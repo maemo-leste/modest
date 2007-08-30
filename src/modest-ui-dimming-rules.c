@@ -321,15 +321,24 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 		
 	/* Check dimmed rule */	
-	if (!dimmed) {
-		dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
+	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
+		if (!dimmed) {
+			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
+	} else if (MODEST_IS_MAIN_WINDOW(win)) {
+		if (!dimmed) {
+			dimmed = !modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), 
+								  TRUE);	
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
+		}
 	}
 
 	return dimmed;
@@ -1055,7 +1064,7 @@ modest_ui_dimming_rules_on_paste (ModestWindow *win, gpointer user_data)
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_copy_samefolder"));
 	}
-
+	
 	return dimmed;
 }
 

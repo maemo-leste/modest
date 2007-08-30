@@ -42,7 +42,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 
 	/* Email Menu */
 	{ "/MenuBar/EmailMenu/EmailNewMainMenu", NULL },
-	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewMessageMenu", NULL },
+	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewMessageMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_msg) },
 	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewFolderMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
 	{ "/MenuBar/EmailMenu/EmailOpenMenu", G_CALLBACK(modest_ui_dimming_rules_on_open_msg) },
 	{ "/MenuBar/EmailMenu/EmailReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
@@ -121,7 +121,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 static const ModestDimmingEntry modest_main_window_toolbar_dimming_entries [] = {
 
 	/* Toolbar */
-	{ "/ToolBar/ToolbarMessageNew", NULL },
+	{ "/ToolBar/ToolbarMessageNew", G_CALLBACK(modest_ui_dimming_rules_on_new_msg) },
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete) },
 	{ "/ToolBar/ToolbarToggleView", NULL },
