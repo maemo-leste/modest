@@ -378,28 +378,50 @@ modest_tny_folder_get_account (TnyFolder *folder)
 	return account;
 }
 
+/*
+ * It's probably better to use a query to get the folders that match
+ * new_name but currently tinymail only provides a match by name using
+ * regular expressions and we want an exact matching. We're not using
+ * a regular expression for the exact name because we'd need first to
+ * escape @new_name and it's not easy sometimes. 
+ *
+ * The code that uses the query is available in revision 3152.
+ */
 gboolean 
 modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
-					   const gchar *name)
+					   const gchar *new_name)
 {
-	TnyList *list;
-	TnyFolderStoreQuery *query;
-	guint length;
+	TnyList *subfolders = NULL;
+	TnyIterator *iter = NULL;
+	TnyFolder *folder = NULL;
+	GError *err = NULL;
+	gboolean same_subfolder = FALSE;
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), FALSE);
-	g_return_val_if_fail (name, FALSE);
 
-	/* Create the query */
-	list = tny_simple_list_new ();
-	query = tny_folder_store_query_new ();
-	tny_folder_store_query_add_item (query, name,
-					 TNY_FOLDER_STORE_QUERY_OPTION_MATCH_ON_NAME);
+	/* Get direct subfolders */
+	subfolders = tny_simple_list_new ();
+	tny_folder_store_get_folders (parent, subfolders, NULL, &err);
 
-	/* Get subfolders */
-	tny_folder_store_get_folders (parent, list, query, NULL);	
-	length = tny_list_get_length (list);
-	g_object_unref (query);
-	g_object_unref (list);
+	/* Check names */
+	iter = tny_list_create_iterator (subfolders);
+	while (!tny_iterator_is_done (iter) && !same_subfolder) {
+		const gchar *name = NULL;
 
-	return (length > 0) ? TRUE : FALSE;
+		folder = TNY_FOLDER(tny_iterator_get_current (iter));
+		name = tny_folder_get_name (folder);
+		
+		same_subfolder = !strcmp(name, new_name);
+
+		g_object_unref (folder);
+		tny_iterator_next(iter);
+	}
+	
+	/* free */
+	if (iter != NULL)
+		g_object_unref (iter);
+	if (subfolders != NULL)
+		g_object_unref (subfolders);
+		
+	return same_subfolder;
 }
