@@ -33,6 +33,7 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-runtime.h"
 #include "modest-window-mgr.h"
+#include <string.h> /* for strcmp */
 
 /* 'private'/'protected' functions */
 static void modest_window_class_init (ModestWindowClass *klass);
@@ -166,17 +167,32 @@ const gchar*
 modest_window_get_active_account (ModestWindow *self)
 {
 	g_return_val_if_fail (self, NULL);
-
+	//g_warning ("%s: %s", __FUNCTION__, MODEST_WINDOW_GET_PRIVATE(self)->active_account);
 	return MODEST_WINDOW_GET_PRIVATE(self)->active_account;
 }
 
 void
 modest_window_set_active_account (ModestWindow *self, const gchar *active_account)
 {
-	ModestWindowPrivate *priv;	
+	ModestWindowPrivate *priv;
 
+	g_return_if_fail (self);	
 	priv = MODEST_WINDOW_GET_PRIVATE(self);
 
+	//g_warning ("%s: %s", __FUNCTION__, active_account);
+	
+	/* only 'real' account should be set here; for example the email signature
+	 * depends on the current account, so if you reply to a message in your
+	 * archive, it should take the signature from the real active account,
+	 * not the non-existing one from your mmc-pseudo-account
+	 */
+	if (active_account && ((strcmp (active_account, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0) ||
+			       (strcmp (active_account, MODEST_MMC_ACCOUNT_ID) == 0))) {
+			g_warning ("%s: %s is not a valid active account",
+				   __FUNCTION__, active_account);
+			return;
+	}
+	
 	if (active_account == priv->active_account)
 		return;
 	else {

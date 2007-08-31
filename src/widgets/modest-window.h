@@ -137,7 +137,8 @@ const gchar* modest_window_get_active_account (ModestWindow *self);
  * @self: a modest window instance
  * @active_account: a new active account name for this window
  * 
- * set the active account for this window
+ * set the active account for this window.
+ * NOTE: this must be a valid, non-pseudo account.
  * 
  */	
 void modest_window_set_active_account (ModestWindow *self, const gchar *active_account);
