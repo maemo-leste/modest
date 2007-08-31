@@ -218,7 +218,6 @@ ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccoun
 /**
  * modest_account_mgr_set_connection_specific_smtp
  * @self: a ModestAccountMgr instance
- * @name: the account name
  * @connection_name: A libconic IAP connection name
  * @server_account_name: a server account name to use for this connection.
  * 
@@ -226,21 +225,20 @@ ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccoun
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */
-gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
+gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
 					 const gchar* connection_name, const gchar* server_account_name);
 
 /**
  * modest_account_mgr_remove_connection_specific_smtp
  * @self: a ModestAccountMgr instance
- * @name: the account name
  * @connection_name: A libconic IAP connection name
  * 
- * Disassacoiate a server account to use with the specific connection for this account.
+ * Disassociate a server account to use with the specific connection for this account.
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */				 
-gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
-					 const gchar* connection_name);
+gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, 
+	const gchar* connection_name);
 
 /**
  * modest_account_mgr_get_use_connection_specific_smtp
@@ -254,23 +252,22 @@ gboolean modest_account_mgr_get_use_connection_specific_smtp (ModestAccountMgr *
  * modest_account_mgr_set_use_connection_specific_smtp
  * @self: a ModestAccountMgr instance
  * @account_name: the account name
- * @new_value: New value that indicates if if this account should use connection-specific smtp server accounts
+ * @new_value: New value that indicates if if this account should use connection-specific smtp server accounts.
  * @result: TRUE if it succeeded, FALSE otherwise
  */
 gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
-                                                              gboolean new_value);
+	gboolean new_value);
 
 /**
  * modest_account_mgr_get_connection_specific_smtp
  * @self: a ModestAccountMgr instance
- * @name: the account name
  * @connection_name: A libconic IAP connection name
  * 
  * Retrieve a server account to use with this specific connection for this account.
  *
  * Returns: a server account name to use for this connection, or NULL if none is specified.
  */			 
-gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, const gchar* name,
+gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 					 const gchar* connection_name);
 
 

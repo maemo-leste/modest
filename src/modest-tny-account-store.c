@@ -114,8 +114,7 @@ static void    on_vfs_volume_unmounted     (GnomeVFSVolumeMonitor *volume_monito
 static void    modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self, 
 								   const gchar *server_account_name);
 
-static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self,
-								   const gchar *account_name);
+static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self);
 
 /* list my signals */
 enum {
@@ -1397,7 +1396,7 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 
 static TnyAccount*
 get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
-							 const gchar *account_name)
+	const gchar *account_name)
 {
 	/* Get the current connection: */
 	TnyDevice *device = modest_runtime_get_device ();
@@ -1406,7 +1405,6 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 		return NULL;
 
 	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (account_name, NULL);
 	
 	
 #ifdef MODEST_PLATFORM_MAEMO
@@ -1429,13 +1427,13 @@ get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *
 	/*  Get the connection-specific transport acccount, if any: */
 	ModestAccountMgr *account_manager = modest_runtime_get_account_mgr ();
 
-        /* Check if this account has connection-specific SMTP enabled */
-        if (!modest_account_mgr_get_use_connection_specific_smtp (account_manager, account_name)) {
-                return NULL;
-        }
+	/* Check if this account has connection-specific SMTP enabled */
+	if (!modest_account_mgr_get_use_connection_specific_smtp (account_manager, account_name)) {
+		return NULL;
+	}
 
 	gchar* server_account_name = modest_account_mgr_get_connection_specific_smtp (account_manager, 
-		account_name, connection_name);
+		connection_name);
 
 	/* printf ("DEBUG: %s: server_account_name=%s\n", __FUNCTION__, server_account_name); */
 	if (!server_account_name) {
@@ -1613,7 +1611,7 @@ insert_account (ModestTnyAccountStore *self,
 		tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
 
 		/* Add connection-specific transport accounts */
-		add_connection_specific_transport_accounts (self, account);
+		add_connection_specific_transport_accounts (self);
 
 		/* Create per account local outbox */
 		account_outbox = 
@@ -1700,18 +1698,24 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 }
 
 static void
-add_connection_specific_transport_accounts (ModestTnyAccountStore *self,
-					    const gchar *account_name)
+add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 {
 	ModestTnyAccountStorePrivate *priv = NULL;
 	GSList *list_specifics = NULL, *iter = NULL;
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	list_specifics = modest_account_mgr_get_list (priv->account_mgr,
-						      account_name, 
-						      MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						      MODEST_CONF_VALUE_STRING, FALSE);
+	ModestConf *conf = modest_runtime_get_conf ();
+
+	GError *err = NULL;
+	list_specifics = modest_conf_get_list (conf,
+						      MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
+						      MODEST_CONF_VALUE_STRING, &err);
+	if (err) {
+		g_printerr ("modest: %s: error getting list: %s\n.", __FUNCTION__, err->message);
+		g_error_free (err);
+		err = NULL;
+	}
 				
 	/* Look at each connection-specific transport account for the 
 	 * modest account: */
@@ -1729,8 +1733,6 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self,
 											 priv->session, 
 											 transport_account_name);
 				if (tny_account) {
-					modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, 
-													      account_name);
 					g_object_set_data (G_OBJECT(tny_account), 
 							   "account_store", 
 							   (gpointer)self);

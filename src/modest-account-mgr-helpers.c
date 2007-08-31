@@ -98,28 +98,40 @@ ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccoun
 }
 
 gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
-	const gchar* account_name,
 	const gchar* connection_name, const gchar* server_account_name)
 {
-	modest_account_mgr_remove_connection_specific_smtp (self, account_name, connection_name);
+	modest_account_mgr_remove_connection_specific_smtp (self, connection_name);
 	
-	GSList *list = modest_account_mgr_get_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, FALSE);
-		
-	/* The server account is in the item after the connection name: */
-	GSList *list_connection = g_slist_append (list, (gpointer)connection_name);
-	list_connection = g_slist_append (list_connection, (gpointer)server_account_name);
+	ModestConf *conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+
+	gboolean result = TRUE;
+	GError *err = NULL;
+	GSList *list = modest_conf_get_list (conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, &err);
+	if (err) {
+		g_printerr ("modest: %s: error getting list: %s.\n", __FUNCTION__, err->message);
+		g_error_free (err);
+		err = NULL;
+		result = FALSE;
+	} else {	
+		/* The server account is in the item after the connection name: */
+		GSList *list_connection = g_slist_append (list, (gpointer)connection_name);
+		list_connection = g_slist_append (list_connection, (gpointer)server_account_name);
 	
-	/* Reset the changed list: */
-	modest_account_mgr_set_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list_connection,
-						    MODEST_CONF_VALUE_STRING, FALSE);
+		/* Reset the changed list: */
+		modest_conf_set_list (conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST, list_connection,
+						    MODEST_CONF_VALUE_STRING, &err);
+		if (err) {
+			g_printerr ("modest: %s: error setting list: %s.\n", __FUNCTION__, err->message);
+			g_error_free (err);
+			result = FALSE;
+		}
+	}
 				
 	/* TODO: Should we free the items too, or just the list? */
 	g_slist_free (list);
 	
-	return TRUE;
+	return result;
 }
 
 /**
@@ -133,11 +145,22 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
  * Returns: TRUE if it worked, FALSE otherwise
  */				 
 gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, 
-	const gchar* account_name, const gchar* connection_name)
+	const gchar* connection_name)
 {
-	GSList *list = modest_account_mgr_get_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, FALSE);
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	
+	gboolean result = TRUE;
+	GError *err = NULL;
+	GSList *list = modest_conf_get_list (priv->modest_conf, 
+							MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, &err);
+	if (err) {
+		g_printerr ("modest: %s: error getting list: %s.\n", __FUNCTION__, err->message);
+		g_error_free (err);
+		err = NULL;
+		result = FALSE;
+	}
+
 	if (!list)
 		return FALSE;
 		
@@ -150,47 +173,58 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 	}
 	
 	/* Reset the changed list: */
-	modest_account_mgr_set_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST, list,
-						    MODEST_CONF_VALUE_STRING, FALSE);
+	modest_conf_set_list (priv->modest_conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST, list,
+						    MODEST_CONF_VALUE_STRING, &err);
+	if (err) {
+		g_printerr ("modest: %s: error setting list: %s.\n", __FUNCTION__, err->message);
+		g_error_free (err);
+		result = FALSE;
+	}
 				
 	/* TODO: Should we free the items too, or just the list? */
 	g_slist_free (list);
 	
-	return TRUE;
+	return result;
 }
+
 
 gboolean modest_account_mgr_get_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name)
 {
-	return modest_account_mgr_get_bool (self, account_name,
-                                            MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP, FALSE);
+	return modest_account_mgr_get_bool (self, account_name, 
+		MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP, FALSE);
 }
 
-gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
-                                                              gboolean new_value)
+gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name, 
+	gboolean new_value)
 {
-        return modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP,
-                                            new_value, FALSE);
+	return modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP, 
+		new_value, FALSE);
 }
 
 /**
  * modest_account_mgr_get_connection_specific_smtp
  * @self: a ModestAccountMgr instance
- * @name: the account name
  * @connection_name: A libconic IAP connection name
  * 
  * Retrieve a server account to use with this specific connection for this account.
  *
  * Returns: a server account name to use for this connection, or NULL if none is specified.
  */			 
-gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
-					 const gchar* connection_name)
+gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self,  const gchar* connection_name)
 {
 	gchar *result = NULL;
 	
-	GSList *list = modest_account_mgr_get_list (self, account_name, 
-							MODEST_ACCOUNT_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, FALSE);
+	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	
+	GError *err = NULL;
+	GSList *list = modest_conf_get_list (priv->modest_conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
+						    MODEST_CONF_VALUE_STRING, &err);
+	if (err) {
+		g_printerr ("modest: %s: error getting list: %s.\n", __FUNCTION__, err->message);
+		g_error_free (err);
+		err = NULL;
+	}
+
 	if (!list)
 		return NULL;
 

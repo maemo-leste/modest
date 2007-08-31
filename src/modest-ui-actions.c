@@ -661,12 +661,9 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 static void
 on_smtp_servers_window_hide (GtkWindow* window, gpointer user_data)
 {
-	ModestWindow *main_window = MODEST_WINDOW (user_data);
-	
 	/* Save any changes. */
 	modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (window), 
-			modest_window_get_active_account (main_window));
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (window));
 	gtk_widget_destroy (GTK_WIDGET (window));
 }
 
@@ -682,22 +679,10 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
 	
 	/* Create the window if necessary: */
-	const gchar *active_account_name = modest_window_get_active_account (win);
-	
-	/* TODO: Dim the menu item (not in the UI spec)? or show a warning,
-	 * or show the default account?
-	 * If we show the default account then the account name should be shown in 
-	 * the window when we show it. */
-	if (!active_account_name) {
-		g_warning ("%s: No account is active.", __FUNCTION__);
-		return;
-	}
-		
 	GtkWidget *specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
 	modest_connection_specific_smtp_window_fill_with_connections (
 		MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (specific_window), 
-		modest_runtime_get_account_mgr(), 
-		active_account_name);
+		modest_runtime_get_account_mgr());
 
 	/* Show the window: */	
 	gtk_window_set_transient_for (GTK_WINDOW (specific_window), GTK_WINDOW (win));

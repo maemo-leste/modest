@@ -859,8 +859,7 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	if (!(self->specific_window)) {
 		self->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
 		modest_connection_specific_smtp_window_fill_with_connections (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager, 
-			NULL /* account_name, not known yet. */);
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager);
 	}
 
 	/* Show the window: */
@@ -1838,12 +1837,12 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		MODEST_ACCOUNT_RETRIEVE, retrieve, FALSE /* not server account */);
 
 	/* Save the connection-specific SMTP server accounts. */
-        modest_account_mgr_set_use_connection_specific_smtp(self->account_manager, account_name,
+        modest_account_mgr_set_use_connection_specific_smtp(self->account_manager, account_name, 
                 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->checkbox_outgoing_smtp_specific)));
 	gboolean result = TRUE;
 	if (self->specific_window)
 		result = modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), account_name);
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window));
 			
 	g_free (self->saved_account_name);
 	self->saved_account_name = g_strdup (account_name);

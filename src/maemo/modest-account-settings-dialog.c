@@ -697,8 +697,7 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	if (!(self->specific_window)) {
 		self->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
 		modest_connection_specific_smtp_window_fill_with_connections (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager, 
-			self->account_name);
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager);
 	}
 
 	/* Show the window: */	
@@ -1028,12 +1027,14 @@ check_data (ModestAccountSettingsDialog *self)
 			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
 
+	/*
 	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
-
+	*/
 	/* If we use an encrypted protocol then there is no need to encrypt the password */
-	/* I don't think this is a good assumption. It overrides the user's request. murrayc: */
-	if (!modest_protocol_info_is_secure(protocol_security_incoming))
+	/* I don't think this is a good assumption. It overrides the user's request. murrayc: 
+	 *  if (!modest_protocol_info_is_secure(protocol_security_incoming)) */
+	if (TRUE)
 	{
 		if (gtk_toggle_button_get_active (
 				GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth))) {
@@ -1382,8 +1383,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 		const gboolean has_specific = 
 			modest_account_mgr_get_use_connection_specific_smtp (
-				dialog->account_manager, 
-				account_name);
+				dialog->account_manager, account_name);
 		gtk_toggle_button_set_active (
 			GTK_TOGGLE_BUTTON (dialog->checkbox_outgoing_smtp_specific), 
 			has_specific);
@@ -1573,11 +1573,11 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	account_title = NULL;
 	
 	/* Save connection-specific SMTP server accounts: */
-        modest_account_mgr_set_use_connection_specific_smtp(dialog->account_manager, account_name,
-               gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog->checkbox_outgoing_smtp_specific)));
+	modest_account_mgr_set_use_connection_specific_smtp(dialog->account_manager, account_name,
+		gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog->checkbox_outgoing_smtp_specific)));
 	if (dialog->specific_window) {
 		return modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window), account_name);
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window));
 	}
 	else
 		return TRUE;

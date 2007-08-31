@@ -63,7 +63,6 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 	GtkWidget *button_edit;
 	
 	ModestAccountMgr *account_manager;
-	gchar* account_name;
 };
 
 static void
@@ -127,7 +126,6 @@ modest_connection_specific_smtp_window_finalize (GObject *object)
 	}
 	
 	g_object_unref (G_OBJECT (priv->model));
-	g_free (priv->account_name);
 	
 	G_OBJECT_CLASS (modest_connection_specific_smtp_window_parent_class)->finalize (object);
 }
@@ -151,13 +149,11 @@ modest_connection_specific_smtp_window_class_init (ModestConnectionSpecificSmtpW
 /* #define DEBUG_WITHOUT_LIBCONIC 1 */
 
 void
-modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, ModestAccountMgr *account_manager,
-	const gchar* account_name)
+modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, ModestAccountMgr *account_manager)
 {
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	priv->account_manager = account_manager;
-	priv->account_name = account_name ? g_strdup (account_name) : NULL;
 	
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	
@@ -179,27 +175,26 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 		ConIcIap *iap = (ConIcIap*)iter->data;
 		if (iap) {
 			#ifdef DEBUG_WITHOUT_LIBCONIC
-			const gchar *name = "debug name";
-			const gchar *id = "debug id";
+			const gchar *connection_name = "debug name";
+			const gchar *connection_id = "debug id";
 			#else
-			const gchar *name = con_ic_iap_get_name (iap);
-			const gchar *id = con_ic_iap_get_id (iap);
+			const gchar *connection_name = con_ic_iap_get_name (iap);
+			const gchar *connection_id = con_ic_iap_get_id (iap);
 			#endif
 			
-			printf ("debug: iac name=%s, id=%s\n", name, id);
+			printf ("debug: iac name=%s, id=%s\n", connection_name, connection_id);
 			
 			/* Get any already-associated connection-specific server account: */
 			gchar *server_account_name = NULL;
-			if (priv->account_name)
-				server_account_name = modest_account_mgr_get_connection_specific_smtp (
-					priv->account_manager, priv->account_name, name);
+			server_account_name = modest_account_mgr_get_connection_specific_smtp (
+				priv->account_manager, connection_name);
 					
 			/* Add the row to the model: */
 			GtkTreeIter iter;
 			gtk_list_store_append (liststore, &iter);
 			gtk_list_store_set(liststore, &iter, 
-				MODEL_COL_ID, id, 
-				MODEL_COL_NAME, name,
+				MODEL_COL_ID, connection_id, 
+				MODEL_COL_NAME, connection_name,
 				MODEL_COL_SERVER_ACCOUNT_NAME, server_account_name,
 				-1);
 				
@@ -466,11 +461,9 @@ modest_connection_specific_smtp_window_new (void)
 }
 
 /** The application should call this when the user changes should be saved.
- * @account_name: Specify this again in case it was not previously known.
  */
 gboolean
-modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpecificSmtpWindow *self, 
-	const gchar* account_name)
+modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpecificSmtpWindow *self)
 {
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
@@ -498,8 +491,7 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 		if (id && data) { /* The presence of data suggests that there is something to save. */
 			if (!server_account_name) {
 				/* Add a new server account, building a (non-human-visible) name: */
-				gchar *name_start = g_strdup_printf("%s_specific_%s", 
-					priv->account_name, connection_name);
+				gchar *name_start = g_strdup_printf("specific_%s", connection_name);
 				server_account_name = modest_account_mgr_get_unused_account_name (
 					priv->account_manager, name_start, TRUE /* server account. */);
 				g_assert (server_account_name);
@@ -515,8 +507,7 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 					
 				/* associate the specific server account with this connection for this account: */
 				success = success && modest_account_mgr_set_connection_specific_smtp (
-					priv->account_manager, priv->account_name,
-					 connection_name, server_account_name);
+					priv->account_manager, connection_name, server_account_name);
 	
 				/* Save the new name in the treemodel, so it can be edited again later: */
 				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 

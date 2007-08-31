@@ -1,3 +1,36 @@
+2007-08-31  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/modest-defs.h: Rename MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST to 
+	MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST and make it a global list 
+	for use by all accounts that enable the MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP
+	boolean, because this is the specified behaviour in the UI spec.
+	* src/modest-account-mgr-helpers.h:
+	* src/modest-account-mgr-helpers.c:
+	(modest_account_mgr_set_connection_specific_smtp),
+	(modest_account_mgr_remove_connection_specific_smtp),
+	(modest_account_mgr_get_connection_specific_smtp): Remove the account_name 
+	parameter.
+	* src/maemo/modest-connection-specific-smtp-window.h:
+	* src/maemo/modest-connection-specific-smtp-window.c:
+	(modest_connection_specific_smtp_window_finalize),
+	(modest_connection_specific_smtp_window_fill_with_connections),
+	(modest_connection_specific_smtp_window_save_server_accounts):
+	Remove the account_name parameters and member variable.
+	* src/maemo/easysetup/modest-easysetup-wizard.c:
+	(on_button_outgoing_smtp_servers), (create_account):
+	* src/maemo/modest-account-settings-dialog.c:
+	(on_button_outgoing_smtp_servers), (check_data),
+	(modest_account_settings_dialog_set_account_name),
+	(save_configuration):
+	* src/maemo/modest-maemo-utils.c: (on_account_online),
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	* src/modest-tny-account-store.c:
+	(get_smtp_specific_transport_account_for_open_connection),
+	(insert_account), (add_connection_specific_transport_accounts):
+	* src/modest-ui-actions.c: (on_smtp_servers_window_hide),
+	(modest_ui_actions_on_smtp_servers):
+	 Adapt to the changed API.
+
 2007-08-29  Armin Burgmeier  <armin@openismus.com>
 
 	* src/modest-protocol-info.h:
