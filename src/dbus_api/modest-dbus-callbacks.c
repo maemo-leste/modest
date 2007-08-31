@@ -55,6 +55,8 @@
 #include <tny-simple-list.h>
 #include <tny-merge-folder.h>
 
+#include <modest-text-utils.h>
+
 typedef struct 
 {
 	gchar *to;
@@ -1406,12 +1408,47 @@ add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 	g_object_unref (G_OBJECT (iter));
 }
 
+
+/* return >1 for a special folder, 0 for a user-folder */
+static gint
+get_rank (const gchar *folder)
+{
+	if (strcmp (folder, "INBOX") == 0)
+		return 1;
+	if (strcmp (folder, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_SENT)) == 0)
+		return 2;
+	if (strcmp (folder, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_DRAFTS)) == 0)
+		return 3;
+	if (strcmp (folder, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_OUTBOX)) == 0)
+		return 4;
+	return 0;
+}
+
+static gint
+folder_name_compare_func (const gchar* folder1, const gchar* folder2)
+{
+	gint r1 = get_rank (folder1);
+	gint r2 = get_rank (folder2);
+
+	if (r1 > 0 && r2 > 0)
+		return r1 - r2;
+	if (r1 > 0 && r2 == 0)
+		return -1;
+	if (r1 == 0 && r2 > 0)
+		return 1;
+	else
+		return	modest_text_utils_utf8_strcmp (folder1, folder2, TRUE);
+}
+
+/* FIXME: */
+/*   - we're still missing the outbox */
+/*   - we need to take care of localization (urgh) */
+/*   - what about 'All mail folders'? */
 static void
 on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 {
 	DBusMessage  *reply = NULL;
 	
-
 	/* Get the TnyStoreAccount so we can get the folders: */
  	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
@@ -1454,6 +1491,11 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	g_object_unref (account_local);
 	account_local = NULL;
 
+	/* specs require us to sort the folder names, although
+	 * this is really not the place to do that...
+	 */
+	folder_names = g_list_sort (folder_names,
+				    (GCompareFunc)folder_name_compare_func);
 
 	/* Put the result in a DBus reply: */
 	reply = dbus_message_new_method_return (message);
