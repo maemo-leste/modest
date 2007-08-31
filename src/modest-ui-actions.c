@@ -730,9 +730,9 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 				return;
 	}
 	
-	account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+	account_name = g_strdup (modest_window_get_active_account (win));
 	if (!account_name)
-		account_name = g_strdup (modest_window_get_active_account (win));
+		account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
 		goto cleanup;
@@ -775,7 +775,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		goto cleanup;
 	}
 	
-
+	
 	/* Create and register edit window */
 	/* This is destroyed by TODO. */
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
@@ -823,10 +823,7 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 }
 
 static void
-open_msg_cb (ModestMailOperation *mail_op, 
-	     TnyHeader *header, 
-	     TnyMsg *msg, 
-	     gpointer user_data)
+open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpointer user_data)
 {
 	ModestWindowMgr *mgr = NULL;
 	ModestWindow *parent_win = NULL;
@@ -838,9 +835,8 @@ open_msg_cb (ModestMailOperation *mail_op,
 	/* Do nothing if there was any problem with the mail
 	   operation. The error will be shown by the error_handler of
 	   the mail operation */
-	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
 		return;
-	}
 
 	parent_win = (ModestWindow *) modest_mail_operation_get_source (mail_op);
 	folder = tny_header_get_folder (header);
@@ -1817,10 +1813,20 @@ set_active_account_from_tny_account (TnyAccount *account,
 		modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store (),
 							     MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
 							     server_acc_name);
+	if (!modest_server_account) {
+		g_warning ("%s: could not get tny account\n", __FUNCTION__);
+		return;
+	}
+
+	/* Update active account, but only if it's not a pseudo-account */
+	if ((!modest_tny_account_is_virtual_local_folders(modest_server_account)) &&
+	    (!modest_tny_account_is_memory_card_account(modest_server_account))) {
+		const gchar *modest_acc_name = 
+			modest_tny_account_get_parent_modest_account_name_for_server_account (modest_server_account);
+		if (modest_acc_name)
+			modest_window_set_active_account (window, modest_acc_name);
+	}
 	
-	const gchar *modest_acc_name = 
-		modest_tny_account_get_parent_modest_account_name_for_server_account (modest_server_account);
-	modest_window_set_active_account (window, modest_acc_name);
 	g_object_unref (modest_server_account);
 }
 
@@ -1877,8 +1883,8 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 
 	if (TNY_IS_ACCOUNT (folder_store)) {
 		if (selected) {
-			/* Update active account */
 			set_active_account_from_tny_account (TNY_ACCOUNT (folder_store), MODEST_WINDOW (main_window));
+			
 			/* Show account details */
 			modest_main_window_set_contents_style (main_window, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 		}
@@ -1918,7 +1924,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 						      MODEST_CONF_HEADER_VIEW_KEY);
 		} else {
 			/* Update the active account */
-			modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
+			//modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
 			/* Save only if we're seeing headers */
 			if (modest_main_window_get_contents_style (main_window) ==
 			    MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
