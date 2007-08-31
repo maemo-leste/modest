@@ -13,8 +13,8 @@ modest (1.0-2007.36-1) gutsy; urgency=low
 modest (1.0-2007.35-3) feisty; urgency=low
 
   * Fixes: NB#64359, NB#61954, NB#63011, NB#66937, NB#64231, NB#67061
-  * Fixes: NB#66968, NB#66762, NB#67113, NB#66280, NB#66458, NB#62700
-  * Fixes: NB#62963, NB#63872, NB#61900, NB#64201, NB#64321
+  * Fixes: NB#66968, NB#66762, NB#67113, NB#66280, NB#66458
+  * Fixes: NB#63872, NB#64201, NB#64321
   * Fixes: NB#66461, NB#61170, NB#66495, NB#66803
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 30 Aug 2007 11:20:23 +0300
@@ -30,8 +30,7 @@ modest (1.0-2007.35-1) gutsy; urgency=low
 
   * Fixes: NB#66356, NB#64095, NB#66347, NB#62700, NB#62963, NB#66403
   * Fixes: NB#63313, NB#66408, NB#63545, NB#66452, NB#66132, NB#66630
-  * Fixes: NB#65969, NB#61649, NB#64604, NB#63872, NB#66304, NB#61900
-  * Fixes: NB#64201
+  * Fixes: NB#65969, NB#61649, NB#64604, NB#66304, NB#61900
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 27 Aug 2007 13:48:42 +0300
 
