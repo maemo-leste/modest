@@ -1,5 +1,5 @@
 /* Copyright (c) 2006, Nokia Corporation
- * All rights reserved.
+ * All rights reserved. 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1109,9 +1109,7 @@ free_reply_forward_helper (gpointer data)
 }
 
 static void
-reply_forward_cb (ModestMailOperation *mail_op, 
-		  TnyHeader *header, 
-		  TnyMsg *msg,
+reply_forward_cb (ModestMailOperation *mail_op,  TnyHeader *header, TnyMsg *msg,
 		  gpointer user_data)
 {
 	TnyMsg *new_msg;
@@ -1854,15 +1852,9 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	/* Check if folder is empty and set headers view contents style */
 	folder_empty = (tny_folder_get_all_count (folder) == 0);
 	all_marked_as_deleted = modest_header_view_is_empty (MODEST_HEADER_VIEW(header_view));
-	folder_empty = folder_empty || all_marked_as_deleted ;
-	if (folder_empty) {
-
-		printf ("DEBUG: %s: tny_folder_get_all_count() returned 0.\n", __FUNCTION__);
+	if (folder_empty || all_marked_as_deleted)
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
-	} else {
-		printf ("DEBUG: %s: tny_folder_get_all_count() returned >0.\n", __FUNCTION__);
-	}
 }
 
 void 

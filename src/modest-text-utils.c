@@ -894,7 +894,6 @@ get_url_matches (GString *txt)
 				match->offset = offset + rm.rm_so;
 				match->len    = rm.rm_eo - rm.rm_so;
 				match->prefix = patterns[i].prefix;
-				g_warning ("<%d, %d, %s>",  match->offset, match->len, match->prefix);
 				match_list = g_slist_prepend (match_list, match);
 			}
 				

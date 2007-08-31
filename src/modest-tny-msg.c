@@ -39,6 +39,7 @@
 #include <camel/camel-stream-buffer.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gprintf.h>
+#include <modest-tny-folder.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -397,6 +398,8 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 }
 
 
+#define MODEST_TNY_MSG_PARENT_UID "parent-uid"
+
 static TnyMsg *
 create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, const gchar *signature, 
 			   gboolean is_reply, guint type, GList *attachments)
@@ -407,7 +410,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 	TnyMimePart *body = NULL;
 	ModestFormatter *formatter;
 	gchar *subject_prefix;
-
+	
 	/* Get body from original msg. Always look for the text/plain
 	   part of the message to create the reply/forwarded mail */
 	if (header)
@@ -470,12 +473,29 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
 
+
+	/* get the parent uid, and set it as a gobject property on the new msg */
+	if (new_msg) {
+		gchar* parent_uid = modest_tny_folder_get_header_unique_id (header);
+		g_object_set_data_full (G_OBJECT(new_msg), MODEST_TNY_MSG_PARENT_UID,
+					parent_uid, g_free);
+	}
+	
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
-	g_object_unref (G_OBJECT (header));
+	g_object_unref (G_OBJECT (header)); /* ugly to unref it here instead of in the calling func */
 
 	return new_msg;
 }
+
+const gchar*
+modest_tny_msg_get_parent_uid (TnyMsg *msg)
+{
+	g_return_val_if_fail (msg, NULL);
+	return g_object_get_data (G_OBJECT(msg), MODEST_TNY_MSG_PARENT_UID);
+}
+
+
 
 static void
 add_if_attachment (gpointer data, gpointer user_data)
@@ -507,7 +527,8 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 	tny_list_foreach (parts, add_if_attachment, &attachments_list);
 
-	new_msg = create_reply_forward_mail (msg, NULL, from, signature, FALSE, forward_type, attachments_list);
+	new_msg = create_reply_forward_mail (msg, NULL, from, signature, FALSE, forward_type,
+					     attachments_list);
 	add_attachments (new_msg, attachments_list);
 
 	/* Clean */
@@ -542,7 +563,8 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 		tny_list_foreach (parts, add_if_attachment, &attachments_list);
 	}
 
-	new_msg = create_reply_forward_mail (msg, header, from, signature, TRUE, reply_type, attachments_list);
+	new_msg = create_reply_forward_mail (msg, header, from, signature, TRUE, reply_type,
+					     attachments_list);
 	if (attachments_list) {
 		g_list_foreach (attachments_list, (GFunc) g_object_unref, NULL);
 		g_list_free (attachments_list);

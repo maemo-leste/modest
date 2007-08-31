@@ -164,4 +164,17 @@ TnyMsg*       modest_tny_msg_create_reply_msg     (TnyMsg *msg,
 						   ModestTnyMsgReplyMode reply_mode);
 
 
+/**
+ * modest_tny_msg_get_parent_unique_id
+ * @msg: a valid #TnyMsg instance, or %NULL
+ * 
+ * gets the unique ID of the 'parent' (the original msg replied to or forward)
+ * 
+ * Returns: Returns: a the parent uid, or NULL if there is none.
+ **/
+const gchar*  modest_tny_msg_get_parent_uid (TnyMsg *msg);
+
+
+
+
 #endif /* __MODEST_TNY_MSG_H__ */
