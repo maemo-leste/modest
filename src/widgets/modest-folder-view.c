@@ -263,58 +263,7 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 }
 
-/* Simplify checks for NULLs: */
-static gboolean
-strings_are_equal (const gchar *a, const gchar *b)
-{
-	if (!a && !b)
-		return TRUE;
-	if (a && b)
-	{
-		return (strcmp (a, b) == 0);
-	}
-	else
-		return FALSE;
-}
 
-static gboolean
-on_model_foreach_set_name(GtkTreeModel *model, GtkTreePath *path,  GtkTreeIter *iter, gpointer data)
-{
-	GObject *instance = NULL;
-	
-	gtk_tree_model_get (model, iter,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
-			    -1);
-			    
-	if (!instance)
-		return FALSE; /* keep walking */
-			
-	if (!TNY_IS_ACCOUNT (instance)) {
-		g_object_unref (instance);
-		return FALSE; /* keep walking */	
-	}    
-	
-	/* Check if this is the looked-for account: */
-	TnyAccount *this_account = TNY_ACCOUNT (instance);
-	TnyAccount *account = TNY_ACCOUNT (data);
-	
-	const gchar *this_account_id = tny_account_get_id(this_account);
-	const gchar *account_id = tny_account_get_id(account);
-	g_object_unref (instance);
-	instance = NULL;
-
-	/* printf ("DEBUG: %s: this_account_id=%s, account_id=%s\n", __FUNCTION__, this_account_id, account_id); */
-	if (strings_are_equal(this_account_id, account_id)) {
-		/* Tell the model that the data has changed, so that
-	 	 * it calls the cell_data_func callbacks again: */
-		/* TODO: This does not seem to actually cause the new string to be shown: */
-		gtk_tree_model_row_changed (model, path, iter);
-		
-		return TRUE; /* stop walking */
-	}
-	
-	return FALSE; /* keep walking */
-}
 
 typedef struct 
 {
@@ -322,28 +271,6 @@ typedef struct
 	gchar *previous_name;
 } GetMmcAccountNameData;
 
-static void
-on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
-{
-	/* printf ("DEBU1G: %s: account name=%s\n", __FUNCTION__, tny_account_get_name (TNY_ACCOUNT(account))); */
-
-	GetMmcAccountNameData *data = (GetMmcAccountNameData*)user_data;
-	
-	if (!strings_are_equal (
-		tny_account_get_name(TNY_ACCOUNT(account)), 
-		data->previous_name)) {
-	
-		/* Tell the model that the data has changed, so that 
-		 * it calls the cell_data_func callbacks again: */
-		ModestFolderView *self = data->self;
-		GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	 	if (model)
-			gtk_tree_model_foreach(model, on_model_foreach_set_name, account);
-	}
-
-	g_free (data->previous_name);
-	g_slice_free (GetMmcAccountNameData, data);
-}
 
 static void
 text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
@@ -448,25 +375,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		g_free (item_name);
 		
 	}
-	
-	/* If it is a Memory card account, make sure that we have the correct name.
-	 * This function will be trigerred again when the name has been retrieved: */
-	if (TNY_IS_STORE_ACCOUNT (instance) && 
-		modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance))) {
-
-		/* Get the account name asynchronously: */
-		GetMmcAccountNameData *callback_data = 
-			g_slice_new0(GetMmcAccountNameData);
-		callback_data->self = self;
-
-		const gchar *name = tny_account_get_name (TNY_ACCOUNT(instance));
-		if (name)
-			callback_data->previous_name = g_strdup (name); 
-
-		modest_tny_account_get_mmc_account_name (TNY_STORE_ACCOUNT (instance), 
-							 on_get_mmc_account_name, callback_data);
-	}
- 			
+	 			
 	g_object_unref (G_OBJECT (instance));
 	g_free (fname);
 }
