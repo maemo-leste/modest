@@ -305,6 +305,8 @@ compare_msguids (ModestWindow *win,
 	/* Get message uid from msg window */
 	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
 		msg_uid = modest_msg_edit_window_get_message_uid (MODEST_MSG_EDIT_WINDOW (win));
+		if (msg_uid && uid &&!strcmp (msg_uid, uid))
+			return 0;
 	} else {
 		msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (win));
 	}
@@ -314,7 +316,6 @@ compare_msguids (ModestWindow *win,
 	else
 		return 1;
 }
-
 
 
 gboolean
@@ -336,9 +337,6 @@ modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *head
 	if (win)
 		*win = NULL;
 	
-/* 	g_debug ("windows in list: %d", g_list_length (priv->window_list)); */
-/* 	g_debug ("headers in list: %d", g_slist_length (priv->preregistered_uids)); */
-
 	has_header = has_uid (priv->preregistered_uids, uid);
 		
 	item = g_list_find_custom (priv->window_list, uid, (GCompareFunc) compare_msguids);
@@ -378,43 +376,42 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 
 	win = g_list_find (priv->window_list, window);
 	if (win) {
-		g_warning ("Trying to register an already registered window");
+		g_warning ("%s: trying to re-register a window",
+			   __FUNCTION__);
 		return;
 	}
 	
 	/* Check that it's not a second main window */
 	if (MODEST_IS_MAIN_WINDOW (window)) {
 		if (priv->main_window) {
-			g_warning ("Trying to register a second main window");
+			g_warning ("%s: trying to register a second main window",
+				   __FUNCTION__);
 			return;
 		} else {
 			priv->main_window = window;
 		}
 	}
 
-
 	/* remove from the list of pre-registered uids */
 	if (MODEST_IS_MSG_VIEW_WINDOW(window)) {
 		const gchar *uid = modest_msg_view_window_get_message_uid
 			(MODEST_MSG_VIEW_WINDOW (window));
-
-		g_debug ("registering window for %s", uid);
-				
+		
 		if (!has_uid (priv->preregistered_uids, uid)) 
 			g_debug ("weird: no uid for window (%s)", uid);
+		
+		g_debug ("registering window for %s", uid ? uid : "<none>");
 
 		priv->preregistered_uids = 
 			remove_uid (priv->preregistered_uids,
 				    modest_msg_view_window_get_message_uid
 				    (MODEST_MSG_VIEW_WINDOW (window)));
+
 	} else if (MODEST_IS_MSG_EDIT_WINDOW(window)) {
 		const gchar *uid = modest_msg_edit_window_get_message_uid
 			(MODEST_MSG_EDIT_WINDOW (window));
-
+		
 		g_debug ("registering window for %s", uid);
-				
-		if (!has_uid (priv->preregistered_uids, uid)) 
-			g_debug ("weird: no uid for window (%s)", uid);
 
 		priv->preregistered_uids = 
 			remove_uid (priv->preregistered_uids,
@@ -760,11 +757,12 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self)
 	
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-
+	
 	/* create the main window, if it hasn't been created yet */
 	if (!priv->main_window) {
-		g_debug ("%s: creating main window\n", __FUNCTION__);
+		/* modest_window_mgr_register_window will set priv->main_window */
 		modest_window_mgr_register_window (self, modest_main_window_new ());
+		g_debug ("%s: created main window: %p\n", __FUNCTION__, priv->main_window);
 	}
 	
 	return priv->main_window;

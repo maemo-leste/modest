@@ -48,14 +48,12 @@ typedef struct _ModestWindowMgrClass ModestWindowMgrClass;
 
 struct _ModestWindowMgr {
 	 GObject parent;
-	/* insert public members, if any */
 };
 
 struct _ModestWindowMgrClass {
 	GObjectClass parent_class;
-	/* insert signal callback declarations, eg. */
-	/* void (* my_event) (ModestWindowMgr* obj); */
 };
+
 
 /* member functions */
 GType        modest_window_mgr_get_type    (void) G_GNUC_CONST;
