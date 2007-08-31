@@ -874,16 +874,23 @@ modest_header_view_get_style (ModestHeaderView *self)
 }
 
 /* This is used to automatically select the first header if the user
- * has not selected any header yet. Fixes NB#58917.
+ * has not selected any header yet.
  */
-static gboolean modest_header_view_on_expose_event(
-		GtkTreeView *header_view,
-		GdkEventExpose *event,
-		gpointer user_data)
+static gboolean 
+modest_header_view_on_expose_event(GtkTreeView *header_view,
+				   GdkEventExpose *event,
+				   gpointer user_data)
 {
 	GtkTreeSelection *sel;
 	GtkTreeModel *model;
 	GtkTreeIter tree_iter;
+
+	/* I'm invalidating this method because it causes an annoying
+	   efect, the focus changes to the header view when selecting
+	   a folder in the folder view because of this code and it
+	   shouldn't. We need to find another way to set the passive
+	   focus on it. Sergio. */
+	return FALSE;
 
 	model = gtk_tree_view_get_model(header_view);
 
