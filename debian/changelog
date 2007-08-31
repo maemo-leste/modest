@@ -1,3 +1,15 @@
+modest (1.0-2007.36-1) gutsy; urgency=low
+
+  * Fixes: NB#63783, NB#64995, NB#66450, NB#63588, NB#66839, NB#64275
+  * Fixes: NB#63784, NB#63393, NB#64359, NB#61954, NB#63011, NB#66937
+  * Fixes: NB#64231, NB#67061, NB#66762, NB#67113, NB#66280, NB#66458
+  * Fixes: NB#64181, NB#64321, NB#66461, NB#61170, NB#66495, NB#66803
+  * Fixes: NB#62026, NB#65312, NB#65713, NB#65097, NB#63178, NB#64311
+  * Fixes: NB#64278, NB#66968, NB#63263, NB#63479, NB#65331
+  * Added unreleased bugs from week 35.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 31 Aug 2007 15:17:11 +0300
+
 modest (1.0-2007.35-3) feisty; urgency=low
 
   * Fixes: NB#64359, NB#61954, NB#63011, NB#66937, NB#64231, NB#67061
