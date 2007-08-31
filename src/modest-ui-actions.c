@@ -3805,17 +3805,21 @@ msgs_move_to_confirmation (GtkWindow *win,
 
 
 static void
-transfer_msgs_from_viewer_cb (const GObject *object, gpointer user_data)
+move_to_cb (const GObject *object, gpointer user_data)
 {
 	ModestMsgViewWindow *self = NULL;
+	g_return_if_fail (GTK_IS_WIDGET (user_data));
+	g_return_if_fail (MODEST_IS_WINDOW (object));
 
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (object));
-	self = MODEST_MSG_VIEW_WINDOW (object);
-	
-	if (!modest_msg_view_window_select_next_message (self))
-		if (!modest_msg_view_window_select_previous_message (self))
-			/* No more messages to view, so close this window */
-			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
+	if (MODEST_IS_MSG_VIEW_WINDOW (object)) {
+                self = MODEST_MSG_VIEW_WINDOW (object);
+
+	        if (!modest_msg_view_window_select_next_message (self))
+		        if (!modest_msg_view_window_select_previous_message (self))
+			        /* No more messages to view, so close this window */
+                                modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
+        }
+	gtk_widget_destroy (GTK_WIDGET(user_data));
 }
 
 void
@@ -4071,6 +4075,14 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 
 	/* Transfer messages */
 	if (response == GTK_RESPONSE_OK) {
+                GtkWidget *inf_note;
+		inf_note = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
+							     _CS("ckct_nw_pasting"));
+		if (inf_note != NULL)  {
+			gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
+			gtk_widget_show (GTK_WIDGET(inf_note));
+		}
+
 		ModestMailOperation *mail_op = 
 			modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 								       G_OBJECT(win),
@@ -4083,8 +4095,8 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 						 headers,
 						 TNY_FOLDER (dst_folder),
 						 TRUE,
-						 (MODEST_IS_MSG_VIEW_WINDOW (win)) ? transfer_msgs_from_viewer_cb : NULL,
-						 NULL);
+						 move_to_cb,
+						 inf_note);
 
 		g_object_unref (G_OBJECT (mail_op));
 	}
@@ -4134,6 +4146,13 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                 }
 
                 if (do_xfer) {
+                        GtkWidget *inf_note;
+                        inf_note = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
+                                                                     _CS("ckct_nw_pasting"));
+                        if (inf_note != NULL)  {
+                                gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
+                                gtk_widget_show (GTK_WIDGET(inf_note));
+                        }
                         /* Clean folder on header view before moving it */
                         sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
                         gtk_tree_selection_unselect_all (sel);
@@ -4154,7 +4173,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                         modest_mail_operation_xfer_folder (mail_op,
                                                            TNY_FOLDER (src_folder),
                                                            dst_folder,
-                                                           TRUE, NULL, NULL);
+                                                           TRUE, move_to_cb, inf_note);
                         /* Unref mail operation */
                         g_object_unref (G_OBJECT (mail_op));
                 }
