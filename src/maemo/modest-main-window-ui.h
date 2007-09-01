@@ -61,9 +61,9 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EmailNewDefault", NULL, N_("mcen_me_viewer_newemail"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "EmailNewFolder",   NULL,  N_("mcen_me_inbox_folder"),       NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "EmailOpen",        NULL,  N_("mcen_me_inbox_open"),	        "<CTRL>O", NULL,   G_CALLBACK (modest_ui_actions_on_open) },
-	{ "EmailReply",       NULL,  N_("mcen_me_inbox_reply"),            NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "EmailReply",       NULL,  N_("mcen_me_inbox_reply"),         "<CTRL>R",      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "EmailReplyAll",    NULL,  N_("mcen_me_inbox_replytoall"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "EmailForward",     NULL,  N_("mcen_me_inbox_forward"),          NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "EmailForward",     NULL,  N_("mcen_me_inbox_forward"),      "<CTRL>D",      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "EmailRenameFolder", NULL, N_("mcen_me_user_renamefolder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
 	{ "EmailDelete",      NULL,  N_("mcen_me_inbox_delete"),    NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_delete_message_or_folder) },
 	{ "EmailContents",    NULL,  N_("mcen_me_inbox_retrieve_contents"), NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_retrieve_msg_contents) },
@@ -113,7 +113,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	 */
 	/* Headers Toolbar */
 	{ "ToolbarMessageNew",        MODEST_STOCK_NEW_MAIL,     N_("qgn_toolb_messagin_new"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("mcen_me_inbox_reply"),          NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("mcen_me_inbox_reply"),      "<CTRL>R", NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("mcen_me_inbox_replytoall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("mcen_me_inbox_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ToolbarSendReceive",       MODEST_STOCK_REFRESH,   N_("qgn_toolb_gene_refresh"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send_receive) },
