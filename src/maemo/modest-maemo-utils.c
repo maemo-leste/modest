@@ -36,6 +36,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <errno.h>
+#include <string.h> /* for strlen */
 #include <modest-runtime.h>
 #include <libgnomevfs/gnome-vfs.h>
 #include <tny-fs-stream.h>
@@ -247,6 +248,20 @@ modest_maemo_utils_create_temp_stream (const gchar *orig_name, gchar **path)
 	gchar *filepath = NULL;
 	gchar *tmpdir;
 
+	/* hmmm... maybe we need a modest_text_utils_validate_file_name? */
+	g_return_val_if_fail (orig_name || strlen(orig_name) == 0, NULL);
+	if (strlen(orig_name) > 200) {
+		g_warning ("%s: filename too long ('%s')",
+			   __FUNCTION__, orig_name);
+		return NULL;
+	}
+	
+	if (g_strstr_len (orig_name, strlen(orig_name), "/") != NULL) {
+		g_warning ("%s: filename contains '/' character(s) (%s)",
+			   __FUNCTION__, orig_name);
+		return NULL;
+	}
+		
 	/* make a random subdir under /tmp or /var/tmp */
 	tmpdir = g_strdup_printf ("%s/%d", g_get_tmp_dir (), (guint)random());
 	if (g_mkdir (tmpdir, 0755) == -1) {
