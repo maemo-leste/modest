@@ -90,4 +90,26 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #endif /*__MODEST_HAVE_HILDON1_WIDGETS*/
 #endif /*__MODEST_HAVE_HILDON0_WIDGETS_*/
 
+
+/* backward compatibility... */
+#ifdef MODEST_HAVE_OSSO_MIME
+#define hildon_mime_open_file_with_mime_type osso_mime_open_file_with_mime_type 
+#define hildon_mime_open_file                osso_mime_open_file                
+
+#define HildonURIAction                      OssoURIAction
+#define hildon_uri_get_scheme_from_uri       osso_uri_get_scheme_from_uri
+#define hildon_uri_get_actions               osso_uri_get_actions
+#define hildon_uri_action_get_translation    osso_uri_action_get_translation   
+#define hildon_uri_is_default_action         osso_uri_is_default_action
+#define hildon_uri_free_actions              osso_uri_free_actions
+
+/* service->name */
+#define hildon_uri_action_get_service        osso_uri_action_get_name
+#define hildon_uri_open                      osso_uri_open
+
+#define hildon_mime_get_icon_names           osso_mime_get_icon_names 
+
+#endif /*MODEST_HAVE_OSSO_MIME*/
+
+
 #endif /*__MODEST_HILDON_INCLUDES__*/

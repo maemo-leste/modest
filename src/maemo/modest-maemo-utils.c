@@ -34,6 +34,8 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <glib.h>
+#include <glib/gstdio.h>
+#include <errno.h>
 #include <modest-runtime.h>
 #include <libgnomevfs/gnome-vfs.h>
 #include <tny-fs-stream.h>
@@ -239,27 +241,38 @@ modest_maemo_utils_file_exists (const gchar *filename)
 }
 
 TnyFsStream *
-modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path)
+modest_maemo_utils_create_temp_stream (const gchar *orig_name, gchar **path)
 {
-	TnyStream *tmp_fs_stream = NULL;
 	gint fd;
 	gchar *filepath = NULL;
-	gchar *template = NULL;
+	gchar *tmpdir;
 
-	if (extension != NULL)
-		template = g_strdup_printf ("XXXXXX.%s", extension);
-
-	fd = g_file_open_tmp (template, &filepath, NULL);
-	g_free (template);
-	if (path != NULL)
-		*path = filepath;
-	if (fd == -1) {
-		g_message ("TODO BANNER: Error saving stream");
+	/* make a random subdir under /tmp or /var/tmp */
+	tmpdir = g_strdup_printf ("%s/%d", g_get_tmp_dir (), (guint)random());
+	if (g_mkdir (tmpdir, 0755) == -1) {
+		g_warning ("%s: failed to create dir '%s': %s",
+			   __FUNCTION__, tmpdir, g_strerror(errno));
+		g_free (tmpdir);
 		return NULL;
 	}
-	tmp_fs_stream = tny_fs_stream_new (fd);
-	
-	return TNY_FS_STREAM (tmp_fs_stream);
+
+	/* try to write the file there */
+	filepath = g_strconcat (tmpdir, "/", orig_name, NULL);
+	fd = g_open (filepath, O_CREAT|O_WRONLY|O_TRUNC, 0644);
+	if (fd == -1) {
+		g_warning ("%s: failed to create '%s': %s",
+			   __FUNCTION__, filepath, g_strerror(errno));
+		g_free (tmpdir);
+		g_free (filepath);
+		return NULL;
+	}
+
+	g_free (tmpdir);
+
+	if (path)
+		*path = filepath;
+
+	return TNY_FS_STREAM (tny_fs_stream_new (fd));
 }
 
 typedef struct 

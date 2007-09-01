@@ -87,14 +87,14 @@ gboolean modest_maemo_utils_file_exists (const gchar *filename);
 
 /**
  * modest_maemo_utils_create_temp_stream:
- * @extension: a string with the extension the file should get, or %NULL
+ * @orig_name: a string with the original name of the extension, or %NULL
  * @path: a string with the created file path
  *
- * Creates a temporary fs stream 
+ * Creates a temporary fs stream, in a random subdir of /tmp or /var/tmp.
  *
  * Returns: a #TnyFsStream, or %NULL if operation failed.
  */
-TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *extension, gchar **path);
+TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *orig_name, gchar **path);
 
 /**
  * modest_maemo_utils_get_supported_secure_authentication_methods:

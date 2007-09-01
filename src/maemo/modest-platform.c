@@ -184,14 +184,15 @@ guess_mime_type_from_name (const gchar* name)
 	const gchar* ext;
 	const static gchar* octet_stream= "application/octet-stream";
 	const static gchar* mime_map[][2] = {
-		{ "pdf",  "application/pdf"},
-		{ "doc",  "application/msword"},
-		{ "xls",  "application/excel"},
-		{ "png",  "image/png" },
-		{ "gif",  "image/gif" },
-		{ "jpg",  "image/jpeg"},
-		{ "jpeg", "image/jpeg"},
-		{ "mp3",  "audio/mp3" }
+		{ "note.html", "text/note"}, /* for the osso_notes program */ 
+		{ "pdf",       "application/pdf"},
+		{ "doc",       "application/msword"},
+		{ "xls",       "application/excel"},
+		{ "png",       "image/png" },
+		{ "gif",       "image/gif" },
+		{ "jpg",       "image/jpeg"},
+		{ "jpeg",      "image/jpeg"},
+		{ "mp3",       "audio/mp3" }
 	};
 
 	if (!name)
@@ -224,11 +225,7 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 		g_string_ascii_down (mime_str);
 	}
 
-#ifdef MODEST_HAVE_OSSO_MIME
-	icons = osso_mime_get_icon_names (mime_str->str, NULL);
-#else
 	icons = hildon_mime_get_icon_names (mime_str->str, NULL);
-#endif /*MODEST_HAVE_OSSO_MIME*/
 	for (cursor = icons; cursor; ++cursor) {
 		if (!g_ascii_strcasecmp (*cursor, "gnome-mime-message") ||
 		    !g_ascii_strcasecmp (*cursor, "gnome-mime-message-rfc822")) {
@@ -250,51 +247,6 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 }
 
 
-
-
-#ifdef MODEST_HAVE_OSSO_MIME
-gboolean 
-modest_platform_activate_uri (const gchar *uri)
-{
-	OssoURIAction *action;
-	gboolean result = FALSE;
-	GSList *actions, *iter = NULL;
-	const gchar *scheme;
-	
-	g_return_val_if_fail (uri, FALSE);
-	if (!uri)
-		return FALSE;
-
-	/* the default action should be email */
-	scheme = osso_uri_get_scheme_from_uri (uri, NULL);
-	actions = osso_uri_get_actions (scheme, NULL);
-	
-	for (iter = actions; iter; iter = g_slist_next (iter)) {
-		action = (OssoURIAction*) iter->data;
-		if (action && strcmp (osso_uri_action_get_name (action), "uri_link_compose_email") == 0) {
-			GError *err = NULL;
-			result = osso_uri_open (uri, action, &err);
-			if (!result && err) {
-				g_printerr ("modest: modest_platform_activate_uri : %s",
-					    err->message ? err->message : "unknown error");
-				g_error_free (err);
-			}
-			break;
-		}
-	}
-
-	/* if we could open it with email, try something else */
-	if (!result)
-	       	result = osso_uri_open (uri, NULL, NULL);	
-	
-			
-	if (!result)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
-	return result;
-}
-
-#else /* !MODEST_HAVE_OSSO_MIME*/
-
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
@@ -312,7 +264,8 @@ modest_platform_activate_uri (const gchar *uri)
 	
 	for (iter = actions; iter; iter = g_slist_next (iter)) {
 		action = (HildonURIAction*) iter->data;
-		if (action && strcmp (hildon_uri_action_get_service (action), "com.nokia.modest") == 0) {
+		if (action && strcmp (hildon_uri_action_get_service (action),
+				      "com.nokia.modest") == 0) {
 			GError *err = NULL;
 			result = hildon_uri_open (uri, action, &err);
 			if (!result && err) {
@@ -334,36 +287,23 @@ modest_platform_activate_uri (const gchar *uri)
 	return result;
 }
 
-
-#endif /* MODEST_HAVE_OSSO_MIME*/
-
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
-	gint result;
+	gint result = 0;
 	DBusConnection *con;
 	gchar *uri_path = NULL;
-	GString *mime_str = NULL;
 
-	if (!mime_type || !g_ascii_strcasecmp (mime_type, "application/octet-stream")) 
-		mime_str = g_string_new (guess_mime_type_from_name(path));
-	else {
-		mime_str = g_string_new (mime_type);
-		g_string_ascii_down (mime_str);
-	}
-
-	uri_path = g_strconcat ("file://", path, NULL);
-	
+	uri_path = g_strconcat ("file://", path, NULL);	
 	con = osso_get_dbus_connection (osso_context);
-#ifdef MODEST_HAVE_OSSO_MIME
-	result = osso_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
-#else
-	result = hildon_mime_open_file_with_mime_type (con, uri_path, mime_str->str);
-#endif /*MODEST_HAVE_OSSO_MIME*/
-	g_string_free (mime_str, TRUE);
-
+	
+	if (mime_type)
+		result = hildon_mime_open_file_with_mime_type (con, uri_path, mime_type);
+	if (result != 1)
+		result = hildon_mime_open_file (con, uri_path);
 	if (result != 1)
 		modest_platform_run_information_dialog (NULL, _("mcen_ni_noregistered_viewer"));
+	
 	return result != 1;
 }
 
@@ -380,11 +320,8 @@ delete_uri_popup (GtkWidget *menu,
 	ModestPlatformPopupInfo *popup_info = (ModestPlatformPopupInfo *) userdata;
 
 	g_free (popup_info->uri);
-#ifdef MODEST_HAVE_OSSO_MIME
-	osso_uri_free_actions (popup_info->actions);
-#else
 	hildon_uri_free_actions (popup_info->actions);
-#endif /*MODEST_HAVE_OSSO_MIME*/
+
 	return FALSE;
 }
 
@@ -417,19 +354,11 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 	
 	/* now, the real uri-actions... */
 	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
-#ifdef MODEST_HAVE_OSSO_MIME
-		OssoURIAction *action = (OssoURIAction *) node->data;
-		if (strcmp (action_name, osso_uri_action_get_name (action))==0) {
-			osso_uri_open (popup_info->uri, action, NULL);
-			break;
-		}
-#else
 		HildonURIAction *action = (HildonURIAction *) node->data;
 		if (strcmp (action_name, hildon_uri_action_get_name (action))==0) {
 			hildon_uri_open (popup_info->uri, action, NULL);
 			break;
 		}
-#endif /*MODEST_HAVE_OSSO_MIME*/
 	}
 }
 
@@ -442,13 +371,8 @@ modest_platform_show_uri_popup (const gchar *uri)
 	if (uri == NULL)
 		return FALSE;
 	
-#ifdef MODEST_HAVE_OSSO_MIME
-	scheme = osso_uri_get_scheme_from_uri (uri, NULL);
-	actions_list = osso_uri_get_actions (scheme, NULL);
-#else
 	scheme = hildon_uri_get_scheme_from_uri (uri, NULL);
 	actions_list = hildon_uri_get_actions (scheme, NULL);
-#endif /* MODEST_HAVE_OSSO_MIME */
 	if (actions_list != NULL) {
 		GSList *node;
 		GtkWidget *menu = gtk_menu_new ();
@@ -461,22 +385,6 @@ modest_platform_show_uri_popup (const gchar *uri)
 			GtkWidget *menu_item;
 			const gchar *action_name;
 			const gchar *translation_domain;
-#ifdef MODEST_HAVE_OSSO_MIME
-			OssoURIAction *action = (OssoURIAction *) node->data;
-			action_name = osso_uri_action_get_name (action);
-			translation_domain = osso_uri_action_get_translation_domain (action);
-			menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain,action_name));
-			g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);
-			/* hack, we add it as a gobject property*/
-			g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
-					  popup_info);
-			
-			if (osso_uri_is_default_action (action, NULL)) {
-				gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
-			} else {
-				gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
-			}
-#else
 			HildonURIAction *action = (HildonURIAction *) node->data;
 			action_name = hildon_uri_action_get_name (action);
 			translation_domain = hildon_uri_action_get_translation_domain (action);
@@ -490,7 +398,6 @@ modest_platform_show_uri_popup (const gchar *uri)
 			} else {
 				gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
 			}
-#endif /*MODEST_HAVE_OSSO_MIME*/
 			gtk_widget_show (menu_item);
 		}
 
@@ -1559,7 +1466,8 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 		return TRUE;		
 	}
 		
-	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (account));
+	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n",
+		__FUNCTION__, tny_account_get_connection_status (account));
 	
 	/* The POP & IMAP store accounts seem to be TNY_CONNECTION_STATUS_DISCONNECTED, 
 	 * and that seems to be an OK time to use them. Maybe it's just TNY_CONNECTION_STATUS_INIT that 

@@ -190,6 +190,9 @@ modest_init (int argc, char *argv[])
 	init_debug_g_type();
 	init_debug_logging();
 
+	/* initialize the prng, we need it when creating random files */
+	srandom((int)getpid());
+	
 	if (!gnome_vfs_initialized()) {
 		if (!gnome_vfs_init ()) {
 			g_printerr ("modest: failed to init gnome-vfs\n");
