@@ -1130,8 +1130,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
 
 	selected = gtk_tree_selection_get_selected (sel, &model, &iter);
-/* 	if(!gtk_tree_selection_get_selected (sel, &model, &iter)) */
-/* 		return; */
 
 	/* Notify the display name observers */
 	g_signal_emit (G_OBJECT(user_data),

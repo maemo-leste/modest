@@ -1152,17 +1152,16 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		/* Pick my reference. Nothing to do with the mail operation */
 		priv->folder = g_object_ref (folder);
 
-		/* no message selected */
+		/* Clear the selection if exists */
+		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+		gtk_tree_selection_unselect_all(selection);
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
+		/* create the helper */
 		info = g_malloc0 (sizeof(SetFolderHelper));
 		info->header_view = self;
 		info->cb = callback;
 		info->user_data = user_data;
-
-		/* bug 57631: Clear the selection if exists */
-		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-		gtk_tree_selection_unselect_all(selection);
 
 		/* Create the mail operation (source will be the parent widget) */
 		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, source);

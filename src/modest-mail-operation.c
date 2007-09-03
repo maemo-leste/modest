@@ -2765,10 +2765,7 @@ on_refresh_folder (TnyFolder   *folder,
 
 		/* This is not a GDK lock because we are a Tinymail callback and
 	 	 * Tinymail already acquires the Gdk lock */
-
-		/* no gdk_threads_enter (), CHECKED */
 		helper->user_callback (self, folder, helper->user_data);
-		/* no gdk_threads_leave (), CHECKED */
 	}
 
  out:
@@ -2807,12 +2804,7 @@ on_refresh_folder_status_update (GObject *obj,
 
 	/* This is not a GDK lock because we are a Tinymail callback and
 	 * Tinymail already acquires the Gdk lock */
-
-	/* no gdk_threads_enter (), CHECKED */
-
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
-
-	/* no gdk_threads_leave (), CHECKED */
 
 	g_slice_free (ModestMailOperationState, state);
 }

@@ -1823,7 +1823,6 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 {
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
-	TnyFolder *current_folder;
 	gboolean folder_empty = FALSE;
 	gboolean all_marked_as_deleted = FALSE;
 
@@ -1834,10 +1833,14 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 		modest_main_window_get_child_widget(win, MODEST_WIDGET_TYPE_HEADER_VIEW);
 
 	if (header_view) {
+		TnyFolder *current_folder;
+
 		current_folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 		if (current_folder != NULL && folder != current_folder) {
+			g_object_unref (current_folder);
 			return;
 		}
+		g_object_unref (current_folder);
 	}
 
 	/* Check if folder is empty and set headers view contents style */
