@@ -181,32 +181,35 @@ const gchar*
 guess_mime_type_from_name (const gchar* name)
 {
 	int i;
-	const gchar* ext;
-	const static gchar* octet_stream= "application/octet-stream";
+	const static gchar* mime_type;
 	const static gchar* mime_map[][2] = {
-		{ "note.html", "text/note"}, /* for the osso_notes program */ 
-		{ "pdf",       "application/pdf"},
-		{ "doc",       "application/msword"},
-		{ "xls",       "application/excel"},
-		{ "png",       "image/png" },
-		{ "gif",       "image/gif" },
-		{ "jpg",       "image/jpeg"},
-		{ "jpeg",      "image/jpeg"},
-		{ "mp3",       "audio/mp3" }
+		{ ".note.html", "text/note"}, /* for the osso_notes program */
+		{ ".html",      "text/html"}, 
+		{ ".htm",       "text/html"}, 
+		{ ".pdf",       "application/pdf"},
+		{ ".doc",       "application/msword"},
+		{ ".xls",       "application/excel"},
+		{ ".png",       "image/png" },
+		{ ".gif",       "image/gif" },
+		{ ".jpg",       "image/jpeg"},
+		{ ".jpeg",      "image/jpeg"},
+		{ ".mp3",       "audio/mp3" }
 	};
 
-	if (!name)
-		return octet_stream;
-	
-	ext = g_strrstr (name, ".");
-	if (!ext)
-		return octet_stream;
-	
-	for (i = 0; i != G_N_ELEMENTS(mime_map); ++i) {
-		if (!g_ascii_strcasecmp (mime_map[i][0], ext + 1)) /* +1: ignore '.'*/
-			return mime_map[i][1];
+	mime_type = "application/octet-stream";
+
+	if (name) {
+		gchar* lc_name = g_utf8_strdown (name, -1);
+		for (i = 0; i != G_N_ELEMENTS(mime_map); ++i) {
+			if (g_str_has_suffix (lc_name, mime_map[i][0])) {
+				mime_type = mime_map[i][1];
+				break;
+			}
+		}
+		g_free (lc_name);
 	}
-	return octet_stream;
+	
+	return mime_type;
 }
 
 
