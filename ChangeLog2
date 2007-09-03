@@ -1,3 +1,15 @@
+2007-09-03  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/widgets/modest-folder-view.c: (strings_are_equal),
+	(on_model_foreach_set_name), (on_get_mmc_account_name),
+	(text_cell_data): Restored this code that was removed in 
+	svn revision 3165 by jfernandez, because this late name-discovery 
+	really is necessary sometimes. This is the correct fix to the endless 
+	calling of this function:
+	* src/modest-tny-account.c: (on_modest_file_system_info):
+	Don't call tny_account_set_name() when the name is already correct, 
+	to avoid unnecessary (endless) updates to the tree model.
+
 2007-08-31  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/modest-defs.h: Rename MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST to 

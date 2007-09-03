@@ -699,7 +699,10 @@ on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
 	}
 		 
 	/* printf ("DEBUG: %s: display name=%s\n", __FUNCTION__,  display_name); */
-	tny_account_set_name (account, display_name);
+	if (display_name && previous_display_name && 
+		(strcmp (display_name, previous_display_name) != 0)) {
+		tny_account_set_name (account, display_name);
+	}
 		
 	/* Inform the application that the name is now ready: */
 	if (callback_data->callback)
