@@ -1594,11 +1594,20 @@ folder_monitor_update (TnyFolderObserver *self,
 		helper = g_slice_new0 (HeadersCountChangedHelper);
 		helper->self = MODEST_HEADER_VIEW(self);
 		helper->change = g_object_ref(change);
-		
-		g_idle_add_full (G_PRIORITY_DEFAULT, 
-				 idle_notify_headers_count_changed, 
-				 helper,
-				 idle_notify_headers_count_changed_destroy);
+	
+		idle_notify_headers_count_changed (helper);
+		idle_notify_headers_count_changed_destroy (helper);
+	
+/* I changed this because it's not necessary anymore: all updates of 
+ * observers in Tinymail happen guaranteed on the Mainloop already.
+ * 				Your friend, Philip
+ *
+ * 		g_idle_add_full (G_PRIORITY_DEFAULT, 
+ *				 idle_notify_headers_count_changed, 
+ *				 helper,
+ *				 idle_notify_headers_count_changed_destroy);
+ */
+
 	}	
 }
 
