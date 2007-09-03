@@ -55,9 +55,12 @@ typedef gchar* FormatterFunc (ModestFormatter *self, const gchar *text, TnyHeade
 static TnyMsg *modest_formatter_do (ModestFormatter *self, TnyMimePart *body,  TnyHeader *header, 
 				    FormatterFunc func, GList *attachments);
 
-static gchar*  modest_formatter_wrapper_cite   (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
-static gchar*  modest_formatter_wrapper_quote  (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
-static gchar*  modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments);
+static gchar*  modest_formatter_wrapper_cite   (ModestFormatter *self, const gchar *text,
+						TnyHeader *header, GList *attachments);
+static gchar*  modest_formatter_wrapper_quote  (ModestFormatter *self, const gchar *text,
+						TnyHeader *header, GList *attachments);
+static gchar*  modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text,
+						TnyHeader *header, GList *attachments);
 
 static gchar *
 extract_text (ModestFormatter *self, TnyMimePart *body)
@@ -117,7 +120,8 @@ construct_from_text (TnyMimePart *part,
 }
 
 static TnyMsg *
-modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func, GList *attachments)
+modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header, FormatterFunc func,
+		     GList *attachments)
 {
 	TnyMsg *new_msg = NULL;
 	gchar *body_text = NULL, *txt = NULL;
@@ -141,7 +145,7 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	construct_from_text (TNY_MIME_PART (body_part), (const gchar*) txt, priv->content_type);
 	g_object_unref (body_part);
-
+	
 	/* Clean */
 	g_free (body_text);
 	g_free (txt);
@@ -271,10 +275,11 @@ modest_formatter_get_type (void)
 
 /****************/
 static gchar *
-modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments) 
+modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHeader *header,
+			       GList *attachments) 
 {
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
-
+	
 	return modest_text_utils_cite (text, 
 				       priv->content_type, 
 				       priv->signature,
@@ -283,7 +288,8 @@ modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHead
 }
 
 static gchar *
-modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments) 
+modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header,
+				 GList *attachments) 
 {
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
@@ -297,7 +303,8 @@ modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHe
 }
 
 static gchar *
-modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHeader *header, GList *attachments) 
+modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHeader *header,
+				GList *attachments) 
 {
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	GList *filenames = NULL;
@@ -382,7 +389,7 @@ modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
 		TnyList *parts = NULL;
 		TnyIterator *iter = NULL;
 		TnyMimePart *alternative_part = NULL;
-
+		
 		parts = TNY_LIST (tny_simple_list_new ());
 		tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
 		iter = tny_list_create_iterator (parts);

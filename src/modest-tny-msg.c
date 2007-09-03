@@ -401,8 +401,9 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 #define MODEST_TNY_MSG_PARENT_UID "parent-uid"
 
 static TnyMsg *
-create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, const gchar *signature, 
-			   gboolean is_reply, guint type, GList *attachments)
+create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
+			   const gchar *signature, gboolean is_reply,
+			   guint type /*ignored*/, GList *attachments)
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header;
@@ -410,48 +411,42 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 	TnyMimePart *body = NULL;
 	ModestFormatter *formatter;
 	gchar *subject_prefix;
+	gboolean no_text_part;
 	
-	/* Get body from original msg. Always look for the text/plain
-	   part of the message to create the reply/forwarded mail */
 	if (header)
 		g_object_ref (header);
 	else
 		header = tny_msg_get_header (msg);
 
+	/* Get body from original msg. Always look for the text/plain
+	   part of the message to create the reply/forwarded mail */
 	if (msg != NULL)
-		body   = modest_tny_msg_find_body_part (msg, !is_reply);
-
-	/* TODO: select the formatter from account prefs */
-	if (modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL))
+		body   = modest_tny_msg_find_body_part (msg, FALSE);
+	
+	if (modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT,
+				  NULL))
 		formatter = modest_formatter_new ("text/html", signature);
 	else
 		formatter = modest_formatter_new ("text/plain", signature);
 
-	/* Format message body */
-	if (is_reply) {
-		switch (type) {
-		case MODEST_TNY_MSG_REPLY_TYPE_CITE:
-		default:
-			new_msg = modest_formatter_cite  (formatter, body, header);
-			break;
-		case MODEST_TNY_MSG_REPLY_TYPE_QUOTE:
-			new_msg = modest_formatter_quote (formatter, body, header, attachments);
-			break;
-		}
-	} else {
-		switch (type) {
-		case MODEST_TNY_MSG_FORWARD_TYPE_INLINE:
-		default:
-			if (strcmp (tny_mime_part_get_content_type (body), "text/html")==0)
-				new_msg = modest_formatter_attach (formatter, msg, header);
-			else 
-				new_msg = modest_formatter_inline  (formatter, body, header, attachments);
-			break;
-		case MODEST_TNY_MSG_FORWARD_TYPE_ATTACHMENT:
+
+	/* if we don't have a text-part */
+	no_text_part = (strcmp (tny_mime_part_get_content_type (body), "text/html")==0);
+	
+	/* when we're reply, include the text part if we have it, or nothing otherwise. */
+	if (is_reply)
+		new_msg = modest_formatter_inline  (formatter, no_text_part ? NULL: body, header,
+						    attachments);
+	else {
+		/* for attachements; inline if there is a text part, and include the
+		 * full old mail if there was none */
+		if (no_text_part) 
 			new_msg = modest_formatter_attach (formatter, msg, header);
-			break;
-		}
+		else 
+			new_msg = modest_formatter_inline  (formatter, body, header,
+							    attachments);
 	}
+	
 	g_object_unref (G_OBJECT(formatter));
 	if (body)
 		g_object_unref (G_OBJECT(body));
@@ -472,8 +467,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 	g_free (subject_prefix);
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
-
-
+	
 	/* get the parent uid, and set it as a gobject property on the new msg */
 	if (new_msg) {
 		gchar* parent_uid = modest_tny_folder_get_header_unique_id (header);
@@ -483,7 +477,8 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from, co
 	
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
-	g_object_unref (G_OBJECT (header)); /* ugly to unref it here instead of in the calling func */
+	g_object_unref (G_OBJECT (header));
+	/* ugly to unref it here instead of in the calling func */
 
 	return new_msg;
 }

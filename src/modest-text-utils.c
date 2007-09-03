@@ -180,18 +180,18 @@ modest_text_utils_cite (const gchar *text,
 {
 	gchar *retval;
 	gchar *tmp_sig;
-
+	
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
-
+	
 	if (!signature)
 		retval = g_strdup ("");
-	else if (!strcmp(content_type, "text/html")) {
+	else if (strcmp(content_type, "text/html") == 0) {
 		tmp_sig = g_strconcat ("\n", signature, NULL);
 		retval = modest_text_utils_convert_to_html_body(tmp_sig);
 		g_free (tmp_sig);
 	} else {
-		retval = g_strconcat ("\n", signature, NULL);
+		retval = g_strconcat (text, "\n", signature, NULL);
 	}
 
 	return retval;
@@ -199,9 +199,9 @@ modest_text_utils_cite (const gchar *text,
 
 static gchar *
 forward_cite (const gchar *from,
-		    const gchar *sent,
-		    const gchar *to,
-		    const gchar *subject)
+	      const gchar *sent,
+	      const gchar *to,
+	      const gchar *subject)
 {
 	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n", 
 				FORWARD_STRING, 
@@ -354,7 +354,9 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
 		case '>'  : g_string_append (html, "&gt;");   break;
 		case '&'  : g_string_append (html, "&amp;");  break;
 		case '"'  : g_string_append (html, "&quot;");  break;
-		case '\'' : g_string_append (html, "&apos;"); break;
+
+		/* don't convert &apos; --> wpeditor will try to re-convert it... */	
+		//case '\'' : g_string_append (html, "&apos;"); break;
 		case '\n' : g_string_append (html, "<br>\n");              break_dist= 0; break;
 		case '\t' : g_string_append (html, "&nbsp;&nbsp;&nbsp; "); break_dist=0; break; /* note the space at the end*/
 		case ' ':
@@ -833,6 +835,7 @@ modest_text_utils_quote_html (const gchar *text,
 	g_free (attachments_string);
 	g_free (q_attachments_string);
 	g_free (signature_result);
+	
 	return result;
 }
 
