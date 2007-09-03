@@ -563,7 +563,10 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		/* TODO: connect to the msg-sent in order to know when
 		   the mail operation is finished */
 
-		tny_send_queue_add (send_queue, msg, &(priv->error));
+/* 		tny_send_queue_add (send_queue, msg, &(priv->error)); */
+		modest_tny_send_queue_add (MODEST_TNY_SEND_QUEUE(send_queue), 
+					   msg, 
+					   &(priv->error));
 
 		/* TODO: we're setting always success, do the check in
 		   the handler */

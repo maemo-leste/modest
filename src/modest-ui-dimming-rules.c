@@ -62,10 +62,11 @@ static gboolean _header_view_is_all_selected (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
 static gboolean _folder_view_has_focus (ModestWindow *win);
 static gboolean _selected_folder_is_same_as_source (ModestWindow *win);
-static gboolean _msg_download_in_progress (ModestMsgViewWindow *win);
+static gboolean _msg_download_in_progress (ModestWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
+static gboolean _send_receive_in_progress (ModestWindow *win);
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
 static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win);
@@ -328,7 +329,7 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 	/* Check dimmed rule */	
 	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
 		if (!dimmed) {
-			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW(win));
+			dimmed = _msg_download_in_progress (win);
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, "");
 		}
@@ -632,7 +633,7 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
 		if (!dimmed) {
-			dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW (win));
+			dimmed = _msg_download_in_progress (win);
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
 		}
@@ -796,6 +797,12 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 
 					g_object_unref (folder_store);
 				}
+				if (!dimmed) {
+					dimmed = _msg_download_in_progress (win);
+					if (dimmed)
+						modest_dimming_rule_set_notification (rule, "");
+				}
+
 			}
 
 		}
@@ -806,7 +813,7 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 		/* Check dimmed rule */	
 		if (!dimmed) {
 			if (MODEST_IS_MSG_VIEW_WINDOW (win))
-				dimmed = _msg_download_in_progress (MODEST_MSG_VIEW_WINDOW (win));
+				dimmed = _msg_download_in_progress (win);
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, "");
 		}
@@ -1406,7 +1413,6 @@ modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data
 {
  	ModestDimmingRule *rule = NULL;
 	TnyFolderType types[1];
-	guint n_messages = 0;
 	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
@@ -1419,18 +1425,42 @@ modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data
 
 	/* Check dimmed rules */	
 	if (!dimmed) {
-		dimmed = state->already_opened_msg;
-		n_messages = state->n_selected;
+		dimmed = !_selected_folder_is_any_of_type (win, types, 1);
  		if (dimmed) 
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_unableto_cancel_send"));
+			modest_dimming_rule_set_notification (rule, "");
+ 	}
+	if (!dimmed) {
+		dimmed = !_sending_in_progress (win);
+ 		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
 	}
+
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_csm_cancel_sending (ModestWindow *win, gpointer user_data)
+{
+ 	ModestDimmingRule *rule = NULL;
+	TnyFolderType types[1];
+	const DimmedState *state = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
+
+	types[0] = TNY_FOLDER_TYPE_OUTBOX; 
+
+	/* Check dimmed rules */	
 	if (!dimmed) {
 		dimmed = !_selected_folder_is_any_of_type (win, types, 1);
  		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, "");
-	}
+ 	}
 	if (!dimmed) {
-		dimmed = !_sending_in_progress (win);
+		dimmed = !_send_receive_in_progress (win);
  		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -2130,13 +2160,18 @@ _invalid_msg_selected (ModestMainWindow *win,
 
 
 static gboolean
-_msg_download_in_progress (ModestMsgViewWindow *win)
+_msg_download_in_progress (ModestWindow *win)
 {
 	gboolean result = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+	g_return_val_if_fail (MODEST_IS_WINDOW (win), FALSE);
 
-	result = modest_msg_view_window_toolbar_on_transfer_mode (win);
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		result = modest_msg_view_window_toolbar_on_transfer_mode (MODEST_MSG_VIEW_WINDOW(win));
+	}
+	else if (MODEST_IS_MAIN_WINDOW (win)) {
+		result = modest_main_window_transfer_mode_enabled (MODEST_MAIN_WINDOW(win));
+	}
 
 	return result;
 }
@@ -2165,6 +2200,34 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 
 static gboolean
 _sending_in_progress (ModestWindow *win)
+{
+	GHashTable *send_queue_cache = NULL;
+	ModestCacheMgr *cache_mgr = NULL;
+	ModestTnySendQueue *send_queue = NULL;
+	GSList *send_queues = NULL, *node = NULL;
+	gboolean result = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
+	
+	/* Get send queue */
+	cache_mgr = modest_runtime_get_cache_mgr ();
+	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+	
+	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+	
+	for (node = send_queues; node != NULL && !result; node = g_slist_next (node)) {
+		send_queue = MODEST_TNY_SEND_QUEUE (node->data);
+		
+		/* Check if send operation is in progress */
+		result = modest_tny_send_queue_sending_in_progress (send_queue);
+	}
+       
+	return result;
+}
+
+static gboolean
+_send_receive_in_progress (ModestWindow *win)
 {
 	gboolean result = FALSE;
 	

@@ -174,7 +174,7 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 }
 
 static void
-modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
+_on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError *err, gpointer user_data) 
 {
 	ModestTnySendQueuePrivate *priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
 	TnyHeader *header = NULL;
@@ -185,13 +185,9 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
 
-	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_func (self, msg, err); /* FIXME */
-
-	/* TODO: We cannot access the message ID of the message here because
-	 * it might  just have been created. Wait for it being added to outbox. */
-
 	header = tny_msg_get_header (msg);
-	msg_id = tny_header_get_message_id (header);
+	msg_id = modest_tny_send_queue_get_msg_id (header);
+/* 	msg_id = tny_header_get_message_id (header); */
 	g_return_if_fail(msg_id != NULL);
 
 	/* Put newly added message in WAITING state */
@@ -218,6 +214,20 @@ modest_tny_send_queue_add (TnySendQueue *self, TnyMsg *msg, GError **err)
 
 	g_object_unref(G_OBJECT(header));
 }
+
+void
+modest_tny_send_queue_add (ModestTnySendQueue *self, TnyMsg *msg, GError **err)
+{
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(self));
+	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
+
+	tny_send_queue_add_async (TNY_SEND_QUEUE(self), 
+				  msg, 
+				  _on_added_to_outbox, 
+				  NULL, 
+				  NULL);
+}
+
 
 static void
 _add_message (ModestTnySendQueue *self, TnyHeader *header)
@@ -353,7 +363,6 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_send_queue_finalize;
 
-	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->add_func         = modest_tny_send_queue_add;
 	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox_func  = modest_tny_send_queue_get_outbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->cancel_func      = modest_tny_send_queue_cancel;

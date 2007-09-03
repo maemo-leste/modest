@@ -92,6 +92,16 @@ ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccoun
 
 
 /**
+ * modest_tny_send_queue_ADD:
+ * @self: a valid #ModestTnySendQueue instance
+ * @msg: a valid #TnyMsg instance to send 
+ * 
+ * Add @msg to outbox folder waiting to be sent by 
+ * its account send queue. 
+ */
+void modest_tny_send_queue_add (ModestTnySendQueue *self, TnyMsg *msg, GError **err);
+
+/**
  * modest_tny_send_queue_try_to_send:
  * @self: a valid #ModestTnySendQueue instance
  * 
