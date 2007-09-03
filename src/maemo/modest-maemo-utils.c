@@ -403,29 +403,6 @@ static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user
 	}
 }
 
-
-typedef struct
-{
-	GMainLoop* loop;
-} UserData;
-
-static UserData *user_data = NULL;
-
-static void
-on_account_online (TnyCamelAccount *account, GError *err)
-{
-	printf ("DEBUGa1: %s\n", __FUNCTION__);
-	
-	if (err) {
-		printf("DEBUG: %s: error=\n  %s\n", __FUNCTION__, err->message);	
-	}
-	
-	/* Allow the function that requested this callback to continue: */
-	/* TODO: Tinymail should really give us user_data with this callback. */
-	if (user_data && user_data->loop)
-		g_main_loop_quit (user_data->loop);
-}
-
 GList*
 modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
 	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window, GError** error)
@@ -483,35 +460,6 @@ modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportS
 		modest_tny_account_store_get_session (TNY_ACCOUNT_STORE (account_store));
 	g_return_val_if_fail (session, NULL);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
-	
-	
-	/* This blocks on the result: */
-	/* TODO: Fix tinymail to take user_data for the callback instead of using one static instance: */
-	if (user_data)  {
-		g_slice_free (UserData, user_data);
-		user_data = NULL;
-	}
-	
-	user_data = g_slice_new0 (UserData);
-	user_data->loop = g_main_loop_new (NULL, FALSE /* not running */);
-
-	/* We get a warning if we don't do use tny_camel_account_set_online():
-	 * GLIB CRITICAL ** camel-lite - camel_service_query_auth_types: assertion `service != NULL' failed.
-	 */
-	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (tny_account), TRUE, &on_account_online);
-	printf ("DEBUGa2: %s\n", __FUNCTION__);
-	
-	/* This main loop will run until the idle handler has stopped it: */
-	printf ("DEBUG: %s: before g_main_loop_run()\n", __FUNCTION__);
-	GDK_THREADS_LEAVE();
-	g_main_loop_run (user_data->loop);
-	GDK_THREADS_ENTER();
-	printf ("DEBUG: %s: after g_main_loop_run()\n", __FUNCTION__);
-	g_main_loop_unref (user_data->loop);
-	/* g_main_context_unref (context); */
-
-	g_slice_free (UserData, user_data);
-	user_data = NULL;
 	
 	
 	/* Ask camel to ask the server, asynchronously: */

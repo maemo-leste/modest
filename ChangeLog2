@@ -1,3 +1,9 @@
+2007-09-03  Armin Burgmeier  <armin@openismus.com>
+
+	* src/maemo/modest-maemo-utils.c: Don't set the temporary account
+	online that checks for supported authentication methods. This fixes
+	projects.maemo.org bug NB#61369.
+
 2007-09-03  Murray Cumming  <murrayc@murrayc.com>
 
 	* src/widgets/modest-folder-view.c: (strings_are_equal),
