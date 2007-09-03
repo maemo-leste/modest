@@ -184,6 +184,8 @@ guess_mime_type_from_name (const gchar* name)
 	const static gchar* mime_type;
 	const static gchar* mime_map[][2] = {
 		{ ".note.html", "text/note"}, /* for the osso_notes program */
+		{ ".deb",       "application/x-deb"},
+		{ ".install",   "application/x-install-instructions"},
 		{ ".html",      "text/html"}, 
 		{ ".htm",       "text/html"}, 
 		{ ".pdf",       "application/pdf"},
