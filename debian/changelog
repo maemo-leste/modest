@@ -1,3 +1,10 @@
+modest (1.0-2007.36-2) gutsy; urgency=low
+
+  * Fixes: NB#66868, NB#67071, NB#63391, NB#65668, NB#65015, NB#64097
+  * Fixes: NB#67791, NB#64146, NB#61952, NB#62688, NB#58433
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon,  3 Sep 2007 15:31:28 +0300
+
 modest (1.0-2007.36-1) gutsy; urgency=low
 
   * Fixes: NB#63783, NB#64995, NB#66450, NB#63588, NB#66839, NB#64275
