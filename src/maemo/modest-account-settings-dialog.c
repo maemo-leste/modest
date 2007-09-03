@@ -297,9 +297,6 @@ static GtkWidget*
 create_page_account_details (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (label);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
