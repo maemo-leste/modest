@@ -248,3 +248,28 @@ modest_tny_local_folders_account_add_folder_to_outbox (ModestTnyLocalFoldersAcco
 	/* Add outbox to the global OUTBOX folder */
 	tny_merge_folder_add_folder (priv->outbox_folder, per_account_outbox);
 }
+
+void 
+modest_tny_local_folders_account_remove_folder_from_outbox (ModestTnyLocalFoldersAccount *self, 
+							    TnyFolder *per_account_outbox)
+{
+	ModestTnyLocalFoldersAccountPrivate *priv;
+	TnyList *merged_folders = NULL;
+
+	g_return_if_fail (MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self));
+	g_return_if_fail (TNY_IS_FOLDER (per_account_outbox));
+
+	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
+
+	/* Remove outbox from the global OUTBOX folder */
+	tny_merge_folder_remove_folder (priv->outbox_folder, per_account_outbox);
+
+	/* If there is no folder in the outbox the delete it */
+	merged_folders = tny_simple_list_new ();
+	tny_merge_folder_get_folders (priv->outbox_folder, merged_folders);
+	if (tny_list_get_length (merged_folders) == 0) {
+		g_object_unref (priv->outbox_folder);
+		priv->outbox_folder = NULL;
+	}
+	g_object_unref (merged_folders);
+}

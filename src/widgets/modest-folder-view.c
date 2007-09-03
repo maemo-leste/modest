@@ -742,10 +742,32 @@ on_account_inserted (TnyAccountStore *account_store,
 
 
 static void
-on_account_changed (TnyAccountStore *account_store, TnyAccount *tny_account,
+on_account_changed (TnyAccountStore *account_store, 
+		    TnyAccount *tny_account,
 		    gpointer user_data)
 {
 	/* do nothing */
+	ModestFolderViewPrivate *priv;
+	GtkTreeModel *sort_model, *filter_model;
+
+	/* Ignore transport account insertions, we're not showing them
+	   in the folder view */
+	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
+		return;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (user_data);
+
+	/* Get the inner model */
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
+	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+
+	/* Remove the account from the model */
+	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
+			 G_OBJECT (tny_account));
+
+	/* Insert the account in the model */
+	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
+			 G_OBJECT (tny_account));
 }
 
 

@@ -78,6 +78,9 @@ gboolean   modest_tny_local_folders_account_folder_name_in_use   (ModestTnyLocal
 void       modest_tny_local_folders_account_add_folder_to_outbox (ModestTnyLocalFoldersAccount *self, 
 								  TnyFolder *per_account_outbox);
 
+void       modest_tny_local_folders_account_remove_folder_from_outbox (ModestTnyLocalFoldersAccount *self, 
+								       TnyFolder *per_account_outbox);
+
 G_END_DECLS
 
 #endif /* _MODEST_TNY_LOCAL_FOLDERS_ACCOUNT */

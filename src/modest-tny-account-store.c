@@ -145,6 +145,9 @@ struct _ModestTnyAccountStorePrivate {
 	TnyList             *store_accounts;
 	TnyList             *transport_accounts;
 	TnyList             *store_accounts_outboxes;
+
+	/* Matches transport accounts and outbox folder */
+	GHashTable          *outbox_of_transport;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -275,6 +278,12 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	priv->session                = NULL;
 	priv->device                 = NULL;
 	
+	priv->outbox_of_transport = 
+		g_hash_table_new_full (g_direct_hash,
+				       g_direct_equal,
+				       NULL,
+				       NULL);
+
 	/* An in-memory store of passwords, 
 	 * for passwords that are not remembered in the configuration,
          * so they need to be asked for from the user once in each session:
@@ -792,6 +801,12 @@ modest_tny_account_store_finalize (GObject *obj)
 		g_hash_table_destroy (priv->account_settings_dialog_hash);
 		priv->account_settings_dialog_hash = NULL;
 	}
+
+	if (priv->outbox_of_transport) {
+		g_hash_table_destroy (priv->outbox_of_transport);
+		priv->outbox_of_transport = NULL;
+	}
+
 
 	/* Disconnect VFS signals */
 	volume_monitor = gnome_vfs_get_volume_monitor ();
@@ -1640,6 +1655,15 @@ insert_account (ModestTnyAccountStore *self,
 		local_account = modest_tny_account_store_get_local_folders_account (MODEST_TNY_ACCOUNT_STORE (self));
 		modest_tny_local_folders_account_add_folder_to_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account), 
 								       per_account_outbox);
+		/* Add the pair to the hash table */
+		g_hash_table_insert (priv->outbox_of_transport,
+				     transport_account,
+				     per_account_outbox);
+
+		/* Notify that the local folders account chaned */
+		if (notify)
+			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
+
 		g_object_unref (local_account);
 		g_object_unref (per_account_outbox);
 
@@ -1689,6 +1713,27 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (transport_account) {
+		TnyAccount *local_account = NULL;
+		TnyFolder *outbox = NULL;
+		ModestTnyAccountStorePrivate *priv = NULL;
+	
+		/* Remove the OUTBOX of the account from the global outbox */
+		priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+		outbox = g_hash_table_lookup (priv->outbox_of_transport, transport_account);
+
+		if (TNY_IS_FOLDER (outbox)) {
+			local_account = modest_tny_account_store_get_local_folders_account (self);
+			modest_tny_local_folders_account_remove_folder_from_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
+										    outbox);
+			g_hash_table_remove (priv->outbox_of_transport, transport_account);
+
+			/* Notify the change in the local account */
+			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
+			g_object_unref (local_account);
+		} else {
+			g_warning ("Removing a transport account that has no outbox");
+		}
+
 		/* Notify the observers */
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
 		g_object_unref (transport_account);
