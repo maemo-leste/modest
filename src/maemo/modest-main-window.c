@@ -180,6 +180,11 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 static void
 set_at_least_one_account_visible(ModestMainWindow *self);
 
+static void
+modest_main_window_on_send_queue_status_canged (ModestTnySendQueue *send_queue,
+						gchar *msg_id, 
+						guint status,
+						gpointer user_data);
 
 /* list my signals */
 enum {
@@ -1445,7 +1450,12 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	ModestWindowPrivate *parent_priv = NULL;	
 	GtkWidget *reply_button = NULL, *menu = NULL;
 	GtkWidget *placeholder = NULL;
+	ModestAccountMgr *mgr = NULL;
+	TnyTransportAccount *transport_account = NULL;
+	ModestTnySendQueue *send_queue = NULL;
 	gint insert_index;
+	GSList *iter = NULL;
+	GSList *account_names = NULL;
 	const gchar *action_name;
 	GtkAction *action;
 
@@ -1503,8 +1513,40 @@ modest_main_window_show_toolbar (ModestWindow *self,
 
 		/* Set send & receive button tap and hold menu */
 		update_menus (MODEST_MAIN_WINDOW (self));
-	}
 
+		/* Create send queue for all defined accounts  */
+		mgr = modest_runtime_get_account_mgr ();
+		account_names = modest_account_mgr_account_names (mgr, TRUE);
+		iter = account_names;
+		while (iter) {
+			transport_account =
+				TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+						      (modest_runtime_get_account_store(),
+						       iter->data,
+						       TNY_ACCOUNT_TYPE_TRANSPORT));
+			
+			/* Create new send queue for this new account */
+			send_queue =  modest_runtime_get_send_queue (transport_account);
+			if (MODEST_IS_TNY_SEND_QUEUE(send_queue)) {
+				
+				/* Connect 'status_changed' signal of this new send-queue */
+				priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT (send_queue), "status_changed", 
+									       G_CALLBACK (modest_main_window_on_send_queue_status_canged), 
+									       self);
+			}
+			
+			iter = iter->next;
+
+			/* free */
+			if (send_queue != NULL)
+				g_object_unref (send_queue);
+			if (transport_account != NULL)
+				g_object_unref (transport_account);
+			
+		}
+		modest_account_mgr_free_account_names (account_names);
+	}
+	
 	if (show_toolbar) {
 		/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */ 
 		/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
@@ -1512,8 +1554,10 @@ modest_main_window_show_toolbar (ModestWindow *self,
 
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 		set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
-	} else
+	} else {
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+
+	}
 
 	/* Update also the actions (to update the toggles in the
 	   menus), we have to do it manually because some other window
@@ -1531,11 +1575,75 @@ modest_main_window_show_toolbar (ModestWindow *self,
 }
 
 static void
+modest_main_window_on_send_queue_status_canged (ModestTnySendQueue *send_queue,
+						gchar *msg_id, 
+						guint status,
+						gpointer user_data)
+{
+	ModestMainWindowPrivate *priv = NULL;
+	TnyFolderStore *selected_folder = NULL;
+	TnyFolderType folder_type;
+
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (send_queue));
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(user_data);
+
+	/* Check if selected folder is OUTBOX */
+	selected_folder = modest_folder_view_get_selected (priv->folder_view);
+	if (!TNY_IS_FOLDER (selected_folder)) goto frees;
+	folder_type = modest_tny_folder_guess_folder_type (TNY_FOLDER (selected_folder)); 
+#if GTK_CHECK_VERSION(2, 8, 0) /* gtk_tree_view_column_queue_resize is only available in GTK+ 2.8 */
+	if (folder_type ==  TNY_FOLDER_TYPE_OUTBOX) {		
+		GtkTreeViewColumn * tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (priv->header_view), 
+									    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN);
+		gtk_tree_view_column_queue_resize (tree_column);
+#endif		
+	}
+	
+	/* Free */
+ frees:
+	if (selected_folder != NULL)
+		g_object_unref (selected_folder);
+}
+
+static void
 on_account_inserted (TnyAccountStore *accoust_store,
                      TnyAccount *account,
                      gpointer user_data)
 {
+	TnyTransportAccount *transport_account = NULL;
+	ModestTnySendQueue *send_queue = NULL;
+	ModestMainWindowPrivate *priv;
+	const gchar *account_name = NULL;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
+
 	update_menus (MODEST_MAIN_WINDOW (user_data));
+
+	/* Get transport account */
+	account_name = tny_account_get_name (TNY_ACCOUNT (account));
+	transport_account =
+		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+				      (modest_runtime_get_account_store(),
+				       account_name,
+				       TNY_ACCOUNT_TYPE_TRANSPORT));
+
+	/* Create new send queue for this new account */
+	send_queue =  modest_runtime_get_send_queue (transport_account);
+	if (!MODEST_IS_TNY_SEND_QUEUE(send_queue)) goto frees;
+ 
+	/* Connect 'status_changed' signal of this new send-queue */
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (send_queue), "status_changed", 
+						       G_CALLBACK (modest_main_window_on_send_queue_status_canged), 
+						       user_data);
+	
+	/* Free */
+ frees:
+	if (transport_account != NULL) 
+		g_object_unref (G_OBJECT (transport_account));
+	if (send_queue != NULL)
+		g_object_unref (send_queue);
 }
 
 static void

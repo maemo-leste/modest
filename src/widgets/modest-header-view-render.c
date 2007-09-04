@@ -60,8 +60,8 @@ get_status_of_uid (TnyHeader *header)
 	TnyTransportAccount *account = NULL;
 	GSList *send_queues = NULL, *node;
 	/* get_msg_status returns suspended by default, so we want to detect changes */
-	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
-	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNONW;
+	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_UNKNONW;
 	gchar *msg_uid = NULL;
 	ModestTnySendQueue *send_queue = NULL;
 	
@@ -376,7 +376,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	set_common_flags (recipient_cell, flags);
 
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
-		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_WAITING;
+		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNONW;
 		const gchar *status_str = "";
 		if (msg_header != NULL) {
 			status = get_status_of_uid (msg_header);
@@ -384,8 +384,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				tny_header_unset_flags (msg_header, TNY_HEADER_FLAG_PRIORITY);
 				tny_header_set_flags (msg_header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
 			}
-/* 			if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY) */
-/* 				status = MODEST_TNY_SEND_QUEUE_SUSPENDED; */
 		}
 		
 		status_str = get_status_string (status);

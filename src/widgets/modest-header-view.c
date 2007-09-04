@@ -1578,6 +1578,7 @@ folder_monitor_update (TnyFolderObserver *self,
 	ModestHeaderViewPrivate *priv = NULL;
 	TnyFolderChangeChanged changed;
 	HeadersCountChangedHelper *helper = NULL;
+	TnyFolder *folder = NULL;
 
 	changed = tny_folder_change_get_changed (change);
 	
@@ -1585,8 +1586,9 @@ folder_monitor_update (TnyFolderObserver *self,
 	   view has changed before this call to the observer
 	   happens */
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (MODEST_HEADER_VIEW (self));
-	if (tny_folder_change_get_folder (change) != priv->folder)
-		return;
+	folder = tny_folder_change_get_folder (change);
+	if (folder != priv->folder)
+		goto frees;
 
 	/* Check folder count */
 	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
@@ -1594,21 +1596,18 @@ folder_monitor_update (TnyFolderObserver *self,
 		helper = g_slice_new0 (HeadersCountChangedHelper);
 		helper->self = MODEST_HEADER_VIEW(self);
 		helper->change = g_object_ref(change);
-	
+
+/* 		if (folder != NULL) */
+/* 			tny_folder_poke_status (folder); */
+
 		idle_notify_headers_count_changed (helper);
 		idle_notify_headers_count_changed_destroy (helper);
-	
-/* I changed this because it's not necessary anymore: all updates of 
- * observers in Tinymail happen guaranteed on the Mainloop already.
- * 				Your friend, Philip
- *
- * 		g_idle_add_full (G_PRIORITY_DEFAULT, 
- *				 idle_notify_headers_count_changed, 
- *				 helper,
- *				 idle_notify_headers_count_changed_destroy);
- */
-
 	}	
+
+	/* Free */
+ frees:
+	if (folder != NULL)
+		g_object_unref (folder);
 }
 
 gboolean

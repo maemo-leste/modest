@@ -194,9 +194,6 @@ _on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError
 	existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
 	if(existing != NULL)
 	{
-		//g_assert(info->status == MODEST_TNY_SEND_QUEUE_SUSPENDED ||
-		//        info->status == MODEST_TNY_SEND_QUEUE_FAILED);
-
 		info = existing->data;
 		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
 	}
@@ -237,7 +234,7 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	SendInfo *info = NULL;
 	GList* existing = NULL;
 	gchar* msg_uid = NULL;
-	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_WAITING;
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNONW;
 	gboolean editing = FALSE;
 
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
