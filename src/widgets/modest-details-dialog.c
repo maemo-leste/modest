@@ -37,8 +37,9 @@
 #include <tny-msg.h>
 #include <tny-header.h>
 #include <tny-header-view.h>
-#include <tny-folder-stats.h>
+#include <tny-folder-store.h>
 #include <modest-tny-folder.h>
+#include <modest-tny-account.h>
 #include <modest-text-utils.h>
 #include <string.h> /* for strlen */
 
@@ -281,19 +282,19 @@ static void
 modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 					  TnyFolder *folder)
 {
-	TnyFolderStats *stats;
-	gchar *count, *size_s, *name = NULL;
-	gint size;
+	gchar *count_s, *size_s, *name = NULL;
+	gint size, count;
 	
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_folder_properties"));
 	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 
-	/* Get stats */
-	stats = tny_folder_get_stats (folder);
-	count = g_strdup_printf ("%d", tny_folder_stats_get_all_count (stats));
-	/* Format the size */
-	size = tny_folder_stats_get_local_size (stats);
+	/* Get data. We use our function because it's recursive */
+	count = modest_tny_folder_store_get_message_count (TNY_FOLDER_STORE (folder));
+	size = modest_tny_folder_store_get_local_size (TNY_FOLDER_STORE (folder));
+
+	/* Format count and size */
+	count_s = g_strdup_printf ("%d", count);
 	if (size <= 0)
 		size_s = g_strdup (_("mcen_va_message_properties_size_noinfo"));
 	else
@@ -310,14 +311,13 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 		name = g_strdup (tny_folder_get_name (folder));
 
 	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_foldername"), name);
-	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_messages"), count);
+	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_messages"), count_s);
 	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_size"), size_s);
 
 	/* Frees */
 	g_free (name);
 	g_free (size_s);
-	g_free (count);
-	g_object_unref (stats);
+	g_free (count_s);
 }
 
 static void

@@ -983,7 +983,6 @@ modest_tny_folder_store_get_folder_count (TnyFolderStore *self)
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
 	helper->task = TASK_GET_FOLDER_COUNT;
-	helper->sum = 0;
 	helper->folders = 0;
 
 	recurse_folders (self, NULL, helper);
@@ -1006,7 +1005,8 @@ modest_tny_folder_store_get_message_count (TnyFolderStore *self)
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
 	helper->task = TASK_GET_ALL_COUNT;
-	helper->sum = 0;
+	if (TNY_IS_FOLDER (self))
+		helper->sum = tny_folder_get_all_count (TNY_FOLDER (self));
 
 	recurse_folders (self, NULL, helper);
 
@@ -1028,7 +1028,8 @@ modest_tny_folder_store_get_local_size (TnyFolderStore *self)
 	/* Create helper */
 	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
 	helper->task = TASK_GET_LOCAL_SIZE;
-	helper->sum = 0;
+	if (TNY_IS_FOLDER (self))
+		helper->sum = tny_folder_get_local_size (TNY_FOLDER (self));
 
 	recurse_folders (self, NULL, helper);
 
