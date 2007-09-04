@@ -3084,7 +3084,7 @@ update_copy_cut_dimming (ModestMsgEditWindow *window)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
 	has_selection = gtk_clipboard_wait_for_targets (clipboard, NULL, NULL);
