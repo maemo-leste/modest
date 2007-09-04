@@ -537,6 +537,9 @@ modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 	GtkTextIter prev;
 	gunichar prev_char;
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
+	
+	if (len > 1024)
+		len = 1024;
 
 	if (!is_valid_insert (text, len)) {
 		gchar *new_text = create_valid_text (text, len);
