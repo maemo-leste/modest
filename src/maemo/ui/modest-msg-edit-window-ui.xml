@@ -118,8 +118,6 @@
 
   <toolbar name="ToolBar">
     <toolitem action="ToolbarSend"/>
-    <!--<toolitem action="ActionFontFace"/>-->
-    <!--<toolitem action="ActionFontSize"/>-->
     <separator/>
     <placeholder name="FontAttributes" />
     <toolitem action="ActionsBold"/>

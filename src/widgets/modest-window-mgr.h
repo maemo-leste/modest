@@ -111,6 +111,7 @@ gboolean       modest_window_mgr_get_fullscreen_mode   (ModestWindowMgr *self);
 /**
  * modest_window_mgr_show_toolbars:
  * @self: a #ModestWindowMgr
+ * @window_type: apply the show toolbars command only to the windows of this type
  * @show_toolbar: whether or not the toolbars should be shown
  * @fullscreen: TRUE/FALSE for show/hide in fullscreen mode, otherwise
  * it applies to normal mode
@@ -121,6 +122,7 @@ gboolean       modest_window_mgr_get_fullscreen_mode   (ModestWindowMgr *self);
  * to fullscreen mode and viceversa
  **/
 void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
+							GType window_type,
 							gboolean show_toolbars,
 							gboolean fullscreen);
 /**

@@ -124,7 +124,7 @@ static gboolean     on_drag_motion         (GtkWidget      *widget,
 					    guint           time,
 					    gpointer        user_data);
 
-static void expand_root_items (ModestFolderView *self);
+static void         expand_root_items (ModestFolderView *self);
 
 static gint         expand_row_timeout     (gpointer data);
 
@@ -480,7 +480,7 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	const gchar *account_id = NULL;
 	gboolean has_children;
-	
+
 	rendobj = G_OBJECT(renderer);
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,

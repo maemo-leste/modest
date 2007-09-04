@@ -262,14 +262,6 @@ void                    modest_msg_edit_window_show_cc               (ModestMsgE
 void                    modest_msg_edit_window_show_bcc               (ModestMsgEditWindow *window, gboolean show);
 
 /**
- * modest_msg_edit_window_toggle_fullscreen:
- * @window: a #ModestMsgEditWindow
- *
- * toggles the current fullscreen status
- */
-void            modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *window);
-
-/**
  * modest_msg_edit_window_set_priority_flags:
  * @window: a #ModestMsgEditWindow
  * @priority_flags: a #TnyHeaderFlags with priority information

@@ -76,8 +76,6 @@
 
 #define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
 #define MODEST_CONF_SHOW_BCC             MODEST_CONF_NAMESPACE "/show_bcc"           
-#define MODEST_CONF_SHOW_TOOLBAR         MODEST_CONF_NAMESPACE "/show_toolbar"
-#define MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN         MODEST_CONF_NAMESPACE "/show_toolbar_fullscreen"
 
 /* This is the alarmd cookie, obtained from alarm_event_add(), 
  * which apparently remains valid between application instances.
@@ -110,6 +108,13 @@
 
 #define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
 
+/* show toolbar settings */
+#define MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MAIN_WINDOW_KEY "/show_toolbar"
+#define MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_EDIT_WINDOW_KEY "/show_toolbar"
+#define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar"
+#define MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR_FULLSCREEN MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MAIN_WINDOW_KEY "/show_toolbar_fullscreen"
+#define MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_EDIT_WINDOW_KEY "/show_toolbar_fullscreen"
+#define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar_fullscreen"
 
 /* per-account data */
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */

@@ -43,9 +43,12 @@ static void modest_window_mgr_class_init (ModestWindowMgrClass *klass);
 static void modest_window_mgr_init       (ModestWindowMgr *obj);
 static void modest_window_mgr_finalize   (GObject *obj);
 
-static gboolean on_window_destroy            (ModestWindow *window,
-					      GdkEvent *event,
-					      ModestWindowMgr *self);
+static gboolean on_window_destroy        (ModestWindow *window,
+					  GdkEvent *event,
+					  ModestWindowMgr *self);
+
+static const gchar* get_show_toolbar_key (GType window_type,
+					  gboolean fullscreen);
 
 /* list my signals  */
 enum {
@@ -62,8 +65,6 @@ struct _ModestWindowMgrPrivate {
 	GtkDialog    *easysetup_dialog;
 	
 	gboolean     fullscreen_mode;
-	gboolean     show_toolbars;
-	gboolean     show_toolbars_fullscreen;
 	
 	GSList       *windows_that_prevent_hibernation;
 	GSList       *preregistered_uids;
@@ -132,8 +133,6 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 
 	/* Could not initialize it from gconf, singletons are not
 	   ready yet */
-	priv->show_toolbars = FALSE;
-	priv->show_toolbars_fullscreen = FALSE;
 	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);	
 	priv->viewer_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
@@ -357,17 +356,38 @@ modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *head
 	return has_header || has_window;
 }
 
+static const gchar *
+get_show_toolbar_key (GType window_type,
+		      gboolean fullscreen)
+{
+	const gchar *key = NULL;
 
+	if (window_type == MODEST_TYPE_MAIN_WINDOW)
+		key = (fullscreen) ? 
+			MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR_FULLSCREEN :
+			MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR;
+	else if (window_type == MODEST_TYPE_MSG_VIEW_WINDOW)
+		key = (fullscreen) ? 
+			MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN :
+			MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR;
+	else if (window_type ==  MODEST_TYPE_MSG_EDIT_WINDOW)
+		key = (fullscreen) ? 
+			MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN :
+			MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR;
+	else
+		g_return_val_if_reached (NULL);
+
+	return key;
+}
 
 void 
 modest_window_mgr_register_window (ModestWindowMgr *self, 
 				   ModestWindow *window)
 {
-	static gboolean first_time = TRUE;
 	GList *win;
-	gboolean show;
 	ModestWindowMgrPrivate *priv;
 	gint *handler_id;
+	const gchar *key;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (GTK_IS_WINDOW (window));
@@ -442,22 +462,9 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	if (priv->fullscreen_mode)
 		gtk_window_fullscreen (GTK_WINDOW (window));
 
-	/* Fill caches */
-	if (first_time) {
-		ModestConf *conf = modest_runtime_get_conf ();
-		priv->show_toolbars = 
-			modest_conf_get_bool (conf, MODEST_CONF_SHOW_TOOLBAR, NULL);
-		priv->show_toolbars_fullscreen = 
-			modest_conf_get_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, NULL);
-		first_time = FALSE;
-	}
-
-	/* Show/hide toolbar */
-	if (priv->fullscreen_mode)
-		show = priv->show_toolbars_fullscreen;
-	else
-		show = priv->show_toolbars;
-	modest_window_show_toolbar (window, show);
+	/* Show/hide toolbar & fullscreen */	
+	key = get_show_toolbar_key (G_TYPE_FROM_INSTANCE (window), priv->fullscreen_mode);
+	modest_window_show_toolbar (window, modest_conf_get_bool (modest_runtime_get_conf (), key, NULL));
 }
 
 static gboolean
@@ -648,18 +655,9 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	gtk_widget_destroy (win->data);
 	
 	/* If there are no more windows registered then exit program */
-	if (priv->window_list == NULL) {
-		
-		ModestConf *conf = modest_runtime_get_conf ();
-		/* Save show toolbar status */
-		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR_FULLSCREEN, 
-				      priv->show_toolbars_fullscreen, NULL);
-		modest_conf_set_bool (conf, MODEST_CONF_SHOW_TOOLBAR, 
-				      priv->show_toolbars, NULL);
-
+	if (priv->window_list == NULL)
 		g_timeout_add (CLOSING_RETRY_INTERVAL,
 			       (GSourceFunc)on_quit_maybe, self);
-	}
 }
 
 
@@ -670,6 +668,7 @@ modest_window_mgr_set_fullscreen_mode (ModestWindowMgr *self,
 {
 	ModestWindowMgrPrivate *priv;
 	GList *win = NULL;
+	ModestConf *conf;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 
@@ -681,18 +680,28 @@ modest_window_mgr_set_fullscreen_mode (ModestWindowMgr *self,
 
 	priv->fullscreen_mode = on;
 
+	conf = modest_runtime_get_conf ();
+
 	/* Update windows */
 	win = priv->window_list;
 	while (win) {
-		if (on) {
+		gboolean show;
+		const gchar *key = NULL;
+
+		/* Getting this from gconf everytime is not that
+		   expensive, we'll do it just a few times */
+		key = get_show_toolbar_key (G_TYPE_FROM_INSTANCE (win->data), on);
+		show = modest_conf_get_bool (conf, key, NULL);
+
+		/* Set fullscreen/unfullscreen */
+		if (on)
 			gtk_window_fullscreen (GTK_WINDOW (win->data));
-			modest_window_show_toolbar (MODEST_WINDOW (win->data), 
-						    priv->show_toolbars_fullscreen);
-		} else {
+		else
 			gtk_window_unfullscreen (GTK_WINDOW (win->data));
-			modest_window_show_toolbar (MODEST_WINDOW (win->data), 
-						    priv->show_toolbars);
-		}
+
+		/* Show/Hide toolbar */
+		modest_window_show_toolbar (MODEST_WINDOW (win->data), show);
+
 		win = g_list_next (win);
 	}
 }
@@ -711,30 +720,27 @@ modest_window_mgr_get_fullscreen_mode (ModestWindowMgr *self)
 
 void 
 modest_window_mgr_show_toolbars (ModestWindowMgr *self,
+				 GType window_type,
 				 gboolean show_toolbars,
 				 gboolean fullscreen)
 {
 	ModestWindowMgrPrivate *priv;
+	ModestConf *conf;
+	const gchar *key = NULL;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	conf = modest_runtime_get_conf ();
 
-	/* If nothing changes then return. Otherwise cache it, do not
-	   save to GConf for the moment, it will be done when all
-	   windows become unregistered in order to avoid unnecessary
-	   ModestConf calls */
-	if (fullscreen) {
-		if (priv->show_toolbars_fullscreen == show_toolbars)
-			return;
-		else
-			priv->show_toolbars_fullscreen = show_toolbars;
-	} else {
-		if (priv->show_toolbars == show_toolbars)
-			return;
-		else
-			priv->show_toolbars = show_toolbars;
-	}
+	/* If nothing changes then return */
+	key = get_show_toolbar_key (window_type, fullscreen);
+	conf = modest_runtime_get_conf ();
+	if (modest_conf_get_bool (conf, key, NULL) == show_toolbars)
+		return;
+
+	/* Save in conf */
+	modest_conf_set_bool (conf, key, show_toolbars, NULL);
 
 	/* Apply now if the view mode is the right one */
 	if ((fullscreen && priv->fullscreen_mode) ||
@@ -743,8 +749,9 @@ modest_window_mgr_show_toolbars (ModestWindowMgr *self,
 		GList *win = priv->window_list;
 
 		while (win) {
-			modest_window_show_toolbar (MODEST_WINDOW (win->data),
-						    show_toolbars);
+			if (G_TYPE_FROM_INSTANCE (win->data) == window_type)
+				modest_window_show_toolbar (MODEST_WINDOW (win->data),
+							    show_toolbars);
 			win = g_list_next (win);
 		}
 	}

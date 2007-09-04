@@ -190,14 +190,6 @@ gboolean        modest_msg_view_window_select_next_message (ModestMsgViewWindow 
 gboolean        modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window);
 
 /**
- * modest_msg_view_window_toggle_fullscreen:
- * @window: a #ModestMsgViewWindow
- *
- * toggles the current fullscreen status
- */
-void            modest_msg_view_window_toggle_fullscreen (ModestMsgViewWindow *window);
-
-/**
  * modest_msg_view_window_view_attachment:
  * @window: a #ModestMsgViewWindow
  * @mime_part: a #TnyMimePart

@@ -966,10 +966,6 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	hildon_window_add_toolbar (HILDON_WINDOW (window), GTK_TOOLBAR (parent_priv->toolbar));
 
-	/* should we hide the toolbar? */
-	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_TOOLBAR, NULL))
-		gtk_widget_hide (parent_priv->toolbar);
-
 	/* Font color placeholder */
 	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontColor");
 	insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
@@ -983,7 +979,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	g_signal_connect_swapped (G_OBJECT (priv->font_color_button), "notify::color", G_CALLBACK (modest_msg_edit_window_color_button_change), window);
+	g_signal_connect_swapped (G_OBJECT (priv->font_color_button), 
+				  "notify::color", 
+				  G_CALLBACK (modest_msg_edit_window_color_button_change), 
+				  window);
 
 	/* Font size and face placeholder */
 	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontAttributes");
@@ -1083,7 +1082,15 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 
+	/* Explicitelly show all the toolbar (a normal gtk_widget_show
+	   will not show the tool items added to the placeholders) */
+	gtk_widget_show_all (parent_priv->toolbar);
 
+	/* Set the no show all *after* showing all items. We do not
+	   want the toolbar to be shown with a show all because it
+	   could go agains the gconf setting regarding showing or not
+	   the toolbar of the editor window */
+	gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 }
 
 
@@ -1163,8 +1170,18 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
-	/* Menubar */
+	/* Menubar. Update the state of some toggles */
 	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	conf = modest_runtime_get_conf ();
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu");
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
+
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 
 	/* Init window */
@@ -1521,7 +1538,7 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	}
 
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
-	
+
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsBold");
 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bold);
 
@@ -2174,20 +2191,6 @@ modest_msg_edit_window_window_state_event (GtkWidget *widget, GdkEventWindowStat
 }
 
 void
-modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	GtkAction *fs_toggle_action;
-	gboolean active;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-
-	fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewToggleFullscreenMenu");
-	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action));
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), !active);
-}
-
-void
 modest_msg_edit_window_show_cc (ModestMsgEditWindow *window, 
 				gboolean show)
 {
@@ -2280,18 +2283,34 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
 {
 	ModestWindowPrivate *parent_priv;
+	const gchar *action_name;
+	GtkAction *action;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
-	/* FIXME: we can not just use the code of
+	/* We can not just use the code of
 	   modest_msg_edit_window_setup_toolbar because it has a
 	   mixture of both initialization and creation code. */
-
 	if (show_toolbar)
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 	else
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+
+	/* Update also the actions (to update the toggles in the
+	   menus), we have to do it manually because some other window
+	   of the same time could have changed it (remember that the
+	   toolbar fullscreen mode is shared by all the windows of the
+	   same type */
+	if (modest_window_mgr_get_fullscreen_mode (modest_runtime_get_window_mgr ()))
+		action_name = "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu";
+	else
+		action_name = "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu";
+	
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+							    show_toolbar);
+
 }
 
 void

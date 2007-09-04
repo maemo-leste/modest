@@ -769,7 +769,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 
 	if (win)
 		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
-					      GTK_WINDOW (win));	
+					      GTK_WINDOW (win));
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
@@ -3202,9 +3202,10 @@ modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 	}
 }
 
-void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
-							GtkRadioAction *selected,
-							ModestWindow *window)
+void     
+modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
+					       GtkRadioAction *selected,
+					       ModestWindow *window)
 {
 	TnyHeaderFlags flags;
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
@@ -3213,9 +3214,10 @@ void     modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
 	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW (window), flags);
 }
 
-void     modest_ui_actions_msg_edit_on_change_file_format (GtkRadioAction *action,
-							   GtkRadioAction *selected,
-							   ModestWindow *window)
+void     
+modest_ui_actions_msg_edit_on_change_file_format (GtkRadioAction *action,
+						  GtkRadioAction *selected,
+						  ModestWindow *window)
 {
 	gint file_format;
 
@@ -3434,7 +3436,7 @@ modest_ui_actions_on_toggle_toolbar (GtkToggleAction *toggle,
 
 	/* Toggle toolbar */
 	mgr = modest_runtime_get_window_mgr ();
-	modest_window_mgr_show_toolbars (mgr, active, fullscreen);
+	modest_window_mgr_show_toolbars (mgr, G_TYPE_FROM_INSTANCE (window), active, fullscreen);
 }
 
 void     
