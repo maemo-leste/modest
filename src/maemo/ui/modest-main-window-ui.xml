@@ -53,10 +53,10 @@
     </menu>
     
     <menu name="EditMenu" action="Edit">
-      <menuitem name="EditCutMenu" action="EditCut"/>
-      <menuitem name="EditCopyMenu" action="EditCopy"/>
-      <menuitem name="EditPasteMenu" action="EditPaste"/>
-      <separator/>
+<!--       <menuitem name="EditCutMenu" action="EditCut"/> -->
+<!--       <menuitem name="EditCopyMenu" action="EditCopy"/> -->
+<!--       <menuitem name="EditPasteMenu" action="EditPaste"/> -->
+<!--       <separator/> -->
       <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
       <menuitem name="EditMarkAsReadMenu" action="EditMarkAsRead"/>
       <menuitem name="EditMarkAsUnreadMenu" action="EditMarkAsUnread"/>
@@ -118,10 +118,10 @@
     <menuitem action="HeaderViewCSMReplyAll"/>
     <menuitem action="HeaderViewCSMForward"/>
     <menuitem action="HeaderViewCSMCancelSending"/>
-    <separator/>
-    <menuitem action="HeaderViewCSMCut"/>
-    <menuitem action="HeaderViewCSMCopy"/>
-    <menuitem action="HeaderViewCSMPaste"/>
+<!--     <separator/> -->
+<!--     <menuitem action="HeaderViewCSMCut"/> -->
+<!--     <menuitem action="HeaderViewCSMCopy"/> -->
+<!--     <menuitem action="HeaderViewCSMPaste"/> -->
     <separator/>
     <menuitem action="HeaderViewCSMDelete"/>
     <menuitem action="HeaderViewCSMHelp"/>
