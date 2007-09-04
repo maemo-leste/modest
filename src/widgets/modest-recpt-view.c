@@ -134,6 +134,7 @@ button_release_event (GtkWidget *widget,
 			gint buffer_x, buffer_y;
 			int index;
 			GtkTextIter iter;
+			gtk_widget_grab_focus (GTK_WIDGET (text_view));
 			gtk_text_view_window_to_buffer_coords (GTK_TEXT_VIEW (text_view), GTK_TEXT_WINDOW_WIDGET,
 							       event->x, event->y, &buffer_x, &buffer_y);
 			gtk_text_view_get_iter_at_location (GTK_TEXT_VIEW (text_view), &iter, buffer_x, buffer_y);
