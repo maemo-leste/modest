@@ -56,9 +56,6 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 
 	/* Edit Menu */
 	{ "/MenuBar/EditMenu", NULL },
-	{ "/MenuBar/EditMenu/EditCutMenu", G_CALLBACK(modest_ui_dimming_rules_on_cut) },
-	{ "/MenuBar/EditMenu/EditCopyMenu", G_CALLBACK(modest_ui_dimming_rules_on_copy) },
-	{ "/MenuBar/EditMenu/EditPasteMenu", G_CALLBACK(modest_ui_dimming_rules_on_paste) },
 	{ "/MenuBar/EditMenu/EditSelectAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_select_all)},
 	{ "/MenuBar/EditMenu/EditMarkAsReadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_read_msg) },
 	{ "/MenuBar/EditMenu/EditMarkAsUnreadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_unread_msg) },
@@ -95,9 +92,6 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/HeaderViewCSM/HeaderViewCSMReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/HeaderViewCSM/HeaderViewCSMReplyAll", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/HeaderViewCSM/HeaderViewCSMForward", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
-	{ "/HeaderViewCSM/HeaderViewCSMCut", NULL },
-	{ "/HeaderViewCSM/HeaderViewCSMCopy", NULL },
-	{ "/HeaderViewCSM/HeaderViewCSMPaste", G_CALLBACK(modest_ui_dimming_rules_on_paste) },
 	{ "/HeaderViewCSM/HeaderViewCSMDelete", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
 	{ "/HeaderViewCSM/HeaderViewCSMCancelSending", G_CALLBACK(modest_ui_dimming_rules_on_csm_cancel_sending) },
 	{ "/HeaderViewCSM/HeaderViewCSMHelp", NULL },
