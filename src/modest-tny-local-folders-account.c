@@ -113,7 +113,7 @@ modest_tny_local_folders_account_query_passes (TnyFolderStoreQuery *query, TnyFo
 			TnyFolderStoreQueryItem *item = (TnyFolderStoreQueryItem*) tny_iterator_get_current (iterator);
 			if (item) {
 				TnyFolderStoreQueryOption options = tny_folder_store_query_item_get_options (item);
-				regex_t *regex = tny_folder_store_query_item_get_regex (item);
+				regex_t *regex = (regex_t *) tny_folder_store_query_item_get_regex (item);
 
 				if ((options & TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED) &&
 			 	   tny_folder_is_subscribed (folder))
