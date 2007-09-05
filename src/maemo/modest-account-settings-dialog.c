@@ -297,11 +297,15 @@ static GtkWidget*
 create_page_account_details (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	GtkAdjustment *focus_adjustment = NULL;
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkWidget *scrollwin = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollwin),
+					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
            
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
@@ -373,7 +377,13 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
-	return GTK_WIDGET (box);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), box);
+	gtk_widget_show (scrollwin);
+
+	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment); 
+	
+	return GTK_WIDGET (scrollwin);
 }
 
 static gchar*
