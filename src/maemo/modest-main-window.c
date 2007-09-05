@@ -2492,12 +2492,12 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 	gtk_action_set_visible (action, show_forward);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCancelSending");
 	gtk_action_set_visible (action, show_cancel_send);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCut");
-	gtk_action_set_visible (action, show_clipboard);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCopy");
-	gtk_action_set_visible (action, show_clipboard);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMPaste");
-	gtk_action_set_visible (action, show_clipboard);
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCut"); */
+/* 	gtk_action_set_visible (action, show_clipboard); */
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCopy"); */
+/* 	gtk_action_set_visible (action, show_clipboard); */
+/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMPaste"); */
+/* 	gtk_action_set_visible (action, show_clipboard); */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMDelete");
 	gtk_action_set_visible (action, show_delete);
 
