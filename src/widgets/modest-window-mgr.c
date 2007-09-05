@@ -317,12 +317,33 @@ compare_msguids (ModestWindow *win,
 }
 
 
+void
+modest_window_mgr_close_all_windows (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv = NULL;
+	GList *wins = NULL;
+	gboolean ret_value = FALSE;
+
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	
+	/* delete-event handler already removes window_list item, */
+	/* so no next its required on this loop  */
+	wins = priv->window_list;
+	while (wins) {		
+		g_signal_emit_by_name (G_OBJECT (wins->data), "delete-event", NULL, &ret_value);
+
+		wins = priv->window_list;
+	}
+}
+
+
 gboolean
 modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *header,
 					  ModestWindow **win)
 {
-	ModestWindowMgrPrivate *priv;
-	gchar* uid;
+	ModestWindowMgrPrivate *priv = NULL;
+	gchar* uid = NULL;
 	gboolean has_header, has_window = FALSE;
 	GList *item = NULL;
 

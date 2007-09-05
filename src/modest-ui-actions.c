@@ -553,7 +553,9 @@ modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *
 
 void
 modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
-{
+{	
+	ModestWindowMgr *mgr = NULL;
+	
 #ifdef MODEST_PLATFORM_MAEMO
 	modest_osso_save_state();
 #endif /* MODEST_PLATFORM_MAEMO */
@@ -568,11 +570,16 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 	
 	g_debug ("queue has been cleared");
 
+
+	/* Check if there are opened editing windows */	
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_close_all_windows (mgr);
+
 	/* note: when modest-tny-account-store is finalized,
 	   it will automatically set all network connections
 	   to offline */
 
-	gtk_main_quit ();
+/* 	gtk_main_quit (); */
 }
 
 void

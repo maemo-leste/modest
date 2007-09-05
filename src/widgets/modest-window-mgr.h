@@ -191,6 +191,14 @@ gboolean modest_window_mgr_find_registered_header (ModestWindowMgr *self,  TnyHe
 
 
 /**
+ * modest_window_mgr_close_all_windows
+ * @self: a #ModestWindowMgr
+ * 
+ * Close all registered windows. 
+ **/
+void modest_window_mgr_close_all_windows (ModestWindowMgr *self);
+
+/**
  * modest_window_mgr_register_header
  * @self: a #ModestWindowMgr
  * @header: a valid #TnyHeader
