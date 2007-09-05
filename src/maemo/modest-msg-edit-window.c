@@ -3076,26 +3076,27 @@ update_copy_cut_dimming (ModestMsgEditWindow *window)
 {
 	ModestWindowPrivate *parent_priv = NULL;
 	ModestMsgEditWindowPrivate *priv = NULL;
-	GtkClipboard *clipboard = NULL;
 	GtkAction *action = NULL;
 	gboolean has_selection = FALSE;
 	GtkWidget *focused = NULL;
-	gchar *selection = NULL;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 	focused = gtk_window_get_focus (GTK_WINDOW (window));
 
-	has_selection = gtk_clipboard_wait_for_targets (clipboard, NULL, NULL);
+	if (GTK_IS_TEXT_VIEW (focused)) {
+		GtkTextBuffer *buffer = NULL;
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
+		has_selection = gtk_text_buffer_get_has_selection (GTK_TEXT_BUFFER (buffer));
+	} else if (GTK_IS_EDITABLE (focused)) {
+		has_selection = gtk_editable_get_selection_bounds (GTK_EDITABLE (focused), NULL, NULL);
+	}
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
 	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
 	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
 
-	if (selection != NULL) 
-		g_free(selection);
 }
 
 static void 
