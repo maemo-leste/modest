@@ -1847,9 +1847,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	folder_name = tny_folder_get_name (folder);
 
 	/* Set the error msg */
-	error_msg = (delete_original) ? 
-		_("mail_in_ui_folder_move_target_error") : 
-		_("mail_in_ui_folder_copy_target_error");
+	error_msg = _("mail_in_ui_folder_move_target_error");
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
