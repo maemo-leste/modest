@@ -849,7 +849,11 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 				goto cleanup;
 		}
 		win = modest_msg_edit_window_new (msg, account, TRUE);
-		
+
+
+		/* Show banner */
+		modest_platform_information_banner (NULL, NULL, _("mail_ib_opening_draft_message"));
+
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
 		
