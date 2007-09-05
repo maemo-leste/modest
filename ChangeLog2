@@ -1,3 +1,11 @@
+2007-09-05  Murray Cumming  <murrayc@murrayc.com>
+
+	* src/maemo/modest-maemo-utils.c:
+	(on_camel_account_get_supported_secure_authentication),
+	(modest_maemo_utils_get_supported_secure_authentication_methods):
+	Adapted to the changed tinymail signature of the callback, and 
+	printf a warning when there is an exception, as a clue.
+
 2007-09-03  Armin Burgmeier  <armin@openismus.com>
 
 	* src/maemo/modest-maemo-utils.c: Don't set the temporary account

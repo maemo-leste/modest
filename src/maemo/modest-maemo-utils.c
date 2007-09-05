@@ -325,12 +325,12 @@ on_idle_secure_auth_finished (gpointer user_data)
 static void
 on_camel_account_get_supported_secure_authentication (
   TnyCamelAccount *self, gboolean cancelled,
-  TnyList *auth_types, GError **err, 
+  TnyList *auth_types, GError *err, 
   gpointer user_data)
 {
-		
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
+	
 
 	/* Free everything if the actual action was canceled */
 	if (info->cancel)
@@ -342,18 +342,22 @@ on_camel_account_get_supported_secure_authentication (
 	}
 	else
 	{
-		/* TODO: Why is this a pointer to a pointer? We are not supposed to
-		 * set it, are we? */
-		if(err != NULL && *err != NULL)
+		if (err)
 		{
-			if(info->error != NULL) g_error_free(info->error);
-			info->error = g_error_copy(*err);
+			if (info->error) {
+				g_error_free (info->error);
+				info->error = NULL;
+			}
+			
+			info->error = g_error_copy (err);
 		}
 
 		if (!auth_types) {
-			printf ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
+			g_warning ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
 		}
-		else
+		else if (tny_list_get_length(auth_types) == 0) {
+			g_warning ("DEBUG: %s: auth_types is an empty TnyList.\n", __FUNCTION__);
+		} else
 		{
 			ModestPairList* pairs = modest_protocol_info_get_auth_protocol_pair_list ();
   
@@ -385,7 +389,7 @@ on_camel_account_get_supported_secure_authentication (
 		}
 
 		printf("DEBUG: finished\n");
-
+				
 		/* Close the dialog in a main thread */
 		g_idle_add(on_idle_secure_auth_finished, info);
 	}
@@ -494,12 +498,19 @@ modest_maemo_utils_get_supported_secure_authentication_methods (ModestTransportS
 	gtk_dialog_run (GTK_DIALOG (info->dialog));
 	
 	gtk_widget_destroy(info->dialog);
-		
+			
 	GList *result = info->result;
 	if (!info->cancel)
 	{
-		if(info->error != NULL)
+		if (info->error) {
+			gchar * debug_url_string = tny_account_get_url_string  (tny_account);
+			g_warning ("DEBUG: %s:\n  error: %s\n  account url: %s", __FUNCTION__, info->error->message, 
+				debug_url_string);
+			g_free (debug_url_string);
+			
 			g_propagate_error(error, info->error);
+			info->error = NULL;
+		}
 
 		g_slice_free (ModestGetSupportedAuthInfo, info);
 		info = NULL;
