@@ -54,6 +54,7 @@
 #include "modest-ui-dimming-manager.h"
 #include <gdk/gdkkeysyms.h>
 #include <modest-tny-account.h>
+#include <math.h>
 
 #define DEFAULT_FOLDER "MyDocs/.documents"
 
@@ -1276,11 +1277,20 @@ modest_msg_view_window_set_zoom (ModestWindow *window,
 				 gdouble zoom)
 {
 	ModestMsgViewWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action = NULL;
+	gint int_zoom = (gint) rint (zoom*100.0+0.1);
      
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	modest_msg_view_set_zoom (MODEST_MSG_VIEW (priv->msg_view), zoom);
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu");
+
+	gtk_radio_action_set_current_value (GTK_RADIO_ACTION (action), int_zoom);
 }
 
 static gdouble
