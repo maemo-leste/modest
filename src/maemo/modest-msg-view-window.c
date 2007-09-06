@@ -133,6 +133,10 @@ static void on_account_removed  (TnyAccountStore *account_store,
 				 TnyAccount *account,
 				 gpointer user_data);
 
+static void on_move_focus (ModestMsgViewWindow *window,
+			   GtkDirectionType direction,
+			   gpointer userdata);
+
 static void view_msg_cb         (ModestMailOperation *mail_op, 
 				 TnyHeader *header, 
 				 TnyMsg *msg, 
@@ -794,6 +798,9 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_view_window_window_state_event),
 			  NULL);
+
+	g_signal_connect (G_OBJECT (obj), "move-focus",
+			  G_CALLBACK (on_move_focus), obj);
 
 	/* Mail Operation Queue */
 	priv->queue_change_handler = g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
@@ -2601,3 +2608,17 @@ update_window_title (ModestMsgViewWindow *window)
 
 	gtk_window_set_title (GTK_WINDOW (window), subject);
 }
+
+static void on_move_focus (ModestMsgViewWindow *window,
+			   GtkDirectionType direction,
+			   gpointer userdata)
+{
+	GtkWidget *current_focus = NULL;
+
+	current_focus = gtk_window_get_focus (GTK_WINDOW (window));
+	if ((current_focus != NULL) &&
+	    MODEST_IS_ATTACHMENTS_VIEW (current_focus)) {
+		g_signal_stop_emission_by_name (G_OBJECT (window), "move-focus");
+	}
+}
+
