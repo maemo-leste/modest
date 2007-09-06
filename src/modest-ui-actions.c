@@ -144,9 +144,7 @@ static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op
 						   ModestMailOperationState *state,
 						   gpointer user_data);
 
-static gint header_list_count_uncached_msgs (
-						TnyList *header_list, 
-						GtkWindow *win);
+static gint header_list_count_uncached_msgs (TnyList *header_list);
 static gboolean connect_to_get_msg (
 						GtkWindow *win,
 						gint num_of_uncached_msgs);
@@ -1201,9 +1199,7 @@ cleanup:
  * downloaded (CACHED) then returns TRUE else returns FALSE.
  */
 static gint
-header_list_count_uncached_msgs (
-				TnyList *header_list, 
-				GtkWindow *win)
+header_list_count_uncached_msgs (TnyList *header_list)
 {
 	TnyIterator *iter;
 	gint uncached_messages = 0;
@@ -1287,9 +1283,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	if (do_retrieve){
 		gint num_of_unc_msgs;
 		/* check that the messages have been previously downloaded */
-		num_of_unc_msgs = header_list_count_uncached_msgs(
-								header_list,
-								GTK_WINDOW (win));
+		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
 		/* If there are any uncached message ask the user
 		 * whether he/she wants to download them. */
 		if (num_of_unc_msgs)
@@ -2850,8 +2844,7 @@ modest_ui_actions_on_cut (GtkAction *action,
 		gboolean continue_download = FALSE;
 		gint num_of_unc_msgs;
 
-		num_of_unc_msgs = header_list_count_uncached_msgs(
-				header_list, GTK_WINDOW (window));
+		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
 
 		if (num_of_unc_msgs)
 			continue_download = connect_to_get_msg(
@@ -2906,9 +2899,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 		gboolean continue_download = FALSE;
 		gint num_of_unc_msgs;
 
-		num_of_unc_msgs = header_list_count_uncached_msgs(
-								header_list,
-								GTK_WINDOW (window));
+		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
 
 		if (num_of_unc_msgs)
 			continue_download = connect_to_get_msg(
