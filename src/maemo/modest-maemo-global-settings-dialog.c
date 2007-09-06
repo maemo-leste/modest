@@ -84,6 +84,10 @@ static gboolean   on_range_error         (HildonNumberEditor *editor,
 					  HildonNumberEditorErrorType type,
 					  gpointer user_data);
 
+static void       on_size_notify         (HildonNumberEditor *editor, 
+					  GParamSpec *arg1,
+					  gpointer user_data);
+
 static void       on_auto_update_toggled (GtkToggleButton *togglebutton,
 					  gpointer user_data);
 
@@ -236,6 +240,8 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, 300);
+
 	g_signal_connect (G_OBJECT (self), "key-press-event",
 			  G_CALLBACK (on_inner_tabs_key_pressed), self);
 	priv->switch_handler = g_signal_connect (G_OBJECT(ppriv->notebook), "switch-page",
@@ -286,8 +292,13 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	GtkWidget *vbox, *vbox_update, *vbox_limit, *caption;
 	GtkSizeGroup *size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
+	GtkWidget *scrollwin = NULL;
+	GtkAdjustment *focus_adjustment = NULL;
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	scrollwin = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollwin), 
+					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
@@ -348,6 +359,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	ppriv->size_limit = hildon_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);
 	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);
 	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
+	g_signal_connect (ppriv->size_limit, "notify", G_CALLBACK (on_size_notify), self);
 	caption = hildon_caption_new (size_group, 
 				      _("mcen_fi_advsetup_sizelimit"), 
 				      ppriv->size_limit,
@@ -366,8 +378,12 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 
 	/* Add to vbox */
 	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), vbox);
+	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (vbox), focus_adjustment);
+	gtk_widget_show (scrollwin);
 	
-	return vbox;
+	return scrollwin;
 }
 
 /*
@@ -473,6 +489,17 @@ on_range_error (HildonNumberEditor *editor,
 	g_free (msg);
 
 	return TRUE;
+}
+
+static void       
+on_size_notify         (HildonNumberEditor *editor, 
+			GParamSpec *arg1,
+			gpointer user_data)
+{
+	ModestMaemoGlobalSettingsDialog *dialog = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG (user_data);
+	gint value = hildon_number_editor_get_value (editor);
+
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
 }
 
 static ModestConnectedVia
