@@ -450,8 +450,10 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		GtkTreeModel *model = NULL;
 		GtkTreeSelection *sel = NULL;
 		GList *sel_list = NULL, *tmp = NULL;
-		GtkTreeRowReference *row_reference = NULL;
+		GtkTreeRowReference *next_row_reference = NULL;
+		GtkTreeRowReference *prev_row_reference = NULL;
 		GtkTreePath *next_path = NULL;
+		GtkTreePath *prev_path = NULL;
 		GError *err = NULL;
 
 		/* Find last selected row */			
@@ -461,10 +463,14 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
 			for (tmp=sel_list; tmp; tmp=tmp->next) {
 				if (tmp->next == NULL) {
+					prev_path = gtk_tree_path_copy((GtkTreePath *) tmp->data);
 					next_path = gtk_tree_path_copy((GtkTreePath *) tmp->data);
+
+					gtk_tree_path_prev (prev_path);
 					gtk_tree_path_next (next_path);
-					row_reference = gtk_tree_row_reference_new (model, next_path);
-					gtk_tree_path_free (next_path);
+
+					prev_row_reference = gtk_tree_row_reference_new (model, prev_path);
+					next_row_reference = gtk_tree_row_reference_new (model, next_path);
 				}
 			}
 		}
@@ -473,17 +479,11 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		modest_window_disable_dimming (MODEST_WINDOW(win));
 
 		/* Remove each header. If it's a view window header_view == NULL */
-/* 		do_headers_action (win, headers_action_delete, header_view); */
 		modest_do_messages_delete (header_list, win);
 		
-
 		/* Enable window dimming management */
 		gtk_tree_selection_unselect_all (sel);
 		modest_window_enable_dimming (MODEST_WINDOW(win));
-
-		/* FIXME: May be folder_monitor will also refilter treemode on EXPUNGE changes ? */
-		/* refresh the header view (removing marked-as-deleted) */
-/*  		modest_header_view_refilter (MODEST_HEADER_VIEW(header_view));  */
 		
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (win));
@@ -496,14 +496,24 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			/* Move cursor to next row */
 			main_window = win; 
 
-			/* Select next row */
-			if (gtk_tree_row_reference_valid (row_reference)) {
-				next_path = gtk_tree_row_reference_get_path (row_reference);
+			/* Select next or previous row */
+			if (gtk_tree_row_reference_valid (next_row_reference)) {
+/* 				next_path = gtk_tree_row_reference_get_path (row_reference); */
 				gtk_tree_selection_select_path (sel, next_path);
-				gtk_tree_path_free (next_path);
 			}
-			if (row_reference != NULL)
-				gtk_tree_row_reference_free (row_reference);
+			else if (gtk_tree_row_reference_valid (prev_row_reference)) {				
+				gtk_tree_selection_select_path (sel, prev_path);
+			}
+
+			/* Free */
+			if (next_row_reference != NULL) 
+				gtk_tree_row_reference_free (next_row_reference);
+			if (next_path != NULL) 
+				gtk_tree_path_free (next_path);				
+			if (prev_row_reference != NULL) 
+				gtk_tree_row_reference_free (prev_row_reference);
+			if (prev_path != NULL) 
+				gtk_tree_path_free (prev_path);				
 		}
 
 		if (err != NULL) {
