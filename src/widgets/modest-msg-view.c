@@ -1095,10 +1095,15 @@ modest_msg_view_new (TnyMsg *msg)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
 	
 	if (priv->attachments_view) {
-		priv->attachments_box = (GtkWidget *) modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),
-												 _("Attachments:"), priv->attachments_view,
-												 FALSE, FALSE);
+		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
+
+		priv->attachments_box = (GtkWidget *)
+			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),
+								   att_label,
+								   priv->attachments_view,
+								   FALSE, FALSE);
 		gtk_widget_hide_all (priv->attachments_box);
+		g_free (att_label);
 /* 		gtk_widget_set_no_show_all (priv->attachments_box, TRUE); */
 	}
 
