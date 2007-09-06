@@ -300,13 +300,9 @@ modest_tny_folder_get_local_or_mmc_folder_type  (TnyFolder *folder)
 	 * _full name_, that is, the full path name of the folder,
 	 * to distinguish between 'Outbox' and 'myfunkyfolder/Outbox'
 	 */
-	CamelFolder *camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
-	if (!camel_folder)
-		return TNY_FOLDER_TYPE_UNKNOWN;
 
-	const gchar *full_name = camel_folder_get_full_name (camel_folder);
+	const gchar *full_name = tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder));
 	/* printf ("DEBUG: %s: full_name=%s\n", __FUNCTION__, full_name); */
-	camel_object_unref (CAMEL_OBJECT(camel_folder));
 	
 	if (!full_name) 
 		return TNY_FOLDER_TYPE_UNKNOWN;
@@ -324,25 +320,6 @@ modest_tny_folder_is_outbox_for_account (TnyFolder *folder, TnyAccount *account)
 		return FALSE;
 		
 	return TRUE;
-#if 0	
-	/* we need to use the camel functions, because we want the
-	 * _full name_, that is, the full path name of the folder,
-	 * to distinguis between 'Outbox' and 'myfunkyfolder/Outbox'
-	 */
-	CamelFolder *camel_folder = tny_camel_folder_get_folder (TNY_CAMEL_FOLDER(folder));
-	if (!camel_folder)
-		return FALSE;
-
-	const gchar *full_name = camel_folder_get_full_name (camel_folder);
-	camel_object_unref (CAMEL_OBJECT(camel_folder));
-	
-	if (!full_name) 
-		return TNY_FOLDER_TYPE_UNKNOWN;
-	else 
-		return modest_local_folder_info_get_type (full_name);
-		
-	return FALSE;
-#endif
 }
 
 gchar* 
