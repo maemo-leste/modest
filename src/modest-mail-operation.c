@@ -591,12 +591,12 @@ idle_create_msg_cb (gpointer idle_data)
 
 	gdk_threads_enter (); /* CHECKED */
 	info->callback (info->mail_op, info->msg, info->userdata);
-	gdk_threads_leave (); /* CHECKED */
 
 	g_object_unref (info->mail_op);
 	if (info->msg)
 		g_object_unref (info->msg);
 	g_slice_free (CreateMsgIdleInfo, info);
+	gdk_threads_leave (); /* CHECKED */
 
 	return FALSE;
 }
