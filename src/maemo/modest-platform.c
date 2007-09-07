@@ -37,6 +37,7 @@
 #include "modest-widget-memory.h"
 #include <modest-hildon-includes.h>
 #include <osso-helplib.h>
+#include <modest-maemo-utils.h>
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso-abook/osso-abook.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
@@ -1254,7 +1255,7 @@ modest_platform_on_new_msg (void)
 {
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	HildonNotification *not;
-
+	
 	/* Create a new notification. TODO: per-mail data needed */
 	not = hildon_notification_new ("TODO: (new email) Summary",
 				       "TODO: (new email) Description",
@@ -1271,8 +1272,9 @@ modest_platform_on_new_msg (void)
 					    -1);
 	
 	/* Play sound SR-SND-18 */
-	hildon_notification_set_sound (not, "/usr/share/sounds/ui-new_email.wav");
-        notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "dialog-type", 4);
+	hildon_notification_set_sound
+		(not, "/usr/share/sounds/ui-new_email.wav");
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "dialog-type", 4);
 
 	/* Set the led pattern */
 	notify_notification_set_hint_string(NOTIFY_NOTIFICATION (not), 
@@ -1503,3 +1505,82 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 	return data->is_online;	
 }
 
+
+
+static void
+on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert)
+{
+	// handle ok/cancel in the normal way
+	if (response_id != GTK_RESPONSE_HELP)
+		gtk_dialog_response (dialog, response_id);
+	else {
+		// GTK_RESPONSE_HELP means we need to show the certificate
+		GtkWidget *note;
+		gchar *msg;
+		
+		msg = g_strdup_printf (_("mcen_ni_view_unknown_certificate"), cert);	
+		note = hildon_note_new_information (GTK_WINDOW(dialog), msg);
+		gtk_dialog_run (GTK_DIALOG(note));
+		gtk_widget_destroy (note);
+	}
+}
+
+
+gboolean
+modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
+						     const gchar *certificate)
+{
+	GtkWidget *note;
+	gint response;
+	GtkWindow *main_win =
+		(GtkWindow*)modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
+
+	gchar *question = g_strdup_printf (_("mcen_mc_unknown_certificate"),
+					   server_name);
+	
+	note = hildon_note_new_confirmation_add_buttons  (
+		main_win,
+		question,
+		_("mcen_bd_dialog_ok"),     GTK_RESPONSE_OK,
+		_("mcen_bd_view"),          GTK_RESPONSE_HELP,   /* abusing this... */
+		_("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL,
+		NULL, NULL);
+	
+	g_signal_connect (G_OBJECT(note), "response", G_CALLBACK(on_cert_dialog_response),
+			  (gpointer)certificate);
+	response = gtk_dialog_run(GTK_DIALOG(note));
+
+	gtk_widget_destroy(GTK_WIDGET(note));
+	g_free (question);
+	
+	return response;
+}
+	
+
+
+gboolean
+modest_platform_run_alert_dialog (const gchar* prompt, gboolean is_question)
+{	
+	ModestWindow *main_window = 
+		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	
+	gboolean retval = TRUE;
+	if (is_question) {
+		/* The Tinymail documentation says that we should show Yes and No buttons, 
+		 * when it is a question.
+		 * Obviously, we need tinymail to use more specific error codes instead,
+		 * so we know what buttons to show. */
+		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
+									      prompt));
+		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
+		retval = (response == GTK_RESPONSE_YES) || (response == GTK_RESPONSE_OK);
+		
+		gtk_widget_destroy (dialog);
+		
+	} else {
+	 	/* Just show the error text and use the default response: */
+	 	modest_maemo_show_information_note_and_forget(GTK_WINDOW (main_window), 
+							      prompt);
+	}
+	return retval;
+}

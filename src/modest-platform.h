@@ -328,6 +328,34 @@ modest_platform_animation_banner (GtkWidget *parent,
  */
 gboolean modest_platform_check_and_wait_for_account_is_online(TnyAccount *account);
 
+
+
+/**
+ * modest_platform_run_certificate_confirmation_dialog:
+ * @server_name: name of the server we get this dialog for
+ * @certificate: the text representation of the certificate
+ *
+ * show the unknown-certificate confirmation dialog
+ *
+ *  Returns: TRUE (Ok-pressed) or FALSE (cancel pressed)
+ **/
+gboolean modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
+							      const gchar *certificate);
+
+
+/**
+ * modest_platform_run_alert_dialog:
+ * @prompt: prompt for the dialog
+ * @is_question: is it a question dialog? 
+ *
+ * show the alert dialog for TnyAlerts
+ * if it's a aquest
+ *
+ *  Returns: TRUE (Ok-pressed) or FALSE (cancel pressed)
+ **/
+gboolean modest_platform_run_alert_dialog (const gchar* prompt, gboolean is_question);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

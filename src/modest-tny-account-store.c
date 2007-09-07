@@ -58,29 +58,19 @@
 #include "modest-tny-platform-factory.h"
 #include <tny-gtk-lockable.h>
 #include <camel/camel.h>
+#include <modest-platform.h>
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-note.h>
-#include <hildon-widgets/hildon-banner.h>
-#else
-#include <hildon/hildon-note.h>
-#include <hildon/hildon-banner.h>
-#endif
 #endif
 
 #include <libgnomevfs/gnome-vfs-volume-monitor.h>
 
 /* 'private'/'protected' functions */
 static void    modest_tny_account_store_class_init   (ModestTnyAccountStoreClass *klass);
-
 static void    modest_tny_account_store_finalize     (GObject *obj);
-
 static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *obj);
-
 static void    modest_tny_account_store_init          (gpointer g, gpointer iface_data);
-
 static void    modest_tny_account_store_base_init     (gpointer g_class);
 
 static void    on_account_inserted         (ModestAccountMgr *acc_mgr, 
@@ -1058,109 +1048,92 @@ modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar
 
 
 
+static void
+log_alert_error (const GError *err)
+{
+	if (err)
+		g_warning ("%s: %d, message=%s", __FUNCTION__, err->domain, err->message);
+}
+
+
 static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyAlertType type,
 				gboolean question, const GError *error)
 {
-	g_return_val_if_fail (error, FALSE);
-
-	if ((error->domain != TNY_ACCOUNT_ERROR) 
-		&& (error->domain != TNY_ACCOUNT_STORE_ERROR)) {
-		g_warning("modest: %s: Unexpected error domain: != TNY_ACCOUNT_ERROR: %d, message=%s", 
-			__FUNCTION__, error->domain, error->message); 
-			
-		return FALSE;
-	}
+	ModestTransportStoreProtocol proto;
+	const gchar* server_name = NULL;
+	gchar *prompt = NULL;
+	gboolean retval;
 	
-	printf("DEBUG: %s: GError code: %d, message=%s\n", 
-				__FUNCTION__, error->code, error->message);
+	g_return_val_if_fail (error, FALSE);
+	log_alert_error (error);
+	
+	if ((error->domain != TNY_ACCOUNT_ERROR) && (error->domain != TNY_ACCOUNT_STORE_ERROR))
+		return FALSE;
 	
 	/* Get the server name: */
-	const gchar* server_name = NULL;
-	if (account && TNY_IS_ACCOUNT (account)) {
+	if (account && TNY_IS_ACCOUNT (account)) 
 		server_name = tny_account_get_hostname (account);
-		printf ("modest: %s: account name = %s, server_name=%s\n", __FUNCTION__, 
-			tny_account_get_id (account), server_name);
+	if (!server_name) {
+		g_warning ("%s: cannot get server name", __FUNCTION__);
+		return FALSE;
 	}
-	
-	if (!server_name)
-		server_name = _("Unknown Server");	
-		
-	ModestTransportStoreProtocol proto = MODEST_PROTOCOL_STORE_POP; /* Arbitrary default. */
+
 	if (account) {
 		const gchar *proto_name = tny_account_get_proto (account);
 		if (proto_name)
 			proto = modest_protocol_info_get_transport_store_protocol (proto_name);
 		else {
 			g_warning("modest: %s: account with id=%s has no proto.\n", __FUNCTION__, 
-				tny_account_get_id (account));
+				  tny_account_get_id (account));
+			return FALSE;
 		}
 	}
-		
-	/* const gchar *prompt = NULL; */
-	gchar *prompt = NULL;
+
 	switch (error->code) {
-		case TNY_ACCOUNT_STORE_ERROR_CANCEL_ALERT:
-		case TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL:
-			/* Don't show waste the user's time by showing him a dialog telling 
-			 * him that he has just cancelled something: */
-			g_debug ("%s: Handling GError domain=%d, code=%d (cancelled) without showing a dialog, message=%s", 
- 				__FUNCTION__, error->domain, error->code, error->message);
-			prompt = NULL;
-			break;
-			
-		case TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED:
-		case TNY_ACCOUNT_ERROR_TRY_CONNECT_SERVICE_UNAVAILABLE:
-			/* TODO: Show the appropriate message, depending on whether it's POP or IMAP: */
-			g_debug ("%s: Handling GError domain=%d, code=%d (lookup failed), message=%s", 
- 				__FUNCTION__, error->domain, error->code, error->message);
- 				
- 			switch (proto) {
- 				case MODEST_PROTOCOL_STORE_POP:
-					prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"), server_name);
-					break;
-				case MODEST_PROTOCOL_STORE_IMAP:
-					prompt = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"), server_name);
-					break;
-				case MODEST_PROTOCOL_TRANSPORT_SMTP:
-				default: /* Arbitrary default. */
-					prompt = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
-					break;
- 			}
-	
-			/*
-			prompt = g_strdup_printf(
-				_("Incorrect Account Settings:\n Host lookup failed.%s"), 
-				error->message);
-			*/
-			break;
-			
-		case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
-			g_debug ("%s: Handling GError domain=%d, code=%d (authentication not supported), message=%s", 
- 				__FUNCTION__, error->domain, error->code, error->message);
-			/*
-			A more helpful error message than what the UI spec wants
-			prompt = g_strdup_printf(
-				_("Incorrect Account Settings:\nThe secure authentication method is not supported.\n%s"), 
-				error->message);
-			*/
+	case TNY_ACCOUNT_STORE_ERROR_CANCEL_ALERT:
+	case TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL:
+		/* Don't show waste the user's time by showing him a dialog telling 
+		 * him that he has just cancelled something: */
+		return TRUE;
 
-			/* This is "Secure connection failed", even though the logical ID has _certificate_ in the name: */
-			prompt = g_strdup (_("mail_ni_ssl_certificate_error")); 
-                        
+	case TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED:
+	case TNY_ACCOUNT_ERROR_TRY_CONNECT_SERVICE_UNAVAILABLE:
+		/* TODO: Show the appropriate message, depending on whether it's POP or IMAP: */		
+		switch (proto) {
+		case MODEST_PROTOCOL_STORE_POP:
+			prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"),
+						  server_name);
 			break;
-			
-		case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
-			g_debug ("%s: Handling GError domain=%d, code=%d (certificatae), message=%s", 
- 				__FUNCTION__, error->domain, error->code, error->message);
-
-			/* TODO: This needs a logical ID and/or some specified way to ask the different certificate questions: */
-			prompt = g_strdup_printf(
-				_("Certificate Problem:\n%s"), 
-				error->message);
+		case MODEST_PROTOCOL_STORE_IMAP:
+			prompt = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"),
+						  server_name);
 			break;
+		case MODEST_PROTOCOL_TRANSPORT_SMTP:
+			prompt = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"),
+						  server_name);
+			break;
+		default:
+			g_warning ("%s: should not be reached (%d)", __FUNCTION__, proto);
+			return FALSE;
+		}
+		break;
 		
-		case TNY_ACCOUNT_ERROR_TRY_CONNECT:
+	case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
+		/* This is "Secure connection failed", even though the logical
+		 * ID has _certificate_ in the name: */
+		prompt = g_strdup (_("mail_ni_ssl_certificate_error")); 
+		break;
+			
+	case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
+		/* TODO: This needs a logical ID and/or some specified way to ask the
+		 * different certificate questions: */
+		prompt = g_strdup_printf(
+			_("Certificate Problem:\n%s"), 
+			error->message);
+		break;
+		
+	case TNY_ACCOUNT_ERROR_TRY_CONNECT:
 		/* The tinymail camel implementation just sends us this for almost 
 		 * everything, so we have to guess at the cause.
 		 * It could be a wrong password, or inability to resolve a hostname, 
@@ -1171,8 +1144,8 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
 			/* This debug output is useful. Please keep it uncommented until 
 			 * we have fixed the problems in this function: */
-			g_debug ("%s: Handling GError domain=%d, code=%d, message=%s", 
- 				__FUNCTION__, error->domain, error->code, error->message);
+			g_debug ("%s: %d, message=%s",__FUNCTION__,
+				 error->domain, error->message);
 			
 			/* TODO: Remove the internal error message for the real release.
 			 * This is just so the testers can give us more information: */
@@ -1183,52 +1156,25 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 				"%s\n (Internal error message, often very misleading):\n%s", 
 				_("Incorrect Account Settings"), 
 				error->message);
-				
+			
 			/* Note: If the password was wrong then get_password() would be called again,
 			 * instead of this vfunc being called. */
-			 
 			break;
-		
-		default:
+			
+	default:
 			g_warning ("%s: Unhandled GError code: %d, message=%s", 
-				__FUNCTION__, error->code, error->message);
+				   __FUNCTION__, error->code, error->message);
 			prompt = NULL;
-		break;
+			break;
 	}
 	
 	if (!prompt)
 		return FALSE;
-
-	ModestWindow *main_window = 
-		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-	gboolean retval = TRUE;
-	if (question) {
-		/* The Tinymail documentation says that we should show Yes and No buttons, 
-		 * when it is a question.
-		 * Obviously, we need tinymail to use more specific error codes instead,
-		 * so we know what buttons to show. */
+	else
+		retval = modest_platform_run_alert_dialog (prompt, question);
 	
-		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
-	 		prompt));
-		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
-		if (question) {
-			retval = (response == GTK_RESPONSE_YES) ||
-					 (response == GTK_RESPONSE_OK);
-		}
-	
-		gtk_widget_destroy (dialog);
-	
-	 } else {
-	 	/* Just show the error text and use the default response: */
-	 	modest_maemo_show_information_note_and_forget(GTK_WINDOW (main_window), 
-	 		prompt);
-	 }
-	
-	/* TODO: Don't free this when we no longer strdup the message for testers. */
 	g_free (prompt);
-
-
-	/* printf("DEBUG: %s: returning %d\n", __FUNCTION__, retval); */
+	
 	return retval;
 }
 
