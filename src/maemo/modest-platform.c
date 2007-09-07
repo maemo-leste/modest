@@ -1013,7 +1013,8 @@ set_account_to_online (TnyAccount *account)
 	#endif
 }
 
-gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account)
+gboolean 
+modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account)
 {
 	if (connect_request_in_progress)
 		return FALSE;
@@ -1071,7 +1072,8 @@ gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount 
 	return result;
 }
 
-gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account)
+gboolean 
+modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account)
 {
 	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
 		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
@@ -1084,7 +1086,8 @@ gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_
 	return modest_platform_connect_and_wait (parent_window, account);
 }
 
-gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store)
+gboolean 
+modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store)
 {
 	if (!folder_store)
 		return TRUE; /* Maybe it is something local. */
@@ -1105,7 +1108,8 @@ gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *par
 	return result;
 }
 
-gboolean modest_platform_is_network_folderstore (TnyFolderStore *folder_store)
+gboolean 
+modest_platform_is_network_folderstore (TnyFolderStore *folder_store)
 {
         TnyAccount *account = NULL;
         gboolean result = TRUE;
@@ -1160,7 +1164,8 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 }
 
 
-gboolean modest_platform_set_update_interval (guint minutes)
+gboolean 
+modest_platform_set_update_interval (guint minutes)
 {
 	ModestConf *conf = modest_runtime_get_conf ();
 	if (!conf)
@@ -1251,16 +1256,24 @@ modest_platform_get_global_settings_dialog ()
 }
 
 void 
-modest_platform_on_new_msg (void)
+modest_platform_on_new_header_received (TnyHeader *header)
 {
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	HildonNotification *not;
-	
+	gchar *url = NULL;
+	TnyFolder *folder = NULL;
+
 	/* Create a new notification. TODO: per-mail data needed */
-	not = hildon_notification_new ("TODO: (new email) Summary",
-				       "TODO: (new email) Description",
+	not = hildon_notification_new (tny_header_get_from (header),
+				       tny_header_get_subject (header),
 				       "qgn_list_messagin_mail_unread",
 				       NULL);
+
+	folder = tny_header_get_folder (header);
+	url = g_strdup_printf ("%s/%s", 
+			       tny_folder_get_url_string (folder), 
+			       tny_header_get_uid (header));
+	g_object_unref (folder);
 
 	hildon_notification_add_dbus_action(not,
 					    "default",
@@ -1268,8 +1281,10 @@ modest_platform_on_new_msg (void)
 					    MODEST_DBUS_SERVICE,
 					    MODEST_DBUS_OBJECT,
 					    MODEST_DBUS_IFACE,
-					    MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX,
+					    MODEST_DBUS_METHOD_OPEN_MESSAGE,
+					    G_TYPE_STRING, url,
 					    -1);
+	g_free (url);
 	
 	/* Play sound SR-SND-18 */
 	hildon_notification_set_sound

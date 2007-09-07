@@ -1520,7 +1520,7 @@ modest_ui_actions_on_sort (GtkAction *action,
 
 static void
 new_messages_arrived (ModestMailOperation *self, 
-		      gint new_messages,
+		      TnyList *new_headers,
 		      gpointer user_data)
 {
 	ModestMainWindow *win = NULL;
@@ -1546,8 +1546,19 @@ new_messages_arrived (ModestMailOperation *self,
 	}	
 
 	/* Notify new messages have been downloaded */
-	if (new_messages > 0)
-		modest_platform_on_new_msg ();
+	if (tny_list_get_length (new_headers) > 0) {
+		TnyIterator *iter = tny_list_create_iterator (new_headers);
+		do {
+			TnyHeader *header =  NULL;
+
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			modest_platform_on_new_header_received (header);
+			g_object_unref (header);
+
+			tny_iterator_next (iter);
+		} while (!tny_iterator_is_done (iter));
+		g_object_unref (iter);
+	}
 }
 
 /*

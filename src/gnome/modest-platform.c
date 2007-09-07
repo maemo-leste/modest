@@ -217,7 +217,7 @@ modest_platform_get_global_settings_dialog ()
 }
 
 void 
-modest_platform_on_new_msg (void)
+modest_platform_on_new_header_received (TnyHeader *header)
 {
 	/* TODO: implement this */
 	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
