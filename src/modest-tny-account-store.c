@@ -1060,7 +1060,8 @@ static gboolean
 modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyAlertType type,
 				gboolean question, const GError *error)
 {
-	ModestTransportStoreProtocol proto;
+	ModestTransportStoreProtocol proto =
+		MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; 
 	const gchar* server_name = NULL;
 	gchar *prompt = NULL;
 	gboolean retval;
