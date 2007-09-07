@@ -192,8 +192,9 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 		 * as soon as it is instantiated: */
 		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
 
-		g_hash_table_insert (send_queue_cache, account, send_queue);
-		g_object_ref (send_queue);
+		g_hash_table_insert (send_queue_cache, 
+				     g_object_ref (account), 
+				     g_object_ref (send_queue));
 	}
 
 	return MODEST_TNY_SEND_QUEUE(send_queue);

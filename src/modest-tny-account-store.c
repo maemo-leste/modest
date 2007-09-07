@@ -859,7 +859,8 @@ modest_tny_account_store_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-gboolean volume_path_is_mounted (const gchar* path)
+gboolean 
+volume_path_is_mounted (const gchar* path)
 {
 	g_return_val_if_fail (path, FALSE);
 
@@ -1571,6 +1572,7 @@ insert_account (ModestTnyAccountStore *self,
 
 		/* Add account to the list */
 		tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
+		g_assert (TNY_IS_ACCOUNT (transport_account));
 
 		/* Add connection-specific transport accounts */
 		add_connection_specific_transport_accounts (self);
@@ -1730,6 +1732,7 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 							   (gpointer)self);
 
 					tny_list_append (priv->transport_accounts, G_OBJECT (tny_account));
+					g_object_unref (tny_account);
 				} else
 					g_printerr ("modest: failed to create smtp-specific account for %s\n",
 						    transport_account_name);
