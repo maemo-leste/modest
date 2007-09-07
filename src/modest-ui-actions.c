@@ -3760,7 +3760,6 @@ has_retrieved_msgs (TnyList *list)
  * GTK_RESPONSE_OK
  *
  * This one is used by the next functions:
- *	modest_ui_actions_xfer_messages_from_move_to
  *	modest_ui_actions_on_paste			- commented out
  *	drag_and_drop_from_header_view (for d&d in modest_folder_view.c)
  */
@@ -4040,7 +4039,6 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 					      ModestWindow *win)
 {
 	TnyList *headers = NULL;
-	gint response = 0;
 	TnyAccount *dst_account = NULL;
 	const gchar *proto_str = NULL;
 	gboolean dst_is_pop = FALSE;
@@ -4075,39 +4073,30 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 		return;
 	}
 
-	/* Ask for user confirmation */
-	response = msgs_move_to_confirmation (GTK_WINDOW (win), 
-					      TNY_FOLDER (dst_folder), 
-					      TRUE,
-					      headers);
-
-	/* Transfer messages */
-	if (response == GTK_RESPONSE_OK) {
-                GtkWidget *inf_note;
-		inf_note = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
-							     _CS("ckct_nw_pasting"));
-		if (inf_note != NULL)  {
-			gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
-			gtk_widget_show (GTK_WIDGET(inf_note));
-		}
-
-		ModestMailOperation *mail_op = 
-			modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-								       G_OBJECT(win),
-								       modest_ui_actions_move_folder_error_handler,
-								       NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-						 mail_op);
-
-		modest_mail_operation_xfer_msgs (mail_op, 
-						 headers,
-						 TNY_FOLDER (dst_folder),
-						 TRUE,
-						 move_to_cb,
-						 inf_note);
-
-		g_object_unref (G_OBJECT (mail_op));
+        GtkWidget *inf_note;
+	inf_note = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
+						     _CS("ckct_nw_pasting"));
+	if (inf_note != NULL)  {
+		gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
+		gtk_widget_show (GTK_WIDGET(inf_note));
 	}
+
+	ModestMailOperation *mail_op = 
+		modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+							       G_OBJECT(win),
+							       modest_ui_actions_move_folder_error_handler,
+							       NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+
+	modest_mail_operation_xfer_msgs (mail_op, 
+					 headers,
+					 TNY_FOLDER (dst_folder),
+					 TRUE,
+					 move_to_cb,
+					 inf_note);
+
+	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (headers);
 }
 
