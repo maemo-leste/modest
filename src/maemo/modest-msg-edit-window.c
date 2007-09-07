@@ -1106,8 +1106,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	GdkPixbuf *window_icon = NULL;
 	GtkAction *action;
 	ModestConf *conf;
-	gboolean prefer_formatted;
-	gint file_format;
 	ModestPair *account_pair = NULL;
 
 	g_return_val_if_fail (msg, NULL);
@@ -1233,18 +1231,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
-
-	/* Setup the file format */
-	conf = modest_runtime_get_conf ();
-	prefer_formatted = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
-	if (error) {
-		g_clear_error (&error);
-		file_format = MODEST_FILE_FORMAT_FORMATTED_TEXT;
-	} else
-		file_format = (prefer_formatted) ? 
-			MODEST_FILE_FORMAT_FORMATTED_TEXT : 
-			MODEST_FILE_FORMAT_PLAIN_TEXT;
-	modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (obj), file_format);
 
 	update_paste_dimming (MODEST_MSG_EDIT_WINDOW (obj));
 	priv->update_caption_visibility = TRUE;
