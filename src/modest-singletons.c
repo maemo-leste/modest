@@ -40,7 +40,6 @@ struct _ModestSingletonsPrivate {
 	ModestConf                *conf;
 	ModestAccountMgr          *account_mgr;
 	ModestEmailClipboard      *email_clipboard;
-	ModestTnyAccountStore     *account_store;
 	ModestCacheMgr            *cache_mgr;	
 	ModestMailOperationQueue  *mail_op_queue;
 	TnyPlatformFactory        *platform_fact;
@@ -98,7 +97,6 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->conf            = NULL;
 	priv->account_mgr     = NULL;
 	priv->email_clipboard = NULL;
-	priv->account_store   = NULL;
 	priv->cache_mgr       = NULL;
 	priv->mail_op_queue   = NULL;
 	priv->platform_fact   = NULL;
@@ -135,12 +133,6 @@ modest_singletons_init (ModestSingletons *obj)
 		return;
 	}
 	
-	priv->account_store  = modest_tny_account_store_new (priv->account_mgr, priv->device);
-	if (!priv->account_store) {
-		g_printerr ("modest: cannot create modest tny account store instance\n");
-		return;
-	}
-	
 	priv->cache_mgr     = modest_cache_mgr_new ();
 	if (!priv->cache_mgr) {
 		g_printerr ("modest: cannot create modest cache mgr instance\n");
@@ -173,12 +165,6 @@ modest_singletons_finalize (GObject *obj)
 		priv->window_mgr = NULL;
 	}
 	
-	if (priv->account_store) {
-		modest_runtime_verify_object_last_ref(priv->account_store,"");
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
-	}
-
 	if (priv->email_clipboard) {
 		modest_runtime_verify_object_last_ref(priv->email_clipboard,"");
 		g_object_unref (G_OBJECT(priv->email_clipboard));
@@ -245,7 +231,7 @@ modest_singletons_new (void)
 	priv = MODEST_SINGLETONS_GET_PRIVATE(self);
 	
 	/* widget_factory will still be NULL, as it is initialized lazily */
-	if (!(priv->conf && priv->account_mgr && priv->email_clipboard && priv->account_store &&
+	if (!(priv->conf && priv->account_mgr && priv->email_clipboard && 
 	      priv->cache_mgr && priv->mail_op_queue && priv->device && priv->platform_fact)) {
 		g_printerr ("modest: failed to create singletons object\n");
 		g_object_unref (G_OBJECT(self));
@@ -276,13 +262,6 @@ modest_singletons_get_email_clipboard (ModestSingletons *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->email_clipboard;
-}
-
-ModestTnyAccountStore*
-modest_singletons_get_account_store (ModestSingletons *self)
-{
-	g_return_val_if_fail (self, NULL);
-	return MODEST_SINGLETONS_GET_PRIVATE(self)->account_store;
 }
 
 ModestCacheMgr*

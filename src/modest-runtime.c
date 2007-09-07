@@ -46,7 +46,12 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-icon-names.h>
 
-static ModestSingletons *_singletons = NULL;
+static ModestSingletons       *_singletons    = NULL;
+
+// we get the account store here instead of in Singletons
+// as it leads to various chicken & problems with initialization
+static ModestTnyAccountStore  *_account_store  = NULL;
+
 
 /*
  * private functions declared in modest-runtime-priv.h -
@@ -66,7 +71,7 @@ modest_runtime_init (void)
 		g_printerr ("modest: failed to create singletons\n");
 		return FALSE;
 	}
-
+	
 	return TRUE;
 }
 
@@ -80,7 +85,14 @@ modest_runtime_uninit (void)
 	modest_runtime_verify_object_last_ref(_singletons,"");
 	g_object_unref(G_OBJECT(_singletons));
 	_singletons = NULL;
-		
+
+	if (_account_store) {
+		modest_runtime_verify_object_last_ref(_account_store,"");
+		g_object_unref(G_OBJECT(_account_store));
+		_account_store = NULL;
+	}
+
+	
 	return TRUE;
 }
 /*-----------------------------------------------------------------------------*/
@@ -103,10 +115,18 @@ modest_runtime_get_email_clipboard   (void)
 ModestTnyAccountStore*
 modest_runtime_get_account_store   (void)
 {
-	if (!_singletons)
-		return NULL;
-	return modest_singletons_get_account_store (_singletons);
-
+	// we get the account store here instead of in Singletons
+        // as it leads to various chicken & problems with initialization
+	g_return_val_if_fail (_singletons, NULL);	
+	if (!_account_store) {
+		_account_store  = modest_tny_account_store_new (modest_runtime_get_account_mgr(),
+								modest_runtime_get_device());
+		if (!_account_store) {
+			g_printerr ("modest: cannot create modest tny account store instance\n");
+			return NULL;
+		}
+	}
+	return _account_store;
 }
 
 ModestConf*

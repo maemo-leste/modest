@@ -36,7 +36,6 @@
 #include <modest-conf.h>
 #include <modest-email-clipboard.h>
 #include <modest-account-mgr.h>
-#include <modest-tny-account-store.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-cache-mgr.h>
 #include <modest-tny-platform-factory.h>
@@ -124,17 +123,6 @@ ModestAccountMgr*         modest_singletons_get_account_mgr   (ModestSingletons 
  **/
 ModestEmailClipboard*      modest_singletons_get_email_clipboard (ModestSingletons *self);
 
-/**
- * modest_singletons_get_account_store:
- * @self: a valid #ModestSingletons instance
- * 
- * get the #ModestTnyAccountStore singleton instance
- * don't use this function directly, use the modest-runtime
- * functions instead.
- *
- * Returns: the #ModestTnyAccountStore singleton
- **/
-ModestTnyAccountStore*    modest_singletons_get_account_store (ModestSingletons *self);
 
 /**
  * modest_singletons_get_cache_mgr:
