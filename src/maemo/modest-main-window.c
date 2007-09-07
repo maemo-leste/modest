@@ -142,8 +142,8 @@ static void set_toolbar_mode                  (ModestMainWindow *self,
 
 static gboolean set_toolbar_transfer_mode     (ModestMainWindow *self); 
 
-static void on_show_account_action_activated      (GtkAction *action,
-						   gpointer user_data);
+static void on_show_account_action_toggled      (GtkToggleAction *action,
+						 gpointer user_data);
 
 static void on_refresh_account_action_activated   (GtkAction *action,
 						   gpointer user_data);
@@ -214,6 +214,7 @@ struct _ModestMainWindowPrivate {
 
 	/* Merge ids used to add/remove accounts to the ViewMenu*/
 	GByteArray *merge_ids;
+	GtkActionGroup *view_additions_group;
 
 	/* On-demand widgets */
 	GtkWidget *accounts_popup;
@@ -484,11 +485,11 @@ update_menus (ModestMainWindow* self)
 	ModestWindowPrivate *parent_priv;
 	ModestAccountMgr *mgr;
 	gint i, num_accounts;
-	GtkActionGroup *action_group;
 	GList *groups;
 	gchar *default_account;
 	GtkWidget *send_receive_button, *item;
 	GtkAction *send_receive_all = NULL;
+	GSList *radio_group;
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
@@ -568,7 +569,8 @@ update_menus (ModestMainWindow* self)
 
 	/* Create a new action group */
 	default_account = modest_account_mgr_get_default_account (mgr);
-	action_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
+	priv->view_additions_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
+	radio_group = NULL;
 	for (i = 0; i < num_accounts; i++) {
 		gchar *display_name = NULL;
 		
@@ -595,9 +597,16 @@ update_menus (ModestMainWindow* self)
 			guint8 merge_id = 0;
 			GtkAction *view_account_action, *refresh_account_action;
 
-			view_account_action = gtk_action_new (account_data->account_name,
-							      display_name, NULL, NULL);
-			gtk_action_group_add_action (action_group, view_account_action);
+			view_account_action = GTK_ACTION (gtk_radio_action_new (account_data->account_name,
+										display_name, NULL, NULL, 0));
+			gtk_action_group_add_action (priv->view_additions_group, view_account_action);
+			gtk_radio_action_set_group (GTK_RADIO_ACTION (view_account_action), radio_group);
+			radio_group = gtk_radio_action_get_group (GTK_RADIO_ACTION (view_account_action));
+
+			if (default_account && account_data->account_name && 
+			    (strcmp (default_account, account_data->account_name) == 0)) {
+				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (view_account_action), TRUE);
+			}
 
 			/* Add ui from account data. We allow 2^9-1 account
 			   changes in a single execution because we're
@@ -615,17 +624,17 @@ update_menus (ModestMainWindow* self)
 					       FALSE);
 
 			/* Connect the action signal "activate" */
-			g_signal_connect (G_OBJECT (view_account_action),
-					  "activate",
-					  G_CALLBACK (on_show_account_action_activated),
-					  self);
+			g_signal_connect_after (G_OBJECT (view_account_action),
+						"toggled",
+						G_CALLBACK (on_show_account_action_toggled),
+						self);
 
 			/* Create the items for the Tools->Send&Receive submenu */
 			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
 			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
 								 display_name, NULL, NULL);
 			printf("DEBUG: %s: menu display_name=%s\n", __FUNCTION__, display_name);
-			gtk_action_group_add_action (action_group, refresh_account_action);
+			gtk_action_group_add_action (priv->view_additions_group, refresh_account_action);
 
 			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
@@ -680,7 +689,7 @@ update_menus (ModestMainWindow* self)
 		g_free (display_name);
 	}
 
-	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 1);
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, priv->view_additions_group, 1);
 
 	/* We cannot do this in the loop above because this relies on the action
 	 * group being inserted. This makes the default account appear in bold.
@@ -2312,6 +2321,7 @@ static void
 set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 {
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	GtkAction *action;
 
 	/* Get account data */
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
@@ -2322,9 +2332,18 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		modest_folder_view_set_account_id_of_visible_server_account (priv->folder_view,
 									     acc_data->store_account->account_name);
 		modest_window_set_active_account (MODEST_WINDOW (self), acc_data->account_name);
+		action = gtk_action_group_get_action (priv->view_additions_group, acc_data->account_name);
+		if (action != NULL) {
+			if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action))) {
+				modest_maemo_toggle_action_set_active_block_notify (
+					GTK_TOGGLE_ACTION (action),
+					TRUE);
+			}
+		}
 	}
 	
 	modest_folder_view_select_first_inbox_or_local (priv->folder_view);
+
 
 	/* Free */
 	if (acc_data)
@@ -2357,13 +2376,14 @@ set_at_least_one_account_visible(ModestMainWindow *self)
 }
 
 static void 
-on_show_account_action_activated  (GtkAction *action,
+on_show_account_action_toggled  (GtkToggleAction *action,
 				   gpointer user_data)
 {
 	ModestMainWindow *self = MODEST_MAIN_WINDOW (user_data);
 
-	const gchar *acc_name = gtk_action_get_name (action);
-	set_account_visible (self, acc_name);
+	const gchar *acc_name = gtk_action_get_name (GTK_ACTION (action));
+	if (gtk_toggle_action_get_active (action))
+		set_account_visible (self, acc_name);
 }
 
 static void
