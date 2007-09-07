@@ -149,7 +149,53 @@ static gboolean connect_to_get_msg (
 						GtkWindow *win,
 						gint num_of_uncached_msgs);
 
+static gboolean remote_folder_is_pop (const TnyFolderStore *folder);
 
+static gboolean msgs_already_deleted_from_server ( TnyList *headers,
+                                                   const TnyFolderStore *src_folder);
+
+
+/*
+ * This function checks whether a TnyFolderStore is a pop account
+ */
+static gboolean
+remote_folder_is_pop (const TnyFolderStore *folder)
+{
+        const gchar *proto = NULL;
+        TnyAccount *account = NULL;
+
+        g_return_val_if_fail (TNY_IS_FOLDER_STORE(folder), FALSE);
+
+        if (TNY_IS_ACCOUNT (folder)) {
+                account = TNY_ACCOUNT(folder);
+                g_object_ref(account);
+        } else if (TNY_IS_FOLDER (folder)) {
+                account = tny_folder_get_account(TNY_FOLDER(folder));
+        }
+
+        proto = tny_account_get_proto(account);
+        g_object_unref (account);
+
+        return proto &&
+          (modest_protocol_info_get_transport_store_protocol (proto) == MODEST_PROTOCOL_STORE_POP);
+}
+
+/*
+ * This functions checks whether if a list of messages are already
+ * deleted from the server: that is, if the server is a POP account
+ * and all messages are already cached.
+ */
+static gboolean
+msgs_already_deleted_from_server (TnyList *headers, const TnyFolderStore *src_folder)
+{
+        g_return_val_if_fail (TNY_IS_FOLDER_STORE(src_folder), FALSE);
+        g_return_val_if_fail (TNY_IS_LIST(headers), FALSE);
+
+        gboolean src_is_pop = remote_folder_is_pop (src_folder);
+        gint uncached_msgs = header_list_count_uncached_msgs (headers);
+
+        return (src_is_pop && !uncached_msgs);
+}
 
 /* Show the account creation wizard dialog.
  * returns: TRUE if an account was created. FALSE if the user cancelled.
@@ -4178,10 +4224,14 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                 gboolean do_xfer = TRUE;
                 /* Ask for confirmation if the source folder is remote and we're not connected */
                 if (!online && modest_platform_is_network_folderstore(src_folder)) {
-                        guint num_headers = modest_header_view_count_selected_headers(header_view);
-                        if (!connect_to_get_msg(GTK_WINDOW(win), num_headers)) {
-                                do_xfer = FALSE;
+                        TnyList *headers = modest_header_view_get_selected_headers(header_view);
+                        if (!msgs_already_deleted_from_server(headers, src_folder)) {
+                                guint num_headers = tny_list_get_length(headers);
+                                if (!connect_to_get_msg(GTK_WINDOW(win), num_headers)) {
+                                        do_xfer = FALSE;
+                                }
                         }
+                        g_object_unref(headers);
                 }
                 if (do_xfer) /* Transfer messages */
                         modest_ui_actions_xfer_messages_from_move_to (dst_folder, MODEST_WINDOW (win));
@@ -4210,7 +4260,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	g_object_unref (header);
 
 	/* Transfer the message if online or confirmed by the user */
-        if (tny_device_is_online (modest_runtime_get_device()) ||
+        if (tny_device_is_online (modest_runtime_get_device()) || remote_folder_is_pop(src_folder) ||
             (modest_platform_is_network_folderstore(src_folder) && connect_to_get_msg(GTK_WINDOW(win), 1))) {
 		modest_ui_actions_xfer_messages_from_move_to (dst_folder, MODEST_WINDOW (win));
         }
