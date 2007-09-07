@@ -531,16 +531,10 @@ on_window_destroy (ModestWindow *window,
 										 _("mcen_nc_no_email_message_modified_save_changes"));
 				/* Save to drafts */
 				if (response != GTK_RESPONSE_CANCEL) 				
-					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));
-				
-			} 
+					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));				
+			}
 		}
 	}
-
-	/* Save configuration state (TODO: why edit window does not require this function ?) */
-	if (!MODEST_IS_MSG_EDIT_WINDOW (window)) 
-		modest_window_save_state (MODEST_WINDOW(window));
-
 
 	/* Unregister window */
 	modest_window_mgr_unregister_window (self, window);
