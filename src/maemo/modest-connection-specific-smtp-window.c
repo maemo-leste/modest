@@ -65,6 +65,8 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 	ModestAccountMgr *account_manager;
 };
 
+static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
+
 static void
 modest_connection_specific_smtp_window_get_property (GObject *object, guint property_id,
 															GValue *value, GParamSpec *pspec)
@@ -452,6 +454,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_optionalsmtp_servers"));
+
+	/* Track key presses to close the window if the Escape is pressed */
+	g_signal_connect (G_OBJECT (self), 
+			  "key-press-event", 
+			  G_CALLBACK (on_key_pressed), NULL);
 }
 
 ModestConnectionSpecificSmtpWindow*
@@ -583,3 +590,15 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 	}
 }
 
+static gboolean
+on_key_pressed (GtkWidget *self,
+		GdkEventKey *event,
+		gpointer user_data)
+{
+	if (event->keyval == GDK_Escape) {
+		/* Simulate a press on Cancel to close the dialog */
+		on_button_cancel (NULL, self);
+	}
+	
+	return FALSE;
+}
