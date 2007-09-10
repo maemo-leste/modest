@@ -688,6 +688,7 @@ modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
 		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW (win));
 		
 		/* The accounts dialog must be modal  */
+		gtk_window_set_modal (GTK_WINDOW (account_win), TRUE);
 		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), account_win); 
 	}
 #else

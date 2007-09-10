@@ -234,6 +234,7 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			
 			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
 				txt));
+			gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 			gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
 			g_free (txt);
 			txt = NULL;
@@ -279,6 +280,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
 
 		modest_account_settings_dialog_set_account_name (dialog, account_name);
+		gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 		modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
 	}
 	
@@ -306,8 +308,7 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	GtkDialog *wizard;
 	
 	/* Show the easy-setup wizard: */	
-	wizard = modest_window_mgr_get_easysetup_dialog
-		(modest_runtime_get_window_mgr());
+	wizard = modest_window_mgr_get_easysetup_dialog (modest_runtime_get_window_mgr());
 	if (wizard) {
 		/* old wizard is active already; 
 		 */
@@ -316,10 +317,11 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	} else {
 		/* there is no such wizard yet */
 		wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
-		modest_window_mgr_set_easysetup_dialog
-			(modest_runtime_get_window_mgr(), GTK_DIALOG(wizard));
+		modest_window_mgr_set_easysetup_dialog (modest_runtime_get_window_mgr(), 
+							GTK_DIALOG(wizard));
 	} 
 	
+	gtk_window_set_modal (GTK_WINDOW (wizard), TRUE);
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));
 	/* Destroy the dialog when it is closed: */
 	g_signal_connect (G_OBJECT (wizard), "response", G_CALLBACK
