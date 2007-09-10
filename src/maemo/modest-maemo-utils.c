@@ -564,20 +564,13 @@ modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 
 }
 
-static void
-on_response (GtkDialog *dialog, gint response, gpointer user_data)
-{
-	/* Just destroy the dialog: */
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-}
-
 void
 modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message)
 {
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, message));
 	
 	/* Destroy the dialog when it is closed: */
-	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (on_response), NULL);
+	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (gtk_widget_destroy), NULL);
 	gtk_widget_show (GTK_WIDGET (dialog));
 }
 
@@ -611,7 +604,9 @@ on_idle_show_information(gpointer user_data)
 	return FALSE; /* Don't call this again. */
 }
 
-void modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *parent_window, const gchar* message)
+void 
+modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *parent_window, 
+							       const gchar* message)
 {
 	ModestIdleNoteInfo *info = g_slice_new (ModestIdleNoteInfo);
 	info->parent_window = parent_window;
@@ -621,19 +616,26 @@ void modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *p
 }
 #endif
 
-void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog)
+void 
+modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, 
+				     GtkDialog *dialog)
 {
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
 	
 	/* Destroy the dialog when it is closed: */
-	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (on_response), NULL);
+	g_signal_connect_swapped (dialog, 
+				  "response", 
+				  G_CALLBACK (gtk_widget_destroy), 
+				  dialog);
+
 	gtk_widget_show (GTK_WIDGET (dialog));
 }
 
 
 
 void
-modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable)
+modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, 
+				      gboolean thumbable)
 {
 	g_return_if_fail (GTK_IS_SCROLLED_WINDOW(win));
 #ifdef MODEST_HAVE_HILDON1_WIDGETS		
