@@ -1597,8 +1597,8 @@ folder_monitor_update (TnyFolderObserver *self,
 		helper->self = MODEST_HEADER_VIEW(self);
 		helper->change = g_object_ref(change);
 
-/* 		if (folder != NULL) */
-/* 			tny_folder_poke_status (folder); */
+		if (folder != NULL)
+			tny_folder_poke_status (folder);
 
 		idle_notify_headers_count_changed (helper);
 		idle_notify_headers_count_changed_destroy (helper);

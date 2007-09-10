@@ -181,10 +181,10 @@ static void
 set_at_least_one_account_visible(ModestMainWindow *self);
 
 static void
-modest_main_window_on_send_queue_status_canged (ModestTnySendQueue *send_queue,
-						gchar *msg_id, 
-						guint status,
-						gpointer user_data);
+modest_main_window_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
+						 gchar *msg_id, 
+						 guint status,
+						 gpointer user_data);
 
 /* list my signals */
 enum {
@@ -1540,7 +1540,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 				
 				/* Connect 'status_changed' signal of this new send-queue */
 				priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT (send_queue), "status_changed", 
-									       G_CALLBACK (modest_main_window_on_send_queue_status_canged), 
+									       G_CALLBACK (modest_main_window_on_send_queue_status_changed), 
 									       self);
 			}
 			
@@ -1584,10 +1584,10 @@ modest_main_window_show_toolbar (ModestWindow *self,
 }
 
 static void
-modest_main_window_on_send_queue_status_canged (ModestTnySendQueue *send_queue,
-						gchar *msg_id, 
-						guint status,
-						gpointer user_data)
+modest_main_window_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
+						 gchar *msg_id, 
+						 guint status,
+						 gpointer user_data)
 {
 	ModestMainWindowPrivate *priv = NULL;
 	TnyFolderStore *selected_folder = NULL;
@@ -1644,7 +1644,7 @@ on_account_inserted (TnyAccountStore *accoust_store,
  
 	/* Connect 'status_changed' signal of this new send-queue */
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (send_queue), "status_changed", 
-						       G_CALLBACK (modest_main_window_on_send_queue_status_canged), 
+						       G_CALLBACK (modest_main_window_on_send_queue_status_changed), 
 						       user_data);
 	
 	/* Free */
