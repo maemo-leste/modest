@@ -693,6 +693,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 	ModestWindowPrivate *parent_priv = NULL;
 	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
+	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	GdkPixbuf *window_icon;
@@ -713,6 +714,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
 	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
+	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -756,12 +758,18 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 					      modest_msg_view_toolbar_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
 					      self);
+	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
+					      modest_msg_view_clipboard_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_clipboard_dimming_entries),
+					      self);
 
 	/* Insert dimming rules group for this window */
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
 	g_object_unref (menu_rules_group);
 	g_object_unref (toolbar_rules_group);
+	g_object_unref (clipboard_rules_group);
 
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
@@ -825,6 +833,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 
 	/* Check toolbar dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
 	
 }
 
@@ -1976,34 +1985,10 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 					       GdkEvent *event,
 					       ModestMsgViewWindow *window)
 {
-	ModestWindowPrivate *parent_priv;
-/* 	GtkAction *action; */
-	gboolean is_address;
-	gchar *selection;
-	GtkWidget *focused;
-
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	selection = gtk_clipboard_wait_for_text (clipboard);
-
-	is_address = ((selection != NULL) && (modest_text_utils_validate_recipient (selection, NULL)));
-	
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsAddToContactsMenu"); */
-/* 	gtk_action_set_sensitive (action, is_address); */
-
-	focused = gtk_window_get_focus (GTK_WINDOW (window));
-
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCopyMenu"); */
-/* 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused))); */
-
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/EditCutMenu"); */
-/* 	gtk_action_set_sensitive (action, (selection != NULL) && (!MODEST_IS_ATTACHMENTS_VIEW (focused))); */
-
-	g_free (selection);
-/* 	modest_msg_view_window_update_dimmed (window); */
-	
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
 }
 
 gboolean 

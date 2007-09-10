@@ -20,8 +20,6 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 
 	/* Edit Menu */
 	{ "/MenuBar/EditMenu", NULL },
-	{ "/MenuBar/EditMenu/EditCutMenu", G_CALLBACK(modest_ui_dimming_rules_always_dimmed) },
-	{ "/MenuBar/EditMenu/EditCopyMenu", G_CALLBACK(modest_ui_dimming_rules_on_copy) },
 	{ "/MenuBar/EditMenu/EditPasteMenu", G_CALLBACK(modest_ui_dimming_rules_always_dimmed) },
 	{ "/MenuBar/EditMenu/EditSelectAllMenu", NULL },
 	{ "/MenuBar/EditMenu/EditMoveToMenu", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
@@ -41,7 +39,6 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 
 	/* Tools Menu */
 	{ "/MenuBar/ToolsMenu", NULL },
-	{ "/MenuBar/ToolsMenu/ToolsAddToContactsMenu", G_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts) },
 
 	/* Close Menu */
 	{ "/MenuBar/CloseMenu", NULL },
@@ -53,6 +50,13 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 	{ "/ToolbarReplyCSM/MessageReplyAllMenu", NULL },
 	{ "/ToolbarReplyCSM/MessageReplyMenu", NULL },
 	
+};
+
+/* Clipboard status dimming rule entries */
+static const ModestDimmingEntry modest_msg_view_clipboard_dimming_entries [] = {
+	{ "/MenuBar/EditMenu/EditCutMenu", G_CALLBACK(modest_ui_dimming_rules_always_dimmed) },
+	{ "/MenuBar/EditMenu/EditCopyMenu", G_CALLBACK(modest_ui_dimming_rules_on_copy) },
+	{ "/MenuBar/ToolsMenu/ToolsAddToContactsMenu", G_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts) },
 };
 
 /* Menu Dimming rules entries */
