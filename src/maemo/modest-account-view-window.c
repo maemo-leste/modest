@@ -154,28 +154,53 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
  * Returns FALSE if the user chose to cancel his request instead.
  */
 static gboolean
-check_for_active_acount (ModestAccountViewWindow *self, const gchar* account_name)
+check_for_active_account (ModestAccountViewWindow *self, const gchar* account_name)
 {
-	/* Check whether any connections are active, and cancel them if 
-	 * the user wishes.
-	 */
-	ModestAccountMgr* mgr = modest_runtime_get_account_mgr ();
-	ModestMailOperationQueue* queue = modest_runtime_get_mail_operation_queue();
-	if (modest_account_mgr_account_is_busy(mgr, account_name)) {
-		GtkWidget *note = hildon_note_new_confirmation (GTK_WINDOW (self), 
-			_("emev_nc_disconnect_account"));
-		const int response = gtk_dialog_run (GTK_DIALOG(note));
+	ModestTnyAccountStore *acc_store;
+	ModestMailOperationQueue* queue;
+	TnyConnectionStatus store_conn_status, transport_conn_status;
+	TnyAccount *store_account = NULL, *transport_account = NULL;
+	gboolean retval = TRUE;
+
+	acc_store = modest_runtime_get_account_store ();
+	queue = modest_runtime_get_mail_operation_queue ();
+
+	store_account = 
+		modest_tny_account_store_get_server_account (acc_store,
+							     account_name,
+							     TNY_ACCOUNT_TYPE_STORE);
+	transport_account = 
+		modest_tny_account_store_get_server_account (acc_store,
+							     account_name,
+							     TNY_ACCOUNT_TYPE_STORE);
+
+	store_conn_status = tny_account_get_connection_status (store_account);
+	transport_conn_status = tny_account_get_connection_status (transport_account);
+
+	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED ||
+	    transport_conn_status == TNY_CONNECTION_STATUS_CONNECTED) {
+		GtkWidget *note = NULL;
+		gint response;
+
+		note = hildon_note_new_confirmation (GTK_WINDOW (self), 
+						     _("emev_nc_disconnect_account"));
+		response = gtk_dialog_run (GTK_DIALOG(note));
+
 		gtk_widget_destroy (note);
 		if (response == GTK_RESPONSE_OK) {
 			/* FIXME: We should only cancel those of this account */
-			modest_mail_operation_queue_cancel_all(queue);
-			return TRUE;
+			modest_mail_operation_queue_cancel_all (queue);
+			retval = TRUE;
+		} else {
+			retval = FALSE;
 		}
-		else
-			return FALSE;
 	}
+
+	/* Frees */
+	g_object_unref (store_account);
+	g_object_unref (transport_account);
 	
-	return TRUE;
+	return retval;
 }
 
 static void
@@ -195,7 +220,7 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	if (account_name) {
 		gchar *account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
 		
-		if (check_for_active_acount (self, account_name)) {
+		if (check_for_active_account (self, account_name)) {
 			/* The warning text depends on the account type: */
 			gchar *txt = NULL;	
 			if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
@@ -248,7 +273,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	/* Check whether any connections are active, and cancel them if 
 	 * the user wishes.
 	 */
-	if (check_for_active_acount (self, account_name)) {
+	if (check_for_active_account (self, account_name)) {
 		
 		/* Show the Account Settings window: */
 		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
