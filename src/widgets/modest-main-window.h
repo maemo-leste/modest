@@ -111,12 +111,12 @@ ModestWindow* modest_main_window_new (void);
  * true now, but might not be. Therefore, these types
  */
 typedef enum {
-	MODEST_WIDGET_TYPE_HEADER_VIEW,
-	MODEST_WIDGET_TYPE_FOLDER_VIEW,
-	MODEST_WIDGET_TYPE_MSG_PREVIEW,
+	MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW,
+	MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW,
+	MODEST_MAIN_WINDOW_WIDGET_TYPE_MSG_PREVIEW,
 	
-	MODEST_WIDGET_TYPE_NUM,
-} ModestWidgetType;
+	MODEST_MAIN_WINDOW_WIDGET_TYPE_NUM,
+} ModestMainWindowWidgetType;
 
 
 /**
@@ -127,7 +127,7 @@ typedef enum {
  * Returns: a child window or NULL
  */
 GtkWidget* modest_main_window_get_child_widget (ModestMainWindow *self,
-						ModestWidgetType widget_type);
+						ModestMainWindowWidgetType widget_type);
 
 /**
  * modest_main_window_close_all:

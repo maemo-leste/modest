@@ -301,7 +301,7 @@ get_selected_headers (ModestWindow *win)
 		GtkWidget *header_view;		
 		
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		return modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
 		
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
@@ -429,7 +429,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		header_view = 
 			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							     MODEST_WIDGET_TYPE_HEADER_VIEW);
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (!gtk_widget_is_focus (header_view))
 			return;
 	}
@@ -594,7 +594,7 @@ modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *w;
 		w = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							 MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							 MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (gtk_widget_is_focus (w)) {
 			modest_ui_actions_on_delete_folder (action, MODEST_MAIN_WINDOW(win));
 			return;
@@ -924,7 +924,7 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 			GtkTreeModel *model;
 			
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_win),
-									   MODEST_WIDGET_TYPE_HEADER_VIEW);
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
 			sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
@@ -1461,7 +1461,7 @@ modest_ui_actions_on_next (GtkAction *action,
 
 		header_view = modest_main_window_get_child_widget (
 				MODEST_MAIN_WINDOW(window),
-				MODEST_WIDGET_TYPE_HEADER_VIEW);
+				MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (!header_view)
 			return;
 	
@@ -1484,7 +1484,7 @@ modest_ui_actions_on_prev (GtkAction *action,
 	if (MODEST_IS_MAIN_WINDOW (window)) {
 		GtkWidget *header_view;
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (!header_view)
 			return;
 		
@@ -1505,7 +1505,7 @@ modest_ui_actions_on_sort (GtkAction *action,
 	if (MODEST_IS_MAIN_WINDOW (window)) {
 		GtkWidget *header_view;
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (!header_view) {
 			modest_platform_information_banner (NULL, NULL, _CS("ckdg_ib_nothing_to_sort"));
 
@@ -1533,7 +1533,7 @@ new_messages_arrived (ModestMailOperation *self,
 	/* Set contents style of headers view */
 	if (modest_main_window_get_contents_style (win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));		
 		
 
@@ -1719,7 +1719,7 @@ modest_do_refresh_current_folder(ModestWindow *win)
 		/* Get folder and header view */
 		folder_view = 
 			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
-							     MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (!folder_view)
 			return;
 
@@ -1728,7 +1728,7 @@ modest_do_refresh_current_folder(ModestWindow *win)
 		if (folder_store && TNY_IS_FOLDER (folder_store)) {
 			header_view = 
 				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								     MODEST_WIDGET_TYPE_HEADER_VIEW);
+								     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		
 			/* We do not need to set the contents style
 			   because it hasn't changed. We also do not
@@ -1776,7 +1776,7 @@ modest_ui_actions_toggle_header_list_view (GtkAction *action, ModestMainWindow *
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
 	header_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 	if (!header_view)
 		return;
 
@@ -1815,7 +1815,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 			TnyFolder *folder = modest_header_view_get_folder (header_view);
 			GtkWidget *folder_view = 
 				modest_main_window_get_child_widget (main_window,
-								     MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 			if (folder != NULL) 
 				modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), folder, FALSE);
 			gtk_widget_grab_focus (GTK_WIDGET (folder_view));
@@ -1901,7 +1901,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 
 	win = MODEST_MAIN_WINDOW (user_data);
 	header_view = 
-		modest_main_window_get_child_widget(win, MODEST_WIDGET_TYPE_HEADER_VIEW);
+		modest_main_window_get_child_widget(win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 	if (header_view) {
 		TnyFolder *current_folder;
@@ -1934,7 +1934,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
 	header_view = modest_main_window_get_child_widget(main_window,
-							  MODEST_WIDGET_TYPE_HEADER_VIEW);
+							  MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 	if (!header_view)
 		return;
 	
@@ -2469,7 +2469,7 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_windo
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
 	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return;
 
@@ -2511,12 +2511,12 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
 	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return;
 
 	header_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 	
 	if (!header_view)
 		return;
@@ -2605,7 +2605,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (main_window));
 
 	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return;
 
@@ -2668,7 +2668,7 @@ modest_ui_actions_on_delete_folder (GtkAction *action,
 
 	delete_folder (main_window, FALSE);
 	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return;
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
@@ -3216,7 +3216,7 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		
 		if (!(MODEST_IS_HEADER_VIEW (focused_widget))) {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
-									   MODEST_WIDGET_TYPE_HEADER_VIEW);
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		}
 				
 		/* Disable window dimming management */
@@ -3430,7 +3430,7 @@ modest_ui_actions_on_details (GtkAction *action,
 
 		/* Check which widget has the focus */
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								    MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								    MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (gtk_widget_is_focus (folder_view)) {
 			TnyFolderStore *folder_store
 				= modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
@@ -3449,7 +3449,7 @@ modest_ui_actions_on_details (GtkAction *action,
 
 		} else {
 			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-									   MODEST_WIDGET_TYPE_HEADER_VIEW);
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 			/* Show details of each header */
 			do_headers_action (win, headers_action_show_details, header_view);
 		}
@@ -3619,7 +3619,7 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	if (MODEST_IS_MAIN_WINDOW (user_data)) {
 		/* Get the widgets */
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (user_data),
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (gtk_widget_is_focus (folder_view))
 			moving_folder = TRUE;
 	}
@@ -3907,7 +3907,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	if (MODEST_IS_MAIN_WINDOW (user_data)) {
 		main_window = MODEST_MAIN_WINDOW(user_data);
 		folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);	
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);	
 		modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));		
 	}
 
@@ -4044,7 +4044,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
 
 	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 	header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
 
@@ -4177,7 +4177,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 	/* Get header view */
-	header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (win, MODEST_WIDGET_TYPE_HEADER_VIEW));
+	header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 
 	/* Get folder or messages to transfer */
 	if (gtk_widget_is_focus (folder_view)) {
@@ -4300,7 +4300,7 @@ modest_ui_actions_on_move_to (GtkAction *action,
 	/* Get the folder view widget if exists */
 	if (main_window)
 		folder_view = modest_main_window_get_child_widget (main_window,
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	else
 		folder_view = NULL;
 
@@ -4443,7 +4443,7 @@ modest_ui_actions_on_help (GtkAction *action,
 		
 		/* Get selected folder */
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 		/* Switch help_id */
@@ -4530,6 +4530,16 @@ modest_ui_actions_on_edit_menu_activated (GtkAction *action,
 void
 modest_ui_actions_on_view_menu_activated (GtkAction *action,
 					  ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (window));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (window, "ModestMenuDimmingRules");	
+}
+
+void
+modest_ui_actions_on_format_menu_activated (GtkAction *action,
+					    ModestWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 

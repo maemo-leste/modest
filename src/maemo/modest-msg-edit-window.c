@@ -62,6 +62,7 @@
 #include <wptextview.h>
 #include <wptextbuffer.h>
 #include "modest-scroll-area.h"
+#include "modest-msg-edit-window-ui-dimming.h"
 
 #include "modest-hildon-includes.h"
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
@@ -92,9 +93,6 @@ static void  modest_msg_edit_window_finalize     (GObject *obj);
 static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer userdata);
 static void  body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
-static void  send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
-static void  style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor);
-static void  setup_insensitive_handlers (ModestMsgEditWindow *editor);
 static void  reset_modified (ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
@@ -136,14 +134,12 @@ static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgEditWindow *window);
+static void subject_field_move_cursor (GtkEntry *entry,
+				       GtkMovementStep step,
+				       gint a1,
+				       gboolean a2,
+				       gpointer userdata);
 static void update_window_title (ModestMsgEditWindow *window);
-static void update_dimmed (ModestMsgEditWindow *window);
-static void update_paste_dimming (ModestMsgEditWindow *window);
-static void update_remove_attachment_dimming (ModestMsgEditWindow *window);
-static void update_copy_cut_dimming (ModestMsgEditWindow *window);
-static void update_select_all_dimming (ModestMsgEditWindow *window);
-static void update_zoom_dimming (ModestMsgEditWindow *window);
-static void update_send_dimming (ModestMsgEditWindow *window);
 
 /* Find toolbar */
 static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
@@ -200,11 +196,6 @@ static void DEBUG_BUFFER (WPTextBuffer *buffer)
 /* 		GdkEventKey *event, */
 /* 		gpointer user_data); */
 
-static void edit_menu_activated (GtkAction *action,
-				 gpointer userdata);
-static void view_menu_activated (GtkAction *action,
-				 gpointer userdata);
-
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -257,7 +248,9 @@ struct _ModestMsgEditWindowPrivate {
 
 	gdouble zoom_level;
 	
+	gboolean    can_undo, can_redo;
 	gulong      clipboard_change_handler_id;
+	gulong      default_clipboard_change_handler_id;
 
 	TnyMsg      *draft_msg;
 	TnyMsg      *outbox_msg;
@@ -367,7 +360,11 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->draft_msg = NULL;
 	priv->outbox_msg = NULL;
 	priv->msg_uid = NULL;
+
+	priv->can_undo = FALSE;
+	priv->can_redo = FALSE;
 	priv->clipboard_change_handler_id = 0;
+	priv->default_clipboard_change_handler_id = 0;
 	priv->sent = FALSE;
 
 	priv->last_vadj_upper = 0;
@@ -409,18 +406,6 @@ get_transports (void)
 	g_slist_free (accounts); /* only free the accounts, not the elements,
 				  * because they are used in the pairlist */
 	return transports;
-}
-
-static gboolean attachment_view_focus_lost (
-		GtkWidget *widget,
-		GdkEventFocus *event,
-		ModestMsgEditWindow *window)
-{
-	g_return_val_if_fail(MODEST_IS_MSG_EDIT_WINDOW(window), FALSE);
-
-	update_remove_attachment_dimming(window);
-
-	return FALSE;
 }
 
 void vadj_changed (GtkAdjustment *adj,
@@ -504,8 +489,6 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
-	g_signal_connect (G_OBJECT (priv->attachments_view), "focus-out-event",
-			  G_CALLBACK (attachment_view_focus_lost), obj);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
@@ -586,8 +569,8 @@ init_window (ModestMsgEditWindow *obj)
 			  "changed", G_CALLBACK (recpt_field_changed), obj);
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))),
 			  "changed", G_CALLBACK (recpt_field_changed), obj);
-	recpt_field_changed (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)), MODEST_MSG_EDIT_WINDOW (obj));
 	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
+	g_signal_connect_after (G_OBJECT (priv->subject_field), "move-cursor", G_CALLBACK (subject_field_move_cursor), obj);
 	g_signal_connect (G_OBJECT (priv->subject_field), "insert-text", G_CALLBACK (subject_field_insert_text), obj);
 
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
@@ -620,6 +603,8 @@ init_window (ModestMsgEditWindow *obj)
 	
 	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+	priv->default_clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD)), "owner-change",
+								      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
 
 }
 	
@@ -632,6 +617,10 @@ modest_msg_edit_window_disconnect_signals (ModestWindow *window)
 					   priv->clipboard_change_handler_id))
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
 					     priv->clipboard_change_handler_id);
+	if (g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
+					   priv->default_clipboard_change_handler_id))
+		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
+					     priv->default_clipboard_change_handler_id);
 }
 
 static void
@@ -881,7 +870,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 
 	reset_modified (self);
 
-	update_dimmed (self);
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
@@ -1107,6 +1096,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	GtkAction *action;
 	ModestConf *conf;
 	ModestPair *account_pair = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
+	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (account_name, NULL);
@@ -1192,11 +1184,44 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
-	setup_insensitive_handlers (MODEST_MSG_EDIT_WINDOW (obj));
-
 	account_pair = modest_pair_list_find_by_first_as_string (priv->from_field_protos, account_name);
 	if (account_pair != NULL)
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
+
+	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
+	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
+	/* Add common dimming rules */
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
+					      modest_msg_edit_window_menu_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_menu_dimming_entries),
+					      MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_msg_edit_window_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_toolbar_dimming_entries),
+					      MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_color_button,
+						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
+						    MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_size_toolitem,
+						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
+						    MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_face_toolitem,
+						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
+						    MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
+					      modest_msg_edit_window_clipboard_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_clipboard_dimming_entries),
+					      MODEST_WINDOW (obj));
+	/* Insert dimming rules group for this window */
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
+        /* Checks the dimming rules */
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
+	g_object_unref (clipboard_rules_group);
 
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
@@ -1209,6 +1234,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 		g_object_unref (window_icon);
 	}
 
+        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+        modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
+
 	/* Dim at start clipboard actions */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
 	gtk_action_set_sensitive (action, FALSE);
@@ -1216,13 +1244,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	gtk_action_set_sensitive (action, FALSE);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
 	gtk_action_set_sensitive (action, FALSE);
-
-	/* Update select all */
-	update_select_all_dimming (MODEST_MSG_EDIT_WINDOW (obj));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu");
-	g_signal_connect (G_OBJECT (action), "activate", G_CALLBACK (edit_menu_activated), obj);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu");
-	g_signal_connect (G_OBJECT (action), "activate", G_CALLBACK (view_menu_activated), obj);
 
 	/* set initial state of cc and bcc */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
@@ -1232,7 +1253,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
 
-	update_paste_dimming (MODEST_MSG_EDIT_WINDOW (obj));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
 	priv->update_caption_visibility = TRUE;
 
 	reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
@@ -2378,7 +2399,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 		}
 			break;
 		}
-		update_dimmed (window);
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	}
 }
 
@@ -2524,7 +2545,7 @@ modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 	
 	wp_text_buffer_undo (WP_TEXT_BUFFER (priv->text_buffer));
 
-	update_dimmed (window);
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 
 }
 
@@ -2538,90 +2559,46 @@ modest_msg_edit_window_redo (ModestMsgEditWindow *window)
 	
 	wp_text_buffer_redo (WP_TEXT_BUFFER (priv->text_buffer));
 
-	update_dimmed (window);
-
-}
-
-static void
-update_dimmed (ModestMsgEditWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	GtkAction *action;
-	GtkWidget *widget;
-	gboolean rich_text;
-	gboolean editor_focused;
-
-	rich_text = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
-	editor_focused = gtk_widget_is_focus (priv->msg_body);
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/SelectFontMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu"); */
-/* 	gtk_action_set_sensitive (action, rich_text && editor_focused); */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentLeftMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentCenterMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentMenu/AlignmentRightMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/InsertImageMenu");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsBold");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
-	gtk_action_set_sensitive (action, rich_text && editor_focused);
-	widget = priv->font_color_button;
-	gtk_widget_set_sensitive (widget, rich_text && editor_focused);
-	widget = priv->font_size_toolitem;
-	gtk_widget_set_sensitive (widget, rich_text && editor_focused);
-	widget = priv->font_face_toolitem;
-	gtk_widget_set_sensitive (widget, rich_text && editor_focused);
-}
-
-static void
-setup_insensitive_handlers (ModestMsgEditWindow *window)
-{
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	GtkWidget *widget;
-
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (send_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsBold");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = priv->font_color_button;
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = priv->font_size_toolitem;
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
-	widget = priv->font_face_toolitem;
-	g_signal_connect (G_OBJECT (widget), "insensitive-press", G_CALLBACK (style_insensitive_press), window);
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 
 }
 
 static void  
 text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window)
 {
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	GtkAction *action;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/UndoMenu");
-	gtk_action_set_sensitive (action, can_undo);
+	priv->can_undo = can_undo;
 }
 
 static void  
 text_buffer_can_redo (GtkTextBuffer *buffer, gboolean can_redo, ModestMsgEditWindow *window)
 {
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	GtkAction *action;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/RedoMenu");
-	gtk_action_set_sensitive (action, can_redo);
+	priv->can_redo = can_redo;
 }
+
+gboolean            
+modest_msg_edit_window_can_undo (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	return priv->can_undo;
+}
+
+gboolean            
+modest_msg_edit_window_can_redo (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	return priv->can_redo;
+}
+
 
 static void
 text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id)
@@ -2678,7 +2655,7 @@ msg_body_focus (GtkWidget *focus,
 		gpointer userdata)
 {
 	
-	update_dimmed (MODEST_MSG_EDIT_WINDOW (userdata));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (userdata));
 	return FALSE;
 }
 
@@ -2686,40 +2663,13 @@ static void
 recpt_field_changed (GtkTextBuffer *buffer,
 		  ModestMsgEditWindow *editor)
 {
-        update_send_dimming (editor);
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
 }
 
 static void
 body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
 {
-        update_send_dimming (editor);
-}
-
-static void  
-send_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
-{
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
-        const gchar *subject = gtk_entry_get_text (GTK_ENTRY (priv->subject_field));
-        if (message_is_empty(editor) || (subject == NULL || subject[0] == '\0')) {
-                hildon_banner_show_information (NULL, NULL, _("mcen_ib_subject_or_body_not_modified"));
-        } else {
-                hildon_banner_show_information (NULL, NULL, _("mcen_ib_add_recipients_first"));
-        }
-}
-
-static void
-style_insensitive_press (GtkWidget *widget, ModestMsgEditWindow *editor)
-{
-	gboolean rich_text, editor_focused;
-
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
-	rich_text = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
-	editor_focused = gtk_widget_is_focus (priv->msg_body);
-
-	if (!rich_text)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_item_unavailable_plaintext"));
-	else if (!editor_focused)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_move_cursor_to_message"));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
 }
 
 static void
@@ -2814,9 +2764,19 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
-	update_remove_attachment_dimming (window);
-	update_copy_cut_dimming (window);
-	update_paste_dimming (window);
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
+}
+static void 
+subject_field_move_cursor (GtkEntry *entry,
+			   GtkMovementStep step,
+			   gint a1,
+			   gboolean a2,
+			   gpointer window)
+{
+	if (!GTK_WIDGET_VISIBLE (window))
+		return;
+
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
 }
 
 static void 
@@ -2841,7 +2801,7 @@ subject_field_changed (GtkEditable *editable,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	update_window_title (window);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
-        update_send_dimming (window);
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 static void  
@@ -3034,170 +2994,6 @@ modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 	gtk_toggle_action_set_active (toggle, FALSE);
 }
 
-static void 
-update_remove_attachment_dimming (ModestMsgEditWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	ModestMsgEditWindowPrivate *priv;
-	GtkAction *action;
-	GList *selected_attachments = NULL;
-	gint n_att_selected = 0;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-
-	selected_attachments = modest_attachments_view_get_selection (
-			MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-	n_att_selected = g_list_length (selected_attachments);
-	g_list_free (selected_attachments);
-
-	action = gtk_ui_manager_get_action (
-			parent_priv->ui_manager,
-			"/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
-	gtk_action_set_sensitive (action, n_att_selected == 1);
-}
-
-static void 
-update_copy_cut_dimming (ModestMsgEditWindow *window)
-{
-	ModestWindowPrivate *parent_priv = NULL;
-	ModestMsgEditWindowPrivate *priv = NULL;
-	GtkAction *action = NULL;
-	gboolean has_selection = FALSE;
-	GtkWidget *focused = NULL;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	focused = gtk_window_get_focus (GTK_WINDOW (window));
-
-	if (GTK_IS_TEXT_VIEW (focused)) {
-		GtkTextBuffer *buffer = NULL;
-		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
-		has_selection = gtk_text_buffer_get_has_selection (GTK_TEXT_BUFFER (buffer));
-	} else if (GTK_IS_EDITABLE (focused)) {
-		has_selection = gtk_editable_get_selection_bounds (GTK_EDITABLE (focused), NULL, NULL);
-	}
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
-	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
-	gtk_action_set_sensitive (action, (has_selection) && (!MODEST_IS_ATTACHMENTS_VIEW (focused)));
-
-}
-
-static void 
-update_paste_dimming (ModestMsgEditWindow *window)
-{
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	GtkAction *action = NULL;
-	GtkClipboard *clipboard = NULL;
-	ModestEmailClipboard *e_clipboard;
-	GtkWidget *focused;
-	gboolean active;
-
-	focused = gtk_window_get_focus (GTK_WINDOW (window));
-
-	e_clipboard = modest_runtime_get_email_clipboard ();
-	if (!modest_email_clipboard_cleared (e_clipboard)) {
-		active = TRUE;
-	} else {
-		clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
-		active = gtk_clipboard_wait_is_text_available (clipboard);
-	}
-
-	if (active) {
-		if (MODEST_IS_ATTACHMENTS_VIEW (focused))
-			active = FALSE;
-	}
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/PasteMenu");
-	gtk_action_set_sensitive (action, active);
-
-}
-
-static void 
-update_select_all_dimming (ModestMsgEditWindow *window)
-{
-	GtkWidget *focused;
-	gboolean dimmed = FALSE;
-	GtkAction *action;
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-
-	focused = gtk_window_get_focus (GTK_WINDOW (window));
-	if (GTK_IS_ENTRY (focused)) {
-		const gchar *current_text;
-		current_text = gtk_entry_get_text (GTK_ENTRY (focused));
-		dimmed = ((current_text == NULL) || (current_text[0] == '\0'));
-	} else if (GTK_IS_TEXT_VIEW (focused)) {
-		GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
-		dimmed = (gtk_text_buffer_get_char_count (buffer) < 1);
-	} else if (MODEST_IS_ATTACHMENTS_VIEW (focused)) {
-		dimmed = FALSE;
-	}
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/SelectAllMenu");
-	gtk_action_set_sensitive (action, !dimmed);
-}
-
-static void 
-update_zoom_dimming (ModestMsgEditWindow *window)
-{
-	GtkWidget *focused;
-	gboolean dimmed = FALSE;
-	GtkAction *action;
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-
-	focused = gtk_window_get_focus (GTK_WINDOW (window));
-	dimmed = ! WP_IS_TEXT_VIEW (focused);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ZoomMenu");
-	gtk_action_set_sensitive (action, !dimmed);
-}
-
-static void
-update_send_dimming (ModestMsgEditWindow *window)
-{
-        ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-        ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-        GtkTextBuffer *to_buffer, *cc_buffer, *bcc_buffer;
-        const gchar *subject;
-	gboolean dim = FALSE;
-	GtkAction *action;
-
-	to_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field));
-	cc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field));
-	bcc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field));
-        subject = gtk_entry_get_text (GTK_ENTRY (priv->subject_field));
-
-	dim = ((gtk_text_buffer_get_char_count (to_buffer) +
-		gtk_text_buffer_get_char_count (cc_buffer) +
-		gtk_text_buffer_get_char_count (bcc_buffer)) == 0)
-          || (subject == NULL || subject[0] == '\0')
-          || message_is_empty(window);
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
-	gtk_action_set_sensitive (action, !dim);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EmailMenu/SendMenu");
-	gtk_action_set_sensitive (action, !dim);
-}
-
-static void
-edit_menu_activated (GtkAction *action,
-		     gpointer userdata)
-{
-	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
-
-	update_select_all_dimming (window);
-	update_copy_cut_dimming (window);
-	update_paste_dimming (window);
-}
-static void
-view_menu_activated (GtkAction *action,
-		     gpointer userdata)
-{
-	ModestMsgEditWindow *window = MODEST_MSG_EDIT_WINDOW (userdata);
-
-	update_zoom_dimming (window);
-}
-
 gboolean 
 modest_msg_edit_window_get_sent (ModestMsgEditWindow *window)
 {
@@ -3294,4 +3090,37 @@ modest_msg_edit_window_get_message_uid (ModestMsgEditWindow *window)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	return priv->msg_uid;
+}
+
+GtkWidget *
+modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
+					 ModestMsgEditWindowWidgetType widget_type)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), NULL);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (win);
+
+	switch (widget_type) {
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY:
+		return priv->msg_body;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_TO:
+		return priv->to_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_CC:
+		return priv->cc_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BCC:
+		return priv->bcc_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_SUBJECT:
+		return priv->subject_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_ATTACHMENTS:
+		return priv->attachments_view;
+		break;
+	default:
+		return NULL;
+	}
 }

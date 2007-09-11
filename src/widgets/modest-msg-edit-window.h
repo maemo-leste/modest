@@ -70,6 +70,16 @@ typedef enum {
 	MODEST_MSG_EDIT_FORMAT_HTML
 } ModestMsgEditFormat;
 
+typedef enum {
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY,
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_TO,
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_CC,
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BCC,
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_SUBJECT,
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_ATTACHMENTS,
+	MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_NUM,
+} ModestMsgEditWindowWidgetType;
+
 /** Get these with modest_msg_edit_window_get_msg_data() 
  * and free them with modest_msg_edit_window_free_msg_data().
  */
@@ -299,12 +309,32 @@ void            modest_msg_edit_window_select_font        (ModestMsgEditWindow *
 void            modest_msg_edit_window_undo               (ModestMsgEditWindow *window);
 
 /**
+ * modest_msg_edit_window_can_undo:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Checks if an undo operation is available
+ *
+ * Returns: %TRUE if undo can be done, %FALSE otherwise.
+ */
+gboolean            modest_msg_edit_window_can_undo               (ModestMsgEditWindow *window);
+
+/**
  * modest_msg_edit_window_redo:
  * @window: a #ModestMsgEditWindow
  *
  * Revert last undo
  */
 void            modest_msg_edit_window_redo               (ModestMsgEditWindow *window);
+
+/**
+ * modest_msg_edit_window_can_redo:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Checks if a redp operation is available
+ *
+ * Returns: %TRUE if redo can be done, %FALSE otherwise.
+ */
+gboolean            modest_msg_edit_window_can_redo               (ModestMsgEditWindow *window);
 
 /**
  * modest_msg_edit_window_select_contacts:
@@ -374,6 +404,19 @@ void            modest_msg_edit_window_set_draft           (ModestMsgEditWindow 
  * Returns: the id of the #TnyMsg being shown, or NULL in case of error
  */
 const gchar*    modest_msg_edit_window_get_message_uid (ModestMsgEditWindow *window);
+
+/**
+ * modest_msg_edit_window_get_child_widget:
+ * @win: a #ModestMsgEditWindow
+ * @widget_type: the type of the child to obtain
+ *
+ * Obtain the child widget of @win of type @widget_type
+ *
+ * Returns: a #GtkWidget, or %NULL
+ */
+GtkWidget *
+modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
+					 ModestMsgEditWindowWidgetType widget_type);
 
 G_END_DECLS
 

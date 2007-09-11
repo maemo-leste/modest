@@ -41,11 +41,11 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 
 	/* Toplevel menus */
 	{ "Email", NULL, N_("mcen_me_inbox_email") },
-	{ "View", NULL, N_("mcen_me_inbox_view") },
-	{ "Edit", NULL, N_("mcen_me_inbox_edit") },
-	{ "Format", NULL, N_("mcen_me_editor_format") },
+	{ "View", NULL, N_("mcen_me_inbox_view") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated)},
+	{ "Edit", NULL, N_("mcen_me_inbox_edit") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated)},
+	{ "Format", NULL, N_("mcen_me_editor_format") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_format_menu_activated)},
 	{ "Alignment", NULL, N_("mcen_me_editor_align") },
-	{ "Attachments", NULL, N_("mcen_me_viewer_attachments") },
+	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
 	{ "Zoom", NULL, N_("mcen_me_viewer_zoom") },
 	{ "MessagePriority", NULL, N_("mcen_me_editor_message_priority") },
 	{ "FileFormat", NULL, N_("mcen_me_editor_file_format") },

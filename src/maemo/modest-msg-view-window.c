@@ -587,7 +587,7 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 
 	header_view = MODEST_HEADER_VIEW(
 			modest_main_window_get_child_widget(
-			main_window, MODEST_WIDGET_TYPE_HEADER_VIEW));
+			main_window, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 
 	if (header_view == NULL)
 		return;
@@ -753,15 +753,15 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_msg_view_menu_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_view_menu_dimming_entries),
-					      self);
+					      MODEST_WINDOW (self));
 	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
 					      modest_msg_view_toolbar_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
-					      self);
+					      MODEST_WINDOW (self));
 	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
 					      modest_msg_view_clipboard_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_view_clipboard_dimming_entries),
-					      self);
+					      MODEST_WINDOW (self));
 
 	/* Insert dimming rules group for this window */
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
@@ -865,7 +865,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 			modest_window_mgr_get_main_window(window_mgr));
 	g_assert(main_window != NULL);
 	header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget(
-			main_window, MODEST_WIDGET_TYPE_HEADER_VIEW));
+			main_window, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	if (header_view != NULL){
 		header_folder = modest_header_view_get_folder(header_view);
 		g_assert(header_folder != NULL);

@@ -397,21 +397,21 @@ modest_main_window_finalize (GObject *obj)
 
 GtkWidget*
 modest_main_window_get_child_widget (ModestMainWindow *self,
-				     ModestWidgetType widget_type)
+				     ModestMainWindowWidgetType widget_type)
 {
 	ModestMainWindowPrivate *priv;
 	GtkWidget *widget;
 	
 	g_return_val_if_fail (self, NULL);
-	g_return_val_if_fail (widget_type >= 0 && widget_type < MODEST_WIDGET_TYPE_NUM,
+	g_return_val_if_fail (widget_type >= 0 && widget_type < MODEST_MAIN_WINDOW_WIDGET_TYPE_NUM,
 			      NULL);
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	switch (widget_type) {
-	case MODEST_WIDGET_TYPE_HEADER_VIEW:
+	case MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW:
 		widget = (GtkWidget*)priv->header_view; break;
-	case MODEST_WIDGET_TYPE_FOLDER_VIEW:
+	case MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW:
 		widget = (GtkWidget*)priv->folder_view; break;
 	default:
 		return NULL;
@@ -1213,11 +1213,11 @@ modest_main_window_new (void)
 	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_main_window_menu_dimming_entries,
 					      G_N_ELEMENTS (modest_main_window_menu_dimming_entries),
-					      self);
+					      MODEST_WINDOW (self));
 	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
 					      modest_main_window_toolbar_dimming_entries,
 					      G_N_ELEMENTS (modest_main_window_toolbar_dimming_entries),
-					      self);
+					      MODEST_WINDOW (self));
 
 	/* Insert dimming rules group for this window */
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);

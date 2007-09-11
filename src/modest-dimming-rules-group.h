@@ -97,7 +97,21 @@ void
 modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 				      const ModestDimmingEntry modest_dimming_entries[],
 				      guint n_elements,
-				      gpointer user_data);
+				      ModestWindow *window);
+
+/**
+ * modest_dimming_rules_group_add_rules:
+ * @self: the #ModestDimmingRulesGroup object which stores dimming rules.
+ * @rule: a #ModestDimmingRule 
+ * @user_data: generic user data.
+ * 
+ * Add @rule to @self dimming rules group object. 
+ **/
+void
+modest_dimming_rules_group_add_widget_rule (ModestDimmingRulesGroup *self,
+					    GtkWidget *widget,
+					    GCallback callback,
+					    ModestWindow *window);
 
 /**
  * modest_dimming_rules_group_get_name:

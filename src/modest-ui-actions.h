@@ -352,6 +352,10 @@ modest_ui_actions_on_edit_menu_activated (GtkAction *action,
 					  ModestWindow *window);
 
 void
+modest_ui_actions_on_format_menu_activated (GtkAction *action,
+					    ModestWindow *window);
+
+void
 modest_ui_actions_on_view_menu_activated (GtkAction *action,
 					  ModestWindow *window);
 

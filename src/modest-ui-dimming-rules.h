@@ -64,6 +64,7 @@ gboolean modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointe
 gboolean modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_undo (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_redo (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data);
@@ -74,6 +75,11 @@ gboolean modest_ui_dimming_rules_on_csm_cancel_sending (ModestWindow *win, gpoin
 gboolean modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_find_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_set_style (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_zoom (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
 #endif 

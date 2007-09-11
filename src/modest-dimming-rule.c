@@ -39,6 +39,7 @@ struct _ModestDimmingRulePrivate {
 	ModestWindow *win;
 	ModestDimmingCallback dimming_rule;
 	gchar *action_path;
+	GtkWidget *widget;
 	gchar *notification;
 };
 
@@ -95,6 +96,7 @@ modest_dimming_rule_init (ModestDimmingRule *obj)
 	priv->win = NULL;
 	priv->dimming_rule = NULL;
 	priv->action_path = NULL;
+	priv->widget = NULL;
 	priv->notification = NULL;
 }
 
@@ -138,6 +140,28 @@ modest_dimming_rule_new(ModestWindow *win,
 	return obj;
 }
 
+ModestDimmingRule*
+modest_dimming_rule_new_from_widget (ModestWindow *win,
+				     ModestDimmingCallback dimming_rule,
+				     GtkWidget *widget)
+{
+	ModestDimmingRule *obj;
+	ModestDimmingRulePrivate *priv;
+		
+	g_return_val_if_fail (MODEST_IS_WINDOW (win), NULL);
+	g_return_val_if_fail (dimming_rule != NULL, NULL);
+	g_return_val_if_fail (GTK_IS_WIDGET (widget), NULL);
+			      
+	obj = MODEST_DIMMING_RULE(g_object_new(MODEST_TYPE_DIMMING_RULE, NULL));
+
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(obj);
+	priv->win = win;
+	priv->dimming_rule = dimming_rule;
+	priv->widget = widget;
+
+	return obj;
+}
+
 
 void
 modest_dimming_rule_process (ModestDimmingRule *self)
@@ -150,17 +174,21 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 	priv = MODEST_DIMMING_RULE_GET_PRIVATE(self);
 	g_return_if_fail (priv->win != NULL);
 	g_return_if_fail (priv->dimming_rule != NULL);
-	g_return_if_fail (priv->action_path != NULL);
+	g_return_if_fail ((priv->action_path != NULL)|| GTK_IS_WIDGET (priv->widget));
 
 	/* process dimming rule */
 	dimmed = priv->dimming_rule (priv->win, self);
 
 	/* Update dimming status */
-        action = modest_window_get_action (priv->win, priv->action_path);	
-	if (action == NULL)
-		g_printerr ("modest: action path '%s' has not associatd action\n", priv->action_path);
-	else
-		gtk_action_set_sensitive (action, !dimmed);
+	if (priv->action_path != NULL) {
+		action = modest_window_get_action (priv->win, priv->action_path);	
+		if (action != NULL)
+			gtk_action_set_sensitive (action, !dimmed);
+		else
+			g_printerr ("modest: action path '%s' has not associatd action\n", priv->action_path);
+	} else if (priv->widget != NULL) {
+		gtk_widget_set_sensitive (priv->widget, !dimmed);
+	}
 }
 
 void
@@ -221,4 +249,29 @@ modest_dimming_rule_get_notification (ModestDimmingRule *rule)
 	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
 	
 	return g_strdup(priv->notification);
+}
+
+GtkWidget *
+modest_dimming_rule_get_widget (ModestDimmingRule *rule)
+{
+	ModestDimmingRulePrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (rule), NULL);
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
+
+	if (priv->action_path != NULL)
+		return modest_window_get_action_widget (MODEST_WINDOW (priv->win), priv->action_path);
+	else
+		return priv->widget;
+}
+
+const gchar *
+modest_dimming_rule_get_action_path (ModestDimmingRule *rule)
+{
+	ModestDimmingRulePrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (rule), NULL);
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(rule);
+
+	return priv->action_path;
 }

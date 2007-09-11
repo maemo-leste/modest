@@ -842,7 +842,7 @@ on_idle_delete_message (gpointer user_data)
 	 * so they would appear with a strike-through until then):
 	 */
 	ModestHeaderView *header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (
-		MODEST_MAIN_WINDOW(win), MODEST_WIDGET_TYPE_HEADER_VIEW));
+		MODEST_MAIN_WINDOW(win), MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	if (header_view && MODEST_IS_HEADER_VIEW (header_view))
 		modest_header_view_refilter (header_view);
 	
@@ -934,7 +934,7 @@ on_idle_open_default_inbox(gpointer user_data)
 
 	/* Get the folder view */
 	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 	
 	gdk_threads_leave (); /* CHECKED */

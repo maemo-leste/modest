@@ -82,6 +82,25 @@ ModestDimmingRule*    modest_dimming_rule_new     (ModestWindow *win,
 						   ModestDimmingCallback dimming_rule,
 						   const gchar *action_path);
 
+
+/**
+ * modest_dimming_rule_new:
+ * @win: the #ModestWindow object which executes dimming rule.
+ * @dimming_rule: a #ModestDimmingCallback function to check dimmed status.
+ * @widget: the widget the rule will apply to
+ * 
+ * Creates a new instance of class #ModestDimmingRule using parameters to
+ * fill private data, required to process dimming rules. All parameters
+ * are required and NULL will be returned if one of these parameters is
+ * invalid or NULL.
+ * 
+ * Returns: a new instance of #ModestDimmingRule class, or NULL, if parameters
+ * are invalid.
+ **/
+ModestDimmingRule*
+modest_dimming_rule_new_from_widget (ModestWindow *win,
+				     ModestDimmingCallback dimming_rule,
+				     GtkWidget *widget);
 /**
  * modest_dimming_rule_process:
  * @rule: a #ModestDimmingRule object to process.
@@ -115,6 +134,29 @@ void modest_dimming_rule_set_group (ModestDimmingRule *rule,
  */
 ModestDimmingRulesGroup *
 modest_dimming_rule_get_group (ModestDimmingRule *rule);
+
+/**
+ * modest_dimming_rule_get_widget:
+ * @rule: a #ModestDimmingRule
+ *
+ * Widget the dimming rule is referenced to
+ *
+ * Returns: a #GtkWidget or %NULL if the dimming rule has no widget attached
+ */
+const gchar*
+modest_dimming_rule_get_action_path (ModestDimmingRule *rule);
+
+/**
+ * modest_dimming_rule_get_widget:
+ * @rule: a #ModestDimmingRule
+ *
+ * In case the dimming rule references directly a widget, it
+ * returns the widget.
+ *
+ * Returns: a #GtkWidget or %NULL if the dimming rule has no direct widget attached
+ */
+GtkWidget *
+modest_dimming_rule_get_widget (ModestDimmingRule *rule);
 
 void modest_dimming_rule_set_notification (ModestDimmingRule *rule,
 					   const gchar *notification);

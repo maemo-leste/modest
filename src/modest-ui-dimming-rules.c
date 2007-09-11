@@ -40,6 +40,7 @@
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
+#include <widgets/modest-recpt-editor.h>
 
 
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
@@ -121,7 +122,7 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
 		header_view = focused_widget;		
 	} else {
-		header_view = modest_main_window_get_child_widget (window, MODEST_WIDGET_TYPE_HEADER_VIEW);
+		header_view = modest_main_window_get_child_widget (window, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 	}
 	
 	/* Get header view and selected headers */
@@ -359,7 +360,7 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 
 	/* Get selected folder as parent of new folder to create */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	if (!parent_folder)
 		return TRUE;
@@ -402,7 +403,7 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 
 	/* if not the folder is selected then dim */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (folder_view && !gtk_widget_is_focus (folder_view)) 
 		dimmed = TRUE;
 
@@ -425,11 +426,11 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		/* Get the folder view */
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		
 		/* Get header view */
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_HEADER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 		if (header_view && gtk_widget_is_focus (header_view)) 
 			dimmed = modest_ui_dimming_rules_on_delete_msg (win, rule);
@@ -770,7 +771,7 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 				
 		/* Check dimmed rule */
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								   MODEST_WIDGET_TYPE_HEADER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		
 		/* If the header view has the focus: */
 		if (header_view && gtk_widget_is_focus (header_view)) {
@@ -781,7 +782,7 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 		else {
 			/* If the folder view has the focus: */
 			GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-				MODEST_WIDGET_TYPE_FOLDER_VIEW);
+				MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 			if (folder_view && gtk_widget_is_focus (folder_view)) {
 				TnyFolderStore *folder_store
 					= modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
@@ -912,7 +913,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	
 	/* Get the folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 
 	
 	/* Check diming rules for folders transfer  */
@@ -1081,21 +1082,34 @@ modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
+	GtkWidget *focused = NULL;
 
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	/* Check dimmed rule */	
-	if (!dimmed)
+	focused = gtk_window_get_focus (GTK_WINDOW (win));
+
+	/* Main window dimming rules */	
+	if (!dimmed && MODEST_IS_MAIN_WINDOW (win))
 		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));
 
-	if (!dimmed)
+	if (!dimmed && MODEST_IS_MAIN_WINDOW (win))
 		dimmed = _header_view_is_all_selected (MODEST_MAIN_WINDOW(win));
 
-	if (dimmed)
-		modest_dimming_rule_set_notification (rule, "");
-		
+	if (!dimmed && GTK_IS_ENTRY (focused)) {
+		const gchar *current_text;
+		current_text = gtk_entry_get_text (GTK_ENTRY (focused));
+		dimmed = ((current_text == NULL) || (current_text[0] == '\0'));
+	}
+
+	if (!dimmed && GTK_IS_TEXT_VIEW (focused)) {
+		GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
+		dimmed = (gtk_text_buffer_get_char_count (buffer) < 1);
+	}
+
+	if (dimmed && MODEST_IS_ATTACHMENTS_VIEW (focused))
+		dimmed = FALSE;
 	return dimmed;
 }
 
@@ -1209,10 +1223,31 @@ modest_ui_dimming_rules_on_undo (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	if (!dimmed) {
+	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
 		dimmed = _clipboard_is_empty (win); 
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
+	}
+
+	if (!dimmed && MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		dimmed = !modest_msg_edit_window_can_undo (MODEST_MSG_EDIT_WINDOW (win));
+	}
+				
+	return dimmed;	
+}
+
+gboolean 
+modest_ui_dimming_rules_on_redo (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	if (!dimmed && MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		dimmed = !modest_msg_edit_window_can_redo (MODEST_MSG_EDIT_WINDOW (win));
 	}
 				
 	return dimmed;	
@@ -1343,6 +1378,186 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 		}
 	}
 		
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_set_style (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
+
+
+	/* Check common dimming rules */
+	if (!dimmed) {
+		ModestMsgEditFormat format;
+		format = modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW (win));
+
+		dimmed = (format != MODEST_MSG_EDIT_FORMAT_HTML);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_item_unavailable_plaintext"));
+	}
+
+	if (!dimmed) {
+		GtkWidget *body;
+		body = modest_msg_edit_window_get_child_widget (MODEST_MSG_EDIT_WINDOW (win),
+								MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY);
+		
+		dimmed = ((body == NULL)||(!gtk_widget_is_focus (body)));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_move_cursor_to_message"));
+	}
+	       
+	
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_zoom (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
+
+	if (!dimmed) {
+		GtkWidget *body;
+		body = modest_msg_edit_window_get_child_widget (MODEST_MSG_EDIT_WINDOW (win),
+								MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY);
+		
+		dimmed = ((body == NULL)||(!gtk_widget_is_focus (body)));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_move_cursor_to_message"));
+	}
+	       
+	
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
+	gboolean dimmed = FALSE;
+	GtkWidget *focused = NULL;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
+
+	focused = gtk_window_get_focus (GTK_WINDOW (win));
+
+	if (!dimmed) {
+		dimmed = MODEST_IS_ATTACHMENTS_VIEW (focused);
+	}
+
+	if (!dimmed) {
+		GtkClipboard *clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+		ModestEmailClipboard *e_clipboard = modest_runtime_get_email_clipboard ();
+		dimmed = modest_email_clipboard_cleared (e_clipboard) && 
+			!gtk_clipboard_wait_is_text_available (clipboard);
+	}
+	
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
+
+	if (!dimmed) {
+		GList *selected_attachments = NULL;
+		gint n_att_selected = 0;
+		GtkWidget *attachments_view;
+		attachments_view = modest_msg_edit_window_get_child_widget (
+			MODEST_MSG_EDIT_WINDOW (win),
+			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_ATTACHMENTS);
+		
+		selected_attachments = modest_attachments_view_get_selection (
+			MODEST_ATTACHMENTS_VIEW (attachments_view));
+		n_att_selected = g_list_length (selected_attachments);
+		g_list_free (selected_attachments);
+
+		dimmed = (n_att_selected != 1);
+	}
+	
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	const DimmedState *state = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
+	rule = MODEST_DIMMING_RULE (user_data);
+	state = modest_window_get_dimming_state (win);
+
+	if (!dimmed) {
+		GtkWidget *subject_field, *body_field;
+		GtkTextBuffer *body_buffer;
+		const gchar *subject = NULL;
+		body_field = modest_msg_edit_window_get_child_widget (
+			MODEST_MSG_EDIT_WINDOW (win),
+			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY);
+		subject_field = modest_msg_edit_window_get_child_widget (
+			MODEST_MSG_EDIT_WINDOW (win),
+			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_SUBJECT);
+		body_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (body_field));
+		subject = gtk_entry_get_text (GTK_ENTRY (subject_field));
+
+		dimmed = ((subject == NULL || subject[0] == '\0')
+			  || (gtk_text_buffer_get_char_count(body_buffer) == 0));
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_subject_or_body_not_modified"));
+	}
+	       
+	if (!dimmed) {
+		GtkWidget *to_field, *cc_field, *bcc_field;
+		GtkTextBuffer * to_buffer, *cc_buffer, *bcc_buffer;
+		cc_field = modest_msg_edit_window_get_child_widget (
+			MODEST_MSG_EDIT_WINDOW (win),
+			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_CC);
+		to_field = modest_msg_edit_window_get_child_widget (
+			MODEST_MSG_EDIT_WINDOW (win),
+			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_TO);
+		bcc_field = modest_msg_edit_window_get_child_widget (
+			MODEST_MSG_EDIT_WINDOW (win),
+			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BCC);
+		to_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (to_field));
+		cc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (cc_field));
+		bcc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (bcc_field));
+
+		dimmed = ((gtk_text_buffer_get_char_count (to_buffer) +
+			   gtk_text_buffer_get_char_count (cc_buffer) +
+			   gtk_text_buffer_get_char_count (bcc_buffer)) == 0);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_add_recipients_first"));
+	}
+	
 	return dimmed;
 }
 
@@ -1528,7 +1743,7 @@ _selected_folder_not_writeable (ModestMainWindow *win,
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	/* If no folder view, always dimmed */
 	if (!folder_view)
 		return TRUE;
@@ -1576,7 +1791,7 @@ _selected_folder_not_deletable (ModestMainWindow *win)
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	/* If no folder view, always dimmed */
 	if (!folder_view)
 		return TRUE;
@@ -1612,7 +1827,7 @@ _selected_folder_not_moveable (ModestMainWindow *win)
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	/* If no folder view, always dimmed */
 	if (!folder_view)
 		return TRUE;
@@ -1648,7 +1863,7 @@ _selected_folder_not_renameable (ModestMainWindow *win)
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	/* If no folder view, always dimmed */
 	if (!folder_view)
 		return TRUE;
@@ -1705,7 +1920,7 @@ _selected_folder_is_root (ModestMainWindow *win)
 
 	/* All accounts are root items: */
 	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (folder_view) {					
 		gboolean is_account = FALSE;
 		TnyFolderStore *folder_store = 
@@ -1742,7 +1957,7 @@ _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
 	gboolean result = FALSE;
 
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return FALSE;
 
@@ -1795,7 +2010,7 @@ _selected_folder_is_empty (ModestMainWindow *win)
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	/* If no folder view, always dimmed */
 	if (!folder_view)
 		return TRUE;
@@ -1826,7 +2041,7 @@ _folder_view_has_focus (ModestWindow *win)
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return FALSE;
 	
@@ -1848,7 +2063,7 @@ _selected_folder_is_same_as_source (ModestWindow *win)
 
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
 		return FALSE;
 	
@@ -1893,7 +2108,7 @@ _selected_folder_is_any_of_type (ModestWindow *win,
 
 		/* Get folder view */
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-								   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		/* If no folder view, always dimmed */
 		if (!folder_view)
 			return FALSE;
@@ -1967,21 +2182,30 @@ _invalid_clipboard_selected (ModestWindow *win,
 {
 	const DimmedState *state = NULL;
 	gboolean result = FALSE;
+	GtkWidget *focused = NULL;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	state = modest_window_get_dimming_state (win);
+	/* Get focuesed widget */
+	focused = gtk_window_get_focus (GTK_WINDOW (win));
 
-	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		gboolean has_selection = FALSE;
+		if (GTK_IS_TEXT_VIEW (focused)) {
+			GtkTextBuffer *buffer = NULL;
+			buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
+			has_selection = gtk_text_buffer_get_has_selection (GTK_TEXT_BUFFER (buffer));
+		} else if (GTK_IS_EDITABLE (focused)) {
+			has_selection = gtk_editable_get_selection_bounds (GTK_EDITABLE (focused), NULL, NULL);
+		}
+		result = !has_selection;
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		GtkClipboard *clipboard = NULL;
 		gchar *selection = NULL;
-		GtkWidget *focused = NULL;
 
 		/* Get clipboard selection*/
 		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 		selection = gtk_clipboard_wait_for_text (clipboard);
-
-		/* Get focuesed widget */
-		focused = gtk_window_get_focus (GTK_WINDOW (win));
 
 		/* Check dimming */
 		result = ((selection == NULL) || 
@@ -2140,7 +2364,7 @@ _invalid_msg_selected (ModestMainWindow *win,
 		
 	/* Get folder view to check focus */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 
 	/* Check dimmed rule (TODO: check focus on widgets */	
 	if (!result) {
@@ -2261,7 +2485,7 @@ _invalid_folder_for_purge (ModestWindow *win,
 		g_object_unref (msg);
 	} else if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-									      MODEST_WIDGET_TYPE_FOLDER_VIEW);
+									      MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (!folder_view)
 			return FALSE;
 		folder = TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
@@ -2350,7 +2574,7 @@ _selected_folder_has_subfolder_with_same_name (ModestWindow *win)
 
 	/*Get current parent folder */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_WIDGET_TYPE_FOLDER_VIEW);
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	/* If no folder view, always dimmed */
 	if (!folder_view) return FALSE;
 	

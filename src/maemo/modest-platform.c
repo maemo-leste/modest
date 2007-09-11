@@ -563,7 +563,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	/* Get header window */
 	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
 		header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_window),
-										      MODEST_WIDGET_TYPE_HEADER_VIEW));
+										      MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	}
 	if (!header_view) return;
 
