@@ -1316,8 +1316,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		const ModestAuthProtocol secure_auth = modest_server_account_get_secure_auth(
 			dialog->account_manager, incoming_account->account_name);
 		dialog->protocol_authentication_incoming = secure_auth;
-		if (modest_protocol_info_is_secure(security) || 
-				modest_protocol_info_auth_is_secure(secure_auth))
+		if (modest_protocol_info_auth_is_secure(secure_auth))
 		{
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
 																	 TRUE);
