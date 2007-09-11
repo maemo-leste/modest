@@ -2485,15 +2485,15 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	tny_folder_remove_msgs (folder, headers, &(priv->error));
 	if (!priv->error) {
 		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
-/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
-			tny_folder_sync (folder, FALSE, &(priv->error)); /* FALSE --> don't expunge */
+ 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /* FALSE --> don't expunge */ 
+/*			tny_folder_sync (folder, FALSE, &(priv->error)); /\* FALSE --> don't expunge */
 		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
-/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* TRUE --> dont expunge *\/ */
-			tny_folder_sync (folder, TRUE, &(priv->error)); /* TRUE --> expunge */
+ 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /* TRUE --> dont expunge */ 
+/*			tny_folder_sync (folder, TRUE, &(priv->error)); /\* TRUE --> expunge */
 		else
 			/* local folders */
-/* 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /\* TRUE --> expunge *\/ */
-			tny_folder_sync (folder, TRUE, &(priv->error)); /* TRUE --> expunge */
+ 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /* TRUE --> expunge */
+/*			tny_folder_sync (folder, TRUE, &(priv->error)); /\* TRUE --> expunge */
 	}
 	
 	
