@@ -330,6 +330,7 @@ easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 	/* Country column:
 	 * The ID model column in not shown in the view. */
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (combobox), renderer, TRUE);
 	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
 	"text", MODEL_COL_NAME, NULL);

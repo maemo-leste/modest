@@ -328,7 +328,7 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is not truncated: */
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	gtk_widget_set_size_request (label, 600, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
@@ -410,7 +410,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	gtk_widget_set_size_request (label, 600, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (label);
 	
@@ -654,19 +654,17 @@ static GtkWidget* create_page_complete_easysetup (ModestEasysetupWizardDialog *s
 	
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	gtk_widget_set_size_request (label, 600, -1);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	/* The documentation for gtk_label_set_line_wrap() says that we must 
+	 * call gtk_widget_set_size_request() with a hard-coded width, 
+	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
 	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
-	
-	/* The documentation for gtk_label_set_line_wrap() says that we must 
-	 * call gtk_widget_set_size_request() with a hard-coded width, 
-	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
-	gtk_widget_set_size_request (label, 400, -1);
+	gtk_widget_set_size_request (label, 600, -1);
 	
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
@@ -735,11 +733,16 @@ static void on_entry_incoming_servername_changed(GtkEntry *entry, gpointer user_
 static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
+					GTK_POLICY_NEVER,
+					GTK_POLICY_AUTOMATIC);
 
 	/* Show note that account type cannot be changed in future: */
 	GtkWidget *label = gtk_label_new (_("mcen_ia_emailsetup_account_type"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 40);
+	gtk_widget_set_size_request (label, 600, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
@@ -819,8 +822,13 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	gtk_widget_show (caption);
 	
 	gtk_widget_show (GTK_WIDGET (box));
+
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), box);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
+					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolled_window)));
+	gtk_widget_show (scrolled_window);
 	
-	return GTK_WIDGET (box);
+	return GTK_WIDGET (scrolled_window);
 }
 
 static void
@@ -1023,11 +1031,15 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	gtk_widget_set_size_request (label, 600, -1);
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
 	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	gtk_widget_set_size_request (label, 600, -1);
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
@@ -1142,10 +1154,27 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Add the common pages: */
 	gtk_notebook_append_page (notebook, self->page_welcome, 
 				  gtk_label_new (_("mcen_ti_emailsetup_welcome")));
+	gtk_container_child_set (GTK_CONTAINER (notebook), 
+				 self->page_welcome,
+				 "tab-expand", TRUE,
+				 "tab-fill", TRUE,
+				 NULL);
+
 	gtk_notebook_append_page (notebook, self->page_account_details, 
 				  gtk_label_new (_("mcen_ti_accountdetails")));
+	gtk_container_child_set (GTK_CONTAINER (notebook), 
+				 self->page_account_details,
+				 "tab-expand", TRUE,
+				 "tab-fill", TRUE,
+				 NULL);
+
 	gtk_notebook_append_page (notebook, self->page_user_details, 
 				  gtk_label_new (_("mcen_ti_emailsetup_userdetails")));
+	gtk_container_child_set (GTK_CONTAINER (notebook), 
+				 self->page_user_details,
+				 "tab-expand", TRUE,
+				 "tab-fill", TRUE,
+				 NULL);
 		
 	/* Create and add the easysetup-specific pages,
 	 * because we need _some_ final page to enable the Next and Finish buttons: */
@@ -1216,9 +1245,15 @@ static void create_subsequent_customsetup_pages (ModestEasysetupWizardDialog *se
 		gtk_notebook_append_page (notebook, self->page_custom_outgoing,
 					  gtk_label_new (_("mcen_ti_emailsetup_outgoingdetails")));
 		
-	if (!gtk_widget_get_parent (GTK_WIDGET (self->page_complete_customsetup)))
+	if (!gtk_widget_get_parent (GTK_WIDGET (self->page_complete_customsetup))) {
 		gtk_notebook_append_page (notebook, self->page_complete_customsetup,
 					  gtk_label_new (_("mcen_ti_emailsetup_complete")));
+		gtk_container_child_set (GTK_CONTAINER (notebook), 
+					 self->page_complete_customsetup,
+					 "tab-expand", TRUE,
+					 "tab-fill", TRUE,
+					 NULL);
+	}
 			
 	/* This is unnecessary with GTK+ 2.10: */
 	modest_wizard_dialog_force_title_update (MODEST_WIZARD_DIALOG(self));
@@ -1234,9 +1269,15 @@ static void create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self
 	if(!self->page_complete_easysetup)
 		self->page_complete_easysetup = create_page_complete_easysetup (self);
 
-	if (!gtk_widget_get_parent (GTK_WIDGET (self->page_complete_easysetup)))
+	if (!gtk_widget_get_parent (GTK_WIDGET (self->page_complete_easysetup))) {
 		gtk_notebook_append_page (notebook, self->page_complete_easysetup, 
 					  gtk_label_new (_("mcen_ti_emailsetup_complete")));
+		gtk_container_child_set (GTK_CONTAINER (notebook),
+					 self->page_complete_easysetup,
+					 "tab-expand", TRUE,
+					 "tab-fill", TRUE,
+					 NULL);
+	}
 			
 	/* This is unnecessary with GTK+ 2.10: */
 	modest_wizard_dialog_force_title_update (MODEST_WIZARD_DIALOG(self));
