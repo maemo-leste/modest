@@ -633,7 +633,6 @@ update_menus (ModestMainWindow* self)
 			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
 			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
 								 display_name, NULL, NULL);
-			printf("DEBUG: %s: menu display_name=%s\n", __FUNCTION__, display_name);
 			gtk_action_group_add_action (priv->view_additions_group, refresh_account_action);
 
 			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);

@@ -1468,19 +1468,12 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
-	/* Get the Modest account */
+	/* Get the store account */
 	store_account = (TnyStoreAccount *)
 		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
 								     account_name,
 								     TNY_ACCOUNT_TYPE_STORE);
 								     
-	/* Make sure that we have a connection, and request one 
-	 * if necessary:
-	 * TODO: Is there some way to trigger this for every attempt to 
-	 * use the network? */
-	if (!modest_platform_connect_and_wait (NULL, TNY_ACCOUNT (store_account)))
-		goto error;
-
 	if (!store_account) {
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
@@ -2484,16 +2477,12 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	/* remove message from folder */
 	tny_folder_remove_msgs (folder, headers, &(priv->error));
 	if (!priv->error) {
-		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
+		if (TNY_IS_CAMEL_IMAP_FOLDER (folder) || 
+		    TNY_IS_CAMEL_POP_FOLDER (folder))
  			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /* FALSE --> don't expunge */ 
-/*			tny_folder_sync (folder, FALSE, &(priv->error)); /\* FALSE --> don't expunge */
-		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
- 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /* TRUE --> dont expunge */ 
-/*			tny_folder_sync (folder, TRUE, &(priv->error)); /\* TRUE --> expunge */
 		else
 			/* local folders */
  			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /* TRUE --> expunge */
-/*			tny_folder_sync (folder, TRUE, &(priv->error)); /\* TRUE --> expunge */
 	}
 	
 	

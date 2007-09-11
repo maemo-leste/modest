@@ -1525,14 +1525,14 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 static void
 on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert)
 {
-	// handle ok/cancel in the normal way
-	if (response_id != GTK_RESPONSE_HELP)
-		gtk_dialog_response (dialog, response_id);
-	else {
-		// GTK_RESPONSE_HELP means we need to show the certificate
+	/* GTK_RESPONSE_HELP means we need to show the certificate */
+	if (response_id == GTK_RESPONSE_HELP) {
 		GtkWidget *note;
 		gchar *msg;
 		
+		/* Do not close the dialog */
+		g_signal_stop_emission_by_name (dialog, "response");
+
 		msg = g_strdup_printf (_("mcen_ni_view_unknown_certificate"), cert);	
 		note = hildon_note_new_information (GTK_WINDOW(dialog), msg);
 		gtk_dialog_run (GTK_DIALOG(note));
@@ -1550,7 +1550,7 @@ modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
 	GtkWindow *main_win =
 		(GtkWindow*)modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
 
-	gchar *question = g_strdup_printf (_("mcen_mc_unknown_certificate"),
+	gchar *question = g_strdup_printf (_("mcen_nc_unknown_certificate"),
 					   server_name);
 	
 	note = hildon_note_new_confirmation_add_buttons  (
@@ -1561,8 +1561,9 @@ modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
 		_("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL,
 		NULL, NULL);
 	
-	g_signal_connect (G_OBJECT(note), "response", G_CALLBACK(on_cert_dialog_response),
-			  (gpointer)certificate);
+	g_signal_connect (G_OBJECT(note), "response", 
+			  G_CALLBACK(on_cert_dialog_response),
+			  (gpointer) certificate);
 	response = gtk_dialog_run(GTK_DIALOG(note));
 
 	gtk_widget_destroy(GTK_WIDGET(note));
@@ -1574,7 +1575,8 @@ modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
 
 
 gboolean
-modest_platform_run_alert_dialog (const gchar* prompt, gboolean is_question)
+modest_platform_run_alert_dialog (const gchar* prompt, 
+				  gboolean is_question)
 {	
 	ModestWindow *main_window = 
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());

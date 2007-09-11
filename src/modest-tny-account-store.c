@@ -1049,37 +1049,27 @@ modest_tny_account_store_find_account_by_url (TnyAccountStore *self, const gchar
 
 
 
-static void
-log_alert_error (const GError *err)
-{
-	if (err)
-		g_warning ("%s: %d, message=%s", __FUNCTION__, err->domain, err->message);
-}
-
-
 static gboolean
-modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyAlertType type,
-				gboolean question, const GError *error)
+modest_tny_account_store_alert (TnyAccountStore *self, 
+				TnyAccount *account, 
+				TnyAlertType type,
+				gboolean question, 
+				const GError *error)
 {
 	ModestTransportStoreProtocol proto =
 		MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; 
 	const gchar* server_name = NULL;
 	gchar *prompt = NULL;
 	gboolean retval;
-	
+
+	g_return_val_if_fail (account, FALSE);
 	g_return_val_if_fail (error, FALSE);
-	log_alert_error (error);
 	
 	if ((error->domain != TNY_ACCOUNT_ERROR) && (error->domain != TNY_ACCOUNT_STORE_ERROR))
 		return FALSE;
 	
 	/* Get the server name: */
-	if (account && TNY_IS_ACCOUNT (account)) 
-		server_name = tny_account_get_hostname (account);
-	if (!server_name) {
-		g_warning ("%s: cannot get server name", __FUNCTION__);
-		return FALSE;
-	}
+	server_name = tny_account_get_hostname (account);
 
 	if (account) {
 		const gchar *proto_name = tny_account_get_proto (account);
@@ -1116,8 +1106,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 						  server_name);
 			break;
 		default:
-			g_warning ("%s: should not be reached (%d)", __FUNCTION__, proto);
-			return FALSE;
+			g_return_val_if_reached (FALSE);
 		}
 		break;
 		
@@ -1128,11 +1117,7 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 		break;
 			
 	case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
-		/* TODO: This needs a logical ID and/or some specified way to ask the
-		 * different certificate questions: */
-		prompt = g_strdup_printf(
-			_("Certificate Problem:\n%s"), 
-			error->message);
+		/* We'll show the proper dialog later */
 		break;
 		
 	case TNY_ACCOUNT_ERROR_TRY_CONNECT:
@@ -1144,10 +1129,6 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 		 * specific dialog messages from Chapter 12 of the UI spec.
 		 */
 		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
-			/* This debug output is useful. Please keep it uncommented until 
-			 * we have fixed the problems in this function: */
-			g_debug ("%s: %d, message=%s",__FUNCTION__,
-				 error->domain, error->message);
 			
 			/* TODO: Remove the internal error message for the real release.
 			 * This is just so the testers can give us more information: */
@@ -1164,18 +1145,18 @@ modest_tny_account_store_alert (TnyAccountStore *self, TnyAccount *account, TnyA
 			break;
 			
 	default:
-			g_warning ("%s: Unhandled GError code: %d, message=%s", 
-				   __FUNCTION__, error->code, error->message);
-			prompt = NULL;
-			break;
+		g_return_val_if_reached (FALSE);
 	}
 	
-	if (!prompt)
-		return FALSE;
+
+	if (error->code == TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE)
+		retval = modest_platform_run_certificate_conformation_dialog (server_name,
+									      error->message);
 	else
 		retval = modest_platform_run_alert_dialog (prompt, question);
 	
-	g_free (prompt);
+	if (prompt)
+		g_free (prompt);
 	
 	return retval;
 }

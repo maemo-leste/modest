@@ -248,3 +248,11 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 
 	return widget;
 }
+
+gboolean
+modest_platform_run_alert_dialog (const gchar* prompt, 
+				  gboolean is_question)
+{
+	/* TODO */
+	return TRUE;
+}

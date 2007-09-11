@@ -1571,6 +1571,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 {
 	gchar *acc_name = NULL;
 	ModestMailOperation *mail_op;
+	TnyAccount *store_account = NULL;
 
 	/* If no account name was provided then get the current account, and if
 	   there is no current account then pick the default one: */
@@ -1585,6 +1586,18 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	} else {
 		acc_name = g_strdup (account_name);
 	}
+
+
+	/* Ensure that we have a connection available */
+	store_account =
+		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+							     account_name,
+							     TNY_ACCOUNT_TYPE_STORE);
+	if (!modest_platform_connect_and_wait (NULL, TNY_ACCOUNT (store_account))) {
+		g_object_unref (store_account);
+		return;
+	}
+	g_object_unref (store_account);
 
 	/* Set send/receive operation in progress */	
 	modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW(win));
