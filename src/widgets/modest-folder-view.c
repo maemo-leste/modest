@@ -177,6 +177,7 @@ struct _ModestFolderViewPrivate {
 
 	gboolean  reselect; /* we use this to force a reselection of the INBOX */
 	gboolean  show_non_move;
+	gboolean  reexpand; /* next time we expose, we'll expand all root folders */
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -635,6 +636,8 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->visible_account_id = NULL;
 	priv->folder_to_select = NULL;
 
+	priv->reexpand = TRUE;
+
 	/* Initialize the local account name */
 	conf = modest_runtime_get_conf();
 	priv->local_account_name = modest_conf_get_string (conf, MODEST_CONF_DEVICE_NAME, NULL);
@@ -829,6 +832,7 @@ on_account_inserted (TnyAccountStore *account_store,
 	/* Insert the account in the model */
 	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (account));
+
 }
 
 
@@ -983,7 +987,10 @@ modest_folder_view_on_map (ModestFolderView *self,
 			       NULL);
 	}
 
-	expand_root_items (self); 
+	if (priv->reexpand) {
+		expand_root_items (self); 
+		priv->reexpand = FALSE;
+	}
 
 	return FALSE;
 }
@@ -1015,11 +1022,17 @@ static void
 expand_root_items (ModestFolderView *self)
 {
 	GtkTreePath *path;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	path = gtk_tree_path_new_first ();
 
 	/* all folders should have child items, so.. */
-	while (gtk_tree_view_expand_row (GTK_TREE_VIEW(self), path, FALSE))
+	do {
+		gtk_tree_view_expand_row (GTK_TREE_VIEW(self), path, FALSE);
 		gtk_tree_path_next (path);
+	} while (gtk_tree_model_get_iter (model, &iter, path));
 	
 	gtk_tree_path_free (path);
 }
@@ -2232,6 +2245,7 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 
 	/* Select the row and free */
 	gtk_tree_view_set_cursor (GTK_TREE_VIEW (self), path, NULL, FALSE);
+	gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (self), path, NULL, FALSE, 0.0, 0.0);
 	gtk_tree_path_free (path);
 
 	/* set focus */
@@ -2281,11 +2295,25 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *pat
 {
 	ModestFolderViewPrivate *priv = NULL;
 	GtkTreeSelection *sel;
+	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
+	GObject *instance = NULL;
 
 	if (!MODEST_IS_FOLDER_VIEW(self))
 		return;
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	priv->reexpand = TRUE;
+
+	gtk_tree_model_get (tree_model, iter, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
+			    -1);
+	if (type == TNY_FOLDER_TYPE_INBOX && priv->folder_to_select == NULL) {
+		priv->folder_to_select = g_object_ref (instance);
+	}
+	g_object_unref (instance);
+
 	
 	if (priv->folder_to_select) {
 		
