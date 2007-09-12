@@ -728,7 +728,30 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 				hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
 				result = FALSE;
 			}
-		} 
+		} else {
+			GSList *tags, *node;
+			gboolean has_recipient = FALSE;
+
+			tags = gtk_text_iter_get_tags (&start_iter);
+			for (node = tags; node != NULL; node = g_slist_next (node)) {
+				GtkTextTag *tag = GTK_TEXT_TAG (node->data);
+				if (g_object_get_data (G_OBJECT (tag), "recipient-tag-id") != NULL) {
+					has_recipient = TRUE;
+					break;
+				}
+			}
+			g_slist_free (tags);
+			if (!has_recipient) {
+				GSList * address_list = NULL;
+
+				address_list = g_slist_prepend (address_list, address);
+				modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
+										     &start_iter, &end_iter,
+										     address_list, 
+										     "");
+				g_slist_free (address_list);
+			}
+		}
 
 		/* so, it seems a valid address */
 		/* note: adding it the to the addressbook if it did not exist yet,

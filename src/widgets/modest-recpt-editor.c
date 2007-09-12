@@ -435,7 +435,12 @@ modest_recpt_editor_on_button_release_event (GtkWidget *widget,
 			selection_changed = TRUE;
 		}
 
-	gtk_text_buffer_select_range (buffer, &start, &end);
+	if (selection_changed) {
+		gtk_text_buffer_select_range (buffer, &start, &end);
+	} else {
+		GTK_TEXT_VIEW (priv->text_view)->pending_place_cursor_button = 0;
+		gtk_text_buffer_place_cursor (buffer, &end);
+	}
 
 	return FALSE;
 }
