@@ -1528,56 +1528,11 @@ on_focus_in (GtkWidget     *self,
 }
 
 static void
-idle_notify_headers_count_changed_destroy (gpointer data)
-{
-	HeadersCountChangedHelper *helper = NULL;
-
-	g_return_if_fail (data != NULL);
-	helper = (HeadersCountChangedHelper *) data; 
-
-	g_object_unref (helper->change);
-	g_slice_free (HeadersCountChangedHelper, helper);
-}
-
-static gboolean
-idle_notify_headers_count_changed (gpointer data)
-{
-	TnyFolder *folder = NULL;
-	ModestHeaderViewPrivate *priv = NULL;
-	HeadersCountChangedHelper *helper = NULL;
-
-	g_return_val_if_fail (data != NULL, FALSE);
-	helper = (HeadersCountChangedHelper *) data; 
-	g_return_val_if_fail (MODEST_IS_HEADER_VIEW(helper->self), FALSE);
-	g_return_val_if_fail (TNY_FOLDER_CHANGE(helper->change), FALSE);
-
-	folder = tny_folder_change_get_folder (helper->change);
-
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE (helper->self);
-
-	g_mutex_lock (priv->observers_lock);
-
-	/* Emit signal to evaluate how headers changes affects to the window view  */
-	g_signal_emit (G_OBJECT(helper->self), 
-		       signals[MSG_COUNT_CHANGED_SIGNAL], 
-		       0, folder, helper->change);
-		
-	/* Added or removed headers, so data stored on cliboard are invalid  */
-	if (modest_email_clipboard_check_source_folder (priv->clipboard, folder))
-	    modest_email_clipboard_clear (priv->clipboard);
-	    
-	g_mutex_unlock (priv->observers_lock);
-
-	return FALSE;
-}
-
-static void
 folder_monitor_update (TnyFolderObserver *self, 
 		       TnyFolderChange *change)
 {
 	ModestHeaderViewPrivate *priv = NULL;
 	TnyFolderChangeChanged changed;
-	HeadersCountChangedHelper *helper = NULL;
 	TnyFolder *folder = NULL;
 
 	changed = tny_folder_change_get_changed (change);
@@ -1593,15 +1548,20 @@ folder_monitor_update (TnyFolderObserver *self,
 	/* Check folder count */
 	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
 	    (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)) {
-		helper = g_slice_new0 (HeadersCountChangedHelper);
-		helper->self = MODEST_HEADER_VIEW(self);
-		helper->change = g_object_ref(change);
 
-		if (folder != NULL)
-			tny_folder_poke_status (folder);
+		g_mutex_lock (priv->observers_lock);
 
-		idle_notify_headers_count_changed (helper);
-		idle_notify_headers_count_changed_destroy (helper);
+		/* Emit signal to evaluate how headers changes affects
+		   to the window view  */
+		g_signal_emit (G_OBJECT(self), 
+			       signals[MSG_COUNT_CHANGED_SIGNAL], 
+			       0, folder, change);
+		
+		/* Added or removed headers, so data stored on cliboard are invalid  */
+		if (modest_email_clipboard_check_source_folder (priv->clipboard, folder))
+			modest_email_clipboard_clear (priv->clipboard);
+	    
+		g_mutex_unlock (priv->observers_lock);
 	}	
 
 	/* Free */
@@ -1769,12 +1729,12 @@ modest_header_view_refilter (ModestHeaderView *header_view)
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
 
-	priv->status = HEADER_VIEW_EMPTY;
-
 	/* Hide cut headers */
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_FILTER (model))
+	if (GTK_IS_TREE_MODEL_FILTER (model)) {
+		priv->status = 0;
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+	}
 }
 
 /* 
@@ -1791,8 +1751,6 @@ on_account_removed (TnyAccountStore *self,
 	/* Ignore changes in transport accounts */
 	if (TNY_IS_TRANSPORT_ACCOUNT (account))
 		return;
-
-	g_print ("--------------------- HEADER ---------------\n");
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
 
@@ -1823,9 +1781,9 @@ void modest_header_view_add_observer(
 	g_mutex_unlock(priv->observer_list_lock);
 }
 
-void modest_header_view_remove_observer(
-		ModestHeaderView *header_view,
-		ModestHeaderViewObserver *observer)
+void 
+modest_header_view_remove_observer(ModestHeaderView *header_view,
+				   ModestHeaderViewObserver *observer)
 {
 	ModestHeaderViewPrivate *priv = NULL;
 
@@ -1840,10 +1798,10 @@ void modest_header_view_remove_observer(
 	g_mutex_unlock(priv->observer_list_lock);
 }
 
-static void modest_header_view_notify_observers(
-		ModestHeaderView *header_view,
-		GtkTreeModel *model,
-		const gchar *tny_folder_id)
+static void 
+modest_header_view_notify_observers(ModestHeaderView *header_view,
+				    GtkTreeModel *model,
+				    const gchar *tny_folder_id)
 {
 	ModestHeaderViewPrivate *priv = NULL;
 	GSList *iter;

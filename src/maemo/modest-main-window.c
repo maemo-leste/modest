@@ -1936,7 +1936,6 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 		       TnyFolderChange *change,
 		       ModestMainWindow *main_window)
 {
-	printf ("DEBUG: %s\n", __FUNCTION__);
 	gboolean folder_empty = FALSE;
 	gboolean all_marked_as_deleted = FALSE;
 	TnyFolderChangeChanged changed;	
@@ -1951,12 +1950,10 @@ _on_msg_count_changed (ModestHeaderView *header_view,
 	
 	/* If something changes */
 	if ((changed) & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
-		folder_empty = (tny_folder_change_get_new_all_count (change) == 0);	
+		folder_empty = (tny_folder_change_get_new_all_count (change) == 0);
 	else
 		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
 	
-	printf ("DEBUG: %s: folder_empty=%d\n", __FUNCTION__, folder_empty);
-
 /*  	Check header removed  (hide marked as DELETED headers) */
 	if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) {
 		modest_header_view_refilter (MODEST_HEADER_VIEW(priv->header_view));
