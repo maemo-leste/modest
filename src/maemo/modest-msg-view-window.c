@@ -541,7 +541,8 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
-	if (g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_PRIMARY),
+	if (gtk_clipboard_get (GDK_SELECTION_PRIMARY) &&
+	    g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_PRIMARY),
 					   priv->clipboard_change_handler)) 
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
 					     priv->clipboard_change_handler);
@@ -556,25 +557,27 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_account_store ()), 
 					     priv->account_removed_handler);
 
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->row_changed_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->row_changed_handler);
-
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->row_deleted_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+	if (priv->header_model) {
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->row_changed_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->row_changed_handler);
+		
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->row_deleted_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
 					     priv->row_deleted_handler);
-
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->row_inserted_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->row_inserted_handler);
-
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->rows_reordered_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->rows_reordered_handler);
+		
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->row_inserted_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->row_inserted_handler);
+		
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->rows_reordered_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->rows_reordered_handler);
+	}
 
 	window_mgr = modest_runtime_get_window_mgr();
 	g_assert(window_mgr != NULL);

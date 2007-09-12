@@ -613,11 +613,13 @@ modest_msg_edit_window_disconnect_signals (ModestWindow *window)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	if (g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
+	if (gtk_clipboard_get (GDK_SELECTION_PRIMARY) &&
+	    g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
 					   priv->clipboard_change_handler_id))
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_PRIMARY), 
 					     priv->clipboard_change_handler_id);
-	if (g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
+	if (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD) &&
+	    g_signal_handler_is_connected (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
 					   priv->default_clipboard_change_handler_id))
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
 					     priv->default_clipboard_change_handler_id);
