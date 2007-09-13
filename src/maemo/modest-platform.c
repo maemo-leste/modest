@@ -1259,15 +1259,19 @@ void
 modest_platform_on_new_header_received (TnyHeader *header)
 {
 #ifdef MODEST_HAVE_HILDON_NOTIFY
-	HildonNotification *not;
+	HildonNotification *notification;
 	gchar *url = NULL;
 	TnyFolder *folder = NULL;
+	const gchar *subject;
 
-	/* Create a new notification. TODO: per-mail data needed */
-	not = hildon_notification_new (tny_header_get_from (header),
-				       tny_header_get_subject (header),
-				       "qgn_list_messagin_mail_unread",
-				       NULL);
+	subject = tny_header_get_subject (header);
+	if (!subject || strlen(subject) == 0)
+		subject = _("mail_va_no_subject");
+	
+	notification = hildon_notification_new (tny_header_get_from (header),
+						subject,
+						"qgn_list_messagin",
+						NULL);
 
 	folder = tny_header_get_folder (header);
 	url = g_strdup_printf ("%s/%s", 
@@ -1275,7 +1279,7 @@ modest_platform_on_new_header_received (TnyHeader *header)
 			       tny_header_get_uid (header));
 	g_object_unref (folder);
 
-	hildon_notification_add_dbus_action(not,
+	hildon_notification_add_dbus_action(notification,
 					    "default",
 					    "Cancel",
 					    MODEST_DBUS_SERVICE,
@@ -1287,21 +1291,22 @@ modest_platform_on_new_header_received (TnyHeader *header)
 	g_free (url);
 	
 	/* Play sound SR-SND-18 */
-	hildon_notification_set_sound
-		(not, "/usr/share/sounds/ui-new_email.wav");
-	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (not), "dialog-type", 4);
-
+	hildon_notification_set_sound (HILDON_NOTIFICATION(notification),
+				       "/usr/share/sounds/ui-new_email.wav");
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION(notification),
+					    "dialog-type", 4);
+	
 	/* Set the led pattern */
-	notify_notification_set_hint_string(NOTIFY_NOTIFICATION (not), 
+	notify_notification_set_hint_string(NOTIFY_NOTIFICATION(notification), 
 					    "led-pattern", 
 					    "PatternCommunicationEmail");
 
 	/* Notify. We need to do this in an idle because this function
 	   could be called from a thread */
-	if (!notify_notification_show (NOTIFY_NOTIFICATION (not), NULL))
+	if (!notify_notification_show (NOTIFY_NOTIFICATION(notification), NULL))
 		g_error ("Failed to send notification");
-		
-	g_object_unref (not);
+	
+	g_object_unref (notification);
 #endif /*MODEST_HAVE_HILDON_NOTIFY*/
 }
 
