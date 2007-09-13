@@ -41,6 +41,7 @@
 #include <tny-folder.h>
 #include <tny-camel-folder.h>
 #include <tny-simple-list.h>
+#include <tny-camel-account.h>
 #include <modest-tny-account.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-local-folders-account.h>
@@ -353,8 +354,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	ModestFolderViewPrivate *priv;
 	GObject *rendobj;
 	gchar *fname = NULL;
-	gint unread = 0;
-	gint all = 0;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	GObject *instance = NULL;
 
@@ -364,8 +363,6 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN, &fname,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_ALL_COLUMN, &all,
-			    TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN, &unread,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
@@ -397,12 +394,17 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			}
 		}
 
-		/* Select the number to show: the unread or unsent messages */
-		if ((type == TNY_FOLDER_TYPE_DRAFTS) || (type == TNY_FOLDER_TYPE_OUTBOX))
-			number = all;
+		/* note: we cannot reliably get the counts from the tree model, we need
+		 * to use explicit calls on tny_folder for some reason.
+		 */
+		/* Select the number to show: the unread or unsent messages. in case of outbox/drafts, show all */
+		if ((type == TNY_FOLDER_TYPE_DRAFTS) ||
+		    (type == TNY_FOLDER_TYPE_OUTBOX) ||
+		    (type == TNY_FOLDER_TYPE_MERGE)) /* _OUTBOX actually returns _MERGE... */
+			number = tny_folder_get_all_count (TNY_FOLDER(instance));
 		else
-			number = unread;
-		
+			number = tny_folder_get_unread_count (TNY_FOLDER(instance));
+						    		
 		/* Use bold font style if there are unread or unset messages */
 		if (number > 0) {
 			item_name = g_strdup_printf ("%s (%d)", fname, number);
@@ -855,7 +857,7 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Get the inner model */
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
 	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
-
+ 	
 	/* Remove the account from the model */
 	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (tny_account));
