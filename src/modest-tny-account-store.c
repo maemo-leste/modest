@@ -306,7 +306,7 @@ static void
 foreach_account_disconnect (gpointer data, 
 			    gpointer user_data)
 {
-	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(data), FALSE, NULL);
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(data), FALSE, NULL, NULL);
 }
 
 
@@ -1061,6 +1061,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	const gchar* server_name = NULL;
 	gchar *prompt = NULL;
 	gboolean retval;
+
 
 	g_return_val_if_fail (account, FALSE);
 	g_return_val_if_fail (error, FALSE);

@@ -964,13 +964,9 @@ set_account_to_online (TnyAccount *account)
 		 * a) They fundamentally need network access, so they can't really be offline.
 		 * b) That might cause a transport connection to happen too early.
 		 */
-		GError *error = NULL;
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, &error);
-		if (error) {
-			g_warning ("%s: tny_camel_account_set_online() returned a GError:\n  %s\n", 
-				__FUNCTION__, error->message);
-			g_error_free (error);	
-		}
+
+		/* The last argument is user_data, the NULL before that is the callback */
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, NULL, NULL);
 	}
 	#endif
 }
