@@ -54,6 +54,7 @@
 #include <modest-text-utils.h>
 #include "modest-tny-folder.h"
 #include <string.h>
+#include <libgnomevfs/gnome-vfs-mime-utils.h>
 
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
@@ -177,45 +178,6 @@ modest_platform_get_new_device (void)
 	return TNY_DEVICE (tny_maemo_conic_device_new ());
 }
 
-
-const gchar*
-guess_mime_type_from_name (const gchar* name)
-{
-	int i;
-	const static gchar* mime_type;
-	const static gchar* mime_map[][2] = {
-		{ ".note.html", "text/note"}, /* for the osso_notes program */
-		{ ".deb",       "application/x-deb"},
-		{ ".install",   "application/x-install-instructions"},
-		{ ".html",      "text/html"}, 
-		{ ".htm",       "text/html"}, 
-		{ ".pdf",       "application/pdf"},
-		{ ".doc",       "application/msword"},
-		{ ".xls",       "application/excel"},
-		{ ".png",       "image/png" },
-		{ ".gif",       "image/gif" },
-		{ ".jpg",       "image/jpeg"},
-		{ ".jpeg",      "image/jpeg"},
-		{ ".mp3",       "audio/mp3" }
-	};
-
-	mime_type = "application/octet-stream";
-
-	if (name) {
-		gchar* lc_name = g_utf8_strdown (name, -1);
-		for (i = 0; i != G_N_ELEMENTS(mime_map); ++i) {
-			if (g_str_has_suffix (lc_name, mime_map[i][0])) {
-				mime_type = mime_map[i][1];
-				break;
-			}
-		}
-		g_free (lc_name);
-	}
-	
-	return mime_type;
-}
-
-
 gchar*
 modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 				    gchar **effective_mime_type)
@@ -223,9 +185,9 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 	GString *mime_str = NULL;
 	gchar *icon_name  = NULL;
 	gchar **icons, **cursor;
-
+	
 	if (!mime_type || !g_ascii_strcasecmp (mime_type, "application/octet-stream")) 
-		mime_str = g_string_new (guess_mime_type_from_name(name));
+		mime_str = g_string_new (gnome_vfs_get_mime_type_for_name (name));
 	else {
 		mime_str = g_string_new (mime_type);
 		g_string_ascii_down (mime_str);
