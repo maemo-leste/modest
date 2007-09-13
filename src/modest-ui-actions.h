@@ -34,6 +34,7 @@
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-recpt-view.h>
 #include "modest-mail-operation.h"
+#include "modest-tny-send-queue.h"
 
 G_BEGIN_DECLS
 
@@ -469,9 +470,30 @@ void modest_do_messages_delete (TnyList *headers, ModestWindow *win);
 gboolean modest_run_account_setup_wizard (ModestWindow *win);
 
 gint msgs_move_to_confirmation (GtkWindow *win,
-			   TnyFolder *dest_folder,
-			   gboolean delete,
-			   TnyList *headers);
+				TnyFolder *dest_folder,
+				gboolean delete,
+				TnyList *headers);
+
+/*
+ * modest_ui_actions_on_send_queue_error_happened:
+ *
+ * Method for handling errors in send queues
+ */
+void modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self, 
+						     TnyHeader *header, 
+						     TnyMsg *msg, 
+						     GError *err, 
+						     gpointer user_data);
+
+/*
+ * modest_ui_actions_on_send_queue_status_changed:
+ *
+ * Method for handling changes in the status of the messages in the send queues
+ */
+void modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
+						     gchar *msg_id, 
+						     guint status,
+						     gpointer user_data);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

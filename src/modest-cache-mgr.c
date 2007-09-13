@@ -129,7 +129,6 @@ modest_cache_mgr_init (ModestCacheMgr *obj)
 				       g_direct_equal,  
 				       (GDestroyNotify)my_object_unref,   /* ref'd GObject */
 				       (GDestroyNotify)my_object_unref);   /* ref'd GObject */  
-
 }
 
 
@@ -143,7 +142,7 @@ modest_cache_mgr_finalize (GObject *obj)
  	priv = MODEST_CACHE_MGR_GET_PRIVATE(obj);
 	
 	modest_cache_mgr_flush_all (self);
-	
+
 	priv->date_str_cache    = NULL;
 	priv->display_str_cache = NULL;
 	priv->pixbuf_cache      = NULL;

@@ -39,6 +39,7 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-tny-account-store.h>
 #include <modest-tny-send-queue.h>
+#include <modest-signal-mgr.h>
 #include <tny-platform-factory.h>
 #include "widgets/modest-window-mgr.h"
 

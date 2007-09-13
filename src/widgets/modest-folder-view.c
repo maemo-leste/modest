@@ -2127,10 +2127,14 @@ on_configuration_key_changed (ModestConf* conf,
 									   MODEST_CONF_DEVICE_NAME, NULL);
 
 		/* Force a redraw */
-#if GTK_CHECK_VERSION(2, 8, 0) /* gtk_tree_view_column_queue_resize is only available in GTK+ 2.8 */
-		GtkTreeViewColumn * tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
-									    TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
+#if GTK_CHECK_VERSION(2, 8, 0)
+		GtkTreeViewColumn * tree_column;
+
+		tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
+							TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
 		gtk_tree_view_column_queue_resize (tree_column);
+#else
+		gtk_widget_queue_draw (GTK_WIDGET (self));
 #endif
 	}
 }

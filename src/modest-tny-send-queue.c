@@ -48,12 +48,28 @@ static void modest_tny_send_queue_finalize   (GObject *obj);
 static void modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class);
 
 /* Signal handlers */ 
-static void _on_msg_start_sending (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, int done, int total, gpointer user_data);
-static void _on_msg_has_been_sent (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, int done, int total, gpointer user_data);
-static void _on_msg_error_happened (TnySendQueue *self, TnyHeader *header, TnyMsg *msg, GError *err, gpointer user_data);
+static void _on_msg_start_sending (TnySendQueue *self, 
+				   TnyHeader *header, 
+				   TnyMsg *msg, 
+				   int done, 
+				   int total, 
+				   gpointer user_data);
 
-static TnyFolder*modest_tny_send_queue_get_outbox (TnySendQueue *self);
-static TnyFolder*modest_tny_send_queue_get_sentbox (TnySendQueue *self);
+static void _on_msg_has_been_sent (TnySendQueue *self, 
+				   TnyHeader *header, 
+				   TnyMsg *msg, 
+				   int done, 
+				   int total, 
+				   gpointer user_data);
+
+static void _on_msg_error_happened (TnySendQueue *self, 
+				    TnyHeader *header, 
+				    TnyMsg *msg, 
+				    GError *err, 
+				    gpointer user_data);
+
+static TnyFolder* modest_tny_send_queue_get_outbox  (TnySendQueue *self);
+static TnyFolder* modest_tny_send_queue_get_sentbox (TnySendQueue *self);
 
 /* list my signals  */
 enum {

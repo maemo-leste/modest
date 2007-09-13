@@ -978,7 +978,7 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 	GObject *win = modest_mail_operation_get_source (mail_op);
 
 	error = modest_mail_operation_get_error (mail_op);
-	printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, error->code, error->message);
+/* 	printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, error->code, error->message); */
  
 	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT) {
 
@@ -1591,7 +1591,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	/* Ensure that we have a connection available */
 	store_account =
 		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-							     account_name,
+							     acc_name,
 							     TNY_ACCOUNT_TYPE_STORE);
 	if (!modest_platform_connect_and_wait (NULL, TNY_ACCOUNT (store_account))) {
 		g_object_unref (store_account);
@@ -4658,3 +4658,103 @@ _on_send_receive_progress_changed (ModestMailOperation  *mail_op,
 }
 
 
+void 
+modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self, 
+						TnyHeader *header, 
+						TnyMsg *msg, 
+						GError *err, 
+						gpointer user_data)
+{
+	const gchar* server_name = NULL;
+	TnyTransportAccount *server_account;
+	gchar *message = NULL;
+
+	/* Don't show anything if the user cancelled something */
+	if (err->code == TNY_TRANSPORT_ACCOUNT_ERROR_SEND_USER_CANCEL)
+		return;
+
+	/* Get the server name: */
+	server_account = 
+		TNY_TRANSPORT_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self)));
+	if (server_account) {
+		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));
+			
+		g_object_unref (server_account);
+		server_account = NULL;
+	}
+	
+	g_return_if_fail (server_name);
+
+	/* Show the appropriate message text for the GError: */
+	switch (err->code) {
+	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_HOST_LOOKUP_FAILED:
+		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+		break;
+	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_SERVICE_UNAVAILABLE:
+		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+		break;
+	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_AUTHENTICATION_NOT_SUPPORTED:
+		message = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"), server_name);
+		break;
+	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND:
+		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
+		break;
+	default:
+		g_return_if_reached ();
+	}
+	
+	/* TODO if the username or the password where not defined we
+	   should show the Accounts Settings dialog or the Connection
+	   specific SMTP server window */
+
+	modest_maemo_show_information_note_and_forget (NULL, message);
+	g_free (message);
+}
+
+void
+modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
+						gchar *msg_id, 
+						guint status,
+						gpointer user_data)
+{
+	ModestMainWindow *main_window = NULL;
+	ModestWindowMgr *mgr = NULL;
+	GtkWidget *folder_view = NULL, *header_view = NULL;
+	TnyFolderStore *selected_folder = NULL;
+	TnyFolderType folder_type;
+
+	mgr = modest_runtime_get_window_mgr ();
+	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr));
+
+	if (!main_window)
+		return;
+
+	/* Check if selected folder is OUTBOX */
+	folder_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	header_view = modest_main_window_get_child_widget (main_window,
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+
+	selected_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+	if (!TNY_IS_FOLDER (selected_folder)) 
+		goto frees;
+
+	/* gtk_tree_view_column_queue_resize is only available in GTK+ 2.8 */
+#if GTK_CHECK_VERSION(2, 8, 0) 
+	folder_type = modest_tny_folder_guess_folder_type (TNY_FOLDER (selected_folder)); 
+	if (folder_type ==  TNY_FOLDER_TYPE_OUTBOX) {		
+		GtkTreeViewColumn *tree_column;
+
+		tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (header_view), 
+							TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN);
+		gtk_tree_view_column_queue_resize (tree_column);
+	}
+#else
+	gtk_widget_queue_draw (header_view);
+#endif		
+	
+	/* Free */
+ frees:
+	if (selected_folder != NULL)
+		g_object_unref (selected_folder);
+}

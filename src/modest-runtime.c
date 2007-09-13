@@ -45,6 +45,7 @@
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-icon-names.h>
+#include <modest-ui-actions.h>
 
 static ModestSingletons       *_singletons    = NULL;
 
@@ -52,6 +53,8 @@ static ModestSingletons       *_singletons    = NULL;
 // as it leads to various chicken & problems with initialization
 static ModestTnyAccountStore  *_account_store  = NULL;
 
+/* Signal handlers for the send queues */
+static GSList *_sig_handlers = NULL;
 
 /*
  * private functions declared in modest-runtime-priv.h -
@@ -92,6 +95,11 @@ modest_runtime_uninit (void)
 		_account_store = NULL;
 	}
 
+	
+	if (_sig_handlers) {
+		modest_signal_mgr_disconnect_all_and_destroy (_sig_handlers);
+		_sig_handlers = NULL;
+	}
 	
 	return TRUE;
 }
@@ -191,6 +199,21 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 		/* Note that this send queue will start sending messages from its outbox 
 		 * as soon as it is instantiated: */
 		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
+
+		_sig_handlers = 
+			modest_signal_mgr_connect (_sig_handlers, 
+						   send_queue, 
+						   "error_happened",
+						   G_CALLBACK (modest_ui_actions_on_send_queue_error_happened), 
+						   NULL);
+
+		_sig_handlers = 
+			modest_signal_mgr_connect (_sig_handlers, 
+						   send_queue, 
+						   "status_changed",
+						   G_CALLBACK (modest_ui_actions_on_send_queue_status_changed), 
+						   NULL);
+
 
 		g_hash_table_insert (send_queue_cache, 
 				     g_object_ref (account), 
