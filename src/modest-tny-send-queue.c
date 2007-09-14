@@ -516,24 +516,15 @@ modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg
 gchar *
 modest_tny_send_queue_get_msg_id (TnyHeader *header)
 {
-	const gchar *uid = NULL;
 	gchar* msg_uid = NULL;
-	gchar **tmp = NULL;
+	const gchar *subject;
+	time_t date_received;
 		
 	/* Get message uid */
-	uid = tny_header_get_uid (header);
-	if (uid)
-		tmp = g_strsplit (uid, "__", 2);
-	
-	if (tmp) {
-		if (tmp[1] != NULL) 
-			msg_uid = g_strconcat (tmp[0], "_", NULL);
-		else 
-			msg_uid = g_strdup(tmp[0]);
+	subject = tny_header_get_subject (header);
+	date_received = tny_header_get_date_received (header);
 
-		/* free */
-		g_strfreev(tmp);
-	}
+	msg_uid = g_strdup_printf ("%s %d", subject, (int) date_received);
 
 	return msg_uid;
 }
@@ -583,20 +574,19 @@ _on_msg_has_been_sent (TnySendQueue *self,
 		       gpointer user_data)
 {
 	ModestTnySendQueuePrivate *priv;
-	GList *item;
 	gchar *msg_id = NULL;
-
+	GList *item;
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
 	/* Get message uid */
 	msg_id = modest_tny_send_queue_get_msg_id (header);
-	
+
+	tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+
 	/* Get status info */
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
-	if (!item)
-		g_warning ("%s: item should not be NULL", __FUNCTION__);
-	else {
-
+	if (item) {
+		
 		/* Remove status info */
 		modest_tny_send_queue_info_free (item->data);
 		g_queue_delete_link (priv->queue, item);
