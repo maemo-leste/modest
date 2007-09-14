@@ -553,6 +553,16 @@ forget_pass_dummy (TnyAccount *account)
 }
 
 
+static void
+set_online_callback (TnyCamelAccount *account, GError *err, gpointer user_data)
+{
+	/* MODEST TODO: Show a real error message here, this is a significant error!
+	 * Perhaps show the account's settings dialog again?! Reconnecting after 
+	 * changing the settings of an account failed in this situation. */
+
+       if (err)
+               g_warning ("err: %s", err->message);
+}
 
 gboolean
 modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
@@ -560,6 +570,7 @@ modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMg
 {
 	ModestAccountData *account_data = NULL;
 	ModestServerAccountData *server_data = NULL;
+	TnyConnectionStatus  conn_status;
 	
 	g_return_val_if_fail (tny_account, FALSE);
 	g_return_val_if_fail (account_mgr, FALSE);
@@ -595,6 +606,17 @@ modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMg
 		tny_account_set_name (tny_account, account_data->display_name);
 
 	modest_account_mgr_free_account_data (account_mgr, account_data);
+
+	/* If the account was online, reconnect to apply the changes */
+	conn_status = tny_account_get_connection_status (tny_account);
+	if (conn_status != TNY_CONNECTION_STATUS_DISCONNECTED) {
+
+		/* The callback will have an error for you if the reconnect
+		 * failed. Please handle it (this is TODO). */
+
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(tny_account), TRUE, 
+			set_online_callback,  "online");
+	}
 
 	return TRUE;
 }
