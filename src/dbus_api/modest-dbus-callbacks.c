@@ -280,35 +280,21 @@ on_idle_mail_to(gpointer user_data)
 				
 			if (!msg) {
 				g_printerr ("modest: failed to create message\n");
-			} else
-			{
-				/* Add the message to a folder and show its UI for editing: */
-				TnyFolder *folder = modest_tny_account_get_special_folder (account,
-									TNY_FOLDER_TYPE_DRAFTS);
-				if (!folder) {
-					g_printerr ("modest: failed to find Drafts folder\n");
-				} else {
-			
-					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
+			} else {			
+				ModestWindow *win;
 
-					/* This is a GDK lock because we are an idle callback and
- 	 				 * the code below is or does Gtk+ code */
-
-					gdk_threads_enter (); /* CHECKED */
-
-					ModestWindow *win = modest_msg_edit_window_new (msg, account_name, FALSE);
-					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
-					gtk_widget_show_all (GTK_WIDGET (win));
-
-					gdk_threads_leave (); /* CHECKED */
+				/* This is a GDK lock because we are an idle callback and
+				 * the code below is or does Gtk+ code */
+				gdk_threads_enter ();
+				win = modest_msg_edit_window_new (msg, account_name, FALSE);
+				modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
+				gtk_widget_show_all (GTK_WIDGET (win));
+				gdk_threads_leave ();
 				
-					g_object_unref (G_OBJECT(folder));
-					g_object_unref (win);
-				}
-			
-				g_object_unref (G_OBJECT(msg));
+				g_object_unref (win);
 			}
 			
+			g_object_unref (G_OBJECT(msg));			
 			g_object_unref (G_OBJECT(account));
 		}
  	}
@@ -325,7 +311,8 @@ on_idle_mail_to(gpointer user_data)
 	return FALSE; /* Do not call this callback again. */
 }
 
-static gint on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
+static gint 
+on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
 	if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
      	return OSSO_ERROR;

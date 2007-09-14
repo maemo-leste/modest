@@ -564,16 +564,6 @@ modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 
 }
 
-void
-modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message)
-{
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, message));
-	
-	/* Destroy the dialog when it is closed: */
-	g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (gtk_widget_destroy), NULL);
-	gtk_widget_show (GTK_WIDGET (dialog));
-}
-
 #if 0
 static void
 on_hide (GtkDialog *dialog, gpointer user_data)

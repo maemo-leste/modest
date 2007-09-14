@@ -1559,8 +1559,8 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		
 	} else {
 	 	/* Just show the error text and use the default response: */
-	 	modest_maemo_show_information_note_and_forget(GTK_WINDOW (main_window), 
-							      prompt);
+	 	modest_platform_run_information_dialog (GTK_WINDOW (main_window), 
+							prompt);
 	}
 	return retval;
 }

@@ -4707,7 +4707,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	   should show the Accounts Settings dialog or the Connection
 	   specific SMTP server window */
 
-	modest_maemo_show_information_note_and_forget (NULL, message);
+	modest_platform_run_information_dialog (NULL, message);
 	g_free (message);
 }
 

@@ -122,16 +122,6 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
  */
 void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
 
-/** modest_maemo_show_information_note_and_forget:
- * @parent_window: The window for which the note should be transient.
- * @message: The text to show.
- * 
- * Show the information note and destroy it when it is closed, without 
- * blocking. Use this when you don't want to use gtk_dialog_run(), which might lead 
- * to hangs.
- */
-void modest_maemo_show_information_note_and_forget (GtkWindow *parent_window, const gchar* message);
-
 /** modest_maemo_show_information_note_in_main_context_and_forget:
  * @parent_window: The window for which the note should be transient.
  * @message: The text to show.
