@@ -1248,13 +1248,17 @@ modest_platform_on_new_header_received (TnyHeader *header)
 					    -1);
 	g_free (url);
 	
-	/* Play sound SR-SND-18 */
-	hildon_notification_set_sound (HILDON_NOTIFICATION(notification),
-				       "/usr/share/sounds/ui-new_email.wav");
-	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION(notification),
-					    "dialog-type", 4);
+	/* Play sound if the user wants */
+	if (modest_conf_get_bool (modest_runtime_get_conf (), 
+				  MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, 
+				  NULL)) {
+		hildon_notification_set_sound (HILDON_NOTIFICATION(notification),
+					       "/usr/share/sounds/ui-new_email.wav");
+	}
 	
 	/* Set the led pattern */
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION(notification),
+					    "dialog-type", 4);
 	notify_notification_set_hint_string(NOTIFY_NOTIFICATION(notification), 
 					    "led-pattern", 
 					    "PatternCommunicationEmail");
