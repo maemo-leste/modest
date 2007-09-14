@@ -63,7 +63,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 			      NULL);
 	
 	TnyAccount *local_account  = NULL;
-		
+
 	/* The accounts have already been instantiated by 
 	 * modest_tny_account_store_get_accounts(), which is the 
 	 * TnyAccountStore::get_accounts_func() implementation,
