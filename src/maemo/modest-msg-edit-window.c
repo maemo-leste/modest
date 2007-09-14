@@ -744,7 +744,7 @@ replace_with_attachments (ModestMsgEditWindow *self, GList *attachments)
 			g_object_unref (stream);
 
 			if (pixbuf != NULL) {
-/* 				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf); */
+				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf);
 				g_object_unref (pixbuf);
 			}
 		}
@@ -835,6 +835,18 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	wp_text_buffer_load_document_end (WP_TEXT_BUFFER (priv->text_buffer));
 	g_free (body);
 
+	/* Add attachments to the view */
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
+	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	if (priv->attachments == NULL) {
+		gtk_widget_hide (priv->attachments_caption);
+	} else {
+		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
+		gtk_widget_show_all (priv->attachments_caption);
+		replace_with_attachments (self, priv->attachments);
+	}
+	update_last_cid (self, priv->attachments);
+
 	if (preserve_is_rich && !is_html) {
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 	/* Get the default format required from configuration */
@@ -853,18 +865,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	   value that comes from msg <- not sure, should it be
 	   allowed? */
 	
-	/* Add attachments to the view */
-	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
-	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-	if (priv->attachments == NULL) {
-		gtk_widget_hide (priv->attachments_caption);
-	} else {
-		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
-		gtk_widget_show_all (priv->attachments_caption);
-		replace_with_attachments (self, priv->attachments);
-	}
-	update_last_cid (self, priv->attachments);
-
 	DEBUG_BUFFER (WP_TEXT_BUFFER (priv->text_buffer));
 
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
