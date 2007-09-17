@@ -69,7 +69,7 @@ typedef HildonWindowClass ModestWindowParentClass;
 /* Dimmed state variables */
 typedef struct _DimmedState {	
 	guint    n_selected;
-	gboolean already_opened_msg;
+	guint    already_opened_msg;
 	gboolean any_marked_as_deleted;
 	gboolean all_marked_as_deleted;
 	gboolean any_marked_as_seen;

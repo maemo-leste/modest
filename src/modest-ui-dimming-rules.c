@@ -102,7 +102,7 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	/* Init state */
 	state = g_slice_new0 (DimmedState);
 	state->n_selected = 0;
-	state->already_opened_msg = FALSE;
+	state->already_opened_msg = 0;
 	state->any_marked_as_deleted = FALSE;
 	state->all_marked_as_deleted = FALSE;
 	state->any_marked_as_seen = FALSE;
@@ -141,8 +141,8 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 		
 		/* Already opened */
 		mgr = modest_runtime_get_window_mgr ();
-		if (!state->already_opened_msg)
-			state->already_opened_msg = modest_window_mgr_find_registered_header (mgr, header, NULL);
+		if (modest_window_mgr_find_registered_header (mgr, header, NULL))
+			state->already_opened_msg++;
 		
 
 		/* Mark as deleted */		
@@ -231,7 +231,7 @@ _define_msg_view_window_dimming_state (ModestMsgViewWindow *window)
 	/* Init state */
 	state = g_slice_new0 (DimmedState);
 	state->n_selected = 0;
-	state->already_opened_msg = FALSE;
+	state->already_opened_msg = 0;
 	state->any_marked_as_deleted = FALSE;
 	state->all_marked_as_deleted = FALSE;
 	state->any_marked_as_seen = FALSE;
@@ -687,7 +687,6 @@ gboolean
 modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
-	guint n_messages = 0;
 	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 
@@ -706,14 +705,15 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		}
 		if (!dimmed) {
-			dimmed = state->already_opened_msg;
-			n_messages = state->n_selected;
+			dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
  			if (dimmed) {
-				gchar *num = g_strdup_printf ("%d", n_messages);
-				gchar *message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
+				gchar *num = NULL, *message = NULL;
+
+				num = g_strdup_printf ("%d", state->already_opened_msg);
+				message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
 				modest_dimming_rule_set_notification (rule, message);
+ 				g_free(num);
  				g_free(message);
-				g_free(num);
 			}
 			
 		}
@@ -904,7 +904,6 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 {
 	GtkWidget *folder_view = NULL;
 	ModestDimmingRule *rule = NULL;
-	guint n_messages = 0;
 	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 	
@@ -943,10 +942,10 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	
 	/* Check diming rules for messages transfer  */
 	if (!dimmed) {
-		dimmed = state->already_opened_msg;
-		n_messages = state->n_selected;
+		dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
 		if (dimmed) {
-			gchar *message = g_strdup_printf(_("emev_bd_unabletomove_items"), n_messages);
+			gchar *message = g_strdup_printf(_("emev_bd_unabletomove_items"), 
+							 state->already_opened_msg);
 			modest_dimming_rule_set_notification (rule, message);
 			g_free(message);
 		}
@@ -1288,7 +1287,7 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 					modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
 			}
 			if (!dimmed) {
-				dimmed = state->already_opened_msg;
+				dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
 				if(dimmed)
 					modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_cut_mess"));
 			}
@@ -1355,7 +1354,7 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 					modest_dimming_rule_set_notification (rule, _(""));
 			}
 			if (!dimmed) {
-				dimmed = state->already_opened_msg;
+				dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
 				if(dimmed)
 					modest_dimming_rule_set_notification (rule, _(""));
 			}

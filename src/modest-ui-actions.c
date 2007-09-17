@@ -385,29 +385,19 @@ void modest_do_messages_delete (TnyList *headers, ModestWindow *win)
 	g_object_unref (G_OBJECT (mail_op));
 }
 
-/* static void */
-/* headers_action_delete (TnyHeader *header, */
-/* 		       ModestWindow *win, */
-/* 		       gpointer user_data) */
-/* { */
-/* 	modest_do_message_delete (header, win); */
-
-/* } */
-
 /** After deleing a message that is currently visible in a window, 
  * show the next message from the list, or close the window if there are no more messages.
  **/
-void modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow* win)
+void 
+modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow* win)
 {
 	/* Close msg view window or select next */
 	if (modest_msg_view_window_last_message_selected (win) &&
 		modest_msg_view_window_first_message_selected (win)) {
 		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (win));
-	} else {
-		if (!modest_msg_view_window_select_next_message (win)) {
-			gboolean ret_value;
-			g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);
-		}
+	} else if (!modest_msg_view_window_select_next_message (win)) {
+		gboolean ret_value;
+		g_signal_emit_by_name (G_OBJECT (win), "delete-event", NULL, &ret_value);	
 	}
 }
 
@@ -441,31 +431,30 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			
 	/* Check if any of the headers are already opened, or in the process of being opened */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		gboolean found;
+		gint opened_headers = 0;
+
 		iter = tny_list_create_iterator (header_list);
-		found = FALSE;
 		mgr = modest_runtime_get_window_mgr ();
-		while (!tny_iterator_is_done (iter) && !found) {
+		while (!tny_iterator_is_done (iter)) {
 			header = TNY_HEADER (tny_iterator_get_current (iter));
 			if (header) {
-				found =  modest_window_mgr_find_registered_header (mgr, header, NULL);
+				if (modest_window_mgr_find_registered_header (mgr, header, NULL))
+					opened_headers++;
 				g_object_unref (header);
 			}
-
 			tny_iterator_next (iter);
 		}
 		g_object_unref (iter);
 
-		if (found) {
-			gchar *num, *msg;
+		if (opened_headers > 0) {
+			gchar *msg;
 
-			num = g_strdup_printf ("%d", tny_list_get_length (header_list));
-			msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"), num);
+			msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"), 
+					       opened_headers);
 
 			modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg);
 			
 			g_free (msg);
-			g_free (num);
 			g_object_unref (header_list);
 			return;
 		}
