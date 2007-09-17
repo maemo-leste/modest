@@ -554,13 +554,13 @@ forget_pass_dummy (TnyAccount *account)
 
 
 static void
-set_online_callback (TnyCamelAccount *account, GError *err, gpointer user_data)
+set_online_callback (TnyCamelAccount *account, gboolean canceled, GError *err, gpointer user_data)
 {
 	/* MODEST TODO: Show a real error message here, this is a significant error!
 	 * Perhaps show the account's settings dialog again?! Reconnecting after 
 	 * changing the settings of an account failed in this situation. */
 
-       if (err)
+       if (err && !canceled)
                g_warning ("err: %s", err->message);
 }
 
