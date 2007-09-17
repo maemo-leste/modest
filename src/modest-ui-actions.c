@@ -528,7 +528,9 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		modest_do_messages_delete (header_list, win);
 		
 		/* Enable window dimming management */
-		gtk_tree_selection_unselect_all (sel);
+		if (sel != NULL) {
+			gtk_tree_selection_unselect_all (sel);
+		}
 		modest_window_enable_dimming (MODEST_WINDOW(win));
 		
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
@@ -1550,7 +1552,7 @@ new_messages_arrived (ModestMailOperation *self,
 	}	
 
 	/* Notify new messages have been downloaded */
-	if (tny_list_get_length (new_headers) > 0) {
+	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0)) {
 		TnyIterator *iter = tny_list_create_iterator (new_headers);
 		do {
 			TnyHeader *header =  NULL;

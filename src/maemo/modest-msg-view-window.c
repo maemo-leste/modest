@@ -1167,6 +1167,8 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	 * instead of sometimes retrieving it from the header view?
 	 * Then we wouldn't be dependent on the message actually still being selected 
 	 * in the header view. murrayc. */
+	if (!gtk_tree_row_reference_valid (priv->row_reference))
+		return NULL;
 	path = gtk_tree_row_reference_get_path (priv->row_reference);
 	g_return_val_if_fail (path != NULL, NULL);
 	gtk_tree_model_get_iter (priv->header_model, 
@@ -1546,7 +1548,7 @@ static gboolean
 message_reader (ModestMsgViewWindow *window,
 		ModestMsgViewWindowPrivate *priv,
 		TnyHeader *header,
-		GtkTreePath *path)
+		GtkTreeRowReference *row_reference)
 {
 	ModestMailOperation *mail_op = NULL;
 	ModestMailOperationTypeOperation op_type;
@@ -1554,7 +1556,7 @@ message_reader (ModestMsgViewWindow *window,
 	ModestWindow *msg_window = NULL;
 	ModestWindowMgr *mgr;
 
-	g_return_val_if_fail (path != NULL, FALSE);
+	g_return_val_if_fail (row_reference != NULL, FALSE);
 
 	mgr = modest_runtime_get_window_mgr ();
 	already_showing = modest_window_mgr_find_registered_header (mgr, header, &msg_window);
@@ -1603,7 +1605,7 @@ message_reader (ModestMsgViewWindow *window,
 								 NULL);
 				
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, path);
+	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, row_reference);
 	g_object_unref (mail_op);
 
 	/* Update toolbar dimming rules */
@@ -1620,6 +1622,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	GtkTreeIter tmp_iter;
 	TnyHeader *header;
 	gboolean retval = TRUE;
+	GtkTreeRowReference *row_reference = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -1641,18 +1644,21 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	if (path == NULL)
 		return FALSE;
 
+	row_reference = gtk_tree_row_reference_copy (priv->next_row_reference);
+
 	gtk_tree_model_get_iter (priv->header_model,
 				 &tmp_iter,
 				 path);
+	gtk_tree_path_free (path);
 
 	gtk_tree_model_get (priv->header_model, &tmp_iter, 
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
 	
 	/* Read the message & show it */
-	if (!message_reader (window, priv, header, path)) {
+	if (!message_reader (window, priv, header, row_reference)) {
 		retval = FALSE;
-		gtk_tree_path_free (path);
+		gtk_tree_row_reference_free (row_reference);
 	}
 
 	/* Free */
@@ -1667,7 +1673,8 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 	ModestMsgViewWindowPrivate *priv = NULL;
 	TnyHeader *header = NULL;
 	GtkTreeIter iter;
-	GtkTreePath *path;
+	GtkTreePath *path = NULL;
+	GtkTreeRowReference *row_reference = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
@@ -1688,9 +1695,11 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 	}
 	
 	path = gtk_tree_model_get_path (priv->header_model, &iter);
-	
+	row_reference = gtk_tree_row_reference_new (priv->header_model, path);
+	gtk_tree_path_free (path);
+
 	/* Read the message & show it */
-	message_reader (self, priv, header, path);
+	message_reader (self, priv, header, row_reference);
 	
 	/* Free */
 	g_object_unref (header);
@@ -1703,6 +1712,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {
 	ModestMsgViewWindowPrivate *priv = NULL;
 	GtkTreePath *path;
+	GtkTreeRowReference *row_reference = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -1727,12 +1737,15 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 			continue;
 		}
 
+		row_reference = gtk_tree_row_reference_new (priv->header_model, path);
 		/* Read the message & show it */
-		if (!message_reader (window, priv, header, path)) {
+		if (!message_reader (window, priv, header, row_reference)) {
+			gtk_tree_row_reference_free (row_reference);
 			g_object_unref (header);
 			break;
 		}
 
+		gtk_tree_path_free (path);
 		g_object_unref (header);
 
 		return TRUE;
@@ -1750,12 +1763,12 @@ view_msg_cb (ModestMailOperation *mail_op,
 {
 	ModestMsgViewWindow *self = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
-	GtkTreePath *path;
+	GtkTreeRowReference *row_reference = NULL;
 
 	/* If there was any error */
-	path = (GtkTreePath *) user_data;
+	row_reference = (GtkTreeRowReference *) user_data;
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
-		gtk_tree_path_free (path);			
+		gtk_tree_row_reference_free (row_reference);			
 		return;
 	}
 
@@ -1766,10 +1779,10 @@ view_msg_cb (ModestMailOperation *mail_op,
 
 	/* Update the row reference */
 	gtk_tree_row_reference_free (priv->row_reference);
-	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, path);
+	priv->row_reference = gtk_tree_row_reference_copy (row_reference);
 	priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
 	select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE);
-	gtk_tree_path_free (path);
+	gtk_tree_row_reference_free (row_reference);
 
 	/* Mark header as read */
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))

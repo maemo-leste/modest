@@ -243,6 +243,8 @@ _define_msg_view_window_dimming_state (ModestMsgViewWindow *window)
 	state->sent_in_progress = FALSE;
 
 	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(window));
+	if (header == NULL)
+		return state;
 	g_return_val_if_fail (TNY_IS_HEADER(header), state);
 	flags = tny_header_get_flags (header);
 

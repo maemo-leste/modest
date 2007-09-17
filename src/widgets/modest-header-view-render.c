@@ -356,9 +356,17 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 			      NULL, NULL);
 
 
-	g_object_set (G_OBJECT (subject_cell), "markup",
-		      (subject && strlen (subject)) ? subject : _("mail_va_no_subject"),
-		      NULL);
+	if (subject && strlen (subject)) {
+		gchar * escaped_subject = NULL;
+
+		escaped_subject = g_markup_escape_text (subject, -1);
+		g_object_set (G_OBJECT (subject_cell), "markup",
+			      escaped_subject, NULL);
+	} else {
+		g_object_set (G_OBJECT (subject_cell), "markup",
+			      _("mail_va_no_subject"), NULL);
+	}
+
 	g_free (subject);
 	set_common_flags (subject_cell, flags);
 

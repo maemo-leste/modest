@@ -1534,8 +1534,9 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
  error:
 	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-	if (callback) 
-		callback (self, 0, user_data);
+	if (callback) {
+		callback (self, NULL, user_data);
+	}
 	modest_mail_operation_notify_end (self);
 	return FALSE;
 }
