@@ -1530,6 +1530,11 @@ new_messages_arrived (ModestMailOperation *self,
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
 	win = MODEST_MAIN_WINDOW (user_data);
 
+	/* Don't do anything if there are not new headers, this could
+	   happen if there was any problem with the mail operation */
+	if (!new_headers)
+		return;
+
 	/* Set contents style of headers view */
 	if (modest_main_window_get_contents_style (win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 

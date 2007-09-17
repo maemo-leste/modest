@@ -1433,7 +1433,8 @@ update_account_thread (gpointer thr_user_data)
 	/* Frees */
 	if (new_headers)
 		g_object_unref (new_headers);
-	g_object_unref (all_folders);
+	if (all_folders)
+		g_object_unref (all_folders);
 	g_object_unref (info->account);
 	g_object_unref (info->transport_account);
 	g_free (info->retrieve_type);
