@@ -2602,7 +2602,7 @@ modest_ui_actions_delete_folder_error_handler (ModestMailOperation *mail_op,
 	g_object_unref (win);
 }
 
-static void
+static gboolean
 delete_folder (ModestMainWindow *main_window, gboolean move_to_trash) 
 {
 	TnyFolderStore *folder;
@@ -2611,12 +2611,12 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	gchar *message;
         gboolean do_delete = TRUE;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (main_window));
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (main_window), FALSE);
 
 	folder_view = modest_main_window_get_child_widget (main_window,
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	if (!folder_view)
-		return;
+		return FALSE;
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
@@ -2625,7 +2625,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		modest_platform_run_information_dialog (GTK_WINDOW (main_window),
 							_("mail_in_ui_folder_delete_error"));
 		g_object_unref (G_OBJECT (folder));
-		return ;
+		return FALSE;
 	}
 
 	/* Ask the user */	
@@ -2666,21 +2666,23 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	}
 
 	g_object_unref (G_OBJECT (folder));
+
+	return do_delete;
 }
 
 void 
 modest_ui_actions_on_delete_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
 {
-	GtkWidget *folder_view;
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
-	delete_folder (main_window, FALSE);
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	if (!folder_view)
-		return;
-	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
+	if (delete_folder (main_window, FALSE)) {
+		GtkWidget *folder_view;
+
+		folder_view = modest_main_window_get_child_widget (main_window,
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
+	}
 }
 
 void 
