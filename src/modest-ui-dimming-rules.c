@@ -2508,9 +2508,7 @@ _invalid_folder_for_purge (ModestWindow *win,
 			result = TRUE;
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_editable_msg"));
 		} else {
-			/* We're currently disabling purge in any local store */
-			result = TRUE;
-			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
+			result = FALSE;
 		}
 	} else {
 		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
