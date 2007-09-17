@@ -1136,22 +1136,8 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		/* TODO: Fix camel to provide specific error codes, and then use the 
 		 * specific dialog messages from Chapter 12 of the UI spec.
 		 */
-		case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
-			
-			/* TODO: Remove the internal error message for the real release.
-			 * This is just so the testers can give us more information: */
-			/* However, I haven't seen this for a few weeks, so maybe the users 
-			 * will never see it. murrayc. */
-			/* prompt = _("Modest account not yet fully configured."); */
-			prompt = g_strdup_printf(
-				"%s\n (Internal error message, often very misleading):\n%s", 
-				_("Incorrect Account Settings"), 
-				error->message);
-			
-			/* Note: If the password was wrong then get_password() would be called again,
-			 * instead of this vfunc being called. */
-			break;
-			
+	case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
+		return FALSE;			
 	default:
 		g_return_val_if_reached (FALSE);
 	}
