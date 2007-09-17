@@ -951,7 +951,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	headers = TNY_LIST (tny_gtk_header_list_model_new ());
 
 	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
-					      folder, FALSE);
+					      folder, FALSE, NULL, NULL, NULL);
 
 	/* Add IDLE observer (monitor) and another folder observer for
 	   new messages (self) */
