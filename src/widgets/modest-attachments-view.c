@@ -190,8 +190,25 @@ modest_attachments_view_remove_attachment (ModestAttachmentsView *atts_view, Tny
 	}
 
 	if (found_att_view) {
-		priv->selected = g_list_remove (priv->selected, found_att_view);
-		gtk_widget_destroy (GTK_WIDGET (found_att_view));
+		GList *node = NULL;
+		GtkWidget *next_widget = NULL;
+		GList *box_children = NULL;
+
+		box_children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+		node = g_list_find (box_children, found_att_view);
+		if (node->next)
+			next_widget = node->next->data;
+
+		g_list_free (box_children);
+
+		node = g_list_find (priv->selected, found_att_view);
+		if (node != NULL) {
+			priv->selected = g_list_delete_link (priv->selected, node);
+			gtk_widget_destroy (GTK_WIDGET (found_att_view));
+			if ((priv->selected == NULL) && (next_widget != NULL))
+				set_selected (MODEST_ATTACHMENTS_VIEW (atts_view), 
+					      MODEST_ATTACHMENT_VIEW (next_widget));
+		}
 		own_clipboard (atts_view);
 	}
 
