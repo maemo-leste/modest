@@ -191,6 +191,18 @@ gchar* modest_tny_folder_get_header_unique_id (TnyHeader *header);
 gboolean modest_tny_folder_has_subfolder_with_name (TnyFolderStore *folder,
 						    const gchar *name);
 
+/**
+ * modest_tny_folder_is_ancestor:
+ * @folder: a #TnyFolder 
+ * @ancestor: a #TnyFolderStore
+ * 
+ * This function checks if @ancestor is an ancestor of @folder
+ * 
+ * Returns: TRUE if @ancestor is an ancestor of @folder, FALSE
+ * otherwise
+ **/
+gboolean modest_tny_folder_is_ancestor (TnyFolder *folder,
+					TnyFolderStore *ancestor);
 
 G_END_DECLS
 

@@ -1250,7 +1250,7 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 				    -1);
 
 		/* If the folder is the same do not notify */
-		if (priv->cur_folder_store == folder && folder) {
+		if (folder && priv->cur_folder_store == folder) {
 			g_object_unref (folder);
 			return;
 		}
@@ -1513,19 +1513,16 @@ typedef struct _DndHelper {
  * and drop action
  */
 static void
-on_progress_changed (ModestMailOperation *mail_op, 
-		     ModestMailOperationState *state,
-		     gpointer user_data)
+xfer_cb (ModestMailOperation *mail_op, 
+	 gpointer user_data)
 {
 	gboolean success;
 	DndHelper *helper;
 
 	helper = (DndHelper *) user_data;
 
-	if (!state->finished)
-		return;
-
-	if (state->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+	if (modest_mail_operation_get_status (mail_op) == 
+	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
 		success = TRUE;
 	} else {
 		success = FALSE;
@@ -1539,7 +1536,6 @@ on_progress_changed (ModestMailOperation *mail_op,
 	gtk_tree_path_free (helper->source_row);
 	g_slice_free (DndHelper, helper);
 }
-
 
 /* get the folder for the row the treepath refers to. */
 /* folder must be unref'd */
@@ -1635,14 +1631,12 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 								 NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
-	g_signal_connect (G_OBJECT (mail_op), "progress-changed",
-			  G_CALLBACK (on_progress_changed), helper);
 
 	modest_mail_operation_xfer_msgs (mail_op, 
 					 headers, 
 					 folder, 
 					 helper->delete_source, 
-					 NULL, NULL);
+					 xfer_cb, helper);
 	
 	/* Frees */
 cleanup:
@@ -1681,10 +1675,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			ModestTnyFolderRules rules =
 					modest_tny_folder_get_rules (folder);
 			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
-
-			if (forbidden)
-				g_debug ("folder rules: cannot write to that folder");
-		} else if (TNY_IS_FOLDER_STORE(folder)){
+		} else if (TNY_IS_FOLDER_STORE(folder)) {
 			/* enable local root as destination for folders */
 			if (!MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (folder)
 					&& TNY_IS_ACCOUNT (folder))
@@ -1699,8 +1690,6 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			ModestTnyFolderRules rules =
 					modest_tny_folder_get_rules (folder);
 			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
-			if (forbidden)
-				g_debug ("folder rules: cannot move that folder");
 		} else
 			forbidden = TRUE;
 		g_object_unref (folder);
@@ -1726,33 +1715,28 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			    &folder, -1);
 
 	/* Offer the connection dialog if necessary, for the destination parent folder and source folder: */
-	if (modest_platform_connect_and_wait_if_network_folderstore (
-				NULL, dest_folder) && 
-			modest_platform_connect_and_wait_if_network_folderstore (
-				NULL, TNY_FOLDER_STORE (folder))) {
+	if (modest_platform_connect_and_wait_if_network_folderstore (NULL, dest_folder) && 
+	    modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
+		ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+
 		/* Do the mail operation */
-		mail_op = modest_mail_operation_new_with_error_handling (
-				MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
-				NULL,
-				modest_ui_actions_move_folder_error_handler,
-				NULL);
-		modest_mail_operation_queue_add (
-				modest_runtime_get_mail_operation_queue (), 
-				mail_op);
-		g_signal_connect (
-				G_OBJECT (mail_op),
-				"progress-changed",
-				G_CALLBACK (on_progress_changed),
-				helper);
+		mail_op = 
+			modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
+								       G_OBJECT (modest_window_mgr_get_main_window (mgr)),
+								       modest_ui_actions_move_folder_error_handler,
+								       folder);
+
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+						 mail_op);
 
 		modest_mail_operation_xfer_folder (mail_op, 
-				folder, 
-				dest_folder,
-				helper->delete_source,
-				NULL,
-				NULL);
+						   folder, 
+						   dest_folder,
+						   helper->delete_source,
+						   xfer_cb,
+						   helper);
 
-		g_object_unref (G_OBJECT (mail_op));	
+		g_object_unref (G_OBJECT (mail_op));
 	}
 	
 	/* Frees */
@@ -1798,16 +1782,8 @@ on_drag_data_received (GtkWidget *widget,
 		   the operation, because the operation won't start if
 		   the folder is in use */
 		if (source_widget == widget) {
-			ModestFolderViewPrivate *priv;
-
-			priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
-			if (priv->cur_folder_store) {
-				g_object_unref (priv->cur_folder_store);
-				priv->cur_folder_store = NULL;
-			}
-
-			g_signal_emit (G_OBJECT (widget), 
-				       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0, NULL, FALSE);
+			GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+			gtk_tree_selection_unselect_all (sel);
 		}
 	}
 

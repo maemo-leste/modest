@@ -411,3 +411,24 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 		
 	return same_subfolder;
 }
+
+gboolean 
+modest_tny_folder_is_ancestor (TnyFolder *folder,
+			       TnyFolderStore *ancestor)
+{
+	TnyFolderStore *tmp = NULL;
+	gboolean found = FALSE;
+
+	tmp = TNY_FOLDER_STORE (folder);
+	while (!found && tmp && !TNY_IS_ACCOUNT (tmp)) {
+		TnyFolderStore *folder_store;
+
+		folder_store = tny_folder_get_folder_store (TNY_FOLDER (tmp));
+		if (ancestor == folder_store)
+			found = TRUE;
+		else
+			tmp = folder_store;
+		g_object_unref (folder_store);
+	}
+	return found;
+}

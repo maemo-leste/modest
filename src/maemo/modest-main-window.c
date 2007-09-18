@@ -170,9 +170,9 @@ static gboolean  on_header_view_focus_in (GtkWidget *widget,
 					  gpointer userdata);
 
 static void      modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
-						TnyFolderStore *folder_store, 
-						gboolean selected,
-						ModestMainWindow *main_window);
+								 TnyFolderStore *folder_store, 
+								 gboolean selected,
+								 ModestMainWindow *main_window);
 						
 static void set_at_least_one_account_visible(ModestMainWindow *self);
 
@@ -815,10 +815,10 @@ connect_signals (ModestMainWindow *self)
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT(priv->folder_view), "key-press-event",
 						       G_CALLBACK(on_inner_widgets_key_pressed), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder_selection_changed",
-						       G_CALLBACK(modest_main_window_on_folder_selection_changed), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "folder_selection_changed",
+						       G_CALLBACK (modest_main_window_on_folder_selection_changed), self);
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder-display-name-changed",
-						       G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
+						       G_CALLBACK (modest_ui_actions_on_folder_display_name_changed), self);
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->folder_view), "focus-in-event", 
 						       G_CALLBACK (on_folder_view_focus_in), self);
 
@@ -2253,19 +2253,12 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 	gtk_action_set_visible (action, show_forward);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCancelSending");
 	gtk_action_set_visible (action, show_cancel_send);
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCut"); */
-/* 	gtk_action_set_visible (action, show_clipboard); */
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMCopy"); */
-/* 	gtk_action_set_visible (action, show_clipboard); */
-/* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMPaste"); */
-/* 	gtk_action_set_visible (action, show_clipboard); */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMDelete");
 	gtk_action_set_visible (action, show_delete);
 
 	/* We finally call to the ui actions handler, after updating properly
 	 * the header view CSM */
 	modest_ui_actions_on_folder_selection_changed (folder_view, folder_store, selected, main_window);
-
 }
 
 gboolean 

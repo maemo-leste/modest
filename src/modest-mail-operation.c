@@ -129,7 +129,7 @@ typedef struct _XFerMsgAsyncHelper
 	ModestMailOperation *mail_op;
 	TnyList *headers;
 	TnyFolder *dest_folder;
-	XferMsgsAsynUserCallback user_callback;	
+	XferAsyncUserCallback user_callback;	
 	gboolean delete;
 	gpointer user_data;
 } XFerMsgAsyncHelper;
@@ -358,7 +358,7 @@ modest_mail_operation_get_source (ModestMailOperation *self)
 		return NULL;
 	}
 	
-	return g_object_ref (priv->source);
+	return (priv->source) ? g_object_ref (priv->source) : NULL;
 }
 
 ModestMailOperationStatus
@@ -1741,7 +1741,7 @@ transfer_folder_cb (TnyFolder *folder,
 	 	 * which is already GDK locked by Tinymail */
 
 		/* no gdk_threads_enter (), CHECKED */
-		helper->user_callback (priv->source, helper->user_data);
+		helper->user_callback (self, helper->user_data);
 		/* no gdk_threads_leave () , CHECKED */
 	}
 
@@ -1791,37 +1791,12 @@ new_name_valid_if_local_account (ModestMailOperationPrivate *priv,
 		return TRUE;
 }
 
-/**
- * This function checks if @ancestor is an acestor of @folder and
- * returns TRUE in that case
- */
-static gboolean
-folder_is_ancestor (TnyFolder *folder,
-		    TnyFolderStore *ancestor)
-{
-	TnyFolder *tmp = NULL;
-	gboolean found = FALSE;
-
-	tmp = folder;
-	while (!found && tmp && !TNY_IS_ACCOUNT (tmp)) {
-		TnyFolderStore *folder_store;
-
-		folder_store = tny_folder_get_folder_store (tmp);
-		if (ancestor == folder_store)
-			found = TRUE;
-		else
-			tmp = g_object_ref (folder_store);
-		g_object_unref (folder_store);
-	}
-	return found;
-}
-
 void
 modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
 				   TnyFolderStore *parent,
 				   gboolean delete_original,
-				   XferMsgsAsynUserCallback user_callback,
+				   XferAsyncUserCallback user_callback,
 				   gpointer user_data)
 {
 	ModestMailOperationPrivate *priv = NULL;
@@ -1849,89 +1824,65 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	if (TNY_IS_FOLDER (parent))
 		parent_rules = modest_tny_folder_get_rules (TNY_FOLDER (parent));
 	
-	/* The moveable restriction is applied also to copy operation */
+	/* Apply operation constraints */
 	if ((gpointer) parent == (gpointer) folder ||
 	    (!TNY_IS_FOLDER_STORE (parent)) || 
 	    (rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE)) {
-
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     error_msg);
-
-		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
-
+		/* Folder rules */
+		goto error;
 	} else if (TNY_IS_FOLDER (parent) && 
 		   (parent_rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)) {
-
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     error_msg);
-
-		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
+		/* Folder rules */
+		goto error;
 
 	} else if (TNY_IS_FOLDER (parent) &&
 		   TNY_IS_FOLDER_STORE (folder) &&
-		   folder_is_ancestor (TNY_FOLDER (parent), TNY_FOLDER_STORE (folder))) {
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     error_msg);
-
-		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
-
+		   modest_tny_folder_is_ancestor (TNY_FOLDER (parent), 
+						  TNY_FOLDER_STORE (folder))) {
+		/* Do not move a parent into a child */
+		goto error;
 	} else if (TNY_IS_FOLDER_STORE (parent) &&
 		   modest_tny_folder_has_subfolder_with_name (parent, folder_name)) {
 		/* Check that the new folder name is not used by any
-		    parent subfolder */
-
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     error_msg);
-
-		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
-		
+		   parent subfolder */
+		goto error;	
 	} else if (!(new_name_valid_if_local_account (priv, parent, folder_name))) {
 		/* Check that the new folder name is not used by any
 		   special local folder */
-
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     error_msg);
-
-		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
+		goto error;
 	} else {
 		/* Create the helper */
 		helper = g_slice_new0 (XFerMsgAsyncHelper);
-		helper->mail_op = g_object_ref(self);
+		helper->mail_op = g_object_ref (self);
 		helper->dest_folder = NULL;
 		helper->headers = NULL;
 		helper->user_callback = user_callback;
 		helper->user_data = user_data;
 		
-		/* Move/Copy folder */		
+		/* Move/Copy folder */
 		tny_folder_copy_async (folder,
 				       parent,
 				       tny_folder_get_name (folder),
 				       delete_original,
 				       transfer_folder_cb,
 				       transfer_folder_status_cb,
-				       helper);		
-	} 
-	
+				       helper);
+		return;
+	}
+
+ error:
+	/* Set status failed and set an error */
+	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+		     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+		     error_msg);
+
+	/* Call the user callback if exists */
+	if (user_callback)
+		user_callback (self, user_data);
+
+	/* Notify the queue */
+	modest_mail_operation_notify_end (self);
 }
 
 void
@@ -2601,7 +2552,7 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 	 	 * Tinymail already acquires the Gdk lock */
 
 		/* no gdk_threads_enter (), CHECKED */
-		helper->user_callback (priv->source, helper->user_data);
+		helper->user_callback (self, helper->user_data);
 		/* no gdk_threads_leave (), CHECKED */
 	}
 
@@ -2616,8 +2567,7 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 		g_object_unref (folder);
 	if (iter)
 		g_object_unref (iter);
-	g_slice_free   (XFerMsgAsyncHelper, helper);
-
+	g_slice_free (XFerMsgAsyncHelper, helper);
 }
 
 void
@@ -2625,7 +2575,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 				 TnyList *headers, 
 				 TnyFolder *folder, 
 				 gboolean delete_original,
-				 XferMsgsAsynUserCallback user_callback,
+				 XferAsyncUserCallback user_callback,
 				 gpointer user_data)
 {
 	ModestMailOperationPrivate *priv = NULL;
@@ -2634,9 +2584,6 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	XFerMsgAsyncHelper *helper = NULL;
 	TnyHeader *header = NULL;
 	ModestTnyFolderRules rules = 0;
-	const gchar *id1 = NULL;
-	const gchar *id2 = NULL;
-	gboolean same_folder = FALSE;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_LIST (headers));
@@ -2671,10 +2618,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	g_object_unref (iter);
 
 	/* Check folder source and destination */
-	id1 = tny_folder_get_id (src_folder);
-	id2 = tny_folder_get_id (TNY_FOLDER(folder));
-	same_folder = !g_ascii_strcasecmp (id1, id2);
-	if (same_folder) {
+	if (src_folder == folder) {
  		/* Set status failed and set an error */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,

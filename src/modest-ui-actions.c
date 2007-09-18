@@ -3035,11 +3035,8 @@ modest_ui_actions_on_redo (GtkAction *action,
 
 
 static void
-paste_msgs_cb (const GObject *object, gpointer user_data)
+destroy_information_note (ModestMailOperation *mail_op, gpointer user_data)
 {
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (object));
-	g_return_if_fail (GTK_IS_WIDGET (user_data));
-	
 	/* destroy information note */
 	gtk_widget_destroy (GTK_WIDGET(user_data));
 }
@@ -3163,7 +3160,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 								 data,
 								 TNY_FOLDER (folder_store),
 								 delete,
-								 paste_msgs_cb,
+								 destroy_information_note,
 								 inf_note);				
 			} else {
 				g_object_unref (mail_op);
@@ -3183,7 +3180,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 							   src_folder,
 							   folder_store,
 							   delete,
-							   paste_msgs_cb,
+							   destroy_information_note,
 							   inf_note);
 		}
 
@@ -3879,20 +3876,26 @@ msgs_move_to_confirmation (GtkWindow *win,
 
 
 static void
-move_to_cb (const GObject *object, gpointer user_data)
+move_to_cb (ModestMailOperation *mail_op, gpointer user_data)
 {
-	ModestMsgViewWindow *self = NULL;
-	g_return_if_fail (GTK_IS_WIDGET (user_data));
-	g_return_if_fail (MODEST_IS_WINDOW (object));
+	/* Note that the operation could have failed, in that case do
+	   nothing */
+	if (modest_mail_operation_get_status (mail_op) == 
+	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
 
-	if (MODEST_IS_MSG_VIEW_WINDOW (object)) {
-                self = MODEST_MSG_VIEW_WINDOW (object);
+		GObject *object = modest_mail_operation_get_source (mail_op);
+		if (MODEST_IS_MSG_VIEW_WINDOW (object)) {
+			ModestMsgViewWindow *self = MODEST_MSG_VIEW_WINDOW (object);
 
-	        if (!modest_msg_view_window_select_next_message (self))
-		        if (!modest_msg_view_window_select_previous_message (self))
-			        /* No more messages to view, so close this window */
-                                modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
+			if (!modest_msg_view_window_select_next_message (self))
+				if (!modest_msg_view_window_select_previous_message (self))
+					/* No more messages to view, so close this window */
+					modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
+		}
+		g_object_unref (object);
         }
+
+	/* Close the "Pasting" information banner */
 	gtk_widget_destroy (GTK_WIDGET(user_data));
 }
 
@@ -3900,7 +3903,7 @@ void
 modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op, 
 					     gpointer user_data)
 {
-	ModestMainWindow *main_window = NULL;
+	ModestWindow *main_window = NULL;
 	GtkWidget *folder_view = NULL;
 	GObject *win = modest_mail_operation_get_source (mail_op);
 	const GError *error = NULL;
@@ -3915,11 +3918,14 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	}
 	
 	/* Disable next automatic folder selection */
-	if (MODEST_IS_MAIN_WINDOW (user_data)) {
-		main_window = MODEST_MAIN_WINDOW(user_data);
-		folder_view = modest_main_window_get_child_widget (main_window,
+	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);	
-		modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));		
+	modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));
+	
+	if (user_data && TNY_IS_FOLDER (user_data)) {
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), 
+						  TNY_FOLDER (user_data), FALSE);
 	}
 
 	/* Show notification dialog */
@@ -4225,7 +4231,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                           modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE,
                                                                          G_OBJECT(win),
                                                                          modest_ui_actions_move_folder_error_handler,
-                                                                         win);
+                                                                         src_folder);
                         modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
                                                          mail_op);
 
@@ -4237,7 +4243,9 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                         modest_mail_operation_xfer_folder (mail_op,
                                                            TNY_FOLDER (src_folder),
                                                            dst_folder,
-                                                           TRUE, move_to_cb, inf_note);
+                                                           TRUE, 
+							   move_to_cb, 
+							   inf_note);
                         /* Unref mail operation */
                         g_object_unref (G_OBJECT (mail_op));
                 }
