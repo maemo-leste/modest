@@ -2780,14 +2780,16 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	GtkClipboard *selection_clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+	gchar *text = NULL;
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
+
+	text = gtk_clipboard_wait_for_text (selection_clipboard);
 
 	if (priv->clipboard_text != NULL) {
 		g_free (priv->clipboard_text);
 	}
-
-	priv->clipboard_text = gtk_clipboard_wait_for_text (selection_clipboard);
+	priv->clipboard_text = text;
 
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
 }
