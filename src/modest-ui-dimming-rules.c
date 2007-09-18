@@ -1465,10 +1465,13 @@ modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer user_data)
 	}
 
 	if (!dimmed) {
-		GtkClipboard *clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
+		dimmed = GTK_IS_TOGGLE_BUTTON (focused);
+	}
+
+	if (!dimmed) {
 		ModestEmailClipboard *e_clipboard = modest_runtime_get_email_clipboard ();
 		dimmed = modest_email_clipboard_cleared (e_clipboard) && 
-			!gtk_clipboard_wait_is_text_available (clipboard);
+			(modest_msg_edit_window_get_clipboard_text(MODEST_MSG_EDIT_WINDOW (win)) != NULL);
 	}
 	
 	return dimmed;

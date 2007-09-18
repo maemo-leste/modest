@@ -418,6 +418,17 @@ GtkWidget *
 modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
 					 ModestMsgEditWindowWidgetType widget_type);
 
+/**
+ * modest_msg_edit_window_get_clipboard_text:
+ * @win: a #ModestMsgEditWindow
+ *
+ * Obtains the currently selected text in selection clipboard
+ *
+ * Returns: a string
+ */
+const gchar *
+modest_msg_edit_window_get_clipboard_text (ModestMsgEditWindow *win);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_EDIT_WINDOW_H__ */

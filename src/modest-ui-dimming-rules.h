@@ -80,6 +80,7 @@ gboolean modest_ui_dimming_rules_on_zoom (ModestWindow *win, gpointer user_data)
 gboolean modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_editor_paste_show_menu (ModestWindow *win, gpointer user_data);
 
 G_END_DECLS
 #endif 

@@ -251,6 +251,7 @@ struct _ModestMsgEditWindowPrivate {
 	gboolean    can_undo, can_redo;
 	gulong      clipboard_change_handler_id;
 	gulong      default_clipboard_change_handler_id;
+	gchar       *clipboard_text;
 
 	TnyMsg      *draft_msg;
 	TnyMsg      *outbox_msg;
@@ -365,6 +366,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->can_redo = FALSE;
 	priv->clipboard_change_handler_id = 0;
 	priv->default_clipboard_change_handler_id = 0;
+	priv->clipboard_text = NULL;
 	priv->sent = FALSE;
 
 	priv->last_vadj_upper = 0;
@@ -633,6 +635,11 @@ modest_msg_edit_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_edit_window_disconnect_signals (MODEST_WINDOW (obj));
+
+	if (priv->clipboard_text != NULL) {
+		g_free (priv->clipboard_text);
+		priv->clipboard_text = NULL;
+	}
 	
 	if (priv->draft_msg != NULL) {
 		TnyHeader *header = tny_msg_get_header (priv->draft_msg);
@@ -2758,13 +2765,29 @@ modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
 	modest_msg_edit_window_offer_attach_file (window);
 }
 
+const gchar *
+modest_msg_edit_window_get_clipboard_text (ModestMsgEditWindow *win)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (win);
+
+	return priv->clipboard_text;
+}
+
 static void
 modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 					       GdkEvent *event,
 					       ModestMsgEditWindow *window)
 {
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	GtkClipboard *selection_clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
+
+	if (priv->clipboard_text != NULL) {
+		g_free (priv->clipboard_text);
+	}
+
+	priv->clipboard_text = gtk_clipboard_wait_for_text (selection_clipboard);
 
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
 }
@@ -3126,3 +3149,4 @@ modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
 		return NULL;
 	}
 }
+
