@@ -439,7 +439,6 @@ modest_recpt_editor_on_button_release_event (GtkWidget *widget,
 		gtk_text_buffer_select_range (buffer, &start, &end);
 	} else {
 		GTK_TEXT_VIEW (priv->text_view)->pending_place_cursor_button = 0;
-		gtk_text_buffer_place_cursor (buffer, &end);
 	}
 
 	return FALSE;
@@ -684,12 +683,14 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 					  ModestRecptEditor *editor)
 {
 	GtkTextMark *insert;
+	GtkTextMark *selection;
 	GtkTextBuffer * buffer;
-	GtkTextIter location;
+	GtkTextIter location, selection_loc;
 	GtkTextTag *tag;
      
 	buffer = gtk_text_view_get_buffer (text_view);
 	insert = gtk_text_buffer_get_insert (buffer);
+	selection = gtk_text_buffer_get_selection_bound (buffer);
 
 	/* cases to cover:
 	 *    * cursor is on resolved recipient:
@@ -711,6 +712,7 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	 */
 
 	gtk_text_buffer_get_iter_at_mark (buffer, &location, insert);
+	gtk_text_buffer_get_iter_at_mark (buffer, &selection_loc, selection);
 
 	switch (key->keyval) {
 	case GDK_Left:
@@ -780,7 +782,12 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	case GDK_Return:
 	case GDK_KP_Enter:
 	{
+		gint insert_offset, selection_offset;
+		insert_offset = gtk_text_iter_get_offset (&location);
+		selection_offset = gtk_text_iter_get_offset (&selection_loc);
 		g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
+		if (selection_offset > insert_offset)
+			location = selection_loc;
 		tag = iter_has_recipient (&location);
 		if (tag != NULL) {
 			gtk_text_buffer_get_end_iter (buffer, &location);
