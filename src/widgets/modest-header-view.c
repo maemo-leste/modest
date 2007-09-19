@@ -1370,52 +1370,32 @@ cmp_subject_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *ite
 
 /* Drag and drop stuff */
 static void
-drag_data_get_cb (GtkWidget *widget, GdkDragContext *context, 
+drag_data_get_cb (GtkWidget *widget, 
+		  GdkDragContext *context, 
 		  GtkSelectionData *selection_data, 
-		  guint info,  guint time, gpointer data)
+		  guint info,  
+		  guint time, 
+		  gpointer data)
 {
-	GtkTreeModel *model = NULL;
-	GtkTreeIter iter;
-	GtkTreePath *source_row = NULL;
-/*	GtkTreeSelection *sel = NULL;*/
-	
-	source_row = get_selected_row (GTK_TREE_VIEW (widget), &model);
-	
-	if ((source_row == NULL) || (!gtk_tree_model_get_iter(model, &iter, source_row))) return;
+	GtkTreeSelection *selection;
+	GtkTreeModel *model;
+	GList *selected_rows;
 
-	switch (info) {
-	case MODEST_HEADER_ROW:
-		gtk_tree_set_row_drag_data (selection_data, model, source_row);
-		break;
-	case MODEST_MSG: {
-		TnyHeader *hdr = NULL;
-		gtk_tree_model_get (model, &iter,
-				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &hdr,
-				    -1);
-		if (hdr) {
-			g_object_unref (G_OBJECT(hdr));
-		}
-		break;
-	}
-	default:
-		g_message ("%s: default switch case.", __FUNCTION__);
-	}
+	/* Get selected rows */
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+	selected_rows = gtk_tree_selection_get_selected_rows (selection, &model);
 
-	/* commenting out the next, fixes NB#62963 */
-#if 0
-	/* Set focus on next header */
-	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW (widget));
-	gtk_tree_path_next (source_row);
-	gtk_tree_selection_select_path (sel, source_row);
+	/* Set the data */
+	modest_dnd_selection_data_set_paths (selection_data, selected_rows);
 
-	gtk_tree_path_free (source_row);
-#endif
+	/* Frees */
+	g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
+	g_list_free (selected_rows);
 }
 
 /* Header view drag types */
 const GtkTargetEntry header_view_drag_types[] = {
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP, MODEST_HEADER_ROW },
-	{ "text/uri-list",      0,                   MODEST_MSG }, 
+	{ GTK_TREE_PATH_AS_STRING_LIST, GTK_TARGET_SAME_APP, MODEST_HEADER_ROW }
 };
 
 static void

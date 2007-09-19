@@ -27,43 +27,69 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_DND_H__
-#define __MODEST_DND_H__
+#include "modest-dnd.h"
+#include <gtk/gtktreeview.h>
+#include <string.h>
 
-#include <gdk/gdk.h>
-#include <gtk/gtkselection.h>
+GdkAtom tree_path_as_string_list_atom;
 
-extern GdkAtom tree_path_as_string_list_atom;
-
-#define GTK_TREE_PATH_AS_STRING_LIST "text/tree-path-as-string-list"
-
-enum {
-       MODEST_FOLDER_ROW,
-       MODEST_HEADER_ROW
-};
-
-/**
- * modest_dnd_selection_data_set_paths:
- * @selection_data: 
- * @selected_rows: 
- * 
- * This function sets a list of gtk_tree_path's represented as strings
- * as the data of a #GtkSelectionData object that will be used during
- * drag and drop
- **/
-void     modest_dnd_selection_data_set_paths (GtkSelectionData *selection_data,
-					      GList            *selected_rows);
+static void
+init_atom (void)
+{
+	if (!tree_path_as_string_list_atom)
+		tree_path_as_string_list_atom = 
+			gdk_atom_intern_static_string (GTK_TREE_PATH_AS_STRING_LIST);
+}
 
 
-/**
- * modest_dnd_selection_data_get_paths:
- * @selection_data: 
- * 
- * This function gets a list of gtk_tree_path's represented as strings
- * from a #GtkSelectionData object used during drag and drop
- * 
- * Returns: the list of gtk_tree_paths as strings or NULL
- **/
-gchar**  modest_dnd_selection_data_get_paths (GtkSelectionData *selection_data);
+void 
+modest_dnd_selection_data_set_paths (GtkSelectionData *selection_data,
+				     GList            *selected_rows)
+{
+	init_atom ();
 
-#endif /* __MODEST_DND_H__ */
+	if (selection_data->target == tree_path_as_string_list_atom) {
+		GString *list;
+		gint i;
+		gchar *result;
+		GList *row;
+      
+		row = selected_rows;
+		list = g_string_new (NULL);
+		
+		for (i = 0; i<g_list_length(selected_rows) - 1; i++) {
+			g_string_append (list, gtk_tree_path_to_string (row->data));
+			g_string_append (list, "\n");
+			row = g_list_next (row);
+		}
+		/* Do not include the delimiter in the last one */
+		g_string_append (list, gtk_tree_path_to_string (row->data));
+
+		result = g_strdup (list->str);
+		g_string_free (list, TRUE);
+		
+		if (result) {
+			gtk_selection_data_set (selection_data,
+						tree_path_as_string_list_atom,
+						8, (guchar *)result, 
+						strlen (result));
+			
+			g_free (result);
+		}
+	}
+}
+
+gchar**  
+modest_dnd_selection_data_get_paths (GtkSelectionData *selection_data)
+{
+	gchar **result = NULL;
+	
+	init_atom ();
+  
+	if (selection_data->length >= 0 &&
+	    selection_data->type == tree_path_as_string_list_atom) {
+		
+		result = g_strsplit (selection_data->data, "\n", 0);		
+	}	
+	return result;
+}

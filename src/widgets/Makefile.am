@@ -25,6 +25,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-attachments-view.h      \
 	modest-combo-box.c	       \
 	modest-combo-box.h             \
+	modest-dnd.c                   \
+	modest-dnd.h                   \
 	modest-folder-view.c           \
 	modest-folder-view.h           \
 	modest-global-settings-dialog.c \

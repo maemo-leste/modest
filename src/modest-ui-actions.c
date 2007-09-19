@@ -3141,10 +3141,11 @@ modest_ui_actions_on_paste (GtkAction *action,
 			gint response = 0;
 
 			/* Ask for user confirmation */
-			response = msgs_move_to_confirmation (GTK_WINDOW (window), 
-							      TNY_FOLDER (folder_store), 
-							      delete,
-							      data);
+			response = 
+				modest_ui_actions_msgs_move_to_confirmation (GTK_WINDOW (window), 
+									     TNY_FOLDER (folder_store), 
+									     delete,
+									     data);
 			
 			if (response == GTK_RESPONSE_OK) {
 				/* Launch notification */
@@ -3828,10 +3829,10 @@ has_retrieved_msgs (TnyList *list)
  *	drag_and_drop_from_header_view (for d&d in modest_folder_view.c)
  */
 gint
-msgs_move_to_confirmation (GtkWindow *win,
-			   TnyFolder *dest_folder,
-			   gboolean delete,
-			   TnyList *headers)
+modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
+					     TnyFolder *dest_folder,
+					     gboolean delete,
+					     TnyList *headers)
 {
 	gint response = GTK_RESPONSE_OK;
 

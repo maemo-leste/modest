@@ -52,10 +52,17 @@
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 #include "modest-folder-view.h"
-#include <modest-dnd.h>
 #include <modest-platform.h>
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
+#include "modest-dnd.h"
+
+/* Folder view drag types */
+const GtkTargetEntry folder_view_drag_types[] =
+{
+	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, MODEST_FOLDER_ROW },
+	{ GTK_TREE_PATH_AS_STRING_LIST, GTK_TARGET_SAME_APP, MODEST_HEADER_ROW }
+};
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -1465,7 +1472,6 @@ finish:
 /*****************************************************************************/
 /*                        DRAG and DROP stuff                                */
 /*****************************************************************************/
-
 /*
  * This function fills the #GtkSelectionData with the row and the
  * model that has been dragged. It's called when this widget is a
@@ -1552,18 +1558,6 @@ tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
 	return folder;
 }
 
-static void 
-show_banner_move_target_error ()
-{
-	ModestWindow *main_window;
-
-	main_window = modest_window_mgr_get_main_window(
-			modest_runtime_get_window_mgr());
-				
-	modest_platform_information_banner(GTK_WIDGET(main_window),
-			NULL, _("mail_in_ui_folder_move_target_error"));
-}
-
 /*
  * This function is used by drag_data_received_cb to manage drag and
  * drop of a header, i.e, and drag from the header view to the folder
@@ -1573,66 +1567,69 @@ static void
 drag_and_drop_from_header_view (GtkTreeModel *source_model,
 				GtkTreeModel *dest_model,
 				GtkTreePath  *dest_row,
+				GtkSelectionData *selection_data,
 				DndHelper    *helper)
 {
 	TnyList *headers = NULL;
-	TnyHeader *header = NULL;
 	TnyFolder *folder = NULL;
 	ModestMailOperation *mail_op = NULL;
-	GtkTreeIter source_iter;
-	ModestWindowMgr *mgr = NULL; /*no need for unref*/
-	ModestWindow *main_win = NULL; /*no need for unref*/
+	GtkTreeIter source_iter, dest_iter;
+	ModestWindowMgr *mgr = NULL;
+	ModestWindow *main_win = NULL;
+	gchar **uris, **tmp;
+	gint response;
 
-	g_return_if_fail (GTK_IS_TREE_MODEL(source_model));
-	g_return_if_fail (GTK_IS_TREE_MODEL(dest_model));
-	g_return_if_fail (dest_row);
-	g_return_if_fail (helper);
-
-	/* Get header */
-	gtk_tree_model_get_iter (source_model, &source_iter, helper->source_row);
-	gtk_tree_model_get (source_model, &source_iter, 
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
-			    &header, -1);
-	if (!TNY_IS_HEADER(header)) {
-		g_warning ("BUG: %s could not get a valid header", __FUNCTION__);
-		goto cleanup;
-	}
-	
-	/* Check if the selected message is in msg-view. If it is than
-	 * do not enable drag&drop on that. */
+	/* Build the list of headers */
 	mgr = modest_runtime_get_window_mgr ();
-	if (modest_window_mgr_find_registered_header(mgr, header, NULL))
-		goto cleanup;
-
-	/* Get Folder */
-	folder = tree_path_to_folder (dest_model, dest_row);
-	if (!TNY_IS_FOLDER(folder)) {
-		g_warning ("BUG: %s could not get a valid folder", __FUNCTION__);
-		show_banner_move_target_error();
-		goto cleanup;
-	}
-	if (modest_tny_folder_get_rules(folder) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
-		g_debug ("folder rules: cannot write to that folder");
-		goto cleanup;
-	}
-	
 	headers = tny_simple_list_new ();
-	tny_list_append (headers, G_OBJECT (header));
+	uris = modest_dnd_selection_data_get_paths (selection_data);
+	tmp = uris;
 
+	while (*tmp != NULL) {
+		TnyHeader *header;
+		GtkTreePath *path;
+
+		/* Get header */
+		path = gtk_tree_path_new_from_string (*tmp);
+		gtk_tree_model_get_iter (source_model, &source_iter, path);
+		gtk_tree_model_get (source_model, &source_iter, 
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+				    &header, -1);
+
+		/* Do not enable d&d of headers already opened */
+		if (!modest_window_mgr_find_registered_header(mgr, header, NULL))
+			tny_list_append (headers, G_OBJECT (header));
+
+		/* Free and go on */
+		gtk_tree_path_free (path);
+		g_object_unref (header);
+		tmp++;
+	}
+	g_strfreev (uris);
+
+	/* Get the target folder */
+	gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
+	gtk_tree_model_get (dest_model, &dest_iter, 
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
+			    &folder, -1);
+
+	/* Ask for confirmation to move */
 	main_win = modest_window_mgr_get_main_window(mgr);
-	if(msgs_move_to_confirmation(GTK_WINDOW(main_win), folder, TRUE, headers)
-			== GTK_RESPONSE_CANCEL)
+	response = modest_ui_actions_msgs_move_to_confirmation (GTK_WINDOW(main_win), folder, 
+								TRUE, headers);
+	if (response == GTK_RESPONSE_CANCEL)
 		goto cleanup;
 
-	/* Transfer message */
+	/* Transfer messages */
 	mail_op = modest_mail_operation_new_with_error_handling (MODEST_MAIL_OPERATION_TYPE_RECEIVE, 
 								 NULL,
 								 modest_ui_actions_move_folder_error_handler,
 								 NULL);
+
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 
-	modest_mail_operation_xfer_msgs (mail_op, 
+	modest_mail_operation_xfer_msgs (mail_op,
 					 headers, 
 					 folder, 
 					 helper->delete_source, 
@@ -1642,8 +1639,6 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 cleanup:
 	if (G_IS_OBJECT(mail_op))
 		g_object_unref (G_OBJECT (mail_op));
-	if (G_IS_OBJECT(header))
-		g_object_unref (G_OBJECT (header));
 	if (G_IS_OBJECT(folder))
 		g_object_unref (G_OBJECT (folder));
 	if (G_IS_OBJECT(headers))
@@ -1791,17 +1786,8 @@ on_drag_data_received (GtkWidget *widget,
 	if (selection_data == NULL || selection_data->length < 0)
 		gtk_drag_finish (context, success, FALSE, time);
 
-	/* Get the models */
-	gtk_tree_get_row_drag_data (selection_data,
-				    &source_model,
-				    &source_row);
-
 	/* Select the destination model */
-	if (source_widget == widget) {
-		dest_model = source_model;
-	} else {
-		dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
-	}
+	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));	
 
 	/* Get the path to the destination row. Can not call
 	   gtk_tree_view_get_drag_dest_row() because the source row
@@ -1810,35 +1796,43 @@ on_drag_data_received (GtkWidget *widget,
 					   &dest_row, &pos);
 
 	/* Only allow drops IN other rows */
-	if (!dest_row || pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_AFTER)
+	if (!dest_row || 
+	    pos == GTK_TREE_VIEW_DROP_BEFORE || 
+	    pos == GTK_TREE_VIEW_DROP_AFTER)
 		gtk_drag_finish (context, success, FALSE, time);
 
 	/* Create the helper */
 	helper = g_slice_new0 (DndHelper);
 	helper->delete_source = delete_source;
-	helper->source_row = gtk_tree_path_copy (source_row);
 	helper->context = context;
 	helper->time = time;
 
 	/* Drags from the header view */
 	if (source_widget != widget) {
+		source_model = gtk_tree_view_get_model (GTK_TREE_VIEW (source_widget));
 
 		drag_and_drop_from_header_view (source_model,
 						dest_model,
 						dest_row,
+						selection_data,
 						helper);
 	} else {
-
+		/* Get the source model and row */
+		gtk_tree_get_row_drag_data (selection_data,
+					    &source_model,
+					    &source_row);
+		helper->source_row = gtk_tree_path_copy (source_row);
 
 		drag_and_drop_from_folder_view (source_model,
 						dest_model,
 						dest_row,
 						selection_data, 
 						helper);
+
+		gtk_tree_path_free (source_row);
 	}
 
 	/* Frees */
-	gtk_tree_path_free (source_row);
 	gtk_tree_path_free (dest_row);
 }
 
@@ -1926,9 +1920,11 @@ on_drag_motion (GtkWidget      *widget,
 {
 	GtkTreeViewDropPosition pos;
 	GtkTreePath *dest_row;
+	GtkTreeModel *dest_model;
 	ModestFolderViewPrivate *priv;
 	GdkDragAction suggested_action;
 	gboolean valid_location = FALSE;
+	TnyFolder *folder;
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
 
@@ -1954,6 +1950,19 @@ on_drag_motion (GtkWidget      *widget,
 		valid_location = TRUE;
 	}
 
+	/* Check that the destination folder is writable */
+	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
+	folder = tree_path_to_folder (dest_model, dest_row);
+	if (folder) {
+		ModestTnyFolderRules rules = modest_tny_folder_get_rules(folder);
+
+		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+			valid_location = FALSE;
+			goto out;
+		}
+		g_object_unref (folder);
+	}
+
 	/* Expand the selected row after 1/2 second */
 	if (!gtk_tree_view_row_expanded (GTK_TREE_VIEW (widget), dest_row)) {
 		gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget), dest_row, pos);
@@ -1976,16 +1985,9 @@ on_drag_motion (GtkWidget      *widget,
 	if (dest_row)
 		gtk_tree_path_free (dest_row);
 	g_signal_stop_emission_by_name (widget, "drag-motion");
+
 	return valid_location;
 }
-
-
-/* Folder view drag types */
-const GtkTargetEntry folder_view_drag_types[] =
-{
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_WIDGET, MODEST_FOLDER_ROW },
-	{ "GTK_TREE_MODEL_ROW", GTK_TARGET_SAME_APP,    MODEST_HEADER_ROW }
-};
 
 /*
  * This function sets the treeview as a source and a target for dnd

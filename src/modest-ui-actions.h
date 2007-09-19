@@ -469,10 +469,10 @@ void modest_do_messages_delete (TnyList *headers, ModestWindow *win);
  */
 gboolean modest_run_account_setup_wizard (ModestWindow *win);
 
-gint msgs_move_to_confirmation (GtkWindow *win,
-				TnyFolder *dest_folder,
-				gboolean delete,
-				TnyList *headers);
+gint modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
+						  TnyFolder *dest_folder,
+						  gboolean delete,
+						  TnyList *headers);
 
 /*
  * modest_ui_actions_on_send_queue_error_happened:
