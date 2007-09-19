@@ -431,7 +431,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 
 
 	/* if we don't have a text-part */
-	no_text_part = (strcmp (tny_mime_part_get_content_type (body), "text/html")==0);
+	no_text_part = (!body) || (strcmp (tny_mime_part_get_content_type (body), "text/html")==0);
 	
 	/* when we're reply, include the text part if we have it, or nothing otherwise. */
 	if (is_reply)

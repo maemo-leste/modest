@@ -799,6 +799,9 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 					}
 
 					g_object_unref (folder_store);
+				} else {
+					dimmed = TRUE;
+					modest_dimming_rule_set_notification (rule, "");
 				}
 				if (!dimmed) {
 					dimmed = _msg_download_in_progress (win);
