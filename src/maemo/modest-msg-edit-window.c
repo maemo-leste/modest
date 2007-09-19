@@ -2538,6 +2538,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 			fmt.cs.font_size = TRUE;
 		}
 		wp_text_buffer_set_format(WP_TEXT_BUFFER(priv->text_buffer), &fmt);
+		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), window);
 	}
 	gtk_widget_destroy (dialog);
 	
