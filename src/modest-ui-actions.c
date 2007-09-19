@@ -3997,6 +3997,8 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 
 		tny_iterator_next (iter);
 	}
+	g_object_unref (iter);
+	
 
 	if (pending_purges>0) {
 		gint response;
@@ -4004,7 +4006,7 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 
 		if (response == GTK_RESPONSE_OK) {
 			modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
-			tny_iterator_first (iter);
+			iter = tny_list_create_iterator (parts);
 			while (!tny_iterator_is_done (iter)) {
 				TnyMimePart *part;
 				
@@ -4023,26 +4025,10 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 	} else {
 		modest_platform_information_banner (NULL, NULL, _("mail_ib_attachment_already_purged"));
 	}
+	g_object_unref (iter);
 
-	/* remove attachments */
-	tny_iterator_first (iter);
-	while (!tny_iterator_is_done (iter)) {
-		TnyMimePart *part;
-			
-		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		if (part) {
-			/* One for the reference given by tny_iterator_get_current(): */
-			g_object_unref (part);
-
-			/* TODO: Is this meant to remove the attachment by doing another unref()? 
-			 * Otherwise, this seems useless. */
-		}
-
-		tny_iterator_next (iter);
-	}
 	modest_window_mgr_unregister_header (mgr, header);
 
-	g_object_unref (iter);
 	g_object_unref (parts);
 }
 

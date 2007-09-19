@@ -273,7 +273,7 @@ _define_msg_view_window_dimming_state (ModestMsgViewWindow *window)
 	all_has_attach = all_has_attach && (flags & TNY_HEADER_FLAG_ATTACHMENTS);
 	state->all_has_attachments = all_has_attach;
 	if (!state->any_has_attachments)
-		state->any_has_attachments = flags & TNY_HEADER_FLAG_ATTACHMENTS;
+		state->any_has_attachments = (flags & TNY_HEADER_FLAG_ATTACHMENTS)?1:0;
 	
 	/* sent in progress */
 	msg_uid = modest_tny_send_queue_get_msg_id (header);
@@ -1193,7 +1193,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 
 	/* Check if the selected message in main window has attachments */
 	if (!dimmed && MODEST_IS_MAIN_WINDOW (win)) {
-		dimmed = state->any_has_attachments;
+		dimmed = !(state->any_has_attachments);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 	}
