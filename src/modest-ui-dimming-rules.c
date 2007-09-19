@@ -2605,3 +2605,21 @@ _selected_folder_has_subfolder_with_same_name (ModestWindow *win)
 	return result;
 }	
 
+gboolean 
+modest_ui_dimming_rules_on_save_to_drafts (ModestWindow *win, 
+					   gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_MSG_EDIT_WINDOW (win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	if (!dimmed) {
+		dimmed = !modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (win));
+	}
+
+	return dimmed;	
+}

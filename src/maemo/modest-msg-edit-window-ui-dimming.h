@@ -23,6 +23,7 @@ static const ModestDimmingEntry modest_msg_edit_window_menu_dimming_entries [] =
 	{ "/MenuBar/EditMenu/RedoMenu", G_CALLBACK (modest_ui_dimming_rules_on_redo) },	
 	{ "/MenuBar/EditMenu/PasteMenu", G_CALLBACK (modest_ui_dimming_rules_on_editor_paste) },	
 	{ "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu", G_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment) },	
+	{ "/MenuBar/EmailMenu/SaveToDraftsMenu", G_CALLBACK (modest_ui_dimming_rules_on_save_to_drafts) },
 
 };
 
