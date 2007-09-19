@@ -267,9 +267,11 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
 
 		old_attachment = pos->data;
-		attachment_part = copy_mime_part (old_attachment);
-		tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
-		g_object_unref (attachment_part);
+		if (!tny_mime_part_is_purged (old_attachment)) {
+			attachment_part = copy_mime_part (old_attachment);
+			tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
+			g_object_unref (attachment_part);
+		}
 	}
 }
 
