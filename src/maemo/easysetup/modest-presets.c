@@ -63,8 +63,6 @@ modest_presets_new (const gchar *presetfile)
 		g_free (presets);
 		return NULL;
 	}
-
-	/* TODO: Unobfuscate an obfuscated file and then load it with g_key_file_load_from_data() instead. */
 	
 	if (!g_key_file_load_from_file (presets->keyfile, presetfile,
 					G_KEY_FILE_NONE, &err)) {
@@ -277,14 +275,6 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 			g_free(val);
 		}
 	}
-
-	/* debug */
-/* 	g_message ("provider id: %s, apop:%s, secure-incoming:%s, altport: %s, secure-smtp: %s", */
-/* 		   provider_id, */
-/* 		   info & MODEST_PRESETS_SECURITY_APOP ? "yes" : "no", */
-/* 		   info & MODEST_PRESETS_SECURITY_SECURE_INCOMING ? "yes" : "no", */
-/* 		   info & MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT ? "yes" : "no", */
-/* 		   info & MODEST_PRESETS_SECURITY_SECURE_SMTP ? "yes" : "no"); */
 
 	return info;
 }
