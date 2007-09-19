@@ -68,6 +68,7 @@ static gboolean motion_notify_event (GtkWidget *widget, GdkEventMotion *event, M
 static gboolean button_release_event (GtkWidget *widget, GdkEventButton *event, ModestAttachmentsView *atts_view);
 static gboolean key_press_event (GtkWidget *widget, GdkEventKey *event, ModestAttachmentsView *atts_view);
 static gboolean focus_out_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView *atts_view);
+static gboolean focus_in_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView *atts_view);
 static GtkWidget *get_att_view_at_coords (ModestAttachmentsView *atts_view,
 					  gdouble x, gdouble y);
 static void unselect_all (ModestAttachmentsView *atts_view);
@@ -262,6 +263,7 @@ modest_attachments_view_instance_init (GTypeInstance *instance, gpointer g_class
 	g_signal_connect (G_OBJECT (instance), "motion-notify-event", G_CALLBACK (motion_notify_event), instance);
 	g_signal_connect (G_OBJECT (instance), "key-press-event", G_CALLBACK (key_press_event), instance);
 	g_signal_connect (G_OBJECT (instance), "focus-out-event", G_CALLBACK (focus_out_event), instance);
+	g_signal_connect (G_OBJECT (instance), "focus-in-event", G_CALLBACK (focus_in_event), instance);
 
 	GTK_WIDGET_SET_FLAGS (instance, GTK_CAN_FOCUS);
 
@@ -778,6 +780,21 @@ focus_out_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView 
 {
 	if (!gtk_widget_is_focus (widget))
 		unselect_all (atts_view);
+
+	return FALSE;
+}
+
+static gboolean 
+focus_in_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView *atts_view)
+{
+	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+	GList *children = NULL;
+
+	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+	if (children != NULL) {
+		set_selected (atts_view, MODEST_ATTACHMENT_VIEW (children->data));
+	}
+	g_list_free (children);
 
 	return FALSE;
 }
