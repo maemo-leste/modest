@@ -221,14 +221,12 @@ modest_platform_activate_uri (const gchar *uri)
 	HildonURIAction *action;
 	gboolean result = FALSE;
 	GSList *actions, *iter = NULL;
-	const gchar *scheme;
 	
 	g_return_val_if_fail (uri, FALSE);
 	if (!uri)
 		return FALSE;
-
-	scheme = hildon_uri_get_scheme_from_uri (uri, NULL);
-	actions = hildon_uri_get_actions (scheme, NULL);
+	
+	actions = hildon_uri_get_actions_by_uri (uri, -1, NULL);
 	
 	for (iter = actions; iter; iter = g_slist_next (iter)) {
 		action = (HildonURIAction*) iter->data;
@@ -245,7 +243,7 @@ modest_platform_activate_uri (const gchar *uri)
 		}
 	}
 	
-	/* if we could open it with email, try something else */
+	/* if we could not open it with email, try something else */
 	if (!result)
 	       	result = hildon_uri_open (uri, NULL, NULL);	
 		
@@ -333,14 +331,12 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 gboolean 
 modest_platform_show_uri_popup (const gchar *uri)
 {
-	gchar *scheme;
 	GSList *actions_list;
 
 	if (uri == NULL)
 		return FALSE;
-	
-	scheme = hildon_uri_get_scheme_from_uri (uri, NULL);
-	actions_list = hildon_uri_get_actions (scheme, NULL);
+
+	actions_list = hildon_uri_get_actions_by_uri (uri, -1, NULL);
 	if (actions_list != NULL) {
 		GSList *node;
 		GtkWidget *menu = gtk_menu_new ();
@@ -386,8 +382,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 	} else {
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
 	}
-	
-	g_free (scheme);
+
 	return TRUE;
 }
 

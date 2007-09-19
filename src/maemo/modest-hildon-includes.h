@@ -99,6 +99,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #define HildonURIAction                      OssoURIAction
 #define hildon_uri_get_scheme_from_uri       osso_uri_get_scheme_from_uri
 #define hildon_uri_get_actions               osso_uri_get_actions
+#define hildon_uri_get_actions_by_uri        osso_uri_get_actions_by_uri
 #define hildon_uri_action_get_translation    osso_uri_action_get_translation   
 #define hildon_uri_is_default_action         osso_uri_is_default_action
 #define hildon_uri_free_actions              osso_uri_free_actions
