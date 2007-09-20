@@ -115,7 +115,6 @@ modest_conf_init (ModestConf *obj)
 {
 	GConfClient *conf = NULL;
 	ModestConfPrivate *priv = MODEST_CONF_GET_PRIVATE(obj);
-	GError *err      = NULL;
 
 	priv->gconf_client = NULL;
 	

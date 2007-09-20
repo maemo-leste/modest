@@ -2842,6 +2842,11 @@ subject_field_insert_text (GtkEditable *editable,
 	GString *result = g_string_new ("");
 	gchar *current;
 	gint result_len = 0;
+	const gchar *entry_text = NULL;
+	gint old_length;
+
+	entry_text = gtk_entry_get_text (GTK_ENTRY (editable));
+	old_length = g_utf8_strlen (entry_text, -1);
 
 	for (current = new_text; current != NULL && *current != '\0'; current = g_utf8_next_char (current)) {
 		gunichar c = g_utf8_get_char_validated (current, 8);
@@ -2866,6 +2871,12 @@ subject_field_insert_text (GtkEditable *editable,
 					       (gpointer) position, (gpointer) window);
 		       g_signal_handlers_unblock_by_func(G_OBJECT(editable), G_CALLBACK(subject_field_insert_text), window);
 		}
+	}
+
+	if (result_len + old_length > 1000) {
+		hildon_banner_show_information (GTK_WIDGET (window), NULL, 
+						dgettext("hildon-common-strings",
+							 "ckdg_ib_maximum_characters_reached"));
 	}
 	
 	g_string_free (result, TRUE);
