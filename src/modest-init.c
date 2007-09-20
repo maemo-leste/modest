@@ -63,6 +63,9 @@ static void     init_default_settings (ModestConf *conf);
 static void     init_device_name (ModestConf *conf);
 static gboolean init_ui (gint argc, gchar** argv);
 
+
+static gboolean _is_initialized = FALSE;
+
 /*
  * defaults for the column headers
  */
@@ -122,7 +125,8 @@ static const TnyFolderType LOCAL_FOLDERS[] = {
 };
 #endif /* MODEST_PLATFORM_MAEMO */
 
-static GList* new_cold_ids_gslist_from_array( const FolderCols* cols, guint col_num)
+static GList*
+new_cold_ids_gslist_from_array( const FolderCols* cols, guint col_num)
 {
 	GList *result = NULL;
 	
@@ -177,15 +181,12 @@ gboolean
 modest_init (int argc, char *argv[])
 {
 	gboolean reset;
-	static gboolean invoked = FALSE;
 
-	if (invoked) {
+	if (_is_initialized) {
 		g_printerr ("modest: modest_init_init_core may only be invoked once\n");
-		g_assert (!invoked); /* abort */
 		return FALSE;
-	} else
-		invoked = TRUE;
-
+	} 
+	
 	init_i18n();
 	init_debug_g_type();
 	init_debug_logging();
@@ -241,8 +242,8 @@ modest_init (int argc, char *argv[])
 		g_printerr ("modest: failed to init ui\n");
 		return FALSE;
 	}
-	
-	return TRUE;
+
+	return _is_initialized = TRUE;
 }
 
 
@@ -267,12 +268,16 @@ init_ui (gint argc, gchar** argv)
 gboolean
 modest_init_uninit (void)
 {
+	if (!_is_initialized)
+		return TRUE; 
+	
+	if (gnome_vfs_initialized()) /* apparently, this returns TRUE, even after a shutdown */
+		gnome_vfs_shutdown ();
+		
 	if (!modest_runtime_uninit())
 		g_printerr ("modest: failed to uninit runtime\n");
 
-	if (gnome_vfs_initialized())
-		gnome_vfs_shutdown ();
-	
+	_is_initialized = FALSE;
 	return TRUE;
 }
 

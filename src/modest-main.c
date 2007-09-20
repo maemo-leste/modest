@@ -45,7 +45,6 @@ main (int argc, char *argv[])
 	 * command line.: */
 	gboolean show_ui_without_top_application_method = FALSE;
 	if (argc >= 2) {
-		printf ("DEBUG: %s: argv[1]=%s\n", __FUNCTION__, argv[1]);
 		if (strcmp (argv[1], "showui") == 0)
 			show_ui_without_top_application_method = TRUE;
 	}
@@ -99,8 +98,6 @@ cleanup:
 		g_printerr ("modest: modest_init_uninit failed\n");
 		retval = 1;
 	}
-
-	g_debug ("closing modest with retval %d", retval);
 
 	return retval;
 }
