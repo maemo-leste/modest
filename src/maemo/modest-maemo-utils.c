@@ -75,7 +75,7 @@ modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager)
 {
 	GtkWidget *main_menu;
 	GtkWidget *menubar;
-	GList *iter;
+	GList *children, *iter;
 
 	g_return_val_if_fail (ui_manager, NULL);
 	
@@ -85,7 +85,7 @@ modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager)
 	/* Get the menubar from the UI manager */
 	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
 
-	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
+	iter = children = gtk_container_get_children (GTK_CONTAINER (menubar));
 	while (iter) {
 		GtkWidget *menu;
 
@@ -94,6 +94,7 @@ modest_maemo_utils_menubar_to_menu (GtkUIManager *ui_manager)
 
 		iter = g_list_next (iter);
 	}
+	g_list_free (children);
 	return main_menu;
 }
 
