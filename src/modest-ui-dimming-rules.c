@@ -196,7 +196,7 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	if (model != NULL){
 		gint count;
 		count = gtk_tree_model_iter_n_children(model, NULL);
-		if(state->n_selected == count != 0)
+		if(state->n_selected == count)
 			state->all_selected = TRUE;
 	}
 
