@@ -137,6 +137,7 @@ struct _ModestHeaderViewPrivate {
 	gulong  acc_removed_handler;
 
 	HeaderViewStatus status;
+	GList *drag_begin_cached_selected_rows;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -1377,20 +1378,67 @@ drag_data_get_cb (GtkWidget *widget,
 		  guint time, 
 		  gpointer data)
 {
+	ModestHeaderView *self = NULL;
+	ModestHeaderViewPrivate *priv = NULL;
+
+	self = MODEST_HEADER_VIEW (widget);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	/* Set the data. Do not use the current selection because it
+	   could be different than the selection at the beginning of
+	   the d&d */
+	modest_dnd_selection_data_set_paths (selection_data, 
+					     priv->drag_begin_cached_selected_rows);
+}
+
+/**
+ * We're caching the selected rows at the beginning because the
+ * selection could change between drag-begin and drag-data-get, for
+ * example if we have a set of rows already selected, and then we
+ * click in one of them (without SHIFT key pressed) and begin a drag,
+ * the selection at that moment contains all the selected lines, but
+ * after dropping the selection, the release event provokes that only
+ * the row used to begin the drag is selected, so at the end the
+ * drag&drop affects only one rows instead of all the selected ones.
+ *
+ */
+static void
+drag_begin_cb (GtkWidget *widget, 
+	       GdkDragContext *context, 
+	       gpointer data)
+{
+	ModestHeaderView *self = NULL;
+	ModestHeaderViewPrivate *priv = NULL;
 	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GList *selected_rows;
 
-	/* Get selected rows */
+	self = MODEST_HEADER_VIEW (widget);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
-	selected_rows = gtk_tree_selection_get_selected_rows (selection, &model);
+	priv->drag_begin_cached_selected_rows = 
+		gtk_tree_selection_get_selected_rows (selection, NULL);
+}
 
-	/* Set the data */
-	modest_dnd_selection_data_set_paths (selection_data, selected_rows);
+/**
+ * We use the drag-end signal to clear the cached selection, we use
+ * this because this allways happens, whether or not the d&d was a
+ * success
+ */
+static void
+drag_end_cb (GtkWidget *widget, 
+	     GdkDragContext *dc, 
+	     gpointer data)
+{
+	ModestHeaderView *self = NULL;
+	ModestHeaderViewPrivate *priv = NULL;
 
-	/* Frees */
-	g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
-	g_list_free (selected_rows);
+	self = MODEST_HEADER_VIEW (widget);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	/* Free cached data */
+	g_list_foreach (priv->drag_begin_cached_selected_rows, (GFunc) gtk_tree_path_free, NULL);
+	g_list_free (priv->drag_begin_cached_selected_rows);
+	priv->drag_begin_cached_selected_rows = NULL;
 }
 
 /* Header view drag types */
@@ -1409,6 +1457,12 @@ setup_drag_and_drop (GtkTreeView *self)
 
 	g_signal_connect(G_OBJECT (self), "drag_data_get",
 			 G_CALLBACK(drag_data_get_cb), NULL);
+
+	g_signal_connect(G_OBJECT (self), "drag_begin",
+			 G_CALLBACK(drag_begin_cb), NULL);
+
+	g_signal_connect(G_OBJECT (self), "drag_end",
+			 G_CALLBACK(drag_end_cb), NULL);
 }
 
 static GtkTreePath *
