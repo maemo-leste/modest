@@ -1640,7 +1640,7 @@ show_error (GtkWidget *parent_widget, const gchar* text)
 /** Attempt to create the account from the information that the user has entered.
  * @result: TRUE if the account was successfully created.
  */
-gboolean
+static gboolean
 create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 {
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);

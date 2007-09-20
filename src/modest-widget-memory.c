@@ -250,7 +250,7 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 		 * The paned position is incorrectly saved somehow before its even visible,
 		 * when we show the main window only some time after creating it,
 		 * so this prevents a wrong value from being used. */
-		const gint max = (GTK_WIDGET(paned)->requisition.width)/3;
+		const gint max = (GTK_WIDGET(paned)->allocation.width)/3;
 		if (pos > max)
 			pos = max;
 		

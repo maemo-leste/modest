@@ -301,7 +301,9 @@ on_account_inserted (TnyAccountStore *account_store,
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 
-	update_account_view (priv->account_mgr, self);
+	/* Do not refresh the view with transport accounts */
+	if (TNY_IS_STORE_ACCOUNT (account))
+		update_account_view (priv->account_mgr, self);
 }
 
 static void
@@ -520,7 +522,7 @@ init_view (ModestAccountView *self)
 						       "account_inserted",
 						       G_CALLBACK(on_account_inserted), self);
 
-	priv->acc_inserted_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+	priv->acc_changed_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
 						       "account_changed",
 						       G_CALLBACK(on_account_changed), self);
 
