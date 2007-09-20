@@ -89,7 +89,7 @@ modest_dnd_selection_data_get_paths (GtkSelectionData *selection_data)
 	if (selection_data->length >= 0 &&
 	    selection_data->type == tree_path_as_string_list_atom) {
 		
-		result = g_strsplit (selection_data->data, "\n", 0);		
+		result = g_strsplit ((const gchar*)selection_data->data, "\n", 0);		
 	}	
 	return result;
 }
