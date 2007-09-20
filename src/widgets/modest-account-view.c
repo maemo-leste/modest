@@ -409,12 +409,12 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
 	}
 	
 	gchar *account_name = NULL;
-	gtk_tree_model_get (model, &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, &account_name,
-			    -1);
+	gtk_tree_model_get (model, &iter, 
+			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
+			    &account_name, -1);
 	
 	/* Set this previously-non-default account as the default: */
-	if (modest_account_mgr_set_default_account (priv->account_mgr, account_name))
-	{
+	if (modest_account_mgr_set_default_account (priv->account_mgr, account_name)) {
 		/* Explicitely set default column because we are ignoring gconf changes */
 		GtkTreeIter old_default_iter;
 		if (find_default_account (self, &old_default_iter)) {

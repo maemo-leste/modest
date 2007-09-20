@@ -45,6 +45,7 @@ enum {
 	ACCOUNT_CHANGED_SIGNAL,
 	ACCOUNT_REMOVED_SIGNAL,
 	ACCOUNT_BUSY_SIGNAL,
+	DEFAULT_ACCOUNT_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -105,7 +106,7 @@ on_timeout_notify_changes (gpointer data)
 	while (cursor) {
 		const gchar *account = cursor->data;
 		if (account)
-			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, 
+			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
 				       account);
 		cursor = g_slist_next (cursor);
 	}
@@ -156,20 +157,10 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 	gboolean is_server_account;
 	gchar* account_name = NULL;
 
-	/* there is only one not-really-account key which will still emit
-	 * a signal: a change in MODEST_CONF_DEFAULT_ACCOUNT */
+	/* Notify that the default account has changed */
 	if (key && strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		/* Get the default account instead. */
-		gchar *default_account =  modest_account_mgr_get_default_account (self);
-		if (!default_account) {
-			g_warning ("BUG: cannot find default account");
-			return;
-		} else {
-			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, 
-				       default_account);
-			g_free(default_account);
-			return;
-		}	
+		g_signal_emit (G_OBJECT(self), signals[DEFAULT_ACCOUNT_CHANGED_SIGNAL], 0);
+		return;
 	}
 	
 	is_account_key = FALSE;
@@ -181,11 +172,6 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 	if (!account_name)
 		return;
 
-	/* ignore server account changes */
-	if (is_server_account)
-		/* change in place: retrieve the parent account name */
-		get_account_name_from_server_account (account_name);
-
 	/* account was removed. Do not emit an account removed signal
 	   because it was already being done in the remove_account
 	   method. Do not notify also the removal of the server
@@ -195,6 +181,11 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 		g_free (account_name);
 		return;
 	}
+
+	/* ignore server account changes */
+	if (is_server_account)
+		/* change in place: retrieve the parent account name */
+		get_account_name_from_server_account (account_name);
 
 	/* is this account enabled? */
 	gboolean enabled = FALSE;
@@ -214,9 +205,9 @@ on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
 								  account_name);
 			/* hmm, small race when this object is destroyed within
 			 * 500ms of the last change, and there are multiple timeouts... */
-			priv->timeout = g_timeout_add (500, (GSourceFunc)on_timeout_notify_changes,
+			priv->timeout = g_timeout_add (500, (GSourceFunc) on_timeout_notify_changes,
 						       self);
-		}   
+		}
 	}
 	g_free (account_name);
 }
@@ -259,7 +250,7 @@ modest_account_mgr_base_init (gpointer g_class)
 			g_signal_new ("account_inserted",
 				      MODEST_TYPE_ACCOUNT_MGR,
 				      G_SIGNAL_RUN_FIRST,
-				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_inserted),
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, account_inserted),
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__STRING,
 				      G_TYPE_NONE, 1, G_TYPE_STRING);
@@ -268,7 +259,7 @@ modest_account_mgr_base_init (gpointer g_class)
 			g_signal_new ("account_removed",
 				      MODEST_TYPE_ACCOUNT_MGR,
 				      G_SIGNAL_RUN_FIRST,
-				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_removed),
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, account_removed),
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__STRING,
 				      G_TYPE_NONE, 1, G_TYPE_STRING);
@@ -277,19 +268,28 @@ modest_account_mgr_base_init (gpointer g_class)
 			g_signal_new ("account_changed",
 				      MODEST_TYPE_ACCOUNT_MGR,
 				      G_SIGNAL_RUN_FIRST,
-				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_changed),
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, account_changed),
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__STRING,
-				      G_TYPE_NONE, 1, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN);
+				      G_TYPE_NONE, 1, G_TYPE_STRING);
 
 		signals[ACCOUNT_BUSY_SIGNAL] =
 			g_signal_new ("account_busy_changed",
 				      MODEST_TYPE_ACCOUNT_MGR,
 				      G_SIGNAL_RUN_FIRST,
-				      G_STRUCT_OFFSET(ModestAccountMgrClass,account_busy_changed),
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, account_busy_changed),
 				      NULL, NULL,
 				      modest_marshal_VOID__STRING_BOOLEAN,
 				      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);
+
+		signals[DEFAULT_ACCOUNT_CHANGED_SIGNAL] =
+			g_signal_new ("default_account_changed",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, default_account_changed),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__VOID,
+				      G_TYPE_NONE, 0);
 
 		modest_account_mgr_initialized = TRUE;
 	}

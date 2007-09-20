@@ -123,9 +123,8 @@ on_account_removed (TnyAccountStore *accoust_store,
                     gpointer user_data);
 
 static void
-on_account_changed (ModestAccountMgr* mgr,
-                    const gchar* account,
-                    gpointer user_data);
+on_default_account_changed (ModestAccountMgr* mgr,
+			    gpointer user_data);
 
 static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
 					       GdkEventKey *event,
@@ -220,8 +219,6 @@ struct _ModestMainWindowPrivate {
 	/* Signal handler UIDs */
 	GList *queue_err_signals;
 	GSList *sighandlers;
-	
-	ModestConfNotificationId notification_id;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -354,12 +351,6 @@ modest_main_window_finalize (GObject *obj)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
-	if (priv->notification_id) {
-		modest_conf_forget_namespace (modest_runtime_get_conf (),
-					      MODEST_CONF_NAMESPACE,
-					      priv->notification_id);
-	}
-	
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_main_window_disconnect_signals (MODEST_WINDOW (obj));
@@ -859,8 +850,6 @@ connect_signals (ModestMainWindow *self)
 						       "queue-changed", G_CALLBACK (on_queue_changed), self);
 	
 	/* Track changes in the device name */
-	priv->notification_id =  modest_conf_listen_to_namespace (modest_runtime_get_conf (), 
-								  MODEST_CONF_NAMESPACE);
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(modest_runtime_get_conf ()),
 						       "key_changed", G_CALLBACK (on_configuration_key_changed), 
 						       self);
@@ -875,8 +864,10 @@ connect_signals (ModestMainWindow *self)
 
 	/* We need to refresh the send & receive menu to change the bold
 	 * account when the default account changes. */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_mgr ()),
-	                                               "account_changed", G_CALLBACK (on_account_changed),
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (modest_runtime_get_account_mgr ()),
+	                                               "default_account_changed", 
+						       G_CALLBACK (on_default_account_changed),
 	                                               self);
 
 	/* Account store */
@@ -1400,19 +1391,10 @@ on_account_inserted (TnyAccountStore *accoust_store,
 }
 
 static void
-on_account_changed (ModestAccountMgr* mgr,
-                    const gchar* account,
-                    gpointer user_data)
+on_default_account_changed (ModestAccountMgr* mgr,
+			    gpointer user_data)
 {
-	gchar *default_account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-
-	/* Actually, we only want to know when another account has become
-	 * the default account, but there is no default_account_changed
-	 * signal in ModestAccountMgr. */
-	if(strcmp(account, default_account) == 0)
-		update_menus (MODEST_MAIN_WINDOW (user_data));
-
-	g_free (default_account);
+	update_menus (MODEST_MAIN_WINDOW (user_data));
 }
 
 static void
@@ -1815,15 +1797,15 @@ on_configuration_key_changed (ModestConf* conf,
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	TnyAccount *account = NULL;
 
-	if (!key || 
-	    priv->notification_id != id ||
-	    strcmp (key, MODEST_CONF_DEVICE_NAME))
+	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
 		return;
 
 	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
 		return;
+
 	if (priv->folder_view) 
 		account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
+
 	if (account && TNY_IS_ACCOUNT (account) &&
 	    strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0) {
 		GList *children;

@@ -115,9 +115,8 @@ modest_conf_init (ModestConf *obj)
 {
 	GConfClient *conf = NULL;
 	ModestConfPrivate *priv = MODEST_CONF_GET_PRIVATE(obj);
-/* 	GError *err      = NULL; */
+	GError *err      = NULL;
 
-	
 	priv->gconf_client = NULL;
 	
 	conf = gconf_client_get_default ();
@@ -125,27 +124,7 @@ modest_conf_init (ModestConf *obj)
 		g_printerr ("modest: could not get gconf client\n");
 		return;
 	}
-/* 	gconf_client_add_dir (conf,MODEST_CONF_NAMESPACE, */
-/* 			      GCONF_CLIENT_PRELOAD_NONE, */
-/* 			      &err); */
-/* 	if (err) { */
-/* 		g_printerr ("modest: error %d with gconf_client_add_dir: '%s'\n", */
-/* 			    err->code, err->message); */
-/* 		g_object_unref (conf); */
-/* 		g_error_free (err); */
-/* 		return; */
-/* 	} */
-	
-/* 	gconf_client_notify_add (conf, MODEST_CONF_NAMESPACE, */
-/* 				 modest_conf_on_change, */
-/* 				 obj, NULL, &err); */
-/* 	if (err) { */
-/* 		g_printerr ("modest: gconf_client_notify_add error %d: '%s'\n", */
-/* 			    err->code, err->message); */
-/* 		g_object_unref (conf); */
-/* 		g_error_free (err); */
-/* 		return; */
-/* 	} */
+
 	priv->gconf_client = conf; 	/* all went well! */
 }
 

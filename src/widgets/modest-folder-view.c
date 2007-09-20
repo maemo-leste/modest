@@ -673,7 +673,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	 * Track changes in the local account name (in the device it
 	 * will be the device name)
 	 */
-	priv->notification_id = modest_conf_listen_to_namespace (conf, 
+	priv->notification_id = modest_conf_listen_to_namespace (conf,
 								 MODEST_CONF_NAMESPACE);
 	priv->conf_key_signal = g_signal_connect (G_OBJECT(conf), 
 						  "key_changed",

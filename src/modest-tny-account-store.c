@@ -465,12 +465,17 @@ update_tny_account_for_account (ModestTnyAccountStore *self, ModestAccountMgr *a
 		TnyAccount *tny_account;
 		tny_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
 		if (tny_account) {
-			const gchar* parent_name =
-				modest_tny_account_get_parent_modest_account_name_for_server_account (tny_account);
-			if (parent_name && strcmp (parent_name, account_name) == 0) {
-				found = TRUE;
-				modest_tny_account_update_from_account (tny_account, acc_mgr, account_name, type);
-				g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
+			TnyConnectionStatus conn_status = tny_account_get_connection_status (tny_account);
+
+			if (conn_status != TNY_CONNECTION_STATUS_RECONNECTING &&
+			    conn_status != TNY_CONNECTION_STATUS_INIT) {
+				const gchar* parent_name;
+				parent_name = modest_tny_account_get_parent_modest_account_name_for_server_account (tny_account);
+				if (parent_name && strcmp (parent_name, account_name) == 0) {
+					found = TRUE;
+					modest_tny_account_update_from_account (tny_account, acc_mgr, account_name, type);
+					g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
+				}
 			}
 			g_object_unref (tny_account);
 		}
@@ -491,11 +496,11 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 {
 	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 
-	g_debug ("DEBUG: modest: %s\n", __FUNCTION__);
+/* 	g_debug ("DEBUG: modest: %s\n", __FUNCTION__); */
 
-	/* Ignore the change if it's a change in the last_updated value */
-//	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED))
-//		return;
+/* 	/\* Ignore the change if it's a change in the last_updated value *\/ */
+/* 	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED)) */
+/* 		return; */
 	
 	if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_STORE))
 		g_warning ("%s: failed to update store account for %s", __FUNCTION__, account_name);
