@@ -666,7 +666,12 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 			gtk_widget_destroy (banner);
 			g_object_unref (G_OBJECT(banner));
 		}
-		return TRUE;
+		if (last_length != 0) {
+			hildon_banner_show_information (NULL, NULL, _("mcen_nc_no_matching_contacts"));
+			return FALSE;
+		} else {
+			return TRUE;
+		}
 	}
 
 	current_start = start_indexes;
