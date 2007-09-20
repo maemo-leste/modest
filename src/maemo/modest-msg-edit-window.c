@@ -150,7 +150,9 @@ static gboolean gtk_text_iter_forward_search_insensitive (const GtkTextIter *ite
 							  const gchar *str,
 							  GtkTextIter *match_start,
 							  GtkTextIter *match_end);
-							  
+
+static void remove_tags (WPTextBuffer *buffer);
+
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -2391,6 +2393,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 		switch (file_format) {
 		case MODEST_FILE_FORMAT_FORMATTED_TEXT:
 			wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
+			remove_tags (WP_TEXT_BUFFER (priv->text_buffer));
 			break;
 		case MODEST_FILE_FORMAT_PLAIN_TEXT:
 		{
@@ -3164,3 +3167,13 @@ modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
 	}
 }
 
+static void 
+remove_tags (WPTextBuffer *buffer)
+{
+	GtkTextIter start, end;
+
+	gtk_text_buffer_get_start_iter (GTK_TEXT_BUFFER (buffer), &start);
+	gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (buffer), &end);
+
+	gtk_text_buffer_remove_all_tags (GTK_TEXT_BUFFER (buffer), &start, &end);
+}
