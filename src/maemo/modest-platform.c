@@ -76,12 +76,40 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 	}
 }
 
+
+
+static gboolean
+check_required_files (void)
+{
+	FILE *mcc_file = modest_maemo_open_mcc_mapping_file ();
+	if (!mcc_file) {
+		g_printerr ("modest: check for mcc file failed\n");
+		return FALSE;
+	} else 
+		fclose (mcc_file);
+
+	if (access (MODEST_PROVIDERS_DATA_PATH, R_OK) != 0) {
+		g_printerr ("modest: cannot find providers data\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+
 gboolean
 modest_platform_init (int argc, char *argv[])
 {
 	osso_hw_state_t hw_state = { 0 };
 	DBusConnection *con;	
 
+	if (!check_required_files ()) {
+		g_printerr ("modest: missing required files\n");
+		return FALSE;
+	}
+
+	
 	osso_context =
 		osso_initialize(PACKAGE,PACKAGE_VERSION,
 				FALSE, NULL);	
@@ -95,7 +123,7 @@ modest_platform_init (int argc, char *argv[])
 		return FALSE;
 
 	}
-	
+
 	/* Add a D-Bus handler to be used when the main osso-rpc 
 	 * D-Bus handler has not handled something.
 	 * We use this for D-Bus methods that need to use more complex types 

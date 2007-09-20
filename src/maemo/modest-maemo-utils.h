@@ -32,7 +32,9 @@
 #define __MODEST_MAEMO_UTILS_H__
 
 #include <gtk/gtk.h>
+#include <stdio.h> /* for FILE* */
 #include <modest-protocol-info.h>
+#include <tny-fs-stream.h>
 
 #define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
@@ -143,7 +145,24 @@ void modest_maemo_show_information_note_in_main_context_and_forget (GtkWindow *p
 void modest_maemo_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog);
 
 
+/**
+ * modest_maemo_open_mcc_mapping_file:
+ *
+ * open the mcc mapping file, or NULL if it fails
+ *
+ * Returns: file ptr or NULL in case of error
+ */
+FILE* modest_maemo_open_mcc_mapping_file (void);
+
+/**
+ * modest_maemo_set_thumbable_scrollbar:
+ * @win: a scrollable window
+ * @thumbable: set it to thumbable (TRUE) or small (FALSE)
+ *
+ * changes the thumbability of scrollbars in a scrollable window
+ */
 void modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable);
+
 
 /**
  * modest_maemo_toggle_action_set_active_block_notify:

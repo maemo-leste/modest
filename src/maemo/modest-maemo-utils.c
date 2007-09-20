@@ -655,3 +655,26 @@ modest_maemo_toggle_action_set_active_block_notify (GtkToggleAction *action, gbo
 	}
 
 }
+
+
+
+FILE*
+modest_maemo_open_mcc_mapping_file (void)
+{
+	FILE* result;
+	
+	/* Load the file one line at a time: */
+#ifdef MODEST_HILDON_VERSION_0
+	const gchar* filepath = PROVIDER_DATA_DIR "/mcc_mapping";
+#else
+	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
+#endif /*MODEST_HILDON_VERSION_0*/
+	
+	result = fopen (filepath, "r");	
+	if (!result) 
+		g_printerr ("modest: failed to open mcc mapping file");
+	
+	return result;
+}
+
+

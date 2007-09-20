@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 
+#include "../modest-maemo-utils.h"
 #include "modest-easysetup-country-combo-box.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
@@ -176,7 +177,6 @@ parse_mcc_mapping_line (const char* line,  char** country)
 			else  /* error */
 				return 0;
 		} else {
-			printf ("%c", kar);
 			my_country [j++] = kar;
 		}
 	}
@@ -202,22 +202,8 @@ load_from_file (EasysetupCountryComboBox *self)
 	
 	char line[MAX_LINE_LEN];
 	guint previous_mcc = 0;
-		
-	/* Load the file one line at a time: */
-#ifdef MODEST_HILDON_VERSION_0
-	const gchar* filepath = PROVIDER_DATA_DIR "/mcc_mapping";
-#else
-	/* This is the official version, in the 'operator-wizard-settings' package */
-	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
-#endif /*MODEST_HILDON_VERSION_0*/
-	/* printf ("DEBUG: %s: filepath=%s\n", __FUNCTION__, filepath); */
-	FILE *file = fopen(filepath, "r");
-	if (!file) {
-		const gchar* filepath_hack = HACK_TOP_SRCDIR "src/maemo/easysetup/mcc_mapping";
-		g_warning ("Could not locate the official mcc_mapping countries list file from %s, "
-			"so attempting to load it instead from %s", filepath, filepath_hack);
-		file = fopen(filepath_hack, "r");
-	}
+	
+	FILE *file = modest_maemo_open_mcc_mapping_file ();
 	if (!file) {
 		g_warning("Could not open mcc_mapping file");
 		return;
