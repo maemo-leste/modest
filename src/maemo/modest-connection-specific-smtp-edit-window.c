@@ -164,6 +164,15 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
 
 	/* Don't close the dialog if a range error occured */
+	if(priv->range_error_occured)
+	{
+		priv->range_error_occured = FALSE;
+		g_signal_stop_emission_by_name (dialog, "response");
+		gtk_widget_grab_focus (priv->entry_port);
+		return;
+	}
+
+	/* Don't close the dialog if a range error occured */
 	if(response_id == GTK_RESPONSE_OK) {
 		if (!modest_text_utils_validate_domain_name (hostname)) { 
 			g_signal_stop_emission_by_name (dialog, "response");
@@ -174,13 +183,6 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 		}
 	}
 	
-	/* Don't close the dialog if a range error occured */
-	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
-	{
-		g_signal_stop_emission_by_name (dialog, "response");
-		gtk_widget_grab_focus (priv->entry_port);
-		return;
-	}
 }
 
 static void on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpointer user_data)
