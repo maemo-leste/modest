@@ -1373,9 +1373,9 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	   toolbar fullscreen mode is shared by all the windows of the
 	   same type */
 	if (modest_window_mgr_get_fullscreen_mode (modest_runtime_get_window_mgr ()))
-		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarFullScreenMenu";
+		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarFullScreenMenu";
 	else
-		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarNormalScreenMenu";
+		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu";
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
