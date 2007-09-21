@@ -52,7 +52,7 @@
 #include <widgets/modest-window-mgr.h>
 #include <modest-account-settings-dialog.h>
 #include <maemo/modest-maemo-utils.h>
-
+#include <modest-signal-mgr.h>
 
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
@@ -125,17 +125,13 @@ struct _ModestTnyAccountStorePrivate {
 	TnySessionCamel    *session;
 	TnyDevice          *device;
 
-	gulong acc_inserted_handler;
-	gulong acc_changed_handler;
-	gulong acc_removed_handler;
-	gulong volume_mounted_handler;
-	gulong volume_unmounted_handler;
+	GSList *sighandlers;
 	
 	/* We cache the lists of accounts here */
 	TnyList             *store_accounts;
 	TnyList             *transport_accounts;
 	TnyList             *store_accounts_outboxes;
-
+	
 	/* Matches transport accounts and outbox folder */
 	GHashTable          *outbox_of_transport;
 };
@@ -267,6 +263,7 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	priv->account_mgr            = NULL;
 	priv->session                = NULL;
 	priv->device                 = NULL;
+	priv->sighandlers            = NULL;
 	
 	priv->outbox_of_transport = g_hash_table_new_full (g_direct_hash,
 							   g_direct_equal,
@@ -290,14 +287,15 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	/* This is a singleton, so it does not need to be unrefed. */
 	monitor = gnome_vfs_get_volume_monitor();
 
-	priv->volume_mounted_handler = g_signal_connect (G_OBJECT(monitor), 
-							 "volume-mounted",
-							 G_CALLBACK(on_vfs_volume_mounted),
-							 obj);
-
-	priv->volume_unmounted_handler = g_signal_connect (G_OBJECT(monitor), "volume-unmounted",
-							   G_CALLBACK(on_vfs_volume_unmounted),
-							   obj);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
+						       G_OBJECT(monitor), 
+						       "volume-mounted",
+						       G_CALLBACK(on_vfs_volume_mounted),
+						       obj);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
+						       G_OBJECT(monitor), "volume-unmounted",
+						       G_CALLBACK(on_vfs_volume_unmounted),
+						       obj);
 }
 
 /* disconnect the list of TnyAccounts */
@@ -779,7 +777,6 @@ forget_password (TnyAccount *account)
 static void
 modest_tny_account_store_finalize (GObject *obj)
 {
-	GnomeVFSVolumeMonitor *volume_monitor;
 	ModestTnyAccountStore *self        = MODEST_TNY_ACCOUNT_STORE(obj);
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
@@ -801,33 +798,10 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->outbox_of_transport = NULL;
 	}
 
-
-	/* Disconnect VFS signals */
-	volume_monitor = gnome_vfs_get_volume_monitor ();
-	if (g_signal_handler_is_connected (volume_monitor, 
-					   priv->volume_mounted_handler))
-		g_signal_handler_disconnect (volume_monitor, 
-					     priv->volume_mounted_handler);
-	if (g_signal_handler_is_connected (volume_monitor, 
-					   priv->volume_unmounted_handler))
-		g_signal_handler_disconnect (volume_monitor, 
-					     priv->volume_unmounted_handler);
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
+	priv->sighandlers = NULL;	
 
 	if (priv->account_mgr) {
-		/* Disconnect signals */
-		if (g_signal_handler_is_connected (priv->account_mgr, 
-						   priv->acc_inserted_handler))
-			g_signal_handler_disconnect (priv->account_mgr, 
-						     priv->acc_inserted_handler);
-		if (g_signal_handler_is_connected (priv->account_mgr, 
-						   priv->acc_changed_handler))
-			g_signal_handler_disconnect (priv->account_mgr, 
-						     priv->acc_changed_handler);
-		if (g_signal_handler_is_connected (priv->account_mgr, 
-						   priv->acc_removed_handler))
-			g_signal_handler_disconnect (priv->account_mgr, 
-						     priv->acc_removed_handler);
-
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
@@ -942,14 +916,17 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 
 	/* Set the ui locker */	
 	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
-		
+	
 	/* Connect signals */
-	priv->acc_inserted_handler = g_signal_connect (G_OBJECT(account_mgr), "account_inserted",
-						      G_CALLBACK (on_account_inserted), obj);
-	priv->acc_changed_handler = g_signal_connect (G_OBJECT(account_mgr), "account_changed",
-						      G_CALLBACK (on_account_changed), obj);
-	priv->acc_removed_handler = g_signal_connect (G_OBJECT(account_mgr), "account_removed",
-						      G_CALLBACK (on_account_removed), obj);
+	priv->sighandlers  =  modest_signal_mgr_connect (priv->sighandlers,
+							 G_OBJECT(account_mgr), "account_inserted",
+							 G_CALLBACK (on_account_inserted), obj);
+	priv->sighandlers  =  modest_signal_mgr_connect (priv->sighandlers,
+							 G_OBJECT(account_mgr), "account_changed",
+							 G_CALLBACK (on_account_changed), obj);
+	priv->sighandlers  =  modest_signal_mgr_connect (priv->sighandlers,
+							 G_OBJECT(account_mgr), "account_removed",
+							 G_CALLBACK (on_account_removed), obj);
 
 	/* Create the lists of accounts */
 	priv->store_accounts = tny_simple_list_new ();

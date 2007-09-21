@@ -59,12 +59,14 @@ modest_signal_mgr_disconnect_all_and_destroy (GSList *lst)
 	for (cursor = lst; cursor; cursor = g_slist_next(cursor)) {
 		SignalHandler *handler;
 		handler = (SignalHandler*)cursor->data;
-		if (g_signal_handler_is_connected (handler->obj, handler->handler_id)) {
-			//g_debug ("disconnecting %d", handler->handler_id);
-			g_signal_handler_disconnect (handler->obj, handler->handler_id);
+		if (handler && handler->obj && G_IS_OBJECT(handler->obj)) {
+			if (g_signal_handler_is_connected (handler->obj, handler->handler_id)) {
+				/* g_debug ("%p: disconnecting %d", handler->obj, handler->handler_id); */
+				g_signal_handler_disconnect (handler->obj, handler->handler_id);
+			}
+			g_object_unref (handler->obj);
+			handler->obj = NULL;
 		}
-		
-		g_object_unref (handler->obj);    
 		g_free (handler);
 	}
 	g_slist_free (lst);
