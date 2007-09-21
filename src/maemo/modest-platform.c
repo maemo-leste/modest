@@ -870,15 +870,16 @@ check_modal_and_set_maybe (GtkDialog *dialog)
 
 	if (!old_modal) {	
 		gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
-		modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(),
-						    dialog);
 	} else {
 		/* un-modalize the old one; the one on top should be the
 		 * modal one */
 		gtk_window_set_modal (GTK_WINDOW(old_modal), FALSE);	
 		gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
 	}
-	
+
+	/* this will be the new modal dialog */
+	modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(),
+					    dialog);
 }
 
 gint
