@@ -457,10 +457,9 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	 * set by the osso-operator-wizard package, suggested by Dirk-Jan Binnema.
 	 *
 	 */
-	GConfClient *client = gconf_client_get_default ();
 	GError *error = NULL;
 	const gchar* key = "/apps/osso/operator-wizard/last_mcc";
-	gint mcc_id = gconf_client_get_int(client, key, &error);
+	gint mcc_id = modest_conf_get_int(modest_runtime_get_conf (), key, &error);
 	
 	if(mcc_id < 0)
 		mcc_id = 0;
@@ -473,7 +472,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 		mcc_id = 0;
 	}
     
-	/* Note that gconf_client_get_int() seems to return 0 without an error if the key is not there
+	/* Note that modest_conf_get_int() seems to return 0 without an error if the key is not there
 	 * This might just be a Maemo bug.
 	 */
 	if (mcc_id == 0) 
@@ -1884,6 +1883,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	if (self->specific_window)
 		result = modest_connection_specific_smtp_window_save_server_accounts (
 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window));
+
 			
 	g_free (self->saved_account_name);
 	self->saved_account_name = g_strdup (account_name);

@@ -2363,7 +2363,11 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 	if (!is_ok) {
 		save_mime_part_info_free (info, TRUE);
 	} else {
+		GtkWidget *banner = hildon_banner_show_animation (NULL, NULL, 
+								  _CS("sfil_ib_saving"));
+		info->banner = g_object_ref (banner);
 		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
+		g_object_unref (banner);
 	}
 
 }
@@ -2469,12 +2473,8 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 
 	if (files_to_save != NULL) {
 		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
-		GtkWidget *banner = hildon_banner_show_animation (NULL, NULL, 
-								  _CS("sfil_ib_saving"));
 		info->pairs = files_to_save;
-		info->banner = banner;
 		info->result = TRUE;
-		g_object_ref (banner);
 		save_mime_parts_to_file_with_checks (info);
 	}
 }

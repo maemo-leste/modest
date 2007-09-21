@@ -1533,6 +1533,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	return TRUE;
 
  error:
+	if (store_account)
+		g_object_unref (store_account);
+	if (transport_account)
+		g_object_unref (transport_account);
 	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 	if (callback) {
 		callback (self, NULL, user_data);
