@@ -62,7 +62,7 @@ struct _ModestWindowMgrPrivate {
 	GList        *window_list;
 
 	ModestWindow *main_window;
-	GtkDialog    *easysetup_dialog;
+	GtkDialog    *modal_dialog;
 	
 	gboolean     fullscreen_mode;
 	
@@ -127,7 +127,7 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->window_list = NULL;
 	priv->main_window = NULL;
 	priv->fullscreen_mode = FALSE;
-	priv->easysetup_dialog = NULL;
+	priv->modal_dialog = NULL;
 	
 	priv->preregistered_uids = NULL;
 
@@ -171,11 +171,11 @@ modest_window_mgr_finalize (GObject *obj)
 		priv->viewer_handlers = NULL;
 	}
 
-	if (priv->easysetup_dialog) {
-		g_warning ("%s: forgot to destroy an easysetup dialog somewhere",
+	if (priv->modal_dialog) {
+		g_warning ("%s: forgot to destroy a modal dialog somewhere",
 			   __FUNCTION__);
-		gtk_widget_destroy (GTK_WIDGET(priv->easysetup_dialog));
-		priv->easysetup_dialog = NULL;
+		gtk_widget_destroy (GTK_WIDGET(priv->modal_dialog));
+		priv->modal_dialog = NULL;
 	}
 	
 	/* Do not unref priv->main_window because it does not hold a
@@ -547,10 +547,11 @@ disconnect_msg_changed (gpointer key,
 			gpointer value, 
 			gpointer user_data)
 {
-	gulong *handler_id;
-
-	handler_id = (gulong *) value;
-	g_signal_handler_disconnect (G_OBJECT (key), *handler_id);
+	guint handler_id;
+	handler_id = GPOINTER_TO_UINT(value);
+	
+	if (key && G_IS_OBJECT(key))
+		g_signal_handler_disconnect (G_OBJECT (key), handler_id);
 }
 
 
@@ -792,26 +793,26 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self)
 
 
 GtkDialog*
-modest_window_mgr_get_easysetup_dialog (ModestWindowMgr *self)
+modest_window_mgr_get_modal_dialog (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv;
 	
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
-	return priv->easysetup_dialog;
+	return priv->modal_dialog;
 }
 
 
 GtkDialog*
-modest_window_mgr_set_easysetup_dialog (ModestWindowMgr *self, GtkDialog *dialog)
+modest_window_mgr_set_modal_dialog (ModestWindowMgr *self, GtkDialog *dialog)
 {
 	ModestWindowMgrPrivate *priv;
 	
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
-	return priv->easysetup_dialog = dialog;
+	return priv->modal_dialog = dialog;
 }
 
 

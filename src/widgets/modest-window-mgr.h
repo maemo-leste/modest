@@ -138,26 +138,26 @@ ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
 
 
 /**
- * modest_window_mgr_get_easysetup_dialog:
+ * modest_window_mgr_get_modal_dialog:
  * @self: a #ModestWindowMgr
  *
- * get the easysetup dialog; if it's NULL, there's no active dialog
+ * get the modal dialog; if it's NULL, there's no active dialog
  *
- * Returns: the easy setup dialog or NULL
+ * Returns: the modal dialog or NULL
  **/
-GtkDialog*    modest_window_mgr_get_easysetup_dialog  (ModestWindowMgr *self);
+GtkDialog*    modest_window_mgr_get_modal_dialog  (ModestWindowMgr *self);
 
 
 /**
  * modest_window_mgr_get_easysetup_dialog:
  * @self: a #ModestWindowMgr
  *
- * set the easysetup dialog; set it to NULL after destroying the dialog
+ * set the modal dialog; set it to NULL after destroying the dialog
  *
- * Returns: the easy setup dialog just set
+ * Returns: the modal dialog just set
  **/
-GtkDialog*    modest_window_mgr_set_easysetup_dialog  (ModestWindowMgr *self,
-						       GtkDialog *dialog);
+GtkDialog*    modest_window_mgr_set_modal_dialog  (ModestWindowMgr *self,
+						   GtkDialog *dialog);
 
 
 /**

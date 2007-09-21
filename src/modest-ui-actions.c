@@ -197,6 +197,8 @@ msgs_already_deleted_from_server (TnyList *headers, const TnyFolderStore *src_fo
         return (src_is_pop && !uncached_msgs);
 }
 
+
+/* FIXME: this should be merged with the similar code in modest-account-view-window */
 /* Show the account creation wizard dialog.
  * returns: TRUE if an account was created. FALSE if the user cancelled.
  */
@@ -204,25 +206,39 @@ gboolean
 modest_run_account_setup_wizard (ModestWindow *win)
 {
 	gboolean result = FALSE;
-	GtkDialog *wizard;
-	
-	wizard = modest_window_mgr_get_easysetup_dialog
-		(modest_runtime_get_window_mgr());
-	if (wizard) {
-		/* old wizard is active already; present it and
-		 * act as if the user cancelled the non-existing
-		 * new one
-		 */
-		printf ("wizard already active\n");
-		return FALSE;
-	} else {
-		/* there is no such wizard yet */
-		wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
-		modest_window_mgr_set_easysetup_dialog
-			(modest_runtime_get_window_mgr(), GTK_DIALOG(wizard));
-	} 
+	GtkDialog *wizard, *dialog;
 
+	/* Show the easy-setup wizard: */	
+	dialog = modest_window_mgr_get_modal_dialog (modest_runtime_get_window_mgr());
+	if (dialog && MODEST_IS_EASYSETUP_WIZARD_DIALOG(dialog)) {
+		/* old wizard is active already; 
+		 */
+		gtk_window_present (GTK_WINDOW(dialog));
+		return FALSE;
+	}
 	
+
+	/* there is no such wizard yet */
+		
+	wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
+	if (!wizard) {
+		g_printerr ("modest: failed to create easysetup wizard\n");
+		return FALSE;
+	}
+	
+	modest_window_mgr_set_modal_dialog
+		(modest_runtime_get_window_mgr(), GTK_DIALOG(wizard));
+
+
+	/* there is no such wizard yet */
+	wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
+	modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(), 
+					    GTK_DIALOG(wizard));
+
+	/* make it non-modal; if though we register it as a modal dialog above
+	 * apparently, making it modal *at all* gives hangs -- FIXME: check this*/
+	gtk_window_set_modal (GTK_WINDOW(dialog), FALSE);
+
 	/* always present a main window in the background 
 	 * we do it here, so we cannot end up with to wizards (as this
 	 * function might be called in modest_window_mgr_get_main_window as well */
@@ -251,7 +267,7 @@ modest_run_account_setup_wizard (ModestWindow *win)
 	gtk_widget_destroy (GTK_WIDGET (wizard));
 
 	/* clear it from the window mgr */
-	modest_window_mgr_set_easysetup_dialog
+	modest_window_mgr_set_modal_dialog
 		(modest_runtime_get_window_mgr(), NULL);
 	
 	return result;

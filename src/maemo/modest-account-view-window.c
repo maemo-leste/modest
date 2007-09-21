@@ -297,7 +297,7 @@ on_wizard_response (GtkDialog *dialog, gint response, gpointer user_data)
 	/* Destroy the dialog: */
 	if (dialog) {
 		gtk_widget_destroy (GTK_WIDGET (dialog));
-		modest_window_mgr_set_easysetup_dialog (
+		modest_window_mgr_set_modal_dialog (
 			modest_runtime_get_window_mgr(), NULL);
 	}
 }
@@ -305,21 +305,25 @@ on_wizard_response (GtkDialog *dialog, gint response, gpointer user_data)
 static void
 on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	GtkDialog *wizard;
+	GtkDialog *wizard, *dialog;
 	
 	/* Show the easy-setup wizard: */	
-	wizard = modest_window_mgr_get_easysetup_dialog (modest_runtime_get_window_mgr());
-	if (wizard) {
+	dialog = modest_window_mgr_get_modal_dialog (modest_runtime_get_window_mgr());
+	if (dialog && MODEST_IS_EASYSETUP_WIZARD_DIALOG(dialog)) {
 		/* old wizard is active already; 
 		 */
-		gtk_window_present (GTK_WINDOW(wizard));
+		gtk_window_present (GTK_WINDOW(dialog));
 		return;
-	} else {
-		/* there is no such wizard yet */
-		wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
-		modest_window_mgr_set_easysetup_dialog (modest_runtime_get_window_mgr(), 
-							GTK_DIALOG(wizard));
-	} 
+	}
+	
+	/* there is no such wizard yet */
+	wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
+	modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(), 
+					    GTK_DIALOG(wizard));
+
+	/* if there is already another modal dialog, make it non-modal */
+	if (dialog)
+		gtk_window_set_modal (GTK_WINDOW(dialog), FALSE);
 	
 	gtk_window_set_modal (GTK_WINDOW (wizard), TRUE);
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));

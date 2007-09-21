@@ -696,6 +696,7 @@ on_response (GtkDialog *dialog,
 }
 
 
+
 static gint
 modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 					TnyFolderStore *parent,
@@ -761,11 +762,8 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 			    hbox, FALSE, FALSE, 0);
 	
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
-
-
-
+	
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	if (result == GTK_RESPONSE_ACCEPT)
 		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
@@ -848,42 +846,76 @@ modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
 						       folder_name);
 }
 
+
+
+static void
+on_destroy_dialog (GtkDialog *dialog)
+{
+	if (dialog == modest_window_mgr_get_modal_dialog (modest_runtime_get_window_mgr()))
+		modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(),
+						    NULL);
+	gtk_widget_destroy (GTK_WIDGET(dialog));
+}
+
+
+/* is there already a modal dialog? if so, return TRUE, if not set this
+ * dialog to be the registered one */
+static void
+check_modal_and_set_maybe (GtkDialog *dialog)
+{
+	GtkDialog *old_modal;
+
+	old_modal =
+		modest_window_mgr_get_modal_dialog (modest_runtime_get_window_mgr());
+
+	if (!old_modal) {	
+		gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+		modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(),
+						    dialog);
+	} else {
+		/* un-modalize the old one; the one on top should be the
+		 * modal one */
+		gtk_window_set_modal (GTK_WINDOW(old_modal), FALSE);	
+		gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+	}
+	
+}
+
 gint
 modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 					 const gchar *message)
 {
 	GtkWidget *dialog;
 	gint response;
-
+	
 	dialog = hildon_note_new_confirmation (parent_window, message);
-	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+	check_modal_and_set_maybe (GTK_DIALOG(dialog));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-
+	on_destroy_dialog (GTK_DIALOG(dialog));
+	
 	while (gtk_events_pending ())
 		gtk_main_iteration ();
 
 	return response;
 }
-
+	
 gint
 modest_platform_run_yes_no_dialog (GtkWindow *parent_window,
 				   const gchar *message)
 {
 	GtkWidget *dialog;
 	gint response;
-
+	
 	dialog = hildon_note_new_confirmation_add_buttons (parent_window, message,
 							   _("mcen_bd_yes"), GTK_RESPONSE_YES,
 							   _("mcen_bd_no"), GTK_RESPONSE_NO,
 							   NULL);
-	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
-
+	check_modal_and_set_maybe (GTK_DIALOG(dialog));
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
-
-	gtk_widget_destroy (GTK_WIDGET (dialog));
+	
+	on_destroy_dialog (GTK_DIALOG(dialog));
 
 	while (gtk_events_pending ())
 		gtk_main_iteration ();
@@ -891,20 +923,23 @@ modest_platform_run_yes_no_dialog (GtkWindow *parent_window,
 	return response;
 }
 
+
+
 void
 modest_platform_run_information_dialog (GtkWindow *parent_window,
 					const gchar *message)
 {
-	GtkWidget *dialog;
-
-	dialog = hildon_note_new_information (parent_window, message);
-
-	g_signal_connect_swapped (dialog,
+	GtkWidget *note;
+	
+	note = hildon_note_new_information (parent_window, message);
+	check_modal_and_set_maybe (GTK_DIALOG(note));
+	
+	g_signal_connect_swapped (note,
 				  "response", 
-				  G_CALLBACK (gtk_widget_destroy),
-				  dialog);
+				  G_CALLBACK (on_destroy_dialog),
+				  note);
 
-	gtk_widget_show_all (dialog);
+	gtk_widget_show_all (note);
 }
 
 
@@ -1130,7 +1165,7 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 
 	/* Build dialog */
 	dialog = hildon_sort_dialog_new (parent_window);
-	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+	check_modal_and_set_maybe (GTK_DIALOG(dialog));
 	
 	/* Fill sort keys */
 	switch (type) {
@@ -1141,7 +1176,7 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 	}
 	
 	/* Free */
-	gtk_widget_destroy (GTK_WIDGET (dialog));
+	on_destroy_dialog (GTK_DIALOG(dialog));
 }
 
 
@@ -1554,9 +1589,11 @@ modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
 	g_signal_connect (G_OBJECT(note), "response", 
 			  G_CALLBACK(on_cert_dialog_response),
 			  (gpointer) certificate);
+	
+	check_modal_and_set_maybe (GTK_DIALOG(note));
 	response = gtk_dialog_run(GTK_DIALOG(note));
 
-	gtk_widget_destroy(GTK_WIDGET(note));
+	on_destroy_dialog (GTK_DIALOG(note));
 	g_free (question);
 	
 	return response;
@@ -1579,11 +1616,12 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		 * so we know what buttons to show. */
 		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
 									      prompt));
+		check_modal_and_set_maybe (GTK_DIALOG(dialog));
+		
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 		retval = (response == GTK_RESPONSE_YES) || (response == GTK_RESPONSE_OK);
 		
-		gtk_widget_destroy (dialog);
-		
+		on_destroy_dialog (GTK_DIALOG(dialog));		
 	} else {
 	 	/* Just show the error text and use the default response: */
 	 	modest_platform_run_information_dialog (GTK_WINDOW (main_window), 
