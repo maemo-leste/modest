@@ -2407,10 +2407,9 @@ modest_ui_actions_new_folder_error_handler (ModestMailOperation *mail_op,
 	ModestMainWindow *window = MODEST_MAIN_WINDOW (user_data);
 	const GError *error = modest_mail_operation_get_error (mail_op);
 
-	if(error)
-	{
+	if(error) {
 		modest_platform_information_banner (GTK_WIDGET (window), NULL,
-	        	                            modest_mail_operation_get_error (mail_op)->message);
+	        	                            _("mail_in_ui_folder_create_error"));
 	}
 }
 
