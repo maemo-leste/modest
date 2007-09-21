@@ -159,33 +159,28 @@ static int
 parse_mcc_mapping_line (const char* line,  char** country)
 {
 	int i, j;
-	char mcc[4];  /* the mcc code, always 3 bytes*/
+	static char* mcc="123";  /* the mcc code, always 3 bytes*/
 	static char my_country[128];
-	
-	/* Initialize output parameters: */
-	*country = NULL;
 
-	g_return_val_if_fail (line && strlen(line) > 20, 0);
+	if (!line) {
+		*country = NULL;
+		return 0;
+	}
 	
 	for (i = 3, j = 0; i < 128; ++i) {
 		char kar = line[i];
-		if (kar < '_' ) { /* optimization */
-			if (kar == '\n' || kar == '\r')
-				break;
-			else if (kar == ' ' || kar == '\t')
-				continue;
-			else  /* error */
-				return 0;
-		} else {
+		if (kar == '\0')
+			break;
+		else if (kar < '_')
+			continue;
+		else 
 			my_country [j++] = kar;
-		}
 	}
 	my_country[j] = '\0';
 
 	mcc[0] = line[0];
 	mcc[1] = line[1];
 	mcc[2] = line[2];
-	mcc[3] = '\0';
 	
 	*country = my_country;
 	return effective_mcc (atoi(mcc));
