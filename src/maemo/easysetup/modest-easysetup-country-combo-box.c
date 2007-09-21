@@ -159,7 +159,7 @@ static int
 parse_mcc_mapping_line (const char* line,  char** country)
 {
 	int i, j;
-	static char* mcc="123";  /* the mcc code, always 3 bytes*/
+	char mcc[3];  /* the mcc code, always 3 bytes*/
 	static char my_country[128];
 
 	if (!line) {
@@ -183,7 +183,7 @@ parse_mcc_mapping_line (const char* line,  char** country)
 	mcc[2] = line[2];
 	
 	*country = my_country;
-	return effective_mcc (atoi(mcc));
+	return effective_mcc (atoi((const char *)mcc));
 }
 
 /** Note that the mcc_mapping file is installed 
