@@ -58,6 +58,8 @@ struct _ModestAccountMgrPrivate {
 	guint timeout;
 	
 	GHashTable *notification_id_accounts;
+	GHashTable *server_account_key_hash;
+	GHashTable *account_key_hash;
 };
 
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
