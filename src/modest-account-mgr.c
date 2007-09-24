@@ -971,10 +971,11 @@ modest_account_mgr_get_list (ModestAccountMgr *self, const gchar *name,
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (key, NULL);
 	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+
 	keyname = _modest_account_mgr_get_account_keyname_cached (priv, name, key,
 								  server_account);
 	
-	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	retval = modest_conf_get_list (priv->modest_conf, keyname, list_type, &err);
 	if (err) {
 		g_printerr ("modest: error getting list '%s': %s\n", keyname,
