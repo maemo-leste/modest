@@ -86,6 +86,10 @@ static gboolean      on_focus_in            (GtkWidget     *sef,
 					     GdkEventFocus *event,
 					     gpointer       user_data);
 
+static gboolean      on_focus_out            (GtkWidget     *self,
+					      GdkEventFocus *event,
+					      gpointer       user_data);
+
 static void          folder_monitor_update  (TnyFolderObserver *self, 
 					     TnyFolderChange *change);
 
@@ -650,6 +654,8 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 
 	g_signal_connect (self, "focus-in-event",
 			  G_CALLBACK(on_focus_in), NULL);
+	g_signal_connect (self, "focus-out-event",
+			  G_CALLBACK(on_focus_out), NULL);
 	
 	priv->acc_removed_handler = g_signal_connect (modest_runtime_get_account_store (),
 						      "account_removed",
@@ -1558,6 +1564,29 @@ on_focus_in (GtkWidget     *self,
 	g_list_foreach (selected, (GFunc) gtk_tree_path_free, NULL);
 	g_list_free (selected);
 
+	return FALSE;
+}
+
+static gboolean 
+on_focus_out (GtkWidget     *self,
+	     GdkEventFocus *event,
+	     gpointer       user_data)
+{
+
+	if (!gtk_widget_is_focus (self)) {
+		GtkTreeSelection *selection = NULL;
+		GList *selected_rows = NULL;
+		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+		if (gtk_tree_selection_count_selected_rows (selection) > 1) {
+			selected_rows = gtk_tree_selection_get_selected_rows (selection, NULL);
+			g_signal_handlers_block_by_func (selection, on_selection_changed, self);
+			gtk_tree_selection_unselect_all (selection);
+			gtk_tree_selection_select_path (selection, (GtkTreePath *) selected_rows->data);
+			g_signal_handlers_unblock_by_func (selection, on_selection_changed, self);
+			g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
+			g_list_free (selected_rows);
+		}
+	}
 	return FALSE;
 }
 
