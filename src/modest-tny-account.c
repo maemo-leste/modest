@@ -610,9 +610,18 @@ modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMg
 	/* If the account was online, reconnect to apply the changes */
 	conn_status = tny_account_get_connection_status (tny_account);
 	if (conn_status != TNY_CONNECTION_STATUS_DISCONNECTED) {
+		TnyAccountStore *account_store = NULL;
 
 		/* The callback will have an error for you if the reconnect
 		 * failed. Please handle it (this is TODO). */
+
+		account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(tny_account),
+							     "account_store"));
+
+		if (account_store) {
+			modest_tny_account_store_forget_already_asked (MODEST_TNY_ACCOUNT_STORE (account_store), 
+								tny_account);
+		}
 
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(tny_account), TRUE, 
 			set_online_callback,  "online");

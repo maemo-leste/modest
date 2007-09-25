@@ -169,6 +169,15 @@ TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *se
  **/
 TnyAccount * modest_tny_account_store_get_local_folders_account (ModestTnyAccountStore *self);
 
+/** modest_tny_account_store_forget_already_asked:
+  * @self: a TnyAccountStore instance
+  * @account: the account to forget the already asked status for
+  *
+  * Forget the already asked status of an account
+  **/
+void modest_tny_account_store_forget_already_asked (ModestTnyAccountStore *self, TnyAccount *account);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */

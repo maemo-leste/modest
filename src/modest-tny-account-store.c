@@ -741,6 +741,38 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	return pwd;
 }
 
+void 
+modest_tny_account_store_forget_already_asked (ModestTnyAccountStore *self, TnyAccount *account)
+{
+	g_return_if_fail (account);
+	  
+	ModestTnyAccountStorePrivate *priv;
+	gchar *pwd = NULL;
+	gpointer pwd_ptr = NULL;
+	gboolean already_asked = FALSE;
+		
+	const gchar *server_account_name = tny_account_get_id (account);
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	/* This hash map stores passwords, including passwords that are not stored in gconf. */
+	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
+				   * type-punned ptrs...*/
+	already_asked = priv->password_hash && 
+				g_hash_table_lookup_extended (priv->password_hash,
+						      server_account_name,
+						      NULL,
+						      (gpointer*)&pwd_ptr);
+
+	if (already_asked) {
+		g_hash_table_remove (priv->password_hash, server_account_name);		
+		g_free (pwd);
+		pwd = NULL;
+	}
+
+	return;
+}
+
 /* tinymail calls this if the connection failed due to an incorrect password.
  * And it seems to call this for any general connection failure. */
 static void
