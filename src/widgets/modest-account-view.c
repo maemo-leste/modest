@@ -186,7 +186,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		
 	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));
 	
-	/* Get the ID of the currently-selected account, 
+	/* Get the ID of the currently-selected account,
 	 * so we can select it again after rebuilding the list.
 	 * Note that the name doesn't change even when the display name changes.
 	 */
@@ -195,11 +195,11 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	gtk_list_store_clear (model);
 
 	/* Note: We do not show disabled accounts.
-	 * Of course, this means that there is no UI to enable or disable 
-	 * accounts. That is OK for maemo where no such feature or UI is 
-	 * specified, so the "enabled" property is used internally to avoid 
-	 * showing unfinished accounts. If a user-visible "enabled" is 
-	 * needed in the future, we must use a second property for the 
+	 * Of course, this means that there is no UI to enable or disable
+	 * accounts. That is OK for maemo where no such feature or UI is
+	 * specified, so the "enabled" property is used internally to avoid
+	 * showing unfinished accounts. If a user-visible "enabled" is
+	 * needed in the future, we must use a second property for the
 	 * current use instead */
 	cursor = account_names = modest_account_mgr_account_names (account_mgr,
 		TRUE /* only enabled accounts. */);
@@ -330,8 +330,6 @@ on_account_changed (TnyAccountStore *account_store,
 {
 	ModestAccountView *self = NULL;
 	ModestAccountViewPrivate *priv = NULL;
-	TnyTransportAccount *transport_account = NULL;
-	ModestTnySendQueue *send_queue = NULL;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
 	g_return_if_fail (account);
@@ -343,26 +341,7 @@ on_account_changed (TnyAccountStore *account_store,
 	g_warning ("account changed: %s", tny_account_get_id(account));
 	
 	/* Update account view */
-	update_account_view (priv->account_mgr, self);
-
-	/* Get transport account */
-	const gchar *modest_account_name = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-	g_return_if_fail (modest_account_name);
-		
-	transport_account = (TnyTransportAccount*)
-		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
-										    modest_account_name);
-
-	/* Restart send queue */
-	if (transport_account) {	
-		g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT(transport_account));
-		send_queue = modest_runtime_get_send_queue (transport_account);
-		g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(send_queue));
-		modest_tny_send_queue_try_to_send (send_queue);
-		
-		g_object_unref (transport_account);
-	}
+/* 	update_account_view (priv->account_mgr, self); */
 }
 
 
@@ -385,49 +364,41 @@ find_default_account(ModestAccountView *self, GtkTreeIter *iter)
 }
 
 static void
-on_account_default_toggled (GtkCellRendererToggle *cell_renderer, gchar *path,
-			   ModestAccountView *self)
+on_account_default_toggled (GtkCellRendererToggle *cell_renderer, 
+			    gchar *path,
+			    ModestAccountView *self)
 {
+	ModestAccountViewPrivate *priv;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	gchar *account_name = NULL;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
 
-	gboolean is_default = gtk_cell_renderer_toggle_get_active (cell_renderer);
-	if (is_default) {
-		/* Do not allow an account to be marked non-default.
-		 * Only allow this to be changed by setting another account to default: */
-		gtk_cell_renderer_toggle_set_active (cell_renderer, TRUE);
+	/* If it's active then do nothing, no need to reenable it as
+	   default account */
+	if (gtk_cell_renderer_toggle_get_active (cell_renderer))
 		return;
-	}
 
-	ModestAccountViewPrivate *priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));	
+	gtk_tree_model_get_iter_from_string (model, &iter, path);
 	
-	GtkTreeIter iter;
-	if (!gtk_tree_model_get_iter_from_string (model, &iter, path)) {
-		g_printerr ("modest: cannot find iterator\n");
-		return;
-	}
-	
-	gchar *account_name = NULL;
 	gtk_tree_model_get (model, &iter, 
 			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
 			    &account_name, -1);
-	
-	/* Set this previously-non-default account as the default: */
+
+	/* Set this previously-non-default account as the default */
 	if (modest_account_mgr_set_default_account (priv->account_mgr, account_name)) {
-		/* Explicitely set default column because we are ignoring gconf changes */
 		GtkTreeIter old_default_iter;
-		if (find_default_account (self, &old_default_iter)) {
-			gtk_list_store_set (GTK_LIST_STORE (model), &old_default_iter,
-			                    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, FALSE, -1);
-		} else {
-			g_warning ("%s: Did not find old default account in view", __FUNCTION__);
-		}
+
+		find_default_account (self, &old_default_iter);
+		gtk_list_store_set (GTK_LIST_STORE (model), &old_default_iter,
+				    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, FALSE, -1);
 
 		gtk_list_store_set (GTK_LIST_STORE (model), &iter,
 		                    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, TRUE, -1);
 	}
-
 	g_free (account_name);
 }
 
@@ -492,7 +463,8 @@ init_view (ModestAccountView *self)
 	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);
 #endif /* MODEST_HAVE_HILDON0_WIDGETS */
 
-	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", G_CALLBACK(on_account_default_toggled),
+	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", 
+			  G_CALLBACK(on_account_default_toggled),
 			  self);
 	
 	/* account name */

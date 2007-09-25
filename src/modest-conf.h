@@ -306,7 +306,6 @@ ModestConfNotificationId modest_conf_listen_to_namespace (ModestConf *self,
 void modest_conf_forget_namespace (ModestConf *self,
 				   const gchar *namespace,
 				   ModestConfNotificationId id);
-
 G_END_DECLS
 
 #endif /* __MODEST_CONF_H__ */

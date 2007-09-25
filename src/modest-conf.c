@@ -427,7 +427,6 @@ modest_conf_on_change (GConfClient *client,
 		       key, event, conn_id);
 }
 
-
 static GConfValueType
 modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 {
@@ -470,12 +469,14 @@ modest_conf_listen_to_namespace (ModestConf *self,
 
 	/* Add the namespace to the list of the namespaces that will
 	   be observed */
-	gconf_client_add_dir (priv->gconf_client, namespace,
+	gconf_client_add_dir (priv->gconf_client,
+			      namespace,
 			      GCONF_CLIENT_PRELOAD_NONE,
 			      &error);
 
-	if (error)
+	if (error) {
 		return 0;
+	}
 
 	/* Notify every change under namespace */
 	notification_id = gconf_client_notify_add (priv->gconf_client,
@@ -484,10 +485,12 @@ modest_conf_listen_to_namespace (ModestConf *self,
 						   self,
 						   NULL,
 						   &error);
-	if (error)
+
+	if (error) {
 		return 0;
-	else
+	} else {
 		return notification_id;
+	}
 }
 
 void 

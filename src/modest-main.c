@@ -56,9 +56,9 @@ main (int argc, char *argv[])
 		g_thread_init (NULL);
 
 	gdk_threads_init ();
-	gdk_threads_enter (); /* CHECKED */
+	gdk_threads_enter ();
 
-	if (!gtk_init_check(&argc, &argv)) {
+	if (!gtk_init_check (&argc, &argv)) {
 		g_printerr ("modest: failed to initialize gtk\n");
 		retval = 1;
 		goto cleanup;
@@ -79,7 +79,7 @@ main (int argc, char *argv[])
 	}
 	
 	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
-	 * This allows modest to start via D-Bus activation to provide a service, 
+	 * This allows modest to start via D-Bus activation to provide a service,
 	 * without showing the UI.
 	 * The UI will be shown later (or just after starting if no otehr D-Bus method was used),
 	 * when we receive the "top_application" D-Bus method.
@@ -87,12 +87,10 @@ main (int argc, char *argv[])
 	if (show_ui_without_top_application_method)
 		gtk_widget_show_all (GTK_WIDGET(win));
 	
-	
-	gtk_main ();	
-	retval = 0;
+	gtk_main ();
 
 cleanup:
-	gdk_threads_leave (); /* CHECKED */
+	gdk_threads_leave ();
 
 	if (!modest_init_uninit ()) {
 		g_printerr ("modest: modest_init_uninit failed\n");
@@ -101,4 +99,3 @@ cleanup:
 
 	return retval;
 }
-

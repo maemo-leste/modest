@@ -35,7 +35,6 @@
 #include <tny-simple-list.h>
 #include <tny-camel-folder.h>
 #include <tny-merge-folder.h>
-#include <camel/camel-folder.h>
 #include <modest-protocol-info.h>
 #include <modest-runtime.h>
 #include <modest-tny-account-store.h>

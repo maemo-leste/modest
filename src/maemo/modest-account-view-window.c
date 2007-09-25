@@ -128,23 +128,15 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 	GtkTreeModel                   *model;
 	GtkTreeIter                     iter;
 	gboolean                        has_selection;
-	gchar                          *account_name;
-	gchar                          *default_account_name;
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
 	has_selection =
 		gtk_tree_selection_get_selected (sel, &model, &iter);
 
+	/* Set the status of the buttons */
 	gtk_widget_set_sensitive (priv->edit_button, has_selection);
 	gtk_widget_set_sensitive (priv->delete_button, has_selection);	
-
-	account_name = modest_account_view_get_selected_account (priv->account_view);
-	default_account_name = modest_account_mgr_get_default_account(
-		modest_runtime_get_account_mgr());
-
-	g_free (account_name);
-	g_free (default_account_name);
 }
 
 /** Check whether any connections are active, and cancel them if 
@@ -384,7 +376,6 @@ button_box_new (ModestAccountViewWindow *self)
 	return button_box;
 }
 
-
 static GtkWidget*
 window_vbox_new (ModestAccountViewWindow *self)
 {
@@ -394,6 +385,7 @@ window_vbox_new (ModestAccountViewWindow *self)
 	GtkWidget *main_hbox     = gtk_hbox_new (FALSE, 6);
 	
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
+
 	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), 300, 400);
 	gtk_widget_show (GTK_WIDGET (priv->account_view));
 
@@ -421,9 +413,6 @@ window_vbox_new (ModestAccountViewWindow *self)
 static void
 modest_account_view_window_init (ModestAccountViewWindow *obj)
 {
-/*
-	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
-*/		
 	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (obj)->vbox)), GTK_WIDGET (window_vbox_new (obj)), 
 		TRUE, TRUE, 2);
 	
@@ -432,7 +421,6 @@ modest_account_view_window_init (ModestAccountViewWindow *obj)
 
 	gtk_window_set_title (GTK_WINDOW (obj), _("mcen_ti_emailsetup_accounts"));
 }
-
 
 GtkWidget*
 modest_account_view_window_new (void)
