@@ -1430,9 +1430,14 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 	if (priv->style == MODEST_MAIN_WINDOW_STYLE_SIMPLE)
 		return FALSE;
 
-	if (MODEST_IS_HEADER_VIEW (widget) && event->keyval == GDK_Left)
-		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
-	else if (MODEST_IS_FOLDER_VIEW (widget) && event->keyval == GDK_Right)
+	if (MODEST_IS_HEADER_VIEW (widget)) {
+		if (event->keyval == GDK_Left)
+			gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
+		else if ((event->keyval == GDK_Return)||(event->keyval == GDK_KP_Enter)) {
+			hildon_banner_show_information (NULL, NULL, _("mcen_ib_select_one_message"));
+			return TRUE;
+		}
+	} else if (MODEST_IS_FOLDER_VIEW (widget) && event->keyval == GDK_Right)
 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
 
 	return FALSE;

@@ -1871,6 +1871,11 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	if (!header)
 		return;
 
+	if (modest_header_view_count_selected_headers (header_view) > 1) {
+		hildon_banner_show_information (NULL, NULL, _("mcen_ib_select_one_message"));
+		return;
+	}
+
 
 /* 	headers = tny_simple_list_new (); */
 /* 	tny_list_prepend (headers, G_OBJECT (header)); */
