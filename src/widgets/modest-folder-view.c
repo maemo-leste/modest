@@ -2448,6 +2448,8 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 						NULL);
 	/* Set copied model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW (folder_view_dst), new_filter_model);
+	g_signal_connect (G_OBJECT(new_filter_model), "row-inserted",
+			  (GCallback) on_row_inserted_maybe_select_folder, folder_view_dst);
 
 	/* Free */
 	g_object_unref (new_filter_model);
