@@ -35,6 +35,7 @@
 #include <modest-tny-account.h>
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
+#include <modest-signal-mgr.h>
 
 #include <gtk/gtkcellrenderertoggle.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -48,7 +49,10 @@ static void modest_account_view_init          (ModestAccountView *obj);
 static void modest_account_view_finalize      (GObject *obj);
 
 static void modest_account_view_select_account (ModestAccountView *account_view, 
-	const gchar* account_name);
+						const gchar* account_name);
+
+static void on_default_account_changed         (ModestAccountMgr *mgr,
+						gpointer user_data);
 
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
@@ -66,8 +70,7 @@ struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
 
 	/* Signal handlers */
-	gulong acc_inserted_handler, acc_removed_handler,
-		acc_busy_changed_handler, acc_changed_handler;
+	GSList *sig_handlers;
 };
 #define MODEST_ACCOUNT_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_ACCOUNT_VIEW, \
@@ -118,11 +121,7 @@ modest_account_view_init (ModestAccountView *obj)
 	
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
-	priv->account_mgr = NULL; 
-	priv->acc_inserted_handler = 0;
-	priv->acc_removed_handler = 0;
-	priv->acc_busy_changed_handler = 0;
-	priv->acc_changed_handler = 0;
+	priv->sig_handlers = NULL;
 }
 
 static void
@@ -132,26 +131,10 @@ modest_account_view_finalize (GObject *obj)
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 
-	if (priv->account_mgr) {
-		if (g_signal_handler_is_connected (modest_runtime_get_account_store (),
-						   priv->acc_inserted_handler))
-			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
-						     priv->acc_inserted_handler);
+	/* Disconnect signals */
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sig_handlers);
 
-		if (g_signal_handler_is_connected (modest_runtime_get_account_store (),
-						   priv->acc_removed_handler))
-			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
-						     priv->acc_removed_handler);
-		
-		if (g_signal_handler_is_connected (modest_runtime_get_account_store (),
-						   priv->acc_changed_handler))
-			g_signal_handler_disconnect (modest_runtime_get_account_store (), 
-						     priv->acc_changed_handler);
-		
-		if (priv->acc_busy_changed_handler)
-			g_signal_handler_disconnect (priv->account_mgr, priv->acc_busy_changed_handler);
-
-		
+	if (priv->account_mgr) {	
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL; 
 	}
@@ -173,7 +156,7 @@ get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountData *accoun
 			last_updated_string = g_strdup (_("mcen_va_never"));
 	} else 	{
 		/* FIXME: There should be a logical name in the UI specs */
-		last_updated_string = g_strdup(_("..."));
+		last_updated_string = g_strdup(_("mcen_va_refreshing"));
 	}
 	return last_updated_string;
 }
@@ -224,16 +207,16 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 			gchar *last_updated_string = get_last_updated_string(account_mgr, account_data);
 			
 			if (account_data->is_enabled) {
+				const gchar *proto_name;
+
+				proto_name = modest_protocol_info_get_transport_store_protocol_name (account_data->store_account->proto);
 				gtk_list_store_insert_with_values (
 					model, &iter, 0,
-					MODEST_ACCOUNT_VIEW_NAME_COLUMN,          account_name,
-					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,  account_data->display_name,
-					MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN,    account_data->is_enabled,
-					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,    account_data->is_default,
-
-					MODEST_ACCOUNT_VIEW_PROTO_COLUMN,
-					modest_protocol_info_get_transport_store_protocol_name (account_data->store_account->proto),
-	
+					MODEST_ACCOUNT_VIEW_NAME_COLUMN, account_name,
+					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, account_data->display_name,
+					MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, account_data->is_enabled,
+					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, account_data->is_default,
+					MODEST_ACCOUNT_VIEW_PROTO_COLUMN, proto_name,
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 					-1);
 			}
@@ -344,25 +327,6 @@ on_account_changed (TnyAccountStore *account_store,
 /* 	update_account_view (priv->account_mgr, self); */
 }
 
-
-
-static gboolean
-find_default_account(ModestAccountView *self, GtkTreeIter *iter)
-{
-	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	gboolean result;
-	for (result = gtk_tree_model_get_iter_first(model, iter);
-	     result == TRUE; result = gtk_tree_model_iter_next(model, iter))
-	{
-		gboolean is_default;
-		gtk_tree_model_get (model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, &is_default, -1);
-		if(is_default)
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
 static void
 on_account_default_toggled (GtkCellRendererToggle *cell_renderer, 
 			    gchar *path,
@@ -388,17 +352,16 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer,
 			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
 			    &account_name, -1);
 
-	/* Set this previously-non-default account as the default */
-	if (modest_account_mgr_set_default_account (priv->account_mgr, account_name)) {
-		GtkTreeIter old_default_iter;
+	/* Set this previously-non-default account as the
+	   default. We're not updating here the value of the
+	   DEFAULT_COLUMN because we'll do it in the
+	   "default_account_changed" signal handler. We do it like
+	   this because that way the signal handler is useful also
+	   when we're inserting a new account and there is no other
+	   one defined, in that case the change of account is provoked
+	   by the account mgr and not by a signal toggle.*/
+	modest_account_mgr_set_default_account (priv->account_mgr, account_name);
 
-		find_default_account (self, &old_default_iter);
-		gtk_list_store_set (GTK_LIST_STORE (model), &old_default_iter,
-				    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, FALSE, -1);
-
-		gtk_list_store_set (GTK_LIST_STORE (model), &iter,
-		                    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, TRUE, -1);
-	}
 	g_free (account_name);
 }
 
@@ -463,9 +426,12 @@ init_view (ModestAccountView *self)
 	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);
 #endif /* MODEST_HAVE_HILDON0_WIDGETS */
 
-	g_signal_connect (G_OBJECT(toggle_renderer), "toggled", 
-			  G_CALLBACK(on_account_default_toggled),
-			  self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers,
+					   G_OBJECT(toggle_renderer), 
+					   "toggled", 
+					   G_CALLBACK(on_account_default_toggled),
+					   self);
 	
 	/* account name */
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), text_renderer, "text",
@@ -486,21 +452,36 @@ init_view (ModestAccountView *self)
 	 */			
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 
-	priv->acc_removed_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-						      "account_removed",
-						      G_CALLBACK(on_account_removed), self);
-
-	priv->acc_inserted_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-						       "account_inserted",
-						       G_CALLBACK(on_account_inserted), self);
-
-	priv->acc_changed_handler = g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
-						       "account_changed",
-						       G_CALLBACK(on_account_changed), self);
-
-	priv->acc_busy_changed_handler = g_signal_connect (G_OBJECT(priv->account_mgr),
-							   "account_busy_changed",
-							   G_CALLBACK(on_account_busy_changed), self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers, 
+					   G_OBJECT (modest_runtime_get_account_store ()),
+					   "account_removed",
+					   G_CALLBACK(on_account_removed), 
+					   self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers, 
+					   G_OBJECT (modest_runtime_get_account_store ()),
+					   "account_inserted",
+					   G_CALLBACK(on_account_inserted), 
+					   self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers, 
+					   G_OBJECT (modest_runtime_get_account_store ()),
+					   "account_changed",
+					   G_CALLBACK(on_account_changed), 
+					   self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers, 
+					   G_OBJECT(priv->account_mgr),
+					   "account_busy_changed",
+					   G_CALLBACK(on_account_busy_changed), 
+					   self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers, 
+					   G_OBJECT(priv->account_mgr),
+					   "default_account_changed",
+					   G_CALLBACK(on_default_account_changed), 
+					   self);
 }
 
 
@@ -576,8 +557,9 @@ on_model_foreach_select_account(GtkTreeModel *model,
 	return FALSE; /* Keep walking the tree. */
 }
 
-static void modest_account_view_select_account (ModestAccountView *account_view, 
-	const gchar* account_name)
+static void 
+modest_account_view_select_account (ModestAccountView *account_view, 
+				    const gchar* account_name)
 {	
 	/* Create a state instance so we can send two items of data to the signal handler: */
 	ForEachData *state = g_new0 (ForEachData, 1);
@@ -592,3 +574,41 @@ static void modest_account_view_select_account (ModestAccountView *account_view,
 	g_free (state);
 }
 
+static void
+on_default_account_changed (ModestAccountMgr *mgr,
+			    gpointer user_data)
+{
+	GtkTreeIter iter;
+	gchar *default_account_name;
+	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
+
+	if (!gtk_tree_model_get_iter_first(model, &iter))
+		return;
+
+	default_account_name = modest_account_mgr_get_default_account (mgr);
+
+	do {
+		gboolean is_default;
+		gchar *name;
+
+		gtk_tree_model_get (model, &iter, 
+				    MODEST_ACCOUNT_VIEW_NAME_COLUMN, &name,
+				    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, &is_default, 
+				    -1);
+
+		/* Update the default account column */
+		if (!strcmp (name, default_account_name))
+			gtk_list_store_set (GTK_LIST_STORE (model), &iter,
+					    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, TRUE, -1);
+		else
+			gtk_list_store_set (GTK_LIST_STORE (model), &iter,
+					    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, FALSE, -1);
+
+		g_free (name);
+
+	} while (gtk_tree_model_iter_next(model, &iter));
+
+	/* Free and force a redraw */
+	g_free (default_account_name);
+	gtk_widget_queue_draw (GTK_WIDGET (user_data));
+}

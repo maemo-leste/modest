@@ -1410,25 +1410,24 @@ modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account
 	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	if (busy)
 	{
-		GSList *account_names = modest_account_mgr_account_names (self,
-				TRUE);
-		GSList* account = 
-			g_slist_find_custom(account_names, account_name, (GCompareFunc) compare_account_name);
-		if (account && !modest_account_mgr_account_is_busy(self, account_name))
-		{
+		GSList *account_names = modest_account_mgr_account_names (self, TRUE);
+		GSList* account = g_slist_find_custom(account_names, account_name, 
+						      (GCompareFunc) compare_account_name);
+
+		if (account && !modest_account_mgr_account_is_busy(self, account_name))	{
 			priv->busy_accounts = g_slist_append(priv->busy_accounts, g_strdup(account_name));
-			g_signal_emit_by_name(G_OBJECT(self), "account-busy-changed", account_name, TRUE);
+			g_signal_emit (G_OBJECT(self), ACCOUNT_BUSY_SIGNAL, 0, account_name, TRUE);
 		}
 		modest_account_mgr_free_account_names (account_names);
 		account_names = NULL;
 	} else {
 		GSList* account = 
 			g_slist_find_custom(priv->busy_accounts, account_name, (GCompareFunc) compare_account_name);
-		if (account)
-		{
+
+		if (account) {
 			g_free(account->data);
 			priv->busy_accounts = g_slist_delete_link(priv->busy_accounts, account);
-			g_signal_emit_by_name(G_OBJECT(self), "account-busy-changed", account_name, FALSE);
+			g_signal_emit (G_OBJECT(self), ACCOUNT_BUSY_SIGNAL, 0, account_name, FALSE);
 		}
 	}
 }

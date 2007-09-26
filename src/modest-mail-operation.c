@@ -826,7 +826,7 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 					 gpointer userdata)
 {
 	TnyFolder *src_folder = NULL;
-	TnyFolder *folder = NULL;
+	TnyFolder *drafts = NULL;
 	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	SaveToDraftsInfo *info = (SaveToDraftsInfo *) userdata;
@@ -840,8 +840,9 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 		goto end;
 	}
 
-	folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_DRAFTS);
-	if (!folder) {
+	drafts = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), 
+							TNY_FOLDER_TYPE_DRAFTS);
+	if (!drafts) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
@@ -850,19 +851,18 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 	}
 
 	if (!priv->error)
-		tny_folder_add_msg (folder, msg, &(priv->error));
+		tny_folder_add_msg (drafts, msg, &(priv->error));
 
 	if ((!priv->error) && (info->draft_msg != NULL)) {
 		header = tny_msg_get_header (info->draft_msg);
 		src_folder = tny_header_get_folder (header); 
 
-		/* Remove the old draft expunging it */
+		/* Remove the old draft */
 		tny_folder_remove_msg (src_folder, header, NULL);
-/* 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED); */
-/* 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN); */
 
-		tny_folder_sync (folder, TRUE, &(priv->error)); /* FALSE --> don't expunge */
-		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);  /* expunge */
+		/* Synchronize to expunge and to update the msg counts */
+		tny_folder_sync_async (drafts, TRUE, NULL, NULL, NULL);
+		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);
 
 		g_object_unref (header);
 	}
@@ -877,8 +877,8 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 
 
 end:
-	if (folder)
-		g_object_unref (G_OBJECT(folder));
+	if (drafts)
+		g_object_unref (G_OBJECT(drafts));
 	if (src_folder)
 		g_object_unref (G_OBJECT(src_folder));
 	if (info->edit_window)
