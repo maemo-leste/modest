@@ -1404,7 +1404,8 @@ compare_account_name(gconstpointer a, gconstpointer b)
 }
 
 void 
-modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account_name, 
+modest_account_mgr_set_account_busy(ModestAccountMgr* self, 
+				    const gchar* account_name, 
 				    gboolean busy)
 {
 	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
@@ -1416,7 +1417,8 @@ modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account
 
 		if (account && !modest_account_mgr_account_is_busy(self, account_name))	{
 			priv->busy_accounts = g_slist_append(priv->busy_accounts, g_strdup(account_name));
-			g_signal_emit (G_OBJECT(self), ACCOUNT_BUSY_SIGNAL, 0, account_name, TRUE);
+			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_BUSY_SIGNAL], 
+				       0, account_name, TRUE);
 		}
 		modest_account_mgr_free_account_names (account_names);
 		account_names = NULL;
@@ -1427,7 +1429,8 @@ modest_account_mgr_set_account_busy(ModestAccountMgr* self, const gchar* account
 		if (account) {
 			g_free(account->data);
 			priv->busy_accounts = g_slist_delete_link(priv->busy_accounts, account);
-			g_signal_emit (G_OBJECT(self), ACCOUNT_BUSY_SIGNAL, 0, account_name, FALSE);
+			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_BUSY_SIGNAL], 
+				       0, account_name, FALSE);
 		}
 	}
 }

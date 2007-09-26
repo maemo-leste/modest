@@ -245,30 +245,35 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 {
 	GtkListStore *model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(self)));
 	GtkTreeIter iter;
-	g_message(__FUNCTION__);
+	gboolean found = FALSE;
+
 	if (!gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter))
 		return;
-	do
-	{
+
+	do {
 		gchar* cur_name;
-		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
-											 &cur_name, -1);
-		if (g_str_equal(cur_name, account_name))
-		{
+		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, 
+				   MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
+				   &cur_name, -1);
+
+		if (g_str_equal(cur_name, account_name)) {
 			ModestAccountData* account_data = 
 				modest_account_mgr_get_account_data (account_mgr, account_name);
-			if (!account_data)
+			if (!account_data) {
+				g_free (cur_name);
 				return;
+			}
 			gchar* last_updated_string = get_last_updated_string(account_mgr, account_data);
 			gtk_list_store_set(model, &iter, 
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
 					   -1);
 			g_free (last_updated_string);
 			modest_account_mgr_free_account_data (account_mgr, account_data);
-			return;
+			found = TRUE;
 		}
-	}
-	while (gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter));
+		g_free (cur_name);
+
+	} while (!found && gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter));
 }
 
 static void
