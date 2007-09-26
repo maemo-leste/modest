@@ -93,7 +93,6 @@ static void  modest_msg_edit_window_finalize     (GObject *obj);
 static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer userdata);
 static void  body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
-static void  reset_modified (ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
 static void  text_buffer_can_undo (GtkTextBuffer *buffer, gboolean can_undo, ModestMsgEditWindow *window);
@@ -879,7 +878,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	gtk_text_buffer_place_cursor (priv->text_buffer, &iter);
 
-	reset_modified (self);
+	modest_msg_edit_window_reset_modified (self);
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
@@ -1267,7 +1266,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
 	priv->update_caption_visibility = TRUE;
 
-	reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
+	modest_msg_edit_window_reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
 	
 	return (ModestWindow*) obj;
 }
@@ -2685,8 +2684,8 @@ body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
 }
 
-static void
-reset_modified (ModestMsgEditWindow *editor)
+void
+modest_msg_edit_window_reset_modified (ModestMsgEditWindow *editor)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
 	GtkTextBuffer *buffer;

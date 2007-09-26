@@ -2179,6 +2179,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 
 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
 	modest_platform_information_banner (NULL, NULL, info_text);
+	modest_msg_edit_window_reset_modified (edit_window);
 	g_free (info_text);
 }
 

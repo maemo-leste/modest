@@ -379,6 +379,14 @@ void            modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow 
  */
 gboolean        modest_msg_edit_window_is_modified         (ModestMsgEditWindow *window);
 
+/**
+ * modest_msg_edit_window_reset_modified:
+ * @window: a #ModestMsgEditWindow
+ *
+ * Resets the message as not modified
+ */
+void            modest_msg_edit_window_reset_modified      (ModestMsgEditWindow *window);
+
 gboolean        modest_msg_edit_window_get_sent            (ModestMsgEditWindow *window);
 void            modest_msg_edit_window_set_sent            (ModestMsgEditWindow *window, 
 							    gboolean sent);
