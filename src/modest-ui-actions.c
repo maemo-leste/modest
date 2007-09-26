@@ -2851,6 +2851,9 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_password,
 			    TRUE, FALSE, 0);
 #endif /* MODEST_PLATFORM_MAEMO */	
+
+	if (initial_username != NULL)
+		gtk_widget_grab_focus (GTK_WIDGET (entry_password));
 			    	
 /* This is not in the Maemo UI spec:
 	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
