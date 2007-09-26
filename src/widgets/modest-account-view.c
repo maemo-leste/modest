@@ -326,8 +326,6 @@ on_account_changed (TnyAccountStore *account_store,
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 	
-	g_warning ("account changed: %s", tny_account_get_id(account));
-	
 	/* Update account view */
 /* 	update_account_view (priv->account_mgr, self); */
 }

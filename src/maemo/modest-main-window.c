@@ -122,9 +122,8 @@ on_account_removed (TnyAccountStore *accoust_store,
                     TnyAccount *account,
                     gpointer user_data);
 
-static void
-on_default_account_changed (ModestAccountMgr* mgr,
-			    gpointer user_data);
+static void on_default_account_changed (ModestAccountMgr* mgr,
+					gpointer user_data);
 
 static gboolean on_inner_widgets_key_pressed  (GtkWidget *widget,
 					       GdkEventKey *event,
@@ -803,15 +802,19 @@ connect_signals (ModestMainWindow *self)
 
 	/* folder view */
 	
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
-						       G_OBJECT(priv->folder_view), "key-press-event",
-						       G_CALLBACK(on_inner_widgets_key_pressed), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "folder_selection_changed",
-						       G_CALLBACK (modest_main_window_on_folder_selection_changed), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder-display-name-changed",
-						       G_CALLBACK (modest_ui_actions_on_folder_display_name_changed), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->folder_view), "focus-in-event", 
-						       G_CALLBACK (on_folder_view_focus_in), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT(priv->folder_view), "key-press-event",
+					   G_CALLBACK(on_inner_widgets_key_pressed), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "folder_selection_changed",
+					   G_CALLBACK (modest_main_window_on_folder_selection_changed), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder-display-name-changed",
+					   G_CALLBACK (modest_ui_actions_on_folder_display_name_changed), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->folder_view), "focus-in-event", 
+					   G_CALLBACK (on_folder_view_focus_in), self);
 
 	/* Folder view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
@@ -820,18 +823,24 @@ connect_signals (ModestMainWindow *self)
 						       G_CALLBACK(_folder_view_csm_menu_activated),
 						       self);
 	/* header view */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_selected",
-						       G_CALLBACK(modest_ui_actions_on_header_selected), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_activated",
-						       G_CALLBACK(modest_ui_actions_on_header_activated), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "item_not_found",
-						       G_CALLBACK(modest_ui_actions_on_item_not_found), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "key-press-event",
-						       G_CALLBACK(on_inner_widgets_key_pressed), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "msg_count_changed",
-						       G_CALLBACK(on_msg_count_changed), self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->header_view), "focus-in-event",
-						       G_CALLBACK (on_header_view_focus_in), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_selected",
+					   G_CALLBACK(modest_ui_actions_on_header_selected), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_activated",
+					   G_CALLBACK(modest_ui_actions_on_header_activated), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "item_not_found",
+					   G_CALLBACK(modest_ui_actions_on_item_not_found), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "key-press-event",
+					   G_CALLBACK(on_inner_widgets_key_pressed), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "msg_count_changed",
+					   G_CALLBACK(on_msg_count_changed), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->header_view), "focus-in-event",
+					   G_CALLBACK (on_header_view_focus_in), self);
 	
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
@@ -1465,6 +1474,49 @@ create_empty_view (void)
 	return GTK_WIDGET(align);
 }
 
+/*
+ * Free the returned string
+ */
+static gchar *
+get_gray_color_markup (GtkWidget *styled_widget)
+{
+	gchar *gray_color_markup;
+
+	/* Obtain the secondary text color. We need a realized widget, that's why 
+	   we get styled_widget from outside */
+#ifndef MODEST_HAVE_HILDON0_WIDGETS
+	GdkColor color;
+	gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color);
+	gray_color_markup = modest_text_utils_get_color_string (&color);
+#else
+	gray_color_markup = g_strdup ("#BBBBBB");
+#endif	
+	return gray_color_markup;
+}
+
+/*
+ * Free the returned string
+ */
+static gchar*
+create_device_name_visual_string (const gchar *device_name,
+				  const gchar *gray_color_markup)
+{
+	gchar *tmp, *label;
+
+	/* We have to use "" to fill the %s of the translation. We can
+	   not just use the device name because the device name is
+	   shown in a different color, so it could not be included
+	   into the <span> tag */
+	tmp = g_strdup_printf (_("mcen_fi_localroot_description"), "");
+	label = g_markup_printf_escaped ("<span color='%s'>%s</span>%s", 
+					 gray_color_markup, 
+					 tmp, 
+					 device_name);
+	g_free (tmp);
+
+	return label;
+}
+
 static GtkWidget *
 create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 {
@@ -1477,22 +1529,11 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 
 	vbox = gtk_vbox_new (FALSE, 0);
 
-	/* Obtain the secondary text color. We need a realized widget, that's why 
-	   we get styled_widget from outside */
-#ifndef MODEST_HAVE_HILDON0_WIDGETS
-	GdkColor color;
-	gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color);
-	gray_color_markup = modest_text_utils_get_color_string (&color);
-#else
-	// gray_color_markup is freed below
-	gray_color_markup = g_strdup ("#BBBBBB");
-#endif	
+	gray_color_markup = get_gray_color_markup (styled_widget);
+
 	/* Account description: */
-	
 	if (modest_tny_account_is_virtual_local_folders (account)
 		|| (modest_tny_account_is_memory_card_account (account))) {
-		gchar *tmp;
-		/* Local folders: */
 	
 		/* Get device name */
 		gchar *device_name = NULL;
@@ -1501,11 +1542,9 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 						      MODEST_CONF_DEVICE_NAME, NULL);
 		else
 			device_name = g_strdup (tny_account_get_name (account));
-						      
-		tmp = g_strdup_printf (_("mcen_fi_localroot_description"), ""); //TODO: Why the ""?
-		label = g_markup_printf_escaped ("<span color='%s'>%s</span>%s",
-						 gray_color_markup, tmp, device_name);
-		g_free (tmp);
+
+		label = create_device_name_visual_string ((const gchar *) device_name, 
+							  (const gchar *) gray_color_markup);
 		label_w = gtk_label_new (NULL);
 		gtk_label_set_markup (GTK_LABEL (label_w), label);
 		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
@@ -1816,7 +1855,7 @@ on_configuration_key_changed (ModestConf* conf,
 		GList *children;
 		GtkLabel *label;
 		const gchar *device_name;
-		gchar *new_text;
+		gchar *new_text, *gray_color_markup;
 		
 		/* Get label */
 		children = gtk_container_get_children (GTK_CONTAINER (priv->details_widget));
@@ -1824,14 +1863,14 @@ on_configuration_key_changed (ModestConf* conf,
 		
 		device_name = modest_conf_get_string (modest_runtime_get_conf(),
 						      MODEST_CONF_DEVICE_NAME, NULL);
+
+		gray_color_markup = get_gray_color_markup (GTK_WIDGET (self));		
+		new_text = create_device_name_visual_string (device_name, gray_color_markup);
 		
-		new_text = g_strdup_printf ("%s: %s",
-					    _("mcen_fi_localroot_description"),
-					    device_name);
-		
-		gtk_label_set_text (label, new_text);
+		gtk_label_set_markup (label, new_text);
 		gtk_widget_show (GTK_WIDGET (label));
 		
+		g_free (gray_color_markup);
 		g_free (new_text);
 		g_list_free (children);
 	}

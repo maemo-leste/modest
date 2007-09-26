@@ -300,12 +300,11 @@ gchar* modest_conf_key_escape (const gchar* str);
 gchar* modest_conf_key_unescape (const gchar* str);
 
 
-ModestConfNotificationId modest_conf_listen_to_namespace (ModestConf *self,
-							  const gchar *namespace);
+void modest_conf_listen_to_namespace (ModestConf *self,
+				      const gchar *namespace);
 
-void modest_conf_forget_namespace (ModestConf *self,
-				   const gchar *namespace,
-				   ModestConfNotificationId id);
+void modest_conf_forget_namespace    (ModestConf *self,
+				      const gchar *namespace);
 G_END_DECLS
 
 #endif /* __MODEST_CONF_H__ */

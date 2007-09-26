@@ -114,6 +114,7 @@ static void
 modest_conf_init (ModestConf *obj)
 {
 	GConfClient *conf = NULL;
+	GError *error = NULL;
 	ModestConfPrivate *priv = MODEST_CONF_GET_PRIVATE(obj);
 
 	priv->gconf_client = NULL;
@@ -124,7 +125,22 @@ modest_conf_init (ModestConf *obj)
 		return;
 	}
 
-	priv->gconf_client = conf; 	/* all went well! */
+	priv->gconf_client = conf;
+
+	/* All the tree will be listened */
+	gconf_client_add_dir (priv->gconf_client,
+			      "/apps/modest",
+			      GCONF_CLIENT_PRELOAD_NONE,
+			      &error);
+
+	/* Notify every change under namespace */
+	if (!error)
+		gconf_client_notify_add (priv->gconf_client,
+					 "/apps/modest",
+					 modest_conf_on_change,
+					 obj,
+					 NULL,
+					 &error);
 }
 
 static void
@@ -454,16 +470,15 @@ modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 	return gconf_type;
 }
 
-ModestConfNotificationId
+void
 modest_conf_listen_to_namespace (ModestConf *self,
 				 const gchar *namespace)
 {
 	ModestConfPrivate *priv;
 	GError *error = NULL;
-	ModestConfNotificationId notification_id;
 
-	g_return_val_if_fail (MODEST_IS_CONF (self), 0);
-	g_return_val_if_fail (namespace, 0);
+	g_return_if_fail (MODEST_IS_CONF (self));
+	g_return_if_fail (namespace);
 	
 	priv = MODEST_CONF_GET_PRIVATE(self);
 
@@ -473,30 +488,11 @@ modest_conf_listen_to_namespace (ModestConf *self,
 			      namespace,
 			      GCONF_CLIENT_PRELOAD_NONE,
 			      &error);
-
-	if (error) {
-		return 0;
-	}
-
-	/* Notify every change under namespace */
-	notification_id = gconf_client_notify_add (priv->gconf_client,
-						   namespace,
-						   modest_conf_on_change,
-						   self,
-						   NULL,
-						   &error);
-
-	if (error) {
-		return 0;
-	} else {
-		return notification_id;
-	}
 }
 
 void 
 modest_conf_forget_namespace (ModestConf *self,
-			      const gchar *namespace,
-			      ModestConfNotificationId id)
+			      const gchar *namespace)
 {
 	ModestConfPrivate *priv;
 
@@ -508,7 +504,4 @@ modest_conf_forget_namespace (ModestConf *self,
 	/* Remove the namespace to the list of the namespaces that will
 	   be observed */
 	gconf_client_remove_dir (priv->gconf_client, namespace, NULL);
-
-	/* Notify every change under namespace */
-	gconf_client_notify_remove (priv->gconf_client, id);
 }

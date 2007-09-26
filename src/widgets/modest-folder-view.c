@@ -161,8 +161,6 @@ struct _ModestFolderViewPrivate {
 
 	TnyFolder            *folder_to_select; /* folder to select after the next update */
 
-	ModestConfNotificationId notification_id;
-
 	gulong                changed_signal;
 	gulong                account_inserted_signal;
 	gulong                account_removed_signal;
@@ -673,9 +671,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	 * Track changes in the local account name (in the device it
 	 * will be the device name)
 	 */
-	priv->notification_id = modest_conf_listen_to_namespace (conf,
-								 MODEST_CONF_NAMESPACE);
-
 	priv->conf_key_signal = g_signal_connect (G_OBJECT(conf), 
 						  "key_changed",
 						  G_CALLBACK(on_configuration_key_changed), 
@@ -701,12 +696,6 @@ modest_folder_view_finalize (GObject *obj)
 	g_return_if_fail (obj);
 	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
-
-	if (priv->notification_id) {
-		modest_conf_forget_namespace (modest_runtime_get_conf (),
-					      MODEST_CONF_NAMESPACE,
-					      priv->notification_id);
-	}
 
 	if (priv->timer_expander != 0) {
 		g_source_remove (priv->timer_expander);
@@ -2089,10 +2078,6 @@ on_configuration_key_changed (ModestConf* conf,
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
-	/* Do not listen for changes in other namespaces */
-	if (priv->notification_id != id)
-		 return;
-	 
 	if (!strcmp (key, MODEST_CONF_DEVICE_NAME)) {
 		g_free (priv->local_account_name);
 
