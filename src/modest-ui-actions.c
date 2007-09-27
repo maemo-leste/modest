@@ -104,8 +104,8 @@ typedef struct _ReplyForwardHelper {
 } ReplyForwardHelper;
 
 typedef struct _MoveToHelper {
-	ModestMailOperation *mail_op;
-	TnyFolder *folder;
+	GtkTreeRowReference *reference;
+	GtkWidget *banner;
 } MoveToHelper;
 
 typedef struct _PasteAsAttachmentHelper {
@@ -336,6 +336,35 @@ get_selected_headers (ModestWindow *win)
 
 	} else
 		return NULL;
+}
+
+static GtkTreeRowReference *
+get_next_after_selected_headers (ModestHeaderView *header_view)
+{
+	GtkTreeSelection *sel;
+	GList *selected_rows, *node;
+	GtkTreePath *path;
+	GtkTreeRowReference *result;
+	GtkTreeModel *model;
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+	selected_rows = gtk_tree_selection_get_selected_rows (sel, NULL);
+
+	if (selected_rows == NULL)
+		return NULL;
+
+	node = g_list_last (selected_rows);
+	path = gtk_tree_path_copy ((GtkTreePath *) node->data);
+	gtk_tree_path_next (path);
+
+	result = gtk_tree_row_reference_new (model, path);
+
+	gtk_tree_path_free (path);
+	g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
+	g_list_free (selected_rows);
+
+	return result;
 }
 
 static void
@@ -3903,6 +3932,8 @@ modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
 static void
 move_to_cb (ModestMailOperation *mail_op, gpointer user_data)
 {
+	MoveToHelper *helper = (MoveToHelper *) user_data;
+
 	/* Note that the operation could have failed, in that case do
 	   nothing */
 	if (modest_mail_operation_get_status (mail_op) == 
@@ -3916,12 +3947,26 @@ move_to_cb (ModestMailOperation *mail_op, gpointer user_data)
 				if (!modest_msg_view_window_select_previous_message (self))
 					/* No more messages to view, so close this window */
 					modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
+		} else if (MODEST_IS_MAIN_WINDOW (object) && helper->reference != NULL) {
+			GtkWidget *header_view;
+			GtkTreePath *path;
+			GtkTreeSelection *sel;
+
+			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+			path = gtk_tree_row_reference_get_path (helper->reference);
+			gtk_tree_selection_select_path (sel, path);
+			gtk_tree_path_free (path);
 		}
 		g_object_unref (object);
         }
 
 	/* Close the "Pasting" information banner */
-	gtk_widget_destroy (GTK_WIDGET(user_data));
+	gtk_widget_destroy (GTK_WIDGET(helper->banner));
+	if (helper->reference != NULL)
+		gtk_tree_row_reference_free (helper->reference);
+	g_free (helper);
 }
 
 void
@@ -4157,12 +4202,19 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 		return;
 	}
 
-        GtkWidget *inf_note;
-	inf_note = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
-						     _CS("ckct_nw_pasting"));
-	if (inf_note != NULL)  {
-		gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
-		gtk_widget_show (GTK_WIDGET(inf_note));
+	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
+	helper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
+							   _CS("ckct_nw_pasting"));
+	if (helper->banner != NULL)  {
+		gtk_window_set_modal (GTK_WINDOW(helper->banner), FALSE);
+		gtk_widget_show (GTK_WIDGET(helper->banner));
+	}
+
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *header_view = 
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+		helper->reference = get_next_after_selected_headers (MODEST_HEADER_VIEW (header_view));
 	}
 
 	ModestMailOperation *mail_op = 
@@ -4178,7 +4230,7 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 					 TNY_FOLDER (dst_folder),
 					 TRUE,
 					 move_to_cb,
-					 inf_note);
+					 helper);
 
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (headers);
@@ -4227,12 +4279,12 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                 }
 
                 if (do_xfer) {
-                        GtkWidget *inf_note;
-                        inf_note = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
-                                                                     _CS("ckct_nw_pasting"));
-                        if (inf_note != NULL)  {
-                                gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
-                                gtk_widget_show (GTK_WIDGET(inf_note));
+                        MoveToHelper *helper = g_new0 (MoveToHelper, 1);
+                        helper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
+									   _CS("ckct_nw_pasting"));
+                        if (helper->banner != NULL)  {
+                                gtk_window_set_modal (GTK_WINDOW(helper->banner), FALSE);
+                                gtk_widget_show (GTK_WIDGET(helper->banner));
                         }
                         /* Clean folder on header view before moving it */
                         sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
@@ -4256,7 +4308,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                                                            dst_folder,
                                                            TRUE, 
 							   move_to_cb, 
-							   inf_note);
+							   helper);
                         /* Unref mail operation */
                         g_object_unref (G_OBJECT (mail_op));
                 }
