@@ -610,7 +610,7 @@ on_default_account_changed (ModestAccountMgr *mgr,
 				    -1);
 
 		/* Update the default account column */
-		if (!strcmp (name, default_account_name))
+		if ((default_account_name != NULL) && (!strcmp (name, default_account_name)))
 			gtk_list_store_set (GTK_LIST_STORE (model), &iter,
 					    MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, TRUE, -1);
 		else
