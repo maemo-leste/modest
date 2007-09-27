@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <modest-marshal.h>
+#include <modest-runtime.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-priv.h>
 #include <modest-account-mgr-helpers.h>
@@ -39,9 +40,12 @@ static void modest_account_mgr_init       (ModestAccountMgr * obj);
 static void modest_account_mgr_finalize   (GObject * obj);
 static void modest_account_mgr_base_init  (gpointer g_class);
 
-static const gchar *
-_modest_account_mgr_get_account_keyname_cached (ModestAccountMgrPrivate *priv, const gchar* account_name,
-						const gchar *name, gboolean is_server);
+static const gchar *_modest_account_mgr_get_account_keyname_cached (ModestAccountMgrPrivate *priv, 
+								    const gchar* account_name,
+								    const gchar *name, 
+								    gboolean is_server);
+
+static gboolean modest_account_mgr_unset_default_account (ModestAccountMgr *self);
 
 /* list my signals */
 enum {
@@ -50,172 +54,13 @@ enum {
 	ACCOUNT_REMOVED_SIGNAL,
 	ACCOUNT_BUSY_SIGNAL,
 	DEFAULT_ACCOUNT_CHANGED_SIGNAL,
+	DISPLAY_NAME_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
 /* globals */
 static GObjectClass *parent_class = NULL;
 static guint signals[LAST_SIGNAL] = {0};
-
-/* is the account already in the queue? */
-static gboolean
-in_change_queue (GSList *change_queue, const gchar *account)
-{
-	GSList *cursor = change_queue;
-	while (cursor) {
-		const gchar *acc = cursor->data;
-		if (acc && strcmp (acc, account) == 0)
-			return TRUE;
-		cursor = g_slist_next (cursor);
-	}
-	return FALSE;
-}
-
-static GSList*
-add_to_change_queue (GSList *change_queue, const gchar *account_name)
-{
-	g_return_val_if_fail (account_name, change_queue);	
-	return g_slist_prepend (change_queue, g_strdup (account_name));
-}
-
-
-/* we don't need to track specific accounts, as in our UI case
- * it's impossible to change two accounts within .5 seconds.
- * still, we might want to allow that later, and then this func
- * will come in handy */
-#if 0
-static GSList*
-remove_from_queue (GSList *change_queue, const gchar *account)
-{
-	GSList *cursor = change_queue;
-	while (cursor) {
-		const gchar *acc = cursor->data;
-		if (acc && strcmp (acc, account) == 0) {
-			g_free (acc);
-			return g_slist_delete_link (change_queue, cursor);
-		}
-		cursor = g_slist_next (cursor);
-	}
-	return change_queue;
-}
-#endif
-
-static gboolean
-on_timeout_notify_changes (gpointer data)
-{
-	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (data);
-	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-		
-	GSList *cursor = priv->change_queue;
-	while (cursor) {
-		const gchar *account = cursor->data;
-		if (account)
-			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0,
-				       account);
-		cursor = g_slist_next (cursor);
-	}
-	
-	/* free our queue */
-	g_slist_foreach (priv->change_queue, (GFunc)g_free, NULL);
-	g_slist_free (priv->change_queue);
-	priv->change_queue = NULL;
-	priv->timeout = 0; /* hmmm */
-	
-	return FALSE; /* don't call me again */
-}
-
-
-/* little hack to retrieve the account name from a server account name,
- * by relying on the convention for that. Note: this changes the
- * string in-place
- *
- * server accounts look like fooID_transport or fooID_store
- * FIXME: make the suffixes more explicit in the account setup
- */
-static void
-get_account_name_from_server_account (gchar *server_account_name)
-{
-	static const gchar *t = "ID_transport";
-	static const gchar *s = "ID_store";
-	const guint len_t = strlen (t);
-	const guint len_s = strlen (s);
-	
-	guint len_a = strlen (server_account_name);
-		
-	if (g_str_has_suffix (server_account_name, t)) 
-		server_account_name [len_a - len_t] = '\0';
-	else if (g_str_has_suffix (server_account_name, s)) 
-		server_account_name [len_a - len_s] = '\0';
-}
-
-
-
-static void
-on_key_change (ModestConf *conf, const gchar *key, ModestConfEvent event,
-	       ModestConfNotificationId id, gpointer user_data)
-{
-	ModestAccountMgr *self = MODEST_ACCOUNT_MGR (user_data);
-	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-
-	gboolean is_account_key;
-	gboolean is_server_account;
-	gchar* account_name = NULL;
-
-	/* Notify that the default account has changed */
-	if (key && strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		g_signal_emit (G_OBJECT(self), signals[DEFAULT_ACCOUNT_CHANGED_SIGNAL], 0);
-		return;
-	}
-	
-	is_account_key = FALSE;
-	is_server_account = FALSE;
-	account_name = _modest_account_mgr_account_from_key (key, &is_account_key,
-							     &is_server_account);
-
-	/* if this is not an account-related key change, ignore */
-	if (!account_name)
-		return;
-
-	/* account was removed. Do not emit an account removed signal
-	   because it was already being done in the remove_account
-	   method. Do not notify also the removal of the server
-	   account keys for the same reason */
-	if ((is_account_key || is_server_account) &&
-	    event == MODEST_CONF_EVENT_KEY_UNSET) {
-		g_free (account_name);
-		return;
-	}
-
-	/* ignore server account changes */
-	if (is_server_account)
-		/* change in place: retrieve the parent account name */
-		get_account_name_from_server_account (account_name);
-
-	/* is this account enabled? */
-	gboolean enabled = FALSE;
-	if (is_server_account)
-		enabled = TRUE;
-	else
-		enabled = modest_account_mgr_get_enabled (self, account_name);
-
-	/* Notify is server account was changed, default account was changed
-	 * or when enabled/disabled changes:
-	 */
-	if (!is_server_account)
-	if (enabled || g_str_has_suffix (key, MODEST_ACCOUNT_ENABLED) ||
-	    strcmp (key, MODEST_CONF_DEFAULT_ACCOUNT) == 0) {
-		if (!in_change_queue (priv->change_queue, account_name)) {
-			priv->change_queue = add_to_change_queue (priv->change_queue,
-								  account_name);
-			/* hmm, small race when this object is destroyed within
-			 * 500ms of the last change, and there are multiple timeouts... */
-			priv->timeout = g_timeout_add (500, (GSourceFunc) on_timeout_notify_changes,
-						       self);
-		}
-	}
-	g_free (account_name);
-}
-
 
 GType
 modest_account_mgr_get_type (void)
@@ -274,8 +119,8 @@ modest_account_mgr_base_init (gpointer g_class)
 				      G_SIGNAL_RUN_FIRST,
 				      G_STRUCT_OFFSET(ModestAccountMgrClass, account_changed),
 				      NULL, NULL,
-				      g_cclosure_marshal_VOID__STRING,
-				      G_TYPE_NONE, 1, G_TYPE_STRING);
+				      modest_marshal_VOID__STRING_INT,
+				      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
 
 		signals[ACCOUNT_BUSY_SIGNAL] =
 			g_signal_new ("account_busy_changed",
@@ -294,6 +139,15 @@ modest_account_mgr_base_init (gpointer g_class)
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__VOID,
 				      G_TYPE_NONE, 0);
+
+		signals[DISPLAY_NAME_CHANGED_SIGNAL] =
+			g_signal_new ("display_name_changed",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, display_name_changed),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__STRING,
+				      G_TYPE_NONE, 1, G_TYPE_STRING);
 
 		modest_account_mgr_initialized = TRUE;
 	}
@@ -321,7 +175,6 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 
 	priv->modest_conf   = NULL;
 	priv->busy_accounts = NULL;
-	priv->change_queue  = NULL;
 	priv->timeout       = 0;
 	
 	priv->notification_id_accounts = g_hash_table_new_full (g_int_hash, g_int_equal, g_free, g_free);
@@ -352,12 +205,6 @@ modest_account_mgr_finalize (GObject * obj)
 		/* TODO: forget dirs */
 
 		g_hash_table_destroy (priv->notification_id_accounts);
-	}
-
-	if (priv->key_changed_handler_uid) {
-		g_signal_handler_disconnect (priv->modest_conf, 
-					     priv->key_changed_handler_uid);
-		priv->key_changed_handler_uid = 0;
 	}
 
 	if (priv->modest_conf) {
@@ -397,11 +244,6 @@ modest_account_mgr_new (ModestConf *conf)
 	g_object_ref (G_OBJECT(conf));
 	priv->modest_conf = conf;
 
- 	priv->key_changed_handler_uid = 
- 		g_signal_connect (G_OBJECT (conf), "key_changed",
- 				  G_CALLBACK (on_key_change),
- 				  obj);
-	
 	return MODEST_ACCOUNT_MGR (obj);
 }
 
@@ -487,10 +329,8 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	/* Make sure that leave-messages-on-server is enabled by default, 
 	 * as per the UI spec, though it is only meaningful for accounts using POP.
 	 * (possibly this gconf key should be under the server account): */
-	modest_account_mgr_set_bool (self, name,
-		MODEST_ACCOUNT_LEAVE_ON_SERVER, TRUE, FALSE /* not server account */);
-
-	modest_account_mgr_set_enabled (self, name, enabled);
+	modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_LEAVE_ON_SERVER, TRUE, FALSE);
+	modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_ENABLED, enabled,FALSE);
 
 	/* Notify the observers */
 	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, name);
@@ -507,9 +347,11 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 
 gboolean
 modest_account_mgr_add_server_account (ModestAccountMgr * self,
-				       const gchar * name, const gchar *hostname,
+				       const gchar *name, 
+				       const gchar *hostname,
 				       guint portnumber,
-				       const gchar * username, const gchar * password,
+				       const gchar *username, 
+				       const gchar *password,
 				       ModestTransportStoreProtocol proto,
 				       ModestConnectionProtocol security,
 				       ModestAuthProtocol auth)
@@ -606,7 +448,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 		goto cleanup;
 	
 	/* Add the security settings: */
-	modest_server_account_set_security (self, name, security);
+	modest_account_mgr_set_server_account_security (self, name, security);
 	
 cleanup:
 	if (!ok) {
@@ -622,7 +464,8 @@ cleanup:
  */
 gboolean
 modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
-					   const gchar *name, ModestTransportStoreProtocol proto,
+					   const gchar *name, 
+					   ModestTransportStoreProtocol proto,
 					   const gchar *uri)
 {
 	ModestAccountMgrPrivate *priv;
@@ -794,9 +637,9 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 		gboolean add = TRUE;
 		if (only_enabled) {
 			if (unescaped_name && 
-				!modest_account_mgr_get_enabled (self, unescaped_name)) {
+			    !modest_account_mgr_get_bool (self, unescaped_name, 
+							  MODEST_ACCOUNT_ENABLED, FALSE))
 				add = FALSE;
-			}
 		}
 		
 		/* Ignore modest accounts whose server accounts don't exist: 
@@ -826,7 +669,7 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 			}
 		}
 		
-		if (add) 	
+		if (add)
 			result = g_slist_append (result, unescaped_name);
 		else 
 			g_free (unescaped_name);
@@ -883,16 +726,6 @@ modest_account_mgr_get_string (ModestAccountMgr *self, const gchar *name,
 
 	return retval;
 }
-
-
-gchar *
-modest_account_mgr_get_password (ModestAccountMgr *self, const gchar *name,
-			       const gchar *key, gboolean server_account)
-{
-	return modest_account_mgr_get_string (self, name, key, server_account);
-
-}
-
 
 
 gint
@@ -988,8 +821,11 @@ modest_account_mgr_get_list (ModestAccountMgr *self, const gchar *name,
 
 
 gboolean
-modest_account_mgr_set_string (ModestAccountMgr * self, const gchar * name,
-			       const gchar * key, const gchar * val, gboolean server_account)
+modest_account_mgr_set_string (ModestAccountMgr * self, 
+			       const gchar * name,
+			       const gchar * key, 
+			       const gchar * val, 
+			       gboolean server_account)
 {
 	ModestAccountMgrPrivate *priv;
 
@@ -1013,16 +849,6 @@ modest_account_mgr_set_string (ModestAccountMgr * self, const gchar * name,
 	}
 	return retval;
 }
-
-
-gboolean
-modest_account_mgr_set_password (ModestAccountMgr * self, const gchar * name,
-				 const gchar * key, const gchar * val, gboolean server_account)
-{
-	return modest_account_mgr_set_password (self, name, key, val, server_account);
-}
-
-
 
 gboolean
 modest_account_mgr_set_int (ModestAccountMgr * self, const gchar * name,
@@ -1139,7 +965,8 @@ modest_account_mgr_account_exists (ModestAccountMgr * self, const gchar* name,
 }
 
 gboolean
-modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self, const gchar *display_name)
+modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self, 
+						      const gchar *display_name)
 {
 	GSList *account_names = NULL;
 	GSList *cursor = NULL;
@@ -1324,37 +1151,16 @@ _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar*
 	return retval;
 }
 
-
-#if 0
-static void
-f2 (gchar*key, gchar* val, gpointer user_data)
-{
-	g_debug (">>%s:%s", key, val);
-}
-
-
-static void
-f1 (gchar*key, GHashTable* h, gpointer user_data)
-{
-	g_debug (">%s", key);
-	g_hash_table_foreach (h, (GHFunc)f2, NULL);
-}
-#endif 
-
-
 static const gchar *
-_modest_account_mgr_get_account_keyname_cached (ModestAccountMgrPrivate *priv, const gchar* account_name,
-						const gchar *name, gboolean is_server)
+_modest_account_mgr_get_account_keyname_cached (ModestAccountMgrPrivate *priv, 
+						const gchar* account_name,
+						const gchar *name, 
+						gboolean is_server)
 {
-	//return _modest_account_mgr_get_account_keyname (account_name, name, is_server);
-	
-	
 	GHashTable *hash = is_server ? priv->server_account_key_hash : priv->account_key_hash;
 	GHashTable *account_hash;
 	gchar *key = NULL;
 	const gchar *search_name;
-	
- 	//g_hash_table_foreach (hash, (GHFunc)f1, NULL); 
 
 	if (!account_name)
 		return is_server ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
@@ -1442,4 +1248,123 @@ modest_account_mgr_account_is_busy(ModestAccountMgr* self, const gchar* account_
 	return (g_slist_find_custom(priv->busy_accounts, account_name, (GCompareFunc) compare_account_name)
 					!= NULL);
 }
+
+void
+modest_account_mgr_notify_account_update (ModestAccountMgr* self, 
+					  const gchar *server_account_name)
+{
+	ModestTransportStoreProtocol proto;
+	gchar *proto_name = NULL;
+
+	/* Get protocol */
+	proto_name = modest_account_mgr_get_string (self, server_account_name, 
+						    MODEST_ACCOUNT_PROTO, TRUE);
+	if (!proto_name) {
+		g_free (proto_name);
+		g_return_if_reached ();
+	}
+	proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+	g_free (proto_name);
+
+	/* Emit "update-account" */
+	g_signal_emit (G_OBJECT(self), 
+		       signals[ACCOUNT_CHANGED_SIGNAL], 0, 
+		       server_account_name, 
+		       (modest_protocol_info_protocol_is_store (proto)) ? 
+		       TNY_ACCOUNT_TYPE_STORE : 
+		       TNY_ACCOUNT_TYPE_TRANSPORT);
+}
+
+
+gboolean
+modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* account)
+{
+	ModestConf *conf;
+	gboolean retval;
 	
+	g_return_val_if_fail (self,    FALSE);
+	g_return_val_if_fail (account, FALSE);
+	g_return_val_if_fail (modest_account_mgr_account_exists (self, account, FALSE),
+			      FALSE);
+	
+	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+
+	/* Change the default account and notify */
+	retval = modest_conf_set_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, account, NULL);
+	if (retval)
+		g_signal_emit (G_OBJECT(self), signals[DEFAULT_ACCOUNT_CHANGED_SIGNAL], 0);
+
+	return retval;
+}
+
+
+gchar*
+modest_account_mgr_get_default_account  (ModestAccountMgr *self)
+{
+	gchar *account;	
+	ModestConf *conf;
+	GError *err = NULL;
+	
+	g_return_val_if_fail (self, NULL);
+
+	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+	account = modest_conf_get_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, &err);
+	
+	if (err) {
+		g_printerr ("modest: failed to get '%s': %s\n",
+			    MODEST_CONF_DEFAULT_ACCOUNT, err->message);
+		g_error_free (err);
+		g_free (account);
+		return  NULL;
+	}
+	
+	/* sanity check */
+	if (account && !modest_account_mgr_account_exists (self, account, FALSE)) {
+		g_printerr ("modest: default account does not exist\n");
+		g_free (account);
+		return NULL;
+	}
+
+	return account;
+}
+
+static gboolean
+modest_account_mgr_unset_default_account (ModestAccountMgr *self)
+{
+	ModestConf *conf;
+	gboolean retval;
+	
+	g_return_val_if_fail (self,    FALSE);
+
+	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
+		
+	retval = modest_conf_remove_key (conf, MODEST_CONF_DEFAULT_ACCOUNT, NULL /* err */);
+
+	if (retval)
+		g_signal_emit (G_OBJECT(self), signals[DEFAULT_ACCOUNT_CHANGED_SIGNAL], 0);
+
+	return retval;
+}
+
+
+gchar* 
+modest_account_mgr_get_display_name (ModestAccountMgr *self, 
+				     const gchar* name)
+{
+	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_DISPLAY_NAME, FALSE);
+}
+
+void 
+modest_account_mgr_set_display_name (ModestAccountMgr *self, 
+				     const gchar *account_name,
+				     const gchar *display_name)
+{
+	modest_account_mgr_set_string (self, 
+				       account_name,
+				       MODEST_ACCOUNT_DISPLAY_NAME, 
+				       display_name, 
+				       FALSE /* not server account */);
+
+	/* Notify about the change in the display name */
+	g_signal_emit (self, signals[DISPLAY_NAME_CHANGED_SIGNAL], 0, account_name);
+}

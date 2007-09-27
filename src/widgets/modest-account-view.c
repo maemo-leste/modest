@@ -54,6 +54,10 @@ static void modest_account_view_select_account (ModestAccountView *account_view,
 static void on_default_account_changed         (ModestAccountMgr *mgr,
 						gpointer user_data);
 
+static void on_display_name_changed            (ModestAccountMgr *self, 
+						const gchar *account,
+						gpointer user_data);
+
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
 	MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
@@ -485,6 +489,12 @@ init_view (ModestAccountView *self)
 					   "default_account_changed",
 					   G_CALLBACK(on_default_account_changed), 
 					   self);
+	priv->sig_handlers = 
+		modest_signal_mgr_connect (priv->sig_handlers, 
+					   G_OBJECT(priv->account_mgr),
+					   "display_name_changed",
+					   G_CALLBACK(on_display_name_changed), 
+					   self);
 }
 
 
@@ -614,4 +624,13 @@ on_default_account_changed (ModestAccountMgr *mgr,
 	/* Free and force a redraw */
 	g_free (default_account_name);
 	gtk_widget_queue_draw (GTK_WIDGET (user_data));
+}
+
+static void 
+on_display_name_changed (ModestAccountMgr *mgr, 
+			 const gchar *account,
+			 gpointer user_data)
+{
+	/* Update the view */
+	update_account_view (mgr, MODEST_ACCOUNT_VIEW (user_data));
 }

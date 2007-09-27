@@ -1622,10 +1622,9 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 		time_t last_updated;
 		gchar *last_updated_string;
 		/* Get last updated from configuration */
-		last_updated = modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
-							  tny_account_get_id (account), 
-							  MODEST_ACCOUNT_LAST_UPDATED, 
-							  TRUE);
+		last_updated = modest_account_mgr_get_last_updated (modest_runtime_get_account_mgr (), 
+								    tny_account_get_id (account));
+
 		if (last_updated > 0) 
 			last_updated_string = modest_text_utils_get_display_date(last_updated);
 		else

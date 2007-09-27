@@ -57,14 +57,6 @@ gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* 
 	return result;
 }
 
-gchar* modest_account_mgr_get_display_name (ModestAccountMgr *self, 
-	const gchar* name)
-{
-	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_DISPLAY_NAME, FALSE);
-}
-
-
-
 gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
 	gboolean* use_signature)
 {
@@ -263,19 +255,19 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 }
 					 
 gchar*
-modest_server_account_get_username (ModestAccountMgr *self, const gchar* account_name)
+modest_account_mgr_get_server_account_username (ModestAccountMgr *self, const gchar* account_name)
 {
 	return modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_USERNAME, 
 		TRUE /* server account */);
 }
 
 void
-modest_server_account_set_username (ModestAccountMgr *self, const gchar* account_name, 
+modest_account_mgr_set_server_account_username (ModestAccountMgr *self, const gchar* account_name, 
 	const gchar* username)
 {
 	/* Note that this won't work properly as long as the gconf cache is broken 
 	 * in Maemo Bora: */
-	gchar *existing_username = modest_server_account_get_username(self, 
+	gchar *existing_username = modest_account_mgr_get_server_account_username(self, 
 		account_name);
 	
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_USERNAME, 
@@ -283,29 +275,29 @@ modest_server_account_set_username (ModestAccountMgr *self, const gchar* account
 		
 	/* We don't know anything about new usernames: */
 	if (strcmp (existing_username, username) != 0)
-		modest_server_account_set_username_has_succeeded (self, 
-		account_name, FALSE);
+		modest_account_mgr_get_server_account_username_has_succeeded (self, account_name);
 		
 	g_free (existing_username);
 }
 
 gboolean
-modest_server_account_get_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name)
+modest_account_mgr_get_server_account_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name)
 {
 	return modest_account_mgr_get_bool (self, account_name, MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED, 
 					    TRUE /* server account */);
 }
 
 void
-modest_server_account_set_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name, 
-	gboolean succeeded)
+modest_account_mgr_set_server_account_username_has_succeeded (ModestAccountMgr *self, 
+						  const gchar* account_name, 
+						  gboolean succeeded)
 {
 	modest_account_mgr_set_bool (self, account_name, MODEST_ACCOUNT_USERNAME_HAS_SUCCEEDED, 
 				     succeeded, TRUE /* server account */);
 }
 
 void
-modest_server_account_set_password (ModestAccountMgr *self, const gchar* account_name, 
+modest_account_mgr_set_server_account_password (ModestAccountMgr *self, const gchar* account_name, 
 				    const gchar* password)
 {
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
@@ -314,14 +306,14 @@ modest_server_account_set_password (ModestAccountMgr *self, const gchar* account
 
 	
 gchar*
-modest_server_account_get_password (ModestAccountMgr *self, const gchar* account_name)
+modest_account_mgr_get_server_account_password (ModestAccountMgr *self, const gchar* account_name)
 {
 	return modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
 		TRUE /* server account */);	
 }
 
 gboolean
-modest_server_account_get_has_password (ModestAccountMgr *self, const gchar* account_name)
+modest_account_mgr_get_server_account_has_password (ModestAccountMgr *self, const gchar* account_name)
 {
 	gboolean result = FALSE;
 	gchar *password = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
@@ -336,12 +328,27 @@ modest_server_account_get_has_password (ModestAccountMgr *self, const gchar* acc
 			 
 	
 gchar*
-modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account_name)
+modest_account_mgr_get_server_account_hostname (ModestAccountMgr *self, 
+						const gchar* account_name)
 {
-	return modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_HOSTNAME, 
-		TRUE /* server account */);
+	return modest_account_mgr_get_string (self, 
+					      account_name, 
+					      MODEST_ACCOUNT_HOSTNAME, 
+					      TRUE /* server account */);
 }
  
+void
+modest_account_mgr_set_server_account_hostname (ModestAccountMgr *self, 
+						const gchar *server_account_name,
+						const gchar *hostname)
+{
+	modest_account_mgr_set_string (self, 
+				       server_account_name,
+				       MODEST_ACCOUNT_HOSTNAME, 
+				       hostname, 
+				       TRUE /* server account */);
+}
+
 
 static ModestAuthProtocol
 get_secure_auth_for_conf_string(const gchar* value)
@@ -360,7 +367,7 @@ get_secure_auth_for_conf_string(const gchar* value)
 }
 
 ModestAuthProtocol
-modest_server_account_get_secure_auth (ModestAccountMgr *self, 
+modest_account_mgr_get_server_account_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
 	ModestAuthProtocol result = MODEST_PROTOCOL_AUTH_NONE;
@@ -377,7 +384,7 @@ modest_server_account_get_secure_auth (ModestAccountMgr *self,
 
 
 void
-modest_server_account_set_secure_auth (ModestAccountMgr *self, 
+modest_account_mgr_set_server_account_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name, ModestAuthProtocol secure_auth)
 {
 	/* Get the conf string for the enum value: */
@@ -411,7 +418,7 @@ get_security_for_conf_string(const gchar* value)
 }
 
 ModestConnectionProtocol
-modest_server_account_get_security (ModestAccountMgr *self, 
+modest_account_mgr_get_server_account_security (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
 	ModestConnectionProtocol result = MODEST_PROTOCOL_CONNECTION_NORMAL;
@@ -427,7 +434,7 @@ modest_server_account_get_security (ModestAccountMgr *self,
 }
 
 void
-modest_server_account_set_security (ModestAccountMgr *self, 
+modest_account_mgr_set_server_account_security (ModestAccountMgr *self, 
 	const gchar* account_name, ModestConnectionProtocol security)
 {
 	/* Get the conf string for the enum value: */
@@ -582,67 +589,8 @@ modest_account_mgr_free_account_data (ModestAccountMgr *self, ModestAccountData 
 	g_slice_free (ModestAccountData, data);
 }
 
-
-gchar*
-modest_account_mgr_get_default_account  (ModestAccountMgr *self)
-{
-	gchar *account;	
-	ModestConf *conf;
-	GError *err = NULL;
-	
-	g_return_val_if_fail (self, NULL);
-
-	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
-	account = modest_conf_get_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, &err);
-	
-	if (err) {
-		g_printerr ("modest: failed to get '%s': %s\n",
-			    MODEST_CONF_DEFAULT_ACCOUNT, err->message);
-		g_error_free (err);
-		g_free (account);
-		return  NULL;
-	}
-	
-	/* sanity check */
-	if (account && !modest_account_mgr_account_exists (self, account, FALSE)) {
-		g_printerr ("modest: default account does not exist\n");
-		g_free (account);
-		return NULL;
-	}
-
-	return account;
-}
-
-
-gboolean
-modest_account_mgr_set_default_account  (ModestAccountMgr *self, const gchar* account)
-{
-	ModestConf *conf;
-	
-	g_return_val_if_fail (self,    FALSE);
-	g_return_val_if_fail (account, FALSE);
-	g_return_val_if_fail (modest_account_mgr_account_exists (self, account, FALSE),
-			      FALSE);
-	
-	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
-
-	return modest_conf_set_string (conf, MODEST_CONF_DEFAULT_ACCOUNT, account, NULL);
-}
-
-gboolean
-modest_account_mgr_unset_default_account  (ModestAccountMgr *self)
-{
-	ModestConf *conf;
-	
-	g_return_val_if_fail (self,    FALSE);
-
-	conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
-		
-	return modest_conf_remove_key (conf, MODEST_CONF_DEFAULT_ACCOUNT, NULL /* err */);
-
-}
-
-gint on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
+gint 
+on_accounts_list_sort_by_title(gconstpointer a, gconstpointer b)
 {
  	return g_utf8_collate((const gchar*)a, (const gchar*)b);
 }
@@ -807,4 +755,153 @@ modest_account_mgr_get_unused_account_display_name (ModestAccountMgr *self, cons
 	}
 	
 	return account_name;
+}
+
+void 
+modest_account_mgr_set_leave_on_server (ModestAccountMgr *self, 
+					const gchar *account_name, 
+					gboolean leave_on_server)
+{
+	modest_account_mgr_set_bool (self, 
+				     account_name,
+				     MODEST_ACCOUNT_LEAVE_ON_SERVER, 
+				     leave_on_server, 
+				     FALSE);
+}
+
+gboolean 
+modest_account_mgr_get_leave_on_server (ModestAccountMgr *self, 
+					const gchar* account_name)
+{
+	return modest_account_mgr_get_bool (self, 
+					    account_name,
+					    MODEST_ACCOUNT_LEAVE_ON_SERVER, 
+					    FALSE);
+}
+
+gint 
+modest_account_mgr_get_last_updated (ModestAccountMgr *self, 
+				     const gchar* account_name)
+{
+	return modest_account_mgr_get_int (modest_runtime_get_account_mgr (), 
+					   account_name, 
+					   MODEST_ACCOUNT_LAST_UPDATED, 
+					   TRUE);
+}
+
+void 
+modest_account_mgr_set_last_updated (ModestAccountMgr *self, 
+				     const gchar* account_name,
+				     gint time)
+{
+	modest_account_mgr_set_int (self, 
+				    account_name, 
+				    MODEST_ACCOUNT_LAST_UPDATED, 
+				    time, 
+				    TRUE);
+
+	/* TODO: notify about changes */
+}
+
+gint  
+modest_account_mgr_get_retrieve_limit (ModestAccountMgr *self, 
+				       const gchar* account_name)
+{
+	return modest_account_mgr_get_int (self, 
+					   account_name,
+					   MODEST_ACCOUNT_LIMIT_RETRIEVE, 
+					   FALSE);
+}
+
+void  
+modest_account_mgr_set_retrieve_limit (ModestAccountMgr *self, 
+				       const gchar* account_name,
+				       gint limit_retrieve)
+{
+	modest_account_mgr_set_int (self, 
+				    account_name,
+				    MODEST_ACCOUNT_LIMIT_RETRIEVE, 
+				    limit_retrieve, 
+				    FALSE /* not server account */);
+}
+
+gint  
+modest_account_mgr_get_server_account_port (ModestAccountMgr *self, 
+					    const gchar* account_name)
+{
+	return modest_account_mgr_get_int (self, 
+					   account_name,
+					   MODEST_ACCOUNT_PORT, 
+					   TRUE);
+}
+
+void
+modest_account_mgr_set_server_account_port (ModestAccountMgr *self, 
+					    const gchar *account_name,
+					    gint port_num)
+{
+	modest_account_mgr_set_int (self, 
+				    account_name,
+				    MODEST_ACCOUNT_PORT, 
+				    port_num, TRUE /* server account */);
+}
+
+gchar* 
+modest_account_mgr_get_server_account_name (ModestAccountMgr *self, 
+					    const gchar *account_name,
+					    TnyAccountType account_type)
+{
+	return modest_account_mgr_get_string (self, 
+					      account_name,
+					      (account_type == TNY_ACCOUNT_TYPE_STORE) ?
+					      MODEST_ACCOUNT_STORE_ACCOUNT :
+					      MODEST_ACCOUNT_TRANSPORT_ACCOUNT, 
+					      FALSE);
+}
+
+gchar* 
+modest_account_mgr_get_retrieve_type (ModestAccountMgr *self, 
+				      const gchar *account_name)
+{
+	return modest_account_mgr_get_string (self, 
+					      account_name,
+					      MODEST_ACCOUNT_RETRIEVE, 
+					      FALSE /* not server account */);
+}
+
+void 
+modest_account_mgr_set_retrieve_type (ModestAccountMgr *self, 
+				      const gchar *account_name,
+				      const gchar *retrieve_type)
+{
+	modest_account_mgr_set_string (self, 
+				       account_name,
+				       MODEST_ACCOUNT_RETRIEVE, 
+				       retrieve_type, 
+				       FALSE /* not server account */);
+}
+
+
+void
+modest_account_mgr_set_server_account_user_fullname (ModestAccountMgr *self, 
+						     const gchar *account_name,
+						     const gchar *fullname)
+{
+	modest_account_mgr_set_string (self, 
+				       account_name,
+				       MODEST_ACCOUNT_FULLNAME, 
+				       fullname, 
+				       FALSE /* not server account */);
+}
+
+void
+modest_account_mgr_set_server_account_user_email (ModestAccountMgr *self, 
+						  const gchar *account_name,
+						  const gchar *email)
+{
+	modest_account_mgr_set_string (self, 
+				       account_name,
+				       MODEST_ACCOUNT_EMAIL, 
+				       email, 
+				       FALSE /* not server account */);
 }

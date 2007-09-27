@@ -55,10 +55,7 @@
 #include "maemo/modest-signature-editor-dialog.h"
 #include "maemo/modest-maemo-utils.h"
 #include "widgets/modest-ui-constants.h"
-
-#include <tny-camel-transport-account.h>
-#include <tny-camel-imap-store-account.h>
-#include <tny-camel-pop-store-account.h>
+#include <tny-account.h>
 #include <tny-status.h>
 
 #include <gconf/gconf-client.h>
@@ -140,9 +137,6 @@ modest_account_settings_dialog_finalize (GObject *object)
 	
 	G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->finalize (object);
 }
-
-static void
-show_error (GtkWidget *parent_widget, const gchar* text);
 
 static void
 on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data);
@@ -265,7 +259,7 @@ on_entry_invalid_account_title_character (ModestValidatingEntry *self, const gch
 	tmp = g_strndup (account_title_forbidden_chars, ACCOUNT_TITLE_FORBIDDEN_CHARS_LENGTH);
 	msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
 
-	show_error (GTK_WIDGET (self), msg);
+	hildon_banner_show_information(GTK_WIDGET (self), NULL, msg);
 
 	g_free (msg);
 	g_free (tmp);
@@ -279,7 +273,7 @@ on_entry_invalid_fullname_character (ModestValidatingEntry *self, const gchar* c
 	tmp = g_strndup (user_name_forbidden_chars, USER_NAME_FORBIDDEN_CHARS_LENGTH);
 	msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
 
-	show_error (GTK_WIDGET (self), msg);
+	hildon_banner_show_information(GTK_WIDGET (self), NULL, msg);
 
 	g_free (msg);
 	g_free (tmp);
@@ -289,8 +283,8 @@ on_entry_invalid_fullname_character (ModestValidatingEntry *self, const gchar* c
 static void
 on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 {
-	/* ModestAccountSettingsDialog *dialog = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data); */
-	show_error (GTK_WIDGET (self), _CS("ckdg_ib_maximum_characters_reached"));
+	hildon_banner_show_information(GTK_WIDGET (self), NULL, 
+				       _CS("ckdg_ib_maximum_characters_reached"));
 }
 
 static GtkWidget*
@@ -427,6 +421,7 @@ on_button_signature (GtkButton *button, gpointer user_data)
 		modest_signature_editor_dialog_set_settings (
 			MODEST_SIGNATURE_EDITOR_DIALOG (self->signature_dialog), 
 			use_signature, signature, account_title);
+
 		g_free (account_title);
 		account_title = NULL;
 		g_free (signature);
@@ -922,7 +917,6 @@ check_hildon_number_editor_and_warn_value_not_in_range (HildonNumberEditor *widg
 		port > PORT_MAX) {
 			
 		/* Warn the user via a dialog: */
-		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
 		gchar *message = g_strdup_printf (_CS("ckct_ib_set_a_value_within_range"), 
 				       min, 
 				       max);
@@ -973,7 +967,6 @@ check_data (ModestAccountSettingsDialog *self)
 			
 	if (!modest_text_utils_validate_email_address (email_address, NULL)) {
 		/* Warn the user via a dialog: */
-		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
                                          
 	        /* Return focus to the email address entry: */
@@ -990,7 +983,6 @@ check_data (ModestAccountSettingsDialog *self)
 	
 	if (!modest_text_utils_validate_domain_name (hostname)) {
 		/* Warn the user via a dialog: */
-		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
                                          
 		/* Return focus to the email address entry: */
@@ -1007,7 +999,6 @@ check_data (ModestAccountSettingsDialog *self)
 	
 	if (!modest_text_utils_validate_domain_name (hostname2)) {
 		/* Warn the user via a dialog: */
-		/*show_error (GTK_WINDOW (self), _("mcen_ib_invalid_email"));*/
 		hildon_banner_show_information (self->entry_outgoingserver, NULL, _("mcen_ib_invalid_servername"));
 
 		/* Return focus to the email address entry: */
@@ -1072,9 +1063,8 @@ check_data (ModestAccountSettingsDialog *self)
 			{
 		  		if(error == NULL || error->domain != modest_maemo_utils_get_supported_secure_authentication_error_quark() ||
 						error->code != MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
-				{
-					show_error (GTK_WIDGET (self), _("Could not discover supported secure authentication methods."));
-				}
+					hildon_banner_show_information(GTK_WIDGET (self), NULL, 
+								       _("Could not discover supported secure authentication methods."));
 
 				if(error != NULL)
 					g_error_free(error);
@@ -1133,15 +1123,38 @@ on_response (GtkDialog *wizard_dialog,
 			if (saved) {
 				/* Do not show the account-saved dialog if we are just saving this 
 				 * temporarily, because from the user's point of view it will not 
-				 * really be saved (saved + enabled) until later.
+				 * really be saved (saved + enabled) until later
 				 */
-				const gboolean enabled = 
-					modest_account_mgr_get_enabled (self->account_manager, self->account_name);
-				if (enabled)
-					show_error (NULL, _("mcen_ib_advsetup_settings_saved"));
+				if (modest_account_mgr_get_enabled (self->account_manager, 
+								    self->account_name)) {
+					gchar *incoming_account_name = NULL, *outgoing_account_name = NULL;
+
+					incoming_account_name = 
+						modest_account_mgr_get_server_account_name (self->account_manager, 
+											    self->account_name,
+											    TNY_ACCOUNT_TYPE_STORE);
+					outgoing_account_name = 
+						modest_account_mgr_get_server_account_name (self->account_manager, 
+											    self->account_name,
+											    TNY_ACCOUNT_TYPE_TRANSPORT);
+
+					if (incoming_account_name) {
+						modest_account_mgr_notify_account_update (self->account_manager, 
+											  incoming_account_name);
+						g_free (incoming_account_name);
+					}
+					if (outgoing_account_name) {
+						modest_account_mgr_notify_account_update (self->account_manager, 
+											  outgoing_account_name);
+						g_free (outgoing_account_name);
+					}
+					
+					hildon_banner_show_information(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
+				}
 			}
-			else
-				show_error (NULL, _("mail_ib_setting_failed"));
+			else {
+				hildon_banner_show_information (NULL, NULL, _("mail_ib_setting_failed"));
+			}
 		}
 	}
 }
@@ -1259,8 +1272,9 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		
 	if (incoming_account)
 		modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), incoming_account->proto);
-	gchar *retrieve = modest_account_mgr_get_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_RETRIEVE, FALSE /* not server account */);
+
+
+	gchar *retrieve = modest_account_mgr_get_retrieve_type (dialog->account_manager, account_name);
 	if (!retrieve) {
 		/* Default to something, though no default is specified in the UI spec: */
 		retrieve = g_strdup (MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY);
@@ -1268,13 +1282,11 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 	modest_retrieve_combo_box_set_active_retrieve_conf (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), retrieve);
 	g_free (retrieve);
 	
-	const gint limit_retrieve = modest_account_mgr_get_int (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_LIMIT_RETRIEVE, FALSE /* not server account */);
+	const gint limit_retrieve = modest_account_mgr_get_retrieve_limit (dialog->account_manager, account_name);
 	modest_limit_retrieve_combo_box_set_active_limit_retrieve (MODEST_LIMIT_RETRIEVE_COMBO_BOX (dialog->combo_limit_retrieve), limit_retrieve);
 	
 	
-	const gboolean leave_on_server = modest_account_mgr_get_bool (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_LEAVE_ON_SERVER, FALSE /* not server account */);
+	const gboolean leave_on_server = modest_account_mgr_get_leave_on_server (dialog->account_manager, account_name);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages), leave_on_server);	
 	
 	/* Only show the leave-on-server checkbox for POP, 
@@ -1303,7 +1315,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
     	 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
 	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
          */														 
-		const ModestConnectionProtocol security = modest_server_account_get_security (
+		const ModestConnectionProtocol security = modest_account_mgr_get_server_account_security (
 			dialog->account_manager, incoming_account->account_name);
 		modest_serversecurity_combo_box_set_active_serversecurity (
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), security);
@@ -1313,25 +1325,24 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 		 OR
 		 - use encrypted passwords
 		*/
-		const ModestAuthProtocol secure_auth = modest_server_account_get_secure_auth(
+		const ModestAuthProtocol secure_auth = modest_account_mgr_get_server_account_secure_auth(
 			dialog->account_manager, incoming_account->account_name);
 		dialog->protocol_authentication_incoming = secure_auth;
 		if (modest_protocol_info_auth_is_secure(secure_auth))
 		{
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
-																	 TRUE);
+						     TRUE);
 		}
 		else
 		{
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
-																	 FALSE);
+						     FALSE);
 		};
 					
 		update_incoming_server_title (dialog, incoming_account->proto);
 		
-		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, incoming_account->account_name,
-			MODEST_ACCOUNT_PORT, TRUE /* server account */);
-			
+		const gint port_num = modest_account_mgr_get_server_account_port (dialog->account_manager, 
+										  incoming_account->account_name);
 		if (port_num == 0) {
 			/* Show the appropriate port number: */
 			on_combo_incoming_security_changed (
@@ -1358,7 +1369,7 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			outgoing_account->password ? outgoing_account->password : "");
 		
 		/* Get the secure-auth setting: */
-		const ModestAuthProtocol secure_auth = modest_server_account_get_secure_auth(
+		const ModestAuthProtocol secure_auth = modest_account_mgr_get_server_account_secure_auth(
 			dialog->account_manager, outgoing_account->account_name);
 		modest_secureauth_combo_box_set_active_secureauth (
 			MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
@@ -1368,13 +1379,13 @@ void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialo
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), outgoing_account->proto);
 		
 		/* Get the security setting: */
-		const ModestConnectionProtocol security = modest_server_account_get_security (
+		const ModestConnectionProtocol security = modest_account_mgr_get_server_account_security (
 			dialog->account_manager, outgoing_account->account_name);
 		modest_serversecurity_combo_box_set_active_serversecurity (
 			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
 		
-		const gint port_num = modest_account_mgr_get_int (dialog->account_manager, outgoing_account->account_name,
-			MODEST_ACCOUNT_PORT, TRUE /* server account */);
+		const gint port_num = modest_account_mgr_get_server_account_port (dialog->account_manager, 
+										  outgoing_account->account_name);
 		if (port_num == 0) {
 			/* Show the appropriate port number: */
 			on_combo_outgoing_security_changed (
@@ -1446,69 +1457,60 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	const gchar* account_name = dialog->account_name;
 		
 	/* Set the account data from the widgets: */
-	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
-	gboolean test = modest_account_mgr_set_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_FULLNAME, user_name, FALSE /* not server account */);
-	if (!test)
-		return FALSE;
-		
+	const gchar* user_fullname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
+	modest_account_mgr_set_server_account_user_fullname (dialog->account_manager, 
+							     account_name,
+							     user_fullname);
+	
 	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_email));
-	test = modest_account_mgr_set_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_EMAIL, emailaddress, FALSE /* not server account */);
-	if (!test)
-		return FALSE;
+	modest_account_mgr_set_server_account_user_email (dialog->account_manager, account_name,
+							  emailaddress);
 		
 	/* Signature: */
 	if (dialog->signature_dialog) {
 		gboolean use_signature = FALSE;
-    	gchar *signature = modest_signature_editor_dialog_get_settings (
-    		MODEST_SIGNATURE_EDITOR_DIALOG (dialog->signature_dialog),
-    		&use_signature);
+		gchar *signature = 
+			modest_signature_editor_dialog_get_settings (MODEST_SIGNATURE_EDITOR_DIALOG (dialog->signature_dialog),
+								     &use_signature);
     	
-    	modest_account_mgr_set_signature(dialog->account_manager, account_name, 
-    		signature, use_signature);
-    	g_free (signature);
-    }
+		modest_account_mgr_set_signature(dialog->account_manager, account_name, 
+						 signature, use_signature);		
+		g_free (signature);
+	}
 	
 	gchar *retrieve = modest_retrieve_combo_box_get_active_retrieve_conf (
 		MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve));
-	modest_account_mgr_set_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_RETRIEVE, retrieve, FALSE /* not server account */);
+	modest_account_mgr_set_retrieve_type (dialog->account_manager, account_name, (const gchar*) retrieve);
 	g_free (retrieve);
 	
 	const gint limit_retrieve = modest_limit_retrieve_combo_box_get_active_limit_retrieve (
 		MODEST_LIMIT_RETRIEVE_COMBO_BOX (dialog->combo_limit_retrieve));
-	modest_account_mgr_set_int (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_LIMIT_RETRIEVE, limit_retrieve, FALSE /* not server account */);
+	modest_account_mgr_set_retrieve_limit (dialog->account_manager, account_name, limit_retrieve);
 	
 	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages));
-	test = modest_account_mgr_set_bool (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_LEAVE_ON_SERVER, leave_on_server, FALSE /* not server account */);
-	if (!test)
-		return FALSE;
+	modest_account_mgr_set_leave_on_server (dialog->account_manager, account_name, leave_on_server); 
 			
 	/* Incoming: */
-	gchar* incoming_account_name = modest_account_mgr_get_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_STORE_ACCOUNT, FALSE /* not server account */);
+	gchar* incoming_account_name = 
+		modest_account_mgr_get_server_account_name (dialog->account_manager, 
+							    account_name, 
+							    TNY_ACCOUNT_TYPE_STORE);
 	g_assert (incoming_account_name);
 	
 	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incomingserver));
-	test = modest_account_mgr_set_string (dialog->account_manager, incoming_account_name,
-		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
-	if (!test)
-		return FALSE;
+	modest_account_mgr_set_server_account_hostname (dialog->account_manager, incoming_account_name, hostname);
 				
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_username));
-	modest_server_account_set_username (dialog->account_manager, incoming_account_name, username);
+	modest_account_mgr_set_server_account_username (dialog->account_manager, incoming_account_name, username);
 	
 	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
-	modest_server_account_set_password (dialog->account_manager, incoming_account_name, password);
+	modest_account_mgr_set_server_account_password (dialog->account_manager, incoming_account_name,
+					    password);
 			
 	/* port: */
 	gint port_num = hildon_number_editor_get_value (
 			HILDON_NUMBER_EDITOR (dialog->entry_incoming_port));
-	modest_account_mgr_set_int (dialog->account_manager, incoming_account_name,
-			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
+	modest_account_mgr_set_server_account_port (dialog->account_manager, incoming_account_name, port_num);
 			
 	/* The UI spec says:
 	 * If secure authentication is unchecked, allow sending username and password also as plain text.
@@ -1517,46 +1519,45 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	
 	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
-	modest_server_account_set_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
+	modest_account_mgr_set_server_account_security (dialog->account_manager, incoming_account_name, protocol_security_incoming);
 	
-	modest_server_account_set_secure_auth (dialog->account_manager, incoming_account_name, dialog->protocol_authentication_incoming);
+	modest_account_mgr_set_server_account_secure_auth (dialog->account_manager, incoming_account_name, dialog->protocol_authentication_incoming);
 	
 		
 	g_free (incoming_account_name);
 	
 	/* Outgoing: */
-	gchar* outgoing_account_name = modest_account_mgr_get_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_TRANSPORT_ACCOUNT, FALSE /* not server account */);
+	gchar* outgoing_account_name = 
+		modest_account_mgr_get_server_account_name (dialog->account_manager, 
+							    account_name,
+							    TNY_ACCOUNT_TYPE_TRANSPORT);
 	g_assert (outgoing_account_name);
 	
 	hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoingserver));
-	test = modest_account_mgr_set_string (dialog->account_manager, outgoing_account_name,
-		MODEST_ACCOUNT_HOSTNAME, hostname, TRUE /* server account */);
-	if (!test)
-		return FALSE;
+	modest_account_mgr_set_server_account_hostname (dialog->account_manager, outgoing_account_name, hostname);
 		
 	username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_username));
-	modest_server_account_set_username (dialog->account_manager, outgoing_account_name,
+	modest_account_mgr_set_server_account_username (dialog->account_manager, outgoing_account_name,
 		username);
 		
 	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
-	modest_server_account_set_password (dialog->account_manager, outgoing_account_name,
-		password);
+	modest_account_mgr_set_server_account_password (dialog->account_manager, outgoing_account_name,
+					    password);
 	
 	const ModestConnectionProtocol protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
-	modest_server_account_set_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
+	modest_account_mgr_set_server_account_security (dialog->account_manager, outgoing_account_name, protocol_security_outgoing);
 	
 	const ModestAuthProtocol protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
 		MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
-	modest_server_account_set_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
+	modest_account_mgr_set_server_account_secure_auth (dialog->account_manager, outgoing_account_name, protocol_authentication_outgoing);	
 	
 	/* port: */
 	port_num = hildon_number_editor_get_value (
 			HILDON_NUMBER_EDITOR (dialog->entry_outgoing_port));
-	modest_account_mgr_set_int (dialog->account_manager, outgoing_account_name,
-			MODEST_ACCOUNT_PORT, port_num, TRUE /* server account */);
-			
+	modest_account_mgr_set_server_account_port (dialog->account_manager, 
+						    outgoing_account_name,
+						    port_num);			
 	g_free (outgoing_account_name);
 	
 	
@@ -1565,16 +1566,9 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (!account_title)
 		return FALSE; /* Should be prevented already anyway. */
 		
-	if (strcmp(account_title, account_name) != 0) {
-		/* Change the title: */
-		const gboolean test = modest_account_mgr_set_string (dialog->account_manager, account_name,
-		MODEST_ACCOUNT_DISPLAY_NAME, account_title, FALSE /* not server account */);
-		if (!test) {
-			g_free (account_title);
-			return FALSE;
-		}
-	}
-	
+/* 	if (strcmp (account_title, account_name) != 0) { */
+		modest_account_mgr_set_display_name (dialog->account_manager, account_name, account_title);
+/* 	} */
 	g_free (account_title);
 	account_title = NULL;
 	
@@ -1584,9 +1578,9 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (dialog->specific_window) {
 		return modest_connection_specific_smtp_window_save_server_accounts (
 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window));
-	}
-	else
+	} else {
 		return TRUE;
+	}
 }
 
 static gboolean entry_is_empty (GtkWidget *entry)
@@ -1653,24 +1647,4 @@ modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *kla
 	object_class->set_property = modest_account_settings_dialog_set_property;
 	object_class->dispose = modest_account_settings_dialog_dispose;
 	object_class->finalize = modest_account_settings_dialog_finalize;
-}
- 
-static void
-show_error (GtkWidget *parent_widget, const gchar* text)
-{
-	hildon_banner_show_information(parent_widget, NULL, text);
-	
-#if 0
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_widget, text);
-	/*
-	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
-	  (GtkDialogFlags)0,
-	  GTK_MESSAGE_ERROR,
-	  GTK_BUTTONS_OK,
-	  text ));
-	*/
-		 
-	gtk_dialog_run (dialog);
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-#endif
 }

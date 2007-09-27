@@ -154,52 +154,6 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	return special_folder;
 }
 
-static void
-on_connection_status_changed (TnyAccount *account, TnyConnectionStatus status, gpointer user_data)
-{
-	printf ("DEBUG: %s: status=%d\n", __FUNCTION__, status);
-	
-	if (status == TNY_CONNECTION_STATUS_DISCONNECTED) {
-		/* A tinymail network operation failed, and tinymail then noticed that 
-		 * the account is offline, because our TnyDevice is offline,
-		 * because libconic says we are offline.
-		 * So ask the user to go online again.
-		 * 
-		 * Note that this signal will not be emitted if the account was offline 
-		 * when the network operation was first attempted. For those cases, 
-		 * the application must do its own explicit checks.
-		 *
-		 * We make sure that this UI is shown in the main thread, to avoid races,
-		 * because tinymail does not guarantee that this signal handler will be called 
-		 * in the main thread.
-		 */
-		/* TODO: Commented out, because this causes hangs, probably related to 
-		 * our use of mainloops:
-		 * modest_platform_connect_and_wait (NULL);
-		 */
-	} else if (status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN) {
-		printf ("DEBUG: %s: Connection broken. Forcing TnyDevice offline.\n", 
-			__FUNCTION__);
-			
-		/* Something went wrong during some network operation.
-		 * Stop trying to use the network now,
-		 * by forcing accounts into offline mode:
-		 * 
-		 * When libconic reconnects, it will set the device back online again,
-		 * regardless of it being forced offline before.
-		 */
-		/* TODO: Find out when this is falsely being emitted. */
-		printf ("  DEBUG: %s: Not forcing offline because tinymail is sometimes reporting false connection breaks.\n", 
-			__FUNCTION__);
-		/*
-		TnyDevice *device = modest_runtime_get_device ();
-		tny_device_force_offline (device);
-		*/
-	}
-}
-
-
-
 /**
  * create_tny_account:
  * @account_mgr: a valid account mgr instance
@@ -256,11 +210,6 @@ create_tny_account (ModestAccountMgr *account_mgr,
 	/* This must be set quite early, or other set() functions will fail. */
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
     
-	/* Handle connection requests:
-	 * This (badly-named) signal will be called when we try to use an offline account. */
-	g_signal_connect (G_OBJECT (tny_account), "connection-status-changed",
-			G_CALLBACK (on_connection_status_changed), NULL);
-
 	/* Proto */
 	const gchar* proto_name =
 		modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
@@ -565,19 +514,20 @@ set_online_callback (TnyCamelAccount *account, gboolean canceled, GError *err, g
 }
 
 gboolean
-modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
-					const gchar *account_name, TnyAccountType type) 
+modest_tny_account_update_from_account (TnyAccount *tny_account) 
 {
 	ModestAccountData *account_data = NULL;
 	ModestServerAccountData *server_data = NULL;
-	TnyConnectionStatus  conn_status;
-	
-	g_return_val_if_fail (tny_account, FALSE);
-	g_return_val_if_fail (account_mgr, FALSE);
-	g_return_val_if_fail (account_name, FALSE);
-	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || type == TNY_ACCOUNT_TYPE_TRANSPORT,
-			      FALSE);
+	TnyConnectionStatus conn_status;
+	ModestAccountMgr *account_mgr;
+	const gchar *account_name;
+	TnyAccountType type;
 
+	g_return_val_if_fail (tny_account, FALSE);
+
+	account_mgr = modest_runtime_get_account_mgr ();
+	account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (tny_account);
+	type = tny_account_get_account_type (tny_account);
 	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
 	if (!account_data) {
 		g_printerr ("modest: %s: cannot get account data for account %s\n",

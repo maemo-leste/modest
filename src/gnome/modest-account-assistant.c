@@ -675,14 +675,11 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 					account_name,
 					store_name,
 					transport_name, TRUE);
-	modest_account_mgr_set_string (priv->account_mgr,
-				       account_name,
-				       MODEST_ACCOUNT_FULLNAME,
-				       get_fullname(self), FALSE);
-	modest_account_mgr_set_string (priv->account_mgr,
-				       account_name,
-				       MODEST_ACCOUNT_EMAIL,
-				       get_email(self), FALSE);
+
+	modest_account_mgr_set_server_account_user_fullname (priv->account_mgr, account_name,
+							     get_fullname (self));
+	modest_account_mgr_set_server_account_user_email (priv->account_mgr, account_name, 
+							  get_email (self));
 
 	/* Frees */	
 	g_free (store_name);

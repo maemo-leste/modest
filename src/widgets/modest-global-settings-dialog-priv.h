@@ -64,7 +64,6 @@ struct _ModestGlobalSettingsDialogPrivate {
 	ModestPairList *msg_format_list;
 	GtkWidget *msg_format;
 
-	gboolean   changed;
 	ModestGlobalSettingsState initial_state;
 };
 

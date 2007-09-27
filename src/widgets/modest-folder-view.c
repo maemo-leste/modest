@@ -148,6 +148,10 @@ static void         on_row_inserted_maybe_select_folder (GtkTreeModel     *tree_
 							 GtkTreeIter      *iter,
 							 ModestFolderView *self);
 
+static void         on_display_name_changed (ModestAccountMgr *self, 
+					     const gchar *account,
+					     gpointer user_data);
+
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
@@ -166,6 +170,7 @@ struct _ModestFolderViewPrivate {
 	gulong                account_removed_signal;
 	gulong		      account_changed_signal;
 	gulong                conf_key_signal;
+	gulong                display_name_changed_signal;
 	
 	/* not unref this object, its a singlenton */
 	ModestEmailClipboard *clipboard;
@@ -353,8 +358,11 @@ on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
 }
 
 static void
-text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-		 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer data)
+text_cell_data  (GtkTreeViewColumn *column,  
+		 GtkCellRenderer *renderer,
+		 GtkTreeModel *tree_model,  
+		 GtkTreeIter *iter,  
+		 gpointer data)
 {
 	ModestFolderViewPrivate *priv;
 	GObject *rendobj;
@@ -395,7 +403,7 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			type = modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (instance));
 			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
 				g_free (fname);
-				fname = g_strdup(modest_local_folder_info_get_type_display_name (type));
+				fname = g_strdup (modest_local_folder_info_get_type_display_name (type));
 			}
 		}
 
@@ -421,12 +429,10 @@ text_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 		
 	} else if (TNY_IS_ACCOUNT (instance)) {
 		/* If it's a server account */
-		if (modest_tny_account_is_virtual_local_folders (
-				TNY_ACCOUNT (instance))) {
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (instance))) {
 			item_name = g_strdup (priv->local_account_name);
 			item_weight = 800;
-		} else if (modest_tny_account_is_memory_card_account (
-				TNY_ACCOUNT (instance))) {
+		} else if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance))) {
 			/* fname is only correct when the items are first 
 			 * added to the model, not when the account is 
 			 * changed later, so get the name from the account
@@ -666,6 +672,12 @@ modest_folder_view_init (ModestFolderView *obj)
 	g_signal_connect (G_OBJECT (obj), 
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), NULL);
+
+	priv->display_name_changed_signal = 
+		g_signal_connect (modest_runtime_get_account_mgr (),
+				  "display_name_changed",
+				  G_CALLBACK (on_display_name_changed),
+				  obj);
 
 	/*
 	 * Track changes in the local account name (in the device it
@@ -2500,3 +2512,23 @@ _clear_hidding_filter (ModestFolderView *folder_view)
 }
 
 
+static void 
+on_display_name_changed (ModestAccountMgr *mgr, 
+			 const gchar *account,
+			 gpointer user_data)
+{
+	ModestFolderView *self;
+
+	self = MODEST_FOLDER_VIEW (user_data);
+
+	/* Force a redraw */
+#if GTK_CHECK_VERSION(2, 8, 0)
+	GtkTreeViewColumn * tree_column;
+	
+	tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 
+						TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN);
+	gtk_tree_view_column_queue_resize (tree_column);
+#else
+	gtk_widget_queue_draw (GTK_WIDGET (self));
+#endif
+}

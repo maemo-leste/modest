@@ -70,17 +70,13 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
 /**
  * modest_tny_account_update_from_account:
  * @tny_account: a valid tny_account
- * @account_mgr: a valid account mgr instance
- * @account_name: the modest account name for which to create a corresponding tny account of the given type.
- * @type: the type of account to create (TNY_ACCOUNT_TYPE_STORE or TNY_ACCOUNT_TYPE_TRANSPORT)
  * 
  * update a tnyaccount corresponding to the server_accounts (store or transport) for this account.
  * 
  * Returns: a TRUE or FALSE in case of error.
  */
 gboolean
-modest_tny_account_update_from_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
-					const gchar *account_name, TnyAccountType type);
+modest_tny_account_update_from_account (TnyAccount *tny_account);
 
 
 /**

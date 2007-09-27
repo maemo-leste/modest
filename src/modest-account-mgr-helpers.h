@@ -15,7 +15,7 @@
  *   this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMIT
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
  * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
@@ -82,40 +82,6 @@ ModestAccountData *modest_account_mgr_get_account_data     (ModestAccountMgr *se
 							    const gchar* name);
 
 /**
- * modest_account_mgr_get_default_account:
- * @self: a ModestAccountMgr instance
- * 
- * get the default account name, or NULL if none is found
- *
- * Returns: the default account name (as newly allocated string, which
- * must be g_free'd), or NULL
- */
-gchar* modest_account_mgr_get_default_account  (ModestAccountMgr *self);
-
-/**
- * modest_account_mgr_set_default_account:
- * @self: a ModestAccountMgr instance
- * @account: the name of an existing account
- * 
- * set the default account name (which must be valid account)
- *
- * Returns: TRUE if succeeded, FALSE otherwise
- */
-gboolean modest_account_mgr_set_default_account  (ModestAccountMgr *self,
-						  const gchar* account);
-
-/**
- * modest_account_mgr_unset_default_account:
- * @self: a ModestAccountMgr instance
- * @account: the name of an account
- * 
- * Unset the default account name, so that no account is the default.
- *
- * Returns: TRUE if succeeded, FALSE otherwise
- */
-gboolean modest_account_mgr_unset_default_account  (ModestAccountMgr *self);
-
-/**
  * modest_account_mgr_set_first_account_as_default:
  * @self: a ModestAccountMgr instance
  * 
@@ -165,17 +131,6 @@ gboolean modest_account_mgr_set_enabled (ModestAccountMgr *self, const gchar* na
  * Returns: TRUE if it is enabled, FALSE otherwise
  */
 gboolean modest_account_mgr_get_enabled (ModestAccountMgr *self, const gchar* name);
-
-/**
- * modest_account_mgr_get_display_name:
- * @self: a ModestAccountMgr instance
- * @name: the account name to check
- *
- * Return the human-readable account title for this account, or NULL.
- */
-gchar* modest_account_mgr_get_display_name (ModestAccountMgr *self, 
-	const gchar* name);
-
 
 /**
  * modest_account_mgr_set_signature
@@ -255,8 +210,9 @@ gboolean modest_account_mgr_get_use_connection_specific_smtp (ModestAccountMgr *
  * @new_value: New value that indicates if if this account should use connection-specific smtp server accounts.
  * @result: TRUE if it succeeded, FALSE otherwise
  */
-gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, const gchar* account_name,
-	gboolean new_value);
+gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *self, 
+							      const gchar* account_name,
+							      gboolean new_value);
 
 /**
  * modest_account_mgr_get_connection_specific_smtp
@@ -268,11 +224,11 @@ gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *
  * Returns: a server account name to use for this connection, or NULL if none is specified.
  */			 
 gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
-					 const gchar* connection_name);
+							const gchar* connection_name);
 
 
 /**
- * modest_server_account_get_username:
+ * modest_account_mgr_get_server_account_username:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
@@ -280,23 +236,23 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self,
  *
  * Returns: The username.
  */
-gchar*
-modest_server_account_get_username (ModestAccountMgr *self, const gchar* account_name);
+gchar* modest_account_mgr_get_server_account_username (ModestAccountMgr *self, 
+						       const gchar* account_name);
 
 /**
- * modest_server_account_set_username:
+ * modest_account_mgr_set_server_account_username:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  * @username: The new username.
  *
  * Sets the username this server account.
  */
-void
-modest_server_account_set_username (ModestAccountMgr *self, const gchar* account_name, 
-	const gchar* username);
+void modest_account_mgr_set_server_account_username (ModestAccountMgr *self, 
+						     const gchar* account_name, 
+						     const gchar* username);
 
 /**
- * modest_server_account_get_username_has_succeeded:
+ * modest_account_mgr_get_server_account_username_has_succeeded:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
@@ -306,55 +262,55 @@ modest_server_account_set_username (ModestAccountMgr *self, const gchar* account
  *
  * Returns: TRUE if the username is known to be correct.
  */
-gboolean
-modest_server_account_get_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name);
+gboolean modest_account_mgr_get_server_account_username_has_succeeded (ModestAccountMgr *self, 
+								       const gchar* account_name);
 
 /**
- * modest_server_account_set_username_has_succeeded:
+ * modest_account_mgr_set_server_account_username_has_succeeded:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  * @succeeded: Whether the username has succeeded
  *
  * Sets whether the username is known to be correct.
  */
-void
-modest_server_account_set_username_has_succeeded (ModestAccountMgr *self, const gchar* account_name, 
-	gboolean succeeded);
+void modest_account_mgr_set_server_account_username_has_succeeded (ModestAccountMgr *self, 
+								   const gchar* account_name, 
+								   gboolean succeeded);
 	
 /**
- * modest_server_account_set_password:
+ * modest_account_mgr_set_server_account_password:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  * @password: The new password.
  *
  * Sets the password for this server account.
  */
-void
-modest_server_account_set_password (ModestAccountMgr *self, const gchar* account_name, 
-	const gchar* password);
+void modest_account_mgr_set_server_account_password (ModestAccountMgr *self, 
+						     const gchar* account_name, 
+						     const gchar* password);
 	
 /**
- * modest_server_account_get_password:
+ * modest_account_mgr_get_server_account_password:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
  * Gets the password for this server account from the account settings.
  */
-gchar*
-modest_server_account_get_password (ModestAccountMgr *self, const gchar* account_name);
+gchar* modest_account_mgr_get_server_account_password (ModestAccountMgr *self, 
+						       const gchar* account_name);
 
 /**
- * modest_server_account_get_has_password:
+ * modest_account_mgr_get_server_account_has_password:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
  * Gets whether a password has been set for this server account in the account settings.
  */
-gboolean
-modest_server_account_get_has_password (ModestAccountMgr *self, const gchar* account_name);	 
+gboolean modest_account_mgr_get_server_account_has_password (ModestAccountMgr *self, 
+							     const gchar* account_name);	 
 
 /**
- * modest_server_account_modest_server_account_get_hostnameget_username:
+ * modest_server_account_modest_account_mgr_get_server_account_hostname:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
@@ -362,12 +318,23 @@ modest_server_account_get_has_password (ModestAccountMgr *self, const gchar* acc
  *
  * Returns: The hostname.
  */
-gchar*
-modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account_name);
-
+gchar* modest_account_mgr_get_server_account_hostname (ModestAccountMgr *self, 
+						       const gchar* account_name);
 
 /**
- * modest_server_account_get_secure_auth:
+ * modest_server_account_modest_account_mgr_set_server_account_hostname:
+ * @self: a ModestAccountMgr instance
+ * @account_name: The name of a server account.
+ * @hostname: The new hostname
+ *
+ * Sets the hostname this server account.
+ */
+void  modest_account_mgr_set_server_account_hostname (ModestAccountMgr *self, 
+						      const gchar* account_name,
+						      const gchar *hostname);
+
+/**
+ * modest_account_mgr_get_server_account_secure_auth:
  * @self: a ModestAccountMgr instance
  * @account_name: The name of a server account.
  *
@@ -375,8 +342,8 @@ modest_server_account_get_hostname (ModestAccountMgr *self, const gchar* account
  *
  * Returns: The secure authentication enum value.
  */
-ModestAuthProtocol
-modest_server_account_get_secure_auth (ModestAccountMgr *self, const gchar* account_name);
+ModestAuthProtocol modest_account_mgr_get_server_account_secure_auth (ModestAccountMgr *self, 
+								      const gchar* account_name);
 
 /**
  * modest_server_account_data_get_secure_auth:
@@ -386,9 +353,9 @@ modest_server_account_get_secure_auth (ModestAccountMgr *self, const gchar* acco
  *
  * Gets the secure authentication method for this server account.
  */
-void
-modest_server_account_set_secure_auth (ModestAccountMgr *self, const gchar* account_name, 
-				       ModestAuthProtocol secure_auth);
+void modest_account_mgr_set_server_account_secure_auth (ModestAccountMgr *self, 
+							const gchar* account_name, 
+							ModestAuthProtocol secure_auth);
 	
 /**
  * modest_server_account_data_get_security:
@@ -399,26 +366,25 @@ modest_server_account_set_secure_auth (ModestAccountMgr *self, const gchar* acco
  *
  * Returns: The security enum value.
  */
-ModestConnectionProtocol
-modest_server_account_get_security (ModestAccountMgr *self, const gchar* account_name);
+ModestConnectionProtocol modest_account_mgr_get_server_account_security (ModestAccountMgr *self, 
+									 const gchar* account_name);
 
 /**
- * modest_server_account_set_security:
+ * modest_account_mgr_set_server_account_security:
  * @self: a ModestAccountMgr instance
  * @secure_auth: The security enum value.
  *
  * Gets the security method for this server account.
  */
-void
-modest_server_account_set_security (ModestAccountMgr *self, const gchar* account_name, 
-				    ModestConnectionProtocol security);
+void modest_account_mgr_set_server_account_security (ModestAccountMgr *self, 
+						     const gchar* account_name, 
+						     ModestConnectionProtocol security);
 
-ModestServerAccountData*
-modest_account_mgr_get_server_account_data (ModestAccountMgr *self, const gchar* name);
+ModestServerAccountData* modest_account_mgr_get_server_account_data (ModestAccountMgr *self, 
+								     const gchar* name);
 
-void
-modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
-					     ModestServerAccountData* data);
+void modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
+						  ModestServerAccountData* data);
 
 /**
  * modest_account_mgr_get_from_string
@@ -441,9 +407,9 @@ gchar * modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar*
  *
  * Returns: the newly allocated name.
  */
-gchar*
-modest_account_mgr_get_unused_account_name (ModestAccountMgr *self, const gchar* starting_name,
-	gboolean server_account);
+gchar* modest_account_mgr_get_unused_account_name (ModestAccountMgr *self, 
+						   const gchar* starting_name,
+						   gboolean server_account);
 
 /**
  * modest_account_mgr_get_unused_account_display name
@@ -454,8 +420,62 @@ modest_account_mgr_get_unused_account_name (ModestAccountMgr *self, const gchar*
  *
  * Returns: the newly allocated name.
  */
-gchar*
-modest_account_mgr_get_unused_account_display_name (ModestAccountMgr *self, const gchar* starting_name);
+gchar* modest_account_mgr_get_unused_account_display_name (ModestAccountMgr *self, 
+							   const gchar* starting_name);
+
+/**
+ * modest_account_mgr_set_server_account_security:
+ * @self: a ModestAccountMgr instance
+ * @secure_auth: The security enum value.
+ *
+ * Gets the security method for this server account.
+ */
+void modest_account_mgr_set_leave_on_server (ModestAccountMgr *self, 
+					     const gchar* account_name, 
+					     gboolean leave_on_server);
+
+gboolean modest_account_mgr_get_leave_on_server (ModestAccountMgr *self, 
+						 const gchar* account_name);
+
+gint  modest_account_mgr_get_last_updated (ModestAccountMgr *self, 
+					   const gchar* account_name);
+
+void  modest_account_mgr_set_last_updated (ModestAccountMgr *self, 
+					   const gchar* account_name,
+					   gint time);
+
+gint  modest_account_mgr_get_retrieve_limit (ModestAccountMgr *self, 
+					     const gchar* account_name);
+
+void  modest_account_mgr_set_retrieve_limit (ModestAccountMgr *self, 
+					     const gchar* account_name,
+					     gint limit_retrieve);
+
+gint  modest_account_mgr_get_server_account_port (ModestAccountMgr *self, 
+						  const gchar* account_name);
+
+void  modest_account_mgr_set_server_account_port (ModestAccountMgr *self, 
+						  const gchar *account_name,
+						  gint port_num);
+
+gchar* modest_account_mgr_get_server_account_name (ModestAccountMgr *self, 
+						   const gchar *account_name,
+						   TnyAccountType account_type);
+
+gchar* modest_account_mgr_get_retrieve_type (ModestAccountMgr *self, 
+					     const gchar *account_name);
+
+void  modest_account_mgr_set_retrieve_type (ModestAccountMgr *self, 
+					    const gchar *account_name,
+					    const gchar *retrieve_type);
+
+void  modest_account_mgr_set_server_account_user_fullname (ModestAccountMgr *self, 
+							   const gchar *account_name,
+							   const gchar *fullname);
+
+void  modest_account_mgr_set_server_account_user_email (ModestAccountMgr *self, 
+							const gchar *account_name,
+							const gchar *email);
 
 G_END_DECLS
 

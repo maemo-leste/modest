@@ -1201,6 +1201,7 @@ reply_forward_cb (ModestMailOperation *mail_op,  TnyHeader *header, TnyMsg *msg,
 	TnyAccount *account = NULL;
 	ModestWindowMgr *mgr = NULL;
 	gchar *signature = NULL;
+	gboolean use_signature;
 
 	/* If there was any error. The mail operation could be NULL,
 	   this means that we already have the message downloaded and
@@ -1213,13 +1214,9 @@ reply_forward_cb (ModestMailOperation *mail_op,  TnyHeader *header, TnyMsg *msg,
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name);
-	if (modest_account_mgr_get_bool (modest_runtime_get_account_mgr(),
-					 rf_helper->account_name,
-					 MODEST_ACCOUNT_USE_SIGNATURE, FALSE)) {
-		signature = modest_account_mgr_get_string (modest_runtime_get_account_mgr (),
-							   rf_helper->account_name,
-							   MODEST_ACCOUNT_SIGNATURE, FALSE);
-	}
+	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr(), 
+						      rf_helper->account_name, 
+						      &use_signature);
 
 	/* Create reply mail */
 	switch (rf_helper->action) {
@@ -2808,7 +2805,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 
 	gtk_window_set_transient_for (GTK_WINDOW(dialog), GTK_WINDOW(main_window));
 	
-	gchar *server_name = modest_server_account_get_hostname (
+	gchar *server_name = modest_account_mgr_get_server_account_hostname (
 		modest_runtime_get_account_mgr(), server_account_name);
 	if (!server_name) {/* This happened once, though I don't know why. murrayc. */
 		g_warning("%s: Could not get server name for server account '%s'", __FUNCTION__, server_account_name);
@@ -2826,7 +2823,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	server_name = NULL;
 
 	/* username: */
-	gchar *initial_username = modest_server_account_get_username (
+	gchar *initial_username = modest_account_mgr_get_server_account_username (
 		modest_runtime_get_account_mgr(), server_account_name);
 	
 	GtkWidget *entry_username = gtk_entry_new ();
@@ -2835,7 +2832,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	/* Dim this if a connection has ever succeeded with this username,
 	 * as per the UI spec: */
 	const gboolean username_known = 
-		modest_server_account_get_username_has_succeeded(
+		modest_account_mgr_get_server_account_username_has_succeeded(
 			modest_runtime_get_account_mgr(), server_account_name);
 	gtk_widget_set_sensitive (entry_username, !username_known);
 	
@@ -2896,7 +2893,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		if (username) {
 			*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
 			
-			modest_server_account_set_username (
+			modest_account_mgr_set_server_account_username (
 				 modest_runtime_get_account_mgr(), server_account_name, 
 				 *username);
 				 

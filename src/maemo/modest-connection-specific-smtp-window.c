@@ -522,23 +522,22 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 				
 			} else {
 				/* Change an existing server account: */
-				success = modest_account_mgr_set_string (priv->account_manager, server_account_name,
-					MODEST_ACCOUNT_HOSTNAME, data->hostname, TRUE /* server account */);
+				modest_account_mgr_set_server_account_hostname (priv->account_manager, server_account_name, 
+										data->hostname);
 						
-				modest_server_account_set_username (priv->account_manager, server_account_name,
+				modest_account_mgr_set_server_account_username (priv->account_manager, server_account_name,
 					data->username);
 							
-				modest_server_account_set_password (priv->account_manager, server_account_name,
+				modest_account_mgr_set_server_account_password (priv->account_manager, server_account_name,
 					data->password);
 						
-				modest_server_account_set_secure_auth (priv->account_manager, server_account_name, 
+				modest_account_mgr_set_server_account_secure_auth (priv->account_manager, server_account_name, 
 					data->secure_auth);
 						
-				modest_server_account_set_security (priv->account_manager, server_account_name, 
+				modest_account_mgr_set_server_account_security (priv->account_manager, server_account_name, 
 					data->security);
-				
-				modest_account_mgr_set_int (priv->account_manager, server_account_name,
-						MODEST_ACCOUNT_PORT, data->port, TRUE /* server account */);
+
+				modest_account_mgr_set_server_account_port (priv->account_manager, server_account_name, data->port);
 			}
 		}
 		
@@ -573,8 +572,8 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 				 
 		if (server_account_name) {
 			/* Get the server hostname and show it in the treemodel: */	
-			gchar *hostname = modest_account_mgr_get_string (priv->account_manager, 
-				server_account_name, MODEST_ACCOUNT_HOSTNAME, TRUE /* server account */);
+			gchar *hostname = modest_account_mgr_get_server_account_hostname (priv->account_manager, 
+											  server_account_name);
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
 					    MODEL_COL_SERVER_NAME, hostname,
 					    -1);

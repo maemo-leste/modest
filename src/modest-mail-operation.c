@@ -45,6 +45,7 @@
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
 #include "modest-platform.h"
+#include "modest-account-mgr-helpers.h"
 #include <modest-tny-account.h>
 #include <modest-tny-send-queue.h>
 #include <modest-runtime.h>
@@ -1153,7 +1154,7 @@ set_last_updated_idle (gpointer data)
 {
 
 	/* This is a GDK lock because we are an idle callback and
- 	 * modest_account_mgr_set_int can contain Gtk+ code */
+ 	 * modest_account_mgr_set_last_updated can issue Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED - please recheck */
 
@@ -1161,11 +1162,9 @@ set_last_updated_idle (gpointer data)
 	   the time when this idle was called, it's just an
 	   approximation and it won't be very different */
 
-	modest_account_mgr_set_int (modest_runtime_get_account_mgr (), 
-				    (gchar *) data, 
-				    MODEST_ACCOUNT_LAST_UPDATED, 
-				    time(NULL), 
-				    TRUE);
+	modest_account_mgr_set_last_updated (modest_runtime_get_account_mgr (), 
+					     (gchar *) data, 
+					     time (NULL));
 
 	gdk_threads_leave (); /* CHECKED - please recheck */
 
@@ -1513,12 +1512,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Get per-account retrieval type */
 	mgr = modest_runtime_get_account_mgr ();
-	info->retrieve_type = modest_account_mgr_get_string (mgr, account_name, 
-							     MODEST_ACCOUNT_RETRIEVE, FALSE);
+	info->retrieve_type = modest_account_mgr_get_retrieve_type (mgr, account_name);
 
 	/* Get per-account message amount retrieval limit */
-	info->retrieve_limit = modest_account_mgr_get_int (mgr, account_name, 
-							   MODEST_ACCOUNT_LIMIT_RETRIEVE, FALSE);
+	info->retrieve_limit = modest_account_mgr_get_retrieve_limit (mgr, account_name);
 	if (info->retrieve_limit == 0)
 		info->retrieve_limit = G_MAXINT;
 		

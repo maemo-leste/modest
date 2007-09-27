@@ -439,24 +439,22 @@ modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self,
 	}
 }
 
-
-static gboolean
-update_tny_account_for_account (ModestTnyAccountStore *self, ModestAccountMgr *acc_mgr,
-				const gchar *account_name, TnyAccountType type)
+static void
+on_account_changed (ModestAccountMgr *acc_mgr, 
+		    const gchar *account_name, 
+		    TnyAccountType account_type,
+		    gpointer user_data)
 {
+	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	ModestTnyAccountStorePrivate *priv;
 	TnyList* account_list;
 	gboolean found = FALSE;
 	TnyIterator *iter = NULL;
 
-	g_return_val_if_fail (self, FALSE);
-	g_return_val_if_fail (account_name, FALSE);
-	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || 
-			      type == TNY_ACCOUNT_TYPE_TRANSPORT,
-			      FALSE);
-
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	account_list = (type == TNY_ACCOUNT_TYPE_STORE ? priv->store_accounts : priv->transport_accounts);
+	account_list = (account_type == TNY_ACCOUNT_TYPE_STORE ? 
+			priv->store_accounts : 
+			priv->transport_accounts);
 	
 	iter = tny_list_create_iterator (account_list);
 	while (!tny_iterator_is_done (iter) && !found) {
@@ -467,11 +465,9 @@ update_tny_account_for_account (ModestTnyAccountStore *self, ModestAccountMgr *a
 
 			if (conn_status != TNY_CONNECTION_STATUS_RECONNECTING &&
 			    conn_status != TNY_CONNECTION_STATUS_INIT) {
-				const gchar* parent_name;
-				parent_name = modest_tny_account_get_parent_modest_account_name_for_server_account (tny_account);
-				if (parent_name && strcmp (parent_name, account_name) == 0) {
+				if (!strcmp (tny_account_get_id (tny_account), account_name)) {
 					found = TRUE;
-					modest_tny_account_update_from_account (tny_account, acc_mgr, account_name, type);
+					modest_tny_account_update_from_account (tny_account);
 					g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
 				}
 			}
@@ -482,28 +478,6 @@ update_tny_account_for_account (ModestTnyAccountStore *self, ModestAccountMgr *a
 
 	if (iter)
 		g_object_unref (iter);
-	
-	return found;
-}
-
-
-static void
-on_account_changed (ModestAccountMgr *acc_mgr, 
-		    const gchar *account_name, 
-		    gpointer user_data)
-{
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
-
-/* 	g_debug ("DEBUG: modest: %s\n", __FUNCTION__); */
-
-/* 	/\* Ignore the change if it's a change in the last_updated value *\/ */
-/* 	if (key && g_str_has_suffix ((const gchar *) key, MODEST_ACCOUNT_LAST_UPDATED)) */
-/* 		return; */
-	
-	if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_STORE))
-		g_warning ("%s: failed to update store account for %s", __FUNCTION__, account_name);
-	if (!update_tny_account_for_account (self, acc_mgr, account_name, TNY_ACCOUNT_TYPE_TRANSPORT))
-		g_warning ("%s: failed to update transport account for %s", __FUNCTION__, account_name);
 }
 
 static void 
@@ -664,8 +638,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
-		pwd  = modest_server_account_get_password (priv->account_mgr,
-						      server_account_name);
+		pwd  = modest_account_mgr_get_server_account_password (priv->account_mgr,
+								       server_account_name);
 		g_hash_table_insert (priv->password_hash, g_strdup (server_account_name), g_strdup (pwd));
 	}
 
@@ -676,7 +650,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		 * then show a banner and the account settings dialog so it can be corrected:
 		 */
 		const gboolean settings_have_password = 
-			modest_server_account_get_has_password (priv->account_mgr, server_account_name);
+			modest_account_mgr_get_server_account_has_password (priv->account_mgr, server_account_name);
 		printf ("DEBUG: modest: %s: settings_have_password=%d\n", __FUNCTION__, settings_have_password);
 		if (settings_have_password) {
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
@@ -706,18 +680,9 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 			 * but we need to tell tinymail about the username too: */
 			tny_account_set_user (account, username);
 			
-			/* Do not save the password in gconf, 
-			 * because the UI spec says "The password will never be saved in the account": */
-			/*
-			if (remember) {
-				printf ("%s: Storing username=%s, password=%s\n", 
-					__FUNCTION__, username, pwd);
-				modest_server_account_set_username (priv->account_mgr, server_account_name,
-							       username);
-				modest_server_account_set_password (priv->account_mgr, server_account_name,
-							       pwd);
-			}
-			*/
+			/* Do not save the password in gconf, because
+			 * the UI spec says "The password will never
+			 * be saved in the account": */
 
 			/* We need to dup the string even knowing that
 			   it's already a dup of the contents of an
