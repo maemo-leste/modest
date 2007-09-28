@@ -195,7 +195,7 @@ check_and_offer_account_creation()
 	
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
 		printf ("DEBUG1: %s\n", __FUNCTION__);
-		const gboolean created = modest_run_account_setup_wizard (NULL);
+		const gboolean created = modest_ui_actions_run_account_setup_wizard (NULL);
 		printf ("DEBUG1: %s\n", __FUNCTION__);
 		if (!created) {
 			g_debug ("modest: %s: no account exists even after offering, "

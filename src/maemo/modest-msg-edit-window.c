@@ -56,6 +56,7 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg.h"
 #include "modest-tny-folder.h"
+#include "modest-tny-account.h"
 #include "modest-address-book.h"
 #include "modest-text-utils.h"
 #include <tny-simple-list.h>
@@ -151,6 +152,11 @@ static gboolean gtk_text_iter_forward_search_insensitive (const GtkTextIter *ite
 							  GtkTextIter *match_end);
 
 static void remove_tags (WPTextBuffer *buffer);
+
+static void on_account_removed (TnyAccountStore *account_store, 
+				TnyAccount *account,
+				gpointer user_data);
+
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -253,6 +259,7 @@ struct _ModestMsgEditWindowPrivate {
 	gboolean    can_undo, can_redo;
 	gulong      clipboard_change_handler_id;
 	gulong      default_clipboard_change_handler_id;
+	gulong      account_removed_handler_id;
 	gchar       *clipboard_text;
 
 	TnyMsg      *draft_msg;
@@ -369,6 +376,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->can_redo = FALSE;
 	priv->clipboard_change_handler_id = 0;
 	priv->default_clipboard_change_handler_id = 0;
+	priv->account_removed_handler_id = 0;
 	priv->clipboard_text = NULL;
 	priv->sent = FALSE;
 
@@ -628,6 +636,12 @@ modest_msg_edit_window_disconnect_signals (ModestWindow *window)
 					   priv->default_clipboard_change_handler_id))
 		g_signal_handler_disconnect (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD), 
 					     priv->default_clipboard_change_handler_id);
+
+	if (priv->account_removed_handler_id && 
+	    g_signal_handler_is_connected (modest_runtime_get_account_store (), 
+					   priv->account_removed_handler_id))
+		g_signal_handler_disconnect(modest_runtime_get_account_store (), 
+					   priv->account_removed_handler_id);
 }
 
 static void
@@ -1327,6 +1341,15 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	priv->update_caption_visibility = TRUE;
 
 	modest_msg_edit_window_reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
+
+	/* Track account-removed signal, this window should be closed
+	   in the case we're creating a mail associated to the account
+	   that is deleted */
+	priv->account_removed_handler_id = 
+		g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+				  "account_removed",
+				  G_CALLBACK(on_account_removed),
+				  obj);
 	
 	return (ModestWindow*) obj;
 }
@@ -3262,4 +3285,23 @@ remove_tags (WPTextBuffer *buffer)
 	gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (buffer), &end);
 
 	gtk_text_buffer_remove_all_tags (GTK_TEXT_BUFFER (buffer), &start, &end);
+}
+
+static void
+on_account_removed (TnyAccountStore *account_store, 
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	/* Do nothing if it's a store account, because we use the
+	   transport to send the messages */
+	if (tny_account_get_account_type(account) == TNY_ACCOUNT_TYPE_TRANSPORT) {
+		const gchar *parent_acc = NULL;
+		const gchar *our_acc = NULL;
+
+		our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
+		parent_acc = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		/* Close this window if I'm showing a message of the removed account */
+		if (strcmp (parent_acc, our_acc) == 0)
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
+	}
 }

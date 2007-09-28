@@ -28,25 +28,31 @@
  */
 
 #include "modest-signal-mgr.h"
+#include <string.h>
 
 typedef struct {
 	guint handler_id;
+	gchar *signal_name;
 	GObject *obj;
 } SignalHandler;
 
 GSList *
-modest_signal_mgr_connect (GSList *lst, GObject *instance, const gchar *detail,
-			   GCallback handler, gpointer data)
+modest_signal_mgr_connect (GSList *lst, 
+			   GObject *instance, 
+			   const gchar *signal_name,
+			   GCallback handler,
+			   gpointer data)
 {
 	SignalHandler *sighandler;
 	
 	g_return_val_if_fail (instance, lst);
-	g_return_val_if_fail (detail, lst);
+	g_return_val_if_fail (signal_name, lst);
 	g_return_val_if_fail (handler, lst);
 	
 	sighandler = g_new (SignalHandler, 1);
-	sighandler->obj        = g_object_ref (instance);
-	sighandler->handler_id = g_signal_connect (instance, detail, handler, data);
+	sighandler->obj         = g_object_ref (instance);
+	sighandler->handler_id  = g_signal_connect (instance, signal_name, handler, data);
+	sighandler->signal_name = g_strdup (signal_name);
 	
 	return g_slist_prepend (lst, (gpointer)sighandler);
 }
@@ -61,7 +67,6 @@ modest_signal_mgr_disconnect_all_and_destroy (GSList *lst)
 		handler = (SignalHandler*)cursor->data;
 		if (handler && handler->obj && G_IS_OBJECT(handler->obj)) {
 			if (g_signal_handler_is_connected (handler->obj, handler->handler_id)) {
-				/* g_debug ("%p: disconnecting %d", handler->obj, handler->handler_id); */
 				g_signal_handler_disconnect (handler->obj, handler->handler_id);
 			}
 			g_object_unref (handler->obj);
@@ -70,4 +75,50 @@ modest_signal_mgr_disconnect_all_and_destroy (GSList *lst)
 		g_free (handler);
 	}
 	g_slist_free (lst);
+}
+
+static gboolean
+obj_in_a_signal_handler (gconstpointer a,
+			 gconstpointer b)
+{
+	SignalHandler *handler, *list_item_handler;
+
+	list_item_handler = (SignalHandler *) a;
+	handler = (SignalHandler *) b;
+
+	if (list_item_handler->obj == handler->obj &&
+	    !strcmp (list_item_handler->signal_name, handler->signal_name))
+		return 0;
+	else 
+		return 1;
+}
+
+GSList *
+modest_signal_mgr_disconnect (GSList *list, 
+			      GObject *instance,
+			      const gchar *signal_name)
+{
+	GSList *item = NULL;
+	SignalHandler *signal_handler = NULL, *tmp = NULL;
+
+	tmp = g_new (SignalHandler, 1);
+	tmp->obj = instance;
+	tmp->signal_name = g_strdup (signal_name);
+
+	/* Find the element */
+	item = g_slist_find_custom (list, tmp, obj_in_a_signal_handler);
+	g_return_val_if_fail (item != NULL, list);
+
+	/* Disconnect the signal */
+	signal_handler = (SignalHandler *) item->data;
+	g_signal_handler_disconnect (signal_handler->obj, signal_handler->handler_id);
+
+	/* Free the handlers */
+	g_free (signal_handler->signal_name);
+	g_free (signal_handler);
+	g_free (tmp->signal_name);
+	g_free (tmp);
+
+	/* Remove item from list */
+	return g_slist_delete_link (list, item);
 }

@@ -203,13 +203,14 @@ msgs_already_deleted_from_server (TnyList *headers, const TnyFolderStore *src_fo
  * returns: TRUE if an account was created. FALSE if the user cancelled.
  */
 gboolean
-modest_run_account_setup_wizard (ModestWindow *win)
+modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 {
-	gboolean result = FALSE;
-	GtkDialog *wizard, *dialog;
+	gboolean result = FALSE;	
+	GtkWindow *dialog, *wizard;
+	gint dialog_response;
 
 	/* Show the easy-setup wizard: */	
-	dialog = modest_window_mgr_get_modal_dialog (modest_runtime_get_window_mgr());
+	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
 	if (dialog && MODEST_IS_EASYSETUP_WIZARD_DIALOG(dialog)) {
 		/* old wizard is active already; 
 		 */
@@ -218,26 +219,9 @@ modest_run_account_setup_wizard (ModestWindow *win)
 	}
 	
 
-	/* there is no such wizard yet */
-		
-	wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
-	if (!wizard) {
-		g_printerr ("modest: failed to create easysetup wizard\n");
-		return FALSE;
-	}
-	
-	modest_window_mgr_set_modal_dialog
-		(modest_runtime_get_window_mgr(), GTK_DIALOG(wizard));
-
-
-	/* there is no such wizard yet */
-	wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
-	modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(), 
-					    GTK_DIALOG(wizard));
-
-	/* make it non-modal; if though we register it as a modal dialog above
-	 * apparently, making it modal *at all* gives hangs -- FIXME: check this*/
-	gtk_window_set_modal (GTK_WINDOW(dialog), FALSE);
+	/* there is no such wizard yet */	
+	wizard = GTK_WINDOW (modest_easysetup_wizard_dialog_new ());
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), wizard);
 
 	/* always present a main window in the background 
 	 * we do it here, so we cannot end up with to wizards (as this
@@ -248,27 +232,18 @@ modest_run_account_setup_wizard (ModestWindow *win)
 	/* make sure the mainwindow is visible */
 	gtk_widget_show_all (GTK_WIDGET(win));
 	gtk_window_present (GTK_WINDOW(win));
-
 	
-	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
+	dialog_response = gtk_dialog_run (GTK_DIALOG (wizard));
+	gtk_widget_destroy (GTK_WIDGET (wizard));
+	if (gtk_events_pending ())
+		gtk_main_iteration ();
 
-	/* Don't make this a modal window, because secondary windows will then 
-	 * be unusable, freezing the UI: */
-	/* gtk_window_set_modal (GTK_WINDOW (wizard), TRUE); */
-	
-	gint dialog_response = gtk_dialog_run (GTK_DIALOG (wizard));
-	if (dialog_response == GTK_RESPONSE_CANCEL)
+	if (dialog_response == GTK_RESPONSE_CANCEL) {
 		result = FALSE;
-	else {
+	} else {
 		/* Check whether an account was created: */
 		result = modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 	}
-	
-	gtk_widget_destroy (GTK_WIDGET (wizard));
-
-	/* clear it from the window mgr */
-	modest_window_mgr_set_modal_dialog
-		(modest_runtime_get_window_mgr(), NULL);
 	
 	return result;
 }
@@ -711,21 +686,22 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 }
 
 void
-modest_ui_actions_on_accounts (GtkAction *action, ModestWindow *win)
+modest_ui_actions_on_accounts (GtkAction *action, 
+			       ModestWindow *win)
 {
 	/* This is currently only implemented for Maemo */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
-	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-		modest_run_account_setup_wizard (win);
+	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
+		modest_ui_actions_run_account_setup_wizard (win);
 		return;
-	} else 	{
-		/* Show the list of accounts: */
-		GtkDialog *account_win = GTK_DIALOG(modest_account_view_window_new ());
-		gtk_window_set_transient_for (GTK_WINDOW (account_win), GTK_WINDOW (win));
+	} else {
+		/* Show the list of accounts */
+		GtkWindow *account_win = GTK_WINDOW (modest_account_view_window_new ());
+		gtk_window_set_transient_for (account_win, GTK_WINDOW (win));
 		
-		/* The accounts dialog must be modal  */
-		gtk_window_set_modal (GTK_WINDOW (account_win), TRUE);
-		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), account_win); 
+		/* The accounts dialog must be modal */
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), account_win);
+		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), GTK_DIALOG (account_win)); 
 	}
 #else
 	GtkWidget *dialog, *label;
@@ -806,9 +782,8 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 
 	/* if there are no accounts yet, just show the wizard */
 	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
-			const gboolean created = modest_run_account_setup_wizard (win);
-			if (!created)
-				return;
+		if (!modest_ui_actions_run_account_setup_wizard (win))
+			return;
 	}
 	
 	account_name = g_strdup (modest_window_get_active_account (win));
@@ -940,8 +915,7 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 	    (folder_type == TNY_FOLDER_TYPE_OUTBOX)) {
 		/* we cannot edit without a valid account... */
 		if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-			const gboolean created = modest_run_account_setup_wizard(parent_win);
-			if (!created)
+			if (!modest_ui_actions_run_account_setup_wizard(parent_win))
 				goto cleanup;
 		}
 		win = modest_msg_edit_window_new (msg, account, TRUE);
@@ -1350,8 +1324,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 	/* we need an account when editing */
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-		const gboolean created = modest_run_account_setup_wizard (win);
-		if (!created)
+		if (!modest_ui_actions_run_account_setup_wizard (win))
 			return;
 	}
 	
@@ -2233,8 +2206,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		
 	if (!account_name) {
 		/* Run account setup wizard */
-		const gboolean created = modest_run_account_setup_wizard(MODEST_WINDOW(edit_window));
-		if (!created)
+		if (!modest_ui_actions_run_account_setup_wizard (MODEST_WINDOW(edit_window)))
 			return;
 	}
 	
@@ -2251,8 +2223,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 				       account_name));
 	if (!transport_account) {
 		/* Run account setup wizard */
-		const gboolean created = modest_run_account_setup_wizard(MODEST_WINDOW(edit_window));
-		if (!created)
+		if (!modest_ui_actions_run_account_setup_wizard(MODEST_WINDOW(edit_window)))
 			return;
 	}
 	

@@ -138,14 +138,14 @@ ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
 
 
 /**
- * modest_window_mgr_get_modal_dialog:
+ * modest_window_mgr_get_modal:
  * @self: a #ModestWindowMgr
  *
- * get the modal dialog; if it's NULL, there's no active dialog
+ * get the modal window; if it's NULL, there's no active modal window
  *
- * Returns: the modal dialog or NULL
+ * Returns: the modal window or NULL
  **/
-GtkDialog*    modest_window_mgr_get_modal_dialog  (ModestWindowMgr *self);
+GtkWindow*    modest_window_mgr_get_modal  (ModestWindowMgr *self);
 
 
 /**
@@ -156,9 +156,8 @@ GtkDialog*    modest_window_mgr_get_modal_dialog  (ModestWindowMgr *self);
  *
  * Returns: the modal dialog just set
  **/
-GtkDialog*    modest_window_mgr_set_modal_dialog  (ModestWindowMgr *self,
-						   GtkDialog *dialog);
-
+void          modest_window_mgr_set_modal  (ModestWindowMgr *self,
+					    GtkWindow *window);
 
 /**
  * modest_window_mgr_prevent_hibernation_while_window_is_shown:

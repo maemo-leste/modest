@@ -47,6 +47,14 @@ static gboolean on_window_destroy        (ModestWindow *window,
 					  GdkEvent *event,
 					  ModestWindowMgr *self);
 
+static gboolean on_modal_window_close    (GtkWidget *widget,
+					  GdkEvent *event,
+					  gpointer user_data);
+
+static void     on_modal_dialog_close    (GtkDialog *dialog,
+					  gint arg1,
+					  gpointer user_data);
+
 static const gchar* get_show_toolbar_key (GType window_type,
 					  gboolean fullscreen);
 
@@ -62,7 +70,9 @@ struct _ModestWindowMgrPrivate {
 	GList        *window_list;
 
 	ModestWindow *main_window;
-	GtkDialog    *modal_dialog;
+
+	GMutex       *queue_lock;
+	GQueue       *modal_windows;
 	
 	gboolean     fullscreen_mode;
 	
@@ -72,6 +82,8 @@ struct _ModestWindowMgrPrivate {
 	GHashTable   *viewer_handlers;
 	
 	guint        closing_time;
+
+	GSList       *modal_handler_uids;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -127,7 +139,9 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->window_list = NULL;
 	priv->main_window = NULL;
 	priv->fullscreen_mode = FALSE;
-	priv->modal_dialog = NULL;
+
+	priv->modal_windows = g_queue_new ();
+	priv->queue_lock = g_mutex_new ();
 	
 	priv->preregistered_uids = NULL;
 
@@ -137,6 +151,8 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->viewer_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
 	priv->closing_time = 0;
+
+	priv->modal_handler_uids = NULL;
 }
 
 static void
@@ -171,12 +187,15 @@ modest_window_mgr_finalize (GObject *obj)
 		priv->viewer_handlers = NULL;
 	}
 
-	if (priv->modal_dialog) {
-		g_warning ("%s: forgot to destroy a modal dialog somewhere",
-			   __FUNCTION__);
-		gtk_widget_destroy (GTK_WIDGET(priv->modal_dialog));
-		priv->modal_dialog = NULL;
+	modest_signal_mgr_disconnect_all_and_destroy (priv->modal_handler_uids);
+
+	if (priv->modal_windows) {
+		g_mutex_lock (priv->queue_lock);
+		g_queue_free (priv->modal_windows);
+		priv->modal_windows = NULL;
+		g_mutex_unlock (priv->queue_lock);
 	}
+	g_mutex_free (priv->queue_lock);
 	
 	/* Do not unref priv->main_window because it does not hold a
 	   new reference */
@@ -525,6 +544,10 @@ on_window_destroy (ModestWindow *window,
 			sent = modest_msg_edit_window_get_sent (MODEST_MSG_EDIT_WINDOW (window));
 			/* Save currently edited message to Drafts if it was not sent */
 			if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
+
+				/* Raise the window if it's minimized */
+				if (!gtk_window_has_toplevel_focus (GTK_WINDOW (window)))
+					gtk_window_present (GTK_WINDOW (window));
 				
 				response =
 					modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
@@ -792,27 +815,64 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self)
 }
 
 
-GtkDialog*
-modest_window_mgr_get_modal_dialog (ModestWindowMgr *self)
+GtkWindow *
+modest_window_mgr_get_modal (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv;
 	
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
-	return priv->modal_dialog;
+	return g_queue_peek_head (priv->modal_windows);
 }
 
 
-GtkDialog*
-modest_window_mgr_set_modal_dialog (ModestWindowMgr *self, GtkDialog *dialog)
+void
+modest_window_mgr_set_modal (ModestWindowMgr *self, 
+			     GtkWindow *window)
 {
+	GtkWindow *old_modal;
 	ModestWindowMgrPrivate *priv;
-	
-	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
-	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
-	return priv->modal_dialog = dialog;
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	g_return_if_fail (GTK_IS_WINDOW (window));
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	g_mutex_lock (priv->queue_lock);
+	old_modal = g_queue_peek_head (priv->modal_windows);
+	g_mutex_unlock (priv->queue_lock);
+
+	if (!old_modal) {	
+		gtk_window_set_modal (window, TRUE);
+	} else {
+		/* un-modalize the old one; the one on top should be the
+		 * modal one */
+		gtk_window_set_transient_for (window, GTK_WINDOW(old_modal));	
+		gtk_window_set_modal (window, TRUE);
+	}
+
+	/* this will be the new modal window */
+	g_mutex_lock (priv->queue_lock);
+	g_queue_push_head (priv->modal_windows, window);
+	g_mutex_unlock (priv->queue_lock);
+
+	if (GTK_IS_DIALOG (window))
+		/* Note that response is not always enough because it
+		   could be captured and removed easily by dialogs but
+		   works for most of situations */
+		priv->modal_handler_uids = 
+			modest_signal_mgr_connect (priv->modal_handler_uids, 
+						   G_OBJECT (window), 
+						   "response",
+						   G_CALLBACK (on_modal_dialog_close), 
+						   self);
+	else
+		priv->modal_handler_uids = 
+			modest_signal_mgr_connect (priv->modal_handler_uids, 
+						   G_OBJECT (window), 
+						   "delete-event",
+						   G_CALLBACK (on_modal_window_close), 
+						   self);
 }
 
 
@@ -892,3 +952,81 @@ modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self)
 		win = g_list_next (win);
 	}
 }
+
+static gboolean
+idle_top_modal (gpointer data)
+{
+	ModestWindowMgr *self = MODEST_WINDOW_MGR (data);
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	GtkWindow *topmost;
+
+	/* Get the top modal */
+	g_mutex_lock (priv->queue_lock);
+	topmost = (GtkWindow *) g_queue_peek_head (priv->modal_windows);
+	g_mutex_unlock (priv->queue_lock);
+
+	/* Show it */
+	if (topmost)
+		gtk_window_present (topmost);
+
+	return FALSE;
+}
+
+static void
+remove_modal_from_queue (GtkWidget *widget,
+			 ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+	GList *item = NULL;
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* Remove from queue. We don't use remove, because we want to
+	   exit if the widget does not belong to the queue */
+	g_mutex_lock (priv->queue_lock);
+	item = g_queue_find (priv->modal_windows, widget);
+	if (!item) {
+		g_warning ("Trying to remove a modal window that is not registered");
+		g_mutex_unlock (priv->queue_lock);
+		return;
+	}
+	g_queue_unlink (priv->modal_windows, item);
+	g_mutex_unlock (priv->queue_lock);
+
+	/* Disconnect handler */
+	priv->modal_handler_uids = 
+		modest_signal_mgr_disconnect (priv->modal_handler_uids, 
+					      G_OBJECT (widget),
+					      GTK_IS_DIALOG (widget) ? 
+					      "response" : 
+					      "destroy-event");
+
+	/* Schedule the next one for being shown */
+	g_idle_add (idle_top_modal, self);
+}
+
+static gboolean
+on_modal_window_close (GtkWidget *widget,
+		       GdkEvent *event,
+		       gpointer user_data)
+{
+	ModestWindowMgr *self = MODEST_WINDOW_MGR (user_data);
+
+	/* Remove modal window from queue */
+	remove_modal_from_queue (widget, self);
+
+	/* Continue */
+	return FALSE;
+}
+
+static void
+on_modal_dialog_close (GtkDialog *dialog,
+		       gint arg1,
+		       gpointer user_data)
+{
+	ModestWindowMgr *self = MODEST_WINDOW_MGR (user_data);
+
+	/* Remove modal window from queue */
+	remove_modal_from_queue (GTK_WIDGET (dialog), self);
+}
+

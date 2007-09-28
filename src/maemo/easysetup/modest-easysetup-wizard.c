@@ -1088,8 +1088,7 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 	if (response_id == GTK_RESPONSE_CANCEL) {
 		/* This is mostly copied from
 		 * src/maemo/modest-account-settings-dialog.c */
-		if (priv->dirty)
-		{
+		if (priv->dirty) {
 			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
 				_("imum_nc_wizard_confirm_lose_changes")));
 			/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
@@ -1097,9 +1096,7 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 			const gint dialog_response = gtk_dialog_run (dialog);
 			gtk_widget_destroy (GTK_WIDGET (dialog));
 
-			if (dialog_response != GTK_RESPONSE_OK)
-			{
-				/* This is a nasty hack. murrayc. */
+			if (dialog_response != GTK_RESPONSE_OK) {
 				/* Don't let the dialog close */
 				g_signal_stop_emission_by_name (wizard_dialog, "response");
 			}

@@ -42,16 +42,34 @@ G_BEGIN_DECLS
  *  
  * TRUE if this succeeded, FALSE otherwise.
  */
-GSList *modest_signal_mgr_connect                    (GSList *lst, GObject *instance, const gchar *detail,
-						      GCallback handler, gpointer data);
+GSList *  modest_signal_mgr_connect               (GSList *lst, 
+						   GObject *instance, 
+						   const gchar *signal_name,
+						   GCallback handler, 
+						   gpointer data);
+
+/**
+ * modest_signal_mgr_disconnect:
+ * @list: 
+ * @instance: 
+ * 
+ * disconnect the handler for a particular object for a particular signal
+ * 
+ * Returns: 
+ **/
+GSList *  modest_signal_mgr_disconnect            (GSList *list, 
+						   GObject *instance,
+						   const gchar *signal_name);
+
 
 /**
  * modest_signal_mgr_disconnect_all_and_destroy:
+ * @lst: the list of signal handlers
  *
  * disconnect all signals in the list, and destroy the list
- *  
  */
-void    modest_signal_mgr_disconnect_all_and_destroy (GSList *lst);
+void      modest_signal_mgr_disconnect_all_and_destroy (GSList *lst);
+
 
 G_END_DECLS
 #endif /*__MODEST_SIGNAL_MGR__*/

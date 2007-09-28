@@ -462,7 +462,7 @@ void modest_do_messages_delete (TnyList *headers, ModestWindow *win);
 /* Show the account creation wizard dialog.
  * returns: TRUE if an account was created. FALSE if the user cancelled.
  */
-gboolean modest_run_account_setup_wizard (ModestWindow *win);
+gboolean modest_ui_actions_run_account_setup_wizard (ModestWindow *win);
 
 gint modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
 						  TnyFolder *dest_folder,

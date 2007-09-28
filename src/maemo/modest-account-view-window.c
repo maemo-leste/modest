@@ -215,6 +215,8 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		if (check_for_active_account (self, account_name)) {
 			/* The warning text depends on the account type: */
 			gchar *txt = NULL;	
+			gint response;
+
 			if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
 				== MODEST_PROTOCOL_STORE_POP) {
 				txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
@@ -231,10 +233,14 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			g_free (txt);
 			txt = NULL;
 	
-			if (gtk_dialog_run (dialog) == GTK_RESPONSE_OK) {
+			response = gtk_dialog_run (dialog);
+			gtk_widget_destroy (GTK_WIDGET (dialog));
+			while (gtk_events_pending ())
+				gtk_main_iteration ();
+
+			if (response == GTK_RESPONSE_OK) {
 				/* Remove account. If it succeeds then it also removes
-				   the account from the ModestAccountView: */
-				  
+				   the account from the ModestAccountView: */				  
 				gboolean is_default = FALSE;
 				gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
 				if (default_account_name && (strcmp (default_account_name, account_name) == 0))
@@ -246,10 +252,8 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 					g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
 				}
 			}
-			gtk_widget_destroy (GTK_WIDGET (dialog));
 			g_free (account_title);
-		}
-		
+		}		
 		g_free (account_name);
 	}
 }
@@ -284,34 +288,31 @@ on_wizard_response (GtkDialog *dialog, gint response, gpointer user_data)
 {	
 	/* The response has already been handled by the wizard dialog itself,
 	 * creating the new account.
-	 */
-	 
+	 */	 
 	/* Destroy the dialog: */
-	if (dialog) {
+	if (dialog)
 		gtk_widget_destroy (GTK_WIDGET (dialog));
-		modest_window_mgr_set_modal_dialog (
-			modest_runtime_get_window_mgr(), NULL);
-	}
 }
 
 static void
 on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	GtkDialog *wizard, *dialog;
+	GtkDialog *wizard;
+	GtkWindow *dialog;
 	
 	/* Show the easy-setup wizard: */	
-	dialog = modest_window_mgr_get_modal_dialog (modest_runtime_get_window_mgr());
+	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
 	if (dialog && MODEST_IS_EASYSETUP_WIZARD_DIALOG(dialog)) {
 		/* old wizard is active already; 
 		 */
-		gtk_window_present (GTK_WINDOW(dialog));
+		gtk_window_present (dialog);
 		return;
 	}
 	
 	/* there is no such wizard yet */
-	wizard = GTK_DIALOG(modest_easysetup_wizard_dialog_new ());
-	modest_window_mgr_set_modal_dialog (modest_runtime_get_window_mgr(), 
-					    GTK_DIALOG(wizard));
+	wizard = GTK_DIALOG (modest_easysetup_wizard_dialog_new ());
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), 
+				     GTK_WINDOW (wizard));
 
 	/* if there is already another modal dialog, make it non-modal */
 	if (dialog)
