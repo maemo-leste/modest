@@ -2194,6 +2194,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->plain_body, 
 					      data->html_body,
 					      data->attachments,
+					      data->images,
 					      data->priority_flags);
 	/* Frees */
 	g_free (from);
@@ -2272,6 +2273,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->plain_body, 
 					     data->html_body,
 					     data->attachments,
+					     data->images,
 					     data->priority_flags);
 					     
 	/* Free data: */

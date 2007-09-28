@@ -289,6 +289,7 @@ void    modest_mail_operation_send_mail       (ModestMailOperation *self,
  * @html_body: the html version of the body of the new mail. If NULL, the mail will
  *             be sent with the plain body only.
  * @attachments_list: a #GList of attachments, each attachment must be a #TnyMimePart
+ * @images_list: a #GList of image attachments, each attachment must be a #TnyMimePart
  * 
  * Sends a new mail message using the provided
  * #TnyTransportAccount. This operation is synchronous, so the
@@ -306,6 +307,7 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
 					       const gchar *plain_body,
 					       const gchar *html_body,
 					       const GList *attachments_list,
+					       const GList *images_list,
 					       TnyHeaderFlags priority_flags);
 
 
@@ -324,6 +326,7 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
  * @html_body: the html version of the body of the new mail. If NULL, the mail will
  *             be sent with the plain body only.
  * @attachments_list: a #GList of attachments, each attachment must be a #TnyMimePart
+ * @images_list: a #GList of image attachments, each attachment must be a #TnyMimePart
  * 
  * Save a mail message to drafts using the provided
  * #TnyTransportAccount. This operation is synchronous, so the
@@ -343,6 +346,7 @@ void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 					     const gchar *plain_body,
 					     const gchar *html_body,
 					     const GList *attachments_list,
+					     const GList *images_list,
 					     TnyHeaderFlags priority_flags);
 /**
  * modest_mail_operation_update_account:

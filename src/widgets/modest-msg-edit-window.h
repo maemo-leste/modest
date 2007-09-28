@@ -86,6 +86,7 @@ typedef enum {
 typedef struct  {
 	gchar *from, *to, *cc, *bcc, *subject, *plain_body, *html_body;
 	GList *attachments;
+	GList *images;
 	TnyHeaderFlags priority_flags;
 	TnyMsg *draft_msg;
 	gchar *account_name;

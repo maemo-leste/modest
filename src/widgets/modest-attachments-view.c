@@ -107,6 +107,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 	TnyList *parts;
 	TnyIterator *iter;
+	const gchar *msg_content_type = NULL;
 	
 	if (msg == priv->msg) return;
 
@@ -126,6 +127,15 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		return;
 	}
 
+	/* If the top mime part is a multipart/related, we don't show the attachments, as they're
+	 * embedded images in body */
+	msg_content_type = tny_mime_part_get_content_type (TNY_MIME_PART (priv->msg));
+	if ((msg_content_type != NULL) && !strcasecmp (msg_content_type, "multipart/related")) {
+		gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
+		return;
+	}
+
+	
 	parts = TNY_LIST (tny_simple_list_new ());
 	tny_mime_part_get_parts (TNY_MIME_PART (priv->msg), parts);
 	iter = tny_list_create_iterator (parts);

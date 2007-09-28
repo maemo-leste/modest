@@ -144,6 +144,7 @@ static void          modest_mail_operation_create_msg (ModestMailOperation *self
 						       const gchar *cc, const gchar *bcc,
 						       const gchar *subject, const gchar *plain_body,
 						       const gchar *html_body, const GList *attachments_list,
+						       const GList *images_list,
 						       TnyHeaderFlags priority_flags,
 						       ModestMailOperationCreateMsgCallback callback,
 						       gpointer userdata);
@@ -160,6 +161,7 @@ typedef struct
 	gchar *plain_body;
 	gchar *html_body;
 	GList *attachments_list;
+	GList *images_list;
 	TnyHeaderFlags priority_flags;
 	ModestMailOperationCreateMsgCallback callback;
 	gpointer userdata;
@@ -613,11 +615,12 @@ create_msg_thread (gpointer thread_data)
 	if (info->html_body == NULL) {
 		new_msg = modest_tny_msg_new (info->to, info->from, info->cc, 
 					      info->bcc, info->subject, info->plain_body, 
-					      info->attachments_list); /* FIXME: attachments */
+					      info->attachments_list);
 	} else {
 		new_msg = modest_tny_msg_new_html_plain (info->to, info->from, info->cc,
 							 info->bcc, info->subject, info->html_body,
-							 info->plain_body, info->attachments_list);
+							 info->plain_body, info->attachments_list,
+							 info->images_list);
 	}
 
 	if (new_msg) {
@@ -652,6 +655,8 @@ create_msg_thread (gpointer thread_data)
 	g_free (info->subject);
 	g_list_foreach (info->attachments_list, (GFunc) g_object_unref, NULL);
 	g_list_free (info->attachments_list);
+	g_list_foreach (info->images_list, (GFunc) g_object_unref, NULL);
+	g_list_free (info->images_list);
 
 	if (info->callback) {
 		CreateMsgIdleInfo *idle_info;
@@ -680,6 +685,7 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 				  const gchar *subject, const gchar *plain_body,
 				  const gchar *html_body,
 				  const GList *attachments_list,
+				  const GList *images_list,
 				  TnyHeaderFlags priority_flags,
 				  ModestMailOperationCreateMsgCallback callback,
 				  gpointer userdata)
@@ -699,6 +705,8 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 	info->html_body = g_strdup (html_body);
 	info->attachments_list = g_list_copy ((GList *) attachments_list);
 	g_list_foreach (info->attachments_list, (GFunc) g_object_ref, NULL);
+	info->images_list = g_list_copy ((GList *) images_list);
+	g_list_foreach (info->images_list, (GFunc) g_object_ref, NULL);
 	info->priority_flags = priority_flags;
 
 	info->callback = callback;
@@ -782,6 +790,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 				     const gchar *subject, const gchar *plain_body,
 				     const gchar *html_body,
 				     const GList *attachments_list,
+				     const GList *images_list,
 				     TnyHeaderFlags priority_flags)
 {
 	ModestMailOperationPrivate *priv = NULL;
@@ -809,7 +818,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	if (draft_msg)
 		g_object_ref (draft_msg);
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
-					  attachments_list, priority_flags,
+					  attachments_list, images_list, priority_flags,
 					  modest_mail_operation_send_new_mail_cb, info);
 
 }
@@ -903,6 +912,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 				      const gchar *subject, const gchar *plain_body,
 				      const gchar *html_body,
 				      const GList *attachments_list,
+				      const GList *images_list,
 				      TnyHeaderFlags priority_flags)
 {
 	ModestMailOperationPrivate *priv = NULL;
@@ -926,7 +936,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 		g_object_ref (edit_window);
 
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
-					  attachments_list, priority_flags,
+					  attachments_list, images_list, priority_flags,
 					  modest_mail_operation_save_to_drafts_cb, info);
 
 }

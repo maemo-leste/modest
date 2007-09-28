@@ -51,7 +51,8 @@
 static TnyMimePart * add_body_part (TnyMsg *msg, const gchar *body,
 				    const gchar *content_type);
 static TnyMimePart * add_html_body_part (TnyMsg *msg, const gchar *body);
-static void add_attachments (TnyMsg *msg, GList *attachments_list);
+static void add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline);
+static void add_images (TnyMsg *msg, GList *attachments_list);
 static char * get_content_type(const gchar *s);
 static gboolean is_ascii(const gchar *s);
 
@@ -66,7 +67,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	gchar *content_type;
 	
 	/* Create new msg */
-	new_msg = modest_formatter_create_message (NULL, TRUE, (attachments != NULL));
+	new_msg = modest_formatter_create_message (NULL, TRUE, (attachments != NULL), FALSE);
 	header  = tny_msg_get_header (new_msg);
 	
 	if ((from != NULL) && (strlen(from) > 0)) {
@@ -92,7 +93,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		       
 	/* Add attachments */
 	if (attachments)
-		add_attachments (new_msg, attachments);
+		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
 
 	return new_msg;
 }
@@ -101,14 +102,14 @@ TnyMsg*
 modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gchar *cc,
 			       const gchar *bcc, const gchar* subject, 
 			       const gchar *html_body, const gchar *plain_body,
-			       GList *attachments)
+			       GList *attachments, GList *images)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
 	gchar *content_type;
 	
 	/* Create new msg */
-	new_msg = modest_formatter_create_message (NULL, FALSE, (attachments != NULL));
+	new_msg = modest_formatter_create_message (NULL, FALSE, (attachments != NULL), (images != NULL));
 	header  = tny_msg_get_header (new_msg);
 	
 	if ((from != NULL) && (strlen(from) > 0)) {
@@ -133,7 +134,8 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	g_free (content_type);
 		       
 	/* Add attachments */
-	add_attachments (new_msg, attachments);
+	add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
+	add_images (new_msg, images);
 
 	return new_msg;
 }
@@ -259,7 +261,7 @@ copy_mime_part (TnyMimePart *part)
 }
 
 static void
-add_attachments (TnyMsg *msg, GList *attachments_list)
+add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline)
 {
 	GList *pos;
 	TnyMimePart *attachment_part, *old_attachment;
@@ -269,9 +271,47 @@ add_attachments (TnyMsg *msg, GList *attachments_list)
 		old_attachment = pos->data;
 		if (!tny_mime_part_is_purged (old_attachment)) {
 			attachment_part = copy_mime_part (old_attachment);
-			tny_mime_part_add_part (TNY_MIME_PART (msg), attachment_part);
+			tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
+			tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
+						       add_inline?"inline":"attachment");
 			g_object_unref (attachment_part);
 		}
+	}
+}
+
+static void
+add_images (TnyMsg *msg, GList *images_list)
+{
+	TnyMimePart *related_part = NULL;
+	const gchar *content_type;
+
+	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
+
+	if ((content_type != NULL) && !strcasecmp (content_type, "multipart/related")) {
+		related_part = g_object_ref (msg);
+	} else if ((content_type != NULL) && !strcasecmp (content_type, "multipart/mixed")) {
+		TnyList *parts = TNY_LIST (tny_simple_list_new ());
+		TnyIterator *iter = NULL;
+		tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+		iter = tny_list_create_iterator (parts);
+
+		while (!tny_iterator_is_done (iter)) {
+			TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
+			if (part && !g_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
+				related_part = part;
+				break;
+			} else {
+				g_object_unref (part);
+			}
+			tny_iterator_next (iter);
+		}
+		g_object_unref (iter);
+		g_object_unref (parts);
+	}
+
+	if (related_part != NULL) {
+		/* TODO: attach images in their proper place */
+		add_attachments (related_part, images_list, TRUE);
 	}
 }
 
@@ -526,7 +566,7 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 
 	new_msg = create_reply_forward_mail (msg, NULL, from, signature, FALSE, forward_type,
 					     attachments_list);
-	add_attachments (new_msg, attachments_list);
+	add_attachments (TNY_MIME_PART (new_msg), attachments_list, FALSE);
 
 	/* Clean */
 	if (attachments_list)

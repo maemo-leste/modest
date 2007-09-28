@@ -88,7 +88,8 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
  * @subject: subject for the message
  * @html_body: body for the message in HTML
  * @plain_body: body for the message in plain text
- * @attachments: a list of attachments (local URIs)
+ * @attachments: a list of attachments (mime parts)
+ * @attachments: a list of images (mime parts)
  * 
  * create a new TnyMsg with the given parameters
  * 
@@ -97,7 +98,7 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
 TnyMsg* modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
 				       const gchar *bcc, const gchar* subject, 
 				       const gchar *html_body, const gchar *plain_body,
-				       GList *attachments);
+				       GList *attachments, GList *images);
 
 /**
  * modest_tny_msg_find_body_part:

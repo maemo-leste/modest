@@ -174,6 +174,7 @@ TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader 
  * @self: a #ModestFormatter
  * @single_body: a #gboolean
  * @has_attachments: a #gboolean
+ * @has_images: a #gboolean
  *
  * Creates an empty #TnyMsg with the expected parts for Modest
  * formatters and body embedders.
@@ -186,8 +187,12 @@ TnyMsg * modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader 
  * If @single_body is %TRUE, the body will be stored as a
  * "multipart/alternative", and the parts will be the different
  * alternatives. If %FALSE, this body will be stored directly.
+ * 
+ * If @has_images is %TRUE, the body will be embedded in a 
+ * multipart/related, that will also host attached images.
  */
-TnyMsg * modest_formatter_create_message (ModestFormatter *self, gboolean single_body, gboolean has_attachments);
+TnyMsg * modest_formatter_create_message (ModestFormatter *self, gboolean single_body, 
+					  gboolean has_attachments, gboolean has_images);
 
 /**
  * modest_formatter_create_body_part:

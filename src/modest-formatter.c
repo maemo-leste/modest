@@ -62,6 +62,8 @@ static gchar*  modest_formatter_wrapper_quote  (ModestFormatter *self, const gch
 static gchar*  modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text,
 						TnyHeader *header, GList *attachments);
 
+static TnyMimePart *find_body_parent (TnyMimePart *part);
+
 static gchar *
 extract_text (ModestFormatter *self, TnyMimePart *body)
 {
@@ -133,7 +135,7 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 	g_return_val_if_fail (func, NULL);
 
 	/* Build new part */
-	new_msg = modest_formatter_create_message (self, TRUE, attachments != NULL);
+	new_msg = modest_formatter_create_message (self, TRUE, attachments != NULL, FALSE);
 	body_part = modest_formatter_create_body_part (self, new_msg);
 
 	if (body)
@@ -181,7 +183,7 @@ modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 
 	fact = modest_runtime_get_platform_factory ();
 	/* Build new part */
-	new_msg     = modest_formatter_create_message (self, TRUE, TRUE);
+	new_msg     = modest_formatter_create_message (self, TRUE, TRUE, FALSE);
 	body_part = modest_formatter_create_body_part (self, new_msg);
 
 	/* Create the two parts */
@@ -347,21 +349,44 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 }
 
 TnyMsg * 
-modest_formatter_create_message (ModestFormatter *self, gboolean single_body, gboolean has_attachments)
+modest_formatter_create_message (ModestFormatter *self, gboolean single_body, 
+				 gboolean has_attachments, gboolean has_images)
 {
 	TnyMsg *result = NULL;
 	TnyPlatformFactory *fact = NULL;
 	TnyMimePart *body_mime_part = NULL;
+	TnyMimePart *related_mime_part = NULL;
+
 	fact    = modest_runtime_get_platform_factory ();
 	result = tny_platform_factory_new_msg (fact);
 	if (has_attachments) {
 		tny_mime_part_set_content_type (TNY_MIME_PART (result), "multipart/mixed");
+		if (has_images) {
+			related_mime_part = tny_platform_factory_new_mime_part (fact);
+			tny_mime_part_set_content_type (related_mime_part, "multipart/related");
+			tny_mime_part_add_part (TNY_MIME_PART (result), related_mime_part);
+		} else {
+			related_mime_part = g_object_ref (result);
+		}
+			
+		if (!single_body) {
+			body_mime_part = tny_platform_factory_new_mime_part (fact);
+			tny_mime_part_set_content_type (body_mime_part, "multipart/alternative");
+			tny_mime_part_add_part (TNY_MIME_PART (related_mime_part), body_mime_part);
+			g_object_unref (body_mime_part);
+		}
+
+		g_object_unref (related_mime_part);
+	} else if (has_images) {
+		tny_mime_part_set_content_type (TNY_MIME_PART (result), "multipart/related");
+
 		if (!single_body) {
 			body_mime_part = tny_platform_factory_new_mime_part (fact);
 			tny_mime_part_set_content_type (body_mime_part, "multipart/alternative");
 			tny_mime_part_add_part (TNY_MIME_PART (result), body_mime_part);
 			g_object_unref (body_mime_part);
 		}
+
 	} else if (!single_body) {
 		tny_mime_part_set_content_type (TNY_MIME_PART (result), "multipart/alternative");
 	}
@@ -369,34 +394,31 @@ modest_formatter_create_message (ModestFormatter *self, gboolean single_body, gb
 	return result;
 }
 
-TnyMimePart * 
-modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
+TnyMimePart *
+find_body_parent (TnyMimePart *part)
 {
-	TnyMimePart *result = NULL;
 	const gchar *msg_content_type = NULL;
-	TnyPlatformFactory *fact = NULL;
+	msg_content_type = tny_mime_part_get_content_type (part);
 
-	fact = modest_runtime_get_platform_factory ();
-	msg_content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
-	/* First it checks if the main part is alternative */
-	if ((msg_content_type != NULL) && 
-	    (!g_strcasecmp (msg_content_type, "multipart/alternative"))) {
-		result = tny_platform_factory_new_mime_part (fact);
-		tny_mime_part_add_part (TNY_MIME_PART (msg), result);
-		return result;
-	} else if ((msg_content_type != NULL) &&
-		   (!g_strcasecmp (msg_content_type, "multipart/mixed"))) {
-		TnyList *parts = NULL;
+	if ((msg_content_type != NULL) &&
+	    (!g_strcasecmp (msg_content_type, "multipart/alternative")))
+		return g_object_ref (part);
+	else if ((msg_content_type != NULL) &&
+		 (g_str_has_prefix (msg_content_type, "multipart/"))) {
 		TnyIterator *iter = NULL;
 		TnyMimePart *alternative_part = NULL;
-		
-		parts = TNY_LIST (tny_simple_list_new ());
-		tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+		TnyMimePart *related_part = NULL;
+		TnyList *parts = TNY_LIST (tny_simple_list_new ());
+		tny_mime_part_get_parts (TNY_MIME_PART (part), parts);
 		iter = tny_list_create_iterator (parts);
+
 		while (!tny_iterator_is_done (iter)) {
 			TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
 			if (part && !g_strcasecmp(tny_mime_part_get_content_type (part), "multipart/alternative")) {
 				alternative_part = part;
+				break;
+			} else if (part && !g_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
+				related_part = part;
 				break;
 			}
 
@@ -405,18 +427,38 @@ modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
 
 			tny_iterator_next (iter);
 		}
+		g_object_unref (iter);
+		g_object_unref (parts);
+		if (related_part) {
+			TnyMimePart *result;
+			result = find_body_parent (related_part);
+			g_object_unref (related_part);
+			return result;
+		} else if (alternative_part)
+			return alternative_part;
+		else 
+			return g_object_ref (part);
+	} else
+		return NULL;
+}
+
+TnyMimePart * 
+modest_formatter_create_body_part (ModestFormatter *self, TnyMsg *msg)
+{
+	TnyMimePart *result = NULL;
+	TnyPlatformFactory *fact = NULL;
+	TnyMimePart *parent = NULL;
+
+	parent = find_body_parent (TNY_MIME_PART (msg));
+	fact = modest_runtime_get_platform_factory ();
+	if (parent != NULL) {
 		result = tny_platform_factory_new_mime_part (fact);
-		if (alternative_part != NULL) {
-			tny_mime_part_add_part (alternative_part, result);
-		} else {
-			tny_mime_part_add_part (TNY_MIME_PART (msg), result);
-		}
-		g_object_unref (G_OBJECT (parts));
-		return result;
+		tny_mime_part_add_part (TNY_MIME_PART (parent), result);
+		g_object_unref (parent);
 	} else {
-		/* We add a reference as this method is intended to obtain
-		   a ref'ed part */
-		g_object_ref (msg);
-		return TNY_MIME_PART (msg);
+		result = g_object_ref (msg);
 	}
+
+	return result;
+
 }
