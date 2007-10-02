@@ -27,11 +27,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <widgets/modest-combo-box.h>
 #include "modest-progress-bar-widget.h"
-#include <string.h>
+#include "modest-tny-account.h"
 #include "modest-platform.h"
 #include "modest-runtime.h"
 
@@ -153,16 +154,6 @@ modest_progress_bar_widget_class_init (ModestProgressBarWidgetClass *klass)
 	gobject_class->finalize = modest_progress_bar_widget_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestProgressBarWidgetPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[DATA_CHANGED_SIGNAL] = */
-/* 		g_signal_new ("data_changed", */
-/* 			      G_TYPE_FROM_CLASS (klass), */
-/* 			      G_SIGNAL_RUN_FIRST, */
-/* 			      G_STRUCT_OFFSET(ModestProgressBarWidgetClass, data_changed), */
-/* 			      NULL, NULL, */
-/* 			      g_cclosure_marshal_VOID__VOID, */
-/* 			      G_TYPE_NONE, 0); */
 }
 
 static void
@@ -243,7 +234,7 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 		priv->count = 0;
 		
 		/* Call progress_change handler to initialize progress message */
-		modest_progress_bar_widget_set_undetermined_progress (MODEST_PROGRESS_BAR_WIDGET(self), mail_op);
+/* 		modest_progress_bar_widget_set_undetermined_progress (MODEST_PROGRESS_BAR_WIDGET(self), mail_op); */
 	}
 
 	/* Add operation to obserbable objects list */
@@ -440,14 +431,9 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 /* 	if ((done == 0 && total == 0) ||  */
 /* 	    (done == 1 && total == 100)) { */
 	if (!determined) {
-		gtk_progress_bar_set_bar_style (GTK_PROGRESS_BAR (priv->progress_bar), /* Deprecated */
-						GTK_PROGRESS_CONTINUOUS);
+/* 		gtk_progress_bar_set_bar_style (GTK_PROGRESS_BAR (priv->progress_bar), /\* Deprecated *\/ */
+/* 						GTK_PROGRESS_CONTINUOUS); */
 		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
-/* 		printf ("debug: %s:\n  undetermined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__,  */
-/* 			(int) priv->progress_bar, */
-/* 			done,  */
-/* 			total, */
-/* 			priv->count); */
 	} else {
 		gdouble percent = 0;
 		if (total != 0) /* Avoid division by zero. */
@@ -455,12 +441,6 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 
  		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
 					       percent);
-
-/* 		printf ("debug: %s:\n  determined progress (%i) changed (%i/%i) : %i\n", __FUNCTION__,  */
-/* 			(int) priv->progress_bar, */
-/* 			done,  */
-/* 			total, */
-/* 			priv->count); */
 	}
 	
 	/* Set text */

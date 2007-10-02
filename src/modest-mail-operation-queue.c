@@ -38,9 +38,8 @@ static void modest_mail_operation_queue_init       (ModestMailOperationQueue *ob
 static void modest_mail_operation_queue_finalize   (GObject *obj);
 
 static void
-on_progress_changed (ModestMailOperation *mail_op,
-                     ModestMailOperationState *state,
-		     gpointer user_data);
+on_operation_finished (ModestMailOperation *mail_op,
+		       gpointer user_data);
 
 /* list my signals  */
 enum {
@@ -145,7 +144,7 @@ on_finalize_foreach(gpointer op,
 	/* Simply remove from queue, but without emitting a
 	 * QUEUE_CHANGED_SIGNAL because we are in finalize anyway and have
 	 * the lock acquired. */
-	g_signal_handlers_disconnect_by_func (mail_op, G_CALLBACK (on_progress_changed), user_data);
+	g_signal_handlers_disconnect_by_func (mail_op, G_CALLBACK (on_operation_finished), user_data);
 
 	modest_mail_operation_cancel (mail_op);
 	g_queue_remove (priv->op_queue, mail_op);
@@ -187,17 +186,12 @@ modest_mail_operation_queue_new (void)
 }
 
 static void
-on_progress_changed (ModestMailOperation *mail_op,
-                     ModestMailOperationState *state,
-		     gpointer user_data)
+on_operation_finished (ModestMailOperation *mail_op,
+		       gpointer user_data)
 {
-	ModestMailOperationQueue *queue;
-
-	if(!state->finished)
-		return;
+	ModestMailOperationQueue *queue = MODEST_MAIL_OPERATION_QUEUE (user_data);
 
 	/* Remove operation from queue when finished */
-	queue = MODEST_MAIL_OPERATION_QUEUE (user_data);
 	modest_mail_operation_queue_remove (queue, mail_op);
 }
 
@@ -214,12 +208,16 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_push_tail (priv->op_queue, g_object_ref (mail_op));
-	modest_mail_operation_set_id (mail_op, priv->op_id++);
 	g_mutex_unlock (priv->queue_lock);
 
-	/* Get notified when the operation ends to remove it from the queue */
-	g_signal_connect (G_OBJECT (mail_op), "progress_changed",
-	                  G_CALLBACK (on_progress_changed), self);
+	/* Get notified when the operation ends to remove it from the
+	   queue. We connect it using the *after* because we want to
+	   let the other handlers for the finish function happen
+	   before this */
+	g_signal_connect_after (G_OBJECT (mail_op), 
+				"operation-finished",
+				G_CALLBACK (on_operation_finished), 
+				self);
 
 	/* Notify observers */
 	g_signal_emit (self, signals[QUEUE_CHANGED_SIGNAL], 0,
@@ -243,7 +241,7 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	g_mutex_unlock (priv->queue_lock);
 
 	g_signal_handlers_disconnect_by_func (G_OBJECT (mail_op),
-	                                      G_CALLBACK (on_progress_changed),
+	                                      G_CALLBACK (on_operation_finished),
 	                                      self);
 
 	/* Notify observers */

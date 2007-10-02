@@ -81,19 +81,21 @@ static void     get_msg_status_cb (GObject *obj,
 				   TnyStatus *status,  
 				   gpointer user_data);
 
+static void     modest_mail_operation_notify_start (ModestMailOperation *self);
 static void     modest_mail_operation_notify_end (ModestMailOperation *self);
 
 enum _ModestMailOperationSignals 
 {
 	PROGRESS_CHANGED_SIGNAL,
-
+	OPERATION_STARTED_SIGNAL,
+	OPERATION_FINISHED_SIGNAL,
 	NUM_SIGNALS
 };
 
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
-	TnyAccount                 *account;
-	gchar										 *account_name;
+	TnyAccount                *account;
+	gchar			  *account_name;
 	guint                      done;
 	guint                      total;
 	GObject                   *source;
@@ -230,7 +232,41 @@ modest_mail_operation_class_init (ModestMailOperationClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
-
+	/**
+	 * operation-started
+	 *
+	 * This signal is issued whenever a mail operation starts, and
+	 * starts mean when the tinymail operation is issued. This
+	 * means that it could happen that something wrong happens and
+	 * the tinymail function is never called. In this situation a
+	 * operation-finished will be issued without any
+	 * operation-started
+	 */
+	signals[OPERATION_STARTED_SIGNAL] =
+		g_signal_new ("operation-started",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestMailOperationClass, operation_started),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+	/**
+	 * operation-started
+	 *
+	 * This signal is issued whenever a mail operation
+	 * finishes. Note that this signal could be issued without any
+	 * previous "operation-started" signal, because this last one
+	 * is only issued when the tinymail operation is successfully
+	 * started
+	 */
+	signals[OPERATION_FINISHED_SIGNAL] =
+		g_signal_new ("operation-finished",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestMailOperationClass, operation_finished),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -474,29 +510,6 @@ modest_mail_operation_is_finished (ModestMailOperation *self)
 	return retval;
 }
 
-guint
-modest_mail_operation_get_id (ModestMailOperation *self)
-{
-	ModestMailOperationPrivate *priv;
-
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), 0);
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	return priv->done;
-}
-
-guint 
-modest_mail_operation_set_id (ModestMailOperation *self,
-			      guint id)
-{
-	ModestMailOperationPrivate *priv;
-
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), 0);
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	return priv->done;
-}
-
 /*
  * Creates an image of the current state of a mail operation, the
  * caller must free it
@@ -563,10 +576,8 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
 	} else {
-		/* TODO: connect to the msg-sent in order to know when
-		   the mail operation is finished */
-
-/* 		tny_send_queue_add (send_queue, msg, &(priv->error)); */
+		/* Add the msg to the queue */
+		modest_mail_operation_notify_start (self);
 		modest_tny_send_queue_add (MODEST_TNY_SEND_QUEUE(send_queue), 
 					   msg, 
 					   &(priv->error));
@@ -817,6 +828,9 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	info->draft_msg = draft_msg;
 	if (draft_msg)
 		g_object_ref (draft_msg);
+
+
+	modest_mail_operation_notify_start (self);
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
 					  attachments_list, images_list, priority_flags,
 					  modest_mail_operation_send_new_mail_cb, info);
@@ -935,10 +949,10 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	if (edit_window)
 		g_object_ref (edit_window);
 
+	modest_mail_operation_notify_start (self);
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
 					  attachments_list, images_list, priority_flags,
 					  modest_mail_operation_save_to_drafts_cb, info);
-
 }
 
 typedef struct 
@@ -1535,6 +1549,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	modest_account_mgr_set_account_busy(mgr, account_name, TRUE);
 	priv->account_name = g_strdup(account_name);
 	
+	modest_mail_operation_notify_start (self);
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
 
 	return TRUE;
@@ -1600,6 +1615,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 
 	if (!priv->error) {
 		/* Create the folder */
+		modest_mail_operation_notify_start (self);
 		new_folder = tny_folder_store_create_folder (parent, name, &(priv->error));
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
 		if (!priv->error)
@@ -1648,6 +1664,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 								      TNY_FOLDER_TYPE_TRASH);
 		/* TODO: error_handling */
 		if (trash_folder) {
+			modest_mail_operation_notify_start (self);
 			modest_mail_operation_xfer_folder (self, folder,
 						    TNY_FOLDER_STORE (trash_folder), 
 						    TRUE, NULL, NULL);
@@ -1656,6 +1673,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
 
+		modest_mail_operation_notify_start (self);
 		tny_folder_store_remove_folder (parent, folder, &(priv->error));
 		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
 
@@ -1871,6 +1889,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		helper->user_data = user_data;
 		
 		/* Move/Copy folder */
+		modest_mail_operation_notify_start (self);
 		tny_folder_copy_async (folder,
 				       parent,
 				       tny_folder_get_name (folder),
@@ -1949,6 +1968,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 			helper->user_data = NULL;
 		
 			/* Rename. Camel handles folder subscription/unsubscription */
+			modest_mail_operation_notify_start (self);
 			tny_folder_copy_async (folder, into, name, TRUE,
 					       transfer_folder_cb,
 					       transfer_folder_status_cb,
@@ -1964,10 +1984,11 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 /* **************************  MSG  ACTIONS  ************************* */
 /* ******************************************************************* */
 
-void modest_mail_operation_get_msg (ModestMailOperation *self,
-				    TnyHeader *header,
-				    GetMsgAsyncUserCallback user_callback,
-				    gpointer user_data)
+void 
+modest_mail_operation_get_msg (ModestMailOperation *self,
+			       TnyHeader *header,
+			       GetMsgAsyncUserCallback user_callback,
+			       gpointer user_data)
 {
 	GetMsgAsyncHelper *helper = NULL;
 	TnyFolder *folder;
@@ -2003,6 +2024,7 @@ void modest_mail_operation_get_msg (ModestMailOperation *self,
 		// the user canceled the request meanwhile.
 		g_object_ref (G_OBJECT (helper->mail_op));
 
+		modest_mail_operation_notify_start (self);
 		tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
 
 		g_object_unref (G_OBJECT (folder));
@@ -2340,6 +2362,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		info->headers = g_object_ref (header_list);
 		info->notify = notify;
 
+		modest_mail_operation_notify_start (self);
 		thread = g_thread_create (get_msgs_full_thread, info, FALSE, NULL);
 	} else {
  		/* Set status failed and set an error */
@@ -2383,6 +2406,8 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 	if (!priv->error) {
 		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+
+		modest_mail_operation_notify_start (self);
 
 		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
 /* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
@@ -2439,6 +2464,8 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* remove message from folder */
+	modest_mail_operation_notify_start (self);
+
 	tny_folder_remove_msgs (folder, headers, &(priv->error));
 	if (!priv->error) {
 		if (TNY_IS_CAMEL_IMAP_FOLDER (folder) || 
@@ -2657,6 +2684,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	priv->account = modest_tny_folder_get_account (src_folder);
 
 	/* Transfer messages */
+	modest_mail_operation_notify_start (self);
 	tny_folder_transfer_msgs_async (src_folder, 
 					headers, 
 					folder, 
@@ -2777,10 +2805,33 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	/* Refresh the folder. TODO: tinymail could issue a status
 	   updates before the callback call then this could happen. We
 	   must review the design */
+	modest_mail_operation_notify_start (self);
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,
 				  on_refresh_folder_status_update,
 				  helper);
+}
+
+
+static void
+modest_mail_operation_notify_start (ModestMailOperation *self)
+{
+	ModestMailOperationPrivate *priv = NULL;
+
+	g_return_if_fail (self);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	/* Ensure that all the fields are filled correctly */
+/* 	g_return_if_fail (priv->account != NULL); */
+/* 	g_return_if_fail (priv->op_type != MODEST_MAIL_OPERATION_TYPE_UNKNOWN); */
+	g_assert (priv->account != NULL);
+	g_assert (priv->op_type != MODEST_MAIL_OPERATION_TYPE_UNKNOWN);
+
+	/* Notify the observers about the mail operation. We do not
+	   wrapp this emission because we assume that this function is
+	   always called from within the main lock */
+	g_signal_emit (G_OBJECT (self), signals[OPERATION_STARTED_SIGNAL], 0, NULL);
 }
 
 /**
@@ -2794,7 +2845,6 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 static void
 modest_mail_operation_notify_end (ModestMailOperation *self)
 {
-	ModestMailOperationState *state;
 	ModestMailOperationPrivate *priv = NULL;
 
 	g_return_if_fail (self);
@@ -2809,10 +2859,20 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 		priv->account_name = NULL;
 	}
 	
-	/* Notify the observers about the mail operation end */
-	/* We do not wrapp this emission because we assume that this
+	/* Notify the observers about the mail operation end. We do
+	   not wrapp this emission because we assume that this
 	   function is always called from within the main lock */
-	state = modest_mail_operation_clone_state (self);
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
-	g_slice_free (ModestMailOperationState, state);
+	g_signal_emit (G_OBJECT (self), signals[OPERATION_FINISHED_SIGNAL], 0, NULL);
+}
+
+TnyAccount *
+modest_mail_operation_get_account (ModestMailOperation *self)
+{
+	ModestMailOperationPrivate *priv = NULL;
+
+	g_return_val_if_fail (self, NULL);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	return (priv->account) ? g_object_ref (priv->account) : NULL;
 }

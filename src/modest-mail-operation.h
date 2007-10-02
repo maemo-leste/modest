@@ -181,6 +181,8 @@ struct _ModestMailOperationClass {
 
 	/* Signals */
 	void (*progress_changed) (ModestMailOperation *self, ModestMailOperationState *state, gpointer user_data);
+	void (*operation_started) (ModestMailOperation *self, gpointer user_data);
+	void (*operation_finished) (ModestMailOperation *self, gpointer user_data);
 };
 
 /* member functions */
@@ -643,10 +645,7 @@ void      modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 						 RefreshAsyncUserCallback user_callback,
 						 gpointer user_data);
 
-guint     modest_mail_operation_get_id          (ModestMailOperation *self);
-
-guint     modest_mail_operation_set_id          (ModestMailOperation *self,
-						 guint id);
+TnyAccount *modest_mail_operation_get_account   (ModestMailOperation *self);
 
 G_END_DECLS
 

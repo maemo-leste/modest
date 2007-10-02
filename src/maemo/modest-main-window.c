@@ -855,34 +855,50 @@ connect_signals (ModestMainWindow *self)
 			  NULL);
 	
 	/* Mail Operation Queue */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_mail_operation_queue ()),
-						       "queue-changed", G_CALLBACK (on_queue_changed), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+					   "queue-changed", 
+					   G_CALLBACK (on_queue_changed), self);
 	
 	/* Track changes in the device name */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(modest_runtime_get_conf ()),
-						       "key_changed", G_CALLBACK (on_configuration_key_changed), 
-						       self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT(modest_runtime_get_conf ()),
+					   "key_changed", 
+					   G_CALLBACK (on_configuration_key_changed), 
+					   self);
 	
 	/* Track account changes. We need to refresh the toolbar */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store ()),
-						       "account_inserted", G_CALLBACK (on_account_inserted),
-						       self);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store ()),
-						       "account_removed", G_CALLBACK (on_account_removed),
-						       self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (modest_runtime_get_account_store ()),
+					   "account_inserted", 
+					   G_CALLBACK (on_account_inserted),
+					   self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (modest_runtime_get_account_store ()),
+					   "account_removed", 
+					   G_CALLBACK (on_account_removed),
+					   self);
 
 	/* We need to refresh the send & receive menu to change the bold
 	 * account when the default account changes. */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
-						       G_OBJECT (modest_runtime_get_account_mgr ()),
-	                                               "default_account_changed", 
-						       G_CALLBACK (on_default_account_changed),
-	                                               self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (modest_runtime_get_account_mgr ()),
+					   "default_account_changed", 
+					   G_CALLBACK (on_default_account_changed),
+					   self);
 
 	/* Account store */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (modest_runtime_get_account_store()), 
-						       "password_requested",
-						       G_CALLBACK (modest_ui_actions_on_password_requested), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (modest_runtime_get_account_store()), 
+					   "password_requested",
+					   G_CALLBACK (modest_ui_actions_on_password_requested), 
+					   self);
 }
 
 #if 0
@@ -2018,6 +2034,130 @@ observers_empty (ModestMainWindow *self)
 	return is_empty;
 }
 
+
+/**
+ * Gets the toolbar mode needed for each mail operation. It stores in
+ * @mode_changed if the toolbar mode has changed or not
+ */
+static ModestToolBarModes
+get_toolbar_mode_from_mail_operation (ModestMainWindow *self,
+				      ModestMailOperation *mail_op,
+				      gboolean *mode_changed)
+{
+	ModestToolBarModes mode;
+	ModestMainWindowPrivate *priv;
+
+	*mode_changed = FALSE;
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
+	/* Get toolbar mode from operation id*/
+	switch (modest_mail_operation_get_type_operation (mail_op)) {
+	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
+	case MODEST_MAIL_OPERATION_TYPE_OPEN:
+		mode = TOOLBAR_MODE_TRANSFER;
+		if (priv->current_toolbar_mode == TOOLBAR_MODE_NORMAL)
+			*mode_changed = TRUE;
+		break;
+	default:
+		mode = TOOLBAR_MODE_NORMAL;		
+	}
+	return mode;
+}
+
+static void 
+on_mail_operation_started (ModestMailOperation *mail_op,
+			   gpointer user_data)
+{
+	ModestMainWindow *self;
+	ModestMailOperationTypeOperation op_type;
+	ModestMainWindowPrivate *priv;
+	ModestToolBarModes mode;
+	GSList *tmp;
+	gboolean mode_changed = FALSE;
+	TnyAccount *account;
+
+	self = MODEST_MAIN_WINDOW (user_data);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
+	/* Do not show progress for receiving operations if the
+	   account is the local account or the MMC one */
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	account = modest_mail_operation_get_account (mail_op);
+	if (account && op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
+		gboolean is_remote;
+
+		is_remote = !(modest_tny_account_is_virtual_local_folders (account) ||
+			      modest_tny_account_is_memory_card_account (account));
+		g_object_unref (account);
+		if (!is_remote)
+			return;
+	}
+	       
+	/* Get toolbar mode from operation id*/
+	mode = get_toolbar_mode_from_mail_operation (self, mail_op, &mode_changed);
+
+	/* Add operation observers and change toolbar if neccessary*/
+	tmp = priv->progress_widgets;
+	if (mode == TOOLBAR_MODE_TRANSFER) {
+		if (mode_changed)
+			set_toolbar_transfer_mode(self);		    
+
+		while (tmp) {
+			modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+							      mail_op);
+			tmp = g_slist_next (tmp);
+		}
+	}
+}
+
+static void 
+on_mail_operation_finished (ModestMailOperation *mail_op,
+			    gpointer user_data)
+{
+	ModestToolBarModes mode;
+	ModestMailOperationTypeOperation op_type;
+	GSList *tmp = NULL;
+	ModestMainWindow *self;
+	gboolean mode_changed;
+	TnyAccount *account;
+	ModestMainWindowPrivate *priv;
+
+	self = MODEST_MAIN_WINDOW (user_data);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
+	/* The mail operation was not added to the progress objects if
+	   the account was the local account or the MMC one */
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	account = modest_mail_operation_get_account (mail_op);
+	if (account && op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
+		gboolean is_remote;
+
+		is_remote = !(modest_tny_account_is_virtual_local_folders (account) ||
+			      modest_tny_account_is_memory_card_account (account));
+		g_object_unref (account);
+		if (!is_remote)
+			return;
+	}
+
+	/* Get toolbar mode from operation id*/
+	mode = get_toolbar_mode_from_mail_operation (self, mail_op, &mode_changed);
+
+	/* Change toolbar mode */
+	tmp = priv->progress_widgets;
+	if (mode == TOOLBAR_MODE_TRANSFER) {			
+		while (tmp) {
+			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+								 mail_op);
+			tmp = g_slist_next (tmp);
+		}
+		
+		/* If no more operations are being observed, NORMAL mode is enabled again */
+		if (observers_empty (self)) {
+			set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);				
+		}
+	}
+}
+
 static void
 on_queue_changed (ModestMailOperationQueue *queue,
 		  ModestMailOperation *mail_op,
@@ -2025,62 +2165,28 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		  ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv;
-	ModestMailOperationTypeOperation op_type;
-	ModestToolBarModes mode;
-	GSList *tmp;
-	gboolean mode_changed = FALSE;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	       
-	/* Get toolbar mode from operation id*/
-	op_type = modest_mail_operation_get_type_operation (mail_op);
-	switch (op_type) {
-	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
-	case MODEST_MAIL_OPERATION_TYPE_OPEN:
-		mode = TOOLBAR_MODE_TRANSFER;
-		if (priv->current_toolbar_mode == TOOLBAR_MODE_NORMAL)
-			mode_changed = TRUE;
-		break;
-	default:
-		mode = TOOLBAR_MODE_NORMAL;
-		
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
+	if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED) {
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-started",
+							       G_CALLBACK (on_mail_operation_started),
+							       self);
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-finished",
+							       G_CALLBACK (on_mail_operation_finished),
+							       self);
+	} else if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED) {
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-started");
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-finished");
 	}
-		
-		       
-	/* Add operation observers and change toolbar if neccessary*/
-	tmp = priv->progress_widgets;
-	switch (type) {
-	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
-		if (mode == TOOLBAR_MODE_TRANSFER) {
-			if (mode_changed) {
-				set_toolbar_transfer_mode(self);		    
-			}
-			while (tmp) {
-				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-								      mail_op);
-				tmp = g_slist_next (tmp);
-			}
-		}
-		break;
-	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
-		/* Change toolbar mode */
-		if (mode == TOOLBAR_MODE_TRANSFER) {			
-			while (tmp) {
-				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-									 mail_op);
-				tmp = g_slist_next (tmp);
-			}
-			
-			/* If no more operations are being observed, NORMAL mode is enabled again */
-			if (observers_empty (self)) {
-				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);				
-			}
-		}
-
-		break;
-	}	
-
 }
 
 static void
