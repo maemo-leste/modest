@@ -111,7 +111,7 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	hit->msize = tny_header_get_message_size (header);
 	hit->has_attachment = flags & TNY_HEADER_FLAG_ATTACHMENTS;
 	hit->is_unread = ! (flags & TNY_HEADER_FLAG_SEEN);
-	hit->timestamp = tny_header_get_date_received (header);
+	hit->timestamp = MIN (tny_header_get_date_received (header), tny_header_get_date_sent (header));
 	
 	return g_list_prepend (list, hit);
 }
@@ -297,7 +297,7 @@ search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 							buffer,
 							TRUE);
 
-		if (found) {
+		if ((found)||(nread == 0)) {
 			break;
 		}
 

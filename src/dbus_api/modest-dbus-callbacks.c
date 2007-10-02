@@ -1152,7 +1152,7 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 				     DBUS_TYPE_INT32, &flags_v,
 				     DBUS_TYPE_UINT32, &size_v,
 				     DBUS_TYPE_INVALID);
-	
+
 	dbus_flags = (ModestDBusSearchFlags) flags_v;
 	start_date = (time_t) sd_v;
 	end_date = (time_t) ed_v;
