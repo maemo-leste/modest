@@ -1599,8 +1599,7 @@ message_reader (ModestMsgViewWindow *window,
 	}
 
 	/* New mail operation */
-	mail_op = modest_mail_operation_new_with_error_handling (op_type, 
-								 G_OBJECT(window),
+	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(window),
 								 modest_ui_actions_get_msgs_full_error_handler, 
 								 NULL);
 				

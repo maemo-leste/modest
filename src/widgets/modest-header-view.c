@@ -1171,7 +1171,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		info->user_data = user_data;
 
 		/* Create the mail operation (source will be the parent widget) */
-		mail_op = modest_mail_operation_new (MODEST_MAIL_OPERATION_TYPE_RECEIVE, source);
+		mail_op = modest_mail_operation_new (source);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 

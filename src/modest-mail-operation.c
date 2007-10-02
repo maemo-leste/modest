@@ -314,8 +314,7 @@ modest_mail_operation_finalize (GObject *obj)
 }
 
 ModestMailOperation*
-modest_mail_operation_new (ModestMailOperationTypeOperation op_type, 
-			   GObject *source)
+modest_mail_operation_new (GObject *source)
 {
 	ModestMailOperation *obj;
 	ModestMailOperationPrivate *priv;
@@ -323,7 +322,6 @@ modest_mail_operation_new (ModestMailOperationTypeOperation op_type,
 	obj = MODEST_MAIL_OPERATION(g_object_new(MODEST_TYPE_MAIL_OPERATION, NULL));
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 
-	priv->op_type = op_type;
 	if (source != NULL)
 		priv->source = g_object_ref(source);
 
@@ -331,15 +329,14 @@ modest_mail_operation_new (ModestMailOperationTypeOperation op_type,
 }
 
 ModestMailOperation*
-modest_mail_operation_new_with_error_handling (ModestMailOperationTypeOperation op_type,
-					       GObject *source,
+modest_mail_operation_new_with_error_handling (GObject *source,
 					       ErrorCheckingUserCallback error_handler,
 					       gpointer user_data)
 {
 	ModestMailOperation *obj;
 	ModestMailOperationPrivate *priv;
 		
-	obj = modest_mail_operation_new (op_type, source);
+	obj = modest_mail_operation_new (source);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(obj);
 	
 	g_return_val_if_fail (error_handler != NULL, obj);
@@ -811,6 +808,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 
 	/* Check parametters */
 	if (to == NULL) {
@@ -856,6 +854,7 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 	SaveToDraftsInfo *info = (SaveToDraftsInfo *) userdata;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
 	if (!msg) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -939,6 +938,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	priv->account = g_object_ref (transport_account);
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
 
 	info = g_slice_new0 (SaveToDraftsInfo);
 	info->transport_account = g_object_ref (transport_account);
@@ -1491,6 +1491,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	priv->total = 0;
 	priv->done  = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
 	/* Get the store account */
 	store_account = (TnyStoreAccount *)
@@ -1584,6 +1585,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	g_return_val_if_fail (name, NULL);
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
 
 	/* Check for already existing folder */
 	if (modest_tny_folder_has_subfolder_with_name (parent, name)) {
@@ -1656,6 +1658,7 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	/* Get the account */
 	account = modest_tny_folder_get_account (folder);
 	priv->account = g_object_ref(account);
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DELETE;
 
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
@@ -1845,6 +1848,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	error_msg = _("mail_in_ui_folder_move_target_error");
 
 	/* Get account and set it into mail_operation */
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
@@ -1932,6 +1936,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
 
 	/* Check folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
@@ -2001,6 +2006,7 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	folder = tny_header_get_folder (header);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
 	/* Get message from folder */
 	if (folder) {
@@ -2302,6 +2308,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	/* Init mail operation */
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 	priv->done = 0;
 	priv->total = tny_list_get_length(header_list);
 
@@ -2398,7 +2405,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
-
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DELETE;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* remove message from folder */
@@ -2460,7 +2467,7 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
-
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DELETE;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 	/* remove message from folder */
@@ -2631,6 +2638,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	priv->total = 1;
 	priv->done = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
 	/* Apply folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
@@ -2795,6 +2803,7 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account  (folder);
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
 	/* Create the helper */
 	helper = g_slice_new0 (RefreshAsyncHelper);
@@ -2823,10 +2832,8 @@ modest_mail_operation_notify_start (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	/* Ensure that all the fields are filled correctly */
-/* 	g_return_if_fail (priv->account != NULL); */
-/* 	g_return_if_fail (priv->op_type != MODEST_MAIL_OPERATION_TYPE_UNKNOWN); */
-	g_assert (priv->account != NULL);
-	g_assert (priv->op_type != MODEST_MAIL_OPERATION_TYPE_UNKNOWN);
+	g_return_if_fail (priv->account != NULL);
+	g_return_if_fail (priv->op_type != MODEST_MAIL_OPERATION_TYPE_UNKNOWN);
 
 	/* Notify the observers about the mail operation. We do not
 	   wrapp this emission because we assume that this function is

@@ -190,14 +190,12 @@ GType        modest_mail_operation_get_type    (void) G_GNUC_CONST;
 
 /**
  * modest_mail_operation_new:
- * @id: a #ModestMailOperationId identification of operation type.
  * @source: a #GObject which creates this new operation.
  * 
  * Creates a new instance of class #ModestMailOperation, using parameters
  * to initialize its private structure. @source parameter may be NULL.
  **/
-ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationTypeOperation type,
-						       GObject *source);
+ModestMailOperation*    modest_mail_operation_new     (GObject *source);
 
 /**
  * modest_mail_operation_new_with_error_handling:
@@ -211,8 +209,7 @@ ModestMailOperation*    modest_mail_operation_new     (ModestMailOperationTypeOp
  * @error_handler can not be NULL, but it will be returned an mail operation
  * object without error handling capability.
  **/
-ModestMailOperation*    modest_mail_operation_new_with_error_handling     (ModestMailOperationTypeOperation op_type,
-									   GObject *source,
+ModestMailOperation*    modest_mail_operation_new_with_error_handling     (GObject *source,
 									   ErrorCheckingUserCallback error_handler,
 									   gpointer user_data);
 /**
