@@ -289,6 +289,17 @@ void modest_platform_show_help (GtkWindow *parent_window,
 				const gchar *help_id);
 
 /**
+ * modest_platform_set_dialog_help:
+ * @dialog: a #GtkDialog
+ * @help_id: the help topic id to be shown on requesting
+ * help in the dialog
+ * 
+ * attachs a help topic to the dialog
+ **/
+void modest_platform_set_dialog_help (GtkDialog *parent_window, 
+				      const gchar *help_id);
+
+/**
  * modest_platform_show_search_messages:
  * @parent_window: window the dialog will be child of
  *

@@ -34,6 +34,7 @@
 #include <widgets/modest-account-view.h>
 
 #include <modest-runtime.h>
+#include "modest-platform.h"
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
 #include "modest-tny-platform-factory.h"
@@ -421,6 +422,7 @@ modest_account_view_window_init (ModestAccountViewWindow *obj)
 		TRUE, TRUE, 2);
 
 	gtk_window_set_title (GTK_WINDOW (obj), _("mcen_ti_emailsetup_accounts"));
+
 }
 
 GtkWidget*
@@ -428,5 +430,8 @@ modest_account_view_window_new (void)
 {
 	GObject *obj = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
 	
+	/* Attach dialog help */
+	modest_platform_set_dialog_help (GTK_DIALOG (obj), "applications_email_accountsettings");
+
 	return GTK_WIDGET(obj);
 }

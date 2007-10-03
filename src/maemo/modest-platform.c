@@ -1335,6 +1335,27 @@ modest_platform_show_help (GtkWindow *parent_window,
 	}
 }
 
+void
+modest_platform_set_dialog_help (GtkDialog *parent_window, 
+				 const gchar *help_id)
+{
+	gboolean result;
+	g_return_if_fail (help_id);
+	g_return_if_fail (osso_context);
+	g_return_if_fail (GTK_IS_DIALOG (parent_window));
+
+	/* Show help */
+#ifdef MODEST_HAVE_OSSO_HELP
+	result = ossohelp_dialog_help_enable (parent_window, help_id, osso_context);
+#else
+	result = hildon_help_dialog_help_enable (parent_window, help_id, osso_context);
+#endif
+
+	if (!result)
+		g_warning ("Help topic %s not found", help_id);
+
+}
+
 void 
 modest_platform_show_search_messages (GtkWindow *parent_window)
 {

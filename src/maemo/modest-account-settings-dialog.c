@@ -1210,7 +1210,7 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
             G_CALLBACK (on_response), self); 
             
     self->modified = FALSE;
-    
+
     /* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
     modest_window_mgr_prevent_hibernation_while_window_is_shown (
