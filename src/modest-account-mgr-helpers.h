@@ -469,13 +469,13 @@ void  modest_account_mgr_set_retrieve_type (ModestAccountMgr *self,
 					    const gchar *account_name,
 					    const gchar *retrieve_type);
 
-void  modest_account_mgr_set_server_account_user_fullname (ModestAccountMgr *self, 
-							   const gchar *account_name,
-							   const gchar *fullname);
+void  modest_account_mgr_set_user_fullname (ModestAccountMgr *self, 
+					    const gchar *account_name,
+					    const gchar *fullname);
 
-void  modest_account_mgr_set_server_account_user_email (ModestAccountMgr *self, 
-							const gchar *account_name,
-							const gchar *email);
+void  modest_account_mgr_set_user_email (ModestAccountMgr *self, 
+					 const gchar *account_name,
+					 const gchar *email);
 
 G_END_DECLS
 

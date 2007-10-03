@@ -1536,7 +1536,6 @@ add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
 	g_object_unref (per_account_outbox);
 }
 
-
 /*
  * This function will be used for both adding new accounts and for the
  * initialization. In the initialization we do not want to emit
@@ -1557,39 +1556,36 @@ insert_account (ModestTnyAccountStore *self,
 	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE);
 	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
 
-	/* Add to the list, and notify the observers */
-	if (store_account) {
-		tny_list_append (priv->store_accounts, G_OBJECT (store_account));
-		if (notify)
-			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, store_account);
-		g_object_unref (store_account);
+	g_assert (store_account);
+	g_assert (transport_account);
+
+	/* Add accounts to the lists */
+	tny_list_append (priv->store_accounts, G_OBJECT (store_account));
+	tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
+
+	/* Create a new pseudo-account with an outbox for this
+	   transport account and add it to the global outbox
+	   in the local account */
+	add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);
+	
+	/* Notify the observers. We do it after everything is
+	   created */
+	if (notify) {
+		TnyAccount *local_account = NULL;
+		
+		/* Notify the observers about the new server & transport accounts */
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, store_account);	
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, transport_account);
+
+		/* Notify that the local account changed */
+		local_account = modest_tny_account_store_get_local_folders_account (self);
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
+		g_object_unref (local_account);
 	}
 
-	/* Add to the list, and notify the observers */
-	if (transport_account) {
-		/* Add account to the list */
-		tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
-		g_assert (TNY_IS_ACCOUNT (transport_account));
-
-		/* Create a new pseudo-account with an outbox for this
-		   transport account and add it to the global outbox
-		   in the local account */
-		add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);
-
-		if (notify) {
-			TnyAccount *local_account = NULL;
-
-			/* Notify that the local account changed */
-			local_account = modest_tny_account_store_get_local_folders_account (self);
-			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
-			g_object_unref (local_account);
-			
-			/* Notify the observers about the new account */
-			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, transport_account);
-		}
-
-		g_object_unref (transport_account);
-	}
+	/* Frees */
+	g_object_unref (store_account);
+	g_object_unref (transport_account);
 }
 
 static void

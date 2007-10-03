@@ -258,6 +258,10 @@ null_means_empty (const gchar * str)
 gboolean
 modest_account_mgr_add_account (ModestAccountMgr *self,
 				const gchar *name,
+				const gchar *display_name,
+				const gchar *user_fullname,
+				const gchar *user_email,
+				const gchar *retrieve_type,
 				const gchar *store_account,
 				const gchar *transport_account,
 				gboolean enabled)
@@ -331,6 +335,20 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	 * (possibly this gconf key should be under the server account): */
 	modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_LEAVE_ON_SERVER, TRUE, FALSE);
 	modest_account_mgr_set_bool (self, name, MODEST_ACCOUNT_ENABLED, enabled,FALSE);
+
+	/* Fill other data */
+	modest_account_mgr_set_string (self, name,
+				       MODEST_ACCOUNT_DISPLAY_NAME, 
+				       display_name, FALSE);
+	modest_account_mgr_set_string (self, name,
+				       MODEST_ACCOUNT_FULLNAME, 
+				       user_fullname, FALSE);
+	modest_account_mgr_set_string (self, name,
+				       MODEST_ACCOUNT_EMAIL, 
+				       user_email, FALSE);
+	modest_account_mgr_set_string (self, name,
+				       MODEST_ACCOUNT_RETRIEVE, 
+				       retrieve_type, FALSE);
 
 	/* Notify the observers */
 	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, name);

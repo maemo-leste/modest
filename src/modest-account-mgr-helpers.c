@@ -511,8 +511,9 @@ modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
 
 /** You must use modest_account_mgr_free_account_data() on the result.
  */
-ModestAccountData*
-modest_account_mgr_get_account_data     (ModestAccountMgr *self, const gchar* name)
+ModestAccountData *
+modest_account_mgr_get_account_data (ModestAccountMgr *self, 
+				     const gchar* name)
 {
 	ModestAccountData *data;
 	gchar *server_account;
@@ -883,9 +884,9 @@ modest_account_mgr_set_retrieve_type (ModestAccountMgr *self,
 
 
 void
-modest_account_mgr_set_server_account_user_fullname (ModestAccountMgr *self, 
-						     const gchar *account_name,
-						     const gchar *fullname)
+modest_account_mgr_set_user_fullname (ModestAccountMgr *self, 
+				      const gchar *account_name,
+				      const gchar *fullname)
 {
 	modest_account_mgr_set_string (self, 
 				       account_name,
@@ -895,9 +896,9 @@ modest_account_mgr_set_server_account_user_fullname (ModestAccountMgr *self,
 }
 
 void
-modest_account_mgr_set_server_account_user_email (ModestAccountMgr *self, 
-						  const gchar *account_name,
-						  const gchar *email)
+modest_account_mgr_set_user_email (ModestAccountMgr *self, 
+				   const gchar *account_name,
+				   const gchar *email)
 {
 	modest_account_mgr_set_string (self, 
 				       account_name,

@@ -115,7 +115,11 @@ ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_c
  * Returns: TRUE if the creation succeeded, FALSE otherwise,
  */
 gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
-						   const gchar* name,
+						   const gchar *name,
+						   const gchar *display_name,
+						   const gchar *user_fullname,
+						   const gchar *user_email,
+						   const gchar *retrieve_type,
 						   const gchar* store_name,
 						   const gchar* transport_name,
 						   gboolean enabled);

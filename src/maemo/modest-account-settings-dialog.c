@@ -1458,13 +1458,13 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		
 	/* Set the account data from the widgets: */
 	const gchar* user_fullname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
-	modest_account_mgr_set_server_account_user_fullname (dialog->account_manager, 
-							     account_name,
-							     user_fullname);
+	modest_account_mgr_set_user_fullname (dialog->account_manager, 
+					      account_name,
+					      user_fullname);
 	
 	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_email));
-	modest_account_mgr_set_server_account_user_email (dialog->account_manager, account_name,
-							  emailaddress);
+	modest_account_mgr_set_user_email (dialog->account_manager, account_name,
+					   emailaddress);
 		
 	/* Signature: */
 	if (dialog->signature_dialog) {

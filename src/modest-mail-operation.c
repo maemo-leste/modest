@@ -95,7 +95,6 @@ enum _ModestMailOperationSignals
 typedef struct _ModestMailOperationPrivate ModestMailOperationPrivate;
 struct _ModestMailOperationPrivate {
 	TnyAccount                *account;
-	gchar			  *account_name;
 	guint                      done;
 	guint                      total;
 	GObject                   *source;
@@ -1410,17 +1409,20 @@ update_account_thread (gpointer thr_user_data)
 	priv->total = 0;
 	if (priv->account != NULL) 
 		g_object_unref (priv->account);
-	priv->account = g_object_ref (info->transport_account);
+
+	if (info->transport_account) {
+		priv->account = g_object_ref (info->transport_account);
 	
-	send_queue = modest_runtime_get_send_queue (info->transport_account);
-	if (send_queue) {
-		modest_tny_send_queue_try_to_send (send_queue);
-	} else {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
-			     "cannot create a send queue for %s\n", 
-			     tny_account_get_name (TNY_ACCOUNT (info->transport_account)));
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		send_queue = modest_runtime_get_send_queue (info->transport_account);
+		if (send_queue) {
+			modest_tny_send_queue_try_to_send (send_queue);
+		} else {
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+				     "cannot create a send queue for %s\n", 
+				     tny_account_get_name (TNY_ACCOUNT (info->transport_account)));
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		}
 	}
 	
 	/* Check if the operation was a success */
@@ -1435,7 +1437,10 @@ update_account_thread (gpointer thr_user_data)
 	}
 
  out:
-
+	/* Set the account back to not busy */
+	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr(), 
+					     info->account_name, FALSE);
+	
 	if (info->callback) {
 		UpdateAccountInfo *idle_info;
 
@@ -1459,7 +1464,9 @@ update_account_thread (gpointer thr_user_data)
 	if (all_folders)
 		g_object_unref (all_folders);
 	g_object_unref (info->account);
-	g_object_unref (info->transport_account);
+	if (info->transport_account)
+		g_object_unref (info->transport_account);
+	g_free (info->account_name);
 	g_free (info->retrieve_type);
 	g_slice_free (UpdateAccountInfo, info);
 
@@ -1525,6 +1532,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->account = store_account;
 	info->transport_account = transport_account;
 	info->callback = callback;
+	info->account_name = g_strdup (account_name);
 	info->user_data = user_data;
 
 	/* Get the message size limit */
@@ -1548,7 +1556,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Set account busy */
 	modest_account_mgr_set_account_busy(mgr, account_name, TRUE);
-	priv->account_name = g_strdup(account_name);
 	
 	modest_mail_operation_notify_start (self);
 	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
@@ -2858,14 +2865,6 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	/* Set the account back to not busy */
-	if (priv->account_name) {
-		modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr(), 
-						     priv->account_name, FALSE);
-		g_free(priv->account_name);
-		priv->account_name = NULL;
-	}
-	
 	/* Notify the observers about the mail operation end. We do
 	   not wrapp this emission because we assume that this
 	   function is always called from within the main lock */

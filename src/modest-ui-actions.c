@@ -140,9 +140,8 @@ static void     folder_refreshed_cb    (ModestMailOperation *mail_op,
 					TnyFolder *folder, 
 					gpointer user_data);
 
-static void     _on_send_receive_progress_changed (ModestMailOperation  *mail_op, 
-						   ModestMailOperationState *state,
-						   gpointer user_data);
+static void     on_send_receive_finished (ModestMailOperation  *mail_op, 
+					  gpointer user_data);
 
 static gint header_list_count_uncached_msgs (TnyList *header_list);
 static gboolean connect_to_get_msg (
@@ -1613,8 +1612,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 								 modest_ui_actions_send_receive_error_handler,
 								 NULL);
 
-	g_signal_connect (G_OBJECT(mail_op), "progress-changed", 
-			  G_CALLBACK (_on_send_receive_progress_changed), 
+	g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
+			  G_CALLBACK (on_send_receive_finished), 
 			  win);
 
 	/* Send & receive. */
@@ -4671,16 +4670,11 @@ modest_ui_actions_on_toggle_find_in_page (GtkToggleAction *action,
 }
 
 static void 
-_on_send_receive_progress_changed (ModestMailOperation  *mail_op, 
-				   ModestMailOperationState *state,
-				   gpointer user_data)
+on_send_receive_finished (ModestMailOperation  *mail_op, 
+			   gpointer user_data)
 {
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(user_data));
-
 	/* Set send/receive operation finished */	
-	if (state->status != MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
-		modest_main_window_notify_send_receive_completed (MODEST_MAIN_WINDOW(user_data));
-	
+	modest_main_window_notify_send_receive_completed (MODEST_MAIN_WINDOW (user_data));	
 }
 
 

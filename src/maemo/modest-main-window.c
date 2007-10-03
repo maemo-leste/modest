@@ -96,8 +96,7 @@ static void restore_settings (ModestMainWindow *self,
 
 static void save_state (ModestWindow *self);
 
-static void
-update_menus (ModestMainWindow* self);
+static void update_menus (ModestMainWindow* self);
 
 static void modest_main_window_show_toolbar   (ModestWindow *window,
 					       gboolean show_toolbar);
@@ -515,7 +514,7 @@ update_menus (ModestMainWindow* self)
 			}
 			/* We need to call this in order to ensure
 			   that the new actions are added in the right
-			   order (alphabetical */
+			   order (alphabetical) */
 			gtk_ui_manager_ensure_update (parent_priv->ui_manager);
 		} else 
 			groups = g_list_next (groups);
@@ -545,13 +544,9 @@ update_menus (ModestMainWindow* self)
 	priv->view_additions_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
 	radio_group = NULL;
 	for (i = 0; i < num_accounts; i++) {
-		gchar *display_name = NULL;
-		
+		gchar *display_name = NULL;	
 		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
-		/* Create display name. The UI specification specifies a different format string 
-		 * to use for the default account, though both seem to be "%s", so 
-		 * I don't see what the point is. murrayc. */
 		if (default_account && account_data->account_name && 
 			!(strcmp (default_account, account_data->account_name) == 0)) {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 

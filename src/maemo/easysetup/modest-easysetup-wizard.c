@@ -1832,11 +1832,19 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 		return FALSE;	
 	}
 	
+	const gchar* user_fullname = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
+	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
+	const gchar *retrieve = MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY;
 	
 	/* Create the account, which will contain the two "server accounts": */
- 	created = modest_account_mgr_add_account (self->account_manager, account_name, 
-						  store_name, /* The name of our POP/IMAP server account. */
-						  transport_name, /* The name of our SMTP server account. */
+ 	created = modest_account_mgr_add_account (self->account_manager, 
+						  account_name, 
+						  display_name,
+						  user_fullname,
+						  emailaddress,
+						  retrieve,
+						  store_name,
+						  transport_name,
 						  enabled);
 	g_free (store_name);
 	g_free (transport_name);
@@ -1855,20 +1863,6 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	if(!modest_account_mgr_has_accounts (self->account_manager, FALSE))
 		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
 		
-	/* The user name and email address must be set additionally: */
-	const gchar* user_name = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
-	modest_account_mgr_set_server_account_user_fullname (self->account_manager, account_name, user_name);
-
-	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
-	modest_account_mgr_set_server_account_user_email (self->account_manager, account_name, emailaddress); 
-
-	/* Set the display name: */
-	modest_account_mgr_set_display_name (self->account_manager, account_name, display_name);
-
-	/* Set retrieve type */ 
-	const gchar *retrieve = MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY;
-	modest_account_mgr_set_retrieve_type (self->account_manager, account_name, retrieve);
-
 	/* Save the connection-specific SMTP server accounts. */
         modest_account_mgr_set_use_connection_specific_smtp(self->account_manager, account_name, 
                 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->checkbox_outgoing_smtp_specific)));

@@ -56,6 +56,7 @@
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
 #include "modest-dnd.h"
+#include "widgets/modest-window.h"
 
 /* Folder view drag types */
 const GtkTargetEntry folder_view_drag_types[] =
@@ -814,6 +815,22 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 }
 
 static void
+on_connection_status_changed (TnyAccount *self, 
+			      TnyConnectionStatus status, 
+			      gpointer user_data)
+{
+	/* If the account becomes online then refresh it */
+	if (status == TNY_CONNECTION_STATUS_CONNECTED) {
+		const gchar *acc_name;
+		GtkWidget *my_window;
+
+		my_window = gtk_widget_get_ancestor (GTK_WIDGET (user_data), MODEST_TYPE_WINDOW);
+		acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (self);
+		modest_ui_actions_do_send_receive (acc_name, MODEST_WINDOW (my_window));
+	}
+}
+
+static void
 on_account_inserted (TnyAccountStore *account_store, 
 		     TnyAccount *account,
 		     gpointer user_data)
@@ -844,6 +861,11 @@ on_account_inserted (TnyAccountStore *account_store,
 	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (account));
 
+
+	/* When the store account gets online refresh it */
+	g_signal_connect (account, "connection_status_changed", 
+			  G_CALLBACK (on_connection_status_changed), 
+			  MODEST_FOLDER_VIEW (user_data));
 }
 
 
