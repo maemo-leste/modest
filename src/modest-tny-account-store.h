@@ -177,6 +177,20 @@ TnyAccount * modest_tny_account_store_get_local_folders_account (ModestTnyAccoun
   **/
 void modest_tny_account_store_forget_already_asked (ModestTnyAccountStore *self, TnyAccount *account);
 
+/**
+ * modest_tny_account_store_find_msg_in_outboxes:
+ * @self: a #ModestTnyAccountStore
+ * @uri: the uri of the message
+ * @ac_out: output attribute, %NULL, or the #TnyAccount of the message
+ *
+ * finds a message in the set of outboxes, using the uri.
+ *
+ * Returns: %NULL or a #TnyMsg
+ **/
+TnyMsg *modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *self, 
+						       const gchar *uri,
+						       TnyAccount **ac_out);
+
 
 G_END_DECLS
 

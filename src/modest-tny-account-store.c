@@ -1710,3 +1710,49 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 		iter = g_slist_next (iter);
 	}
 }
+
+TnyMsg *
+modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *self, 
+					       const gchar *uri,
+					       TnyAccount **ac_out)
+{
+	TnyIterator *acc_iter;
+	ModestTnyAccountStorePrivate *priv;
+	TnyMsg *msg = NULL;
+	TnyAccount *msg_account = NULL;
+
+	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	acc_iter = tny_list_create_iterator (priv->store_accounts_outboxes);
+	while (!msg && !tny_iterator_is_done (acc_iter)) {
+		TnyList *folders = tny_simple_list_new ();
+		TnyAccount *account = TNY_ACCOUNT (tny_iterator_get_current (acc_iter));
+		TnyIterator *folders_iter = NULL;
+
+		tny_folder_store_get_folders (TNY_FOLDER_STORE (account), folders, NULL, NULL);
+		folders_iter = tny_list_create_iterator (folders);
+
+		while (msg == NULL && !tny_iterator_is_done (folders_iter)) {
+			TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (folders_iter));
+			msg = tny_folder_find_msg (folder, uri, NULL);
+
+			if (msg)
+				msg_account = g_object_ref (account);
+
+			g_object_unref (folder);
+			tny_iterator_next (folders_iter);
+		}
+
+		g_object_unref (folders);
+		g_object_unref (account);
+		tny_iterator_next (acc_iter);
+	}
+
+	g_object_unref (acc_iter);
+
+	if (ac_out != NULL)
+		*ac_out = msg_account;
+
+	return msg;
+}

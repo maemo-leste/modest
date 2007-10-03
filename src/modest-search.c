@@ -52,6 +52,7 @@
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-account.h"
+#include "modest-tny-folder.h"
 #include "modest-search.h"
 #include "modest-runtime.h"
 #include "modest-platform.h"
@@ -388,8 +389,15 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 	/* Check that we should be searching this folder. */
 	/* Note that we don't try to search sub-folders. 
 	 * Maybe we should, but that should be specified. */
-	if (search->folder && strlen (search->folder) && (strcmp (tny_folder_get_id (folder), search->folder) != 0))
-		return NULL;
+	if (search->folder && strlen (search->folder)) {
+		if (!strcmp (search->folder, "outbox")) {
+			if (modest_tny_folder_guess_folder_type (folder) != TNY_FOLDER_TYPE_OUTBOX) {
+				return NULL;
+			}
+		} else if (strcmp (tny_folder_get_id (folder), search->folder) != 0) {
+			return NULL;
+		}
+	}
 	
 	GList *retval = NULL;
 	TnyIterator *iter = NULL;

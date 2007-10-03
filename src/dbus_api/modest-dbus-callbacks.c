@@ -497,7 +497,6 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
  	return OSSO_OK;
 }
 
-
 static TnyMsg *
 find_message_by_url (const char *uri,  TnyAccount **ac_out)
 {
@@ -516,6 +515,12 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 		return NULL;
 	}
 
+	if (uri && g_str_has_prefix (uri, "merge://")) {
+		/* we assume we're talking about outbox folder, as this 
+		 * is the only merge folder we work with in modest */
+		return modest_tny_account_store_find_msg_in_outboxes (astore, uri, ac_out);
+	}
+	
 	printf ("DEBUG: %s: uri=%s\n", __FUNCTION__, uri);
 	/* TODO: When tinymail is built with the extra DBC assertion checks, 
 	 * this will crash for local folders (such as drafts),
@@ -1165,7 +1170,13 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	 * Note that we don't copy the strings, 
 	 * because this struct will only be used for the lifetime of this function.
 	 */
-	search.folder = folder;
+	if (folder && g_str_has_prefix (folder, "MAND:")) {
+		search.folder = folder + strlen ("MAND:");
+	} else if (folder && g_str_has_prefix (folder, "USER:")) {
+		search.folder = folder + strlen ("USER:");
+	} else {
+		search.folder = folder;
+	}
 
    /* Remember the text to search for: */
 #ifdef MODEST_HAVE_OGS
@@ -1305,6 +1316,7 @@ add_single_folder_to_list (TnyFolder *folder, GList** list)
 		return;
 		
 	if (TNY_IS_MERGE_FOLDER (folder)) {
+		const gchar * folder_name;
 		/* Ignore these because their IDs ares
 		 * a) not always unique or sensible.
 		 * b) not human-readable, and currently need a human-readable 
@@ -1315,7 +1327,11 @@ add_single_folder_to_list (TnyFolder *folder, GList** list)
 		 * We could hack our D-Bus API to understand "outbox" as the merged outboxes, 
 		 * but that seems unwise. murrayc.
 		 */
-		 return;	
+		folder_name = tny_folder_get_name (folder);
+		if (folder_name && !strcmp (folder_name, "Outbox")) {
+			*list = g_list_append(*list, g_strdup ("MAND:outbox"));
+		}
+		return;	
 	}
 		
 	/* Add this folder to the list: */
@@ -1330,9 +1346,31 @@ add_single_folder_to_list (TnyFolder *folder, GList** list)
 		 * TODO: osso-global search should probably be changed to 
 		 * take an ID and a Name.
 		 */
-		const gchar * id =  tny_folder_get_id (folder);
-		if (id && strlen(id))
-			*list = g_list_append(*list, g_strdup (id));
+	const gchar * id =  tny_folder_get_id (folder);
+	if (id && strlen(id)) {
+		const gchar *prefix = NULL;
+		TnyFolderType folder_type;
+			
+		/* dbus global search api expects a prefix identifying the type of
+		 * folder here. Mandatory folders should have MAND: prefix, and
+		 * other user created folders should have USER: prefix
+		 */
+		folder_type = modest_tny_folder_guess_folder_type (folder);
+		switch (folder_type) {
+		case TNY_FOLDER_TYPE_INBOX:
+		case TNY_FOLDER_TYPE_OUTBOX:
+		case TNY_FOLDER_TYPE_DRAFTS:
+		case TNY_FOLDER_TYPE_SENT:
+		case TNY_FOLDER_TYPE_ARCHIVE:
+			prefix = "MAND:";
+			break;
+		default:
+			prefix = "USER:";
+		}
+		
+
+		*list = g_list_append(*list, g_strdup_printf ("%s%s", prefix, id));
+	}
 		/*
 		else {
 			g_warning ("DEBUG: %s: folder has no name or ID.\n", __FUNCTION__);	
