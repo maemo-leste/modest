@@ -122,6 +122,10 @@ struct _ModestHeaderViewClass {
 				   TnyFolder *folder,
 				   TnyFolderChange *change,
 				   gpointer user_data);
+
+	void (*updating_msg_list) (ModestHeaderView *self,
+				   gboolean starting,
+				   gpointer user_data);
 };
 
 /**

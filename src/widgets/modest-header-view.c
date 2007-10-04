@@ -164,6 +164,7 @@ enum {
 	HEADER_ACTIVATED_SIGNAL,
 	ITEM_NOT_FOUND_SIGNAL,
 	MSG_COUNT_CHANGED_SIGNAL,
+	UPDATING_MSG_LIST_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -257,6 +258,15 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      NULL, NULL,
 			      modest_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+
+	signals[UPDATING_MSG_LIST_SIGNAL] =
+		g_signal_new ("updating-msg-list",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestHeaderViewClass, updating_msg_list),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__BOOLEAN,
+			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
 static void
@@ -635,7 +645,6 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	
 	modest_header_view_set_style   (self, style);
-/* 	modest_header_view_set_folder (self, NULL, NULL, NULL); */
 
 	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(obj));
 	gtk_tree_view_set_fixed_height_mode (GTK_TREE_VIEW(obj),TRUE);
@@ -1120,6 +1129,10 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	tny_folder_add_observer (folder, TNY_FOLDER_OBSERVER (info->header_view));
 	g_mutex_unlock (priv->observers_lock);
 
+	/* Notify the observers that the update is over */
+	g_signal_emit (G_OBJECT (info->header_view), 
+		       signals[UPDATING_MSG_LIST_SIGNAL], 0, FALSE, NULL);
+
 	/* Frees */
 	g_free (info);
 }
@@ -1164,6 +1177,10 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		gtk_tree_selection_unselect_all(selection);
 		g_signal_emit (G_OBJECT(self), signals[HEADER_SELECTED_SIGNAL], 0, NULL);
 
+		/* Notify the observers that the update begins */
+		g_signal_emit (G_OBJECT (self), signals[UPDATING_MSG_LIST_SIGNAL], 
+			       0, TRUE, NULL);
+
 		/* create the helper */
 		info = g_malloc0 (sizeof(SetFolderHelper));
 		info->header_view = self;
@@ -1196,6 +1213,10 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		modest_header_view_notify_observers(self, NULL, NULL);
 
 		g_mutex_unlock (priv->observers_lock);
+
+		/* Notify the observers that the update is over */
+		g_signal_emit (G_OBJECT (self), signals[UPDATING_MSG_LIST_SIGNAL], 
+			       0, FALSE, NULL);
 	}
 }
 

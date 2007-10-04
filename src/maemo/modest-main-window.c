@@ -173,6 +173,10 @@ static void      modest_main_window_on_folder_selection_changed (ModestFolderVie
 						
 static void set_at_least_one_account_visible(ModestMainWindow *self);
 
+static void on_updating_msg_list (ModestHeaderView *header_view,
+				  gboolean starting,
+				  gpointer user_data);
+
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
@@ -217,6 +221,10 @@ struct _ModestMainWindowPrivate {
 	/* Signal handler UIDs */
 	GList *queue_err_signals;
 	GSList *sighandlers;
+
+	/* "Updating" banner for header view */
+	GtkWidget *updating_banner;
+	guint updating_banner_timeout;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -340,6 +348,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->send_receive_in_progress  = FALSE;
 	priv->progress_bar_timeout = 0;
 	priv->sighandlers = NULL;
+	priv->updating_banner = NULL;
+	priv->updating_banner_timeout = 0;
 }
 
 static void
@@ -362,6 +372,11 @@ modest_main_window_finalize (GObject *obj)
 	if (priv->progress_bar_timeout > 0) {
 		g_source_remove (priv->progress_bar_timeout);
 		priv->progress_bar_timeout = 0;
+	}
+
+	if (priv->updating_banner_timeout > 0) {
+		g_source_remove (priv->updating_banner_timeout);
+		priv->updating_banner_timeout = 0;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -836,6 +851,12 @@ connect_signals (ModestMainWindow *self)
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->header_view), "focus-in-event",
 					   G_CALLBACK (on_header_view_focus_in), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->header_view), 
+					   "updating-msg-list",
+					   G_CALLBACK (on_updating_msg_list), 
+					   self);
 	
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
@@ -958,7 +979,7 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	gtk_widget_show (GTK_WIDGET (priv->folder_view));
 
 	/* Connect signals */
-	connect_signals ((ModestMainWindow*)self);
+	connect_signals (MODEST_MAIN_WINDOW (self));
 
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
@@ -2417,3 +2438,54 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 	return TRUE;
 }
 
+static gboolean
+show_updating_banner (gpointer user_data)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
+
+	priv->updating_banner = 
+		modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
+						  _CS ("ckdg_pb_updating"));
+
+	/* Remove timeout */
+	priv->updating_banner_timeout = 0;
+	return FALSE;
+}
+
+/**
+ * We use this function to show/hide a progress banner showing
+ * "Updating" while the header view is being filled. We're not showing
+ * it unless the update takes more than 2 seconds
+ *
+ * If starting = TRUE then the refresh is starting, otherwise it means
+ * that is has just finished
+ */
+static void 
+on_updating_msg_list (ModestHeaderView *header_view,
+		      gboolean starting,
+		      gpointer user_data)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
+
+	/* Remove old timeout */
+	if (priv->updating_banner_timeout > 0) {
+		g_source_remove (priv->updating_banner_timeout);
+		priv->updating_banner_timeout = 0;
+	}
+
+	/* Create a new timeout */
+	if (starting) {
+		priv->updating_banner_timeout = 
+			g_timeout_add (2000, show_updating_banner, user_data);
+	} else {
+		/* Remove the banner if exists */
+		if (priv->updating_banner) {
+			gtk_widget_destroy (priv->updating_banner);
+			priv->updating_banner = NULL;
+		}
+	}
+}
