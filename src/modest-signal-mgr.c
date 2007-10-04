@@ -114,6 +114,7 @@ modest_signal_mgr_disconnect (GSList *list,
 	g_signal_handler_disconnect (signal_handler->obj, signal_handler->handler_id);
 
 	/* Free the handlers */
+	g_object_unref (signal_handler->obj);
 	g_free (signal_handler->signal_name);
 	g_free (signal_handler);
 	g_free (tmp->signal_name);
