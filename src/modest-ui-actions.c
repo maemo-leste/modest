@@ -2104,6 +2104,22 @@ modest_ui_actions_on_msg_recpt_activated (ModestMsgView *msgview,
 	/* g_message ("%s %s", __FUNCTION__, address); */
 }
 
+static void
+on_save_to_drafts_cb (ModestMailOperation *mail_op, 
+		      TnyMsg *saved_draft,
+		      gpointer user_data)
+{
+	ModestMsgEditWindow *edit_window;
+
+	edit_window = MODEST_MSG_EDIT_WINDOW (user_data);
+
+	/* If there was any error do nothing */
+	if (modest_mail_operation_get_error (mail_op) != NULL)
+		return;
+
+	modest_msg_edit_window_set_draft (edit_window, saved_draft);
+}
+
 void
 modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
@@ -2152,7 +2168,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	modest_mail_operation_save_to_drafts (mail_operation,
 					      transport_account,
 					      data->draft_msg,
-					      edit_window,
 					      from,
 					      data->to, 
 					      data->cc, 
@@ -2162,7 +2177,9 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->html_body,
 					      data->attachments,
 					      data->images,
-					      data->priority_flags);
+					      data->priority_flags,
+					      on_save_to_drafts_cb,
+					      edit_window);
 	/* Frees */
 	g_free (from);
 	g_free (account_name);

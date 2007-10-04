@@ -146,7 +146,7 @@ typedef void (*RefreshAsyncUserCallback) (ModestMailOperation *mail_op,
 /**
  * UpdateAccountCallback:
  *
- * @obj: a #GObject generic object which has created current mail operation.
+ * @self: a #ModestMailOperation
  * @new_headers: the list of new headers received
  * @user_data: generic data passed to user defined function.
  *
@@ -157,6 +157,22 @@ typedef void (*RefreshAsyncUserCallback) (ModestMailOperation *mail_op,
 typedef void (*UpdateAccountCallback) (ModestMailOperation *self, 
 				       TnyList *new_headers,
 				       gpointer user_data);
+
+
+/**
+ * SaveToDraftsCallback:
+ *
+ * @self: a #ModestMailOperation
+ * @saved_draft: the new draft message that has been saved
+ * @user_data: generic data passed to user defined function.
+ *
+ * This is the callback of the save_to_drafts operation. It returns
+ * the newly created msg stored in the Drafts folder
+ */
+typedef void (*SaveToDraftstCallback) (ModestMailOperation *self, 
+				       TnyMsg *saved_draft,
+				       gpointer user_data);
+
 
 /* This struct represents the internal state of a mail operation in a
    given time */
@@ -326,17 +342,16 @@ void    modest_mail_operation_send_new_mail   (ModestMailOperation *self,
  *             be sent with the plain body only.
  * @attachments_list: a #GList of attachments, each attachment must be a #TnyMimePart
  * @images_list: a #GList of image attachments, each attachment must be a #TnyMimePart
- * 
+ * @callback: the user callback, will be called when the operation finishes
+ * @user_data: data that will be passed to the user callback
+ *
  * Save a mail message to drafts using the provided
- * #TnyTransportAccount. This operation is synchronous, so the
- * #ModestMailOperation should not be added to any
- * #ModestMailOperationQueue
+ * #TnyTransportAccount. This operation is asynchronous.
  *
   **/
 void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 					     TnyTransportAccount *transport_account,
 					     TnyMsg *draft_msg,
-					     ModestMsgEditWindow *edit_window,
 					     const gchar *from,
 					     const gchar *to,
 					     const gchar *cc,
@@ -346,7 +361,9 @@ void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 					     const gchar *html_body,
 					     const GList *attachments_list,
 					     const GList *images_list,
-					     TnyHeaderFlags priority_flags);
+					     TnyHeaderFlags priority_flags,
+					     SaveToDraftstCallback callback,
+					     gpointer user_data);
 /**
  * modest_mail_operation_update_account:
  * @self: a #ModestMailOperation

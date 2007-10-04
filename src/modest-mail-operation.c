@@ -668,11 +668,8 @@ create_msg_thread (gpointer thread_data)
 	if (info->callback) {
 		CreateMsgIdleInfo *idle_info;
 		idle_info = g_slice_new0 (CreateMsgIdleInfo);
-		idle_info->mail_op = info->mail_op;
-		g_object_ref (info->mail_op);
-		idle_info->msg = new_msg;
-		if (new_msg)
-			g_object_ref (new_msg);
+		idle_info->mail_op = g_object_ref (info->mail_op);
+		idle_info->msg = (new_msg) ? g_object_ref (new_msg) : NULL;
 		idle_info->callback = info->callback;
 		idle_info->userdata = info->userdata;
 		g_idle_add (idle_create_msg_cb, idle_info);
@@ -700,8 +697,7 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 	CreateMsgInfo *info = NULL;
 
 	info = g_slice_new0 (CreateMsgInfo);
-	info->mail_op = self;
-	g_object_ref (self);
+	info->mail_op = g_object_ref (self);
 
 	info->from = g_strdup (from);
 	info->to = g_strdup (to);
@@ -838,7 +834,8 @@ typedef struct
 {
 	TnyTransportAccount *transport_account;
 	TnyMsg *draft_msg;
-	ModestMsgEditWindow *edit_window;
+	SaveToDraftstCallback callback;
+	gpointer user_data;
 } SaveToDraftsInfo;
 
 static void
@@ -894,17 +891,15 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 	else
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
-	if (info->edit_window)
-		modest_msg_edit_window_set_draft (info->edit_window, msg);
-
-
 end:
+	/* Call the user callback */
+	if (info->callback)
+		info->callback (self, msg, info->user_data);
+
 	if (drafts)
 		g_object_unref (G_OBJECT(drafts));
 	if (src_folder)
 		g_object_unref (G_OBJECT(src_folder));
-	if (info->edit_window)
-		g_object_unref (G_OBJECT(info->edit_window));
 	if (info->draft_msg)
 		g_object_unref (G_OBJECT (info->draft_msg));
 	if (info->transport_account)
@@ -918,14 +913,15 @@ void
 modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 				      TnyTransportAccount *transport_account,
 				      TnyMsg *draft_msg,
-				      ModestMsgEditWindow *edit_window,
 				      const gchar *from,  const gchar *to,
 				      const gchar *cc,  const gchar *bcc,
 				      const gchar *subject, const gchar *plain_body,
 				      const gchar *html_body,
 				      const GList *attachments_list,
 				      const GList *images_list,
-				      TnyHeaderFlags priority_flags)
+				      TnyHeaderFlags priority_flags,
+				      SaveToDraftstCallback callback,
+				      gpointer user_data)
 {
 	ModestMailOperationPrivate *priv = NULL;
 	SaveToDraftsInfo *info = NULL;
@@ -941,12 +937,9 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 
 	info = g_slice_new0 (SaveToDraftsInfo);
 	info->transport_account = g_object_ref (transport_account);
-	info->draft_msg = draft_msg;
-	if (draft_msg)
-		g_object_ref (draft_msg);
-	info->edit_window = edit_window;
-	if (edit_window)
-		g_object_ref (edit_window);
+	info->draft_msg = (draft_msg) ? g_object_ref (draft_msg) : NULL;
+	info->callback = callback;
+	info->user_data = user_data;
 
 	modest_mail_operation_notify_start (self);
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
