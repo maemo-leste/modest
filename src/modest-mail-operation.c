@@ -804,6 +804,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
+	priv->account = TNY_ACCOUNT (g_object_ref (transport_account));
 
 	/* Check parametters */
 	if (to == NULL) {
@@ -1506,6 +1507,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 		goto error;
 	}
 
+	priv->account = g_object_ref (store_account);
 	
 	/* Get the transport account, we can not do it in the thread
 	   due to some problems with dbus */
@@ -1586,6 +1588,9 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
+	priv->account = (TNY_IS_ACCOUNT (parent)) ? 
+		g_object_ref (parent) : 
+		modest_tny_folder_get_account (TNY_FOLDER (parent));
 
 	/* Check for already existing folder */
 	if (modest_tny_folder_has_subfolder_with_name (parent, name)) {
@@ -2320,10 +2325,8 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 			folder = tny_header_get_folder (header);
 			if (folder) {		
 				priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
-
 				g_object_unref (folder);
 			}
-
 			g_object_unref (header);
 		}
 

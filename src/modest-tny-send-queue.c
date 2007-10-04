@@ -235,10 +235,10 @@ modest_tny_send_queue_add (ModestTnySendQueue *self, TnyMsg *msg, GError **err)
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
 
 	tny_camel_send_queue_add_async (TNY_CAMEL_SEND_QUEUE(self), 
-				  msg, 
-				  _on_added_to_outbox, 
-				  NULL, 
-				  NULL);
+					msg, 
+					_on_added_to_outbox, 
+					NULL, 
+					NULL);
 }
 
 

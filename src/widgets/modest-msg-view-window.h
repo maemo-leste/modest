@@ -31,6 +31,7 @@
 #define __MODEST_MSG_VIEW_WINDOW_H__
 
 #include <tny-msg.h>
+#include <tny-folder.h>
 #include <widgets/modest-window.h>
 #include <gtk/gtktreemodel.h>
 

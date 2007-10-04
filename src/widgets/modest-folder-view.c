@@ -909,6 +909,7 @@ on_account_removed (TnyAccountStore *account_store,
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
 	GtkTreeSelection *sel = NULL;
+	TnyAccount *folder_selected_account;
 
 	/* Ignore transport account removals, we're not showing them
 	   in the folder view */
@@ -971,8 +972,14 @@ on_account_removed (TnyAccountStore *account_store,
 					      MODEST_CONF_FOLDER_VIEW_KEY);
 	}
 
-	/* Select the INBOX */
-	modest_folder_view_select_first_inbox_or_local (self);
+	/* Select the first INBOX if the currently selected folder
+	   belongs to the account that is being deleted */
+	folder_selected_account = (TNY_IS_FOLDER (priv->cur_folder_store)) ?
+		modest_tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store)) :
+		TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
+	if (account == folder_selected_account)
+		modest_folder_view_select_first_inbox_or_local (self);
+	g_object_unref (folder_selected_account);
 }
 
 void
