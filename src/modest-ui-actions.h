@@ -464,7 +464,7 @@ void modest_do_messages_delete (TnyList *headers, ModestWindow *win);
  */
 gboolean modest_ui_actions_run_account_setup_wizard (ModestWindow *win);
 
-gint modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
+gint modest_ui_actions_msgs_move_to_confirmation (ModestWindow *win,
 						  TnyFolder *dest_folder,
 						  gboolean delete,
 						  TnyList *headers);

@@ -117,7 +117,6 @@ update_device_name_from_msg (DBusMessage *message)
 			return;
 		}
 		dbus_message_iter_get_basic (&iter, &device_name);
-		g_warning ("update device name: %s", device_name);
 		modest_conf_set_string (modest_runtime_get_conf(),
 					MODEST_CONF_DEVICE_NAME, device_name,
 					NULL);

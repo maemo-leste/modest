@@ -921,146 +921,119 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 
 
 
-typedef struct
-{
+typedef struct _UtilIdleData {
 	GMainLoop* loop;
+	TnyAccount *account;
+	GError *error;
+	gulong handler;
 } UtilIdleData;
+
+static void
+on_connection_status_changed (TnyAccount *self, 
+			      TnyConnectionStatus status,
+			      gpointer user_data)
+{
+	UtilIdleData *data = (UtilIdleData *) user_data;
+	TnyConnectionStatus conn_status;
+			
+	conn_status = tny_account_get_connection_status (data->account);
+	if (conn_status == TNY_CONNECTION_STATUS_RECONNECTING)
+		return;
+
+	/* Remove the handler and Exit loop */
+	g_signal_handler_disconnect (self, data->handler);
+	g_main_loop_quit (data->loop);
+}
 
 static gboolean 
 on_idle_connect_and_wait(gpointer user_data)
 {
-	printf ("DEBUG: %s:\n", __FUNCTION__);
-	TnyDevice *device = modest_runtime_get_device();
-	if (!tny_device_is_online (device)) {
+	TnyDevice *device = NULL;
+	UtilIdleData *data = NULL;
+	gboolean connected, exit_loop;
 
-		/* This is a GDK lock because we are an idle callback and
-		 * tny_maemo_conic_device_connect can contain Gtk+ code */
+	exit_loop = TRUE;
+	device = modest_runtime_get_device();
+	data = (UtilIdleData*) user_data;
 
-		gdk_threads_enter(); /* CHECKED */
-		tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
-		gdk_threads_leave(); /* CHECKED */
+	/* This is a GDK lock because we are an idle callback and
+	 * tny_maemo_conic_device_connect can contain Gtk+ code */
+	gdk_threads_enter();
+	connected = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+	gdk_threads_leave();
+
+	if (!connected ) {
+		data->error = g_error_new (0, 0, "Error connecting");
+		goto end;
 	}
-	
-	/* Allow the function that requested this idle callback to continue: */
-	UtilIdleData *data = (UtilIdleData*)user_data;
-	if (data->loop)
-		g_main_loop_quit (data->loop);
-	
-	return FALSE; /* Don't call this again. */
-}
 
-static gboolean connect_request_in_progress = FALSE;
+	if (data->account) {
+		TnyConnectionStatus conn_status;
+		gboolean tried_to_connect;
+			
+		conn_status = tny_account_get_connection_status (data->account);
+		tried_to_connect = (conn_status == TNY_CONNECTION_STATUS_CONNECTED || 
+				    conn_status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN);
 
-/* This callback is used when connect_and_wait() is already queued as an idle callback.
- * This can happen because the gtk_dialog_run() for the connection dialog 
- * (at least in the fake scratchbox version) allows idle handlers to keep running.
- */
-static gboolean 
-on_idle_wait_for_previous_connect_to_finish(gpointer user_data)
-{
-	gboolean result = FALSE;
-	TnyDevice *device = modest_runtime_get_device();
-	if (tny_device_is_online (device))
-		result = FALSE; /* Stop trying. */
-	else {
-		/* Keep trying until connect_request_in_progress is FALSE. */
-		if (connect_request_in_progress)
-			result = TRUE; /* Keep trying */
-		else {
-			printf ("DEBUG: %s: other idle has finished.\n", __FUNCTION__);
-						
-			result = FALSE; /* Stop trying, now that a result should be available. */
+		if (!tried_to_connect) {
+			data->handler =
+				g_signal_connect (data->account, "connection-status-changed",
+						  G_CALLBACK (on_connection_status_changed),
+						  data);
+			exit_loop = FALSE;
 		}
 	}
 	
-	if (result == FALSE) {
-		/* Allow the function that requested this idle callback to continue: */
-		UtilIdleData *data = (UtilIdleData*)user_data;
-		if (data->loop)
-			g_main_loop_quit (data->loop);	
-	}
-		
-	return result;
-}
+ end:
+	if (exit_loop)
+		g_main_loop_quit (data->loop);
 
-static void 
-set_account_to_online (TnyAccount *account)
-{
-	/* TODO: This is necessary to prevent a cancel of the password dialog 
-	 * from making a restart necessary to be asked the password again,
-	 * but it causes a hang:
-	 */
-	#if 0
-	if (account && TNY_IS_CAMEL_STORE_ACCOUNT (account)) {
-		/* Make sure that store accounts are online too, 
-		 * because tinymail sets accounts to offline if 
-		 * a password dialog is ever cancelled.
-		 * We don't do this for transport accounts because 
-		 * a) They fundamentally need network access, so they can't really be offline.
-		 * b) That might cause a transport connection to happen too early.
-		 */
-
-		/* The last argument is user_data, the NULL before that is the callback */
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, NULL, NULL);
-	}
-	#endif
+	/* Remove the idle if we're connected */
+	return FALSE;
 }
 
 gboolean 
-modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account)
+modest_platform_connect_and_wait (GtkWindow *parent_window, 
+				  TnyAccount *account)
 {
-	if (connect_request_in_progress)
-		return FALSE;
-		
-	printf ("DEBUG: %s:\n", __FUNCTION__);
-	TnyDevice *device = modest_runtime_get_device();
+	UtilIdleData *data = NULL;
+	gboolean result;
 	
-	if (tny_device_is_online (device)) {
-		printf ("DEBUG: %s: Already online.\n", __FUNCTION__);
-		set_account_to_online (account);
+	if (!account && tny_device_is_online (modest_runtime_get_device()))
 		return TRUE;
-	} else
-	{
-		printf ("DEBUG: %s: tny_device_is_online() returned FALSE\n", __FUNCTION__);
-	}
-		
-	/* This blocks on the result: */
-	UtilIdleData *data = g_slice_new0 (UtilIdleData);
-	
-	GMainContext *context = NULL; /* g_main_context_new (); */
-	data->loop = g_main_loop_new (context, FALSE /* not running */);
-	
-	/* Cause the function to be run in an idle-handler, which is always 
-	 * in the main thread:
-	 */
-	if (!connect_request_in_progress) {
-		printf ("DEBUG: %s: First request\n", __FUNCTION__);
-		connect_request_in_progress = TRUE;
-		g_idle_add (&on_idle_connect_and_wait, data);
-	}
-	else {
-		printf ("DEBUG: %s: nth request\n", __FUNCTION__);
-		g_idle_add_full (G_PRIORITY_LOW, &on_idle_wait_for_previous_connect_to_finish, data, NULL);
-	}
 
-	/* This main loop will run until the idle handler has stopped it: */
-	printf ("DEBUG: %s: before g_main_loop_run()\n", __FUNCTION__);
-	GDK_THREADS_LEAVE();
+	if (account && 
+	    tny_device_is_online (modest_runtime_get_device()) && 
+	    tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED)
+		return TRUE;
+
+	/* This blocks on the result: */
+	data = g_slice_new0 (UtilIdleData);
+
+	data->loop = g_main_loop_new (NULL, FALSE);
+	data->account = (account) ? g_object_ref (account) : NULL;
+	
+	/* Cause the function to be run in an idle-handler, which is
+	 * always in the main thread
+	 */
+	g_idle_add (&on_idle_connect_and_wait, data);
+
+	gdk_threads_leave ();
 	g_main_loop_run (data->loop);
-	GDK_THREADS_ENTER();
-	printf ("DEBUG: %s: after g_main_loop_run()\n", __FUNCTION__);
-	connect_request_in_progress = FALSE;
-	printf ("DEBUG: %s: Finished\n", __FUNCTION__);
+	gdk_threads_enter ();
+
 	g_main_loop_unref (data->loop);
-	/* g_main_context_unref (context); */
+
+	if (data->error) {
+		g_error_free (data->error);
+		result = FALSE;
+	} else {
+		result = TRUE;
+	}
+	if (data->account)
+		g_object_unref (data->account);
 
 	g_slice_free (UtilIdleData, data);
-
-	const gboolean result = tny_device_is_online (device);
-
-	if (result) {
-		set_account_to_online (account);
-	}
 
 	return result;
 }

@@ -2725,8 +2725,6 @@ on_refresh_folder (TnyFolder   *folder,
 	if (error) {
 		priv->error = g_error_copy (error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		printf("DEBUG: %s: Operation error:\n %s", __FUNCTION__,
-		       error->message);
 		goto out;
 	}
 
@@ -2736,11 +2734,11 @@ on_refresh_folder (TnyFolder   *folder,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to refresh the contents of %s"),
 			     tny_folder_get_name (folder));
-		printf("DEBUG: %s: Operation cancelled.\n", __FUNCTION__);
 		goto out;
 	}
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+ out:
 
 	/* Call user defined callback, if it exists */
 	if (helper->user_callback) {
@@ -2750,7 +2748,6 @@ on_refresh_folder (TnyFolder   *folder,
 		helper->user_callback (self, folder, helper->user_data);
 	}
 
- out:
 	/* Free */
 	g_slice_free   (RefreshAsyncHelper, helper);
 

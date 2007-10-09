@@ -861,14 +861,16 @@ connect_signals (ModestMainWindow *self)
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->header_view), menu, NULL, 0);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "tap-and-hold",
-						       G_CALLBACK(_header_view_csm_menu_activated),
-						       self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "tap-and-hold",
+					   G_CALLBACK(_header_view_csm_menu_activated),
+					   self);
 	
 	/* window */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (self), "window-state-event",
-			  G_CALLBACK (modest_main_window_window_state_event),
-			  NULL);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (self), "window-state-event",
+					   G_CALLBACK (modest_main_window_window_state_event),
+					   NULL);
 	
 	/* Mail Operation Queue */
 	priv->sighandlers = 
@@ -989,15 +991,14 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	 * hibernation:  */
 	modest_osso_load_state ();
 
-	/* Restore window & widget settings */
-	
+	/* Restore window & widget settings */	
 	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
 
-	/* The UI spec wants us to show a connection dialog when the application is 
-	 * started by the user, if there is no connection.
-	 * Do this before showing the account wizard, 
-	 * because wizard needs a connection to discover capabilities. */
-	 modest_platform_connect_and_wait (GTK_WINDOW (self), NULL);
+/* 	/\* The UI spec wants us to show a connection dialog when the application is  */
+/* 	 * started by the user, if there is no connection. */
+/* 	 * Do this before showing the account wizard,  */
+/* 	 * because wizard needs a connection to discover capabilities. *\/ */
+/* 	 modest_platform_connect_and_wait (GTK_WINDOW (self), NULL); */
 	 
 	/* Check if accounts exist and show the account wizard if not */
 	gboolean accounts_exist = 

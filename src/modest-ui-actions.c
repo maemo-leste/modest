@@ -144,9 +144,10 @@ static void     on_send_receive_finished (ModestMailOperation  *mail_op,
 					  gpointer user_data);
 
 static gint header_list_count_uncached_msgs (TnyList *header_list);
-static gboolean connect_to_get_msg (
-						GtkWindow *win,
-						gint num_of_uncached_msgs);
+
+static gboolean connect_to_get_msg (ModestWindow *win,
+				    gint num_of_uncached_msgs,
+				    TnyAccount *account);
 
 static gboolean remote_folder_is_pop (const TnyFolderStore *folder);
 
@@ -985,7 +986,6 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 	GObject *win = modest_mail_operation_get_source (mail_op);
 
 	error = modest_mail_operation_get_error (mail_op);
-/* 	printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, error->code, error->message); */
  
 	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT) {
 
@@ -1000,6 +1000,27 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 		g_object_unref (win);
 }
 
+/**
+ * Returns the account a list of headers belongs to. It returns a
+ * *new* reference so don't forget to unref it
+ */
+static TnyAccount*
+get_account_from_header_list (TnyList *headers)
+{
+	TnyAccount *account = NULL;
+
+	if (tny_list_get_length (headers) > 0) {
+		TnyIterator *iter = tny_list_create_iterator (headers);
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		TnyFolder *folder = tny_header_get_folder (header);
+		account = tny_folder_get_account (folder);
+		g_object_unref (folder);
+		g_object_unref (header);
+		g_object_unref (iter);
+	}
+	return account;
+}
+
 /*
  * This function is used by both modest_ui_actions_on_open and
  * modest_ui_actions_on_header_activated. This way we always do the
@@ -1009,10 +1030,11 @@ static void
 _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 {
 	ModestWindowMgr *mgr = NULL;
-	TnyIterator *iter = NULL;
+	TnyIterator *iter = NULL, *iter_not_opened = NULL;
 	ModestMailOperation *mail_op = NULL;
 	TnyList *not_opened_headers = NULL;
 	TnyHeaderFlags flags = 0;
+	TnyAccount *account;
 		
 	g_return_if_fail (headers != NULL);
 
@@ -1023,14 +1045,16 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		return;
 	}
 
+	mgr = modest_runtime_get_window_mgr ();
+	iter = tny_list_create_iterator (headers);
 
+	/* Get the account */
+	account = get_account_from_header_list (headers);
+	
 	/* Look if we already have a message view for each header. If
 	   true, then remove the header from the list of headers to
 	   open */
-	mgr = modest_runtime_get_window_mgr ();
-	iter = tny_list_create_iterator (headers);
 	not_opened_headers = tny_simple_list_new ();
-	
 	while (!tny_iterator_is_done (iter)) {
 
 		ModestWindow *window = NULL;
@@ -1064,6 +1088,10 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	}
 	g_object_unref (iter);
 	iter = NULL;
+
+	/* Open each message */
+	if (tny_list_get_length (not_opened_headers) == 0)
+		goto cleanup;
 	
 	/* If some messages would have to be downloaded, ask the user to 
 	 * make a connection. It's generally easier to do this here (in the mainloop) 
@@ -1085,50 +1113,51 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		}
 		g_object_unref (iter);
 
-		if (found && !modest_platform_connect_and_wait (GTK_WINDOW (win), NULL)) {
-			g_object_unref (not_opened_headers);
-			return;			
-		}
+		/* Ask the user if there are any uncached messages */
+		if (found && !connect_to_get_msg (win, 
+						  header_list_count_uncached_msgs (not_opened_headers), 
+						  account))
+			goto cleanup;
 	}
 	
 	/* Register the headers before actually creating the windows: */
-	TnyIterator *iter_not_opened = tny_list_create_iterator (not_opened_headers);
+	iter_not_opened = tny_list_create_iterator (not_opened_headers);
 	while (!tny_iterator_is_done (iter_not_opened)) {
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_not_opened));
 		if (header) {
 			modest_window_mgr_register_header (mgr, header);
 			g_object_unref (header);
-		}
-		
+		}		
 		tny_iterator_next (iter_not_opened);
 	}
 	g_object_unref (iter_not_opened);
 	iter_not_opened = NULL;
-	
-	/* Open each message */
-	if (tny_list_get_length (not_opened_headers) > 0) {
-		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
-									 modest_ui_actions_get_msgs_full_error_handler, 
-									 NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		if (tny_list_get_length (not_opened_headers) > 1) {
-			modest_mail_operation_get_msgs_full (mail_op, 
-							     not_opened_headers, 
-							     open_msg_cb, 
-							     NULL, 
-							     NULL);
-		} else {
-			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
-			g_object_unref (header);
-			g_object_unref (iter);
-		}
-		g_object_unref (mail_op);
-	}
 
+	/* Create the mail operation */
+	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
+								 modest_ui_actions_get_msgs_full_error_handler, 
+								 NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	if (tny_list_get_length (not_opened_headers) > 1) {
+		modest_mail_operation_get_msgs_full (mail_op, 
+						     not_opened_headers, 
+						     open_msg_cb, 
+						     NULL, 
+						     NULL);
+	} else {
+		TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
+		g_object_unref (header);
+		g_object_unref (iter);
+	}
+	g_object_unref (mail_op);
+
+cleanup:
 	/* Clean */
-	if (not_opened_headers != NULL)
+	if (account)
+		g_object_unref (account);
+	if (not_opened_headers)
 		g_object_unref (not_opened_headers);
 }
 
@@ -1284,23 +1313,26 @@ header_list_count_uncached_msgs (TnyList *header_list)
  * messages. Returns TRUE if the user allowed the download.
  */
 static gboolean
-connect_to_get_msg (GtkWindow *win,
-		    gint num_of_uncached_msgs)
+connect_to_get_msg (ModestWindow *win,
+		    gint num_of_uncached_msgs,
+		    TnyAccount *account)
 {
+	GtkResponseType response;
+
 	/* Allways download if we are online. */
 	if (tny_device_is_online (modest_runtime_get_device ()))
 		return TRUE;
 
 	/* If offline, then ask for user permission to download the messages */
-	GtkResponseType response;
 	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 			ngettext("mcen_nc_get_msg",
 			"mcen_nc_get_msgs",
 			num_of_uncached_msgs));
+
 	if (response == GTK_RESPONSE_CANCEL)
 		return FALSE;
 
-	return modest_platform_connect_and_wait(win, NULL);	
+	return modest_platform_connect_and_wait(GTK_WINDOW (win), account);
 }
 
 /*
@@ -1339,14 +1371,16 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 	if (do_retrieve){
 		gint num_of_unc_msgs;
+
 		/* check that the messages have been previously downloaded */
 		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
 		/* If there are any uncached message ask the user
 		 * whether he/she wants to download them. */
-		if (num_of_unc_msgs)
-			continue_download = connect_to_get_msg (
-								GTK_WINDOW (win),
-								num_of_unc_msgs);
+		if (num_of_unc_msgs) {
+			TnyAccount *account = get_account_from_header_list (header_list);
+			continue_download = connect_to_get_msg (win, num_of_unc_msgs, account);
+			g_object_unref (account);
+		}
 	}
 
 	if (!continue_download) {
@@ -2950,10 +2984,11 @@ modest_ui_actions_on_cut (GtkAction *action,
 
 		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
 
-		if (num_of_unc_msgs)
-			continue_download = connect_to_get_msg(
-								GTK_WINDOW (window),
-								num_of_unc_msgs);
+		if (num_of_unc_msgs) {
+			TnyAccount *account = get_account_from_header_list (header_list);
+			continue_download = connect_to_get_msg (window, num_of_unc_msgs, account);
+			g_object_unref (account);
+		}
 
 		if (num_of_unc_msgs == 0 || continue_download) {
 /*			modest_platform_information_banner (
@@ -3005,10 +3040,11 @@ modest_ui_actions_on_copy (GtkAction *action,
 
 		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
 
-		if (num_of_unc_msgs)
-			continue_download = connect_to_get_msg(
-								GTK_WINDOW (window),
-								num_of_unc_msgs);
+		if (num_of_unc_msgs) {
+			TnyAccount *account = get_account_from_header_list (header_list);
+			continue_download = connect_to_get_msg (window, num_of_unc_msgs, account);
+			g_object_unref (account);
+		}
 
 		if (num_of_unc_msgs == 0 || continue_download) {
 			modest_platform_information_banner (
@@ -3168,7 +3204,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 
 			/* Ask for user confirmation */
 			response = 
-				modest_ui_actions_msgs_move_to_confirmation (GTK_WINDOW (window), 
+				modest_ui_actions_msgs_move_to_confirmation (window, 
 									     TNY_FOLDER (folder_store), 
 									     delete,
 									     data);
@@ -3855,20 +3891,20 @@ has_retrieved_msgs (TnyList *list)
  *	drag_and_drop_from_header_view (for d&d in modest_folder_view.c)
  */
 gint
-modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
+modest_ui_actions_msgs_move_to_confirmation (ModestWindow *win,
 					     TnyFolder *dest_folder,
 					     gboolean delete,
 					     TnyList *headers)
 {
 	gint response = GTK_RESPONSE_OK;
+	TnyAccount *account = NULL;
+	TnyFolder *src_folder = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
 
 	/* return with OK if the destination is a remote folder */
 	if (modest_tny_folder_is_remote_folder (dest_folder))
 		return GTK_RESPONSE_OK;
-
-	TnyFolder *src_folder = NULL;
-	TnyIterator *iter = NULL;
-	TnyHeader *header = NULL;
 
 	/* Get source folder */
 	iter = tny_list_create_iterator (headers);
@@ -3888,14 +3924,19 @@ modest_ui_actions_msgs_move_to_confirmation (GtkWindow *win,
 		g_object_unref (src_folder);
 		return GTK_RESPONSE_OK;
 	}
-	g_object_unref (src_folder);
+
+	/* Get the account */
+	account = tny_folder_get_account (src_folder);
 
 	/* now if offline we ask the user */
-	if(connect_to_get_msg(	GTK_WINDOW (win),
-					tny_list_get_length (headers)))
+	if(connect_to_get_msg (win, tny_list_get_length (headers), account))
 		response = GTK_RESPONSE_OK;
 	else
 		response = GTK_RESPONSE_CANCEL;
+
+	/* Frees */
+	g_object_unref (src_folder);
+	g_object_unref (account);
 
 	return response;
 }
@@ -4243,10 +4284,11 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
                         do_xfer = FALSE;
                 } else if (!online && modest_platform_is_network_folderstore(src_folder)) {
-                        guint num_headers = tny_folder_get_all_count(TNY_FOLDER(src_folder));
-                        if (!connect_to_get_msg(GTK_WINDOW(win), num_headers)) {
+                        guint num_headers = tny_folder_get_all_count(TNY_FOLDER (src_folder));
+			TnyAccount *account = tny_folder_get_account (TNY_FOLDER (src_folder));
+                        if (!connect_to_get_msg(MODEST_WINDOW (win), num_headers, account))
                                 do_xfer = FALSE;
-                        }
+			g_object_unref (account);
                 }
 
                 if (do_xfer) {
@@ -4289,9 +4331,10 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                         TnyList *headers = modest_header_view_get_selected_headers(header_view);
                         if (!msgs_already_deleted_from_server(headers, src_folder)) {
                                 guint num_headers = tny_list_get_length(headers);
-                                if (!connect_to_get_msg(GTK_WINDOW(win), num_headers)) {
+				TnyAccount *account = get_account_from_header_list (headers);
+                                if (!connect_to_get_msg(MODEST_WINDOW (win), num_headers, account))
                                         do_xfer = FALSE;
-                                }
+				g_object_unref (account);
                         }
                         g_object_unref(headers);
                 }
@@ -4314,19 +4357,22 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 					      ModestMsgViewWindow *win)
 {
 	TnyHeader *header = NULL;
-	TnyFolderStore *src_folder;
+	TnyFolder *src_folder = NULL;
+	TnyAccount *account = NULL;
 
 	/* Create header list */
 	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));		
-	src_folder = TNY_FOLDER_STORE(tny_header_get_folder(header));
+	src_folder = TNY_FOLDER (tny_header_get_folder(header));
 	g_object_unref (header);
 
 	/* Transfer the message if online or confirmed by the user */
-        if (tny_device_is_online (modest_runtime_get_device()) || remote_folder_is_pop(src_folder) ||
-            (modest_platform_is_network_folderstore(src_folder) && connect_to_get_msg(GTK_WINDOW(win), 1))) {
+	account = tny_folder_get_account (src_folder);
+        if (remote_folder_is_pop(TNY_FOLDER_STORE (src_folder)) ||
+            (modest_platform_is_network_folderstore(TNY_FOLDER_STORE (src_folder)) && 
+	     connect_to_get_msg(MODEST_WINDOW (win), 1, account))) {
 		modest_ui_actions_xfer_messages_from_move_to (dst_folder, MODEST_WINDOW (win));
         }
-
+	g_object_unref (account);
 	g_object_unref (src_folder);
 }
 

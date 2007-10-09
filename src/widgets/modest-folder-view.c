@@ -1187,9 +1187,8 @@ modest_folder_view_update_model (ModestFolderView *self,
 				 TnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *model /* , *old_model */;
-	/* TnyAccount *local_account; */
-	TnyList *model_as_list;
+	GtkTreeModel *model /* , *old_model */;                                                    
+	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 	g_return_val_if_fail (account_store, FALSE);
@@ -1206,22 +1205,13 @@ modest_folder_view_update_model (ModestFolderView *self,
 	}
 
 	/* FIXME: the local accounts are not shown when the query
-	   selects only the subscribed folders. */
-/* 	model        = tny_gtk_folder_store_tree_model_new (TRUE, priv->query); */
+	   selects only the subscribed folders */
 	model        = tny_gtk_folder_store_tree_model_new (NULL);
-	
-	/* Deal with the model via its TnyList Interface,
-	 * filling the TnyList via a get_accounts() call: */
-	model_as_list = TNY_LIST(model);
 
 	/* Get the accounts: */
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
-					model_as_list,
+					TNY_LIST (model),
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-	g_object_unref (model_as_list);
-	model_as_list = NULL;	
-                                                     
-	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
 	sortable = gtk_tree_model_sort_new_with_model (model);
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
@@ -1643,7 +1633,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 
 	/* Ask for confirmation to move */
 	main_win = modest_window_mgr_get_main_window(mgr);
-	response = modest_ui_actions_msgs_move_to_confirmation (GTK_WINDOW(main_win), folder, 
+	response = modest_ui_actions_msgs_move_to_confirmation (main_win, folder, 
 								TRUE, headers);
 	if (response == GTK_RESPONSE_CANCEL)
 		goto cleanup;
