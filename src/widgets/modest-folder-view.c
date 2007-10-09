@@ -1641,7 +1641,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	/* Transfer messages */
 	mail_op = modest_mail_operation_new_with_error_handling (NULL,
 								 modest_ui_actions_move_folder_error_handler,
-								 NULL);
+								 NULL, NULL);
 
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
@@ -1735,7 +1735,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 		mail_op = 
 			modest_mail_operation_new_with_error_handling (G_OBJECT (modest_window_mgr_get_main_window (mgr)),
 								       modest_ui_actions_move_folder_error_handler,
-								       folder);
+								       folder, NULL);
 
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 						 mail_op);

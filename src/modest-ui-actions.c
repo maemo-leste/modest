@@ -978,6 +978,20 @@ cleanup:
 	g_object_unref (folder);
 }
 
+
+static void
+open_msg_error_handler (ModestMailOperation *mail_op,
+			gpointer user_data)
+{
+	/* Show the message error */
+	GObject *win = modest_mail_operation_get_source (mail_op);
+
+	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, 
+						(gchar *) user_data);
+	if (win)
+		g_object_unref (win);
+}
+
 void
 modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
@@ -1134,11 +1148,12 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	iter_not_opened = NULL;
 
 	/* Create the mail operation */
-	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
-								 modest_ui_actions_get_msgs_full_error_handler, 
-								 NULL);
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	if (tny_list_get_length (not_opened_headers) > 1) {
+		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
+									 modest_ui_actions_get_msgs_full_error_handler, 
+									 NULL, NULL);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+		
 		modest_mail_operation_get_msgs_full (mail_op, 
 						     not_opened_headers, 
 						     open_msg_cb, 
@@ -1147,7 +1162,32 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	} else {
 		TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		const gchar *proto_name;
+		gchar *error_msg;
+		ModestTransportStoreProtocol proto;
+
+		/* Get the error message depending on the protocol */
+		proto_name = tny_account_get_proto (account);
+		proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+		
+		if (proto == MODEST_PROTOCOL_STORE_POP) {
+			error_msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
+		} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
+			error_msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
+						     tny_header_get_subject (header));
+		} else {
+			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
+		}
+
+		/* Create and call the mail operation */
+		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
+									 open_msg_error_handler, 
+									 error_msg,
+									 g_free);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+
 		modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
+
 		g_object_unref (header);
 		g_object_unref (iter);
 	}
@@ -1434,10 +1474,10 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		if (header) {
 			/* Retrieve messages */
 			if (do_retrieve) {
-				mail_op = modest_mail_operation_new_with_error_handling (
-					G_OBJECT(win),
-					modest_ui_actions_get_msgs_full_error_handler, 
-					NULL);
+				mail_op = 
+					modest_mail_operation_new_with_error_handling (G_OBJECT(win),
+										       modest_ui_actions_get_msgs_full_error_handler, 
+										       NULL, NULL);
 				modest_mail_operation_queue_add (
 					modest_runtime_get_mail_operation_queue (), mail_op);
 				
@@ -1644,7 +1684,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
 								 modest_ui_actions_send_receive_error_handler,
-								 NULL);
+								 NULL, NULL);
 
 	g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
 			  G_CALLBACK (on_send_receive_finished), 
@@ -2505,7 +2545,7 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 
 				mail_op  = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
 											  modest_ui_actions_new_folder_error_handler,
-											  parent_window);
+											  parent_window, NULL);
 
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 								 mail_op);
@@ -2625,7 +2665,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			mail_op = 
 				modest_mail_operation_new_with_error_handling (G_OBJECT(main_window),
 									       modest_ui_actions_rename_folder_error_handler,
-									       main_window);
+									       main_window, NULL);
 
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
@@ -2715,7 +2755,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		mail_op =
 			modest_mail_operation_new_with_error_handling (G_OBJECT(main_window),
 								       modest_ui_actions_delete_folder_error_handler,
-								       NULL);
+								       NULL, NULL);
 
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
@@ -4160,7 +4200,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header);
 		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
 									 modest_ui_actions_get_msgs_full_error_handler,
-									 NULL);
+									 NULL, NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		modest_mail_operation_get_msg (mail_op, header, open_msg_for_purge_cb, win);
 		
@@ -4233,7 +4273,7 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 	ModestMailOperation *mail_op = 
 		modest_mail_operation_new_with_error_handling (G_OBJECT(win),
 							       modest_ui_actions_move_folder_error_handler,
-							       NULL);
+							       NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
 
@@ -4306,7 +4346,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                         mail_op =
                           modest_mail_operation_new_with_error_handling (G_OBJECT(win),
                                                                          modest_ui_actions_move_folder_error_handler,
-                                                                         src_folder);
+                                                                         src_folder, NULL);
                         modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
                                                          mail_op);
 
@@ -4595,7 +4635,7 @@ modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
 	/* Create mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (window),
 								 modest_ui_actions_get_msgs_full_error_handler, 
-								 NULL);
+								 NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msgs_full (mail_op, headers, NULL, NULL, NULL);
 

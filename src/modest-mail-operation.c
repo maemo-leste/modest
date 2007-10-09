@@ -101,6 +101,7 @@ struct _ModestMailOperationPrivate {
 	GError                    *error;
 	ErrorCheckingUserCallback  error_checking;
 	gpointer                   error_checking_user_data;
+	ErrorCheckingUserDataDestroyer error_checking_user_data_destroyer;
 	ModestMailOperationStatus  status;	
 	ModestMailOperationTypeOperation op_type;
 };
@@ -330,7 +331,8 @@ modest_mail_operation_new (GObject *source)
 ModestMailOperation*
 modest_mail_operation_new_with_error_handling (GObject *source,
 					       ErrorCheckingUserCallback error_handler,
-					       gpointer user_data)
+					       gpointer user_data,
+					       ErrorCheckingUserDataDestroyer error_handler_destroyer)
 {
 	ModestMailOperation *obj;
 	ModestMailOperationPrivate *priv;
@@ -341,6 +343,7 @@ modest_mail_operation_new_with_error_handling (GObject *source,
 	g_return_val_if_fail (error_handler != NULL, obj);
 	priv->error_checking = error_handler;
 	priv->error_checking_user_data = user_data;
+	priv->error_checking_user_data_destroyer = error_handler_destroyer;
 
 	return obj;
 }
@@ -353,6 +356,7 @@ modest_mail_operation_execute_error_handler (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	g_return_if_fail(priv->status != MODEST_MAIL_OPERATION_STATUS_SUCCESS);	    
 
+	/* Call the user callback */
 	if (priv->error_checking != NULL)
 		priv->error_checking (self, priv->error_checking_user_data);
 }
@@ -2013,42 +2017,31 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
-	/* Get message from folder */
-	if (folder) {
-		/* Get account and set it into mail_operation */
-		priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	/* Get account and set it into mail_operation */
+	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	
+	/* Check for cached messages */
+	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
+		priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
+	else 
+		priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+	
+	helper = g_slice_new0 (GetMsgAsyncHelper);
+	helper->mail_op = self;
+	helper->user_callback = user_callback;
+	helper->user_data = user_data;
+	helper->header = g_object_ref (header);
 		
-		/* Check for cached messages */
-		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
-			priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
-		else 
-			priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+	/* The callback's reference so that the mail op is not
+	 * finalized until the async operation is completed even if
+	 * the user canceled the request meanwhile.
+	 */
+	g_object_ref (G_OBJECT (helper->mail_op));
 
-		helper = g_slice_new0 (GetMsgAsyncHelper);
-		helper->mail_op = self;
-		helper->user_callback = user_callback;
-		helper->user_data = user_data;
-		helper->header = g_object_ref (header);
+	modest_mail_operation_notify_start (self);
+	tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
 
-		// The callback's reference so that the mail op is not
-		// finalized until the async operation is completed even if
-		// the user canceled the request meanwhile.
-		g_object_ref (G_OBJECT (helper->mail_op));
-
-		modest_mail_operation_notify_start (self);
-		tny_folder_get_msg_async (folder, header, get_msg_cb, get_msg_status_cb, helper);
-
-		g_object_unref (G_OBJECT (folder));
-	} else {
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     _("Error trying to get a message. No folder found for header"));
-
-		/* Notify the queue */
-		modest_mail_operation_notify_end (self);
-	}
+	g_object_unref (G_OBJECT (folder));
 }
 
 static void
@@ -2862,6 +2855,10 @@ modest_mail_operation_notify_end (ModestMailOperation *self)
 	   not wrapp this emission because we assume that this
 	   function is always called from within the main lock */
 	g_signal_emit (G_OBJECT (self), signals[OPERATION_FINISHED_SIGNAL], 0, NULL);
+
+	/* Remove the error user data */
+	if (priv->error_checking_user_data && priv->error_checking_user_data_destroyer)
+		priv->error_checking_user_data_destroyer (priv->error_checking_user_data);
 }
 
 TnyAccount *

@@ -76,7 +76,7 @@ typedef enum {
 } ModestMailOperationTypeOperation;
 
 /**
- * ErrorCheckingAsyncUserCallback:
+ * ErrorCheckingUserCallback:
  *
  * @mail_op: the current mail operation.
  * @user_data: generic data passed to user defined function.
@@ -85,6 +85,17 @@ typedef enum {
  * states.  
  */
 typedef void (*ErrorCheckingUserCallback) (ModestMailOperation *mail_op, gpointer user_data);
+
+/**
+ * ErrorCheckingUserDataDestroyer:
+ *
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function is used to destroy the user_data passed to the error
+ * checking user callback function
+ */
+typedef void (*ErrorCheckingUserDataDestroyer) (gpointer user_data);
+
 
 /**
  * GetMsgAsyncUserCallback:
@@ -227,7 +238,8 @@ ModestMailOperation*    modest_mail_operation_new     (GObject *source);
  **/
 ModestMailOperation*    modest_mail_operation_new_with_error_handling     (GObject *source,
 									   ErrorCheckingUserCallback error_handler,
-									   gpointer user_data);
+									   gpointer user_data,
+									   ErrorCheckingUserDataDestroyer error_handler_destroyer);
 /**
  * modest_mail_operation_execute_error_handler
  * @self: a #ModestMailOperation

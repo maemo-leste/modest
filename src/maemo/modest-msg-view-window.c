@@ -1601,7 +1601,7 @@ message_reader (ModestMsgViewWindow *window,
 	/* New mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(window),
 								 modest_ui_actions_get_msgs_full_error_handler, 
-								 NULL);
+								 NULL, NULL);
 				
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, row_reference);
