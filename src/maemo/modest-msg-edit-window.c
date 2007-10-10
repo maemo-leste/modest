@@ -2046,15 +2046,27 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 		gboolean dialog_response;
 		GList *node;
 		gchar *message = NULL;
-		const gchar *filename = NULL;
+		gchar *filename = NULL;
 
 		if (att_list->next == NULL) {
-			filename = tny_mime_part_get_filename (TNY_MIME_PART (att_list->data));
+			if (TNY_IS_MSG (att_list->data)) {
+				TnyHeader *header = tny_msg_get_header (TNY_MSG (att_list->data));
+				if (header) {
+					filename = g_strdup (tny_header_get_subject (header));
+					g_object_unref (header);
+				}
+				if (filename == NULL) {
+					filename = g_strdup (_("mail_va_no_subject"));
+				}
+			} else {
+				filename = g_strdup (tny_mime_part_get_filename (TNY_MIME_PART (att_list->data)));
+			}
 		} else {
-			filename = "";
+			filename = g_strdup ("");
 		}
 		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", "emev_nc_delete_attachments",
 						    att_list->next == NULL), filename);
+		g_free (filename);
 		confirmation_dialog = hildon_note_new_confirmation (GTK_WINDOW (window), message);
 		g_free (message);
 		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
