@@ -1168,7 +1168,11 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 
 		/* Get the error message depending on the protocol */
 		proto_name = tny_account_get_proto (account);
-		proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+		if (proto_name != NULL) {
+			proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+		} else {
+			proto = MODEST_PROTOCOL_STORE_MAILDIR;
+		}
 		
 		if (proto == MODEST_PROTOCOL_STORE_POP) {
 			error_msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
