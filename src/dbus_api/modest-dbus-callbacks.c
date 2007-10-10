@@ -1174,6 +1174,8 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 		search.folder = folder + strlen ("MAND:");
 	} else if (folder && g_str_has_prefix (folder, "USER:")) {
 		search.folder = folder + strlen ("USER:");
+	} else if (folder && g_str_has_prefix (folder, "MY:")) {
+		search.folder = folder + strlen ("MY:");
 	} else {
 		search.folder = folder;
 	}
@@ -1358,6 +1360,8 @@ add_single_folder_to_list (TnyFolder *folder, GList** list)
 		folder_type = modest_tny_folder_guess_folder_type (folder);
 		switch (folder_type) {
 		case TNY_FOLDER_TYPE_INBOX:
+			prefix = "MY:";
+			break;
 		case TNY_FOLDER_TYPE_OUTBOX:
 		case TNY_FOLDER_TYPE_DRAFTS:
 		case TNY_FOLDER_TYPE_SENT:
