@@ -39,6 +39,7 @@
 
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-account-store.h"
+#include <widgets/modest-msg-view.h>
 
 /* 'private'/'protected' functions */
 static void modest_tny_platform_factory_class_init (ModestTnyPlatformFactoryClass *klass);
@@ -188,8 +189,8 @@ modest_tny_platform_factory_new_device (TnyPlatformFactory *self)
 static TnyMsgView*
 modest_tny_platform_factory_new_msg_view (TnyPlatformFactory *self)
 {
-	/* TODO */
-	return NULL;
+	/* Here we'll select one of the implementations available */
+	return g_object_new (MODEST_TYPE_MSG_VIEW, NULL);
 }
 
 static TnyMsg*

@@ -31,6 +31,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-folder-view.h           \
 	modest-global-settings-dialog.c \
 	modest-global-settings-dialog.h \
+	modest-gtkhtml-mime-part-view.c \
+	modest-gtkhtml-mime-part-view.h \
 	modest-hbox-cell-renderer.c    \
 	modest-hbox-cell-renderer.h    \
 	modest-vbox-cell-renderer.c    \
@@ -40,11 +42,15 @@ libmodest_widgets_la_SOURCES=          \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \
+	modest-isearch-view.c          \
+	modest-isearch-view.h          \
 	modest-limit-retrieve-combo-box.h \
 	modest-limit-retrieve-combo-box.c \
 	modest-mail-header-view.c      \
 	modest-mail-header-view.h      \
 	modest-main-window.h	       \
+	modest-mime-part-view.c        \
+	modest-mime-part-view.h        \
 	modest-msg-edit-window-ui.h    \
 	modest-msg-edit-window.h       \
 	modest-msg-view-window.h       \
@@ -69,7 +75,9 @@ libmodest_widgets_la_SOURCES=          \
 	modest-window.c                \
 	modest-window.h	               \
 	modest-window-mgr.h            \
-	modest-window-mgr.c
+	modest-window-mgr.c            \
+	modest-zoomable.h              \
+	modest-zoomable.c
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\

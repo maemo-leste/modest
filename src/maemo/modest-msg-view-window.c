@@ -1196,7 +1196,7 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 
 	msg_view = MODEST_MSG_VIEW (priv->msg_view);
 
-	return modest_msg_view_get_message (msg_view);
+	return tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 }
 
 const gchar*
@@ -1310,7 +1310,7 @@ modest_msg_view_window_set_zoom (ModestWindow *window,
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	modest_msg_view_set_zoom (MODEST_MSG_VIEW (priv->msg_view), zoom);
+	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 					    "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu");
@@ -1326,7 +1326,7 @@ modest_msg_view_window_get_zoom (ModestWindow *window)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), 1.0);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	return modest_msg_view_get_zoom (MODEST_MSG_VIEW (priv->msg_view));
+	return modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
 }
 
 static gboolean
@@ -1788,7 +1788,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
 
 	/* Set new message */
-	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	modest_msg_view_window_update_priority (self);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
 	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
@@ -1818,7 +1818,7 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 
 	folder_type = TNY_FOLDER_TYPE_UNKNOWN;
 
-	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
+	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 	if (msg) {
 		TnyFolder *folder;
 
@@ -2569,10 +2569,10 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 /* 		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data); */
 	}
 
-	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
-	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), NULL);
+	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+	tny_msg_view_clear (TNY_MSG_VIEW (priv->msg_view));
 	tny_msg_rewrite_cache (msg);
-	modest_msg_view_set_message (MODEST_MSG_VIEW (priv->msg_view), msg);
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 
 	g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
 	g_list_free (mime_parts);
@@ -2600,7 +2600,7 @@ update_window_title (ModestMsgViewWindow *window)
 	TnyHeader *header = NULL;
 	const gchar *subject = NULL;
 
-	msg = modest_msg_view_get_message (MODEST_MSG_VIEW (priv->msg_view));
+	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 	if (msg != NULL) {
 		header = tny_msg_get_header (msg);
 		subject = tny_header_get_subject (header);
