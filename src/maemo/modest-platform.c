@@ -36,7 +36,6 @@
 #include "maemo/modest-maemo-global-settings-dialog.h"
 #include "modest-widget-memory.h"
 #include <modest-hildon-includes.h>
-#include <osso-helplib.h>
 #include <modest-maemo-utils.h>
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <libosso-abook/osso-abook.h>
@@ -1291,12 +1290,7 @@ modest_platform_show_help (GtkWindow *parent_window,
 	g_return_if_fail (help_id);
 	g_return_if_fail (osso_context);
 
-	/* Show help */
-#ifdef MODEST_HAVE_OSSO_HELP
-	result = ossohelp_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
-#else
-	result = hildon_help_show (osso_context, help_id, OSSO_HELP_SHOW_DIALOG);
-#endif
+	result = hildon_help_show (osso_context, help_id, HILDON_HELP_SHOW_DIALOG);
 
 	if (result != OSSO_OK) {
 		gchar *error_msg;
@@ -1317,12 +1311,7 @@ modest_platform_set_dialog_help (GtkDialog *parent_window,
 	g_return_if_fail (osso_context);
 	g_return_if_fail (GTK_IS_DIALOG (parent_window));
 
-	/* Show help */
-#ifdef MODEST_HAVE_OSSO_HELP
-	result = ossohelp_dialog_help_enable (parent_window, help_id, osso_context);
-#else
 	result = hildon_help_dialog_help_enable (parent_window, help_id, osso_context);
-#endif
 
 	if (!result)
 		g_warning ("Help topic %s not found", help_id);

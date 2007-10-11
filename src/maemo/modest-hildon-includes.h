@@ -109,8 +109,21 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #define hildon_uri_open                      osso_uri_open
 
 #define hildon_mime_get_icon_names           osso_mime_get_icon_names 
-
 #endif /*MODEST_HAVE_OSSO_MIME*/
+
+
+
+/* helplib to use */
+#ifdef MODEST_HAVE_OSSO_HELP
+#define hildon_help_show               ossohelp_show
+#define hildon_help_dialog_help_enable ossohelp_dialog_help_enable
+#define HILDON_HELP_SHOW_DIALOG        OSSO_HELP_SHOW_DIALOG
+#else
+#ifdef MODEST_HAVE_HILDON_HELP
+/* nothing */
+#endif /*MODEST_HAVE_HILDON_HELP*/
+#endif /*MODEST_HAVE_OSSO_HELP*/
+
 
 
 #endif /*__MODEST_HILDON_INCLUDES__*/
