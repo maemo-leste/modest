@@ -1476,8 +1476,11 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 		if (event->keyval == GDK_Left)
 			gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
 		else if ((event->keyval == GDK_Return)||(event->keyval == GDK_KP_Enter)) {
-			hildon_banner_show_information (NULL, NULL, _("mcen_ib_select_one_message"));
-			return TRUE;
+			guint selected_headers = modest_header_view_count_selected_headers (MODEST_HEADER_VIEW (widget));
+			if (selected_headers > 1) {
+				hildon_banner_show_information (NULL, NULL, _("mcen_ib_select_one_message"));
+				return TRUE;
+			}
 		}
 	} else if (MODEST_IS_FOLDER_VIEW (widget) && event->keyval == GDK_Right)
 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
