@@ -84,8 +84,8 @@ static void modest_main_window_init        (ModestMainWindow *obj);
 static void modest_main_window_finalize    (GObject *obj);
 
 static gboolean modest_main_window_window_state_event (GtkWidget *widget, 
-							   GdkEventWindowState *event, 
-							   gpointer userdata);
+						       GdkEventWindowState *event, 
+						       gpointer userdata);
 
 static void connect_signals (ModestMainWindow *self);
 
@@ -177,6 +177,8 @@ static void on_updating_msg_list (ModestHeaderView *header_view,
 				  gboolean starting,
 				  gpointer user_data);
 
+static gboolean restore_paned_timeout_handler (gpointer *data);
+
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
@@ -217,6 +219,7 @@ struct _ModestMainWindowPrivate {
 	ModestMainWindowContentsStyle contents_style;
 
 	guint progress_bar_timeout;
+	guint restore_paned_timeout;
 
 	/* Signal handler UIDs */
 	GList *queue_err_signals;
@@ -347,6 +350,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->optimized_view  = FALSE;
 	priv->send_receive_in_progress  = FALSE;
 	priv->progress_bar_timeout = 0;
+	priv->restore_paned_timeout = 0;
 	priv->sighandlers = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
@@ -379,6 +383,11 @@ modest_main_window_finalize (GObject *obj)
 		priv->updating_banner_timeout = 0;
 	}
 
+	if (priv->restore_paned_timeout > 0) {
+		g_source_remove (priv->restore_paned_timeout);
+		priv->restore_paned_timeout = 0;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -407,6 +416,21 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 	return widget ? GTK_WIDGET(widget) : NULL;
 }
 
+static gboolean 
+restore_paned_timeout_handler (gpointer *data)
+{
+	ModestMainWindow *main_window = MODEST_MAIN_WINDOW (data);
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
+	ModestConf *conf;
+
+	if (GTK_WIDGET_VISIBLE (main_window)) {
+		conf = modest_runtime_get_conf ();
+		modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
+					      MODEST_CONF_MAIN_PANED_KEY);
+	}
+	return FALSE;
+}
+
 
 static void
 restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
@@ -430,6 +454,8 @@ restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 
 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 				      MODEST_CONF_MAIN_PANED_KEY);
+
+	g_timeout_add (500, (GSourceFunc) restore_paned_timeout_handler, self);
 
 	/* We need to force a redraw here in order to get the right
 	   position of the horizontal paned separator */
@@ -871,7 +897,7 @@ connect_signals (ModestMainWindow *self)
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (self), "window-state-event",
 					   G_CALLBACK (modest_main_window_window_state_event),
 					   NULL);
-	
+
 	/* Mail Operation Queue */
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,
