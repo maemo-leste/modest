@@ -1729,7 +1729,41 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 
 }
 
+#ifdef MODEST_HILDON_VERSION_0
+void
+modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
+{
+	
+	WPTextBufferFormat *buffer_format = g_new0 (WPTextBufferFormat, 1);
+	ModestMsgEditWindowPrivate *priv;
+	GtkWidget *dialog = NULL;
+	gint response;
+	GdkColor *new_color = NULL;
 
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
+	
+	dialog = hildon_color_selector_new (GTK_WINDOW (window));
+	hildon_color_selector_set_color (HILDON_COLOR_SELECTOR (dialog), &(buffer_format->color));
+	g_free (buffer_format);
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+	switch (response) {
+	case GTK_RESPONSE_OK: {
+		new_color = hildon_color_selector_get_color (HILDON_COLOR_SELECTOR (dialog));
+	}
+		break;
+	default:
+		break;
+	}
+	gtk_widget_destroy (dialog);
+	
+	if (new_color != NULL) {
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) new_color);
+		/* FIXME: free new_color here? */
+	}
+}
+#else 
 void
 modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 {
@@ -1739,41 +1773,33 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 	GtkWidget *dialog = NULL;
 	gint response;
 	const GdkColor *new_color = NULL;
-	
+	GdkColor col;
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
-	
-#ifdef MODEST_HILDON_VERSION_0	
-	dialog = hildon_color_selector_new (GTK_WINDOW (window));
-	hildon_color_selector_set_color (HILDON_COLOR_SELECTOR (dialog), &(buffer_format->color));
-#else
+		
 	dialog = hildon_color_chooser_new ();
 	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog), &(buffer_format->color));
-#endif /*MODEST_HILDON_VERSION_0*/		
 	g_free (buffer_format);
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
 	case GTK_RESPONSE_OK: {
-#ifdef MODEST_HILDON_VERSION_0
-		new_color = hildon_color_selector_get_color (HILDON_COLOR_SELECTOR (dialog));
-#else
-		GdkColor col;
 		hildon_color_chooser_get_color (HILDON_COLOR_CHOOSER(dialog), &col);
 		new_color = &col;
-#endif /*MODEST_HILDON_VERSION_0*/
 	}
-
-	break;
+		
+		break;
 	default:
 		break;
 	}
 	gtk_widget_destroy (dialog);
-
 	if (new_color != NULL)
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) new_color);
-
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR,
+					      (gpointer) new_color);
 }
+
+#endif /*!MODEST_HILDON_VERSION_0*/
 
 void
 modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
