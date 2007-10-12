@@ -16,10 +16,10 @@ modest (1.0-2007.41-1) gutsy; urgency=low
   * Fixes: NB#63815, NB#67694, NB#66489, NB#66430, NB#61113, NB#66729
   * Fixes: NB#63405, NB#64463, NB#62792, NB#61007, NB#62764, NB#59971
   * Fixes: NB#57740, NB#64738, NB#64129, NB#65599, NB#62423, NB#65091
-  * Fixes: NB#66769, NB#63115
+  * Fixes: NB#66769, NB#63115, NB#69536, NB#64698, NB#66044, NB#65064
   * Consolidated all the bug fixes for diablo build.
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 10 Oct 2007 15:47:40 +0300
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 12 Oct 2007 12:04:40 +0300
 
 modest (1.0-2007.38-2) gutsy; urgency=low
 
