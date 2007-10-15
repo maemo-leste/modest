@@ -309,7 +309,6 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
 {
 	ModestConfPrivate *priv;
 	GConfValueType gconf_type;
-	gboolean result;
        
 	g_return_val_if_fail (self, FALSE);
 	g_return_val_if_fail (key, FALSE);
@@ -317,31 +316,8 @@ modest_conf_set_list (ModestConf* self, const gchar* key,
 	priv = MODEST_CONF_GET_PRIVATE(self);
 
 	gconf_type = modest_conf_type_to_gconf_type (list_type, err);
-	if (*err)
-		return FALSE;
 
-	result = gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
-	if(*err) {
-		g_warning("gconf_client_set_list() failed with key=%s. error=%s", key,
-			  (*err)->message);
-		result = FALSE;
-	}
-       
-	/* TODO: Remove this, when we fix the problem: */
-	/* This shows that sometimes set_list fails, while saying that it succeeded: */
-	if (result) {
-		const gint debug_list_length_start = g_slist_length(val);
-		GSList* debug_list = gconf_client_get_list(priv->gconf_client, key, gconf_type, err);
-		const gint debug_list_length_after = g_slist_length(debug_list);
-	       
-		if(debug_list_length_start != debug_list_length_after)
-			g_warning("modest_conf_set_list(): The list length after setting is "
-				  "not the same as the specified list. key=%s. "
-				  "We think that we fixed this, so tell us if you see this.", key);
-		g_slist_free(debug_list);
-	}
-	
-	return result;
+	return gconf_client_set_list (priv->gconf_client, key, gconf_type, val, err);
 }
 
 

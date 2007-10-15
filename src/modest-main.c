@@ -32,6 +32,7 @@
 #include <glib.h>
 #include <modest-runtime.h>
 #include <modest-init.h>
+#include "modest-platform.h"
 #include <gdk/gdk.h>
 #include <widgets/modest-main-window.h>
 #include <string.h>
@@ -84,13 +85,20 @@ main (int argc, char *argv[])
 	 * The UI will be shown later (or just after starting if no otehr D-Bus method was used),
 	 * when we receive the "top_application" D-Bus method.
 	 */
-	if (show_ui_without_top_application_method)
+	if (show_ui_without_top_application_method) {
 		gtk_widget_show_all (GTK_WIDGET(win));
+
+		/* Remove new mail notifications if exist */
+		modest_platform_remove_new_mail_notifications ();
+	}
 	
 	gtk_main ();
 
 cleanup:
 	gdk_threads_leave ();
+
+	/* Remove new mail notifications if exist */
+/* 	modest_platform_remove_new_mail_notifications (); */
 
 	if (!modest_init_uninit ()) {
 		g_printerr ("modest: modest_init_uninit failed\n");

@@ -41,6 +41,7 @@
 #define _FM(str) dgettext("hildon-fm",str)
 #define _CS(str) dgettext("hildon-common-strings",str)
 #define _HL(str) dgettext("hildon-libs",str)
+#define _MD(str) dgettext("maemo-af-desktop",str)
 
 /* Forbidden char arrays */
 extern const gchar account_title_forbidden_chars[];
@@ -203,13 +204,10 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t 
  * ie. removes "<...>" and "(...)" parts
  * the change is in-place; removes leading/trailing whitespace
  * 
- * Returns: the new address of the string; this new string
- * is _NOT_ newly allocated, so should not be freed. (remember
- * the old address of the parameter if that one needs to be freed)
- * 
- * NULL in case of error or if address == NULL
+ * Returns: a new allocated string with the display address. NULL in
+ * case of error or if address == NULL
  */
-gchar* modest_text_utils_get_display_address (gchar *address);
+gchar* modest_text_utils_get_display_address (const gchar *address);
 
 /**
  * modest_text_utils_get_email_address:

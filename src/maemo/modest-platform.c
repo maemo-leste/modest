@@ -59,6 +59,11 @@
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
 
+/* The maximun number of notifications that could be shown in the
+   desktop. It's specified by the specs and limited by the screen
+   size */
+#define MAX_NOTIFICATIONS 6
+
 static osso_context_t *osso_context = NULL;
 
 static void	
@@ -1215,71 +1220,146 @@ modest_platform_set_update_interval (guint minutes)
 	return TRUE;
 }
 
+void 
+modest_platform_on_new_headers_received (TnyList *header_list) 
+{
+#ifdef MODEST_HAVE_HILDON_NOTIFY
+	HildonNotification *notification;
+	TnyIterator *iter;
+	GSList *notifications_list = NULL;
+
+	/* Get previous notifications ids */
+	notifications_list = modest_conf_get_list (modest_runtime_get_conf (), 
+						   MODEST_CONF_NOTIFICATION_IDS, 
+						   MODEST_CONF_VALUE_INT, NULL);
+
+	iter = tny_list_create_iterator (header_list);
+	while (!tny_iterator_is_done (iter)) {
+		gchar *url = NULL, *display_address = NULL, *display_date = NULL, *summary = NULL;
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		TnyFolder *folder = tny_header_get_folder (header);
+		gboolean first_notification = TRUE;
+		gint notif_id;
+	
+		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
+		display_address = modest_text_utils_get_display_address (tny_header_get_from (header));
+		summary = g_strdup_printf ("%s - %s", display_date, display_address);
+		notification = hildon_notification_new (summary,
+							tny_header_get_subject (header),
+							"qgn_list_messagin",
+							"email.arrive");
+		
+		/* Create the message URL */
+		url = g_strdup_printf ("%s/%s", tny_folder_get_url_string (folder), 
+				       tny_header_get_uid (header));
+
+		hildon_notification_add_dbus_action(notification,
+						    "default",
+						    "Cancel",
+						    MODEST_DBUS_SERVICE,
+						    MODEST_DBUS_OBJECT,
+						    MODEST_DBUS_IFACE,
+						    MODEST_DBUS_METHOD_OPEN_MESSAGE,
+						    G_TYPE_STRING, url,
+						    -1);
+
+		/* Play sound if the user wants. Show the LED
+		   pattern. Show and play just one */
+		if (G_UNLIKELY (first_notification)) {
+			first_notification = FALSE;
+			if (modest_conf_get_bool (modest_runtime_get_conf (),
+						  MODEST_CONF_PLAY_SOUND_MSG_ARRIVE,
+						  NULL))  {
+				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
+								    "sound-file", "/usr/share/sounds/ui-new_email.wav");
+			}
+
+			/* Set the led pattern */
+			notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
+							    "dialog-type", 4);
+			notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
+							    "led-pattern",
+							    "PatternCommunicationEmail");			
+		}
+
+		/* Notify. We need to do this in an idle because this function
+		   could be called from a thread */
+		notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL);
+
+		/* Save id in the list */
+		g_object_get(G_OBJECT(notification), "id", &notif_id, NULL);
+		notifications_list = g_slist_prepend (notifications_list, GINT_TO_POINTER(notif_id));
+		/* We don't listen for the "closed" signal, because we
+		   don't care about if the notification was removed or
+		   not to store the list in gconf */
+	
+		/* Free & carry on */
+		g_free (display_date);
+		g_free (display_address);
+		g_free (summary);
+		g_free (url);
+		g_object_unref (folder);
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	/* Save the ids */
+	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 
+			      notifications_list, MODEST_CONF_VALUE_INT, NULL);
+
+	g_slist_free (notifications_list);
+	
+#endif /*MODEST_HAVE_HILDON_NOTIFY*/
+}
+
+void
+modest_platform_remove_new_mail_notifications (void) 
+{
+#ifdef MODEST_HAVE_HILDON_NOTIFY
+	GSList *notif_list = NULL;
+
+	/* Get previous notifications ids */
+	notif_list = modest_conf_get_list (modest_runtime_get_conf (), 
+					   MODEST_CONF_NOTIFICATION_IDS, 
+					   MODEST_CONF_VALUE_INT, NULL);
+
+        while (notif_list) {
+		gint notif_id;
+		NotifyNotification *notif;
+
+		/* Nasty HACK to remove the notifications, set the id
+		   of the existing ones and then close them */
+		notif_id = GPOINTER_TO_INT(notif_list->data);
+		notif = notify_notification_new("dummy", NULL, NULL, NULL);
+		g_object_set(G_OBJECT(notif), "id", notif_id, NULL);
+
+		/* Close the notification, note that some ids could be
+		   already invalid, but we don't care because it does
+		   not fail */
+		notify_notification_close(notif, NULL);
+		g_object_unref(notif);
+
+		/* Delete the link, it's like going to the next */
+		notif_list = g_slist_delete_link (notif_list, notif_list);
+        }
+
+	/* Save the ids */
+	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 
+			      notif_list, MODEST_CONF_VALUE_INT, NULL);
+
+	g_slist_free (notif_list);
+
+#endif /* MODEST_HAVE_HILDON_NOTIFY */
+}
+
+
+
 GtkWidget * 
 modest_platform_get_global_settings_dialog ()
 {
 	return modest_maemo_global_settings_dialog_new ();
 }
-
-void 
-modest_platform_on_new_header_received (TnyHeader *header)
-{
-#ifdef MODEST_HAVE_HILDON_NOTIFY
-	HildonNotification *notification;
-	gchar *url = NULL;
-	TnyFolder *folder = NULL;
-	const gchar *subject;
-
-	subject = tny_header_get_subject (header);
-	if (!subject || strlen(subject) == 0)
-		subject = _("mail_va_no_subject");
-	
-	notification = hildon_notification_new (tny_header_get_from (header),
-						subject,
-						"qgn_list_messagin",
-						NULL);
-
-	folder = tny_header_get_folder (header);
-	url = g_strdup_printf ("%s/%s", 
-			       tny_folder_get_url_string (folder), 
-			       tny_header_get_uid (header));
-	g_object_unref (folder);
-
-	hildon_notification_add_dbus_action(notification,
-					    "default",
-					    "Cancel",
-					    MODEST_DBUS_SERVICE,
-					    MODEST_DBUS_OBJECT,
-					    MODEST_DBUS_IFACE,
-					    MODEST_DBUS_METHOD_OPEN_MESSAGE,
-					    G_TYPE_STRING, url,
-					    -1);
-	g_free (url);
-	
-	/* Play sound if the user wants */
-	if (modest_conf_get_bool (modest_runtime_get_conf (), 
-				  MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, 
-				  NULL)) {
-		hildon_notification_set_sound (HILDON_NOTIFICATION(notification),
-					       "/usr/share/sounds/ui-new_email.wav");
-	}
-	
-	/* Set the led pattern */
-	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION(notification),
-					    "dialog-type", 4);
-	notify_notification_set_hint_string(NOTIFY_NOTIFICATION(notification), 
-					    "led-pattern", 
-					    "PatternCommunicationEmail");
-
-	/* Notify. We need to do this in an idle because this function
-	   could be called from a thread */
-	if (!notify_notification_show (NOTIFY_NOTIFICATION(notification), NULL))
-		g_error ("Failed to send notification");
-	
-	g_object_unref (notification);
-#endif /*MODEST_HAVE_HILDON_NOTIFY*/
-}
-
 
 void
 modest_platform_show_help (GtkWindow *parent_window, 

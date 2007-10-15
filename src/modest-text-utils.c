@@ -953,36 +953,35 @@ hyperlinkify_plain_text (GString *txt)
 }
 
 
-
 gchar*
-modest_text_utils_get_display_address (gchar *address)
+modest_text_utils_get_display_address (const gchar *address)
 {
-	gchar *cursor;
+	gchar *display;
+	gchar **tokens;
+	gint i = 0;
 	
 	if (!address)
 		return NULL;
-	
+
 	g_return_val_if_fail (g_utf8_validate (address, -1, NULL), NULL);
 	
-	g_strchug (address); /* remove leading whitespace */
+	tokens = g_strsplit_set ((const gchar*) address, "<>()", 3);
 
-	/*  <email@address> from display name */
-	cursor = g_strstr_len (address, strlen(address), "<");
-	if (cursor == address) /* there's nothing else? leave it */
-		return address;
-	if (cursor) 
-		cursor[0]='\0';
+	/* Note that if any of the delimiters is the first character
+	   then g_strsplit_set will return "" as the first string */
+	while (tokens[i] != NULL) {
+		if (strlen ((char *) (tokens[i])) != 0)
+			break;
+		i++;
+	}
 
-	/* remove (bla bla) from display name */
-	cursor = g_strstr_len (address, strlen(address), "(");
-	if (cursor == address) /* there's nothing else? leave it */
-		return address;
-	if (cursor) 
-		cursor[0]='\0';
+	display = g_strdup (tokens [i]);
+	g_strchug (display);
 
-	g_strchomp (address); /* remove trailing whitespace */
+	/* Free the other tokens */
+	g_strfreev (tokens);
 
-	return address;
+	return display;
 }
 
 gchar *

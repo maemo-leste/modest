@@ -182,4 +182,7 @@
 #define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
 #define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
 
+/* Notification ids */
+#define MODEST_CONF_NOTIFICATION_IDS MODEST_CONF_NAMESPACE "/notification_ids"      /* list of ints */
+
 #endif /*__MODEST_DEFS_H__*/

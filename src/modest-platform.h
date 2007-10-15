@@ -275,8 +275,14 @@ gboolean modest_platform_set_update_interval (guint minutes);
  **/
 GtkWidget* modest_platform_get_global_settings_dialog (void);
 
-void modest_platform_on_new_header_received (TnyHeader *header);
-
+/**
+ * modest_platform_on_new_headers_received:
+ * @header_list: the list of new received headers
+ *
+ * Performs the required actions when new headers are
+ * received. Tipically it's useful for showing new email notifications
+ **/
+void modest_platform_on_new_headers_received (TnyList *header_list);
 
 /**
  * modest_platform_show_help:
@@ -366,6 +372,13 @@ gboolean modest_platform_run_certificate_conformation_dialog (const gchar* serve
  **/
 gboolean modest_platform_run_alert_dialog (const gchar* prompt, gboolean is_question);
 
+
+/**
+ * modest_platform_remove_new_mail_notifications:
+ *
+ * Removes all the active new mail notifications
+ **/
+void modest_platform_remove_new_mail_notifications (void);
 
 G_END_DECLS
 
