@@ -2623,3 +2623,15 @@ modest_ui_dimming_rules_on_save_to_drafts (ModestWindow *win,
 
 	return dimmed;	
 }
+
+gboolean
+modest_ui_dimming_rules_on_insert_image (ModestWindow *win,
+					 gpointer user_data)
+{
+	g_return_val_if_fail (MODEST_MSG_EDIT_WINDOW (win), FALSE);
+
+	ModestMsgEditFormat format =
+	  modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW (win));
+
+	return (format != MODEST_MSG_EDIT_FORMAT_HTML);
+}
