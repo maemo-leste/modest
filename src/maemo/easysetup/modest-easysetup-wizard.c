@@ -88,6 +88,15 @@ struct _ModestEasysetupWizardDialogPrivate
 	gboolean dirty;
 };
 
+static gboolean
+on_delete_event (GtkWidget *widget,
+		 GdkEvent *event,
+		 ModestEasysetupWizardDialog *wizard)
+{
+	gtk_dialog_response (GTK_DIALOG (wizard), GTK_RESPONSE_CANCEL);
+	return TRUE;
+}
+
 static void
 on_easysetup_changed(GtkWidget* widget, ModestEasysetupWizardDialog* wizard)
 {
@@ -345,10 +354,12 @@ on_combo_account_country (GtkComboBox *widget, gpointer user_data)
 	priv->dirty = TRUE;
 	
 	/* Fill the providers combo, based on the selected country: */
-	gint mcc = easysetup_country_combo_box_get_active_country_mcc (
-		EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
-	easysetup_provider_combo_box_fill (
-		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider), priv->presets, mcc);
+	if (priv->presets != NULL) {
+		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
+			EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
+		easysetup_provider_combo_box_fill (
+			EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider), priv->presets, mcc);
+	}
 }
 
 static void
@@ -437,6 +448,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
             
 	/* The service provider widgets: */	
 	self->combo_account_serviceprovider = GTK_WIDGET (easysetup_provider_combo_box_new ());
+	gtk_widget_set_size_request (self->combo_account_serviceprovider, 320, -1);
 	
 	caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_serviceprovider"), 
 						   self->combo_account_serviceprovider, NULL, HILDON_CAPTION_OPTIONAL);
@@ -1094,6 +1106,7 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 			/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
 
 			const gint dialog_response = gtk_dialog_run (dialog);
+			self->combo_account_country = NULL;
 			gtk_widget_destroy (GTK_WIDGET (dialog));
 
 			if (dialog_response != GTK_RESPONSE_OK) {
@@ -1102,6 +1115,61 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 			}
 		}
 	}
+}
+
+typedef struct IdleData {
+	ModestEasysetupWizardDialog *dialog;
+	ModestPresets *presets;
+} IdleData;
+
+gboolean
+presets_idle (gpointer userdata)
+{
+	IdleData *idle_data = (IdleData *) userdata;
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (idle_data->dialog);
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
+
+	g_assert (idle_data->presets);
+
+	gdk_threads_enter ();
+
+	priv->presets = idle_data->presets;
+
+	if (self->combo_account_country) {
+		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
+			EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
+		easysetup_provider_combo_box_fill (
+			EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider), priv->presets, mcc);
+	}
+
+	g_object_unref (idle_data->dialog);
+	g_free (idle_data);
+
+	gdk_threads_leave ();
+
+	return FALSE;
+}
+
+gpointer
+presets_loader (gpointer userdata)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (userdata);
+	ModestPresets *presets = NULL;
+	IdleData *idle_data;
+
+	const gchar* filepath = MODEST_PROVIDERS_DATA_PATH; /* Defined in config.h */
+	presets = modest_presets_new (filepath);
+	if (!(presets)) {
+		g_warning ("Could not locate the official provider data keyfile from %s", filepath);
+	}
+
+	idle_data = g_new0 (IdleData, 1);
+	idle_data->dialog = self;
+	idle_data->presets = presets;
+
+	g_idle_add (presets_idle, idle_data);
+
+	return NULL;
 }
 
 static void
@@ -1123,14 +1191,6 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Read in the information about known service providers: */
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	
-	const gchar* filepath = MODEST_PROVIDERS_DATA_PATH; /* Defined in config.h */
-	priv->presets = modest_presets_new (filepath);
-	if (!(priv->presets)) {
-		g_warning ("Could not locate the official provider data keyfile from %s", filepath);
-	}
-	
-	g_assert(priv->presets);
-
 	/* The server fields did not have been manually changed yet */
 	priv->server_changes = 0;
 
@@ -1198,6 +1258,9 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	g_signal_connect (G_OBJECT (self), "response",
 	                  G_CALLBACK (on_response_before), self);
 
+	g_signal_connect (G_OBJECT (self), "delete-event",
+			  G_CALLBACK (on_delete_event), self);
+
 	/* Reset dirty, because there was no user input until now */
 	priv->dirty = FALSE;
 	
@@ -1205,6 +1268,11 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
 		modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+
+	/* Load provider presets */
+	g_object_ref (self);
+	g_thread_create (presets_loader, self, FALSE, NULL);
+
 }
 
 ModestEasysetupWizardDialog*
