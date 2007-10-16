@@ -78,7 +78,17 @@ static void         on_account_removed     (TnyAccountStore *self,
 static void          on_selection_changed   (GtkTreeSelection *sel,
 					     gpointer user_data);
 
-static void          setup_drag_and_drop    (GtkTreeView *self);
+static gboolean      on_button_press_event  (GtkWidget * self, GdkEventButton * event,
+                                             gpointer userdata);
+
+static gboolean      on_button_release_event(GtkWidget * self, GdkEventButton * event,
+                                             gpointer userdata);
+
+static void          setup_drag_and_drop    (GtkWidget *self);
+
+static void          enable_drag_and_drop   (GtkWidget *self);
+
+static void          disable_drag_and_drop  (GtkWidget *self);
 
 static GtkTreePath * get_selected_row       (GtkTreeView *self, GtkTreeModel **model);
 
@@ -563,7 +573,7 @@ modest_header_view_init (ModestHeaderView *obj)
 		}			
 	}
 
-	setup_drag_and_drop (GTK_TREE_VIEW (obj));
+	setup_drag_and_drop (GTK_WIDGET(obj));
 }
 
 static void
@@ -665,6 +675,11 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 			  G_CALLBACK(on_focus_in), NULL);
 	g_signal_connect (self, "focus-out-event",
 			  G_CALLBACK(on_focus_out), NULL);
+
+	g_signal_connect (self, "button-press-event",
+			  G_CALLBACK(on_button_press_event), NULL);
+	g_signal_connect (self, "button-release-event",
+			  G_CALLBACK(on_button_release_event), NULL);
 	
 	priv->acc_removed_handler = g_signal_connect (modest_runtime_get_account_store (),
 						      "account_removed",
@@ -1474,14 +1489,24 @@ const GtkTargetEntry header_view_drag_types[] = {
 };
 
 static void
-setup_drag_and_drop (GtkTreeView *self)
+enable_drag_and_drop (GtkWidget *self)
 {
-	gtk_drag_source_set (GTK_WIDGET (self),
-			     GDK_BUTTON1_MASK,
+	gtk_drag_source_set (self, GDK_BUTTON1_MASK,
 			     header_view_drag_types,
 			     G_N_ELEMENTS (header_view_drag_types),
 			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
+}
 
+static void
+disable_drag_and_drop (GtkWidget *self)
+{
+	gtk_drag_source_unset (self);
+}
+
+static void
+setup_drag_and_drop (GtkWidget *self)
+{
+	enable_drag_and_drop(self);
 	g_signal_connect(G_OBJECT (self), "drag_data_get",
 			 G_CALLBACK(drag_data_get_cb), NULL);
 
@@ -1608,6 +1633,39 @@ on_focus_out (GtkWidget     *self,
 			g_list_free (selected_rows);
 		}
 	}
+	return FALSE;
+}
+
+static gboolean
+on_button_release_event(GtkWidget * self, GdkEventButton * event, gpointer userdata)
+{
+	enable_drag_and_drop(self);
+	return FALSE;
+}
+
+static gboolean
+on_button_press_event(GtkWidget * self, GdkEventButton * event, gpointer userdata)
+{
+	GtkTreeSelection *selection = NULL;
+	GtkTreePath *path = NULL;
+	gboolean already_selected = FALSE;
+
+	if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(self), event->x, event->y, &path, NULL, NULL, NULL)) {
+		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
+		already_selected = gtk_tree_selection_path_is_selected (selection, path);
+	}
+
+	/* Enable drag and drop onlly if the user clicks on a row that
+	   it's already selected. If not, let him select items using
+	   the pointer */
+	if (!already_selected) {
+		disable_drag_and_drop(self);
+	}
+
+	if (path != NULL) {
+		gtk_tree_path_free(path);
+	}
+
 	return FALSE;
 }
 
