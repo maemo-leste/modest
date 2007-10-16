@@ -705,7 +705,7 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	/* Show the window: */	
 	gtk_window_set_transient_for (GTK_WINDOW (self->specific_window), GTK_WINDOW (self));
 	gtk_window_set_modal (GTK_WINDOW (self->specific_window), TRUE);
-    gtk_widget_show (self->specific_window);
+	gtk_widget_show (self->specific_window);
 }
 
 static void
