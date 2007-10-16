@@ -183,7 +183,8 @@ parse_mcc_mapping_line (const char* line,  char** country)
 	mcc[2] = line[2];
 	
 	*country = my_country;
-	return effective_mcc (atoi((const char *)mcc));
+
+	return effective_mcc ((int) strtol ((const char*)mcc, NULL, 10));
 }
 
 /** Note that the mcc_mapping file is installed 
