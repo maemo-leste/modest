@@ -1242,7 +1242,10 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 		gint notif_id;
 	
 		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
-		display_address = modest_text_utils_get_display_address (tny_header_get_from (header));
+
+		display_address = g_strdup(tny_header_get_from (header));
+		modest_text_utils_get_display_address (display_address); /* string is changed in-place */
+		
 		summary = g_strdup_printf ("%s - %s", display_date, display_address);
 		notification = hildon_notification_new (summary,
 							tny_header_get_subject (header),

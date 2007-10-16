@@ -953,36 +953,39 @@ hyperlinkify_plain_text (GString *txt)
 }
 
 
-gchar*
-modest_text_utils_get_display_address (const gchar *address)
+/* for optimization reasons, we change the string in-place */
+void
+modest_text_utils_get_display_address (gchar *address)
 {
-	gchar *display;
-	gchar **tokens;
-	gint i = 0;
+	int i;
 	
 	if (!address)
-		return NULL;
-
-	g_return_val_if_fail (g_utf8_validate (address, -1, NULL), NULL);
+		return;
 	
-	tokens = g_strsplit_set ((const gchar*) address, "<>()", 3);
-
-	/* Note that if any of the delimiters is the first character
-	   then g_strsplit_set will return "" as the first string */
-	while (tokens[i] != NULL) {
-		if (strlen ((char *) (tokens[i])) != 0)
-			break;
-		i++;
+	/* should not be needed, and otherwise, we probably won't screw up the address
+	 * more than it already is :) 
+	 * g_return_val_if_fail (g_utf8_validate (address, -1, NULL), NULL);
+	 * */
+	
+	/* remove leading whitespace */
+	if (address[0] == ' ')
+		g_strchug (address);
+		
+	for (i = 0; address[i]; ++i) {
+		if (address[i] == '<') {
+			if (G_UNLIKELY(i == 0))
+				return; /* there's nothing else, leave it */
+			else {
+				address[i] = '\0'; /* terminate the string here */
+				return;
+			}
+		}
 	}
-
-	display = g_strdup (tokens [i]);
-	g_strchug (display);
-
-	/* Free the other tokens */
-	g_strfreev (tokens);
-
-	return display;
 }
+
+
+
+
 
 gchar *
 modest_text_utils_get_email_address (const gchar *full_address)
@@ -1142,6 +1145,8 @@ modest_text_utils_validate_domain_name (const gchar *domain)
 	regex_t rx;
 	const gchar* domain_regex = "^[a-z0-9]([.]?[a-z0-9-])*[a-z0-9]$";
 
+	memset (&rx, 0, sizeof(regex_t)); /* coverity wants this... */
+	
 	if (!domain)
 		return FALSE;
 	

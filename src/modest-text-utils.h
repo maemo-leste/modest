@@ -200,14 +200,14 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t 
  * @address: original address (UTF8 string)
  *
  * make a 'display address' from an address:
- * "Foo Bar <foo@bar.cx> (Bla)" --> "Foo Bar"
- * ie. removes "<...>" and "(...)" parts
- * the change is in-place; removes leading/trailing whitespace
+ * "Foo Bar <foo@bar.cx>" --> "Foo Bar"
+ * ie. removes "<...>" parts
+ * the change is in-place; removes leading whitespace
  * 
- * Returns: a new allocated string with the display address. NULL in
- * case of error or if address == NULL
+ * NOTE: for optimization reasons, this function changes @address
+ * in-place
  */
-gchar* modest_text_utils_get_display_address (const gchar *address);
+void modest_text_utils_get_display_address (gchar *address);
 
 /**
  * modest_text_utils_get_email_address:
@@ -381,7 +381,18 @@ typedef enum {
 	USER_NAME_FORBIDDEN_NAMES,
 } ModestTextUtilsForbiddenCharType;
 
+
+/**
+ * modest_text_utils_is_forbidden_char:
+ * @character: some character
+ * @type: the type of forbidden char (see #ModestTextUtilsForbiddenCharType)
+ * 
+ * check whether the given character is 'forbidden'
+ *
+ * Returns: TRUE if it's forbidden, FALSE otherwise
+ */
 gboolean     modest_text_utils_is_forbidden_char (const gchar character,
 						  ModestTextUtilsForbiddenCharType type);
+
 
 #endif /* __MODEST_TEXT_UTILS_H__ */

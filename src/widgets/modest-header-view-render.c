@@ -264,7 +264,7 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,
 						gboolean is_sender)
 {
 	TnyHeaderFlags flags;
-	gchar *address, *display_address;
+	gchar *address;
 	gint sender_receiver_col;
 
 	if (is_sender)
@@ -277,13 +277,13 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    -1);
 	
-	display_address = modest_text_utils_get_display_address (address);
+	modest_text_utils_get_display_address (address); /* string is changed in-place */
 	g_object_set (G_OBJECT(renderer),
 		      "text",
-		      display_address,
+		      address,
 		      NULL);
-	g_free (display_address);
 	g_free (address);
+
 	set_common_flags (renderer, flags);
 }
 /*
@@ -305,7 +305,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	
 	TnyHeaderFlags flags = 0;
 	TnyHeaderFlags prior_flags = 0;
-	gchar *address = NULL, *display_address;
+	gchar *address = NULL;
 	gchar *subject = NULL;
 	gchar *header = NULL;
 	time_t date = 0;
@@ -376,12 +376,10 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 
 	/* FIXME: we hardcode the color to #666666; instead we should use SecondaryTextColour from the
 	 * theme (gtkrc file) */
-	display_address = modest_text_utils_get_display_address (address);
+	modest_text_utils_get_display_address (address); /* changed in-place */
 	header = g_markup_printf_escaped ("<span size='small' foreground='#666666'>%s</span>",
-					  display_address);
-	g_free (display_address);
+					  address);
 	g_free (address);
-	address = display_address = NULL;
 	g_object_set (G_OBJECT (recipient_cell),
 		      "markup", header,
 		      NULL);
