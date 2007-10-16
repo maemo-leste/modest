@@ -1151,8 +1151,7 @@ on_response (GtkDialog *wizard_dialog,
 					
 					hildon_banner_show_information(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
-			}
-			else {
+			} else {
 				hildon_banner_show_information (NULL, NULL, _("mail_ib_setting_failed"));
 			}
 		}

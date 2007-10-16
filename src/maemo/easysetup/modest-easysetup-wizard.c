@@ -993,7 +993,7 @@ show_advanced_edit(gpointer user_data)
 	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
 	modest_account_settings_dialog_set_account_name (dialog, self->saved_account_name);
 	
-	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 	
 	gtk_dialog_run (GTK_DIALOG (dialog));
 

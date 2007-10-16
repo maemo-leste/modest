@@ -165,7 +165,7 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 	transport_account = 
 		modest_tny_account_store_get_server_account (acc_store,
 							     account_name,
-							     TNY_ACCOUNT_TYPE_STORE);
+							     TNY_ACCOUNT_TYPE_TRANSPORT);
 
 	store_conn_status = tny_account_get_connection_status (store_account);
 	transport_conn_status = tny_account_get_connection_status (transport_account);
@@ -183,6 +183,18 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 		if (response == GTK_RESPONSE_OK) {
 			/* FIXME: We should only cancel those of this account */
 			modest_mail_operation_queue_cancel_all (queue);
+
+			/* Also disconnect the account */
+			if (tny_account_get_connection_status (store_account) == TNY_CONNECTION_STATUS_CONNECTED) {
+				tny_account_cancel (store_account);
+				tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
+							      FALSE, NULL, NULL);
+			}
+			if (tny_account_get_connection_status (transport_account) == TNY_CONNECTION_STATUS_CONNECTED) {
+				tny_account_cancel (transport_account);
+				tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account),
+							      FALSE, NULL, NULL);
+			}
 			retval = TRUE;
 		} else {
 			retval = FALSE;
@@ -260,9 +272,38 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 }
 
 static void
+on_account_settings_dialog_response (GtkDialog *dialog,
+				     gint response,
+				     gpointer user_data)
+{
+	TnyAccount *store_account = NULL;
+	gchar* account_name = NULL;
+	ModestAccountViewWindowPrivate *priv = NULL;
+
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (user_data);
+	account_name = modest_account_view_get_selected_account (priv->account_view);
+	store_account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+								     account_name,
+								     TNY_ACCOUNT_TYPE_STORE);
+       
+	/* Reconnect the store account, no need to reconnect the
+	   transport account because it will connect when needed */
+	if (tny_account_get_connection_status (store_account) == 
+	    TNY_CONNECTION_STATUS_DISCONNECTED)
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
+					      TRUE, NULL, NULL);
+
+	/* Disconnect this handler */
+	g_signal_handlers_disconnect_by_func (dialog, on_account_settings_dialog_response, user_data);
+
+	/* Free */
+	g_free (account_name);
+}
+
+static void
 on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (self);
 	
 	gchar* account_name = modest_account_view_get_selected_account (priv->account_view);
 	if (!account_name)
@@ -277,7 +318,13 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
 
 		modest_account_settings_dialog_set_account_name (dialog, account_name);
-		gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+
+		/* When the dialog is closed, reconnect */
+		g_signal_connect (dialog, "response", 
+				  G_CALLBACK (on_account_settings_dialog_response), 
+				  self);
+
 		modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
 	}
 	

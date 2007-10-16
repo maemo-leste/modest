@@ -539,6 +539,7 @@ show_wrong_password_dialog (TnyAccount *account)
 		dialog = modest_account_settings_dialog_new ();
 		modest_account_settings_dialog_set_account_name (dialog, modest_account_name);
 		modest_account_settings_dialog_switch_to_user_info (dialog);
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 		
 		g_hash_table_insert (priv->account_settings_dialog_hash, g_strdup (modest_account_name), dialog);
 		
@@ -546,8 +547,7 @@ show_wrong_password_dialog (TnyAccount *account)
 	}
 	
 	/* Show an explanatory temporary banner: */
-	hildon_banner_show_information ( 
-		GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
+	hildon_banner_show_information (GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
 		
 	if (created_dialog) {
 		/* Forget it when it closes: */
