@@ -3217,23 +3217,20 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
 	if (priv->draft_msg != NULL) {
-		header = tny_msg_get_header (priv->draft_msg);
-		if (TNY_IS_HEADER (header)) {
-			modest_window_mgr_unregister_header (mgr, header);
-		}
+		modest_window_mgr_unregister_window (mgr, MODEST_WINDOW (window));
 		g_object_unref (priv->draft_msg);
 	}
 
 	if (draft != NULL) {
 		g_object_ref (draft);
 		header = tny_msg_get_header (draft);
-		if (TNY_IS_HEADER (header))
-			modest_window_mgr_register_header (mgr, header);
 		if (priv->msg_uid) {
 			g_free (priv->msg_uid);
 			priv->msg_uid = NULL;
 		}
 		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
+		if (GTK_WIDGET_REALIZED (window))
+			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window));
 	}
 
 	priv->draft_msg = draft;
