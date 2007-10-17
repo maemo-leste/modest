@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
 #include <widgets/modest-gtkhtml-mime-part-view.h>
 #include <string.h>
 #include <gtkhtml/gtkhtml-stream.h>
@@ -461,8 +462,12 @@ get_selection_area (ModestGtkhtmlMimePartView *self,
 		    gint *x, gint *y,
 		    gint *width, gint *height)
 {
+#ifdef HAVE_GTK_HTML_GET_SELECTION_AREA
 	gtk_html_get_selection_area (GTK_HTML (self), x, y, width, height);
 	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 

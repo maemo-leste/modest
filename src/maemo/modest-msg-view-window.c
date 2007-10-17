@@ -50,10 +50,11 @@
 #include "modest-progress-bar-widget.h"
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
-#include <gtkhtml/gtkhtml-search.h>
 #include "modest-ui-dimming-manager.h"
 #include <gdk/gdkkeysyms.h>
 #include <modest-tny-account.h>
+#include <modest-mime-part-view.h>
+#include <modest-isearch-view.h>
 #include <math.h>
 
 #define DEFAULT_FOLDER "MyDocs/.documents"
@@ -483,7 +484,7 @@ menubar_to_menu (GtkUIManager *ui_manager)
 }
 
 static void
-init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
+init_window (ModestMsgViewWindow *obj)
 {
 	GtkWidget *main_vbox;
 	ModestMsgViewWindowPrivate *priv;
@@ -494,7 +495,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->msg_view = modest_msg_view_new (msg);
+	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 
@@ -517,7 +518,11 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->main_scroll), GTK_SHADOW_NONE);
 	modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->main_scroll), TRUE);
 
+#ifdef MODEST_USE_MOZEMBED
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (priv->main_scroll), priv->msg_view);
+#else
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
+#endif
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
@@ -687,7 +692,7 @@ select_next_valid_row (GtkTreeModel *model,
 
 /* TODO: This should be in _init(), with the parameters as properties. */
 static void
-modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg, 
+modest_msg_view_window_construct (ModestMsgViewWindow *self, 
 			    const gchar *modest_account_name,
 			    const gchar *msg_uid)
 {
@@ -701,8 +706,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 	GError *error = NULL;
 	GdkPixbuf *window_icon;
 
-	g_return_if_fail (msg);
-	
 	obj = G_OBJECT (self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -779,7 +782,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 	
 	/* Init window */
-	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
+	init_window (MODEST_MSG_VIEW_WINDOW(obj));
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
 	
 	/* Set window icon */
@@ -791,7 +794,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 
  	/* g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj); */
 
-	g_signal_connect (G_OBJECT(priv->msg_view), "link_clicked",
+	g_signal_connect (G_OBJECT(priv->msg_view), "activate_link",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_clicked), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_hover",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_hover), obj);
@@ -837,7 +840,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self, TnyMsg *msg,
 	/* Check toolbar dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
-	
+
 }
 
 ModestWindow *
@@ -856,7 +859,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
-	modest_msg_view_window_construct (window, msg, modest_account_name, msg_uid);
+	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
@@ -904,6 +907,10 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 				MODEST_HEADER_VIEW_OBSERVER(window));
 	}
 
+	gtk_widget_show_all (GTK_WIDGET (window));
+
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+
 	modest_msg_view_window_update_priority (window);
 
 	/* Check toolbar dimming rules */
@@ -922,13 +929,15 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 
 	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
-	modest_msg_view_window_construct (window, msg, modest_account_name, msg_uid);
+	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	/* Remember that this is a search result, 
 	 * so we can disable some UI appropriately: */
 	priv->is_search_result = TRUE;
+
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 
 	return MODEST_WINDOW(window);
 }
@@ -939,11 +948,15 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 			    const gchar *msg_uid)
 {
 	GObject *obj = NULL;
+	ModestMsgViewWindowPrivate *priv;
 	g_return_val_if_fail (msg, NULL);
 	
 	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 	modest_msg_view_window_construct (MODEST_MSG_VIEW_WINDOW (obj), 
-		msg, modest_account_name, msg_uid);
+		modest_account_name, msg_uid);
+
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 
 	return MODEST_WINDOW(obj);
 }
@@ -1157,8 +1170,10 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	 */
 	if (priv->header_model == NULL) {
 		msg = modest_msg_view_window_get_message (self);
-		header = tny_msg_get_header (msg);
-		g_object_unref (msg);
+		if (msg) {
+			header = tny_msg_get_header (msg);
+			g_object_unref (msg);
+		}
 		return header;
 	}
 
@@ -1257,7 +1272,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 	gchar *current_search;
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 
-	if (modest_msg_view_get_message_is_empty (MODEST_MSG_VIEW (priv->msg_view))) {
+	if (modest_mime_part_view_is_empty (MODEST_MIME_PART_VIEW (priv->msg_view))) {
 		hildon_banner_show_information (NULL, NULL, _("mail_ib_nothing_to_find"));
 		return;
 	}
@@ -1274,8 +1289,8 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		gboolean result;
 		g_free (priv->last_search);
 		priv->last_search = g_strdup (current_search);
-		result = modest_msg_view_search (MODEST_MSG_VIEW (priv->msg_view),
-						 priv->last_search);
+		result = modest_isearch_view_search (MODEST_ISEARCH_VIEW (priv->msg_view),
+						     priv->last_search);
 		if (!result) {
 			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_no_matches"));
 			g_free (priv->last_search);
@@ -1284,7 +1299,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 		}
 	} else {
-		if (!modest_msg_view_search_next (MODEST_MSG_VIEW (priv->msg_view))) {
+		if (!modest_isearch_view_search_next (MODEST_ISEARCH_VIEW (priv->msg_view))) {
 			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_search_complete"));
 			g_free (priv->last_search);
 			priv->last_search = NULL;

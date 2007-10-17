@@ -6,6 +6,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
 	$(MODEST_HILDON_WIDGETS_CFLAGS) \
+	$(MODEST_MOZEMBED_CFLAGS) \
 	-I ${top_srcdir}/src/$(MODEST_PLATFORM) \
 	-I ${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
@@ -56,6 +57,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-msg-view-window.h       \
 	modest-msg-view.c              \
 	modest-msg-view.h	       \
+	modest-gtkhtml-msg-view.c              \
+	modest-gtkhtml-msg-view.h	       \
 	modest-details-dialog.c        \
 	modest-details-dialog.h        \
 	modest-recpt-editor.c          \
@@ -79,7 +82,16 @@ libmodest_widgets_la_SOURCES=          \
 	modest-zoomable.h              \
 	modest-zoomable.c
 
+if BUILD_MOZEMBED
+libmodest_widgets_la_SOURCES+=          \
+	modest-mozembed-msg-view.c              \
+	modest-mozembed-msg-view.h	       \
+	modest-mozembed-mime-part-view.c \
+	modest-mozembed-mime-part-view.h 	
+endif
+
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
+	$(MODEST_MOZEMBED_LIBS)                         \
 	$(MODEST_PLATFORM_LIBS)				\
 	$(MODEST_HILDON_WIDGETS_LIBS) 

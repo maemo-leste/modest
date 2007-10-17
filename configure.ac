@@ -69,6 +69,12 @@ PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gcon
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
+__COPY_LIBS="$LIBS"
+LIBS="$LIBS $MODEST_GSTUFF_LIBS"
+AC_CHECK_FUNCS(gtk_html_get_selection_area)
+LIBS="$__COPY_LIBS"
+AC_SUBST(HAVE_GTK_HTML_GET_SELECTION_AREA)
+
 dnl dnl now, determine what to build
 AC_MSG_NOTICE([Determining what platform to build])
 PKG_CHECK_MODULES(MODEST_MAEMO_LIBS,libosso,[with_platform=maemo],true)
@@ -195,7 +201,27 @@ if test "x$with_platform" == "xmaemo"; then
    fi
 fi
 
+PKG_CHECK_MODULES(MODEST_MOZEMBED, libtinymailui-mozembed-1.0, have_mozembed=true, have_mozembed=false)
+AC_ARG_ENABLE(mozembed,
+AC_HELP_STRING([--enable-mozembed],
+	[Build with GtkMozEmbed (yes, no)]),
+[case "${enableval}" in
+      yes)
+	if test x$have_mozembed = xfalse; then
+	   AC_MSG_ERROR([building of GtkMozEmbed support requested and gtkmozembed not found])
+	fi
+	use_mozembed=true
+	;;
+      *)
+        use_mozembed=false
+	;;
+esac],[use_mozembed=false])
 
+AM_CONDITIONAL(BUILD_MOZEMBED, test x$use_mozembed = xtrue)
+
+if test x$use_mozembed = xtrue; then
+   	AC_DEFINE_UNQUOTED(MODEST_USE_MOZEMBED, 1, ["Whether we use GtkMozEmbed."])
+fi
 
 #dnl wether we can and should build the 
 #dnl search plugin (on maemo)
@@ -391,6 +417,7 @@ echo "Editor lib       : $wpeditor"
 echo "Help lib         : $helplib"
 echo "Hildon-Notify    : $have_hildon_notify"    
 echo "LibOGS support   : $have_ogs_support"
+echo "MozEmbed support : $use_mozembed"
 echo "CFLAGS           : $CFLAGS"
 echo "Gettext Packages : $GETTEXT_PACKAGE"
 echo "Debug version    : $with_debug"

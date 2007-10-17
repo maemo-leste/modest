@@ -36,52 +36,41 @@
 #include <tny-msg-view.h>
 #include <widgets/modest-recpt-view.h>
 #include <widgets/modest-zoomable.h>
+#include <widgets/modest-isearch-view.h>
+#include <widgets/modest-mime-part-view.h>
 
 G_BEGIN_DECLS
 
 /* convenience macros */
 #define MODEST_TYPE_MSG_VIEW             (modest_msg_view_get_type())
 #define MODEST_MSG_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_MSG_VIEW,ModestMsgView))
-#define MODEST_MSG_VIEW_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_MSG_VIEW,ModestMsgViewClass))
 #define MODEST_IS_MSG_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_MSG_VIEW))
-#define MODEST_IS_MSG_VIEW_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_MSG_VIEW))
-#define MODEST_MSG_VIEW_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_MSG_VIEW,ModestMsgViewClass))
+#define MODEST_MSG_VIEW_GET_IFACE(obj)   (G_TYPE_INSTANCE_GET_INTERFACE((obj),MODEST_TYPE_MSG_VIEW,ModestMsgViewIface))
 
 typedef struct _ModestMsgView      ModestMsgView;
-typedef struct _ModestMsgViewClass ModestMsgViewClass;
+typedef struct _ModestMsgViewIface ModestMsgViewIface;
 
-struct _ModestMsgView {
-	GtkContainer parent;
-};
+struct _ModestMsgViewIface {
+	GTypeInterface parent;
 
-struct _ModestMsgViewClass {
-	GtkContainerClass parent_class;
-
-	/* TnyMimePartView interface */
-	TnyMimePart* (*get_part_func) (TnyMimePartView *self);
-	void (*set_part_func) (TnyMimePartView *self, TnyMimePart *part);
-	/* TnyMsgView interface */
-	TnyMsg* (*get_msg_func) (TnyMsgView *self);
-	void (*set_msg_func) (TnyMsgView *self, TnyMsg *msg);
-	void (*set_unavailable_func) (TnyMsgView *self);
-	void (*clear_func) (TnyMsgView *self);
-	TnyMimePartView* (*create_mime_part_view_for_func) (TnyMsgView *self, TnyMimePart *part);
-	TnyMsgView* (*create_new_inline_viewer_func) (TnyMsgView *self);
-	/* ModestZoomable interface */
-	gdouble (*get_zoom_func) (ModestZoomable *self);
-	void (*set_zoom_func) (ModestZoomable *self, gdouble value);
-	gboolean (*zoom_minus_func) (ModestZoomable *self);
-	gboolean (*zoom_plus_func) (ModestZoomable *self);
+	GtkAdjustment* (*get_vadjustment_func) (ModestMsgView *self);
+	GtkAdjustment* (*get_hadjustment_func) (ModestMsgView *self);
+	void (*set_vadjustment_func) (ModestMsgView *self, GtkAdjustment *vadj);
+	void (*set_hadjustment_func) (ModestMsgView *self, GtkAdjustment *vadj);
+	void (*set_shadow_type_func) (ModestMsgView *self, GtkShadowType type);
+	GtkShadowType (*get_shadow_type_func) (ModestMsgView *self);
+	TnyHeaderFlags (*get_priority_func) (ModestMsgView *self);
+	void (*set_priority_func) (ModestMsgView *self, TnyHeaderFlags flags);
+	GList * (*get_selected_attachments_func) (ModestMsgView *self);
+	GList * (*get_attachments_func) (ModestMsgView *self);
+	void (*grab_focus_func) (ModestMsgView *self);
+	void (*remove_attachment_func) (ModestMsgView *view, TnyMimePart *attachment);
 
 	/* signals */
 	void (*set_scroll_adjustments)      (ModestMsgView *msg_view,
 					     GtkAdjustment *hadj,
 					     GtkAdjustment *vadj);
 	
-	void (*link_hover)         (ModestMsgView *msgview, const gchar* link,
-				    gpointer user_data);
-	void (*link_clicked)       (ModestMsgView *msgview, const gchar* link,
-				    gpointer user_data);
 	void (*link_contextual)    (ModestMsgView *msgview, const gchar* link,
 				    gpointer user_data);
 	void (*attachment_clicked) (ModestMsgView *msgview, TnyMimePart *mime_part,
@@ -95,37 +84,12 @@ struct _ModestMsgViewClass {
  *
  * modest_msg_view_get_type
  *
- * get the GType for the this class
+ * get the GType for the this interface
  *
- * Returns: the GType for this class
+ * Returns: the GType for this interface
  */
 GType        modest_msg_view_get_type    (void) G_GNUC_CONST;
 
-
-/**
- * modest_msg_view_new 
- * @tny_msg: a TnyMsg instance, or NULL
- *
- * create a new ModestMsgView widget (a GtkScrolledWindow subclass),
- * and display the @tny_msg e-mail message in it. If @tny_msg is NULL,
- * then a blank page will be displayed
- *  
- * Returns: a new ModestMsgView widget, or NULL if there's an error
- */
-GtkWidget*   modest_msg_view_new          (TnyMsg *tny_msg);
-
-
-
-/**
- * modest_msg_view_get_message_is_empty
- * @self: a ModestMsgView instance
- *
- * Returns whether the message contains any visbible (searchable) text.
- * For instance, this will return FALSE if the message contains only markup.
- *
- * Returns: TRUE if the message contains visible text.
- */
-gboolean modest_msg_view_get_message_is_empty (ModestMsgView *self);
 
 GtkAdjustment *modest_msg_view_get_vadjustment (ModestMsgView *self);
 GtkAdjustment *modest_msg_view_get_hadjustment (ModestMsgView *self);
@@ -134,8 +98,6 @@ void modest_msg_view_set_hadjustment (ModestMsgView *self, GtkAdjustment *hadj);
 void modest_msg_view_set_shadow_type (ModestMsgView *self, GtkShadowType type);
 GtkShadowType modest_msg_view_get_shadow_type (ModestMsgView *self);
 
-gboolean modest_msg_view_search (ModestMsgView *self, const gchar *search);
-gboolean modest_msg_view_search_next (ModestMsgView *self);
 TnyHeaderFlags modest_msg_view_get_priority (ModestMsgView *self);
 void modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags);
 GList *modest_msg_view_get_selected_attachments (ModestMsgView *self);
