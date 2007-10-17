@@ -916,19 +916,17 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 	GtkTreeModel *model;
 	GtkTreeIter tree_iter;
 
-	/* I'm invalidating this method because it causes an annoying
-	   efect, the focus changes to the header view when selecting
-	   a folder in the folder view because of this code and it
-	   shouldn't. We need to find another way to set the passive
-	   focus on it. Sergio. */
-	return FALSE;
-
 	model = gtk_tree_view_get_model(header_view);
 
 	sel = gtk_tree_view_get_selection(header_view);
 	if(!gtk_tree_selection_count_selected_rows(sel))
-		if (gtk_tree_model_get_iter_first(model, &tree_iter))
+		if (gtk_tree_model_get_iter_first(model, &tree_iter)) {
+			/* Prevent the widget from getting the focus
+			   when selecting the first item */
+			g_object_set(header_view, "can-focus", FALSE, NULL);
 			gtk_tree_selection_select_iter(sel, &tree_iter);
+			g_object_set(header_view, "can-focus", TRUE, NULL);
+		}
 
 	return FALSE;
 }
