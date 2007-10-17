@@ -909,8 +909,7 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 
 	/* If the header is in the drafts folder then open the editor,
 	   else the message view window */
-	if ((folder_type == TNY_FOLDER_TYPE_DRAFTS) ||
-	    (folder_type == TNY_FOLDER_TYPE_OUTBOX)) {
+	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
 		/* we cannot edit without a valid account... */
 		if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
 			if (!modest_ui_actions_run_account_setup_wizard(parent_win))
