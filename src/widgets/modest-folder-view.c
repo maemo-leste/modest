@@ -1563,11 +1563,11 @@ xfer_cb (ModestMailOperation *mail_op,
 
 /* get the folder for the row the treepath refers to. */
 /* folder must be unref'd */
-static TnyFolder*
+static TnyFolderStore *
 tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
 {
 	GtkTreeIter iter;
-	TnyFolder *folder = NULL;
+	TnyFolderStore *folder = NULL;
 	
 	if (gtk_tree_model_get_iter (model,&iter, path))
 		gtk_tree_model_get (model, &iter,
@@ -1677,7 +1677,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter dest_iter, iter;
 	TnyFolderStore *dest_folder = NULL;
-	TnyFolder *folder = NULL;
+	TnyFolderStore *folder = NULL;
 	gboolean forbidden = FALSE;
 
 	if (!forbidden) {
@@ -1685,7 +1685,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 		folder = tree_path_to_folder (dest_model, dest_row);
 		if (TNY_IS_FOLDER(folder)) {
 			ModestTnyFolderRules rules =
-					modest_tny_folder_get_rules (folder);
+				modest_tny_folder_get_rules (TNY_FOLDER (folder));
 			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
 		} else if (TNY_IS_FOLDER_STORE(folder)) {
 			/* enable local root as destination for folders */
@@ -1700,7 +1700,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 		folder = tree_path_to_folder (source_model, helper->source_row);
 		if (TNY_IS_FOLDER(folder)) {
 			ModestTnyFolderRules rules =
-					modest_tny_folder_get_rules (folder);
+				modest_tny_folder_get_rules (TNY_FOLDER (folder));
 			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
 		} else
 			forbidden = TRUE;
@@ -1741,7 +1741,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 						 mail_op);
 
 		modest_mail_operation_xfer_folder (mail_op, 
-						   folder, 
+						   TNY_FOLDER (folder), 
 						   dest_folder,
 						   helper->delete_source,
 						   xfer_cb,
@@ -1940,7 +1940,7 @@ on_drag_motion (GtkWidget      *widget,
 	ModestFolderViewPrivate *priv;
 	GdkDragAction suggested_action;
 	gboolean valid_location = FALSE;
-	TnyFolder *folder;
+	TnyFolderStore *folder;
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
 
@@ -1969,15 +1969,15 @@ on_drag_motion (GtkWidget      *widget,
 	/* Check that the destination folder is writable */
 	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 	folder = tree_path_to_folder (dest_model, dest_row);
-	if (folder) {
-		ModestTnyFolderRules rules = modest_tny_folder_get_rules(folder);
+	if (folder && TNY_IS_FOLDER (folder)) {
+		ModestTnyFolderRules rules = modest_tny_folder_get_rules(TNY_FOLDER (folder));
 
 		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
 			valid_location = FALSE;
 			goto out;
 		}
-		g_object_unref (folder);
 	}
+	g_object_unref (folder);
 
 	/* Expand the selected row after 1/2 second */
 	if (!gtk_tree_view_row_expanded (GTK_TREE_VIEW (widget), dest_row)) {
