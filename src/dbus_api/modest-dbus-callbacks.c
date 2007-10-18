@@ -710,7 +710,6 @@ on_idle_delete_message (gpointer user_data)
 	TnyHeader    *msg_header = NULL;
 	TnyMsg       *msg = NULL;
 	TnyAccount   *account = NULL;
-	GError       *error = NULL;
 	const char   *uri = NULL;
 	const char   *uid = NULL;
 	gint          res = 0;
@@ -785,7 +784,6 @@ on_idle_delete_message (gpointer user_data)
 		return OSSO_ERROR;
 	}	
 		
-	error = NULL;
 	res = OSSO_OK;
 	
 	/* This is a GDK lock because we are an idle callback and
@@ -794,14 +792,6 @@ on_idle_delete_message (gpointer user_data)
 	gdk_threads_enter (); /* CHECKED */
 	ModestWindow *win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 	modest_do_message_delete (header, win);
-
-	if (error != NULL) {
-		res = OSSO_ERROR;
-		g_error_free (error);
-	}
-	
-	
-	
 	ModestWindowMgr *win_mgr = modest_runtime_get_window_mgr ();	
 	ModestWindow *msg_view = NULL; 
 	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
