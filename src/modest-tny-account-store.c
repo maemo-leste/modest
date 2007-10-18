@@ -1437,6 +1437,16 @@ modest_tny_account_store_get_local_folders_account (ModestTnyAccountStore *self)
 	return account;
 }
 
+TnyAccount*
+modest_tny_account_store_get_mmc_folders_account (ModestTnyAccountStore *self)
+{
+	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
+	
+	return modest_tny_account_store_get_tny_account_by (self, MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+							    MODEST_MMC_ACCOUNT_ID);
+
+}
+
 /*********************************************************************************/
 static void
 add_existing_accounts (ModestTnyAccountStore *self)

@@ -169,6 +169,16 @@ TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *se
  **/
 TnyAccount * modest_tny_account_store_get_local_folders_account (ModestTnyAccountStore *self);
 
+/**
+ * modest_tny_account_store_get_mmc_folders_account:
+ * @self: a TnyAccountStore instance
+ * 
+ * Get the mmc folders account.
+ *
+ * Returns: a #TnyAccount, or %NULL if no mmc account is available now.
+ */
+TnyAccount * modest_tny_account_store_get_mmc_folders_account (ModestTnyAccountStore *self);
+
 /** modest_tny_account_store_forget_already_asked:
   * @self: a TnyAccountStore instance
   * @account: the account to forget the already asked status for

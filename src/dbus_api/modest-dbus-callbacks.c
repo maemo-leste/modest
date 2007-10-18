@@ -1477,18 +1477,21 @@ static void
 on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 {
 	DBusMessage  *reply = NULL;
+ 	ModestAccountMgr *account_mgr = NULL;
+	gchar *account_name = NULL;
+	GList *folder_names = NULL;	
+	TnyAccount *account_local = NULL;
+	TnyAccount *account_mmc = NULL;
 	
 	/* Get the TnyStoreAccount so we can get the folders: */
- 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
-	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
+	account_mgr = modest_runtime_get_account_mgr();
+	account_name = modest_account_mgr_get_default_account (account_mgr);
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
 	}
 	
-	GList *folder_names = NULL;
-	
-	TnyAccount *account = NULL;
 	if (account_name) {
+		TnyAccount *account = NULL;
 		if (account_mgr) {
 			account = modest_tny_account_store_get_server_account (
 				modest_runtime_get_account_store(), account_name, 
@@ -1513,12 +1516,21 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 	 * because they are (currently) used with all accounts:
 	 * TODO: This is not working. It seems to get only the Merged Folder (with an ID of "" (not NULL)).
 	 */
-	TnyAccount *account_local = 
+	account_local = 
 		modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store());
 	add_folders_to_list (TNY_FOLDER_STORE (account_local), &folder_names);
 
 	g_object_unref (account_local);
 	account_local = NULL;
+
+	/* Obtain the mmc account */
+	account_mmc = 
+		modest_tny_account_store_get_mmc_folders_account (modest_runtime_get_account_store());
+	if (account_mmc) {
+		add_folders_to_list (TNY_FOLDER_STORE (account_mmc), &folder_names);
+		g_object_unref (account_mmc);
+		account_mmc = NULL;
+	}
 
 	/* specs require us to sort the folder names, although
 	 * this is really not the place to do that...
