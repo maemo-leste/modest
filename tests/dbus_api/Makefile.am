@@ -19,14 +19,16 @@ objects=\
 	$(MODEST_OGS_LIBS) \
 	${top_srcdir}/libmodest-dbus-client/libmodest-dbus-client-1.0.la
         
-noinst_PROGRAMS = test_mail_to \
-		  test_open_message   \
-		  test_search         \
-		  test_delete_message \
-		  test_compose_mail \
-		  test_open_default_inbox \
-		  test_get_folders \
-		  test_top_application
+noinst_PROGRAMS = \
+	test_mail_to \
+	test_open_message   \
+	test_search         \
+	test_delete_message \
+	test_compose_mail \
+	test_open_default_inbox \
+	test_get_folders \
+	test_top_application \
+	test_update_account
 
 test_mail_to_SOURCES = test_mail_to.c
 test_mail_to_LDADD = $(objects)
@@ -51,3 +53,6 @@ test_get_folders_LDADD = $(objects)
 
 test_top_application_SOURCES = test_top_application.c
 test_top_application_LDADD = $(objects)
+
+test_update_account_SOURCES = test_update_account.c
+test_update_account_LDADD = $(objects)
