@@ -898,23 +898,49 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 	/* Mark header as read */
 	headers_action_mark_as_read (header, MODEST_WINDOW(parent_win), NULL);
 
+	/* Gets folder type (OUTBOX headers will be opened in edit window */
+	if (modest_tny_folder_is_local_folder (folder)) {
+		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+	}
+
 	/* Get account */
-	account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
+	if (!account)
+		account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	
-	/* Gets folder type (OUTBOX headers will be opened in edit window */
-	if (modest_tny_folder_is_local_folder (folder))
-		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
-
 	/* If the header is in the drafts folder then open the editor,
 	   else the message view window */
 	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
+		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
+		const gchar *from_header = NULL;
+
+		from_header = tny_header_get_from (header);
+
 		/* we cannot edit without a valid account... */
-		if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
+		if (!modest_account_mgr_has_accounts(mgr, TRUE)) {
 			if (!modest_ui_actions_run_account_setup_wizard(parent_win))
 				goto cleanup;
 		}
+		
+		if (from_header) {
+			GSList *accounts = modest_account_mgr_account_names (mgr, TRUE);
+			GSList *node = NULL;
+			for (node = accounts; node != NULL; node = g_slist_next (node)) {
+				gchar *from = modest_account_mgr_get_from_string (mgr, node->data);
+				
+				if (from && (strcmp (from_header, from) == 0)) {
+					g_free (account);
+					account = g_strdup (node->data);
+					g_free (from);
+					break;
+				}
+				g_free (from);
+			}
+			g_slist_foreach (accounts, (GFunc) g_free, NULL);
+			g_slist_free (accounts);
+		}
+
 		win = modest_msg_edit_window_new (msg, account, TRUE);
 
 
@@ -2200,8 +2226,10 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	
 	data = modest_msg_edit_window_get_msg_data (edit_window);
 
+	account_name = g_strdup (data->account_name);
 	account_mgr = modest_runtime_get_account_mgr();
-	account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+	if (!account_name)
+		account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
 	if (!account_name) 
 		account_name = modest_account_mgr_get_default_account (account_mgr);
 	if (!account_name) {
@@ -2272,21 +2300,21 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	/* FIXME: Code added just for testing. The final version will
 	   use the send queue provided by tinymail and some
 	   classifier */
+	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
+
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
-	gchar *account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+	gchar *account_name = g_strdup (data->account_name);
+	if (!account_name)
+		g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+
 	if (!account_name) 
 		account_name = modest_account_mgr_get_default_account (account_mgr);
 		
 	if (!account_name) {
+		modest_msg_edit_window_free_msg_data (edit_window, data);
 		/* Run account setup wizard */
 		if (!modest_ui_actions_run_account_setup_wizard (MODEST_WINDOW(edit_window)))
 			return;
-	}
-	
-	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
-
-	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
-		account_name = g_strdup (data->account_name);
 	}
 	
 	/* Get the currently-active transport account for this modest account: */
