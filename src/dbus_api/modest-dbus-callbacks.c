@@ -158,8 +158,8 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 		
 		/* Looking for the end of a value: */
 		if (start_item_value) {
-			const size_t len = strcspn (p, "?"); /* Returns whole string if none found. */
-			/* ? marks the start of a new item: */
+			const size_t len = strcspn (p, "&"); /* Returns whole string if none found. */
+			/* & marks the start of a new item: */
 			if (len) {
 				if (start_item_name && len_item_name) {
 					/* Finish the previously-started item: */
@@ -175,7 +175,7 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 				}
 				
 				/* Skip over the value and mark the start of a possible new name/value pair: */
-				p += (len + 1); /* Skip over the ? */
+				p += (len + 1); /* Skip over the & */
 				start_item_name = p;
 				len_item_name = 0;
 				start_item_value = NULL;
