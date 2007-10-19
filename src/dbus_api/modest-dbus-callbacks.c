@@ -77,6 +77,8 @@ typedef struct
 	gchar *attachments;
 } ComposeMailIdleData;
 
+static gboolean on_idle_compose_mail(gpointer user_data);
+
 /** uri_unescape:
  * @uri An escaped URI. URIs should always be escaped.
  * @len The length of the @uri string, or -1 if the string is null terminated.
@@ -212,102 +214,53 @@ check_and_offer_account_creation()
 static gboolean
 on_idle_mail_to(gpointer user_data)
 {
-	/* This is based on the implementation of main.c:start_uil(): */
-	
-	if (!check_and_offer_account_creation ())
-		return FALSE;
-		
 	gchar *uri = (gchar*)user_data;
 	GSList *list_names_and_values = NULL;
-	
-	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
- 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
-	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
-	if (!account_name) {
-		g_printerr ("modest: no account found\n");
-	}
-	
-	TnyAccount *account = NULL;
-	if (account_mgr) {
-		account = modest_tny_account_store_get_transport_account_for_open_connection (
-			modest_runtime_get_account_store(), account_name);
-	}
-	
-	if (!account) {
-		g_printerr ("modest: failed to get tny account folder'\n", account_name);
-	} else {
-		gchar * from = modest_account_mgr_get_from_string (account_mgr,
-								  account_name);
-		if (!from) {
-			g_printerr ("modest: no from address for account '%s'\n", account_name);
-		} else {
-			const gchar *cc = NULL;
-			const gchar *bcc = NULL;
-			const gchar *subject = NULL;
-			const gchar *body = NULL;
-			
-			/* Get the relevant items from the list: */
-			GSList *list = list_names_and_values;
-			while (list) {
-				const gchar * name = (const gchar*)list->data;
-				GSList *list_value = g_slist_next (list);
-				const gchar * value = (const gchar*)list_value->data;
-				
-				if (strcmp (name, "cc") == 0) {
-					cc = value;
-				} else if (strcmp (name, "bcc") == 0) {
-					bcc = value;
-				} else if (strcmp (name, "subject") == 0) {
-					subject = value;
-				} else if (strcmp (name, "body") == 0) {
-					body = value;
-				}
-				
-				/* Go to the next pair: */
-				if (list_value) {
-					list = g_slist_next (list_value);
-				} else 
-					list = NULL;
-			}
-			
-			/* Create the message: */
-			gchar *to = uri_parse_mailto (uri, &list_names_and_values);
-			TnyMsg *msg  = modest_tny_msg_new (to, from, 
-				cc, bcc, subject, body, 
-				NULL /* attachments */);
-			g_free(to);
-			to = NULL;
-				
-			if (!msg) {
-				g_printerr ("modest: failed to create message\n");
-			} else {			
-				ModestWindow *win;
 
-				/* This is a GDK lock because we are an idle callback and
-				 * the code below is or does Gtk+ code */
-				gdk_threads_enter ();
-				win = modest_msg_edit_window_new (msg, account_name, FALSE);
-				modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
-				gtk_widget_show_all (GTK_WIDGET (win));
-				gdk_threads_leave ();
-				
-				g_object_unref (win);
-			}
-			
-			g_object_unref (G_OBJECT(msg));			
-			g_object_unref (G_OBJECT(account));
+	const gchar *cc = NULL;
+	const gchar *bcc = NULL;
+	const gchar *subject = NULL;
+	const gchar *body = NULL;
+
+	/* Get the relevant items from the list: */
+	gchar *to = uri_parse_mailto (uri, &list_names_and_values);
+	GSList *list = list_names_and_values;
+	while (list) {
+		GSList *list_value = g_slist_next (list);
+		const gchar * name = (const gchar*)list->data;
+		const gchar * value = (const gchar*)list_value->data;
+
+		if (strcmp (name, "cc") == 0) {
+			cc = value;
+		} else if (strcmp (name, "bcc") == 0) {
+			bcc = value;
+		} else if (strcmp (name, "subject") == 0) {
+			subject = value;
+		} else if (strcmp (name, "body") == 0) {
+			body = value;
 		}
- 	}
- 	
- 	g_free (account_name);
- 	
- 	/* Free the list, as required by the uri_parse_mailto() documentation: */
- 	if (list_names_and_values)
- 		g_slist_foreach (list_names_and_values, (GFunc)g_free, NULL);
- 	g_slist_free (list_names_and_values);
-		
+
+		list = g_slist_next (list_value);
+	}
+
+	ComposeMailIdleData *idle_data = g_new0(ComposeMailIdleData, 1); /* Freed in the idle callback. */
+
+	idle_data->to = g_strdup (to);
+	idle_data->cc = g_strdup (cc);
+	idle_data->bcc = g_strdup (bcc);
+	idle_data->subject = g_strdup (subject);
+	idle_data->body = g_strdup (body);
+	idle_data->attachments = NULL;
+
+	/* Free the to: and the list, as required by uri_parse_mailto() */
+	g_free(to);
+	g_slist_foreach (list_names_and_values, (GFunc)g_free, NULL);
+	g_slist_free (list_names_and_values);
+
 	g_free(uri);
-	
+
+	on_idle_compose_mail((gpointer)idle_data);
+
 	return FALSE; /* Do not call this callback again. */
 }
 
@@ -426,12 +379,14 @@ on_idle_compose_mail(gpointer user_data)
 						idle_data->attachments = tmp;
 					}
 
-					list = g_strsplit(idle_data->attachments, ",", 0);
-					for (i=0; list[i] != NULL; i++) {
-						modest_msg_edit_window_attach_file_one(
+					if (idle_data->attachments != NULL) {
+						list = g_strsplit(idle_data->attachments, ",", 0);
+						for (i=0; list[i] != NULL; i++) {
+							modest_msg_edit_window_attach_file_one(
 								(ModestMsgEditWindow *)win, list[i]);
+						}
+						g_strfreev(list);
 					}
-					g_strfreev(list);
 
 					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
 					gtk_widget_show_all (GTK_WIDGET (win));
