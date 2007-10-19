@@ -1626,33 +1626,6 @@ new_messages_arrived (ModestMailOperation *self,
 		      TnyList *new_headers,
 		      gpointer user_data)
 {
-	ModestMainWindow *win = NULL;
-	GtkWidget *folder_view = NULL;
-	TnyFolderStore *folder = NULL;
-	gboolean folder_empty = FALSE;
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
-	win = MODEST_MAIN_WINDOW (user_data);
-
-	/* Don't do anything if there are not new headers, this could
-	   happen if there was any problem with the mail operation */
-	if (!new_headers)
-		return;
-
-	/* Set contents style of headers view */
-	if (modest_main_window_get_contents_style (win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));		
-		
-
-		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
-		
-		if (!folder_empty)
-			modest_main_window_set_contents_style (win,
-						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-	}	
-
 	/* Notify new messages have been downloaded */
 	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0))
 		modest_platform_on_new_headers_received (new_headers);
