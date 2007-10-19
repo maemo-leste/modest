@@ -242,11 +242,12 @@ modest_maemo_utils_file_exists (const gchar *filename)
 }
 
 TnyFsStream *
-modest_maemo_utils_create_temp_stream (const gchar *orig_name, gchar **path)
+modest_maemo_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base, gchar **path)
 {
 	gint fd;
 	gchar *filepath = NULL;
 	gchar *tmpdir;
+	guint hash_number;
 
 	/* hmmm... maybe we need a modest_text_utils_validate_file_name? */
 	g_return_val_if_fail (orig_name || strlen(orig_name) == 0, NULL);
@@ -263,8 +264,13 @@ modest_maemo_utils_create_temp_stream (const gchar *orig_name, gchar **path)
 	}
 		
 	/* make a random subdir under /tmp or /var/tmp */
-	tmpdir = g_strdup_printf ("%s/%d", g_get_tmp_dir (), (guint)random());
-	if (g_mkdir (tmpdir, 0755) == -1) {
+	if (hash_base != NULL) {
+		hash_number = g_str_hash (hash_base);
+	} else {
+		hash_number = (guint) random ();
+	}
+	tmpdir = g_strdup_printf ("%s/%u", g_get_tmp_dir (), hash_number);
+	if ((g_access (tmpdir, R_OK) == -1) && (g_mkdir (tmpdir, 0755) == -1)) {
 		g_warning ("%s: failed to create dir '%s': %s",
 			   __FUNCTION__, tmpdir, g_strerror(errno));
 		g_free (tmpdir);

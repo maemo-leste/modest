@@ -201,13 +201,14 @@ void modest_window_mgr_close_all_windows (ModestWindowMgr *self);
  * modest_window_mgr_register_header
  * @self: a #ModestWindowMgr
  * @header: a valid #TnyHeader
+ * @alt_uid: alternative uid in case @header does not provide one
  * 
  * register the uid, even before the window is created. thus, we know when
  * some window creation might already be underway. the uid will automatically be
  * removed when the window itself will registered
  * 
  **/
-void  modest_window_mgr_register_header   (ModestWindowMgr *self,  TnyHeader *header);
+void  modest_window_mgr_register_header   (ModestWindowMgr *self,  TnyHeader *header, const gchar *alt_uid);
 	
 
 /**

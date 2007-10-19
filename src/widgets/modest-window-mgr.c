@@ -261,7 +261,7 @@ append_uid (GSList *list, const gchar *uid)
 
 
 void 
-modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header)
+modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header, const gchar *alt_uid)
 {
 	ModestWindowMgrPrivate *priv;
 	gchar* uid;
@@ -272,13 +272,15 @@ modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	uid = modest_tny_folder_get_header_unique_id (header);
 
-
+	if (uid == NULL)
+		uid = g_strdup (alt_uid);
+	
 	if (!has_uid (priv->preregistered_uids, uid)) {
 		g_debug ("registering new uid %s", uid);
 		priv->preregistered_uids = append_uid (priv->preregistered_uids, uid);
 	} else
 		g_debug ("already had uid %s", uid);
-
+	
 	g_free (uid);
 }
 
@@ -293,13 +295,13 @@ modest_window_mgr_unregister_header (ModestWindowMgr *self,  TnyHeader *header)
 		
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	uid = modest_tny_folder_get_header_unique_id (header);
-	
+
 	if (!has_uid (priv->preregistered_uids, uid)) {
 		g_debug ("trying to unregister non-existing uid %s", uid);
 		priv->preregistered_uids = append_uid (priv->preregistered_uids, uid);
 	} else
 		g_debug ("unregistering uid %s", uid);
-
+	
 	if (has_uid (priv->preregistered_uids, uid)) {
 		priv->preregistered_uids = remove_uid (priv->preregistered_uids, uid);
 		if (has_uid (priv->preregistered_uids, uid))
@@ -307,7 +309,7 @@ modest_window_mgr_unregister_header (ModestWindowMgr *self,  TnyHeader *header)
 		else
 			g_debug ("uid %s removed", uid);
 	}
-
+		
 	g_free (uid);
 }
 
@@ -335,14 +337,13 @@ compare_msguids (ModestWindow *win,
 		return 1;
 }
 
-
 void
 modest_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv = NULL;
 	GList *wins = NULL;
 	gboolean ret_value = FALSE;
-
+	
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	
@@ -375,9 +376,9 @@ modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *head
 	
 	if (win)
 		*win = NULL;
-	
+
 	has_header = has_uid (priv->preregistered_uids, uid);
-		
+	
 	item = g_list_find_custom (priv->window_list, uid, (GCompareFunc) compare_msguids);
 	if (item) {
 		has_window = TRUE;
@@ -391,8 +392,8 @@ modest_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *head
 			}
 		}
 	}
-
 	g_free (uid);
+	
 	return has_header || has_window;
 }
 
@@ -456,17 +457,16 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	if (MODEST_IS_MSG_VIEW_WINDOW(window)) {
 		const gchar *uid = modest_msg_view_window_get_message_uid
 			(MODEST_MSG_VIEW_WINDOW (window));
-		
+
 		if (!has_uid (priv->preregistered_uids, uid)) 
 			g_debug ("weird: no uid for window (%s)", uid);
 		
 		g_debug ("registering window for %s", uid ? uid : "<none>");
-
+		
 		priv->preregistered_uids = 
 			remove_uid (priv->preregistered_uids,
 				    modest_msg_view_window_get_message_uid
 				    (MODEST_MSG_VIEW_WINDOW (window)));
-
 	} else if (MODEST_IS_MSG_EDIT_WINDOW(window)) {
 		const gchar *uid = modest_msg_edit_window_get_message_uid
 			(MODEST_MSG_EDIT_WINDOW (window));

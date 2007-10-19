@@ -652,7 +652,7 @@ on_idle_open_message (gpointer user_data)
 	
 	if (!already_opened) {
 		/* g_debug ("creating new window for this msg"); */
-		modest_window_mgr_register_header (win_mgr, header);
+		modest_window_mgr_register_header (win_mgr, header, NULL);
 		
 		const gchar *modest_account_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);

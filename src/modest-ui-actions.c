@@ -1138,7 +1138,7 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	while (!tny_iterator_is_done (iter_not_opened)) {
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_not_opened));
 		if (header) {
-			modest_window_mgr_register_header (mgr, header);
+			modest_window_mgr_register_header (mgr, header, NULL);
 			g_object_unref (header);
 		}		
 		tny_iterator_next (iter_not_opened);
@@ -4189,7 +4189,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 		}
 	} else {
 		ModestMailOperation *mail_op = NULL;
-		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header);
+		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header, NULL);
 		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
 									 modest_ui_actions_get_msgs_full_error_handler,
 									 NULL, NULL);

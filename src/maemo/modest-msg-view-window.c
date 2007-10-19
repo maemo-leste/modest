@@ -2176,10 +2176,23 @@ void
 modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart *mime_part)
 {
 	ModestMsgViewWindowPrivate *priv;
+	const gchar *msg_uid;
+	gchar *attachment_uid = NULL;
+	gint attachment_index = 0;
+	GList *attachments;
+
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	g_return_if_fail (TNY_IS_MIME_PART (mime_part) || (mime_part == NULL));
-
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (window));
+	attachments = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	attachment_index = g_list_index (attachments, mime_part);
+	g_list_free (attachments);
+	
+	if (msg_uid && attachment_index >= 0) {
+		attachment_uid = g_strdup_printf ("%s/%d", msg_uid, attachment_index);
+	}
 
 	if (mime_part == NULL) {
 		gboolean error = FALSE;
@@ -2211,8 +2224,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		TnyFsStream *temp_stream = NULL;
-
-		temp_stream = modest_maemo_utils_create_temp_stream (att_filename, &filepath);
+		temp_stream = modest_maemo_utils_create_temp_stream (att_filename, attachment_uid, &filepath);
 		
 		if (temp_stream) {
 			const gchar *content_type;
@@ -2245,11 +2257,11 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 				g_warning ("window for is already being created");
 		} else { 
 			/* it's not found, so create a new window for it */
-			modest_window_mgr_register_header (mgr, header); /* register the uid before building the window */
+			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
 			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, NULL);
+			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, attachment_uid);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win), 
 						modest_window_get_zoom (MODEST_WINDOW (window)));
 			modest_window_mgr_register_window (mgr, msg_win);
