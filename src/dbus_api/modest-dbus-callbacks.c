@@ -64,16 +64,6 @@ typedef struct
  	gchar *bcc;
  	gchar *subject;
  	gchar *body;
- 	gchar *attachments;
-} SendMailIdleData;
-
-typedef struct 
-{
-	gchar *to;
- 	gchar *cc;
- 	gchar *bcc;
- 	gchar *subject;
- 	gchar *body;
 	gchar *attachments;
 } ComposeMailIdleData;
 
@@ -118,15 +108,11 @@ static gchar* uri_unescape(const gchar* uri, size_t len)
  */
 static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_values)
 {
-	const gchar* start_to = NULL;
-	/* Remove the mailto: prefix: 
-	 * 7 is the length of "mailto:": */
-	if (strncmp (mailto, "mailto:", 7) == 0) {
-		start_to = mailto + 7;
-	}
-	
-	if (!start_to)
+	/* The URL must begin with mailto: */
+	if (strncmp (mailto, "mailto:", 7) != 0) {
 		return NULL;
+	}
+	const gchar* start_to = mailto + 7;
 	
 	/* Look for ?, or the end of the string, marking the end of the to address: */
 	const size_t len_to = strcspn (start_to, "?");
@@ -137,7 +123,6 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 	const size_t len_mailto = strlen (start_to);
 	const gchar* p = start_to + len_to + 1; /* parsed so far. */
 	const gchar* end = start_to + len_mailto;
-	/* GSList *items = NULL; */
 	const gchar* start_item_name = p;
 	size_t len_item_name = 0;
 	const gchar* start_item_value = NULL;
