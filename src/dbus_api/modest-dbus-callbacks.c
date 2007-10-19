@@ -113,60 +113,41 @@ static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_val
 		return NULL;
 	}
 	const gchar* start_to = mailto + 7;
-	
+
 	/* Look for ?, or the end of the string, marking the end of the to address: */
 	const size_t len_to = strcspn (start_to, "?");
 	gchar* result_to = uri_unescape (start_to, len_to);
 	printf("debug: result_to=%s\n", result_to);
-	
+
+	if (list_items_and_values == NULL) {
+		return result_to;
+	}
+
 	/* Get any other items: */
 	const size_t len_mailto = strlen (start_to);
 	const gchar* p = start_to + len_to + 1; /* parsed so far. */
 	const gchar* end = start_to + len_mailto;
-	const gchar* start_item_name = p;
-	size_t len_item_name = 0;
-	const gchar* start_item_value = NULL;
 	while (p < end) {
-		
-		/* Looking for the end of a name; */
-		if (start_item_name) {
-			const size_t len = strcspn (p, "="); /* Returns whole string if none found. */
-			if (len) {
-				/* This marks the end of a name and the start of the value: */
-				len_item_name = len;
-				
-				/* Skip over the name and mark the start of the value: */
-				p += (len + 1); /* Skip over the = */
-				start_item_value = p;
-			}
+		const gchar *name, *value, *name_start, *name_end, *value_start, *value_end;
+		name_start = p;
+		name_end = strchr (name_start, '='); /* Separator between name and value */
+		if (name_end == NULL) {
+			g_debug ("Malformed URI: %s\n", mailto);
+			return result_to;
 		}
-		
-		/* Looking for the end of a value: */
-		if (start_item_value) {
-			const size_t len = strcspn (p, "&"); /* Returns whole string if none found. */
-			/* & marks the start of a new item: */
-			if (len) {
-				if (start_item_name && len_item_name) {
-					/* Finish the previously-started item: */
-					gchar *item_value = uri_unescape (start_item_value, len);
-					gchar *item_name = g_strndup (start_item_name, len_item_name);
-					/* printf ("debug: item name=%s, value=%s\n", item_name, item_value); */
-					
-					/* Append the items to the list */
-					if(list_items_and_values) {
-						*list_items_and_values = g_slist_append (*list_items_and_values, item_name);
-						*list_items_and_values = g_slist_append (*list_items_and_values, item_value);
-					}
-				}
-				
-				/* Skip over the value and mark the start of a possible new name/value pair: */
-				p += (len + 1); /* Skip over the & */
-				start_item_name = p;
-				len_item_name = 0;
-				start_item_value = NULL;
-			}
+		value_start = name_end + 1;
+		value_end = strchr (value_start, '&'); /* Separator between value and next parameter */
+
+		name = g_strndup(name_start, name_end - name_start);
+		if (value_end != NULL) {
+			value = uri_unescape(value_start, value_end - value_start);
+			p = value_end + 1;
+		} else {
+			value = uri_unescape(value_start, -1);
+			p = end;
 		}
-		
+		*list_items_and_values = g_slist_append (*list_items_and_values, (gpointer) name);
+		*list_items_and_values = g_slist_append (*list_items_and_values, (gpointer) value);
 	}
 	
 	return result_to;
