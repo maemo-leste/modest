@@ -1815,8 +1815,8 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win)
 	account_names = NULL;
 }
 
-void 
-modest_do_refresh_current_folder(ModestWindow *win)
+static void 
+refresh_current_folder(ModestWindow *win)
 {
 	/* Refresh currently selected folder. Note that if we only
 	   want to retreive the headers, then the refresh only will
@@ -1870,7 +1870,9 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 	if (!accounts_exist)
 		modest_ui_actions_on_accounts (NULL, win);
 
-	modest_do_refresh_current_folder (win);
+	/* Refresh the current folder if we're viewing a window */
+	if (win)
+		refresh_current_folder (win);
 	
 	/* Refresh the active account */
 	modest_ui_actions_do_send_receive (NULL, win);

@@ -214,9 +214,6 @@ void    modest_ui_actions_do_send_receive_all          (ModestWindow *win);
 void    modest_ui_actions_do_send_receive              (const gchar *account_name,
 							ModestWindow *win);
 
-void 
-modest_do_refresh_current_folder(ModestWindow *win);
-
 /**
  * modest_ui_actions_on_send_receive:
  * @action: a #GtkAction

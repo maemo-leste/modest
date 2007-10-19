@@ -790,11 +790,6 @@ on_idle_send_receive(gpointer user_data)
 	/* Pick the main window if it exists */
 	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 
-	/* This seems to be necessary to show new messages in the current window.
-	 * I would expect this to be after the send_receive, but maybe 
-	 * this makes a connection too. murrayc. */
-	modest_do_refresh_current_folder (win);
-
 	/* Send & receive all if "Update automatically" is set */
 	/* TODO: check the auto-update parameter in the configuration */
 	modest_ui_actions_do_send_receive_all (win);
