@@ -182,14 +182,17 @@ on_idle_mail_to(gpointer user_data)
 {
 	gchar *uri = (gchar*)user_data;
 	GSList *list_names_and_values = NULL;
-
+	gchar *to = NULL;
 	const gchar *cc = NULL;
 	const gchar *bcc = NULL;
 	const gchar *subject = NULL;
 	const gchar *body = NULL;
+	if (!check_and_offer_account_creation ()) {
+		goto cleanup;
+	}
 
 	/* Get the relevant items from the list: */
-	gchar *to = uri_parse_mailto (uri, &list_names_and_values);
+	to = uri_parse_mailto (uri, &list_names_and_values);
 	GSList *list = list_names_and_values;
 	while (list) {
 		GSList *list_value = g_slist_next (list);
@@ -213,6 +216,7 @@ on_idle_mail_to(gpointer user_data)
 	modest_ui_actions_compose_msg(NULL, to, cc, bcc, subject, body, NULL);
 	gdk_threads_leave (); /* CHECKED */
 
+cleanup:
 	/* Free the to: and the list, as required by uri_parse_mailto() */
 	g_free(to);
 	g_slist_foreach (list_names_and_values, (GFunc)g_free, NULL);
@@ -247,10 +251,11 @@ on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 static gboolean
 on_idle_compose_mail(gpointer user_data)
 {
-	if (!check_and_offer_account_creation ())
-		return FALSE;
 	GSList *attachments = NULL;
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
+	if (!check_and_offer_account_creation ()) {
+		goto cleanup;
+	}
 
 	/* it seems Sketch at least sends a leading ',' -- take that into account,
 	 * ie strip that ,*/
@@ -272,8 +277,16 @@ on_idle_compose_mail(gpointer user_data)
 				      idle_data->bcc, idle_data->subject,
 				      idle_data->body, attachments);
 	gdk_threads_leave (); /* CHECKED */
+cleanup:
 	g_slist_foreach(attachments, (GFunc)g_free, NULL);
 	g_slist_free(attachments);
+	g_free (idle_data->to);
+	g_free (idle_data->cc);
+	g_free (idle_data->bcc);
+	g_free (idle_data->subject);
+	g_free (idle_data->body);
+	g_free (idle_data->attachments);
+	g_free(idle_data);
 
 	return FALSE; /* Do not call this callback again. */
 }
