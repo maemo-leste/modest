@@ -765,22 +765,31 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 #endif /* MODEST_PLATFORM_MAEMO */
 }
 
-TnyMsg *
-modest_ui_actions_create_msg(const gchar *account_name,
-			     const gchar *to_str,
-			     const gchar *cc_str,
-			     const gchar *bcc_str,
-			     const gchar *subject_str,
-			     const gchar *body_str)
+void
+modest_ui_actions_compose_msg(ModestWindow *win,
+			      const gchar *to_str,
+			      const gchar *cc_str,
+			      const gchar *bcc_str,
+			      const gchar *subject_str,
+			      const gchar *body_str,
+			      GSList *attachments)
 {
+	gchar *account_name = NULL;
 	TnyMsg *msg = NULL;
 	TnyAccount *account = NULL;
 	TnyFolder *folder = NULL;
 	gchar *from_str = NULL, *signature = NULL, *body = NULL;
 	gboolean use_signature = FALSE;
+	ModestWindow *msg_win = NULL;
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
 	ModestTnyAccountStore *store = modest_runtime_get_account_store();
 
+	if (win) account_name = g_strdup (modest_window_get_active_account (win));
+	if (!account_name) account_name = modest_account_mgr_get_default_account(mgr);
+	if (!account_name) {
+		g_printerr ("modest: no account found\n");
+		goto cleanup;
+	}
 	account = modest_tny_account_store_get_server_account (store, account_name, TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
 		g_printerr ("modest: failed to get tnyaccount for '%s'\n", account_name);
@@ -810,55 +819,42 @@ modest_ui_actions_create_msg(const gchar *account_name,
 		goto cleanup;
 	}
 
+	/* Create and register edit window */
+	/* This is destroyed by TODO. */
+	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
+	while (attachments) {
+		modest_msg_edit_window_attach_file_one((ModestMsgEditWindow *)msg_win,
+						       attachments->data);
+		attachments = g_slist_next(attachments);
+	}
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
+
+	if (win) {
+		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
+					      GTK_WINDOW (win));
+	}
+	gtk_widget_show_all (GTK_WIDGET (msg_win));
+
 cleanup:
 	g_free (from_str);
 	g_free (signature);
 	g_free (body);
+	g_free (account_name);
 	if (account) g_object_unref (G_OBJECT(account));
 	if (folder) g_object_unref (G_OBJECT(folder));
-
-	return msg;
+	if (msg_win) g_object_unref (G_OBJECT(msg_win));
+	if (msg) g_object_unref (G_OBJECT(msg));
 }
 
 void
 modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 {
-	ModestWindow *msg_win = NULL;
-	TnyMsg *msg = NULL;
-	gchar *account_name = NULL;
-	ModestWindowMgr *win_mgr;
-	ModestAccountMgr *acc_mgr = modest_runtime_get_account_mgr();
-
 	/* if there are no accounts yet, just show the wizard */
-	if (!modest_account_mgr_has_accounts (acc_mgr, TRUE)) {
+	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
 		if (!modest_ui_actions_run_account_setup_wizard (win)) return;
 	}
 
-	account_name = g_strdup (modest_window_get_active_account (win));
-	if (!account_name) account_name = modest_account_mgr_get_default_account(acc_mgr);
-	if (!account_name) {
-		g_printerr ("modest: no account found\n");
-		goto cleanup;
-	}
-	msg = modest_ui_actions_create_msg(account_name, NULL, NULL, NULL, NULL, NULL);
-	if (msg == NULL) goto cleanup;
-
-	/* Create and register edit window */
-	/* This is destroyed by TODO. */
-	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
-	win_mgr = modest_runtime_get_window_mgr ();
-	modest_window_mgr_register_window (win_mgr, msg_win);
-
-	if (win) {
-		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
-					      GTK_WINDOW (win));
-        }
-	gtk_widget_show_all (GTK_WIDGET (msg_win));
-
-cleanup:
-	g_free (account_name);
-	if (msg_win) g_object_unref (msg_win);
-	if (msg) g_object_unref (G_OBJECT(msg));
+	modest_ui_actions_compose_msg(win, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 gboolean 

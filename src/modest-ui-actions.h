@@ -488,21 +488,22 @@ void modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_qu
 						     gpointer user_data);
 
 /**
- * Create a new TnyMsg to be used in a compose window
- * @param account_name Name of the account that will be used to send this message
+ * Opens a new message editor for composing
+ * @param win Modest main window (can be NULL)
  * @param to_str "To:" header, or NULL
  * @param cc_str "Cc:" header, or NULL
  * @param bcc_str "Bcc:" header, or NULL
  * @param subject_str Subject of the message, or NULL
  * @param body_str Body of the message (without signature), or NULL
- * @return A new TnyMsg (or NULL if an error happened)
+ * @param attachments List of file URIs to attach
  */
-TnyMsg *modest_ui_actions_create_msg(const gchar *account_name,
-				     const gchar *to_str,
-				     const gchar *cc_str,
-				     const gchar *bcc_str,
-				     const gchar *subject_str,
-				     const gchar *body_str);
+void modest_ui_actions_compose_msg(ModestWindow *win,
+				   const gchar *to_str,
+				   const gchar *cc_str,
+				   const gchar *bcc_str,
+				   const gchar *subject_str,
+				   const gchar *body_str,
+				   GSList *attachments);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

@@ -256,69 +256,32 @@ on_idle_compose_mail(gpointer user_data)
 {
 	if (!check_and_offer_account_creation ())
 		return FALSE;
-	
+	GSList *attachments = NULL;
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
-        ModestWindow *win = NULL;
-        TnyMsg *msg = NULL;
 
-	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
-	gchar *account_name = modest_account_mgr_get_default_account(modest_runtime_get_account_mgr());
-	if (!account_name) {
-		g_printerr ("modest: no account found.\n");
-		
-		/* TODO: If the call to this D-Bus method caused the application to start
-		 * then the new-account wizard will now be shown, and we need to wait 
-		 * until the account exists instead of just failing.
-		 */
+	/* it seems Sketch at least sends a leading ',' -- take that into account,
+	 * ie strip that ,*/
+	if (idle_data->attachments && idle_data->attachments[0]==',') {
+		gchar *tmp = g_strdup (idle_data->attachments + 1);
+		g_free(idle_data->attachments);
+		idle_data->attachments = tmp;
 	}
+	if (idle_data->attachments != NULL) {
+		gchar **list = g_strsplit(idle_data->attachments, ",", 0);
+		gint i = 0;
+		for (i=0; list[i] != NULL; i++) {
+			attachments = g_slist_append(attachments, g_strdup(list[i]));
+		}
+		g_strfreev(list);
+	}
+	gdk_threads_enter (); /* CHECKED */
+	modest_ui_actions_compose_msg(NULL, idle_data->to, idle_data->cc,
+				      idle_data->bcc, idle_data->subject,
+				      idle_data->body, attachments);
+	gdk_threads_leave (); /* CHECKED */
+	g_slist_foreach(attachments, (GFunc)g_free, NULL);
+	g_slist_free(attachments);
 
-        msg = modest_ui_actions_create_msg(account_name, idle_data->to, idle_data->cc,
-                                           idle_data->bcc, idle_data->subject, idle_data->body);
-        if (msg == NULL) goto cleanup;
-
-        /* This is a GDK lock because we are an idle callback and
-         * the code below is or does Gtk+ code */
-
-        gdk_threads_enter (); /* CHECKED */
-
-        win = modest_msg_edit_window_new (msg, account_name, FALSE);
-
-        /* it seems Sketch at least sends a leading ',' -- take that into account,
-         * ie strip that ,*/
-        if (idle_data->attachments && idle_data->attachments[0]==',') {
-                gchar *tmp = g_strdup (idle_data->attachments + 1);
-                g_free(idle_data->attachments);
-                idle_data->attachments = tmp;
-        }
-        if (idle_data->attachments != NULL) {
-                gchar **list = g_strsplit(idle_data->attachments, ",", 0);
-                gint i = 0;
-                for (i=0; list[i] != NULL; i++) {
-                        modest_msg_edit_window_attach_file_one(
-                                (ModestMsgEditWindow *)win, list[i]);
-                }
-                g_strfreev(list);
-        }
-
-        modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
-        gtk_widget_show_all (GTK_WIDGET (win));
-
-        gdk_threads_leave (); /* CHECKED */
-
-cleanup:
-        if (win) g_object_unref (win);
-        if (msg) g_object_unref (msg);
- 	/* Free the idle data: */
-	g_free (idle_data->to);
-	g_free (idle_data->cc);
-	g_free (idle_data->bcc);
-	g_free (idle_data->subject);
-	g_free (idle_data->body);
-	g_free (idle_data->attachments);
-	g_free (idle_data);
-	
- 	g_free (account_name);
- 	
 	return FALSE; /* Do not call this callback again. */
 }
 
