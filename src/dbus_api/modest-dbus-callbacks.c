@@ -209,14 +209,9 @@ on_idle_mail_to(gpointer user_data)
 		list = g_slist_next (list_value);
 	}
 
-	ComposeMailIdleData *idle_data = g_new0(ComposeMailIdleData, 1); /* Freed in the idle callback. */
-
-	idle_data->to = g_strdup (to);
-	idle_data->cc = g_strdup (cc);
-	idle_data->bcc = g_strdup (bcc);
-	idle_data->subject = g_strdup (subject);
-	idle_data->body = g_strdup (body);
-	idle_data->attachments = NULL;
+	gdk_threads_enter (); /* CHECKED */
+	modest_ui_actions_compose_msg(NULL, to, cc, bcc, subject, body, NULL);
+	gdk_threads_leave (); /* CHECKED */
 
 	/* Free the to: and the list, as required by uri_parse_mailto() */
 	g_free(to);
@@ -224,8 +219,6 @@ on_idle_mail_to(gpointer user_data)
 	g_slist_free (list_names_and_values);
 
 	g_free(uri);
-
-	on_idle_compose_mail((gpointer)idle_data);
 
 	return FALSE; /* Do not call this callback again. */
 }
