@@ -765,94 +765,100 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 #endif /* MODEST_PLATFORM_MAEMO */
 }
 
-void
-modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
+TnyMsg *
+modest_ui_actions_create_msg(const gchar *account_name,
+			     const gchar *to_str,
+			     const gchar *cc_str,
+			     const gchar *bcc_str,
+			     const gchar *subject_str,
+			     const gchar *body_str)
 {
-	ModestWindow *msg_win = NULL;
 	TnyMsg *msg = NULL;
-	TnyFolder *folder = NULL;
-	gchar *account_name = NULL;
-	gchar *from_str = NULL;
-/* 	GError *err = NULL; */
 	TnyAccount *account = NULL;
-	ModestWindowMgr *mgr;
-	gchar *signature = NULL, *blank_and_signature = NULL;
+	TnyFolder *folder = NULL;
+	gchar *from_str = NULL, *signature = NULL, *body = NULL;
+	gboolean use_signature = FALSE;
+	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
+	ModestTnyAccountStore *store = modest_runtime_get_account_store();
 
-	/* if there are no accounts yet, just show the wizard */
-	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
-		if (!modest_ui_actions_run_account_setup_wizard (win))
-			return;
-	}
-	
-	account_name = g_strdup (modest_window_get_active_account (win));
-	if (!account_name)
-		account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-	if (!account_name) {
-		g_printerr ("modest: no account found\n");
-		goto cleanup;
-	}
-	
-	account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store(),
-								       account_name,
-								       TNY_ACCOUNT_TYPE_STORE);
+	account = modest_tny_account_store_get_server_account (store, account_name, TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
 		g_printerr ("modest: failed to get tnyaccount for '%s'\n", account_name);
 		goto cleanup;
 	}
-
-	from_str = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), account_name);
-	if (!from_str) {
-		g_printerr ("modest: failed get from string for '%s'\n", account_name);
-		goto cleanup;
-	}
-
-	gboolean use_signature = FALSE;
-	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr (), account_name, &use_signature);
-
-	if (use_signature) {
-		blank_and_signature = g_strconcat ("\n", signature, NULL);
-	} else {
-		blank_and_signature = g_strdup ("");
-	}
-
-	g_free (signature);
-
-	msg = modest_tny_msg_new ("", from_str, "", "", "", blank_and_signature, NULL);
-	if (!msg) {
-		g_printerr ("modest: failed to create new msg\n");
-		goto cleanup;
-	}
-	
 	folder = modest_tny_account_get_special_folder (account, TNY_FOLDER_TYPE_DRAFTS);
 	if (!folder) {
 		g_printerr ("modest: failed to find Drafts folder\n");
 		goto cleanup;
 	}
-	
-	
+	from_str = modest_account_mgr_get_from_string (mgr, account_name);
+	if (!from_str) {
+		g_printerr ("modest: failed get from string for '%s'\n", account_name);
+		goto cleanup;
+	}
+
+	signature = modest_account_mgr_get_signature (mgr, account_name, &use_signature);
+	if (body_str != NULL) {
+		body = use_signature ? g_strconcat(body_str, "\n", signature, NULL) : g_strdup(body_str);
+	} else {
+		body = use_signature ? g_strconcat("\n", signature, NULL) : g_strdup("");
+	}
+
+	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL);
+	if (!msg) {
+		g_printerr ("modest: failed to create new msg\n");
+		goto cleanup;
+	}
+
+cleanup:
+	g_free (from_str);
+	g_free (signature);
+	g_free (body);
+	if (account) g_object_unref (G_OBJECT(account));
+	if (folder) g_object_unref (G_OBJECT(folder));
+
+	return msg;
+}
+
+void
+modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
+{
+	ModestWindow *msg_win = NULL;
+	TnyMsg *msg = NULL;
+	gchar *account_name = NULL;
+	ModestWindowMgr *win_mgr;
+	ModestAccountMgr *acc_mgr = modest_runtime_get_account_mgr();
+
+	/* if there are no accounts yet, just show the wizard */
+	if (!modest_account_mgr_has_accounts (acc_mgr, TRUE)) {
+		if (!modest_ui_actions_run_account_setup_wizard (win)) return;
+	}
+
+	account_name = g_strdup (modest_window_get_active_account (win));
+	if (!account_name) account_name = modest_account_mgr_get_default_account(acc_mgr);
+	if (!account_name) {
+		g_printerr ("modest: no account found\n");
+		goto cleanup;
+	}
+	msg = modest_ui_actions_create_msg(account_name, NULL, NULL, NULL, NULL, NULL);
+	if (msg == NULL) goto cleanup;
+
 	/* Create and register edit window */
 	/* This is destroyed by TODO. */
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
-	mgr = modest_runtime_get_window_mgr ();
-	modest_window_mgr_register_window (mgr, msg_win);
+	win_mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_register_window (win_mgr, msg_win);
 
-	if (win)
+	if (win) {
 		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
 					      GTK_WINDOW (win));
+        }
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
 	g_free (account_name);
-	g_free (from_str);
-	g_free (blank_and_signature);
-	if (msg_win)
-		g_object_unref (msg_win);
-	if (account)
-		g_object_unref (G_OBJECT(account));
-	if (msg)
-		g_object_unref (G_OBJECT(msg));
-	if (folder)
-		g_object_unref (G_OBJECT(folder));
+	if (msg_win) g_object_unref (msg_win);
+	if (msg) g_object_unref (G_OBJECT(msg));
 }
 
 gboolean 

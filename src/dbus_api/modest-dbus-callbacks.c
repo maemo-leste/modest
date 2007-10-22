@@ -258,12 +258,11 @@ on_idle_compose_mail(gpointer user_data)
 		return FALSE;
 	
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
-	gchar **list = NULL;
-	gint i = 0;
+        ModestWindow *win = NULL;
+        TnyMsg *msg = NULL;
 
 	/* Get the TnyTransportAccount so we can instantiate a mail operation: */
- 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
-	gchar *account_name = modest_account_mgr_get_default_account (account_mgr);
+	gchar *account_name = modest_account_mgr_get_default_account(modest_runtime_get_account_mgr());
 	if (!account_name) {
 		g_printerr ("modest: no account found.\n");
 		
@@ -272,104 +271,43 @@ on_idle_compose_mail(gpointer user_data)
 		 * until the account exists instead of just failing.
 		 */
 	}
-	
-	TnyAccount *account = NULL;
-	if (account_name && account_mgr) {
-		account = modest_tny_account_store_get_transport_account_for_open_connection (
-			modest_runtime_get_account_store(), account_name);
-	}
-	
-	if (!account) {
-		g_printerr ("modest: failed to get tny account folder'%s'\n", account_name);
-	} else {
-		gchar * from = modest_account_mgr_get_from_string (account_mgr,
-								  account_name);
-		if (!from) {
-			g_printerr ("modest: no from address for account '%s'\n", account_name);
-		} else {
-			/* Get the signature. 
-			 * TODO: This, like much of this function is copy/pasted from 
-			 * modest_ui_actions_on_new_msg(): */
-			gboolean use_signature = FALSE;
-			gchar *signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr (), account_name, &use_signature);
-		
-			gchar* blank_and_signature = NULL;
-			if (use_signature) {
-				blank_and_signature = g_strconcat ("\n", signature, NULL);
-			} else {
-				blank_and_signature = g_strdup ("");
-			}
-			g_free (signature);
-			
-			/* Add it to the body. */
-			gchar *body_with_sig = NULL;
-			if (!(idle_data->body))
-				body_with_sig = g_strdup (blank_and_signature);
-			else {
-				body_with_sig = g_strconcat (idle_data->body, blank_and_signature, NULL);
-			}
-				
-			/* Create the message: */
-			TnyMsg *msg  = modest_tny_msg_new (idle_data->to, from, 
-				idle_data->cc, idle_data->bcc, idle_data->subject, body_with_sig, 
-				NULL); /* NULL because m_t_m_n doesn't use it */
-				
-			g_free (body_with_sig);
-			g_free (blank_and_signature);
-				
-			if (!msg) {
-				g_printerr ("modest: failed to create message\n");
-			} else
-			{
-				/* Add the message to a folder and show its UI for editing: */
-				TnyFolder *folder = modest_tny_account_get_special_folder (account,
-									TNY_FOLDER_TYPE_DRAFTS);
-				if (!folder) {
-					g_printerr ("modest: failed to find Drafts folder\n");
-				} else {
-			
-					tny_folder_add_msg (folder, msg, NULL); /* TODO: check err */
 
-					/* This is a GDK lock because we are an idle callback and
- 	 				 * the code below is or does Gtk+ code */
+        msg = modest_ui_actions_create_msg(account_name, idle_data->to, idle_data->cc,
+                                           idle_data->bcc, idle_data->subject, idle_data->body);
+        if (msg == NULL) goto cleanup;
 
-					gdk_threads_enter (); /* CHECKED */
-	
-					ModestWindow *win = modest_msg_edit_window_new (msg, account_name, FALSE);
+        /* This is a GDK lock because we are an idle callback and
+         * the code below is or does Gtk+ code */
 
-					/* it seems Sketch at least sends a leading ',' -- take that into account,
-					 * ie strip that ,*/
-					if (idle_data->attachments && idle_data->attachments[0]==',') {
-						gchar *tmp = g_strdup (idle_data->attachments + 1);
-						g_free(idle_data->attachments);
-						idle_data->attachments = tmp;
-					}
+        gdk_threads_enter (); /* CHECKED */
 
-					if (idle_data->attachments != NULL) {
-						list = g_strsplit(idle_data->attachments, ",", 0);
-						for (i=0; list[i] != NULL; i++) {
-							modest_msg_edit_window_attach_file_one(
-								(ModestMsgEditWindow *)win, list[i]);
-						}
-						g_strfreev(list);
-					}
+        win = modest_msg_edit_window_new (msg, account_name, FALSE);
 
-					modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
-					gtk_widget_show_all (GTK_WIDGET (win));
+        /* it seems Sketch at least sends a leading ',' -- take that into account,
+         * ie strip that ,*/
+        if (idle_data->attachments && idle_data->attachments[0]==',') {
+                gchar *tmp = g_strdup (idle_data->attachments + 1);
+                g_free(idle_data->attachments);
+                idle_data->attachments = tmp;
+        }
+        if (idle_data->attachments != NULL) {
+                gchar **list = g_strsplit(idle_data->attachments, ",", 0);
+                gint i = 0;
+                for (i=0; list[i] != NULL; i++) {
+                        modest_msg_edit_window_attach_file_one(
+                                (ModestMsgEditWindow *)win, list[i]);
+                }
+                g_strfreev(list);
+        }
 
-					gdk_threads_leave (); /* CHECKED */
-				
-					g_object_unref (G_OBJECT(folder));
-					g_object_unref (win);
-				}
-			
-				g_object_unref (G_OBJECT(msg));
-			}
-			
-			g_object_unref (G_OBJECT(account));
-		}
- 	}
+        modest_window_mgr_register_window (modest_runtime_get_window_mgr (), win);
+        gtk_widget_show_all (GTK_WIDGET (win));
 
+        gdk_threads_leave (); /* CHECKED */
+
+cleanup:
+        if (win) g_object_unref (win);
+        if (msg) g_object_unref (msg);
  	/* Free the idle data: */
 	g_free (idle_data->to);
 	g_free (idle_data->cc);
