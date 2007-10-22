@@ -135,6 +135,9 @@ typedef struct _XFerMsgAsyncHelper
 	XferAsyncUserCallback user_callback;	
 	gboolean delete;
 	gpointer user_data;
+	gint last_total_bytes;
+	gint sum_total_bytes;
+	gint total_bytes;
 } XFerMsgAsyncHelper;
 
 typedef void (*ModestMailOperationCreateMsgCallback) (ModestMailOperation *mail_op,
@@ -2505,7 +2508,7 @@ transfer_msgs_status_cb (GObject *obj,
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	ModestMailOperationState *state;
-
+	gboolean is_num_bytes;
 
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_XFER_MSGS);
@@ -2516,19 +2519,30 @@ transfer_msgs_status_cb (GObject *obj,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	priv->done = status->position;
-	priv->total = status->of_total;
+	/* We know that tinymail sends us information about
+	   transferred bytes with this particular message */
+	is_num_bytes = (g_ascii_strcasecmp (status->message, "Retrieving message") == 0);
 
 	state = modest_mail_operation_clone_state (self);
+	if (is_num_bytes && !((status->position == 1) && (status->of_total == 100))) {
+		/* We know that we're in a different message when the
+		   total number of bytes to transfer is different. Of
+		   course it could fail if we're transferring messages
+		   of the same size, but this is a workarround */
+		if (status->of_total != helper->last_total_bytes) {
+			priv->done++;
+			helper->sum_total_bytes += helper->last_total_bytes;
+			helper->last_total_bytes = status->of_total;
+		}
+		state->bytes_done += status->position + helper->sum_total_bytes;
+		state->bytes_total = helper->total_bytes;
 
-	/* This is not a GDK lock because we are a Tinymail callback and
-	 * Tinymail already acquires the Gdk lock */
 
-	/* no gdk_threads_enter (), CHECKED */
-
-	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
-
-	/* no gdk_threads_leave (), CHECKED */
+		/* Notify the status change. Only notify about changes
+		   referred to bytes */
+		g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+			       0, state, NULL);
+	}
 
 	g_slice_free (ModestMailOperationState, state);
 }
@@ -2611,6 +2625,24 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 	g_slice_free (XFerMsgAsyncHelper, helper);
 }
 
+static guint
+compute_message_list_size (TnyList *headers)
+{
+	TnyIterator *iter;
+	guint size = 0;
+
+	iter = tny_list_create_iterator (headers);
+	while (!tny_iterator_is_done (iter)) {
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		size += tny_header_get_message_size (header);
+		g_object_unref (header);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	return size;
+}
+
 void
 modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 				 TnyList *headers, 
@@ -2631,7 +2663,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-	priv->total = 1;
+	priv->total = tny_list_get_length (headers);
 	priv->done = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
@@ -2683,6 +2715,9 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
 	helper->delete = delete_original;
+	helper->last_total_bytes = 0;
+	helper->sum_total_bytes = 0;
+	helper->total_bytes = compute_message_list_size (headers);
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (src_folder);

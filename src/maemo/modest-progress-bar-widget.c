@@ -428,11 +428,7 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 	   once the done is greater than 1 */
 	determined = (done > 0 && total > 1) && 
 		!(done == 1 && total == 100);
-/* 	if ((done == 0 && total == 0) ||  */
-/* 	    (done == 1 && total == 100)) { */
 	if (!determined) {
-/* 		gtk_progress_bar_set_bar_style (GTK_PROGRESS_BAR (priv->progress_bar), /\* Deprecated *\/ */
-/* 						GTK_PROGRESS_CONTINUOUS); */
 		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
 	} else {
 		gdouble percent = 0;
