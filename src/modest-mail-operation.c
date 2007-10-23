@@ -1829,7 +1829,7 @@ new_name_valid_if_local_account (ModestMailOperationPrivate *priv,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS,
-			     _("ckdg_ib_folder_already_exists"));
+			     _CS("ckdg_ib_folder_already_exists"));
 		return FALSE;
 	} else
 		return TRUE;
