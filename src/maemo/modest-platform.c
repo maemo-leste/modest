@@ -1576,7 +1576,7 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 	GMainContext *context = NULL; /* g_main_context_new (); */
 	data->loop = g_main_loop_new (context, FALSE /* not running */);
 
-	g_timeout_add (1000, &on_timeout_check_account_is_online, data);
+	g_timeout_add (1000, on_timeout_check_account_is_online, data);
 
 	/* This main loop will run until the idle handler has stopped it: */
 	g_main_loop_run (data->loop);
