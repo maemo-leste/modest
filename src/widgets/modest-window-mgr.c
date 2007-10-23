@@ -670,9 +670,13 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	   HashTable could not exist if the main window was closeed
 	   when there were other windows remaining */
 	if (MODEST_IS_MSG_VIEW_WINDOW (window) && priv->viewer_handlers) {
-		tmp = (gulong *) g_hash_table_lookup (priv->viewer_handlers, window);
-		g_signal_handler_disconnect (window, *tmp);
-		g_hash_table_remove (priv->viewer_handlers, window);
+		/* If the viewer was created without a main window
+		   (for example when opening a message through D-Bus
+		   the viewer handlers was not registered */
+		if (tmp) {
+			g_signal_handler_disconnect (window, *tmp);
+			g_hash_table_remove (priv->viewer_handlers, window);
+		}
 	}
 
 	/* Save state */
