@@ -3837,6 +3837,8 @@ create_move_to_dialog (GtkWindow *win,
 	if (MODEST_IS_FOLDER_VIEW (folder_view)) {
 		const gchar *visible_id = NULL;
 
+		modest_folder_view_set_style (MODEST_FOLDER_VIEW (*tree_view),
+					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 		modest_folder_view_copy_model (MODEST_FOLDER_VIEW(folder_view), 
 					       MODEST_FOLDER_VIEW(*tree_view));
 
@@ -3851,6 +3853,8 @@ create_move_to_dialog (GtkWindow *win,
 		ModestAccountMgr *mgr = NULL;
 		ModestAccountData *acc_data = NULL;
 
+		modest_folder_view_set_style (MODEST_FOLDER_VIEW (*tree_view),
+					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 		modest_folder_view_update_model (MODEST_FOLDER_VIEW (*tree_view), 
 						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
