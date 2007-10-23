@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 	
 	/* Call the function in libmodest-dbus-client: */
 	const gboolean ret = libmodest_dbus_client_mail_to (osso_context,
-		"mailto:murrayc@murrayc.com?subject=test%20subject%20via%20dbus?body=test%20body%20via%20dbus");
+		"mailto:murrayc@murrayc.com?subject=test%20subject%20via%20dbus&body=test%20body%20via%20dbus");
 	if (!ret) {
 		printf("libmodest_dbus_client_mail_to() failed.\n");
 		return OSSO_ERROR;
