@@ -866,6 +866,9 @@ on_account_inserted (TnyAccountStore *account_store,
 	g_signal_connect (account, "connection_status_changed", 
 			  G_CALLBACK (on_connection_status_changed), 
 			  MODEST_FOLDER_VIEW (user_data));
+
+	/* Refilter the model */
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 }
 
 
@@ -896,6 +899,9 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Insert the account in the model */
 	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (tny_account));
+
+	/* Refilter the model */
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 }
 
 
@@ -909,7 +915,6 @@ on_account_removed (TnyAccountStore *account_store,
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
 	GtkTreeSelection *sel = NULL;
-	TnyAccount *folder_selected_account;
 
 	/* Ignore transport account removals, we're not showing them
 	   in the folder view */
@@ -972,14 +977,21 @@ on_account_removed (TnyAccountStore *account_store,
 					      MODEST_CONF_FOLDER_VIEW_KEY);
 	}
 
+	/* Refilter the model */
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
+
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
-	folder_selected_account = (TNY_IS_FOLDER (priv->cur_folder_store)) ?
-		modest_tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store)) :
-		TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
-	if (account == folder_selected_account)
-		modest_folder_view_select_first_inbox_or_local (self);
-	g_object_unref (folder_selected_account);
+	if (priv->cur_folder_store) {
+		TnyAccount *folder_selected_account;
+
+		folder_selected_account = (TNY_IS_FOLDER (priv->cur_folder_store)) ?
+			modest_tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store)) :
+			TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
+		if (account == folder_selected_account)
+			modest_folder_view_select_first_inbox_or_local (self);
+		g_object_unref (folder_selected_account);
+	}
 }
 
 void
@@ -1632,14 +1644,14 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 			    &folder, -1);
 
 	/* Ask for confirmation to move */
-	main_win = modest_window_mgr_get_main_window(mgr);
+	main_win = modest_window_mgr_get_main_window (mgr);
 	response = modest_ui_actions_msgs_move_to_confirmation (main_win, folder, 
 								TRUE, headers);
 	if (response == GTK_RESPONSE_CANCEL)
 		goto cleanup;
 
 	/* Transfer messages */
-	mail_op = modest_mail_operation_new_with_error_handling (NULL,
+	mail_op = modest_mail_operation_new_with_error_handling ((GObject *) main_win,
 								 modest_ui_actions_move_folder_error_handler,
 								 NULL, NULL);
 
@@ -1733,7 +1745,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 
 		/* Do the mail operation */
 		mail_op = 
-			modest_mail_operation_new_with_error_handling (G_OBJECT (modest_window_mgr_get_main_window (mgr)),
+			modest_mail_operation_new_with_error_handling ((GObject *) modest_window_mgr_get_main_window (mgr),
 								       modest_ui_actions_move_folder_error_handler,
 								       folder, NULL);
 
