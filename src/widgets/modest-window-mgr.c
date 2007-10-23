@@ -512,6 +512,8 @@ on_window_destroy (ModestWindow *window,
 		   GdkEvent *event,
 		   ModestWindowMgr *self)
 {
+	gint dialog_response = GTK_RESPONSE_NONE;
+
 	/* Specific stuff first */
 	if (MODEST_IS_MAIN_WINDOW (window)) {
 		ModestWindowMgrPrivate *priv;
@@ -520,21 +522,32 @@ on_window_destroy (ModestWindow *window,
 		/* If more than one window already opened */
 		if (g_list_length (priv->window_list) > 1) {
 
+			/* Create the confirmation dialog MSG-NOT308 */
+			dialog_response = modest_platform_run_confirmation_dialog (
+					GTK_WINDOW (window), _("emev_nc_close_windows"));
+
 			/* If the user wants to close all the windows */
-			if (modest_main_window_close_all (MODEST_MAIN_WINDOW (window))) {
-				GList *iter = priv->window_list;
-				do {
-					if (iter->data != window) {
-						GList *tmp = iter->next;
-						on_window_destroy (MODEST_WINDOW (iter->data),
-								   event,
-								   self);
-						iter = tmp;
-					} else {
-						iter = g_list_next (iter);
-					}
-				} while (iter);
-			}
+			if ((dialog_response == GTK_RESPONSE_OK) 
+					|| (dialog_response == GTK_RESPONSE_ACCEPT) 
+					|| (dialog_response == GTK_RESPONSE_YES))
+				{
+					GList *iter = priv->window_list;
+					do {
+						if (iter->data != window) {
+							GList *tmp = iter->next;
+							on_window_destroy (MODEST_WINDOW (iter->data),
+									event,
+									self);
+							iter = tmp;
+						} else {
+							iter = g_list_next (iter);
+						}
+					} while (iter);
+				}
+			else
+				{
+					return TRUE;
+				}
 		}
 	}
 	else {

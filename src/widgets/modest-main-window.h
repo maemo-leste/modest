@@ -129,17 +129,6 @@ typedef enum {
 GtkWidget* modest_main_window_get_child_widget (ModestMainWindow *self,
 						ModestMainWindowWidgetType widget_type);
 
-/**
- * modest_main_window_close_all:
- * @self: 
- * 
- * this function will ask the user about if the user wants to close
- * all the windows or just the main one
- * 
- * Returns: TRUE if the user selected to close all the windows, otherwise FALSE
- **/
-gboolean   modest_main_window_close_all        (ModestMainWindow *self);
-
 
 /**
  * modest_main_window_set_style:

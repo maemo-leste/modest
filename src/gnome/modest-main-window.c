@@ -692,14 +692,6 @@ on_header_status_update (ModestHeaderView *header_view,
 	modest_gnome_info_bar_set_message (MODEST_GNOME_INFO_BAR (priv->main_bar), msg);
 }
 
-gboolean 
-modest_main_window_close_all (ModestMainWindow *self)
-{
-	/* TODO: show a dialog to ask the user for permission to close
-	   all */
-	return TRUE;
-}
-
 void 
 modest_main_window_set_style (ModestMainWindow *self, 
 			      ModestMainWindowStyle style)
