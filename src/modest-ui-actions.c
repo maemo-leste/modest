@@ -2534,9 +2534,7 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 			g_free (suggested_name);
 			suggested_name = NULL;
 
-			if (result == GTK_RESPONSE_REJECT) {
-				finished = TRUE;
-			} else {
+			if (result == GTK_RESPONSE_ACCEPT) {
 				ModestMailOperation *mail_op;
 				TnyFolder *new_folder = NULL;
 
@@ -2557,6 +2555,8 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 					finished = TRUE;
 				}
 				g_object_unref (mail_op);
+			} else {
+				finished = TRUE;
 			}
 
 			suggested_name = folder_name;
