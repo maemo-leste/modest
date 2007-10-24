@@ -132,7 +132,7 @@
     <menuitem action="FolderViewCSMRenameFolder"/>
     <menuitem action="FolderViewCSMDeleteFolder"/>
     <separator/>
-    <menuitem action="FolderViewCSMPasteMsgs"/>
+<!--    <menuitem action="FolderViewCSMPasteMsgs"/> -->
     <separator/>
     <separator/>
     <menuitem action="FolderViewCSMSearchMessages"/>
