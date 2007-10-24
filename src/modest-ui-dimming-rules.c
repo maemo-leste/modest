@@ -360,6 +360,14 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
+	if (!dimmed) {
+		dimmed = _transfer_mode_enabled (win);
+		if (dimmed) {
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
+			return dimmed;
+		}
+	}
+
 	/* Get selected folder as parent of new folder to create */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
@@ -558,6 +566,11 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 4);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+	if (!dimmed) {
+		dimmed = _transfer_mode_enabled (win);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
