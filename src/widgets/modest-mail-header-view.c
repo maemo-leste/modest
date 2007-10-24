@@ -585,7 +585,7 @@ modest_mail_header_view_set_priority (ModestMailHeaderView *headers_view,
 
 	priv->priority_flags = flags & (TNY_HEADER_FLAG_PRIORITY);
 
-	if (priv->priority_flags == 0) {
+	if (priv->priority_flags == TNY_HEADER_FLAG_NORMAL_PRIORITY) {
 		if (priv->priority_icon != NULL) {
 			gtk_widget_destroy (priv->priority_icon);
 			priv->priority_icon = NULL;
