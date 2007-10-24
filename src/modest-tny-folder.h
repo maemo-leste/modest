@@ -69,19 +69,6 @@ typedef enum {
  */
 TnyFolderType  modest_tny_folder_guess_folder_type   (const TnyFolder *folder);
 
-/**
- * modest_tny_folder_guess_type_from_name:
- * @folder_name: a folder name
- * 
- * determine the type of the folder. first, we see if tinymail
- * can give a specific type. if it cannot, we try to guess the
- * type, based on the name of the folder
- *
- * Note: this is a Class function, there does not require a tnyfolder instance
- *  
- * Returns: the folder type, or TNY_FOLDER_TYPE_UNKNOWN
- */
-TnyFolderType  modest_tny_folder_guess_folder_type_from_name   (const gchar *folder_name);
 
 
 /**

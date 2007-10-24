@@ -207,12 +207,7 @@ modest_mail_header_view_update_is_outgoing (TnyHeaderView *self)
 	folder = tny_header_get_folder (priv->header);
 
 	if (folder) {
-		TnyFolderType folder_type;
-		folder_type = tny_folder_get_folder_type (folder);
-		if (folder_type == TNY_FOLDER_TYPE_NORMAL || folder_type == TNY_FOLDER_TYPE_UNKNOWN) {
-			const gchar *fname = tny_folder_get_name (folder);
-			folder_type = modest_tny_folder_guess_folder_type_from_name (fname);
-		}
+		TnyFolderType folder_type = tny_folder_get_folder_type (folder);
 
 		switch (folder_type) {
 		case TNY_FOLDER_TYPE_DRAFTS:

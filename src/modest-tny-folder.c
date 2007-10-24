@@ -39,54 +39,19 @@
 #include <modest-runtime.h>
 #include <modest-tny-account-store.h>
 
-TnyFolderType
-modest_tny_folder_guess_folder_type_from_name (const gchar* name)
+
+/* make sure you use the *full* name, because foo/drafts is not the same as drafts */
+static TnyFolderType
+modest_tny_folder_guess_folder_type_from_name (const gchar* full_name)
 {
-	gint  type;
-	gchar *folder;
-	gchar *dc_outbox = NULL;
-	gchar *dc_sent = NULL;
-	gchar *dc_drafts = NULL;
-
-	g_return_val_if_fail (name, TNY_FOLDER_TYPE_UNKNOWN);
+	g_return_val_if_fail (full_name, TNY_FOLDER_TYPE_UNKNOWN);
 	
-	type = TNY_FOLDER_TYPE_UNKNOWN;
-	folder = g_utf8_strdown (name, strlen(name));
-	dc_outbox = g_utf8_strdown (_("mcen_me_folder_outbox"), -1);
-	dc_sent = g_utf8_strdown (_("mcen_me_folder_sent"), -1);
-	dc_drafts = g_utf8_strdown (_("mcen_me_folder_drafts"), -1);
-
-//	if (strcmp (folder, "inbox") == 0 ||
-//	    strcmp (folder, _("inbox")) == 0 ||
-//	    strcmp (folder, _("mcen_me_folder_inbox")) == 0)
-//		type = TNY_FOLDER_TYPE_INBOX;
-	if (strcmp (folder, dc_outbox) == 0)
-		type = TNY_FOLDER_TYPE_OUTBOX;
-//	else if (g_str_has_prefix(folder, "junk") ||
-//		 g_str_has_prefix(folder, _("junk")))
-//		type = TNY_FOLDER_TYPE_JUNK;
-//	else if (g_str_has_prefix(folder, "trash") ||
-//		 g_str_has_prefix(folder, _("trash")))
-//		type = TNY_FOLDER_TYPE_TRASH;
-	else if (strcmp (folder, dc_sent) == 0)
-		type = TNY_FOLDER_TYPE_SENT;
-	else if (strcmp (folder, dc_drafts) == 0)
-		type = TNY_FOLDER_TYPE_DRAFTS;
-//	else if (g_str_has_prefix(folder, "notes") ||
-//		 g_str_has_prefix(folder, _("notes")))
-//		type = TNY_FOLDER_TYPE_NOTES;
-//	else if (g_str_has_prefix(folder, "contacts") ||
-//		 g_str_has_prefix(folder, _("contacts")))
-//		type = TNY_FOLDER_TYPE_CONTACTS;
-//	else if (g_str_has_prefix(folder, "calendar") ||
-//		 g_str_has_prefix(folder, _("calendar")))
-//		type = TNY_FOLDER_TYPE_CALENDAR;
-	
-	g_free (folder);
-	g_free (dc_outbox);
-	g_free (dc_sent);
-	g_free (dc_drafts);
-	return type;
+	if (strcmp (full_name, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_OUTBOX)) == 0)
+		return TNY_FOLDER_TYPE_OUTBOX;
+	else if (strcmp (full_name, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_DRAFTS)) == 0)
+		return TNY_FOLDER_TYPE_DRAFTS;
+	return
+		TNY_FOLDER_TYPE_UNKNOWN;
 }
 
 
@@ -104,8 +69,8 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 		type = tny_folder_get_folder_type (TNY_FOLDER (folder));
 	
 	if (type == TNY_FOLDER_TYPE_UNKNOWN) {
-		const gchar *folder_name;
-		folder_name = tny_folder_get_name (TNY_FOLDER (folder));
+		const gchar *folder_name =
+			tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder));
 		type =	modest_tny_folder_guess_folder_type_from_name (folder_name);
 	}
 

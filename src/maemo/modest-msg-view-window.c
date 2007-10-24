@@ -1838,15 +1838,8 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 		TnyFolder *folder;
 
 		folder = tny_msg_get_folder (msg);
-		
 		if (folder) {
 			folder_type = tny_folder_get_folder_type (folder);
-			
-			if (folder_type == TNY_FOLDER_TYPE_NORMAL || folder_type == TNY_FOLDER_TYPE_UNKNOWN) {
-				const gchar *fname = tny_folder_get_name (folder);
-				folder_type = modest_tny_folder_guess_folder_type_from_name (fname);
-			}
-
 			g_object_unref (folder);
 		}
 		g_object_unref (msg);
