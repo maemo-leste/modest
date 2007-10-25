@@ -375,22 +375,6 @@ headers_action_mark_as_unread (TnyHeader *header,
  * otherwise complicated, and it's best to change it in one place 
  * when we change it.
  */
-void modest_do_message_delete (TnyHeader *header, ModestWindow *win)
-{
-	ModestMailOperation *mail_op = NULL;
-	mail_op = modest_mail_operation_new (win ? G_OBJECT(win) : NULL);
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-					 mail_op);
-	
-	/* Always delete. TODO: Move to trash still not supported */
-	modest_mail_operation_remove_msg (mail_op, header, FALSE);
-	g_object_unref (G_OBJECT (mail_op));
-}
-
-/** A convenience method, because deleting a message is 
- * otherwise complicated, and it's best to change it in one place 
- * when we change it.
- */
 void modest_do_messages_delete (TnyList *headers, ModestWindow *win)
 {
 	ModestMailOperation *mail_op = NULL;

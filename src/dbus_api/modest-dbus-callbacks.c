@@ -531,16 +531,17 @@ static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retv
 static gboolean
 on_idle_delete_message (gpointer user_data)
 {
-	TnyList      *headers = NULL;
-	TnyFolder    *folder = NULL;
-	TnyIterator  *iter = NULL; 
-	TnyHeader    *header = NULL;
-	TnyHeader    *msg_header = NULL;
-	TnyMsg       *msg = NULL;
-	TnyAccount   *account = NULL;
-	const char   *uri = NULL;
-	const char   *uid = NULL;
-	gint          res = 0;
+	TnyList *headers = NULL;
+	TnyFolder *folder = NULL;
+	TnyIterator *iter = NULL; 
+	TnyHeader *header = NULL, *msg_header = NULL;
+	TnyMsg *msg = NULL;
+	TnyAccount *account = NULL;
+	const char *uri = NULL, *uid = NULL;
+	gint res = 0;
+	ModestMailOperation *mail_op = NULL;
+	ModestWindow *win = NULL, *msg_view = NULL;
+	ModestWindowMgr *win_mgr = NULL;	
 
 	uri = (char *) user_data;
 
@@ -618,10 +619,14 @@ on_idle_delete_message (gpointer user_data)
 	 * the code below is or does Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED */
-	ModestWindow *win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-	modest_do_message_delete (header, win);
-	ModestWindowMgr *win_mgr = modest_runtime_get_window_mgr ();	
-	ModestWindow *msg_view = NULL; 
+	win_mgr = modest_runtime_get_window_mgr ();	
+	win = modest_window_mgr_get_main_window (win_mgr);
+
+	mail_op = modest_mail_operation_new (win ? G_OBJECT(win) : NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_remove_msg (mail_op, header, FALSE);
+	g_object_unref (G_OBJECT (mail_op));
+
 	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
 		if (MODEST_IS_MSG_VIEW_WINDOW (msg_view))
 			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
