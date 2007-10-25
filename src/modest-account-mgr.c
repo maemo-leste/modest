@@ -33,6 +33,7 @@
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-priv.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-platform.h>
 
 /* 'private'/'protected' functions */
 static void modest_account_mgr_class_init (ModestAccountMgrClass * klass);
@@ -358,7 +359,11 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	if (!default_account)
 		modest_account_mgr_set_default_account (self, name);
 	g_free (default_account);
-
+	
+	/* (re)set the automatic account update */
+	modest_platform_set_update_interval
+		(modest_conf_get_int (priv->modest_conf, MODEST_CONF_UPDATE_INTERVAL, NULL));
+	
 	return TRUE;
 }
 
@@ -594,6 +599,14 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 	   will retrieve also the deleted account */
 	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, name);
 
+	/* if this was the last account, stop any auto-updating */
+	/* (re)set the automatic account update */
+	GSList *acc_names = modest_account_mgr_account_names (self, TRUE);
+	if (!acc_names) 
+		modest_platform_set_update_interval (0);
+	else
+		modest_account_mgr_free_account_names (acc_names);
+	
 	return TRUE;
 }
 

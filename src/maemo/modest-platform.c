@@ -59,12 +59,7 @@
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
 
-/* The maximun number of notifications that could be shown in the
-   desktop. It's specified by the specs and limited by the screen
-   size */
-#define MAX_NOTIFICATIONS 6
-
-static osso_context_t *osso_context = NULL;
+static osso_context_t *osso_context = NULL; /* urgh global */
 
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, 
@@ -73,6 +68,8 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 					ModestConfNotificationId id, 
 					gpointer user_data)
 {
+	g_return_if_fail (key);
+	
 	if (strcmp (key, MODEST_CONF_UPDATE_INTERVAL) == 0) {
 		const guint update_interval_minutes = 
 			modest_conf_get_int (self, MODEST_CONF_UPDATE_INTERVAL, NULL);
@@ -107,7 +104,8 @@ modest_platform_init (int argc, char *argv[])
 {
 	osso_hw_state_t hw_state = { 0 };
 	DBusConnection *con;	
-
+	GSList *acc_names;
+	
 	if (!check_required_files ()) {
 		g_printerr ("modest: missing required files\n");
 		return FALSE;
@@ -190,10 +188,16 @@ modest_platform_init (int argc, char *argv[])
 			  "key_changed",
 			  G_CALLBACK (on_modest_conf_update_interval_changed), 
 			  NULL);
-			  
-	/* Get the initial update interval from gconf: */
-	on_modest_conf_update_interval_changed(conf, MODEST_CONF_UPDATE_INTERVAL,
-					       MODEST_CONF_EVENT_KEY_CHANGED, 0, NULL);
+
+	/* only force the setting of the default interval, if there are actually
+	 * any accounts */
+	acc_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr(), TRUE);
+	if (acc_names) {
+		/* Get the initial update interval from gconf: */
+		on_modest_conf_update_interval_changed(conf, MODEST_CONF_UPDATE_INTERVAL,
+						       MODEST_CONF_EVENT_KEY_CHANGED, 0, NULL);
+		modest_account_mgr_free_account_names (acc_names);
+	}
 
 	/* initialize the addressbook */
 	if (!osso_abook_init (&argc, &argv, osso_context)) {
