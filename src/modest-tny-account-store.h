@@ -202,6 +202,19 @@ TnyMsg *modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *se
 						       TnyAccount **ac_out);
 
 
+/**
+ * modest_tny_account_store_get_transport_account_from_outbox_header:
+ * @self: a #ModestTnyAccountStore
+ * @header: a #TnyHeader
+ *
+ * Gets the transport account from a header that is in the outbox
+ *
+ * Returns: %NULL or a %TnyTransportAccount
+ */
+TnyTransportAccount *
+modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccountStore *self,
+								  TnyHeader *header);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */

@@ -871,6 +871,7 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
 	gchar *account = NULL;
 	TnyFolder *folder;
+	gboolean open_in_editor = FALSE;
 	
 	/* Do nothing if there was any problem with the mail
 	   operation. The error will be shown by the error_handler of
@@ -889,15 +890,39 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 	}
 
+	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
+		TnyTransportAccount *traccount = NULL;
+		ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
+		traccount = modest_tny_account_store_get_transport_account_from_outbox_header(accstore, header);
+		if (traccount) {
+			ModestTnySendQueue *send_queue = NULL;
+			ModestTnySendQueueStatus status;
+			char *msg_id;
+			account = g_strdup(modest_tny_account_get_parent_modest_account_name_for_server_account(
+						   TNY_ACCOUNT(traccount)));
+			send_queue = modest_runtime_get_send_queue(traccount);
+			msg_id = modest_tny_send_queue_get_msg_id (header);
+			status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
+			/* Only open messages in outbox with the editor if they are in Failed state */
+			if (status == MODEST_TNY_SEND_QUEUE_FAILED) {
+				open_in_editor = TRUE;
+			}
+			g_free(msg_id);
+			g_object_unref(traccount);
+		} else {
+			g_warning("Cannot get transport account for message in outbox!!");
+		}
+	} else if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
+		open_in_editor = TRUE; /* Open in editor if the message is in the Drafts folder */
+	}
+
 	/* Get account */
 	if (!account)
 		account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	
-	/* If the header is in the drafts folder then open the editor,
-	   else the message view window */
-	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
+	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 		const gchar *from_header = NULL;
 

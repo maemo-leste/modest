@@ -1762,3 +1762,34 @@ modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *self,
 
 	return msg;
 }
+
+TnyTransportAccount *
+modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccountStore *self, TnyHeader *header)
+{
+	TnyIterator *acc_iter;
+	ModestTnyAccountStorePrivate *priv;
+	TnyTransportAccount *header_acc = NULL;
+	const gchar *msg_id;
+
+	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
+	g_return_val_if_fail (TNY_IS_HEADER (header), NULL);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	msg_id = modest_tny_send_queue_get_msg_id (header);
+	acc_iter = tny_list_create_iterator (priv->transport_accounts);
+	while (!header_acc && !tny_iterator_is_done (acc_iter)) {
+		TnyTransportAccount *account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current (acc_iter));
+		ModestTnySendQueue *send_queue;
+		ModestTnySendQueueStatus status;
+		send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account));
+		status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
+		if (status != MODEST_TNY_SEND_QUEUE_UNKNONW) {
+			header_acc = g_object_ref(account);
+		}
+		g_object_unref (account);
+		tny_iterator_next (acc_iter);
+	}
+
+	g_object_unref(acc_iter);
+	return header_acc;
+}
