@@ -926,74 +926,36 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 
 
 typedef struct _UtilIdleData {
-	GMainLoop* loop;
-	TnyAccount *account;
-	GError *error;
+	GMutex *mutex;
+	GMainLoop *wait_loop;
+	gboolean has_callback;
 	gulong handler;
 } UtilIdleData;
 
 static void
-on_connection_status_changed (TnyAccount *self, 
+on_connection_status_changed (TnyAccount *account, 
 			      TnyConnectionStatus status,
 			      gpointer user_data)
 {
 	UtilIdleData *data = (UtilIdleData *) user_data;
 	TnyConnectionStatus conn_status;
 			
-	conn_status = tny_account_get_connection_status (data->account);
-	if (conn_status == TNY_CONNECTION_STATUS_RECONNECTING)
+	conn_status = tny_account_get_connection_status (account);
+	if (conn_status == TNY_CONNECTION_STATUS_RECONNECTING ||
+	    conn_status == TNY_CONNECTION_STATUS_DISCONNECTED)
 		return;
 
-	/* Remove the handler and Exit loop */
-	g_signal_handler_disconnect (self, data->handler);
-	g_main_loop_quit (data->loop);
-}
+	/* Remove the handler */
+	g_signal_handler_disconnect (account, data->handler);
 
-static gboolean 
-on_idle_connect_and_wait(gpointer user_data)
-{
-	TnyDevice *device = NULL;
-	UtilIdleData *data = NULL;
-	gboolean connected, exit_loop;
-
-	exit_loop = TRUE;
-	device = modest_runtime_get_device();
-	data = (UtilIdleData*) user_data;
-
-	/* This is a GDK lock because we are an idle callback and
-	 * tny_maemo_conic_device_connect can contain Gtk+ code */
-	gdk_threads_enter();
-	connected = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
-	gdk_threads_leave();
-
-	if (!connected ) {
-		data->error = g_error_new (0, 0, "Error connecting");
-		goto end;
-	}
-
-	if (data->account) {
-		TnyConnectionStatus conn_status;
-		gboolean tried_to_connect;
-			
-		conn_status = tny_account_get_connection_status (data->account);
-		tried_to_connect = (conn_status == TNY_CONNECTION_STATUS_CONNECTED || 
-				    conn_status == TNY_CONNECTION_STATUS_CONNECTED_BROKEN);
-
-		if (!tried_to_connect) {
-			data->handler =
-				g_signal_connect (data->account, "connection-status-changed",
-						  G_CALLBACK (on_connection_status_changed),
-						  data);
-			exit_loop = FALSE;
-		}
-	}
-	
- end:
-	if (exit_loop)
-		g_main_loop_quit (data->loop);
-
-	/* Remove the idle if we're connected */
-	return FALSE;
+	/* Set the has_callback to TRUE (means that the callback was
+	   executed and wake up every code waiting for cond to be
+	   TRUE */
+	g_mutex_lock (data->mutex);
+	data->has_callback = TRUE;
+	if (data->wait_loop)
+		g_main_loop_quit (data->wait_loop);
+	g_mutex_unlock (data->mutex);
 }
 
 gboolean 
@@ -1001,45 +963,67 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 				  TnyAccount *account)
 {
 	UtilIdleData *data = NULL;
-	gboolean result;
+	gboolean device_online;
+	TnyDevice *device;
+	TnyConnectionStatus conn_status;
 	
-	if (!account && tny_device_is_online (modest_runtime_get_device()))
-		return TRUE;
+	device = modest_runtime_get_device();
+	device_online = tny_device_is_online (device);
 
-	if (account && 
-	    tny_device_is_online (modest_runtime_get_device()) && 
-	    tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED)
-		return TRUE;
-
-	/* This blocks on the result: */
-	data = g_slice_new0 (UtilIdleData);
-
-	data->loop = g_main_loop_new (NULL, FALSE);
-	data->account = (account) ? g_object_ref (account) : NULL;
-	
-	/* Cause the function to be run in an idle-handler, which is
-	 * always in the main thread
-	 */
-	g_idle_add (&on_idle_connect_and_wait, data);
-
-	gdk_threads_leave ();
-	g_main_loop_run (data->loop);
-	gdk_threads_enter ();
-
-	g_main_loop_unref (data->loop);
-
-	if (data->error) {
-		g_error_free (data->error);
-		result = FALSE;
-	} else {
-		result = TRUE;
+	/* If there is no account check only the device status */
+	if (!account) {
+		if (device_online)
+			return TRUE;
+		else
+			return tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
 	}
-	if (data->account)
-		g_object_unref (data->account);
 
-	g_slice_free (UtilIdleData, data);
+	/* Return if the account is already connected */
+	conn_status = tny_account_get_connection_status (account);
+	if (device_online && conn_status == TNY_CONNECTION_STATUS_CONNECTED)
+		return TRUE;
 
-	return result;
+	/* Connect the device */
+	if (!device_online) {
+		data = g_slice_new0 (UtilIdleData);
+		data->mutex = g_mutex_new ();
+		data->has_callback = FALSE;
+
+		/* Track account connection status changes */
+		data->handler = g_signal_connect (account, "connection-status-changed",					    
+						  G_CALLBACK (on_connection_status_changed),
+						  data);
+		/* Try to connect the device */
+		device_online = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+
+		/* If the device connection failed then exit */
+		if (!device_online && data->handler)
+			goto frees;
+	}
+
+	/* Wait until the callback is executed */
+	g_mutex_lock (data->mutex);
+	if (!data->has_callback) {
+		data->wait_loop = g_main_loop_new (NULL, FALSE);
+		gdk_threads_leave ();
+		g_mutex_unlock (data->mutex);
+		g_main_loop_run (data->wait_loop);
+		g_mutex_lock (data->mutex);
+		gdk_threads_enter ();
+	}
+	g_mutex_unlock (data->mutex);
+
+ frees:
+	if (data) {
+		if (g_signal_handler_is_connected (account, data->handler))
+			g_signal_handler_disconnect (account, data->handler);
+		g_mutex_free (data->mutex);
+		g_main_loop_unref (data->wait_loop);
+		g_slice_free (UtilIdleData, data);
+	}
+
+	conn_status = tny_account_get_connection_status (account);
+	return (conn_status == TNY_CONNECTION_STATUS_CONNECTED)	? TRUE: FALSE;
 }
 
 gboolean 
