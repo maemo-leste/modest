@@ -936,12 +936,11 @@ typedef struct _UtilIdleData {
 	gulong handler;
 } UtilIdleData;
 
+
 static void
-on_connection_status_changed (TnyAccount *account, 
-			      TnyConnectionStatus status,
-			      gpointer user_data)
+check_connection_status_and_quit (TnyAccount *account,
+				  UtilIdleData *data) 
 {
-	UtilIdleData *data = (UtilIdleData *) user_data;
 	TnyConnectionStatus conn_status;
 			
 	conn_status = tny_account_get_connection_status (account);
@@ -960,6 +959,25 @@ on_connection_status_changed (TnyAccount *account,
 	if (data->wait_loop)
 		g_main_loop_quit (data->wait_loop);
 	g_mutex_unlock (data->mutex);
+}
+
+static void
+on_connection_status_changed (TnyAccount *account, 
+			      TnyConnectionStatus status,
+			      gpointer user_data)
+{
+	check_connection_status_and_quit (account, 
+					  (UtilIdleData *) user_data);
+}
+
+static void
+on_tny_camel_account_set_online_cb (TnyCamelAccount *account, 
+				    gboolean canceled, 
+				    GError *err, 
+				    gpointer user_data)
+{
+	check_connection_status_and_quit (TNY_ACCOUNT (account), 
+					  (UtilIdleData *) user_data);
 }
 
 gboolean 
@@ -987,12 +1005,13 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 	if (device_online && conn_status == TNY_CONNECTION_STATUS_CONNECTED)
 		return TRUE;
 
+	/* Create the helper */
+	data = g_slice_new0 (UtilIdleData);
+	data->mutex = g_mutex_new ();
+	data->has_callback = FALSE;
+
 	/* Connect the device */
 	if (!device_online) {
-		data = g_slice_new0 (UtilIdleData);
-		data->mutex = g_mutex_new ();
-		data->has_callback = FALSE;
-
 		/* Track account connection status changes */
 		data->handler = g_signal_connect (account, "connection-status-changed",					    
 						  G_CALLBACK (on_connection_status_changed),
@@ -1003,6 +1022,10 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 		/* If the device connection failed then exit */
 		if (!device_online && data->handler)
 			goto frees;
+	} else {
+		/* Force a reconnection of the account */
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, 
+					      on_tny_camel_account_set_online_cb, data);
 	}
 
 	/* Wait until the callback is executed */
