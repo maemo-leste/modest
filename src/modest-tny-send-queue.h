@@ -51,7 +51,7 @@ typedef struct _ModestTnySendQueue      ModestTnySendQueue;
 typedef struct _ModestTnySendQueueClass ModestTnySendQueueClass;
 
 typedef enum {
-	MODEST_TNY_SEND_QUEUE_UNKNONW,
+	MODEST_TNY_SEND_QUEUE_UNKNOWN,
 	MODEST_TNY_SEND_QUEUE_WAITING,
 	MODEST_TNY_SEND_QUEUE_SUSPENDED,
 	MODEST_TNY_SEND_QUEUE_SENDING,

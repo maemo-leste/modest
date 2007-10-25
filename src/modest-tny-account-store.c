@@ -1783,7 +1783,7 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 		ModestTnySendQueueStatus status;
 		send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account));
 		status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
-		if (status != MODEST_TNY_SEND_QUEUE_UNKNONW) {
+		if (status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
 			header_acc = g_object_ref(account);
 		}
 		g_object_unref (account);

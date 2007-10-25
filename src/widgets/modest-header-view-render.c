@@ -60,8 +60,8 @@ get_status_of_uid (TnyHeader *header)
 	TnyTransportAccount *account = NULL;
 	GSList *send_queues = NULL, *node;
 	/* get_msg_status returns suspended by default, so we want to detect changes */
-	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNONW;
-	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_UNKNONW;
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
+	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 	gchar *msg_uid = NULL;
 	ModestTnySendQueue *send_queue = NULL;
 	
@@ -85,7 +85,7 @@ get_status_of_uid (TnyHeader *header)
 			g_object_unref(account);
 
 			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
-			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNONW) {
+			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
 				status = queue_status;
 				break;
 			}
@@ -99,7 +99,7 @@ get_status_of_uid (TnyHeader *header)
 			send_queue = MODEST_TNY_SEND_QUEUE (node->data);
 			
 			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
-			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNONW) {
+			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
 				status = queue_status;
 				break;
 			}
@@ -388,7 +388,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	set_common_flags (recipient_cell, flags);
 
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
-		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNONW;
+		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 		const gchar *status_str = "";
 		if (msg_header != NULL) {
 			status = get_status_of_uid (msg_header);

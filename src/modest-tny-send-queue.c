@@ -250,7 +250,7 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	SendInfo *info = NULL;
 	GList* existing = NULL;
 	gchar* msg_uid = NULL;
-	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNONW;
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 	gboolean editing = FALSE;
 
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
@@ -261,7 +261,7 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	msg_uid = modest_tny_send_queue_get_msg_id (header);
 	status = modest_tny_send_queue_get_msg_status (self, msg_uid);
 	switch (status) {
-	case MODEST_TNY_SEND_QUEUE_UNKNONW:
+	case MODEST_TNY_SEND_QUEUE_UNKNOWN:
 	case MODEST_TNY_SEND_QUEUE_SUSPENDED:
 	case MODEST_TNY_SEND_QUEUE_FAILED:
 		if (status != MODEST_TNY_SEND_QUEUE_SUSPENDED)
@@ -509,7 +509,7 @@ modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg
 {
   GList *item;
   item = modest_tny_send_queue_lookup_info (self, msg_id);
-  if(item == NULL) return MODEST_TNY_SEND_QUEUE_UNKNONW;
+  if(item == NULL) return MODEST_TNY_SEND_QUEUE_UNKNOWN;
   return ((SendInfo*)item->data)->status;
 }
 
