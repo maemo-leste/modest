@@ -45,6 +45,7 @@
 #define MODEST_PRESETS_KEY_MAILBOX_TYPE        "MailboxType"
 #define MODEST_PRESETS_KEY_APOP                "APOPSecureLogin"
 #define MODEST_PRESETS_KEY_SECURE_SMTP         "SecureSmtp"
+#define MODEST_PRESETS_KEY_SMTP_PORT           "SmtpPort"
 						    
 
 ModestPresets*
@@ -279,7 +280,29 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 	return info;
 }
 
-						    	
+
+/*
+ * at the moment, this only for mac.com, which have a special SMTP port
+ */
+guint
+modest_presets_get_port (ModestPresets *self, const gchar* provider_id,
+			 gboolean incoming_server)
+{
+	guint port;
+	
+	g_return_val_if_fail (self && self->keyfile, 0);
+
+	if (incoming_server)
+		port = 0; /* not used yet */
+	else 
+		port = (guint)g_key_file_get_integer (self->keyfile, provider_id,
+						      MODEST_PRESETS_KEY_SMTP_PORT, NULL);
+
+	return port;
+}
+
+
+
 
 	
 void

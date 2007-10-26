@@ -147,6 +147,22 @@ ModestPresetsSecurity          modest_presets_get_info_server_security (ModestPr
 						    const gchar *provider_id,
 						    gboolean incoming_server);
 
+
+/**
+ * modest_presets_get_port:
+ * @self: a valid ModestPresets instance
+ * @provider_id: ID of the provider 
+ * @incoming_server: get port# for the incoming mailserver if TRUE, for the outgoing server otherwise
+ *
+ * return the specific port number for some provider
+ * function return 0 if the normal port number is valid
+ *
+ * Returns: ModestPresetsSecurity ORable flags with the required information
+ */
+guint modest_presets_get_port (ModestPresets *self, const gchar* provider_id,
+			       gboolean incoming_server);
+
+
 /**
  * modest_presets_destroy:
  * @self: a valid ModestPresets instance (ie. must not be NULL)

@@ -1709,7 +1709,7 @@ static gboolean
 create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 {
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
-	
+	guint special_port;
 	gchar* display_name = get_entered_account_title (self);
 
 	/* Some checks: */
@@ -1759,7 +1759,6 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 												   provider_id, 
 												   TRUE /* incoming */);
 
-		g_warning ("security incoming: %x", security_incoming);
 			
 		/* We don't check for SMTP here as that is impossible for an incoming server. */
 		if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_IMAP) {
@@ -1807,6 +1806,13 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	gchar *store_name = modest_account_mgr_get_unused_account_name (self->account_manager, 
 									store_name_start, TRUE /* server account */);
 	g_free (store_name_start);
+
+	/* we check if there is a *special* port */
+	special_port = modest_presets_get_port (priv->presets, provider_id,
+						TRUE /* incoming */);
+	if (special_port != 0)
+		serverport_incoming = special_port;
+	
 	gboolean created = modest_account_mgr_add_server_account (self->account_manager,
 								  store_name,
 								  servername_incoming,
@@ -1850,10 +1856,6 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 			modest_presets_get_info_server_security (priv->presets, provider_id, 
 								 FALSE /* incoming */);
 
-		/* TODO: The secure-smtp information in the presets data is currently wrong,
-		 * so we choose a reasonable default. Remove this when the presets data is corrected: */
-		security_outgoing = security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP;
-
 		protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
 		if (security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP) {
 			/* printf("DEBUG: %s: using secure SMTP\n", __FUNCTION__); */
@@ -1864,8 +1866,7 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 			/* printf("DEBUG: %s: using non-secure SMTP\n", __FUNCTION__); */
 			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
 		}
-	}
-	else {
+	} else {
 		/* Use custom pages because no preset was specified: */
 		servername_outgoing = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver) ));
 		
@@ -1883,6 +1884,13 @@ create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
 	gchar *transport_name = modest_account_mgr_get_unused_account_name (self->account_manager, 
 									    transport_name_start, TRUE /* server account */);
 	g_free (transport_name_start);
+
+	/* we check if there is a *special* port */
+	special_port = modest_presets_get_port (priv->presets, provider_id,
+						FALSE /* incoming */);
+	if (special_port != 0)
+		serverport_outgoing = special_port;
+	
 	created = modest_account_mgr_add_server_account (self->account_manager,
 							 transport_name,
 							 servername_outgoing,
