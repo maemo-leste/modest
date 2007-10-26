@@ -929,28 +929,18 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 
 
 
-typedef struct _UtilIdleData {
+typedef struct _ConnectAndWaitData {
 	GMutex *mutex;
 	GMainLoop *wait_loop;
 	gboolean has_callback;
 	gulong handler;
-} UtilIdleData;
+} ConnectAndWaitData;
 
 
 static void
-check_connection_status_and_quit (TnyAccount *account,
-				  UtilIdleData *data) 
+quit_wait_loop (TnyAccount *account,
+		ConnectAndWaitData *data) 
 {
-	TnyConnectionStatus conn_status;
-			
-	conn_status = tny_account_get_connection_status (account);
-	if (conn_status == TNY_CONNECTION_STATUS_RECONNECTING ||
-	    conn_status == TNY_CONNECTION_STATUS_DISCONNECTED)
-		return;
-
-	/* Remove the handler */
-	g_signal_handler_disconnect (account, data->handler);
-
 	/* Set the has_callback to TRUE (means that the callback was
 	   executed and wake up every code waiting for cond to be
 	   TRUE */
@@ -966,8 +956,21 @@ on_connection_status_changed (TnyAccount *account,
 			      TnyConnectionStatus status,
 			      gpointer user_data)
 {
-	check_connection_status_and_quit (account, 
-					  (UtilIdleData *) user_data);
+	TnyConnectionStatus conn_status;
+	ConnectAndWaitData *data;
+			
+	/* Ignore if reconnecting or disconnected */
+	conn_status = tny_account_get_connection_status (account);
+	if (conn_status == TNY_CONNECTION_STATUS_RECONNECTING ||
+	    conn_status == TNY_CONNECTION_STATUS_DISCONNECTED)
+		return;
+
+	/* Remove the handler */
+	data = (ConnectAndWaitData *) user_data;
+	g_signal_handler_disconnect (account, data->handler);
+
+	/* Quit from wait loop */
+	quit_wait_loop (account, (ConnectAndWaitData *) user_data);
 }
 
 static void
@@ -976,15 +979,15 @@ on_tny_camel_account_set_online_cb (TnyCamelAccount *account,
 				    GError *err, 
 				    gpointer user_data)
 {
-	check_connection_status_and_quit (TNY_ACCOUNT (account), 
-					  (UtilIdleData *) user_data);
+	/* Quit from wait loop */
+	quit_wait_loop (TNY_ACCOUNT (account), (ConnectAndWaitData *) user_data);
 }
 
 gboolean 
 modest_platform_connect_and_wait (GtkWindow *parent_window, 
 				  TnyAccount *account)
 {
-	UtilIdleData *data = NULL;
+	ConnectAndWaitData *data = NULL;
 	gboolean device_online;
 	TnyDevice *device;
 	TnyConnectionStatus conn_status;
@@ -1006,7 +1009,7 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 		return TRUE;
 
 	/* Create the helper */
-	data = g_slice_new0 (UtilIdleData);
+	data = g_slice_new0 (ConnectAndWaitData);
 	data->mutex = g_mutex_new ();
 	data->has_callback = FALSE;
 
@@ -1046,7 +1049,7 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 			g_signal_handler_disconnect (account, data->handler);
 		g_mutex_free (data->mutex);
 		g_main_loop_unref (data->wait_loop);
-		g_slice_free (UtilIdleData, data);
+		g_slice_free (ConnectAndWaitData, data);
 	}
 
 	conn_status = tny_account_get_connection_status (account);
