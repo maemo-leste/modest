@@ -38,7 +38,6 @@
 #include <modest-hildon-includes.h>
 #include <modest-maemo-utils.h>
 #include <dbus_api/modest-dbus-callbacks.h>
-#include <libosso-abook/osso-abook.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
 #include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
@@ -54,6 +53,10 @@
 #include "modest-tny-folder.h"
 #include <string.h>
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
+
+#ifdef MODEST_HAVE_ABOOK
+#include <libosso-abook/osso-abook.h>
+#endif /*MODEST_HAVE_ABOOK*/
 
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
@@ -199,12 +202,16 @@ modest_platform_init (int argc, char *argv[])
 		modest_account_mgr_free_account_names (acc_names);
 	}
 
+	
+#ifdef MODEST_HAVE_ABOOK
 	/* initialize the addressbook */
 	if (!osso_abook_init (&argc, &argv, osso_context)) {
 		g_printerr ("modest: failed to initialized addressbook\n");
 		return FALSE;
 	}
-		
+#endif /*MODEST_HAVE_ABOOK*/
+
+
 	return TRUE;
 }
 
