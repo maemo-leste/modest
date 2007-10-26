@@ -95,7 +95,7 @@ if test "x$with_platform" == "xgnome"; then
     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
     have_easysetup=true
-    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 osso-addressbook-1.0 libebook-1.2 libalarm)
+    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 libebook-1.2 libalarm microb-engine-nss)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
     AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
 fi		    
@@ -272,11 +272,25 @@ fi
 # check the version of the addressbook on maemo
 #
 if test "x$with_platform" == "xmaemo"; then  
-   PKG_CHECK_MODULES(MODEST_ABOOK, osso-addressbook-1.0 < 2.0, have_old_abook=true,have_old_abook=false)	
-   if test "x$have_old_abook" == "xtrue"; then
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_OLD_ABOOK, 1, ["whether we have an old osso-addressbook"])
+   PKG_CHECK_MODULES(MODEST_ABOOK,osso-addressbook-1.0,have_abook=true,have_abook=false)
+   AC_SUBST(MODEST_ABOOK_CFLAGS)
+   AC_SUBST(MODEST_ABOOK_LIBS)
+
+   if test "x$have_abook" == "xtrue"; then 	
+      PKG_CHECK_MODULES(MODEST_ABOOK_OLD, osso-addressbook-1.0 < 2.0, have_old_abook=true,have_old_abook=false)	
+      if test "x$have_old_abook" == "xtrue"; then
+      	 AC_DEFINE_UNQUOTED(MODEST_HAVE_OLD_ABOOK, 1, ["whether we have an old osso-addressbook"])
+      fi
+      AC_DEFINE_UNQUOTED(MODEST_HAVE_ABOOK,1, ["whether we have osso-addressbook"])
+      addressbook="osso-addressbook"
    fi
 fi
+
+
+#
+# if we don't have an addressbook, use the dummy one
+#
+AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook"="xtrue")
 
 
 
@@ -414,6 +428,7 @@ echo "Build docs       : $build_docs"
 echo "Gettext Packages : $GETTEXT_PACKAGE"
 echo "Easysetup data   : $providers_data"
 echo "Editor lib       : $wpeditor"
+echo "Addressbook      : $addressbook"
 echo "Help lib         : $helplib"
 echo "Hildon-Notify    : $have_hildon_notify"    
 echo "LibOGS support   : $have_ogs_support"

@@ -32,6 +32,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)             \
 	$(MODEST_WPEDITOR_CFLAGS)           \
 	$(MODEST_PLATFORM_CFLAGS)           \
+	$(MODEST_ABOOK_CFLAGS)              \
 	$(MODEST_HILDON_WIDGETS_CFLAGS)     \
 	$(MODEST_HILDON_HELP_CFLAGS)        \
 	$(MODEST_HILDON_MIME_CFLAGS)        \
@@ -49,7 +50,6 @@ noinst_LTLIBRARIES=\
 
 libmodest_ui_la_SOURCES=              \
 	modest-account-view-window.c  \
-	modest-address-book.c	      \
 	modest-icon-names.h           \
 	modest-maemo-global-settings-dialog.c \
 	modest-maemo-global-settings-dialog.h \
@@ -81,9 +81,16 @@ libmodest_ui_la_SOURCES=              \
 	modest-osso-state-saving.c \
 	modest-osso-state-saving.h   
 
+if MODEST_USE_DUMMY_ADDRESS_BOOK
+#	 nothing 
+else
+libmodest_ui_la_SOURCES += modest-address-book.c
+endif 
+
 
 libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \
+	$(MODEST_ABOOK_LIBS) \
 	$(MODEST_PLATFORM_LIBS) \
 	$(MODEST_WPEDITOR_LIBS) \
 	$(MODEST_HILDON_WIDGETS_LIBS) \

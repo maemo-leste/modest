@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-08-02 16:13:34 (djcb)>
+# Time-stamp: <2007-10-26 12:47:06 (djcb)>
 
 SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
 
@@ -33,20 +33,28 @@ modest-marshal.h: modest-marshal.list
 bin_PROGRAMS=\
 	modest
 
+#
+# NOTE: $(addressbook) will be modest-addressbook-dummy.c
+# if no real addressbook has been defined (configure.ac)
+#
 modest_SOURCES=\
-	modest-account-mgr-helpers.c\
-	modest-account-mgr-helpers.h\
-	modest-account-mgr-priv.h\
-	modest-account-mgr.c\
-	modest-account-mgr.h\
-	modest-email-clipboard.c\
-	modest-email-clipboard.h\
-	modest-address-book.h\
-	modest-cache-mgr.c\
-	modest-cache-mgr.h\
-	modest-conf.c\
+	modest-account-mgr-helpers.c \
+	modest-account-mgr-helpers.h \
+	modest-account-mgr-priv.h \
+	modest-account-mgr.c \
+	modest-account-mgr.h \
+	modest-address-book.h \
+	modest-cache-mgr.c \
+	modest-cache-mgr.h \
+	modest-conf.c \
 	modest-conf.h \
-	modest-defs.h\
+	modest-defs.h \
+	modest-dimming-rule.c \
+	modest-dimming-rule.h \
+	modest-dimming-rules-group.c \
+	modest-dimming-rules-group.h \
+	modest-email-clipboard.c \
+	modest-email-clipboard.h \
 	modest-error.h \
 	modest-formatter.c \
 	modest-formatter.h \
@@ -58,57 +66,58 @@ modest_SOURCES=\
 	modest-mail-operation-queue.h \
 	modest-mail-operation.c \
 	modest-mail-operation.h \
-	modest-ui-dimming-manager.c \
-	modest-ui-dimming-manager.h \
-	modest-dimming-rules-group.c \
-	modest-dimming-rules-group.h \
-	modest-dimming-rule.c \
-	modest-dimming-rule.h \
-	modest-main.c\
+	modest-main.c \
 	modest-marshal.c \
 	modest-marshal.h \
-	modest-pair.c\
-	modest-pair.h\
-	modest-platform.h\
-	modest-progress-object.c\
-	modest-progress-object.h\
-	modest-protocol-info.c\
-	modest-protocol-info.h\
-	modest-runtime.c\
-	modest-runtime.h\
-	modest-runtime-priv.h\
-	modest-singletons.c\
-	modest-singletons.h\
-	modest-signal-mgr.h\
-	modest-signal-mgr.c\
-	modest-text-utils.c\
-	modest-text-utils.h\
-	modest-tny-account-store.c\
-	modest-tny-account-store.h\
-	modest-tny-account.c\
-	modest-tny-account.h\
-	modest-tny-local-folders-account.c\
-	modest-tny-local-folders-account.h\
-	modest-tny-outbox-account.c\
-	modest-tny-outbox-account.h\
+	modest-pair.c \
+	modest-pair.h \
+	modest-platform.h \
+	modest-platform.h \
+	modest-progress-object.c \
+	modest-progress-object.h \
+	modest-protocol-info.c \
+	modest-protocol-info.h \
+	modest-runtime-priv.h \
+	modest-runtime.c \
+	modest-runtime.h \
+	modest-search.c \
+	modest-search.h \
+	modest-signal-mgr.c \
+	modest-signal-mgr.h \
+	modest-singletons.c \
+	modest-singletons.h \
+	modest-text-utils.c \
+	modest-text-utils.h \
+	modest-tny-account-store.c \
+	modest-tny-account-store.h \
+	modest-tny-account.c \
+	modest-tny-account.h \
 	modest-tny-folder.c \
 	modest-tny-folder.h \
-	modest-tny-msg.c\
-	modest-tny-msg.h\
-	modest-platform.h\
+	modest-tny-local-folders-account.c \
+	modest-tny-local-folders-account.h \
+	modest-tny-msg.c \
+	modest-tny-msg.h \
+	modest-tny-outbox-account.c \
+	modest-tny-outbox-account.h \
 	modest-tny-platform-factory.c \
 	modest-tny-platform-factory.h \
-	modest-tny-send-queue.c\
-	modest-tny-send-queue.h\
-	modest-ui-actions.c\
-	modest-ui-actions.h\
-	modest-ui-dimming-rules.c\
-	modest-ui-dimming-rules.h\
+	modest-tny-send-queue.c \
+	modest-tny-send-queue.h \
+	modest-ui-actions.c \
+	modest-ui-actions.h \
+	modest-ui-dimming-manager.c \
+	modest-ui-dimming-manager.h \
+	modest-ui-dimming-rules.c \
+	modest-ui-dimming-rules.h \
 	modest-widget-memory-priv.h \
-	modest-widget-memory.c\
-	modest-widget-memory.h\
-	modest-search.c\
-	modest-search.h
+	modest-widget-memory.c \
+	modest-widget-memory.h 
+
+if MODEST_USE_DUMMY_ADDRESS_BOOK
+modest_SOURCES += modest-address-book-dummy.c
+endif 
+
 
 modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
 modest_LDFLAGS = $(MAEMO_LAUNCHER_LDFLAGS)
