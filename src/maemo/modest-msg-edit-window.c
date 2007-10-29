@@ -968,6 +968,9 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	if (msg_folder) {		
 		if (modest_tny_folder_is_local_folder (msg_folder)) {
 			TnyFolderType type = modest_tny_folder_get_local_or_mmc_folder_type (msg_folder);
+			if (type == TNY_FOLDER_TYPE_INVALID)
+				g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+			
 			if (type == TNY_FOLDER_TYPE_DRAFTS) 
 				priv->draft_msg = g_object_ref(msg);
 			if (type == TNY_FOLDER_TYPE_OUTBOX)

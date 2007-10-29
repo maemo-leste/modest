@@ -44,7 +44,7 @@
 static TnyFolderType
 modest_tny_folder_guess_folder_type_from_name (const gchar* full_name)
 {
-	g_return_val_if_fail (full_name, TNY_FOLDER_TYPE_UNKNOWN);
+	g_return_val_if_fail (full_name, TNY_FOLDER_TYPE_INVALID);
 	
 	if (strcmp (full_name, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_OUTBOX)) == 0)
 		return TNY_FOLDER_TYPE_OUTBOX;
@@ -61,7 +61,7 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 {
 	TnyFolderType type;
 	
-	g_return_val_if_fail (TNY_IS_FOLDER(folder), TNY_FOLDER_TYPE_UNKNOWN);
+	g_return_val_if_fail (TNY_IS_FOLDER(folder), TNY_FOLDER_TYPE_INVALID);
 
 	if (modest_tny_folder_is_local_folder ((TnyFolder*)folder))
 		type = modest_tny_folder_get_local_or_mmc_folder_type ((TnyFolder*)folder);
@@ -73,6 +73,9 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 			tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder));
 		type =	modest_tny_folder_guess_folder_type_from_name (folder_name);
 	}
+
+	if (type == TNY_FOLDER_TYPE_INVALID)
+		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 
 	return type;
 }
@@ -86,11 +89,12 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 	TnyFolderType type;
 
 	g_return_val_if_fail (TNY_IS_FOLDER(folder), -1);
-
+	
 	if (modest_tny_folder_is_local_folder (folder) ||
 	    modest_tny_folder_is_memory_card_folder (folder)) {
 	
 		type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+		g_return_val_if_fail (type != TNY_FOLDER_TYPE_INVALID, -1);
 		
 		switch (type) {
 		case TNY_FOLDER_TYPE_OUTBOX:
@@ -139,6 +143,8 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 
 		/* Neither INBOX nor ROOT, nor ARCHIVE folders should me moveable */
 		folder_type = modest_tny_folder_guess_folder_type (folder);
+		g_return_val_if_fail (folder_type != TNY_FOLDER_TYPE_INVALID, -1);
+		
 		if ((folder_type ==  TNY_FOLDER_TYPE_INBOX) ||
 		    (folder_type == TNY_FOLDER_TYPE_ROOT) ||
 		    (folder_type == TNY_FOLDER_TYPE_ARCHIVE)) {
@@ -196,6 +202,8 @@ gboolean
 modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 {
 	g_return_val_if_fail (folder, FALSE);
+	g_return_val_if_fail (modest_tny_folder_guess_folder_type (folder) !=
+			      TNY_FOLDER_TYPE_INVALID, FALSE);
 	
 	/* The merge folder is a special case, 
 	 * used to merge the per-account local outbox folders. 
@@ -231,13 +239,14 @@ modest_tny_folder_is_remote_folder   (TnyFolder *folder)
 	return !is_local;
 }
 
+
 TnyFolderType
 modest_tny_folder_get_local_or_mmc_folder_type  (TnyFolder *folder)
 {
-	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_UNKNOWN);
+	g_return_val_if_fail (folder, TNY_FOLDER_TYPE_INVALID);
 	g_return_val_if_fail (modest_tny_folder_is_local_folder(folder)||
 			      modest_tny_folder_is_memory_card_folder(folder),
-			      TNY_FOLDER_TYPE_UNKNOWN);
+			      TNY_FOLDER_TYPE_INVALID);
 	
 	/* The merge folder is a special case, 
 	 * used to merge the per-account local outbox folders. 

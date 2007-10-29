@@ -277,6 +277,9 @@ save_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	}
 	
 	type  = modest_tny_folder_guess_folder_type (folder);
+	if (type == TNY_FOLDER_TYPE_INVALID)
+		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+	
 	style = modest_header_view_get_style   (header_view);
 	
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,
@@ -365,6 +368,9 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 		return TRUE; /* no folder: no settings */
 	
 	type = modest_tny_folder_guess_folder_type (folder);	
+	if (type == TNY_FOLDER_TYPE_INVALID)
+		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+
 	style = modest_header_view_get_style (header_view);
 
 	key = _modest_widget_memory_get_keyname_with_double_type (name, type, style,

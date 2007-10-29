@@ -281,6 +281,10 @@ modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
 	id2 = tny_folder_get_id (TNY_FOLDER(folder));	
 	folder_type1 = modest_tny_folder_guess_folder_type (priv->src);
 	folder_type2 = modest_tny_folder_guess_folder_type (folder);
+	
+	if (folder_type1 == TNY_FOLDER_TYPE_INVALID || folder_type2 == TNY_FOLDER_TYPE_INVALID)
+		g_warning ("%s: BUG: folder of type TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+	
 	same_folder = ((folder_type1 == folder_type2) && 
 		       (!g_ascii_strcasecmp (id1, id2)));
 	

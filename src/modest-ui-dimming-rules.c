@@ -2173,7 +2173,9 @@ _folder_is_any_of_type (TnyFolder *folder,
 
 	/* Get folder type */
 	folder_type = modest_tny_folder_guess_folder_type (folder);
-		
+	if (folder_type == TNY_FOLDER_TYPE_INVALID)
+		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+	
 	/* Check foler type */
 	for (i=0; i < ntypes; i++) {
 		result = result || folder_type == types[i];

@@ -1014,6 +1014,9 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	/* Restore sort column id */
 	if (cols) {
 		type  = modest_tny_folder_guess_folder_type (folder);
+		if (type == TNY_FOLDER_TYPE_INVALID)
+			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+		
 		sort_colid = modest_header_view_get_sort_column_id (self, type); 
 		sort_type = modest_header_view_get_sort_type (self, type); 
 		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
@@ -1058,16 +1061,15 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 	
 	/* Sort tree model */
 	type  = modest_tny_folder_guess_folder_type (priv->folder);
-	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
+	if (type == TNY_FOLDER_TYPE_INVALID)
+		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+	else {
+		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
 					      sort_colid,
 					      sort_type);
-	/* Store new sort parameters */
-	modest_header_view_set_sort_params (self, sort_colid, sort_type, type);
-
-	/* Save GConf parameters */
-/* 	modest_widget_memory_save (modest_runtime_get_conf(), */
-/* 				   G_OBJECT(self), "header-view"); */
-	
+		/* Store new sort parameters */
+		modest_header_view_set_sort_params (self, sort_colid, sort_type, type);
+	}	
 }
 
 void

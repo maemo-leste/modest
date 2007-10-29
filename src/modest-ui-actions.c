@@ -888,8 +888,11 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 	/* Gets folder type (OUTBOX headers will be opened in edit window */
 	if (modest_tny_folder_is_local_folder (folder)) {
 		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+		if (folder_type == TNY_FOLDER_TYPE_INVALID)
+			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 	}
 
+		
 	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
 		TnyTransportAccount *traccount = NULL;
 		ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
@@ -4614,6 +4617,9 @@ modest_ui_actions_on_help (GtkAction *action,
 				break;
 			case TNY_FOLDER_TYPE_ARCHIVE:
 				help_id = "applications_email_managefolders";
+				break;
+			case TNY_FOLDER_TYPE_INVALID:
+				g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 				break;
 			default:
 				help_id = "applications_email_managefolders";

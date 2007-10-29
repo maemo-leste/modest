@@ -2388,6 +2388,9 @@ modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
 					show_clipboard = show_delete = show_cancel_send = TRUE;
 					show_reply = show_forward = FALSE;
 					break;
+				case TNY_FOLDER_TYPE_INVALID:
+					g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+					break;
 				default:
 					show_reply = show_forward = show_clipboard = show_delete = TRUE;
 					show_cancel_send = FALSE;

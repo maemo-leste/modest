@@ -511,10 +511,14 @@ icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 	   the local OUTBOX folder */
 	if (type == TNY_FOLDER_TYPE_NORMAL || 
 	    type == TNY_FOLDER_TYPE_UNKNOWN) {
-		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
+		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));		
 	}
 
 	switch (type) {
+	case TNY_FOLDER_TYPE_INVALID:
+		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+		break;
+		
 	case TNY_FOLDER_TYPE_ROOT:
 		if (TNY_IS_ACCOUNT (instance)) {
 			
@@ -1179,6 +1183,9 @@ filter_row (GtkTreeModel *model,
 			case TNY_FOLDER_TYPE_UNKNOWN:
 			case TNY_FOLDER_TYPE_NORMAL:
 				type = modest_tny_folder_guess_folder_type(TNY_FOLDER(instance));
+				if (type == TNY_FOLDER_TYPE_INVALID)
+					g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+				
 				if (type == TNY_FOLDER_TYPE_OUTBOX || 
 				    type == TNY_FOLDER_TYPE_SENT
 				    || type == TNY_FOLDER_TYPE_DRAFTS)
@@ -1471,12 +1478,14 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 			if ((parent_type == TNY_FOLDER_TYPE_ROOT) &&
 			    TNY_IS_ACCOUNT (parent_folder) &&
 			    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
-				cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (folder1)));
-				cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (folder2)));
+				cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type
+								   (TNY_FOLDER (folder1)));
+				cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type
+								   (TNY_FOLDER (folder2)));
 			}
 			g_object_unref (parent_folder);
 		}
-
+		
 		/* if they are not local folders */
  		if (cmp1 == cmp2) {
 			cmp1 = get_cmp_subfolder_type_pos (tny_folder_get_folder_type (TNY_FOLDER (folder1)));
@@ -1604,6 +1613,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 {
 	TnyList *headers = NULL;
 	TnyFolder *folder = NULL;
+	TnyFolderType folder_type;
 	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter source_iter, dest_iter;
 	ModestWindowMgr *mgr = NULL;
@@ -1645,6 +1655,20 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
 
+	if (!folder || TNY_IS_FOLDER_STORE(folder)) {
+		//g_warning ("%s: not a valid target folder", __FUNCTION__);
+		goto cleanup;
+	}
+	
+	folder_type = modest_tny_folder_guess_folder_type (folder);
+	if (folder_type == TNY_FOLDER_TYPE_INVALID) {
+		g_warning ("%s: invalid target folder", __FUNCTION__);
+		goto cleanup;  /* cannot move messages there */
+	}
+		
+	if (modest_tny_folder_get_rules((TNY_FOLDER(folder))) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)
+		goto cleanup; /* verboten! */
+	
 	/* Ask for confirmation to move */
 	main_win = modest_window_mgr_get_main_window (mgr);
 	response = modest_ui_actions_msgs_move_to_confirmation (main_win, folder, 

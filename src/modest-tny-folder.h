@@ -39,6 +39,9 @@
 
 G_BEGIN_DECLS
 
+/*  TODO: move this to tinymail */
+#define TNY_FOLDER_TYPE_INVALID -1
+
 typedef enum {
 	MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE  = 1 << 1,
 	MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE  = 1 << 2,

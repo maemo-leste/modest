@@ -202,6 +202,8 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	folder_type = modest_tny_folder_guess_folder_type (folder);
 	g_object_unref (folder);
 
+	g_return_if_fail (folder_type != TNY_FOLDER_TYPE_INVALID);
+	
 	/* Get header data */
 	from = g_strdup (tny_header_get_from (header));
 	to = g_strdup (tny_header_get_to (header));
@@ -284,6 +286,11 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 {
 	gchar *count_s, *size_s, *name = NULL;
 	gint size, count;
+
+
+	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
+	g_return_if_fail (modest_tny_folder_get_local_or_mmc_folder_type (folder)
+			  != TNY_FOLDER_TYPE_INVALID);
 	
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_folder_properties"));

@@ -750,8 +750,10 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	modest_mail_operation_send_mail (self, info->transport_account, msg);
 
 	/* Remove old mail from its source folder */
-	draft_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_DRAFTS);
-	outbox_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), TNY_FOLDER_TYPE_OUTBOX);
+	draft_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
+							      TNY_FOLDER_TYPE_DRAFTS);
+	outbox_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
+							       TNY_FOLDER_TYPE_OUTBOX);
 	if (info->draft_msg != NULL) {
 		TnyFolder *folder = NULL;
 		TnyFolder *src_folder = NULL;
@@ -759,6 +761,10 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 		folder = tny_msg_get_folder (info->draft_msg);		
 		if (folder == NULL) goto end;
 		folder_type = modest_tny_folder_guess_folder_type (folder);
+
+		if (folder_type == TNY_FOLDER_TYPE_INVALID)
+			g_warning ("%s: BUG: folder of type TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+		
 		if (folder_type == TNY_FOLDER_TYPE_OUTBOX) 
 			src_folder = outbox_folder;
 		else 

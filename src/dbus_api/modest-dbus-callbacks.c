@@ -1186,20 +1186,17 @@ add_single_folder_to_list (TnyFolder *folder, GList** list)
 		case TNY_FOLDER_TYPE_ARCHIVE:
 			prefix = "MAND:";
 			break;
+		case TNY_FOLDER_TYPE_INVALID:
+			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+			return; /* don't add it */
 		default:
 			prefix = "USER:";
+			
 		}
 		
 
 		*list = g_list_append(*list, g_strdup_printf ("%s%s", prefix, id));
 	}
-		/*
-		else {
-			g_warning ("DEBUG: %s: folder has no name or ID.\n", __FUNCTION__);	
-		}
-		
-	}
-	*/
 }
 
 static void
