@@ -1331,13 +1331,26 @@ _modest_header_view_change_selection (GtkTreeSelection *selection,
 
 static gint compare_priorities (TnyHeaderFlags p1, TnyHeaderFlags p2)
 {
-	p1 = p1 & TNY_HEADER_FLAG_PRIORITY;
-	p2 = p2 & TNY_HEADER_FLAG_PRIORITY;
-	if (p1 == 0) 
-		p1 = TNY_HEADER_FLAG_LOW_PRIORITY + 1;
-	if (p2 == 0) 
-		p2 = TNY_HEADER_FLAG_LOW_PRIORITY + 1;
-	return p1 - p2;
+
+	/* HH, LL, NN */
+	if (p1 == p2)
+		return 0;
+
+	/* HL HN */
+	if (p1 == TNY_HEADER_FLAG_HIGH_PRIORITY)
+		return 1;
+
+	/* LH LN */
+	if (p1 == TNY_HEADER_FLAG_LOW_PRIORITY)
+		return -1;
+
+	/* NH */
+	if ((p1 == TNY_HEADER_FLAG_NORMAL_PRIORITY) && (p2 == TNY_HEADER_FLAG_HIGH_PRIORITY))
+		return -1;
+
+	/* NL */
+	return 1;
+
 }
 
 static gint
@@ -1368,18 +1381,28 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 
 		return cmp ? cmp : t1 - t2;
 		
-	case TNY_HEADER_FLAG_PRIORITY:
-		gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val1,
+	case TNY_HEADER_FLAG_PRIORITY_MASK: {
+		TnyHeader *header1 = NULL, *header2 = NULL;
+
+		gtk_tree_model_get (tree_model, iter1, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header1,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t1,-1);
-		gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &val2,
+		gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header2,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2,-1);
 
 		/* This is for making priority values respect the intuitive sort relationship 
-		 * as HIGH is 11, LOW is 01, and we put NORMAL AS 10 (2) */
-		cmp =  compare_priorities (val1, val2);
+		 * as HIGH is 01, LOW is 10, and NORMAL is 00 */
 
-		return cmp ? cmp : t1 - t2;
+		if (header1 && header2) {
+			cmp =  compare_priorities (tny_header_get_priority (header1), 
+				tny_header_get_priority (header2));
+			g_object_unref (header1);
+			g_object_unref (header2);
 
+			return cmp ? cmp : t1 - t2;
+		}
+
+		return t1 - t2;
+	}
 	default:
 		return &iter1 - &iter2; /* oughhhh  */
 	}

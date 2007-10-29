@@ -164,9 +164,8 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 		iter = tny_list_create_iterator (headers);
 		while (!tny_iterator_is_done (iter)) {
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (header) {	
-				tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
-				tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
+			if (header) {
+				tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED);
 				tny_iterator_next (iter);
 				g_object_unref (header);
 			}
@@ -264,9 +263,7 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	case MODEST_TNY_SEND_QUEUE_UNKNOWN:
 	case MODEST_TNY_SEND_QUEUE_SUSPENDED:
 	case MODEST_TNY_SEND_QUEUE_FAILED:
-		if (status != MODEST_TNY_SEND_QUEUE_SUSPENDED)
-			tny_header_unset_flags (header, TNY_HEADER_FLAG_PRIORITY);
-		
+
 		/* Check if it already exists on queue */
 		existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_uid);
 		if(existing != NULL)

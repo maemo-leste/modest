@@ -176,7 +176,6 @@ struct _ModestMozembedMsgViewPrivate {
 	/* link click management */
 	gchar *last_url;
 
-	TnyHeaderFlags priority_flags;
 };
 
 #define MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -326,13 +325,11 @@ modest_mozembed_msg_view_init (ModestMozembedMsgView *obj)
 	GtkWidget *separator;
 	GtkWidget *main_vbox;
 	GtkWidget *scroll_area;
-	GtkWidget *viewport;
 	GtkWidget *body_box;
 
 	priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE(obj);
 
 	priv->current_zoom = 1.0;
-	priv->priority_flags = 0;
 
 	priv->body_view                 = GTK_WIDGET (g_object_new (MODEST_TYPE_MOZEMBED_MIME_PART_VIEW, NULL));
 	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new (TRUE));
@@ -372,16 +369,17 @@ modest_mozembed_msg_view_init (ModestMozembedMsgView *obj)
 	gtk_box_pack_start (GTK_BOX (main_vbox), body_box, TRUE, TRUE, 0);
 
 	if (priv->body_view) {
-/* 		viewport = gtk_viewport_new (NULL, NULL); */
-/* 		gtk_widget_set_size_request (priv->body_view, -1, 300); */
-/* 		gtk_container_add (GTK_CONTAINER (viewport), priv->body_view); */
-/* 		gtk_widget_show_all (viewport); */
-/* 		scroll_area = modest_scroll_area_new (GTK_WIDGET (obj), viewport); */
-/* 		gtk_container_add (GTK_CONTAINER (frame), scroll_area); */
+		gtk_widget_set_size_request (priv->body_view, -1, 1000);
+		scroll_area = modest_scroll_area_new (GTK_WIDGET (obj), priv->body_view);
+		gtk_container_add (GTK_CONTAINER (body_box), scroll_area);
 
-		gtk_container_add (GTK_CONTAINER (body_box), priv->body_view);
-		scroll_area = NULL;
-		viewport = NULL;
+/* 		gtk_container_add (GTK_CONTAINER (body_box), priv->body_view); */
+/* 		scroll_area = NULL; */
+
+/* 		scroll_area = gtk_scrolled_window_new (NULL, NULL); */
+/* 		gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll_area), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC); */
+/* 		gtk_container_add (GTK_CONTAINER (scroll_area), priv->body_view); */
+/* 		gtk_container_add (GTK_CONTAINER (body_box), scroll_area); */
 
 #ifdef MAEMO_CHANGES
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->body_view), NULL, NULL, 0);
@@ -746,7 +744,7 @@ get_priority (ModestMozembedMsgView *self)
 
 	priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE (self);
 
-	return priv->priority_flags;
+	return modest_mail_header_view_get_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view));
 }
 
 static void
@@ -756,8 +754,6 @@ set_priority (ModestMozembedMsgView *self, TnyHeaderFlags flags)
 
 	g_return_if_fail (MODEST_IS_MOZEMBED_MSG_VIEW (self));
 	priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE (self);
-
-	priv->priority_flags = flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
 
 	modest_mail_header_view_set_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), flags);
 }

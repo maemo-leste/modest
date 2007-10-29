@@ -267,7 +267,7 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 		gtk_misc_set_alignment (GTK_MISC (subject_label), 0.0, 0.0);
 
 		/* TODO: code disabled until we can get real priority information from message */
-/* 		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_PRIORITY) { */
+/* 		if (tny_header_get_priority (header)) { */
 /* 			GtkWidget *priority_icon = gtk_image_new_from_icon_name ("qgn_list_messaging_high", GTK_ICON_SIZE_MENU); */
 /* 			gtk_box_pack_start (GTK_BOX (subject_box), priority_icon, FALSE, FALSE, 0); */
 /* 		} */
@@ -583,7 +583,7 @@ modest_mail_header_view_set_priority (ModestMailHeaderView *headers_view,
 	g_return_if_fail (MODEST_IS_MAIL_HEADER_VIEW (headers_view));
 	priv = MODEST_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
 
-	priv->priority_flags = flags & (TNY_HEADER_FLAG_PRIORITY);
+	priv->priority_flags = flags & TNY_HEADER_FLAG_PRIORITY_MASK ;
 
 	if (priv->priority_flags == TNY_HEADER_FLAG_NORMAL_PRIORITY) {
 		if (priv->priority_icon != NULL) {

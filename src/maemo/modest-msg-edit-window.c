@@ -873,7 +873,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	cc      = tny_header_get_cc (header);
 	bcc     = tny_header_get_bcc (header);
 	subject = tny_header_get_subject (header);
-	priority_flags = tny_header_get_flags (header) & TNY_HEADER_FLAG_PRIORITY;
+	priority_flags = tny_header_get_priority (header);
 
 	if (to)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
@@ -2489,7 +2489,6 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	priority_flags = priority_flags & (TNY_HEADER_FLAG_PRIORITY);
 
 	if (priv->priority_flags != priority_flags) {
 		GtkAction *priority_action = NULL;

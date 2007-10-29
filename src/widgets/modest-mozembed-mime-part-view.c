@@ -80,6 +80,7 @@ static gboolean      get_selection_area (ModestMozembedMimePartView *self, gint 
 typedef struct _ModestMozembedMimePartViewPrivate ModestMozembedMimePartViewPrivate;
 struct _ModestMozembedMimePartViewPrivate {
 	gdouble current_zoom;
+	gchar *last_search;
 };
 
 #define MODEST_MOZEMBED_MIME_PART_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -176,12 +177,18 @@ modest_mozembed_mime_part_view_init (ModestMozembedMimePartView *self)
 	ModestMozembedMimePartViewPrivate *priv = MODEST_MOZEMBED_MIME_PART_VIEW_GET_PRIVATE (self);
 
 	priv->current_zoom = 1.0;
+	priv->last_search = NULL;
 
 }
 
 static void
 modest_mozembed_mime_part_view_finalize (GObject *obj)
 {
+	ModestMozembedMimePartViewPrivate *priv = MODEST_MOZEMBED_MIME_PART_VIEW_GET_PRIVATE (obj);
+
+	g_free (priv->last_search);
+	priv->last_search = NULL;
+
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
 
@@ -224,15 +231,22 @@ static gboolean
 search (ModestMozembedMimePartView *self, 
 	const gchar *string)
 {
-	/* TODO: Implement incremental search */
-	return FALSE;
+	ModestMozembedMimePartViewPrivate *priv = MODEST_MOZEMBED_MIME_PART_VIEW_GET_PRIVATE (self);
+	if (priv->last_search != NULL) {
+		g_free (priv->last_search);
+	}
+	priv->last_search = g_strdup (string);
+
+	return gtk_moz_embed_find_text (GTK_MOZ_EMBED (self), string, FALSE, FALSE,
+					FALSE, TRUE, 0);
 }
 
 static gboolean
 search_next (ModestMozembedMimePartView *self)
 {
-	/* TODO: Implement incremental search */
-	return FALSE;
+	ModestMozembedMimePartViewPrivate *priv = MODEST_MOZEMBED_MIME_PART_VIEW_GET_PRIVATE (self);
+	return gtk_moz_embed_find_text (GTK_MOZ_EMBED (self), priv->last_search, FALSE, FALSE,
+					FALSE, FALSE, 0);
 }
 
 static gboolean

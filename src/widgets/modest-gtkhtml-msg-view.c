@@ -217,8 +217,6 @@ struct _ModestGtkhtmlMsgViewPrivate {
 
 	/* link click management */
 	gchar *last_url;
-
-	TnyHeaderFlags priority_flags;
 };
 
 #define MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -1005,7 +1003,6 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(obj);
 
 	priv->current_zoom = 1.0;
-	priv->priority_flags = 0;
 
 	priv->hadj = NULL;
 	priv->vadj = NULL;
@@ -1523,7 +1520,7 @@ get_priority (ModestGtkhtmlMsgView *self)
 
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
-	return priv->priority_flags;
+	return modest_mail_header_view_get_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view));
 }
 
 static void
@@ -1533,8 +1530,6 @@ set_priority (ModestGtkhtmlMsgView *self, TnyHeaderFlags flags)
 
 	g_return_if_fail (MODEST_IS_GTKHTML_MSG_VIEW (self));
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
-
-	priv->priority_flags = flags & (TNY_HEADER_FLAG_HIGH_PRIORITY);
 
 	modest_mail_header_view_set_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), flags);
 }

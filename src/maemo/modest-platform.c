@@ -614,7 +614,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 
 	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"));
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
-	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY;
+	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
 	priority_sort_id = sort_key;
 
 	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)))));
@@ -628,7 +628,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 		if (current_sort_colid == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN) {
 			gpointer flags_sort_type_pointer;
 			flags_sort_type_pointer = g_object_get_data (G_OBJECT (cols->data), MODEST_HEADER_VIEW_FLAG_SORT);
-			if (GPOINTER_TO_INT (flags_sort_type_pointer) == TNY_HEADER_FLAG_PRIORITY)
+			if (GPOINTER_TO_INT (flags_sort_type_pointer) == TNY_HEADER_FLAG_PRIORITY_MASK)
 				hildon_sort_dialog_set_sort_key (dialog, priority_sort_id);
 			else
 				hildon_sort_dialog_set_sort_key (dialog, attachments_sort_id);

@@ -165,6 +165,8 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 		if (G_UNLIKELY(!low_pixbuf))
 			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW);
 		return low_pixbuf;
+	case TNY_HEADER_FLAG_NORMAL_PRIORITY:
+		return NULL;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
 			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD);
@@ -304,7 +306,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	/* printf ("DEBUG: %s: tree_model gtype=%s\n", __FUNCTION__, G_OBJECT_TYPE_NAME (tree_model)); */
 	
 	TnyHeaderFlags flags = 0;
-	TnyHeaderFlags prior_flags = 0;
 	gchar *address = NULL;
 	gchar *subject = NULL;
 	gchar *header = NULL;
@@ -315,6 +316,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		*recipient_box, *subject_box = NULL;
 	TnyHeader *msg_header = NULL;
 	gchar *display_date = NULL, *tmp_date = NULL;
+	TnyHeaderFlags prio = 0;
 
 	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
 	subject_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "subject-box-renderer"));
@@ -343,7 +345,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    -1);	
 	/* flags */
 	/* FIXME: we might gain something by doing all the g_object_set's at once */
-	prior_flags = flags & TNY_HEADER_FLAG_PRIORITY;
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
 			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS),
@@ -351,15 +352,12 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	else
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
 			      NULL, NULL);
-	if (flags & TNY_HEADER_FLAG_PRIORITY)
-		g_object_set (G_OBJECT (priority_cell), "pixbuf",
-			      get_pixbuf_for_flag (prior_flags),
-/* 			      get_pixbuf_for_flag (flags & TNY_HEADER_FLAG_PRIORITY), */
-			      NULL);
-	else
-		g_object_set (G_OBJECT (priority_cell), "pixbuf",
-			      NULL, NULL);
 
+	if (msg_header)
+		prio = tny_header_get_priority (msg_header);
+	g_object_set (G_OBJECT (priority_cell), "pixbuf",
+		      get_pixbuf_for_flag (prio), 
+		      NULL);
 
 	if (subject && strlen (subject)) {
 		gchar* escaped_subject = g_markup_escape_text (subject, -1);
@@ -393,8 +391,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		if (msg_header != NULL) {
 			status = get_status_of_uid (msg_header);
 			if (status == MODEST_TNY_SEND_QUEUE_SUSPENDED) {
-				tny_header_unset_flags (msg_header, TNY_HEADER_FLAG_PRIORITY);
-				tny_header_set_flags (msg_header, TNY_HEADER_FLAG_SUSPENDED_PRIORITY);
+				tny_header_set_flags (msg_header, TNY_HEADER_FLAG_SUSPENDED);
 			}
 		}
 		
@@ -458,16 +455,15 @@ _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
 				       GtkTreeModel *tree_model,  GtkTreeIter *iter,
 				       gpointer user_data)
 {
-        TnyHeaderFlags flags, prior_flags;
+        TnyHeaderFlags flags;
 	//guint status;
 	gchar *status_str;
 	
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    -1);
-	
-       prior_flags = flags & TNY_HEADER_FLAG_PRIORITY;
-       if (prior_flags == TNY_HEADER_FLAG_SUSPENDED_PRIORITY)
+
+       if (flags & TNY_HEADER_FLAG_SUSPENDED)
 	       status_str = g_strdup(_("mcen_li_outbox_suspended"));
        else	       
 	       status_str = g_strdup(_("mcen_li_outbox_waiting"));
