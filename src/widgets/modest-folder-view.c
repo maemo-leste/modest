@@ -615,7 +615,9 @@ add_columns (GtkWidget *treeview)
 						icon_cell_data, treeview, NULL);
 	
 	renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_column_pack_start (column, renderer, FALSE);
+	g_object_set (renderer, "ellipsize", PANGO_ELLIPSIZE_END, 
+			"ellipsize-set", TRUE, NULL);
+	gtk_tree_view_column_pack_start (column, renderer, TRUE);
 	gtk_tree_view_column_set_cell_data_func(column, renderer,
 						text_cell_data, treeview, NULL);
 	
