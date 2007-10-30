@@ -174,7 +174,8 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 
 	/* Don't close the dialog if a range error occured */
 	if(response_id == GTK_RESPONSE_OK) {
-		if (!modest_text_utils_validate_domain_name (hostname)) { 
+		if (hostname && (hostname[0] != '\0') &&
+		    (!modest_text_utils_validate_domain_name (hostname))) { 
 			g_signal_stop_emission_by_name (dialog, "response");
 			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
 			gtk_widget_grab_focus (priv->entry_outgoingserver);
@@ -384,12 +385,22 @@ modest_connection_specific_smtp_edit_window_get_settings (
 	ModestConnectionSpecificSmtpEditWindow *window, 
 	ModestAccountMgr *account_manager)
 {
-	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
-		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = NULL;
+	ModestServerAccountData *result = NULL;
+	const gchar *outgoing_server = NULL;
+
+	priv = 	CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
+	outgoing_server = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
+
+	/* If the outgoing server is NULL, we are removing the connection specific
+	 * settings */
+	if ((outgoing_server == NULL) || (outgoing_server[0] == '\0')) {
+		return NULL;
+	}
 	
 	/* Use g_slice_new0(), because that's what modest_account_mgr_free_server_account_data() 
 	 * expects us to use. */
-	ModestServerAccountData *result = g_slice_new0 (ModestServerAccountData);
+	result = g_slice_new0 (ModestServerAccountData);
 	
 	result->hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
 	result->username = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));	

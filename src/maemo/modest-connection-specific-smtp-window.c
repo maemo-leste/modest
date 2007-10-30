@@ -282,11 +282,18 @@ on_button_edit (GtkButton *button, gpointer user_data)
 							MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
 							priv->account_manager);
 				
-				const gchar* server_name = data ? data->hostname : NULL;
-				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-						MODEL_COL_SERVER_ACCOUNT_DATA, data,
-						MODEL_COL_SERVER_NAME, server_name,
-						-1);
+				if (data) {
+					gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+							    MODEL_COL_SERVER_ACCOUNT_DATA, data,
+							    MODEL_COL_SERVER_NAME, data->hostname,
+							    -1);
+				} else {
+					gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+							    MODEL_COL_SERVER_ACCOUNT_DATA, NULL,
+							    MODEL_COL_SERVER_NAME, NULL,
+							    MODEL_COL_SERVER_ACCOUNT_NAME, NULL,
+							    -1);
+				}
 			}
 			else
 			{
@@ -314,6 +321,7 @@ on_button_edit (GtkButton *button, gpointer user_data)
 	g_free (connection_name);
 	g_free (id);
 	g_free (server_account_name);
+	update_model_server_names (self);
 }
 
 static void
@@ -482,7 +490,7 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 
 	/* Walk through the list, reading each row */
 	while (valid) {
-      	gchar *id = NULL;
+		gchar *id = NULL;
 		gchar *connection_name = NULL;
 		gchar *server_account_name = NULL;
 		ModestServerAccountData *data = NULL;
@@ -539,6 +547,11 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 
 				modest_account_mgr_set_server_account_port (priv->account_manager, server_account_name, data->port);
 			}
+		} else if (connection_name) {
+			modest_account_mgr_remove_connection_specific_smtp (priv->account_manager, 
+									    connection_name);
+			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+					    MODEL_COL_SERVER_ACCOUNT_NAME, NULL, -1);
 		}
 		
 		g_free (connection_name);
@@ -566,11 +579,13 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 	while (valid) {
 		
 		gchar *server_account_name = NULL;
+		ModestServerAccountData *data = NULL;
 		gtk_tree_model_get (priv->model, &iter, 
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
+				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
 				    -1);
-				 
 		if (server_account_name) {
+			
 			/* Get the server hostname and show it in the treemodel: */	
 			gchar *hostname = modest_account_mgr_get_server_account_hostname (priv->account_manager, 
 											  server_account_name);
@@ -578,6 +593,10 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 					    MODEL_COL_SERVER_NAME, hostname,
 					    -1);
 			g_free (hostname);
+		} else if (data && data->hostname && (data->hostname[0] != '\0')) {
+			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+					    MODEL_COL_SERVER_NAME, data->hostname,
+					    -1);
 		} else {
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter,
 					    MODEL_COL_SERVER_NAME, _("mcen_ia_optionalsmtp_notdefined"),

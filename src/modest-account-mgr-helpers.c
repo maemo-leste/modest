@@ -159,9 +159,10 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 	/* The server account is in the item after the connection name: */
 	GSList *list_connection = g_slist_find_custom (list, connection_name, (GCompareFunc)strcmp);
 	if (list_connection) {
+		GSList *account_node = g_slist_next (list_connection);
 		/* remove both items: */
-		GSList *temp = g_slist_delete_link(list_connection, list_connection);
-		temp = g_slist_delete_link(temp, g_slist_next(temp));
+		list = g_slist_delete_link(list, list_connection);
+		list = g_slist_delete_link(list, account_node);
 	}
 	
 	/* Reset the changed list: */
