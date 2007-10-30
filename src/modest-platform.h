@@ -356,7 +356,7 @@ gboolean modest_platform_check_and_wait_for_account_is_online(TnyAccount *accoun
  *
  *  Returns: TRUE (Ok-pressed) or FALSE (cancel pressed)
  **/
-gboolean modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
+gboolean modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 							      const gchar *certificate);
 
 

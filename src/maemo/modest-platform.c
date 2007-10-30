@@ -1632,7 +1632,7 @@ on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert
 
 
 gboolean
-modest_platform_run_certificate_conformation_dialog (const gchar* server_name,
+modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 						     const gchar *certificate)
 {
 	GtkWidget *note;

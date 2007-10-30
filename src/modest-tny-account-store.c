@@ -1123,7 +1123,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	
 
 	if (error->code == TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE)
-		retval = modest_platform_run_certificate_conformation_dialog (server_name,
+		retval = modest_platform_run_certificate_confirmation_dialog (server_name,
 									      error->message);
 	else
 		retval = modest_platform_run_alert_dialog (prompt, question);
