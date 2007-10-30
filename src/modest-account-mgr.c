@@ -1245,9 +1245,13 @@ modest_account_mgr_set_account_busy(ModestAccountMgr* self,
 				    const gchar* account_name, 
 				    gboolean busy)
 {
-	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
-	if (busy)
-	{
+	ModestAccountMgrPrivate* priv;
+
+	g_return_if_fail (MODEST_IS_ACCOUNT_MGR(self));
+	g_return_if_fail (account_name);
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	if (busy) {
 		GSList *account_names = modest_account_mgr_account_names (self, TRUE);
 		GSList* account = g_slist_find_custom(account_names, account_name, 
 						      (GCompareFunc) compare_account_name);
@@ -1273,11 +1277,17 @@ modest_account_mgr_set_account_busy(ModestAccountMgr* self,
 }
 
 gboolean
-modest_account_mgr_account_is_busy(ModestAccountMgr* self, const gchar* account_name)
+modest_account_mgr_account_is_busy (ModestAccountMgr* self, const gchar* account_name)
 {
-	ModestAccountMgrPrivate* priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	ModestAccountMgrPrivate* priv;
+	
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
+	g_return_val_if_fail (account_name, FALSE);
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+		
 	return (g_slist_find_custom(priv->busy_accounts, account_name, (GCompareFunc) compare_account_name)
-					!= NULL);
+		!= NULL);
 }
 
 void
