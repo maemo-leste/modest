@@ -32,7 +32,7 @@
 #include <modest-protocol-info.h>
 #include <modest-pair.h>
 #include <modest-defs.h>
-
+#include <modest-text-utils.h>
 
 typedef struct {
 	gint   proto;
@@ -94,35 +94,32 @@ get_protocol_by_name (const ProtocolInfo* map,
 	guint i;
 
 	g_return_val_if_fail (map, default_value);
-
+	g_return_val_if_fail (query_name, default_value);
+	
 	for(i = 0; i < size; ++i)
-	{
-		if((case_sensitive && strcmp(map[i].name, query_name) == 0) ||
-		   (!case_sensitive && g_ascii_strcasecmp(map[i].name, query_name) == 0))
-		{
+		if (modest_text_utils_utf8_strcmp (map[i].name, query_name,
+						   !case_sensitive) == 0)
 			return map[i].proto;
-		}
-	}
-
+	
 	return default_value;
 }
 
 ModestPairList*
-modest_protocol_info_get_transport_store_protocol_pair_list ()
+modest_protocol_info_get_transport_store_protocol_pair_list (void)
 {
 	return get_protocol_pair_list (TransportStoreProtocolMap,
 		G_N_ELEMENTS(TransportStoreProtocolMap));
 }
 
 ModestPairList*
-modest_protocol_info_get_auth_protocol_pair_list ()
+modest_protocol_info_get_auth_protocol_pair_list (void)
 {
 	return get_protocol_pair_list (AuthProtocolMap,
 		G_N_ELEMENTS(AuthProtocolMap));
 }
 
 ModestPairList*
-modest_protocol_info_get_connection_protocol_pair_list ()
+modest_protocol_info_get_connection_protocol_pair_list (void)
 {
 	return get_protocol_pair_list (ConnectionProtocolMap,
 		G_N_ELEMENTS(ConnectionProtocolMap));
@@ -131,6 +128,8 @@ modest_protocol_info_get_connection_protocol_pair_list ()
 ModestTransportStoreProtocol
 modest_protocol_info_get_transport_store_protocol (const gchar* name)
 {
+	g_return_val_if_fail (name, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
+	
 	return get_protocol_by_name(TransportStoreProtocolMap,
 	                            G_N_ELEMENTS(TransportStoreProtocolMap),
 	                            name,
@@ -141,6 +140,8 @@ modest_protocol_info_get_transport_store_protocol (const gchar* name)
 ModestAuthProtocol
 modest_protocol_info_get_auth_protocol (const gchar* name)
 {
+	g_return_val_if_fail (name, MODEST_PROTOCOL_AUTH_NONE);
+	
 	return get_protocol_by_name(AuthProtocolMap,
 	                            G_N_ELEMENTS(AuthProtocolMap),
 	                            name,

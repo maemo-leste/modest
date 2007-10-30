@@ -88,8 +88,7 @@ modest_protocol_info_get_transport_store_protocol_pair_list ();
  * Returns: a list of protocols. After use, it should be freed
  * with modest_pair_list_free
  */
-ModestPairList*
-modest_protocol_info_get_auth_protocol_pair_list ();
+ModestPairList* modest_protocol_info_get_auth_protocol_pair_list (void);
 
 
 /**
@@ -102,8 +101,7 @@ modest_protocol_info_get_auth_protocol_pair_list ();
  * Returns: a list of protocols. After use, it should be freed
  * with modest_pair_list_free
  */
-ModestPairList*
-modest_protocol_info_get_connection_protocol_pair_list ();
+ModestPairList* modest_protocol_info_get_connection_protocol_pair_list (void);
 	
 	
 /**
@@ -114,8 +112,7 @@ modest_protocol_info_get_connection_protocol_pair_list ();
  *  
  * Returns: the id of the protocol or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN
  */
-ModestTransportStoreProtocol
-modest_protocol_info_get_transport_store_protocol (const gchar* name);
+ModestTransportStoreProtocol modest_protocol_info_get_transport_store_protocol (const gchar* name);
 
 /**
  * modest_protocol_info_get_auth_protocol:
@@ -125,8 +122,7 @@ modest_protocol_info_get_transport_store_protocol (const gchar* name);
  *
  * Returns: The ID of the protocol or MODEST_PROTOCOL_AUTH_NONE
  */
-ModestAuthProtocol
-modest_protocol_info_get_auth_protocol (const gchar* name);
+ModestAuthProtocol modest_protocol_info_get_auth_protocol (const gchar* name);
 
 /**
  * modest_protocol_info_get_transport_store_protocol_name:
@@ -136,8 +132,7 @@ modest_protocol_info_get_auth_protocol (const gchar* name);
  *  
  * Returns: string id of the proto as a constant string, that should NOT be modified or freed
  */
-const gchar*
-modest_protocol_info_get_transport_store_protocol_name (ModestTransportStoreProtocol proto);
+const gchar* modest_protocol_info_get_transport_store_protocol_name (ModestTransportStoreProtocol proto);
 
 /**
  * modest_protocol_info_get_auth_protocol_name:
@@ -147,8 +142,7 @@ modest_protocol_info_get_transport_store_protocol_name (ModestTransportStoreProt
  *  
  * Returns: string id of the proto as a constant string, that should NOT be modified or freed
  */
-const gchar*
-modest_protocol_info_get_auth_protocol_name (ModestAuthProtocol proto);
+const gchar* modest_protocol_info_get_auth_protocol_name (ModestAuthProtocol proto);
 
 /*
  * modest_protocol_get_auth_protocol_pair_list:
@@ -158,9 +152,7 @@ modest_protocol_info_get_auth_protocol_name (ModestAuthProtocol proto);
  *
  * Returns: List of method/display name pairs
  */
-
-ModestPairList*
-modest_protocol_info_get_auth_protocol_pair_list ();
+ModestPairList* modest_protocol_info_get_auth_protocol_pair_list (void);
 
 /**
  * modest_protocol_info_get_auth_protocol_name:
