@@ -1662,7 +1662,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	on_destroy_dialog (GTK_DIALOG(note));
 	g_free (question);
 	
-	return response;
+	return response == GTK_RESPONSE_OK;
 }
 	
 
