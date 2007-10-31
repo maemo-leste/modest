@@ -34,7 +34,7 @@
 #include <gtkhtml/gtkhtml-search.h>
 #include <tny-stream.h>
 #include <tny-mime-part-view.h>
-#include <tny-gtk-text-buffer-stream.h>
+#include <modest-stream-text-to-html.h>
 #include <modest-text-utils.h>
 #include <widgets/modest-mime-part-view.h>
 #include <widgets/modest-zoomable.h>
@@ -298,41 +298,24 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 static void
 set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 {
-	GtkTextBuffer *buf;
-	GtkTextIter begin, end;
-	TnyStream* txt_stream, *tny_stream;
+	TnyStream* text_to_html_stream, *tny_stream;
 	GtkHTMLStream *gtkhtml_stream;
-	gchar *txt;
-		
+	
 	g_return_if_fail (self);
 	g_return_if_fail (part);
 
-	buf            = gtk_text_buffer_new (NULL);
-	txt_stream     = TNY_STREAM(tny_gtk_text_buffer_stream_new (buf));
-		
-	tny_stream_reset (txt_stream);
-
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self)); 
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
+	text_to_html_stream = TNY_STREAM (modest_stream_text_to_html_new (tny_stream));
+	modest_stream_text_to_html_set_linkify_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 64*1024);
+	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 640*1024);
 	
 	// FIXME: tinymail
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, txt_stream);
-	tny_stream_reset (txt_stream);		
+	tny_mime_part_decode_to_stream ((TnyMimePart*)part, text_to_html_stream);
+	tny_stream_reset (text_to_html_stream);		
 	
-	gtk_text_buffer_get_bounds (buf, &begin, &end);
-	txt = gtk_text_buffer_get_text (buf, &begin, &end, FALSE);
-	if (txt) {
-		gchar *html = modest_text_utils_convert_to_html (txt);
-		tny_stream_write (tny_stream, html, strlen(html));
-		tny_stream_reset (tny_stream);
-		g_free (txt);
-		g_free (html);
-	}
-	
+	g_object_unref (G_OBJECT(text_to_html_stream));
 	g_object_unref (G_OBJECT(tny_stream));
-	g_object_unref (G_OBJECT(txt_stream));
-	g_object_unref (G_OBJECT(buf));
-	
 	gtk_html_stream_destroy (gtkhtml_stream);
 }
 

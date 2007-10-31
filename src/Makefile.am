@@ -104,6 +104,8 @@ modest_SOURCES=\
 	modest-tny-platform-factory.h \
 	modest-tny-send-queue.c \
 	modest-tny-send-queue.h \
+	modest-stream-text-to-html.c \
+	modest-stream-text-to-html.h \
 	modest-ui-actions.c \
 	modest-ui-actions.h \
 	modest-ui-dimming-manager.c \

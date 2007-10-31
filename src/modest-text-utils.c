@@ -188,7 +188,7 @@ modest_text_utils_cite (const gchar *text,
 		retval = g_strdup ("");
 	else if (strcmp(content_type, "text/html") == 0) {
 		tmp_sig = g_strconcat ("\n", signature, NULL);
-		retval = modest_text_utils_convert_to_html_body(tmp_sig);
+		retval = modest_text_utils_convert_to_html_body(tmp_sig, -1, TRUE);
 		g_free (tmp_sig);
 	} else {
 		retval = g_strconcat (text, "\n", signature, NULL);
@@ -321,17 +321,17 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 }
 
 static void
-modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data)
+modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data, gssize n)
 {
 	guint		 i;
 	gboolean	space_seen = FALSE;
-	gsize           len;
 	guint           break_dist = 0; /* distance since last break point */
 
-	len = strlen (data);
+	if (n == -1)
+		n = strlen (data);
 
 	/* replace with special html chars where needed*/
-	for (i = 0; i != len; ++i)  {
+	for (i = 0; i != n; ++i)  {
 		char kar = data[i];
 		
 		if (space_seen && kar != ' ') {
@@ -391,7 +391,7 @@ modest_text_utils_convert_to_html (const gchar *data)
 				"</head>"
 				"<body>");
 
-	modest_text_utils_convert_buffer_to_html (html, data);
+	modest_text_utils_convert_buffer_to_html (html, data, -1);
 	
 	g_string_append (html, "</body></html>");
 
@@ -402,20 +402,20 @@ modest_text_utils_convert_to_html (const gchar *data)
 }
 
 gchar *
-modest_text_utils_convert_to_html_body (const gchar *data)
+modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hyperlinkify)
 {
 	GString		*html;	    
-	gsize           len;
 	
 	if (!data)
 		return NULL;
 
-	len = strlen (data);
-	html = g_string_sized_new (1.5 * len);	/* just a  guess... */
+	if (n == -1) 
+		n = strlen (data);
+	html = g_string_sized_new (1.5 * n);	/* just a  guess... */
 
-	modest_text_utils_convert_buffer_to_html (html, data);
+	modest_text_utils_convert_buffer_to_html (html, data, n);
 
-	if (len < HYPERLINKIFY_MAX_LENGTH)
+	if (hyperlinkify && (n < HYPERLINKIFY_MAX_LENGTH))
 		hyperlinkify_plain_text (html);
 
 	return g_string_free (html, FALSE);
@@ -823,12 +823,12 @@ modest_text_utils_quote_html (const gchar *text,
 	if (signature == NULL)
 		signature_result = g_strdup ("");
 	else
-		signature_result = modest_text_utils_convert_to_html_body (signature);
+		signature_result = modest_text_utils_convert_to_html_body (signature, -1, TRUE);
 
 	attachments_string = quoted_attachments (attachments);
-	q_attachments_string = modest_text_utils_convert_to_html_body (attachments_string);
-	q_cite = modest_text_utils_convert_to_html_body (cite);
-	html_text = modest_text_utils_convert_to_html_body (text);
+	q_attachments_string = modest_text_utils_convert_to_html_body (attachments_string, -1, TRUE);
+	q_cite = modest_text_utils_convert_to_html_body (cite, -1, TRUE);
+	html_text = modest_text_utils_convert_to_html_body (text, -1, TRUE);
 	result = g_strdup_printf (format, signature_result, q_cite, html_text, q_attachments_string);
 	g_free (q_cite);
 	g_free (html_text);
@@ -845,6 +845,52 @@ cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
 	return match2->offset - match1->offset;
 }
 
+static gboolean url_matches_block = 0;
+static url_match_pattern_t patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
+
+
+static gboolean
+compile_patterns ()
+{
+	guint i;
+	const size_t pattern_num = sizeof(patterns)/sizeof(url_match_pattern_t);
+	for (i = 0; i != pattern_num; ++i) {
+		patterns[i].preg = g_slice_new0 (regex_t);
+		
+		/* this should not happen */
+		g_return_val_if_fail (regcomp (patterns[i].preg, patterns[i].regex,
+					       REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0, FALSE);
+	}
+	return TRUE;
+}
+
+static void 
+free_patterns ()
+{
+	guint i;
+	const size_t pattern_num = sizeof(patterns)/sizeof(url_match_pattern_t);
+	for (i = 0; i != pattern_num; ++i) {
+		regfree (patterns[i].preg);
+		g_slice_free  (regex_t, patterns[i].preg);
+	} /* don't free patterns itself -- it's static */
+}
+
+void
+modest_text_utils_hyperlinkify_begin (void)
+{
+	if (url_matches_block == 0)
+		compile_patterns ();
+	url_matches_block ++;
+}
+
+void
+modest_text_utils_hyperlinkify_end (void)
+{
+	url_matches_block--;
+	if (url_matches_block <= 0)
+		free_patterns ();
+}
+
 
 static GSList*
 get_url_matches (GString *txt)
@@ -853,17 +899,11 @@ get_url_matches (GString *txt)
         guint rv, i, offset = 0;
         GSList *match_list = NULL;
 
-	static url_match_pattern_t patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
 	const size_t pattern_num = sizeof(patterns)/sizeof(url_match_pattern_t);
 
 	/* initalize the regexps */
-	for (i = 0; i != pattern_num; ++i) {
-		patterns[i].preg = g_slice_new0 (regex_t);
+	modest_text_utils_hyperlinkify_begin ();
 
-		/* this should not happen */
-		g_return_val_if_fail (regcomp (patterns[i].preg, patterns[i].regex,
-					       REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0, NULL);
-	}
         /* find all the matches */
 	for (i = 0; i != pattern_num; ++i) {
 		offset     = 0;	
@@ -904,10 +944,7 @@ get_url_matches (GString *txt)
 		}
 	}
 
-	for (i = 0; i != pattern_num; ++i) {
-		regfree (patterns[i].preg);
-		g_slice_free  (regex_t, patterns[i].preg);
-	} /* don't free patterns itself -- it's static */
+	modest_text_utils_hyperlinkify_end ();
 	
 	/* now sort the list, so the matches are in reverse order of occurence.
 	 * that way, we can do the replacements starting from the end, so we don't need

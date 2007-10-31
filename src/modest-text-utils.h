@@ -156,7 +156,20 @@ void     modest_text_utils_address_range_at_position (const gchar *recipients_li
 						      gint position,
 						      gint *start,
 						      gint *end);
-						      
+
+/**
+ * modest_text_utils_hyperlinkify_begin:
+ *
+ * begin a linkify block, compiling the caches to be reused.
+ */
+void modest_text_utils_hyperlinkify_begin (void);
+
+/**
+ * modest_text_utils_hyperlinkify_end:
+ *
+ * end a linkify block, freeing the caches to be reused.
+ */
+void modest_text_utils_hyperlinkify_end (void);
 
 /**
  * modest_text_utils_convert_to_html:
@@ -176,7 +189,7 @@ gchar*  modest_text_utils_convert_to_html (const gchar *txt);
  * 
  * Returns: a newly allocated string containing the html
  */
-gchar*  modest_text_utils_convert_to_html_body (const gchar *data);
+gchar*  modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hyperlinkify);
 
 
 /**
