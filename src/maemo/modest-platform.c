@@ -1637,14 +1637,24 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 {
 	GtkWidget *note;
 	gint response;
-	GtkWindow *main_win =
-		(GtkWindow*)modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
+	ModestWindow *main_win;
+	
+	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
+		g_warning ("%s: don't show dialogs if there's no main window; assuming 'Cancel'",
+			   __FUNCTION__);
+		return FALSE;
+	}
 
+	/* don't create it */
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
+	g_return_val_if_fail (main_win, FALSE); /* should not happen */
+	
+	
 	gchar *question = g_strdup_printf (_("mcen_nc_unknown_certificate"),
 					   server_name);
 	
 	note = hildon_note_new_confirmation_add_buttons  (
-		main_win,
+		GTK_WINDOW(main_win),
 		question,
 		_("mcen_bd_dialog_ok"),     GTK_RESPONSE_OK,
 		_("mcen_bd_view"),          GTK_RESPONSE_HELP,   /* abusing this... */
@@ -1671,8 +1681,16 @@ gboolean
 modest_platform_run_alert_dialog (const gchar* prompt, 
 				  gboolean is_question)
 {	
-	ModestWindow *main_window = 
-		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	ModestWindow *main_win; 
+
+	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
+		g_warning ("%s:\n'%s'\ndon't show dialogs if there's no main window;"
+			   " assuming 'Cancel' for questions, 'Ok' otherwise", prompt, __FUNCTION__);
+		return is_question ? FALSE : TRUE;
+	}
+
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
+	g_return_val_if_fail (main_win, FALSE); /* should not happen */
 	
 	gboolean retval = TRUE;
 	if (is_question) {
@@ -1680,7 +1698,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		 * when it is a question.
 		 * Obviously, we need tinymail to use more specific error codes instead,
 		 * so we know what buttons to show. */
-		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_window), 
+		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_win), 
 									      prompt));
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 					     GTK_WINDOW (dialog));
@@ -1691,7 +1709,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		on_destroy_dialog (GTK_DIALOG(dialog));		
 	} else {
 	 	/* Just show the error text and use the default response: */
-	 	modest_platform_run_information_dialog (GTK_WINDOW (main_window), 
+	 	modest_platform_run_information_dialog (GTK_WINDOW (main_win), 
 							prompt);
 	}
 	return retval;

@@ -815,7 +815,7 @@ modest_window_mgr_show_toolbars (ModestWindowMgr *self,
 }
 
 ModestWindow*  
-modest_window_mgr_get_main_window (ModestWindowMgr *self)
+modest_window_mgr_get_main_window (ModestWindowMgr *self, gboolean create)
 {
 	ModestWindowMgrPrivate *priv;
 	
@@ -823,13 +823,25 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	
 	/* create the main window, if it hasn't been created yet */
-	if (!priv->main_window) {
+	if (!priv->main_window && create) {
 		/* modest_window_mgr_register_window will set priv->main_window */
 		modest_window_mgr_register_window (self, modest_main_window_new ());
 		g_debug ("%s: created main window: %p\n", __FUNCTION__, priv->main_window);
 	}
 	
 	return priv->main_window;
+}
+
+
+gboolean
+modest_window_mgr_main_window_exists  (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return priv->main_window != NULL;
 }
 
 

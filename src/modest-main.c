@@ -45,13 +45,14 @@ main (int argc, char *argv[])
 	 * be called. But that's annoying when starting from the 
 	 * command line.: */
 	gboolean show_ui_without_top_application_method = FALSE;
+
+	ModestWindow *main_win;
+	int retval  = 0;
+
 	if (argc >= 2) {
 		if (strcmp (argv[1], "showui") == 0)
 			show_ui_without_top_application_method = TRUE;
 	}
-	
-	ModestWindow *win;
-	int retval  = 0;
 		
 	if (!g_thread_supported())
 		g_thread_init (NULL);
@@ -72,8 +73,8 @@ main (int argc, char *argv[])
 	}
 
 	/* this will create & register the window */
-	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
-	if (!win) {
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), TRUE);
+	if (!main_win) {
 		g_printerr ("modest: failed to get main window instance\n");
 		retval = 1;
 		goto cleanup;
@@ -86,7 +87,7 @@ main (int argc, char *argv[])
 	 * when we receive the "top_application" D-Bus method.
 	 */
 	if (show_ui_without_top_application_method) {
-		gtk_widget_show_all (GTK_WIDGET(win));
+		gtk_widget_show_all (GTK_WIDGET(main_win));
 
 		/* Remove new mail notifications if exist */
 		modest_platform_remove_new_mail_notifications ();

@@ -1670,7 +1670,12 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 		goto cleanup; /* verboten! */
 	
 	/* Ask for confirmation to move */
-	main_win = modest_window_mgr_get_main_window (mgr);
+	main_win = modest_window_mgr_get_main_window (mgr, FALSE); /* don't create */
+	if (!main_win) {
+		g_warning ("%s: BUG: no main window found", __FUNCTION__);
+		goto cleanup;
+	}
+
 	response = modest_ui_actions_msgs_move_to_confirmation (main_win, folder, 
 								TRUE, headers);
 	if (response == GTK_RESPONSE_CANCEL)
@@ -1717,7 +1722,14 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	TnyFolderStore *dest_folder = NULL;
 	TnyFolderStore *folder = NULL;
 	gboolean forbidden = FALSE;
+	ModestWindow *win;
 
+	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE); /* don't create */
+	if (!win) {
+		g_warning ("%s: BUG: no main window", __FUNCTION__);
+		return;
+	}
+	
 	if (!forbidden) {
 		/* check the folder rules for the destination */
 		folder = tree_path_to_folder (dest_model, dest_row);
@@ -1767,13 +1779,11 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	/* Offer the connection dialog if necessary, for the destination parent folder and source folder: */
 	if (modest_platform_connect_and_wait_if_network_folderstore (NULL, dest_folder) && 
 	    modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
-		ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
-
+	
 		/* Do the mail operation */
-		mail_op = 
-			modest_mail_operation_new_with_error_handling ((GObject *) modest_window_mgr_get_main_window (mgr),
-								       modest_ui_actions_move_folder_error_handler,
-								       folder, NULL);
+		mail_op = modest_mail_operation_new_with_error_handling ((GObject *) win,
+									 modest_ui_actions_move_folder_error_handler,
+									 folder, NULL);
 
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 						 mail_op);

@@ -1159,12 +1159,20 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			       gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv;
-	ModestWindowMgr *mgr = NULL;
-	GObject *source = NULL;
 	SetFolderHelper *info;
- 
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	ModestWindow *main_win;
+	
+	g_return_if_fail (self);
 
+	priv =     MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+						      FALSE); /* don't create */
+	if (!main_win) {
+		g_warning ("%s: BUG: no main window", __FUNCTION__);
+		return;
+	}
+						      
 	if (priv->folder) {
 		g_mutex_lock (priv->observers_lock);
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (self));
@@ -1177,13 +1185,9 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		ModestMailOperation *mail_op = NULL;
 		GtkTreeSelection *selection;
 
-		/* Get main window to use it as source of mail operation */
-		mgr = modest_runtime_get_window_mgr ();
-		source = G_OBJECT (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
-
 		/* Set folder in the model */
 		modest_header_view_set_folder_intern (self, folder);
-
+		
 		/* Pick my reference. Nothing to do with the mail operation */
 		priv->folder = g_object_ref (folder);
 
@@ -1203,7 +1207,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		info->user_data = user_data;
 
 		/* Create the mail operation (source will be the parent widget) */
-		mail_op = modest_mail_operation_new (source);
+		mail_op = modest_mail_operation_new (G_OBJECT(main_win));
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 

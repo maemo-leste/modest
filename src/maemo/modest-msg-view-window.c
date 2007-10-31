@@ -542,9 +542,8 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 {
 	ModestMsgViewWindowPrivate *priv;
 	ModestHeaderView *header_view = NULL;
-	ModestMainWindow *main_window = NULL;
-	ModestWindowMgr *window_mgr = NULL;
-
+	ModestWindow *main_window = NULL;
+	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
 	if (gtk_clipboard_get (GDK_SELECTION_PRIMARY) &&
@@ -585,19 +584,15 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 						    priv->rows_reordered_handler);
 	}
 
-	window_mgr = modest_runtime_get_window_mgr();
-	g_assert(window_mgr != NULL);
-
-	main_window = MODEST_MAIN_WINDOW(
-			modest_window_mgr_get_main_window(window_mgr));
-	
-	if(main_window == NULL)
+	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
+							 FALSE); /* don't create */
+	if (!main_window)
 		return;
-
+	
 	header_view = MODEST_HEADER_VIEW(
 			modest_main_window_get_child_widget(
-			main_window, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
-
+				MODEST_MAIN_WINDOW(main_window),
+				MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	if (header_view == NULL)
 		return;
 	
@@ -844,6 +839,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 }
 
+/* FIXME: parameter checks */
 ModestWindow *
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 					      const gchar *modest_account_name,
@@ -855,24 +851,28 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	ModestMsgViewWindowPrivate *priv = NULL;
 	TnyFolder *header_folder = NULL;
 	ModestHeaderView *header_view = NULL;
-	ModestMainWindow *main_window = NULL;
-	ModestWindowMgr *window_mgr = NULL;
-
+	ModestWindow *main_window = NULL;
+	
 	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
+
 	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	/* Remember the message list's TreeModel so we can detect changes 
 	 * and change the list selection when necessary: */
-	window_mgr = modest_runtime_get_window_mgr();
-	g_assert(window_mgr != NULL);
-	main_window = MODEST_MAIN_WINDOW(
-			modest_window_mgr_get_main_window(window_mgr));
-	g_assert(main_window != NULL);
+
+	main_window = modest_window_mgr_get_main_window(
+		modest_runtime_get_window_mgr(), FALSE); /* don't create */
+	if (!main_window) {
+		g_warning ("%s: BUG: no main window", __FUNCTION__);
+		return NULL;
+	}
+	
 	header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget(
-			main_window, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
+						 MODEST_MAIN_WINDOW(main_window),
+						 MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	if (header_view != NULL){
 		header_folder = modest_header_view_get_folder(header_view);
 		g_assert(header_folder != NULL);

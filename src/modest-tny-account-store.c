@@ -499,22 +499,34 @@ static void
 show_password_warning_only ()
 {
 	ModestWindow *main_window = 
-				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-				
+		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE); /* don't create */
+	
 	/* Show an explanatory temporary banner: */
-	hildon_banner_show_information ( 
-		GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
+	if (main_window) 
+		hildon_banner_show_information ( 
+			GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
+	else
+		g_warning ("%s: %s", __FUNCTION__, _("mcen_ib_username_pw_incorrect"));
 }
-		
+
+
 static void 
 show_wrong_password_dialog (TnyAccount *account)
 { 
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	const gchar *modest_account_name = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+	ModestWindow *main_window;
+	const gchar *modest_account_name;
+
+	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+							 FALSE); /* don't create */
+	if (!main_window) {
+		g_warning ("%s: password was wrong; ignoring because no main window", __FUNCTION__);
+		return;
+	}
+
+	modest_account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 	if (!modest_account_name) {
 		g_warning ("%s: modest_tny_account_get_parent_modest_account_name_for_server_account() failed.\n", 
 			__FUNCTION__);
@@ -531,9 +543,6 @@ show_wrong_password_dialog (TnyAccount *account)
 	}
 	ModestAccountSettingsDialog *dialog = dialog_as_gpointer;
 					
-	ModestWindow *main_window = 
-				modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-
 	gboolean created_dialog = FALSE;
 	if (!found || !dialog) {
 		dialog = modest_account_settings_dialog_new ();
@@ -574,9 +583,9 @@ request_password_and_wait (ModestTnyAccountStore *account_store,
 					 gboolean *cancel, 
 					 gboolean *remember)
 {
-			g_signal_emit (G_OBJECT(account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-			       server_account_id, /* server_account_name */
-			       username, password, cancel, remember);
+	g_signal_emit (G_OBJECT(account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+		       server_account_id, /* server_account_name */
+		       username, password, cancel, remember);
 }
 
 /* This callback will be called by Tinymail when it needs the password

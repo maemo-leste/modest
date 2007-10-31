@@ -224,11 +224,12 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), wizard);
 
 	/* always present a main window in the background 
-	 * we do it here, so we cannot end up with to wizards (as this
+	 * we do it here, so we cannot end up with two wizards (as this
 	 * function might be called in modest_window_mgr_get_main_window as well */
 	if (!win) 
-		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr());
-
+		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
+							 TRUE);  /* create if not existent */
+	
 	/* make sure the mainwindow is visible */
 	gtk_widget_show_all (GTK_WIDGET(win));
 	gtk_window_present (GTK_WINDOW(win));
@@ -403,6 +404,7 @@ modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow* win)
 	}
 }
 
+
 void
 modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 {
@@ -529,9 +531,8 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			
 			/* Get main window */
 			mgr = modest_runtime_get_window_mgr ();
-			main_window = modest_window_mgr_get_main_window (mgr);
-		}
-		else {			
+			main_window = modest_window_mgr_get_main_window (mgr, FALSE); /* don't create */
+		} else {			
 			/* Move cursor to next row */
 			main_window = win; 
 
@@ -4055,7 +4056,11 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	}
 	
 	/* Disable next automatic folder selection */
-	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
+	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+							 FALSE); /* don't create */
+	if (!main_window)
+		g_warning ("%s: BUG: no main window", __FUNCTION__);
+	
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);	
 	modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));
@@ -4446,7 +4451,8 @@ modest_ui_actions_on_move_to (GtkAction *action,
 		main_window = MODEST_MAIN_WINDOW (win);
 	else
 		main_window = 
-			MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
+			MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+									       FALSE)); /* don't create */
 
 	/* Get the folder view widget if exists */
 	if (main_window)
@@ -4859,8 +4865,8 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 	TnyFolderType folder_type;
 
 	mgr = modest_runtime_get_window_mgr ();
-	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr));
-
+	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr,
+									     FALSE));/* don't create */
 	if (!main_window)
 		return;
 

@@ -2285,9 +2285,15 @@ static void
 refresh_account (const gchar *account_name)
 {
 	ModestWindow *win;
-
-	win = MODEST_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ()));
-
+	
+	/* win must already exists here, obviously */ 
+	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+						 FALSE);
+	if (!win) {
+		g_warning ("%s: BUG: no main window!", __FUNCTION__);
+		return;
+	}
+	
 	/* If account_name == NULL, we must update all (option All) */
 	if (!account_name)
 		modest_ui_actions_do_send_receive_all (win);

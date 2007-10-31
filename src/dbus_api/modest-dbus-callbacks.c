@@ -540,8 +540,7 @@ on_idle_delete_message (gpointer user_data)
 	const char *uri = NULL, *uid = NULL;
 	gint res = 0;
 	ModestMailOperation *mail_op = NULL;
-	ModestWindow *win = NULL, *msg_view = NULL;
-	ModestWindowMgr *win_mgr = NULL;	
+	ModestWindow *main_win = NULL, *msg_view = NULL;
 
 	uri = (char *) user_data;
 
@@ -549,16 +548,17 @@ on_idle_delete_message (gpointer user_data)
 	
 	msg = find_message_by_url (uri, &account);
 
-	if (msg == NULL) {
-		return OSSO_ERROR;
+	if (!msg) {
+		g_warning ("modest: %s: Could not find message '%s'", __FUNCTION__, uri);
+		return OSSO_ERROR; /* FIXME: is this TRUE or FALSE?! */
 	}
-
-	g_debug ("modest: %s: Found message", __FUNCTION__);
+	
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
+						      FALSE); /* don't create */
 	
 	msg_header = tny_msg_get_header (msg);
 	uid = tny_header_get_uid (msg_header);
 	folder = tny_msg_get_folder (msg);
-
 
 	/* tny_msg_get_header () flaw:
 	 * From tinythingy doc: You can't use the returned instance with the
@@ -614,24 +614,23 @@ on_idle_delete_message (gpointer user_data)
 	}	
 		
 	res = OSSO_OK;
-	
+
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
-
 	gdk_threads_enter (); /* CHECKED */
-	win_mgr = modest_runtime_get_window_mgr ();	
-	win = modest_window_mgr_get_main_window (win_mgr);
 
-	mail_op = modest_mail_operation_new (win ? G_OBJECT(win) : NULL);
+	mail_op = modest_mail_operation_new (main_win ? G_OBJECT(main_win) : NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_remove_msg (mail_op, header, FALSE);
 	g_object_unref (G_OBJECT (mail_op));
-
-	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
-		if (MODEST_IS_MSG_VIEW_WINDOW (msg_view))
-			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
-	}
 	
+	if (main_win) { /* no need if there's no window */ 
+		if (modest_window_mgr_find_registered_header (modest_runtime_get_window_mgr(),
+							      header, &msg_view)) {
+			if (MODEST_IS_MSG_VIEW_WINDOW (msg_view))
+				modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
+		}
+	}
 	gdk_threads_leave (); /* CHECKED */
 	
 	if (header)
@@ -656,10 +655,18 @@ on_idle_delete_message (gpointer user_data)
 	 * (They are not really deleted until contact is made with the server, 
 	 * so they would appear with a strike-through until then):
 	 */
-	ModestHeaderView *header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (
-		MODEST_MAIN_WINDOW(win), MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
-	if (header_view && MODEST_IS_HEADER_VIEW (header_view))
-		modest_header_view_refilter (header_view);
+	if (main_win) { /* only needed when there's a mainwindow / UI */
+
+		/* This is a GDK lock because we are an idle callback and
+		 * the code below is or does Gtk+ code */
+		gdk_threads_enter (); /* CHECKED */
+		ModestHeaderView *header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (
+									   MODEST_MAIN_WINDOW(main_win),
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
+		if (header_view && MODEST_IS_HEADER_VIEW (header_view))
+			modest_header_view_refilter (header_view);
+		gdk_threads_leave ();
+	}
 	
 	return res;
 }
@@ -692,19 +699,17 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
-	ModestWindow *win;
+	ModestWindow *main_win =
+		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+						   FALSE); /* don't create */
 
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
-
 	gdk_threads_enter (); /* CHECKED */
-
-	/* Pick the main window if it exists */
-	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 
 	/* Send & receive all if "Update automatically" is set */
 	/* TODO: check the auto-update parameter in the configuration */
-	modest_ui_actions_do_send_receive_all (win);
+	modest_ui_actions_do_send_receive_all (main_win);
 	
 	gdk_threads_leave (); /* CHECKED */
 	
@@ -731,19 +736,26 @@ static gboolean on_idle_top_application (gpointer user_data);
 static gboolean
 on_idle_open_default_inbox(gpointer user_data)
 {
-	if (!check_and_offer_account_creation ())
-		return FALSE;
+	ModestWindow *main_win;
+	GtkWidget *folder_view;
 	
+	if (!check_and_offer_account_creation ()) /* this has it's only lock already */
+		return FALSE;
+
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
-
 	gdk_threads_enter (); /* CHECKED */
-	
-	ModestWindow *win = 
-		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
 
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+						      TRUE); /* create if non-existent */
+	if (!main_win) {
+		g_warning ("%s: BUG: no main window", __FUNCTION__);
+		gdk_threads_leave (); /* CHECKED */
+		return FALSE; /* don't call me again */
+	}
+		
 	/* Get the folder view */
-	GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_win),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 	
@@ -772,20 +784,22 @@ static gint on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t 
 
 static gboolean on_idle_top_application (gpointer user_data)
 {
-
+	ModestWindow *main_win;
+	
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED */
-
-	ModestWindow *win = 
-		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr ());
-	if (win) {
+	
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+						      TRUE); /* create if non-existent */
+	if (main_win) {
 		/* Ideally, we would just use gtk_widget_show(), 
 		 * but this widget is not coded correctly to support that: */
-		gtk_widget_show_all (GTK_WIDGET (win));
-		gtk_window_present (GTK_WINDOW (win));
-	}
+		gtk_widget_show_all (GTK_WIDGET (main_win));
+		gtk_window_present (GTK_WINDOW (main_win));
+	} else
+		g_warning ("%s: BUG: no main window", __FUNCTION__);
 
 	gdk_threads_leave (); /* CHECKED */
 	

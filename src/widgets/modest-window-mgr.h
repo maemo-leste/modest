@@ -128,13 +128,27 @@ void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 /**
  * modest_window_mgr_get_main_window:
  * @self: a #ModestWindowMgr
+ * @create: if TRUE, create the main window if it was not yet existing
  *
- * get the main window, or create if it's not there. don't destroy
- * it.
+ * get the main window, and depending on @create, create one if it does not exist yet
  *
- * Returns: the main window or NULL in case of error
+ * Returns: the main window or NULL in case of error, or the main-window
+ * did not yet exist
  **/
-ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self);
+ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self,
+							gboolean create);
+
+
+/**
+ * modest_window_mgr_main_window_exists:
+ * @self: a #ModestWindowMgr
+ *
+ * do we have a main window?
+ *
+ * Returns: TRUE if there's a main window, FALSE otherwise
+ **/
+gboolean  modest_window_mgr_main_window_exists       (ModestWindowMgr *self);
+
 
 
 /**
