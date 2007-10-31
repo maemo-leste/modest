@@ -354,7 +354,7 @@ headers_action_mark_as_read (TnyHeader *header,
 
 	flags = tny_header_get_flags (header);
 	if (flags & TNY_HEADER_FLAG_SEEN) return;
-	tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+	tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 }
 
 static void
@@ -368,7 +368,7 @@ headers_action_mark_as_unread (TnyHeader *header,
 
 	flags = tny_header_get_flags (header);
 	if (flags & TNY_HEADER_FLAG_SEEN)  {
-		tny_header_unset_flags (header, TNY_HEADER_FLAG_SEEN);
+		tny_header_unset_flag (header, TNY_HEADER_FLAG_SEEN);
 	}
 }
 

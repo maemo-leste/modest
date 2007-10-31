@@ -165,7 +165,7 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 		while (!tny_iterator_is_done (iter)) {
 			header = TNY_HEADER (tny_iterator_get_current (iter));
 			if (header) {
-				tny_header_set_flags (header, TNY_HEADER_FLAG_SUSPENDED);
+				tny_header_set_flag (header, TNY_HEADER_FLAG_SUSPENDED);
 				tny_iterator_next (iter);
 				g_object_unref (header);
 			}
@@ -578,7 +578,7 @@ _on_msg_has_been_sent (TnySendQueue *self,
 	/* Get message uid */
 	msg_id = modest_tny_send_queue_get_msg_id (header);
 
-	tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+	tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 
 	/* Get status info */
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);

@@ -391,7 +391,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		if (msg_header != NULL) {
 			status = get_status_of_uid (msg_header);
 			if (status == MODEST_TNY_SEND_QUEUE_SUSPENDED) {
-				tny_header_set_flags (msg_header, TNY_HEADER_FLAG_SUSPENDED);
+				tny_header_set_flag (msg_header, TNY_HEADER_FLAG_SUSPENDED);
 			}
 		}
 		

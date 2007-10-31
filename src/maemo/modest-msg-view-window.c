@@ -1801,7 +1801,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 
 	/* Mark header as read */
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
-		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 
 	/* Set new message */
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);

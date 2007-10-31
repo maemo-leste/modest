@@ -650,7 +650,7 @@ create_msg_thread (gpointer thread_data)
 		if (info->attachments_list != NULL)
 			flags |= TNY_HEADER_FLAG_ATTACHMENTS;
 
-		tny_header_set_flags (header, flags);
+		tny_header_set_flag (header, flags);
 		g_object_unref (G_OBJECT(header));
 	} else {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -2416,8 +2416,8 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 	/* remove message from folder */
 	tny_folder_remove_msg (folder, header, &(priv->error));
 	if (!priv->error) {
-		tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
-		tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+		tny_header_set_flag (header, TNY_HEADER_FLAG_DELETED);
+		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 
 		modest_mail_operation_notify_start (self);
 
@@ -2594,8 +2594,8 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 		iter = tny_list_create_iterator (helper->headers);
 		while (!tny_iterator_is_done (iter)) {
 			header = TNY_HEADER (tny_iterator_get_current (iter));
-			tny_header_set_flags (header, TNY_HEADER_FLAG_DELETED);
-			tny_header_set_flags (header, TNY_HEADER_FLAG_SEEN);
+			tny_header_set_flag (header, TNY_HEADER_FLAG_DELETED);
+			tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 			g_object_unref (header);
 
 			tny_iterator_next (iter);
