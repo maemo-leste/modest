@@ -238,7 +238,6 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 {
 	TnyHeaderFlags flags;
 	guint date, date_col;
-	gchar *display_date = NULL;
 	gboolean received = GPOINTER_TO_INT(user_data);
 
 	if (received)
@@ -251,11 +250,10 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 			    date_col, &date,
 			    -1);
 	
-	display_date = modest_text_utils_get_display_date (date);
-	g_object_set (G_OBJECT(renderer), "text", display_date, NULL);	
+	g_object_set (G_OBJECT(renderer), "text", modest_text_utils_get_display_date (date),
+		      NULL);	
 
 	set_common_flags (renderer, flags);
-	g_free (display_date);
 }
 
 void
@@ -297,10 +295,6 @@ void
 _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					       GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
-	g_return_if_fail (GTK_IS_TREE_VIEW_COLUMN (column));
-	g_return_if_fail (GTK_IS_CELL_RENDERER (renderer));
-	g_return_if_fail (GTK_IS_TREE_MODEL (tree_model));
-	
 	/* Note that GtkTreeModel is a GtkTreeModelFilter. */
 	
 	/* printf ("DEBUG: %s: tree_model gtype=%s\n", __FUNCTION__, G_OBJECT_TYPE_NAME (tree_model)); */
@@ -309,7 +303,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	gchar *address = NULL;
 	gchar *subject = NULL;
 	gchar *header = NULL;
-	time_t date = 0;
+	time_t date;
 	
 	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
 		*attach_cell, *priority_cell,
@@ -318,6 +312,11 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	gchar *display_date = NULL, *tmp_date = NULL;
 	TnyHeaderFlags prio = 0;
 
+
+	g_return_if_fail (GTK_IS_TREE_VIEW_COLUMN (column));
+	g_return_if_fail (GTK_IS_CELL_RENDERER (renderer));
+	g_return_if_fail (GTK_IS_TREE_MODEL (tree_model));
+	
 	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
 	subject_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "subject-box-renderer"));
 	priority_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (subject_box), "priority-renderer"));
@@ -384,7 +383,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_free (header);
 	header = NULL;
 	set_common_flags (recipient_cell, flags);
-
+	
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
 		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 		const gchar *status_str = "";
@@ -402,16 +401,9 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 			      NULL);
 		g_free (display_date);
 		display_date = NULL;
-	} else {
-		/* in some rare cases, mail might have no Date: field. it case,
-		 * don't show the date, instead of bogus 1/1/1970
-		 */
-		if (date)
-			tmp_date = modest_text_utils_get_display_date (date);
-		else
-			tmp_date = g_strdup ("");
-		
-		display_date = g_strdup_printf ("<span size='small' foreground='#666666'>%s</span>", tmp_date);
+	} else {		
+		display_date = g_strdup_printf ("<span size='small' foreground='#666666'>%s</span>",
+						date ? modest_text_utils_get_display_date (date) : "");
 		g_object_set (G_OBJECT (date_or_status_cell),
 			      "markup", display_date,
 			      NULL);

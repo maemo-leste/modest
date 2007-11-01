@@ -146,22 +146,23 @@ modest_account_view_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-/* Get the string for the last updated time. Result must be g_freed */
-static gchar*
+/* Get the string for the last updated time. Result must NOT be g_freed */
+static const gchar*
 get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountData *account_data)
 {
 	/* FIXME: let's assume that 'last update' applies to the store account... */
-	gchar* last_updated_string;
+	const gchar* last_updated_string;
 	time_t last_updated = account_data->store_account->last_updated;
 	if (!modest_account_mgr_account_is_busy(account_mgr, account_data->account_name)) {
 		if (last_updated > 0) 
 			last_updated_string = modest_text_utils_get_display_date(last_updated);
 		else
-			last_updated_string = g_strdup (_("mcen_va_never"));
+			last_updated_string = _("mcen_va_never");
 	} else 	{
 		/* FIXME: There should be a logical name in the UI specs */
-		last_updated_string = g_strdup(_("mcen_va_refreshing"));
+		last_updated_string = _("mcen_va_refreshing");
 	}
+	
 	return last_updated_string;
 }
 
@@ -207,8 +208,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		if (account_data->store_account) {
 
 			GtkTreeIter iter;
-			
-			gchar *last_updated_string = get_last_updated_string(account_mgr, account_data);
+
+			/* don't free */
+			const gchar *last_updated_string = get_last_updated_string(account_mgr, account_data);
 			
 			if (account_data->is_enabled) {
 				const gchar *proto_name;
@@ -224,7 +226,6 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 					-1);
 			}
-			g_free (last_updated_string);
 		}
 
 		modest_account_mgr_free_account_data (account_mgr, account_data);
@@ -267,11 +268,10 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 				g_free (cur_name);
 				return;
 			}
-			gchar* last_updated_string = get_last_updated_string(account_mgr, account_data);
+			const gchar* last_updated_string = get_last_updated_string(account_mgr, account_data);
 			gtk_list_store_set(model, &iter, 
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
 					   -1);
-			g_free (last_updated_string);
 			modest_account_mgr_free_account_data (account_mgr, account_data);
 			found = TRUE;
 		}

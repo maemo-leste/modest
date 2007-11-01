@@ -1256,12 +1256,14 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 
 	iter = tny_list_create_iterator (header_list);
 	while (!tny_iterator_is_done (iter)) {
-		gchar *url = NULL, *display_address = NULL, *display_date = NULL, *summary = NULL;
+		gchar *url = NULL, *display_address = NULL,  *summary = NULL;
+		const gchar *display_date;
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 		TnyFolder *folder = tny_header_get_folder (header);
 		gboolean first_notification = TRUE;
 		gint notif_id;
-	
+
+		/* constant string, don't free */
 		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
 
 		display_address = g_strdup(tny_header_get_from (header));
@@ -1272,7 +1274,6 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 							tny_header_get_subject (header),
 							"qgn_list_messagin",
 							"email.arrive");
-		
 		/* Create the message URL */
 		url = g_strdup_printf ("%s/%s", tny_folder_get_url_string (folder), 
 				       tny_header_get_uid (header));
@@ -1318,7 +1319,6 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 		   not to store the list in gconf */
 	
 		/* Free & carry on */
-		g_free (display_date);
 		g_free (display_address);
 		g_free (summary);
 		g_free (url);

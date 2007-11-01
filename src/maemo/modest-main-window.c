@@ -1659,7 +1659,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 		TnyAccount *account = TNY_ACCOUNT(folder_store);
 		
 		time_t last_updated;
-		gchar *last_updated_string;
+		const gchar *last_updated_string;
 		/* Get last updated from configuration */
 		last_updated = modest_account_mgr_get_last_updated (modest_runtime_get_account_mgr (), 
 								    tny_account_get_id (account));
@@ -1674,7 +1674,6 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 		label_w = gtk_label_new (NULL);
 		gtk_label_set_markup (GTK_LABEL (label_w), label);
 		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-		g_free (last_updated_string);
 		g_free (label);
 	}
 

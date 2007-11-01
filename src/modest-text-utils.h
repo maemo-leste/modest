@@ -270,10 +270,13 @@ gint modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean i
  *
  * get a string representation for a date.
  * 
- * Returns: the new display date, as a newly allocated string;
- * free with g_free
+ * Returns: the new display date, as a *static* string.
+ * This string should not be modified, and will change
+ * upon recalling this function. g_strdup it if you to
+ * do so.
+ * 
  */
-gchar* modest_text_utils_get_display_date (time_t date);
+const gchar* modest_text_utils_get_display_date (time_t date);
 
 
 /**
