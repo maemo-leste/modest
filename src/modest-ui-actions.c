@@ -2613,7 +2613,9 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 		message = _CS("ckdg_ib_folder_already_exists");
 		break;
 	default:
-		g_return_if_reached ();
+		g_warning ("%s: BUG: unexpected error:[%d]: %s", __FUNCTION__,
+			   error->code, error->message);
+		return;
 	}
 
 	modest_platform_information_banner (GTK_WIDGET (window), NULL, message);
