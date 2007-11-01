@@ -95,7 +95,7 @@ if test "x$with_platform" == "xgnome"; then
     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
     have_easysetup=true
-    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 libebook-1.2 libalarm microb-engine-nss)
+    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 libebook-1.2  microb-engine-nss)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
     AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
 fi		    
@@ -122,6 +122,22 @@ if test "x$have_wpeditor" == "xfalse"; then
 else
    wpeditor="wpeditor"	
    AC_DEFINE_UNQUOTED(MODEST_HAVE_WPEDITOR, 1, ["Whether wpeditor is used."])		
+fi
+fi
+
+
+#
+# check libalarm
+#
+if test "x$with_platform" == "xmaemo"; then  
+PKG_CHECK_MODULES(MODEST_LIBALARM,libalarm,have_libalarm=true,have_libalarm=false)
+if test "x$have_libalarm" == "xtrue"; then
+   libalarm="libalarm"	
+   AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBALARM, 1, ["Whether libalarm is used."])		
+   AC_SUBST(MODEST_LIBALARM_CFLAGS)
+   AC_SUBST(MODEST_LIBALARM_LIBS)
+else
+   libalarm=""
 fi
 fi
 
@@ -430,6 +446,7 @@ echo "Easysetup data   : $providers_data"
 echo "Editor lib       : $wpeditor"
 echo "Addressbook      : $addressbook"
 echo "Help lib         : $helplib"
+echo "Alarm            : $libalarm"
 echo "Hildon-Notify    : $have_hildon_notify"    
 echo "LibOGS support   : $have_ogs_support"
 echo "MozEmbed support : $use_mozembed"

@@ -37,6 +37,7 @@ INCLUDES=\
 	$(MODEST_HILDON_HELP_CFLAGS)        \
 	$(MODEST_HILDON_MIME_CFLAGS)        \
 	$(MODEST_HILDON_NOTIFY_CFLAGS)      \
+	$(MODEST_LIBALARM_CFLAGS)           \
 	-I ${top_srcdir}/src/widgets        \
 	-I ${top_srcdir}/src                \
 	-DPREFIX=\"@prefix@\" 	            \
@@ -96,6 +97,7 @@ libmodest_ui_la_LIBADD = \
 	$(MODEST_HILDON_WIDGETS_LIBS) \
 	$(MODEST_HILDON_MIME_LIBS) \
 	$(MODEST_HILDON_HELP_LIBS) \
+	$(MODEST_LIBALARM_LIBS)           \
 	$(MODEST_HILDON_NOTIFY_LIBS)\
 	easysetup/libmodest-easysetup.la 
 

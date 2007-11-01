@@ -40,7 +40,6 @@
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
-#include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
@@ -57,6 +56,11 @@
 #ifdef MODEST_HAVE_ABOOK
 #include <libosso-abook/osso-abook.h>
 #endif /*MODEST_HAVE_ABOOK*/
+
+#ifdef MODEST_HAVE_LIBALARM
+#include <alarmd/alarm_event.h> /* For alarm_event_add(), etc. */
+#endif /*MODEST_HAVE_LIBALARM*/
+
 
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
@@ -1159,6 +1163,8 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 gboolean 
 modest_platform_set_update_interval (guint minutes)
 {
+#ifdef MODEST_HAVE_LIBALARM
+	
 	ModestConf *conf = modest_runtime_get_conf ();
 	if (!conf)
 		return FALSE;
@@ -1237,7 +1243,7 @@ modest_platform_set_update_interval (guint minutes)
 	    
 	    return FALSE;
 	}
-	
+#endif /* MODEST_HAVE_LIBALARM */	
 	return TRUE;
 }
 
