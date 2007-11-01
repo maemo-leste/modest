@@ -1654,20 +1654,22 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	gtk_tree_model_get (dest_model, &dest_iter, 
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
-
-	if (!folder || TNY_IS_FOLDER_STORE(folder)) {
-		//g_warning ("%s: not a valid target folder", __FUNCTION__);
+	
+	if (!folder || !TNY_IS_FOLDER(folder)) {
+/* 		g_warning ("%s: not a valid target folder (%p)", __FUNCTION__, folder); */
 		goto cleanup;
 	}
 	
 	folder_type = modest_tny_folder_guess_folder_type (folder);
 	if (folder_type == TNY_FOLDER_TYPE_INVALID) {
-		g_warning ("%s: invalid target folder", __FUNCTION__);
+/* 		g_warning ("%s: invalid target folder", __FUNCTION__); */
 		goto cleanup;  /* cannot move messages there */
 	}
-		
-	if (modest_tny_folder_get_rules((TNY_FOLDER(folder))) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE)
+	
+	if (modest_tny_folder_get_rules((TNY_FOLDER(folder))) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
+/* 		g_warning ("folder not writable"); */
 		goto cleanup; /* verboten! */
+	}
 	
 	/* Ask for confirmation to move */
 	main_win = modest_window_mgr_get_main_window (mgr, FALSE); /* don't create */
