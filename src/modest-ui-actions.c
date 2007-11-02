@@ -4607,33 +4607,11 @@ modest_ui_actions_on_help (GtkAction *action,
 
 		/* Switch help_id */
 		if (TNY_IS_FOLDER (folder_store)) {
-			switch (modest_tny_folder_guess_folder_type (TNY_FOLDER (folder_store))) {
-			case TNY_FOLDER_TYPE_NORMAL:
-				help_id = "applications_email_managefolders";
-				break;
-			case TNY_FOLDER_TYPE_INBOX:
-				help_id = "applications_email_inbox";
-				break;
-			case TNY_FOLDER_TYPE_OUTBOX:
-				help_id = "applications_email_outbox";
-				break;
-			case TNY_FOLDER_TYPE_SENT:
-				help_id = "applications_email_sent";
-				break;
-			case TNY_FOLDER_TYPE_DRAFTS:
-				help_id = "applications_email_drafts";
-				break;
-			case TNY_FOLDER_TYPE_ARCHIVE:
-				help_id = "applications_email_managefolders";
-				break;
-			case TNY_FOLDER_TYPE_INVALID:
-				g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
-				break;
-			default:
-				help_id = "applications_email_managefolders";
+			help_id = modest_tny_folder_get_help_id (TNY_FOLDER (folder_store));
+			if (!help_id) {
+				g_warning ("%s: BUG: did not get a valid help_id", __FUNCTION__);
+				help_id = "applications_email_mainview";
 			}
-		} else {
-			help_id = "applications_email_mainview";
 		}
 		g_object_unref (folder_store);
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {

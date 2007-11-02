@@ -51,7 +51,7 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* full_name)
 	else if (strcmp (full_name, modest_local_folder_info_get_type_name(TNY_FOLDER_TYPE_DRAFTS)) == 0)
 		return TNY_FOLDER_TYPE_DRAFTS;
 	return
-		TNY_FOLDER_TYPE_UNKNOWN;
+		TNY_FOLDER_TYPE_NORMAL;
 }
 
 
@@ -79,6 +79,34 @@ modest_tny_folder_guess_folder_type (const TnyFolder *folder)
 
 	return type;
 }
+
+
+const gchar*
+modest_tny_folder_get_help_id (const TnyFolder *folder)
+{
+	TnyFolderType type;
+	const gchar* help_id = NULL;
+	
+	g_return_val_if_fail (folder, NULL);
+	g_return_val_if_fail (TNY_IS_FOLDER(folder), NULL);
+	
+	type = modest_tny_folder_guess_folder_type (TNY_FOLDER (folder));
+	
+	switch (type) {
+	case TNY_FOLDER_TYPE_NORMAL:  help_id = "applications_email_managefolders"; break;
+	case TNY_FOLDER_TYPE_INBOX:   help_id = "applications_email_inbox";break;
+	case TNY_FOLDER_TYPE_OUTBOX:  help_id = "applications_email_outbox";break;
+	case TNY_FOLDER_TYPE_SENT:    help_id = "applications_email_sent"; break;
+	case TNY_FOLDER_TYPE_DRAFTS:  help_id = "applications_email_drafts";break;
+	case TNY_FOLDER_TYPE_ARCHIVE: help_id = "applications_email_managefolders";break;
+
+	case TNY_FOLDER_TYPE_INVALID: g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);break;
+	default: 	              g_warning ("%s: BUG: unexpected folder type (%d)", __FUNCTION__, type);
+	}
+	
+	return help_id;
+}
+
 
 
 /* FIXME: encode all folder rules here */

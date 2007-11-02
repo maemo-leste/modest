@@ -129,6 +129,18 @@ TnyFolderType modest_tny_folder_get_local_or_mmc_folder_type  (TnyFolder *folder
  */
 ModestTnyFolderRules  modest_tny_folder_get_rules   (TnyFolder *folder);
 
+
+/**
+ * modest_tny_folder_get_help_id:
+ * @folder: a valid tnymail folder
+ * 
+ * get the help_id for this folder
+ *  
+ * Returns: get the help_id for this folder, or NULL in case of error
+ */
+const gchar* modest_tny_folder_get_help_id (const TnyFolder *folder);
+
+
 /**
  * modest_tny_folder_is_outbox_for_account:
  * @folder: a valid tnymail folder
