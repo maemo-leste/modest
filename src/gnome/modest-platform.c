@@ -43,6 +43,12 @@ modest_platform_init (int argc, char *argv[])
 }
 
 
+gboolean modest_platform_uninit (void)
+{
+	return TRUE; /*nothing to do */
+}
+
+
 TnyDevice*
 modest_platform_get_new_device (void)
 {

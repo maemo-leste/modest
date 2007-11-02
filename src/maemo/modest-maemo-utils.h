@@ -35,6 +35,8 @@
 #include <stdio.h> /* for FILE* */
 #include <modest-protocol-info.h>
 #include <tny-fs-stream.h>
+#include <libosso.h>
+
 
 #define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
@@ -126,6 +128,18 @@ GList* modest_maemo_utils_get_supported_secure_authentication_methods (ModestTra
  */
 void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
 
+
+/**
+ * modest_maemo_utils_get_osso_context:
+ *
+ * get the osso_context pointer for this application
+ * 
+ * Return: the osso context pointer 
+ */
+osso_context_t *modest_maemo_utils_get_osso_context (void);
+
+
+
 /** modest_maemo_show_information_note_in_main_context_and_forget:
  * @parent_window: The window for which the note should be transient.
  * @message: The text to show.
@@ -174,5 +188,25 @@ void modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thum
  * updates the toggle action active status, but blocking the notification of the changes.
  */
 void modest_maemo_toggle_action_set_active_block_notify (GtkToggleAction *action, gboolean value);
+
+
+/**
+ * modest_maemo_get_osso_context:
+ *
+ * retrieve the osso context for this application
+ * 
+ * Returns: the current osso_context_t ptr  
+ */
+osso_context_t* modest_maemo_utils_get_osso_context (void);
+
+/**
+ * modest_maemo_set_osso_context:
+ *
+ * remember the osso-context for this application 
+ * 
+ * @osso_context: a valid osso_context_t pointer
+ *  
+ */
+void modest_maemo_utils_set_osso_context (osso_context_t *osso_context);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/

@@ -62,11 +62,8 @@
 #endif /*MODEST_HAVE_LIBALARM*/
 
 
-
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
-
-static osso_context_t *osso_context = NULL; /* urgh global */
 
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, 
@@ -105,10 +102,12 @@ check_required_files (void)
 }
 
 
-
+/* the gpointer here is the osso_context. */
 gboolean
 modest_platform_init (int argc, char *argv[])
 {
+	osso_context_t *osso_context;
+	
 	osso_hw_state_t hw_state = { 0 };
 	DBusConnection *con;	
 	GSList *acc_names;
@@ -117,20 +116,18 @@ modest_platform_init (int argc, char *argv[])
 		g_printerr ("modest: missing required files\n");
 		return FALSE;
 	}
-
 	
-	osso_context =
-		osso_initialize(PACKAGE,PACKAGE_VERSION,
-				FALSE, NULL);	
+	osso_context = 	osso_initialize(PACKAGE,PACKAGE_VERSION,
+					FALSE, NULL);	
 	if (!osso_context) {
 		g_printerr ("modest: failed to acquire osso context\n");
 		return FALSE;
 	}
+	modest_maemo_utils_set_osso_context (osso_context);
 
 	if ((con = osso_get_dbus_connection (osso_context)) == NULL) {
 		g_printerr ("modest: could not get dbus connection\n");
 		return FALSE;
-
 	}
 
 	/* Add a D-Bus handler to be used when the main osso-rpc 
@@ -155,19 +152,8 @@ modest_platform_init (int argc, char *argv[])
                                modest_dbus_req_handler, NULL /* user_data */);
     	if (result != OSSO_OK) {
        		g_printerr ("modest: Error setting D-BUS callback (%d)\n", result);
-       		return FALSE;
+		return FALSE;
    	}
-
-	/* Add handler for Exit D-BUS messages.
-	 * Not used because osso_application_set_exit_cb() is deprecated and obsolete:
-	result = osso_application_set_exit_cb(osso_context,
-                                          modest_dbus_exit_event_handler,
-                                          (gpointer) NULL);
-	if (result != OSSO_OK) {
-		g_print("Error setting exit callback (%d)\n", result);
-		return OSSO_ERROR;
-	}
-	*/
 
 	/* Register hardware event dbus callback: */
     	hw_state.shutdown_ind = TRUE;
@@ -215,9 +201,22 @@ modest_platform_init (int argc, char *argv[])
 	}
 #endif /*MODEST_HAVE_ABOOK*/
 
+	return TRUE;
+}
+
+gboolean
+modest_platform_uninit (void)
+{
+	osso_context_t *osso_context =
+		modest_maemo_utils_get_osso_context ();
+	if (osso_context)
+		osso_deinitialize (osso_context);
 
 	return TRUE;
 }
+
+
+
 
 TnyDevice*
 modest_platform_get_new_device (void)
@@ -308,7 +307,7 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	gchar *uri_path = NULL;
 
 	uri_path = g_strconcat ("file://", path, NULL);	
-	con = osso_get_dbus_connection (osso_context);
+	con = osso_get_dbus_connection (modest_maemo_utils_get_osso_context());
 	
 	if (mime_type)
 		result = hildon_mime_open_file_with_mime_type (con, uri_path, mime_type);
@@ -569,8 +568,9 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 		header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_window),
 										      MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	}
-	if (!header_view) return;
-
+	if (!header_view)
+		return;
+	
 	/* Add sorting keys */
 	cols = modest_header_view_get_columns (header_view);
 	if (cols == NULL) return;
@@ -620,8 +620,9 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
 	priority_sort_id = sort_key;
-
-	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)))));
+	
+	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
+				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)))));
 	/* Launch dialogs */
 	if (!gtk_tree_sortable_get_sort_column_id (sortable,
 						   &current_sort_colid, &current_sort_type)) {
@@ -1146,7 +1147,11 @@ modest_platform_run_sort_dialog (GtkWindow *parent_window,
 	dialog = hildon_sort_dialog_new (parent_window);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (dialog));
-	
+
+	hildon_help_dialog_help_enable (GTK_DIALOG(dialog),
+					"applications_email_sort",
+					modest_maemo_utils_get_osso_context());
+
 	/* Fill sort keys */
 	switch (type) {
 	case MODEST_SORT_HEADERS:
@@ -1396,12 +1401,11 @@ modest_platform_show_help (GtkWindow *parent_window,
 			   const gchar *help_id)
 {
 	osso_return_t result;
-
 	g_return_if_fail (help_id);
-	g_return_if_fail (osso_context);
 
-	result = hildon_help_show (osso_context, help_id, HILDON_HELP_SHOW_DIALOG);
-
+	result = hildon_help_show (modest_maemo_utils_get_osso_context(),
+				   help_id, HILDON_HELP_SHOW_DIALOG);
+	
 	if (result != OSSO_OK) {
 		gchar *error_msg;
 		error_msg = g_strdup_printf ("FIXME The help topic %s could not be found", help_id); 
@@ -1412,28 +1416,14 @@ modest_platform_show_help (GtkWindow *parent_window,
 	}
 }
 
-void
-modest_platform_set_dialog_help (GtkDialog *parent_window, 
-				 const gchar *help_id)
-{
-	gboolean result;
-	g_return_if_fail (help_id);
-	g_return_if_fail (osso_context);
-	g_return_if_fail (GTK_IS_DIALOG (parent_window));
-
-	result = hildon_help_dialog_help_enable (parent_window, help_id, osso_context);
-
-	if (!result)
-		g_warning ("Help topic %s not found", help_id);
-
-}
-
 void 
 modest_platform_show_search_messages (GtkWindow *parent_window)
 {
 	osso_return_t result = OSSO_ERROR;
 	
-	result = osso_rpc_run_with_defaults (osso_context, "osso_global_search", "search_email", NULL, DBUS_TYPE_INVALID);
+	result = osso_rpc_run_with_defaults (modest_maemo_utils_get_osso_context(),
+					     "osso_global_search",
+					     "search_email", NULL, DBUS_TYPE_INVALID);
 
 	if (result != OSSO_OK) {
 		g_warning ("%s: osso_rpc_run_with_defaults() failed.\n", __FUNCTION__);
@@ -1445,7 +1435,9 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 {
 	osso_return_t result = OSSO_ERROR;
 	
-	result = osso_rpc_run_with_defaults (osso_context, "osso_addressbook", "top_application", NULL, DBUS_TYPE_INVALID);
+	result = osso_rpc_run_with_defaults (modest_maemo_utils_get_osso_context(),
+					     "osso_addressbook",
+					     "top_application", NULL, DBUS_TYPE_INVALID);
 
 	if (result != OSSO_OK) {
 		g_warning ("%s: osso_rpc_run_with_defaults() failed.\n", __FUNCTION__);
@@ -1507,18 +1499,11 @@ on_timeout_check_account_is_online(gpointer user_data)
 {
 	printf ("DEBUG: %s:\n", __FUNCTION__);
 	CheckAccountIdleData *data = (CheckAccountIdleData*)user_data;
+
+	g_return_val_if_fail (data && data->account, FALSE);
 	
-	if (!data) {
-		g_warning ("%s: data is NULL.\n", __FUNCTION__);
-	}
-	
-	if (!(data->account)) {
-		g_warning ("%s: data->account is NULL.\n", __FUNCTION__);
-	}
-	
-	if (data && data->account) {
-		printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__, tny_account_get_connection_status (data->account));	
-	}
+	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__,
+		tny_account_get_connection_status (data->account));	
 	
 	gboolean stop_trying = FALSE;
 	if (data && data->account && 

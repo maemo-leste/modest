@@ -277,6 +277,9 @@ modest_init_uninit (void)
 	if (!modest_runtime_uninit())
 		g_printerr ("modest: failed to uninit runtime\n");
 
+	if (!modest_platform_uninit())
+		g_printerr ("modest: failed to uninit platform\n");
+	
 	_is_initialized = FALSE;
 	return TRUE;
 }

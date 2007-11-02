@@ -52,7 +52,17 @@ typedef enum _ModestSortDialogType {
  * Returns: TRUE if succeeded, FALSE otherwise
  */
 gboolean modest_platform_init (int argc, char *argv[]);
-	
+
+
+/**
+ * modest_platform_platform_init:
+ *
+ * platform specific un-initialization function
+ * 
+ * Returns: TRUE if succeeded, FALSE otherwise
+ */
+gboolean modest_platform_uninit (void);
+
 
 /**
  * modest_platform_get_new_device:
@@ -293,17 +303,6 @@ void modest_platform_on_new_headers_received (TnyList *header_list);
  **/
 void modest_platform_show_help (GtkWindow *parent_window, 
 				const gchar *help_id);
-
-/**
- * modest_platform_set_dialog_help:
- * @dialog: a #GtkDialog
- * @help_id: the help topic id to be shown on requesting
- * help in the dialog
- * 
- * attachs a help topic to the dialog
- **/
-void modest_platform_set_dialog_help (GtkDialog *parent_window, 
-				      const gchar *help_id);
 
 /**
  * modest_platform_show_search_messages:

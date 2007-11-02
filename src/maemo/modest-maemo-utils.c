@@ -65,7 +65,28 @@
 #define BTNAME_MATCH_RULE "type='signal',interface='" BTNAME_SIGNAL_IF \
                           "',member='" BTNAME_SIG_CHANGED "'"
 
-GQuark modest_maemo_utils_get_supported_secure_authentication_error_quark (void)
+
+static osso_context_t *__osso_context = NULL; /* urgh global */
+
+osso_context_t *
+modest_maemo_utils_get_osso_context (void)
+{
+	if (!__osso_context) 
+		g_warning ("%s: __osso_context == NULL", __FUNCTION__);
+	
+	return __osso_context;
+}
+
+void
+modest_maemo_utils_set_osso_context (osso_context_t *osso_context)
+{
+	g_return_if_fail (osso_context);
+	__osso_context = osso_context;
+}
+
+
+GQuark
+modest_maemo_utils_get_supported_secure_authentication_error_quark (void)
 {
 	return g_quark_from_static_string("modest-maemo-utils-get-supported-secure-authentication-error-quark");
 }
