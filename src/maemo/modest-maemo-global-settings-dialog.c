@@ -31,15 +31,8 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-number-editor.h>
-#include <hildon-widgets/hildon-banner.h>
-#else
-#include <hildon/hildon-caption.h>
-#include <hildon/hildon-number-editor.h>
-#include <hildon/hildon-banner.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
+#include <modest-hildon-includes.h>
+#include <modest-maemo-utils.h>
 
 #include <glib/gi18n.h>
 #include <string.h>
@@ -56,6 +49,8 @@
 #include "widgets/modest-ui-constants.h"
 #include <tny-account-store.h>
 #include <tny-maemo-conic-device.h>
+
+
 
 #define MSG_SIZE_MAX_VAL 5000
 #define MSG_SIZE_DEF_VAL 1000
@@ -252,6 +247,9 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 
 	/* Set first page */
 	gtk_notebook_set_current_page (GTK_NOTEBOOK (ppriv->notebook), 0);
+
+	hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_options_dialog",
+					modest_maemo_utils_get_osso_context());
 }
 
 static void

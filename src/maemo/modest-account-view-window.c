@@ -477,8 +477,5 @@ modest_account_view_window_new (void)
 {
 	GObject *obj = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
 	
-	/* Attach dialog help */
-	modest_platform_set_dialog_help (GTK_DIALOG (obj), "applications_email_accountsettings");
-
 	return GTK_WIDGET(obj);
 }

@@ -46,10 +46,12 @@
 
 #include "modest-hildon-includes.h"
 #include "modest-platform.h"
+#include "modest-maemo-utils.h"
 
 #include <glib/gi18n.h>
 
-G_DEFINE_TYPE (ModestConnectionSpecificSmtpWindow, modest_connection_specific_smtp_window, GTK_TYPE_WINDOW);
+G_DEFINE_TYPE (ModestConnectionSpecificSmtpWindow, modest_connection_specific_smtp_window,
+	       GTK_TYPE_DIALOG);
 
 #define CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE(o) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_CONNECTION_SPECIFIC_SMTP_WINDOW, ModestConnectionSpecificSmtpWindowPrivate))
@@ -403,7 +405,8 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	
 	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
 	
-	GtkWidget *vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	GtkWidget *vbox = GTK_DIALOG(self)->vbox;
+	//gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
 	/* Introductory note: */
 	/* TODO: For some reason this label does not wrap. It is truncated. */
@@ -445,7 +448,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	g_signal_connect (G_OBJECT (button_cancel), "clicked",
         	G_CALLBACK (on_button_cancel), self);
 	
-	gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (vbox));
+	//gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (vbox));
 	gtk_widget_show (vbox);
 	
 	/* Disable the Edit button when nothing is selected: */
@@ -467,6 +470,10 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	g_signal_connect (G_OBJECT (self), 
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), NULL);
+	
+	hildon_help_dialog_help_enable (GTK_DIALOG(self),
+					"applications_email_connectionsspecificsmtpconf",
+					modest_maemo_utils_get_osso_context());
 }
 
 ModestConnectionSpecificSmtpWindow*

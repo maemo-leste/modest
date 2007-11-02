@@ -41,6 +41,7 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkstock.h>
 #include "modest-text-utils.h"
+#include "modest-maemo-utils.h"
 
 #include <glib/gi18n.h>
 
@@ -334,7 +335,11 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
-    	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+		modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+	
+	hildon_help_dialog_help_enable (GTK_DIALOG(self),
+					"applications_email_connectionspecificsmtpconf",
+					modest_maemo_utils_get_osso_context());
 }
 
 ModestConnectionSpecificSmtpEditWindow*

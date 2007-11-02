@@ -1214,6 +1214,9 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
 	 * because there is no sensible way to save the state: */
     modest_window_mgr_prevent_hibernation_while_window_is_shown (
     	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+
+    hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_accountsettings",
+				    modest_maemo_utils_get_osso_context());
 }
 
 ModestAccountSettingsDialog*

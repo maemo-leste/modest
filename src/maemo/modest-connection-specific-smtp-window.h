@@ -33,6 +33,7 @@
 #include <modest-account-mgr.h>
 #include <gtk/gtkwindow.h>
 #include <gtk/gtktreeview.h>
+#include <gtk/gtkdialog.h>
 
 G_BEGIN_DECLS
 
@@ -59,12 +60,12 @@ G_BEGIN_DECLS
 	MODEST_TYPE_CONNECTION_SPECIFIC_SMTP_WINDOW, ModestConnectionSpecificSmtpWindowClass))
 
 typedef struct {
-	GtkWindow parent;
+	GtkDialog parent;
 	
 } ModestConnectionSpecificSmtpWindow;
 
 typedef struct {
-	GtkWindowClass parent_class;
+	GtkDialogClass parent_class;
 } ModestConnectionSpecificSmtpWindowClass;
 
 GType modest_connection_specific_smtp_window_get_type (void);

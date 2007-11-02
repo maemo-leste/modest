@@ -1274,6 +1274,8 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	g_object_ref (self);
 	g_thread_create (presets_loader, self, FALSE, NULL);
 
+	hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_wizardwelcome",
+					modest_maemo_utils_get_osso_context());	
 }
 
 ModestEasysetupWizardDialog*
