@@ -95,7 +95,7 @@ if test "x$with_platform" == "xgnome"; then
     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
     have_easysetup=true
-    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 libebook-1.2)
+    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 libebook-1.2 microb-engine-nss)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
     AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
 fi		    
