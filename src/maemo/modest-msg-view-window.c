@@ -345,6 +345,9 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->purge_timeout = 0;
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
+	
+	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
+					    GTK_WINDOW(obj),"applications_email_viewer");
 }
 
 

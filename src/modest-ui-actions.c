@@ -4592,34 +4592,19 @@ modest_ui_actions_on_settings (GtkAction *action,
 
 void 
 modest_ui_actions_on_help (GtkAction *action, 
-			   ModestWindow *win)
+			   GtkWindow *win)
 {
-	const gchar *help_id = NULL;
+	const gchar *help_id;
 
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *folder_view;
-		TnyFolderStore *folder_store;
-		
-		/* Get selected folder */
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-		/* Switch help_id */
-		if (TNY_IS_FOLDER (folder_store)) {
-			help_id = modest_tny_folder_get_help_id (TNY_FOLDER (folder_store));
-			if (!help_id) {
-				g_warning ("%s: BUG: did not get a valid help_id", __FUNCTION__);
-				help_id = "applications_email_mainview";
-			}
-		}
-		g_object_unref (folder_store);
-	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		help_id = "applications_email_viewer";
-	} else if (MODEST_IS_MSG_EDIT_WINDOW (win))
-		help_id = "applications_email_editor";
-
-	modest_platform_show_help (GTK_WINDOW (win), help_id);
+	g_return_if_fail (action);
+	g_return_if_fail (win && GTK_IS_WINDOW(win));
+	
+	help_id = modest_window_mgr_get_help_id (modest_runtime_get_window_mgr(), win);
+	
+	if (help_id)
+		modest_platform_show_help (GTK_WINDOW (win), help_id);
+	else
+		g_warning ("%s: no help for window %p", __FUNCTION__, win);
 }
 
 void 

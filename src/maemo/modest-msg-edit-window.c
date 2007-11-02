@@ -381,6 +381,9 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->sent = FALSE;
 
 	priv->last_vadj_upper = 0;
+
+	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
+					    GTK_WINDOW(obj),"applications_email_editor");
 }
 
 

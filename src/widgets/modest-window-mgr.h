@@ -189,6 +189,34 @@ void modest_window_mgr_prevent_hibernation_while_window_is_shown (ModestWindowMg
 	GtkWindow *window);
 
 
+
+/**
+ * modest_window_mgr_register_help_id
+ * @self: a #ModestWindowMgr
+ * @win: some window
+ * @help_id: the help_id for this window
+ * 
+ * register a help id for a window
+ **/
+void
+modest_window_mgr_register_help_id (ModestWindowMgr *self, GtkWindow *win, const gchar* help_id);
+
+
+/**
+ * modest_window_mgr_get_help_id:
+ * @self: a #ModestWindowMgr
+ * @win: some window
+ * 
+ * get the help id for a window; if the window is the main-window and some folder is
+ * selected, it will return the proper help_id for that
+ *
+ * Returns: a help _id
+ **/
+const gchar*
+modest_window_mgr_get_help_id (ModestWindowMgr *self, GtkWindow *win);
+
+
+
 /**
  * modest_window_mgr_find_registered_header
  * @self: a #ModestWindowMgr

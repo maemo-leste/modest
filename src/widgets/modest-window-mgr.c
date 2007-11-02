@@ -313,6 +313,68 @@ modest_window_mgr_unregister_header (ModestWindowMgr *self,  TnyHeader *header)
 	g_free (uid);
 }
 
+
+#define MODEST_WINDOW_HELP_ID_PARAM "help-id"
+
+void
+modest_window_mgr_register_help_id (ModestWindowMgr *self, GtkWindow *win, const gchar* help_id)
+{
+	/* we don't need 'self', but for API consistency... */
+	g_return_if_fail (self && MODEST_IS_WINDOW_MGR(self));
+
+	g_return_if_fail (win && GTK_IS_WINDOW(win));
+	g_return_if_fail (help_id);
+	
+	g_object_set_data_full (G_OBJECT(win), MODEST_WINDOW_HELP_ID_PARAM,
+				g_strdup(help_id), g_free);
+}
+
+
+const gchar*
+modest_window_mgr_get_help_id (ModestWindowMgr *self, GtkWindow *win)
+{
+	const gchar* help_id = NULL;
+
+	/* we don't need 'self', but for API consistency... */
+	g_return_val_if_fail (self && MODEST_IS_WINDOW_MGR(self), NULL);
+	
+	g_return_val_if_fail (win, NULL);
+	g_return_val_if_fail (GTK_IS_WINDOW(win), NULL);
+	
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *folder_view;
+		TnyFolderStore *folder_store;
+		
+		/* Get selected folder */
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+
+		/* Switch help_id */
+		if (folder_store && TNY_IS_FOLDER (folder_store)) {
+			help_id = modest_tny_folder_get_help_id (TNY_FOLDER (folder_store));
+			if (!help_id)
+				g_warning ("%s: BUG: did not get a valid help_id", __FUNCTION__);
+		}
+		if (folder_store)
+			g_object_unref (folder_store);
+	}
+
+	if (!help_id)
+		help_id = g_object_get_data (G_OBJECT(win), MODEST_WINDOW_HELP_ID_PARAM);
+		
+	return help_id;
+}
+
+
+
+
+
+
+
+
+
+
 static gint
 compare_msguids (ModestWindow *win,
 		 const gchar *uid)

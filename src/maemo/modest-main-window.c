@@ -354,6 +354,10 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->sighandlers = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
+	
+	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
+					    GTK_WINDOW(obj),
+					    "applications_email_mainview");
 }
 
 static void

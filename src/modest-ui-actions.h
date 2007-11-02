@@ -94,7 +94,7 @@ void     modest_ui_actions_on_settings      (GtkAction *action, ModestWindow *wi
  * 
  * Shows the help dialog
  **/
-void     modest_ui_actions_on_help          (GtkAction *action, ModestWindow *win);
+void     modest_ui_actions_on_help          (GtkAction *action, GtkWindow *win);
 
 /**
  * modest_ui_actions_toggle_folders_view:
