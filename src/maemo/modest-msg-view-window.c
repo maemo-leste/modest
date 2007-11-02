@@ -2340,7 +2340,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 	TnyStream *stream;
 	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
 
-	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0777);
+	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0444);
 	if (result == GNOME_VFS_OK) {
 		stream = tny_vfs_stream_new (handle);
 		tny_mime_part_decode_to_stream (pair->part, stream);
@@ -2623,8 +2623,9 @@ update_window_title (ModestMsgViewWindow *window)
 	TnyMsg *msg = NULL;
 	TnyHeader *header = NULL;
 	const gchar *subject = NULL;
-
+	
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+
 	if (msg != NULL) {
 		header = tny_msg_get_header (msg);
 		subject = tny_header_get_subject (header);
@@ -2636,6 +2637,7 @@ update_window_title (ModestMsgViewWindow *window)
 
 	gtk_window_set_title (GTK_WINDOW (window), subject);
 }
+
 
 static void on_move_focus (ModestMsgViewWindow *window,
 			   GtkDirectionType direction,
