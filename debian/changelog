@@ -1,8 +1,9 @@
 modest (1.0-2007.45-1) feisty; urgency=low
 
   * Fixes: NB#66958, NB#74469, NB#65559, NB#74605, NB#74675, NB#73934
+  * Fixes: NB#74766, NB#73940, NB#75056
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu,  1 Nov 2007 10:07:06 +0200
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  2 Nov 2007 14:20:06 +0200
 
 modest (1.0-2007.44-1) gutsy; urgency=low
 
