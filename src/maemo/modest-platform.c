@@ -261,6 +261,26 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 }
 
 
+static gboolean
+checked_hildon_uri_open (const gchar *uri, HildonURIAction *action)
+{
+	GError *err = NULL;
+	gboolean result;
+
+	g_return_val_if_fail (uri, FALSE);
+	
+	result = hildon_uri_open (uri, action, &err);
+	if (!result) {
+		g_printerr ("modest: hildon_uri_open ('%s', %p) failed: %s",
+			    uri, action,  err && err->message ? err->message : "unknown error");
+		if (err)
+			g_error_free (err);
+	}
+	return result;
+}
+
+
+
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
@@ -278,23 +298,21 @@ modest_platform_activate_uri (const gchar *uri)
 		action = (HildonURIAction*) iter->data;
 		if (action && strcmp (hildon_uri_action_get_service (action),
 				      "com.nokia.modest") == 0) {
-			GError *err = NULL;
-			result = hildon_uri_open (uri, action, &err);
-			if (!result && err) {
-				g_printerr ("modest: modest_platform_activate_uri : %s",
-					    err->message ? err->message : "unknown error");
-				g_error_free (err);
-			}
+			result = checked_hildon_uri_open (uri, action);
 			break;
 		}
 	}
 	
 	/* if we could not open it with email, try something else */
 	if (!result)
-	       	result = hildon_uri_open (uri, NULL, NULL);	
-		
-	if (!result)
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
+	       	result = checked_hildon_uri_open (uri, NULL);	
+
+	if (!result) {
+		ModestWindow *parent =
+			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
+		hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
+						_("mcen_ib_unsupported_link"));
+	}
 	
 	return result;
 }
@@ -368,7 +386,12 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
 		HildonURIAction *action = (HildonURIAction *) node->data;
 		if (strcmp (action_name, hildon_uri_action_get_name (action))==0) {
-			hildon_uri_open (popup_info->uri, action, NULL);
+			if (!checked_hildon_uri_open (popup_info->uri, action)) {
+				ModestWindow *parent =
+					modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
+				hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
+								_("mcen_ib_unsupported_link"));
+			}
 			break;
 		}
 	}
