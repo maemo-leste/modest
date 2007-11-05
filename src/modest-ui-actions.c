@@ -4187,7 +4187,11 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 	header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
-
+	if (!header_list) {
+		g_warning ("%s: no header selected", __FUNCTION__);
+		return;
+	}
+	
 	if (tny_list_get_length (header_list) == 1) {
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
