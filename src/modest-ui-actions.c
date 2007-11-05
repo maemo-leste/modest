@@ -4434,17 +4434,27 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	TnyHeader *header = NULL;
 	TnyFolder *src_folder = NULL;
 	TnyAccount *account = NULL;
+	gboolean do_xfer = FALSE;
 
 	/* Create header list */
 	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));		
 	src_folder = TNY_FOLDER (tny_header_get_folder(header));
 	g_object_unref (header);
 
-	/* Transfer the message if online or confirmed by the user */
 	account = tny_folder_get_account (src_folder);
-        if (remote_folder_is_pop(TNY_FOLDER_STORE (src_folder)) ||
-            (modest_platform_is_network_folderstore(TNY_FOLDER_STORE (src_folder)) && 
-	     connect_to_get_msg(MODEST_WINDOW (win), 1, account))) {
+	if (!modest_platform_is_network_folderstore(TNY_FOLDER_STORE(src_folder))) {
+		/* Transfer if the source folder is local */
+		do_xfer = TRUE;
+	} else if (remote_folder_is_pop(TNY_FOLDER_STORE(src_folder))) {
+		/* Transfer if the source folder is POP (as it means
+		 * that the message is already downloaded) */
+		do_xfer = TRUE;
+	} else if (connect_to_get_msg(MODEST_WINDOW(win), 1, account)) {
+		/* Transfer after asking confirmation */
+		do_xfer = TRUE;
+	}
+
+	if (do_xfer) {
 		modest_ui_actions_xfer_messages_from_move_to (dst_folder, MODEST_WINDOW (win));
         }
 	g_object_unref (account);
