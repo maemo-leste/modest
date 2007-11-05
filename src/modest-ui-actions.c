@@ -4356,6 +4356,15 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                         sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
                         gtk_tree_selection_unselect_all (sel);
 
+			/* Let gtk events run. We need that the folder
+			   view frees its reference to the source
+			   folder *before* issuing the mail operation
+			   so we need the signal handler of selection
+			   changed to happen before the mail
+			   operation */
+			while (gtk_events_pending ())
+				gtk_main_iteration ();
+
                         mail_op =
                           modest_mail_operation_new_with_error_handling (G_OBJECT(win),
                                                                          modest_ui_actions_move_folder_error_handler,
