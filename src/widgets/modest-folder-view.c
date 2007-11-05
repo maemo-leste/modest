@@ -1532,14 +1532,15 @@ on_drag_data_get (GtkWidget *widget,
 	GtkTreePath *source_row;
 
 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
-	gtk_tree_selection_get_selected (selection, &model, &iter);
-	source_row = gtk_tree_model_get_path (model, &iter);
+	if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
 
-	gtk_tree_set_row_drag_data (selection_data,
-				    model,
-				    source_row);
-
-	gtk_tree_path_free (source_row);
+		source_row = gtk_tree_model_get_path (model, &iter);
+		gtk_tree_set_row_drag_data (selection_data,
+					    model,
+					    source_row);
+		
+		gtk_tree_path_free (source_row);
+	}
 }
 
 typedef struct _DndHelper {
@@ -2282,7 +2283,10 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	expand_root_items (self);
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 
-	gtk_tree_model_get_iter_first (model, &iter);
+	if (!gtk_tree_model_get_iter_first (model, &iter)) {
+		g_warning ("%s: model is empty", __FUNCTION__);
+		return;
+	}
 
 	if (find_inbox_iter (model, &iter, &inbox_iter))
 		path = gtk_tree_model_get_path (model, &inbox_iter);
@@ -2429,8 +2433,11 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 	if (!model)
 		return FALSE;
 
-		
-	gtk_tree_model_get_iter_first (model, &iter);
+	if (!gtk_tree_model_get_iter_first (model, &iter)) {
+		g_warning ("%s: model is empty", __FUNCTION__);
+		return FALSE;
+	}
+	
 	if (find_folder_iter (model, &iter, &folder_iter, folder)) {
 		GtkTreePath *path;
 
