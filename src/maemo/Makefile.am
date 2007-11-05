@@ -62,10 +62,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-signature-editor-dialog.h         \
 	modest-scroll-area.h          \
 	modest-scroll-area.c          \
-	modest-store-widget.c         \
-	modest-store-widget.h         \
-	modest-transport-widget.c     \
-	modest-transport-widget.h     \
 	modest-msg-view-window.c      \
 	modest-msg-edit-window.c      \
 	modest-maemo-utils.c          \
