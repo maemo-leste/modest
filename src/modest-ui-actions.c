@@ -4196,10 +4196,14 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		g_object_unref (iter);
-	} else {
+	} else
+		return;
+	
+	if (!header || !TNY_IS_HEADER(header)) {
+		g_warning ("%s: header is not valid", __FUNCTION__);
 		return;
 	}
-
+	
 	found = modest_window_mgr_find_registered_header (modest_runtime_get_window_mgr (),
 							  header, &msg_view_window);
 	flags = tny_header_get_flags (header);
