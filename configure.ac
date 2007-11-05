@@ -306,7 +306,7 @@ fi
 #
 # if we don't have an addressbook, use the dummy one
 #
-AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook"="xtrue")
+AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook" != "xtrue")
 
 
 # gettext support
