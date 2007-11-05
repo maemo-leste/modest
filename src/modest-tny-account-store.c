@@ -708,7 +708,8 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		g_free (username);
 		username = NULL;
 	} else
-		*cancel = FALSE;
+		if (cancel)
+			*cancel = FALSE;
  
     /* printf("  DEBUG: %s: returning %s\n", __FUNCTION__, pwd); */
 	

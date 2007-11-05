@@ -2664,9 +2664,9 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	TnyHeader *header = NULL;
 	ModestTnyFolderRules rules = 0;
 
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_LIST (headers));
-	g_return_if_fail (TNY_IS_FOLDER (folder));
+	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (headers && TNY_IS_LIST (headers));
+	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->total = tny_list_get_length (headers);
@@ -2694,9 +2694,14 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		src_folder = tny_header_get_folder (header);
 		g_object_unref (header);
 	}
-
 	g_object_unref (iter);
 
+	if (src_folder == NULL) {
+		g_warning ("%s: cannot find folder from header", __FUNCTION__);
+		return;
+	}
+
+	
 	/* Check folder source and destination */
 	if (src_folder == folder) {
  		/* Set status failed and set an error */
