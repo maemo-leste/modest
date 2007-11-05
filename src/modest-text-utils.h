@@ -142,7 +142,7 @@ gchar*   modest_text_utils_remove_address (const gchar *address_list,
 
 /**
  * modest_text_utils_address_range_at_position:
- * @address_list: utf8 string containing a list of addresses
+ * @address_list: non-NULL utf8 string containing a list of addresses
  * @position: a gint
  * @start: a gint pointer
  * @end: a gint pointer
@@ -153,9 +153,9 @@ gchar*   modest_text_utils_remove_address (const gchar *address_list,
  * @end
  */
 void     modest_text_utils_address_range_at_position (const gchar *recipients_list,
-						      gint position,
-						      gint *start,
-						      gint *end);
+						      guint position,
+						      guint *start,
+						      guint *end);
 
 /**
  * modest_text_utils_hyperlinkify_begin:

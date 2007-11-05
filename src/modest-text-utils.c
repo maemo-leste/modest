@@ -524,9 +524,9 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 
 void
 modest_text_utils_address_range_at_position (const gchar *recipients_list,
-					     gint position,
-					     gint *start,
-					     gint *end)
+					     guint position,
+					     guint *start,
+					     guint *end)
 {
 	gchar *current = NULL;
 	gint range_start = 0;
@@ -534,8 +534,12 @@ modest_text_utils_address_range_at_position (const gchar *recipients_list,
 	gint index;
 	gboolean is_quoted = FALSE;
 
+	g_return_if_fail (recipients_list);
+	g_return_if_fail (position < g_utf8_strlen(recipients_list, -1));
+		
 	index = 0;
-	for (current = (gchar *) recipients_list; *current != '\0'; current = g_utf8_find_next_char (current, NULL)) {
+	for (current = (gchar *) recipients_list; *current != '\0';
+	     current = g_utf8_find_next_char (current, NULL)) {
 		gunichar c = g_utf8_get_char (current);
 
 		if ((c == ',') && (!is_quoted)) {

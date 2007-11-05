@@ -158,23 +158,24 @@ button_release_event (GtkWidget *widget,
 					gtk_text_buffer_get_end_iter (buffer, &end_iter);
 					text = gtk_text_buffer_get_text (buffer, &start_iter, &end_iter, FALSE);
 
-					modest_text_utils_address_range_at_position (text,
-										     index,
-										     &selection_start, &selection_end);
-					/* TODO: now gtk label tries to select more than the label as usual,
-					 *  and we force it to recover the selected region for the defined area.
-					 *  It should be fixed (maybe preventing gtklabel to manage selections
-					 *  in parallel with us
-					 */
-					gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, selection_start);
-					gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, selection_end);
-					gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
-					
-					if (text)
+					/* text will not be NULL, but source code checkers should be satisfied */
+					if (text) {
+						modest_text_utils_address_range_at_position (text,
+											     index,
+											     &selection_start, &selection_end);
+						/* TODO: now gtk label tries to select more than the label as usual,
+						 *  and we force it to recover the selected region for the defined area.
+						 *  It should be fixed (maybe preventing gtklabel to manage selections
+						 *  in parallel with us
+						 */
+						gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, selection_start);
+						gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, selection_end);
+						gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
+						
 						g_free (text);
-								      
+					}		      
 				}
-
+				
 				if (selected) {
 					gchar *selection;
 
