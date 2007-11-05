@@ -309,14 +309,8 @@ fi
 AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook"="xtrue")
 
 
-
-#FIXME: hack to set the right gettext package..
-if test "x$have_hildon1" == "xtrue"; then
-     GETTEXT_PACKAGE=osso-email
-else
-     GETTEXT_PACKAGE=modest	
-fi
-# Check for gettext support
+# gettext support
+GETTEXT_PACKAGE=modest	
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["gettext package"])
 
