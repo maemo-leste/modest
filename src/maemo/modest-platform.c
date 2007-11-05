@@ -1202,8 +1202,8 @@ modest_platform_set_update_interval (guint minutes)
 	/* Delete any existing alarm,
 	 * because we will replace it: */
 	if (alarm_cookie) {
-		/* TODO: What does the alarm_event_del() return value mean? */
-		alarm_event_del(alarm_cookie);
+		if (alarm_event_del(alarm_cookie) != 1)
+			g_warning ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
 		alarm_cookie = 0;
 		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
 	}
@@ -1211,7 +1211,7 @@ modest_platform_set_update_interval (guint minutes)
 	/* 0 means no updates: */
 	if (minutes == 0)
 		return TRUE;
-		
+	
      
 	/* Register alarm: */
 	
