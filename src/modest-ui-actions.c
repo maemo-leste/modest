@@ -4257,6 +4257,11 @@ modest_ui_actions_xfer_messages_from_move_to (TnyFolderStore *dst_folder,
 
 	/* Get selected headers */
 	headers = get_selected_headers (MODEST_WINDOW (win));
+	if (!headers) {
+		g_warning ("%s: no headers selected", __FUNCTION__);
+		return;
+	}
+
 
 	if (dst_is_pop) {
 		modest_platform_information_banner (GTK_WIDGET (win),
