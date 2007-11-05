@@ -996,7 +996,6 @@ open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpoi
 		mgr = modest_runtime_get_window_mgr ();
 		modest_window_mgr_register_window (mgr, win);
 		g_object_unref (win);
-		gtk_window_set_transient_for (GTK_WINDOW (win), GTK_WINDOW (parent_win));
 		gtk_widget_show_all (GTK_WIDGET(win));
 	}
 

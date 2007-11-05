@@ -366,15 +366,6 @@ modest_window_mgr_get_help_id (ModestWindowMgr *self, GtkWindow *win)
 	return help_id;
 }
 
-
-
-
-
-
-
-
-
-
 static gint
 compare_msguids (ModestWindow *win,
 		 const gchar *uid)
