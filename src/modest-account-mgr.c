@@ -1167,8 +1167,9 @@ _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar*
 		retval = g_strconcat (namespace, "/", escaped_account_name, NULL);
 
 	/* Sanity check: */
-	if (!modest_conf_key_is_valid (retval)) {
-		g_warning ("%s: Generated conf key was invalid: %s", __FUNCTION__, retval);
+	if (!retval || !modest_conf_key_is_valid (retval)) {
+		g_warning ("%s: Generated conf key was invalid: %s", __FUNCTION__,
+			   retval ? retval: "<empty>");
 		g_free (retval);
 		retval = NULL;
 	}

@@ -359,11 +359,11 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html, gboolean *is_html)
 TnyMimePart*
 modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html)
 {
-	const gchar *mime_type = want_html ? "text/html" : "text/plain";
+	const gchar *desired_mime_type = want_html ? "text/html" : "text/plain";
 	TnyMimePart *part = NULL;
 	TnyList *parts = NULL;
 	TnyIterator *iter = NULL;
-
+	
 	if (!msg)
 		return NULL;
 
@@ -377,45 +377,53 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		g_object_unref (G_OBJECT(iter));
 		return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
 	} else {
-		gchar *content_type = NULL;
 		do {
+			gchar *content_type = NULL;
+			
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
+
+			if (!part) {
+				g_warning ("%s: not a valid mime part", __FUNCTION__);
+				continue;
+			}
+
+			/* it's a message --> ignore */
 			if (part && TNY_IS_MSG (part)) {
 				g_object_unref (part);
 				tny_iterator_next (iter);
 				continue;
 			}
+			
 
 			/* we need to strdown the content type, because
 			 * tny_mime_part_has_content_type does not do it...
 			 */
-			if (part) {
-				content_type = g_ascii_strdown
-					(tny_mime_part_get_content_type (part), -1);
-			}
-							
-			if (g_str_has_prefix (content_type, mime_type) &&
-			    !tny_mime_part_is_attachment (part))
+			content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
+
+			if (g_str_has_prefix (content_type, desired_mime_type) && !tny_mime_part_is_attachment (part)) {
+				/* we found the desired mime-type! */
+				g_free (content_type);
 				break;
-			
-			if (g_str_has_prefix(content_type, "multipart")) {
+
+			} else 	if (g_str_has_prefix(content_type, "multipart")) {
+
+				/* multipart? recurse! */
+				g_object_unref (part);
+				g_free (content_type);
 				part = modest_tny_msg_find_body_part_from_mime_part (part, want_html);
 				if (part)
 					break;
-			}
-
-			if (part)
-				g_object_unref (G_OBJECT(part));
-
-			part = NULL;
+			} else
+				g_free (content_type);
 			
-			g_free (content_type);
-			content_type = NULL;
-
+			if (part) {
+				g_object_unref (G_OBJECT(part));
+				part = NULL;
+			}
+			
 			tny_iterator_next (iter);
 			
 		} while (!tny_iterator_is_done(iter));
-		g_free (content_type);
 	}
 	
 	g_object_unref (G_OBJECT(iter));

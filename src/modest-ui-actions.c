@@ -493,7 +493,6 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		GtkTreeRowReference *prev_row_reference = NULL;
 		GtkTreePath *next_path = NULL;
 		GtkTreePath *prev_path = NULL;
-		GError *err = NULL;
 
 		/* Find last selected row */			
 		if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -554,11 +553,6 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 				gtk_tree_row_reference_free (prev_row_reference);
 			if (prev_path != NULL) 
 				gtk_tree_path_free (prev_path);				
-		}
-
-		if (err != NULL) {
-			printf ("DEBUG: %s: Error: code=%d, text=%s\n", __FUNCTION__, err->code, err->message);
-			g_error_free(err);
 		}
 		
 		/* Update toolbar dimming state */
@@ -2834,7 +2828,6 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					 ModestMainWindow *main_window)
 {
 	g_return_if_fail(server_account_name);
-	/* printf("DEBUG: %s: server_account_name=%s\n", __FUNCTION__, server_account_name); */
 	
 	/* Initalize output parameters: */
 	if (cancel)
@@ -2872,7 +2865,8 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		modest_runtime_get_account_mgr(), server_account_name);
 	if (!server_name) {/* This happened once, though I don't know why. murrayc. */
 		g_warning("%s: Could not get server name for server account '%s'", __FUNCTION__, server_account_name);
-		*cancel = TRUE;
+		if (cancel)
+			*cancel = TRUE;
 		return;
 	}
 	

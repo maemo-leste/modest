@@ -1518,17 +1518,14 @@ typedef struct
 #define NUMBER_OF_TRIES 10 /* Try approx every second, ten times. */
 
 static gboolean 
-on_timeout_check_account_is_online(gpointer user_data)
+on_timeout_check_account_is_online(CheckAccountIdleData* data)
 {
-	printf ("DEBUG: %s:\n", __FUNCTION__);
-	CheckAccountIdleData *data = (CheckAccountIdleData*)user_data;
-
+	gboolean stop_trying = FALSE;
 	g_return_val_if_fail (data && data->account, FALSE);
 	
 	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__,
 		tny_account_get_connection_status (data->account));	
 	
-	gboolean stop_trying = FALSE;
 	if (data && data->account && 
 		/* We want to wait until TNY_CONNECTION_STATUS_INIT has changed to something else,
 		 * after which the account is likely to be usable, or never likely to be usable soon: */
@@ -1537,14 +1534,11 @@ on_timeout_check_account_is_online(gpointer user_data)
 		data->is_online = TRUE;
 		
 		stop_trying = TRUE;
-	}
-	else {
+	} else {
 		/* Give up if we have tried too many times: */
-		if (data->count_tries >= NUMBER_OF_TRIES)
-		{
+		if (data->count_tries >= NUMBER_OF_TRIES) {
 			stop_trying = TRUE;
-		}
-		else {
+		} else {
 			/* Wait for another timeout: */
 			++(data->count_tries);
 		}
@@ -1611,7 +1605,7 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 	GMainContext *context = NULL; /* g_main_context_new (); */
 	data->loop = g_main_loop_new (context, FALSE /* not running */);
 
-	g_timeout_add (1000, on_timeout_check_account_is_online, data);
+	g_timeout_add (1000, (GSourceFunc)(on_timeout_check_account_is_online), data);
 
 	/* This main loop will run until the idle handler has stopped it: */
 	g_main_loop_run (data->loop);
