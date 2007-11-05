@@ -2697,6 +2697,9 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	g_object_unref (iter);
 
 	if (src_folder == NULL) {
+		/* Notify the queue */
+		modest_mail_operation_notify_end (self);
+
 		g_warning ("%s: cannot find folder from header", __FUNCTION__);
 		return;
 	}
