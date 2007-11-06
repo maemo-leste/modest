@@ -289,7 +289,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 
 
 	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
-	g_return_if_fail (modest_tny_folder_get_local_or_mmc_folder_type (folder)
+	g_return_if_fail (modest_tny_folder_guess_folder_type (folder)
 			  != TNY_FOLDER_TYPE_INVALID);
 	
 	/* Set window title */
