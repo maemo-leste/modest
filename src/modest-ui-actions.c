@@ -372,22 +372,6 @@ headers_action_mark_as_unread (TnyHeader *header,
 	}
 }
 
-/** A convenience method, because deleting a message is 
- * otherwise complicated, and it's best to change it in one place 
- * when we change it.
- */
-void modest_do_messages_delete (TnyList *headers, ModestWindow *win)
-{
-	ModestMailOperation *mail_op = NULL;
-	mail_op = modest_mail_operation_new (win ? G_OBJECT(win) : NULL);
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-					 mail_op);
-	
-	/* Always delete. TODO: Move to trash still not supported */
-	modest_mail_operation_remove_msgs (mail_op, headers, FALSE);
-	g_object_unref (G_OBJECT (mail_op));
-}
-
 /** After deleing a message that is currently visible in a window, 
  * show the next message from the list, or close the window if there are no more messages.
  **/
@@ -493,6 +477,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		GtkTreeRowReference *prev_row_reference = NULL;
 		GtkTreePath *next_path = NULL;
 		GtkTreePath *prev_path = NULL;
+		ModestMailOperation *mail_op = NULL;
 
 		/* Find last selected row */			
 		if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -517,7 +502,11 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		modest_window_disable_dimming (MODEST_WINDOW(win));
 
 		/* Remove each header. If it's a view window header_view == NULL */
-		modest_do_messages_delete (header_list, win);
+		mail_op = modest_mail_operation_new ((GObject *) win);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+						 mail_op);
+		modest_mail_operation_remove_msgs (mail_op, header_list, FALSE);
+		g_object_unref (mail_op);
 		
 		/* Enable window dimming management */
 		if (sel != NULL) {
@@ -556,7 +545,8 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		}
 		
 		/* Update toolbar dimming state */
-		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+		if (main_window)
+			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 
 		/* Free */
 		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
@@ -1409,7 +1399,7 @@ connect_to_get_msg (ModestWindow *win,
 	if (response == GTK_RESPONSE_CANCEL)
 		return FALSE;
 
-	return modest_platform_connect_and_wait(GTK_WINDOW (win), account);
+	return modest_platform_connect_and_wait((GtkWindow *) win, account);
 }
 
 /*
@@ -1646,7 +1636,8 @@ new_messages_arrived (ModestMailOperation *self,
  * be more flexible.
  */
 void
-modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
+modest_ui_actions_do_send_receive (const gchar *account_name, 
+				   ModestWindow *win)
 {
 	gchar *acc_name = NULL;
 	ModestMailOperation *mail_op;
@@ -1655,7 +1646,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	/* If no account name was provided then get the current account, and if
 	   there is no current account then pick the default one: */
 	if (!account_name) {
-		acc_name = g_strdup (modest_window_get_active_account(win));
+		if (win)
+			acc_name = g_strdup (modest_window_get_active_account (win));
 		if (!acc_name)
 			acc_name  = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 		if (!acc_name) {
@@ -1679,15 +1671,17 @@ modest_ui_actions_do_send_receive (const gchar *account_name, ModestWindow *win)
 	g_object_unref (store_account);
 
 	/* Set send/receive operation in progress */	
-	modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW(win));
-
+	if (win && MODEST_IS_MAIN_WINDOW (win))
+		modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW(win));
+	
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
 								 modest_ui_actions_send_receive_error_handler,
 								 NULL, NULL);
 
-	g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
-			  G_CALLBACK (on_send_receive_finished), 
-			  win);
+	if (win && MODEST_IS_MAIN_WINDOW (win))
+		g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
+				  G_CALLBACK (on_send_receive_finished), 
+				  win);
 
 	/* Send & receive. */
 	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
@@ -4040,8 +4034,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 					     gpointer user_data)
 {
 	ModestWindow *main_window = NULL;
-	GtkWidget *folder_view = NULL;
-	GObject *win = modest_mail_operation_get_source (mail_op);
+	GObject *win = NULL;
 	const GError *error = NULL;
 	const gchar *message = NULL;
 	
@@ -4056,21 +4049,25 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	/* Disable next automatic folder selection */
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 							 FALSE); /* don't create */
-	if (!main_window)
-		g_warning ("%s: BUG: no main window", __FUNCTION__);
+	if (main_window) {
+		GtkWidget *folder_view = NULL;
 	
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);	
-	modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));
-	
-	if (user_data && TNY_IS_FOLDER (user_data)) {
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), 
-						  TNY_FOLDER (user_data), FALSE);
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);	
+		modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));
+		
+		if (user_data && TNY_IS_FOLDER (user_data)) {
+			modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), 
+							  TNY_FOLDER (user_data), FALSE);
+		}
 	}
 
 	/* Show notification dialog */
-	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, message);
-	g_object_unref (win);
+	win = modest_mail_operation_get_source (mail_op);
+	if (G_IS_OBJECT (win)) {
+		modest_platform_run_information_dialog (GTK_WINDOW (win), message);
+		g_object_unref (win);
+	}
 }
 
 void

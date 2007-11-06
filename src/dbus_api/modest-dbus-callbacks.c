@@ -660,9 +660,9 @@ on_idle_delete_message (gpointer user_data)
 		/* This is a GDK lock because we are an idle callback and
 		 * the code below is or does Gtk+ code */
 		gdk_threads_enter (); /* CHECKED */
-		ModestHeaderView *header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (
-									   MODEST_MAIN_WINDOW(main_win),
-									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
+		ModestHeaderView *header_view = (ModestHeaderView *)
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_win),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (header_view && MODEST_IS_HEADER_VIEW (header_view))
 			modest_header_view_refilter (header_view);
 		gdk_threads_leave ();
@@ -768,7 +768,8 @@ on_idle_open_default_inbox(gpointer user_data)
 	return FALSE; /* Do not call this callback again. */
 }
 
-static gint on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
+static gint 
+on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
     /* Use g_idle to context-switch into the application's thread: */
 
@@ -782,7 +783,8 @@ static gint on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t 
 }
 
 
-static gboolean on_idle_top_application (gpointer user_data)
+static gboolean 
+on_idle_top_application (gpointer user_data)
 {
 	ModestWindow *main_win;
 	
