@@ -32,6 +32,7 @@
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <glib/gi18n.h>
+#include <modest-text-utils.h>
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
@@ -105,10 +106,37 @@ easysetup_provider_combo_box_class_init (EasysetupProviderComboBoxClass *klass)
 
 enum MODEL_COLS {
 	MODEL_COL_NAME = 0,
-	MODEL_COL_ID = 1 /* a string, not an int. */
+	MODEL_COL_ID   = 1 /* a string, not an int. */
 };
 
 
+/*
+ * strictly, we should sort providers with mcc=0 after the other ones.... but, we don't have
+ * that info here, so ignoring for now.
+ */
+gint
+provider_sort_func (GtkTreeModel *model, GtkTreeIter *iter1, GtkTreeIter *iter2, gpointer user_data)
+{
+	gchar *prov1, *prov2;
+	gint retval;
+	
+	gtk_tree_model_get (model, iter1, MODEL_COL_NAME, &prov1, -1);
+	gtk_tree_model_get (model, iter2, MODEL_COL_NAME, &prov2, -1);
+
+	if (strcmp (prov1, prov2) == 0) 
+		retval = 0;
+	else if (strcmp (_("mcen_va_serviceprovider_other"), prov1) == 0)
+		retval = -1;
+	else if (strcmp (_("mcen_va_serviceprovider_other"), prov2) == 0)
+		retval = 1;
+	else
+		retval = modest_text_utils_utf8_strcmp (prov1, prov2, TRUE);
+	
+	g_free (prov1);
+	g_free (prov2);
+
+	return retval;
+}
 
 static void
 easysetup_provider_combo_box_init (EasysetupProviderComboBox *self)
@@ -116,7 +144,7 @@ easysetup_provider_combo_box_init (EasysetupProviderComboBox *self)
 	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (self);
 
 	/* Create a tree model for the combo box,
-	 * with a string for the name, and a string for the ID (e.g. "vodafone.it").
+	 * with a string for the name, and a string for the ID (e.g. "vodafone.it"), and the mcc
 	 * This must match our MODEL_COLS enum constants.
 	 */
 	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING));
@@ -129,11 +157,14 @@ easysetup_provider_combo_box_init (EasysetupProviderComboBox *self)
 	 * The ID model column in not shown in the view. */
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (combobox), renderer, TRUE);
-	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
-	"text", MODEL_COL_NAME, NULL);
+	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer,  "text", MODEL_COL_NAME, NULL);
 	
-	/* The application should call easysetup_provider_combo_box_fill()
-	 * to actually add some rows. */
+	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(priv->model),
+					      MODEL_COL_NAME, GTK_SORT_ASCENDING);
+	gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(priv->model),
+					  MODEL_COL_NAME,
+					  (GtkTreeIterCompareFunc)provider_sort_func,
+					  NULL, NULL);
 }
 
 EasysetupProviderComboBox*
@@ -196,7 +227,8 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 	/* TODO: We need a Logical ID for this text. */
 	GtkTreeIter iter;
 	gtk_list_store_prepend (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, 0, MODEL_COL_NAME, _("mcen_va_serviceprovider_other"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, 0, MODEL_COL_NAME, _("mcen_va_serviceprovider_other"),
+			    -1);
 	
 	/* Select the "Other" item: */
 	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
