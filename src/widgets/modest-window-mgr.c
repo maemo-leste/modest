@@ -60,9 +60,8 @@ static const gchar* get_show_toolbar_key (GType window_type,
 
 /* list my signals  */
 enum {
-	/* MY_SIGNAL_1, */
-	/* MY_SIGNAL_2, */
-	LAST_SIGNAL
+	WINDOW_LIST_EMPTY_SIGNAL,
+	NUM_SIGNALS
 };
 
 typedef struct _ModestWindowMgrPrivate ModestWindowMgrPrivate;
@@ -92,7 +91,7 @@ struct _ModestWindowMgrPrivate {
 static GObjectClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-/* static guint signals[LAST_SIGNAL] = {0}; */
+static guint signals[NUM_SIGNALS] = {0};
 
 GType
 modest_window_mgr_get_type (void)
@@ -128,6 +127,23 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	gobject_class->finalize = modest_window_mgr_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
+
+
+	/**
+	 * ModestWindowMgr::window-list-empty
+	 * @self: the #ModestWindowMgr that emits the signal
+	 * @user_data: user data set when the signal handler was connected
+	 *
+	 * Issued whenever the window list becomes empty
+	 */
+	signals[WINDOW_LIST_EMPTY_SIGNAL] =
+		g_signal_new ("window-list-empty",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestWindowMgrClass, window_list_empty),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -643,62 +659,6 @@ disconnect_msg_changed (gpointer key,
 		g_signal_handler_disconnect (G_OBJECT (key), handler_id);
 }
 
-
-
-/* interval before retrying to close the application */
-#define CLOSING_RETRY_INTERVAL 3000 
-/* interval before cancel whatever is left in the queue, and closing anyway */
-#define MAX_WAIT_FOR_CLOSING 30 * 1000 
-
-static gboolean
-on_quit_maybe (ModestWindowMgr *self)
-{
-	ModestWindowMgrPrivate *priv;
-	guint queue_num;
-	
-	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-
-	/* it seems, in the meantime some windows were
-	 * created. in that case, stop  'on_quit_maybe' */
-	if (priv->window_list) {
-		priv->closing_time = 0;
-		return FALSE;
-	}
-
-	if (priv->closing_time >= MAX_WAIT_FOR_CLOSING) {
-		/* we waited long enough: cancel all remaining operations */
-		g_debug ("%s: we waited long enough (%ds), cancelling queue and quiting",
-			 __FUNCTION__, priv->closing_time/1000);
-		/* FIXME: below gives me a lot of:
-		 * GLIB CRITICAL ** default - modest_mail_operation_cancel:
-		 *                     assertion `priv->account' failed
-		 * which means there is no account for the given operation
-		 * so, we're not trying to be nice, we're just quiting.
-		 */
-		//modest_mail_operation_queue_cancel_all
-		//	(modest_runtime_get_mail_operation_queue());
-	} else {
-	
-		/* if there is anything left in our operation queue,
-		 * wait another round
-		 */
-		queue_num = modest_mail_operation_queue_num_elements
-			(modest_runtime_get_mail_operation_queue()); 
-		if  (queue_num > 0) {
-			g_debug ("%s: waiting, there are still %d operation(s) queued",
-				 __FUNCTION__, queue_num);
-			priv->closing_time += CLOSING_RETRY_INTERVAL;
-			return TRUE;
-		}
-	}
-	
-	/* so: no windows left, nothing in the queue: quit */
-	priv->closing_time = 0;
-	gtk_main_quit ();
-	return FALSE;
-}
-
-
 void 
 modest_window_mgr_unregister_window (ModestWindowMgr *self, 
 				     ModestWindow *window)
@@ -764,10 +724,9 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	/* Destroy the window */
 	gtk_widget_destroy (win->data);
 	
-	/* If there are no more windows registered then exit program */
+	/* If there are no more windows registered emit the signal */
 	if (priv->window_list == NULL)
-		g_timeout_add (CLOSING_RETRY_INTERVAL,
-			       (GSourceFunc)on_quit_maybe, self);
+		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 }
 
 
@@ -1113,3 +1072,14 @@ on_modal_dialog_close (GtkDialog *dialog,
 	remove_modal_from_queue (GTK_WIDGET (dialog), self);
 }
 
+gint 
+modest_window_mgr_num_windows (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+	gint num_windows = 0;
+
+	if (priv->window_list)
+		num_windows = g_list_length (priv->window_list);
+
+	return num_windows;
+}

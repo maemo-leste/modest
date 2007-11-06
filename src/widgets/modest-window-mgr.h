@@ -52,6 +52,9 @@ struct _ModestWindowMgr {
 
 struct _ModestWindowMgrClass {
 	GObjectClass parent_class;
+
+	/* Signals */
+	void (*window_list_empty) (ModestWindowMgr *self);
 };
 
 
@@ -286,6 +289,16 @@ gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self);
  * application hibernation.
  **/
 void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_num_windows:
+ * @self: a #ModestWindowMgr
+ * 
+ * Gets the number of already registered windows
+ *
+ * Returns: the number of already registered windows
+ **/
+gint modest_window_mgr_num_windows (ModestWindowMgr *self);
 	
 G_END_DECLS
 

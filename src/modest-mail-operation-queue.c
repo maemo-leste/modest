@@ -44,6 +44,7 @@ on_operation_finished (ModestMailOperation *mail_op,
 /* list my signals  */
 enum {
 	QUEUE_CHANGED_SIGNAL,
+	QUEUE_EMPTY_SIGNAL,
 	NUM_SIGNALS
 };
 
@@ -115,6 +116,23 @@ modest_mail_operation_queue_class_init (ModestMailOperationQueueClass *klass)
 			      NULL, NULL,
 			      modest_marshal_VOID__POINTER_INT,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_INT);
+
+	/**
+	 * ModestMailOperationQueue::queue-empty
+	 * @self: the #ModestMailOperationQueue that emits the signal
+	 * @user_data: user data set when the signal handler was connected
+	 *
+	 * Issued whenever the queue is empty
+	 */
+	signals[QUEUE_EMPTY_SIGNAL] =
+		g_signal_new ("queue-empty",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestMailOperationQueueClass, queue_empty),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
 }
 
 static void
@@ -276,6 +294,9 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	 * until the signal emission is complete. armin. */
 	/* modest_runtime_verify_object_last_ref (mail_op, ""); */
 	g_object_unref (G_OBJECT (mail_op));
+
+	/* Emit the queue empty-signal */
+	g_signal_emit (self, signals[QUEUE_EMPTY_SIGNAL], 0);
 }
 
 guint 

@@ -37,6 +37,45 @@
 #include <widgets/modest-main-window.h>
 #include <string.h>
 
+static gboolean
+on_idle_exit_modest (gpointer data)
+{
+	/* Protect the Gtk calls */
+	gdk_threads_enter ();
+
+	/* Wait for remaining tasks */
+	while (gtk_events_pending ())
+		gtk_main_iteration ();
+
+	gtk_main_quit ();
+
+	gdk_threads_leave ();
+
+	return FALSE;
+}
+
+static void
+on_queue_empty (ModestMailOperationQueue *queue,
+		gpointer user_data)
+{
+	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+
+	/* Exit if the queue is empty and there are no more windows */
+	if (modest_window_mgr_num_windows (mgr) == 0)
+		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, NULL, NULL);
+}
+
+static void
+on_window_list_empty (ModestWindowMgr *window_mgr,
+		      gpointer user_data)
+{
+	ModestMailOperationQueue *queue = modest_runtime_get_mail_operation_queue ();
+
+	/* Exit if there are no more windows and the queue is empty */
+	if (modest_mail_operation_queue_num_elements (queue) == 0)
+		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, NULL, NULL);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -45,8 +84,6 @@ main (int argc, char *argv[])
 	 * be called. But that's annoying when starting from the 
 	 * command line.: */
 	gboolean show_ui_without_top_application_method = FALSE;
-
-	ModestWindow *main_win;
 	int retval  = 0;
 
 	if (argc >= 2) {
@@ -72,14 +109,17 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	/* this will create & register the window */
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), TRUE);
-	if (!main_win) {
-		g_printerr ("modest: failed to get main window instance\n");
-		retval = 1;
-		goto cleanup;
-	}
-	
+	/* Connect to the queue-emtpy signal */
+	g_signal_connect (modest_runtime_get_mail_operation_queue (),
+			  "queue-empty",
+			  G_CALLBACK (on_queue_empty),
+			  NULL);
+
+	g_signal_connect (modest_runtime_get_window_mgr (),
+			  "window-list-empty",
+			  G_CALLBACK (on_window_list_empty),
+			  NULL);
+
 	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
 	 * This allows modest to start via D-Bus activation to provide a service,
 	 * without showing the UI.
@@ -87,6 +127,17 @@ main (int argc, char *argv[])
 	 * when we receive the "top_application" D-Bus method.
 	 */
 	if (show_ui_without_top_application_method) {
+		ModestWindow *main_win;
+
+		/* this will create & register the window */
+		main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), 
+							      TRUE);
+		if (!main_win) {
+			g_printerr ("modest: failed to get main window instance\n");
+			retval = 1;
+			goto cleanup;
+		}
+	
 		gtk_widget_show_all (GTK_WIDGET(main_win));
 
 		/* Remove new mail notifications if exist */

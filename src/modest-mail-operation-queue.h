@@ -64,6 +64,8 @@ struct _ModestMailOperationQueueClass {
 	void (*queue_changed) (ModestMailOperationQueue *self, 
 			       ModestMailOperation *mail_op,
 			       ModestMailOperationQueueNotification type);
+
+	void (*queue_empty) (ModestMailOperationQueue *self);
 };
 
 /* member functions */
