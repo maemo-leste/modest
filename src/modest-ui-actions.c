@@ -3707,12 +3707,15 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	/* check if folder_store is an remote account */
 	if (TNY_IS_ACCOUNT (folder_store)) {
 		TnyAccount *local_account = NULL;
+		TnyAccount *mmc_account = NULL;
 		ModestTnyAccountStore *account_store = NULL;
 
 		account_store = modest_runtime_get_account_store ();
 		local_account = modest_tny_account_store_get_local_folders_account (account_store);
+		mmc_account = modest_tny_account_store_get_mmc_folders_account (account_store);
 
-		if ((gpointer) local_account != (gpointer) folder_store) {
+		if ((gpointer) local_account != (gpointer) folder_store &&
+		    (gpointer) mmc_account != (gpointer) folder_store) {
 			is_local_account = FALSE;
 			/* New button should be dimmed on remote
 			   account root */
