@@ -862,6 +862,8 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	update_window_title (MODEST_MSG_VIEW_WINDOW (window));
 
 	/* Remember the message list's TreeModel so we can detect changes 
 	 * and change the list selection when necessary: */
