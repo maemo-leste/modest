@@ -54,7 +54,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "Close", NULL, N_("mcen_me_inbox_close") },
 
 	/* ACTIONS */
-	{ "ActionsNewMessage", NULL, N_("mcen_me_viewer_newemail"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
+	{ "ActionsNewMessage", NULL, N_("mcen_me_viewer_newemail"), "<CTRL>N", NULL, G_CALLBACK (modest_ui_actions_on_new_msg) },
 	{ "ActionsSaveToDrafts", NULL, N_("mcen_me_editor_save_as_draft"), "<CTRL>S", NULL, G_CALLBACK (modest_ui_actions_on_save_to_drafts) },
 	{ "ActionsDelete", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
 	{ "ActionsSend", NULL, N_("mcen_me_editor_send"), "<CTRL>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
