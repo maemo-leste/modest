@@ -42,7 +42,7 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
-
+#include <ctype.h>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -1079,26 +1079,42 @@ modest_text_utils_get_subject_prefix_len (const gchar *sub)
 gint
 modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insensitive)
 {
-	gint result = 0;
-	gchar *n1, *n2;
 
-	/* work even when s1 and/or s2 == NULL */
+/* work even when s1 and/or s2 == NULL */
 	if (G_UNLIKELY(s1 == s2))
 		return 0;
-
+	if (G_UNLIKELY(!s1))
+		return -1;
+	if (G_UNLIKELY(!s2))
+		return 1;
+	
 	/* if it's not case sensitive */
-	if (!insensitive)
-		return strcmp (s1 ? s1 : "", s2 ? s2 : "");
-	
-	n1 = g_utf8_collate_key (s1 ? s1 : "", -1);
-	n2 = g_utf8_collate_key (s2 ? s2 : "", -1);
-	
-	result = strcmp (n1, n2);
+	if (!insensitive) {
 
-	g_free (n1);
-	g_free (n2);
+		/* optimization: short cut if first char is ascii */ 
+		if (((s1[0] & 0xf0)== 0) && ((s2[0] & 0xf0) == 0)) 
+			return s1[0] - s2[0];
+		
+		return g_utf8_collate (s1, s2);
+
+	} else {
+		gint result;
+		gchar *n1, *n2;
+
+		/* optimization: short cut iif first char is ascii */ 
+		if (((s1[0] & 0xf0) == 0) && ((s2[0] & 0xf0) == 0)) 
+			return tolower(s1[0]) - tolower(s2[0]);
+		
+		n1 = g_utf8_strdown (s1, -1);
+		n2 = g_utf8_strdown (s2, -1);
+		
+		result = g_utf8_collate (n1, n2);
+		
+		g_free (n1);
+		g_free (n2);
 	
-	return result;
+		return result;
+	}
 }
 
 
