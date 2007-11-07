@@ -184,6 +184,8 @@ gchar* modest_tny_folder_get_header_unique_id (TnyHeader *header);
  * modest_tny_folder_has_subfolder_with_name:
  * @folder: a #TnyFolderStore 
  * @name: the name to check into subfolders.
+ * @nonstrict: if TRUE, also match on different-case and current-locale
+ * display versions of the name
  *   
  * This function check if subfolders of @folder has the same
  * name as @name.
@@ -191,7 +193,8 @@ gchar* modest_tny_folder_get_header_unique_id (TnyHeader *header);
  * Returns: TRUE if some subfolder has the name @name.
  **/
 gboolean modest_tny_folder_has_subfolder_with_name (TnyFolderStore *folder,
-						    const gchar *name);
+						    const gchar *name,
+						    gboolean nonstrict);
 
 /**
  * modest_tny_folder_is_ancestor:

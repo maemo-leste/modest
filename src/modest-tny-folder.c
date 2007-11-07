@@ -38,6 +38,7 @@
 #include <modest-protocol-info.h>
 #include <modest-runtime.h>
 #include <modest-tny-account-store.h>
+#include <modest-text-utils.h>
 
 
 /* make sure you use the *full* name, because foo/drafts is not the same as drafts */
@@ -376,30 +377,57 @@ modest_tny_folder_get_account (TnyFolder *folder)
  */
 gboolean 
 modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
-					   const gchar *new_name)
+					   const gchar *new_name,
+					   gboolean non_strict)
 {
 	TnyList *subfolders = NULL;
 	TnyIterator *iter = NULL;
 	TnyFolder *folder = NULL;
 	GError *err = NULL;
-	gboolean same_subfolder = FALSE;
+	gboolean has_name = FALSE;
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), FALSE);
-
+	g_return_val_if_fail (new_name, FALSE);
+	
 	/* Get direct subfolders */
 	subfolders = tny_simple_list_new ();
 	tny_folder_store_get_folders (parent, subfolders, NULL, &err);
 
 	/* Check names */
 	iter = tny_list_create_iterator (subfolders);
-	while (!tny_iterator_is_done (iter) && !same_subfolder) {
-		const gchar *name = NULL;
-
-		folder = TNY_FOLDER(tny_iterator_get_current (iter));
-		name = tny_folder_get_name (folder);
+	while (!tny_iterator_is_done (iter) && !has_name) {
 		
-		same_subfolder = !strcmp(name, new_name);
+		const gchar *name;
+		
+		folder = (TnyFolder*)tny_iterator_get_current (iter);
+		if (!folder || ! TNY_IS_FOLDER(folder)) {
+			g_warning ("%s: invalid folder", __FUNCTION__);
+			continue;
+		}
+		
+		name = tny_folder_get_name (folder);
+		if (!name) {
+			g_warning ("%s: folder name == NULL", __FUNCTION__);
+			g_object_unref (folder);
+			continue;
+		}
 
+		/* is it simply the same folder name? */
+		if (strcmp (name, new_name) == 0)
+			has_name = TRUE;
+		/* or is it the same when ignoring case (non-strict mode)? */
+		else if (non_strict && modest_text_utils_utf8_strcmp (name, new_name, TRUE) == 0)
+			has_name = TRUE;
+		/* or is the name equal to the display name of some folder, in the current locale? */
+		else if (non_strict) {
+			TnyFolderType type = modest_tny_folder_guess_folder_type (folder);
+			if (type != TNY_FOLDER_TYPE_INVALID && type != TNY_FOLDER_TYPE_NORMAL) 
+				has_name =  modest_text_utils_utf8_strcmp (modest_local_folder_info_get_type_display_name (type),
+									   new_name,
+									   TRUE);
+		} else
+			has_name = FALSE;
+		
 		g_object_unref (folder);
 		tny_iterator_next(iter);
 	}
@@ -410,7 +438,7 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 	if (subfolders != NULL)
 		g_object_unref (subfolders);
 		
-	return same_subfolder;
+	return has_name;
 }
 
 gboolean 
