@@ -504,6 +504,7 @@ update_menus (ModestMainWindow* self)
 	gint i, num_accounts;
 	GList *groups;
 	gchar *default_account;
+	const gchar *active_account_name;
 	GtkWidget *send_receive_button, *item;
 	GtkAction *send_receive_all = NULL;
 	GSList *radio_group;
@@ -586,6 +587,13 @@ update_menus (ModestMainWindow* self)
 
 	/* Create a new action group */
 	default_account = modest_account_mgr_get_default_account (mgr);
+	active_account_name = modest_window_get_active_account (MODEST_WINDOW (self));
+	
+	if (active_account_name == NULL)
+		{
+			modest_window_set_active_account (MODEST_WINDOW (self), default_account);
+		}
+	
 	priv->view_additions_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
 	radio_group = NULL;
 	for (i = 0; i < num_accounts; i++) {
@@ -616,9 +624,11 @@ update_menus (ModestMainWindow* self)
 			gtk_radio_action_set_group (GTK_RADIO_ACTION (view_account_action), radio_group);
 			radio_group = gtk_radio_action_get_group (GTK_RADIO_ACTION (view_account_action));
 
-			if (default_account && account_data->account_name && 
-			    (strcmp (default_account, account_data->account_name) == 0)) {
-				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (view_account_action), TRUE);
+			if (active_account_name) {
+				if (active_account_name && account_data->account_name && 
+						(strcmp (active_account_name, account_data->account_name) == 0)) {
+							gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (view_account_action), TRUE);
+				}
 			}
 
 			/* Add ui from account data. We allow 2^9-1 account
@@ -1048,6 +1058,7 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 							      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
 		gtk_action_set_visible (send_receive_all, g_slist_length (accounts) > 1);
 		modest_account_mgr_free_account_names (accounts);
+		update_menus (MODEST_MAIN_WINDOW (self));
 	}
 }
 
@@ -2261,15 +2272,20 @@ set_at_least_one_account_visible(ModestMainWindow *self)
 	}
 	
 	const gchar *active_server_account_name = 
-		modest_folder_view_get_account_id_of_visible_server_account (priv->folder_view);	
+		modest_folder_view_get_account_id_of_visible_server_account (priv->folder_view);
+	
 	if (!active_server_account_name ||
 		!modest_account_mgr_account_exists (account_mgr, active_server_account_name, TRUE))
 	{
 		gchar* first_modest_name = modest_account_mgr_get_first_account_name (account_mgr);
-		if (first_modest_name) {
+		gchar* default_modest_name = modest_account_mgr_get_default_account (account_mgr);
+		if (default_modest_name) {
+			set_account_visible (self, default_modest_name);
+		} else if (first_modest_name) {
 			set_account_visible (self, first_modest_name);
-			g_free (first_modest_name);
 		}
+		g_free (first_modest_name);
+		g_free (default_modest_name);
 	}
 }
 
