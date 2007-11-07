@@ -1606,7 +1606,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 		modest_tny_folder_get_account (TNY_FOLDER (parent));
 
 	/* Check for already existing folder */
-	if (modest_tny_folder_has_subfolder_with_name (parent, name)) {
+	if (modest_tny_folder_has_subfolder_with_name (parent, name, TRUE)) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 		             MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS,
@@ -1893,7 +1893,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		/* Do not move a parent into a child */
 		goto error;
 	} else if (TNY_IS_FOLDER_STORE (parent) &&
-		   modest_tny_folder_has_subfolder_with_name (parent, folder_name)) {
+		   modest_tny_folder_has_subfolder_with_name (parent, folder_name, TRUE)) {
 		/* Check that the new folder name is not used by any
 		   parent subfolder */
 		goto error;	

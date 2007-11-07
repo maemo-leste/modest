@@ -596,10 +596,11 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	
 	/* Add sorting keys */
 	cols = modest_header_view_get_columns (header_view);
-	if (cols == NULL) return;
-	int sort_model_ids[6];
-	int sort_ids[6];
-
+	if (cols == NULL) 
+		return;
+#define SORT_ID_NUM 6
+	int sort_model_ids[SORT_ID_NUM];
+	int sort_ids[SORT_ID_NUM];
 
 	outgoing = (GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cols->data), MODEST_HEADER_VIEW_COLUMN))==
 		    MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT);
@@ -726,7 +727,9 @@ on_response (GtkDialog *dialog,
 
 	/* Look for another folder with the same name */
 	if (modest_tny_folder_has_subfolder_with_name (parent, 
-						       gtk_entry_get_text (GTK_ENTRY (entry)))) {
+						       gtk_entry_get_text (GTK_ENTRY (entry)),
+						       TRUE)) {
+
 		/* Show an error */
 		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
 						NULL, _CS("ckdg_ib_folder_already_exists"));
@@ -844,9 +847,9 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 			else
 				real_suggested_name = g_strdup_printf (_("mcen_ia_default_folder_name_s"),
 				                                       num_str);
-
 			exists = modest_tny_folder_has_subfolder_with_name (parent_folder,
-									    real_suggested_name);
+									    real_suggested_name,
+									    TRUE);
 
 			if (!exists)
 				break;

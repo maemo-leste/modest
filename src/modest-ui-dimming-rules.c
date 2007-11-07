@@ -2609,9 +2609,9 @@ _selected_folder_has_subfolder_with_same_name (ModestWindow *win)
 	if (folder_name == NULL) goto frees;
 
 	/* Check source subfolders names */
-	result = modest_tny_folder_has_subfolder_with_name (folder, folder_name);
-	
-	
+	result = modest_tny_folder_has_subfolder_with_name (folder, folder_name,
+							    TRUE);
+		
 	/* Free */
  frees:
 	if (folder != NULL) 
