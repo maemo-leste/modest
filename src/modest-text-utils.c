@@ -1105,33 +1105,23 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 const gchar*
 modest_text_utils_get_display_date (time_t date)
 {
-	time_t now;
 #define DATE_BUF_SIZE 64 
-	static const guint ONE_DAY = 24 * 60 * 60; /* seconds in one day */
 	static gchar date_buf[DATE_BUF_SIZE];
-
-	gchar today_buf [DATE_BUF_SIZE];  
-
-	modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%x", date); 
-
-	now = time (NULL);
-
-	/* we check if the date is within the last 24h, if not, we don't
-	 * have to do the extra, expensive strftime, which was very visible
-	 * in the profiles.
-	 */
-	if (abs(now - date) < ONE_DAY) {
-		
-		/* it's within the last 24 hours, but double check */
-		/* use the localized dates */
-		modest_text_utils_strftime (today_buf,  DATE_BUF_SIZE, "%x", now); 
-
-		/* if it's today, use the time instead */
-		if (strcmp (date_buf, today_buf) == 0)
-			modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%X", date);
-	}
 	
-	return date_buf;
+	/* calculate the # of days since epoch for 
+ 	 * for today and for the date provided 
+ 	 * based on idea from pvanhoof */
+	int day      = time(NULL) / (24 * 60 * 60);
+	int date_day = date       / (24 * 60 * 60);
+
+	/* if it's today, show the time, if it's not today, show the date instead */
+
+	if (day == date_day) /* is the date today? */
+		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%X", date);
+	else 
+		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%x", date); 
+
+	return date_buf; /* this is a static buffer, don't free! */
 }
 
 
