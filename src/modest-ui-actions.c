@@ -1624,9 +1624,18 @@ new_messages_arrived (ModestMailOperation *self,
 		      TnyList *new_headers,
 		      gpointer user_data)
 {
-	/* Notify new messages have been downloaded */
-	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0))
+	GObject *source;
+
+	source = modest_mail_operation_get_source (self);
+
+	/* Notify new messages have been downloaded. Do not notify if
+	   the send&receive was invoked by the user, i.e, if the mail
+	   operation has a source (the main window) */
+	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0) && !source)
 		modest_platform_on_new_headers_received (new_headers);
+
+	if (source)
+		g_object_unref (source);
 }
 
 /*
@@ -1658,12 +1667,12 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 		acc_name = g_strdup (account_name);
 	}
 
-
 	/* Ensure that we have a connection available */
 	store_account =
 		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
 							     acc_name,
 							     TNY_ACCOUNT_TYPE_STORE);
+
 	if (!modest_platform_connect_and_wait (NULL, TNY_ACCOUNT (store_account))) {
 		g_object_unref (store_account);
 		return;
