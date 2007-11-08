@@ -783,7 +783,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    if (!trash_pixbuf)
 		trash_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_TRASH));
 
-	    if (!junk_pixbuf_open) {
+	    if (!trash_pixbuf_open) {
 		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
 		trash_pixbuf_open = gdk_pixbuf_copy (trash_pixbuf);
 		gdk_pixbuf_composite (emblem, trash_pixbuf_open, 0, 0, 
@@ -817,7 +817,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	   if (!draft_pixbuf)
 		draft_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_DRAFTS));
 
-	    if (!junk_pixbuf_open) {
+	    if (!draft_pixbuf_open) {
 		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
 		draft_pixbuf_open = gdk_pixbuf_copy (draft_pixbuf);
 		gdk_pixbuf_composite (emblem, draft_pixbuf_open, 0, 0, 
@@ -852,7 +852,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    if (!normal_pixbuf)
 		normal_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL));
 
-	    if (!junk_pixbuf_open) {
+	    if (!normal_pixbuf_open) {
 		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
 		normal_pixbuf_open = gdk_pixbuf_copy (normal_pixbuf);
 		gdk_pixbuf_composite (emblem, draft_pixbuf_open, 0, 0, 
