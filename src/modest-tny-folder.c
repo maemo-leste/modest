@@ -422,11 +422,12 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 		else if (non_strict) {
 			TnyFolderType type = modest_tny_folder_guess_folder_type (folder);
 			if (type != TNY_FOLDER_TYPE_INVALID && type != TNY_FOLDER_TYPE_NORMAL) 
-				has_name =  modest_text_utils_utf8_strcmp (modest_local_folder_info_get_type_display_name (type),
-									   new_name,
-									   TRUE);
-		} else
+				has_name = !(modest_text_utils_utf8_strcmp (modest_local_folder_info_get_type_display_name (type),
+									    new_name,
+									    TRUE));
+		} else {
 			has_name = FALSE;
+		}
 		
 		g_object_unref (folder);
 		tny_iterator_next(iter);
