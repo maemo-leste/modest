@@ -1,3 +1,9 @@
+modest (1.0-2007.45-2) feisty; urgency=low
+
+  * New version for the modest-l10n localisation.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon,  5 Nov 2007 13:57:08 +0200
+
 modest (1.0-2007.45-1) feisty; urgency=low
 
   * Fixes: NB#66958, NB#74469, NB#65559, NB#74605, NB#74675, NB#73934
