@@ -127,7 +127,7 @@
  * alernating between a connection name, followed by a corresponding server account name.
  * That's not pretty, but it's nicer than dealing with escaping of a = separator if 
  * putting them both in one string. */
-#define MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST "/specific_smtp" /* one list used for all accounts. */
+#define MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST MODEST_CONF_NAMESPACE "/specific_smtp" /* one list used for all accounts. */
 #define MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP  "use_specific_smtp" /* boolean */
 
 /* server account keys */

@@ -151,6 +151,9 @@ TnyAccount* modest_tny_account_store_get_server_account (ModestTnyAccountStore *
 TnyAccount* modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAccountStore *self,
 										const gchar *account_name);
 
+TnyAccount* modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
+											      const gchar *account_name);
+
 /**
  * tny_account_store_get_session
  * @self: a TnyAccountStore instance
@@ -214,6 +217,19 @@ TnyMsg *modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *se
 TnyTransportAccount *
 modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccountStore *self,
 								  TnyHeader *header);
+
+/**
+ * modest_tny_account_store_new_connection_specific_transport_account:
+ * @self: a #ModestTnyAccountStore
+ * @name: the name of the connection specific smtp transport account
+ *
+ * Creates a connection specific transport account and put it in the merged outbox
+ *
+ * Returns: the new #TnyTransportAccount
+ */
+TnyTransportAccount *
+modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAccountStore *self,
+								    const gchar *name);
 
 G_END_DECLS
 

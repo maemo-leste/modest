@@ -2278,6 +2278,8 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 void
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
+	TnyTransportAccount *transport_account = NULL;
+
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 
 	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
@@ -2304,10 +2306,16 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 	
 	/* Get the currently-active transport account for this modest account: */
-	TnyTransportAccount *transport_account =
-		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection
-				      (modest_runtime_get_account_store(),
-				       account_name));
+/* 	TnyTransportAccount *transport_account = */
+/* 		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection */
+/* 				      (modest_runtime_get_account_store(), */
+/* 				       account_name)); */
+	if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) != 0) {
+		transport_account = TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+							  (modest_runtime_get_account_store(),
+							   account_name, TNY_ACCOUNT_TYPE_TRANSPORT));
+	}
+	
 	if (!transport_account) {
 		/* Run account setup wizard */
 		if (!modest_ui_actions_run_account_setup_wizard(MODEST_WINDOW(edit_window)))

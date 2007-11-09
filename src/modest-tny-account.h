@@ -118,7 +118,9 @@ TnyAccount* modest_tny_account_new_for_per_account_local_outbox_folder (
 TnyAccount*
 modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr, 
 						 TnySessionCamel *session,
-						 const gchar* server_account_name);
+						 const gchar* server_account_name,
+						 TnyGetPassFunc get_pass_func,
+						 TnyForgetPassFunc forget_pass_func);
 
 #if 0
 /**

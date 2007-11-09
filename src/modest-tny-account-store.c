@@ -958,7 +958,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	   it will return NULL because there is no outbox folder for
 	   this specific transport accounts, and it's a must that the
 	   send queue returns an outbox */
-	if (FALSE)
+	if (TRUE)
 		/* Add connection-specific transport accounts */
 		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
 	
@@ -1321,9 +1321,9 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 	return retval;
 }
 
-static TnyAccount*
-get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
-	const gchar *account_name)
+TnyAccount*
+modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
+										  const gchar *account_name)
 {
 	/* Get the current connection: */
 	TnyDevice *device = modest_runtime_get_device ();
@@ -1397,7 +1397,7 @@ modest_tny_account_store_get_transport_account_for_open_connection (ModestTnyAcc
 	/*  Get the connection-specific transport acccount, if any: */
 	/* Note: This gives us a reference: */
 	TnyAccount *account =
-		get_smtp_specific_transport_account_for_open_connection (self, account_name);
+		modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (self, account_name);
 			
 	/* If there is no connection-specific transport account (the common case), 
 	 * just get the regular transport account: */
@@ -1676,6 +1676,40 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	}
 }
 
+TnyTransportAccount *
+modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAccountStore *self,
+								    const gchar *name)
+{
+	ModestTnyAccountStorePrivate *priv = NULL;
+	TnyAccount * tny_account = NULL;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	/* Add the account: */
+	tny_account = 
+		modest_tny_account_new_from_server_account_name (priv->account_mgr, 
+								 priv->session, 
+								 name,
+								 get_password,
+								 forget_password);
+	if (tny_account) {
+		g_object_set_data (G_OBJECT(tny_account), 
+				   "account_store", 
+				   (gpointer)self);
+		
+		tny_list_append (priv->transport_accounts, G_OBJECT (tny_account));
+		add_outbox_from_transport_account_to_global_outbox (self, 
+								    name, 
+								    tny_account);
+		
+	} else
+		g_printerr ("modest: failed to create smtp-specific account for %s\n",
+			    name);
+
+	return TNY_TRANSPORT_ACCOUNT (tny_account);
+}
+
+
 static void
 add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 {
@@ -1704,24 +1738,11 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 		iter = g_slist_next (iter);
 		if (iter) {
 			const gchar* transport_account_name = (const gchar*) (iter->data);
-			if (transport_account_name) {
-				TnyAccount * tny_account = NULL;
-				/* Add the account: */
-				tny_account = 
-					modest_tny_account_new_from_server_account_name (priv->account_mgr, 
-											 priv->session, 
-											 transport_account_name);
-				if (tny_account) {
-					g_object_set_data (G_OBJECT(tny_account), 
-							   "account_store", 
-							   (gpointer)self);
-
-					tny_list_append (priv->transport_accounts, G_OBJECT (tny_account));
-					g_object_unref (tny_account);
-				} else
-					g_printerr ("modest: failed to create smtp-specific account for %s\n",
-						    transport_account_name);
-			}
+			TnyTransportAccount * account = NULL;
+			account = modest_tny_account_store_new_connection_specific_transport_account (
+				self, transport_account_name);
+			if (account)
+				g_object_unref (account);
 		}				
 		iter = g_slist_next (iter);
 	}

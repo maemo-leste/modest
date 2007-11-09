@@ -472,7 +472,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	
 	/* Add the security settings: */
 	modest_account_mgr_set_server_account_security (self, name, security);
-	
+
 cleanup:
 	if (!ok) {
 		g_printerr ("modest: failed to add server account\n");

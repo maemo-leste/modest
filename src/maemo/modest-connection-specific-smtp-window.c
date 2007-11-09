@@ -49,6 +49,7 @@
 #include "modest-maemo-utils.h"
 
 #include <glib/gi18n.h>
+#include <string.h>
 
 G_DEFINE_TYPE (ModestConnectionSpecificSmtpWindow, modest_connection_specific_smtp_window,
 	       GTK_TYPE_DIALOG);
@@ -500,11 +501,13 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 		gchar *id = NULL;
 		gchar *connection_name = NULL;
 		gchar *server_account_name = NULL;
+		gchar *server_name = NULL;
 		ModestServerAccountData *data = NULL;
 		
 		gtk_tree_model_get (priv->model, &iter, 
 				    MODEL_COL_ID, &id, 
 				    MODEL_COL_NAME, &connection_name, 
+				    MODEL_COL_SERVER_NAME, &server_name,
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
 				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
 				    -1);
@@ -526,6 +529,13 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 										 MODEST_PROTOCOL_TRANSPORT_SMTP,
 										 data->security,
 										 data->secure_auth);
+				if (success) {
+					TnyAccount *account = TNY_ACCOUNT (modest_tny_account_store_new_connection_specific_transport_account 
+									   (modest_runtime_get_account_store (),
+									    server_account_name));
+					if (account)
+						g_object_unref (account);
+				}
 					
 				/* associate the specific server account with this connection for this account: */
 				success = success && modest_account_mgr_set_connection_specific_smtp (
@@ -554,7 +564,8 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 
 				modest_account_mgr_set_server_account_port (priv->account_manager, server_account_name, data->port);
 			}
-		} else if (connection_name) {
+		} else if (connection_name && server_name && 
+			   !strcmp (server_name, _("mcen_ia_optionalsmtp_notdefined"))) {
 			modest_account_mgr_remove_connection_specific_smtp (priv->account_manager, 
 									    connection_name);
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
@@ -564,6 +575,7 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 		g_free (connection_name);
 		g_free (id);
 		g_free (server_account_name);
+		g_free (server_name);
 		
 		if (!success)
 			return FALSE;

@@ -107,11 +107,11 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 		result = FALSE;
 	} else {	
 		/* The server account is in the item after the connection name: */
-		GSList *list_connection = g_slist_append (list, (gpointer)connection_name);
-		list_connection = g_slist_append (list_connection, (gpointer)server_account_name);
+		list = g_slist_append (list, (gpointer)connection_name);
+		list = g_slist_append (list, (gpointer)server_account_name);
 	
 		/* Reset the changed list: */
-		modest_conf_set_list (conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST, list_connection,
+		modest_conf_set_list (conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST, list,
 						    MODEST_CONF_VALUE_STRING, &err);
 		if (err) {
 			g_printerr ("modest: %s: error setting list: %s.\n", __FUNCTION__, err->message);

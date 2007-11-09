@@ -36,6 +36,7 @@
 #include <tny-simple-list.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-outbox-account.h>
+#include <modest-transport-account-decorator.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-init.h>
 #include <tny-camel-transport-account.h>
@@ -48,6 +49,10 @@
 #else
 #include <hildon/hildon-file-system-info.h>
 #endif
+
+/* we need these dummy functions, or tinymail will complain */
+static gchar *  get_pass_dummy     (TnyAccount *account, const gchar *prompt, gboolean *cancel);
+static void     forget_pass_dummy  (TnyAccount *account);
 
 TnyFolder *
 modest_tny_account_get_special_folder (TnyAccount *account,
@@ -186,7 +191,7 @@ create_tny_account (ModestAccountMgr *account_mgr,
 	switch (account_data->proto) {
 	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
 	case MODEST_PROTOCOL_TRANSPORT_SMTP:
-		tny_account = TNY_ACCOUNT(tny_camel_transport_account_new ()); break;
+		tny_account = TNY_ACCOUNT (modest_transport_account_decorator_new ()); break;
 	case MODEST_PROTOCOL_STORE_POP:
 		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ()); break;
 	case MODEST_PROTOCOL_STORE_IMAP:
@@ -388,7 +393,9 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 TnyAccount*
 modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 						 TnySessionCamel *session,
-						 const gchar *server_account_name)
+						 const gchar *server_account_name,
+						 TnyGetPassFunc get_pass_func,
+						 TnyForgetPassFunc forget_pass_func)
 {
 	ModestServerAccountData *account_data;
 	TnyAccount *tny_account;
@@ -401,11 +408,27 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 	if (!account_data)
 		return NULL;
 
-	tny_account = create_tny_account (account_mgr, session, account_data);
+	tny_account = TNY_ACCOUNT (tny_camel_transport_account_new ());
+
+	if (tny_account) {
+		const gchar* proto_name = NULL;
+		tny_account_set_id (tny_account, account_data->account_name);
+		tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
+		proto_name = modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
+		tny_account_set_proto (tny_account, proto_name);
+		modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, server_account_name);
+	}
+
 	if (!tny_account)
 		g_warning ("%s: failed to create tny_account", __FUNCTION__);
 	else if (!update_tny_account (tny_account, account_mgr, account_data))
 		g_warning ("%s: failed to initialize tny_account", __FUNCTION__);
+	else {
+		tny_account_set_forget_pass_func (tny_account,
+						  forget_pass_func ? forget_pass_func : forget_pass_dummy);
+		tny_account_set_pass_func (tny_account,
+					   get_pass_func ? get_pass_func: get_pass_dummy);
+	}
 	
 	modest_account_mgr_free_server_account_data (account_mgr, account_data);
 	
