@@ -387,6 +387,11 @@ modest_main_window_finalize (GObject *obj)
 		priv->updating_banner_timeout = 0;
 	}
 
+	if (priv->updating_banner) {
+		gtk_widget_destroy (priv->updating_banner);
+		priv->updating_banner = NULL;
+	}
+
 	if (priv->restore_paned_timeout > 0) {
 		g_source_remove (priv->restore_paned_timeout);
 		priv->restore_paned_timeout = 0;
@@ -2480,9 +2485,11 @@ show_updating_banner (gpointer user_data)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
 
-	priv->updating_banner = 
-		modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
-						  _CS ("ckdg_pb_updating"));
+	if (priv->updating_banner == NULL) {
+		priv->updating_banner = 
+			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
+							  _CS ("ckdg_pb_updating"));
+	}
 
 	/* Remove timeout */
 	priv->updating_banner_timeout = 0;

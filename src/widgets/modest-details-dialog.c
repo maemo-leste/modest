@@ -297,8 +297,13 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 
 	/* Get data. We use our function because it's recursive */
-	count = modest_tny_folder_store_get_message_count (TNY_FOLDER_STORE (folder));
-	size = modest_tny_folder_store_get_local_size (TNY_FOLDER_STORE (folder));
+	if (TNY_IS_FOLDER_STORE (folder)) {
+		count = modest_tny_folder_store_get_message_count (TNY_FOLDER_STORE (folder));
+		size = modest_tny_folder_store_get_local_size (TNY_FOLDER_STORE (folder));
+	} else {
+		count = tny_folder_get_all_count (TNY_FOLDER (folder));
+		size = tny_folder_get_local_size (TNY_FOLDER (folder));
+	}
 
 	/* Format count and size */
 	count_s = g_strdup_printf ("%d", count);
