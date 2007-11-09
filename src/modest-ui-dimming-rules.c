@@ -67,7 +67,6 @@ static gboolean _msg_download_in_progress (ModestWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
-static gboolean _send_receive_in_progress (ModestWindow *win);
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
 static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win);
@@ -1696,7 +1695,7 @@ modest_ui_dimming_rules_on_csm_cancel_sending (ModestWindow *win, gpointer user_
 			modest_dimming_rule_set_notification (rule, "");
  	}
 	if (!dimmed) {
-		dimmed = !_send_receive_in_progress (win);
+		dimmed = !_sending_in_progress (win);
  		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -2470,19 +2469,6 @@ _sending_in_progress (ModestWindow *win)
 		result = modest_tny_send_queue_sending_in_progress (send_queue);
 	}
        
-	return result;
-}
-
-static gboolean
-_send_receive_in_progress (ModestWindow *win)
-{
-	gboolean result = FALSE;
-	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
-
-	/* Check if send operation is in progress */
-	result = modest_main_window_send_receive_in_progress (MODEST_MAIN_WINDOW (win));
-
 	return result;
 }
 
