@@ -749,7 +749,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    if (!sent_pixbuf)
 		sent_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_SENT));
 
-	    if (!junk_pixbuf_open) {
+	    if (!sent_pixbuf_open) {
 		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
 		sent_pixbuf_open = gdk_pixbuf_copy (sent_pixbuf);
 		gdk_pixbuf_composite (emblem, sent_pixbuf_open, 0, 0, 
