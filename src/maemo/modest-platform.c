@@ -1072,7 +1072,7 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 	/* Wait until the callback is executed */
 	g_mutex_lock (data->mutex);
 	if (!data->has_callback) {
-		data->wait_loop = g_main_loop_new (NULL, FALSE);
+		data->wait_loop = g_main_loop_new (g_main_context_new (), FALSE);
 		gdk_threads_leave ();
 		g_mutex_unlock (data->mutex);
 		g_main_loop_run (data->wait_loop);
@@ -1685,8 +1685,6 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	
 	return response == GTK_RESPONSE_OK;
 }
-	
-
 
 gboolean
 modest_platform_run_alert_dialog (const gchar* prompt, 
@@ -1711,7 +1709,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		 * so we know what buttons to show. */
 		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_win), 
 									      prompt));
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 					     GTK_WINDOW (dialog));
 		
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -1724,4 +1722,271 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 							prompt);
 	}
 	return retval;
+}
+
+/***************/
+typedef struct {
+ 	GtkWindow *parent_window;
+ 	ModestConnectedPerformer callback;
+ 	TnyAccount *account;
+ 	gpointer user_data;
+ 	gchar *iap;
+ 	TnyDevice *device;
+} OnWentOnlineInfo;
+ 
+static void 
+on_went_online_info_free (OnWentOnlineInfo *info)
+{
+ 	/* And if we cleanup, we DO cleanup  :-)  */
+ 	
+ 	if (info->device)
+ 		g_object_unref (info->device);
+ 	if (info->iap)
+ 		g_free (info->iap);
+ 	if (info->parent_window)
+ 		g_object_unref (info->parent_window);
+ 	if (info->account)
+ 		g_object_unref (info->account);
+ 	
+ 	g_slice_free (OnWentOnlineInfo, info);
+ 	
+ 	/* We're done ... */
+ 	
+ 	return;
+}
+ 
+static void
+on_account_went_online (TnyCamelAccount *account, gboolean canceled, GError *err, gpointer user_data)
+{
+ 	OnWentOnlineInfo *info = (OnWentOnlineInfo *) user_data;
+ 
+ 	/* Now it's really time to callback to the caller. If going online didn't succeed,
+ 	 * err will be set. We don't free it, Tinymail does that! If a cancel happened,
+ 	 * canceled will be set. Etcetera etcetera. */
+ 	
+ 	if (info->callback) {
+ 		info->callback (canceled, err, info->parent_window, info->account, info->user_data);
+ 	}
+ 	
+ 	/* This is our last call, we must cleanup here if we didn't yet do that */
+ 	on_went_online_info_free (info);
+ 	
+ 	return;
+}
+ 
+ 
+static void
+on_conic_device_went_online (TnyMaemoConicDevice *device, const gchar* iap_id, gboolean canceled, GError *err, gpointer user_data)
+{
+ 	OnWentOnlineInfo *info = (OnWentOnlineInfo *) user_data;
+ 	info->iap = g_strdup (iap_id);
+ 	
+ 	if (canceled || err || !info->account) {
+ 	
+ 		/* If there's a problem or if there's no account (then that's it for us, we callback
+ 		 * the caller's callback now. He'll have to handle err or canceled, of course.
+ 		 * We are not really online, as the account is not really online here ... */	
+ 		
+ 		/* We'll use the err and the canceled of this cb. TnyMaemoConicDevice delivered us
+ 		 * this info. We don't cleanup err, Tinymail does that! */
+ 		
+ 		if (info->callback) {
+ 			
+ 			/* info->account can be NULL here, this means that the user did not
+ 			 * provide a nice account instance. We'll assume that the user knows
+ 			 * what he's doing and is happy with just the device going online. 
+ 			 * 
+ 			 * We can't do magic, we don't know what account the user wants to
+ 			 * see going online. So just the device goes online, end of story */
+ 			
+ 			info->callback (canceled, err, info->parent_window, info->account, info->user_data);
+ 		}
+ 		
+ 	} else if (info->account) {
+ 		
+ 		/* If there's no problem and if we have an account, we'll put the account
+ 		 * online too. When done, the callback of bringing the account online
+ 		 * will callback the caller's callback. This is the most normal case. */
+ 
+ 		info->device = TNY_DEVICE (g_object_ref (device));
+ 		
+ 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (info->account), TRUE,
+					      on_account_went_online, info);
+ 		
+ 		/* The on_account_went_online cb frees up the info, go look if you
+ 		 * don't believe me! (so we return here) */
+ 		
+ 		return;
+ 	}
+ 	
+ 	/* We cleanup if we are not bringing the account online too */
+ 	on_went_online_info_free (info);
+ 
+ 	return;	
+}
+ 	
+void 
+modest_platform_connect_and_perform (GtkWindow *parent_window, 
+				     TnyAccount *account, ModestConnectedPerformer callback, gpointer user_data)
+{
+ 	gboolean device_online;
+ 	TnyDevice *device;
+ 	TnyConnectionStatus conn_status;
+ 	OnWentOnlineInfo *info;
+ 	
+ 	device = modest_runtime_get_device();
+ 	device_online = tny_device_is_online (device);
+
+ 	/* If there is no account check only the device status */
+ 	if (!account) {
+ 		
+ 		if (device_online) {
+ 
+ 			/* We promise to instantly perform the callback, so ... */
+ 			if (callback) {
+ 				callback (FALSE, NULL, parent_window, account, user_data);
+ 			}
+ 			
+ 		} else {
+ 			
+ 			info = g_slice_new0 (OnWentOnlineInfo);
+ 			
+ 			info->iap = NULL;
+ 			info->device = NULL;
+ 			info->account = NULL;
+ 		
+ 			if (parent_window)
+ 				info->parent_window = (GtkWindow *) g_object_ref (parent_window);
+ 			else
+ 				info->parent_window = NULL;
+ 			info->user_data = user_data;
+ 			info->callback = callback;
+ 		
+ 			tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
+							      on_conic_device_went_online, info);
+ 
+ 			/* We'll cleanup in on_conic_device_went_online */
+ 		}
+ 
+ 		/* The other code has no more reason to run. This is all that we can do for the
+ 		 * caller (he should have given us a nice and clean account instance!). We
+ 		 * can't do magic, we don't know what account he intends to bring online. So
+ 		 * we'll just bring the device online (and await his false bug report). */
+ 		
+ 		return;
+ 	}
+ 
+ 	
+ 	/* Return if the account is already connected */
+ 	
+ 	conn_status = tny_account_get_connection_status (account);
+ 	if (device_online && conn_status == TNY_CONNECTION_STATUS_CONNECTED) {
+ 
+ 		/* We promise to instantly perform the callback, so ... */
+ 		if (callback) {
+ 			callback (FALSE, NULL, parent_window, account, user_data);
+ 		}
+ 		
+ 		return;
+ 	}
+ 	
+ 	/* Else, we are in a state that requires that we go online before we
+ 	 * call the caller's callback. */
+ 	
+ 	info = g_slice_new0 (OnWentOnlineInfo);
+ 	
+ 	info->device = NULL;
+ 	info->iap = NULL;
+ 	info->account = TNY_ACCOUNT (g_object_ref (account));
+ 	
+ 	if (parent_window)
+ 		info->parent_window = (GtkWindow *) g_object_ref (parent_window);
+ 	else
+ 		info->parent_window = NULL;
+ 	
+ 	/* So we'll put the callback away for later ... */
+ 	
+ 	info->user_data = user_data;
+ 	info->callback = callback;
+ 	
+ 	if (!device_online) {
+ 
+ 		/* If also the device is offline, then we connect both the device 
+ 		 * and the account */
+ 		
+ 		tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
+						      on_conic_device_went_online, info);
+ 		
+ 	} else {
+ 		
+ 		/* If the device is online, we'll just connect the account */
+ 		
+ 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, 
+					      on_account_went_online, info);
+ 	}
+ 
+ 	/* The info gets freed by on_account_went_online or on_conic_device_went_online
+ 	 * in both situations, go look if you don't believe me! */
+ 	
+ 	return;
+}
+ 
+void 
+modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window, 
+							TnyAccount *account,
+							ModestConnectedPerformer callback, 
+							gpointer user_data)
+{
+ 	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
+ 		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
+ 		    !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
+ 			
+ 			/* This IS a local account like a maildir account, which does not require 
+ 			 * a connection. (original comment had a vague assumption in its language
+ 			 * usage. There's no assuming needed, this IS what it IS: a local account), */
+ 
+ 			/* We promise to instantly perform the callback, so ... */
+ 			if (callback) {
+ 				callback (FALSE, NULL, parent_window, account, user_data);
+ 			}
+ 			
+ 			return;
+ 		}
+ 	}
+ 
+ 	modest_platform_connect_and_perform (parent_window, account, callback, user_data);
+ 
+ 	return;
+}
+ 
+void
+modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store, 
+							    ModestConnectedPerformer callback, gpointer user_data)
+{
+ 	if (!folder_store) {
+ 
+ 		/* We promise to instantly perform the callback, so ... */
+ 		if (callback) {
+ 			callback (FALSE, NULL, parent_window, NULL, user_data);
+ 		}
+ 		return; 
+ 		
+ 		/* Original comment: Maybe it is something local. */
+ 		/* PVH's comment: maybe we should KNOW this in stead of assuming? */
+ 		
+ 	}
+ 	
+ 	if (TNY_IS_FOLDER (folder_store)) {
+ 		/* Get the folder's parent account: */
+ 		TnyAccount *account = tny_folder_get_account(TNY_FOLDER (folder_store));
+ 		if (account != NULL) {
+ 			modest_platform_connect_and_perform_if_network_account (NULL, account, callback, user_data);
+ 			g_object_unref (account);
+ 		}
+ 	} else if (TNY_IS_ACCOUNT (folder_store)) {
+ 		/* Use the folder store as an account: */
+ 		modest_platform_connect_and_perform_if_network_account (NULL, TNY_ACCOUNT (folder_store), callback, user_data);
+ 	}
+ 
+ 	return;
 }

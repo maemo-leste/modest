@@ -1638,6 +1638,58 @@ new_messages_arrived (ModestMailOperation *self,
 		g_object_unref (source);
 }
 
+typedef struct {
+	TnyAccount *account;
+	ModestWindow *win;
+	gchar *account_name;
+} SendReceiveInfo;
+
+static void
+do_send_receive_performer (gboolean canceled, 
+			   GError *err,
+			   GtkWindow *parent_window, 
+			   TnyAccount *account, 
+			   gpointer user_data)
+{
+	ModestMailOperation *mail_op;
+	SendReceiveInfo *info;
+
+	info = (SendReceiveInfo *) user_data;
+
+	if (err || canceled) {
+
+		goto clean;
+	}
+
+	/* Set send/receive operation in progress */	
+	if (info->win && MODEST_IS_MAIN_WINDOW (info->win))
+		modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW (info->win));
+	
+	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (info->win),
+								 modest_ui_actions_send_receive_error_handler,
+								 NULL, NULL);
+
+	if (info->win && MODEST_IS_MAIN_WINDOW (info->win))
+		g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
+				  G_CALLBACK (on_send_receive_finished), 
+				  info->win);
+
+	/* Send & receive. */
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_update_account (mail_op, info->account_name, new_messages_arrived, info->win);
+	g_object_unref (G_OBJECT (mail_op));
+	
+ clean:
+	/* Frees */
+	if (info->account_name)
+		g_free (info->account_name);
+	if (info->win)
+		g_object_unref (info->win);
+	if (info->account)
+		g_object_unref (info->account);
+	g_slice_free (SendReceiveInfo, info);
+}
+
 /*
  * This function performs the send & receive required actions. The
  * window is used to create the mail operation. Typically it should
@@ -1649,8 +1701,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 				   ModestWindow *win)
 {
 	gchar *acc_name = NULL;
-	ModestMailOperation *mail_op;
-	TnyAccount *store_account = NULL;
+	SendReceiveInfo *info;
+	ModestTnyAccountStore *acc_store;
 
 	/* If no account name was provided then get the current account, and if
 	   there is no current account then pick the default one: */
@@ -1667,44 +1719,18 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 		acc_name = g_strdup (account_name);
 	}
 
-	/* Ensure that we have a connection available */
-	store_account =
-		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-							     acc_name,
-							     TNY_ACCOUNT_TYPE_STORE);
+	acc_store = modest_runtime_get_account_store ();
 
-	if (!modest_platform_connect_and_wait (NULL, TNY_ACCOUNT (store_account))) {
-		g_object_unref (store_account);
-		return;
-	}
-	g_object_unref (store_account);
+	/* Create the info for the connect and perform */
+	info = g_slice_new (SendReceiveInfo);
+	info->account_name = acc_name;
+	info->win = (win) ? g_object_ref (win) : NULL;
+	info->account = modest_tny_account_store_get_server_account (acc_store, acc_name,
+								     TNY_ACCOUNT_TYPE_STORE);
 
-	/* Set send/receive operation in progress */	
-	if (win && MODEST_IS_MAIN_WINDOW (win))
-		modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW(win));
-	
-	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
-								 modest_ui_actions_send_receive_error_handler,
-								 NULL, NULL);
-
-	if (win && MODEST_IS_MAIN_WINDOW (win))
-		g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
-				  G_CALLBACK (on_send_receive_finished), 
-				  win);
-
-	/* Send & receive. */
-	/* TODO: The spec wants us to first do any pending deletions, before receiving. */
-	/* Receive and then send. The operation is tagged initially as
-	   a receive operation because the account update performs a
-	   receive and then a send. The operation changes its type
-	   internally, so the progress objects will receive the proper
-	   progress information */
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, acc_name, new_messages_arrived, win);
-	g_object_unref (G_OBJECT (mail_op));
-	
-	/* Free */
-	g_free (acc_name);
+	/* Invoke the connect and perform */
+	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL, info->account, 
+					     do_send_receive_performer, info);
 }
 
 

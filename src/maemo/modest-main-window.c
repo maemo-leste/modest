@@ -2505,7 +2505,7 @@ on_updating_msg_list (ModestHeaderView *header_view,
 	ModestMainWindowPrivate *priv = NULL;
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
-
+	
 	/* Remove old timeout */
 	if (priv->updating_banner_timeout > 0) {
 		g_source_remove (priv->updating_banner_timeout);

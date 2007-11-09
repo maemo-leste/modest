@@ -1901,7 +1901,7 @@ modest_header_view_refilter (ModestHeaderView *header_view)
 	/* Hide cut headers */
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
 	if (GTK_IS_TREE_MODEL_FILTER (model)) {
-		priv->status = 0;
+		priv->status = HEADER_VIEW_INIT;
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
 	}
 }

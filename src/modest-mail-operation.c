@@ -2791,7 +2791,7 @@ on_refresh_folder (TnyFolder   *folder,
 	}
 
 	/* Free */
-	g_slice_free   (RefreshAsyncHelper, helper);
+	g_slice_free (RefreshAsyncHelper, helper);
 
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
