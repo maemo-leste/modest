@@ -283,7 +283,7 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 	gchar *email_address;
 
 	g_return_val_if_fail (address_list, NULL);
-
+	
 	if (!address)
 		return g_strdup (address_list);
 
@@ -378,6 +378,8 @@ modest_text_utils_convert_to_html (const gchar *data)
 {
 	GString		*html;	    
 	gsize           len;
+
+	g_return_val_if_fail (data, NULL);
 	
 	if (!data)
 		return NULL;
@@ -405,7 +407,9 @@ gchar *
 modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hyperlinkify)
 {
 	GString		*html;	    
-	
+
+	g_return_val_if_fail (data, NULL);
+
 	if (!data)
 		return NULL;
 
@@ -999,6 +1003,8 @@ void
 modest_text_utils_get_display_address (gchar *address)
 {
 	int i;
+
+	g_return_if_fail (address);
 	
 	if (!address)
 		return;
@@ -1032,6 +1038,8 @@ gchar *
 modest_text_utils_get_email_address (const gchar *full_address)
 {
 	const gchar *left, *right;
+
+	g_return_val_if_fail (full_address, NULL);
 	
 	if (!full_address)
 		return NULL;
@@ -1052,27 +1060,44 @@ modest_text_utils_get_email_address (const gchar *full_address)
 gint 
 modest_text_utils_get_subject_prefix_len (const gchar *sub)
 {
-	gint i;
-	static const gchar* prefix[] = {
-		"Re:", "RE:", "RV:", "re:"
-		"Fwd:", "FWD:", "FW:", "fwd:", "Fw:", "fw:", NULL
-	};
-		
-	if (!sub || (sub[0] != 'R' && sub[0] != 'F' && sub[0] != 'r' && sub[0] != 'f')) /* optimization */
+	gint prefix_len = 0;	
+
+	g_return_val_if_fail (sub, 0);
+
+	if (!sub)
+		return 0;
+	
+	/* optimization: "Re", "RE", "re","Fwd", "FWD", "fwd","FW","Fw", "fw" */
+	if (sub[0] != 'R' && sub[0] != 'F' && sub[0] != 'r' && sub[0] != 'f')
+		return 0;
+	else if (sub[0] && sub[1] != 'e' && sub[1] != 'E' && sub[1] != 'w' && sub[1] != 'W')
 		return 0;
 
-	i = 0;
-	
-	while (prefix[i]) {
-		if (g_str_has_prefix(sub, prefix[i])) {
-			int prefix_len = strlen(prefix[i]); 
-			if (sub[prefix_len] == ' ')
-				++prefix_len; /* ignore space after prefix as well */
-			return prefix_len; 
-		}
-		++i;
+	prefix_len = 2;
+	if (sub[2] == 'd')
+		++prefix_len;
+
+	/* skip over a [...] block */
+	if (sub[prefix_len] == '[') {
+		int c = prefix_len + 1;
+		while (sub[c] && sub[c] != ']')
+			++c;
+		if (sub[c])
+			return 0; /* no end to the ']' found */
+		else
+			prefix_len = c + 1;
 	}
-	return 0;
+
+	/* did we find the ':' ? */
+	if (sub[prefix_len] == ':') {
+		++prefix_len;
+		if (sub[prefix_len] == ' ')
+			++prefix_len;
+		prefix_len += modest_text_utils_get_subject_prefix_len (sub + prefix_len);
+/* 		g_warning ("['%s','%s']", sub, (char*) sub + prefix_len); */
+		return prefix_len;
+	} else
+		return 0;
 }
 
 
@@ -1182,6 +1207,7 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 				return FALSE;
 		}
 	}
+
 	return TRUE; /* it's valid! */
 }
 
@@ -1194,11 +1220,13 @@ modest_text_utils_validate_domain_name (const gchar *domain)
 	regex_t rx;
 	const gchar* domain_regex = "^[a-z0-9]([.]?[a-z0-9-])*[a-z0-9]$";
 
-	memset (&rx, 0, sizeof(regex_t)); /* coverity wants this... */
+	g_return_val_if_fail (domain, FALSE);
 	
 	if (!domain)
 		return FALSE;
 	
+	memset (&rx, 0, sizeof(regex_t)); /* coverity wants this... */
+		
 	/* domain name: all alphanum or '-' or '.',
 	 * but beginning/ending in alphanum */	
 	if (regcomp (&rx, domain_regex, REG_ICASE|REG_EXTENDED|REG_NOSUB)) {
@@ -1215,21 +1243,22 @@ modest_text_utils_validate_domain_name (const gchar *domain)
 
 
 gboolean
-modest_text_utils_validate_email_address (const gchar *email_address, const gchar **invalid_char_position)
+modest_text_utils_validate_email_address (const gchar *email_address,
+					  const gchar **invalid_char_position)
 {
 	int count = 0;
 	const gchar *c = NULL, *domain = NULL;
 	static gchar *rfc822_specials = "()<>@,;:\\\"[]&";
-
-	if (invalid_char_position != NULL)
+	
+	if (invalid_char_position)
 		*invalid_char_position = NULL;
+	
+	g_return_val_if_fail (email_address, FALSE);
 	
 	/* check that the email adress contains exactly one @ */
 	if (!strstr(email_address, "@") || 
-			(strstr(email_address, "@") != g_strrstr(email_address, "@")))
-	{
+			(strstr(email_address, "@") != g_strrstr(email_address, "@"))) 
 		return FALSE;
-	}
 	
 	/* first we validate the name portion (name@domain) */
 	for (c = email_address;  *c;  c++) {
@@ -1294,8 +1323,14 @@ modest_text_utils_validate_recipient (const gchar *recipient, const gchar **inva
 	gchar *right_part;
 	gboolean has_error = FALSE;
 
+	if (invalid_char_position)
+		*invalid_char_position = NULL;
+	
+	g_return_val_if_fail (recipient, FALSE);
+	
 	if (modest_text_utils_validate_email_address (recipient, invalid_char_position))
 		return TRUE;
+
 	stripped = g_strdup (recipient);
 	stripped = g_strstrip (stripped);
 	current = stripped;
@@ -1401,7 +1436,8 @@ get_email_from_address (const gchar * address)
 gchar *      
 modest_text_utils_get_color_string (GdkColor *color)
 {
-
+	g_return_val_if_fail (color, NULL);
+	
 	return g_strdup_printf ("#%x%x%x%x%x%x%x%x%x%x%x%x",
 				(color->red >> 12)   & 0xf, (color->red >> 8)   & 0xf,
 				(color->red >>  4)   & 0xf, (color->red)        & 0xf,
@@ -1418,8 +1454,8 @@ modest_text_utils_text_buffer_get_text (GtkTextBuffer *buffer)
 	gchar *slice, *current;
 	GString *result = g_string_new ("");
 
-	g_return_val_if_fail (GTK_IS_TEXT_BUFFER (buffer), NULL);
-
+	g_return_val_if_fail (buffer && GTK_IS_TEXT_BUFFER (buffer), NULL);
+	
 	gtk_text_buffer_get_start_iter (buffer, &start);
 	gtk_text_buffer_get_end_iter (buffer, &end);
 
