@@ -3213,7 +3213,6 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
 	if (priv->draft_msg != NULL) {
-		modest_window_mgr_unregister_window (mgr, MODEST_WINDOW (window));
 		g_object_unref (priv->draft_msg);
 	}
 

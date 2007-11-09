@@ -506,8 +506,9 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 
 	win = g_list_find (priv->window_list, window);
 	if (win) {
-		g_warning ("%s: trying to re-register a window",
-			   __FUNCTION__);
+		/* this is for the case we want to register the window and it was already
+		 * registered. We leave silently.
+		 */
 		return;
 	}
 	
