@@ -1498,6 +1498,7 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->to);
 	g_free (data->cc);
 	g_free (data->bcc);
+	g_free (data->from);
 	g_free (data->subject);
 	g_free (data->plain_body);
 	g_free (data->html_body);
