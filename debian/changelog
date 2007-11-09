@@ -1,3 +1,13 @@
+modest (1.0-2007.46-1) feisty; urgency=low
+
+  * Fixes: NB#75099, NB#75109, NB#74639, NB#74764, NB#75187, NB#74260
+  * Fixes: NB#74626, NB#74402, NB#75279, NB#75213, NB#75081, NB#75407
+  * Fixes: NB#75548, NB#75530, NB#75550, NB#74096, NB#75543, NB#65708
+  * Fixes: NB#75312, NB#75592, NB#75510, NB#75509, NB#75525, NB#74689
+  * Fixes: NB#74777
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  9 Nov 2007 14:41:52 +0200
+
 modest (1.0-2007.45-2) feisty; urgency=low
 
   * New version for the modest-l10n localisation.
@@ -7,7 +17,7 @@ modest (1.0-2007.45-2) feisty; urgency=low
 modest (1.0-2007.45-1) feisty; urgency=low
 
   * Fixes: NB#66958, NB#74469, NB#65559, NB#74605, NB#74675, NB#73934
-  * Fixes: NB#74766, NB#73940, NB#75056
+  * Fixes: NB#74766, NB#73940
 
  -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  2 Nov 2007 14:20:06 +0200
 
