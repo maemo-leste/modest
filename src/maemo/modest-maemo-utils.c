@@ -47,6 +47,7 @@
 #include <tny-camel-pop-store-account.h>
 #include "modest-hildon-includes.h"
 
+#include <modest-defs.h>
 #include "modest-maemo-utils.h"
 #include "modest-platform.h"
 
@@ -422,7 +423,8 @@ on_camel_account_get_supported_secure_authentication (
 	}
 }
 
-static void on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
+static void
+on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
 {
 	if(response == GTK_RESPONSE_REJECT || response == GTK_RESPONSE_DELETE_EVENT)
 	{
@@ -684,24 +686,31 @@ modest_maemo_toggle_action_set_active_block_notify (GtkToggleAction *action, gbo
 }
 
 
-
 FILE*
 modest_maemo_open_mcc_mapping_file (void)
 {
 	FILE* result;
 	
-	/* Load the file one line at a time: */
-#ifdef MODEST_HILDON_VERSION_0
-	const gchar* filepath = PROVIDER_DATA_DIR "/mcc_mapping";
-#else
-	const gchar* filepath = "/usr/share/operator-wizard/mcc_mapping";
-#endif /*MODEST_HILDON_VERSION_0*/
+	const gchar* path;
+	const gchar* path1 = MODEST_OPERATOR_WIZARD_PROVIDER_DATA_DIR;
+	const gchar* path2 = MODEST_PROVIDER_DATA_DIR;
 	
-	result = fopen (filepath, "r");	
-	if (!result) 
-		g_printerr ("modest: failed to open mcc mapping file");
+	if (access(path1, R_OK) == 0) 
+		path = path1;
+	else if (access(path2, R_OK) == 0)
+		path = path2;
+	else {
+		g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
+			   __FUNCTION__, path1, path2);
+		return NULL;
+	}
 	
+	result = fopen (path, "r");
+	if (!result) {
+		g_warning ("%s: error opening mapping file '%s': %s",
+			   __FUNCTION__, path, strerror(errno));
+		return NULL;
+	}
 	return result;
 }
-
 

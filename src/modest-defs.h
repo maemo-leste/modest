@@ -31,6 +31,7 @@
 #ifndef __MODEST_DEFS_H__
 #define __MODEST_DEFS_H__
 
+#include <config.h>
 #include <glib/gi18n.h>
 
 /* Some interesting directories. NOTE, they should be prefixed
@@ -60,6 +61,7 @@
 
 #define MODEST_MMC_ACCOUNT_ID             "mcc"
 
+/* FIXME: get these from the environment */
 /* Without the trailing / because gnome-vfs reports mounted 
  * volume URIs without the trailing, and we want to match them: */
 #define MODEST_MCC1_VOLUMEPATH	  "/media/mmc1" 
@@ -67,6 +69,11 @@
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
+
+/* the mapping files, there are two possibilities; used in modest_maemo_open_mcc_mapping_file */
+#define MODEST_PROVIDER_DATA_DIR                 PREFIX "/share/modest/provider-data/mcc_mapping"
+#define MODEST_OPERATOR_WIZARD_PROVIDER_DATA_DIR "/usr/share/operator-wizard/mcc_mapping"
+
 
 /* configuration key definitions for modest */
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"
