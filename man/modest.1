@@ -30,47 +30,29 @@
 .\"    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"    
 .\"
-.TH modest 1 "February 2007" Unix "User Manuals"
+.TH modest 1 "November 2007" Unix "User Manuals"
 .SH NAME
 modest \- The Modest Mail User Agent
 .SH SYNOPSIS
 .PP
 .B modest 
-[-m \fIaddress\fP] 
-[-s \fIsubject\fP]
-[-b \fIbody\fP]
-[-c \fIcc\fP]
-[-x \fIbcc\fP]
-[-a \fIaccount\fP]
-[-b]
+[showui] 
 .SH DESCRIPTION
 .PP
-Modest is a graphical e-mail program, targetting resource constrained
+Modest is a graphical e-mail program, targetting resource-constrained
 environments, such as older PCs and internet tablets. It aims to be
 easy to use and provide a complete e-mail experience, while keeping
 the resource usage at a modest level (by 2007 standards).
 .SH OPTIONS
 .PP
-.IP "-m, --mailto \fIaddress\fP"
-Specify the To: address for the message
-.IP "-s, --subject \fIsubject\fP"
-Specify the subject for the message
-.IP "-b, --body \fIbody\fP"
-Specify the body for the message
-.IP "-c, --cc \fIaddress\fP"
-Specify a Cc: address for the message
-.IP "-x, --bcc \fIaddress\fP"
-Specify a Bcc: address for the message
-.IP "-a, --account \fIaccount\fP"
-Use the given (named) account
-.IP "-y, --batch"
-Use batch mode (don't show graphical UI)
-.IP "-h"
-Display help.
+.IP "showui"
+To actually start with the UI, you have to provide the 'showui' parameter to
+modest. Reason for this not being the default is to allow for DBUS-activation
+of various services without showing the UI.
 .SH ENVIRONMENT
 .PP
 .B "MODEST_DEBUG"
-The MODEST_DEBUG environment can contain an number of ':'-separated strings
+The MODEST_DEBUG environment may contain any number of ':'-separated strings
 to trigger certain debugging features:
 .PP
 .IP "abort-on-warning"
@@ -86,15 +68,8 @@ Debug GSignal usage (G_TYPE_DEBUG_SIGNALS)
 Return all the user-settings to the 'factory defaults'
 .SH EXIT CODES
 .PP
-.IP "0: no error"
-.IP "1: error in the options given to the program"
-.IP "2: error getting configuration data"
-.IP "3: error int the graphical user interface"
-.IP "4: error with Hildon (maemo-only)"
-.IP "5: error running"
-.IP "6: error sending mail"
-.IP "7: error in one or more of the paramaters"
-.IP "8: error in initialization"
+Normally, modest will exit with 0 as its exit code. In case of any error,
+the exit code will be non-zero.
 .SH FILES
 .PP
 .IP "~/.modest/cache"
@@ -122,6 +97,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .BR maildir (5),
 .PP
 Modest Home Page: http://modest.garage.maemo.org/
+
 .PP
 .SH COPYRIGHTS
 Copyright (c) 2006,2007 Nokia Corporation

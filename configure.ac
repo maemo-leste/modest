@@ -143,30 +143,6 @@ fi
 
 
 #
-# check the providers-data (on maemo)
-#
-if test "x$with_platform" == "xmaemo"; then  
-PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA,modest-providers-data,have_modest_providers_data=true,have_modest_providers_data=false)
-if test "x$have_modest_providers_data" == "xfalse"; then
-   PKG_CHECK_MODULES(MODEST_PROVIDERS_DATA,maemo-providers-data,have_maemo_providers_data=true,have_maemo_providers_data=false)
-   if test "x$have_maemo_providers_data" == "xfalse"; then
-      	echo "x$have_maemo_providers_data"   
-       	AC_MSG_ERROR([you need to have either modest-providers-data or maemo-providers-data installed])
-   else
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_MAEMO_PROVIDERS_DATA, 1, ["Whether maemo-providers-data is used."])
-	AC_DEFINE_UNQUOTED([MODEST_PROVIDERS_DATA_PATH],["`$PKG_CONFIG --variable=path maemo-providers-data`"],[maemo-providers-data file path])
-	providers_data="maemo-providers-data"		
-   fi
-else
-  AC_DEFINE_UNQUOTED(MODEST_HAVE_MODEST_PROVIDERS_DATA, 1, ["Whether modest-providers-data is used."])
-  AC_DEFINE_UNQUOTED([MODEST_PROVIDERS_DATA_PATH],["`$PKG_CONFIG --variable=path modest-providers-data`"],[modest-providers-data file path])
-  providers_data="modest-providers-data"								
-fi
-fi      
-   
-
-
-#
 # check hildon-help (only for maemo)
 #
 if test "x$with_platform" == "xmaemo"; then  
@@ -436,7 +412,6 @@ echo "Prefix           : ${prefix}"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
 echo "Gettext Packages : $GETTEXT_PACKAGE"
-echo "Easysetup data   : $providers_data"
 echo "Editor lib       : $wpeditor"
 echo "Addressbook      : $addressbook"
 echo "Help lib         : $helplib"
@@ -445,7 +420,6 @@ echo "Hildon-Notify    : $have_hildon_notify"
 echo "LibOGS support   : $have_ogs_support"
 echo "MozEmbed support : $use_mozembed"
 echo "CFLAGS           : $CFLAGS"
-echo "Gettext Packages : $GETTEXT_PACKAGE"
 echo "Debug version    : $with_debug"
 echo ""
 echo "NOTE: you should do a 'make clean' after changing architecture or platform (--with-platform=)"
