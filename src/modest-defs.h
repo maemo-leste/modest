@@ -71,9 +71,11 @@
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
 
 /* the mapping files, there are two possibilities; used in modest_maemo_open_mcc_mapping_file */
-#define MODEST_PROVIDER_DATA_DIR                 PREFIX "/share/modest/provider-data/mcc_mapping"
-#define MODEST_OPERATOR_WIZARD_PROVIDER_DATA_DIR "/usr/share/operator-wizard/mcc_mapping"
+#define MODEST_MCC_MAPPING                 PREFIX "/share/modest/provider-data/mcc_mapping"
+#define MODEST_OPERATOR_WIZARD_MCC_MAPPING "/usr/share/operator-wizard/mcc_mapping"
 
+#define MODEST_PROVIDER_DATA_FILE         PREFIX "/share/modest/provider-data/modest-provider-data.keyfile"  
+#define MODEST_MAEMO_PROVIDER_DATA_FILE	  PREFIX "/share/modest/provider-data/maemo-provider-data.keyfile"  
 
 /* configuration key definitions for modest */
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"

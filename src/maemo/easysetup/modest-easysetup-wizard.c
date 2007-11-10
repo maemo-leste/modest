@@ -1104,7 +1104,8 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 		if (priv->dirty) {
 			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
 				_("imum_nc_wizard_confirm_lose_changes")));
-			/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
+			/* TODO: These button names will be ambiguous, and not
+			 * specified in the UI specification. */
 
 			const gint dialog_response = gtk_dialog_run (dialog);
 			self->combo_account_country = NULL;
@@ -1140,7 +1141,8 @@ presets_idle (gpointer userdata)
 		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
 			EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
 		easysetup_provider_combo_box_fill (
-			EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider), priv->presets, mcc);
+			EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider),
+			priv->presets, mcc);
 	}
 
 	g_object_unref (idle_data->dialog);
@@ -1158,17 +1160,31 @@ presets_loader (gpointer userdata)
 	ModestPresets *presets = NULL;
 	IdleData *idle_data;
 
-	const gchar* filepath = MODEST_PROVIDERS_DATA_PATH; /* Defined in config.h */
-	presets = modest_presets_new (filepath);
-	if (!(presets)) {
-		g_warning ("Could not locate the official provider data keyfile from %s", filepath);
+	const gchar* path  = NULL;
+	const gchar* path1 = MODEST_PROVIDER_DATA_FILE;
+	const gchar* path2 = MODEST_MAEMO_PROVIDER_DATA_FILE;
+	
+	if (access(path1, R_OK) == 0) 
+		path = path1;
+	else if (access(path2, R_OK) == 0)
+		path = path2;
+	else {
+		g_warning ("%s: neither '%s' nor '%s' is a readable provider data file",
+			   __FUNCTION__, path1, path2);
+		return NULL;
 	}
 
+	presets = modest_presets_new (path);
+	if (!presets) {
+		g_warning ("%s: failed to parse '%s'", __FUNCTION__, path);
+		return NULL;
+	}
+	
 	idle_data = g_new0 (IdleData, 1);
 	idle_data->dialog = self;
 	idle_data->presets = presets;
-
-	g_idle_add (presets_idle, idle_data);
+	
+	g_idle_add (presets_idle, idle_data);	
 
 	return NULL;
 }

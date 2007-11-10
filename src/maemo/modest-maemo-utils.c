@@ -692,8 +692,8 @@ modest_maemo_open_mcc_mapping_file (void)
 	FILE* result;
 	
 	const gchar* path;
-	const gchar* path1 = MODEST_OPERATOR_WIZARD_PROVIDER_DATA_DIR;
-	const gchar* path2 = MODEST_PROVIDER_DATA_DIR;
+	const gchar* path1 = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
+	const gchar* path2 = MODEST_MCC_MAPPING;
 	
 	if (access(path1, R_OK) == 0) 
 		path = path1;

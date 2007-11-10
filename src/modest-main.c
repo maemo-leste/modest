@@ -90,6 +90,11 @@ main (int argc, char *argv[])
 		if (strcmp (argv[1], "showui") == 0)
 			show_ui_without_top_application_method = TRUE;
 	}
+
+	if (!show_ui_without_top_application_method) {
+		g_print ("modest: not showing UI\n");
+		g_print ("modest: use 'modest showui' to start with UI\n");
+	}	
 		
 	if (!g_thread_supported())
 		g_thread_init (NULL);
@@ -97,6 +102,12 @@ main (int argc, char *argv[])
 	gdk_threads_init ();
 	gdk_threads_enter ();
 
+	if (!getenv("DISPLAY")) {
+		g_printerr ("modest: DISPLAY env variable is not set\n");
+		retval = 1;
+		goto cleanup;
+	}
+	
 	if (!gtk_init_check (&argc, &argv)) {
 		g_printerr ("modest: failed to initialize gtk\n");
 		retval = 1;

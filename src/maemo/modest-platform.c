@@ -92,12 +92,13 @@ check_required_files (void)
 		return FALSE;
 	} else 
 		fclose (mcc_file);
-
-	if (access (MODEST_PROVIDERS_DATA_PATH, R_OK) != 0) {
+	
+	if (access(MODEST_PROVIDER_DATA_FILE, R_OK) != 0 &&
+	    access(MODEST_MAEMO_PROVIDER_DATA_FILE, R_OK) != 0) {
 		g_printerr ("modest: cannot find providers data\n");
 		return FALSE;
 	}
-
+	
 	return TRUE;
 }
 
