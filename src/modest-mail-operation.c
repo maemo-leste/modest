@@ -871,7 +871,7 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 		g_error_free(priv->error);
 	}
 
-	priv->error = g_error_copy(err);
+	priv->error = (err == NULL) ? NULL : g_error_copy(err);
 
 	if ((!priv->error) && (info->draft_msg != NULL)) {
 		TnyHeader *header = tny_msg_get_header (info->draft_msg);
