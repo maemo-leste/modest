@@ -551,15 +551,23 @@ static void
 init_i18n (void)
 {
 	const gchar* gettext_package;
-	/* Setup gettext, to use our .po files: */
-	/* GETTEXT_PACKAGE and MODEST_LOCALE_DIR are defined in config.h */
-/* #ifdef MODEST_HILDON_VERSION_0 */
-/* 	gettext_package = GETTEXT_PACKAGE; */
-/* 	bindtextdomain (gettext_package, MODEST_LOCALE_DIR); */
-/* #else */
-/* 	gettext_package = "osso-email"; /\* HACK to use the localizations *\/ */
-/* 	bindtextdomain (gettext_package, "/usr/share/locale"); */
-/* #endif /\*MODEST_HILDON_VERSION_0*\/ */
+
+#ifdef MODEST_PLATFORM_MAEMO
+	/* little trick make en_GB the fallback language, instead
+	 * of the logical IDs
+	 * we need the ugly ifdefs, because modest_platform_init is
+	 * too late.
+	 */
+	const gchar *lang = getenv ("LANG");
+	if (!lang) 
+		setenv ("LANGUAGE", "en_GB", 1);
+	else {
+		gchar *language = g_strdup_printf ("%s:en_GB", lang);
+		setenv ("LANGUAGE", language, 1);
+		g_free (language);
+	}
+	/* end of little trick */
+#endif /*MODEST_PLATFORM_MAEMO */
 	
 	gettext_package = GETTEXT_PACKAGE;
 
