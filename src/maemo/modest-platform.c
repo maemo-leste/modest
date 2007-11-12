@@ -1828,7 +1828,9 @@ on_conic_device_went_online (TnyMaemoConicDevice *device, const gchar* iap_id, g
  	
 void 
 modest_platform_connect_and_perform (GtkWindow *parent_window, 
-				     TnyAccount *account, ModestConnectedPerformer callback, gpointer user_data)
+				     TnyAccount *account, 
+				     ModestConnectedPerformer callback, 
+				     gpointer user_data)
 {
  	gboolean device_online;
  	TnyDevice *device;

@@ -1662,8 +1662,9 @@ do_send_receive_performer (gboolean canceled,
 	}
 
 	/* Set send/receive operation in progress */	
-	if (info->win && MODEST_IS_MAIN_WINDOW (info->win))
+	if (info->win && MODEST_IS_MAIN_WINDOW (info->win)) {
 		modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW (info->win));
+	}
 	
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (info->win),
 								 modest_ui_actions_send_receive_error_handler,
@@ -1825,47 +1826,6 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win)
 	account_names = NULL;
 }
 
-static void 
-refresh_current_folder(ModestWindow *win)
-{
-	/* Refresh currently selected folder. Note that if we only
-	   want to retreive the headers, then the refresh only will
-	   invoke a poke_status over all folders, i.e., only the
-	   total/unread count will be updated */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *header_view, *folder_view;
-		TnyFolderStore *folder_store;
-
-		/* Get folder and header view */
-		folder_view = 
-			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
-							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		if (!folder_view)
-			return;
-
-		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-		if (folder_store && TNY_IS_FOLDER (folder_store)) {
-			header_view = 
-				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		
-			/* We do not need to set the contents style
-			   because it hasn't changed. We also do not
-			   need to save the widget status. Just force
-			   a refresh */
-			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
-						       TNY_FOLDER (folder_store),
-						       folder_refreshed_cb,
-						       MODEST_MAIN_WINDOW (win));
-		}
-		
-		if (folder_store)
-			g_object_unref (folder_store);
-	}
-}
-
-
 /*
  * Handler of the click on Send&Receive button in the main toolbar
  */
@@ -1879,10 +1839,6 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 	/* If not, allow the user to create an account before trying to send/receive. */
 	if (!accounts_exist)
 		modest_ui_actions_on_accounts (NULL, win);
-
-	/* Refresh the current folder if we're viewing a window */
-	if (win)
-		refresh_current_folder (win);
 	
 	/* Refresh the active account */
 	modest_ui_actions_do_send_receive (NULL, win);
@@ -4820,8 +4776,47 @@ static void
 on_send_receive_finished (ModestMailOperation  *mail_op, 
 			   gpointer user_data)
 {
+	GtkWidget *header_view, *folder_view;
+	TnyFolderStore *folder_store;
+	ModestMainWindow *main_win = MODEST_MAIN_WINDOW (user_data);
+
 	/* Set send/receive operation finished */	
-	modest_main_window_notify_send_receive_completed (MODEST_MAIN_WINDOW (user_data));	
+	modest_main_window_notify_send_receive_completed (main_win);
+
+	/* Don't refresh the current folder if there were any errors */
+	if (modest_mail_operation_get_status (mail_op) !=
+	    MODEST_MAIL_OPERATION_STATUS_SUCCESS)
+		return;
+	
+	/* Refresh the current folder if we're viewing a window. We do
+	   this because the user won't be able to see the new mails in
+	   the selected folder after a Send&Receive because it only
+	   performs a poke_status, i.e, only the number of read/unread
+	   messages is updated, but the new headers are not
+	   downloaded */
+	folder_view = modest_main_window_get_child_widget (main_win, 
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view)
+		return;
+
+	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+	
+	if (folder_store && TNY_IS_FOLDER (folder_store)) {
+		header_view = modest_main_window_get_child_widget (main_win,
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+		
+		/* We do not need to set the contents style
+		   because it hasn't changed. We also do not
+		   need to save the widget status. Just force
+		   a refresh */
+		modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
+					       TNY_FOLDER (folder_store),
+					       folder_refreshed_cb,
+					       main_win);
+	}
+	
+	if (folder_store)
+		g_object_unref (folder_store);
 }
 
 
