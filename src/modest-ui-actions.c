@@ -2214,6 +2214,7 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 		      gpointer user_data)
 {
 	ModestMsgEditWindow *edit_window;
+	char *info_text;
 
 	edit_window = MODEST_MSG_EDIT_WINDOW (user_data);
 
@@ -2222,6 +2223,9 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 		return;
 
 	modest_msg_edit_window_set_draft (edit_window, saved_draft);
+	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
+	modest_platform_information_banner (NULL, NULL, info_text);
+	g_free (info_text);
 }
 
 void
@@ -2232,7 +2236,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	MsgData *data;
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
-	gchar *info_text = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 	
@@ -2293,11 +2296,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
-
-	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
-	modest_platform_information_banner (NULL, NULL, info_text);
 	modest_msg_edit_window_reset_modified (edit_window);
-	g_free (info_text);
 }
 
 /* For instance, when clicking the Send toolbar button when editing a message: */

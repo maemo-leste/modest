@@ -850,6 +850,73 @@ typedef struct
 	TnyMsg *draft_msg;
 	SaveToDraftstCallback callback;
 	gpointer user_data;
+	TnyFolder *drafts;
+	TnyMsg *msg;
+	ModestMailOperation *mailop;
+} SaveToDraftsAddMsgInfo;
+
+static void
+modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
+						gboolean canceled,
+						GError *err,
+						gpointer userdata)
+{
+	ModestMailOperationPrivate *priv = NULL;
+	SaveToDraftsAddMsgInfo *info = (SaveToDraftsAddMsgInfo *) userdata;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mailop);
+
+	if (priv->error) {
+		g_warning ("%s: priv->error != NULL", __FUNCTION__);
+		g_error_free(priv->error);
+	}
+
+	priv->error = g_error_copy(err);
+
+	if ((!priv->error) && (info->draft_msg != NULL)) {
+		TnyHeader *header = tny_msg_get_header (info->draft_msg);
+		TnyFolder *src_folder = tny_header_get_folder (header);
+
+		/* Remove the old draft */
+		tny_folder_remove_msg (src_folder, header, NULL);
+
+		/* Synchronize to expunge and to update the msg counts */
+		tny_folder_sync_async (info->drafts, TRUE, NULL, NULL, NULL);
+		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);
+
+		g_object_unref (G_OBJECT(header));
+		g_object_unref (G_OBJECT(src_folder));
+	}
+
+	if (!priv->error)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	else
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+
+	/* Call the user callback */
+	if (info->callback)
+		info->callback (info->mailop, info->msg, info->user_data);
+
+	if (info->transport_account)
+		g_object_unref (G_OBJECT(info->transport_account));
+	if (info->draft_msg)
+		g_object_unref (G_OBJECT (info->draft_msg));
+	if (info->drafts)
+		g_object_unref (G_OBJECT(info->drafts));
+	if (info->msg)
+		g_object_unref (G_OBJECT (info->msg));
+	g_slice_free (SaveToDraftsAddMsgInfo, info);
+
+	modest_mail_operation_notify_end (info->mailop);
+	g_object_unref(info->mailop);
+}
+
+typedef struct
+{
+	TnyTransportAccount *transport_account;
+	TnyMsg *draft_msg;
+	SaveToDraftstCallback callback;
+	gpointer user_data;
 } SaveToDraftsInfo;
 
 static void
@@ -857,70 +924,52 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 					 TnyMsg *msg,
 					 gpointer userdata)
 {
-	TnyFolder *src_folder = NULL;
 	TnyFolder *drafts = NULL;
-	TnyHeader *header = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	SaveToDraftsInfo *info = (SaveToDraftsInfo *) userdata;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	if (!msg) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
 			     "modest: failed to create a new msg\n");
-		goto end;
+	} else {
+		drafts = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
+								TNY_FOLDER_TYPE_DRAFTS);
+		if (!drafts) {
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+				     "modest: failed to create a new msg\n");
+		}
 	}
 
-	drafts = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account), 
-							TNY_FOLDER_TYPE_DRAFTS);
-	if (!drafts) {
+	if (!priv->error) {
+		SaveToDraftsAddMsgInfo *cb_info = g_slice_new(SaveToDraftsAddMsgInfo);
+		cb_info->transport_account = g_object_ref(info->transport_account);
+		cb_info->draft_msg = g_object_ref(info->draft_msg);
+		cb_info->callback = info->callback;
+		cb_info->user_data = info->user_data;
+		cb_info->drafts = g_object_ref(drafts);
+		cb_info->msg = g_object_ref(msg);
+		cb_info->mailop = g_object_ref(self);
+		tny_folder_add_msg_async(drafts, msg, modest_mail_operation_save_to_drafts_add_msg_cb,
+					 NULL, cb_info);
+	} else {
+		/* Call the user callback */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     "modest: failed to create a new msg\n");
-		goto end;
+		if (info->callback)
+			info->callback (self, msg, info->user_data);
+		modest_mail_operation_notify_end (self);
 	}
-
-	if (!priv->error)
-		tny_folder_add_msg (drafts, msg, &(priv->error));
-
-	if ((!priv->error) && (info->draft_msg != NULL)) {
-		header = tny_msg_get_header (info->draft_msg);
-		src_folder = tny_header_get_folder (header); 
-
-		/* Remove the old draft */
-		tny_folder_remove_msg (src_folder, header, NULL);
-
-		/* Synchronize to expunge and to update the msg counts */
-		tny_folder_sync_async (drafts, TRUE, NULL, NULL, NULL);
-		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);
-
-		g_object_unref (header);
-	}
-	
-	if (!priv->error)
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	else
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-
-end:
-	/* Call the user callback */
-	if (info->callback)
-		info->callback (self, msg, info->user_data);
 
 	if (drafts)
 		g_object_unref (G_OBJECT(drafts));
-	if (src_folder)
-		g_object_unref (G_OBJECT(src_folder));
 	if (info->draft_msg)
 		g_object_unref (G_OBJECT (info->draft_msg));
 	if (info->transport_account)
 		g_object_unref (G_OBJECT(info->transport_account));
 	g_slice_free (SaveToDraftsInfo, info);
-
- 	modest_mail_operation_notify_end (self);
 }
 
 void
