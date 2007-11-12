@@ -25,8 +25,11 @@ modest-window-priv
 </para>
 
 @ui_manager: 
+@ui_dimming_manager: 
 @toolbar: 
 @menubar: 
+@dimming_state: 
+@ui_dimming_enabled: 
 @active_account: 
 
 <!-- ##### MACRO MODEST_WINDOW_GET_PRIVATE ##### -->

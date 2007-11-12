@@ -19,31 +19,6 @@ ModestMailOperation
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### ENUM ModestMailOperationForwardType ##### -->
-<para>
-
-</para>
-
-@MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE: 
-@MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT: 
-
-<!-- ##### ENUM ModestMailOperationReplyType ##### -->
-<para>
-
-</para>
-
-@MODEST_MAIL_OPERATION_REPLY_TYPE_CITE: 
-@MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE: 
-
-<!-- ##### ENUM ModestMailOperationReplyMode ##### -->
-<para>
-
-</para>
-
-@MODEST_MAIL_OPERATION_REPLY_MODE_SENDER: 
-@MODEST_MAIL_OPERATION_REPLY_MODE_LIST: 
-@MODEST_MAIL_OPERATION_REPLY_MODE_ALL: 
-
 <!-- ##### ENUM ModestMailOperationStatus ##### -->
 <para>
 
@@ -68,6 +43,7 @@ ModestMailOperation
 
 </para>
 
+@source: 
 @Returns: 
 
 
@@ -88,36 +64,17 @@ ModestMailOperation
 
 @self: 
 @transport_account: 
+@draft_msg: 
 @from: 
 @to: 
 @cc: 
 @bcc: 
 @subject: 
-@body: 
+@plain_body: 
+@html_body: 
 @attachments_list: 
-
-
-<!-- ##### FUNCTION modest_mail_operation_create_forward_mail ##### -->
-<para>
-
-</para>
-
-@msg: 
-@from: 
-@forward_type: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_mail_operation_create_reply_mail ##### -->
-<para>
-
-</para>
-
-@msg: 
-@from: 
-@reply_type: 
-@reply_mode: 
-@Returns: 
+@images_list: 
+@priority_flags: 
 
 
 <!-- ##### FUNCTION modest_mail_operation_update_account ##### -->
@@ -126,7 +83,9 @@ ModestMailOperation
 </para>
 
 @self: 
-@store_account: 
+@account_name: 
+@callback: 
+@user_data: 
 @Returns: 
 
 

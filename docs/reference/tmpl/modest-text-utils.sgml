@@ -36,8 +36,10 @@ modest-text-utils
 
 @text: 
 @content_type: 
+@signature: 
 @from: 
 @sent_date: 
+@attachments: 
 @limit: 
 @Returns: 
 
@@ -49,6 +51,7 @@ modest-text-utils
 
 @text: 
 @content_type: 
+@signature: 
 @from: 
 @sent_date: 
 @Returns: 
@@ -61,6 +64,7 @@ modest-text-utils
 
 @text: 
 @content_type: 
+@signature: 
 @from: 
 @sent_date: 
 @to: 
@@ -105,7 +109,6 @@ modest-text-utils
 </para>
 
 @address: 
-@Returns: 
 
 
 <!-- ##### FUNCTION modest_text_utils_get_subject_prefix_len ##### -->
@@ -152,6 +155,7 @@ modest-text-utils
 </para>
 
 @email_address: 
+@invalid_char_position: 
 @Returns: 
 
 

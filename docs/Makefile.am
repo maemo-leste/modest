@@ -1,5 +1,7 @@
 #
 # Makefile.am
-# Time-stamp: <2006-04-17 13:23:36 (djcb)>
+# Time-stamp: <2007-11-12 12:39:12 (djcb)>
+#
+
 SUBDIRS=reference
 

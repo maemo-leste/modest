@@ -39,8 +39,12 @@ ModestHeaderView
 @MODEST_HEADER_VIEW_COLUMN_MSGTYPE: 
 @MODEST_HEADER_VIEW_COLUMN_ATTACH: 
 @MODEST_HEADER_VIEW_COLUMN_SIZE: 
+@MODEST_HEADER_VIEW_COLUMN_STATUS: 
+@MODEST_HEADER_VIEW_COLUMN_COMPACT_FLAG: 
 @MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN: 
 @MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT: 
+@MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE: 
+@MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE: 
 @MODEST_HEADER_VIEW_COLUMN_NUM: 
 
 <!-- ##### ENUM ModestHeaderViewStyle ##### -->
@@ -85,6 +89,8 @@ ModestHeaderView
 
 @self: 
 @folder: 
+@callback: 
+@user_data: 
 
 
 <!-- ##### FUNCTION modest_header_view_get_folder ##### -->
@@ -103,6 +109,7 @@ ModestHeaderView
 
 @self: 
 @columns: 
+@type: 
 @Returns: 
 
 

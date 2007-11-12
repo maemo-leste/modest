@@ -24,7 +24,6 @@ SCANGOBJ_OPTIONS=
 # e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED" 
 SCAN_OPTIONS= \
 	--source-dir=$(top_srcdir)/src/widgets \
-	--source-dir=$(top_srcdir)/src/gtk \
 	--source-dir=$(top_srcdir)/src
 
 # Extra options to supply to gtkdoc-mkdb.
@@ -42,8 +41,8 @@ FIXXREF_OPTIONS=
 # Used for dependencies. The docs will be rebuilt if any of these change.
 # e.g. HFILE_GLOB=$(top_srcdir)/*.h
 # e.g. CFILE_GLOB=$(top_srcdir)/*.c
-HFILE_GLOB=$(top_srcdir)/src/*.h $(top_srcdir)/src/widgets/*.h  $(top_srcdir)/src/gtk/*.h 
-CFILE_GLOB=$(top_srcdir)/src/*.c $(top_srcdir)/src/widgets/*.c  $(top_srcdir)/src/gtk/*.c 
+HFILE_GLOB=$(top_srcdir)/src/*.h $(top_srcdir)/src/widgets/*.h  
+CFILE_GLOB=$(top_srcdir)/src/*.c $(top_srcdir)/src/widgets/*.c  
 
 # Header files to ignore when scanning.
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
@@ -72,41 +71,103 @@ expand_content_files=
 # e.g. INCLUDES=-I$(top_srcdir) -I$(top_builddir) $(GTK_DEBUG_FLAGS)
 # e.g. GTKDOC_LIBS=$(top_builddir)/gtk/$(gtktargetlib)
 INCLUDES=						\
-	-I$(top_srcdir)/src $(MODEST_GSTUFF_CFLAGS)	\
-	-I$(top_srcdir)/src				\
-	-I$(top_srcdir)/src/gtk				\
+	-I$(top_srcdir)/src                     	\
 	-I$(top_srcdir)/src/widgets
-
+	$(MODEST_GSTUFF_CFLAGS)\
+	$(MODEST_PLATFORM_CFLAGS) \
+	$(MODEST_HILDON_WIDGETS_CFLAGS) \
+	$(MODEST_OGS_CFLAGS) \
+	$(MODEST_HILDON_HELP_CFLAGS) \
+	$(MODEST_HILDON_NOTIFY_CFLAGS) \
+	$(MODEST_MOZEMBED_CFLAGS) \
+	-I$(MODEST_PLATFORM) \
+	-DPREFIX=\"@prefix@\" \
+	-DMAEMO_CHANGES \
+	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
+	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
+	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"
 
 GTKDOC_LIBS= \
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)	\
-	$(MODEST_LIBTINYMAIL_MAEMO_LIBS) 		\
-	$(MODEST_GSTUFF_LIBS)			\
-	$(top_builddir)/src/gtk/libmodest-ui.la		\
-	$(top_builddir)/src/widgets/libmodest-widgets.la\
-	${top_builddir}/src/modest-account-mgr.o \
-	${top_builddir}/src/modest-account-mgr-helpers.o \
-	${top_builddir}/src/modest-account-mgr-priv.o \
-	${top_builddir}/src/modest-cache-mgr.o \
-	${top_builddir}/src/modest-conf.o \
-	${top_builddir}/src/modest-formatter.o \
-	${top_builddir}/src/modest-local-folder-info.o \
-	${top_builddir}/src/modest-mail-operation.o \
-	${top_builddir}/src/modest-mail-operation-queue.o \
-	${top_builddir}/src/modest-marshal.o \
-	${top_builddir}/src/modest-pair.o \
-	${top_builddir}/src/modest-protocol-info.o \
-	${top_builddir}/src/modest-runtime.o \
-	${top_builddir}/src/modest-singletons.o \
-	${top_builddir}/src/modest-text-utils.o \
-	${top_builddir}/src/modest-tny-account.o \
-	${top_builddir}/src/modest-tny-account-store.o \
-	${top_builddir}/src/modest-tny-folder.o \
-	${top_builddir}/src/modest-tny-msg.o \
-	${top_builddir}/src/modest-tny-platform-factory.o \
-	${top_builddir}/src/modest-tny-send-queue.o \
-	${top_builddir}/src/modest-ui-actions.o \
-	${top_builddir}/src/modest-widget-memory.o
+	$(MODEST_GSTUFF_LIBS) 			        \
+	$(MODEST_MOZEMBED_LIBS) 			\
+	$(MODEST_PLATFORM_LIBS)	                        \
+	$(MODEST_HILDON_WIDGETS_LIBS)			\
+	$(MODEST_HILDON_HELP_LIBS)			\
+	$(MODEST_HILDON_NOTIFY_LIBS)			\
+	$(MODEST_OGS_LIBS)				\
+	${easysetupmaybe}				\
+	$(MODEST_PLATFORM)/libmodest-ui.la		\
+	widgets/libmodest-widgets.la                    \
+	dbus_api/libmodest-dbus-api.la			\
+	${top_builddir}/src/modest-modest-account-mgr-helpers.o \
+	${top_builddir}/src/modest-modest-account-mgr.o \
+	${top_builddir}/src/modest-modest-address-book-dummy.o \
+	${top_builddir}/src/modest-modest-cache-mgr.o \
+	${top_builddir}/src/modest-modest-conf.o \
+	${top_builddir}/src/modest-modest-dimming-rule.o \
+	${top_builddir}/src/modest-modest-dimming-rules-group.o \
+	${top_builddir}/src/modest-modest-email-clipboard.o \
+	${top_builddir}/src/modest-modest-formatter.o \
+	${top_builddir}/src/modest-modest-init.o \
+	${top_builddir}/src/modest-modest-local-folder-info.o \
+	${top_builddir}/src/modest-modest-mail-operation.o \
+	${top_builddir}/src/modest-modest-mail-operation-queue.o \
+	${top_builddir}/src/modest-modest-main.o \
+	${top_builddir}/src/modest-modest-marshal.o \
+	${top_builddir}/src/modest-modest-pair.o \
+	${top_builddir}/src/modest-modest-progress-object.o \
+	${top_builddir}/src/modest-modest-protocol-info.o \
+	${top_builddir}/src/modest-modest-runtime.o \
+	${top_builddir}/src/modest-modest-search.o \
+	${top_builddir}/src/modest-modest-signal-mgr.o \
+	${top_builddir}/src/modest-modest-singletons.o \
+	${top_builddir}/src/modest-modest-stream-text-to-html.o \
+	${top_builddir}/src/modest-modest-text-utils.o \
+	${top_builddir}/src/modest-modest-tny-account.o \
+	${top_builddir}/src/modest-modest-tny-account-store.o \
+	${top_builddir}/src/modest-modest-tny-folder.o \
+	${top_builddir}/src/modest-modest-tny-local-folders-account.o \
+	${top_builddir}/src/modest-modest-tny-msg.o \
+	${top_builddir}/src/modest-modest-tny-outbox-account.o \
+	${top_builddir}/src/modest-modest-tny-platform-factory.o \
+	${top_builddir}/src/modest-modest-tny-send-queue.o \
+	${top_builddir}/src/modest-modest-transport-account-decorator.o \
+	${top_builddir}/src/modest-modest-ui-actions.o \
+	${top_builddir}/src/modest-modest-ui-dimming-manager.o \
+	${top_builddir}/src/modest-modest-ui-dimming-rules.o \
+	${top_builddir}/src/modest-modest-widget-memory.o \
+	${top_builddir}/src/widgets/modest-account-view.o \
+	${top_builddir}/src/widgets/modest-attachments-view.o \
+	${top_builddir}/src/widgets/modest-attachment-view.o \
+	${top_builddir}/src/widgets/modest-combo-box.o \
+	${top_builddir}/src/widgets/modest-details-dialog.o \
+	${top_builddir}/src/widgets/modest-dnd.o \
+	${top_builddir}/src/widgets/modest-folder-view.o \
+	${top_builddir}/src/widgets/modest-global-settings-dialog.o \
+	${top_builddir}/src/widgets/modest-gtkhtml-mime-part-view.o \
+	${top_builddir}/src/widgets/modest-gtkhtml-msg-view.o \
+	${top_builddir}/src/widgets/modest-hbox-cell-renderer.o \
+	${top_builddir}/src/widgets/modest-header-view.o \
+	${top_builddir}/src/widgets/modest-header-view-observer.o \
+	${top_builddir}/src/widgets/modest-header-view-render.o \
+	${top_builddir}/src/widgets/modest-isearch-view.o \
+	${top_builddir}/src/widgets/modest-limit-retrieve-combo-box.o \
+	${top_builddir}/src/widgets/modest-mail-header-view.o \
+	${top_builddir}/src/widgets/modest-mime-part-view.o \
+	${top_builddir}/src/widgets/modest-msg-view.o \
+	${top_builddir}/src/widgets/modest-recpt-editor.o \
+	${top_builddir}/src/widgets/modest-recpt-view.o \
+	${top_builddir}/src/widgets/modest-retrieve-combo-box.o \
+	${top_builddir}/src/widgets/modest-scroll-text.o \
+	${top_builddir}/src/widgets/modest-secureauth-combo-box.o \
+	${top_builddir}/src/widgets/modest-serversecurity-combo-box.o \
+	${top_builddir}/src/widgets/modest-tny-stream-gtkhtml.o \
+	${top_builddir}/src/widgets/modest-validating-entry.o \
+	${top_builddir}/src/widgets/modest-vbox-cell-renderer.o \
+	${top_builddir}/src/widgets/modest-window-mgr.o \
+	${top_builddir}/src/widgets/modest-window.o \
+	${top_builddir}/src/widgets/modest-zoomable.o 
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
 include $(top_srcdir)/gtk-doc.make

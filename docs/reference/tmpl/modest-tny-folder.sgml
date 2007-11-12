@@ -24,8 +24,10 @@ modest-tny-folder
 
 </para>
 
-@MODEST_FOLDER_RULES_FOLDER_READ_ONLY: 
-@MODEST_FOLDER_RULES_FOLDER_DELETABLE: 
+@MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE: 
+@MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE: 
+@MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE: 
+@MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE: 
 
 <!-- ##### FUNCTION modest_tny_folder_guess_folder_type ##### -->
 <para>
@@ -36,25 +38,7 @@ modest-tny-folder
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_tny_folder_guess_folder_type_from_name ##### -->
-<para>
-
-</para>
-
-@folder_name: 
-@Returns: 
-
-
 <!-- ##### FUNCTION modest_tny_folder_is_local_folder ##### -->
-<para>
-
-</para>
-
-@folder: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_tny_folder_get_local_folder_type ##### -->
 <para>
 
 </para>

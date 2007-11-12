@@ -35,15 +35,6 @@ ModestStoreWidget
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_store_widget_get_remember_password ##### -->
-<para>
-
-</para>
-
-@self: 
-@Returns: 
-
-
 <!-- ##### FUNCTION modest_store_widget_get_username ##### -->
 <para>
 

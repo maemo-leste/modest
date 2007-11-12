@@ -54,13 +54,6 @@ modest-defs
 
 
 
-<!-- ##### MACRO MODEST_LOCAL_FOLDERS_DISPLAY_NAME ##### -->
-<para>
-
-</para>
-
-
-
 <!-- ##### MACRO MODEST_CONF_NAMESPACE ##### -->
 <para>
 
@@ -209,13 +202,6 @@ modest-defs
 
 
 <!-- ##### MACRO MODEST_ACCOUNT_PREFERRED_CNX ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### MACRO MODEST_ACCOUNT_OPTIONS ##### -->
 <para>
 
 </para>

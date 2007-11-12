@@ -244,6 +244,36 @@ ModestWidgetFactory
 </para>
 
 
+<!-- ##### MACRO MODEST_ACCOUNT_OPTIONS ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_CALENDAR ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_CONTACTS ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_FOLDER_ICON_NOTES ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO MODEST_LOCAL_FOLDERS_DISPLAY_NAME ##### -->
+<para>
+
+</para>
+
+
 <!-- ##### SIGNAL ModestAccountMgr::account-changed ##### -->
 <para>
 
@@ -325,6 +355,31 @@ ModestWidgetFactory
 @:
 
 
+<!-- ##### ENUM ModestMailOperationForwardType ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_FORWARD_TYPE_INLINE: 
+@MODEST_MAIL_OPERATION_FORWARD_TYPE_ATTACHMENT: 
+
+<!-- ##### ENUM ModestMailOperationReplyMode ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_REPLY_MODE_SENDER: 
+@MODEST_MAIL_OPERATION_REPLY_MODE_LIST: 
+@MODEST_MAIL_OPERATION_REPLY_MODE_ALL: 
+
+<!-- ##### ENUM ModestMailOperationReplyType ##### -->
+<para>
+
+</para>
+
+@MODEST_MAIL_OPERATION_REPLY_TYPE_CITE: 
+@MODEST_MAIL_OPERATION_REPLY_TYPE_QUOTE: 
+
 <!-- ##### STRUCT ModestPresets ##### -->
 <para>
 
@@ -344,6 +399,38 @@ ModestWidgetFactory
 @MODEST_PRESETS_INFO_APOP: 
 @MODEST_PRESETS_INFO_SECURE_SMTP: 
 @MODEST_PRESETS_INFO_SECURE_INCOMING: 
+
+<!-- ##### ENUM ModestProtocol ##### -->
+<para>
+
+</para>
+
+@MODEST_PROTOCOL_UNKNOWN: 
+@MODEST_PROTOCOL_TRANSPORT_SENDMAIL: 
+@MODEST_PROTOCOL_TRANSPORT_SMTP: 
+@MODEST_PROTOCOL_STORE_POP: 
+@MODEST_PROTOCOL_STORE_IMAP: 
+@MODEST_PROTOCOL_STORE_MAILDIR: 
+@MODEST_PROTOCOL_STORE_MBOX: 
+@MODEST_PROTOCOL_SECURITY_NONE: 
+@MODEST_PROTOCOL_SECURITY_SSL: 
+@MODEST_PROTOCOL_SECURITY_TLS: 
+@MODEST_PROTOCOL_SECURITY_TLS_OP: 
+@MODEST_PROTOCOL_AUTH_NONE: 
+@MODEST_PROTOCOL_AUTH_PASSWORD: 
+@MODEST_PROTOCOL_NUM: 
+
+<!-- ##### ENUM ModestProtocolType ##### -->
+<para>
+
+</para>
+
+@MODEST_PROTOCOL_TYPE_UNKNOWN: 
+@MODEST_PROTOCOL_TYPE_TRANSPORT: 
+@MODEST_PROTOCOL_TYPE_STORE: 
+@MODEST_PROTOCOL_TYPE_SECURITY: 
+@MODEST_PROTOCOL_TYPE_AUTH: 
+@MODEST_PROTOCOL_TYPE_NUM: 
 
 <!-- ##### SIGNAL ModestTnyAccountStore::account-update ##### -->
 <para>
@@ -399,6 +486,17 @@ ModestWidgetFactory
 @self: 
 @name: 
 @enabled: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_account_mgr_search_server_accounts ##### -->
+<para>
+
+</para>
+
+@self: 
+@account_name: 
+@type: 
+@proto: 
 @Returns: 
 
 <!-- ##### FUNCTION modest_debug_g_type_init ##### -->
@@ -549,6 +647,27 @@ ModestWidgetFactory
 @folder: 
 @Returns: 
 
+<!-- ##### FUNCTION modest_mail_operation_create_forward_mail ##### -->
+<para>
+
+</para>
+
+@msg: 
+@from: 
+@forward_type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_mail_operation_create_reply_mail ##### -->
+<para>
+
+</para>
+
+@msg: 
+@from: 
+@reply_type: 
+@reply_mode: 
+@Returns: 
+
 <!-- ##### FUNCTION modest_mail_operation_move_folder ##### -->
 <para>
 
@@ -568,90 +687,6 @@ ModestWidgetFactory
 @folder: 
 @Returns: 
 
-<!-- ##### MACRO modest_marshal_VOID__POINTER_BOOL ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### FUNCTION modest_marshal_VOID__POINTER_BOOLEAN ##### -->
-<para>
-
-</para>
-
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
-
-<!-- ##### FUNCTION modest_marshal_VOID__POINTER_POINTER ##### -->
-<para>
-
-</para>
-
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
-
-<!-- ##### FUNCTION modest_marshal_VOID__POINTER_POINTER_POINTER ##### -->
-<para>
-
-</para>
-
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
-
-<!-- ##### MACRO modest_marshal_VOID__STRING_BOOL ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### FUNCTION modest_marshal_VOID__STRING_BOOLEAN ##### -->
-<para>
-
-</para>
-
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
-
-<!-- ##### FUNCTION modest_marshal_VOID__STRING_INT ##### -->
-<para>
-
-</para>
-
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
-
-<!-- ##### FUNCTION modest_marshal_VOID__STRING_INT_INT ##### -->
-<para>
-
-</para>
-
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
-
 <!-- ##### FUNCTION modest_marshal_VOID__STRING_POINTER_POINTER_POINTER ##### -->
 <para>
 
@@ -664,23 +699,21 @@ ModestWidgetFactory
 @invocation_hint: 
 @marshal_data: 
 
-<!-- ##### MACRO modest_marshal_VOID__STRING_STRING_BOOL ##### -->
+<!-- ##### FUNCTION modest_msg_view_new ##### -->
 <para>
 
 </para>
 
+@tny_msg: 
+@Returns: 
 
-<!-- ##### FUNCTION modest_marshal_VOID__STRING_STRING_BOOLEAN ##### -->
+<!-- ##### FUNCTION modest_msg_view_set_message ##### -->
 <para>
 
 </para>
 
-@closure: 
-@return_value: 
-@n_param_values: 
-@param_values: 
-@invocation_hint: 
-@marshal_data: 
+@self: 
+@tny_msg: 
 
 <!-- ##### FUNCTION modest_presets_destroy ##### -->
 <para>
@@ -725,6 +758,97 @@ ModestWidgetFactory
 </para>
 
 @presetfile: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_display_name ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_list ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_name ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_pair_list ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_protocol_info_get_protocol_type ##### -->
+<para>
+
+</para>
+
+@proto: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_store_widget_get_remember_password ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_account_store_get_tny_account_by_account ##### -->
+<para>
+
+</para>
+
+@self: 
+@account_name: 
+@type: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_account_store_get_tny_account_by_id ##### -->
+<para>
+
+</para>
+
+@self: 
+@id: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_folder_get_local_folder_type ##### -->
+<para>
+
+</para>
+
+@folder: 
+@Returns: 
+
+<!-- ##### FUNCTION modest_tny_folder_guess_folder_type_from_name ##### -->
+<para>
+
+</para>
+
+@folder_name: 
 @Returns: 
 
 <!-- ##### FUNCTION modest_tny_msg_actions_find_body ##### -->
@@ -786,6 +910,23 @@ ModestWidgetFactory
 @store: 
 @user_data: 
 
+<!-- ##### FUNCTION modest_ui_actions_on_connection_changed ##### -->
+<para>
+
+</para>
+
+@device: 
+@online: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_delete ##### -->
+<para>
+
+</para>
+
+@widget: 
+@win: 
+
 <!-- ##### FUNCTION modest_ui_actions_on_folder_moved ##### -->
 <para>
 
@@ -796,6 +937,33 @@ ModestWidgetFactory
 @parent: 
 @done: 
 @user_data: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_header_status_update ##### -->
+<para>
+
+</para>
+
+@header_view: 
+@msg: 
+@num: 
+@total: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_on_online_toggle_toggled ##### -->
+<para>
+
+</para>
+
+@toggle: 
+@main_window: 
+
+<!-- ##### FUNCTION modest_ui_actions_toggle_view ##### -->
+<para>
+
+</para>
+
+@widget: 
+@main_window: 
 
 <!-- ##### FUNCTION modest_ui_edit_window ##### -->
 <para>
@@ -916,5 +1084,13 @@ ModestWidgetFactory
 </para>
 
 @window: 
+@Returns: 
+
+<!-- ##### FUNCTION tny_account_store_get_session ##### -->
+<para>
+
+</para>
+
+@self: 
 @Returns: 
 

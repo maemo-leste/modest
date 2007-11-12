@@ -42,33 +42,3 @@ ModestTnyAccountStore
 @Returns: 
 
 
-<!-- ##### FUNCTION modest_tny_account_store_get_tny_account_by_id ##### -->
-<para>
-
-</para>
-
-@self: 
-@id: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_tny_account_store_get_tny_account_by_account ##### -->
-<para>
-
-</para>
-
-@self: 
-@account_name: 
-@type: 
-@Returns: 
-
-
-<!-- ##### FUNCTION tny_account_store_get_session ##### -->
-<para>
-
-</para>
-
-@self: 
-@Returns: 
-
-

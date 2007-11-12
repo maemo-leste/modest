@@ -26,12 +26,6 @@
 <!ENTITY widgets-ModestMainWindow SYSTEM "xml/modest-main-window.xml">
 <!ENTITY widgets-ModestMsgView SYSTEM "xml/modest-msg-view.xml">
 
-<!ENTITY gtk-ModestAccountViewWindow SYSTEM "xml/modest-account-view-window.xml">
-<!ENTITY gtk-ModestAccountAssistant SYSTEM "xml/modest-account-assistant.xml">
-<!ENTITY gtk-ModestMsgEditWindow SYSTEM "xml/modest-msg-edit-window.xml">
-<!ENTITY gtk-ModestStoreWidget SYSTEM "xml/modest-store-widget.xml">
-<!ENTITY gtk-modestTransportWidget SYSTEM "xml/modest-transport-widget.xml">
-
 <!-- <!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml"> -->
 
 <!ENTITY preface SYSTEM "modest-preface.sgml">
@@ -45,7 +39,7 @@
   <bookinfo>
     <title>modest technical documentation</title>
     <copyright>
-      <year>2006</year>
+      <year>2006, 2007</year>
       <holder>Nokia Corporation</holder>
     </copyright>
   </bookinfo>

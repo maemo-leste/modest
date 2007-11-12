@@ -124,27 +124,6 @@ modest-icon-names
 
 
 
-<!-- ##### MACRO MODEST_FOLDER_ICON_CONTACTS ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### MACRO MODEST_FOLDER_ICON_NOTES ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### MACRO MODEST_FOLDER_ICON_CALENDAR ##### -->
-<para>
-
-</para>
-
-
-
 <!-- ##### MACRO MODEST_TOOLBAR_ICON_MAIL_SEND ##### -->
 <para>
 

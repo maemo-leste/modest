@@ -42,8 +42,13 @@ ModestAccountMgr
 
 @self: 
 @name: 
+@display_name: 
+@user_fullname: 
+@user_email: 
+@retrieve_type: 
 @store_name: 
 @transport_name: 
+@enabled: 
 @Returns: 
 
 
@@ -55,6 +60,7 @@ ModestAccountMgr
 @self: 
 @name: 
 @hostname: 
+@portnumber: 
 @username: 
 @password: 
 @proto: 
@@ -82,7 +88,6 @@ ModestAccountMgr
 
 @self: 
 @name: 
-@server_account: 
 @Returns: 
 
 
@@ -92,18 +97,7 @@ ModestAccountMgr
 </para>
 
 @self: 
-@Returns: 
-
-
-<!-- ##### FUNCTION modest_account_mgr_search_server_accounts ##### -->
-<para>
-
-</para>
-
-@self: 
-@account_name: 
-@type: 
-@proto: 
+@only_enabled: 
 @Returns: 
 
 

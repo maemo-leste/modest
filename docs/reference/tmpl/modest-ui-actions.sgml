@@ -24,16 +24,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
-@win: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_on_delete ##### -->
-<para>
-
-</para>
-
-@widget: 
+@action: 
 @win: 
 
 
@@ -42,7 +33,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -51,7 +42,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -60,7 +51,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -69,7 +60,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -78,7 +69,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -87,7 +78,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -96,7 +87,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @win: 
 
 
@@ -105,16 +96,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
-@main_window: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_toggle_view ##### -->
-<para>
-
-</para>
-
-@widget: 
+@action: 
 @main_window: 
 
 
@@ -144,17 +126,8 @@ modest-ui-actions
 </para>
 
 @folder_view: 
-@folder: 
+@folder_store: 
 @selected: 
-@main_window: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_on_online_toggle_toggled ##### -->
-<para>
-
-</para>
-
-@toggle: 
 @main_window: 
 
 
@@ -166,18 +139,6 @@ modest-ui-actions
 @header_view: 
 @type: 
 @window: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_on_header_status_update ##### -->
-<para>
-
-</para>
-
-@header_view: 
-@msg: 
-@num: 
-@total: 
-@main_window: 
 
 
 <!-- ##### FUNCTION modest_ui_actions_on_msg_link_hover ##### -->
@@ -206,7 +167,7 @@ modest-ui-actions
 </para>
 
 @msgview: 
-@index: 
+@mime_part: 
 @win: 
 
 
@@ -224,7 +185,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @main_window: 
 
 
@@ -233,7 +194,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @main_window: 
 
 
@@ -242,7 +203,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
+@action: 
 @main_window: 
 
 
@@ -251,17 +212,7 @@ modest-ui-actions
 
 </para>
 
-@widget: 
-@main_window: 
-
-
-<!-- ##### FUNCTION modest_ui_actions_on_connection_changed ##### -->
-<para>
-
-</para>
-
-@device: 
-@online: 
+@action: 
 @main_window: 
 
 
