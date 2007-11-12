@@ -2,29 +2,39 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
           "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
+<!ENTITY ModestAccountMgrHelpers SYSTEM "xml/modest-account-mgr-helpers.xml">
 <!ENTITY ModestAccountMgr SYSTEM "xml/modest-account-mgr.xml">
+<!ENTITY ModestAccountViewWindow SYSTEM "xml/modest-account-view-window.xml">
+<!ENTITY ModestAccountView SYSTEM "xml/modest-account-view.xml">
+<!ENTITY ModestCacheMgr SYSTEM "xml/modest-cache-mgr.xml">
+<!ENTITY ModestComboBox SYSTEM "xml/modest-combo-box.xml">
 <!ENTITY ModestConf SYSTEM "xml/modest-conf.xml">
-<!ENTITY ModestDefs SYSTEM "xml/modest-defs.xml">
 <!ENTITY ModestError SYSTEM "xml/modest-error.xml">
-<!ENTITY ModestFormatter SYSTEM "xml/modest-formatter.xml">
+<!ENTITY ModestFolderView SYSTEM "xml/modest-folder-view.xml">
+<!ENTITY ModestHeaderView SYSTEM "xml/modest-header-view.xml">
 <!ENTITY ModestIconNames SYSTEM "xml/modest-icon-names.xml">
-<!ENTITY ModestMailOperation SYSTEM "xml/modest-mail-operation.xml">
+<!ENTITY ModestLocalFolderInfo SYSTEM "xml/modest-local-folder-info.xml">
 <!ENTITY ModestMailOperationQueue SYSTEM "xml/modest-mail-operation-queue.xml">
-<!ENTITY ModestMarshal SYSTEM "xml/modest-marshal.xml">
+<!ENTITY ModestMailOperations SYSTEM "xml/modest-mail-operation.xml">
+<!ENTITY ModestMainWindow SYSTEM "xml/modest-main-window.xml">
+<!ENTITY ModestMsgEditWindow SYSTEM "xml/modest-msg-edit-window.xml">
+<!ENTITY ModestMsgViewWindow SYSTEM "xml/modest-msg-view-window.xml">
+<!ENTITY ModestMsgView SYSTEM "xml/modest-msg-view.xml">
 <!ENTITY ModestPair SYSTEM "xml/modest-pair.xml">
 <!ENTITY ModestProtocolInfo SYSTEM "xml/modest-protocol-info.xml">
+<!ENTITY ModestRuntime SYSTEM "xml/modest-runtime.xml">
+<!ENTITY ModestSingletons SYSTEM "xml/modest-singletons.xml">
 <!ENTITY ModestTextUtils SYSTEM "xml/modest-text-utils.xml">
 <!ENTITY ModestTnyAccountStore SYSTEM "xml/modest-tny-account-store.xml">
+<!ENTITY ModestTnyAccount SYSTEM "xml/modest-tny-account.xml">
 <!ENTITY ModestTnyFolder SYSTEM "xml/modest-tny-folder.xml">
+<!ENTITY ModestTnyMsg SYSTEM "xml/modest-tny-msg.xml">
 <!ENTITY ModestTnyPlatformFactory SYSTEM "xml/modest-tny-platform-factory.xml">
+<!ENTITY ModestTnySendQueue SYSTEM "xml/modest-tny-send-queue.xml">
+<!ENTITY ModestTnyStreamGtkHtml SYSTEM "xml/modest-tny-stream-gtkhtml.xml">
+<!ENTITY ModestUIActions SYSTEM "xml/modest-ui-actions.xml">
 <!ENTITY ModestWidgetMemory SYSTEM "xml/modest-widget-memory.xml">
-
-<!ENTITY widgets-ModestAccountView SYSTEM "xml/modest-account-view.xml">
-<!ENTITY widgets-ModestComboBox SYSTEM "xml/modest-combo-box.xml">
-<!ENTITY widgets-ModestFolderView SYSTEM "xml/modest-folder-view.xml">
-<!ENTITY widgets-ModestHeaderView SYSTEM "xml/modest-header-view.xml">
-<!ENTITY widgets-ModestMainWindow SYSTEM "xml/modest-main-window.xml">
-<!ENTITY widgets-ModestMsgView SYSTEM "xml/modest-msg-view.xml">
+<!ENTITY ModestWindow SYSTEM "xml/modest-window.xml">
 
 <!-- <!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml"> -->
 
@@ -60,42 +70,59 @@
 -->
   <reference>
     <title>API Reference</title>
-      <chapter id="src">
-        <title>Modest</title>
-          &ModestAccountMgr;
-          &ModestConf;
-	  &ModestDefs;
-          &ModestError;
-          &ModestFormatter;
-          &ModestIconNames;
-          &ModestMailOperation;
-          &ModestMailOperationQueue;
-          &ModestMarshal;
-          &ModestPair;
-          &ModestProtocolInfo;
-          &ModestTextUtils;
-          &ModestTnyAccountStore;
-          &ModestTnyFolder;
-          &ModestTnyPlatformFactory;
-          &ModestWidgetMemory;
+
+      <chapter id="core">
+        <title>Core/Runtime</title>
+	&ModestRuntime;
+	&ModestSingletons;
+<!-- 	&ModestPlatform; -->
+<!-- 	&ModestInit; -->
       </chapter>
+      
+      <chapter id="mail">
+        <title>Mail</title>
+	&ModestTnyMsg;
+	&ModestTnyFolder;
+	&ModestTnySendQueue;
+	&ModestTnyAccountStore;
+<!-- 	&ModestMailOperation; -->
+        &ModestMailOperationQueue;
+      </chapter>
+
+     
       <chapter id="widgets">
         <title>Widgets</title>
-          &widgets-ModestAccountView;
-          &widgets-ModestComboBox;
-          &widgets-ModestFolderView;
-          &widgets-ModestHeaderView;
-          &widgets-ModestMainWindow;
-          &widgets-ModestMsgView;
+        &ModestAccountView;
+	&ModestAccountViewWindow;
+        &ModestComboBox;
+        &ModestFolderView;
+        &ModestHeaderView;
+        &ModestMainWindow;
+        &ModestMsgView;
+	&ModestMsgViewWindow;
+	&ModestMsgEditWindow;
+	&ModestWindow;
       </chapter>
-      <chapter id="gtk">
-        <title>Gtk</title>
-          &gtk-ModestAccountViewWindow;
-          &gtk-ModestAccountAssistant;
-          &gtk-ModestMsgEditWindow;
-          &gtk-ModestStoreWidget;
-          &gtk-modestTransportWidget;
+
+      <chapter id="accmgmt_settings">
+        <title>Account Management and Settings</title>
+        &ModestAccountMgr;
+	&ModestAccountMgrHelpers;
+	&ModestConf;
+	&ModestWidgetMemory;
       </chapter>
+      
+      <chapter id="other">
+        <title>Other</title>
+	&ModestCacheMgr;
+	&ModestError;
+	&ModestIconNames;
+	&ModestPair;
+	&ModestProtocolInfo;
+	&ModestLocalFolderInfo;
+	&ModestTextUtils;
+      </chapter>
+
   </reference>
 
 

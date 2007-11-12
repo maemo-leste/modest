@@ -93,8 +93,7 @@ ModestCacheMgr*    modest_cache_mgr_new          (void);
  * 
  * get the cache (GHashTable) of the requested type
  * 
- * Returns: the requested cache (GHashTable) 
- * 
+ * Returns: the requested cache (GHashTable)  
  * the returned  hashtable should NOT be destroyed or unref'd.
  */
 GHashTable*     modest_cache_mgr_get_cache    (ModestCacheMgr* self, ModestCacheMgrCacheType type);
@@ -124,7 +123,7 @@ void            modest_cache_mgr_flush_all    (ModestCacheMgr *self);
  * @self: a valid cache mgr obj
  * @type: a valid cache mgr cache type
  *
- * get the size (number of <key,value>-pairs) in the cache
+ * get the size (number of [key,value]-pairs) in the cache
  * 
  * Returns: the size of the give cache type 
  */

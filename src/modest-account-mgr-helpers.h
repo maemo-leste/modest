@@ -391,7 +391,7 @@ void modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
  * @self: a #ModestAccountMgr instance
  * @name: the account name
  *
- * get the From: string for some account; ie. "Foo Bar" <foo.bar@cuux.yy>"
+ * get the From: string for some account; ie. "Foo Bar" &lt;foo.bar@cuux.yy&gt;"
  *
  * Returns: the newly allocated from-string, or NULL in case of error
  */
