@@ -213,8 +213,8 @@ size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t 
  * @address: original address (UTF8 string)
  *
  * make a 'display address' from an address:
- * "Foo Bar <foo@bar.cx>" --> "Foo Bar"
- * ie. removes "<...>" parts
+ * "Foo Bar &lt;foo@bar.cx&gt;" --&gt; "Foo Bar"
+ * ie. removes "&lt;...&gt;" parts
  * the change is in-place; removes leading whitespace
  * 
  * NOTE: for optimization reasons, this function changes @address
