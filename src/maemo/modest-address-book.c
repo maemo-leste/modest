@@ -633,8 +633,13 @@ show_check_names_banner (gpointer data)
 {
 	GtkWidget **banner = (GtkWidget **) data;
 
+	/* We're outside the main lock */
+	gdk_threads_enter ();
+
 	*banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
 	g_object_ref (G_OBJECT (*banner));
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }

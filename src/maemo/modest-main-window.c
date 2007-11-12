@@ -432,11 +432,15 @@ restore_paned_timeout_handler (gpointer *data)
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
 	ModestConf *conf;
 
+	/* Timeouts are outside the main lock */
+	gdk_threads_enter ();
 	if (GTK_WIDGET_VISIBLE (main_window)) {
 		conf = modest_runtime_get_conf ();
 		modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
 					      MODEST_CONF_MAIN_PANED_KEY);
 	}
+	gdk_threads_leave ();
+
 	return FALSE;
 }
 
@@ -2486,9 +2490,13 @@ show_updating_banner (gpointer user_data)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
 
 	if (priv->updating_banner == NULL) {
+
+		/* We're outside the main lock */
+		gdk_threads_enter ();
 		priv->updating_banner = 
 			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
 							  _CS ("ckdg_pb_updating"));
+		gdk_threads_leave ();
 	}
 
 	/* Remove timeout */

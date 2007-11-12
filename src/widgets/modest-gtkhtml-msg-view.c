@@ -969,6 +969,10 @@ html_adjustment_changed (GtkAdjustment *adj,
 gboolean
 idle_readjust_scroll (ModestGtkhtmlMsgView *self)
 {
+
+	/* We're out the main lock */
+	gdk_threads_enter ();
+
 	if (GTK_WIDGET_DRAWABLE (self)) {
 		ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 		GtkAdjustment *html_vadj;
@@ -985,6 +989,9 @@ idle_readjust_scroll (ModestGtkhtmlMsgView *self)
 		gtk_adjustment_set_value (priv->vadj, 0.0);
 	}
 	g_object_unref (G_OBJECT (self));
+
+	gdk_threads_leave ();
+
 	return FALSE;
 }
 

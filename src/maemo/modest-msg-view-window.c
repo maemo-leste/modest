@@ -2509,6 +2509,9 @@ show_remove_attachment_information (gpointer userdata)
 	ModestMsgViewWindow *window = (ModestMsgViewWindow *) userdata;
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
+	/* We're outside the main lock */
+	gdk_threads_enter ();
+
 	if (priv->remove_attachment_banner != NULL) {
 		gtk_widget_destroy (priv->remove_attachment_banner);
 		g_object_unref (priv->remove_attachment_banner);
@@ -2516,6 +2519,8 @@ show_remove_attachment_information (gpointer userdata)
 
 	priv->remove_attachment_banner = g_object_ref (
 		hildon_banner_show_animation (NULL, NULL, _("mcen_ib_removing_attachment")));
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }

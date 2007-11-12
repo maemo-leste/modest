@@ -2279,7 +2279,7 @@ expand_row_timeout (gpointer data)
 	GtkTreeViewDropPosition pos;
 	gboolean result = FALSE;
 	
-	GDK_THREADS_ENTER ();
+	gdk_threads_enter ();
 	
 	gtk_tree_view_get_drag_dest_row (tree_view,
 					 &dest_path,
@@ -2298,7 +2298,7 @@ expand_row_timeout (gpointer data)
 		result = TRUE;
 	}
 	
-	GDK_THREADS_LEAVE ();
+	gdk_threads_leave ();
 
 	return result;
 }
