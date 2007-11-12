@@ -1200,8 +1200,9 @@ idle_notify_queue (gpointer data)
 {
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 
-	/* Do not need to block, the notify end will do it for us */	
+	gdk_threads_enter ();
 	modest_mail_operation_notify_end (mail_op);
+	gdk_threads_leave ();
 	g_object_unref (mail_op);
 
 	return FALSE;

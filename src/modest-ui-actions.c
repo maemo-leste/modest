@@ -4801,7 +4801,11 @@ on_send_receive_finished (ModestMailOperation  *mail_op,
 
 	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 	
-	if (folder_store && TNY_IS_FOLDER (folder_store)) {
+	/* Do not need to refresh INBOX again because the
+	   update_account does it always automatically */
+	if (folder_store && TNY_IS_FOLDER (folder_store) && 
+	    tny_folder_get_folder_type (TNY_FOLDER (folder_store)) != TNY_FOLDER_TYPE_INBOX) {
+
 		header_view = modest_main_window_get_child_widget (main_win,
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		
