@@ -1145,6 +1145,8 @@ presets_idle (gpointer userdata)
 			priv->presets, mcc);
 	}
 
+	priv->dirty = FALSE;
+
 	g_object_unref (idle_data->dialog);
 	g_free (idle_data);
 
