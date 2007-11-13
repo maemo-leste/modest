@@ -1963,8 +1963,10 @@ modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window
 }
  
 void
-modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store, 
-							    ModestConnectedPerformer callback, gpointer user_data)
+modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_window, 
+							    TnyFolderStore *folder_store, 
+							    ModestConnectedPerformer callback, 
+							    gpointer user_data)
 {
  	if (!folder_store) {
  

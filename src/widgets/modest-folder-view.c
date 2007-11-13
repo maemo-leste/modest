@@ -903,13 +903,18 @@ free_pixbufs (ThreePixbufs *pixbufs)
 }
 
 static void
-icon_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-		 GtkTreeModel *tree_model,  GtkTreeIter *iter, gpointer data)
+icon_cell_data  (GtkTreeViewColumn *column,  
+		 GtkCellRenderer *renderer,
+		 GtkTreeModel *tree_model,  
+		 GtkTreeIter *iter, 
+		 gpointer data)
 {
-	GObject *rendobj = (GObject *) renderer, *instance = NULL;
+	GObject *rendobj = NULL, *instance = NULL;
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	gboolean has_children;
 	ThreePixbufs *pixbufs;
+
+	rendobj = (GObject *) renderer;
 
 	gtk_tree_model_get (tree_model, iter,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
@@ -1884,6 +1889,13 @@ typedef struct _DndHelper {
 	guint time;
 } DndHelper;
 
+static void
+dnd_helper_destroyer (DndHelper *helper)
+{
+	/* Free the helper */
+	gtk_tree_path_free (helper->source_row);
+	g_slice_free (DndHelper, helper);
+}
 
 /*
  * This function is the callback of the
@@ -1915,8 +1927,7 @@ xfer_cb (ModestMailOperation *mail_op,
 	gtk_drag_finish (helper->context, success, FALSE, helper->time);
 
 	/* Free the helper */
-	gtk_tree_path_free (helper->source_row);
-	g_slice_free (DndHelper, helper);
+	dnd_helper_destroyer (helper);
 }
 
 /* get the folder for the row the treepath refers to. */
@@ -2042,6 +2053,103 @@ cleanup:
 		g_object_unref (headers);
 }
 
+typedef struct {
+	TnyFolderStore *src_folder;
+	TnyFolderStore *dst_folder;
+	DndHelper *helper; 
+} DndFolderInfo;
+
+static void
+dnd_folder_info_destroyer (DndFolderInfo *info)
+{
+	if (info->src_folder)
+		g_object_unref (info->src_folder);
+	if (info->dst_folder)
+		g_object_unref (info->dst_folder);
+	g_slice_free (DndFolderInfo, info);
+}
+
+static void
+dnd_on_connection_failed_destroyer (DndFolderInfo *info,
+				    GtkWindow *parent_window,
+				    TnyAccount *account)
+{
+	time_t dnd_time = info->helper->time;
+	GdkDragContext *context = info->helper->context;
+	
+	/* Show error */
+	modest_ui_actions_on_account_connection_error (parent_window, account);
+
+	/* Free the helper & info */
+	dnd_helper_destroyer (info->helper);
+	dnd_folder_info_destroyer (info);
+	
+	/* Notify the drag source. Never call delete, the monitor will
+	   do the job if needed */
+	gtk_drag_finish (context, FALSE, FALSE, dnd_time);
+	return;
+}
+
+static void
+drag_and_drop_from_folder_view_src_folder_performer (gboolean canceled, 
+						     GError *err,
+						     GtkWindow *parent_window, 
+						     TnyAccount *account, 
+						     gpointer user_data)
+{
+	DndFolderInfo *info = NULL;
+	ModestMailOperation *mail_op;
+
+	info = (DndFolderInfo *) user_data;
+
+	if (err || canceled) {
+		dnd_on_connection_failed_destroyer (info, parent_window, account);
+		return;
+	}
+
+	/* Do the mail operation */
+	mail_op = modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
+								 modest_ui_actions_move_folder_error_handler,
+								 info->src_folder, NULL);
+
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+
+	/* Transfer the folder */
+	modest_mail_operation_xfer_folder (mail_op,
+					   TNY_FOLDER (info->src_folder),
+					   info->dst_folder,
+					   info->helper->delete_source,
+					   xfer_cb,
+					   info->helper);
+	
+	g_object_unref (G_OBJECT (mail_op));
+}
+
+
+static void
+drag_and_drop_from_folder_view_dst_folder_performer (gboolean canceled, 
+						     GError *err,
+						     GtkWindow *parent_window, 
+						     TnyAccount *account, 
+						     gpointer user_data)
+{
+	DndFolderInfo *info = NULL;
+
+	info = (DndFolderInfo *) user_data;
+
+	if (err || canceled) {
+		dnd_on_connection_failed_destroyer (info, parent_window, account);
+		return;
+	}
+
+	/* Connect to source folder and perform the copy/move */
+	modest_platform_connect_and_perform_if_network_folderstore (NULL, 
+								    info->src_folder,
+								    drag_and_drop_from_folder_view_src_folder_performer,
+								    info);
+}
+
 /*
  * This function is used by drag_data_received_cb to manage drag and
  * drop of a folder, i.e, and drag from the folder view to the same
@@ -2054,12 +2162,12 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 				GtkSelectionData *selection_data,
 				DndHelper        *helper)
 {
-	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter dest_iter, iter;
 	TnyFolderStore *dest_folder = NULL;
 	TnyFolderStore *folder = NULL;
 	gboolean forbidden = FALSE;
 	ModestWindow *win;
+	DndFolderInfo *info = NULL;
 
 	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE); /* don't create */
 	if (!win) {
@@ -2113,31 +2221,21 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN,
 			    &folder, -1);
 
-	/* Offer the connection dialog if necessary, for the destination parent folder and source folder: */
-	if (modest_platform_connect_and_wait_if_network_folderstore (NULL, dest_folder) && 
-	    modest_platform_connect_and_wait_if_network_folderstore (NULL, TNY_FOLDER_STORE (folder))) {
-	
-		/* Do the mail operation */
-		mail_op = modest_mail_operation_new_with_error_handling ((GObject *) win,
-									 modest_ui_actions_move_folder_error_handler,
-									 folder, NULL);
+	/* Create the info for the performer */
+	info = g_slice_new (DndFolderInfo);
+	info->src_folder = g_object_ref (folder);
+	info->dst_folder = g_object_ref (dest_folder);
+	info->helper = helper;
 
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-						 mail_op);
-
-		modest_mail_operation_xfer_folder (mail_op, 
-						   TNY_FOLDER (folder), 
-						   dest_folder,
-						   helper->delete_source,
-						   xfer_cb,
-						   helper);
-
-		g_object_unref (G_OBJECT (mail_op));
-	}
+	/* Connect to the destination folder and perform the copy/move */
+	modest_platform_connect_and_perform_if_network_folderstore (GTK_WINDOW (win), 
+								    dest_folder,
+								    drag_and_drop_from_folder_view_dst_folder_performer,
+								    info);
 	
 	/* Frees */
-	g_object_unref (G_OBJECT (dest_folder));
-	g_object_unref (G_OBJECT (folder));
+	g_object_unref (dest_folder);
+	g_object_unref (folder);
 }
 
 /*

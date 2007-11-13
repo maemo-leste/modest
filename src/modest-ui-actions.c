@@ -41,7 +41,7 @@
 #include <modest-address-book.h>
 #include "modest-error.h"
 #include "modest-ui-actions.h"
-
+#include "modest-protocol-info.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
 #include <tny-mime-part.h>
@@ -4062,10 +4062,9 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 
 	/* Show notification dialog */
 	win = modest_mail_operation_get_source (mail_op);
-	if (G_IS_OBJECT (win)) {
-		modest_platform_run_information_dialog (GTK_WINDOW (win), message);
+	modest_platform_run_information_dialog ((GtkWindow *) win, message);
+	if (win)
 		g_object_unref (win);
-	}
 }
 
 void
@@ -4929,4 +4928,38 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
  frees:
 	if (selected_folder != NULL)
 		g_object_unref (selected_folder);
+}
+
+void 
+modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
+					       TnyAccount *account)
+{
+	ModestTransportStoreProtocol proto;
+	const gchar *proto_name;
+	gchar *error_note = NULL;
+	
+	proto_name = tny_account_get_proto (account);
+	proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+	
+	switch (proto) {
+	case MODEST_PROTOCOL_STORE_POP:
+		error_note = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"), 
+					      tny_account_get_hostname (account));
+		break;
+	case MODEST_PROTOCOL_STORE_IMAP:
+		error_note = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"), 
+					      tny_account_get_hostname (account));
+		break;
+	case MODEST_PROTOCOL_STORE_MAILDIR:
+	case MODEST_PROTOCOL_STORE_MBOX:
+		error_note = g_strdup (_("emev_nc_mailbox_notavailable"));
+		break;
+	default:
+		g_warning ("%s: This should not be reached", __FUNCTION__);
+	}
+
+	if (error_note) {
+		modest_platform_run_information_dialog (parent_window, error_note);
+		g_free (error_note);
+	}
 }

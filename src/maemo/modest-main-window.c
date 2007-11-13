@@ -1027,7 +1027,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
 	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
-/* 	wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET(priv->header_view)); */
 
 	gtk_widget_show (GTK_WIDGET (priv->folder_view));
 
@@ -1045,12 +1044,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	/* Restore window & widget settings */	
 	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
 
-/* 	/\* The UI spec wants us to show a connection dialog when the application is  */
-/* 	 * started by the user, if there is no connection. */
-/* 	 * Do this before showing the account wizard,  */
-/* 	 * because wizard needs a connection to discover capabilities. *\/ */
-/* 	 modest_platform_connect_and_wait (GTK_WINDOW (self), NULL); */
-	 
 	/* Check if accounts exist and show the account wizard if not */
 	gboolean accounts_exist = 
 		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
