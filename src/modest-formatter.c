@@ -179,9 +179,7 @@ modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 	TnyMsg *new_msg = NULL;
 	TnyMimePart *body_part = NULL;
 	ModestFormatterPrivate *priv;
-	TnyPlatformFactory *fact;
 
-	fact = modest_runtime_get_platform_factory ();
 	/* Build new part */
 	new_msg     = modest_formatter_create_message (self, TRUE, TRUE, FALSE);
 	body_part = modest_formatter_create_body_part (self, new_msg);

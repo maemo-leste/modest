@@ -119,13 +119,10 @@ modest_email_clipboard_finalize (GObject * obj)
 
 
 ModestEmailClipboard *
-modest_email_clipboard_new ()
+modest_email_clipboard_new (void)
 {
 	GObject *obj;
-	ModestEmailClipboardPrivate *priv;
-
 	obj = G_OBJECT (g_object_new (MODEST_TYPE_EMAIL_CLIPBOARD, NULL));
-	priv = MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (obj);
 	
 	return MODEST_EMAIL_CLIPBOARD (obj);
 }
