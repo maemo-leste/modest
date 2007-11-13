@@ -61,6 +61,7 @@ build-stamp:  config.status
          MAEMO_LAUNCHER_LDFLAGS="$(LAUNCHER_LDFLAGS)"
 	touch build-stamp
 
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -91,6 +92,13 @@ ifeq "$(strip $(LAUNCHER))" "yes"
 	ln -s /usr/bin/maemo-invoker \
 	$(CURDIR)/debian/modest/usr/bin/modest
 endif
+
+# ACHTUNG: hack
+# we remove the modest.mo english localization, if the current control file contains a reference
+# to modest-l10n-mr0; thus, the modest package will not conflict with that one.
+# if modest-l10n-mr0 is not there, we'll install our own (en_GB) .mo file.
+	grep modest-l10n-mr0 $(CURDIR)/control && rm $(CURDIR)/tmp/usr/share/locale/en_GB/LC_MESSAGES/modest.mo	
+
 
 # Build architecture-independent files here.
 binary-indep: build install
