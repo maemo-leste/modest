@@ -4,7 +4,9 @@ usr/share/applications/*
 usr/share/applications/hildon/*
 usr/share/doc/modest/*
 usr/share/mime/packages/*
+usr/share/locale/en_GB/LC_MESSAGES/*
 usr/share/modest/ui/*
 usr/share/modest/provider-data/*
 usr/share/pixmaps/modest/*
+usr/share/man/man1/*
 etc/osso-backup/applications/modest.conf
