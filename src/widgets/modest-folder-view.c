@@ -76,7 +76,8 @@ static void         tny_account_store_view_init (gpointer g,
 static void         modest_folder_view_set_account_store (TnyAccountStoreView *self, 
 							  TnyAccountStore     *account_store);
 
-static void         on_selection_changed   (GtkTreeSelection *sel, gpointer data);
+static void         on_selection_changed   (GtkTreeSelection *sel, 
+					    gpointer data);
 
 static void         on_account_removed     (TnyAccountStore *self, 
 					    TnyAccount *account,
@@ -1222,7 +1223,6 @@ on_account_changed (TnyAccountStore *account_store,
 		    TnyAccount *tny_account,
 		    gpointer user_data)
 {
-	/* do nothing */
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
 
@@ -1236,7 +1236,7 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Get the inner model */
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
 	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
- 	
+
 	/* Remove the account from the model */
 	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (tny_account));
@@ -1249,6 +1249,19 @@ on_account_changed (TnyAccountStore *account_store,
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 }
 
+/**
+ *
+ * Selects the first inbox or the local account in an idle
+ */
+static gboolean
+on_idle_select_first_inbox_or_local (gpointer user_data)
+{
+	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
+
+	modest_folder_view_select_first_inbox_or_local (self);
+
+	return FALSE;
+}
 
 
 static void
@@ -1330,7 +1343,7 @@ on_account_removed (TnyAccountStore *account_store,
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
 	if (same_account_selected)
-		modest_folder_view_select_first_inbox_or_local (self);
+		g_idle_add (on_idle_select_first_inbox_or_local, self);
 }
 
 void

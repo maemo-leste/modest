@@ -166,10 +166,10 @@ static gboolean  on_header_view_focus_in (GtkWidget *widget,
 					  GdkEventFocus *event,
 					  gpointer userdata);
 
-static void      modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
-								 TnyFolderStore *folder_store, 
-								 gboolean selected,
-								 ModestMainWindow *main_window);
+static void      on_folder_selection_changed (ModestFolderView *folder_view,
+					      TnyFolderStore *folder_store, 
+					      gboolean selected,
+					      ModestMainWindow *main_window);
 						
 static void set_at_least_one_account_visible(ModestMainWindow *self);
 
@@ -870,7 +870,7 @@ connect_signals (ModestMainWindow *self)
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), 
 					   "folder_selection_changed",
-					   G_CALLBACK (modest_main_window_on_folder_selection_changed), 
+					   G_CALLBACK (on_folder_selection_changed), 
 					   self);
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), 
@@ -2388,10 +2388,10 @@ on_header_view_focus_in (GtkWidget *widget,
 }
 
 static void 
-modest_main_window_on_folder_selection_changed (ModestFolderView *folder_view,
-						TnyFolderStore *folder_store, 
-						gboolean selected,
-						ModestMainWindow *main_window)
+on_folder_selection_changed (ModestFolderView *folder_view,
+			     TnyFolderStore *folder_store, 
+			     gboolean selected,
+			     ModestMainWindow *main_window)
 {
 	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (main_window);
 	GtkAction *action = NULL;
