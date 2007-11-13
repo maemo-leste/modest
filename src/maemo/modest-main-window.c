@@ -868,14 +868,20 @@ connect_signals (ModestMainWindow *self)
 					   G_OBJECT(priv->folder_view), "key-press-event",
 					   G_CALLBACK(on_inner_widgets_key_pressed), self);
 	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "folder_selection_changed",
-					   G_CALLBACK (modest_main_window_on_folder_selection_changed), self);
+		modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), 
+					   "folder_selection_changed",
+					   G_CALLBACK (modest_main_window_on_folder_selection_changed), 
+					   self);
 	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), "folder-display-name-changed",
-					   G_CALLBACK (modest_ui_actions_on_folder_display_name_changed), self);
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->folder_view), 
+					   "folder-display-name-changed",
+					   G_CALLBACK (modest_ui_actions_on_folder_display_name_changed), 
+					   self);
 	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->folder_view), "focus-in-event", 
-					   G_CALLBACK (on_folder_view_focus_in), self);
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (priv->folder_view), 
+					   "focus-in-event", 
+					   G_CALLBACK (on_folder_view_focus_in), 
+					   self);
 
 	/* Folder view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");

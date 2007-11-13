@@ -1260,6 +1260,7 @@ on_account_removed (TnyAccountStore *account_store,
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
 	GtkTreeSelection *sel = NULL;
+	gboolean same_account_selected = FALSE;
 
 	/* Ignore transport account removals, we're not showing them
 	   in the folder view */
@@ -1285,6 +1286,7 @@ on_account_removed (TnyAccountStore *account_store,
 		if (selected_folder_account == account) {
 			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 			gtk_tree_selection_unselect_all (sel);
+			same_account_selected = TRUE;
 		}
 		g_object_unref (selected_folder_account);
 	}
@@ -1296,7 +1298,7 @@ on_account_removed (TnyAccountStore *account_store,
 
 		folder_to_select_account = tny_folder_get_account (priv->folder_to_select);
 		if (folder_to_select_account == account) {
-/* 			modest_folder_view_disable_next_folder_selection (self); */
+			modest_folder_view_disable_next_folder_selection (self);
 			g_object_unref (priv->folder_to_select);
 			priv->folder_to_select = NULL;
 		}
@@ -1327,16 +1329,8 @@ on_account_removed (TnyAccountStore *account_store,
 
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
-	if (priv->cur_folder_store) {
-		TnyAccount *folder_selected_account;
-
-		folder_selected_account = (TNY_IS_FOLDER (priv->cur_folder_store)) ?
-			modest_tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store)) :
-			TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
-		if (account == folder_selected_account)
-			modest_folder_view_select_first_inbox_or_local (self);
-		g_object_unref (folder_selected_account);
-	}
+	if (same_account_selected)
+		modest_folder_view_select_first_inbox_or_local (self);
 }
 
 void
@@ -1659,10 +1653,13 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	/* New current references */
 	priv->cur_folder_store = folder;
 
-	/* New folder has been selected */
-	g_signal_emit (G_OBJECT(tree_view),
-		       signals[FOLDER_SELECTION_CHANGED_SIGNAL],
-		       0, priv->cur_folder_store, TRUE);
+	/* New folder has been selected. Do not notify if there is
+	   nothing new selected */
+	if (selected) {
+		g_signal_emit (G_OBJECT(tree_view),
+			       signals[FOLDER_SELECTION_CHANGED_SIGNAL],
+			       0, priv->cur_folder_store, TRUE);
+	}
 }
 
 TnyFolderStore *
