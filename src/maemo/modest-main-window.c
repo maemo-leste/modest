@@ -598,10 +598,8 @@ update_menus (ModestMainWindow* self)
 	default_account = modest_account_mgr_get_default_account (mgr);
 	active_account_name = modest_window_get_active_account (MODEST_WINDOW (self));
 	
-	if (active_account_name == NULL)
-		{
-			modest_window_set_active_account (MODEST_WINDOW (self), default_account);
-		}
+	if (!active_account_name) 
+		modest_window_set_active_account (MODEST_WINDOW (self), default_account);
 	
 	priv->view_additions_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
 	radio_group = NULL;
@@ -609,20 +607,24 @@ update_menus (ModestMainWindow* self)
 		gchar *display_name = NULL;	
 		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
 
+		if (!account_data) {
+			g_warning ("%s: BUG: account_data == NULL", __FUNCTION__);
+			continue;
+		}
+	
 		if (default_account && account_data->account_name && 
-			!(strcmp (default_account, account_data->account_name) == 0)) {
+		    !(strcmp (default_account, account_data->account_name) == 0)) {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
 							account_data->display_name);
-		}
-		else {
+		} else {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
 							account_data->display_name);
 		}
-
+		
 		/* Create action and add it to the action group. The
 		   action name must be the account name, this way we
 		   could know in the handlers the account to show */
-		if(account_data && account_data->account_name) {
+		if (account_data && account_data->account_name) {
 			gchar* item_name, *refresh_action_name;
 			guint8 merge_id = 0;
 			GtkAction *view_account_action, *refresh_account_action;
@@ -1543,17 +1545,18 @@ create_empty_view (void)
 static gchar *
 get_gray_color_markup (GtkWidget *styled_widget)
 {
-	gchar *gray_color_markup;
-
+	gchar *gray_color_markup = NULL;
+#ifndef MODEST_HAVE_HILDON0_WIDGETS
 	/* Obtain the secondary text color. We need a realized widget, that's why 
 	   we get styled_widget from outside */
-#ifndef MODEST_HAVE_HILDON0_WIDGETS
 	GdkColor color;
-	gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color);
-	gray_color_markup = modest_text_utils_get_color_string (&color);
-#else
-	gray_color_markup = g_strdup ("#BBBBBB");
-#endif	
+	if (gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color)) 
+		gray_color_markup = modest_text_utils_get_color_string (&color);
+#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
+	
+	if (!gray_color_markup) 
+		gray_color_markup = g_strdup ("#BBBBBB");
+
 	return gray_color_markup;
 }
 
@@ -2355,9 +2358,7 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 }
 
 static gboolean
-on_folder_view_focus_in (GtkWidget *widget,
-			 GdkEventFocus *event,
-			 gpointer userdata)
+on_folder_view_focus_in (GtkWidget *widget, GdkEventFocus *event, gpointer userdata)
 {
 	ModestMainWindow *main_window = NULL;
 	
@@ -2376,11 +2377,10 @@ on_header_view_focus_in (GtkWidget *widget,
 			 gpointer userdata)
 {
 	ModestMainWindow *main_window = NULL;
-	ModestMainWindowPrivate *priv = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (userdata), FALSE);
+
 	main_window = MODEST_MAIN_WINDOW (userdata);
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
 
 	/* Update toolbar dimming state */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));

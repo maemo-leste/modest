@@ -549,8 +549,8 @@ on_idle_delete_message (gpointer user_data)
 	msg = find_message_by_url (uri, &account);
 
 	if (!msg) {
-		g_warning ("modest: %s: Could not find message '%s'", __FUNCTION__, uri);
-		return OSSO_ERROR; /* FIXME: is this TRUE or FALSE?! */
+		g_warning ("%s: Could not find message '%s'", __FUNCTION__, uri);
+		return OSSO_ERROR; 
 	}
 	
 	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
@@ -560,6 +560,12 @@ on_idle_delete_message (gpointer user_data)
 	uid = tny_header_get_uid (msg_header);
 	folder = tny_msg_get_folder (msg);
 
+	if (!folder) {
+		g_warning ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
+		g_object_unref (msg);
+		return OSSO_ERROR; 
+	}
+	
 	/* tny_msg_get_header () flaw:
 	 * From tinythingy doc: You can't use the returned instance with the
 	 * TnyFolder operations

@@ -170,11 +170,8 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	GSList *email_addrs_per_contact = NULL;
 	gchar *econtact_id;
 	gboolean focus_recpt_editor = FALSE;
-	GtkWidget *toplevel;
 
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
-
-	toplevel = gtk_widget_get_toplevel (GTK_WIDGET (recpt_editor));
 
 	if (!open_addressbook ()) {
 		if (contact_model) {

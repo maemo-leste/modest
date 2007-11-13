@@ -181,12 +181,7 @@ on_switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gp
 {
 	/* grab the focus to the default element in the current page */
 	GtkWidget *selected_page = NULL, *focus_item = NULL;
-	ModestGlobalSettingsDialogPrivate *ppriv;
-	ModestMaemoGlobalSettingsDialogPrivate *priv;
 	SwitchPageHelper *helper;
-
-	priv  = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
-	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
 
 	selected_page = gtk_notebook_get_nth_page (notebook, page_num);
 	focus_item = GTK_WIDGET(g_object_get_data (G_OBJECT(selected_page), DEFAULT_FOCUS_WIDGET));
