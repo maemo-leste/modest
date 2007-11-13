@@ -173,6 +173,11 @@ remote_folder_is_pop (const TnyFolderStore *folder)
                 account = tny_folder_get_account(TNY_FOLDER(folder));
         }
 
+	if (!account && !TNY_IS_ACCOUNT(account)) {
+		g_warning ("%s: could not get account", __FUNCTION__);
+		return FALSE;
+	}
+	
         proto = tny_account_get_proto(account);
         g_object_unref (account);
 
@@ -659,7 +664,9 @@ modest_ui_actions_on_accounts (GtkAction *action,
 	/* This is currently only implemented for Maemo */
 #ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
 	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
-		modest_ui_actions_run_account_setup_wizard (win);
+		if (!modest_ui_actions_run_account_setup_wizard (win)) 
+			g_debug ("%s: wizard was already running", __FUNCTION__);
+		
 		return;
 	} else {
 		/* Show the list of accounts */
@@ -819,10 +826,10 @@ void
 modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 {
 	/* if there are no accounts yet, just show the wizard */
-	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
-		if (!modest_ui_actions_run_account_setup_wizard (win)) return;
-	}
-
+	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE))
+		if (!modest_ui_actions_run_account_setup_wizard (win))
+			return;
+		
 	modest_ui_actions_compose_msg(win, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
