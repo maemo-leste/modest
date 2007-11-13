@@ -1953,15 +1953,11 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 void
 modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
-{
-	
-	ModestMsgEditWindowPrivate *priv;
+{	
 	GtkWidget *dialog = NULL;
 	gint response = 0;
 	GSList *uris = NULL;
 	GSList *uri_node;
-	
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));

@@ -1096,10 +1096,9 @@ void modest_msg_view_window_update_model_replaced(
 	 * not care about it's model (msg list). Else if the
 	 * header-view shows the folder the msg shown by us is in, we
 	 * shall replace our model reference and make some check. */
-	if(tny_folder_id == NULL ||
-			!g_str_equal(tny_folder_id, priv->header_folder_id))
+	if(tny_folder_id == NULL || !g_str_equal(tny_folder_id, priv->header_folder_id))
 		return;
-
+	
 	/* Model is changed(replaced), so we should forget the old
 	 * one. Because there might be other references and there
 	 * might be some change on the model even if we unreferenced
@@ -1132,9 +1131,6 @@ void modest_msg_view_window_update_model_replaced(
 	priv->next_row_reference = NULL;
 
 	modest_ui_actions_check_toolbar_dimming_rules(MODEST_WINDOW(window));
-
-	if(tny_folder_id == NULL)
-		return;
 
 	g_assert(model != NULL);
 
@@ -1207,15 +1203,12 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 TnyMsg*
 modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 {
-	ModestMsgView *msg_view;
 	ModestMsgViewWindowPrivate *priv;
-
+	
 	g_return_val_if_fail (self, NULL);
-
+	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
-
-	msg_view = MODEST_MSG_VIEW (priv->msg_view);
-
+	
 	return tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 }
 
