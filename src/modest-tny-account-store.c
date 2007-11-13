@@ -300,11 +300,27 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 
 /* disconnect the list of TnyAccounts */
 static void
-foreach_account_disconnect (gpointer data, 
-			    gpointer user_data)
+account_disconnect (TnyAccount *account)
 {
-	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(data), FALSE, NULL, NULL);
+	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, NULL, NULL);
 }
+
+
+/* disconnect the list of TnyAccounts */
+static void
+account_verify_last_ref (TnyAccount *account, const gchar *str)
+{
+	gchar *txt;
+
+	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
+
+	txt = g_strdup_printf ("%s: %s", str ? str : "?", tny_account_get_name(account));
+	modest_runtime_verify_object_last_ref(G_OBJECT(account),txt);
+	g_free (txt);
+}
+
+
 
 
 static void
@@ -312,7 +328,7 @@ foreach_account_append_to_list (gpointer data,
 				gpointer user_data)
 {
 	TnyList *list;
-
+	
 	list = TNY_LIST (user_data);
 	tny_list_append (list, G_OBJECT (data));
 }
@@ -405,7 +421,7 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 		if (found) {
 			/* Remove from the list */
 			tny_list_remove (priv->store_accounts, G_OBJECT (mmc_account));
-		       
+			
 			/* Notify observers */
 			g_signal_emit (G_OBJECT (self),
 				       signals [ACCOUNT_REMOVED_SIGNAL],
@@ -820,13 +836,15 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	/* Destroy all accounts. Disconnect all accounts before they are destroyed */
 	if (priv->store_accounts) {
-		tny_list_foreach (priv->store_accounts, foreach_account_disconnect, NULL);
+		tny_list_foreach (priv->store_accounts, (GFunc)account_disconnect, NULL);
+		tny_list_foreach (priv->store_accounts, (GFunc)account_verify_last_ref, "store");
 		g_object_unref (priv->store_accounts);
 		priv->store_accounts = NULL;
 	}
-
+	
 	if (priv->transport_accounts) {
-		tny_list_foreach (priv->transport_accounts, foreach_account_disconnect, NULL);
+		tny_list_foreach (priv->transport_accounts, (GFunc)account_disconnect, NULL);
+		tny_list_foreach (priv->transport_accounts, (GFunc)account_verify_last_ref, "transport");
 		g_object_unref (priv->transport_accounts);
 		priv->transport_accounts = NULL;
 	}
@@ -1027,8 +1045,8 @@ modest_tny_account_store_get_device (TnyAccountStore *self)
 	g_return_val_if_fail (self, NULL);
 	
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	if (priv->device)
+	
+	if (priv->device) 
 		return g_object_ref (G_OBJECT(priv->device));
 	else
 		return NULL;
@@ -1260,6 +1278,7 @@ modest_tny_account_store_get_tny_account_by (ModestTnyAccountStore *self,
 	/* Returns a new reference to the account if found */	
 	return account;
 }
+
 
 TnyAccount*
 modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
@@ -1582,7 +1601,7 @@ insert_account (ModestTnyAccountStore *self,
 	/* Add accounts to the lists */
 	tny_list_append (priv->store_accounts, G_OBJECT (store_account));
 	tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
-
+	
 	/* Create a new pseudo-account with an outbox for this
 	   transport account and add it to the global outbox
 	   in the local account */
@@ -1618,8 +1637,7 @@ on_account_inserted (ModestAccountMgr *acc_mgr,
 }
 
 static void
-on_account_removed (ModestAccountMgr *acc_mgr, 
-		    const gchar *account,
+on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account,
 		    gpointer user_data)
 {
 	TnyAccount *store_account = NULL, *transport_account = NULL;
@@ -1630,7 +1648,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_STORE);
 	transport_account = 
 		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
-
+	
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (store_account) {
@@ -1639,6 +1657,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 
 		/* Notify the observers */
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, store_account);
+		account_disconnect (store_account); /* disconnect the account */
 		g_object_unref (store_account);
 	} else {
 		g_warning ("There is no store account for account %s\n", account);
@@ -1670,6 +1689,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 
 		/* Notify the observers */
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
+		account_disconnect (transport_account); /* disconnect the account */
 		g_object_unref (transport_account);
 	} else {
 		g_warning ("There is no transport account for account %s\n", account);
