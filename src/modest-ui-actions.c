@@ -4176,8 +4176,9 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 			
 			tny_msg_rewrite_cache (msg);
 		}
-	} else {
-		modest_platform_information_banner (NULL, NULL, _("mail_ib_attachment_already_purged"));
+     /* } else { */
+		/* This string no longer exists, refer to NB#75415 for more info */
+		/* modest_platform_information_banner (NULL, NULL, _("mail_ib_attachment_already_purged")); */
 	}
 	g_object_unref (iter);
 

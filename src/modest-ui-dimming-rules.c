@@ -2370,8 +2370,10 @@ _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rul
 	else
 		result = (purged > 0);
 
+	/* This string no longer exists, refer to NB#75415 for more info
 	if (result && (rule != NULL))
 		modest_dimming_rule_set_notification (rule, _("mail_ib_attachment_already_purged"));
+	*/
 
 	return result;
 }
