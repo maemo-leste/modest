@@ -111,7 +111,9 @@ typedef void (*ErrorCheckingUserDataDestroyer) (gpointer user_data);
  */
 typedef void (*GetMsgAsyncUserCallback) (ModestMailOperation *mail_op, 
 					 TnyHeader *header, 
+					 gboolean canceled, 
 					 TnyMsg *msg, 
+					 GError *err,
 					 gpointer user_data);
 
 /**

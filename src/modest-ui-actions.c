@@ -126,12 +126,16 @@ static void     do_headers_action     (ModestWindow *win,
 
 static void     open_msg_cb            (ModestMailOperation *mail_op, 
 					TnyHeader *header, 
+					gboolean canceled,
 					TnyMsg *msg,
+					GError *err,
 					gpointer user_data);
 
 static void     reply_forward_cb       (ModestMailOperation *mail_op, 
 					TnyHeader *header, 
+					gboolean canceled,
 					TnyMsg *msg,
+					GError *err,
 					gpointer user_data);
 
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
@@ -856,7 +860,12 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 }
 
 static void
-open_msg_cb (ModestMailOperation *mail_op, TnyHeader *header,  TnyMsg *msg, gpointer user_data)
+open_msg_cb (ModestMailOperation *mail_op, 
+	     TnyHeader *header,  
+	     gboolean canceled,
+	     TnyMsg *msg, 
+	     GError *err,
+	     gpointer user_data)
 {
 	ModestWindowMgr *mgr = NULL;
 	ModestWindow *parent_win = NULL;
@@ -1264,7 +1273,11 @@ free_reply_forward_helper (gpointer data)
 }
 
 static void
-reply_forward_cb (ModestMailOperation *mail_op,  TnyHeader *header, TnyMsg *msg,
+reply_forward_cb (ModestMailOperation *mail_op,  
+		  TnyHeader *header, 
+		  gboolean canceled,
+		  TnyMsg *msg,
+		  GError *err,
 		  gpointer user_data)
 {
 	TnyMsg *new_msg;
@@ -1493,7 +1506,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			g_printerr ("modest: no message found\n");
 			return;
 		} else {
-			reply_forward_cb (NULL, header, msg, rf_helper);
+			reply_forward_cb (NULL, header, FALSE, msg, NULL, rf_helper);
 		}
 		if (header)
 			g_object_unref (header);
@@ -1525,7 +1538,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			} else {
 				/* we put a ref here to prevent double unref as the reply
 				 * forward callback unrefs the header at its end */
-				reply_forward_cb (NULL, header, NULL, rf_helper);
+				reply_forward_cb (NULL, header, FALSE, NULL, NULL, rf_helper);
 			}
 
 
@@ -4101,7 +4114,9 @@ modest_ui_actions_send_receive_error_handler (ModestMailOperation *mail_op,
 static void
 open_msg_for_purge_cb (ModestMailOperation *mail_op, 
 		       TnyHeader *header, 
+		       gboolean canceled,
 		       TnyMsg *msg, 
+		       GError *err,
 		       gpointer user_data)
 {
 	TnyList *parts;
@@ -4637,28 +4652,68 @@ modest_ui_actions_on_help (GtkAction *action,
 		g_warning ("%s: no help for window %p", __FUNCTION__, win);
 }
 
-void 
-modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
-					    ModestWindow *window)
+static void
+retrieve_msg_contents_performer (gboolean canceled, 
+				 GError *err,
+				 GtkWindow *parent_window, 
+				 TnyAccount *account, 
+				 gpointer user_data)
 {
 	ModestMailOperation *mail_op;
-	TnyList *headers;
+	TnyList *headers = TNY_LIST (user_data);
 
-	/* Get headers */
-	headers = get_selected_headers (window);
-	if (!headers)
-		return;
+	if (err || canceled) {
+		/* Show an error ? */
+		goto out;
+	}
 
 	/* Create mail operation */
-	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (window),
+	mail_op = modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
 								 modest_ui_actions_get_msgs_full_error_handler, 
 								 NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msgs_full (mail_op, headers, NULL, NULL, NULL);
 
 	/* Frees */
-	g_object_unref (headers);
 	g_object_unref (mail_op);
+ out:
+	g_object_unref (headers);
+	g_object_unref (account);
+}
+
+void 
+modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
+					    ModestWindow *window)
+{
+	TnyList *headers = NULL;
+	TnyAccount *account = NULL;
+	TnyIterator *iter = NULL;
+	TnyHeader *header = NULL;
+	TnyFolder *folder = NULL;
+
+	/* Get headers */
+	headers = get_selected_headers (window);
+	if (!headers)
+		return;
+
+	/* Pick the account */
+	iter = tny_list_create_iterator (headers);
+	header = TNY_HEADER (tny_iterator_get_current (iter));
+	folder = tny_header_get_folder (header);
+	account = tny_folder_get_account (folder);
+	g_object_unref (folder);
+	g_object_unref (header);
+	g_object_unref (iter);
+
+	/* Connect and perform the message retrieval */
+	modest_platform_connect_and_perform ((GtkWindow *) window, 
+					     g_object_ref (account), 
+					     retrieve_msg_contents_performer, 
+					     g_object_ref (headers));
+
+	/* Frees */
+	g_object_unref (account);
+	g_object_unref (headers);
 }
 
 void

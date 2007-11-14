@@ -140,7 +140,9 @@ static void on_move_focus (ModestMsgViewWindow *window,
 
 static void view_msg_cb         (ModestMailOperation *mail_op, 
 				 TnyHeader *header, 
+				 gboolean canceled,
 				 TnyMsg *msg, 
+				 GError *error,
 				 gpointer user_data);
 
 static void set_toolbar_mode    (ModestMsgViewWindow *self, 
@@ -1770,7 +1772,9 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 static void
 view_msg_cb (ModestMailOperation *mail_op, 
 	     TnyHeader *header, 
+	     gboolean canceled,
 	     TnyMsg *msg, 
+	     GError *error,
 	     gpointer user_data)
 {
 	ModestMsgViewWindow *self = NULL;
