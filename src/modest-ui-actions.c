@@ -236,6 +236,7 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 							 TRUE);  /* create if not existent */
 	
 	/* make sure the mainwindow is visible */
+	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 	gtk_widget_show_all (GTK_WIDGET(win));
 	gtk_window_present (GTK_WINDOW(win));
 	
