@@ -3648,16 +3648,13 @@ modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
 						  const gchar *display_name,
 						  GtkWindow *window)
 {
-	/* Do not change the application name if the widget has not
-	   the focus. This callback could be called even if the folder
-	   view has not the focus, because the handled signal could be
-	   emitted when the folder view is redrawn */
-	if (gtk_widget_is_focus (GTK_WIDGET (folder_view))) {
-		if (display_name)
-			gtk_window_set_title (window, display_name);
-		else
-			gtk_window_set_title (window, " ");
-	}
+	/* This is usually used to change the title of the main window, which
+	 * is the one that holds the folder view. Note that this change can
+	 * happen even when the widget doesn't have the focus. */
+	if (display_name)
+		gtk_window_set_title (window, display_name);
+	else
+		gtk_window_set_title (window, " ");
 }
 
 void
