@@ -53,6 +53,7 @@
 #include <modest-account-settings-dialog.h>
 #include <maemo/modest-maemo-utils.h>
 #include <modest-signal-mgr.h>
+#include <modest-debug.h>
 
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
@@ -316,7 +317,7 @@ account_verify_last_ref (TnyAccount *account, const gchar *str)
 	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
 
 	txt = g_strdup_printf ("%s: %s", str ? str : "?", tny_account_get_name(account));
-	modest_runtime_verify_object_last_ref(G_OBJECT(account),txt);
+	MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(G_OBJECT(account),txt);
 	g_free (txt);
 }
 
@@ -615,12 +616,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	/* TODO: Settting cancel to FALSE does not actually cancel everything.
 	 * We still get multiple requests afterwards, so we end up showing the 
 	 * same dialogs repeatedly.
-	 */
-	 
-	printf ("DEBUG: modest: %s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
-	  
-	g_return_val_if_fail (account, NULL);
-	  
+	 */	  
 	const TnyAccountStore *account_store = NULL;
 	ModestTnyAccountStore *self = NULL;
 	ModestTnyAccountStorePrivate *priv;
@@ -629,6 +625,12 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	gpointer pwd_ptr = NULL;
 	gboolean already_asked = FALSE;
 
+	g_return_val_if_fail (account, NULL);
+	
+	MODEST_DEBUG_BLOCK(
+		g_debug ("DEBUG: modest: %s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
+	);
+	
 	/* Initialize the output parameter: */
 	if (cancel)
 		*cancel = FALSE;
@@ -658,9 +660,10 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 						      server_account_name,
 						      NULL,
 						      (gpointer*)&pwd_ptr);
-						      
-	printf ("DEBUG: modest: %s: Already asked = %d\n", __FUNCTION__, already_asked);
-
+	MODEST_DEBUG_BLOCK(
+		g_debug ("DEBUG: modest: %s: Already asked = %d\n", __FUNCTION__, already_asked);
+	);
+		
 	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
 		pwd  = modest_account_mgr_get_server_account_password (priv->account_mgr,
@@ -676,7 +679,10 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		 */
 		const gboolean settings_have_password = 
 			modest_account_mgr_get_server_account_has_password (priv->account_mgr, server_account_name);
-		printf ("DEBUG: modest: %s: settings_have_password=%d\n", __FUNCTION__, settings_have_password);
+		MODEST_DEBUG_BLOCK(
+			printf ("DEBUG: modest: %s: settings_have_password=%d\n",
+				__FUNCTION__, settings_have_password);
+		);
 		if (settings_have_password) {
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
 			show_wrong_password_dialog (account);
@@ -725,10 +731,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		username = NULL;
 	} else
 		if (cancel)
-			*cancel = FALSE;
- 
-    /* printf("  DEBUG: %s: returning %s\n", __FUNCTION__, pwd); */
-	
+			*cancel = FALSE;	
 	return pwd;
 }
 

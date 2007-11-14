@@ -36,6 +36,7 @@
 #include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
+#include "modest-debug.h"
 
 
 /* 'private'/'protected' functions */
@@ -839,7 +840,9 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self, gboolean create)
 	if (!priv->main_window && create) {
 		/* modest_window_mgr_register_window will set priv->main_window */
 		modest_window_mgr_register_window (self, modest_main_window_new ());
-		g_debug ("%s: created main window: %p\n", __FUNCTION__, priv->main_window);
+		MODEST_DEBUG_BLOCK(
+			g_debug ("%s: created main window: %p\n", __FUNCTION__, priv->main_window);
+		);
 	}
 	
 	return priv->main_window;

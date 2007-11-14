@@ -43,6 +43,7 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
+#include <modest-debug.h>
 #include <string.h>
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-file-system-info.h>
@@ -58,17 +59,16 @@ TnyFolder *
 modest_tny_account_get_special_folder (TnyAccount *account,
 				       TnyFolderType special_type)
 {
-	TnyList *folders;
-	TnyIterator *iter;
+	TnyList *folders = NULL;
+	TnyIterator *iter = NULL;
 	TnyFolder *special_folder = NULL;
-
+	TnyAccount *local_account  = NULL;
+	GError *error = NULL;
 	
 	g_return_val_if_fail (account, NULL);
 	g_return_val_if_fail (0 <= special_type && special_type < TNY_FOLDER_TYPE_NUM,
 			      NULL);
 	
-	TnyAccount *local_account  = NULL;
-
 	/* The accounts have already been instantiated by 
 	 * modest_tny_account_store_get_accounts(), which is the 
 	 * TnyAccountStore::get_accounts_func() implementation,
@@ -77,84 +77,76 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	 
 	/* Per-account outbox folders are each in their own on-disk directory: */
 	if (special_type == TNY_FOLDER_TYPE_OUTBOX) {
-		const gchar *modest_account_name = 
+
+		gchar *account_id;
+		const gchar *modest_account_name;
+
+		modest_account_name =
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		
-		if (modest_account_name) {
-			gchar *account_id = g_strdup_printf (
-				MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
-				modest_account_name);
-			
-			local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
-										     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
-										     account_id);
-			if (!local_account) {
-				g_printerr ("modest: %s: modest_tny_account_store_get_tny_account_by(ID) returned NULL for %s\n", __FUNCTION__, account_id);
+		if (!modest_account_name) {
+			g_warning ("%s: could not get modest account name", __FUNCTION__);
 			return NULL;
-			}
-		
-			g_free (account_id);
-		} else {
-			g_warning ("%s: modest_account_name was NULL.", __FUNCTION__);
 		}
-	} else {
+		
+		account_id = g_strdup_printf (
+			MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDER_ACCOUNT_ID_PREFIX "%s", 
+			modest_account_name);
+		
+		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
+									     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+									     account_id);
+		g_free (account_id);		
+	} else 
 		/* Other local folders are all in one on-disk directory: */
 		local_account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
 									     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
 									     MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
-	}
-	
 	if (!local_account) {
 		g_printerr ("modest: cannot get local account\n");
-		return NULL;
+		goto cleanup;
 	}
 
 	folders = TNY_LIST (tny_simple_list_new ());
-
+	
 	/* There is no need to do this _async, as these are local folders. */
 	/* TODO: However, this seems to fail sometimes when the network is busy, 
 	 * returning an empty list. murrayc. */	
-	GError *error = NULL;
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account),
-				      folders, NULL, &error);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account), folders, NULL, &error);
 	if (error) {
-		g_warning ("%s: tny_folder_store_get_folders() failed:\n  error=%s\n", 
-			__FUNCTION__, error->message);
+		g_warning ("%s: tny_folder_store_get_folders() failed:%s\n", __FUNCTION__, error->message);
+		g_error_free (error);
+		goto cleanup;
 	}
 				      
 	if (tny_list_get_length (folders) == 0) {
 		gchar* url_string = tny_account_get_url_string (local_account);
-		g_printerr ("modest: %s: tny_folder_store_get_folders() returned an empty list for account with URL '%s'\n", 
-			__FUNCTION__, url_string);
+		g_printerr ("modest: %s: tny_folder_store_get_folders(%s) returned an empty list\n", 
+			    __FUNCTION__, url_string);
 		g_free (url_string);
+		goto cleanup;
 	}
 	
 	iter = tny_list_create_iterator (folders);
 
 	while (!tny_iterator_is_done (iter)) {
-		TnyFolder *folder =
-			TNY_FOLDER (tny_iterator_get_current (iter));
+		TnyFolder *folder = TNY_FOLDER (tny_iterator_get_current (iter));
 		if (folder) {
 			if (modest_tny_folder_get_local_or_mmc_folder_type (folder) == special_type) {
 				special_folder = folder;
 				break; /* Leaving a ref for the special_folder return value. */
 			}
-		
-			g_object_unref (G_OBJECT(folder));
+			g_object_unref (folder);
 		}
-
 		tny_iterator_next (iter);
 	}
-	
-	g_object_unref (G_OBJECT (folders));
-	g_object_unref (G_OBJECT (iter));
-	g_object_unref (G_OBJECT (local_account));
 
-	/*
-	if (!special_folder) {
-		g_warning ("%s: Returning NULL.", __FUNCTION__);	
-	}
-	*/
+cleanup:
+	if (folders)
+		g_object_unref (folders);
+	if (iter)
+		g_object_unref (iter);
+	if (local_account)
+		g_object_unref (local_account);
 	
 	return special_folder;
 }
@@ -175,18 +167,14 @@ create_tny_account (ModestAccountMgr *account_mgr,
 		    TnySessionCamel *session,
 		    ModestServerAccountData *account_data)
 {
+	TnyAccount *tny_account = NULL;
+	const gchar* proto_name;
+	
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (account_data, NULL);
-
-	/* sanity checks */
-	if (account_data->proto == MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN) {
-		g_printerr ("modest: '%s' does not provide a protocol\n",
-			    account_data->account_name);
-		return NULL;
-	}
-
-	TnyAccount *tny_account = NULL;
+	g_return_val_if_fail (account_data->proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN,
+			      NULL);
 	
 	switch (account_data->proto) {
 	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
@@ -205,9 +193,10 @@ create_tny_account (ModestAccountMgr *account_mgr,
 	default:
 		g_return_val_if_reached (NULL);
 	}
+
 	if (!tny_account) {
-		g_printerr ("modest: could not create tny account for '%s'\n",
-			    account_data->account_name);
+		g_printerr ("modest: %s: could not create tny account for '%s'\n",
+			    __FUNCTION__, account_data->account_name);
 		return NULL;
 	}
 	tny_account_set_id (tny_account, account_data->account_name);
@@ -216,8 +205,7 @@ create_tny_account (ModestAccountMgr *account_mgr,
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
     
 	/* Proto */
-	const gchar* proto_name =
-		modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
+	proto_name =  modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
 	tny_account_set_proto (tny_account, proto_name);
 
 	return tny_account;
@@ -277,24 +265,25 @@ static gboolean
 update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 		    ModestServerAccountData *account_data)
 {
-	gchar *url = NULL;
-	
 	g_return_val_if_fail (account_mgr, FALSE);
 	g_return_val_if_fail (account_data, FALSE);
+	g_return_val_if_fail (account_data->account_name, FALSE);
 	g_return_val_if_fail (tny_account, FALSE);
-
+	
 	tny_account_set_id (tny_account, account_data->account_name);
-	       
+	
 	/* mbox and maildir accounts use a URI instead of the rest:
 	 * Note that this is not where we create the special local folders account.
 	 * We do that in modest_tny_account_new_for_local_folders() instead. */
 	if (account_data->uri)  
 		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
 	else {
-		/* Set camel-specific options: */
-		
+		/* Set camel-specific options: */		
 		/* Enable secure connection settings: */
 		const gchar* option_security = NULL;
+		const gchar* auth_mech_name = NULL;
+
+
 		switch (account_data->security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
 			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_NEVER;
@@ -320,8 +309,6 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 						      option_security);
 		
 		/* Secure authentication: */
-
-		const gchar* auth_mech_name = NULL;
 		switch (account_data->secure_auth) {
 		case MODEST_PROTOCOL_AUTH_NONE:
 			/* IMAP and POP need at least a password,
@@ -354,7 +341,7 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 			
 		default:
 			g_warning ("%s: Unhandled secure authentication setting %d for "
-				"account=%s (%s)", __FUNCTION__, account_data->secure_auth,
+				   "account_name=%s (%s)", __FUNCTION__, account_data->secure_auth,
 				   account_data->account_name, account_data->hostname);
 			break;
 		}
@@ -381,12 +368,12 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 			tny_account_set_port (tny_account, account_data->port);
 	}
 
-	/* FIXME: for debugging. 
-	 * Let's keep this because it is very useful for debugging. */
-	url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
-	g_debug ("%s:\n  account-url: %s\n", __FUNCTION__, url);
-
-	g_free (url);
+	MODEST_DEBUG_BLOCK (
+		gchar *url = tny_account_get_url_string (TNY_ACCOUNT(tny_account));
+		g_debug ("%s:\n  account-url: %s\n", __FUNCTION__, url);
+		g_free (url);
+	);
+	
 	return TRUE;
 }
 
@@ -434,80 +421,6 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 	
 	return tny_account;
 }
-
-
-#if 0
-gboolean
-modest_tny_account_update_from_server_account_name (TnyAccount *tny_account,
-						    ModestAccountMgr *account_mgr,
-						    const gchar *server_account_name)
-{
-	ModestServerAccountData *account_data;
-	gboolean valid_account_type;
-	
-	g_return_val_if_fail (tny_account, FALSE);
-	g_return_val_if_fail (server_account_name, FALSE);
-	
-	account_data =	modest_account_mgr_get_server_account_data (account_mgr, 
-								    server_account_name);
-	if (!account_data) {
-		g_warning ("%s: failed to get server account data for %s",
-			   __FUNCTION__, server_account_name);
-		return FALSE;
-	}
-
-	valid_account_type = FALSE;
-
-	/* you cannot change the protocol type of an existing account;
-	 * so double check we don't even try
-	 */
-	switch (account_data->proto) {
-	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
-	case MODEST_PROTOCOL_TRANSPORT_SMTP:
-		if (!TNY_IS_CAMEL_TRANSPORT_ACCOUNT(tny_account))
-			g_warning ("%s: expecting transport account", __FUNCTION__);
-		else
-			valid_account_type = TRUE;
-		break;
-	case MODEST_PROTOCOL_STORE_POP:
-		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT(tny_account))
-			g_warning ("%s: expecting pop account", __FUNCTION__);
-		else
-			valid_account_type = TRUE;
-		break;
-	case MODEST_PROTOCOL_STORE_IMAP:
-		if (!TNY_IS_CAMEL_IMAP_STORE_ACCOUNT(tny_account))
-			g_warning ("%s: expecting imap account", __FUNCTION__);
-		else
-			valid_account_type = TRUE;
-		break;
-	case MODEST_PROTOCOL_STORE_MAILDIR:
-	case MODEST_PROTOCOL_STORE_MBOX:
-		if (!TNY_IS_CAMEL_STORE_ACCOUNT(tny_account))
-			g_warning ("%s: expecting store account", __FUNCTION__);
-		else
-			valid_account_type = TRUE;
-		break;
-	default:
-		g_warning ("invalid account type");
-	}
-
-	if (!valid_account_type) {
-		g_warning ("%s: protocol type cannot be changed", __FUNCTION__);
-		modest_account_mgr_free_server_account_data (account_mgr, account_data);
-		return FALSE;
-	}
-	
-	if (!update_tny_account (tny_account, account_mgr, account_data)) {
-		g_warning ("%s: failed to update account", __FUNCTION__);
-		modest_account_mgr_free_server_account_data (account_mgr, account_data);
-		return FALSE;
-	}
-
-	modest_account_mgr_free_server_account_data (account_mgr, account_data);
-	return TRUE;
-}
-#endif
 
 
 
@@ -682,9 +595,9 @@ typedef struct
 
 /* Gets the memory card name: */
 static void 
-on_modest_file_system_info(HildonFileSystemInfoHandle *handle,
-                             HildonFileSystemInfo *info,
-                             const GError *error, gpointer data)
+on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
+			    HildonFileSystemInfo *info,
+			    const GError *error, gpointer data)
 {
 	GetMmcAccountNameData *callback_data = (GetMmcAccountNameData*)data;
 

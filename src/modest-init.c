@@ -526,9 +526,9 @@ init_debug_g_type (void)
 	gflags = 0;
 	mflags = modest_runtime_get_debug_flags ();
 
-	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS)
+	if (mflags & MODEST_RUNTIME_DEBUG_OBJECTS)
 		gflags |= G_TYPE_DEBUG_OBJECTS;
-	if (mflags & MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS)
+	if (mflags & MODEST_RUNTIME_DEBUG_SIGNALS)
 		gflags |= G_TYPE_DEBUG_SIGNALS;
 
 	g_type_init_with_debug_flags (gflags);

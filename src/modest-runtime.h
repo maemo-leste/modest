@@ -50,9 +50,10 @@ G_BEGIN_DECLS
 typedef enum {
 	MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING      = 1 << 0,
 	MODEST_RUNTIME_DEBUG_LOG_ACTIONS           = 1 << 1, /* not in use atm */
-	MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS         = 1 << 2, /* for g_type_init */
-	MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS         = 1 << 3, /* for g_type_init */
-	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4  /* reset to factory defaults */
+	MODEST_RUNTIME_DEBUG_OBJECTS               = 1 << 2, /* for g_type_init */
+	MODEST_RUNTIME_DEBUG_SIGNALS               = 1 << 3, /* for g_type_init */
+	MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS      = 1 << 4, /* reset to factory defaults */
+	MODEST_RUNTIME_DEBUG_CODE                  = 1 << 5  /* print various debugging messages */
 } ModestRuntimeDebugFlags;
 
 /**
@@ -209,51 +210,6 @@ void modest_runtime_remove_all_send_queues ();
  * Returns: the #ModestWindowMgr singleton. This should NOT be unref'd.
  **/
 ModestWindowMgr* modest_runtime_get_window_mgr (void);
-
-/**
- * modest_runtime_verify_object_last_ref
- * @OBJ: some (GObject) ptr
- * @NAME: name of @OBJ
- * 
- * macro to check whether @obj holds only one more ref (ie. after the
- * next unref it will die)
- * 
- * not, a g_warning will be issued on stderr. NOTE: this is only active
- * when MODEST_DEBUG contains "debug-objects".
- *
- ***/
-#define modest_runtime_verify_object_last_ref(OBJ,name)			                               \
-	do {								                               \
-		if (modest_runtime_get_debug_flags() & MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS)             \
-			if (G_IS_OBJECT(OBJ) && G_OBJECT(OBJ)->ref_count != 1)			       \
-				g_warning ("%s:%d: %s ("	                                       \
-					   #OBJ ") still holds a ref count of %d",                     \
-					   __FILE__,__LINE__,name, G_OBJECT(OBJ)->ref_count);          \
-	} while (0)
-
-
-
-/**
- * modest_runtime_not_implemented
- * @WIN: the parent GtkWindow, or NULL
- *
- * give a not-implemented-yet warning popup or g_warning
- *
- ***/
-#define modest_runtime_not_implemented(WIN)    \
-	do {				       \
-		if (gtk_main_level() > 0) {    \
-			GtkWidget *popup;      \
-			popup = gtk_message_dialog_new (WIN,\
-							GTK_DIALOG_MODAL|GTK_DIALOG_DESTROY_WITH_PARENT,\
-							GTK_MESSAGE_WARNING, \
-							GTK_BUTTONS_OK,	\
-							"Not yet implemented");\
-			gtk_dialog_run (GTK_DIALOG(popup));		\
-			gtk_widget_destroy (popup);			\
-		} else							\
-			g_warning ("%s:%d: Not yet implemented",__FILE__,__LINE__); \
-	} while (0)							\
 
 
 G_END_DECLS

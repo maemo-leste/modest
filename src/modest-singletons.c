@@ -29,6 +29,7 @@
 
 #include "modest-singletons.h"
 #include "modest-runtime.h"
+#include "modest-debug.h"
 
 /* 'private'/'protected' functions */
 static void modest_singletons_class_init (ModestSingletonsClass *klass);
@@ -160,37 +161,37 @@ modest_singletons_finalize (GObject *obj)
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 	
 	if (priv->window_mgr) {
-		modest_runtime_verify_object_last_ref(priv->window_mgr,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->window_mgr,"");
 		g_object_unref (G_OBJECT(priv->window_mgr));
 		priv->window_mgr = NULL;
 	}
 	
 	if (priv->email_clipboard) {
-		modest_runtime_verify_object_last_ref(priv->email_clipboard,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->email_clipboard,"");
 		g_object_unref (G_OBJECT(priv->email_clipboard));
 		priv->email_clipboard = NULL;
 	}
 
 	if (priv->cache_mgr) {
-		modest_runtime_verify_object_last_ref(priv->cache_mgr,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->cache_mgr,"");
 		g_object_unref (G_OBJECT(priv->cache_mgr));
 		priv->cache_mgr = NULL;
 	}
 
 	if (priv->device) {
-		modest_runtime_verify_object_last_ref(priv->device,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->device,"");
 		g_object_unref (G_OBJECT(priv->device));
 		priv->device = NULL;
 	}
 
 	if (priv->platform_fact) {
-		modest_runtime_verify_object_last_ref(priv->platform_fact,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->platform_fact,"");
 		g_object_unref (G_OBJECT(priv->platform_fact));
 		priv->platform_fact = NULL;
 	}
 
 	if (priv->mail_op_queue) {
-		modest_runtime_verify_object_last_ref(priv->mail_op_queue,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->mail_op_queue,"");
 		g_object_unref (G_OBJECT(priv->mail_op_queue));
 		priv->mail_op_queue = NULL;
 	}
@@ -200,13 +201,13 @@ modest_singletons_finalize (GObject *obj)
 	 * cancells any mail operations which in turn access the account
 	 * manager (see modest_mail_operation_notify_end()). */
 	if (priv->account_mgr) {
-		modest_runtime_verify_object_last_ref(priv->account_mgr,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->account_mgr,"");
 		g_object_unref (G_OBJECT(priv->account_mgr));
 		priv->account_mgr = NULL;
 	}
 	
 	if (priv->conf) {
-		modest_runtime_verify_object_last_ref(priv->conf,"");
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->conf,"");
 		g_object_unref (G_OBJECT(priv->conf));
 		priv->conf = NULL;
 	}

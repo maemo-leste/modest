@@ -46,6 +46,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-icon-names.h>
 #include <modest-ui-actions.h>
+#include <modest-debug.h>
 
 static ModestSingletons       *_singletons    = NULL;
 
@@ -85,15 +86,15 @@ modest_runtime_uninit (void)
 		return TRUE; 	/* uninit maybe called if runtime_init failed */
 	
 	g_return_val_if_fail (MODEST_IS_SINGLETONS(_singletons), FALSE);
-
+	
 	if (_account_store) {
-		modest_runtime_verify_object_last_ref(_account_store,"");
-		g_object_unref(G_OBJECT(_account_store));
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(_account_store,"");
+		g_object_unref(_account_store);
 		_account_store = NULL;
 	}
-
-	modest_runtime_verify_object_last_ref(_singletons,"");
-	g_object_unref(G_OBJECT(_singletons));
+	
+	MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(_singletons,"");
+	g_object_unref(_singletons);
 	_singletons = NULL;
 
 	
@@ -245,9 +246,10 @@ modest_runtime_get_debug_flags ()
 	static const GDebugKey debug_keys[] = {
 		{ "abort-on-warning",   MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING },
 		{ "log-actions",        MODEST_RUNTIME_DEBUG_LOG_ACTIONS },
-		{ "debug-objects",      MODEST_RUNTIME_DEBUG_DEBUG_OBJECTS },
-		{ "debug-signals",      MODEST_RUNTIME_DEBUG_DEBUG_SIGNALS },
-		{ "factory-settings",   MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS}
+		{ "debug-objects",      MODEST_RUNTIME_DEBUG_OBJECTS },
+		{ "debug-signals",      MODEST_RUNTIME_DEBUG_SIGNALS },
+		{ "factory-settings",   MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS},
+		{ "debug-code",         MODEST_RUNTIME_DEBUG_CODE}
 	};
 	const gchar *str;
 	static ModestRuntimeDebugFlags debug_flags = -1;

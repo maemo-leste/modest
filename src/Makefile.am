@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-10-26 12:47:06 (djcb)>
+# Time-stamp: <2007-11-14 22:42:34 (djcb)>
 
 SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
 
@@ -49,6 +49,7 @@ modest_SOURCES=\
 	modest-conf.c \
 	modest-conf.h \
 	modest-defs.h \
+	modest-debug.h \
 	modest-dimming-rule.c \
 	modest-dimming-rule.h \
 	modest-dimming-rules-group.c \
