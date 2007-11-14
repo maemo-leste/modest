@@ -2476,7 +2476,6 @@ static gboolean
 _invalid_folder_for_purge (ModestWindow *win, 
 			   ModestDimmingRule *rule)
 {
-	TnyMsg *msg = NULL;
 	TnyFolder *folder = NULL;
 	TnyAccount *account = NULL;
 	gboolean result = FALSE;
@@ -2484,14 +2483,14 @@ _invalid_folder_for_purge (ModestWindow *win,
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 
 		/* Get folder and account of message */
-		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		TnyMsg *msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
 		g_return_val_if_fail(msg != NULL, TRUE); 			
 		folder = tny_msg_get_folder (msg);	
+		g_object_unref (msg);
 		if (folder == NULL) {
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 			goto frees;
 		}
-		g_object_unref (msg);
 	} else if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 									      MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
