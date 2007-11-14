@@ -752,6 +752,11 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
 		}
+		if (!dimmed) {
+			dimmed = state->sent_in_progress;
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+		}
 		
 		/* The delete button should be dimmed when viewing an attachment,
 		 * but should be enabled when viewing a message from the list, 
