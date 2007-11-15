@@ -650,22 +650,7 @@ static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
 
 	if ((priv->selected != NULL)&&(priv->selected->next == NULL)) {
-		TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->selected->data));
-		if (info != MODEST_ATTACHMENTS_VIEW_CLIPBOARD_TYPE_INDEX) {
-			if (TNY_IS_MSG (mime_part)) {
-				TnyHeader *header = tny_msg_get_header (TNY_MSG (mime_part));
-				if (TNY_IS_HEADER (header)) {
-					const gchar *subject = NULL;
-					subject = tny_header_get_subject (header);
-					if ((subject == NULL) || (subject[0] == '\0'))
-						subject = _("mail_va_no_subject");
-					gtk_selection_data_set_text (selection_data, subject, -1);
-					g_object_unref (header);
-				}
-			} else {
-				gtk_selection_data_set_text (selection_data, tny_mime_part_get_filename (mime_part), -1);
-			}
-		} else {
+		if (info == MODEST_ATTACHMENTS_VIEW_CLIPBOARD_TYPE_INDEX) {
 			/* MODEST_ATTACHMENT requested. As the content id is not filled in all the case, we'll
 			 * use an internal index. This index is simply the index of the attachment in the vbox */
 			GList *box_children = NULL;
@@ -772,10 +757,6 @@ static void
 own_clipboard (ModestAttachmentsView *atts_view)
 {
 	GtkTargetEntry targets[] = {
-		{"TEXT", 0, 0},
-		{"UTF8_STRING", 0, 1},
-		{"COMPOUND_TEXT", 0, 2},
-		{"STRING", 0, 3},
 		{MODEST_ATTACHMENTS_VIEW_CLIPBOARD_TYPE, 0, MODEST_ATTACHMENTS_VIEW_CLIPBOARD_TYPE_INDEX},
 	};
 
