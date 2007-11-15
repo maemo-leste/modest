@@ -147,6 +147,20 @@ get_model (ModestPairList *pairs)
 	return GTK_TREE_MODEL (store);
 }
 
+void
+modest_combo_box_set_pair_list (ModestComboBox *combo, ModestPairList *pairs)
+{
+	GtkTreeModel *model;
+
+	model = get_model (pairs);
+
+	gtk_combo_box_set_model (GTK_COMBO_BOX(combo), model);
+	g_object_unref (model);
+	
+	gtk_combo_box_set_active (GTK_COMBO_BOX(combo), 0);
+}
+
+
 
 GtkWidget*
 modest_combo_box_new (ModestPairList *pairs, GEqualFunc id_equal_func)
@@ -156,8 +170,6 @@ modest_combo_box_new (ModestPairList *pairs, GEqualFunc id_equal_func)
 	GObject *obj;
 	ModestComboBoxPrivate *priv;
 
-	g_return_val_if_fail (pairs,         NULL);
-	
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_COMBO_BOX, NULL));
 	priv = MODEST_COMBO_BOX_GET_PRIVATE(obj);
 	

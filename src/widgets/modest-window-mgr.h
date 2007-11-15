@@ -299,6 +299,28 @@ void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self);
  * Returns: the number of already registered windows
  **/
 gint modest_window_mgr_num_windows (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_get_msg_view_window:
+ * @self: a #ModestWindowMgr
+ *
+ * obtain a cached #ModestMsgViewWindow if available, or construct a new
+ * one.
+ *
+ * Returns: a #ModestMsgViewWindow
+ */
+GtkWidget *   modest_window_mgr_get_msg_view_window (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_get_msg_edit_window:
+ * @self: a #ModestWindowMgr
+ *
+ * obtain a cached #ModestMsgEditWindow if available, or construct a new
+ * one.
+ *
+ * Returns: a #ModestMsgEditWindow
+ */
+GtkWidget *   modest_window_mgr_get_msg_edit_window (ModestWindowMgr *self);
 	
 G_END_DECLS
 

@@ -84,6 +84,10 @@ struct _ModestWindowMgrPrivate {
 	guint        closing_time;
 
 	GSList       *modal_handler_uids;
+	GtkWidget    *cached_view;
+	GtkWidget    *cached_editor;
+	guint        idle_load_view_id;
+	guint        idle_load_editor_id;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -147,6 +151,42 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 			      G_TYPE_NONE, 0);
 }
 
+static gboolean
+idle_load_view (ModestWindowMgr *mgr)
+{
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (mgr);
+	
+	priv->cached_view = g_object_new (MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	priv->idle_load_view_id = 0;
+	return FALSE;
+}
+
+static gboolean
+idle_load_editor (ModestWindowMgr *mgr)
+{
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (mgr);
+	
+	priv->cached_editor = g_object_new (MODEST_TYPE_MSG_EDIT_WINDOW, NULL);
+	priv->idle_load_editor_id = 0;
+	return FALSE;
+}
+
+static void
+load_new_view (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	if ((priv->cached_view == NULL) && (priv->idle_load_view_id == 0))
+		priv->idle_load_view_id = g_idle_add ((GSourceFunc) idle_load_view, self);
+}
+
+static void
+load_new_editor (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+	if ((priv->cached_editor == NULL) && (priv->idle_load_editor_id == 0))
+		priv->idle_load_editor_id = g_idle_add ((GSourceFunc) idle_load_editor, self);
+}
+
 static void
 modest_window_mgr_init (ModestWindowMgr *obj)
 {
@@ -170,12 +210,33 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->closing_time = 0;
 
 	priv->modal_handler_uids = NULL;
+	priv->cached_view = NULL;
+	priv->cached_editor = NULL;
 }
 
 static void
 modest_window_mgr_finalize (GObject *obj)
 {
 	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(obj);
+
+	if (priv->idle_load_view_id > 0) {
+		g_source_remove (priv->idle_load_view_id);
+		priv->idle_load_view_id = 0;
+	}
+	
+	if (priv->idle_load_editor_id > 0) {
+		g_source_remove (priv->idle_load_editor_id);
+		priv->idle_load_editor_id = 0;
+	}
+	
+	if (priv->cached_view) {
+		gtk_widget_destroy (priv->cached_view);
+		priv->cached_view = NULL;
+	}
+	if (priv->cached_editor) {
+		gtk_widget_destroy (priv->cached_editor);
+		priv->cached_editor = NULL;
+	}
 
 	if (priv->window_list) {
 		GList *iter = priv->window_list;
@@ -521,6 +582,8 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 			return;
 		} else {
 			priv->main_window = window;
+			load_new_view (self);
+			load_new_editor (self);
 		}
 	}
 
@@ -1086,4 +1149,38 @@ modest_window_mgr_num_windows (ModestWindowMgr *self)
 		num_windows = g_list_length (priv->window_list);
 
 	return num_windows;
+}
+
+GtkWidget *   
+modest_window_mgr_get_msg_edit_window (ModestWindowMgr *self)
+{
+	GtkWidget *result;
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+
+	if (priv->cached_editor) {
+		result = priv->cached_editor;
+		priv->cached_editor = NULL;
+		load_new_editor (self);
+	} else {
+		result = g_object_new (MODEST_TYPE_MSG_EDIT_WINDOW, NULL);
+	}
+
+	return result;
+}
+
+GtkWidget *   
+modest_window_mgr_get_msg_view_window (ModestWindowMgr *self)
+{
+	GtkWidget *result;
+	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+
+	if (priv->cached_view) {
+		result = priv->cached_view;
+		priv->cached_view = NULL;
+		load_new_view (self);
+	} else {
+		result = g_object_new (MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	}
+
+	return result;
 }

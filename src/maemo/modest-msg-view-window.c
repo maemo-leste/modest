@@ -151,6 +151,7 @@ static void set_toolbar_mode    (ModestMsgViewWindow *self,
 static void update_window_title (ModestMsgViewWindow *window);
 
 static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
+static void init_window (ModestMsgViewWindow *obj);
 
 
 /* list my signals */
@@ -326,8 +327,55 @@ static void
 modest_msg_view_window_init (ModestMsgViewWindow *obj)
 {
 	ModestMsgViewWindowPrivate *priv;
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
+	ModestWindowPrivate *parent_priv = NULL;
+	GtkActionGroup *action_group = NULL;
+	GError *error = NULL;
+	GdkPixbuf *window_icon;
 
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
+	parent_priv->ui_manager = gtk_ui_manager_new();
+
+	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_action_entries,
+				      G_N_ELEMENTS (modest_action_entries),
+				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_toggle_action_entries,
+					     G_N_ELEMENTS (modest_toggle_action_entries),
+					     obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     msg_view_toggle_action_entries,
+					     G_N_ELEMENTS (msg_view_toggle_action_entries),
+					     obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    msg_view_zoom_action_entries,
+					    G_N_ELEMENTS (msg_view_zoom_action_entries),
+					    100,
+					    G_CALLBACK (modest_ui_actions_on_change_zoom),
+					    obj);
+
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-view-window-ui.xml",
+					 &error);
+	if (error) {
+		g_printerr ("modest: could not merge modest-msg-view-window-ui.xml: %s\n", error->message);
+		g_error_free (error);
+		error = NULL;
+	}
+	/* ****** */
+
+	/* Add accelerators */
+	gtk_window_add_accel_group (GTK_WINDOW (obj), 
+				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
+	
 	priv->is_search_result = FALSE;
 
 	priv->msg_view      = NULL;
@@ -348,6 +396,16 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
 	
+	/* Init window */
+	init_window (MODEST_MSG_VIEW_WINDOW(obj));
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON); 
+	if (window_icon) {
+		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+		g_object_unref (window_icon);
+	}
+
+
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_viewer");
 }
@@ -538,7 +596,6 @@ init_window (ModestMsgViewWindow *obj)
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
-	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 }
 
@@ -703,9 +760,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
-	GtkActionGroup *action_group = NULL;
-	GError *error = NULL;
-	GdkPixbuf *window_icon;
 
 	obj = G_OBJECT (self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
@@ -713,48 +767,11 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 	priv->msg_uid = g_strdup (msg_uid);
 
-	parent_priv->ui_manager = gtk_ui_manager_new();
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
-
-	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
-	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
 	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
-
-	/* Add common actions */
-	gtk_action_group_add_actions (action_group,
-				      modest_action_entries,
-				      G_N_ELEMENTS (modest_action_entries),
-				      obj);
-	gtk_action_group_add_toggle_actions (action_group,
-					     modest_toggle_action_entries,
-					     G_N_ELEMENTS (modest_toggle_action_entries),
-					     obj);
-	gtk_action_group_add_toggle_actions (action_group,
-					     msg_view_toggle_action_entries,
-					     G_N_ELEMENTS (msg_view_toggle_action_entries),
-					     obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    msg_view_zoom_action_entries,
-					    G_N_ELEMENTS (msg_view_zoom_action_entries),
-					    100,
-					    G_CALLBACK (modest_ui_actions_on_change_zoom),
-					    obj);
-
-	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
-	g_object_unref (action_group);
-
-	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-view-window-ui.xml",
-					 &error);
-	if (error) {
-		g_printerr ("modest: could not merge modest-msg-view-window-ui.xml: %s\n", error->message);
-		g_error_free (error);
-		error = NULL;
-	}
-	/* ****** */
 
 	/* Add common dimming rules */
 	modest_dimming_rules_group_add_rules (menu_rules_group, 
@@ -778,23 +795,11 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 
-	/* Add accelerators */
-	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
-	
-	/* Init window */
-	init_window (MODEST_MSG_VIEW_WINDOW(obj));
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
 	
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON); 
-	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
-		g_object_unref (window_icon);
-	}
-
  	/* g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj); */
 
+	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "activate_link",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_clicked), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_hover",
@@ -857,8 +862,10 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	TnyFolder *header_folder = NULL;
 	ModestHeaderView *header_view = NULL;
 	ModestWindow *main_window = NULL;
-	
-	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	ModestWindowMgr *mgr = NULL;
+
+	mgr = modest_runtime_get_window_mgr ();
+	window = MODEST_MSG_VIEW_WINDOW (modest_window_mgr_get_msg_view_window (mgr));
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
 
 	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
@@ -868,8 +875,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	/* Remember the message list's TreeModel so we can detect changes 
 	 * and change the list selection when necessary: */
 
-	main_window = modest_window_mgr_get_main_window(
-		modest_runtime_get_window_mgr(), FALSE); /* don't create */
+	main_window = modest_window_mgr_get_main_window(mgr, FALSE); /* don't create */
 	if (!main_window) {
 		g_warning ("%s: BUG: no main window", __FUNCTION__);
 		return NULL;
@@ -933,8 +939,10 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 {
 	ModestMsgViewWindow *window = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
+	ModestWindowMgr *mgr = NULL;
 
-	window = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	mgr = modest_runtime_get_window_mgr ();
+	window = MODEST_MSG_VIEW_WINDOW (modest_window_mgr_get_msg_view_window (mgr));
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
 	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
 
@@ -955,10 +963,12 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 			    const gchar *msg_uid)
 {
 	GObject *obj = NULL;
-	ModestMsgViewWindowPrivate *priv;
+	ModestMsgViewWindowPrivate *priv;	
+	ModestWindowMgr *mgr = NULL;
+
 	g_return_val_if_fail (msg, NULL);
-	
-	obj = g_object_new(MODEST_TYPE_MSG_VIEW_WINDOW, NULL);
+	mgr = modest_runtime_get_window_mgr ();
+	obj = G_OBJECT (modest_window_mgr_get_msg_view_window (mgr));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 	modest_msg_view_window_construct (MODEST_MSG_VIEW_WINDOW (obj), 
 		modest_account_name, msg_uid);

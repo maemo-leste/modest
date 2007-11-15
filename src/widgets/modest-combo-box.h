@@ -83,6 +83,15 @@ GtkWidget*   modest_combo_box_new         (ModestPairList* pairs,
 					   GEqualFunc id_equal_func);
 
 /**
+ * modest_combo_box_set_pair_list:
+ * @combo: a #ModestComboBox
+ * @pairs: a #ModestPairList
+ *
+ * sets the model of the combobox with a new pair list.
+ */
+void         modest_combo_box_set_pair_list (ModestComboBox *combo, 
+					     ModestPairList *pairs);
+/**
  * modest_combo_box_get_active_id
  * @self: a valid ModestComboBox instance 
  * 

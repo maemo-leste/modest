@@ -157,6 +157,7 @@ static void on_account_removed (TnyAccountStore *account_store,
 				TnyAccount *account,
 				gpointer user_data);
 
+static void init_window (ModestMsgEditWindow *obj);
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -315,7 +316,37 @@ save_state (ModestWindow *self)
 static void
 restore_settings (ModestMsgEditWindow *self)
 {
-	modest_widget_memory_restore (modest_runtime_get_conf(),
+	ModestConf *conf = NULL;
+	GtkAction *action;
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+
+	conf = modest_runtime_get_conf ();
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu");
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
+
+	/* set initial state of cc and bcc */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
+	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
+
+	/* Dim at start clipboard actions */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
+	gtk_action_set_sensitive (action, FALSE);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
+	gtk_action_set_sensitive (action, FALSE);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
+	gtk_action_set_sensitive (action, FALSE);
+
+	modest_widget_memory_restore (conf,
 				      G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
@@ -384,6 +415,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_editor");
+	init_window (obj);
 }
 
 
@@ -460,11 +492,87 @@ void vadj_changed (GtkAdjustment *adj,
 
 
 static void
+connect_signals (ModestMsgEditWindow *obj)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
+
+	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
+			  G_CALLBACK (text_buffer_refresh_attributes), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
+			  G_CALLBACK (text_buffer_can_undo), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "can-redo",
+			  G_CALLBACK (text_buffer_can_redo), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
+                          G_CALLBACK (body_changed), obj);
+	g_signal_connect (G_OBJECT (obj), "window-state-event",
+			  G_CALLBACK (modest_msg_edit_window_window_state_event),
+			  NULL);
+	g_signal_connect_after (G_OBJECT (priv->text_buffer), "apply-tag",
+				G_CALLBACK (text_buffer_apply_tag), obj);
+	g_signal_connect_swapped (G_OBJECT (priv->to_field), "open-addressbook", 
+				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
+	g_signal_connect_swapped (G_OBJECT (priv->cc_field), "open-addressbook", 
+				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
+	g_signal_connect_swapped (G_OBJECT (priv->bcc_field), "open-addressbook", 
+				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
+
+	g_signal_connect (G_OBJECT (priv->add_attachment_button), "clicked",
+			  G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), obj);
+
+	g_signal_connect (G_OBJECT (priv->msg_body), "focus-in-event",
+			  G_CALLBACK (msg_body_focus), obj);
+	g_signal_connect (G_OBJECT (priv->msg_body), "focus-out-event",
+			  G_CALLBACK (msg_body_focus), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
+	g_signal_connect_after (G_OBJECT (priv->subject_field), "move-cursor", G_CALLBACK (subject_field_move_cursor), obj);
+	g_signal_connect (G_OBJECT (priv->subject_field), "insert-text", G_CALLBACK (subject_field_insert_text), obj);
+
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
+
+	g_signal_connect (G_OBJECT (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll))),
+			  "changed",
+			  G_CALLBACK (vadj_changed),
+			  obj);
+
+	priv->clipboard_change_handler_id = 
+		g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
+				  G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+	priv->default_clipboard_change_handler_id = 
+		g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD)), "owner-change",
+				  G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+
+}
+
+static GtkWidget *
+menubar_to_menu (GtkUIManager *ui_manager)
+{
+	GtkWidget *main_menu;
+
+	/* Get the menubar from the UI manager */
+	main_menu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+
+	return main_menu;
+}
+
+static void
 init_window (ModestMsgEditWindow *obj)
 {
 	GtkWidget *from_caption, *to_caption, *subject_caption;
 	GtkWidget *main_vbox;
 	ModestMsgEditWindowPrivate *priv;
+	GtkActionGroup *action_group;
+	ModestWindowPrivate *parent_priv;
+	GdkPixbuf *window_icon = NULL;
+	GError *error = NULL;
 
 	GtkSizeGroup *size_group;
 	GtkWidget *frame;
@@ -475,15 +583,70 @@ init_window (ModestMsgEditWindow *obj)
 	GdkAtom deserialize_type;
 #endif
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
+
+	parent_priv->ui_manager = gtk_ui_manager_new();
+	action_group = gtk_action_group_new ("ModestMsgEditWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+
+	/* Add common actions */
+	gtk_action_group_add_actions (action_group,
+				      modest_msg_edit_action_entries,
+				      G_N_ELEMENTS (modest_msg_edit_action_entries),
+				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_msg_edit_toggle_action_entries,
+					     G_N_ELEMENTS (modest_msg_edit_toggle_action_entries),
+					     obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_alignment_radio_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_alignment_radio_action_entries),
+					    GTK_JUSTIFY_LEFT,
+					    G_CALLBACK (modest_ui_actions_on_change_justify),
+					    obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_zoom_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_zoom_action_entries),
+					    100,
+					    G_CALLBACK (modest_ui_actions_on_change_zoom),
+					    obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_priority_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_priority_action_entries),
+					    0,
+					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_priority),
+					    obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_file_format_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_file_format_action_entries),
+					    modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL),
+					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_file_format),
+					    obj);
+	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
+	g_object_unref (action_group);
+
+	/* Load the UI definition */
+	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-edit-window-ui.xml",
+					 &error);
+	if (error != NULL) {
+		g_warning ("Could not merge modest-msg-edit-window-ui.xml: %s", error->message);
+		g_clear_error (&error);
+	}
+
+	/* Add accelerators */
+	gtk_window_add_accel_group (GTK_WINDOW (obj), 
+				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
+
+	/* Menubar. Update the state of some toggles */
+	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
-	priv->from_field_protos = get_transports ();
-
- 	priv->from_field    = modest_combo_box_new (priv->from_field_protos, g_str_equal);
+ 	priv->from_field    = modest_combo_box_new (NULL, g_str_equal);
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -552,46 +715,6 @@ init_window (ModestMsgEditWindow *obj)
 
 /* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
 
-	g_signal_connect (G_OBJECT (priv->text_buffer), "refresh_attributes",
-			  G_CALLBACK (text_buffer_refresh_attributes), obj);
-	g_signal_connect (G_OBJECT (priv->text_buffer), "can-undo",
-			  G_CALLBACK (text_buffer_can_undo), obj);
-	g_signal_connect (G_OBJECT (priv->text_buffer), "can-redo",
-			  G_CALLBACK (text_buffer_can_redo), obj);
-	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
-                          G_CALLBACK (body_changed), obj);
-	g_signal_connect (G_OBJECT (obj), "window-state-event",
-			  G_CALLBACK (modest_msg_edit_window_window_state_event),
-			  NULL);
-	g_signal_connect_after (G_OBJECT (priv->text_buffer), "apply-tag",
-				G_CALLBACK (text_buffer_apply_tag), obj);
-	g_signal_connect_swapped (G_OBJECT (priv->to_field), "open-addressbook", 
-				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
-	g_signal_connect_swapped (G_OBJECT (priv->cc_field), "open-addressbook", 
-				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
-	g_signal_connect_swapped (G_OBJECT (priv->bcc_field), "open-addressbook", 
-				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
-
-	g_signal_connect (G_OBJECT (priv->add_attachment_button), "clicked",
-			  G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), obj);
-
-	g_signal_connect (G_OBJECT (priv->msg_body), "focus-in-event",
-			  G_CALLBACK (msg_body_focus), obj);
-	g_signal_connect (G_OBJECT (priv->msg_body), "focus-out-event",
-			  G_CALLBACK (msg_body_focus), obj);
-	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
-			  "changed", G_CALLBACK (recpt_field_changed), obj);
-	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))),
-			  "changed", G_CALLBACK (recpt_field_changed), obj);
-	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))),
-			  "changed", G_CALLBACK (recpt_field_changed), obj);
-	g_signal_connect (G_OBJECT (priv->subject_field), "changed", G_CALLBACK (subject_field_changed), obj);
-	g_signal_connect_after (G_OBJECT (priv->subject_field), "move-cursor", G_CALLBACK (subject_field_move_cursor), obj);
-	g_signal_connect (G_OBJECT (priv->subject_field), "insert-text", G_CALLBACK (subject_field_insert_text), obj);
-
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
-
 	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scroll), GTK_SHADOW_NONE);
@@ -616,11 +739,13 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 	priv->scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
 	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
-	
-	priv->clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
-							      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
-	priv->default_clipboard_change_handler_id = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD)), "owner-change",
-								      G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+
+	/* Set window icon */
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON);
+	if (window_icon) {
+		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+		g_object_unref (window_icon);
+	}
 
 }
 	
@@ -688,31 +813,6 @@ modest_msg_edit_window_finalize (GObject *obj)
 	modest_pair_list_free (priv->from_field_protos);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
-}
-
-static GtkWidget *
-menubar_to_menu (GtkUIManager *ui_manager)
-{
-	GtkWidget *main_menu;
-	GtkWidget *menubar;
-	GList *iter;
-
-	/* Create new main menu */
-	main_menu = gtk_menu_new();
-
-	/* Get the menubar from the UI manager */
-	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
-
-	iter = gtk_container_get_children (GTK_CONTAINER (menubar));
-	while (iter) {
-		GtkWidget *menu;
-
-		menu = GTK_WIDGET (iter->data);
-		gtk_widget_reparent(menu, main_menu);
-
-		iter = g_list_next (iter);
-	}
-	return main_menu;
 }
 
 static GdkPixbuf *
@@ -1180,99 +1280,33 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
-	GtkActionGroup *action_group;
-	GError *error = NULL;
-	GdkPixbuf *window_icon = NULL;
-	GtkAction *action;
-	ModestConf *conf;
 	ModestPair *account_pair = NULL;
 	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
+	ModestWindowMgr *mgr = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 	g_return_val_if_fail (account_name, NULL);
+
+	mgr = modest_runtime_get_window_mgr ();
 	
-	obj = g_object_new(MODEST_TYPE_MSG_EDIT_WINDOW, NULL);
+	obj = G_OBJECT (modest_window_mgr_get_msg_edit_window (mgr));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
 
-	parent_priv->ui_manager = gtk_ui_manager_new();
-	action_group = gtk_action_group_new ("ModestMsgEditWindowActions");
-	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
-
-	/* Add common actions */
-	gtk_action_group_add_actions (action_group,
-				      modest_msg_edit_action_entries,
-				      G_N_ELEMENTS (modest_msg_edit_action_entries),
-				      obj);
-	gtk_action_group_add_toggle_actions (action_group,
-					     modest_msg_edit_toggle_action_entries,
-					     G_N_ELEMENTS (modest_msg_edit_toggle_action_entries),
-					     obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    modest_msg_edit_alignment_radio_action_entries,
-					    G_N_ELEMENTS (modest_msg_edit_alignment_radio_action_entries),
-					    GTK_JUSTIFY_LEFT,
-					    G_CALLBACK (modest_ui_actions_on_change_justify),
-					    obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    modest_msg_edit_zoom_action_entries,
-					    G_N_ELEMENTS (modest_msg_edit_zoom_action_entries),
-					    100,
-					    G_CALLBACK (modest_ui_actions_on_change_zoom),
-					    obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    modest_msg_edit_priority_action_entries,
-					    G_N_ELEMENTS (modest_msg_edit_priority_action_entries),
-					    0,
-					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_priority),
-					    obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    modest_msg_edit_file_format_action_entries,
-					    G_N_ELEMENTS (modest_msg_edit_file_format_action_entries),
-					    modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL),
-					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_file_format),
-					    obj);
-	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
-	g_object_unref (action_group);
-
-	/* Load the UI definition */
-	gtk_ui_manager_add_ui_from_file (parent_priv->ui_manager, MODEST_UIDIR "modest-msg-edit-window-ui.xml",
-					 &error);
-	if (error != NULL) {
-		g_warning ("Could not merge modest-msg-edit-window-ui.xml: %s", error->message);
-		g_clear_error (&error);
-	}
-
-	/* Add accelerators */
-	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
-
-	/* Menubar. Update the state of some toggles */
-	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
-	conf = modest_runtime_get_conf ();
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
-
-	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
+	priv->from_field_protos = get_transports ();
+ 	modest_combo_box_set_pair_list (MODEST_COMBO_BOX (priv->from_field), priv->from_field_protos);
+	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
+	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
 	/* Init window */
-	init_window (MODEST_MSG_EDIT_WINDOW(obj));
+	connect_signals (MODEST_MSG_EDIT_WINDOW(obj));
 
 	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 		
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
-
-	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
-	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
 	account_pair = modest_pair_list_find_by_first_as_string (priv->from_field_protos, account_name);
 	if (account_pair != NULL)
@@ -1317,32 +1351,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON);
-	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
-		g_object_unref (window_icon);
-	}
-
         modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
-        modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
-
-	/* Dim at start clipboard actions */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
-	gtk_action_set_sensitive (action, FALSE);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
-	gtk_action_set_sensitive (action, FALSE);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
-	gtk_action_set_sensitive (action, FALSE);
-
-	/* set initial state of cc and bcc */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
-
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
 	priv->update_caption_visibility = TRUE;
 

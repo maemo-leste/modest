@@ -381,6 +381,7 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	if (modest_conf_key_exists (conf, sort_key, NULL)) {
 		gchar *value = modest_conf_get_string (conf, sort_key, NULL);
 		sscanf (value, "%d:%d:%d", &sort_colid, &sort_type, &sort_flag_id);
+		g_free (value);
 	}
 
 	if (modest_conf_key_exists (conf, key, NULL)) {
