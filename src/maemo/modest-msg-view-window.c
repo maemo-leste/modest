@@ -56,6 +56,8 @@
 #include <modest-mime-part-view.h>
 #include <modest-isearch-view.h>
 #include <math.h>
+#include <errno.h>
+#include <glib/gstdio.h>
 
 #define DEFAULT_FOLDER "MyDocs/.documents"
 
@@ -2230,12 +2232,18 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		TnyFsStream *temp_stream = NULL;
-		temp_stream = modest_maemo_utils_create_temp_stream (att_filename, attachment_uid, &filepath);
+		temp_stream = modest_maemo_utils_create_temp_stream (att_filename, attachment_uid,
+								     &filepath);
 		
 		if (temp_stream) {
 			const gchar *content_type;
 			content_type = tny_mime_part_get_content_type (mime_part);
 			tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream));
+
+			/* make the file read-only */
+			if (g_chmod(filepath, 0444) != 0)
+				g_warning ("%s: failed to set file '%s' to read-only: %s",
+					   __FUNCTION__, filepath, strerror(errno));
 			
 			modest_platform_activate_file (filepath, content_type);
 			g_object_unref (temp_stream);
@@ -2349,7 +2357,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 	TnyStream *stream;
 	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
 
-	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0444);
+	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
 	if (result == GNOME_VFS_OK) {
 		stream = tny_vfs_stream_new (handle);
 		tny_mime_part_decode_to_stream (pair->part, stream);
