@@ -520,8 +520,8 @@ show_password_warning_only ()
 	
 	/* Show an explanatory temporary banner: */
 	if (main_window) 
-		hildon_banner_show_information ( 
-			GTK_WIDGET(main_window), NULL, _("mcen_ib_username_pw_incorrect"));
+		modest_platform_information_banner (GTK_WIDGET(main_window), NULL, 
+						    _("mcen_ib_username_pw_incorrect"));
 	else
 		g_warning ("%s: %s", __FUNCTION__, _("mcen_ib_username_pw_incorrect"));
 }
@@ -573,7 +573,7 @@ show_wrong_password_dialog (TnyAccount *account)
 	}
 	
 	/* Show an explanatory temporary banner: */
-	hildon_banner_show_information (GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
+	modest_platform_information_banner (GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
 		
 	if (created_dialog) {
 		/* Forget it when it closes: */
