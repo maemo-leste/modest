@@ -581,7 +581,12 @@ show_wrong_password_dialog (TnyAccount *account)
 			account, 0);
 			
 		/* Show it and delete it when it closes: */
-		modest_maemo_show_dialog_and_forget (GTK_WINDOW (main_window), GTK_DIALOG (dialog));
+		gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (main_window));
+		g_signal_connect_swapped (dialog, 
+					  "response", 
+					  G_CALLBACK (gtk_widget_destroy), 
+					  dialog);
+		gtk_widget_show (GTK_WIDGET (dialog));
 	}
 	else {
 		/* Just show it instead of showing it and deleting it when it closes,
