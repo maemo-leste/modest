@@ -1018,37 +1018,25 @@ cleanup:
 	g_object_unref (folder);
 }
 
-
-static void
-open_msg_error_handler (ModestMailOperation *mail_op,
-			gpointer user_data)
-{
-	/* Show the message error */
-	GObject *win = modest_mail_operation_get_source (mail_op);
-
-	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, 
-						(gchar *) user_data);
-	if (win)
-		g_object_unref (win);
-}
-
 void
 modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
 	const GError *error;
-	GObject *win = modest_mail_operation_get_source (mail_op);
+	GObject *win = NULL;
+	const gchar *err_msg;
 
+	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
  
-	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT) {
+	/* Select error message */
+	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT)
+		err_msg = _("emev_ni_ui_imap_msg_size_exceed_error");
+	else
+		err_msg = (const gchar *) user_data;
 
-		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-							error->message);
-	} else {
-		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-							_("mail_ni_ui_folder_get_msg_folder_error"));
-	}
+	/* Show error */
+	modest_platform_run_information_dialog ((GtkWindow *) win, err_msg);
 
 	if (win)
 		g_object_unref (win);
@@ -1075,20 +1063,81 @@ get_account_from_header_list (TnyList *headers)
 	return account;
 }
 
+static void
+open_msgs_performer(gboolean canceled, 
+		    GError *err,
+		    GtkWindow *parent_window, 
+		    TnyAccount *account, 
+		    gpointer user_data)
+{
+	ModestMailOperation *mail_op;
+	const gchar *proto_name;
+	gchar *error_msg;
+	ModestTransportStoreProtocol proto;
+	TnyList *not_opened_headers;
+
+	not_opened_headers = TNY_LIST (user_data);
+
+	/* Get the error message depending on the protocol */
+	proto_name = tny_account_get_proto (account);
+	if (proto_name != NULL) {
+		proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+	} else {
+		proto = MODEST_PROTOCOL_STORE_MAILDIR;
+	}
+	
+	/* Create the error messages */
+	if (tny_list_get_length (not_opened_headers) == 1) {
+		if (proto == MODEST_PROTOCOL_STORE_POP) {
+			error_msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
+		} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
+			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			error_msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
+						     tny_header_get_subject (header));
+			g_object_unref (header);
+			g_object_unref (iter);
+		} else {
+			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
+		}
+	} else {
+		error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
+	}
+
+	/* Create the mail operation */
+	mail_op = 
+		modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
+							       modest_ui_actions_get_msgs_full_error_handler,
+							       error_msg, g_free);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+		
+	modest_mail_operation_get_msgs_full (mail_op,
+					     not_opened_headers,
+					     open_msg_cb,
+					     NULL,
+					     NULL);
+
+	/* Frees */
+	g_object_unref (mail_op);
+	g_object_unref (not_opened_headers);
+	g_object_unref (account);
+}
+
 /*
  * This function is used by both modest_ui_actions_on_open and
  * modest_ui_actions_on_header_activated. This way we always do the
  * same when trying to open messages.
  */
 static void
-_modest_ui_actions_open (TnyList *headers, ModestWindow *win)
+open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 {
 	ModestWindowMgr *mgr = NULL;
 	TnyIterator *iter = NULL, *iter_not_opened = NULL;
-	ModestMailOperation *mail_op = NULL;
 	TnyList *not_opened_headers = NULL;
 	TnyHeaderFlags flags = 0;
 	TnyAccount *account;
+	gint uncached_msgs = 0;
 		
 	g_return_if_fail (headers != NULL);
 
@@ -1152,26 +1201,24 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 	 * than later in a thread:
 	 */
 	if (tny_list_get_length (not_opened_headers) > 0) {
-		TnyIterator *iter;
-		gboolean found = FALSE;
+		uncached_msgs = header_list_count_uncached_msgs (not_opened_headers);
 
-		iter = tny_list_create_iterator (not_opened_headers);
-		while (!tny_iterator_is_done (iter) && !found) {
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED))
-				found = TRUE;
-			else
-				tny_iterator_next (iter);
+		if (uncached_msgs > 0) {
+			/* Allways download if we are online. */
+			if (!tny_device_is_online (modest_runtime_get_device ())) {
+				gint response;
 
-			g_object_unref (header);
+				/* If ask for user permission to download the messages */
+				response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+										    ngettext("mcen_nc_get_msg",
+											     "mcen_nc_get_msgs",
+											     uncached_msgs));
+
+				/* End if the user does not want to continue */
+				if (response == GTK_RESPONSE_CANCEL)
+					goto cleanup;
+			}
 		}
-		g_object_unref (iter);
-
-		/* Ask the user if there are any uncached messages */
-		if (found && !connect_to_get_msg (win, 
-						  header_list_count_uncached_msgs (not_opened_headers), 
-						  account))
-			goto cleanup;
 	}
 	
 	/* Register the headers before actually creating the windows: */
@@ -1181,62 +1228,21 @@ _modest_ui_actions_open (TnyList *headers, ModestWindow *win)
 		if (header) {
 			modest_window_mgr_register_header (mgr, header, NULL);
 			g_object_unref (header);
-		}		
+		}
 		tny_iterator_next (iter_not_opened);
 	}
 	g_object_unref (iter_not_opened);
 	iter_not_opened = NULL;
 
-	/* Create the mail operation */
-	if (tny_list_get_length (not_opened_headers) > 1) {
-		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
-									 modest_ui_actions_get_msgs_full_error_handler, 
-									 NULL, NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		
-		modest_mail_operation_get_msgs_full (mail_op, 
-						     not_opened_headers, 
-						     open_msg_cb, 
-						     NULL, 
-						     NULL);
+	/* Connect to the account and perform */
+	if (uncached_msgs > 0) {
+		modest_platform_connect_and_perform ((GtkWindow *) win, g_object_ref (account), 
+						     open_msgs_performer, g_object_ref (not_opened_headers));
 	} else {
-		TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		const gchar *proto_name;
-		gchar *error_msg;
-		ModestTransportStoreProtocol proto;
-
-		/* Get the error message depending on the protocol */
-		proto_name = tny_account_get_proto (account);
-		if (proto_name != NULL) {
-			proto = modest_protocol_info_get_transport_store_protocol (proto_name);
-		} else {
-			proto = MODEST_PROTOCOL_STORE_MAILDIR;
-		}
-		
-		if (proto == MODEST_PROTOCOL_STORE_POP) {
-			error_msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
-		} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
-			error_msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
-						     tny_header_get_subject (header));
-		} else {
-			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
-		}
-
-		/* Create and call the mail operation */
-		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win), 
-									 open_msg_error_handler, 
-									 error_msg,
-									 g_free);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-
-		modest_mail_operation_get_msg (mail_op, header, open_msg_cb, NULL);
-
-		g_object_unref (header);
-		g_object_unref (iter);
+		/* Call directly the performer, do not need to connect */
+		open_msgs_performer (FALSE, NULL, (GtkWindow *) win, g_object_ref (account),
+				     g_object_ref (not_opened_headers));
 	}
-	g_object_unref (mail_op);
-
 cleanup:
 	/* Clean */
 	if (account)
@@ -1256,7 +1262,7 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 		return;
 
 	/* Open them */
-	_modest_ui_actions_open (headers, win);
+	open_msgs_from_headers (headers, win);
 
 	g_object_unref(headers);
 }
@@ -1955,7 +1961,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 /* 	tny_list_prepend (headers, G_OBJECT (header)); */
 	headers = modest_header_view_get_selected_headers (header_view);
 
-	_modest_ui_actions_open (headers, MODEST_WINDOW (main_window));
+	open_msgs_from_headers (headers, MODEST_WINDOW (main_window));
 
 	g_object_unref (headers);
 }
