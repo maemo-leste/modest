@@ -2198,6 +2198,18 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 {
 	ModestMsgEditWindow *edit_window;
 	char *info_text;
+	ModestMainWindow *win;
+
+	/* FIXME. Make the header view sensitive again. This is a
+	 * temporary hack. See modest_ui_actions_on_save_to_drafts()
+	 * for details */
+	win = MODEST_MAIN_WINDOW(modest_window_mgr_get_main_window(
+					 modest_runtime_get_window_mgr(), FALSE));
+	if (win != NULL) {
+		GtkWidget *hdrview = modest_main_window_get_child_widget(
+			win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+		if (hdrview) gtk_widget_set_sensitive(hdrview, TRUE);
+	}
 
 	edit_window = MODEST_MSG_EDIT_WINDOW (user_data);
 
@@ -2280,6 +2292,43 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
 	modest_msg_edit_window_reset_modified (edit_window);
+
+	/* ** FIXME **
+	 * If the drafts folder is selected then make the header view
+	 * insensitive while the message is being saved to drafts
+	 * (it'll be sensitive again in on_save_to_drafts_cb()). This
+	 * is not very clean but it avoids letting the drafts folder
+	 * in an inconsistent state: the user could edit the message
+	 * being saved and undesirable things would happen.
+	 * In the average case the user won't notice anything at
+	 * all. In the worst case (the user is editing a really big
+	 * file from Drafts) the header view will be insensitive
+	 * during the saving process (10 or 20 seconds, depending on
+	 * the message). Anyway this is just a quick workaround: once
+	 * we find a better solution it should be removed
+	 * See NB#65125 (commend #18) for details.
+	 */
+	ModestMainWindow *win = MODEST_MAIN_WINDOW(modest_window_mgr_get_main_window(
+		modest_runtime_get_window_mgr(), FALSE));
+	if (win != NULL) {
+		ModestFolderView *view = MODEST_FOLDER_VIEW(modest_main_window_get_child_widget(
+			win, MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW));
+		if (view != NULL) {
+			TnyFolder *folder = TNY_FOLDER(modest_folder_view_get_selected(view));
+			if (folder) {
+				if (modest_tny_folder_is_local_folder(folder)) {
+					TnyFolderType folder_type;
+					folder_type = modest_tny_folder_get_local_or_mmc_folder_type(folder);
+					if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
+						GtkWidget *hdrview = modest_main_window_get_child_widget(
+							win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+						if (hdrview) gtk_widget_set_sensitive(hdrview, FALSE);
+					}
+				}
+			}
+			if (folder != NULL) g_object_unref(folder);
+		}
+	}
 }
 
 /* For instance, when clicking the Send toolbar button when editing a message: */
