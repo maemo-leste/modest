@@ -1323,7 +1323,7 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 		modest_acc_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (tmp_account);
 		
-		if (!strcmp (account_name, modest_acc_name)) {
+		if (account_name && modest_acc_name && !strcmp (account_name, modest_acc_name)) {
 			found = TRUE;
 			retval = g_object_ref (tmp_account);
 		}

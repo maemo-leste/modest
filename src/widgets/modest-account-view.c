@@ -58,6 +58,8 @@ static void on_display_name_changed            (ModestAccountMgr *self,
 						const gchar *account,
 						gpointer user_data);
 
+static void modest_account_view_select_first_account (ModestAccountView *account_view);
+
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
 	MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
@@ -310,7 +312,15 @@ on_account_removed (TnyAccountStore *account_store,
 
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
-
+	
+	gchar *selected_name = modest_account_view_get_selected_account (self);
+	if (selected_name == NULL) {
+		/* we select the first account if none is selected */
+		modest_account_view_select_first_account (self);		
+	} else {
+		g_free (selected_name);
+	}
+	
 	update_account_view (priv->account_mgr, self);
 }
 
@@ -585,6 +595,21 @@ modest_account_view_select_account (ModestAccountView *account_view,
 		on_model_foreach_select_account, state);
 		
 	g_free (state);
+}
+
+static void
+modest_account_view_select_first_account (ModestAccountView *account_view)
+{
+	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (account_view));
+	g_return_if_fail (model != NULL);
+
+	GtkTreeIter iter;
+	gtk_tree_model_get_iter_first (model, &iter);
+
+	GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (account_view));
+	g_return_if_fail (selection != NULL);
+
+	gtk_tree_selection_select_iter (selection, &iter);
 }
 
 static void
