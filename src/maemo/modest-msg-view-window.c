@@ -919,10 +919,9 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 				MODEST_HEADER_VIEW_OBSERVER(window));
 	}
 
-	gtk_widget_show_all (GTK_WIDGET (window));
-
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (window));
+	gtk_widget_show_all (GTK_WIDGET (window));
 
 	modest_msg_view_window_update_priority (window);
 
@@ -953,6 +952,7 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	priv->is_search_result = TRUE;
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	update_window_title (window);
 
 	return MODEST_WINDOW(window);
 }
@@ -974,6 +974,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 		modest_account_name, msg_uid);
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
 	return MODEST_WINDOW(obj);
 }
