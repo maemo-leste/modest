@@ -87,16 +87,15 @@ modest_runtime_uninit (void)
 	
 	g_return_val_if_fail (MODEST_IS_SINGLETONS(_singletons), FALSE);
 	
+	MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(_singletons,"");
+	g_object_unref(_singletons);
+	_singletons = NULL;
+
 	if (_account_store) {
 		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(_account_store,"");
 		g_object_unref(_account_store);
 		_account_store = NULL;
 	}
-	
-	MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(_singletons,"");
-	g_object_unref(_singletons);
-	_singletons = NULL;
-
 	
 	if (_sig_handlers) {
 		modest_signal_mgr_disconnect_all_and_destroy (_sig_handlers);
