@@ -1030,16 +1030,22 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 	gboolean device_online;
 	TnyDevice *device;
 	TnyConnectionStatus conn_status;
+	gboolean user_requested;
 	
 	device = modest_runtime_get_device();
 	device_online = tny_device_is_online (device);
+
+	/* Whether the connection is user requested or automatically
+	   requested, for example via D-Bus */
+	user_requested = (parent_window) ? TRUE : FALSE;
 
 	/* If there is no account check only the device status */
 	if (!account) {
 		if (device_online)
 			return TRUE;
 		else
-			return tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+			return tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), 
+							       NULL, user_requested);
 	}
 
 	/* Return if the account is already connected */
@@ -1059,7 +1065,8 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 						  G_CALLBACK (on_connection_status_changed),
 						  data);
 		/* Try to connect the device */
-		device_online = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), NULL);
+		device_online = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), 
+								NULL, user_requested);
 
 		/* If the device connection failed then exit */
 		if (!device_online && data->handler)
@@ -1836,9 +1843,14 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  	TnyDevice *device;
  	TnyConnectionStatus conn_status;
  	OnWentOnlineInfo *info;
+	gboolean user_requested;
  	
  	device = modest_runtime_get_device();
  	device_online = tny_device_is_online (device);
+
+	/* Whether the connection is user requested or automatically
+	   requested, for example via D-Bus */
+	user_requested = (parent_window) ? TRUE : FALSE;
 
  	/* If there is no account check only the device status */
  	if (!account) {
@@ -1866,7 +1878,8 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  			info->callback = callback;
  		
  			tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
-							      on_conic_device_went_online, info);
+							      user_requested, on_conic_device_went_online, 
+							      info);
  
  			/* We'll cleanup in on_conic_device_went_online */
  		}
@@ -1918,7 +1931,8 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  		 * and the account */
  		
  		tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
-						      on_conic_device_went_online, info);
+						      user_requested, on_conic_device_went_online, 
+						      info);
  		
  	} else {
  		
