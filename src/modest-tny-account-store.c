@@ -1660,12 +1660,16 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (store_account) {
+
+		/* do this before deleting the cache */
+		account_disconnect (store_account);
+		
 		/* Clear the cache */
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
 
 		/* Notify the observers */
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, store_account);
-		account_disconnect (store_account); /* disconnect the account */
+
 		g_object_unref (store_account);
 	} else {
 		g_warning ("There is no store account for account %s\n", account);
