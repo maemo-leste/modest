@@ -1484,8 +1484,11 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 		gtk_tree_model_get (priv->header_model, &tmp_iter,
 				TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				&header, -1);
-		if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
-			is_last_selected = FALSE;
+		if (header) {
+			if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+				is_last_selected = FALSE;
+			g_object_unref(G_OBJECT(header));
+		}
 	}
 	gtk_tree_path_free (path);
 	return is_last_selected;
@@ -1553,8 +1556,11 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 		gtk_tree_model_get (priv->header_model, &tmp_iter,
 				TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				&header, -1);
-		if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
-			is_first_selected = FALSE;
+		if (header) {
+			if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+				is_first_selected = FALSE;
+			g_object_unref(G_OBJECT(header));
+		}
 	}
 	gtk_tree_path_free (path);
 	return is_first_selected;
@@ -1885,7 +1891,10 @@ modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 
 		gtk_tree_model_get (priv->header_model, &iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				    &header, -1);
-		flags = tny_header_get_flags (header);
+		if (header) {
+			flags = tny_header_get_flags (header);
+			g_object_unref(G_OBJECT(header));
+		}
 		gtk_tree_path_free (path);
 	}
 
