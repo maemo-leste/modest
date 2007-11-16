@@ -194,6 +194,10 @@ modest_account_mgr_init (ModestAccountMgr * obj)
 							       g_str_equal,
 							       g_free,
 							       (GDestroyNotify)g_hash_table_destroy);
+
+	/* FALSE means: status is unknown */
+	priv->has_accounts = FALSE;
+	priv->has_enabled_accounts = FALSE;
 }
 
 static void
@@ -602,9 +606,13 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 	/* if this was the last account, stop any auto-updating */
 	/* (re)set the automatic account update */
 	GSList *acc_names = modest_account_mgr_account_names (self, TRUE);
-	if (!acc_names) 
+	if (!acc_names) {
 		modest_platform_set_update_interval (0);
-	else
+		/* it was the last account, the has_account / has_enabled_account
+		 * changes
+		 */
+		priv->has_accounts = priv->has_enabled_accounts = FALSE; 
+	} else
 		modest_account_mgr_free_account_names (acc_names);
 	
 	return TRUE;
@@ -1222,13 +1230,30 @@ _modest_account_mgr_get_account_keyname_cached (ModestAccountMgrPrivate *priv,
 gboolean
 modest_account_mgr_has_accounts (ModestAccountMgr* self, gboolean enabled)
 {
-	/* Check that at least one account exists: */
-	GSList *account_names = modest_account_mgr_account_names (self,
-								  enabled);
-	gboolean accounts_exist = account_names != NULL;
+	ModestAccountMgrPrivate* priv;
+	GSList *account_names;
+	gboolean accounts_exist;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
 	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	
+	if (enabled && priv->has_enabled_accounts)
+		return TRUE;
+	else if (priv->has_accounts)
+		return TRUE;
+		
+	/* Check that at least one account exists: */
+	account_names = modest_account_mgr_account_names (self,enabled);
+	accounts_exist = account_names != NULL;
 	modest_account_mgr_free_account_names (account_names);
 	account_names = NULL;
+
+	/* cache it. */
+	if (enabled)
+		priv->has_enabled_accounts = accounts_exist;
+	else
+		priv->has_accounts = accounts_exist;
 	
 	return accounts_exist;
 }
@@ -1296,8 +1321,14 @@ modest_account_mgr_notify_account_update (ModestAccountMgr* self,
 					  const gchar *server_account_name)
 {
 	ModestTransportStoreProtocol proto;
+	ModestAccountMgrPrivate* priv;
 	gchar *proto_name = NULL;
 
+	g_return_if_fail (self);
+	g_return_if_fail (server_account_name);
+	
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	
 	/* Get protocol */
 	proto_name = modest_account_mgr_get_string (self, server_account_name, 
 						    MODEST_ACCOUNT_PROTO, TRUE);
@@ -1308,6 +1339,12 @@ modest_account_mgr_notify_account_update (ModestAccountMgr* self,
 	proto = modest_protocol_info_get_transport_store_protocol (proto_name);
 	g_free (proto_name);
 
+	/* there is some update in the account, so we can't
+	 * be sure about whether there are still enabled accounts...
+	 */
+	priv->has_enabled_accounts = FALSE;
+	priv->has_accounts         = FALSE;
+	
 	/* Emit "update-account" */
 	g_signal_emit (G_OBJECT(self), 
 		       signals[ACCOUNT_CHANGED_SIGNAL], 0, 

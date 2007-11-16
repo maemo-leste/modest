@@ -60,12 +60,17 @@ struct _ModestAccountMgrPrivate {
 	GHashTable *notification_id_accounts;
 	GHashTable *server_account_key_hash;
 	GHashTable *account_key_hash;
+	
+	/* cache whether we have accounts; if this is TRUE, we have accounts, if
+	 * it's FALSE we _don't know_ if we have account and need to check
+	 */
+	gboolean has_accounts;
+	gboolean has_enabled_accounts;
 };
-
 #define MODEST_ACCOUNT_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                MODEST_TYPE_ACCOUNT_MGR, \
+	         				    MODEST_TYPE_ACCOUNT_MGR, \
                                                 ModestAccountMgrPrivate))
-
+	
 /**
  * modest_account_mgr_set_bool:
  * @self: a ModestAccountMgr instance
