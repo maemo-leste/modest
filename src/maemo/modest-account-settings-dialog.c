@@ -172,6 +172,15 @@ on_modified_number_editor_changed (HildonNumberEditor *number_editor, gint new_v
 	self->modified = TRUE;
 }
 
+static void       
+on_number_editor_notify (HildonNumberEditor *editor, GParamSpec *arg1, gpointer user_data)
+{
+	ModestAccountSettingsDialog *dialog = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	gint value = hildon_number_editor_get_value (editor);
+
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
+}
+
 /* Set a modified boolean whenever the widget is changed, 
  * so we can check for it later.
  */
@@ -181,6 +190,7 @@ connect_for_modified (ModestAccountSettingsDialog *self, GtkWidget *widget)
 	if (HILDON_IS_NUMBER_EDITOR (widget)) {
 		g_signal_connect (G_OBJECT (widget), "notify::value",
 			G_CALLBACK (on_modified_number_editor_changed), self);
+		g_signal_connect (G_OBJECT (widget), "notify", G_CALLBACK (on_number_editor_notify), self);
 	}
 	else if (GTK_IS_ENTRY (widget)) {
 		g_signal_connect (G_OBJECT (widget), "changed",
@@ -901,39 +911,6 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	
 	return GTK_WIDGET (scrollwin);
 }
-
-
-/** TODO: This doesn't work because hildon_number_editor_get_value() does not work until 
- * focus has been lost:
- * See https://bugs.maemo.org/show_bug.cgi?id=1806.
- */
-static gboolean
-check_hildon_number_editor_and_warn_value_not_in_range (HildonNumberEditor *widget, gint min, gint max)
-{
-	g_return_val_if_fail (widget, FALSE);
-	
-	const gint port = hildon_number_editor_get_value (widget);
-	/* printf ("DEBUG: %s, port=%d\n", __FUNCTION__, port); */
-	if (port < PORT_MIN || 
-		port > PORT_MAX) {
-			
-		/* Warn the user via a dialog: */
-		gchar *message = g_strdup_printf (_CS("ckct_ib_set_a_value_within_range"), 
-				       min, 
-				       max);
-		hildon_banner_show_information (GTK_WIDGET (widget), NULL, message);
-		g_free (message);
-		message = NULL;
-
-		/* Return focus to the email address entry: */
-		gtk_widget_grab_focus (GTK_WIDGET (widget));
-		
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-
 	
 static gboolean
 check_data (ModestAccountSettingsDialog *self)
@@ -1008,18 +985,6 @@ check_data (ModestAccountSettingsDialog *self)
 		return FALSE;
 	}
 	
-	/* Check that the port numbers are acceptable: */
-	if (!check_hildon_number_editor_and_warn_value_not_in_range ( 
-		HILDON_NUMBER_EDITOR (self->entry_incoming_port), PORT_MIN, PORT_MAX)) {
-		return FALSE;
-	}
-		
-	if (!check_hildon_number_editor_and_warn_value_not_in_range ( 
-		HILDON_NUMBER_EDITOR (self->entry_outgoing_port), PORT_MIN, PORT_MAX)) {
-		return FALSE;
-	}
-
-		
 	/* Find a suitable authentication method when secure authentication is desired */
 
 	const gint port_num = hildon_number_editor_get_value (
