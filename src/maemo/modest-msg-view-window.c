@@ -1040,6 +1040,8 @@ void modest_msg_view_window_on_row_inserted(
 	gtk_tree_model_get (new_model, tree_iter, 
 			TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header, -1);
 	uid = modest_tny_folder_get_header_unique_id(header);
+	g_object_unref(G_OBJECT(header));
+	header = NULL;
 	if(!g_str_equal(priv->msg_uid, uid)){
 		g_free(uid);
 		return;
