@@ -2047,7 +2047,7 @@ modest_msg_edit_window_attach_file_one (
 		tny_mime_part_set_filename (mime_part, basename);
 		g_free (basename);
 		
-		priv->attachments = g_list_prepend (priv->attachments, mime_part);
+		priv->attachments = g_list_prepend (priv->attachments, g_object_ref(mime_part));
 		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 							mime_part);
 		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
