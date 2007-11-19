@@ -66,8 +66,6 @@
 #include <config.h>
 #endif
 
-#define EXAMPLE_EMAIL_ADDRESS "first.last@provider.com"
-
 #define PORT_MIN 1
 #define PORT_MAX 65535
 
@@ -539,7 +537,7 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_caption_new_with_asterisk (self, sizegroup, 
 		_("mcen_li_emailsetup_email_address"), self->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
-	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), EXAMPLE_EMAIL_ADDRESS); /* Default text. */
+	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (self->entry_user_email);
 	connect_for_modified (self, self->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);

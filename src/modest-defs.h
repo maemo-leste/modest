@@ -194,4 +194,7 @@
 /* Notification ids */
 #define MODEST_CONF_NOTIFICATION_IDS MODEST_CONF_NAMESPACE "/notification_ids"      /* list of ints */
 
+
+#define MODEST_EXAMPLE_EMAIL_ADDRESS "first.last@example.com"
+
 #endif /*__MODEST_DEFS_H__*/

@@ -61,8 +61,6 @@
 #include <config.h>
 #endif
 
-#define EXAMPLE_EMAIL_ADDRESS "first.last@provider.com"
-
 G_DEFINE_TYPE (ModestEasysetupWizardDialog, modest_easysetup_wizard_dialog, MODEST_TYPE_WIZARD_DIALOG);
 
 #define WIZARD_DIALOG_GET_PRIVATE(o)					\
@@ -380,7 +378,7 @@ on_combo_account_serviceprovider (GtkComboBox *widget, gpointer user_data)
 		domain_name = modest_presets_get_domain (priv->presets, provider_id);
 	
 	if(!domain_name)
-		domain_name = g_strdup (EXAMPLE_EMAIL_ADDRESS);
+		domain_name = g_strdup (MODEST_EXAMPLE_EMAIL_ADDRESS);
 		
 	if (self->entry_user_email)
 		gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), domain_name);
@@ -640,7 +638,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_caption_new_with_asterisk (self, sizegroup, 
 						   _("mcen_li_emailsetup_email_address"), self->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
-	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), EXAMPLE_EMAIL_ADDRESS); /* Default text. */
+	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (self->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	g_signal_connect(G_OBJECT(self->entry_user_email), "changed", 
