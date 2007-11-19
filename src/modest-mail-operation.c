@@ -2844,7 +2844,6 @@ modest_mail_operation_notify_start (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	/* Ensure that all the fields are filled correctly */
-	g_return_if_fail (priv->account != NULL);
 	g_return_if_fail (priv->op_type != MODEST_MAIL_OPERATION_TYPE_UNKNOWN);
 
 	/* Notify the observers about the mail operation. We do not
@@ -2890,4 +2889,22 @@ modest_mail_operation_get_account (ModestMailOperation *self)
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	return (priv->account) ? g_object_ref (priv->account) : NULL;
+}
+
+void
+modest_mail_operation_noop (ModestMailOperation *self)
+{
+	ModestMailOperationPrivate *priv = NULL;
+
+	g_return_if_fail (self);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
+	priv->done = 0;
+	priv->total = 0;
+
+	/* This mail operation does nothing actually */
+	modest_mail_operation_notify_start (self);
+	modest_mail_operation_notify_end (self);
 }

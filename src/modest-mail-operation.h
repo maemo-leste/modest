@@ -673,7 +673,25 @@ void      modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 						 RefreshAsyncUserCallback user_callback,
 						 gpointer user_data);
 
+/**
+ * modest_mail_operation_get_account:
+ * @self: a #ModestMailOperation
+ * 
+ * Gets the account associated to a mail operation
+ * 
+ * Returns: the #TnyAccount associated to the #ModestMailOperation
+ **/
 TnyAccount *modest_mail_operation_get_account   (ModestMailOperation *self);
+
+
+/**
+ * modest_mail_operation_noop:
+ * @self: a #ModestMailOperation
+ * 
+ * Does nothing except emitting operation-started and
+ * operation-finished
+ **/
+void modest_mail_operation_noop (ModestMailOperation *self);
 
 G_END_DECLS
 

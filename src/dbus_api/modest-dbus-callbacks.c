@@ -34,7 +34,7 @@
 #include "modest-tny-account.h"
 #include "modest-tny-folder.h"
 #include "modest-ui-actions.h"
-
+#include "modest-debug.h"
 #include "modest-search.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "modest-tny-msg.h"
@@ -67,7 +67,10 @@ typedef struct
 	gchar *attachments;
 } ComposeMailIdleData;
 
+
+static gboolean notify_error_in_dbus_callback (gpointer user_data);
 static gboolean on_idle_compose_mail(gpointer user_data);
+static gboolean on_idle_top_application (gpointer user_data);
 
 /** uri_unescape:
  * @uri An escaped URI. URIs should always be escaped.
@@ -78,7 +81,8 @@ static gboolean on_idle_compose_mail(gpointer user_data);
  * 
  * Return value: An unescaped string. This should be freed with g_free().
  */
-static gchar* uri_unescape(const gchar* uri, size_t len)
+static gchar* 
+uri_unescape(const gchar* uri, size_t len)
 {
 	if (!uri)
 		return NULL;
@@ -106,7 +110,8 @@ static gchar* uri_unescape(const gchar* uri, size_t len)
  * 
  * Return value: The to address, unescaped. This should be freed with g_free().
  */
-static gchar* uri_parse_mailto (const gchar* mailto, GSList** list_items_and_values)
+static gchar* 
+uri_parse_mailto (const gchar* mailto, GSList** list_items_and_values)
 {
 	/* The URL must begin with mailto: */
 	if (strncmp (mailto, "mailto:", 7) != 0) {
@@ -162,9 +167,7 @@ check_and_offer_account_creation()
 	gdk_threads_enter ();
 	
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
-		printf ("DEBUG1: %s\n", __FUNCTION__);
 		const gboolean created = modest_ui_actions_run_account_setup_wizard (NULL);
-		printf ("DEBUG1: %s\n", __FUNCTION__);
 		if (!created) {
 			g_debug ("modest: %s: no account exists even after offering, "
 				 "or account setup was already underway.\n", __FUNCTION__);
@@ -187,7 +190,9 @@ on_idle_mail_to(gpointer user_data)
 	const gchar *bcc = NULL;
 	const gchar *subject = NULL;
 	const gchar *body = NULL;
+
 	if (!check_and_offer_account_creation ()) {
+		g_idle_add (notify_error_in_dbus_callback, NULL);
 		goto cleanup;
 	}
 
@@ -230,16 +235,13 @@ cleanup:
 static gint 
 on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
-     	return OSSO_ERROR;
-     	
-    /* Use g_idle to context-switch into the application's thread: */
- 
-    /* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_MAIL_TO_ARG_URI);
- 	gchar *uri = g_strdup (val.value.s);
+ 	osso_rpc_t val;
+ 	gchar *uri;
+
+	/* Get arguments */
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_MAIL_TO_ARG_URI);
+ 	uri = g_strdup (val.value.s);
  	
- 	/* printf("  debug: to=%s\n", idle_data->to); */
  	g_idle_add(on_idle_mail_to, (gpointer)uri);
  	
  	/* Note that we cannot report failures during sending, 
@@ -253,7 +255,9 @@ on_idle_compose_mail(gpointer user_data)
 {
 	GSList *attachments = NULL;
 	ComposeMailIdleData *idle_data = (ComposeMailIdleData*)user_data;
+
 	if (!check_and_offer_account_creation ()) {
+		g_idle_add (notify_error_in_dbus_callback, NULL);
 		goto cleanup;
 	}
 
@@ -291,16 +295,16 @@ cleanup:
 	return FALSE; /* Do not call this callback again. */
 }
 
-static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
+static gint 
+on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
-     	return OSSO_ERROR;
+	ComposeMailIdleData *idle_data;
+	osso_rpc_t val;
      	
-	/* Use g_idle to context-switch into the application's thread: */
- 	ComposeMailIdleData *idle_data = g_new0(ComposeMailIdleData, 1); /* Freed in the idle callback. */
+ 	idle_data = g_new0(ComposeMailIdleData, 1); /* Freed in the idle callback. */
  	
 	/* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_TO);
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_TO);
  	idle_data->to = g_strdup (val.value.s);
  	
  	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_CC);
@@ -318,10 +322,9 @@ static gint on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retv
  	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_COMPOSE_MAIL_ARG_ATTACHMENTS);
  	idle_data->attachments = g_strdup (val.value.s);
 
+	/* Use g_idle to context-switch into the application's thread: */
   	g_idle_add(on_idle_compose_mail, (gpointer)idle_data);
  	
- 	/* Note that we cannot report failures during sending, 
- 	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
 
@@ -349,7 +352,6 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 		return modest_tny_account_store_find_msg_in_outboxes (astore, uri, ac_out);
 	}
 	
-	printf ("DEBUG: %s: uri=%s\n", __FUNCTION__, uri);
 	/* TODO: When tinymail is built with the extra DBC assertion checks, 
 	 * this will crash for local folders (such as drafts),
 	 * because tny_folder_get_url_string() (in add_hit())
@@ -366,13 +368,13 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 		return NULL;
 	}
 
-	g_debug ("%s: Found account.\n", __FUNCTION__);
+	MODEST_DEBUG_BLOCK (g_debug ("%s: Found account.\n", __FUNCTION__););
 
 	if ( ! TNY_IS_STORE_ACCOUNT (account)) {
 		goto out;
 	}
 
-	g_debug ("%s: Account is store account.\n", __FUNCTION__);
+	MODEST_DEBUG_BLOCK (g_debug ("%s: Account is store account.\n", __FUNCTION__););
 	*ac_out = account;
 
 	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account),
@@ -385,14 +387,17 @@ find_message_by_url (const char *uri,  TnyAccount **ac_out)
 		goto out;
 	}
 	
-	g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri);
+	MODEST_DEBUG_BLOCK (g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri););
 	
 	msg = tny_folder_find_msg (folder, uri, &err);
 	
-	if (!msg) {
-		g_debug ("%s: tny_folder_find_msg() failed for folder %s\n  with error=%s.\n",
-			 __FUNCTION__, tny_folder_get_id (folder), err->message);
-	}
+	if (!msg)
+		MODEST_DEBUG_BLOCK (
+				    g_debug ("%s: tny_folder_find_msg() failed for "\
+					     "folder %s\n  with error=%s.\n",
+					     __FUNCTION__, tny_folder_get_id (folder), 
+					     err->message);
+				    );
 
 out:
 	if (err)
@@ -419,26 +424,26 @@ on_idle_open_message (gpointer user_data)
 	char         *uri = NULL;
 	ModestWindowMgr *win_mgr = NULL;
 	TnyFolder    *folder = NULL;
+	gboolean is_draft = FALSE;
+	gboolean already_opened = FALSE;
+	ModestWindow *msg_view = NULL;
 
 	uri = (char *) user_data;
 
-	/* g_debug ("modest: %s: Trying to find msg by url: %s", __FUNCTION__, uri); */
 	msg = find_message_by_url (uri, &account);
 	g_free (uri);
 
 	if (msg == NULL) {
-		g_debug ("modest:  %s: message not found.", __FUNCTION__);
+		g_warning ("modest:  %s: message not found.", __FUNCTION__);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
 		return FALSE;
 	}
-	g_debug ("modest:  %s: Found message.", __FUNCTION__);
-
 	
 	folder = tny_msg_get_folder (msg);
 	
 	/* Drafts will be opened in the editor, instead of the viewer, as per the UI spec: */
 	/* FIXME: same should happen for Outbox; not enabling that, as the handling
 	 * of edited messages is not clear in that case */
-	gboolean is_draft = FALSE;
 	if (folder && modest_tny_folder_is_local_folder (folder) &&
 		(modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
 		is_draft = TRUE;
@@ -460,8 +465,6 @@ on_idle_open_message (gpointer user_data)
 
 	gdk_threads_enter (); /* CHECKED */
 
-	gboolean already_opened = FALSE;
-	ModestWindow *msg_view = NULL;
 	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
 		if (msg_view) {
 			g_debug ("modest: %s: A window for this message is open already: type=%s", 
@@ -479,10 +482,12 @@ on_idle_open_message (gpointer user_data)
 	}
 	
 	if (!already_opened) {
+		const gchar *modest_account_name;
+
 		/* g_debug ("creating new window for this msg"); */
 		modest_window_mgr_register_header (win_mgr, header, NULL);
 		
-		const gchar *modest_account_name = 
+		modest_account_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 			
 		/* Drafts will be opened in the editor, and others will be opened in the viewer, 
@@ -494,8 +499,7 @@ on_idle_open_message (gpointer user_data)
 		} else {
 			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name,
 						       msg_uid);
-		}
-		
+		}		
 		modest_window_mgr_register_window (win_mgr, msg_view);
 		gtk_widget_show_all (GTK_WIDGET (msg_view));
 	}
@@ -509,22 +513,19 @@ on_idle_open_message (gpointer user_data)
 	return FALSE; /* Do not call this callback again. */
 }
 
-static gint on_open_message(GArray * arguments, gpointer data, osso_rpc_t * retval)
+static gint 
+on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	if (arguments->len != MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT)
-     	return OSSO_ERROR;
-     	
-    /* Use g_idle to context-switch into the application's thread: */
+ 	osso_rpc_t val;
+ 	gchar *uri;
 
-    /* Get the arguments: */
- 	osso_rpc_t val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_OPEN_MESSAGE_ARG_URI);
- 	gchar *uri = g_strdup (val.value.s);
+	/* Get the arguments: */
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_OPEN_MESSAGE_ARG_URI);
+ 	uri = g_strdup (val.value.s);
  	
- 	/* printf("  debug: to=%s\n", idle_data->to); */
+	/* Use g_idle to context-switch into the application's thread */
  	g_idle_add(on_idle_open_message, (gpointer)uri);
  	
- 	/* Note that we cannot report failures during sending, 
- 	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
 
@@ -543,13 +544,12 @@ on_idle_delete_message (gpointer user_data)
 	ModestWindow *main_win = NULL, *msg_view = NULL;
 
 	uri = (char *) user_data;
-
-	/* g_debug ("modest: %s Searching for message (delete message)"); */
 	
 	msg = find_message_by_url (uri, &account);
 
 	if (!msg) {
 		g_warning ("%s: Could not find message '%s'", __FUNCTION__, uri);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
 		return OSSO_ERROR; 
 	}
 	
@@ -563,25 +563,15 @@ on_idle_delete_message (gpointer user_data)
 	if (!folder) {
 		g_warning ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
 		g_object_unref (msg);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
 		return OSSO_ERROR; 
 	}
-	
-	/* tny_msg_get_header () flaw:
-	 * From tinythingy doc: You can't use the returned instance with the
-	 * TnyFolder operations
-	 *
-	 * To get a header instance that will work with these folder methods,
-	 * you can use tny_folder_get_headers.
-	 *
-	 * Ok, we will do so then. Sigh.
-	 * */
-	headers = tny_simple_list_new ();
 
+	headers = tny_simple_list_new ();
 	tny_folder_get_headers (folder, headers, TRUE, NULL);
 	iter = tny_list_create_iterator (headers);
 	header = NULL;
 
-	/* g_debug ("Searching header for msg in folder"); */
 	while (!tny_iterator_is_done (iter)) {
 		const char *cur_id = NULL;
 
@@ -615,9 +605,9 @@ on_idle_delete_message (gpointer user_data)
 	if (header == NULL) {
 		if (folder)
 			g_object_unref (folder);
-			
+		g_idle_add (notify_error_in_dbus_callback, NULL);			
 		return OSSO_ERROR;
-	}	
+	}
 		
 	res = OSSO_OK;
 
@@ -683,22 +673,15 @@ on_idle_delete_message (gpointer user_data)
 static gint
 on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 {
-	if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT)
-     	return OSSO_ERROR;
-     	
-    /* Use g_idle to context-switch into the application's thread: */
-
-    /* Get the arguments: */
+	/* Get the arguments: */
  	osso_rpc_t val = g_array_index (arguments,
 			     osso_rpc_t,
 			     MODEST_DBUS_DELETE_MESSAGE_ARG_URI);
  	gchar *uri = g_strdup (val.value.s);
  	
- 	/* printf("  debug: to=%s\n", idle_data->to); */
+	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_delete_message, (gpointer)uri);
  	
- 	/* Note that we cannot report failures during sending, 
- 	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
 
@@ -709,35 +692,22 @@ on_idle_send_receive(gpointer user_data)
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 						   FALSE); /* don't create */
 
-	/* This is a GDK lock because we are an idle callback and
-	 * the code below is or does Gtk+ code */
+	/* Send & receive all */
 	gdk_threads_enter (); /* CHECKED */
-
-	/* Send & receive all if "Update automatically" is set */
-	/* TODO: check the auto-update parameter in the configuration */
 	modest_ui_actions_do_send_receive_all (main_win);
-	
 	gdk_threads_leave (); /* CHECKED */
 	
-	return FALSE; /* Do not call this callback again. */
+	return FALSE;
 }
 
-static gint on_send_receive(GArray * arguments, gpointer data, osso_rpc_t * retval)
+static gint 
+on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 { 	
-	printf("DEBUG: modest: %s\n", __FUNCTION__);
-    /* Use g_idle to context-switch into the application's thread: */
-
-    /* This method has no arguments. */
- 	
- 	/* printf("  debug: to=%s\n", idle_data->to); */
+	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_send_receive, NULL);
  	
- 	/* Note that we cannot report failures during send/receive, 
- 	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
-
-static gboolean on_idle_top_application (gpointer user_data);
 
 static gboolean
 on_idle_open_default_inbox(gpointer user_data)
@@ -777,14 +747,9 @@ on_idle_open_default_inbox(gpointer user_data)
 static gint 
 on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-    /* Use g_idle to context-switch into the application's thread: */
-
-    /* This method has no arguments. */
- 	
+	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_open_default_inbox, NULL);
  	
- 	/* Note that we cannot report failures during send/receive, 
- 	 * because that would be asynchronous. */
  	return OSSO_OK;
 }
 
@@ -814,48 +779,60 @@ on_idle_top_application (gpointer user_data)
 	return FALSE; /* Do not call this callback again. */
 }
 
-static gint on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
+static gint 
+on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-    /* Use g_idle to context-switch into the application's thread: */
-
-    /* This method has no arguments. */
- 	
+	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_top_application, NULL);
  	
  	return OSSO_OK;
 }
                       
 /* Callback for normal D-BUS messages */
-gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
-                      GArray * arguments, gpointer data,
-                      osso_rpc_t * retval)
+gint 
+modest_dbus_req_handler(const gchar * interface, const gchar * method,
+			GArray * arguments, gpointer data,
+			osso_rpc_t * retval)
 {
-	
-	/* g_debug ("debug: %s\n", __FUNCTION__); */
-	g_debug ("debug: %s: method received: %s\n", __FUNCTION__, method);
-	
 	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
-		return on_mail_to (arguments, data, retval);
+		if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
+			goto param_error;
+		return on_mail_to (arguments, data, retval);		
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
+		if (arguments->len != MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT)
+			goto param_error;
 		return on_open_message (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
+		if (arguments->len != 0)
+			goto param_error;
 		return on_send_receive (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
+		if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
+			goto param_error;
 		return on_compose_mail (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
+		if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT)
+			goto param_error;
 		return on_delete_message (arguments,data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX) == 0) {
+		if (arguments->len != 0)
+			goto param_error;
 		return on_open_default_inbox (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_TOP_APPLICATION) == 0) {
+		if (arguments->len != 0)
+			goto param_error;
 		return on_top_application (arguments, data, retval);
-	}
-	else { 
+	} else { 
 		/* We need to return INVALID here so
 		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
 		 * so that our modest_dbus_req_filter will then be tried instead.
 		 * */
 		return OSSO_INVALID;
 	}
+ param_error:
+	/* Notify error in D-Bus method */
+	g_idle_add (notify_error_in_dbus_callback, NULL);
+	return OSSO_ERROR;
 }
 					 
 /* A complex D-Bus type (like a struct),
@@ -1433,23 +1410,20 @@ modest_dbus_req_filter (DBusConnection *con,
 		DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
 }
 
-
-void
-modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data)
+static gboolean
+notify_error_in_dbus_callback (gpointer user_data)
 {
-	/* TODO? */
-    /* printf("%s()\n", __PRETTY_FUNCTION__); */
+	ModestMailOperation *mail_op;
+	ModestMailOperationQueue *mail_op_queue;
 
-    if(state->system_inactivity_ind)
-    {
-    }
-    else if(state->save_unsaved_data_ind)
-    {
-    }
-    else
-    {
-    
-    }
+	mail_op = modest_mail_operation_new (NULL);
+	mail_op_queue = modest_runtime_get_mail_operation_queue ();
 
-    /* printf("debug: %s(): return\n", __PRETTY_FUNCTION__); */
+	/* Issues a noop operation in order to force the queue to emit
+	   the "queue-empty" signal to allow modest to quit */
+	modest_mail_operation_queue_add (mail_op_queue, mail_op);
+	modest_mail_operation_noop (mail_op);
+	g_object_unref (mail_op);
+
+	return FALSE;
 }

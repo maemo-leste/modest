@@ -158,7 +158,7 @@ modest_platform_init (int argc, char *argv[])
 
 	/* Register hardware event dbus callback: */
     	hw_state.shutdown_ind = TRUE;
-	osso_hw_set_event_cb(osso_context, NULL,/*&hw_state*/ modest_osso_cb_hw_state_handler, NULL);
+	osso_hw_set_event_cb(osso_context, NULL, NULL, NULL);
 
 	/* Register osso auto-save callbacks: */
 	result = osso_application_set_autosave_cb (osso_context, 
