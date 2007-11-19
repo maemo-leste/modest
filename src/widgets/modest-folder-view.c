@@ -2433,7 +2433,7 @@ on_drag_motion (GtkWidget      *widget,
 	ModestFolderViewPrivate *priv;
 	GdkDragAction suggested_action;
 	gboolean valid_location = FALSE;
-	TnyFolderStore *folder;
+	TnyFolderStore *folder = NULL;
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
 
