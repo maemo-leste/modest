@@ -856,7 +856,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    if (!normal_pixbuf_open) {
 		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
 		normal_pixbuf_open = gdk_pixbuf_copy (normal_pixbuf);
-		gdk_pixbuf_composite (emblem, draft_pixbuf_open, 0, 0, 
+		gdk_pixbuf_composite (emblem, normal_pixbuf_open, 0, 0, 
 				      MIN (gdk_pixbuf_get_width (emblem), 
 					   gdk_pixbuf_get_width (normal_pixbuf_open)),
 				      MIN (gdk_pixbuf_get_height (emblem), 
