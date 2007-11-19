@@ -804,10 +804,14 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_object_unref (priv->outbox_msg);
 		priv->outbox_msg = NULL;
 	}
-	if (priv->msg_uid != NULL) {
-		g_free (priv->msg_uid);
-		priv->msg_uid = NULL;
-	}
+	g_free (priv->msg_uid);
+	g_free (priv->last_search);
+	g_slist_free (priv->font_items_group);
+	g_slist_free (priv->size_items_group);
+	g_list_foreach (priv->attachments, (GFunc) g_object_unref, NULL);
+	g_list_free (priv->attachments);
+	g_list_foreach (priv->images, (GFunc) g_object_unref, NULL);
+	g_list_free (priv->images);
 
 	/* This had to stay alive for as long as the combobox that used it: */
 	modest_pair_list_free (priv->from_field_protos);
