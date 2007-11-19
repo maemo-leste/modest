@@ -971,7 +971,7 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 	if (!priv->error) {
 		SaveToDraftsAddMsgInfo *cb_info = g_slice_new(SaveToDraftsAddMsgInfo);
 		cb_info->transport_account = g_object_ref(info->transport_account);
-		cb_info->draft_msg = g_object_ref(info->draft_msg);
+		cb_info->draft_msg = info->draft_msg ? g_object_ref(info->draft_msg) : NULL;
 		cb_info->callback = info->callback;
 		cb_info->user_data = info->user_data;
 		cb_info->drafts = g_object_ref(drafts);
