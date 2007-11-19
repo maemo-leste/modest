@@ -377,7 +377,6 @@ text_cell_data  (GtkTreeViewColumn *column,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
-
 	if (!fname)
 		return;
 
@@ -1351,7 +1350,7 @@ modest_folder_view_set_title (ModestFolderView *self, const gchar *title)
 {
 	GtkTreeViewColumn *col;
 	
-	g_return_if_fail (self);
+	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
 
 	col = gtk_tree_view_get_column (GTK_TREE_VIEW(self), 0);
 	if (!col) {
@@ -1447,9 +1446,7 @@ expand_root_items (ModestFolderView *self)
  * account in this case, and the local folders.
  */
 static gboolean 
-filter_row (GtkTreeModel *model,
-	    GtkTreeIter *iter,
-	    gpointer data)
+filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 {
 	ModestFolderViewPrivate *priv;
 	gboolean retval = TRUE;
@@ -1557,9 +1554,10 @@ modest_folder_view_update_model (ModestFolderView *self,
 	GtkTreeModel *model /* , *old_model */;                                                    
 	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
-	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
-	g_return_val_if_fail (account_store, FALSE);
-
+	g_return_val_if_fail (self && MODEST_IS_FOLDER_VIEW (self), FALSE);
+	g_return_val_if_fail (account_store && MODEST_IS_TNY_ACCOUNT_STORE(account_store),
+			      FALSE);
+	
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
 	/* Notify that there is no folder selected */
@@ -1679,8 +1677,8 @@ TnyFolderStore *
 modest_folder_view_get_selected (ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv;
-
-	g_return_val_if_fail (self, NULL);
+	
+	g_return_val_if_fail (self && MODEST_IS_FOLDER_VIEW(self), NULL);
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	if (priv->cur_folder_store)
@@ -1868,18 +1866,14 @@ finish:
  * source for dnd after the event drop happened
  */
 static void
-on_drag_data_get (GtkWidget *widget, 
-		  GdkDragContext *context, 
-		  GtkSelectionData *selection_data, 
-		  guint info, 
-		  guint time, 
-		  gpointer data)
+on_drag_data_get (GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selection_data, 
+		  guint info, guint time, gpointer data)
 {
 	GtkTreeSelection *selection;
 	GtkTreeModel *model;
 	GtkTreeIter iter;
 	GtkTreePath *source_row;
-
+	
 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
 	if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
 
@@ -2629,10 +2623,13 @@ modest_folder_view_set_style (ModestFolderView *self,
 {
 	ModestFolderViewPrivate *priv;
 
-	g_return_if_fail (self);
+	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
+	g_return_if_fail (style == MODEST_FOLDER_VIEW_STYLE_SHOW_ALL ||
+			  style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
+	
 	priv->style = style;
 }
 
@@ -2643,7 +2640,7 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *model;
 
-	g_return_if_fail (self);
+	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
@@ -2671,7 +2668,7 @@ modest_folder_view_get_account_id_of_visible_server_account (ModestFolderView *s
 {
 	ModestFolderViewPrivate *priv;
 
-	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (self && MODEST_IS_FOLDER_VIEW(self), NULL);
 	
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 
@@ -2719,6 +2716,8 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 	GtkTreeSelection *sel;
 	GtkTreePath *path = NULL;
 
+	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
+	
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!model)
 		return;
@@ -2836,9 +2835,10 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *pat
 void
 modest_folder_view_disable_next_folder_selection (ModestFolderView *self) 
 {
-	ModestFolderViewPrivate *priv = NULL;
+	ModestFolderViewPrivate *priv;
 
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));	
+	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
+
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
 	if (priv->folder_to_select)
@@ -2856,8 +2856,8 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 	GtkTreeSelection *sel;
 	ModestFolderViewPrivate *priv = NULL;
 	
-	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);	
-	g_return_val_if_fail (TNY_IS_FOLDER (folder), FALSE);	
+	g_return_val_if_fail (self && MODEST_IS_FOLDER_VIEW (self), FALSE);	
+	g_return_val_if_fail (folder && TNY_IS_FOLDER (folder), FALSE);	
 		
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
@@ -2899,10 +2899,12 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 
 
 void 
-modest_folder_view_copy_selection (ModestFolderView *folder_view)
+modest_folder_view_copy_selection (ModestFolderView *self)
 {
+	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
+	
 	/* Copy selection */
-	_clipboard_set_selected_data (folder_view, FALSE);
+	_clipboard_set_selected_data (self, FALSE);
 }
 
 void 
@@ -2913,7 +2915,7 @@ modest_folder_view_cut_selection (ModestFolderView *folder_view)
 	const gchar **hidding = NULL;
 	guint i, n_selected;
 
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
+	g_return_if_fail (folder_view && MODEST_IS_FOLDER_VIEW (folder_view));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
 
 	/* Copy selection */
@@ -2945,9 +2947,9 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 	GtkTreeModel *model = NULL;
 	GtkTreeModel *new_filter_model = NULL;
 	
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view_src));
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view_dst));
-
+	g_return_if_fail (folder_view_src && MODEST_IS_FOLDER_VIEW (folder_view_src));
+	g_return_if_fail (folder_view_dst && MODEST_IS_FOLDER_VIEW (folder_view_dst));
+	
 	/* Get src model*/
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view_src));
 	model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(filter_model));
@@ -2972,7 +2974,11 @@ modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
 					  gboolean show)
 {
 	GtkTreeModel *model = NULL;
-	ModestFolderViewPrivate* priv = MODEST_FOLDER_VIEW_GET_PRIVATE(folder_view);
+	ModestFolderViewPrivate* priv;
+
+	g_return_if_fail (folder_view && MODEST_IS_FOLDER_VIEW (folder_view));
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(folder_view);	
 	priv->show_non_move = show;
 /* 	modest_folder_view_update_model(folder_view, */
 /* 					TNY_ACCOUNT_STORE(modest_runtime_get_account_store())); */
