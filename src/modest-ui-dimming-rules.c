@@ -1733,6 +1733,29 @@ modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data)
 	return dimmed;
 }
 
+gboolean 
+modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+	
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+ 
+	/* Check dimmed rule */	
+	if (!dimmed) {
+		GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
+		if (g_slist_length (account_names) <= 1)
+			dimmed = TRUE;
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
+		
+		modest_account_mgr_free_account_names (account_names);
+	}
+
+	return dimmed;
+}
+
 gboolean
 modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
 {
