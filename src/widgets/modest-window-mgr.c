@@ -656,6 +656,9 @@ on_window_destroy (ModestWindow *window,
 		/* If more than one window already opened */
 		if (g_list_length (priv->window_list) > 1) {
 
+			/* Present the window if it's not visible now */
+			if (!gtk_window_has_toplevel_focus (GTK_WINDOW (window)))
+				gtk_window_present (GTK_WINDOW (window));
 			/* Create the confirmation dialog MSG-NOT308 */
 			dialog_response = modest_platform_run_confirmation_dialog (
 					GTK_WINDOW (window), _("emev_nc_close_windows"));
