@@ -2016,12 +2016,12 @@ set_toolbar_mode (ModestMainWindow *self,
 			gtk_action_set_visible (refresh_action, FALSE);
 		if (cancel_action)
 			gtk_action_set_visible (cancel_action, TRUE);
+		if (priv->progress_bar)
+			gtk_widget_show (priv->progress_bar);
 		if (priv->progress_toolitem) {
 			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
 			gtk_widget_show (priv->progress_toolitem);
 		}
-		if (priv->progress_bar)
-			gtk_widget_show (priv->progress_bar);
 
 		/* Show toolbar if it's hiden (optimized view ) */
 		if (priv->optimized_view)
