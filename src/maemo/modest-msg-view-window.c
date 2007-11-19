@@ -2009,10 +2009,13 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		/* Quick hack: this prevents toolbar icons "dance" when progress bar show status is changed */ 
 		/* TODO: resize mode migth be GTK_RESIZE_QUEUE, in order to avoid unneccesary shows */
 		gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
-		
+
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-		set_toolbar_mode (MODEST_MSG_VIEW_WINDOW(self), TOOLBAR_MODE_NORMAL);			
-		
+		if (modest_msg_view_window_transfer_mode_enabled (MODEST_MSG_VIEW_WINDOW (self))) 
+			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW (self), TOOLBAR_MODE_TRANSFER);
+		else
+			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW (self), TOOLBAR_MODE_NORMAL);
+
 	} else {
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));

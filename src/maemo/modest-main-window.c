@@ -1431,7 +1431,10 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		gtk_container_set_resize_mode (GTK_CONTAINER(parent_priv->toolbar), GTK_RESIZE_IMMEDIATE);
 
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-		set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
+		if (modest_main_window_transfer_mode_enabled (MODEST_MAIN_WINDOW(self)))
+			set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_TRANSFER);
+		else
+			set_toolbar_mode (MODEST_MAIN_WINDOW(self), TOOLBAR_MODE_NORMAL);
 	} else {
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 
