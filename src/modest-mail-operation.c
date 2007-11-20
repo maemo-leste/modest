@@ -2339,16 +2339,11 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 
 		modest_mail_operation_notify_start (self);
 
-		if (TNY_IS_CAMEL_IMAP_FOLDER (folder))
-/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* FALSE --> don't expunge *\/ */
-			tny_folder_sync (folder, FALSE, &(priv->error)); /* FALSE --> don't expunge */
-		else if (TNY_IS_CAMEL_POP_FOLDER (folder))
-/* 			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /\* TRUE --> dont expunge *\/ */
-			tny_folder_sync (folder, TRUE, &(priv->error)); /* TRUE --> expunge */
+		if (TNY_IS_CAMEL_IMAP_FOLDER (folder) ||
+		    TNY_IS_CAMEL_POP_FOLDER (folder))
+			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /* FALSE --> dont expunge */
 		else
-			/* local folders */
-/* 			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /\* TRUE --> expunge *\/ */
-			tny_folder_sync (folder, TRUE, &(priv->error)); /* TRUE --> expunge */
+			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /* TRUE --> expunge */
 	}
 	
 	
