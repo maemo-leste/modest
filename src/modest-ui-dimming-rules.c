@@ -1761,16 +1761,36 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
+	GtkWidget *focused = NULL;
 
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
+	focused = gtk_window_get_focus (GTK_WINDOW (win));
 
-	/* Check dimmed rule */
+	dimmed = !focused;
+
 	if (!dimmed) {
-		GtkClipboard *clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 		gchar *selection = NULL;
-		selection = gtk_clipboard_wait_for_text (clipboard);
-
+		if (GTK_IS_TEXT_VIEW (focused)) {
+			GtkTextIter start, end;
+			GtkTextBuffer *buffer = NULL;
+			buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
+			if (gtk_text_buffer_get_selection_bounds (buffer, &start, &end)) {
+				selection = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+			}
+		} else if (GTK_IS_LABEL (focused)) {
+			gint start, end;
+			if (gtk_label_get_selection_bounds (GTK_LABEL (focused), &start, &end)) {
+				const gchar *start_offset;
+				start_offset = gtk_label_get_text (GTK_LABEL (focused));
+				start_offset = g_utf8_offset_to_pointer (start_offset, start);
+				selection = g_new0 (gchar, end - start + 1);
+				g_utf8_strncpy (selection, start_offset, end - start);
+			}
+		} else {
+			GtkClipboard *clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+			selection = gtk_clipboard_wait_for_text (clipboard);
+		}
 		dimmed = !((selection != NULL) && (modest_text_utils_validate_recipient (selection, NULL)));
 	}
 
@@ -2255,22 +2275,32 @@ _invalid_clipboard_selected (ModestWindow *win,
 		}
 		result = !has_selection;
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		GtkClipboard *clipboard = NULL;
-		gchar *selection = NULL;
+		if (focused) {
+			if (GTK_IS_LABEL (focused) && 
+			    !gtk_label_get_selection_bounds (GTK_LABEL (focused), NULL, NULL)) {
+				result = TRUE;
+			} else if (GTK_IS_TEXT_VIEW (focused)) {
+				GtkTextBuffer *buffer;
+				buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
+				result = !gtk_text_buffer_get_has_selection (buffer);
+			} else if (!MODEST_IS_ATTACHMENTS_VIEW (focused)) {
+				GtkClipboard *clipboard = NULL;
+				gchar *selection = NULL;
 
-		/* Get clipboard selection*/
-		clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
-		selection = gtk_clipboard_wait_for_text (clipboard);
-
-		/* Check dimming */
-		result = ((selection == NULL) || 
-			  (MODEST_IS_ATTACHMENTS_VIEW (focused)));
+				clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+				/* Get clipboard selection*/
+				selection = gtk_clipboard_wait_for_text (clipboard);
+				/* Check dimming */
+				result = (selection == NULL);
+				g_free (selection);
+			} 
+		} else {
+			result = TRUE;
+		}
 		
 		if (result)
 			modest_dimming_rule_set_notification (rule, "");
 		
-		if (selection != NULL) 
-			g_free(selection);
 	}		
 	else if (MODEST_IS_MAIN_WINDOW (win)) {
 		/* Check dimming */
