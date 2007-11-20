@@ -79,14 +79,12 @@ static void modest_msg_view_window_set_zoom (ModestWindow *window,
 static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
 static gboolean modest_msg_view_window_zoom_minus (ModestWindow *window);
 static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
-static gboolean modest_msg_view_window_key_release_event (GtkWidget *window,
-							  GdkEventKey *event,
-							  gpointer userdata);
+static gboolean modest_msg_view_window_key_event (GtkWidget *window,
+						  GdkEventKey *event,
+						  gpointer userdata);
 static gboolean modest_msg_view_window_window_state_event (GtkWidget *widget, 
 							   GdkEventWindowState *event, 
 							   gpointer userdata);
-static void modest_msg_view_window_scroll_up (ModestWindow *window);
-static void modest_msg_view_window_scroll_down (ModestWindow *window);
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
@@ -136,7 +134,7 @@ static void on_account_removed  (TnyAccountStore *account_store,
 				 TnyAccount *account,
 				 gpointer user_data);
 
-static void on_move_focus (ModestMsgViewWindow *window,
+static void on_move_focus (GtkWidget *widget,
 			   GtkDirectionType direction,
 			   gpointer userdata);
 
@@ -797,7 +795,11 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 			  G_CALLBACK (modest_ui_actions_on_msg_link_contextual), obj);
 
 	g_signal_connect (G_OBJECT (obj), "key-release-event",
-			  G_CALLBACK (modest_msg_view_window_key_release_event),
+			  G_CALLBACK (modest_msg_view_window_key_event),
+			  NULL);
+
+	g_signal_connect (G_OBJECT (obj), "key-press-event",
+			  G_CALLBACK (modest_msg_view_window_key_event),
 			  NULL);
 
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
@@ -1400,47 +1402,54 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 }
 
 static gboolean
-modest_msg_view_window_key_release_event (GtkWidget *window,
-					  GdkEventKey *event,
-					  gpointer userdata)
+modest_msg_view_window_key_event (GtkWidget *window,
+				  GdkEventKey *event,
+				  gpointer userdata)
 {
-	if (event->type == GDK_KEY_RELEASE) {
-		switch (event->keyval) {
-		case GDK_Up:
-			modest_msg_view_window_scroll_up (MODEST_WINDOW (window));
+	
+	if (event->keyval == GDK_Up || event->keyval == GDK_KP_Up ||
+	    event->keyval == GDK_Down || event->keyval == GDK_KP_Down ||
+	    event->keyval == GDK_Page_Up || event->keyval == GDK_KP_Page_Up ||
+	    event->keyval == GDK_Page_Down || event->keyval == GDK_KP_Page_Down ||
+	    event->keyval == GDK_Home || event->keyval == GDK_KP_Home ||
+	    event->keyval == GDK_End || event->keyval == GDK_KP_End) {
+		ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+		gboolean return_value;
+
+		if (event->type == GDK_KEY_RELEASE) {
+			GtkScrollType scroll_type;
+			
+			switch (event->keyval) {
+			case GDK_Up: 
+			case GDK_KP_Up:
+				scroll_type = GTK_SCROLL_STEP_UP; break;
+			case GDK_Down: 
+			case GDK_KP_Down:
+				scroll_type = GTK_SCROLL_STEP_DOWN; break;
+			case GDK_Page_Up:
+			case GDK_KP_Page_Up:
+				scroll_type = GTK_SCROLL_PAGE_UP; break;
+			case GDK_Page_Down:
+			case GDK_KP_Page_Down:
+				scroll_type = GTK_SCROLL_PAGE_DOWN; break;
+			case GDK_Home:
+			case GDK_KP_Home:
+				scroll_type = GTK_SCROLL_START; break;
+			case GDK_End:
+			case GDK_KP_End:
+				scroll_type = GTK_SCROLL_END; break;
+			default: scroll_type = GTK_SCROLL_NONE;
+			}
+			
+			g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", 
+					       scroll_type, FALSE, &return_value);
 			return TRUE;
-			break;
-		case GDK_Down:
-			modest_msg_view_window_scroll_down (MODEST_WINDOW (window));
-			return TRUE;
-			break;
-		default:
+		} else {
 			return FALSE;
-			break;
-		};
+		}
 	} else {
 		return FALSE;
 	}
-}
-
-static void
-modest_msg_view_window_scroll_up (ModestWindow *window)
-{
-	ModestMsgViewWindowPrivate *priv;
-	gboolean return_value;
-
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_UP, FALSE, &return_value);
-}
-
-static void
-modest_msg_view_window_scroll_down (ModestWindow *window)
-{
-	ModestMsgViewWindowPrivate *priv;
-	gboolean return_value;
-
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE, &return_value);
 }
 
 gboolean
@@ -2660,16 +2669,10 @@ update_window_title (ModestMsgViewWindow *window)
 }
 
 
-static void on_move_focus (ModestMsgViewWindow *window,
+static void on_move_focus (GtkWidget *widget,
 			   GtkDirectionType direction,
 			   gpointer userdata)
 {
-	GtkWidget *current_focus = NULL;
-
-	current_focus = gtk_window_get_focus (GTK_WINDOW (window));
-	if ((current_focus != NULL) &&
-	    MODEST_IS_ATTACHMENTS_VIEW (current_focus)) {
-		g_signal_stop_emission_by_name (G_OBJECT (window), "move-focus");
-	}
+	g_signal_stop_emission_by_name (G_OBJECT (widget), "move-focus");
 }
 

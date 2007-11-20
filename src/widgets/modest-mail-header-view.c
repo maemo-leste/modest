@@ -170,6 +170,7 @@ add_recpt_header (ModestMailHeaderView *widget, const gchar *field, const gchar 
 	gtk_size_group_add_widget (priv->labels_size_group, label_field);
 	
 	gtk_box_pack_start (GTK_BOX (priv->headers_vbox), hbox, FALSE, FALSE, 0);
+
 	gtk_widget_show (hbox);
 }
 
@@ -445,6 +446,7 @@ modest_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class
 	gtk_size_group_add_widget (priv->labels_size_group, priv->fromto_label);
 	
 	priv->headers_vbox = gtk_vbox_new (FALSE, 0);
+	gtk_container_set_focus_chain (GTK_CONTAINER (priv->headers_vbox), NULL);
 	g_object_ref (priv->headers_vbox);
 
 	expander_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
