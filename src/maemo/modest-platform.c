@@ -50,6 +50,7 @@
 #include <gtk/gtkmain.h>
 #include <modest-text-utils.h>
 #include "modest-tny-folder.h"
+#include "modest-tny-account.h"
 #include <string.h>
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 
@@ -714,23 +715,40 @@ on_response (GtkDialog *dialog,
 	GList *child_vbox, *child_hbox;
 	GtkWidget *hbox, *entry;
 	TnyFolderStore *parent;
+	const gchar *new_name;
+	gboolean exists;
 
 	if (response != GTK_RESPONSE_ACCEPT)
 		return;
-
+	
 	/* Get entry */
 	child_vbox = gtk_container_get_children (GTK_CONTAINER (dialog->vbox));
 	hbox = child_vbox->data;
 	child_hbox = gtk_container_get_children (GTK_CONTAINER (hbox));
 	entry = child_hbox->next->data;
-
+	
 	parent = TNY_FOLDER_STORE (user_data);
-
+	new_name = gtk_entry_get_text (GTK_ENTRY (entry));
+	exists = FALSE;
+	
 	/* Look for another folder with the same name */
 	if (modest_tny_folder_has_subfolder_with_name (parent, 
-						       gtk_entry_get_text (GTK_ENTRY (entry)),
+						       new_name,
 						       TRUE)) {
-
+		exists = TRUE;
+	}
+	
+	if (!exists) {
+		if (TNY_IS_ACCOUNT (parent) &&
+		    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent)) &&
+		    modest_tny_local_folders_account_folder_name_in_use (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (parent),
+									 new_name)) {
+			exists = TRUE;
+		}
+	}
+	
+	if (exists) {
+		
 		/* Show an error */
 		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
 						NULL, _CS("ckdg_ib_folder_already_exists"));
