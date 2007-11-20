@@ -299,15 +299,26 @@ modest_maemo_utils_create_temp_stream (const gchar *orig_name, const gchar *hash
 		return NULL;
 	}
 
-	/* try to write the file there */
 	filepath = g_strconcat (tmpdir, "/", orig_name, NULL);
-	fd = g_open (filepath, O_CREAT|O_WRONLY|O_TRUNC, 0644);
-	if (fd == -1) {
-		g_warning ("%s: failed to create '%s': %s",
-			   __FUNCTION__, filepath, g_strerror(errno));
+	/* don't overwrite if it already exists, even if it is writable */
+	if (modest_maemo_utils_file_exists (filepath)) {
+		if (path!=NULL) {
+			*path = filepath;
+		} else {
+			g_free (filepath);
+		}
 		g_free (tmpdir);
-		g_free (filepath);
 		return NULL;
+	} else {
+		/* try to write the file there */
+		fd = g_open (filepath, O_CREAT|O_WRONLY|O_TRUNC, 0644);
+		if (fd == -1) {
+			g_warning ("%s: failed to create '%s': %s",
+					__FUNCTION__, filepath, g_strerror(errno));			
+			g_free (filepath);
+			g_free (tmpdir);
+			return NULL;
+		}
 	}
 
 	g_free (tmpdir);

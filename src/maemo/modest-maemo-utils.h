@@ -94,11 +94,13 @@ gboolean modest_maemo_utils_file_exists (const gchar *filename);
  * @orig_name: a string with the original name of the extension, or %NULL
  * @hash_base: if %NULL, subdir will be random. If not, it will be a hash
  * of this.
- * @path: a string with the created file path
+ * @path: a string with the created file path. 
  *
  * Creates a temporary fs stream, in a random subdir of /tmp or /var/tmp.
  *
- * Returns: a #TnyFsStream, or %NULL if operation failed.
+ * Returns: a #TnyFsStream, or %NULL if operation failed.  Note that it is 
+ * possible that the file already exists but it is not writable. In that case,
+ * the function would return NULL and @path would contain its path.
  */
 TnyFsStream *modest_maemo_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base, gchar **path);
 

@@ -2239,12 +2239,12 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 	if (!TNY_IS_MSG (mime_part)) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
+		const gchar *content_type;
 		TnyFsStream *temp_stream = NULL;
 		temp_stream = modest_maemo_utils_create_temp_stream (att_filename, attachment_uid,
 								     &filepath);
 		
-		if (temp_stream) {
-			const gchar *content_type;
+		if (temp_stream != NULL) {
 			content_type = tny_mime_part_get_content_type (mime_part);
 			tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream));
 
@@ -2258,6 +2258,12 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 			g_free (filepath);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
+		} else if (filepath != NULL) {
+			/* the file may already exist but it isn't writable,
+			 * let's try to open it anyway */
+			content_type = tny_mime_part_get_content_type (mime_part);
+			modest_platform_activate_file (filepath, content_type);
+			g_free (filepath);
 		}
 	} else {
 		/* message attachment */
