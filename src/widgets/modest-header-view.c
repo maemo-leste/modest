@@ -1858,15 +1858,18 @@ filter_row (GtkTreeModel *model,
 	gchar *id = NULL;
 	gboolean visible = TRUE;
 	gboolean found = FALSE;
+	GValue value = {0,};
 	
 	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (user_data), FALSE);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
 
 	/* Get header from model */
-	gtk_tree_model_get (model, iter,
-			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header,
-			    -1);
+	gtk_tree_model_get_value (model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &value);
+	flags = (TnyHeaderFlags) g_value_get_int (&value);
+	g_value_unset (&value);
+	gtk_tree_model_get_value (model, iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &value);
+	header = (TnyHeader *) g_value_get_object (&value);
+	g_value_unset (&value);
 	
 	/* Hide mark as deleted heders */
 	if (flags & TNY_HEADER_FLAG_DELETED) {
@@ -1882,25 +1885,21 @@ filter_row (GtkTreeModel *model,
 
 	/* Get message id from header (ensure is a valid id) */
 	if (!header) return FALSE;
-	id = g_strdup(tny_header_get_message_id (header));
 	
 	/* Check hiding */
 	if (priv->hidding_ids != NULL) {
+		id = g_strdup(tny_header_get_message_id (header));
 		for (i=0; i < priv->n_selected && !found; i++)
 			if (priv->hidding_ids[i] != NULL && id != NULL)
 				found = (!strcmp (priv->hidding_ids[i], id));
 	
 		visible = !found;
+		g_free(id);
 	}
 
  frees:
 	priv->status = ((gboolean) priv->status) && !visible;
 	
-	/* Free */
-	if (header)
-		g_object_unref (header);
-	g_free(id);
-
 	return visible;
 }
 
