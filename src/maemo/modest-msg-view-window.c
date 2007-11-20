@@ -282,7 +282,20 @@ save_state (ModestWindow *self)
 static void
 restore_settings (ModestMsgViewWindow *self)
 {
-	modest_widget_memory_restore (modest_runtime_get_conf (),
+	ModestConf *conf;
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+	GtkAction *action;
+
+	conf = modest_runtime_get_conf ();
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR, NULL));
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+					    "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarFullScreenMenu");
+	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
+				      modest_conf_get_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
+	modest_widget_memory_restore (conf,
 				      G_OBJECT(self), 
 				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
@@ -525,26 +538,10 @@ static GtkWidget *
 menubar_to_menu (GtkUIManager *ui_manager)
 {
 	GtkWidget *main_menu;
-	GtkWidget *menubar;
-	GList *iter, *children;
-
-	/* Create new main menu */
-	main_menu = gtk_menu_new();
 
 	/* Get the menubar from the UI manager */
-	menubar = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
+	main_menu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
 
-	iter = children = gtk_container_get_children (GTK_CONTAINER (menubar));
-	while (iter) {
-		GtkWidget *menu;
-
-		menu = GTK_WIDGET (iter->data);
-		gtk_widget_reparent(menu, main_menu);
-		
-		iter = g_list_next (iter);
-	}
-	g_list_free (children);
-		     
 	return main_menu;
 }
 
@@ -554,8 +551,6 @@ init_window (ModestMsgViewWindow *obj)
 	GtkWidget *main_vbox;
 	ModestMsgViewWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	ModestConf *conf;
-	GtkAction *action = NULL;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -563,20 +558,6 @@ init_window (ModestMsgViewWindow *obj)
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
-
-	/* Menubar */
-	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
-	conf = modest_runtime_get_conf ();
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarFullScreenMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
-	hildon_window_set_menu    (HILDON_WINDOW(obj), GTK_MENU(parent_priv->menubar));
-	gtk_widget_show (GTK_WIDGET(parent_priv->menubar));
 
 #ifdef MODEST_USE_MOZEMBED
 	priv->main_scroll = priv->msg_view;
@@ -595,8 +576,6 @@ init_window (ModestMsgViewWindow *obj)
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 }
@@ -769,6 +748,10 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 	priv->msg_uid = g_strdup (msg_uid);
 
+	/* Menubar */
+	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	hildon_window_set_menu    (HILDON_WINDOW(obj), GTK_MENU(parent_priv->menubar));
+	gtk_widget_show (parent_priv->menubar);
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 
 	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
@@ -838,6 +821,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 	modest_window_set_active_account (MODEST_WINDOW(obj), modest_account_name);
 
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	priv->last_search = NULL;
 
 	/* Init the clipboard actions dim status */

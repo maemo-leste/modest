@@ -637,9 +637,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
-	/* Menubar. Update the state of some toggles */
-	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
-	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
+	parent_priv->menubar = NULL;
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
@@ -1300,6 +1298,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
 
+	/* Menubar. Update the state of some toggles */
+	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 	priv->from_field_protos = get_transports ();
  	modest_combo_box_set_pair_list (MODEST_COMBO_BOX (priv->from_field), priv->from_field_protos);
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
