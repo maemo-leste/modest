@@ -571,6 +571,23 @@ entry_changed (GtkEditable *editable,
 	g_free (chars);
 }
 
+static guint
+checked_hildon_sort_dialog_add_sort_key (HildonSortDialog *dialog, const gchar* key, guint max)
+{
+	gint sort_key;
+	
+	g_return_val_if_fail (dialog && HILDON_IS_SORT_DIALOG(dialog), 0);
+	g_return_val_if_fail (key, 0);
+	
+	sort_key = hildon_sort_dialog_add_sort_key (dialog, key);
+	if (sort_key < 0 || sort_key >= max) {
+		g_warning ("%s: out of range (%d) for %s", __FUNCTION__, sort_key, key);
+		return 0;
+	} else
+		return (guint)sort_key;	
+}
+
+
 static void
 launch_sort_headers_dialog (GtkWindow *parent_window,
 			    HildonSortDialog *dialog)
@@ -607,7 +624,8 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	outgoing = (GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cols->data), MODEST_HEADER_VIEW_COLUMN))==
 		    MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT);
 
-	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"));
+	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"),
+							    SORT_ID_NUM - 1);
 	if (outgoing) {
 		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
@@ -616,7 +634,8 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
 	}
 
-	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"));
+	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"),
+							    SORT_ID_NUM - 1);
 	if (outgoing) {
 		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE;
@@ -626,23 +645,27 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	}
 	default_key = sort_key;
 
-	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"));
+	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"),
+							    SORT_ID_NUM -1);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
 	if (outgoing)
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
 	else
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
 
-	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"));
+	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"),
+							    SORT_ID_NUM - 1);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
 	attachments_sort_id = sort_key;
 
-	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_size"));
+	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_size"),
+							    SORT_ID_NUM - 1);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN;
 	sort_ids[sort_key] = 0;
 
-	sort_key = hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"));
+	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"),
+							    SORT_ID_NUM - 1);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
 	priority_sort_id = sort_key;
@@ -678,6 +701,11 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	result = gtk_dialog_run (GTK_DIALOG (dialog));
 	if (result == GTK_RESPONSE_OK) {
 		sort_key = hildon_sort_dialog_get_sort_key (dialog);
+		if (sort_key < 0 || sort_key > SORT_ID_NUM -1) {
+			g_warning ("%s: out of range (%d)", __FUNCTION__, sort_key);
+			sort_key = 0;
+		}
+
 		sort_type = hildon_sort_dialog_get_sort_order (dialog);
 		if (sort_model_ids[sort_key] == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN) {
 			g_object_set_data (G_OBJECT(cols->data), MODEST_HEADER_VIEW_FLAG_SORT,
@@ -698,9 +726,6 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	modest_widget_memory_save (modest_runtime_get_conf (),
 				   G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
 	
-/* 	while (gtk_events_pending ()) */
-/* 		gtk_main_iteration (); */
-
 	/* free */
 	g_list_free(cols);	
 }
