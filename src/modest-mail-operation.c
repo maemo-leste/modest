@@ -1764,16 +1764,17 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 		}
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
+		if (parent) {
+			modest_mail_operation_notify_start (self);
+			tny_folder_store_remove_folder (parent, folder, &(priv->error));
+			CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
+			
+			if (!priv->error)
+				priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
-		modest_mail_operation_notify_start (self);
-		tny_folder_store_remove_folder (parent, folder, &(priv->error));
-		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
-
-		if (!priv->error)
-			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-
-		if (parent)
-			g_object_unref (G_OBJECT (parent));
+			g_object_unref (parent);
+		} else
+			g_warning ("%s: could not get parent folder", __FUNCTION__);
 	}
 	g_object_unref (G_OBJECT (account));
 
