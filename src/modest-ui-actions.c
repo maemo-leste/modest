@@ -2197,7 +2197,6 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 		      gpointer user_data)
 {
 	ModestMsgEditWindow *edit_window;
-	char *info_text;
 	ModestMainWindow *win;
 
 	/* FIXME. Make the header view sensitive again. This is a
@@ -2218,9 +2217,6 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 		return;
 
 	modest_msg_edit_window_set_draft (edit_window, saved_draft);
-	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
-	modest_platform_information_banner (NULL, NULL, info_text);
-	g_free (info_text);
 }
 
 void
@@ -2231,6 +2227,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	MsgData *data;
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
+	char *info_text;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
 	
@@ -2284,7 +2281,11 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->priority_flags,
 					      on_save_to_drafts_cb,
 					      edit_window);
+	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
+	modest_platform_information_banner (NULL, NULL, info_text);
+
 	/* Frees */
+	g_free (info_text);
 	g_free (from);
 	g_free (account_name);
 	g_object_unref (G_OBJECT (transport_account));
