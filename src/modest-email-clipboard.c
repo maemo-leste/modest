@@ -38,7 +38,6 @@ static void modest_email_clipboard_finalize   (GObject * obj);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
-typedef struct _ModestEmailClipboardPrivate ModestEmailClipboardPrivate;
 struct _ModestEmailClipboardPrivate {
 	TnyList    *selection;
 	TnyFolder  *src;	
@@ -57,7 +56,7 @@ modest_email_clipboard_get_type (void)
 {
 	static GType my_type = 0;
 
-	if (!my_type) {
+	if (G_UNLIKELY (!my_type)) {
 		static const GTypeInfo my_info = {
 			sizeof (ModestEmailClipboardClass),
 			NULL,	/* base init */
@@ -99,13 +98,14 @@ modest_email_clipboard_class_init (ModestEmailClipboardClass * klass)
 static void
 modest_email_clipboard_init (ModestEmailClipboard * obj)
 {
-	ModestEmailClipboardPrivate *priv =
-		MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (obj);
+
+	if (obj->priv == NULL)
+		obj->priv = MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (obj);
 	
-	priv->src = NULL;
-	priv->selection = NULL;
-	priv->hidding = NULL;
-	priv->delete = FALSE;
+	obj->priv->src = NULL;
+	obj->priv->selection = NULL;
+	obj->priv->hidding = NULL;
+	obj->priv->delete = FALSE;
 }
 
 static void
@@ -244,13 +244,11 @@ modest_email_clipboard_clear (ModestEmailClipboard *self)
 gboolean
 modest_email_clipboard_cleared (ModestEmailClipboard *self)
 {
-	ModestEmailClipboardPrivate *priv = NULL;;
 	gboolean cleared = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_EMAIL_CLIPBOARD (self), TRUE);
-	priv = MODEST_EMAIL_CLIPBOARD_GET_PRIVATE (self);
 
-	cleared = ((priv->src == NULL) && (priv->selection == NULL));
+	cleared = ((self->priv->src == NULL) && (self->priv->selection == NULL));
 
 	return cleared;
 }

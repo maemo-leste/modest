@@ -48,9 +48,11 @@ G_BEGIN_DECLS
 
 typedef struct _ModestEmailClipboard      ModestEmailClipboard;
 typedef struct _ModestEmailClipboardClass ModestEmailClipboardClass;
+typedef struct _ModestEmailClipboardPrivate ModestEmailClipboardPrivate;
 
 struct _ModestEmailClipboard {
 	 GObject parent;
+	ModestEmailClipboardPrivate *priv;
 };
 
 struct _ModestEmailClipboardClass {
