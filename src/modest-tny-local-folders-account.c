@@ -39,6 +39,7 @@
 #include <tny-camel-folder.h>
 #include <tny-merge-folder.h>
 #include <tny-simple-list.h>
+#include <tny-gtk-lockable.h>
 
 G_DEFINE_TYPE (ModestTnyLocalFoldersAccount, 
 	modest_tny_local_folders_account, 
@@ -239,7 +240,7 @@ modest_tny_local_folders_account_add_folder_to_outbox (ModestTnyLocalFoldersAcco
 
 	/* Create on-demand */
 	if (!priv->outbox_folder) {
-		priv->outbox_folder = TNY_MERGE_FOLDER (tny_merge_folder_new (_("mcen_me_folder_outbox")));
+		priv->outbox_folder = TNY_MERGE_FOLDER (tny_merge_folder_new_with_ui_locker (_("mcen_me_folder_outbox"), tny_gtk_lockable_new ()));
 	
 		/* Set type to outbox */
 		tny_merge_folder_set_folder_type (priv->outbox_folder, TNY_FOLDER_TYPE_OUTBOX);
