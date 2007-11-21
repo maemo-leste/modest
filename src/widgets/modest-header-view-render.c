@@ -332,7 +332,8 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,  &address,
 				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
-				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN, &date,   
+				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN, &date,
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &msg_header,
 				    -1);
 	else
 		gtk_tree_model_get (tree_model, iter,
