@@ -1644,13 +1644,53 @@ on_account_inserted (ModestAccountMgr *acc_mgr,
 	insert_account (MODEST_TNY_ACCOUNT_STORE (user_data), account, TRUE);
 }
 
+/* This is the callback of the tny_camel_account_set_online called in
+   on_account_removed to disconnect the account */
+static void
+on_account_disconnect_when_removing (TnyCamelAccount *account, 
+				     gboolean canceled, 
+				     GError *err, 
+				     gpointer user_data)
+{
+	ModestTnyAccountStore *self;
+	ModestTnyAccountStorePrivate *priv;
+
+	self = MODEST_TNY_ACCOUNT_STORE (user_data);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	if (canceled || err) {
+		/* The account was not cancelled */
+	} else {
+		/* Clear the cache if it's an store account */
+		if (TNY_IS_STORE_ACCOUNT (account))
+			tny_store_account_delete_cache (TNY_STORE_ACCOUNT (account));
+	}
+
+	/* Remove it from the list of accounts */
+	if (TNY_IS_STORE_ACCOUNT (account))
+		tny_list_remove (priv->store_accounts, (GObject *) account);
+	else
+		tny_list_remove (priv->transport_accounts, (GObject *) account);
+
+	/* Notify the observers */
+	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 
+		       0, account);
+	
+	/* Unref the extra reference added by get_server_account */
+	g_object_unref (account);
+}
+
 static void
 on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account,
 		    gpointer user_data)
 {
 	TnyAccount *store_account = NULL, *transport_account = NULL;
-	ModestTnyAccountStore *self = MODEST_TNY_ACCOUNT_STORE(user_data);
+	ModestTnyAccountStore *self;
+	ModestTnyAccountStorePrivate *priv;
 	
+	self = MODEST_TNY_ACCOUNT_STORE (user_data);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
 	/* Get the server and the transport account */
 	store_account = 
 		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_STORE);
@@ -1660,17 +1700,11 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (store_account) {
-
-		/* do this before deleting the cache */
-		account_disconnect (store_account);
-		
-		/* Clear the cache */
-		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (store_account));
-
-		/* Notify the observers */
-		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, store_account);
-
-		g_object_unref (store_account);
+		/* Disconnect before deleting the cache, because the
+		   disconnection will rewrite the cache to the
+		   disk */
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account), FALSE,
+					      on_account_disconnect_when_removing, self);
 	} else {
 		g_warning ("There is no store account for account %s\n", account);
 	}
@@ -1699,10 +1733,9 @@ on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account,
 			g_warning ("Removing a transport account that has no outbox");
 		}
 
-		/* Notify the observers */
-		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
-		account_disconnect (transport_account); /* disconnect the account */
-		g_object_unref (transport_account);
+		/* Disconnect and notify the observers. The callback will free the reference */
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account), FALSE,
+					      on_account_disconnect_when_removing, self);
 	} else {
 		g_warning ("There is no transport account for account %s\n", account);
 	}
