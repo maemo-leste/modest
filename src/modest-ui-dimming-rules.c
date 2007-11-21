@@ -1004,7 +1004,7 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_move_mail_attachment"));
+			modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_item"));
 	}
 	if (!dimmed) {
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
@@ -1018,7 +1018,7 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 		}
 		
 		if (dimmed) 
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_move_mail_attachment"));
+			modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_item"));
 	}
 
 	return dimmed;
