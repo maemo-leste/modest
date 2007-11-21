@@ -1322,6 +1322,13 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 		part = TNY_MIME_PART(tny_iterator_get_current(iter));
 		part_cid = tny_mime_part_get_content_id (part);
 
+		/* if there is no content id, try the content location;
+		 * this is what Outlook seems to use when it converts
+		 * it's internal richtext to html
+		 */
+		if (!part_cid)
+			part_cid = tny_mime_part_get_content_location (part);
+		
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			break;
 
@@ -1371,26 +1378,34 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 	      TnyStream *stream, ModestGtkhtmlMsgView *self)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
-	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
-	gboolean result = FALSE;
+	const gchar* my_uri;
+	TnyMimePart *part = NULL;
 	
-	if (g_str_has_prefix (uri, "cid:")) {
-		/* +4 ==> skip "cid:" */
-		TnyMimePart *part = find_cid_image (priv->msg, uri + 4);
-		if (!part) {
-			g_printerr ("modest: '%s' not found\n", uri + 4);
-			result = FALSE;
-		} else {
-			tny_mime_part_decode_to_stream ((TnyMimePart*)part,
-							stream);
-			g_object_unref (G_OBJECT(part));
-			result = TRUE;
-		}
-	} else {
-		return TRUE;
+	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
+	
+	/*
+	 * we search for either something starting with cid:, or something
+	 * with no prefix at all; this latter case occurs when sending mails
+	 * with MS Outlook in rich-text mode, and 'attach-as-object
+	 */
+	if (g_str_has_prefix (uri, "cid:"))  
+		my_uri = uri + 4;  /* +4 ==> skip "cid:" */
+	else if (g_strstr_len (uri, strlen(uri), ":") == NULL)
+		my_uri = uri;      /* for outlook, no cid:, we check for ':',
+				    * so external locations are excluded */
+	else
+		return FALSE; /* we don't support non-embedded images */
+	
+	/* now try to find the embedded image */
+	part = find_cid_image (priv->msg, my_uri);
+	if (!part) {
+		g_printerr ("modest: %s: '%s' not found\n", __FUNCTION__, my_uri);
+		return FALSE;	
 	}
 
-	return result;
+	tny_mime_part_decode_to_stream ((TnyMimePart*)part, stream);
+	g_object_unref (G_OBJECT(part));
+	return TRUE;
 }
 
 static void
