@@ -2399,6 +2399,10 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->attachments,
 					     data->images,
 					     data->priority_flags);
+
+	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
+
 					     
 	/* Free data: */
 	g_free (from);

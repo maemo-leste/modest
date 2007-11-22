@@ -596,7 +596,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 {
 	TnySendQueue *send_queue = NULL;
 	ModestMailOperationPrivate *priv;
-	SendMsgInfo *info = g_slice_new0 (SendMsgInfo);
+	SendMsgInfo *info;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
@@ -616,6 +616,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "modest: could not find send queue for account\n");
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
 
 	} else {
 		/* Add the msg to the queue */
@@ -624,18 +625,17 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 					   msg, 
 					   &(priv->error));
 
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
+		info = g_slice_new0 (SendMsgInfo);
+
+		info->mail_op = g_object_ref (self);
+		info->msg = g_object_ref (msg);
+		info->msg_sent_handler = g_signal_connect (G_OBJECT (send_queue), "msg-sent",
+							   G_CALLBACK (send_mail_msg_sent_handler), info);
+		info->error_happened_handler = g_signal_connect (G_OBJECT (send_queue), "error-happened",
+								 G_CALLBACK (send_mail_error_happened_handler), info);
 	}
-
-	if (priv->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS)
-		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
-
-	info->mail_op = g_object_ref (self);
-	info->msg = g_object_ref (msg);
-	info->msg_sent_handler = g_signal_connect (G_OBJECT (send_queue), "msg-sent",
-						   G_CALLBACK (send_mail_msg_sent_handler), info);
-	info->error_happened_handler = g_signal_connect (G_OBJECT (send_queue), "error-happened",
-							 G_CALLBACK (send_mail_error_happened_handler), info);
 
 }
 
@@ -880,7 +880,6 @@ end:
 	if (info->transport_account)
 		g_object_unref (info->transport_account);
 	g_slice_free (SendNewMailInfo, info);
-	modest_mail_operation_notify_end (self);
 }
 
 void
