@@ -135,6 +135,20 @@ typedef struct {
 	gint total_bytes;
 } GetMsgInfo;
 
+typedef struct {
+	ModestMailOperation *mail_op;
+	TnyMsg *msg;
+	gulong msg_sent_handler;
+	gulong error_happened_handler;
+} SendMsgInfo;
+
+static void     send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
+					    guint nth, guint total, gpointer userdata);
+static void     send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
+						  GError *error, gpointer userdata);
+static void     common_send_mail_operation_end (TnySendQueue *queue, TnyMsg *msg, 
+						SendMsgInfo *info);
+
 typedef struct _RefreshAsyncHelper {	
 	ModestMailOperation *mail_op;
 	RefreshAsyncUserCallback user_callback;	
@@ -582,6 +596,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 {
 	TnySendQueue *send_queue = NULL;
 	ModestMailOperationPrivate *priv;
+	SendMsgInfo *info = g_slice_new0 (SendMsgInfo);
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
@@ -609,18 +624,68 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 					   msg, 
 					   &(priv->error));
 
-		/* TODO: we're setting always success, do the check in
-		   the handler */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
 	if (priv->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
 
-	/* TODO: do this in the handler of the "msg-sent"
-	   signal.Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	info->mail_op = g_object_ref (self);
+	info->msg = g_object_ref (msg);
+	info->msg_sent_handler = g_signal_connect (G_OBJECT (send_queue), "msg-sent",
+						   G_CALLBACK (send_mail_msg_sent_handler), info);
+	info->error_happened_handler = g_signal_connect (G_OBJECT (send_queue), "error-happened",
+							 G_CALLBACK (send_mail_error_happened_handler), info);
+
 }
+
+static void
+common_send_mail_operation_end (TnySendQueue *queue, TnyMsg *msg,
+				SendMsgInfo *info)
+{
+	if (msg == info->msg) {
+		g_signal_handler_disconnect (queue, info->msg_sent_handler);
+		info->msg_sent_handler = 0;
+		g_signal_handler_disconnect (queue, info->error_happened_handler);
+		info->error_happened_handler = 0;
+		g_object_unref (info->msg);
+		modest_mail_operation_notify_end (info->mail_op);
+		g_object_unref (info->mail_op);
+		g_slice_free (SendMsgInfo, info);
+	}
+}
+
+static void     
+send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
+			    guint nth, guint total, gpointer userdata)
+{
+	SendMsgInfo *info = (SendMsgInfo *) info;
+
+	if (msg == info->msg) {
+		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
+		
+	common_send_mail_operation_end (queue, msg, info);
+}
+
+static void     
+send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
+				  GError *error, gpointer userdata)
+{
+	SendMsgInfo *info = (SendMsgInfo *) info;
+
+	if (msg == info->msg) {
+		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+			     "modest: send mail failed\n");
+	}
+		
+	common_send_mail_operation_end (queue, msg, info);
+}
+
 
 static gboolean
 idle_create_msg_cb (gpointer idle_data)
