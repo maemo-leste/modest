@@ -2738,7 +2738,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
-			     _("mcen_ib_unable_to_copy_samefolder"));
+			     _("mail_in_ui_folder_copy_target_error"));
 		
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);

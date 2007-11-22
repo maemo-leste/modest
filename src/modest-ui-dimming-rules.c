@@ -1091,12 +1091,12 @@ modest_ui_dimming_rules_on_paste (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		dimmed = _selected_folder_is_same_as_source (win);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_copy_samefolder"));
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_copy_target_error"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_has_subfolder_with_same_name (win);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_copy_samefolder"));
+			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_copy_target_error"));
 	}
 	
 	return dimmed;
