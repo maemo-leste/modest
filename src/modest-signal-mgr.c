@@ -70,6 +70,7 @@ modest_signal_mgr_disconnect_all_and_destroy (GSList *lst)
 				g_signal_handler_disconnect (handler->obj, handler->handler_id);
 			}
 			g_object_unref (handler->obj);
+			g_free (handler->signal_name);
 			handler->obj = NULL;
 		}
 		g_free (handler);
