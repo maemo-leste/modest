@@ -87,6 +87,8 @@
 #define IMAGE_MAX_WIDTH 560
 #define DEFAULT_FONT_SCALE 1.5
 
+static gboolean is_wp_text_buffer_started = FALSE;
+
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
 static void  modest_msg_edit_window_finalize     (GObject *obj);
@@ -300,7 +302,6 @@ modest_msg_edit_window_get_type (void)
 		                                  "ModestMsgEditWindow",
 		                                  &my_info, 0);
 
-		wp_text_buffer_library_init ();
 	}
 	return my_type;
 }
@@ -415,6 +416,12 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_editor");
+
+	if (!is_wp_text_buffer_started) {
+		is_wp_text_buffer_started = TRUE;
+		wp_text_buffer_library_init ();
+	}
+
 	init_window (obj);
 }
 
