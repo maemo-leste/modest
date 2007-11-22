@@ -127,10 +127,6 @@ static void modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
 
 /* ModestWindow methods implementation */
 static void modest_msg_edit_window_disconnect_signals (ModestWindow *window);
-static void modest_msg_edit_window_set_zoom (ModestWindow *window, gdouble zoom);
-static gdouble modest_msg_edit_window_get_zoom (ModestWindow *window);
-static gboolean modest_msg_edit_window_zoom_minus (ModestWindow *window);
-static gboolean modest_msg_edit_window_zoom_plus (ModestWindow *window);
 static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 						   gboolean show_toolbar);
 static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
@@ -158,6 +154,8 @@ static void remove_tags (WPTextBuffer *buffer);
 static void on_account_removed (TnyAccountStore *account_store, 
 				TnyAccount *account,
 				gpointer user_data);
+
+static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 
 static void init_window (ModestMsgEditWindow *obj);
 
@@ -256,8 +254,6 @@ struct _ModestMsgEditWindowPrivate {
 	GList *images;
 
 	TnyHeaderFlags priority_flags;
-
-	gdouble zoom_level;
 	
 	gboolean    can_undo, can_redo;
 	gulong      clipboard_change_handler_id;
@@ -363,10 +359,8 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_edit_window_finalize;
 
-	modest_window_class->set_zoom_func = modest_msg_edit_window_set_zoom;
-	modest_window_class->get_zoom_func = modest_msg_edit_window_get_zoom;
-	modest_window_class->zoom_plus_func = modest_msg_edit_window_zoom_plus;
-	modest_window_class->zoom_minus_func = modest_msg_edit_window_zoom_minus;
+	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
+	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
 	modest_window_class->save_state_func = save_state;
 	modest_window_class->disconnect_signals_func = modest_msg_edit_window_disconnect_signals;
@@ -389,7 +383,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->attachments   = NULL;
 	priv->images        = NULL;
 	priv->last_cid      = 0;
-	priv->zoom_level    = 1.0;
 
 	priv->cc_caption    = NULL;
 	priv->bcc_caption    = NULL;
@@ -610,12 +603,6 @@ init_window (ModestMsgEditWindow *obj)
 					    G_N_ELEMENTS (modest_msg_edit_alignment_radio_action_entries),
 					    GTK_JUSTIFY_LEFT,
 					    G_CALLBACK (modest_ui_actions_on_change_justify),
-					    obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    modest_msg_edit_zoom_action_entries,
-					    G_N_ELEMENTS (modest_msg_edit_zoom_action_entries),
-					    100,
-					    G_CALLBACK (modest_ui_actions_on_change_zoom),
 					    obj);
 	gtk_action_group_add_radio_actions (action_group,
 					    modest_msg_edit_priority_action_entries,
@@ -2234,117 +2221,6 @@ modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
 	}
 }
 
-static void
-modest_msg_edit_window_set_zoom (ModestWindow *window,
-				 gdouble zoom)
-{
-	ModestMsgEditWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkRadioAction *zoom_radio_action;
-     
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	priv->zoom_level = zoom;
-	wp_text_buffer_set_font_scaling_factor (WP_TEXT_BUFFER (priv->text_buffer), zoom*DEFAULT_FONT_SCALE);
-
-	/* Zoom level menu options should be updated with the current zoom level */
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
-									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	/* FIXME: Not availible before Gtk 2.10 */
-#else
-	gtk_radio_action_set_current_value (zoom_radio_action, (gint) (zoom*100.0+0.1));
-#endif
-}
-
-static gdouble
-modest_msg_edit_window_get_zoom (ModestWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv;
-     
-	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), 1.0);
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	return priv->zoom_level;
-}
-
-static gboolean
-zoom_allowed (ModestMsgEditWindow *window)
-{
-	GtkWidget *focus;
-
-	focus = gtk_window_get_focus (GTK_WINDOW (window));
-	return (focus != NULL && WP_IS_TEXT_VIEW (focus));
-}
-
-static gboolean
-modest_msg_edit_window_zoom_plus (ModestWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	GtkRadioAction *zoom_radio_action;
-	GSList *group, *node;
-
-	/* First we check if the text view is focused. If not, zooming is not allowed */
-	if (!zoom_allowed (MODEST_MSG_EDIT_WINDOW (window))) {
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
-		return FALSE;
-	}
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
-									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
-
-	group = gtk_radio_action_get_group (zoom_radio_action);
-
-	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_max_zoom_level_reached"));
-		return FALSE;
-	}
-
-	for (node = group; node != NULL; node = g_slist_next (node)) {
-		if ((node->next != NULL) && gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->next->data))) {
-			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->data), TRUE);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-static gboolean
-modest_msg_edit_window_zoom_minus (ModestWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	GtkRadioAction *zoom_radio_action;
-	GSList *group, *node;
-
-	/* First we check if the text view is focused. If not, zooming is not allowed */
-	if (!zoom_allowed (MODEST_MSG_EDIT_WINDOW (window))) {
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
-		return FALSE;
-	}
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
-									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
-
-	group = gtk_radio_action_get_group (zoom_radio_action);
-
-	for (node = group; node != NULL; node = g_slist_next (node)) {
-		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
-			if (node->next != NULL) {
-				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
-				return TRUE;
-			} else
-				hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_min_zoom_level_reached"));
-			break;
-		}
-	}
-	return FALSE;
-}
-
 static gboolean
 modest_msg_edit_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
 {
@@ -2601,7 +2477,6 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 
 	/* First we get the currently selected font information */
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &oldfmt, TRUE);
-	g_object_set (G_OBJECT (dialog), "font-scaling", priv->zoom_level, NULL);
 
 	switch (oldfmt.text_position) {
 	case TEXT_POSITION_NORMAL:
@@ -3352,4 +3227,14 @@ on_account_removed (TnyAccountStore *account_store,
 		if (strcmp (parent_acc, our_acc) == 0)
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
 	}
+}
+
+static gboolean
+on_zoom_minus_plus_not_implemented (ModestWindow *window)
+{
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+
+	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
+	return FALSE;
+
 }

@@ -54,15 +54,6 @@
     </menu>
 
     <menu name="ViewMenu" action="View">
-      <menu name="ZoomMenu" action="Zoom">
-	<menuitem name="Zoom50Menu" action="Zoom50"/>
-	<menuitem name="Zoom80Menu" action="Zoom80"/>
-	<menuitem name="Zoom100Menu" action="Zoom100"/>
-	<menuitem name="Zoom120Menu" action="Zoom120"/>
-	<menuitem name="Zoom150Menu" action="Zoom150"/>
-	<menuitem name="Zoom200Menu" action="Zoom200"/>
-      </menu>
-      <separator/>
       <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
       <separator/>
       <menu name="ShowToolbarMenu" action="ShowToolbar">

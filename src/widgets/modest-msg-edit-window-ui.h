@@ -46,7 +46,6 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "Format", NULL, N_("mcen_me_editor_format") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_format_menu_activated)},
 	{ "Alignment", NULL, N_("mcen_me_editor_align") },
 	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
-	{ "Zoom", NULL, N_("mcen_me_viewer_zoom") },
 	{ "MessagePriority", NULL, N_("mcen_me_editor_message_priority") },
 	{ "FileFormat", NULL, N_("mcen_me_editor_file_format") },
 	{ "Tools", NULL, N_("mcen_me_inbox_tools") },
@@ -78,10 +77,10 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "SearchMessages", NULL, N_("mcen_me_inbox_search"), "<CTRL>E", NULL,  G_CALLBACK (modest_ui_actions_on_search_messages) },
 
 
-	/* KEY ACCELERATOR ACTIONS */
+	/* KEY ACCELERATOR ACTIONS */ 
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },
 	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_ui_actions_on_zoom_minus) },
- 	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
+	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
 	{ "CloseWindowShortcut", NULL, NULL, "Escape", NULL, G_CALLBACK (modest_ui_actions_on_close_window) },
 
 	/* TOOLBAR ACTIONS */
@@ -117,15 +116,6 @@ static const GtkRadioActionEntry modest_msg_edit_alignment_radio_action_entries 
 	{ "AlignmentLeft", NULL, N_("mcen_me_editor_align_left"), NULL, NULL, GTK_JUSTIFY_LEFT },
 	{ "AlignmentCenter", NULL, N_("mcen_me_editor_align_centred"), NULL, NULL, GTK_JUSTIFY_CENTER },
 	{ "AlignmentRight", NULL, N_("mcen_me_editor_align_right"), NULL, NULL, GTK_JUSTIFY_RIGHT },
-};
-
-static const GtkRadioActionEntry modest_msg_edit_zoom_action_entries [] = {
-	{ "Zoom50", NULL, N_("mcen_me_viewer_50"), NULL, NULL, 50 },
-	{ "Zoom80", NULL, N_("mcen_me_viewer_80"), NULL, NULL, 80 },
-	{ "Zoom100", NULL, N_("mcen_me_viewer_100"), NULL, NULL, 100 },
-	{ "Zoom120", NULL, N_("mcen_me_viewer_120"), NULL, NULL, 120 },
-	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
-	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
 };
 
 static const GtkRadioActionEntry modest_msg_edit_priority_action_entries [] = {
