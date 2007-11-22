@@ -222,6 +222,8 @@ struct _ModestMsgViewWindowPrivate {
 	guint progress_bar_timeout;
 
 	gchar *msg_uid;
+	
+	GSList *sighandlers;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -409,6 +411,8 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
 	
+	priv->sighandlers = NULL;
+	
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj));
 	/* Set window icon */
@@ -510,10 +514,13 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 		if (priv->next_toolitem)
 			gtk_widget_hide (priv->next_toolitem);
 		
-		if (priv->progress_toolitem)
-			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
 		if (priv->progress_bar)
 			gtk_widget_show (priv->progress_bar);
+
+		if (priv->progress_toolitem) {
+			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
+			gtk_widget_show (priv->progress_toolitem);
+		}
 			
 		if (priv->cancel_toolitem)
 			gtk_widget_show (priv->cancel_toolitem);
@@ -625,6 +632,9 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 						    priv->rows_reordered_handler);
 	}
 
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
+	priv->sighandlers = NULL;
+	
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
 							 FALSE); /* don't create */
 	if (!main_window)
@@ -1581,7 +1591,6 @@ message_reader (ModestMsgViewWindow *window,
 		GtkTreeRowReference *row_reference)
 {
 	ModestMailOperation *mail_op = NULL;
-	ModestMailOperationTypeOperation op_type;
 	gboolean already_showing = FALSE;
 	ModestWindow *msg_window = NULL;
 	ModestWindowMgr *mgr;
@@ -1599,11 +1608,7 @@ message_reader (ModestMsgViewWindow *window,
 	}
 
 	/* Msg download completed */
-	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED) {
-		op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
-	} else {
-		op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
-
+	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
 		/* Ask the user if he wants to download the message if
 		   we're not online */
 		if (!tny_device_is_online (modest_runtime_get_device())) {
@@ -1990,7 +1995,6 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
 
-
 		/* Set reply button tap and hold menu */	
 		reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 							  "/ToolBar/ToolbarMessageReply");
@@ -2110,67 +2114,92 @@ on_account_removed (TnyAccountStore *account_store,
 	}
 }
 
+static void 
+on_mail_operation_started (ModestMailOperation *mail_op,
+			   gpointer user_data)
+{
+	ModestMsgViewWindow *self;
+	ModestMailOperationTypeOperation op_type;
+	GSList *tmp;
+	ModestMsgViewWindowPrivate *priv;
+
+	self = MODEST_MSG_VIEW_WINDOW (user_data);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	tmp = priv->progress_widgets;
+	
+	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
+		set_toolbar_transfer_mode(self);
+		while (tmp) {
+			modest_progress_object_add_operation (
+					MODEST_PROGRESS_OBJECT (tmp->data),
+					mail_op);
+			tmp = g_slist_next (tmp);
+		}
+	}
+}
+
+static void 
+on_mail_operation_finished (ModestMailOperation *mail_op,
+			    gpointer user_data)
+{
+	ModestMsgViewWindow *self;
+	ModestMailOperationTypeOperation op_type;
+	GSList *tmp;
+	ModestMsgViewWindowPrivate *priv;
+	
+	self = MODEST_MSG_VIEW_WINDOW (user_data);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	tmp = priv->progress_widgets;
+	
+	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
+		while (tmp) {
+			modest_progress_object_remove_operation (
+					MODEST_PROGRESS_OBJECT (tmp->data),
+					mail_op);
+			tmp = g_slist_next (tmp);
+		}
+
+		/* If no more operations are being observed, NORMAL mode is enabled again */
+		if (observers_empty (self)) {
+			set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+		}
+	}
+}
+
 static void
 on_queue_changed (ModestMailOperationQueue *queue,
 		  ModestMailOperation *mail_op,
 		  ModestMailOperationQueueNotification type,
 		  ModestMsgViewWindow *self)
-{
-	GSList *tmp;
+{	
 	ModestMsgViewWindowPrivate *priv;
-	ModestMailOperationTypeOperation op_type;
-	ModestToolBarModes mode;
-	
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
 	/* If this operations was created by another window, do nothing */
 	if (!modest_mail_operation_is_mine (mail_op, G_OBJECT(self))) 
 	    return;
 
-	/* Get toolbar mode from operation id*/
-	op_type = modest_mail_operation_get_type_operation (mail_op);
-	switch (op_type) {
-/* 	case MODEST_MAIL_OPERATION_TYPE_SEND: */
-	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
-	case MODEST_MAIL_OPERATION_TYPE_OPEN:
-		mode = TOOLBAR_MODE_TRANSFER;
-		break;
-	default:
-		mode = TOOLBAR_MODE_NORMAL;
-		
-	}
-		
-	/* Add operation observers and change toolbar if neccessary*/
-	tmp = priv->progress_widgets;
-	switch (type) {
-	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED:
-		if (mode == TOOLBAR_MODE_TRANSFER) {
-			/* Enable transfer toolbar mode */
-			set_toolbar_transfer_mode(self);
-			while (tmp) {
-				modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-								      mail_op);
-				tmp = g_slist_next (tmp);
-			}
-			
-		}
-		break;
-	case MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED:
-		if (mode == TOOLBAR_MODE_TRANSFER) {
-			while (tmp) {
-				modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
-								 mail_op);
-				tmp = g_slist_next (tmp);
-				
-			}
-
-			/* If no more operations are being observed, NORMAL mode is enabled again */
-			if (observers_empty (self)) {
-				set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
-			}
-		}
-		break;
+	if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED) {
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-started",
+							       G_CALLBACK (on_mail_operation_started),
+							       self);
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-finished",
+							       G_CALLBACK (on_mail_operation_finished),
+							       self);
+	} else if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED) {
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-started");
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-finished");
 	}
 }
 
