@@ -468,14 +468,16 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:		
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply"); */
-/* 		gtk_action_set_sensitive (widget, TRUE); */
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage"); */
-/* 		gtk_action_set_sensitive (widget, TRUE); */
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo"); */
-/* 		gtk_action_set_sensitive (widget, TRUE); */
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"); */
-/* 		gtk_action_set_sensitive (widget, TRUE); */
+		if (priv->progress_toolitem) {
+			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
+			gtk_widget_hide (priv->progress_toolitem);
+		}
+
+		if (priv->progress_bar)
+			gtk_widget_hide (priv->progress_bar);
+			
+		if (priv->cancel_toolitem)
+			gtk_widget_hide (priv->cancel_toolitem);
 
 		if (priv->prev_toolitem)
 			gtk_widget_show (priv->prev_toolitem);
@@ -483,14 +485,6 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 		if (priv->next_toolitem)
 			gtk_widget_show (priv->next_toolitem);
 			
-		if (priv->progress_toolitem)
-			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
-		if (priv->progress_bar)
-			gtk_widget_hide (priv->progress_bar);
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_hide (priv->cancel_toolitem);
-
 		/* Hide toolbar if optimized view is enabled */
 		if (priv->optimized_view) {
 			gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
@@ -499,15 +493,6 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 
 		break;
 	case TOOLBAR_MODE_TRANSFER:
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply"); */
-/* 		gtk_action_set_sensitive (widget, FALSE); */
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage"); */
-/* 		gtk_action_set_sensitive (widget, FALSE); */
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo"); */
-/* 		gtk_action_set_sensitive (widget, FALSE); */
-/* 		widget = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"); */
-/* 		gtk_action_set_sensitive (widget, FALSE); */
-
 		if (priv->prev_toolitem)
 			gtk_widget_hide (priv->prev_toolitem);
 		
