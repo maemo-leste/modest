@@ -93,6 +93,11 @@ static void     notify_progress_of_multiple_messages (ModestMailOperation *self,
 
 static guint    compute_message_list_size (TnyList *headers);
 
+static guint    compute_message_array_size (GPtrArray *headers);
+
+static int      compare_headers_by_date   (gconstpointer a,
+					   gconstpointer b);
+
 enum _ModestMailOperationSignals 
 {
 	PROGRESS_CHANGED_SIGNAL,
@@ -1095,20 +1100,6 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 					  modest_mail_operation_save_to_drafts_cb, info);
 }
 
-typedef struct 
-{
-	ModestMailOperation *mail_op;
-	TnyStoreAccount *account;
-	TnyTransportAccount *transport_account;
-	gint max_size;
-	gint retrieve_limit;
-	gchar *retrieve_type;
-	gchar *account_name;
-	UpdateAccountCallback callback;
-	gpointer user_data;
-	TnyList *new_headers;
-} UpdateAccountInfo;
-
 typedef struct
 {
 	ModestMailOperation *mail_op;
@@ -1200,30 +1191,294 @@ internal_folder_observer_class_init (InternalFolderObserverClass *klass)
 	object_class->finalize = internal_folder_observer_finalize;
 }
 
-/*****************/
+typedef struct 
+{
+	ModestMailOperation *mail_op;
+	gchar *account_name;
+	UpdateAccountCallback callback;
+	gpointer user_data;
+	TnyList *folders;
+	gint pending_calls;
+	gboolean poke_all;
+	TnyFolderObserver *inbox_observer;
+	guint update_timeout;
+} UpdateAccountInfo;
+
 
 static void
-recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all_folders)
+destroy_update_account_info (UpdateAccountInfo *info)
 {
-	TnyIterator *iter;
-	TnyList *folders = tny_simple_list_new ();
-
-	tny_folder_store_get_folders (store, folders, query, NULL);
-	iter = tny_list_create_iterator (folders);
-
-	while (!tny_iterator_is_done (iter)) {
-
-		TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
-		if (folder) {
-			tny_list_prepend (all_folders, G_OBJECT (folder));
-			recurse_folders (folder, query, all_folders);    
- 			g_object_unref (G_OBJECT (folder));
-		}
-
-		tny_iterator_next (iter);
+	if (info->update_timeout) {
+		g_source_remove (info->update_timeout);
+		info->update_timeout = 0;
 	}
-	 g_object_unref (G_OBJECT (iter));
-	 g_object_unref (G_OBJECT (folders));
+
+	g_free (info->account_name);
+	g_object_unref (info->folders);
+	g_object_unref (info->mail_op);
+	g_slice_free (UpdateAccountInfo, info);
+}
+
+static void
+update_account_get_msg_async_cb (TnyFolder *folder, 
+				 gboolean canceled, 
+				 TnyMsg *msg, 
+				 GError *err, 
+				 gpointer user_data)
+{
+	GetMsgInfo *msg_info = (GetMsgInfo *) user_data;
+
+	/* Just delete the helper. Don't do anything with the new
+	   msg. There is also no need to check for errors */
+	g_object_unref (msg_info->mail_op);
+	g_object_unref (msg_info->header);
+	g_slice_free (GetMsgInfo, msg_info);
+}
+
+
+static void
+inbox_refreshed_cb (TnyFolder *inbox, 
+		    gboolean canceled, 
+		    GError *err, 
+		    gpointer user_data)
+{	
+	UpdateAccountInfo *info;
+	ModestMailOperationPrivate *priv;
+	TnyIterator *new_headers_iter;
+	GPtrArray *new_headers_array = NULL;   
+	gint max_size, retrieve_limit, i;
+	ModestAccountMgr *mgr;
+	gchar *retrieve_type = NULL;
+	TnyList *new_headers = NULL;
+	gboolean headers_only;
+	TnyTransportAccount *transport_account;
+	ModestTnySendQueue *send_queue;
+
+	info = (UpdateAccountInfo *) user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
+	mgr = modest_runtime_get_account_mgr ();
+
+	if (canceled || err || !inbox) {
+		/* Try to send anyway */
+		goto send_mail;
+	}
+
+	/* Get the message max size */
+	max_size  = modest_conf_get_int (modest_runtime_get_conf (),
+					 MODEST_CONF_MSG_SIZE_LIMIT, NULL);
+	if (max_size == 0)
+		max_size = G_MAXINT;
+	else
+		max_size = max_size * KB;
+
+	/* Create the new headers array. We need it to sort the
+	   new headers by date */
+	new_headers_array = g_ptr_array_new ();
+	new_headers_iter = tny_list_create_iterator (((InternalFolderObserver *) info->inbox_observer)->new_headers);
+	while (!tny_iterator_is_done (new_headers_iter)) {
+		TnyHeader *header = NULL;
+
+		header = TNY_HEADER (tny_iterator_get_current (new_headers_iter));
+		/* Apply per-message size limits */
+		if (tny_header_get_message_size (header) < max_size)
+			g_ptr_array_add (new_headers_array, g_object_ref (header));
+				
+		g_object_unref (header);
+		tny_iterator_next (new_headers_iter);
+	}
+	g_object_unref (new_headers_iter);
+	tny_folder_remove_observer (inbox, info->inbox_observer);
+	g_object_unref (info->inbox_observer);
+	info->inbox_observer = NULL;
+
+	if (new_headers_array->len == 0)
+		goto send_mail;
+
+	/* Get per-account message amount retrieval limit */
+	retrieve_limit = modest_account_mgr_get_retrieve_limit (mgr, info->account_name);
+	if (retrieve_limit == 0)
+		retrieve_limit = G_MAXINT;
+	
+	/* Get per-account retrieval type */
+	retrieve_type = modest_account_mgr_get_retrieve_type (mgr, info->account_name);	
+	headers_only = !g_ascii_strcasecmp (retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY);
+	g_free (retrieve_type);
+
+	/* Order by date */
+	g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date);
+	
+	/* TODO: Ask the user, instead of just failing,
+	 * showing mail_nc_msg_count_limit_exceeded, with 'Get
+	 * all' and 'Newest only' buttons. */
+	if (new_headers_array->len > retrieve_limit) {
+		/* TODO */
+	}
+	
+	if (!headers_only) {
+		gint msg_num = 0;
+		const gint msg_list_size = compute_message_array_size (new_headers_array);
+
+		priv->done = 0;
+		priv->total = MIN (new_headers_array->len, retrieve_limit);
+		while (msg_num < priv->total) {		
+			TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, msg_num));
+			TnyFolder *folder = tny_header_get_folder (header);
+			GetMsgInfo *msg_info;
+
+			/* Create the message info */
+			msg_info = g_slice_new0 (GetMsgInfo);
+			msg_info->mail_op = g_object_ref (info->mail_op);
+			msg_info->header = g_object_ref (header);
+			msg_info->total_bytes = msg_list_size;
+
+			/* Get message in an async way */
+			tny_folder_get_msg_async (folder, header, update_account_get_msg_async_cb, 
+						  get_msg_status_cb, msg_info);
+
+			g_object_unref (folder);
+			
+			msg_num++;
+		}
+	}
+
+	/* Copy the headers to a list and free the array */
+	new_headers = tny_simple_list_new ();
+	for (i=0; i < new_headers_array->len; i++) {
+		TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, i));
+		tny_list_append (new_headers, G_OBJECT (header));
+	}
+	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (new_headers_array, FALSE);
+
+	/* Update the last updated key */
+	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
+
+ send_mail:
+	/* Send mails */
+	priv->done = 0;
+	priv->total = 0;
+
+	/* Get the transport account */
+	transport_account = (TnyTransportAccount *)
+		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
+										    info->account_name);
+	
+	/* Try to send */
+	send_queue = modest_runtime_get_send_queue (transport_account);
+	modest_tny_send_queue_try_to_send (send_queue);
+
+	/* Check if the operation was a success */
+	if (!priv->error)
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	/* Set the account back to not busy */
+	modest_account_mgr_set_account_busy (mgr, info->account_name, FALSE);
+
+	/* Call the user callback */
+	if (info->callback)
+		info->callback (info->mail_op, new_headers, info->user_data);
+
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (info->mail_op);
+
+	/* Frees */
+	if (new_headers)
+		g_object_unref (new_headers);
+	destroy_update_account_info (info);
+}
+
+static void 
+recurse_folders_async_cb (TnyFolderStore *folder_store, 
+			  gboolean canceled,
+			  TnyList *list, 
+			  GError *err, 
+			  gpointer user_data)
+{
+	UpdateAccountInfo *info;
+	ModestMailOperationPrivate *priv;
+    
+	info = (UpdateAccountInfo *) user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
+
+	if (err || canceled) {
+		/* Try to continue anyway */
+	} else {
+		TnyIterator *iter = tny_list_create_iterator (list);
+		while (!tny_iterator_is_done (iter)) {
+			TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
+			TnyList *folders = tny_simple_list_new ();
+
+			/* Add to the list of all folders */
+			tny_list_append (info->folders, (GObject *) folder);
+			
+			/* Add pending call */
+			info->pending_calls++;
+			
+			tny_folder_store_get_folders_async (folder, folders, recurse_folders_async_cb, 
+							    NULL, NULL, info);
+			
+			g_object_unref (G_OBJECT (folder));
+			
+			tny_iterator_next (iter);	    
+		}
+		g_object_unref (G_OBJECT (iter));
+		g_object_unref (G_OBJECT (list));
+	}
+
+	/* Remove my own pending call */
+	info->pending_calls--;
+
+	/* This means that we have all the folders */
+	if (info->pending_calls == 0) {
+		TnyIterator *iter_all_folders;
+		TnyFolder *inbox = NULL;
+
+		iter_all_folders = tny_list_create_iterator (info->folders);
+
+		/* Do a poke status over all folders */
+		while (!tny_iterator_is_done (iter_all_folders) &&
+		       priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS) {
+			TnyFolder *folder = NULL;
+
+			folder = TNY_FOLDER (tny_iterator_get_current (iter_all_folders));
+
+			if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX) {
+				/* Get a reference to the INBOX */
+				inbox = g_object_ref (folder);
+			} else {
+				/* Issue a poke status over the folder */
+				if (info->poke_all)
+					tny_folder_poke_status (folder);
+			}
+
+			/* Free and go to next */
+			g_object_unref (folder);
+			tny_iterator_next (iter_all_folders);
+		}
+		g_object_unref (iter_all_folders);
+
+		/* Stop the progress notification */
+		g_source_remove (info->update_timeout);
+		info->update_timeout = 0;
+
+		/* Refresh the INBOX */
+		if (inbox) {
+			/* Refresh the folder. Our observer receives
+			 * the new emails during folder refreshes, so
+			 * we can use observer->new_headers
+			 */
+			info->inbox_observer = g_object_new (internal_folder_observer_get_type (), NULL);
+			tny_folder_add_observer (inbox, info->inbox_observer);
+
+			/* Refresh the INBOX */
+			tny_folder_refresh_async (inbox, inbox_refreshed_cb, NULL, info);
+			g_object_unref (inbox);
+		} else {
+			/* We could not perform the inbox refresh but
+			   we'll try to send mails anyway */
+			inbox_refreshed_cb (inbox, FALSE, NULL, info);
+		}
+	}
 }
 
 /* 
@@ -1231,7 +1486,7 @@ recurse_folders (TnyFolderStore *store, TnyFolderStoreQuery *query, TnyList *all
  * so you must call g_source_remove to stop the signal emission
  */
 static gboolean
-idle_notify_progress (gpointer data)
+timeout_notify_progress (gpointer data)
 {
 	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
 	ModestMailOperationState *state;
@@ -1250,33 +1505,57 @@ idle_notify_progress (gpointer data)
 	return TRUE;
 }
 
-/* 
- * Issues the "progress-changed" signal and removes the timer. It uses
- * a lock to ensure that the progress information of the mail
- * operation is not modified while there are notifications pending
- */
-static gboolean
-idle_notify_progress_once (gpointer data)
+void
+modest_mail_operation_update_account (ModestMailOperation *self,
+				      const gchar *account_name,
+				      gboolean poke_all,
+				      UpdateAccountCallback callback,
+				      gpointer user_data)
 {
-	ModestPair *pair;
+	UpdateAccountInfo *info = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+	ModestTnyAccountStore *account_store = NULL;
+	TnyStoreAccount *store_account = NULL;
+	TnyList *folders;
 
-	pair = (ModestPair *) data;
+	/* Init mail operation */
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	priv->total = 0;
+	priv->done  = 0;
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
-	/* This is a GDK lock because we are an idle callback and
- 	 * the handlers of this signal can contain Gtk+ code */
+	/* Get the store account */
+	account_store = modest_runtime_get_account_store ();
+	store_account = (TnyStoreAccount *)
+		modest_tny_account_store_get_server_account (account_store,
+							     account_name,
+							     TNY_ACCOUNT_TYPE_STORE);
+	priv->account = g_object_ref (store_account);
 
-	gdk_threads_enter (); /* CHECKED */
-	g_signal_emit (G_OBJECT (pair->first), signals[PROGRESS_CHANGED_SIGNAL], 0, pair->second, NULL);
-	gdk_threads_leave (); /* CHECKED */
+	/* Create the helper object */
+	info = g_slice_new0 (UpdateAccountInfo);
+	info->pending_calls = 1;
+	info->folders = tny_simple_list_new ();
+	info->mail_op = g_object_ref (self);
+	info->poke_all = poke_all;
+	info->account_name = g_strdup (account_name);
+	info->callback = callback;
+	info->user_data = user_data;
+	info->update_timeout = g_timeout_add (250, timeout_notify_progress, self);
 
-	/* Free the state and the reference to the mail operation */
-	g_slice_free (ModestMailOperationState, (ModestMailOperationState*)pair->second);
-	g_object_unref (pair->first);
+	/* Set account busy */
+	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), account_name, TRUE);
+	modest_mail_operation_notify_start (self);
 
-	return FALSE;
+	/* Get all folders and continue in the callback */    
+	folders = tny_simple_list_new ();
+    	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
+					    folders, recurse_folders_async_cb, 
+					    NULL, NULL, info);
 }
 
-/* 
+/*
  * Used to notify the queue from the main
  * loop. We call it inside an idle call to achieve that
  */
@@ -1294,7 +1573,7 @@ idle_notify_queue (gpointer data)
 }
 
 static int
-compare_headers_by_date (gconstpointer a, 
+compare_headers_by_date (gconstpointer a,
 			 gconstpointer b)
 {
 	TnyHeader **header1, **header2;
@@ -1314,409 +1593,325 @@ compare_headers_by_date (gconstpointer a,
 		return -1;
 }
 
-static gboolean 
-set_last_updated_idle (gpointer data)
-{
+/* static gpointer */
+/* update_account_thread (gpointer thr_user_data) */
+/* { */
+/* 	static gboolean first_time = TRUE; */
+/* 	UpdateAccountInfo *info = NULL; */
+/* 	TnyList *all_folders = NULL, *new_headers = NULL; */
+/* 	GPtrArray *new_headers_array = NULL; */
+/* 	TnyIterator *iter = NULL; */
+/* 	ModestMailOperationPrivate *priv = NULL; */
+/* 	ModestTnySendQueue *send_queue = NULL; */
+/* 	gint i = 0, timeout = 0; */
 
-	/* This is a GDK lock because we are an idle callback and
- 	 * modest_account_mgr_set_last_updated can issue Gtk+ code */
+/* 	info = (UpdateAccountInfo *) thr_user_data; */
+/* 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op); */
 
-	gdk_threads_enter (); /* CHECKED - please recheck */
+/* 	/\* Get account and set it into mail_operation *\/ */
+/* 	priv->account = g_object_ref (info->account); */
 
-	/* It does not matter if the time is not exactly the same than
-	   the time when this idle was called, it's just an
-	   approximation and it won't be very different */
+/* 	/\* Get all the folders. We can do it synchronously because */
+/* 	   we're already running in a different thread than the UI *\/ */
+/* 	all_folders = get_all_folders_from_account (info->account, &(priv->error)); */
+/* 	if (!all_folders) { */
+/* 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED; */
+/* 		goto out; */
+/* 	} */
 
-	modest_account_mgr_set_last_updated (modest_runtime_get_account_mgr (), 
-					     (gchar *) data, 
-					     time (NULL));
+/* 	/\* Update status and notify. We need to call the notification */
+/* 	   with a source function in order to call it from the main */
+/* 	   loop. We need that in order not to get into trouble with */
+/* 	   Gtk+. We use a timeout in order to provide more status */
+/* 	   information, because the sync tinymail call does not */
+/* 	   provide it for the moment *\/ */
+/* 	timeout = g_timeout_add (100, idle_notify_progress, info->mail_op); */
 
-	gdk_threads_leave (); /* CHECKED - please recheck */
+/* 	new_headers_array = g_ptr_array_new (); */
+/* 	iter = tny_list_create_iterator (all_folders); */
 
-	return FALSE;
-}
+/* 	while (!tny_iterator_is_done (iter) && !priv->error &&  */
+/* 	       priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) { */
 
-static gboolean
-idle_update_account_cb (gpointer data)
-{
-	UpdateAccountInfo *idle_info;
+/* 		TnyFolderType folder_type; */
+/* 		TnyFolder *folder = NULL; */
 
-	idle_info = (UpdateAccountInfo *) data;
+/* 		folder = TNY_FOLDER (tny_iterator_get_current (iter)); */
+/* 		folder_type = tny_folder_get_folder_type (folder); */
 
-	/* This is a GDK lock because we are an idle callback and
- 	 * idle_info->callback can contain Gtk+ code */
+/* 		/\* Refresh it only if it's the INBOX *\/ */
+/* 		if (folder_type == TNY_FOLDER_TYPE_INBOX) { */
+/* 			InternalFolderObserver *observer = NULL; */
+/* 			TnyIterator *new_headers_iter = NULL; */
 
-	gdk_threads_enter (); /* CHECKED */
-	idle_info->callback (idle_info->mail_op,
-			     idle_info->new_headers,
-			     idle_info->user_data);
-	gdk_threads_leave (); /* CHECKED */
-
-	/* Frees */
-	g_object_unref (idle_info->mail_op);
-	if (idle_info->new_headers)
-		g_object_unref (idle_info->new_headers);
-	g_free (idle_info);
-
-	return FALSE;
-}
-
-static TnyList *
-get_all_folders_from_account (TnyStoreAccount *account,
-			      GError **error)
-{
-	TnyList *all_folders = NULL;
-	TnyIterator *iter = NULL;
-	TnyFolderStoreQuery *query = NULL;
-
-	all_folders = tny_simple_list_new ();
-	query = tny_folder_store_query_new ();
-	tny_folder_store_query_add_item (query, NULL, TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (account),
-				      all_folders,
-				      query,
-				      error);
-
-	if (*error) {
-		if (all_folders)
-			g_object_unref (all_folders);
-		return NULL;
-	}
-
-	iter = tny_list_create_iterator (all_folders);
-	while (!tny_iterator_is_done (iter)) {
-		TnyFolderStore *folder = TNY_FOLDER_STORE (tny_iterator_get_current (iter));
-		if (folder) {
-			recurse_folders (folder, query, all_folders);
-			g_object_unref (folder);
-		}
-		tny_iterator_next (iter);
-	}
-	g_object_unref (G_OBJECT (iter));
-
-	return all_folders;
-}
-
-
-static gpointer
-update_account_thread (gpointer thr_user_data)
-{
-	static gboolean first_time = TRUE;
-	UpdateAccountInfo *info = NULL;
-	TnyList *all_folders = NULL, *new_headers = NULL;
-	GPtrArray *new_headers_array = NULL;
-	TnyIterator *iter = NULL;
-	ModestMailOperationPrivate *priv = NULL;
-	ModestTnySendQueue *send_queue = NULL;
-	gint i = 0, timeout = 0;
-
-	info = (UpdateAccountInfo *) thr_user_data;
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
-
-	/* Get account and set it into mail_operation */
-	priv->account = g_object_ref (info->account);
-
-	/* Get all the folders. We can do it synchronously because
-	   we're already running in a different thread than the UI */
-	all_folders = get_all_folders_from_account (info->account, &(priv->error));
-	if (!all_folders) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		goto out;
-	}
-
-	/* Update status and notify. We need to call the notification
-	   with a source function in order to call it from the main
-	   loop. We need that in order not to get into trouble with
-	   Gtk+. We use a timeout in order to provide more status
-	   information, because the sync tinymail call does not
-	   provide it for the moment */
-	timeout = g_timeout_add (100, idle_notify_progress, info->mail_op);
-
-	new_headers_array = g_ptr_array_new ();
-	iter = tny_list_create_iterator (all_folders);
-
-	while (!tny_iterator_is_done (iter) && !priv->error && 
-	       priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-
-		TnyFolderType folder_type;
-		TnyFolder *folder = NULL;
-
-		folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		folder_type = tny_folder_get_folder_type (folder);
-
-		/* Refresh it only if it's the INBOX */
-		if (folder_type == TNY_FOLDER_TYPE_INBOX) {
-			InternalFolderObserver *observer = NULL;
-			TnyIterator *new_headers_iter = NULL;
-
-			/* Refresh the folder. Our observer receives
-			 * the new emails during folder refreshes, so
-			 * we can use observer->new_headers
-			 */
-			observer = g_object_new (internal_folder_observer_get_type (), NULL);
-			tny_folder_add_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
+/* 			/\* Refresh the folder. Our observer receives */
+/* 			 * the new emails during folder refreshes, so */
+/* 			 * we can use observer->new_headers */
+/* 			 *\/ */
+/* 			observer = g_object_new (internal_folder_observer_get_type (), NULL); */
+/* 			tny_folder_add_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer)); */
 		
-			tny_folder_refresh (TNY_FOLDER (folder), &(priv->error));
+/* 			tny_folder_refresh (TNY_FOLDER (folder), &(priv->error)); */
 
-			new_headers_iter = tny_list_create_iterator (observer->new_headers);
-			while (!tny_iterator_is_done (new_headers_iter)) {
-				TnyHeader *header = NULL;
+/* 			new_headers_iter = tny_list_create_iterator (observer->new_headers); */
+/* 			while (!tny_iterator_is_done (new_headers_iter)) { */
+/* 				TnyHeader *header = NULL; */
 
-				header = TNY_HEADER (tny_iterator_get_current (new_headers_iter));
-				/* Apply per-message size limits */
-				if (tny_header_get_message_size (header) < info->max_size)
-					g_ptr_array_add (new_headers_array, g_object_ref (header));
+/* 				header = TNY_HEADER (tny_iterator_get_current (new_headers_iter)); */
+/* 				/\* Apply per-message size limits *\/ */
+/* 				if (tny_header_get_message_size (header) < info->max_size) */
+/* 					g_ptr_array_add (new_headers_array, g_object_ref (header)); */
 				
-				g_object_unref (header);
-				tny_iterator_next (new_headers_iter);
-			}
-			g_object_unref (new_headers_iter);
+/* 				g_object_unref (header); */
+/* 				tny_iterator_next (new_headers_iter); */
+/* 			} */
+/* 			g_object_unref (new_headers_iter); */
 
-			tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer));
-			g_object_unref (observer);
-		} else {
-			/* We no not need to do it the first time,
-			   because it's automatically done by the tree
-			   model */
-			if (G_LIKELY (!first_time))
-				tny_folder_poke_status (folder);
-		}
-		g_object_unref (folder);
+/* 			tny_folder_remove_observer (TNY_FOLDER (folder), TNY_FOLDER_OBSERVER (observer)); */
+/* 			g_object_unref (observer); */
+/* 		} else { */
+/* 			/\* We no not need to do it the first time, */
+/* 			   because it's automatically done by the tree */
+/* 			   model *\/ */
+/* 			if (G_LIKELY (!first_time)) */
+/* 				tny_folder_poke_status (folder); */
+/* 		} */
+/* 		g_object_unref (folder); */
 
-		tny_iterator_next (iter);
-	}
-	g_object_unref (G_OBJECT (iter));
-	g_source_remove (timeout);
+/* 		tny_iterator_next (iter); */
+/* 	} */
+/* 	g_object_unref (G_OBJECT (iter)); */
+/* 	g_source_remove (timeout); */
 
-	if (priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED && 
-	    priv->status != MODEST_MAIL_OPERATION_STATUS_FAILED &&
-	    new_headers_array->len > 0) {
-		gint msg_num = 0;
+/* 	if (priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED &&  */
+/* 	    priv->status != MODEST_MAIL_OPERATION_STATUS_FAILED && */
+/* 	    new_headers_array->len > 0) { */
+/* 		gint msg_num = 0; */
 
-		/* Order by date */
-		g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date);
+/* 		/\* Order by date *\/ */
+/* 		g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date); */
 
-		/* TODO: Ask the user, instead of just failing,
-		 * showing mail_nc_msg_count_limit_exceeded, with 'Get
-		 * all' and 'Newest only' buttons. */
-		if (new_headers_array->len > info->retrieve_limit) {
-			/* TODO */
-		}
+/* 		/\* TODO: Ask the user, instead of just failing, */
+/* 		 * showing mail_nc_msg_count_limit_exceeded, with 'Get */
+/* 		 * all' and 'Newest only' buttons. *\/ */
+/* 		if (new_headers_array->len > info->retrieve_limit) { */
+/* 			/\* TODO *\/ */
+/* 		} */
 
-		/* Should be get only the headers or the message as well? */
-		if (g_ascii_strcasecmp (info->retrieve_type, 
-					MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY) != 0) {	
-			priv->done = 0;
-			priv->total = MIN (new_headers_array->len, info->retrieve_limit);
-			while (msg_num < priv->total) {
+/* 		/\* Should be get only the headers or the message as well? *\/ */
+/* 		if (g_ascii_strcasecmp (info->retrieve_type,  */
+/* 					MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY) != 0) {	 */
+/* 			priv->done = 0; */
+/* 			priv->total = MIN (new_headers_array->len, info->retrieve_limit); */
+/* 			while (msg_num < priv->total) { */
 
-				TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, msg_num));
-				TnyFolder *folder = tny_header_get_folder (header);
-				TnyMsg *msg       = tny_folder_get_msg (folder, header, NULL);
-				ModestMailOperationState *state;
-				ModestPair* pair;
+/* 				TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, msg_num)); */
+/* 				TnyFolder *folder = tny_header_get_folder (header); */
+/* 				TnyMsg *msg       = tny_folder_get_msg (folder, header, NULL); */
+/* 				ModestMailOperationState *state; */
+/* 				ModestPair* pair; */
 
-				priv->done++;
-				/* We can not just use the mail operation because the
-				   values of done and total could change before the
-				   idle is called */
-				state = modest_mail_operation_clone_state (info->mail_op);
-				pair = modest_pair_new (g_object_ref (info->mail_op), state, FALSE);
-				g_idle_add_full (G_PRIORITY_HIGH_IDLE, idle_notify_progress_once,
-						 pair, (GDestroyNotify) modest_pair_free);
+/* 				priv->done++; */
+/* 				/\* We can not just use the mail operation because the */
+/* 				   values of done and total could change before the */
+/* 				   idle is called *\/ */
+/* 				state = modest_mail_operation_clone_state (info->mail_op); */
+/* 				pair = modest_pair_new (g_object_ref (info->mail_op), state, FALSE); */
+/* 				g_idle_add_full (G_PRIORITY_HIGH_IDLE, idle_notify_progress_once, */
+/* 						 pair, (GDestroyNotify) modest_pair_free); */
 
-				g_object_unref (msg);
-				g_object_unref (folder);
+/* 				g_object_unref (msg); */
+/* 				g_object_unref (folder); */
 
-				msg_num++;
-			}
-		}
-	}
+/* 				msg_num++; */
+/* 			} */
+/* 		} */
+/* 	} */
 
-	if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
-		goto out;
+/* 	if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED) */
+/* 		goto out; */
 
-	/* Copy the headers to a list and free the array */
-	new_headers = tny_simple_list_new ();
-	for (i=0; i < new_headers_array->len; i++) {
-		TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, i));
-		tny_list_append (new_headers, G_OBJECT (header));
-	}
-	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (new_headers_array, FALSE);
+/* 	/\* Copy the headers to a list and free the array *\/ */
+/* 	new_headers = tny_simple_list_new (); */
+/* 	for (i=0; i < new_headers_array->len; i++) { */
+/* 		TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, i)); */
+/* 		tny_list_append (new_headers, G_OBJECT (header)); */
+/* 	} */
+/* 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL); */
+/* 	g_ptr_array_free (new_headers_array, FALSE); */
 	
 
-	/* Perform send (if operation was not cancelled) */
-	priv->done = 0;
-	priv->total = 0;
-	if (priv->account != NULL) 
-		g_object_unref (priv->account);
+/* 	/\* Perform send (if operation was not cancelled) *\/ */
+/* 	priv->done = 0; */
+/* 	priv->total = 0; */
+/* 	if (priv->account != NULL)  */
+/* 		g_object_unref (priv->account); */
 
-	if (info->transport_account) {
-		priv->account = g_object_ref (info->transport_account);
+/* 	if (info->transport_account) { */
+/* 		priv->account = g_object_ref (info->transport_account); */
 	
-		send_queue = modest_runtime_get_send_queue (info->transport_account);
-		if (send_queue) {
-			modest_tny_send_queue_try_to_send (send_queue);
-		} else {
-			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-				     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
-				     "cannot create a send queue for %s\n", 
-				     tny_account_get_name (TNY_ACCOUNT (info->transport_account)));
-			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		}
-	}
+/* 		send_queue = modest_runtime_get_send_queue (info->transport_account); */
+/* 		if (send_queue) { */
+/* 			modest_tny_send_queue_try_to_send (send_queue); */
+/* 		} else { */
+/* 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR, */
+/* 				     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED, */
+/* 				     "cannot create a send queue for %s\n",  */
+/* 				     tny_account_get_name (TNY_ACCOUNT (info->transport_account))); */
+/* 			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED; */
+/* 		} */
+/* 	} */
 	
-	/* Check if the operation was a success */
-	if (!priv->error) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+/* 	/\* Check if the operation was a success *\/ */
+/* 	if (!priv->error) { */
+/* 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS; */
 
-		/* Update the last updated key */
-		g_idle_add_full (G_PRIORITY_HIGH_IDLE, 
-				 set_last_updated_idle, 
-				 g_strdup (tny_account_get_id (TNY_ACCOUNT (info->account))),
-				 (GDestroyNotify) g_free);
-	}
+/* 		/\* Update the last updated key *\/ */
+/* 		g_idle_add_full (G_PRIORITY_HIGH_IDLE,  */
+/* 				 set_last_updated_idle,  */
+/* 				 g_strdup (tny_account_get_id (TNY_ACCOUNT (info->account))), */
+/* 				 (GDestroyNotify) g_free); */
+/* 	} */
 
- out:
-	/* Set the account back to not busy */
-	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr(), 
-					     info->account_name, FALSE);
+/*  out: */
+/* 	/\* Set the account back to not busy *\/ */
+/* 	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr(),  */
+/* 					     info->account_name, FALSE); */
 	
-	if (info->callback) {
-		UpdateAccountInfo *idle_info;
+/* 	if (info->callback) { */
+/* 		UpdateAccountInfo *idle_info; */
 
-		/* This thread is not in the main lock */
-		idle_info = g_malloc0 (sizeof (UpdateAccountInfo));
-		idle_info->mail_op = g_object_ref (info->mail_op);
-		idle_info->new_headers = (new_headers) ? g_object_ref (new_headers) : NULL;
-		idle_info->callback = info->callback;
-		idle_info->user_data = info->user_data;
-		g_idle_add (idle_update_account_cb, idle_info);
-	}
+/* 		/\* This thread is not in the main lock *\/ */
+/* 		idle_info = g_malloc0 (sizeof (UpdateAccountInfo)); */
+/* 		idle_info->mail_op = g_object_ref (info->mail_op); */
+/* 		idle_info->new_headers = (new_headers) ? g_object_ref (new_headers) : NULL; */
+/* 		idle_info->callback = info->callback; */
+/* 		idle_info->user_data = info->user_data; */
+/* 		g_idle_add (idle_update_account_cb, idle_info); */
+/* 	} */
 
-	/* Notify about operation end. Note that the info could be
-	   freed before this idle happens, but the mail operation will
-	   be still alive */
-	g_idle_add (idle_notify_queue, g_object_ref (info->mail_op));
+/* 	/\* Notify about operation end. Note that the info could be */
+/* 	   freed before this idle happens, but the mail operation will */
+/* 	   be still alive *\/ */
+/* 	g_idle_add (idle_notify_queue, g_object_ref (info->mail_op)); */
 
-	/* Frees */
-	if (new_headers)
-		g_object_unref (new_headers);
-	if (all_folders)
-		g_object_unref (all_folders);
-	g_object_unref (info->account);
-	if (info->transport_account)
-		g_object_unref (info->transport_account);
-	g_free (info->account_name);
-	g_free (info->retrieve_type);
-	g_slice_free (UpdateAccountInfo, info);
+/* 	/\* Frees *\/ */
+/* 	if (new_headers) */
+/* 		g_object_unref (new_headers); */
+/* 	if (all_folders) */
+/* 		g_object_unref (all_folders); */
+/* 	g_object_unref (info->account); */
+/* 	if (info->transport_account) */
+/* 		g_object_unref (info->transport_account); */
+/* 	g_free (info->account_name); */
+/* 	g_free (info->retrieve_type); */
+/* 	g_slice_free (UpdateAccountInfo, info); */
 
-	first_time = FALSE;
+/* 	first_time = FALSE; */
 
-	return NULL;
-}
+/* 	return NULL; */
+/* } */
 
-gboolean
-modest_mail_operation_update_account (ModestMailOperation *self,
-				      const gchar *account_name,
-				      UpdateAccountCallback callback,
-				      gpointer user_data)
-{
-	GThread *thread = NULL;
-	UpdateAccountInfo *info = NULL;
-	ModestMailOperationPrivate *priv = NULL;
-	ModestAccountMgr *mgr = NULL;
-	TnyStoreAccount *store_account = NULL;
-	TnyTransportAccount *transport_account = NULL;
+/* gboolean */
+/* modest_mail_operation_update_account (ModestMailOperation *self, */
+/* 				      const gchar *account_name, */
+/* 				      UpdateAccountCallback callback, */
+/* 				      gpointer user_data) */
+/* { */
+/* 	GThread *thread = NULL; */
+/* 	UpdateAccountInfo *info = NULL; */
+/* 	ModestMailOperationPrivate *priv = NULL; */
+/* 	ModestAccountMgr *mgr = NULL; */
+/* 	TnyStoreAccount *store_account = NULL; */
+/* 	TnyTransportAccount *transport_account = NULL; */
 
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
-	g_return_val_if_fail (account_name, FALSE);
+/* 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE); */
+/* 	g_return_val_if_fail (account_name, FALSE); */
 
-	/* Init mail operation. Set total and done to 0, and do not
-	   update them, this way the progress objects will know that
-	   we have no clue about the number of the objects */
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-	priv->total = 0;
-	priv->done  = 0;
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+/* 	/\* Init mail operation. Set total and done to 0, and do not */
+/* 	   update them, this way the progress objects will know that */
+/* 	   we have no clue about the number of the objects *\/ */
+/* 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self); */
+/* 	priv->total = 0; */
+/* 	priv->done  = 0; */
+/* 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS; */
+/* 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE; */
 
-	/* Get the store account */
-	store_account = (TnyStoreAccount *)
-		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_STORE);
+/* 	/\* Get the store account *\/ */
+/* 	store_account = (TnyStoreAccount *) */
+/* 		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (), */
+/* 								     account_name, */
+/* 								     TNY_ACCOUNT_TYPE_STORE); */
 								     
-	if (!store_account) {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     "cannot get tny store account for %s\n", account_name);
-		goto error;
-	}
+/* 	if (!store_account) { */
+/* 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR, */
+/* 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND, */
+/* 			     "cannot get tny store account for %s\n", account_name); */
+/* 		goto error; */
+/* 	} */
 
-	priv->account = g_object_ref (store_account);
+/* 	priv->account = g_object_ref (store_account); */
 	
-	/* Get the transport account, we can not do it in the thread
-	   due to some problems with dbus */
-	transport_account = (TnyTransportAccount *)
-		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
-										    account_name);
-	if (!transport_account) {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     "cannot get tny transport account for %s\n", account_name);
-		goto error;
-	}
+/* 	/\* Get the transport account, we can not do it in the thread */
+/* 	   due to some problems with dbus *\/ */
+/* 	transport_account = (TnyTransportAccount *) */
+/* 		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(), */
+/* 										    account_name); */
+/* 	if (!transport_account) { */
+/* 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR, */
+/* 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND, */
+/* 			     "cannot get tny transport account for %s\n", account_name); */
+/* 		goto error; */
+/* 	} */
 
-	/* Create the helper object */
-	info = g_slice_new (UpdateAccountInfo);
-	info->mail_op = self;
-	info->account = store_account;
-	info->transport_account = transport_account;
-	info->callback = callback;
-	info->account_name = g_strdup (account_name);
-	info->user_data = user_data;
+/* 	/\* Create the helper object *\/ */
+/* 	info = g_slice_new (UpdateAccountInfo); */
+/* 	info->mail_op = self; */
+/* 	info->account = store_account; */
+/* 	info->transport_account = transport_account; */
+/* 	info->callback = callback; */
+/* 	info->account_name = g_strdup (account_name); */
+/* 	info->user_data = user_data; */
 
-	/* Get the message size limit */
-	info->max_size  = modest_conf_get_int (modest_runtime_get_conf (), 
-					       MODEST_CONF_MSG_SIZE_LIMIT, NULL);
-	if (info->max_size == 0)
-		info->max_size = G_MAXINT;
-	else
-		info->max_size = info->max_size * KB;
+/* 	/\* Get the message size limit *\/ */
+/* 	info->max_size  = modest_conf_get_int (modest_runtime_get_conf (),  */
+/* 					       MODEST_CONF_MSG_SIZE_LIMIT, NULL); */
+/* 	if (info->max_size == 0) */
+/* 		info->max_size = G_MAXINT; */
+/* 	else */
+/* 		info->max_size = info->max_size * KB; */
 
-	/* Get per-account retrieval type */
-	mgr = modest_runtime_get_account_mgr ();
-	info->retrieve_type = modest_account_mgr_get_retrieve_type (mgr, account_name);
+/* 	/\* Get per-account retrieval type *\/ */
+/* 	mgr = modest_runtime_get_account_mgr (); */
+/* 	info->retrieve_type = modest_account_mgr_get_retrieve_type (mgr, account_name); */
 
-	/* Get per-account message amount retrieval limit */
-	info->retrieve_limit = modest_account_mgr_get_retrieve_limit (mgr, account_name);
-	if (info->retrieve_limit == 0)
-		info->retrieve_limit = G_MAXINT;
+/* 	/\* Get per-account message amount retrieval limit *\/ */
+/* 	info->retrieve_limit = modest_account_mgr_get_retrieve_limit (mgr, account_name); */
+/* 	if (info->retrieve_limit == 0) */
+/* 		info->retrieve_limit = G_MAXINT; */
 		
-	/* printf ("DEBUG: %s: info->retrieve_limit = %d\n", __FUNCTION__, info->retrieve_limit); */
+/* 	/\* printf ("DEBUG: %s: info->retrieve_limit = %d\n", __FUNCTION__, info->retrieve_limit); *\/ */
 
-	/* Set account busy */
-	modest_account_mgr_set_account_busy(mgr, account_name, TRUE);
+/* 	/\* Set account busy *\/ */
+/* 	modest_account_mgr_set_account_busy(mgr, account_name, TRUE); */
 	
-	modest_mail_operation_notify_start (self);
-	thread = g_thread_create (update_account_thread, info, FALSE, NULL);
+/* 	modest_mail_operation_notify_start (self); */
+/* 	thread = g_thread_create (update_account_thread, info, FALSE, NULL); */
 
-	return TRUE;
+/* 	return TRUE; */
 
- error:
-	if (store_account)
-		g_object_unref (store_account);
-	if (transport_account)
-		g_object_unref (transport_account);
-	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-	if (callback) {
-		callback (self, NULL, user_data);
-	}
-	modest_mail_operation_notify_end (self);
-	return FALSE;
-}
+/*  error: */
+/* 	if (store_account) */
+/* 		g_object_unref (store_account); */
+/* 	if (transport_account) */
+/* 		g_object_unref (transport_account); */
+/* 	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED; */
+/* 	if (callback) { */
+/* 		callback (self, NULL, user_data); */
+/* 	} */
+/* 	modest_mail_operation_notify_end (self); */
+/* 	return FALSE; */
+/* } */
 
 /* ******************************************************************* */
 /* ************************** STORE  ACTIONS ************************* */
@@ -2160,7 +2355,6 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	folder = tny_header_get_folder (header);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 	priv->total = 1;
 	priv->done = 0;
 
@@ -2328,8 +2522,9 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	}
 
 	if (size_ok) {
-		modest_mail_operation_notify_start (self);
+		const gint msg_list_size = compute_message_list_size (header_list);
 
+		modest_mail_operation_notify_start (self);
 		iter = tny_list_create_iterator (header_list);
 		while (!tny_iterator_is_done (iter)) { 
 			GetMsgInfo *msg_info = NULL;
@@ -2345,7 +2540,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 			msg_info->destroy_notify = notify;
 			msg_info->last_total_bytes = 0;
 			msg_info->sum_total_bytes = 0;
-			msg_info->total_bytes = compute_message_list_size (header_list);
+			msg_info->total_bytes = msg_list_size;
 			
 			/* The callback will call it per each header */
 			tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, msg_info);
@@ -2675,6 +2870,21 @@ compute_message_list_size (TnyList *headers)
 
 	return size;
 }
+
+static guint
+compute_message_array_size (GPtrArray *headers)
+{
+	guint size = 0;
+	gint i;
+
+	for (i = 0; i < headers->len; i++) {
+		TnyHeader *header = TNY_HEADER (g_ptr_array_index (headers, i));
+		size += tny_header_get_message_size (header);
+	}
+
+	return size;
+}
+
 
 void
 modest_mail_operation_xfer_msgs (ModestMailOperation *self,

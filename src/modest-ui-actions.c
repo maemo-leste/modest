@@ -1704,7 +1704,8 @@ do_send_receive_performer (gboolean canceled,
 
 	/* Send & receive. */
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, info->account_name, new_messages_arrived, info->win);
+	modest_mail_operation_update_account (mail_op, info->account_name, (info->win) ? FALSE : TRUE,
+					      new_messages_arrived, info->win);
 	g_object_unref (G_OBJECT (mail_op));
 	
  clean:
