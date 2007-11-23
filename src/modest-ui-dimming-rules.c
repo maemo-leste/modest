@@ -840,6 +840,13 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, "");
 		}
+		if (!dimmed) {
+			if (!modest_msg_view_window_is_search_result (MODEST_MSG_VIEW_WINDOW(win))) {
+				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
+			}
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
 	}
 
 	return dimmed;
