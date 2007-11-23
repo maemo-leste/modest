@@ -664,7 +664,7 @@ static void
 send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
 			    guint nth, guint total, gpointer userdata)
 {
-	SendMsgInfo *info = (SendMsgInfo *) info;
+	SendMsgInfo *info = (SendMsgInfo *) userdata;
 
 	if (msg == info->msg) {
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
@@ -678,7 +678,7 @@ static void
 send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
 				  GError *error, gpointer userdata)
 {
-	SendMsgInfo *info = (SendMsgInfo *) info;
+	SendMsgInfo *info = (SendMsgInfo *) userdata;
 
 	if (msg == info->msg) {
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
