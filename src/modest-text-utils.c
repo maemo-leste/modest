@@ -278,7 +278,7 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 gchar*
 modest_text_utils_remove_address (const gchar *address_list, const gchar *address)
 {
-	gchar *dup, *token, *ptr, *result;
+	gchar *dup, *token, *ptr = NULL, *result;
 	GString *filtered_emails;
 	gchar *email_address;
 

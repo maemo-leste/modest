@@ -1620,27 +1620,34 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 
 	wp_text_buffer_freeze (WP_TEXT_BUFFER (priv->text_buffer));
 	if (buffer_format->cs.bold) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BOLD, (gpointer) (buffer_format->bold&0x1));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BOLD,
+					      GINT_TO_POINTER (buffer_format->bold&0x1));
 	}
 	if (buffer_format->cs.italic) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_ITALIC, (gpointer) (buffer_format->italic&0x1));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_ITALIC,
+					      GINT_TO_POINTER (buffer_format->italic&0x1));
 	}
 	if (buffer_format->cs.color) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) (&(buffer_format->color)));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR,
+					      GINT_TO_POINTER (&(buffer_format->color)));
 	}
 	if (buffer_format->cs.font_size) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE, (gpointer) (buffer_format->font_size));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE,
+					      GINT_TO_POINTER (buffer_format->font_size));
 	}
 	if (buffer_format->cs.justification) {
 		switch (buffer_format->justification) {
 		case GTK_JUSTIFY_LEFT:
-			wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_LEFT, (gpointer) TRUE);
+			wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_LEFT,
+						      GINT_TO_POINTER(TRUE));
 			break;
 		case GTK_JUSTIFY_CENTER:
-			wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_CENTER, (gpointer) TRUE);
+			wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_CENTER,
+						      GINT_TO_POINTER(TRUE));
 			break;
 		case GTK_JUSTIFY_RIGHT:
-			wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_RIGHT, (gpointer) TRUE);
+			wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_RIGHT,
+						      GINT_TO_POINTER(TRUE));
 			break;
 		default:
 			break;
@@ -1648,14 +1655,16 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 			
 	}
 	if (buffer_format->cs.font) {
-		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, (gpointer) (buffer_format->font));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT,
+					      GINT_TO_POINTER (buffer_format->font));
 	}
 	wp_text_buffer_thaw (WP_TEXT_BUFFER (priv->text_buffer));
 	if (buffer_format->cs.bullet) {
-	  wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET, (gpointer) ((buffer_format->bullet)?1:0));
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_BULLET,
+					      GINT_TO_POINTER ((buffer_format->bullet)?1:0));
 	}
 /* 	wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), buffer_format); */
-
+	
 	g_free (current_format);
 
 }
@@ -2180,7 +2189,7 @@ modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 /* 		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &format); */
 
 		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE,
-						   (gpointer) wp_get_font_size_index (new_size_index, 12)))
+						   GINT_TO_POINTER (wp_get_font_size_index (new_size_index, 12))))
 			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
@@ -2211,7 +2220,7 @@ modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
 		new_font_index = wp_get_font_index (gtk_label_get_text (GTK_LABEL (label)), DEFAULT_FONT);
 
 		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, 
-						   (gpointer) new_font_index))
+						   GINT_TO_POINTER(new_font_index)))
 			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));

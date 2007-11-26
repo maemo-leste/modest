@@ -141,7 +141,7 @@ button_release_event (GtkWidget *widget,
 			index = gtk_text_iter_get_offset (&iter);
 			
 			if (!gtk_text_iter_is_end (&iter)) {
-				int selection_start, selection_end;
+				guint selection_start, selection_end;
 				gboolean selected = FALSE;
 				GtkTextIter start_iter, end_iter;
 				GtkTextBuffer *buffer;
