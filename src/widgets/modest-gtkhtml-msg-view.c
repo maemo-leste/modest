@@ -1421,6 +1421,12 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 
+	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+	html_vadj->upper = 0;
+	html_vadj->page_size = 0;
+	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+
 	if (msg != priv->msg) {
 		if (priv->msg)
 			g_object_unref (G_OBJECT(priv->msg));
@@ -1473,8 +1479,6 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 		priv->hadj->value = 0.0;
 	if (priv->vadj != NULL)
 		priv->vadj->value = 0.0;
-
-	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
 
 	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
 
