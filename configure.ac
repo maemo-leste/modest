@@ -96,7 +96,7 @@ dnl     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo 
 else
     have_easysetup=true
     have_dbusapi=true
-    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso conic libtinymail-maemo-1.0 libebook-1.2 microb-engine-nss)
+    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso dbus-1 libtinymail-maemo-1.0 libebook-1.2 )
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
     AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
 fi		    
@@ -143,6 +143,20 @@ else
 fi
 fi
 
+
+
+#
+# check for libconic; this is a trick to check whether we run
+# on a 'real' maemo platform, or on, say, ubuntu embedded
+# this determines whether we build with the non-hildon GTK+
+#
+if test "x$with_platform" == "xmaemo"; then  
+PKG_CHECK_MODULES(MODEST_LIBCONIC,conic,have_libconic=true,have_libconic=false)
+if test "x$have_libconic" == "xtrue"; then
+   AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_GTK,1,["Whether modest is being built with Hildon/Gtk"])
+   AC_DEFINE_UNQUOTED(MODEST_HAVE_CONIC,1,["Whether modest has conic available"])
+fi
+fi
 
 #
 # check hildon-help (only for maemo)

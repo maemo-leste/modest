@@ -154,8 +154,10 @@ modest_connection_specific_smtp_window_class_init (ModestConnectionSpecificSmtpW
 /* #define DEBUG_WITHOUT_LIBCONIC 1 */
 
 void
-modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self, ModestAccountMgr *account_manager)
+modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self,
+							      ModestAccountMgr *account_manager)
 {
+#ifdef MODEST_HAVE_CONIC
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	priv->account_manager = account_manager;
@@ -215,6 +217,7 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 	#endif
 		
 	update_model_server_names (self);
+#endif /*MODEST_HAVE_CONIC */
 }
  	
 static void

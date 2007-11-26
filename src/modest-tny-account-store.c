@@ -1371,7 +1371,7 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 	g_return_val_if_fail (self, NULL);
 	
 	
-#ifdef MODEST_PLATFORM_MAEMO
+#ifdef MODEST_HAVE_CONIC
 	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
 	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);	
 	const gchar* iap_id = tny_maemo_conic_device_get_current_iap_id (maemo_device);
@@ -1417,7 +1417,7 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 	return account;
 #else
 	return NULL; /* TODO: Implement this for GNOME, instead of just Maemo? */
-#endif /* MODEST_PLATFORM_MAEMO */
+#endif /* MODEST_HAVE_CONIC */
 }
 
 								 

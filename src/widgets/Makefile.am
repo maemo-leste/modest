@@ -1,11 +1,12 @@
 #
 # Makefile.am
-# Time-stamp: <2007-06-23 15:40:04 (djcb)>
+# Time-stamp: <2007-11-24 13:34:06 (djcb)>
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
 	$(MODEST_HILDON_WIDGETS_CFLAGS) \
+	$(MODEST_HILDON_HELP_CFLAGS)    \
 	$(MODEST_MOZEMBED_CFLAGS) \
 	-I ${top_srcdir}/src/$(MODEST_PLATFORM) \
 	-I ${top_srcdir}/src \
