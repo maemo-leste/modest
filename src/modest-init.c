@@ -551,31 +551,28 @@ init_debug_logging (void)
 static void
 init_i18n (void)
 {
-	const gchar* gettext_package;
-
 #ifdef MODEST_PLATFORM_MAEMO
-	/* little trick make en_GB the fallback language, instead
-	 * of the logical IDs
-	 * we need the ugly ifdefs, because modest_platform_init is
-	 * too late.
-	 */
-	const gchar *lang = getenv ("LANG");
-	if (!lang) 
+       /* little trick make en_GB the fallback language, instead
+        * of the logical IDs
+        * we need the ugly ifdefs, because modest_platform_init is
+        * too late.
+        */
+	const gchar *lc_messages = getenv ("LC_MESSAGES");
+
+	if (!lc_messages) {
 		setenv ("LANGUAGE", "en_GB", 1);
-	else {
-		gchar *language = g_strdup_printf ("%s:en_GB", lang);
-		setenv ("LANGUAGE", language, 1);
-		g_free (language);
+		setenv ("LC_MESSAGES", "en_GB", 1);
+	} else {
+		gchar *language = g_strdup_printf ("%s:en_GB", lc_messages);
+               setenv ("LANGUAGE", language, 1);
+               g_free (language);
 	}
 	/* end of little trick */
 #endif /*MODEST_PLATFORM_MAEMO */
-	
-	gettext_package = GETTEXT_PACKAGE;
 
-	bind_textdomain_codeset (gettext_package, "UTF-8");
-	textdomain (gettext_package);
-
-	setlocale (LC_ALL, "");
+	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+	textdomain (GETTEXT_PACKAGE);
 }
 
 
