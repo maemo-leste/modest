@@ -2690,6 +2690,59 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	modest_platform_information_banner (GTK_WIDGET (window), NULL, message);
 }
 
+typedef struct {
+	TnyFolderStore *folder;
+	gchar *new_name;
+} RenameFolderInfo;
+
+static void
+on_rename_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window, 
+		TnyAccount *account, gpointer user_data)
+{
+	ModestMailOperation *mail_op = NULL;
+	GtkTreeSelection *sel = NULL;
+	GtkWidget *folder_view = NULL;
+	RenameFolderInfo *data = (RenameFolderInfo*)user_data;
+
+	if (MODEST_IS_MAIN_WINDOW(parent_window)) {
+
+		folder_view = modest_main_window_get_child_widget (
+				MODEST_MAIN_WINDOW (parent_window),
+				MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+
+		mail_op = 
+			modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
+					modest_ui_actions_rename_folder_error_handler,
+					parent_window, NULL);
+
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+				mail_op);
+
+		/* Clear the headers view */
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		gtk_tree_selection_unselect_all (sel);
+
+		/* Select *after* the changes */
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
+				TNY_FOLDER(data->folder), TRUE);
+
+		/* Actually rename the folder */
+		modest_mail_operation_rename_folder (mail_op,
+				TNY_FOLDER (data->folder),
+				(const gchar *) (data->new_name));
+		
+		/* TODO folder view filter refilter */
+		/* 
+		GtkTreeModel *tree_model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view));
+		if (GTK_IS_TREE_MODEL_FILTER (tree_model))
+			gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (tree_model)); */
+	}
+
+	g_object_unref (mail_op);
+	g_free (data->new_name);
+	g_free (data);
+}
+
 void 
 modest_ui_actions_on_rename_folder (GtkAction *action,
 				     ModestMainWindow *main_window)
@@ -2721,7 +2774,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		gint response;
 		const gchar *current_name;
 		TnyFolderStore *parent;
-                gboolean do_rename = TRUE;
+		gboolean do_rename = TRUE;
 
 		current_name = tny_folder_get_name (TNY_FOLDER (folder));
 		parent = tny_folder_get_folder_store (TNY_FOLDER (folder));
@@ -2730,42 +2783,14 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 								     &folder_name);
 		g_object_unref (parent);
 
-                if (response != GTK_RESPONSE_ACCEPT || strlen (folder_name) == 0) {
-                        do_rename = FALSE;
-                } else if (modest_tny_folder_store_is_remote(folder) &&
-                           !tny_device_is_online (modest_runtime_get_device())) {
-                        TnyAccount *account = tny_folder_get_account(TNY_FOLDER(folder));
-                        do_rename = modest_platform_connect_and_wait(GTK_WINDOW(main_window), account);
-                        g_object_unref(account);
-                }
-
-		if (do_rename) {
-			ModestMailOperation *mail_op;
-			GtkTreeSelection *sel = NULL;
-
-			mail_op = 
-				modest_mail_operation_new_with_error_handling (G_OBJECT(main_window),
-									       modest_ui_actions_rename_folder_error_handler,
-									       main_window, NULL);
-
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-							 mail_op);
-
-			/* Clear the headers view */
-			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
-			gtk_tree_selection_unselect_all (sel);
-
-			/* Select *after* the changes */
-			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
-							  TNY_FOLDER(folder), TRUE);
-
-			/* Actually rename the folder */
-			modest_mail_operation_rename_folder (mail_op,
-							     TNY_FOLDER (folder),
-							     (const gchar *) folder_name);
-
-			g_object_unref (mail_op);
-			g_free (folder_name);
+		if (response != GTK_RESPONSE_ACCEPT || strlen (folder_name) == 0) {
+			do_rename = FALSE;
+		} else {
+			RenameFolderInfo *rename_folder_data = g_new0 (RenameFolderInfo, 1);
+			rename_folder_data->folder = folder;
+			rename_folder_data->new_name = folder_name;
+			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(main_window), 
+					folder, on_rename_folder_cb, rename_folder_data);
 		}
 	}
 	g_object_unref (folder);

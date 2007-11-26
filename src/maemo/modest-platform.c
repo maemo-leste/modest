@@ -1957,14 +1957,34 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  	
  	return;
 }
- 
-void 
-modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window, 
-							TnyAccount *account,
-							ModestConnectedPerformer callback, 
-							gpointer user_data)
+
+void
+modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
+							    TnyFolderStore *folder_store, 
+							    ModestConnectedPerformer callback, 
+							    gpointer user_data)
 {
- 	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
+	TnyAccount *account = NULL;
+	
+	if (!folder_store) {
+ 		/* We promise to instantly perform the callback, so ... */
+ 		if (callback) {
+ 			callback (FALSE, NULL, parent_window, NULL, user_data);
+ 		}
+ 		return; 
+ 		
+ 		/* Original comment: Maybe it is something local. */
+ 		/* PVH's comment: maybe we should KNOW this in stead of assuming? */
+ 		
+ 	} else if (TNY_IS_FOLDER (folder_store)) {
+ 		/* Get the folder's parent account: */
+ 		account = tny_folder_get_account(TNY_FOLDER (folder_store));
+ 	} else if (TNY_IS_ACCOUNT (folder_store)) {
+ 		/* Use the folder store as an account: */
+ 		account = TNY_ACCOUNT (folder_store);
+ 	}
+ 
+	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
  		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
  		    !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
  			
@@ -1982,40 +2002,6 @@ modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window
  	}
  
  	modest_platform_connect_and_perform (parent_window, account, callback, user_data);
- 
- 	return;
-}
- 
-void
-modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_window, 
-							    TnyFolderStore *folder_store, 
-							    ModestConnectedPerformer callback, 
-							    gpointer user_data)
-{
- 	if (!folder_store) {
- 
- 		/* We promise to instantly perform the callback, so ... */
- 		if (callback) {
- 			callback (FALSE, NULL, parent_window, NULL, user_data);
- 		}
- 		return; 
- 		
- 		/* Original comment: Maybe it is something local. */
- 		/* PVH's comment: maybe we should KNOW this in stead of assuming? */
- 		
- 	}
- 	
- 	if (TNY_IS_FOLDER (folder_store)) {
- 		/* Get the folder's parent account: */
- 		TnyAccount *account = tny_folder_get_account(TNY_FOLDER (folder_store));
- 		if (account != NULL) {
- 			modest_platform_connect_and_perform_if_network_account (NULL, account, callback, user_data);
- 			g_object_unref (account);
- 		}
- 	} else if (TNY_IS_ACCOUNT (folder_store)) {
- 		/* Use the folder store as an account: */
- 		modest_platform_connect_and_perform_if_network_account (NULL, TNY_ACCOUNT (folder_store), callback, user_data);
- 	}
  
  	return;
 }

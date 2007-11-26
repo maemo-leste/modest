@@ -404,23 +404,7 @@ void modest_platform_connect_and_perform (GtkWindow *parent_window,
 					  gpointer user_data);
  		
 /*
- * modest_platform_connect_and_perform_if_network_account:
- * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
- * @account: The account that might need a connection in subsequent operations.
- * @callback: will be called when finished, can be NULL
- * @user_data: user data for @callback
- * 
- * Like modest_platform_connect_and_perform(), but only attempts to make a connection if the 
- * @account uses the network. For instance, this just returns for local maildir accounts. It
- * will in that case instantly perform the @callback.
- */
-void modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window, 
-							     TnyAccount *account,
-							     ModestConnectedPerformer callback, 
-							     gpointer user_data);
- 
-/*
- * modest_platform_connect_and_perform_if_network_folderstore:
+ * modest_platform_connect_if_remote_and_perform:
  * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
  * @folder_store: The folder store (folder or account) that might need a connection in subsequent operations.
  * @callback: will be called when finished, can be NULL
@@ -428,9 +412,9 @@ void modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_w
  * 
  * Like modest_platform_connect_and_perform(), but only attempts to make a connection if the 
  * folder store uses the network. For instance, this just returns for local maildir folders. It
- * will in that case instantly perform the @callback
+ * will in that case synchronously and instantly perform the @callback
  */
-void modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_window, 
+void modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
 								 TnyFolderStore *folder_store,
 								 ModestConnectedPerformer callback, 
 								 gpointer user_data);

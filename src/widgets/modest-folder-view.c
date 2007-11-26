@@ -2148,7 +2148,7 @@ drag_and_drop_from_folder_view_dst_folder_performer (gboolean canceled,
 	}
 
 	/* Connect to source folder and perform the copy/move */
-	modest_platform_connect_and_perform_if_network_folderstore (NULL, 
+	modest_platform_connect_if_remote_and_perform (NULL, 
 								    info->src_folder,
 								    drag_and_drop_from_folder_view_src_folder_performer,
 								    info);
@@ -2232,7 +2232,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	info->helper = helper;
 
 	/* Connect to the destination folder and perform the copy/move */
-	modest_platform_connect_and_perform_if_network_folderstore (GTK_WINDOW (win), 
+	modest_platform_connect_if_remote_and_perform (GTK_WINDOW (win), 
 								    dest_folder,
 								    drag_and_drop_from_folder_view_dst_folder_performer,
 								    info);
@@ -2828,6 +2828,9 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *pat
 		modest_folder_view_disable_next_folder_selection (self);
 /* 		g_object_unref (priv->folder_to_select); */
 /* 		priv->folder_to_select = NULL; */
+		
+		/* Refilter the model */
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (tree_model));
 	}
 }
 
@@ -2862,7 +2865,6 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
 	if (after_change) {
-
 		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 		gtk_tree_selection_unselect_all (sel);
 
