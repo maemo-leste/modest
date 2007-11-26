@@ -1863,12 +1863,48 @@ void
 modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 {
 	/* Check if accounts exist */
-	gboolean accounts_exist = 
+	gboolean accounts_exist;
+
+	accounts_exist =
 		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 	
 	/* If not, allow the user to create an account before trying to send/receive. */
 	if (!accounts_exist)
 		modest_ui_actions_on_accounts (NULL, win);
+	
+	/* Refresh the current folder. The if is always TRUE it's just an extra check */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *header_view, *folder_view;
+		TnyFolderStore *folder_store;
+
+		folder_view = 
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win), 
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		if (!folder_view)
+			return;
+		
+		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+	
+		/* No need to refresh the INBOX the send_receive will do it for us */
+		if (folder_store && TNY_IS_FOLDER (folder_store) && 
+		    tny_folder_get_folder_type (TNY_FOLDER (folder_store)) != TNY_FOLDER_TYPE_INBOX) {
+			header_view = 
+				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+                
+			/* We do not need to set the contents style
+			   because it hasn't changed. We also do not
+			   need to save the widget status. Just force
+                           a refresh */
+			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
+						       TNY_FOLDER (folder_store),
+						       folder_refreshed_cb,
+						       MODEST_MAIN_WINDOW (win));
+		}
+	
+		if (folder_store)
+			g_object_unref (folder_store);
+	}	
 	
 	/* Refresh the active account */
 	modest_ui_actions_do_send_receive (NULL, win);
