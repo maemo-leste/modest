@@ -551,7 +551,6 @@ init_debug_logging (void)
 static void
 init_i18n (void)
 {
-#ifdef MODEST_PLATFORM_MAEMO
        /* little trick make en_GB the fallback language, instead
         * of the logical IDs
         * we need the ugly ifdefs, because modest_platform_init is
@@ -568,7 +567,6 @@ init_i18n (void)
                g_free (language);
 	}
 	/* end of little trick */
-#endif /*MODEST_PLATFORM_MAEMO */
 
 	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
