@@ -155,6 +155,11 @@ PKG_CHECK_MODULES(MODEST_LIBCONIC,conic,have_libconic=true,have_libconic=false)
 if test "x$have_libconic" == "xtrue"; then
    AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_GTK,1,["Whether modest is being built with Hildon/Gtk"])
    AC_DEFINE_UNQUOTED(MODEST_HAVE_CONIC,1,["Whether modest has conic available"])
+   AC_SUBST(MODEST_LIBCONIC_CLAGS)
+   AC_SUBST(MODEST_LIBCONIC_LIBS)
+else
+# if we define this, tinymail will not try to #include conic headers
+   CFLAGS="$CFLAGS -DLIBTINYMAIL_MAEMO_WITHOUT_CONIC"
 fi
 fi
 
@@ -427,11 +432,12 @@ echo "Platform         : $with_platform"
 echo "Prefix           : ${prefix}"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
-echo "Gettext Packages : $GETTEXT_PACKAGE"
+echo "Gettext Package  : $GETTEXT_PACKAGE"
 echo "Editor lib       : $wpeditor"
-echo "Addressbook      : $addressbook"
+echo "Addressbook      : $have_abook"
 echo "Help lib         : $helplib"
-echo "Alarm            : $libalarm"
+echo "libconic support : $have_libconic"
+echo "Alarm            : $have_libalarm"
 echo "Hildon-Notify    : $have_hildon_notify"    
 echo "LibOGS support   : $have_ogs_support"
 echo "MozEmbed support : $use_mozembed"

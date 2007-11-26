@@ -31,6 +31,10 @@
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
+#ifdef MODEST_HAVE_CONIC
+#include <coniciap.h>
+#endif /*MODEST_HAVE_CONIC*/
+
 #include <modest-hildon-includes.h>
 #include <modest-maemo-utils.h>
 
@@ -49,7 +53,6 @@
 #include "widgets/modest-ui-constants.h"
 #include <tny-account-store.h>
 #include <tny-maemo-conic-device.h>
-
 
 
 #define MSG_SIZE_MAX_VAL 5000
