@@ -112,7 +112,6 @@ typedef struct {
 	GtkWidget *button_outgoing_smtp_servers;
 	
 	GtkWidget *page_complete_customsetup;
-	GtkWidget *button_edit;
 	
 	GtkWidget *specific_window;
 	

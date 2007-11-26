@@ -761,8 +761,7 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The incoming server widgets: */
-	if (!self->combo_incoming_servertype)
-		self->combo_incoming_servertype = GTK_WIDGET (easysetup_servertype_combo_box_new ());
+	self->combo_incoming_servertype = GTK_WIDGET (easysetup_servertype_combo_box_new ());
 	easysetup_servertype_combo_box_set_active_servertype (
 		EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype), MODEST_PROTOCOL_STORE_POP);
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
@@ -771,19 +770,12 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
-	if(!self->entry_incomingserver)
-	{
-		self->entry_incomingserver = gtk_entry_new ();
-		g_signal_connect(G_OBJECT(self->entry_incomingserver), "changed",
-										 G_CALLBACK(on_easysetup_changed), self);
-	}
+	self->entry_incomingserver = gtk_entry_new ();
+	g_signal_connect(G_OBJECT(self->entry_incomingserver), "changed", G_CALLBACK(on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
 	set_default_custom_servernames (self);
 
-	if (self->caption_incoming)
-		gtk_widget_destroy (self->caption_incoming);
-	   
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
@@ -804,8 +796,7 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	                  G_CALLBACK (on_entry_incoming_servername_changed), self);
 
 	/* The secure connection widgets: */	
-	if (!self->combo_incoming_security)
-		self->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+	self->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	update_incoming_server_security_choices (self);
 	modest_serversecurity_combo_box_set_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), MODEST_PROTOCOL_CONNECTION_NORMAL);
@@ -817,12 +808,9 @@ static GtkWidget* create_page_custom_incoming (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
-	if(!self->checkbox_incoming_auth)
-	{
-		self->checkbox_incoming_auth = gtk_check_button_new ();
-		g_signal_connect (G_OBJECT (self->checkbox_incoming_auth), "toggled",
+	self->checkbox_incoming_auth = gtk_check_button_new ();
+	g_signal_connect (G_OBJECT (self->checkbox_incoming_auth), "toggled",
 	                  G_CALLBACK (on_easysetup_changed), self);
-	}
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 				      self->checkbox_incoming_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	
@@ -902,12 +890,9 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The outgoing server widgets: */
-	if (!self->entry_outgoingserver)
-	{
-		self->entry_outgoingserver = gtk_entry_new ();
-		g_signal_connect (G_OBJECT (self->entry_outgoingserver), "changed",
-	                  G_CALLBACK (on_easysetup_changed), self);
-	}
+	self->entry_outgoingserver = gtk_entry_new ();
+	g_signal_connect (G_OBJECT (self->entry_outgoingserver), "changed",
+                  G_CALLBACK (on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
@@ -918,12 +903,9 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	set_default_custom_servernames (self);
 	
 	/* The secure connection widgets: */	
-	if (!self->combo_outgoing_security)
-	{
-		self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
-		g_signal_connect (G_OBJECT (self->combo_outgoing_security), "changed",
+	self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+	g_signal_connect (G_OBJECT (self->combo_outgoing_security), "changed",
 	                  G_CALLBACK (on_easysetup_changed), self);
-	}
 	modest_serversecurity_combo_box_fill (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
 	modest_serversecurity_combo_box_set_active_serversecurity (
@@ -935,12 +917,9 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	gtk_widget_show (caption);
 	
 	/* The secure authentication widgets: */
-	if (!self->combo_outgoing_auth)
-	{
-		self->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
-				g_signal_connect (G_OBJECT (self->combo_outgoing_auth), "changed",
+	self->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
+			g_signal_connect (G_OBJECT (self->combo_outgoing_auth), "changed",
 	                  G_CALLBACK (on_easysetup_changed), self);
-	}
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
 				      self->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->combo_outgoing_auth);
@@ -952,14 +931,12 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	gtk_widget_show (separator);
 	
 	/* connection-specific checkbox: */
-	if (!self->checkbox_outgoing_smtp_specific) {
-		self->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
-		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific), 
-					      FALSE);
-		g_signal_connect (G_OBJECT (self->checkbox_outgoing_smtp_specific), "toggled",
-	                  G_CALLBACK (on_easysetup_changed), self);
+	self->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific), 
+				      FALSE);
+	g_signal_connect (G_OBJECT (self->checkbox_outgoing_smtp_specific), "toggled",
+                  G_CALLBACK (on_easysetup_changed), self);
 
-	}
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
 				      self->checkbox_outgoing_smtp_specific, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (self->checkbox_outgoing_smtp_specific);
@@ -967,8 +944,7 @@ static GtkWidget* create_page_custom_outgoing (ModestEasysetupWizardDialog *self
 	gtk_widget_show (caption);
 	
 	/* Connection-specific SMTP-Severs Edit button: */
-	if (!self->button_outgoing_smtp_servers)
-		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
+	self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
 				      self->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
 	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
@@ -1040,6 +1016,7 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
+	GtkWidget *button_edit = gtk_button_new_with_label (_("mcen_bd_edit"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_widget_set_size_request (label, 600, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
@@ -1053,16 +1030,14 @@ static GtkWidget* create_page_complete_custom (ModestEasysetupWizardDialog *self
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
-	if (!self->button_edit)
-		self->button_edit = gtk_button_new_with_label (_("mcen_bd_edit"));
 	GtkWidget *caption = hildon_caption_new (NULL, _("mcen_fi_advanced_settings"), 
-						 self->button_edit, NULL, HILDON_CAPTION_OPTIONAL);
+						 button_edit, NULL, HILDON_CAPTION_OPTIONAL);
 	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
-	gtk_widget_show (self->button_edit);
+	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
-	g_signal_connect (G_OBJECT (self->button_edit), "clicked", 
+	g_signal_connect (G_OBJECT (button_edit), "clicked", 
 			  G_CALLBACK (on_button_edit_advanced_settings), self);
 	
 	gtk_widget_show (GTK_WIDGET (box));
@@ -1391,11 +1366,21 @@ static void create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			if(self->page_custom_incoming) {
 				gtk_widget_destroy (self->page_custom_incoming);
 				self->page_custom_incoming = NULL;
+				self->combo_incoming_servertype = NULL;
+				self->caption_incoming = NULL;
+				self->entry_incomingserver = NULL;
+				self->combo_incoming_security = NULL;
+				self->checkbox_incoming_auth = NULL;
 			}
 			
 			if(self->page_custom_outgoing) {
 				gtk_widget_destroy (self->page_custom_outgoing);
 				self->page_custom_outgoing = NULL;
+				self->entry_outgoingserver = NULL;
+				self->combo_outgoing_security = NULL;
+				self->combo_outgoing_auth = NULL;
+				self->checkbox_outgoing_smtp_specific = NULL;
+				self->button_outgoing_smtp_servers = NULL;
 			}
 			
 			if(self->page_complete_customsetup) {
