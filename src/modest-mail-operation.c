@@ -648,16 +648,14 @@ static void
 common_send_mail_operation_end (TnySendQueue *queue, TnyMsg *msg,
 				SendMsgInfo *info)
 {
-	if (msg == info->msg) {
-		g_signal_handler_disconnect (queue, info->msg_sent_handler);
-		info->msg_sent_handler = 0;
-		g_signal_handler_disconnect (queue, info->error_happened_handler);
-		info->error_happened_handler = 0;
-		g_object_unref (info->msg);
-		modest_mail_operation_notify_end (info->mail_op);
-		g_object_unref (info->mail_op);
-		g_slice_free (SendMsgInfo, info);
-	}
+	g_signal_handler_disconnect (queue, info->msg_sent_handler);
+	g_signal_handler_disconnect (queue, info->error_happened_handler);
+
+	g_object_unref (info->msg);
+	modest_mail_operation_notify_end (info->mail_op);
+	g_object_unref (info->mail_op);
+
+	g_slice_free (SendMsgInfo, info);
 }
 
 static void     
@@ -666,12 +664,13 @@ send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
 {
 	SendMsgInfo *info = (SendMsgInfo *) userdata;
 
-	if (msg == info->msg) {
+	if (!strcmp (tny_msg_get_url_string (msg),
+		     tny_msg_get_url_string (info->msg))) {
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+		common_send_mail_operation_end (queue, msg, info);
 	}
-		
-	common_send_mail_operation_end (queue, msg, info);
 }
 
 static void     
@@ -680,15 +679,16 @@ send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg
 {
 	SendMsgInfo *info = (SendMsgInfo *) userdata;
 
-	if (msg == info->msg) {
+	if (!strcmp (tny_msg_get_url_string (msg),
+		     tny_msg_get_url_string (info->msg))) {
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 			     "modest: send mail failed\n");
+
+		common_send_mail_operation_end (queue, msg, info);
 	}
-		
-	common_send_mail_operation_end (queue, msg, info);
 }
 
 
