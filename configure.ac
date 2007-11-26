@@ -433,7 +433,7 @@ echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
 echo "Gettext Package  : $GETTEXT_PACKAGE"
 
-if test "x$with_platform" == "xgnome"; then
+if test "x$with_platform" == "xmaemo"; then
    echo "Editor lib       : $wpeditor"
    echo "Addressbook      : $have_abook"
    echo "Help lib         : $helplib"
