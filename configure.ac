@@ -32,7 +32,6 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR(src/modest-main.c)
 AM_INIT_AUTOMAKE([dist-bzip2])
 
-
 ALL_LINGUAS="en_GB"
 
 MODEST_LOCALE_DIR='$prefix/${DATADIRNAME}/locale'
@@ -76,8 +75,8 @@ LIBS="$__COPY_LIBS"
 AC_SUBST(HAVE_GTK_HTML_GET_SELECTION_AREA)
 
 dnl dnl now, determine what to build
-AC_MSG_NOTICE([Determining what platform to build])
-PKG_CHECK_MODULES(MODEST_MAEMO_LIBS,libosso,[with_platform=maemo],true)
+dnl AC_MSG_NOTICE([Determining what platform to build])
+dnl PKG_CHECK_MODULES(MODEST_MAEMO_LIBS,libosso,[with_platform=maemo],true)
 
 AC_ARG_WITH(platform,
 [--with-platform=gnome		platform to build for [gnome]],
@@ -433,14 +432,18 @@ echo "Prefix           : ${prefix}"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
 echo "Gettext Package  : $GETTEXT_PACKAGE"
-echo "Editor lib       : $wpeditor"
-echo "Addressbook      : $have_abook"
-echo "Help lib         : $helplib"
-echo "libconic support : $have_libconic"
-echo "Alarm            : $have_libalarm"
-echo "Hildon-Notify    : $have_hildon_notify"    
-echo "LibOGS support   : $have_ogs_support"
-echo "MozEmbed support : $use_mozembed"
+
+if test "x$with_platform" == "xgnome"; then
+   echo "Editor lib       : $wpeditor"
+   echo "Addressbook      : $have_abook"
+   echo "Help lib         : $helplib"
+   echo "libconic support : $have_libconic"
+   echo "Alarm            : $have_libalarm"
+   echo "Hildon-Notify    : $have_hildon_notify"    
+   echo "LibOGS support   : $have_ogs_support"
+   echo "MozEmbed support : $use_mozembed"
+fi 
+
 echo "CFLAGS           : $CFLAGS"
 echo "Debug version    : $with_debug"
 echo ""
