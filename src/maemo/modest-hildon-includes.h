@@ -111,8 +111,6 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #define hildon_mime_get_icon_names           osso_mime_get_icon_names 
 #endif /*MODEST_HAVE_OSSO_MIME*/
 
-
-
 /* helplib to use */
 #ifdef MODEST_HAVE_OSSO_HELP
 #define hildon_help_show               ossohelp_show
@@ -123,6 +121,38 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 /* nothing */
 #endif /*MODEST_HAVE_HILDON_HELP*/
 #endif /*MODEST_HAVE_OSSO_HELP*/
+
+/* some extra #defines, so it will compile with the 'normal' gtk */
+#ifndef MODEST_HAVE_HILDON_GTK
+#define hildon_gtk_entry_set_input_mode(a,b) \
+	g_warning ("%s: hildon_gtk_entry_set_input_mode requires gtk-hildon", __FUNCTION__)
+#define hildon_gtk_text_view_set_input_mode(a,b) \
+	g_warning ("%s: hildon_gtk_text_view_set_input_mode requires gtk-hildon", __FUNCTION__)
+#define gtk_widget_tap_and_hold_setup(a,b,c,d)				\
+	g_warning ("%s: gtk_widget_tap_and_hold_setup requires gtk-hildon", __FUNCTION__)
+
+typedef enum
+{
+  GTK_INVALID_INPUT_MAX_CHARS_REACHED,
+  GTK_INVALID_INPUT_MODE_RESTRICTION
+} GtkInvalidInputType;
+
+typedef enum
+{
+  HILDON_GTK_INPUT_MODE_ALPHA        = 1 << 0,
+  HILDON_GTK_INPUT_MODE_NUMERIC      = 1 << 1,
+  HILDON_GTK_INPUT_MODE_SPECIAL      = 1 << 2,
+  HILDON_GTK_INPUT_MODE_HEXA         = 1 << 3,
+  HILDON_GTK_INPUT_MODE_TELE         = 1 << 4,
+  HILDON_GTK_INPUT_MODE_FULL         = (HILDON_GTK_INPUT_MODE_ALPHA | HILDON_GTK_INPUT_MODE_NUMERIC | HILDON_GTK_INPUT_MODE_SPECIAL),
+  HILDON_GTK_INPUT_MODE_MULTILINE    = 1 << 28,
+  HILDON_GTK_INPUT_MODE_INVISIBLE    = 1 << 29,
+  HILDON_GTK_INPUT_MODE_AUTOCAP      = 1 << 30,
+  HILDON_GTK_INPUT_MODE_DICTIONARY   = 1 << 31
+} HildonGtkInputMode;
+#endif /* !MODEST_HAVE_HILDON_GTK */
+
+
 
 
 #endif /*__MODEST_HILDON_INCLUDES__*/

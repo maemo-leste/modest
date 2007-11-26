@@ -44,6 +44,12 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
+/* FIXNE: we should have no maemo-deps in widgets/ */
+#ifdef MODEST_PLATFORM_MAEMO
+#include "maemo/modest-hildon-includes.h"
+#endif /*MODEST_PLATFORM_MAEMO*/
+
+
 static GObjectClass *parent_class = NULL;
 
 #define RECIPIENT_TAG_ID "recpt-id"

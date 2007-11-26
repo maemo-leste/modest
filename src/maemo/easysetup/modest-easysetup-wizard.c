@@ -1,3 +1,4 @@
+
 /* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
@@ -55,6 +56,7 @@
 #include "maemo/modest-maemo-utils.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
+#include "maemo/modest-hildon-includes.h"
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -498,7 +500,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	g_signal_connect(G_OBJECT(self->entry_account_title), "changed",
-									 G_CALLBACK(on_easysetup_changed), self);
+			 G_CALLBACK(on_easysetup_changed), self);
 	/* Do use auto-capitalization: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (self->entry_account_title), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);

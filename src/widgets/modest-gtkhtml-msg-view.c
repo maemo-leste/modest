@@ -47,6 +47,11 @@
 #include <widgets/modest-gtkhtml-msg-view.h>
 #include <widgets/modest-isearch-view.h>
 
+/* FIXNE: we should have no maemo-deps in widgets/ */
+#ifdef MODEST_PLATFORM_MAEMO
+#include "maemo/modest-hildon-includes.h"
+#endif /*MODEST_PLATFORM_MAEMO*/
+
 
 /* 'private'/'protected' functions */
 static void     modest_gtkhtml_msg_view_class_init   (ModestGtkhtmlMsgViewClass *klass);
