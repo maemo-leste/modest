@@ -53,6 +53,7 @@
 #include "maemo/modest-osso-state-saving.h"
 #include "maemo/modest-maemo-utils.h"
 #include "maemo/modest-hildon-includes.h"
+#include "maemo/modest-connection-specific-smtp-window.h"
 #endif /* MODEST_PLATFORM_MAEMO */
 
 #include "widgets/modest-ui-constants.h"
@@ -63,7 +64,6 @@
 #include <widgets/modest-attachments-view.h>
 #include "widgets/modest-folder-view.h"
 #include "widgets/modest-global-settings-dialog.h"
-#include "modest-connection-specific-smtp-window.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
 #include "modest-text-utils.h"
@@ -215,6 +215,7 @@ gboolean
 modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 {
 	gboolean result = FALSE;	
+#ifdef MODEST_PLATFORM_MAEMO
 	GtkWindow *dialog, *wizard;
 	gint dialog_response;
 
@@ -255,7 +256,7 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 		/* Check whether an account was created: */
 		result = modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 	}
-	
+#endif	
 	return result;
 }
 
@@ -709,6 +710,7 @@ modest_ui_actions_on_accounts (GtkAction *action,
 #endif /* MODEST_PLATFORM_MAEMO */
 }
 
+#ifdef MODEST_PLATFORM_MAEMO
 static void
 on_smtp_servers_window_hide (GtkWindow* window, gpointer user_data)
 {
@@ -717,7 +719,7 @@ on_smtp_servers_window_hide (GtkWindow* window, gpointer user_data)
 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (window));
 	gtk_widget_destroy (GTK_WIDGET (window));
 }
-
+#endif
 
 
 void
@@ -1953,7 +1955,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 		return;
 
 	if (modest_header_view_count_selected_headers (header_view) > 1) {
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_select_one_message"));
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_select_one_message"));
 		return;
 	}
 
@@ -2600,7 +2602,7 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 		if (proto_str && modest_protocol_info_get_transport_store_protocol (proto_str) ==
 		    MODEST_PROTOCOL_STORE_POP) {
 			finished = TRUE;
-			hildon_banner_show_information (NULL, NULL, _("mail_in_ui_folder_create_error"));
+			modest_platform_information_banner (NULL, NULL, _("mail_in_ui_folder_create_error"));
 		}
 		g_object_unref (account);
 
@@ -2730,7 +2732,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 
                 if (response != GTK_RESPONSE_ACCEPT || strlen (folder_name) == 0) {
                         do_rename = FALSE;
-                } else if (modest_platform_is_network_folderstore(folder) &&
+                } else if (modest_tny_folder_store_is_remote(folder) &&
                            !tny_device_is_online (modest_runtime_get_device())) {
                         TnyAccount *account = tny_folder_get_account(TNY_FOLDER(folder));
                         do_rename = modest_platform_connect_and_wait(GTK_WINDOW(main_window), account);
@@ -2815,7 +2817,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 
         if (response != GTK_RESPONSE_OK) {
                 do_delete = FALSE;
-        } else if (modest_platform_is_network_folderstore(folder) &&
+        } else if (modest_tny_folder_store_is_remote(folder) &&
                    !tny_device_is_online (modest_runtime_get_device())) {
                 TnyAccount *account = tny_folder_get_account(TNY_FOLDER(folder));
                 do_delete = modest_platform_connect_and_wait(GTK_WINDOW(main_window), account);
@@ -2874,7 +2876,7 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainW
 static void
 show_error (GtkWidget *parent_widget, const gchar* text)
 {
-	hildon_banner_show_information(parent_widget, NULL, text);
+	modest_platform_information_banner(parent_widget, NULL, text);
 	
 #if 0
 	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text)); */
@@ -4428,7 +4430,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
                 } else if (!TNY_IS_FOLDER (src_folder)) {
 			g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
                         do_xfer = FALSE;
-                } else if (!online && modest_platform_is_network_folderstore(src_folder)) {
+                } else if (!online && modest_tny_folder_store_is_remote(src_folder)) {
                         guint num_headers = tny_folder_get_all_count(TNY_FOLDER (src_folder));
 			TnyAccount *account = tny_folder_get_account (TNY_FOLDER (src_folder));
                         if (!connect_to_get_msg(MODEST_WINDOW (win), num_headers, account))
@@ -4481,7 +4483,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
                 gboolean do_xfer = TRUE;
                 /* Ask for confirmation if the source folder is remote and we're not connected */
-                if (!online && modest_platform_is_network_folderstore(src_folder)) {
+                if (!online && modest_tny_folder_store_is_remote(src_folder)) {
                         TnyList *headers = modest_header_view_get_selected_headers(header_view);
                         if (!msgs_already_deleted_from_server(headers, src_folder)) {
                                 guint num_headers = tny_list_get_length(headers);
@@ -4521,7 +4523,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	g_object_unref (header);
 
 	account = tny_folder_get_account (src_folder);
-	if (!modest_platform_is_network_folderstore(TNY_FOLDER_STORE(src_folder))) {
+	if (!modest_tny_folder_store_is_remote(TNY_FOLDER_STORE(src_folder))) {
 		/* Transfer if the source folder is local */
 		do_xfer = TRUE;
 	} else if (remote_folder_is_pop(TNY_FOLDER_STORE(src_folder))) {

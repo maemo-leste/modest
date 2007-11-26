@@ -34,6 +34,7 @@
 #include "modest-runtime.h"
 #include "modest-window-mgr.h"
 #include <string.h> /* for strcmp */
+#include <gdk/gdkkeysyms.h>
 
 /* 'private'/'protected' functions */
 static void modest_window_class_init (ModestWindowClass *klass);

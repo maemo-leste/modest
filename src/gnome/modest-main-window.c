@@ -200,7 +200,8 @@ modest_main_window_init (ModestMainWindow *obj)
 							  priv->main_bar);
 
 	/* msg preview */
-	priv->msg_preview = MODEST_MSG_VIEW(modest_msg_view_new (NULL));
+	priv->msg_preview = MODEST_MSG_VIEW(tny_platform_factory_new_msg_view 
+					    (modest_tny_platform_factory_get_instance ()));
 	if (!priv->msg_preview)
 		g_printerr ("modest: cannot instantiate msgpreiew\n");
 
@@ -316,7 +317,6 @@ on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *
 	const gchar *icon_name;
 	ModestMainWindowPrivate *priv;
 	
-	g_return_if_fail (device);
 	g_return_if_fail (self);
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -485,8 +485,10 @@ modest_main_window_new (void)
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
 	
 	parent_priv->ui_manager = gtk_ui_manager_new();
+	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	
 	/* Add common actions */
@@ -729,11 +731,11 @@ get_msg_callback (TnyFolder *folder,
 		  GError **err, 
 		  gpointer user_data)
 {
-	if (!(*err)) {
+	if (!err ||!(*err)) {
 		ModestMsgView *msg_preview;
 
 		msg_preview = MODEST_MSG_VIEW (user_data);
-		modest_msg_view_set_message (msg_preview, msg);
+		tny_msg_view_set_msg (TNY_MSG_VIEW (msg_preview), msg);
 	}
 
 	/* Frees */
@@ -759,7 +761,35 @@ on_header_selected (ModestHeaderView *header_view,
 	   instead in order to get progress info */
 	tny_folder_get_msg_async (folder, 
 				  header, 
-				  get_msg_callback, 
+				  (TnyGetMsgCallback) get_msg_callback, 
 				  NULL, 
 				  priv->msg_preview);
+}
+
+void      
+modest_main_window_notify_send_receive_initied    (ModestMainWindow *self)
+{
+	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+void      
+modest_main_window_notify_send_receive_completed    (ModestMainWindow *self)
+{
+	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+gboolean
+modest_main_window_transfer_mode_enabled (ModestMainWindow *self)
+{
+	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;
+}
+
+gboolean  
+modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_window,
+						   GtkTreeModel *model,
+						   GtkTreeRowReference *row_reference,
+						   ModestMainWindow *self)
+{
+	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;
 }

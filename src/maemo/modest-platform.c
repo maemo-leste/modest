@@ -1181,39 +1181,6 @@ modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_windo
 	return result;
 }
 
-gboolean 
-modest_platform_is_network_folderstore (TnyFolderStore *folder_store)
-{
-        TnyAccount *account = NULL;
-        gboolean result = TRUE;
-
-        g_return_val_if_fail(TNY_IS_FOLDER_STORE(folder_store), FALSE);
-
-        if (TNY_IS_FOLDER (folder_store)) {
-                /* Get the folder's parent account: */
-                account = tny_folder_get_account(TNY_FOLDER(folder_store));
-        } else if (TNY_IS_ACCOUNT (folder_store)) {
-                account = TNY_ACCOUNT(folder_store);
-                g_object_ref(account);
-        }
-
-        if (account != NULL) {
-                if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
-                        if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
-                            !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
-                                /* This must be a maildir account, which does
-                                 * not require a connection: */
-                                result = FALSE;
-                        }
-                }
-                g_object_unref (account);
-        } else {
-                result = FALSE;
-        }
-
-        return result;
-}
-
 void
 modest_platform_run_sort_dialog (GtkWindow *parent_window,
 				 ModestSortDialogType type)

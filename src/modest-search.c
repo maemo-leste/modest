@@ -46,8 +46,6 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 
-#include <libmodest-dbus-client/libmodest-dbus-client.h>
-
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
@@ -72,7 +70,7 @@ g_strdup_or_null (const gchar *str)
 static GList*
 add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 {
-	ModestSearchHit *hit;
+	ModestSearchResultHit *hit;
 	TnyHeaderFlags   flags;
 	char            *furl;
 	char            *msg_url;
@@ -80,7 +78,7 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	const char      *subject;
 	const char      *sender;
 
-	hit = g_slice_new0 (ModestSearchHit);
+	hit = g_slice_new0 (ModestSearchResultHit);
 
 	furl = tny_folder_get_url_string (folder);
 	printf ("DEBUG: %s: folder URL=%s\n", __FUNCTION__, furl);

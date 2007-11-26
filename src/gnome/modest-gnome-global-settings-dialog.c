@@ -225,8 +225,8 @@ create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
-	ppriv->connected_via_list = _modest_global_settings_dialog_get_connected_via ();
-	combo = modest_combo_box_new (ppriv->connected_via_list, g_int_equal);
+	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
+	combo = modest_combo_box_new (ppriv->connect_via_list, g_int_equal);
 
 	add_to_table (GTK_TABLE (table_update), label, combo);
 
@@ -287,8 +287,8 @@ create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
-	ppriv->combo_msg_formats_list = _modest_global_settings_dialog_get_msg_formats ();
-	combo = modest_combo_box_new (ppriv->cmsg_formats_list, g_int_equal);
+	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
+	combo = modest_combo_box_new (ppriv->msg_format_list, g_int_equal);
 
 	add_to_table (GTK_TABLE (table), label, combo);
 

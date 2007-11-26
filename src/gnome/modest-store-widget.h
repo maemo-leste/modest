@@ -66,8 +66,8 @@ const gchar*    modest_store_widget_get_username          (ModestStoreWidget *se
 const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
 ModestTransportStoreProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 gchar *         modest_store_widget_get_path              (ModestStoreWidget *self);
-ModestConnectionProtocol  modest_store_widget_get_auth              (ModestStoreWidget *self);
-ModestAuthProtocol  modest_store_widget_get_security          (ModestStoreWidget *self);
+ModestAuthProtocol  modest_store_widget_get_auth              (ModestStoreWidget *self);
+ModestConnectionProtocol  modest_store_widget_get_security          (ModestStoreWidget *self);
 
 G_END_DECLS
 

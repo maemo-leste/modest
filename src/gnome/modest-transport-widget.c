@@ -56,6 +56,7 @@ struct _ModestTransportWidgetPrivate {
 	GtkWidget *remember_pwd;
 	
 	ModestPairList *transport_store_protos;
+	ModestPairList *auth_protos;
 };
 #define MODEST_TRANSPORT_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                      MODEST_TYPE_TRANSPORT_WIDGET, \

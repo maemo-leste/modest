@@ -137,7 +137,11 @@ modest_LDADD = 						\
 	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe}				\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
-	widgets/libmodest-widgets.la \
-	dbus_api/libmodest-dbus-api.la
+	widgets/libmodest-widgets.la
+
+
+if MODEST_HAVE_DBUS_API
+modest_LDADD +=	dbus_api/libmodest-dbus-api.la
+endif
 
 EXTRA_DIST=modest-marshal.list

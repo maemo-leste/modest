@@ -74,7 +74,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ActionsBounce",      NULL, N_("_Bounce"),        NULL, N_("Bounce a message"),          NULL },
 	{ "ActionsSendReceive", GTK_STOCK_REFRESH, N_("Send/Receive"),   NULL, N_("Send and receive messages"), G_CALLBACK (modest_ui_actions_on_send_receive) },
-	{ "ActionsDelete",      GTK_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ActionsDelete",      GTK_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete_message) },
 	{ "ActionsFolderNew",   NULL, N_("New Folder"),   NULL, N_("Create a new folder"), G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "ActionsFolderDelete",   NULL, N_("Delete Folder"),   NULL, N_("Delete the folder"), G_CALLBACK (modest_ui_actions_on_delete_folder) },
 	{ "ActionsFolderRename",   NULL, N_("Rename Folder"),   NULL, N_("Rename the folder"), G_CALLBACK (modest_ui_actions_on_rename_folder) },

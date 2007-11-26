@@ -66,12 +66,16 @@ enum {
 	LAST_SIGNAL
 };
 
-typedef struct _ModestTnyPlatformFactoryPrivate ModestTnyPlatformFactoryPrivate;
-struct _ModestTnyPlatformFactoryPrivate {};
+/* PRIVATE area commented as it's empty now. If you enable this again remember to enable also
+ * private area registration in class init */
 
-#define MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                         MODEST_TYPE_TNY_PLATFORM_FACTORY, \
-                                                         ModestTnyPlatformFactoryPrivate))
+/* typedef struct _ModestTnyPlatformFactoryPrivate ModestTnyPlatformFactoryPrivate; */
+/* struct _ModestTnyPlatformFactoryPrivate {}; */
+
+/* #define MODEST_TNY_PLATFORM_FACTORY_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \ */
+/*                                                          MODEST_TYPE_TNY_PLATFORM_FACTORY, \ */
+/*                                                          ModestTnyPlatformFactoryPrivate)) */
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 static ModestTnyPlatformFactory *singleton = NULL;
@@ -121,7 +125,7 @@ modest_tny_platform_factory_class_init (ModestTnyPlatformFactoryClass *klass)
 	gobject_class->finalize = modest_tny_platform_factory_finalize;
 	gobject_class->constructor = modest_tny_platform_factory_constructor;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestTnyPlatformFactoryPrivate));
+/* 	g_type_class_add_private (gobject_class, sizeof(ModestTnyPlatformFactoryPrivate)); */
 }
 
 static void

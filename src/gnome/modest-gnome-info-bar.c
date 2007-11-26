@@ -45,6 +45,7 @@ static void modest_gnome_info_bar_remove_operation (ModestProgressObject *self,
 						    ModestMailOperation  *mail_op);
 
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
+						    ModestMailOperationState *state,
 						    ModestGnomeInfoBar *self);
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
@@ -278,6 +279,7 @@ modest_gnome_info_bar_remove_operation (ModestProgressObject *self,
 
 static void 
 on_progress_changed (ModestMailOperation  *mail_op, 
+		     ModestMailOperationState *state,
 		     ModestGnomeInfoBar *self)
 {
 	ModestGnomeInfoBarPrivate *priv;

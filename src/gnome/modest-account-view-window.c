@@ -180,8 +180,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			/* Remove account. If succeeded it removes also 
 			   the account from the ModestAccountView */
 			removed = modest_account_mgr_remove_account (account_mgr,
-								     account_name,
-								     FALSE);
+								     account_name);
 			if (removed) {
 				/* Show confirmation dialog ??? */
 			} else {

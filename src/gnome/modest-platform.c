@@ -91,21 +91,21 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	modest_runtime_not_implemented (NULL);
+	g_message ("NOT IMPLEMENTED");;
 	return FALSE;
 }
 
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
-	modest_runtime_not_implemented (NULL);
+	g_message ("NOT IMPLEMENTED");;
 	return FALSE;
 }
 
 gboolean 
 modest_platform_show_uri_popup (const gchar *uri)
 {
-	modest_runtime_not_implemented (NULL);
+	g_message ("NOT IMPLEMENTED");;
 	return FALSE;
 }
 
@@ -232,16 +232,34 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 
 
 
-gboolean
-modest_platform_show_help (GtkWidget *widget, const gchar *help_id)
+void
+modest_platform_show_help (GtkWindow *parent_window, const gchar *help_id)
 {
-	return TRUE; /* TODO */
+	return; /* TODO */
 }
+
+void 
+modest_platform_information_banner (GtkWidget *widget,
+				    const gchar *icon_name,
+				    const gchar *text)
+{
+	g_message ("NOT IMPLEMENTED");;
+}
+
+GtkWidget *
+modest_platform_animation_banner (GtkWidget *widget,
+				  const gchar *icon_name,
+				  const gchar *text)
+{
+	g_message ("NOT IMPLEMENTED");
+	return NULL;
+}
+
 
 void
 modest_platform_show_search_messages (GtkWindow *parent_window)
 {
-	modest_runtime_not_implemented (NULL);
+	g_message ("NOT IMPLEMENTED");;
 }
 
 GtkWidget *
@@ -263,3 +281,72 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 	/* TODO */
 	return TRUE;
 }
+
+void 
+modest_platform_connect_and_perform (GtkWindow *parent_window, 
+				     TnyAccount *account, 
+				     ModestConnectedPerformer callback, 
+				     gpointer user_data)
+{
+	if (callback)
+		callback (FALSE, NULL, parent_window, account, user_data);
+}
+
+void 
+modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window, 
+							TnyAccount *account,
+							ModestConnectedPerformer callback, 
+							gpointer user_data)
+{
+	if (callback)
+		callback (FALSE, NULL, parent_window, account, user_data);
+}
+
+void
+modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_window, 
+							    TnyFolderStore *folder_store, 
+							    ModestConnectedPerformer callback, 
+							    gpointer user_data)
+{
+	if (callback)
+		callback (FALSE, NULL, parent_window, NULL, user_data);
+}
+
+
+void 
+modest_platform_remove_new_mail_notifications (void)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+gboolean 
+modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return TRUE;
+}
+
+gboolean 
+modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
+						     const gchar *certificate)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return TRUE;
+}
+
+gint
+modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
+                                          TnyFolderStore *parent_folder,
+                                          const gchar *suggested_name,
+                                          gchar **folder_name)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return GTK_RESPONSE_CANCEL;
+}
+
+void 
+modest_platform_show_addressbook (GtkWindow *parent_window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+

@@ -45,10 +45,12 @@
 #include <tny-folder-stats.h>
 #include <modest-debug.h>
 #include <string.h>
+#ifdef MODEST_PLATFORM_MAEMO
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-file-system-info.h>
 #else
 #include <hildon/hildon-file-system-info.h>
+#endif
 #endif
 
 /* we need these dummy functions, or tinymail will complain */
@@ -592,7 +594,7 @@ typedef struct
 
 
 
-
+#ifdef MODEST_PLATFORM_MAEMO
 /* Gets the memory card name: */
 static void 
 on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
@@ -629,9 +631,11 @@ on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
 	g_object_unref (callback_data->account);
 	g_slice_free (GetMmcAccountNameData, callback_data);
 }
+#endif
 
 void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data)
 {
+#ifdef MODEST_PLATFORM_MAEMO
 	/* Just use the hard-coded path for the single memory card,
 	 * rather than try to figure out the path to the specific card by 
 	 * looking at the maildir URI:
@@ -670,6 +674,7 @@ void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAc
 	}
 
 	/* g_free (uri); */
+#endif
 }
 
  				
@@ -997,3 +1002,37 @@ modest_tny_account_is_memory_card_account (TnyAccount *self)
 	else	
 		return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
 }
+
+gboolean 
+modest_tny_folder_store_is_remote (TnyFolderStore *folder_store)
+{
+        TnyAccount *account = NULL;
+        gboolean result = TRUE;
+
+        g_return_val_if_fail(TNY_IS_FOLDER_STORE(folder_store), FALSE);
+
+        if (TNY_IS_FOLDER (folder_store)) {
+                /* Get the folder's parent account: */
+                account = tny_folder_get_account(TNY_FOLDER(folder_store));
+        } else if (TNY_IS_ACCOUNT (folder_store)) {
+                account = TNY_ACCOUNT(folder_store);
+                g_object_ref(account);
+        }
+
+        if (account != NULL) {
+                if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
+                        if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
+                            !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
+                                /* This must be a maildir account, which does
+                                 * not require a connection: */
+                                result = FALSE;
+                        }
+                }
+                g_object_unref (account);
+        } else {
+                result = FALSE;
+        }
+
+        return result;
+}
+

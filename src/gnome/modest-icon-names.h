@@ -59,6 +59,8 @@
 #define MODEST_HEADER_ICON_HIGH_PRIORITY        PIXMAP_PREFIX"modest_high_no_attachment.png"
 #define MODEST_HEADER_ICON_LOW_PRIORITY         PIXMAP_PREFIX"modest_low_no_attachment.png"
 #define MODEST_HEADER_ICON_NORM_PRIORITY        PIXMAP_PREFIX"modest_normal_no_attachment.png"
+#define MODEST_HEADER_ICON_HIGH        PIXMAP_PREFIX"modest_high_no_attachment.png"
+#define MODEST_HEADER_ICON_LOW         PIXMAP_PREFIX"modest_low_no_attachment.png"
 /*
  *
  */
@@ -90,6 +92,8 @@
 /* #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png" */
 #define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.png"
 #define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     PIXMAP_PREFIX "qgn_list_gene_bullets"
+#define  MODEST_TOOLBAR_ICON_BOLD               GTK_STOCK_BOLD
+#define  MODEST_TOOLBAR_ICON_ITALIC             GTK_STOCK_ITALIC
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND	   "modest-stock-mail-send"

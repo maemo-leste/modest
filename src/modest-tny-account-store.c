@@ -50,8 +50,6 @@
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <widgets/modest-window-mgr.h>
-#include <modest-account-settings-dialog.h>
-#include <maemo/modest-maemo-utils.h>
 #include <modest-signal-mgr.h>
 #include <modest-debug.h>
 
@@ -63,6 +61,8 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
+#include <maemo/modest-maemo-utils.h>
+#include <maemo/modest-account-settings-dialog.h>
 #endif
 
 #include <libgnomevfs/gnome-vfs-volume-monitor.h>
@@ -121,7 +121,9 @@ typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 	gchar              *cache_dir;	
 	GHashTable         *password_hash;
+#ifdef MODEST_PLATFORM_MAEMO
 	GHashTable         *account_settings_dialog_hash;
+#endif
 	ModestAccountMgr   *account_mgr;
 	TnySessionCamel    *session;
 	TnyDevice          *device;
@@ -277,11 +279,13 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
          */
 	priv->password_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 						     g_free, g_free);
-							     
+
+#ifdef MODEST_PLATFORM_MAEMO							     
 	/* A hash-map of modest account names to dialog pointers,
 	 * so we can avoid showing the account settings twice for the same modest account: */				      
 	priv->account_settings_dialog_hash = g_hash_table_new_full (g_str_hash, g_str_equal, 
 								    g_free, NULL);
+#endif
 	
 	/* Respond to volume mounts and unmounts, such 
 	 * as the insertion/removal of the memory card: */
@@ -497,6 +501,7 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 		g_object_unref (iter);
 }
 
+#ifdef MODEST_PLATFORM_MAEMO
 static void 
 on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 {
@@ -511,6 +516,7 @@ on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 	if (modest_account_name)
 		g_hash_table_remove (priv->account_settings_dialog_hash, modest_account_name);
 }
+#endif
 
 static void 
 show_password_warning_only ()
@@ -526,7 +532,7 @@ show_password_warning_only ()
 		g_warning ("%s: %s", __FUNCTION__, _("mcen_ib_username_pw_incorrect"));
 }
 
-
+#ifdef MODEST_PLATFORM_MAEMO
 static void 
 show_wrong_password_dialog (TnyAccount *account)
 { 
@@ -594,7 +600,7 @@ show_wrong_password_dialog (TnyAccount *account)
 		gtk_window_present (GTK_WINDOW (dialog));
 	}
 }
-
+#endif
 
 
 static void
@@ -690,7 +696,9 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		);
 		if (settings_have_password) {
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
+#ifdef MODEST_PLATFORM_MAEMO
 			show_wrong_password_dialog (account);
+#endif
 			
 			if (cancel)
 				*cancel = TRUE;
@@ -819,10 +827,12 @@ modest_tny_account_store_finalize (GObject *obj)
 		priv->password_hash = NULL;
 	}
 
+#ifdef MODEST_PLATFORM_MAEMO
 	if (priv->account_settings_dialog_hash) {
 		g_hash_table_destroy (priv->account_settings_dialog_hash);
 		priv->account_settings_dialog_hash = NULL;
 	}
+#endif
 
 	if (priv->outbox_of_transport) {
 		g_hash_table_destroy (priv->outbox_of_transport);

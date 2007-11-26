@@ -334,8 +334,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	priv->text_view = gtk_text_view_new ();
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_text_view_set_input_mode (GTK_TEXT_VIEW (priv->text_view), 
 		HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	
 	priv->recipients = NULL;
 

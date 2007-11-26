@@ -49,10 +49,10 @@ struct _ModestStoreWidgetPrivate {
 	GtkWidget *servername;
 	GtkWidget *username;
 	
-	ModestProtoList *security_protos;
+	ModestPairList *security_protos;
 	GtkWidget *security;
 	
-	ModestProtoList *auth_protos;
+	ModestPairList *auth_protos;
 	GtkWidget *auth;
 	
 	GtkWidget *chooser;
@@ -253,7 +253,7 @@ imap_pop_configuration (ModestStoreWidget *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
-	priv->auth_protos = modest_protocol_info_get_auth_protocol_pair_list (;
+	priv->auth_protos = modest_protocol_info_get_auth_protocol_pair_list ();
 	priv->auth =  modest_combo_box_new (priv->auth_protos, g_str_equal);
 
 	gtk_box_pack_start (GTK_BOX(hbox), priv->auth, FALSE, FALSE, 0);

@@ -180,7 +180,7 @@ identity_page_update_completeness (GtkEditable *editable,
 
 	/* FIXME: regexp check for email address */
 	txt = gtk_entry_get_text (GTK_ENTRY(priv->email));
-	if (!modest_text_utils_validate_email_address (txt))
+	if (!modest_text_utils_validate_email_address (txt, NULL))
 		set_current_page_complete (self, FALSE);
 	else
 		set_current_page_complete (self, TRUE);
@@ -673,13 +673,12 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 	account_name = get_account_name (self);
 	modest_account_mgr_add_account (priv->account_mgr,
 					account_name,
+					account_name,
+					get_fullname (self),
+					get_email (self),
+					MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY,
 					store_name,
 					transport_name, TRUE);
-
-	modest_account_mgr_set_server_account_user_fullname (priv->account_mgr, account_name,
-							     get_fullname (self));
-	modest_account_mgr_set_server_account_user_email (priv->account_mgr, account_name, 
-							  get_email (self));
 
 	/* Frees */	
 	g_free (store_name);

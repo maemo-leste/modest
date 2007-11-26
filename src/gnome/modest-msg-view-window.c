@@ -93,7 +93,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },
 	{ "ActionsBounce",      NULL, N_("_Bounce"),        NULL, N_("Bounce a message"),          NULL },
 	{ "ActionsSendReceive", GTK_STOCK_REFRESH, N_("Send/Receive"),   NULL, N_("Send and receive messages"), NULL },
-	{ "ActionsDelete",      MODEST_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete) },
+	{ "ActionsDelete",      MODEST_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete_message) },
 
 	/* HELP */
 	{ "HelpAbout", GTK_STOCK_ABOUT, N_("About"), NULL, N_("About Modest"), G_CALLBACK (modest_ui_actions_on_about) },
@@ -179,7 +179,8 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	priv->msg_view = modest_msg_view_new (msg);
+	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 	
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
@@ -202,11 +203,6 @@ modest_msg_view_window_finalize (GObject *obj)
 	ModestMsgViewWindowPrivate *priv;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
-
-	if (priv->msg_uid) {
-		g_free (priv->msg_uid);
-		msg_uid = NULL;
-	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -242,7 +238,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 
 	priv->msg_uid = g_strdup (msg_uid);
 
-	modest_window_set_active_account (MODEST_WINDOW(obj), account);
+	modest_window_set_active_account (MODEST_WINDOW(obj), modest_account_name);
 	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
@@ -309,16 +305,18 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 
 	msg_view = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self)->msg_view;
 
-	return modest_msg_view_get_message (MODEST_MSG_VIEW(msg_view));
+	return tny_msg_view_get_msg (TNY_MSG_VIEW(msg_view));
 }
 
 const gchar*
 modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 {
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 	TnyMsg *msg;
 	TnyHeader *header;
 	const gchar *retval = NULL;
 
+	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 	msg = modest_msg_view_window_get_message (self);
 
 	if (!msg)
@@ -346,7 +344,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	   actions */
 	g_message ("partially implemented %s", __FUNCTION__);
 
-	return modest_msg_view_window_new_for_attachment (msg, account);
+	return modest_msg_view_window_new_for_attachment (msg, modest_account_name, msg_uid);
 }
 
 
@@ -376,7 +374,99 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 	g_message ("not implemented %s", __FUNCTION__);
 }
 void
-modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean get_all)
 {
 	g_message ("not implemented %s", __FUNCTION__);
+}
+
+TnyHeader *
+modest_msg_view_window_get_header (ModestMsgViewWindow *self)
+{
+	TnyMsg *msg;
+	TnyHeader *header = NULL;
+
+	msg = modest_msg_view_window_get_message (self);
+	if (msg) {
+		header = tny_msg_get_header (msg);
+		g_object_unref (msg);
+	}
+	return header;
+}
+
+TnyFolderType
+modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv;
+	TnyMsg *msg;
+	TnyFolderType folder_type;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	folder_type = TNY_FOLDER_TYPE_UNKNOWN;
+
+	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+	if (msg) {
+		TnyFolder *folder;
+
+		folder = tny_msg_get_folder (msg);
+		if (folder) {
+			folder_type = tny_folder_get_folder_type (folder);
+			g_object_unref (folder);
+		}
+		g_object_unref (msg);
+	}
+
+	return folder_type;
+}
+
+/* NOT IMPLEMENTED METHODS */
+
+gboolean 
+modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return TRUE;
+}
+
+gboolean 
+modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return TRUE;
+}
+
+gboolean 
+modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;
+}
+
+gboolean  
+modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;
+}
+
+
+GList *         
+modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return NULL;	
+}
+
+gboolean 
+modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;	
+}
+
+gboolean 
+modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;	
 }

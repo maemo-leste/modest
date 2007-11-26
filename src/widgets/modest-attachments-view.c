@@ -93,7 +93,7 @@ GtkWidget*
 modest_attachments_view_new (TnyMsg *msg)
 {
 	ModestAttachmentsView *self = g_object_new (MODEST_TYPE_ATTACHMENTS_VIEW, 
-						    "resize-mode", GTK_RESIZE_PARENT,
+						    "resize-mode", GTK_RESIZE_QUEUE,
 						    NULL);
 
 	modest_attachments_view_set_message (self, msg);

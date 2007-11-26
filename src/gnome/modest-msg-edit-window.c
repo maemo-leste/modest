@@ -61,7 +61,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *msg_body;
 	
-	ModestProtoList *from_field_protos;
+	ModestPairList *from_field_protos;
 	GtkWidget   *from_field;
 	
 	GtkWidget   *to_field;
@@ -322,7 +322,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 
 ModestWindow *
-modest_msg_edit_window_new (TnyMsg *msg, const gchar *account)
+modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
+			    gboolean preserve_is_rich)
 {
 	ModestMsgEditWindow *self;
 	ModestMsgEditWindowPrivate *priv;
@@ -419,7 +420,6 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->cc      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->cc_field)));
 	data->bcc     =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)));
 	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
-	data->msg_id = NULL;
 
 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	GtkTextIter b, e;
@@ -605,7 +605,7 @@ modest_msg_edit_window_select_contacts (ModestMsgEditWindow *window)
 }
 
 gboolean
-modest_msg_edit_window_check_names (ModestMsgEditWindow *window)
+modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to_addressbook)
 {
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
 
@@ -639,4 +639,119 @@ modest_msg_edit_window_set_sent (ModestMsgEditWindow *window,
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
 	priv->sent = sent;
+}
+
+GtkWidget *
+modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
+					 ModestMsgEditWindowWidgetType widget_type)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), NULL);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (win);
+
+	switch (widget_type) {
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY:
+		return priv->msg_body;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_TO:
+		return priv->to_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_CC:
+		return priv->cc_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BCC:
+		return priv->bcc_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_SUBJECT:
+		return priv->subject_field;
+		break;
+	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_ATTACHMENTS:
+		return NULL;
+		break;
+	default:
+		return NULL;
+	}
+	return NULL;
+}
+
+/* FUNCTIONS NOT IMPLEMENTED YET */
+
+void            
+modest_msg_edit_window_reset_modified      (ModestMsgEditWindow *window)
+{
+	g_message (__FUNCTION__);
+}
+
+void            
+modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
+					    gboolean show)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+void                    
+modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
+				 TnyMimePart *part)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+void            
+modest_msg_edit_window_redo               (ModestMsgEditWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+void                    
+modest_msg_edit_window_offer_attach_file           (ModestMsgEditWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+void                    
+modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+void            
+modest_msg_edit_window_set_draft           (ModestMsgEditWindow *window,
+					    TnyMsg *draft)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+}
+
+gboolean        
+modest_msg_edit_window_is_modified         (ModestMsgEditWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return TRUE;
+}
+
+const gchar *
+modest_msg_edit_window_get_clipboard_text (ModestMsgEditWindow *win)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return NULL;
+}
+
+gboolean            
+modest_msg_edit_window_can_redo               (ModestMsgEditWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;
+}
+gboolean            
+modest_msg_edit_window_can_undo               (ModestMsgEditWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;
+}
+
+const gchar*    
+modest_msg_edit_window_get_message_uid (ModestMsgEditWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return NULL;
 }

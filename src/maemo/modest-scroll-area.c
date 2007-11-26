@@ -148,6 +148,10 @@ modest_scroll_area_new (GtkWidget *sw, GtkWidget *child)
 				  G_CALLBACK (g_free), sc);
 
 	gtk_widget_show_all (sw);
+
+	gtk_widget_set_redraw_on_allocate (GTK_WIDGET(sc->fixed), FALSE);
+	gtk_widget_set_redraw_on_allocate (GTK_WIDGET(sw), FALSE);
+	gtk_widget_set_redraw_on_allocate (GTK_WIDGET(child), FALSE);
 	return fixed;
 }
 

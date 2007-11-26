@@ -187,6 +187,14 @@ gint          modest_tny_folder_store_get_message_count (TnyFolderStore *self);
  **/
 gint          modest_tny_folder_store_get_local_size    (TnyFolderStore *self);
 
+/**
+ * modest_tny_folder_store_is_remote:
+ * @folder_store: The folder store (folder or account) that needs to
+ * decide if need a connection in subsequent operations.
+ * @return value: Whether a connection is necessary for this folder_store.
+ */
+gboolean modest_tny_folder_store_is_remote (TnyFolderStore *self);
+
 /** modest_tny_account_get_parent_modest_account_name_for_server_account:
  * Get the name of the parent modest account of which the server account is a part.
  */

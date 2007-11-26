@@ -866,7 +866,7 @@ search_result_to_message (DBusMessage *reply,
 
 	for (hit_iter = hits; hit_iter; hit_iter = hit_iter->next) {
 		DBusMessageIter  struct_iter;
-		ModestSearchHit *hit;
+		ModestSearchResultHit *hit;
 		char            *msg_url;
 		const char      *subject;
 		const char      *folder;
@@ -876,7 +876,7 @@ search_result_to_message (DBusMessage *reply,
 		gboolean         is_unread;
 		gint64           ts;
 
-		hit = (ModestSearchHit *) hit_iter->data;
+		hit = (ModestSearchResultHit *) hit_iter->data;
 
 		msg_url = hit->msgid;
 		subject = hit->subject;
@@ -934,7 +934,7 @@ search_result_to_message (DBusMessage *reply,
 		g_free (hit->folder);
 		g_free (hit->sender);
 
-		g_slice_free (ModestSearchHit, hit);
+		g_slice_free (ModestSearchResultHit, hit);
 	}
 
 	dbus_message_iter_close_container (&iter, &array_iter);

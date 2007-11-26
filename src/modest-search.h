@@ -59,6 +59,17 @@ typedef enum {
 } ModestSearchFlags;
 
 typedef struct {
+	gchar     *msgid; /* E.g. the URI of the message. */
+	gchar     *subject;
+	gchar     *folder; /* The name, not the URI. */
+	gchar     *sender;
+	guint64    msize;
+	gboolean   has_attachment;
+	gboolean   is_unread;
+	gint64     timestamp;		 
+} ModestSearchResultHit;
+
+typedef struct {
 	const gchar *folder; /* The folder to search in */
 	
 	/* Text to search for in various parts: */

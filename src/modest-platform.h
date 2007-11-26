@@ -259,14 +259,6 @@ gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_
 gboolean modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_window, TnyFolderStore *folder_store);
 
 /**
- * modest_platform_is_network_folderstore:
- * @folder_store: The folder store (folder or account) that needs to
- * decide if need a connection in subsequent operations.
- * @return value: Whether a connection is necessary for this folder_store.
- */
-gboolean modest_platform_is_network_folderstore (TnyFolderStore *folder_store);
-
-/**
  * modest_platform_set_update_interval:
  * @minutes: The number of minutes between updates, or 0 for no updates.
  * 
