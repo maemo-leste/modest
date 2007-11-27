@@ -326,6 +326,8 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html, gboolean *is_html)
 	gchar *to_quote;
 	gboolean result_was_html = TRUE;
 
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	
 	body = modest_tny_msg_find_body_part(msg, want_html);
 	if (!body)
 		return NULL;
@@ -443,6 +445,8 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 TnyMimePart*
 modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 {
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	
 	return modest_tny_msg_find_body_part_from_mime_part (TNY_MIME_PART(msg),
 							     want_html);
 }
@@ -478,7 +482,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 		formatter = modest_formatter_new ("text/html", signature);
 	else
 		formatter = modest_formatter_new ("text/plain", signature);
-
+	
 
 	/* if we don't have a text-part */
 	no_text_part = (!body) || (strcmp (tny_mime_part_get_content_type (body), "text/html")==0);
@@ -536,7 +540,8 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 const gchar*
 modest_tny_msg_get_parent_uid (TnyMsg *msg)
 {
-	g_return_val_if_fail (msg, NULL);
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	
 	return g_object_get_data (G_OBJECT(msg), MODEST_TNY_MSG_PARENT_UID);
 }
 
@@ -567,6 +572,8 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	
 	/* Add attachments */
 	parts = TNY_LIST (tny_simple_list_new());
 	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
@@ -601,6 +608,8 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	
 	/* Add attachments */
 	if (msg != NULL) {
 		parts = TNY_LIST (tny_simple_list_new());
@@ -622,6 +631,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 		g_object_ref (header);
 	else
 		header = tny_msg_get_header (msg);
+
 	new_header = tny_msg_get_header (new_msg);
 	reply_to = tny_header_get_replyto (header);
 
@@ -643,8 +653,10 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 		bcc = tny_header_get_bcc (header);
 
 		tmp = g_string_new (tny_header_get_to (header));
-		if (cc)  g_string_append_printf (tmp, ",%s",cc);
-		if (bcc) g_string_append_printf (tmp, ",%s",bcc);
+		if (cc)
+			g_string_append_printf (tmp, ",%s",cc);
+		if (bcc)
+			g_string_append_printf (tmp, ",%s",bcc);
 
                /* Remove my own address from the cc list. TODO:
                   remove also the To: of the new message, needed due
