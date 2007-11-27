@@ -76,16 +76,23 @@ AC_SUBST(HAVE_GTK_HTML_GET_SELECTION_AREA)
 
 dnl dnl now, determine what to build
 dnl AC_MSG_NOTICE([Determining what platform to build])
-dnl PKG_CHECK_MODULES(MODEST_MAEMO_LIBS,libosso,[with_platform=maemo],true)
+PKG_CHECK_MODULES(MODEST_MAEMO_LIBS,conic,[detected_platform=maemo],[detected_platform=gnome])
 
-AC_ARG_WITH(platform,
-[--with-platform=gnome		platform to build for [gnome]],
+AC_ARG_WITH(platform, [
+Target platform:
+  --with-platform=detect  detect target platform (default)
+  --with-platform=gnome   build for Gnome
+  --with-platform=maemo   build for Maemo
+],
 [case "${with_platform}" in
-       gnome)    MODEST_PLATFORM=gnome;;
-       maemo) MODEST_PLATFORM=maemo;;
-       *)      MODEST_PLATFORM=${with_platform}
-esac], [MODEST_PLATFORM=gnome
-               with_platform=gnome])
+       gnome|maemo|detect)    MODEST_PLATFORM=${with_platform};;
+       *)        AC_MSG_ERROR([Unknown platform selected]);;
+esac], [MODEST_PLATFORM=detect])
+
+if test "$MODEST_PLATFORM" = "detect"; then
+	MODEST_PLATFORM="$detected_platform"
+	with_platform=$detected_platform
+fi
 
 have_easysetup=false
 if test "x$with_platform" == "xgnome"; then
