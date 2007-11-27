@@ -2995,7 +2995,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					      NULL);
 #endif /* MODEST_PLATFORM_MAEMO */
 
-	gtk_window_set_transient_for (GTK_WINDOW(dialog), GTK_WINDOW(main_window));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (dialog));
 	
 	gchar *server_name = modest_account_mgr_get_server_account_hostname (
 		modest_runtime_get_account_mgr(), server_account_name);
