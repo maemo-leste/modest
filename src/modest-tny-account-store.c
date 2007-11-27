@@ -1372,7 +1372,8 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 	
 	
 #ifdef MODEST_HAVE_CONIC
-	g_assert (TNY_IS_MAEMO_CONIC_DEVICE (device));
+	g_return_val_if_fail (TNY_IS_MAEMO_CONIC_DEVICE (device), NULL);
+	
 	TnyMaemoConicDevice *maemo_device = TNY_MAEMO_CONIC_DEVICE (device);	
 	const gchar* iap_id = tny_maemo_conic_device_get_current_iap_id (maemo_device);
 	/* printf ("DEBUG: %s: iap_id=%s\n", __FUNCTION__, iap_id); */
@@ -1570,8 +1571,11 @@ add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
 	/* Get the outbox folder */
 	folders = tny_simple_list_new ();
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (account_outbox), folders, NULL, NULL);
-	g_assert (tny_list_get_length (folders) == 1);
-		
+	if (tny_list_get_length (folders) != 1) {
+		g_warning ("%s: > 1 outbox found (%d)?!", __FUNCTION__,
+			   tny_list_get_length (folders));
+	}
+			
 	iter_folders = tny_list_create_iterator (folders);
 	per_account_outbox = TNY_FOLDER (tny_iterator_get_current (iter_folders));
 	g_object_unref (iter_folders);
@@ -1611,10 +1615,17 @@ insert_account (ModestTnyAccountStore *self,
 
 	/* Get the server and the transport account */
 	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE);
-	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (!store_account || !TNY_IS_ACCOUNT(store_account)) {
+		g_warning ("%s: failed to create store account", __FUNCTION__);
+		return;
+	}
 
-	g_assert (store_account);
-	g_assert (transport_account);
+	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (!transport_account || !TNY_IS_ACCOUNT(transport_account)) {
+		g_warning ("%s: failed to create transport account", __FUNCTION__);
+		g_object_unref (store_account);
+		return;
+	}
 
 	/* Add accounts to the lists */
 	tny_list_append (priv->store_accounts, G_OBJECT (store_account));

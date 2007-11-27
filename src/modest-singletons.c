@@ -223,9 +223,10 @@ modest_singletons_new (void)
 	static gboolean invoked = FALSE;
 
 	if (invoked) {
-		g_printerr ("modest: modest_singletons_new may only be called once\n");
-		g_assert (!invoked); /* abort */
-		return NULL; /* g_assert may be NOP */
+		g_printerr ("%s: modest: modest_singletons_new may only be called once, aborting...\n",
+			    __FUNCTION__);
+		abort();
+		return NULL;
 	}
 	
 	self = MODEST_SINGLETONS(g_object_new(MODEST_TYPE_SINGLETONS, NULL));
