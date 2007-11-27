@@ -216,15 +216,6 @@ modest_tny_account_store_base_init (gpointer g_class)
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__OBJECT,
 				      G_TYPE_NONE, 1, TNY_TYPE_ACCOUNT);
-		
-/* 		signals[TNY_ACCOUNT_STORE_CONNECTING_FINISHED] = */
-/* 			g_signal_new ("connecting_finished", */
-/* 				      TNY_TYPE_ACCOUNT_STORE, */
-/* 				      G_SIGNAL_RUN_FIRST, */
-/* 				      G_STRUCT_OFFSET (TnyAccountStoreIface, connecting_finished), */
-/* 				      NULL, NULL, */
-/* 				      g_cclosure_marshal_VOID__VOID,  */
-/* 				      G_TYPE_NONE, 0); */
 
 		signals[PASSWORD_REQUESTED_SIGNAL] =
 			g_signal_new ("password_requested",
@@ -602,20 +593,6 @@ show_wrong_password_dialog (TnyAccount *account)
 }
 #endif
 
-
-static void
-request_password_and_wait (ModestTnyAccountStore *account_store, 
-					 const gchar* server_account_id,
-					 gchar **username,
-					 gchar **password,
-					 gboolean *cancel, 
-					 gboolean *remember)
-{
-	g_signal_emit (G_OBJECT(account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
-		       server_account_id, /* server_account_name */
-		       username, password, cancel, remember);
-}
-
 /* This callback will be called by Tinymail when it needs the password
  * from the user or the account settings.
  * It can also call forget_password() before calling this,
@@ -715,9 +692,12 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 			/* Show an info banner, before we show the protected password dialog: */
 			show_password_warning_only();
 		}
-		
-		request_password_and_wait (self, account_id, 
+
+		/* Request password */
+		g_signal_emit (G_OBJECT(account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+			       account_id, /* server_account_name */
 			       &username, &pwd, cancel, &remember);
+
 		
 		if (!*cancel) {
 			/* The password will be returned as the result,

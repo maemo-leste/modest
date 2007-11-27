@@ -2403,10 +2403,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 	
 	/* Get the currently-active transport account for this modest account: */
-/* 	TnyTransportAccount *transport_account = */
-/* 		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_transport_account_for_open_connection */
-/* 				      (modest_runtime_get_account_store(), */
-/* 				       account_name)); */
 	if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) != 0) {
 		transport_account = TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
 							  (modest_runtime_get_account_store(),
