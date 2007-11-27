@@ -879,17 +879,21 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 	
 	/* get the resolved contacts (can be no contact) */
 	if (resolved_contacts) {
+		gboolean found;
 		EContact *contact = (EContact *) resolved_contacts->data;
 
 		*resolved_addresses = get_recipients_for_given_contact (contact);
 		if (*resolved_addresses) {
 			*contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
+			found = TRUE;
+		} else {
+			found = FALSE;
 		}
 
 		g_list_foreach (resolved_contacts, (GFunc)unref_gobject, NULL);
 		g_list_free (resolved_contacts);
 
-		return TRUE;
+		return found;
 	} else {
 		/* cancelled dialog to select more than one contact or
 		 * selected no contact */
