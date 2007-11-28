@@ -360,7 +360,7 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 						      MODEST_ACCOUNT_OPTION_CHECK_ALL);
 		}
 		
-		if (account_data->username) 
+		if (account_data->username && strlen(account_data->username) > 0)
 			tny_account_set_user (tny_account, account_data->username);
 		if (account_data->hostname)
 			tny_account_set_hostname (tny_account, account_data->hostname);
