@@ -60,6 +60,9 @@ static void on_display_name_changed            (ModestAccountMgr *self,
 
 static void modest_account_view_select_first_account (ModestAccountView *account_view);
 
+static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
+                    gpointer user_data);
+
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
 	MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN,
@@ -382,6 +385,14 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer,
 	g_free (account_name);
 }
 
+static void
+on_account_updated (ModestAccountMgr* mgr,
+                    gchar* account_name,
+                    gpointer user_data)
+{
+	update_account_view (mgr, MODEST_ACCOUNT_VIEW (user_data));
+}
+
 void
 bold_if_default_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
@@ -505,6 +516,12 @@ init_view (ModestAccountView *self)
 					   "display_name_changed",
 					   G_CALLBACK(on_display_name_changed), 
 					   self);
+	priv->sig_handlers = 
+			modest_signal_mgr_connect (priv->sig_handlers,
+						   G_OBJECT (priv->account_mgr),
+						   "account_updated", 
+						   G_CALLBACK (on_account_updated),
+						   self);
 }
 
 

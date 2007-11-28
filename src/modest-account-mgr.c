@@ -56,6 +56,7 @@ enum {
 	ACCOUNT_BUSY_SIGNAL,
 	DEFAULT_ACCOUNT_CHANGED_SIGNAL,
 	DISPLAY_NAME_CHANGED_SIGNAL,
+	ACCOUNT_UPDATED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -149,6 +150,16 @@ modest_account_mgr_base_init (gpointer g_class)
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__STRING,
 				      G_TYPE_NONE, 1, G_TYPE_STRING);
+		
+		signals[ACCOUNT_UPDATED_SIGNAL] =
+			g_signal_new ("account_updated",
+				      MODEST_TYPE_ACCOUNT_MGR,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestAccountMgrClass, account_updated),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__STRING,
+				      G_TYPE_NONE, 1, G_TYPE_STRING);
+
 
 		modest_account_mgr_initialized = TRUE;
 	}
@@ -894,7 +905,6 @@ modest_account_mgr_set_int (ModestAccountMgr * self, const gchar * name,
 			    const gchar * key, int val, gboolean server_account)
 {
 	ModestAccountMgrPrivate *priv;
-
 	const gchar *keyname;
 	gboolean retval;
 	GError *err = NULL;
@@ -912,6 +922,13 @@ modest_account_mgr_set_int (ModestAccountMgr * self, const gchar * name,
 		g_printerr ("modest: error setting int '%s': %s\n", keyname, err->message);
 		g_error_free (err);
 		retval = FALSE;
+	} else {
+		/* check whether this field is one of those interesting for the 
+		 * "account-updated" signal */
+		if (strcmp(key, MODEST_ACCOUNT_LAST_UPDATED) == 0) {
+			g_signal_emit (G_OBJECT(self), signals[ACCOUNT_UPDATED_SIGNAL], 
+					0, name);
+		}
 	}
 	return retval;
 }

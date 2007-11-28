@@ -1291,6 +1291,9 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	g_object_unref (info->inbox_observer);
 	info->inbox_observer = NULL;
 
+	/* Update the last updated key, even if we don't have to get new headers */
+	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
+	
 	if (new_headers_array->len == 0)
 		goto send_mail;
 
@@ -1349,9 +1352,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	}
 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (new_headers_array, FALSE);
-
-	/* Update the last updated key */
-	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
 
  send_mail:
 	/* Send mails */
@@ -1550,9 +1550,9 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Get all folders and continue in the callback */    
 	folders = tny_simple_list_new ();
-    	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
-					    folders, recurse_folders_async_cb, 
-					    NULL, NULL, info);
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
+				folders, recurse_folders_async_cb, 
+				NULL, NULL, info);
 }
 
 /*

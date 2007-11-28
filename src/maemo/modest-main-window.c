@@ -145,6 +145,9 @@ static void on_show_account_action_toggled      (GtkToggleAction *action,
 static void on_refresh_account_action_activated   (GtkAction *action,
 						   gpointer user_data);
 
+static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
+                    gpointer user_data);
+
 static void on_send_receive_csm_activated         (GtkMenuItem *item,
 						   gpointer user_data);
 
@@ -967,6 +970,12 @@ connect_signals (ModestMainWindow *self)
 					   G_CALLBACK (on_default_account_changed),
 					   self);
 
+	priv->sighandlers = 
+			modest_signal_mgr_connect (priv->sighandlers,
+						   G_OBJECT (modest_runtime_get_account_mgr ()),
+						   "account_updated", 
+						   G_CALLBACK (on_account_updated),
+						   self);
 	/* Account store */
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,
@@ -1476,6 +1485,18 @@ on_account_removed (TnyAccountStore *accoust_store,
                      gpointer user_data)
 {
 	update_menus (MODEST_MAIN_WINDOW (user_data));
+}
+
+static void
+on_account_updated (ModestAccountMgr* mgr,
+                    gchar* account_name,
+                    gpointer user_data)
+{
+	ModestMainWindow *win = MODEST_MAIN_WINDOW (user_data);
+	
+	if (modest_main_window_get_contents_style(win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS) {
+		modest_main_window_set_contents_style (win, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
+	}
 }
 
 /* 

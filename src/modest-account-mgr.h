@@ -79,6 +79,10 @@ struct _ModestAccountMgrClass {
 	void (* display_name_changed)   (ModestAccountMgr *obj, 
 					 const gchar *account,
 					 gpointer user_data);
+	
+	void (* account_updated)   (ModestAccountMgr *obj, 
+			 const gchar *account,
+			 gpointer user_data);
 };
 
 /**
