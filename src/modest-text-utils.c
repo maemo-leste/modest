@@ -1218,7 +1218,7 @@ modest_text_utils_validate_domain_name (const gchar *domain)
 {
 	gboolean valid = FALSE;
 	regex_t rx;
-	const gchar* domain_regex = "^[a-z0-9]([.]?[a-z0-9-])*[a-z0-9]$";
+	const gchar* domain_regex = "^([a-z0-9-]*[a-z0-9]\\.)+[a-z0-9-]*[a-z0-9]$";
 
 	g_return_val_if_fail (domain, FALSE);
 	
