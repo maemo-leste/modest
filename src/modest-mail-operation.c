@@ -908,7 +908,8 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 	priv->account = TNY_ACCOUNT (g_object_ref (transport_account));
-
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	
 	/* Check parametters */
 	if (to == NULL) {
  		/* Set status failed and set an error */
