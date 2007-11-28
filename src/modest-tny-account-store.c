@@ -473,15 +473,10 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 		TnyAccount *tny_account;
 		tny_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
 		if (tny_account) {
-			TnyConnectionStatus conn_status = tny_account_get_connection_status (tny_account);
-
-			if (conn_status != TNY_CONNECTION_STATUS_RECONNECTING &&
-			    conn_status != TNY_CONNECTION_STATUS_INIT) {
-				if (!strcmp (tny_account_get_id (tny_account), account_name)) {
-					found = TRUE;
-					modest_tny_account_update_from_account (tny_account);
-					g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
-				}
+			if (!strcmp (tny_account_get_id (tny_account), account_name)) {
+				found = TRUE;
+				modest_tny_account_update_from_account (tny_account);
+				g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
 			}
 			g_object_unref (tny_account);
 		}
