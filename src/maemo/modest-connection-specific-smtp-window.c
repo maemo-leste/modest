@@ -606,7 +606,11 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
 				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
 				    -1);
-		if (server_account_name) {
+		if (data && data->hostname && (data->hostname[0] != '\0')) {
+			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
+					    MODEL_COL_SERVER_NAME, data->hostname,
+					    -1);
+		} else if (server_account_name) {
 			
 			/* Get the server hostname and show it in the treemodel: */	
 			gchar *hostname = modest_account_mgr_get_server_account_hostname (priv->account_manager, 
@@ -615,10 +619,6 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 					    MODEL_COL_SERVER_NAME, hostname,
 					    -1);
 			g_free (hostname);
-		} else if (data && data->hostname && (data->hostname[0] != '\0')) {
-			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-					    MODEL_COL_SERVER_NAME, data->hostname,
-					    -1);
 		} else {
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter,
 					    MODEL_COL_SERVER_NAME, _("mcen_ia_optionalsmtp_notdefined"),
