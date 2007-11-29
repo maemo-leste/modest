@@ -1073,7 +1073,7 @@ open_msgs_performer(gboolean canceled,
 		    TnyAccount *account,
 		    gpointer user_data)
 {
-	ModestMailOperation *mail_op;
+	ModestMailOperation *mail_op = NULL;
 	const gchar *proto_name;
 	gchar *error_msg;
 	ModestTransportStoreProtocol proto;
