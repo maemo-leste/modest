@@ -44,6 +44,7 @@
 #include "modest-protocol-info.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
+#include "modest-debug.h"
 #include <tny-mime-part.h>
 #include <tny-camel-folder.h>
 #include <tny-camel-imap-folder.h>
@@ -1068,8 +1069,8 @@ get_account_from_header_list (TnyList *headers)
 static void
 open_msgs_performer(gboolean canceled, 
 		    GError *err,
-		    GtkWindow *parent_window, 
-		    TnyAccount *account, 
+		    GtkWindow *parent_window,
+		    TnyAccount *account,
 		    gpointer user_data)
 {
 	ModestMailOperation *mail_op;
@@ -1079,6 +1080,11 @@ open_msgs_performer(gboolean canceled,
 	TnyList *not_opened_headers;
 
 	not_opened_headers = TNY_LIST (user_data);
+
+	if (err) {
+		/* TODO: Show an error ? */
+		goto clean;
+	}
 
 	/* Get the error message depending on the protocol */
 	proto_name = tny_account_get_proto (account);
@@ -1121,7 +1127,9 @@ open_msgs_performer(gboolean canceled,
 					     NULL);
 
 	/* Frees */
-	g_object_unref (mail_op);
+ clean:
+	if (mail_op)
+		g_object_unref (mail_op);
 	g_object_unref (not_opened_headers);
 	g_object_unref (account);
 }
@@ -3519,7 +3527,7 @@ modest_ui_actions_on_change_zoom (GtkRadioAction *action,
 	}
 }
 
-void     
+void
 modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
 					       GtkRadioAction *selected,
 					       ModestWindow *window)
@@ -3531,7 +3539,7 @@ modest_ui_actions_msg_edit_on_change_priority (GtkRadioAction *action,
 	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW (window), flags);
 }
 
-void     
+void
 modest_ui_actions_msg_edit_on_change_file_format (GtkRadioAction *action,
 						  GtkRadioAction *selected,
 						  ModestWindow *window)
@@ -3545,7 +3553,7 @@ modest_ui_actions_msg_edit_on_change_file_format (GtkRadioAction *action,
 }
 
 
-void     
+void
 modest_ui_actions_on_zoom_plus (GtkAction *action,
 				ModestWindow *window)
 {
