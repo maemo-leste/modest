@@ -388,6 +388,8 @@ void
 modest_mail_operation_execute_error_handler (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION(self));
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	g_return_if_fail(priv->status != MODEST_MAIL_OPERATION_STATUS_SUCCESS);	    
@@ -403,6 +405,9 @@ modest_mail_operation_get_type_operation (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
 
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION(self),
+			      MODEST_MAIL_OPERATION_TYPE_UNKNOWN);
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	
 	return priv->op_type;
@@ -414,6 +419,9 @@ modest_mail_operation_is_mine (ModestMailOperation *self,
 {
 	ModestMailOperationPrivate *priv;
 
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION(self),
+			      FALSE);
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	if (priv->source == NULL) return FALSE;
 
@@ -425,7 +433,8 @@ modest_mail_operation_get_source (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
 
-	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION(self),
+			      NULL);
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 	if (!priv) {
@@ -477,8 +486,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
 	gboolean canceled = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), FALSE);
+	
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION (self), FALSE);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
@@ -513,8 +522,9 @@ modest_mail_operation_get_task_done (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
 
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), 0);
-
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION(self),
+			      0);
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	return priv->done;
 }
@@ -524,7 +534,8 @@ modest_mail_operation_get_task_total (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv;
 
-	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION (self), 0);
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION(self),
+			      0);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	return priv->total;
@@ -536,11 +547,9 @@ modest_mail_operation_is_finished (ModestMailOperation *self)
 	ModestMailOperationPrivate *priv;
 	gboolean retval = FALSE;
 
-	if (!MODEST_IS_MAIL_OPERATION (self)) {
-		g_warning ("%s: invalid parametter", G_GNUC_FUNCTION);
-		return retval;
-	}
-
+	g_return_val_if_fail (self && MODEST_IS_MAIL_OPERATION(self),
+			      FALSE);
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	if (priv->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS   ||
@@ -603,9 +612,9 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv;
 	SendMsgInfo *info;
 	
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (transport_account));
-	g_return_if_fail (TNY_IS_MSG (msg));
+	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (transport_account && TNY_IS_TRANSPORT_ACCOUNT (transport_account));
+	g_return_if_fail (msg && TNY_IS_MSG (msg));
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
