@@ -1,3 +1,11 @@
+modest (1.0-2007.49-1) feisty; urgency=low
+
+  * Fixes: NB#76897, NB#64099, NB#63571, NB#76991, NB#74031, NB#73776
+  * Fixes: NB#76521, NB#77103, NB#73627, NB#77038, NB#77277, NB#77388
+  * Fixes: NB#77361
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 30 Nov 2007 11:32:08 +0200
+
 modest (1.0-2007.48-2) feisty; urgency=low
 
   * Fixes: NB#76616, NB#74075, NB#76469
