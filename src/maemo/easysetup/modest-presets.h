@@ -129,8 +129,8 @@ gchar *                   modest_presets_get_domain      (ModestPresets *self,
  * Returns: a ModestPresetsServerType with the required information
  */
 ModestPresetsServerType          modest_presets_get_info_server_type (ModestPresets *self,
-						    const gchar *provider_id,
-						    gboolean incoming_server);
+								      const gchar *provider_id,
+								      gboolean incoming_server);
 
 /**
  * modest_presets_get_info_server_security:
@@ -144,8 +144,8 @@ ModestPresetsServerType          modest_presets_get_info_server_type (ModestPres
  * Returns: ModestPresetsSecurity ORable flags with the required information
  */					    
 ModestPresetsSecurity          modest_presets_get_info_server_security (ModestPresets *self,
-						    const gchar *provider_id,
-						    gboolean incoming_server);
+									const gchar *provider_id,
+									gboolean incoming_server);
 
 
 /**

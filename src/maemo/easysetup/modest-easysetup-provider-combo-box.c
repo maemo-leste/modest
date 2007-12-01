@@ -214,8 +214,8 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 
 			++iter_provider_names;
 			++iter_provider_ids;
-		}
-
+	}
+	
 	/* Free the result of modest_presets_get_providers()
 	 * as specified by its documentation: */
 	g_strfreev (provider_names);
