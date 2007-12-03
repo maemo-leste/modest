@@ -38,6 +38,7 @@
 #include "modest-search.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "modest-tny-msg.h"
+#include "modest-platform.h"
 #include <libmodest-dbus-client/libmodest-dbus-client.h>
 #include <libgnomevfs/gnome-vfs-utils.h>
 #include <stdio.h>
@@ -332,156 +333,90 @@ static TnyMsg *
 find_message_by_url (const char *uri,  TnyAccount **ac_out)
 {
 	ModestTnyAccountStore *astore;
-	TnyAccount            *account;
-	TnyFolder             *folder;
-	TnyMsg                *msg;
-	GError *err = NULL;
-	account = NULL;
-	msg = NULL;
-	folder = NULL;
+	TnyAccount *account = NULL;
+	TnyFolder *folder = NULL;
+	TnyMsg *msg = NULL;
 
 	astore = modest_runtime_get_account_store ();
 	
-	if (astore == NULL) {
+	if (astore == NULL)
 		return NULL;
-	}
 
 	if (uri && g_str_has_prefix (uri, "merge://")) {
 		/* we assume we're talking about outbox folder, as this 
 		 * is the only merge folder we work with in modest */
 		return modest_tny_account_store_find_msg_in_outboxes (astore, uri, ac_out);
 	}
-	
-	/* TODO: When tinymail is built with the extra DBC assertion checks, 
-	 * this will crash for local folders (such as drafts),
-	 * because tny_folder_get_url_string() (in add_hit())
-	 * returns mail:/home/murrayc/yaddayadda 
-	 * instead of mail://localhost/home/murrayc/yaddayadd,
-	 * but I'm not sure where that folder URI is built. murrayc.
-	 */
 	account = tny_account_store_find_account (TNY_ACCOUNT_STORE (astore),
 						  uri);
 	
-	if (account == NULL) {
-		g_debug ("%s: tny_account_store_find_account() failed for\n  uri=%s\n", 
-			__FUNCTION__, uri);
-		return NULL;
-	}
-
-	MODEST_DEBUG_BLOCK (g_debug ("%s: Found account.\n", __FUNCTION__););
-
-	if ( ! TNY_IS_STORE_ACCOUNT (account)) {
+	if (account == NULL || !TNY_IS_STORE_ACCOUNT (account))
 		goto out;
-	}
-
-	MODEST_DEBUG_BLOCK (g_debug ("%s: Account is store account.\n", __FUNCTION__););
 	*ac_out = account;
 
-	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account),
-						uri,
-						&err);
+	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
 
-	if (folder == NULL) {
-		g_debug ("%s: tny_store_account_find_folder() failed for\n  account=%s, uri=%s.\n", __FUNCTION__, 
-			tny_account_get_id (TNY_ACCOUNT(account)), uri);
+	if (folder == NULL)
 		goto out;
-	}
 	
-	MODEST_DEBUG_BLOCK (g_debug ("%s: Found folder. (%s)\n",  __FUNCTION__, uri););
+	msg = tny_folder_find_msg (folder, uri, NULL);
 	
-	msg = tny_folder_find_msg (folder, uri, &err);
-	
-	if (!msg)
-		MODEST_DEBUG_BLOCK (
-				    g_debug ("%s: tny_folder_find_msg() failed for "\
-					     "folder %s\n  with error=%s.\n",
-					     __FUNCTION__, tny_folder_get_id (folder), 
-					     err->message);
-				    );
-
 out:
-	if (err)
-		g_error_free (err);
-
 	if (account && !msg) {
 		g_object_unref (account);
 		*ac_out = NULL;
 	}
-
 	if (folder)
 		g_object_unref (folder);
 
 	return msg;
 }
 
-static gboolean
-on_idle_open_message (gpointer user_data)
+
+typedef struct {
+	TnyAccount *account;
+	gchar *uri;
+} OpenMsgPerformerInfo;
+
+static void 
+on_open_message_performer (gboolean canceled, 
+			   GError *err,
+			   GtkWindow *parent_window, 
+			   TnyAccount *account, 
+			   gpointer user_data)
 {
-	TnyMsg       *msg = NULL;
-	TnyAccount   *account = NULL;
-	TnyHeader    *header = NULL; 
-	const char   *msg_uid = NULL;
-	char         *uri = NULL;
-	ModestWindowMgr *win_mgr = NULL;
-	TnyFolder    *folder = NULL;
-	gboolean is_draft = FALSE;
-	gboolean already_opened = FALSE;
+	OpenMsgPerformerInfo *info;
+	gchar *uri;
+	TnyHeader *header;
+	gchar *msg_uid;
+	ModestWindowMgr *win_mgr;
 	ModestWindow *msg_view = NULL;
+	gboolean is_draft = FALSE;
+	TnyFolder *folder = NULL;
+	TnyMsg *msg = NULL;
 
-	uri = (char *) user_data;
+	info = (OpenMsgPerformerInfo *) user_data;
+	uri = info->uri;
 
-	msg = find_message_by_url (uri, &account);
-	g_free (uri);
+	if (err)
+		goto frees;
 
-	if (msg == NULL) {
-		g_warning ("modest:  %s: message not found.", __FUNCTION__);
-		g_idle_add (notify_error_in_dbus_callback, NULL);
-		return FALSE;
-	}
-	
-	folder = tny_msg_get_folder (msg);
-	
-	/* Drafts will be opened in the editor, instead of the viewer, as per the UI spec: */
-	/* FIXME: same should happen for Outbox; not enabling that, as the handling
-	 * of edited messages is not clear in that case */
-	if (folder && modest_tny_folder_is_local_folder (folder) &&
-		(modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
+	/* Get message */
+	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+	msg = tny_folder_find_msg (folder, uri, NULL);
+
+	if (modest_tny_folder_is_local_folder (folder) &&
+	    (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
 		is_draft = TRUE;
 	}
 
 	header = tny_msg_get_header (msg);
-	
-	/* TODO:  The modest_tny_folder_get_header_unique_id() documentation warns against 
-	 * using it with tny_msg_get_header(), and there is a 
-	 * " camel_folder_get_full_name: assertion `CAMEL_IS_FOLDER (folder)' failed" runtime warning,
-	 * but it seems to work.
-	 */	
-	msg_uid =  modest_tny_folder_get_header_unique_id(header); 
-	
+	msg_uid =  modest_tny_folder_get_header_unique_id (header); 
 	win_mgr = modest_runtime_get_window_mgr ();
 
-	/* This is a GDK lock because we are an idle callback and
-	 * the code below is or does Gtk+ code */
-
-	gdk_threads_enter (); /* CHECKED */
-
 	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
-		if (msg_view) {
-			g_debug ("modest: %s: A window for this message is open already: type=%s", 
-			__FUNCTION__, G_OBJECT_TYPE_NAME (msg_view));
-		}
-		
-		if (!msg_view)
-			g_debug ("modest_window_mgr_find_registered_header(): Returned TRUE, but msg_view is NULL");
-		else if (!MODEST_IS_MSG_VIEW_WINDOW (msg_view) && !MODEST_IS_MSG_EDIT_WINDOW (msg_view))
-			g_debug ("  DEBUG: But the window is not a msg view or edit window.");
-		else {
-			gtk_window_present (GTK_WINDOW(msg_view));
-			already_opened = TRUE;
-		}
-	}
-	
-	if (!already_opened) {
+		gtk_window_present (GTK_WINDOW(msg_view));
+	} else {
 		const gchar *modest_account_name;
 
 		/* g_debug ("creating new window for this msg"); */
@@ -490,11 +425,8 @@ on_idle_open_message (gpointer user_data)
 		modest_account_name = 
 			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 			
-		/* Drafts will be opened in the editor, and others will be opened in the viewer, 
-		 * as per the UI spec: */
+		/* Drafts will be opened in the editor, and others will be opened in the viewer */
 		if (is_draft) {
-			/* TODO: Maybe the msg_uid should be registered for edit windows too,
-			 * so we can open the same window again next time: */
 			msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
 		} else {
 			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name,
@@ -503,14 +435,28 @@ on_idle_open_message (gpointer user_data)
 		modest_window_mgr_register_window (win_mgr, msg_view);
 		gtk_widget_show_all (GTK_WIDGET (msg_view));
 	}
-
-	gdk_threads_leave (); /* CHECKED */
-
 	g_object_unref (header);
-	g_object_unref (account);
+	g_object_unref (msg);
 	g_object_unref (folder);
 
-	return FALSE; /* Do not call this callback again. */
+ frees:
+	g_free (info->uri);
+	g_object_unref (info->account);
+	g_slice_free (OpenMsgPerformerInfo, info);
+}
+
+static gboolean
+on_idle_open_message_performer (gpointer user_data)
+{
+	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) user_data;
+
+	/* Lock before the call as we're in an idle handler */
+	gdk_threads_enter ();
+	modest_platform_connect_and_perform (NULL, info->account, 
+					     on_open_message_performer, info);
+	gdk_threads_leave ();
+
+	return FALSE;
 }
 
 static gint 
@@ -518,15 +464,38 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
  	osso_rpc_t val;
  	gchar *uri;
+	TnyAccount *account = NULL;
+	gint osso_retval;
 
 	/* Get the arguments: */
  	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_OPEN_MESSAGE_ARG_URI);
  	uri = g_strdup (val.value.s);
+
+	/* Get the account */
+	account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+						  uri);
+
  	
-	/* Use g_idle to context-switch into the application's thread */
- 	g_idle_add(on_idle_open_message, (gpointer)uri);
- 	
- 	return OSSO_OK;
+	if (account) {
+		OpenMsgPerformerInfo *info;
+
+		info = g_slice_new0 (OpenMsgPerformerInfo);
+		info->account = g_object_ref (account);
+		info->uri = uri;
+
+		/* We need to call it into an idle to get
+		   modest_platform_connect_and_perform into the main
+		   loop */
+		g_idle_add (on_idle_open_message_performer, info);
+		osso_retval = OSSO_OK;
+	} else {
+		g_free (uri);
+		osso_retval = OSSO_ERROR; 
+		g_idle_add (notify_error_in_dbus_callback, NULL);
+ 	}
+
+	g_object_unref (account);
+	return osso_retval;
 }
 
 static gboolean
