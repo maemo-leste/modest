@@ -566,6 +566,7 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 
 	modest_account_settings_set_enabled (settings, modest_account_mgr_get_enabled (self, name));
 	modest_account_settings_set_retrieve_type (settings, modest_account_mgr_get_retrieve_type (self, name));
+	modest_account_settings_set_retrieve_limit (settings, modest_account_mgr_get_retrieve_limit (self, name));
 
 	default_account    = modest_account_mgr_get_default_account (self);
 	modest_account_settings_set_is_default (settings,
