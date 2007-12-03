@@ -85,7 +85,14 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(body);
-		
+
+	/* set modest as the X-Mailer
+	 * we could this in the platform factory, but then the header
+	 * would show up before all the others.
+	 */
+	tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "X-Mailer", "Modest "
+				       VERSION);
+	
 	/* Add the body of the new mail */
 	/* This is needed even if body is NULL or empty. */
 	add_body_part (new_msg, body, content_type);
@@ -127,7 +134,14 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 		tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(plain_body);
-		
+	
+	/* set modest as the X-Mailer
+	 * we could this in the platform factory, but then the header
+	 * would show up before all the others.
+	 */
+	tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "X-Mailer", "Modest "
+				       VERSION);
+
 	/* Add the body of the new mail */	
 	add_body_part (new_msg, plain_body, content_type);
 	add_html_body_part (new_msg, html_body);
@@ -528,7 +542,14 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 		g_object_set_data_full (G_OBJECT(new_msg), MODEST_TNY_MSG_PARENT_UID,
 					parent_uid, g_free);
 	}
-	
+
+	/* set modest as the X-Mailer
+	 * we could this in the platform factory, but then the header
+	 * would show up before all the others.
+	 */
+	tny_mime_part_set_header_pair (TNY_MIME_PART (msg), "X-Mailer", "Modest "
+				       VERSION);
+
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
 	g_object_unref (G_OBJECT (header));
