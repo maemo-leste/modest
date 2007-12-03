@@ -44,6 +44,9 @@
 
 #include <glib/gi18n.h>
 
+#define PORT_RANGE_MIN 1
+#define PORT_RANGE_MAX 65535
+
 G_DEFINE_TYPE (ModestConnectionSpecificSmtpEditWindow, modest_connection_specific_smtp_edit_window, GTK_TYPE_DIALOG);
 
 #define CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE(o) \
@@ -65,6 +68,7 @@ struct _ModestConnectionSpecificSmtpEditWindowPrivate
 	
 	gboolean is_dirty;
 	gboolean range_error_occured;
+	guint range_error_banner_timeout;
 };
 
 static void
@@ -90,6 +94,8 @@ modest_connection_specific_smtp_edit_window_set_property (GObject *object, guint
 static void
 modest_connection_specific_smtp_edit_window_dispose (GObject *object)
 {
+
+	
 	if (G_OBJECT_CLASS (modest_connection_specific_smtp_edit_window_parent_class)->dispose)
 		G_OBJECT_CLASS (modest_connection_specific_smtp_edit_window_parent_class)->dispose (object);
 }
@@ -97,6 +103,14 @@ modest_connection_specific_smtp_edit_window_dispose (GObject *object)
 static void
 modest_connection_specific_smtp_edit_window_finalize (GObject *object)
 {
+	ModestConnectionSpecificSmtpEditWindow *self = (ModestConnectionSpecificSmtpEditWindow *) object;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	if (priv->range_error_banner_timeout > 0) {
+		g_source_remove (priv->range_error_banner_timeout);
+		priv->range_error_banner_timeout = 0;
+	}
 	G_OBJECT_CLASS (modest_connection_specific_smtp_edit_window_parent_class)->finalize (object);
 }
 
@@ -137,6 +151,23 @@ on_value_changed(GtkWidget* widget, GValue* value, ModestConnectionSpecificSmtpE
 	on_change(widget, self);
 }
 
+gboolean
+show_banner_handler (gpointer userdata)
+{
+	ModestConnectionSpecificSmtpEditWindow *self = userdata;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	gchar *msg;
+
+	msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_set_a_value_within_range"), PORT_RANGE_MIN, PORT_RANGE_MAX);
+
+	hildon_banner_show_information (NULL, NULL, msg);
+	g_free (msg);
+
+	priv->range_error_banner_timeout = 0;
+	return FALSE;
+}
+
 static gboolean
 on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer user_data)
 {
@@ -148,9 +179,11 @@ on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer us
 	 * the hildon number editor already resets the value to the default value, so we have to
 	 * remember that such an error occured. */
 	priv->range_error_occured = TRUE;
+	if (priv->range_error_banner_timeout == 0)
+		priv->range_error_banner_timeout = g_timeout_add (200, show_banner_handler, self);
 
 	/* Show error message by not returning TRUE */
-	return FALSE;
+	return TRUE;
 }
 
 static void
@@ -162,6 +195,12 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
        		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 
 	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
+
+	if ((response_id == GTK_RESPONSE_CANCEL) &&
+	    (priv->range_error_banner_timeout > 0)) {
+		g_source_remove (priv->range_error_banner_timeout);
+		priv->range_error_banner_timeout = 0;
+	}
 
 	/* Don't close the dialog if a range error occured */
 	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
@@ -305,7 +344,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
-		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (1, 65535));
+		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
 	caption = hildon_caption_new (sizegroup, 
 		_("mcen_fi_emailsetup_port"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
@@ -327,6 +366,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	priv->range_error_occured = FALSE;
 	g_signal_connect(G_OBJECT(self), "response", G_CALLBACK(on_response), self);
 	g_signal_connect(G_OBJECT(box), "set-focus-child", G_CALLBACK(on_set_focus_child), self);
+
+	priv->range_error_banner_timeout = 0;
 	
 	gtk_widget_show (box);
 	
@@ -385,6 +426,11 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		
 		/* This will cause changed signals so we set dirty back to FALSE */
 		priv->is_dirty = FALSE;
+		if (priv->range_error_banner_timeout > 0) {
+			g_source_remove (priv->range_error_banner_timeout);
+			priv->range_error_banner_timeout = 0;
+		}
+	
 	}
 }
 

@@ -302,24 +302,8 @@ on_button_edit (GtkButton *button, gpointer user_data)
 			}
 			else
 			{
-				if (!modest_connection_specific_smtp_edit_window_is_dirty(
-						MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW(window)))
-				{
-					gtk_widget_hide(window);
-					dialog_finished = TRUE;
-				}
-				else
-				{
-						
-					gint response;
-					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window), 
-									    _("imum_nc_wizard_confirm_lose_changes"));			 
-					if (response == GTK_RESPONSE_OK)
-					{
-						gtk_widget_hide(window);
-						dialog_finished = TRUE;
-					}
-				}
+				gtk_widget_hide(window);
+				dialog_finished = TRUE;
 			}
 		}
 	}
