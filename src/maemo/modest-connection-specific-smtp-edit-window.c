@@ -408,6 +408,8 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	
 	modest_server_account_settings_set_hostname (server_settings, 
 						     gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
+	modest_server_account_settings_set_protocol (server_settings,
+						     MODEST_PROTOCOL_TRANSPORT_SMTP);
 	modest_server_account_settings_set_username (server_settings,
 						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));
 	modest_server_account_settings_set_password (server_settings,
