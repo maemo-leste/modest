@@ -1050,10 +1050,12 @@ open_msgs_performer(gboolean canceled,
 	gchar *error_msg;
 	ModestTransportStoreProtocol proto;
 	TnyList *not_opened_headers;
+	TnyConnectionStatus status;
 
 	not_opened_headers = TNY_LIST (user_data);
 
-	if (err) {
+	status = tny_account_get_connection_status (account);
+	if (err || canceled || status != TNY_CONNECTION_STATUS_CONNECTED) {
 		/* TODO: Show an error ? */
 		goto clean;
 	}
