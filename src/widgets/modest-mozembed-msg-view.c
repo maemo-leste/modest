@@ -71,9 +71,9 @@ static gboolean on_fetch_url (GtkWidget *widget, const gchar *uri, TnyStream *st
 			      ModestMozembedMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestMozembedMsgView *msg_view);
 
-#ifdef MAEMO_CHANGES
+#if HAVE_DECL_GTK_WIDGET_TAP_AND_HOLD_SETUP
 static void     on_tap_and_hold (GtkWidget *widget, gpointer userdata); 
-#endif /*MAEMO_CHANGES*/
+#endif /*HAVE_DECL_GTK_WIDGET_TAP_AND_HOLD_SETUP*/
 
 /* TnyMimePartView implementation */
 static void modest_msg_view_mp_clear (TnyMimePartView *self);
@@ -381,7 +381,7 @@ modest_mozembed_msg_view_init (ModestMozembedMsgView *obj)
 /* 		gtk_container_add (GTK_CONTAINER (scroll_area), priv->body_view); */
 /* 		gtk_container_add (GTK_CONTAINER (body_box), scroll_area); */
 
-#ifdef MAEMO_CHANGES
+#if HAVE_DECL_GTK_WIDGET_TAP_AND_HOLD_SETUP
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->body_view), NULL, NULL, 0);
 		g_signal_connect (G_OBJECT (priv->body_view), "tap-and-hold", G_CALLBACK (on_tap_and_hold), obj);
 #endif
@@ -482,7 +482,7 @@ modest_mozembed_msg_view_new (TnyMsg *msg)
 	return GTK_WIDGET(self);
 }
 
-#ifdef MAEMO_CHANGES
+#if HAVE_DECL_GTK_WIDGET_TAP_AND_HOLD_SETUP
 static void
 on_tap_and_hold (GtkWidget *widget,
 		 gpointer data)

@@ -68,6 +68,14 @@ PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gcon
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
+modest_save_cflags="$CFLAGS"
+modest_save_libs="$LIBS"
+CFLAGS="$MODEST_GSTUFF_CFLAGS"
+LIBS="$MODEST_GSTUFF_LIBS"
+AC_CHECK_DECLS([gtk_widget_tap_and_hold_setup],[],[], [#include <gtk/gtk.h>])
+CFLAGS="$modest_save_cflags"
+LIBS="$modest_save_libs"
+
 __COPY_LIBS="$LIBS"
 LIBS="$LIBS $MODEST_GSTUFF_LIBS"
 AC_CHECK_FUNCS(gtk_html_get_selection_area)
