@@ -9,7 +9,7 @@ Package: modest
 Architecture: any
 Section: user/extras
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends},osso-icons-theme,operator-wizard-settings,osso-countries-l10n-mr0
-Conflicts: modest-l10n-engb
+Replaces: modest-l10n-engb
 Description: an e-mail client for platforms with modest resources
  e-mail client for osso
 
