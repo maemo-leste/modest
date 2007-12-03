@@ -1258,7 +1258,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	GPtrArray *new_headers_array = NULL;   
 	gint max_size, retrieve_limit, i;
 	ModestAccountMgr *mgr;
-	gchar *retrieve_type = NULL;
+	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
 	gboolean headers_only;
 	TnyTransportAccount *transport_account;
@@ -1314,8 +1314,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	
 	/* Get per-account retrieval type */
 	retrieve_type = modest_account_mgr_get_retrieve_type (mgr, info->account_name);	
-	headers_only = !g_ascii_strcasecmp (retrieve_type, MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY);
-	g_free (retrieve_type);
+	headers_only = (retrieve_type == MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY);
 
 	/* Order by date */
 	g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date);

@@ -52,10 +52,10 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
-#include "maemo/modest-maemo-utils.h"
 #include "maemo/modest-hildon-includes.h"
 #include "maemo/modest-connection-specific-smtp-window.h"
 #endif /* MODEST_PLATFORM_MAEMO */
+#include <modest-utils.h>
 
 #include "widgets/modest-ui-constants.h"
 #include <widgets/modest-main-window.h>
@@ -216,13 +216,12 @@ gboolean
 modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 {
 	gboolean result = FALSE;	
-#ifdef MODEST_PLATFORM_MAEMO
 	GtkWindow *dialog, *wizard;
 	gint dialog_response;
 
 	/* Show the easy-setup wizard: */	
 	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
-	if (dialog && MODEST_IS_EASYSETUP_WIZARD_DIALOG(dialog)) {
+	if (dialog) {
 		/* old wizard is active already; 
 		 */
 		gtk_window_present (GTK_WINDOW(dialog));
@@ -231,7 +230,7 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 	
 
 	/* there is no such wizard yet */	
-	wizard = GTK_WINDOW (modest_easysetup_wizard_dialog_new ());
+	wizard = GTK_WINDOW (modest_platform_get_account_settings_wizard ());
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), wizard);
 
 	/* always present a main window in the background 
@@ -257,7 +256,6 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 		/* Check whether an account was created: */
 		result = modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 	}
-#endif	
 	return result;
 }
 
@@ -669,7 +667,6 @@ modest_ui_actions_on_accounts (GtkAction *action,
 			       ModestWindow *win)
 {
 	/* This is currently only implemented for Maemo */
-#ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
 	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
 		if (!modest_ui_actions_run_account_setup_wizard (win)) 
 			g_debug ("%s: wizard was already running", __FUNCTION__);
@@ -682,33 +679,8 @@ modest_ui_actions_on_accounts (GtkAction *action,
 		
 		/* The accounts dialog must be modal */
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), account_win);
-		modest_maemo_show_dialog_and_forget (GTK_WINDOW (win), GTK_DIALOG (account_win)); 
+		modest_utils_show_dialog_and_forget (GTK_WINDOW (win), GTK_DIALOG (account_win)); 
 	}
-#else
-	GtkWidget *dialog, *label;
-	
-	/* Create the widgets */
-	
-	dialog = gtk_dialog_new_with_buttons ("Message",
-					      GTK_WINDOW(win),
-					      GTK_DIALOG_DESTROY_WITH_PARENT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_NONE,
-					      NULL);
-	label = gtk_label_new ("Hello World!");
-	
-	/* Ensure that the dialog box is destroyed when the user responds. */
-	
-	g_signal_connect_swapped (dialog, "response", 
-				  G_CALLBACK (gtk_widget_destroy),
-				  dialog);
-	
-	/* Add the label, and show everything we've added to the dialog. */
-	
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox),
-			   label);
-	gtk_widget_show_all (dialog);
-#endif /* MODEST_PLATFORM_MAEMO */
 }
 
 #ifdef MODEST_PLATFORM_MAEMO
@@ -4000,7 +3972,8 @@ create_move_to_dialog (GtkWindow *win,
 	} else {
 		const gchar *active_account_name = NULL;
 		ModestAccountMgr *mgr = NULL;
-		ModestAccountData *acc_data = NULL;
+		ModestAccountSettings *settings = NULL;
+		ModestServerAccountSettings *store_settings = NULL;
 
 		modest_folder_view_set_style (MODEST_FOLDER_VIEW (*tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
@@ -4009,13 +3982,17 @@ create_move_to_dialog (GtkWindow *win,
 
 		active_account_name = modest_window_get_active_account (MODEST_WINDOW (win));
 		mgr = modest_runtime_get_account_mgr ();
-		acc_data = modest_account_mgr_get_account_data (mgr, active_account_name);
+		settings = modest_account_mgr_load_account_settings (mgr, active_account_name);
 
-		/* Set the new visible & active account */
-		if (acc_data && acc_data->store_account) { 
+		if (settings) {
+			const gchar *store_account_name;
+			store_settings = modest_account_settings_get_store_settings (settings);
+			store_account_name = modest_server_account_settings_get_account_name (store_settings);
+
 			modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (*tree_view),
-										     acc_data->store_account->account_name);
-			modest_account_mgr_free_account_data (mgr, acc_data);
+										     store_account_name);
+			g_object_unref (store_settings);
+			g_object_unref (settings);
 		}
 	}
 

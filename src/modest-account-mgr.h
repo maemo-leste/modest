@@ -35,6 +35,7 @@
 #include <modest-conf.h>
 #include <modest-defs.h>
 #include <modest-protocol-info.h>
+#include <modest-account-settings.h>
 
 G_BEGIN_DECLS
 
@@ -106,6 +107,18 @@ ModestAccountMgr*        modest_account_mgr_new            (ModestConf *modest_c
 
 
 /**
+ * modest_account_mgr_add_account_from_settings:
+ * @self: a #ModestAccountMgr instance
+ * @self: a #ModestSettings
+ * 
+ * Create a new account from a @settings instance.
+ *
+ * Returns: TRUE if the creation succeeded, FALSE otherwise,
+ */
+gboolean        modest_account_mgr_add_account_from_settings    (ModestAccountMgr *self,
+								 ModestAccountSettings *settings);
+
+/**
  * modest_account_mgr_add_account:
  * @self: a ModestAccountMgr instance
  * @name: name (id) of the account, which is a valid UTF8 string that does not contain '/'
@@ -123,7 +136,7 @@ gboolean        modest_account_mgr_add_account    (ModestAccountMgr *self,
 						   const gchar *display_name,
 						   const gchar *user_fullname,
 						   const gchar *user_email,
-						   const gchar *retrieve_type,
+						   ModestAccountRetrieveType retrieve_type,
 						   const gchar* store_name,
 						   const gchar* transport_name,
 						   gboolean enabled);

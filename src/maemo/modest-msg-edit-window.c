@@ -75,6 +75,7 @@
 #else
 #include <libgnomevfs/gnome-vfs-mime.h>
 #endif
+#include <modest-utils.h>
 #include "modest-maemo-utils.h"
 
 
@@ -320,19 +321,19 @@ restore_settings (ModestMsgEditWindow *self)
 	conf = modest_runtime_get_conf ();
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
 
 	/* set initial state of cc and bcc */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
 
 	/* Dim at start clipboard actions */
@@ -1685,23 +1686,23 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))) {
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu");
 		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
-			modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
+			modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
 	} else {
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatPlainTextMenu");
 		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
-			modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
+			modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
 	}
 
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsBold");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bold);
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bold);
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ActionsItalics");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->italic);
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->italic);
 
 /* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu"); */
-/* 	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet); */
+/* 	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet); */
 
 	g_signal_handlers_block_by_func (G_OBJECT (priv->font_color_button), 
 					 G_CALLBACK (modest_msg_edit_window_color_button_change),
@@ -2373,7 +2374,7 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 		action_name = "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu";
 	
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 							    show_toolbar);
 
 }
@@ -2452,7 +2453,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 			} else {
 				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu"));
-				modest_maemo_toggle_action_set_active_block_notify (action, TRUE);
+				modest_utils_toggle_action_set_active_block_notify (action, TRUE);
 			}
 		}
 			break;

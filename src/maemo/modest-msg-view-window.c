@@ -35,6 +35,7 @@
 #include <tny-vfs-stream.h>
 #include "modest-marshal.h"
 #include "modest-platform.h"
+#include <modest-utils.h>
 #include <modest-maemo-utils.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
@@ -1244,9 +1245,9 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 
 	/* update the toggle buttons status */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsFindInMessageMenu");
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
 	
 }
 
@@ -2015,7 +2016,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarNormalScreenMenu";
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 							    show_toolbar);
 }
 
@@ -2255,8 +2256,8 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		const gchar *content_type;
 		TnyFsStream *temp_stream = NULL;
-		temp_stream = modest_maemo_utils_create_temp_stream (att_filename, attachment_uid,
-								     &filepath);
+		temp_stream = modest_utils_create_temp_stream (att_filename, attachment_uid,
+							       &filepath);
 		
 		if (temp_stream != NULL) {
 			content_type = tny_mime_part_get_content_type (mime_part);
@@ -2413,8 +2414,8 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 
         for (iter = files; (iter != NULL) && (replaced_files < 2); iter = g_list_next(iter)) {
                 SaveMimePartPair *pair = iter->data;
-                if (modest_maemo_utils_file_exists (pair->filename)) {
-                        replaced_files++;
+                if (modest_utils_file_exists (pair->filename)) {
+			replaced_files++;
                 }
         }
 	if (replaced_files) {
@@ -2500,7 +2501,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 	if (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
 		gchar *chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
 
-		if (!modest_maemo_utils_folder_writable (chooser_uri)) {
+		if (!modest_utils_folder_writable (chooser_uri)) {
 			hildon_banner_show_information 
 				(NULL, NULL, dgettext("hildon-fm", "sfil_ib_readonly_location"));
 		} else {

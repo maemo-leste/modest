@@ -141,7 +141,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 		}
 		tny_iterator_next (iter);
 	}
-
+	
 cleanup:
 	if (folders)
 		g_object_unref (folders);
@@ -155,7 +155,6 @@ cleanup:
 
 /**
  * create_tny_account:
- * @account_mgr: a valid account mgr instance
  * @session: A valid TnySessionCamel instance.
  * @account_data: the server account for which to create a corresponding tny account
  * 
@@ -165,20 +164,19 @@ cleanup:
  * Returns: a new TnyAccount or NULL in case of error.
  */
 static TnyAccount*
-create_tny_account (ModestAccountMgr *account_mgr,
-		    TnySessionCamel *session,
-		    ModestServerAccountData *account_data)
+create_tny_account (TnySessionCamel *session,
+		    ModestServerAccountSettings *server_settings)
 {
 	TnyAccount *tny_account = NULL;
+	ModestTransportStoreProtocol protocol;
 	const gchar* proto_name;
 	
-	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (session, NULL);
-	g_return_val_if_fail (account_data, NULL);
-	g_return_val_if_fail (account_data->proto != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN,
-			      NULL);
+	g_return_val_if_fail (server_settings, NULL);
+	protocol = modest_server_account_settings_get_protocol (server_settings);
+	g_return_val_if_fail (protocol != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
 	
-	switch (account_data->proto) {
+	switch (protocol) {
 	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
 	case MODEST_PROTOCOL_TRANSPORT_SMTP:
 		tny_account = TNY_ACCOUNT (modest_transport_account_decorator_new ()); break;
@@ -198,16 +196,16 @@ create_tny_account (ModestAccountMgr *account_mgr,
 
 	if (!tny_account) {
 		g_printerr ("modest: %s: could not create tny account for '%s'\n",
-			    __FUNCTION__, account_data->account_name);
+			    __FUNCTION__, modest_server_account_settings_get_account_name (server_settings));
 		return NULL;
 	}
-	tny_account_set_id (tny_account, account_data->account_name);
+	tny_account_set_id (tny_account, modest_server_account_settings_get_account_name (server_settings));
 
 	/* This must be set quite early, or other set() functions will fail. */
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
     
 	/* Proto */
-	proto_name =  modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
+	proto_name =  modest_protocol_info_get_transport_store_protocol_name(protocol);
 	tny_account_set_proto (tny_account, proto_name);
 
 	return tny_account;
@@ -264,29 +262,41 @@ create_tny_account (ModestAccountMgr *account_mgr,
  * Returns: a new TnyAccount or NULL in case of error.
  */
 static gboolean
-update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
-		    ModestServerAccountData *account_data)
+update_tny_account (TnyAccount *tny_account,
+		    ModestServerAccountSettings *server_settings)
 {
-	g_return_val_if_fail (account_mgr, FALSE);
-	g_return_val_if_fail (account_data, FALSE);
-	g_return_val_if_fail (account_data->account_name, FALSE);
+	const gchar *account_name;
+	const gchar *uri;
+	g_return_val_if_fail (server_settings, FALSE);
+	account_name = modest_server_account_settings_get_account_name (server_settings);
+	g_return_val_if_fail (account_name, FALSE);
 	g_return_val_if_fail (tny_account, FALSE);
 	
-	tny_account_set_id (tny_account, account_data->account_name);
+	tny_account_set_id (tny_account, account_name);
 	
 	/* mbox and maildir accounts use a URI instead of the rest:
 	 * Note that this is not where we create the special local folders account.
 	 * We do that in modest_tny_account_new_for_local_folders() instead. */
-	if (account_data->uri)  
-		tny_account_set_url_string (TNY_ACCOUNT(tny_account), account_data->uri);
+	uri = modest_server_account_settings_get_uri (server_settings);
+	if (uri)  
+		tny_account_set_url_string (TNY_ACCOUNT(tny_account), uri);
 	else {
 		/* Set camel-specific options: */		
 		/* Enable secure connection settings: */
 		const gchar* option_security = NULL;
 		const gchar* auth_mech_name = NULL;
+		ModestTransportStoreProtocol protocol;
+		ModestConnectionProtocol security;
+		ModestAuthProtocol auth_protocol;
+		const gchar *username;
+		const gchar *hostname;
+		guint port;
 
+		protocol = modest_server_account_settings_get_protocol (server_settings);
+		security = modest_server_account_settings_get_security (server_settings);
+		auth_protocol = modest_server_account_settings_get_auth_protocol (server_settings);
 
-		switch (account_data->security) {
+		switch (security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
 			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_NEVER;
 			break;
@@ -311,15 +321,15 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 						      option_security);
 		
 		/* Secure authentication: */
-		switch (account_data->secure_auth) {
+		switch (auth_protocol) {
 		case MODEST_PROTOCOL_AUTH_NONE:
 			/* IMAP and POP need at least a password,
 			 * which camel uses if we specify NULL.
 			 * This setting should never happen anyway. */
-			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP ||
-			    account_data->proto == MODEST_PROTOCOL_STORE_POP)
+			if (protocol == MODEST_PROTOCOL_STORE_IMAP ||
+			    protocol == MODEST_PROTOCOL_STORE_POP)
 				auth_mech_name = NULL;
-			else if (account_data->proto == MODEST_PROTOCOL_TRANSPORT_SMTP)
+			else if (protocol == MODEST_PROTOCOL_TRANSPORT_SMTP)
 				auth_mech_name = MODEST_ACCOUNT_AUTH_ANONYMOUS;
 			else
 				auth_mech_name = MODEST_ACCOUNT_AUTH_PLAIN;
@@ -329,9 +339,9 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 			/* Camel use a password for IMAP or POP if we specify NULL,
 			 * For IMAP, at least it will report an error if we use "Password", "Login" or "Plain".
 			 * (POP is know to report an error for Login too. Probably Password and Plain too.) */
-			if (account_data->proto == MODEST_PROTOCOL_STORE_IMAP)
+			if (protocol == MODEST_PROTOCOL_STORE_IMAP)
 				auth_mech_name = NULL;
-			else if (account_data->proto == MODEST_PROTOCOL_STORE_POP)
+			else if (protocol == MODEST_PROTOCOL_STORE_POP)
 				auth_mech_name = NULL;
 			else
 				auth_mech_name = MODEST_ACCOUNT_AUTH_PASSWORD;
@@ -343,16 +353,16 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 			
 		default:
 			g_warning ("%s: Unhandled secure authentication setting %d for "
-				   "account_name=%s (%s)", __FUNCTION__, account_data->secure_auth,
-				   account_data->account_name, account_data->hostname);
+				   "account_name=%s (%s)", __FUNCTION__, auth_protocol,
+				   account_name, modest_server_account_settings_get_hostname (server_settings));
 			break;
 		}
 		
 		if(auth_mech_name) 
 			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		
-		if (modest_protocol_info_protocol_is_store(account_data->proto) && 
-			(account_data->proto == MODEST_PROTOCOL_STORE_IMAP) ) {
+		if (modest_protocol_info_protocol_is_store(protocol) && 
+			(protocol == MODEST_PROTOCOL_STORE_IMAP) ) {
 			/* Other connection options, needed for IMAP. */
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
 						      MODEST_ACCOUNT_OPTION_USE_LSUB);
@@ -360,14 +370,17 @@ update_tny_account (TnyAccount *tny_account, ModestAccountMgr *account_mgr,
 						      MODEST_ACCOUNT_OPTION_CHECK_ALL);
 		}
 		
-		if (account_data->username && strlen(account_data->username) > 0)
-			tny_account_set_user (tny_account, account_data->username);
-		if (account_data->hostname)
-			tny_account_set_hostname (tny_account, account_data->hostname);
+		username = modest_server_account_settings_get_username (server_settings);
+		if (username && strlen (username) > 0) 
+			tny_account_set_user (tny_account, username);
+		hostname = modest_server_account_settings_get_hostname (server_settings);
+		if (hostname)
+			tny_account_set_hostname (tny_account, hostname);
 		 
 		/* Set the port: */
-		if (account_data->port)
-			tny_account_set_port (tny_account, account_data->port);
+		port = modest_server_account_settings_get_port (server_settings);
+		if (port)
+			tny_account_set_port (tny_account, port);
 	}
 
 	MODEST_DEBUG_BLOCK (
@@ -386,31 +399,32 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 						 TnyGetPassFunc get_pass_func,
 						 TnyForgetPassFunc forget_pass_func)
 {
-	ModestServerAccountData *account_data;
+	ModestServerAccountSettings *server_settings;
 	TnyAccount *tny_account;
 	
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (server_account_name, NULL);
 
-	account_data = 	modest_account_mgr_get_server_account_data (account_mgr, 
-								    server_account_name);
-	if (!account_data)
+	
+	server_settings = 	modest_account_mgr_load_server_settings (account_mgr, server_account_name);
+	if (!server_settings)
 		return NULL;
 
 	tny_account = TNY_ACCOUNT (tny_camel_transport_account_new ());
 
 	if (tny_account) {
 		const gchar* proto_name = NULL;
-		tny_account_set_id (tny_account, account_data->account_name);
+		tny_account_set_id (tny_account, server_account_name);
 		tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
-		proto_name = modest_protocol_info_get_transport_store_protocol_name(account_data->proto);
+		proto_name = modest_protocol_info_get_transport_store_protocol_name 
+				    (modest_server_account_settings_get_protocol (server_settings));
 		tny_account_set_proto (tny_account, proto_name);
 		modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, server_account_name);
 	}
 
 	if (!tny_account)
 		g_warning ("%s: failed to create tny_account", __FUNCTION__);
-	else if (!update_tny_account (tny_account, account_mgr, account_data))
+	else if (!update_tny_account (tny_account, server_settings))
 		g_warning ("%s: failed to initialize tny_account", __FUNCTION__);
 	else {
 		tny_account_set_forget_pass_func (tny_account,
@@ -419,7 +433,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 					   get_pass_func ? get_pass_func: get_pass_dummy);
 	}
 	
-	modest_account_mgr_free_server_account_data (account_mgr, account_data);
+	g_object_unref (server_settings);
 	
 	return tny_account;
 }
@@ -454,46 +468,52 @@ set_online_callback (TnyCamelAccount *account, gboolean canceled, GError *err, g
 gboolean
 modest_tny_account_update_from_account (TnyAccount *tny_account) 
 {
-	ModestAccountData *account_data = NULL;
-	ModestServerAccountData *server_data = NULL;
+	ModestAccountSettings *settings = NULL;
+	ModestServerAccountSettings *server_settings = NULL;
 	TnyConnectionStatus conn_status;
 	ModestAccountMgr *account_mgr;
 	const gchar *account_name;
 	TnyAccountType type;
+	const gchar *display_name;
 
 	g_return_val_if_fail (tny_account, FALSE);
 
 	account_mgr = modest_runtime_get_account_mgr ();
 	account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (tny_account);
 	type = tny_account_get_account_type (tny_account);
-	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
-	if (!account_data) {
+	settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
+	if (!settings) {
 		g_printerr ("modest: %s: cannot get account data for account %s\n",
 			    __FUNCTION__, account_name);
 		return FALSE;
 	}
 
-	if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
-		server_data = account_data->store_account;
-	else if (type == TNY_ACCOUNT_TYPE_TRANSPORT && account_data->transport_account)
-		server_data = account_data->transport_account;
-	if (!server_data) {
+	display_name = modest_account_settings_get_display_name (settings);
+
+	if (type == TNY_ACCOUNT_TYPE_STORE)
+		server_settings = modest_account_settings_get_store_settings (settings);
+	else if (type == TNY_ACCOUNT_TYPE_TRANSPORT)
+		server_settings = modest_account_settings_get_transport_settings (settings);
+
+	if (modest_server_account_settings_get_account_name (server_settings) == NULL) {
 		g_printerr ("modest: no %s account defined for '%s'\n",
 			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
-			    account_data->display_name);
-		modest_account_mgr_free_account_data (account_mgr, account_data);
+			    display_name);
+		g_object_unref (server_settings);
+		g_object_unref (settings);
 		return FALSE;
 	}
 	
-	update_tny_account (tny_account, account_mgr, server_data);
+	update_tny_account (tny_account, server_settings);
 		
 	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
  	 * account, we set its name to the account of which it is part. */
- 
-	if (account_data->display_name)
-		tny_account_set_name (tny_account, account_data->display_name);
 
-	modest_account_mgr_free_account_data (account_mgr, account_data);
+	if (display_name)
+		tny_account_set_name (tny_account, display_name);
+
+	g_object_unref (server_settings);
+	g_object_unref (settings);
 
 	/* If the account was online, reconnect to apply the changes */
 	conn_status = tny_account_get_connection_status (tny_account);
@@ -529,8 +549,9 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 				     TnyForgetPassFunc forget_pass_func) 
 {
 	TnyAccount *tny_account = NULL;
-	ModestAccountData *account_data = NULL;
-	ModestServerAccountData *server_data = NULL;
+	ModestAccountSettings *settings = NULL;
+	ModestServerAccountSettings *server_settings = NULL;
+	const gchar *display_name;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_name, NULL);
@@ -538,39 +559,44 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 	g_return_val_if_fail (type == TNY_ACCOUNT_TYPE_STORE || type == TNY_ACCOUNT_TYPE_TRANSPORT,
 			      NULL);
 
-	account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
-	if (!account_data) {
+	settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
+	if (!settings) {
 		g_printerr ("modest: %s: cannot get account data for account %s\n",
 			    __FUNCTION__, account_name);
 		return NULL;
 	}
+	display_name = modest_account_settings_get_display_name (settings);
 
-	if (type == TNY_ACCOUNT_TYPE_STORE && account_data->store_account)
-		server_data = account_data->store_account;
-	else if (type == TNY_ACCOUNT_TYPE_TRANSPORT && account_data->transport_account)
-		server_data = account_data->transport_account;
-	if (!server_data) {
+	if (type == TNY_ACCOUNT_TYPE_STORE)
+		server_settings = modest_account_settings_get_store_settings (settings);
+	else if (type == TNY_ACCOUNT_TYPE_TRANSPORT)
+		server_settings = modest_account_settings_get_transport_settings (settings);
+
+	if (modest_server_account_settings_get_account_name (server_settings) == NULL) {
 		g_printerr ("modest: no %s account defined for '%s'\n",
 			    type == TNY_ACCOUNT_TYPE_STORE ? "store" : "transport",
-			    account_data->display_name);
-		modest_account_mgr_free_account_data (account_mgr, account_data);
+			    display_name);
+		g_object_unref (server_settings);
+		g_object_unref (settings);
 		return NULL;
 	}
 	
-	tny_account = create_tny_account (account_mgr,session, server_data);
+	tny_account = create_tny_account (session, server_settings);
 	if (!tny_account) { 
 		g_printerr ("modest: failed to create tny account for %s (%s)\n",
-			    account_data->account_name, server_data->account_name);
-		modest_account_mgr_free_account_data (account_mgr, account_data);
+			    account_name, 
+			    modest_server_account_settings_get_account_name (server_settings));
+		g_object_unref (server_settings);
+		g_object_unref (settings);
 		return NULL;
 	} else
-		update_tny_account (tny_account, account_mgr, server_data);
+		update_tny_account (tny_account, server_settings);
 		
 	/* This name is what shows up in the folder view -- so for some POP/IMAP/... server
  	 * account, we set its name to the account of which it is part. */
  
-	if (account_data->display_name)
-		tny_account_set_name (tny_account, account_data->display_name);
+	if (display_name)
+		tny_account_set_name (tny_account, display_name);
 
 	tny_account_set_forget_pass_func (tny_account,
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
@@ -579,7 +605,8 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 	
         modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account,
 									      account_name);
-        modest_account_mgr_free_account_data (account_mgr, account_data);
+	g_object_unref (server_settings);
+	g_object_unref (settings);
 
 	return tny_account;
 }

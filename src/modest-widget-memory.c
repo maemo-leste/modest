@@ -487,14 +487,17 @@ restore_settings_folder_view (ModestConf *conf,
 	mgr = modest_runtime_get_account_mgr ();
 	default_acc = modest_account_mgr_get_default_account (mgr);
 	if (default_acc) {
-		ModestAccountData *acc_data;
+		ModestAccountSettings *settings;
+		ModestServerAccountSettings *store_settings;
 		const gchar *server_acc_id;
 
-		acc_data = modest_account_mgr_get_account_data (mgr, (const gchar*) default_acc);
-		server_acc_id = (const gchar *) acc_data->store_account->account_name;
+		settings = modest_account_mgr_load_account_settings (mgr, (const gchar*) default_acc);
+		store_settings = modest_account_settings_get_store_settings (settings);
+		server_acc_id = modest_server_account_settings_get_account_name (store_settings);
 
 		modest_folder_view_set_account_id_of_visible_server_account (folder_view, server_acc_id);
-
+		g_object_unref (store_settings);
+		g_object_unref (settings);
 		g_free (default_acc);
 	}
 	return TRUE;

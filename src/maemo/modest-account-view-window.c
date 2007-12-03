@@ -40,7 +40,7 @@
 #include "modest-tny-platform-factory.h"
 #include "maemo/easysetup/modest-easysetup-wizard.h"
 #include "maemo/modest-account-settings-dialog.h"
-#include <maemo/modest-maemo-utils.h>
+#include <modest-utils.h>
 #include "widgets/modest-ui-constants.h"
 
 /* 'private'/'protected' functions */
@@ -172,14 +172,10 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 
 	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED ||
 	    transport_conn_status == TNY_CONNECTION_STATUS_CONNECTED) {
-		GtkWidget *note = NULL;
 		gint response;
 
-		note = hildon_note_new_confirmation (GTK_WINDOW (self), 
-						     _("emev_nc_disconnect_account"));
-		response = gtk_dialog_run (GTK_DIALOG(note));
-
-		gtk_widget_destroy (note);
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
+								_("emev_nc_disconnect_account"));
 		if (response == GTK_RESPONSE_OK) {
 			/* FIXME: We should only cancel those of this account */
 			modest_mail_operation_queue_cancel_all (queue);
@@ -239,17 +235,9 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 					account_title);
 			}
 			
-			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
-				txt));
-			gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-			gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (self));
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), txt);
 			g_free (txt);
 			txt = NULL;
-	
-			response = gtk_dialog_run (dialog);
-			gtk_widget_destroy (GTK_WIDGET (dialog));
-			while (gtk_events_pending ())
-				gtk_main_iteration ();
 
 			if (response == GTK_RESPONSE_OK) {
 				/* Remove account. If it succeeds then it also removes
@@ -316,8 +304,12 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		
 		/* Show the Account Settings window: */
 		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+		ModestAccountSettings *settings;
 
-		modest_account_settings_dialog_set_account_name (dialog, account_name);
+		settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (), account_name);
+
+		modest_account_settings_dialog_set_account (dialog, settings);
+		g_object_unref (settings);
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 
 		/* When the dialog is closed, reconnect */
@@ -325,7 +317,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 				  G_CALLBACK (on_account_settings_dialog_response), 
 				  self);
 
-		modest_maemo_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
+		modest_utils_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
 	}
 	
 	g_free (account_name);

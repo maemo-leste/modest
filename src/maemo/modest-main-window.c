@@ -53,6 +53,7 @@
 #include "modest-tny-account.h"
 #include "modest-tny-folder.h"
 #include "modest-conf.h"
+#include <modest-utils.h>
 #include <modest-maemo-utils.h>
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-msg.h"
@@ -500,10 +501,11 @@ save_state (ModestWindow *window)
 }
 
 static gint
-compare_display_names (ModestAccountData *a,
-		       ModestAccountData *b)
+compare_display_names (ModestAccountSettings *a,
+		       ModestAccountSettings *b)
 {
-	return strcmp (a->display_name, b->display_name);
+	return strcmp (modest_account_settings_get_display_name (a),
+		       modest_account_settings_get_display_name (b));
 }
 
 static void
@@ -531,9 +533,9 @@ update_menus (ModestMainWindow* self)
 	accounts = NULL;
 
 	while (iter) {
-		ModestAccountData *account_data = 
-			modest_account_mgr_get_account_data (mgr, (gchar*) iter->data);
-		accounts = g_slist_prepend (accounts, account_data);
+		ModestAccountSettings *settings = 
+			modest_account_mgr_load_account_settings (mgr, (gchar*) iter->data);
+		accounts = g_slist_prepend (accounts, settings);
 
 		iter = iter->next;
 	}
@@ -608,40 +610,42 @@ update_menus (ModestMainWindow* self)
 	radio_group = NULL;
 	for (i = 0; i < num_accounts; i++) {
 		gchar *display_name = NULL;	
-		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
+		const gchar *account_name;
+		ModestAccountSettings *settings = (ModestAccountSettings *) g_slist_nth_data (accounts, i);
 
-		if (!account_data) {
+		if (!settings) {
 			g_warning ("%s: BUG: account_data == NULL", __FUNCTION__);
 			continue;
 		}
+		account_name = modest_account_settings_get_account_name (settings);
 	
-		if (default_account && account_data->account_name && 
-		    !(strcmp (default_account, account_data->account_name) == 0)) {
+		if (default_account && account_name && 
+		    !(strcmp (default_account, account_name) == 0)) {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
-							account_data->display_name);
+							modest_account_settings_get_display_name (settings));
 		} else {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
-							account_data->display_name);
+							modest_account_settings_get_display_name (settings));
 		}
 		
 		/* Create action and add it to the action group. The
 		   action name must be the account name, this way we
 		   could know in the handlers the account to show */
-		if (account_data && account_data->account_name) {
+		if (settings && account_name) {
 			gchar* item_name, *refresh_action_name;
 			guint8 merge_id = 0;
 			GtkAction *view_account_action, *refresh_account_action;
 
-			view_account_action = GTK_ACTION (gtk_radio_action_new (account_data->account_name,
+			view_account_action = GTK_ACTION (gtk_radio_action_new (account_name,
 										display_name, NULL, NULL, 0));
 			gtk_action_group_add_action (priv->view_additions_group, view_account_action);
 			gtk_radio_action_set_group (GTK_RADIO_ACTION (view_account_action), radio_group);
 			radio_group = gtk_radio_action_get_group (GTK_RADIO_ACTION (view_account_action));
 
 			if (active_account_name) {
-				if (active_account_name && account_data->account_name && 
-						(strcmp (active_account_name, account_data->account_name) == 0)) {
-							gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (view_account_action), TRUE);
+				if (active_account_name && account_name && 
+				    (strcmp (active_account_name, account_name) == 0)) {
+					gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (view_account_action), TRUE);
 				}
 			}
 
@@ -649,14 +653,14 @@ update_menus (ModestMainWindow* self)
 			   changes in a single execution because we're
 			   downcasting the guint to a guint8 in order to use a
 			   GByteArray. It should be enough. */
-			item_name = g_strconcat (account_data->account_name, "Menu", NULL);
+			item_name = g_strconcat (account_name, "Menu", NULL);
 			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
 			gtk_ui_manager_add_ui (parent_priv->ui_manager,
 					       merge_id,
 					       "/MenuBar/ViewMenu/ViewMenuAdditions",
 					       item_name,
-					       account_data->account_name,
+					       account_name,
 					       GTK_UI_MANAGER_MENUITEM,
 					       FALSE);
 
@@ -667,7 +671,7 @@ update_menus (ModestMainWindow* self)
 						self);
 
 			/* Create the items for the Tools->Send&Receive submenu */
-			refresh_action_name = g_strconcat ("SendReceive", account_data->account_name, NULL);
+			refresh_action_name = g_strconcat ("SendReceive", account_name, NULL);
 			refresh_account_action = gtk_action_new ((const gchar*) refresh_action_name, 
 								 display_name, NULL, NULL);
 			gtk_action_group_add_action (priv->view_additions_group, refresh_account_action);
@@ -686,7 +690,7 @@ update_menus (ModestMainWindow* self)
 			g_signal_connect_data (G_OBJECT (refresh_account_action), 
 					       "activate", 
 					       G_CALLBACK (on_refresh_account_action_activated), 
-					       g_strdup (account_data->account_name),
+					       g_strdup (account_name),
 					       (GClosureNotify) g_free,
 					       0);
 
@@ -696,7 +700,7 @@ update_menus (ModestMainWindow* self)
 			if (priv->accounts_popup) {
 				GtkWidget *label = gtk_label_new(NULL);
 				gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
-				if (default_account && (strcmp(account_data->account_name, default_account) == 0))
+				if (default_account && (strcmp(account_name, default_account) == 0))
 				{
 					gchar *escaped = g_markup_printf_escaped ("<b>%s</b>", display_name);
 					gtk_label_set_markup (GTK_LABEL (label), escaped);
@@ -714,7 +718,7 @@ update_menus (ModestMainWindow* self)
 				g_signal_connect_data (G_OBJECT (item), 
 						       "activate", 
 						       G_CALLBACK (on_send_receive_csm_activated),
-						       g_strdup (account_data->account_name),
+						       g_strdup (account_name),
 						       (GClosureNotify) g_free,
 						       0);
 			}
@@ -731,11 +735,14 @@ update_menus (ModestMainWindow* self)
 	 * group being inserted. This makes the default account appear in bold.
 	 * I agree it is a rather ugly way, but I don't see another possibility. armin. */
 	for (i = 0; i < num_accounts; i++) {
-		ModestAccountData *account_data = (ModestAccountData *) g_slist_nth_data (accounts, i);
+		ModestAccountSettings *settings = (ModestAccountSettings *) g_slist_nth_data (accounts, i);
+		const gchar *account_name;
 
-		if(account_data->account_name && default_account &&
-		   strcmp (account_data->account_name, default_account) == 0) {
-			gchar *item_name = g_strconcat (account_data->account_name, "Menu", NULL);
+		account_name = modest_account_settings_get_account_name (settings);
+
+		if(account_name && default_account &&
+		   strcmp (account_name, default_account) == 0) {
+			gchar *item_name = g_strconcat (account_name, "Menu", NULL);
 
 			gchar *path = g_strconcat ("/MenuBar/ViewMenu/ViewMenuAdditions/", item_name, NULL);
 			GtkWidget *item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
@@ -750,7 +757,7 @@ update_menus (ModestMainWindow* self)
 					g_free (bold_name);
 				}
 			}
-
+			
 			path = g_strconcat("/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions/", item_name, NULL);
 			item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
 			g_free (path);
@@ -768,7 +775,7 @@ update_menus (ModestMainWindow* self)
 			g_free(item_name);
 		}
 
-		modest_account_mgr_free_account_data (mgr, account_data);
+		g_object_unref (settings);
 	}
 
 	if (priv->accounts_popup) {
@@ -1168,7 +1175,7 @@ modest_main_window_new (void)
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 	/* Menubar. Update the state of some toggles */
-	parent_priv->menubar = modest_maemo_utils_menubar_to_menu (parent_priv->ui_manager);
+	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 	conf = modest_runtime_get_conf ();
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu");
@@ -1460,7 +1467,7 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu";
 
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
-	modest_maemo_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
+	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
 							    show_toolbar);
 }
 
@@ -2266,20 +2273,30 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 {
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	GtkAction *action;
+	ModestAccountMgr *mgr;
+	ModestAccountSettings *settings;
+	ModestServerAccountSettings *store_settings = NULL;
 
 	/* Get account data */
-	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
-	ModestAccountData *acc_data = modest_account_mgr_get_account_data (mgr, acc_name);
+	mgr = modest_runtime_get_account_mgr ();
+	settings = modest_account_mgr_load_account_settings (mgr, acc_name);
+	if (settings)
+		store_settings = modest_account_settings_get_store_settings (settings);
 
 	/* Set the new visible & active account */
-	if (acc_data && acc_data->store_account) { 
-		modest_folder_view_set_account_id_of_visible_server_account (priv->folder_view,
-									     acc_data->store_account->account_name);
-		modest_window_set_active_account (MODEST_WINDOW (self), acc_data->account_name);
-		action = gtk_action_group_get_action (priv->view_additions_group, acc_data->account_name);
+	if (settings && (modest_server_account_settings_get_account_name (store_settings)!= NULL)) { 
+		const gchar *account_name;
+
+		account_name = modest_account_settings_get_account_name (settings);
+
+		modest_folder_view_set_account_id_of_visible_server_account 
+			(priv->folder_view,
+			 modest_server_account_settings_get_account_name (store_settings));
+		modest_window_set_active_account (MODEST_WINDOW (self), account_name);
+		action = gtk_action_group_get_action (priv->view_additions_group, account_name);
 		if (action != NULL) {
 			if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action))) {
-				modest_maemo_toggle_action_set_active_block_notify (
+				modest_utils_toggle_action_set_active_block_notify (
 					GTK_TOGGLE_ACTION (action),
 					TRUE);
 			}
@@ -2290,8 +2307,10 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 
 
 	/* Free */
-	if (acc_data)
-		modest_account_mgr_free_account_data (mgr, acc_data);
+	if (settings) {
+		g_object_unref (store_settings);
+		g_object_unref (settings);
+	}
 }
 
 /* Make sure that at least one account is "viewed": */

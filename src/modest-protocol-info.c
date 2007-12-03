@@ -149,6 +149,18 @@ modest_protocol_info_get_auth_protocol (const gchar* name)
 	                            FALSE);
 }
 
+ModestConnectionProtocol
+modest_protocol_info_get_connection_protocol (const gchar* name)
+{
+	g_return_val_if_fail (name, MODEST_PROTOCOL_CONNECTION_NORMAL);
+	
+	return get_protocol_by_name(ConnectionProtocolMap,
+	                            G_N_ELEMENTS(ConnectionProtocolMap),
+	                            name,
+	                            MODEST_PROTOCOL_CONNECTION_NORMAL,
+	                            FALSE);
+}
+
 
 /* get either the name or the display_name for the protocol */
 static const gchar*

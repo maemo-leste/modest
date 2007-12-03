@@ -42,6 +42,7 @@
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtkliststore.h>
 #include <string.h> /* For strcmp(). */
+#include <modest-account-mgr-helpers.h>
 
 /* 'private'/'protected' functions */
 static void modest_account_view_class_init    (ModestAccountViewClass *klass);
@@ -153,12 +154,21 @@ modest_account_view_finalize (GObject *obj)
 
 /* Get the string for the last updated time. Result must NOT be g_freed */
 static const gchar*
-get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountData *account_data)
+get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountSettings *settings)
 {
 	/* FIXME: let's assume that 'last update' applies to the store account... */
-	const gchar* last_updated_string;
-	time_t last_updated = account_data->store_account->last_updated;
-	if (!modest_account_mgr_account_is_busy(account_mgr, account_data->account_name)) {
+	const gchar *last_updated_string;
+	const gchar *store_account_name;
+	const gchar *account_name;
+	time_t last_updated;
+	ModestServerAccountSettings *server_settings;
+
+	server_settings = modest_account_settings_get_store_settings (settings);
+	store_account_name = modest_server_account_settings_get_account_name (server_settings);
+	last_updated = modest_account_mgr_get_last_updated (account_mgr, store_account_name);
+	g_object_unref (server_settings);
+	account_name = modest_account_settings_get_account_name (settings);
+	if (!modest_account_mgr_account_is_busy(account_mgr, account_name)) {
 		if (last_updated > 0) 
 			last_updated_string = modest_text_utils_get_display_date(last_updated);
 		else
@@ -199,41 +209,48 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 
 	while (cursor) {
 		gchar *account_name;
-		ModestAccountData *account_data;
+		ModestAccountSettings *settings;
+		ModestServerAccountSettings *store_settings;
 		
 		account_name = (gchar*)cursor->data;
 		
-		account_data = modest_account_mgr_get_account_data (account_mgr, account_name);
-		if (!account_data) {
+		settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
+		if (!settings) {
 			g_printerr ("modest: failed to get account data for %s\n", account_name);
 			continue;
 		}
+		store_settings = modest_account_settings_get_store_settings (settings);
 
 		/* don't display accounts without stores */
-		if (account_data->store_account) {
+		if (modest_server_account_settings_get_account_name (store_settings) != NULL) {
 
 			GtkTreeIter iter;
 
 			/* don't free */
-			const gchar *last_updated_string = get_last_updated_string(account_mgr, account_data);
+			const gchar *last_updated_string = get_last_updated_string(account_mgr, settings);
 			
-			if (account_data->is_enabled) {
+			if (modest_account_settings_get_enabled (settings)) {
 				const gchar *proto_name;
 
-				proto_name = modest_protocol_info_get_transport_store_protocol_name (account_data->store_account->proto);
+				proto_name = modest_protocol_info_get_transport_store_protocol_name 
+					(modest_server_account_settings_get_protocol (store_settings));
 				gtk_list_store_insert_with_values (
 					model, &iter, 0,
 					MODEST_ACCOUNT_VIEW_NAME_COLUMN, account_name,
-					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, account_data->display_name,
-					MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, account_data->is_enabled,
-					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, account_data->is_default,
+					MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, 
+					modest_account_settings_get_display_name (settings),
+					MODEST_ACCOUNT_VIEW_IS_ENABLED_COLUMN, 
+					modest_account_settings_get_enabled (settings),
+					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, 
+					modest_account_settings_get_is_default (settings),
 					MODEST_ACCOUNT_VIEW_PROTO_COLUMN, proto_name,
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
 					-1);
 			}
 		}
-
-		modest_account_mgr_free_account_data (account_mgr, account_data);
+		
+		g_object_unref (store_settings);
+		g_object_unref (settings);
 		cursor = cursor->next;
 	}
 
@@ -267,17 +284,17 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 				   &cur_name, -1);
 
 		if (g_str_equal(cur_name, account_name)) {
-			ModestAccountData* account_data = 
-				modest_account_mgr_get_account_data (account_mgr, account_name);
-			if (!account_data) {
+			ModestAccountSettings* settings = 
+				modest_account_mgr_load_account_settings (account_mgr, account_name);
+			if (!settings) {
 				g_free (cur_name);
 				return;
 			}
-			const gchar* last_updated_string = get_last_updated_string(account_mgr, account_data);
+			const gchar* last_updated_string = get_last_updated_string(account_mgr, settings);
 			gtk_list_store_set(model, &iter, 
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
 					   -1);
-			modest_account_mgr_free_account_data (account_mgr, account_data);
+			g_object_unref (settings);
 			found = TRUE;
 		}
 		g_free (cur_name);

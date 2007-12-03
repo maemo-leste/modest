@@ -35,7 +35,6 @@
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
-#include <modest-account-mgr-helpers.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
@@ -165,7 +164,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
 
 	/* Don't close the dialog if a range error occured */
-	if(priv->range_error_occured)
+	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
 	{
 		priv->range_error_occured = FALSE;
 		g_signal_stop_emission_by_name (dialog, "response");
@@ -351,7 +350,7 @@ modest_connection_specific_smtp_edit_window_new (void)
 void
 modest_connection_specific_smtp_edit_window_set_connection (
 	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name,
-	const ModestServerAccountData *data)
+	ModestServerAccountSettings *server_settings)
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
@@ -361,21 +360,27 @@ modest_connection_specific_smtp_edit_window_set_connection (
 	gtk_window_set_title (GTK_WINDOW (window), title);
 	g_free (title);
 	
-	if (data) 
+	if (server_settings) 
 	{
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_outgoingserver), data->hostname);
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_username), data->username);	
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_password), data->password);
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_outgoingserver), 
+				    modest_server_account_settings_get_hostname (server_settings));
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_username),
+				    modest_server_account_settings_get_username (server_settings));	
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_password), 
+				    modest_server_account_settings_get_password (server_settings));
 	
 		modest_serversecurity_combo_box_set_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), data->security);
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), 
+		modest_server_account_settings_get_security (server_settings));
 	
 		modest_secureauth_combo_box_set_active_secureauth (
-		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), data->secure_auth);
+		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), 
+		modest_server_account_settings_get_auth_protocol (server_settings));
 		
 		/* port: */
 		hildon_number_editor_set_value (
-			HILDON_NUMBER_EDITOR (priv->entry_port), data->port);
+			HILDON_NUMBER_EDITOR (priv->entry_port), 
+			modest_server_account_settings_get_port (server_settings));
 		
 		
 		/* This will cause changed signals so we set dirty back to FALSE */
@@ -383,15 +388,11 @@ modest_connection_specific_smtp_edit_window_set_connection (
 	}
 }
 
-/*
- * The result must be freed with modest_account_mgr_free_server_account_data(). */
-ModestServerAccountData*
-modest_connection_specific_smtp_edit_window_get_settings (
-	ModestConnectionSpecificSmtpEditWindow *window, 
-	ModestAccountMgr *account_manager)
+ModestServerAccountSettings*
+modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecificSmtpEditWindow *window)
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = NULL;
-	ModestServerAccountData *result = NULL;
+	ModestServerAccountSettings *server_settings = NULL;
 	const gchar *outgoing_server = NULL;
 
 	priv = 	CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
@@ -403,25 +404,27 @@ modest_connection_specific_smtp_edit_window_get_settings (
 		return NULL;
 	}
 	
-	/* Use g_slice_new0(), because that's what modest_account_mgr_free_server_account_data() 
-	 * expects us to use. */
-	result = g_slice_new0 (ModestServerAccountData);
+	server_settings = modest_server_account_settings_new ();
 	
-	result->hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
-	result->username = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));	
-	result->password = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password)));
+	modest_server_account_settings_set_hostname (server_settings, 
+						     gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
+	modest_server_account_settings_set_username (server_settings,
+						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));
+	modest_server_account_settings_set_password (server_settings,
+						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password)));
 	
-	result->security = modest_serversecurity_combo_box_get_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
+	modest_server_account_settings_set_security (server_settings, 
+						     modest_serversecurity_combo_box_get_active_serversecurity (
+						     MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security)));
+	modest_server_account_settings_set_auth_protocol (server_settings,
+							  modest_secureauth_combo_box_get_active_secureauth (
+							  MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth)));
 	
-	result->secure_auth = modest_secureauth_combo_box_get_active_secureauth (
-		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
-		
 	/* port: */
-	result->port = hildon_number_editor_get_value (
-			HILDON_NUMBER_EDITOR (priv->entry_port));
+	modest_server_account_settings_set_port (server_settings,
+						 hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->entry_port)));
 			
-	return result;
+	return server_settings;
 }
 
 gboolean modest_connection_specific_smtp_edit_window_is_dirty(

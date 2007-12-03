@@ -30,7 +30,7 @@
 
 <ui>
 
-  <menubar name="MenuBar">
+  <popup name="MenuBar">
     
     <menu name="EmailMenu" action="Email">
       <menu name="EmailNewMainMenu" action="EmailNew">
@@ -100,7 +100,7 @@
       <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
       <menuitem name="CloseAllWindowsMenu" action="CloseAllWindows"/>
     </menu>
-  </menubar>
+  </popup>
 
   <toolbar name="ToolBar">
     <toolitem action="ToolbarMessageNew"/> 

@@ -5,6 +5,7 @@
 
 #include "modest-retrieve-combo-box.h"
 #include "modest-defs.h" /* For the conf names. */
+#include "modest-account-settings.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -82,7 +83,7 @@ modest_retrieve_combo_box_class_init (ModestRetrieveComboBoxClass *klass)
 
 enum MODEL_COLS {
 	MODEL_COL_NAME = 0, /* a string */
-	MODEL_COL_CONF_NAME = 1 /* a string */
+	MODEL_COL_RETRIEVE_TYPE = 1 /* a gint (a ModestAccountRetrieveType) */
 };
 
 void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTransportStoreProtocol protocol);
@@ -96,7 +97,7 @@ modest_retrieve_combo_box_init (ModestRetrieveComboBox *self)
 	 * with a string for the name, and an ID for the retrieve.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING));
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT));
 
 	/* Setup the combo box: */
 	GtkComboBox *combobox = GTK_COMBO_BOX (self);
@@ -135,7 +136,7 @@ void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTra
 	GtkTreeIter iter;
 	gtk_list_store_append (liststore, &iter);
 	gtk_list_store_set (liststore, &iter, 
-		MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY, 
+		MODEL_COL_RETRIEVE_TYPE, MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY, 
 		MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_headers"), -1);
 
 	/* We disable messages retrieval finally */
@@ -143,14 +144,14 @@ void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTra
 /* 	if (protocol == MODEST_PROTOCOL_STORE_IMAP) { */
 /* 		gtk_list_store_append (liststore, &iter); */
 /* 		gtk_list_store_set (liststore, &iter,  */
-/* 			MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES,  */
+/* 			MODEL_COL_RETRIEVE_TYPE, MODEST_ACCOUNT_RETRIEVE_MESSAGES,  */
 /* 			MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_messages"), -1); */
 /* 	} */
 	
 	
 	gtk_list_store_append (liststore, &iter);
 	gtk_list_store_set (liststore, &iter, 
-		MODEL_COL_CONF_NAME, MODEST_ACCOUNT_RETRIEVE_VALUE_MESSAGES_AND_ATTACHMENTS, 
+		MODEL_COL_RETRIEVE_TYPE, MODEST_ACCOUNT_RETRIEVE_MESSAGES_AND_ATTACHMENTS, 
 		MODEL_COL_NAME, _("mcen_fi_advsetup_retrievetype_messages_attachments"), -1);
 }
 
@@ -158,7 +159,7 @@ void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTra
  * Returns the selected retrieve.
  * or NULL if no retrieve was selected. The result must be freed with g_free().
  */
-gchar*
+ModestAccountRetrieveType
 modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *combobox)
 {
 	GtkTreeIter active;
@@ -166,12 +167,12 @@ modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *comb
 	if (found) {
 		ModestRetrieveComboBoxPrivate *priv = RETRIEVE_COMBO_BOX_GET_PRIVATE (combobox);
 
-		gchar *retrieve = NULL;
-		gtk_tree_model_get (priv->model, &active, MODEL_COL_CONF_NAME, &retrieve, -1);
-		return retrieve;	
+		ModestAccountRetrieveType retrieve_type = MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY;
+		gtk_tree_model_get (priv->model, &active, MODEL_COL_RETRIEVE_TYPE, &retrieve_type, -1);
+		return retrieve_type;	
 	}
 
-	return NULL; /* Failed. */
+	return MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY; /* Failed. */
 }
 
 /* This allows us to pass more than one piece of data to the signal handler,
@@ -179,7 +180,7 @@ modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *comb
 typedef struct 
 {
 		ModestRetrieveComboBox* self;
-		const gchar* conf_name;
+		ModestAccountRetrieveType retrieve_type;
 		gboolean found;
 } ForEachData;
 
@@ -192,15 +193,14 @@ on_model_foreach_select_id(GtkTreeModel *model,
 	gboolean result = FALSE;
 	
 	/* Select the item if it has the matching name: */
-	gchar * conf_name = 0;
-	gtk_tree_model_get (model, iter, MODEL_COL_CONF_NAME, &conf_name, -1); 
-	if(conf_name && state->conf_name && (strcmp(conf_name, state->conf_name) == 0)) {
+	ModestAccountRetrieveType retrieve_type;
+	gtk_tree_model_get (model, iter, MODEL_COL_RETRIEVE_TYPE, &retrieve_type, -1); 
+	if (retrieve_type == state->retrieve_type) {
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (state->self), iter);
 		
 		state->found = TRUE;
 		result = TRUE; /* Stop walking the tree. */
 	}
-	g_free (conf_name);
 	
 	return result; /* Whether we keep walking the tree. */
 }
@@ -210,14 +210,15 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or FALSE if no retrieve was selected.
  */
 gboolean
-modest_retrieve_combo_box_set_active_retrieve_conf (ModestRetrieveComboBox *combobox, const gchar* retrieve)
+modest_retrieve_combo_box_set_active_retrieve_conf (ModestRetrieveComboBox *combobox, 
+						    ModestAccountRetrieveType retrieve_type)
 {
 	ModestRetrieveComboBoxPrivate *priv = RETRIEVE_COMBO_BOX_GET_PRIVATE (combobox);
 	
 	/* Create a state instance so we can send two items of data to the signal handler: */
 	ForEachData *state = g_new0 (ForEachData, 1);
 	state->self = combobox;
-	state->conf_name = retrieve;
+	state->retrieve_type = retrieve_type;
 	state->found = FALSE;
 	
 	/* Look at each item, and select the one with the correct ID: */

@@ -37,49 +37,25 @@
 #include <tny-account.h>
 #include <tny-store-account.h>
 #include <tny-transport-account.h>
+#include <modest-server-account-settings.h>
 
 G_BEGIN_DECLS
 
-typedef struct {
-	gchar            *account_name;
-	gchar            *hostname;
-	gchar            *username;
-	gchar	         *uri; /*< Only for mbox and maildir accounts. */
-	ModestTransportStoreProtocol    proto; /*< The store or transport. Not ORed. */
-	gchar            *password;
-	time_t		  last_updated;
-	gint              port; /* Or 0, if the default should be used. */
-	ModestAuthProtocol   secure_auth;
-	ModestConnectionProtocol   security;
-} ModestServerAccountData;
-
-typedef struct {
-	gchar            *account_name;
-	gchar            *display_name;
-	gchar            *fullname;
-	gchar            *email;
-	gboolean         is_enabled;
-	gboolean         is_default;
-	ModestServerAccountData *transport_account;
-	ModestServerAccountData *store_account;
-} ModestAccountData;
-
-
-
 /**
- * modest_account_mgr_get_account_data:
+ * modest_account_mgr_load_account_settings:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account
  * 
  * get information about an account
  *
- * Returns: a ModestAccountData structure with information about the account.
- * the data should not be changed, and be freed with modest_account_mgr_free_account_data
- * The function does a sanity check, an if it's not returning NULL,
- * it is a valid account
+ * Returns: a ModestAccountSettings instance with information about the account,
+ *  or NULL if the account is not valid or does not exist.
  */
-ModestAccountData *modest_account_mgr_get_account_data     (ModestAccountMgr *self,
-							    const gchar* name);
+ModestAccountSettings *modest_account_mgr_load_account_settings     (ModestAccountMgr *self,
+								     const gchar* name);
+
+void modest_account_mgr_save_account_settings (ModestAccountMgr *self,
+					       ModestAccountSettings *settings);
 
 /**
  * modest_account_mgr_set_first_account_as_default:
@@ -98,15 +74,6 @@ modest_account_mgr_set_first_account_as_default  (ModestAccountMgr *self);
 gchar* 
 modest_account_mgr_get_first_account_name (ModestAccountMgr *self);
 
-/**
- * modest_account_mgr_free_account_data:
- * @self: a ModestAccountMgr instance
- * @data: a ModestAccountData instance
- * 
- * free the account data structure
- */
-void       modest_account_mgr_free_account_data     (ModestAccountMgr *self,
-						     ModestAccountData *data);
 
 /**
  * modest_account_mgr_set_enabled
@@ -380,11 +347,11 @@ void modest_account_mgr_set_server_account_security (ModestAccountMgr *self,
 						     const gchar* account_name, 
 						     ModestConnectionProtocol security);
 
-ModestServerAccountData* modest_account_mgr_get_server_account_data (ModestAccountMgr *self, 
-								     const gchar* name);
+gboolean modest_account_mgr_save_server_settings (ModestAccountMgr *self,
+						  ModestServerAccountSettings *settings);
 
-void modest_account_mgr_free_server_account_data (ModestAccountMgr *self,
-						  ModestServerAccountData* data);
+ModestServerAccountSettings *modest_account_mgr_load_server_settings (ModestAccountMgr *self,
+								      const gchar *account_name);
 
 /**
  * modest_account_mgr_get_from_string
@@ -462,12 +429,12 @@ gchar* modest_account_mgr_get_server_account_name (ModestAccountMgr *self,
 						   const gchar *account_name,
 						   TnyAccountType account_type);
 
-gchar* modest_account_mgr_get_retrieve_type (ModestAccountMgr *self, 
-					     const gchar *account_name);
+ModestAccountRetrieveType modest_account_mgr_get_retrieve_type (ModestAccountMgr *self, 
+								const gchar *account_name);
 
 void  modest_account_mgr_set_retrieve_type (ModestAccountMgr *self, 
 					    const gchar *account_name,
-					    const gchar *retrieve_type);
+					    ModestAccountRetrieveType retrieve_type);
 
 void  modest_account_mgr_set_user_fullname (ModestAccountMgr *self, 
 					    const gchar *account_name,

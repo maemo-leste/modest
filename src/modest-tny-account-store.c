@@ -554,8 +554,11 @@ show_wrong_password_dialog (TnyAccount *account)
 					
 	gboolean created_dialog = FALSE;
 	if (!found || !dialog) {
+		ModestAccountSettings *settings;
 		dialog = modest_account_settings_dialog_new ();
-		modest_account_settings_dialog_set_account_name (dialog, modest_account_name);
+		settings = modest_account_mgr_load_account_settings (priv->account_mgr, modest_account_name);
+		modest_account_settings_dialog_set_account (dialog, settings);
+		g_object_unref (settings);
 		modest_account_settings_dialog_switch_to_user_info (dialog);
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 		

@@ -927,6 +927,9 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 
 	model = gtk_tree_view_get_model(header_view);
 
+	if (!model)
+		return FALSE;
+
 	sel = gtk_tree_view_get_selection(header_view);
 	if(!gtk_tree_selection_count_selected_rows(sel))
 		if (gtk_tree_model_get_iter_first(model, &tree_iter)) {

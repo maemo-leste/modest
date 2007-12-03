@@ -270,6 +270,89 @@ null_means_empty (const gchar * str)
 	return str ? str : "";
 }
 
+gboolean
+modest_account_mgr_add_account_from_settings (ModestAccountMgr *self,
+					      ModestAccountSettings *settings)
+{
+	ModestAccountMgrPrivate *priv;
+	const gchar* display_name;
+	gchar *account_name_start, *account_name;
+	gchar *store_name_start, *store_name;
+	gchar *transport_name_start, *transport_name;
+	gchar *default_account;
+	ModestServerAccountSettings *store_settings, *transport_settings;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR (self), FALSE);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_SETTINGS (settings), FALSE);
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	display_name = modest_account_settings_get_display_name (settings);
+
+	/* We should have checked for this already, and changed that name accordingly, 
+	 * but let's check again just in case */
+	if (!display_name || 
+	    modest_account_mgr_account_with_display_name_exists (self, display_name)) {
+		return FALSE;
+	}
+
+	/* Increment the non-user visible name if necessary, 
+	 * based on the display name: */
+	account_name_start = g_strdup_printf ("%sID", display_name);
+	account_name = modest_account_mgr_get_unused_account_name (self,
+								   account_name_start, FALSE /* not a server account */);
+	g_free (account_name_start);
+	
+	/* Add a (incoming) server account, to be used by the account: */
+	store_name_start = g_strconcat (account_name, "_store", NULL);
+	store_name = modest_account_mgr_get_unused_account_name (self, 
+								 store_name_start, TRUE /* server account */);
+	g_free (store_name_start);
+	
+	/* Add a (outgoing) server account to be used by the account: */
+	transport_name_start = g_strconcat (account_name, "_transport", NULL);
+	transport_name = modest_account_mgr_get_unused_account_name (self, 
+								     transport_name_start, TRUE /* server account */);
+	g_free (transport_name_start);
+
+	modest_account_settings_set_account_name (settings, account_name);
+	store_settings = modest_account_settings_get_store_settings (settings);
+	modest_server_account_settings_set_account_name (store_settings, store_name);
+	transport_settings = modest_account_settings_get_transport_settings (settings);
+	modest_server_account_settings_set_account_name (transport_settings, transport_name);
+	g_object_unref (store_settings);
+	g_object_unref (transport_settings);
+
+	/* Create the account, which will contain the two "server accounts": */
+ 	modest_account_mgr_save_account_settings (self, settings);
+	g_free (store_name);
+	g_free (transport_name);
+	
+	/* Sanity check: */
+	/* There must be at least one account now: */
+	/* Note, when this fails is is caused by a Maemo gconf bug that has been 
+	 * fixed in versions after 3.1. */
+	if(!modest_account_mgr_has_accounts (self, FALSE))
+		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
+				
+	/* Notify the observers */
+	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, account_name);
+
+	/* if no default account has been defined yet, do so now */
+	default_account = modest_account_mgr_get_default_account (self);
+	if (!default_account) {
+		modest_account_mgr_set_default_account (self, account_name);
+		modest_account_settings_set_is_default (settings, TRUE);
+	}
+	g_free (default_account);
+	g_free (account_name);
+
+	/* (re)set the automatic account update */
+	modest_platform_set_update_interval
+		(modest_conf_get_int (priv->modest_conf, MODEST_CONF_UPDATE_INTERVAL, NULL));
+
+	return TRUE;
+}
+
 
 gboolean
 modest_account_mgr_add_account (ModestAccountMgr *self,
@@ -277,7 +360,7 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 				const gchar *display_name,
 				const gchar *user_fullname,
 				const gchar *user_email,
-				const gchar *retrieve_type,
+				ModestAccountRetrieveType retrieve_type,
 				const gchar *store_account,
 				const gchar *transport_account,
 				gboolean enabled)
@@ -362,9 +445,8 @@ modest_account_mgr_add_account (ModestAccountMgr *self,
 	modest_account_mgr_set_string (self, name,
 				       MODEST_ACCOUNT_EMAIL, 
 				       user_email, FALSE);
-	modest_account_mgr_set_string (self, name,
-				       MODEST_ACCOUNT_RETRIEVE, 
-				       retrieve_type, FALSE);
+	modest_account_mgr_set_retrieve_type (self, name,
+					      retrieve_type);
 
 	/* Notify the observers */
 	g_signal_emit (self, signals[ACCOUNT_INSERTED_SIGNAL], 0, name);
@@ -1034,20 +1116,23 @@ modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self,
 	
 	/* Look at each non-server account to check their display names; */
 	while (cursor) {
-		const gchar * account_name = (gchar*)cursor->data;
+		const gchar *account_name = (gchar*)cursor->data;
+		const gchar *cursor_display_name;
 		
-		ModestAccountData *account_data = modest_account_mgr_get_account_data (self, account_name);
-		if (!account_data) {
+		ModestAccountSettings *settings = modest_account_mgr_load_account_settings (self, account_name);
+		if (!settings) {
 			g_printerr ("modest: failed to get account data for %s\n", account_name);
 			continue;
 		}
 
-		if(account_data->display_name && (strcmp (account_data->display_name, display_name) == 0)) {
+		cursor_display_name = modest_account_settings_get_display_name (settings);
+		if(cursor_display_name && (strcmp (cursor_display_name, display_name) == 0)) {
 			found = TRUE;
+			g_object_unref (settings);
 			break;
 		}
 
-		modest_account_mgr_free_account_data (self, account_data);
+		g_object_unref (settings);
 		cursor = cursor->next;
 	}
 	modest_account_mgr_free_account_names (account_names);

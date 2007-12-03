@@ -8,6 +8,7 @@
 
 #include <gtk/gtkcombobox.h>
 #include "modest-protocol-info.h"
+#include <modest-account-settings.h>
 
 G_BEGIN_DECLS
 
@@ -47,9 +48,10 @@ ModestRetrieveComboBox* modest_retrieve_combo_box_new (void);
 
 void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTransportStoreProtocol protocol);
 
-gchar* modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *combobox);
+ModestAccountRetrieveType modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *combobox);
 
-gboolean modest_retrieve_combo_box_set_active_retrieve_conf (ModestRetrieveComboBox *combobox, const gchar* retrieve);
+gboolean modest_retrieve_combo_box_set_active_retrieve_conf (ModestRetrieveComboBox *combobox, 
+							     ModestAccountRetrieveType retrieve_type);
 
 
 G_END_DECLS

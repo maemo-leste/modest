@@ -181,15 +181,37 @@ gint
 modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 					 const gchar *msg)
 {
+	gint response;
+	GtkWidget *dialog;
+
+	dialog = gtk_message_dialog_new (parent_window,
+					 GTK_DIALOG_MODAL,
+					 GTK_MESSAGE_QUESTION,
+					 GTK_BUTTONS_OK_CANCEL,
+					 msg);
+
+	response = gtk_dialog_run (GTK_DIALOG(dialog));
+	gtk_widget_destroy (dialog);
+	
 	/* TODO implement confirmation dialog */
-	return GTK_RESPONSE_CANCEL;
+	return response;
 }
 
 void
 modest_platform_run_information_dialog (GtkWindow *parent_window,
 					const gchar *message)
 {
-	/* TODO: implement a information dialog */
+	GtkWidget *dialog;
+
+	dialog = gtk_message_dialog_new (parent_window,
+					 GTK_DIALOG_MODAL,
+					 GTK_MESSAGE_INFO,
+					 GTK_BUTTONS_OK,
+					 message);
+
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	
 }
 
 gboolean modest_platform_connect_and_wait (GtkWindow *parent_window, TnyAccount *account)
@@ -403,3 +425,20 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 
+GtkWidget *
+modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
+{
+	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
+						    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+						    "NOT IMPLEMENTED");
+	return dialog;
+}
+
+GtkWidget *
+modest_platform_get_account_settings_wizard ()
+{
+	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
+						    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+						    "NOT IMPLEMENTED");
+	return dialog;
+}

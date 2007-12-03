@@ -41,6 +41,7 @@ typedef struct {
 	/* Used by derived widgets to query existing accounts,
 	 * and to create new accounts: */
 	ModestAccountMgr *account_manager;
+	ModestAccountSettings *settings;
 	
 	gboolean modified;
 	gchar * account_name; /* This may not change. It is not user visible. */
@@ -101,7 +102,7 @@ GType modest_account_settings_dialog_get_type (void);
 
 ModestAccountSettingsDialog* modest_account_settings_dialog_new (void);
 
-void modest_account_settings_dialog_set_account_name (ModestAccountSettingsDialog *dialog, const gchar* account_name);
+void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *dialog, ModestAccountSettings *settings);
 
 void modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDialog *dialog);
 

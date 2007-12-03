@@ -30,10 +30,9 @@
 #ifndef __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW
 #define __MODEST_MAEMO_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW
 
-#include <modest-account-mgr.h>
-#include <modest-account-mgr-helpers.h> /* For ModestServerAccountData */
 #include <gtk/gtkdialog.h>
 #include <gtk/gtktreeview.h>
+#include <modest-server-account-settings.h>
 
 G_BEGIN_DECLS
 
@@ -74,11 +73,10 @@ ModestConnectionSpecificSmtpEditWindow* modest_connection_specific_smtp_edit_win
 
 void modest_connection_specific_smtp_edit_window_set_connection (
 	ModestConnectionSpecificSmtpEditWindow *window, const gchar* iap_id, const gchar* iap_name, 
-	const ModestServerAccountData *data);
+	ModestServerAccountSettings *server_settings);
 	
-ModestServerAccountData* modest_connection_specific_smtp_edit_window_get_settings (
-	ModestConnectionSpecificSmtpEditWindow *window, 
-	ModestAccountMgr *account_manager);
+ModestServerAccountSettings* modest_connection_specific_smtp_edit_window_get_settings (
+	ModestConnectionSpecificSmtpEditWindow *window);
 
 gboolean modest_connection_specific_smtp_edit_window_is_dirty(
 	ModestConnectionSpecificSmtpEditWindow *window);

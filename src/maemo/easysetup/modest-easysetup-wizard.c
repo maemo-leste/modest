@@ -54,6 +54,7 @@
 #include "widgets/modest-ui-constants.h"
 #include "maemo/modest-account-settings-dialog.h"
 #include "maemo/modest-maemo-utils.h"
+#include "modest-utils.h"
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
 #include "maemo/modest-hildon-includes.h"
@@ -86,7 +87,13 @@ struct _ModestEasysetupWizardDialogPrivate
 	
 	/* Check if the user changes a field to show a confirmation dialog */
 	gboolean dirty;
+
+	/* If we have a pending load of settings or not. */
+	gboolean pending_load_settings;
 };
+
+static void save_to_settings (ModestEasysetupWizardDialog *self);
+
 
 static gboolean
 on_delete_event (GtkWidget *widget,
@@ -146,17 +153,15 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 		
 	if (self->specific_window)
 	 	gtk_widget_destroy (self->specific_window);
+
+	if (self->settings)
+		g_object_unref (self->settings);
 	 	
-	g_free (self->saved_account_name);
-	
 	G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->finalize (object);
 }
 
 static void
 show_error (GtkWidget *parent_widget, const gchar* text);
-
-static gboolean
-create_account (ModestEasysetupWizardDialog *self, gboolean enabled);
 
 static void
 create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self);
@@ -195,9 +200,8 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 							account_wizard->combo_incoming_security));
 	const int port_num = get_serverport_incoming(protocol, protocol_security_incoming); 
 	GList *list_auth_methods =
-          modest_maemo_utils_get_supported_secure_authentication_methods (
-                                                                      protocol, 
-                                                                      hostname, port_num, username, GTK_WINDOW (account_wizard), &error);
+          modest_utils_get_supported_secure_authentication_methods (protocol, hostname, port_num, 
+								    username, GTK_WINDOW (account_wizard), &error);
 	if (list_auth_methods) {
 		/* TODO: Select the correct method */
 		GList* list = NULL;
@@ -215,8 +219,8 @@ static GList* check_for_supported_auth_methods(ModestEasysetupWizardDialog* acco
 			return list;
 	}
 
-	if(error == NULL || error->domain != modest_maemo_utils_get_supported_secure_authentication_error_quark() ||
-			error->code != MODEST_MAEMO_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
+	if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() ||
+			error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 	{
 		show_error (GTK_WIDGET(account_wizard), _("Could not discover supported secure authentication methods."));
 	}
@@ -974,17 +978,20 @@ static gboolean
 show_advanced_edit(gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	
-	if (!(self->saved_account_name))
-		return FALSE;
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
+	gint response;
 	
 	/* Show the Account Settings window: */
 	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-	modest_account_settings_dialog_set_account_name (dialog, self->saved_account_name);
+	if (priv->pending_load_settings) {
+		save_to_settings (self);
+		priv->pending_load_settings = FALSE;
+	}
+	modest_account_settings_dialog_set_account (dialog, self->settings);
 	
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 	
-	gtk_dialog_run (GTK_DIALOG (dialog));
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 	
@@ -995,21 +1002,6 @@ static void
 on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	
-	/* Save the new account, so we can edit it with ModestAccountSettingsDialog, 
-	 * without recoding it to use non-gconf information.
-	 * This account will be deleted if Finish is never actually clicked. */
-
-	gboolean saved = TRUE;
-	if (!(self->saved_account_name)) {
-		saved = create_account (self, FALSE);
-	}
-		
-	if (!saved)
-		return;
-		
-	if (!(self->saved_account_name))
-		return;
 	
 	/* Show the Account Settings window: */
 	show_advanced_edit(self);
@@ -1055,13 +1047,6 @@ on_response (ModestWizardDialog *wizard_dialog,
 	     gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (wizard_dialog);
-	if (response_id == GTK_RESPONSE_CANCEL) {
-		/* Remove any temporarily-saved account that will not actually be needed: */
-		if (self->saved_account_name) {
-			modest_account_mgr_remove_account (self->account_manager,
-							   self->saved_account_name);
-		}
-	}
 
 	invoke_enable_buttons_vfunc (self);
 }
@@ -1083,7 +1068,6 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 			 * specified in the UI specification. */
 
 			const gint dialog_response = gtk_dialog_run (dialog);
-			self->combo_account_country = NULL;
 			gtk_widget_destroy (GTK_WIDGET (dialog));
 
 			if (dialog_response != GTK_RESPONSE_OK) {
@@ -1187,6 +1171,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	
 	/* The server fields did not have been manually changed yet */
 	priv->server_changes = 0;
+	priv->pending_load_settings = TRUE;
 
 	/* Get the account manager object, 
 	 * so we can check for existing accounts,
@@ -1269,6 +1254,8 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 
 	hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_wizardwelcome",
 					modest_maemo_utils_get_osso_context());	
+
+	self->settings = modest_account_settings_new ();
 }
 
 ModestEasysetupWizardDialog*
@@ -1500,6 +1487,12 @@ static gboolean
 on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *next_page)
 {
 	ModestEasysetupWizardDialog *account_wizard = MODEST_EASYSETUP_WIZARD_DIALOG (dialog);
+	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (account_wizard);
+
+	/* if are browsing pages previous to the last one, then we have pending settings in
+	 * this wizard */
+	if (next_page != NULL)
+		priv->pending_load_settings = TRUE;
 	
 	/* Do extra validation that couldn't be done for every key press,
 	 * either because it was too slow,
@@ -1556,8 +1549,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		/* Check if the server supports secure authentication */
 		const ModestConnectionProtocol security_incoming = 
 			modest_serversecurity_combo_box_get_active_serversecurity (
-																																 MODEST_SERVERSECURITY_COMBO_BOX (
-																																																	account_wizard->combo_incoming_security));
+				MODEST_SERVERSECURITY_COMBO_BOX (account_wizard->combo_incoming_security));
 		if (gtk_toggle_button_get_active (
 			GTK_TOGGLE_BUTTON (account_wizard->checkbox_incoming_auth))
 				&& !modest_protocol_info_is_secure(security_incoming))
@@ -1572,14 +1564,10 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	 */
 	if(!next_page) /* This is NULL when this is a click on Finish. */
 	{
-		if (account_wizard->saved_account_name) {
-			/* Just enable the already-saved account (temporarily created when 
-			 * editing advanced settings): */
-			modest_account_mgr_set_enabled (account_wizard->account_manager, 
-							account_wizard->saved_account_name, TRUE);
-		} else {
-			create_account (account_wizard, TRUE /* enabled */);
+		if (priv->pending_load_settings) {
+			save_to_settings (account_wizard);
 		}
+		modest_account_mgr_add_account_from_settings (account_wizard->account_manager, account_wizard->settings);
 	}
 	
 	
@@ -1690,275 +1678,201 @@ static void
 show_error (GtkWidget *parent_widget, const gchar* text)
 {
 	//TODO: Apparently this doesn't show anything in Maemo Bora:
-	hildon_banner_show_information(parent_widget, NULL, text);
-	
-#if 0
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text)); */
-	/*
-	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
-	  (GtkDialogFlags)0,
-	  GTK_MESSAGE_ERROR,
-	  GTK_BUTTONS_OK,
-	  text ));
-	*/
-		 
-	gtk_dialog_run (dialog);
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-#endif
+	hildon_banner_show_information(parent_widget, NULL, text);	
 }
 
-/** Attempt to create the account from the information that the user has entered.
- * @result: TRUE if the account was successfully created.
+
+/**
+ * save_to_settings:
+ * @self: a #ModestEasysetupWizardDialog
+ *
+ * takes information from all the wizard and stores it in settings
  */
-static gboolean
-create_account (ModestEasysetupWizardDialog *self, gboolean enabled)
+static void
+save_to_settings (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = WIZARD_DIALOG_GET_PRIVATE (self);
 	guint special_port;
-	gchar* display_name = get_entered_account_title (self);
+	gchar *provider_id;
+	gchar* display_name;
+	const gchar *username, *password;
+	gchar *store_hostname, *transport_hostname;
+	guint store_port, transport_port;
+	ModestTransportStoreProtocol store_protocol, transport_protocol;
+	ModestConnectionProtocol store_security, transport_security;
+	ModestAuthProtocol store_auth_protocol, transport_auth_protocol;
+	ModestServerAccountSettings *store_settings, *transport_settings;
+	const gchar *fullname, *email_address;
 
-	/* Some checks: */
-	if (!display_name)
-		return FALSE;
-		
-	/* We should have checked for this already, 
-	 * and changed that name accordingly, 
-	 * but let's check again just in case:
-	 */
-	if (modest_account_mgr_account_with_display_name_exists (self->account_manager, display_name)) {
-		g_free (display_name);
-		return FALSE;
-	}
-
-	/* Increment the non-user visible name if necessary, 
-	 * based on the display name: */
-	gchar *account_name_start = g_strdup_printf ("%sID", display_name);
-	gchar* account_name = modest_account_mgr_get_unused_account_name (self->account_manager,
-									  account_name_start, FALSE /* not a server account */);
-	g_free (account_name_start);
+	/* Get details from the specified presets: */
+	provider_id = easysetup_provider_combo_box_get_active_provider_id (
+		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider));
 		
 	/* username and password (for both incoming and outgoing): */
-	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
-	const gchar* password = gtk_entry_get_text (GTK_ENTRY (self->entry_user_password));
+	username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
+	password = gtk_entry_get_text (GTK_ENTRY (self->entry_user_password));
+
 	/* Incoming server: */
 	/* Note: We need something as default for the ModestTransportStoreProtocol* values, 
 	 * or modest_account_mgr_add_server_account will fail. */
-	gchar* servername_incoming = NULL;
-	guint serverport_incoming = 0;
-	ModestTransportStoreProtocol protocol_incoming = MODEST_PROTOCOL_STORE_POP;
-	ModestConnectionProtocol protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	ModestAuthProtocol protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_NONE;
+	store_port = 0;
+	store_protocol = MODEST_PROTOCOL_STORE_POP;
+	store_security = MODEST_PROTOCOL_CONNECTION_NORMAL;
+	store_auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
 
-	/* Get details from the specified presets: */
-	gchar* provider_id = easysetup_provider_combo_box_get_active_provider_id (
-		EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider));
 	if (provider_id) {
+		ModestPresetsServerType store_provider_server_type;
+		ModestPresetsSecurity store_provider_security;
 		/* Use presets: */
-		servername_incoming = modest_presets_get_server (priv->presets, provider_id, 
-								 TRUE /* incoming */);
+		store_hostname = modest_presets_get_server (priv->presets, provider_id, 
+							    TRUE /* store */);
 		
-		ModestPresetsServerType servertype_incoming = modest_presets_get_info_server_type (priv->presets,
-												   provider_id, 
-												   TRUE /* incoming */);
-		ModestPresetsSecurity security_incoming = modest_presets_get_info_server_security (priv->presets,
-												   provider_id, 
-												   TRUE /* incoming */);
+		store_provider_server_type = modest_presets_get_info_server_type (priv->presets,
+									 provider_id, 
+									 TRUE /* store */);
+		store_provider_security  = modest_presets_get_info_server_security (priv->presets,
+										    provider_id, 
+										    TRUE /* store */);
 
-			
 		/* We don't check for SMTP here as that is impossible for an incoming server. */
-		if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_IMAP) {
-			protocol_incoming = MODEST_PROTOCOL_STORE_IMAP;
-		} else if (servertype_incoming == MODEST_PRESETS_SERVER_TYPE_POP) {
-			protocol_incoming = MODEST_PROTOCOL_STORE_POP; 
-		}
-		serverport_incoming = get_serverport_incoming(servertype_incoming, security_incoming);
+		if (store_provider_server_type == MODEST_PRESETS_SERVER_TYPE_IMAP)
+			store_protocol = MODEST_PROTOCOL_STORE_IMAP;
+		else if (store_provider_server_type == MODEST_PRESETS_SERVER_TYPE_POP)
+			store_protocol = MODEST_PROTOCOL_STORE_POP;
+		else /* fallback */
+			store_protocol = MODEST_PROTOCOL_STORE_POP;
+
+		/* we check if there is a *special* port */
+		special_port = modest_presets_get_port (priv->presets, provider_id, TRUE /* incoming */);
+		if (special_port != 0)
+			store_port = special_port;
+		else 
+			store_port = get_serverport_incoming(store_provider_server_type, store_provider_security);
 		
-		if (security_incoming & MODEST_PRESETS_SECURITY_SECURE_INCOMING)
-			protocol_security_incoming = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
+		if (store_provider_security & MODEST_PRESETS_SECURITY_SECURE_INCOMING)
+			store_security = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
 		
-		if (security_incoming & MODEST_PRESETS_SECURITY_APOP)
-			protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_PASSWORD; /* TODO: Is this what we want? */
-	}
-	else {
+		if (store_provider_security & MODEST_PRESETS_SECURITY_APOP)
+			store_auth_protocol = MODEST_PROTOCOL_AUTH_PASSWORD; /* TODO: Is this what we want? */
+	} else {
 		/* Use custom pages because no preset was specified: */
-		servername_incoming = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_incomingserver) ));
-		
-		protocol_incoming = easysetup_servertype_combo_box_get_active_servertype (
-			EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));
-		
-		protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		store_hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_incomingserver) ));		
+		store_protocol = easysetup_servertype_combo_box_get_active_servertype (
+			EASYSETUP_SERVERTYPE_COMBO_BOX (self->combo_incoming_servertype));		
+		store_security = modest_serversecurity_combo_box_get_active_serversecurity (
 			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
 		
-		/* The UI spec says:
+		/* The UI spec says: 
 		 * If secure authentication is unchecked, allow sending username and password also as plain text.
-		 * If secure authentication is checked, require one of the secure methods during connection: SSL, TLS, CRAM-MD5 etc. 
-		 */
-		
+		 * If secure authentication is checked, require one of the secure methods during 
+		 * connection: SSL, TLS, CRAM-MD5 etc. */
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth)) &&
-				!modest_protocol_info_is_secure(protocol_security_incoming)) {
-			protocol_authentication_incoming = check_first_supported_auth_method (self);
-		}
-		else {
-			protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_PASSWORD;
+		    !modest_protocol_info_is_secure(store_security)) {
+			store_auth_protocol = check_first_supported_auth_method (self);
+		} else {
+			store_auth_protocol = MODEST_PROTOCOL_AUTH_PASSWORD;
 		}
 	}
-	
-	/* First we add the 2 server accounts, and then we add the account that uses them.
-	 * If we don't do it in this order then we will experience a crash. */
-	 
-	/* Add a (incoming) server account, to be used by the account: */
-	gchar *store_name_start = g_strconcat (account_name, "_store", NULL);
-	gchar *store_name = modest_account_mgr_get_unused_account_name (self->account_manager, 
-									store_name_start, TRUE /* server account */);
-	g_free (store_name_start);
 
-	/* we check if there is a *special* port */
-	special_port = modest_presets_get_port (priv->presets, provider_id,
-						TRUE /* incoming */);
-	if (special_port != 0)
-		serverport_incoming = special_port;
-	
-	gboolean created = modest_account_mgr_add_server_account (self->account_manager,
-								  store_name,
-								  servername_incoming,
-								  serverport_incoming,
-								  username, password,
-								  protocol_incoming,
-								  protocol_security_incoming,
-								  protocol_authentication_incoming);		
-		
-	g_free (servername_incoming);
-	
-	if (!created) {
-		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WIDGET (self), _("An error occurred while creating the incoming account."));
-		g_free (display_name);
-		return FALSE;	
-	}
+	/* now we store the store account settings */
+	store_settings = modest_account_settings_get_store_settings (self->settings);
+	modest_server_account_settings_set_hostname (store_settings, store_hostname);
+	modest_server_account_settings_set_username (store_settings, username);
+	modest_server_account_settings_set_password (store_settings, password);
+	modest_server_account_settings_set_protocol (store_settings, store_protocol);
+	modest_server_account_settings_set_security (store_settings, store_security);
+	modest_server_account_settings_set_auth_protocol (store_settings, store_auth_protocol);
+	if (store_port != 0)
+		modest_server_account_settings_set_port (store_settings, store_port);
+
+	g_object_unref (store_settings);
+	g_free (store_hostname);
 	
 	/* Outgoing server: */
-	gchar* servername_outgoing = NULL;
-	ModestTransportStoreProtocol protocol_outgoing = MODEST_PROTOCOL_STORE_POP;
-	ModestConnectionProtocol protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	ModestAuthProtocol protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
-	guint serverport_outgoing = 0;
+	transport_hostname = NULL;
+	transport_protocol = MODEST_PROTOCOL_STORE_POP;
+	transport_security = MODEST_PROTOCOL_CONNECTION_NORMAL;
+	transport_auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
+	transport_port = 0;
 	
 	if (provider_id) {
-		/* Use presets: */
-		servername_outgoing = modest_presets_get_server (priv->presets, provider_id, 
-								 FALSE /* incoming */);
-			
-		ModestPresetsServerType servertype_outgoing = modest_presets_get_info_server_type (priv->presets,
-												   provider_id, 
-												   FALSE /* incoming */);
-		
-		/* Note: We need something as default, or modest_account_mgr_add_server_account will fail. */
-		protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SENDMAIL; 
-		if (servertype_outgoing == MODEST_PRESETS_SERVER_TYPE_SMTP)
-			protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SMTP;
-		
-		ModestPresetsSecurity security_outgoing = 
-			modest_presets_get_info_server_security (priv->presets, provider_id, 
-								 FALSE /* incoming */);
+		ModestPresetsServerType transport_provider_server_type;
+		ModestPresetsSecurity transport_provider_security;
 
-		protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_NORMAL;
-		if (security_outgoing & MODEST_PRESETS_SECURITY_SECURE_SMTP) {
+		/* Use presets: */
+		transport_hostname = modest_presets_get_server (priv->presets, provider_id, 
+								FALSE /* transport */);
+			
+		transport_provider_server_type = modest_presets_get_info_server_type (priv->presets,
+										      provider_id, 
+										      FALSE /* transport */);		
+		transport_provider_security = modest_presets_get_info_server_security (priv->presets, 
+										       provider_id, 
+										       FALSE /* transport */);
+
+		/* Note: We need something as default, or modest_account_mgr_add_server_account will fail. */
+		transport_protocol = MODEST_PROTOCOL_TRANSPORT_SENDMAIL; 
+		if (transport_provider_server_type == MODEST_PRESETS_SERVER_TYPE_SMTP)
+			transport_protocol = MODEST_PROTOCOL_TRANSPORT_SMTP;
+
+		transport_security = MODEST_PROTOCOL_CONNECTION_NORMAL;
+		if (transport_provider_security & MODEST_PRESETS_SECURITY_SECURE_SMTP) {
 			/* printf("DEBUG: %s: using secure SMTP\n", __FUNCTION__); */
-			protocol_security_outgoing = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
-			serverport_outgoing = 465;
-			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_PASSWORD;
+			transport_security = MODEST_PROTOCOL_CONNECTION_SSL; /* TODO: Is this what we want? */
+			/* we check if there is a *special* port */
+			special_port = modest_presets_get_port (priv->presets, provider_id,
+								FALSE /* transport */);
+			if (special_port != 0)
+				transport_port = special_port;
+			else 
+				transport_port = 465;
+			transport_auth_protocol = MODEST_PROTOCOL_AUTH_PASSWORD;
 		} else {
 			/* printf("DEBUG: %s: using non-secure SMTP\n", __FUNCTION__); */
-			protocol_authentication_outgoing = MODEST_PROTOCOL_AUTH_NONE;
+			transport_auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
 		}
 	} else {
 		/* Use custom pages because no preset was specified: */
-		servername_outgoing = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver) ));
-		
-		protocol_outgoing = MODEST_PROTOCOL_TRANSPORT_SMTP; /* It's always SMTP for outgoing. */
-
-		protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
-			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
-		
-		protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
+		transport_hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver) ));
+		transport_protocol = MODEST_PROTOCOL_TRANSPORT_SMTP; /* It's always SMTP for outgoing. */
+		transport_security = modest_serversecurity_combo_box_get_active_serversecurity (
+			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));		
+		transport_auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
 			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
 	}
 	    
-	/* Add a (outgoing) server account to be used by the account: */
-	gchar *transport_name_start = g_strconcat (account_name, "_transport", NULL);
-	gchar *transport_name = modest_account_mgr_get_unused_account_name (self->account_manager, 
-									    transport_name_start, TRUE /* server account */);
-	g_free (transport_name_start);
+	/* now we transport the transport account settings */
+	transport_settings = modest_account_settings_get_transport_settings (self->settings);
+	modest_server_account_settings_set_hostname (transport_settings, transport_hostname);
+	modest_server_account_settings_set_username (transport_settings, username);
+	modest_server_account_settings_set_password (transport_settings, password);
+	modest_server_account_settings_set_protocol (transport_settings, transport_protocol);
+	modest_server_account_settings_set_security (transport_settings, transport_security);
+	modest_server_account_settings_set_auth_protocol (transport_settings, transport_auth_protocol);
+	if (transport_port != 0)
+		modest_server_account_settings_set_port (transport_settings, transport_port);
 
-	/* we check if there is a *special* port */
-	special_port = modest_presets_get_port (priv->presets, provider_id,
-						FALSE /* incoming */);
-	if (special_port != 0)
-		serverport_outgoing = special_port;
+	g_object_unref (transport_settings);
+	g_free (transport_hostname);
 	
-	created = modest_account_mgr_add_server_account (self->account_manager,
-							 transport_name,
-							 servername_outgoing,
-							 serverport_outgoing,
-							 username, password,
-							 protocol_outgoing,
-							 protocol_security_outgoing,
-							 protocol_authentication_outgoing);
-		
-	g_free (servername_outgoing);
-		
-	if (!created) {
-		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WIDGET (self), _("An error occurred while creating the outgoing account."));
-		g_free (display_name);
-		return FALSE;	
-	}
+	fullname = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
+	email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
+	modest_account_settings_set_fullname (self->settings, fullname);
+	modest_account_settings_set_email_address (self->settings, email_address);
+	/* we don't set retrieve type to preserve advanced settings if any. By default account settings
+	   are set to headers only */
 	
-	const gchar* user_fullname = gtk_entry_get_text (GTK_ENTRY (self->entry_user_name));
-	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
-	const gchar *retrieve = MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY;
-	
-	/* Create the account, which will contain the two "server accounts": */
- 	created = modest_account_mgr_add_account (self->account_manager, 
-						  account_name, 
-						  display_name,
-						  user_fullname,
-						  emailaddress,
-						  retrieve,
-						  store_name,
-						  transport_name,
-						  enabled);
-	g_free (store_name);
-	g_free (transport_name);
-	
-	if (!created) {
-		/* TODO: Provide a Logical ID for the text: */
-		show_error (GTK_WIDGET (self), _("An error occurred while creating the account."));
-		g_free (display_name);
-		return FALSE;	
-	}
-
-	/* Sanity check: */
-	/* There must be at least one account now: */
-	/* Note, when this fails is is caused by a Maemo gconf bug that has been 
-	 * fixed in versions after 3.1. */
-	if(!modest_account_mgr_has_accounts (self->account_manager, FALSE))
-		g_warning ("modest_account_mgr_account_names() returned NULL after adding an account.");
-		
 	/* Save the connection-specific SMTP server accounts. */
-        modest_account_mgr_set_use_connection_specific_smtp(self->account_manager, account_name, 
-                gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->checkbox_outgoing_smtp_specific)));
-	gboolean result = TRUE;
-	if (self->specific_window)
-		result = modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window));
+        modest_account_settings_set_use_connection_specific_smtp 
+		(self->settings, 
+		 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->checkbox_outgoing_smtp_specific)));
 
-			
-	g_free (self->saved_account_name);
-	self->saved_account_name = g_strdup (account_name);
-	
-	g_free (account_name);
+	display_name = get_entered_account_title (self);
+	modest_account_settings_set_display_name (self->settings, display_name);
 	g_free (display_name);
-	
-	return result;
+
+	if (self->specific_window)
+		modest_connection_specific_smtp_window_save_server_accounts (
+			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window));
 }
+

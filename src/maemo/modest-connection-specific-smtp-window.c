@@ -102,7 +102,7 @@ enum MODEL_COLS {
 	MODEL_COL_ID = 1, /* libconic IAP ID: a string */
 	MODEL_COL_SERVER_ACCOUNT_NAME = 2, /* a string */
 	MODEL_COL_SERVER_NAME = 3, /* a string */
-	MODEL_COL_SERVER_ACCOUNT_DATA = 4 /* a gpointer */
+	MODEL_COL_SERVER_ACCOUNT_SETTINGS = 4 /* a gpointer */
 };
 
 
@@ -117,14 +117,14 @@ modest_connection_specific_smtp_window_finalize (GObject *object)
 	GtkTreeIter iter;
   	gboolean valid = gtk_tree_model_get_iter_first (priv->model, &iter);
 	while (valid) {
-		ModestServerAccountData *data = NULL;
+		ModestServerAccountSettings *server_settings = NULL;
 		
 		gtk_tree_model_get (priv->model, &iter, 
-				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
+				    MODEL_COL_SERVER_ACCOUNT_SETTINGS, &server_settings,
 				    -1);
 				 
-		if (data)
-			modest_account_mgr_free_server_account_data (priv->account_manager, data);
+		if (server_settings)
+			g_object_unref (server_settings);
 			
 		/* Get next row: */
 		valid = gtk_tree_model_iter_next (priv->model, &iter);
@@ -225,11 +225,12 @@ on_button_edit (GtkButton *button, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpWindow *self = MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (user_data);
 	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
+	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 	
 	gchar *id = NULL;
 	gchar *connection_name = NULL;
 	gchar *server_account_name = NULL;
-	ModestServerAccountData *data = NULL;
+	ModestServerAccountSettings *server_settings = NULL;
 	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->treeview));
 	GtkTreeIter iter;
 	GtkTreeModel *model = 0;
@@ -238,7 +239,7 @@ on_button_edit (GtkButton *button, gpointer user_data)
 				    MODEL_COL_ID, &id, 
 				    MODEL_COL_NAME, &connection_name, 
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
-				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
+				    MODEL_COL_SERVER_ACCOUNT_SETTINGS, &server_settings,
 				    -1);
 	
 		/* printf("DEBUG: %s: BEFORE: connection-specific server_account_name=%s\n", __FUNCTION__, server_account_name); */
@@ -246,22 +247,21 @@ on_button_edit (GtkButton *button, gpointer user_data)
 		 * If not then we should check for it. */
 		
 		/* Get existing server account data if a server account is already specified: */
-		gboolean data_was_retrieved = FALSE;
-		if (server_account_name && !data) {
-			data = modest_account_mgr_get_server_account_data (priv->account_manager, 
-				server_account_name);
-			if (data)
-				data_was_retrieved = TRUE;
+		gboolean settings_were_retrieved = FALSE;
+		if (server_account_name && !server_settings) {
+			server_settings = modest_account_mgr_load_server_settings(mgr, server_account_name);
+			if (server_settings)
+				settings_were_retrieved = TRUE;
 		}
 		
 		GtkWidget * window = GTK_WIDGET (modest_connection_specific_smtp_edit_window_new ());
 		modest_connection_specific_smtp_edit_window_set_connection (
-			MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), id, connection_name, data);
+			MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), id, connection_name, server_settings);
 			
 		/* Delete data, unless it was data from the rowmodel: */
-		if (data_was_retrieved) {
-			modest_account_mgr_free_server_account_data (priv->account_manager, data);
-			data = NULL;
+		if (settings_were_retrieved) {
+			g_object_unref (server_settings);
+			server_settings = NULL;
 		}
 			
 		gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
@@ -274,28 +274,27 @@ on_button_edit (GtkButton *button, gpointer user_data)
 				gtk_widget_hide (window);
 				dialog_finished = TRUE;
 				/* Delete any previous data for this row: */
-				if (data) 
+				if (server_settings) 
 				{
-					modest_account_mgr_free_server_account_data (priv->account_manager, data);
-					data = NULL;
+					g_object_unref (server_settings);
+					server_settings = NULL;
 				}
 				
 				/* Get the new account data and save it in the row for later:
 				 * We free this in finalize(),
 				 * and save it to our configuration in 
 				 * modest_connection_specific_smtp_window_save_server_accounts(). */
-				data = modest_connection_specific_smtp_edit_window_get_settings (
-							MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window), 
-							priv->account_manager);
+				server_settings = modest_connection_specific_smtp_edit_window_get_settings (
+					MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window));
 				
-				if (data) {
+				if (server_settings) {
 					gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-							    MODEL_COL_SERVER_ACCOUNT_DATA, data,
-							    MODEL_COL_SERVER_NAME, data->hostname,
+							    MODEL_COL_SERVER_ACCOUNT_SETTINGS, server_settings,
+							    MODEL_COL_SERVER_NAME, modest_server_account_settings_get_hostname (server_settings),
 							    -1);
 				} else {
 					gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-							    MODEL_COL_SERVER_ACCOUNT_DATA, NULL,
+							    MODEL_COL_SERVER_ACCOUNT_SETTINGS, NULL,
 							    MODEL_COL_SERVER_NAME, NULL,
 							    MODEL_COL_SERVER_ACCOUNT_NAME, NULL,
 							    -1);
@@ -491,6 +490,7 @@ modest_connection_specific_smtp_window_new (void)
 gboolean
 modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpecificSmtpWindow *self)
 {
+	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	
@@ -505,18 +505,18 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 		gchar *connection_name = NULL;
 		gchar *server_account_name = NULL;
 		gchar *server_name = NULL;
-		ModestServerAccountData *data = NULL;
+		ModestServerAccountSettings *server_settings = NULL;
 		
 		gtk_tree_model_get (priv->model, &iter, 
 				    MODEL_COL_ID, &id, 
 				    MODEL_COL_NAME, &connection_name, 
 				    MODEL_COL_SERVER_NAME, &server_name,
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
-				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
+				    MODEL_COL_SERVER_ACCOUNT_SETTINGS, &server_settings,
 				    -1);
 				 
 		gboolean success = TRUE;   
-		if (id && data) { /* The presence of data suggests that there is something to save. */
+		if (id && server_settings) { /* The presence of data suggests that there is something to save. */
 			if (!server_account_name) {
 				/* Add a new server account, building a (non-human-visible) name: */
 				gchar *name_start = g_strdup_printf("specific_%s", connection_name);
@@ -525,13 +525,8 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 				g_assert (server_account_name);
 				g_free (name_start);
 				
-				success = modest_account_mgr_add_server_account (priv->account_manager,
-										 server_account_name,
-										 data->hostname, 0,
-										 data->username, data->password,
-										 MODEST_PROTOCOL_TRANSPORT_SMTP,
-										 data->security,
-										 data->secure_auth);
+				modest_server_account_settings_set_account_name (server_settings, server_account_name);
+				success = modest_account_mgr_save_server_settings (mgr, server_settings);
 				if (success) {
 					TnyAccount *account = TNY_ACCOUNT (modest_tny_account_store_new_connection_specific_transport_account 
 									   (modest_runtime_get_account_store (),
@@ -539,33 +534,17 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 					if (account)
 						g_object_unref (account);
 				}
-					
+				
 				/* associate the specific server account with this connection for this account: */
 				success = success && modest_account_mgr_set_connection_specific_smtp (
 					priv->account_manager, connection_name, server_account_name);
-	
+				
 				/* Save the new name in the treemodel, so it can be edited again later: */
 				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
 					MODEL_COL_SERVER_ACCOUNT_NAME, server_account_name, -1);
 				
 			} else {
-				/* Change an existing server account: */
-				modest_account_mgr_set_server_account_hostname (priv->account_manager, server_account_name, 
-										data->hostname);
-						
-				modest_account_mgr_set_server_account_username (priv->account_manager, server_account_name,
-					data->username);
-							
-				modest_account_mgr_set_server_account_password (priv->account_manager, server_account_name,
-					data->password);
-						
-				modest_account_mgr_set_server_account_secure_auth (priv->account_manager, server_account_name, 
-					data->secure_auth);
-						
-				modest_account_mgr_set_server_account_security (priv->account_manager, server_account_name, 
-					data->security);
-
-				modest_account_mgr_set_server_account_port (priv->account_manager, server_account_name, data->port);
+				modest_account_mgr_save_server_settings (mgr, server_settings);
 			}
 		} else if (connection_name && server_name && 
 			   !strcmp (server_name, _("mcen_ia_optionalsmtp_notdefined"))) {
@@ -601,14 +580,15 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 	while (valid) {
 		
 		gchar *server_account_name = NULL;
-		ModestServerAccountData *data = NULL;
+		ModestServerAccountSettings *server_settings = NULL;
 		gtk_tree_model_get (priv->model, &iter, 
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
-				    MODEL_COL_SERVER_ACCOUNT_DATA, &data,
-				    -1);
-		if (data && data->hostname && (data->hostname[0] != '\0')) {
+				    MODEL_COL_SERVER_ACCOUNT_SETTINGS, &server_settings,
+				    -1);	
+		if (server_settings && modest_server_account_settings_get_hostname (server_settings)
+		    && (modest_server_account_settings_get_hostname (server_settings) [0] != '\0')) {
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-					    MODEL_COL_SERVER_NAME, data->hostname,
+					    MODEL_COL_SERVER_NAME, modest_server_account_settings_get_hostname (server_settings),
 					    -1);
 		} else if (server_account_name) {
 			

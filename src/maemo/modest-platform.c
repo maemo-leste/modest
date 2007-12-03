@@ -53,6 +53,8 @@
 #include "modest-tny-account.h"
 #include <string.h>
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
+#include <modest-account-settings-dialog.h>
+#include <maemo/easysetup/modest-easysetup-wizard.h>
 
 #ifdef MODEST_HAVE_ABOOK
 #include <libosso-abook/osso-abook.h>
@@ -2020,4 +2022,21 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  	modest_platform_connect_and_perform (parent_window, account, callback, user_data);
  
  	return;
+}
+
+GtkWidget *
+modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
+{
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+
+	modest_account_settings_dialog_set_account (dialog, settings);
+	return GTK_WIDGET (dialog);
+}
+
+GtkWidget *
+modest_platform_get_account_settings_wizard ()
+{
+	ModestEasysetupWizardDialog *dialog = modest_easysetup_wizard_dialog_new ();
+
+	return GTK_WIDGET (dialog);
 }

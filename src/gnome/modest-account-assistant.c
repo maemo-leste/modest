@@ -676,7 +676,7 @@ on_apply (ModestAccountAssistant *self, gpointer user_data)
 					account_name,
 					get_fullname (self),
 					get_email (self),
-					MODEST_ACCOUNT_RETRIEVE_VALUE_HEADERS_ONLY,
+					MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY,
 					store_name,
 					transport_name, TRUE);
 

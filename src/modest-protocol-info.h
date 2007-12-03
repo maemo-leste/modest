@@ -125,6 +125,16 @@ ModestTransportStoreProtocol modest_protocol_info_get_transport_store_protocol (
 ModestAuthProtocol modest_protocol_info_get_auth_protocol (const gchar* name);
 
 /**
+ * modest_protocol_info_get_connection_protocol:
+ * @name: The name of the #ModestConnectionProtocol
+ *
+ * Returns the ID of the protocol with the given name
+ *
+ * Returns: The ID of the protocol or MODEST_CONNECTION_PROTOCOL_NORMAL
+ */
+ModestConnectionProtocol modest_protocol_info_get_connection_protocol (const gchar* name);
+
+/**
  * modest_protocol_info_get_transport_store_protocol_name:
  * @proto: the protocol you are looking for
  * 

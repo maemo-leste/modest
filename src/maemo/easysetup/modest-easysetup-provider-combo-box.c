@@ -256,3 +256,14 @@ easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *
 
 	return NULL; /* Failed. */
 }
+
+void 
+easysetup_provider_combo_box_set_others_provider (EasysetupProviderComboBox *combobox)
+{
+	GtkTreeModel *model;
+	GtkTreeIter others_iter;
+	model = gtk_combo_box_get_model (GTK_COMBO_BOX (combobox));
+
+	gtk_tree_model_get_iter_first (model, &others_iter);
+	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &others_iter);
+}

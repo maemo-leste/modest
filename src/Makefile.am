@@ -44,6 +44,8 @@ modest_SOURCES=\
 	modest-account-mgr-priv.h \
 	modest-account-mgr.c \
 	modest-account-mgr.h \
+	modest-account-settings.c \
+	modest-account-settings.h \
 	modest-address-book.h \
 	modest-cache-mgr.c \
 	modest-cache-mgr.h \
@@ -88,6 +90,8 @@ modest_SOURCES=\
 	modest-signal-mgr.h \
 	modest-singletons.c \
 	modest-singletons.h \
+	modest-server-account-settings.c \
+	modest-server-account-settings.h \
 	modest-text-utils.c \
 	modest-text-utils.h \
 	modest-tny-account-store.c \
@@ -116,6 +120,8 @@ modest_SOURCES=\
 	modest-ui-dimming-manager.h \
 	modest-ui-dimming-rules.c \
 	modest-ui-dimming-rules.h \
+	modest-utils.c \
+	modest-utils.h \
 	modest-widget-memory-priv.h \
 	modest-widget-memory.c \
 	modest-widget-memory.h 

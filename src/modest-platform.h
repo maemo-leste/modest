@@ -419,6 +419,26 @@ void modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
 								 ModestConnectedPerformer callback, 
 								 gpointer user_data);
 
+/**
+ * modest_platform_get_account_settings_dialog:
+ * @settings: a #ModestAccountSettings
+ *
+ * creates a dialog for editing @settings
+ *
+ * Returns: the newly created dialog.
+ */
+GtkWidget *modest_platform_get_account_settings_dialog (ModestAccountSettings *settings);
+
+/**
+ * modest_platform_get_account_settings_wizard:
+ * @settings: a #ModestAccountSettings
+ *
+ * creates a dialog for editing @settings
+ *
+ * Returns: the newly created dialog.
+ */
+GtkWidget *modest_platform_get_account_settings_wizard ();
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */
