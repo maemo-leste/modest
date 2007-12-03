@@ -69,6 +69,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-recpt-view.h            \
 	modest-retrieve-combo-box.h    \
 	modest-retrieve-combo-box.c    \
+	modest-scroll-area.h          \
+	modest-scroll-area.c          \
 	modest-scroll-text.c           \
 	modest-scroll-text.h           \
 	modest-serversecurity-combo-box.h modest-serversecurity-combo-box.c \
