@@ -672,14 +672,19 @@ send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
 			    guint nth, guint total, gpointer userdata)
 {
 	SendMsgInfo *info = (SendMsgInfo *) userdata;
+	TnyHeader *hdr1, *hdr2;
+	hdr1 = tny_msg_get_header(msg);
+	hdr2 = tny_msg_get_header(info->msg);
 
-	if (!strcmp (tny_msg_get_url_string (msg),
-		     tny_msg_get_url_string (info->msg))) {
+	if (!strcmp (tny_header_get_message_id(hdr1),
+		     tny_header_get_message_id(hdr2))) {
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
 		common_send_mail_operation_end (queue, msg, info);
 	}
+	g_object_unref(G_OBJECT(hdr1));
+	g_object_unref(G_OBJECT(hdr2));
 }
 
 static void     
@@ -687,9 +692,12 @@ send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg
 				  GError *error, gpointer userdata)
 {
 	SendMsgInfo *info = (SendMsgInfo *) userdata;
+	TnyHeader *hdr1, *hdr2;
+	hdr1 = tny_msg_get_header(msg);
+	hdr2 = tny_msg_get_header(info->msg);
 
-	if (!strcmp (tny_msg_get_url_string (msg),
-		     tny_msg_get_url_string (info->msg))) {
+	if (!strcmp (tny_header_get_message_id(hdr1),
+		     tny_header_get_message_id(hdr2))) {
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
@@ -698,6 +706,8 @@ send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg
 
 		common_send_mail_operation_end (queue, msg, info);
 	}
+	g_object_unref(G_OBJECT(hdr1));
+	g_object_unref(G_OBJECT(hdr2));
 }
 
 
