@@ -1568,6 +1568,7 @@ static void
 enable_buttons (ModestAccountSettingsDialog *self)
 {
 	gboolean enable_ok = TRUE;
+	ModestAuthProtocol outgoing_auth_protocol;
 	
 	/* The account details title is mandatory: */
 	if (entry_is_empty(self->entry_account_title))
@@ -1584,14 +1585,24 @@ enable_buttons (ModestAccountSettingsDialog *self)
 	/* The custom incoming server is mandatory: */
 	if (entry_is_empty(self->entry_incomingserver))
 		enable_ok = FALSE;
+
+	/* Outgoing username is mandatory if outgoing auth is secure */
+	if (self->combo_outgoing_auth) {
+		outgoing_auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
+			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
+		if (enable_ok && 
+		    outgoing_auth_protocol != MODEST_PROTOCOL_AUTH_NONE &&
+		    entry_is_empty (self->entry_outgoing_username))
+			enable_ok = FALSE;
+	}
 			
 	/* Enable the buttons, 
 	 * identifying them via their associated response codes:
 	 */
 	GtkDialog *dialog_base = GTK_DIALOG (self);
-    gtk_dialog_set_response_sensitive (dialog_base,
-                                       GTK_RESPONSE_OK,
-                                       enable_ok);
+	gtk_dialog_set_response_sensitive (dialog_base,
+					   GTK_RESPONSE_OK,
+					   enable_ok);
 }
 
 static void
