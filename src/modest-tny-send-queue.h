@@ -144,6 +144,17 @@ modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg
 gchar *
 modest_tny_send_queue_get_msg_id (TnyHeader *header);
 
+/**
+ * modest_tny_all_send_queues_get_msg_status:
+ * @header: a #TnyHeader
+ *
+ * obtain status of message (searching for it in all queues)
+ *
+ * Returns: a #ModestTnySendQueueStatus
+ */
+ModestTnySendQueueStatus
+modest_tny_all_send_queues_get_msg_status (TnyHeader *header);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_SEND_QUEUE_H__ */

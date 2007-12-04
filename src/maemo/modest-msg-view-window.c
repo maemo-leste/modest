@@ -154,6 +154,8 @@ static void update_window_title (ModestMsgViewWindow *window);
 static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 static void init_window (ModestMsgViewWindow *obj);
 
+static gboolean msg_is_visible (TnyHeader *header, gboolean check_outbox);
+
 
 /* list my signals */
 enum {
@@ -199,6 +201,9 @@ struct _ModestMsgViewWindowPrivate {
 
 	/* Whether this was created via the *_new_for_search_result() function. */
 	gboolean is_search_result;
+
+	/* Whether the message is in outbox */
+	gboolean is_outbox;
 	
 	/* A reference to the @model of the header view 
 	 * to allow selecting previous/next messages,
@@ -393,6 +398,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 	
 	priv->is_search_result = FALSE;
+	priv->is_outbox = FALSE;
 
 	priv->msg_view      = NULL;
 	priv->header_model  = NULL;
@@ -871,6 +877,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 						 MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 	if (header_view != NULL){
 		header_folder = modest_header_view_get_folder(header_view);
+		priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == TNY_FOLDER_TYPE_OUTBOX);
 		g_assert(header_folder != NULL);
 		priv->header_folder_id = tny_folder_get_id(header_folder);
 		g_assert(priv->header_folder_id != NULL);
@@ -1477,7 +1484,7 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 				TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				&header, -1);
 		if (header) {
-			if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+			if (msg_is_visible (header, priv->is_outbox))
 				is_last_selected = FALSE;
 			g_object_unref(G_OBJECT(header));
 		}
@@ -1506,6 +1513,14 @@ modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	return priv->is_search_result;
+}
+
+static gboolean
+msg_is_visible (TnyHeader *header, gboolean check_outbox)
+{
+	return (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED)) &&
+		( (!check_outbox) || (modest_tny_all_send_queues_get_msg_status (header) != MODEST_TNY_SEND_QUEUE_FAILED)) ;
+	
 }
 
 gboolean
@@ -1549,7 +1564,7 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 				TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				&header, -1);
 		if (header) {
-			if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+			if (msg_is_visible (header, priv->is_outbox))
 				is_first_selected = FALSE;
 			g_object_unref(G_OBJECT(header));
 		}
@@ -1709,7 +1724,7 @@ modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
 			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 			    &header, -1);
 	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
-	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
+	if (!msg_is_visible (header, priv->is_outbox)) {
 		g_object_unref (header);
 		return modest_msg_view_window_select_next_message (self);
 	}
@@ -1752,7 +1767,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 				    &header, -1);
 		if (!header)
 			break;
-		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED) {
+		if (!msg_is_visible (header, priv->is_outbox)) {
 			g_object_unref (header);
 			continue;
 		}

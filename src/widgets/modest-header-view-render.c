@@ -42,75 +42,6 @@
 #include <string.h>
 
 
-static void 
-fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
-{
-	GSList **send_queues = (GSList **) userdata;
-	*send_queues = g_slist_prepend (*send_queues, value);
-}
-
-static ModestTnySendQueueStatus
-get_status_of_uid (TnyHeader *header)
-{
-	ModestCacheMgr *cache_mgr = NULL;
-	GHashTable     *send_queue_cache = NULL;
-	ModestTnyAccountStore *accounts_store = NULL;
-	TnyList *accounts = NULL;
-	TnyIterator *iter = NULL;
-	TnyTransportAccount *account = NULL;
-	GSList *send_queues = NULL, *node;
-	/* get_msg_status returns suspended by default, so we want to detect changes */
-	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
-	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
-	gchar *msg_uid = NULL;
-	ModestTnySendQueue *send_queue = NULL;
-	
-	msg_uid = modest_tny_send_queue_get_msg_id (header);
-	cache_mgr = modest_runtime_get_cache_mgr ();
-	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
-						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
-	
-	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
-	if (send_queues == NULL) {
-		accounts = tny_simple_list_new (); 
-		accounts_store = modest_runtime_get_account_store ();
-		tny_account_store_get_accounts (TNY_ACCOUNT_STORE(accounts_store), 
-						accounts, 
-						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-		
-		iter = tny_list_create_iterator (accounts);
-		while (!tny_iterator_is_done (iter)) {			
-			account = TNY_TRANSPORT_ACCOUNT(tny_iterator_get_current (iter));
-			send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account));
-			g_object_unref(account);
-
-			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
-			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
-				status = queue_status;
-				break;
-			}
-			tny_iterator_next (iter);
-		}
-		g_object_unref (iter);
-		g_object_unref (accounts);
-	}
-	else {
-		for (node = send_queues; node != NULL; node = g_slist_next (node)) {
-			send_queue = MODEST_TNY_SEND_QUEUE (node->data);
-			
-			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
-			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
-				status = queue_status;
-				break;
-			}
-		}
-	}
-
-	g_free(msg_uid);
-	g_slist_free (send_queues);
-	return status;
-}
-
 static const gchar *
 get_status_string (ModestTnySendQueueStatus status)
 {
@@ -389,7 +320,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 		const gchar *status_str = "";
 		if (msg_header != NULL) {
-			status = get_status_of_uid (msg_header);
+			status = modest_tny_all_send_queues_get_msg_status (msg_header);
 			if (status == MODEST_TNY_SEND_QUEUE_SUSPENDED) {
 				tny_header_set_flag (msg_header, TNY_HEADER_FLAG_SUSPENDED);
 			}
