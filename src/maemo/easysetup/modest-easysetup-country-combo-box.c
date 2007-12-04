@@ -256,7 +256,6 @@ easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 	
 	/* Setup the combo box: */
 	GtkComboBox *combobox = GTK_COMBO_BOX (self);
-	gtk_combo_box_set_model (combobox, priv->model);
 	
 	/* Country column:
 	 * The ID model column in not shown in the view. */
@@ -272,6 +271,8 @@ easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 	
 	/* Fill the model with rows: */
 	load_from_file (self);
+	/* Set this _after_ loading from file, it makes loading faster */
+	gtk_combo_box_set_model (combobox, priv->model);
 }
 
 EasysetupCountryComboBox*
