@@ -65,6 +65,8 @@ struct _ModestConnectionSpecificSmtpEditWindowPrivate
 	
 	GtkWidget *button_ok;
 	GtkWidget *button_cancel;
+
+	gchar     *account_name;
 	
 	gboolean is_dirty;
 	gboolean range_error_occured;
@@ -110,6 +112,10 @@ modest_connection_specific_smtp_edit_window_finalize (GObject *object)
 	if (priv->range_error_banner_timeout > 0) {
 		g_source_remove (priv->range_error_banner_timeout);
 		priv->range_error_banner_timeout = 0;
+	}
+	if (priv->account_name) {
+		g_free (priv->account_name);
+		priv->account_name = NULL;
 	}
 	G_OBJECT_CLASS (modest_connection_specific_smtp_edit_window_parent_class)->finalize (object);
 }
@@ -368,6 +374,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	g_signal_connect(G_OBJECT(box), "set-focus-child", G_CALLBACK(on_set_focus_child), self);
 
 	priv->range_error_banner_timeout = 0;
+	priv->account_name = NULL;
 	
 	gtk_widget_show (box);
 	
@@ -400,9 +407,13 @@ modest_connection_specific_smtp_edit_window_set_connection (
 	gchar* title = g_strdup_printf (_("mcen_ti_connection_connection_name"), iap_name);
 	gtk_window_set_title (GTK_WINDOW (window), title);
 	g_free (title);
-	
+
 	if (server_settings) 
 	{
+		
+		if (priv->account_name)
+			g_free (priv->account_name);
+		priv->account_name = g_strdup (modest_server_account_settings_get_account_name (server_settings));
 		gtk_entry_set_text (GTK_ENTRY (priv->entry_outgoingserver), 
 				    modest_server_account_settings_get_hostname (server_settings));
 		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_username),
@@ -467,6 +478,8 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	modest_server_account_settings_set_auth_protocol (server_settings,
 							  modest_secureauth_combo_box_get_active_secureauth (
 							  MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth)));
+	modest_server_account_settings_set_account_name (server_settings,
+							 priv->account_name);
 	
 	/* port: */
 	modest_server_account_settings_set_port (server_settings,
