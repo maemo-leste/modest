@@ -451,6 +451,8 @@ init_view (ModestAccountView *self)
 
 	toggle_renderer = gtk_cell_renderer_toggle_new ();
 	text_renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (text_renderer), "ellipsize", PANGO_ELLIPSIZE_END,
+			"ellipsize-set", TRUE, NULL);
 
 	/* the is_default column */
 	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE, "radio", TRUE, NULL);
@@ -482,6 +484,7 @@ init_view (ModestAccountView *self)
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), text_renderer, "text",
 							    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
+	gtk_tree_view_column_set_expand (column, TRUE);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
 						NULL, NULL);
 

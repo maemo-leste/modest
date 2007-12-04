@@ -1643,6 +1643,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 							  (const gchar *) gray_color_markup);
 		label_w = gtk_label_new (NULL);
 		gtk_label_set_markup (GTK_LABEL (label_w), label);
+		gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
 		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 		g_free (device_name);
 		g_free (label);
@@ -1670,6 +1671,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 
 			label_w = gtk_label_new (NULL);
 			gtk_label_set_markup (GTK_LABEL (label_w), label);
+			gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
 			gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 			g_string_free (proto, TRUE);
 			g_free (label);
@@ -1683,6 +1685,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 					 modest_tny_folder_store_get_message_count (folder_store));
 	label_w = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label_w), label);
+	gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
 	gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 	g_free (label);
 
@@ -1693,6 +1696,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 					 modest_tny_folder_store_get_folder_count (folder_store));
 	label_w = gtk_label_new (NULL);
 	gtk_label_set_markup (GTK_LABEL (label_w), label);
+	gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
 	gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 	g_free (label);
 
@@ -1710,6 +1714,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 		
 		label_w = gtk_label_new (NULL);
 		gtk_label_set_markup (GTK_LABEL (label_w), label);
+		gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
 		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 		g_free (label);
 	} else if (TNY_IS_ACCOUNT(folder_store)) {
@@ -1730,6 +1735,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 						 gray_color_markup, _("mcen_ti_lastupdated"), last_updated_string);
 		label_w = gtk_label_new (NULL);
 		gtk_label_set_markup (GTK_LABEL (label_w), label);
+		gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
 		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
 		g_free (label);
 	}
