@@ -1055,7 +1055,9 @@ open_msgs_performer(gboolean canceled,
 	not_opened_headers = TNY_LIST (user_data);
 
 	status = tny_account_get_connection_status (account);
-	if (err || canceled || status != TNY_CONNECTION_STATUS_CONNECTED) {
+	if (err || canceled || 
+	    (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)) &&
+						status != TNY_CONNECTION_STATUS_CONNECTED)) {
 		/* TODO: Show an error ? */
 		goto clean;
 	}
