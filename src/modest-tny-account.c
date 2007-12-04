@@ -330,7 +330,7 @@ update_tny_account (TnyAccount *tny_account,
 			    protocol == MODEST_PROTOCOL_STORE_POP)
 				auth_mech_name = NULL;
 			else if (protocol == MODEST_PROTOCOL_TRANSPORT_SMTP)
-				auth_mech_name = MODEST_ACCOUNT_AUTH_ANONYMOUS;
+				auth_mech_name = NULL; 
 			else
 				auth_mech_name = MODEST_ACCOUNT_AUTH_PLAIN;
 			break;
