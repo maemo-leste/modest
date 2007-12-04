@@ -27,6 +27,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef XPCOM_GLUE
+#include <gtkmozembed_glue.cpp>
+#endif
+
 #include <widgets/modest-mozembed-mime-part-view.h>
 #include <string.h>
 #include <tny-stream.h>
@@ -92,7 +96,7 @@ static GtkMozEmbedClass *parent_class = NULL;
 GtkWidget *
 modest_mozembed_mime_part_view_new ()
 {
-	return g_object_new (MODEST_TYPE_MOZEMBED_MIME_PART_VIEW, NULL);
+	return GTK_WIDGET(g_object_new (MODEST_TYPE_MOZEMBED_MIME_PART_VIEW, NULL));
 }
 
 /* GOBJECT IMPLEMENTATION */
@@ -137,7 +141,7 @@ modest_mozembed_mime_part_view_get_type (void)
 
  		my_type = g_type_register_static (TNY_TYPE_MOZ_EMBED_HTML_MIME_PART_VIEW,
 		                                  "ModestMozembedMimePartView",
-		                                  &my_info, 0);
+		                                  &my_info, GTypeFlags(0));
 
 		g_type_add_interface_static (my_type, MODEST_TYPE_MIME_PART_VIEW, 
 			&modest_mime_part_view_info);
@@ -156,7 +160,7 @@ modest_mozembed_mime_part_view_class_init (ModestMozembedMimePartViewClass *klas
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 
-	parent_class            = g_type_class_peek_parent (klass);
+	parent_class            = (GtkMozEmbedClass*) g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_mozembed_mime_part_view_finalize;
 	klass->is_empty_func = modest_mozembed_mime_part_view_is_empty_default;
 	klass->get_zoom_func = modest_mozembed_mime_part_view_get_zoom_default;

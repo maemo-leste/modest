@@ -90,7 +90,7 @@ if BUILD_MOZEMBED
 libmodest_widgets_la_SOURCES+=          \
 	modest-mozembed-msg-view.c              \
 	modest-mozembed-msg-view.h	       \
-	modest-mozembed-mime-part-view.c \
+	modest-mozembed-mime-part-view.cpp \
 	modest-mozembed-mime-part-view.h 	
 endif
 
