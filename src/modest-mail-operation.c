@@ -2301,16 +2301,32 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 	/* remove message from folder */
 	tny_folder_remove_msg (folder, header, &(priv->error));
 	if (!priv->error) {
+		gboolean expunge, leave_on_server;
+		const gchar *account_name;
+		TnyAccount *account;
+
 		tny_header_set_flag (header, TNY_HEADER_FLAG_DELETED);
 		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 
 		modest_mail_operation_notify_start (self);
 
-		if (TNY_IS_CAMEL_IMAP_FOLDER (folder) ||
-		    TNY_IS_CAMEL_POP_FOLDER (folder))
-			tny_folder_sync_async(folder, FALSE, NULL, NULL, NULL); /* FALSE --> dont expunge */
+		/* Get leave on server setting */
+		account = tny_folder_get_account (folder);
+		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		leave_on_server =
+			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
+								account_name);
+
+		if (TNY_IS_CAMEL_POP_FOLDER (folder) && !leave_on_server)
+			expunge = TRUE;
 		else
-			tny_folder_sync_async(folder, TRUE, NULL, NULL, NULL); /* TRUE --> expunge */
+			expunge = FALSE;
+
+		/* Sync folder */
+		tny_folder_sync_async(folder, expunge, NULL, NULL, NULL);
+
+		/* Unref */
+		g_object_unref (account);
 	}
 	
 	
