@@ -51,6 +51,8 @@ modest_SOURCES=\
 	modest-cache-mgr.h \
 	modest-conf.c \
 	modest-conf.h \
+	modest-count-stream.c \
+	modest-count-stream.h \
 	modest-defs.h \
 	modest-debug.h \
 	modest-dimming-rule.c \

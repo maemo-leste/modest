@@ -42,6 +42,7 @@
 #include <modest-mail-operation.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-runtime.h>
+#include <modest-count-stream.h>
 
 #define GET_SIZE_BUFFER_SIZE 128
 
@@ -122,25 +123,18 @@ get_mime_part_size_thread (gpointer thr_user_data)
 {
 	ModestAttachmentView *view =  (ModestAttachmentView *) thr_user_data;
 	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (view);
-	gchar read_buffer[GET_SIZE_BUFFER_SIZE];
 	TnyStream *stream;
-	gssize readed_size;
-	gssize total = 0;
+	gsize total = 0;
 
-	stream = tny_camel_mem_stream_new ();
+	stream = modest_count_stream_new();
 	tny_mime_part_decode_to_stream (priv->mime_part, stream);
-	tny_stream_reset (stream);
-	if (tny_stream_is_eos (stream)) {
-		tny_stream_close (stream);
-		stream = tny_mime_part_get_stream (priv->mime_part);
+	total = modest_count_stream_get_count(MODEST_COUNT_STREAM (stream));
+	if (total == 0) {
+		modest_count_stream_reset_count(MODEST_COUNT_STREAM (stream));
+		tny_mime_part_write_to_stream (priv->mime_part, stream);
+		total = modest_count_stream_get_count(MODEST_COUNT_STREAM (stream));
 	}
-	
-	while (!tny_stream_is_eos (stream)) {
-		readed_size = tny_stream_read (stream, read_buffer, GET_SIZE_BUFFER_SIZE);
-		total += readed_size;
-	}
-
-	priv->size = total;
+	priv->size = (guint64)total;
 
 	g_idle_add (idle_get_mime_part_size_cb, g_object_ref (view));
 

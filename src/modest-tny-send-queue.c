@@ -616,7 +616,7 @@ _on_msg_error_happened (TnySendQueue *self,
 						  msg_uid);	
 	if (item == NULL) {
 		info = g_slice_new (SendInfo);
-		info->msg_id = strdup(msg_uid);
+		info->msg_id = (msg_uid != NULL)? strdup(msg_uid) : NULL;
 		g_queue_push_tail (priv->queue, info);
 	} else
 		info = item->data;

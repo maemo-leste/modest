@@ -697,9 +697,8 @@ send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg
 {
 	SendMsgInfo *info = (SendMsgInfo *) userdata;
 	TnyHeader *hdr1, *hdr2;
-	hdr1 = tny_msg_get_header(msg);
-	hdr2 = tny_msg_get_header(info->msg);
 	const char *msgid1, *msgid2;
+	
 	hdr1 = tny_msg_get_header(msg);
 	hdr2 = tny_msg_get_header(info->msg);
 	msgid1 = tny_header_get_message_id(hdr1);
