@@ -1657,14 +1657,6 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 	self = MODEST_TNY_ACCOUNT_STORE (user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
 
-	if (canceled || err) {
-		/* The account was not cancelled */
-	} else {
-		/* Clear the cache if it's an store account */
-		if (TNY_IS_STORE_ACCOUNT (account))
-			tny_store_account_delete_cache (TNY_STORE_ACCOUNT (account));
-	}
-
 	/* Remove it from the list of accounts */
 	if (TNY_IS_STORE_ACCOUNT (account))
 		tny_list_remove (priv->store_accounts, (GObject *) account);
@@ -1677,6 +1669,10 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 	
 	/* Unref the extra reference added by get_server_account */
 	g_object_unref (account);
+
+	/* Clear the cache if it's an store account */
+	if (TNY_IS_STORE_ACCOUNT (account))
+		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (account));
 }
 
 static void
