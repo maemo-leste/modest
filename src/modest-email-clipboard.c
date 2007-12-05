@@ -255,7 +255,7 @@ modest_email_clipboard_cleared (ModestEmailClipboard *self)
 
 gboolean 
 modest_email_clipboard_check_source_folder (ModestEmailClipboard *self,
-					    const TnyFolder *folder)
+					    TnyFolder *folder)
 {
 	TnyFolderType folder_type1;
 	TnyFolderType folder_type2;

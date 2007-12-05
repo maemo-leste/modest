@@ -70,7 +70,7 @@ typedef enum {
  *  
  * Returns: the folder type, or TNY_FOLDER_TYPE_UNKNOWN
  */
-TnyFolderType  modest_tny_folder_guess_folder_type   (const TnyFolder *folder);
+TnyFolderType  modest_tny_folder_guess_folder_type   (TnyFolder *folder);
 
 
 

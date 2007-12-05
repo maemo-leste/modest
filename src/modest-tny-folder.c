@@ -58,14 +58,15 @@ modest_tny_folder_guess_folder_type_from_name (const gchar* full_name)
 
 
 TnyFolderType
-modest_tny_folder_guess_folder_type (const TnyFolder *folder)
+modest_tny_folder_guess_folder_type (TnyFolder *folder)
 {
 	TnyFolderType type;
 	
 	g_return_val_if_fail (TNY_IS_FOLDER(folder), TNY_FOLDER_TYPE_INVALID);
 
-	if (modest_tny_folder_is_local_folder ((TnyFolder*)folder))
-		type = modest_tny_folder_get_local_or_mmc_folder_type ((TnyFolder*)folder);
+	if (modest_tny_folder_is_local_folder (folder) || 
+	    modest_tny_folder_is_memory_card_folder (folder))
+		type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 	else
 		type = tny_folder_get_folder_type (TNY_FOLDER (folder));
 	
@@ -231,8 +232,6 @@ gboolean
 modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 {
 	g_return_val_if_fail (folder, FALSE);
-	g_return_val_if_fail (modest_tny_folder_guess_folder_type (folder) !=
-			      TNY_FOLDER_TYPE_INVALID, FALSE);
 	
 	/* The merge folder is a special case, 
 	 * used to merge the per-account local outbox folders. 

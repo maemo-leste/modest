@@ -2170,8 +2170,7 @@ _selected_folder_is_same_as_source (ModestWindow *win)
 	}
 		
 	/* Check source folder */
-	result = modest_email_clipboard_check_source_folder (clipboard, 
-							     (const TnyFolder *) folder);
+	result = modest_email_clipboard_check_source_folder (clipboard, TNY_FOLDER (folder));
 	
 	/* Free */
  frees:
