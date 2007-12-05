@@ -1880,7 +1880,7 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 	
 	/* Refresh the current folder. The if is always TRUE it's just an extra check */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *header_view, *folder_view;
+		GtkWidget *folder_view;
 		TnyFolderStore *folder_store;
 
 		folder_view = 
@@ -1890,15 +1890,6 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 			return;
 		
 		folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-	
-		/* No need to refresh the INBOX the send_receive will do it for us */
-		if (folder_store && TNY_IS_FOLDER (folder_store) && 
-		    tny_folder_get_folder_type (TNY_FOLDER (folder_store)) != TNY_FOLDER_TYPE_INBOX) {
-			header_view = 
-				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-                
-		}
 	
 		if (folder_store)
 			g_object_unref (folder_store);

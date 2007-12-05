@@ -1218,6 +1218,14 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 			modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
 	}
 
+	if (!dimmed) {
+
+		dimmed = _selected_msg_sent_in_progress (win);
+		if (dimmed) {
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
+		}
+	}
+
 	/* cannot purge in editable drafts nor pop folders */
 	if (!dimmed) {
 		dimmed = _invalid_folder_for_purge (win, rule);
