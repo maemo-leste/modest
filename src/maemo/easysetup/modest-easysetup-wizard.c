@@ -419,6 +419,44 @@ on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character,
 	show_error (GTK_WIDGET (self), message);
 }
 
+static gint
+get_default_country_code(void)
+{
+	/* TODO: Default to the current country somehow.
+	 * But I don't know how to get the information that is specified in the
+	 * "Language and region" control panel. It does not seem be anywhere in gconf. murrayc.
+	 *
+	 * This is probably not the best choice of gconf key:
+	 * This is the	"mcc used in the last pairing", ie. the last connection you made.
+	 * set by the osso-operator-wizard package, suggested by Dirk-Jan Binnema.
+	 *
+	 */
+	GError *error = NULL;
+	const gchar* key = "/apps/osso/operator-wizard/last_mcc";
+	gint mcc_id = modest_conf_get_int(modest_runtime_get_conf (), key, &error);
+
+	if(mcc_id < 0)
+		mcc_id = 0;
+
+	if (error) {
+		g_warning ("Error getting gconf key %s:\n%s", key, error->message);
+		g_error_free (error);
+		error = NULL;
+
+		mcc_id = 0;
+	}
+
+	/* Note that modest_conf_get_int() seems to return 0 without an error if the key is not there
+	 * This might just be a Maemo bug.
+	 */
+	if (mcc_id == 0)
+	{
+		/* For now, we default to Finland when there is nothing better: */
+		mcc_id = 244;
+	}
+	return mcc_id;
+}
+
 static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
 {
@@ -438,8 +476,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	self->combo_account_country = GTK_WIDGET (easysetup_country_combo_box_new ());
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_country"), 
 							      self->combo_account_country, NULL, HILDON_CAPTION_OPTIONAL);
-        /* _Don't_ do gtk_widget_show(self->combo_account_country) now, it's very slow.
-         * We're showing the combo later, in presets_idle() */
+	gtk_widget_show (self->combo_account_country);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
@@ -464,43 +501,6 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	/* connect to providers combo's changed signal, so we can fill the email address: */
 	g_signal_connect (G_OBJECT (self->combo_account_serviceprovider), "changed",
 			  G_CALLBACK (on_combo_account_serviceprovider), self);
-	
-	/* TODO: Default to the current country somehow.
-	 * But I don't know how to get the information that is specified in the 
-	 * "Language and region" control panel. It does not seem be anywhere in gconf. murrayc.
-	 *
-	 * This is probably not the best choice of gconf key:
-	 * This is the  "mcc used in the last pairing", ie. the last connection you made.
-	 * set by the osso-operator-wizard package, suggested by Dirk-Jan Binnema.
-	 *
-	 */
-	GError *error = NULL;
-	const gchar* key = "/apps/osso/operator-wizard/last_mcc";
-	gint mcc_id = modest_conf_get_int(modest_runtime_get_conf (), key, &error);
-	
-	if(mcc_id < 0)
-		mcc_id = 0;
-     
-	if (error) {
-		g_warning ("Error getting gconf key %s:\n%s", key, error->message);
-		g_error_free (error);
-		error = NULL;
-     	
-		mcc_id = 0;
-	}
-    
-	/* Note that modest_conf_get_int() seems to return 0 without an error if the key is not there
-	 * This might just be a Maemo bug.
-	 */
-	if (mcc_id == 0) 
-	{
-		/* For now, we default to Finland when there is nothing better: */
-		mcc_id = 244;
-	}
-   
-	easysetup_country_combo_box_set_active_country_mcc (
-		EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country), mcc_id);
-		
 	
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
@@ -1098,11 +1098,12 @@ presets_idle (gpointer userdata)
 	priv->presets = idle_data->presets;
 
 	if (self->combo_account_country) {
-		/* We're showing the combo now because it's very slow to do it
-		   synchronously in create_page_account_details() */
-		gtk_widget_show (self->combo_account_country);
-		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
+		gint mcc = get_default_country_code();
+		/* Fill the combo in an idle call, as it takes a lot of time */
+		easysetup_country_combo_box_load_data(
 			EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
+		easysetup_country_combo_box_set_active_country_mcc (
+			EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country), mcc);
 		easysetup_provider_combo_box_fill (
 			EASYSETUP_PROVIDER_COMBO_BOX (self->combo_account_serviceprovider),
 			priv->presets, mcc);

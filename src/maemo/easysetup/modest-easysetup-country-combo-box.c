@@ -247,6 +247,13 @@ static void
 easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 {
 	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	priv->model = NULL;
+}
+
+void
+easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
+{
+	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an int for the MCC ID.

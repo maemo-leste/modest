@@ -68,6 +68,8 @@ GType easysetup_country_combo_box_get_type (void);
 
 EasysetupCountryComboBox* easysetup_country_combo_box_new (void);
 
+void easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self);
+
 gint easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *self);
 
 
