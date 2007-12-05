@@ -158,6 +158,10 @@ static void on_account_removed (TnyAccountStore *account_store,
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 
+static void set_zoom_do_nothing (ModestWindow *window, gdouble zoom);
+
+static gdouble get_zoom_do_nothing (ModestWindow *window);
+
 static void init_window (ModestMsgEditWindow *obj);
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
@@ -360,6 +364,8 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_edit_window_finalize;
 
+	modest_window_class->set_zoom_func = set_zoom_do_nothing;
+	modest_window_class->get_zoom_func = get_zoom_do_nothing;
 	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
@@ -3248,3 +3254,16 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 	return FALSE;
 
 }
+
+static void
+set_zoom_do_nothing (ModestWindow *window,
+				 gdouble zoom)
+{
+}
+
+static gdouble
+get_zoom_do_nothing (ModestWindow *window)
+{
+	return 1.0;
+}
+
