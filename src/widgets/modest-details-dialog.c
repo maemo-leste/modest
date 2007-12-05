@@ -162,6 +162,7 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 	/* Create value */
 	value_w = gtk_label_new (value);
 	gtk_label_set_line_wrap (GTK_LABEL (value_w), TRUE);
+	gtk_label_set_line_wrap_mode (GTK_LABEL (value_w), PANGO_WRAP_WORD_CHAR);
 	gtk_misc_set_alignment (GTK_MISC (value_w), 0.0, 0.0);
 	gtk_label_set_justify (GTK_LABEL (value_w), GTK_JUSTIFY_LEFT);
 
