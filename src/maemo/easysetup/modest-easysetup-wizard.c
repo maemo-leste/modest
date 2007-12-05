@@ -438,7 +438,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	self->combo_account_country = GTK_WIDGET (easysetup_country_combo_box_new ());
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_country"), 
 							      self->combo_account_country, NULL, HILDON_CAPTION_OPTIONAL);
-	gtk_widget_show (self->combo_account_country);
+        /* _Don't_ do gtk_widget_show(self->combo_account_country) now, it's very slow.
+         * We're showing the combo later, in presets_idle() */
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
@@ -1097,6 +1098,9 @@ presets_idle (gpointer userdata)
 	priv->presets = idle_data->presets;
 
 	if (self->combo_account_country) {
+		/* We're showing the combo now because it's very slow to do it
+		   synchronously in create_page_account_details() */
+		gtk_widget_show (self->combo_account_country);
 		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
 			EASYSETUP_COUNTRY_COMBO_BOX (self->combo_account_country));
 		easysetup_provider_combo_box_fill (
