@@ -2570,6 +2570,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 				    ? TEXT_POSITION_SUPERSCRIPT
 				    : TEXT_POSITION_SUBSCRIPT );
 			fmt.cs.text_position = TRUE;
+			fmt.font_size = oldfmt.font_size;
 		}
 		if (color_set) {
 			fmt.color = *color;
@@ -2582,9 +2583,8 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 		}
 		g_free(font_name);
 		if (font_size_set) {
-			fmt.font_size = wp_get_font_size_index(
-				font_size, DEFAULT_FONT_SIZE);
 			fmt.cs.font_size = TRUE;
+			fmt.font_size = wp_get_font_size_index(font_size, DEFAULT_FONT_SIZE);
 		}
 		wp_text_buffer_set_format(WP_TEXT_BUFFER(priv->text_buffer), &fmt);
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), window);
