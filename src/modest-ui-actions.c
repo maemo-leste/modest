@@ -1898,14 +1898,6 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 								     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
                 
-			/* We do not need to set the contents style
-			   because it hasn't changed. We also do not
-			   need to save the widget status. Just force
-                           a refresh */
-			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
-						       TNY_FOLDER (folder_store),
-						       folder_refreshed_cb,
-						       MODEST_MAIN_WINDOW (win));
 		}
 	
 		if (folder_store)
@@ -5002,6 +4994,7 @@ on_send_receive_finished (ModestMailOperation  *mail_op,
 	   update_account does it always automatically */
 	if (folder_store && TNY_IS_FOLDER (folder_store) && 
 	    tny_folder_get_folder_type (TNY_FOLDER (folder_store)) != TNY_FOLDER_TYPE_INBOX) {
+		ModestMailOperation *refresh_op;
 
 		header_view = modest_main_window_get_child_widget (main_win,
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
@@ -5010,10 +5003,11 @@ on_send_receive_finished (ModestMailOperation  *mail_op,
 		   because it hasn't changed. We also do not
 		   need to save the widget status. Just force
 		   a refresh */
-		modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
-					       TNY_FOLDER (folder_store),
-					       folder_refreshed_cb,
-					       main_win);
+		refresh_op = modest_mail_operation_new (G_OBJECT (main_win));
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), refresh_op);
+		modest_mail_operation_refresh_folder (refresh_op, TNY_FOLDER (folder_store),
+						      folder_refreshed_cb, main_win);
+		g_object_unref (refresh_op);
 	}
 	
 	if (folder_store)
