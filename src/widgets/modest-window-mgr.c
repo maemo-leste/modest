@@ -354,10 +354,10 @@ modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header, co
 		uid = g_strdup (alt_uid);
 	
 	if (!has_uid (priv->preregistered_uids, uid)) {
-		g_debug ("registering new uid %s", uid);
+		MODEST_DEBUG_BLOCK(g_debug ("registering new uid %s", uid););
 		priv->preregistered_uids = append_uid (priv->preregistered_uids, uid);
 	} else
-		g_debug ("already had uid %s", uid);
+		MODEST_DEBUG_BLOCK(g_debug ("already had uid %s", uid););
 	
 	g_free (uid);
 }
@@ -375,17 +375,17 @@ modest_window_mgr_unregister_header (ModestWindowMgr *self,  TnyHeader *header)
 	uid = modest_tny_folder_get_header_unique_id (header);
 
 	if (!has_uid (priv->preregistered_uids, uid)) {
-		g_debug ("trying to unregister non-existing uid %s", uid);
+		MODEST_DEBUG_BLOCK(g_debug ("trying to unregister non-existing uid %s", uid););
 		priv->preregistered_uids = append_uid (priv->preregistered_uids, uid);
 	} else
-		g_debug ("unregistering uid %s", uid);
+		MODEST_DEBUG_BLOCK(g_debug ("unregistering uid %s", uid););
 	
 	if (has_uid (priv->preregistered_uids, uid)) {
 		priv->preregistered_uids = remove_uid (priv->preregistered_uids, uid);
 		if (has_uid (priv->preregistered_uids, uid))
 			g_debug ("BUG: uid %s NOT removed", uid);
 		else
-			g_debug ("uid %s removed", uid);
+			MODEST_DEBUG_BLOCK(g_debug ("uid %s removed", uid););
 	}
 		
 	g_free (uid);
@@ -595,7 +595,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 		if (!has_uid (priv->preregistered_uids, uid)) 
 			g_debug ("weird: no uid for window (%s)", uid);
 		
-		g_debug ("registering window for %s", uid ? uid : "<none>");
+		MODEST_DEBUG_BLOCK(g_debug ("registering window for %s", uid ? uid : "<none>"););
 		
 		priv->preregistered_uids = 
 			remove_uid (priv->preregistered_uids,
@@ -605,7 +605,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 		const gchar *uid = modest_msg_edit_window_get_message_uid
 			(MODEST_MSG_EDIT_WINDOW (window));
 		
-		g_debug ("registering window for %s", uid);
+		MODEST_DEBUG_BLOCK(g_debug ("registering window for %s", uid););
 
 		priv->preregistered_uids = 
 			remove_uid (priv->preregistered_uids,
