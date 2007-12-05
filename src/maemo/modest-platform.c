@@ -643,7 +643,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 		    MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT);
 
 	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_sender_recipient"),
-							    SORT_ID_NUM - 1);
+							    SORT_ID_NUM);
 	if (outgoing) {
 		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
@@ -653,7 +653,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	}
 
 	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_date"),
-							    SORT_ID_NUM - 1);
+							    SORT_ID_NUM);
 	if (outgoing) {
 		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE;
@@ -664,7 +664,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	default_key = sort_key;
 
 	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_subject"),
-							    SORT_ID_NUM -1);
+							    SORT_ID_NUM);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
 	if (outgoing)
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
@@ -672,18 +672,18 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
 
 	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_attachment"),
-							    SORT_ID_NUM - 1);
+							    SORT_ID_NUM);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
 	attachments_sort_id = sort_key;
 
 	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_size"),
-							    SORT_ID_NUM - 1);
+							    SORT_ID_NUM);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN;
 	sort_ids[sort_key] = 0;
 
 	sort_key = checked_hildon_sort_dialog_add_sort_key (dialog, _("mcen_li_sort_priority"),
-							    SORT_ID_NUM - 1);
+							    SORT_ID_NUM);
 	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
 	priority_sort_id = sort_key;
