@@ -337,6 +337,12 @@ void modest_platform_information_banner (GtkWidget *widget,
 					 const gchar *icon_name,
 					 const gchar *text);
 
+/* Timeout is in miliseconds */
+void modest_platform_information_banner_with_timeout (GtkWidget *parent,
+						      const gchar *icon_name,
+						      const gchar *text,
+						      gint timeout);
+
 GtkWidget *
 modest_platform_animation_banner (GtkWidget *parent,
 				  const gchar *annimation_name,

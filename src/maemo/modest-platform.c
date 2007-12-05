@@ -1558,6 +1558,17 @@ modest_platform_information_banner (GtkWidget *parent,
 	hildon_banner_show_information (parent, icon_name, text);
 }
 
+void
+modest_platform_information_banner_with_timeout (GtkWidget *parent,
+						 const gchar *icon_name,
+						 const gchar *text,
+						 gint timeout)
+{
+	GtkWidget *banner;
+	banner = hildon_banner_show_information (parent, icon_name, text);
+	hildon_banner_set_timeout(HILDON_BANNER(banner), timeout);
+}
+
 GtkWidget *
 modest_platform_animation_banner (GtkWidget *parent,
 				  const gchar *animation_name,

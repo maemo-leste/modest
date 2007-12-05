@@ -936,7 +936,8 @@ open_msg_cb (ModestMailOperation *mail_op,
 
 
 		/* Show banner */
-		modest_platform_information_banner (NULL, NULL, _("mail_ib_opening_draft_message"));
+		modest_platform_information_banner_with_timeout
+			(NULL, NULL, _("mail_ib_opening_draft_message"), 1200);
 
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);

@@ -344,6 +344,15 @@ modest_platform_information_banner (GtkWidget *widget,
 	g_message ("NOT IMPLEMENTED");;
 }
 
+void
+modest_platform_information_banner_with_timeout (GtkWidget *widget,
+						 const gchar *icon_name,
+						 const gchar *text,
+						 gint timeout)
+{
+	g_message ("NOT IMPLEMENTED");;
+}
+
 GtkWidget *
 modest_platform_animation_banner (GtkWidget *widget,
 				  const gchar *icon_name,
