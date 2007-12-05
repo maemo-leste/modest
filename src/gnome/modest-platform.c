@@ -193,7 +193,30 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 	response = gtk_dialog_run (GTK_DIALOG(dialog));
 	gtk_widget_destroy (dialog);
 	
-	/* TODO implement confirmation dialog */
+	return response;
+}
+
+gint
+modest_platform_run_confirmation_dialog_with_buttons (GtkWindow *parent_window,
+						      const gchar *message,
+						      const gchar *button_accept,
+						      const gchar *button_cancel)
+{
+	gint response;
+	GtkWidget *dialog;
+
+	dialog = gtk_dialog_new_with_buttons (message,
+					      parent_window,
+					      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+					      button_accept,
+					      GTK_RESPONSE_ACCEPT,
+					      button_cancel,
+					      GTK_RESPONSE_CANCEL,
+					      NULL);
+
+	response = gtk_dialog_run (GTK_DIALOG(dialog));
+	gtk_widget_destroy (dialog);
+	
 	return response;
 }
 

@@ -171,7 +171,6 @@ typedef void (*UpdateAccountCallback) (ModestMailOperation *self,
 				       TnyList *new_headers,
 				       gpointer user_data);
 
-
 /**
  * SaveToDraftsCallback:
  *
@@ -186,6 +185,10 @@ typedef void (*SaveToDraftstCallback) (ModestMailOperation *self,
 				       TnyMsg *saved_draft,
 				       gpointer user_data);
 
+
+typedef gboolean (*RetrieveAllCallback) (GObject *source,
+					 guint num_msgs,
+					 guint limit);
 
 /* This struct represents the internal state of a mail operation in a
    given time */
@@ -407,6 +410,7 @@ void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 void          modest_mail_operation_update_account (ModestMailOperation *self,
 						    const gchar *account_name,
 						    gboolean poke_all,
+						    RetrieveAllCallback retrieve_all_cb,
 						    UpdateAccountCallback callback,
 						    gpointer user_data);
 

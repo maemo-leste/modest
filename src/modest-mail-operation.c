@@ -1231,6 +1231,7 @@ typedef struct
 	gboolean poke_all;
 	TnyFolderObserver *inbox_observer;
 	guint update_timeout;
+	RetrieveAllCallback retrieve_all_cb;
 } UpdateAccountInfo;
 
 
@@ -1279,7 +1280,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountMgr *mgr;
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
-	gboolean headers_only;
+	gboolean headers_only, ignore_limit;
 	TnyTransportAccount *transport_account;
 	ModestTnySendQueue *send_queue;
 
@@ -1338,11 +1339,18 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	/* Order by date */
 	g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date);
 	
-	/* TODO: Ask the user, instead of just failing,
-	 * showing mail_nc_msg_count_limit_exceeded, with 'Get
-	 * all' and 'Newest only' buttons. */
+	/* Ask the users if they want to retrieve all the messages
+	   even though the limit was exceeded */
+	ignore_limit = FALSE;
 	if (new_headers_array->len > retrieve_limit) {
-		/* TODO */
+		/* Ask the user if a callback has been specified and
+		   if the mail operation has a source (this means that
+		   was invoked by the user and not automatically by a
+		   D-Bus method) */
+		if (info->retrieve_all_cb && priv->source)
+			ignore_limit = info->retrieve_all_cb (priv->source,
+							      new_headers_array->len,
+							      retrieve_limit);
 	}
 	
 	if (!headers_only) {
@@ -1350,7 +1358,10 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		const gint msg_list_size = compute_message_array_size (new_headers_array);
 
 		priv->done = 0;
-		priv->total = MIN (new_headers_array->len, retrieve_limit);
+		if (ignore_limit)
+			priv->total = new_headers_array->len;
+		else
+			priv->total = MIN (new_headers_array->len, retrieve_limit);
 		while (msg_num < priv->total) {		
 			TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, msg_num));
 			TnyFolder *folder = tny_header_get_folder (header);
@@ -1537,6 +1548,7 @@ void
 modest_mail_operation_update_account (ModestMailOperation *self,
 				      const gchar *account_name,
 				      gboolean poke_all,
+				      RetrieveAllCallback retrieve_all_cb,
 				      UpdateAccountCallback callback,
 				      gpointer user_data)
 {
@@ -1571,6 +1583,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->callback = callback;
 	info->user_data = user_data;
 	info->update_timeout = g_timeout_add (250, timeout_notify_progress, self);
+	info->retrieve_all_cb = retrieve_all_cb;
 
 	/* Set account busy */
 	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), account_name, TRUE);
