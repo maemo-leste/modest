@@ -100,7 +100,7 @@ const gchar account_title_forbidden_chars[] = {
 	'\\', '/', ':', '*', '?', '\'', '<', '>', '|', '^'
 };
 const gchar folder_name_forbidden_chars[] = {
-	'<', '>', ':', '\'', '/', '\\', '|', '?', '*', '^', '%', '$'
+	'<', '>', ':', '\'', '/', '\\', '|', '?', '*', '^', '%', '$', '#', '&'
 };
 const gchar user_name_forbidden_chars[] = {
 	'<', '>'
@@ -399,7 +399,7 @@ modest_text_utils_convert_to_html (const gchar *data)
 
 	if (len <= HYPERLINKIFY_MAX_LENGTH)
 		hyperlinkify_plain_text (html);
-
+	
 	return g_string_free (html, FALSE);
 }
 
