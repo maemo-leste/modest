@@ -37,7 +37,7 @@
 #include <widgets/modest-main-window.h>
 #include <string.h>
 
-static gboolean
+ static gboolean
 on_idle_exit_modest (gpointer data)
 {
 	/* Protect the Gtk calls */

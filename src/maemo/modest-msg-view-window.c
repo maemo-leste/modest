@@ -434,7 +434,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 		GdkPixbuf *scaled =
 			gdk_pixbuf_scale_simple (window_icon, 64, 54, GDK_INTERP_BILINEAR);
 		if (scaled) {
-			g_warning ("setting scaled icon");
 			gtk_window_set_icon (GTK_WINDOW (obj), scaled);
 			g_object_unref (scaled);
 		}
