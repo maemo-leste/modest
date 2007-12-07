@@ -1,3 +1,13 @@
+modest (1.0-2007.50-1) feisty; urgency=low
+
+  * Fixes: NB#77391, NB#77997, NB#77007, NB#77433, NB#77596, NB#68054
+  * Fixes: NB#77086, NB#77978, NB#77426, NB#66958, NB#63928, NB#77425
+  * Fixes: NB#77589, NB#78266, NB#78338, NB#78350, NB#76842, NB#78132
+  * Fixes: NB#76634, NB#64670, NB#76854, NB#78104, NB#77603, NB#78366
+  * Fixes: NB#78367, NB#78380
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri,  7 Dec 2007 12:03:40 +0200
+
 modest (1.0-2007.49-1) feisty; urgency=low
 
   * Fixes: NB#76897, NB#64099, NB#63571, NB#76991, NB#74031, NB#73776
