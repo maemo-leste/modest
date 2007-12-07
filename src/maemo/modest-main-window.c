@@ -66,12 +66,6 @@
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
 
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-program.h>
-#else
-#include <hildon/hildon-program.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
-
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
 #define XALIGN 0.5
@@ -373,10 +367,9 @@ modest_main_window_finalize (GObject *obj)
 
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
-	modest_main_window_disconnect_signals (MODEST_WINDOW (obj));
-
+	modest_main_window_disconnect_signals (MODEST_WINDOW (obj));	
 	modest_main_window_cleanup_queue_error_signals ((ModestMainWindow *) obj);
-
+	
 	g_slist_free (priv->progress_widgets);
 
 	g_byte_array_free (priv->merge_ids, TRUE);
@@ -400,7 +393,7 @@ modest_main_window_finalize (GObject *obj)
 		g_source_remove (priv->restore_paned_timeout);
 		priv->restore_paned_timeout = 0;
 	}
-
+	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -1099,6 +1092,7 @@ modest_main_window_new (void)
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
+	HildonProgram *app;
 	ModestConf *conf = NULL;
 	GtkAction *action = NULL;
 	GdkPixbuf *window_icon;
@@ -1234,7 +1228,7 @@ modest_main_window_new (void)
 	
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
 	
-	HildonProgram *app = hildon_program_get_instance ();
+	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
 	
 	g_signal_connect (G_OBJECT(app), "notify::is-topmost",

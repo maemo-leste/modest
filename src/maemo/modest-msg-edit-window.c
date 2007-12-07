@@ -168,8 +168,8 @@ static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
 	GtkTextIter iter;
-
 	g_message ("BEGIN BUFFER OF SIZE %d", gtk_text_buffer_get_char_count (GTK_TEXT_BUFFER (buffer)));
+
 	gtk_text_buffer_get_start_iter (GTK_TEXT_BUFFER (buffer), &iter);
 	while (!gtk_text_iter_is_end (&iter)) {
 		GString *output = g_string_new ("");
@@ -423,6 +423,9 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	}
 
 	init_window (obj);
+	
+	hildon_program_add_window (hildon_program_get_instance(),
+				   HILDON_WINDOW(obj));
 }
 
 
@@ -740,12 +743,22 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
 
 	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON);
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON); 
 	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+		/* scale the icon, because it won't be shown unless it's
+		 * 64 x 54 -- hildon quirk. this looks a bit ugly now,
+		 * so waiting for correctly sized icons, then this scaling
+		 * code can disappear -- djcb
+		 */
+		GdkPixbuf *scaled =
+			gdk_pixbuf_scale_simple (window_icon, 64, 54, GDK_INTERP_BILINEAR);
+		if (scaled) {
+			g_warning ("setting scaled icon");
+			gtk_window_set_icon (GTK_WINDOW (obj), scaled);
+			g_object_unref (scaled);
+		}
 		g_object_unref (window_icon);
-	}
-
+	}	
 }
 	
 static void
@@ -775,7 +788,7 @@ static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
-
+	
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_edit_window_disconnect_signals (MODEST_WINDOW (obj));

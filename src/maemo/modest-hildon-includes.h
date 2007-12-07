@@ -58,7 +58,6 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-notification.h>
 #endif /*MODEST_HILDON_NOTIFY*/
 
-
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-color-selector.h>
 #include <hildon-widgets/hildon-color-button.h>
@@ -70,6 +69,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon-widgets/hildon-font-selection-dialog.h>
 #include <hildon-widgets/hildon-find-toolbar.h>
 #include <hildon-widgets/hildon-sort-dialog.h>
+#include <hildon-widgets/hildon-program.h>
 
 #else
 
@@ -86,6 +86,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-find-toolbar.h>
 #include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
+#include <hildon/hildon-program.h>
 
 #endif /*__MODEST_HAVE_HILDON1_WIDGETS*/
 #endif /*__MODEST_HAVE_HILDON0_WIDGETS_*/
@@ -151,8 +152,5 @@ typedef enum
   HILDON_GTK_INPUT_MODE_DICTIONARY   = 1 << 31
 } HildonGtkInputMode;
 #endif /* !MODEST_HAVE_HILDON_GTK */
-
-
-
 
 #endif /*__MODEST_HILDON_INCLUDES__*/

@@ -422,13 +422,27 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj));
+	
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON); 
 	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
+		/* scale the icon, because it won't be shown unless it's
+		 * 64 x 54 -- hildon quirk. this looks a bit ugly now,
+		 * so waiting for correctly sized icons, then this scaling
+		 * code can disappear -- djcb
+		 */
+		GdkPixbuf *scaled =
+			gdk_pixbuf_scale_simple (window_icon, 64, 54, GDK_INTERP_BILINEAR);
+		if (scaled) {
+			g_warning ("setting scaled icon");
+			gtk_window_set_icon (GTK_WINDOW (obj), scaled);
+			g_object_unref (scaled);
+		}
 		g_object_unref (window_icon);
-	}
-
+	}	
+	
+	hildon_program_add_window (hildon_program_get_instance(),
+				   HILDON_WINDOW(obj));
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_viewer");
