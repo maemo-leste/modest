@@ -4166,16 +4166,6 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 {
 	ModestWindow *main_window = NULL;
 	GObject *win = NULL;
-	const GError *error = NULL;
-	const gchar *message = NULL;
-	
-	/* Get error message */
-	error = modest_mail_operation_get_error (mail_op);
-	if (error != NULL && error->message != NULL) {
-		message = error->message;
-	} else {
-		message = _("mail_in_ui_folder_move_target_error");
-	}
 	
 	/* Disable next automatic folder selection */
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
@@ -4195,7 +4185,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 
 	/* Show notification dialog */
 	win = modest_mail_operation_get_source (mail_op);
-	modest_platform_run_information_dialog ((GtkWindow *) win, message);
+	modest_platform_run_information_dialog ((GtkWindow *) win, _("mail_in_ui_folder_move_target_error"));
 	if (win)
 		g_object_unref (win);
 }
