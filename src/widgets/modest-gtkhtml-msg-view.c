@@ -1395,11 +1395,8 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 	 */
 	if (g_str_has_prefix (uri, "cid:"))  
 		my_uri = uri + 4;  /* +4 ==> skip "cid:" */
-	else if (g_strstr_len (uri, strlen(uri), ":") == NULL)
-		my_uri = uri;      /* for outlook, no cid:, we check for ':',
-				    * so external locations are excluded */
 	else
-		return FALSE; /* we don't support non-embedded images */
+		my_uri = uri;
 	
 	/* now try to find the embedded image */
 	part = find_cid_image (priv->msg, my_uri);
