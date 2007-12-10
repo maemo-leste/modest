@@ -597,12 +597,19 @@ static void
 set_selected (ModestAttachmentsView *atts_view, ModestAttachmentView *att_view)
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+	TnyMimePart *part;
 
 	unselect_all (atts_view);
-	gtk_widget_set_state (GTK_WIDGET (att_view), GTK_STATE_SELECTED);
+	part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+	
 	g_list_free (priv->selected);
 	priv->selected = NULL;
-	priv->selected = g_list_append (priv->selected, att_view);
+	if (TNY_IS_MIME_PART (part) && !tny_mime_part_is_purged (part)) {
+		gtk_widget_set_state (GTK_WIDGET (att_view), GTK_STATE_SELECTED);
+		priv->selected = g_list_append (priv->selected, att_view);
+	}
+	if (part)
+		g_object_unref (part);
 	
 	own_clipboard (atts_view);
 }
@@ -614,6 +621,7 @@ select_range (ModestAttachmentsView *atts_view, ModestAttachmentView *att1, Mode
 	GList *children = NULL;
 	GList *node = NULL;
 	gboolean selecting = FALSE;
+	TnyMimePart *part;
 
 	unselect_all (atts_view);
 
@@ -629,12 +637,20 @@ select_range (ModestAttachmentsView *atts_view, ModestAttachmentView *att1, Mode
 
 	for (node = children; node != NULL; node = g_list_next (node)) {
 		if ((node->data == att1) || (node->data == att2)) {
-			gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
-			priv->selected = g_list_append (priv->selected, node->data);
+			part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (node->data));
+			if (!tny_mime_part_is_purged (part)) {
+				gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
+				priv->selected = g_list_append (priv->selected, node->data);
+			}
+			g_object_unref (part);
 			selecting = !selecting;
 		} else if (selecting) {
-			gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
-			priv->selected = g_list_append (priv->selected, node->data);
+			part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (node->data));
+			if (!tny_mime_part_is_purged (part)) {
+				gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
+				priv->selected = g_list_append (priv->selected, node->data);
+			}
+			g_object_unref (part);
 		}
 			
 	}
