@@ -424,19 +424,9 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	init_window (MODEST_MSG_VIEW_WINDOW(obj));
 	
 	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON); 
+	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON, MODEST_ICON_SIZE_BIG); 
 	if (window_icon) {
-		/* scale the icon, because it won't be shown unless it's
-		 * 64 x 54 -- hildon quirk. this looks a bit ugly now,
-		 * so waiting for correctly sized icons, then this scaling
-		 * code can disappear -- djcb
-		 */
-		GdkPixbuf *scaled =
-			gdk_pixbuf_scale_simple (window_icon, 64, 54, GDK_INTERP_BILINEAR);
-		if (scaled) {
-			gtk_window_set_icon (GTK_WINDOW (obj), scaled);
-			g_object_unref (scaled);
-		}
+		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
 		g_object_unref (window_icon);
 	}	
 	

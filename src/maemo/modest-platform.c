@@ -477,7 +477,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 
 
 GdkPixbuf*
-modest_platform_get_icon (const gchar *name)
+modest_platform_get_icon (const gchar *name, guint icon_size)
 {
 	GError *err = NULL;
 	GdkPixbuf* pixbuf = NULL;
@@ -491,20 +491,8 @@ modest_platform_get_icon (const gchar *name)
 	if (!name || strlen(name) == 0)
 		return NULL;
 	
-#if 0 /* do we still need this? */
-	if (g_str_has_suffix (name, ".png")) { /*FIXME: hack*/
-		pixbuf = gdk_pixbuf_new_from_file (name, &err);
-		if (!pixbuf) {
-			g_printerr ("modest: error loading icon '%s': %s\n",
-				    name, err->message);
-			g_error_free (err);
-			return NULL;
-		}
-		return pixbuf;
-	}
-#endif /* */
 	current_theme = gtk_icon_theme_get_default ();
-	pixbuf = gtk_icon_theme_load_icon (current_theme, name, 26,
+	pixbuf = gtk_icon_theme_load_icon (current_theme, name, icon_size,
 					   GTK_ICON_LOOKUP_NO_SVG,
 					   &err);
 	if (!pixbuf) {

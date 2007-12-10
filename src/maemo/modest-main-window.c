@@ -1238,7 +1238,7 @@ modest_main_window_new (void)
 			  G_CALLBACK (modest_main_window_on_show), folder_win);
 		
 	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_ICON);
+	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
 	if (window_icon) {
 		gtk_window_set_icon (GTK_WINDOW (self), window_icon);
 		g_object_unref (window_icon);

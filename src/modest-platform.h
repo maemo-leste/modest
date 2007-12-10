@@ -127,10 +127,11 @@ gboolean modest_platform_show_uri_popup (const gchar *uri);
 /**
  * modest_platform_get_icon:
  * @name: the name of the icon
+ * @size: the icon size, use MODEST_ICON_SMALL or MODEST_ICON_BIG
  *
  * this function returns an icon, or NULL in case of error 
  */
-GdkPixbuf* modest_platform_get_icon (const gchar *name);
+GdkPixbuf* modest_platform_get_icon (const gchar *name, guint icon_size);
 
 
 /**

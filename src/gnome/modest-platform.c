@@ -113,7 +113,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 }
 
 GdkPixbuf*
-modest_platform_get_icon (const gchar *name)
+modest_platform_get_icon (const gchar *name, guint icon_size)
 {
 	GError *err = NULL;
 	GdkPixbuf* pixbuf;

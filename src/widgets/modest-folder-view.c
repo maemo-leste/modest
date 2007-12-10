@@ -536,22 +536,25 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 				TNY_ACCOUNT (instance))) {
 
 			    if (!avirt_pixbuf)
-				    avirt_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS));
-
+				    avirt_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_LOCAL_FOLDERS,
+											      MODEST_ICON_SIZE_SMALL));
+			    
 			    if (!avirt_pixbuf_open) {
-				GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-				avirt_pixbuf_open = gdk_pixbuf_copy (avirt_pixbuf);
-				gdk_pixbuf_composite (emblem, avirt_pixbuf_open, 0, 0, 
-						      MIN (gdk_pixbuf_get_width (emblem), 
-							   gdk_pixbuf_get_width (avirt_pixbuf_open)),
-						      MIN (gdk_pixbuf_get_height (emblem), 
-							   gdk_pixbuf_get_height (avirt_pixbuf_open)),
-						      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-				g_object_unref (emblem);
+				    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+										  MODEST_ICON_SIZE_SMALL);
+				    avirt_pixbuf_open = gdk_pixbuf_copy (avirt_pixbuf);
+				    gdk_pixbuf_composite (emblem, avirt_pixbuf_open, 0, 0, 
+							  MIN (gdk_pixbuf_get_width (emblem), 
+							       gdk_pixbuf_get_width (avirt_pixbuf_open)),
+							  MIN (gdk_pixbuf_get_height (emblem), 
+							       gdk_pixbuf_get_height (avirt_pixbuf_open)),
+							  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+				    g_object_unref (emblem);
 			    }
 
 			    if (!avirt_pixbuf_close) {
-				GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
+				    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+										  MODEST_ICON_SIZE_SMALL);
 				avirt_pixbuf_close = gdk_pixbuf_copy (avirt_pixbuf);
 				gdk_pixbuf_composite (emblem, avirt_pixbuf_close, 0, 0, 
 						      MIN (gdk_pixbuf_get_width (emblem), 
@@ -573,10 +576,12 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 				
 				if (!strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {				   
 				    if (!ammc_pixbuf)
-					    ammc_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_MMC));
-
+					    ammc_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_MMC,
+												     MODEST_ICON_SIZE_SMALL));
+				    
 				    if (!ammc_pixbuf_open) {
-					GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
+					    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+											  MODEST_ICON_SIZE_SMALL);
 					ammc_pixbuf_open = gdk_pixbuf_copy (ammc_pixbuf);
 					gdk_pixbuf_composite (emblem, ammc_pixbuf_open, 0, 0, 
 							      MIN (gdk_pixbuf_get_width (emblem), 
@@ -588,7 +593,8 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 				    }
 
 				    if (!ammc_pixbuf_close) {
-					GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
+					    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+											  MODEST_ICON_SIZE_SMALL);
 					ammc_pixbuf_close = gdk_pixbuf_copy (ammc_pixbuf);
 					gdk_pixbuf_composite (emblem, ammc_pixbuf_close, 0, 0, 
 							      MIN (gdk_pixbuf_get_width (emblem), 
@@ -607,10 +613,11 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 				} else {
 
 				    if (!anorm_pixbuf)
-					    anorm_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT));
-
+					    anorm_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_ACCOUNT,
+												      MODEST_ICON_SIZE_SMALL));
 				    if (!anorm_pixbuf_open) {
-					GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
+					    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+											  MODEST_ICON_SIZE_SMALL);
 					anorm_pixbuf_open = gdk_pixbuf_copy (anorm_pixbuf);
 					gdk_pixbuf_composite (emblem, anorm_pixbuf_open, 0, 0, 
 							      MIN (gdk_pixbuf_get_width (emblem), 
@@ -622,7 +629,8 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 				    }
 
 				    if (!anorm_pixbuf_close) {
-					GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
+					    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+											  MODEST_ICON_SIZE_SMALL);
 					anorm_pixbuf_close = gdk_pixbuf_copy (anorm_pixbuf);
 					gdk_pixbuf_composite (emblem, anorm_pixbuf_close, 0, 0, 
 							      MIN (gdk_pixbuf_get_width (emblem), 
@@ -645,56 +653,62 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	case TNY_FOLDER_TYPE_INBOX:
 
 	    if (!inbox_pixbuf)
-		    inbox_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_INBOX));
+		    inbox_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_INBOX,
+									      MODEST_ICON_SIZE_SMALL));
 
 	    if (!inbox_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-		inbox_pixbuf_open = gdk_pixbuf_copy (inbox_pixbuf);
-		gdk_pixbuf_composite (emblem, inbox_pixbuf_open, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (inbox_pixbuf_open)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (inbox_pixbuf_open)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								  MODEST_ICON_SIZE_SMALL);
+		    inbox_pixbuf_open = gdk_pixbuf_copy (inbox_pixbuf);
+		    gdk_pixbuf_composite (emblem, inbox_pixbuf_open, 0, 0, 
+					  MIN (gdk_pixbuf_get_width (emblem), 
+					       gdk_pixbuf_get_width (inbox_pixbuf_open)),
+					  MIN (gdk_pixbuf_get_height (emblem), 
+					       gdk_pixbuf_get_height (inbox_pixbuf_open)),
+					  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+		    g_object_unref (emblem);
 	    }
-
+	    
 	    if (!inbox_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
-		inbox_pixbuf_close = gdk_pixbuf_copy (inbox_pixbuf);
-		gdk_pixbuf_composite (emblem, inbox_pixbuf_close, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (inbox_pixbuf_close)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (inbox_pixbuf_close)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								  MODEST_ICON_SIZE_SMALL);
+		    inbox_pixbuf_close = gdk_pixbuf_copy (inbox_pixbuf);
+		    gdk_pixbuf_composite (emblem, inbox_pixbuf_close, 0, 0, 
+					  MIN (gdk_pixbuf_get_width (emblem), 
+					       gdk_pixbuf_get_width (inbox_pixbuf_close)),
+					  MIN (gdk_pixbuf_get_height (emblem), 
+					       gdk_pixbuf_get_height (inbox_pixbuf_close)),
+					  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+		    g_object_unref (emblem);
 	    }
-
+	    
 
 	    pixbuf = g_object_ref (inbox_pixbuf);
 	    pixbuf_open = g_object_ref (inbox_pixbuf_open);
 	    pixbuf_close = g_object_ref (inbox_pixbuf_close);
-
+	    
 	    break;
 	case TNY_FOLDER_TYPE_OUTBOX:
-	    if (!outbox_pixbuf)
-		outbox_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_OUTBOX));
+		if (!outbox_pixbuf)
+			outbox_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_OUTBOX,
+										   MODEST_ICON_SIZE_SMALL));
 
-	    if (!outbox_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-		outbox_pixbuf_open = gdk_pixbuf_copy (outbox_pixbuf);
-		gdk_pixbuf_composite (emblem, outbox_pixbuf_open, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (outbox_pixbuf_open)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (outbox_pixbuf_open)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		if (!outbox_pixbuf_open) {
+			GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								      MODEST_ICON_SIZE_SMALL);
+			outbox_pixbuf_open = gdk_pixbuf_copy (outbox_pixbuf);
+			gdk_pixbuf_composite (emblem, outbox_pixbuf_open, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (emblem), 
+						   gdk_pixbuf_get_width (outbox_pixbuf_open)),
+					      MIN (gdk_pixbuf_get_height (emblem), 
+						   gdk_pixbuf_get_height (outbox_pixbuf_open)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_unref (emblem);
 	    }
 
 	    if (!outbox_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								  MODEST_ICON_SIZE_SMALL);
 		outbox_pixbuf_close = gdk_pixbuf_copy (outbox_pixbuf);
 		gdk_pixbuf_composite (emblem, outbox_pixbuf_close, 0, 0, 
 				      MIN (gdk_pixbuf_get_width (emblem), 
@@ -713,101 +727,110 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    break;
 	case TNY_FOLDER_TYPE_JUNK:
 	    if (!junk_pixbuf)
-		junk_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_JUNK));
-
+		    junk_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_JUNK,
+									     MODEST_ICON_SIZE_SMALL));
 	    if (!junk_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-		junk_pixbuf_open = gdk_pixbuf_copy (junk_pixbuf);
-		gdk_pixbuf_composite (emblem, junk_pixbuf_open, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (junk_pixbuf_open)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (junk_pixbuf_open)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								  MODEST_ICON_SIZE_SMALL);
+		    junk_pixbuf_open = gdk_pixbuf_copy (junk_pixbuf);
+		    gdk_pixbuf_composite (emblem, junk_pixbuf_open, 0, 0, 
+					  MIN (gdk_pixbuf_get_width (emblem), 
+					       gdk_pixbuf_get_width (junk_pixbuf_open)),
+					  MIN (gdk_pixbuf_get_height (emblem), 
+					       gdk_pixbuf_get_height (junk_pixbuf_open)),
+					  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+		    g_object_unref (emblem);
 	    }
-
+	    
 	    if (!junk_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
-		junk_pixbuf_close = gdk_pixbuf_copy (junk_pixbuf);
-		gdk_pixbuf_composite (emblem, junk_pixbuf_close, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (junk_pixbuf_close)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (junk_pixbuf_close)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								  MODEST_ICON_SIZE_SMALL);
+		    junk_pixbuf_close = gdk_pixbuf_copy (junk_pixbuf);
+		    gdk_pixbuf_composite (emblem, junk_pixbuf_close, 0, 0, 
+					  MIN (gdk_pixbuf_get_width (emblem), 
+					       gdk_pixbuf_get_width (junk_pixbuf_close)),
+					  MIN (gdk_pixbuf_get_height (emblem), 
+					       gdk_pixbuf_get_height (junk_pixbuf_close)),
+					  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+		    g_object_unref (emblem);
 	    }
-
-
+	    
+	    
 	    pixbuf = g_object_ref (junk_pixbuf);
 	    pixbuf_open = g_object_ref (junk_pixbuf_open);
 	    pixbuf_close = g_object_ref (junk_pixbuf_close);
-
+	    
 	    break;
+
 	case TNY_FOLDER_TYPE_SENT:
-	    if (!sent_pixbuf)
-		sent_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_SENT));
-
-	    if (!sent_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-		sent_pixbuf_open = gdk_pixbuf_copy (sent_pixbuf);
-		gdk_pixbuf_composite (emblem, sent_pixbuf_open, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (sent_pixbuf_open)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (sent_pixbuf_open)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
-	    }
-
-	    if (!sent_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
-		sent_pixbuf_close = gdk_pixbuf_copy (sent_pixbuf);
-		gdk_pixbuf_composite (emblem, sent_pixbuf_close, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (sent_pixbuf_close)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (sent_pixbuf_close)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
-	    }
-
+		if (!sent_pixbuf)
+			sent_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_SENT,
+										 MODEST_ICON_SIZE_SMALL));
+		
+		if (!sent_pixbuf_open) {
+			GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								      MODEST_ICON_SIZE_SMALL);
+			sent_pixbuf_open = gdk_pixbuf_copy (sent_pixbuf);
+			gdk_pixbuf_composite (emblem, sent_pixbuf_open, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (emblem), 
+						   gdk_pixbuf_get_width (sent_pixbuf_open)),
+					      MIN (gdk_pixbuf_get_height (emblem), 
+						   gdk_pixbuf_get_height (sent_pixbuf_open)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_unref (emblem);
+		}
+		
+		if (!sent_pixbuf_close) {
+			GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								      MODEST_ICON_SIZE_SMALL);
+			sent_pixbuf_close = gdk_pixbuf_copy (sent_pixbuf);
+			gdk_pixbuf_composite (emblem, sent_pixbuf_close, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (emblem), 
+						   gdk_pixbuf_get_width (sent_pixbuf_close)),
+					      MIN (gdk_pixbuf_get_height (emblem), 
+						   gdk_pixbuf_get_height (sent_pixbuf_close)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_unref (emblem);
+		}
+		
 
 	    pixbuf = g_object_ref (sent_pixbuf);
 	    pixbuf_open = g_object_ref (sent_pixbuf_open);
 	    pixbuf_close = g_object_ref (sent_pixbuf_close);
-
+	    
 	    break;
+
 	case TNY_FOLDER_TYPE_TRASH:
 	    if (!trash_pixbuf)
-		trash_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_TRASH));
-
+		    trash_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_TRASH,
+									      MODEST_ICON_SIZE_SMALL));
 	    if (!trash_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-		trash_pixbuf_open = gdk_pixbuf_copy (trash_pixbuf);
-		gdk_pixbuf_composite (emblem, trash_pixbuf_open, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (trash_pixbuf_open)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (trash_pixbuf_open)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								  MODEST_ICON_SIZE_SMALL);
+		    trash_pixbuf_open = gdk_pixbuf_copy (trash_pixbuf);
+		    gdk_pixbuf_composite (emblem, trash_pixbuf_open, 0, 0, 
+					  MIN (gdk_pixbuf_get_width (emblem), 
+					       gdk_pixbuf_get_width (trash_pixbuf_open)),
+					  MIN (gdk_pixbuf_get_height (emblem), 
+					       gdk_pixbuf_get_height (trash_pixbuf_open)),
+					  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+		    g_object_unref (emblem);
 	    }
-
+	    
 	    if (!trash_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
-		trash_pixbuf_close = gdk_pixbuf_copy (trash_pixbuf);
-		gdk_pixbuf_composite (emblem, trash_pixbuf_close, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (trash_pixbuf_close)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (trash_pixbuf_close)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								  MODEST_ICON_SIZE_SMALL);
+		    trash_pixbuf_close = gdk_pixbuf_copy (trash_pixbuf);
+		    gdk_pixbuf_composite (emblem, trash_pixbuf_close, 0, 0, 
+					  MIN (gdk_pixbuf_get_width (emblem), 
+					       gdk_pixbuf_get_width (trash_pixbuf_close)),
+					  MIN (gdk_pixbuf_get_height (emblem), 
+					       gdk_pixbuf_get_height (trash_pixbuf_close)),
+					  0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+		    g_object_unref (emblem);
 	    }
-
-
+	    
+	    
 	    pixbuf = g_object_ref (trash_pixbuf);
 	    pixbuf_open = g_object_ref (trash_pixbuf_open);
 	    pixbuf_close = g_object_ref (trash_pixbuf_close);
@@ -815,10 +838,12 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    break;
 	case TNY_FOLDER_TYPE_DRAFTS:
 	   if (!draft_pixbuf)
-		draft_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_DRAFTS));
-
+		   draft_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_DRAFTS,
+									     MODEST_ICON_SIZE_SMALL));
+	   
 	    if (!draft_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								  MODEST_ICON_SIZE_SMALL);
 		draft_pixbuf_open = gdk_pixbuf_copy (draft_pixbuf);
 		gdk_pixbuf_composite (emblem, draft_pixbuf_open, 0, 0, 
 				      MIN (gdk_pixbuf_get_width (emblem), 
@@ -830,7 +855,8 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    }
 
 	    if (!draft_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
+		    GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								  MODEST_ICON_SIZE_SMALL);
 		draft_pixbuf_close = gdk_pixbuf_copy (draft_pixbuf);
 		gdk_pixbuf_composite (emblem, draft_pixbuf_close, 0, 0, 
 				      MIN (gdk_pixbuf_get_width (emblem), 
@@ -849,34 +875,37 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    break;	
 	case TNY_FOLDER_TYPE_NORMAL:
 	default:
-	    if (!normal_pixbuf)
-		normal_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL));
-
-	    if (!normal_pixbuf_open) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp");
-		normal_pixbuf_open = gdk_pixbuf_copy (normal_pixbuf);
-		gdk_pixbuf_composite (emblem, normal_pixbuf_open, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (normal_pixbuf_open)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (normal_pixbuf_open)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
-	    }
-
-	    if (!normal_pixbuf_close) {
-		GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp");
-		normal_pixbuf_close = gdk_pixbuf_copy (normal_pixbuf);
-		gdk_pixbuf_composite (emblem, normal_pixbuf_close, 0, 0, 
-				      MIN (gdk_pixbuf_get_width (emblem), 
-					   gdk_pixbuf_get_width (normal_pixbuf_close)),
-				      MIN (gdk_pixbuf_get_height (emblem), 
-					   gdk_pixbuf_get_height (normal_pixbuf_close)),
-				      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
-		g_object_unref (emblem);
-	    }
-
-
+		if (!normal_pixbuf)
+			normal_pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL,
+										   MODEST_ICON_SIZE_SMALL));
+		
+		if (!normal_pixbuf_open) {
+			GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_exp",
+								      MODEST_ICON_SIZE_SMALL);
+			normal_pixbuf_open = gdk_pixbuf_copy (normal_pixbuf);
+			gdk_pixbuf_composite (emblem, normal_pixbuf_open, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (emblem), 
+						   gdk_pixbuf_get_width (normal_pixbuf_open)),
+					      MIN (gdk_pixbuf_get_height (emblem), 
+						   gdk_pixbuf_get_height (normal_pixbuf_open)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_unref (emblem);
+		}
+		
+		if (!normal_pixbuf_close) {
+			GdkPixbuf *emblem = modest_platform_get_icon ("qgn_list_gene_fldr_clp",
+								      MODEST_ICON_SIZE_SMALL);
+			normal_pixbuf_close = gdk_pixbuf_copy (normal_pixbuf);
+			gdk_pixbuf_composite (emblem, normal_pixbuf_close, 0, 0, 
+					      MIN (gdk_pixbuf_get_width (emblem), 
+						   gdk_pixbuf_get_width (normal_pixbuf_close)),
+					      MIN (gdk_pixbuf_get_height (emblem), 
+						   gdk_pixbuf_get_height (normal_pixbuf_close)),
+					      0, 0, 1, 1, GDK_INTERP_NEAREST, 255);
+			g_object_unref (emblem);
+		}
+		
+		
 	    pixbuf = g_object_ref (normal_pixbuf);
 	    pixbuf_open = g_object_ref (normal_pixbuf_open);
 	    pixbuf_close = g_object_ref (normal_pixbuf_close);

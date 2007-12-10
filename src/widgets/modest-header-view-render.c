@@ -78,29 +78,35 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	switch (flag) {
 	case TNY_HEADER_FLAG_DELETED:
 		if (G_UNLIKELY(!deleted_pixbuf))
-			deleted_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_DELETED);
+			deleted_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_DELETED,
+								   MODEST_ICON_SIZE_SMALL);
 		return deleted_pixbuf;
 	case TNY_HEADER_FLAG_SEEN:
 		if (G_UNLIKELY(!seen_pixbuf))
-			seen_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_READ);
+			seen_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_READ,
+								MODEST_ICON_SIZE_SMALL);
 		return seen_pixbuf;
 	case TNY_HEADER_FLAG_ATTACHMENTS:
 		if (G_UNLIKELY(!attachments_pixbuf))
-			attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH);
+			attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH,
+								       MODEST_ICON_SIZE_SMALL);
 		return attachments_pixbuf;
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
 		if (G_UNLIKELY(!high_pixbuf))
-			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH);
+			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH,
+								MODEST_ICON_SIZE_SMALL);
 		return high_pixbuf;
 	case TNY_HEADER_FLAG_LOW_PRIORITY:
 		if (G_UNLIKELY(!low_pixbuf))
-			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW);
+			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW,
+							       MODEST_ICON_SIZE_SMALL);
 		return low_pixbuf;
 	case TNY_HEADER_FLAG_NORMAL_PRIORITY:
 		return NULL;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
-			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD);
+			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD,
+								  MODEST_ICON_SIZE_SMALL);
 		return unread_pixbuf;
 	}
 }
