@@ -1344,8 +1344,8 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 {
 	TnyDevice *device;
 
-	g_return_if_fail (self && MODEST_IS_TNY_ACCOUNT_STORE(self));
-	g_return_if_fail (account_name);
+	g_return_val_if_fail (self && MODEST_IS_TNY_ACCOUNT_STORE(self), NULL);
+	g_return_val_if_fail (account_name, NULL);
 
 	/* Get the current connection: */
 	device = modest_runtime_get_device ();
