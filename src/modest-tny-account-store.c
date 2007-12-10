@@ -1204,6 +1204,8 @@ get_tny_account_by (TnyList *accounts,
 	gboolean found = FALSE;
 	TnyAccount *retval = NULL;
 
+	g_return_val_if_fail (accounts && TNY_IS_LIST(accounts), NULL);
+
 	iter = tny_list_create_iterator (accounts);
 	while (!tny_iterator_is_done (iter) && !found) {
 		TnyAccount *tmp_account = NULL;
@@ -1340,14 +1342,16 @@ TnyAccount*
 modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
 										  const gchar *account_name)
 {
+	TnyDevice *device;
+
+	g_return_if_fail (self && MODEST_IS_TNY_ACCOUNT_STORE(self));
+	g_return_if_fail (account_name);
+
 	/* Get the current connection: */
-	TnyDevice *device = modest_runtime_get_device ();
+	device = modest_runtime_get_device ();
 	
 	if (!tny_device_is_online (device))
 		return NULL;
-
-	g_return_val_if_fail (self, NULL);
-	
 	
 #ifdef MODEST_HAVE_CONIC
 	g_return_val_if_fail (TNY_IS_MAEMO_CONIC_DEVICE (device), NULL);
