@@ -1727,7 +1727,7 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 		gchar *markup;
 
 		label = gtk_bin_get_child (GTK_BIN (new_size_menuitem));
-		markup = g_strconcat ("<span font_family='Serif'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
+		markup = g_strconcat ("<span font_family='Sans'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
 		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 		g_free (markup);
 		g_signal_handlers_block_by_func (G_OBJECT (new_size_menuitem),
@@ -2041,8 +2041,7 @@ modest_msg_edit_window_attach_file_one (
 		
 		if (gnome_vfs_get_file_info (uri, 
 					     &info, 
-					     GNOME_VFS_FILE_INFO_GET_MIME_TYPE |
-					     GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE)
+					     GNOME_VFS_FILE_INFO_GET_MIME_TYPE)
 		    == GNOME_VFS_OK)
 			mime_type = gnome_vfs_file_info_get_mime_type (&info);
 		mime_part = tny_platform_factory_new_mime_part
