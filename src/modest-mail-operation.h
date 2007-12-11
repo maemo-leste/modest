@@ -190,6 +190,22 @@ typedef gboolean (*RetrieveAllCallback) (GObject *source,
 					 guint num_msgs,
 					 guint limit);
 
+/**
+ * CreateFolderUserCallback:
+ *
+ * @mail_op: the current #ModestMailOperation.
+ * @folder: a #TnyFolder summary item.
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function will be called after get_msg_cb private function, which is
+ * used as tinymail operation callback. The private function fills private 
+ * fields of mail operation and calls user defined callback if it exists.
+ */
+typedef void (*CreateFolderUserCallback) (ModestMailOperation *mail_op, 
+					  TnyFolderStore *parent_folder,
+					  TnyFolder *new_folder, 
+					  gpointer user_data);
+
 /* This struct represents the internal state of a mail operation in a
    given time */
 typedef struct {
@@ -430,9 +446,11 @@ void          modest_mail_operation_update_account (ModestMailOperation *self,
  * 
  * Returns: a newly created #TnyFolder or NULL in case of error.
  **/
-TnyFolder*    modest_mail_operation_create_folder  (ModestMailOperation *self,
-						    TnyFolderStore *parent,
-						    const gchar *name);
+void    modest_mail_operation_create_folder  (ModestMailOperation *self,
+					      TnyFolderStore *parent,
+					      const gchar *name,
+					      CreateFolderUserCallback callback,
+					      gpointer user_data);
 
 /**
  * modest_mail_operation_remove_folder:

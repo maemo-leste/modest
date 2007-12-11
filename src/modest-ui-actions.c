@@ -159,6 +159,9 @@ static gboolean remote_folder_is_pop (const TnyFolderStore *folder);
 static gboolean msgs_already_deleted_from_server ( TnyList *headers,
                                                    const TnyFolderStore *src_folder);
 
+static void     do_create_folder (GtkWindow *window, 
+				  TnyFolderStore *parent_folder, 
+				  const gchar *suggested_name);
 
 /*
  * This function checks whether a TnyFolderStore is a pop account
@@ -2588,17 +2591,67 @@ modest_ui_actions_on_remove_attachments (GtkAction *action,
 }
 
 static void
-modest_ui_actions_new_folder_error_handler (ModestMailOperation *mail_op,
-                                            gpointer user_data)
+do_create_folder_cb (ModestMailOperation *mail_op,
+		     TnyFolderStore *parent_folder, 
+		     TnyFolder *new_folder,
+		     gpointer user_data)
 {
-	ModestMainWindow *window = MODEST_MAIN_WINDOW (user_data);
-	const GError *error = modest_mail_operation_get_error (mail_op);
+	gchar *suggested_name = (gchar *) user_data;
+	GtkWindow *main_window = (GtkWindow *) modest_mail_operation_get_source (mail_op);
 
-	if(error) {
-		modest_platform_information_banner (GTK_WIDGET (window), NULL,
+	if (modest_mail_operation_get_error (mail_op)) {
+		/* Show an error */
+		modest_platform_information_banner (GTK_WIDGET (main_window), NULL,
 	        	                            _("mail_in_ui_folder_create_error"));
+
+		/* Try again */
+		do_create_folder (main_window, parent_folder, (const gchar *) suggested_name);
+	} else {
+		GtkWidget *folder_view;
+
+		folder_view = 
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+
+		/* Select the newly created folder */
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
+						  new_folder, FALSE);
+		g_object_unref (new_folder);
+	}
+	/* Free. Note that the first time it'll be NULL so noop */
+	g_free (suggested_name);
+	g_object_unref (main_window);
+}
+
+static void
+do_create_folder (GtkWindow *parent_window, 
+		  TnyFolderStore *parent_folder, 
+		  const gchar *suggested_name)
+{
+	gint result;
+	gchar *folder_name = NULL;
+
+	result = modest_platform_run_new_folder_dialog (GTK_WINDOW (parent_window),
+							parent_folder,
+							(gchar *) suggested_name,
+							&folder_name);
+	
+	if (result == GTK_RESPONSE_ACCEPT) {
+		ModestMailOperation *mail_op;
+		
+		mail_op  = modest_mail_operation_new (G_OBJECT(parent_window));
+			
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+						 mail_op);
+		modest_mail_operation_create_folder (mail_op,
+						     parent_folder,
+						     (const gchar *) folder_name,
+						     do_create_folder_cb,
+						     folder_name);
+		g_object_unref (mail_op);
 	}
 }
+
 
 static void
 modest_ui_actions_create_folder(GtkWidget *parent_window,
@@ -2609,64 +2662,10 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
 	if (parent_folder) {
-		gboolean finished = FALSE;
-		gint result;
-		gchar *folder_name = NULL, *suggested_name = NULL;
-		const gchar *proto_str = NULL;
-		TnyAccount *account;
-
-		if (TNY_IS_ACCOUNT (parent_folder))
-			account = g_object_ref (parent_folder);
-		else
-			account = tny_folder_get_account (TNY_FOLDER (parent_folder));
-		proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
-
-		if (proto_str && modest_protocol_info_get_transport_store_protocol (proto_str) ==
-		    MODEST_PROTOCOL_STORE_POP) {
-			finished = TRUE;
-			modest_platform_information_banner (NULL, NULL, _("mail_in_ui_folder_create_error"));
-		}
-		g_object_unref (account);
-
+	
 		/* Run the new folder dialog */
-		while (!finished) {
-			result = modest_platform_run_new_folder_dialog (GTK_WINDOW (parent_window),
-									parent_folder,
-									suggested_name,
-									&folder_name);
-
-			g_free (suggested_name);
-			suggested_name = NULL;
-
-			if (result == GTK_RESPONSE_ACCEPT) {
-				ModestMailOperation *mail_op;
-				TnyFolder *new_folder = NULL;
-
-				mail_op  = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
-											  modest_ui_actions_new_folder_error_handler,
-											  parent_window, NULL);
-
-				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-								 mail_op);
-				new_folder = modest_mail_operation_create_folder (mail_op,
-										  parent_folder,
-										  (const gchar *) folder_name);
-				if (new_folder) {
-					modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), 
-									  new_folder, TRUE);
-
-					g_object_unref (new_folder);
-					finished = TRUE;
-				}
-				g_object_unref (mail_op);
-			} else {
-				finished = TRUE;
-			}
-
-			suggested_name = folder_name;
-			folder_name = NULL;
-		}
-
+		do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
+	
 		g_object_unref (parent_folder);
 	}
 }

@@ -1639,17 +1639,62 @@ compare_headers_by_date (gconstpointer a,
 /* ************************** STORE  ACTIONS ************************* */
 /* ******************************************************************* */
 
+typedef struct {
+	ModestMailOperation *mail_op;
+	CreateFolderUserCallback callback;
+	gpointer user_data;
+} CreateFolderInfo;
 
-TnyFolder *
-modest_mail_operation_create_folder (ModestMailOperation *self,
-				     TnyFolderStore *parent,
-				     const gchar *name)
+
+static void
+create_folder_cb (TnyFolderStore *parent_folder, 
+		  gboolean canceled, 
+		  TnyFolder *new_folder, 
+		  GError *err, 
+		  gpointer user_data)
 {
 	ModestMailOperationPrivate *priv;
-	TnyFolder *new_folder = NULL;
+	CreateFolderInfo *info;
 
-	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), NULL);
-	g_return_val_if_fail (name, NULL);
+	info = (CreateFolderInfo *) user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
+
+	if (canceled || err) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		if (err)
+			priv->error = g_error_copy (err);
+		else
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+				     "canceled");		
+	} else {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
+
+	/* The user will unref the new_folder */
+	if (info->callback)
+		info->callback (info->mail_op, parent_folder, 
+				new_folder, info->user_data);
+	
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (info->mail_op);
+
+	/* Frees */
+	g_object_unref (info->mail_op);
+	g_slice_free (CreateFolderInfo, info);
+}
+
+void
+modest_mail_operation_create_folder (ModestMailOperation *self,
+				     TnyFolderStore *parent,
+				     const gchar *name,
+				     CreateFolderUserCallback callback,
+				     gpointer user_data)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (TNY_IS_FOLDER_STORE (parent));
+	g_return_if_fail (name);
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_INFO;
@@ -1686,18 +1731,25 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 	}
 
 	if (!priv->error) {
-		/* Create the folder */
+		CreateFolderInfo *info;
+
+		info = g_slice_new0 (CreateFolderInfo);
+		info->mail_op = g_object_ref (self);
+		info->callback = callback;
+		info->user_data = user_data;
+
 		modest_mail_operation_notify_start (self);
-		new_folder = tny_folder_store_create_folder (parent, name, &(priv->error));
-		CHECK_EXCEPTION (priv, MODEST_MAIL_OPERATION_STATUS_FAILED);
-		if (!priv->error)
-			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+		/* Create the folder */
+		tny_folder_store_create_folder_async (parent, name, create_folder_cb, 
+						      NULL, info);
+	} else {
+		/* Call the user callback anyway */
+		if (callback)
+			callback (self, parent, NULL, user_data);
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);
 	}
-
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
-
-	return new_folder;
 }
 
 void
