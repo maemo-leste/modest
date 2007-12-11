@@ -2726,7 +2726,7 @@ on_rename_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	GtkWidget *folder_view = NULL;
 	RenameFolderInfo *data = (RenameFolderInfo*)user_data;
 
-	if (MODEST_IS_MAIN_WINDOW(parent_window)) {
+	if (!canceled && (err == NULL) && MODEST_IS_MAIN_WINDOW(parent_window)) {
 
 		folder_view = modest_main_window_get_child_widget (
 				MODEST_MAIN_WINDOW (parent_window),
@@ -2846,7 +2846,11 @@ on_delete_folder_cb (gboolean canceled,
 	ModestMailOperation *mail_op;
 	GtkTreeSelection *sel;
 	
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(parent_window));
+	if (!MODEST_IS_MAIN_WINDOW(parent_window) || canceled || (err!=NULL)) {
+		g_object_unref (G_OBJECT (info->folder));
+		g_free (info);
+	}
+	
 	folder_view = modest_main_window_get_child_widget (
 			MODEST_MAIN_WINDOW (parent_window),
 			MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
@@ -4388,6 +4392,11 @@ xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
 	const gchar *proto_str = NULL;
 	gboolean dst_is_pop = FALSE;
 
+	if (canceled || err) {
+		g_object_unref (dst_folder);
+		return;
+	}
+	
 	if (!TNY_IS_FOLDER (dst_folder)) {
 		modest_platform_information_banner (GTK_WIDGET (win),
 						    NULL,
@@ -4468,11 +4477,17 @@ static void
 on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window, 
 		TnyAccount *account, gpointer user_data)
 {
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (parent_window));
-	
 	MoveFolderInfo *info = (MoveFolderInfo*)user_data;
 	GtkTreeSelection *sel;
 	ModestMailOperation *mail_op = NULL;
+	
+	if (canceled || err || !MODEST_IS_MAIN_WINDOW (parent_window)) {
+		g_object_unref (G_OBJECT (info->src_folder));
+		g_object_unref (G_OBJECT (info->dst_folder));
+		g_free (info);
+		return;
+	}
+	
 	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
 	helper->banner = modest_platform_animation_banner (GTK_WIDGET (parent_window), NULL,
 			_CS("ckct_nw_pasting"));
