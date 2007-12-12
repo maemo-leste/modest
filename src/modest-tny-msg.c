@@ -101,6 +101,8 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	/* Add attachments */
 	if (attachments)
 		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
+	if (header)
+		g_object_unref(header);
 
 	return new_msg;
 }
@@ -150,6 +152,8 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	/* Add attachments */
 	add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
 	add_images (new_msg, images);
+	if (header)
+		g_object_unref(header);
 
 	return new_msg;
 }
