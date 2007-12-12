@@ -70,6 +70,7 @@ typedef struct
 
 
 static gboolean notify_error_in_dbus_callback (gpointer user_data);
+static gboolean notify_msg_not_found_in_idle (gpointer user_data);
 static gboolean on_idle_compose_mail(gpointer user_data);
 static gboolean on_idle_top_application (gpointer user_data);
 
@@ -372,7 +373,6 @@ out:
 	return msg;
 }
 
-
 typedef struct {
 	TnyAccount *account;
 	gchar *uri;
@@ -410,7 +410,18 @@ on_open_message_performer (gboolean canceled,
 		is_draft = TRUE;
 	}
 
+	if (!msg) {
+		g_idle_add (notify_msg_not_found_in_idle, NULL);
+		goto frees;
+	}
+
 	header = tny_msg_get_header (msg);
+	if (header && (tny_header_get_flags (header)&TNY_HEADER_FLAG_DELETED)) {
+		g_object_unref (header);
+		g_object_unref (msg);
+		g_idle_add (notify_msg_not_found_in_idle, NULL);
+		goto frees;
+	}
 	msg_uid =  modest_tny_folder_get_header_unique_id (header); 
 	win_mgr = modest_runtime_get_window_mgr ();
 
@@ -429,8 +440,13 @@ on_open_message_performer (gboolean canceled,
 		if (is_draft) {
 			msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
 		} else {
-			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name,
-						       msg_uid);
+			TnyHeader *header;
+			header = tny_msg_get_header (msg);
+			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, msg_uid);
+			if (! (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
+				tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
+			g_object_unref (header);
+			
 		}		
 		modest_window_mgr_register_window (win_mgr, msg_view);
 		gtk_widget_show_all (GTK_WIDGET (msg_view));
@@ -1393,6 +1409,14 @@ notify_error_in_dbus_callback (gpointer user_data)
 	modest_mail_operation_queue_add (mail_op_queue, mail_op);
 	modest_mail_operation_noop (mail_op);
 	g_object_unref (mail_op);
+
+	return FALSE;
+}
+
+static gboolean
+notify_msg_not_found_in_idle (gpointer user_data)
+{
+	modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"));
 
 	return FALSE;
 }
