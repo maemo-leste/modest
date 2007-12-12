@@ -805,6 +805,7 @@ create_msg_thread (gpointer thread_data)
 
 	g_object_unref (info->mail_op);
 	g_slice_free (CreateMsgInfo, info);
+	if (new_msg) g_object_unref(new_msg);
 	return NULL;
 }
 
