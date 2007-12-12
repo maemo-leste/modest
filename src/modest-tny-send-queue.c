@@ -624,6 +624,7 @@ _on_msg_error_happened (TnySendQueue *self,
 	/* Keep in queue so that we remember that the opertion has failed */
 	/* and was not just cancelled */
 	info->status = MODEST_TNY_SEND_QUEUE_FAILED;
+	priv->current = NULL;
 	
 	/* Notify status has changed */
 	g_signal_emit (self, signals[STATUS_CHANGED], 0, info->msg_id, info->status);
