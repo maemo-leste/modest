@@ -290,9 +290,9 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 		old_attachment = pos->data;
 		if (!tny_mime_part_is_purged (old_attachment)) {
 			attachment_part = copy_mime_part (old_attachment);
-			tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
 			tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
 						       add_inline?"inline":"attachment");
+			tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
 			g_object_unref (attachment_part);
 		}
 	}
