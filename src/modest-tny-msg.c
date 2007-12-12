@@ -267,6 +267,7 @@ copy_mime_part (TnyMimePart *part)
 			TnyMimePart *subpart_copy = copy_mime_part (subpart);
 			tny_mime_part_add_part (result, subpart_copy);
 			g_object_unref (subpart);
+			g_object_unref (subpart_copy);
 		}
 
 		tny_iterator_next (iterator);
