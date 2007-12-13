@@ -64,6 +64,16 @@
  */
 #define HYPERLINKIFY_MAX_LENGTH (1024*50)
 
+
+/*
+ * we mark the ampersand with \007 when converting text->html
+ * because after text->html we do hyperlink detecting, which
+ * could be screwed up by the ampersand
+ */
+#define MARK_AMP '\007'
+#define MARK_AMP_STR "\007"
+
+
 /*
  * we need these regexps to find URLs in plain text e-mails
  */
@@ -321,7 +331,7 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 }
 
 static void
-modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data, gssize n)
+modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data, gssize n)
 {
 	guint		 i;
 	gboolean	space_seen = FALSE;
@@ -349,16 +359,21 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data, gssi
 		}
 		
 		switch (kar) {
-		case 0:  break; /* ignore embedded \0s */	
-		case '<'  : g_string_append (html, "&lt;");   break;
-		case '>'  : g_string_append (html, "&gt;");   break;
-		case '&'  : g_string_append (html, "&amp;");  break;
-		case '"'  : g_string_append (html, "&quot;");  break;
+		case 0:
+		case MARK_AMP: /* this is a temp place holder for '&'; we can only
+				* set the real '&' after hyperlink translation, otherwise
+				* we might screw that up */
+			break; /* ignore embedded \0s and MARK_AMP */	
+		case '<'  : g_string_append (html, MARK_AMP_STR "lt;");   break;
+		case '>'  : g_string_append (html, MARK_AMP_STR "gt;");   break;
+		case '&'  : g_string_append (html, MARK_AMP_STR "amp;");  break;
+		case '"'  : g_string_append (html, MARK_AMP_STR "quot;");  break;
 
 		/* don't convert &apos; --> wpeditor will try to re-convert it... */	
 		//case '\'' : g_string_append (html, "&apos;"); break;
-		case '\n' : g_string_append (html, "<br>\n");              break_dist= 0; break;
-		case '\t' : g_string_append (html, "&nbsp;&nbsp;&nbsp; "); break_dist=0; break; /* note the space at the end*/
+		case '\n' : g_string_append (html, "<br>\n");break_dist= 0; break;
+		case '\t' : g_string_append (html, MARK_AMP_STR "nbsp;" MARK_AMP_STR "nbsp;" MARK_AMP_STR "nbsp; ");
+			break_dist=0; break; /* note the space at the end*/
 		case ' ':
 			break_dist = 0;
 			if (space_seen) { /* second space in a row */
@@ -372,6 +387,18 @@ modest_text_utils_convert_buffer_to_html (GString *html, const gchar *data, gssi
 		}
 	}
 }
+
+
+static void
+modest_text_utils_convert_buffer_to_html_finish (GString *html)
+{
+	int i;
+	/* replace all our MARK_AMPs with real ones */
+	for (i = 0; i != html->len; ++i)
+		if ((html->str)[i] == MARK_AMP)
+			(html->str)[i] = '&';
+}
+
 
 gchar*
 modest_text_utils_convert_to_html (const gchar *data)
@@ -393,12 +420,14 @@ modest_text_utils_convert_to_html (const gchar *data)
 				"</head>"
 				"<body>");
 
-	modest_text_utils_convert_buffer_to_html (html, data, -1);
+	modest_text_utils_convert_buffer_to_html_start (html, data, -1);
 	
 	g_string_append (html, "</body></html>");
 
 	if (len <= HYPERLINKIFY_MAX_LENGTH)
 		hyperlinkify_plain_text (html);
+
+	modest_text_utils_convert_buffer_to_html_finish (html);
 	
 	return g_string_free (html, FALSE);
 }
@@ -417,11 +446,13 @@ modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hy
 		n = strlen (data);
 	html = g_string_sized_new (1.5 * n);	/* just a  guess... */
 
-	modest_text_utils_convert_buffer_to_html (html, data, n);
+	modest_text_utils_convert_buffer_to_html_start (html, data, n);
 
 	if (hyperlinkify && (n < HYPERLINKIFY_MAX_LENGTH))
 		hyperlinkify_plain_text (html);
 
+	modest_text_utils_convert_buffer_to_html_finish (html);
+	
 	return g_string_free (html, FALSE);
 }
 
@@ -946,8 +977,7 @@ get_url_matches (GString *txt)
 				match->len    = rm.rm_eo - rm.rm_so;
 				match->prefix = patterns[i].prefix;
 				match_list = g_slist_prepend (match_list, match);
-			}
-				
+			}		
 			offset += rm.rm_eo;
 		}
 	}
