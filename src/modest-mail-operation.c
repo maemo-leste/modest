@@ -2369,6 +2369,7 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 		gboolean expunge, leave_on_server;
 		const gchar *account_name;
 		TnyAccount *account;
+		ModestTransportStoreProtocol account_proto;
 
 		tny_header_set_flag (header, TNY_HEADER_FLAG_DELETED);
 		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
@@ -2382,7 +2383,10 @@ modest_mail_operation_remove_msg (ModestMailOperation *self,
 			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
 								account_name);
 
-		if (TNY_IS_CAMEL_POP_FOLDER (folder) && !leave_on_server)
+		account_proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+
+		if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
+		    modest_tny_folder_is_remote_folder (folder) == FALSE)
 			expunge = TRUE;
 		else
 			expunge = FALSE;
@@ -2479,6 +2483,7 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 		gboolean expunge, leave_on_server;
 		const gchar *account_name;
 		TnyAccount *account;
+		ModestTransportStoreProtocol account_proto;
 		
 		account = tny_folder_get_account (folder);
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
@@ -2486,7 +2491,10 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
 					account_name);
 
-		if (TNY_IS_CAMEL_POP_FOLDER (folder) && !leave_on_server)
+		account_proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+
+		if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
+		    modest_tny_folder_is_remote_folder (folder) == FALSE)
 			expunge = TRUE;
 		else
 			expunge = FALSE;
