@@ -1177,6 +1177,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 		       signals[UPDATING_MSG_LIST_SIGNAL], 0, FALSE, NULL);
 
 	/* Frees */
+	g_object_unref (info->header_view);
 	g_free (info);
 }
 
@@ -1230,7 +1231,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 
 		/* create the helper */
 		info = g_malloc0 (sizeof(SetFolderHelper));
-		info->header_view = self;
+		info->header_view = g_object_ref (self);
 		info->cb = callback;
 		info->user_data = user_data;
 
