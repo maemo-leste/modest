@@ -178,6 +178,7 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0, 0.5);
 	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
 	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (priv->progress_bar), 0.05);
+	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), " ");
 	gtk_widget_size_request (priv->progress_bar, &req);
 	gtk_container_add (GTK_CONTAINER (align), priv->progress_bar);
 	gtk_widget_size_request (align, &req);
@@ -394,7 +395,7 @@ static gboolean
 progressbar_clean (GtkProgressBar *bar)
 {
 	gtk_progress_bar_set_fraction (bar, 0);
-	gtk_progress_bar_set_text (bar, 0);
+	gtk_progress_bar_set_text (bar, " ");
 	return FALSE;
 }
 
@@ -440,7 +441,8 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 	}
 	
 	/* Set text */
-	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), message);
+	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), 
+				   (message && message[0] != '\0')?message:" ");
 }
 
 

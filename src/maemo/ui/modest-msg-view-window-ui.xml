@@ -100,11 +100,11 @@
     <toolitem action="ToolbarMessageMoveTo"/>
     <toolitem action="ToolbarDeleteMessage"/>
     <toolitem action="FindInMessage"/>
-    <toolitem action="ToolbarMessageBack"/>
-    <toolitem action="ToolbarMessageNext"/>
-    <placeholder name="ProgressbarView">
+    <toolitem action="ToolbarMessageBack" position="bot"/>
+    <toolitem action="ToolbarMessageNext" position="bot"/>
+    <placeholder name="ProgressbarView" position="bot">
     </placeholder>
-    <toolitem action="ToolbarCancel"/>
+    <toolitem action="ToolbarCancel" position="bot"/>
   </toolbar>
 
   <popup name="ToolbarReplyCSM">

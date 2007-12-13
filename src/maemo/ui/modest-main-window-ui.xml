@@ -107,10 +107,10 @@
     <toolitem action="ToolbarMessageReply"/> 
     <toolitem action="ToolbarDeleteMessage"/>
     <toolitem action="ToggleFolders"/>
-    <toolitem action="ToolbarSort"/>
-    <toolitem action="ToolbarSendReceive"/>
-    <placeholder name="ProgressBarView" />
-    <toolitem action="ToolbarCancel"/>
+    <toolitem action="ToolbarSort" position="bot"/>
+    <toolitem action="ToolbarSendReceive" position="bot"/>
+    <placeholder name="ProgressBarView"  position="bot"/>
+    <toolitem action="ToolbarCancel" position="bot"/>
   </toolbar>
 
   <popup name="HeaderViewCSM">

@@ -1920,6 +1920,53 @@ modest_msg_view_window_update_priority (ModestMsgViewWindow *window)
 
 }
 
+static void
+toolbar_resize (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv = NULL;
+	ModestWindowPrivate *parent_priv = NULL;
+	GtkWidget *widget;
+	gint static_button_size;
+	ModestWindowMgr *mgr;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	mgr = modest_runtime_get_window_mgr ();
+	static_button_size = modest_window_mgr_get_fullscreen_mode (mgr)?118:108;
+
+	if (parent_priv->toolbar) {
+		/* left size buttons */
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo");
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage");
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FindInMessage");
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
+		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		
+ 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->prev_toolitem), TRUE);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->prev_toolitem), TRUE);
+	}
+		
+}
+
 static gboolean
 modest_msg_view_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
 {
@@ -1940,20 +1987,11 @@ modest_msg_view_window_window_state_event (GtkWidget *widget, GdkEventWindowStat
 		if (is_fullscreen != active) {
 			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
 		}
+		toolbar_resize (MODEST_MSG_VIEW_WINDOW (widget));
 	}
 
 	return FALSE;
 
-}
-
-static void
-set_homogeneous (GtkWidget *widget,
-		 gpointer data)
-{
-	if (GTK_IS_TOOL_ITEM (widget)) {
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
-	}
 }
 
 static void
@@ -1979,18 +2017,11 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 								  "/ToolBar");
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 
-		/* Set homogeneous toolbar */
-		gtk_container_foreach (GTK_CONTAINER (parent_priv->toolbar), 
-				       set_homogeneous, NULL);
-
 		priv->progress_toolitem = GTK_WIDGET (gtk_tool_item_new ());
 		priv->cancel_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
 		priv->prev_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
- 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
+		toolbar_resize (MODEST_MSG_VIEW_WINDOW (self));
 
 		/* Add ProgressBar (Transfer toolbar) */ 
 		priv->progress_bar = modest_progress_bar_widget_new ();
