@@ -617,6 +617,72 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	return new_msg;
 }
 
+
+/* get the new To:, based on the old header,
+ * result is newly allocated or NULL in case of error
+ * TODO: mailing list handling
+ * */
+static gchar*
+get_new_to (TnyHeader *header, const gchar* from, ModestTnyMsgReplyMode mode)
+{
+	const gchar* old_to;
+	const gchar* old_reply_to_from;
+
+	gchar* new_to;
+	
+	/* reply to sender, use ReplyTo or From */
+	old_reply_to_from = tny_header_get_replyto (header);
+	if (old_reply_to_from)
+		new_to = g_strdup (old_reply_to_from);
+	else {
+		old_reply_to_from = tny_header_get_from (header);
+		if (old_reply_to_from)
+			new_to = g_strdup (old_reply_to_from);
+		else {
+			g_warning ("%s: failed to get either Reply-To: or From: from header",
+				   __FUNCTION__);
+			return NULL;
+		}
+	}
+			
+	/* in case of ReplyAll, we need to add the Recipients in the old To: */
+	if (mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
+		old_to = tny_header_get_to (header);
+		if (!old_to) 
+			g_warning ("%s: no To: address found in source mail", __FUNCTION__);
+		else {
+			/* append the old To: */
+			gchar *tmp = g_strjoin (",", new_to, old_to, NULL);
+			g_free (new_to);
+			new_to = tmp;
+		}
+	}
+	
+	/* now, strip me (the new From:) from the new_to */
+	gchar *tmp = modest_text_utils_remove_address (new_to, from);
+	g_free (new_to);
+	new_to = tmp;
+	
+	return new_to;
+}
+
+
+/* get the new Cc:, based on the old header,
+ * result is newly allocated or NULL in case of error */
+static gchar*
+get_new_cc (TnyHeader *header, const gchar* from, ModestTnyMsgReplyMode mode)
+{
+	const gchar *old_cc;
+
+	old_cc = tny_header_get_cc (header);
+	if (!old_cc)
+		return NULL;
+
+	/* remove me (the new From:) from the Cc: list */
+	return modest_text_utils_remove_address (old_cc, from);
+}
+
+
 TnyMsg* 
 modest_tny_msg_create_reply_msg (TnyMsg *msg,
 				 TnyHeader *header,
@@ -627,10 +693,8 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 {
 	TnyMsg *new_msg = NULL;
 	TnyHeader *new_header;
-	const gchar* reply_to;
-	gchar *new_cc = NULL;
-	const gchar *cc = NULL, *bcc = NULL;
-	GString *tmp = NULL;
+	gchar *new_to, *new_cc = NULL;
+	
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
@@ -658,47 +722,22 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	else
 		header = tny_msg_get_header (msg);
 
-	new_header = tny_msg_get_header (new_msg);
-	reply_to = tny_header_get_replyto (header);
-
-	if (reply_to)
-		tny_header_set_to (new_header, reply_to);
-	else
-		tny_header_set_to (new_header, tny_header_get_from (header));
-
-	switch (reply_mode) {
-	case MODEST_TNY_MSG_REPLY_MODE_SENDER:
-		/* Do not fill neither cc nor bcc */
-		break;
-	case MODEST_TNY_MSG_REPLY_MODE_LIST:
-		/* TODO */
-		break;
-	case MODEST_TNY_MSG_REPLY_MODE_ALL:
-		/* Concatenate to, cc and bcc */
-		cc = tny_header_get_cc (header);
-		bcc = tny_header_get_bcc (header);
-
-		tmp = g_string_new (tny_header_get_to (header));
-		if (cc)
-			g_string_append_printf (tmp, ",%s",cc);
-		if (bcc)
-			g_string_append_printf (tmp, ",%s",bcc);
-
-               /* Remove my own address from the cc list. TODO:
-                  remove also the To: of the new message, needed due
-                  to the new reply_to feature */
-		new_cc = (gchar *)
-			modest_text_utils_remove_address ((const gchar *) tmp->str,
-							  from);
-		/* FIXME: remove also the mails from the new To: */
-		tny_header_set_cc (new_header, new_cc);
-
-		/* Clean */
-		g_string_free (tmp, TRUE);
-		g_free (new_cc);
-		break;
+	new_header = tny_msg_get_header(new_msg);
+	
+	new_to = get_new_to (header, from, reply_mode);
+	if (!new_to)
+		g_warning ("%s: failed to get new To:", __FUNCTION__);
+	else {
+		tny_header_set_to (new_header, new_to);
+		g_free (new_to);
 	}
-
+		
+	new_cc = get_new_cc (header, from, reply_mode);
+	if (new_cc) { 
+		tny_header_set_cc (new_header, new_cc);
+		g_free (new_cc);
+	}
+	
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
 	g_object_unref (G_OBJECT (header));
