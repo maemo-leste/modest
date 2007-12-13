@@ -562,17 +562,6 @@ connect_signals (ModestMsgEditWindow *obj)
 
 }
 
-static GtkWidget *
-menubar_to_menu (GtkUIManager *ui_manager)
-{
-	GtkWidget *main_menu;
-
-	/* Get the menubar from the UI manager */
-	main_menu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
-
-	return main_menu;
-}
-
 static void
 init_window (ModestMsgEditWindow *obj)
 {
@@ -1302,7 +1291,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
 
 	/* Menubar. Update the state of some toggles */
-	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	parent_priv->menubar = modest_maemo_utils_get_manager_menubar_as_menu (parent_priv->ui_manager, "/MenuBar");
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 	priv->from_field_protos = get_transports ();
  	modest_combo_box_set_pair_list (MODEST_COMBO_BOX (priv->from_field), priv->from_field_protos);

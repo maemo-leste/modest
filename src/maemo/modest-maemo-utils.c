@@ -264,3 +264,26 @@ modest_maemo_open_mcc_mapping_file (void)
 	return result;
 }
 
+GtkWidget *
+modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager,
+						const gchar *item_name)
+{
+	GtkWidget *new_menu;
+	GtkWidget *menubar;
+	GList *children, *iter;
+
+	menubar = gtk_ui_manager_get_widget (manager, item_name);
+	new_menu = gtk_menu_new ();
+
+	children = gtk_container_get_children (GTK_CONTAINER (menubar));
+	for (iter = children; iter != NULL; iter = g_list_next (iter)) {
+		GtkWidget *menu;
+
+		menu = GTK_WIDGET (iter->data);
+		gtk_widget_reparent (menu, new_menu);
+	}
+	
+	g_list_free (children);
+
+	return new_menu;
+}

@@ -534,17 +534,6 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 }
 
 
-static GtkWidget *
-menubar_to_menu (GtkUIManager *ui_manager)
-{
-	GtkWidget *main_menu;
-
-	/* Get the menubar from the UI manager */
-	main_menu = gtk_ui_manager_get_widget (ui_manager, "/MenuBar");
-
-	return main_menu;
-}
-
 static void
 init_window (ModestMsgViewWindow *obj)
 {
@@ -752,7 +741,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	priv->msg_uid = g_strdup (msg_uid);
 
 	/* Menubar */
-	parent_priv->menubar = menubar_to_menu (parent_priv->ui_manager);
+	parent_priv->menubar = modest_maemo_utils_get_manager_menubar_as_menu (parent_priv->ui_manager, "/MenuBar");
 	hildon_window_set_menu    (HILDON_WINDOW(obj), GTK_MENU(parent_priv->menubar));
 	gtk_widget_show (parent_priv->menubar);
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();

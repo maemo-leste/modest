@@ -1169,7 +1169,7 @@ modest_main_window_new (void)
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 	/* Menubar. Update the state of some toggles */
-	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
+	parent_priv->menubar = modest_maemo_utils_get_manager_menubar_as_menu (parent_priv->ui_manager, "/MenuBar");
 	conf = modest_runtime_get_conf ();
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu");

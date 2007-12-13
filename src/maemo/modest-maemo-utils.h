@@ -111,4 +111,16 @@ osso_context_t* modest_maemo_utils_get_osso_context (void);
  */
 void modest_maemo_utils_set_osso_context (osso_context_t *osso_context);
 
+/**
+ * modest_maemo_utils_get_manager_menubar_as_menu:
+ * @manager: a #GtkUIManager
+ * @item_name: a string
+ *
+ * obtains the node with name @item_name in @manager (which happens to be a menubar) as a
+ * #GtkMenu.
+ *
+ * Returns: a #GtkMenu
+ */
+GtkWidget *modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager, const gchar *item_name);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

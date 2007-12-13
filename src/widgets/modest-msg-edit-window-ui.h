@@ -38,7 +38,6 @@
 G_BEGIN_DECLS
 
 static const GtkActionEntry modest_msg_edit_action_entries [] = {
-
 	/* Toplevel menus */
 	{ "Email", NULL, N_("mcen_me_inbox_email") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
 	{ "View", NULL, N_("mcen_me_inbox_view") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated)},
