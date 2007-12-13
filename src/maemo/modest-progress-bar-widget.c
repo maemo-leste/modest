@@ -73,7 +73,7 @@ static void modest_progress_bar_widget_set_pulsating_mode (ModestProgressBarWidg
 #define LOWER 0
 #define UPPER 150
 
-#define MODEST_PROGRESS_BAR_PULSE_INTERVAL 250
+#define MODEST_PROGRESS_BAR_PULSE_INTERVAL 125
 
 /* list my signals  */
 /* enum { */
@@ -185,7 +185,7 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 	req.height = 64;
 	gtk_progress_set_text_alignment (GTK_PROGRESS (priv->progress_bar), 0, 0.5);
 	gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (priv->progress_bar), PANGO_ELLIPSIZE_END);
-	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (priv->progress_bar), 0.05);
+	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (priv->progress_bar), 0.25);
 	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), " ");
 	gtk_widget_size_request (priv->progress_bar, &req);
 	gtk_container_add (GTK_CONTAINER (align), priv->progress_bar);
