@@ -1590,6 +1590,14 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), account_name, TRUE);
 	modest_mail_operation_notify_start (self);
 
+	/* notify about the start of the operation */ 
+	ModestMailOperationState *state;
+	state = modest_mail_operation_clone_state (self);
+	state->done = 0;
+	state->total = 0;
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+			0, state, NULL);
+	
 	/* Get all folders and continue in the callback */    
 	folders = tny_simple_list_new ();
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
@@ -2154,6 +2162,15 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	helper->total_bytes = tny_header_get_message_size (header);
 
 	modest_mail_operation_notify_start (self);
+	
+	/* notify about the start of the operation */ 
+	ModestMailOperationState *state;
+	state = modest_mail_operation_clone_state (self);
+	state->done = 0;
+	state->total = 0;
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+				0, state, NULL);
+	
 	tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, helper);
 
 	g_object_unref (G_OBJECT (folder));
@@ -2302,6 +2319,14 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		modest_mail_operation_notify_start (self);
 		iter = tny_list_create_iterator (header_list);
 		while (!tny_iterator_is_done (iter)) { 
+			/* notify about the start of the operation */ 
+			ModestMailOperationState *state;
+			state = modest_mail_operation_clone_state (self);
+			state->done = 0;
+			state->total = 0;
+			g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+					0, state, NULL);
+			
 			GetMsgInfo *msg_info = NULL;
 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 			TnyFolder *folder = tny_header_get_folder (header);
@@ -2906,6 +2931,15 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	   updates before the callback call then this could happen. We
 	   must review the design */
 	modest_mail_operation_notify_start (self);
+	
+	/* notify that the operation was started */
+	ModestMailOperationState *state;
+	state = modest_mail_operation_clone_state (self);
+	state->done = 0;
+	state->total = 0;
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+			0, state, NULL);
+	
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,
 				  on_refresh_folder_status_update,

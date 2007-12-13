@@ -59,6 +59,12 @@ static void on_progress_changed                    (ModestMailOperation  *mail_o
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
 
+static gboolean modest_progress_bar_widget_is_pulsating (ModestProgressBarWidget *self);
+
+static void modest_progress_bar_widget_set_pulsating_mode (ModestProgressBarWidget *self,
+                                                           const gchar* msg,
+                                                           gboolean is_pulsating);
+
 #define XALIGN 0.5
 #define YALIGN 0.5
 #define XSPACE 1
@@ -66,6 +72,8 @@ static gboolean     progressbar_clean        (GtkProgressBar *bar);
 
 #define LOWER 0
 #define UPPER 150
+
+#define MODEST_PROGRESS_BAR_PULSE_INTERVAL 250
 
 /* list my signals  */
 /* enum { */
@@ -80,11 +88,11 @@ struct _ObservableData {
 
 typedef struct _ModestProgressBarWidgetPrivate ModestProgressBarWidgetPrivate;
 struct _ModestProgressBarWidgetPrivate {
-        GSList              *observables;
-        ModestMailOperation *current;
-
+	GSList              *observables;
+	ModestMailOperation *current;
 	guint count;
 	GtkWidget *progress_bar;
+	guint pulsating_timeout;
 };
 #define MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_PROGRESS_BAR_WIDGET, \
@@ -186,6 +194,8 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 	/* Add progress bar widget */	
 	gtk_box_pack_start (GTK_BOX(self), align, TRUE, TRUE, 0);
 	gtk_widget_show_all (GTK_WIDGET(self));       
+	
+	priv->pulsating_timeout = 0;
 }
 
 static void
@@ -206,6 +216,10 @@ modest_progress_bar_widget_finalize (GObject *obj)
 		g_slist_free (priv->observables);
 		priv->observables = NULL;
 	}
+	
+	/* remove timeout */
+	if (priv->pulsating_timeout != 0)
+		g_source_remove (priv->pulsating_timeout);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -292,6 +306,7 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 			priv->current = NULL;
 
 		/* Refresh the view */
+		modest_progress_bar_widget_set_pulsating_mode (me, NULL, FALSE);
 		progressbar_clean (GTK_PROGRESS_BAR (priv->progress_bar));
 	}
 	
@@ -383,6 +398,8 @@ on_progress_changed (ModestMailOperation  *mail_op,
 			modest_progress_bar_widget_set_progress (self, msg,
 								 state->bytes_done,
 								 state->bytes_total);
+		else if ((state->done == 0) && (state->total == 0))
+			modest_progress_bar_widget_set_pulsating_mode (self, msg, TRUE);
 		else
 			modest_progress_bar_widget_set_progress (self, msg,
 								 state->done,
@@ -421,7 +438,10 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 	
 	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
 
- 	priv->count++;
+	priv->count++;
+
+	if (modest_progress_bar_widget_is_pulsating (self))
+		modest_progress_bar_widget_set_pulsating_mode (self, NULL, FALSE);
 
 	/* Set progress. Tinymail sometimes returns us 1/100 when it
 	   does not have any clue, NOTE that 1/100 could be also a
@@ -458,4 +478,56 @@ modest_progress_bar_widget_set_undetermined_progress (ModestProgressBarWidget *s
 	state->op_type = modest_mail_operation_get_type_operation (mail_op);
 	on_progress_changed (mail_op, state, self);
 	g_free(state);
+}
+
+/* this has to be explicitly removed */
+static gboolean
+do_pulse (gpointer data)
+{
+	ModestProgressBarWidgetPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(data), FALSE);
+	
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (data);
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+	return TRUE;
+}
+
+gboolean
+modest_progress_bar_widget_is_pulsating (ModestProgressBarWidget *self)
+{
+	ModestProgressBarWidgetPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self), FALSE);
+
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
+	
+	return priv->pulsating_timeout != 0;
+}
+
+void
+modest_progress_bar_widget_set_pulsating_mode (ModestProgressBarWidget *self,
+                                               const gchar* msg,
+                                               gboolean is_pulsating)
+{
+	ModestProgressBarWidgetPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self));
+
+	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
+	
+	if (msg != NULL)
+		gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), msg);
+	
+	if (is_pulsating == (priv->pulsating_timeout != 0))
+		return;
+	else if (is_pulsating && (priv->pulsating_timeout == 0)) {
+		/* enable */
+		priv->pulsating_timeout = g_timeout_add (MODEST_PROGRESS_BAR_PULSE_INTERVAL,
+				do_pulse, self);
+	} else if (!is_pulsating && (priv->pulsating_timeout != 0)) {
+		/* disable */
+		g_source_remove (priv->pulsating_timeout);
+		priv->pulsating_timeout = 0;
+	}
 }
