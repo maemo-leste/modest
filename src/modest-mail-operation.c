@@ -1231,7 +1231,6 @@ typedef struct
 	gint pending_calls;
 	gboolean poke_all;
 	TnyFolderObserver *inbox_observer;
-	guint update_timeout;
 	RetrieveAllCallback retrieve_all_cb;
 } UpdateAccountInfo;
 
@@ -1239,11 +1238,6 @@ typedef struct
 static void
 destroy_update_account_info (UpdateAccountInfo *info)
 {
-	if (info->update_timeout) {
-		g_source_remove (info->update_timeout);
-		info->update_timeout = 0;
-	}
-
 	g_free (info->account_name);
 	g_object_unref (info->folders);
 	g_object_unref (info->mail_op);
@@ -1497,10 +1491,6 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 		}
 		g_object_unref (iter_all_folders);
 
-		/* Stop the progress notification */
-		g_source_remove (info->update_timeout);
-		info->update_timeout = 0;
-
 		/* Refresh the INBOX */
 		if (inbox) {
 			/* Refresh the folder. Our observer receives
@@ -1519,30 +1509,6 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 			inbox_refreshed_cb (inbox, FALSE, NULL, info);
 		}
 	}
-}
-
-/* 
- * Issues the "progress-changed" signal. The timer won't be removed,
- * so you must call g_source_remove to stop the signal emission
- */
-static gboolean
-timeout_notify_progress (gpointer data)
-{
-	ModestMailOperation *mail_op = MODEST_MAIL_OPERATION (data);
-	ModestMailOperationState *state;
-
-	state = modest_mail_operation_clone_state (mail_op);
-
-	/* This is a GDK lock because we are an idle callback and
- 	 * the handlers of this signal can contain Gtk+ code */
-
-	gdk_threads_enter (); /* CHECKED */
-	g_signal_emit (G_OBJECT (mail_op), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
-	gdk_threads_leave (); /* CHECKED */
-
-	g_slice_free (ModestMailOperationState, state);
-	
-	return TRUE;
 }
 
 void
@@ -1583,7 +1549,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->account_name = g_strdup (account_name);
 	info->callback = callback;
 	info->user_data = user_data;
-	info->update_timeout = g_timeout_add (250, timeout_notify_progress, self);
 	info->retrieve_all_cb = retrieve_all_cb;
 
 	/* Set account busy */
@@ -1595,8 +1560,11 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	state = modest_mail_operation_clone_state (self);
 	state->done = 0;
 	state->total = 0;
+
+	/* Start notifying progress */
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
 			0, state, NULL);
+	g_slice_free (ModestMailOperationState, state);
 	
 	/* Get all folders and continue in the callback */    
 	folders = tny_simple_list_new ();
