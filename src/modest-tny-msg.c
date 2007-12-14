@@ -331,6 +331,7 @@ add_images (TnyMsg *msg, GList *images_list)
 	if (related_part != NULL) {
 		/* TODO: attach images in their proper place */
 		add_attachments (related_part, images_list, TRUE);
+		g_object_unref (related_part);
 	}
 }
 
