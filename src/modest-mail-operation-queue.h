@@ -121,6 +121,16 @@ void    modest_mail_operation_queue_cancel     (ModestMailOperationQueue *op_que
  **/
 void    modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *op_queue);
 
+/**
+ * modest_mail_operation_queue_get_by_source:
+ * @op_queue:  a #ModestMailOperationQueue
+ * @source: the source of the operations
+ * 
+ * Returns a list with the #ModestMailOperation that have the given source 
+ **/
+GSList*
+modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *op_queue, GObject *source);
+
 G_END_DECLS
 
 #endif /* __MODEST_MAIL_OPERATION_QUEUE_H__ */

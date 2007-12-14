@@ -372,3 +372,45 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 
 	g_slist_free(operations_to_cancel);
 }
+
+typedef struct
+{
+	GSList **new_list;
+	GObject *source;
+} FindBySourceInfo;
+
+static void
+on_find_by_source_foreach (gpointer op, gpointer data)
+{
+	FindBySourceInfo *info = (FindBySourceInfo*) data; 
+
+	if ( info->source == modest_mail_operation_get_source (MODEST_MAIL_OPERATION (op))) {
+		*(info->new_list) = g_slist_prepend (*(info->new_list), MODEST_MAIL_OPERATION (op));	
+	}
+}
+
+GSList*
+modest_mail_operation_queue_get_by_source (
+		ModestMailOperationQueue *self, 
+		GObject *source)
+{
+	ModestMailOperationQueuePrivate *priv;
+	GSList* found_operations= NULL;
+	FindBySourceInfo *info = g_new0 (FindBySourceInfo, 1);
+
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self), NULL);
+	g_return_val_if_fail (source != NULL, NULL);
+	
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+
+	info->new_list = &found_operations;
+	info->source = source;
+	
+	g_mutex_lock (priv->queue_lock);
+	g_queue_foreach (priv->op_queue, (GFunc) on_find_by_source_foreach, info);
+	g_mutex_unlock (priv->queue_lock);
+	
+	g_free (info);
+	
+	return found_operations;
+}

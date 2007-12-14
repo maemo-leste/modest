@@ -783,6 +783,25 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	handler_id = *tmp;
 	g_hash_table_remove (priv->destroy_handlers, window);
 
+	/* cancel open and receive operations */
+	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		ModestMailOperationTypeOperation type;
+		GSList* pending_ops = NULL;
+		GSList* tmp_list = NULL;
+		pending_ops = modest_mail_operation_queue_get_by_source (
+				modest_runtime_get_mail_operation_queue (), 
+				G_OBJECT (window));
+		while (pending_ops != NULL) {
+			type = modest_mail_operation_get_type_operation (MODEST_MAIL_OPERATION (pending_ops->data));
+			if (type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
+				modest_mail_operation_cancel (pending_ops->data);
+			}
+			tmp_list = pending_ops;
+			pending_ops = g_slist_next (pending_ops);
+			g_slist_free_1 (tmp_list);
+		}
+	}
+	
 	/* Disconnect the "delete-event" handler, we won't need it anymore */
 	g_signal_handler_disconnect (window, handler_id);
 

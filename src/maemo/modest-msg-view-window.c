@@ -1810,6 +1810,11 @@ view_msg_cb (ModestMailOperation *mail_op,
 	ModestMsgViewWindowPrivate *priv = NULL;
 	GtkTreeRowReference *row_reference = NULL;
 
+	if (canceled) {
+		g_object_unref (self);
+		return;
+	}
+	
 	/* If there was any error */
 	row_reference = (GtkTreeRowReference *) user_data;
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
@@ -1823,21 +1828,25 @@ view_msg_cb (ModestMailOperation *mail_op,
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
 	/* Update the row reference */
-	gtk_tree_row_reference_free (priv->row_reference);
-	priv->row_reference = gtk_tree_row_reference_copy (row_reference);
-	priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
-	select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE);
-	gtk_tree_row_reference_free (row_reference);
+	if (priv->row_reference != NULL) {
+		gtk_tree_row_reference_free (priv->row_reference);
+		priv->row_reference = gtk_tree_row_reference_copy (row_reference);
+		priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+		select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE);
+		gtk_tree_row_reference_free (row_reference);
+	}
 
 	/* Mark header as read */
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
 		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 
 	/* Set new message */
-	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
-	modest_msg_view_window_update_priority (self);
-	update_window_title (MODEST_MSG_VIEW_WINDOW (self));
-	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
+	if (priv->msg_view != NULL && TNY_IS_MSG_VIEW (priv->msg_view)) {
+		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+		modest_msg_view_window_update_priority (self);
+		update_window_title (MODEST_MSG_VIEW_WINDOW (self));
+		modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
+	}
 
 	/* Set the new message uid of the window  */
 	if (priv->msg_uid) {
@@ -2175,14 +2184,15 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	tmp = priv->progress_widgets;
-	
-	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
-		set_toolbar_transfer_mode(self);
-		while (tmp) {
-			modest_progress_object_add_operation (
-					MODEST_PROGRESS_OBJECT (tmp->data),
-					mail_op);
-			tmp = g_slist_next (tmp);
+	if (G_OBJECT (self) == modest_mail_operation_get_source(mail_op)) {
+		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
+			set_toolbar_transfer_mode(self);
+			while (tmp) {
+				modest_progress_object_add_operation (
+						MODEST_PROGRESS_OBJECT (tmp->data),
+						mail_op);
+				tmp = g_slist_next (tmp);
+			}
 		}
 	}
 }
