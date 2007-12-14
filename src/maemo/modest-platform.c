@@ -335,7 +335,7 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	DBusConnection *con;
 	gchar *uri_path = NULL;
 	
-	uri_path = g_strconcat ("file://", path, NULL);	
+	uri_path = gnome_vfs_get_uri_from_local_path (path);	
 	con = osso_get_dbus_connection (modest_maemo_utils_get_osso_context());
 	
 	if (mime_type)
