@@ -2216,8 +2216,12 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	/* Add operation observers and change toolbar if neccessary*/
 	tmp = priv->progress_widgets;
 	if (mode == TOOLBAR_MODE_TRANSFER) {
-		if (mode_changed && (G_OBJECT (self) == modest_mail_operation_get_source(mail_op)))
-			set_toolbar_transfer_mode(self);		    
+		if (mode_changed) {
+			if (G_OBJECT (self) == modest_mail_operation_get_source(mail_op)) {
+				set_toolbar_transfer_mode(self);
+			}
+			g_object_unref (G_OBJECT (mail_op));
+		}
 
 		while (tmp) {
 			modest_progress_object_add_operation (MODEST_PROGRESS_OBJECT (tmp->data),

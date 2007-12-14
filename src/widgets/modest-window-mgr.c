@@ -796,6 +796,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 			if (type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
 				modest_mail_operation_cancel (pending_ops->data);
 			}
+			g_object_unref (G_OBJECT (pending_ops->data));
 			tmp_list = pending_ops;
 			pending_ops = g_slist_next (pending_ops);
 			g_slist_free_1 (tmp_list);

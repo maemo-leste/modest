@@ -385,7 +385,8 @@ on_find_by_source_foreach (gpointer op, gpointer data)
 	FindBySourceInfo *info = (FindBySourceInfo*) data; 
 
 	if ( info->source == modest_mail_operation_get_source (MODEST_MAIL_OPERATION (op))) {
-		*(info->new_list) = g_slist_prepend (*(info->new_list), MODEST_MAIL_OPERATION (op));	
+		g_object_ref (G_OBJECT (op));
+		*(info->new_list) = g_slist_prepend (*(info->new_list), MODEST_MAIL_OPERATION (op));
 	}
 }
 

@@ -2195,6 +2195,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 			}
 		}
 	}
+	g_object_unref (G_OBJECT (mail_op));
 }
 
 static void 
