@@ -2217,10 +2217,11 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	tmp = priv->progress_widgets;
 	if (mode == TOOLBAR_MODE_TRANSFER) {
 		if (mode_changed) {
-			if (G_OBJECT (self) == modest_mail_operation_get_source(mail_op)) {
+			GObject *source = modest_mail_operation_get_source(mail_op);
+			if (G_OBJECT (self) == source) {
 				set_toolbar_transfer_mode(self);
 			}
-			g_object_unref (G_OBJECT (mail_op));
+			g_object_unref (source);
 		}
 
 		while (tmp) {

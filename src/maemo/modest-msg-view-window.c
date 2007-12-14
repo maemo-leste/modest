@@ -2179,12 +2179,14 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	ModestMailOperationTypeOperation op_type;
 	GSList *tmp;
 	ModestMsgViewWindowPrivate *priv;
+	GObject *source = NULL;
 
 	self = MODEST_MSG_VIEW_WINDOW (user_data);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	tmp = priv->progress_widgets;
-	if (G_OBJECT (self) == modest_mail_operation_get_source(mail_op)) {
+	source = modest_mail_operation_get_source(mail_op);
+	if (G_OBJECT (self) == source) {
 		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
 			set_toolbar_transfer_mode(self);
 			while (tmp) {
@@ -2195,7 +2197,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 			}
 		}
 	}
-	g_object_unref (G_OBJECT (mail_op));
+	g_object_unref (source);
 }
 
 static void 
