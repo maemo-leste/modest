@@ -128,17 +128,31 @@ gchar*   modest_text_utils_inline (const gchar *text,
 
 /**
  * modest_text_utils_remove_address
- * @address_list: none-NULL string with a comma-separated list of email addresses
+ * @address_list: non-NULL string with a comma-separated list of email addresses
  * @address: an specific e-mail address 
  *
  * remove a specific address from a list of email addresses; if @address
- * is NULL, returns an unchanged @address_list
+ * is NULL, returns an unchanged (but newly allocated) @address_list
  * 
  * Returns: a newly allocated string containing the new list, or NULL
  * in case of error or the original @address_list was NULL
  */
 gchar*   modest_text_utils_remove_address (const gchar *address_list, 
 					   const gchar *address);
+
+
+/**
+ * modest_text_utils_remove_duplicate_addresses
+ * @address_list: non-NULL string with a comma-separated list of email addresses
+ *
+ * remove duplicate addresses from a list of email addresses
+ * 
+ * Returns: a newly allocated string containing the new list, or NULL
+ * in case of error or the original @address_list was NULL
+ */
+gchar*   modest_text_utils_remove_duplicate_addresses (const gchar *address_list); 
+						    
+
 
 /**
  * modest_text_utils_address_range_at_position:
@@ -352,9 +366,10 @@ gboolean     modest_text_utils_validate_recipient (const gchar *recipient,
  * obtains a GSList of addresses from a string of addresses
  * in the format understood by email protocols
  *
- * Returns: a GSList of strings
+ * Returns: a newly allocated GSList of strings
  **/
 GSList      *modest_text_utils_split_addresses_list (const gchar *addresses);
+
 
 /**
  * modest_text_utils_get_addresses_indexes:

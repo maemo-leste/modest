@@ -330,10 +330,48 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 	return result;
 }
 
+
+gchar*
+modest_text_utils_remove_duplicate_addresses (const gchar *address_list)
+{
+	GSList *addresses, *cursor;
+	GHashTable *table;
+	gchar *new_list;
+	
+	g_return_val_if_fail (address_list, NULL);
+
+	table = g_hash_table_new (g_str_hash, g_str_equal);
+	addresses = modest_text_utils_split_addresses_list (address_list);
+
+	new_list = g_strdup("");
+	cursor = addresses;
+	while (cursor) {
+		const gchar* address = (const gchar*)cursor->data;
+
+		/* ignore the address if already seen */
+		if (g_hash_table_lookup (table, address) == 0) {
+		
+			gchar *tmp = g_strjoin (",", new_list, address, NULL);
+			g_free (new_list);
+			new_list = tmp;
+			
+			g_hash_table_insert (table, (gchar*)address, GINT_TO_POINTER(1));
+		}
+		cursor = g_slist_next (cursor);
+	}
+
+	g_hash_table_destroy (table);
+	g_slist_foreach (addresses, (GFunc)g_free, NULL);
+	g_slist_free (addresses);
+
+	return new_list;
+}
+
+
 static void
 modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data, gssize n)
 {
-	guint		 i;
+	guint		i;
 	gboolean	space_seen = FALSE;
 	guint           break_dist = 0; /* distance since last break point */
 
@@ -514,6 +552,7 @@ modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_
 	return;
 }
 
+#if 0
 GSList *
 modest_text_utils_split_addresses_list (const gchar *addresses)
 {
@@ -556,6 +595,43 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	return result;
 
 }
+#endif
+
+
+
+
+GSList *
+modest_text_utils_split_addresses_list (const gchar *addresses)
+{
+	GSList *head;
+	const gchar *my_addrs = addresses;
+	const gchar *end;
+	gchar *addr;
+	
+	/* skip any space, ',', ';' at the start */
+	while (my_addrs && (my_addrs[0] == ' ' || my_addrs[0] == ',' || my_addrs[0] == ';'))
+	       ++my_addrs;
+
+	/* are we at the end of addresses list? */
+	if (!my_addrs[0])
+		return NULL;
+	
+	/* nope, we are at the start of some address
+	 * now, let's find the end of the address */
+	end = my_addrs + 1;
+	while (end[0] && end[0] != ',' && end[0] != ';')
+		++end;
+
+	/* we got the address; copy it and remove trailing whitespace */
+	addr = g_strndup (my_addrs, end - my_addrs);
+	g_strchomp (addr);
+
+	head = g_slist_append (NULL, addr);
+	head->next = modest_text_utils_split_addresses_list (end); /* recurse */
+
+	return head;
+}
+
 
 void
 modest_text_utils_address_range_at_position (const gchar *recipients_list,

@@ -115,7 +115,7 @@ TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html)
 
 /**
  * modest_tny_msg_find_body:
- * @self: 
+ * @self: some #TnyMsg
  * @want_html: 
  * @is_html: if the original body was html or plain text
  * 
@@ -126,6 +126,20 @@ TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html)
  * the text should be freed with 
  **/
 gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html, gboolean *is_html);
+
+
+
+/**
+ * modest_tny_msg_get_header:
+ * @self: some #TnyMsg 
+ * @header: the header to get
+ * 
+ * gets the mail header for a #TnyMsg as a newly allocated string,
+ * or NULL if it cannot be found
+ * 
+ * Returns: the header
+ **/
+gchar*       modest_tny_msg_get_header (TnyMsg *msg, const gchar *header);
 
 
 /**

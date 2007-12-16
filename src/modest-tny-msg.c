@@ -619,38 +619,87 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 }
 
 
+gchar*
+modest_tny_msg_get_header (TnyMsg *msg, const gchar *header)
+{
+	TnyList *pairs;
+	TnyIterator *iter;
+	gchar *val;
+	
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	g_return_val_if_fail (header, NULL);
+
+	pairs = tny_simple_list_new ();
+
+	tny_mime_part_get_header_pairs (TNY_MIME_PART(msg), pairs);
+	iter = tny_list_create_iterator (pairs);
+
+	val = NULL;
+	while (!tny_iterator_is_done(iter) && !val) {
+
+		TnyPair *pair = (TnyPair*)tny_iterator_get_current(iter);
+		if (strcasecmp (header, tny_pair_get_name(pair)) == 0)
+			val = g_strdup (tny_pair_get_value(pair));
+		
+		tny_iterator_next (iter);
+	}
+
+	g_object_unref (pairs);
+	g_object_unref (iter);
+
+	return val;
+}
+
+
+
 /* get the new To:, based on the old header,
  * result is newly allocated or NULL in case of error
- * TODO: mailing list handling
  * */
 static gchar*
-get_new_to (TnyHeader *header, const gchar* from, ModestTnyMsgReplyMode mode)
+get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
+	    ModestTnyMsgReplyMode reply_mode)
 {
-	const gchar* old_to;
-	const gchar* old_reply_to_from;
-
+	const gchar* old_reply_to;
+	const gchar* old_from;
 	gchar* new_to;
 	
+	/* according to RFC2369 (http://www.faqs.org/rfcs/rfc2369.html), we
+	 * can identify Mailing-List posts by the List-Help header.
+	 * for mailing lists, both the Reply-To: and From: should be included
+	 * in the new To:; for now, we're ignoring List-Post
+	 */
+	gchar* list_help = modest_tny_msg_get_header (msg, "List-Help");
+	gboolean is_mailing_list = (list_help != NULL);
+	g_free (list_help);
+
+
 	/* reply to sender, use ReplyTo or From */
-	old_reply_to_from = tny_header_get_replyto (header);
-	if (old_reply_to_from)
-		new_to = g_strdup (old_reply_to_from);
-	else {
-		old_reply_to_from = tny_header_get_from (header);
-		if (old_reply_to_from)
-			new_to = g_strdup (old_reply_to_from);
-		else {
-			g_warning ("%s: failed to get either Reply-To: or From: from header",
-				   __FUNCTION__);
-			return NULL;
-		}
+	//old_reply_to = tny_header_get_replyto (header);
+	old_reply_to = modest_tny_msg_get_header (msg, "Reply-To"); 
+	old_from     = tny_header_get_from (header);
+	
+	if (!old_from &&  !old_reply_to) {
+		g_warning ("%s: failed to get either Reply-To: or From: from header",
+			   __FUNCTION__);
+		return NULL;
 	}
-			
+	
+	/* for mailing lists, use both Reply-To and From if we did a
+	 * 'Reply All:'
+	 * */
+	if (is_mailing_list && reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL &&
+	    old_reply_to && old_from && strcmp (old_from, old_reply_to) != 0)
+		new_to = g_strjoin (",", old_reply_to, old_from, NULL);
+	else
+		/* otherwise use either Reply-To: (preferred) or From: */
+		new_to = g_strdup (old_reply_to ? old_reply_to : old_from);
+
 	/* in case of ReplyAll, we need to add the Recipients in the old To: */
-	if (mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
-		old_to = tny_header_get_to (header);
+	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
+		const gchar *old_to = tny_header_get_to (header);
 		if (!old_to) 
-			g_warning ("%s: no To: address found in source mail", __FUNCTION__);
+			g_warning ("%s: no To: address found in source mail",
+				   __FUNCTION__);
 		else {
 			/* append the old To: */
 			gchar *tmp = g_strjoin (",", new_to, old_to, NULL);
@@ -663,7 +712,12 @@ get_new_to (TnyHeader *header, const gchar* from, ModestTnyMsgReplyMode mode)
 	gchar *tmp = modest_text_utils_remove_address (new_to, from);
 	g_free (new_to);
 	new_to = tmp;
-	
+
+	/* remove duplicate entries */
+	tmp = modest_text_utils_remove_duplicate_addresses (new_to);
+	g_free (new_to);
+	new_to = tmp;
+
 	return new_to;
 }
 
@@ -671,7 +725,7 @@ get_new_to (TnyHeader *header, const gchar* from, ModestTnyMsgReplyMode mode)
 /* get the new Cc:, based on the old header,
  * result is newly allocated or NULL in case of error */
 static gchar*
-get_new_cc (TnyHeader *header, const gchar* from, ModestTnyMsgReplyMode mode)
+get_new_cc (TnyHeader *header, const gchar* from)
 {
 	const gchar *old_cc;
 
@@ -695,7 +749,6 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	TnyMsg *new_msg = NULL;
 	TnyHeader *new_header;
 	gchar *new_to, *new_cc = NULL;
-	
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
@@ -723,17 +776,16 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	else
 		header = tny_msg_get_header (msg);
 
-	new_header = tny_msg_get_header(new_msg);
 	
-	new_to = get_new_to (header, from, reply_mode);
+	new_header = tny_msg_get_header(new_msg);
+	new_to = get_new_to (msg, header, from, reply_mode);
 	if (!new_to)
 		g_warning ("%s: failed to get new To:", __FUNCTION__);
 	else {
 		tny_header_set_to (new_header, new_to);
 		g_free (new_to);
-	}
-		
-	new_cc = get_new_cc (header, from, reply_mode);
+	}	
+	new_cc = get_new_cc (header, from);
 	if (new_cc) { 
 		tny_header_set_cc (new_header, new_cc);
 		g_free (new_cc);
