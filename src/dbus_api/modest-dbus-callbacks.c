@@ -673,13 +673,26 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
-	ModestWindow *main_win =
+	gboolean auto_update;
+	ModestWindow *main_win = NULL;
+
+	main_win =
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 						   FALSE); /* don't create */
 
-	/* Send & receive all */
 	gdk_threads_enter (); /* CHECKED */
-	modest_ui_actions_do_send_receive_all (main_win);
+
+	/* Check if the autoupdate feature is on */
+	auto_update = modest_conf_get_bool (modest_runtime_get_conf (), 
+					    MODEST_CONF_AUTO_UPDATE, NULL);
+
+	if (auto_update)
+		/* Do send receive */
+		modest_ui_actions_do_send_receive_all (main_win);
+	else
+		/* Disable auto update */
+		modest_platform_set_update_interval (0);
+
 	gdk_threads_leave (); /* CHECKED */
 	
 	return FALSE;
