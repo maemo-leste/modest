@@ -1448,8 +1448,8 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 			/* Add pending call */
 			info->pending_calls++;
 			
-			tny_folder_store_get_folders_async (folder, folders, NULL, recurse_folders_async_cb, 
-							    NULL, info);
+			tny_folder_store_get_folders_async (folder, folders, recurse_folders_async_cb, 
+							    NULL, NULL, info);
 			
 			g_object_unref (G_OBJECT (folder));
 			
