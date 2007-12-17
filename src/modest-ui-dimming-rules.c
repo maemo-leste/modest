@@ -41,6 +41,7 @@
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
 #include <widgets/modest-recpt-editor.h>
+#include <gtkhtml/gtkhtml.h>
 
 
 static gboolean _folder_is_any_of_type (TnyFolder *folder, TnyFolderType types[], guint ntypes);
@@ -1367,7 +1368,7 @@ modest_ui_dimming_rules_on_copy (ModestWindow *win, gpointer user_data)
 	ModestDimmingRule *rule = NULL;
 	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
-	
+
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 	state = modest_window_get_dimming_state (win);
@@ -1803,8 +1804,20 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 				g_utf8_strncpy (selection, start_offset, end - start);
 			}
 		} else {
-			GtkClipboard *clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
-			selection = gtk_clipboard_wait_for_text (clipboard);
+			gboolean do_check = TRUE;
+			GtkClipboard *clipboard;
+			if (GTK_IS_HTML (focused)) {
+				const gchar *sel;
+				guint len = -1;
+				sel = gtk_html_get_selection_html (GTK_HTML (focused), &len);
+				do_check = !((sel == NULL) || (sel[0] == '\0'));
+			}
+			if (do_check) {
+				clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
+				selection = gtk_clipboard_wait_for_text (clipboard);
+			} else {
+				selection = NULL;
+			}
 		}
 		dimmed = !((selection != NULL) && (modest_text_utils_validate_recipient (selection, NULL)));
 	}
@@ -2290,6 +2303,7 @@ _invalid_clipboard_selected (ModestWindow *win,
 		result = !has_selection;
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		if (focused) {
+			g_message ("FOCUSED %s", g_type_name (G_TYPE_FROM_INSTANCE (focused)));
 			if (GTK_IS_LABEL (focused) && 
 			    !gtk_label_get_selection_bounds (GTK_LABEL (focused), NULL, NULL)) {
 				result = TRUE;
@@ -2297,9 +2311,14 @@ _invalid_clipboard_selected (ModestWindow *win,
 				GtkTextBuffer *buffer;
 				buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
 				result = !gtk_text_buffer_get_has_selection (buffer);
+			} else if (GTK_IS_HTML (focused)) {
+				const gchar *sel;
+				guint len = -1;
+				sel = gtk_html_get_selection_html (GTK_HTML (focused), &len);
+				result = ((sel == NULL) || (sel[0] == '\0'));
 			} else if (!MODEST_IS_ATTACHMENTS_VIEW (focused)) {
-				GtkClipboard *clipboard = NULL;
-				gchar *selection = NULL;
+				GtkClipboard *clipboard;
+				gchar *selection;
 
 				clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 				/* Get clipboard selection*/

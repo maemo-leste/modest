@@ -1979,7 +1979,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	TnyList *headers;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-	
+
 	if (!header)
 		return;
 

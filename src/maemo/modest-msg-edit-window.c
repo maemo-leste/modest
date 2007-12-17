@@ -1343,6 +1343,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	g_object_unref (menu_rules_group);
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
+	gtk_widget_show_all (GTK_WIDGET (obj));
 
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 

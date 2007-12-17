@@ -2229,7 +2229,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	TnyIterator *iter = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	
+
 	/* Init mail operation */
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
@@ -2333,6 +2333,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		if (notify)
 			notify (user_data);
 	}
+
 }
 
 
