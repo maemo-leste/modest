@@ -1051,13 +1051,15 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	if (!msg) {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
-			     "modest: failed to create a new msg\n");
+		if (!(priv->error)) {
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+				     "modest: failed to create a new msg\n");
+		}
 	} else {
 		drafts = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
 								TNY_FOLDER_TYPE_DRAFTS);
-		if (!drafts) {
+		if (!drafts && !(priv->error)) {
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 				     "modest: failed to create a new msg\n");
