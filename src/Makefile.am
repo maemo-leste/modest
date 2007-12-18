@@ -134,7 +134,7 @@ endif
 
 
 modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
-modest_LDFLAGS = $(MAEMO_LAUNCHER_LDFLAGS)
+modest_LDFLAGS = $(MAEMO_LAUNCHER_LIBS)
 
 modest_LDADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\

@@ -25,24 +25,17 @@ ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
         CFLAGS += -mthumb
 endif
 
-LAUNCHER = no
-#ifneq (,$(findstring maemo-launcher,$(DEB_BUILD_OPTIONS)))
-#	LAUNCHER = yes
-#endif
-
-ifeq "$(strip $(LAUNCHER))" "yes"
-	LAUNCHER_DEPENDS = -Vlauncher:Depends="maemo-launcher"
-	LAUNCHER_CFLAGS = -shared
-	LAUNCHER_LDFLAGS = -pie -shared -export-dynamic
-	CFLAGS += -fPIC
-endif
-
+# maemo-launcher support is not working properly yet, so leave it disabled
+# ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
+# 	LAUNCHER = yes
+# 	conf_opt := --enable-maemo-launcher
+# endif
 
 config.status: configure
 	dh_testdir
 	# commands to configure the package.
 	if [ ! -x configure ]; then ./autogen.sh; fi
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --sysconfdir=/etc --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --sysconfdir=/etc --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info $(conf_opt)
 
 configure: configure-stamp
 configure-stamp:
@@ -56,9 +49,7 @@ build-stamp:  config.status
 	dh_testdir
 
         # commands to compile the package.
-	$(MAKE) \
-         MAEMO_LAUNCHER_CFLAGS="$(LAUNCHER_CFLAGS)" \
-         MAEMO_LAUNCHER_LDFLAGS="$(LAUNCHER_LDFLAGS)"
+	$(MAKE)
 	touch build-stamp
 
 

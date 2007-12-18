@@ -103,6 +103,23 @@ if test "$MODEST_PLATFORM" = "detect"; then
 	with_platform=$detected_platform
 fi
 
+
+dnl Whether to use maemo-launcher or not
+AC_ARG_ENABLE([maemo-launcher],
+	      [AS_HELP_STRING([--enable-maemo-launcher],
+			      [build with maemo-launcher support])],
+			      [case "${enableval}" in
+			       yes) maemo_launcher=true ;;
+			       no)  maemo_launcher=false ;;
+			       *) AC_MSG_ERROR([bad value ${enableval} for --enable-maemo-launcher]) ;;
+			       esac], [maemo_launcher=false])
+if test x$maemo_launcher = xtrue
+then
+	PKG_CHECK_MODULES(MAEMO_LAUNCHER, [maemo-launcher-app])
+	AC_SUBST(MAEMO_LAUNCHER_CFLAGS)
+	AC_SUBST(MAEMO_LAUNCHER_LIBS)
+fi
+
 have_easysetup=false
 if test "x$with_platform" == "xgnome"; then
       PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
@@ -450,6 +467,7 @@ echo "Build docs       : $build_docs"
 echo "Gettext Package  : $GETTEXT_PACKAGE"
 
 if test "x$with_platform" == "xmaemo"; then
+   echo "Maemo Launcher   : $maemo_launcher"
    echo "Editor lib       : $wpeditor"
    echo "Addressbook      : $have_abook"
    echo "Help lib         : $helplib"
