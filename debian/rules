@@ -115,7 +115,8 @@ binary-arch: build install
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
-	dh_maemolauncher usr/bin/modest
+	# Not a requirement by now, so don't fail if it's not installed
+	which dh_maemolauncher && dh_maemolauncher usr/bin/modest || true
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
