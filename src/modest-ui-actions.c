@@ -3775,11 +3775,19 @@ modest_ui_actions_msg_edit_on_select_font (GtkAction *action,
 	modest_msg_edit_window_select_font (window);
 }
 
+
 void
 modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
 						  const gchar *display_name,
 						  GtkWindow *window)
 {
+	/* don't update the display name if it was already set;
+	 * updating the display name apparently is expensive */
+	const gchar* old_name = gtk_window_get_title (window);
+
+	if (old_name && display_name && strcmp (old_name, display_name) == 0)
+		return; /* don't do anything */
+
 	/* This is usually used to change the title of the main window, which
 	 * is the one that holds the folder view. Note that this change can
 	 * happen even when the widget doesn't have the focus. */
@@ -3787,6 +3795,7 @@ modest_ui_actions_on_folder_display_name_changed (ModestFolderView *folder_view,
 		gtk_window_set_title (window, display_name);
 	else
 		gtk_window_set_title (window, " ");
+
 }
 
 void
