@@ -743,8 +743,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
 	ModestTnyAccountStore *store = modest_runtime_get_account_store();
 
-	if (win) account_name = g_strdup (modest_window_get_active_account (win));
-	if (!account_name) account_name = modest_account_mgr_get_default_account(mgr);
+	account_name = modest_account_mgr_get_default_account(mgr);
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
 		goto cleanup;
