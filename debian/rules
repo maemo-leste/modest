@@ -28,6 +28,7 @@ endif
 # maemo-launcher support is not working properly yet, so leave it disabled
 # ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
 # 	LAUNCHER = yes
+# 	LAUNCHER_DEPENDS=-Vlauncher:Depends="maemo-launcher"
 # 	conf_opt := --enable-maemo-launcher
 # endif
 
