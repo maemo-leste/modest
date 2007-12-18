@@ -26,11 +26,10 @@ ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
 endif
 
 # maemo-launcher support is not working properly yet, so leave it disabled
-# ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
-# 	LAUNCHER = yes
-# 	LAUNCHER_DEPENDS=-Vlauncher:Depends="maemo-launcher"
-# 	conf_opt := --enable-maemo-launcher
-# endif
+DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS),nolauncher
+ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
+	conf_opt := --enable-maemo-launcher
+endif
 
 config.status: configure
 	dh_testdir
@@ -78,13 +77,6 @@ install: build
 # install the package into debian/tmp/
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-ifeq "$(strip $(LAUNCHER))" "yes"
-	mv $(CURDIR)/debian/tmp/usr/bin/modest \
-	$(CURDIR)/debian/modest/usr/bin/modest.launch
-	ln -s /usr/bin/maemo-invoker \
-	$(CURDIR)/debian/modest/usr/bin/modest
-endif
-
 # ACHTUNG: hack
 # we remove the modest.mo english localization, if the current control file contains a reference
 # to modest-l10n-mr0; thus, the modest package will not conflict with that one.
@@ -123,7 +115,8 @@ binary-arch: build install
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
-	dh_gencontrol -- $(LAUNCHER_DEPENDS)
+	dh_maemolauncher usr/bin/modest
+	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
 
