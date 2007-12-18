@@ -1709,15 +1709,12 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	{
 	case GTK_JUSTIFY_LEFT:
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentLeftMenu");
-		g_warning ("GTK_JUSTIFY_LEFT");
 		break;
 	case GTK_JUSTIFY_CENTER:
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentCenterMenu");
-		g_warning ("GTK_JUSTIFY_CENTER");
 		break;
 	case GTK_JUSTIFY_RIGHT:
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentRightMenu");
-		g_warning ("GTK_JUSTIFY_RIGHT");
 		break;
 	default:
 		break;

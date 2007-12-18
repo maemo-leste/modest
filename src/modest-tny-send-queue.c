@@ -159,6 +159,10 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 	/* Set flags to supend sending operaiton (if removed, this is not necessary) */
 	if (!remove) {		
 		outbox = modest_tny_send_queue_get_outbox (TNY_SEND_QUEUE(self));
+		if (!outbox) {
+			g_warning ("%s: modest_tny_send_queue_get_outbox(..) returned NULL\n", __FUNCTION__);
+			goto frees;
+		}
 		tny_folder_get_headers (outbox, headers, TRUE, err);
 		if (err != NULL) goto frees;
 		iter = tny_list_create_iterator (headers);

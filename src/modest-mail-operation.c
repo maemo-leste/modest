@@ -872,8 +872,16 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	/* Remove old mail from its source folder */
 	draft_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
 							      TNY_FOLDER_TYPE_DRAFTS);
+	if (!draft_folder) {
+		g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL drafts folder", __FUNCTION__);
+		goto end;
+	}
 	outbox_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
 							       TNY_FOLDER_TYPE_OUTBOX);
+	if (!outbox_folder) {
+		g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL outbox folder", __FUNCTION__);
+		goto end;
+	}
 	if (info->draft_msg != NULL) {
 		TnyFolder *folder = NULL;
 		TnyFolder *src_folder = NULL;
@@ -1775,6 +1783,8 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 						    TNY_FOLDER_STORE (trash_folder), 
 						    TRUE, NULL, NULL);
 			g_object_unref (trash_folder);
+		} else {
+			g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL trash folder", __FUNCTION__);
 		}
 	} else {
 		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
