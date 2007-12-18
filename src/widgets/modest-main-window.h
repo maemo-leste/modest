@@ -217,8 +217,9 @@ gboolean  modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow
  *
  * Returns: TRUE if transfer mode is enabled, FASE otherwise.
 */
-gboolean
-modest_main_window_transfer_mode_enabled (ModestMainWindow *self);
+gboolean  modest_main_window_transfer_mode_enabled (ModestMainWindow *self);
+
+gboolean  modest_main_window_screen_is_on (ModestMainWindow *self);
 
 G_END_DECLS
 

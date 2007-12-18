@@ -152,16 +152,13 @@ main (int argc, char *argv[])
 		gtk_widget_show_all (GTK_WIDGET(main_win));
 
 		/* Remove new mail notifications if exist */
-		modest_platform_remove_new_mail_notifications ();
+		modest_platform_remove_new_mail_notifications (FALSE);
 	}
 	
 	gtk_main ();
 
 cleanup:
 	gdk_threads_leave ();
-
-	/* Remove new mail notifications if exist */
-/* 	modest_platform_remove_new_mail_notifications (); */
 
 	if (!modest_init_uninit ()) {
 		g_printerr ("modest: modest_init_uninit failed\n");

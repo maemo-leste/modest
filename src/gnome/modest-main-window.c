@@ -793,3 +793,10 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;
 }
+
+gboolean  
+modest_main_window_screen_is_on (ModestMainWindow *self)
+{
+	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	return TRUE;
+}

@@ -322,7 +322,8 @@ modest_platform_get_global_settings_dialog ()
 
 
 void 
-modest_platform_on_new_headers_received (TnyList *header_list)
+modest_platform_on_new_headers_received (TnyList *header_list,
+					 gboolean show_visual)
 {
 	/* TODO: implement this */
 	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
@@ -421,7 +422,7 @@ modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_wi
 
 
 void 
-modest_platform_remove_new_mail_notifications (void)
+modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 {
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
 }

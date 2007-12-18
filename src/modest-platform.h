@@ -299,11 +299,13 @@ GtkWidget* modest_platform_get_global_settings_dialog (void);
 /**
  * modest_platform_on_new_headers_received:
  * @header_list: the list of new received headers
+ * @show_visual: adds a visual notification 
  *
  * Performs the required actions when new headers are
  * received. Tipically it's useful for showing new email notifications
  **/
-void modest_platform_on_new_headers_received (TnyList *header_list);
+void modest_platform_on_new_headers_received (TnyList *header_list,
+					      gboolean show_visual);
 
 /**
  * modest_platform_show_help:
@@ -391,10 +393,11 @@ gboolean modest_platform_run_alert_dialog (const gchar* prompt, gboolean is_ques
 
 /**
  * modest_platform_remove_new_mail_notifications:
+ * @only_visuals: remove only the visual notifications (like LEDs)
  *
  * Removes all the active new mail notifications
  **/
-void modest_platform_remove_new_mail_notifications (void);
+void modest_platform_remove_new_mail_notifications (gboolean only_visuals);
 
 /* ModestConnectedPerformer:
  * @canceled: whether or not the user canceled

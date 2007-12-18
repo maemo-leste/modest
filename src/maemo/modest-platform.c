@@ -40,6 +40,7 @@
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
+#include <mce/dbus-names.h>
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
@@ -55,6 +56,7 @@
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 #include <modest-account-settings-dialog.h>
 #include <maemo/easysetup/modest-easysetup-wizard.h>
+#include <hildon/hildon-sound.h>
 
 #ifdef MODEST_HAVE_ABOOK
 #include <libosso-abook/osso-abook.h>
@@ -67,6 +69,8 @@
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
+#define MODEST_NEW_MAIL_SOUND_FILE "/usr/share/sounds/ui-new_email.wav"
+#define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternCommunicationEmail"
 
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, 
@@ -1329,8 +1333,49 @@ modest_platform_set_update_interval (guint minutes)
 }
 
 void 
-modest_platform_on_new_headers_received (TnyList *header_list) 
+modest_platform_on_new_headers_received (TnyList *header_list,
+					 gboolean show_visual)
 {
+	gboolean play_sound;
+
+	/* Check whether or not we should play a sound */
+	play_sound = modest_conf_get_bool (modest_runtime_get_conf (),
+					   MODEST_CONF_PLAY_SOUND_MSG_ARRIVE,
+					   NULL);
+
+	if (!show_visual) {
+		gboolean screen_on, app_in_foreground;
+		ModestWindow *main_window;
+
+		/* Get the screen status */
+		main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
+		screen_on = modest_main_window_screen_is_on (MODEST_MAIN_WINDOW (main_window));
+
+		/* Get the window status */
+		app_in_foreground = hildon_program_get_is_topmost (hildon_program_get_instance ());
+
+		/* If the screen is on and the app is in the
+		   foreground we don't show anything */
+		if (!(screen_on && app_in_foreground)) {
+			/* Play a sound */
+			if (play_sound)
+				hildon_play_system_sound (MODEST_NEW_MAIL_SOUND_FILE);
+			
+			/* Activate LED. This must be deactivated by
+			   modest_platform_remove_new_mail_notifications */
+			osso_rpc_run_system (modest_maemo_utils_get_osso_context (),
+					     MCE_SERVICE,
+					     MCE_REQUEST_PATH,
+					     MCE_REQUEST_IF,
+					     MCE_ACTIVATE_LED_PATTERN,
+					     NULL,
+					     DBUS_TYPE_STRING, MODEST_NEW_MAIL_LIGHTING_PATTERN,
+					     DBUS_TYPE_INVALID);
+		}
+		/* We do a return here to avoid indentation with an else */
+		return;
+	}
+
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	HildonNotification *notification;
 	TnyIterator *iter;
@@ -1379,11 +1424,9 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 		   pattern. Show and play just one */
 		if (G_UNLIKELY (first_notification)) {
 			first_notification = FALSE;
-			if (modest_conf_get_bool (modest_runtime_get_conf (),
-						  MODEST_CONF_PLAY_SOUND_MSG_ARRIVE,
-						  NULL))  {
+			if (play_sound)  {
 				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-								    "sound-file", "/usr/share/sounds/ui-new_email.wav");
+								    "sound-file", MODEST_NEW_MAIL_SOUND_FILE);
 			}
 
 			/* Set the led pattern */
@@ -1391,7 +1434,7 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 							    "dialog-type", 4);
 			notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
 							    "led-pattern",
-							    "PatternCommunicationEmail");			
+							    MODEST_NEW_MAIL_LIGHTING_PATTERN);			
 		}
 
 		/* Notify. We need to do this in an idle because this function
@@ -1425,8 +1468,20 @@ modest_platform_on_new_headers_received (TnyList *header_list)
 }
 
 void
-modest_platform_remove_new_mail_notifications (void) 
+modest_platform_remove_new_mail_notifications (gboolean only_visuals) 
 {
+	if (only_visuals) {
+		osso_rpc_run_system (modest_maemo_utils_get_osso_context (),
+				     MCE_SERVICE,
+				     MCE_REQUEST_PATH,
+				     MCE_REQUEST_IF,
+				     MCE_DEACTIVATE_LED_PATTERN,
+				     NULL,
+				     DBUS_TYPE_STRING, MODEST_NEW_MAIL_LIGHTING_PATTERN,
+				     DBUS_TYPE_INVALID);
+		return;
+	}
+
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	GSList *notif_list = NULL;
 
@@ -2003,9 +2058,9 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 
 void
 modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
-							    TnyFolderStore *folder_store, 
-							    ModestConnectedPerformer callback, 
-							    gpointer user_data)
+					       TnyFolderStore *folder_store, 
+					       ModestConnectedPerformer callback, 
+					       gpointer user_data)
 {
 	TnyAccount *account = NULL;
 	

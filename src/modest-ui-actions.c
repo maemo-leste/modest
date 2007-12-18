@@ -1639,17 +1639,21 @@ new_messages_arrived (ModestMailOperation *self,
 		      gpointer user_data)
 {
 	GObject *source;
+	gboolean show_visual_notifications;
 
 	source = modest_mail_operation_get_source (self);
-
-	/* Notify new messages have been downloaded. Do not notify if
-	   the send&receive was invoked by the user, i.e, if the mail
-	   operation has a source (the main window) */
-	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0) && !source)
-		modest_platform_on_new_headers_received (new_headers);
-
+	show_visual_notifications = (source) ? FALSE : TRUE;
 	if (source)
 		g_object_unref (source);
+
+	/* Notify new messages have been downloaded. If the
+	   send&receive was invoked by the user then do not show any
+	   visual notification, only play a sound and activate the LED
+	   (for the Maemo version) */
+	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0))
+		modest_platform_on_new_headers_received (new_headers, 
+							 show_visual_notifications);
+
 }
 
 gboolean

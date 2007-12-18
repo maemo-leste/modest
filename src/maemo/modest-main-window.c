@@ -225,6 +225,9 @@ struct _ModestMainWindowPrivate {
 	/* "Updating" banner for header view */
 	GtkWidget *updating_banner;
 	guint updating_banner_timeout;
+
+	/* Display state */
+	osso_display_state_t display_state;
 };
 #define MODEST_MAIN_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                 MODEST_TYPE_MAIN_WINDOW, \
@@ -351,6 +354,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->sighandlers = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
+	priv->display_state = OSSO_DISPLAY_ON;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -985,25 +989,12 @@ connect_signals (ModestMainWindow *self)
 					   self);
 }
 
-#if 0
-/** Idle handler, to send/receive at startup .*/
-gboolean
-sync_accounts_cb (ModestMainWindow *win)
-{
-	modest_ui_actions_do_send_receive (NULL, MODEST_WINDOW (win));
-	return FALSE; /* Do not call this idle handler again. */
-}
-#endif
-
 static void 
 on_hildon_program_is_topmost_notify(GObject *self,
-				    GParamSpec *propert_param, gpointer user_data)
+				    GParamSpec *propert_param, 
+				    gpointer user_data)
 {
 	HildonProgram *app = HILDON_PROGRAM (self);
-	
-	/*
-	ModestWindow* self = MODEST_WINDOW(user_data);
-	*/
 	
 	/* Note that use of hildon_program_set_can_hibernate() 
 	 * is generally referred to as "setting the killable flag", 
@@ -1015,13 +1006,16 @@ on_hildon_program_is_topmost_notify(GObject *self,
 		 * because hibernation should only happen when the application 
 		 * is in the background: */
 		hildon_program_set_can_hibernate (app, FALSE);
+
+		/* Remove new mail visual notifications */
+		modest_platform_remove_new_mail_notifications (TRUE);
 	} else {
 		/* Allow hibernation if the program has gone to the background: */
 		
 		/* However, prevent hibernation while the settings are being changed: */
 		const gboolean hibernation_prevented = 
 			modest_window_mgr_get_hibernation_is_prevented (
-    	modest_runtime_get_window_mgr ()); 
+									modest_runtime_get_window_mgr ()); 
     	
 		if (hibernation_prevented)
 			hildon_program_set_can_hibernate (app, FALSE);
@@ -1030,8 +1024,7 @@ on_hildon_program_is_topmost_notify(GObject *self,
 			modest_osso_save_state();
 			hildon_program_set_can_hibernate (app, TRUE);
 		}
-	}
-	
+	}	
 }
 
 static void
@@ -1079,6 +1072,19 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		modest_account_mgr_free_account_names (accounts);
 		update_menus (MODEST_MAIN_WINDOW (self));
 	}
+}
+
+static void 
+osso_display_event_cb (osso_display_state_t state, 
+		       gpointer data)
+{
+	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (data);
+
+	priv->display_state = state;
+
+	/* Stop blinking if the screen becomes on */
+	if (priv->display_state == OSSO_DISPLAY_ON)
+		modest_platform_remove_new_mail_notifications (TRUE);
 }
 
 ModestWindow *
@@ -1244,12 +1250,17 @@ modest_main_window_new (void)
 		g_object_unref (window_icon);
 	}
 
+	/* Listen for changes in the screen, we don't want to show a
+	   led pattern when the display is on for example */
+	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
+				      osso_display_event_cb,
+				      self); 
+
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
 	 * and we don't want to do that until later,
 	 * so that the UI is not visible for non-menu D-Bus activation.
 	 */
-	/* restore_settings (MODEST_MAIN_WINDOW(self), FALSE); */
 
 	return MODEST_WINDOW(self);
 }
@@ -1856,8 +1867,12 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		folder_empty = (tny_folder_change_get_new_all_count (change) == 0);
 	else
 		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+
+	/* Play a sound (if configured) and make the LED blink  */
+	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS)
+		modest_platform_on_new_headers_received (NULL, FALSE);
 	
-/*  	Check header removed  (hide marked as DELETED headers) */
+	/* Check header removed  (hide marked as DELETED headers) */
 	if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) {
 		modest_header_view_refilter (MODEST_HEADER_VIEW(priv->header_view));
 	}
@@ -1875,7 +1890,7 @@ on_msg_count_changed (ModestHeaderView *header_view,
 	else {
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
-	}	
+	}
 }
 
 
@@ -2623,4 +2638,14 @@ on_updating_msg_list (ModestHeaderView *header_view,
 			priv->updating_banner = NULL;
 		}
 	}
+}
+
+gboolean
+modest_main_window_screen_is_on (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+	
+	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
 }
