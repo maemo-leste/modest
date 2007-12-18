@@ -1664,6 +1664,8 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 	}
 /* 	wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), buffer_format); */
 	
+	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), self);
+	
 	g_free (current_format);
 
 }
@@ -1702,6 +1704,28 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 /* 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/BulletedListMenu"); */
 /* 	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), buffer_format->bullet); */
 
+	action = NULL;
+	switch (buffer_format->justification)
+	{
+	case GTK_JUSTIFY_LEFT:
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentLeftMenu");
+		g_warning ("GTK_JUSTIFY_LEFT");
+		break;
+	case GTK_JUSTIFY_CENTER:
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentCenterMenu");
+		g_warning ("GTK_JUSTIFY_CENTER");
+		break;
+	case GTK_JUSTIFY_RIGHT:
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/AlignmentRightMenu");
+		g_warning ("GTK_JUSTIFY_RIGHT");
+		break;
+	default:
+		break;
+	}
+	
+	if (action != NULL)
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), TRUE);
+	
 	g_signal_handlers_block_by_func (G_OBJECT (priv->font_color_button), 
 					 G_CALLBACK (modest_msg_edit_window_color_button_change),
 					 window);
