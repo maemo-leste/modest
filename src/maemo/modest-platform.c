@@ -40,7 +40,6 @@
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
 #include <libosso.h>
-#include <mce/dbus-names.h>
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
@@ -57,6 +56,10 @@
 #include <modest-account-settings-dialog.h>
 #include <maemo/easysetup/modest-easysetup-wizard.h>
 #include <hildon/hildon-sound.h>
+
+#ifdef MODEST_HAVE_MCE
+#include <mce/dbus-names.h>
+#endif /*MODEST_HAVE_MCE*/
 
 #ifdef MODEST_HAVE_ABOOK
 #include <libosso-abook/osso-abook.h>
@@ -1363,6 +1366,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 			
 			/* Activate LED. This must be deactivated by
 			   modest_platform_remove_new_mail_notifications */
+#ifdef MODEST_HAVE_MCE
 			osso_rpc_run_system (modest_maemo_utils_get_osso_context (),
 					     MCE_SERVICE,
 					     MCE_REQUEST_PATH,
@@ -1371,6 +1375,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 					     NULL,
 					     DBUS_TYPE_STRING, MODEST_NEW_MAIL_LIGHTING_PATTERN,
 					     DBUS_TYPE_INVALID);
+#endif
 		}
 		/* We do a return here to avoid indentation with an else */
 		return;
@@ -1471,6 +1476,7 @@ void
 modest_platform_remove_new_mail_notifications (gboolean only_visuals) 
 {
 	if (only_visuals) {
+#ifdef MODEST_HAVE_MCE
 		osso_rpc_run_system (modest_maemo_utils_get_osso_context (),
 				     MCE_SERVICE,
 				     MCE_REQUEST_PATH,
@@ -1479,6 +1485,7 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 				     NULL,
 				     DBUS_TYPE_STRING, MODEST_NEW_MAIL_LIGHTING_PATTERN,
 				     DBUS_TYPE_INVALID);
+#endif
 		return;
 	}
 

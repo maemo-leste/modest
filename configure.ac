@@ -175,7 +175,20 @@ else
 fi
 fi
 
-
+#
+# check for MCE
+#
+if test "x$with_platform" == "xmaemo"; then  
+PKG_CHECK_MODULES(MODEST_MCE,mce,have_mce=true,have_mce=false)
+if test "x$have_mce" == "xtrue"; then
+   mce="mce"	
+   AC_DEFINE_UNQUOTED(MODEST_HAVE_MCE, 1, ["Whether mce is used."])
+   AC_SUBST(MODEST_MCE_CFLAGS)
+   AC_SUBST(MODEST_MCE_LIBS)
+else
+   mce=""
+fi
+fi
 
 #
 # check for libconic; this is a trick to check whether we run
@@ -473,6 +486,7 @@ if test "x$with_platform" == "xmaemo"; then
    echo "Help lib         : $helplib"
    echo "libconic support : $have_libconic"
    echo "Alarm            : $have_libalarm"
+   echo "MCE              : $have_mce"
    echo "Hildon-Notify    : $have_hildon_notify"    
    echo "LibOGS support   : $have_ogs_support"
    echo "MozEmbed support : $use_mozembed"
