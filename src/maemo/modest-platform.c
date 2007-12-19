@@ -397,6 +397,7 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 			action_name += strlen ("mailto:");
 		
 		gtk_clipboard_set_text (clipboard, action_name, strlen (action_name));
+		modest_platform_information_banner (NULL, NULL, _CS("ecoc_ib_edwin_copied"));
 		return; /* we're done */
 	}
 	
