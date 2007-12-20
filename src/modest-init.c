@@ -720,6 +720,9 @@ init_default_settings (ModestConf *conf)
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_REPLY_TYPE, NULL))
 		modest_conf_set_int (conf, MODEST_CONF_REPLY_TYPE, MODEST_TNY_MSG_REPLY_TYPE_QUOTE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES, FALSE, NULL);
 }
 
 

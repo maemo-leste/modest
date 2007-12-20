@@ -36,6 +36,7 @@
 #include <glib/gi18n.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
+#include <tny-vfs-stream.h>
 
 #include <modest-tny-msg.h>
 #include <modest-text-utils.h>
@@ -1387,7 +1388,7 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 	TnyMimePart *part = NULL;
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
-	
+
 	/*
 	 * we search for either something starting with cid:, or something
 	 * with no prefix at all; this latter case occurs when sending mails

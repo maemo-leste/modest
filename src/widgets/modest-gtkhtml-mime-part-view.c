@@ -36,9 +36,12 @@
 #include <tny-mime-part-view.h>
 #include <modest-stream-text-to-html.h>
 #include <modest-text-utils.h>
+#include <modest-conf.h>
+#include <modest-runtime.h>
 #include <widgets/modest-mime-part-view.h>
 #include <widgets/modest-zoomable.h>
 #include <widgets/modest-tny-stream-gtkhtml.h>
+#include <libgnomevfs/gnome-vfs.h>
 
 /* gobject structure methods */
 static void    modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass);
@@ -258,6 +261,70 @@ on_url (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMimePartView *self)
 	return result;
 }
 
+typedef struct {
+	gpointer buffer;
+	GtkHTML *html;
+	GtkHTMLStream *stream;
+	gboolean html_finalized;
+} ImageFetcherInfo;
+
+static void
+html_finalized_notify (ImageFetcherInfo *ifinfo,
+		       GObject *destroyed)
+{
+	ifinfo->html_finalized = TRUE;
+}
+
+static void
+image_fetcher_close (GnomeVFSAsyncHandle *handle,
+		     GnomeVFSResult result,
+		     gpointer data)
+{
+}
+
+static void
+image_fetcher_read (GnomeVFSAsyncHandle *handle,
+		    GnomeVFSResult result,
+		    gpointer buffer,
+		    GnomeVFSFileSize bytes_requested,
+		    GnomeVFSFileSize bytes_read,
+		    ImageFetcherInfo *ifinfo)
+{
+
+	if (ifinfo->html_finalized || result != GNOME_VFS_OK) {
+		gnome_vfs_async_close (handle, (GnomeVFSAsyncCloseCallback) image_fetcher_close, (gpointer) NULL);
+		if (!ifinfo->html_finalized) {
+			gtk_html_stream_close (ifinfo->stream, GTK_HTML_STREAM_OK);
+			g_object_weak_unref ((GObject *) ifinfo->html, (GWeakNotify) html_finalized_notify, (gpointer) ifinfo);
+		}
+		g_slice_free1 (128, ifinfo->buffer);
+		g_slice_free (ImageFetcherInfo, ifinfo);
+		return;
+	}
+	gtk_html_stream_write (ifinfo->stream, buffer, bytes_read);
+	gnome_vfs_async_read (handle, ifinfo->buffer, 128, 
+			      (GnomeVFSAsyncReadCallback)image_fetcher_read, ifinfo);
+	return;
+}
+
+static void
+image_fetcher_open (GnomeVFSAsyncHandle *handle,
+		    GnomeVFSResult result,
+		    ImageFetcherInfo *ifinfo)
+{
+	if (!ifinfo->html_finalized && result == GNOME_VFS_OK) {
+		ifinfo->buffer = g_slice_alloc (128);
+		gnome_vfs_async_read (handle, ifinfo->buffer, 128, 
+				      (GnomeVFSAsyncReadCallback) image_fetcher_read, ifinfo);
+	} else {
+		if (!ifinfo->html_finalized) {
+			gtk_html_stream_close (ifinfo->stream, GTK_HTML_STREAM_OK);
+			g_object_weak_unref ((GObject *) ifinfo->html, (GWeakNotify) html_finalized_notify, (gpointer) ifinfo);
+		}
+		g_slice_free (ImageFetcherInfo, ifinfo);
+	}
+}
+
 static gboolean
 on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream, 
 		  ModestGtkhtmlMimePartView *self)
@@ -266,6 +333,23 @@ on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 	TnyStream *tny_stream;
 	g_return_val_if_fail (MODEST_IS_GTKHTML_MIME_PART_VIEW (self), FALSE);
 
+	if (g_str_has_prefix (uri, "http:") &&
+	    modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES, NULL)) {
+		GnomeVFSAsyncHandle *handle;
+		ImageFetcherInfo *ifinfo;
+
+		ifinfo = g_slice_new (ImageFetcherInfo);
+		ifinfo->html_finalized = FALSE;
+		ifinfo->html = (GtkHTML *) self;
+		ifinfo->buffer = NULL;
+		ifinfo->stream = stream;
+		g_object_weak_ref ((GObject *) self, (GWeakNotify) html_finalized_notify, (gpointer) ifinfo);
+		gnome_vfs_async_open (&handle, uri, GNOME_VFS_OPEN_READ,
+				      GNOME_VFS_PRIORITY_DEFAULT, 
+				      (GnomeVFSAsyncOpenCallback) image_fetcher_open, ifinfo);
+		return FALSE;
+	}
+	
 	tny_stream = TNY_STREAM (modest_tny_stream_gtkhtml_new (stream));
 	g_signal_emit_by_name (MODEST_MIME_PART_VIEW (self), "fetch-url", uri, tny_stream, &result);
 	gtk_html_stream_close (stream, result?GTK_HTML_STREAM_OK:GTK_HTML_STREAM_ERROR);

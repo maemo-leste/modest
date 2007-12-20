@@ -195,6 +195,9 @@
 #define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
 #define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
 
+/* hidden global settings */
+#define MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES MODEST_CONF_NAMESPACE "/fetch_external_images" /* bool */
+
 /* Notification ids */
 #define MODEST_CONF_NOTIFICATION_IDS MODEST_CONF_NAMESPACE "/notification_ids"      /* list of ints */
 
