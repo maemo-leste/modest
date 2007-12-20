@@ -138,6 +138,13 @@ AM_CONDITIONAL(MODEST_HAVE_DBUS_API,test "x$have_dbusapi" == "xtrue")
 AC_SUBST(MODEST_PLATFORM)
 
 
+#
+# check for libcurl
+#
+PKG_CHECK_MODULES(MODEST_LIBCURL,libcurl,have_libcurl=true,have_libcurl=false)
+if test "x$have_libcurl" == "xtrue"; then
+	AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBCURL, 1, ["Whether libcurl is available."])
+fi
 
 
 #
@@ -478,6 +485,7 @@ echo "Prefix           : ${prefix}"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
 echo "Gettext Package  : $GETTEXT_PACKAGE"
+echo "libcurl          : $have_libcurl"
 
 if test "x$with_platform" == "xmaemo"; then
    echo "Maemo Launcher   : $maemo_launcher"
