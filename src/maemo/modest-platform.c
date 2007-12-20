@@ -1592,7 +1592,6 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
 				      MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 
-
 	/* Restore settings */
 	modest_widget_memory_restore (modest_runtime_get_conf(), 
 				      G_OBJECT (widget),

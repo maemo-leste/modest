@@ -2906,6 +2906,10 @@ modest_folder_view_select_folder (ModestFolderView *self, TnyFolder *folder,
 	if (!model)
 		return FALSE;
 
+
+	/* Refilter the model, before selecting the folder */
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+
 	if (!gtk_tree_model_get_iter_first (model, &iter)) {
 		g_warning ("%s: model is empty", __FUNCTION__);
 		return FALSE;

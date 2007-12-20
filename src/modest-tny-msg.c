@@ -648,7 +648,8 @@ modest_tny_msg_get_header (TnyMsg *msg, const gchar *header)
 		TnyPair *pair = (TnyPair*)tny_iterator_get_current(iter);
 		if (strcasecmp (header, tny_pair_get_name(pair)) == 0)
 			val = g_strdup (tny_pair_get_value(pair));
-		
+		g_object_unref (pair);		
+
 		tny_iterator_next (iter);
 	}
 

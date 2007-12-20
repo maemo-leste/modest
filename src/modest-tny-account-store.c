@@ -1680,7 +1680,8 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 }
 
 static void
-on_account_removed (ModestAccountMgr *acc_mgr, const gchar *account,
+on_account_removed (ModestAccountMgr *acc_mgr, 
+		    const gchar *account,
 		    gpointer user_data)
 {
 	TnyAccount *store_account = NULL, *transport_account = NULL;
