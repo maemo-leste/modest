@@ -264,8 +264,12 @@ copy_mime_part (TnyMimePart *part)
 	while (!tny_iterator_is_done (iterator)) {
 		TnyMimePart *subpart = TNY_MIME_PART (tny_iterator_get_current (iterator));
 		if (subpart) {
+			const gchar *subpart_cid;
 			TnyMimePart *subpart_copy = copy_mime_part (subpart);
+			subpart_cid = tny_mime_part_get_content_id (subpart);
 			tny_mime_part_add_part (result, subpart_copy);
+			if (subpart_cid)
+				tny_mime_part_set_content_id (result, subpart_cid);
 			g_object_unref (subpart);
 			g_object_unref (subpart_copy);
 		}
@@ -289,10 +293,14 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 
 		old_attachment = pos->data;
 		if (!tny_mime_part_is_purged (old_attachment)) {
+			const gchar *old_cid;
+			old_cid = tny_mime_part_get_content_id (old_attachment);
 			attachment_part = copy_mime_part (old_attachment);
 			tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
 						       add_inline?"inline":"attachment");
 			tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
+			if (old_cid)
+				tny_mime_part_set_content_id (attachment_part, old_cid);
 			g_object_unref (attachment_part);
 		}
 	}
