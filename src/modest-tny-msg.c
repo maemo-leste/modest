@@ -732,6 +732,11 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 			g_free (new_to);
 			new_to = tmp;
 		}
+
+		/* remove duplicate entries */
+		gchar *tmp = modest_text_utils_remove_duplicate_addresses (new_to);
+		g_free (new_to);
+		new_to = tmp;
 		
 		/* now, strip me (the new From:) from the new_to, but only if
 		 * there are >1 addresses there */
@@ -740,11 +745,6 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 			g_free (new_to);
 			new_to = tmp;
 		}
-		
-		/* remove duplicate entries */
-		gchar *tmp = modest_text_utils_remove_duplicate_addresses (new_to);
-		g_free (new_to);
-		new_to = tmp;
 	}
 
 	return new_to;
