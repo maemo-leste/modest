@@ -2177,9 +2177,9 @@ drag_and_drop_from_folder_view_dst_folder_performer (gboolean canceled,
 
 	/* Connect to source folder and perform the copy/move */
 	modest_platform_connect_if_remote_and_perform (NULL, 
-								    info->src_folder,
-								    drag_and_drop_from_folder_view_src_folder_performer,
-								    info);
+						       info->src_folder,
+						       drag_and_drop_from_folder_view_src_folder_performer,
+						       info);
 }
 
 /*
@@ -2261,9 +2261,9 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 
 	/* Connect to the destination folder and perform the copy/move */
 	modest_platform_connect_if_remote_and_perform (GTK_WINDOW (win), 
-								    dest_folder,
-								    drag_and_drop_from_folder_view_dst_folder_performer,
-								    info);
+						       dest_folder,
+						       drag_and_drop_from_folder_view_dst_folder_performer,
+						       info);
 	
 	/* Frees */
 	g_object_unref (dest_folder);

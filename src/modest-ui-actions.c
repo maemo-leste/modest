@@ -1059,7 +1059,6 @@ open_msgs_performer(gboolean canceled,
 
 	status = tny_account_get_connection_status (account);
 	if (err || canceled) {
-		/* TODO: Show an error ? */
 		goto clean;
 	}
 
@@ -1698,7 +1697,6 @@ do_send_receive_performer (gboolean canceled,
 	info = (SendReceiveInfo *) user_data;
 
 	if (err || canceled) {
-
 		goto clean;
 	}
 
@@ -2655,6 +2653,25 @@ do_create_folder (GtkWindow *parent_window,
 	}
 }
 
+static void
+create_folder_performer (gboolean canceled, 
+			 GError *err,
+			 GtkWindow *parent_window, 
+			 TnyAccount *account, 
+			 gpointer user_data)
+{
+	TnyFolderStore *parent_folder = TNY_FOLDER_STORE (user_data);
+
+	if (canceled || err) {
+		goto frees;
+	}
+
+	/* Run the new folder dialog */
+	do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
+
+ frees:
+	g_object_unref (parent_folder);
+}
 
 static void
 modest_ui_actions_create_folder(GtkWidget *parent_window,
@@ -2665,11 +2682,11 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	
 	if (parent_folder) {
-	
-		/* Run the new folder dialog */
-		do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
-	
-		g_object_unref (parent_folder);
+		/* The parent folder will be freed in the callback */
+		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window), 
+							       parent_folder,
+							       create_folder_performer, 
+							       parent_folder);
 	}
 }
 
@@ -4849,7 +4866,6 @@ retrieve_msg_contents_performer (gboolean canceled,
 	TnyList *headers = TNY_LIST (user_data);
 
 	if (err || canceled) {
-		/* Show an error ? */
 		goto out;
 	}
 

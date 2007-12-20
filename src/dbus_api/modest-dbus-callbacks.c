@@ -398,8 +398,9 @@ on_open_message_performer (gboolean canceled,
 	info = (OpenMsgPerformerInfo *) user_data;
 	uri = info->uri;
 
-	if (err)
+	if (canceled || err) {
 		goto frees;
+	}
 
 	/* Get message */
 	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
