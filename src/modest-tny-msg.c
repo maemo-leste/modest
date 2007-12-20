@@ -777,7 +777,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 {
 	TnyMsg *new_msg = NULL;
 	TnyHeader *new_header;
-	gchar *new_to, *new_cc = NULL;
+	gchar *new_to = NULL;
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 
@@ -814,10 +814,13 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 		tny_header_set_to (new_header, new_to);
 		g_free (new_to);
 	}	
-	new_cc = get_new_cc (header, from);
-	if (new_cc) { 
-		tny_header_set_cc (new_header, new_cc);
-		g_free (new_cc);
+	
+	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
+		gchar *new_cc = get_new_cc (header, from);
+		if (new_cc) { 
+			tny_header_set_cc (new_header, new_cc);
+			g_free (new_cc);
+		}
 	}
 	
 	/* Clean */
