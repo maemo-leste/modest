@@ -36,7 +36,6 @@
 #include <glib/gi18n.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
-#include <tny-vfs-stream.h>
 
 #include <modest-tny-msg.h>
 #include <modest-text-utils.h>
