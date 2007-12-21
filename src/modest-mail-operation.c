@@ -2490,8 +2490,9 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	if (!priv->error) {
 		gboolean expunge, leave_on_server;
 		const gchar *account_name;
+		const gchar *proto;
 		TnyAccount *account;
-		ModestTransportStoreProtocol account_proto;
+		ModestTransportStoreProtocol account_proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 		
 		account = tny_folder_get_account (folder);
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
@@ -2499,7 +2500,10 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
 					account_name);
 
-		account_proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+		proto = tny_account_get_proto (account);
+		if (proto) {
+			account_proto = modest_protocol_info_get_transport_store_protocol (proto);
+		}
 
 		if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
 		    modest_tny_folder_is_remote_folder (folder) == FALSE)
