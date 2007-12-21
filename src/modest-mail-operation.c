@@ -635,20 +635,21 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	} else {
 		/* Add the msg to the queue */
 		modest_mail_operation_notify_start (self);
-		modest_tny_send_queue_add (MODEST_TNY_SEND_QUEUE(send_queue), 
-					   msg, 
-					   &(priv->error));
-
-		priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 
 		info = g_slice_new0 (SendMsgInfo);
 
 		info->mail_op = g_object_ref (self);
 		info->msg = g_object_ref (msg);
 		info->msg_sent_handler = g_signal_connect (G_OBJECT (send_queue), "msg-sent",
-							   G_CALLBACK (send_mail_msg_sent_handler), info);
+				G_CALLBACK (send_mail_msg_sent_handler), info);
 		info->error_happened_handler = g_signal_connect (G_OBJECT (send_queue), "error-happened",
-								 G_CALLBACK (send_mail_error_happened_handler), info);
+				G_CALLBACK (send_mail_error_happened_handler), info);
+
+		modest_tny_send_queue_add (MODEST_TNY_SEND_QUEUE(send_queue), 
+				msg, 
+				&(priv->error));
+
+		priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	}
 
 }
@@ -707,6 +708,8 @@ send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg
 	if (msgid2 == NULL) msgid2 = "(null)";
 
 	if (!strcmp (msgid1, msgid2)) {
+		if (error != NULL)
+			g_warning ("%s: %s\n", __FUNCTION__, error->message);
 		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,

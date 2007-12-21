@@ -125,18 +125,24 @@ get_mime_part_size_thread (gpointer thr_user_data)
 	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (view);
 	TnyStream *stream;
 	gsize total = 0;
+	gssize result = 0;
 
 	stream = modest_count_stream_new();
-	tny_mime_part_decode_to_stream (priv->mime_part, stream);
+	result = tny_mime_part_decode_to_stream (priv->mime_part, stream, NULL);
 	total = modest_count_stream_get_count(MODEST_COUNT_STREAM (stream));
 	if (total == 0) {
 		modest_count_stream_reset_count(MODEST_COUNT_STREAM (stream));
-		tny_mime_part_write_to_stream (priv->mime_part, stream);
+		result = tny_mime_part_write_to_stream (priv->mime_part, stream, NULL);
 		total = modest_count_stream_get_count(MODEST_COUNT_STREAM (stream));
 	}
-	priv->size = (guint64)total;
-
-	g_idle_add (idle_get_mime_part_size_cb, g_object_ref (view));
+	
+	/* if there was an error, don't set the size (this is pretty uncommon) */
+	if (result < 0) {
+		g_warning ("%s: error while writing mime part to stream\n", __FUNCTION__);
+	} else {
+		priv->size = (guint64)total;
+		g_idle_add (idle_get_mime_part_size_cb, g_object_ref (view));
+	}
 
 	g_object_unref (stream);
 	g_object_unref (view);

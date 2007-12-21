@@ -2333,31 +2333,47 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		const gchar *content_type;
+		gboolean show_error_banner = FALSE;
+		GError *err;
 		TnyFsStream *temp_stream = NULL;
 		temp_stream = modest_utils_create_temp_stream (att_filename, attachment_uid,
 							       &filepath);
 		
 		if (temp_stream != NULL) {
 			content_type = tny_mime_part_get_content_type (mime_part);
-			tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream));
+			if (tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream), &err) >= 0) {
+				/* make the file read-only */
+				if (g_chmod(filepath, 0444) != 0)
+					g_warning ("%s: failed to set file '%s' to read-only: %s",
+							__FUNCTION__, filepath, strerror(errno));
 
-			/* make the file read-only */
-			if (g_chmod(filepath, 0444) != 0)
-				g_warning ("%s: failed to set file '%s' to read-only: %s",
-					   __FUNCTION__, filepath, strerror(errno));
-			
-			modest_platform_activate_file (filepath, content_type);
+				modest_platform_activate_file (filepath, content_type);
+			} else {
+				/* error while saving attachment, maybe cerm_device_memory_full */
+				show_error_banner = TRUE;
+				if (err != NULL) {
+					g_warning ("%s: tny_mime_part_decode_to_stream failed (%s)", __FUNCTION__, err->message);
+					g_error_free (err);
+				}
+			}
 			g_object_unref (temp_stream);
 			g_free (filepath);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
-		} else if (filepath != NULL) {
-			/* the file may already exist but it isn't writable,
-			 * let's try to open it anyway */
-			content_type = tny_mime_part_get_content_type (mime_part);
-			modest_platform_activate_file (filepath, content_type);
-			g_free (filepath);
+		} else {
+			if (filepath != NULL) {
+				/* the file may already exist but it isn't writable,
+				 * let's try to open it anyway */
+				content_type = tny_mime_part_get_content_type (mime_part);
+				modest_platform_activate_file (filepath, content_type);
+				g_free (filepath);
+			} else {
+				g_warning ("%s: modest_utils_create_temp_stream failed", __FUNCTION__);
+				show_error_banner = TRUE;
+			}
 		}
+		if (show_error_banner)
+			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 	} else {
 		/* message attachment */
 		TnyHeader *header = NULL;
@@ -2463,16 +2479,19 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 	GnomeVFSHandle *handle;
 	TnyStream *stream;
 	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
+	gboolean decode_result = TRUE;
 
 	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
 	if (result == GNOME_VFS_OK) {
 		stream = tny_vfs_stream_new (handle);
-		tny_mime_part_decode_to_stream (pair->part, stream);
+		if (tny_mime_part_decode_to_stream (pair->part, stream, NULL) < 0) {
+			decode_result = FALSE;
+		}
 		g_object_unref (G_OBJECT (stream));
 		g_object_unref (pair->part);
 		g_slice_free (SaveMimePartPair, pair);
 		info->pairs = g_list_delete_link (info->pairs, info->pairs);
-		info->result = TRUE;
+		info->result = decode_result;
 	} else {
 		save_mime_part_info_free (info, FALSE);
 		info->result = FALSE;

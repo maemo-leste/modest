@@ -2245,9 +2245,14 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 
 	edit_window = MODEST_MSG_EDIT_WINDOW (user_data);
 
-	/* If there was any error do nothing */
-	if (modest_mail_operation_get_error (mail_op) != NULL)
+	/* It might not be a good idea to do nothing if there was an error,
+	 * so let's at least show a generic error banner. */
+	/* TODO error while saving attachment, show "Saving draft failed" banner */
+	if (modest_mail_operation_get_error (mail_op) != NULL) {
+		g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_op))->message);
+		modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 		return;
+	}
 
 	modest_msg_edit_window_set_draft (edit_window, saved_draft);
 }

@@ -76,7 +76,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
 	tny_stream_reset (stream);
-	tny_mime_part_decode_to_stream (body, stream);
+	tny_mime_part_decode_to_stream (body, stream, NULL);
 	tny_stream_reset (stream);
 
 	g_object_unref (G_OBJECT(stream));

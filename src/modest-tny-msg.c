@@ -363,7 +363,7 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html, gboolean *is_html)
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
 	tny_stream_reset (stream);
-	tny_mime_part_decode_to_stream (body, stream);
+	tny_mime_part_decode_to_stream (body, stream, NULL);
 	tny_stream_reset (stream);
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);

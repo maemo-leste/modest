@@ -373,7 +373,7 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
 	tny_stream_reset (tny_stream);
 
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, tny_stream);
+	tny_mime_part_decode_to_stream ((TnyMimePart*)part, tny_stream, NULL);
 	g_object_unref (G_OBJECT(tny_stream));
 	
 	gtk_html_stream_destroy (gtkhtml_stream);
@@ -395,7 +395,7 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 640*1024);
 	
 	// FIXME: tinymail
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, text_to_html_stream);
+	tny_mime_part_decode_to_stream ((TnyMimePart*)part, text_to_html_stream, NULL);
 	tny_stream_reset (text_to_html_stream);		
 	
 	g_object_unref (G_OBJECT(text_to_html_stream));

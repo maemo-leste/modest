@@ -1405,7 +1405,7 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 		return FALSE;	
 	}
 
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, stream);
+	tny_mime_part_decode_to_stream ((TnyMimePart*)part, stream, NULL);
 	g_object_unref (G_OBJECT(part));
 	return TRUE;
 }
