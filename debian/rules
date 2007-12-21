@@ -26,16 +26,16 @@ ifneq (,$(findstring thumb,$(DEB_BUILD_OPTIONS)))
 endif
 
 # maemo-launcher support is not working properly yet, so leave it disabled
-DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS),nolauncher
-ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
-	conf_opt := --enable-maemo-launcher
-endif
+#DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS),nolauncher
+#ifeq (,$(findstring nolauncher,$(DEB_BUILD_OPTIONS)))
+#	conf_opt := --enable-maemo-launcher
+#endif
 
 config.status: configure
 	dh_testdir
 	# commands to configure the package.
 	if [ ! -x configure ]; then ./autogen.sh; fi
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --sysconfdir=/etc --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info $(conf_opt)
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --disable-maemo-launcher --prefix=/usr --sysconfdir=/etc --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info $(conf_opt)
 
 configure: configure-stamp
 configure-stamp:
@@ -116,7 +116,7 @@ binary-arch: build install
 	dh_installdeb
 	dh_shlibdeps
 	# Not a requirement by now, so don't fail if it's not installed
-	which dh_maemolauncher && dh_maemolauncher usr/bin/modest || true
+#	which dh_maemolauncher && dh_maemolauncher usr/bin/modest || true
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
