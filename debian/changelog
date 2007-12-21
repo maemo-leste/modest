@@ -1,3 +1,9 @@
+modest (1.0-2007.52-3) hardy; urgency=low
+
+  * prepare public release
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 21 Dec 2007 16:21:23 +0200
+
 modest (1.0-2007.52-1) feisty; urgency=low
 
   * Fixes: NB#78637, NB#78459, NB#78638, NB#78639, NB#63853, NB#64296
