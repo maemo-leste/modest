@@ -264,14 +264,10 @@ modest_hbox_cell_renderer_render       (GtkCellRenderer       *cell,
 	GList *node = NULL;
 	GtkCellRenderer *child;
 	gint width, extra;
-	GtkRequisition req;
 	
 	direction = gtk_widget_get_direction (widget);
 	nvis_children = 0;
 	nexpand_children = 0;
-
-	/* first, retrieve the requisition of the children cell renderers */
-	modest_hbox_cell_renderer_get_size (cell, widget, NULL, NULL, NULL, &(req.width), &(req.height));
 
 	/* Counts visible and expandable children cell renderers */
 	for (node = priv->renderers_list; node != NULL; node = g_list_next (node)) {
@@ -293,6 +289,10 @@ modest_hbox_cell_renderer_render       (GtkCellRenderer       *cell,
 		GdkRectangle child_alloc;
 
 		if (nexpand_children > 0) {
+			GtkRequisition req;
+
+			/* retrieve the requisition of the children cell renderers */
+			modest_hbox_cell_renderer_get_size (cell, widget, NULL, NULL, NULL, &(req.width), &(req.height));
 			width = cell_area->width - req.width;
 			extra = width / nexpand_children;
 		} else {

@@ -265,14 +265,11 @@ modest_vbox_cell_renderer_render       (GtkCellRenderer       *cell,
 	GList *node = NULL;
 	GtkCellRenderer *child;
 	gint height, extra;
-	GtkRequisition req;
 	
 	direction = gtk_widget_get_direction (widget);
 	nvis_children = 0;
 	nexpand_children = 0;
 
-	/* first, retrieve the requisition of the children cell renderers */
-	modest_vbox_cell_renderer_get_size (cell, widget, NULL, NULL, NULL, &(req.width), &(req.height));
 
 	/* Counts visible and expandable children cell renderers */
 	for (node = priv->renderers_list; node != NULL; node = g_list_next (node)) {
@@ -294,6 +291,9 @@ modest_vbox_cell_renderer_render       (GtkCellRenderer       *cell,
 		GdkRectangle child_alloc;
 
 		if (nexpand_children > 0) {
+			GtkRequisition req;
+			
+			modest_vbox_cell_renderer_get_size (cell, widget, NULL, NULL, NULL, &(req.width), &(req.height));
 			height = cell_area->height - req.height;
 			extra = height / nexpand_children;
 		} else {

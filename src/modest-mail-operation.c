@@ -2649,7 +2649,6 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 
 			tny_iterator_next (iter);
 		}
-
 	}
 		
 
