@@ -1110,7 +1110,7 @@ on_response (GtkDialog *wizard_dialog,
 
 
 					store_settings = modest_account_settings_get_store_settings (self->settings);
-					transport_settings = modest_account_settings_get_store_settings (self->settings);
+					transport_settings = modest_account_settings_get_transport_settings (self->settings);
 					store_account_name = modest_server_account_settings_get_account_name (store_settings);
 					transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
 					
