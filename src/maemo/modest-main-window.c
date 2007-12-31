@@ -407,7 +407,7 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 	ModestMainWindowPrivate *priv;
 	GtkWidget *widget;
 	
-	g_return_val_if_fail (self, NULL);
+	g_return_val_if_fail (self && MODEST_IS_MAIN_WINDOW(self), NULL);
 	g_return_val_if_fail (widget_type >= 0 && widget_type < MODEST_MAIN_WINDOW_WIDGET_TYPE_NUM,
 			      NULL);
 	

@@ -163,6 +163,9 @@ static void     do_create_folder (GtkWindow *window,
 				  TnyFolderStore *parent_folder, 
 				  const gchar *suggested_name);
 
+static GtkWidget* get_folder_view_from_move_to_dialog (GtkWidget *move_to_dialog);
+
+
 /*
  * This function checks whether a TnyFolderStore is a pop account
  */
@@ -2603,22 +2606,28 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 		     gpointer user_data)
 {
 	gchar *suggested_name = (gchar *) user_data;
-	GtkWindow *main_window = (GtkWindow *) modest_mail_operation_get_source (mail_op);
-
+	GtkWindow *source_win = (GtkWindow *) modest_mail_operation_get_source (mail_op);
+		
 	if (modest_mail_operation_get_error (mail_op)) {
 		/* Show an error */
-		modest_platform_information_banner (GTK_WIDGET (main_window), NULL,
+		modest_platform_information_banner (GTK_WIDGET (source_win), NULL,
 	        	                            _("mail_in_ui_folder_create_error"));
 
 		/* Try again */
-		do_create_folder (main_window, parent_folder, (const gchar *) suggested_name);
+		do_create_folder (source_win, parent_folder, (const gchar *) suggested_name);
 	} else {
+		/* the 'source_win' is either the ModestMainWindow, or the 'Move to folder'-dialog
+		 * FIXME: any other? */		
 		GtkWidget *folder_view;
 
-		folder_view = 
-			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
-							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-
+		if (MODEST_IS_MAIN_WINDOW(source_win)) 
+			folder_view = 
+				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (source_win),
+								     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		else
+			folder_view =
+				get_folder_view_from_move_to_dialog (GTK_WIDGET(source_win));
+		
 		/* Select the newly created folder */
 		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
 						  new_folder, FALSE);
@@ -2626,7 +2635,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 	}
 	/* Free. Note that the first time it'll be NULL so noop */
 	g_free (suggested_name);
-	g_object_unref (main_window);
+	g_object_unref (source_win);
 }
 
 static void
@@ -3971,6 +3980,16 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	gtk_widget_set_sensitive (new_button, new_sensitive);
 }
 
+
+#define MODEST_MOVE_TO_DIALOG_FOLDER_VIEW "move-to-dialog-folder-view"
+
+static GtkWidget*
+get_folder_view_from_move_to_dialog (GtkWidget *move_to_dialog)
+{
+	return GTK_WIDGET(g_object_get_data (G_OBJECT(move_to_dialog),
+					     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
+}
+
 static GtkWidget*
 create_move_to_dialog (GtkWindow *win,
 		       GtkWidget *folder_view,
@@ -4059,9 +4078,16 @@ create_move_to_dialog (GtkWindow *win,
 		}
 	}
 
+	/* we keep a pointer to the embedded folder view, so we can retrieve it with
+	 *   get_folder_view_from_move_to_dialog 
+	 * (see above) later (needed for focus handling) 
+	 */
+	g_object_set_data (G_OBJECT(dialog), MODEST_MOVE_TO_DIALOG_FOLDER_VIEW, *tree_view);
+
+	
 	/* Hide special folders */
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (*tree_view), FALSE);
-	
+
 	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
 
 	/* Add scroll to dialog */
