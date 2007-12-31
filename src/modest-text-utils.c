@@ -68,10 +68,18 @@
 /*
  * we mark the ampersand with \007 when converting text->html
  * because after text->html we do hyperlink detecting, which
- * could be screwed up by the ampersand
+ * could be screwed up by the ampersand.
+ * ie. 1<3 ==> 1\007lt;3
  */
 #define MARK_AMP '\007'
 #define MARK_AMP_STR "\007"
+
+/* mark &amp; separately, because they are parts of urls.
+ * ie. a&b => 1\008amp;b
+ */
+#define MARK_AMP_URI '\006'
+#define MARK_AMP_URI_STR "\006"
+
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -90,19 +98,19 @@ struct _url_match_t {
 	const gchar* prefix;
 };
 
-/* note: match MARK_AMP_STR as well, because after txt->html, a '&' will look like $(MARK_AMP_STR)"amp;" */
+/* note: match MARK_AMP_URI_STR as well, because after txt->html, a '&' will look like $(MARK_AMP_URI_STR)"amp;" */
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "^(file|rtsp|http|ftp|https)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_STR "]+[-a-z0-9_$%" MARK_AMP_STR "=?/~#]",\
+	{ "(file|rtsp|http|ftp|https)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 	  NULL, NULL },\
-	{ "^www\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_STR "]+[-a-z0-9_$%" MARK_AMP_STR "=?/~#]",\
+	{ "www\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 			NULL, "http://" },				\
-	{ "^ftp\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_STR "]+[-a-z0-9_$%" MARK_AMP_STR "=?/~#]",\
+	{ "ftp\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 	  NULL, "ftp://" },\
-	{ "^(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.+]+", \
+	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.+]+", \
 	   NULL, NULL},						    \
-	{ "^mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
+	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
 	  NULL, NULL},\
-	{ "^[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
+	{ "[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
 	  NULL, "mailto:"}\
 	}
 
@@ -398,13 +406,15 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 		
 		switch (kar) {
 		case 0:
-		case MARK_AMP: /* this is a temp place holder for '&'; we can only
+		case MARK_AMP:
+		case MARK_AMP_URI:	
+			/* this is a temp place holder for '&'; we can only
 				* set the real '&' after hyperlink translation, otherwise
 				* we might screw that up */
 			break; /* ignore embedded \0s and MARK_AMP */	
 		case '<'  : g_string_append (html, MARK_AMP_STR "lt;");   break;
 		case '>'  : g_string_append (html, MARK_AMP_STR "gt;");   break;
-		case '&'  : g_string_append (html, MARK_AMP_STR "amp;");  break;
+		case '&'  : g_string_append (html, MARK_AMP_URI_STR "amp;");  break; /* special case */
 		case '"'  : g_string_append (html, MARK_AMP_STR "quot;");  break;
 
 		/* don't convert &apos; --> wpeditor will try to re-convert it... */	
@@ -433,7 +443,7 @@ modest_text_utils_convert_buffer_to_html_finish (GString *html)
 	int i;
 	/* replace all our MARK_AMPs with real ones */
 	for (i = 0; i != html->len; ++i)
-		if ((html->str)[i] == MARK_AMP)
+		if ((html->str)[i] == MARK_AMP || (html->str)[i] == MARK_AMP_URI)
 			(html->str)[i] = '&';
 }
 
@@ -551,53 +561,6 @@ modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_
 
 	return;
 }
-
-#if 0
-GSList *
-modest_text_utils_split_addresses_list (const gchar *addresses)
-{
-	gchar *current, *start, *last_blank;
-	GSList *result = NULL;
-
-	start = (gchar *) addresses;
-	current = start;
-	last_blank = start;
-
-	while (*current != '\0') {
-		if ((start == current)&&((*current == ' ')||(*current == ',')||(*current == ';'))) {
-			start = g_utf8_next_char (start);
-			last_blank = current;
-		} else if ((*current == ',')||(*current == ';')) {
-			gchar *new_address = NULL;
-			new_address = g_strndup (start, current - last_blank);
-			result = g_slist_prepend (result, new_address);
-			start = g_utf8_next_char (current);
-			last_blank = start;
-		} else if (*current == '\"') {
-			if (current == start) {
-				current = g_utf8_next_char (current);
-				start = g_utf8_next_char (start);
-			}
-			while ((*current != '\"')&&(*current != '\0'))
-				current = g_utf8_next_char (current);
-		}
-				
-		current = g_utf8_next_char (current);
-	}
-
-	if (start != current) {
-		gchar *new_address = NULL;
-		new_address = g_strndup (start, current - last_blank);
-		result = g_slist_prepend (result, new_address);
-	}
-
-	result = g_slist_reverse (result);
-	return result;
-
-}
-#endif
-
-
 
 
 GSList *
@@ -1110,12 +1073,12 @@ hyperlinkify_plain_text (GString *txt)
 		gchar *url  = g_strndup (txt->str + match->offset, match->len);
 		gchar *repl = NULL; /* replacement  */
 
-		/* the string still contains $(MARK_AMP_STR)"amp;" for each
+		/* the string still contains $(MARK_AMP_URI_STR)"amp;" for each
 		 * '&' in the original, because of the text->html conversion.
 		 * in the href-URL (and only there), we must convert that back to
 		 * '&'
 		 */
-		gchar *href_url = replace_string (url, MARK_AMP_STR "amp;", '&');
+		gchar *href_url = replace_string (url, MARK_AMP_URI_STR "amp;", '&');
 		
 		/* the prefix is NULL: use the one that is already there */
 		repl = g_strdup_printf ("<a href=\"%s%s\">%s</a>",
