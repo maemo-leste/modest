@@ -73,7 +73,6 @@
 #define MARK_AMP '\007'
 #define MARK_AMP_STR "\007"
 
-
 /*
  * we need these regexps to find URLs in plain text e-mails
  */
@@ -91,18 +90,19 @@ struct _url_match_t {
 	const gchar* prefix;
 };
 
+/* note: match MARK_AMP_STR as well, because after txt->html, a '&' will look like $(MARK_AMP_STR)"amp;" */
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|rtsp|http|ftp|https)://[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]+[-A-Za-z0-9_$%&=?/~#]",\
+	{ "^(file|rtsp|http|ftp|https)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_STR "]+[-a-z0-9_$%" MARK_AMP_STR "=?/~#]",\
 	  NULL, NULL },\
-	{ "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
+	{ "^www\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_STR "]+[-a-z0-9_$%" MARK_AMP_STR "=?/~#]",\
 			NULL, "http://" },				\
-	{ "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]}\\),?!;:\"]?)?",\
+	{ "^ftp\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_STR "]+[-a-z0-9_$%" MARK_AMP_STR "=?/~#]",\
 	  NULL, "ftp://" },\
-	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.\\+]+", \
+	{ "^(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.+]+", \
 	   NULL, NULL},						    \
-	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
+	{ "^mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
 	  NULL, NULL},\
-	{ "[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
+	{ "^[-_a-z0-9.\\+]+@[-_a-z0-9.]+",\
 	  NULL, "mailto:"}\
 	}
 
@@ -973,8 +973,11 @@ compile_patterns ()
 		patterns[i].preg = g_slice_new0 (regex_t);
 		
 		/* this should not happen */
-		g_return_val_if_fail (regcomp (patterns[i].preg, patterns[i].regex,
-					       REG_ICASE|REG_EXTENDED|REG_NEWLINE) == 0, FALSE);
+		if (regcomp (patterns[i].preg, patterns[i].regex,
+			     REG_ICASE|REG_EXTENDED|REG_NEWLINE) != 0) {
+			g_warning ("%s: error in regexp:\n%s\n", __FUNCTION__, patterns[i].regex);
+			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -1071,6 +1074,29 @@ get_url_matches (GString *txt)
 
 
 
+/* replace all occurences of needle in haystack with repl*/
+static gchar*
+replace_string (const gchar *haystack, const gchar *needle, gchar repl)
+{
+	gchar *str, *cursor;
+
+	if (!haystack || !needle || strlen(needle) == 0)
+		return haystack ? g_strdup(haystack) : NULL;
+	
+	str = g_strdup (haystack);
+
+	for (cursor = str; cursor && *cursor; ++cursor) {
+		if (g_str_has_prefix (cursor, needle)) {
+			cursor[0] = repl;
+			memmove (cursor + 1,
+				 cursor + strlen (needle),
+				 strlen (cursor + strlen (needle)) + 1);
+		}
+	}
+	
+	return str;
+}
+
 static void
 hyperlinkify_plain_text (GString *txt)
 {
@@ -1084,10 +1110,17 @@ hyperlinkify_plain_text (GString *txt)
 		gchar *url  = g_strndup (txt->str + match->offset, match->len);
 		gchar *repl = NULL; /* replacement  */
 
+		/* the string still contains $(MARK_AMP_STR)"amp;" for each
+		 * '&' in the original, because of the text->html conversion.
+		 * in the href-URL (and only there), we must convert that back to
+		 * '&'
+		 */
+		gchar *href_url = replace_string (url, MARK_AMP_STR "amp;", '&');
+		
 		/* the prefix is NULL: use the one that is already there */
 		repl = g_strdup_printf ("<a href=\"%s%s\">%s</a>",
 					match->prefix ? match->prefix : EMPTY_STRING, 
-					url, url);
+					href_url, url);
 
 		/* replace the old thing with our hyperlink
 		 * replacement thing */
@@ -1096,6 +1129,7 @@ hyperlinkify_plain_text (GString *txt)
 		
 		g_free (url);
 		g_free (repl);
+		g_free (href_url);
 
 		g_slice_free (url_match_t, match);	
 	}
