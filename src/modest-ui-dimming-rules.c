@@ -34,6 +34,7 @@
 #include <string.h>
 #include "modest-ui-dimming-rules.h"
 #include "modest-dimming-rule.h"
+#include "modest-debug.h"
 #include "modest-tny-folder.h"
 #include "modest-tny-account.h"
 #include "modest-text-utils.h"
@@ -2303,7 +2304,7 @@ _invalid_clipboard_selected (ModestWindow *win,
 		result = !has_selection;
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		if (focused) {
-			g_message ("FOCUSED %s", g_type_name (G_TYPE_FROM_INSTANCE (focused)));
+			MODEST_DEBUG_BLOCK (g_message ("FOCUSED %s", g_type_name (G_TYPE_FROM_INSTANCE (focused))););
 			if (GTK_IS_LABEL (focused) && 
 			    !gtk_label_get_selection_bounds (GTK_LABEL (focused), NULL, NULL)) {
 				result = TRUE;
@@ -2316,7 +2317,9 @@ _invalid_clipboard_selected (ModestWindow *win,
 				guint len = -1;
 				sel = gtk_html_get_selection_html (GTK_HTML (focused), &len);
 				result = ((sel == NULL) || (sel[0] == '\0'));
-			} else if (!MODEST_IS_ATTACHMENTS_VIEW (focused)) {
+			} else if (MODEST_IS_ATTACHMENTS_VIEW (focused)) {
+				result = TRUE;
+			} else {
 				GtkClipboard *clipboard;
 				gchar *selection;
 
