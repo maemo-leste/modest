@@ -38,7 +38,7 @@
 #include <modest-header-view-priv.h>
 #include <modest-dnd.h>
 #include <modest-tny-folder.h>
-
+#include <modest-debug.h>
 #include <modest-main-window.h>
 
 #include <modest-marshal.h>
@@ -1742,6 +1742,30 @@ folder_monitor_update (TnyFolderObserver *self,
 	if (folder != priv->folder)
 		goto frees;
 
+	MODEST_DEBUG_BLOCK (
+			    if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS)
+				    g_print ("ADDED %d/%d (r/t) \n", 
+					     tny_folder_change_get_new_unread_count (change),
+					     tny_folder_change_get_new_all_count (change));
+			    if (changed & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
+				    g_print ("ALL COUNT %d\n", 
+					     tny_folder_change_get_new_all_count (change));
+			    if (changed & TNY_FOLDER_CHANGE_CHANGED_UNREAD_COUNT)
+				    g_print ("UNREAD COUNT %d\n", 
+					     tny_folder_change_get_new_unread_count (change));
+			    if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)
+				    g_print ("EXPUNGED %d/%d (r/t) \n", 
+					     tny_folder_change_get_new_unread_count (change),
+					     tny_folder_change_get_new_all_count (change));
+			    if (changed & TNY_FOLDER_CHANGE_CHANGED_FOLDER_RENAME)
+				    g_print ("FOLDER RENAME\n");
+			    if (changed & TNY_FOLDER_CHANGE_CHANGED_MSG_RECEIVED)
+				    g_print ("MSG RECEIVED %d/%d (r/t) \n", 
+					     tny_folder_change_get_new_unread_count (change),
+					     tny_folder_change_get_new_all_count (change));
+			    g_print ("---------------------------------------------------\n");
+			    );
+
 	/* Check folder count */
 	if ((changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) ||
 	    (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)) {
@@ -1888,7 +1912,10 @@ filter_row (GtkTreeModel *model,
 	}	    	
 
 	/* Get message id from header (ensure is a valid id) */
-	if (!header) return FALSE;
+	if (!header) {
+		visible = FALSE;
+		goto frees;
+	}
 	
 	/* Check hiding */
 	if (priv->hidding_ids != NULL) {
