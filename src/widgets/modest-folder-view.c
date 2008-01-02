@@ -1126,7 +1126,7 @@ modest_folder_view_finalize (GObject *obj)
 
 	if (priv->cur_folder_store) {
 		if (TNY_IS_FOLDER(priv->cur_folder_store))
-			tny_folder_sync_async (TNY_FOLDER(priv->cur_folder_store), FALSE, NULL, NULL, NULL);
+			tny_folder_sync (TNY_FOLDER(priv->cur_folder_store), FALSE, NULL);
 
 		g_object_unref (priv->cur_folder_store);
 		priv->cur_folder_store = NULL;
