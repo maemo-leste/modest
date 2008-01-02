@@ -5169,7 +5169,10 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
 		break;
 	default:
-		g_return_if_reached ();
+		g_warning ("%s: unexpected TNY_TRANSPORT_ACCOUNT_ERROR %d",
+			   __FUNCTION__, err->code);
+		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
+		break;	
 	}
 	
 	/* TODO if the username or the password where not defined we
