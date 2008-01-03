@@ -789,11 +789,6 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		attachments = g_slist_next(attachments);
 	}
 	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
-
-	if (win) {
-		gtk_window_set_transient_for (GTK_WINDOW (msg_win),
-					      GTK_WINDOW (win));
-	}
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
