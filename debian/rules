@@ -118,6 +118,7 @@ binary-arch: build install
 	# Not a requirement by now, so don't fail if it's not installed
 #	which dh_maemolauncher && dh_maemolauncher usr/bin/modest || true
 	dh_gencontrol
+	sh debian/scripts/renew_control_file.sh
 	dh_md5sums
 	dh_builddeb
 
