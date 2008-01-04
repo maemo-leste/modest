@@ -409,7 +409,9 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	} else {
 		do {
 			gchar *content_type = NULL;
-			
+			gchar *content_disp;
+			gboolean has_content_disp;
+
 			part = TNY_MIME_PART(tny_iterator_get_current (iter));
 
 			if (!part) {
@@ -422,15 +424,21 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 				g_object_unref (part);
 				tny_iterator_next (iter);
 				continue;
-			}
-			
+			}			
 
 			/* we need to strdown the content type, because
 			 * tny_mime_part_has_content_type does not do it...
 			 */
 			content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
-
-			if (g_str_has_prefix (content_type, desired_mime_type) && !tny_mime_part_is_attachment (part)) {
+			
+			/* mime-parts with a content-disposition header (either 'inline' or 'attachment')
+			 * cannot be body parts
+                         */
+			content_disp = modest_tny_mime_part_get_header_value (part, "Content-Disposition"); 
+			has_content_disp = content_disp && strlen (content_disp) != 0;
+			g_free (content_disp);
+			
+			if (g_str_has_prefix (content_type, desired_mime_type) && !has_content_disp) {
 				/* we found the desired mime-type! */
 				g_free (content_type);
 				break;
@@ -628,18 +636,18 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 
 
 gchar*
-modest_tny_msg_get_header (TnyMsg *msg, const gchar *header)
+modest_tny_mime_part_get_header_value (TnyMimePart *part, const gchar *header)
 {
 	TnyList *pairs;
 	TnyIterator *iter;
 	gchar *val;
 	
-	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	g_return_val_if_fail (part && TNY_IS_MIME_PART(part), NULL);
 	g_return_val_if_fail (header, NULL);
 
 	pairs = tny_simple_list_new ();
-
-	tny_mime_part_get_header_pairs (TNY_MIME_PART(msg), pairs);
+	
+	tny_mime_part_get_header_pairs (part, pairs);
 	iter = tny_list_create_iterator (pairs);
 
 	val = NULL;
@@ -694,14 +702,16 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	 * for mailing lists, both the Reply-To: and From: should be included
 	 * in the new To:; for now, we're ignoring List-Post
 	 */
-	gchar* list_help = modest_tny_msg_get_header (msg, "List-Help");
+	gchar* list_help = modest_tny_mime_part_get_header_value (TNY_MIME_PART(msg), 
+								  "List-Help");
 	gboolean is_mailing_list = (list_help != NULL);
 	g_free (list_help);
 
 
 	/* reply to sender, use ReplyTo or From */
 	//old_reply_to = tny_header_get_replyto (header);
-	old_reply_to = modest_tny_msg_get_header (msg, "Reply-To"); 
+	old_reply_to = modest_tny_mime_part_get_header_value (TNY_MIME_PART(msg), 
+							      "Reply-To"); 
 	old_from     = tny_header_get_from (header);
 	
 	if (!old_from &&  !old_reply_to) {
