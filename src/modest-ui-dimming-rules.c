@@ -1809,7 +1809,7 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 			GtkClipboard *clipboard;
 			if (GTK_IS_HTML (focused)) {
 				const gchar *sel;
-				guint len = -1;
+				int len = -1;
 				sel = gtk_html_get_selection_html (GTK_HTML (focused), &len);
 				do_check = !((sel == NULL) || (sel[0] == '\0'));
 			}
@@ -2314,7 +2314,7 @@ _invalid_clipboard_selected (ModestWindow *win,
 				result = !gtk_text_buffer_get_has_selection (buffer);
 			} else if (GTK_IS_HTML (focused)) {
 				const gchar *sel;
-				guint len = -1;
+				int len = -1;
 				sel = gtk_html_get_selection_html (GTK_HTML (focused), &len);
 				result = ((sel == NULL) || (sel[0] == '\0'));
 			} else if (MODEST_IS_ATTACHMENTS_VIEW (focused)) {

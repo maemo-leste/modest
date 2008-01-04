@@ -496,25 +496,32 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 
 		has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_HOSTNAME, 
 							    hostname, TRUE);
-		has_errors || (has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_USERNAME,
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_USERNAME,
 									   username, TRUE));
-		has_errors || (has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD,
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD,
 									   password, TRUE));
-		has_errors || (has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PROTO,
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PROTO,
 									   protocol, TRUE));
-		has_errors || (has_errors = !modest_account_mgr_set_int (self, account_name, MODEST_ACCOUNT_PORT,
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_int (self, account_name, MODEST_ACCOUNT_PORT,
 									port, TRUE));
-		has_errors || (has_errors = !modest_account_mgr_set_string (self, account_name, 
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_string (self, account_name, 
 									   MODEST_ACCOUNT_AUTH_MECH,
 									   auth_protocol, TRUE));		
-		has_errors || (has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY,
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY,
 									   security,
 									   TRUE));
 	} else {
 		const gchar *uri = modest_server_account_settings_get_uri (settings);
 		has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_URI,
 							    uri, TRUE);
-		has_errors || (has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PROTO,
+		if (!has_errors)
+			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PROTO,
 									   protocol, TRUE));
 	}
 

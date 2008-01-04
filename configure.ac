@@ -477,7 +477,6 @@ echo "Prefix           : ${prefix}"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"
 echo "Gettext Package  : $GETTEXT_PACKAGE"
-echo "libcurl          : $have_libcurl"
 
 if test "x$with_platform" == "xmaemo"; then
    echo "Maemo Launcher   : $maemo_launcher"
