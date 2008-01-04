@@ -668,6 +668,57 @@ modest_tny_mime_part_get_header_value (TnyMimePart *part, const gchar *header)
 }
 
 
+/* we consider more things attachments than tinymail does...
+ */
+gboolean
+modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part)
+{
+	gchar *content_disp;
+	gchar *content_type;
+	gboolean has_content_disp;
+
+	g_return_val_if_fail (part && TNY_IS_MIME_PART(part), FALSE);
+	
+	/* if tinymail thinks it's an attachment, it definitely is */
+	if (tny_mime_part_is_attachment (part))
+		return TRUE; 
+
+	/* if the mime part is a message itself (ie. embedded), it's an attachment */
+	if (TNY_IS_MSG (part))
+		return TRUE;
+
+	content_disp = modest_tny_mime_part_get_header_value (part, "Content-Disposition"); 
+	has_content_disp = content_disp && strlen (content_disp) != 0;
+	g_free (content_disp);
+	
+	/* if it doesn't have a content deposition, it's not an attachment */
+	if (!content_disp)
+		return FALSE;
+	
+	/* ok, it must be content-disposition "inline" then, because "attachment"
+	 * is already handle above "...is_attachment". modest consider these "inline" things
+         * attachments as well, unless they are embedded images for html mail 
+	 */
+	content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
+	if (!g_str_has_prefix (content_type, "image/")) {
+		g_free (content_type);
+		return TRUE; /* it's not an image, so it must be an attachment */
+	}
+	g_free (content_type);
+
+
+	/* now, if it's an inline-image, and it has a content-id or location, we
+	 * we guess it's an inline image, and not an attachment */
+	if (tny_mime_part_get_content_id (part) || tny_mime_part_get_content_location(part))
+		return FALSE;
+		
+	/* in other cases... */
+	return TRUE;
+}
+
+
+
+
 static gint
 count_addresses (const gchar* addresses)
 {

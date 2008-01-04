@@ -145,6 +145,21 @@ gchar*       modest_tny_mime_part_get_header_value (TnyMimePart *part, const gch
 
 
 /**
+ * modest_tny_mime_part_is_attachment_for_modest:
+ * @self: some #TnyMimePart
+ *
+ * determine whether the given mime part is an attachment; note modest considers
+ * more things attachments than tinymail does; in particular, modest considers
+ * non-image 'inline' things to be attachments; check the source for details
+ * 
+ * NOTE: this function should maybe in modest-tny-mime-part....
+ *
+ * Returns: TRUE if it's attachment for modest, or FALSE otherwise
+ **/
+gboolean     modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part);
+
+
+/**
  * modest_tny_msg_create_forward_msg:
  * @msg: a valid #TnyMsg instance
  * @from: the sender of the forwarded mail
