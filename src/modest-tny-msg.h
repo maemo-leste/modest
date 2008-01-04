@@ -130,33 +130,16 @@ gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html, 
 
 
 /**
- * modest_tny_mime_part_get_header_value:
- * @self: some #TnyMimePart
- * @header: the header to get the value for
+ * modest_tny_msg_get_header:
+ * @self: some #TnyMsg 
+ * @header: the header to get
  * 
- * gets the mail header value for a #TnyMimePart as a newly allocated string,
+ * gets the mail header for a #TnyMsg as a newly allocated string,
  * or NULL if it cannot be found
  * 
- * NOTE: this function should be part of tinymail, or maybe modest-tny-mime-part....
- *
- * Returns: the header value or NULL
+ * Returns: the header
  **/
-gchar*       modest_tny_mime_part_get_header_value (TnyMimePart *part, const gchar *header);
-
-
-/**
- * modest_tny_mime_part_is_attachment_for_modest:
- * @self: some #TnyMimePart
- *
- * determine whether the given mime part is an attachment; note modest considers
- * more things attachments than tinymail does; in particular, modest considers
- * non-image 'inline' things to be attachments; check the source for details
- * 
- * NOTE: this function should maybe in modest-tny-mime-part....
- *
- * Returns: TRUE if it's attachment for modest, or FALSE otherwise
- **/
-gboolean     modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part);
+gchar*       modest_tny_msg_get_header (TnyMsg *msg, const gchar *header);
 
 
 /**

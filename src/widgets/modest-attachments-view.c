@@ -39,7 +39,6 @@
 
 #include <modest-platform.h>
 #include <modest-runtime.h>
-#include <modest-tny-msg.h>
 #include <modest-attachment-view.h>
 #include <modest-attachments-view.h>
 
@@ -102,10 +101,6 @@ modest_attachments_view_new (TnyMsg *msg)
 	return GTK_WIDGET (self);
 }
 
-
-
-
-
 void
 modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg)
 {
@@ -140,6 +135,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		return;
 	}
 
+	
 	parts = TNY_LIST (tny_simple_list_new ());
 	tny_mime_part_get_parts (TNY_MIME_PART (priv->msg), parts);
 	iter = tny_list_create_iterator (parts);
@@ -148,7 +144,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		TnyMimePart *part;
 
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		if (part && modest_tny_mime_part_is_attachment_for_modest(part)) {
+		if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))) {
 			modest_attachments_view_add_attachment (attachments_view, part);
 		}
 
@@ -159,7 +155,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	}
 
 	gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
-	
+
 }
 
 void
