@@ -100,13 +100,13 @@ struct _url_match_t {
 
 /* note: match MARK_AMP_URI_STR as well, because after txt->html, a '&' will look like $(MARK_AMP_URI_STR)"amp;" */
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|rtsp|http|ftp|https)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
+	{ "(file|rtsp|http|ftp|https|mms|mmsh|rtsp|rdp|lastfm)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 	  NULL, NULL },\
 	{ "www\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 			NULL, "http://" },				\
 	{ "ftp\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 	  NULL, "ftp://" },\
-	{ "(voipto|callto|chatto|jabberto|xmpp):[-_a-z@0-9.+]+", \
+	{ "(jabberto|voipto|sipto|sip|chatto|xmpp):[-_a-z@0-9.+]+", \
 	   NULL, NULL},						    \
 	{ "mailto:[-_a-z0-9.\\+]+@[-_a-z0-9.]+",		    \
 	  NULL, NULL},\
