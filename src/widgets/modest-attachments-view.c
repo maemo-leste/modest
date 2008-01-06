@@ -29,8 +29,6 @@
 
 #include <config.h>
 
-//#include <glib/gi18n-lib.h>
-
 #include <string.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
@@ -41,6 +39,7 @@
 #include <modest-runtime.h>
 #include <modest-attachment-view.h>
 #include <modest-attachments-view.h>
+#include <modest-tny-mime-part.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -135,7 +134,6 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		return;
 	}
 
-	
 	parts = TNY_LIST (tny_simple_list_new ());
 	tny_mime_part_get_parts (TNY_MIME_PART (priv->msg), parts);
 	iter = tny_list_create_iterator (parts);
@@ -144,9 +142,9 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		TnyMimePart *part;
 
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))) {
+
+		if (part && (modest_tny_mime_part_is_attachment_for_modest (part))) 
 			modest_attachments_view_add_attachment (attachments_view, part);
-		}
 
 		if (part)
 			g_object_unref (part);

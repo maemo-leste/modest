@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, 2007, 2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -128,18 +128,6 @@ TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html)
 gchar*        modest_tny_msg_get_body        (TnyMsg *self, gboolean want_html, gboolean *is_html);
 
 
-
-/**
- * modest_tny_msg_get_header:
- * @self: some #TnyMsg 
- * @header: the header to get
- * 
- * gets the mail header for a #TnyMsg as a newly allocated string,
- * or NULL if it cannot be found
- * 
- * Returns: the header
- **/
-gchar*       modest_tny_msg_get_header (TnyMsg *msg, const gchar *header);
 
 
 /**

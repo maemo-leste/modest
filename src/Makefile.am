@@ -1,6 +1,6 @@
 #
 # Makefile.am
-# Time-stamp: <2007-11-14 22:42:34 (djcb)>
+# Time-stamp: <2008-01-06 10:18:49 (djcb)>
 
 SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
 
@@ -104,6 +104,8 @@ modest_SOURCES=\
 	modest-tny-folder.h \
 	modest-tny-local-folders-account.c \
 	modest-tny-local-folders-account.h \
+	modest-tny-mime-part.c \
+	modest-tny-mime-part.h \
 	modest-tny-msg.c \
 	modest-tny-msg.h \
 	modest-tny-outbox-account.c \
