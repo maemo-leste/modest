@@ -232,10 +232,6 @@ modest_tny_local_folders_account_add_folder_to_outbox (ModestTnyLocalFoldersAcco
 	g_return_if_fail (MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self));
 	g_return_if_fail (TNY_IS_FOLDER (per_account_outbox));
 
-	/* We can not test it yet, because there is no API to set the
-	   type of a folder */
-/* 	g_return_if_fail (tny_folder_get_folder_type (per_account_outbox) == TNY_FOLDER_TYPE_OUTBOX); */
-
 	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
 
 	/* Create on-demand */

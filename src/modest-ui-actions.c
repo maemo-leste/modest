@@ -2035,8 +2035,6 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 {
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
-	gboolean folder_empty = FALSE;
-	gboolean all_marked_as_deleted = FALSE;
 
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
@@ -2056,9 +2054,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Check if folder is empty and set headers view contents style */
-	folder_empty = (tny_folder_get_all_count (folder) == 0);
-	all_marked_as_deleted = modest_header_view_is_empty (MODEST_HEADER_VIEW(header_view));
-	if (folder_empty || all_marked_as_deleted)
+	if (tny_folder_get_all_count (folder) == 0)
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 }

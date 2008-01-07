@@ -150,8 +150,10 @@ struct _ModestHeaderViewPrivate {
 	gulong  selection_changed_handler;
 	gulong  acc_removed_handler;
 
-	HeaderViewStatus status;
 	GList *drag_begin_cached_selected_rows;
+
+	HeaderViewStatus status;
+	guint status_timeout;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -558,6 +560,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->observers_lock = g_mutex_new ();
 
 	priv->status  = HEADER_VIEW_INIT;
+	priv->status_timeout = 0;
 
 	priv->observer_list_lock = g_mutex_new();
 	priv->observer_list = NULL;
@@ -1203,6 +1206,9 @@ modest_header_view_set_folder (ModestHeaderView *self,
 	}
 						      
 	if (priv->folder) {
+		if (priv->status_timeout)
+			g_source_remove (priv->status_timeout);
+
 		g_mutex_lock (priv->observers_lock);
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (self));
 		g_object_unref (priv->folder);
@@ -1872,7 +1878,32 @@ _clipboard_set_selected_data (ModestHeaderView *header_view,
 	g_object_unref (headers);
 }
 
+typedef struct {
+	ModestHeaderView *self;
+	TnyFolder *folder;
+} NotifyFilterInfo;
 
+static gboolean
+notify_filter_change (gpointer data)
+{
+	NotifyFilterInfo *info = (NotifyFilterInfo *) data;
+
+	g_signal_emit (info->self, 
+		       signals[MSG_COUNT_CHANGED_SIGNAL], 
+		       0, info->folder, NULL);
+
+	return FALSE;
+}
+
+static void
+notify_filter_change_destroy (gpointer data)
+{
+	NotifyFilterInfo *info = (NotifyFilterInfo *) data;
+
+	g_object_unref (info->self);
+	g_object_unref (info->folder);
+	g_slice_free (NotifyFilterInfo, info);
+}
 
 static gboolean
 filter_row (GtkTreeModel *model,
@@ -1887,7 +1918,8 @@ filter_row (GtkTreeModel *model,
 	gboolean visible = TRUE;
 	gboolean found = FALSE;
 	GValue value = {0,};
-	
+	HeaderViewStatus old_status;
+
 	g_return_val_if_fail (MODEST_IS_HEADER_VIEW (user_data), FALSE);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (user_data);
 
@@ -1929,8 +1961,23 @@ filter_row (GtkTreeModel *model,
 	}
 
  frees:
+	old_status = priv->status;
 	priv->status = ((gboolean) priv->status) && !visible;
-	
+	if (priv->status != old_status) {
+		NotifyFilterInfo *info;
+
+		if (priv->status_timeout)
+			g_source_remove (priv->status_timeout);
+
+		info = g_slice_new0 (NotifyFilterInfo);
+		info->self = g_object_ref (G_OBJECT (user_data));
+		info->folder = tny_header_get_folder (header);
+		priv->status_timeout = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
+							   notify_filter_change,
+							   info,
+							   notify_filter_change_destroy);
+	}
+
 	return visible;
 }
 

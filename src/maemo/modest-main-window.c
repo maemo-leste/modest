@@ -1852,29 +1852,31 @@ on_msg_count_changed (ModestHeaderView *header_view,
 {
 	gboolean folder_empty = FALSE;
 	gboolean all_marked_as_deleted = FALSE;
-	TnyFolderChangeChanged changed;	
 	ModestMainWindowPrivate *priv;
 	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (main_window));
 	g_return_if_fail (TNY_IS_FOLDER(folder));
-	g_return_if_fail (TNY_IS_FOLDER_CHANGE(change));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
-	
-	changed = tny_folder_change_get_changed (change);
-	
-	/* If something changes */
-	if ((changed) & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
-		folder_empty = (tny_folder_change_get_new_all_count (change) == 0);
-	else
-		folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
 
-	/* Play a sound (if configured) and make the LED blink  */
-	if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS)
-		modest_platform_on_new_headers_received (NULL, FALSE);
-	
-	/* Check header removed  (hide marked as DELETED headers) */
-	if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) {
-		modest_header_view_refilter (MODEST_HEADER_VIEW(priv->header_view));
+	if (change != NULL) {
+		TnyFolderChangeChanged changed;
+
+		changed = tny_folder_change_get_changed (change);
+		/* If something changes */
+		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
+			folder_empty = (tny_folder_change_get_new_all_count (change) == 0);
+		else
+			folder_empty = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+		
+		/* Play a sound (if configured) and make the LED blink  */
+		if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) {
+			modest_platform_on_new_headers_received (NULL, FALSE);
+		}
+		
+		/* Checks header removed  (hide marked as DELETED headers) */
+		if (changed & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS) {
+			modest_header_view_refilter (MODEST_HEADER_VIEW(priv->header_view));
+		}
 	}
 
 	/* Check if all messages are marked to be deleted */
@@ -1886,8 +1888,7 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
 		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
-	}
-	else {
+	} else {
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 	}
