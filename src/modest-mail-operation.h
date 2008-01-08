@@ -716,6 +716,18 @@ TnyAccount *modest_mail_operation_get_account   (ModestMailOperation *self);
  **/
 void modest_mail_operation_noop (ModestMailOperation *self);
 
+
+/**
+ * modest_mail_operation_to_string:
+ * @self: a #ModestMailOperation
+ * 
+ * get a string representation of the mail operation (for debugging)
+ *
+ * Returns: a newly allocated string
+ **/
+gchar* modest_mail_operation_to_string (ModestMailOperation *self);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_MAIL_OPERATION_H__ */

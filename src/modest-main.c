@@ -92,8 +92,7 @@ main (int argc, char *argv[])
 	}
 
 	if (!show_ui_without_top_application_method) {
-		g_print ("modest: not showing UI\n");
-		g_print ("modest: use 'modest showui' to start with UI\n");
+		g_print ("modest: use 'modest showui' to start from cmdline  with UI\n");
 	}	
 		
 	if (!g_thread_supported())

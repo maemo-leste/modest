@@ -68,6 +68,7 @@ struct _ModestMailOperationQueueClass {
 	void (*queue_empty) (ModestMailOperationQueue *self);
 };
 
+
 /* member functions */
 GType                   modest_mail_operation_queue_get_type      (void) G_GNUC_CONST;
 

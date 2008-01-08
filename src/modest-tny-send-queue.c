@@ -40,6 +40,7 @@
 #include <modest-platform.h>
 #include <widgets/modest-window-mgr.h>
 #include <modest-marshal.h>
+#include <modest-debug.h>
 #include <string.h> /* strcmp */
 
 /* 'private'/'protected' functions */
@@ -124,12 +125,36 @@ modest_tny_send_queue_info_free(SendInfo *info)
 	g_slice_free(SendInfo, info);
 }
 
+static void
+print_queue_item (gpointer data, gpointer user_data)
+{
+	SendInfo *info = (SendInfo*)data;
+	const gchar *status;
+	
+	switch (info->status) {
+	case MODEST_TNY_SEND_QUEUE_UNKNOWN: status = "UNKNOWN"; break;
+	case MODEST_TNY_SEND_QUEUE_WAITING: status = "WAITING"; break;
+	case MODEST_TNY_SEND_QUEUE_SUSPENDED: status = "SUSPENDED"; break;
+	case MODEST_TNY_SEND_QUEUE_SENDING: status = "SENDING"; break;
+	case MODEST_TNY_SEND_QUEUE_FAILED: status = "FAILED"; break;
+	default: status= "UNEXPECTED"; break;
+	}
+
+	g_debug ("\"%s\" => [%s]", info->msg_id, status);
+}
+
 static GList*
 modest_tny_send_queue_lookup_info (ModestTnySendQueue *self, const gchar *msg_id)
 {
 	ModestTnySendQueuePrivate *priv;
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
+	MODEST_DEBUG_BLOCK (
+		g_debug ("items in the send queue (%d):",
+			 g_queue_get_length (priv->queue));
+		g_queue_foreach (priv->queue, print_queue_item, NULL);
+	);
+	
 	return g_queue_find_custom (priv->queue, msg_id, on_modest_tny_send_queue_compare_id);
 }
 
@@ -552,7 +577,8 @@ _on_msg_start_sending (TnySendQueue *self,
 	/* Get status info */
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
 	if (!item) 
-		g_warning  ("%s: item should not be NULL", __FUNCTION__);
+		g_warning  ("%s: item (%s) should not be NULL",
+			    __FUNCTION__, msg_id ? msg_id : "<none>");
 	else {
 		info = item->data;
 		info->status = MODEST_TNY_SEND_QUEUE_SENDING;

@@ -3010,3 +3010,41 @@ modest_mail_operation_noop (ModestMailOperation *self)
 	modest_mail_operation_notify_start (self);
 	modest_mail_operation_notify_end (self);
 }
+
+
+gchar*
+modest_mail_operation_to_string (ModestMailOperation *self)
+{
+	const gchar *type, *status, *account_id;
+	ModestMailOperationPrivate *priv = NULL;
+	
+	g_return_val_if_fail (self, NULL);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	
+	switch (priv->op_type) {
+	case MODEST_MAIL_OPERATION_TYPE_SEND:    type= "SEND";    break;
+	case MODEST_MAIL_OPERATION_TYPE_RECEIVE: type= "RECEIVE"; break;
+	case MODEST_MAIL_OPERATION_TYPE_OPEN:    type= "OPEN";    break;
+	case MODEST_MAIL_OPERATION_TYPE_DELETE:  type= "DELETE";  break;
+	case MODEST_MAIL_OPERATION_TYPE_INFO:    type= "INFO";    break;
+	case MODEST_MAIL_OPERATION_TYPE_UNKNOWN: type= "UNKNOWN"; break;
+	default: type = "UNEXPECTED"; break;
+	}
+
+	switch (priv->status) {
+	case MODEST_MAIL_OPERATION_STATUS_INVALID:              status= "INVALID"; break;
+	case MODEST_MAIL_OPERATION_STATUS_SUCCESS:              status= "SUCCESS"; break;
+	case MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS: status= "FINISHED-WITH-ERRORS"; break;
+	case MODEST_MAIL_OPERATION_STATUS_FAILED:               status= "FAILED"; break;
+	case MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS:          status= "IN-PROGRESS"; break;
+	case MODEST_MAIL_OPERATION_STATUS_CANCELED:             status= "CANCELLED"; break;
+	default:                                                status= "UNEXPECTED"; break;
+	} 
+
+	account_id = priv->account ? tny_account_get_id (priv->account) : "";
+	
+	return g_strdup_printf ("%p \"%s\" (%s) [%s] {%d/%d} '%s'", self, account_id,type, status,
+				priv->done, priv->total,
+				priv->error && priv->error->message ? priv->error->message : "");
+}
