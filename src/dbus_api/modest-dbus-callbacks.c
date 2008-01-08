@@ -705,16 +705,22 @@ on_dbus_method_dump (DBusConnection *con, DBusMessage *message)
 {
 	gchar *str;
 	gchar *op_queue_str;
+	
 	DBusMessage *reply;
 	dbus_uint32_t serial = 0;
-	
+
+	/* operations queue; */
 	op_queue_str = modest_mail_operation_queue_to_string
 		(modest_runtime_get_mail_operation_queue ());
-
-	str = g_strdup_printf ("\nmodest debug dump\n=================\n%s\n",
+		
+	str = g_strdup_printf ("\nmodest debug dump\n"
+			       "=================\n"
+			       "status: %s\n"
+			       "%s\n",
+			       tny_device_is_online (modest_runtime_get_device ()) ? "online" : "offline",
 			       op_queue_str);
 	g_free (op_queue_str);
-
+	
 	g_printerr (str);
 	
 	reply = dbus_message_new_method_return (message);
