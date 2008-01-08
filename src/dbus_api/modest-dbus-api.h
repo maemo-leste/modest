@@ -78,6 +78,9 @@ enum ModestDbusDeleteMessageArguments
 
 #define MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX "OpenDefaultInbox"
 
+
+#define MODEST_DBUS_METHOD_DUMP "Dump"
+
 /* These are handle via normal D-Bus instead of osso-rpc: */
 #define MODEST_DBUS_METHOD_SEARCH "Search"
 #define MODEST_DBUS_METHOD_GET_FOLDERS "GetFolders"

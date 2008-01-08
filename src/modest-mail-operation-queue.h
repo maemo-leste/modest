@@ -129,8 +129,18 @@ void    modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *op_que
  * 
  * Returns a list with the #ModestMailOperation that have the given source 
  **/
-GSList*
-modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *op_queue, GObject *source);
+GSList* modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *op_queue, GObject *source);
+
+
+/**
+ * modest_mail_operation_queue_get_by_source:
+ * @op_queue:  a #ModestMailOperationQueue
+ * 
+ * Returns a string representation of the operation queue (for debugging)
+ *
+ * Returns: a newly allocated string, or NULL in case of error
+ **/
+gchar* modest_mail_operation_queue_to_string (ModestMailOperationQueue *self);
 
 G_END_DECLS
 

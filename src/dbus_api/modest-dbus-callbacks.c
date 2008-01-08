@@ -699,6 +699,39 @@ on_idle_send_receive(gpointer user_data)
 	return FALSE;
 }
 
+
+static gint 
+on_dbus_method_dump (DBusConnection *con, DBusMessage *message)
+{
+	gchar *str;
+	gchar *op_queue_str;
+	DBusMessage *reply;
+	dbus_uint32_t serial = 0;
+	
+	op_queue_str = modest_mail_operation_queue_to_string
+		(modest_runtime_get_mail_operation_queue ());
+
+	str = g_strdup_printf ("\nmodest debug dump\n=================\n%s\n",
+			       op_queue_str);
+	g_free (op_queue_str);
+
+	g_printerr (str);
+	
+	reply = dbus_message_new_method_return (message);
+	if (reply) {
+		dbus_message_append_args (reply,
+					  DBUS_TYPE_STRING, &str,
+					  DBUS_TYPE_INVALID);
+		dbus_connection_send (con, reply, &serial);
+		dbus_connection_flush (con);
+		dbus_message_unref (reply);
+	}
+	
+	g_free (str);
+	return OSSO_OK;
+}
+
+
 static gint 
 on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 { 	
@@ -820,7 +853,7 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_TOP_APPLICATION) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
-		return on_top_application (arguments, data, retval);
+		return on_top_application (arguments, data, retval); 
 	} else { 
 		/* We need to return INVALID here so
 		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
@@ -1390,12 +1423,16 @@ modest_dbus_req_filter (DBusConnection *con,
 		on_dbus_method_search (con, message);
 		handled = TRUE;			 	
 	} else if (dbus_message_is_method_call (message,
-					 MODEST_DBUS_IFACE,
-					 MODEST_DBUS_METHOD_GET_FOLDERS)) {
+						MODEST_DBUS_IFACE,
+						MODEST_DBUS_METHOD_GET_FOLDERS)) {
 		on_dbus_method_get_folders (con, message);
 		handled = TRUE;			 	
-	}
-	else {
+	} else if (dbus_message_is_method_call (message,
+						MODEST_DBUS_IFACE,
+						MODEST_DBUS_METHOD_DUMP)) {
+		on_dbus_method_dump (con, message);
+		handled = TRUE;
+	} else {
 		/* Note that this mentions methods that were already handled in modest_dbus_req_handler(). */
 		/* 
 		g_debug ("  debug: %s: Unexpected (maybe already handled) D-Bus method:\n   Interface=%s, Member=%s\n", 
