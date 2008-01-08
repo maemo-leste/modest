@@ -2049,8 +2049,8 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 		if (current_folder != NULL && folder != current_folder) {
 			g_object_unref (current_folder);
 			return;
-		}
-		g_object_unref (current_folder);
+		} else if (current_folder)
+			g_object_unref (current_folder);
 	}
 
 	/* Check if folder is empty and set headers view contents style */
