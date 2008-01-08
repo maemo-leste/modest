@@ -1533,7 +1533,7 @@ modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer
 	state = modest_window_get_dimming_state (win);
 
 	if (!dimmed) {
-		GList *selected_attachments = NULL;
+		TnyList *selected_attachments = NULL;
 		gint n_att_selected = 0;
 		GtkWidget *attachments_view;
 		attachments_view = modest_msg_edit_window_get_child_widget (
@@ -1542,8 +1542,8 @@ modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer
 		
 		selected_attachments = modest_attachments_view_get_selection (
 			MODEST_ATTACHMENTS_VIEW (attachments_view));
-		n_att_selected = g_list_length (selected_attachments);
-		g_list_free (selected_attachments);
+		n_att_selected = tny_list_get_length (selected_attachments);
+		g_object_unref (selected_attachments);
 
 		dimmed = (n_att_selected != 1);
 	}
@@ -2356,7 +2356,7 @@ _invalid_attach_selected (ModestWindow *win,
 			  gboolean for_remove,
 			  ModestDimmingRule *rule) 
 {
-	GList *attachments, *node;
+	TnyList *attachments;
 	gint n_selected;
 	TnyHeaderFlags flags;
 	gboolean nested_attachments = FALSE;
@@ -2376,7 +2376,7 @@ _invalid_attach_selected (ModestWindow *win,
 		
 		/* Get selected atachments */
 		attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-		n_selected = g_list_length (attachments);
+		n_selected = tny_list_get_length (attachments);
 
 		/* Check unique */		
 		if (!result) {
@@ -2389,8 +2389,10 @@ _invalid_attach_selected (ModestWindow *win,
 		
 		/* Check attached type (view operation not required) */
 		if (!result && !for_view)  {
-			for (node = attachments; node != NULL && !result; node = g_list_next (node)) {
-				TnyMimePart *mime_part = TNY_MIME_PART (node->data);
+			TnyIterator *iter;
+			iter = tny_list_create_iterator (attachments);
+			while (!tny_iterator_is_done (iter) && !result) {
+				TnyMimePart *mime_part = TNY_MIME_PART (tny_iterator_get_current (iter));
 				TnyList *nested_list = tny_simple_list_new ();
 				if (!for_remove && TNY_IS_MSG (mime_part)) {
 					selected_messages = TRUE;
@@ -2402,7 +2404,10 @@ _invalid_attach_selected (ModestWindow *win,
 					result = TRUE;
 				}
 				g_object_unref (nested_list);
+				g_object_unref (mime_part);
+				tny_iterator_next (iter);
 			}
+			g_object_unref (iter);
 		}
 		
 		/* Set notifications */
@@ -2419,7 +2424,7 @@ _invalid_attach_selected (ModestWindow *win,
 		}
 		
 		/* Free */
-		g_list_free (attachments);
+		g_object_unref (attachments);
 	}
 
 	return result;
@@ -2428,7 +2433,8 @@ _invalid_attach_selected (ModestWindow *win,
 static gboolean
 _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rule) 
 {
-	GList *attachments = NULL, *node;
+	TnyList *attachments = NULL;
+	TnyIterator *iter;
 	gint purged = 0;
 	gint n_attachments = 0;
 	gboolean result = FALSE;
@@ -2448,16 +2454,25 @@ _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rul
 	if (attachments == NULL)
 		return FALSE;
 
-	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		TnyMimePart *mime_part = TNY_MIME_PART (node->data);
+	if (tny_list_get_length (attachments)) {
+		g_object_unref (attachments);
+		return FALSE;
+	}
+
+	iter = tny_list_create_iterator (attachments);
+	while (!tny_iterator_is_done (iter)) {
+		TnyMimePart *mime_part = TNY_MIME_PART (tny_iterator_get_current (iter));
 		if (tny_mime_part_is_purged (mime_part)) {
 			purged++;
 		}
 		n_attachments++;
+		g_object_unref (mime_part);
+		tny_iterator_next (iter);
 	}
+	g_object_unref (iter);
 		
 	/* Free */
-	g_list_free (attachments);
+	g_object_unref (attachments);
 
 	if (all)
 		result = (purged == n_attachments);
@@ -2623,7 +2638,7 @@ _invalid_folder_for_purge (ModestWindow *win,
 		/* If it's POP then dim */
 		if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
 		    MODEST_PROTOCOL_STORE_POP) {
-			GList *attachments = NULL;
+			TnyList *attachments = NULL;
 			gint n_selected = 0;
 			result = TRUE;
 			
@@ -2631,8 +2646,8 @@ _invalid_folder_for_purge (ModestWindow *win,
 			 * murrayc */
 			if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 				attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-				n_selected = g_list_length (attachments);
-				g_list_free (attachments);
+				n_selected = tny_list_get_length (attachments);
+				g_object_unref (attachments);
 			}
 			
 			modest_dimming_rule_set_notification (rule, 

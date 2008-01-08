@@ -151,6 +151,9 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 		tny_iterator_next (iter);
 	}
+	g_object_unref (iter);
+	g_object_unref (parts);
+	
 
 	gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
 
@@ -687,42 +690,47 @@ static void clipboard_clear (GtkClipboard *clipboard, gpointer userdata)
 	unselect_all (atts_view);
 }
 
-GList *
+TnyList *
 modest_attachments_view_get_selection (ModestAttachmentsView *atts_view)
 {
 	ModestAttachmentsViewPrivate *priv;
-	GList *selection, *node;
+	TnyList *selection;
+	GList *node;
 
 	g_return_val_if_fail (MODEST_IS_ATTACHMENTS_VIEW (atts_view), NULL);
 	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
 
-	selection = NULL;
+	selection = tny_simple_list_new ();
 	for (node = priv->selected; node != NULL; node = g_list_next (node)) {
 		ModestAttachmentView *att_view = (ModestAttachmentView *) node->data;
 		TnyMimePart *part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
-		selection = g_list_append (selection, part);
+		tny_list_append (selection, (GObject *) part);
+		g_object_unref (part);
 	}
 	
 	return selection;
 }
 
-GList *
+TnyList *
 modest_attachments_view_get_attachments (ModestAttachmentsView *atts_view)
 {
 	ModestAttachmentsViewPrivate *priv;
-	GList *children, *node, *att_list = NULL;
+	TnyList *att_list;
+	GList *children, *node= NULL;
 
 	g_return_val_if_fail (MODEST_IS_ATTACHMENTS_VIEW (atts_view), NULL);
 	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+
+	att_list = TNY_LIST (tny_simple_list_new ());
 
 	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
 	for (node = children; node != NULL; node = g_list_next (node)) {
 		GtkWidget *att_view = GTK_WIDGET (node->data);
 		TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
-		att_list = g_list_prepend (att_list, mime_part);
+		tny_list_append (att_list, (GObject *) mime_part);
+		g_object_unref (mime_part);
 	}
 	g_list_free (children);
-	att_list = g_list_reverse (att_list);
 	return att_list;
 
 }

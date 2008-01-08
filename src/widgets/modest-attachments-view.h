@@ -70,8 +70,8 @@ void modest_attachments_view_set_message (ModestAttachmentsView *attachments_vie
 void modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);
 void modest_attachments_view_remove_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);
 void modest_attachments_view_remove_attachment_by_id (ModestAttachmentsView *attachments_view, const gchar *att_id);
-GList *modest_attachments_view_get_attachments (ModestAttachmentsView *attachments_view);
-GList *modest_attachments_view_get_selection (ModestAttachmentsView *attachments_view);
+TnyList *modest_attachments_view_get_attachments (ModestAttachmentsView *attachments_view);
+TnyList *modest_attachments_view_get_selection (ModestAttachmentsView *attachments_view);
 void modest_attachments_view_select_all (ModestAttachmentsView *attachments_view);
 
 gboolean modest_attachments_view_has_attachments (ModestAttachmentsView *attachments_view);

@@ -633,8 +633,10 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	add_attachments (TNY_MIME_PART (new_msg), attachments_list, FALSE);
 
 	/* Clean */
-	if (attachments_list)
+	if (attachments_list) {
+		g_list_foreach (attachments_list, (GFunc) g_object_unref, NULL);
 		g_list_free (attachments_list);
+	}
 	g_object_unref (G_OBJECT (parts));
 
 	return new_msg;

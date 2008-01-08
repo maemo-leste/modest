@@ -208,18 +208,18 @@ void            modest_msg_view_window_view_attachment (ModestMsgViewWindow *win
  *
  * Get selected attachments from #ModetMsgView private object.  
  */
-GList *         modest_msg_view_window_get_attachments (ModestMsgViewWindow *win);
+TnyList *         modest_msg_view_window_get_attachments (ModestMsgViewWindow *win);
 
 /**
  * modest_msg_view_window_save_attachments:
  * @window: a #ModestMsgViewWindow
- * @mime_parts: a #GList of #TnyMimePart
+ * @mime_parts: a #TnyList of #TnyMimePart
  *
  * Save the #TnyMimePart attachments in @mime_parts, or currently selected attachments
  * if @mime_parts is %NULL, offering a dialog to the user to choose the location.
  */
 void            modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
-							 GList *mime_parts);
+							 TnyList *mime_parts);
 
 /**
  * modest_msg_view_window_remove_attachments:

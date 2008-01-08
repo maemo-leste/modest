@@ -88,13 +88,13 @@ modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags)
 	MODEST_MSG_VIEW_GET_IFACE (self)->set_priority_func (self, flags);
 }
 
-GList*
+TnyList*
 modest_msg_view_get_selected_attachments (ModestMsgView *self)
 {
 	return MODEST_MSG_VIEW_GET_IFACE (self)->get_selected_attachments_func (self);
 }
 
-GList*
+TnyList*
 modest_msg_view_get_attachments (ModestMsgView *self)
 {
 	return MODEST_MSG_VIEW_GET_IFACE (self)->get_attachments_func (self);

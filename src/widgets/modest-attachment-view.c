@@ -203,7 +203,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 		g_object_unref (priv->mime_part);
 	}
 
-	priv->mime_part = mime_part;
+	priv->mime_part = g_object_ref (mime_part);
 
 	priv->size = 0;
 	priv->is_purged = tny_mime_part_is_purged (mime_part);

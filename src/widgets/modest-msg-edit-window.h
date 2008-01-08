@@ -242,7 +242,7 @@ void                    modest_msg_edit_window_attach_file_one           (Modest
  * remove attachments in @att_list, with a confirmation dialog
  */
 void                    modest_msg_edit_window_remove_attachments    (ModestMsgEditWindow *window, 
-								      GList *att_list);
+								      TnyList *att_list);
 
 /**
  * modest_msg_edit_window_add_part:

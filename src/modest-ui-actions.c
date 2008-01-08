@@ -2295,7 +2295,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */		
-	mail_operation = modest_mail_operation_new (G_OBJECT(edit_window));
+	mail_operation = modest_mail_operation_new (NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_save_to_drafts (mail_operation,
@@ -2383,7 +2383,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = g_strdup (data->account_name);
 	if (!account_name)
-		g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
+		account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
 
 	if (!account_name) 
 		account_name = modest_account_mgr_get_default_account (account_mgr);
@@ -2391,8 +2391,9 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	if (!account_name) {
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		/* Run account setup wizard */
-		if (!modest_ui_actions_run_account_setup_wizard (MODEST_WINDOW(edit_window)))
+		if (!modest_ui_actions_run_account_setup_wizard (MODEST_WINDOW(edit_window))) {
 			return;
+		}
 	}
 	
 	/* Get the currently-active transport account for this modest account: */
@@ -2403,6 +2404,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 	
 	if (!transport_account) {
+		modest_msg_edit_window_free_msg_data (edit_window, data);
 		/* Run account setup wizard */
 		if (!modest_ui_actions_run_account_setup_wizard(MODEST_WINDOW(edit_window)))
 			return;
@@ -2411,7 +2413,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */
-	ModestMailOperation *mail_operation = modest_mail_operation_new (G_OBJECT(edit_window));
+	ModestMailOperation *mail_operation = modest_mail_operation_new (NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_send_new_mail (mail_operation,

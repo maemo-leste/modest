@@ -2263,11 +2263,11 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	}
 }
 
-GList *
+TnyList *
 modest_msg_view_window_get_attachments (ModestMsgViewWindow *win) 
 {
 	ModestMsgViewWindowPrivate *priv;
-	GList *selected_attachments = NULL;
+	TnyList *selected_attachments = NULL;
 	
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (win);
@@ -2284,7 +2284,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 	const gchar *msg_uid;
 	gchar *attachment_uid = NULL;
 	gint attachment_index = 0;
-	GList *attachments;
+	TnyList *attachments;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	g_return_if_fail (TNY_IS_MIME_PART (mime_part) || (mime_part == NULL));
@@ -2292,8 +2292,8 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 
 	msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (window));
 	attachments = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-	attachment_index = g_list_index (attachments, mime_part);
-	g_list_free (attachments);
+	attachment_index = modest_list_index (attachments, (GObject *) mime_part);
+	g_object_unref (attachments);
 	
 	if (msg_uid && attachment_index >= 0) {
 		attachment_uid = g_strdup_printf ("%s/%d", msg_uid, attachment_index);
@@ -2301,18 +2301,19 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 
 	if (mime_part == NULL) {
 		gboolean error = FALSE;
-		GList *selected_attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (selected_attachments == NULL) {
+		TnyList *selected_attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+		if (selected_attachments == NULL || tny_list_get_length (selected_attachments) == 0) {
 			error = TRUE;
-		} else if (g_list_length (selected_attachments) > 1) {
+		} else if (tny_list_get_length (selected_attachments) > 1) {
 			hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
 			error = TRUE;
 		} else {
-			mime_part = (TnyMimePart *) selected_attachments->data;
-			g_object_ref (mime_part);
+			TnyIterator *iter;
+			iter = tny_list_create_iterator (selected_attachments);
+			mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
+			g_object_unref (iter);
 		}
-		g_list_foreach (selected_attachments, (GFunc) g_object_unref, NULL);
-		g_list_free (selected_attachments);
+		g_object_unref (selected_attachments);
 
 		if (error)
 			return;
@@ -2535,9 +2536,8 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 
 
 void
-modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *mime_parts)
 {
-	gboolean clean_list = FALSE;
 	ModestMsgViewWindowPrivate *priv;
 	GList *files_to_save = NULL;
 	GtkWidget *save_dialog = NULL;
@@ -2551,24 +2551,29 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 
 	if (mime_parts == NULL) {
 		mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (mime_parts == NULL)
+		if (mime_parts == NULL || tny_list_get_length (mime_parts) == 0)
 			return;
-		clean_list = TRUE;
+	} else {
+		g_object_ref (mime_parts);
 	}
 
 	/* prepare dialog */
-	if (mime_parts->next == NULL) {
+	if (tny_list_get_length (mime_parts) == 1) {
+		TnyIterator *iter;
 		/* only one attachment selected */
-		TnyMimePart *mime_part = (TnyMimePart *) mime_parts->data;
+		iter = tny_list_create_iterator (mime_parts);
+		TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
+		g_object_unref (iter);
 		if (!TNY_IS_MSG (mime_part) && tny_mime_part_is_attachment (mime_part)) {
 			filename = tny_mime_part_get_filename (mime_part);
 		} else {
 			g_warning ("Tried to save a non-file attachment");
 			canceled = TRUE;
 		}
+		g_object_unref (mime_part);
 	} else {
 		save_multiple_str = g_strdup_printf (_FM("sfil_va_number_of_objects_attachments"), 
-						     g_list_length (mime_parts));
+						     tny_list_get_length (mime_parts));
 	}
 	
 	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
@@ -2597,40 +2602,42 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mim
 			hildon_banner_show_information 
 				(NULL, NULL, dgettext("hildon-fm", "sfil_ib_readonly_location"));
 		} else {
-			GList *node = NULL;
+			TnyIterator *iter;
 
-			for (node = mime_parts; node != NULL; node = g_list_next (node)) {
-				TnyMimePart *mime_part = (TnyMimePart *) node->data;
-				
+			iter = tny_list_create_iterator (mime_parts);
+			while (!tny_iterator_is_done (iter)) {
+				TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
+
+				tny_iterator_next (iter);
 				if (tny_mime_part_is_attachment (mime_part)) {
 					SaveMimePartPair *pair;
 
-					if ((mime_parts->next != NULL) &&
-					    (tny_mime_part_get_filename (mime_part) == NULL))
+					if ((!tny_iterator_is_done (iter)) &&
+					    (tny_mime_part_get_filename (mime_part) == NULL)) {
+						g_object_unref (mime_part);
 						continue;
+					}
 					
 					pair = g_slice_new0 (SaveMimePartPair);
-					if (mime_parts->next == NULL) {
+					if (tny_iterator_is_done (iter)) {
 						pair->filename = g_strdup (chooser_uri);
 					} else {
 						pair->filename = 
 							g_build_filename (chooser_uri,
 									  tny_mime_part_get_filename (mime_part), NULL);
 					}
-					pair->part = g_object_ref (mime_part);
+					pair->part = mime_part;
 					files_to_save = g_list_prepend (files_to_save, pair);
 				}
 			}
+			g_object_unref (iter);
 		}
 		g_free (chooser_uri);
 	}
 
 	gtk_widget_destroy (save_dialog);
 
-	if (clean_list) {
-		g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
-		g_list_free (mime_parts);
-	}
+	g_object_unref (mime_parts);
 
 	if (files_to_save != NULL) {
 		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
@@ -2666,11 +2673,12 @@ void
 modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean get_all)
 {
 	ModestMsgViewWindowPrivate *priv;
-	GList *mime_parts = NULL, *node;
+	TnyList *mime_parts = NULL;
 	gchar *confirmation_message;
 	gint response;
 	gint n_attachments;
 	TnyMsg *msg;
+	TnyIterator *iter;
 /* 	TnyFolder *folder; */
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
@@ -2682,37 +2690,42 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 		mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
 		
 	/* Remove already purged messages from mime parts list */
-	node = mime_parts;
-	while (node != NULL) {
-		TnyMimePart *part = TNY_MIME_PART (node->data);
+	iter = tny_list_create_iterator (mime_parts);
+	while (!tny_iterator_is_done (iter)) {
+		TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		tny_iterator_next (iter);
 		if (tny_mime_part_is_purged (part)) {
-			GList *deleted_node = node;
-			node = g_list_next (node);
-			g_object_unref (part);
-			mime_parts = g_list_delete_link (mime_parts, deleted_node);
-		} else {
-			node = g_list_next (node);
+			tny_list_remove (mime_parts, (GObject *) part);
 		}
+		g_object_unref (part);
+	}
+	g_object_unref (iter);
+
+	if (tny_list_get_length (mime_parts) == 0) {
+		g_object_unref (mime_parts);
+		return;
 	}
 
-	if (mime_parts == NULL)
-		return;
-
-	n_attachments = g_list_length (mime_parts);
+	n_attachments = tny_list_get_length (mime_parts);
 	if (n_attachments == 1) {
 		const gchar *filename;
+		TnyMimePart *part;
 
-		if (TNY_IS_MSG (mime_parts->data)) {
+		iter = tny_list_create_iterator (mime_parts);
+		part = (TnyMimePart *) tny_iterator_get_current (iter);
+		g_object_unref (iter);
+		if (TNY_IS_MSG (part)) {
 			TnyHeader *header;
-			header = tny_msg_get_header (TNY_MSG (mime_parts->data));
+			header = tny_msg_get_header (TNY_MSG (part));
 			filename = tny_header_get_subject (header);
 			g_object_unref (header);
 			if (filename == NULL)
 				filename = _("mail_va_no_subject");
 		} else {
-			filename = tny_mime_part_get_filename (TNY_MIME_PART (mime_parts->data));
+			filename = tny_mime_part_get_filename (TNY_MIME_PART (part));
 		}
 		confirmation_message = g_strdup_printf (_("mcen_nc_purge_file_text"), filename);
+		g_object_unref (part);
 	} else {
 		confirmation_message = g_strdup_printf (ngettext("mcen_nc_purge_file_text", 
 								 "mcen_nc_purge_files_text", 
@@ -2722,8 +2735,10 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 							    confirmation_message);
 	g_free (confirmation_message);
 
-	if (response != GTK_RESPONSE_OK)
+	if (response != GTK_RESPONSE_OK) {
+		g_object_unref (mime_parts);
 		return;
+	}
 
 	priv->purge_timeout = g_timeout_add (2000, show_remove_attachment_information, window);
 /* 	folder = tny_msg_get_folder (msg); */
@@ -2731,18 +2746,25 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 /* 	tny_folder_refresh (folder, NULL); */
 /* 	g_object_unref (folder); */
 	
-	for (node = mime_parts; node != NULL; node = g_list_next (node)) {
-		tny_mime_part_set_purged (TNY_MIME_PART (node->data));
+	iter = tny_list_create_iterator (mime_parts);
+	while (!tny_iterator_is_done (iter)) {
+		TnyMimePart *part;
+
+		part = (TnyMimePart *) tny_iterator_get_current (iter);
+		tny_mime_part_set_purged (TNY_MIME_PART (part));
 /* 		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data); */
+		g_object_unref (part);
+		tny_iterator_next (iter);
 	}
+	g_object_unref (iter);
 
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 	tny_msg_view_clear (TNY_MSG_VIEW (priv->msg_view));
 	tny_msg_rewrite_cache (msg);
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	g_object_unref (msg);
 
-	g_list_foreach (mime_parts, (GFunc) g_object_unref, NULL);
-	g_list_free (mime_parts);
+	g_object_unref (mime_parts);
 
 	if (priv->purge_timeout > 0) {
 		g_source_remove (priv->purge_timeout);

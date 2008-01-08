@@ -61,8 +61,8 @@ struct _ModestMsgViewIface {
 	GtkShadowType (*get_shadow_type_func) (ModestMsgView *self);
 	TnyHeaderFlags (*get_priority_func) (ModestMsgView *self);
 	void (*set_priority_func) (ModestMsgView *self, TnyHeaderFlags flags);
-	GList * (*get_selected_attachments_func) (ModestMsgView *self);
-	GList * (*get_attachments_func) (ModestMsgView *self);
+	TnyList * (*get_selected_attachments_func) (ModestMsgView *self);
+	TnyList * (*get_attachments_func) (ModestMsgView *self);
 	void (*grab_focus_func) (ModestMsgView *self);
 	void (*remove_attachment_func) (ModestMsgView *view, TnyMimePart *attachment);
 
@@ -100,8 +100,8 @@ GtkShadowType modest_msg_view_get_shadow_type (ModestMsgView *self);
 
 TnyHeaderFlags modest_msg_view_get_priority (ModestMsgView *self);
 void modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags);
-GList *modest_msg_view_get_selected_attachments (ModestMsgView *self);
-GList *modest_msg_view_get_attachments (ModestMsgView *self);
+TnyList *modest_msg_view_get_selected_attachments (ModestMsgView *self);
+TnyList *modest_msg_view_get_attachments (ModestMsgView *self);
 void modest_msg_view_grab_focus (ModestMsgView *self);
 void modest_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 

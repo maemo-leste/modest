@@ -255,8 +255,8 @@ struct _ModestMsgEditWindowPrivate {
 	gint        last_vadj_upper;
 
 	gint last_cid;
-	GList *attachments;
-	GList *images;
+	TnyList *attachments;
+	TnyList *images;
 
 	TnyHeaderFlags priority_flags;
 	
@@ -387,8 +387,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->cc_field      = NULL;
 	priv->bcc_field     = NULL;
 	priv->subject_field = NULL;
-	priv->attachments   = NULL;
-	priv->images        = NULL;
+	priv->attachments   = TNY_LIST (tny_simple_list_new ());
+	priv->images        = TNY_LIST (tny_simple_list_new ());
 	priv->last_cid      = 0;
 
 	priv->cc_caption    = NULL;
@@ -798,10 +798,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 	g_free (priv->last_search);
 	g_slist_free (priv->font_items_group);
 	g_slist_free (priv->size_items_group);
-	g_list_foreach (priv->attachments, (GFunc) g_object_unref, NULL);
-	g_list_free (priv->attachments);
-	g_list_foreach (priv->images, (GFunc) g_object_unref, NULL);
-	g_list_free (priv->images);
+	g_object_unref (priv->attachments);
+	g_object_unref (priv->images);
 
 	/* This had to stay alive for as long as the combobox that used it: */
 	modest_pair_list_free (priv->from_field_protos);
@@ -848,15 +846,17 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type)
 }
 
 static void
-replace_with_images (ModestMsgEditWindow *self, GList *attachments)
+replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 {
 	ModestMsgEditWindowPrivate *priv;
-	GList *node;
+	TnyIterator *iter;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
-	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		TnyMimePart *part = (TnyMimePart *) node->data;
+	for (iter = tny_list_create_iterator (attachments);
+	     !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyMimePart *part = (TnyMimePart *) tny_iterator_get_current (iter);
 		const gchar *cid = tny_mime_part_get_content_id (part);
 		const gchar *mime_type = tny_mime_part_get_content_type (part);
 		if ((cid != NULL)&&(mime_type != NULL)) {
@@ -869,6 +869,7 @@ replace_with_images (ModestMsgEditWindow *self, GList *attachments)
 				g_object_unref (pixbuf);
 			}
 		}
+		g_object_unref (part);
 	}
 }
 
@@ -916,10 +917,9 @@ get_related_images (ModestMsgEditWindow *self, TnyMsg *msg)
 			part = TNY_MIME_PART (tny_iterator_get_current (iter));
 			content_type = tny_mime_part_get_content_type (part);
 			if (content_type && g_str_has_prefix (content_type, "image/")) {
-				priv->images = g_list_prepend (priv->images, part);
-			} else {
-				g_object_unref (part);
-			}
+				tny_list_prepend (priv->images, (GObject *) part);
+			} 
+			g_object_unref (part);
 			tny_iterator_next (iter);
 		}
 		g_object_unref (iter);
@@ -929,13 +929,15 @@ get_related_images (ModestMsgEditWindow *self, TnyMsg *msg)
 }
 
 static void
-update_last_cid (ModestMsgEditWindow *self, GList *attachments)
+update_last_cid (ModestMsgEditWindow *self, TnyList *attachments)
 {
-	GList *node;
+	TnyIterator *iter;
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
-	for (node = attachments; node != NULL; node = g_list_next (node)) {
-		TnyMimePart *part = (TnyMimePart *) node->data;
+	for (iter = tny_list_create_iterator (attachments) ; 
+	     !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyMimePart *part = (TnyMimePart *) tny_iterator_get_current (iter);
 		const gchar *cid = tny_mime_part_get_content_id (part);
 		if (cid != NULL) {
 			char *invalid = NULL;
@@ -944,7 +946,7 @@ update_last_cid (ModestMsgEditWindow *self, GList *attachments)
 				priv->last_cid = int_cid;
 			}
 		}
-		
+		g_object_unref (part);
 	}
 }
 
@@ -1015,7 +1017,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	/* Add attachments to the view */
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
 	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-	if (priv->attachments == NULL) {
+	if (tny_list_get_length (priv->attachments) == 0) {
 		gtk_widget_hide (priv->attachments_caption);
 	} else {
 		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
@@ -1396,6 +1398,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	MsgData *data;
 	const gchar *account_name;
 	ModestMsgEditWindowPrivate *priv;
+	TnyIterator *att_iter;
 	
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window), NULL);
 
@@ -1433,30 +1436,35 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 		data->html_body = NULL;
 
 	/* deep-copy the data */
-	GList *cursor = priv->attachments;
+	att_iter = tny_list_create_iterator (priv->attachments);
 	data->attachments = NULL;
-	while (cursor) {
-		if (!(TNY_IS_MIME_PART(cursor->data))) {
+	while (!tny_iterator_is_done (att_iter)) {
+		TnyMimePart *part = (TnyMimePart *) tny_iterator_get_current (att_iter);
+		if (!(TNY_IS_MIME_PART(part))) {
 			g_warning ("strange data in attachment list");
-			cursor = g_list_next (cursor);
+			g_object_unref (part);
+			tny_iterator_next (att_iter);
 			continue;
 		}
 		data->attachments = g_list_append (data->attachments,
-						   g_object_ref (cursor->data));
-		cursor = g_list_next (cursor);
+						   part);
+		tny_iterator_next (att_iter);
 	}
+	g_object_unref (att_iter);
 
 	GtkTextTagTable *tag_table = gtk_text_buffer_get_tag_table (GTK_TEXT_BUFFER (priv->text_buffer));
-	cursor = priv->images;
+	att_iter = tny_list_create_iterator (priv->images);
 	data->images = NULL;
-	while (cursor) {
+	while (!tny_iterator_is_done (att_iter)) {
+		TnyMimePart *part = (TnyMimePart *) tny_iterator_get_current (att_iter);
 		const gchar *cid;
-		if (!(TNY_IS_MIME_PART(cursor->data))) {
+		if (!(TNY_IS_MIME_PART(part))) {
 			g_warning ("strange data in attachment list");
-			cursor = g_list_next (cursor);
+			g_object_unref (part);
+			tny_iterator_next (att_iter);
 			continue;
 		}
-		cid = tny_mime_part_get_content_id (cursor->data);
+		cid = tny_mime_part_get_content_id (part);
 		if (cid) {			
 			gchar *image_tag_id;
 			GtkTextTag *image_tag;
@@ -1470,9 +1478,10 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 			    ((gtk_text_iter_has_tag (&iter, image_tag))||
 			     (gtk_text_iter_forward_to_tag_toggle (&iter, image_tag))))
 				data->images = g_list_append (data->images,
-							      g_object_ref (cursor->data));
+							      g_object_ref (part));
 		}
-		cursor = g_list_next (cursor);
+		g_object_unref (part);
+		tny_iterator_next (att_iter);
 	}
 	
 	data->priority_flags = priv->priority_flags;
@@ -1974,9 +1983,10 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (mime_part)), pixbuf);
 			} 
 
-			priv->images = g_list_prepend (priv->images, mime_part);
+			tny_list_prepend (priv->images, (GObject *) mime_part);
 			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 			g_free (filename);
+			g_object_unref (mime_part);
 
 		}
 	}
@@ -2056,6 +2066,8 @@ modest_msg_edit_window_attach_file_one (
 		stream = TNY_STREAM (tny_vfs_stream_new (handle));
 		
 		tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+
+		g_object_unref (stream);
 		
 		content_id = g_strdup_printf ("%d", priv->last_cid);
 		tny_mime_part_set_content_id (mime_part, content_id);
@@ -2066,43 +2078,48 @@ modest_msg_edit_window_attach_file_one (
 		tny_mime_part_set_filename (mime_part, basename);
 		g_free (basename);
 		
-		priv->attachments = g_list_prepend (priv->attachments, g_object_ref(mime_part));
+		tny_list_prepend (priv->attachments, (GObject *) mime_part);
 		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 							mime_part);
 		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 		gtk_widget_show_all (priv->attachments_caption);
 		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 		g_free (filename);
+		g_object_unref (mime_part);
 	}
 }
 
 void
 modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
-					  GList *att_list)
+					   TnyList *att_list)
 {
 	ModestMsgEditWindowPrivate *priv;
-	gboolean clean_list = FALSE;
+	TnyIterator *iter;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	if (att_list == NULL) {
 		att_list = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-		clean_list = TRUE;
+	} else {
+		g_object_ref (att_list);
 	}
 
-	if (att_list == NULL) {
+	if (tny_list_get_length (att_list) == 0) {
 		hildon_banner_show_information (NULL, NULL, _("TODO: no attachments selected to remove"));
 	} else {
 		GtkWidget *confirmation_dialog = NULL;
 		gboolean dialog_response;
-		GList *node;
 		gchar *message = NULL;
 		gchar *filename = NULL;
 
-		if (att_list->next == NULL) {
-			if (TNY_IS_MSG (att_list->data)) {
-				TnyHeader *header = tny_msg_get_header (TNY_MSG (att_list->data));
+		if (tny_list_get_length (att_list) == 1) {
+			TnyMimePart *part;
+			iter = tny_list_create_iterator (att_list);
+			part = (TnyMimePart *) tny_iterator_get_current (iter);
+			g_object_unref (iter);
+			if (TNY_IS_MSG (part)) {
+				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
 				if (header) {
 					filename = g_strdup (tny_header_get_subject (header));
 					g_object_unref (header);
@@ -2111,45 +2128,46 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 					filename = g_strdup (_("mail_va_no_subject"));
 				}
 			} else {
-				filename = g_strdup (tny_mime_part_get_filename (TNY_MIME_PART (att_list->data)));
+				filename = g_strdup (tny_mime_part_get_filename (TNY_MIME_PART (part)));
 			}
+			g_object_unref (part);
 		} else {
 			filename = g_strdup ("");
 		}
 		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", "emev_nc_delete_attachments",
-						    att_list->next == NULL), filename);
+						    (tny_list_get_length (att_list) == 1)), filename);
 		g_free (filename);
 		confirmation_dialog = hildon_note_new_confirmation (GTK_WINDOW (window), message);
 		g_free (message);
 		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
 		gtk_widget_destroy (confirmation_dialog);
 		if (!dialog_response) {
-			if (clean_list)
-				g_list_free (att_list);
+			g_object_unref (att_list);
 			return;
 		}
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_removing_attachment"));
-
-		for (node = att_list; node != NULL; node = g_list_next (node)) {
-			TnyMimePart *mime_part = (TnyMimePart *) node->data;
+		
+		for (iter = tny_list_create_iterator (att_list);
+		     !tny_iterator_is_done (iter);
+		     tny_iterator_next (iter)) {
+			TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 			const gchar *att_id;
-			priv->attachments = g_list_remove (priv->attachments, mime_part);
+			tny_list_remove (priv->attachments, (GObject *) mime_part);
 
 			modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 								   mime_part);
-			if (priv->attachments == NULL)
+			if (tny_list_get_length (priv->attachments) == 0)
 				gtk_widget_hide (priv->attachments_caption);
 			att_id = tny_mime_part_get_content_id (mime_part);
 			if (att_id != NULL)
 				text_buffer_delete_images_by_id (gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)),
 								 att_id);
-			g_object_unref (mime_part);
 			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+			g_object_unref (mime_part);
 		}
 	}
 
-	if (clean_list)
-		g_list_free (att_list);
+	g_object_unref (att_list);
 
 	/* if the last attachment has been removed, focus the Subject: field */
 	if (!modest_attachments_view_has_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view))) 
@@ -3175,8 +3193,7 @@ modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	g_return_if_fail (TNY_IS_MIME_PART (part));
-	priv->attachments = g_list_prepend (priv->attachments, part);
-	g_object_ref (part);
+	tny_list_prepend (priv->attachments, (GObject *) part);
 	modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), part);
 	gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 	gtk_widget_show_all (priv->attachments_caption);

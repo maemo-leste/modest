@@ -148,8 +148,8 @@ static void modest_gtkhtml_msg_view_set_shadow_type (ModestMsgView *self, GtkSha
 static GtkShadowType modest_gtkhtml_msg_view_get_shadow_type (ModestMsgView *self);
 static TnyHeaderFlags modest_gtkhtml_msg_view_get_priority (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags);
-static GList *modest_gtkhtml_msg_view_get_selected_attachments (ModestMsgView *self);
-static GList *modest_gtkhtml_msg_view_get_attachments (ModestMsgView *self);
+static TnyList *modest_gtkhtml_msg_view_get_selected_attachments (ModestMsgView *self);
+static TnyList *modest_gtkhtml_msg_view_get_attachments (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_grab_focus (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 static GtkAdjustment *modest_gtkhtml_msg_view_get_vadjustment_default (ModestMsgView *self);
@@ -160,8 +160,8 @@ static void modest_gtkhtml_msg_view_set_shadow_type_default (ModestMsgView *self
 static GtkShadowType modest_gtkhtml_msg_view_get_shadow_type_default (ModestMsgView *self);
 static TnyHeaderFlags modest_gtkhtml_msg_view_get_priority_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_set_priority_default (ModestMsgView *self, TnyHeaderFlags flags);
-static GList *modest_gtkhtml_msg_view_get_selected_attachments_default (ModestMsgView *self);
-static GList *modest_gtkhtml_msg_view_get_attachments_default (ModestMsgView *self);
+static TnyList *modest_gtkhtml_msg_view_get_selected_attachments_default (ModestMsgView *self);
+static TnyList *modest_gtkhtml_msg_view_get_attachments_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
 
@@ -181,8 +181,8 @@ static void set_shadow_type (ModestGtkhtmlMsgView *self, GtkShadowType type);
 static GtkShadowType get_shadow_type (ModestGtkhtmlMsgView *self);
 static TnyHeaderFlags get_priority (ModestGtkhtmlMsgView *self);
 static void set_priority (ModestGtkhtmlMsgView *self, TnyHeaderFlags flags);
-static GList *get_selected_attachments (ModestGtkhtmlMsgView *self);
-static GList *get_attachments (ModestGtkhtmlMsgView *self);
+static TnyList *get_selected_attachments (ModestGtkhtmlMsgView *self);
+static TnyList *get_attachments (ModestGtkhtmlMsgView *self);
 static void grab_focus (ModestGtkhtmlMsgView *self);
 static void remove_attachment (ModestGtkhtmlMsgView *view, TnyMimePart *attachment);
 
@@ -1633,7 +1633,7 @@ search_next (ModestGtkhtmlMsgView *self)
 	return result;
 }
 
-static GList *
+static TnyList *
 get_selected_attachments (ModestGtkhtmlMsgView *self)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
@@ -1645,7 +1645,7 @@ get_selected_attachments (ModestGtkhtmlMsgView *self)
 	
 }
 
-static GList *
+static TnyList *
 get_attachments (ModestGtkhtmlMsgView *self)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
@@ -2070,25 +2070,25 @@ modest_gtkhtml_msg_view_get_priority_default (ModestMsgView *self)
 	return get_priority (MODEST_GTKHTML_MSG_VIEW (self));
 }
 
-static GList*
+static TnyList*
 modest_gtkhtml_msg_view_get_selected_attachments (ModestMsgView *self)
 {
 	return MODEST_GTKHTML_MSG_VIEW_GET_CLASS (self)->get_selected_attachments_func (self);
 }
 
-static GList*
+static TnyList*
 modest_gtkhtml_msg_view_get_selected_attachments_default (ModestMsgView *self)
 {
 	return get_selected_attachments (MODEST_GTKHTML_MSG_VIEW (self));
 }
 
-static GList*
+static TnyList*
 modest_gtkhtml_msg_view_get_attachments (ModestMsgView *self)
 {
 	return MODEST_GTKHTML_MSG_VIEW_GET_CLASS (self)->get_attachments_func (self);
 }
 
-static GList*
+static TnyList*
 modest_gtkhtml_msg_view_get_attachments_default (ModestMsgView *self)
 {
 	return get_attachments (MODEST_GTKHTML_MSG_VIEW (self));

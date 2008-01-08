@@ -431,3 +431,27 @@ modest_utils_toggle_action_set_active_block_notify (GtkToggleAction *action, gbo
 
 }
 
+
+gint 
+modest_list_index (TnyList *list, GObject *object)
+{
+	TnyIterator *iter;
+	gint index = 0;
+
+	iter = tny_list_create_iterator (list);
+	while (!tny_iterator_is_done (iter)) {
+		GObject *current = tny_iterator_get_current (iter);
+
+		g_object_unref (current);
+		if (current == object)
+			break;
+
+		tny_iterator_next (iter);
+		index++;
+	}
+
+	if (tny_iterator_is_done (iter))
+		index = -1;
+	g_object_unref (iter);
+	return index;
+}

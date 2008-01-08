@@ -124,4 +124,15 @@ void modest_utils_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *d
  */
 void modest_utils_toggle_action_set_active_block_notify (GtkToggleAction *action, gboolean value);
 
+/**
+ * modest_list_index:
+ * @list: a #TnyList
+ * @object: a #GObject
+ *
+ * finds the index of @object in @list
+ *
+ * Returns: the index of @object, or -1 if @object is not in @list
+ */
+gint modest_list_index (TnyList *list, GObject *object);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/
