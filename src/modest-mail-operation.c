@@ -2547,13 +2547,18 @@ notify_progress_of_multiple_messages (ModestMailOperation *self,
 {
 	ModestMailOperationPrivate *priv;
 	ModestMailOperationState *state;
-	gboolean is_num_bytes;
+	gboolean is_num_bytes = FALSE;
 
 	priv = 	MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	/* We know that tinymail sends us information about
-	   transferred bytes with this particular message */
-	is_num_bytes = (g_ascii_strcasecmp (status->message, "Retrieving message") == 0);
+	 *  transferred bytes with this particular message
+	 *  
+	 *  (FIXME: this is very ugly, and no I (djcb) didn't write this code,
+	 *  I just added the 'if' so we don't get runtime warning)
+	 */
+	if (status->message)
+		is_num_bytes = (g_ascii_strcasecmp (status->message, "Retrieving message") == 0);
 
 	state = modest_mail_operation_clone_state (self);
 	if (is_num_bytes && !((status->position == 1) && (status->of_total == 100))) {
