@@ -1165,9 +1165,13 @@ on_modal_dialog_close (GtkDialog *dialog,
 gint 
 modest_window_mgr_num_windows (ModestWindowMgr *self)
 {
-	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+	ModestWindowMgrPrivate *priv;
 	gint num_windows = 0;
 
+	g_return_val_if_fail (self && MODEST_IS_WINDOW_MGR(self), -1);
+	
+	priv =  MODEST_WINDOW_MGR_GET_PRIVATE(self);
+	
 	if (priv->window_list)
 		num_windows = g_list_length (priv->window_list);
 
@@ -1178,8 +1182,12 @@ GtkWidget *
 modest_window_mgr_get_msg_edit_window (ModestWindowMgr *self)
 {
 	GtkWidget *result;
-	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+	ModestWindowMgrPrivate *priv;
 
+	g_return_val_if_fail (self && MODEST_IS_WINDOW_MGR(self), NULL);
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+		
 	if (priv->cached_editor) {
 		result = priv->cached_editor;
 		priv->cached_editor = NULL;
@@ -1195,7 +1203,11 @@ GtkWidget *
 modest_window_mgr_get_msg_view_window (ModestWindowMgr *self)
 {
 	GtkWidget *result;
-	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
+	ModestWindowMgrPrivate *priv;
+
+	g_return_val_if_fail (self && MODEST_IS_WINDOW_MGR(self), NULL);
+	
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE(self);
 
 	if (priv->cached_view) {
 		result = priv->cached_view;
@@ -1207,3 +1219,4 @@ modest_window_mgr_get_msg_view_window (ModestWindowMgr *self)
 
 	return result;
 }
+
