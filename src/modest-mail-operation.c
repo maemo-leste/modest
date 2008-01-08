@@ -3026,6 +3026,10 @@ modest_mail_operation_to_string (ModestMailOperation *self)
 	g_return_val_if_fail (self, NULL);
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	/* new operations don't have anything interesting */
+	if (priv->op_type == MODEST_MAIL_OPERATION_TYPE_UNKNOWN)
+		return g_strdup_printf ("%p <new operation>", self);
 	
 	switch (priv->op_type) {
 	case MODEST_MAIL_OPERATION_TYPE_SEND:    type= "SEND";    break;
@@ -3048,7 +3052,7 @@ modest_mail_operation_to_string (ModestMailOperation *self)
 	} 
 
 	account_id = priv->account ? tny_account_get_id (priv->account) : "";
-	
+
 	return g_strdup_printf ("%p \"%s\" (%s) [%s] {%d/%d} '%s'", self, account_id,type, status,
 				priv->done, priv->total,
 				priv->error && priv->error->message ? priv->error->message : "");

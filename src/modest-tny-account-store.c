@@ -614,7 +614,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	g_return_val_if_fail (account, NULL);
 	
 	MODEST_DEBUG_BLOCK(
-		g_debug ("DEBUG: modest: %s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
+		g_debug ("%s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
 	);
 	
 	/* Initialize the output parameter: */
@@ -647,7 +647,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 						      NULL,
 						      (gpointer*)&pwd_ptr);
 	MODEST_DEBUG_BLOCK(
-		g_debug ("DEBUG: modest: %s: Already asked = %d\n", __FUNCTION__, already_asked);
+		g_debug ("%s: Already asked = %d\n", __FUNCTION__, already_asked);
 	);
 		
 	/* If the password is not already there, try ModestConf */
@@ -666,7 +666,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		const gboolean settings_have_password = 
 			modest_account_mgr_get_server_account_has_password (priv->account_mgr, server_account_name);
 		MODEST_DEBUG_BLOCK(
-			printf ("DEBUG: modest: %s: settings_have_password=%d\n",
+			printf ("%s: settings_have_password=%d\n",
 				__FUNCTION__, settings_have_password);
 		);
 		if (settings_have_password) {
@@ -763,7 +763,6 @@ modest_tny_account_store_forget_already_asked (ModestTnyAccountStore *self, TnyA
 static void
 forget_password (TnyAccount *account)
 {
-	printf ("DEBUG: %s\n", __FUNCTION__);
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	const TnyAccountStore *account_store;
