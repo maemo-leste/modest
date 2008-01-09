@@ -79,6 +79,8 @@ modest_utils_file_exists (const gchar *filename)
 	GnomeVFSURI *uri = NULL;
 	gboolean result = FALSE;
 
+	g_return_val_if_fail (filename, FALSE);
+	
 	uri = gnome_vfs_uri_new (filename);
 	if (uri) {
 		result = gnome_vfs_uri_exists (uri);
@@ -187,18 +189,18 @@ on_idle_secure_auth_finished (gpointer user_data)
 }
 
 static void
-on_camel_account_get_supported_secure_authentication (
-  TnyCamelAccount *self, gboolean cancelled,
-  TnyList *auth_types, GError *err, 
-  gpointer user_data)
+on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gboolean cancelled,
+	TnyList *auth_types, GError *err, gpointer user_data)
 {
+	g_return_if_fail (TNY_IS_CAMEL_ACCOUNT(self));
+	g_return_if_fail (TNY_IS_LIST(auth_types));
+	
 	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	g_return_if_fail (info);
 	
 
 	/* Free everything if the actual action was canceled */
-	if (info->cancel)
-	{
+	if (info->cancel) {
 		/* The operation was canceled and the ownership of the info given to us
 		 * so that we could still check the cancel flag. */
 		g_slice_free (ModestGetSupportedAuthInfo, info);
@@ -206,8 +208,7 @@ on_camel_account_get_supported_secure_authentication (
 	}
 	else
 	{
-		if (err)
-		{
+		if (err) {
 			if (info->error) {
 				g_error_free (info->error);
 				info->error = NULL;
@@ -219,10 +220,9 @@ on_camel_account_get_supported_secure_authentication (
 		if (!auth_types) {
 			g_warning ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
 		}
-		else if (tny_list_get_length(auth_types) == 0) {
+		else if (tny_list_get_length(auth_types) == 0) 
 			g_warning ("DEBUG: %s: auth_types is an empty TnyList.\n", __FUNCTION__);
-		} else
-		{
+		else {
 			ModestPairList* pairs = modest_protocol_info_get_auth_protocol_pair_list ();
   
 			/* Get the enum value for the strings: */
@@ -262,8 +262,9 @@ on_camel_account_get_supported_secure_authentication (
 static void
 on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
 {
-	if(response == GTK_RESPONSE_REJECT || response == GTK_RESPONSE_DELETE_EVENT)
-	{
+	g_return_if_fail (GTK_IS_WIDGET(dialog));
+	
+	if(response == GTK_RESPONSE_REJECT || response == GTK_RESPONSE_DELETE_EVENT) {
 		ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 		g_return_if_fail(info);
 		/* This gives the ownership of the info to the worker thread. */
@@ -397,6 +398,9 @@ void
 modest_utils_show_dialog_and_forget (GtkWindow *parent_window, 
 				     GtkDialog *dialog)
 {
+	g_return_if_fail (GTK_IS_WINDOW(parent_window));
+	g_return_if_fail (GTK_IS_DIALOG(dialog));
+
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
 	
 	/* Destroy the dialog when it is closed: */
@@ -438,6 +442,9 @@ modest_list_index (TnyList *list, GObject *object)
 	TnyIterator *iter;
 	gint index = 0;
 
+	g_return_val_if_fail (TNY_IS_LIST(list), -1);
+	g_return_val_if_fail (G_IS_OBJECT(object), -1);
+	
 	iter = tny_list_create_iterator (list);
 	while (!tny_iterator_is_done (iter)) {
 		GObject *current = tny_iterator_get_current (iter);

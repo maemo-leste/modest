@@ -65,21 +65,6 @@
 #define HYPERLINKIFY_MAX_LENGTH (1024*50)
 
 
-/*
- * we mark the ampersand with \007 when converting text->html
- * because after text->html we do hyperlink detecting, which
- * could be screwed up by the ampersand.
- * ie. 1<3 ==> 1\007lt;3
- */
-#define MARK_AMP '\007'
-#define MARK_AMP_STR "\007"
-
-/* mark &amp; separately, because they are parts of urls.
- * ie. a&b => 1\008amp;b
- */
-#define MARK_AMP_URI '\006'
-#define MARK_AMP_URI_STR "\006"
-
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -98,9 +83,34 @@ struct _url_match_t {
 	const gchar* prefix;
 };
 
+
+/*
+ * we mark the ampersand with \007 when converting text->html
+ * because after text->html we do hyperlink detecting, which
+ * could be screwed up by the ampersand.
+ * ie. 1<3 ==> 1\007lt;3
+ */
+#define MARK_AMP '\007'
+#define MARK_AMP_STR "\007"
+
+/* mark &amp; separately, because they are parts of urls.
+ * ie. a&b => a\006amp;b, but a>b => a\007gt;b
+ *
+ * we need to handle '&' separately, because it can be part of URIs
+ * (as in href="http://foo.bar?a=1&b=1"), so inside those URIs
+ * we need to re-replace \006amp; with '&' again, while outside uri's
+ * it will be '&amp;'
+ * 
+ * yes, it's messy, but a consequence of doing text->html first, then hyperlinkify
+ */
+#define MARK_AMP_URI '\006'
+#define MARK_AMP_URI_STR "\006"
+
+
 /* note: match MARK_AMP_URI_STR as well, because after txt->html, a '&' will look like $(MARK_AMP_URI_STR)"amp;" */
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|rtsp|http|ftp|https|mms|mmsh|rtsp|rdp|lastfm)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
+	{ "(file|rtsp|http|ftp|https|mms|mmsh|rtsp|rdp|lastfm)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR \
+			"]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",	\
 	  NULL, NULL },\
 	{ "www\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
 			NULL, "http://" },				\
@@ -221,6 +231,8 @@ forward_cite (const gchar *from,
 	      const gchar *to,
 	      const gchar *subject)
 {
+	g_return_val_if_fail (sent, NULL);
+	
 	return g_strdup_printf ("%s\n%s %s\n%s %s\n%s %s\n%s %s\n", 
 				FORWARD_STRING, 
 				FROM_STRING, (from)?from:"",
@@ -570,6 +582,8 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	const gchar *my_addrs = addresses;
 	const gchar *end;
 	gchar *addr;
+
+	g_return_val_if_fail (addresses, NULL);
 	
 	/* skip any space, ',', ';' at the start */
 	while (my_addrs && (my_addrs[0] == ' ' || my_addrs[0] == ',' || my_addrs[0] == ';'))
@@ -1219,7 +1233,7 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 	/* if it's not case sensitive */
 	if (!insensitive) {
 
-		/* optimization: short cut if first char is ascii */ 
+		/* optimization: shortcut if first char is ascii */ 
 		if (((s1[0] & 0xf0)== 0) && ((s2[0] & 0xf0) == 0)) 
 			return s1[0] - s2[0];
 		
