@@ -2600,7 +2600,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 {
 	gchar *suggested_name = (gchar *) user_data;
 	GtkWindow *source_win = (GtkWindow *) modest_mail_operation_get_source (mail_op);
-		
+
 	if (modest_mail_operation_get_error (mail_op)) {
 		/* Show an error */
 		modest_platform_information_banner (GTK_WIDGET (source_win), NULL,
@@ -2940,9 +2940,10 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		info->folder = folder;
 		info->move_to_trash = move_to_trash;
 		g_object_ref (G_OBJECT (info->folder));
-		TnyAccount *account = tny_folder_get_account(TNY_FOLDER(folder));
-		modest_platform_connect_and_perform (GTK_WINDOW (main_window), 
-				account, on_delete_folder_cb, info);
+		TnyAccount *account = tny_folder_get_account (TNY_FOLDER (folder));
+		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (main_window), 
+							       TNY_FOLDER_STORE (account), 
+							       on_delete_folder_cb, info);
 		g_object_unref (account);
 	}
 	g_object_unref (G_OBJECT (folder));
