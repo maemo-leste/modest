@@ -1484,7 +1484,11 @@ on_account_inserted (TnyAccountStore *accoust_store,
                      TnyAccount *account,
                      gpointer user_data)
 {
-	update_menus (MODEST_MAIN_WINDOW (user_data));
+	/* Transport accounts and local ones (MMC and the Local
+	   folders account do now cause menu changes */
+	if (TNY_IS_STORE_ACCOUNT (account) && 
+	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		update_menus (MODEST_MAIN_WINDOW (user_data));
 }
 
 static void
@@ -1499,7 +1503,11 @@ on_account_removed (TnyAccountStore *accoust_store,
                      TnyAccount *account,
                      gpointer user_data)
 {
-	update_menus (MODEST_MAIN_WINDOW (user_data));
+	/* Transport accounts and local ones (MMC and the Local
+	   folders account do now cause menu changes */
+	if (TNY_IS_STORE_ACCOUNT (account) && 
+	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		update_menus (MODEST_MAIN_WINDOW (user_data));
 }
 
 static void
@@ -1514,8 +1522,12 @@ on_account_changed (TnyAccountStore *account_store,
 		modest_main_window_set_contents_style (win, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
 	}
 
-	/* Update the menus as well, the account name could be changed */
-	update_menus (MODEST_MAIN_WINDOW (user_data));
+	/* Update the menus as well, the account name could be
+	   changed. Transport accounts and local ones (MMC and the
+	   Local folders account do now cause menu changes */
+	if (TNY_IS_STORE_ACCOUNT (account) && 
+	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		update_menus (MODEST_MAIN_WINDOW (user_data));
 }
 
 /* 
