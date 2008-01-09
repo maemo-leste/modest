@@ -43,7 +43,10 @@ endif
 EXTRA_DIST=                 \
 	mkinstalldirs       \
 	autogen.sh          \
+	NEWS		    \
+	ChangeLog	    \
 	COPYING             \
+	HACKING	            \
 	intltool-extract.in \
 	intltool-merge.in   \
 	intltool-update.in  \
@@ -55,3 +58,10 @@ DISTCLEANFILES =            \
 	intltool-extract.in \
 	intltool-merge.in   \
 	intltool-update.in
+
+# we install the NEWS file, so we can give
+# a nice release note dialog when updating 
+# (using the postinst thingie in debian/
+NEWS_FILE=NEWS
+newsdir=$(datadir)/modest/data
+news_DATA = $(NEWS_FILE)
