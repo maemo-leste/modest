@@ -1572,10 +1572,10 @@ enable_buttons (ModestAccountSettingsDialog *self)
 	
 	/* The account details title is mandatory: */
 	if (entry_is_empty(self->entry_account_title))
-			enable_ok = FALSE;
+		enable_ok = FALSE;
 
 	/* The user details username is mandatory: */
-	if (entry_is_empty(self->entry_user_username))
+	if (enable_ok && entry_is_empty(self->entry_user_username))
 		enable_ok = FALSE;
 		
 	/* The user details email address is mandatory: */
@@ -1583,7 +1583,11 @@ enable_buttons (ModestAccountSettingsDialog *self)
 		enable_ok = FALSE;
 
 	/* The custom incoming server is mandatory: */
-	if (entry_is_empty(self->entry_incomingserver))
+	if (enable_ok && entry_is_empty(self->entry_incomingserver))
+		enable_ok = FALSE;
+
+	/* The custom incoming server is mandatory: */
+	if (enable_ok && entry_is_empty(self->entry_outgoingserver))
 		enable_ok = FALSE;
 
 	/* Outgoing username is mandatory if outgoing auth is secure */
