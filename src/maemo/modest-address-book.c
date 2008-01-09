@@ -625,22 +625,6 @@ add_to_address_book (const gchar* address)
 	return TRUE;
 }
 
-static gboolean
-show_check_names_banner (gpointer data)
-{
-	GtkWidget **banner = (GtkWidget **) data;
-
-	/* We're outside the main lock */
-	gdk_threads_enter ();
-
-	*banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
-	g_object_ref (G_OBJECT (*banner));
-
-	gdk_threads_leave ();
-
-	return FALSE;
-}
-
 gboolean
 modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
 {
@@ -652,22 +636,16 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	gint offset_delta = 0;
 	gint last_length;
 	GtkTextIter start_iter, end_iter;
-	GtkWidget *banner = NULL;
-	guint show_banner_timeout;
 
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
 
-	show_banner_timeout = g_timeout_add (2000, show_check_names_banner, &banner);
+	modest_platform_information_banner (NULL, NULL, _("mail_ib_checking_names"));
+
 	recipients = modest_recpt_editor_get_recipients (recpt_editor);
 	last_length = g_utf8_strlen (recipients, -1);
 	modest_text_utils_get_addresses_indexes (recipients, &start_indexes, &end_indexes);
 
 	if (start_indexes == NULL) {
-		g_source_remove (show_banner_timeout);
-		if (banner != NULL) {
-			gtk_widget_destroy (banner);
-			g_object_unref (G_OBJECT(banner));
-		}
 		if (last_length != 0) {
 			hildon_banner_show_information (NULL, NULL, _("mcen_nc_no_matching_contacts"));
 			return FALSE;
@@ -777,12 +755,6 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	if (current_start == NULL) {
 		gtk_text_buffer_get_end_iter (buffer, &end_iter);
 		gtk_text_buffer_place_cursor (buffer, &end_iter);
-	}
-
-	g_source_remove (show_banner_timeout);
-	if (banner != NULL) {
-		gtk_widget_destroy (banner);
-		g_object_unref (G_OBJECT (banner));
 	}
 
 	g_slist_foreach (start_indexes, (GFunc) g_free, NULL);
