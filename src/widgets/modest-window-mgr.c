@@ -472,19 +472,25 @@ void
 modest_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv = NULL;
-	GList *wins = NULL;
 	gboolean ret_value = FALSE;
 	
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	
-	/* delete-event handler already removes window_list item, */
-	/* so no next its required on this loop  */
-	wins = priv->window_list;
-	while (wins) {		
-		g_signal_emit_by_name (G_OBJECT (wins->data), "delete-event", NULL, &ret_value);
+	/* If there is a main window then try to close it, and it will
+	   close the others if needed */
+	if (priv->main_window) {
+		g_signal_emit_by_name (priv->main_window, "delete-event", NULL, &ret_value);
+	} else {
+		GList *wins = NULL, *next = NULL;
 
+		/* delete-event handler actually removes window_list item, */
 		wins = priv->window_list;
+		while (wins) {
+			next = g_list_next (wins);
+			g_signal_emit_by_name (G_OBJECT (wins->data), "delete-event", NULL, &ret_value);
+			wins = next;
+		}
 	}
 }
 
@@ -703,7 +709,7 @@ on_window_destroy (ModestWindow *window,
 					modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
 										 _("mcen_nc_no_email_message_modified_save_changes"));
 				/* Save to drafts */
-				if (response != GTK_RESPONSE_CANCEL) 				
+				if (response != GTK_RESPONSE_CANCEL)
 					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));				
 			}
 		}
