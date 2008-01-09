@@ -1413,7 +1413,21 @@ modest_msg_view_window_key_event (GtkWidget *window,
 				  GdkEventKey *event,
 				  gpointer userdata)
 {
-	
+	GtkWidget *focus;
+
+	focus = gtk_window_get_focus (GTK_WINDOW (window));
+
+	/* for the find toolbar case */
+	if (focus && GTK_IS_ENTRY (focus)) {
+		if (event->keyval == GDK_BackSpace) {
+			GdkEvent *copy;
+			copy = gdk_event_copy ((GdkEvent *) event);
+			gtk_widget_event (focus, copy);
+			gdk_event_free (copy);
+			return TRUE;
+		} else 
+			return FALSE;
+	}
 	if (event->keyval == GDK_Up || event->keyval == GDK_KP_Up ||
 	    event->keyval == GDK_Down || event->keyval == GDK_KP_Down ||
 	    event->keyval == GDK_Page_Up || event->keyval == GDK_KP_Page_Up ||
