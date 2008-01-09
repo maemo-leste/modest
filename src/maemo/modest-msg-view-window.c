@@ -1723,46 +1723,6 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	return retval;       	
 }
 
-gboolean 
-modest_msg_view_window_select_first_message (ModestMsgViewWindow *self)
-{
-	ModestMsgViewWindowPrivate *priv = NULL;
-	TnyHeader *header = NULL;
-	GtkTreeIter iter;
-	GtkTreePath *path = NULL;
-	GtkTreeRowReference *row_reference = NULL;
-
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
-
-	/* Check that the model is not empty */
-	if (!gtk_tree_model_get_iter_first (priv->header_model, &iter))
-		return FALSE;
-
-	/* Get the header */
-	gtk_tree_model_get (priv->header_model, 
-			    &iter, 
-			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-			    &header, -1);
-	g_return_val_if_fail (TNY_IS_HEADER (header), FALSE);
-	if (!msg_is_visible (header, priv->is_outbox)) {
-		g_object_unref (header);
-		return modest_msg_view_window_select_next_message (self);
-	}
-	
-	path = gtk_tree_model_get_path (priv->header_model, &iter);
-	row_reference = gtk_tree_row_reference_new (priv->header_model, path);
-	gtk_tree_path_free (path);
-
-	/* Read the message & show it */
-	message_reader (self, priv, header, row_reference);
-	
-	/* Free */
-	g_object_unref (header);
-
-	return TRUE;
-}
- 
 gboolean        
 modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {

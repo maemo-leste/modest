@@ -158,17 +158,6 @@ TnyMsg*         modest_msg_view_window_get_message     (ModestMsgViewWindow *win
 const gchar*    modest_msg_view_window_get_message_uid (ModestMsgViewWindow *window);
 
 /**
- * modest_msg_view_window_select_first_message:
- * @window: a #ModestMsgViewWindow instance
- *
- * select the first message obtained from the header view this view 
- * was called from
- *
- * Returns: %TRUE if a new message is shown.
- */
-gboolean        modest_msg_view_window_select_first_message (ModestMsgViewWindow *window);
-
-/**
  * modest_msg_view_window_select_next_message:
  * @window: a #ModestMsgViewWindow instance
  *
