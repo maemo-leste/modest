@@ -1603,7 +1603,6 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 void
 banner_finish (gpointer data, GObject *object)
 {
-	g_message ("BANNER FINISH");
 	ModestWindowMgr *mgr = (ModestWindowMgr *) data;
 	modest_window_mgr_unregister_banner (mgr);
 	g_object_unref (mgr);
