@@ -1656,6 +1656,8 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	selected = gtk_tree_selection_get_selected (sel, &model, &iter);
 
 	/* Notify the display name observers */
+	/* TODO: this is redundant, and it's only required because we sometimes lose the focus of the folder
+	   view */
 	g_signal_emit (G_OBJECT(user_data),
 		       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
 		       NULL);
@@ -1915,6 +1917,7 @@ on_drag_data_get (GtkWidget *widget, GdkDragContext *context, GtkSelectionData *
 }
 
 typedef struct _DndHelper {
+	ModestFolderView *folder_view;
 	gboolean delete_source;
 	GtkTreePath *source_row;
 	GdkDragContext *context;
@@ -1925,6 +1928,7 @@ static void
 dnd_helper_destroyer (DndHelper *helper)
 {
 	/* Free the helper */
+	g_object_unref (helper->folder_view);
 	gtk_tree_path_free (helper->source_row);
 	g_slice_free (DndHelper, helper);
 }
@@ -2088,6 +2092,7 @@ cleanup:
 typedef struct {
 	TnyFolderStore *src_folder;
 	TnyFolderStore *dst_folder;
+	ModestFolderView *folder_view;
 	DndHelper *helper; 
 } DndFolderInfo;
 
@@ -2098,6 +2103,8 @@ dnd_folder_info_destroyer (DndFolderInfo *info)
 		g_object_unref (info->src_folder);
 	if (info->dst_folder)
 		g_object_unref (info->dst_folder);
+	if (info->folder_view)
+		g_object_unref (info->folder_view);
 	g_slice_free (DndFolderInfo, info);
 }
 
@@ -2155,6 +2162,9 @@ drag_and_drop_from_folder_view_src_folder_performer (gboolean canceled,
 					   xfer_cb,
 					   info->helper);
 	
+	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
+					  TNY_FOLDER (info->dst_folder), TRUE);
+
 	g_object_unref (G_OBJECT (mail_op));
 }
 
@@ -2257,6 +2267,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	info = g_slice_new (DndFolderInfo);
 	info->src_folder = g_object_ref (folder);
 	info->dst_folder = g_object_ref (dest_folder);
+	info->folder_view = g_object_ref (helper->folder_view);
 	info->helper = helper;
 
 	/* Connect to the destination folder and perform the copy/move */
@@ -2337,6 +2348,7 @@ on_drag_data_received (GtkWidget *widget,
 	helper->delete_source = delete_source;
 	helper->context = context;
 	helper->time = time;
+	helper->folder_view = g_object_ref (widget);
 
 	/* Drags from the header view */
 	if (source_widget != widget) {
