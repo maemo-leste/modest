@@ -68,6 +68,7 @@ enum {
 typedef struct _ModestWindowMgrPrivate ModestWindowMgrPrivate;
 struct _ModestWindowMgrPrivate {
 	GList        *window_list;
+	guint         banner_counter;
 
 	ModestWindow *main_window;
 
@@ -194,6 +195,7 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE(obj);
 	priv->window_list = NULL;
+	priv->banner_counter = 0;
 	priv->main_window = NULL;
 	priv->fullscreen_mode = FALSE;
 
@@ -819,7 +821,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	gtk_widget_destroy (win->data);
 	
 	/* If there are no more windows registered emit the signal */
-	if (priv->window_list == NULL)
+	if (priv->window_list == NULL && priv->banner_counter == 0)
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 }
 
@@ -1181,7 +1183,7 @@ modest_window_mgr_num_windows (ModestWindowMgr *self)
 	if (priv->window_list)
 		num_windows = g_list_length (priv->window_list);
 
-	return num_windows;
+	return num_windows + priv->banner_counter;
 }
 
 GtkWidget *   
@@ -1226,3 +1228,32 @@ modest_window_mgr_get_msg_view_window (ModestWindowMgr *self)
 	return result;
 }
 
+void           
+modest_window_mgr_register_banner (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	priv->banner_counter++;
+	g_message ("REGISTER BANNER -> %d", priv->banner_counter);
+	
+}
+
+void           
+modest_window_mgr_unregister_banner (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	priv->banner_counter--;
+	g_message ("UNREGISTER BANNER -> %d", priv->banner_counter);
+	if (priv->window_list == NULL && priv->banner_counter == 0) {
+		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
+		g_message ("WINDOW LIST EMPTY");
+	}
+
+}

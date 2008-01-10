@@ -1600,12 +1600,29 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 	return widget;
 }
 
+void
+banner_finish (gpointer data, GObject *object)
+{
+	g_message ("BANNER FINISH");
+	ModestWindowMgr *mgr = (ModestWindowMgr *) data;
+	modest_window_mgr_unregister_banner (mgr);
+	g_object_unref (mgr);
+}
+
 void 
 modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
-	hildon_banner_show_information (parent, icon_name, text);
+	GtkWidget *banner;
+	ModestWindowMgr *mgr;
+
+	mgr = modest_runtime_get_window_mgr ();
+	banner = hildon_banner_show_information (parent, icon_name, text);
+
+	modest_window_mgr_register_banner (mgr);
+	g_object_ref (mgr);
+	g_object_weak_ref ((GObject *) banner, banner_finish, mgr);
 }
 
 void

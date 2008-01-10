@@ -87,7 +87,21 @@ void           modest_window_mgr_register_window       (ModestWindowMgr *self,
 void           modest_window_mgr_unregister_window     (ModestWindowMgr *self, 
 							ModestWindow *window);
 
+/**
+ * modest_window_mgr_register_banner:
+ * @self: a #ModestWindowMgr
+ *
+ * Increase the count of pending banners in the window manager
+ */
+void           modest_window_mgr_register_banner (ModestWindowMgr *self);
 
+/**
+ * modest_window_mgr_unregister_banner:
+ * @self: a #ModestWindowMgr
+ *
+ * Decrease the count of pending banners in the window manager
+ */
+void           modest_window_mgr_unregister_banner (ModestWindowMgr *self);
 
 /**
  * modest_window_mgr_set_fullscreen_mode:
@@ -294,9 +308,9 @@ void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self);
  * modest_window_mgr_num_windows:
  * @self: a #ModestWindowMgr
  * 
- * Gets the number of already registered windows
+ * Gets the number of already registered windows, and pending banners
  *
- * Returns: the number of already registered windows
+ * Returns: the number of already registered windows, and pending banners
  **/
 gint modest_window_mgr_num_windows (ModestWindowMgr *self);
 
