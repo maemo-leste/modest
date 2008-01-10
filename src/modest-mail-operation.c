@@ -1036,10 +1036,10 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 		g_object_unref (G_OBJECT(info->drafts));
 	if (info->msg)
 		g_object_unref (G_OBJECT (info->msg));
-	g_slice_free (SaveToDraftsAddMsgInfo, info);
 
 	modest_mail_operation_notify_end (info->mailop);
 	g_object_unref(info->mailop);
+	g_slice_free (SaveToDraftsAddMsgInfo, info);
 }
 
 typedef struct
