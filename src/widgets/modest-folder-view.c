@@ -1599,7 +1599,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders */
-	model        = tny_gtk_folder_store_tree_model_new (NULL);
+	model = tny_gtk_folder_store_tree_model_new (NULL);
 
 	/* Get the accounts: */
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),

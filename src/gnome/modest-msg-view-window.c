@@ -369,7 +369,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 }
 
 void
-modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, GList *mime_parts)
+modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *mime_parts)
 {
 	g_message ("not implemented %s", __FUNCTION__);
 }
@@ -450,7 +450,7 @@ modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
 }
 
 
-GList *         
+TnyList *         
 modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 {
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
