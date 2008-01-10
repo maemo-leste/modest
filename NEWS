@@ -1,1 +1,13 @@
-No news
+-*-mode:text-*-
+
+2008-W3:
+     - now with release notes (also seen in the NEWS)
+     - added some dbus-debug methods
+     - fixed some memory corruption (incorrect frees) in tinymail-maemo
+     - fixed bugs in tny tree model (see there)
+     - fixed support for message with multiple text/plain parts (#2720)
+     - fixed URL support (#2683)
+     - fixed many dimming rules, focus issues
+     - fixed backspace-usage in find-toolbar
+     - code cleanups
+   
