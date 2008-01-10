@@ -125,11 +125,25 @@ modest_tny_send_queue_info_free(SendInfo *info)
 	g_slice_free(SendInfo, info);
 }
 
+static GList*
+modest_tny_send_queue_lookup_info (ModestTnySendQueue *self, const gchar *msg_id)
+{
+	ModestTnySendQueuePrivate *priv;
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	
+	return g_queue_find_custom (priv->queue, msg_id, on_modest_tny_send_queue_compare_id);
+}
+
+
 static void
-print_queue_item (gpointer data, gpointer user_data)
+queue_item_to_string (gpointer data, gchar **user_data)
 {
 	SendInfo *info = (SendInfo*)data;
 	const gchar *status;
+	gchar *tmp;
+	
+	if (!(user_data && *user_data))
+		return;
 	
 	switch (info->status) {
 	case MODEST_TNY_SEND_QUEUE_UNKNOWN: status = "UNKNOWN"; break;
@@ -140,22 +154,27 @@ print_queue_item (gpointer data, gpointer user_data)
 	default: status= "UNEXPECTED"; break;
 	}
 
-	g_debug ("\"%s\" => [%s]", info->msg_id, status);
+	tmp = g_strdup_printf ("%s\"%s\" => [%s]\n",
+			       *user_data, info->msg_id, status);
+	g_free (*user_data);
+	*user_data = tmp;
 }
 
-static GList*
-modest_tny_send_queue_lookup_info (ModestTnySendQueue *self, const gchar *msg_id)
+gchar*
+modest_tny_send_queue_to_string (ModestTnySendQueue *self)
 {
+	gchar *str;
 	ModestTnySendQueuePrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE(self), NULL);
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
-	MODEST_DEBUG_BLOCK (
-		g_debug ("items in the send queue (%d):",
-			 g_queue_get_length (priv->queue));
-		g_queue_foreach (priv->queue, print_queue_item, NULL);
-	);
+	str = g_strdup_printf ("items in the send queue: %d\n",
+			       g_queue_get_length (priv->queue));
 	
-	return g_queue_find_custom (priv->queue, msg_id, on_modest_tny_send_queue_compare_id);
+	g_queue_foreach (priv->queue, (GFunc)queue_item_to_string, &str);
+
+	return str;
 }
 
 static void

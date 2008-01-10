@@ -55,6 +55,7 @@
 #include <tny-iterator.h>
 #include <tny-simple-list.h>
 #include <tny-merge-folder.h>
+#include <tny-account.h>
 
 #include <modest-text-utils.h>
 
@@ -700,8 +701,75 @@ on_idle_send_receive(gpointer user_data)
 }
 
 
+
 static gint 
-on_dbus_method_dump (DBusConnection *con, DBusMessage *message)
+on_dbus_method_dump_send_queues (DBusConnection *con, DBusMessage *message)
+{
+	gchar *str;
+	
+	DBusMessage *reply;
+	dbus_uint32_t serial = 0;
+
+	GSList *account_names, *cursor;
+
+	str = g_strdup("\nsend queues\n"
+		       "===========\n");
+
+	cursor = account_names = modest_account_mgr_account_names
+		(modest_runtime_get_account_mgr(), TRUE); /* only enabled accounts */
+
+	while (cursor) {
+		TnyAccount *acc;
+		gchar *tmp, *accname = (gchar*)cursor->data;
+		
+		tmp = g_strdup_printf ("%s", str);
+		g_free (str);
+		str = tmp;
+		
+		/* transport */
+		acc = modest_tny_account_store_get_server_account (
+			modest_runtime_get_account_store(), accname,
+			TNY_ACCOUNT_TYPE_TRANSPORT);
+		if (TNY_IS_ACCOUNT(acc)) {
+			gchar *tmp, *url = tny_account_get_url_string (acc);
+			ModestTnySendQueue *sendqueue =
+				modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(acc));
+			gchar *queue_str = modest_tny_send_queue_to_string (sendqueue);
+			
+			tmp = g_strdup_printf ("%s[%s]: '%s': %s\n%s",
+					       str, accname, tny_account_get_id (acc), url,
+					       queue_str);
+			g_free(queue_str);
+			g_free (url);
+			g_free (str);
+			str = tmp;
+
+			g_object_unref (acc);
+		}
+		
+		cursor = g_slist_next (cursor);
+	}
+	modest_account_mgr_free_account_names (account_names);
+							 
+	g_printerr (str);
+	
+	reply = dbus_message_new_method_return (message);
+	if (reply) {
+		dbus_message_append_args (reply,
+					  DBUS_TYPE_STRING, &str,
+					  DBUS_TYPE_INVALID);
+		dbus_connection_send (con, reply, &serial);
+		dbus_connection_flush (con);
+		dbus_message_unref (reply);
+	}
+	
+	g_free (str);
+	return OSSO_OK;
+}
+
+
+static gint 
+on_dbus_method_dump_operation_queue (DBusConnection *con, DBusMessage *message)
 {
 	gchar *str;
 	gchar *op_queue_str;
@@ -713,8 +781,8 @@ on_dbus_method_dump (DBusConnection *con, DBusMessage *message)
 	op_queue_str = modest_mail_operation_queue_to_string
 		(modest_runtime_get_mail_operation_queue ());
 		
-	str = g_strdup_printf ("\nmodest debug dump\n"
-			       "=================\n"
+	str = g_strdup_printf ("\noperation queue\n"
+			       "===============\n"
 			       "status: %s\n"
 			       "%s\n",
 			       tny_device_is_online (modest_runtime_get_device ()) ? "online" : "offline",
@@ -736,6 +804,82 @@ on_dbus_method_dump (DBusConnection *con, DBusMessage *message)
 	g_free (str);
 	return OSSO_OK;
 }
+
+
+
+static gint 
+on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
+{
+	gchar *str;
+	
+	DBusMessage *reply;
+	dbus_uint32_t serial = 0;
+
+	GSList *account_names, *cursor;
+
+	str = g_strdup ("\naccounts\n========\n");
+
+	cursor = account_names = modest_account_mgr_account_names
+		(modest_runtime_get_account_mgr(), TRUE); /* only enabled accounts */
+
+	while (cursor) {
+		TnyAccount *acc;
+		gchar *tmp, *accname = (gchar*)cursor->data;
+
+		tmp = g_strdup_printf ("%s[%s]\n", str, accname);
+		g_free (str);
+		str = tmp;
+		
+		/* store */
+		acc = modest_tny_account_store_get_server_account (
+			modest_runtime_get_account_store(), accname,
+			TNY_ACCOUNT_TYPE_STORE);
+		if (TNY_IS_ACCOUNT(acc)) {
+			gchar *tmp, *url = tny_account_get_url_string (acc);
+			tmp = g_strdup_printf ("%sstore    : '%s': %s\n",
+					       str, tny_account_get_id (acc), url);
+			g_free (str);
+			str = tmp;
+			g_free (url);
+			g_object_unref (acc);
+		}
+		
+		/* transport */
+		acc = modest_tny_account_store_get_server_account (
+			modest_runtime_get_account_store(), accname,
+			TNY_ACCOUNT_TYPE_TRANSPORT);
+		if (TNY_IS_ACCOUNT(acc)) {
+			gchar *tmp, *url = tny_account_get_url_string (acc);
+			tmp = g_strdup_printf ("%stransport: '%s': %s\n",
+					       str, tny_account_get_id (acc), url);
+			g_free (str);
+			str = tmp;
+			g_free (url);
+			g_object_unref (acc);
+		}
+		
+		cursor = g_slist_next (cursor);
+	}
+	
+	modest_account_mgr_free_account_names (account_names);
+							 
+	g_printerr (str);
+	
+	reply = dbus_message_new_method_return (message);
+	if (reply) {
+		dbus_message_append_args (reply,
+					  DBUS_TYPE_STRING, &str,
+					  DBUS_TYPE_INVALID);
+		dbus_connection_send (con, reply, &serial);
+		dbus_connection_flush (con);
+		dbus_message_unref (reply);
+	}
+	
+	g_free (str);
+	return OSSO_OK;
+}
+
+
 
 
 static gint 
@@ -1435,8 +1579,18 @@ modest_dbus_req_filter (DBusConnection *con,
 		handled = TRUE;			 	
 	} else if (dbus_message_is_method_call (message,
 						MODEST_DBUS_IFACE,
-						MODEST_DBUS_METHOD_DUMP)) {
-		on_dbus_method_dump (con, message);
+						MODEST_DBUS_METHOD_DUMP_OPERATION_QUEUE)) {
+		on_dbus_method_dump_operation_queue (con, message);
+		handled = TRUE;
+	} else if (dbus_message_is_method_call (message,
+						MODEST_DBUS_IFACE,
+						MODEST_DBUS_METHOD_DUMP_ACCOUNTS)) {
+		on_dbus_method_dump_accounts (con, message);
+		handled = TRUE;
+	} else if (dbus_message_is_method_call (message,
+						MODEST_DBUS_IFACE,
+						MODEST_DBUS_METHOD_DUMP_SEND_QUEUES)) {
+		on_dbus_method_dump_send_queues (con, message);
 		handled = TRUE;
 	} else {
 		/* Note that this mentions methods that were already handled in modest_dbus_req_handler(). */

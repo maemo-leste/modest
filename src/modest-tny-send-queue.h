@@ -155,6 +155,18 @@ modest_tny_send_queue_get_msg_id (TnyHeader *header);
 ModestTnySendQueueStatus
 modest_tny_all_send_queues_get_msg_status (TnyHeader *header);
 
+
+/**
+ * modest_tny_send_queue_to_string:
+ * @self: a valid #ModestTnySendQueue instance
+ *
+ * get a string representation of a send queue (for debugging)
+ *
+ * Returns: a newly allocated string, or NULL in case of error
+ */
+gchar* modest_tny_send_queue_to_string (ModestTnySendQueue *self);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_SEND_QUEUE_H__ */

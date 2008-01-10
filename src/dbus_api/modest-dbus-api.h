@@ -78,8 +78,15 @@ enum ModestDbusDeleteMessageArguments
 
 #define MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX "OpenDefaultInbox"
 
+/*
+ * these methods are for debugging only, and should _not_ be
+ * exported through libmodest-dbus-client
+ */
+#define MODEST_DBUS_METHOD_DUMP_OPERATION_QUEUE   "DumpOperationQueue"
+#define MODEST_DBUS_METHOD_DUMP_ACCOUNTS          "DumpAccounts"
+#define MODEST_DBUS_METHOD_DUMP_SEND_QUEUES       "DumpSendQueues"
 
-#define MODEST_DBUS_METHOD_DUMP "Dump"
+
 
 /* These are handle via normal D-Bus instead of osso-rpc: */
 #define MODEST_DBUS_METHOD_SEARCH "Search"
