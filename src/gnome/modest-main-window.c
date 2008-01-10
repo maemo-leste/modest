@@ -54,8 +54,7 @@ static void modest_main_window_class_init    (ModestMainWindowClass *klass);
 static void modest_main_window_init          (ModestMainWindow *obj);
 static void modest_main_window_finalize      (GObject *obj);
 
-static void restore_sizes (ModestMainWindow *self);
-static void save_sizes (ModestMainWindow *self);
+static void         restore_settings                    (ModestMainWindow *self);
 
 static gboolean     on_header_view_button_press_event   (ModestHeaderView *header_view,
 							 GdkEventButton   *event,
@@ -86,6 +85,8 @@ static void         on_header_status_update              (ModestHeaderView *head
 static void         on_header_selected                   (ModestHeaderView *header_view, 
 							  TnyHeader *header,
 							  ModestMainWindow *main_window);
+
+static void         save_state                           (ModestWindow *window);
 
 /* list my signals */
 enum {
@@ -158,6 +159,8 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_main_window_finalize;
+
+	((ModestWindowClass *)(klass))->save_state_func = save_state;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
 }
@@ -259,7 +262,7 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 
 
 static void
-restore_sizes (ModestMainWindow *self)
+restore_settings (ModestMainWindow *self)
 {
 	ModestConf *conf;
 	ModestMainWindowPrivate *priv;
@@ -282,69 +285,6 @@ restore_sizes (ModestMainWindow *self)
 				      MODEST_CONF_MAIN_WINDOW_KEY);
 }
 
-
-static void
-save_sizes (ModestMainWindow *self)
-{
-	ModestWindowPrivate *parent_priv;
-	ModestMainWindowPrivate *priv;
-	ModestConf *conf;
-	
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-
-	conf = modest_runtime_get_conf ();
-	
-	modest_widget_memory_save (conf, G_OBJECT(priv->folder_paned),
-				   MODEST_CONF_FOLDER_PANED_KEY);
-	modest_widget_memory_save (conf, G_OBJECT(priv->msg_paned),
-				   MODEST_CONF_MSG_PANED_KEY);
-	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned),
-				   MODEST_CONF_MAIN_PANED_KEY);
-	modest_widget_memory_save (conf, G_OBJECT(priv->header_view),
-				   MODEST_CONF_HEADER_VIEW_KEY);
-	modest_widget_memory_save (conf, G_OBJECT(self), 
-				   MODEST_CONF_MAIN_WINDOW_KEY);
-}
-
-
-static void
-on_account_store_connecting_finished (TnyAccountStore *store, ModestMainWindow *self)
-{
-	const gboolean online = TRUE;
-
-	GtkWidget *icon;
-	const gchar *icon_name;
-	ModestMainWindowPrivate *priv;
-	
-	g_return_if_fail (self);
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-	icon_name = online ? GTK_STOCK_CONNECT : GTK_STOCK_DISCONNECT;
-	icon      = gtk_image_new_from_icon_name (icon_name, GTK_ICON_SIZE_BUTTON);
-
-	/* Block handlers in order to avoid unnecessary calls */
-	//g_signal_handler_block (G_OBJECT (priv->online_toggle), priv->toggle_button_signal);
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle), online);
-	//g_signal_handler_unblock (G_OBJECT (online_toggle), priv->toggle_button_signal);
-
-	gtk_button_set_image (GTK_BUTTON(priv->online_toggle), icon);
-	//statusbar_push (widget_factory, 0, online ? _("Modest went online") : _("Modest went offline"));
-	
-	/* If Modest has became online and the header view has a
-	   header selected then show it */
-	/* TODO: FIXME: there is a race condition if some account needs to
-	   ask the user for a password */
-
-/* 	if (online) { */
-/* 		GtkTreeSelection *selected; */
-
-/* 		selected = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view)); */
-/* 		_modest_header_view_change_selection (selected, header_view); */
-/* 	} */
-}
-
 void
 on_online_toggle_toggled (GtkToggleButton *toggle, ModestMainWindow *self)
 {
@@ -365,11 +305,16 @@ on_online_toggle_toggled (GtkToggleButton *toggle, ModestMainWindow *self)
 		tny_device_force_offline (device);
 }
 
-static gboolean
-on_delete_event (GtkWidget *widget, GdkEvent  *event, ModestMainWindow *self)
+static void
+modest_main_window_on_show (GtkWidget *widget, gpointer user_data)
 {
-	save_sizes (self);
-	return FALSE;
+	ModestMainWindow *self = MODEST_MAIN_WINDOW (widget);
+
+	/* Connect signals */
+	connect_signals (self);
+
+	/* Restore window & widget settings */	
+	restore_settings (self);
 }
 
 static void
@@ -393,8 +338,6 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK(modest_ui_actions_on_folder_display_name_changed), self);
 
 	/* header view */
-	g_signal_connect (G_OBJECT(priv->header_view), "status_update",
-			  G_CALLBACK(on_header_status_update), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
 			  G_CALLBACK(modest_ui_actions_on_header_selected), self);
 	g_signal_connect (G_OBJECT(priv->header_view), "header_selected",
@@ -425,8 +368,6 @@ connect_signals (ModestMainWindow *self)
 			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
 	
 	/* Device */
-	g_signal_connect (G_OBJECT(modest_runtime_get_account_store()), "connecting-finished",
-			  G_CALLBACK(on_account_store_connecting_finished), self);
 	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
 			  G_CALLBACK(on_online_toggle_toggled), self);
 
@@ -435,9 +376,6 @@ connect_signals (ModestMainWindow *self)
 			  "queue-changed",
 			  G_CALLBACK (on_queue_changed),
 			  self);
-	
-	/* window */
-	g_signal_connect (G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 }
 
 
@@ -544,20 +482,20 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
-	
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
-	restore_sizes (MODEST_MAIN_WINDOW(obj));	
 
 	gtk_window_set_title (GTK_WINDOW(obj), _("Modest"));
 	gtk_window_set_icon_from_file  (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);	
 	gtk_widget_show_all (main_vbox);
 	
-	/* Connect signals */
-	connect_signals (MODEST_MAIN_WINDOW(obj));
+	/* Do some tasks on show */
+	g_signal_connect (G_OBJECT(self), "show", G_CALLBACK (modest_main_window_on_show), NULL);
 
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+
+	gtk_window_set_default_size (GTK_WINDOW (obj), 800, 600);
 
 	return (ModestWindow *) obj;
 }
@@ -799,4 +737,22 @@ modest_main_window_screen_is_on (ModestMainWindow *self)
 {
 	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
 	return TRUE;
+}
+
+static void
+save_state (ModestWindow *window)
+{
+	ModestConf *conf;
+	ModestMainWindow* self = MODEST_MAIN_WINDOW(window);
+	ModestMainWindowPrivate *priv;
+		
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	conf = modest_runtime_get_conf ();
+	
+	modest_widget_memory_save (conf, G_OBJECT(self), 
+				   MODEST_CONF_MAIN_WINDOW_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
+				   MODEST_CONF_MAIN_PANED_KEY);
+	modest_widget_memory_save (conf, G_OBJECT(priv->folder_view), 
+				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
