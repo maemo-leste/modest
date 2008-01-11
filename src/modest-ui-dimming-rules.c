@@ -372,6 +372,9 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 	/* Get selected folder as parent of new folder to create */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	if (!folder_view) /* folder view may not have been created yet */
+		return TRUE;	
+
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 	if (!parent_folder)
 		return TRUE;
