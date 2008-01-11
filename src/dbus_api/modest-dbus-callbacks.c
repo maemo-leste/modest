@@ -377,6 +377,7 @@ out:
 typedef struct {
 	TnyAccount *account;
 	gchar *uri;
+	gboolean connect;
 } OpenMsgPerformerInfo;
 
 static void 
@@ -466,12 +467,20 @@ on_open_message_performer (gboolean canceled,
 static gboolean
 on_idle_open_message_performer (gpointer user_data)
 {
+	ModestWindow *main_win = NULL;
 	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) user_data;
+
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
+						      FALSE); /* don't create */
 
 	/* Lock before the call as we're in an idle handler */
 	gdk_threads_enter ();
-	modest_platform_connect_and_perform (NULL, info->account, 
-					     on_open_message_performer, info);
+	if (info->connect) {
+		modest_platform_connect_and_perform (GTK_WINDOW (main_win), info->account, 
+						     on_open_message_performer, info);
+	} else {
+		on_open_message_performer (FALSE, NULL, GTK_WINDOW (main_win), info->account, info);
+	}
 	gdk_threads_leave ();
 
 	return FALSE;
@@ -496,10 +505,24 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
  	
 	if (account) {
 		OpenMsgPerformerInfo *info;
+		TnyFolder *folder = NULL;
 
 		info = g_slice_new0 (OpenMsgPerformerInfo);
 		info->account = g_object_ref (account);
 		info->uri = uri;
+		info->connect = TRUE;
+
+		/* Try to get the message, if it's already downloaded
+		   we don't need to connect */
+		folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+		if (folder) {
+			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
+			if (msg) {
+				info->connect = FALSE;
+				g_object_unref (msg);
+			}
+			g_object_unref (folder);
+		}
 
 		/* We need to call it into an idle to get
 		   modest_platform_connect_and_perform into the main
