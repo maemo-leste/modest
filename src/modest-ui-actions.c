@@ -2744,8 +2744,21 @@ typedef struct {
 } RenameFolderInfo;
 
 static void
-on_rename_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window, 
-		TnyAccount *account, gpointer user_data)
+on_rename_folder_cb (ModestMailOperation *mail_op, 
+		     TnyFolder *new_folder,
+		     gpointer user_data)
+{
+	/* Select now */
+	modest_folder_view_select_folder (MODEST_FOLDER_VIEW (user_data),
+					  new_folder, FALSE);
+}
+
+static void
+on_rename_folder_performer (gboolean canceled, 
+			    GError *err, 
+			    GtkWindow *parent_window, 
+			    TnyAccount *account, 
+			    gpointer user_data)
 {
 	ModestMailOperation *mail_op = NULL;
 	GtkTreeSelection *sel = NULL;
@@ -2770,20 +2783,12 @@ on_rename_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
 		gtk_tree_selection_unselect_all (sel);
 
-		/* Select *after* the changes */
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view),
-				TNY_FOLDER(data->folder), TRUE);
-
 		/* Actually rename the folder */
 		modest_mail_operation_rename_folder (mail_op,
-				TNY_FOLDER (data->folder),
-				(const gchar *) (data->new_name));
-		
-		/* TODO folder view filter refilter */
-		/* 
-		GtkTreeModel *tree_model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view));
-		if (GTK_IS_TREE_MODEL_FILTER (tree_model))
-			gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (tree_model)); */
+						     TNY_FOLDER (data->folder),
+						     (const gchar *) (data->new_name),
+						     on_rename_folder_cb,
+						     folder_view);
 	}
 
 	g_object_unref (mail_op);
@@ -2838,7 +2843,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			rename_folder_data->folder = folder;
 			rename_folder_data->new_name = folder_name;
 			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(main_window), 
-					folder, on_rename_folder_cb, rename_folder_data);
+					folder, on_rename_folder_performer, rename_folder_data);
 		}
 	}
 	g_object_unref (folder);
@@ -3313,7 +3318,17 @@ modest_ui_actions_on_redo (GtkAction *action,
 
 
 static void
-destroy_information_note (ModestMailOperation *mail_op, gpointer user_data)
+destroy_information_note (ModestMailOperation *mail_op, 
+			  gpointer user_data)
+{
+	/* destroy information note */
+	gtk_widget_destroy (GTK_WIDGET(user_data));
+}
+
+static void
+destroy_folder_information_note (ModestMailOperation *mail_op, 
+				 TnyFolder *new_folder,
+				 gpointer user_data)
 {
 	/* destroy information note */
 	gtk_widget_destroy (GTK_WIDGET(user_data));
@@ -3458,7 +3473,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 							   src_folder,
 							   folder_store,
 							   delete,
-							   destroy_information_note,
+							   destroy_folder_information_note,
 							   inf_note);
 		}
 
@@ -4191,10 +4206,9 @@ modest_ui_actions_msgs_move_to_confirmation (ModestWindow *win,
 	return response;
 }
 
-
-
 static void
-move_to_cb (ModestMailOperation *mail_op, gpointer user_data)
+move_to_cb (ModestMailOperation *mail_op, 
+	    gpointer user_data)
 {
 	MoveToHelper *helper = (MoveToHelper *) user_data;
 
@@ -4231,6 +4245,21 @@ move_to_cb (ModestMailOperation *mail_op, gpointer user_data)
 	if (helper->reference != NULL)
 		gtk_tree_row_reference_free (helper->reference);
 	g_free (helper);
+}
+
+static void
+folder_move_to_cb (ModestMailOperation *mail_op, 
+		   TnyFolder *new_folder,
+		   gpointer user_data)
+{
+	move_to_cb (mail_op, user_data);
+}
+
+static void
+msgs_move_to_cb (ModestMailOperation *mail_op, 
+		 gpointer user_data)
+{
+	move_to_cb (mail_op, user_data);
 }
 
 void
@@ -4511,7 +4540,7 @@ xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
 					 headers,
 					 TNY_FOLDER (dst_folder),
 					 TRUE,
-					 move_to_cb,
+					 msgs_move_to_cb,
 					 helper);
 
 	g_object_unref (G_OBJECT (mail_op));
@@ -4577,7 +4606,7 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 			TNY_FOLDER (info->src_folder),
 			info->dst_folder,
 			info->delete_original, 
-			move_to_cb, 
+			folder_move_to_cb, 
 			helper);
 	
 	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),

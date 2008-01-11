@@ -1933,15 +1933,6 @@ dnd_helper_destroyer (DndHelper *helper)
 	g_slice_free (DndHelper, helper);
 }
 
-/*
- * This function is the callback of the
- * modest_mail_operation_xfer_msgs () and
- * modest_mail_operation_xfer_folder() calls. We check here if the
- * message/folder was correctly asynchronously transferred. The reason
- * to use the same callback is that the code is the same, it only has
- * to check that the operation went fine and then finalize the drag
- * and drop action
- */
 static void
 xfer_cb (ModestMailOperation *mail_op, 
 	 gpointer user_data)
@@ -1965,6 +1956,33 @@ xfer_cb (ModestMailOperation *mail_op,
 	/* Free the helper */
 	dnd_helper_destroyer (helper);
 }
+
+static void
+xfer_msgs_cb (ModestMailOperation *mail_op, 
+	      gpointer user_data)
+{
+	/* Common part */
+	xfer_cb (mail_op, user_data);
+}
+
+static void
+xfer_folder_cb (ModestMailOperation *mail_op, 
+		TnyFolder *new_folder,
+		gpointer user_data)
+{
+	DndHelper *helper;
+
+	helper = (DndHelper *) user_data;
+
+	/* Common part */
+	xfer_cb (mail_op, user_data);
+
+	/* Select the folder */
+	if (new_folder)
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (helper->folder_view),
+						  new_folder, FALSE);
+}
+
 
 /* get the folder for the row the treepath refers to. */
 /* folder must be unref'd */
@@ -2077,7 +2095,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 					 headers, 
 					 folder, 
 					 helper->delete_source, 
-					 xfer_cb, helper);
+					 xfer_msgs_cb, helper);
 	
 	/* Frees */
 cleanup:
@@ -2159,11 +2177,11 @@ drag_and_drop_from_folder_view_src_folder_performer (gboolean canceled,
 					   TNY_FOLDER (info->src_folder),
 					   info->dst_folder,
 					   info->helper->delete_source,
-					   xfer_cb,
+					   xfer_folder_cb,
 					   info->helper);
 	
-	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
-					  TNY_FOLDER (info->dst_folder), TRUE);
+/* 	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view), */
+/* 					  TNY_FOLDER (info->dst_folder), TRUE); */
 
 	g_object_unref (G_OBJECT (mail_op));
 }
@@ -2822,7 +2840,9 @@ find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_it
 
 
 static void
-on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *path, GtkTreeIter *iter,
+on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, 
+				     GtkTreePath *path, 
+				     GtkTreeIter *iter,
 				     ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv = NULL;
@@ -2866,8 +2886,6 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model, GtkTreePath  *pat
 
 		/* Disable next */
 		modest_folder_view_disable_next_folder_selection (self);
-/* 		g_object_unref (priv->folder_to_select); */
-/* 		priv->folder_to_select = NULL; */
 		
 		/* Refilter the model */
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (tree_model));

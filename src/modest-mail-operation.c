@@ -160,18 +160,25 @@ typedef struct _RefreshAsyncHelper {
 	gpointer user_data;
 } RefreshAsyncHelper;
 
-typedef struct _XFerMsgAsyncHelper
+typedef struct _XFerMsgsAsyncHelper
 {
 	ModestMailOperation *mail_op;
 	TnyList *headers;
 	TnyFolder *dest_folder;
-	XferAsyncUserCallback user_callback;	
+	XferMsgsAsyncUserCallback user_callback;	
 	gboolean delete;
 	gpointer user_data;
 	gint last_total_bytes;
 	gint sum_total_bytes;
 	gint total_bytes;
-} XFerMsgAsyncHelper;
+} XFerMsgsAsyncHelper;
+
+typedef struct _XFerFolderAsyncHelper
+{
+	ModestMailOperation *mail_op;
+	XferFolderAsyncUserCallback user_callback;	
+	gpointer user_data;
+} XFerFolderAsyncHelper;
 
 typedef void (*ModestMailOperationCreateMsgCallback) (ModestMailOperation *mail_op,
 						      TnyMsg *msg,
@@ -1818,12 +1825,12 @@ transfer_folder_status_cb (GObject *obj,
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	ModestMailOperationState *state;
-	XFerMsgAsyncHelper *helper;
+	XFerFolderAsyncHelper *helper;
 
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
 
-	helper = (XFerMsgAsyncHelper *) user_data;
+	helper = (XFerFolderAsyncHelper *) user_data;
 	g_return_if_fail (helper != NULL);
 
 	self = helper->mail_op;
@@ -1855,11 +1862,11 @@ transfer_folder_cb (TnyFolder *folder,
 		    GError *err, 
 		    gpointer user_data)
 {
-	XFerMsgAsyncHelper *helper;
+	XFerFolderAsyncHelper *helper;
 	ModestMailOperation *self = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 
-	helper = (XFerMsgAsyncHelper *) user_data;
+	helper = (XFerFolderAsyncHelper *) user_data;
 	g_return_if_fail (helper != NULL);       
 
 	self = helper->mail_op;
@@ -1890,13 +1897,13 @@ transfer_folder_cb (TnyFolder *folder,
 	 	 * which is already GDK locked by Tinymail */
 
 		/* no gdk_threads_enter (), CHECKED */
-		helper->user_callback (self, helper->user_data);
+		helper->user_callback (self, new_folder, helper->user_data);
 		/* no gdk_threads_leave () , CHECKED */
 	}
 
 	/* Free */
 	g_object_unref (helper->mail_op);
-	g_slice_free   (XFerMsgAsyncHelper, helper);
+	g_slice_free   (XFerFolderAsyncHelper, helper);
 }
 
 /**
@@ -1945,12 +1952,12 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 				   TnyFolder *folder,
 				   TnyFolderStore *parent,
 				   gboolean delete_original,
-				   XferAsyncUserCallback user_callback,
+				   XferFolderAsyncUserCallback user_callback,
 				   gpointer user_data)
 {
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnyFolderRules parent_rules = 0, rules; 
-	XFerMsgAsyncHelper *helper = NULL;
+	XFerFolderAsyncHelper *helper = NULL;
 	const gchar *folder_name = NULL;
 	const gchar *error_msg;
 
@@ -2002,10 +2009,8 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 		goto error;
 	} else {
 		/* Create the helper */
-		helper = g_slice_new0 (XFerMsgAsyncHelper);
+		helper = g_slice_new0 (XFerFolderAsyncHelper);
 		helper->mail_op = g_object_ref (self);
-		helper->dest_folder = NULL;
-		helper->headers = NULL;
 		helper->user_callback = user_callback;
 		helper->user_data = user_data;
 		
@@ -2030,7 +2035,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 
 	/* Call the user callback if exists */
 	if (user_callback)
-		user_callback (self, user_data);
+		user_callback (self, NULL, user_data);
 
 	/* Notify the queue */
 	modest_mail_operation_notify_end (self);
@@ -2039,11 +2044,13 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 void
 modest_mail_operation_rename_folder (ModestMailOperation *self,
 				     TnyFolder *folder,
-				     const gchar *name)
+				     const gchar *name,
+				     XferFolderAsyncUserCallback user_callback,
+				     gpointer user_data)
 {
 	ModestMailOperationPrivate *priv;
 	ModestTnyFolderRules rules;
-	XFerMsgAsyncHelper *helper;
+	XFerFolderAsyncHelper *helper;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER_STORE (folder));
@@ -2058,21 +2065,9 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 	/* Check folder rules */
 	rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
 	if (rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE) {
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: unable to rename"));
-
-		/* Notify about operation end */
-		modest_mail_operation_notify_end (self);
+		goto error;
 	} else if (!strcmp (name, " ") || strchr (name, '/')) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _("FIXME: unable to rename"));
-		/* Notify about operation end */
-		modest_mail_operation_notify_end (self);
+		goto error;
 	} else {
 		TnyFolderStore *into;
 
@@ -2082,12 +2077,10 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 		   special local folder */
 		if (new_name_valid_if_local_account (priv, into, name)) {
 			/* Create the helper */
-			helper = g_slice_new0 (XFerMsgAsyncHelper);
+			helper = g_slice_new0 (XFerFolderAsyncHelper);
 			helper->mail_op = g_object_ref(self);
-			helper->dest_folder = NULL;
-			helper->headers = NULL;
-			helper->user_callback = NULL;
-			helper->user_data = NULL;
+			helper->user_callback = user_callback;
+			helper->user_data = user_data;
 		
 			/* Rename. Camel handles folder subscription/unsubscription */
 			modest_mail_operation_notify_start (self);
@@ -2096,10 +2089,24 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 					       transfer_folder_status_cb,
 					       helper);
 		} else {
-			modest_mail_operation_notify_end (self);
+			goto error;
 		}
 		g_object_unref (into);
+
+		return;
 	}
+ error:
+	/* Set status failed and set an error */
+	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+		     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
+		     _("FIXME: unable to rename"));
+	
+	if (user_callback)
+		user_callback (self, NULL, user_data);
+
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (self);
 }
 
 /* ******************************************************************* */
@@ -2594,12 +2601,12 @@ transfer_msgs_status_cb (GObject *obj,
 			 TnyStatus *status,  
 			 gpointer user_data)
 {
-	XFerMsgAsyncHelper *helper;
+	XFerMsgsAsyncHelper *helper;
 
 	g_return_if_fail (status != NULL);
 	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_XFER_MSGS);
 
-	helper = (XFerMsgAsyncHelper *) user_data;
+	helper = (XFerMsgsAsyncHelper *) user_data;
 	g_return_if_fail (helper != NULL);       
 
 	/* Notify progress */
@@ -2611,13 +2618,13 @@ transfer_msgs_status_cb (GObject *obj,
 static void
 transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer user_data)
 {
-	XFerMsgAsyncHelper *helper;
+	XFerMsgsAsyncHelper *helper;
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
 
-	helper = (XFerMsgAsyncHelper *) user_data;
+	helper = (XFerMsgsAsyncHelper *) user_data;
 	self = helper->mail_op;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
@@ -2681,7 +2688,7 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 		g_object_unref (folder);
 	if (iter)
 		g_object_unref (iter);
-	g_slice_free (XFerMsgAsyncHelper, helper);
+	g_slice_free (XFerMsgsAsyncHelper, helper);
 }
 
 static guint
@@ -2722,13 +2729,13 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 				 TnyList *headers, 
 				 TnyFolder *folder, 
 				 gboolean delete_original,
-				 XferAsyncUserCallback user_callback,
+				 XferMsgsAsyncUserCallback user_callback,
 				 gpointer user_data)
 {
 	ModestMailOperationPrivate *priv = NULL;
 	TnyIterator *iter = NULL;
 	TnyFolder *src_folder = NULL;
-	XFerMsgAsyncHelper *helper = NULL;
+	XFerMsgsAsyncHelper *helper = NULL;
 	TnyHeader *header = NULL;
 	ModestTnyFolderRules rules = 0;
 
@@ -2790,7 +2797,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	}
 
 	/* Create the helper */
-	helper = g_slice_new0 (XFerMsgAsyncHelper);
+	helper = g_slice_new0 (XFerMsgsAsyncHelper);
 	helper->mail_op = g_object_ref(self);
 	helper->dest_folder = g_object_ref(folder);
 	helper->headers = g_object_ref(headers);

@@ -129,16 +129,34 @@ typedef void (*GetMimePartSizeCallback) (ModestMailOperation *mail_op,
 					 gpointer user_data);
 
 /**
- * XferAsyncUserCallback:
+ * XferMsgsAsyncUserCallback:
  *
  * @obj: a #GObject generic object which has created current mail operation.
+ * @new_folder: the new instance of the #TnyFolder that has been transferred
  * @user_data: generic data passed to user defined function.
  *
  * This function will be called after transfer_msgs_cb private function, which is
  * used as tinymail operation callback. The private function fills private 
  * fields of mail operation and calls user defined callback if it exists.
  */
-typedef void (*XferAsyncUserCallback) (ModestMailOperation *mail_op, gpointer user_data);
+typedef void (*XferMsgsAsyncUserCallback) (ModestMailOperation *mail_op, 
+					   gpointer user_data);
+
+
+/**
+ * XferFolderAsyncUserCallback:
+ *
+ * @obj: a #GObject generic object which has created current mail operation.
+ * @new_folder: the new instance of the #TnyFolder that has been transferred
+ * @user_data: generic data passed to user defined function.
+ *
+ * This function will be called after transfer_msgs_cb private function, which is
+ * used as tinymail operation callback. The private function fills private 
+ * fields of mail operation and calls user defined callback if it exists.
+ */
+typedef void (*XferFolderAsyncUserCallback) (ModestMailOperation *mail_op, 
+					     TnyFolder *new_folder,
+					     gpointer user_data);
 
 
 /**
@@ -479,7 +497,9 @@ void          modest_mail_operation_remove_folder  (ModestMailOperation *self,
  **/
 void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
 						    TnyFolder *folder, 
-						    const gchar *name);
+						    const gchar *name,
+						    XferFolderAsyncUserCallback user_callback,
+						    gpointer user_data);
 
 /**
  * modest_mail_operation_xfer_folder:
@@ -487,7 +507,7 @@ void          modest_mail_operation_rename_folder  (ModestMailOperation *self,
  * @folder: a #TnyFolder
  * @parent: the new parent of the folder as #TnyFolderStore
  * @delete_original: wheter or not delete the original folder
- * @user_callback: a #XferAsyncUserCallback function to call after tinymail callback execution.
+ * @user_callback: a #XferFolderAsyncUserCallback function to call after tinymail callback execution.
  * @user_data: generic user data which will be passed to @user_callback function.
  * 
  * Sets the given @folder as child of a provided #TnyFolderStore. This
@@ -504,7 +524,7 @@ void          modest_mail_operation_xfer_folder    (ModestMailOperation *self,
 						    TnyFolder *folder,
 						    TnyFolderStore *parent,
 						    gboolean delete_original,
-						    XferAsyncUserCallback user_callback,
+						    XferFolderAsyncUserCallback user_callback,
 						    gpointer user_data);
 						    
 
@@ -516,7 +536,7 @@ void          modest_mail_operation_xfer_folder    (ModestMailOperation *self,
  * @header_list: a #TnyList of #TnyHeader to transfer
  * @folder: the #TnyFolder where the messages will be transferred
  * @delete_original: whether or not delete the source messages
- * @user_callback: a #XferAsyncUserCallback function to call after tinymail callback execution.
+ * @user_callback: a #XferFolderAsyncUserCallback function to call after tinymail callback execution.
  * @user_data: generic user data which will be passed to @user_callback function.
  * 
  * Asynchronously transfers messages from their current folder to
@@ -544,7 +564,7 @@ void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
 						    TnyList *header_list, 
 						    TnyFolder *folder,
 						    gboolean delete_original,
-						    XferAsyncUserCallback user_callback,
+						    XferMsgsAsyncUserCallback user_callback,
 						    gpointer user_data);
 
 /**
