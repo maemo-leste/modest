@@ -1220,7 +1220,7 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 
 	/* Connect to the account and perform */
 	if (uncached_msgs > 0) {
-		modest_platform_connect_and_perform ((GtkWindow *) win, g_object_ref (account), 
+		modest_platform_connect_and_perform ((GtkWindow *) win, TRUE, g_object_ref (account), 
 						     open_msgs_performer, g_object_ref (not_opened_headers));
 	} else {
 		/* Call directly the performer, do not need to connect */
@@ -1769,7 +1769,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 								     TNY_ACCOUNT_TYPE_STORE);
 
 	/* Invoke the connect and perform */
-	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL, info->account, 
+	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL, 
+					     (win) ? TRUE : FALSE, info->account, 
 					     do_send_receive_performer, info);
 }
 
@@ -2691,6 +2692,7 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 	if (parent_folder) {
 		/* The parent folder will be freed in the callback */
 		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window), 
+							       TRUE,
 							       parent_folder,
 							       create_folder_performer, 
 							       parent_folder);
@@ -2842,7 +2844,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			RenameFolderInfo *rename_folder_data = g_new0 (RenameFolderInfo, 1);
 			rename_folder_data->folder = folder;
 			rename_folder_data->new_name = folder_name;
-			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(main_window), 
+			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(main_window), TRUE,
 					folder, on_rename_folder_performer, rename_folder_data);
 		}
 	}
@@ -2947,6 +2949,7 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		g_object_ref (G_OBJECT (info->folder));
 		TnyAccount *account = tny_folder_get_account (TNY_FOLDER (folder));
 		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (main_window), 
+							       TRUE,
 							       TNY_FOLDER_STORE (account), 
 							       on_delete_folder_cb, info);
 		g_object_unref (account);
@@ -4668,7 +4671,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			info->folder_view = folder_view;
 			g_object_ref (G_OBJECT (info->src_folder));
 			g_object_ref (G_OBJECT (info->dst_folder));
-			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), 
+			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
 				    TNY_FOLDER_STORE (dst_folder), on_move_folder_cb, info);
 		}
 	} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
@@ -4687,7 +4690,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		}
 		if (do_xfer) /* Transfer messages */ {
 			g_object_ref (dst_folder);
-			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), 
+			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
 					TNY_FOLDER_STORE (dst_folder), xfer_messages_from_move_to_cb, dst_folder);
 		}
 	}
@@ -4731,7 +4734,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 
 	if (do_xfer) {
 		g_object_ref (dst_folder);
-		modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), 
+		modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
 				TNY_FOLDER_STORE (dst_folder), xfer_messages_from_move_to_cb, dst_folder);
         }
 	g_object_unref (account);
@@ -4962,7 +4965,7 @@ modest_ui_actions_on_retrieve_msg_contents (GtkAction *action,
 	g_object_unref (iter);
 
 	/* Connect and perform the message retrieval */
-	modest_platform_connect_and_perform ((GtkWindow *) window, 
+	modest_platform_connect_and_perform ((GtkWindow *) window, TRUE,
 					     g_object_ref (account), 
 					     retrieve_msg_contents_performer, 
 					     g_object_ref (headers));

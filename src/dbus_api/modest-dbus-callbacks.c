@@ -476,7 +476,7 @@ on_idle_open_message_performer (gpointer user_data)
 	/* Lock before the call as we're in an idle handler */
 	gdk_threads_enter ();
 	if (info->connect) {
-		modest_platform_connect_and_perform (GTK_WINDOW (main_win), info->account, 
+		modest_platform_connect_and_perform (GTK_WINDOW (main_win), TRUE, info->account, 
 						     on_open_message_performer, info);
 	} else {
 		on_open_message_performer (FALSE, NULL, GTK_WINDOW (main_win), info->account, info);

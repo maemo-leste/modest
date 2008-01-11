@@ -1966,6 +1966,7 @@ on_conic_device_went_online (TnyMaemoConicDevice *device, const gchar* iap_id, g
  	
 void 
 modest_platform_connect_and_perform (GtkWindow *parent_window, 
+				     gboolean force,
 				     TnyAccount *account, 
 				     ModestConnectedPerformer callback, 
 				     gpointer user_data)
@@ -1974,14 +1975,9 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  	TnyDevice *device;
  	TnyConnectionStatus conn_status;
  	OnWentOnlineInfo *info;
-	gboolean user_requested;
  	
  	device = modest_runtime_get_device();
  	device_online = tny_device_is_online (device);
-
-	/* Whether the connection is user requested or automatically
-	   requested, for example via D-Bus */
-	user_requested = (parent_window) ? TRUE : FALSE;
 
  	/* If there is no account check only the device status */
  	if (!account) {
@@ -2009,7 +2005,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  			info->callback = callback;
  		
  			tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
-							      user_requested, on_conic_device_went_online, 
+							      force, on_conic_device_went_online, 
 							      info);
  
  			/* We'll cleanup in on_conic_device_went_online */
@@ -2062,7 +2058,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  		 * and the account */
  		
  		tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
-						      user_requested, on_conic_device_went_online, 
+						      force, on_conic_device_went_online, 
 						      info);
  		
  	} else {
@@ -2081,6 +2077,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 
 void
 modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
+					       gboolean force,
 					       TnyFolderStore *folder_store, 
 					       ModestConnectedPerformer callback, 
 					       gpointer user_data)
@@ -2122,7 +2119,7 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		}
  	}
  
- 	modest_platform_connect_and_perform (parent_window, account, callback, user_data);
+ 	modest_platform_connect_and_perform (parent_window, force, account, callback, user_data);
  
  	return;
 }

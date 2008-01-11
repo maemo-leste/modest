@@ -2204,7 +2204,7 @@ drag_and_drop_from_folder_view_dst_folder_performer (gboolean canceled,
 	}
 
 	/* Connect to source folder and perform the copy/move */
-	modest_platform_connect_if_remote_and_perform (NULL, 
+	modest_platform_connect_if_remote_and_perform (NULL, TRUE,
 						       info->src_folder,
 						       drag_and_drop_from_folder_view_src_folder_performer,
 						       info);
@@ -2289,7 +2289,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	info->helper = helper;
 
 	/* Connect to the destination folder and perform the copy/move */
-	modest_platform_connect_if_remote_and_perform (GTK_WINDOW (win), 
+	modest_platform_connect_if_remote_and_perform (GTK_WINDOW (win), TRUE,
 						       dest_folder,
 						       drag_and_drop_from_folder_view_dst_folder_performer,
 						       info);

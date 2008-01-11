@@ -416,6 +416,7 @@ typedef void (*ModestConnectedPerformer) (gboolean canceled,
 
 /*
  * modest_platform_connect_and_perform:
+ * @force: force the device to connect if we're offline, if FALSE then it does not connect if required
  * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
  * @account: The account to be used.
  * @callback: will be called when finished, can be NULL
@@ -427,6 +428,7 @@ typedef void (*ModestConnectedPerformer) (gboolean canceled,
  * @account is NULL, only a network connection is made using the platform's device.
  */		
 void modest_platform_connect_and_perform (GtkWindow *parent_window, 
+					  gboolean force,
 					  TnyAccount *account, 
 					  ModestConnectedPerformer callback, 
 					  gpointer user_data);
@@ -443,9 +445,10 @@ void modest_platform_connect_and_perform (GtkWindow *parent_window,
  * will in that case synchronously and instantly perform the @callback
  */
 void modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
-								 TnyFolderStore *folder_store,
-								 ModestConnectedPerformer callback, 
-								 gpointer user_data);
+						    gboolean force,
+						    TnyFolderStore *folder_store,
+						    ModestConnectedPerformer callback, 
+						    gpointer user_data);
 
 /**
  * modest_platform_get_account_settings_dialog:

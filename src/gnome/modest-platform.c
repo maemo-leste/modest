@@ -392,6 +392,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 
 void 
 modest_platform_connect_and_perform (GtkWindow *parent_window, 
+				     gboolean force,
 				     TnyAccount *account, 
 				     ModestConnectedPerformer callback, 
 				     gpointer user_data)
@@ -402,6 +403,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 
 void 
 modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window, 
+							gboolean force,
 							TnyAccount *account,
 							ModestConnectedPerformer callback, 
 							gpointer user_data)
