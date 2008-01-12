@@ -4611,9 +4611,11 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 			info->delete_original, 
 			folder_move_to_cb, 
 			helper);
-	
-	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
-			TNY_FOLDER (info->dst_folder), TRUE);
+
+	if (modest_mail_operation_get_status (mail_op) == MODEST_MAIL_OPERATION_STATUS_SUCCESS) {       
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
+						  TNY_FOLDER (info->dst_folder), TRUE);
+	}
 	
 	/* Unref mail operation */
 	g_object_unref (G_OBJECT (mail_op));
