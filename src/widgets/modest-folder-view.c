@@ -1655,13 +1655,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 
 	selected = gtk_tree_selection_get_selected (sel, &model, &iter);
 
-	/* Notify the display name observers */
-	/* TODO: this is redundant, and it's only required because we sometimes lose the focus of the folder
-	   view */
-	g_signal_emit (G_OBJECT(user_data),
-		       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
-		       NULL);
-
 	tree_view = MODEST_FOLDER_VIEW (user_data);
 
 	if (selected) {
