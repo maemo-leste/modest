@@ -501,6 +501,13 @@ void vadj_changed (GtkAdjustment *adj,
 	priv->last_vadj_upper = adj->upper;
 }
 
+static void window_focus (GtkWindow *window,
+			  GtkWidget *widget,
+			  gpointer userdata)
+{
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), "ModestClipboardDimmingRules");
+}
+
 
 static void
 connect_signals (ModestMsgEditWindow *obj)
@@ -538,6 +545,7 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (msg_body_focus), obj);
 	g_signal_connect (G_OBJECT (priv->msg_body), "focus-out-event",
 			  G_CALLBACK (msg_body_focus), obj);
+	g_signal_connect (G_OBJECT (obj), "set-focus", G_CALLBACK (window_focus), obj);
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
 			  "changed", G_CALLBACK (recpt_field_changed), obj);
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))),
@@ -2754,6 +2762,7 @@ msg_body_focus (GtkWidget *focus,
 {
 	
 	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (userdata));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), "ModestClipboardDimmingRules");
 	return FALSE;
 }
 
