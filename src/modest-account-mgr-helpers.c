@@ -98,9 +98,9 @@ ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccoun
 
 
 gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
-	const gchar* connection_name, const gchar* server_account_name)
+	const gchar* connection_id, const gchar* server_account_name)
 {
-	modest_account_mgr_remove_connection_specific_smtp (self, connection_name);
+	modest_account_mgr_remove_connection_specific_smtp (self, connection_id);
 	
 	ModestConf *conf = MODEST_ACCOUNT_MGR_GET_PRIVATE (self)->modest_conf;
 
@@ -115,7 +115,7 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 		result = FALSE;
 	} else {	
 		/* The server account is in the item after the connection name: */
-		list = g_slist_append (list, (gpointer)connection_name);
+		list = g_slist_append (list, (gpointer)connection_id);
 		list = g_slist_append (list, (gpointer)server_account_name);
 	
 		/* Reset the changed list: */
@@ -138,22 +138,22 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
  * modest_account_mgr_remove_connection_specific_smtp
  * @self: a ModestAccountMgr instance
  * @name: the account name
- * @connection_name: A libconic IAP connection name
+ * @connection_id: A libconic IAP connection id
  * 
  * Disassacoiate a server account to use with the specific connection for this account.
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */				 
 gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, 
-	const gchar* connection_name)
+	const gchar* connection_id)
 {
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
 	gboolean result = TRUE;
 	GError *err = NULL;
 	GSList *list = modest_conf_get_list (priv->modest_conf, 
-							MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
-						    MODEST_CONF_VALUE_STRING, &err);
+					     MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
+					     MODEST_CONF_VALUE_STRING, &err);
 	if (err) {
 		g_printerr ("modest: %s: error getting list: %s.\n", __FUNCTION__, err->message);
 		g_error_free (err);
@@ -165,7 +165,7 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 		return FALSE;
 		
 	/* The server account is in the item after the connection name: */
-	GSList *list_connection = g_slist_find_custom (list, connection_name, (GCompareFunc)strcmp);
+	GSList *list_connection = g_slist_find_custom (list, connection_id, (GCompareFunc)strcmp);
 	if (list_connection) {
 		GSList *account_node = g_slist_next (list_connection);
 		/* remove both items: */
@@ -205,13 +205,13 @@ gboolean modest_account_mgr_set_use_connection_specific_smtp (ModestAccountMgr *
 /**
  * modest_account_mgr_get_connection_specific_smtp
  * @self: a ModestAccountMgr instance
- * @connection_name: A libconic IAP connection name
+ * @connection_id: A libconic IAP connection id
  * 
  * Retrieve a server account to use with this specific connection for this account.
  *
  * Returns: a server account name to use for this connection, or NULL if none is specified.
  */			 
-gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self,  const gchar* connection_name)
+gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self,  const gchar* connection_id)
 {
 	gchar *result = NULL;
 	
@@ -232,8 +232,8 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 	/* The server account is in the item after the connection name: */
 	GSList *iter = list;
 	while (iter) {
-		const gchar* this_connection_name = (const gchar*)(iter->data);
-		if (strcmp (this_connection_name, connection_name) == 0) {
+		const gchar* this_connection_id = (const gchar*)(iter->data);
+		if (strcmp (this_connection_id, connection_id) == 0) {
 			iter = g_slist_next (iter);
 			
 			if (iter) {
@@ -253,7 +253,7 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 		
 	/*
 	if (!result) {
-		printf ("  debug: no server found for connection_name=%s.\n", connection_name);	
+		printf ("  debug: no server found for connection_id=%s.\n", connection_id);	
 	}
 	*/
 				

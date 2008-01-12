@@ -1365,9 +1365,9 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 	if (!connection)
 		return NULL;
 		
-	const gchar *connection_name = con_ic_iap_get_name (connection);
-	/* printf ("DEBUG: %s: connection_name=%s\n", __FUNCTION__, connection_name); */
-	if (!connection_name)
+	const gchar *connection_id = con_ic_iap_get_id (connection);
+	/* printf ("DEBUG: %s: connection_id=%s\n", __FUNCTION__, connection_id); */
+	if (!connection_id)
 		return NULL;
 	
 	/*  Get the connection-specific transport acccount, if any: */
@@ -1379,7 +1379,7 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 	}
 
 	gchar* server_account_name = modest_account_mgr_get_connection_specific_smtp (account_manager, 
-		connection_name);
+		connection_id);
 
 	/* printf ("DEBUG: %s: server_account_name=%s\n", __FUNCTION__, server_account_name); */
 	if (!server_account_name) {

@@ -194,7 +194,7 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 			/* Get any already-associated connection-specific server account: */
 			gchar *server_account_name = NULL;
 			server_account_name = modest_account_mgr_get_connection_specific_smtp (
-				priv->account_manager, connection_name);
+				priv->account_manager, connection_id);
 					
 			/* Add the row to the model: */
 			GtkTreeIter iter;
@@ -521,7 +521,7 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 				
 				/* associate the specific server account with this connection for this account: */
 				success = success && modest_account_mgr_set_connection_specific_smtp (
-					priv->account_manager, connection_name, server_account_name);
+					priv->account_manager, id, server_account_name);
 				
 				/* Save the new name in the treemodel, so it can be edited again later: */
 				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
@@ -530,10 +530,10 @@ modest_connection_specific_smtp_window_save_server_accounts (ModestConnectionSpe
 			} else {
 				modest_account_mgr_save_server_settings (mgr, server_settings);
 			}
-		} else if (connection_name && server_name && 
+		} else if (id && server_name && 
 			   !strcmp (server_name, _("mcen_ia_optionalsmtp_notdefined"))) {
 			modest_account_mgr_remove_connection_specific_smtp (priv->account_manager, 
-									    connection_name);
+									    id);
 			gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
 					    MODEL_COL_SERVER_ACCOUNT_NAME, NULL, -1);
 		}

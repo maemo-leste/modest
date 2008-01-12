@@ -1237,7 +1237,6 @@ modest_window_mgr_register_banner (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	priv->banner_counter++;
-	g_message ("REGISTER BANNER -> %d", priv->banner_counter);
 	
 }
 
@@ -1250,10 +1249,8 @@ modest_window_mgr_unregister_banner (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	priv->banner_counter--;
-	g_message ("UNREGISTER BANNER -> %d", priv->banner_counter);
 	if (priv->window_list == NULL && priv->banner_counter == 0) {
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
-		g_message ("WINDOW LIST EMPTY");
 	}
 
 }
