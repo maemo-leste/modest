@@ -60,6 +60,7 @@ struct _ModestAttachmentsViewClass
 	GtkEventBoxClass parent_class;
 
 	void (*activate)           (ModestAttachmentsView *attachments_view, TnyMimePart *mime_part);
+	void (*selection_changed)  (ModestAttachmentsView *attachments_view);
 };
 
 GType modest_attachments_view_get_type (void);

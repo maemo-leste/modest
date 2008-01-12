@@ -96,6 +96,7 @@ static void  modest_msg_edit_window_finalize     (GObject *obj);
 
 static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer userdata);
 static void  body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
+static void  attachments_selection_changed (ModestAttachmentsView *buffer, ModestMsgEditWindow *editor);
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
@@ -516,6 +517,8 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_can_redo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
                           G_CALLBACK (body_changed), obj);
+	g_signal_connect (G_OBJECT (priv->attachments_view), "selection-changed",
+                          G_CALLBACK (attachments_selection_changed), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
@@ -2765,6 +2768,12 @@ static void
 body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
 {
 	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (editor));
+}
+
+static void
+attachments_selection_changed (ModestAttachmentsView *atts_view, ModestMsgEditWindow *window)
+{
+	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
 }
 
 void

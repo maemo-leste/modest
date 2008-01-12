@@ -1549,7 +1549,7 @@ modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer
 		n_att_selected = tny_list_get_length (selected_attachments);
 		g_object_unref (selected_attachments);
 
-		dimmed = (n_att_selected != 1);
+		dimmed = (n_att_selected == 0);
 	}
 	
 	return dimmed;
