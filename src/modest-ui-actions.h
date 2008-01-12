@@ -67,6 +67,8 @@ void     modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindo
 
 void     modest_ui_actions_on_new_msg       (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_new_msg_or_folder (GtkAction *action, ModestWindow *win);
+
 void     modest_ui_actions_on_open           (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_reply         (GtkAction *action, ModestWindow *win);
