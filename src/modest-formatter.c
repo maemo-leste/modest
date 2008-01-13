@@ -114,7 +114,7 @@ construct_from_text (TnyMimePart *part,
 
 	/* Construct MIME part */
 	tny_stream_reset (text_body_stream);
-	tny_mime_part_construct_from_stream (part, text_body_stream, content_type);
+	tny_mime_part_construct (part, text_body_stream, content_type, "7bit");
 	tny_stream_reset (text_body_stream);
 
 	/* Clean */

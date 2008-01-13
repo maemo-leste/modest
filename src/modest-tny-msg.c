@@ -179,9 +179,9 @@ add_body_part (TnyMsg *msg,
 
 	/* Construct MIME part */
 	tny_stream_reset (text_body_stream);
-	tny_mime_part_construct_from_stream (text_body_part,
-					     text_body_stream,
-					     content_type);
+	tny_mime_part_construct (text_body_part,
+				 text_body_stream,
+				 content_type, "7bit");
 	tny_stream_reset (text_body_stream);
 
 	g_object_unref (G_OBJECT(text_body_part));
@@ -209,9 +209,11 @@ add_html_body_part (TnyMsg *msg,
 
 	/* Construct MIME part */
 	tny_stream_reset (html_body_stream);
-	tny_mime_part_construct_from_stream (html_body_part,
-					     html_body_stream,
-					     "text/html; charset=utf-8");
+	tny_mime_part_construct (html_body_part,
+			         html_body_stream,
+			         "text/html; charset=utf-8", 
+			         "7bit"); /* Sometimes it might be needed 
+					     to make this one a 8bit! */
 	tny_stream_reset (html_body_stream);
 
 	g_object_unref (G_OBJECT(html_body_part));
@@ -232,7 +234,8 @@ copy_mime_part (TnyMimePart *part)
 	TnyList *parts;
 	TnyIterator *iterator;
 	TnyStream *attachment_stream;
-
+	const gchar *enc;
+	
 	if (TNY_IS_MSG (part)) {
 		g_object_ref (part);
 		return part;
@@ -249,10 +252,12 @@ copy_mime_part (TnyMimePart *part)
 	
 	/* fill the stream */
  	attachment_stream = tny_mime_part_get_stream (part);
+	enc = tny_mime_part_get_transfer_encoding (part);
 	tny_stream_reset (attachment_stream);
-	tny_mime_part_construct_from_stream (result,
-					     attachment_stream,
-					     attachment_content_type);
+	tny_mime_part_construct (result,
+			         attachment_stream,
+				 attachment_content_type, 
+				 enc);
 	tny_stream_reset (attachment_stream);
 	
 	/* set other mime part fields */

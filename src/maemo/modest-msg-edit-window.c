@@ -1975,7 +1975,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				(modest_runtime_get_platform_factory ());
 				
 			TnyStream *stream = create_stream_for_uri (uri);
-			tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+			tny_mime_part_construct (mime_part, stream, mime_type, "base64");
 			
 			content_id = g_strdup_printf ("%d", priv->last_cid);
 			tny_mime_part_set_content_id (mime_part, content_id);
@@ -2076,7 +2076,7 @@ modest_msg_edit_window_attach_file_one (
 			(modest_runtime_get_platform_factory ());
 		stream = TNY_STREAM (tny_vfs_stream_new (handle));
 		
-		tny_mime_part_construct_from_stream (mime_part, stream, mime_type);
+		tny_mime_part_construct (mime_part, stream, mime_type, "base64");
 
 		g_object_unref (stream);
 		
