@@ -159,7 +159,7 @@ static int
 parse_mcc_mapping_line (const char* line,  char** country)
 {
 	int i, j;
-	char mcc[3];  /* the mcc code, always 3 bytes*/
+	char mcc[4];  /* the mcc code, always 3 bytes*/
 	static char my_country[128];
 
 	if (!line) {
@@ -181,6 +181,7 @@ parse_mcc_mapping_line (const char* line,  char** country)
 	mcc[0] = line[0];
 	mcc[1] = line[1];
 	mcc[2] = line[2];
+	mcc[3] = '\0';
 	
 	*country = my_country;
 
@@ -205,7 +206,7 @@ load_from_file (EasysetupCountryComboBox *self)
 		return;
 	}
 
-	while (fgets (line, MAX_LINE_LEN, file) > 0) { 
+	while (fgets (line, MAX_LINE_LEN, file) != NULL) { 
 
 		int mcc;
 		char *country = NULL;
