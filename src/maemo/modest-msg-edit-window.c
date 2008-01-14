@@ -1062,6 +1062,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	modest_msg_edit_window_reset_modified (self);
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
@@ -1359,7 +1360,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
-        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (obj));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), MODEST_DIMMING_RULES_CLIPBOARD);
 	priv->update_caption_visibility = TRUE;
 
@@ -2653,6 +2655,7 @@ modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 	wp_text_buffer_undo (WP_TEXT_BUFFER (priv->text_buffer));
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 
 }
 
@@ -2667,6 +2670,7 @@ modest_msg_edit_window_redo (ModestMsgEditWindow *window)
 	wp_text_buffer_redo (WP_TEXT_BUFFER (priv->text_buffer));
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 
 }
 
@@ -2763,6 +2767,7 @@ msg_body_focus (GtkWidget *focus,
 {
 	
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (userdata));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (userdata));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), MODEST_DIMMING_RULES_CLIPBOARD);
 	return FALSE;
 }
@@ -2772,12 +2777,14 @@ recpt_field_changed (GtkTextBuffer *buffer,
 		  ModestMsgEditWindow *editor)
 {
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (editor));
 }
 
 static void
 body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
 {
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (editor));
 }
 
 void
@@ -2928,6 +2935,7 @@ subject_field_changed (GtkEditable *editable,
 	update_window_title (window);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 }
 
 static void  
