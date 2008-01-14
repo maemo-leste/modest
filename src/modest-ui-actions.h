@@ -201,7 +201,8 @@ void     modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win);
  * 
  * Refreshes all the accounts
  **/
-void    modest_ui_actions_do_send_receive_all          (ModestWindow *win);
+void    modest_ui_actions_do_send_receive_all          (ModestWindow *win,
+							gboolean force_connection);
 
 /**
  * modest_ui_actions_do_send_receive:
@@ -214,6 +215,7 @@ void    modest_ui_actions_do_send_receive_all          (ModestWindow *win);
  * default account
  **/
 void    modest_ui_actions_do_send_receive              (const gchar *account_name,
+							gboolean force_connection,
 							ModestWindow *win);
 
 /**

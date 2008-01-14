@@ -818,7 +818,7 @@ modest_ui_actions_on_new_msg_or_folder (GtkAction *action, ModestWindow *win)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (win));
 
-	/* Check first if the header view has the focus */
+	/* Check first if the folder view has the focus */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *w;
 		w = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
@@ -1758,6 +1758,7 @@ do_send_receive_performer (gboolean canceled,
  */
 void
 modest_ui_actions_do_send_receive (const gchar *account_name, 
+				   gboolean force_connection,
 				   ModestWindow *win)
 {
 	gchar *acc_name = NULL;
@@ -1790,7 +1791,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 
 	/* Invoke the connect and perform */
 	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL, 
-					     (win) ? TRUE : FALSE, info->account, 
+					     force_connection, info->account, 
 					     do_send_receive_performer, info);
 }
 
@@ -1869,7 +1870,8 @@ modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win)
  * updates
  */
 void
-modest_ui_actions_do_send_receive_all (ModestWindow *win)
+modest_ui_actions_do_send_receive_all (ModestWindow *win, 
+				       gboolean force_connection)
 {
 	GSList *account_names, *iter;
 
@@ -1878,7 +1880,7 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win)
 
 	iter = account_names;
 	while (iter) {			
-		modest_ui_actions_do_send_receive ((const char*) iter->data, win);
+		modest_ui_actions_do_send_receive ((const char*) iter->data, force_connection, win);
 		iter = g_slist_next (iter);
 	}
 
@@ -1919,8 +1921,8 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 			g_object_unref (folder_store);
 	}	
 	
-	/* Refresh the active account */
-	modest_ui_actions_do_send_receive (NULL, win);
+	/* Refresh the active account. Force the connection if needed */
+	modest_ui_actions_do_send_receive (NULL, TRUE, win);
 }
 
 

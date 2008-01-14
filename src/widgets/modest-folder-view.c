@@ -1199,7 +1199,7 @@ on_connection_status_changed (TnyAccount *self,
 
 		my_window = gtk_widget_get_ancestor (GTK_WIDGET (user_data), MODEST_TYPE_WINDOW);
 		acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (self);
-		modest_ui_actions_do_send_receive (acc_name, MODEST_WINDOW (my_window));
+		modest_ui_actions_do_send_receive (acc_name, FALSE, MODEST_WINDOW (my_window));
 	}
 }
 

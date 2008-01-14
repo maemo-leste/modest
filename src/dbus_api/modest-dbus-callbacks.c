@@ -713,7 +713,7 @@ on_idle_send_receive(gpointer user_data)
 
 	if (auto_update)
 		/* Do send receive */
-		modest_ui_actions_do_send_receive_all (main_win);
+		modest_ui_actions_do_send_receive_all (main_win, FALSE);
 	else
 		/* Disable auto update */
 		modest_platform_set_update_interval (0);
