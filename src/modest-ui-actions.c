@@ -2268,10 +2268,10 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 	if (modest_mail_operation_get_error (mail_op) != NULL) {
 		g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_op))->message);
 		modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
-		return;
+	} else {
+		modest_msg_edit_window_set_draft (edit_window, saved_draft);
 	}
-
-	modest_msg_edit_window_set_draft (edit_window, saved_draft);
+	g_object_unref(edit_window);
 }
 
 void
@@ -2335,7 +2335,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->images,
 					      data->priority_flags,
 					      on_save_to_drafts_cb,
-					      edit_window);
+					      g_object_ref(edit_window));
 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
 	modest_platform_information_banner (NULL, NULL, info_text);
 
