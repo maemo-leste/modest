@@ -377,6 +377,14 @@ modest_ui_actions_on_header_view_csm_menu_activated (GtkAction *action,
 void
 modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window);
 
+void
+modest_ui_actions_check_menu_dimming_rules (ModestWindow *window);
+
+/* Dimming rules groups */
+#define MODEST_DIMMING_RULES_TOOLBAR "ModestToolbarDimmingRules"
+#define MODEST_DIMMING_RULES_MENU "ModestMenuDimmingRules"
+#define MODEST_DIMMING_RULES_CLIPBOARD "ModestClipboardDimmingRules"
+
 /**
  * modest_ui_actions_move_folder_error_handler:
  * @mail_op: a #ModestMailOperation

@@ -832,8 +832,8 @@ _folder_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
 
-	/* Update dimmed */	
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
+	/* Update dimmed */
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW(user_data));
 }
 
 static void
@@ -843,8 +843,8 @@ _header_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
 
 	/* Update visibility */
 
-	/* Update dimmed */	
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
+	/* Update dimmed */
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW(user_data));
 }
 
 static void
@@ -1113,8 +1113,8 @@ modest_main_window_new (void)
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
-	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
-	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
+	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,

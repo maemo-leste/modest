@@ -745,9 +745,9 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	gtk_widget_show (parent_priv->menubar);
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 
-	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
-	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
-	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
+	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
+	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
 
 	/* Add common dimming rules */
 	modest_dimming_rules_group_add_rules (menu_rules_group, 
@@ -910,7 +910,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	/* Check toolbar dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
 
 	return MODEST_WINDOW(window);
 }
@@ -965,7 +965,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 
 	/* Check toolbar dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), MODEST_DIMMING_RULES_CLIPBOARD);
 
 	return MODEST_WINDOW(obj);
 }
@@ -2071,7 +2071,7 @@ modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
 }
 
 gboolean 

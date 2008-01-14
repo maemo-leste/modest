@@ -504,7 +504,7 @@ static void window_focus (GtkWindow *window,
 			  GtkWidget *widget,
 			  gpointer userdata)
 {
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), MODEST_DIMMING_RULES_CLIPBOARD);
 }
 
 
@@ -1320,9 +1320,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
-	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
-	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
-	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
+	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
+	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
 	/* Add common dimming rules */
 	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_msg_edit_window_menu_dimming_entries,
@@ -1360,7 +1360,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
         modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), MODEST_DIMMING_RULES_CLIPBOARD);
 	priv->update_caption_visibility = TRUE;
 
 	modest_msg_edit_window_reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
@@ -2763,7 +2763,7 @@ msg_body_focus (GtkWidget *focus,
 {
 	
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (userdata));
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), MODEST_DIMMING_RULES_CLIPBOARD);
 	return FALSE;
 }
 
@@ -2890,7 +2890,7 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	}
 	priv->clipboard_text = text;
 
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
 }
 static void 
 subject_field_move_cursor (GtkEntry *entry,
@@ -2902,7 +2902,7 @@ subject_field_move_cursor (GtkEntry *entry,
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
 }
 
 static void 
