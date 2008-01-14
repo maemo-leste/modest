@@ -96,7 +96,6 @@ static void  modest_msg_edit_window_finalize     (GObject *obj);
 
 static gboolean msg_body_focus (GtkWidget *focus, GdkEventFocus *event, gpointer userdata);
 static void  body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
-static void  attachments_selection_changed (ModestAttachmentsView *buffer, ModestMsgEditWindow *editor);
 static void  recpt_field_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor);
 
 static void  text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *window);
@@ -524,8 +523,6 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_can_redo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
                           G_CALLBACK (body_changed), obj);
-	g_signal_connect (G_OBJECT (priv->attachments_view), "selection-changed",
-                          G_CALLBACK (attachments_selection_changed), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
@@ -1064,7 +1061,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 
 	modest_msg_edit_window_reset_modified (self);
 
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 	text_buffer_can_undo (priv->text_buffer, FALSE, self);
 	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
@@ -1288,7 +1285,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
 	ModestPair *account_pair = NULL;
-	ModestDimmingRulesGroup *window_rules_group = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 	ModestWindowMgr *mgr = NULL;
 
@@ -1322,24 +1320,25 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
-	window_rules_group = modest_dimming_rules_group_new ("ModestWindowDimmingRules", TRUE);
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (window_rules_group, 
-					      modest_msg_edit_window_toolbar_dimming_entries,
-					      G_N_ELEMENTS (modest_msg_edit_window_toolbar_dimming_entries),
-					      MODEST_WINDOW (obj));
-	modest_dimming_rules_group_add_rules (window_rules_group,
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_msg_edit_window_menu_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_edit_window_menu_dimming_entries),
 					      MODEST_WINDOW (obj));
-	modest_dimming_rules_group_add_widget_rule (window_rules_group, priv->font_color_button,
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_msg_edit_window_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_toolbar_dimming_entries),
+					      MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_color_button,
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
-	modest_dimming_rules_group_add_widget_rule (window_rules_group, priv->font_size_toolitem,
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_size_toolitem,
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
-	modest_dimming_rules_group_add_widget_rule (window_rules_group, priv->font_face_toolitem,
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_face_toolitem,
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
 	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
@@ -1347,10 +1346,12 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 					      G_N_ELEMENTS (modest_msg_edit_window_clipboard_dimming_entries),
 					      MODEST_WINDOW (obj));
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, window_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
         /* Checks the dimming rules */
-	g_object_unref (window_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 	gtk_widget_show_all (GTK_WIDGET (obj));
 
@@ -1358,7 +1359,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
-        modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (obj));
+        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
 	priv->update_caption_visibility = TRUE;
 
@@ -2505,7 +2506,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 		}
 			break;
 		}
-		modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	}
 }
 
@@ -2651,7 +2652,7 @@ modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 	
 	wp_text_buffer_undo (WP_TEXT_BUFFER (priv->text_buffer));
 
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 
 }
 
@@ -2665,7 +2666,7 @@ modest_msg_edit_window_redo (ModestMsgEditWindow *window)
 	
 	wp_text_buffer_redo (WP_TEXT_BUFFER (priv->text_buffer));
 
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 
 }
 
@@ -2761,7 +2762,7 @@ msg_body_focus (GtkWidget *focus,
 		gpointer userdata)
 {
 	
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (userdata));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (userdata));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), "ModestClipboardDimmingRules");
 	return FALSE;
 }
@@ -2770,19 +2771,13 @@ static void
 recpt_field_changed (GtkTextBuffer *buffer,
 		  ModestMsgEditWindow *editor)
 {
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (editor));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
 }
 
 static void
 body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
 {
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (editor));
-}
-
-static void
-attachments_selection_changed (ModestAttachmentsView *atts_view, ModestMsgEditWindow *window)
-{
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
 }
 
 void
@@ -2932,7 +2927,7 @@ subject_field_changed (GtkEditable *editable,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	update_window_title (window);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 static void  

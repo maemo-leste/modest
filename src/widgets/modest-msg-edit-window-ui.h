@@ -39,12 +39,12 @@ G_BEGIN_DECLS
 
 static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	/* Toplevel menus */
-	{ "Email", NULL, N_("mcen_me_inbox_email") , NULL, NULL, NULL },
-	{ "View", NULL, N_("mcen_me_inbox_view") , NULL, NULL, NULL},
-	{ "Edit", NULL, N_("mcen_me_inbox_edit") , NULL, NULL, NULL},
-	{ "Format", NULL, N_("mcen_me_editor_format") , NULL, NULL, NULL},
+	{ "Email", NULL, N_("mcen_me_inbox_email") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
+	{ "View", NULL, N_("mcen_me_inbox_view") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated)},
+	{ "Edit", NULL, N_("mcen_me_inbox_edit") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated)},
+	{ "Format", NULL, N_("mcen_me_editor_format") , NULL, NULL, G_CALLBACK (modest_ui_actions_on_format_menu_activated)},
 	{ "Alignment", NULL, N_("mcen_me_editor_align") },
-	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, NULL },
+	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
 	{ "MessagePriority", NULL, N_("mcen_me_editor_message_priority") },
 	{ "FileFormat", NULL, N_("mcen_me_editor_file_format") },
 	{ "Tools", NULL, N_("mcen_me_inbox_tools") },

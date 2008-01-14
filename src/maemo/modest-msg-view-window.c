@@ -473,8 +473,8 @@ set_toolbar_mode (ModestMsgViewWindow *self,
 	/* Sets current toolbar mode */
 	priv->current_toolbar_mode = mode;
 
-	/* Update window dimming state */
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (self));
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 
 	switch (mode) {
 	case TOOLBAR_MODE_NORMAL:		
@@ -730,7 +730,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
-	ModestDimmingRulesGroup *window_rules_group = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 
 	obj = G_OBJECT (self);
@@ -745,17 +746,18 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	gtk_widget_show (parent_priv->menubar);
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 
-	window_rules_group = modest_dimming_rules_group_new ("ModestWindowDimmingRules", TRUE);
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new ("ModestClipboardDimmingRules", FALSE);
 
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (window_rules_group, 
-					      modest_msg_view_toolbar_dimming_entries,
-					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
-					      MODEST_WINDOW (self));
-	modest_dimming_rules_group_add_rules (window_rules_group, 
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_msg_view_menu_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_view_menu_dimming_entries),
+					      MODEST_WINDOW (self));
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_msg_view_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
 					      MODEST_WINDOW (self));
 	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
 					      modest_msg_view_clipboard_dimming_entries,
@@ -763,9 +765,11 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 					      MODEST_WINDOW (self));
 
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, window_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
-	g_object_unref (window_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 
 	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
@@ -905,8 +909,8 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	gtk_widget_show_all (GTK_WIDGET (window));
 	modest_msg_view_window_update_priority (window);
 
-	/* Check window dimming rules */
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	/* Check toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), "ModestClipboardDimmingRules");
 
 	return MODEST_WINDOW(window);
@@ -960,8 +964,8 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
-	/* Check window dimming rules */
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (obj));
+	/* Check toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), "ModestClipboardDimmingRules");
 
 	return MODEST_WINDOW(obj);
@@ -972,14 +976,14 @@ void modest_msg_view_window_on_row_changed(
 		GtkTreePath *arg1,
 		GtkTreeIter *arg2,
 		ModestMsgViewWindow *window){
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 void modest_msg_view_window_on_row_deleted(
 		GtkTreeModel *header_model,
 		GtkTreePath *arg1,
 		ModestMsgViewWindow *window){
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 /* On insertions we check if the folder still has the message we are
@@ -1017,7 +1021,7 @@ void modest_msg_view_window_on_row_inserted(
 			select_next_valid_row (priv->header_model,
 					       &(priv->next_row_reference), FALSE);
 		}
-		modest_ui_actions_check_window_dimming_rules (
+		modest_ui_actions_check_toolbar_dimming_rules (
 				MODEST_WINDOW (window));
 		return;
 	}
@@ -1067,7 +1071,7 @@ void modest_msg_view_window_on_row_inserted(
 	select_next_valid_row (priv->header_model,
 			&(priv->next_row_reference), FALSE);
 
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 void modest_msg_view_window_on_row_reordered(
@@ -1076,7 +1080,7 @@ void modest_msg_view_window_on_row_reordered(
 		GtkTreeIter *arg2,
 		gpointer arg3,
 		ModestMsgViewWindow *window){
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 /* The modest_msg_view_window_update_model_replaced implements update
@@ -1141,7 +1145,7 @@ void modest_msg_view_window_update_model_replaced(
 		g_object_unref(priv->next_row_reference);
 	priv->next_row_reference = NULL;
 
-	modest_ui_actions_check_window_dimming_rules(MODEST_WINDOW(window));
+	modest_ui_actions_check_toolbar_dimming_rules(MODEST_WINDOW(window));
 
 	g_assert(model != NULL);
 
@@ -1597,7 +1601,7 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
  *
  * If the message was not previously downloaded then ask the user
  * before downloading. If there is no connection launch the connection
- * dialog. Update window dimming rules.
+ * dialog. Update toolbar dimming rules.
  *
  * Returns: TRUE if the mail operation was started, otherwise if the
  * user do not want to download the message, or if the user do not
@@ -1661,8 +1665,8 @@ message_reader (ModestMsgViewWindow *window,
 	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, row_reference);
 	g_object_unref (mail_op);
 
-	/* Update window dimming rules */
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (window));
+	/* Update toolbar dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 
 	return TRUE;
 }

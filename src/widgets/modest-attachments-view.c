@@ -46,7 +46,6 @@ static GObjectClass *parent_class = NULL;
 /* signals */
 enum {
 	ACTIVATE_SIGNAL,
-	SELECTION_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -321,15 +320,6 @@ modest_attachments_view_class_init (ModestAttachmentsViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__OBJECT,
 			      G_TYPE_NONE, 1, G_TYPE_OBJECT);
-
-	signals[SELECTION_CHANGED_SIGNAL] =
-		g_signal_new ("selection-changed",
-			      G_TYPE_FROM_CLASS (object_class),
-			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
-			      G_STRUCT_OFFSET (ModestAttachmentsViewClass, selection_changed),
-			      NULL, NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 	
 	return;
 }
@@ -623,8 +613,6 @@ set_selected (ModestAttachmentsView *atts_view, ModestAttachmentView *att_view)
 		g_object_unref (part);
 	
 	own_clipboard (atts_view);
-
-	g_signal_emit (G_OBJECT (atts_view), signals[SELECTION_CHANGED_SIGNAL], 0);
 }
 
 static void 
@@ -670,8 +658,6 @@ select_range (ModestAttachmentsView *atts_view, ModestAttachmentView *att1, Mode
 	g_list_free (children);
 	
 	own_clipboard (atts_view);
-
-	g_signal_emit (G_OBJECT (atts_view), signals[SELECTION_CHANGED_SIGNAL], 0);
 }
 
 static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_data,
@@ -770,8 +756,6 @@ modest_attachments_view_select_all (ModestAttachmentsView *atts_view)
 	g_list_free (children);
 
 	own_clipboard (atts_view);
-
-	g_signal_emit (G_OBJECT (atts_view), signals[SELECTION_CHANGED_SIGNAL], 0);
 }
 
 gboolean
@@ -809,8 +793,6 @@ focus_out_event (GtkWidget *widget, GdkEventFocus *event, ModestAttachmentsView 
 {
 	if (!gtk_widget_is_focus (widget))
 		unselect_all (atts_view);
-
-	g_signal_emit (G_OBJECT (atts_view), signals[SELECTION_CHANGED_SIGNAL], 0);
 
 	return FALSE;
 }

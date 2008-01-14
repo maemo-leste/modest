@@ -42,11 +42,11 @@ G_BEGIN_DECLS
 static const GtkActionEntry modest_action_entries [] = {
 
 	/* Toplevel menus */
-	{ "Email",       NULL, N_("mcen_me_inbox_email"),        NULL, NULL, NULL },
-	{ "Edit",        NULL, N_("mcen_me_inbox_edit"),         NULL, NULL, NULL },
-	{ "View",        NULL, N_("mcen_me_inbox_view"),         NULL, NULL, NULL },
-	{ "Tools",       NULL, N_("mcen_me_inbox_tools"),        NULL, NULL, NULL },
-	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, NULL },
+	{ "Email",       NULL, N_("mcen_me_inbox_email"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
+	{ "Edit",        NULL, N_("mcen_me_inbox_edit"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
+	{ "View",        NULL, N_("mcen_me_inbox_view"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated) },
+	{ "Tools",       NULL, N_("mcen_me_inbox_tools"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_tools_menu_activated) },
+	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
 	{ "Close",       NULL, N_("mcen_me_inbox_close") },
 	{ "Zoom",        NULL, N_("Zoom") },
 

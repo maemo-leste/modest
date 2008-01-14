@@ -339,7 +339,43 @@ void     modest_ui_actions_on_retrieve_msg_contents       (GtkAction *action,
 							   ModestWindow *window);
 
 void
-modest_ui_actions_check_window_dimming_rules (ModestWindow *window);
+modest_ui_actions_on_email_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
+void
+modest_ui_actions_on_edit_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
+void
+modest_ui_actions_on_format_menu_activated (GtkAction *action,
+					    ModestWindow *window);
+
+void
+modest_ui_actions_on_view_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
+void
+modest_ui_actions_on_tools_menu_activated (GtkAction *action,
+					  ModestWindow *window);
+
+void
+modest_ui_actions_on_attachment_menu_activated (GtkAction *action,
+						ModestWindow *window);
+
+void
+modest_ui_actions_on_toolbar_csm_menu_activated (GtkAction *action,
+						 ModestWindow *window);
+
+void
+modest_ui_actions_on_folder_view_csm_menu_activated (GtkAction *action,
+						     ModestWindow *window);
+
+void
+modest_ui_actions_on_header_view_csm_menu_activated (GtkAction *action,
+						     ModestWindow *window);
+
+void
+modest_ui_actions_check_toolbar_dimming_rules (ModestWindow *window);
 
 /**
  * modest_ui_actions_move_folder_error_handler:

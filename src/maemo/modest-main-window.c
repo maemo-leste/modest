@@ -828,6 +828,26 @@ modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self)
 
 
 static void
+_folder_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
+}
+
+static void
+_header_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+
+	/* Update visibility */
+
+	/* Update dimmed */	
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (user_data), "ModestMenuDimmingRules");	
+}
+
+static void
 modest_main_window_disconnect_signals (ModestWindow *self)
 {	
 	ModestMainWindowPrivate *priv;	
@@ -872,6 +892,9 @@ connect_signals (ModestMainWindow *self)
 	/* Folder view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "tap-and-hold",
+						       G_CALLBACK(_folder_view_csm_menu_activated),
+						       self);
 	/* header view */
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_selected",
@@ -901,6 +924,10 @@ connect_signals (ModestMainWindow *self)
 	/* Header view CSM */
 	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
 	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->header_view), menu, NULL, 0);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "tap-and-hold",
+					   G_CALLBACK(_header_view_csm_menu_activated),
+					   self);
 	
 	/* window */
 	priv->sighandlers = 
@@ -1067,7 +1094,8 @@ modest_main_window_new (void)
 	ModestMainWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
 	GtkWidget *folder_win = NULL;
-	ModestDimmingRulesGroup *window_rules_group = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	HildonProgram *app;
@@ -1085,7 +1113,8 @@ modest_main_window_new (void)
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
 	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
-	window_rules_group = modest_dimming_rules_group_new ("ModestWindowDimmingRules", TRUE);
+	menu_rules_group = modest_dimming_rules_group_new ("ModestMenuDimmingRules", FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new ("ModestToolbarDimmingRules", TRUE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -1126,18 +1155,20 @@ modest_main_window_new (void)
 	}
 
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (window_rules_group, 
-					      modest_main_window_toolbar_dimming_entries,
-					      G_N_ELEMENTS (modest_main_window_toolbar_dimming_entries),
-					      MODEST_WINDOW (self));
-	modest_dimming_rules_group_add_rules (window_rules_group, 
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_main_window_menu_dimming_entries,
 					      G_N_ELEMENTS (modest_main_window_menu_dimming_entries),
 					      MODEST_WINDOW (self));
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_main_window_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_main_window_toolbar_dimming_entries),
+					      MODEST_WINDOW (self));
 
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, window_rules_group);
-	g_object_unref (window_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
 	
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (self), 
@@ -2052,7 +2083,7 @@ set_toolbar_mode (ModestMainWindow *self,
 	priv->current_toolbar_mode = mode;
 
         /* Checks the dimming rules */
-        modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (self));
+        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 
 	/* Show and hide toolbar items */
 	switch (mode) {
@@ -2447,8 +2478,8 @@ on_folder_view_focus_in (GtkWidget *widget, GdkEventFocus *event, gpointer userd
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (userdata), FALSE);
 	main_window = MODEST_MAIN_WINDOW (userdata);
 	
-	/* Update window dimming state */
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (main_window));
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 
 	return FALSE;
 }
@@ -2464,8 +2495,8 @@ on_header_view_focus_in (GtkWidget *widget,
 
 	main_window = MODEST_MAIN_WINDOW (userdata);
 
-	/* Update window dimming state */
-	modest_ui_actions_check_window_dimming_rules (MODEST_WINDOW (main_window));
+	/* Update toolbar dimming state */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 
 	return FALSE;
 }
