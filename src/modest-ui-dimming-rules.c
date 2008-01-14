@@ -319,6 +319,23 @@ modest_ui_dimming_rules_define_dimming_state (ModestWindow *window)
 	return state;
 }
 
+gboolean 
+modest_ui_dimming_rules_on_new_msg_or_folder (ModestWindow *win, 
+					      gpointer user_data)
+{
+	GtkWidget *folder_view;
+
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
+
+	/* Check first if the folder view has the focus */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	if (gtk_widget_is_focus (folder_view)) {
+		return modest_ui_dimming_rules_on_new_folder (win, user_data);
+	} else {
+		return modest_ui_dimming_rules_on_new_msg (win, user_data);
+	}
+}
 
 gboolean 
 modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)

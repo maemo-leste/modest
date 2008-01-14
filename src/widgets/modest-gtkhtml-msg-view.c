@@ -2117,4 +2117,3 @@ modest_gtkhtml_msg_view_remove_attachment_default (ModestMsgView *self, TnyMimeP
 {
 	remove_attachment (MODEST_GTKHTML_MSG_VIEW (self), attachment);
 }
-

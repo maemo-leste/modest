@@ -39,7 +39,6 @@
 #include <modest-maemo-utils.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
-#include <modest-attachments-view.h>
 #include <modest-main-window-ui.h>
 #include "modest-msg-view-window-ui-dimming.h"
 #include <modest-widget-memory.h>

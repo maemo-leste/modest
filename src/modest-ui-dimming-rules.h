@@ -42,6 +42,7 @@ DimmedState *modest_ui_dimming_rules_define_dimming_state (ModestWindow *window)
 /* Menu & toolbar dimming rules */
 gboolean modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_new_msg_or_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data);
