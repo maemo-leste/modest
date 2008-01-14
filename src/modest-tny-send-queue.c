@@ -111,7 +111,7 @@ static guint signals[LAST_SIGNAL] = {0};
  */
 
 static int
-on_modest_tny_send_queue_compare_id(gconstpointer info, gconstpointer msg_id)
+on_modest_tny_send_queue_compare_id (gconstpointer info, gconstpointer msg_id)
 {
 	g_return_val_if_fail (info && ((SendInfo*)info)->msg_id && msg_id, -1);
 	
@@ -119,7 +119,7 @@ on_modest_tny_send_queue_compare_id(gconstpointer info, gconstpointer msg_id)
 }
 
 static void
-modest_tny_send_queue_info_free(SendInfo *info)
+modest_tny_send_queue_info_free (SendInfo *info)
 {
 	g_free(info->msg_id);
 	g_slice_free(SendInfo, info);
@@ -237,13 +237,14 @@ modest_tny_send_queue_cancel (TnySendQueue *self, gboolean remove, GError **err)
 }
 
 static void
-_on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError *err, gpointer user_data) 
+_on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError *err,
+		     gpointer user_data) 
 {
 	ModestTnySendQueuePrivate *priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
 	TnyHeader *header = NULL;
 	SendInfo *info = NULL;
 	GList* existing = NULL;
-	const gchar* msg_id = NULL;
+	gchar* msg_id = NULL;
 
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
@@ -255,17 +256,12 @@ _on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError
 
 	/* Put newly added message in WAITING state */
 	existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
-	if(existing != NULL)
-	{
+	if(existing != NULL) {
 		info = existing->data;
 		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
-	}
-	else
-	{
-		
+	} else {
 		info = g_slice_new (SendInfo);
-
-		info->msg_id = strdup(msg_id);
+		info->msg_id = msg_id;
 		info->status = MODEST_TNY_SEND_QUEUE_WAITING;
 		g_queue_push_tail (priv->queue, info);
 	}
@@ -497,6 +493,8 @@ modest_tny_send_queue_try_to_send (ModestTnySendQueue* self)
 	TnyHeader *header = NULL;
 	GError *err = NULL;
 
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(self));
+	
 	outbox = modest_tny_send_queue_get_outbox (TNY_SEND_QUEUE(self));
 	if (!outbox)
 		return;
@@ -544,6 +542,9 @@ gboolean
 modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self)
 {	
 	ModestTnySendQueuePrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE(self), FALSE);
+	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	
 	return priv->current != NULL;
@@ -552,10 +553,16 @@ modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self)
 ModestTnySendQueueStatus
 modest_tny_send_queue_get_msg_status (ModestTnySendQueue *self, const gchar *msg_id)
 {
-  GList *item;
-  item = modest_tny_send_queue_lookup_info (self, msg_id);
-  if(item == NULL) return MODEST_TNY_SEND_QUEUE_UNKNOWN;
-  return ((SendInfo*)item->data)->status;
+	GList *item;
+
+	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE(self), MODEST_TNY_SEND_QUEUE_UNKNOWN);
+	g_return_val_if_fail (msg_id, MODEST_TNY_SEND_QUEUE_UNKNOWN);
+
+	item = modest_tny_send_queue_lookup_info (self, msg_id);
+	if (!item)
+		return MODEST_TNY_SEND_QUEUE_UNKNOWN;
+	else
+		return ((SendInfo*)item->data)->status;
 }
 
 gchar *
@@ -565,6 +572,8 @@ modest_tny_send_queue_get_msg_id (TnyHeader *header)
 	const gchar *subject;
 	time_t date_received;
 		
+	g_return_val_if_fail (header && TNY_IS_HEADER(header), NULL);
+
 	/* Get message uid */
 	subject = tny_header_get_subject (header);
 	date_received = tny_header_get_date_received (header);
@@ -622,6 +631,7 @@ _on_msg_has_been_sent (TnySendQueue *self,
 	ModestTnySendQueuePrivate *priv;
 	gchar *msg_id = NULL;
 	GList *item;
+
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
 	/* Get message uid */
@@ -705,6 +715,8 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 	gchar *msg_uid = NULL;
 	ModestTnySendQueue *send_queue = NULL;
 	
+	g_return_val_if_fail (TNY_IS_HEADER(header), MODEST_TNY_SEND_QUEUE_UNKNOWN);
+
 	msg_uid = modest_tny_send_queue_get_msg_id (header);
 	cache_mgr = modest_runtime_get_cache_mgr ();
 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
