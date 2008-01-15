@@ -1059,6 +1059,16 @@ get_account_from_header_list (TnyList *headers)
 	return account;
 }
 
+static void 
+foreach_unregister_headers (gpointer data,
+			    gpointer user_data)
+{
+	ModestWindowMgr *mgr = (ModestWindowMgr *) user_data;
+	TnyHeader *header = TNY_HEADER (data);
+
+	modest_window_mgr_unregister_header (mgr, header);
+}
+
 static void
 open_msgs_performer(gboolean canceled, 
 		    GError *err,
@@ -1077,6 +1087,9 @@ open_msgs_performer(gboolean canceled,
 
 	status = tny_account_get_connection_status (account);
 	if (err || canceled) {
+		/* Unregister the already registered headers */
+		tny_list_foreach (not_opened_headers, foreach_unregister_headers, 
+				  modest_runtime_get_window_mgr ());
 		goto clean;
 	}
 
