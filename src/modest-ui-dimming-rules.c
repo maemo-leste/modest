@@ -980,12 +980,12 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 		if (!dimmed) {
 			dimmed = _selected_folder_not_moveable (MODEST_MAIN_WINDOW(win));
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_items"));
+				modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_items"));
 		}
 		if (!dimmed) {
 			dimmed = _selected_folder_is_any_of_type (win, types, 5);
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_itemsr"));
+				modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_items"));
 		}
 	}
 	
@@ -993,7 +993,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	if (!dimmed) {
 		dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
 		if (dimmed) {
-			gchar *message = g_strdup_printf(_("emev_bd_unabletomove_items"), 
+			gchar *message = g_strdup_printf(_("emev_nc_unabletomove_items"),
 							 state->already_opened_msg);
 			modest_dimming_rule_set_notification (rule, message);
 			g_free(message);
@@ -1365,17 +1365,17 @@ modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data)
 			if (!dimmed) {
 				dimmed = _selected_folder_not_deletable (MODEST_MAIN_WINDOW(win));
 				if (dimmed)
-					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_items"));
+					modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_items"));
 			}
 			if (!dimmed) {
 				dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
 				if (dimmed)
-					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_itemsr"));
+					modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_items"));
 			}
 			if (!dimmed) {
 				dimmed = _selected_folder_is_any_of_type (win, types, 3);
 				if (dimmed)
-					modest_dimming_rule_set_notification (rule, _("emev_bd_unabletomove_itemsr"));
+					modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_items"));
 			}
 		}
 	}
