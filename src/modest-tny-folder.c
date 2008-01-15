@@ -258,7 +258,7 @@ modest_tny_folder_is_remote_folder   (TnyFolder *folder)
 {
 	gboolean is_local = TRUE;
 
-	g_return_val_if_fail (folder, FALSE);
+	g_return_val_if_fail (TNY_IS_FOLDER(folder), FALSE);
 	
 	is_local = ((modest_tny_folder_is_local_folder(folder)) ||
 		    (modest_tny_folder_is_memory_card_folder(folder)));
@@ -351,6 +351,8 @@ TnyAccount *
 modest_tny_folder_get_account (TnyFolder *folder)
 {
 	TnyAccount *account = NULL;
+
+	g_return_val_if_fail (TNY_IS_FOLDER(folder), NULL);
 	
 	if (TNY_IS_MERGE_FOLDER (folder)) {
 		/* TnyMergeFolder does not support get_account(), 
