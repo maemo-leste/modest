@@ -625,6 +625,18 @@ add_to_address_book (const gchar* address)
 	return TRUE;
 }
 
+static gboolean
+show_check_names_banner (gpointer userdata)
+{
+	GtkWidget **banner = (GtkWidget **) userdata;
+
+	gdk_threads_enter ();
+	*banner = modest_platform_animation_banner (NULL, NULL, _("mail_ib_checking_names"));
+	gdk_threads_leave ();
+
+	return FALSE;
+}
+
 gboolean
 modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
 {
@@ -636,10 +648,10 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	gint offset_delta = 0;
 	gint last_length;
 	GtkTextIter start_iter, end_iter;
+	guint banner_timeout;
+	GtkWidget *banner = NULL;
 
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
-
-	modest_platform_information_banner (NULL, NULL, _("mail_ib_checking_names"));
 
 	recipients = modest_recpt_editor_get_recipients (recpt_editor);
 	last_length = g_utf8_strlen (recipients, -1);
@@ -653,6 +665,8 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 			return TRUE;
 		}
 	}
+
+	banner_timeout = g_timeout_add (500, show_check_names_banner, &banner);
 
 	current_start = start_indexes;
 	current_end = end_indexes;
@@ -761,6 +775,14 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	g_slist_foreach (end_indexes, (GFunc) g_free, NULL);
 	g_slist_free (start_indexes);
 	g_slist_free (end_indexes);
+
+	g_source_remove (banner_timeout);
+	if (banner != NULL) {
+		gtk_widget_destroy (banner);
+		banner = NULL;
+	} else {
+		g_source_remove (banner_timeout);
+	}
 
 	return result;
 
