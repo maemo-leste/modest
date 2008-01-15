@@ -1,10 +1,12 @@
-modest (1.0-2008.03-1) feisty; urgency=low
+modest (1.0-2008.03-3) feisty; urgency=low
 
-  * Fixes: NB#78955, NB#61810, NB#78732, NB#79057, NB#78844, NB#79088
-  * Fixes: NB#78974, NB#79014, NB#79114, NB#78850, NB#78989, NB#78962
-  * Fixes: NB#79140, NB#79115, NB#78939, NB#79209
+  * Fixes: NB#78955, NB#61810, NB#78732, NB#79057, NB#79088, NB#79014
+  * Fixes: NB#79114, NB#78850, NB#78989, NB#78962, NB#79140, NB#79115
+  * Fixes: NB#78939, NB#79209, NB#77978, NB#78817, NB#79026, NB#79021
+  * Fixes: NB#79204, NB#63877, NB#79232, NB#78974, NB#79238, NB#78844
+  * Fixes: NB#78802
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 11 Jan 2008 13:50:59 +0200
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 15 Jan 2008 17:15:16 +0200
 
 modest (1.0-2008.02-1) feisty; urgency=low
 
