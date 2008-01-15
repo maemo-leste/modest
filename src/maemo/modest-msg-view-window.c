@@ -908,8 +908,9 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	gtk_widget_show_all (GTK_WIDGET (window));
 	modest_msg_view_window_update_priority (window);
 
-	/* Check toolbar dimming rules */
+	/* Check dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
 
 	return MODEST_WINDOW(window);
@@ -963,8 +964,9 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
-	/* Check toolbar dimming rules */
+	/* Check dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (obj));
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), MODEST_DIMMING_RULES_CLIPBOARD);
 
 	return MODEST_WINDOW(obj);
@@ -1664,8 +1666,9 @@ message_reader (ModestMsgViewWindow *window,
 	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, row_reference);
 	g_object_unref (mail_op);
 
-	/* Update toolbar dimming rules */
+	/* Update dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 
 	return TRUE;
 }
