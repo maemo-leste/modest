@@ -104,6 +104,11 @@ static void  text_buffer_can_redo (GtkTextBuffer *buffer, gboolean can_redo, Mod
 static void  text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag, 
 				    GtkTextIter *start, GtkTextIter *end,
 				    gpointer userdata);
+static void  text_buffer_insert_text (GtkTextBuffer *buffer,
+				      GtkTextIter *location,
+				      gchar *text,
+				      gint len,
+				      ModestMsgEditWindow *window);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
 static void  subject_field_changed (GtkEditable *editable, ModestMsgEditWindow *window);
 static void  subject_field_insert_text (GtkEditable *editable, 
@@ -523,6 +528,8 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_can_redo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
                           G_CALLBACK (body_changed), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "insert-text", 
+			  G_CALLBACK (text_buffer_insert_text), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
@@ -2985,6 +2992,48 @@ subject_field_insert_text (GtkEditable *editable,
 							 "ckdg_ib_maximum_characters_reached"));
 	}
 	
+	g_string_free (result, TRUE);
+}
+
+static void  
+text_buffer_insert_text (GtkTextBuffer *buffer, 
+			 GtkTextIter *iter,
+			 gchar *new_text,
+			 gint new_text_length,
+			 ModestMsgEditWindow *window)
+{
+	GString *result = g_string_new ("");
+	gchar *current;
+	gint result_len = 0;
+	gboolean changed = FALSE;
+
+	for (current = new_text; current != NULL && *current != '\0'; current = g_utf8_next_char (current)) {
+		gunichar c = g_utf8_get_char_validated (current, 8);
+		/* Invalid unichar, stop */
+		if (c == -1)
+			break;
+		/* a bullet */
+		switch (c) {
+		case 0x2022:
+			result = g_string_append_c (result, ' ');
+			changed = TRUE;
+			break;
+		default:
+			result = g_string_append_unichar (result, c);
+		}
+		result_len++;
+	}
+
+	if (changed) {
+		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
+		g_signal_handlers_block_by_func(G_OBJECT(buffer), G_CALLBACK(text_buffer_insert_text), window);
+		g_signal_emit_by_name (buffer, "insert-text", 
+				       (gpointer) iter,
+				       (gpointer) result->str, (gpointer) result->len,
+				       (gpointer) window);
+		g_signal_handlers_unblock_by_func(G_OBJECT(buffer), G_CALLBACK(text_buffer_insert_text), window);
+	}
+
 	g_string_free (result, TRUE);
 }
 
