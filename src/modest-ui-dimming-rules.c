@@ -967,7 +967,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 
 	
 	/* Check diming rules for folders transfer  */
-	if (gtk_widget_is_focus (folder_view)) {
+	if (folder_view && gtk_widget_is_focus (folder_view)) {
 		TnyFolderType types[5];
 		
 		types[0] = TNY_FOLDER_TYPE_DRAFTS; 
@@ -1000,7 +1000,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 		}
 	}
 	if (!dimmed) {
-		if (!gtk_widget_is_focus (folder_view))
+		if (!(folder_view && gtk_widget_is_focus (folder_view)))
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		
 	}
