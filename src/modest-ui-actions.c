@@ -4502,8 +4502,8 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
  */
 static void
 xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
-		GtkWindow *parent_window, 
-		TnyAccount *account, gpointer user_data)
+				GtkWindow *parent_window, 
+				TnyAccount *account, gpointer user_data)
 {
 	TnyFolderStore *dst_folder = TNY_FOLDER_STORE (user_data);
 	ModestWindow *win = MODEST_WINDOW (parent_window);
@@ -4514,13 +4514,6 @@ xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
 
 	if (canceled || err) {
 		g_object_unref (dst_folder);
-		return;
-	}
-	
-	if (!TNY_IS_FOLDER (dst_folder)) {
-		modest_platform_information_banner (GTK_WIDGET (win),
-						    NULL,
-						    _CS("ckdg_ib_unable_to_move_to_current_location"));
 		return;
 	}
 
@@ -4584,6 +4577,36 @@ xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (headers);
 	g_object_unref (dst_folder);
+}
+
+typedef struct {
+	TnyAccount *dst_account;
+	ModestConnectedPerformer callback;
+	gpointer data;
+} DoubleConnectionInfo;
+
+static void
+src_account_connect_performer (gboolean canceled, 
+			       GError *err,
+			       GtkWindow *parent_window, 
+			       TnyAccount *src_account, 
+			       gpointer user_data)
+{
+	DoubleConnectionInfo *info = (DoubleConnectionInfo *) user_data;
+
+	if (canceled || err) {
+		/* If there was any error call the user callback */
+		info->callback (canceled, err, parent_window, src_account, info->data);
+	} else {
+		/* Connect the destination account */
+		modest_platform_connect_if_remote_and_perform (parent_window, TRUE, 
+							       TNY_FOLDER_STORE (info->dst_account),
+							       info->callback, info->data);
+	}
+
+	/* Free the info object */
+	g_object_unref (info->dst_account);
+	g_slice_free (DoubleConnectionInfo, info);
 }
 
 typedef struct {
@@ -4687,8 +4710,8 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 		/* Allow only to transfer folders to the local root folder */
 		if (TNY_IS_ACCOUNT (dst_folder) && 
-				!MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder)) {
-					do_xfer = FALSE;
+		    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder)) {
+			do_xfer = FALSE;
 		} else if (!TNY_IS_FOLDER (src_folder)) {
 			g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
 			do_xfer = FALSE;
@@ -4713,25 +4736,48 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		}
 	} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
 		gboolean do_xfer = TRUE;
+
+		/* Show an error when trying to move msgs to an account */	
+		if (!TNY_IS_FOLDER (dst_folder)) {
+			modest_platform_information_banner (GTK_WIDGET (win),
+							    NULL,
+							    _CS("ckdg_ib_unable_to_move_to_current_location"));
+			goto free;
+		}
+
 		/* Ask for confirmation if the source folder is remote and we're not connected */
 		if (!online && modest_tny_folder_store_is_remote(src_folder)) {
 			TnyList *headers = modest_header_view_get_selected_headers(header_view);
 			if (!msgs_already_deleted_from_server(headers, src_folder)) {
 				guint num_headers = tny_list_get_length(headers);
 				TnyAccount *account = get_account_from_header_list (headers);
-				if (!connect_to_get_msg(MODEST_WINDOW (win), num_headers, account))
+				GtkResponseType response;
+
+				response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+										    ngettext("mcen_nc_get_msg",
+											     "mcen_nc_get_msgs",
+											     num_headers));
+				if (response == GTK_RESPONSE_CANCEL)
 					do_xfer = FALSE;
+				
 				g_object_unref (account);
 			}
 			g_object_unref(headers);
 		}
 		if (do_xfer) /* Transfer messages */ {
-			g_object_ref (dst_folder);
+			DoubleConnectionInfo *info = g_slice_new (DoubleConnectionInfo);
+			info->callback = xfer_messages_from_move_to_cb;
+			info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
+			info->data = g_object_ref (dst_folder);
+
 			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
-					TNY_FOLDER_STORE (dst_folder), xfer_messages_from_move_to_cb, dst_folder);
+								      TNY_FOLDER_STORE (src_folder), 
+								      src_account_connect_performer, 
+								      info);
 		}
 	}
 
+ free:
 	if (src_folder)
 		g_object_unref (src_folder);
 }
