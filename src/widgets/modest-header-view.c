@@ -1931,8 +1931,9 @@ filter_row (GtkTreeModel *model,
 	header = (TnyHeader *) g_value_get_object (&value);
 	g_value_unset (&value);
 	
-	/* Hide mark as deleted heders */
-	if (flags & TNY_HEADER_FLAG_DELETED) {
+	/* Hide deleted and mark as deleted heders */
+	if (flags & TNY_HEADER_FLAG_DELETED ||
+	    flags & TNY_HEADER_FLAG_EXPUNGED) {
 		visible = FALSE;
 		goto frees;
 	}
