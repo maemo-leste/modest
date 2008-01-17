@@ -124,3 +124,26 @@ modest_signal_mgr_disconnect (GSList *list,
 	/* Remove item from list */
 	return g_slist_delete_link (list, item);
 }
+
+gboolean  
+modest_signal_mgr_is_connected (GSList *list, 
+				GObject *instance,
+				const gchar *signal_name)
+{
+	GSList *item = NULL;
+	SignalHandler *tmp = NULL;
+
+	/* Build the helper object */
+	tmp = g_new (SignalHandler, 1);
+	tmp->obj = instance;
+	tmp->signal_name = g_strdup (signal_name);
+
+	/* Find the element */
+	item = g_slist_find_custom (list, tmp, obj_in_a_signal_handler);
+
+	/* Free the handlers */
+	g_free (tmp->signal_name);
+	g_free (tmp);
+
+	return (item != NULL) ? TRUE : FALSE;
+}

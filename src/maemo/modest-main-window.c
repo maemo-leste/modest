@@ -465,10 +465,10 @@ restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 		modest_widget_memory_restore (conf, G_OBJECT(priv->folder_view),
 				      MODEST_CONF_FOLDER_VIEW_KEY);
 
-	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
-				      MODEST_CONF_MAIN_PANED_KEY);
+/* 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned), */
+/* 				      MODEST_CONF_MAIN_PANED_KEY); */
 
-	g_timeout_add (500, (GSourceFunc) restore_paned_timeout_handler, self);
+	g_timeout_add (250, (GSourceFunc) restore_paned_timeout_handler, self);
 
 	/* We need to force a redraw here in order to get the right
 	   position of the horizontal paned separator */
@@ -488,10 +488,10 @@ save_state (ModestWindow *window)
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), 
 				   MODEST_CONF_MAIN_WINDOW_KEY);
-	modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
-				   MODEST_CONF_MAIN_PANED_KEY);
-	//	modest_widget_memory_save (conf, G_OBJECT(priv->header_view), 
- 	//			   MODEST_CONF_HEADER_VIEW_KEY);
+	/* Only save main paned position if we're in split mode */
+	if (priv->style == MODEST_MAIN_WINDOW_STYLE_SPLIT)
+		modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
+					   MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_view), 
 				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
@@ -502,6 +502,14 @@ compare_display_names (ModestAccountSettings *a,
 {
 	return strcmp (modest_account_settings_get_display_name (a),
 		       modest_account_settings_get_display_name (b));
+}
+
+/* We use this function to prevent the send&receive CSM to be shown
+   when there are less than two account */
+static gboolean
+tap_and_hold_query_cb (GtkWidget *widget, GdkEvent *event)
+{
+	return TRUE;
 }
 
 static void
@@ -693,7 +701,7 @@ update_menus (ModestMainWindow* self)
 			/* Create item and add it to the send&receive
 			   CSM. If there is only one account then
 			   it'll be no menu */
-			if (priv->accounts_popup) {
+			if (num_accounts > 1) {
 				GtkWidget *label = gtk_label_new(NULL);
 				gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 				if (default_account && (strcmp(account_name, default_account) == 0))
@@ -774,13 +782,31 @@ update_menus (ModestMainWindow* self)
 		g_object_unref (settings);
 	}
 
-	if (priv->accounts_popup) {
+	if (num_accounts > 1) {
+		/* Disconnect the tap-and-hold-query if it's connected */
+		if (modest_signal_mgr_is_connected (priv->sighandlers, 
+						    G_OBJECT (send_receive_button),
+						    "tap-and-hold-query"))
+			priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers, 
+									  G_OBJECT (send_receive_button),
+									  "tap-and-hold-query");
+
 		/* Mandatory in order to view the menu contents */
 		gtk_widget_show_all (priv->accounts_popup);
 
 		/* Setup tap_and_hold just if was not done before*/
 		if (!gtk_menu_get_attach_widget (GTK_MENU (priv->accounts_popup)))
 			gtk_widget_tap_and_hold_setup (send_receive_button, priv->accounts_popup, NULL, 0);
+	} else {
+		/* Connect the tap-and-hold-query in order not to show the CSM */
+		if (!modest_signal_mgr_is_connected (priv->sighandlers, 
+						     G_OBJECT (send_receive_button),
+						     "tap-and-hold-query"))
+			priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
+								       G_OBJECT (send_receive_button),
+								       "tap-and-hold-query",
+								       G_CALLBACK (tap_and_hold_query_cb), 
+								       NULL);
 	}
 
 	/* Frees */

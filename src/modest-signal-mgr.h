@@ -70,6 +70,19 @@ GSList *  modest_signal_mgr_disconnect            (GSList *list,
  */
 void      modest_signal_mgr_disconnect_all_and_destroy (GSList *lst);
 
+/**
+ * modest_signal_mgr_disconnect:
+ * @list: 
+ * @instance: 
+ * 
+ * disconnect the handler for a particular object for a particular signal
+ * 
+ * Returns: 
+ **/
+gboolean  modest_signal_mgr_is_connected               (GSList *list, 
+							GObject *instance,
+							const gchar *signal_name);
+
 
 G_END_DECLS
 #endif /*__MODEST_SIGNAL_MGR__*/
