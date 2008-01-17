@@ -538,10 +538,8 @@ init_window (ModestMsgViewWindow *obj)
 {
 	GtkWidget *main_vbox;
 	ModestMsgViewWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);

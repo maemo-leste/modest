@@ -114,7 +114,7 @@ enum MODEL_COLS {
  * strictly, we should sort providers with mcc=0 after the other ones.... but, we don't have
  * that info here, so ignoring for now.
  */
-gint
+static gint
 provider_sort_func (GtkTreeModel *model, GtkTreeIter *iter1, GtkTreeIter *iter2, gpointer user_data)
 {
 	gchar *prov1, *prov2;
@@ -177,6 +177,8 @@ void
 easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets,
 				   gint mcc)
 {	
+	g_return_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox));
+	
 	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
 	
 	/* Remove any existing rows: */
@@ -245,6 +247,9 @@ gchar*
 easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *combobox)
 {
 	GtkTreeIter active;
+
+	g_return_val_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox), NULL);
+
 	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
 	if (found) {
 		EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
@@ -262,8 +267,11 @@ easysetup_provider_combo_box_set_others_provider (EasysetupProviderComboBox *com
 {
 	GtkTreeModel *model;
 	GtkTreeIter others_iter;
-	model = gtk_combo_box_get_model (GTK_COMBO_BOX (combobox));
 
-	gtk_tree_model_get_iter_first (model, &others_iter);
-	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &others_iter);
+	g_return_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox));
+	
+	model = gtk_combo_box_get_model (GTK_COMBO_BOX (combobox));
+	
+	if (gtk_tree_model_get_iter_first (model, &others_iter))
+		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &others_iter);
 }
