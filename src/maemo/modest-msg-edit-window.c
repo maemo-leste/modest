@@ -162,12 +162,26 @@ static void on_account_removed (TnyAccountStore *account_store,
 				gpointer user_data);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
-
 static void set_zoom_do_nothing (ModestWindow *window, gdouble zoom);
-
 static gdouble get_zoom_do_nothing (ModestWindow *window);
 
 static void init_window (ModestMsgEditWindow *obj);
+
+gboolean scroll_drag_timeout (gpointer userdata);
+static void correct_scroll (ModestMsgEditWindow *w);
+static void correct_scroll_without_drag_check (ModestMsgEditWindow *w);
+static void text_buffer_end_user_action (GtkTextBuffer *buffer,
+					 ModestMsgEditWindow *userdata);
+static void text_buffer_mark_set (GtkTextBuffer *buffer,
+				  GtkTextIter *iter,
+				  GtkTextMark *mark,
+				  ModestMsgEditWindow *userdata);
+void vadj_changed (GtkAdjustment *adj, 
+		   ModestMsgEditWindow *window);
+
+
+
+
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -224,6 +238,7 @@ enum {
 typedef struct _ModestMsgEditWindowPrivate ModestMsgEditWindowPrivate;
 struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *msg_body;
+	GtkWidget   *frame;
 	GtkWidget   *header_box;
 	
 	ModestPairList *from_field_protos;
@@ -256,8 +271,7 @@ struct _ModestMsgEditWindowPrivate {
 	gchar       *last_search;
 
 	GtkWidget   *scroll;
-	GtkWidget   *scroll_area;
-	gint        last_vadj_upper;
+	guint        scroll_drag_timeout_id;
 
 	gint last_cid;
 	TnyList *attachments;
@@ -387,6 +401,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
 	priv->msg_body      = NULL;
+	priv->frame         = NULL;
 	priv->from_field    = NULL;
 	priv->to_field      = NULL;
 	priv->cc_field      = NULL;
@@ -417,7 +432,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->clipboard_text = NULL;
 	priv->sent = FALSE;
 
-	priv->last_vadj_upper = 0;
+	priv->scroll_drag_timeout_id = 0;
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_editor");
@@ -471,40 +486,6 @@ get_transports (void)
 	return transports;
 }
 
-void vadj_changed (GtkAdjustment *adj,
-		   ModestMsgEditWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	GdkRectangle rectangle, cursor_rectangle;
-	GtkTextIter position;
-	gboolean visible;
-	gint cursor_bottom;
-
-	/* We detect if cursor is visible using the full height, not only the center. This
-	   seems to work */
-	gtk_text_view_get_visible_rect (GTK_TEXT_VIEW (priv->msg_body), &rectangle);
-	gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer),
-					  &position,
-					  gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer)));
-	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->msg_body), &position, &cursor_rectangle);
-
-	cursor_bottom = (cursor_rectangle.y + cursor_rectangle.height);
-	visible = (cursor_rectangle.y >= rectangle.y) && (cursor_bottom < (rectangle.y + rectangle.height));
-
-	if (gtk_widget_is_focus (priv->msg_body) && 
-	    !visible) {
-		if (priv->last_vadj_upper != adj->upper) {
-			GtkTextMark *insert;
-			
-			insert = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
-			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (priv->msg_body), 
-						      insert, 0.1, FALSE, 0.0, 0.0);
-		}
-	}
-	priv->last_vadj_upper = adj->upper;
-}
-
 static void window_focus (GtkWindow *window,
 			  GtkWidget *widget,
 			  gpointer userdata)
@@ -512,6 +493,112 @@ static void window_focus (GtkWindow *window,
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (userdata), MODEST_DIMMING_RULES_CLIPBOARD);
 }
 
+gboolean
+scroll_drag_timeout (gpointer userdata)
+{
+	ModestMsgEditWindow *win = (ModestMsgEditWindow *) userdata;
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(win);
+
+	correct_scroll_without_drag_check (win);
+
+	priv->scroll_drag_timeout_id = 0;
+
+	return FALSE;
+}
+
+static void
+correct_scroll_without_drag_check (ModestMsgEditWindow *w)
+{
+	ModestMsgEditWindowPrivate *priv;
+	GtkTextMark *insert;
+	GtkTextIter iter;
+	GdkRectangle rectangle;
+	GtkAdjustment *vadj;
+	gdouble new_value;
+	gint offset;
+	GdkWindow *window;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
+
+	insert = gtk_text_buffer_get_insert (priv->text_buffer);
+	gtk_text_buffer_get_iter_at_mark (priv->text_buffer, &iter, insert);
+
+	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->msg_body), &iter, &rectangle);
+	vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll));
+	offset = priv->msg_body->allocation.y;
+
+	new_value = vadj->value;
+	
+	if ((offset + rectangle.y + rectangle.height) > 
+	    ((gint) (vadj->value +vadj->page_size))) {
+		new_value = (offset + rectangle.y) + vadj->page_size * 0.75;
+		if (new_value > vadj->upper - vadj->page_size)
+			new_value = vadj->upper - vadj->page_size;
+	} else if ((offset + rectangle.y) < ((gint) vadj->value)) {
+		new_value = (offset + rectangle.y - vadj->page_size * 0.75);
+		if (((gint) (new_value + vadj->page_size)) < (offset + rectangle.y + rectangle.height))
+			new_value = offset + rectangle.y + rectangle.height - (gint) vadj->page_size;
+		if (new_value < 0.0)
+			new_value = 0.0;
+		if (new_value > vadj->value)
+			new_value = vadj->value;
+	}
+
+	if (vadj->value != new_value) {
+		g_signal_emit_by_name (GTK_TEXT_VIEW(priv->msg_body)->layout,
+				       "invalidated");
+		vadj->value = new_value;
+		gtk_adjustment_value_changed (vadj);
+		/* invalidate body */
+		window = gtk_widget_get_parent_window (priv->msg_body);
+		if (window)
+			gdk_window_invalidate_rect (window, NULL, TRUE);
+	}
+
+}
+
+static void
+correct_scroll (ModestMsgEditWindow *w)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
+	if (gtk_grab_get_current () == priv->msg_body) {
+		if (priv->scroll_drag_timeout_id == 0) {
+			priv->scroll_drag_timeout_id = g_timeout_add (500, (GSourceFunc) scroll_drag_timeout,
+								      (gpointer) w);
+		}
+		return;
+	}
+
+	correct_scroll_without_drag_check (w);
+}
+
+static void
+text_buffer_end_user_action (GtkTextBuffer *buffer,
+			     ModestMsgEditWindow *userdata)
+{
+
+	correct_scroll (userdata);
+}
+
+static void
+text_buffer_mark_set (GtkTextBuffer *buffer,
+		      GtkTextIter *iter,
+		      GtkTextMark *mark,
+		      ModestMsgEditWindow *userdata)
+{
+	gtk_text_buffer_begin_user_action (buffer);
+	gtk_text_buffer_end_user_action (buffer);
+}
+
+void vadj_changed (GtkAdjustment *adj,
+		   ModestMsgEditWindow *window)
+{
+	correct_scroll (window);
+}
 
 static void
 connect_signals (ModestMsgEditWindow *obj)
@@ -533,6 +620,10 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
 			  G_CALLBACK (modest_msg_edit_window_window_state_event),
 			  NULL);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "end-user-action",
+			  G_CALLBACK (text_buffer_end_user_action), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "mark-set",
+			  G_CALLBACK (text_buffer_mark_set), obj);
 	g_signal_connect_after (G_OBJECT (priv->text_buffer), "apply-tag",
 				G_CALLBACK (text_buffer_apply_tag), obj);
 	g_signal_connect_swapped (G_OBJECT (priv->to_field), "open-addressbook", 
@@ -589,7 +680,6 @@ init_window (ModestMsgEditWindow *obj)
 	GError *error = NULL;
 
 	GtkSizeGroup *size_group;
-	GtkWidget *frame;
 	GtkWidget *subject_box;
 	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
@@ -729,22 +819,19 @@ init_window (ModestMsgEditWindow *obj)
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
-	frame = gtk_frame_new (NULL);
-	gtk_box_pack_start (GTK_BOX(main_vbox), frame, TRUE, TRUE, 0);
+	priv->frame = gtk_frame_new (NULL);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->frame, TRUE, TRUE, 0);
 
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (priv->scroll), main_vbox);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
-	g_signal_connect (G_OBJECT (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll))),
-			  "changed",
-			  G_CALLBACK (vadj_changed),
-			  obj);
 	gtk_widget_show_all (GTK_WIDGET(priv->scroll));
 	
 	window_box = gtk_vbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (window_box), priv->scroll, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
-	priv->scroll_area = modest_scroll_area_new (priv->scroll, priv->msg_body);
-	gtk_container_add (GTK_CONTAINER (frame), priv->scroll_area);
+
+	gtk_box_pack_start (GTK_BOX (window_box), priv->scroll, TRUE, TRUE, 0);
+
+	gtk_container_add (GTK_CONTAINER (priv->frame), priv->msg_body);
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG); 
@@ -808,6 +895,10 @@ modest_msg_edit_window_finalize (GObject *obj)
 		}
 		g_object_unref (priv->outbox_msg);
 		priv->outbox_msg = NULL;
+	}
+	if (priv->scroll_drag_timeout_id > 0) {
+		g_source_remove (priv->scroll_drag_timeout_id);
+		priv->scroll_drag_timeout_id = 0;
 	}
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
