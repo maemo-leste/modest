@@ -2246,8 +2246,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 				     GDestroyNotify notify)
 {
 	ModestMailOperationPrivate *priv = NULL;
-	gboolean size_ok = TRUE;
-	gint max_size;
+	gint msg_list_size;
 	TnyIterator *iter = NULL;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
@@ -2278,84 +2277,43 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		}
 	}
 
-	/* Get msg size limit */
-	max_size  = modest_conf_get_int (modest_runtime_get_conf (), 
-					 MODEST_CONF_MSG_SIZE_LIMIT, 
-					 &(priv->error));
-	if (priv->error) {
-		g_clear_error (&(priv->error));
-		max_size = G_MAXINT;
-	} else {
-		max_size = max_size * KB;
+	msg_list_size = compute_message_list_size (header_list);
+
+	modest_mail_operation_notify_start (self);
+	iter = tny_list_create_iterator (header_list);
+	while (!tny_iterator_is_done (iter)) {
+		/* notify about the start of the operation */
+		ModestMailOperationState *state;
+		state = modest_mail_operation_clone_state (self);
+		state->done = 0;
+		state->total = 0;
+		g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL],
+			       0, state, NULL);
+
+		GetMsgInfo *msg_info = NULL;
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		TnyFolder *folder = tny_header_get_folder (header);
+
+		/* Create the message info */
+		msg_info = g_slice_new0 (GetMsgInfo);
+		msg_info->mail_op = g_object_ref (self);
+		msg_info->header = g_object_ref (header);
+		msg_info->user_callback = user_callback;
+		msg_info->user_data = user_data;
+		msg_info->destroy_notify = notify;
+		msg_info->last_total_bytes = 0;
+		msg_info->sum_total_bytes = 0;
+		msg_info->total_bytes = msg_list_size;
+
+		/* The callback will call it per each header */
+		tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, msg_info);
+
+		/* Free and go on */
+		g_object_unref (header);
+		g_object_unref (folder);
+		tny_iterator_next (iter);
 	}
-
-	/* Check message size limits. If there is only one message
-	   always retrieve it */
-	if (iter != NULL) {
-		while (!tny_iterator_is_done (iter) && size_ok) {
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (header) {
-				if (tny_header_get_message_size (header) >= max_size)
-					size_ok = FALSE;
-				g_object_unref (header);
-			}
-
-			tny_iterator_next (iter);
-		}
-		g_object_unref (iter);
-	}
-
-	if (size_ok) {
-		const gint msg_list_size = compute_message_list_size (header_list);
-
-		modest_mail_operation_notify_start (self);
-		iter = tny_list_create_iterator (header_list);
-		while (!tny_iterator_is_done (iter)) { 
-			/* notify about the start of the operation */ 
-			ModestMailOperationState *state;
-			state = modest_mail_operation_clone_state (self);
-			state->done = 0;
-			state->total = 0;
-			g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
-					0, state, NULL);
-			
-			GetMsgInfo *msg_info = NULL;
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			TnyFolder *folder = tny_header_get_folder (header);
-			
-			/* Create the message info */
-			msg_info = g_slice_new0 (GetMsgInfo);
-			msg_info->mail_op = g_object_ref (self);
-			msg_info->header = g_object_ref (header);
-			msg_info->user_callback = user_callback;
-			msg_info->user_data = user_data;
-			msg_info->destroy_notify = notify;
-			msg_info->last_total_bytes = 0;
-			msg_info->sum_total_bytes = 0;
-			msg_info->total_bytes = msg_list_size;
-			
-			/* The callback will call it per each header */
-			tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, msg_info);
-			
-			/* Free and go on */
-			g_object_unref (header);
-			g_object_unref (folder);
-			tny_iterator_next (iter);
-		}
-		g_object_unref (iter);
-	} else {
- 		/* Set status failed and set an error */
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		/* FIXME: the error msg is different for pop */
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT,
-			     _("emev_ni_ui_imap_msg_size_exceed_error"));
-		/* Remove from queue and free resources */
-		modest_mail_operation_notify_end (self);
-		if (notify)
-			notify (user_data);
-	}
-
+	g_object_unref (iter);
 }
 
 

@@ -1020,16 +1020,10 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 {
 	const GError *error;
 	GObject *win = NULL;
-	const gchar *err_msg;
+	const gchar *err_msg = (const gchar *) user_data;
 
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
- 
-	/* Select error message */
-	if (error->code == MODEST_MAIL_OPERATION_ERROR_MESSAGE_SIZE_LIMIT)
-		err_msg = _("emev_ni_ui_imap_msg_size_exceed_error");
-	else
-		err_msg = (const gchar *) user_data;
 
 	/* Show error */
 	modest_platform_run_information_dialog ((GtkWindow *) win, err_msg);
