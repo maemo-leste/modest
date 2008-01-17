@@ -1,13 +1,18 @@
--*-mode:text-*-
+** 2008-W04:
+* many stability fixes in tinymail (see there) and modest, due to extensive valgrinding; 
+* fixes for parsing namespaces
+* fix attachment handling in the UI
+* fix attachment forwarding (tinymail)
+* fix misbehaving keyboard shortcuts
+* lots of focus/dimming issues resolved
 
-2008-W3:
-     - now with release notes (also seen in the NEWS)
-     - added some dbus-debug methods
-     - fixed some memory corruption (incorrect frees) in tinymail-maemo
-     - fixed bugs in tny tree model (see there)
-     - fixed support for message with multiple text/plain parts (#2720)
-     - fixed URL support (#2683)
-     - fixed many dimming rules, focus issues
-     - fixed backspace-usage in find-toolbar
-     - code cleanups
-   
+** 2008-W03:
+* now with release notes (also seen in the NEWS)
+* added some dbus-debug methods
+* fixed some memory corruption (incorrect frees) in modest, tinymail-maemo and tinymail-camel
+* fixed bugs in tny tree model (see there)
+* fixed support for message with multiple text/plain parts (#2720)
+* fixed URL support (#2683)
+* fixed many dimming rules, focus issues
+* fixed backspace-usage in find-toolbar
+* code cleanups
