@@ -2393,7 +2393,7 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 				   TnyList *headers,
 				  gboolean remove_to_trash /*ignored*/)
 {
-	TnyFolder *folder;
+	TnyFolder *folder = NULL;
 	ModestMailOperationPrivate *priv;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
@@ -2406,14 +2406,23 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	if (remove_to_trash)
 		g_warning ("remove to trash is not implemented");
 
+	if (tny_list_get_length(headers) == 0) {
+		g_warning ("%s: list of headers is empty\n", __FUNCTION__);
+		goto cleanup; /* nothing to do */
+	}
+	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
 	remove_headers = g_object_ref(headers);
 
 	/* Get folder from first header and sync it */
-	iter = tny_list_create_iterator (headers);
+	iter = tny_list_create_iterator (headers);	
 	header = TNY_HEADER (tny_iterator_get_current (iter));
-	folder = tny_header_get_folder (header);
+
+	folder = tny_header_get_folder (header);	
+	if (!TNY_IS_FOLDER(folder)) {
+		g_warning ("%s: could not get folder for header\n", __FUNCTION__);
+		goto cleanup;
+	}
 
 	/* Don't remove messages that are being sent */
 	if (modest_tny_folder_is_local_folder (folder)) {
@@ -2466,13 +2475,13 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 		leave_on_server =
 			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
-					account_name);
-
+								account_name);
+		
 		proto = tny_account_get_proto (account);
 		if (proto) {
 			account_proto = modest_protocol_info_get_transport_store_protocol (proto);
 		}
-
+		
 		if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
 		    modest_tny_folder_is_remote_folder (folder) == FALSE)
 			expunge = TRUE;
@@ -2493,10 +2502,15 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 
 	/* Free */
-	g_object_unref (remove_headers);
-	g_object_unref (header);
-	g_object_unref (iter);
-	g_object_unref (G_OBJECT (folder));
+cleanup:
+	if (remove_headers)
+		g_object_unref (remove_headers);
+	if (header)
+		g_object_unref (header);
+	if (iter)
+		g_object_unref (iter);
+	if (folder)
+		g_object_unref (folder);
 
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
