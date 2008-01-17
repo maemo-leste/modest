@@ -1348,12 +1348,13 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 					   NULL);
 
 	if (!show_visual) {
-		gboolean screen_on, app_in_foreground;
+		gboolean screen_on = TRUE, app_in_foreground;
 		ModestWindow *main_window;
 
 		/* Get the screen status */
 		main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
-		screen_on = modest_main_window_screen_is_on (MODEST_MAIN_WINDOW (main_window));
+		if (main_window)
+			screen_on = modest_main_window_screen_is_on (MODEST_MAIN_WINDOW (main_window));
 
 		/* Get the window status */
 		app_in_foreground = hildon_program_get_is_topmost (hildon_program_get_instance ());
