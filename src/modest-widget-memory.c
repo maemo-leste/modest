@@ -245,8 +245,10 @@ restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);	
 	percent = modest_conf_get_int (conf, key, NULL);
 	
-	pos = GTK_WIDGET (paned)->allocation.width * percent /100;
-	gtk_paned_set_position (paned, pos);
+	if (GTK_WIDGET_VISIBLE (GTK_WIDGET (paned)) && GTK_WIDGET_REALIZED (GTK_WIDGET (paned))) {
+		pos = GTK_WIDGET (paned)->allocation.width * percent /100;
+		gtk_paned_set_position (paned, pos);
+	}
 
 	g_free (key);
 	return TRUE;

@@ -214,6 +214,7 @@ struct _ModestMainWindowPrivate {
 
 	ModestMainWindowStyle style;
 	ModestMainWindowContentsStyle contents_style;
+	gboolean wait_for_settings;
 
 	guint progress_bar_timeout;
 	guint restore_paned_timeout;
@@ -345,6 +346,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->progress_bar = NULL;
 	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
 	priv->style  = MODEST_MAIN_WINDOW_STYLE_SPLIT;
+	priv->wait_for_settings = TRUE;
 	priv->contents_style  = -1; /* invalid contents style. We need this to select it for the first time */
 	priv->merge_ids = NULL;
 	priv->optimized_view  = FALSE;
@@ -1081,7 +1083,9 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	modest_osso_load_state ();
 
 	/* Restore window & widget settings */	
+	priv->wait_for_settings = TRUE;
 	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
+	priv->wait_for_settings = FALSE;
 
 	/* Check if accounts exist and show the account wizard if not */
 	gboolean accounts_exist = 
@@ -1329,6 +1333,10 @@ modest_main_window_set_style (ModestMainWindow *self,
 	priv->style = style;
 	switch (style) {
 	case MODEST_MAIN_WINDOW_STYLE_SIMPLE:
+
+		if (!priv->wait_for_settings)
+			modest_widget_memory_save (modest_runtime_get_conf (), G_OBJECT (priv->main_paned),
+						   MODEST_CONF_MAIN_PANED_KEY);
 		/* Remove main paned */
 		g_object_ref (priv->main_paned);
 		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
@@ -1345,6 +1353,8 @@ modest_main_window_set_style (ModestMainWindow *self,
 		/* Reparent the main paned */
 		gtk_paned_add2 (GTK_PANED (priv->main_paned), priv->contents_widget);
 		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
+
+		g_timeout_add (500, (GSourceFunc) restore_paned_timeout_handler, self);
 
 		break;
 	default:
