@@ -1,9 +1,10 @@
 ** 2008-W04:
-* many stability fixes in tinymail (see there) and modest, due to extensive valgrinding; 
+* many stability fixes in tinymail (see there) and modest, due to extensive valgrinding
 * fixes for parsing namespaces
 * fix attachment handling in the UI
 * fix attachment forwarding (tinymail)
 * fix misbehaving keyboard shortcuts
+* fix for separator position (Maemo bug #2682)
 * lots of focus/dimming issues resolved
 
 ** 2008-W03:
