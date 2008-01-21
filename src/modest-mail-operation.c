@@ -706,6 +706,11 @@ send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg
 	SendMsgInfo *info = (SendMsgInfo *) userdata;
 	TnyHeader *hdr1, *hdr2;
 	const char *msgid1, *msgid2;
+
+	if (!TNY_IS_MSG(msg)) {
+		g_warning ("%s: did not receive a valid msg", __FUNCTION__);
+		return;
+	}
 	
 	hdr1 = tny_msg_get_header(msg);
 	hdr2 = tny_msg_get_header(info->msg);

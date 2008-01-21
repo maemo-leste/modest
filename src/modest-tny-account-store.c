@@ -30,10 +30,10 @@
 #include <string.h>
 #include <glib/gi18n.h>
 
+#include <tny-error.h>
 #include <tny-account.h>
 #include <tny-account-store.h>
 #include <tny-store-account.h>
-#include <tny-error.h>
 #include <tny-transport-account.h>
 #include <tny-simple-list.h>
 #include <tny-account-store.h>
@@ -1199,14 +1199,25 @@ get_tny_account_by (TnyList *accounts,
 	gboolean found = FALSE;
 	TnyAccount *retval = NULL;
 
-	g_return_val_if_fail (accounts && TNY_IS_LIST(accounts), NULL);
+	g_return_val_if_fail (TNY_IS_LIST(accounts), NULL);
 
+	if (tny_list_get_length(accounts) == 0) {
+		g_warning ("%s: account list is empty", __FUNCTION__);
+		return NULL;
+	}
+	
 	iter = tny_list_create_iterator (accounts);
 	while (!tny_iterator_is_done (iter) && !found) {
 		TnyAccount *tmp_account = NULL;
 		const gchar *val = NULL;
 
 		tmp_account = TNY_ACCOUNT (tny_iterator_get_current (iter));
+		if (!TNY_IS_ACCOUNT(tmp_account)) {
+			g_warning ("%s: not a valid account", __FUNCTION__);
+			tmp_account = NULL;
+			break;
+		}
+
 		switch (type) {
 		case MODEST_TNY_ACCOUNT_STORE_QUERY_ID:
 			val = tny_account_get_id (tmp_account);
@@ -1221,7 +1232,7 @@ get_tny_account_by (TnyList *accounts,
 			retval = g_object_ref (tmp_account);
 			found = TRUE;
 		} else {
-			if (strcmp (val, str) == 0) {
+			if (val && str && strcmp (val, str) == 0) {
 				retval = g_object_ref (tmp_account);
 				found = TRUE;
 			}

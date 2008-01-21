@@ -1674,7 +1674,7 @@ new_messages_arrived (ModestMailOperation *self,
 	   send&receive was invoked by the user then do not show any
 	   visual notification, only play a sound and activate the LED
 	   (for the Maemo version) */
-	if ((new_headers != NULL) && (tny_list_get_length (new_headers) > 0))
+	if (TNY_IS_LIST(new_headers) && (tny_list_get_length (new_headers)) > 0)
 		modest_platform_on_new_headers_received (new_headers, 
 							 show_visual_notifications);
 

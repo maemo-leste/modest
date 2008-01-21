@@ -2694,6 +2694,8 @@ modest_main_window_screen_is_on (ModestMainWindow *self)
 {
 	ModestMainWindowPrivate *priv = NULL;
 
+	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(self), FALSE);
+
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
 	
 	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;

@@ -1342,6 +1342,13 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 {
 	gboolean play_sound;
 
+	g_return_if_fail (TNY_IS_LIST(header_list));
+
+	if (tny_list_get_length(header_list) == 0) {
+		g_warning ("%s: header list is empty", __FUNCTION__);
+		return;
+	}
+	
 	/* Check whether or not we should play a sound */
 	play_sound = modest_conf_get_bool (modest_runtime_get_conf (),
 					   MODEST_CONF_PLAY_SOUND_MSG_ARRIVE,
