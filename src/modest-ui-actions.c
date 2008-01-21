@@ -5251,7 +5251,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	gchar *message = NULL;
 
 	/* Don't show anything if the user cancelled something */
-	if (err->code == TNY_TRANSPORT_ACCOUNT_ERROR_SEND_USER_CANCEL)
+	if (err->code == TNY_SYSTEM_ERROR_CANCEL)
 		return;
 
 	/* Get the server name: */
@@ -5268,20 +5268,17 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 
 	/* Show the appropriate message text for the GError: */
 	switch (err->code) {
-	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_HOST_LOOKUP_FAILED:
+	case TNY_SERVICE_ERROR_CONNECT:
 		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
 		break;
-	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_SERVICE_UNAVAILABLE:
-		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
-		break;
-	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND_AUTHENTICATION_NOT_SUPPORTED:
+	case TNY_SERVICE_ERROR_AUTHENTICATE:
 		message = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"), server_name);
 		break;
-	case TNY_TRANSPORT_ACCOUNT_ERROR_SEND:
+	case TNY_SERVICE_ERROR_SEND:
 		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
 		break;
 	default:
-		g_warning ("%s: unexpected TNY_TRANSPORT_ACCOUNT_ERROR %d",
+		g_warning ("%s: unexpected ERROR %d",
 			   __FUNCTION__, err->code);
 		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
 		break;	

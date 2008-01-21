@@ -1075,9 +1075,6 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	g_return_val_if_fail (account, FALSE);
 	g_return_val_if_fail (error, FALSE);
 	
-	if ((error->domain != TNY_ACCOUNT_ERROR) && (error->domain != TNY_ACCOUNT_STORE_ERROR))
-		return FALSE;
-	
 	/* Get the server name: */
 	server_name = tny_account_get_hostname (account);
 
@@ -1093,14 +1090,18 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	}
 
 	switch (error->code) {
-	case TNY_ACCOUNT_STORE_ERROR_CANCEL_ALERT:
-	case TNY_ACCOUNT_ERROR_TRY_CONNECT_USER_CANCEL:
+	case TNY_SYSTEM_ERROR_CANCEL:
 		/* Don't show waste the user's time by showing him a dialog telling 
 		 * him that he has just cancelled something: */
 		return TRUE;
 
-	case TNY_ACCOUNT_ERROR_TRY_CONNECT_HOST_LOOKUP_FAILED:
-	case TNY_ACCOUNT_ERROR_TRY_CONNECT_SERVICE_UNAVAILABLE:
+	case TNY_SERVICE_ERROR_PROTOCOL:
+		/* Like a BAD from IMAP (protocol error) */
+	case TNY_SERVICE_ERROR_LOST_CONNECTION:
+		/* Lost the connection with the service */
+	case TNY_SERVICE_ERROR_UNAVAILABLE:
+		/* You must be working online for this operation */
+	case TNY_SERVICE_ERROR_CONNECT:
 		/* TODO: Show the appropriate message, depending on whether it's POP or IMAP: */		
 		switch (proto) {
 		case MODEST_PROTOCOL_STORE_POP:
@@ -1120,32 +1121,27 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		}
 		break;
 		
-	case TNY_ACCOUNT_ERROR_TRY_CONNECT_AUTHENTICATION_NOT_SUPPORTED:
+	case TNY_SERVICE_ERROR_AUTHENTICATE:
 		/* This is "Secure connection failed", even though the logical
 		 * ID has _certificate_ in the name: */
 		prompt = g_strdup (_("mail_ni_ssl_certificate_error")); 
 		break;
 			
-	case TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE:
+	case TNY_SERVICE_ERROR_CERTIFICATE:
 		/* We'll show the proper dialog later */
 		break;
-		
-	case TNY_ACCOUNT_ERROR_TRY_CONNECT:
-		/* The tinymail camel implementation just sends us this for almost 
-		 * everything, so we have to guess at the cause.
-		 * It could be a wrong password, or inability to resolve a hostname, 
-		 * or lack of network, or incorrect authentication method, or something entirely different: */
-		/* TODO: Fix camel to provide specific error codes, and then use the 
-		 * specific dialog messages from Chapter 12 of the UI spec.
-		 */
-	case TNY_ACCOUNT_STORE_ERROR_UNKNOWN_ALERT: 
+
+	case TNY_SYSTEM_ERROR_MEMORY:
+		/* Can't allocate memory for this operation */
+
+	case TNY_SERVICE_ERROR_UNKNOWN: 
 		return FALSE;			
 	default:
 		g_return_val_if_reached (FALSE);
 	}
 	
 
-	if (error->code == TNY_ACCOUNT_ERROR_TRY_CONNECT_CERTIFICATE)
+	if (error->code == TNY_SERVICE_ERROR_CERTIFICATE)
 		retval = modest_platform_run_certificate_confirmation_dialog (server_name,
 									      error->message);
 	else
