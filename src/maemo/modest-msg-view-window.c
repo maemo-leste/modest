@@ -688,7 +688,8 @@ select_next_valid_row (GtkTreeModel *model,
 		       gboolean cycle)
 {
 	GtkTreeIter tmp_iter;
-	GtkTreePath *path, *next;
+	GtkTreePath *path;
+	GtkTreePath *next = NULL;
 	gboolean retval = FALSE;
 
 	g_return_val_if_fail (gtk_tree_row_reference_valid (*row_reference), FALSE);
@@ -714,6 +715,8 @@ select_next_valid_row (GtkTreeModel *model,
 
 	/* Free */
 	gtk_tree_path_free (path);
+	if (next)
+		gtk_tree_path_free (next);
 
 	return retval;
 }
