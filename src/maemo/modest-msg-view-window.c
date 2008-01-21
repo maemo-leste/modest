@@ -1804,6 +1804,9 @@ view_msg_cb (ModestMailOperation *mail_op,
 	if (priv->row_reference != NULL) {
 		gtk_tree_row_reference_free (priv->row_reference);
 		priv->row_reference = gtk_tree_row_reference_copy (row_reference);
+		if (priv->next_row_reference != NULL) {
+			gtk_tree_row_reference_free (priv->next_row_reference);
+		}
 		priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
 		select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE);
 		gtk_tree_row_reference_free (row_reference);
