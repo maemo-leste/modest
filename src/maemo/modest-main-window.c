@@ -2233,6 +2233,7 @@ get_toolbar_mode_from_mail_operation (ModestMainWindow *self,
 
 	/* Get toolbar mode from operation id*/
 	switch (modest_mail_operation_get_type_operation (mail_op)) {
+	case MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE:
 	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
 	case MODEST_MAIL_OPERATION_TYPE_OPEN:
 		mode = TOOLBAR_MODE_TRANSFER;

@@ -78,7 +78,8 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	 */
 	 
 	/* Per-account outbox folders are each in their own on-disk directory: */
-	if (special_type == TNY_FOLDER_TYPE_OUTBOX) {
+	if ((special_type == TNY_FOLDER_TYPE_OUTBOX) &&
+	    (!modest_tny_account_is_virtual_local_folders (account))) {
 
 		gchar *account_id;
 		const gchar *modest_account_name;

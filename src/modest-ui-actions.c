@@ -1830,9 +1830,12 @@ modest_ui_actions_do_cancel_send (const gchar *account_name,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "modest: could not find send queue for account\n");
 	} else {
-		/* Keeep messages in outbox folder */
-		tny_send_queue_cancel (send_queue, FALSE, &error);
-	}	
+		/* Cancel the current send */
+		tny_account_cancel (TNY_ACCOUNT (transport_account));
+
+		/* Suspend all pending messages */
+		tny_send_queue_cancel (send_queue, TNY_SEND_QUEUE_CANCEL_ACTION_SUSPEND, &error);
+	}
 
  frees:
 	if (transport_account != NULL) 
@@ -5343,6 +5346,10 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 #else
 	gtk_widget_queue_draw (header_view);
 #endif		
+
+	/* Rerun dimming rules, because the message could become deletable for example */
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (main_window), 
+						 MODEST_DIMMING_RULES_TOOLBAR);
 	
 	/* Free */
  frees:

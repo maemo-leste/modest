@@ -65,6 +65,7 @@ struct _ModestTnySendQueue {
 struct _ModestTnySendQueueClass {
 	TnyCamelSendQueueClass parent_class;
 
+	/* Signals */
 	void (*status_changed)(ModestTnySendQueue *self, const gchar *msg_id, ModestTnySendQueueStatus status);
 };
 
@@ -100,17 +101,6 @@ ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccoun
  * its account send queue. 
  */
 void modest_tny_send_queue_add (ModestTnySendQueue *self, TnyMsg *msg, GError **err);
-
-/**
- * modest_tny_send_queue_try_to_send:
- * @self: a valid #ModestTnySendQueue instance
- * 
- * Try to send the messages that are in the queue's outbox folder.
- * This is not always necessary because the queue tries to send 
- * messages as soon as a message is added, and as soon as the queue 
- * is instantiated.
- */
-void modest_tny_send_queue_try_to_send (ModestTnySendQueue* self);
 
 /**
  * modest_tny_send_queue_sending_in_progress:
@@ -165,6 +155,16 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header);
  * Returns: a newly allocated string, or NULL in case of error
  */
 gchar* modest_tny_send_queue_to_string (ModestTnySendQueue *self);
+
+/**
+ * modest_tny_send_queue_wakeup:
+ * @self: a valid #ModestTnySendQueue instance
+ *
+ * Wakes up all suspended messages in the send queue. This means that
+ * the send queue will try to send them again. Note that you'd
+ * probably need a tny_send_queue_flush to force it
+ */
+void   modest_tny_send_queue_wakeup (ModestTnySendQueue *self);
 
 
 G_END_DECLS
