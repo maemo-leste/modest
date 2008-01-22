@@ -874,7 +874,7 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	SendNewMailInfo *info = (SendNewMailInfo *) userdata;
 	TnyFolder *draft_folder = NULL;
 	TnyFolder *outbox_folder = NULL;
-	TnyHeader *header;
+	TnyHeader *header = NULL;
 	GError *err = NULL;
 
 	if (!msg) {
@@ -884,23 +884,37 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	/* Call mail operation */
 	modest_mail_operation_send_mail (self, info->transport_account, msg);
 
-	/* Remove old mail from its source folder */
-	draft_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
-							      TNY_FOLDER_TYPE_DRAFTS);
-	if (!draft_folder) {
-		g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL drafts folder", __FUNCTION__);
-		goto end;
-	}
-	outbox_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (info->transport_account),
-							       TNY_FOLDER_TYPE_OUTBOX);
-	if (!outbox_folder) {
-		g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL outbox folder", __FUNCTION__);
-		goto end;
-	}
 	if (info->draft_msg != NULL) {
 		TnyFolder *folder = NULL;
 		TnyFolder *src_folder = NULL;
 		TnyFolderType folder_type;		
+		TnyTransportAccount *transport_account = NULL;
+
+		/* To remove the old mail from its source folder, we need to get the
+		 * transport account of the original draft message (the transport account
+		 * might have been changed by the user) */
+		header = tny_msg_get_header (info->draft_msg);
+		transport_account = modest_tny_account_store_get_transport_account_from_outbox_header(
+			modest_runtime_get_account_store(), header);
+		if (transport_account == NULL)
+			transport_account = g_object_ref(info->transport_account);
+		draft_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account),
+								      TNY_FOLDER_TYPE_DRAFTS);
+		outbox_folder = modest_tny_account_get_special_folder (TNY_ACCOUNT (transport_account),
+								       TNY_FOLDER_TYPE_OUTBOX);
+		g_object_unref(transport_account);
+
+		if (!draft_folder) {
+			g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL drafts folder",
+				   __FUNCTION__);
+			goto end;
+		}
+		if (!outbox_folder) {
+			g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL outbox folder",
+				   __FUNCTION__);
+			goto end;
+		}
+
 		folder = tny_msg_get_folder (info->draft_msg);		
 		if (folder == NULL) goto end;
 		folder_type = modest_tny_folder_guess_folder_type (folder);
@@ -915,17 +929,17 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 
 		/* Note: This can fail (with a warning) if the message is not really already in a folder,
 		 * because this function requires it to have a UID. */		
-		header = tny_msg_get_header (info->draft_msg);
 		tny_folder_remove_msg (src_folder, header, NULL);
 
 		tny_folder_sync (folder, TRUE, &err); /* FALSE --> don't expunge */
 /* 		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);  /\* expunge *\/ */
 		
-		g_object_unref (header);
 		g_object_unref (folder);
 	}
 
 end:
+	if (header)
+		g_object_unref (header);
 	if (err != NULL)
 		g_error_free(err);	
 	if (info->draft_msg)
