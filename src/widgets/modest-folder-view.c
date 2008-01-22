@@ -1846,12 +1846,21 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 					    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &parent_folder,
 					    -1);
 			if ((parent_type == TNY_FOLDER_TYPE_ROOT) &&
-			    TNY_IS_ACCOUNT (parent_folder) &&
-			    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
-				cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type
-								   (TNY_FOLDER (folder1)));
-				cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type
-								   (TNY_FOLDER (folder2)));
+			    TNY_IS_ACCOUNT (parent_folder)) {
+				if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
+					cmp1 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type
+									   (TNY_FOLDER (folder1)));
+					cmp2 = get_cmp_subfolder_type_pos (modest_tny_folder_get_local_or_mmc_folder_type
+									   (TNY_FOLDER (folder2)));
+				} else if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (parent_folder))) {
+					if (modest_local_folder_info_get_type (tny_folder_get_name (TNY_FOLDER (folder1))) == TNY_FOLDER_TYPE_ARCHIVE) {
+						cmp1 = 0;
+						cmp2 = 1;
+						} else if (modest_local_folder_info_get_type (tny_folder_get_name (TNY_FOLDER (folder2))) == TNY_FOLDER_TYPE_ARCHIVE) {
+						cmp1 = 1;
+						cmp2 = 0;
+					}
+				}
 			}
 			g_object_unref (parent_folder);
 		}
