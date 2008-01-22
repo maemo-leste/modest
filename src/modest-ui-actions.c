@@ -3940,10 +3940,15 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 
 		if ((gpointer) local_account != (gpointer) folder_store &&
 		    (gpointer) mmc_account != (gpointer) folder_store) {
+			const char *proto_name = tny_account_get_proto (TNY_ACCOUNT (folder_store));
+			ModestTransportStoreProtocol proto = MODEST_PROTOCOL_STORE_MAILDIR;
+			if (proto_name != NULL) {
+				proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+			}
 			is_local_account = FALSE;
 			/* New button should be dimmed on remote
-			   account root */
-			new_sensitive = FALSE;
+			   POP account root */
+			new_sensitive = (proto != MODEST_PROTOCOL_STORE_POP);
 		}
 		g_object_unref (local_account);
 	}
