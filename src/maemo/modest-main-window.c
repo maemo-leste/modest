@@ -1923,7 +1923,7 @@ on_msg_count_changed (ModestHeaderView *header_view,
 
 		/* Play a sound (if configured) and make the LED blink  */
 		if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) {
-			modest_platform_on_new_headers_received (NULL, FALSE);
+			modest_platform_push_email_notification ();
 		}
 	}
 

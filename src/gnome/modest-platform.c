@@ -320,6 +320,12 @@ modest_platform_get_global_settings_dialog ()
 	return modest_gnome_global_settings_dialog_new ();
 }
 
+void
+modest_platform_push_email_notification(void)
+{
+	/* TODO: implement this */
+	g_print ("--------------- NEW MESSAGE ARRIVED ---------------\n");
+}
 
 void 
 modest_platform_on_new_headers_received (TnyList *header_list,

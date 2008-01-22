@@ -297,6 +297,14 @@ gboolean modest_platform_set_update_interval (guint minutes);
 GtkWidget* modest_platform_get_global_settings_dialog (void);
 
 /**
+ * modest_platform_push_email_notification:
+ *
+ * Notify the user when new e-mail arrives by playing a sound, making
+ * a light blink, etc.
+ */
+void modest_platform_push_email_notification(void);
+
+/**
  * modest_platform_on_new_headers_received:
  * @header_list: the list of new received headers
  * @show_visual: adds a visual notification 
