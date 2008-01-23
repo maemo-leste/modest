@@ -70,6 +70,11 @@ static void _on_msg_error_happened (TnySendQueue *self,
 				    GError *err, 
 				    gpointer user_data);
 
+static void modest_tny_send_queue_add_async (TnyCamelSendQueue *self, 
+					     TnyMsg *msg, 
+					     TnySendQueueAddCallback callback, 
+					     TnyStatusCallback status_callback, 
+					     gpointer user_data);
 static TnyFolder* modest_tny_send_queue_get_outbox  (TnySendQueue *self);
 static TnyFolder* modest_tny_send_queue_get_sentbox (TnySendQueue *self);
 
@@ -181,7 +186,10 @@ modest_tny_send_queue_to_string (ModestTnySendQueue *self)
 }
 
 static void
-_on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError *err,
+_on_added_to_outbox (TnySendQueue *self, 
+		     gboolean cancelled, 
+		     TnyMsg *msg, 
+		     GError *err,
 		     gpointer user_data) 
 {
 	ModestTnySendQueuePrivate *priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE(self);
@@ -195,7 +203,6 @@ _on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError
 
 	header = tny_msg_get_header (msg);
 	msg_id = modest_tny_send_queue_get_msg_id (header);
-/* 	msg_id = tny_header_get_message_id (header); */
 	g_return_if_fail(msg_id != NULL);
 
 	/* Put newly added message in WAITING state */
@@ -214,20 +221,6 @@ _on_added_to_outbox (TnySendQueue *self, gboolean cancelled, TnyMsg *msg, GError
 
 	g_object_unref(G_OBJECT(header));
 }
-
-void
-modest_tny_send_queue_add (ModestTnySendQueue *self, TnyMsg *msg, GError **err)
-{
-	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE(self));
-	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
-
-	tny_camel_send_queue_add_async (TNY_CAMEL_SEND_QUEUE(self), 
-					msg, 
-					_on_added_to_outbox, 
-					NULL, 
-					NULL);
-}
-
 
 static void
 _add_message (ModestTnySendQueue *self, TnyHeader *header)
@@ -276,6 +269,18 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 	/* Free */
 	g_free(msg_uid);
 }
+
+static void 
+modest_tny_send_queue_add_async (TnyCamelSendQueue *self, 
+				 TnyMsg *msg, 
+				 TnySendQueueAddCallback callback, 
+				 TnyStatusCallback status_callback, 
+				 gpointer user_data)
+{
+	/* Call the superclass passing our own callback */
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_async_func (self, msg, _on_added_to_outbox, NULL, NULL);
+}
+
 
 static TnyFolder*
 modest_tny_send_queue_get_sentbox (TnySendQueue *self)
@@ -339,6 +344,7 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_send_queue_finalize;
 
+	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->add_async_func  = modest_tny_send_queue_add_async;
 	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox_func  = modest_tny_send_queue_get_outbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
 	klass->status_changed   = NULL;
@@ -543,9 +549,6 @@ _on_msg_has_been_sent (TnySendQueue *self,
 	gchar *msg_id = NULL;
 	GList *item;
 
-	/* TODO: Sometimes tinymail does not return a header, need to check */
-	g_return_if_fail (TNY_IS_HEADER (header));
-
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
 	/* Get message uid */
@@ -555,13 +558,20 @@ _on_msg_has_been_sent (TnySendQueue *self,
 
 	/* Get status info */
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
+
+
+	/* TODO: note that item=NULL must not happen, but I found that
+	   tinymail is issuing the message-sent signal twice, because
+	   tny_camel_send_queue_update is called twice for each
+	   message sent. This must be fixed in tinymail. Sergio */
+	if (item) {
+		/* Remove status info */
+		modest_tny_send_queue_info_free (item->data);
+		g_queue_delete_link (priv->queue, item);
+		priv->current = NULL;
 		
-	/* Remove status info */
-	modest_tny_send_queue_info_free (item->data);
-	g_queue_delete_link (priv->queue, item);
-	priv->current = NULL;
-		
-	modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_sent"));	
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_sent"));
+	}
 
 	/* free */
 	g_free(msg_id);
@@ -585,6 +595,7 @@ _on_msg_error_happened (TnySendQueue *self,
 	msg_uid = modest_tny_send_queue_get_msg_id (header);
 	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), 
 						  msg_uid);	
+
 	info = item->data;
 
 	/* Keep in queue so that we remember that the opertion has failed */

@@ -91,17 +91,6 @@ GType        modest_tny_send_queue_get_type    (void) G_GNUC_CONST;
 ModestTnySendQueue*    modest_tny_send_queue_new        (TnyCamelTransportAccount *account);
 
 
-
-/**
- * modest_tny_send_queue_ADD:
- * @self: a valid #ModestTnySendQueue instance
- * @msg: a valid #TnyMsg instance to send 
- * 
- * Add @msg to outbox folder waiting to be sent by 
- * its account send queue. 
- */
-void modest_tny_send_queue_add (ModestTnySendQueue *self, TnyMsg *msg, GError **err);
-
 /**
  * modest_tny_send_queue_sending_in_progress:
  * @self: a valid #ModestTnySendQueue instance

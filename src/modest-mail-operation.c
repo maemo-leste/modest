@@ -652,9 +652,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		info->error_happened_handler = g_signal_connect (G_OBJECT (send_queue), "error-happened",
 				G_CALLBACK (send_mail_error_happened_handler), info);
 
-		modest_tny_send_queue_add (MODEST_TNY_SEND_QUEUE(send_queue), 
-				msg, 
-				&(priv->error));
+		tny_send_queue_add_async (send_queue, msg, NULL, NULL, NULL);
 
 		priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	}
