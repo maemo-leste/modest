@@ -1940,6 +1940,11 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 	}
+
+	/* Finally refilter the model. Do this *after* setting the
+	   contents style because otherwise we could get into troubles
+	   with the "No messages to show" banner */
+	modest_header_view_refilter (priv->header_view);
 }
 
 
