@@ -43,6 +43,7 @@
 #include <modest-defs.h>
 #include "modest-utils.h"
 #include "modest-platform.h"
+#include <modest-local-folder-info.h>
 
 GQuark
 modest_utils_get_supported_secure_authentication_error_quark (void)
@@ -461,4 +462,29 @@ modest_list_index (TnyList *list, GObject *object)
 		index = -1;
 	g_object_unref (iter);
 	return index;
+}
+
+guint64 
+modest_folder_available_space (const gchar *maildir_path)
+{
+	gchar *folder;
+	gchar *uri_string;
+	GnomeVFSURI *uri;
+	GnomeVFSFileSize size;
+
+	folder = modest_local_folder_info_get_maildir_path (maildir_path);
+	uri_string = gnome_vfs_get_uri_from_local_path (folder);
+	uri = gnome_vfs_uri_new (uri_string);
+	g_free (folder);
+	g_free (uri_string);
+
+	if (uri) {
+		if (gnome_vfs_get_volume_free_space (uri, &size) != GNOME_VFS_OK)
+			size = -1;
+		gnome_vfs_uri_unref (uri);
+	} else {
+		size = -1;
+	}
+
+	return (guint64) size;
 }

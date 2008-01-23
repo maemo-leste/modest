@@ -712,7 +712,8 @@ on_window_destroy (ModestWindow *window,
 										 _("mcen_nc_no_email_message_modified_save_changes"));
 				/* Save to drafts */
 				if (response != GTK_RESPONSE_CANCEL)
-					modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window));				
+					if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
+						return TRUE;
 			}
 		}
 	}

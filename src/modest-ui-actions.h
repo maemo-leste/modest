@@ -154,9 +154,9 @@ void     modest_ui_actions_on_msg_attachment_clicked   (ModestMsgView *msgview, 
 void     modest_ui_actions_on_msg_recpt_activated   (ModestMsgView *msgview, const gchar *address,
 						     ModestWindow *win);
 
-void     modest_ui_actions_on_send                     (GtkWidget *widget,
+gboolean modest_ui_actions_on_send                     (GtkWidget *widget,
 							ModestMsgEditWindow *edit_window);
-void     modest_ui_actions_on_save_to_drafts           (GtkWidget *widget, 
+gboolean modest_ui_actions_on_save_to_drafts           (GtkWidget *widget, 
 							ModestMsgEditWindow *edit_window);
 
 

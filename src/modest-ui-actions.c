@@ -2285,7 +2285,7 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 	g_object_unref(edit_window);
 }
 
-void
+gboolean
 modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	TnyTransportAccount *transport_account;
@@ -2294,10 +2294,29 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
 	char *info_text;
+	gboolean had_error = FALSE;
+	guint64 available_disk, expected_size;
+	gint parts_count;
+	guint64 parts_size;
 
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), FALSE);
 	
 	data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	/* Check size */
+	available_disk = modest_folder_available_space (NULL);
+	modest_msg_edit_window_get_parts_size (edit_window, &parts_count, &parts_size);
+	expected_size = modest_tny_msg_estimate_size (data->plain_body,
+						 data->html_body,
+						 parts_count,
+						 parts_size);
+
+	if ((available_disk != -1) && expected_size > available_disk) {
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+
+		modest_platform_information_banner (NULL, NULL, dgettext("ke-recv", "cerm_device_memory_full"));
+		return FALSE;
+	}
 
 	account_name = g_strdup (data->account_name);
 	account_mgr = modest_runtime_get_account_mgr();
@@ -2308,7 +2327,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
 		modest_msg_edit_window_free_msg_data (edit_window, data);
-		return;
+		return FALSE;
 	}
 
 	if (!strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
@@ -2324,7 +2343,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 		g_printerr ("modest: no transport account found for '%s'\n", account_name);
 		g_free (account_name);
 		modest_msg_edit_window_free_msg_data (edit_window, data);
-		return;
+		return FALSE;
 	}
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
@@ -2347,18 +2366,19 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->priority_flags,
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
+
 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
 	modest_platform_information_banner (NULL, NULL, info_text);
+	g_free (info_text);
+	modest_msg_edit_window_reset_modified (edit_window);
 
 	/* Frees */
-	g_free (info_text);
 	g_free (from);
 	g_free (account_name);
 	g_object_unref (G_OBJECT (transport_account));
 	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
-	modest_msg_edit_window_reset_modified (edit_window);
 
 	/* ** FIXME **
 	 * If the drafts folder is selected then make the header view
@@ -2377,7 +2397,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	 */
 	ModestMainWindow *win = MODEST_MAIN_WINDOW(modest_window_mgr_get_main_window(
 		modest_runtime_get_window_mgr(), FALSE));
-	if (win != NULL) {
+	if (!had_error && win != NULL) {
 		ModestFolderView *view = MODEST_FOLDER_VIEW(modest_main_window_get_child_widget(
 			win, MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW));
 		if (view != NULL) {
@@ -2396,23 +2416,44 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 			if (folder != NULL) g_object_unref(folder);
 		}
 	}
+
+	return !had_error;
 }
 
 /* For instance, when clicking the Send toolbar button when editing a message: */
-void
+gboolean
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	TnyTransportAccount *transport_account = NULL;
+	gboolean had_error = FALSE;
+	guint64 available_disk, expected_size;
+	gint parts_count;
+	guint64 parts_size;
 
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window));
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
 
 	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
-		return;
+		return TRUE;
 	
 	/* FIXME: Code added just for testing. The final version will
 	   use the send queue provided by tinymail and some
 	   classifier */
 	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	/* Check size */
+	available_disk = modest_folder_available_space (NULL);
+	modest_msg_edit_window_get_parts_size (edit_window, &parts_count, &parts_size);
+	expected_size = modest_tny_msg_estimate_size (data->plain_body,
+						 data->html_body,
+						 parts_count,
+						 parts_size);
+
+	if ((available_disk != -1) && expected_size > available_disk) {
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+
+		modest_platform_information_banner (NULL, NULL, dgettext("ke-recv", "cerm_device_memory_full"));
+		return FALSE;
+	}
 
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = g_strdup (data->account_name);
@@ -2426,7 +2467,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		/* Run account setup wizard */
 		if (!modest_ui_actions_run_account_setup_wizard (MODEST_WINDOW(edit_window))) {
-			return;
+			return TRUE;
 		}
 	}
 	
@@ -2441,7 +2482,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		/* Run account setup wizard */
 		if (!modest_ui_actions_run_account_setup_wizard(MODEST_WINDOW(edit_window)))
-			return;
+			return TRUE;
 	}
 	
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
@@ -2467,6 +2508,15 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_outbox_waiting_to_be_sent"));
 
+
+	if (modest_mail_operation_get_error (mail_operation) != NULL) {
+		const GError *error = modest_mail_operation_get_error (mail_operation);
+		if (error->code == MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED) {
+			g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_operation))->message);
+			modest_platform_information_banner (NULL, NULL, _CS("sfil_ni_not_enough_memory"));
+			had_error = TRUE;
+		}
+	}
 					     
 	/* Free data: */
 	g_free (from);
@@ -2475,10 +2525,15 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	g_object_unref (G_OBJECT (mail_operation));
 
 	modest_msg_edit_window_free_msg_data (edit_window, data);
-	modest_msg_edit_window_set_sent (edit_window, TRUE);
 
-	/* Save settings and close the window: */
-	modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (edit_window));
+	if (!had_error) {
+		modest_msg_edit_window_set_sent (edit_window, TRUE);
+
+		/* Save settings and close the window: */
+		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (edit_window));
+	}
+
+	return !had_error;
 }
 
 void 

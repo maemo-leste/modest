@@ -144,7 +144,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
 
 		if (part && (modest_tny_mime_part_is_attachment_for_modest (part))) 
-			modest_attachments_view_add_attachment (attachments_view, part);
+			modest_attachments_view_add_attachment (attachments_view, part, TRUE, 0);
 
 		if (part)
 			g_object_unref (part);
@@ -160,7 +160,8 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 }
 
 void
-modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part)
+modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part,
+					gboolean detect_size, guint64 size)
 {
 	GtkWidget *att_view = NULL;
 	ModestAttachmentsViewPrivate *priv = NULL;
@@ -170,7 +171,9 @@ modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view,
 
 	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 
-	att_view = modest_attachment_view_new (part);
+	att_view = modest_attachment_view_new (part, detect_size);
+	if (!detect_size)
+		modest_attachment_view_set_size (MODEST_ATTACHMENT_VIEW (att_view), size);
 	gtk_box_pack_end (GTK_BOX (priv->box), att_view, FALSE, FALSE, 0);
 	gtk_widget_show_all (att_view);
 }
@@ -773,6 +776,43 @@ modest_attachments_view_has_attachments (ModestAttachmentsView *atts_view)
 	g_list_free (children);
 
 	return result;
+}
+
+void
+modest_attachments_view_get_sizes (ModestAttachmentsView *attachments_view,
+				   gint *attachments_count,
+				   guint64 *attachments_size)
+{
+	ModestAttachmentsViewPrivate *priv;
+	GList *children, *node;
+
+	g_return_if_fail (MODEST_IS_ATTACHMENTS_VIEW (attachments_view));
+	g_return_if_fail (attachments_count != NULL && attachments_size != NULL);
+
+	*attachments_count = 0;
+	*attachments_size = 0;
+
+	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
+
+	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+	for (node = children; node != NULL; node = g_list_next (node)) {
+		GtkWidget *att_view = (GtkWidget *) node->data;
+		TnyMimePart *part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+
+		if (!tny_mime_part_is_purged (part)) {
+			guint64 size;
+			*attachments_count ++;
+			size = modest_attachment_view_get_size (MODEST_ATTACHMENT_VIEW (att_view));
+			if (size == 0) {
+				/* we do a random estimation of the size of an attachment */
+				size = 32768;
+			}
+			*attachments_size += size;
+			
+		}
+		g_object_unref (part);
+	}
+	g_list_free (children);
 }
 
 static void

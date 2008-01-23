@@ -852,3 +852,30 @@ get_content_type(const gchar *s)
 	}
 	return g_string_free(type, FALSE);
 }
+
+guint64
+modest_tny_msg_estimate_size (const gchar *plain_body, const gchar *html_body,
+			      guint64 parts_count,
+			      guint64 parts_size)
+{
+	guint64 result;
+
+	/* estimation of headers size */
+	result = 1024;
+
+	/* We add a 20% of size due to the increase in 7bit encoding */
+	if (plain_body) {
+		result += strlen (plain_body) * 120 / 100;
+	}
+	if (html_body) {
+		result += strlen (html_body) * 120 / 100;
+	}
+
+	/* 256 bytes per additional part because of their headers */
+	result += parts_count * 256;
+
+	/* 150% of increase per encoding */
+	result += parts_size * 3 / 2;
+
+	return result;
+}

@@ -57,6 +57,9 @@
 #include "modest-marshal.h"
 #include "modest-error.h"
 #include "modest-mail-operation.h"
+#include <modest-count-stream.h>
+#include <libgnomevfs/gnome-vfs.h>
+#include "modest-utils.h"
 
 #define KB 1024
 
@@ -819,6 +822,7 @@ create_msg_thread (gpointer thread_data)
 	return NULL;
 }
 
+
 void
 modest_mail_operation_create_msg (ModestMailOperation *self,
 				  const gchar *from, const gchar *to,
@@ -831,7 +835,10 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 				  ModestMailOperationCreateMsgCallback callback,
 				  gpointer userdata)
 {
+	ModestMailOperationPrivate *priv;
 	CreateMsgInfo *info = NULL;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	info = g_slice_new0 (CreateMsgInfo);
 	info->mail_op = g_object_ref (self);
@@ -866,6 +873,7 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 					TnyMsg *msg,
 					gpointer userdata)
 {
+	ModestMailOperationPrivate *priv = NULL;
 	SendNewMailInfo *info = (SendNewMailInfo *) userdata;
 	TnyFolder *draft_folder = NULL;
 	TnyFolder *outbox_folder = NULL;
@@ -873,6 +881,14 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	GError *err = NULL;
 
 	if (!msg) {
+		goto end;
+	}
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	if (priv->error) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
 		goto end;
 	}
 

@@ -64,7 +64,12 @@ struct _ModestAttachmentViewClass
 
 GType modest_attachment_view_get_type (void);
 
-GtkWidget* modest_attachment_view_new (TnyMimePart *mime_part);
+GtkWidget* modest_attachment_view_new (TnyMimePart *mime_part, gboolean detect_size);
+void modest_attachment_view_set_detect_size (ModestAttachmentView *self, gboolean detect_size);
+void modest_attachment_view_set_size (ModestAttachmentView *self, guint64 size);
+guint64 modest_attachment_view_get_size (ModestAttachmentView *self);
+
+
 
 G_END_DECLS
 

@@ -58,7 +58,7 @@ struct _ModestAttachmentViewPrivate
 	GtkWidget *filename_view;
 	GtkWidget *size_view;
 
-	guint get_size_idle_id;
+	gboolean detect_size;
 	TnyStream *get_size_stream;
 	guint64 size;
 
@@ -93,22 +93,27 @@ static void tny_mime_part_view_init (gpointer g, gpointer iface_data);
 
 static void update_filename_request (ModestAttachmentView *self);
 
+static void update_size_label (ModestAttachmentView *self)
+{
+	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
+	gchar *size_str;
+	gchar *label_text;
+
+	size_str = modest_text_utils_get_display_size (priv->size);
+	label_text = g_strdup_printf (" (%s)", size_str);
+	g_free (size_str);
+	gtk_label_set_text (GTK_LABEL (priv->size_view), label_text);
+	g_free (label_text);
+}
 
 static gboolean
 idle_get_mime_part_size_cb (gpointer userdata)
 {
 	ModestAttachmentView *view = (ModestAttachmentView *) userdata;
-	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (view);
-	gchar *size_str;
-	gchar *label_text;
 	gdk_threads_enter ();
 
 	if (GTK_WIDGET_VISIBLE (view)) {
-		size_str = modest_text_utils_get_display_size (priv->size);
-		label_text = g_strdup_printf (" (%s)", size_str);
-		g_free (size_str);
-		gtk_label_set_text (GTK_LABEL (priv->size_view), label_text);
-		g_free (label_text);
+		update_size_label (view);
 	}
 
 	gdk_threads_leave ();
@@ -148,6 +153,42 @@ get_mime_part_size_thread (gpointer thr_user_data)
 	g_object_unref (view);
 
 	return NULL;
+}
+
+void
+modest_attachment_view_set_detect_size (ModestAttachmentView *self, gboolean detect_size)
+{
+	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
+
+	priv->detect_size = detect_size;
+	
+}
+
+void
+modest_attachment_view_set_size (ModestAttachmentView *self, guint64 size)
+{
+	ModestAttachmentViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_ATTACHMENT_VIEW (self));
+	priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
+
+	if (!priv->detect_size) {
+		priv->size = size;
+		update_size_label (self);
+	} else {
+		g_assert ("Shouldn't set the size of the attachment view if detect size is enabled");
+	}
+}
+
+guint64
+modest_attachment_view_get_size (ModestAttachmentView *self)
+{
+	ModestAttachmentViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_ATTACHMENT_VIEW (self), 0);
+	priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (self);
+
+	return priv->size;
 }
 
 static TnyMimePart *
@@ -254,7 +295,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 
 	gtk_label_set_text (GTK_LABEL (priv->size_view), "");
 
-	if (show_size) {
+	if (show_size && priv->detect_size) {
 		tny_camel_mem_stream_get_type ();
 		g_object_ref (self);
 		g_thread_create (get_mime_part_size_thread, self, FALSE, NULL);
@@ -278,11 +319,6 @@ modest_attachment_view_clear_default (TnyMimePartView *self)
 	if (priv->mime_part != NULL) {
 		g_object_unref (priv->mime_part);
 		priv->mime_part = NULL;
-	}
-
-	if (priv->get_size_idle_id != 0) {
-		g_source_remove (priv->get_size_idle_id);
-		priv->get_size_idle_id = 0;
 	}
 
 	if (priv->get_size_stream != NULL) {
@@ -312,10 +348,12 @@ modest_attachment_view_clear_default (TnyMimePartView *self)
  * Return value: a new #ModestAttachmentView instance implemented for Gtk+
  **/
 GtkWidget*
-modest_attachment_view_new (TnyMimePart *mime_part)
+modest_attachment_view_new (TnyMimePart *mime_part, gboolean detect_size)
 {
 	ModestAttachmentView *self = g_object_new (MODEST_TYPE_ATTACHMENT_VIEW, 
 						   NULL);
+
+	modest_attachment_view_set_detect_size (self, detect_size);
 
 	modest_attachment_view_set_part (TNY_MIME_PART_VIEW (self), mime_part);
 
@@ -342,9 +380,9 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_misc_set_alignment (GTK_MISC (priv->size_view), 0.0, 0.5);
 	gtk_misc_set_alignment (GTK_MISC (priv->filename_view), 0.0, 0.5);
 
-	priv->get_size_idle_id = 0;
 	priv->get_size_stream = NULL;
 	priv->size = 0;
+	priv->detect_size = TRUE;
 
 	box = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), priv->icon, FALSE, FALSE, 0);
@@ -373,11 +411,6 @@ static void
 modest_attachment_view_finalize (GObject *object)
 {
 	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (object);
-
-	if (priv->get_size_idle_id) {
-		g_source_remove (priv->get_size_idle_id);
-		priv->get_size_idle_id = 0;
-	}
 
 	if (priv->get_size_stream != NULL) {
 		g_object_unref (priv->get_size_stream);

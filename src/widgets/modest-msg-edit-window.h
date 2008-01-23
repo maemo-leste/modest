@@ -245,6 +245,15 @@ void                    modest_msg_edit_window_remove_attachments    (ModestMsgE
 								      TnyList *att_list);
 
 /**
+ * modest_msg_edit_window_get_parts_size:
+ * @window: a #ModestMsgEditWindow
+ * @parts_count: number of attachments and images attached to the message
+ * @parts_size: sum of sizes of attachments and images
+ */
+void                    modest_msg_edit_window_get_parts_size (ModestMsgEditWindow *window,
+							       gint *parts_count,
+							       guint64 *parts_size);
+/**
  * modest_msg_edit_window_add_part:
  * @self: a #ModestMsgEditWindow
  * @part: a #TnyMimePart

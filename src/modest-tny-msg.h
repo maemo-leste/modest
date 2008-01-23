@@ -178,6 +178,19 @@ TnyMsg*       modest_tny_msg_create_reply_msg     (TnyMsg *msg,
 const gchar*  modest_tny_msg_get_parent_uid (TnyMsg *msg);
 
 
-
+/**
+ * modest_tny_msg_estimate_size:
+ * @plain_body: a string
+ * @html_body: a string
+ * @parts_number: a gint (number of additional parts)
+ * @parts_size: a guint64 (sum of size of the additional parts)
+ *
+ * Estimates the size of the resulting message obtained from the size of the body
+ * parts, and adding the estimation of size headers.
+ */
+guint64
+modest_tny_msg_estimate_size (const gchar *plain_body, const gchar *html_body,
+			      guint64 parts_count,
+			      guint64 parts_size);
 
 #endif /* __MODEST_TNY_MSG_H__ */

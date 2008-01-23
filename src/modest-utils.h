@@ -135,4 +135,15 @@ void modest_utils_toggle_action_set_active_block_notify (GtkToggleAction *action
  */
 gint modest_list_index (TnyList *list, GObject *object);
 
+/**
+ * modest_folder_available_space:
+ * @maildir_path: the path of the maildir folder, or %NULL to
+ * get the space available in local folders
+ *
+ * Obtains the space available in the local folder.
+ *
+ * Returns: a #guint64
+ */
+guint64 modest_folder_available_space (const gchar *maildir_path);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

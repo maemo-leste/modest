@@ -276,6 +276,8 @@ struct _ModestMsgEditWindowPrivate {
 	gint last_cid;
 	TnyList *attachments;
 	TnyList *images;
+	guint64 images_size;
+	gint images_count;
 
 	TnyHeaderFlags priority_flags;
 	
@@ -409,6 +411,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->subject_field = NULL;
 	priv->attachments   = TNY_LIST (tny_simple_list_new ());
 	priv->images        = TNY_LIST (tny_simple_list_new ());
+	priv->images_size   = 0;
+	priv->images_count  = 0;
 	priv->last_cid      = 0;
 
 	priv->cc_caption    = NULL;
@@ -914,21 +918,28 @@ modest_msg_edit_window_finalize (GObject *obj)
 }
 
 static GdkPixbuf *
-pixbuf_from_stream (TnyStream *stream, const gchar *mime_type)
+pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_size)
 {
 	GdkPixbufLoader *loader;
 	GdkPixbuf *pixbuf;
+	guint64 size;
+	
+	size = 0;
 
 	loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, NULL);
 
-	if (loader == NULL)
+	if (loader == NULL) {
+		if (stream_size)
+			*stream_size = 0;
 		return NULL;
+	}
 
 	tny_stream_reset (TNY_STREAM (stream));
 	while (!tny_stream_is_eos (TNY_STREAM (stream))) {
 		unsigned char read_buffer[128];
 		gint readed;
 		readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
+		size += readed;
 		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, NULL))
 			break;
 	}
@@ -948,6 +959,9 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type)
 		pixbuf = new_pixbuf;
 	}
 
+	if (stream_size)
+		*stream_size = size;
+
 	return pixbuf;
 }
 
@@ -966,11 +980,16 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 		const gchar *cid = tny_mime_part_get_content_id (part);
 		const gchar *mime_type = tny_mime_part_get_content_type (part);
 		if ((cid != NULL)&&(mime_type != NULL)) {
+			guint64 stream_size;
 			TnyStream *stream = tny_mime_part_get_stream (part);
-			GdkPixbuf *pixbuf = pixbuf_from_stream (stream, mime_type);
+			GdkPixbuf *pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size);
+
+
 			g_object_unref (stream);
 
 			if (pixbuf != NULL) {
+				priv->images_count ++;
+				priv->images_size += stream_size;
 				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf);
 				g_object_unref (pixbuf);
 			}
@@ -1500,6 +1519,8 @@ get_formatted_data (ModestMsgEditWindow *edit_window)
 
 	wp_text_buffer_save_document (WP_TEXT_BUFFER(priv->text_buffer), get_formatted_data_cb, &string_buffer);
 
+	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+
 	return g_string_free (string_buffer, FALSE);
 									
 }
@@ -1639,6 +1660,23 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_list_free (data->images);
 	
 	g_slice_free (MsgData, data);
+}
+
+void                    
+modest_msg_edit_window_get_parts_size (ModestMsgEditWindow *window,
+				       gint *parts_count,
+				       guint64 *parts_size)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	modest_attachments_view_get_sizes (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), parts_count, parts_size);
+
+	/* TODO: add images */
+	*parts_size += priv->images_size;
+	*parts_count += priv->images_count;
+
 }
 
 ModestMsgEditFormat
@@ -2059,6 +2097,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			gchar *content_id;
 			const gchar *mime_type = NULL;
 			GnomeVFSURI *vfs_uri;
+			guint64 stream_size;
 
 			vfs_uri = gnome_vfs_uri_new (uri);
 
@@ -2087,9 +2126,11 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			tny_mime_part_set_filename (mime_part, basename);
 			g_free (basename);
 
-			pixbuf = pixbuf_from_stream (stream, mime_type);
+			pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size);
 			
 			if (pixbuf != NULL) {
+				priv->images_size += stream_size;
+				priv->images_count ++;
 				insert_mark = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
 				gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &position, insert_mark);
 				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (mime_part)), pixbuf);
@@ -2192,7 +2233,8 @@ modest_msg_edit_window_attach_file_one (
 		
 		tny_list_prepend (priv->attachments, (GObject *) mime_part);
 		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
-							mime_part);
+							mime_part,
+							info.size == 0, info.size);
 		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 		gtk_widget_show_all (priv->attachments_caption);
 		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
@@ -3355,7 +3397,7 @@ modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
 
 	g_return_if_fail (TNY_IS_MIME_PART (part));
 	tny_list_prepend (priv->attachments, (GObject *) part);
-	modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), part);
+	modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), part, TRUE, 0);
 	gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 	gtk_widget_show_all (priv->attachments_caption);
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);

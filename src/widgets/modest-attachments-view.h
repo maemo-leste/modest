@@ -67,7 +67,8 @@ GType modest_attachments_view_get_type (void);
 GtkWidget* modest_attachments_view_new (TnyMsg *msg);
 
 void modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg);
-void modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);
+void modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part,
+					     gboolean detect_size, guint64 size);
 void modest_attachments_view_remove_attachment (ModestAttachmentsView *attachments_view, TnyMimePart *part);
 void modest_attachments_view_remove_attachment_by_id (ModestAttachmentsView *attachments_view, const gchar *att_id);
 TnyList *modest_attachments_view_get_attachments (ModestAttachmentsView *attachments_view);
@@ -75,6 +76,10 @@ TnyList *modest_attachments_view_get_selection (ModestAttachmentsView *attachmen
 void modest_attachments_view_select_all (ModestAttachmentsView *attachments_view);
 
 gboolean modest_attachments_view_has_attachments (ModestAttachmentsView *attachments_view);
+
+void modest_attachments_view_get_sizes (ModestAttachmentsView *attachments_view,
+					gint *attachments_count,
+					guint64 *attachments_size);
 
 G_END_DECLS
 
