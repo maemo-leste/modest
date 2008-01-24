@@ -1,3 +1,14 @@
+** 2008-W05:
+* fixed crasher in tinymail when message retrieval failed (r3284)
+* tinymail: fix syncing of imap folders with offline changes (r3279)
+* tinymail: fix some memory issues (r3287)
+* fix background download crash
+* many UI issues fixed
+* disable signature when it's not enabled
+* don't send message after cancelling it
+* don't keep 'updating' when going offline
+* read/unread fixes
+
 ** 2008-W04:
 * many stability fixes in tinymail (see there) and modest, due to extensive valgrinding
 * fixes for parsing namespaces
