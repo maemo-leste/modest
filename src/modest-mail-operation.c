@@ -2902,6 +2902,43 @@ modest_mail_operation_run_queue (ModestMailOperation *self,
 }
 
 static void
+sync_folder_finish_callback (TnyFolder *self, gboolean cancelled, GError *err, ModestMailOperation *mail_op)
+{
+	ModestMailOperationPrivate *priv;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+	if (err != NULL) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+			     err->message);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	} else {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
+	modest_mail_operation_notify_end (mail_op);
+	g_object_unref (mail_op);
+}
+
+void
+modest_mail_operation_sync_folder (ModestMailOperation *self,
+				   TnyFolder *folder, gboolean expunge)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_FOLDER (folder));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->account = TNY_ACCOUNT (tny_folder_get_account (folder));
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER;
+
+	modest_mail_operation_notify_start (self);
+	g_object_ref (self);
+	tny_folder_sync_async (folder, expunge, (TnyFolderCallback) sync_folder_finish_callback, NULL, self);
+}
+
+static void
 modest_mail_operation_notify_start (ModestMailOperation *self)
 {
 	ModestMailOperationPrivate *priv = NULL;
@@ -2998,6 +3035,7 @@ modest_mail_operation_to_string (ModestMailOperation *self)
 	case MODEST_MAIL_OPERATION_TYPE_DELETE:  type= "DELETE";  break;
 	case MODEST_MAIL_OPERATION_TYPE_INFO:    type= "INFO";    break;
 	case MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE: type= "RUN-QUEUE"; break;
+	case MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER: type= "SYNC-FOLDER"; break;
 	case MODEST_MAIL_OPERATION_TYPE_UNKNOWN: type= "UNKNOWN"; break;
 	default: type = "UNEXPECTED"; break;
 	}

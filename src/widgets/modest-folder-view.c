@@ -1125,8 +1125,14 @@ modest_folder_view_finalize (GObject *obj)
 	}
 
 	if (priv->cur_folder_store) {
-		if (TNY_IS_FOLDER(priv->cur_folder_store))
-			tny_folder_sync (TNY_FOLDER(priv->cur_folder_store), FALSE, NULL);
+		if (TNY_IS_FOLDER(priv->cur_folder_store)) {
+			ModestMailOperation *mail_op;
+
+			mail_op = modest_mail_operation_new (NULL);
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
+			modest_mail_operation_sync_folder (mail_op, TNY_FOLDER (priv->cur_folder_store), FALSE);
+		}
 
 		g_object_unref (priv->cur_folder_store);
 		priv->cur_folder_store = NULL;

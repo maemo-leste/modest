@@ -76,6 +76,7 @@ typedef enum {
 	MODEST_MAIL_OPERATION_TYPE_DELETE,
 	MODEST_MAIL_OPERATION_TYPE_INFO,
 	MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE,
+	MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER,
 	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
 } ModestMailOperationTypeOperation;
 
@@ -645,6 +646,18 @@ void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
  */
 void          modest_mail_operation_run_queue       (ModestMailOperation *self,
 						     ModestTnySendQueue *queue);
+
+/**
+ * modest_mail_operation_sync_folder:
+ * @self: a #ModestMailOperation
+ * @folder: a #TnyFolder
+ * @expunge: a #gboolean
+ *
+ * mail operation wrapper around tny_folder_sync () method, to keep modest
+ * running while we do that sync operation.
+ */
+void          modest_mail_operation_sync_folder     (ModestMailOperation *self,
+						     TnyFolder *folder, gboolean expunge);
 
 /* Functions to control mail operations */
 /**
