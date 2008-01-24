@@ -70,11 +70,15 @@ static void _on_msg_error_happened (TnySendQueue *self,
 				    GError *err, 
 				    gpointer user_data);
 
+static void _on_queue_start        (TnySendQueue *self, 
+				    gpointer user_data);
+
 static void modest_tny_send_queue_add_async (TnyCamelSendQueue *self, 
 					     TnyMsg *msg, 
 					     TnySendQueueAddCallback callback, 
 					     TnyStatusCallback status_callback, 
 					     gpointer user_data);
+
 static TnyFolder* modest_tny_send_queue_get_outbox  (TnySendQueue *self);
 static TnyFolder* modest_tny_send_queue_get_sentbox (TnySendQueue *self);
 
@@ -409,6 +413,9 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	g_signal_connect (G_OBJECT(self), "error-happened",
 	                  G_CALLBACK(_on_msg_error_happened),
 			  NULL);
+	g_signal_connect (G_OBJECT (self), "queue-start",
+			  G_CALLBACK (_on_queue_start),
+			  NULL);
 
 	/* Set outbox and sentbox */
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
@@ -611,6 +618,19 @@ _on_msg_error_happened (TnySendQueue *self,
 
 	/* free */
 	g_free(msg_uid);
+}
+
+static void 
+_on_queue_start (TnySendQueue *self,
+		 gpointer data)
+{
+	ModestMailOperation *mail_op;
+
+	mail_op = modest_mail_operation_new (NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+	modest_mail_operation_run_queue (mail_op, MODEST_TNY_SEND_QUEUE (self));
+	g_object_unref (mail_op);
 }
 
 static void 

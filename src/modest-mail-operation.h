@@ -33,6 +33,7 @@
 #include <tny-transport-account.h>
 #include <tny-folder-store.h>
 #include <widgets/modest-msg-edit-window.h>
+#include <modest-tny-send-queue.h>
 
 G_BEGIN_DECLS
 
@@ -74,6 +75,7 @@ typedef enum {
 	MODEST_MAIL_OPERATION_TYPE_OPEN,
 	MODEST_MAIL_OPERATION_TYPE_DELETE,
 	MODEST_MAIL_OPERATION_TYPE_INFO,
+	MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE,
 	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
 } ModestMailOperationTypeOperation;
 
@@ -630,6 +632,19 @@ void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
 						     GetMsgAsyncUserCallback user_callback,
 						     gpointer user_data,
 						     GDestroyNotify notify);
+
+/**
+ * modest_mail_operation_run_queue:
+ * @self: a #ModestMailOperation
+ * @queue: a #ModestTnySendQueue
+ *
+ * This mail operation is special. It should be running every time the send queue
+ * is running (after queue-start), and we should notify end of the operation
+ * after queue-end. Then, we should only set this queue on queue-start signal, and
+ * it will clean up the operation (notify end) on queue-end.
+ */
+void          modest_mail_operation_run_queue       (ModestMailOperation *self,
+						     ModestTnySendQueue *queue);
 
 /* Functions to control mail operations */
 /**

@@ -143,20 +143,6 @@ typedef struct {
 	gint total_bytes;
 } GetMsgInfo;
 
-typedef struct {
-	ModestMailOperation *mail_op;
-	TnyMsg *msg;
-	gulong msg_sent_handler;
-	gulong error_happened_handler;
-} SendMsgInfo;
-
-static void     send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
-					    guint nth, guint total, gpointer userdata);
-static void     send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
-						  GError *error, gpointer userdata);
-static void     common_send_mail_operation_end (TnySendQueue *queue, TnyMsg *msg, 
-						SendMsgInfo *info);
-
 typedef struct _RefreshAsyncHelper {	
 	ModestMailOperation *mail_op;
 	RefreshAsyncUserCallback user_callback;	
@@ -617,7 +603,6 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 {
 	TnySendQueue *send_queue = NULL;
 	ModestMailOperationPrivate *priv;
-	SendMsgInfo *info;
 	
 	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (transport_account && TNY_IS_TRANSPORT_ACCOUNT (transport_account));
@@ -643,91 +628,12 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		/* Add the msg to the queue */
 		modest_mail_operation_notify_start (self);
 
-		info = g_slice_new0 (SendMsgInfo);
-
-		info->mail_op = g_object_ref (self);
-		info->msg = g_object_ref (msg);
-		info->msg_sent_handler = g_signal_connect (G_OBJECT (send_queue), "msg-sent",
-				G_CALLBACK (send_mail_msg_sent_handler), info);
-		info->error_happened_handler = g_signal_connect (G_OBJECT (send_queue), "error-happened",
-				G_CALLBACK (send_mail_error_happened_handler), info);
-
 		tny_send_queue_add_async (send_queue, msg, NULL, NULL, NULL);
 
-		priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	}
-
-}
-
-static void
-common_send_mail_operation_end (TnySendQueue *queue, TnyMsg *msg,
-				SendMsgInfo *info)
-{
-	g_signal_handler_disconnect (queue, info->msg_sent_handler);
-	g_signal_handler_disconnect (queue, info->error_happened_handler);
-
-	g_object_unref (info->msg);
-	modest_mail_operation_notify_end (info->mail_op);
-	g_object_unref (info->mail_op);
-
-	g_slice_free (SendMsgInfo, info);
-}
-
-static void     
-send_mail_msg_sent_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
-			    guint nth, guint total, gpointer userdata)
-{
-	SendMsgInfo *info = (SendMsgInfo *) userdata;
-	TnyHeader *hdr1, *hdr2;
-	const char *msgid1, *msgid2;
-	hdr1 = tny_msg_get_header(msg);
-	hdr2 = tny_msg_get_header(info->msg);
-	msgid1 = tny_header_get_message_id(hdr1);
-	msgid2 = tny_header_get_message_id(hdr2);
-	if (msgid1 == NULL) msgid1 = "(null)";
-	if (msgid2 == NULL) msgid2 = "(null)";
-
-	if (!strcmp (msgid1, msgid2)) {
-		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-
-		common_send_mail_operation_end (queue, msg, info);
+		modest_mail_operation_notify_end (self);
 	}
-	g_object_unref(G_OBJECT(hdr1));
-	g_object_unref(G_OBJECT(hdr2));
-}
 
-static void     
-send_mail_error_happened_handler (TnySendQueue *queue, TnyHeader *header, TnyMsg *msg,
-				  GError *error, gpointer userdata)
-{
-	SendMsgInfo *info = (SendMsgInfo *) userdata;
-	TnyHeader *hdr1, *hdr2;
-	const char *msgid1, *msgid2;
-
-	if (!TNY_IS_MSG(msg)) {
-		g_warning ("%s: did not receive a valid msg", __FUNCTION__);
-		return;
-	}
-	
-	hdr1 = tny_msg_get_header(msg);
-	hdr2 = tny_msg_get_header(info->msg);
-	msgid1 = tny_header_get_message_id(hdr1);
-	msgid2 = tny_header_get_message_id(hdr2);
-	if (msgid1 == NULL) msgid1 = "(null)";
-	if (msgid2 == NULL) msgid2 = "(null)";
-
-	if (!strcmp (msgid1, msgid2)) {
-		ModestMailOperationPrivate *priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
-			     "modest: send mail failed\n");
-
-		common_send_mail_operation_end (queue, msg, info);
-	}
-	g_object_unref(G_OBJECT(hdr1));
-	g_object_unref(G_OBJECT(hdr2));
 }
 
 
@@ -1308,62 +1214,6 @@ update_account_get_msg_async_cb (TnyFolder *folder,
 	g_slice_free (GetMsgInfo, msg_info);
 }
 
-typedef struct {
-	guint error_handler;
-	guint sent_handler;
-	ModestMailOperation *mail_op;
-} UpdateAccountSendQueueFlushInfo;
-
-static void
-update_account_finalize (TnySendQueue *queue,
-			 UpdateAccountSendQueueFlushInfo *info)
-{
-	ModestMailOperationPrivate *priv;
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
-	priv->done++;
-
-	/* The last one finish the mail operation */
-	if (priv->done == priv->total) {
-		/* Notify end */
-		modest_mail_operation_notify_end (info->mail_op);
-		
-		/* Free */
-		g_object_unref (info->mail_op);
-		g_signal_handler_disconnect (queue, info->error_handler);
-		g_signal_handler_disconnect (queue, info->sent_handler);
-		g_slice_free (UpdateAccountSendQueueFlushInfo, info);
-	}
-}
-
-static void
-update_account_on_msg_sent_cb (TnySendQueue *queue, 
-			       TnyHeader *header, 
-			       TnyMsg *msg,
-			       guint nth, 
-			       guint total, 
-			       gpointer user_data)
-{
-	UpdateAccountSendQueueFlushInfo *info;
-	info = (UpdateAccountSendQueueFlushInfo *) user_data;
-
-	update_account_finalize (queue, info);
-}
-
-static void     
-update_account_on_error_happened_cb (TnySendQueue *queue, 
-				     TnyHeader *header, 
-				     TnyMsg *msg,
-				     GError *error, 
-				     gpointer user_data)
-{
-	UpdateAccountSendQueueFlushInfo *info;
-	info = (UpdateAccountSendQueueFlushInfo *) user_data;
-
-	update_account_finalize (queue, info);
-}
-
-
 static void
 inbox_refreshed_cb (TnyFolder *inbox, 
 		    gboolean canceled, 
@@ -1380,7 +1230,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	TnyList *new_headers = NULL;
 	gboolean headers_only, ignore_limit;
 	TnyTransportAccount *transport_account;
-	gboolean end_operation;
 
 	info = (UpdateAccountInfo *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
@@ -1508,27 +1357,9 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		num_messages = tny_folder_get_all_count (outbox);
 		g_object_unref (outbox);
 
-		if (num_messages == 0) {
-			end_operation = TRUE;
-		} else {
-			UpdateAccountSendQueueFlushInfo *send_info;
-
-			end_operation = FALSE;
+		if (num_messages != 0) {
 			/* Send mails */
-			priv->done = 0;
-			priv->total = num_messages;
 			g_object_unref (priv->account);
-			priv->account = TNY_ACCOUNT (transport_account);
-
-			/* Create the info object */
-			send_info = g_slice_new (UpdateAccountSendQueueFlushInfo);
-			send_info->error_handler = g_signal_connect (send_queue, "error-happened", 
-								     G_CALLBACK (update_account_on_error_happened_cb), 
-								     send_info);
-			send_info->sent_handler = g_signal_connect (send_queue, "msg-sent", 
-								    G_CALLBACK (update_account_on_msg_sent_cb), 
-								    send_info);
-			send_info->mail_op = g_object_ref (info->mail_op);
 
 			/* Reenable suspended items */
 			modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
@@ -1536,9 +1367,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 			/* Try to send */
 			tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
 		}
-	} else {
-		end_operation = TRUE;
-	}
+	} 
 
 	/* Check if the operation was a success */
 	if (!priv->error)
@@ -1552,8 +1381,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		info->callback (info->mail_op, new_headers, info->user_data);
 
 	/* Notify about operation end */
-	if (end_operation)
-		modest_mail_operation_notify_end (info->mail_op);
+	modest_mail_operation_notify_end (info->mail_op);
 
 	/* Frees */
 	if (new_headers)
@@ -3038,6 +2866,40 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 				  helper);
 }
 
+static void
+run_queue_stop (ModestTnySendQueue *queue,
+		ModestMailOperation *self)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (queue));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	modest_mail_operation_notify_end (self);
+	g_signal_handlers_disconnect_by_func (queue, run_queue_stop, self);
+	g_object_unref (self);
+}
+void
+modest_mail_operation_run_queue (ModestMailOperation *self,
+				 ModestTnySendQueue *queue)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (queue));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->account = TNY_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (queue)));
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE;
+
+	modest_mail_operation_notify_start (self);
+	g_object_ref (self);
+	g_signal_connect ((gpointer) queue, "queue-stop", G_CALLBACK (run_queue_stop), (gpointer) self);
+}
 
 static void
 modest_mail_operation_notify_start (ModestMailOperation *self)
@@ -3135,6 +2997,7 @@ modest_mail_operation_to_string (ModestMailOperation *self)
 	case MODEST_MAIL_OPERATION_TYPE_OPEN:    type= "OPEN";    break;
 	case MODEST_MAIL_OPERATION_TYPE_DELETE:  type= "DELETE";  break;
 	case MODEST_MAIL_OPERATION_TYPE_INFO:    type= "INFO";    break;
+	case MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE: type= "RUN-QUEUE"; break;
 	case MODEST_MAIL_OPERATION_TYPE_UNKNOWN: type= "UNKNOWN"; break;
 	default: type = "UNEXPECTED"; break;
 	}
