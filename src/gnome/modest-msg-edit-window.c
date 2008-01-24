@@ -556,6 +556,15 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 	g_message ("Remove attachments operation is not supported");
 }
 
+void 
+modest_msg_edit_window_get_parts_size (ModestMsgEditWindow *window,
+				       gint *parts_count,
+				       guint64 *parts_size)
+{
+	*parts_count = 0;
+	*parts_size = 0;
+}
+
 void
 modest_msg_edit_window_show_cc (ModestMsgEditWindow *window, 
 				gboolean show)

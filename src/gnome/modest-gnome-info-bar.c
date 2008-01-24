@@ -28,6 +28,7 @@
  */
 
 
+#include <glib/gi18n.h>
 #include "modest-gnome-info-bar.h"
 #include <gtk/gtkprogressbar.h>
 #include <gtk/gtkstatusbar.h>
@@ -44,12 +45,18 @@ static void modest_gnome_info_bar_add_operation    (ModestProgressObject *self,
 static void modest_gnome_info_bar_remove_operation (ModestProgressObject *self,
 						    ModestMailOperation  *mail_op);
 
+static void modest_gnome_info_bar_set_pulsating_mode (ModestGnomeInfoBar *self,
+						      const gchar* msg,
+						      gboolean is_pulsating);
+
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
 						    ModestMailOperationState *state,
 						    ModestGnomeInfoBar *self);
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
 static gboolean     statusbar_clean          (GtkStatusbar *bar);
+
+#define MODEST_GNOME_INFO_BAR_PULSE_INTERVAL 125
 
 /* list my signals  */
 enum {
@@ -74,6 +81,7 @@ struct _ModestGnomeInfoBarPrivate {
 
 	guint status_bar_timeout;
 	guint progress_bar_timeout;
+	guint pulsating_timeout;
 };
 
 #define MODEST_GNOME_INFO_BAR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -251,30 +259,46 @@ modest_gnome_info_bar_remove_operation (ModestProgressObject *self,
 	ModestGnomeInfoBar *me;
 	ModestGnomeInfoBarPrivate *priv;
 	GSList *link;
+	ObservableData *tmp_data = NULL;
+	gboolean is_current;
 
 	me = MODEST_GNOME_INFO_BAR (self);
 	priv = MODEST_GNOME_INFO_BAR_GET_PRIVATE (me);
 
-	link = g_slist_find_custom (priv->observables,
-				    mail_op,
-				    (GCompareFunc) compare_observable_data);
+	is_current = (priv->current == mail_op);
 
+	/* Find item */
+	tmp_data = g_malloc0 (sizeof (ObservableData));
+        tmp_data->mail_op = mail_op;
+	link = g_slist_find_custom (priv->observables,
+				    tmp_data,
+				    (GCompareFunc) compare_observable_data);
+	
 	/* Remove the item */
 	if (link) {
-		priv->observables = g_slist_remove_link (priv->observables, link);
-		destroy_observable_data ((ObservableData *) link->data);
+		ObservableData *ob_data = link->data;
+		g_signal_handler_disconnect (ob_data->mail_op, ob_data->signal_handler);
+		g_object_unref (ob_data->mail_op);
+		g_free (ob_data);
+		priv->observables = g_slist_delete_link (priv->observables, link);
+		tmp_data->mail_op = NULL;
+		link = NULL;
 	}
-
+	
 	/* Update the current mail operation */
-	if (priv->current == mail_op) {
+	if (is_current) {
 		if (priv->observables)
 			priv->current = ((ObservableData *) priv->observables->data)->mail_op;
 		else
 			priv->current = NULL;
 
 		/* Refresh the view */
+		modest_gnome_info_bar_set_pulsating_mode (me, NULL, FALSE);
 		progressbar_clean (GTK_PROGRESS_BAR (priv->progress_bar));
 	}
+	
+	/* free */
+	g_free(tmp_data);
 }
 
 static void 
@@ -283,17 +307,51 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		     ModestGnomeInfoBar *self)
 {
 	ModestGnomeInfoBarPrivate *priv;
+	gboolean determined = FALSE;
 
 	priv = MODEST_GNOME_INFO_BAR_GET_PRIVATE (self);
 
 	/* If the mail operation is the currently shown one */
 	if (priv->current == mail_op) {
 		gchar *msg = NULL;
+		
+		determined = (state->done > 0 && state->total > 1) && 
+			!(state->done == 1 && state->total == 100);
 
-		msg = g_strdup_printf ("Mail operation %d of %d",
-				       modest_mail_operation_get_task_done (mail_op),
-				       modest_mail_operation_get_task_total (mail_op));
-		modest_gnome_info_bar_set_message (self, msg);
+		switch (state->op_type) {
+		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
+			if (determined)
+ 				msg = g_strdup_printf(_("mcen_me_receiving"),
+						      state->done, state->total); 
+			else 
+ 				msg = g_strdup(_("mail_me_receiving"));
+			break;
+		case MODEST_MAIL_OPERATION_TYPE_SEND:		
+			if (determined)
+				msg = g_strdup_printf(_("mcen_me_sending"), state->done,
+						      state->total);
+			else
+				msg = g_strdup(_("mail_me_sending"));
+			break;
+			
+		case MODEST_MAIL_OPERATION_TYPE_OPEN:		
+			msg = g_strdup(_("mail_me_opening"));
+			break;
+		default:
+			msg = g_strdup("");
+		}
+		
+		/* If we have byte information use it */
+		if ((state->bytes_done != 0) && (state->bytes_total != 0))
+			modest_gnome_info_bar_set_progress (self, msg,
+							    state->bytes_done,
+							    state->bytes_total);
+		else if ((state->done == 0) && (state->total == 0))
+			modest_gnome_info_bar_set_pulsating_mode (self, msg, TRUE);
+		else
+			modest_gnome_info_bar_set_progress (self, msg,
+							    state->done,
+							    state->total);
 		g_free (msg);
 	}
 }
@@ -328,6 +386,18 @@ modest_gnome_info_bar_set_message    (ModestGnomeInfoBar *self,
 						  priv->status_bar);
 }
 
+static gboolean
+modest_gnome_info_bar_is_pulsating (ModestGnomeInfoBar *self)
+{
+	ModestGnomeInfoBarPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_GNOME_INFO_BAR(self), FALSE);
+
+	priv = MODEST_GNOME_INFO_BAR_GET_PRIVATE (self);
+	
+	return priv->pulsating_timeout != 0;
+}
+
 void 
 modest_gnome_info_bar_set_progress   (ModestGnomeInfoBar *self,
 				      const gchar *message,
@@ -335,16 +405,73 @@ modest_gnome_info_bar_set_progress   (ModestGnomeInfoBar *self,
 				      gint total)
 {
 	ModestGnomeInfoBarPrivate *priv;
+	gboolean determined = FALSE;
 
+	g_return_if_fail (MODEST_IS_GNOME_INFO_BAR(self));
+	g_return_if_fail (done <= total);
+	
 	priv = MODEST_GNOME_INFO_BAR_GET_PRIVATE (self);
 
-	/* Set progress */
-	if (total != 0)
-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
-					       (gdouble)done/(gdouble)total);
-	else
-		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+	if (modest_gnome_info_bar_is_pulsating (self))
+		modest_gnome_info_bar_set_pulsating_mode (self, NULL, FALSE);
 
+	/* Set progress. Tinymail sometimes returns us 1/100 when it
+	   does not have any clue, NOTE that 1/100 could be also a
+	   valid progress (we will loose it), but it will be recovered
+	   once the done is greater than 1 */
+	determined = (done > 0 && total > 1) && 
+		!(done == 1 && total == 100);
+	if (!determined) {
+		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+	} else {
+		gdouble percent = 0;
+		if (total != 0) /* Avoid division by zero. */
+			percent = (gdouble)done/(gdouble)total;
+
+ 		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar),
+					       percent);
+	}
+	
 	/* Set text */
-	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), message);
+	gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), 
+				   (message && message[0] != '\0')?message:" ");
+}
+
+static gboolean
+do_pulse (gpointer data)
+{
+	ModestGnomeInfoBarPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_GNOME_INFO_BAR(data), FALSE);
+	
+	priv = MODEST_GNOME_INFO_BAR_GET_PRIVATE (data);
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+	return TRUE;
+}
+
+static void
+modest_gnome_info_bar_set_pulsating_mode (ModestGnomeInfoBar *self,
+					  const gchar* msg,
+					  gboolean is_pulsating)
+{
+	ModestGnomeInfoBarPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_GNOME_INFO_BAR (self));
+
+	priv = MODEST_GNOME_INFO_BAR_GET_PRIVATE (self);
+	
+	if (msg != NULL)
+		gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), msg);
+	
+	if (is_pulsating == (priv->pulsating_timeout != 0))
+		return;
+	else if (is_pulsating && (priv->pulsating_timeout == 0)) {
+		/* enable */
+		priv->pulsating_timeout = g_timeout_add (MODEST_GNOME_INFO_BAR_PULSE_INTERVAL,
+							 do_pulse, self);
+	} else if (!is_pulsating && (priv->pulsating_timeout != 0)) {
+		/* disable */
+		g_source_remove (priv->pulsating_timeout);
+		priv->pulsating_timeout = 0;
+	}
 }

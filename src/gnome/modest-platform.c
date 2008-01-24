@@ -254,6 +254,7 @@ gboolean modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_
 
 void
 modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
+					       gboolean force,
 					       TnyFolderStore *folder_store, 
 					       ModestConnectedPerformer callback, 
 					       gpointer user_data)
@@ -295,7 +296,7 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		}
  	}
  
- 	modest_platform_connect_and_perform (parent_window, account, callback, user_data);
+ 	modest_platform_connect_and_perform (parent_window, force, account, callback, user_data);
  
  	return;
 }
