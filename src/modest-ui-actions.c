@@ -1027,7 +1027,8 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 	error = modest_mail_operation_get_error (mail_op);
 
 	/* Show error */
-	modest_platform_run_information_dialog ((GtkWindow *) win, err_msg);
+	if (err_msg)
+		modest_platform_run_information_dialog ((GtkWindow *) win, err_msg);
 
 	if (win)
 		g_object_unref (win);
@@ -1327,19 +1328,23 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	switch (rf_helper->action) {
 	case ACTION_REPLY:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg, header, from, signature,
+			modest_tny_msg_create_reply_msg (msg, header, from, 
+							 (use_signature) ? signature : NULL,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
 		break;
 	case ACTION_REPLY_TO_ALL:
 		new_msg = 
-			modest_tny_msg_create_reply_msg (msg, header, from, signature, rf_helper->reply_forward_type,
+			modest_tny_msg_create_reply_msg (msg, header, from, 
+							 (use_signature) ? signature : NULL, 
+							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
 		break;
 	case ACTION_FORWARD:
 		new_msg = 
-			modest_tny_msg_create_forward_msg (msg, from, signature, rf_helper->reply_forward_type);
+			modest_tny_msg_create_forward_msg (msg, from, (use_signature) ? signature : NULL, 
+							   rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
 	default:
@@ -2293,7 +2298,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	MsgData *data;
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
-	char *info_text;
+/* 	char *info_text; */
 	gboolean had_error = FALSE;
 	guint64 available_disk, expected_size;
 	gint parts_count;
@@ -2367,9 +2372,8 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
 
-	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
-	modest_platform_information_banner (NULL, NULL, info_text);
-	g_free (info_text);
+/* 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts")); */
+	modest_platform_information_banner (NULL, NULL, _CS("sfil_ib_saving"));
 	modest_msg_edit_window_reset_modified (edit_window);
 
 	/* Frees */

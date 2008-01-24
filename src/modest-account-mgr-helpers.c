@@ -65,13 +65,13 @@ gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* 
 	return result;
 }
 
-gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
-	gboolean* use_signature)
+gchar* 
+modest_account_mgr_get_signature (ModestAccountMgr *self, 
+				  const gchar* name, 
+				  gboolean* use_signature)
 {
-	if (use_signature) {
-		*use_signature = 
-			modest_account_mgr_get_bool (self, name, MODEST_ACCOUNT_USE_SIGNATURE, FALSE);
-	}
+	*use_signature = 
+		modest_account_mgr_get_bool (self, name, MODEST_ACCOUNT_USE_SIGNATURE, FALSE);
 	
 	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SIGNATURE, FALSE);
 }
