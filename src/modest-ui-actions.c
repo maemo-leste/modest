@@ -184,7 +184,7 @@ remote_folder_is_pop (const TnyFolderStore *folder)
                 account = tny_folder_get_account(TNY_FOLDER(folder));
         }
 
-	if (!account && !TNY_IS_ACCOUNT(account)) {
+	if (!TNY_IS_ACCOUNT(account)) {
 		g_warning ("%s: could not get account", __FUNCTION__);
 		return FALSE;
 	}
