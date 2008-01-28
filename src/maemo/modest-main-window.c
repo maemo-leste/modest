@@ -1903,6 +1903,7 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		      TnyFolderChange *change,
 		      ModestMainWindow *main_window)
 {
+	gboolean refilter = FALSE;
 	gboolean folder_empty = FALSE;
 	gboolean all_marked_as_deleted = FALSE;
 	ModestMainWindowPrivate *priv;
@@ -1925,6 +1926,9 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		if (changed & TNY_FOLDER_CHANGE_CHANGED_ADDED_HEADERS) {
 			modest_platform_push_email_notification ();
 		}
+
+		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)
+			refilter = TRUE;
 	}
 
 	/* Check if all messages are marked to be deleted */
@@ -1940,6 +1944,9 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		modest_main_window_set_contents_style (main_window,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 	}
+
+	if (refilter)
+		modest_header_view_refilter (header_view);
 }
 
 
