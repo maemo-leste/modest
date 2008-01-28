@@ -637,16 +637,14 @@ modest_account_view_select_account (ModestAccountView *account_view,
 static void
 modest_account_view_select_first_account (ModestAccountView *account_view)
 {
-	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (account_view));
-	g_return_if_fail (model != NULL);
-
 	GtkTreeIter iter;
-	gtk_tree_model_get_iter_first (model, &iter);
+	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (account_view));
 
-	GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (account_view));
-	g_return_if_fail (selection != NULL);
-
-	gtk_tree_selection_select_iter (selection, &iter);
+	if (gtk_tree_model_get_iter_first (model, &iter)) {
+		GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (account_view));
+	
+		gtk_tree_selection_select_iter (selection, &iter);
+	}
 }
 
 static void
