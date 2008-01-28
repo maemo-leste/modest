@@ -2091,7 +2091,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 		result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
 		if (result == GNOME_VFS_OK) {
 			GdkPixbuf *pixbuf;
-			GnomeVFSFileInfo info;
+			GnomeVFSFileInfo *info;
 			gchar *filename, *basename, *escaped_filename;
 			TnyMimePart *mime_part;
 			gchar *content_id;
@@ -2105,11 +2105,12 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			filename = gnome_vfs_unescape_string_for_display (escaped_filename);
 			g_free (escaped_filename);
 			gnome_vfs_uri_unref (vfs_uri);
+			info = gnome_vfs_file_info_new ();
 
-			if (gnome_vfs_get_file_info (uri, &info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE
+			if (gnome_vfs_get_file_info (uri, info, GNOME_VFS_FILE_INFO_GET_MIME_TYPE
 						     | GNOME_VFS_FILE_INFO_FORCE_SLOW_MIME_TYPE) 
 			    == GNOME_VFS_OK)
-				mime_type = gnome_vfs_file_info_get_mime_type (&info);
+				mime_type = gnome_vfs_file_info_get_mime_type (info);
 
 			mime_part = tny_platform_factory_new_mime_part
 				(modest_runtime_get_platform_factory ());
@@ -2140,6 +2141,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 			g_free (filename);
 			g_object_unref (mime_part);
+			gnome_vfs_file_info_unref (info);
 
 		}
 	}
@@ -2198,7 +2200,7 @@ modest_msg_edit_window_attach_file_one (
 		gchar *escaped_filename;
 		gchar *filename;
 		gchar *content_id;
-		GnomeVFSFileInfo info;
+		GnomeVFSFileInfo *info;
 		GnomeVFSURI *vfs_uri;
 
 		vfs_uri = gnome_vfs_uri_new (uri);
@@ -2208,12 +2210,14 @@ modest_msg_edit_window_attach_file_one (
 		filename = gnome_vfs_unescape_string_for_display (escaped_filename);
 		g_free (escaped_filename);
 		gnome_vfs_uri_unref (vfs_uri);
+
+		info = gnome_vfs_file_info_new ();
 		
 		if (gnome_vfs_get_file_info (uri, 
-					     &info, 
+					     info, 
 					     GNOME_VFS_FILE_INFO_GET_MIME_TYPE)
 		    == GNOME_VFS_OK)
-			mime_type = gnome_vfs_file_info_get_mime_type (&info);
+			mime_type = gnome_vfs_file_info_get_mime_type (info);
 		mime_part = tny_platform_factory_new_mime_part
 			(modest_runtime_get_platform_factory ());
 		stream = TNY_STREAM (tny_vfs_stream_new (handle));
@@ -2234,12 +2238,13 @@ modest_msg_edit_window_attach_file_one (
 		tny_list_prepend (priv->attachments, (GObject *) mime_part);
 		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 							mime_part,
-							info.size == 0, info.size);
+							info->size == 0, info->size);
 		gtk_widget_set_no_show_all (priv->attachments_caption, FALSE);
 		gtk_widget_show_all (priv->attachments_caption);
 		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 		g_free (filename);
 		g_object_unref (mime_part);
+		gnome_vfs_file_info_unref (info);
 	}
 }
 
