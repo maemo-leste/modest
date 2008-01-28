@@ -2484,9 +2484,9 @@ refresh_account (const gchar *account_name)
 	
 	/* If account_name == NULL, we must update all (option All) */
 	if (!account_name)
-		modest_ui_actions_do_send_receive_all (win, FALSE);
+		modest_ui_actions_do_send_receive_all (win, TRUE);
 	else
-		modest_ui_actions_do_send_receive (account_name, FALSE, win);
+		modest_ui_actions_do_send_receive (account_name, TRUE, win);
 	
 }
 
