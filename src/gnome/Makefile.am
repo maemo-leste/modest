@@ -29,8 +29,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-address-book.c         \
 	modest-msg-edit-window.c      \
 	modest-icon-names.h           \
-	modest-gnome-info-bar.c       \
-	modest-gnome-info-bar.h       \
 	modest-gnome-global-settings-dialog.c \
 	modest-gnome-global-settings-dialog.h \
 	modest-main-window.c          \

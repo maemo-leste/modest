@@ -63,6 +63,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-gtkhtml-msg-view.h	       \
 	modest-details-dialog.c        \
 	modest-details-dialog.h        \
+	modest-progress-bar.c	\
+	modest-progress-bar.h	\
 	modest-recpt-editor.c          \
 	modest-recpt-editor.h          \
 	modest-recpt-view.c            \

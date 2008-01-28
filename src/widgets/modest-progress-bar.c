@@ -31,15 +31,15 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <widgets/modest-combo-box.h>
-#include "modest-progress-bar-widget.h"
+#include "widgets/modest-progress-bar.h"
 #include "modest-tny-account.h"
 #include "modest-platform.h"
 #include "modest-runtime.h"
 
 /* 'private'/'protected' functions */
-static void modest_progress_bar_widget_class_init (ModestProgressBarWidgetClass *klass);
-static void modest_progress_bar_widget_init       (ModestProgressBarWidget *obj);
-static void modest_progress_bar_widget_finalize   (GObject *obj);
+static void modest_progress_bar_class_init (ModestProgressBarClass *klass);
+static void modest_progress_bar_init       (ModestProgressBar *obj);
+static void modest_progress_bar_finalize   (GObject *obj);
 
 static void modest_progress_bar_add_operation    (ModestProgressObject *self,
 						    ModestMailOperation  *mail_op);
@@ -55,13 +55,13 @@ static guint modest_progress_bar_num_pending_operations (ModestProgressObject *s
 
 static void on_progress_changed                    (ModestMailOperation  *mail_op, 
 						    ModestMailOperationState *state,
-						    ModestProgressBarWidget *self);
+						    ModestProgressBar *self);
 
 static gboolean     progressbar_clean        (GtkProgressBar *bar);
 
-static gboolean modest_progress_bar_widget_is_pulsating (ModestProgressBarWidget *self);
+static gboolean modest_progress_bar_is_pulsating (ModestProgressBar *self);
 
-static void modest_progress_bar_widget_set_pulsating_mode (ModestProgressBarWidget *self,
+static void modest_progress_bar_set_pulsating_mode (ModestProgressBar *self,
                                                            const gchar* msg,
                                                            gboolean is_pulsating);
 
@@ -86,17 +86,17 @@ struct _ObservableData {
         ModestMailOperation *mail_op;
 };
 
-typedef struct _ModestProgressBarWidgetPrivate ModestProgressBarWidgetPrivate;
-struct _ModestProgressBarWidgetPrivate {
+typedef struct _ModestProgressBarPrivate ModestProgressBarPrivate;
+struct _ModestProgressBarPrivate {
 	GSList              *observables;
 	ModestMailOperation *current;
 	guint count;
 	GtkWidget *progress_bar;
 	guint pulsating_timeout;
 };
-#define MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+#define MODEST_PROGRESS_BAR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_PROGRESS_BAR_WIDGET, \
-                                                 ModestProgressBarWidgetPrivate))
+                                                 ModestProgressBarPrivate))
 
 /* globals */
 static GtkContainerClass *parent_class = NULL;
@@ -118,20 +118,20 @@ modest_progress_object_init (gpointer g, gpointer iface_data)
 
 
 GType
-modest_progress_bar_widget_get_type (void)
+modest_progress_bar_get_type (void)
 {
 	static GType my_type = 0;
 	if (!my_type) {
 		static const GTypeInfo my_info = {
-			sizeof(ModestProgressBarWidgetClass),
+			sizeof(ModestProgressBarClass),
 			NULL,		/* base init */
 			NULL,		/* base finalize */
-			(GClassInitFunc) modest_progress_bar_widget_class_init,
+			(GClassInitFunc) modest_progress_bar_class_init,
 			NULL,		/* class finalize */
 			NULL,		/* class data */
-			sizeof(ModestProgressBarWidget),
+			sizeof(ModestProgressBar),
 			1,		/* n_preallocs */
-			(GInstanceInitFunc) modest_progress_bar_widget_init,
+			(GInstanceInitFunc) modest_progress_bar_init,
 			NULL
 		};
 
@@ -143,7 +143,7 @@ modest_progress_bar_widget_get_type (void)
 		};
 
 		my_type = g_type_register_static (GTK_TYPE_VBOX,
-		                                  "ModestProgressBarWidget",
+		                                  "ModestProgressBar",
 		                                  &my_info, 0);
 
 		g_type_add_interface_static (my_type, MODEST_TYPE_PROGRESS_OBJECT, 
@@ -153,27 +153,27 @@ modest_progress_bar_widget_get_type (void)
 }
 
 static void
-modest_progress_bar_widget_class_init (ModestProgressBarWidgetClass *klass)
+modest_progress_bar_class_init (ModestProgressBarClass *klass)
 {
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
-	gobject_class->finalize = modest_progress_bar_widget_finalize;
+	gobject_class->finalize = modest_progress_bar_finalize;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestProgressBarWidgetPrivate));
+	g_type_class_add_private (gobject_class, sizeof(ModestProgressBarPrivate));
 }
 
 static void
-modest_progress_bar_widget_init (ModestProgressBarWidget *self)
+modest_progress_bar_init (ModestProgressBar *self)
 {
 	
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 	GtkWidget *align = NULL;
 	GtkRequisition req;
 	GtkAdjustment *adj;
 
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE(self);
 
 	/* Alignment */
 	align = gtk_alignment_new(XALIGN, YALIGN, XSPACE, YSPACE);
@@ -199,11 +199,11 @@ modest_progress_bar_widget_init (ModestProgressBarWidget *self)
 }
 
 static void
-modest_progress_bar_widget_finalize (GObject *obj)
+modest_progress_bar_finalize (GObject *obj)
 {
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE(obj);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE(obj);
 	if (priv->observables) {
 		GSList *tmp;
 
@@ -229,12 +229,12 @@ static void
 modest_progress_bar_add_operation (ModestProgressObject *self,
 				   ModestMailOperation  *mail_op)
 {
-	ModestProgressBarWidget *me = NULL;
+	ModestProgressBar *me = NULL;
 	ObservableData *data = NULL;
-	ModestProgressBarWidgetPrivate *priv = NULL;
+	ModestProgressBarPrivate *priv = NULL;
 	
-	me = MODEST_PROGRESS_BAR_WIDGET (self);
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+	me = MODEST_PROGRESS_BAR (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (me);
 
 	data = g_malloc0 (sizeof (ObservableData));
 	data->mail_op = g_object_ref (mail_op);
@@ -249,7 +249,7 @@ modest_progress_bar_add_operation (ModestProgressObject *self,
 		priv->count = 0;
 		
 		/* Call progress_change handler to initialize progress message */
-/* 		modest_progress_bar_widget_set_undetermined_progress (MODEST_PROGRESS_BAR_WIDGET(self), mail_op); */
+/* 		modest_progress_bar_set_undetermined_progress (MODEST_PROGRESS_BAR(self), mail_op); */
 	}
 
 	/* Add operation to obserbable objects list */
@@ -269,14 +269,14 @@ static void
 modest_progress_bar_remove_operation (ModestProgressObject *self,
 				      ModestMailOperation  *mail_op)
 {
-	ModestProgressBarWidget *me;
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBar *me;
+	ModestProgressBarPrivate *priv;
 	GSList *link;
 	ObservableData *tmp_data = NULL;
 	gboolean is_current;
 
-	me = MODEST_PROGRESS_BAR_WIDGET (self);
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+	me = MODEST_PROGRESS_BAR (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (me);
 
 	is_current = (priv->current == mail_op);
 
@@ -306,7 +306,7 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 			priv->current = NULL;
 
 		/* Refresh the view */
-		modest_progress_bar_widget_set_pulsating_mode (me, NULL, FALSE);
+		modest_progress_bar_set_pulsating_mode (me, NULL, FALSE);
 		progressbar_clean (GTK_PROGRESS_BAR (priv->progress_bar));
 	}
 	
@@ -317,11 +317,11 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 static guint
 modest_progress_bar_num_pending_operations (ModestProgressObject *self)
 {
-	ModestProgressBarWidget *me;
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBar *me;
+	ModestProgressBarPrivate *priv;
 	
-	me = MODEST_PROGRESS_BAR_WIDGET (self);
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+	me = MODEST_PROGRESS_BAR (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (me);
 	
 	return g_slist_length(priv->observables);
 }
@@ -329,11 +329,11 @@ modest_progress_bar_num_pending_operations (ModestProgressObject *self)
 static void 
 modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 {
-	ModestProgressBarWidget *me;
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBar *me;
+	ModestProgressBarPrivate *priv;
 
-	me = MODEST_PROGRESS_BAR_WIDGET (self);
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+	me = MODEST_PROGRESS_BAR (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (me);
 
 	if (priv->current == NULL) return;
 
@@ -343,11 +343,11 @@ modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 static void 
 modest_progress_bar_cancel_all_operations (ModestProgressObject *self)
 {
-	ModestProgressBarWidget *me;
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBar *me;
+	ModestProgressBarPrivate *priv;
 
-	me = MODEST_PROGRESS_BAR_WIDGET (self);
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (me);
+	me = MODEST_PROGRESS_BAR (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (me);
 
 	/* Cancel all the mail operations */
 	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue ());
@@ -356,12 +356,12 @@ modest_progress_bar_cancel_all_operations (ModestProgressObject *self)
 static void 
 on_progress_changed (ModestMailOperation  *mail_op, 
 		     ModestMailOperationState *state,
-		     ModestProgressBarWidget *self)
+		     ModestProgressBar *self)
 {
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 	gboolean determined = FALSE;
 
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (self);
 
 	/* If the mail operation is the currently shown one */
 	if (priv->current == mail_op) {
@@ -395,13 +395,13 @@ on_progress_changed (ModestMailOperation  *mail_op,
 		
 		/* If we have byte information use it */
 		if ((state->bytes_done != 0) && (state->bytes_total != 0))
-			modest_progress_bar_widget_set_progress (self, msg,
+			modest_progress_bar_set_progress (self, msg,
 								 state->bytes_done,
 								 state->bytes_total);
 		else if ((state->done == 0) && (state->total == 0))
-			modest_progress_bar_widget_set_pulsating_mode (self, msg, TRUE);
+			modest_progress_bar_set_pulsating_mode (self, msg, TRUE);
 		else
-			modest_progress_bar_widget_set_progress (self, msg,
+			modest_progress_bar_set_progress (self, msg,
 								 state->done,
 								 state->total);
 		g_free (msg);
@@ -418,30 +418,30 @@ progressbar_clean (GtkProgressBar *bar)
 
 
 GtkWidget*
-modest_progress_bar_widget_new ()
+modest_progress_bar_new ()
 {
 	return GTK_WIDGET (g_object_new (MODEST_TYPE_PROGRESS_BAR_WIDGET, NULL));
 }
 
 
 void 
-modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
+modest_progress_bar_set_progress (ModestProgressBar *self,
 					 const gchar *message,
 					 gint done,
 					 gint total)
 {
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 	gboolean determined = FALSE;
 
 	g_return_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self));
 	g_return_if_fail (done <= total);
 	
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (self);
 
 	priv->count++;
 
-	if (modest_progress_bar_widget_is_pulsating (self))
-		modest_progress_bar_widget_set_pulsating_mode (self, NULL, FALSE);
+	if (modest_progress_bar_is_pulsating (self))
+		modest_progress_bar_set_pulsating_mode (self, NULL, FALSE);
 
 	/* Set progress. Tinymail sometimes returns us 1/100 when it
 	   does not have any clue, NOTE that 1/100 could be also a
@@ -467,7 +467,7 @@ modest_progress_bar_widget_set_progress (ModestProgressBarWidget *self,
 
 
 void
-modest_progress_bar_widget_set_undetermined_progress (ModestProgressBarWidget *self,
+modest_progress_bar_set_undetermined_progress (ModestProgressBar *self,
 						      ModestMailOperation *mail_op)
 {
 	ModestMailOperationState *state = NULL;
@@ -484,37 +484,37 @@ modest_progress_bar_widget_set_undetermined_progress (ModestProgressBarWidget *s
 static gboolean
 do_pulse (gpointer data)
 {
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 	
 	g_return_val_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(data), FALSE);
 	
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (data);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (data);
 	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
 	return TRUE;
 }
 
 gboolean
-modest_progress_bar_widget_is_pulsating (ModestProgressBarWidget *self)
+modest_progress_bar_is_pulsating (ModestProgressBar *self)
 {
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 
 	g_return_val_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self), FALSE);
 
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (self);
 	
 	return priv->pulsating_timeout != 0;
 }
 
 void
-modest_progress_bar_widget_set_pulsating_mode (ModestProgressBarWidget *self,
+modest_progress_bar_set_pulsating_mode (ModestProgressBar *self,
                                                const gchar* msg,
                                                gboolean is_pulsating)
 {
-	ModestProgressBarWidgetPrivate *priv;
+	ModestProgressBarPrivate *priv;
 
 	g_return_if_fail (MODEST_IS_PROGRESS_BAR_WIDGET(self));
 
-	priv = MODEST_PROGRESS_BAR_WIDGET_GET_PRIVATE (self);
+	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (self);
 	
 	if (msg != NULL)
 		gtk_progress_bar_set_text (GTK_PROGRESS_BAR (priv->progress_bar), msg);

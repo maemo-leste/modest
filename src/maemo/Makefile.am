@@ -70,8 +70,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \
 	modest-connection-specific-smtp-edit-window.c \
-	modest-progress-bar-widget.c      \
-	modest-progress-bar-widget.h \
 	modest-osso-autosave-callbacks.c \
 	modest-osso-autosave-callbacks.h \
 	modest-osso-state-saving.c \

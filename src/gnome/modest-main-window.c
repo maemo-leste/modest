@@ -37,6 +37,7 @@
 #include <widgets/modest-window-priv.h>
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-account-view-window.h>
+#include "widgets/modest-progress-bar.h"
 
 #include <modest-runtime.h>
 #include "modest-widget-memory.h"
@@ -47,7 +48,6 @@
 #include <modest-tny-msg.h>
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"
-#include "modest-gnome-info-bar.h"
 
 /* 'private'/'protected' functions */
 static void modest_main_window_class_init    (ModestMainWindowClass *klass);
@@ -75,12 +75,6 @@ static void         on_queue_changed                     (ModestMailOperationQue
 							  ModestMailOperation *mail_op,
 							  ModestMailOperationQueueNotification type,
 							  ModestMainWindow *self);
-
-static void         on_header_status_update              (ModestHeaderView *header_view, 
-							  const gchar *msg, 
-							  gint num, 
-							  gint total,  
-							  ModestMainWindow *main_window);
 
 static void         on_header_selected                   (ModestHeaderView *header_view, 
 							  TnyHeader *header,
@@ -165,6 +159,29 @@ modest_main_window_class_init (ModestMainWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestMainWindowPrivate));
 }
 
+static GtkWidget *
+create_main_bar (GtkWidget *progress_bar)
+{
+	GtkWidget *status_bar, *main_bar;
+
+	main_bar = gtk_hbox_new (FALSE, 6);
+
+        /* Status bar */
+        status_bar = gtk_statusbar_new ();
+        gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR (status_bar), FALSE);
+
+        /* Progress bar */
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (progress_bar), 1.0);
+        gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (progress_bar),
+                                        PANGO_ELLIPSIZE_END);
+
+        /* Pack */
+        gtk_box_pack_start (GTK_BOX (main_bar), status_bar, TRUE, TRUE, 0);
+        gtk_box_pack_start (GTK_BOX (main_bar), progress_bar, FALSE, FALSE, 0);
+
+	return main_bar;
+}
+
 static void
 modest_main_window_init (ModestMainWindow *obj)
 {
@@ -173,6 +190,7 @@ modest_main_window_init (ModestMainWindow *obj)
 	TnyFolderStoreQuery     *query;
 	GtkWidget               *icon;
 	gboolean                online;
+	GtkWidget *progress_bar;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 	
@@ -198,9 +216,10 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	/* Main bar */
 	priv->folder_info_label = gtk_label_new (NULL);
-	priv->main_bar = modest_gnome_info_bar_new ();
+	progress_bar = modest_progress_bar_new ();
+	priv->main_bar = create_main_bar (progress_bar);
 	priv->progress_widgets = g_slist_prepend (priv->progress_widgets, 
-							  priv->main_bar);
+						  progress_bar);
 
 	/* msg preview */
 	priv->msg_preview = MODEST_MSG_VIEW(tny_platform_factory_new_msg_view 
@@ -609,27 +628,6 @@ on_queue_changed (ModestMailOperationQueue *queue,
 		}
 		break;
 	}
-}
-
-static void
-on_header_status_update (ModestHeaderView *header_view, 
-			 const gchar *msg, gint num, 
-			 gint total,  ModestMainWindow *self)
-{
-	ModestMainWindowPrivate *priv;
-	gchar *txt;
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-
-	/* Set progress */
-	txt = g_strdup_printf (_("Downloading %d of %d"), num, total);
-	modest_gnome_info_bar_set_progress (MODEST_GNOME_INFO_BAR (priv->main_bar), 
-					    (const gchar*) txt,
-					    num, total);
-	g_free (txt);
-	
-	/* Set status message */
-	modest_gnome_info_bar_set_message (MODEST_GNOME_INFO_BAR (priv->main_bar), msg);
 }
 
 void 

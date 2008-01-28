@@ -47,7 +47,7 @@
 #include <modest-tny-folder.h>
 #include <modest-text-utils.h>
 #include <modest-account-mgr-helpers.h>
-#include "modest-progress-bar-widget.h"
+#include "modest-progress-bar.h"
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include "modest-ui-dimming-manager.h"
@@ -2012,7 +2012,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		toolbar_resize (MODEST_MSG_VIEW_WINDOW (self));
 
 		/* Add ProgressBar (Transfer toolbar) */ 
-		priv->progress_bar = modest_progress_bar_widget_new ();
+		priv->progress_bar = modest_progress_bar_new ();
 		gtk_widget_set_no_show_all (priv->progress_bar, TRUE);
 		placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ProgressbarView");
 		insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));

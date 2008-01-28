@@ -73,7 +73,7 @@ static void _on_msg_error_happened (TnySendQueue *self,
 static void _on_queue_start        (TnySendQueue *self, 
 				    gpointer user_data);
 
-static void modest_tny_send_queue_add_async (TnyCamelSendQueue *self, 
+static void modest_tny_send_queue_add_async (TnySendQueue *self, 
 					     TnyMsg *msg, 
 					     TnySendQueueAddCallback callback, 
 					     TnyStatusCallback status_callback, 
@@ -275,7 +275,7 @@ _add_message (ModestTnySendQueue *self, TnyHeader *header)
 }
 
 static void 
-modest_tny_send_queue_add_async (TnyCamelSendQueue *self, 
+modest_tny_send_queue_add_async (TnySendQueue *self, 
 				 TnyMsg *msg, 
 				 TnySendQueueAddCallback callback, 
 				 TnyStatusCallback status_callback, 
