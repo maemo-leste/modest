@@ -86,7 +86,7 @@ modest_transport_account_decorator_send (TnyTransportAccount *self, TnyMsg *msg,
 	if (connection_specific_account) {
 		tny_transport_account_send (connection_specific_account, msg, err);
 	} else {
-		TNY_CAMEL_TRANSPORT_ACCOUNT_CLASS(parent_class)->send_func (self, msg, err);
+		TNY_CAMEL_TRANSPORT_ACCOUNT_CLASS(parent_class)->send (self, msg, err);
 	}
 }
 
@@ -102,7 +102,7 @@ modest_transport_account_decorator_class_init (ModestTransportAccountDecoratorCl
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_transport_account_decorator_finalize;
 
-	transport_class->send_func = modest_transport_account_decorator_send;
+	transport_class->send = modest_transport_account_decorator_send;
 
 /* 	g_type_class_add_private (gobject_class, sizeof(ModestTransportAccountDecoratorPrivate)); */
 }

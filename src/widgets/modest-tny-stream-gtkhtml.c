@@ -226,11 +226,11 @@ modest_tny_stream_gtkhml_iface_init (gpointer g_iface, gpointer iface_data)
 
 	klass = (TnyStreamIface*) g_iface;
 	
-        klass->read_func            = gtkhtml_read;
-        klass->write_func           = gtkhtml_write;
-        klass->flush_func           = gtkhtml_flush;
-        klass->close_func           = gtkhtml_close;
-	klass->is_eos_func          = gtkhtml_is_eos;
-	klass->reset_func           = gtkhtml_reset;
-	klass->write_to_stream_func = gtkhtml_write_to_stream;
+        klass->read            = gtkhtml_read;
+        klass->write           = gtkhtml_write;
+        klass->flush           = gtkhtml_flush;
+        klass->close           = gtkhtml_close;
+	klass->is_eos          = gtkhtml_is_eos;
+	klass->reset           = gtkhtml_reset;
+	klass->write_to_stream = gtkhtml_write_to_stream;
 }

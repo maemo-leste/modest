@@ -80,8 +80,8 @@ modest_tny_local_folders_account_class_init (ModestTnyLocalFoldersAccountClass *
 	object_class->finalize = modest_tny_local_folders_account_finalize;
 	  
 	/* Override virtual functions from the parent class: */
-	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->get_folders_func = get_folders;
-	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->create_folder_func = create_folder;
+	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->get_folders = get_folders;
+	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->create_folder = create_folder;
 }
 
 static void
@@ -154,7 +154,7 @@ get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GE
 
 	/* Call the base class implementation: */
 	parent_class = g_type_class_peek_parent (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT_GET_CLASS (self));
-	parent_class->get_folders_func (self, list, query, err);
+	parent_class->get_folders (self, list, query, err);
 	
 	/* Add our extra folder only if it passes the query */
 	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
@@ -182,7 +182,7 @@ create_folder (TnyFolderStore *self,
 	}
 
 	/* Call the base class implementation: */
-	return parent_class->create_folder_func (self, name, err);
+	return parent_class->create_folder (self, name, err);
 }
 
 /*****************************/

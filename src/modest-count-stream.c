@@ -149,13 +149,13 @@ modest_count_stream_instance_init (GTypeInstance *instance, gpointer g_class)
 static void
 tny_stream_init (TnyStreamIface *klass)
 {
-        klass->read_func = modest_count_stream_read;
-        klass->write_func = modest_count_stream_write;
-        klass->flush_func = modest_count_stream_flush;
-        klass->close_func = modest_count_stream_close;
-        klass->is_eos_func = modest_count_stream_is_eos;
-        klass->reset_func = modest_count_stream_reset;
-        klass->write_to_stream_func = modest_count_stream_write_to_stream;
+        klass->read = modest_count_stream_read;
+        klass->write = modest_count_stream_write;
+        klass->flush = modest_count_stream_flush;
+        klass->close = modest_count_stream_close;
+        klass->is_eos = modest_count_stream_is_eos;
+        klass->reset = modest_count_stream_reset;
+        klass->write_to_stream = modest_count_stream_write_to_stream;
 }
 
 static void

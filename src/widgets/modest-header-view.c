@@ -284,7 +284,7 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 static void
 tny_folder_observer_init (TnyFolderObserverIface *klass)
 {
-	klass->update_func = folder_monitor_update;
+	klass->update = folder_monitor_update;
 }
 
 static GtkTreeViewColumn*

@@ -282,7 +282,7 @@ modest_tny_send_queue_add_async (TnySendQueue *self,
 				 gpointer user_data)
 {
 	/* Call the superclass passing our own callback */
-	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_async_func (self, msg, _on_added_to_outbox, NULL, NULL);
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_async (self, msg, _on_added_to_outbox, NULL, NULL);
 }
 
 
@@ -348,9 +348,9 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_tny_send_queue_finalize;
 
-	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->add_async_func  = modest_tny_send_queue_add_async;
-	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox_func  = modest_tny_send_queue_get_outbox;
-        TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox_func = modest_tny_send_queue_get_sentbox;
+	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->add_async   = modest_tny_send_queue_add_async;
+	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox  = modest_tny_send_queue_get_outbox;
+        TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox = modest_tny_send_queue_get_sentbox;
 	klass->status_changed   = NULL;
 
 	signals[STATUS_CHANGED_SIGNAL] =

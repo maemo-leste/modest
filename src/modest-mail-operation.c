@@ -1163,7 +1163,7 @@ internal_folder_observer_finalize (GObject *object)
 static void
 tny_folder_observer_init (TnyFolderObserverIface *iface) 
 {
-	iface->update_func = internal_folder_observer_update;
+	iface->update = internal_folder_observer_update;
 }
 static void
 internal_folder_observer_class_init (InternalFolderObserverClass *klass) 

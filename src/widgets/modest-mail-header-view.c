@@ -489,8 +489,8 @@ tny_header_view_init (gpointer g, gpointer iface_data)
 {
 	TnyHeaderViewIface *klass = (TnyHeaderViewIface *)g;
 
-	klass->set_header_func = modest_mail_header_view_set_header;
-	klass->clear_func = modest_mail_header_view_clear;
+	klass->set_header = modest_mail_header_view_set_header;
+	klass->clear = modest_mail_header_view_clear;
 
 	return;
 }

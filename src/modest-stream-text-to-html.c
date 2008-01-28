@@ -323,11 +323,11 @@ modest_stream_text_to_html_iface_init (gpointer g_iface, gpointer iface_data)
 
 	klass = (TnyStreamIface*) g_iface;
 	
-        klass->read_func            = text_to_html_read;
-        klass->write_func           = text_to_html_write;
-        klass->flush_func           = text_to_html_flush;
-        klass->close_func           = text_to_html_close;
-	klass->is_eos_func          = text_to_html_is_eos;
-	klass->reset_func           = text_to_html_reset;
-	klass->write_to_stream_func = text_to_html_write_to_stream;
+        klass->read            = text_to_html_read;
+        klass->write           = text_to_html_write;
+        klass->flush           = text_to_html_flush;
+        klass->close           = text_to_html_close;
+	klass->is_eos          = text_to_html_is_eos;
+	klass->reset           = text_to_html_reset;
+	klass->write_to_stream = text_to_html_write_to_stream;
 }

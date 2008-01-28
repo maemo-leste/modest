@@ -1063,7 +1063,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 				TnyAccount *account, 
 				TnyAlertType type,
 				gboolean question, 
-				const GError *error)
+				GError *error)
 {
 	ModestTransportStoreProtocol proto =
 		MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; 
@@ -1163,15 +1163,15 @@ modest_tny_account_store_init (gpointer g, gpointer iface_data)
 
 	klass = (TnyAccountStoreIface *)g;
 
-	klass->get_accounts_func =
+	klass->get_accounts =
 		modest_tny_account_store_get_accounts;
-	klass->get_cache_dir_func =
+	klass->get_cache_dir =
 		modest_tny_account_store_get_cache_dir;
-	klass->get_device_func =
+	klass->get_device =
 		modest_tny_account_store_get_device;
-	klass->alert_func =
+	klass->alert =
 		modest_tny_account_store_alert;
-	klass->find_account_func =
+	klass->find_account =
 		modest_tny_account_store_find_account_by_url;
 }
 

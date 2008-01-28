@@ -1689,12 +1689,12 @@ tny_msg_view_init (gpointer g, gpointer iface_data)
 {
 	TnyMsgViewIface *klass = (TnyMsgViewIface *)g;
 
-	klass->get_msg_func = modest_msg_view_get_msg;
-	klass->set_msg_func = modest_msg_view_set_msg;
-	klass->set_unavailable_func = modest_msg_view_set_unavailable;
-	klass->clear_func = modest_msg_view_clear;
-	klass->create_mime_part_view_for_func = modest_msg_view_create_mime_part_view_for;
-	klass->create_new_inline_viewer_func = modest_msg_view_create_new_inline_viewer;
+	klass->get_msg = modest_msg_view_get_msg;
+	klass->set_msg = modest_msg_view_set_msg;
+	klass->set_unavailable = modest_msg_view_set_unavailable;
+	klass->clear = modest_msg_view_clear;
+	klass->create_mime_part_view_for = modest_msg_view_create_mime_part_view_for;
+	klass->create_new_inline_viewer = modest_msg_view_create_new_inline_viewer;
 
 	return;
 }
@@ -1786,9 +1786,9 @@ tny_mime_part_view_init (gpointer g, gpointer iface_data)
 {
 	TnyMimePartViewIface *klass = (TnyMimePartViewIface *)g;
 
-	klass->get_part_func = modest_msg_view_mp_get_part;
-	klass->set_part_func = modest_msg_view_mp_set_part;
-	klass->clear_func = modest_msg_view_mp_clear;
+	klass->get_part = modest_msg_view_mp_get_part;
+	klass->set_part = modest_msg_view_mp_set_part;
+	klass->clear = modest_msg_view_mp_clear;
 
 	return;
 }
