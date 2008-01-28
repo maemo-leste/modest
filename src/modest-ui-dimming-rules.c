@@ -33,6 +33,7 @@
 
 #include <string.h>
 #include "modest-ui-dimming-rules.h"
+#include "modest-ui-actions.h"
 #include "modest-dimming-rule.h"
 #include "modest-debug.h"
 #include "modest-tny-folder.h"
@@ -599,8 +600,11 @@ modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data)
 	}
 	if (!dimmed) {
 		dimmed = state->any_marked_as_deleted;
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
+		if (dimmed) {
+			gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
+			modest_dimming_rule_set_notification (rule, msg);
+			g_free (msg);
+		}
 	}
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
@@ -736,7 +740,9 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = state->any_marked_as_deleted;
 			if (dimmed) {
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
+				gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
+				modest_dimming_rule_set_notification (rule, msg);
+				g_free (msg);
 			}
 		}
 		if (!dimmed) {
@@ -753,8 +759,11 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		}
 		if (!dimmed) {
 			dimmed = state->any_marked_as_deleted;
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_message_already_deleted"));
+			if (dimmed) {
+				gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
+				modest_dimming_rule_set_notification (rule, msg);
+				g_free (msg);
+			}
 		}
 		if (!dimmed) {
 			dimmed = state->sent_in_progress;

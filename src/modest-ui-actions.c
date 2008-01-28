@@ -5428,3 +5428,54 @@ modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
 		g_free (error_note);
 	}
 }
+
+gchar *
+modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
+{
+	gchar *msg = NULL;
+	TnyFolderStore *folder = NULL;
+	TnyAccount *account = NULL;
+	ModestTransportStoreProtocol proto;
+	TnyHeader *header = NULL;
+
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		GtkWidget *header_view;
+		TnyList* headers = NULL;
+		TnyIterator *iter;
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+		headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
+		if (!headers || tny_list_get_length (headers) == 0) {
+			if (headers)
+				g_object_unref (headers);
+			return NULL;
+		}
+		iter = tny_list_create_iterator (headers);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
+		g_object_unref (iter);
+		g_object_unref (headers);
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
+		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
+	}
+
+	/* Get the account type */
+	account = tny_folder_get_account (TNY_FOLDER (folder));
+	proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+	if (proto == MODEST_PROTOCOL_STORE_POP) {
+		msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
+	} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
+		msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"), 
+				       tny_header_get_subject (header));
+	} else {
+		msg = g_strdup_printf (_("mail_ni_ui_folder_get_msg_folder_error"));
+	}
+
+	/* Frees */
+	g_object_unref (account);
+	g_object_unref (folder);
+	g_object_unref (header);
+
+	return msg;
+}

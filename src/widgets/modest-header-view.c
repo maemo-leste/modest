@@ -40,7 +40,7 @@
 #include <modest-tny-folder.h>
 #include <modest-debug.h>
 #include <modest-main-window.h>
-
+#include <modest-ui-actions.h>
 #include <modest-marshal.h>
 #include <modest-text-utils.h>
 #include <modest-icon-names.h>
@@ -1300,7 +1300,12 @@ on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
 
 	/* Dont open DELETED messages */
 	if (flags & TNY_HEADER_FLAG_DELETED) {
-		modest_platform_information_banner (NULL, NULL, _("mcen_ib_message_already_deleted"));
+		GtkWidget *win;
+		gchar *msg;
+		win = gtk_widget_get_ancestor (GTK_WIDGET (treeview), GTK_TYPE_WINDOW);
+		msg = modest_ui_actions_get_msg_already_deleted_error_msg (MODEST_WINDOW (win));
+		modest_platform_information_banner (NULL, NULL, msg);
+		g_free (msg);
 		goto frees;
 	}
 
