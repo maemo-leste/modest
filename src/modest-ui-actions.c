@@ -598,8 +598,6 @@ modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *
 	modest_ui_actions_on_delete_message (action, win);
 }
 
-
-
 void
 modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 {	
@@ -812,25 +810,6 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 			return;
 		
 	modest_ui_actions_compose_msg(win, NULL, NULL, NULL, NULL, NULL, NULL);
-}
-
-void
-modest_ui_actions_on_new_msg_or_folder (GtkAction *action, ModestWindow *win)
-{
-	g_return_if_fail (MODEST_IS_WINDOW (win));
-
-	/* Check first if the folder view has the focus */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *w;
-		w = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							 MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		if (gtk_widget_is_focus (w)) {
-			modest_ui_actions_on_new_folder (action, MODEST_MAIN_WINDOW(win));
-			return;
-		}
-	}
-
-	modest_ui_actions_on_new_msg (action, win);
 }
 
 

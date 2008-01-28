@@ -115,7 +115,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 static const ModestDimmingEntry modest_main_window_toolbar_dimming_entries [] = {
 
 	/* Toolbar */
-	{ "/ToolBar/ToolbarMessageNew", G_CALLBACK(modest_ui_dimming_rules_on_new_msg_or_folder) },
+	{ "/ToolBar/ToolbarMessageNew", G_CALLBACK(modest_ui_dimming_rules_on_new_msg) },
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/ToolBar/ToolbarDeleteMessage", G_CALLBACK(modest_ui_dimming_rules_on_delete) },
 	{ "/ToolBar/ToolbarToggleView", NULL },
