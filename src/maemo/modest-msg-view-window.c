@@ -2418,7 +2418,6 @@ save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
 	info->pairs = NULL;
 	if (with_struct) {
 		gtk_widget_destroy (info->banner);
-		g_object_unref (info->banner);
 		g_slice_free (SaveMimePartInfo, info);
 	}
 }
@@ -2507,9 +2506,8 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 	} else {
 		GtkWidget *banner = hildon_banner_show_animation (NULL, NULL, 
 								  _CS("sfil_ib_saving"));
-		info->banner = g_object_ref (banner);
+		info->banner = banner;
 		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
-		g_object_unref (banner);
 	}
 
 }
@@ -2588,27 +2586,22 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 			while (!tny_iterator_is_done (iter)) {
 				TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 
-				tny_iterator_next (iter);
-				if (tny_mime_part_is_attachment (mime_part)) {
+				if ((tny_mime_part_is_attachment (mime_part)) && 
+				    (tny_mime_part_get_filename (mime_part) != NULL)) {
 					SaveMimePartPair *pair;
-
-					if ((!tny_iterator_is_done (iter)) &&
-					    (tny_mime_part_get_filename (mime_part) == NULL)) {
-						g_object_unref (mime_part);
-						continue;
-					}
 					
 					pair = g_slice_new0 (SaveMimePartPair);
-					if (tny_iterator_is_done (iter)) {
-						pair->filename = g_strdup (chooser_uri);
-					} else {
+					if (save_multiple_str) {
 						pair->filename = 
 							g_build_filename (chooser_uri,
 									  tny_mime_part_get_filename (mime_part), NULL);
+					} else {
+						pair->filename = g_strdup (chooser_uri);
 					}
 					pair->part = mime_part;
 					files_to_save = g_list_prepend (files_to_save, pair);
 				}
+				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
 		}
