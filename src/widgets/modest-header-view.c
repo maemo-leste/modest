@@ -32,6 +32,7 @@
 #include <tny-simple-list.h>
 #include <tny-folder-monitor.h>
 #include <tny-folder-change.h>
+#include <tny-error.h>
 #include <string.h>
 
 #include <modest-header-view.h>
@@ -1184,6 +1185,21 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	g_free (info);
 }
 
+static void
+refresh_folder_error_handler (ModestMailOperation *mail_op, 
+			      gpointer user_data)
+{
+	const GError *error = modest_mail_operation_get_error (mail_op);
+
+	if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
+	    error->code == TNY_IO_ERROR_WRITE ||
+	    error->code == TNY_IO_ERROR_READ) {
+		modest_platform_information_banner (NULL, NULL, 
+						    dgettext("ke-recv", 
+							     "cerm_device_memory_full"));
+	}
+}
+
 void
 modest_header_view_set_folder (ModestHeaderView *self, 
 			       TnyFolder *folder,
@@ -1242,7 +1258,9 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		info->user_data = user_data;
 
 		/* Create the mail operation (source will be the parent widget) */
-		mail_op = modest_mail_operation_new (G_OBJECT(main_win));
+		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(main_win),
+									 refresh_folder_error_handler,
+									 NULL, NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 						 mail_op);
 

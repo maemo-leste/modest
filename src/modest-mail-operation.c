@@ -2161,10 +2161,15 @@ get_msg_async_cb (TnyFolder *folder,
 	/* Check errors */
 	if (canceled || err) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
-		if (!priv->error)
+		if (err) {
+			priv->error = g_error_copy ((const GError *) err);
+			priv->error->domain = MODEST_MAIL_OPERATION_ERROR;
+		}
+		if (!priv->error) {
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 				     err->message);
+		}
 	} else if (finished && priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS) {
 		/* Set the success status before calling the user callback */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;

@@ -1000,14 +1000,18 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 {
 	const GError *error;
 	GObject *win = NULL;
-	const gchar *err_msg = (const gchar *) user_data;
 
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
 
 	/* Show error */
-	if (err_msg)
-		modest_platform_run_information_dialog ((GtkWindow *) win, err_msg);
+	if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
+	    error->code == TNY_IO_ERROR_WRITE ||
+	    error->code == TNY_IO_ERROR_READ) {
+		modest_platform_information_banner ((GtkWidget *) win, 
+						    NULL, dgettext("ke-recv", 
+								   "cerm_device_memory_full"));
+	}
 
 	if (win)
 		g_object_unref (win);
