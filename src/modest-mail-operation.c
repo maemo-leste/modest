@@ -2240,8 +2240,8 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	if (tny_list_get_length (header_list) >= 1) {
-		iter = tny_list_create_iterator (header_list);
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+		TnyIterator *iterator = tny_list_create_iterator (header_list);
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iterator));
 		if (header) {
 			TnyFolder *folder = tny_header_get_folder (header);
 			if (folder) {		
@@ -2250,11 +2250,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 			}
 			g_object_unref (header);
 		}
-
-		if (tny_list_get_length (header_list) == 1) {
-			g_object_unref (iter);
-			iter = NULL;
-		}
+		g_object_unref (iterator);
 	}
 
 	msg_list_size = compute_message_list_size (header_list);
