@@ -135,7 +135,6 @@ struct _ModestMailOperationPrivate {
 typedef struct {
 	GetMsgAsyncUserCallback user_callback;
 	TnyHeader *header;
-	TnyList *header_list;
 	TnyIterator *iter;
 	gpointer user_data;
 	ModestMailOperation *mail_op;
@@ -2196,8 +2195,6 @@ get_msg_async_cb (TnyFolder *folder,
 		/* Clean */
 		if (info->iter)
 			g_object_unref (info->iter);
-		if (info->header_list)
-			g_object_unref (info->header_list);
 		g_object_unref (info->header);
 		g_object_unref (info->mail_op);
 		g_slice_free (GetMsgInfo, info);
@@ -2274,7 +2271,6 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		msg_info = g_slice_new0 (GetMsgInfo);
 		msg_info->mail_op = g_object_ref (self);
 		msg_info->header = g_object_ref (header);
-		msg_info->header_list = g_object_ref (header_list);
 		msg_info->iter = g_object_ref (iter);
 		msg_info->user_callback = user_callback;
 		msg_info->user_data = user_data;
