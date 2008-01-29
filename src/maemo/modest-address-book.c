@@ -586,6 +586,7 @@ add_to_address_book (const gchar* address)
 	EBookQuery *query;
 	GList *contacts = NULL;
 	GError *err = NULL;
+	gchar *email;
 	
 	g_return_val_if_fail (address, FALSE);
 	
@@ -593,8 +594,10 @@ add_to_address_book (const gchar* address)
 		open_addressbook ();
 	
 	g_return_val_if_fail (book, FALSE);
+
+	email = modest_text_utils_get_email_address (address);
 	
-	query = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, address);
+	query = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, email);
 	if (!e_book_get_contacts (book, query, &contacts, &err)) {
 		g_printerr ("modest: failed to get contacts: %s",
 			    err ? err->message : "<unknown>");
@@ -616,11 +619,21 @@ add_to_address_book (const gchar* address)
 	} else {
 		/* it's not yet in the addressbook, add it now! */
 		EContact *new_contact = e_contact_new ();
-		e_contact_set (new_contact, E_CONTACT_EMAIL_1, (const gpointer)address);
+		gchar *display_address;
+		display_address = g_strdup (address);
+		if (display_address) {
+			modest_text_utils_get_display_address (display_address);
+			if ((display_address[0] != '\0') && (strlen (display_address) != strlen (address)))
+				e_contact_set (new_contact, E_CONTACT_FULL_NAME, (const gpointer)display_address);
+		}
+		e_contact_set (new_contact, E_CONTACT_EMAIL_1, (const gpointer)email);
+		g_free (display_address);
 		commit_contact (new_contact, TRUE);
 		g_debug ("%s added to address book", address);
 		g_object_unref (new_contact);
 	}
+
+	g_free (email);
 
 	return TRUE;
 }
