@@ -135,6 +135,8 @@ struct _ModestMailOperationPrivate {
 typedef struct {
 	GetMsgAsyncUserCallback user_callback;
 	TnyHeader *header;
+	TnyList *header_list;
+	TnyIterator *iter;
 	gpointer user_data;
 	ModestMailOperation *mail_op;
 	GDestroyNotify destroy_notify;
@@ -2148,7 +2150,13 @@ get_msg_async_cb (TnyFolder *folder,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 	priv->done++;
-	finished = (priv->done == priv->total) ? TRUE : FALSE;
+
+	if (info->iter) {
+		tny_iterator_next (info->iter);
+		finished = (tny_iterator_is_done (info->iter));
+	} else {
+		finished = (priv->done == priv->total) ? TRUE : FALSE;
+	}
 
 	/* Check errors */
 	if (canceled || err) {
@@ -2157,10 +2165,12 @@ get_msg_async_cb (TnyFolder *folder,
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 				     err->message);
-	} else {
+	} else if (finished && priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS) {
 		/* Set the success status before calling the user callback */
-		if (finished && priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)
-			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	} else if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		canceled = TRUE;
+		finished = TRUE;
 	}
 
 
@@ -2177,12 +2187,30 @@ get_msg_async_cb (TnyFolder *folder,
 
 		/* Notify about operation end */
 		modest_mail_operation_notify_end (info->mail_op);
-	}
 
-	/* Clean */
-	g_object_unref (info->header);
-	g_object_unref (info->mail_op);
-	g_slice_free (GetMsgInfo, info);
+		/* Clean */
+		if (info->iter)
+			g_object_unref (info->iter);
+		if (info->header_list)
+			g_object_unref (info->header_list);
+		g_object_unref (info->header);
+		g_object_unref (info->mail_op);
+		g_slice_free (GetMsgInfo, info);
+	} else if (info->iter) {
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (info->iter));
+		TnyFolder *folder = tny_header_get_folder (header);
+
+		g_object_unref (info->header);
+		info->header = g_object_ref (header);
+
+		/* Retrieve the next message */
+		tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, info);
+
+		g_object_unref (header);
+		g_object_unref (folder);
+	} else {
+		g_warning ("%s: finished != TRUE but no messages left", __FUNCTION__);
+	}
 }
 
 void 
@@ -2228,7 +2256,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 
 	modest_mail_operation_notify_start (self);
 	iter = tny_list_create_iterator (header_list);
-	while (!tny_iterator_is_done (iter)) {
+	if (!tny_iterator_is_done (iter)) {
 		/* notify about the start of the operation */
 		ModestMailOperationState *state;
 		state = modest_mail_operation_clone_state (self);
@@ -2245,6 +2273,8 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		msg_info = g_slice_new0 (GetMsgInfo);
 		msg_info->mail_op = g_object_ref (self);
 		msg_info->header = g_object_ref (header);
+		msg_info->header_list = g_object_ref (header_list);
+		msg_info->iter = g_object_ref (iter);
 		msg_info->user_callback = user_callback;
 		msg_info->user_data = user_data;
 		msg_info->destroy_notify = notify;
@@ -2258,7 +2288,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		/* Free and go on */
 		g_object_unref (header);
 		g_object_unref (folder);
-		tny_iterator_next (iter);
+		g_slice_free (ModestMailOperationState, state);
 	}
 	g_object_unref (iter);
 }
