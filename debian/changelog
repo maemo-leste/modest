@@ -1,3 +1,11 @@
+modest (1.0-2008.06-1) feisty; urgency=low
+
+  * Implemented: NR#188799, NR#187157, NR#187165, NR#187169, NR#187158
+  * Implemented: NR#187159, NR#187160, NR#187162, NR#188800, NR#187163
+  * Implemented: NR#187167, NR#187161, NR#187168
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 30 Jan 2008 12:57:25 +0200
+
 modest (1.0-2008.05-1) feisty; urgency=low
 
   * Fixes: NB#79407, NB#78857, NB#79541, NB#79562, NB#75801, NB#79456
