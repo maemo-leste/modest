@@ -135,7 +135,7 @@ struct _ModestMailOperationPrivate {
 typedef struct {
 	GetMsgAsyncUserCallback user_callback;
 	TnyHeader *header;
-	TnyIterator *iter;
+	TnyIterator *more_msgs;
 	gpointer user_data;
 	ModestMailOperation *mail_op;
 	GDestroyNotify destroy_notify;
@@ -154,6 +154,7 @@ typedef struct _XFerMsgsAsyncHelper
 {
 	ModestMailOperation *mail_op;
 	TnyList *headers;
+	TnyIterator *more_msgs;
 	TnyFolder *dest_folder;
 	XferMsgsAsyncUserCallback user_callback;	
 	gboolean delete;
@@ -2150,9 +2151,9 @@ get_msg_async_cb (TnyFolder *folder,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 	priv->done++;
 
-	if (info->iter) {
-		tny_iterator_next (info->iter);
-		finished = (tny_iterator_is_done (info->iter));
+	if (info->more_msgs) {
+		tny_iterator_next (info->more_msgs);
+		finished = (tny_iterator_is_done (info->more_msgs));
 	} else {
 		finished = (priv->done == priv->total) ? TRUE : FALSE;
 	}
@@ -2193,13 +2194,13 @@ get_msg_async_cb (TnyFolder *folder,
 		modest_mail_operation_notify_end (info->mail_op);
 
 		/* Clean */
-		if (info->iter)
-			g_object_unref (info->iter);
+		if (info->more_msgs)
+			g_object_unref (info->more_msgs);
 		g_object_unref (info->header);
 		g_object_unref (info->mail_op);
 		g_slice_free (GetMsgInfo, info);
-	} else if (info->iter) {
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (info->iter));
+	} else if (info->more_msgs) {
+		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (info->more_msgs));
 		TnyFolder *folder = tny_header_get_folder (header);
 
 		g_object_unref (info->header);
@@ -2271,7 +2272,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		msg_info = g_slice_new0 (GetMsgInfo);
 		msg_info->mail_op = g_object_ref (self);
 		msg_info->header = g_object_ref (header);
-		msg_info->iter = g_object_ref (iter);
+		msg_info->more_msgs = g_object_ref (iter);
 		msg_info->user_callback = user_callback;
 		msg_info->user_data = user_data;
 		msg_info->destroy_notify = notify;
@@ -2567,8 +2568,7 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 	XFerMsgsAsyncHelper *helper;
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
-	TnyIterator *iter = NULL;
-	TnyHeader *header = NULL;
+	gboolean finished = TRUE;
 
 	helper = (XFerMsgsAsyncHelper *) user_data;
 	self = helper->mail_op;
@@ -2585,56 +2585,68 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     _("Error trying to refresh the contents of %s"),
 			     tny_folder_get_name (folder));
-	} else {
-		priv->done = 1;
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	} else if (priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		if (helper->more_msgs) {
+			/* We'll transfer the next message in the list */
+			tny_iterator_next (helper->more_msgs);
+			if (!tny_iterator_is_done (helper->more_msgs)) {
+				GObject *next_header;
+				g_object_unref (helper->headers);
+				helper->headers = tny_simple_list_new ();
+				next_header = tny_iterator_get_current (helper->more_msgs);
+				tny_list_append (helper->headers, next_header);
+				g_object_unref (next_header);
+				finished = FALSE;
+			}
+		}
 
-		/* Update folder counts */
-		tny_folder_poke_status (folder);		
-		tny_folder_poke_status (helper->dest_folder);		
-	}
-
-	
-	/* Mark headers as deleted and seen */
-	if ((helper->delete) && 
-	    (priv->status == MODEST_MAIL_OPERATION_STATUS_SUCCESS)) {
-		iter = tny_list_create_iterator (helper->headers);
-		while (!tny_iterator_is_done (iter)) {
-			header = TNY_HEADER (tny_iterator_get_current (iter));
-			tny_header_set_flag (header, TNY_HEADER_FLAG_DELETED);
-			tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
-			g_object_unref (header);
-
-			tny_iterator_next (iter);
+		if (finished) {
+			priv->done = 1;
+			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 		}
 	}
-		
 
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+	if (finished) {
 
-	/* If user defined callback function was defined, call it */
-	if (helper->user_callback) {
-		/* This is not a GDK lock because we are a Tinymail callback and
-	 	 * Tinymail already acquires the Gdk lock */
+		/* Update folder counts */
+		tny_folder_poke_status (folder);
+		tny_folder_poke_status (helper->dest_folder);
 
-		/* no gdk_threads_enter (), CHECKED */
-		helper->user_callback (self, helper->user_data);
-		/* no gdk_threads_leave (), CHECKED */
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);
+
+		/* If user defined callback function was defined, call it */
+		if (helper->user_callback) {
+			/* This is not a GDK lock because we are a Tinymail callback and
+			 * Tinymail already acquires the Gdk lock */
+
+			/* no gdk_threads_enter (), CHECKED */
+			helper->user_callback (self, helper->user_data);
+			/* no gdk_threads_leave (), CHECKED */
+		}
+
+		/* Free */
+		if (helper->more_msgs)
+			g_object_unref (helper->more_msgs);
+		if (helper->headers)
+			g_object_unref (helper->headers);
+		if (helper->dest_folder)
+			g_object_unref (helper->dest_folder);
+		if (helper->mail_op)
+			g_object_unref (helper->mail_op);
+		if (folder)
+			g_object_unref (folder);
+		g_slice_free (XFerMsgsAsyncHelper, helper);
+	} else {
+		/* Transfer more messages */
+		tny_folder_transfer_msgs_async (folder,
+						helper->headers,
+						helper->dest_folder,
+						helper->delete,
+						transfer_msgs_cb,
+						transfer_msgs_status_cb,
+						helper);
 	}
-
-	/* Free */
-	if (helper->headers)
-		g_object_unref (helper->headers);
-	if (helper->dest_folder)
-		g_object_unref (helper->dest_folder);
-	if (helper->mail_op)
-		g_object_unref (helper->mail_op);
-	if (folder)
-		g_object_unref (folder);
-	if (iter)
-		g_object_unref (iter);
-	g_slice_free (XFerMsgsAsyncHelper, helper);
 }
 
 static guint
@@ -2684,6 +2696,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	XFerMsgsAsyncHelper *helper = NULL;
 	TnyHeader *header = NULL;
 	ModestTnyFolderRules rules = 0;
+	TnyAccount *dst_account = NULL;
 
 	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (headers && TNY_IS_LIST (headers));
@@ -2746,7 +2759,6 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper = g_slice_new0 (XFerMsgsAsyncHelper);
 	helper->mail_op = g_object_ref(self);
 	helper->dest_folder = g_object_ref(folder);
-	helper->headers = g_object_ref(headers);
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
 	helper->delete = delete_original;
@@ -2756,16 +2768,35 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (src_folder);
+	dst_account = modest_tny_folder_get_account (folder);
 
-	/* Transfer messages */
+	if (priv->account == dst_account) {
+		/* Transfer all messages at once using the fast
+		 * method. Note that depending on the server this
+		 * might not be that fast, and might not be
+		 * user-cancellable either */
+		helper->headers = g_object_ref (headers);
+		helper->more_msgs = NULL;
+	} else {
+		/* Transfer messages one by one so the user can cancel
+		 * the operation */
+		GObject *hdr;
+		helper->headers = tny_simple_list_new ();
+		helper->more_msgs = tny_list_create_iterator (headers);
+		hdr = tny_iterator_get_current (helper->more_msgs);
+		tny_list_append (helper->headers, hdr);
+		g_object_unref (hdr);
+	}
+
 	modest_mail_operation_notify_start (self);
 	tny_folder_transfer_msgs_async (src_folder, 
-					headers, 
+					helper->headers, 
 					folder, 
 					delete_original, 
 					transfer_msgs_cb, 
 					transfer_msgs_status_cb,
 					helper);
+	g_object_unref (dst_account);
 }
 
 
