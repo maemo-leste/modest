@@ -270,3 +270,16 @@ modest_tny_local_folders_account_remove_folder_from_outbox (ModestTnyLocalFolder
 	}
 	g_object_unref (merged_folders);
 }
+
+TnyFolder *
+modest_tny_local_folders_account_get_merged_outbox (ModestTnyLocalFoldersAccount *self)
+{
+	ModestTnyLocalFoldersAccountPrivate *priv;
+	g_return_val_if_fail (MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (self), NULL);
+
+	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
+	if (priv->outbox_folder)
+		return g_object_ref (priv->outbox_folder);
+	else
+		return NULL;
+}

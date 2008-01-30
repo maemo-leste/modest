@@ -378,7 +378,38 @@ typedef struct {
 	TnyAccount *account;
 	gchar *uri;
 	gboolean connect;
+	guint animation_timeout;
+	GtkWidget *animation;
 } OpenMsgPerformerInfo;
+
+static gboolean
+on_show_opening_animation (gpointer userdata)
+{
+	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) userdata;
+	info->animation = modest_platform_animation_banner (NULL, NULL, _("mail_me_opening"));
+	info->animation_timeout = 0;
+	
+	return FALSE;
+}
+
+static gboolean
+on_hide_opening_animation (gpointer userdata)
+{
+	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) userdata;
+
+	if (info->animation_timeout>0) {
+		g_source_remove (info->animation_timeout);
+		info->animation_timeout = 0;
+	}
+
+	if (info->animation) {
+		gtk_widget_destroy (info->animation);
+		info->animation = NULL;
+	}
+
+	g_slice_free (OpenMsgPerformerInfo, info);
+	return FALSE;
+}
 
 static void 
 on_open_message_performer (gboolean canceled, 
@@ -404,15 +435,25 @@ on_open_message_performer (gboolean canceled,
 		goto frees;
 	}
 
-	/* Get message */
-	folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
-	msg = tny_folder_find_msg (folder, uri, NULL);
-
+	/* Get folder */
+	if (!account) {
+		ModestTnyAccountStore *account_store;
+		ModestTnyLocalFoldersAccount *local_folders_account;
+		
+		account_store = modest_runtime_get_account_store ();
+		local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
+			modest_tny_account_store_get_local_folders_account (account_store));
+		folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);		
+	} else {
+		folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+	}
 	if (modest_tny_folder_is_local_folder (folder) &&
 	    (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
 		is_draft = TRUE;
 	}
 
+	/* Get message */
+	msg = tny_folder_find_msg (folder, uri, NULL);
 	if (!msg) {
 		g_idle_add (notify_msg_not_found_in_idle, NULL);
 		goto frees;
@@ -435,9 +476,13 @@ on_open_message_performer (gboolean canceled,
 
 		/* g_debug ("creating new window for this msg"); */
 		modest_window_mgr_register_header (win_mgr, header, NULL);
-		
-		modest_account_name = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+
+		if (account) {
+			modest_account_name = 
+				modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		} else {
+			modest_account_name = NULL;
+		}
 			
 		/* Drafts will be opened in the editor, and others will be opened in the viewer */
 		if (is_draft) {
@@ -460,8 +505,9 @@ on_open_message_performer (gboolean canceled,
 
  frees:
 	g_free (info->uri);
-	g_object_unref (info->account);
-	g_slice_free (OpenMsgPerformerInfo, info);
+	if (info->account)
+		g_object_unref (info->account);
+	g_idle_add (on_hide_opening_animation, info);
 }
 
 static gboolean
@@ -493,28 +539,44 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
  	gchar *uri;
 	TnyAccount *account = NULL;
 	gint osso_retval;
+	gboolean is_merge;
 
 	/* Get the arguments: */
  	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_OPEN_MESSAGE_ARG_URI);
  	uri = g_strdup (val.value.s);
 
+	is_merge = g_str_has_prefix (uri, "merge:");
+
 	/* Get the account */
-	account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
-						  uri);
+	if (!is_merge)
+		account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+							  uri);
 
  	
-	if (account) {
+	if (is_merge || account) {
 		OpenMsgPerformerInfo *info;
 		TnyFolder *folder = NULL;
 
 		info = g_slice_new0 (OpenMsgPerformerInfo);
-		info->account = g_object_ref (account);
+		if (account) 
+			info->account = g_object_ref (account);
 		info->uri = uri;
 		info->connect = TRUE;
+		info->animation_timeout = g_timeout_add (1000, on_show_opening_animation, info);
 
 		/* Try to get the message, if it's already downloaded
 		   we don't need to connect */
-		folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+		if (account) {
+			folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+		} else {
+			ModestTnyAccountStore *account_store;
+			ModestTnyLocalFoldersAccount *local_folders_account;
+
+			account_store = modest_runtime_get_account_store ();
+			local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
+				modest_tny_account_store_get_local_folders_account (account_store));
+			folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
+		}
 		if (folder) {
 			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
 			if (msg) {
@@ -535,7 +597,8 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 		g_idle_add (notify_error_in_dbus_callback, NULL);
  	}
 
-	g_object_unref (account);
+	if (account)
+		g_object_unref (account);
 	return osso_retval;
 }
 
