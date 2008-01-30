@@ -2634,8 +2634,6 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 			g_object_unref (helper->dest_folder);
 		if (helper->mail_op)
 			g_object_unref (helper->mail_op);
-		if (folder)
-			g_object_unref (folder);
 		g_slice_free (XFerMsgsAsyncHelper, helper);
 	} else {
 		/* Transfer more messages */
@@ -2796,6 +2794,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 					transfer_msgs_cb, 
 					transfer_msgs_status_cb,
 					helper);
+	g_object_unref (src_folder);
 	g_object_unref (dst_account);
 }
 
