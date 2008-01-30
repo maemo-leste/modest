@@ -1929,6 +1929,8 @@ on_msg_count_changed (ModestHeaderView *header_view,
 
 		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)
 			refilter = TRUE;
+	} else {
+		folder_empty = (((guint) tny_folder_get_all_count (TNY_FOLDER (folder))) == 0);
 	}
 
 	/* Check if all messages are marked to be deleted */
