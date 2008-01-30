@@ -1011,6 +1011,9 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 		modest_platform_information_banner ((GtkWidget *) win, 
 						    NULL, dgettext("ke-recv", 
 								   "cerm_device_memory_full"));
+	} else if (user_data) {
+		modest_platform_information_banner ((GtkWidget *) win, 
+						    NULL, user_data);
 	}
 
 	if (win)
