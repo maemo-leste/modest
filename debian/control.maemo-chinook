@@ -7,7 +7,7 @@ Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
-Section: user/extras
+Section: user/Communication
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends},osso-icons-theme,operator-wizard-settings,osso-countries-l10n-mr0
 Replaces: modest-l10n-engb
 XB-Maemo-Icon-26:
