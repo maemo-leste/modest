@@ -748,6 +748,9 @@ modest_tny_send_queue_wakeup (ModestTnySendQueue *self)
 		tny_iterator_next (iter);
 	}
 
+	/* Make changes persistent on disk */
+	tny_folder_sync (priv->outbox, FALSE, NULL);
+
 	/* Frees */
 	g_object_unref (iter);
 	g_object_unref (G_OBJECT (headers));

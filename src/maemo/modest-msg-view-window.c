@@ -1186,7 +1186,9 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	/* If the message was not obtained from a treemodel,
 	 * for instance if it was opened directly by the search UI:
 	 */
-	if (priv->header_model == NULL || priv->row_reference == NULL) {
+	if (priv->header_model == NULL || 
+	    priv->row_reference == NULL ||
+	    !gtk_tree_row_reference_valid (priv->row_reference)) {
 		msg = modest_msg_view_window_get_message (self);
 		if (msg) {
 			header = tny_msg_get_header (msg);
@@ -1196,12 +1198,6 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 	}
 
 	/* Get iter of the currently selected message in the header view: */
-	/* TODO: Why not just give this window a ref of the TnyHeader or TnyMessage,
-	 * instead of sometimes retrieving it from the header view?
-	 * Then we wouldn't be dependent on the message actually still being selected 
-	 * in the header view. murrayc. */
-	if (!gtk_tree_row_reference_valid (priv->row_reference))
-		return NULL;
 	path = gtk_tree_row_reference_get_path (priv->row_reference);
 	g_return_val_if_fail (path != NULL, NULL);
 	gtk_tree_model_get_iter (priv->header_model, 
