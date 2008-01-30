@@ -363,7 +363,7 @@ restore_settings_header_view (ModestConf *conf, ModestHeaderView *header_view,
 	TnyFolderType type;
 	ModestHeaderViewStyle style;
 	gint sort_flag_id = 0;
-	gint sort_colid = -1, sort_type;
+	gint sort_colid = -1, sort_type = GTK_SORT_DESCENDING;
 	
 	folder = modest_header_view_get_folder (header_view);
 	if (!folder)
