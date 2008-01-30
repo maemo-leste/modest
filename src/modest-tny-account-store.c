@@ -1332,6 +1332,7 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 		g_object_unref (tmp_account);
 		tny_iterator_next (iter);
 	}
+	g_object_unref (iter);
 
 	if (!found) {
 		g_printerr ("modest: %s: could not get tny %s account for %s\n." \
@@ -1851,6 +1852,7 @@ modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *self,
 			g_object_unref (folder);
 			tny_iterator_next (folders_iter);
 		}
+		g_object_unref (folders_iter);
 
 		g_object_unref (folders);
 		g_object_unref (account);

@@ -1008,6 +1008,7 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 		}
 		g_object_unref (part);
 	}
+	g_object_unref (iter);
 }
 
 static void
@@ -1085,6 +1086,7 @@ update_last_cid (ModestMsgEditWindow *self, TnyList *attachments)
 		}
 		g_object_unref (part);
 	}
+	g_object_unref (iter);
 }
 
 static void
@@ -1628,6 +1630,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 		g_object_unref (part);
 		tny_iterator_next (att_iter);
 	}
+	g_object_unref (att_iter);
 	
 	data->priority_flags = priv->priority_flags;
 
@@ -2336,6 +2339,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 			g_object_unref (mime_part);
 		}
+		g_object_unref (iter);
 	}
 
 	g_object_unref (att_list);

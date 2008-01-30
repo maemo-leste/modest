@@ -4470,6 +4470,7 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 
 				tny_iterator_next (iter);
 			}
+			g_object_unref (iter);
 			
 			tny_msg_rewrite_cache (msg);
 		}
@@ -4477,7 +4478,6 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 		/* This string no longer exists, refer to NB#75415 for more info */
 		/* modest_platform_information_banner (NULL, NULL, _("mail_ib_attachment_already_purged")); */
 	}
-	g_object_unref (iter);
 
 	modest_window_mgr_unregister_header (mgr, header);
 
@@ -4490,7 +4490,6 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 {
 	GtkWidget *header_view;
 	TnyList *header_list;
-	TnyIterator *iter;
 	TnyHeader *header;
 	TnyHeaderFlags flags;
 	ModestWindow *msg_view_window =  NULL;
@@ -4508,7 +4507,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 	}
 	
 	if (tny_list_get_length (header_list) == 1) {
-		iter = tny_list_create_iterator (header_list);
+		TnyIterator *iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		g_object_unref (iter);
 	} else
