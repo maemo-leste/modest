@@ -272,6 +272,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *scroll;
 	guint        scroll_drag_timeout_id;
+	gdouble      last_upper;
 
 	gint last_cid;
 	TnyList *attachments;
@@ -437,6 +438,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->sent = FALSE;
 
 	priv->scroll_drag_timeout_id = 0;
+	priv->last_upper = 0.0;
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_editor");
@@ -526,6 +528,9 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
 
+	if (!gtk_widget_is_focus (priv->msg_body))
+		return;
+
 	insert = gtk_text_buffer_get_insert (priv->text_buffer);
 	gtk_text_buffer_get_iter_at_mark (priv->text_buffer, &iter, insert);
 
@@ -601,7 +606,14 @@ text_buffer_mark_set (GtkTextBuffer *buffer,
 void vadj_changed (GtkAdjustment *adj,
 		   ModestMsgEditWindow *window)
 {
-	correct_scroll (window);
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (priv->last_upper != adj->upper) {
+		priv->last_upper = adj->upper;
+		correct_scroll (window);
+	}
 }
 
 static void
