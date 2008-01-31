@@ -30,27 +30,66 @@
 
 <ui>
   <menubar name="MenuBar">
-    <menu name="EmailMenu" action="Email">
-      <menuitem name="ReplyMenu" action="ActionsReply"/>
-      <menuitem name="ReplyToAllMenu" action="ActionsReplyAll"/>
-      <menuitem name="ForwardMenu" action="ActionsForward"/>
+    <menu name="MessageMenu" action="Email">
+      <menuitem name="MessageReplyMenu" action="EmailReply"/>
+      <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
+      <menuitem name="MessageForwardMenu" action="EmailForward"/>
       <separator/>
-      <menuitem name="NewMessageMenu" action="ActionsNewMessage"/>
+      <menuitem name="MessageNewMenu"  action="EmailNewDefault"/>
       <separator/>
-<!--      <menuitem name="DeleteMessageMenu" action="ActionsDelete"/>-->
+      <menuitem name="MessageDeleteMenu" action="EmailDelete"/>
+      <separator/>
+      <menuitem name="MessageDetailsMenu"      action="EmailDetails"/>
+      <separator/>
+      <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
+      <menuitem name="CloseAllWindowsMenu"     action="CloseAllWindows"/>
     </menu>
+
     <menu name="EditMenu" action="Edit">
-      <menuitem name="EditUndoMenu" action="EditUndo"/>
-      <menuitem name="EditRedoMenu" action="EditRedo"/>
+      <menuitem name="EditCutMenu" action="EditCut"/>
+      <menuitem name="EditCopyMenu" action="EditCopy"/>
+      <menuitem name="EditPasteMenu" action="EditPaste"/>
       <separator/>
-      <menuitem name="EditCutMenu" action="Cut"/>
-      <menuitem name="EditCopyMenu" action="Copy"/>
-      <menuitem name="EditPasteMenu" action="Paste"/>
-<!--      <menuitem name="EditDeleteMenu" action="EditDelete"/>-->
+      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
       <separator/>
-      <menuitem name="EditSelectAllMenu" action="SelectAll"/>
-<!--      <menuitem name="EditDeselectAllMenu" action="EditDeselectAll"/>-->
+      <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
+    </menu> 
+ 
+    <menu name="ViewMenu" action="View">
+      <menu name="ZoomMenu" action="Zoom">
+	<menuitem name="Zoom50Menu" action="Zoom50"/>
+	<menuitem name="Zoom80Menu" action="Zoom80"/>
+	<menuitem name="Zoom100Menu" action="Zoom100"/>
+	<menuitem name="Zoom120Menu" action="Zoom120"/>
+	<menuitem name="Zoom150Menu" action="Zoom150"/>
+	<menuitem name="Zoom200Menu" action="Zoom200"/>
+      </menu>
+      <separator/>
+      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
+      <separator/>
+<!--       <menu name="ViewShowToolbarMenu" action="ViewShowToolbar"> -->
+<!-- 	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/> -->
+<!-- 	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/> -->
+<!--       </menu> -->
+      <separator/>
+      <menuitem name="ViewPreviousMessageMenu" action="ViewPreviousMessage"/>
+      <menuitem name="ViewNextMessageMenu" action="ViewNextMessage"/>
     </menu>
+
+    <menu name="AttachmentsMenu" action="Attachments">
+      <menuitem name="ViewAttachmentMenu" action="ViewAttachment"/>
+      <menuitem name="SaveAttachmentMenu" action="SaveAttachment"/>
+      <menuitem name="RemoveAttachmentMenu" action="RemoveAttachment"/>
+    </menu>
+
+   <menu name="ToolsMenu" action="Tools">
+      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
+      <separator/>
+      <menuitem name="ToolsFindInMessageMenu" action="ToolsFindInMessage"/>
+      <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
+      <separator/>
+      <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
+   </menu>
 
 <!--    <menu name="ActionsMenu" action="Actions">
       <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
@@ -60,8 +99,10 @@
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ActionsReply"/>
-    <toolitem action="ActionsReplyAll"/>
-    <toolitem action="ActionsForward"/>
+    <toolitem action="ToolbarMessageReply"/> 
+    <toolitem action="ToolbarDeleteMessage"/>
+    <separator/>
+    <toolitem action="ToolbarMessageBack" position="bot"/>
+    <toolitem action="ToolbarMessageNext" position="bot"/>
   </toolbar>
 </ui>

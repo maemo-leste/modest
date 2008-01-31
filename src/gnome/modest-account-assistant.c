@@ -59,6 +59,9 @@ struct _ModestAccountAssistantPrivate {
 	GtkWidget *account_name;
 	GtkWidget *fullname;
 	GtkWidget *email;
+       
+	GtkWidget *username;
+	GtkWidget *password;
 	
 	GtkWidget *store_widget;
 	GtkWidget *transport_widget;
@@ -129,22 +132,24 @@ add_intro_page (ModestAccountAssistant *assistant)
 {
 	GtkWidget *page, *label;
 	
-	page = gtk_vbox_new (FALSE, 6);
+	page = gtk_vbox_new (FALSE, 12);
 	
-	label = gtk_label_new (
-		_("Welcome to the account assistant\n\n"
-		  "It will help to set up a new e-mail account\n"));
-	gtk_box_pack_start (GTK_BOX(page), label, FALSE, FALSE, 6);
+	label = gtk_label_new (_("mcen_ia_emailsetup_intro"));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_box_pack_start (GTK_BOX(page), label, FALSE, FALSE, 0);
+	gtk_widget_set_size_request (label, 400, -1);
 	gtk_widget_show_all (page);
 	
 	gtk_assistant_append_page (GTK_ASSISTANT(assistant), page);
 		
 	gtk_assistant_set_page_title (GTK_ASSISTANT(assistant), page,
-				      _("Modest Account Assistant"));
+				      _("mcen_ti_emailsetup_welcome"));
 	gtk_assistant_set_page_type (GTK_ASSISTANT(assistant), page,
 				     GTK_ASSISTANT_PAGE_INTRO);
 	gtk_assistant_set_page_complete (GTK_ASSISTANT(assistant),
 					 page, TRUE);
+
+	return page;
 }
 
 
@@ -180,58 +185,151 @@ identity_page_update_completeness (GtkEditable *editable,
 
 	/* FIXME: regexp check for email address */
 	txt = gtk_entry_get_text (GTK_ENTRY(priv->email));
-	if (!modest_text_utils_validate_email_address (txt, NULL))
+	if (!modest_text_utils_validate_email_address (txt, NULL)) {
 		set_current_page_complete (self, FALSE);
-	else
-		set_current_page_complete (self, TRUE);
+		return;
+	}
+
+	txt = gtk_entry_get_text (GTK_ENTRY(priv->username));
+	if (!txt || txt[0] == '\0') {
+		set_current_page_complete (self, FALSE);
+		return;
+	}
+	set_current_page_complete (self, TRUE);
 }
 
+static GtkWidget *
+field_name_label (const gchar *text)
+{
+	GtkWidget *label;
+	gchar *fixed_text;
+
+	fixed_text = g_strconcat (text, ":", NULL);
+	label = gtk_label_new (fixed_text);
+	g_free (fixed_text);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+
+	return label;
+}
 
 static void
 add_identity_page (ModestAccountAssistant *self)
 {
-	GtkWidget *page, *label, *table;
+	GtkWidget *page, *label, *table, *frame;
+	GtkWidget *alignment;
 	ModestAccountAssistantPrivate *priv;
 
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
 
-	priv->fullname = gtk_entry_new_with_max_length (40);
-	priv->email    = gtk_entry_new_with_max_length (40);
+	priv->account_name = gtk_entry_new ();
+	gtk_entry_set_max_length (GTK_ENTRY (priv->fullname), 40);
+	priv->fullname = gtk_entry_new ();
+	gtk_entry_set_max_length (GTK_ENTRY (priv->fullname), 40);
+	priv->email    = gtk_entry_new ();
+	gtk_entry_set_width_chars (GTK_ENTRY (priv->email), 40);
+	priv->username = gtk_entry_new ();
+	gtk_entry_set_width_chars (GTK_ENTRY (priv->username), 40);
+	priv->password = gtk_entry_new ();
+	gtk_entry_set_width_chars (GTK_ENTRY (priv->password), 40);
+	gtk_entry_set_visibility (GTK_ENTRY (priv->password), FALSE);
 	
-	page = gtk_vbox_new (FALSE, 6);
+	page = gtk_vbox_new (FALSE, 24);
 
 	label = gtk_label_new (
-		_("Please enter your name and your e-mail address below.\n\n"));
-	gtk_box_pack_start (GTK_BOX(page), label, FALSE, FALSE, 6);
+		_("Please enter below the name for the account you're creating."));
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
+	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 12, 0, 12, 12);
+	gtk_container_add (GTK_CONTAINER (alignment), label);
+	gtk_box_pack_start (GTK_BOX(page), alignment, FALSE, FALSE, 0);
 	
-	table = gtk_table_new (2,2, FALSE);
-	gtk_table_attach_defaults (GTK_TABLE(table),gtk_label_new (_("Full name")),
+	table = gtk_table_new (1,2, FALSE);
+	gtk_table_set_col_spacings (GTK_TABLE (table), 6);
+	gtk_table_set_row_spacings (GTK_TABLE (table), 1);
+	gtk_table_attach_defaults (GTK_TABLE(table),field_name_label (_("Account name")),
 				   0,1,0,1);
-	gtk_table_attach_defaults (GTK_TABLE(table),gtk_label_new (_("E-mail address")),
+	gtk_table_attach_defaults (GTK_TABLE(table),priv->account_name,
+				   1,2,0,1);
+	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
+	gtk_container_add (GTK_CONTAINER (alignment), table);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 12, 0, 12, 0);
+	gtk_box_pack_start (GTK_BOX(page), alignment, FALSE, FALSE, 0);
+
+	frame = gtk_frame_new (NULL);
+	label = gtk_label_new (NULL);
+	gtk_label_set_markup (GTK_LABEL (label), _("<b>Public information </b>"));
+	gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+	gtk_frame_set_shadow_type (GTK_FRAME (frame), GTK_SHADOW_NONE);
+	table = gtk_table_new (2,2, FALSE);
+	gtk_table_set_col_spacings (GTK_TABLE (table), 6);
+	gtk_table_set_row_spacings (GTK_TABLE (table), 3);
+	gtk_table_attach_defaults (GTK_TABLE(table),field_name_label (_("Full name")),
+				   0,1,0,1);
+	gtk_table_attach_defaults (GTK_TABLE(table),field_name_label (_("Email address")),
 				   0,1,1,2);
 	gtk_table_attach_defaults (GTK_TABLE(table),priv->fullname,
 				   1,2,0,1);
 	gtk_table_attach_defaults (GTK_TABLE(table),priv->email,
 				   1,2,1,2);
+	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
+	gtk_container_add (GTK_CONTAINER (alignment), table);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 0, 0, 12, 0);
+	gtk_container_add (GTK_CONTAINER (frame), alignment);
+	gtk_box_pack_start (GTK_BOX(page), frame, FALSE, FALSE, 0);
+
+
+	frame = gtk_frame_new (NULL);
+	label = gtk_label_new (NULL);
+	gtk_label_set_markup (GTK_LABEL (label), _("<b>Server account </b>"));
+	gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+	gtk_frame_set_shadow_type (GTK_FRAME (frame), GTK_SHADOW_NONE);
+	table = gtk_table_new (2,2, FALSE);
+	gtk_table_set_col_spacings (GTK_TABLE (table), 6);
+	gtk_table_set_row_spacings (GTK_TABLE (table), 3);
+	gtk_table_attach_defaults (GTK_TABLE(table),field_name_label (_("User name")),
+				   0,1,0,1);
+	gtk_table_attach_defaults (GTK_TABLE(table),field_name_label (_("Password")),
+				   0,1,1,2);
+	gtk_table_attach_defaults (GTK_TABLE(table),priv->username,
+				   1,2,0,1);
+	gtk_table_attach_defaults (GTK_TABLE(table),priv->password,
+				   1,2,1,2);
+	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
+	gtk_container_add (GTK_CONTAINER (alignment), table);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 0, 0, 12, 0);
+	gtk_container_add (GTK_CONTAINER (frame), alignment);
+	gtk_box_pack_start (GTK_BOX(page), frame, FALSE, FALSE, 0);
 
 	g_signal_connect (G_OBJECT(priv->fullname), "changed",
+			  G_CALLBACK(identity_page_update_completeness),
+			  self);
+	g_signal_connect (G_OBJECT(priv->username), "changed",
+			  G_CALLBACK(identity_page_update_completeness),
+			  self);
+	g_signal_connect (G_OBJECT(priv->password), "changed",
 			  G_CALLBACK(identity_page_update_completeness),
 			  self);
 	g_signal_connect (G_OBJECT(priv->email), "changed",
 			  G_CALLBACK(identity_page_update_completeness),
 			  self);
+	g_signal_connect (G_OBJECT(priv->account_name), "changed",
+			  G_CALLBACK(identity_page_update_completeness),
+			  self);
 	
-	gtk_box_pack_start (GTK_BOX(page), table, FALSE, FALSE, 6);
-	gtk_widget_show_all (page);
 	
-	gtk_assistant_append_page (GTK_ASSISTANT(self), page);
+	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_container_add (GTK_CONTAINER (alignment), page);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 12, 12, 12, 12);
+	gtk_widget_show_all (alignment);
+	gtk_assistant_append_page (GTK_ASSISTANT(self), alignment);
 	
-	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
+	gtk_assistant_set_page_title (GTK_ASSISTANT(self), alignment,
 				      _("Identity"));
-	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
-				     GTK_ASSISTANT_PAGE_INTRO);
+	gtk_assistant_set_page_type (GTK_ASSISTANT(self), alignment,
+				     GTK_ASSISTANT_PAGE_CONTENT);
 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
-					 page, FALSE);
+					 alignment, FALSE);
 }	
 
 
@@ -337,7 +435,7 @@ add_receiving_page (ModestAccountAssistant *self)
 	gtk_assistant_set_page_title (GTK_ASSISTANT(self), page,
 				      _("Receiving mail"));
 	gtk_assistant_set_page_type (GTK_ASSISTANT(self), page,
-				     GTK_ASSISTANT_PAGE_INTRO);
+				     GTK_ASSISTANT_PAGE_CONTENT);
 	gtk_assistant_set_page_complete (GTK_ASSISTANT(self),
 					 page, FALSE);
 	gtk_widget_show_all (page);

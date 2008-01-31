@@ -63,7 +63,7 @@ struct _ModestAccountViewWindowPrivate {
                                                         MODEST_TYPE_ACCOUNT_VIEW_WINDOW, \
                                                         ModestAccountViewWindowPrivate))
 /* globals */
-static GtkWindowClass *parent_class = NULL;
+static GtkDialogClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -85,7 +85,7 @@ modest_account_view_window_get_type (void)
 			(GInstanceInitFunc) modest_account_view_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (GTK_TYPE_WINDOW,
+		my_type = g_type_register_static (GTK_TYPE_DIALOG,
 		                                  "ModestAccountViewWindow",
 		                                  &my_info, 0);
 	}
@@ -232,15 +232,6 @@ on_default_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 }
 
 
-
-static void
-on_close_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
-{
-	gtk_widget_destroy (GTK_WIDGET(self));
-}
-
-
-
 static GtkWidget*
 button_box_new (ModestAccountViewWindow *self)
 {
@@ -285,20 +276,18 @@ button_box_new (ModestAccountViewWindow *self)
 	return button_box;
 }
 
-
 static GtkWidget*
 window_vbox_new (ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	GtkTreeSelection *sel;
 	GtkWidget *main_hbox, *main_vbox, *button_box;
-	GtkWidget *close_button;
-	GtkWidget *close_hbox;
+	GtkWidget *scrolled_window;
 
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
-	main_vbox     = gtk_vbox_new (FALSE, 6);
-	main_hbox     = gtk_hbox_new (FALSE, 6);
+	main_vbox     = gtk_vbox_new (FALSE, 0);
+	main_hbox     = gtk_hbox_new (FALSE, 12);
 	
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
 	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), 300, 400);
@@ -309,20 +298,14 @@ window_vbox_new (ModestAccountViewWindow *self)
 	
 	button_box = button_box_new (self);
 	
-	gtk_box_pack_start (GTK_BOX(main_hbox), GTK_WIDGET(priv->account_view), TRUE, TRUE, 2);
-	gtk_box_pack_start (GTK_BOX(main_hbox), button_box, FALSE, FALSE,2);
+	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_IN);
+	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->account_view));
+	gtk_box_pack_start (GTK_BOX(main_hbox), scrolled_window, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX(main_hbox), button_box, FALSE, FALSE,0);
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), main_hbox, TRUE, TRUE, 2);
-
-	close_button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	g_signal_connect (G_OBJECT(close_button), "clicked",
-			  G_CALLBACK(on_close_button_clicked),
-			  self);
-	
-	close_hbox = gtk_hbox_new (FALSE, 2);
-	gtk_box_pack_end (GTK_BOX(close_hbox),
-			  close_button, FALSE, FALSE,2);
-	gtk_box_pack_end (GTK_BOX(main_vbox), close_hbox, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(main_vbox), main_hbox, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (main_vbox);
 	return main_vbox;
@@ -338,14 +321,18 @@ modest_account_view_window_new (void)
 	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(obj);
 
-	gtk_window_set_resizable (GTK_WINDOW(obj), FALSE);
-	gtk_window_set_title (GTK_WINDOW(obj), _("Accounts"));
+	gtk_window_set_resizable (GTK_WINDOW(obj), TRUE);
+	gtk_window_set_title (GTK_WINDOW(obj), _("mcen_ti_emailsetup_accounts"));
 	gtk_window_set_type_hint (GTK_WINDOW(obj), GDK_WINDOW_TYPE_HINT_DIALOG);
+	gtk_window_set_default_size (GTK_WINDOW (obj), 640, 480);
 	
 	gtk_window_set_modal (GTK_WINDOW(obj), TRUE);
-		
-	gtk_container_add (GTK_CONTAINER(obj),
-			   window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW(obj)));
+				     
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(obj)->vbox),
+			    window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW(obj)),
+			    TRUE, TRUE, 12);
+
+	gtk_dialog_add_button (GTK_DIALOG (obj), GTK_STOCK_CLOSE, GTK_RESPONSE_OK);
 		
 	return GTK_WIDGET(obj);
 }

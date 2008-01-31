@@ -382,6 +382,7 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 {
 	GtkWidget *widget = modest_folder_view_new (query);
 
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW (widget), FALSE);
 	/* Show all accounts by default */
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
 				      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);

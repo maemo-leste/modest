@@ -43,6 +43,7 @@
 #include "modest-widget-memory.h"
 #include "modest-ui-actions.h"
 #include "modest-main-window-ui.h"
+#include "modest-main-window-ui-dimming.h"
 #include "modest-account-mgr.h"
 #include "modest-conf.h"
 #include <modest-tny-msg.h>
@@ -70,6 +71,7 @@ static gboolean     show_context_popup_menu             (ModestMainWindow *windo
 							 GtkWidget        *menu);
 
 static void         connect_signals                      (ModestMainWindow *self);
+static void         setup_toolbar                        (ModestMainWindow *window);
 
 static void         on_queue_changed                     (ModestMailOperationQueue *queue,
 							  ModestMailOperation *mail_op,
@@ -95,6 +97,8 @@ struct _ModestMainWindowPrivate {
 	GtkWidget        *folder_paned;
 	GtkWidget        *msg_paned;
 	GtkWidget        *main_paned;
+	GtkWidget        *main_vbox;
+	GtkWidget        *header_win;
 	
 	GtkWidget        *online_toggle;
 	GtkWidget        *folder_info_label;
@@ -102,6 +106,8 @@ struct _ModestMainWindowPrivate {
 	ModestHeaderView *header_view;
 	ModestFolderView *folder_view;
 	ModestMsgView    *msg_preview;
+
+	ModestMainWindowStyle style;
 
 	GtkWidget        *status_bar;
 	GtkWidget        *progress_bar;
@@ -117,6 +123,11 @@ struct _ModestMainWindowPrivate {
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
+
+static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {
+	{ "ToggleFolders",     MODEST_STOCK_SPLIT_VIEW, N_("mcen_me_inbox_hidefolders"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), TRUE },
+};
+
 
 /* uncomment the following if you have defined any signals */
 /* static guint signals[LAST_SIGNAL] = {0}; */
@@ -209,6 +220,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(priv->online_toggle), online);
 	gtk_button_set_image (GTK_BUTTON(priv->online_toggle),icon);
 
+	priv->style = MODEST_MAIN_WINDOW_STYLE_SPLIT;
+
 	/* Paned */
 	priv->folder_paned = gtk_vpaned_new ();
 	priv->main_paned = gtk_hpaned_new ();
@@ -229,7 +242,7 @@ modest_main_window_init (ModestMainWindow *obj)
 
 	/* header view */
 	priv->header_view  =
-		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
+		MODEST_HEADER_VIEW(modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES));
 	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 
@@ -239,6 +252,7 @@ modest_main_window_init (ModestMainWindow *obj)
 					 TNY_FOLDER_STORE_QUERY_OPTION_SUBSCRIBED);
 
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_folder_view_new (query));
+	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW (priv->folder_view), FALSE);
 	if (!priv->folder_view)
 		g_printerr ("modest: cannot instantiate folder view\n");	
 	g_object_unref (G_OBJECT (query));
@@ -420,7 +434,24 @@ wrapped_in_scrolled_window (GtkWidget *widget, gboolean needs_viewport)
 	return win;
 }
 
+static void
+setup_toolbar (ModestMainWindow *self)
+{
+	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkWidget *item;
 
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNew");
+	gtk_tool_item_set_is_important (GTK_TOOL_ITEM (item), TRUE);
+	item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
+	gtk_tool_item_set_is_important (GTK_TOOL_ITEM (item), TRUE);
+	item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSendReceive");
+	gtk_tool_item_set_is_important (GTK_TOOL_ITEM (item), TRUE);
+
+}
 
 
 ModestWindow *
@@ -430,12 +461,13 @@ modest_main_window_new (void)
 	ModestMainWindow *self;
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
-	GtkWidget *main_vbox;
 	GtkWidget *status_hbox;
-	GtkWidget *header_win, *folder_win;
+	GtkWidget *folder_win;
 	GtkWidget *preview_scroll;
 	GtkActionGroup *action_group;
 	GError *error = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 		
 	obj  = g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL);
 	self = MODEST_MAIN_WINDOW(obj);
@@ -447,12 +479,24 @@ modest_main_window_new (void)
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
 	action_group = gtk_action_group_new ("ModestMainWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
+
+	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_toggle_action_entries,
+					     G_N_ELEMENTS (modest_toggle_action_entries),
+					     self);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_main_window_toggle_action_entries,
+					     G_N_ELEMENTS (modest_toggle_action_entries),
+					     self);
 
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
@@ -466,6 +510,22 @@ modest_main_window_new (void)
 		error = NULL;
 	}
 
+	/* Add common dimming rules */
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
+					      modest_main_window_menu_dimming_entries,
+					      G_N_ELEMENTS (modest_main_window_menu_dimming_entries),
+					      MODEST_WINDOW (self));
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_main_window_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_main_window_toolbar_dimming_entries),
+					      MODEST_WINDOW (self));
+
+	/* Insert dimming rules group for this window */
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
+	
 	/* Add accelerators */
 	gtk_window_add_accel_group (GTK_WINDOW (obj), 
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
@@ -474,9 +534,10 @@ modest_main_window_new (void)
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	parent_priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
 
+	setup_toolbar (MODEST_MAIN_WINDOW (obj));
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
 	folder_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->folder_view), FALSE);
-	header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);
+	priv->header_win = wrapped_in_scrolled_window (GTK_WIDGET(priv->header_view), FALSE);
 
 	/* Paned */
 	preview_scroll = gtk_scrolled_window_new (NULL, NULL);
@@ -484,7 +545,7 @@ modest_main_window_new (void)
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_paned_add1 (GTK_PANED(priv->main_paned), folder_win);
 	gtk_paned_add2 (GTK_PANED(priv->main_paned), priv->msg_paned);
-	gtk_paned_add1 (GTK_PANED(priv->msg_paned), header_win);
+	gtk_paned_add1 (GTK_PANED(priv->msg_paned), priv->header_win);
 	gtk_container_add (GTK_CONTAINER (preview_scroll),
 			   GTK_WIDGET(priv->msg_preview));
 	gtk_paned_add2 (GTK_PANED(priv->msg_paned), preview_scroll);
@@ -496,16 +557,16 @@ modest_main_window_new (void)
 	gtk_box_pack_start (GTK_BOX(status_hbox), priv->online_toggle,FALSE, FALSE, 0);
 
 	/* putting it all together... */
-	main_vbox = gtk_vbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_paned, TRUE, TRUE,0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), status_hbox, FALSE, FALSE, 0);
-	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
+	priv->main_vbox = gtk_vbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(priv->main_vbox), parent_priv->menubar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(priv->main_vbox), parent_priv->toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
+	gtk_box_pack_start (GTK_BOX(priv->main_vbox), status_hbox, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER(obj), priv->main_vbox);
 
 	gtk_window_set_title (GTK_WINDOW(obj), _("Modest"));
 	gtk_window_set_icon_from_file  (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);	
-	gtk_widget_show_all (main_vbox);
+	gtk_widget_show_all (priv->main_vbox);
 	
 	/* Do some tasks on show */
 	g_signal_connect (G_OBJECT(self), "show", G_CALLBACK (modest_main_window_on_show), NULL);
@@ -634,7 +695,65 @@ void
 modest_main_window_set_style (ModestMainWindow *self, 
 			      ModestMainWindowStyle style)
 {
-	/* TODO */
+	ModestMainWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	GtkAction *action;
+	gboolean active;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	/* no change -> nothing to do */
+	if (priv->style == style)
+		return;
+
+       /* Get toggle button and update the state if needed. This will
+	  happen only when the set_style is not invoked from the UI,
+	  for example when it's called from widget memory */
+       action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToggleFolders");
+       active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
+       if ((active && style == MODEST_MAIN_WINDOW_STYLE_SIMPLE) ||
+	   (!active && style == MODEST_MAIN_WINDOW_STYLE_SPLIT)) {
+	       g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
+	       gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), !active);
+	       g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
+       }
+
+	priv->style = style;
+	switch (style) {
+	case MODEST_MAIN_WINDOW_STYLE_SIMPLE:
+		/* Remove main paned */
+		g_object_ref (priv->main_paned);
+		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
+
+		/* Reparent the contents widget to the main vbox */
+		gtk_widget_reparent (priv->header_win, priv->main_vbox);
+
+		break;
+	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
+		/* Remove header view */
+		g_object_ref (priv->header_win);
+		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->header_win);
+
+		/* Reparent the main paned */
+		gtk_paned_add2 (GTK_PANED (priv->main_paned), priv->header_win);
+		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
+
+		break;
+	default:
+		g_return_if_reached ();
+	}
+
+/* 	/\* Let header view grab the focus if it's being shown *\/ */
+/* 	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS) */
+/* 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view)); */
+/* 	else  */
+/* 		gtk_widget_grab_focus (GTK_WIDGET (priv->contents_widget)); */
+
+	/* Show changes */
+	gtk_widget_show_all (GTK_WIDGET (priv->main_vbox));
 }
 
 

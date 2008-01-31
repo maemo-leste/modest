@@ -31,40 +31,64 @@
 <ui>
 
   <menubar name="MenuBar">
-    <menu name="FileMenu" action="File">
-      <menuitem name="FileNewMenu" action="FileNew"/>
-      <menuitem name="FileOpenMenu" action="FileOpen"/>
+    <menu name="EmailMenu" action="Email">
+      <menu name="EmailNewMainMenu" action="EmailNew">
+	<menuitem name="EmailNewMessageMenu"  action="EmailNewMessage"/>
+	<menuitem name="EmailNewFolderMenu" action="EmailNewFolder"/>
+      </menu>
+      <menuitem name="EmailOpenMenu" action="EmailOpen"/>
       <separator/>
-      <menuitem name="FileSaveMenu" action="FileSave"/>
-      <menuitem name="FileSaveAsMenu" action="FileSaveAs"/>
+      <menuitem name="EmailReplyMenu" action="EmailReply"/>
+      <menuitem name="EmailReplyAllMenu" action="EmailReplyAll"/>
+      <menuitem name="EmailForwardMenu" action="EmailForward"/>
       <separator/>
-      <menuitem name="FileQuitMenu" action="FileQuit"/>
+      <menuitem name="EmailContentsMenu"     action="EmailContents"/>
+      <menuitem name="EmailPurgeAttachmentsMenu" action="EmailPurgeAttachments"/>
+      <separator/>
+      <menuitem name="EmailRenameMenu" action="EmailRenameFolder"/>
+      <menuitem name="EmailDeleteMenu" action="EmailDelete"/>
+      <separator/>
+      <menuitem name="EmailDetailsMenu" action="EmailDetails"/>
+      <separator/>
+      <menuitem name="CloseWindowMenu"     action="CloseWindow"/>
+      <menuitem name="CloseAllWindowsMenu" action="CloseAllWindows"/>
     </menu>
 
     <menu name="EditMenu" action="Edit">
-      <menuitem name="EditUndoMenu" action="EditUndo"/>
-      <menuitem name="EditRedoMenu" action="EditRedo"/>
+      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
+      <menuitem name="EditMarkAsReadMenu" action="EditMarkAsRead"/>
+      <menuitem name="EditMarkAsUnreadMenu" action="EditMarkAsUnread"/>
       <separator/>
-      <menuitem name="EditCutMenu" action="Cut"/>
-      <menuitem name="EditCopyMenu" action="Copy"/>
-      <menuitem name="EditPasteMenu" action="Paste"/>
-<!--      <menuitem name="EditDeleteMenu" action="EditDelete"/>-->
-      <separator/>
-      <menuitem name="EditSelectAllMenu" action="SelectAll"/>
-<!--      <menuitem name="EditDeselectAllMenu" action="EditDeselectAll"/>-->
+      <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
     </menu>
 
-    <menu name="ActionsMenu" action="Actions">
-      <menuitem name="ActionsNewMenu" action="ActionsNew"/>
-      <menuitem name="ActionsReplyMenu" action="ActionsReply"/>
-      <menuitem name="ActionsForwardMenu" action="ActionsForward"/>
-      <menuitem name="ActionsBounceMenu" action="ActionsBounce"/>
+    <menu name="ViewMenu" action="View">
+      <menuitem name="ViewSortMenu" action="ViewSort"/>
       <separator/>
-      <menuitem name="ActionsFolderNewMenu" action="ActionsFolderNew"/>
-      <menuitem name="ActionsFolderDeleteMenu" action="ActionsFolderDelete"/>
-      <menuitem name="ActionsFolderRenameMenu" action="ActionsFolderRename"/>
-      <menuitem name="ActionsFolderMoveToTrashMenu" action="ActionsFolderMoveToTrash"/>
+<!--       <menuitem name="ViewToggleFoldersMenu" action="ToggleFolders"/> -->
+      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
+      <separator/>
+      <placeholder name="ViewMenuAdditions" />
+   </menu>
+
+    <menu name="ToolsMenu" action="Tools">
+      <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>   
+      <menuitem name="ToolsAccountsMenu" action="ToolsAccounts"/>
+      <menuitem name="ToolsSMTPServersMenu" action="ToolsSMTPServers"/>
+      <separator/>
+      <menu name="ToolsSendReceiveMainMenu" action="ToolsSendReceive">
+        <menuitem name="ToolsSendReceiveAllMenu"  action="ToolsSendReceiveAll"/>
+        <menuitem name="ToolsSendReceiveCancelSendingMenu"  action="ToolsSendReceiveCancelSending"/>
+        <separator/>
+        <placeholder name="ToolsMenuAdditions" />
+      </menu>
+      <separator/>
+      <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
+      <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
+      <separator/>
+      <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
     </menu>
+
 
     <menu name="OptionsMenu" action="Options">
       <menuitem name="OptionsAddToContactsMenu" action="OptionsAddToContacts"/>
@@ -81,20 +105,20 @@
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ActionsNew"/>
+    <toolitem action="ToolbarMessageNew"/>
     <separator/>
-    <toolitem action="ActionsReply"/>
-    <toolitem action="ActionsReplyAll"/>
-    <toolitem action="ActionsForward"/>
+    <toolitem action="ToolbarMessageReply"/>
+    <toolitem action="ToolbarMessageReplyAll"/>
+    <toolitem action="ToolbarMessageForward"/>
     <separator/>
-    <toolitem action="ActionsSendReceive"/>
+    <toolitem action="ToolbarSendReceive"/>
     <separator/>
     <toolitem action="GotoPrevious"/>
     <toolitem action="GotoNext"/>
     <separator/>
-    <toolitem action="ActionsDelete"/>
-    <separator/>
-    <toolitem name="ToggleView" action="ToggleView"/>
+    <toolitem action="ToolbarDeleteMessage"/>
+<!--     <separator/> -->
+<!--     <toolitem name="ToggleView" action="ToggleView"/> -->
   </toolbar>
 
   <popup name="HeaderViewContextMenu">

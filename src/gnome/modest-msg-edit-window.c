@@ -41,6 +41,7 @@
 
 #include <modest-widget-memory.h>
 #include <modest-account-mgr-helpers.h>
+#include <gtkhtml/gtkhtml.h>
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
@@ -203,6 +204,8 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	GtkWidget *to_button, *cc_button, *bcc_button; 
 	GtkWidget *header_table;
 	GtkWidget *main_vbox;
+	GtkWidget *msg_vbox;
+	GtkWidget *scrolled_window;
 	ModestMsgEditWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	
@@ -248,14 +251,23 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->bcc_field,    1,2,3,4);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->subject_field,1,2,4,5);
 
-	priv->msg_body = gtk_text_view_new ();
+	priv->msg_body = gtk_html_new ();
+	gtk_html_load_empty (GTK_HTML (priv->msg_body));
+	gtk_html_set_editable (GTK_HTML (priv->msg_body), TRUE);
 	
-	main_vbox = gtk_vbox_new  (FALSE, 6);
+	main_vbox = gtk_vbox_new  (FALSE, 0);
+
+	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), header_table, FALSE, FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 0);
+	
+	msg_vbox = gtk_vbox_new (FALSE, 0);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), msg_vbox); 
+
+	gtk_box_pack_start (GTK_BOX(msg_vbox), header_table, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(msg_vbox), priv->msg_body, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
@@ -287,7 +299,6 @@ static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 {
 	TnyHeader *header;
-	GtkTextBuffer *buf;
 	const gchar *to, *cc, *bcc, *subject;
 	ModestMsgEditWindowPrivate *priv;
 	gchar *body;
@@ -313,10 +324,12 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 
 	
-	buf  = gtk_text_view_get_buffer (GTK_TEXT_VIEW(priv->msg_body));
 	body = modest_tny_msg_get_body (msg, FALSE, NULL);
-	if (body) 
-		gtk_text_buffer_set_text (buf, body, -1);
+	gtk_html_set_editable (GTK_HTML (priv->msg_body), FALSE);
+	if (body) {
+		gtk_html_load_from_string (GTK_HTML (priv->msg_body), body, -1);
+	}
+	gtk_html_set_editable (GTK_HTML (priv->msg_body), TRUE);
 	g_free (body);
 }
 
@@ -389,6 +402,16 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	return MODEST_WINDOW(self);
 }
 
+static gboolean
+html_export_save_buffer (gpointer engine,
+			 const gchar *data,
+			 size_t len,
+			 GString **buffer)
+{
+	*buffer = g_string_append (*buffer, data);
+	return TRUE;
+}
+
 
 MsgData * 
 modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
@@ -398,6 +421,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	const gchar *account_name;
 	gchar *from_string = NULL;
 	ModestMsgEditWindowPrivate *priv;
+	GString *buffer;
 	
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window), NULL);
 
@@ -421,13 +445,17 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->bcc     =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)));
 	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
 
-	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
-	GtkTextIter b, e;
-	gtk_text_buffer_get_bounds (buf, &b, &e);
-	data->plain_body =  gtk_text_buffer_get_text (buf, &b, &e, FALSE); /* Returns a copy. */
+/* 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)); */
+/* 	GtkTextIter b, e; */
+/* 	gtk_text_buffer_get_bounds (buf, &b, &e); */
+/* 	data->plain_body =  gtk_text_buffer_get_text (buf, &b, &e, FALSE); /\* Returns a copy. *\/ */
 
-	/* No rich supported yet, then html body is NULL */
-	data->html_body = NULL;
+	buffer = g_string_new ("");
+	gtk_html_export (GTK_HTML (priv->msg_body), "text/html", (GtkHTMLSaveReceiverFn) html_export_save_buffer, &buffer);
+	data->html_body = g_string_free (buffer, FALSE);
+	buffer = g_string_new ("");
+	gtk_html_export (GTK_HTML (priv->msg_body), "text/plain", (GtkHTMLSaveReceiverFn) html_export_save_buffer, &buffer);
+	data->plain_body = g_string_free (buffer, FALSE);
 
 	return data;
 }

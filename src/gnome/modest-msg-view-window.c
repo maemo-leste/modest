@@ -35,15 +35,21 @@
 #include "modest-ui-actions.h"
 #include <modest-widget-memory.h>
 #include <modest-runtime.h>
+#include <modest-main-window-ui.h>
+#include "modest-msg-view-window-ui-dimming.h"
 
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-window-priv.h>
 #include "widgets/modest-msg-view.h"
+#include "modest-ui-dimming-manager.h"
 
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
 static void  modest_msg_view_window_finalize     (GObject *obj);
+
+static void  modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
+							 gpointer data);
 
 /* list my signals */
 enum {
@@ -67,38 +73,19 @@ struct _ModestMsgViewWindowPrivate {
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
-/* Action entries */
-static const GtkActionEntry modest_action_entries [] = {
-
-	/* Toplevel menus */
-	{ "Edit", NULL, N_("_Edit") },
-	{ "Actions", NULL, N_("_Actions") },
-	{ "Help", NULL, N_("_Help") },
-	{ "Email", NULL, N_("E_mail") },
-
-	/* EDIT */
-	{ "EditUndo",        GTK_STOCK_UNDO,   N_("_Undo"), "<CTRL>Z",        N_("Undo last action"),  NULL },
-	{ "EditRedo",        GTK_STOCK_REDO,   N_("_Redo"), "<shift><CTRL>Z", N_("Redo previous action"),  NULL },
-	{ "Cut",         GTK_STOCK_CUT,    N_("Cut"),   "<CTRL>X",        N_("_Cut"), G_CALLBACK (modest_ui_actions_on_cut)   },
-	{ "Copy",        GTK_STOCK_COPY,   N_("Copy"),  "<CTRL>C",        N_("Copy"), G_CALLBACK (modest_ui_actions_on_copy) },
-	{ "Paste",       GTK_STOCK_PASTE,  N_("Paste"), "<CTRL>V",        N_("Paste"), G_CALLBACK (modest_ui_actions_on_paste) },
-	{ "EditDelete",      GTK_STOCK_DELETE, N_("_Delete"),      "<CTRL>Q",	      N_("Delete"), NULL },
-	{ "SelectAll",   NULL, 	       N_("Select all"),   "<CTRL>A",	      N_("Select all"), G_CALLBACK (modest_ui_actions_on_select_all) },
-	{ "EditDeselectAll", NULL,             N_("Deselect all"), "<Shift><CTRL>A",  N_("Deselect all"), NULL },
-
-	/* ACTIONS */
-	{ "ActionsNewMessage",  MODEST_STOCK_NEW_MAIL, N_("_New"), "<CTRL>N", N_("Compose new message"), G_CALLBACK (modest_ui_actions_on_new_msg) },
-	{ "ActionsReply",       MODEST_STOCK_REPLY, N_("_Reply"),         NULL, N_("Reply to a message"), G_CALLBACK (modest_ui_actions_on_reply) },
-	{ "ActionsReplyAll",    MODEST_STOCK_REPLY_ALL, N_("Reply to all"),   NULL, N_("Reply to all"), G_CALLBACK (modest_ui_actions_on_reply_all) },
-	{ "ActionsForward",     MODEST_STOCK_FORWARD, N_("_Forward"),       NULL, N_("Forward a message"), G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "ActionsBounce",      NULL, N_("_Bounce"),        NULL, N_("Bounce a message"),          NULL },
-	{ "ActionsSendReceive", GTK_STOCK_REFRESH, N_("Send/Receive"),   NULL, N_("Send and receive messages"), NULL },
-	{ "ActionsDelete",      MODEST_STOCK_DELETE, N_("Delete message"), NULL, N_("Delete messages"), G_CALLBACK (modest_ui_actions_on_delete_message) },
-
-	/* HELP */
-	{ "HelpAbout", GTK_STOCK_ABOUT, N_("About"), NULL, N_("About Modest"), G_CALLBACK (modest_ui_actions_on_about) },
+static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
+	{ "FindInMessage",    GTK_STOCK_FIND,    N_("mcen_me_viewer_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
+	{ "ToolsFindInMessage", NULL, N_("mcen_me_viewer_find"), "<CTRL>F", NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
 };
 
+static const GtkRadioActionEntry msg_view_zoom_action_entries [] = {
+	{ "Zoom50", NULL, N_("mcen_me_viewer_50"), NULL, NULL, 50 },
+	{ "Zoom80", NULL, N_("mcen_me_viewer_80"), NULL, NULL, 80 },
+	{ "Zoom100", NULL, N_("mcen_me_viewer_100"), NULL, NULL, 100 },
+	{ "Zoom120", NULL, N_("mcen_me_viewer_120"), NULL, NULL, 120 },
+	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
+	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
+};
 
 GType
 modest_msg_view_window_get_type (void)
@@ -181,7 +168,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
-	main_vbox = gtk_vbox_new  (FALSE, 6);
+	main_vbox = gtk_vbox_new  (FALSE, 0);
 	
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
@@ -190,7 +177,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_container_add (GTK_CONTAINER (scrolled_window), 
 			   priv->msg_view);
-	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 6);
+	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
@@ -229,6 +216,9 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	GError *error = NULL;
 	TnyHeader *header = NULL;
 	const gchar *subject = NULL;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
+	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 
 	g_return_val_if_fail (msg, NULL);
 
@@ -242,12 +232,27 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMsgViewWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     modest_toggle_action_entries,
+					     G_N_ELEMENTS (modest_toggle_action_entries),
+					     obj);
+	gtk_action_group_add_toggle_actions (action_group,
+					     msg_view_toggle_action_entries,
+					     G_N_ELEMENTS (msg_view_toggle_action_entries),
+					     obj);
+	gtk_action_group_add_radio_actions (action_group,
+					    msg_view_zoom_action_entries,
+					    G_N_ELEMENTS (msg_view_zoom_action_entries),
+					    100,
+					    G_CALLBACK (modest_ui_actions_on_change_zoom),
+					    obj);
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 
@@ -290,6 +295,34 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 		g_object_unref (header);
 
 	gtk_window_set_icon_from_file (GTK_WINDOW(obj), MODEST_APP_ICON, NULL);
+
+	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
+
+	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
+	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
+
+	/* Add common dimming rules */
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
+					      modest_msg_view_menu_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_menu_dimming_entries),
+					      MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_msg_view_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
+					      MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
+					      modest_msg_view_clipboard_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_view_clipboard_dimming_entries),
+					      MODEST_WINDOW (obj));
+
+	/* Insert dimming rules group for this window */
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
+	g_object_unref (clipboard_rules_group);
 
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
 
@@ -453,8 +486,11 @@ modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
 TnyList *         
 modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 {
+	TnyList *result;
+
+	result = tny_simple_list_new ();
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
-	return NULL;	
+	return result;	
 }
 
 gboolean 
@@ -466,6 +502,14 @@ modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
 
 gboolean 
 modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window)
+{
+	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	return FALSE;	
+}
+
+static void 
+modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
+					    gpointer data)
 {
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;	
