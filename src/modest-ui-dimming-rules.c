@@ -1811,10 +1811,13 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 			gint start, end;
 			if (gtk_label_get_selection_bounds (GTK_LABEL (focused), &start, &end)) {
 				const gchar *start_offset;
+				const gchar *end_offset;
 				start_offset = gtk_label_get_text (GTK_LABEL (focused));
 				start_offset = g_utf8_offset_to_pointer (start_offset, start);
-				selection = g_new0 (gchar, end - start + 1);
-				g_utf8_strncpy (selection, start_offset, end - start);
+				end_offset = gtk_label_get_text (GTK_LABEL (focused));
+				end_offset = g_utf8_offset_to_pointer (end_offset, end);
+				selection = g_strndup (start_offset, end_offset - start_offset);
+				g_message (selection);
 			}
 		} else {
 			gboolean do_check = TRUE;
