@@ -50,6 +50,11 @@ static const ProtocolInfo TransportStoreProtocolMap[] = {
 	{ MODEST_PROTOCOL_STORE_MBOX,         "mbox",     N_("MBox") }
 };
 
+static const ProtocolInfo SupportedStoreProtocolMap[] = {
+	{ MODEST_PROTOCOL_STORE_POP,          "pop",      N_("POP3") },
+	{ MODEST_PROTOCOL_STORE_IMAP,         "imap",     N_("IMAPv4") },
+};
+
 static const ProtocolInfo ConnectionProtocolMap[] = {
 	{ MODEST_PROTOCOL_CONNECTION_NORMAL,    "none",     N_("None") },   
 	{ MODEST_PROTOCOL_CONNECTION_SSL,       "ssl",      N_("SSL") },   
@@ -110,6 +115,14 @@ modest_protocol_info_get_transport_store_protocol_pair_list (void)
 	return get_protocol_pair_list (TransportStoreProtocolMap,
 		G_N_ELEMENTS(TransportStoreProtocolMap));
 }
+
+ModestPairList*
+modest_protocol_info_get_supported_store_protocol_pair_list (void)
+{
+	return get_protocol_pair_list (SupportedStoreProtocolMap,
+		G_N_ELEMENTS(SupportedStoreProtocolMap));
+}
+
 
 ModestPairList*
 modest_protocol_info_get_auth_protocol_pair_list (void)

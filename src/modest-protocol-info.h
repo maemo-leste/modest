@@ -79,6 +79,23 @@ ModestPairList*
 modest_protocol_info_get_transport_store_protocol_pair_list ();
 
 /**
+ * modest_protocol_info_get_supported_store_protocol_pair_list:
+ * 
+ * return the list of <protocol,display-name>-tuples of 
+ * store protocols.
+ * The elements of the returned list are ModestPairs
+ * This is a convenience function for use with ModestComboBox
+ *
+ * In this case it only returns the UI exposed protocols for
+ * storage (IMAP, POP3).
+ *  
+ * Returns: a list of protocols. After use, it should be freed
+ * with modest_pair_list_free
+ */
+ModestPairList*
+modest_protocol_info_get_supported_store_protocol_pair_list ();
+
+/**
  * modest_protocol_info_get_auth_protocol_pair_list:
  * 
  * return the list of <protocol,display-name>-tupels of protocols.
