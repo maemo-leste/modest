@@ -38,7 +38,6 @@
 #include <modest-platform.h>
 #include <modest-text-utils.h>
 #include <tny-msg.h>
-#include <tny-camel-mem-stream.h>
 #include <modest-mail-operation.h>
 #include <modest-mail-operation-queue.h>
 #include <modest-runtime.h>
@@ -128,17 +127,15 @@ get_mime_part_size_thread (gpointer thr_user_data)
 {
 	ModestAttachmentView *view =  (ModestAttachmentView *) thr_user_data;
 	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (view);
-	TnyStream *stream;
 	gsize total = 0;
 	gssize result = 0;
 
-	stream = modest_count_stream_new();
-	result = tny_mime_part_decode_to_stream (priv->mime_part, stream, NULL);
-	total = modest_count_stream_get_count(MODEST_COUNT_STREAM (stream));
+	result = tny_mime_part_decode_to_stream (priv->mime_part, priv->get_size_stream, NULL);
+	total = modest_count_stream_get_count(MODEST_COUNT_STREAM (priv->get_size_stream));
 	if (total == 0) {
-		modest_count_stream_reset_count(MODEST_COUNT_STREAM (stream));
-		result = tny_mime_part_write_to_stream (priv->mime_part, stream, NULL);
-		total = modest_count_stream_get_count(MODEST_COUNT_STREAM (stream));
+		modest_count_stream_reset_count(MODEST_COUNT_STREAM (priv->get_size_stream));
+		result = tny_mime_part_write_to_stream (priv->mime_part, priv->get_size_stream, NULL);
+		total = modest_count_stream_get_count(MODEST_COUNT_STREAM (priv->get_size_stream));
 	}
 	
 	/* if there was an error, don't set the size (this is pretty uncommon) */
@@ -148,8 +145,6 @@ get_mime_part_size_thread (gpointer thr_user_data)
 		priv->size = (guint64)total;
 		g_idle_add (idle_get_mime_part_size_cb, g_object_ref (view));
 	}
-
-	g_object_unref (stream);
 	g_object_unref (view);
 
 	return NULL;
@@ -296,8 +291,9 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	gtk_label_set_text (GTK_LABEL (priv->size_view), "");
 
 	if (show_size && priv->detect_size) {
-		tny_camel_mem_stream_get_type ();
 		g_object_ref (self);
+		if (!priv->get_size_stream)
+			priv->get_size_stream = modest_count_stream_new ();
 		g_thread_create (get_mime_part_size_thread, self, FALSE, NULL);
 	}
 
@@ -321,10 +317,8 @@ modest_attachment_view_clear_default (TnyMimePartView *self)
 		priv->mime_part = NULL;
 	}
 
-	if (priv->get_size_stream != NULL) {
-		g_object_unref (priv->get_size_stream);
-		priv->get_size_stream = NULL;
-	}
+	if (priv->get_size_stream)
+		modest_count_stream_reset_count(MODEST_COUNT_STREAM (priv->get_size_stream));
 
 	priv->size = 0;
 

@@ -1070,8 +1070,6 @@ tny_account_store_view_init (gpointer g, gpointer iface_data)
 	TnyAccountStoreViewIface *klass = (TnyAccountStoreViewIface *)g;
 
 	klass->set_account_store = modest_folder_view_set_account_store;
-
-	return;
 }
 
 static void

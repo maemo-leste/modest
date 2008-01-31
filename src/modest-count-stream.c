@@ -147,8 +147,10 @@ modest_count_stream_instance_init (GTypeInstance *instance, gpointer g_class)
 }
 
 static void
-tny_stream_init (TnyStreamIface *klass)
+tny_stream_init (gpointer g_iface, gpointer iface_data)
 {
+	TnyStreamIface *klass = (TnyStreamIface *) g_iface;
+
         klass->read = modest_count_stream_read;
         klass->write = modest_count_stream_write;
         klass->flush = modest_count_stream_flush;
@@ -198,8 +200,8 @@ modest_count_stream_get_type (void)
                 };
 
                 type = g_type_register_static (G_TYPE_OBJECT,
-                        "ModestCountStream",
-                        &info, 0);
+					       "ModestCountStream",
+					       &info, 0);
 
                 /* TODO? : FIX THIS (ADD _TYPE): */
                 g_type_add_interface_static (type, TNY_TYPE_STREAM,
