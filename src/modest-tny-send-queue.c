@@ -514,12 +514,8 @@ modest_tny_send_queue_get_msg_id (TnyHeader *header)
 
 
 static void
-_on_msg_start_sending (TnySendQueue *self,
-		       TnyHeader *header,
-		       TnyMsg *msg,
-		       int done, 
-		       int total,
-		       gpointer user_data)
+_on_msg_start_sending (TnySendQueue *self, TnyHeader *header,
+		       TnyMsg *msg, int done, int total, gpointer user_data)
 {
 	ModestTnySendQueuePrivate *priv = NULL;
 	GList *item = NULL;
@@ -530,16 +526,20 @@ _on_msg_start_sending (TnySendQueue *self,
 	
 	/* Get message uid */
 	msg_id = modest_tny_send_queue_get_msg_id (header);
-
-	/* Get status info */
-	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
-
-	/* Set current status item */
-	info = item->data;
-	info->status = MODEST_TNY_SEND_QUEUE_SENDING;
-	g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
-	priv->current = item;
-
+	if (msg_id) 
+		item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
+	else
+		g_warning ("%s: could not get msg-id for header", __FUNCTION__);
+	
+	if (item) {
+		/* Set current status item */
+		info = item->data;
+		info->status = MODEST_TNY_SEND_QUEUE_SENDING;
+		g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
+		priv->current = item;
+	} else
+		g_warning ("%s: could not find item with id '%s'", __FUNCTION__, msg_id);
+	
 	/* free */
 	g_free (msg_id);
 }
