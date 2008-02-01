@@ -1593,6 +1593,46 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 	return is_first_selected;
 }
 
+typedef struct {
+	TnyHeader *header;
+	GtkTreeRowReference *row_reference;
+} MsgReaderInfo;
+
+static void
+message_reader_performer (gboolean canceled, 
+			  GError *err,
+			  GtkWindow *parent_window, 
+			  TnyAccount *account, 
+			  gpointer user_data)
+{
+	ModestMailOperation *mail_op = NULL;
+	MsgReaderInfo *info;
+
+	info = (MsgReaderInfo *) user_data;
+	if (canceled || err) {
+		goto frees;
+	}
+
+	/* New mail operation */
+	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
+								 modest_ui_actions_get_msgs_full_error_handler, 
+								 NULL, NULL);
+				
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_get_msg (mail_op, info->header, view_msg_cb, info->row_reference);
+	g_object_unref (mail_op);
+
+	/* Update dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (parent_window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (parent_window));
+
+ frees:
+	/* Frees. The row_reference will be freed by the view_msg_cb callback */
+	g_object_unref (info->header);
+	g_slice_free (MsgReaderInfo, info);
+}
+
+
 /**
  * Reads the message whose summary item is @header. It takes care of
  * several things, among others:
@@ -1611,10 +1651,12 @@ message_reader (ModestMsgViewWindow *window,
 		TnyHeader *header,
 		GtkTreeRowReference *row_reference)
 {
-	ModestMailOperation *mail_op = NULL;
 	gboolean already_showing = FALSE;
 	ModestWindow *msg_window = NULL;
 	ModestWindowMgr *mgr;
+	TnyAccount *account;
+	TnyFolder *folder;
+	MsgReaderInfo *info;
 
 	g_return_val_if_fail (row_reference != NULL, FALSE);
 
@@ -1633,7 +1675,6 @@ message_reader (ModestMsgViewWindow *window,
 		/* Ask the user if he wants to download the message if
 		   we're not online */
 		if (!tny_device_is_online (modest_runtime_get_device())) {
-			TnyFolder *folder = NULL;
 			GtkResponseType response;
 
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
@@ -1641,31 +1682,31 @@ message_reader (ModestMsgViewWindow *window,
 			if (response == GTK_RESPONSE_CANCEL)
 				return FALSE;
 		
-			/* Offer the connection dialog if necessary */
 			folder = tny_header_get_folder (header);
-			if (folder) {
-				if (!modest_platform_connect_and_wait_if_network_folderstore (NULL, 
-											      TNY_FOLDER_STORE (folder))) {
-					g_object_unref (folder);
-					return FALSE;
-				}
-				g_object_unref (folder);
-			}
+			info = g_slice_new (MsgReaderInfo);
+			info->header = g_object_ref (header);
+			info->row_reference = gtk_tree_row_reference_copy (row_reference);
+
+			/* Offer the connection dialog if necessary */
+			modest_platform_connect_if_remote_and_perform ((GtkWindow *) window, 
+								       TRUE,
+								       TNY_FOLDER_STORE (folder),
+								       message_reader_performer, 
+								       info);
+			g_object_unref (folder);
+			return TRUE;
 		}
 	}
-
-	/* New mail operation */
-	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(window),
-								 modest_ui_actions_get_msgs_full_error_handler, 
-								 NULL, NULL);
-				
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg (mail_op, header, view_msg_cb, row_reference);
-	g_object_unref (mail_op);
-
-	/* Update dimming rules */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+	
+	folder = tny_header_get_folder (header);
+	account = tny_folder_get_account (folder);
+	info = g_slice_new (MsgReaderInfo);
+	info->header = g_object_ref (header);
+	info->row_reference = gtk_tree_row_reference_copy (row_reference);
+	
+	message_reader_performer (FALSE, NULL, (GtkWindow *) window, account, info);
+	g_object_unref (account);
+	g_object_unref (folder);
 
 	return TRUE;
 }
@@ -1808,7 +1849,6 @@ view_msg_cb (ModestMailOperation *mail_op,
 		}
 		priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
 		select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE);
-		gtk_tree_row_reference_free (row_reference);
 	}
 
 	/* Mark header as read */
@@ -1833,8 +1873,9 @@ view_msg_cb (ModestMailOperation *mail_op,
 	g_signal_emit (G_OBJECT (self), signals[MSG_CHANGED_SIGNAL], 
 		       0, priv->header_model, priv->row_reference);
 
-	/* Free new references */
+	/* Frees */
 	g_object_unref (self);
+	gtk_tree_row_reference_free (row_reference);		
 }
 
 TnyFolderType
