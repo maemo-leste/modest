@@ -1486,6 +1486,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 	gtk_widget_show_all (GTK_WIDGET (obj));
+	modest_msg_edit_window_clipboard_owner_change (NULL, NULL, MODEST_MSG_EDIT_WINDOW (obj));
 
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
@@ -2199,14 +2200,16 @@ modest_msg_edit_window_attach_file_one (
 		ModestMsgEditWindow *window,
 		const gchar *uri)
 {
+	GnomeVFSHandle *handle = NULL;
+	ModestMsgEditWindowPrivate *priv;
+	GnomeVFSResult result;
+
 	g_return_if_fail (window);
 	g_return_if_fail (uri);
 		
-	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
-	
-	GnomeVFSHandle *handle = NULL;
-	GnomeVFSResult result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+	result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
 	if (result == GNOME_VFS_OK) {
 		TnyMimePart *mime_part;
 		TnyStream *stream;
