@@ -1,3 +1,12 @@
+** 2008-W06:
+* fixed another bunch of crashers
+* fixed the focus issue that caused addressbook not to work (editor)
+* fix saving of multiple attachments
+* various fixes related to dimming / focussing
+* performance improvements
+* fixed maemo bug #2790 (wrong section in debian control)
+* improved the working of the cancel-button 
+
 ** 2008-W05:
 * fixed crasher in tinymail when message retrieval failed (r3284)
 * tinymail: fix syncing of imap folders with offline changes (r3279)
