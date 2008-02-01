@@ -1854,7 +1854,7 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 
 		folder = tny_msg_get_folder (msg);
 		if (folder) {
-			folder_type = tny_folder_get_folder_type (folder);
+			folder_type = modest_tny_folder_guess_folder_type (folder);
 			g_object_unref (folder);
 		}
 		g_object_unref (msg);

@@ -625,19 +625,20 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
+	types[0] = TNY_FOLDER_TYPE_DRAFTS;
+	types[1] = TNY_FOLDER_TYPE_OUTBOX;
+	types[2] = TNY_FOLDER_TYPE_ROOT;
+
+	/* Check dimmed rule */
+	if (!dimmed) {
+		dimmed = _selected_folder_is_any_of_type (win, types, 3);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
+	}
+
 	/* main window dimming rules */
 	if (MODEST_IS_MAIN_WINDOW(win)) {
 		
-		types[0] = TNY_FOLDER_TYPE_DRAFTS; 
-		types[1] = TNY_FOLDER_TYPE_OUTBOX;
-		types[2] = TNY_FOLDER_TYPE_ROOT;
-		
-		/* Check dimmed rule */	
-		if (!dimmed) {
-			dimmed = _selected_folder_is_any_of_type (win, types, 3);			
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
-		}
 		if (!dimmed) {
 			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
 			if (dimmed)
