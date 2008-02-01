@@ -2251,7 +2251,8 @@ _selected_folder_is_any_of_type (ModestWindow *win,
 
 
 	/* free */
-	g_object_unref (folder);
+	if (folder)
+		g_object_unref (folder);
 
 	return result;	
 }
