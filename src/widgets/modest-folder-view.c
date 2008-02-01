@@ -1977,16 +1977,19 @@ xfer_folder_cb (ModestMailOperation *mail_op,
 		gpointer user_data)
 {
 	DndHelper *helper;
+	GtkWidget *folder_view;
 
 	helper = (DndHelper *) user_data;
+	folder_view = g_object_ref (helper->folder_view);
 
 	/* Common part */
 	xfer_cb (mail_op, user_data);
 
 	/* Select the folder */
 	if (new_folder)
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (helper->folder_view),
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
 						  new_folder, FALSE);
+	g_object_unref (folder_view);
 }
 
 
