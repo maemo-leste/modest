@@ -305,6 +305,7 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 			attachment_part = copy_mime_part (old_attachment);
 			tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
 						       add_inline?"inline":"attachment");
+			tny_mime_part_set_transfer_encoding (TNY_MIME_PART (part), "base64");
 			tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
 			if (old_cid)
 				tny_mime_part_set_content_id (attachment_part, old_cid);
