@@ -3316,7 +3316,10 @@ modest_ui_actions_on_copy (GtkAction *action,
 	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
 
 	if (GTK_IS_LABEL (focused_widget)) {
-		gtk_clipboard_set_text (clipboard, gtk_label_get_text (GTK_LABEL (focused_widget)), -1);
+		gchar *selection;
+		selection = modest_text_utils_label_get_selection (GTK_LABEL (focused_widget));
+		gtk_clipboard_set_text (clipboard, selection, -1);
+		g_free (selection);
 		gtk_clipboard_set_can_store (clipboard, NULL, 0);
 		gtk_clipboard_store (clipboard);
 	} else if (GTK_IS_EDITABLE (focused_widget)) {
@@ -4342,7 +4345,17 @@ folder_move_to_cb (ModestMailOperation *mail_op,
 		   TnyFolder *new_folder,
 		   gpointer user_data)
 {
+	GtkWidget *folder_view;
+	GObject *object;
+
+	object = modest_mail_operation_get_source (mail_op);
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	g_object_ref (folder_view);
+	g_object_unref (object);
 	move_to_cb (mail_op, user_data);
+	modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), new_folder, FALSE);
+	g_object_unref (folder_view);
 }
 
 static void

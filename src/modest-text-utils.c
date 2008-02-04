@@ -1631,3 +1631,23 @@ modest_text_utils_is_forbidden_char (const gchar character,
 
 	return FALSE; /* it's valid! */
 }
+
+gchar *      
+modest_text_utils_label_get_selection (GtkLabel *label)
+{
+	gint start, end;
+	gchar *selection;
+
+	if (gtk_label_get_selection_bounds (GTK_LABEL (label), &start, &end)) {
+		const gchar *start_offset;
+		const gchar *end_offset;
+		start_offset = gtk_label_get_text (GTK_LABEL (label));
+		start_offset = g_utf8_offset_to_pointer (start_offset, start);
+		end_offset = gtk_label_get_text (GTK_LABEL (label));
+		end_offset = g_utf8_offset_to_pointer (end_offset, end);
+		selection = g_strndup (start_offset, end_offset - start_offset);
+		return selection;
+	} else {
+		return g_strdup ("");
+	}
+}

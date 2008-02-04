@@ -37,6 +37,7 @@
 #include <glib.h>
 #include <gdk/gdkcolor.h>
 #include <gtk/gtktextbuffer.h>
+#include <gtk/gtklabel.h>
 
 #define _FM(str) dgettext("hildon-fm",str)
 #define _CS(str) dgettext("hildon-common-strings",str)
@@ -412,6 +413,15 @@ typedef enum {
 	USER_NAME_FORBIDDEN_NAMES,
 } ModestTextUtilsForbiddenCharType;
 
+/**
+ * modest_text_utils_label_get_selection:
+ * @label: a #GtkLabel
+ *
+ * Obtain the current selection of @label
+ *
+ * Returns: a string with current selection, or %NULL if no selection in @label
+ */
+gchar *      modest_text_utils_label_get_selection (GtkLabel *label);
 
 /**
  * modest_text_utils_is_forbidden_char:
