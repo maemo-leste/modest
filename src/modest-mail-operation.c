@@ -1353,9 +1353,14 @@ inbox_refreshed_cb (TnyFolder *inbox,
 
 		/* Get outbox folder */
 		outbox = tny_send_queue_get_outbox (TNY_SEND_QUEUE (send_queue));
-		num_messages = tny_folder_get_all_count (outbox);
-		g_object_unref (outbox);
-
+		if (outbox) { /* this could fail in some cases */
+			num_messages = tny_folder_get_all_count (outbox);
+			g_object_unref (outbox);
+		} else {
+			g_warning ("%s: could not get outbox", __FUNCTION__);
+			num_messages = 0;
+		}
+		
 		if (num_messages != 0) {
 			/* Send mails */
 			g_object_unref (priv->account);
