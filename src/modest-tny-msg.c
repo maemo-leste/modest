@@ -775,12 +775,9 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 
 	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
 	
-	/* Add attachments */
-	if (msg != NULL) {
-		parts = TNY_LIST (tny_simple_list_new());
-		tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
-		tny_list_foreach (parts, add_if_attachment, &attachments_list);
-	}
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+	tny_list_foreach (parts, add_if_attachment, &attachments_list);
 
 	new_msg = create_reply_forward_mail (msg, header, from, signature, TRUE, reply_type,
 					     attachments_list);

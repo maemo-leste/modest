@@ -741,10 +741,7 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 				  ModestMailOperationCreateMsgCallback callback,
 				  gpointer userdata)
 {
-	ModestMailOperationPrivate *priv;
 	CreateMsgInfo *info = NULL;
-
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
 	info = g_slice_new0 (CreateMsgInfo);
 	info->mail_op = g_object_ref (self);
@@ -2916,6 +2913,8 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	state->total = 0;
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
 			0, state, NULL);
+
+	/* FIXME: we're leaking the state here, or? valgrind thinks so */
 	
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,

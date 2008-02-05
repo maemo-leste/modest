@@ -801,7 +801,7 @@ modest_attachments_view_get_sizes (ModestAttachmentsView *attachments_view,
 
 		if (!tny_mime_part_is_purged (part)) {
 			guint64 size;
-			*attachments_count ++;
+			(*attachments_count) ++;
 			size = modest_attachment_view_get_size (MODEST_ATTACHMENT_VIEW (att_view));
 			if (size == 0) {
 				/* we do a random estimation of the size of an attachment */
