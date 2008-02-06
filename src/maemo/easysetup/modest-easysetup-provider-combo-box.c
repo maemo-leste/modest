@@ -196,6 +196,9 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 	while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids) {
 		const gchar* provider_name = *iter_provider_names;
 		const gchar* provider_id = *iter_provider_ids;
+
+		gchar *provider_domain = modest_presets_get_domain (presets, provider_id);
+		gchar *provider_display_name = g_strdup_printf ("%s (%s)", provider_name, provider_domain);
 		
 		/* Prevent duplicate providers: */
 		if (g_slist_find_custom (provider_ids_used_already, 
@@ -208,14 +211,17 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 			
 			gtk_list_store_set(liststore, &iter, 
 					   MODEL_COL_ID, provider_id, 
-					   MODEL_COL_NAME, provider_name, -1);
+					   MODEL_COL_NAME, provider_display_name, -1);
 			
 			provider_ids_used_already = g_slist_prepend (
 				provider_ids_used_already, (gpointer)g_strdup (provider_id));
 		}
 
-			++iter_provider_names;
-			++iter_provider_ids;
+		g_free (provider_domain);
+		g_free (provider_display_name);
+		
+		++iter_provider_names;
+		++iter_provider_ids;
 	}
 	
 	/* Free the result of modest_presets_get_providers()
@@ -229,7 +235,9 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 	/* TODO: We need a Logical ID for this text. */
 	GtkTreeIter iter;
 	gtk_list_store_prepend (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, 0, MODEL_COL_NAME, _("mcen_va_serviceprovider_other"),
+	gtk_list_store_set (liststore, &iter,
+			    MODEL_COL_ID, 0,
+			    MODEL_COL_NAME, _("mcen_va_serviceprovider_other"),
 			    -1);
 	
 	/* Select the "Other" item: */
