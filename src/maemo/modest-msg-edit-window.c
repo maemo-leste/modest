@@ -179,6 +179,8 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 void vadj_changed (GtkAdjustment *adj, 
 		   ModestMsgEditWindow *window);
 
+static ModestPair *find_transport_from_message_sender (ModestPairList *transports,
+						       TnyMsg *msg);
 
 
 
@@ -490,6 +492,41 @@ get_transports (void)
 	g_slist_free (accounts); /* only free the accounts, not the elements,
 				  * because they are used in the pairlist */
 	return transports;
+}
+
+/**
+ * Search an (account, address) ModestPairList for a pair whose
+ * address matches the one in the From: header of a TnyMsg
+ *
+ * @result: A ModestPair * with a matching address, or NULL if none found
+ */
+static ModestPair *
+find_transport_from_message_sender (ModestPairList *transports, TnyMsg *msg)
+{
+	g_return_val_if_fail (transports, NULL);
+	g_return_val_if_fail (msg, NULL);
+
+	ModestPair *account_pair = NULL;
+	TnyHeader *header = tny_msg_get_header (msg);
+
+	if (header != NULL && tny_header_get_from (header)) {
+		char *from_addr = modest_text_utils_get_email_address (tny_header_get_from (header));
+		GSList *iter;
+		for (iter = transports; iter && !account_pair; iter = iter->next) {
+			ModestPair *pair = (ModestPair *) iter->data;
+			char *account_addr = modest_text_utils_get_email_address ((char *) pair->second);
+			if (account_addr && !strcasecmp(from_addr, account_addr)) {
+				account_pair = pair;
+			}
+			g_free (account_addr);
+		}
+		g_free (from_addr);
+	}
+
+	if (header)
+		g_object_unref (header);
+
+	return account_pair;
 }
 
 static void window_focus (GtkWindow *window,
@@ -1447,7 +1484,10 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 		
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 
-	account_pair = modest_pair_list_find_by_first_as_string (priv->from_field_protos, account_name);
+	account_pair = find_transport_from_message_sender (priv->from_field_protos, msg);
+	if (account_pair == NULL) {
+		account_pair = modest_pair_list_find_by_first_as_string (priv->from_field_protos, account_name);
+	}
 	if (account_pair != NULL)
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
 
