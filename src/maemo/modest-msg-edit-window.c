@@ -245,6 +245,7 @@ struct _ModestMsgEditWindowPrivate {
 	
 	ModestPairList *from_field_protos;
 	GtkWidget   *from_field;
+	const gchar *original_account_name;
 	
 	GtkWidget   *to_field;
 	GtkWidget   *cc_field;
@@ -1490,6 +1491,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	}
 	if (account_pair != NULL)
 		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
+
+	priv->original_account_name = account_pair ? (const gchar *) account_pair->first : NULL;
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
 	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
@@ -3010,6 +3013,7 @@ gboolean
 modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
+	const char *account_name;
 	GtkTextBuffer *buffer;
 
 	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->to_field));
@@ -3023,6 +3027,10 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 		return TRUE;
 	if (gtk_text_buffer_get_modified (priv->text_buffer))
 		return TRUE;
+	account_name = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
+		return TRUE;
+	}
 
 	return FALSE;
 }
