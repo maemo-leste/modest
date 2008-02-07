@@ -77,7 +77,7 @@
 
 
 /* toolbar */
-#define  MODEST_TOOLBAR_ICON_MAIL_SEND		"qgn_list_messagin_sent"
+#define  MODEST_TOOLBAR_ICON_MAIL_SEND		"qgn_toolb_messagin_send"
 #define  MODEST_TOOLBAR_ICON_NEW_MAIL		"qgn_list_messagin_editor"
 #define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	"qgn_toolb_messagin_sendreceive"
 #define  MODEST_TOOLBAR_ICON_REPLY		"qgn_toolb_messagin_reply"
