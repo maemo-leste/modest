@@ -1,3 +1,10 @@
+** 2008-W07:
+* added maemo-launcher support, which should improve startup speed, memory usage
+* fixed some (increasing rare) crashes
+* fixed attachment detection
+* fixed a number of focus issues
+* many small UI issues (focusing, icons etc.
+
 ** 2008-W06:
 * fixed another bunch of crashers
 * fixed the focus issue that caused addressbook not to work (editor)
