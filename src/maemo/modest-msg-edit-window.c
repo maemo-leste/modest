@@ -169,7 +169,7 @@ static void init_window (ModestMsgEditWindow *obj);
 
 gboolean scroll_drag_timeout (gpointer userdata);
 static void correct_scroll (ModestMsgEditWindow *w);
-static void correct_scroll_without_drag_check (ModestMsgEditWindow *w);
+static void correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focused);
 static void text_buffer_end_user_action (GtkTextBuffer *buffer,
 					 ModestMsgEditWindow *userdata);
 static void text_buffer_mark_set (GtkTextBuffer *buffer,
@@ -545,7 +545,7 @@ scroll_drag_timeout (gpointer userdata)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(win);
 
-	correct_scroll_without_drag_check (win);
+	correct_scroll_without_drag_check (win, TRUE);
 
 	priv->scroll_drag_timeout_id = 0;
 
@@ -553,7 +553,7 @@ scroll_drag_timeout (gpointer userdata)
 }
 
 static void
-correct_scroll_without_drag_check (ModestMsgEditWindow *w)
+correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focused)
 {
 	ModestMsgEditWindowPrivate *priv;
 	GtkTextMark *insert;
@@ -566,7 +566,7 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
 
-	if (!gtk_widget_is_focus (priv->msg_body))
+	if (only_if_focused && !gtk_widget_is_focus (priv->msg_body))
 		return;
 
 	insert = gtk_text_buffer_get_insert (priv->text_buffer);
@@ -580,7 +580,7 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w)
 	
 	if ((offset + rectangle.y + rectangle.height) > 
 	    ((gint) (vadj->value +vadj->page_size))) {
-		new_value = (offset + rectangle.y) + vadj->page_size * 0.75;
+		new_value = (offset + rectangle.y) - vadj->page_size * 0.25;
 		if (new_value > vadj->upper - vadj->page_size)
 			new_value = vadj->upper - vadj->page_size;
 	} else if ((offset + rectangle.y) < ((gint) vadj->value)) {
@@ -620,7 +620,7 @@ correct_scroll (ModestMsgEditWindow *w)
 		return;
 	}
 
-	correct_scroll_without_drag_check (w);
+	correct_scroll_without_drag_check (w, TRUE);
 }
 
 static void
@@ -3374,6 +3374,7 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 	if (result) {
 		gtk_text_buffer_select_range (priv->text_buffer, &match_start, &match_end);
 		gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (priv->msg_body), &match_start, 0.0, TRUE, 0.0, 0.0);
+		correct_scroll_without_drag_check (MODEST_MSG_EDIT_WINDOW (window), FALSE);
 	} else {
 		g_free (priv->last_search);
 		priv->last_search = NULL;
