@@ -3963,9 +3963,11 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	GtkWidget *folder_view = NULL;
 	ModestTnyFolderRules rules;
 
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW(self));
+	
 	if (!selected)
 		return;
-
+	
 	/* Get the OK button */
 	dialog = gtk_widget_get_ancestor (GTK_WIDGET (self), GTK_TYPE_DIALOG);
 	if (!dialog)
@@ -4047,25 +4049,36 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		}
 		g_object_unref (moved_folder);
 	} else {
-		TnyHeader *header = NULL;
 		TnyFolder *src_folder = NULL;
 
 		/* Moving a message */
 		if (MODEST_IS_MSG_VIEW_WINDOW (user_data)) {
-			header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (user_data));
-			src_folder = tny_header_get_folder (header);
-			g_object_unref (header);
+
+			TnyHeader *header = NULL;
+			header = modest_msg_view_window_get_header
+				(MODEST_MSG_VIEW_WINDOW (user_data));
+			if (!TNY_IS_HEADER(header))
+				g_warning ("%s: could not get source header", __FUNCTION__);
+			else
+				src_folder = tny_header_get_folder (header);
+
+			if (header)
+				g_object_unref (header);
 		} else {
 			src_folder = 
-				TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
+				TNY_FOLDER (modest_folder_view_get_selected
+					    (MODEST_FOLDER_VIEW (folder_view)));
 		}
 
-		/* Do not allow to move the msg to the same folder */
-		/* Do not allow to move the msg to an account */
-		if ((gpointer) src_folder == (gpointer) folder_store ||
-		    TNY_IS_ACCOUNT (folder_store))
-			ok_sensitive = FALSE;
-		g_object_unref (src_folder);
+		if (TNY_IS_FOLDER(src_folder)) {
+			/* Do not allow to move the msg to the same folder */
+			/* Do not allow to move the msg to an account */
+			if ((gpointer) src_folder == (gpointer) folder_store ||
+			    TNY_IS_ACCOUNT (folder_store))
+				ok_sensitive = FALSE;
+			g_object_unref (src_folder);
+		} else
+			g_warning ("%s: could not get source folder", __FUNCTION__);
 	}
 
  end:
