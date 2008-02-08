@@ -2287,6 +2287,13 @@ _clipboard_is_empty (ModestWindow *win)
 }
 
 static gboolean
+_forward_search_image_char (gunichar ch,
+			    gpointer userdata)
+{
+	return (ch == 0xFFFC);
+}
+
+static gboolean
 _invalid_clipboard_selected (ModestWindow *win,
 			     ModestDimmingRule *rule) 
 {
@@ -2303,8 +2310,23 @@ _invalid_clipboard_selected (ModestWindow *win,
 		gboolean has_selection = FALSE;
 		if (GTK_IS_TEXT_VIEW (focused)) {
 			GtkTextBuffer *buffer = NULL;
+			GtkTextIter start, end;
 			buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused));
 			has_selection = gtk_text_buffer_get_has_selection (GTK_TEXT_BUFFER (buffer));
+
+			/* check there are no images in selection */
+			if (has_selection) {
+				gtk_text_buffer_get_selection_bounds (GTK_TEXT_BUFFER (buffer), &start, &end);
+				if (gtk_text_iter_get_char (&start)== 0xFFFC)
+					has_selection = FALSE;
+				else {
+					gtk_text_iter_backward_char (&end);
+					if (gtk_text_iter_forward_find_char (&start, _forward_search_image_char,
+									  NULL, &end))
+						has_selection = FALSE;
+				}
+				    
+			}
 		} else if (GTK_IS_EDITABLE (focused)) {
 			has_selection = gtk_editable_get_selection_bounds (GTK_EDITABLE (focused), NULL, NULL);
 		}
