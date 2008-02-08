@@ -56,4 +56,25 @@ gchar* modest_tny_mime_part_get_header_value (TnyMimePart *part, const gchar *he
 
 gboolean modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part);
 
+/**
+ * modest_tny_mime_part_is_msg:
+ * @part: a #TnyMimePart
+ *
+ * determines if this is a message (it's a TnyMsg and it's not a
+ * file attached as the top mime part of the TnyMsg).
+ *
+ * Returns: %TRUE if it's a real message, %FALSE otherwise
+ */
+gboolean modest_tny_mime_part_is_msg (TnyMimePart *part);
+
+/**
+ * modest_tny_mime_part_to_string:
+ * @part: a #TnyMimePart
+ * @indent: indent level (should be 0)
+ *
+ * Shows in stdout a text representation of the mime structure of
+ * the message. This is intended for debugging.
+ */
+void modest_tny_mime_part_to_string (TnyMimePart *part, gint indent);
+
 #endif /*__MODEST_TNY_MIME_PART_H__*/

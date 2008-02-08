@@ -125,4 +125,72 @@ modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part)
 	return TRUE;
 }
 
+gboolean
+modest_tny_mime_part_is_msg (TnyMimePart *part)
+{
+	const gchar *content_type;
+
+	if (!TNY_IS_MSG (part))
+		return FALSE;
+
+	content_type = tny_mime_part_get_content_type (part);
+	if ((g_str_has_prefix (content_type, "message/rfc822") ||
+	     g_str_has_prefix (content_type, "multipart/") ||
+	     g_str_has_prefix (content_type, "text/"))) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+void 
+modest_tny_mime_part_to_string (TnyMimePart *part, gint indent)
+{
+	return;
+	gint i;
+	GString *indent_prefix;
+	TnyList *list, *pairs_list;
+	TnyIterator *iter, *pairs_iter;
+	
+	indent_prefix = g_string_new ("");
+	for (i = 0; i < indent; i++) {
+		indent_prefix = g_string_append_c (indent_prefix, ' ');
+	}
+
+	if (TNY_IS_MSG (part)) {
+		TnyHeader *header;
+
+		header = tny_msg_get_header (TNY_MSG (part));
+		g_print ("(%s(MSG))\n", indent_prefix->str);
+		g_object_unref (header);
+	}
+
+	list = tny_simple_list_new ();
+	tny_mime_part_get_parts (part, list);
+	pairs_list = tny_simple_list_new ();
+	tny_mime_part_get_header_pairs (part, pairs_list);
+	g_print ("%s(content=%s parts=%d location=%s)\n", indent_prefix->str, 
+		 tny_mime_part_get_content_type (part),
+		 tny_list_get_length (list),
+		 tny_mime_part_get_content_location (part));
+	for (pairs_iter = tny_list_create_iterator (pairs_list);
+	     !tny_iterator_is_done (pairs_iter);
+	     tny_iterator_next (pairs_iter)) {
+		TnyPair *pair = TNY_PAIR (tny_iterator_get_current (pairs_iter));
+		g_print ("%s(%s:%s)\n", indent_prefix->str, tny_pair_get_name (pair), tny_pair_get_value (pair));
+		g_object_unref (pair);
+	}
+	for (iter = tny_list_create_iterator (list);
+	     !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyMimePart *child;
+		child = (TnyMimePart *) tny_iterator_get_current (iter);
+		modest_tny_mime_part_to_string (child, indent + 3);
+		g_object_unref (child);
+	}
+	g_object_unref (iter);
+	g_object_unref (list);
+
+	g_string_free (indent_prefix, TRUE);
+}
 

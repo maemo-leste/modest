@@ -401,9 +401,26 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	TnyMimePart *part = NULL;
 	TnyList *parts = NULL;
 	TnyIterator *iter = NULL;
+	gchar *header_content_type;
+	gchar *header_content_type_lower;
 	
 	if (!msg)
 		return NULL;
+
+	/* If it's an application multipart, then we don't get into as we don't
+	 * support them (for example application/sml or wap messages */
+	header_content_type = modest_tny_mime_part_get_header_value (msg, "Content-Type");
+	header_content_type = g_strstrip (header_content_type);
+	header_content_type_lower = header_content_type?g_ascii_strdown (header_content_type, -1):NULL;
+	if (header_content_type_lower && 
+	    g_str_has_prefix (header_content_type_lower, "multipart/") &&
+	    strstr (header_content_type_lower, "application/")) {
+		g_free (header_content_type_lower);
+		g_free (header_content_type);
+		return NULL;
+	}
+	g_free (header_content_type_lower);
+	g_free (header_content_type);
 
 	parts = TNY_LIST (tny_simple_list_new());
 	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
@@ -412,8 +429,15 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 
 	/* no parts? assume it's single-part message */
 	if (tny_iterator_is_done(iter)) {
+		const gchar *content_type;
 		g_object_unref (G_OBJECT(iter));
-		return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
+		content_type = tny_mime_part_get_content_type (msg);
+		/* if this part cannot be a supported body return NULL */
+		if (!g_str_has_prefix (content_type, "text/")) {
+			return NULL;
+		} else {
+			return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
+		}
 	} else {
 		do {
 			gchar *tmp, *content_type = NULL;
@@ -542,11 +566,12 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	else {
 		/* for attachements; inline if there is a text part, and include the
 		 * full old mail if there was none */
-		if (no_text_part) 
+		if (no_text_part) {
 			new_msg = modest_formatter_attach (formatter, msg, header);
-		else 
+		} else { 
 			new_msg = modest_formatter_inline  (formatter, body, header,
 							    attachments);
+		}
 	}
 	
 	g_object_unref (G_OBJECT(formatter));
@@ -588,6 +613,10 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	g_object_unref (G_OBJECT (new_header));
 	g_object_unref (G_OBJECT (header));
 	/* ugly to unref it here instead of in the calling func */
+
+	if (!is_reply & !no_text_part) {
+		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
+	}
 
 	return new_msg;
 }
@@ -636,7 +665,6 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 
 	new_msg = create_reply_forward_mail (msg, NULL, from, signature, FALSE, forward_type,
 					     attachments_list);
-	add_attachments (TNY_MIME_PART (new_msg), attachments_list, FALSE);
 
 	/* Clean */
 	if (attachments_list) {

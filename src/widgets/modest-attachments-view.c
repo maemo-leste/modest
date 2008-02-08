@@ -130,8 +130,36 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	 * embedded images in body */
 	msg_content_type = tny_mime_part_get_content_type (TNY_MIME_PART (priv->msg));
 	if ((msg_content_type != NULL) && !strcasecmp (msg_content_type, "multipart/related")) {
-		gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
-		return;
+		gchar *header_content_type;
+		gchar *header_content_type_lower;
+		gboolean application_multipart = FALSE;
+		header_content_type = modest_tny_mime_part_get_header_value (TNY_MIME_PART (priv->msg), "Content-Type");
+		header_content_type = g_strstrip (header_content_type);
+		header_content_type_lower = header_content_type?g_ascii_strdown (header_content_type, -1):NULL;
+		
+		if (!strstr (header_content_type_lower, "application/"))
+			application_multipart = TRUE;
+		
+		g_free (header_content_type);
+		g_free (header_content_type_lower);
+		if (application_multipart) {
+			gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
+			return;
+		}
+	} else {
+		gchar *lower;
+		gboolean direct_attach;
+
+		lower = g_ascii_strdown (msg_content_type, -1);
+		direct_attach = (!g_str_has_prefix (lower, "message/rfc822") && 
+				 !g_str_has_prefix (lower, "multipart") && 
+				 !g_str_has_prefix (lower, "text/"));
+		g_free (lower);
+		if (direct_attach) {
+			modest_attachments_view_add_attachment (attachments_view, TNY_MIME_PART (msg), TRUE, 0);
+			gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
+			return;
+		}
 	}
 
 	parts = TNY_LIST (tny_simple_list_new ());

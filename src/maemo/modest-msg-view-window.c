@@ -55,9 +55,11 @@
 #include <modest-tny-account.h>
 #include <modest-mime-part-view.h>
 #include <modest-isearch-view.h>
+#include <modest-tny-mime-part.h>
 #include <math.h>
 #include <errno.h>
 #include <glib/gstdio.h>
+#include <modest-debug.h>
 
 #define DEFAULT_FOLDER "MyDocs/.documents"
 
@@ -844,6 +846,10 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	ModestHeaderView *header_view = NULL;
 	ModestWindow *main_window = NULL;
 	ModestWindowMgr *mgr = NULL;
+
+	MODEST_DEBUG_BLOCK (
+	       modest_tny_mime_part_to_string (TNY_MIME_PART (msg), 0);
+	);
 
 	mgr = modest_runtime_get_window_mgr ();
 	window = MODEST_MSG_VIEW_WINDOW (modest_window_mgr_get_msg_view_window (mgr));
@@ -2342,7 +2348,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 		return;
 	}
 
-	if (!TNY_IS_MSG (mime_part)) {
+	if (!modest_tny_mime_part_is_msg (mime_part)) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		const gchar *content_type;
@@ -2578,7 +2584,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		iter = tny_list_create_iterator (mime_parts);
 		TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 		g_object_unref (iter);
-		if (!TNY_IS_MSG (mime_part) && tny_mime_part_is_attachment (mime_part)) {
+		if (!modest_tny_mime_part_is_msg (mime_part) && tny_mime_part_is_attachment (mime_part)) {
 			filename = tny_mime_part_get_filename (mime_part);
 		} else {
 			g_warning ("Tried to save a non-file attachment");
@@ -2723,7 +2729,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 		iter = tny_list_create_iterator (mime_parts);
 		part = (TnyMimePart *) tny_iterator_get_current (iter);
 		g_object_unref (iter);
-		if (TNY_IS_MSG (part)) {
+		if (modest_tny_mime_part_is_msg (part)) {
 			TnyHeader *header;
 			header = tny_msg_get_header (TNY_MSG (part));
 			filename = tny_header_get_subject (header);

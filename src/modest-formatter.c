@@ -189,8 +189,10 @@ modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 	construct_from_text (body_part, "", priv->content_type);
 	g_object_unref (body_part);
 
-	/* Add parts */
-	tny_mime_part_add_part (TNY_MIME_PART (new_msg), TNY_MIME_PART (msg));
+	if (msg) {
+		/* Add parts */
+		tny_mime_part_add_part (TNY_MIME_PART (new_msg), TNY_MIME_PART (msg));
+	}
 
 	return new_msg;
 }
