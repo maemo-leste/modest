@@ -266,12 +266,16 @@ on_combo_security_changed (GtkComboBox *widget, gpointer user_data)
 static void
 modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEditWindow *self)
 {
-	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
-		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
-	
-	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
-	gtk_box_set_spacing (GTK_BOX (box), MODEST_MARGIN_NONE);
-	gtk_container_set_border_width (GTK_CONTAINER (box), MODEST_MARGIN_HALF);
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv; 
+	GtkWidget *dialog_box;
+	GtkWidget *scrolled_window, *vbox;
+
+	priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	dialog_box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
+	gtk_box_set_spacing (GTK_BOX (dialog_box), MODEST_MARGIN_NONE);
+	gtk_container_set_border_width (GTK_CONTAINER (dialog_box), MODEST_MARGIN_HALF);
+
+	vbox = gtk_vbox_new (FALSE, 0);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -288,7 +292,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	GtkWidget *caption = hildon_caption_new (sizegroup, 
 		_("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->entry_outgoingserver);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The secure authentication widgets: */
@@ -298,7 +302,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
 	g_signal_connect (G_OBJECT (priv->combo_outgoing_auth), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->combo_outgoing_auth);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The username widgets: */	
@@ -309,7 +313,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_username);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the username, 
@@ -332,7 +336,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		_("mail_fi_password"), priv->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_password);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The secure connection widgets: */	
@@ -345,7 +349,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		priv->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->combo_outgoing_security);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* The port number widgets: */
@@ -357,7 +361,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	g_signal_connect(G_OBJECT(priv->entry_port), "range-error", G_CALLBACK(on_range_error), self);
 	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
 	gtk_widget_show (priv->entry_port);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
@@ -371,12 +375,20 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	priv->is_dirty = FALSE;
 	priv->range_error_occured = FALSE;
 	g_signal_connect(G_OBJECT(self), "response", G_CALLBACK(on_response), self);
-	g_signal_connect(G_OBJECT(box), "set-focus-child", G_CALLBACK(on_set_focus_child), self);
+	g_signal_connect(G_OBJECT(vbox), "set-focus-child", G_CALLBACK(on_set_focus_child), self);
 
 	priv->range_error_banner_timeout = 0;
 	priv->account_name = NULL;
+
+	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), vbox);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_box_pack_start (GTK_BOX (dialog_box), scrolled_window, TRUE, TRUE, 0);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (vbox), 
+					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolled_window)));
 	
-	gtk_widget_show (box);
+	gtk_widget_show_all (dialog_box);
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, 220);
 	
 	
 	/* When this window is shown, hibernation should not be possible, 
