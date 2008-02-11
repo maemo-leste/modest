@@ -98,6 +98,13 @@ static void disconnect_vadjustment (ModestGtkhtmlMsgView *obj);
 static void disconnect_hadjustment (ModestGtkhtmlMsgView *obj);
 static gboolean idle_readjust_scroll (ModestGtkhtmlMsgView *obj);
 
+/* vertical panning implementation */
+#ifdef MAEMO_CHANGES
+static gboolean motion_notify_event (GtkWidget *widget,
+				     GdkEventMotion *event,
+				     gpointer userdata);
+#endif
+
 /* GtkContainer methods */
 static void forall (GtkContainer *container, gboolean include_internals,
 		    GtkCallback callback, gpointer userdata);
@@ -1043,6 +1050,10 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 				       G_CALLBACK(on_fetch_url), obj);
 	g_signal_connect (G_OBJECT(priv->body_view), "link_hover",
 				       G_CALLBACK(on_link_hover), obj);
+#ifdef MAEMO_CHANGES
+	g_signal_connect (G_OBJECT(priv->body_view), "motion-notify-event",
+			  G_CALLBACK (motion_notify_event), obj);
+#endif
 
 	g_signal_connect (G_OBJECT (priv->mail_header_view), "recpt-activated", 
 			  G_CALLBACK (on_recpt_activated), obj);
@@ -1125,6 +1136,35 @@ modest_gtkhtml_msg_view_destroy (GtkObject *obj)
 }
 
 /* INTERNAL METHODS */
+
+#ifdef MAEMO_CHANGES
+static gboolean 
+motion_notify_event (GtkWidget *widget,
+		     GdkEventMotion *event,
+		     gpointer userdata)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (userdata);
+
+	/* Use panning information in gtkhtml widget to support also vertical panning */
+
+	if (GTK_HTML (widget)->panning) {
+		gint y, dy;
+		gdouble value;
+
+		gdk_window_get_pointer (GTK_LAYOUT (widget)->bin_window, NULL, &y, NULL);
+		dy = y - GTK_HTML (widget)->lasty;
+		value = priv->vadj->value - (gdouble) dy;
+
+		if (value < priv->vadj->lower)
+			value = priv->vadj->lower;
+		else if (value > priv->vadj->upper - priv->vadj->page_size)
+			value = priv->vadj->upper - priv->vadj->page_size;
+		gtk_adjustment_set_value (priv->vadj, value);
+		
+	}
+	return FALSE;
+}
+#endif
 
 static GtkAdjustment *
 get_vadjustment (ModestGtkhtmlMsgView *self)
