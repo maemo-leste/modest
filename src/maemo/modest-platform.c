@@ -1297,8 +1297,9 @@ modest_platform_set_update_interval (guint minutes)
 	 * Also use ALARM_EVENT_ACTIVATION so that modest is started (without UI) to get emails 
 	 * This is why we want to use the Alarm API instead of just g_timeout_add().
 	 * (The old maemo email-client did this, though it isn't specified in the UI spec.)
+	 * ALARM_EVENT_CONNECTED will prevent the alarm from being called in case that the device is offline
          */
-	event->flags = ALARM_EVENT_NO_DIALOG | ALARM_EVENT_ACTIVATION;
+	event->flags = ALARM_EVENT_NO_DIALOG | ALARM_EVENT_ACTIVATION | ALARM_EVENT_CONNECTED;
 	
 	alarm_cookie = alarm_event_add (event);
 
