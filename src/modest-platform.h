@@ -422,6 +422,12 @@ typedef void (*ModestConnectedPerformer) (gboolean canceled,
 					  TnyAccount *account, 
 					  gpointer user_data);
 
+typedef struct {
+	TnyAccount *dst_account;
+	ModestConnectedPerformer callback;
+	gpointer data;
+} DoubleConnectionInfo;
+
 /*
  * modest_platform_connect_and_perform:
  * @force: force the device to connect if we're offline, if FALSE then it does not connect if required
@@ -457,6 +463,19 @@ void modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
 						    TnyFolderStore *folder_store,
 						    ModestConnectedPerformer callback, 
 						    gpointer user_data);
+
+/*
+ * modest_platform_double_connect_and_perform:
+ * @parent_window: the parent #GtkWindow for any interactive or progress feedback UI.
+ * @folder_store: The folder store (folder or account) that might need a connection in subsequent operations.
+ * @callback: will be called when finished, can be NULL
+ * @info: 
+ * 
+ */
+void modest_platform_double_connect_and_perform (GtkWindow *parent_window, 
+						 gboolean force,
+						 TnyFolderStore *folder_store,
+						 DoubleConnectionInfo *info);
 
 /**
  * modest_platform_get_account_settings_dialog:

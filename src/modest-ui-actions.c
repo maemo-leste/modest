@@ -4655,36 +4655,6 @@ xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
 }
 
 typedef struct {
-	TnyAccount *dst_account;
-	ModestConnectedPerformer callback;
-	gpointer data;
-} DoubleConnectionInfo;
-
-static void
-src_account_connect_performer (gboolean canceled, 
-			       GError *err,
-			       GtkWindow *parent_window, 
-			       TnyAccount *src_account, 
-			       gpointer user_data)
-{
-	DoubleConnectionInfo *info = (DoubleConnectionInfo *) user_data;
-
-	if (canceled || err) {
-		/* If there was any error call the user callback */
-		info->callback (canceled, err, parent_window, src_account, info->data);
-	} else {
-		/* Connect the destination account */
-		modest_platform_connect_if_remote_and_perform (parent_window, TRUE, 
-							       TNY_FOLDER_STORE (info->dst_account),
-							       info->callback, info->data);
-	}
-
-	/* Free the info object */
-	g_object_unref (info->dst_account);
-	g_slice_free (DoubleConnectionInfo, info);
-}
-
-typedef struct {
 	TnyFolder *src_folder;
 	TnyFolderStore *dst_folder;
 	gboolean delete_original;
@@ -4757,6 +4727,15 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	g_free (user_data);
 }
 
+static TnyAccount *
+get_account_from_folder_store (TnyFolderStore *folder_store) 
+{
+	if (TNY_IS_ACCOUNT (folder_store))
+		return g_object_ref (folder_store);
+	else
+		return tny_folder_get_account (TNY_FOLDER (folder_store));
+}
+
 /*
  * UI handler for the "Move to" action when invoked from the
  * ModestMainWindow
@@ -4785,29 +4764,30 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 
 		/* Allow only to transfer folders to the local root folder */
 		if (TNY_IS_ACCOUNT (dst_folder) && 
-		    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder)) {
+		    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder) &&
+		    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (dst_folder))) {
 			do_xfer = FALSE;
 		} else if (!TNY_IS_FOLDER (src_folder)) {
 			g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
 			do_xfer = FALSE;
-		} /* else if (!online && modest_tny_folder_store_is_remote(src_folder)) {
-			guint num_headers = tny_folder_get_all_count(TNY_FOLDER (src_folder));
-			TnyAccount *account = tny_folder_get_account (TNY_FOLDER (src_folder));
-			if (!connect_to_get_msg(MODEST_WINDOW (win), num_headers, account))
-				do_xfer = FALSE;
-			g_object_unref (account);
-		}*/
+		}
 
-		if (do_xfer) {
+		if (do_xfer) {			
 			MoveFolderInfo *info = g_new0 (MoveFolderInfo, 1);
-			info->src_folder = TNY_FOLDER (src_folder);
-			info->dst_folder = dst_folder;
+			DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
+
+			info->src_folder = g_object_ref (src_folder);
+			info->dst_folder = g_object_ref (dst_folder);
 			info->delete_original = TRUE;
 			info->folder_view = folder_view;
-			g_object_ref (G_OBJECT (info->src_folder));
-			g_object_ref (G_OBJECT (info->dst_folder));
-			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
-				    TNY_FOLDER_STORE (dst_folder), on_move_folder_cb, info);
+
+			connect_info->callback = on_move_folder_cb;
+			connect_info->dst_account = get_account_from_folder_store (TNY_FOLDER_STORE (dst_folder));
+			connect_info->data = info;
+
+			modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+								   TNY_FOLDER_STORE (src_folder), 
+								   connect_info);
 		}
 	} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
 		gboolean do_xfer = TRUE;
@@ -4840,15 +4820,14 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			g_object_unref(headers);
 		}
 		if (do_xfer) /* Transfer messages */ {
-			DoubleConnectionInfo *info = g_slice_new (DoubleConnectionInfo);
-			info->callback = xfer_messages_from_move_to_cb;
-			info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
-			info->data = g_object_ref (dst_folder);
-
-			modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
-								      TNY_FOLDER_STORE (src_folder), 
-								      src_account_connect_performer, 
-								      info);
+			DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
+			connect_info->callback = xfer_messages_from_move_to_cb;
+			connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
+			connect_info->data = g_object_ref (dst_folder);
+			
+			modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+								   TNY_FOLDER_STORE (src_folder), 
+								   connect_info);
 		}
 	}
 

@@ -2144,6 +2144,44 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  	return;
 }
 
+static void
+src_account_connect_performer (gboolean canceled, 
+			       GError *err,
+			       GtkWindow *parent_window, 
+			       TnyAccount *src_account, 
+			       gpointer user_data)
+{
+	DoubleConnectionInfo *info = (DoubleConnectionInfo *) user_data;
+
+	if (canceled || err) {
+		/* If there was any error call the user callback */
+		info->callback (canceled, err, parent_window, src_account, info->data);
+	} else {
+		/* Connect the destination account */
+		modest_platform_connect_if_remote_and_perform (parent_window, TRUE, 
+							       TNY_FOLDER_STORE (info->dst_account),
+							       info->callback, info->data);
+	}
+
+	/* Free the info object */
+	g_object_unref (info->dst_account);
+	g_slice_free (DoubleConnectionInfo, info);
+}
+
+
+void 
+modest_platform_double_connect_and_perform (GtkWindow *parent_window, 
+					    gboolean force,
+					    TnyFolderStore *folder_store,
+					    DoubleConnectionInfo *connect_info)
+{
+	modest_platform_connect_if_remote_and_perform(parent_window, 
+						      force,
+						      folder_store, 
+						      src_account_connect_performer, 
+						      connect_info);
+}
+
 GtkWidget *
 modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
 {
