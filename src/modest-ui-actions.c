@@ -3271,9 +3271,11 @@ modest_ui_actions_on_cut (GtkAction *action,
 		GtkTextBuffer *buffer;
 
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
-		gtk_text_buffer_cut_clipboard (buffer, clipboard, TRUE);
-		gtk_clipboard_set_can_store (clipboard, NULL, 0);
-		gtk_clipboard_store (clipboard);
+		if (modest_text_utils_buffer_selection_is_valid (buffer)) {
+			gtk_text_buffer_cut_clipboard (buffer, clipboard, TRUE);
+			gtk_clipboard_set_can_store (clipboard, NULL, 0);
+			gtk_clipboard_store (clipboard);
+		}
 	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
 		TnyList *header_list = modest_header_view_get_selected_headers (
 				MODEST_HEADER_VIEW (focused_widget));
@@ -3330,9 +3332,11 @@ modest_ui_actions_on_copy (GtkAction *action,
 	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
 		GtkTextBuffer *buffer;
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
-		gtk_text_buffer_copy_clipboard (buffer, clipboard);
-		gtk_clipboard_set_can_store (clipboard, NULL, 0);
-		gtk_clipboard_store (clipboard);
+		if (modest_text_utils_buffer_selection_is_valid (buffer)) {
+			gtk_text_buffer_copy_clipboard (buffer, clipboard);
+			gtk_clipboard_set_can_store (clipboard, NULL, 0);
+			gtk_clipboard_store (clipboard);
+		}
 	} else if (MODEST_IS_HEADER_VIEW (focused_widget)) {
 		TnyList *header_list = modest_header_view_get_selected_headers (
 				MODEST_HEADER_VIEW (focused_widget));

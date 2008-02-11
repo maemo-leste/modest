@@ -435,5 +435,16 @@ gchar *      modest_text_utils_label_get_selection (GtkLabel *label);
 gboolean     modest_text_utils_is_forbidden_char (const gchar character,
 						  ModestTextUtilsForbiddenCharType type);
 
+/**
+ * modest_text_utils_buffer_selection_is_valid:
+ * @buffer: a #GtkTextBuffer
+ *
+ * Checks if @buffer contains a valid selection for cut/copy. This means it's
+ * not empty, and no images are in the selection.
+ *
+ * Returns: %TRUE if there's a valid selection, false otherwise.
+ */
+gboolean     modest_text_utils_buffer_selection_is_valid (GtkTextBuffer *buffer);
+
 
 #endif /* __MODEST_TEXT_UTILS_H__ */

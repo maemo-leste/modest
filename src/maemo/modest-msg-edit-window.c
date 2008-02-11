@@ -641,6 +641,30 @@ text_buffer_mark_set (GtkTextBuffer *buffer,
 	gtk_text_buffer_end_user_action (buffer);
 }
 
+static void
+cut_clipboard_check (GtkTextView *text_view,
+		     gpointer userdata)
+{
+	GtkTextBuffer *buffer;
+	
+	buffer = gtk_text_view_get_buffer (text_view);
+	if (!modest_text_utils_buffer_selection_is_valid (buffer)) {
+		g_signal_stop_emission_by_name ((gpointer )text_view, "cut-clipboard");
+	}
+}
+
+static void
+copy_clipboard_check (GtkTextView *text_view,
+		     gpointer userdata)
+{
+	GtkTextBuffer *buffer;
+	
+	buffer = gtk_text_view_get_buffer (text_view);
+	if (!modest_text_utils_buffer_selection_is_valid (buffer)) {
+		g_signal_stop_emission_by_name ((gpointer )text_view, "copy-clipboard");
+	}
+}
+
 void vadj_changed (GtkAdjustment *adj,
 		   ModestMsgEditWindow *window)
 {
@@ -719,6 +743,9 @@ connect_signals (ModestMsgEditWindow *obj)
 	priv->default_clipboard_change_handler_id = 
 		g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_CLIPBOARD)), "owner-change",
 				  G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
+
+	g_signal_connect (G_OBJECT (priv->msg_body), "cut-clipboard", G_CALLBACK (cut_clipboard_check), NULL);
+	g_signal_connect (G_OBJECT (priv->msg_body), "copy-clipboard", G_CALLBACK (copy_clipboard_check), NULL);
 
 }
 

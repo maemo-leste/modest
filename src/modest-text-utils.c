@@ -1651,3 +1651,37 @@ modest_text_utils_label_get_selection (GtkLabel *label)
 		return g_strdup ("");
 	}
 }
+
+static gboolean
+_forward_search_image_char (gunichar ch,
+			    gpointer userdata)
+{
+	return (ch == 0xFFFC);
+}
+
+gboolean
+modest_text_utils_buffer_selection_is_valid (GtkTextBuffer *buffer)
+{
+	gboolean result;
+	GtkTextIter start, end;
+
+	g_return_val_if_fail (GTK_IS_TEXT_BUFFER (buffer), FALSE);
+
+	result = gtk_text_buffer_get_has_selection (GTK_TEXT_BUFFER (buffer));
+
+	/* check there are no images in selection */
+	if (result) {
+		gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
+		if (gtk_text_iter_get_char (&start)== 0xFFFC)
+			result = FALSE;
+		else {
+			gtk_text_iter_backward_char (&end);
+			if (gtk_text_iter_forward_find_char (&start, _forward_search_image_char,
+							     NULL, &end))
+				result = FALSE;
+		}
+				    
+	}
+
+	return result;
+}
