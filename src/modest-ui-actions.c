@@ -2957,6 +2957,7 @@ on_delete_folder_cb (gboolean canceled,
 	if (!MODEST_IS_MAIN_WINDOW(parent_window) || canceled || (err!=NULL)) {
 		g_object_unref (G_OBJECT (info->folder));
 		g_free (info);
+		return;
 	}
 	
 	folder_view = modest_main_window_get_child_widget (
