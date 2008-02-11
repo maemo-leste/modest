@@ -371,6 +371,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 			!(state->done == 1 && state->total == 100);
 
 		switch (state->op_type) {
+		case MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE:		
 		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
 			if (determined)
  				msg = g_strdup_printf(_("mcen_me_receiving"),
