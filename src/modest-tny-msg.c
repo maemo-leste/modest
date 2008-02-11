@@ -251,7 +251,7 @@ copy_mime_part (TnyMimePart *part)
 	attachment_cid = tny_mime_part_get_content_id (part);
 	
 	/* fill the stream */
- 	attachment_stream = tny_mime_part_get_stream (part);
+ 	attachment_stream = tny_mime_part_get_decoded_stream (part);
 	enc = tny_mime_part_get_transfer_encoding (part);
 	tny_stream_reset (attachment_stream);
 	tny_mime_part_construct (result,
