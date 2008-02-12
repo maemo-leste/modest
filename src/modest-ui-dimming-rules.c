@@ -2607,7 +2607,7 @@ _invalid_account_for_purge (ModestWindow *win,
 {
 	const gchar *account_name;
 	ModestTnyAccountStore *account_store;
-	TnyAccount *store_account;
+	TnyAccount *store_account = NULL;
 	gboolean result = FALSE;
 	const gchar *protocol_name;
 

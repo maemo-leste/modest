@@ -2437,7 +2437,7 @@ typedef struct
 {
 	GList *pairs;
 	GtkWidget *banner;
-	gboolean result;
+	GnomeVFSResult result;
 } SaveMimePartInfo;
 
 static void save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct);
@@ -2470,16 +2470,16 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	if (info->pairs != NULL) {
 		save_mime_part_to_file (info);
 	} else {
-		gboolean result;
-		result = info->result;
-
 		/* This is a GDK lock because we are an idle callback and
 	 	 * hildon_banner_show_information is or does Gtk+ code */
 
 		gdk_threads_enter (); /* CHECKED */
 		save_mime_part_info_free (info, TRUE);
-		if (result) {
+		if (info->result == GNOME_VFS_OK) {
 			hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
+		} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
+			hildon_banner_show_information (NULL, NULL, dgettext("ke-recv", 
+									     "cerm_device_memory_full"));
 		} else {
 			hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
 		}
@@ -2492,26 +2492,22 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 static gpointer
 save_mime_part_to_file (SaveMimePartInfo *info)
 {
-	GnomeVFSResult result;
 	GnomeVFSHandle *handle;
 	TnyStream *stream;
 	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
-	gboolean decode_result = TRUE;
 
-	result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
-	if (result == GNOME_VFS_OK) {
+	info->result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
+	if (info->result == GNOME_VFS_OK) {
 		stream = tny_vfs_stream_new (handle);
 		if (tny_mime_part_decode_to_stream (pair->part, stream, NULL) < 0) {
-			decode_result = FALSE;
+			info->result = GNOME_VFS_ERROR_IO;
 		}
 		g_object_unref (G_OBJECT (stream));
 		g_object_unref (pair->part);
 		g_slice_free (SaveMimePartPair, pair);
 		info->pairs = g_list_delete_link (info->pairs, info->pairs);
-		info->result = decode_result;
 	} else {
 		save_mime_part_info_free (info, FALSE);
-		info->result = FALSE;
 	}
 
 	g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
