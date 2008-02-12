@@ -727,6 +727,19 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		}
 		if (!dimmed) {
+			dimmed = state->sent_in_progress;
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+		}
+		if (!dimmed) {
+			dimmed = state->any_marked_as_deleted;
+			if (dimmed) {
+				gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
+				modest_dimming_rule_set_notification (rule, msg);
+				g_free (msg);
+			}
+		}
+		if (!dimmed) {
 			dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
  			if (dimmed) {
 				gchar *num = NULL, *message = NULL;
@@ -738,19 +751,6 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
  				g_free(message);
 			}
 			
-		}
-		if (!dimmed) {
-			dimmed = state->any_marked_as_deleted;
-			if (dimmed) {
-				gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
-				modest_dimming_rule_set_notification (rule, msg);
-				g_free (msg);
-			}
-		}
-		if (!dimmed) {
-			dimmed = state->sent_in_progress;
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 		}
 	} 
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
