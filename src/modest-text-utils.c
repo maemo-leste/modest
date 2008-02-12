@@ -391,7 +391,7 @@ modest_text_utils_remove_duplicate_addresses (const gchar *address_list)
 static void
 modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data, gssize n)
 {
-	guint		i;
+	guint		i = 0;
 	gboolean	space_seen = FALSE;
 	guint           break_dist = 0; /* distance since last break point */
 
@@ -399,7 +399,7 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 		n = strlen (data);
 
 	/* replace with special html chars where needed*/
-	for (i = 0; i != n; ++i)  {
+	while (i != n) {
 		char kar = data[i];
 		
 		if (space_seen && kar != ' ') {
@@ -443,8 +443,25 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 				space_seen = TRUE;
 			break;
 		default:
-			g_string_append_c (html, kar);
+			/* Optimization to copy single ascii
+			 * characters faster */
+			if (kar > 31 && kar < 127) {
+				g_string_append_c (html, kar);
+			} else {
+				/* Important: copy full UTF-8 characters,
+				 * don't copy them byte by byte */
+				gunichar c = g_utf8_get_char_validated (data+i, -1);
+				if (c != (gunichar) -1 && c != (gunichar) -2) {
+					const gchar *copyfrom = data + i;
+					int len = g_utf8_next_char(copyfrom) - copyfrom;
+					g_string_append_len (html, copyfrom, len);
+					i += len - 1;
+				} else {
+					g_warning ("%s: non-UTF8 byte found, skipping", __FUNCTION__);
+				}
+			}
 		}
+		i++;
 	}
 }
 
