@@ -3051,26 +3051,6 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainW
 }
 
 
-static void
-show_error (GtkWidget *parent_widget, const gchar* text)
-{
-	modest_platform_information_banner(parent_widget, NULL, text);
-	
-#if 0
-	GtkDialog *dialog = GTK_DIALOG (hildon_note_new_information (parent_window, text)); */
-	/*
-	  GtkDialog *dialog = GTK_DIALOG (gtk_message_dialog_new (parent_window,
-	  (GtkDialogFlags)0,
-	  GTK_MESSAGE_ERROR,
-	  GTK_BUTTONS_OK,
-	  text ));
-	*/
-		 
-	gtk_dialog_run (dialog);
-	gtk_widget_destroy (GTK_WIDGET (dialog));
-#endif
-}
-
 void
 modest_ui_actions_on_password_requested (TnyAccountStore *account_store, 
 					 const gchar* server_account_name,
@@ -3231,7 +3211,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 			*cancel   = FALSE;
 			
 	} else {
-		show_error(GTK_WIDGET (main_window), _("mail_ib_login_cancelled"));
+		modest_platform_information_banner(GTK_WIDGET (main_window), NULL, _("mail_ib_login_cancelled"));
 		
 		if (username)
 			*username = NULL;
@@ -4589,6 +4569,8 @@ xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
 	gboolean dst_is_pop = FALSE;
 
 	if (canceled || err) {
+		/* Show the proper error message */
+		modest_ui_actions_on_account_connection_error (parent_window, account);
 		g_object_unref (dst_folder);
 		return;
 	}
@@ -4820,15 +4802,31 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			}
 			g_object_unref(headers);
 		}
-		if (do_xfer) /* Transfer messages */ {
-			DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
-			connect_info->callback = xfer_messages_from_move_to_cb;
-			connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
-			connect_info->data = g_object_ref (dst_folder);
-			
-			modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
-								   TNY_FOLDER_STORE (src_folder), 
-								   connect_info);
+		/* Transfer messages */
+		if (do_xfer)  {
+			TnyList *headers = modest_header_view_get_selected_headers(header_view);
+			gint uncached = header_list_count_uncached_msgs (headers);
+			g_object_unref (headers);
+
+			/* If there are almost 1 message that it's not
+			   fully downloaded then request a new connection */
+			if (uncached > 0) {
+				DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
+				connect_info->callback = xfer_messages_from_move_to_cb;
+				connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
+				connect_info->data = g_object_ref (dst_folder);
+				
+				modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+									   TNY_FOLDER_STORE (src_folder), 
+									   connect_info);
+			} else {
+				TnyAccount *account;
+				account = get_account_from_folder_store (TNY_FOLDER_STORE (src_folder));
+				xfer_messages_from_move_to_cb (FALSE, NULL, GTK_WINDOW (win),
+							       account, 
+							       g_object_ref (dst_folder));
+				g_object_unref (account);
+			}
 		}
 	}
 
