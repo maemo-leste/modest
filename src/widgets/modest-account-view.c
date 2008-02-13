@@ -492,6 +492,7 @@ init_view (ModestAccountView *self)
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_lastupdated"), text_renderer,"text",
 							    MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
+	gtk_tree_view_column_set_expand (column, TRUE);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
 						NULL, NULL);
 			
