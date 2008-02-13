@@ -978,9 +978,13 @@ modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
 	if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
 	    error->code == TNY_IO_ERROR_WRITE ||
 	    error->code == TNY_IO_ERROR_READ) {
-		modest_platform_information_banner ((GtkWidget *) win, 
-						    NULL, dgettext("ke-recv", 
-								   "cerm_device_memory_full"));
+		ModestMailOperationStatus st = modest_mail_operation_get_status (mail_op);
+		/* If the mail op has been cancelled then it's not an error: don't show any message */
+		if (st != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+			modest_platform_information_banner ((GtkWidget *) win,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		}
 	} else if (user_data) {
 		modest_platform_information_banner ((GtkWidget *) win, 
 						    NULL, user_data);
