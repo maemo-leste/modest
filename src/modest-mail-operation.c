@@ -2697,6 +2697,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	TnyHeader *header = NULL;
 	ModestTnyFolderRules rules = 0;
 	TnyAccount *dst_account = NULL;
+	gboolean leave_on_server;
 
 	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (headers && TNY_IS_LIST (headers));
@@ -2788,11 +2789,28 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		g_object_unref (hdr);
 	}
 
+	/* If leave_on_server is set to TRUE then don't use
+	   delete_original, we always pass FALSE. This is because
+	   otherwise tinymail will try to sync the source folder and
+	   this could cause an error if we're offline while
+	   transferring an already downloaded message from a POP
+	   account */
+        if (modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (priv->account)) == 
+	    MODEST_PROTOCOL_STORE_POP) {
+		const gchar *account_name;
+
+		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (priv->account);
+		leave_on_server = modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
+									  account_name);
+	} else {
+		leave_on_server = FALSE;
+	}
+
 	modest_mail_operation_notify_start (self);
 	tny_folder_transfer_msgs_async (src_folder, 
 					helper->headers, 
 					folder, 
-					delete_original, 
+					(leave_on_server) ? FALSE : delete_original, 
 					transfer_msgs_cb, 
 					transfer_msgs_status_cb,
 					helper);

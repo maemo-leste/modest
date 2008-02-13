@@ -154,10 +154,7 @@ static gboolean connect_to_get_msg (ModestWindow *win,
 				    gint num_of_uncached_msgs,
 				    TnyAccount *account);
 
-static gboolean remote_folder_is_pop (const TnyFolderStore *folder);
-
-static gboolean msgs_already_deleted_from_server ( TnyList *headers,
-                                                   const TnyFolderStore *src_folder);
+static gboolean remote_folder_is_pop (TnyFolderStore *folder);
 
 static void     do_create_folder (GtkWindow *window, 
 				  TnyFolderStore *parent_folder, 
@@ -165,54 +162,30 @@ static void     do_create_folder (GtkWindow *window,
 
 static GtkWidget* get_folder_view_from_move_to_dialog (GtkWidget *move_to_dialog);
 
+static TnyAccount *get_account_from_folder_store (TnyFolderStore *folder_store);
+
+static void transfer_messages_helper (GtkWindow *win,
+				      TnyFolder *src_folder,
+				      TnyList *headers,
+				      TnyFolder *dst_folder);
 
 /*
  * This function checks whether a TnyFolderStore is a pop account
  */
 static gboolean
-remote_folder_is_pop (const TnyFolderStore *folder)
+remote_folder_is_pop (TnyFolderStore *folder)
 {
         const gchar *proto = NULL;
         TnyAccount *account = NULL;
 
-        g_return_val_if_fail (TNY_IS_FOLDER_STORE(folder), FALSE);
-
-        if (TNY_IS_ACCOUNT (folder)) {
-                account = TNY_ACCOUNT(folder);
-                g_object_ref(account);
-        } else if (TNY_IS_FOLDER (folder)) {
-                account = tny_folder_get_account(TNY_FOLDER(folder));
-        }
-
-	if (!TNY_IS_ACCOUNT(account)) {
-		g_warning ("%s: could not get account", __FUNCTION__);
-		return FALSE;
-	}
+        g_return_val_if_fail (TNY_IS_FOLDER_STORE (folder), FALSE);
 	
-        proto = tny_account_get_proto(account);
+	account = get_account_from_folder_store (folder);
+        proto = tny_account_get_proto (account);
         g_object_unref (account);
 
-        return proto &&
-          (modest_protocol_info_get_transport_store_protocol (proto) == MODEST_PROTOCOL_STORE_POP);
+        return (modest_protocol_info_get_transport_store_protocol (proto) == MODEST_PROTOCOL_STORE_POP);
 }
-
-/*
- * This functions checks whether if a list of messages are already
- * deleted from the server: that is, if the server is a POP account
- * and all messages are already cached.
- */
-static gboolean
-msgs_already_deleted_from_server (TnyList *headers, const TnyFolderStore *src_folder)
-{
-        g_return_val_if_fail (TNY_IS_FOLDER_STORE(src_folder), FALSE);
-        g_return_val_if_fail (TNY_IS_LIST(headers), FALSE);
-
-        gboolean src_is_pop = remote_folder_is_pop (src_folder);
-        gint uncached_msgs = header_list_count_uncached_msgs (headers);
-
-        return (src_is_pop && !uncached_msgs);
-}
-
 
 /* FIXME: this should be merged with the similar code in modest-account-view-window */
 /* Show the account creation wizard dialog.
@@ -4552,14 +4525,97 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 		g_object_unref (header_list);
 }
 
+/*
+ * Checks if we need a connection to do the transfer and if the user
+ * wants to connect to complete it
+ */
+void
+modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
+				       TnyFolderStore *src_folder,
+				       TnyList *headers,
+				       TnyFolder *dst_folder,
+				       gboolean delete_originals,
+				       gboolean *need_connection,
+				       gboolean *do_xfer)
+{
+	TnyAccount *src_account;
+	gint uncached_msgs = 0;
+
+	uncached_msgs = header_list_count_uncached_msgs (headers);
+
+	/* We don't need any further check if
+	 *
+	 * 1- the source folder is local OR
+	 * 2- the device is already online
+	 */
+	if (!modest_tny_folder_store_is_remote (src_folder) ||
+	    tny_device_is_online (modest_runtime_get_device())) {
+		*need_connection = FALSE;
+		*do_xfer = TRUE;
+		return;
+	}
+
+	/* We must ask for a connection when
+	 *
+	 *   - the message(s) is not already cached   OR 
+	 *   - the message(s) is cached but the leave_on_server setting
+	 * is FALSE (because we need to sync the source folder to
+	 * delete the message from the server (for IMAP we could do it
+	 * offline, it'll take place the next time we get a
+	 * connection)
+	 */
+	src_account = get_account_from_folder_store (src_folder);
+	if (uncached_msgs > 0) {
+		guint num_headers;
+		const gchar *msg;
+
+		*need_connection = TRUE;
+		num_headers = tny_list_get_length (headers);
+		msg = ngettext ("mcen_nc_get_msg", "mcen_nc_get_msgs", num_headers);
+
+		if (modest_platform_run_confirmation_dialog (parent_window, msg) ==
+		    GTK_RESPONSE_CANCEL) {
+			*do_xfer = FALSE;
+		} else {
+			*do_xfer = TRUE;
+		}
+	} else {
+		/* The transfer is possible and the user wants to */
+		*do_xfer = TRUE;
+
+		if (remote_folder_is_pop (src_folder) && delete_originals) {
+			const gchar *account_name;
+			gboolean leave_on_server;
+			
+			account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (src_account);
+			leave_on_server = modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
+										  account_name);
+			
+			if (leave_on_server == TRUE) {
+				*need_connection = FALSE;
+			} else {
+				*need_connection = TRUE;
+			}
+		} else {
+			*need_connection = FALSE;
+		}
+	}
+
+	/* Frees */
+	g_object_unref (src_account);
+}
+
+
 /**
  * Utility function that transfer messages from both the main window
  * and the msg view window when using the "Move to" dialog
  */
 static void
-xfer_messages_from_move_to_cb  (gboolean canceled, GError *err,
-				GtkWindow *parent_window, 
-				TnyAccount *account, gpointer user_data)
+xfer_messages_performer  (gboolean canceled, 
+			  GError *err,
+			  GtkWindow *parent_window, 
+			  TnyAccount *account, 
+			  gpointer user_data)
 {
 	TnyFolderStore *dst_folder = TNY_FOLDER_STORE (user_data);
 	ModestWindow *win = MODEST_WINDOW (parent_window);
@@ -4730,8 +4786,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 					  ModestMainWindow *win)
 {
 	ModestHeaderView *header_view = NULL;
-	TnyFolderStore *src_folder;
-	gboolean online = (tny_device_is_online (modest_runtime_get_device()));
+	TnyFolderStore *src_folder = NULL;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
 
@@ -4773,68 +4828,57 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 								   connect_info);
 		}
 	} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
-		gboolean do_xfer = TRUE;
+		TnyList *headers;
 
-		/* Show an error when trying to move msgs to an account */	
-		if (!TNY_IS_FOLDER (dst_folder)) {
-			modest_platform_information_banner (GTK_WIDGET (win),
-							    NULL,
-							    _CS("ckdg_ib_unable_to_move_to_current_location"));
-			goto free;
-		}
+		headers = modest_header_view_get_selected_headers(header_view);
 
-		/* Ask for confirmation if the source folder is remote and we're not connected */
-		if (!online && modest_tny_folder_store_is_remote(src_folder)) {
-			TnyList *headers = modest_header_view_get_selected_headers(header_view);
-			if (!msgs_already_deleted_from_server(headers, src_folder)) {
-				guint num_headers = tny_list_get_length(headers);
-				TnyAccount *account = get_account_from_header_list (headers);
-				GtkResponseType response;
+		/* Transfer the messages */
+		transfer_messages_helper (GTK_WINDOW (win), TNY_FOLDER (src_folder), 
+					  headers, TNY_FOLDER (dst_folder));
 
-				response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-										    ngettext("mcen_nc_get_msg",
-											     "mcen_nc_get_msgs",
-											     num_headers));
-				if (response == GTK_RESPONSE_CANCEL)
-					do_xfer = FALSE;
-				
-				g_object_unref (account);
-			}
-			g_object_unref(headers);
-		}
-		/* Transfer messages */
-		if (do_xfer)  {
-			TnyList *headers = modest_header_view_get_selected_headers(header_view);
-			gint uncached = header_list_count_uncached_msgs (headers);
-			g_object_unref (headers);
-
-			/* If there are almost 1 message that it's not
-			   fully downloaded then request a new connection */
-			if (uncached > 0) {
-				DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
-				connect_info->callback = xfer_messages_from_move_to_cb;
-				connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
-				connect_info->data = g_object_ref (dst_folder);
-				
-				modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
-									   TNY_FOLDER_STORE (src_folder), 
-									   connect_info);
-			} else {
-				TnyAccount *account;
-				account = get_account_from_folder_store (TNY_FOLDER_STORE (src_folder));
-				xfer_messages_from_move_to_cb (FALSE, NULL, GTK_WINDOW (win),
-							       account, 
-							       g_object_ref (dst_folder));
-				g_object_unref (account);
-			}
-		}
+		g_object_unref (headers);
 	}
 
- free:
-	if (src_folder)
-		g_object_unref (src_folder);
+	/* Frees */
+	g_object_unref (src_folder);
 }
 
+
+static void
+transfer_messages_helper (GtkWindow *win,
+			  TnyFolder *src_folder,
+			  TnyList *headers,
+			  TnyFolder *dst_folder)
+{
+	gboolean need_connection = TRUE;
+	gboolean do_xfer = TRUE;
+	
+	modest_ui_actions_xfer_messages_check (win, TNY_FOLDER_STORE (src_folder), 
+					       headers, TNY_FOLDER (dst_folder),
+					       TRUE, &need_connection, 
+					       &do_xfer);
+
+	/* If we don't want to transfer just return */
+	if (!do_xfer)
+		return;
+
+	if (need_connection) {
+		DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
+		connect_info->callback = xfer_messages_performer;
+		connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
+		connect_info->data = g_object_ref (dst_folder);
+		
+		modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+							   TNY_FOLDER_STORE (src_folder), 
+							   connect_info);
+	} else {
+		TnyAccount *src_account = get_account_from_folder_store (TNY_FOLDER_STORE (src_folder));
+		xfer_messages_performer (FALSE, NULL, GTK_WINDOW (win),
+					 src_account, 
+					 g_object_ref (dst_folder));
+		g_object_unref (src_account);
+	}
+}
 
 /*
  * UI handler for the "Move to" action when invoked from the
@@ -4845,36 +4889,25 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 					      TnyFolderStore *dst_folder,
 					      ModestMsgViewWindow *win)
 {
+	TnyList *headers = NULL;
 	TnyHeader *header = NULL;
 	TnyFolder *src_folder = NULL;
-	TnyAccount *account = NULL;
-	gboolean do_xfer = FALSE;
+
+	g_return_if_fail (TNY_IS_FOLDER (dst_folder));
 
 	/* Create header list */
-	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));		
+	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
 	src_folder = TNY_FOLDER (tny_header_get_folder(header));
+	headers = tny_simple_list_new ();
+	tny_list_append (headers, G_OBJECT (header));
+
+	/* Transfer the messages */
+	transfer_messages_helper (GTK_WINDOW (win), src_folder, headers, 
+				  TNY_FOLDER (dst_folder));
+
+	/* Frees */
 	g_object_unref (header);
-
-	account = tny_folder_get_account (src_folder);
-	if (!modest_tny_folder_store_is_remote(TNY_FOLDER_STORE(src_folder))) {
-		/* Transfer if the source folder is local */
-		do_xfer = TRUE;
-	} else if (remote_folder_is_pop(TNY_FOLDER_STORE(src_folder))) {
-		/* Transfer if the source folder is POP (as it means
-		 * that the message is already downloaded) */
-		do_xfer = TRUE;
-	} else if (connect_to_get_msg(MODEST_WINDOW(win), 1, account)) {
-		/* Transfer after asking confirmation */
-		do_xfer = TRUE;
-	}
-
-	if (do_xfer) {
-		g_object_ref (dst_folder);
-		modest_platform_connect_if_remote_and_perform(GTK_WINDOW (win), TRUE,
-				TNY_FOLDER_STORE (dst_folder), xfer_messages_from_move_to_cb, dst_folder);
-        }
-	g_object_unref (account);
-	g_object_unref (src_folder);
+	g_object_unref (headers);
 }
 
 void 
