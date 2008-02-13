@@ -1348,8 +1348,8 @@ modest_tny_account_store_get_server_account (ModestTnyAccountStore *self,
 }
 
 TnyAccount*
-modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (ModestTnyAccountStore *self,
-										  const gchar *account_name)
+modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (
+	ModestTnyAccountStore *self, const gchar *account_name)
 {
 	TnyDevice *device;
 
@@ -1358,7 +1358,12 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 
 	/* Get the current connection: */
 	device = modest_runtime_get_device ();
-	
+
+	if (!device) {
+		g_warning ("%s: could not get device", __FUNCTION__);
+		return NULL;
+	}
+		
 	if (!tny_device_is_online (device))
 		return NULL;
 	
