@@ -442,8 +442,7 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	modest_tny_send_queue_wakeup (self);
 
 	/* Frees */
-	g_object_unref (G_OBJECT (headers));
-	g_object_unref (G_OBJECT (priv->outbox));
+	g_object_unref (headers);
 	g_object_unref (iter);
 
 	/* Do this at the end, because it'll call tny_send_queue_flush
@@ -749,7 +748,7 @@ modest_tny_send_queue_wakeup (ModestTnySendQueue *self)
 	}
 
 	/* Make changes persistent on disk */
-	tny_folder_sync (priv->outbox, FALSE, NULL);
+	tny_folder_sync_async (priv->outbox, FALSE, NULL, NULL, NULL);
 
 	/* Frees */
 	g_object_unref (iter);
