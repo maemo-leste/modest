@@ -392,10 +392,13 @@ gboolean        modest_msg_edit_window_is_modified         (ModestMsgEditWindow 
 /**
  * modest_msg_edit_window_reset_modified:
  * @window: a #ModestMsgEditWindow
+ * @modified: wheter or not we want to make the buffer as modified or not
  *
- * Resets the message as not modified
+ * Sets the message as modified or not
  */
-void            modest_msg_edit_window_reset_modified      (ModestMsgEditWindow *window);
+void            modest_msg_edit_window_set_modified      (ModestMsgEditWindow *window,
+							  gboolean modified);
+
 
 gboolean        modest_msg_edit_window_get_sent            (ModestMsgEditWindow *window);
 void            modest_msg_edit_window_set_sent            (ModestMsgEditWindow *window, 

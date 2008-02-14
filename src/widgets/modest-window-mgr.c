@@ -673,9 +673,8 @@ on_window_destroy (ModestWindow *window,
 
 			/* If the user wants to close all the windows */
 			if ((dialog_response == GTK_RESPONSE_OK) 
-					|| (dialog_response == GTK_RESPONSE_ACCEPT) 
-					|| (dialog_response == GTK_RESPONSE_YES))
-				{
+			    || (dialog_response == GTK_RESPONSE_ACCEPT) 
+			    || (dialog_response == GTK_RESPONSE_YES)) {
 					GList *iter = priv->window_list;
 					do {
 						if (iter->data != window) {
@@ -688,11 +687,9 @@ on_window_destroy (ModestWindow *window,
 							iter = g_list_next (iter);
 						}
 					} while (iter);
-				}
-			else
-				{
-					return TRUE;
-				}
+			} else {
+				return TRUE;
+			}
 		}
 	}
 	else {

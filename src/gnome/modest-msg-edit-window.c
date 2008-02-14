@@ -715,7 +715,8 @@ modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
 /* FUNCTIONS NOT IMPLEMENTED YET */
 
 void            
-modest_msg_edit_window_reset_modified      (ModestMsgEditWindow *window)
+modest_msg_edit_window_set_modified      (ModestMsgEditWindow *window,
+					  gboolean modified)
 {
 	g_message (__FUNCTION__);
 }

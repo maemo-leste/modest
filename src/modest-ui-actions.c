@@ -703,7 +703,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 			      const gchar *bcc_str,
 			      const gchar *subject_str,
 			      const gchar *body_str,
-			      GSList *attachments)
+			      GSList *attachments,
+			      gboolean set_as_modified)
 {
 	gchar *account_name = NULL;
 	TnyMsg *msg = NULL;
@@ -758,6 +759,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		attachments = g_slist_next(attachments);
 	}
 	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
+	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (msg_win), set_as_modified);
+
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
@@ -779,7 +782,7 @@ modest_ui_actions_on_new_msg (GtkAction *action, ModestWindow *win)
 		if (!modest_ui_actions_run_account_setup_wizard (win))
 			return;
 		
-	modest_ui_actions_compose_msg(win, NULL, NULL, NULL, NULL, NULL, NULL);
+	modest_ui_actions_compose_msg(win, NULL, NULL, NULL, NULL, NULL, NULL, FALSE);
 }
 
 
@@ -2334,7 +2337,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 
 /* 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts")); */
 	modest_platform_information_banner (NULL, NULL, _CS("sfil_ib_saving"));
-	modest_msg_edit_window_reset_modified (edit_window);
+	modest_msg_edit_window_set_modified (edit_window, FALSE);
 
 	/* Frees */
 	g_free (from);

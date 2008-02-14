@@ -488,14 +488,17 @@ void modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_qu
 						     gpointer user_data);
 
 /**
+ * modest_ui_actions_compose_msg
+ * @win: Modest main window (can be NULL)
+ * @to_str: "To:" header, or NULL
+ * @cc_str: "Cc:" header, or NULL
+ * @bcc_str: "Bcc:" header, or NULL
+ * @subject_str: Subject of the message, or NULL
+ * @body_str: Body of the message (without signature), or NULL
+ * @attachments: attachments List of file URIs to attach
+ * @set_as_modified: wheter or not the message is set initially as modified or not
+ *
  * Opens a new message editor for composing
- * @param win Modest main window (can be NULL)
- * @param to_str "To:" header, or NULL
- * @param cc_str "Cc:" header, or NULL
- * @param bcc_str "Bcc:" header, or NULL
- * @param subject_str Subject of the message, or NULL
- * @param body_str Body of the message (without signature), or NULL
- * @param attachments List of file URIs to attach
  */
 void modest_ui_actions_compose_msg (ModestWindow *win,
 				    const gchar *to_str,
@@ -503,7 +506,8 @@ void modest_ui_actions_compose_msg (ModestWindow *win,
 				    const gchar *bcc_str,
 				    const gchar *subject_str,
 				    const gchar *body_str,
-				    GSList *attachments);
+				    GSList *attachments,
+				    gboolean set_as_modified);
 
 void modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
 						    TnyAccount *account);

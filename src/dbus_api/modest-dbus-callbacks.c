@@ -221,7 +221,7 @@ on_idle_mail_to(gpointer user_data)
 	}
 
 	gdk_threads_enter (); /* CHECKED */
-	modest_ui_actions_compose_msg(NULL, to, cc, bcc, subject, body, NULL);
+	modest_ui_actions_compose_msg(NULL, to, cc, bcc, subject, body, NULL, FALSE);
 	gdk_threads_leave (); /* CHECKED */
 
 cleanup:
@@ -271,6 +271,7 @@ on_idle_compose_mail(gpointer user_data)
 		g_free(idle_data->attachments);
 		idle_data->attachments = tmp;
 	}
+
 	if (idle_data->attachments != NULL) {
 		gchar **list = g_strsplit(idle_data->attachments, ",", 0);
 		gint i = 0;
@@ -279,10 +280,22 @@ on_idle_compose_mail(gpointer user_data)
 		}
 		g_strfreev(list);
 	}
+
+	/* If the message has nothing then mark the buffers as not
+	   modified */
 	gdk_threads_enter (); /* CHECKED */
-	modest_ui_actions_compose_msg(NULL, idle_data->to, idle_data->cc,
-				      idle_data->bcc, idle_data->subject,
-				      idle_data->body, attachments);
+	if (!strncmp (idle_data->to, "", 1) &&
+	    !strncmp (idle_data->to, "", 1) &&
+	    !strncmp (idle_data->cc, "", 1) &&
+	    !strncmp (idle_data->bcc, "", 1) &&
+	    !strncmp (idle_data->subject, "", 1) &&
+	    !strncmp (idle_data->body, "", 1) &&
+	    attachments == NULL)
+		modest_ui_actions_compose_msg(NULL, NULL, NULL, NULL, NULL, NULL, NULL, FALSE);
+	else
+		modest_ui_actions_compose_msg(NULL, idle_data->to, idle_data->cc,
+					      idle_data->bcc, idle_data->subject,
+					      idle_data->body, attachments, TRUE);
 	gdk_threads_leave (); /* CHECKED */
 cleanup:
 	g_slist_foreach(attachments, (GFunc)g_free, NULL);

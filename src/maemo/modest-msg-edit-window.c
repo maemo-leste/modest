@@ -1255,7 +1255,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	gtk_text_buffer_place_cursor (priv->text_buffer, &iter);
 
-	modest_msg_edit_window_reset_modified (self);
+	modest_msg_edit_window_set_modified (self, FALSE);
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
@@ -1567,7 +1567,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), MODEST_DIMMING_RULES_CLIPBOARD);
 	priv->update_caption_visibility = TRUE;
 
-	modest_msg_edit_window_reset_modified (MODEST_MSG_EDIT_WINDOW (obj));
+	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (obj), FALSE);
 
 	/* Track account-removed signal, this window should be closed
 	   in the case we're creating a mail associated to the account
@@ -3022,18 +3022,19 @@ body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
 }
 
 void
-modest_msg_edit_window_reset_modified (ModestMsgEditWindow *editor)
+modest_msg_edit_window_set_modified (ModestMsgEditWindow *editor,
+				     gboolean modified)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (editor);
 	GtkTextBuffer *buffer;
 
 	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->to_field));
-	gtk_text_buffer_set_modified (buffer, FALSE);
+	gtk_text_buffer_set_modified (buffer, modified);
 	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->cc_field));
-	gtk_text_buffer_set_modified (buffer, FALSE);
+	gtk_text_buffer_set_modified (buffer, modified);
 	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->bcc_field));
-	gtk_text_buffer_set_modified (buffer, FALSE);
-	gtk_text_buffer_set_modified (priv->text_buffer, FALSE);
+	gtk_text_buffer_set_modified (buffer, modified);
+	gtk_text_buffer_set_modified (priv->text_buffer, modified);
 }
 
 gboolean
