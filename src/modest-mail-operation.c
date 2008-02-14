@@ -489,11 +489,6 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	/* Note that if we call cancel with an already canceled mail
-	   operation the progress changed signal won't be emitted */
-	if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED)
-		return FALSE;
-
 	/* Set new status */
 	priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 	
