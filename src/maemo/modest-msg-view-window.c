@@ -2562,7 +2562,6 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 	GList *files_to_save = NULL;
 	GtkWidget *save_dialog = NULL;
 	gchar *folder = NULL;
-	gboolean canceled = FALSE;
 	const gchar *filename = NULL;
 	gchar *save_multiple_str = NULL;
 
@@ -2584,11 +2583,14 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		iter = tny_list_create_iterator (mime_parts);
 		TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 		g_object_unref (iter);
-		if (!modest_tny_mime_part_is_msg (mime_part) && tny_mime_part_is_attachment (mime_part)) {
+		if (!modest_tny_mime_part_is_msg (mime_part) && 
+		    modest_tny_mime_part_is_attachment_for_modest (mime_part)) {
 			filename = tny_mime_part_get_filename (mime_part);
 		} else {
+			/* TODO: show any error? */
 			g_warning ("Tried to save a non-file attachment");
-			canceled = TRUE;
+			g_object_unref (mime_parts);
+			return;
 		}
 		g_object_unref (mime_part);
 	} else {
@@ -2628,7 +2630,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 			while (!tny_iterator_is_done (iter)) {
 				TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 
-				if ((tny_mime_part_is_attachment (mime_part)) && 
+				if ((modest_tny_mime_part_is_attachment_for_modest (mime_part)) && 
 				    (tny_mime_part_get_filename (mime_part) != NULL)) {
 					SaveMimePartPair *pair;
 					
