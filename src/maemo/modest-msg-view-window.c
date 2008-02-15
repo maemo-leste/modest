@@ -1628,10 +1628,6 @@ message_reader_performer (gboolean canceled,
 	modest_mail_operation_get_msg (mail_op, info->header, view_msg_cb, info->row_reference);
 	g_object_unref (mail_op);
 
-	/* Update dimming rules */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (parent_window));
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (parent_window));
-
  frees:
 	/* Frees. The row_reference will be freed by the view_msg_cb callback */
 	g_object_unref (info->header);
@@ -2247,6 +2243,14 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 		if (observers_empty (self)) {
 			set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
 		}
+
+		/* Update dimming rules. We have to do this right here
+		   and not in view_msg_cb because at that point the
+		   transfer mode is still enabled so the dimming rule
+		   won't let the user delete the message that has been
+		   readed for example */
+		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+		modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 	}
 }
 
