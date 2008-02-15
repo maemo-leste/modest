@@ -1,3 +1,12 @@
+modest (1.0-2008.08-1) feisty; urgency=low
+
+  * Fixes: NB#79684, NB#78802, NB#80508, NB#80155, NB#79872, NB#80484
+  * Fixes: NB#80377, NB#80554, NB#79816, NB#80213, NB#78546, NB#80619
+  * Fixes: NB#80616, NB#80211, NB#78911, NB#80471, NB#80606, NB#80391
+  * Fixes: NB#80742, NB#80768, NB#79777, NB#80646
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Fri, 15 Feb 2008 15:32:34 +0200
+
 modest (1.0-2008.07-1) feisty; urgency=low
 
   * Fixes: NB#80177, NB#80195, NB#78939, NB#79471, NB#79266, NB#79501
