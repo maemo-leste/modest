@@ -2266,6 +2266,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	guint64 available_disk, expected_size;
 	gint parts_count;
 	guint64 parts_size;
+	ModestMainWindow *win;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), FALSE);
 	
@@ -2335,8 +2336,17 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
 
-/* 	info_text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts")); */
-	modest_platform_information_banner (NULL, NULL, _CS("sfil_ib_saving"));
+	/* Use the main window as the parent of the banner, if the
+	   main window does not exist it won't be shown, if the parent
+	   window exists then it's properly shown. We don't use the
+	   editor window because it could be closed (save to drafts
+	   could happen after closing the window */
+	win = (ModestMainWindow *)
+		modest_window_mgr_get_main_window( modest_runtime_get_window_mgr(), FALSE);
+	if (win) {
+		modest_platform_information_banner (GTK_WIDGET (win), 
+						    NULL, _CS("sfil_ib_saving"));
+	}
 	modest_msg_edit_window_set_modified (edit_window, FALSE);
 
 	/* Frees */
@@ -2362,8 +2372,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	 * we find a better solution it should be removed
 	 * See NB#65125 (commend #18) for details.
 	 */
-	ModestMainWindow *win = MODEST_MAIN_WINDOW(modest_window_mgr_get_main_window(
-		modest_runtime_get_window_mgr(), FALSE));
 	if (!had_error && win != NULL) {
 		ModestFolderView *view = MODEST_FOLDER_VIEW(modest_main_window_get_child_widget(
 			win, MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW));
