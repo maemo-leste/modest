@@ -834,10 +834,15 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	gsize len;
 	gchar *attachments_string = NULL;
 
-	/* remaining will store the rest of the line if we have to break it */
 	q = g_string_new ("\n");
+	if (signature != NULL) {
+		q = g_string_append (q, signature);
+		q = g_string_append_c (q, '\n');
+	}
 	q = g_string_append (q, cite);
 	q = g_string_append_c (q, '\n');
+
+	/* remaining will store the rest of the line if we have to break it */
 	remaining = g_string_new ("");
 
 	iter = text;
@@ -883,11 +888,6 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	attachments_string = quoted_attachments (attachments);
 	q = g_string_append (q, attachments_string);
 	g_free (attachments_string);
-
-	if (signature != NULL) {
-		q = g_string_append_c (q, '\n');
-		q = g_string_append (q, signature);
-	}
 
 	return g_string_free (q, FALSE);
 }
