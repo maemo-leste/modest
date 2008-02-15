@@ -1824,6 +1824,10 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	gchar *question = g_strdup_printf (_("mcen_nc_unknown_certificate"),
 					   server_name);
 	
+	/* We use GTK_RESPONSE_APPLY because we want the button in the
+	   middle of OK and CANCEL the same as the browser does for
+	   example. With GTK_RESPONSE_HELP the view button is aligned
+	   to the left while the other two to the right */
 	note = hildon_note_new_confirmation_add_buttons  (
 		GTK_WINDOW(main_win),
 		question,
