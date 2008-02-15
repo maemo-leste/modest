@@ -1787,7 +1787,7 @@ static void
 on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert)
 {
 	/* GTK_RESPONSE_HELP means we need to show the certificate */
-	if (response_id == GTK_RESPONSE_HELP) {
+	if (response_id == GTK_RESPONSE_APPLY) {
 		GtkWidget *note;
 		gchar *msg;
 		
@@ -1828,7 +1828,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 		GTK_WINDOW(main_win),
 		question,
 		_("mcen_bd_dialog_ok"),     GTK_RESPONSE_OK,
-		_("mcen_bd_view"),          GTK_RESPONSE_HELP,   /* abusing this... */
+		_("mcen_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
 		_("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL,
 		NULL, NULL);
 	
