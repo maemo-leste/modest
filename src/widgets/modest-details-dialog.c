@@ -286,8 +286,8 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 					  TnyFolder *folder)
 {
 	gchar *count_s, *size_s, *name = NULL;
+	gchar *tmp = NULL;
 	gint size, count;
-
 
 	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
 	g_return_if_fail (modest_tny_folder_guess_folder_type (folder)
@@ -323,9 +323,17 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	if (!name)	
 		name = g_strdup (tny_folder_get_name (folder));
 
-	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_foldername"), name);
-	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_messages"), count_s);
-	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_size"), size_s);
+	tmp = g_strconcat (_("mcen_fi_folder_properties_foldername"), ":", NULL);
+	modest_details_dialog_add_data (self, tmp, name);
+	g_free (tmp);
+
+	tmp = g_strconcat (_("mcen_fi_folder_properties_messages"), ":", NULL);
+	modest_details_dialog_add_data (self, tmp, count_s);
+	g_free (tmp);
+
+	tmp = g_strconcat (_("mcen_fi_folder_properties_size"), ":", NULL);
+	modest_details_dialog_add_data (self, tmp, size_s);
+	g_free (tmp);
 
 	/* Frees */
 	g_free (name);

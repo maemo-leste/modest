@@ -5384,6 +5384,9 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	case TNY_SERVICE_ERROR_SEND:
 		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
 		break;
+	case TNY_SERVICE_ERROR_UNAVAILABLE:
+		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+		break;
 	default:
 		g_warning ("%s: unexpected ERROR %d",
 			   __FUNCTION__, err->code);
