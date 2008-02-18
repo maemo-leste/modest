@@ -742,12 +742,11 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		if (!dimmed) {
 			dimmed = (state->already_opened_msg > 0) ? TRUE : FALSE;
  			if (dimmed) {
-				gchar *num = NULL, *message = NULL;
+				gchar *message = NULL;
 
-				num = g_strdup_printf ("%d", state->already_opened_msg);
-				message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), num);
+				message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), 
+							  state->already_opened_msg);
 				modest_dimming_rule_set_notification (rule, message);
- 				g_free(num);
  				g_free(message);
 			}
 			
