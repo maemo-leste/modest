@@ -3049,6 +3049,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					 ModestMainWindow *main_window)
 {
 	g_return_if_fail(server_account_name);
+	gboolean completed = FALSE;
 	
 	/* Initalize output parameters: */
 	if (cancel)
@@ -3166,49 +3167,58 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 */
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+
+	while (!completed) {
 	
-	if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		if (username) {
-			*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
-			
-			modest_account_mgr_set_server_account_username (
-				 modest_runtime_get_account_mgr(), server_account_name, 
-				 *username);
-				 
-			const gboolean username_was_changed = 
-				(strcmp (*username, initial_username) != 0);
-			if (username_was_changed) {
-				g_warning ("%s: tinymail does not yet support changing the "
-					"username in the get_password() callback.\n", __FUNCTION__);
+		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+			if (username) {
+				*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
+				
+				/* Note that an empty field becomes the "" string */
+				if (*username && strlen (*username) > 0) {
+					modest_account_mgr_set_server_account_username (modest_runtime_get_account_mgr(), 
+											server_account_name, 
+											*username);
+					completed = TRUE;
+				
+					const gboolean username_was_changed = 
+						(strcmp (*username, initial_username) != 0);
+					if (username_was_changed) {
+						g_warning ("%s: tinymail does not yet support changing the "
+							   "username in the get_password() callback.\n", __FUNCTION__);
+					}
+				} else {
+					/* Show error */
+					modest_platform_information_banner (GTK_WIDGET (dialog), NULL, 
+									    _("mcen_ib_username_pw_incorrect"));
+					completed = FALSE;
+				}
 			}
-		}
 			
-		if (password) {
-			*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
+			if (password) {
+				*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
 			
-			/* We do not save the password in the configuration, 
-			 * because this function is only called for passwords that should 
-			 * not be remembered:
-			modest_server_account_set_password (
+				/* We do not save the password in the configuration, 
+				 * because this function is only called for passwords that should 
+				 * not be remembered:
+				 modest_server_account_set_password (
 				 modest_runtime_get_account_mgr(), server_account_name, 
 				 *password);
-			*/
+				 */
+			}			
+			if (cancel)
+				*cancel   = FALSE;			
+		} else {
+			modest_platform_information_banner(GTK_WIDGET (dialog), 
+							   NULL, _("mail_ib_login_cancelled"));
+			completed = TRUE;
+			if (username)
+				*username = NULL;			
+			if (password)
+				*password = NULL;			
+			if (cancel)
+				*cancel   = TRUE;
 		}
-		
-		if (cancel)
-			*cancel   = FALSE;
-			
-	} else {
-		modest_platform_information_banner(GTK_WIDGET (main_window), NULL, _("mail_ib_login_cancelled"));
-		
-		if (username)
-			*username = NULL;
-			
-		if (password)
-			*password = NULL;
-			
-		if (cancel)
-			*cancel   = TRUE;
 	}
 
 /* This is not in the Maemo UI spec:
