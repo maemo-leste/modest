@@ -176,6 +176,8 @@ static void on_updating_msg_list (ModestHeaderView *header_view,
 
 static gboolean restore_paned_timeout_handler (gpointer *data);
 
+static gboolean show_retrieving_banner (gpointer user_data);
+
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
@@ -226,6 +228,10 @@ struct _ModestMainWindowPrivate {
 	/* "Updating" banner for header view */
 	GtkWidget *updating_banner;
 	guint updating_banner_timeout;
+
+	/* "Retrieving" banner for header view */
+	GtkWidget *retrieving_banner;
+	guint retrieving_banner_timeout;
 
 	/* Display state */
 	osso_display_state_t display_state;
@@ -356,6 +362,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->sighandlers = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
+	priv->retrieving_banner = NULL;
+	priv->retrieving_banner_timeout = 0;
 	priv->display_state = OSSO_DISPLAY_ON;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
@@ -392,6 +400,16 @@ modest_main_window_finalize (GObject *obj)
 	if (priv->updating_banner) {
 		gtk_widget_destroy (priv->updating_banner);
 		priv->updating_banner = NULL;
+	}
+
+	if (priv->retrieving_banner_timeout > 0) {
+		g_source_remove (priv->retrieving_banner_timeout);
+		priv->retrieving_banner_timeout = 0;
+	}
+
+	if (priv->retrieving_banner) {
+		gtk_widget_destroy (priv->retrieving_banner);
+		priv->retrieving_banner = NULL;
 	}
 
 	if (priv->restore_paned_timeout > 0) {
@@ -2282,6 +2300,15 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 		g_object_unref (account);
 		if (!is_remote)
 			return;
+
+		/* Show information banner. Remove old timeout */
+		if (priv->retrieving_banner_timeout > 0) {
+			g_source_remove (priv->retrieving_banner_timeout);
+			priv->retrieving_banner_timeout = 0;
+		}
+		/* Create a new timeout */
+		priv->retrieving_banner_timeout = 
+			g_timeout_add (2000, show_retrieving_banner, self);
 	}
 	       
 	/* Get toolbar mode from operation id*/
@@ -2337,6 +2364,18 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 		g_object_unref (account);
 		if (!is_remote)
 			return;
+
+		/* Remove old timeout */
+		if (priv->retrieving_banner_timeout > 0) {
+			g_source_remove (priv->retrieving_banner_timeout);
+			priv->retrieving_banner_timeout = 0;
+		}
+
+		/* Remove the banner if exists */
+		if (priv->retrieving_banner) {
+			gtk_widget_destroy (priv->retrieving_banner);
+			priv->retrieving_banner = NULL;
+		}
 	}
 
 	/* Get toolbar mode from operation id*/
@@ -2713,4 +2752,26 @@ modest_main_window_screen_is_on (ModestMainWindow *self)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
 	
 	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
+}
+
+static gboolean
+show_retrieving_banner (gpointer user_data)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
+
+	if (priv->retrieving_banner == NULL) {
+
+		/* We're outside the main lock */
+		gdk_threads_enter ();
+		priv->retrieving_banner = 
+			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
+							  _("mcen_ib_getting_items"));
+		gdk_threads_leave ();
+	}
+
+	/* Remove timeout */
+	priv->retrieving_banner_timeout = 0;
+	return FALSE;
 }
