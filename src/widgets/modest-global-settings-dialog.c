@@ -173,7 +173,7 @@ _modest_global_settings_dialog_get_connected_via (void)
 {
 	GSList *list = NULL;
 
-	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN, 
+	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, 
 				 _("mcen_va_options_connectiontype_wlan"), 
 				 &list);
 	add_to_modest_pair_list (MODEST_CONNECTED_VIA_ANY, 
@@ -258,7 +258,7 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 	if (error) {
 		g_error_free (error);
 		error = NULL;
-		combo_id = MODEST_CONNECTED_VIA_WLAN;
+		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
 	}
 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->connect_via), 
 					(gpointer) &combo_id);
@@ -405,7 +405,7 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 			/* Disable autoupdate in offline mode */
 			modest_platform_set_update_interval (0);
 		}
-		g_object_unref (device);		
+		g_object_unref (device);
 	}
 
 exit:

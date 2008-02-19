@@ -36,7 +36,7 @@
 #include <modest-protocol-info.h>
 #include <tny-fs-stream.h>
 #include <libosso.h>
-
+#include "widgets/modest-global-settings-dialog.h"
 
 #define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"

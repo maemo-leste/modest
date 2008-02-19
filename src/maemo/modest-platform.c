@@ -2208,3 +2208,39 @@ modest_platform_get_account_settings_wizard ()
 
 	return GTK_WIDGET (dialog);
 }
+
+ModestConnectedVia
+modest_platform_get_current_connection (void)
+{
+	TnyDevice *device = NULL;
+	ModestConnectedVia retval = MODEST_CONNECTED_VIA_ANY;
+	
+	device = modest_runtime_get_device ();
+
+	if (!tny_device_is_online (device))
+		return MODEST_CONNECTED_VIA_ANY;
+
+#ifdef MODEST_HAVE_CONIC
+	/* Get iap id */
+	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
+	if (iap_id) {
+		ConIcIap *iap = tny_maemo_conic_device_get_iap (
+			TNY_MAEMO_CONIC_DEVICE (device), iap_id);
+		const gchar *bearer_type = con_ic_iap_get_bearer_type (iap);
+		if (bearer_type) {
+			if (!strcmp (bearer_type, CON_IC_BEARER_WLAN_INFRA) ||
+			    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC) ||
+			    !strcmp (bearer_type, "WIMAX")) {
+				retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
+			} else {
+				retval = MODEST_CONNECTED_VIA_ANY;
+			}
+		}
+	
+		g_object_unref (iap);
+	}
+#else
+	retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX; /* assume WLAN (fast) internet */  
+#endif /* MODEST_HAVE_CONIC */
+	return retval;
+}

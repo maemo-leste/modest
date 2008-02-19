@@ -987,8 +987,19 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 static gint 
 on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 { 	
-	/* Use g_idle to context-switch into the application's thread: */
- 	g_idle_add(on_idle_send_receive, NULL);
+	ModestConnectedVia connect_when;
+
+	connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
+					    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
+	
+	/* Perform a send and receive if the user selected to connect
+	   via any mean or if the current connection method is the
+	   same as the one specified by the user */
+	if (connect_when == MODEST_CONNECTED_VIA_ANY ||
+	    connect_when == modest_platform_get_current_connection ()) {
+		/* Use g_idle to context-switch into the application's thread: */
+		g_idle_add(on_idle_send_receive, NULL);
+	}
  	
  	return OSSO_OK;
 }

@@ -44,6 +44,11 @@ typedef enum _ModestSortDialogType {
 	MODEST_SORT_HEADERS,
 } ModestSortDialogType;
 
+typedef enum _ModestConnectedVia {
+	MODEST_CONNECTED_VIA_WLAN_OR_WIMAX = 1,
+	MODEST_CONNECTED_VIA_ANY,
+} ModestConnectedVia;
+
 /**
  * modest_platform_platform_init:
  *
@@ -496,6 +501,8 @@ GtkWidget *modest_platform_get_account_settings_dialog (ModestAccountSettings *s
  * Returns: the newly created dialog.
  */
 GtkWidget *modest_platform_get_account_settings_wizard ();
+
+ModestConnectedVia modest_platform_get_current_connection (void);
 
 G_END_DECLS
 

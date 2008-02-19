@@ -32,6 +32,7 @@
 
 #include <gtk/gtkdialog.h>
 #include "widgets/modest-global-settings-dialog-priv.h"
+#include "modest-platform.h"
 /* other include files */
 
 G_BEGIN_DECLS
@@ -45,11 +46,6 @@ G_BEGIN_DECLS
 #define MODEST_GLOBAL_SETTINGS_DIALOG_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,ModestGlobalSettingsDialogClass))
 
 /* Global settings */
-typedef enum _ModestConnectedVia {
-	MODEST_CONNECTED_VIA_WLAN = 1,
-	MODEST_CONNECTED_VIA_ANY,
-} ModestConnectedVia;
-
 typedef enum _ModestUpdateInterval {
 	MODEST_UPDATE_INTERVAL_5_MIN = 5,
 	MODEST_UPDATE_INTERVAL_10_MIN = 10,
