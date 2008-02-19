@@ -1812,6 +1812,8 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	GtkWidget *note;
 	gint response;
 	ModestWindow *main_win;
+	GList *buttons, *iter;
+	gboolean found = FALSE;
 	
 	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
 		g_warning ("%s: don't show dialogs if there's no main window; assuming 'Cancel'",
@@ -1838,6 +1840,18 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 		_("mcen_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
 		_("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL,
 		NULL, NULL);
+
+	/* Focus the View button */
+	buttons = gtk_container_get_children (GTK_CONTAINER ((GTK_DIALOG (note))->action_area));
+	iter = buttons;
+	while (!found && iter) {
+		if (!strcmp (gtk_button_get_label (GTK_BUTTON (iter->data)), _("mcen_bd_view"))) {
+			found = TRUE;
+			gtk_widget_grab_focus (GTK_WIDGET (iter->data));
+		} else {
+			iter = g_list_next (iter);
+		}
+	}
 	
 	g_signal_connect (G_OBJECT(note), "response", 
 			  G_CALLBACK(on_cert_dialog_response),
