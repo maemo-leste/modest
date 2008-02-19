@@ -2304,6 +2304,10 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 			tmp = g_slist_next (tmp);
 		}
 	}
+
+	/* Update the main menu as well, we need to explicitely do
+	   this in order to enable/disable accelerators */
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 }
 
 static void 
