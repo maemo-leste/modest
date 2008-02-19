@@ -837,6 +837,8 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 		gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
 	else
 		gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
+	gtk_entry_set_width_chars (GTK_ENTRY (entry),
+				   g_utf8_strlen (gtk_entry_get_text (GTK_ENTRY (entry)), -1));
 	gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 
 	/* Connect to the response method to avoid closing the dialog
