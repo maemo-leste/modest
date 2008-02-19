@@ -264,7 +264,7 @@ on_button_edit (GtkButton *button, gpointer user_data)
 			server_settings = NULL;
 		}
 			
-		gtk_window_set_transient_for (GTK_WINDOW (self), GTK_WINDOW (window));
+		gtk_window_set_transient_for (GTK_WINDOW (window), GTK_WINDOW (self));
 		
 		gboolean dialog_finished = FALSE;
 		while (!dialog_finished)
