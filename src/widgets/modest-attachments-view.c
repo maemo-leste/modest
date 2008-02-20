@@ -408,9 +408,14 @@ button_press_event (GtkWidget *widget,
 					g_object_unref (mime_part);
 				}
 			} else {
-				set_selected (MODEST_ATTACHMENTS_VIEW (widget), MODEST_ATTACHMENT_VIEW (att_view));
-				priv->rubber_start = att_view;
-				gtk_grab_add (widget);
+				TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+
+				/* Do not select purged attachments */
+				if (TNY_IS_MIME_PART (mime_part) && !tny_mime_part_is_purged (mime_part)) {
+					set_selected (MODEST_ATTACHMENTS_VIEW (widget), MODEST_ATTACHMENT_VIEW (att_view));
+					priv->rubber_start = att_view;
+					gtk_grab_add (widget);
+				}
 			}
 		}
 	}
@@ -464,6 +469,45 @@ motion_notify_event (GtkWidget *widget,
 	return TRUE;
 }
 
+static GList*
+find_prev_or_next_not_purged (GList *list, gboolean prev, gboolean include_this)
+{
+	GList *tmp = NULL;
+	gboolean is_valid;
+
+	if (!include_this) {
+		if (prev) {
+			tmp = g_list_previous (list);
+		} else {
+			tmp = g_list_next (list);
+		}
+	} else {
+		tmp = list;
+	}
+
+	if (!tmp)
+		return NULL;
+
+	do {
+		ModestAttachmentView *att_view = (ModestAttachmentView *) tmp->data;
+		TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+		
+		/* Do not select purged attachments */
+		if (TNY_IS_MIME_PART (mime_part) && !tny_mime_part_is_purged (mime_part)) {
+			is_valid = TRUE;
+		} else {
+			if (prev)
+				tmp = g_list_previous (tmp);
+			else
+				tmp = g_list_next (tmp);
+			is_valid = FALSE;
+		}
+	} while (!is_valid && tmp);
+
+	return tmp;
+}
+
+
 static gboolean
 key_press_event (GtkWidget *widget,
 		 GdkEventKey *event,
@@ -486,15 +530,23 @@ key_press_event (GtkWidget *widget,
 	if (event->keyval == GDK_Up) {
 		ModestAttachmentView *current_sel = NULL;
 		gboolean move_out = FALSE;
-		GList * box_children, *new_sel;
+		GList * box_children, *new_sel, *first_child;
 
 		box_children = gtk_container_get_children (GTK_CONTAINER (priv->box));
-		if (box_children == NULL)
+		if (box_children == NULL) {
 			move_out = TRUE;
-		else if ((priv->selected != NULL)&&(priv->selected->data != box_children->data))
-			current_sel = (ModestAttachmentView *) priv->selected->data;
-		else
-			move_out = TRUE;
+		} else { 
+			first_child = box_children;
+			first_child = find_prev_or_next_not_purged (box_children, FALSE, TRUE);
+			if (priv->selected != NULL && first_child != NULL) {
+				if (priv->selected->data != first_child->data)
+					current_sel = (ModestAttachmentView *) priv->selected->data;
+				else
+					move_out = TRUE;
+			} else {
+				move_out = TRUE;
+			}
+		}
 
 		if (move_out) {
 			GtkWidget *toplevel = NULL;
@@ -505,7 +557,10 @@ key_press_event (GtkWidget *widget,
 			unselect_all (atts_view);
 		} else {
 			new_sel = g_list_find (box_children, (gpointer) current_sel);
-			new_sel = g_list_previous (new_sel);
+			new_sel = find_prev_or_next_not_purged (new_sel, TRUE, FALSE);
+			/* We assume that we detected properly that
+			   there is a not purge attachment so we don't
+			   need to check NULL */
 			set_selected (MODEST_ATTACHMENTS_VIEW (atts_view), MODEST_ATTACHMENT_VIEW (new_sel->data));
 		}
 		g_list_free (box_children);
@@ -523,7 +578,8 @@ key_press_event (GtkWidget *widget,
 			move_out = TRUE;
 		} else {
 			last_child = g_list_last (box_children);
-			if (priv->selected != NULL) {
+			last_child = find_prev_or_next_not_purged (last_child, TRUE, TRUE);
+			if (priv->selected != NULL && last_child != NULL) {
 				GList *last_selected = g_list_last (priv->selected);
 				if (last_selected->data != last_child->data)
 					current_sel = (ModestAttachmentView *) last_selected->data;
@@ -543,7 +599,7 @@ key_press_event (GtkWidget *widget,
 			unselect_all (atts_view);
 		} else {
 			new_sel = g_list_find (box_children, (gpointer) current_sel);
-			new_sel = g_list_next (new_sel);
+			new_sel = find_prev_or_next_not_purged (new_sel, FALSE, FALSE);
 			set_selected (MODEST_ATTACHMENTS_VIEW (atts_view), MODEST_ATTACHMENT_VIEW (new_sel->data));
 		}
 		g_list_free (box_children);
@@ -779,10 +835,15 @@ modest_attachments_view_select_all (ModestAttachmentsView *atts_view)
 	g_list_free (priv->selected);
 	priv->selected = NULL;
 
-
 	for (node = children; node != NULL; node = g_list_next (node)) {
-		gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
-		priv->selected = g_list_append (priv->selected, node->data);
+		ModestAttachmentView *att_view = (ModestAttachmentView *) node->data;
+		TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+
+		/* Do not select purged attachments */
+		if (TNY_IS_MIME_PART (mime_part) && !tny_mime_part_is_purged (mime_part)) {
+			gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
+			priv->selected = g_list_append (priv->selected, node->data);
+		}
 	}
 	g_list_free (children);
 
