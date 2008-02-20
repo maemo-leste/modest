@@ -30,6 +30,7 @@
 #include "modest-details-dialog.h"
 
 #include <glib/gi18n.h>
+#include <gdk/gdkkeysyms.h>
 #include <gtk/gtkscrolledwindow.h>
 #include <gtk/gtktable.h>
 #include <gtk/gtkstock.h>
@@ -341,6 +342,38 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	g_free (count_s);
 }
 
+static gboolean
+on_key_press_event (GtkWindow *window, GdkEventKey *event, gpointer userdata)
+{
+	GtkWidget *focused;
+
+	focused = gtk_window_get_focus (window);
+	if (GTK_IS_SCROLLED_WINDOW (focused)) {
+		GtkAdjustment *vadj;
+		gboolean return_value;
+
+		vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (focused));
+		switch (event->keyval) {
+		case GDK_Up:
+			if (vadj->value > 0.0) {
+				g_signal_emit_by_name (G_OBJECT (focused), "scroll-child", GTK_SCROLL_STEP_UP, FALSE, 
+						       &return_value);
+				return TRUE;
+			}
+			break;
+		case GDK_Down:
+			if (vadj->value < vadj->upper - vadj->page_size) {
+				g_signal_emit_by_name (G_OBJECT (focused), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE, 
+						       &return_value);
+				return TRUE;
+			}
+			break;
+		}
+	}
+
+	return FALSE;
+}
+
 static void
 modest_details_dialog_create_container_default (ModestDetailsDialog *self)
 {
@@ -357,7 +390,11 @@ modest_details_dialog_create_container_default (ModestDetailsDialog *self)
 	gtk_table_set_row_spacings (GTK_TABLE (priv->props_table), 1);
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollbar), priv->props_table);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollbar), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->props_table), 
+					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollbar)));
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), scrollbar);
 
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
+
+	g_signal_connect (self, "key-press-event", G_CALLBACK (on_key_press_event), self);
 }
