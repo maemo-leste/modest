@@ -233,7 +233,7 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 
-	gtk_window_set_default_size (GTK_WINDOW (self), -1, 300);
+	gtk_window_set_default_size (GTK_WINDOW (self), 700, 300);
 
 	g_signal_connect (G_OBJECT (self), "key-press-event",
 			  G_CALLBACK (on_inner_tabs_key_pressed), self);
