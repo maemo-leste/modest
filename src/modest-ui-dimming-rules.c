@@ -2658,6 +2658,7 @@ _invalid_folder_for_purge (ModestWindow *win,
 		folder = tny_msg_get_folder (msg);	
 		g_object_unref (msg);
 		if (folder == NULL) {
+			result = TRUE;
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 			goto frees;
 		}
@@ -2684,30 +2685,15 @@ _invalid_folder_for_purge (ModestWindow *win,
 		if (_selected_folder_is_any_of_type (win, types, 2)) {
 			result = TRUE;
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_editable_msg"));
-		} else {
-			result = FALSE;
 		}
 	} else {
 		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
-		/* If it's POP then dim */
-		if (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-		    MODEST_PROTOCOL_STORE_POP) {
-			TnyList *attachments = NULL;
-			gint n_selected = 0;
+		ModestTransportStoreProtocol proto;
+		proto = modest_protocol_info_get_transport_store_protocol (proto_str);
+		/* If it's a remote folder then dim */
+		if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) {
 			result = TRUE;
-			
-			/* TODO: This check is here to prevent a gwarning, but this looks like a logic error.
-			 * murrayc */
-			if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-				attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-				n_selected = tny_list_get_length (attachments);
-				g_object_unref (attachments);
-			}
-			
-			modest_dimming_rule_set_notification (rule, 
-							      ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
-									"mail_ib_unable_to_pure_attach_pop_mail_plural", 
-									n_selected));
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 		}
 	}
 	
