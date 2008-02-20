@@ -174,7 +174,7 @@ _modest_global_settings_dialog_get_connected_via (void)
 	GSList *list = NULL;
 
 	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, 
-				 _("mcen_va_options_connectiontype_wlan"), 
+				 _("mcen_va_options_connectiontype_wlan_wimax"), 
 				 &list);
 	add_to_modest_pair_list (MODEST_CONNECTED_VIA_ANY, 
 				 _("mcen_va_options_connectiontype_all"), 
