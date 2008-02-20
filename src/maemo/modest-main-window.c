@@ -1804,7 +1804,7 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 	g_free (label);
 
 	/* Folder count */
-	label = g_markup_printf_escaped ("<span color='%s'>%s</span>: %d", 
+	label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %d", 
 					 gray_color_markup, 
 					 _("mcen_fi_rootfolder_folders"), 
 					 modest_tny_folder_store_get_folder_count (folder_store));
