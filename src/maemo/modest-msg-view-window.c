@@ -726,8 +726,8 @@ select_next_valid_row (GtkTreeModel *model,
 /* TODO: This should be in _init(), with the parameters as properties. */
 static void
 modest_msg_view_window_construct (ModestMsgViewWindow *self, 
-			    const gchar *modest_account_name,
-			    const gchar *msg_uid)
+				  const gchar *modest_account_name,
+				  const gchar *msg_uid)
 {
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
@@ -826,7 +826,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	/* Init the clipboard actions dim status */
 	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));
 
-	gtk_widget_show_all (GTK_WIDGET (obj));
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
 
@@ -948,6 +947,8 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	update_window_title (window);
 	modest_msg_view_window_update_priority (window);
 
+	gtk_widget_show_all (GTK_WIDGET (window));
+
 
 	return MODEST_WINDOW(window);
 }
@@ -970,6 +971,8 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
+
+	gtk_widget_show_all (GTK_WIDGET (obj));
 
 	/* Check dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));

@@ -807,6 +807,28 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 	return TRUE;
 }
 
+typedef struct {
+	guint idle_handler;
+	gchar *message;
+	GtkWidget *banner;
+} OpenMsgBannerInfo;
+
+gboolean
+open_msg_banner_idle (gpointer userdata)
+{
+	OpenMsgBannerInfo *banner_info = (OpenMsgBannerInfo *) userdata;
+
+	gdk_threads_enter ();
+	banner_info->idle_handler = 0;
+	banner_info->banner = modest_platform_animation_banner (NULL, NULL, banner_info->message);
+	g_object_ref (banner_info->banner);
+	
+	gdk_threads_leave ();
+
+	return FALSE;
+	
+}
+
 static void
 open_msg_cb (ModestMailOperation *mail_op, 
 	     TnyHeader *header,  
@@ -822,12 +844,13 @@ open_msg_cb (ModestMailOperation *mail_op,
 	gchar *account = NULL;
 	TnyFolder *folder;
 	gboolean open_in_editor = FALSE;
+	OpenMsgBannerInfo *banner_info = (OpenMsgBannerInfo *) user_data;
 	
 	/* Do nothing if there was any problem with the mail
 	   operation. The error will be shown by the error_handler of
 	   the mail operation */
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
-		return;
+		goto banner_cleanup;
 
 	parent_win = (ModestWindow *) modest_mail_operation_get_source (mail_op);
 	folder = tny_header_get_folder (header);
@@ -908,9 +931,6 @@ open_msg_cb (ModestMailOperation *mail_op,
 		win = modest_msg_edit_window_new (msg, account, TRUE);
 
 
-		/* Show banner */
-		modest_platform_information_banner_with_timeout
-			(NULL, NULL, _("mail_ib_opening_draft_message"), 1200);
 
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
@@ -965,6 +985,20 @@ cleanup:
 	g_free(account);
 	g_object_unref (parent_win);
 	g_object_unref (folder);
+banner_cleanup:
+	if (banner_info) {
+		g_free (banner_info->message);
+		if (banner_info->idle_handler > 0) {
+			g_source_remove (banner_info->idle_handler);
+			banner_info->idle_handler = 0;
+		}
+		if (banner_info->banner != NULL) {
+			gtk_widget_destroy (banner_info->banner);
+			g_object_unref (banner_info->banner);
+			banner_info->banner = NULL;
+		}
+		g_slice_free (OpenMsgBannerInfo, banner_info);
+	}
 }
 
 void
@@ -1041,6 +1075,8 @@ open_msgs_performer(gboolean canceled,
 	ModestTransportStoreProtocol proto;
 	TnyList *not_opened_headers;
 	TnyConnectionStatus status;
+	gboolean show_open_draft = FALSE;
+	OpenMsgBannerInfo *banner_info = NULL;
 
 	not_opened_headers = TNY_LIST (user_data);
 
@@ -1072,6 +1108,19 @@ open_msgs_performer(gboolean canceled,
 			g_object_unref (header);
 			g_object_unref (iter);
 		} else {
+			TnyHeader *header;
+			TnyFolder *folder;
+			TnyIterator *iter;
+			TnyFolderType folder_type;
+
+			iter = tny_list_create_iterator (not_opened_headers);
+			header = TNY_HEADER (tny_iterator_get_current (iter));
+			folder = tny_header_get_folder (header);
+			folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+			show_open_draft = (folder_type == TNY_FOLDER_TYPE_DRAFTS);
+			g_object_unref (folder);
+			g_object_unref (header);
+			g_object_unref (iter);
 			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
 		}
 	} else {
@@ -1085,11 +1134,18 @@ open_msgs_performer(gboolean canceled,
 							       error_msg, g_free);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
-		
+
+	if (show_open_draft) {
+		banner_info = g_slice_new (OpenMsgBannerInfo);
+		banner_info->message = g_strdup (_("mail_ib_opening_draft_message"));
+		banner_info->banner = NULL;
+		banner_info->idle_handler = g_timeout_add (500, open_msg_banner_idle, banner_info);
+	}
+
 	modest_mail_operation_get_msgs_full (mail_op,
 					     not_opened_headers,
 					     open_msg_cb,
-					     NULL,
+					     banner_info,
 					     NULL);
 
 	/* Frees */

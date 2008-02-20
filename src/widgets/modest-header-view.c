@@ -389,12 +389,15 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set (G_OBJECT (renderer_subject),
 		      "ellipsize", PANGO_ELLIPSIZE_END, "yalign", 1.0,
 		      NULL);
+	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_subject), 1);
 	g_object_set (G_OBJECT (renderer_recpt),
 		      "ellipsize", PANGO_ELLIPSIZE_END, "yalign", 0.0,
 		      NULL);
+	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_recpt), 1);
 	g_object_set(G_OBJECT(renderer_compact_date_or_status),
 		     "xalign", 1.0, "yalign", 0.0,
 		     NULL);
+	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_compact_date_or_status), 1);
 	g_object_set (G_OBJECT (renderer_priority),
 		      "yalign", 1.0, NULL);
 	g_object_set (G_OBJECT (renderer_attach),

@@ -316,7 +316,6 @@ modest_hbox_cell_renderer_render       (GtkCellRenderer       *cell,
 				GtkRequisition child_req;
 				gint child_xpad, child_ypad;
 				GdkRectangle child_expose_area;
-
 				gtk_cell_renderer_get_size (child, widget, NULL, NULL, NULL, &(child_req.width), &(child_req.height));
 				g_object_get (child, "xpad", &child_xpad, "ypad", &child_ypad, NULL);
 
