@@ -136,11 +136,11 @@ set_cell_text (GtkCellRenderer *renderer,
 	weight =  (flags & TNY_HEADER_FLAG_SEEN) ? PANGO_WEIGHT_NORMAL: PANGO_WEIGHT_ULTRABOLD;
 	strikethrough = (flags & TNY_HEADER_FLAG_DELETED) ?  TRUE:FALSE;
 	g_object_freeze_notify (G_OBJECT (renderer));
-	g_object_set (G_OBJECT (renderer), "text", text, NULL);
-	if (!(flags & TNY_HEADER_FLAG_SEEN))
-		g_object_set (G_OBJECT (renderer), "weight", PANGO_WEIGHT_ULTRABOLD, NULL);
-	if (flags & TNY_HEADER_FLAG_DELETED)
-		g_object_set (G_OBJECT (renderer), "strikethrough", TRUE, NULL);
+	g_object_set (G_OBJECT (renderer), 
+		      "text", text, 
+		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? PANGO_WEIGHT_NORMAL : PANGO_WEIGHT_ULTRABOLD,
+		      "strikethrough", (flags &TNY_HEADER_FLAG_DELETED) ? TRUE : FALSE,
+		      NULL);
 	switch (style) {
 	case RENDER_CELL_STYLE_GREY:
 		g_object_set (G_OBJECT (renderer), 
