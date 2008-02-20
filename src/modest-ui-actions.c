@@ -2400,8 +2400,9 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	win = (ModestMainWindow *)
 		modest_window_mgr_get_main_window( modest_runtime_get_window_mgr(), FALSE);
 	if (win) {
-		modest_platform_information_banner (GTK_WIDGET (win), 
-						    NULL, _CS("sfil_ib_saving"));
+		gchar *text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
+		modest_platform_information_banner (GTK_WIDGET (win), NULL, text);
+		g_free (text);
 	}
 	modest_msg_edit_window_set_modified (edit_window, FALSE);
 
