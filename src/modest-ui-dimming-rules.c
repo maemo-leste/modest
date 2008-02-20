@@ -1594,8 +1594,7 @@ modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 		body_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (body_field));
 		subject = gtk_entry_get_text (GTK_ENTRY (subject_field));
 
-		dimmed = ((subject == NULL || subject[0] == '\0')
-			  || (gtk_text_buffer_get_char_count(body_buffer) == 0));
+		dimmed = (subject == NULL || subject[0] == '\0');
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_subject_or_body_not_modified"));
 	}
