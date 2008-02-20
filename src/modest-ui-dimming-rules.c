@@ -1248,6 +1248,8 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 	/* cannot purge in editable drafts nor pop folders */
 	if (!dimmed) {
 		dimmed = _invalid_folder_for_purge (win, rule);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 	}
 
 	/* Check if the selected message in main window has attachments */
@@ -2659,7 +2661,6 @@ _invalid_folder_for_purge (ModestWindow *win,
 		g_object_unref (msg);
 		if (folder == NULL) {
 			result = TRUE;
-			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 			goto frees;
 		}
 	} else if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -2684,7 +2685,6 @@ _invalid_folder_for_purge (ModestWindow *win,
 		
 		if (_selected_folder_is_any_of_type (win, types, 2)) {
 			result = TRUE;
-			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_editable_msg"));
 		}
 	} else {
 		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
@@ -2693,7 +2693,6 @@ _invalid_folder_for_purge (ModestWindow *win,
 		/* If it's a remote folder then dim */
 		if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) {
 			result = TRUE;
-			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 		}
 	}
 	
