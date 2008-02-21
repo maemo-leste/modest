@@ -1486,6 +1486,7 @@ modest_tny_account_store_get_mmc_folders_account (ModestTnyAccountStore *self)
 {
 	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
 	
+	/* New reference */
 	return modest_tny_account_store_get_tny_account_by (self, MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
 							    MODEST_MMC_ACCOUNT_ID);
 
@@ -1900,7 +1901,8 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 		g_object_unref (account);
 		tny_iterator_next (acc_iter);
 	}
-
 	g_object_unref(acc_iter);
+
+	/* New reference */
 	return header_acc;
 }

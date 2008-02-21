@@ -85,6 +85,7 @@ modest_transport_account_decorator_send (TnyTransportAccount *self, TnyMsg *msg,
 	
 	if (connection_specific_account) {
 		tny_transport_account_send (connection_specific_account, msg, err);
+		g_object_unref (connection_specific_account);
 	} else {
 		TNY_CAMEL_TRANSPORT_ACCOUNT_CLASS(parent_class)->send (self, msg, err);
 	}

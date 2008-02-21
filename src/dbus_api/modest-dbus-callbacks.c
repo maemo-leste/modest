@@ -459,7 +459,8 @@ on_open_message_performer (gboolean canceled,
 		account_store = modest_runtime_get_account_store ();
 		local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
 			modest_tny_account_store_get_local_folders_account (account_store));
-		folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);		
+		folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
+		g_object_unref (local_folders_account);
 	} else {
 		folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
 	}
@@ -592,6 +593,7 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 			local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
 				modest_tny_account_store_get_local_folders_account (account_store));
 			folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
+			g_object_unref (local_folders_account);
 		}
 		if (folder) {
 			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);

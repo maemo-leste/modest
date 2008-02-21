@@ -168,7 +168,8 @@ TnySessionCamel*    modest_tny_account_store_get_session    (TnyAccountStore *se
 /** modest_tny_account_store_get_local_folders_account:
  * @self: a TnyAccountStore instance
  * 
- * Get the user-visible local folders account.
+ * Get the user-visible local folders account. It returns a new
+ * reference so the caller must unref it when no longer needed
  **/
 TnyAccount * modest_tny_account_store_get_local_folders_account (ModestTnyAccountStore *self);
 
@@ -178,7 +179,9 @@ TnyAccount * modest_tny_account_store_get_local_folders_account (ModestTnyAccoun
  * 
  * Get the mmc folders account.
  *
- * Returns: a #TnyAccount, or %NULL if no mmc account is available now.
+ * Returns: a #TnyAccount, or %NULL if no mmc account is available
+ * now. It returns a new reference so the caller must unref it when no
+ * longer needed
  */
 TnyAccount * modest_tny_account_store_get_mmc_folders_account (ModestTnyAccountStore *self);
 
@@ -212,11 +215,11 @@ TnyMsg *modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *se
  *
  * Gets the transport account from a header that is in the outbox
  *
- * Returns: %NULL or a %TnyTransportAccount
+ * Returns: %NULL or a %TnyTransportAccount. Returns a new reference
+ * so the caller must unref it when no longer needed
  */
-TnyTransportAccount *
-modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccountStore *self,
-								  TnyHeader *header);
+TnyTransportAccount * modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccountStore *self,
+										       TnyHeader *header);
 
 /**
  * modest_tny_account_store_new_connection_specific_transport_account:
@@ -227,9 +230,8 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
  *
  * Returns: the new #TnyTransportAccount
  */
-TnyTransportAccount *
-modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAccountStore *self,
-								    const gchar *name);
+TnyTransportAccount * modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAccountStore *self,
+											  const gchar *name);
 
 G_END_DECLS
 

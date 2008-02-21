@@ -4041,6 +4041,7 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 			new_sensitive = (proto != MODEST_PROTOCOL_STORE_POP);
 		}
 		g_object_unref (local_account);
+		g_object_unref (mmc_account);
 	}
 
 	/* Check the target folder rules */

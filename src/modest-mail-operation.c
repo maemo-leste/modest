@@ -1223,7 +1223,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
 	gboolean headers_only, ignore_limit;
-	TnyTransportAccount *transport_account;
+	TnyTransportAccount *transport_account = NULL;
 
 	info = (UpdateAccountInfo *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
@@ -1345,6 +1345,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		guint num_messages;
 
 		send_queue = modest_runtime_get_send_queue (transport_account);
+		g_object_unref (transport_account);
 
 		/* Get outbox folder */
 		outbox = tny_send_queue_get_outbox (TNY_SEND_QUEUE (send_queue));
@@ -1366,7 +1367,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 			/* Try to send */
 			tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
 		}
-	} 
+	}
 
 	/* Check if the operation was a success */
 	if (!priv->error)
@@ -1490,7 +1491,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	UpdateAccountInfo *info = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	ModestTnyAccountStore *account_store = NULL;
-	TnyStoreAccount *store_account = NULL;
 	TnyList *folders;
 	ModestMailOperationState *state;
 
@@ -1503,11 +1503,10 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 	/* Get the store account */
 	account_store = modest_runtime_get_account_store ();
-	store_account = (TnyStoreAccount *)
+	priv->account =
 		modest_tny_account_store_get_server_account (account_store,
 							     account_name,
 							     TNY_ACCOUNT_TYPE_STORE);
-	priv->account = g_object_ref (store_account);
 
 	/* Create the helper object */
 	info = g_slice_new0 (UpdateAccountInfo);
@@ -1535,7 +1534,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	
 	/* Get all folders and continue in the callback */ 
 	folders = tny_simple_list_new ();
-	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (store_account),
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (priv->account),
 					    folders, NULL,
 					    recurse_folders_async_cb, 
 					    NULL, info);
@@ -1702,7 +1701,6 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 				     TnyFolder           *folder,
 				     gboolean             remove_to_trash)
 {
-	TnyAccount *account;
 	ModestMailOperationPrivate *priv;
 	ModestTnyFolderRules rules;
 
@@ -1723,14 +1721,13 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 	}
 
 	/* Get the account */
-	account = modest_tny_folder_get_account (folder);
-	priv->account = g_object_ref(account);
+	priv->account = modest_tny_folder_get_account (folder);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DELETE;
 
 	/* Delete folder or move to trash */
 	if (remove_to_trash) {
 		TnyFolder *trash_folder = NULL;
-		trash_folder = modest_tny_account_get_special_folder (account,
+		trash_folder = modest_tny_account_get_special_folder (priv->account,
 								      TNY_FOLDER_TYPE_TRASH);
 		/* TODO: error_handling */
 		if (trash_folder) {
@@ -1756,7 +1753,6 @@ modest_mail_operation_remove_folder (ModestMailOperation *self,
 		} else
 			g_warning ("%s: could not get parent folder", __FUNCTION__);
 	}
-	g_object_unref (G_OBJECT (account));
 
  end:
 	/* Notify about operation end */

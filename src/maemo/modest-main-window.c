@@ -2297,9 +2297,10 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 
 		is_remote = !(modest_tny_account_is_virtual_local_folders (account) ||
 			      modest_tny_account_is_memory_card_account (account));
-		g_object_unref (account);
-		if (!is_remote)
+		if (!is_remote) {
+			g_object_unref (account);
 			return;
+		}
 
 		/* Show information banner. Remove old timeout */
 		if (priv->retrieving_banner_timeout > 0) {
@@ -2310,6 +2311,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 		priv->retrieving_banner_timeout = 
 			g_timeout_add (2000, show_retrieving_banner, self);
 	}
+	g_object_unref (account);
 	       
 	/* Get toolbar mode from operation id*/
 	mode = get_toolbar_mode_from_mail_operation (self, mail_op, &mode_changed);
@@ -2361,9 +2363,10 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 
 		is_remote = !(modest_tny_account_is_virtual_local_folders (account) ||
 			      modest_tny_account_is_memory_card_account (account));
-		g_object_unref (account);
-		if (!is_remote)
+		if (!is_remote) {
+			g_object_unref (account);
 			return;
+		}
 
 		/* Remove old timeout */
 		if (priv->retrieving_banner_timeout > 0) {
@@ -2377,6 +2380,7 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 			priv->retrieving_banner = NULL;
 		}
 	}
+	g_object_unref (account);
 
 	/* Get toolbar mode from operation id*/
 	mode = get_toolbar_mode_from_mail_operation (self, mail_op, &mode_changed);
