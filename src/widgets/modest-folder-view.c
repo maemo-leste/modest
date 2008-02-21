@@ -2231,8 +2231,8 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
 		} else if (TNY_IS_FOLDER_STORE(folder)) {
 			/* enable local root as destination for folders */
-			if (!MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (folder)
-					&& TNY_IS_ACCOUNT (folder))
+			if (!MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (folder) && 
+			    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (folder)))
 				forbidden = TRUE;
 		}
 		g_object_unref (folder);
