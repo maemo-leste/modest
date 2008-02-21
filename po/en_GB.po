@@ -965,7 +965,7 @@ msgstr "This removes attachments from this message. Continue anyway?"
 
 msgid "mcen_nc_unable_to_delete_n_messages"
 msgstr ""
-"Unable to delete %s messages.\n"
+"Unable to delete %d messages.\n"
 "Messages in use or already queued for deletion."
 
 msgid "mcen_nc_unknown_certificate"
