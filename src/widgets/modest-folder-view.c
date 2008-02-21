@@ -2512,9 +2512,9 @@ on_drag_motion (GtkWidget      *widget,
 
 	/* Expand the selected row after 1/2 second */
 	if (!gtk_tree_view_row_expanded (GTK_TREE_VIEW (widget), dest_row)) {
-		gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget), dest_row, pos);
 		priv->timer_expander = g_timeout_add (500, expand_row_timeout, widget);
 	}
+	gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget), dest_row, pos);
 
 	/* Select the desired action. By default we pick MOVE */
 	suggested_action = GDK_ACTION_MOVE;
@@ -2531,8 +2531,9 @@ on_drag_motion (GtkWidget      *widget,
  out:
 	if (folder)
 		g_object_unref (folder);
-	if (dest_row)
+	if (dest_row) {
 		gtk_tree_path_free (dest_row);
+	}
 	g_signal_stop_emission_by_name (widget, "drag-motion");
 
 	return valid_location;
