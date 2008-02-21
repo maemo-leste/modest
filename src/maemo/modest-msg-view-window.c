@@ -2587,7 +2587,8 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 		g_object_unref (iter);
 		if (!modest_tny_mime_part_is_msg (mime_part) && 
-		    modest_tny_mime_part_is_attachment_for_modest (mime_part)) {
+		    modest_tny_mime_part_is_attachment_for_modest (mime_part) &&
+		    !tny_mime_part_is_purged (mime_part)) {
 			filename = tny_mime_part_get_filename (mime_part);
 		} else {
 			/* TODO: show any error? */
@@ -2634,7 +2635,8 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 			while (!tny_iterator_is_done (iter)) {
 				TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 
-				if ((modest_tny_mime_part_is_attachment_for_modest (mime_part)) && 
+				if ((modest_tny_mime_part_is_attachment_for_modest (mime_part)) &&
+				    !tny_mime_part_is_purged (mime_part) &&
 				    (tny_mime_part_get_filename (mime_part) != NULL)) {
 					SaveMimePartPair *pair;
 					

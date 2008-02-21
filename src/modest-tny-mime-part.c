@@ -85,7 +85,7 @@ modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part)
 	g_return_val_if_fail (part && TNY_IS_MIME_PART(part), FALSE);
 	
 	/* if tinymail thinks it's an attachment, it definitely is */
-	if (tny_mime_part_is_attachment (part))
+	if (tny_mime_part_is_attachment (part) || tny_mime_part_is_purged (part))
 		return TRUE; 
 
 	/* if the mime part is a message itself (ie. embedded), it's an attachment */

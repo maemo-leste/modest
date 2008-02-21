@@ -70,7 +70,6 @@ static gboolean _msg_download_in_progress (ModestWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
 static gboolean _sending_in_progress (ModestWindow *win);
-static gboolean _invalid_account_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
 static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win);
@@ -1238,11 +1237,6 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 		if (dimmed) {
 			modest_dimming_rule_set_notification (rule, _("mail_ib_unable_to_purge_attachments"));
 		}
-	}
-
-	/* cannot purge in pop accounts */
-	if (!dimmed) {
-		dimmed = _invalid_account_for_purge (win, rule);
 	}
 
 	/* cannot purge in editable drafts nor pop folders */
@@ -2598,49 +2592,6 @@ _sending_in_progress (ModestWindow *win)
 		result = modest_tny_send_queue_sending_in_progress (send_queue);
 	}
        
-	return result;
-}
-
-static gboolean
-_invalid_account_for_purge (ModestWindow *win,
-			    ModestDimmingRule *rule)
-{
-	const gchar *account_name;
-	ModestTnyAccountStore *account_store;
-	TnyAccount *store_account = NULL;
-	gboolean result = FALSE;
-	const gchar *protocol_name;
-
-	account_name = modest_window_get_active_account (win);
-	if (account_name == NULL)
-		goto frees;
-
-	account_store = modest_runtime_get_account_store ();
-	store_account = modest_tny_account_store_get_server_account (account_store, account_name, TNY_ACCOUNT_TYPE_STORE);
-	if (store_account == NULL)
-		goto frees;
-
-	protocol_name = tny_account_get_proto (store_account);
-	if (modest_protocol_info_get_transport_store_protocol (protocol_name) == MODEST_PROTOCOL_STORE_POP) {
-		gint n_selected = 0;
-		result = TRUE;
-
-		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-			TnyList *attachments;
-			attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
-			n_selected = tny_list_get_length (attachments);
-			g_object_unref (attachments);
-		}
-			
-		modest_dimming_rule_set_notification (rule, 
-						      ngettext ("mail_ib_unable_to_pure_attach_pop_mail_singular",
-								"mail_ib_unable_to_pure_attach_pop_mail_plural", 
-								n_selected));
-		
-	}
-frees:
-	if (store_account)
-		g_object_unref (store_account);
 	return result;
 }
 
