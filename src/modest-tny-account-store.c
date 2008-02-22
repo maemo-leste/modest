@@ -491,16 +491,13 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 static void 
 on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 {
-	TnyAccount *account = (TnyAccount*)user_data;
-	
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
-	const gchar *modest_account_name = 
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-	if (modest_account_name)
-		g_hash_table_remove (priv->account_settings_dialog_hash, modest_account_name);
+	gchar *account_name = (gchar *) user_data;
+	if (account_name)
+		g_hash_table_remove (priv->account_settings_dialog_hash, account_name);
 }
 #endif
 
@@ -524,12 +521,12 @@ show_wrong_password_dialog (TnyAccount *account)
 { 
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	ModestWindow *main_window;
 	const gchar *modest_account_name;
+	GtkWidget *main_window;
+	GtkWidget *dialog;
 
-	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-							 FALSE); /* don't create */
+	main_window = (GtkWidget *) modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+								       FALSE); /* don't create */
 	if (!main_window) {
 		g_warning ("%s: password was wrong; ignoring because no main window", __FUNCTION__);
 		return;
@@ -541,53 +538,9 @@ show_wrong_password_dialog (TnyAccount *account)
 			__FUNCTION__);
 	}
 	
-	/* Check whether this window is already open,
-	 * for instance because of a previous get_password() call: 
-	 */
-	gpointer dialog_as_gpointer = NULL;
-	gboolean found = FALSE;
-	if (priv->account_settings_dialog_hash) {
-		found = g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
-			modest_account_name, NULL, (gpointer*)&dialog_as_gpointer);
-	}
-	ModestAccountSettingsDialog *dialog = dialog_as_gpointer;
-					
-	gboolean created_dialog = FALSE;
-	if (!found || !dialog) {
-		ModestAccountSettings *settings;
-		dialog = modest_account_settings_dialog_new ();
-		settings = modest_account_mgr_load_account_settings (priv->account_mgr, modest_account_name);
-		modest_account_settings_dialog_set_account (dialog, settings);
-		g_object_unref (settings);
-		modest_account_settings_dialog_switch_to_user_info (dialog);
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
-		
-		g_hash_table_insert (priv->account_settings_dialog_hash, g_strdup (modest_account_name), dialog);
-		
-		created_dialog = TRUE;
-	}
-	
+	dialog = modest_tny_account_store_show_account_settings_dialog (self, modest_account_name);
 	/* Show an explanatory temporary banner: */
 	modest_platform_information_banner (GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
-		
-	if (created_dialog) {
-		/* Forget it when it closes: */
-		g_signal_connect_object (G_OBJECT (dialog), "hide", G_CALLBACK (on_account_settings_hide), 
-			account, 0);
-			
-		/* Show it and delete it when it closes: */
-		gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (main_window));
-		g_signal_connect_swapped (dialog, 
-					  "response", 
-					  G_CALLBACK (gtk_widget_destroy), 
-					  dialog);
-		gtk_widget_show (GTK_WIDGET (dialog));
-	}
-	else {
-		/* Just show it instead of showing it and deleting it when it closes,
-		 * though it is probably open already: */
-		gtk_window_present (GTK_WINDOW (dialog));
-	}
 }
 #endif
 
@@ -1905,4 +1858,45 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 
 	/* New reference */
 	return header_acc;
+}
+
+GtkWidget *
+modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *self,
+						      const gchar *account_name)
+{
+	ModestTnyAccountStorePrivate *priv;
+	gpointer dialog_as_gpointer = NULL;
+	gboolean found;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	found = g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
+					      account_name, NULL, (gpointer*)&dialog_as_gpointer);
+
+	if (found)
+		return (GtkWidget *) dialog_as_gpointer;
+	else {
+		ModestAccountSettings *settings;
+		GtkWidget *dialog;
+		dialog = (GtkWidget *) modest_account_settings_dialog_new ();
+		settings = modest_account_mgr_load_account_settings (priv->account_mgr, account_name);
+		modest_account_settings_dialog_set_account (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog), settings);
+		g_object_unref (settings);
+		modest_account_settings_dialog_switch_to_user_info (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+		
+		g_hash_table_insert (priv->account_settings_dialog_hash, g_strdup (account_name), dialog);
+		
+		g_signal_connect (G_OBJECT (dialog), "hide", G_CALLBACK (on_account_settings_hide), 
+				  g_strdup (account_name));
+			
+		/* Show it and delete it when it closes: */
+		g_signal_connect_swapped (dialog, 
+					  "response", 
+					  G_CALLBACK (gtk_widget_destroy), 
+					  dialog);
+		gtk_widget_show (GTK_WIDGET (dialog));
+
+		return dialog;
+	}
+	
 }

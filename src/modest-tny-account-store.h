@@ -41,6 +41,7 @@
 #include <tny-folder.h>
 #include <modest-account-mgr.h>
 #include <modest-tny-local-folders-account.h>
+#include <gtk/gtkwidget.h>
 
 /* other include files */
 
@@ -232,6 +233,19 @@ TnyTransportAccount * modest_tny_account_store_get_transport_account_from_outbox
  */
 TnyTransportAccount * modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAccountStore *self,
 											  const gchar *name);
+
+/**
+ * modest_tny_account_store_show_account_settings_dialog:
+ * @self: a #ModestTnyAccountStore
+ * @account_name: a string
+ *
+ * obtains (if already created) or creates (and shows) the settings dialog for
+ * @account_name
+ *
+ * Returns: a #ModesAccountSettingsDialog
+ */
+GtkWidget *modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *self,
+								  const gchar *account_name);
 
 G_END_DECLS
 

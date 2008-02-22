@@ -301,23 +301,12 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	 * the user wishes.
 	 */
 	if (check_for_active_account (self, account_name)) {
+		GtkWidget *dialog = modest_tny_account_store_show_account_settings_dialog (modest_runtime_get_account_store (), account_name);
 		
-		/* Show the Account Settings window: */
-		ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-		ModestAccountSettings *settings;
-
-		settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (), account_name);
-
-		modest_account_settings_dialog_set_account (dialog, settings);
-		g_object_unref (settings);
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
-
 		/* When the dialog is closed, reconnect */
 		g_signal_connect (dialog, "response", 
 				  G_CALLBACK (on_account_settings_dialog_response), 
 				  self);
-
-		modest_utils_show_dialog_and_forget (GTK_WINDOW (self), GTK_DIALOG (dialog));
 	}
 	
 	g_free (account_name);
