@@ -1643,6 +1643,9 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 	/* Unref the extra reference added by get_server_account */
 	g_object_unref (account);
 
+	/* Cancel all pending operations */
+	tny_account_cancel (TNY_ACCOUNT (account));
+
 	/* Clear the cache if it's an store account */
 	if (TNY_IS_STORE_ACCOUNT (account))
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (account));
