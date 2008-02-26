@@ -135,13 +135,16 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		gboolean application_multipart = FALSE;
 		header_content_type = modest_tny_mime_part_get_header_value (TNY_MIME_PART (priv->msg), "Content-Type");
 		header_content_type = g_strstrip (header_content_type);
-		header_content_type_lower = header_content_type?g_ascii_strdown (header_content_type, -1):NULL;
+		header_content_type_lower = (header_content_type ) ?
+			g_ascii_strdown (header_content_type, -1) : NULL;
 		
-		if (!strstr (header_content_type_lower, "application/"))
+		if ((header_content_type_lower != NULL) && 
+		    !strstr (header_content_type_lower, "application/")) {
 			application_multipart = TRUE;
-		
+			g_free (header_content_type_lower);
+		}
 		g_free (header_content_type);
-		g_free (header_content_type_lower);
+
 		if (application_multipart) {
 			gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
 			return;

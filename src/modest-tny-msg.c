@@ -809,7 +809,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 
 	new_msg = create_reply_forward_mail (msg, header, from, signature, TRUE, reply_type,
 					     attachments_list);
-	if (attachments_list) {
+	if (attachments_list != NULL) {
 		g_list_foreach (attachments_list, (GFunc) g_object_unref, NULL);
 		g_list_free (attachments_list);
 	}
