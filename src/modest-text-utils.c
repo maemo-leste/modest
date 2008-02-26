@@ -1687,3 +1687,23 @@ modest_text_utils_buffer_selection_is_valid (GtkTextBuffer *buffer)
 
 	return result;
 }
+
+gchar *
+modest_text_utils_escape_mnemonics (const gchar *text)
+{
+	const gchar *p;
+	GString *result = NULL;
+
+	if (text == NULL)
+		return NULL;
+
+	result = g_string_new ("");
+	for (p = text; *p != '\0'; p++) {
+		if (*p == '_')
+			result = g_string_append (result, "__");
+		else
+			result = g_string_append_c (result, *p);
+	}
+	
+	return g_string_free (result, FALSE);
+}

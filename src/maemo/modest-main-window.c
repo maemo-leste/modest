@@ -651,6 +651,8 @@ update_menus (ModestMainWindow* self)
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_mailbox_n"), 
 							modest_account_settings_get_display_name (settings));
 		}
+
+		
 		
 		/* Create action and add it to the action group. The
 		   action name must be the account name, this way we
@@ -659,9 +661,13 @@ update_menus (ModestMainWindow* self)
 			gchar* item_name, *refresh_action_name;
 			guint8 merge_id = 0;
 			GtkAction *view_account_action, *refresh_account_action;
+			gchar *escaped_display_name;
+
+			escaped_display_name = modest_text_utils_escape_mnemonics (display_name);
 
 			view_account_action = GTK_ACTION (gtk_radio_action_new (account_name,
-										display_name, NULL, NULL, 0));
+										escaped_display_name, NULL, NULL, 0));
+			g_free (escaped_display_name);
 			gtk_action_group_add_action (priv->view_additions_group, view_account_action);
 			gtk_radio_action_set_group (GTK_RADIO_ACTION (view_account_action), radio_group);
 			radio_group = gtk_radio_action_get_group (GTK_RADIO_ACTION (view_account_action));

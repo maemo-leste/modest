@@ -446,5 +446,15 @@ gboolean     modest_text_utils_is_forbidden_char (const gchar character,
  */
 gboolean     modest_text_utils_buffer_selection_is_valid (GtkTextBuffer *buffer);
 
+/**
+ * modest_text_utils_escape_mnemonics:
+ * @text: a string
+ *
+ * obtains the representation of text, but escaping mnemonics (we duplicate _)
+ *
+ * Returns: a newly allocated string
+ */
+gchar *modest_text_utils_escape_mnemonics (const gchar *text);
+
 
 #endif /* __MODEST_TEXT_UTILS_H__ */
