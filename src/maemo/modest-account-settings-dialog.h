@@ -44,6 +44,7 @@ typedef struct {
 	ModestAccountSettings *settings;
 	
 	gboolean modified;
+	gboolean save_password;
 	gchar * account_name; /* This may not change. It is not user visible. */
 	ModestTransportStoreProtocol incoming_protocol; /* This may not change. */
 	ModestTransportStoreProtocol outgoing_protocol; /* This may not change. */
@@ -105,6 +106,10 @@ ModestAccountSettingsDialog* modest_account_settings_dialog_new (void);
 void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *dialog, ModestAccountSettings *settings);
 
 void modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDialog *dialog);
+
+void modest_account_settings_dialog_set_modified (ModestAccountSettingsDialog *dialog, gboolean modified);
+
+void modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialog);
 
 G_END_DECLS
 

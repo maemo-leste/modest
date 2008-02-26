@@ -1125,7 +1125,8 @@ on_response (GtkDialog *wizard_dialog,
 					g_object_unref (store_settings);
 					g_object_unref (transport_settings);
 					
-					hildon_banner_show_information(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
+					if (self->save_password)
+						hildon_banner_show_information(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
 			} else {
 				hildon_banner_show_information (NULL, NULL, _("mail_ib_setting_failed"));
@@ -1186,6 +1187,7 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
             G_CALLBACK (on_response), self); 
             
     self->modified = FALSE;
+    self->save_password = FALSE;
 
     /* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
@@ -1608,6 +1610,25 @@ enable_buttons (ModestAccountSettingsDialog *self)
 					   GTK_RESPONSE_OK,
 					   enable_ok);
 }
+
+void 
+modest_account_settings_dialog_set_modified (ModestAccountSettingsDialog *dialog, gboolean modified)
+{
+	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
+
+	dialog->modified = modified;
+
+}
+
+void
+modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialog)
+{
+	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
+
+	dialog->save_password = TRUE;
+	dialog->modified = TRUE;
+}
+
 
 static void
 modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *klass)
