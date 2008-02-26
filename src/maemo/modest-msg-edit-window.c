@@ -693,6 +693,8 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_can_redo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
                           G_CALLBACK (body_changed), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "modified-changed",
+                          G_CALLBACK (body_changed), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "insert-text", 
 			  G_CALLBACK (text_buffer_insert_text), obj);
 	g_signal_connect (G_OBJECT (obj), "window-state-event",
