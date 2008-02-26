@@ -1013,18 +1013,24 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 
 	tny_stream_reset (TNY_STREAM (stream));
 	while (!tny_stream_is_eos (TNY_STREAM (stream))) {
+		GError *error = NULL;
 		unsigned char read_buffer[128];
 		gint readed;
 		readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
 		size += readed;
-		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, NULL))
+		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, &error)) {
 			break;
+		}
 	}
 
 	pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
-	g_object_ref (pixbuf);
+	if (pixbuf) 
+		g_object_ref (pixbuf);
 	gdk_pixbuf_loader_close (loader, NULL);
 	g_object_unref (loader);
+
+	if (!pixbuf)
+		return NULL;
 
 	if (gdk_pixbuf_get_width (pixbuf) > IMAGE_MAX_WIDTH) {
 		GdkPixbuf *new_pixbuf;
@@ -1058,7 +1064,7 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 		const gchar *mime_type = tny_mime_part_get_content_type (part);
 		if ((cid != NULL)&&(mime_type != NULL)) {
 			guint64 stream_size;
-			TnyStream *stream = tny_mime_part_get_stream (part);
+			TnyStream *stream = tny_mime_part_get_decoded_stream (part);
 			GdkPixbuf *pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size);
 
 
