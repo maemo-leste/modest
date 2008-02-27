@@ -2826,6 +2826,17 @@ on_refresh_folder (TnyFolder   *folder,
 
 	g_return_if_fail(priv!=NULL);
 
+	/* If the folder is remote, set the "Last updated" value */
+	if (modest_tny_folder_is_remote_folder (folder)) {
+		TnyAccount *account = modest_tny_folder_get_account (folder);
+		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
+		const gchar *name;
+		name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		modest_account_mgr_set_last_updated (mgr, tny_account_get_id (account), time (NULL));
+		modest_account_mgr_set_account_busy (mgr, name, FALSE);
+		g_object_unref (account);
+	}
+
 	if (error) {
 		priv->error = g_error_copy (error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -2918,6 +2929,12 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	/* Refresh the folder. TODO: tinymail could issue a status
 	   updates before the callback call then this could happen. We
 	   must review the design */
+	if (modest_tny_folder_is_remote_folder (folder)) {
+		/* If the folder is remote, mark its account as busy */
+		const gchar *name;
+		name = modest_tny_account_get_parent_modest_account_name_for_server_account (priv->account);
+		modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), name, TRUE);
+	}
 	modest_mail_operation_notify_start (self);
 	
 	/* notify that the operation was started */

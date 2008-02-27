@@ -174,7 +174,6 @@ get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountSettings *se
 		else
 			last_updated_string = _("mcen_va_never");
 	} else 	{
-		/* FIXME: There should be a logical name in the UI specs */
 		last_updated_string = _("mcen_va_refreshing");
 	}
 	
