@@ -1581,6 +1581,27 @@ modest_main_window_show_toolbar (ModestWindow *self,
 							    show_toolbar);
 }
 
+/* 
+ * Counts the number of remote accounts in a list
+ */
+static guint
+num_remote_accounts (TnyList *accounts)
+{
+	TnyIterator *iter;
+	guint num = 0;
+
+	iter = tny_list_create_iterator (accounts);
+	while (!tny_iterator_is_done (iter)) {
+		TnyAccount *account = (TnyAccount *) tny_iterator_get_current (iter);
+		if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+			num++;
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+	return num;
+}
+
+
 static void
 on_account_inserted (TnyAccountStore *accoust_store,
                      TnyAccount *account,
@@ -1589,8 +1610,26 @@ on_account_inserted (TnyAccountStore *accoust_store,
 	/* Transport accounts and local ones (MMC and the Local
 	   folders account do now cause menu changes */
 	if (TNY_IS_STORE_ACCOUNT (account) && 
-	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account))) {
+		TnyList *list = tny_simple_list_new ();
+
+		/* Update menus */
 		update_menus (MODEST_MAIN_WINDOW (user_data));
+
+		/* Perform a send&receive if there are more than 1
+		   remote account , if this is the first remote
+		   account the folder view will automatically select
+		   and update it */
+		tny_account_store_get_accounts (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()), 
+						list, TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+		if (num_remote_accounts (list) > 1) {
+			const gchar *account_name = 
+				modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			modest_ui_actions_do_send_receive (account_name, FALSE, MODEST_WINDOW (user_data));
+		}
+
+		g_object_unref (list);
+	}
 }
 
 static void
