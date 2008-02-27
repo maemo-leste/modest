@@ -708,7 +708,7 @@ on_window_destroy (ModestWindow *window,
 					modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
 										 _("mcen_nc_no_email_message_modified_save_changes"));
 				/* Save to drafts */
-				if (response != GTK_RESPONSE_CANCEL)
+				if (response == GTK_RESPONSE_OK)
 					if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
 						return TRUE;
 			}
