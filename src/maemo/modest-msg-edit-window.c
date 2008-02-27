@@ -2750,6 +2750,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			break;
 		}
 		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), window);
 	}
 }
 
