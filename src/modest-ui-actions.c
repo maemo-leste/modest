@@ -2025,6 +2025,7 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 	    gtk_widget_grab_focus (GTK_WIDGET(header_view));
 
 	/* Update toolbar dimming state */
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 }
 
