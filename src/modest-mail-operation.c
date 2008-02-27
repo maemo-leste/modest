@@ -2151,8 +2151,11 @@ get_msg_async_cb (TnyFolder *folder,
 		finished = (priv->done == priv->total) ? TRUE : FALSE;
 	}
 
-	/* Check errors */
-	if (canceled || err) {
+	/* If canceled by the user, ignore the error given by Tinymail */
+	if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		canceled = TRUE;
+		finished = TRUE;
+	} else if (canceled || err) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
 		if (err) {
 			priv->error = g_error_copy ((const GError *) err);
@@ -2166,9 +2169,6 @@ get_msg_async_cb (TnyFolder *folder,
 	} else if (finished && priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS) {
 		/* Set the success status before calling the user callback */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	} else if (priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-		canceled = TRUE;
-		finished = TRUE;
 	}
 
 

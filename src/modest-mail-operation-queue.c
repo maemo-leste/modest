@@ -292,7 +292,9 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 
 	/* Check errors */
 	status = modest_mail_operation_get_status (mail_op);
-	if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+	if (status == MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		g_warning ("%s: operation canceled \n", __FUNCTION__);
+	} else if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
 		/* This is a sanity check. Shouldn't be needed, but
 		   prevent possible application crashes. It's useful
 		   also for detecting mail operations with invalid
@@ -300,13 +302,10 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 		if (modest_mail_operation_get_error (mail_op) != NULL) {
 			modest_mail_operation_execute_error_handler (mail_op);
 		} else {
-			if (status == MODEST_MAIL_OPERATION_STATUS_CANCELED) 
-				g_warning ("%s: operation canceled \n", __FUNCTION__);
-			else
-				g_warning ("%s: possible error in a mail operation " \
-					   "implementation. The status is not successful " \
-					   "but the mail operation does not have any " \
-					   "error set\n", __FUNCTION__);
+			g_warning ("%s: possible error in a mail operation " \
+				   "implementation. The status is not successful " \
+				   "but the mail operation does not have any " \
+				   "error set\n", __FUNCTION__);
 		}
 	}
 
