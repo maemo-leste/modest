@@ -94,9 +94,22 @@ modest_tny_mime_part_is_attachment_for_modest (TnyMimePart *part)
 	
 	tmp = modest_tny_mime_part_get_header_value (part, "Content-Disposition");
 	if (tmp) {
+		/* If the Content-Disposition header contains a "name"
+		 * parameter, treat the mime part as an attachment */
 		gchar *content_disp = g_ascii_strdown(tmp, -1);
+		gint len = strlen (content_disp);
+		const gchar *substr = g_strstr_len (content_disp, len, "name");
+		if (substr != NULL) {
+			gint substrlen = len - (substr - content_disp);
+			/* The parameter can appear in muliple
+			 * ways. See RFC 2231 for details */
+			has_content_disp_name =
+				g_strstr_len (substr, substrlen, "name=") != NULL ||
+				g_strstr_len (substr, substrlen, "name*=") != NULL ||
+				g_strstr_len (substr, substrlen, "name*0=") != NULL ||
+				g_strstr_len (substr, substrlen, "name*0*=") != NULL;
+		}
 		g_free (tmp);
-		has_content_disp_name = g_strstr_len (content_disp, strlen(content_disp), "name=") != NULL;
 		g_free (content_disp);
 	}
 		
