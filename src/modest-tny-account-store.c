@@ -475,7 +475,7 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 		if (tny_account) {
 			if (!strcmp (tny_account_get_id (tny_account), account_name)) {
 				found = TRUE;
-				modest_tny_account_update_from_account (tny_account);
+				modest_tny_account_update_from_account (tny_account, get_password, forget_password);
 				g_signal_emit (G_OBJECT(self), signals[ACCOUNT_CHANGED_SIGNAL], 0, tny_account);
 			}
 			g_object_unref (tny_account);

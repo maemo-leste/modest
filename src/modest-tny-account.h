@@ -76,7 +76,9 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr, const gchar 
  * Returns: a TRUE or FALSE in case of error.
  */
 gboolean
-modest_tny_account_update_from_account (TnyAccount *tny_account);
+modest_tny_account_update_from_account (TnyAccount *tny_account,
+					TnyGetPassFunc get_pass_func,
+					TnyForgetPassFunc forget_pass_func);
 
 
 /**

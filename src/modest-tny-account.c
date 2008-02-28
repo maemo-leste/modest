@@ -458,24 +458,34 @@ forget_pass_dummy (TnyAccount *account)
 static void
 set_online_callback (TnyCamelAccount *account, gboolean canceled, GError *err, gpointer user_data)
 {
-	/* MODEST TODO: Show a real error message here, this is a significant error!
-	 * Perhaps show the account's settings dialog again?! Reconnecting after 
-	 * changing the settings of an account failed in this situation. */
+	TnyAccountStore *account_store;
 
-       if (err && !canceled)
-               g_warning ("err: %s", err->message);
+	account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
+							     "account_store"));
+	if (err && !canceled) {
+		/* It seems err is forgotten here ... if the disk is full ! */
+		if (account_store) {
+			tny_account_store_alert (
+				account_store, 
+				TNY_ACCOUNT (account), TNY_ALERT_TYPE_ERROR, FALSE, 
+				err);
+		}
+		g_warning ("err: %s", err->message);
+	}
 }
 
 gboolean
-modest_tny_account_update_from_account (TnyAccount *tny_account) 
+modest_tny_account_update_from_account (TnyAccount *tny_account,
+					TnyGetPassFunc get_pass_func,
+					TnyForgetPassFunc forget_pass_func) 
 {
 	ModestAccountSettings *settings = NULL;
 	ModestServerAccountSettings *server_settings = NULL;
-	TnyConnectionStatus conn_status;
 	ModestAccountMgr *account_mgr;
 	const gchar *account_name;
 	TnyAccountType type;
 	const gchar *display_name;
+	TnyConnectionStatus conn_status;
 
 	g_return_val_if_fail (tny_account, FALSE);
 
@@ -516,26 +526,30 @@ modest_tny_account_update_from_account (TnyAccount *tny_account)
 	g_object_unref (server_settings);
 	g_object_unref (settings);
 
-	/* If the account was online, reconnect to apply the changes */
+	tny_account_set_forget_pass_func (tny_account,
+					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
+	tny_account_set_pass_func (tny_account,
+				   get_pass_func ? get_pass_func: get_pass_dummy);
+	
+	/* The callback will have an error for you if the reconnect
+	 * failed. Please handle it (this is TODO). */
+	
 	conn_status = tny_account_get_connection_status (tny_account);
 	if (conn_status != TNY_CONNECTION_STATUS_DISCONNECTED) {
 		TnyAccountStore *account_store = NULL;
-
-		/* The callback will have an error for you if the reconnect
-		 * failed. Please handle it (this is TODO). */
-
+	
 		account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(tny_account),
-							     "account_store"));
-
+								     "account_store"));
+	
 		if (account_store) {
 			modest_tny_account_store_forget_already_asked (MODEST_TNY_ACCOUNT_STORE (account_store), 
-								tny_account);
+								       tny_account);
 		}
-
+	
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(tny_account), TRUE, 
-			set_online_callback,  "online");
+					      set_online_callback,  "online");
 	}
-
+	
 	return TRUE;
 }
 
