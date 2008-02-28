@@ -54,7 +54,7 @@
 #include <string.h>
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 #include <modest-account-settings-dialog.h>
-#include <maemo/easysetup/modest-easysetup-wizard.h>
+#include <easysetup/modest-easysetup-wizard-dialog.h>
 #include <hildon/hildon-sound.h>
 
 #ifdef MODEST_HAVE_MCE

@@ -70,7 +70,7 @@
 #include "modest-text-utils.h"
 
 #ifdef MODEST_HAVE_EASYSETUP
-#include "easysetup/modest-easysetup-wizard.h"
+#include "easysetup/modest-easysetup-wizard-dialog.h"
 #endif /* MODEST_HAVE_EASYSETUP */
 
 #include <modest-widget-memory.h>

@@ -49,7 +49,7 @@ noinst_LTLIBRARIES=\
 libmodest_easysetup_la_SOURCES=              \
 	modest-wizard-dialog.h modest-wizard-dialog.c \
 	modest-presets.h modest-presets.c \
-	modest-easysetup-wizard.h modest-easysetup-wizard.c \
+	modest-easysetup-wizard-dialog.h modest-easysetup-wizard-dialog.c \
 	modest-easysetup-country-combo-box.h modest-easysetup-country-combo-box.c \
 	modest-easysetup-provider-combo-box.h modest-easysetup-provider-combo-box.c \
 	modest-easysetup-servertype-combo-box.h modest-easysetup-servertype-combo-box.c

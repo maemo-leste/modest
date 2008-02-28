@@ -38,8 +38,8 @@
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
 #include "modest-tny-platform-factory.h"
-#include "maemo/easysetup/modest-easysetup-wizard.h"
-#include "maemo/modest-account-settings-dialog.h"
+#include "easysetup/modest-easysetup-wizard-dialog.h"
+#include "modest-account-settings-dialog.h"
 #include <modest-utils.h>
 #include "widgets/modest-ui-constants.h"
 

@@ -72,45 +72,6 @@ G_BEGIN_DECLS
 typedef struct {
 	ModestWizardDialog parent;
 	
-	/* Used by derived widgets to query existing accounts,
-	 * and to create new accounts: */
-	ModestAccountMgr *account_manager;
-	ModestAccountSettings *settings;
-	
-	/* notebook pages: */
-	GtkWidget *page_welcome;
-	
-	GtkWidget *page_account_details;
-	GtkWidget *combo_account_country;
-	GtkWidget *combo_account_serviceprovider;
-	GtkWidget *entry_account_title;
-	
-	GtkWidget *page_user_details;
-	GtkWidget *entry_user_name;
-	GtkWidget *entry_user_username;
-	GtkWidget *entry_user_password;
-	GtkWidget *entry_user_email;
-	
-	GtkWidget *page_complete_easysetup;
-	
-	GtkWidget *page_custom_incoming;
-	GtkWidget *combo_incoming_servertype;
-	GtkWidget *caption_incoming;
-	GtkWidget *entry_incomingserver;
-	GtkWidget *combo_incoming_security;
-	GtkWidget *checkbox_incoming_auth;
-
-	GtkWidget *page_custom_outgoing;
-	GtkWidget *entry_outgoingserver;
-	GtkWidget *combo_outgoing_security;
-	GtkWidget *combo_outgoing_auth;
-	GtkWidget *checkbox_outgoing_smtp_specific;
-	GtkWidget *button_outgoing_smtp_servers;
-	
-	GtkWidget *page_complete_customsetup;
-	
-	GtkWidget *specific_window;
-	
 } ModestEasysetupWizardDialog;
 
 typedef struct {
