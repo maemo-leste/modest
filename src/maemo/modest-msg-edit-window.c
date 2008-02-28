@@ -138,6 +138,7 @@ static void modest_msg_edit_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgEditWindow *window);
+static void modest_msg_edit_window_clipboard_owner_handle_change_in_idle (ModestMsgEditWindow *window);
 static void subject_field_move_cursor (GtkEntry *entry,
 				       GtkMovementStep step,
 				       gint a1,
@@ -289,6 +290,7 @@ struct _ModestMsgEditWindowPrivate {
 	gulong      clipboard_change_handler_id;
 	gulong      default_clipboard_change_handler_id;
 	gulong      account_removed_handler_id;
+	guint       clipboard_owner_idle;
 	gchar       *clipboard_text;
 
 	TnyMsg      *draft_msg;
@@ -437,6 +439,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->clipboard_change_handler_id = 0;
 	priv->default_clipboard_change_handler_id = 0;
 	priv->account_removed_handler_id = 0;
+	priv->clipboard_owner_idle = 0;
 	priv->clipboard_text = NULL;
 	priv->sent = FALSE;
 
@@ -982,6 +985,10 @@ modest_msg_edit_window_finalize (GObject *obj)
 	if (priv->scroll_drag_timeout_id > 0) {
 		g_source_remove (priv->scroll_drag_timeout_id);
 		priv->scroll_drag_timeout_id = 0;
+	}
+	if (priv->clipboard_owner_idle > 0) {
+		g_source_remove (priv->clipboard_owner_idle);
+		priv->clipboard_owner_idle = 0;
 	}
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
@@ -1563,8 +1570,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	g_object_unref (menu_rules_group);
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
-	modest_msg_edit_window_clipboard_owner_change (NULL, NULL, MODEST_MSG_EDIT_WINDOW (obj));
-
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
@@ -1584,7 +1589,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 				  "account_removed",
 				  G_CALLBACK(on_account_removed),
 				  obj);
-	
+
+	modest_msg_edit_window_clipboard_owner_handle_change_in_idle (MODEST_MSG_EDIT_WINDOW (obj));
+
 	return (ModestWindow*) obj;
 }
 
@@ -3138,6 +3145,7 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
+	g_object_ref (window);
 	text = gtk_clipboard_wait_for_text (selection_clipboard);
 
 	if (priv->clipboard_text != NULL) {
@@ -3145,8 +3153,37 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	}
 	priv->clipboard_text = text;
 
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
+	if (GTK_WIDGET_VISIBLE (window)) {
+		modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
+	}
+	g_object_unref (window);
 }
+
+static gboolean clipboard_owner_change_idle (gpointer userdata)
+{
+	ModestMsgEditWindow *window = (ModestMsgEditWindow *) userdata;
+	ModestMsgEditWindowPrivate *priv;
+
+	gdk_threads_enter ();
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	priv->clipboard_owner_idle = 0;
+	modest_msg_edit_window_clipboard_owner_change (NULL, NULL, window);
+	gdk_threads_leave ();
+
+	return FALSE;
+}
+
+static void
+modest_msg_edit_window_clipboard_owner_handle_change_in_idle (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	if (priv->clipboard_owner_idle == 0) {
+		priv->clipboard_owner_idle = g_idle_add (clipboard_owner_change_idle, window);
+	}
+}
+
 static void 
 subject_field_move_cursor (GtkEntry *entry,
 			   GtkMovementStep step,
