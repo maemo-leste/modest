@@ -1,0 +1,75 @@
+Index: src/modest-platform.h
+===================================================================
+--- src/modest-platform.h	(revision 4240)
++++ src/modest-platform.h	(working copy)
+@@ -45,7 +45,7 @@
+ } ModestSortDialogType;
+ 
+ typedef enum _ModestConnectedVia {
+-	MODEST_CONNECTED_VIA_WLAN_OR_WIMAX = 1,
++	MODEST_CONNECTED_VIA_WLAN = 1,
+ 	MODEST_CONNECTED_VIA_ANY,
+ } ModestConnectedVia;
+ 
+Index: src/widgets/modest-global-settings-dialog.c
+===================================================================
+--- src/widgets/modest-global-settings-dialog.c	(revision 4240)
++++ src/widgets/modest-global-settings-dialog.c	(working copy)
+@@ -173,8 +173,8 @@
+ {
+ 	GSList *list = NULL;
+ 
+-	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, 
+-				 _("mcen_va_options_connectiontype_wlan_wimax"), 
++	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN, 
++				 _("mcen_va_options_connectiontype_wlan"), 
+ 				 &list);
+ 	add_to_modest_pair_list (MODEST_CONNECTED_VIA_ANY, 
+ 				 _("mcen_va_options_connectiontype_all"), 
+@@ -258,7 +258,7 @@
+ 	if (error) {
+ 		g_error_free (error);
+ 		error = NULL;
+-		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
++		combo_id = MODEST_CONNECTED_VIA_WLAN;
+ 	}
+ 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->connect_via), 
+ 					(gpointer) &combo_id);
+Index: src/modest-init.c
+===================================================================
+--- src/modest-init.c	(revision 4240)
++++ src/modest-init.c	(working copy)
+@@ -704,7 +704,7 @@
+ 		modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, TRUE, NULL);
+ 
+ 	if (!modest_conf_key_exists (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL))
+-		modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, NULL);
++		modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, MODEST_CONNECTED_VIA_WLAN, NULL);
+ 
+ 	if (!modest_conf_key_exists (conf, MODEST_CONF_UPDATE_INTERVAL, NULL))
+ 		modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, MODEST_UPDATE_INTERVAL_15_MIN, NULL);
+Index: src/maemo/modest-platform.c
+===================================================================
+--- src/maemo/modest-platform.c	(revision 4240)
++++ src/maemo/modest-platform.c	(working copy)
+@@ -2229,9 +2229,8 @@
+ 		const gchar *bearer_type = con_ic_iap_get_bearer_type (iap);
+ 		if (bearer_type) {
+ 			if (!strcmp (bearer_type, CON_IC_BEARER_WLAN_INFRA) ||
+-			    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC) ||
+-			    !strcmp (bearer_type, "WIMAX")) {
+-				retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
++			    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC)) {
++				retval = MODEST_CONNECTED_VIA_WLAN;
+ 			} else {
+ 				retval = MODEST_CONNECTED_VIA_ANY;
+ 			}
+@@ -2240,7 +2239,7 @@
+ 		g_object_unref (iap);
+ 	}
+ #else
+-	retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX; /* assume WLAN (fast) internet */  
++	retval = MODEST_CONNECTED_VIA_WLAN; /* assume WLAN (fast) internet */  
+ #endif /* MODEST_HAVE_CONIC */
+ 	return retval;
+ }
