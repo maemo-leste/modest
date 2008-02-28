@@ -1175,8 +1175,8 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 
 	/* Check that only one message is selected for opening */
 	if (tny_list_get_length (headers) != 1) {
-		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-							_("mcen_ib_select_one_message"));
+		modest_platform_information_banner ((win) ? GTK_WIDGET (win) : NULL,
+						    NULL, _("mcen_ib_select_one_message"));
 		return;
 	}
 
