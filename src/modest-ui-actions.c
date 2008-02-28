@@ -2468,9 +2468,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
 		return TRUE;
 	
-	/* FIXME: Code added just for testing. The final version will
-	   use the send queue provided by tinymail and some
-	   classifier */
 	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
 
 	/* Check size */
