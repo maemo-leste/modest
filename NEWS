@@ -1,3 +1,19 @@
+* 2008-W10:
+- many small UI fixes
+- non-empty body no longer required when sending mail
+- fixes related to handling of non-Latin mails (e.g. Chinese)
+- more specific error notes when connection fails
+- fix a bunch of crashers in various places, and some modality problems
+- fixes related to attachments (when forewarding/replying/opening from drafts)
+- fix some reference leaks
+- localization/truncation fixes
+- optimizations in showing of viewer/editor windows
+- fixes related to address book handling
+- make more actions cancellable
+
+* 2008-W09:
+- no release due to the FOSDEM conference
+
 * 2008-W08:
 - improved support for dealing Chinese / non-ascii languages
 - fix some server-specific imap/namespace crashes (Maemo bug: #2715)
