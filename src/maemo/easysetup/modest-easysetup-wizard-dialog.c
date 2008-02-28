@@ -407,7 +407,7 @@ on_combo_account_country (GtkComboBox *widget, gpointer user_data)
 	/* Fill the providers combo, based on the selected country: */
 	if (priv->presets != NULL) {
 		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
-			EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
+			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
 		easysetup_provider_combo_box_fill (
 			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider), priv->presets, mcc);
 	}
@@ -1163,13 +1163,13 @@ presets_idle (gpointer userdata)
 
 	priv->presets = idle_data->presets;
 
-	if (priv->combo_account_country) {
+	if (MODEST_EASYSETUP_IS_COUNTRY_COMBO_BOX (priv->combo_account_country)) {
 		gint mcc = get_default_country_code();
 		/* Fill the combo in an idle call, as it takes a lot of time */
 		easysetup_country_combo_box_load_data(
-			EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
+			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
 		easysetup_country_combo_box_set_active_country_mcc (
-			EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country), mcc);
+			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country), mcc);
 		easysetup_provider_combo_box_fill (
 			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider),
 			priv->presets, mcc);
@@ -1248,16 +1248,36 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	 * so we can check for existing accounts,
 	 * and create new accounts: */
 	priv->account_manager = modest_runtime_get_account_mgr ();
-	g_assert (priv->account_manager);
 	g_object_ref (priv->account_manager);
 	
-	/* Create the common pages, 
-	 */
-	priv->combo_account_country = NULL;
+	/* Initialize fields */
 	priv->page_welcome = create_page_welcome (self);
 	priv->page_account_details = create_page_account_details (self);
 	priv->page_user_details = create_page_user_details (self);
-	
+	priv->page_account_details = NULL;
+	priv->combo_account_country = NULL;
+	priv->combo_account_serviceprovider = NULL;
+	priv->entry_account_title = NULL;	
+	priv->entry_user_name = NULL;
+	priv->entry_user_username = NULL;
+	priv->entry_user_password = NULL;
+	priv->entry_user_email = NULL;	
+	priv->page_complete_easysetup = NULL;       
+	priv->page_custom_incoming = NULL;
+	priv->combo_incoming_servertype = NULL;
+	priv->caption_incoming = NULL;
+	priv->entry_incomingserver = NULL;
+	priv->combo_incoming_security = NULL;
+	priv->checkbox_incoming_auth = NULL;
+	priv->page_custom_outgoing = NULL;
+	priv->entry_outgoingserver = NULL;
+	priv->combo_outgoing_security = NULL;
+	priv->combo_outgoing_auth = NULL;
+	priv->checkbox_outgoing_smtp_specific = NULL;
+	priv->button_outgoing_smtp_servers = NULL;
+	priv->page_complete_customsetup = NULL;
+	priv->specific_window = NULL;
+
 	/* Add the common pages: */
 	gtk_notebook_append_page (notebook, priv->page_welcome, 
 				  gtk_label_new (_("mcen_ti_emailsetup_welcome")));

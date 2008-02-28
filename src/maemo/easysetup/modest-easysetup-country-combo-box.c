@@ -53,15 +53,14 @@
 
 G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, GTK_TYPE_COMBO_BOX);
 
-#define COUNTRY_COMBO_BOX_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE ((o), EASYSETUP_TYPE_COUNTRY_COMBO_BOX, EasysetupCountryComboBoxPrivate))
-
-typedef struct _EasysetupCountryComboBoxPrivate EasysetupCountryComboBoxPrivate;
-
-struct _EasysetupCountryComboBoxPrivate
+typedef struct
 {
 	GtkTreeModel *model;
-};
+} ModestEasysetupCountryComboBoxPrivate;
+
+#define MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
+							MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, \
+							ModestEasysetupCountryComboBoxPrivate))
 
 static void
 easysetup_country_combo_box_get_property (GObject *object, guint property_id,
@@ -99,7 +98,7 @@ enum MODEL_COLS {
 static void
 easysetup_country_combo_box_finalize (GObject *object)
 {
-	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (object);
+	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (object);
 
 	g_object_unref (G_OBJECT (priv->model));
 	G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->finalize (object);
@@ -110,7 +109,7 @@ easysetup_country_combo_box_class_init (EasysetupCountryComboBoxClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasysetupCountryComboBoxPrivate));
+	g_type_class_add_private (klass, sizeof (ModestEasysetupCountryComboBoxPrivate));
 
 	object_class->get_property = easysetup_country_combo_box_get_property;
 	object_class->set_property = easysetup_country_combo_box_set_property;
@@ -194,7 +193,7 @@ parse_mcc_mapping_line (const char* line,  char** country)
 static void
 load_from_file (EasysetupCountryComboBox *self)
 {
-	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	
 	char line[MAX_LINE_LEN];
@@ -247,14 +246,14 @@ load_from_file (EasysetupCountryComboBox *self)
 static void
 easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 {
-	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	priv->model = NULL;
 }
 
 void
 easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 {
-	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an int for the MCC ID.
@@ -286,7 +285,7 @@ easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 EasysetupCountryComboBox*
 easysetup_country_combo_box_new (void)
 {
-	return g_object_new (EASYSETUP_TYPE_COUNTRY_COMBO_BOX, NULL);
+	return g_object_new (MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, NULL);
 }
 
 /**
@@ -298,7 +297,7 @@ easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *se
 	GtkTreeIter active;
 	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self), &active);
 	if (found) {
-		EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+		ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 		gint mcc = 0;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_MCC, &mcc, -1); 
 		return mcc;	
@@ -314,7 +313,7 @@ easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *se
 gboolean
 easysetup_country_combo_box_set_active_country_mcc (EasysetupCountryComboBox *self, guint mcc)
 {
-	EasysetupCountryComboBoxPrivate *priv = COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	GtkTreeIter iter;
 
 	if (!gtk_tree_model_get_iter_first (priv->model, &iter)) 
