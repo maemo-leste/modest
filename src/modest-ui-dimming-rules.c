@@ -38,6 +38,7 @@
 #include "modest-debug.h"
 #include "modest-tny-folder.h"
 #include "modest-tny-account.h"
+#include "modest-tny-mime-part.h"
 #include "modest-text-utils.h"
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
@@ -2401,7 +2402,7 @@ _invalid_attach_selected (ModestWindow *win,
 			while (!tny_iterator_is_done (iter) && !result) {
 				TnyMimePart *mime_part = TNY_MIME_PART (tny_iterator_get_current (iter));
 				TnyList *nested_list = tny_simple_list_new ();
-				if (!for_remove && TNY_IS_MSG (mime_part)) {
+				if (!for_remove && modest_tny_mime_part_is_msg (mime_part)) {
 					selected_messages = TRUE;
 					result = TRUE;
 				}
