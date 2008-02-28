@@ -1254,14 +1254,6 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	priv->page_welcome = create_page_welcome (self);
 	priv->page_account_details = create_page_account_details (self);
 	priv->page_user_details = create_page_user_details (self);
-	priv->page_account_details = NULL;
-	priv->combo_account_country = NULL;
-	priv->combo_account_serviceprovider = NULL;
-	priv->entry_account_title = NULL;	
-	priv->entry_user_name = NULL;
-	priv->entry_user_username = NULL;
-	priv->entry_user_password = NULL;
-	priv->entry_user_email = NULL;	
 	priv->page_complete_easysetup = NULL;       
 	priv->page_custom_incoming = NULL;
 	priv->combo_incoming_servertype = NULL;
