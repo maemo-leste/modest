@@ -1058,7 +1058,6 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
 		/* You must be working online for this operation */
 	case TNY_SERVICE_ERROR_CONNECT:
-		/* TODO: Show the appropriate message, depending on whether it's POP or IMAP: */		
 		switch (proto) {
 		case MODEST_PROTOCOL_STORE_POP:
 			prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"),
@@ -1078,9 +1077,25 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		break;
 		
 	case TNY_SERVICE_ERROR_AUTHENTICATE:
-		/* This is "Secure connection failed", even though the logical
-		 * ID has _certificate_ in the name: */
-		prompt = g_strdup (_("mail_ni_ssl_certificate_error")); 
+		/* It seems that there's no better error to show with
+		 * POP and IMAP because TNY_SERVICE_ERROR_AUTHENTICATE
+		 * may appear if there's a timeout during auth */
+		switch (proto) {
+		case MODEST_PROTOCOL_STORE_POP:
+			prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"),
+						  server_name);
+			break;
+		case MODEST_PROTOCOL_STORE_IMAP:
+			prompt = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"),
+						  server_name);
+			break;
+		case MODEST_PROTOCOL_TRANSPORT_SMTP:
+			prompt = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"),
+						  server_name);
+			break;
+		default:
+			g_return_val_if_reached (FALSE);
+		}
 		break;
 			
 	case TNY_SERVICE_ERROR_CERTIFICATE:
