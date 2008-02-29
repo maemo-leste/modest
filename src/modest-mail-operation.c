@@ -1264,6 +1264,8 @@ inbox_refreshed_cb (TnyFolder *inbox,
 
 	/* Update the last updated key, even if we don't have to get new headers */
 	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
+	if (!canceled && !err) 
+		modest_account_mgr_set_server_account_username_has_succeeded (mgr, tny_account_get_id (priv->account), TRUE);
 	
 	if (new_headers_array->len == 0)
 		goto send_mail;
@@ -2833,6 +2835,8 @@ on_refresh_folder (TnyFolder   *folder,
 		const gchar *name;
 		name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 		modest_account_mgr_set_last_updated (mgr, tny_account_get_id (account), time (NULL));
+		if (!cancelled && !error)
+			modest_account_mgr_set_server_account_username_has_succeeded (mgr, tny_account_get_id (account), TRUE);
 		modest_account_mgr_set_account_busy (mgr, name, FALSE);
 		g_object_unref (account);
 	}
