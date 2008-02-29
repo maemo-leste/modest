@@ -19,8 +19,7 @@ noinst_LTLIBRARIES=\
 	libmodest-ui.la
 
 PIXMAP_FILES=\
-	pixmaps/*.png \
-	pixmaps/*.svg
+	pixmaps/*.png
 
 libmodest_ui_la_SOURCES=              \
 	modest-account-assistant.c    \
