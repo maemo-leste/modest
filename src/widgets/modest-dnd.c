@@ -50,20 +50,18 @@ modest_dnd_selection_data_set_paths (GtkSelectionData *selection_data,
 
 	if (selection_data->target == tree_path_as_string_list_atom) {
 		GString *list;
-		gint i;
 		gchar *result;
 		GList *row;
       
 		row = selected_rows;
 		list = g_string_new (NULL);
 		
-		for (i = 0; i<g_list_length(selected_rows) - 1; i++) {
+		while (row != NULL) {
 			g_string_append (list, gtk_tree_path_to_string (row->data));
-			g_string_append (list, "\n");
 			row = g_list_next (row);
+			if (row != NULL)
+				g_string_append (list, "\n");
 		}
-		/* Do not include the delimiter in the last one */
-		g_string_append (list, gtk_tree_path_to_string (row->data));
 
 		result = g_strdup (list->str);
 		g_string_free (list, TRUE);
