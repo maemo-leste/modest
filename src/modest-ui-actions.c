@@ -1732,6 +1732,7 @@ typedef struct {
 	TnyAccount *account;
 	ModestWindow *win;
 	gchar *account_name;
+	gboolean poke_status;
 } SendReceiveInfo;
 
 static void
@@ -1766,7 +1767,7 @@ do_send_receive_performer (gboolean canceled,
 
 	/* Send & receive. */
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, info->account_name, (info->win) ? FALSE : TRUE,
+	modest_mail_operation_update_account (mail_op, info->account_name, info->poke_status,
 					      (info->win) ? retrieve_all_messages_cb : NULL, 
 					      new_messages_arrived, info->win);
 	g_object_unref (G_OBJECT (mail_op));
@@ -1791,6 +1792,7 @@ do_send_receive_performer (gboolean canceled,
 void
 modest_ui_actions_do_send_receive (const gchar *account_name, 
 				   gboolean force_connection,
+				   gboolean poke_status,
 				   ModestWindow *win)
 {
 	gchar *acc_name = NULL;
@@ -1818,6 +1820,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	info = g_slice_new (SendReceiveInfo);
 	info->account_name = acc_name;
 	info->win = (win) ? g_object_ref (win) : NULL;
+	info->poke_status = poke_status;
 	info->account = modest_tny_account_store_get_server_account (acc_store, acc_name,
 								     TNY_ACCOUNT_TYPE_STORE);
 
@@ -1906,7 +1909,8 @@ modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win)
  */
 void
 modest_ui_actions_do_send_receive_all (ModestWindow *win, 
-				       gboolean force_connection)
+				       gboolean force_connection,
+				       gboolean poke_status)
 {
 	GSList *account_names, *iter;
 
@@ -1915,7 +1919,9 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win,
 
 	iter = account_names;
 	while (iter) {			
-		modest_ui_actions_do_send_receive ((const char*) iter->data, force_connection, win);
+		modest_ui_actions_do_send_receive ((const char*) iter->data, 
+						   force_connection, 
+						   poke_status, win);
 		iter = g_slist_next (iter);
 	}
 
@@ -1956,8 +1962,9 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 			g_object_unref (folder_store);
 	}	
 	
-	/* Refresh the active account. Force the connection if needed */
-	modest_ui_actions_do_send_receive (NULL, TRUE, win);
+	/* Refresh the active account. Force the connection if needed
+	   and poke the status of all folders */
+	modest_ui_actions_do_send_receive (NULL, TRUE, TRUE, win);
 }
 
 

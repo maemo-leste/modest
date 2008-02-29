@@ -1222,7 +1222,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountMgr *mgr;
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
-	gboolean headers_only, ignore_limit;
+	gboolean headers_only, ignore_limit, succeeded;
 	TnyTransportAccount *transport_account = NULL;
 
 	info = (UpdateAccountInfo *) user_data;
@@ -1335,6 +1335,13 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (new_headers_array, FALSE);
 
+	if (priv->error)
+		succeeded = FALSE;
+	else
+		succeeded = TRUE;
+	modest_account_mgr_set_server_account_username_has_succeeded (modest_runtime_get_account_mgr (), 
+								      tny_account_get_name (priv->account), 
+								      succeeded);
  send_mail:
 	/* Get the transport account */
 	transport_account = (TnyTransportAccount *)
@@ -1406,7 +1413,8 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 
 	if (err || canceled) {
 		/* Try to continue anyway */
-	} else {
+	} else if (info->poke_all) {
+		/* We're not getting INBOX children if we don't want to poke all */
 		TnyIterator *iter = tny_list_create_iterator (list);
 		while (!tny_iterator_is_done (iter)) {
 			TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
@@ -2828,19 +2836,6 @@ on_refresh_folder (TnyFolder   *folder,
 
 	g_return_if_fail(priv!=NULL);
 
-	/* If the folder is remote, set the "Last updated" value */
-	if (modest_tny_folder_is_remote_folder (folder)) {
-		TnyAccount *account = modest_tny_folder_get_account (folder);
-		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
-		const gchar *name;
-		name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		modest_account_mgr_set_last_updated (mgr, tny_account_get_id (account), time (NULL));
-		if (!cancelled && !error)
-			modest_account_mgr_set_server_account_username_has_succeeded (mgr, tny_account_get_id (account), TRUE);
-		modest_account_mgr_set_account_busy (mgr, name, FALSE);
-		g_object_unref (account);
-	}
-
 	if (error) {
 		priv->error = g_error_copy (error);
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -2930,15 +2925,6 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
 
-	/* Refresh the folder. TODO: tinymail could issue a status
-	   updates before the callback call then this could happen. We
-	   must review the design */
-	if (modest_tny_folder_is_remote_folder (folder)) {
-		/* If the folder is remote, mark its account as busy */
-		const gchar *name;
-		name = modest_tny_account_get_parent_modest_account_name_for_server_account (priv->account);
-		modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), name, TRUE);
-	}
 	modest_mail_operation_notify_start (self);
 	
 	/* notify that the operation was started */

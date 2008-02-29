@@ -58,6 +58,7 @@
 #include <tny-gtk-lockable.h>
 #include <camel/camel.h>
 #include <modest-platform.h>
+#include "modest-ui-actions.h"
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
@@ -106,6 +107,10 @@ static void    modest_tny_account_store_forget_password_in_memory (ModestTnyAcco
 								   const gchar *server_account_name);
 
 static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self);
+
+static void    connection_status_changed   (TnyAccount *account, 
+					    TnyConnectionStatus status, 
+					    gpointer data);
 
 /* list my signals */
 enum {
@@ -1483,6 +1488,35 @@ add_existing_accounts (ModestTnyAccountStore *self)
 	modest_account_mgr_free_account_names (account_names);
 }
 
+static void 
+connection_status_changed (TnyAccount *account, 
+			   TnyConnectionStatus status, 
+			   gpointer data)
+{
+	if (status == TNY_CONNECTION_STATUS_CONNECTED) {
+		const gchar *account_name;
+		ModestWindow *main_window;
+		ModestTnyAccountStorePrivate *priv = NULL;
+		
+		priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (data);
+
+		/* Remove this handler */
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers, 
+								  G_OBJECT (account),
+								  "connection_status_changed");
+
+		/* Set the username as succedded */
+		modest_account_mgr_set_server_account_username_has_succeeded (modest_runtime_get_account_mgr (), 
+									      tny_account_get_id (account), 
+									      TRUE);
+
+		/* Perform a send receive */
+		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
+		modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, main_window);
+	}
+}
+
 static TnyAccount*
 create_tny_account (ModestTnyAccountStore *self,
 		    const gchar *name,
@@ -1504,6 +1538,15 @@ create_tny_account (ModestTnyAccountStore *self,
 		   we use a new account if any */
 		modest_tny_account_store_forget_password_in_memory (self, 
 								    tny_account_get_id (account));
+
+		/* Install a signal handler that will refresh the
+		   account the first time it becomes online */
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
+							       G_OBJECT (account), 
+							       "connection_status_changed",
+							       G_CALLBACK (connection_status_changed),
+							       self);
+
 		/* Set the account store */				
 		g_object_set_data (G_OBJECT(account), "account_store", self);
 	} else {
@@ -1644,6 +1687,15 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 
 	self = MODEST_TNY_ACCOUNT_STORE (user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	/* Remove the connection-status-changed handler if it's still there */
+	if (modest_signal_mgr_is_connected (priv->sighandlers, 
+					    G_OBJECT (account),
+					    "connection_status_changed")) {
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers, 
+								  G_OBJECT (account),
+								  "connection_status_changed");
+	}
 
 	/* Remove it from the list of accounts */
 	if (TNY_IS_STORE_ACCOUNT (account))

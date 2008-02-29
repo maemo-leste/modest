@@ -284,8 +284,7 @@ modest_account_mgr_set_server_account_username (ModestAccountMgr *self, const gc
 		
 	/* We don't know anything about new usernames: */
 	if (strcmp (existing_username, username) != 0)
-		modest_account_mgr_set_server_account_username_has_succeeded (self, account_name,
-									      TRUE);
+		modest_account_mgr_set_server_account_username_has_succeeded (self, account_name, FALSE);
 		
 	g_free (existing_username);
 }
@@ -306,15 +305,6 @@ modest_account_mgr_set_server_account_username_has_succeeded (ModestAccountMgr *
 				     succeeded, TRUE /* server account */);
 }
 
-void
-modest_account_mgr_set_server_account_password (ModestAccountMgr *self, const gchar* account_name, 
-				    const gchar* password)
-{
-	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PASSWORD, 
-				       password, TRUE /* server account */);
-}
-
-	
 gchar*
 modest_account_mgr_get_server_account_password (ModestAccountMgr *self, const gchar* account_name)
 {
