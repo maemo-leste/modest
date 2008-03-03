@@ -1205,7 +1205,10 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 
 	/* Get the account */
 	account = get_account_from_header_list (headers);
-	
+
+	if (!account)
+		return;
+
 	/* Look if we already have a message view for each header. If
 	   true, then remove the header from the list of headers to
 	   open */
@@ -1528,8 +1531,10 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		 * whether he/she wants to download them. */
 		if (num_of_unc_msgs) {
 			TnyAccount *account = get_account_from_header_list (header_list);
-			continue_download = connect_to_get_msg (win, num_of_unc_msgs, account);
-			g_object_unref (account);
+			if (account) {
+				continue_download = connect_to_get_msg (win, num_of_unc_msgs, account);
+				g_object_unref (account);
+			}
 		}
 	}
 
@@ -3347,8 +3352,10 @@ modest_ui_actions_on_cut (GtkAction *action,
 
 		if (num_of_unc_msgs) {
 			TnyAccount *account = get_account_from_header_list (header_list);
-			continue_download = connect_to_get_msg (window, num_of_unc_msgs, account);
-			g_object_unref (account);
+			if (account) {
+				continue_download = connect_to_get_msg (window, num_of_unc_msgs, account);
+				g_object_unref (account);
+			}
 		}
 
 		if (num_of_unc_msgs == 0 || continue_download) {
@@ -3408,8 +3415,10 @@ modest_ui_actions_on_copy (GtkAction *action,
 
 		if (num_of_unc_msgs) {
 			TnyAccount *account = get_account_from_header_list (header_list);
-			continue_download = connect_to_get_msg (window, num_of_unc_msgs, account);
-			g_object_unref (account);
+			if (account) {
+				continue_download = connect_to_get_msg (window, num_of_unc_msgs, account);
+				g_object_unref (account);
+			}
 		}
 
 		if (num_of_unc_msgs == 0 || continue_download) {
