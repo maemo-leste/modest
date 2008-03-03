@@ -1044,9 +1044,29 @@ get_account_from_header_list (TnyList *headers)
 		TnyIterator *iter = tny_list_create_iterator (headers);
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 		TnyFolder *folder = tny_header_get_folder (header);
-		account = tny_folder_get_account (folder);
-		g_object_unref (folder);
-		g_object_unref (header);
+		
+		if (!folder) {
+			g_object_unref (header);
+			
+			while (!tny_iterator_is_done (iter)) {
+				header = TNY_HEADER (tny_iterator_get_current (iter));
+				folder = tny_header_get_folder (header);
+				if (folder) 
+					break;
+				g_object_unref (header);
+				header = NULL;
+				tny_iterator_next (iter);
+			}
+		}
+
+		if (folder) {
+			account = tny_folder_get_account (folder);
+			g_object_unref (folder);
+		}
+		
+		if (header)
+			g_object_unref (header);
+		
 		g_object_unref (iter);
 	}
 	return account;
