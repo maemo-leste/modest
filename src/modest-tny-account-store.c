@@ -514,7 +514,7 @@ show_password_warning_only ()
 	
 	/* Show an explanatory temporary banner: */
 	if (main_window) 
-		modest_platform_information_banner (GTK_WIDGET(main_window), NULL, 
+		modest_platform_information_banner (NULL, NULL, 
 						    _("mcen_ib_username_pw_incorrect"));
 	else
 		g_warning ("%s: %s", __FUNCTION__, _("mcen_ib_username_pw_incorrect"));
