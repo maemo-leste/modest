@@ -168,6 +168,7 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
 	
 	gtk_widget_show (box);
+	gtk_widget_set_size_request (GTK_WIDGET (self), 480, -1);
 	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
