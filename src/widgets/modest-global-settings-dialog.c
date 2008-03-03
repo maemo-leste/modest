@@ -32,6 +32,7 @@
 #include <gtk/gtkstock.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtktogglebutton.h>
+#include <string.h>
 #include "widgets/modest-global-settings-dialog.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-defs.h"
@@ -165,17 +166,23 @@ add_to_modest_pair_list (const gint num, const gchar *str, GSList **list)
 	*list = g_slist_prepend (*list, pair);
 }
 
-/*
- * Gets a list of pairs 
- */
 ModestPairList *
 _modest_global_settings_dialog_get_connected_via (void)
 {
 	GSList *list = NULL;
+	const gchar *message;
 
-	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, 
-				 _("mcen_va_options_connectiontype_wlan_wimax"), 
-				 &list);
+#ifdef MODEST_PLATFORM_MAEMO
+	const gchar *env_var = getenv ("OSSO_PRODUCT_HARDWARE");
+	/* Check if WIMAX is available */
+	if (env_var && !strncmp (env_var, "RX-48", 5))
+		message = _("mcen_va_options_connectiontype_wlan_wimax");
+	else
+		message = _("mcen_va_options_connectiontype_wlan");
+#else
+	message = _("mcen_va_options_connectiontype_wlan");
+#endif
+	add_to_modest_pair_list (MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, message, &list);
 	add_to_modest_pair_list (MODEST_CONNECTED_VIA_ANY, 
 				 _("mcen_va_options_connectiontype_all"), 
 				 &list);
