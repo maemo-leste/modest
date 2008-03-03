@@ -1593,7 +1593,7 @@ modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 
 		dimmed = (subject == NULL || subject[0] == '\0');
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mcen_ib_subject_or_body_not_modified"));
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_subject_not_modified"));
 	}
 	       
 	if (!dimmed) {

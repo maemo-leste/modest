@@ -1,9 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: modest 20071102150317\n"
-"Report-Msgid-Bugs-To: rami.abbad@nokia.com\n"
-"POT-Creation-Date: 2007.11.02 15:03+0200\n"
-"PO-Revision-Date: 2007.11.02 15:03+0200\n"
+"Project-Id-Version: modest 20080222172757\n"
+"POT-Creation-Date: 2008.02.22 17:27+0200\n"
+"PO-Revision-Date: 2008.02.22 17:27+0200\n"
 "Last-Translator:\n"
 "Language-Team: English (UK)\n"
 "MIME-Version: 1.0\n"
@@ -15,16 +14,15 @@ msgid "emev_ib_ui_imap_server_not_support_error"
 msgstr "Operation not supported by IMAP server"
 
 msgid "emev_ib_ui_imap_uid_fetch_error"
-msgstr "Unable to fetch message body"
+msgstr "Unable to retrieve message body"
 
 msgid "emev_ib_ui_imap_unable_to_rename"
 msgstr ""
 "Unable to rename.\n"
-"Invalid folder name."
+"Invalid name."
 
 msgid "emev_ib_ui_pop3_msg_lock_error"
-msgstr ""
-"Unable to access e-mail account. Another application may be using it."
+msgstr "Unable to access e-mail account. Another application may be using it."
 
 msgid "emev_ib_ui_smtp_send_error"
 msgstr "SMTP send operation failed. Please try again later."
@@ -36,7 +34,8 @@ msgstr ""
 
 msgid "emev_nc_close_windows"
 msgstr ""
-"Several windows currently open. Close all e-mail application windows?"
+"Several windows currently open.\n"
+"Close all E-mail windows?"
 
 msgid "emev_nc_delete_attachment"
 msgid_plural "emev_nc_delete_attachments"
@@ -64,8 +63,8 @@ msgstr[1] "Delete messages?"
 
 msgid "emev_nc_disconnect_account"
 msgstr ""
-"Online editing of e-mail account will cause it to disconnect and will "
-"cancel any current operations. Continue anyway?"
+"Online editing of e-mail account will cause it to disconnect and will cancel "
+"any current operations. Continue anyway?"
 
 msgid "emev_nc_formatting_lost"
 msgstr ""
@@ -83,19 +82,20 @@ msgid_plural "emev_nc_unabletomove_items"
 msgstr[0] "Unable to move item"
 msgstr[1] "Unable to move %d items"
 
+msgid "emev_ni_checking_supported_auth_methods"
+msgstr "!!Checking for supported authentication methods…"
+
 msgid "emev_ni_internal_error"
 msgstr "Error occurred"
 
 msgid "emev_ni_ui_imap_connect_server_error"
-msgstr ""
-"Unable to connect to %s. Server name or port number may be incorrect."
+msgstr "Unable to connect to %s. Server name or port number may be incorrect."
 
 msgid "emev_ni_ui_imap_message_not_available_in_server"
 msgstr "Message %s not available on server."
 
 msgid "emev_ni_ui_pop3_msg_connect_error"
-msgstr ""
-"Unable to connect to %s. Server name or port number may be incorrect."
+msgstr "Unable to connect to %s. Server name or port number may be incorrect."
 
 msgid "emev_ni_ui_pop3_msg_eof"
 msgstr ""
@@ -114,13 +114,13 @@ msgstr ""
 
 msgid "emev_ni_ui_smtp_passwd_invalid"
 msgstr ""
-"SMTP password not defined. Please edit mailbox options for mailbox %s and "
+"SMTP password not defined. Edit e-mail account options for account %s and "
 "enter password for server %s."
 
 msgid "emev_ni_ui_smtp_userid_invalid"
 msgstr ""
-"SMTP user name not defined. Edit e-mail account options for account %s and "
-"enter password for server %s."
+"SMTP user name not defined. Edit e-mail account options for account %1$s and "
+"enter password for server %2$s."
 
 msgid "emev_ui_imap_inbox_select_error"
 msgstr "Unable to select server Inbox. Restart application and try again."
@@ -131,7 +131,9 @@ msgstr ""
 "try again."
 
 msgid "imum_nc_wizard_confirm_lose_changes"
-msgstr "All changes made to the settings will be lost. Continue anyway?"
+msgstr ""
+"All changes made to the settings will be lost.\n"
+"Continue anyway?"
 
 msgid "mail_fi_emailtype_imap"
 msgstr "IMAP4"
@@ -143,7 +145,7 @@ msgid "mail_fi_password"
 msgstr "Password"
 
 msgid "mail_fi_username"
-msgstr "Username"
+msgstr "User name"
 
 msgid "mail_ia_password_info"
 msgstr "Enter password for server %s"
@@ -180,14 +182,8 @@ msgstr "Opening"
 msgid "mail_ib_setting_failed"
 msgstr "Unable to save settings"
 
-msgid "mail_ib_ui_folder_copy_msgs_error"
-msgstr "Unable to copy messages"
-
 msgid "mail_ib_unable_to_purge_attachments"
 msgstr "Unable to purge attachments"
-
-msgid "mail_in_ui_folder_copy_target_error"
-msgstr "Unable to copy to current location"
 
 msgid "mail_in_ui_folder_create_error"
 msgstr "Unable to create folder"
@@ -209,9 +205,8 @@ msgstr "Retrieving"
 
 msgid "mail_nc_msg_count_limit_exceeded"
 msgstr ""
-"There are %d new messages on the server, but the limit is set to %d "
-"messages. Do you want to get all messages or just the newest mails up to the "
-"limit?"
+"%d new messages on server but retrieval limit is %d.\n"
+"Retrieve all messages or the newest ones up to the limit?"
 
 msgid "mail_ni_ssl_certificate_error"
 msgstr "Secure connection failed"
@@ -256,13 +251,13 @@ msgid "mail_va_no_subject"
 msgstr "(no subject)"
 
 msgid "mail_va_no_to"
-msgstr "(no address)"
+msgstr "(no recipient)"
 
 msgid "mail_va_re"
 msgstr "Re"
 
 msgid "mail_va_saved_to_drafts"
-msgstr "Saved to %s"
+msgstr "Saving to %s"
 
 msgid "mail_va_subject"
 msgstr "Subject:"
@@ -292,7 +287,7 @@ msgid "mcen_bd_edit"
 msgstr "Edit"
 
 msgid "mcen_bd_get_all"
-msgstr "Get all"
+msgstr "All"
 
 msgid "mcen_bd_new"
 msgstr "New"
@@ -325,7 +320,7 @@ msgid "mcen_fi_advsetup_leave_on_server"
 msgstr "Leave messages on server"
 
 msgid "mcen_fi_advsetup_limit_retrieve"
-msgstr "Limit retrieve"
+msgstr "Retrieval limit"
 
 msgid "mcen_fi_advsetup_optional_smtp"
 msgstr "SMTP servers:"
@@ -346,16 +341,16 @@ msgid "mcen_fi_advsetup_other_security_ssl"
 msgstr "SSL"
 
 msgid "mcen_fi_advsetup_retrieve_100"
-msgstr "Last 100 mails"
+msgstr "Last 100 messages"
 
 msgid "mcen_fi_advsetup_retrieve_20"
-msgstr "Last 20 mails"
+msgstr "Last 20 messages"
 
 msgid "mcen_fi_advsetup_retrieve_200"
-msgstr "Last 200 mails"
+msgstr "Last 200 messages"
 
 msgid "mcen_fi_advsetup_retrieve_50"
-msgstr "Last 50 mails"
+msgstr "Last 50 messages"
 
 msgid "mcen_fi_advsetup_retrieve_nolimit"
 msgstr "No limit"
@@ -385,7 +380,7 @@ msgid "mcen_fi_advsetup_smtp_none"
 msgstr "None"
 
 msgid "mcen_fi_country"
-msgstr "Country"
+msgstr "Region"
 
 msgid "mcen_fi_email_signature"
 msgstr "Signature"
@@ -466,7 +461,7 @@ msgid "mcen_fi_serviceprovider"
 msgstr "Service provider"
 
 msgid "mcen_ia_accountdetails"
-msgstr "Select your country and service provider from the list below."
+msgstr "Select your country/region and service provider from the list below"
 
 msgid "mcen_ia_add_email_name"
 msgstr "Name"
@@ -484,8 +479,8 @@ msgstr "New folder %s"
 
 msgid "mcen_ia_easysetup_complete"
 msgstr ""
-"Tap 'Finish' to save or 'Cancel' to discard the settings. You can later "
-"change your settings from the 'Tools > Accounts...' in the menu."
+"Tap 'Finish' to save or 'Cancel' to discard the settings. You can edit these "
+"settings via 'Tools > Accounts…' from the menu."
 
 msgid "mcen_ia_editor_attach_filename"
 msgstr "<Attachment:> "
@@ -504,8 +499,8 @@ msgstr "Account"
 
 msgid "mcen_ia_emailsetup_intro"
 msgstr ""
-"Account setup wizard allows you to define e-mail accounts for use on your "
-"device.\n"
+"Account setup wizard allows you to define e-mail accounts\n"
+"for use on your device.\n"
 "Tap 'Next' to continue."
 
 msgid "mcen_ia_emailsetup_setup_complete"
@@ -525,8 +520,7 @@ msgstr "Not defined"
 
 msgid "mcen_ia_optionalsmtp_note"
 msgstr ""
-"Select connection and edit SMTP servers to be used when connection is "
-"active"
+"Select connection and edit SMTP server to be used when connection is active"
 
 msgid "mcen_ia_optionalsmtp_servername"
 msgstr "SMTP server name"
@@ -560,21 +554,6 @@ msgid_plural "mcen_ib_messages_sent"
 msgstr[0] "Message sent"
 msgstr[1] "Messages sent"
 
-msgid "mcen_ib_message_unableto_cancel_send"
-msgstr ""
-"Unable to cancel sending.\n"
-"Message is in use."
-
-msgid "mcen_ib_message_unableto_send"
-msgstr ""
-"Unable to send.\n"
-"Message is in use."
-
-msgid "mcen_ib_messages_cannot_copy"
-msgstr ""
-"Unable to copy.\n"
-"Some messages not available."
-
 msgid "mcen_ib_move_cursor_to_message"
 msgstr "Move cursor to message area first"
 
@@ -593,25 +572,16 @@ msgstr "Removing attachment"
 msgid "mcen_ib_select_one_message"
 msgstr "Select 1 message only"
 
-msgid "mcen_ib_subject_or_body_not_modified"
+msgid "mcen_ib_subject_not_modified"
 msgstr ""
 "Unable to send.\n"
-"Make sure both subject and message body contain some text."
-
-msgid "mcen_ib_unable_to_copy_sending_message"
-msgstr "Unable to copy messages while being sent"
-
-msgid "mcen_ib_unable_to_move_mail_attachment"
-msgstr "Unable to move attached e-mail"
-
-msgid "mcen_ib_unable_to_open_while_sent"
-msgstr "Unable to open messages while being sent"
+"Make sure subject contains some text."
 
 msgid "mcen_ib_unable_to_reply"
-msgstr "Unable to reply to this message"
+msgstr "Unable to reply"
 
-msgid "mcen_ib_unable_to_save_attach_mail"
-msgstr "Unable to save attached messages"
+msgid "mcen_ib_unableto_discover_auth_methods"
+msgstr "!!Unable to discover supported secure authentication methods"
 
 msgid "mcen_ib_unsupported_link"
 msgstr "Unsupported link type"
@@ -626,7 +596,7 @@ msgid "mcen_li_emailsetup_name"
 msgstr "Name"
 
 msgid "mcen_li_emailsetup_secure_authentication"
-msgstr "Use Secure authentication"
+msgstr "Use secure authentication"
 
 msgid "mcen_li_emailsetup_secure_connection"
 msgstr "Secure connection"
@@ -692,7 +662,7 @@ msgid "mcen_me_editor_checknames"
 msgstr "Check names"
 
 msgid "mcen_me_editor_file_format"
-msgstr "File Format"
+msgstr "File format"
 
 msgid "mcen_me_editor_font"
 msgstr "Font…"
@@ -884,22 +854,22 @@ msgid "mcen_me_user_renamefolder"
 msgstr "Rename…"
 
 msgid "mcen_me_viewer_100"
-msgstr "100 %"
+msgstr "100%"
 
 msgid "mcen_me_viewer_120"
-msgstr "120 %"
+msgstr "120%"
 
 msgid "mcen_me_viewer_150"
-msgstr "150 %"
+msgstr "150%"
 
 msgid "mcen_me_viewer_200"
-msgstr "200 %"
+msgstr "200%"
 
 msgid "mcen_me_viewer_50"
-msgstr "50 %"
+msgstr "50%"
 
 msgid "mcen_me_viewer_80"
-msgstr "80 %"
+msgstr "80%"
 
 msgid "mcen_me_viewer_addtocontacts"
 msgstr "Add to Contacts…"
@@ -943,11 +913,11 @@ msgstr ""
 
 msgid "mcen_nc_get_msg"
 msgid_plural "mcen_nc_get_msgs"
-msgstr[0] "Content of the message must be retrieved first. Retrieve now?"
-msgstr[1] "Content of the messages must be retrieved first. Retrieve now?"
+msgstr[0] "Content of message must be retrieved first. Retrieve now?"
+msgstr[1] "Content of messages must be retrieved first. Retrieve now?"
 
 msgid "mcen_nc_no_email_acnts_defined"
-msgstr "No e-mail account defined."
+msgstr "No e-mail account defined"
 
 msgid "mcen_nc_no_email_message_modified_save_changes"
 msgstr "Message modified. Save changes?"
@@ -971,7 +941,8 @@ msgstr ""
 msgid "mcen_nc_unknown_certificate"
 msgstr ""
 "Trying to establish secure connection to server %s with an unknown "
-"certificate. Allow connections?"
+"certificate.\n"
+"Allow connections?"
 
 msgid "mcen_ni_noregistered_viewer"
 msgstr "No viewer found for this file type"
@@ -1075,7 +1046,7 @@ msgid "mcen_va_default_signature_tablet"
 msgstr "Sent from Nokia Internet Tablet"
 
 msgid "mcen_va_message_properties_size_noinfo"
-msgstr "-"
+msgstr "–"
 
 msgid "mcen_va_never"
 msgstr "Never"
@@ -1086,6 +1057,9 @@ msgstr "Any connection"
 msgid "mcen_va_options_connectiontype_wlan"
 msgstr "WLAN"
 
+msgid "mcen_va_options_connectiontype_wlan_wimax"
+msgstr "!!WLAN and WiMAX"
+
 msgid "mcen_va_options_messageformat_html"
 msgstr "Formatted text (HTML)"
 
@@ -1093,10 +1067,10 @@ msgid "mcen_va_options_messageformat_plain"
 msgstr "Plain text"
 
 msgid "mcen_va_options_updateinterval_10min"
-msgstr "10 min"
+msgstr "10 minutes"
 
 msgid "mcen_va_options_updateinterval_15min"
-msgstr "15 min"
+msgstr "15 minutes"
 
 msgid "mcen_va_options_updateinterval_1h"
 msgstr "1 hour"
@@ -1105,13 +1079,13 @@ msgid "mcen_va_options_updateinterval_2h"
 msgstr "2 hours"
 
 msgid "mcen_va_options_updateinterval_30min"
-msgstr "30 min"
+msgstr "30 minutes"
 
 msgid "mcen_va_options_updateinterval_5min"
-msgstr "5 min"
+msgstr "5 minutes"
 
 msgid "mcen_va_refreshing"
-msgstr "Refreshing..."
+msgstr "Refreshing"
 
 msgid "mcen_va_serviceprovider_other"
-msgstr "Other..."
+msgstr "Other"
