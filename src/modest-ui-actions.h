@@ -452,15 +452,15 @@ gboolean modest_ui_actions_msg_retrieval_check                (ModestMailOperati
 
 
 /**
- * modest_ui_actions_get_msgs_full_error_handler
+ * modest_ui_actions_disk_operations_error_handler
  * @mail_op: a #ModestMailOperation
  *
- * Error handler for message retrieval operations like
+ * Error handler for retrieval operations like
  * modest_mail_operation_get_msg or
  * modest_mail_operation_get_msgs_full
  **/
-void     modest_ui_actions_get_msgs_full_error_handler         (ModestMailOperation *mail_op,
-								gpointer user_data);
+void     modest_ui_actions_disk_operations_error_handler      (ModestMailOperation *mail_op,
+							       gpointer user_data);
 
 /* Show the account creation wizard dialog.
  * returns: TRUE if an account was created. FALSE if the user cancelled.

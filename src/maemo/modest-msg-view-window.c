@@ -1624,7 +1624,7 @@ message_reader_performer (gboolean canceled,
 
 	/* New mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
-								 modest_ui_actions_get_msgs_full_error_handler, 
+								 modest_ui_actions_disk_operations_error_handler, 
 								 NULL, NULL);
 				
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);

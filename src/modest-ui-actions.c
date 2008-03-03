@@ -1002,8 +1002,8 @@ banner_cleanup:
 }
 
 void
-modest_ui_actions_get_msgs_full_error_handler (ModestMailOperation *mail_op,
-					       gpointer user_data)
+modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
+						    gpointer user_data)
 {
 	const GError *error;
 	GObject *win = NULL;
@@ -1150,7 +1150,7 @@ open_msgs_performer(gboolean canceled,
 	/* Create the mail operation */
 	mail_op = 
 		modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
-							       modest_ui_actions_get_msgs_full_error_handler,
+							       modest_ui_actions_disk_operations_error_handler,
 							       error_msg, g_free);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
@@ -1591,7 +1591,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			if (do_retrieve) {
 				mail_op = 
 					modest_mail_operation_new_with_error_handling (G_OBJECT(win),
-										       modest_ui_actions_get_msgs_full_error_handler, 
+										       modest_ui_actions_disk_operations_error_handler, 
 										       NULL, NULL);
 				modest_mail_operation_queue_add (
 					modest_runtime_get_mail_operation_queue (), mail_op);
@@ -2330,15 +2330,10 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 
 	edit_window = MODEST_MSG_EDIT_WINDOW (user_data);
 
-	/* It might not be a good idea to do nothing if there was an error,
-	 * so let's at least show a generic error banner. */
-	/* TODO error while saving attachment, show "Saving draft failed" banner */
-	if (modest_mail_operation_get_error (mail_op) != NULL) {
-		g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_op))->message);
-		modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
-	} else {
+	/* Set draft is there was no error */
+	if (!modest_mail_operation_get_error (mail_op))
 		modest_msg_edit_window_set_draft (edit_window, saved_draft);
-	}
+
 	g_object_unref(edit_window);
 }
 
@@ -2406,7 +2401,8 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */		
-	mail_operation = modest_mail_operation_new (NULL);
+	mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler,
+									NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_save_to_drafts (mail_operation,
@@ -2753,11 +2749,20 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 	GtkWindow *source_win = (GtkWindow *) modest_mail_operation_get_source (mail_op);
 
 	if (modest_mail_operation_get_error (mail_op)) {
-		/* Show an error */
-		modest_platform_information_banner (GTK_WIDGET (source_win), NULL,
-	        	                            _("mail_in_ui_folder_create_error"));
 
-		/* Try again */
+		/* Show an error. If there was some problem writing to
+		   disk, show it, otherwise show the generic folder
+		   create error. We do it here and not in an error
+		   handler because the call to do_create_folder will
+		   stop the main loop in a gtk_dialog_run and then,
+		   the message won't be shown until that dialog is
+		   closed */
+		modest_ui_actions_disk_operations_error_handler (mail_op,
+								 _("mail_in_ui_folder_create_error"));
+
+		/* Try again. Do *NOT* show any error because the mail
+		   operations system will do it for us because we
+		   created the mail_op with new_with_error_handler */
 		do_create_folder (source_win, parent_folder, (const gchar *) suggested_name);
 	} else {
 		/* the 'source_win' is either the ModestMainWindow, or the 'Move to folder'-dialog
@@ -2798,8 +2803,7 @@ do_create_folder (GtkWindow *parent_window,
 	if (result == GTK_RESPONSE_ACCEPT) {
 		ModestMailOperation *mail_op;
 		
-		mail_op  = modest_mail_operation_new (G_OBJECT(parent_window));
-			
+		mail_op  = modest_mail_operation_new (NULL);			
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 						 mail_op);
 		modest_mail_operation_create_folder (mail_op,
@@ -4629,7 +4633,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 		ModestMailOperation *mail_op = NULL;
 		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header, NULL);
 		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
-									 modest_ui_actions_get_msgs_full_error_handler,
+									 modest_ui_actions_disk_operations_error_handler,
 									 NULL, NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 		modest_mail_operation_get_msg (mail_op, header, open_msg_for_purge_cb, win);
@@ -5214,7 +5218,7 @@ retrieve_msg_contents_performer (gboolean canceled,
 
 	/* Create mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
-								 modest_ui_actions_get_msgs_full_error_handler, 
+								 modest_ui_actions_disk_operations_error_handler, 
 								 NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msgs_full (mail_op, headers, NULL, NULL, NULL);
