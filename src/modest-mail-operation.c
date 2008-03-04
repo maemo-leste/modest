@@ -1518,6 +1518,24 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 							     account_name,
 							     TNY_ACCOUNT_TYPE_STORE);
 
+	/* The above function could return NULL */
+	if (!priv->account) {
+		/* Check if the operation was a success */
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     "no account");
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+
+		/* Call the user callback */
+		if (callback)
+			callback (self, NULL, user_data);
+
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);
+
+		return;
+	}
+
 	/* Create the helper object */
 	info = g_slice_new0 (UpdateAccountInfo);
 	info->pending_calls = 1;
