@@ -2647,9 +2647,10 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 					
 					pair = g_slice_new0 (SaveMimePartPair);
 					if (save_multiple_str) {
-						pair->filename = 
-							g_build_filename (chooser_uri,
-									  tny_mime_part_get_filename (mime_part), NULL);
+						gchar *escaped = gnome_vfs_escape_slashes (
+							tny_mime_part_get_filename (mime_part));
+						pair->filename = g_build_filename (chooser_uri, escaped, NULL);
+						g_free (escaped);
 					} else {
 						pair->filename = g_strdup (chooser_uri);
 					}
