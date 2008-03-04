@@ -3300,6 +3300,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 			if (cancel)
 				*cancel   = FALSE;			
 		} else {
+			/* Set parent to NULL or the banner will disappear with its parent dialog */
 			modest_platform_information_banner(NULL, NULL, _("mail_ib_login_cancelled"));
 			completed = TRUE;
 			if (username)
