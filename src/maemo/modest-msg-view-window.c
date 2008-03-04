@@ -870,11 +870,16 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	
 	if (header_view != NULL){
 		header_folder = modest_header_view_get_folder(header_view);
-		priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == TNY_FOLDER_TYPE_OUTBOX);
-		g_assert(header_folder != NULL);
-		priv->header_folder_id = tny_folder_get_id(header_folder);
-		g_assert(priv->header_folder_id != NULL);
-		g_object_unref(header_folder);
+		/* This could happen if the header folder was
+		   unseleted before opening this msg window (for
+		   example if the user selects an account in the
+		   folder view of the main window */
+		if (header_folder) {
+			priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == TNY_FOLDER_TYPE_OUTBOX);
+			priv->header_folder_id = tny_folder_get_id(header_folder);
+			g_assert(priv->header_folder_id != NULL);
+			g_object_unref(header_folder);
+		}
 	}
 
 	priv->header_model = g_object_ref(model);
@@ -1103,10 +1108,10 @@ void modest_msg_view_window_on_row_reordered(
  * the new model. In this case the view will be detached from it's
  * header folder. From this point the next/prev buttons are dimmed.
  */
-void modest_msg_view_window_update_model_replaced(
-		ModestHeaderViewObserver *observer,
-		GtkTreeModel *model,
-		const gchar *tny_folder_id){
+void 
+modest_msg_view_window_update_model_replaced(ModestHeaderViewObserver *observer,
+					     GtkTreeModel *model,
+					     const gchar *tny_folder_id){
 	ModestMsgViewWindowPrivate *priv = NULL; 
 	ModestMsgViewWindow *window = NULL;
 
@@ -1120,7 +1125,8 @@ void modest_msg_view_window_update_model_replaced(
 	 * not care about it's model (msg list). Else if the
 	 * header-view shows the folder the msg shown by us is in, we
 	 * shall replace our model reference and make some check. */
-	if(tny_folder_id == NULL || !g_str_equal(tny_folder_id, priv->header_folder_id))
+	if(tny_folder_id == NULL || 
+	   (priv->header_folder_id && !g_str_equal(tny_folder_id, priv->header_folder_id)))
 		return;
 	
 	/* Model is changed(replaced), so we should forget the old
@@ -2236,9 +2242,8 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	
 	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
 		while (tmp) {
-			modest_progress_object_remove_operation (
-					MODEST_PROGRESS_OBJECT (tmp->data),
-					mail_op);
+			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
+								 mail_op);
 			tmp = g_slist_next (tmp);
 		}
 
