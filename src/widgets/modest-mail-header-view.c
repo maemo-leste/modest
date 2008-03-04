@@ -304,7 +304,7 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 				add_recpt_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_hotfix1"), bcc);
 			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_subject"),
 								   priv->subject_box, TRUE, TRUE);
-			add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mcen_fi_message_properties_received"),
+			add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_date"),
 					      tny_header_get_date_received (header));
 		}
 	}
