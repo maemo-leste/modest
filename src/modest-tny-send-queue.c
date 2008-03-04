@@ -591,18 +591,8 @@ _on_msg_error_happened (TnySendQueue *self,
 			gpointer user_data)
 {
 	ModestTnySendQueuePrivate *priv = NULL;
-	SendInfo *info = NULL;
-	GList *item = NULL;
-	gchar* msg_uid = NULL;
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-	
-	/* Get sending info (create new if it doesn not exist) */
-	msg_uid = modest_tny_send_queue_get_msg_id (header);
-	item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), 
-						  msg_uid);	
-
-	info = item->data;
 
 	/* Keep in queue so that we remember that the opertion has failed */
 	/* and was not just cancelled */
@@ -611,12 +601,29 @@ _on_msg_error_happened (TnySendQueue *self,
 	else
 		info->status = MODEST_TNY_SEND_QUEUE_FAILED;
 	priv->current = NULL;
-	
-	/* Notify status has changed */
-	g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
 
-	/* free */
-	g_free(msg_uid);
+	/* Note that header could be NULL. Tinymail notifies about
+	   generic send queue errors with this signal as well, and
+	   those notifications are not bound to any particular header
+	   or message */
+	if (header) {
+		SendInfo *info = NULL;
+		GList *item = NULL;
+		gchar* msg_uid = NULL;
+
+		/* Get sending info (create new if it doesn not exist) */
+		msg_uid = modest_tny_send_queue_get_msg_id (header);
+		item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), 
+							  msg_uid);	
+		
+		info = item->data;
+		
+		/* Notify status has changed */
+		g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
+
+		/* free */
+		g_free(msg_uid);
+	}
 }
 
 static void 
