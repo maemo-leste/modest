@@ -3300,8 +3300,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 			if (cancel)
 				*cancel   = FALSE;			
 		} else {
-			modest_platform_information_banner(GTK_WIDGET (dialog), 
-							   NULL, _("mail_ib_login_cancelled"));
+			modest_platform_information_banner(NULL, NULL, _("mail_ib_login_cancelled"));
 			completed = TRUE;
 			if (username)
 				*username = NULL;			
