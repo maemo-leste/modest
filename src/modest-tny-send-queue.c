@@ -594,14 +594,6 @@ _on_msg_error_happened (TnySendQueue *self,
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
-	/* Keep in queue so that we remember that the opertion has failed */
-	/* and was not just cancelled */
-	if (err->code == TNY_SYSTEM_ERROR_CANCEL)
-		info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
-	else
-		info->status = MODEST_TNY_SEND_QUEUE_FAILED;
-	priv->current = NULL;
-
 	/* Note that header could be NULL. Tinymail notifies about
 	   generic send queue errors with this signal as well, and
 	   those notifications are not bound to any particular header
@@ -617,6 +609,14 @@ _on_msg_error_happened (TnySendQueue *self,
 							  msg_uid);	
 		
 		info = item->data;
+
+		/* Keep in queue so that we remember that the opertion has failed */
+		/* and was not just cancelled */
+		if (err->code == TNY_SYSTEM_ERROR_CANCEL)
+			info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+		else
+			info->status = MODEST_TNY_SEND_QUEUE_FAILED;
+		priv->current = NULL;
 		
 		/* Notify status has changed */
 		g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
