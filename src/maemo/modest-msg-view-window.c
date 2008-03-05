@@ -1071,15 +1071,15 @@ void modest_msg_view_window_on_row_inserted(
 	/* Attach new_model and connect some callback to it to become able
 	 * to detect changes in header-view. */
 	priv->header_model = g_object_ref(new_model);
-	g_signal_connect (new_model, "row-changed",
-			G_CALLBACK (modest_msg_view_window_on_row_changed),
-			window);
-	g_signal_connect (new_model, "row-deleted",
-			G_CALLBACK (modest_msg_view_window_on_row_deleted),
-			window);
-	g_signal_connect (new_model, "rows-reordered",
-			G_CALLBACK (modest_msg_view_window_on_row_reordered),
-			window);
+	priv->row_changed_handler = g_signal_connect (new_model, "row-changed",
+						      G_CALLBACK (modest_msg_view_window_on_row_changed),
+						      window);
+	priv->row_deleted_handler = g_signal_connect (new_model, "row-deleted",
+						      G_CALLBACK (modest_msg_view_window_on_row_deleted),
+						      window);
+	priv->rows_reordered_handler = g_signal_connect (new_model, "rows-reordered",
+							 G_CALLBACK (modest_msg_view_window_on_row_reordered),
+							 window);
 
 	/* Now set up next_row_reference. */
 	priv->next_row_reference = gtk_tree_row_reference_copy(
