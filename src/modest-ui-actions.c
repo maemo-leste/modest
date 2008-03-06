@@ -2915,7 +2915,6 @@ static void
 modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
-	ModestMainWindow *window = MODEST_MAIN_WINDOW (user_data);
 	const GError *error = NULL;
 	const gchar *message = NULL;
 	
@@ -2929,12 +2928,12 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 		message = _CS("ckdg_ib_folder_already_exists");
 		break;
 	default:
-		g_warning ("%s: BUG: unexpected error:[%d]: %s", __FUNCTION__,
-			   error->code, error->message);
-		return;
+		message = _("emev_ib_ui_imap_unable_to_rename");
 	}
 
-	modest_platform_information_banner (GTK_WIDGET (window), NULL, message);
+	/* We don't set a parent for the dialog because the dialog
+	   will be destroyed so the banner won't appear */
+	modest_platform_information_banner (NULL, NULL, message);
 }
 
 typedef struct {
@@ -2947,9 +2946,15 @@ on_rename_folder_cb (ModestMailOperation *mail_op,
 		     TnyFolder *new_folder,
 		     gpointer user_data)
 {
-	/* Select now */
-	modest_folder_view_select_folder (MODEST_FOLDER_VIEW (user_data),
-					  new_folder, FALSE);
+	ModestFolderView *folder_view;
+
+	folder_view = MODEST_FOLDER_VIEW (user_data);
+	/* Note that if the rename fails new_folder will be NULL */
+	if (new_folder) {
+		modest_folder_view_select_folder (folder_view, new_folder, FALSE);
+	} else {
+		modest_folder_view_select_first_inbox_or_local (folder_view);
+	}
 }
 
 static void
