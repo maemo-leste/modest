@@ -270,6 +270,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	GtkWidget *dialog_box;
 	GtkWidget *scrolled_window, *vbox;
 
+	gtk_widget_set_size_request (GTK_WIDGET (self), 600, -1);
+
 	priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 	dialog_box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
 	gtk_box_set_spacing (GTK_BOX (dialog_box), MODEST_MARGIN_NONE);
