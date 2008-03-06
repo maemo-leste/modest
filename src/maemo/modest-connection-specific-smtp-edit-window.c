@@ -270,6 +270,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	GtkWidget *dialog_box;
 	GtkWidget *scrolled_window, *vbox;
 
+	/* The title of this dialog is quite long, so make the window wide enough */
 	gtk_widget_set_size_request (GTK_WIDGET (self), 600, -1);
 
 	priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
