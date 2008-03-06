@@ -32,8 +32,7 @@
 #include <tny-header.h>
 #include <tny-simple-list.h>
 #include <tny-gtk-text-buffer-stream.h>
-#include <tny-camel-stream.h>
-#include <camel/camel-stream-mem.h>
+#include <tny-camel-mem-stream.h>
 #include "modest-formatter.h"
 #include "modest-text-utils.h"
 #include "modest-tny-platform-factory.h"
@@ -108,9 +107,8 @@ construct_from_text (TnyMimePart *part,
 	TnyStream *text_body_stream;
 
 	/* Create the stream */
-	text_body_stream = TNY_STREAM (tny_camel_stream_new
-				       (camel_stream_mem_new_with_buffer
-					(text, strlen(text))));
+	text_body_stream = TNY_STREAM (tny_camel_mem_stream_new_with_buffer
+					(text, strlen(text)));
 
 	/* Construct MIME part */
 	tny_stream_reset (text_body_stream);

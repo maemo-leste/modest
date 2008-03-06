@@ -34,10 +34,8 @@
 #include <tny-folder.h>
 #include <modest-runtime.h>
 #include "modest-formatter.h"
-#include <tny-camel-stream.h>
+#include <tny-camel-mem-stream.h>
 #include <tny-camel-mime-part.h>
-#include <camel/camel-stream-buffer.h>
-#include <camel/camel-stream-mem.h>
 #include <glib/gprintf.h>
 #include <modest-tny-folder.h>
 #include "modest-tny-mime-part.h"
@@ -171,9 +169,8 @@ add_body_part (TnyMsg *msg,
 	TnyStream *text_body_stream;
 
 	/* Create the stream */
-	text_body_stream = TNY_STREAM (tny_camel_stream_new
-				       (camel_stream_mem_new_with_buffer
-					(body, (body ? strlen(body) : 0))));
+	text_body_stream = TNY_STREAM (tny_camel_mem_stream_new_with_buffer
+					(body, (body ? strlen(body) : 0)));
 
 	text_body_part = modest_formatter_create_body_part (NULL, msg);
 
@@ -200,9 +197,8 @@ add_html_body_part (TnyMsg *msg,
 	TnyStream *html_body_stream;
 
 	/* Create the stream */
-	html_body_stream = TNY_STREAM (tny_camel_stream_new
-				       (camel_stream_mem_new_with_buffer
-					(body, strlen(body))));
+	html_body_stream = TNY_STREAM (tny_camel_mem_stream_new_with_buffer
+					(body, strlen(body)));
 
 	/* Create body part if needed */
 	html_body_part = modest_formatter_create_body_part (NULL, msg);
