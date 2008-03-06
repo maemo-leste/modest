@@ -1628,6 +1628,9 @@ message_reader_performer (gboolean canceled,
 		goto frees;
 	}
 
+	/* Register the header - it'll be unregistered in the callback */
+	modest_window_mgr_register_header (modest_runtime_get_window_mgr (), info->header, NULL);
+
 	/* New mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
 								 modest_ui_actions_disk_operations_error_handler, 
@@ -1832,6 +1835,9 @@ view_msg_cb (ModestMailOperation *mail_op,
 	ModestMsgViewWindow *self = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	GtkTreeRowReference *row_reference = NULL;
+
+	/* Unregister the header (it was registered before creating the mail operation) */
+	modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), header);
 
 	row_reference = (GtkTreeRowReference *) user_data;
 	if (canceled) {
