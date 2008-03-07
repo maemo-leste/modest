@@ -1,3 +1,10 @@
+* 2008-W11:
+- many minor UI fixes
+- handful of crasher fixes
+- better handling of non-latin mails
+- better error messages in some cases
+- code improvements and some mem leak fixes 
+
 * 2008-W10:
 - many small UI fixes
 - non-empty body no longer required when sending mail
