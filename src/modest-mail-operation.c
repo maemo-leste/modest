@@ -1276,7 +1276,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		retrieve_limit = G_MAXINT;
 	
 	/* Get per-account retrieval type */
-	retrieve_type = modest_account_mgr_get_retrieve_type (mgr, info->account_name);	
+	retrieve_type = modest_account_mgr_get_retrieve_type (mgr, info->account_name);
 	headers_only = (retrieve_type == MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY);
 
 	/* Order by date */
@@ -1367,9 +1367,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		}
 		
 		if (num_messages != 0) {
-			/* Send mails */
-			g_object_unref (priv->account);
-
 			/* Reenable suspended items */
 			modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
 

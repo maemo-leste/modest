@@ -5518,14 +5518,10 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	/* Get the server name: */
 	server_account = 
 		TNY_TRANSPORT_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self)));
-	if (server_account) {
-		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));
-			
-		g_object_unref (server_account);
-		server_account = NULL;
-	}
-	
-	g_return_if_fail (server_name);
+	if (server_account)
+		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));		
+	else
+		g_return_if_reached ();
 
 	/* Show the appropriate message text for the GError: */
 	switch (err->code) {
@@ -5554,6 +5550,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 
 	modest_platform_run_information_dialog (NULL, message);
 	g_free (message);
+	g_object_unref (server_account);
 }
 
 void
