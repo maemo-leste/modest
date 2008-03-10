@@ -278,7 +278,7 @@ struct _ModestMsgEditWindowPrivate {
 	guint        scroll_drag_timeout_id;
 	gdouble      last_upper;
 
-	gint last_cid;
+	gint next_cid;
 	TnyList *attachments;
 	TnyList *images;
 	guint64 images_size;
@@ -419,7 +419,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->images        = TNY_LIST (tny_simple_list_new ());
 	priv->images_size   = 0;
 	priv->images_count  = 0;
-	priv->last_cid      = 0;
+	priv->next_cid      = 0;
 
 	priv->cc_caption    = NULL;
 	priv->bcc_caption    = NULL;
@@ -1147,7 +1147,7 @@ get_related_images (ModestMsgEditWindow *self, TnyMsg *msg)
 }
 
 static void
-update_last_cid (ModestMsgEditWindow *self, TnyList *attachments)
+update_next_cid (ModestMsgEditWindow *self, TnyList *attachments)
 {
 	TnyIterator *iter;
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
@@ -1160,8 +1160,8 @@ update_last_cid (ModestMsgEditWindow *self, TnyList *attachments)
 		if (cid != NULL) {
 			char *invalid = NULL;
 			gint int_cid = strtol (cid, &invalid, 10);
-			if ((invalid != NULL) && (*invalid == '\0') && (int_cid > priv->last_cid)) {
-				priv->last_cid = int_cid;
+			if ((invalid != NULL) && (*invalid == '\0') && (int_cid >= priv->next_cid)) {
+				priv->next_cid = int_cid + 1;
 			}
 		}
 		g_object_unref (part);
@@ -1243,8 +1243,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_widget_show_all (priv->attachments_caption);
 	}
 	get_related_images (self, msg);
-	update_last_cid (self, priv->attachments);
-	update_last_cid (self, priv->images);
+	update_next_cid (self, priv->attachments);
+	update_next_cid (self, priv->images);
 	replace_with_images (self, priv->images);
 
 	if (preserve_is_rich && !is_html) {
@@ -2218,10 +2218,10 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			TnyStream *stream = create_stream_for_uri (uri);
 			tny_mime_part_construct (mime_part, stream, mime_type, "base64");
 			
-			content_id = g_strdup_printf ("%d", priv->last_cid);
+			content_id = g_strdup_printf ("%d", priv->next_cid);
 			tny_mime_part_set_content_id (mime_part, content_id);
 			g_free (content_id);
-			priv->last_cid++;
+			priv->next_cid++;
 			
 			basename = g_path_get_basename (filename);
 			tny_mime_part_set_filename (mime_part, basename);
@@ -2328,10 +2328,10 @@ modest_msg_edit_window_attach_file_one (
 
 		g_object_unref (stream);
 		
-		content_id = g_strdup_printf ("%d", priv->last_cid);
+		content_id = g_strdup_printf ("%d", priv->next_cid);
 		tny_mime_part_set_content_id (mime_part, content_id);
 		g_free (content_id);
-		priv->last_cid++;
+		priv->next_cid++;
 		
 		basename = g_path_get_basename (filename);
 		tny_mime_part_set_filename (mime_part, basename);
