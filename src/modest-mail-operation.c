@@ -2244,15 +2244,28 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	ModestMailOperationPrivate *priv = NULL;
 	gint msg_list_size;
 	TnyIterator *iter = NULL;
+	gboolean has_uncached_messages;
 	
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 
 	/* Init mail operation */
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 	priv->done = 0;
 	priv->total = tny_list_get_length(header_list);
+
+	/* Check uncached messages */
+	for (iter = tny_list_create_iterator (header_list), has_uncached_messages = FALSE;
+	     !has_uncached_messages && !tny_iterator_is_done (iter); 
+	     tny_iterator_next (iter)) {
+		TnyHeader *header;
+
+		header = (TnyHeader *) tny_iterator_get_current (iter);
+		if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED))
+			has_uncached_messages = TRUE;
+		g_object_unref (header);
+	}	
+	priv->op_type = has_uncached_messages?MODEST_MAIL_OPERATION_TYPE_RECEIVE:MODEST_MAIL_OPERATION_TYPE_OPEN;
 
 	/* Get account and set it into mail_operation */
 	if (tny_list_get_length (header_list) >= 1) {
