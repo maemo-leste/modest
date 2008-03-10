@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	
 	const gboolean ret = libmodest_dbus_client_compose_mail (
 		osso_context,
-		"modesttest@openismus.com", /* to */
+		"modesttest@modesttest.com", /* to */
 		"cc test", /* cc */
 		"bcc test", /* bcc */
 		"test subject", /* subject */

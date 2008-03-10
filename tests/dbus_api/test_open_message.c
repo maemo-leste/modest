@@ -19,7 +19,7 @@ main (int argc, char *argv[])
 	}
 	
 	/* For instance, 
-	 * "pop://murray.cumming%40gmail.com@pop.gmail.com:995/;use_ssl=wrapped/inbox/GmailId112e166949157685"
+	 * "pop://nomail%40nodomain.com@pop.gmail.com:995/;use_ssl=wrapped/inbox/GmailId112e166949157685"
 	 */
 	if (argc == 2) {
 		url = argv[1];

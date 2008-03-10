@@ -360,10 +360,10 @@ on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
 }
 
 static void
-text_cell_data  (GtkTreeViewColumn *column,  
+text_cell_data  (GtkTreeViewColumn *column,
 		 GtkCellRenderer *renderer,
-		 GtkTreeModel *tree_model,  
-		 GtkTreeIter *iter,  
+		 GtkTreeModel *tree_model,
+		 GtkTreeIter *iter,
 		 gpointer data)
 {
 	ModestFolderViewPrivate *priv;
@@ -416,10 +416,16 @@ text_cell_data  (GtkTreeViewColumn *column,
 						    		
 		/* Use bold font style if there are unread or unset messages */
 		if (number > 0) {
-			item_name = g_strdup_printf ("%s (%d)", fname, number);
+			if (type == TNY_FOLDER_TYPE_INBOX)
+				item_name = g_strdup_printf ("%s (%d)", _("mcen_me_folder_inbox"), number);
+			else
+				item_name = g_strdup_printf ("%s (%d)", fname, number);
 			item_weight = 800;
 		} else {
-			item_name = g_strdup (fname);
+			if (type == TNY_FOLDER_TYPE_INBOX)
+				item_name = g_strdup (_("mcen_me_folder_inbox"));
+			else
+				item_name = g_strdup (fname);
 			item_weight = 400;
 		}
 		
