@@ -154,6 +154,7 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 	TnyConnectionStatus store_conn_status, transport_conn_status;
 	TnyAccount *store_account = NULL, *transport_account = NULL;
 	gboolean retval = TRUE;
+	gboolean do_disconnect = TRUE;
 
 	acc_store = modest_runtime_get_account_store ();
 	queue = modest_runtime_get_mail_operation_queue ();
@@ -176,27 +177,34 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 
 		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
 								_("emev_nc_disconnect_account"));
+		do_disconnect = (response == FALSE);
 		if (response == GTK_RESPONSE_OK) {
-			/* FIXME: We should only cancel those of this account */
-			modest_mail_operation_queue_cancel_all (queue);
-
-			/* Also disconnect the account */
-			if (tny_account_get_connection_status (store_account) == TNY_CONNECTION_STATUS_CONNECTED) {
-				tny_account_cancel (store_account);
-				tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
-							      FALSE, NULL, NULL);
-			}
-			if (tny_account_get_connection_status (transport_account) == TNY_CONNECTION_STATUS_CONNECTED) {
-				tny_account_cancel (transport_account);
-				tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account),
-							      FALSE, NULL, NULL);
-			}
 			retval = TRUE;
 		} else {
 			retval = FALSE;
 		}
-	}
+	} 
 
+	if (do_disconnect) {
+
+		/* FIXME: We should only cancel those of this account */
+		modest_mail_operation_queue_cancel_all (queue);
+
+		/* Also disconnect the account */
+		if ((tny_account_get_connection_status (store_account) != TNY_CONNECTION_STATUS_DISCONNECTED) &&
+		    (tny_account_get_connection_status (store_account) != TNY_CONNECTION_STATUS_DISCONNECTED_BROKEN)) {
+			tny_account_cancel (store_account);
+			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
+						      FALSE, NULL, NULL);
+		}
+		if ((tny_account_get_connection_status (transport_account) != TNY_CONNECTION_STATUS_DISCONNECTED) &&
+		    (tny_account_get_connection_status (transport_account) != TNY_CONNECTION_STATUS_DISCONNECTED_BROKEN)) {
+			tny_account_cancel (transport_account);
+			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account),
+						      FALSE, NULL, NULL);
+		}
+	}
+		
 	/* Frees */
 	g_object_unref (store_account);
 	g_object_unref (transport_account);

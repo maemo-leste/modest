@@ -526,6 +526,8 @@ modest_tny_account_update_from_account (TnyAccount *tny_account,
 	g_object_unref (server_settings);
 	g_object_unref (settings);
 
+	tny_account_set_forget_pass_func (tny_account, NULL);
+	tny_account_set_pass_func (tny_account, NULL);
 	tny_account_set_forget_pass_func (tny_account,
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,
