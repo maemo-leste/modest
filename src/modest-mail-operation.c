@@ -2271,6 +2271,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 			has_uncached_messages = TRUE;
 		g_object_unref (header);
 	}	
+	g_object_unref (iter);
 	priv->op_type = has_uncached_messages?MODEST_MAIL_OPERATION_TYPE_RECEIVE:MODEST_MAIL_OPERATION_TYPE_OPEN;
 
 	/* Get account and set it into mail_operation */
