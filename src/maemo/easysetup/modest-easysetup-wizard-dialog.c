@@ -52,7 +52,7 @@
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
 #include "maemo/modest-connection-specific-smtp-window.h"
 #include "widgets/modest-ui-constants.h"
-#include "maemo/modest-account-settings-dialog.h"
+#include "widgets/modest-account-settings-dialog.h"
 #include "maemo/modest-maemo-utils.h"
 #include "modest-utils.h"
 #include <gconf/gconf-client.h>
