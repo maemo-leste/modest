@@ -5539,7 +5539,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 		message = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"), server_name);
 		break;
 	case TNY_SERVICE_ERROR_SEND:
-		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
+		message = g_strdup (dgettext("hildon-common-strings", "sfil_ib_unable_to_send"));
 		break;
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
 		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
@@ -5547,7 +5547,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	default:
 		g_warning ("%s: unexpected ERROR %d",
 			   __FUNCTION__, err->code);
-		message = g_strdup (_("emev_ib_ui_smtp_send_error"));
+		message = g_strdup (dgettext("hildon-common-strings", "sfil_ib_unable_to_send"));
 		break;	
 	}
 	
