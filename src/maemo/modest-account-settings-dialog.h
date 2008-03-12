@@ -9,7 +9,6 @@
 #include <gtk/gtkdialog.h>
 #include <gtk/gtknotebook.h>
 #include "modest-account-mgr.h"
-#include "modest-hildon-includes.h"
 
 G_BEGIN_DECLS
 
