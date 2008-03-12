@@ -2396,7 +2396,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 			filename = g_strdup ("");
 		}
 		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", "emev_nc_delete_attachments",
-						    (tny_list_get_length (att_list) == 1)), filename);
+						    tny_list_get_length (att_list)), filename);
 		g_free (filename);
 		confirmation_dialog = hildon_note_new_confirmation (GTK_WINDOW (window), message);
 		g_free (message);
