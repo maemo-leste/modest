@@ -38,14 +38,25 @@
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-msg-edit-window-ui.h>
 #include <widgets/modest-combo-box.h>
+#include <widgets/modest-attachments-view.h>
 
 #include <modest-widget-memory.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-tny-folder.h>
 #include <gtkhtml/gtkhtml.h>
+#include "modest-msg-edit-window-ui-dimming.h"
+#include <modest-platform.h>
+#include <libgnomevfs/gnome-vfs-mime-utils.h>
+#include <libgnomevfs/gnome-vfs.h>
+#include <tny-vfs-stream.h>
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
 static void  modest_msg_edit_window_finalize     (GObject *obj);
+
+static void  modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
+							    ModestMsgEditWindow *window);
+static void update_next_cid (ModestMsgEditWindow *self, TnyList *attachments);
 
 /* list my signals */
 enum {
@@ -69,6 +80,14 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *cc_field;
 	GtkWidget   *bcc_field;
 	GtkWidget   *subject_field;
+
+	GtkWidget   *attachments_view;
+	TnyList     *attachments;
+	guint       next_cid;
+
+	TnyMsg      *draft_msg;
+	TnyMsg      *outbox_msg;
+	gchar       *msg_uid;
 
 	gboolean    sent;
 };
@@ -153,7 +172,13 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->cc_field      = NULL;
 	priv->bcc_field     = NULL;
 	priv->subject_field = NULL;
+	priv->attachments_view = NULL;
+	priv->attachments = TNY_LIST (tny_simple_list_new ());
 	priv->sent          = FALSE;
+	priv->next_cid      = 0;
+	priv->draft_msg = NULL;
+	priv->outbox_msg = NULL;
+	priv->msg_uid = NULL;
 }
 
 /** 
@@ -201,7 +226,7 @@ on_from_combo_changed (ModestComboBox *combo, ModestWindow *win)
 static void
 init_window (ModestMsgEditWindow *obj, const gchar* account)
 {
-	GtkWidget *to_button, *cc_button, *bcc_button; 
+	GtkWidget *to_button, *cc_button, *bcc_button, *add_attachment_button; 
 	GtkWidget *header_table;
 	GtkWidget *main_vbox;
 	GtkWidget *msg_vbox;
@@ -215,6 +240,7 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	to_button     = gtk_button_new_with_label (_("To..."));
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
+	add_attachment_button = gtk_button_new_with_label (_("Attach..."));
 	
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
@@ -234,22 +260,25 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	priv->cc_field      = gtk_entry_new_with_max_length (80);
 	priv->bcc_field     = gtk_entry_new_with_max_length (80);
 	priv->subject_field = gtk_entry_new_with_max_length (80);
+	priv->attachments_view = modest_attachments_view_new (NULL);
 	
-	header_table = gtk_table_new (5,2, FALSE);
+	header_table = gtk_table_new (6,2, FALSE);
 	
 	gtk_table_attach (GTK_TABLE(header_table), gtk_label_new (_("From:")),
-			  0,1,0,1, GTK_SHRINK, 0, 0, 0);
-	gtk_table_attach (GTK_TABLE(header_table), to_button,     0,1,1,2, GTK_SHRINK, 0, 0, 0);
-	gtk_table_attach (GTK_TABLE(header_table), cc_button,     0,1,2,3, GTK_SHRINK, 0, 0, 0);
-	gtk_table_attach (GTK_TABLE(header_table), bcc_button,    0,1,3,4, GTK_SHRINK, 0, 0, 0);
+			  0,1,0,1, GTK_FILL, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), to_button,     0,1,1,2, GTK_FILL, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), cc_button,     0,1,2,3, GTK_FILL, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), bcc_button,    0,1,3,4, GTK_FILL, 0, 0, 0);
 	gtk_table_attach (GTK_TABLE(header_table), gtk_label_new (_("Subject:")),
-			  0,1,4,5, GTK_SHRINK, 0, 0, 0);
+			  0,1,4,5, GTK_FILL, 0, 0, 0);
+	gtk_table_attach (GTK_TABLE(header_table), add_attachment_button, 0, 1, 5, 6, GTK_FILL, 0, 0, 0);
 
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->from_field,   1,2,0,1);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->to_field,     1,2,1,2);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->cc_field,     1,2,2,3);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->bcc_field,    1,2,3,4);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->subject_field,1,2,4,5);
+	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->attachments_view,1,2,5,6);
 
 	priv->msg_body = gtk_html_new ();
 	gtk_html_load_empty (GTK_HTML (priv->msg_body));
@@ -258,19 +287,26 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	main_vbox = gtk_vbox_new  (FALSE, 0);
 
 	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), 
+					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_IN);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), scrolled_window, TRUE, TRUE, 0);
 	
 	msg_vbox = gtk_vbox_new (FALSE, 0);
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), msg_vbox); 
+	gtk_box_pack_start (GTK_BOX (main_vbox), msg_vbox, TRUE, TRUE, 0);
 
 	gtk_box_pack_start (GTK_BOX(msg_vbox), header_table, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(msg_vbox), priv->msg_body, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (scrolled_window), priv->msg_body); 
+
+	gtk_box_pack_start (GTK_BOX(msg_vbox), scrolled_window, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
+
+	g_signal_connect_object (add_attachment_button, "clicked", 
+				 G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), G_OBJECT (obj), 0);
 }
 
 
@@ -281,8 +317,53 @@ modest_msg_edit_window_finalize (GObject *obj)
 	
 	/* These had to stay alive for as long as the comboboxes that used them: */
 	modest_pair_list_free (priv->from_field_protos);
+	g_object_unref (priv->attachments);
+	priv->attachments = NULL;
+
+	if (priv->draft_msg != NULL) {
+		TnyHeader *header = tny_msg_get_header (priv->draft_msg);
+		if (TNY_IS_HEADER (header)) {
+			ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+			modest_window_mgr_unregister_header (mgr, header);
+		}
+		g_object_unref (priv->draft_msg);
+		priv->draft_msg = NULL;
+	}
+	if (priv->outbox_msg != NULL) {
+		TnyHeader *header = tny_msg_get_header (priv->outbox_msg);
+		if (TNY_IS_HEADER (header)) {
+			ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+			modest_window_mgr_unregister_header (mgr, header);
+		}
+		g_object_unref (priv->outbox_msg);
+		priv->outbox_msg = NULL;
+	}
+	g_free (priv->msg_uid);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
+update_next_cid (ModestMsgEditWindow *self, TnyList *attachments)
+{
+	TnyIterator *iter;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	for (iter = tny_list_create_iterator (attachments) ; 
+	     !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyMimePart *part = (TnyMimePart *) tny_iterator_get_current (iter);
+		const gchar *cid = tny_mime_part_get_content_id (part);
+		if (cid != NULL) {
+			char *invalid = NULL;
+			gint int_cid = strtol (cid, &invalid, 10);
+			if ((invalid != NULL) && (*invalid == '\0') && (int_cid >= priv->next_cid)) {
+				priv->next_cid = int_cid + 1;
+			}
+		}
+		g_object_unref (part);
+	}
+	g_object_unref (iter);
 }
 
 
@@ -299,6 +380,7 @@ static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 {
 	TnyHeader *header;
+	TnyFolder *msg_folder;
 	const gchar *to, *cc, *bcc, *subject;
 	ModestMsgEditWindowPrivate *priv;
 	gchar *body;
@@ -323,7 +405,10 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 
-	
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
+	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	update_next_cid (self, priv->attachments);
+
 	body = modest_tny_msg_get_body (msg, FALSE, NULL);
 	gtk_html_set_editable (GTK_HTML (priv->msg_body), FALSE);
 	if (body) {
@@ -331,6 +416,30 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	}
 	gtk_html_set_editable (GTK_HTML (priv->msg_body), TRUE);
 	g_free (body);
+
+	modest_msg_edit_window_set_modified (self, FALSE);
+
+	if (priv->msg_uid) {
+		g_free (priv->msg_uid);
+		priv->msg_uid = NULL;
+	}
+
+	/* we should set a reference to the incoming message if it is a draft */
+	msg_folder = tny_msg_get_folder (msg);
+	if (msg_folder) {		
+		if (modest_tny_folder_is_local_folder (msg_folder)) {
+			TnyFolderType type = modest_tny_folder_get_local_or_mmc_folder_type (msg_folder);
+			if (type == TNY_FOLDER_TYPE_INVALID)
+				g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
+			
+			if (type == TNY_FOLDER_TYPE_DRAFTS) 
+				priv->draft_msg = g_object_ref(msg);
+			if (type == TNY_FOLDER_TYPE_OUTBOX)
+				priv->outbox_msg = g_object_ref(msg);
+			priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
+		}
+		g_object_unref (msg_folder);
+	}
 }
 
 
@@ -342,6 +451,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	ModestMsgEditWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
 	GtkActionGroup *action_group;
+	ModestDimmingRulesGroup *menu_rules_group = NULL;
+	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
+	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 	GError *error = NULL;
 
 	g_return_val_if_fail (msg, NULL);
@@ -352,6 +464,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	
 	parent_priv->ui_manager = gtk_ui_manager_new();
 	action_group = gtk_action_group_new ("ModestMsgEditWindowActions");
+	gtk_action_group_set_translation_domain (action_group, GETTEXT_PACKAGE);
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
@@ -397,6 +510,42 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	g_signal_connect (G_OBJECT(self), "delete-event",
 			  G_CALLBACK(on_delete_event), self);
 	
+	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
+	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
+	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
+
+	/* Add common dimming rules */
+	modest_dimming_rules_group_add_rules (menu_rules_group, 
+					      modest_msg_edit_window_menu_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_menu_dimming_entries),
+					      MODEST_WINDOW (self));
+	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
+					      modest_msg_edit_window_toolbar_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_toolbar_dimming_entries),
+					      MODEST_WINDOW (self));
+/* 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_color_button, */
+/* 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style), */
+/* 						    MODEST_WINDOW (self)); */
+/* 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_size_toolitem, */
+/* 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style), */
+/* 						    MODEST_WINDOW (self)); */
+/* 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_face_toolitem, */
+/* 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style), */
+/* 						    MODEST_WINDOW (self)); */
+	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
+					      modest_msg_edit_window_clipboard_dimming_entries,
+					      G_N_ELEMENTS (modest_msg_edit_window_clipboard_dimming_entries),
+					      MODEST_WINDOW (self));
+	/* Insert dimming rules group for this window */
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
+	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
+        /* Checks the dimming rules */
+	g_object_unref (menu_rules_group);
+	g_object_unref (toolbar_rules_group);
+	g_object_unref (clipboard_rules_group);
+
 	set_msg (self, msg);
 	
 	return MODEST_WINDOW(self);
@@ -422,6 +571,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	gchar *from_string = NULL;
 	ModestMsgEditWindowPrivate *priv;
 	GString *buffer;
+	TnyIterator *att_iter;
 	
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window), NULL);
 
@@ -440,7 +590,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	
 	data = g_slice_new0 (MsgData);
 	data->from    =  from_string; /* will be freed when data is freed */
-	data->to      =  g_strdup (gtk_entry_get_text (GTK_ENTRY(priv->to_field)));
+	data->to      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->to_field)));
 	data->cc      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->cc_field)));
 	data->bcc     =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)));
 	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
@@ -457,7 +607,40 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	gtk_html_export (GTK_HTML (priv->msg_body), "text/plain", (GtkHTMLSaveReceiverFn) html_export_save_buffer, &buffer);
 	data->plain_body = g_string_free (buffer, FALSE);
 
+	/* deep-copy the attachment data */
+	att_iter = tny_list_create_iterator (priv->attachments);
+	data->attachments = NULL;
+	while (!tny_iterator_is_done (att_iter)) {
+		TnyMimePart *part = (TnyMimePart *) tny_iterator_get_current (att_iter);
+		if (!(TNY_IS_MIME_PART(part))) {
+			g_warning ("strange data in attachment list");
+			g_object_unref (part);
+			tny_iterator_next (att_iter);
+			continue;
+		}
+		data->attachments = g_list_append (data->attachments,
+						   part);
+		tny_iterator_next (att_iter);
+	}
+	g_object_unref (att_iter);
+
+
+	if (priv->draft_msg) {
+		data->draft_msg = g_object_ref (priv->draft_msg);
+	} else if (priv->outbox_msg) {
+		data->draft_msg = g_object_ref (priv->outbox_msg);
+	} else {
+		data->draft_msg = NULL;
+	}
 	return data;
+}
+
+static void
+unref_gobject (GObject *obj, gpointer data)
+{
+	if (!G_IS_OBJECT(obj))
+		return;
+	g_object_unref (obj);
 }
 
 void 
@@ -476,7 +659,13 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->plain_body);
 	g_free (data->html_body);
 
-	/* TODO: Free data->attachments? */
+	if (data->draft_msg != NULL) {
+		g_object_unref (data->draft_msg);
+		data->draft_msg = NULL;
+	}	
+	
+	g_list_foreach (data->attachments, (GFunc)unref_gobject,  NULL);
+	g_list_free (data->attachments);
 
 	g_slice_free (MsgData, data);
 }
@@ -579,9 +768,86 @@ void
 modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 					   TnyList *att_list)
 {
-	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+	ModestMsgEditWindowPrivate *priv;
+	TnyIterator *iter;
 
-	g_message ("Remove attachments operation is not supported");
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (att_list == NULL) {
+		att_list = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+	} else {
+		g_object_ref (att_list);
+	}
+
+	if (tny_list_get_length (att_list) == 0) {
+		modest_platform_information_banner (NULL, NULL, _("TODO: no attachments selected to remove"));
+	} else {
+		GtkWidget *confirmation_dialog = NULL;
+		gboolean dialog_response;
+		gchar *message = NULL;
+		gchar *filename = NULL;
+
+		if (tny_list_get_length (att_list) == 1) {
+			TnyMimePart *part;
+			iter = tny_list_create_iterator (att_list);
+			part = (TnyMimePart *) tny_iterator_get_current (iter);
+			g_object_unref (iter);
+			if (TNY_IS_MSG (part)) {
+				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
+				if (header) {
+					filename = g_strdup (tny_header_get_subject (header));
+					g_object_unref (header);
+				}
+				if (filename == NULL) {
+					filename = g_strdup (_("mail_va_no_subject"));
+				}
+			} else {
+				filename = g_strdup (tny_mime_part_get_filename (TNY_MIME_PART (part)));
+			}
+			g_object_unref (part);
+		} else {
+			filename = g_strdup ("");
+		}
+		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", "emev_nc_delete_attachments",
+						    (tny_list_get_length (att_list) == 1)), filename);
+		g_free (filename);
+		confirmation_dialog = gtk_message_dialog_new (GTK_WINDOW (window), 
+							      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT, 
+							      GTK_MESSAGE_QUESTION,
+							      GTK_BUTTONS_OK_CANCEL,
+							      message);
+		g_free (message);
+		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
+		gtk_widget_destroy (confirmation_dialog);
+		if (!dialog_response) {
+			g_object_unref (att_list);
+			return;
+		}
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
+		
+		for (iter = tny_list_create_iterator (att_list);
+		     !tny_iterator_is_done (iter);
+		     tny_iterator_next (iter)) {
+			TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
+			tny_list_remove (priv->attachments, (GObject *) mime_part);
+
+			modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+								   mime_part);
+			g_object_unref (mime_part);
+		}
+		g_object_unref (iter);
+	}
+
+	g_object_unref (att_list);
+
+}
+
+static void
+modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
+					       ModestMsgEditWindow *window)
+{
+	modest_msg_edit_window_offer_attach_file (window);
 }
 
 void 
@@ -589,8 +855,12 @@ modest_msg_edit_window_get_parts_size (ModestMsgEditWindow *window,
 				       gint *parts_count,
 				       guint64 *parts_size)
 {
-	*parts_count = 0;
-	*parts_size = 0;
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	modest_attachments_view_get_sizes (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), parts_count, parts_size);
+
 }
 
 void
@@ -704,7 +974,7 @@ modest_msg_edit_window_get_child_widget (ModestMsgEditWindow *win,
 		return priv->subject_field;
 		break;
 	case MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_ATTACHMENTS:
-		return NULL;
+		return priv->attachments_view;
 		break;
 	default:
 		return NULL;
@@ -732,7 +1002,11 @@ void
 modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
 				 TnyMimePart *part)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	g_return_if_fail (TNY_IS_MIME_PART (part));
+	tny_list_prepend (priv->attachments, (GObject *) part);
+	modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), part, TRUE, 0);
 }
 
 void            
@@ -744,20 +1018,133 @@ modest_msg_edit_window_redo               (ModestMsgEditWindow *window)
 void                    
 modest_msg_edit_window_offer_attach_file           (ModestMsgEditWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	GtkWidget *dialog = NULL;
+	gint response = 0;
+	GSList *uris = NULL;
+	GSList *uri_node;
+	
+	dialog = gtk_file_chooser_dialog_new (_("mcen_ti_select_attachment_title"), 
+					      GTK_WINDOW (window), 
+					      GTK_FILE_CHOOSER_ACTION_OPEN,
+					      GTK_STOCK_OPEN,
+					      GTK_RESPONSE_OK,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_CANCEL,
+					      NULL);
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+	switch (response) {
+	case GTK_RESPONSE_OK:
+		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (dialog));
+		break;
+	default:
+		break;
+	}
+	gtk_widget_destroy (dialog);
+
+	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
+		const gchar *uri = (const gchar *) uri_node->data;
+		modest_msg_edit_window_attach_file_one (window, uri);
+	}
+	g_slist_foreach (uris, (GFunc) g_free, NULL);
+	g_slist_free (uris);
 }
 
 void                    
-modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri)
+modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *uri)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	GnomeVFSHandle *handle = NULL;
+	ModestMsgEditWindowPrivate *priv;
+	GnomeVFSResult result;
+
+	g_return_if_fail (window);
+	g_return_if_fail (uri);
+		
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	
+	result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+	if (result == GNOME_VFS_OK) {
+		TnyMimePart *mime_part;
+		TnyStream *stream;
+		const gchar *mime_type = NULL;
+		gchar *basename;
+		gchar *escaped_filename;
+		gchar *filename;
+		gchar *content_id;
+		GnomeVFSFileInfo *info;
+		GnomeVFSURI *vfs_uri;
+
+		vfs_uri = gnome_vfs_uri_new (uri);
+
+		escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
+		filename = gnome_vfs_unescape_string_for_display (escaped_filename);
+		g_free (escaped_filename);
+		gnome_vfs_uri_unref (vfs_uri);
+
+		info = gnome_vfs_file_info_new ();
+		
+		if (gnome_vfs_get_file_info (uri, 
+					     info, 
+					     GNOME_VFS_FILE_INFO_GET_MIME_TYPE)
+		    == GNOME_VFS_OK)
+			mime_type = gnome_vfs_file_info_get_mime_type (info);
+		mime_part = tny_platform_factory_new_mime_part
+			(modest_runtime_get_platform_factory ());
+		stream = TNY_STREAM (tny_vfs_stream_new (handle));
+		
+		tny_mime_part_construct (mime_part, stream, mime_type, "base64");
+
+		g_object_unref (stream);
+		
+		content_id = g_strdup_printf ("%d", priv->next_cid);
+		tny_mime_part_set_content_id (mime_part, content_id);
+		g_free (content_id);
+		priv->next_cid++;
+		
+		basename = g_path_get_basename (filename);
+		tny_mime_part_set_filename (mime_part, basename);
+		g_free (basename);
+		
+		tny_list_prepend (priv->attachments, (GObject *) mime_part);
+		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+							mime_part,
+							info->size == 0, info->size);
+		g_free (filename);
+		g_object_unref (mime_part);
+		gnome_vfs_file_info_unref (info);
+	}
 }
 
 void            
 modest_msg_edit_window_set_draft           (ModestMsgEditWindow *window,
 					    TnyMsg *draft)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	ModestMsgEditWindowPrivate *priv;
+	TnyHeader *header = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	g_return_if_fail ((draft == NULL)||(TNY_IS_MSG (draft)));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+
+	if (priv->draft_msg != NULL) {
+		g_object_unref (priv->draft_msg);
+	}
+
+	if (draft != NULL) {
+		g_object_ref (draft);
+		header = tny_msg_get_header (draft);
+		if (priv->msg_uid) {
+			g_free (priv->msg_uid);
+			priv->msg_uid = NULL;
+		}
+		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
+		if (GTK_WIDGET_REALIZED (window))
+			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window));
+	}
+
+	priv->draft_msg = draft;
 }
 
 gboolean        
@@ -790,6 +1177,10 @@ modest_msg_edit_window_can_undo               (ModestMsgEditWindow *window)
 const gchar*    
 modest_msg_edit_window_get_message_uid (ModestMsgEditWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
-	return NULL;
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), NULL);	
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	return priv->msg_uid;
 }

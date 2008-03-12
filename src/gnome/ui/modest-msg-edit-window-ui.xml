@@ -32,7 +32,23 @@
 
   <menubar name="MenuBar">
 
+    <menu name="EmailMenu" action="Email">
+      <menuitem name="SendMenu" action="ActionsSend"/>
+      <menuitem name="SaveToDraftsMenu" action="ActionsSaveToDrafts"/>
+      <separator/>
+      <menuitem name="SelectContactsMenu" action="SelectContacts"/>
+      <menuitem name="CheckNamesMenu" action="CheckNames"/>
+      <separator/>
+      <menuitem name="NewMessageMenu" action="ActionsNewMessage"/>
+      <separator/>
+      <menuitem name="CloseWindowMenu" action="CloseWindow"/>
+      <menuitem name="CloseAllWindowsMenu" action="CloseAllWindows"/>
+    </menu>
+
     <menu name="EditMenu" action="Edit">
+      <menuitem name="UndoMenu" action="Undo"/>
+      <menuitem name="RedoMenu" action="Redo"/>
+      <separator/>
       <menuitem name="CutMenu" action="Cut"/>
       <menuitem name="CopyMenu" action="Copy"/>
       <menuitem name="PasteMenu" action="Paste"/>
@@ -41,15 +57,66 @@
     </menu>
 
     <menu name="ViewMenu" action="View">
-      <menuitem name="ViewToFieldMenu"  action="ViewToField"/>
-      <menuitem name="ViewCcFieldMenu"  action="ViewCcField"/>
+      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
+      <separator/>
+      <menu name="ShowToolbarMenu" action="ShowToolbar">
+	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
+	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
+      </menu>
+      <separator/>
+      <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
+    </menu>
+
+    <menu name="FormatMenu" action="Format">
+      <menuitem name="SelectFontMenu" action="SelectFont"/>
+<!--      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/> -->
+      <menu name="AlignmentMenu" action="Alignment">
+         <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
+         <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>
+         <menuitem name="AlignmentRightMenu" action="AlignmentRight"/>
+      </menu>
+      <separator/>
+      <menu name="FileFormatMenu" action="FileFormat">
+	<menuitem name="FileFormatPlainTextMenu" action="FileFormatPlainText"/>
+	<menuitem name="FileFormatFormattedTextMenu" action="FileFormatFormattedText"/>
+      </menu>
+    </menu>
+
+    <menu name="AttachmentsMenu" action="Attachments">
+      <menuitem name="AttachFileMenu" action="AttachFile"/>
+      <menuitem name="InsertImageMenu" action="InsertImage"/>
+      <separator/>
+      <menuitem name="RemoveAttachmentsMenu" action="RemoveAttachments"/>
+    </menu>
+
+    <menu name="ToolsMenu" action="Tools">
+      <menu name="MessagePriorityMenu" action="MessagePriority">
+	<menuitem name="MessagePriorityHighMenu" action="MessagePriorityHigh"/>
+	<menuitem name="MessagePriorityNormalMenu" action="MessagePriorityNormal"/>
+	<menuitem name="MessagePriorityLowMenu" action="MessagePriorityLow"/>
+      </menu>
+      <separator/>
+      <menuitem name="FindInMessageMenu" action="FindInMessage"/>
+      <menuitem name="ToolSearchMessagesMenu" action="SearchMessages"/>
+      <separator/>
+      <menuitem name="ToolsHelpMenu" action="Help"/>
     </menu>
 
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ActionsSend"/>
+    <toolitem action="ToolbarSend"/>
+    <separator/>
+    <placeholder name="FontAttributes" />
+    <toolitem action="ActionsBold"/>
+    <toolitem action="ActionsItalics"/>
+    <placeholder name="FontColor" />
   </toolbar>
+
+  <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
+  <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
+  <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
+  <accelerator name="AccelCloseWindow" action="CloseWindowShortcut"/>
 
 </ui>

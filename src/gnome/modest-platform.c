@@ -410,6 +410,16 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 }
 
 void 
+modest_platform_double_connect_and_perform (GtkWindow *parent_window, 
+					    gboolean force,
+					    TnyFolderStore *folder_store,
+					    DoubleConnectionInfo *connect_info)
+{
+	if (connect_info->callback)
+		connect_info->callback (FALSE, NULL, parent_window, folder_store, connect_info->data);
+}
+
+void 
 modest_platform_connect_and_perform_if_network_account (GtkWindow *parent_window, 
 							gboolean force,
 							TnyAccount *account,

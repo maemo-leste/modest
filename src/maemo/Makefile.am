@@ -52,6 +52,7 @@ noinst_LTLIBRARIES=\
 
 libmodest_ui_la_SOURCES=              \
 	modest-account-view-window.c  \
+	modest-account-settings-dialog.c \
 	modest-icon-names.h           \
 	modest-maemo-global-settings-dialog.c \
 	modest-maemo-global-settings-dialog.h \
@@ -64,8 +65,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-msg-view-window.c      \
 	modest-msg-edit-window.c      \
 	modest-maemo-utils.c          \
-	modest-account-settings-dialog.h \
-	modest-account-settings-dialog.c \
 	modest-connection-specific-smtp-window.h \
 	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \

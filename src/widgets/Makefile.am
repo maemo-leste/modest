@@ -20,6 +20,7 @@ noinst_LTLIBRARIES=\
 
 libmodest_widgets_la_SOURCES=          \
 	modest-account-view-window.h   \
+	modest-account-settings-dialog.h \
 	modest-account-view.c          \
 	modest-account-view.h          \
 	modest-attachment-view.c       \
