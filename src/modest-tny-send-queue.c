@@ -105,6 +105,9 @@ struct _ModestTnySendQueuePrivate {
 	/* Special folders */
 	TnyFolder *outbox;
 	TnyFolder *sentbox;
+
+	/* last was send receive operation?*/
+	gboolean requested_send_receive;
 };
 
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -423,6 +426,8 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 							       TNY_FOLDER_TYPE_OUTBOX);
 	priv->sentbox = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
 							       TNY_FOLDER_TYPE_SENT);
+
+	priv->requested_send_receive = FALSE;
 
 
 	headers = tny_simple_list_new ();	
@@ -760,4 +765,26 @@ modest_tny_send_queue_wakeup (ModestTnySendQueue *self)
 	/* Frees */
 	g_object_unref (iter);
 	g_object_unref (G_OBJECT (headers));
+}
+
+gboolean 
+modest_tny_send_queue_get_requested_send_receive (ModestTnySendQueue *self)
+{
+	ModestTnySendQueuePrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_TNY_SEND_QUEUE (self), FALSE);
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	return priv->requested_send_receive;
+}
+
+void 
+modest_tny_send_queue_set_requested_send_receive (ModestTnySendQueue *self, gboolean requested_send_receive)
+{
+	ModestTnySendQueuePrivate *priv;
+
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (self));
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	priv->requested_send_receive = requested_send_receive;
 }

@@ -1500,7 +1500,7 @@ connection_status_changed (TnyAccount *account,
 		/* Perform a send receive */
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 		main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
-		modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, main_window);
+		modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, FALSE, main_window);
 	}
 }
 

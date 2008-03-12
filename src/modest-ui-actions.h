@@ -200,18 +200,21 @@ void     modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win);
  * @win: the window that will be used as source of the refresh mail operation
  * @force_connection: whether or not the code should try to force a new connection if we're offline
  * @poke_status: wheter ot not we want to poke the status of all mail folders
+ * @interactive: is coming from an interactive send receive.
  * 
  * Refreshes all the accounts
  **/
 void    modest_ui_actions_do_send_receive_all          (ModestWindow *win,
 							gboolean force_connection,
-							gboolean poke_status);
+							gboolean poke_status,
+							gboolean interactive);
 
 /**
  * modest_ui_actions_do_send_receive:
  * @account_name: the name of the Modest account or NULL
  * @force_connection: whether or not the code should try to force a new connection if we're offline
  * @poke_status: wheter ot not we want to poke the status of all mail folders
+ * @interactive: is coming from an interactive send receive
  * @win: the window that will be used as source of the refresh mail operation
  * 
  * Refreshes the Modest account whose name is passed as argument. If
@@ -222,6 +225,7 @@ void    modest_ui_actions_do_send_receive_all          (ModestWindow *win,
 void    modest_ui_actions_do_send_receive              (const gchar *account_name,
 							gboolean force_connection,
 							gboolean poke_status,
+							gboolean interactive,
 							ModestWindow *win);
 
 /**

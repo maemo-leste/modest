@@ -626,6 +626,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		modest_mail_operation_notify_start (self);
 
 		tny_send_queue_add_async (send_queue, msg, NULL, NULL, NULL);
+		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), FALSE);
 
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 		modest_mail_operation_notify_end (self);
@@ -1180,6 +1181,7 @@ typedef struct
 	gboolean poke_all;
 	TnyFolderObserver *inbox_observer;
 	RetrieveAllCallback retrieve_all_cb;
+	gboolean interactive;
 } UpdateAccountInfo;
 
 
@@ -1372,6 +1374,8 @@ inbox_refreshed_cb (TnyFolder *inbox,
 
 			/* Try to send */
 			tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
+			modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
+									  info->interactive);
 		}
 	}
 
@@ -1491,6 +1495,7 @@ void
 modest_mail_operation_update_account (ModestMailOperation *self,
 				      const gchar *account_name,
 				      gboolean poke_all,
+				      gboolean interactive,
 				      RetrieveAllCallback retrieve_all_cb,
 				      UpdateAccountCallback callback,
 				      gpointer user_data)
@@ -1539,6 +1544,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->folders = tny_simple_list_new ();
 	info->mail_op = g_object_ref (self);
 	info->poke_all = poke_all;
+	info->interactive = interactive;
 	info->account_name = g_strdup (account_name);
 	info->callback = callback;
 	info->user_data = user_data;

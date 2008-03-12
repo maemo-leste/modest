@@ -155,6 +155,28 @@ gchar* modest_tny_send_queue_to_string (ModestTnySendQueue *self);
  */
 void   modest_tny_send_queue_wakeup (ModestTnySendQueue *self);
 
+/**
+ * modest_tny_send_queue_get_requested_send_receive:
+ * @self: a #ModestTnySendQueue
+ *
+ * gets if the last request to send queue was an interactive send
+ * receive or not.
+ *
+ * Returns: %TRUE if last request was an interactive send receive,
+ * %FALSE otherwise.
+ */
+gboolean modest_tny_send_queue_get_requested_send_receive (ModestTnySendQueue *self);
+
+/**
+ * modest_tny_send_queue_set_requested_send_receive:
+ * @self: a #ModestTnySendQueue
+ * @requested_send_receive: mode.
+ *
+ * this should be called on each call to process the queue, to distinguish if the
+ * action was an interactive send receive.
+ */
+void modest_tny_send_queue_set_requested_send_receive (ModestTnySendQueue *self, gboolean requested_send_receive);
+
 
 G_END_DECLS
 

@@ -424,6 +424,7 @@ void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
  * @self: a #ModestMailOperation
  * @account_name: the id of a Modest account
  * @poke_all: if TRUE it will also do a poke_status over all folders of the account
+ * @interactive: if TRUE the update account was scheduled by an interactive send receive
  * 
  * Asynchronously refreshes the root folders of the given store
  * account. The caller should add the #ModestMailOperation to a
@@ -448,6 +449,7 @@ void modest_mail_operation_save_to_drafts   (ModestMailOperation *self,
 void          modest_mail_operation_update_account (ModestMailOperation *self,
 						    const gchar *account_name,
 						    gboolean poke_all,
+						    gboolean interactive,
 						    RetrieveAllCallback retrieve_all_cb,
 						    UpdateAccountCallback callback,
 						    gpointer user_data);

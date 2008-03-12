@@ -1801,6 +1801,7 @@ typedef struct {
 	ModestWindow *win;
 	gchar *account_name;
 	gboolean poke_status;
+	gboolean interactive;
 } SendReceiveInfo;
 
 static void
@@ -1835,7 +1836,7 @@ do_send_receive_performer (gboolean canceled,
 
 	/* Send & receive. */
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, info->account_name, info->poke_status,
+	modest_mail_operation_update_account (mail_op, info->account_name, info->poke_status, info->interactive,
 					      (info->win) ? retrieve_all_messages_cb : NULL, 
 					      new_messages_arrived, info->win);
 	g_object_unref (G_OBJECT (mail_op));
@@ -1861,6 +1862,7 @@ void
 modest_ui_actions_do_send_receive (const gchar *account_name, 
 				   gboolean force_connection,
 				   gboolean poke_status,
+				   gboolean interactive,
 				   ModestWindow *win)
 {
 	gchar *acc_name = NULL;
@@ -1889,6 +1891,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	info->account_name = acc_name;
 	info->win = (win) ? g_object_ref (win) : NULL;
 	info->poke_status = poke_status;
+	info->interactive = interactive;
 	info->account = modest_tny_account_store_get_server_account (acc_store, acc_name,
 								     TNY_ACCOUNT_TYPE_STORE);
 
@@ -1978,7 +1981,8 @@ modest_ui_actions_cancel_send (GtkAction *action,  ModestWindow *win)
 void
 modest_ui_actions_do_send_receive_all (ModestWindow *win, 
 				       gboolean force_connection,
-				       gboolean poke_status)
+				       gboolean poke_status,
+				       gboolean interactive)
 {
 	GSList *account_names, *iter;
 
@@ -1989,7 +1993,7 @@ modest_ui_actions_do_send_receive_all (ModestWindow *win,
 	while (iter) {			
 		modest_ui_actions_do_send_receive ((const char*) iter->data, 
 						   force_connection, 
-						   poke_status, win);
+						   poke_status, interactive, win);
 		iter = g_slist_next (iter);
 	}
 
@@ -2032,7 +2036,7 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 	
 	/* Refresh the active account. Force the connection if needed
 	   and poke the status of all folders */
-	modest_ui_actions_do_send_receive (NULL, TRUE, TRUE, win);
+	modest_ui_actions_do_send_receive (NULL, TRUE, TRUE, TRUE, win);
 }
 
 
@@ -5511,9 +5515,12 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	TnyTransportAccount *server_account;
 	gchar *message = NULL;
 
-	/* Don't show anything if the user cancelled something */
-	if (err->code == TNY_SYSTEM_ERROR_CANCEL)
+	/* Don't show anything if the user cancelled something or the send receive request is not
+	 * interactive */
+	if (err->code == TNY_SYSTEM_ERROR_CANCEL ||
+	    !modest_tny_send_queue_get_requested_send_receive (MODEST_TNY_SEND_QUEUE (self)))
 		return;
+
 
 	/* Get the server name: */
 	server_account = 
