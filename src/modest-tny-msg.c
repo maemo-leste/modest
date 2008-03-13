@@ -410,6 +410,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	header_content_type_lower = header_content_type?g_ascii_strdown (header_content_type, -1):NULL;
 	if (header_content_type_lower && 
 	    g_str_has_prefix (header_content_type_lower, "multipart/") &&
+	    !g_str_has_prefix (header_content_type_lower, "multipart/signed") &&
 	    strstr (header_content_type_lower, "application/")) {
 		g_free (header_content_type_lower);
 		g_free (header_content_type);
