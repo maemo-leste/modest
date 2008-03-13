@@ -48,12 +48,12 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "Tools",       NULL, N_("mcen_me_inbox_tools"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_tools_menu_activated) },
 	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
 	{ "Close",       NULL, N_("mcen_me_inbox_close") },
-	{ "Zoom",        NULL, N_("Zoom") },
+	{ "Zoom",        NULL, N_("mcen_me_viewer_zoom") },
 
 	/* Zoom and fullscreen keyboard actions*/
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },
 	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_ui_actions_on_zoom_minus) },
-	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
+	{ "ToggleFullscreen", NULL, N_("mcen_me_inbox_fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
 
 	/* Email */
 	{ "EmailNew", NULL, N_("mcen_me_inbox_new") }, /* submenu */
