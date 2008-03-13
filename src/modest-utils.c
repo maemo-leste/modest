@@ -342,7 +342,7 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 	info->error = NULL;
 	info->progress = gtk_progress_bar_new();
 	/* TODO: Need logical_ID for the title: */
-	info->dialog = gtk_dialog_new_with_buttons(_("Authentication"),
+	info->dialog = gtk_dialog_new_with_buttons(_("accountwizard_fi_authentication"),
 	                                           parent_window, GTK_DIALOG_MODAL,
 	                                           _("mcen_bd_dialog_cancel"),
 	                                           GTK_RESPONSE_REJECT,
