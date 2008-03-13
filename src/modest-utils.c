@@ -352,7 +352,7 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 	g_signal_connect(G_OBJECT(info->dialog), "response", G_CALLBACK(on_secure_auth_cancel), info);
 	
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox),
-	                  gtk_label_new("Checking for supported authentication types..."));
+	                  gtk_label_new(_("emev_ni_checking_supported_auth_methods")));
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), info->progress);
 	gtk_widget_show_all(info->dialog);
 	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(info->progress));
