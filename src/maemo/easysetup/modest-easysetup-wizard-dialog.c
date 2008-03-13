@@ -269,7 +269,7 @@ check_for_supported_auth_methods (ModestEasysetupWizardDialog* self)
 	if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() ||
 			error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 	{
-		show_error (GTK_WIDGET(self), _("Could not discover supported secure authentication methods."));
+		show_error (GTK_WIDGET(self), _("mcen_ib_unableto_discover_auth_methods"));
 	}
 
 	if(error != NULL)
