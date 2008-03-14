@@ -35,6 +35,7 @@
 #include <tny-account-store.h>
 #include <tny-fs-stream.h>
 #include <tny-vfs-stream.h>
+#include <tny-camel-mem-stream.h>
 
 #include <config.h>
 
@@ -2144,9 +2145,21 @@ static TnyStream* create_stream_for_uri (const gchar* uri)
 	GnomeVFSHandle *handle = NULL;
 	GnomeVFSResult test = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
 	if (test == GNOME_VFS_OK) {
-		/* Create the tinymail stream: */
-		/* Presumably tinymai will call gnome_vfs_close (handle) later. */
-		result = TNY_STREAM (tny_vfs_stream_new (handle));
+		TnyStream *vfssstream = TNY_STREAM (tny_vfs_stream_new (handle));
+		/* Streams over OBEX (Bluetooth) are not seekable but
+		 * we expect them to be (we might need to read them
+		 * several times). So if this is a Bluetooth URI just
+		 * read the whole file into memory (this is not a fast
+		 * protocol so we can assume that these files are not
+		 * going to be very big) */
+		if (g_ascii_strncasecmp (uri, "obex://", 7) == 0) {
+			TnyStream *memstream = tny_camel_mem_stream_new ();
+			tny_stream_write_to_stream (vfssstream, memstream);
+			g_object_unref (vfssstream);
+			result = memstream;
+		} else {
+			result = vfssstream;
+		}
 	}
 	
 	return result;
@@ -2199,6 +2212,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			GnomeVFSURI *vfs_uri;
 			guint64 stream_size;
 
+			gnome_vfs_close (handle);
 			vfs_uri = gnome_vfs_uri_new (uri);
 
 			escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
@@ -2305,6 +2319,7 @@ modest_msg_edit_window_attach_file_one (
 		GnomeVFSFileInfo *info;
 		GnomeVFSURI *vfs_uri;
 
+		gnome_vfs_close (handle);
 		vfs_uri = gnome_vfs_uri_new (uri);
 		
 
@@ -2322,7 +2337,7 @@ modest_msg_edit_window_attach_file_one (
 			mime_type = gnome_vfs_file_info_get_mime_type (info);
 		mime_part = tny_platform_factory_new_mime_part
 			(modest_runtime_get_platform_factory ());
-		stream = TNY_STREAM (tny_vfs_stream_new (handle));
+		stream = create_stream_for_uri (uri);
 		
 		tny_mime_part_construct (mime_part, stream, mime_type, "base64");
 
