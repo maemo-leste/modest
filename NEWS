@@ -1,3 +1,10 @@
+* 2008-W12:
+- fixes for instability in POP3 handling
+- improved error notes for a couple of situations
+- fixed a couple of crashes
+- better handling of memory-full situations
+- better handling of some non-Latin mails
+
 * 2008-W11:
 - many minor UI fixes
 - handful of crasher fixes
