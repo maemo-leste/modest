@@ -50,10 +50,27 @@
 #include "modest-account-mgr.h"
 #include "modest-tny-account-store.h"
 #include "modest-tny-account.h"
+#include "modest-tny-mime-part.h"
 #include "modest-tny-folder.h"
 #include "modest-search.h"
 #include "modest-runtime.h"
 #include "modest-platform.h"
+
+typedef struct 
+{
+	guint folder_count;
+	guint folder_total;
+	GList *msg_hits;
+	ModestSearch *search;
+	ModestSearchCallback callback;
+	gpointer user_data;
+} SearchHelper;
+
+static SearchHelper *create_helper (ModestSearchCallback callback, 
+				    ModestSearch *search,
+				    gpointer user_data);
+
+static void          check_search_finished (SearchHelper *helper);
 
 static gchar *
 g_strdup_or_null (const gchar *str)
@@ -81,7 +98,7 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	hit = g_slice_new0 (ModestSearchResultHit);
 
 	furl = tny_folder_get_url_string (folder);
-	printf ("DEBUG: %s: folder URL=%s\n", __FUNCTION__, furl);
+	g_debug ("%s: folder URL=%s\n", __FUNCTION__, furl);
 	if (!furl) {
 		g_warning ("%s: tny_folder_get_url_string(): returned NULL for folder. Folder name=%s\n", __FUNCTION__, tny_folder_get_name (folder));
 	}
@@ -146,6 +163,9 @@ read_chunk (TnyStream *stream, char *buffer, gsize count, gsize *nread)
 }
 
 #ifdef MODEST_HAVE_OGS
+/*
+ * This function assumes that the mime part is of type "text / *"
+ */
 static gboolean
 search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 {
@@ -156,30 +176,6 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 	gboolean   is_text_html = FALSE;
 	gboolean   found = FALSE;
 	gboolean   res = FALSE;
-
-	gboolean is_text = tny_mime_part_content_type_is (part, "text/*");
-	if (!is_text) {
-		g_debug ("%s: tny_mime_part_content_type_is() failed to find a "
-			"text/* MIME part. Content type is %s", 
-	    	__FUNCTION__, "Unknown (calling tny_mime_part_get_content_type(part) causes a deadlock)");
-	    	
-	    /* Retry with specific MIME types, because the wildcard seems to fail
-	     * in tinymail.
-	     * Actually I'm not sure anymore that it fails, so we could probalby 
-	     * remove this later: murrayc */
-	    is_text = (
-	    	tny_mime_part_content_type_is (part, "text/plain") ||
-	    	tny_mime_part_content_type_is (part, "text/html") );
-	    	
-	   	if (is_text) {
-	   	  g_debug ("%s: Retryting with text/plain or text/html succeeded", 
-	   	  	__FUNCTION__);	
-	   	}
-	}
-	
-	if (!is_text) {
-	    return FALSE;
-	}
 	
 	is_text_html = tny_mime_part_content_type_is (part, "text/html");
 
@@ -190,7 +186,6 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 		/* search->text_searcher was instantiated in modest_search_folder(). */
 		
 		if (is_text_html) {
-
 			found = ogs_text_searcher_search_html (search->text_searcher,
 							       buffer,
 							       nread,
@@ -201,6 +196,11 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 							       nread);
 		}
 
+		/* HACK: this helps UI refreshes because the search
+		   operations could be heavy */
+		while (gtk_events_pending ())
+			gtk_main_iteration ();
+
 		if (found) {
 			break;
 		}
@@ -208,29 +208,22 @@ search_mime_part_ogs (TnyMimePart *part, ModestSearch *search)
 		nread = 0;
 		res = read_chunk (stream, buffer, len, &nread);
 	}
+	g_object_unref (stream);
 
 	if (!found) {
 		found = ogs_text_searcher_search_done (search->text_searcher);
 	}
 
 	ogs_text_searcher_reset (search->text_searcher);
-	
-	/* debug stuff:
-	if (!found) {
-		buffer[len -1] = 0;
-		printf ("DEBUG: %s: query %s was not found in message text: %s\n", 
-			__FUNCTION__, search->query, buffer);	
-		
-	} else {
-		printf ("DEBUG: %s: found.\n", __FUNCTION__);	
-	}
-	*/
 
 	return found;
 }
 
 #else
 
+/*
+ * This function assumes that the mime part is of type "text / *"
+ */
 static gboolean
 search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 {
@@ -241,11 +234,6 @@ search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 	gsize     nread;
 	gboolean   found;
 	gboolean   res;
-
-	if (! tny_mime_part_content_type_is (part, "text/*")) {
-		g_debug ("%s: No text MIME part found.\n", __FUNCTION__);
-		return FALSE;
-	}
 
 	found = FALSE;
 	len = (sizeof (buffer) - 1) / 2;
@@ -296,6 +284,11 @@ search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 							buffer,
 							TRUE);
 
+		/* HACK: this helps UI refreshes because the search
+		   operations could be heavy */
+		while (gtk_events_pending ())
+			gtk_main_iteration ();
+
 		if ((found)||(nread == 0)) {
 			break;
 		}
@@ -315,7 +308,7 @@ search_string (const char      *what,
 	       const char      *where,
 	       ModestSearch    *search)
 {
-	gboolean found;
+	gboolean found = FALSE;
 #ifdef MODEST_HAVE_OGS
 	if (search->flags & MODEST_SEARCH_USE_OGS) {
 		found = ogs_text_searcher_search_text (search->text_searcher,
@@ -333,13 +326,25 @@ search_string (const char      *what,
 #ifdef MODEST_HAVE_OGS
 	}
 #endif
+
+	/* HACK: this helps UI refreshes because the search
+	   operations could be heavy */
+	while (gtk_events_pending ())
+		gtk_main_iteration ();
+
 	return found;
 }
 
 
-static gboolean search_mime_part_and_child_parts (TnyMimePart *part, ModestSearch *search)
+static gboolean 
+search_mime_part_and_child_parts (TnyMimePart *part, ModestSearch *search)
 {
 	gboolean found = FALSE;
+
+	/* Do not search into attachments */
+	if (modest_tny_mime_part_is_attachment_for_modest (part))
+		return FALSE;
+
 	#ifdef MODEST_HAVE_OGS
 	found = search_mime_part_ogs (part, search);
 	#else
@@ -372,61 +377,26 @@ static gboolean search_mime_part_and_child_parts (TnyMimePart *part, ModestSearc
 	return found;
 }
 
-/**
- * modest_search:
- * @folder: a #TnyFolder instance
- * @search: a #ModestSearch query
- *
- * This operation will search @folder for headers that match the query @search,
- * if the folder itself matches the query.
- * It will return a doubly linked list with URIs that point to the message.
- **/
-GList *
-modest_search_folder (TnyFolder *folder, ModestSearch *search)
+static void 
+modest_search_folder_get_headers_cb (TnyFolder *folder, 
+				     gboolean cancelled, 
+				     TnyList *headers, 
+				     GError *err, 
+				     gpointer user_data)
 {
-	/* Check that we should be searching this folder. */
-	/* Note that we don't try to search sub-folders. 
-	 * Maybe we should, but that should be specified. */
-	if (search->folder && strlen (search->folder)) {
-		if (!strcmp (search->folder, "outbox")) {
-			if (modest_tny_folder_guess_folder_type (folder) != TNY_FOLDER_TYPE_OUTBOX) {
-				return NULL;
-			}
-		} else if (strcmp (tny_folder_get_id (folder), search->folder) != 0) {
-			return NULL;
-		}
-	}
-	
-	GList *retval = NULL;
 	TnyIterator *iter = NULL;
-	TnyList *list = NULL;
-	
-#ifdef MODEST_HAVE_OGS
-	if (search->flags & MODEST_SEARCH_USE_OGS) {
-	
-		if (search->text_searcher == NULL && search->query != NULL) {
-			OgsTextSearcher *text_searcher;	
+	SearchHelper *helper;
 
-			text_searcher = ogs_text_searcher_new (FALSE);
-			ogs_text_searcher_parse_query (text_searcher, search->query);
-			search->text_searcher = text_searcher;
-		}
-	}
-#endif
+	helper = (SearchHelper *) user_data;
 
-	list = tny_simple_list_new ();
-	GError *error = NULL;
-	tny_folder_get_headers (folder, list, FALSE /* don't refresh */, &error);
-	if (error) {
-		g_warning ("%s: tny_folder_get_headers() failed with error=%s.\n", 
-		__FUNCTION__, error->message);
-		g_error_free (error);
-		error = NULL;	
+	if (err || cancelled) {
+		goto end;
 	}
 
-	iter = tny_list_create_iterator (list);
+	iter = tny_list_create_iterator (headers);
 
 	while (!tny_iterator_is_done (iter)) {
+
 		TnyHeader *cur = (TnyHeader *) tny_iterator_get_current (iter);
 		const time_t t = tny_header_get_date_sent (cur);
 		gboolean found = FALSE;
@@ -435,44 +405,44 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 		if (tny_header_get_flags(cur) & TNY_HEADER_FLAG_DELETED)
 			goto go_next;
 			
-		if (search->flags & MODEST_SEARCH_BEFORE)
-			if (!(t <= search->end_date))
+		if (helper->search->flags & MODEST_SEARCH_BEFORE)
+			if (!(t <= helper->search->end_date))
 				goto go_next;
 
-		if (search->flags & MODEST_SEARCH_AFTER)
-			if (!(t >= search->start_date))
+		if (helper->search->flags & MODEST_SEARCH_AFTER)
+			if (!(t >= helper->search->start_date))
 				goto go_next;
 
-		if (search->flags & MODEST_SEARCH_SIZE)
-			if (tny_header_get_message_size (cur) < search->minsize)
+		if (helper->search->flags & MODEST_SEARCH_SIZE)
+			if (tny_header_get_message_size (cur) < helper->search->minsize)
 				goto go_next;
 
-		if (search->flags & MODEST_SEARCH_SUBJECT) {
+		if (helper->search->flags & MODEST_SEARCH_SUBJECT) {
 			const char *str = tny_header_get_subject (cur);
 
-			if ((found = search_string (search->subject, str, search))) {
-			    retval = add_hit (retval, cur, folder);
+			if ((found = search_string (helper->search->subject, str, helper->search))) {
+			    helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
 			}
 		}
 		
-		if (!found && search->flags & MODEST_SEARCH_SENDER) {
+		if (!found && helper->search->flags & MODEST_SEARCH_SENDER) {
 			char *str = g_strdup (tny_header_get_from (cur));
 
-			if ((found = search_string (search->from, (const gchar *) str, search))) {
-				retval = add_hit (retval, cur, folder);
+			if ((found = search_string (helper->search->from, (const gchar *) str, helper->search))) {
+				helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
 			}
 			g_free (str);
 		}
 		
-		if (!found && search->flags & MODEST_SEARCH_RECIPIENT) {
+		if (!found && helper->search->flags & MODEST_SEARCH_RECIPIENT) {
 			const char *str = tny_header_get_to (cur);
 
-			if ((found = search_string (search->recipient, str, search))) {
-				retval = add_hit (retval, cur, folder);
+			if ((found = search_string (helper->search->recipient, str, helper->search))) {
+				helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
 			}
 		}
 	
-		if (!found && search->flags & MODEST_SEARCH_BODY) {
+		if (!found && helper->search->flags & MODEST_SEARCH_BODY) {
 			TnyHeaderFlags flags;
 			GError      *err = NULL;
 			TnyMsg      *msg = NULL;
@@ -493,91 +463,167 @@ modest_search_folder (TnyFolder *folder, ModestSearch *search)
 					g_object_unref (msg);
 				}
 			} else {	
+				g_debug ("Searching in %s\n", tny_header_get_subject (cur));
 			
-				found = search_mime_part_and_child_parts (TNY_MIME_PART (msg), 
-									  search);
+				found = search_mime_part_and_child_parts (TNY_MIME_PART (msg),
+									  helper->search);
 				if (found) {
-					retval = add_hit (retval, cur, folder);
+					helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
 				}
 			}
 			
 			if (msg)
 				g_object_unref (msg);
 		}
-
-go_next:
+	go_next:
 		g_object_unref (cur);
 		tny_iterator_next (iter);
 	}
 
+	/* Frees */
 	g_object_unref (iter);
-	g_object_unref (list);
-	return retval;
+ end:
+	if (headers)
+		g_object_unref (headers);
+
+	/* Check search finished */
+	helper->folder_count++;
+	check_search_finished (helper);
 }
 
-GList *
-modest_search_account (TnyAccount *account, ModestSearch *search)
+static void
+_search_folder (TnyFolder *folder, 
+		SearchHelper *helper)
 {
-	TnyFolderStore      *store;
-	TnyIterator         *iter;
-	TnyList             *folders;
-	GList               *hits;
-	GError              *error;
+	TnyList *list = NULL;
 
-	error = NULL;
-	hits = NULL;
-
-	store = TNY_FOLDER_STORE (account);
-
-	folders = tny_simple_list_new ();
-	tny_folder_store_get_folders (store, folders, NULL, &error);
+	g_debug ("%s: searching folder %s.", __FUNCTION__, tny_folder_get_name (folder));
 	
-	if (error != NULL) {
-		g_object_unref (folders);
-		return NULL;
+	/* Check that we should be searching this folder. */
+	/* Note that we don't try to search sub-folders. 
+	 * Maybe we should, but that should be specified. */
+	if (helper->search->folder && strlen (helper->search->folder)) {
+		if (!strcmp (helper->search->folder, "outbox")) {
+			if (modest_tny_folder_guess_folder_type (folder) != TNY_FOLDER_TYPE_OUTBOX) {
+				modest_search_folder_get_headers_cb (folder, TRUE, NULL, NULL, helper); 
+				return;
+			}
+		} else if (strcmp (tny_folder_get_id (folder), helper->search->folder) != 0) {
+			modest_search_folder_get_headers_cb (folder, TRUE, NULL, NULL, helper); 
+			return;
+		}
+	}
+	
+#ifdef MODEST_HAVE_OGS
+	if (helper->search->flags & MODEST_SEARCH_USE_OGS) {
+	
+		if (helper->search->text_searcher == NULL && helper->search->query != NULL) {
+			OgsTextSearcher *text_searcher;	
+
+			text_searcher = ogs_text_searcher_new (FALSE);
+			ogs_text_searcher_parse_query (text_searcher, helper->search->query);
+			helper->search->text_searcher = text_searcher;
+		}
+	}
+#endif
+	list = tny_simple_list_new ();
+	/* Get the headers */
+	tny_folder_get_headers_async (folder, list, FALSE, 
+				      modest_search_folder_get_headers_cb, 
+				      NULL, helper);
+}
+
+void
+modest_search_folder (TnyFolder *folder, 
+		      ModestSearch *search,
+		      ModestSearchCallback callback,
+		      gpointer user_data)
+{
+	SearchHelper *helper;
+
+	/* Create the helper */
+	helper = create_helper (callback, search, user_data);
+
+	/* Search */
+	_search_folder (folder, helper);
+}
+
+static void
+modest_search_account_get_folders_cb (TnyFolderStore *self, 
+				      gboolean cancelled, 
+				      TnyList *folders, 
+				      GError *err, 
+				      gpointer user_data)
+{
+	TnyIterator *iter;
+	SearchHelper *helper;
+
+	helper = (SearchHelper *) user_data;
+
+	if (err || cancelled) {
+		goto end;
 	}
 
 	iter = tny_list_create_iterator (folders);
 	while (!tny_iterator_is_done (iter)) {
 		TnyFolder *folder = NULL;
-		GList     *res = NULL;
 
-		folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		if (folder) {
-			/* g_debug ("DEBUG: %s: searching folder %s.", 
-				__FUNCTION__, tny_folder_get_name (folder)); */
-		
-			res = modest_search_folder (folder, search);
-
-			if (res != NULL) {
-				if (hits == NULL) {
-					hits = res;
-				} else {
-					hits = g_list_concat (hits, res);
-				}
-			}
-
-			g_object_unref (folder);
-		}
+		/* Search into folder */
+		folder = TNY_FOLDER (tny_iterator_get_current (iter));	
+		helper->folder_total++;
+		_search_folder (folder, (SearchHelper *) user_data);
+		g_object_unref (folder);
 
 		tny_iterator_next (iter);
 	}
-
 	g_object_unref (iter);
-	g_object_unref (folders);
+ end:
+	if (folders)
+		g_object_unref (folders);
 
-	/* printf ("DEBUG: %s: hits length = %d\n", __FUNCTION__, g_list_length (hits)); */
-	return hits;
+	/* Check search finished */
+	check_search_finished (helper);
 }
 
-GList *
-modest_search_all_accounts (ModestSearch *search)
+static void
+_search_account (TnyAccount *account, 
+		 SearchHelper *helper)
 {
-	/* printf ("DEBUG: %s: query=%s\n", __FUNCTION__, search->query); */
+	TnyList *folders = tny_simple_list_new ();
+
+	g_debug ("%s: Searching account %s", __FUNCTION__, tny_account_get_name (account));
+
+	/* Get folders */
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account), folders, NULL, 
+					    modest_search_account_get_folders_cb, 
+					    NULL, helper);
+}
+
+void
+modest_search_account (TnyAccount *account, 
+		       ModestSearch *search,
+		       ModestSearchCallback callback,
+		       gpointer user_data)
+{
+	SearchHelper *helper;
+
+	/* Create the helper */
+	helper = create_helper (callback, search, user_data);
+
+	/* Search */
+	_search_account (account, helper);
+}
+
+void
+modest_search_all_accounts (ModestSearch *search,
+			    ModestSearchCallback callback,
+			    gpointer user_data)
+{
 	ModestTnyAccountStore *astore;
-	TnyList               *accounts;
-	TnyIterator           *iter;
-	GList                 *hits;
+	TnyList *accounts;
+	TnyIterator *iter;
+	GList *hits;
+	SearchHelper *helper;
 
 	hits = NULL;
 	astore = modest_runtime_get_account_store ();
@@ -587,43 +633,74 @@ modest_search_all_accounts (ModestSearch *search)
 					accounts,
 					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
 
+	/* Create the helper */
+	helper = create_helper (callback, search, user_data);
+
+	/* Search through all accounts */
 	iter = tny_list_create_iterator (accounts);
 	while (!tny_iterator_is_done (iter)) {
 		TnyAccount *account = NULL;
-		GList      *res = NULL;
 
 		account = TNY_ACCOUNT (tny_iterator_get_current (iter));
-		if (account) {
-			/* g_debug ("DEBUG: %s: Searching account %s",
-		  	 __FUNCTION__, tny_account_get_name (account)); */
-		  	 
-			/* Give the account time to go online if necessary, 
-			 * for instance if this is immediately after startup,
-			 * after D-Bus activation: */
-			modest_platform_check_and_wait_for_account_is_online (account);
-			
-			/* Search: */
-			res = modest_search_account (account, search);
-			
-			if (res != NULL) {	
-				if (hits == NULL) {
-					hits = res;
-				} else {
-					hits = g_list_concat (hits, res);
-				}
-			}
-			
-			g_object_unref (account);
-		}
+		_search_account (account, helper);
+		g_object_unref (account);
 
 		tny_iterator_next (iter);
 	}
-
-	g_object_unref (accounts);
 	g_object_unref (iter);
-
-	/* printf ("DEBUG: %s: end: hits length=%d\n", __FUNCTION__, g_list_length(hits)); */
-	return hits;
+	g_object_unref (accounts);
 }
 
+static SearchHelper *
+create_helper (ModestSearchCallback callback, 
+	       ModestSearch *search,
+	       gpointer user_data)
+{
+	SearchHelper *helper;
 
+	helper = g_slice_new0 (SearchHelper);
+	helper->folder_count = 0;
+	helper->folder_total = 0;
+	helper->search = search;
+	helper->callback = callback;
+	helper->user_data = user_data;
+	helper->msg_hits = NULL;
+
+	return helper;
+}
+
+void 
+modest_search_free (ModestSearch *search)
+{
+	if (search->folder)
+		g_free (search->folder);
+	if (search->subject)
+		g_free (search->subject);
+	if (search->from)
+		g_free (search->from);
+	if (search->recipient)
+		g_free (search->recipient);
+	if (search->body)
+		g_free (search->body);
+
+#ifdef MODEST_HAVE_OGS
+	if (search->query)
+		g_free (search->query);
+	if (search->text_searcher)
+		ogs_text_searcher_free (search->text_searcher);	
+#endif
+}
+
+static void
+check_search_finished (SearchHelper *helper)
+{
+	/* If there are no more folders to check the account search has finished */
+	if (helper->folder_count == helper->folder_total) {
+		/* callback */
+		helper->callback (helper->msg_hits, helper->user_data);
+		
+		/* free helper */
+		g_list_free (helper->msg_hits);
+		g_slice_free (SearchHelper, helper);
+	}
+}

@@ -1000,7 +1000,10 @@ on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 	if (connect_when == MODEST_CONNECTED_VIA_ANY ||
 	    connect_when == modest_platform_get_current_connection ()) {
 		/* Use g_idle to context-switch into the application's thread: */
-		g_idle_add(on_idle_send_receive, NULL);
+		g_idle_add (on_idle_send_receive, NULL);
+	} else {
+		/* We need this to allow modest to finish */
+		g_idle_add (notify_error_in_dbus_callback, NULL);
 	}
  	
  	return OSSO_OK;
@@ -1239,12 +1242,42 @@ search_result_to_message (DBusMessage *reply,
 	return reply;
 }
 
+typedef struct
+{
+	DBusConnection *con;
+	DBusMessage *message;
+	ModestSearch *search;
+} SearchHelper;
+
+static void
+search_all_cb (GList *hits, gpointer user_data)
+{
+	DBusMessage  *reply;
+	SearchHelper *helper = (SearchHelper *) user_data;
+
+	reply = dbus_message_new_method_return (helper->message);
+
+	if (reply) {
+		dbus_uint32_t serial = 0;
+		
+		search_result_to_message (reply, hits);
+
+		dbus_connection_send (helper->con, reply, &serial);
+		dbus_connection_flush (helper->con);
+		dbus_message_unref (reply);
+	}
+
+	/* Free the helper */
+	dbus_message_unref (helper->message);
+	modest_search_free (helper->search);
+	g_slice_free (ModestSearch, helper->search);
+	g_slice_free (SearchHelper, helper);
+}
 
 static void
 on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 {
 	ModestDBusSearchFlags dbus_flags;
-	DBusMessage  *reply = NULL;
 	dbus_bool_t  res;
 	dbus_int64_t sd_v;
 	dbus_int64_t ed_v;
@@ -1254,9 +1287,9 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	const char *query;
 	time_t start_date;
 	time_t end_date;
-	GList *hits;
-
+	ModestSearch *search;
 	DBusError error;
+
 	dbus_error_init (&error);
 
 	sd_v = ed_v = 0;
@@ -1276,96 +1309,77 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	start_date = (time_t) sd_v;
 	end_date = (time_t) ed_v;
 
-	ModestSearch search;
-	memset (&search, 0, sizeof (search));
+	search = g_slice_new0 (ModestSearch);
 	
-	/* Remember what folder we are searching in:
-	 *
-	 * Note that we don't copy the strings, 
-	 * because this struct will only be used for the lifetime of this function.
-	 */
 	if (folder && g_str_has_prefix (folder, "MAND:")) {
-		search.folder = folder + strlen ("MAND:");
+		search->folder = g_strdup (folder + strlen ("MAND:"));
 	} else if (folder && g_str_has_prefix (folder, "USER:")) {
-		search.folder = folder + strlen ("USER:");
+		search->folder = g_strdup (folder + strlen ("USER:"));
 	} else if (folder && g_str_has_prefix (folder, "MY:")) {
-		search.folder = folder + strlen ("MY:");
+		search->folder = g_strdup (folder + strlen ("MY:"));
 	} else {
-		search.folder = folder;
+		search->folder = g_strdup (folder);
 	}
 
    /* Remember the text to search for: */
 #ifdef MODEST_HAVE_OGS
-	search.query  = query;
+	search->query  = g_strdup (query);
 #endif
 
 	/* Other criteria: */
-	search.start_date = start_date;
-	search.end_date  = end_date;
-	search.flags  = 0;
+	search->start_date = start_date;
+	search->end_date  = end_date;
+	search->flags = 0;
 
 	/* Text to serach for in various parts of the message: */
 	if (dbus_flags & MODEST_DBUS_SEARCH_SUBJECT) {
-		search.flags |= MODEST_SEARCH_SUBJECT;
-		search.subject = query;
+		search->flags |= MODEST_SEARCH_SUBJECT;
+		search->subject = g_strdup (query);
 	}
 
 	if (dbus_flags & MODEST_DBUS_SEARCH_SENDER) {
-		search.flags |=  MODEST_SEARCH_SENDER;
-		search.from = query;
+		search->flags |=  MODEST_SEARCH_SENDER;
+		search->from = g_strdup (query);
 	}
 
 	if (dbus_flags & MODEST_DBUS_SEARCH_RECIPIENT) {
-		search.flags |= MODEST_SEARCH_RECIPIENT; 
-		search.recipient = query;
+		search->flags |= MODEST_SEARCH_RECIPIENT; 
+		search->recipient = g_strdup (query);
 	}
 
 	if (dbus_flags & MODEST_DBUS_SEARCH_BODY) {
-		search.flags |=  MODEST_SEARCH_BODY; 
-		search.body = query;
+		search->flags |=  MODEST_SEARCH_BODY; 
+		search->body = g_strdup (query);
 	}
 
 	if (sd_v > 0) {
-		search.flags |= MODEST_SEARCH_BEFORE;
-		search.start_date = start_date;
+		search->flags |= MODEST_SEARCH_BEFORE;
+		search->start_date = start_date;
 	}
 
 	if (ed_v > 0) {
-		search.flags |= MODEST_SEARCH_AFTER;
-		search.end_date = end_date;
+		search->flags |= MODEST_SEARCH_AFTER;
+		search->end_date = end_date;
 	}
 
 	if (size_v > 0) {
-		search.flags |= MODEST_SEARCH_SIZE;
-		search.minsize = size_v;
+		search->flags |= MODEST_SEARCH_SIZE;
+		search->minsize = size_v;
 	}
 
 #ifdef MODEST_HAVE_OGS
-	search.flags |= MODEST_SEARCH_USE_OGS;
-	g_debug ("%s: Starting search for %s", __FUNCTION__, search.query);
+	search->flags |= MODEST_SEARCH_USE_OGS;
+	g_debug ("%s: Starting search for %s", __FUNCTION__, search->query);
 #endif
 
-	/* Note that this currently gets folders and messages from the servers, 
-	 * which can take a long time. libmodest_dbus_client_search() can timeout, 
-	 * reporting no results, if this takes a long time: */
-	hits = modest_search_all_accounts (&search);
+	SearchHelper *helper = g_slice_new (SearchHelper);
+	helper->search = search;
+	dbus_message_ref (message);
+	helper->message = message;
+	helper->con = con;
 
-	reply = dbus_message_new_method_return (message);
-
-	search_result_to_message (reply, hits);
-
-	if (reply == NULL) {
-		g_warning ("%s: Could not create reply.", __FUNCTION__);
-	}
-
-	if (reply) {
-		dbus_uint32_t serial = 0;
-		dbus_connection_send (con, reply, &serial);
-    	dbus_connection_flush (con);
-    	dbus_message_unref (reply);
-	}
-
-	g_list_free (hits);
+	/* Search asynchronously */
+	modest_search_all_accounts (search, search_all_cb, helper);
 }
 
 

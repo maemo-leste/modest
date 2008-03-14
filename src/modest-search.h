@@ -70,27 +70,31 @@ typedef struct {
 } ModestSearchResultHit;
 
 typedef struct {
-	const gchar *folder; /* The folder to search in */
+	gchar *folder; /* The folder to search in */
 	
 	/* Text to search for in various parts: */
-	const gchar *subject;
-	const gchar *from;
-	const gchar *recipient;
-	const gchar *body;
+	gchar *subject;
+	gchar *from;
+	gchar *recipient;
+	gchar *body;
 	
 	/* Other criteria: */
 	time_t start_date, end_date;
 	guint32 minsize;
 	ModestSearchFlags flags;
 #ifdef MODEST_HAVE_OGS
-	const gchar     *query; /* The text to search for. */
+	gchar     *query; /* The text to search for. */
 	OgsTextSearcher *text_searcher;	
 #endif
 } ModestSearch;
 
-GList * modest_search_folder (TnyFolder *folder, ModestSearch *search);
-GList * modest_search_all_accounts (ModestSearch *search);
-GList * modest_search_account (TnyAccount *account, ModestSearch *search);
+typedef void (*ModestSearchCallback) (GList *hits, gpointer user_data);
+
+void modest_search_folder (TnyFolder *folder, ModestSearch *search, ModestSearchCallback callback, gpointer user_data);
+void modest_search_all_accounts (ModestSearch *search, ModestSearchCallback callback, gpointer user_data);
+void modest_search_account (TnyAccount *account, ModestSearch *search, ModestSearchCallback callback, gpointer user_data);
+void modest_search_free (ModestSearch *search);
+
 G_END_DECLS
 
 #endif
