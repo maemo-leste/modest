@@ -155,6 +155,7 @@ struct _ModestHeaderViewPrivate {
 
 	HeaderViewStatus status;
 	guint status_timeout;
+	gboolean notify_status; /* whether or not the filter_row should notify about changes in the filtering */
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -565,6 +566,7 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv->status  = HEADER_VIEW_INIT;
 	priv->status_timeout = 0;
+	priv->notify_status = TRUE;
 
 	priv->observer_list_lock = g_mutex_new();
 	priv->observer_list = NULL;
@@ -1183,6 +1185,13 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	g_signal_emit (G_OBJECT (info->header_view), 
 		       signals[UPDATING_MSG_LIST_SIGNAL], 0, FALSE, NULL);
 
+	/* Allow filtering notifications from now on if the current
+	   folder is still the same (if not then the user has selected
+	   another one to refresh, we should wait until that refresh
+	   finishes) */
+	if (priv->folder == folder)
+		priv->notify_status = TRUE;
+
 	/* Frees */
 	g_object_unref (info->header_view);
 	g_free (info);
@@ -1248,6 +1257,9 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		
 		/* Pick my reference. Nothing to do with the mail operation */
 		priv->folder = g_object_ref (folder);
+
+		/* Do not notify about filterings until the refresh finishes */
+		priv->notify_status = FALSE;
 
 		/* Clear the selection if exists */
 		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
@@ -1994,7 +2006,7 @@ filter_row (GtkTreeModel *model,
  frees:
 	old_status = priv->status;
 	priv->status = ((gboolean) priv->status) && !visible;
-	if (priv->status != old_status) {
+	if ((priv->notify_status) && (priv->status != old_status)) {
 		NotifyFilterInfo *info;
 
 		if (priv->status_timeout)
