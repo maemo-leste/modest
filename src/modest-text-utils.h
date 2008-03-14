@@ -386,6 +386,16 @@ GSList      *modest_text_utils_split_addresses_list (const gchar *addresses);
 void         modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_indexes, GSList **end_indexes);
 
 /**
+ * modest_text_utils_address_with_standard_length:
+ * @recipients_list: a string
+ *
+ * obtains the list of recipients, but making sure that lines are not longer than 1000 chars
+ *
+ * Returns: a newly allocated string
+ */
+gchar *      modest_text_utils_address_with_standard_length (const gchar *recipients_list);
+
+/**
  * modest_text_utils_get_color_string:
  * @color: a #GdkColor
  *

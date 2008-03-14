@@ -85,11 +85,19 @@ modest_recpt_view_set_recipients (ModestRecptView *recpt_view, const gchar *reci
 {
 	const GtkWidget *text_view = NULL;
 	GtkTextBuffer *buffer = NULL;
+	gchar *std_recipients;
 
 	text_view = modest_scroll_text_get_text_view (MODEST_SCROLL_TEXT (recpt_view));
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (text_view));
 
-	gtk_text_buffer_set_text (buffer, recipients, -1);
+	if (recipients == NULL) {
+		std_recipients = NULL;
+	} else {
+		std_recipients = modest_text_utils_address_with_standard_length (recipients);
+	}
+
+	gtk_text_buffer_set_text (buffer, std_recipients, -1);
+	g_free (std_recipients);
 	if (GTK_WIDGET_REALIZED (recpt_view))
 		gtk_widget_queue_resize (GTK_WIDGET (recpt_view));
 

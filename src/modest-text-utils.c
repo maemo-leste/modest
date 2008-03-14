@@ -653,6 +653,30 @@ modest_text_utils_address_range_at_position (const gchar *recipients_list,
 		*end = range_end;
 }
 
+gchar *
+modest_text_utils_address_with_standard_length (const gchar *recipients_list)
+{
+	gchar ** splitted;
+	gchar ** current;
+	GString *buffer = g_string_new ("");
+
+	splitted = g_strsplit (recipients_list, "\n", 0);
+	current = splitted;
+	while (*current) {
+		gchar *line;
+		if (current != splitted)
+			buffer = g_string_append_c (buffer, '\n');
+		line = g_strndup (*splitted, 1000);
+		buffer = g_string_append (buffer, line);
+		g_free (line);
+		current++;
+	}
+
+	g_strfreev (splitted);
+
+	return g_string_free (buffer, FALSE);
+}
+
 
 /* ******************************************************************* */
 /* ************************* UTILIY FUNCTIONS ************************ */
