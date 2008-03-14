@@ -1693,12 +1693,12 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 	/* Notify the observers */
 	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 
 		       0, account);
-	
-	/* Unref the extra reference added by get_server_account */
-	g_object_unref (account);
 
 	/* Cancel all pending operations */
 	tny_account_cancel (TNY_ACCOUNT (account));
+	
+	/* Unref the extra reference added by get_server_account */
+	g_object_unref (account);
 
 	/* Clear the cache if it's an store account */
 	if (TNY_IS_STORE_ACCOUNT (account))
@@ -1726,6 +1726,9 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (store_account) {
+		/* Cancel all pending operations */
+		tny_account_cancel (TNY_ACCOUNT (store_account));
+
 		/* Disconnect before deleting the cache, because the
 		   disconnection will rewrite the cache to the
 		   disk */
@@ -1758,6 +1761,9 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		} else {
 			g_warning ("Removing a transport account that has no outbox");
 		}
+
+		/* Cancel all pending operations */
+		tny_account_cancel (TNY_ACCOUNT (transport_account));
 
 		/* Disconnect and notify the observers. The callback will free the reference */
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account), FALSE,

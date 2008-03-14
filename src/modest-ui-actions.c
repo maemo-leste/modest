@@ -981,24 +981,26 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 {
 	const GError *error;
 	GObject *win = NULL;
+	ModestMailOperationStatus status;
 
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
+	status = modest_mail_operation_get_status (mail_op);
 
-	/* Show error */
-	if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
-	    error->code == TNY_IO_ERROR_WRITE ||
-	    error->code == TNY_IO_ERROR_READ) {
-		ModestMailOperationStatus st = modest_mail_operation_get_status (mail_op);
-		/* If the mail op has been cancelled then it's not an error: don't show any message */
-		if (st != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+	/* If the mail op has been cancelled then it's not an error:
+	   don't show any message */
+	if (status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
+		/* Show error */
+		if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
+		    error->code == TNY_IO_ERROR_WRITE ||
+		    error->code == TNY_IO_ERROR_READ) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, dgettext("ke-recv",
 									   "cerm_device_memory_full"));
+		} else if (user_data) {
+			modest_platform_information_banner ((GtkWidget *) win, 
+							    NULL, user_data);
 		}
-	} else if (user_data) {
-		modest_platform_information_banner ((GtkWidget *) win, 
-						    NULL, user_data);
 	}
 
 	if (win)
