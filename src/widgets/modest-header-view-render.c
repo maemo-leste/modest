@@ -267,10 +267,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	gchar *address = NULL;
 	gchar *subject = NULL;
 	time_t date;
-
-#ifdef MAEMO_CHANGES
-	GtkTreeCellDataHint hint;
-#endif
 	
 	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
 		*attach_cell, *priority_cell,
@@ -282,13 +278,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_return_if_fail (GTK_IS_TREE_VIEW_COLUMN (column));
 	g_return_if_fail (GTK_IS_CELL_RENDERER (renderer));
 	g_return_if_fail (GTK_IS_TREE_MODEL (tree_model));
-
-#ifdef MAEMO_CHANGES
-	hint = gtk_tree_view_column_get_cell_data_hint (GTK_TREE_VIEW_COLUMN (column));
-
-	if (hint != GTK_TREE_CELL_DATA_HINT_ALL)
-		return;
-#endif
 	
 	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
 	subject_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "subject-box-renderer"));
