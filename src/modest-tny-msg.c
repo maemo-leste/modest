@@ -398,7 +398,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	TnyList *parts = NULL;
 	TnyIterator *iter = NULL;
 	gchar *header_content_type;
-	gchar *header_content_type_lower;
+	gchar *header_content_type_lower = NULL;
 	
 	if (!msg)
 		return NULL;
@@ -406,8 +406,10 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	/* If it's an application multipart, then we don't get into as we don't
 	 * support them (for example application/sml or wap messages */
 	header_content_type = modest_tny_mime_part_get_header_value (msg, "Content-Type");
-	header_content_type = g_strstrip (header_content_type);
-	header_content_type_lower = header_content_type?g_ascii_strdown (header_content_type, -1):NULL;
+	if (header_content_type) {
+		header_content_type = g_strstrip (header_content_type);
+		header_content_type_lower = g_ascii_strdown (header_content_type, -1);
+	}
 	if (header_content_type_lower && 
 	    g_str_has_prefix (header_content_type_lower, "multipart/") &&
 	    !g_str_has_prefix (header_content_type_lower, "multipart/signed") &&
