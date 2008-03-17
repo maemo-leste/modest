@@ -80,8 +80,10 @@ LIBS="$modest_save_libs"
 __COPY_LIBS="$LIBS"
 LIBS="$LIBS $MODEST_GSTUFF_LIBS"
 AC_CHECK_FUNCS(gtk_html_get_selection_area)
-LIBS="$__COPY_LIBS"
 AC_SUBST(HAVE_GTK_HTML_GET_SELECTION_AREA)
+AC_CHECK_FUNCS(gtk_tree_view_column_get_cell_data_hint)
+AC_SUBST(HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT)
+LIBS="$__COPY_LIBS"
 
 dnl dnl now, determine what to build
 dnl AC_MSG_NOTICE([Determining what platform to build])
