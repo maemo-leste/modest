@@ -153,6 +153,22 @@ on_easysetup_changed(GtkWidget* widget, ModestEasysetupWizardDialog* wizard)
 }
 
 static void
+on_incoming_security_changed(GtkWidget* widget, ModestEasysetupWizardDialog* wizard)
+{
+	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(wizard);
+	ModestConnectionProtocol protocol_security_incoming;
+
+	g_return_if_fail (priv != NULL);
+	protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security));
+
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_incoming_auth), modest_protocol_info_is_secure (protocol_security_incoming));
+	gtk_widget_set_sensitive (priv->checkbox_incoming_auth, !modest_protocol_info_is_secure (protocol_security_incoming));
+	
+	on_easysetup_changed (widget, wizard);
+}
+
+static void
 modest_easysetup_wizard_dialog_get_property (GObject *object, guint property_id,
 					     GValue *value, GParamSpec *pspec)
 {
@@ -872,7 +888,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 				      priv->combo_incoming_security, NULL, HILDON_CAPTION_OPTIONAL);
 	g_signal_connect (G_OBJECT (priv->combo_incoming_security), "changed",
-	                  G_CALLBACK (on_easysetup_changed), self);
+	                  G_CALLBACK (on_incoming_security_changed), self);
 	gtk_widget_show (priv->combo_incoming_security);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);

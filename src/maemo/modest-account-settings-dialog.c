@@ -763,8 +763,10 @@ static void
 on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	ModestConnectionProtocol protocol_security_incoming;
+	gint port_number;
 	
-	const gint port_number = 
+	port_number = 
 		modest_serversecurity_combo_box_get_active_serversecurity_port (
 			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
 
@@ -772,6 +774,12 @@ on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
 		hildon_number_editor_set_value (
 			HILDON_NUMBER_EDITOR (self->entry_incoming_port), port_number);
 	}		
+
+	protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+	gtk_widget_set_sensitive (self->checkbox_incoming_auth, !modest_protocol_info_is_secure (protocol_security_incoming));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth), modest_protocol_info_is_secure (protocol_security_incoming));
+
 }
 
 
@@ -1002,14 +1010,9 @@ check_data (ModestAccountSettingsDialog *self)
 			HILDON_NUMBER_EDITOR (self->entry_incoming_port));
 	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
 
-	/*
 	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
-	*/
-	/* If we use an encrypted protocol then there is no need to encrypt the password */
-	/* I don't think this is a good assumption. It overrides the user's request. murrayc: 
-	 *  if (!modest_protocol_info_is_secure(protocol_security_incoming)) */
-	if (TRUE)
+	if (!modest_protocol_info_is_secure(protocol_security_incoming))
 	{
 		if (gtk_toggle_button_get_active (
 				GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth))) {
@@ -1244,8 +1247,7 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 			    null_means_empty (modest_account_settings_get_fullname (settings)));
 	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_email), 
 			    null_means_empty (modest_account_settings_get_email_address (settings)));
-	modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), 
-					modest_server_account_settings_get_protocol (incoming_account));
+	modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), modest_server_account_settings_get_protocol (incoming_account));
 	modest_retrieve_combo_box_set_active_retrieve_conf (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), 
 							    modest_account_settings_get_retrieve_type (settings));
 	modest_limit_retrieve_combo_box_set_active_limit_retrieve (
@@ -1300,7 +1302,8 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 		const ModestAuthProtocol secure_auth = modest_server_account_settings_get_auth_protocol (incoming_account);
 		dialog->protocol_authentication_incoming = (secure_auth != MODEST_PROTOCOL_AUTH_NONE)?
 			secure_auth:MODEST_PROTOCOL_AUTH_PASSWORD;
-		if (modest_protocol_info_auth_is_secure(secure_auth))
+		ModestConnectionProtocol secure_protocol = modest_server_account_settings_get_security (incoming_account);
+		if (modest_protocol_info_is_secure (secure_protocol) || modest_protocol_info_auth_is_secure(secure_auth))
 		{
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
 						     TRUE);
@@ -1310,6 +1313,8 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
 						     FALSE);
 		};
+
+		gtk_widget_set_sensitive (dialog->checkbox_incoming_auth, !modest_protocol_info_is_secure (secure_protocol));
 					
 		update_incoming_server_title (dialog, dialog->incoming_protocol);
 		
@@ -1482,8 +1487,13 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	
 	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
-	modest_server_account_settings_set_security (store_settings, protocol_security_incoming);	
-	modest_server_account_settings_set_auth_protocol (store_settings, dialog->protocol_authentication_incoming);
+	modest_server_account_settings_set_security (store_settings, protocol_security_incoming);
+	if (modest_protocol_info_is_secure (protocol_security_incoming)) {
+		modest_server_account_settings_set_auth_protocol (store_settings, FALSE);
+	} else {
+		modest_server_account_settings_set_auth_protocol (store_settings, 
+								  dialog->protocol_authentication_incoming);
+	}
 
 	g_object_unref (store_settings);
 	
