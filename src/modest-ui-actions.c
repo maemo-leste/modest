@@ -1820,6 +1820,7 @@ typedef struct {
 	gchar *account_name;
 	gboolean poke_status;
 	gboolean interactive;
+	ModestMailOperation *mail_op;
 } SendReceiveInfo;
 
 static void
@@ -1829,7 +1830,6 @@ do_send_receive_performer (gboolean canceled,
 			   TnyAccount *account, 
 			   gpointer user_data)
 {
-	ModestMailOperation *mail_op;
 	SendReceiveInfo *info;
 
 	info = (SendReceiveInfo *) user_data;
@@ -1841,6 +1841,10 @@ do_send_receive_performer (gboolean canceled,
 							    NULL, dgettext("ke-recv",
 									   "cerm_device_memory_full"));
 		}
+		if (info->mail_op) {
+			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (),
+							    info->mail_op);
+		}
 		goto clean;
 	}
 
@@ -1848,25 +1852,21 @@ do_send_receive_performer (gboolean canceled,
 	if (info->win && MODEST_IS_MAIN_WINDOW (info->win)) {
 		modest_main_window_notify_send_receive_initied (MODEST_MAIN_WINDOW (info->win));
 	}
-	
-	mail_op = modest_mail_operation_new_with_error_handling ((info->win) ? G_OBJECT (info->win) : NULL,
-								 modest_ui_actions_disk_operations_error_handler,
-								 NULL, NULL);
 
 	if (info->win && MODEST_IS_MAIN_WINDOW (info->win))
-		g_signal_connect (G_OBJECT(mail_op), "operation-finished", 
+		g_signal_connect (G_OBJECT (info->mail_op), "operation-finished", 
 				  G_CALLBACK (on_send_receive_finished), 
 				  info->win);
 
 	/* Send & receive. */
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_update_account (mail_op, info->account_name, info->poke_status, info->interactive,
+	modest_mail_operation_update_account (info->mail_op, info->account_name, info->poke_status, info->interactive,
 					      (info->win) ? retrieve_all_messages_cb : NULL, 
 					      new_messages_arrived, info->win);
-	g_object_unref (G_OBJECT (mail_op));
 	
  clean:
 	/* Frees */
+	if (info->mail_op)
+		g_object_unref (G_OBJECT (info->mail_op));
 	if (info->account_name)
 		g_free (info->account_name);
 	if (info->win)
@@ -1918,6 +1918,13 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	info->interactive = interactive;
 	info->account = modest_tny_account_store_get_server_account (acc_store, acc_name,
 								     TNY_ACCOUNT_TYPE_STORE);
+	/* We need to create the operation here, because otherwise it
+	   could happen that the queue emits the queue-empty signal
+	   while we're trying to connect the account */
+	info->mail_op = modest_mail_operation_new_with_error_handling ((info->win) ? G_OBJECT (info->win) : NULL,
+								       modest_ui_actions_disk_operations_error_handler,
+								       NULL, NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), info->mail_op);
 
 	/* Invoke the connect and perform */
 	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL, 

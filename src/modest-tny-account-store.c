@@ -1508,7 +1508,8 @@ connection_status_changed (TnyAccount *account,
 static TnyAccount*
 create_tny_account (ModestTnyAccountStore *self,
 		    const gchar *name,
-		    TnyAccountType type)
+		    TnyAccountType type,
+		    gboolean notify)
 {
 	TnyAccount *account = NULL;
 	ModestTnyAccountStorePrivate *priv = NULL;
@@ -1528,14 +1529,18 @@ create_tny_account (ModestTnyAccountStore *self,
 								    tny_account_get_id (account));
 
 		/* Install a signal handler that will refresh the
-		   account the first time it becomes online */
-		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
-							       G_OBJECT (account), 
-							       "connection_status_changed",
-							       G_CALLBACK (connection_status_changed),
-							       self);
+		   account the first time it becomes online. Do this
+		   only if we're adding a new account while the
+		   program is running (we do not want to do this
+		   allways) */
+		if (type == TNY_ACCOUNT_TYPE_STORE && notify)
+			priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
+								       G_OBJECT (account), 
+								       "connection_status_changed",
+								       G_CALLBACK (connection_status_changed),
+								       self);
 
-		/* Set the account store */				
+		/* Set the account store */
 		g_object_set_data (G_OBJECT(account), "account_store", self);
 	} else {
 		g_printerr ("modest: failed to create account for %s\n", name);
@@ -1611,13 +1616,13 @@ insert_account (ModestTnyAccountStore *self,
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* Get the server and the transport account */
-	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE);
+	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE, notify);
 	if (!store_account || !TNY_IS_ACCOUNT(store_account)) {
 		g_warning ("%s: failed to create store account", __FUNCTION__);
 		return;
 	}
 
-	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT, notify);
 	if (!transport_account || !TNY_IS_ACCOUNT(transport_account)) {
 		g_warning ("%s: failed to create transport account", __FUNCTION__);
 		g_object_unref (store_account);

@@ -2240,8 +2240,7 @@ modest_platform_get_current_connection (void)
 			} else {
 				retval = MODEST_CONNECTED_VIA_ANY;
 			}
-		}
-	
+		}	
 		g_object_unref (iap);
 	}
 #else

@@ -54,6 +54,7 @@ struct _ModestMailOperationQueuePrivate {
 	GQueue *op_queue;
 	GMutex *queue_lock;
 	guint   op_id;
+	guint   queue_empty_handler;
 };
 #define MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                          MODEST_TYPE_MAIL_OPERATION_QUEUE, \
@@ -146,6 +147,7 @@ modest_mail_operation_queue_init (ModestMailOperationQueue *obj)
 	priv->op_queue   = g_queue_new ();
 	priv->queue_lock = g_mutex_new ();
 	priv->op_id = 0;
+	priv->queue_empty_handler = 0;
 }
 
 static void
@@ -264,12 +266,45 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 		       mail_op, MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED);
 }
 
+static gboolean
+notify_queue_empty (gpointer user_data)
+{
+	ModestMailOperationQueue *self = (ModestMailOperationQueue *) user_data;
+	ModestMailOperationQueuePrivate *priv;
+	guint num_elements;
+
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+
+	g_mutex_lock (priv->queue_lock);
+	num_elements = priv->op_queue->length;
+	g_mutex_unlock (priv->queue_lock);
+
+	/* We re-check again that the queue is empty. It could happen
+	   that we had issued a tny_send_queue_flush before the send
+	   queue could add a mail operation to the queue as a response
+	   to the "start-queue" signal, because that signal is issued
+	   by tinymail in the main loop. Therefor it could happen that
+	   we emit the queue-empty signal while a send-queue is still
+	   waiting for the "start-queue" signal from tinymail, so the
+	   send queue will never try to send the items because modest
+	   is finalized before */
+	if (num_elements == 0) {
+		gdk_threads_enter ();
+		g_signal_emit (self, signals[QUEUE_EMPTY_SIGNAL], 0);
+		gdk_threads_leave ();
+	}
+
+	return FALSE;
+}
+
+
 void 
 modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 				    ModestMailOperation *mail_op)
 {
 	ModestMailOperationQueuePrivate *priv;
 	ModestMailOperationStatus status;
+	guint num_elements;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
@@ -278,6 +313,7 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_remove (priv->op_queue, mail_op);
+	num_elements = priv->op_queue->length;
 	g_mutex_unlock (priv->queue_lock);
 
 	MODEST_DEBUG_BLOCK (print_queue_item (mail_op, "remove"););
@@ -311,16 +347,19 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 	}
 
 	/* Free object */
-
-	/* We do not own the last reference when this operation is deleted
-	 * as response to a progress changed signal from the mail operation
-	 * itself, in which case the glib signal system owns a reference
-	 * until the signal emission is complete. armin. */
-	/* modest_runtime_verify_object_last_ref (mail_op, ""); */
 	g_object_unref (G_OBJECT (mail_op));
 
-	/* Emit the queue empty-signal */
-	g_signal_emit (self, signals[QUEUE_EMPTY_SIGNAL], 0);
+	/* Emit the queue empty-signal. See the function to know why
+	   we emit it in an idle */
+	if (num_elements == 0) {
+		if (priv->queue_empty_handler) {
+			g_source_remove (priv->queue_empty_handler);
+			priv->queue_empty_handler = 0;
+		}
+		priv->queue_empty_handler = g_idle_add_full (G_PRIORITY_LOW, 
+							     notify_queue_empty, 
+							     self, NULL);
+	}
 }
 
 guint 

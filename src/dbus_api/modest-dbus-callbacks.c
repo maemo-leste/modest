@@ -983,13 +983,19 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 	return OSSO_OK;
 }
 
-
-
-
-static gint 
-on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
-{ 	
+static void
+on_send_receive_performer(gboolean canceled, 
+			  GError *err,
+			  GtkWindow *parent_window,
+			  TnyAccount *account,
+			  gpointer user_data)
+{
 	ModestConnectedVia connect_when;
+
+	if (err || canceled) {
+		g_idle_add (notify_error_in_dbus_callback, NULL);
+		return;
+	}
 
 	connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
 					    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
@@ -999,12 +1005,23 @@ on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 	   same as the one specified by the user */
 	if (connect_when == MODEST_CONNECTED_VIA_ANY ||
 	    connect_when == modest_platform_get_current_connection ()) {
-		/* Use g_idle to context-switch into the application's thread: */
 		g_idle_add (on_idle_send_receive, NULL);
 	} else {
 		/* We need this to allow modest to finish */
 		g_idle_add (notify_error_in_dbus_callback, NULL);
 	}
+}
+
+
+static gint 
+on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
+{ 	
+	TnyDevice *device = modest_runtime_get_device ();
+
+	if (!tny_device_is_online (device))
+		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, NULL);
+	else
+		on_send_receive_performer (FALSE, NULL, NULL, NULL, NULL);
  	
  	return OSSO_OK;
 }
