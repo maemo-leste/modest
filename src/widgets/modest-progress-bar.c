@@ -65,6 +65,8 @@ static void modest_progress_bar_set_pulsating_mode (ModestProgressBar *self,
                                                            const gchar* msg,
                                                            gboolean is_pulsating);
 
+static gchar *progress_string (ModestMailOperationTypeOperation op_type, guint done, guint total);
+
 #define XALIGN 0.5
 #define YALIGN 0.5
 #define XSPACE 1
@@ -300,14 +302,19 @@ modest_progress_bar_remove_operation (ModestProgressObject *self,
 	
 	/* Update the current mail operation */
 	if (is_current) {
-		if (priv->observables)
+		if (priv->observables) {
+			gchar *msg;
 			priv->current = ((ObservableData *) priv->observables->data)->mail_op;
-		else
+			msg = progress_string (modest_mail_operation_get_type_operation (MODEST_MAIL_OPERATION (priv->current)), 0, 0);
+			modest_progress_bar_set_pulsating_mode (me, msg, TRUE);
+			g_free (msg);
+		} else {
 			priv->current = NULL;
+			modest_progress_bar_set_pulsating_mode (me, NULL, FALSE);
+			progressbar_clean (GTK_PROGRESS_BAR (priv->progress_bar));
+		}
 
 		/* Refresh the view */
-		modest_progress_bar_set_pulsating_mode (me, NULL, FALSE);
-		progressbar_clean (GTK_PROGRESS_BAR (priv->progress_bar));
 	}
 	
 	/* free */
@@ -353,13 +360,49 @@ modest_progress_bar_cancel_all_operations (ModestProgressObject *self)
 	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue ());
 }
 
+static gchar *
+progress_string (ModestMailOperationTypeOperation op_type, guint done, guint total)
+{
+	gboolean determined = FALSE;
+
+	gchar *msg = NULL;
+
+	determined = (done > 0 && total > 1) && 
+		!(done == 1 && total == 100);
+
+	switch (op_type) {
+	case MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE:		
+	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
+		if (determined)
+			msg = g_strdup_printf(_("mcen_me_receiving"),
+					      done, total); 
+		else 
+			msg = g_strdup(_("mail_me_receiving"));
+		break;
+	case MODEST_MAIL_OPERATION_TYPE_SEND:		
+		if (determined)
+			msg = g_strdup_printf(_("mcen_me_sending"), done,
+					      total);
+		else
+			msg = g_strdup(_("mail_me_sending"));
+		break;
+		
+	case MODEST_MAIL_OPERATION_TYPE_OPEN:		
+		msg = g_strdup(_("mail_me_opening"));
+		break;
+	default:
+		msg = g_strdup("");
+	}
+
+	return msg;
+}
+
 static void 
 on_progress_changed (ModestMailOperation  *mail_op, 
 		     ModestMailOperationState *state,
 		     ModestProgressBar *self)
 {
 	ModestProgressBarPrivate *priv;
-	gboolean determined = FALSE;
 
 	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (self);
 
@@ -367,32 +410,7 @@ on_progress_changed (ModestMailOperation  *mail_op,
 	if (priv->current == mail_op) {
 		gchar *msg = NULL;
 		
-		determined = (state->done > 0 && state->total > 1) && 
-			!(state->done == 1 && state->total == 100);
-
-		switch (state->op_type) {
-		case MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE:		
-		case MODEST_MAIL_OPERATION_TYPE_RECEIVE:		
-			if (determined)
- 				msg = g_strdup_printf(_("mcen_me_receiving"),
-						      state->done, state->total); 
-			else 
- 				msg = g_strdup(_("mail_me_receiving"));
-			break;
-		case MODEST_MAIL_OPERATION_TYPE_SEND:		
-			if (determined)
-				msg = g_strdup_printf(_("mcen_me_sending"), state->done,
-						      state->total);
-			else
-				msg = g_strdup(_("mail_me_sending"));
-			break;
-			
-		case MODEST_MAIL_OPERATION_TYPE_OPEN:		
-			msg = g_strdup(_("mail_me_opening"));
-			break;
-		default:
-			msg = g_strdup("");
-		}
+		msg = progress_string (state->op_type, state->done, state->total);
 		
 		/* If we have byte information use it */
 		if ((state->bytes_done != 0) && (state->bytes_total != 0))
@@ -412,8 +430,10 @@ on_progress_changed (ModestMailOperation  *mail_op,
 static gboolean
 progressbar_clean (GtkProgressBar *bar)
 {
+
 	gtk_progress_bar_set_fraction (bar, 0);
 	gtk_progress_bar_set_text (bar, " ");
+
 	return FALSE;
 }
 
