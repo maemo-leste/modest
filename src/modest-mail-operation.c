@@ -1446,29 +1446,31 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 					     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 					     "canceled");
 		}
-	} else if (info->poke_all) {
+	} else { 
 		/* We're not getting INBOX children if we don't want to poke all */
 		TnyIterator *iter = tny_list_create_iterator (list);
 		while (!tny_iterator_is_done (iter)) {
 			TnyFolderStore *folder = (TnyFolderStore*) tny_iterator_get_current (iter);
-			TnyList *folders = tny_simple_list_new ();
 
 			/* Add to the list of all folders */
 			tny_list_append (info->folders, (GObject *) folder);
 			
-			/* Add pending call */
-			info->pending_calls++;
-			
-			tny_folder_store_get_folders_async (folder, folders, NULL,
-							    recurse_folders_async_cb, 
-							    NULL, info);
+			if (info->poke_all) {
+				TnyList *folders = tny_simple_list_new ();
+				/* Add pending call */
+				info->pending_calls++;
+				
+				tny_folder_store_get_folders_async (folder, folders, NULL,
+								    recurse_folders_async_cb, 
+								    NULL, info);
+				g_object_unref (folders);
+			}
 			
 			g_object_unref (G_OBJECT (folder));
 			
 			tny_iterator_next (iter);	    
 		}
 		g_object_unref (G_OBJECT (iter));
-		g_object_unref (G_OBJECT (list));
 	}
 
 	/* Remove my own pending call */
@@ -1607,6 +1609,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 					    folders, NULL,
 					    recurse_folders_async_cb, 
 					    NULL, info);
+	g_object_unref (folders);
 }
 
 /*
