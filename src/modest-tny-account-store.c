@@ -537,6 +537,7 @@ show_wrong_password_dialog (TnyAccount *account)
 	}
 	
 	dialog = modest_tny_account_store_show_account_settings_dialog (self, modest_account_name);
+	modest_account_settings_dialog_save_password (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
 	/* Show an explanatory temporary banner: */
 	modest_platform_information_banner (GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
 }

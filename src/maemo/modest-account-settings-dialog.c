@@ -1128,7 +1128,7 @@ on_response (GtkDialog *wizard_dialog,
 					g_object_unref (store_settings);
 					g_object_unref (transport_settings);
 					
-					if (self->save_password)
+					if (!self->save_password)
 						hildon_banner_show_information(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
 			} else {
