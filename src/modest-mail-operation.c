@@ -1211,6 +1211,27 @@ update_account_get_msg_async_cb (TnyFolder *folder,
 }
 
 static void
+update_account_notify_user_and_free (UpdateAccountInfo *info, 
+				     TnyList *new_headers)
+{
+	/* Set the account back to not busy */
+	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), 
+					     info->account_name, FALSE);
+	
+	/* User callback */
+	if (info->callback)
+		info->callback (info->mail_op, new_headers, info->user_data);
+	
+	/* Mail operation end */
+	modest_mail_operation_notify_end (info->mail_op);
+
+	/* Frees */
+	if (new_headers)
+		g_object_unref (new_headers);
+	destroy_update_account_info (info);
+}
+
+static void
 inbox_refreshed_cb (TnyFolder *inbox, 
 		    gboolean canceled, 
 		    GError *err, 
@@ -1231,7 +1252,20 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 	mgr = modest_runtime_get_account_mgr ();
 
-	if (canceled || err || !inbox) {
+	if (canceled || err) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		if (err)
+			priv->error = g_error_copy (err);
+		else
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+				     "canceled");
+		/* Notify the user about the error and then exit */
+		update_account_notify_user_and_free (info, NULL);
+		return;
+	}
+
+	if (!inbox) {
 		/* Try to send anyway */
 		goto send_mail;
 	}
@@ -1383,20 +1417,8 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	if (!priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 
-	/* Set the account back to not busy */
-	modest_account_mgr_set_account_busy (mgr, info->account_name, FALSE);
-
-	/* Call the user callback */
-	if (info->callback)
-		info->callback (info->mail_op, new_headers, info->user_data);
-
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (info->mail_op);
-
-	/* Frees */
-	if (new_headers)
-		g_object_unref (new_headers);
-	destroy_update_account_info (info);
+	/* Call the user callback and free */
+	update_account_notify_user_and_free (info, new_headers);
 }
 
 static void 
@@ -1413,7 +1435,17 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 
 	if (err || canceled) {
-		/* Try to continue anyway */
+		/* If the error was previosly set by another callback
+		   don't set it again */
+		if (!priv->error) {
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+			if (err)
+				priv->error = g_error_copy (err);
+			else
+				g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+					     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
+					     "canceled");
+		}
 	} else if (info->poke_all) {
 		/* We're not getting INBOX children if we don't want to poke all */
 		TnyIterator *iter = tny_list_create_iterator (list);
@@ -1446,6 +1478,12 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 	if (info->pending_calls == 0) {
 		TnyIterator *iter_all_folders;
 		TnyFolder *inbox = NULL;
+
+		/* If there was any error do not continue */
+		if (priv->error) {
+			update_account_notify_user_and_free (info, NULL);
+			return;
+		}
 
 		iter_all_folders = tny_list_create_iterator (info->folders);
 

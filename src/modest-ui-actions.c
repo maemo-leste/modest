@@ -975,9 +975,21 @@ cleanup:
 	g_object_unref (folder);
 }
 
+static gboolean
+is_memory_full_error (GError *error)
+{
+	if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
+	    error->code == TNY_IO_ERROR_WRITE ||
+	    error->code == TNY_IO_ERROR_READ) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
 void
 modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
-						    gpointer user_data)
+						 gpointer user_data)
 {
 	const GError *error;
 	GObject *win = NULL;
@@ -990,10 +1002,7 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 	/* If the mail op has been cancelled then it's not an error:
 	   don't show any message */
 	if (status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-		/* Show error */
-		if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
-		    error->code == TNY_IO_ERROR_WRITE ||
-		    error->code == TNY_IO_ERROR_READ) {
+		if (is_memory_full_error ((GError *) error)) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, dgettext("ke-recv",
 									   "cerm_device_memory_full"));
@@ -1109,6 +1118,13 @@ open_msgs_performer(gboolean canceled,
 				  modest_runtime_get_window_mgr ());
 		/* Free the helper */
 		open_msgs_helper_destroyer (helper);
+
+		/* In memory full conditions we could get this error here */
+		if (err && is_memory_full_error (err)) {
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		}
 		goto clean;
 	}
 
@@ -1819,6 +1835,12 @@ do_send_receive_performer (gboolean canceled,
 	info = (SendReceiveInfo *) user_data;
 
 	if (err || canceled) {
+		/* In memory full conditions we could get this error here */
+		if (err && is_memory_full_error (err)) {
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		}
 		goto clean;
 	}
 
@@ -1828,7 +1850,7 @@ do_send_receive_performer (gboolean canceled,
 	}
 	
 	mail_op = modest_mail_operation_new_with_error_handling ((info->win) ? G_OBJECT (info->win) : NULL,
-								 modest_ui_actions_send_receive_error_handler,
+								 modest_ui_actions_disk_operations_error_handler,
 								 NULL, NULL);
 
 	if (info->win && MODEST_IS_MAIN_WINDOW (info->win))
@@ -2874,6 +2896,12 @@ create_folder_performer (gboolean canceled,
 	TnyFolderStore *parent_folder = TNY_FOLDER_STORE (user_data);
 
 	if (canceled || err) {
+		/* In memory full conditions we could get this error here */
+		if (err && is_memory_full_error (err)) {
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		}
 		goto frees;
 	}
 
@@ -2975,7 +3003,14 @@ on_rename_folder_performer (gboolean canceled,
 	GtkWidget *folder_view = NULL;
 	RenameFolderInfo *data = (RenameFolderInfo*)user_data;
 
-	if (!canceled && (err == NULL) && MODEST_IS_MAIN_WINDOW(parent_window)) {
+	if (canceled || err) {
+		/* In memory full conditions we could get this error here */
+		if (err && is_memory_full_error (err)) {
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		}
+	} else if (MODEST_IS_MAIN_WINDOW(parent_window)) {
 
 		folder_view = modest_main_window_get_child_widget (
 				MODEST_MAIN_WINDOW (parent_window),
@@ -2999,9 +3034,9 @@ on_rename_folder_performer (gboolean canceled,
 						     (const gchar *) (data->new_name),
 						     on_rename_folder_cb,
 						     folder_view);
+		g_object_unref (mail_op);
 	}
 
-	g_object_unref (mail_op);
 	g_free (data->new_name);
 	g_free (data);
 }
@@ -4535,29 +4570,6 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 		g_object_unref (win);
 }
 
-void
-modest_ui_actions_send_receive_error_handler (ModestMailOperation *mail_op, 
-					      gpointer user_data)
-{
-	GObject *win = modest_mail_operation_get_source (mail_op);
-	const GError *error = modest_mail_operation_get_error (mail_op);
-
-	g_return_if_fail (error != NULL);
-	if (error->message != NULL)		
-		g_printerr ("modest: %s\n", error->message);
-	else
-		g_printerr ("modest: unkonw error on send&receive operation");
-
-	/* Show error message */
-/* 	if (modest_mail_operation_get_id (mail_op) == MODEST_MAIL_OPERATION_TYPE_RECEIVE) */
-/* 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, */
-/* 							_CS("sfil_ib_unable_to_receive")); */
-/* 	else  */
-/* 		modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL, */
-/* 							_CS("sfil_ib_unable_to_send")); */
-	g_object_unref (win);
-}
-
 static void
 open_msg_for_purge_cb (ModestMailOperation *mail_op, 
 		       TnyHeader *header, 
@@ -4800,8 +4812,14 @@ xfer_messages_performer  (gboolean canceled,
 	gboolean dst_is_pop = FALSE;
 
 	if (canceled || err) {
-		/* Show the proper error message */
-		modest_ui_actions_on_account_connection_error (parent_window, account);
+		if (err && is_memory_full_error (err)) {
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		} else {
+			/* Show the proper error message */
+			modest_ui_actions_on_account_connection_error (parent_window, account);
+		}
 		g_object_unref (dst_folder);
 		return;
 	}
@@ -5267,6 +5285,11 @@ retrieve_msg_contents_performer (gboolean canceled,
 	TnyList *headers = TNY_LIST (user_data);
 
 	if (err || canceled) {
+		if (err && is_memory_full_error (err)) {
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL, dgettext("ke-recv",
+									   "cerm_device_memory_full"));
+		}
 		goto out;
 	}
 
