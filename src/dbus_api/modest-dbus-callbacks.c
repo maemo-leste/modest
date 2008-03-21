@@ -464,6 +464,13 @@ on_open_message_performer (gboolean canceled,
 	} else {
 		folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
 	}
+
+
+	if (!folder) {
+		g_idle_add (notify_msg_not_found_in_idle, NULL);
+		goto frees;
+	}
+	
 	if (modest_tny_folder_is_local_folder (folder) &&
 	    (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
 		is_draft = TRUE;
