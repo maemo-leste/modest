@@ -166,6 +166,7 @@ typedef struct
 	GtkWidget* dialog;
 	GtkWidget* progress;
 	GError* error;
+	gboolean pulsing;
 } ModestGetSupportedAuthInfo;
 
 static void on_camel_account_get_supported_secure_authentication_status (
@@ -185,6 +186,7 @@ on_idle_secure_auth_finished (gpointer user_data)
 	 * the code below is or does Gtk+ code */
 
 	gdk_threads_enter(); /* CHECKED */
+	info->pulsing = FALSE;
 	gtk_dialog_response (GTK_DIALOG (info->dialog), GTK_RESPONSE_ACCEPT);
 	gdk_threads_leave(); /* CHECKED */
 
@@ -273,7 +275,28 @@ on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
 		/* This gives the ownership of the info to the worker thread. */
 		info->result = NULL;
 		info->cancel = TRUE;
+		info->pulsing = FALSE;
 	}
+}
+typedef struct {
+	GtkProgressBar *progress;
+	gboolean not_finished;
+} KeepPulsing;
+
+static gboolean
+keep_pulsing (gpointer user_data)
+{
+	KeepPulsing *info = (KeepPulsing *) user_data;
+	
+	gtk_progress_bar_pulse (info->progress);
+
+	if (!info->not_finished) {
+		g_object_unref (info->progress);
+		g_slice_free (KeepPulsing, info);
+		return FALSE;
+	}
+	
+	return TRUE;
 }
 
 GList*
@@ -340,6 +363,7 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 	info->result = NULL;
 	info->cancel = FALSE;
 	info->error = NULL;
+	info->pulsing = TRUE;
 	info->progress = gtk_progress_bar_new();
 	/* TODO: Need logical_ID for the title: */
 	info->dialog = gtk_dialog_new_with_buttons(" ",
@@ -355,9 +379,16 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 	                  gtk_label_new(_("emev_ni_checking_supported_auth_methods")));
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), info->progress);
 	gtk_widget_show_all(info->dialog);
-	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(info->progress));
+
+	KeepPulsing *pi = g_slice_new (KeepPulsing);
+	pi->progress = (GtkProgressBar *) g_object_ref (info->progress);
+	pi->not_finished = TRUE;
+	
+	/* Starts the pulsing of the progressbar */
+	g_timeout_add (500, keep_pulsing, pi);
 	
 	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
+	
 	tny_camel_account_get_supported_secure_authentication (
 		TNY_CAMEL_ACCOUNT (tny_account),
 		on_camel_account_get_supported_secure_authentication,
@@ -365,6 +396,9 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 		info);
 
 	gtk_dialog_run (GTK_DIALOG (info->dialog));
+	
+	pi->not_finished = FALSE;
+	/* pi is freed in the timeout itself to avoid a GCond here */
 	
 	gtk_widget_destroy(info->dialog);
 			
