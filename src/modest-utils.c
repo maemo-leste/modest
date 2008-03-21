@@ -166,7 +166,6 @@ typedef struct
 	GtkWidget* dialog;
 	GtkWidget* progress;
 	GError* error;
-	gboolean pulsing;
 } ModestGetSupportedAuthInfo;
 
 static void on_camel_account_get_supported_secure_authentication_status (
@@ -186,7 +185,6 @@ on_idle_secure_auth_finished (gpointer user_data)
 	 * the code below is or does Gtk+ code */
 
 	gdk_threads_enter(); /* CHECKED */
-	info->pulsing = FALSE;
 	gtk_dialog_response (GTK_DIALOG (info->dialog), GTK_RESPONSE_ACCEPT);
 	gdk_threads_leave(); /* CHECKED */
 
@@ -275,7 +273,6 @@ on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
 		/* This gives the ownership of the info to the worker thread. */
 		info->result = NULL;
 		info->cancel = TRUE;
-		info->pulsing = FALSE;
 	}
 }
 typedef struct {
@@ -363,7 +360,6 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 	info->result = NULL;
 	info->cancel = FALSE;
 	info->error = NULL;
-	info->pulsing = TRUE;
 	info->progress = gtk_progress_bar_new();
 	/* TODO: Need logical_ID for the title: */
 	info->dialog = gtk_dialog_new_with_buttons(" ",
