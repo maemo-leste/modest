@@ -1577,6 +1577,11 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 
 		return;
 	}
+	
+	/* We have once seen priv->account getting finalized during this code,
+	 * therefore adding a reference (bug #82296) */
+	
+	g_object_ref (priv->account);
 
 	/* Create the helper object */
 	info = g_slice_new0 (UpdateAccountInfo);
@@ -1610,6 +1615,9 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 					    recurse_folders_async_cb, 
 					    NULL, info);
 	g_object_unref (folders);
+	
+	g_object_unref (priv->account);
+	
 }
 
 /*
