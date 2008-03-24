@@ -455,10 +455,12 @@ on_response (GtkDialog *dialog,
 			saved = _modest_global_settings_dialog_save_conf (MODEST_GLOBAL_SETTINGS_DIALOG (dialog));
 			if (saved) {
 				modest_platform_run_information_dialog (GTK_WINDOW (user_data),
-									_("mcen_ib_advsetup_settings_saved"));
+									_("mcen_ib_advsetup_settings_saved"),
+									FALSE);
 			} else {
 				modest_platform_run_information_dialog (GTK_WINDOW (user_data),
-									_("mail_ib_setting_failed"));
+									_("mail_ib_setting_failed"),
+									FALSE);
 			}
 		}
 	} else {

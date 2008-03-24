@@ -1780,7 +1780,7 @@ notify_error_in_dbus_callback (gpointer user_data)
 static gboolean
 notify_msg_not_found_in_idle (gpointer user_data)
 {
-	modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"));
+	modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), FALSE);
 
 	return FALSE;
 }

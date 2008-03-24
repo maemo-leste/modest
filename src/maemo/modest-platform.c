@@ -350,7 +350,7 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	if (result != 1)
 		result = hildon_mime_open_file (con, uri_path);
 	if (result != 1)
-		modest_platform_run_information_dialog (NULL, _("mcen_ni_noregistered_viewer"));
+		modest_platform_run_information_dialog (NULL, _("mcen_ni_noregistered_viewer"), FALSE);
 	
 	return result != 1;
 }
@@ -1043,7 +1043,8 @@ modest_platform_run_yes_no_dialog (GtkWindow *parent_window,
 
 void
 modest_platform_run_information_dialog (GtkWindow *parent_window,
-					const gchar *message)
+					const gchar *message,
+					gboolean block)
 {
 	GtkWidget *note;
 	
@@ -1051,15 +1052,22 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (note));
 	
-	g_signal_connect_swapped (note,
-				  "response", 
-				  G_CALLBACK (on_destroy_dialog),
-				  note);
+	if (block) {
+		gtk_dialog_run (GTK_DIALOG (note));
+	
+		on_destroy_dialog (GTK_DIALOG (note));
 
-	gtk_widget_show_all (note);
+		while (gtk_events_pending ())
+			gtk_main_iteration ();
+	} else {
+		g_signal_connect_swapped (note,
+					  "response", 
+					  G_CALLBACK (on_destroy_dialog),
+					  note);
+
+		gtk_widget_show_all (note);
+	}
 }
-
-
 
 typedef struct _ConnectAndWaitData {
 	GMutex *mutex;
@@ -1893,7 +1901,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 	} else {
 	 	/* Just show the error text and use the default response: */
 	 	modest_platform_run_information_dialog (GTK_WINDOW (main_win), 
-							prompt);
+							prompt, FALSE);
 	}
 	return retval;
 }

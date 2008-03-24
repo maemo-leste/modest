@@ -230,11 +230,13 @@ gint      modest_platform_run_yes_no_dialog      (GtkWindow *parent_window,
  * modest_platform_run_information_dialog:
  * @parent_window: the parent #GtkWindow of the dialog
  * @message: the message to show
+ * @block: whether or not the dialog should block the main loop or not while running
  * 
  * shows an information dialog
  **/
 void      modest_platform_run_information_dialog       (GtkWindow *parent_window,
-							const gchar *message);
+							const gchar *message,
+							gboolean block);
 
 /**
  * modest_platform_run_sort_dialog:

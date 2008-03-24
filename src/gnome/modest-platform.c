@@ -222,7 +222,8 @@ modest_platform_run_confirmation_dialog_with_buttons (GtkWindow *parent_window,
 
 void
 modest_platform_run_information_dialog (GtkWindow *parent_window,
-					const gchar *message)
+					const gchar *message,
+					gboolean block)
 {
 	GtkWidget *dialog;
 

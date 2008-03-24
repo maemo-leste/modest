@@ -427,7 +427,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"), 
 					       opened_headers);
 
-			modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg);
+			modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg, FALSE);
 			
 			g_free (msg);
 			g_object_unref (header_list);
@@ -3108,7 +3108,8 @@ modest_ui_actions_delete_folder_error_handler (ModestMailOperation *mail_op,
 	GObject *win = modest_mail_operation_get_source (mail_op);
 
 	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
-						_("mail_in_ui_folder_delete_error"));
+						_("mail_in_ui_folder_delete_error"),
+						FALSE);
 	g_object_unref (win);
 }
 
@@ -3180,7 +3181,8 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 	/* Show an error if it's an account */
 	if (!TNY_IS_FOLDER (folder)) {
 		modest_platform_run_information_dialog (GTK_WINDOW (main_window),
-							_("mail_in_ui_folder_delete_error"));
+							_("mail_in_ui_folder_delete_error"),
+							FALSE);
 		g_object_unref (G_OBJECT (folder));
 		return;
 	}
@@ -4572,7 +4574,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 
 	/* Show notification dialog */
 	win = modest_mail_operation_get_source (mail_op);
-	modest_platform_run_information_dialog ((GtkWindow *) win, _("mail_in_ui_folder_move_target_error"));
+	modest_platform_run_information_dialog ((GtkWindow *) win, _("mail_in_ui_folder_move_target_error"), FALSE);
 	if (win)
 		g_object_unref (win);
 }
@@ -5587,7 +5589,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	   should show the Accounts Settings dialog or the Connection
 	   specific SMTP server window */
 
-	modest_platform_run_information_dialog (NULL, message);
+	modest_platform_run_information_dialog (NULL, message, FALSE);
 	g_free (message);
 	g_object_unref (server_account);
 }
@@ -5673,7 +5675,7 @@ modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
 	}
 
 	if (error_note) {
-		modest_platform_run_information_dialog (parent_window, error_note);
+		modest_platform_run_information_dialog (parent_window, error_note, FALSE);
 		g_free (error_note);
 	}
 }

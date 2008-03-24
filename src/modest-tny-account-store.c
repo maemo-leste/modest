@@ -550,10 +550,6 @@ show_wrong_password_dialog (TnyAccount *account)
 static gchar*
 get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *cancel)
 {
-	/* TODO: Settting cancel to FALSE does not actually cancel everything.
-	 * We still get multiple requests afterwards, so we end up showing the 
-	 * same dialogs repeatedly.
-	 */	  
 	const TnyAccountStore *account_store = NULL;
 	ModestTnyAccountStore *self = NULL;
 	ModestTnyAccountStorePrivate *priv;
@@ -614,12 +610,42 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		 * ask for it now. But if the password is wrong in the account settings, 
 		 * then show a banner and the account settings dialog so it can be corrected:
 		 */
+		ModestTransportStoreProtocol proto;
 		const gboolean settings_have_password = 
 			modest_account_mgr_get_server_account_has_password (priv->account_mgr, server_account_name);
-		MODEST_DEBUG_BLOCK(
-			printf ("%s: settings_have_password=%d\n",
-				__FUNCTION__, settings_have_password);
-		);
+
+		/* Show an error and after that ask for a password */
+		proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+		if (proto == MODEST_PROTOCOL_TRANSPORT_SMTP) {
+			gchar *username = NULL, *msg = NULL;
+			username = modest_account_mgr_get_server_account_username (priv->account_mgr,
+										   server_account_name);
+			if (!username || strlen(username) == 0) {
+				msg = g_strdup_printf (_("emev_ni_ui_smtp_userid_invalid"), 
+						       tny_account_get_name (account),
+						       tny_account_get_hostname (account));
+			} else {
+				gchar *password;
+				password  = modest_account_mgr_get_server_account_password (priv->account_mgr,
+											    server_account_name);
+				if (!password || strlen(password) == 0)
+					msg = g_strdup_printf (_("emev_ni_ui_smtp_passwd_invalid"), 
+							       tny_account_get_name (account),
+							       tny_account_get_hostname (account));
+				else
+					msg = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"), 
+							       tny_account_get_hostname (account));
+				if (password)
+					g_free (password);
+			}
+			if (msg) {
+				modest_platform_run_information_dialog (NULL, msg, TRUE);
+				g_free (msg);
+			}
+			if (username)
+				g_free (username);
+		}
+
 		if (settings_have_password) {
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
 			show_wrong_password_dialog (account);

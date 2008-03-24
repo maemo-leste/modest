@@ -875,7 +875,7 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 
 	if (resolved_contacts == NULL) {
 		/* no matching contacts for the search string */
-		modest_platform_run_information_dialog (NULL, _("mcen_nc_no_matching_contacts"));
+		modest_platform_run_information_dialog (NULL, _("mcen_nc_no_matching_contacts"), FALSE);
 		return FALSE;
 	}
 
