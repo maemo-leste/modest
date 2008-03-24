@@ -1642,6 +1642,10 @@ message_reader_performer (gboolean canceled,
 	modest_mail_operation_get_msg (mail_op, info->header, view_msg_cb, info->row_reference);
 	g_object_unref (mail_op);
 
+	/* Update dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (parent_window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (parent_window));
+
  frees:
 	/* Frees. The row_reference will be freed by the view_msg_cb callback */
 	g_object_unref (info->header);
@@ -1780,7 +1784,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 	/* Free */
 	g_object_unref (header);
 
-	return retval;       	
+	return retval;
 }
 
 gboolean        
