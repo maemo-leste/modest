@@ -2297,7 +2297,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	ModestToolBarModes mode;
 	GSList *tmp;
 	gboolean mode_changed = FALSE;
-	TnyAccount *account;
+	TnyAccount *account = NULL;
 
 	self = MODEST_MAIN_WINDOW (user_data);
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
@@ -2325,7 +2325,10 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 		priv->retrieving_banner_timeout = 
 			g_timeout_add (2000, show_retrieving_banner, self);
 	}
-	g_object_unref (account);
+
+	/* Not every mail operation has account, noop does not */
+	if (account)
+		g_object_unref (account);
 	       
 	/* Get toolbar mode from operation id*/
 	mode = get_toolbar_mode_from_mail_operation (self, mail_op, &mode_changed);
@@ -2362,7 +2365,7 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	GSList *tmp = NULL;
 	ModestMainWindow *self;
 	gboolean mode_changed;
-	TnyAccount *account;
+	TnyAccount *account = NULL;
 	ModestMainWindowPrivate *priv;
 
 	self = MODEST_MAIN_WINDOW (user_data);
@@ -2394,7 +2397,10 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 			priv->retrieving_banner = NULL;
 		}
 	}
-	g_object_unref (account);
+
+	/* Not every mail operation has account, noop does not */
+	if (account)
+		g_object_unref (account);
 
 	/* Get toolbar mode from operation id*/
 	mode = get_toolbar_mode_from_mail_operation (self, mail_op, &mode_changed);
