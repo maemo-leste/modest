@@ -467,14 +467,11 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 static void
 on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
 {
-	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
-	
 	const gchar *show_char = NULL;
 	if (character)
 	  show_char = character;
 	else {
-	  /* TODO: We need a logical ID for this: */
-	  show_char = _("whitespace");
+	  show_char = "' '";
 	}
 	
 	/* TODO: Should this show just this one bad character or all the not-allowed characters? */
