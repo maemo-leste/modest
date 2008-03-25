@@ -210,7 +210,10 @@ _on_added_to_outbox (TnySendQueue *self,
 
 	header = tny_msg_get_header (msg);
 	msg_id = modest_tny_send_queue_get_msg_id (header);
-	g_return_if_fail(msg_id != NULL);
+	if (!msg_id) {
+		g_warning ("%s: No msg_id returned for header", __FUNCTION__);
+		goto end;
+	}
 
 	/* Put newly added message in WAITING state */
 	existing = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE(self), msg_id);
@@ -226,7 +229,8 @@ _on_added_to_outbox (TnySendQueue *self,
 
 	g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
 
-	g_object_unref(G_OBJECT(header));
+ end:
+	g_object_unref (G_OBJECT(header));
 }
 
 static void
@@ -603,7 +607,7 @@ _on_msg_error_happened (TnySendQueue *self,
 	   generic send queue errors with this signal as well, and
 	   those notifications are not bound to any particular header
 	   or message */
-	if (header) {
+	if (header && TNY_IS_HEADER (header)) {
 		SendInfo *info = NULL;
 		GList *item = NULL;
 		gchar* msg_uid = NULL;
@@ -611,7 +615,16 @@ _on_msg_error_happened (TnySendQueue *self,
 		/* Get sending info (create new if it doesn not exist) */
 		msg_uid = modest_tny_send_queue_get_msg_id (header);
 		item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), 
-							  msg_uid);	
+							  msg_uid);
+
+		/* TODO: this should not happen (but it does), so the
+		   problem should be located in the way we generate
+		   the message uids */
+		if (!item) {
+			g_warning ("%s: could not find item with id '%s'", __FUNCTION__, msg_uid);
+			g_free(msg_uid);
+			return;
+		}
 		
 		info = item->data;
 
