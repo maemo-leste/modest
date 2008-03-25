@@ -2226,6 +2226,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	if (tny_folder_get_all_count (folder) == 0)
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
+
 }
 
 void 
@@ -2299,7 +2300,8 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		}
 	}
 
-	/* Update toolbar dimming state */
+	/* Update dimming state */
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
 }
 

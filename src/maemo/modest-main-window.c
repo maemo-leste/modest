@@ -1653,6 +1653,9 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 {
 	ModestMainWindowPrivate *priv;
 
+	if (event->type == GDK_KEY_RELEASE)
+		return FALSE;
+
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
 
 	/* Do nothing if we're in SIMPLE style */
@@ -2161,6 +2164,7 @@ set_toolbar_mode (ModestMainWindow *self,
 
         /* Checks the dimming rules */
         modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	/* Show and hide toolbar items */
 	switch (mode) {
@@ -2593,6 +2597,7 @@ on_folder_view_focus_in (GtkWidget *widget, GdkEventFocus *event, gpointer userd
 	
 	/* Update toolbar dimming state */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
 
 	return FALSE;
 }
@@ -2610,6 +2615,7 @@ on_header_view_focus_in (GtkWidget *widget,
 
 	/* Update toolbar dimming state */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
 
 	return FALSE;
 }
