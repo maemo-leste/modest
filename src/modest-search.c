@@ -60,6 +60,7 @@ typedef struct
 {
 	guint folder_count;
 	guint folder_total;
+	guint account_total;
 	GList *msg_hits;
 	ModestSearch *search;
 	ModestSearchCallback callback;
@@ -568,6 +569,9 @@ modest_search_account_get_folders_cb (TnyFolderStore *self,
 
 	helper = (SearchHelper *) user_data;
 
+	/* Remove the "account" reference */
+	helper->account_total--;
+
 	if (err || cancelled) {
 		goto end;
 	}
@@ -600,6 +604,11 @@ _search_account (TnyAccount *account,
 	TnyList *folders = tny_simple_list_new ();
 
 	g_debug ("%s: Searching account %s", __FUNCTION__, tny_account_get_name (account));
+
+	/* Add a "reference" to the folder total. This allows the code
+	   not to finalize the helper if an account is fully refreshed
+	   before we get the folders of the others */
+	helper->account_total++;
 
 	/* Get folders */
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account), folders, NULL, 
@@ -669,6 +678,7 @@ create_helper (ModestSearchCallback callback,
 	helper = g_slice_new0 (SearchHelper);
 	helper->folder_count = 0;
 	helper->folder_total = 0;
+	helper->account_total = 0;
 	helper->search = search;
 	helper->callback = callback;
 	helper->user_data = user_data;
@@ -703,7 +713,7 @@ static void
 check_search_finished (SearchHelper *helper)
 {
 	/* If there are no more folders to check the account search has finished */
-	if (helper->folder_count == helper->folder_total) {
+	if (helper->folder_count == helper->folder_total && helper->account_total == 0) {
 		/* callback */
 		helper->callback (helper->msg_hits, helper->user_data);
 		
