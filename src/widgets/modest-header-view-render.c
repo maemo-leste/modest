@@ -344,6 +344,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	 * theme (gtkrc file) */
 	modest_text_utils_get_display_address (address); /* changed in-place */
 	set_cell_text (recipient_cell, address, flags, RENDER_CELL_STYLE_GREY);
+	g_free (address);
 	
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
 		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;

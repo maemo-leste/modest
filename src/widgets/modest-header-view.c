@@ -1994,7 +1994,7 @@ filter_row (GtkTreeModel *model,
 	
 	/* Check hiding */
 	if (priv->hidding_ids != NULL) {
-		id = g_strdup(tny_header_get_message_id (header));
+		id = tny_header_dup_message_id (header);
 		for (i=0; i < priv->n_selected && !found; i++)
 			if (priv->hidding_ids[i] != NULL && id != NULL)
 				found = (!strcmp (priv->hidding_ids[i], id));

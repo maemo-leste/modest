@@ -241,7 +241,7 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 
 	if (header && G_IS_OBJECT (header))
 	{
-		const gchar *to, *from, *subject, *bcc, *cc;
+		gchar *to, *from, *subject, *bcc, *cc;
 		GtkWidget *subject_label;
 
 		g_object_ref (G_OBJECT (header)); 
@@ -250,11 +250,11 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 		modest_mail_header_view_update_is_outgoing (self);
 
 
-		to = tny_header_get_to (header);
-		from = tny_header_get_from (header);
-		subject = tny_header_get_subject (header);
-		cc = tny_header_get_cc (header);
-		bcc = tny_header_get_bcc (header);
+		to = tny_header_dup_to (header);
+		from = tny_header_dup_from (header);
+		subject = tny_header_dup_subject (header);
+		cc = tny_header_dup_cc (header);
+		bcc = tny_header_dup_bcc (header);
 
 		priv->subject_box = gtk_hbox_new (FALSE, 0);
 		subject_label = gtk_label_new (NULL);
@@ -307,6 +307,11 @@ modest_mail_header_view_set_header_default (TnyHeaderView *self, TnyHeader *head
 			add_date_time_header (MODEST_MAIL_HEADER_VIEW (self), _("mail_va_date"),
 					      tny_header_get_date_received (header));
 		}
+		g_free (subject);
+		g_free (to);
+		g_free (from);
+		g_free (cc);
+		g_free (bcc);
 	}
 
 	gtk_widget_show_all (GTK_WIDGET (self));

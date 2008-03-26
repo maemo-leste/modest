@@ -506,16 +506,17 @@ gchar *
 modest_tny_send_queue_get_msg_id (TnyHeader *header)
 {
 	gchar* msg_uid = NULL;
-	const gchar *subject;
+	gchar *subject;
 	time_t date_received;
 		
 	g_return_val_if_fail (header && TNY_IS_HEADER(header), NULL);
 
 	/* Get message uid */
-	subject = tny_header_get_subject (header);
+	subject = tny_header_dup_subject (header);
 	date_received = tny_header_get_date_received (header);
 
 	msg_uid = g_strdup_printf ("%s %d", subject, (int) date_received);
+	g_free (subject);
 
 	return msg_uid;
 }

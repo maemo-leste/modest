@@ -328,7 +328,7 @@ modest_tny_folder_get_header_unique_id (TnyHeader *header)
 {
 	TnyFolder *folder;
 	gchar *url, *retval;
-	const gchar *uid;
+	gchar *uid;
 
 	g_return_val_if_fail (TNY_IS_HEADER (header), NULL);
 
@@ -337,9 +337,10 @@ modest_tny_folder_get_header_unique_id (TnyHeader *header)
 		return NULL;
 
 	url = tny_folder_get_url_string (folder);
-	uid = tny_header_get_uid (header);
+	uid = tny_header_dup_uid (header);
 
 	retval = g_strjoin ("/", url, uid, NULL);
+	g_free (uid);
 
 	g_free (url);
 	g_object_unref (folder);

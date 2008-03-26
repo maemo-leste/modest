@@ -91,9 +91,9 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	TnyHeaderFlags   flags;
 	char            *furl;
 	char            *msg_url;
-	const char      *uid;
-	const char      *subject;
-	const char      *sender;
+	char      *uid;
+	char      *subject;
+	char      *sender;
 
 	hit = g_slice_new0 (ModestSearchResultHit);
 
@@ -107,22 +107,25 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	 * and/or find out what UID form is used when finding, in camel_data_cache_get().
 	 * so we can find what we get. Philip is working on this.
 	 */
-	uid = tny_header_get_uid (header);
+	uid = tny_header_dup_uid (header);
 	if (!furl) {
-		g_warning ("%s: tny_header_get_uid(): returned NULL for message with subject=%s\n", __FUNCTION__, tny_header_get_subject (header));
+		gchar *subject = tny_header_dup_subject (header);
+		g_warning ("%s: tny_header_get_uid(): returned NULL for message with subject=%s\n", __FUNCTION__, subject);
+		g_free (subject);
 	}
 	
 	msg_url = g_strdup_printf ("%s/%s", furl, uid);
 	g_free (furl);
+	g_free (uid);
 	
-	subject = tny_header_get_subject (header);
-	sender = tny_header_get_from (header);
+	subject = tny_header_dup_subject (header);
+	sender = tny_header_dup_from (header);
 	
 	flags = tny_header_get_flags (header);
 
 	hit->msgid = msg_url;
-	hit->subject = g_strdup_or_null (subject);
-	hit->sender = g_strdup_or_null (sender);
+	hit->subject = subject;
+	hit->sender = sender;
 	hit->folder = g_strdup_or_null (tny_folder_get_name (folder));
 	hit->msize = tny_header_get_message_size (header);
 	hit->has_attachment = flags & TNY_HEADER_FLAG_ATTACHMENTS;
@@ -418,15 +421,16 @@ modest_search_folder_get_headers_cb (TnyFolder *folder,
 				goto go_next;
 
 		if (helper->search->flags & MODEST_SEARCH_SUBJECT) {
-			const char *str = tny_header_get_subject (cur);
+			char *str = tny_header_dup_subject (cur);
 
 			if ((found = search_string (helper->search->subject, str, helper->search))) {
 			    helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
 			}
+			g_free (str);
 		}
 		
 		if (!found && helper->search->flags & MODEST_SEARCH_SENDER) {
-			char *str = g_strdup (tny_header_get_from (cur));
+			char *str = tny_header_dup_from (cur);
 
 			if ((found = search_string (helper->search->from, (const gchar *) str, helper->search))) {
 				helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
@@ -435,11 +439,12 @@ modest_search_folder_get_headers_cb (TnyFolder *folder,
 		}
 		
 		if (!found && helper->search->flags & MODEST_SEARCH_RECIPIENT) {
-			const char *str = tny_header_get_to (cur);
+			char *str = tny_header_dup_to (cur);
 
 			if ((found = search_string (helper->search->recipient, str, helper->search))) {
 				helper->msg_hits = add_hit (helper->msg_hits, cur, folder);
 			}
+			g_free (str);
 		}
 	
 		if (!found && helper->search->flags & MODEST_SEARCH_BODY) {
@@ -463,7 +468,10 @@ modest_search_folder_get_headers_cb (TnyFolder *folder,
 					g_object_unref (msg);
 				}
 			} else {	
-				g_debug ("Searching in %s\n", tny_header_get_subject (cur));
+				gchar *str;
+				str = tny_header_dup_subject (cur);
+				g_debug ("Searching in %s\n", str);
+				g_free (str);
 			
 				found = search_mime_part_and_child_parts (TNY_MIME_PART (msg),
 									  helper->search);

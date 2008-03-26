@@ -1439,21 +1439,26 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		TnyFolder *folder = tny_header_get_folder (header);
 		gboolean first_notification = TRUE;
 		gint notif_id;
+		gchar *str;
 
 		/* constant string, don't free */
 		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
 
-		display_address = g_strdup(tny_header_get_from (header));
+		display_address = tny_header_dup_from (header);
 		modest_text_utils_get_display_address (display_address); /* string is changed in-place */
 		
 		summary = g_strdup_printf ("%s - %s", display_date, display_address);
+		str = tny_header_dup_subject (header);
 		notification = hildon_notification_new (summary,
-							tny_header_get_subject (header),
+							str,
 							"qgn_list_messagin",
 							"email.arrive");
+		g_free (str);
 		/* Create the message URL */
+		str = tny_header_dup_uid (header);
 		url = g_strdup_printf ("%s/%s", tny_folder_get_url_string (folder), 
-				       tny_header_get_uid (header));
+				       str);
+		g_free (str);
 
 		hildon_notification_add_dbus_action(notification,
 						    "default",

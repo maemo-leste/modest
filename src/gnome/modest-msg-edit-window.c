@@ -381,7 +381,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 {
 	TnyHeader *header;
 	TnyFolder *msg_folder;
-	const gchar *to, *cc, *bcc, *subject;
+	gchar *to, *cc, *bcc, *subject;
 	ModestMsgEditWindowPrivate *priv;
 	gchar *body;
 	
@@ -391,10 +391,10 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	header  = tny_msg_get_header (msg);
-	to      = tny_header_get_to (header);
-	cc      = tny_header_get_cc (header);
-	bcc     = tny_header_get_bcc (header);
-	subject = tny_header_get_subject (header);
+	to      = tny_header_dup_to (header);
+	cc      = tny_header_dup_cc (header);
+	bcc     = tny_header_dup_bcc (header);
+	subject = tny_header_dup_subject (header);
 
 	if (to)
 		gtk_entry_set_text (GTK_ENTRY(priv->to_field), to);
@@ -440,6 +440,11 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		}
 		g_object_unref (msg_folder);
 	}
+
+	g_free (subject);
+	g_free (to);
+	g_free (cc);
+	g_free (bcc);
 }
 
 
@@ -796,7 +801,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 			if (TNY_IS_MSG (part)) {
 				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
 				if (header) {
-					filename = g_strdup (tny_header_get_subject (header));
+					filename = tny_header_dup_subject (header);
 					g_object_unref (header);
 				}
 				if (filename == NULL) {

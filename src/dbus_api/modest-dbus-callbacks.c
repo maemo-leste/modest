@@ -636,7 +636,8 @@ on_idle_delete_message (gpointer user_data)
 	TnyHeader *header = NULL, *msg_header = NULL;
 	TnyMsg *msg = NULL;
 	TnyAccount *account = NULL;
-	const char *uri = NULL, *uid = NULL;
+	const char *uri = NULL;
+	gchar *uid = NULL;
 	gint res = 0;
 	ModestMailOperation *mail_op = NULL;
 	ModestWindow *main_win = NULL, *msg_view = NULL;
@@ -655,7 +656,6 @@ on_idle_delete_message (gpointer user_data)
 						      FALSE); /* don't create */
 	
 	msg_header = tny_msg_get_header (msg);
-	uid = tny_header_get_uid (msg_header);
 	folder = tny_msg_get_folder (msg);
 
 	if (!folder) {
@@ -665,22 +665,25 @@ on_idle_delete_message (gpointer user_data)
 		return OSSO_ERROR; 
 	}
 
+	uid = tny_header_dup_uid (msg_header);
 	headers = tny_simple_list_new ();
 	tny_folder_get_headers (folder, headers, TRUE, NULL);
 	iter = tny_list_create_iterator (headers);
 	header = NULL;
 
 	while (!tny_iterator_is_done (iter)) {
-		const char *cur_id = NULL;
+		gchar *cur_id = NULL;
 
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header)
-			cur_id = tny_header_get_uid (header);
+			cur_id = tny_header_dup_uid (header);
 		
 		if (cur_id && uid && g_str_equal (cur_id, uid)) {
+			g_free (cur_id);
 			/* g_debug ("Found corresponding header from folder"); */
 			break;
 		}
+		g_free (cur_id);
 
 		if (header) {
 			g_object_unref (header);
@@ -689,6 +692,7 @@ on_idle_delete_message (gpointer user_data)
 		
 		tny_iterator_next (iter);
 	}
+	g_free (uid);
 
 	g_object_unref (iter);
 	iter = NULL;

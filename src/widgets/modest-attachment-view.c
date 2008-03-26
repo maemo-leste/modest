@@ -249,7 +249,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 		if (TNY_IS_HEADER (header)) {
 			filename = g_strdup (tny_mime_part_get_filename (mime_part));
 			if (!filename)
-				filename = g_strdup (tny_header_get_subject (header));
+				filename = tny_header_dup_subject (header);
 			if (filename == NULL || filename[0] == '\0')
 				filename = g_strdup (_("mail_va_no_subject"));
 			if (priv->is_purged)

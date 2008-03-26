@@ -278,28 +278,40 @@ static gchar *
 modest_formatter_wrapper_cite (ModestFormatter *self, const gchar *text, TnyHeader *header,
 			       GList *attachments) 
 {
+	gchar *result, *from;
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	
-	return modest_text_utils_cite (text, 
-				       priv->content_type, 
-				       priv->signature,
-				       tny_header_get_from (header), 
-				       tny_header_get_date_sent (header));
+	from = tny_header_dup_from (header);
+	result = modest_text_utils_cite (text, 
+					 priv->content_type, 
+					 priv->signature,
+					 from, 
+					 tny_header_get_date_sent (header));
+	g_free (from);
+	return result;
 }
 
 static gchar *
 modest_formatter_wrapper_inline (ModestFormatter *self, const gchar *text, TnyHeader *header,
 				 GList *attachments) 
 {
+	gchar *result, *from, *to, *subject;
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
-	return modest_text_utils_inline (text, 
-					 priv->content_type, 
-					 priv->signature,
-					 tny_header_get_from (header), 
-					 tny_header_get_date_sent (header),
-					 tny_header_get_to (header),
-					 tny_header_get_subject (header));
+	from = tny_header_dup_from (header);
+	to = tny_header_dup_to (header);
+	subject = tny_header_dup_subject (header);
+	result =  modest_text_utils_inline (text, 
+					    priv->content_type, 
+					    priv->signature,
+					    from,
+					    tny_header_get_date_sent (header),
+					    to,
+					    subject);
+	g_free (subject);
+	g_free (to);
+	g_free (from);
+	return result;
 }
 
 static gchar *
@@ -310,6 +322,7 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 	GList *filenames = NULL;
 	GList *node = NULL;
 	gchar *result = NULL;
+	gchar *from;
        
 	/* First we need a GList of attachments filenames */
 	for (node = attachments; node != NULL; node = g_list_next (node)) {
@@ -317,7 +330,7 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 		gchar *filename = NULL;
 		if (TNY_IS_MSG (part)) {
 			TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
-			filename = g_strdup (tny_header_get_subject (header));
+			filename = tny_header_dup_subject (header);
 			if ((filename == NULL)||(filename[0] == '\0')) {
 				g_free (filename);
 				filename = g_strdup (_("mail_va_no_subject"));
@@ -333,13 +346,15 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 	filenames = g_list_reverse (filenames);
 
 	/* TODO: get 80 from the configuration */
+	from = tny_header_dup_from (header);
 	result = modest_text_utils_quote (text, 
 					  priv->content_type, 
 					  priv->signature,
-					  tny_header_get_from (header), 
+					  from,
 					  tny_header_get_date_sent (header),
 					  filenames,
 					  80);
+	g_free (from);
 
 	g_list_foreach (filenames, (GFunc) g_free, NULL);
 	g_list_free (filenames);

@@ -440,7 +440,10 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header) {
-			desc = g_strdup_printf ("%s", tny_header_get_subject (header)); 
+			gchar *subject;
+			subject = tny_header_dup_subject (header);
+			desc = g_strdup_printf ("%s", subject); 
+			g_free (subject);
 			g_object_unref (header);
 		}
 
@@ -907,13 +910,14 @@ open_msg_cb (ModestMailOperation *mail_op,
 	
 	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
-		const gchar *from_header = NULL;
+		gchar *from_header = NULL;
 
-		from_header = tny_header_get_from (header);
+		from_header = tny_header_dup_from (header);
 
 		/* we cannot edit without a valid account... */
 		if (!modest_account_mgr_has_accounts(mgr, TRUE)) {
 			if (!modest_ui_actions_run_account_setup_wizard(parent_win))
+				g_free (from_header);
 				goto cleanup;
 		}
 		
@@ -931,6 +935,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 				}
 				g_free (from);
 			}
+			g_free (from_header);
 			g_slist_foreach (accounts, (GFunc) g_free, NULL);
 			g_slist_free (accounts);
 		}
@@ -1143,8 +1148,10 @@ open_msgs_performer(gboolean canceled,
 		} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
 			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			gchar *subject = tny_header_dup_subject (header);
 			error_msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
-						     tny_header_get_subject (header));
+						     subject);
+			g_free (subject);
 			g_object_unref (header);
 			g_object_unref (iter);
 		} else {
@@ -4951,21 +4958,21 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	/* 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), */
 	/* 							  TNY_FOLDER (src_folder), TRUE); */
 
+	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
+					  TNY_FOLDER (info->dst_folder), TRUE);
 	modest_mail_operation_xfer_folder (mail_op,
 			TNY_FOLDER (info->src_folder),
 			info->dst_folder,
 			info->delete_original, 
 			folder_move_to_cb, 
 			helper);
+	g_object_unref (G_OBJECT (info->src_folder));
 
-	if (modest_mail_operation_get_status (mail_op) == MODEST_MAIL_OPERATION_STATUS_SUCCESS) {       
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
-						  TNY_FOLDER (info->dst_folder), TRUE);
-	}
+	/* if (modest_mail_operation_get_status (mail_op) == MODEST_MAIL_OPERATION_STATUS_SUCCESS) {        */
+	/* } */
 	
 	/* Unref mail operation */
 	g_object_unref (G_OBJECT (mail_op));
-	g_object_unref (G_OBJECT (info->src_folder));
 	g_object_unref (G_OBJECT (info->dst_folder));
 	g_free (user_data);
 }
@@ -5719,8 +5726,11 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 	if (proto == MODEST_PROTOCOL_STORE_POP) {
 		msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
 	} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
+		gchar *subject;
+		subject = tny_header_dup_subject (header);
 		msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"), 
-				       tny_header_get_subject (header));
+				       subject);
+		g_free (subject);
 	} else {
 		msg = g_strdup_printf (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}

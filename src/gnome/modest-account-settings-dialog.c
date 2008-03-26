@@ -387,7 +387,7 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), box);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrollwin), GTK_SHADOW_NONE);
-	gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (scrollwin)), GTK_SHADOW_NONE);
+	gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrollwin))), GTK_SHADOW_NONE);
 	gtk_widget_show (scrollwin);
 
 	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
@@ -1115,8 +1115,9 @@ on_response (GtkDialog *wizard_dialog,
 					}
 					g_object_unref (store_settings);
 					g_object_unref (transport_settings);
-					
-					modest_platform_information_banner(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
+
+					if (!self->save_password)
+						modest_platform_information_banner(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
 			} else {
 				modest_platform_information_banner (NULL, NULL, _("mail_ib_setting_failed"));
@@ -1177,6 +1178,7 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
             G_CALLBACK (on_response), self); 
             
     self->modified = FALSE;
+    self->save_password;
 
     /* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
@@ -1600,6 +1602,15 @@ enable_buttons (ModestAccountSettingsDialog *self)
 	gtk_dialog_set_response_sensitive (dialog_base,
 					   GTK_RESPONSE_OK,
 					   enable_ok);
+}
+
+void
+modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialog)
+{
+	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
+
+	dialog->save_password = TRUE;
+	dialog->modified = TRUE;
 }
 
 static void

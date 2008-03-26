@@ -195,7 +195,7 @@ modest_email_clipboard_set_data (ModestEmailClipboard *self,
 			while (!tny_iterator_is_done (iter)) {
 				obj = tny_iterator_get_current (iter);
 				if (obj && TNY_IS_HEADER (obj))
-					id = g_strdup(tny_header_get_message_id (TNY_HEADER (obj)));
+					id = tny_header_dup_message_id (TNY_HEADER (obj));
 				
 				priv->hidding[i++] = id;
 				tny_iterator_next (iter);

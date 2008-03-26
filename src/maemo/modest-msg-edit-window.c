@@ -508,15 +508,21 @@ get_transports (void)
 static ModestPair *
 find_transport_from_message_sender (ModestPairList *transports, TnyMsg *msg)
 {
+	ModestPair *account_pair = NULL;
+	gchar *from;
+	TnyHeader *header;
+
 	g_return_val_if_fail (transports, NULL);
 	g_return_val_if_fail (msg, NULL);
 
-	ModestPair *account_pair = NULL;
-	TnyHeader *header = tny_msg_get_header (msg);
+	header = tny_msg_get_header (msg);
 
-	if (header != NULL && tny_header_get_from (header)) {
-		char *from_addr = modest_text_utils_get_email_address (tny_header_get_from (header));
+	if (header != NULL && (from = tny_header_dup_from (header))) {
 		GSList *iter;
+		char *from_addr;
+
+		from_addr = modest_text_utils_get_email_address (from);
+		g_free (from);
 		for (iter = transports; iter && !account_pair; iter = iter->next) {
 			ModestPair *pair = (ModestPair *) iter->data;
 			char *account_addr = modest_text_utils_get_email_address ((char *) pair->second);
@@ -1174,7 +1180,7 @@ static void
 set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 {
 	TnyHeader *header;
-	const gchar *to, *cc, *bcc, *subject;
+	gchar *to, *cc, *bcc, *subject;
 	gchar *body;
 	ModestMsgEditWindowPrivate *priv;
 	GtkTextIter iter;
@@ -1188,10 +1194,10 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	header = tny_msg_get_header (msg);
-	to      = tny_header_get_to (header);
-	cc      = tny_header_get_cc (header);
-	bcc     = tny_header_get_bcc (header);
-	subject = tny_header_get_subject (header);
+	to      = tny_header_dup_to (header);
+	cc      = tny_header_dup_cc (header);
+	bcc     = tny_header_dup_bcc (header);
+	subject = tny_header_dup_subject (header);
 	priority_flags = tny_header_get_priority (header);
 
 	if (to)
@@ -1299,6 +1305,11 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		}
 		g_object_unref (msg_folder);
 	}
+
+	g_free (to);
+	g_free (subject);
+	g_free (cc);
+	g_free (bcc);
 }
 
 static void
@@ -2397,7 +2408,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 			if (TNY_IS_MSG (part)) {
 				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
 				if (header) {
-					filename = g_strdup (tny_header_get_subject (header));
+					filename = tny_header_dup_subject (header);
 					g_object_unref (header);
 				}
 				if (filename == NULL) {

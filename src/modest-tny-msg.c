@@ -532,6 +532,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 {
 	TnyMsg *new_msg;
 	TnyHeader *new_header;
+	gchar *old_subject;
 	gchar *new_subject;
 	TnyMimePart *body = NULL;
 	ModestFormatter *formatter;
@@ -587,9 +588,11 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 		subject_prefix = g_strconcat (_("mail_va_re"), ":", NULL);
 	else
 		subject_prefix = g_strconcat (_("mail_va_fw"), ":", NULL);
+	old_subject = tny_header_dup_subject (header);
 	new_subject =
-		(gchar *) modest_text_utils_derived_subject (tny_header_get_subject(header),
+		(gchar *) modest_text_utils_derived_subject (old_subject,
 							     subject_prefix);
+	g_free (old_subject);
 	g_free (subject_prefix);
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
@@ -703,7 +706,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	    ModestTnyMsgReplyMode reply_mode)
 {
 	const gchar* old_reply_to;
-	const gchar* old_from;
+	gchar* old_from;
 	gchar* new_to;
 	
 	/* according to RFC2369 (http://www.faqs.org/rfcs/rfc2369.html), we
@@ -721,7 +724,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	//old_reply_to = tny_header_get_replyto (header);
 	old_reply_to = modest_tny_mime_part_get_header_value (TNY_MIME_PART(msg), 
 							      "Reply-To"); 
-	old_from     = tny_header_get_from (header);
+	old_from     = tny_header_dup_from (header);
 	
 	if (!old_from &&  !old_reply_to) {
 		g_warning ("%s: failed to get either Reply-To: or From: from header",
@@ -738,10 +741,11 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	else
 		/* otherwise use either Reply-To: (preferred) or From: */
 		new_to = g_strdup (old_reply_to ? old_reply_to : old_from);
+	g_free (old_from);
 
 	/* in case of ReplyAll, we need to add the Recipients in the old To: */
 	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
-		const gchar *old_to = tny_header_get_to (header);
+		gchar *old_to = tny_header_dup_to (header);
 		if (!old_to) 
 			g_warning ("%s: no To: address found in source mail",
 				   __FUNCTION__);
@@ -750,6 +754,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 			gchar *tmp = g_strjoin (",", new_to, old_to, NULL);
 			g_free (new_to);
 			new_to = tmp;
+			g_free (old_to);
 		}
 
 		/* remove duplicate entries */
@@ -775,14 +780,17 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 static gchar*
 get_new_cc (TnyHeader *header, const gchar* from)
 {
-	const gchar *old_cc;
+	gchar *old_cc;
+	gchar *result;
 
-	old_cc = tny_header_get_cc (header);
+	old_cc = tny_header_dup_cc (header);
 	if (!old_cc)
 		return NULL;
 
 	/* remove me (the new From:) from the Cc: list */
-	return modest_text_utils_remove_address (old_cc, from);
+	result =  modest_text_utils_remove_address (old_cc, from);
+	g_free (old_cc);
+	return result;
 }
 
 

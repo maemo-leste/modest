@@ -207,10 +207,10 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	g_return_if_fail (folder_type != TNY_FOLDER_TYPE_INVALID);
 	
 	/* Get header data */
-	from = g_strdup (tny_header_get_from (header));
-	to = g_strdup (tny_header_get_to (header));
-	subject = g_strdup (tny_header_get_subject (header));
-	cc = g_strdup (tny_header_get_cc (header));
+	from = tny_header_dup_from (header);
+	to = tny_header_dup_to (header);
+	subject = tny_header_dup_subject (header);
+	cc = tny_header_dup_cc (header);
 	received = tny_header_get_date_received (header);
 	sent = tny_header_get_date_sent (header);
 	size = tny_header_get_message_size (header);

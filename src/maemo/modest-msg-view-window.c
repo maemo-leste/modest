@@ -2749,7 +2749,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 
 	n_attachments = tny_list_get_length (mime_parts);
 	if (n_attachments == 1) {
-		const gchar *filename;
+		gchar *filename;
 		TnyMimePart *part;
 
 		iter = tny_list_create_iterator (mime_parts);
@@ -2758,14 +2758,15 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 		if (modest_tny_mime_part_is_msg (part)) {
 			TnyHeader *header;
 			header = tny_msg_get_header (TNY_MSG (part));
-			filename = tny_header_get_subject (header);
+			filename = tny_header_dup_subject (header);
 			g_object_unref (header);
 			if (filename == NULL)
-				filename = _("mail_va_no_subject");
+				filename = g_strdup (_("mail_va_no_subject"));
 		} else {
-			filename = tny_mime_part_get_filename (TNY_MIME_PART (part));
+			filename = g_strdup (tny_mime_part_get_filename (TNY_MIME_PART (part)));
 		}
 		confirmation_message = g_strdup_printf (_("mcen_nc_purge_file_text"), filename);
+		g_free (filename);
 		g_object_unref (part);
 	} else {
 		confirmation_message = g_strdup_printf (ngettext("mcen_nc_purge_file_text", 
@@ -2828,18 +2829,21 @@ update_window_title (ModestMsgViewWindow *window)
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 	TnyMsg *msg = NULL;
 	TnyHeader *header = NULL;
-	const gchar *subject = NULL;
+	gchar *subject = NULL;
 	
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
 	if (msg != NULL) {
 		header = tny_msg_get_header (msg);
-		subject = tny_header_get_subject (header);
+		subject = tny_header_dup_subject (header);
+		g_object_unref (header);
 		g_object_unref (msg);
 	}
 
-	if ((subject == NULL)||(subject[0] == '\0'))
-		subject = _("mail_va_no_subject");
+	if ((subject == NULL)||(subject[0] == '\0')) {
+		g_free (subject);
+		subject = g_strdup (_("mail_va_no_subject"));
+	}
 
 	gtk_window_set_title (GTK_WINDOW (window), subject);
 }

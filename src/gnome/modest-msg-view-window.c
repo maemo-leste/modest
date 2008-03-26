@@ -215,7 +215,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	GtkActionGroup *action_group;
 	GError *error = NULL;
 	TnyHeader *header = NULL;
-	const gchar *subject = NULL;
+	gchar *subject = NULL;
 	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
@@ -284,12 +284,13 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 
 	header = tny_msg_get_header (msg);
 	if (header)
-		subject = tny_header_get_subject (header);
+		subject = tny_header_dup_subject (header);
 	
 	if (subject != NULL)
 		gtk_window_set_title (GTK_WINDOW (obj), subject);
 	else
 		gtk_window_set_title (GTK_WINDOW(obj), "Modest");
+	g_free (subject);
 
 	if (header)
 		g_object_unref (header);
@@ -356,13 +357,14 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 		return NULL;
 
 	header = tny_msg_get_header (msg);
+	g_free (priv->msg_uid);
 	if (header) {
-		retval = tny_header_get_uid (header);
+		priv->msg_uid = tny_header_dup_uid (header);
 		g_object_unref (header);
 	}
 	g_object_unref (msg);
 
-	return retval;
+	return priv->msg_uid;
 }
 
 ModestWindow*   
