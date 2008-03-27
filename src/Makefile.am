@@ -136,11 +136,14 @@ endif
 
 
 modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
-modest_LDFLAGS = $(MAEMO_LAUNCHER_LIBS)
+modest_LDFLAGS = -Wl,--version-script=export.map
 
+modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 modest_LDADD = 						\
+	$(filter-out $(modest_UNWANTED),		\
+	$(MAEMO_LAUNCHER_LIBS) 				\
 	$(MODEST_GSTUFF_LIBS) 				\
-	$(MODEST_MOZEMBED_LIBS) 				\
+	$(MODEST_MOZEMBED_LIBS) 			\
 	$(MODEST_PLATFORM_LIBS)	                        \
 	$(MODEST_HILDON_WIDGETS_LIBS)			\
 	$(MODEST_HILDON_HELP_LIBS)			\
@@ -148,7 +151,7 @@ modest_LDADD = 						\
 	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe}				\
 	$(MODEST_PLATFORM)/libmodest-ui.la		\
-	widgets/libmodest-widgets.la
+	widgets/libmodest-widgets.la)
 
 
 if MODEST_HAVE_DBUS_API
