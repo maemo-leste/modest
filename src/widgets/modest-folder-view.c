@@ -241,7 +241,9 @@ static void
 modest_folder_view_class_init (ModestFolderViewClass *klass)
 {
 	GObjectClass *gobject_class;
+	GtkTreeViewClass *treeview_class;
 	gobject_class = (GObjectClass*) klass;
+	treeview_class = (GtkTreeViewClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_view_finalize;
@@ -275,6 +277,9 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+	treeview_class->select_cursor_parent = NULL;
+
 }
 
 /* Simplify checks for NULLs: */
