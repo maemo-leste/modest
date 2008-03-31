@@ -128,7 +128,9 @@ modest_SOURCES=\
 	modest-utils.h \
 	modest-widget-memory-priv.h \
 	modest-widget-memory.c \
-	modest-widget-memory.h 
+	modest-widget-memory.h \
+	modest-default-connection-policy.c \
+	modest-default-connection-policy.h 
 
 if MODEST_USE_DUMMY_ADDRESS_BOOK
 modest_SOURCES += modest-address-book-dummy.c

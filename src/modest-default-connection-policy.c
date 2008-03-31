@@ -1,0 +1,123 @@
+/* Your copyright here */
+
+#include <config.h>
+#include <glib.h>
+#include <glib/gi18n-lib.h>
+
+#define MODEST_DEFAULT_CONNECTION_POLICY_C
+gboolean exiting = FALSE;
+#include <modest-default-connection-policy.h>
+#undef MODEST_DEFAULT_CONNECTION_POLICY_C
+
+#include <tny-account.h>
+
+static GObjectClass *parent_class = NULL;
+
+static void
+modest_default_connection_policy_set_current (TnyConnectionPolicy *self, TnyAccount *account, TnyFolder *folder)
+{
+	return;
+}
+
+static void
+modest_default_connection_policy_on_connect (TnyConnectionPolicy *self, TnyAccount *account)
+{
+	return;
+}
+
+static void
+modest_default_connection_policy_on_connection_broken (TnyConnectionPolicy *self, TnyAccount *account)
+{
+	return;
+}
+
+static void
+modest_default_connection_policy_on_disconnect (TnyConnectionPolicy *self, TnyAccount *account)
+{
+	tny_account_cancel (account);
+	return;
+}
+
+static void
+modest_default_connection_policy_finalize (GObject *object)
+{
+	parent_class->finalize (object);
+}
+
+static void
+modest_default_connection_policy_instance_init (GTypeInstance *instance, gpointer g_class)
+{
+}
+
+static void
+tny_connection_policy_init (TnyConnectionPolicyIface *klass)
+{
+	klass->on_connect= modest_default_connection_policy_on_connect;
+	klass->on_connection_broken= modest_default_connection_policy_on_connection_broken;
+	klass->on_disconnect= modest_default_connection_policy_on_disconnect;
+	klass->set_current= modest_default_connection_policy_set_current;
+}
+
+static void
+modest_default_connection_policy_class_init (ModestDefaultConnectionPolicyClass *klass)
+{
+	GObjectClass *object_class;
+
+	parent_class = g_type_class_peek_parent (klass);
+	object_class = (GObjectClass*) klass;
+	object_class->finalize = modest_default_connection_policy_finalize;
+}
+
+
+
+/**
+ * modest_default_connection_policy_new:
+ * 
+ * A connection policy
+ *
+ * Return value: A new #TnyConnectionPolicy instance 
+ **/
+TnyConnectionPolicy*
+modest_default_connection_policy_new (void)
+{
+	return TNY_CONNECTION_POLICY (g_object_new (MODEST_TYPE_DEFAULT_CONNECTION_POLICY, NULL));
+}
+
+GType
+modest_default_connection_policy_get_type (void)
+{
+	static GType type = 0;
+	if (G_UNLIKELY(type == 0))
+	{
+		static const GTypeInfo info = 
+		{
+			sizeof (ModestDefaultConnectionPolicyClass),
+			NULL,   /* base_init */
+			NULL,   /* base_finalize */
+			(GClassInitFunc) modest_default_connection_policy_class_init,   /* class_init */
+			NULL,   /* class_finalize */
+			NULL,   /* class_data */
+			sizeof (ModestDefaultConnectionPolicy),
+			0,      /* n_preallocs */
+			modest_default_connection_policy_instance_init,    /* instance_init */
+			NULL
+		};
+
+
+		static const GInterfaceInfo tny_connection_policy_info = 
+		{
+			(GInterfaceInitFunc) tny_connection_policy_init, /* interface_init */
+			NULL,         /* interface_finalize */
+			NULL          /* interface_data */
+		};
+
+		type = g_type_register_static (G_TYPE_OBJECT,
+			"ModestDefaultConnectionPolicy",
+			&info, 0);
+
+		g_type_add_interface_static (type, TNY_TYPE_CONNECTION_POLICY,
+			&tny_connection_policy_info);
+
+	}
+	return type;
+}

@@ -31,6 +31,7 @@
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-account.h>
 #include <modest-tny-account-store.h>
+#include <modest-default-connection-policy.h>
 #include <modest-tny-local-folders-account.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
@@ -433,7 +434,9 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 		tny_account_set_pass_func (tny_account,
 					   get_pass_func ? get_pass_func: get_pass_dummy);
 	}
-	
+
+	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
+
 	g_object_unref (server_settings);
 	
 	return tny_account;
@@ -532,6 +535,8 @@ modest_tny_account_update_from_account (TnyAccount *tny_account,
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
+
+	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
 	
 	/* The callback will have an error for you if the reconnect
 	 * failed. Please handle it (this is TODO). */
@@ -619,7 +624,9 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
-	
+
+	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
+
         modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account,
 									      account_name);
 	g_object_unref (server_settings);
@@ -811,7 +818,9 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	
 	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
-	
+
+	tny_account_set_connection_policy (TNY_ACCOUNT (tny_account), modest_default_connection_policy_new ());	
+
 	modest_tny_account_set_parent_modest_account_name_for_server_account (
 		TNY_ACCOUNT (tny_account), id);
 	
@@ -881,7 +890,9 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	
 	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
-	
+
+	tny_account_set_connection_policy (TNY_ACCOUNT (tny_account), modest_default_connection_policy_new ());
+
 	/* Make this think that it belongs to the modest local-folders parent account: */
 	modest_tny_account_set_parent_modest_account_name_for_server_account (
 		TNY_ACCOUNT (tny_account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID);
