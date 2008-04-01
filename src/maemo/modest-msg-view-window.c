@@ -950,10 +950,13 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	
 	update_window_title (window);
+	gtk_widget_show_all (GTK_WIDGET (window));
 	modest_msg_view_window_update_priority (window);
 
-	gtk_widget_show_all (GTK_WIDGET (window));
-
+	/* Check dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
 
 	return MODEST_WINDOW(window);
 }
