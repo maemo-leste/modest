@@ -916,9 +916,12 @@ open_msg_cb (ModestMailOperation *mail_op,
 
 		/* we cannot edit without a valid account... */
 		if (!modest_account_mgr_has_accounts(mgr, TRUE)) {
-			if (!modest_ui_actions_run_account_setup_wizard(parent_win))
+			if (!modest_ui_actions_run_account_setup_wizard(parent_win)) {
+				modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), 
+								     header);
 				g_free (from_header);
 				goto cleanup;
+			}
 		}
 		
 		if (from_header) {
