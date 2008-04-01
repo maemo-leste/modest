@@ -60,6 +60,7 @@
 #include <modest-count-stream.h>
 #include <libgnomevfs/gnome-vfs.h>
 #include "modest-utils.h"
+#include "modest-debug.h"
 
 #define KB 1024
 
@@ -1850,7 +1851,10 @@ transfer_folder_status_cb (GObject *obj,
 	XFerFolderAsyncHelper *helper;
 
 	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_COPY_FOLDER);
+
+	/* Show only the status information we want */
+	if (status->code != TNY_FOLDER_STATUS_CODE_COPY_FOLDER)
+		return;
 
 	helper = (XFerFolderAsyncHelper *) user_data;
 	g_return_if_fail (helper != NULL);
@@ -2198,7 +2202,10 @@ get_msg_status_cb (GObject *obj,
 	GetMsgInfo *helper = NULL;
 
 	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_GET_MSG);
+
+	/* Show only the status information we want */
+	if (status->code != TNY_FOLDER_STATUS_CODE_GET_MSG)
+		return;
 
 	helper = (GetMsgInfo *) user_data;
 	g_return_if_fail (helper != NULL);       
@@ -2638,7 +2645,10 @@ transfer_msgs_status_cb (GObject *obj,
 	XFerMsgsAsyncHelper *helper;
 
 	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_XFER_MSGS);
+
+	/* Show only the status information we want */
+	if (status->code != TNY_FOLDER_STATUS_CODE_XFER_MSGS)
+		return;
 
 	helper = (XFerMsgsAsyncHelper *) user_data;
 	g_return_if_fail (helper != NULL);       
@@ -2966,7 +2976,10 @@ on_refresh_folder_status_update (GObject *obj,
 
 	g_return_if_fail (user_data != NULL);
 	g_return_if_fail (status != NULL);
-	g_return_if_fail (status->code == TNY_FOLDER_STATUS_CODE_REFRESH);
+
+	/* Show only the status information we want */
+	if (status->code != TNY_FOLDER_STATUS_CODE_REFRESH)
+		return;
 
 	helper = (RefreshAsyncHelper *) user_data;
 	self = helper->mail_op;
