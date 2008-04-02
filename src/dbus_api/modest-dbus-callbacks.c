@@ -627,10 +627,43 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 	return osso_retval;
 }
 
+static void 
+on_remove_msgs_finished (ModestMailOperation *mail_op,
+			 gpointer user_data)
+{	
+	TnyHeader *header;
+	ModestWindow *main_win = NULL, *msg_view = NULL;
+	ModestHeaderView *header_view;
+
+	header = (TnyHeader *) user_data;
+
+	/* Get the main window if exists */
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
+						      FALSE); /* don't create */
+	if (!main_win) {
+		g_object_unref (header);
+		return;
+	}
+
+	if (modest_window_mgr_find_registered_header (modest_runtime_get_window_mgr(),
+						      header, &msg_view)) {
+		if (MODEST_IS_MSG_VIEW_WINDOW (msg_view))
+			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
+	}	
+	g_object_unref (header);
+
+	/* Refilter the header view explicitly */
+	header_view = (ModestHeaderView *)
+		modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_win),
+						     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+	if (header_view && MODEST_IS_HEADER_VIEW (header_view))
+		modest_header_view_refilter (header_view);
+}
+
 static gboolean
 on_idle_delete_message (gpointer user_data)
 {
-	TnyList *headers = NULL;
+	TnyList *headers = NULL, *tmp_headers = NULL;
 	TnyFolder *folder = NULL;
 	TnyIterator *iter = NULL; 
 	TnyHeader *header = NULL, *msg_header = NULL;
@@ -638,38 +671,41 @@ on_idle_delete_message (gpointer user_data)
 	TnyAccount *account = NULL;
 	const char *uri = NULL;
 	gchar *uid = NULL;
-	gint res = 0;
 	ModestMailOperation *mail_op = NULL;
-	ModestWindow *main_win = NULL, *msg_view = NULL;
+	ModestWindow *main_win = NULL;
 
 	uri = (char *) user_data;
 	
 	msg = find_message_by_url (uri, &account);
+	if (account)
+		g_object_unref (account);
 
 	if (!msg) {
 		g_warning ("%s: Could not find message '%s'", __FUNCTION__, uri);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
-		return OSSO_ERROR; 
+		return FALSE; 
 	}
 	
 	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
 						      FALSE); /* don't create */
 	
-	msg_header = tny_msg_get_header (msg);
 	folder = tny_msg_get_folder (msg);
-
 	if (!folder) {
 		g_warning ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
 		g_object_unref (msg);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
-		return OSSO_ERROR; 
+		return FALSE; 
 	}
 
+	/* Get UID */
+	msg_header = tny_msg_get_header (msg);
 	uid = tny_header_dup_uid (msg_header);
+	g_object_unref (msg);
+	g_object_unref (msg_header);
+
 	headers = tny_simple_list_new ();
 	tny_folder_get_headers (folder, headers, TRUE, NULL);
 	iter = tny_list_create_iterator (headers);
-	header = NULL;
 
 	while (!tny_iterator_is_done (iter)) {
 		gchar *cur_id = NULL;
@@ -693,80 +729,42 @@ on_idle_delete_message (gpointer user_data)
 		tny_iterator_next (iter);
 	}
 	g_free (uid);
-
 	g_object_unref (iter);
-	iter = NULL;
 	g_object_unref (headers);
-	headers = NULL;
-	
-	g_object_unref (msg_header);
-	msg_header = NULL;
-	g_object_unref (msg);
-	msg = NULL;
 
 	if (header == NULL) {
 		if (folder)
 			g_object_unref (folder);
 		g_idle_add (notify_error_in_dbus_callback, NULL);			
-		return OSSO_ERROR;
+		return FALSE;
 	}
 		
-	res = OSSO_OK;
-
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
 	gdk_threads_enter (); /* CHECKED */
 
 	mail_op = modest_mail_operation_new (main_win ? G_OBJECT(main_win) : NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_remove_msg (mail_op, header, FALSE);
+
+	g_signal_connect (G_OBJECT (mail_op),
+			  "operation-finished",
+			  G_CALLBACK (on_remove_msgs_finished),
+			  g_object_ref (header));
+
+	tmp_headers = tny_simple_list_new ();
+	tny_list_append (tmp_headers, (GObject *) header);
+
+	modest_mail_operation_remove_msgs (mail_op, tmp_headers, FALSE);
+
+	g_object_unref (tmp_headers);
 	g_object_unref (G_OBJECT (mail_op));
-	
-	if (main_win) { /* no need if there's no window */ 
-		if (modest_window_mgr_find_registered_header (modest_runtime_get_window_mgr(),
-							      header, &msg_view)) {
-			if (MODEST_IS_MSG_VIEW_WINDOW (msg_view))
-				modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (msg_view));
-		}
-	}
 	gdk_threads_leave (); /* CHECKED */
 	
+	/* Clean */
 	if (header)
 		g_object_unref (header);
 	
-	if (folder) {
-		/* Trick: do a poke status in order to speed up the signaling
-		   of observers.
-		   A delete via the menu does this, in do_headers_action(), 
-		   though I don't know why.
-		 */
-		tny_folder_poke_status (folder);
-	
-		g_object_unref (folder);
-	}
-	
-	if (account)
-		g_object_unref (account);
-		
-	/* Refilter the header view explicitly, to make sure that 
-	 * deleted emails are really removed from view. 
-	 * (They are not really deleted until contact is made with the server, 
-	 * so they would appear with a strike-through until then):
-	 */
-	if (main_win) { /* only needed when there's a mainwindow / UI */
-
-		/* This is a GDK lock because we are an idle callback and
-		 * the code below is or does Gtk+ code */
-		gdk_threads_enter (); /* CHECKED */
-		ModestHeaderView *header_view = (ModestHeaderView *)
-			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_win),
-							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		if (header_view && MODEST_IS_HEADER_VIEW (header_view))
-			modest_header_view_refilter (header_view);
-		gdk_threads_leave ();
-	}
-	
-	return res;
+	return FALSE;
 }
 
 

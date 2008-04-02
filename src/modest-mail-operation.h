@@ -576,21 +576,6 @@ void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
 /**
  * modest_mail_operation_remove_msg:
  * @self: a #ModestMailOperation
- * @header: the #TnyHeader of the message to move
- * @remove_to_trash: TRUE to move it to trash or FALSE to delete it
- * permanently
- * 
- * Deletes a message. This operation is synchronous, so the
- * #ModestMailOperation should not be added to any
- * #ModestMailOperationQueue
- **/
-void          modest_mail_operation_remove_msg     (ModestMailOperation *self,
-						    TnyHeader *header,
-						    gboolean remove_to_trash);
-
-/**
- * modest_mail_operation_remove_msg:
- * @self: a #ModestMailOperation
  * @headers: the #TnyList of the messages to delete
  * @remove_to_trash: TRUE to move it to trash or FALSE to delete it
  * permanently

@@ -102,6 +102,11 @@ static guint    compute_message_array_size (GPtrArray *headers);
 static int      compare_headers_by_date   (gconstpointer a,
 					   gconstpointer b);
 
+static void     sync_folder_finish_callback (TnyFolder *self, 
+					     gboolean cancelled, 
+					     GError *err, 
+					     gpointer user_data);
+
 enum _ModestMailOperationSignals 
 {
 	PROGRESS_CHANGED_SIGNAL,
@@ -2386,81 +2391,64 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 }
 
 
-void 
-modest_mail_operation_remove_msg (ModestMailOperation *self,  
-				  TnyHeader *header,
-				  gboolean remove_to_trash /*ignored*/)
+static void
+remove_msgs_async_cb (TnyFolder *folder, 
+		      gboolean canceled, 
+		      GError *err, 
+		      gpointer user_data)
 {
-	TnyFolder *folder;
+	gboolean expunge, leave_on_server;
+	const gchar *account_name;
+	const gchar *proto;
+	TnyAccount *account;
+	ModestTransportStoreProtocol account_proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (TNY_IS_HEADER (header));
-
-	if (remove_to_trash)
-		g_warning ("remove to trash is not implemented");
-
+	self = (ModestMailOperation *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	folder = tny_header_get_folder (header);
 
-	/* Get account and set it into mail_operation */
-	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
-	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DELETE;
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-
-	/* remove message from folder */
-	tny_folder_remove_msg (folder, header, &(priv->error));
-	if (!priv->error) {
-		gboolean expunge, leave_on_server;
-		const gchar *account_name;
-		TnyAccount *account;
-		ModestTransportStoreProtocol account_proto;
-
-		tny_header_set_flag (header, TNY_HEADER_FLAG_DELETED);
-		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
-
-		modest_mail_operation_notify_start (self);
-
-		/* Get leave on server setting */
-		account = tny_folder_get_account (folder);
-		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		leave_on_server =
-			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
-								account_name);
-
-		account_proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
-
-		if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
-		    modest_tny_folder_is_remote_folder (folder) == FALSE)
-			expunge = TRUE;
-		else
-			expunge = FALSE;
-
-		/* Sync folder */
-		tny_folder_sync_async(folder, expunge, NULL, NULL, NULL);
-
-		/* Unref */
-		g_object_unref (account);
+	if (canceled || err) {
+		/* If canceled by the user, ignore the error given by Tinymail */
+		if (canceled) {
+			priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+		} else if (err) {
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
+			priv->error = g_error_copy ((const GError *) err);
+			priv->error->domain = MODEST_MAIL_OPERATION_ERROR;
+		}
+		/* Exit */
+		modest_mail_operation_notify_end (self);
+		g_object_unref (self);
+		return;
 	}
+
+	account = tny_folder_get_account (folder);
+	account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+	leave_on_server =
+		modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
+							account_name);	
+	proto = tny_account_get_proto (account);
+	g_object_unref (account);
+
+	if (proto)
+		account_proto = modest_protocol_info_get_transport_store_protocol (proto);
 	
-	
-	/* Set status */
-	if (!priv->error)
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
+		    modest_tny_folder_is_remote_folder (folder) == FALSE)
+		expunge = TRUE;
 	else
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-
-	/* Free */
-	g_object_unref (G_OBJECT (folder));
-
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
+		expunge = FALSE;
+	
+	/* Sync folder */
+	tny_folder_sync_async(folder, expunge, sync_folder_finish_callback, 
+			      NULL, self);
 }
 
 void 
 modest_mail_operation_remove_msgs (ModestMailOperation *self,  
 				   TnyList *headers,
-				  gboolean remove_to_trash /*ignored*/)
+				   gboolean remove_to_trash /*ignored*/)
 {
 	TnyFolder *folder = NULL;
 	ModestMailOperationPrivate *priv;
@@ -2531,46 +2519,9 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 
 	/* remove message from folder */
 	modest_mail_operation_notify_start (self);
+	tny_folder_remove_msgs_async (folder, remove_headers, remove_msgs_async_cb, 
+				      NULL, g_object_ref (self));
 
-	tny_folder_remove_msgs (folder, remove_headers, &(priv->error));
-	if (!priv->error) {
-		gboolean expunge, leave_on_server;
-		const gchar *account_name;
-		const gchar *proto;
-		TnyAccount *account;
-		ModestTransportStoreProtocol account_proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
-		
-		account = tny_folder_get_account (folder);
-		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		leave_on_server =
-			modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
-								account_name);
-		
-		proto = tny_account_get_proto (account);
-		if (proto) {
-			account_proto = modest_protocol_info_get_transport_store_protocol (proto);
-		}
-		
-		if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
-		    modest_tny_folder_is_remote_folder (folder) == FALSE)
-			expunge = TRUE;
-		else
-			expunge = FALSE;
-
-		/* Sync folder */
-		tny_folder_sync_async(folder, expunge, NULL, NULL, NULL);
-		
-		g_object_unref (account);
-	}
-	
-	
-	/* Set status */
-	if (!priv->error)
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	else
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-
-	/* Free */
 cleanup:
 	if (remove_headers)
 		g_object_unref (remove_headers);
@@ -2580,9 +2531,6 @@ cleanup:
 		g_object_unref (iter);
 	if (folder)
 		g_object_unref (folder);
-
-	/* Notify about operation end */
-	modest_mail_operation_notify_end (self);
 }
 
 static void
@@ -3076,19 +3024,35 @@ modest_mail_operation_run_queue (ModestMailOperation *self,
 }
 
 static void
-sync_folder_finish_callback (TnyFolder *self, gboolean cancelled, GError *err, ModestMailOperation *mail_op)
+sync_folder_finish_callback (TnyFolder *self, 
+			     gboolean cancelled, 
+			     GError *err, 
+			     gpointer user_data)
+
 {
+	ModestMailOperation *mail_op;
 	ModestMailOperationPrivate *priv;
 
+	mail_op = (ModestMailOperation *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
-	if (err != NULL) {
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
-			     err->message);
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+
+	/* If canceled by the user, ignore the error given by Tinymail */
+	if (cancelled) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+	} else if (err) {
+		/* If the operation was a sync then the status is
+		   failed, but if it's part of another operation then
+		   just set it as finished with errors */
+		if (priv->op_type == MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER)
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		else
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
+		priv->error = g_error_copy ((const GError *) err);
+		priv->error->domain = MODEST_MAIL_OPERATION_ERROR;
 	} else {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
+
 	modest_mail_operation_notify_end (mail_op);
 	g_object_unref (mail_op);
 }
