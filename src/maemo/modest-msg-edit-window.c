@@ -2241,6 +2241,16 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				(modest_runtime_get_platform_factory ());
 				
 			TnyStream *stream = create_stream_for_uri (uri);
+
+			if (stream == NULL) {
+
+				modest_platform_information_banner (NULL, NULL, dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+				
+				g_object_unref (mime_part);
+				gnome_vfs_file_info_unref (info);
+				continue;
+			}
+
 			tny_mime_part_construct (mime_part, stream, mime_type, "base64");
 			
 			content_id = g_strdup_printf ("%d", priv->next_cid);
@@ -2350,8 +2360,16 @@ modest_msg_edit_window_attach_file_one (
 			(modest_runtime_get_platform_factory ());
 		stream = create_stream_for_uri (uri);
 		
-		tny_mime_part_construct (mime_part, stream, mime_type, "base64");
+		if (stream == NULL) {
 
+			modest_platform_information_banner (NULL, NULL, dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+
+			g_object_unref (mime_part);
+			gnome_vfs_file_info_unref (info);
+			return;
+		}
+
+		tny_mime_part_construct (mime_part, stream, mime_type, "base64");
 		g_object_unref (stream);
 		
 		content_id = g_strdup_printf ("%d", priv->next_cid);
