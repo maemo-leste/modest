@@ -29,10 +29,12 @@
 
 #include <config.h>
 #include <glib.h>
-#include <glib/gi18n-lib.h>
 
-#include <modest-default-connection-policy.h>
+#include "modest-default-connection-policy.h"
+#include "modest-account-mgr-helpers.h"
+#include "modest-runtime.h"
 #include <tny-account.h>
+#include <tny-store-account.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -45,6 +47,12 @@ modest_default_connection_policy_set_current (TnyConnectionPolicy *self, TnyAcco
 static void
 modest_default_connection_policy_on_connect (TnyConnectionPolicy *self, TnyAccount *account)
 {
+	/* Set the username as succedded */
+	if (TNY_IS_STORE_ACCOUNT (account))
+		modest_account_mgr_set_server_account_username_has_succeeded (modest_runtime_get_account_mgr (), 
+									      tny_account_get_id (account), 
+									      TRUE);
+
 	return;
 }
 

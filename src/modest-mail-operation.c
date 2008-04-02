@@ -1251,7 +1251,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountMgr *mgr;
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
-	gboolean headers_only, ignore_limit, succeeded;
+	gboolean headers_only, ignore_limit;
 	TnyTransportAccount *transport_account = NULL;
 
 	info = (UpdateAccountInfo *) user_data;
@@ -1306,8 +1306,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 
 	/* Update the last updated key, even if we don't have to get new headers */
 	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
-	if (!canceled && !err) 
-		modest_account_mgr_set_server_account_username_has_succeeded (mgr, tny_account_get_id (priv->account), TRUE);
 	
 	if (new_headers_array->len == 0)
 		goto send_mail;
@@ -1377,13 +1375,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (new_headers_array, FALSE);
 
-	if (priv->error)
-		succeeded = FALSE;
-	else
-		succeeded = TRUE;
-	modest_account_mgr_set_server_account_username_has_succeeded (modest_runtime_get_account_mgr (), 
-								      tny_account_get_name (priv->account), 
-								      succeeded);
  send_mail:
 	/* Get the transport account */
 	transport_account = (TnyTransportAccount *)

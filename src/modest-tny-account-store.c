@@ -501,17 +501,14 @@ on_account_settings_hide (GtkWidget *widget, gpointer user_data)
 }
 
 static void 
-show_password_warning_only ()
+show_password_warning_only (const gchar *msg)
 {
 	ModestWindow *main_window = 
 		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE); /* don't create */
 	
 	/* Show an explanatory temporary banner: */
 	if (main_window) 
-		modest_platform_information_banner (NULL, NULL, 
-						    _("mcen_ib_username_pw_incorrect"));
-	else
-		g_warning ("%s: %s", __FUNCTION__, _("mcen_ib_username_pw_incorrect"));
+		modest_platform_information_banner (NULL, NULL, msg);
 }
 
 static void 
@@ -662,8 +659,16 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		pwd = NULL;
 		
 		if (already_asked) {
-			/* Show an info banner, before we show the protected password dialog: */
-			show_password_warning_only();
+			const gchar *msg;
+			gboolean username_known = 
+				modest_account_mgr_get_server_account_username_has_succeeded(priv->account_mgr, 
+											     server_account_name);
+			/* If the login has ever succeeded then show a specific message */
+			if (username_known)
+				msg = _("ecdg_ib_set_password_incorrect");
+			else
+				msg = _("mcen_ib_username_pw_incorrect");
+			show_password_warning_only (msg);
 		}
 
 		/* Request password */
@@ -1507,6 +1512,10 @@ connection_status_changed (TnyAccount *account,
 			   TnyConnectionStatus status, 
 			   gpointer data)
 {
+	/* We do this here and not in the connection policy because we
+	   don't want to do it for every account, just for the
+	   accounts that are interactively added when modest is
+	   runnning */
 	if (status == TNY_CONNECTION_STATUS_CONNECTED) {
 		const gchar *account_name;
 		ModestWindow *main_window;
@@ -1518,11 +1527,6 @@ connection_status_changed (TnyAccount *account,
 		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers, 
 								  G_OBJECT (account),
 								  "connection_status_changed");
-
-		/* Set the username as succedded */
-		modest_account_mgr_set_server_account_username_has_succeeded (modest_runtime_get_account_mgr (), 
-									      tny_account_get_id (account), 
-									      TRUE);
 
 		/* Perform a send receive */
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
