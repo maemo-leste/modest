@@ -2827,6 +2827,8 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
 	dialog = hildon_font_selection_dialog_new (GTK_WINDOW (window), NULL);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(),
+				     GTK_WINDOW(dialog));
 
 	/* First we get the currently selected font information */
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &oldfmt, TRUE);
