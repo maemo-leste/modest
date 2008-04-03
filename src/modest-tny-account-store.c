@@ -547,29 +547,47 @@ show_wrong_password_dialog (TnyAccount *account)
 static gchar*
 get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *cancel)
 {
-	const TnyAccountStore *account_store = NULL;
 	ModestTnyAccountStore *self = NULL;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *username = NULL;
 	gchar *pwd = NULL;
 	gpointer pwd_ptr = NULL;
 	gboolean already_asked = FALSE;
+	const gchar *server_account_name;
+	gchar *url_string;
 
 	g_return_val_if_fail (account, NULL);
 	
 	MODEST_DEBUG_BLOCK(
 		g_debug ("%s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
-	);
-	
-	/* Initialize the output parameter: */
-	if (cancel)
-		*cancel = FALSE;
-		
-	const gchar *server_account_name = tny_account_get_id (account);
-	account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
-							     "account_store"));
+	);		
 
-	if (!server_account_name || !account_store) {
+	/* Get a reference to myself */
+	self = MODEST_TNY_ACCOUNT_STORE (g_object_get_data (G_OBJECT(account), "account_store"));
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	/* Ensure that we still have this account. It could happen
+	   that a set_online was requested *before* removing an
+	   account, and due to tinymail emits the get_password
+	   function using a g_idle the account could be actually
+	   removed *before* this function was really called */
+	url_string = tny_account_get_url_string (account);
+	if (url_string) {
+		TnyAccount *tmp_account;
+
+		tmp_account = tny_account_store_find_account (TNY_ACCOUNT_STORE (self), 
+							      url_string);
+		g_free (url_string);
+
+		if (!tmp_account) {
+			*cancel = TRUE;
+			return NULL;
+		}
+		g_object_unref (tmp_account);
+	}
+
+	server_account_name = tny_account_get_id (account);
+	if (!server_account_name || !self) {
 		g_warning ("modest: %s: could not retrieve account_store for account %s",
 			   __FUNCTION__, server_account_name ? server_account_name : "<NULL>");
 		if (cancel)
@@ -577,9 +595,6 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		
 		return NULL;
 	}
-
-	self = MODEST_TNY_ACCOUNT_STORE (account_store);
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* This hash map stores passwords, including passwords that are not stored in gconf. */
 	/* Is it in the hash? if it's already there, it must be wrong... */
@@ -672,7 +687,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		}
 
 		/* Request password */
-		g_signal_emit (G_OBJECT(account_store), signals[PASSWORD_REQUESTED_SIGNAL], 0,
+		g_signal_emit (G_OBJECT (self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
 			       account_id, /* server_account_name */
 			       &username, &pwd, cancel, &remember);
 
@@ -1720,16 +1735,6 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 								  "connection_status_changed");
 	}
 
-	/* Remove it from the list of accounts */
-	if (TNY_IS_STORE_ACCOUNT (account))
-		tny_list_remove (priv->store_accounts, (GObject *) account);
-	else
-		tny_list_remove (priv->transport_accounts, (GObject *) account);
-
-	/* Notify the observers */
-	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 
-		       0, account);
-
 	/* Cancel all pending operations */
 	tny_account_cancel (TNY_ACCOUNT (account));
 	
@@ -1762,6 +1767,12 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (store_account) {
+		/* Remove it from the list of accounts and notify the
+		   observers. Do not need to wait for account
+		   disconnection */
+		tny_list_remove (priv->store_accounts, (GObject *) store_account);
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, store_account);
+
 		/* Cancel all pending operations */
 		tny_account_cancel (TNY_ACCOUNT (store_account));
 
@@ -1779,10 +1790,14 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	if (transport_account) {
 		TnyAccount *local_account = NULL;
 		TnyFolder *outbox = NULL;
-		ModestTnyAccountStorePrivate *priv = NULL;
+
+		/* Remove it from the list of accounts and notify the
+		   observers. Do not need to wait for account
+		   disconnection */
+		tny_list_remove (priv->transport_accounts, (GObject *) transport_account);
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
 	
 		/* Remove the OUTBOX of the account from the global outbox */
-		priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 		outbox = g_hash_table_lookup (priv->outbox_of_transport, transport_account);
 
 		if (TNY_IS_FOLDER (outbox)) {
