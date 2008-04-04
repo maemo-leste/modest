@@ -1,3 +1,17 @@
+* 2008-W15:
+- many fixes related to specific hangs
+- fix for the background-update coredumps
+- improved some error notes
+- improved attachment detection (tinymail)
+- symbol reduction, should help startup a bit
+
+
+* 2008-W14:
+
+
+* 2008-W13:
+
+
 * 2008-W12:
 - fixes for instability in POP3 handling
 - improved error notes for a couple of situations
