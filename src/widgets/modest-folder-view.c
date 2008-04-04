@@ -1141,6 +1141,7 @@ modest_folder_view_finalize (GObject *obj)
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
 			modest_mail_operation_sync_folder (mail_op, TNY_FOLDER (priv->cur_folder_store), FALSE);
+			g_object_unref (mail_op);
 		}
 
 		g_object_unref (priv->cur_folder_store);
