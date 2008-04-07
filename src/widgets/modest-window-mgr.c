@@ -979,6 +979,11 @@ modest_window_mgr_set_modal (ModestWindowMgr *self,
 	g_mutex_unlock (priv->queue_lock);
 
 	if (!old_modal) {	
+		/* make us transient wrt the main window then */
+		ModestWindow *main_win = modest_window_mgr_get_main_window (self, FALSE);
+		if (GTK_WINDOW(main_win) != window) /* they should not be the same */
+			gtk_window_set_transient_for (window, GTK_WINDOW(main_win));
+
 		gtk_window_set_modal (window, TRUE);
 	} else {
 		/* un-modalize the old one; the one on top should be the
