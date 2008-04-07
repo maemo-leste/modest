@@ -2299,13 +2299,18 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 						      G_OBJECT(header_view),
 						      MODEST_CONF_HEADER_VIEW_KEY);
 		} else {
-			/* Update the active account */
-			//modest_window_set_active_account (MODEST_WINDOW (main_window), NULL);
-			/* Save only if we're seeing headers */
+			/* No need to save the header view
+			   configuration for Maemo because it only
+			   saves the sorting stuff and that it's
+			   already being done by the sort
+			   dialog. Remove it when the GNOME version
+			   has the same behaviour */
+#ifdef MODEST_PLATFORM_GNOME
 			if (modest_main_window_get_contents_style (main_window) ==
 			    MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
 				modest_widget_memory_save (conf, G_OBJECT (header_view), 
 							   MODEST_CONF_HEADER_VIEW_KEY);
+#endif
 			modest_header_view_clear (MODEST_HEADER_VIEW(header_view));
 		}
 	}
