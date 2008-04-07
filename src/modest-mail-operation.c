@@ -2109,10 +2109,11 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 					       transfer_folder_cb,
 					       transfer_folder_status_cb,
 					       helper);
+			g_object_unref (into);
 		} else {
+			g_object_unref (into);
 			goto error;
 		}
-		g_object_unref (into);
 
 		return;
 	}

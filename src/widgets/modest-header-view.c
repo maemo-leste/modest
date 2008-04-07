@@ -2080,7 +2080,7 @@ on_account_removed (TnyAccountStore *self,
 		my_account = tny_folder_get_account (priv->folder);
 		if (my_account == account)
 			modest_header_view_clear (MODEST_HEADER_VIEW (user_data));
-		g_object_unref (account);
+		g_object_unref (my_account);
 	}
 }
 

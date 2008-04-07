@@ -2144,32 +2144,28 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		
  	} else if (TNY_IS_FOLDER (folder_store)) {
  		/* Get the folder's parent account: */
- 		account = tny_folder_get_account(TNY_FOLDER (folder_store));
+ 		account = tny_folder_get_account (TNY_FOLDER (folder_store));
  	} else if (TNY_IS_ACCOUNT (folder_store)) {
  		/* Use the folder store as an account: */
- 		account = TNY_ACCOUNT (folder_store);
+ 		account = TNY_ACCOUNT (g_object_ref (folder_store));
  	}
  
 	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
  		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
  		    !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
- 			
- 			/* This IS a local account like a maildir account, which does not require 
- 			 * a connection. (original comment had a vague assumption in its language
- 			 * usage. There's no assuming needed, this IS what it IS: a local account), */
  
- 			/* We promise to instantly perform the callback, so ... */
- 			if (callback) {
+ 			/* No need to connect a local account */
+ 			if (callback)
  				callback (FALSE, NULL, parent_window, account, user_data);
- 			}
- 			
- 			return;
+
+			goto clean;
  		}
  	}
+  	modest_platform_connect_and_perform (parent_window, force, account, callback, user_data);
  
- 	modest_platform_connect_and_perform (parent_window, force, account, callback, user_data);
- 
- 	return;
+ clean:
+	if (account)
+		g_object_unref (account);
 }
 
 static void

@@ -245,10 +245,12 @@ modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 		return FALSE;
 
 	const gchar* account_id = tny_account_get_id (account);
-	if (!account_id)
+	if (!account_id) {	
+		g_object_unref (account);
 		return FALSE;
+	}
 
-	g_object_unref (G_OBJECT(account));
+	g_object_unref (account);
 	
 	return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
 }	

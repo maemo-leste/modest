@@ -103,8 +103,8 @@ static void    on_vfs_volume_unmounted     (GnomeVFSVolumeMonitor *volume_monito
 					    GnomeVFSVolume *volume, 
 					    gpointer user_data);
 
-static void    modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self, 
-								   const gchar *server_account_name);
+static void    forget_password_in_memory (ModestTnyAccountStore *self, 
+					  const gchar *server_account_name);
 
 static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self);
 
@@ -434,7 +434,7 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 }
 
 /**
- * modest_tny_account_store_forget_password_in_memory
+ * forget_password_in_memory
  * @self: a TnyAccountStore instance
  * @account: A server account.
  * 
@@ -442,9 +442,9 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
  * For instance, this should be called when the user has changed the password in the account settings.
  */
 static void
-modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self, const gchar * server_account_name)
+forget_password_in_memory (ModestTnyAccountStore *self, 
+			   const gchar * server_account_name)
 {
-	/* printf ("DEBUG: %s\n", __FUNCTION__); */
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	if (server_account_name && priv->password_hash) {
@@ -1570,8 +1570,7 @@ create_tny_account (ModestTnyAccountStore *self,
 	if (account) {
 		/* Forget any cached password for the account, so that
 		   we use a new account if any */
-		modest_tny_account_store_forget_password_in_memory (self, 
-								    tny_account_get_id (account));
+		forget_password_in_memory (self, tny_account_get_id (account));
 
 		/* Install a signal handler that will refresh the
 		   account the first time it becomes online. Do this
@@ -1767,6 +1766,9 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (store_account) {
+		/* Forget any cached password for the account */
+		forget_password_in_memory (self, tny_account_get_id (store_account));
+
 		/* Remove it from the list of accounts and notify the
 		   observers. Do not need to wait for account
 		   disconnection */
@@ -1790,6 +1792,9 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	if (transport_account) {
 		TnyAccount *local_account = NULL;
 		TnyFolder *outbox = NULL;
+
+		/* Forget any cached password for the account */
+		forget_password_in_memory (self, tny_account_get_id (store_account));
 
 		/* Remove it from the list of accounts and notify the
 		   observers. Do not need to wait for account
