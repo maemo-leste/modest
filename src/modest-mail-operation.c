@@ -3064,7 +3064,9 @@ modest_mail_operation_sync_folder (ModestMailOperation *self,
 
 	modest_mail_operation_notify_start (self);
 	g_object_ref (self);
-	tny_folder_sync_async (folder, expunge, (TnyFolderCallback) sync_folder_finish_callback, NULL, self);
+	tny_folder_sync_async (folder, expunge, 
+			       (TnyFolderCallback) sync_folder_finish_callback, 
+			       NULL, self);
 }
 
 static void

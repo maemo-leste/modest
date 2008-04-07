@@ -2893,7 +2893,7 @@ do_create_folder (GtkWindow *parent_window,
 	if (result == GTK_RESPONSE_ACCEPT) {
 		ModestMailOperation *mail_op;
 		
-		mail_op  = modest_mail_operation_new (NULL);			
+		mail_op  = modest_mail_operation_new ((GObject *) parent_window);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 						 mail_op);
 		modest_mail_operation_create_folder (mail_op,
