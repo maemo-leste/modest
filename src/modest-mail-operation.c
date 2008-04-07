@@ -783,7 +783,6 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	TnyFolder *draft_folder = NULL;
 	TnyFolder *outbox_folder = NULL;
 	TnyHeader *header = NULL;
-	GError *err = NULL;
 
 	if (!msg) {
 		goto end;
@@ -801,6 +800,7 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	modest_mail_operation_send_mail (self, info->transport_account, msg);
 
 	if (info->draft_msg != NULL) {
+		TnyList *tmp_headers = NULL;
 		TnyFolder *folder = NULL;
 		TnyFolder *src_folder = NULL;
 		TnyFolderType folder_type;		
@@ -844,11 +844,12 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 			src_folder = draft_folder;
 
 		/* Note: This can fail (with a warning) if the message is not really already in a folder,
-		 * because this function requires it to have a UID. */		
-		tny_folder_remove_msg (src_folder, header, NULL);
-
-		tny_folder_sync (folder, TRUE, &err); /* FALSE --> don't expunge */
-/* 		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);  /\* expunge *\/ */
+		 * because this function requires it to have a UID. */
+		tmp_headers = tny_simple_list_new ();
+		tny_list_append (tmp_headers, (GObject*) header);
+		tny_folder_remove_msgs_async (src_folder, tmp_headers, NULL, NULL, NULL);
+		g_object_unref (tmp_headers);
+		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);  /* expunge */
 		
 		g_object_unref (folder);
 	}
@@ -856,8 +857,6 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 end:
 	if (header)
 		g_object_unref (header);
-	if (err != NULL)
-		g_error_free(err);	
 	if (info->draft_msg)
 		g_object_unref (info->draft_msg);
 	if (draft_folder)
