@@ -464,21 +464,6 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 	show_error (GTK_WIDGET (self), _CS("ckdg_ib_maximum_characters_reached"));
 }
 
-static void
-on_entry_invalid_character (ModestValidatingEntry *self, const gchar* character, gpointer user_data)
-{
-	const gchar *show_char = NULL;
-	if (character)
-	  show_char = character;
-	else {
-	  show_char = "' '";
-	}
-	
-	/* TODO: Should this show just this one bad character or all the not-allowed characters? */
-	gchar *message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), show_char);
-	show_error (GTK_WIDGET (self), message);
-}
-
 static gint
 get_default_country_code(void)
 {
@@ -609,7 +594,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_list_free (list_prevent);
 	list_prevent = NULL;
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_account_title),
-																	 on_entry_invalid_character, self);
+																	 modest_maemo_utils_on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
@@ -663,7 +648,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (priv->entry_user_name), list_prevent);
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_user_name),
-		on_entry_invalid_character, self);
+		modest_maemo_utils_on_entry_invalid_character, self);
 	g_list_free (list_prevent);
 	
 	/* The username widgets: */	
@@ -683,7 +668,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_unallowed_characters_whitespace (
 	 	MODEST_VALIDATING_ENTRY (priv->entry_user_username));
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_user_username),
-		on_entry_invalid_character, self);
+		modest_maemo_utils_on_entry_invalid_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */

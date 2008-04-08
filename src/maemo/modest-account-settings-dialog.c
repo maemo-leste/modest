@@ -523,6 +523,9 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	 * as required by our UI specification: */
 	modest_validating_entry_set_unallowed_characters_whitespace (
 	 	MODEST_VALIDATING_ENTRY (self->entry_user_username));
+	modest_validating_entry_set_func (MODEST_VALIDATING_ENTRY (self->entry_user_username), 
+					  modest_maemo_utils_on_entry_invalid_character, 
+					  self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
