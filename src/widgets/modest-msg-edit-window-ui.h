@@ -80,7 +80,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "ZoomPlus", NULL, N_("Zoom +"), "F7", NULL, G_CALLBACK (modest_ui_actions_on_zoom_plus) },
 	{ "ZoomMinus", NULL, N_("Zoom -"), "F8", NULL, G_CALLBACK (modest_ui_actions_on_zoom_minus) },
 	{ "ToggleFullscreen", NULL, N_("Toggle fullscreen"), "F6", NULL, G_CALLBACK (modest_ui_actions_on_change_fullscreen) },
-	{ "CloseWindowShortcut", NULL, NULL, "Escape", NULL, G_CALLBACK (modest_ui_actions_on_close_window) },
+	{ "CloseWindowShortcut", NULL, NULL, "Escape", NULL, NULL },
 
 	/* TOOLBAR ACTIONS */
 	{ "ToolbarSend", MODEST_STOCK_MAIL_SEND, N_("qgn_toolb_messagin_send"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
