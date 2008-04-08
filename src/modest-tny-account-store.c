@@ -300,7 +300,9 @@ static void
 account_disconnect (TnyAccount *account)
 {
 	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
-	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, NULL, NULL);
+
+	if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, NULL, NULL);
 }
 
 
@@ -1806,6 +1808,13 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		outbox = g_hash_table_lookup (priv->outbox_of_transport, transport_account);
 
 		if (TNY_IS_FOLDER (outbox)) {
+			TnyAccount *outbox_account = tny_folder_get_account (outbox);
+
+			if (outbox_account) {
+				tny_list_remove (priv->store_accounts_outboxes, G_OBJECT (outbox_account));
+				g_object_unref (outbox_account);
+			}
+
 			local_account = modest_tny_account_store_get_local_folders_account (self);
 			modest_tny_local_folders_account_remove_folder_from_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
 										    outbox);
