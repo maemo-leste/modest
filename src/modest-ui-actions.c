@@ -4536,6 +4536,7 @@ move_to_cb (ModestMailOperation *mail_op,
 
 	/* Close the "Pasting" information banner */
 	gtk_widget_destroy (GTK_WIDGET(helper->banner));
+	g_object_unref (helper->banner);
 	if (helper->reference != NULL)
 		gtk_tree_row_reference_free (helper->reference);
 	g_free (helper);
@@ -4571,12 +4572,12 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 					     gpointer user_data)
 {
 	ModestWindow *main_window = NULL;
-	GObject *win = NULL;
 	
 	/* Disable next automatic folder selection */
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 							 FALSE); /* don't create */
 	if (main_window) {
+		GObject *win = NULL;
 		GtkWidget *folder_view = NULL;
 	
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
@@ -4587,13 +4588,15 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), 
 							  TNY_FOLDER (user_data), FALSE);
 		}
-	}
 
-	/* Show notification dialog */
-	win = modest_mail_operation_get_source (mail_op);
-	modest_platform_run_information_dialog ((GtkWindow *) win, _("mail_in_ui_folder_move_target_error"), FALSE);
-	if (win)
-		g_object_unref (win);
+		/* Show notification dialog only if the main window exists */
+		win = modest_mail_operation_get_source (mail_op);
+		modest_platform_run_information_dialog ((GtkWindow *) win, 
+							_("mail_in_ui_folder_move_target_error"), 
+							FALSE);
+		if (win)
+			g_object_unref (win);
+	}
 }
 
 static void
@@ -4818,6 +4821,24 @@ modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
 	g_object_unref (src_account);
 }
 
+static void
+xfer_messages_error_handler (ModestMailOperation *mail_op, 
+			     gpointer user_data)
+{
+	ModestWindow *main_window = NULL;
+	
+	/* Disable next automatic folder selection */
+	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+							 FALSE); /* don't create */
+	if (main_window) {
+		GObject *win = modest_mail_operation_get_source (mail_op);
+		modest_platform_run_information_dialog ((GtkWindow *) win, 
+							_("mail_in_ui_folder_move_target_error"), 
+							FALSE);
+		if (win)
+			g_object_unref (win);
+	}
+}
 
 /**
  * Utility function that transfer messages from both the main window
@@ -4837,8 +4858,11 @@ xfer_messages_performer  (gboolean canceled,
 	const gchar *proto_str = NULL;
 	gboolean dst_is_pop = FALSE;
 
-	if (canceled || err) {
-		if (err && is_memory_full_error (err)) {
+	if (canceled)
+		goto end;
+
+	if (err) {
+		if (is_memory_full_error (err)) {
 			modest_platform_information_banner ((GtkWidget *) parent_window,
 							    NULL, dgettext("ke-recv",
 									   "cerm_device_memory_full"));
@@ -4846,8 +4870,7 @@ xfer_messages_performer  (gboolean canceled,
 			/* Show the proper error message */
 			modest_ui_actions_on_account_connection_error (parent_window, account);
 		}
-		g_object_unref (dst_folder);
-		return;
+		goto end;
 	}
 
 	dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
@@ -4882,6 +4905,7 @@ xfer_messages_performer  (gboolean canceled,
 	helper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
 							   _CS("ckct_nw_pasting"));
 	if (helper->banner != NULL)  {
+		g_object_ref (helper->banner);
 		gtk_window_set_modal (GTK_WINDOW(helper->banner), FALSE);
 		gtk_widget_show (GTK_WIDGET(helper->banner));
 	}
@@ -4895,7 +4919,7 @@ xfer_messages_performer  (gboolean canceled,
 
 	ModestMailOperation *mail_op = 
 		modest_mail_operation_new_with_error_handling (G_OBJECT(win),
-							       modest_ui_actions_move_folder_error_handler,
+							       xfer_messages_error_handler,
 							       NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
@@ -4909,6 +4933,7 @@ xfer_messages_performer  (gboolean canceled,
 
 	g_object_unref (G_OBJECT (mail_op));
 	g_object_unref (headers);
+ end:
 	g_object_unref (dst_folder);
 }
 
@@ -4938,6 +4963,7 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	helper->banner = modest_platform_animation_banner (GTK_WIDGET (parent_window), NULL,
 			_CS("ckct_nw_pasting"));
 	if (helper->banner != NULL)  {
+		g_object_ref (helper->banner);
 		gtk_window_set_modal (GTK_WINDOW(helper->banner), FALSE);
 		gtk_widget_show (GTK_WIDGET(helper->banner));
 	}
