@@ -4528,6 +4528,10 @@ move_to_cb (ModestMailOperation *mail_op,
 									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
 			path = gtk_tree_row_reference_get_path (helper->reference);
+			/* We need to unselect the previous one
+			   because we could be copying instead of
+			   moving */
+			gtk_tree_selection_unselect_all (sel);
 			gtk_tree_selection_select_path (sel, path);
 			gtk_tree_path_free (path);
 		}
