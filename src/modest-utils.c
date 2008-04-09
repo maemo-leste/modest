@@ -361,8 +361,11 @@ modest_utils_get_supported_secure_authentication_methods (ModestTransportStorePr
 	info->cancel = FALSE;
 	info->error = NULL;
 	info->progress = gtk_progress_bar_new();
-	/* TODO: Need logical_ID for the title: */
-	info->dialog = gtk_dialog_new_with_buttons(" ",
+
+	/* FIXME: the title (first arg) here is empty; there should be 'accountwizard_fi_authentication', 
+	 *  but that does not exist yet; see bug #82487. so, for now, we simply leave it empty
+         */
+	info->dialog = gtk_dialog_new_with_buttons(" ", 
 	                                           parent_window, GTK_DIALOG_MODAL,
 	                                           _("mcen_bd_dialog_cancel"),
 	                                           GTK_RESPONSE_REJECT,
