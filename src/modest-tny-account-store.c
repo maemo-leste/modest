@@ -301,8 +301,11 @@ account_disconnect (TnyAccount *account)
 {
 	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
 
-	if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, NULL, NULL);
+	if (TNY_IS_STORE_ACCOUNT (account) && 
+	    !modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		return;
+
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, NULL, NULL);
 }
 
 

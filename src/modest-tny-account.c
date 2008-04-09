@@ -274,7 +274,10 @@ update_tny_account (TnyAccount *tny_account,
 	g_return_val_if_fail (account_name, FALSE);
 	g_return_val_if_fail (tny_account, FALSE);
 	
-	tny_account_set_id (tny_account, account_name);
+	/* Do not change the id if it's not needed */
+	if (tny_account_get_id (tny_account) && 
+	    strcmp (tny_account_get_id (tny_account), account_name))
+		tny_account_set_id (tny_account, account_name);
 	
 	/* mbox and maildir accounts use a URI instead of the rest:
 	 * Note that this is not where we create the special local folders account.
