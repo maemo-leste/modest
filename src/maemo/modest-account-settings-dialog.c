@@ -1047,7 +1047,7 @@ check_data (ModestAccountSettingsDialog *self)
 		  		if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() ||
 						error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 					hildon_banner_show_information(GTK_WIDGET (self), NULL, 
-								       _("Could not discover supported secure authentication methods."));
+								       _("mcen_ib_unableto_discover_auth_methods"));
 
 				if(error != NULL)
 					g_error_free(error);
