@@ -1,6 +1,9 @@
 HACKING
 =======
 
+[ Unfortunately, modest is not following these rules everywhere;
+however, it *should* ]
+
 When hacking on modest, please honour these time-tested coding guidelines.
 First, please follow the Linux CodingStyle guidelines
 (/usr/src/linux/Documentation/CodingStyle); for naming, follow the
@@ -55,3 +58,18 @@ GLib/GTK+/GObject. Some things to remember:
   for NULL returns;
 * g_return_if_fail, g_return_if_reached and friends may be 'turned off', 
   ie. they are to be used for error checking,  but not for your programming logic
+
+
+DEBUGGING
+=========
+There are some DBUS methods available for debugging.
+
+run-standalone.sh  dbus-send --print-reply --dest=com.nokia.modest /com/nokia/modest com.nokia.modest.DumpOperationQueue
+
+(instead of DumpOperationQueue, you can also use DumpSendQueues or
+DumpAccounts)
+
+These methods will print a list of the current mail operation queue,
+send queues or the accounts. If you don't know what that means, then
+this problably not for you :)
+
