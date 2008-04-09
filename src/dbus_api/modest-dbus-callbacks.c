@@ -875,8 +875,11 @@ on_dbus_method_dump_send_queues (DBusConnection *con, DBusMessage *message)
 		dbus_connection_flush (con);
 		dbus_message_unref (reply);
 	}
-	
 	g_free (str);
+
+	/* Let modest die */
+	g_idle_add (notify_error_in_dbus_callback, NULL);
+
 	return OSSO_OK;
 }
 
@@ -912,9 +915,12 @@ on_dbus_method_dump_operation_queue (DBusConnection *con, DBusMessage *message)
 		dbus_connection_send (con, reply, &serial);
 		dbus_connection_flush (con);
 		dbus_message_unref (reply);
-	}
-	
+	}	
 	g_free (str);
+
+	/* Let modest die */
+	g_idle_add (notify_error_in_dbus_callback, NULL);
+
 	return OSSO_OK;
 }
 
@@ -949,8 +955,8 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 			TNY_ACCOUNT_TYPE_STORE);
 		if (TNY_IS_ACCOUNT(acc)) {
 			gchar *tmp, *url = tny_account_get_url_string (acc);
-			tmp = g_strdup_printf ("%sstore    : '%s': %s\n",
-					       str, tny_account_get_id (acc), url);
+			tmp = g_strdup_printf ("%sstore    : '%s': %s (refs: %d)\n",
+					       str, tny_account_get_id (acc), url, ((GObject*)acc)->ref_count);
 			g_free (str);
 			str = tmp;
 			g_free (url);
@@ -986,9 +992,12 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 		dbus_connection_send (con, reply, &serial);
 		dbus_connection_flush (con);
 		dbus_message_unref (reply);
-	}
-	
+	}	
 	g_free (str);
+
+	/* Let modest die */
+	g_idle_add (notify_error_in_dbus_callback, NULL);
+
 	return OSSO_OK;
 }
 
