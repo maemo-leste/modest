@@ -1279,7 +1279,9 @@ on_idle_select_first_inbox_or_local (gpointer user_data)
 {
 	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
 
+	gdk_threads_enter ();
 	modest_folder_view_select_first_inbox_or_local (self);
+	gdk_threads_leave ();
 
 	return FALSE;
 }

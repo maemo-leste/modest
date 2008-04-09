@@ -1107,8 +1107,11 @@ idle_top_modal (gpointer data)
 	g_mutex_unlock (priv->queue_lock);
 
 	/* Show it */
-	if (topmost)
+	if (topmost) {
+		gdk_threads_enter ();
 		gtk_window_present (topmost);
+		gdk_threads_leave ();
+	}
 
 	return FALSE;
 }
