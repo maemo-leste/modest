@@ -1322,7 +1322,7 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	const gchar *forbidden_names[] = { /* windows does not like these */
 		"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
 		"COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-		".", "..", NULL
+		".", "..", "cur", "tmp", "new", NULL /* cur, tmp new  are reserved for Maildir */
 	};
 	
 	/* cannot be NULL */
@@ -1334,6 +1334,10 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	if (len == 0)
 		return FALSE;
 	
+	/* cannot start with a dot, vfat does not seem to like that */
+	if (folder_name[0] == '.')
+		return FALSE;
+
 	/* cannot start or end with a space */
 	if (g_ascii_isspace(folder_name[0]) || g_ascii_isspace(folder_name[len - 1]))
 		return FALSE; 
