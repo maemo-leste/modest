@@ -496,3 +496,10 @@ modest_platform_get_account_settings_wizard ()
 						    "NOT IMPLEMENTED");
 	return dialog;
 }
+
+
+
+gboolean modest_platform_check_memory_low (gboolean showui)
+{
+	return FALSE;
+}

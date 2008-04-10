@@ -56,6 +56,7 @@
 #include <modest-account-settings-dialog.h>
 #include <easysetup/modest-easysetup-wizard-dialog.h>
 #include <hildon/hildon-sound.h>
+#include <osso-mem.h>
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -2256,4 +2257,35 @@ modest_platform_get_current_connection (void)
 	retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX; /* assume WLAN (fast) internet */  
 #endif /* MODEST_HAVE_CONIC */
 	return retval;
+}
+
+
+
+gboolean
+modest_platform_check_memory_low (gboolean showui)
+{
+	gboolean lowmem;
+
+	/* are we in low memory state? */
+	lowmem = osso_mem_in_lowmem_state () ? TRUE : FALSE;
+
+
+	if (showui && lowmem) {
+		ModestWindowMgr *window_mgr;
+		ModestWindow *main_win;
+		
+		window_mgr = modest_runtime_get_window_mgr();
+		main_win = modest_window_mgr_get_main_window (
+			window_mgr, FALSE /* don't create */);
+		
+		if (!main_win)
+			return lowmem; /* don't show ui */
+		
+		modest_platform_run_information_dialog (
+			GTK_WINDOW(main_win),
+			dgettext("ke-recv","memr_ib_operation_disabled"),
+			TRUE);
+	}
+	
+	return lowmem;
 }

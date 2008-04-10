@@ -506,6 +506,22 @@ GtkWidget *modest_platform_get_account_settings_wizard ();
 
 ModestConnectedVia modest_platform_get_current_connection (void);
 
+
+
+
+/**
+ * modest_platform_check_memory_low:
+ * @showui: show a warning dialog
+ *
+ * see if memory is too low for big memory consuming operations
+ * optionally show a warning dialog
+ *
+ * Returns: TRUE if we're in lowmem state, FALSE otherwise
+ */
+gboolean modest_platform_check_memory_low (gboolean showui);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */
+
