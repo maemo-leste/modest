@@ -569,9 +569,6 @@ modest_search_account_get_folders_cb (TnyFolderStore *self,
 
 	helper = (SearchHelper *) user_data;
 
-	/* Remove the "account" reference */
-	helper->account_total--;
-
 	if (err || cancelled) {
 		goto end;
 	}
@@ -583,13 +580,16 @@ modest_search_account_get_folders_cb (TnyFolderStore *self,
 		/* Search into folder */
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));	
 		helper->folder_total++;
-		_search_folder (folder, (SearchHelper *) user_data);
+		_search_folder (folder, helper);
 		g_object_unref (folder);
 
 		tny_iterator_next (iter);
 	}
 	g_object_unref (iter);
  end:
+	/* Remove the "account" reference */
+	helper->account_total--;
+
 	if (folders)
 		g_object_unref (folders);
 
