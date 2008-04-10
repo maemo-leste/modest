@@ -81,6 +81,7 @@ struct _ModestWindowMgrPrivate {
 	GSList       *preregistered_uids;
 	GHashTable   *destroy_handlers;
 	GHashTable   *viewer_handlers;
+	GSList       *window_state_uids;
 	
 	guint        closing_time;
 
@@ -89,6 +90,8 @@ struct _ModestWindowMgrPrivate {
 	GtkWidget    *cached_editor;
 	guint        idle_load_view_id;
 	guint        idle_load_editor_id;
+
+	ModestWindow *current_top;
 };
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_WINDOW_MGR, \
@@ -198,6 +201,8 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->banner_counter = 0;
 	priv->main_window = NULL;
 	priv->fullscreen_mode = FALSE;
+	priv->current_top = NULL;
+	priv->window_state_uids = NULL;
 
 	priv->modal_windows = g_queue_new ();
 	priv->queue_lock = g_mutex_new ();
@@ -239,6 +244,8 @@ modest_window_mgr_finalize (GObject *obj)
 		gtk_widget_destroy (priv->cached_editor);
 		priv->cached_editor = NULL;
 	}
+
+	modest_signal_mgr_disconnect_all_and_destroy (priv->window_state_uids);
 
 	if (priv->window_list) {
 		GList *iter = priv->window_list;
@@ -560,6 +567,64 @@ get_show_toolbar_key (GType window_type,
 	return key;
 }
 
+#ifdef MODEST_PLATFORM_MAEMO
+static void
+on_window_is_topmost (GObject    *gobject,
+		      GParamSpec *arg1,
+		      gpointer    user_data)
+{
+	ModestWindowMgr *self;
+	ModestWindowMgrPrivate *priv;
+	ModestWindow *win = (ModestWindow *) gobject;
+
+	g_return_if_fail (MODEST_IS_WINDOW_MGR (user_data));
+
+	self = MODEST_WINDOW_MGR (user_data);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	if (hildon_window_get_is_topmost (HILDON_WINDOW (win)))
+		priv->current_top = win;
+}
+
+#else
+static gboolean
+on_window_state_event (GtkWidget           *widget,
+		       GdkEventWindowState *event,
+		       gpointer             user_data)
+{
+	ModestWindowMgr *self;
+	ModestWindowMgrPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (user_data), FALSE);
+
+	self = MODEST_WINDOW_MGR (user_data);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	MODEST_DEBUG_BLOCK (
+			    if (event->changed_mask & GDK_WINDOW_STATE_WITHDRAWN)
+				    g_print ("GDK_WINDOW_STATE_WITHDRAWN\n");
+			    if (event->changed_mask & GDK_WINDOW_STATE_ICONIFIED)
+				    g_print ("GDK_WINDOW_STATE_ICONIFIED\n");
+			    if (event->changed_mask & GDK_WINDOW_STATE_MAXIMIZED)
+				    g_print ("GDK_WINDOW_STATE_MAXIMIZED\n");
+			    if (event->changed_mask & GDK_WINDOW_STATE_STICKY)
+				    g_print ("GDK_WINDOW_STATE_STICKY\n");
+			    if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN)
+				    g_print ("GDK_WINDOW_STATE_FULLSCREEN\n");
+			    if (event->changed_mask & GDK_WINDOW_STATE_ABOVE)
+				    g_print ("GDK_WINDOW_STATE_ABOVE\n");
+			    if (event->changed_mask & GDK_WINDOW_STATE_BELOW)
+				    g_print ("GDK_WINDOW_STATE_BELOW\n");
+			    );
+	if (event->changed_mask & GDK_WINDOW_STATE_WITHDRAWN ||
+	    event->changed_mask & GDK_WINDOW_STATE_ABOVE) {
+		priv->current_top = MODEST_WINDOW (widget);
+	}
+	
+	return FALSE;
+}
+#endif
+
 void 
 modest_window_mgr_register_window (ModestWindowMgr *self, 
 				   ModestWindow *window)
@@ -625,6 +690,24 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
+	/* Listen to window state changes. Unfortunately
+	   window-state-event does not properly work for the Maemo
+	   version, so we need to use is-topmost and the ifdef */
+#ifdef MODEST_PLATFORM_MAEMO
+	priv->window_state_uids = 
+		modest_signal_mgr_connect (priv->window_state_uids, 
+					   G_OBJECT (window), 
+					   "notify::is-topmost",
+					   G_CALLBACK (on_window_is_topmost), 
+					   self);
+#else
+	priv->window_state_uids = 
+		modest_signal_mgr_connect (priv->window_state_uids, 
+					   G_OBJECT (window), 
+					   "window-state-event",
+					   G_CALLBACK (on_window_state_event), 
+					   self);
+#endif
 	/* Listen to object destruction */
 	handler_id = g_malloc0 (sizeof (gint));
 	*handler_id = g_signal_connect (window, "delete-event", G_CALLBACK (on_window_destroy), self);
@@ -806,6 +889,17 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 		pending_ops = g_slist_next (pending_ops);
 		g_slist_free_1 (tmp_list);
 	}
+
+	/* Disconnect the "window-state-event" handler, we won't need it anymore */
+#ifdef MODEST_PLATFORM_MAEMO
+	priv->window_state_uids = modest_signal_mgr_disconnect (priv->window_state_uids, 
+								G_OBJECT (window), 
+								"notify::is-topmost");
+#else
+	priv->window_state_uids = modest_signal_mgr_disconnect (priv->window_state_uids, 
+								G_OBJECT (window), 
+								"window-state-event");
+#endif
 	
 	/* Disconnect the "delete-event" handler, we won't need it anymore */
 	g_signal_handler_disconnect (window, handler_id);
@@ -980,10 +1074,13 @@ modest_window_mgr_set_modal (ModestWindowMgr *self,
 
 	if (!old_modal) {	
 		/* make us transient wrt the main window then */
-		ModestWindow *main_win = modest_window_mgr_get_main_window (self, FALSE);
-		if (GTK_WINDOW(main_win) != window) /* they should not be the same */
-			gtk_window_set_transient_for (window, GTK_WINDOW(main_win));
-
+		if (priv->current_top && ((GtkWindow *) priv->current_top != window)) {
+			gtk_window_set_transient_for (window, GTK_WINDOW(priv->current_top));
+		} else {
+			ModestWindow *main_win = modest_window_mgr_get_main_window (self, FALSE);
+			if (GTK_WINDOW(main_win) != window) /* they should not be the same */
+				gtk_window_set_transient_for (window, GTK_WINDOW(main_win));
+		}
 		gtk_window_set_modal (window, TRUE);
 	} else {
 		/* un-modalize the old one; the one on top should be the

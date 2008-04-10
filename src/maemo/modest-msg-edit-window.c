@@ -2295,6 +2295,7 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
