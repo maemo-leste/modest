@@ -445,7 +445,9 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 		return NULL;
 	}
 
-	return widget ? GTK_WIDGET(widget) : NULL;
+	/* Note that the window could have been destroyed, and so
+	   their children, but still have some references */
+	return (widget && GTK_IS_WIDGET(widget)) ? GTK_WIDGET(widget) : NULL;
 }
 
 static gboolean 

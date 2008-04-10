@@ -2872,9 +2872,12 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 			folder_view =
 				get_folder_view_from_move_to_dialog (GTK_WIDGET(source_win));
 		
-		/* Select the newly created folder */
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
-						  new_folder, FALSE);
+		/* Select the newly created folder. It could happen
+		   that the widget is no longer there (i.e. the window
+		   has been destroyed, so we need to check this */
+		if (folder_view)
+			modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
+							  new_folder, FALSE);
 		g_object_unref (new_folder);
 	}
 	/* Free. Note that the first time it'll be NULL so noop */
