@@ -1215,6 +1215,7 @@ on_account_inserted (TnyAccountStore *account_store,
 
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (user_data);
 
+
 	/* If we're adding a new account, and there is no previous
 	   one, we need to select the visible server account */
 	if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE &&
@@ -1223,14 +1224,32 @@ on_account_inserted (TnyAccountStore *account_store,
 					      G_OBJECT (user_data),
 					      MODEST_CONF_FOLDER_VIEW_KEY);
 
+	if (!GTK_IS_TREE_VIEW(user_data)) {
+		g_warning ("BUG: %s: not a valid tree view", __FUNCTION__);
+		return;
+	}
+	
 	/* Get the inner model */
+	/* check, is some rare cases, we did not get the right thing here,
+	 * NB#84097 */
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
+	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		return;
+	}
+
+	/* check, is some rare cases, we did not get the right thing here,
+	 * NB#84097 */
 	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
+		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
+		return;
+	}
 
 	/* Insert the account in the model */
 	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (account));
-
+	
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 }
