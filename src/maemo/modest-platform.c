@@ -2217,7 +2217,7 @@ modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
 }
 
 GtkWidget *
-modest_platform_get_account_settings_wizard ()
+modest_platform_get_account_settings_wizard (void)
 {
 	ModestEasysetupWizardDialog *dialog = modest_easysetup_wizard_dialog_new ();
 
@@ -2262,30 +2262,20 @@ modest_platform_get_current_connection (void)
 
 
 gboolean
-modest_platform_check_memory_low (gboolean showui)
+modest_platform_check_memory_low (ModestWindow *win)
 {
 	gboolean lowmem;
-
+	
+	g_return_val_if_fail (win == NULL || MODEST_IS_WINDOW(win), FALSE);
+	
 	/* are we in low memory state? */
 	lowmem = osso_mem_in_lowmem_state () ? TRUE : FALSE;
-
-
-	if (showui && lowmem) {
-		ModestWindowMgr *window_mgr;
-		ModestWindow *main_win;
-		
-		window_mgr = modest_runtime_get_window_mgr();
-		main_win = modest_window_mgr_get_main_window (
-			window_mgr, FALSE /* don't create */);
-		
-		if (!main_win)
-			return lowmem; /* don't show ui */
-		
+	
+	if (win && lowmem)
 		modest_platform_run_information_dialog (
-			GTK_WINDOW(main_win),
+			GTK_WINDOW(win),
 			dgettext("ke-recv","memr_ib_operation_disabled"),
 			TRUE);
-	}
 	
 	return lowmem;
 }

@@ -2292,6 +2292,13 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	GSList *uris = NULL;
 	GSList *uri_node;
 	
+
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * attachments
+	 */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+		return;
+
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);

@@ -489,7 +489,7 @@ modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
 }
 
 GtkWidget *
-modest_platform_get_account_settings_wizard ()
+modest_platform_get_account_settings_wizard (void)
 {
 	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
 						    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
@@ -499,7 +499,7 @@ modest_platform_get_account_settings_wizard ()
 
 
 
-gboolean modest_platform_check_memory_low (gboolean showui)
+gboolean modest_platform_check_memory_low (ModestWindow *win)
 {
 	return FALSE;
 }

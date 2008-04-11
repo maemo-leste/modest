@@ -502,7 +502,7 @@ GtkWidget *modest_platform_get_account_settings_dialog (ModestAccountSettings *s
  *
  * Returns: the newly created dialog.
  */
-GtkWidget *modest_platform_get_account_settings_wizard ();
+GtkWidget *modest_platform_get_account_settings_wizard (void);
 
 ModestConnectedVia modest_platform_get_current_connection (void);
 
@@ -511,14 +511,15 @@ ModestConnectedVia modest_platform_get_current_connection (void);
 
 /**
  * modest_platform_check_memory_low:
- * @showui: show a warning dialog
+ * 
+ * @win: a ModestWindow, or NULL
  *
  * see if memory is too low for big memory consuming operations
- * optionally show a warning dialog
+ * optionally show a warning dialog if @win was provided
  *
  * Returns: TRUE if we're in lowmem state, FALSE otherwise
  */
-gboolean modest_platform_check_memory_low (gboolean showui);
+gboolean modest_platform_check_memory_low (ModestWindow *win);
 
 
 G_END_DECLS
