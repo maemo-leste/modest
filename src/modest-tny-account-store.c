@@ -1002,7 +1002,7 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self,
 		tny_list_foreach (priv->transport_accounts, foreach_account_append_to_list, list);
 		break;
 	case TNY_ACCOUNT_STORE_STORE_ACCOUNTS:
-		tny_list_foreach (priv->store_accounts, foreach_account_append_to_list, list);
+  		tny_list_foreach (priv->store_accounts, foreach_account_append_to_list, list);
 		break;
 	case TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS:
 		tny_list_foreach (priv->transport_accounts, foreach_account_append_to_list, list);

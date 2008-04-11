@@ -382,13 +382,8 @@ text_cell_data  (GtkTreeViewColumn *column,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN, &type,
 			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &instance,
 			    -1);
-	if (!fname)
-		return;
-
-	if (!instance) {
-		g_free (fname);
-		return;
-	}
+	if (!fname || !instance)
+		goto end;
 
 	ModestFolderView *self = MODEST_FOLDER_VIEW (data);
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (self);
@@ -487,9 +482,11 @@ text_cell_data  (GtkTreeViewColumn *column,
 		modest_tny_account_get_mmc_account_name (TNY_STORE_ACCOUNT (instance), 
 							 on_get_mmc_account_name, callback_data);
 	}
- 			
-	g_object_unref (G_OBJECT (instance));
-	g_free (fname);
+ end: 			
+	if (instance)
+		g_object_unref (G_OBJECT (instance));
+	if (fname)
+		g_free (fname);
 }
 
 
@@ -1585,7 +1582,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(self);
 	
 	/* Notify that there is no folder selected */
-	g_signal_emit (G_OBJECT(self), 
+	g_signal_emit (G_OBJECT(self),
 		       signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       NULL, FALSE);
 	if (priv->cur_folder_store) {
@@ -1621,7 +1618,6 @@ modest_folder_view_update_model (ModestFolderView *self,
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
 	g_signal_connect (G_OBJECT(filter_model), "row-inserted",
 			  (GCallback) on_row_inserted_maybe_select_folder, self);
-
 
 	g_object_unref (model);
 	g_object_unref (filter_model);		

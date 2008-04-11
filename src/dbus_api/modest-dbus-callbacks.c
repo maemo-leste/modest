@@ -956,7 +956,8 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 		if (TNY_IS_ACCOUNT(acc)) {
 			gchar *tmp, *url = tny_account_get_url_string (acc);
 			tmp = g_strdup_printf ("%sstore    : '%s': %s (refs: %d)\n",
-					       str, tny_account_get_id (acc), url, ((GObject*)acc)->ref_count);
+					       str, tny_account_get_id (acc), url, 
+					       ((GObject*)acc)->ref_count-1);
 			g_free (str);
 			str = tmp;
 			g_free (url);
@@ -970,7 +971,8 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 		if (TNY_IS_ACCOUNT(acc)) {
 			gchar *tmp, *url = tny_account_get_url_string (acc);
 			tmp = g_strdup_printf ("%stransport: '%s': %s (refs: %d)\n",
-					       str, tny_account_get_id (acc), url, ((GObject*)acc)->ref_count);
+					       str, tny_account_get_id (acc), url, 
+					       ((GObject*)acc)->ref_count-1);
 			g_free (str);
 			str = tmp;
 			g_free (url);
