@@ -1,9 +1,16 @@
+* 2008-W16:
+- stability fixes
+- logical-id fixes
+- fixed some glitches
+- better support for some UPnP servers (attachments)
+
 * 2008-W15:
 - many fixes related to specific hangs
 - fix for the background-update coredumps
 - improved some error notes
 - improved attachment detection (tinymail)
 - symbol reduction, should help startup a bit
+- added WiMAX support
 
 
 * 2008-W14:
