@@ -2163,7 +2163,8 @@ static TnyStream* create_stream_for_uri (const gchar* uri)
 		 * read the whole file into memory (this is not a fast
 		 * protocol so we can assume that these files are not
 		 * going to be very big) */
-		if (g_ascii_strncasecmp (uri, "obex://", 7) == 0) {
+		if ((g_ascii_strncasecmp (uri, "obex://", 7) == 0)||
+		    (g_ascii_strncasecmp (uri, "upnpav://", 9) == 0)) {
 			TnyStream *memstream = tny_camel_mem_stream_new ();
 			tny_stream_write_to_stream (vfssstream, memstream);
 			g_object_unref (vfssstream);
