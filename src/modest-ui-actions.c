@@ -718,6 +718,13 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	ModestWindow *msg_win = NULL;
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
 	ModestTnyAccountStore *store = modest_runtime_get_account_store();
+	GnomeVFSFileSize total_size, allowed_size;
+
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * composing a message with attachments
+	 */
+	if (attachments && modest_platform_check_memory_low (win))
+		goto cleanup;
 
 	account_name = modest_account_mgr_get_default_account(mgr);
 	if (!account_name) {
@@ -755,10 +762,22 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 
 	/* Create and register edit window */
 	/* This is destroyed by TODO. */
+	total_size = 0;
+	allowed_size = MODEST_MAX_ATTACHMENT_SIZE;
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
 	while (attachments) {
-		modest_msg_edit_window_attach_file_one((ModestMsgEditWindow *)msg_win,
-						       attachments->data);
+		total_size +=
+			modest_msg_edit_window_attach_file_one(
+				(ModestMsgEditWindow *)msg_win,
+				attachments->data, allowed_size);
+
+		if (total_size > allowed_size) {
+			g_warning ("%s: total size: %u", 
+				   __FUNCTION__, (unsigned int)total_size);
+			break;
+		}
+		allowed_size -= total_size;
+
 		attachments = g_slist_next(attachments);
 	}
 	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
@@ -771,10 +790,14 @@ cleanup:
 	g_free (signature);
 	g_free (body);
 	g_free (account_name);
-	if (account) g_object_unref (G_OBJECT(account));
-	if (folder) g_object_unref (G_OBJECT(folder));
-	if (msg_win) g_object_unref (G_OBJECT(msg_win));
-	if (msg) g_object_unref (G_OBJECT(msg));
+	if (account) 
+		g_object_unref (G_OBJECT(account));
+	if (folder)
+		g_object_unref (G_OBJECT(folder));
+	if (msg_win)
+		g_object_unref (G_OBJECT(msg_win));
+	if (msg)
+		g_object_unref (G_OBJECT(msg));
 }
 
 void
@@ -1381,6 +1404,12 @@ void
 modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 {
 	TnyList *headers;
+	
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * opening
+	 */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win)))
+		return;
 
 	/* Get headers */
 	headers = get_selected_headers (win);
@@ -1573,6 +1602,13 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	gboolean do_retrieve = TRUE;
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
+
+			
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * reply/forward (because it could potentially require a lot of memory */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win)))
+		return;
+
 
 	/* we need an account when editing */
 	if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE)) {
@@ -2166,6 +2202,12 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 		return;
 	}
 
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * activating headers
+	 */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(main_window)))
+		return;
+
 
 /* 	headers = tny_simple_list_new (); */
 /* 	tny_list_prepend (headers, G_OBJECT (header)); */
@@ -2392,7 +2434,13 @@ modest_ui_actions_on_msg_link_contextual (ModestMsgView *msgview, const gchar* l
 void
 modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, TnyMimePart *mime_part,
 					     ModestWindow *win)
-{
+{		
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * viewing attachments
+	 */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win)))
+		return;
+
 	modest_msg_view_window_view_attachment (MODEST_MSG_VIEW_WINDOW (win), mime_part);
 }
 
@@ -2464,6 +2512,21 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 
 		modest_platform_information_banner (NULL, NULL, dgettext("ke-recv", "cerm_device_memory_full"));
 		return FALSE;
+	}
+
+		
+	/*
+	 * djcb: if we're in low-memory state, we only allow for
+	 * saving messages smaller than
+	 * MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE (see modest-defs.h) this
+	 * should still allow for sending anything critical...
+	 */
+	if (expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) {
+
+		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window))) {
+			modest_msg_edit_window_free_msg_data (edit_window, data);
+			return FALSE;
+		}
 	}
 
 	account_name = g_strdup (data->account_name);
@@ -2607,6 +2670,20 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		modest_platform_information_banner (NULL, NULL, dgettext("ke-recv", "cerm_device_memory_full"));
 		return FALSE;
 	}
+
+	
+	/*
+	 * djcb: if we're in low-memory state, we only allow for sending messages
+	 * smaller than MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE (see modest-defs.h)
+	 * this should still allow for sending anything critical... 
+	 */
+	if (expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) {
+		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window))) {
+			modest_msg_edit_window_free_msg_data (edit_window, data);
+			return FALSE;
+		}
+	}
+
 
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = g_strdup (data->account_name);
@@ -2808,6 +2885,10 @@ modest_ui_actions_on_insert_image (GtkAction *action,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	g_return_if_fail (GTK_IS_ACTION (action));
 
+
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+		return;
+
 	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
 		return;
 
@@ -2821,6 +2902,9 @@ modest_ui_actions_on_attach_file (GtkAction *action,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	g_return_if_fail (GTK_IS_ACTION (action));
 
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+		return;
+	
 	modest_msg_edit_window_offer_attach_file (window);
 }
 
@@ -4405,40 +4489,6 @@ create_move_to_dialog (GtkWindow *win,
 	return dialog;
 }
 
-/*
- * Returns TRUE if at least one of the headers of the list belongs to
- * a message that has been fully retrieved.
- */
-#if 0 /* no longer in use. delete in 2007.10 */
-static gboolean
-has_retrieved_msgs (TnyList *list)
-{
-	TnyIterator *iter;
-	gboolean found = FALSE;
-
-	iter = tny_list_create_iterator (list);
-	while (!tny_iterator_is_done (iter) && !found) {
-		TnyHeader *header;
-		TnyHeaderFlags flags = 0;
-
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header) {
-			flags = tny_header_get_flags (header);
-			if (flags & TNY_HEADER_FLAG_CACHED)
-/* 			if (!(flags & TNY_HEADER_FLAG_PARTIAL)) */
-				found = TRUE;
-
-			g_object_unref (header);
-		}
-
-		if (!found)
-			tny_iterator_next (iter);
-	}
-	g_object_unref (iter);
-
-	return found;
-}
-#endif /* 0 */
 
 
 /*
@@ -5279,6 +5329,10 @@ modest_ui_actions_save_attachments (GtkAction *action,
 				    ModestWindow *window)
 {
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+
+		if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+			return;
+
 		modest_msg_view_window_save_attachments (MODEST_MSG_VIEW_WINDOW (window), NULL);
 	} else {
 		/* not supported window for this action */
@@ -5514,6 +5568,12 @@ modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * searching
+	 */
+	if (modest_platform_check_memory_low (window))
+		return;
+	
 	modest_platform_show_search_messages (GTK_WINDOW (window));
 }
 
@@ -5521,6 +5581,15 @@ void
 modest_ui_actions_on_open_addressbook (GtkAction *action, ModestWindow *win)
 {
 	g_return_if_fail (MODEST_IS_WINDOW (win));
+
+
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * for the addressbook
+	 */
+	if (modest_platform_check_memory_low (win))
+		return;
+
+
 	modest_platform_show_addressbook (GTK_WINDOW (win));
 }
 

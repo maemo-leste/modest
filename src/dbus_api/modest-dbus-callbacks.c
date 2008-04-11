@@ -1721,6 +1721,25 @@ on_dbus_method_get_folders (DBusConnection *con, DBusMessage *message)
 }
 
 
+static void
+reply_empty_results (DBusConnection *con, DBusMessage *msg)
+{
+	DBusMessage *reply = dbus_message_new_method_return (msg);
+	if (reply) {
+		dbus_uint32_t serial = 0;
+		/* we simply return an empty list, otherwise
+		   global-search gets confused */
+		search_result_to_message (reply, NULL);
+
+		dbus_connection_send (con, reply, &serial);
+		dbus_connection_flush (con);
+		dbus_message_unref (reply);
+	} else
+		g_warning ("%s: failed to send reply",
+			__FUNCTION__);
+}
+
+
 /** This D-Bus handler is used when the main osso-rpc 
  * D-Bus handler has not handled something.
  * We use this for D-Bus methods that need to use more complex types 
@@ -1736,8 +1755,19 @@ modest_dbus_req_filter (DBusConnection *con,
 	if (dbus_message_is_method_call (message,
 					 MODEST_DBUS_IFACE,
 					 MODEST_DBUS_METHOD_SEARCH)) {
-		on_dbus_method_search (con, message);
-		handled = TRUE;			 	
+		
+	/* don't try to search when there not enough mem */
+		if (modest_platform_check_memory_low (NULL)) {
+			g_warning ("%s: not enough memory for searching",
+				   __FUNCTION__);
+			reply_empty_results (con, message);
+			handled = TRUE;
+
+		} else {
+			on_dbus_method_search (con, message);
+			handled = TRUE;
+		}
+			 	
 	} else if (dbus_message_is_method_call (message,
 						MODEST_DBUS_IFACE,
 						MODEST_DBUS_METHOD_GET_FOLDERS)) {

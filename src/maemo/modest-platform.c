@@ -2265,7 +2265,7 @@ gboolean
 modest_platform_check_memory_low (ModestWindow *win)
 {
 	gboolean lowmem;
-	
+
 	g_return_val_if_fail (win == NULL || MODEST_IS_WINDOW(win), FALSE);
 	
 	/* are we in low memory state? */
@@ -2276,6 +2276,10 @@ modest_platform_check_memory_low (ModestWindow *win)
 			GTK_WINDOW(win),
 			dgettext("ke-recv","memr_ib_operation_disabled"),
 			TRUE);
-	
+
+	if (lowmem)
+		g_warning ("%s: low memory reached. disallowing some operations",
+			   __FUNCTION__);
+
 	return lowmem;
 }

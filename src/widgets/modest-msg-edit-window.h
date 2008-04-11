@@ -31,6 +31,7 @@
 #define __MODEST_MSG_EDIT_WINDOW_H__
 
 #include <tny-msg.h>
+#include <tny-vfs-stream.h>
 #include <widgets/modest-window.h>
 
 G_BEGIN_DECLS
@@ -228,11 +229,14 @@ void                    modest_msg_edit_window_offer_attach_file           (Mode
  * modest_msg_edit_window_attach_file_one:
  * @self: a #ModestMsgEditWindow
  * @file_uri: The URI of a file to attach to the email message.
+ * @allowed_size: max size allowed for this attachment, 0 for unlimited
  *
  * attach a file to a MsgEditWindow non interactively, 
  * without file dialog. This is needed by dbus callbacks.
+ *
+ * Returns: the filesize (if available)
  */
-void                    modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri);
+GnomeVFSFileSize modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *file_uri, GnomeVFSFileSize allowed_size);
 
 /**
  * modest_msg_edit_window_remove_attachments:

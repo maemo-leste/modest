@@ -2146,7 +2146,8 @@ modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 
 
 
-static TnyStream* create_stream_for_uri (const gchar* uri)
+static TnyStream*
+create_stream_for_uri (const gchar* uri)
 {
 	if (!uri)
 		return NULL;
@@ -2292,14 +2293,18 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	gint response = 0;
 	GSList *uris = NULL;
 	GSList *uri_node;
-	
+	GnomeVFSFileSize total_size, allowed_size;
+	ModestMsgEditWindowPrivate *priv;
+	gint att_num;
+	guint64 att_size;
 
-	/* we check for low-mem; in that case, show a warning, and don't allow
-	 * attachments
-	 */
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(window));
+		
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
 	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
 		return;
-
+	
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
@@ -2315,25 +2320,48 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	}
 	gtk_widget_destroy (dialog);
 
+	/* allowed size is the maximum size - what's already there */
+	modest_attachments_view_get_sizes (
+		MODEST_ATTACHMENTS_VIEW (priv->attachments_view), 
+		&att_num, &att_size);
+	allowed_size = MODEST_MAX_ATTACHMENT_SIZE - att_size;
+
+	total_size = 0;
 	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
+
 		const gchar *uri = (const gchar *) uri_node->data;
-		modest_msg_edit_window_attach_file_one (window, uri);
+		
+		total_size += modest_msg_edit_window_attach_file_one 
+			(window, uri, allowed_size);
+		
+		if (total_size > allowed_size) {
+			g_warning ("%s: total size: %u", 
+				   __FUNCTION__, (unsigned int)total_size);
+			break;
+		}
+
+		allowed_size -= total_size;
+		
+
 	}
 	g_slist_foreach (uris, (GFunc) g_free, NULL);
 	g_slist_free (uris);
 }
 
-void
-modest_msg_edit_window_attach_file_one (
-		ModestMsgEditWindow *window,
-		const gchar *uri)
+
+GnomeVFSFileSize
+modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
+					const gchar *uri, 
+					GnomeVFSFileSize allowed_size)
+
 {
 	GnomeVFSHandle *handle = NULL;
 	ModestMsgEditWindowPrivate *priv;
 	GnomeVFSResult result;
+	GnomeVFSFileSize size = 0;
 
-	g_return_if_fail (window);
-	g_return_if_fail (uri);
+	g_return_val_if_fail (window, 0);
+	g_return_val_if_fail (uri, 0);
 		
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
@@ -2367,6 +2395,20 @@ modest_msg_edit_window_attach_file_one (
 			mime_type = gnome_vfs_file_info_get_mime_type (info);
 		mime_part = tny_platform_factory_new_mime_part
 			(modest_runtime_get_platform_factory ());
+		
+		/* try to get the attachment's size; this may fail for weird
+		 * file systems, like obex, upnp... */
+		if (allowed_size != 0 &&
+		    info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE) {
+			size = info->size;
+			if (size > allowed_size) {
+				g_warning ("%s: attachment too big", __FUNCTION__);
+				modest_platform_information_banner (NULL, NULL, dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+				return 0;
+			}
+		} else
+			g_warning ("%s: could not get attachment size", __FUNCTION__);
+		
 		stream = create_stream_for_uri (uri);
 		
 		if (stream == NULL) {
@@ -2375,7 +2417,7 @@ modest_msg_edit_window_attach_file_one (
 
 			g_object_unref (mime_part);
 			gnome_vfs_file_info_unref (info);
-			return;
+			return 0;
 		}
 
 		tny_mime_part_construct (mime_part, stream, mime_type, "base64");
@@ -2401,6 +2443,8 @@ modest_msg_edit_window_attach_file_one (
 		g_object_unref (mime_part);
 		gnome_vfs_file_info_unref (info);
 	}
+
+	return size;
 }
 
 void
@@ -2655,6 +2699,14 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	g_return_if_fail ((editor == NULL) || (MODEST_IS_RECPT_EDITOR (editor)));
+	
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * for the addressbook
+	 */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+		return;
+
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	if (editor == NULL) {

@@ -204,4 +204,11 @@
 
 #define MODEST_EXAMPLE_EMAIL_ADDRESS "first.last@example.com"
 
+
+/* max size of message we still allow to save/send when we're in low-mem
+ * condition
+ */
+#define MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE (25*1024)
+#define MODEST_MAX_ATTACHMENT_SIZE (12*1024*1024)
+
 #endif /*__MODEST_DEFS_H__*/
