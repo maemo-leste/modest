@@ -1067,18 +1067,16 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 {
 	ModestTransportStoreProtocol proto =
 		MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; 
-	const gchar* server_name = NULL;
+	const gchar* server_name = "";
 	gchar *prompt = NULL;
 	gboolean retval;
 
-
-	g_return_val_if_fail (account, FALSE);
+	/* NOTE: account may be NULL in some cases */
 	g_return_val_if_fail (error, FALSE);
 	
 	/* Get the server name: */
-	server_name = tny_account_get_hostname (account);
-
 	if (account) {
+		server_name = tny_account_get_hostname (account);
 		const gchar *proto_name = tny_account_get_proto (account);
 		if (proto_name)
 			proto = modest_protocol_info_get_transport_store_protocol (proto_name);
