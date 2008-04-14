@@ -58,20 +58,20 @@
 
 typedef struct 
 {
-	guint folder_count;
-	guint folder_total;
-	guint account_total;
+	guint pending_calls;
 	GList *msg_hits;
 	ModestSearch *search;
 	ModestSearchCallback callback;
 	gpointer user_data;
+	TnyList *all_folders;
 } SearchHelper;
 
 static SearchHelper *create_helper (ModestSearchCallback callback, 
 				    ModestSearch *search,
 				    gpointer user_data);
 
-static void          check_search_finished (SearchHelper *helper);
+static void          _search_folder (TnyFolder *folder, 
+				     SearchHelper *helper);
 
 static gchar *
 g_strdup_or_null (const gchar *str)
@@ -381,6 +381,18 @@ search_mime_part_and_child_parts (TnyMimePart *part, ModestSearch *search)
 	return found;
 }
 
+static void
+search_next_folder (SearchHelper *helper) 
+{
+	TnyIterator *iter = tny_list_create_iterator (helper->all_folders);
+	TnyFolder *first = TNY_FOLDER (tny_iterator_get_current (iter));
+	
+	_search_folder (first, helper);
+
+	g_object_unref (first);
+	g_object_unref (iter);
+}
+
 static void 
 modest_search_folder_get_headers_cb (TnyFolder *folder, 
 				     gboolean cancelled, 
@@ -496,8 +508,18 @@ modest_search_folder_get_headers_cb (TnyFolder *folder,
 		g_object_unref (headers);
 
 	/* Check search finished */
-	helper->folder_count++;
-	check_search_finished (helper);
+	tny_list_remove (helper->all_folders, G_OBJECT (folder));
+	if (tny_list_get_length (helper->all_folders) == 0) {
+		/* callback */
+		helper->callback (helper->msg_hits, helper->user_data);
+		
+		/* free helper */
+		g_object_unref (helper->all_folders);
+		g_list_free (helper->msg_hits);
+		g_slice_free (SearchHelper, helper);
+	} else {
+		search_next_folder (helper);
+	}
 }
 
 static void
@@ -573,28 +595,48 @@ modest_search_account_get_folders_cb (TnyFolderStore *self,
 		goto end;
 	}
 
+	/* IMPORTANT: We need to get the headers of the folders one by
+	   one, because otherwise the get_headers_async calls are
+	   often canceled. That's why we firstly retrieve all folders,
+	   and then we search inside them one by one. sergio */
 	iter = tny_list_create_iterator (folders);
 	while (!tny_iterator_is_done (iter)) {
 		TnyFolder *folder = NULL;
 
 		/* Search into folder */
 		folder = TNY_FOLDER (tny_iterator_get_current (iter));	
-		helper->folder_total++;
-		_search_folder (folder, helper);
-		g_object_unref (folder);
+		tny_list_append (helper->all_folders, G_OBJECT (folder));
 
+		/* Search into children. Could be a merge folder */
+		if (TNY_IS_FOLDER_STORE (folder)) {
+			TnyList *children = tny_simple_list_new ();
+			helper->pending_calls++;
+			tny_folder_store_get_folders_async (TNY_FOLDER_STORE (folder), children, NULL, 
+							    modest_search_account_get_folders_cb, 
+							    NULL, helper);
+		}
+
+		g_object_unref (folder);
 		tny_iterator_next (iter);
 	}
 	g_object_unref (iter);
  end:
 	/* Remove the "account" reference */
-	helper->account_total--;
+	helper->pending_calls--;
 
 	if (folders)
 		g_object_unref (folders);
 
-	/* Check search finished */
-	check_search_finished (helper);
+	/* If there are not more folders, begin to search from the first one */
+	if (helper->pending_calls == 0) {
+		TnyIterator *iter = tny_list_create_iterator (helper->all_folders);
+		TnyFolder *first = TNY_FOLDER (tny_iterator_get_current (iter));
+
+		_search_folder (first, helper);
+
+		g_object_unref (first);
+		g_object_unref (iter);
+	}
 }
 
 static void
@@ -608,7 +650,7 @@ _search_account (TnyAccount *account,
 	/* Add a "reference" to the folder total. This allows the code
 	   not to finalize the helper if an account is fully refreshed
 	   before we get the folders of the others */
-	helper->account_total++;
+	helper->pending_calls++;
 
 	/* Get folders */
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account), folders, NULL, 
@@ -676,13 +718,12 @@ create_helper (ModestSearchCallback callback,
 	SearchHelper *helper;
 
 	helper = g_slice_new0 (SearchHelper);
-	helper->folder_count = 0;
-	helper->folder_total = 0;
-	helper->account_total = 0;
+	helper->pending_calls = 0;
 	helper->search = search;
 	helper->callback = callback;
 	helper->user_data = user_data;
 	helper->msg_hits = NULL;
+	helper->all_folders = tny_simple_list_new ();
 
 	return helper;
 }
@@ -707,18 +748,4 @@ modest_search_free (ModestSearch *search)
 	if (search->text_searcher)
 		ogs_text_searcher_free (search->text_searcher);	
 #endif
-}
-
-static void
-check_search_finished (SearchHelper *helper)
-{
-	/* If there are no more folders to check the account search has finished */
-	if (helper->folder_count == helper->folder_total && helper->account_total == 0) {
-		/* callback */
-		helper->callback (helper->msg_hits, helper->user_data);
-		
-		/* free helper */
-		g_list_free (helper->msg_hits);
-		g_slice_free (SearchHelper, helper);
-	}
 }
