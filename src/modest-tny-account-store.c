@@ -1799,7 +1799,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		TnyFolder *outbox = NULL;
 
 		/* Forget any cached password for the account */
-		forget_password_in_memory (self, tny_account_get_id (store_account));
+		forget_password_in_memory (self, tny_account_get_id (transport_account));
 
 		/* Remove it from the list of accounts and notify the
 		   observers. Do not need to wait for account
