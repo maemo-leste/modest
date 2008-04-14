@@ -1268,16 +1268,32 @@ on_account_changed (TnyAccountStore *account_store,
 	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
 		return;
 
+	if (!MODEST_IS_FOLDER_VIEW(user_data)) {
+		g_warning ("BUG: %s: not a valid folder view", __FUNCTION__);
+		return;
+	}
+
+
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (user_data);
 
 	/* Get the inner model */
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
+	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		return;
+	}
+
+
 	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
+		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
+		return;
+	}
 
 	/* Remove the account from the model */
 	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (tny_account));
-
+	
 	/* Insert the account in the model */
 	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (tny_account));
@@ -1319,6 +1335,11 @@ on_account_removed (TnyAccountStore *account_store,
 	if (TNY_IS_TRANSPORT_ACCOUNT (account))
 		return;
 
+	if (!MODEST_IS_FOLDER_VIEW(user_data)) {
+		g_warning ("BUG: %s: not a valid folder view", __FUNCTION__);
+		return;
+	}
+
 	self = MODEST_FOLDER_VIEW (user_data);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
@@ -1359,7 +1380,17 @@ on_account_removed (TnyAccountStore *account_store,
 
 	/* Remove the account from the model */
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		return;
+	}
+
 	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
+		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
+		return;
+	}
+	
 	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
 			 G_OBJECT (account));
 
