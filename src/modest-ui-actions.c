@@ -164,11 +164,6 @@ static GtkWidget* get_folder_view_from_move_to_dialog (GtkWidget *move_to_dialog
 
 static TnyAccount *get_account_from_folder_store (TnyFolderStore *folder_store);
 
-static void transfer_messages_helper (GtkWindow *win,
-				      TnyFolder *src_folder,
-				      TnyList *headers,
-				      TnyFolder *dst_folder);
-
 /*
  * This function checks whether a TnyFolderStore is a pop account
  */
@@ -4944,9 +4939,8 @@ xfer_messages_performer  (gboolean canceled,
 	headers = get_selected_headers (MODEST_WINDOW (win));
 	if (!headers) {
 		g_warning ("%s: no headers selected", __FUNCTION__);
-		return;
+		goto end;
 	}
-
 
 	if (dst_is_pop) {
 		modest_platform_information_banner (GTK_WIDGET (win),
@@ -4955,7 +4949,7 @@ xfer_messages_performer  (gboolean canceled,
 							     "mail_in_ui_folder_move_targets_error",
 							     tny_list_get_length (headers)));
 		g_object_unref (headers);
-		return;
+		goto end;
 	}
 
 	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
@@ -5135,8 +5129,8 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 		headers = modest_header_view_get_selected_headers(header_view);
 
 		/* Transfer the messages */
-		transfer_messages_helper (GTK_WINDOW (win), TNY_FOLDER (src_folder), 
-					  headers, TNY_FOLDER (dst_folder));
+		modest_ui_actions_transfer_messages_helper (GTK_WINDOW (win), TNY_FOLDER (src_folder), 
+							    headers, TNY_FOLDER (dst_folder));
 
 		g_object_unref (headers);
 	}
@@ -5146,11 +5140,11 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 }
 
 
-static void
-transfer_messages_helper (GtkWindow *win,
-			  TnyFolder *src_folder,
-			  TnyList *headers,
-			  TnyFolder *dst_folder)
+void
+modest_ui_actions_transfer_messages_helper (GtkWindow *win,
+					    TnyFolder *src_folder,
+					    TnyList *headers,
+					    TnyFolder *dst_folder)
 {
 	gboolean need_connection = TRUE;
 	gboolean do_xfer = TRUE;
@@ -5176,8 +5170,7 @@ transfer_messages_helper (GtkWindow *win,
 	} else {
 		TnyAccount *src_account = get_account_from_folder_store (TNY_FOLDER_STORE (src_folder));
 		xfer_messages_performer (FALSE, NULL, GTK_WINDOW (win),
-					 src_account, 
-					 g_object_ref (dst_folder));
+					 src_account, g_object_ref (dst_folder));
 		g_object_unref (src_account);
 	}
 }
@@ -5204,8 +5197,8 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 	tny_list_append (headers, G_OBJECT (header));
 
 	/* Transfer the messages */
-	transfer_messages_helper (GTK_WINDOW (win), src_folder, headers, 
-				  TNY_FOLDER (dst_folder));
+	modest_ui_actions_transfer_messages_helper (GTK_WINDOW (win), src_folder, headers, 
+						    TNY_FOLDER (dst_folder));
 
 	/* Frees */
 	g_object_unref (header);

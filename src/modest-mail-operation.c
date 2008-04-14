@@ -2611,16 +2611,12 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	if (err) {
+	if (cancelled) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
+	} else if (err) {
 		priv->error = g_error_copy (err);
 		priv->done = 0;
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;	
-	} else if (cancelled) {
-		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     _("Error trying to refresh the contents of %s"),
-			     tny_folder_get_name (folder));
 	} else if (priv->status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
 		if (helper->more_msgs) {
 			/* We'll transfer the next message in the list */
@@ -2635,7 +2631,6 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 				finished = FALSE;
 			}
 		}
-
 		if (finished) {
 			priv->done = 1;
 			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;

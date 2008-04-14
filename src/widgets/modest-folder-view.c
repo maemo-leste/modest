@@ -1964,49 +1964,14 @@ typedef struct _DndHelper {
 	ModestFolderView *folder_view;
 	gboolean delete_source;
 	GtkTreePath *source_row;
-	GdkDragContext *context;
-	guint time;
 } DndHelper;
 
 static void
 dnd_helper_destroyer (DndHelper *helper)
 {
 	/* Free the helper */
-	g_object_unref (helper->folder_view);
 	gtk_tree_path_free (helper->source_row);
 	g_slice_free (DndHelper, helper);
-}
-
-static void
-xfer_cb (ModestMailOperation *mail_op, 
-	 gpointer user_data)
-{
-	gboolean success;
-	DndHelper *helper;
-
-	helper = (DndHelper *) user_data;
-
-	if (modest_mail_operation_get_status (mail_op) == 
-	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
-		success = TRUE;
-	} else {
-		success = FALSE;
-	}
-
-	/* Notify the drag source. Never call delete, the monitor will
-	   do the job if needed */
-	gtk_drag_finish (helper->context, success, FALSE, helper->time);
-
-	/* Free the helper */
-	dnd_helper_destroyer (helper);
-}
-
-static void
-xfer_msgs_cb (ModestMailOperation *mail_op, 
-	      gpointer user_data)
-{
-	/* Common part */
-	xfer_cb (mail_op, user_data);
 }
 
 static void
@@ -2014,20 +1979,11 @@ xfer_folder_cb (ModestMailOperation *mail_op,
 		TnyFolder *new_folder,
 		gpointer user_data)
 {
-	DndHelper *helper;
-	GtkWidget *folder_view;
-
-	helper = (DndHelper *) user_data;
-	folder_view = g_object_ref (helper->folder_view);
-
-	/* Common part */
-	xfer_cb (mail_op, user_data);
-
-	/* Select the folder */
-	if (new_folder)
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
-						  new_folder, FALSE);
-	g_object_unref (folder_view);
+	if (new_folder) {	
+		/* Select the folder */
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (user_data), 
+						  new_folder, TRUE);
+	}
 }
 
 
@@ -2046,6 +2002,7 @@ tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
 	return folder;
 }
 
+
 /*
  * This function is used by drag_data_received_cb to manage drag and
  * drop of a header, i.e, and drag from the header view to the folder
@@ -2055,19 +2012,16 @@ static void
 drag_and_drop_from_header_view (GtkTreeModel *source_model,
 				GtkTreeModel *dest_model,
 				GtkTreePath  *dest_row,
-				GtkSelectionData *selection_data,
-				DndHelper    *helper)
+				GtkSelectionData *selection_data)
 {
 	TnyList *headers = NULL;
-	TnyFolder *folder = NULL;
+	TnyFolder *folder = NULL, *src_folder = NULL;
 	TnyFolderType folder_type;
-	ModestMailOperation *mail_op = NULL;
 	GtkTreeIter source_iter, dest_iter;
 	ModestWindowMgr *mgr = NULL;
 	ModestWindow *main_win = NULL;
 	gchar **uris, **tmp;
-	gint response;
-
+	
 	/* Build the list of headers */
 	mgr = modest_runtime_get_window_mgr ();
 	headers = tny_simple_list_new ();
@@ -2077,6 +2031,7 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	while (*tmp != NULL) {
 		TnyHeader *header;
 		GtkTreePath *path;
+		gboolean first = TRUE;
 
 		/* Get header */
 		path = gtk_tree_path_new_from_string (*tmp);
@@ -2088,6 +2043,11 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 		/* Do not enable d&d of headers already opened */
 		if (!modest_window_mgr_find_registered_header(mgr, header, NULL))
 			tny_list_append (headers, G_OBJECT (header));
+
+		if (G_UNLIKELY (first)) {
+			src_folder = tny_header_get_folder (header);
+			first = FALSE;
+		}
 
 		/* Free and go on */
 		gtk_tree_path_free (path);
@@ -2125,29 +2085,14 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 		goto cleanup;
 	}
 
-	response = modest_ui_actions_msgs_move_to_confirmation (main_win, folder, 
-								TRUE, headers);
-	if (response == GTK_RESPONSE_CANCEL)
-		goto cleanup;
-
 	/* Transfer messages */
-	mail_op = modest_mail_operation_new_with_error_handling ((GObject *) main_win,
-								 modest_ui_actions_move_folder_error_handler,
-								 NULL, NULL);
-
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-					 mail_op);
-
-	modest_mail_operation_xfer_msgs (mail_op,
-					 headers, 
-					 folder, 
-					 helper->delete_source, 
-					 xfer_msgs_cb, helper);
+	modest_ui_actions_transfer_messages_helper (GTK_WINDOW (main_win), src_folder, 
+						    headers, folder);
 	
 	/* Frees */
 cleanup:
-	if (G_IS_OBJECT(mail_op))
-		g_object_unref (G_OBJECT (mail_op));
+	if (G_IS_OBJECT (src_folder))
+		g_object_unref (src_folder);
 	if (G_IS_OBJECT(folder))
 		g_object_unref (G_OBJECT (folder));
 	if (G_IS_OBJECT(headers))
@@ -2168,8 +2113,6 @@ dnd_folder_info_destroyer (DndFolderInfo *info)
 		g_object_unref (info->src_folder);
 	if (info->dst_folder)
 		g_object_unref (info->dst_folder);
-	if (info->folder_view)
-		g_object_unref (info->folder_view);
 	g_slice_free (DndFolderInfo, info);
 }
 
@@ -2178,20 +2121,12 @@ dnd_on_connection_failed_destroyer (DndFolderInfo *info,
 				    GtkWindow *parent_window,
 				    TnyAccount *account)
 {
-	time_t dnd_time = info->helper->time;
-	GdkDragContext *context = info->helper->context;
-	
 	/* Show error */
 	modest_ui_actions_on_account_connection_error (parent_window, account);
 
 	/* Free the helper & info */
 	dnd_helper_destroyer (info->helper);
 	dnd_folder_info_destroyer (info);
-	
-	/* Notify the drag source. Never call delete, the monitor will
-	   do the job if needed */
-	gtk_drag_finish (context, FALSE, FALSE, dnd_time);
-	return;
 }
 
 static void
@@ -2225,12 +2160,12 @@ drag_and_drop_from_folder_view_src_folder_performer (gboolean canceled,
 					   info->dst_folder,
 					   info->helper->delete_source,
 					   xfer_folder_cb,
-					   info->helper);
-	
-/* 	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view), */
-/* 					  TNY_FOLDER (info->dst_folder), TRUE); */
+					   info->helper->folder_view);
 
+	/* Frees */	
 	g_object_unref (G_OBJECT (mail_op));
+	dnd_helper_destroyer (info->helper);
+	dnd_folder_info_destroyer (info);
 }
 
 
@@ -2279,6 +2214,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE); /* don't create */
 	if (!win) {
 		g_warning ("%s: BUG: no main window", __FUNCTION__);
+		dnd_helper_destroyer (helper);
 		return;
 	}
 	
@@ -2312,9 +2248,7 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	
 	/* Check if the drag is possible */
 	if (forbidden || !gtk_tree_path_compare (helper->source_row, dest_row)) {
-		gtk_drag_finish (helper->context, FALSE, FALSE, helper->time);
-		gtk_tree_path_free (helper->source_row);	
-		g_slice_free (DndHelper, helper);
+		dnd_helper_destroyer (helper);
 		return;
 	}
 
@@ -2332,7 +2266,6 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 	info = g_slice_new (DndFolderInfo);
 	info->src_folder = g_object_ref (folder);
 	info->dst_folder = g_object_ref (dest_folder);
-	info->folder_view = g_object_ref (helper->folder_view);
 	info->helper = helper;
 
 	/* Connect to the destination folder and perform the copy/move */
@@ -2366,8 +2299,8 @@ on_drag_data_received (GtkWidget *widget,
 	GtkTreeModel *dest_model, *source_model;
  	GtkTreePath *source_row, *dest_row;
 	GtkTreeViewDropPosition pos;
-	gboolean success = FALSE, delete_source = FALSE;
-	DndHelper *helper = NULL; 
+	gboolean delete_source = FALSE;
+	gboolean success = FALSE;
 
 	/* Do not allow further process */
 	g_signal_stop_emission_by_name (widget, "drag-data-received");
@@ -2391,10 +2324,10 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Check if the get_data failed */
 	if (selection_data == NULL || selection_data->length < 0)
-		gtk_drag_finish (context, success, FALSE, time);
+		goto end;
 
 	/* Select the destination model */
-	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));	
+	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
 
 	/* Get the path to the destination row. Can not call
 	   gtk_tree_view_get_drag_dest_row() because the source row
@@ -2406,15 +2339,9 @@ on_drag_data_received (GtkWidget *widget,
 	if (!dest_row || 
 	    pos == GTK_TREE_VIEW_DROP_BEFORE || 
 	    pos == GTK_TREE_VIEW_DROP_AFTER)
-		gtk_drag_finish (context, success, FALSE, time);
+		goto end;
 
-	/* Create the helper */
-	helper = g_slice_new0 (DndHelper);
-	helper->delete_source = delete_source;
-	helper->context = context;
-	helper->time = time;
-	helper->folder_view = g_object_ref (widget);
-
+	success = TRUE;
 	/* Drags from the header view */
 	if (source_widget != widget) {
 		source_model = gtk_tree_view_get_model (GTK_TREE_VIEW (source_widget));
@@ -2422,14 +2349,20 @@ on_drag_data_received (GtkWidget *widget,
 		drag_and_drop_from_header_view (source_model,
 						dest_model,
 						dest_row,
-						selection_data,
-						helper);
+						selection_data);
 	} else {
+		DndHelper *helper = NULL; 
+
 		/* Get the source model and row */
 		gtk_tree_get_row_drag_data (selection_data,
 					    &source_model,
 					    &source_row);
+
+		/* Create the helper */
+		helper = g_slice_new0 (DndHelper);
+		helper->delete_source = delete_source;
 		helper->source_row = gtk_tree_path_copy (source_row);
+		helper->folder_view = MODEST_FOLDER_VIEW (widget);
 
 		drag_and_drop_from_folder_view (source_model,
 						dest_model,
@@ -2442,6 +2375,10 @@ on_drag_data_received (GtkWidget *widget,
 
 	/* Frees */
 	gtk_tree_path_free (dest_row);
+
+ end:
+	/* Finish the drag and drop */
+	gtk_drag_finish (context, success, FALSE, time);
 }
 
 /*

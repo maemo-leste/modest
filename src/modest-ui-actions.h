@@ -524,6 +524,10 @@ void modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
 
 gchar *modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win);
 
+void modest_ui_actions_transfer_messages_helper (GtkWindow *win,
+						 TnyFolder *src_folder,
+						 TnyList *headers,
+						 TnyFolder *dst_folder);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */
