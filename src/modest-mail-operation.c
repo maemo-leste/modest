@@ -2238,7 +2238,7 @@ get_msg_async_cb (TnyFolder *folder,
 	if (canceled) {
 		canceled = TRUE;
 		finished = TRUE;
-		priv->status == MODEST_MAIL_OPERATION_STATUS_CANCELED;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 	} else if (err) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
 		if (err) {
