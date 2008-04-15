@@ -1762,13 +1762,15 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 
 	/* Get the server and the transport account */
 	store_account = 
-		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_STORE);
+		modest_tny_account_store_get_server_account (self, account, 
+							     TNY_ACCOUNT_TYPE_STORE);
 	transport_account = 
-		modest_tny_account_store_get_server_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT);
+		modest_tny_account_store_get_server_account (self, account,
+							     TNY_ACCOUNT_TYPE_TRANSPORT);
 	
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
-	if (store_account) {
+	if (TNY_IS_STORE_ACCOUNT(store_account)) {
 		/* Forget any cached password for the account */
 		forget_password_in_memory (self, tny_account_get_id (store_account));
 
@@ -1787,12 +1789,13 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account), FALSE,
 					      on_account_disconnect_when_removing, self);
 	} else {
-		g_warning ("There is no store account for account %s\n", account);
+		g_warning ("%s: no store account for account %s\n", 
+			   __FUNCTION__, account);
 	}
 
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
-	if (transport_account) {
+	if (TNY_IS_TRANSPORT_ACCOUNT(transport_account)) {
 		TnyAccount *local_account = NULL;
 		TnyFolder *outbox = NULL;
 
@@ -1835,7 +1838,8 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account), FALSE,
 					      on_account_disconnect_when_removing, self);
 	} else {
-		g_warning ("There is no transport account for account %s\n", account);
+		g_warning ("%s: no transport account for account %s\n", 
+			   __FUNCTION__, account);
 	}
 }
 
