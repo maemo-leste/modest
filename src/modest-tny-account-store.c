@@ -1964,7 +1964,7 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 	TnyIterator *acc_iter;
 	ModestTnyAccountStorePrivate *priv;
 	TnyTransportAccount *header_acc = NULL;
-	const gchar *msg_id;
+	gchar *msg_id;
 
 	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
 	g_return_val_if_fail (TNY_IS_HEADER (header), NULL);
@@ -1985,6 +1985,7 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 		tny_iterator_next (acc_iter);
 	}
 	g_object_unref(acc_iter);
+	g_free (msg_id);
 
 	/* New reference */
 	return header_acc;
