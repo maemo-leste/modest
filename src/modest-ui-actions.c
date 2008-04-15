@@ -2509,7 +2509,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 		return FALSE;
 	}
 
-		
 	/*
 	 * djcb: if we're in low-memory state, we only allow for
 	 * saving messages smaller than
@@ -2522,6 +2521,21 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 			modest_msg_edit_window_free_msg_data (edit_window, data);
 			return FALSE;
 		}
+	}
+
+	/*
+	 * djcb: we also make sure that the attachments are smaller than the max size
+	 * this is for the case where we'd try to forward a message with attachments 
+	 * bigger than our max allowed size, or sending an message from drafts which
+	 * somehow got past our checks when attaching.
+	 */
+	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
+		modest_platform_run_information_dialog (
+			GTK_WINDOW(edit_window),
+			dgettext("ke-recv","memr_ib_operation_disabled"),
+			TRUE);
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+		return FALSE;
 	}
 
 	account_name = g_strdup (data->account_name);
@@ -2679,6 +2693,20 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		}
 	}
 
+	/*
+	 * djcb: we also make sure that the attachments are smaller than the max size
+	 * this is for the case where we'd try to forward a message with attachments 
+	 * bigger than our max allowed size, or sending an message from drafts which
+	 * somehow got past our checks when attaching.
+	 */
+	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
+		modest_platform_run_information_dialog (
+			GTK_WINDOW(edit_window),
+			dgettext("ke-recv","memr_ib_operation_disabled"),
+			TRUE);
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+		return FALSE;
+	}
 
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
 	gchar *account_name = g_strdup (data->account_name);
