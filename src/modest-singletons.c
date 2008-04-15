@@ -166,10 +166,10 @@ modest_singletons_finalize (GObject *obj)
 		priv->window_mgr = NULL;
 	}
 	
-	if (priv->email_clipboard) {
-		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->email_clipboard,"");
-		g_object_unref (G_OBJECT(priv->email_clipboard));
-		priv->email_clipboard = NULL;
+	if (priv->mail_op_queue) {
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->mail_op_queue,"");
+		g_object_unref (G_OBJECT(priv->mail_op_queue));
+		priv->mail_op_queue = NULL;
 	}
 
 	if (priv->cache_mgr) {
@@ -189,11 +189,11 @@ modest_singletons_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->platform_fact));
 		priv->platform_fact = NULL;
 	}
-
-	if (priv->mail_op_queue) {
-		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->mail_op_queue,"");
-		g_object_unref (G_OBJECT(priv->mail_op_queue));
-		priv->mail_op_queue = NULL;
+	
+	if (priv->email_clipboard) {
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->email_clipboard,"");
+		g_object_unref (G_OBJECT(priv->email_clipboard));
+		priv->email_clipboard = NULL;
 	}
 
 	/* It is important that the account manager is uninitialized after
