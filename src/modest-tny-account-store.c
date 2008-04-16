@@ -2007,9 +2007,10 @@ modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *se
 	found = g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
 					      account_name, NULL, (gpointer*)&dialog_as_gpointer);
 
-	if (found)
+	if (found) {
+		modest_account_settings_dialog_check_allow_changes ((ModestAccountSettingsDialog *) dialog_as_gpointer);
 		return (GtkWidget *) dialog_as_gpointer;
-	else {
+	} else {
 		ModestAccountSettings *settings;
 		GtkWidget *dialog;
 		dialog = (GtkWidget *) modest_account_settings_dialog_new ();
@@ -2017,6 +2018,7 @@ modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *se
 		modest_account_settings_dialog_set_account (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog), settings);
 		g_object_unref (settings);
 		modest_account_settings_dialog_switch_to_user_info (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
+		modest_account_settings_dialog_check_allow_changes (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 		
 		g_hash_table_insert (priv->account_settings_dialog_hash, g_strdup (account_name), dialog);

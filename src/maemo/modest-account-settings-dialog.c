@@ -1624,6 +1624,33 @@ enable_buttons (ModestAccountSettingsDialog *self)
 					   enable_ok);
 }
 
+void
+modest_account_settings_dialog_check_allow_changes (ModestAccountSettingsDialog *self)
+{
+	ModestServerAccountSettings *incoming_settings;
+	const gchar *server_account_name;
+	gboolean username_known;
+
+	if (!G_IS_OBJECT (self->settings))
+		return;
+
+	incoming_settings = modest_account_settings_get_store_settings (self->settings);
+	server_account_name = modest_server_account_settings_get_account_name (incoming_settings);
+
+	username_known = modest_account_mgr_get_server_account_username_has_succeeded (self->account_manager, 
+										       server_account_name);
+
+	/* Enable or disable widgets */
+	gtk_widget_set_sensitive (self->entry_user_username, !username_known);
+	gtk_widget_set_sensitive (self->entry_incomingserver, !username_known);
+	gtk_widget_set_sensitive (self->entry_outgoingserver, !username_known);
+	gtk_widget_set_sensitive (self->entry_outgoing_username, !username_known);
+	gtk_widget_set_sensitive (self->entry_incoming_port, !username_known);
+	gtk_widget_set_sensitive (self->entry_outgoing_port, !username_known);
+	gtk_widget_set_sensitive (self->combo_incoming_security, !username_known);
+	gtk_widget_set_sensitive (self->combo_outgoing_security, !username_known);
+}
+
 void 
 modest_account_settings_dialog_set_modified (ModestAccountSettingsDialog *dialog, gboolean modified)
 {

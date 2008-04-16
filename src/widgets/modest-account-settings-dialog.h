@@ -110,6 +110,7 @@ void modest_account_settings_dialog_set_modified (ModestAccountSettingsDialog *d
 
 void modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialog);
 
+void modest_account_settings_dialog_check_allow_changes (ModestAccountSettingsDialog *self);
 G_END_DECLS
 
 #endif /* _MODEST_ACCOUNT_SETTINGS_DIALOG */

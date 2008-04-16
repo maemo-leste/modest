@@ -515,10 +515,6 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 									   protocol, TRUE));
 	}
 
-	if (!has_errors) {
-	  modest_account_mgr_set_server_account_username_has_succeeded (self, account_name, FALSE);
-	}
-
 	return !has_errors;
 
 }
