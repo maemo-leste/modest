@@ -808,8 +808,7 @@ on_window_destroy (ModestWindow *window,
 		cancel_window_operations (window);
 
 		/* Fake the window system, make it think that there is no window */
-		if (priv->banner_counter == 0)
-			g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
+		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 
 		no_propagate = TRUE;
 	}
