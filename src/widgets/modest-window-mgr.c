@@ -808,7 +808,8 @@ on_window_destroy (ModestWindow *window,
 		cancel_window_operations (window);
 
 		/* Fake the window system, make it think that there is no window */
-		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
+		if (modest_window_mgr_num_windows (self) == 0)
+			g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 
 		no_propagate = TRUE;
 	}
@@ -933,7 +934,8 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	gtk_widget_destroy (win->data);
 	
 	/* If there are no more windows registered emit the signal */
-	if (priv->window_list == NULL && priv->banner_counter == 0)
+	if (modest_window_mgr_num_windows (self) == 0)
+/* 	if (priv->window_list == NULL && priv->banner_counter == 0) */
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 }
 
@@ -1306,6 +1308,10 @@ modest_window_mgr_num_windows (ModestWindowMgr *self)
 	if (priv->window_list)
 		num_windows = g_list_length (priv->window_list);
 
+	/* Do not take into account the main window if it was hidden */
+	if (priv->main_window && !GTK_WIDGET_VISIBLE (priv->main_window))
+		num_windows--;
+
 	return num_windows + priv->banner_counter;
 }
 
@@ -1372,8 +1378,7 @@ modest_window_mgr_unregister_banner (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	priv->banner_counter--;
-	if (priv->window_list == NULL && priv->banner_counter == 0) {
+/* 	if (priv->window_list == NULL && priv->banner_counter == 0) */
+	if (modest_window_mgr_num_windows (self) == 0)
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
-	}
-
 }

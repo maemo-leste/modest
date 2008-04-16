@@ -80,16 +80,12 @@ static void
 on_queue_empty (ModestMailOperationQueue *queue,
 		gpointer user_data)
 {
-	guint num_windows = 0;
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
-	ModestWindow *main_win = modest_window_mgr_get_main_window (mgr, FALSE);
 
 	/* Exit if the queue is empty and there are no more
 	   windows. We can exit as well if the main window is hidden
 	   and it's the only one */
-	num_windows = modest_window_mgr_num_windows (mgr); 
-	if ((num_windows == 0) || 
-	    (num_windows == 1 && main_win && !GTK_WIDGET_VISIBLE (main_win)))
+	if (modest_window_mgr_num_windows (mgr) == 0)
 		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, g_free);
 }
 
