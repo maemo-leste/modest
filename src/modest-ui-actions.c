@@ -3116,6 +3116,11 @@ on_rename_folder_cb (ModestMailOperation *mail_op,
 {
 	ModestFolderView *folder_view;
 
+	/* If the window was closed when renaming a folder this could
+	   happen */
+	if (MODEST_IS_FOLDER_VIEW (user_data))
+		return;
+
 	folder_view = MODEST_FOLDER_VIEW (user_data);
 	/* Note that if the rename fails new_folder will be NULL */
 	if (new_folder) {

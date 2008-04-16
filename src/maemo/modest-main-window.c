@@ -1622,18 +1622,18 @@ on_account_changed (TnyAccountStore *account_store,
                     gpointer user_data)
 {
 	ModestMainWindow *win = MODEST_MAIN_WINDOW (user_data);
-	
-	/* We need to refresh the details widget because it could have changed */
-	if (modest_main_window_get_contents_style(win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS) {
-		modest_main_window_set_contents_style (win, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
-	}
 
-	/* Update the menus as well, the account name could be
-	   changed. Transport accounts and local ones (MMC and the
-	   Local folders account do now cause menu changes */
-	if (TNY_IS_STORE_ACCOUNT (account) && 
-	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
-		update_menus (MODEST_MAIN_WINDOW (user_data));
+	/* Transport accounts and local ones (MMC and the Local
+	   folders account do now cause menu changes */
+	if (TNY_IS_STORE_ACCOUNT (account)) {
+		/* We need to refresh the details widget because it could have changed */
+		if (modest_main_window_get_contents_style(win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
+			modest_main_window_set_contents_style (win, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
+
+		/* Update the menus as well, name could change */
+		if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+			update_menus (MODEST_MAIN_WINDOW (user_data));
+	}
 }
 
 /* 

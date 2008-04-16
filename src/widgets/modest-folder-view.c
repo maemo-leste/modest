@@ -1262,6 +1262,7 @@ on_account_changed (TnyAccountStore *account_store,
 {
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
+	GtkTreeSelection *sel;
 
 	/* Ignore transport account insertions, we're not showing them
 	   in the folder view */
@@ -1289,6 +1290,10 @@ on_account_changed (TnyAccountStore *account_store,
 		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
 		return;
 	}
+
+	/* Unselect the folder, clear the header list */
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data));
+	gtk_tree_selection_unselect_all (sel);
 
 	/* Remove the account from the model */
 	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
@@ -2850,7 +2855,6 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model,
 		priv->folder_to_select = g_object_ref (instance);
 	}
 	g_object_unref (instance);
-
 	
 	if (priv->folder_to_select) {
 		
@@ -2865,8 +2869,7 @@ on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model,
 			gtk_tree_selection_select_iter (sel, iter);
 			gtk_tree_view_set_cursor (GTK_TREE_VIEW(self), path, NULL, FALSE);
 
-			gtk_tree_path_free (path);
-		
+			gtk_tree_path_free (path);		
 		}
 
 		/* Disable next */

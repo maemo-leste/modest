@@ -2174,6 +2174,7 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	helper->last_total_bytes = 0;
 	helper->sum_total_bytes = 0;
 	helper->total_bytes = tny_header_get_message_size (header);
+	helper->more_msgs = NULL;
 
 	modest_mail_operation_notify_start (self);
 	
