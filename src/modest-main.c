@@ -37,11 +37,33 @@
 #include <widgets/modest-main-window.h>
 #include <string.h>
 
- static gboolean
+typedef struct {
+	gulong queue_handler;
+	gulong window_list_handler;
+} MainSignalHandlers;
+
+static gboolean
 on_idle_exit_modest (gpointer data)
 {
+	ModestWindow *main_win;
+	ModestWindowMgr *mgr;
+	MainSignalHandlers *handlers;
+
 	/* Protect the Gtk calls */
 	gdk_threads_enter ();
+
+	/* Disconnect signals. Will be freed by the destroy notify */
+	handlers = (MainSignalHandlers *) data;
+	g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (), 
+				     handlers->queue_handler);
+	g_signal_handler_disconnect (modest_runtime_get_window_mgr (), 
+				     handlers->window_list_handler);
+
+	/* If the main window is still there but hidden, then unregister it */
+	mgr = modest_runtime_get_window_mgr();
+	main_win = modest_window_mgr_get_main_window (mgr, FALSE);
+	if (main_win)
+		modest_window_mgr_unregister_window (mgr, main_win);
 
 	/* Wait for remaining tasks */
 	while (gtk_events_pending ())
@@ -58,11 +80,17 @@ static void
 on_queue_empty (ModestMailOperationQueue *queue,
 		gpointer user_data)
 {
+	guint num_windows = 0;
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+	ModestWindow *main_win = modest_window_mgr_get_main_window (mgr, FALSE);
 
-	/* Exit if the queue is empty and there are no more windows */
-	if (modest_window_mgr_num_windows (mgr) == 0)
-		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, NULL, NULL);
+	/* Exit if the queue is empty and there are no more
+	   windows. We can exit as well if the main window is hidden
+	   and it's the only one */
+	num_windows = modest_window_mgr_num_windows (mgr); 
+	if ((num_windows == 0) || 
+	    (num_windows == 1 && main_win && !GTK_WIDGET_VISIBLE (main_win)))
+		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, g_free);
 }
 
 static void
@@ -73,7 +101,7 @@ on_window_list_empty (ModestWindowMgr *window_mgr,
 
 	/* Exit if there are no more windows and the queue is empty */
 	if (modest_mail_operation_queue_num_elements (queue) == 0)
-		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, NULL, NULL);
+		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, g_free);
 }
 
 int
@@ -85,6 +113,7 @@ main (int argc, char *argv[])
 	 * command line.: */
 	gboolean show_ui_without_top_application_method = FALSE;
 	int retval  = 0;
+	MainSignalHandlers *handlers;
 
 	if (argc >= 2) {
 		if (strcmp (argv[1], "showui") == 0)
@@ -120,15 +149,18 @@ main (int argc, char *argv[])
 	}
 
 	/* Connect to the queue-emtpy signal */
-	g_signal_connect (modest_runtime_get_mail_operation_queue (),
-			  "queue-empty",
-			  G_CALLBACK (on_queue_empty),
-			  NULL);
+	handlers = g_malloc0 (sizeof (MainSignalHandlers));
+	handlers->queue_handler = 
+		g_signal_connect (modest_runtime_get_mail_operation_queue (),
+				  "queue-empty",
+				  G_CALLBACK (on_queue_empty),
+				  handlers);
 
-	g_signal_connect (modest_runtime_get_window_mgr (),
-			  "window-list-empty",
-			  G_CALLBACK (on_window_list_empty),
-			  NULL);
+	handlers->window_list_handler = 
+		g_signal_connect (modest_runtime_get_window_mgr (),
+				  "window-list-empty",
+				  G_CALLBACK (on_window_list_empty),
+				  handlers);
 
 	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
 	 * This allows modest to start via D-Bus activation to provide a service,

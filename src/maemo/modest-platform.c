@@ -1689,6 +1689,10 @@ modest_platform_animation_banner (GtkWidget *parent,
 
 	g_return_val_if_fail (text != NULL, NULL);
 
+	/* If the parent is not visible then do not show */
+	if (parent && !GTK_WIDGET_VISIBLE (parent))
+		return NULL;
+
 	inf_note = hildon_banner_show_animation (parent, animation_name, text);
 
 	return inf_note;

@@ -181,6 +181,10 @@ static gboolean show_retrieving_banner (gpointer user_data);
 static void on_window_destroy (GtkObject *widget,
 			       gpointer userdata);
 
+static void on_window_hide (GObject    *gobject,
+			    GParamSpec *arg1,
+			    gpointer    user_data);
+
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
 	GtkWidget *msg_paned;
@@ -999,6 +1003,8 @@ connect_signals (ModestMainWindow *self)
 	/* we don't register this in sighandlers, as it should be run after disconnecting all signals,
 	 * in destroy stage */
 	g_signal_connect (G_OBJECT (self), "destroy", G_CALLBACK (on_window_destroy), NULL);
+
+	g_signal_connect (G_OBJECT (self), "notify::visible", G_CALLBACK (on_window_hide), NULL);
 
 	/* Mail Operation Queue */
 	priv->sighandlers = 
@@ -2787,11 +2793,11 @@ modest_main_window_screen_is_on (ModestMainWindow *self)
 }
 
 static void
-on_window_destroy (GtkObject *widget, gpointer userdata)
+remove_banners (ModestMainWindow *window)
 {
 	ModestMainWindowPrivate *priv;
 
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (widget);
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (window);
 
 	if (priv->retrieving_banner_timeout > 0) {
 		g_source_remove (priv->retrieving_banner_timeout);
@@ -2811,8 +2817,28 @@ on_window_destroy (GtkObject *widget, gpointer userdata)
 	if (priv->updating_banner != NULL) {
 		gtk_widget_destroy (priv->updating_banner);
 		priv->updating_banner = NULL;
-	}
-	
+	}	
+}
+
+
+static void
+on_window_hide (GObject    *gobject,
+		GParamSpec *arg1,
+		gpointer    user_data)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+
+	if (!GTK_WIDGET_VISIBLE (user_data))
+		remove_banners (MODEST_MAIN_WINDOW (user_data));
+}
+
+static void
+on_window_destroy (GtkObject *widget, 
+		   gpointer user_data)
+{
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+
+	remove_banners (MODEST_MAIN_WINDOW (user_data));
 }
 
 static gboolean

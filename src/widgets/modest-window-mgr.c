@@ -732,12 +732,38 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	modest_window_show_toolbar (window, modest_conf_get_bool (modest_runtime_get_conf (), key, NULL));
 }
 
+static void
+cancel_window_operations (ModestWindow *window)
+{
+	GSList* pending_ops = NULL;
+
+	/* cancel open and receive operations */
+	pending_ops = modest_mail_operation_queue_get_by_source (modest_runtime_get_mail_operation_queue (), 
+								 G_OBJECT (window));
+	while (pending_ops != NULL) {
+		ModestMailOperationTypeOperation type;
+		GSList* tmp_list = NULL;
+
+		type = modest_mail_operation_get_type_operation (MODEST_MAIL_OPERATION (pending_ops->data));
+		if (type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
+			modest_mail_operation_cancel (pending_ops->data);
+		}
+		g_object_unref (G_OBJECT (pending_ops->data));
+		tmp_list = pending_ops;
+		pending_ops = g_slist_next (pending_ops);
+		g_slist_free_1 (tmp_list);
+	}
+}
+
+
+
 static gboolean
 on_window_destroy (ModestWindow *window, 
 		   GdkEvent *event,
 		   ModestWindowMgr *self)
 {
 	gint dialog_response = GTK_RESPONSE_NONE;
+	gboolean no_propagate = FALSE;
 
 	/* Specific stuff first */
 	if (MODEST_IS_MAIN_WINDOW (window)) {
@@ -774,6 +800,18 @@ on_window_destroy (ModestWindow *window,
 				return TRUE;
 			}
 		}
+
+		/* Do not unregister it, just hide */
+		gtk_widget_hide_all (GTK_WIDGET (window));
+
+		/* Cancel pending operations */
+		cancel_window_operations (window);
+
+		/* Fake the window system, make it think that there is no window */
+		if (priv->banner_counter == 0)
+			g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
+
+		no_propagate = TRUE;
 	}
 	else {
 		if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
@@ -796,12 +834,12 @@ on_window_destroy (ModestWindow *window,
 						return TRUE;
 			}
 		}
+		/* Unregister window */
+		modest_window_mgr_unregister_window (self, window);
+		no_propagate = FALSE;
 	}
 
-	/* Unregister window */
-	modest_window_mgr_unregister_window (self, window);
-	
-	return FALSE;
+	return no_propagate;
 }
 
 static void
@@ -823,7 +861,6 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	GList *win;
 	ModestWindowMgrPrivate *priv;
 	gulong *tmp, handler_id;
-	GSList* pending_ops = NULL;
 
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
@@ -851,7 +888,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	}
 
 	/* Remove the viewer window handler from the hash table. The
-	   HashTable could not exist if the main window was closeed
+	   HashTable could not exist if the main window was closed
 	   when there were other windows remaining */
 	if (MODEST_IS_MSG_VIEW_WINDOW (window) && priv->viewer_handlers) {
 		tmp = (gulong *) g_hash_table_lookup (priv->viewer_handlers, window);
@@ -874,21 +911,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	g_hash_table_remove (priv->destroy_handlers, window);
 
 	/* cancel open and receive operations */
-	pending_ops = modest_mail_operation_queue_get_by_source (modest_runtime_get_mail_operation_queue (), 
-								 G_OBJECT (window));
-	while (pending_ops != NULL) {
-		ModestMailOperationTypeOperation type;
-		GSList* tmp_list = NULL;
-
-		type = modest_mail_operation_get_type_operation (MODEST_MAIL_OPERATION (pending_ops->data));
-		if (type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
-			modest_mail_operation_cancel (pending_ops->data);
-		}
-		g_object_unref (G_OBJECT (pending_ops->data));
-		tmp_list = pending_ops;
-		pending_ops = g_slist_next (pending_ops);
-		g_slist_free_1 (tmp_list);
-	}
+	cancel_window_operations (window);
 
 	/* Disconnect the "window-state-event" handler, we won't need it anymore */
 #ifdef MODEST_PLATFORM_MAEMO
