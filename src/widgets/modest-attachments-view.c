@@ -419,6 +419,7 @@ button_press_event (GtkWidget *widget,
 					priv->rubber_start = att_view;
 					gtk_grab_add (widget);
 				}
+				g_object_unref (mime_part);
 			}
 		}
 	}
@@ -505,6 +506,7 @@ find_prev_or_next_not_purged (GList *list, gboolean prev, gboolean include_this)
 				tmp = g_list_next (tmp);
 			is_valid = FALSE;
 		}
+		g_object_unref (mime_part);
 	} while (!is_valid && tmp);
 
 	return tmp;
@@ -847,6 +849,7 @@ modest_attachments_view_select_all (ModestAttachmentsView *atts_view)
 			gtk_widget_set_state (GTK_WIDGET (node->data), GTK_STATE_SELECTED);
 			priv->selected = g_list_append (priv->selected, node->data);
 		}
+		g_object_unref (mime_part);
 	}
 	g_list_free (children);
 
