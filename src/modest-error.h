@@ -47,6 +47,7 @@ typedef enum _ModestErrorCode {
 	MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS, /* Folder to be created exists already. */
 	MODEST_MAIL_OPERATION_ERROR_RETRIEVAL_NUMBER_LIMIT, /* There were too many messages to retrieve. */
 	MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+	MODEST_MAIL_OPERATION_ERROR_FILE_IO, /* couldn't retrieve a file to construct a mail */
 } ModestErrorCode;
 
 G_END_DECLS

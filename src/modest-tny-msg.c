@@ -39,6 +39,7 @@
 #include <glib/gprintf.h>
 #include <modest-tny-folder.h>
 #include "modest-tny-mime-part.h"
+#include <modest-error.h>
 
 
 #ifdef HAVE_CONFIG_H
@@ -51,8 +52,8 @@
 static TnyMimePart * add_body_part (TnyMsg *msg, const gchar *body,
 				    const gchar *content_type);
 static TnyMimePart * add_html_body_part (TnyMsg *msg, const gchar *body);
-static void add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline);
-static void add_images (TnyMsg *msg, GList *attachments_list);
+static void add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline, GError **err);
+static void add_images (TnyMsg *msg, GList *attachments_list, GError **err);
 static char * get_content_type(const gchar *s);
 static gboolean is_ascii(const gchar *s);
 
@@ -60,7 +61,7 @@ static gboolean is_ascii(const gchar *s);
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		    const gchar *bcc, const gchar* subject, const gchar *body,
-		    GList *attachments)
+		    GList *attachments, GError **err)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
@@ -100,7 +101,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		       
 	/* Add attachments */
 	if (attachments)
-		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
+		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE, err);
 	if (header)
 		g_object_unref(header);
 
@@ -111,7 +112,7 @@ TnyMsg*
 modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gchar *cc,
 			       const gchar *bcc, const gchar* subject, 
 			       const gchar *html_body, const gchar *plain_body,
-			       GList *attachments, GList *images)
+			       GList *attachments, GList *images, GError **err)
 {
 	TnyMsg *new_msg;
 	TnyHeader *header;
@@ -150,8 +151,8 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	g_free (content_type);
 		       
 	/* Add attachments */
-	add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
-	add_images (new_msg, images);
+	add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE, err);
+	add_images (new_msg, images, err);
 	if (header)
 		g_object_unref(header);
 
@@ -221,7 +222,7 @@ add_html_body_part (TnyMsg *msg,
 }
 
 static TnyMimePart *
-copy_mime_part (TnyMimePart *part)
+copy_mime_part (TnyMimePart *part, GError **err)
 {
 	TnyMimePart *result = NULL;
 	const gchar *attachment_content_type;
@@ -231,6 +232,7 @@ copy_mime_part (TnyMimePart *part)
 	TnyIterator *iterator;
 	TnyStream *attachment_stream;
 	const gchar *enc;
+	gint ret;
 	
 	if (TNY_IS_MSG (part)) {
 		g_object_ref (part);
@@ -249,12 +251,19 @@ copy_mime_part (TnyMimePart *part)
 	/* fill the stream */
  	attachment_stream = tny_mime_part_get_decoded_stream (part);
 	enc = tny_mime_part_get_transfer_encoding (part);
-	tny_stream_reset (attachment_stream);
-	tny_mime_part_construct (result,
-			         attachment_stream,
-				 attachment_content_type, 
-				 enc);
-	tny_stream_reset (attachment_stream);
+	if (attachment_stream == NULL) {
+		if (err != NULL && *err == NULL)
+			g_set_error (err, MODEST_MAIL_OPERATION_ERROR, MODEST_MAIL_OPERATION_ERROR_FILE_IO, _("TODO: couldn't retrieve attachment"));
+		g_object_unref (result);
+		return NULL;
+	} else {
+		ret = tny_stream_reset (attachment_stream);
+		ret = tny_mime_part_construct (result,
+					       attachment_stream,
+					       attachment_content_type, 
+					       enc);
+		ret = tny_stream_reset (attachment_stream);
+	}
 	
 	/* set other mime part fields */
 	tny_mime_part_set_filename (result, attachment_filename);
@@ -268,13 +277,15 @@ copy_mime_part (TnyMimePart *part)
 		TnyMimePart *subpart = TNY_MIME_PART (tny_iterator_get_current (iterator));
 		if (subpart) {
 			const gchar *subpart_cid;
-			TnyMimePart *subpart_copy = copy_mime_part (subpart);
-			subpart_cid = tny_mime_part_get_content_id (subpart);
-			tny_mime_part_add_part (result, subpart_copy);
-			if (subpart_cid)
-				tny_mime_part_set_content_id (result, subpart_cid);
+			TnyMimePart *subpart_copy = copy_mime_part (subpart, err);
+			if (subpart_copy != NULL) {
+				subpart_cid = tny_mime_part_get_content_id (subpart);
+				tny_mime_part_add_part (result, subpart_copy);
+				if (subpart_cid)
+					tny_mime_part_set_content_id (result, subpart_cid);
+				g_object_unref (subpart_copy);
+			}
 			g_object_unref (subpart);
-			g_object_unref (subpart_copy);
 		}
 
 		tny_iterator_next (iterator);
@@ -287,10 +298,11 @@ copy_mime_part (TnyMimePart *part)
 }
 
 static void
-add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline)
+add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline, GError **err)
 {
 	GList *pos;
 	TnyMimePart *attachment_part, *old_attachment;
+	gint ret;
 
 	for (pos = (GList *)attachments_list; pos; pos = pos->next) {
 
@@ -298,20 +310,22 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 		if (!tny_mime_part_is_purged (old_attachment)) {
 			const gchar *old_cid;
 			old_cid = tny_mime_part_get_content_id (old_attachment);
-			attachment_part = copy_mime_part (old_attachment);
-			tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
-						       add_inline?"inline":"attachment");
-			tny_mime_part_set_transfer_encoding (TNY_MIME_PART (attachment_part), "base64");
-			tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
-			if (old_cid)
-				tny_mime_part_set_content_id (attachment_part, old_cid);
-			g_object_unref (attachment_part);
+			attachment_part = copy_mime_part (old_attachment, err);
+			if (attachment_part != NULL) {
+				tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
+							       add_inline?"inline":"attachment");
+				tny_mime_part_set_transfer_encoding (TNY_MIME_PART (attachment_part), "base64");
+				ret = tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
+				if (old_cid)
+					tny_mime_part_set_content_id (attachment_part, old_cid);
+				g_object_unref (attachment_part);
+			}
 		}
 	}
 }
 
 static void
-add_images (TnyMsg *msg, GList *images_list)
+add_images (TnyMsg *msg, GList *images_list, GError **err)
 {
 	TnyMimePart *related_part = NULL;
 	const gchar *content_type;
@@ -342,7 +356,7 @@ add_images (TnyMsg *msg, GList *images_list)
 
 	if (related_part != NULL) {
 		/* TODO: attach images in their proper place */
-		add_attachments (related_part, images_list, TRUE);
+		add_attachments (related_part, images_list, TRUE, err);
 		g_object_unref (related_part);
 	}
 }
@@ -617,7 +631,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	/* ugly to unref it here instead of in the calling func */
 
 	if (!is_reply & !no_text_part) {
-		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE);
+		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE, NULL);
 	}
 
 	return new_msg;

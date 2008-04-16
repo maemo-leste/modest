@@ -749,7 +749,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		body = use_signature ? g_strconcat("\n", signature, NULL) : g_strdup("");
 	}
 
-	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL);
+	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -767,7 +767,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 				attachments->data, allowed_size);
 
 		if (total_size > allowed_size) {
-			g_warning ("%s: total size: %u", 
+			g_warning ("%s: total size: %u",
 				   __FUNCTION__, (unsigned int)total_size);
 			break;
 		}
@@ -1032,6 +1032,9 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, dgettext("ke-recv",
 									   "cerm_device_memory_full"));
+		} else if (error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
+			modest_platform_information_banner ((GtkWidget *) win,
+							    NULL, dgettext ("hildon-common-strings", "sfil_ni_unable_to_open_file_not_found"));
 		} else if (user_data) {
 			modest_platform_information_banner ((GtkWidget *) win, 
 							    NULL, user_data);
@@ -2741,7 +2744,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */
-	ModestMailOperation *mail_operation = modest_mail_operation_new (NULL);
+	ModestMailOperation *mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler, NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_send_new_mail (mail_operation,

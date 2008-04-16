@@ -621,6 +621,10 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 
 	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
 	if (!TNY_IS_SEND_QUEUE(send_queue)) {
+		if (priv->error) {
+			g_error_free (priv->error);
+			priv->error = NULL;
+		}
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 			     "modest: could not find send queue for account\n");
@@ -634,7 +638,11 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 		tny_send_queue_add_async (send_queue, msg, NULL, NULL, NULL);
 		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), FALSE);
 
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+		if (priv->error) {
+			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
+		} else {
+			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+		}
 		modest_mail_operation_notify_end (self);
 	}
 
@@ -672,12 +680,14 @@ create_msg_thread (gpointer thread_data)
 	if (info->html_body == NULL) {
 		new_msg = modest_tny_msg_new (info->to, info->from, info->cc, 
 					      info->bcc, info->subject, info->plain_body, 
-					      info->attachments_list);
+					      info->attachments_list,
+					      &(priv->error));
 	} else {
 		new_msg = modest_tny_msg_new_html_plain (info->to, info->from, info->cc,
 							 info->bcc, info->subject, info->html_body,
 							 info->plain_body, info->attachments_list,
-							 info->images_list);
+							 info->images_list,
+							 &(priv->error));
 	}
 
 	if (new_msg) {
@@ -694,9 +704,10 @@ create_msg_thread (gpointer thread_data)
 		g_object_unref (G_OBJECT(header));
 	} else {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
-			     "modest: failed to create a new msg\n");
+		if (!priv->error)
+			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+				     MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
+				     "modest: failed to create a new msg\n");
 	}
 
 
@@ -784,13 +795,15 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 	TnyFolder *outbox_folder = NULL;
 	TnyHeader *header = NULL;
 
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
 	if (!msg) {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
 		goto end;
 	}
 
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-
-	if (priv->error) {
+	if (priv->error && priv->error->code != MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		modest_mail_operation_notify_end (self);
 		goto end;
@@ -935,9 +948,14 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 {
 	ModestMailOperationPrivate *priv = NULL;
 	SaveToDraftsAddMsgInfo *info = (SaveToDraftsAddMsgInfo *) userdata;
+	GError *io_error = NULL;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mailop);
 
+	if (priv->error && priv->error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
+		io_error = priv->error;
+		priv->error = NULL;
+	}
 	if (priv->error) {
 		g_warning ("%s: priv->error != NULL", __FUNCTION__);
 		g_error_free(priv->error);
@@ -960,10 +978,18 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 		g_object_unref (G_OBJECT(src_folder));
 	}
 
-	if (!priv->error)
-		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	else
+	if (priv->error) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		if (io_error) {
+			g_error_free (io_error);
+			io_error = NULL;
+		}
+	} else if (io_error) {
+		priv->error = io_error;
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
+	} else {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
 
 	/* Call the user callback */
 	if (info->callback)
@@ -1018,7 +1044,7 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 		}
 	}
 
-	if (!priv->error) {
+	if (!priv->error || priv->error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
 		SaveToDraftsAddMsgInfo *cb_info = g_slice_new(SaveToDraftsAddMsgInfo);
 		cb_info->transport_account = g_object_ref(info->transport_account);
 		cb_info->draft_msg = info->draft_msg ? g_object_ref(info->draft_msg) : NULL;
