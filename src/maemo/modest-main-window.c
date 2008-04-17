@@ -2826,19 +2826,19 @@ on_window_hide (GObject    *gobject,
 		GParamSpec *arg1,
 		gpointer    user_data)
 {
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (gobject));
 
-	if (!GTK_WIDGET_VISIBLE (user_data))
-		remove_banners (MODEST_MAIN_WINDOW (user_data));
+	if (!GTK_WIDGET_VISIBLE (gobject))
+		remove_banners (MODEST_MAIN_WINDOW (gobject));
 }
 
 static void
 on_window_destroy (GtkObject *widget, 
 		   gpointer user_data)
 {
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW (widget));
 
-	remove_banners (MODEST_MAIN_WINDOW (user_data));
+	remove_banners (MODEST_MAIN_WINDOW (widget));
 }
 
 static gboolean

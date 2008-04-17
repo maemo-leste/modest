@@ -246,6 +246,7 @@ modest_window_mgr_finalize (GObject *obj)
 	}
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->window_state_uids);
+	priv->window_state_uids = NULL;
 
 	if (priv->window_list) {
 		GList *iter = priv->window_list;
@@ -275,6 +276,7 @@ modest_window_mgr_finalize (GObject *obj)
 	}
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->modal_handler_uids);
+	priv->modal_handler_uids = NULL;
 
 	if (priv->modal_windows) {
 		g_mutex_lock (priv->queue_lock);
@@ -914,15 +916,19 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	cancel_window_operations (window);
 
 	/* Disconnect the "window-state-event" handler, we won't need it anymore */
+	if (priv->window_state_uids) {
 #ifdef MODEST_PLATFORM_MAEMO
-	priv->window_state_uids = modest_signal_mgr_disconnect (priv->window_state_uids, 
-								G_OBJECT (window), 
-								"notify::is-topmost");
+		priv->window_state_uids = 
+			modest_signal_mgr_disconnect (priv->window_state_uids, 
+						      G_OBJECT (window), 
+						      "notify::is-topmost");
 #else
-	priv->window_state_uids = modest_signal_mgr_disconnect (priv->window_state_uids, 
-								G_OBJECT (window), 
-								"window-state-event");
+		priv->window_state_uids = 
+			modest_signal_mgr_disconnect (priv->window_state_uids, 
+						      G_OBJECT (window), 
+						      "window-state-event");
 #endif
+	}
 	
 	/* Disconnect the "delete-event" handler, we won't need it anymore */
 	g_signal_handler_disconnect (window, handler_id);
@@ -930,12 +936,12 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	/* Disconnect all the window signals */
 	modest_window_disconnect_signals (window);
 	
-	/* Destroy the window */
+	/* Destroy the window and unref the extra reference */
+	g_object_unref (win->data);
 	gtk_widget_destroy (win->data);
 	
 	/* If there are no more windows registered emit the signal */
 	if (modest_window_mgr_num_windows (self) == 0)
-/* 	if (priv->window_list == NULL && priv->banner_counter == 0) */
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 }
 
@@ -1378,7 +1384,6 @@ modest_window_mgr_unregister_banner (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	priv->banner_counter--;
-/* 	if (priv->window_list == NULL && priv->banner_counter == 0) */
 	if (modest_window_mgr_num_windows (self) == 0)
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
 }

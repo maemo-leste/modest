@@ -45,8 +45,6 @@ typedef struct {
 static gboolean
 on_idle_exit_modest (gpointer data)
 {
-	ModestWindow *main_win;
-	ModestWindowMgr *mgr;
 	MainSignalHandlers *handlers;
 
 	/* Protect the Gtk calls */
@@ -58,12 +56,6 @@ on_idle_exit_modest (gpointer data)
 				     handlers->queue_handler);
 	g_signal_handler_disconnect (modest_runtime_get_window_mgr (), 
 				     handlers->window_list_handler);
-
-	/* If the main window is still there but hidden, then unregister it */
-	mgr = modest_runtime_get_window_mgr();
-	main_win = modest_window_mgr_get_main_window (mgr, FALSE);
-	if (main_win)
-		modest_window_mgr_unregister_window (mgr, main_win);
 
 	/* Wait for remaining tasks */
 	while (gtk_events_pending ())
