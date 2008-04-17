@@ -223,7 +223,7 @@ save_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 
 	/* Don't save the paned position if it's not visible, 
 	 * because it could not be correct: */
-	if (GTK_WIDGET_VISIBLE (GTK_WIDGET (paned)) && GTK_WIDGET_REALIZED (GTK_WIDGET (paned))) {
+	if (GTK_WIDGET_REALIZED (GTK_WIDGET (paned))) {
 		pos = gtk_paned_get_position (paned);
 		percent = pos * 100 / GTK_WIDGET (paned)->allocation.width;
 
