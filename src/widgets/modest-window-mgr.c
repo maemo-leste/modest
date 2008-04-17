@@ -936,8 +936,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	/* Disconnect all the window signals */
 	modest_window_disconnect_signals (window);
 	
-	/* Destroy the window and unref the extra reference */
-	g_object_unref (win->data);
+	/* Destroy the window */
 	gtk_widget_destroy (win->data);
 	
 	/* If there are no more windows registered emit the signal */
