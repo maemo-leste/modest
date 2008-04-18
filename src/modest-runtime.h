@@ -195,6 +195,14 @@ ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
 ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
 
 /**
+ * modest_runtime_remove_send_queue:
+ * @account: a #TnyTransportAccount
+ * 
+ * Removes the send queue associated with the given transport account
+ **/
+void modest_runtime_remove_send_queue (TnyTransportAccount *account);
+
+/**
  * modest_runtime_remove_all_send_queues:
  * 
  * Removes all send queues, ready for them to be recreated, for instance 

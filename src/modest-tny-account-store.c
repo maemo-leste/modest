@@ -1744,8 +1744,17 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 	g_object_unref (account);
 
 	/* Clear the cache if it's an store account */
-	if (TNY_IS_STORE_ACCOUNT (account))
+	if (TNY_IS_STORE_ACCOUNT (account)) {
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (account));
+	} else if (TNY_IS_TRANSPORT_ACCOUNT (account)) {
+		ModestTnySendQueue* send_queue;
+		send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (account));
+		if (modest_tny_send_queue_sending_in_progress (send_queue))
+			tny_send_queue_cancel (TNY_SEND_QUEUE (send_queue),
+					       TNY_SEND_QUEUE_CANCEL_ACTION_REMOVE, 
+					       NULL);
+		modest_runtime_remove_send_queue (TNY_TRANSPORT_ACCOUNT (account));
+	}
 }
 
 static void
@@ -1816,12 +1825,15 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 
 			if (outbox_account) {
 				tny_list_remove (priv->store_accounts_outboxes, G_OBJECT (outbox_account));
+				/* Remove existing emails to send */
+				tny_store_account_delete_cache (TNY_STORE_ACCOUNT (outbox_account));
 				g_object_unref (outbox_account);
 			}
 
 			local_account = modest_tny_account_store_get_local_folders_account (self);
 			modest_tny_local_folders_account_remove_folder_from_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
 										    outbox);
+
 			g_hash_table_remove (priv->outbox_of_transport, transport_account);
 
 			/* Notify the change in the local account */

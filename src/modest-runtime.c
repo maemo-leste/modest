@@ -241,6 +241,24 @@ void modest_runtime_remove_all_send_queues ()
 	modest_cache_mgr_flush (cache_mgr, MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
 }
 
+void 
+modest_runtime_remove_send_queue (TnyTransportAccount *account)
+{
+
+	ModestCacheMgr *cache_mgr;
+	GHashTable     *send_queue_cache;
+
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (account));	
+	g_return_if_fail (_singletons);
+
+	cache_mgr = modest_singletons_get_cache_mgr (_singletons);
+	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);	
+
+	if (g_hash_table_lookup (send_queue_cache, account))
+		g_hash_table_remove (send_queue_cache, account);
+}
+
 ModestWindowMgr *
 modest_runtime_get_window_mgr (void)
 {

@@ -328,7 +328,8 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 
 	/* Check errors */
 	status = modest_mail_operation_get_status (mail_op);
-	if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+	if (status != MODEST_MAIL_OPERATION_STATUS_SUCCESS &&
+	    status != MODEST_MAIL_OPERATION_STATUS_INVALID) {
 		/* This is a sanity check. Shouldn't be needed, but
 		   prevent possible application crashes. It's useful
 		   also for detecting mail operations with invalid
