@@ -186,13 +186,15 @@ ModestMailOperationQueue* modest_runtime_get_mail_operation_queue (void);
 /**
  * modest_runtime_get_send_queue:
  * @account: a valid TnyTransportAccount
+ * @create: whether or not a new send queue should be created if it does not exist
  * 
  * get the send queue for the given account
  *
  * Returns: the #ModestTnySendQueue singleton instance for this account
  * (ie., one singleton per account). This should NOT be unref'd.
  **/
-ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account);
+ModestTnySendQueue* modest_runtime_get_send_queue        (TnyTransportAccount *account,
+							  gboolean create);
 
 /**
  * modest_runtime_remove_send_queue:

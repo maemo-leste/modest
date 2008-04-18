@@ -1748,12 +1748,14 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 		tny_store_account_delete_cache (TNY_STORE_ACCOUNT (account));
 	} else if (TNY_IS_TRANSPORT_ACCOUNT (account)) {
 		ModestTnySendQueue* send_queue;
-		send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (account));
-		if (modest_tny_send_queue_sending_in_progress (send_queue))
-			tny_send_queue_cancel (TNY_SEND_QUEUE (send_queue),
-					       TNY_SEND_QUEUE_CANCEL_ACTION_REMOVE, 
-					       NULL);
-		modest_runtime_remove_send_queue (TNY_TRANSPORT_ACCOUNT (account));
+		send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (account), FALSE);
+		if (send_queue) {
+			if (modest_tny_send_queue_sending_in_progress (send_queue))
+				tny_send_queue_cancel (TNY_SEND_QUEUE (send_queue),
+						       TNY_SEND_QUEUE_CANCEL_ACTION_REMOVE, 
+						       NULL);
+			modest_runtime_remove_send_queue (TNY_TRANSPORT_ACCOUNT (account));
+		}
 	}
 }
 
@@ -1992,7 +1994,7 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 		TnyTransportAccount *account = TNY_TRANSPORT_ACCOUNT (tny_iterator_get_current (acc_iter));
 		ModestTnySendQueue *send_queue;
 		ModestTnySendQueueStatus status;
-		send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account));
+		send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account), TRUE);
 		status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
 		if (status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
 			header_acc = g_object_ref(account);

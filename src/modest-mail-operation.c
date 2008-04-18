@@ -504,7 +504,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 
 	if (priv->op_type == MODEST_MAIL_OPERATION_TYPE_SEND) {
 		ModestTnySendQueue *queue;
-		queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (priv->account));
+		queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (priv->account),
+						       TRUE);
 
 		/* Cancel the sending of the following next messages */
 		tny_send_queue_cancel (TNY_SEND_QUEUE (queue), TNY_SEND_QUEUE_CANCEL_ACTION_SUSPEND, NULL);
@@ -619,7 +620,7 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 	priv->done = 1;
 	priv->total = 1;
 
-	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
+	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account, TRUE));
 	if (!TNY_IS_SEND_QUEUE(send_queue)) {
 		if (priv->error) {
 			g_error_free (priv->error);
@@ -1411,7 +1412,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		TnyFolder *outbox;
 		guint num_messages;
 
-		send_queue = modest_runtime_get_send_queue (transport_account);
+		send_queue = modest_runtime_get_send_queue (transport_account, TRUE);
 		g_object_unref (transport_account);
 
 		/* Get outbox folder */
@@ -2510,7 +2511,7 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 		traccount = modest_tny_account_store_get_transport_account_from_outbox_header(accstore, header);
 		if (traccount) {
 			ModestTnySendQueueStatus status;
-			ModestTnySendQueue *send_queue = modest_runtime_get_send_queue(traccount);
+			ModestTnySendQueue *send_queue = modest_runtime_get_send_queue(traccount, TRUE);
 			TnyIterator *iter = tny_list_create_iterator(headers);
 			g_object_unref(remove_headers);
 			remove_headers = TNY_LIST(tny_simple_list_new());

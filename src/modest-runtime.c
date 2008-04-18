@@ -189,11 +189,12 @@ modest_runtime_get_platform_factory  (void)
 }
 
 ModestTnySendQueue*
-modest_runtime_get_send_queue  (TnyTransportAccount *account)
+modest_runtime_get_send_queue  (TnyTransportAccount *account,
+				gboolean create)
 {
 	ModestCacheMgr *cache_mgr;
 	GHashTable     *send_queue_cache;
-	gpointer       orig_key, send_queue;
+	gpointer       orig_key = NULL, send_queue = NULL;
 	
 	g_return_val_if_fail (_singletons, NULL);
 	g_return_val_if_fail (TNY_IS_TRANSPORT_ACCOUNT(account), NULL);
@@ -206,7 +207,8 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 	 * Note that each modest account will have its own outbox folder, 
 	 * returned by TnySendQueue::get_outbox_func().
 	 */
-	if (!g_hash_table_lookup_extended (send_queue_cache, account, &orig_key, &send_queue)) {
+	if (!g_hash_table_lookup_extended (send_queue_cache, account, &orig_key, &send_queue) &&
+	    create) {
 		/* Note that this send queue will start sending messages from its outbox 
 		 * as soon as it is instantiated: */
 		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
@@ -231,7 +233,7 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account)
 				     g_object_ref (send_queue));
 	}
 
-	return MODEST_TNY_SEND_QUEUE(send_queue);
+	return (send_queue) ? MODEST_TNY_SEND_QUEUE(send_queue) : NULL;
 }
 
 void modest_runtime_remove_all_send_queues ()

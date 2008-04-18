@@ -846,7 +846,7 @@ on_dbus_method_dump_send_queues (DBusConnection *con, DBusMessage *message)
 		if (TNY_IS_ACCOUNT(acc)) {
 			gchar *tmp, *url = tny_account_get_url_string (acc);
 			ModestTnySendQueue *sendqueue =
-				modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(acc));
+				modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(acc), TRUE);
 			gchar *queue_str = modest_tny_send_queue_to_string (sendqueue);
 			
 			tmp = g_strdup_printf ("%s[%s]: '%s': %s\n%s",

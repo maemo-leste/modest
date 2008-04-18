@@ -700,7 +700,7 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 		iter = tny_list_create_iterator (accounts);
 		while (!tny_iterator_is_done (iter)) {			
 			account = TNY_TRANSPORT_ACCOUNT(tny_iterator_get_current (iter));
-			send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account));
+			send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account), TRUE);
 			g_object_unref(account);
 
 			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);

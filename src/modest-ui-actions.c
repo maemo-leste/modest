@@ -904,7 +904,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 			char *msg_id;
 			account = g_strdup(modest_tny_account_get_parent_modest_account_name_for_server_account(
 						   TNY_ACCOUNT(traccount)));
-			send_queue = modest_runtime_get_send_queue(traccount);
+			send_queue = modest_runtime_get_send_queue(traccount, TRUE);
 			msg_id = modest_tny_send_queue_get_msg_id (header);
 			status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
 			/* Only open messages in outbox with the editor if they are in Failed state */
@@ -1997,7 +1997,7 @@ modest_ui_actions_do_cancel_send (const gchar *account_name,
 	}
 
 	/* Get send queue*/
-	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account));
+	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account, TRUE));
 	if (!TNY_IS_SEND_QUEUE(send_queue)) {
 		g_set_error (&error, MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
