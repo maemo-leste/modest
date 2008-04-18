@@ -181,12 +181,6 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 void vadj_changed (GtkAdjustment *adj, 
 		   ModestMsgEditWindow *window);
 
-static ModestPair *find_transport_from_message_sender (ModestPairList *transports,
-						       TnyMsg *msg);
-
-
-
-
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -247,7 +241,7 @@ struct _ModestMsgEditWindowPrivate {
 	
 	ModestPairList *from_field_protos;
 	GtkWidget   *from_field;
-	const gchar *original_account_name;
+	gchar       *original_account_name;
 	
 	GtkWidget   *to_field;
 	GtkWidget   *cc_field;
@@ -497,47 +491,6 @@ get_transports (void)
 	g_slist_free (accounts); /* only free the accounts, not the elements,
 				  * because they are used in the pairlist */
 	return transports;
-}
-
-/**
- * Search an (account, address) ModestPairList for a pair whose
- * address matches the one in the From: header of a TnyMsg
- *
- * @result: A ModestPair * with a matching address, or NULL if none found
- */
-static ModestPair *
-find_transport_from_message_sender (ModestPairList *transports, TnyMsg *msg)
-{
-	ModestPair *account_pair = NULL;
-	gchar *from;
-	TnyHeader *header;
-
-	g_return_val_if_fail (transports, NULL);
-	g_return_val_if_fail (msg, NULL);
-
-	header = tny_msg_get_header (msg);
-
-	if (header != NULL && (from = tny_header_dup_from (header))) {
-		GSList *iter;
-		char *from_addr;
-
-		from_addr = modest_text_utils_get_email_address (from);
-		g_free (from);
-		for (iter = transports; iter && !account_pair; iter = iter->next) {
-			ModestPair *pair = (ModestPair *) iter->data;
-			char *account_addr = modest_text_utils_get_email_address ((char *) pair->second);
-			if (account_addr && !strcasecmp(from_addr, account_addr)) {
-				account_pair = pair;
-			}
-			g_free (account_addr);
-		}
-		g_free (from_addr);
-	}
-
-	if (header)
-		g_object_unref (header);
-
-	return account_pair;
 }
 
 static void window_focus (GtkWindow *window,
@@ -997,6 +950,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_source_remove (priv->clipboard_owner_idle);
 		priv->clipboard_owner_idle = 0;
 	}
+	if (priv->original_account_name)
+		g_free (priv->original_account_name);
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
 	g_slist_free (priv->font_items_group);
@@ -1508,7 +1463,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
-	ModestPair *account_pair = NULL;
 	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
@@ -1529,6 +1483,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 	priv->from_field_protos = get_transports ();
  	modest_combo_box_set_pair_list (MODEST_COMBO_BOX (priv->from_field), priv->from_field_protos);
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), (gpointer) account_name);
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
@@ -1539,14 +1494,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 		
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
 
-	account_pair = find_transport_from_message_sender (priv->from_field_protos, msg);
-	if (account_pair == NULL) {
-		account_pair = modest_pair_list_find_by_first_as_string (priv->from_field_protos, account_name);
-	}
-	if (account_pair != NULL)
-		modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), account_pair->first);
-
-	priv->original_account_name = account_pair ? (const gchar *) account_pair->first : NULL;
+	priv->original_account_name = (account_name) ? g_strdup (account_name) : NULL;
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
 	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
