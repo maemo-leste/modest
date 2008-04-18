@@ -2189,6 +2189,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 				       ModestMainWindow *main_window)
 {
 	TnyList *headers;
+	GtkWidget *open_widget;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 
@@ -2206,6 +2207,10 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	if (modest_platform_check_memory_low (MODEST_WINDOW(main_window)))
 		return;
 
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
+	open_widget = modest_window_get_action_widget (MODEST_WINDOW (main_window), "/MenuBar/EmailMenu/EmailOpenMenu");
+	if (!GTK_WIDGET_IS_SENSITIVE (open_widget))
+		return;
 
 /* 	headers = tny_simple_list_new (); */
 /* 	tny_list_prepend (headers, G_OBJECT (header)); */
