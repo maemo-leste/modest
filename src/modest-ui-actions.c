@@ -3363,6 +3363,30 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainW
 }
 
 
+typedef struct _PasswordDialogFields {
+	GtkWidget *username;
+	GtkWidget *password;
+	GtkWidget *dialog;
+} PasswordDialogFields;
+
+static void
+password_dialog_check_field (GtkEditable *editable,
+			     PasswordDialogFields *fields)
+{
+	const gchar *value;
+	gboolean any_value_empty = FALSE;
+
+	value = gtk_entry_get_text (GTK_ENTRY (fields->username));
+	if ((value == NULL) || value[0] == '\0') {
+		any_value_empty = TRUE;
+	}
+	value = gtk_entry_get_text (GTK_ENTRY (fields->password));
+	if ((value == NULL) || value[0] == '\0') {
+		any_value_empty = TRUE;
+	}
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (fields->dialog), GTK_RESPONSE_ACCEPT, !any_value_empty);
+}
+
 void
 modest_ui_actions_on_password_requested (TnyAccountStore *account_store, 
 					 const gchar* server_account_name,
@@ -3374,6 +3398,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 {
 	g_return_if_fail(server_account_name);
 	gboolean completed = FALSE;
+	PasswordDialogFields *fields = NULL;
 	
 	/* Initalize output parameters: */
 	if (cancel)
@@ -3438,7 +3463,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		modest_account_mgr_get_server_account_username_has_succeeded(
 			modest_runtime_get_account_mgr(), server_account_name);
 	gtk_widget_set_sensitive (entry_username, !username_known);
-	
+
 #ifdef MODEST_PLATFORM_MAEMO
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_username), HILDON_GTK_INPUT_MODE_FULL);
@@ -3489,6 +3514,15 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
 			    TRUE, FALSE, 0);
 */
+
+	fields = g_slice_new0 (PasswordDialogFields);
+	fields->username = entry_username;
+	fields->password = entry_password;
+	fields->dialog = dialog;
+
+	g_signal_connect (entry_username, "changed", G_CALLBACK (password_dialog_check_field), fields);
+	g_signal_connect (entry_password, "changed", G_CALLBACK (password_dialog_check_field), fields);
+	password_dialog_check_field (NULL, fields);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 
@@ -3553,6 +3587,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 */
 
 	gtk_widget_destroy (dialog);
+	g_slice_free (PasswordDialogFields, fields);
 	
 	/* printf ("DEBUG: %s: cancel=%d\n", __FUNCTION__, *cancel); */
 }
