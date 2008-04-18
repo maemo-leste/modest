@@ -1196,6 +1196,8 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 				  G_CALLBACK (on_account_changed), self);
 
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (self), account_store);
+	priv->reselect = FALSE;
+	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (self));
 	
 	g_object_unref (G_OBJECT (device));
 }
