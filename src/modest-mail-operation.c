@@ -3083,7 +3083,7 @@ modest_mail_operation_sync_folder (ModestMailOperation *self,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	priv->account = TNY_ACCOUNT (tny_folder_get_account (folder));
+	priv->account = modest_tny_folder_get_account (folder);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER;
 
 	modest_mail_operation_notify_start (self);

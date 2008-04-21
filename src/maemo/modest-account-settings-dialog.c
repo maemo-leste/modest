@@ -1646,9 +1646,9 @@ modest_account_settings_dialog_check_allow_changes (ModestAccountSettingsDialog 
 	gtk_widget_set_sensitive (self->entry_outgoingserver, !username_known);
 	gtk_widget_set_sensitive (self->entry_outgoing_username, !username_known);
 	gtk_widget_set_sensitive (self->entry_incoming_port, !username_known);
-	gtk_widget_set_sensitive (self->entry_outgoing_port, !username_known);
+/* 	gtk_widget_set_sensitive (self->entry_outgoing_port, !username_known); */
 	gtk_widget_set_sensitive (self->combo_incoming_security, !username_known);
-	gtk_widget_set_sensitive (self->combo_outgoing_security, !username_known);
+/* 	gtk_widget_set_sensitive (self->combo_outgoing_security, !username_known); */
 }
 
 void 
