@@ -197,8 +197,10 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 		const gchar* provider_name = *iter_provider_names;
 		const gchar* provider_id = *iter_provider_ids;
 
-		gchar *provider_domain = modest_presets_get_domain (presets, provider_id);
-		gchar *provider_display_name = g_strdup_printf ("%s (%s)", provider_name, provider_domain);
+		gchar *provider_incoming = modest_presets_get_server (presets, provider_id, 
+								    TRUE);
+		gchar *provider_display_name = g_strdup_printf ("%s (%s)", provider_name, 
+								provider_incoming);
 		
 		/* Prevent duplicate providers: */
 		if (g_slist_find_custom (provider_ids_used_already, 
@@ -216,8 +218,8 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 			provider_ids_used_already = g_slist_prepend (
 				provider_ids_used_already, (gpointer)g_strdup (provider_id));
 		}
-
-		g_free (provider_domain);
+		
+		g_free (provider_incoming);
 		g_free (provider_display_name);
 		
 		++iter_provider_names;
