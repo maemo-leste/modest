@@ -185,7 +185,6 @@ GtkWindow*    modest_window_mgr_get_modal  (ModestWindowMgr *self);
  *
  * set the modal dialog; set it to NULL after destroying the dialog
  *
- * Returns: the modal dialog just set
  **/
 void          modest_window_mgr_set_modal  (ModestWindowMgr *self,
 					    GtkWindow *window);

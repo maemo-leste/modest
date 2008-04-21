@@ -38,6 +38,8 @@
 #include <libosso-abook/osso-abook.h>
 #include "modest-hildon-includes.h"
 #include "modest-platform.h"
+#include "modest-runtime.h"
+#include "widgets/modest-window-mgr.h"
 #include <string.h>
 #include <gtk/gtksizegroup.h>
 #include <gtk/gtkbox.h>
@@ -187,6 +189,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 
 	contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
 	gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (contact_dialog));
 
 	gtk_widget_show (contact_dialog);
 
