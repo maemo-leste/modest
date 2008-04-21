@@ -1,3 +1,10 @@
+* 2008-W17:
+- fixes access to Gmail and some other TLS/SSL sites
+- improved low-memory handling
+- stability fixes
+- fixes for dealing with unreliable networks
+- many tiny UI issues fixes
+
 * 2008-W16:
 - stability fixes
 - logical-id fixes
@@ -12,12 +19,10 @@
 - symbol reduction, should help startup a bit
 - added WiMAX support
 
-
 * 2008-W14:
 
 
 * 2008-W13:
-
 
 * 2008-W12:
 - fixes for instability in POP3 handling
