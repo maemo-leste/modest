@@ -288,7 +288,7 @@ update_tny_account (TnyAccount *tny_account,
 	else {
 		/* Set camel-specific options: */		
 		/* Enable secure connection settings: */
-		const gchar* option_security = NULL;
+		TnyPair *option_security = NULL;
 		const gchar* auth_mech_name = NULL;
 		ModestTransportStoreProtocol protocol;
 		ModestConnectionProtocol security;
@@ -297,33 +297,35 @@ update_tny_account (TnyAccount *tny_account,
 		const gchar *hostname;
 		guint port;
 
+		/* First of all delete old options */
+		tny_camel_account_clear_options (TNY_CAMEL_ACCOUNT (tny_account));
+
 		protocol = modest_server_account_settings_get_protocol (server_settings);
 		security = modest_server_account_settings_get_security (server_settings);
 		auth_protocol = modest_server_account_settings_get_auth_protocol (server_settings);
 
 		switch (security) {
 		case MODEST_PROTOCOL_CONNECTION_NORMAL:
-			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_NEVER;
+			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_NEVER);
 			break;
 		case MODEST_PROTOCOL_CONNECTION_SSL:
 			/* Apparently, use of "IMAPS" (specified in our UI spec), implies 
 			 * use of the "wrapped" option: */
-			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_WRAPPED;
+			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_WRAPPED);
 			break;
 		case MODEST_PROTOCOL_CONNECTION_TLS:
-			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_TLS;
+			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_TLS);
 			break;
 		case MODEST_PROTOCOL_CONNECTION_TLS_OP:
 			/* This is not actually in our UI: */
-			option_security = MODEST_ACCOUNT_OPTION_SSL "=" MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE;
+			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE);
 			break;
 		default:
 			break;
 		}
 		
 		if(option_security)
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      option_security);
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), option_security);
 		
 		/* Secure authentication: */
 		switch (auth_protocol) {
@@ -370,9 +372,9 @@ update_tny_account (TnyAccount *tny_account,
 			(protocol == MODEST_PROTOCOL_STORE_IMAP) ) {
 			/* Other connection options, needed for IMAP. */
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      MODEST_ACCOUNT_OPTION_USE_LSUB);
+						      tny_pair_new (MODEST_ACCOUNT_OPTION_USE_LSUB, ""));
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      MODEST_ACCOUNT_OPTION_CHECK_ALL);
+						      tny_pair_new (MODEST_ACCOUNT_OPTION_CHECK_ALL, ""));
 		}
 		
 		username = modest_server_account_settings_get_username (server_settings);
