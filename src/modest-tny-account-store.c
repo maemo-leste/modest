@@ -1596,6 +1596,58 @@ create_tny_account (ModestTnyAccountStore *self,
 	return account;
 }
 
+typedef struct _AddOutboxInfo {
+	ModestTnyAccountStore *account_store;
+	TnyAccount *transport_account;
+} AddOutboxInfo;
+
+static void
+add_outbox_from_transport_account_to_global_outbox_get_folders_cb (TnyFolderStore *folder_store,
+								   gboolean cancelled,
+								   TnyList *list,
+								   GError *err,
+								   gpointer userdata)
+{
+	TnyIterator *iter_folders;
+	TnyFolder *per_account_outbox;
+	TnyAccount *local_account = NULL;
+	AddOutboxInfo *info = (AddOutboxInfo *) userdata;
+	ModestTnyAccountStorePrivate *priv = NULL;
+	ModestTnyAccountStore *self;
+
+	self = MODEST_TNY_ACCOUNT_STORE (info->account_store);
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+	
+	if (tny_list_get_length (list) != 1) {
+		g_warning ("%s: > 1 outbox found (%d)?!", __FUNCTION__,
+			   tny_list_get_length (list));
+	}
+			
+	iter_folders = tny_list_create_iterator (list);
+	per_account_outbox = TNY_FOLDER (tny_iterator_get_current (iter_folders));
+	g_object_unref (iter_folders);
+	g_object_unref (list);
+
+	/* Add the outbox of the new per-account-local-outbox account
+	   to the global local merged OUTBOX of the local folders
+	   account */
+	local_account = modest_tny_account_store_get_local_folders_account (info->account_store);
+	modest_tny_local_folders_account_add_folder_to_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
+							       per_account_outbox);
+	/* Add the pair to the hash table */
+	g_hash_table_insert (priv->outbox_of_transport,
+			     info->transport_account,
+			     per_account_outbox);
+	
+	/* Notify that the local account changed */
+	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
+
+	g_object_unref (info->transport_account);
+	g_object_unref (local_account);
+	g_object_unref (per_account_outbox);
+	g_slice_free (AddOutboxInfo, info);
+}
+								   
 
 static void
 add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
@@ -1603,10 +1655,9 @@ add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
 						    TnyAccount *transport_account)
 {
 	TnyList *folders = NULL;
-	TnyIterator *iter_folders = NULL;
-	TnyAccount *local_account = NULL, *account_outbox = NULL;
-	TnyFolder *per_account_outbox = NULL;
+	TnyAccount *account_outbox = NULL;
 	ModestTnyAccountStorePrivate *priv = NULL;
+	AddOutboxInfo *info;
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
@@ -1615,35 +1666,22 @@ add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
 		modest_tny_account_new_for_per_account_local_outbox_folder (priv->account_mgr, 
 									    account_name, 
 									    priv->session);
-	tny_list_append (priv->store_accounts_outboxes, G_OBJECT (account_outbox));
 
+	if (!G_IS_OBJECT (account_outbox)) {
+		g_warning ("%s: could not create per account local outbox folder", __FUNCTION__);
+		return;
+	}
+
+	tny_list_append (priv->store_accounts_outboxes, G_OBJECT (account_outbox));
+	
 	/* Get the outbox folder */
 	folders = tny_simple_list_new ();
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (account_outbox), folders, NULL, NULL);
-	if (tny_list_get_length (folders) != 1) {
-		g_warning ("%s: > 1 outbox found (%d)?!", __FUNCTION__,
-			   tny_list_get_length (folders));
-	}
-			
-	iter_folders = tny_list_create_iterator (folders);
-	per_account_outbox = TNY_FOLDER (tny_iterator_get_current (iter_folders));
-	g_object_unref (iter_folders);
-	g_object_unref (folders);
+	info = g_slice_new0 (AddOutboxInfo);
+	info->account_store = self;
+	info->transport_account = g_object_ref (transport_account);
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account_outbox), folders, NULL, 
+					    add_outbox_from_transport_account_to_global_outbox_get_folders_cb, NULL, (gpointer) info);
 	g_object_unref (account_outbox);
-
-	/* Add the outbox of the new per-account-local-outbox account
-	   to the global local merged OUTBOX of the local folders
-	   account */
-	local_account = modest_tny_account_store_get_local_folders_account (self);
-	modest_tny_local_folders_account_add_folder_to_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
-							       per_account_outbox);
-	/* Add the pair to the hash table */
-	g_hash_table_insert (priv->outbox_of_transport,
-			     transport_account,
-			     per_account_outbox);
-	
-	g_object_unref (local_account);
-	g_object_unref (per_account_outbox);
 }
 
 /*
@@ -1683,21 +1721,13 @@ insert_account (ModestTnyAccountStore *self,
 	/* Create a new pseudo-account with an outbox for this
 	   transport account and add it to the global outbox
 	   in the local account */
-	add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);
-	
+	add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);	
+
 	/* Notify the observers. We do it after everything is
 	   created */
 	if (notify) {
-		TnyAccount *local_account = NULL;
-		
-		/* Notify the observers about the new server & transport accounts */
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, store_account);	
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, transport_account);
-
-		/* Notify that the local account changed */
-		local_account = modest_tny_account_store_get_local_folders_account (self);
-		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
-		g_object_unref (local_account);
 	}
 
 	/* Frees */
