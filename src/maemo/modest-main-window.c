@@ -2828,8 +2828,27 @@ on_window_hide (GObject    *gobject,
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (gobject));
 
-	if (!GTK_WIDGET_VISIBLE (gobject))
+	if (!GTK_WIDGET_VISIBLE (gobject)) {
+		TnyFolderStore *folder_store;
+		ModestMainWindowPrivate *priv;
+		
+		/* Remove the currently shown banners */
 		remove_banners (MODEST_MAIN_WINDOW (gobject));
+
+		/* Force the folder view to sync the currently selected folder
+		   to save the read/unread status and to expunge messages */
+		priv = MODEST_MAIN_WINDOW_GET_PRIVATE (gobject);
+		folder_store = modest_folder_view_get_selected (priv->folder_view);
+		if (TNY_IS_FOLDER (folder_store)) {
+			ModestMailOperation *mail_op;
+			
+			mail_op = modest_mail_operation_new (NULL);
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
+			modest_mail_operation_sync_folder (mail_op, TNY_FOLDER (folder_store), FALSE);
+			g_object_unref (mail_op);
+		}
+	}
 }
 
 static void
