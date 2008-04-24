@@ -1021,6 +1021,14 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 	}
+	if (!dimmed) {
+		dimmed = modest_window_get_dimming_state (win)->any_marked_as_deleted;
+		if (dimmed) {
+			gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
+			modest_dimming_rule_set_notification (rule, msg);
+			g_free (msg);
+		}
+	}
 	
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
