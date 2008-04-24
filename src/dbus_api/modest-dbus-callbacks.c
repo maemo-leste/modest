@@ -552,10 +552,19 @@ on_open_message_performer (gboolean canceled,
 			
 			header = tny_msg_get_header (msg);
 			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, msg_uid);
-			if (! (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
-				tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
-			g_object_unref (header);
-			
+
+			if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN)) {
+				ModestMailOperation *mail_op;
+				
+				tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);	
+				/* Sync folder, we need this to save the seen flag */
+				mail_op = modest_mail_operation_new (NULL);
+				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+								 mail_op);
+				modest_mail_operation_sync_folder (mail_op, folder, FALSE);
+				g_object_unref (mail_op);
+			}
+			g_object_unref (header);			
 		}
 		if (msg_view != NULL) {
 			modest_window_mgr_register_window (win_mgr, msg_view);
