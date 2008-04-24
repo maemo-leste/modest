@@ -1782,22 +1782,40 @@ on_button_press_event(GtkWidget * self, GdkEventButton * event, gpointer userdat
 	GtkTreeSelection *selection = NULL;
 	GtkTreePath *path = NULL;
 	gboolean already_selected = FALSE;
+	ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 
 	if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(self), event->x, event->y, &path, NULL, NULL, NULL)) {
+		GtkTreeIter iter;
+		GtkTreeModel *model;
+
 		selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 		already_selected = gtk_tree_selection_path_is_selected (selection, path);
+
+		/* Get header from model */
+		model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+		if (gtk_tree_model_get_iter (model, &iter, path)) {
+			GValue value = {0,};
+			TnyHeader *header;
+
+			gtk_tree_model_get_value (model, &iter, 
+						  TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+						  &value);
+			header = (TnyHeader *) g_value_get_object (&value);
+			if (TNY_IS_HEADER (header))
+				status = modest_tny_all_send_queues_get_msg_status (header);
+			g_value_unset (&value);
+		}
 	}
 
 	/* Enable drag and drop onlly if the user clicks on a row that
 	   it's already selected. If not, let him select items using
-	   the pointer */
-	if (!already_selected) {
+	   the pointer. If the message is in an outbos and in sending
+	   status disable drag and drop as well */
+	if (!already_selected || status == MODEST_TNY_SEND_QUEUE_SENDING)
 		disable_drag_and_drop(self);
-	}
 
-	if (path != NULL) {
+	if (path != NULL)
 		gtk_tree_path_free(path);
-	}
 
 	return FALSE;
 }
