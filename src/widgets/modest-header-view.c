@@ -989,6 +989,34 @@ modest_header_view_get_folder (ModestHeaderView *self)
 }
 
 static void
+set_folder_intern_get_headers_async_cb (TnyFolder *folder, 
+					gboolean cancelled, 
+					TnyList *headers, 
+					GError *err, 
+					gpointer user_data)
+{
+	ModestHeaderView *self;
+	ModestHeaderViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (user_data));
+
+	self = MODEST_HEADER_VIEW (user_data);
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	/* Add IDLE observer (monitor) and another folder observer for
+	   new messages (self) */
+	g_mutex_lock (priv->observers_lock);
+	if (priv->monitor) {
+		tny_folder_monitor_stop (priv->monitor);
+		g_object_unref (G_OBJECT (priv->monitor));
+	}
+	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
+	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
+	tny_folder_monitor_start (priv->monitor);
+	g_mutex_unlock (priv->observers_lock);
+}
+
+static void
 modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 {
 	TnyFolderType type;
@@ -1003,20 +1031,22 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 
 	headers = TNY_LIST (tny_gtk_header_list_model_new ());
 
+	/* Start the monitor in the callback of the
+	   tny_gtk_header_list_model_set_folder call. It's crucial to
+	   do it there and not just after the call because we want the
+	   monitor to observe only the headers returned by the
+	   tny_folder_get_headers_async call that it's inside the
+	   tny_gtk_header_list_model_set_folder call. This way the
+	   monitor infrastructure could successfully cope with
+	   duplicates. For example if a tny_folder_add_msg_async is
+	   happening while tny_gtk_header_list_model_set_folder is
+	   invoked, then the first call could add a header that will
+	   be added again by tny_gtk_header_list_model_set_folder, so
+	   we'd end up with duplicate headers. sergio */
 	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
-					      folder, FALSE, NULL, NULL, NULL);
-
-	/* Add IDLE observer (monitor) and another folder observer for
-	   new messages (self) */
-	g_mutex_lock (priv->observers_lock);
-	if (priv->monitor) {
-		tny_folder_monitor_stop (priv->monitor);
-		g_object_unref (G_OBJECT (priv->monitor));
-	}
-	priv->monitor = TNY_FOLDER_MONITOR (tny_folder_monitor_new (folder));
-	tny_folder_monitor_add_list (priv->monitor, TNY_LIST (headers));
-	tny_folder_monitor_start (priv->monitor);
-	g_mutex_unlock (priv->observers_lock);
+					      folder, FALSE, 
+					      set_folder_intern_get_headers_async_cb, 
+					      NULL, self);
 
 	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
 	g_object_unref (G_OBJECT (headers));
