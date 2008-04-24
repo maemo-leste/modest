@@ -1288,10 +1288,14 @@ modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
 {
 	GtkToggleAction *toggle;
 	ModestWindowPrivate *parent_priv;
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
 	
 	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"));
 	gtk_toggle_action_set_active (toggle, FALSE);
+	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 }
 
 static void
