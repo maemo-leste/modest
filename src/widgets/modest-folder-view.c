@@ -1246,56 +1246,32 @@ on_account_inserted (TnyAccountStore *account_store,
 }
 
 
-static void
-on_account_changed (TnyAccountStore *account_store, 
-		    TnyAccount *tny_account,
-		    gpointer user_data)
+static gboolean
+same_account_selected (ModestFolderView *self,
+		       TnyAccount *account)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *sort_model, *filter_model;
-	GtkTreeSelection *sel;
+	gboolean same_account = FALSE;
 
-	/* Ignore transport account insertions, we're not showing them
-	   in the folder view */
-	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
-		return;
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
-	if (!MODEST_IS_FOLDER_VIEW(user_data)) {
-		g_warning ("BUG: %s: not a valid folder view", __FUNCTION__);
-		return;
+	if (priv->cur_folder_store) {
+		TnyAccount *selected_folder_account = NULL;
+
+		if (TNY_IS_FOLDER (priv->cur_folder_store)) {
+			selected_folder_account = 
+				tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store));
+		} else {
+			selected_folder_account = 
+				TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
+		}
+
+		if (selected_folder_account == account)
+			same_account = TRUE;
+
+		g_object_unref (selected_folder_account);
 	}
-
-
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (user_data);
-
-	/* Get the inner model */
-	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
-	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
-		return;
-	}
-
-
-	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
-	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
-		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
-		return;
-	}
-
-	/* Unselect the folder, clear the header list */
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (user_data));
-	gtk_tree_selection_unselect_all (sel);
-
-	/* Remove the account from the model */
-	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
-			 G_OBJECT (tny_account));
-	
-	/* Insert the account in the model */
-	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
-			 G_OBJECT (tny_account));
-
-	/* Refilter the model */
-	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
+	return same_account;
 }
 
 /**
@@ -1314,6 +1290,67 @@ on_idle_select_first_inbox_or_local (gpointer user_data)
 	return FALSE;
 }
 
+static void
+on_account_changed (TnyAccountStore *account_store, 
+		    TnyAccount *tny_account,
+		    gpointer user_data)
+{
+	ModestFolderView *self;
+	ModestFolderViewPrivate *priv;
+	GtkTreeModel *sort_model, *filter_model;
+	GtkTreeSelection *sel;
+	gboolean same_account;
+
+	/* Ignore transport account insertions, we're not showing them
+	   in the folder view */
+	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
+		return;
+
+	if (!MODEST_IS_FOLDER_VIEW(user_data)) {
+		g_warning ("BUG: %s: not a valid folder view", __FUNCTION__);
+		return;
+	}
+
+	self = MODEST_FOLDER_VIEW (user_data);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (user_data);
+
+	/* Get the inner model */
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
+	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		return;
+	}
+
+	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
+	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
+		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
+		return;
+	}
+
+	/* Invalidate the cur_folder_store only if the selected folder
+	   belongs to the account that is being removed */
+	same_account = same_account_selected (self, tny_account);
+	if (same_account) {
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+		gtk_tree_selection_unselect_all (sel);
+	}
+
+	/* Remove the account from the model */
+	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
+			 G_OBJECT (tny_account));
+	
+	/* Insert the account in the model */
+	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
+			 G_OBJECT (tny_account));
+
+	/* Refilter the model */
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
+
+	/* Select the first INBOX if the currently selected folder
+	   belongs to the account that is being deleted */
+	if (same_account)
+		g_idle_add (on_idle_select_first_inbox_or_local, self);
+}
 
 static void
 on_account_removed (TnyAccountStore *account_store, 
@@ -1324,7 +1361,7 @@ on_account_removed (TnyAccountStore *account_store,
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *sort_model, *filter_model;
 	GtkTreeSelection *sel = NULL;
-	gboolean same_account_selected = FALSE;
+	gboolean same_account = FALSE;
 
 	/* Ignore transport account removals, we're not showing them
 	   in the folder view */
@@ -1341,23 +1378,10 @@ on_account_removed (TnyAccountStore *account_store,
 
 	/* Invalidate the cur_folder_store only if the selected folder
 	   belongs to the account that is being removed */
-	if (priv->cur_folder_store) {
-		TnyAccount *selected_folder_account = NULL;
-
-		if (TNY_IS_FOLDER (priv->cur_folder_store)) {
-			selected_folder_account = 
-				tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store));
-		} else {
-			selected_folder_account = 
-				TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));
-		}
-
-		if (selected_folder_account == account) {
-			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-			gtk_tree_selection_unselect_all (sel);
-			same_account_selected = TRUE;
-		}
-		g_object_unref (selected_folder_account);
+	same_account = same_account_selected (self, account);
+	if (same_account) {
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
+		gtk_tree_selection_unselect_all (sel);
 	}
 
 	/* Invalidate row to select only if the folder to select
@@ -1408,7 +1432,7 @@ on_account_removed (TnyAccountStore *account_store,
 
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
-	if (same_account_selected)
+	if (same_account)
 		g_idle_add (on_idle_select_first_inbox_or_local, self);
 }
 

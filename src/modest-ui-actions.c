@@ -648,7 +648,6 @@ modest_ui_actions_on_accounts (GtkAction *action,
 	} else {
 		/* Show the list of accounts */
 		GtkWindow *account_win = GTK_WINDOW (modest_account_view_window_new ());
-		gtk_window_set_transient_for (account_win, GTK_WINDOW (win));
 		
 		/* The accounts dialog must be modal */
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), account_win);
