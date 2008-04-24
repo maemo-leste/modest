@@ -121,16 +121,25 @@
 <!--     <toolitem name="ToggleView" action="ToggleView"/> -->
   </toolbar>
 
-  <popup name="HeaderViewContextMenu">
-    <menuitem action="ActionsReply"/>
-    <menuitem action="ActionsForward"/>
+  <popup name="HeaderViewCSM">
+    <menuitem action="HeaderViewCSMReply"/>
+    <menuitem action="HeaderViewCSMReplyAll"/>
+    <menuitem action="HeaderViewCSMForward"/>
+    <menuitem action="HeaderViewCSMCancelSending"/>
+    <separator/>
+    <menuitem action="HeaderViewCSMDelete"/>
+    <menuitem action="HeaderViewCSMHelp"/>
   </popup>
 
-  <popup name="FolderViewContextMenu">
-    <menuitem action="ActionsFolderNew"/>
-    <menuitem action="ActionsFolderDelete"/>
-    <menuitem action="ActionsFolderRename"/>
-    <menuitem action="ActionsFolderMoveToTrash"/>
+  <popup name="FolderViewCSM">
+    <menuitem action="FolderViewCSMNewFolder"/>
+    <menuitem action="FolderViewCSMRenameFolder"/>
+    <menuitem action="FolderViewCSMDeleteFolder"/>
+    <separator/>
+    <separator/>
+    <separator/>
+    <menuitem action="FolderViewCSMSearchMessages"/>
+    <menuitem action="FolderViewCSMHelp"/>
   </popup>
 
 </ui>

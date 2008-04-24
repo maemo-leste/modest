@@ -124,6 +124,32 @@ struct _ModestMainWindowPrivate {
 /* globals */
 static GtkWindowClass *parent_class = NULL;
 
+static const GtkActionEntry modest_folder_view_action_entries [] = {
+
+	/* Folder View CSM actions */
+	{ "FolderViewCSMNewFolder", NULL, N_("mcen_ti_new_folder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "FolderViewCSMRenameFolder", NULL, N_("mcen_me_user_renamefolder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
+	{ "FolderViewCSMPasteMsgs", NULL, N_("mcen_me_inbox_paste"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_paste)},
+	{ "FolderViewCSMDeleteFolder", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
+	{ "FolderViewCSMSearchMessages", NULL, N_("mcen_me_inbox_search"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_search_messages) },
+	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_help) },
+};
+
+static const GtkActionEntry modest_header_view_action_entries [] = {
+
+	/* Header View CSM actions */
+	{ "HeaderViewCSMOpen",          NULL,  N_("mcen_me_inbox_open"),        NULL,       NULL, G_CALLBACK (modest_ui_actions_on_open) },
+	{ "HeaderViewCSMReply",         NULL,  N_("mcen_me_inbox_reply"),       NULL,      NULL, G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "HeaderViewCSMReplyAll",      NULL,  N_("mcen_me_inbox_replytoall"),  NULL,      NULL, G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "HeaderViewCSMForward",       NULL,  N_("mcen_me_inbox_forward"),     NULL,      NULL, G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "HeaderViewCSMCut",           NULL,  N_("mcen_me_inbox_cut"),         "<CTRL>X", NULL, G_CALLBACK (modest_ui_actions_on_cut) },
+	{ "HeaderViewCSMCopy",          NULL,  N_("mcen_me_inbox_copy"),        "<CTRL>C", NULL, G_CALLBACK (modest_ui_actions_on_copy) },
+	{ "HeaderViewCSMPaste",         NULL,  N_("mcen_me_inbox_paste"),       "<CTRL>V", NULL, G_CALLBACK (modest_ui_actions_on_paste) },
+	{ "HeaderViewCSMDelete",        NULL,  N_("mcen_me_inbox_delete"),      NULL,      NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
+	{ "HeaderViewCSMCancelSending", NULL,  N_("mcen_me_outbox_cancelsend"), NULL,      NULL, G_CALLBACK (modest_ui_actions_cancel_send) },
+	{ "HeaderViewCSMHelp",          NULL,  N_("mcen_me_inbox_help"),        NULL,      NULL, G_CALLBACK (modest_ui_actions_on_help) },
+};
+
 static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {
 	{ "ToggleFolders",     MODEST_STOCK_SPLIT_VIEW, N_("mcen_me_inbox_hidefolders"), "<CTRL>t", NULL, G_CALLBACK (modest_ui_actions_toggle_folders_view), TRUE },
 };
@@ -180,11 +206,6 @@ create_main_bar (GtkWidget *progress_bar)
         /* Status bar */
         status_bar = gtk_statusbar_new ();
         gtk_statusbar_set_has_resize_grip (GTK_STATUSBAR (status_bar), FALSE);
-
-        /* Progress bar */
-        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (progress_bar), 1.0);
-        gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (progress_bar),
-                                        PANGO_ELLIPSIZE_END);
 
         /* Pack */
         gtk_box_pack_start (GTK_BOX (main_bar), status_bar, TRUE, TRUE, 0);
@@ -489,6 +510,17 @@ modest_main_window_new (void)
 				      modest_action_entries,
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
+
+	gtk_action_group_add_actions (action_group,
+				      modest_header_view_action_entries,
+				      G_N_ELEMENTS (modest_header_view_action_entries),
+				      self);
+
+	gtk_action_group_add_actions (action_group,
+				      modest_folder_view_action_entries,
+				      G_N_ELEMENTS (modest_folder_view_action_entries),
+				      self);
+
 	gtk_action_group_add_toggle_actions (action_group,
 					     modest_toggle_action_entries,
 					     G_N_ELEMENTS (modest_toggle_action_entries),

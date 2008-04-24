@@ -37,7 +37,9 @@ static void modest_dimming_rules_group_class_init (ModestDimmingRulesGroupClass 
 static void modest_dimming_rules_group_init       (ModestDimmingRulesGroup *obj);
 static void modest_dimming_rules_group_finalize   (GObject *obj);
 
+#ifdef MODEST_PLATFORM_MAEMO
 static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
+#endif
 
 static void _add_rule (ModestDimmingRulesGroup *self,
 		       ModestDimmingRule *rule,
@@ -62,9 +64,6 @@ static GObjectClass *parent_class = NULL;
 
 static void _execute_dimming_rule (gpointer key, gpointer value, gpointer user_data);
 static void _execute_widget_dimming_rule (gpointer data, gpointer user_data);
-static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
-
-
 
 GType
 modest_dimming_rules_group_get_type (void)
@@ -189,11 +188,12 @@ _add_rule (ModestDimmingRulesGroup *self,
 	priv->window = MODEST_WINDOW (window);
 
 	widget = modest_dimming_rule_get_widget (rule);
+#ifdef MODEST_PLATFORM_MAEMO
 	/* Connect insensitive-presss handler to show notifications */
 	g_signal_connect (G_OBJECT (widget), "insensitive-press", 
 			  G_CALLBACK (_insensitive_press_callback), 
 			  rule);
-
+#endif
 	/* Register new dimming rule */		
 	modest_dimming_rule_set_group (rule, self);
 	action_path = modest_dimming_rule_get_action_path (rule);
@@ -327,6 +327,7 @@ _execute_widget_dimming_rule (gpointer data, gpointer user_data)
 	modest_dimming_rule_process (MODEST_DIMMING_RULE(data));
 }
 
+#ifdef MODEST_PLATFORM_MAEMO
 static void
 _insensitive_press_callback (GtkWidget *widget, gpointer user_data)
 {
@@ -357,3 +358,4 @@ _insensitive_press_callback (GtkWidget *widget, gpointer user_data)
 	if (notification != NULL)
 		g_free(notification);
 }
+#endif

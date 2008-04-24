@@ -1615,7 +1615,7 @@ modest_account_settings_dialog_check_allow_changes (ModestAccountSettingsDialog 
 		return;
 
 	incoming_settings = modest_account_settings_get_store_settings (self->settings);
-	server_account_name = modest_server_account_settings_get_account_name (incomming_settings);
+	server_account_name = modest_server_account_settings_get_account_name (incoming_settings);
 
 	username_known = modest_account_mgr_get_server_account_username_has_succeeded (self->account_manager, 
 										       server_account_name);

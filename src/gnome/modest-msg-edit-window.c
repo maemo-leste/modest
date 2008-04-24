@@ -1049,14 +1049,16 @@ modest_msg_edit_window_offer_attach_file           (ModestMsgEditWindow *window)
 
 	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
 		const gchar *uri = (const gchar *) uri_node->data;
-		modest_msg_edit_window_attach_file_one (window, uri);
+		modest_msg_edit_window_attach_file_one (window, uri, MODEST_MAX_ATTACHMENT_SIZE);
 	}
 	g_slist_foreach (uris, (GFunc) g_free, NULL);
 	g_slist_free (uris);
 }
 
-void                    
-modest_msg_edit_window_attach_file_one           (ModestMsgEditWindow *window, const gchar *uri)
+GnomeVFSFileSize
+modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window, 
+					const gchar *uri,
+					GnomeVFSFileSize allowed_size)
 {
 	GnomeVFSHandle *handle = NULL;
 	ModestMsgEditWindowPrivate *priv;
