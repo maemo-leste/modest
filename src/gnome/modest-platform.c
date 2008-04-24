@@ -123,8 +123,8 @@ modest_platform_get_icon (const gchar *name, guint icon_size)
 	pixbuf = gdk_pixbuf_new_from_file (name, &err);
 
 	if (!pixbuf) {
-		g_printerr ("modest: error while loading icon '%s': %s\n",
-			    name, err->message);
+/* 		g_printerr ("modest: error while loading icon '%s': %s\n", */
+/* 			    name, err->message); */
 		g_error_free (err);
 	}
 	
