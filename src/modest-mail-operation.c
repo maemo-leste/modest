@@ -1444,6 +1444,41 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	update_account_notify_user_and_free (info, new_headers);
 }
 
+static void
+inbox_refresh_status_update (GObject *obj,
+			     TnyStatus *status,
+			     gpointer user_data)
+{
+	UpdateAccountInfo *info = NULL;
+	ModestMailOperation *self = NULL;
+	ModestMailOperationPrivate *priv = NULL;
+	ModestMailOperationState *state;
+
+	g_return_if_fail (user_data != NULL);
+	g_return_if_fail (status != NULL);
+
+	/* Show only the status information we want */
+	if (status->code != TNY_FOLDER_STATUS_CODE_REFRESH)
+		return;
+
+	info = (UpdateAccountInfo *) user_data;
+	self = info->mail_op;
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION(self));
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+
+	priv->done = status->position;
+	priv->total = status->of_total;
+
+	state = modest_mail_operation_clone_state (self);
+
+	/* This is not a GDK lock because we are a Tinymail callback and
+	 * Tinymail already acquires the Gdk lock */
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+
+	g_slice_free (ModestMailOperationState, state);
+}
+
 static void 
 recurse_folders_async_cb (TnyFolderStore *folder_store, 
 			  gboolean canceled,
@@ -1544,7 +1579,7 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 			tny_folder_add_observer (inbox, info->inbox_observer);
 
 			/* Refresh the INBOX */
-			tny_folder_refresh_async (inbox, inbox_refreshed_cb, NULL, info);
+			tny_folder_refresh_async (inbox, inbox_refreshed_cb, inbox_refresh_status_update, info);
 			g_object_unref (inbox);
 		} else {
 			/* We could not perform the inbox refresh but
