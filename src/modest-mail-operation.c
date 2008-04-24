@@ -2855,7 +2855,6 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper->dest_folder = g_object_ref(folder);
 	helper->user_callback = user_callback;
 	helper->user_data = user_data;
-	helper->delete = delete_original;
 	helper->last_total_bytes = 0;
 	helper->sum_total_bytes = 0;
 	helper->total_bytes = compute_message_list_size (headers);
@@ -2899,11 +2898,14 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		leave_on_server = FALSE;
 	}
 
+	/* Do not delete messages if leave on server is TRUE */
+	helper->delete = (leave_on_server) ? FALSE : delete_original;
+
 	modest_mail_operation_notify_start (self);
 	tny_folder_transfer_msgs_async (src_folder, 
 					helper->headers, 
 					folder, 
-					(leave_on_server) ? FALSE : delete_original, 
+					helper->delete, 
 					transfer_msgs_cb, 
 					transfer_msgs_status_cb,
 					helper);
