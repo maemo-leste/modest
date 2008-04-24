@@ -700,7 +700,13 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		if (!*cancel) {
 			/* The password will be returned as the result,
 			 * but we need to tell tinymail about the username too: */
-			tny_account_set_user (account, username);
+
+			/* WARNING: I disabled setting username as this can cause locks. Anyway,
+			 * as now we have the password dialog username entry always dimmed
+			 * this shouldn't be a problem */
+
+			/* if (username) */
+			/* 	tny_account_set_user (account, username); */
 			
 			/* Do not save the password in gconf, because
 			 * the UI spec says "The password will never

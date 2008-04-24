@@ -526,7 +526,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			if (prev_row_reference != NULL) 
 				gtk_tree_row_reference_free (prev_row_reference);
 			if (prev_path != NULL) 
-				gtk_tree_path_free (prev_path);				
+				gtk_tree_path_free (prev_path);
 		}
 		
 		/* Update toolbar dimming state */
@@ -3464,10 +3464,15 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		gtk_entry_set_text (GTK_ENTRY (entry_username), initial_username);
 	/* Dim this if a connection has ever succeeded with this username,
 	 * as per the UI spec: */
-	const gboolean username_known = 
-		modest_account_mgr_get_server_account_username_has_succeeded(
-			modest_runtime_get_account_mgr(), server_account_name);
-	gtk_widget_set_sensitive (entry_username, !username_known);
+	/* const gboolean username_known =  */
+	/* 	modest_account_mgr_get_server_account_username_has_succeeded( */
+	/* 		modest_runtime_get_account_mgr(), server_account_name); */
+	/* gtk_widget_set_sensitive (entry_username, !username_known); */
+
+	/* We drop the username sensitive code and disallow changing it here
+	 * as tinymail does not support really changing the username in the callback
+	 */
+	gtk_widget_set_sensitive (entry_username, FALSE);
 
 #ifdef MODEST_PLATFORM_MAEMO
 	/* Auto-capitalization is the default, so let's turn it off: */

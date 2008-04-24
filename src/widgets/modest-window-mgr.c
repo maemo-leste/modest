@@ -915,6 +915,13 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	/* cancel open and receive operations */
 	cancel_window_operations (window);
 
+	/* Check if it's the topmost window, and remove the window from the stack.
+	 * This is needed for the cases there's no other topmost window that will
+	 * replace it in topmost handler.
+	 */
+	 if (window == priv->current_top)
+		 priv->current_top = NULL;
+
 	/* Disconnect the "window-state-event" handler, we won't need it anymore */
 	if (priv->window_state_uids) {
 #ifdef MODEST_PLATFORM_MAEMO
