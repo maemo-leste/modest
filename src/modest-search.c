@@ -346,7 +346,7 @@ search_mime_part_and_child_parts (TnyMimePart *part, ModestSearch *search)
 	gboolean found = FALSE;
 
 	/* Do not search into attachments */
-	if (modest_tny_mime_part_is_attachment_for_modest (part))
+	if (modest_tny_mime_part_is_attachment_for_modest (part) && !TNY_IS_MSG (part))
 		return FALSE;
 
 	#ifdef MODEST_HAVE_OGS
