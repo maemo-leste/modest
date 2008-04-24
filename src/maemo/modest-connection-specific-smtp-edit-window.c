@@ -52,6 +52,10 @@ G_DEFINE_TYPE (ModestConnectionSpecificSmtpEditWindow, modest_connection_specifi
 #define CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE(o) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW, ModestConnectionSpecificSmtpEditWindowPrivate))
 
+static void on_response (GtkDialog *dialog,
+			 gint arg1,
+			 gpointer user_data);
+
 typedef struct _ModestConnectionSpecificSmtpEditWindowPrivate ModestConnectionSpecificSmtpEditWindowPrivate;
 
 struct _ModestConnectionSpecificSmtpEditWindowPrivate
@@ -227,8 +231,16 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 			gtk_editable_select_region (GTK_EDITABLE (priv->entry_outgoingserver), 0, -1);
 			return;
 		}
+	} else {
+		/* Ask user if they want to discard changes */
+		if (priv->is_dirty) {
+			gint response;
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (user_data), 
+									    _("imum_nc_wizard_confirm_lose_changes"));
+			if (response == GTK_RESPONSE_CANCEL)
+				g_signal_stop_emission_by_name (dialog, "response");
+		}
 	}
-	
 }
 
 static void on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpointer user_data)
@@ -503,8 +515,8 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	return server_settings;
 }
 
-gboolean modest_connection_specific_smtp_edit_window_is_dirty(
-	ModestConnectionSpecificSmtpEditWindow *window)
+gboolean 
+modest_connection_specific_smtp_edit_window_is_dirty(ModestConnectionSpecificSmtpEditWindow *window)
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
