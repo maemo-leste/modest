@@ -1678,6 +1678,20 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 			if (selected_headers > 1) {
 				hildon_banner_show_information (NULL, NULL, _("mcen_ib_select_one_message"));
 				return TRUE;
+			} else {
+				GtkTreePath * cursor_path;
+				gtk_tree_view_get_cursor (GTK_TREE_VIEW (widget), &cursor_path, NULL);
+				if (cursor_path == NULL) {
+					GtkTreeSelection *selection;
+					GList *list;
+					selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+					list = gtk_tree_selection_get_selected_rows (selection, NULL);
+
+					if (list != NULL)
+						gtk_tree_view_set_cursor (GTK_TREE_VIEW (widget), (GtkTreePath *) list->data, NULL, FALSE);
+					g_list_foreach (list, (GFunc) gtk_tree_path_free, NULL);
+					g_list_free (list);
+				}
 			}
 		}
 	} else if (MODEST_IS_FOLDER_VIEW (widget) && event->keyval == GDK_Right)
