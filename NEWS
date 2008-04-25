@@ -1,3 +1,8 @@
+* 2008-W18:
+- some more low-memory fixes
+- many small UI issues were fixed
+- a couple of rare hangs / crashes fixed
+
 * 2008-W17:
 - fixes access to Gmail and some other TLS/SSL sites
 - improved low-memory handling
@@ -77,7 +82,7 @@
 - fixed the focus issue that caused addressbook not to work (editor)
 - fix saving of multiple attachments
 - various fixes related to dimming / focussing
-- performance improvements
+ - performance improvements
 - fixed maemo bug #2790 (wrong section in debian control)
 - improved the working of the cancel-button 
 
