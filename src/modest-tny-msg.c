@@ -312,8 +312,18 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 			old_cid = tny_mime_part_get_content_id (old_attachment);
 			attachment_part = copy_mime_part (old_attachment, err);
 			if (attachment_part != NULL) {
-				tny_mime_part_set_header_pair (attachment_part, "Content-Disposition", 
-							       add_inline?"inline":"attachment");
+				if (add_inline) {
+					tny_mime_part_set_header_pair (attachment_part, "Content-Disposition",
+								       "inline");
+				} else {
+					const gchar *filename;
+					filename = tny_mime_part_get_filename (old_attachment);
+					if (filename)
+						tny_mime_part_set_filename (attachment_part, filename);
+					else
+						tny_mime_part_set_header_pair (attachment_part, "Content-Disposition",
+									       "attachment");
+				}
 				tny_mime_part_set_transfer_encoding (TNY_MIME_PART (attachment_part), "base64");
 				ret = tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
 				if (old_cid)
