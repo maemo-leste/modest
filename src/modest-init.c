@@ -49,6 +49,8 @@
 #include "widgets/modest-global-settings-dialog.h"
 #include "modest-tny-msg.h"
 #include <libgnomevfs/gnome-vfs.h>
+#include <string.h>
+
 #ifdef MODEST_PLATFORM_MAEMO
 #include "modest-hildon-includes.h"
 #endif
@@ -178,17 +180,40 @@ modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, Modes
 }
 
 
+static gboolean
+force_ke_recv_load (void)
+{
+	if (strcmp ("cerm_device_memory_full",
+		    dgettext("ke-recv", "cerm_device_memory_full")) == 0) {
+		g_warning ("%s: cannot get translation for cerm_device_memory_full",
+			   __FUNCTION__);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
 gboolean
 modest_init (int argc, char *argv[])
 {
 	gboolean reset;
 
 	if (_is_initialized) {
-		g_printerr ("modest: modest_init_init_core may only be invoked once\n");
+		g_printerr ("modest: %s may only be invoked once\n", __FUNCTION__);
 		return FALSE;
 	} 
 	
 	init_i18n();
+
+	if (!force_ke_recv_load()) {
+		g_printerr ("modest: %s: ke-recv is missing "
+			    "or memory is very low\n", __FUNCTION__);
+		/* don't return FALSE here, because it might be that ke-recv is 
+		   missing. TODO: find a way to verify that
+		*/
+	}
+
 	init_debug_g_type();
 	init_debug_logging();
 
