@@ -409,7 +409,7 @@ on_show_opening_animation (gpointer userdata)
 }
 
 static gboolean
-on_hide_opening_animation (gpointer userdata)
+on_find_msg_async_destroy (gpointer userdata)
 {
 	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) userdata;
 
@@ -423,85 +423,69 @@ on_hide_opening_animation (gpointer userdata)
 		info->animation = NULL;
 	}
 
+	if (info->uri)
+		g_free (info->uri);
+	
+	if (info->account)
+		g_object_unref (info->account);
+
 	g_slice_free (OpenMsgPerformerInfo, info);
 	return FALSE;
 }
 
-static void 
-on_open_message_performer (gboolean canceled, 
-			   GError *err,
-			   GtkWindow *parent_window, 
-			   TnyAccount *account, 
-			   gpointer user_data)
+static void     
+find_msg_async_cb (TnyFolder *folder, 
+                   gboolean cancelled, 
+                   TnyMsg *msg, 
+                   GError *err, 
+                   gpointer user_data)
 {
-	OpenMsgPerformerInfo *info;
-	gchar *uri;
-	TnyHeader *header;
-	gchar *msg_uid;
-	ModestWindowMgr *win_mgr;
-	ModestWindow *msg_view = NULL;
-	gboolean is_draft = FALSE;
-	TnyFolder *folder = NULL;
-	TnyMsg *msg = NULL;
+        TnyHeader *header;
+        gchar *msg_uid;
+        ModestWindowMgr *win_mgr;
+        ModestWindow *msg_view = NULL;
+        gboolean is_draft = FALSE;
+        OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) user_data;
 
-	info = (OpenMsgPerformerInfo *) user_data;
-	uri = info->uri;
+        if (err || cancelled) {
+                g_idle_add (notify_msg_not_found_in_idle, NULL);
+                goto end;
+        }
 
-	if (canceled || err) {
-		goto frees;
-	}
+        header = tny_msg_get_header (msg);
+        if (header && (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)) {
+                g_object_unref (header);
+                g_object_unref (msg);
+                g_idle_add (notify_msg_not_found_in_idle, NULL);
+                goto end;
+        }
 
-	/* Get folder */
-	if (!account) {
-		ModestTnyAccountStore *account_store;
-		ModestTnyLocalFoldersAccount *local_folders_account;
-		
-		account_store = modest_runtime_get_account_store ();
-		local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
-			modest_tny_account_store_get_local_folders_account (account_store));
-		folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
-		g_object_unref (local_folders_account);
-	} else {
-		folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
-	}
+        msg_uid =  modest_tny_folder_get_header_unique_id (header);
+        win_mgr = modest_runtime_get_window_mgr ();
 
+        if (modest_tny_folder_is_local_folder (folder) &&
+            (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
+                is_draft = TRUE;
+        }
 
-	if (!folder) {
-		g_idle_add (notify_msg_not_found_in_idle, NULL);
-		goto frees;
-	}
-	
-	if (modest_tny_folder_is_local_folder (folder) &&
-	    (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS)) {
-		is_draft = TRUE;
-	}
+        if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
+                gtk_window_present (GTK_WINDOW(msg_view));
+        } else {
+                const gchar *modest_account_name;
+                TnyAccount *account;
 
-	/* Get message */
-	msg = tny_folder_find_msg (folder, uri, NULL);
-	if (!msg) {
-		g_idle_add (notify_msg_not_found_in_idle, NULL);
-		goto frees;
-	}
+                modest_window_mgr_register_header (win_mgr, header, NULL);
 
-	header = tny_msg_get_header (msg);
-	if (header && (tny_header_get_flags (header)&TNY_HEADER_FLAG_DELETED)) {
-		g_object_unref (header);
-		g_object_unref (msg);
-		g_idle_add (notify_msg_not_found_in_idle, NULL);
-		goto frees;
-	}
-	msg_uid =  modest_tny_folder_get_header_unique_id (header); 
-	win_mgr = modest_runtime_get_window_mgr ();
-
-	if (modest_window_mgr_find_registered_header (win_mgr, header, &msg_view)) {
-		gtk_window_present (GTK_WINDOW(msg_view));
-	} else {
-
-		/* g_debug ("creating new window for this msg"); */
-		modest_window_mgr_register_header (win_mgr, header, NULL);
-
-		/* Drafts will be opened in the editor, and others will be opened in the viewer */
-		if (is_draft) {
+                account = tny_folder_get_account (folder);
+                if (account) {
+                        modest_account_name =
+                                modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+                } else {
+                        modest_account_name = NULL;
+                }
+                        
+                /* Drafts will be opened in the editor, and others will be opened in the viewer */
+                if (is_draft) {
 			gchar *modest_account_name = NULL;
 			gchar *from_header;
 			
@@ -513,7 +497,7 @@ on_open_message_performer (gboolean canceled,
 					goto cleanup;
 				}
 			}
-		
+               
 			from_header = tny_header_dup_from (header);
 			if (from_header) {
 				GSList *accounts = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
@@ -528,19 +512,19 @@ on_open_message_performer (gboolean canceled,
 						break;
 					}
 					g_free (from);
-				}
+                               }
 				g_slist_foreach (accounts, (GFunc) g_free, NULL);
 				g_slist_free (accounts);
 				g_free (from_header);
 			}
-
+			
 			if (modest_account_name == NULL) {
 				modest_account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 			}
-			msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
+                        msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
 			g_free (modest_account_name);
 		} else {
-			TnyHeader *header;
+                        TnyHeader *header;
 			const gchar *modest_account_name;
 
 			if (account) {
@@ -549,14 +533,13 @@ on_open_message_performer (gboolean canceled,
 			} else {
 				modest_account_name = NULL;
 			}
-			
-			header = tny_msg_get_header (msg);
-			msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, msg_uid);
 
-			if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN)) {
+                        header = tny_msg_get_header (msg);
+                        msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, msg_uid);
+                        if (! (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN)) {
 				ModestMailOperation *mail_op;
 				
-				tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);	
+                                tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
 				/* Sync folder, we need this to save the seen flag */
 				mail_op = modest_mail_operation_new (NULL);
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
@@ -564,24 +547,63 @@ on_open_message_performer (gboolean canceled,
 				modest_mail_operation_sync_folder (mail_op, folder, FALSE);
 				g_object_unref (mail_op);
 			}
-			g_object_unref (header);			
-		}
+                        g_object_unref (header);
+                }
+
 		if (msg_view != NULL) {
 			modest_window_mgr_register_window (win_mgr, msg_view);
 			gtk_widget_show_all (GTK_WIDGET (msg_view));
 		}
-	}
+        }
 
 cleanup:
-	g_object_unref (header);
-	g_object_unref (msg);
-	g_object_unref (folder);
+        g_object_unref (header);
+        g_object_unref (msg);
 
- frees:
-	g_free (info->uri);
-	if (info->account)
-		g_object_unref (info->account);
-	g_idle_add (on_hide_opening_animation, info);
+end:
+        on_find_msg_async_destroy (info);
+}
+
+
+static void 
+on_open_message_performer (gboolean canceled, 
+			   GError *err,
+			   GtkWindow *parent_window, 
+			   TnyAccount *account, 
+			   gpointer user_data)
+{
+	OpenMsgPerformerInfo *info;
+	TnyFolder *folder = NULL;
+
+	info = (OpenMsgPerformerInfo *) user_data;
+        if (canceled || err) {
+                g_idle_add (notify_msg_not_found_in_idle, NULL);
+                on_find_msg_async_destroy (info);
+                return;
+        }
+
+        /* Get folder */
+        if (!account) {
+                ModestTnyAccountStore *account_store;
+                ModestTnyLocalFoldersAccount *local_folders_account;
+                
+                account_store = modest_runtime_get_account_store ();
+                local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
+                        modest_tny_account_store_get_local_folders_account (account_store));
+                folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
+                g_object_unref (local_folders_account);
+        } else {
+                folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), info->uri, NULL);
+        }
+        if (!folder) {
+                g_idle_add (notify_msg_not_found_in_idle, NULL);
+                on_find_msg_async_destroy (info);
+                return;
+        }
+        
+        /* Get message */
+        tny_folder_find_msg_async (folder, info->uri, find_msg_async_cb, NULL, info);
+        g_object_unref (folder);
 }
 
 static gboolean
@@ -653,10 +675,21 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 			g_object_unref (local_folders_account);
 		}
 		if (folder) {
-			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
-			if (msg) {
-				info->connect = FALSE;
-				g_object_unref (msg);
+			TnyDevice *device;
+			gboolean device_online;
+
+			device = modest_runtime_get_device();
+			device_online = tny_device_is_online (device);
+			if (device_online) {
+				info->connect = TRUE;
+			} else {
+				TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
+				if (msg) {
+					info->connect = FALSE;
+					g_object_unref (msg);
+				} else {
+					info->connect = TRUE;
+				}
 			}
 			g_object_unref (folder);
 		}
@@ -1874,6 +1907,8 @@ static gboolean
 notify_msg_not_found_in_idle (gpointer user_data)
 {
 	modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), FALSE);
+
+	g_idle_add (notify_error_in_dbus_callback, NULL);
 
 	return FALSE;
 }
