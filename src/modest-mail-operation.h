@@ -592,6 +592,7 @@ void          modest_mail_operation_remove_msgs     (ModestMailOperation *self,
  * modest_mail_operation_get_msg:
  * @self: a #ModestMailOperation
  * @header_list: the #TnyHeader of the message to get
+ * @progress_feedback: a #gboolean. If %TRUE, we'll get progress bar feedback.
  * @user_callback: a #GetMsgAsyncUserCallback function to call after tinymail callback execution.
  * @user_data: generic user data which will be passed to @user_callback function.
  * 
@@ -600,7 +601,8 @@ void          modest_mail_operation_remove_msgs     (ModestMailOperation *self,
  * #ModestMailOperation should be added to #ModestMailOperationQueue
  **/
 void          modest_mail_operation_get_msg     (ModestMailOperation *self,
-						 TnyHeader *header, 
+						 TnyHeader *header,
+						 gboolean progress_feedback,
 						 GetMsgAsyncUserCallback user_callback,
 						 gpointer user_data);
 /**

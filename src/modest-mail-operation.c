@@ -2200,6 +2200,7 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 void 
 modest_mail_operation_get_msg (ModestMailOperation *self,
 			       TnyHeader *header,
+			       gboolean progress_feedback,
 			       GetMsgAsyncUserCallback user_callback,
 			       gpointer user_data)
 {
@@ -2221,10 +2222,14 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 	
 	/* Check for cached messages */
-	if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
-		priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
-	else 
-		priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+	if (progress_feedback) {
+		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
+		else 
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+	} else {
+		priv->op_type = MODEST_MAIL_OPERATION_TYPE_UNKNOWN;
+	}
 	
 	/* Create the helper */
 	helper = g_slice_new0 (GetMsgInfo);

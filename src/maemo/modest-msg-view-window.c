@@ -1646,7 +1646,7 @@ message_reader_performer (gboolean canceled,
 								 NULL, NULL);
 				
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg (mail_op, info->header, view_msg_cb, info->row_reference);
+	modest_mail_operation_get_msg (mail_op, info->header, TRUE, view_msg_cb, info->row_reference);
 	g_object_unref (mail_op);
 
 	/* Update dimming rules */

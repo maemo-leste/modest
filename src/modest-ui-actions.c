@@ -1702,6 +1702,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				
 				modest_mail_operation_get_msg (mail_op,
 							       header,
+							       TRUE,
 							       reply_forward_cb,
 							       rf_helper);
 				/* Clean */
@@ -4863,7 +4864,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 									 modest_ui_actions_disk_operations_error_handler,
 									 NULL, NULL);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		modest_mail_operation_get_msg (mail_op, header, open_msg_for_purge_cb, win);
+		modest_mail_operation_get_msg (mail_op, header, FALSE, open_msg_for_purge_cb, win);
 		
 		g_object_unref (mail_op);
 	}
