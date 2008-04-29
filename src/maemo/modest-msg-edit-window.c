@@ -269,6 +269,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *find_toolbar;
 	gchar       *last_search;
 
+	GtkWidget   *font_dialog;
+
 	GtkWidget   *scroll;
 	guint        scroll_drag_timeout_id;
 	gdouble      last_upper;
@@ -440,6 +442,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->scroll_drag_timeout_id = 0;
 	priv->last_upper = 0.0;
+
+	priv->font_dialog = NULL;
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),"applications_email_editor");
@@ -918,6 +922,10 @@ modest_msg_edit_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_edit_window_disconnect_signals (MODEST_WINDOW (obj));
+
+	if (priv->font_dialog != NULL) {
+		gtk_dialog_response (GTK_DIALOG (priv->font_dialog), GTK_RESPONSE_NONE);
+	}
 
 	if (priv->clipboard_text != NULL) {
 		g_free (priv->clipboard_text);
@@ -2874,7 +2882,9 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 		      NULL);
 
 	gtk_widget_show_all (dialog);
+	priv->font_dialog = dialog;
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
+	priv->font_dialog = NULL;
 	if (response == GTK_RESPONSE_OK) {
 
 		g_object_get( dialog,
