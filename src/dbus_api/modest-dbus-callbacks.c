@@ -601,6 +601,7 @@ on_open_message_performer (gboolean canceled,
                 return;
         }
         
+	info->animation_timeout = g_timeout_add (1000, on_show_opening_animation, info);
         /* Get message */
         tny_folder_find_msg_async (folder, info->uri, find_msg_async_cb, NULL, info);
         g_object_unref (folder);
@@ -658,7 +659,8 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 			info->account = g_object_ref (account);
 		info->uri = uri;
 		info->connect = TRUE;
-		info->animation_timeout = g_timeout_add (1000, on_show_opening_animation, info);
+		info->animation = NULL;
+		info->animation_timeout = 0;
 
 		/* Try to get the message, if it's already downloaded
 		   we don't need to connect */
