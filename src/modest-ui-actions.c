@@ -3136,6 +3136,7 @@ on_rename_folder_cb (ModestMailOperation *mail_op,
 	} else {
 		modest_folder_view_select_first_inbox_or_local (folder_view);
 	}
+	gtk_widget_grab_focus (GTK_WIDGET (folder_view));	
 }
 
 static void

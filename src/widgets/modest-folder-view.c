@@ -1734,7 +1734,7 @@ xfer_folder_cb (ModestMailOperation *mail_op,
 	if (new_folder) {	
 		/* Select the folder */
 		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (user_data), 
-						  new_folder, TRUE);
+						  new_folder, FALSE);
 	}
 }
 
