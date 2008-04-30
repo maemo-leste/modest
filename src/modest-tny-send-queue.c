@@ -192,6 +192,11 @@ modest_tny_send_queue_to_string (ModestTnySendQueue *self)
 	return str;
 }
 
+typedef struct {
+	TnySendQueueAddCallback callback;
+	gpointer user_data;
+} AddAsyncHelper;
+
 static void
 _on_added_to_outbox (TnySendQueue *self, 
 		     gboolean cancelled, 
@@ -204,6 +209,7 @@ _on_added_to_outbox (TnySendQueue *self,
 	SendInfo *info = NULL;
 	GList* existing = NULL;
 	gchar* msg_id = NULL;
+	AddAsyncHelper *helper;
 
 	g_return_if_fail (TNY_IS_SEND_QUEUE(self));
 	g_return_if_fail (TNY_IS_CAMEL_MSG(msg));
@@ -231,6 +237,12 @@ _on_added_to_outbox (TnySendQueue *self,
 
  end:
 	g_object_unref (G_OBJECT(header));
+
+	/* Call the user callback */
+	helper = (AddAsyncHelper *) user_data;
+	if (helper->callback)
+		helper->callback (self, cancelled, msg, err, helper->user_data);
+	g_slice_free (AddAsyncHelper, helper);
 }
 
 static void
@@ -288,8 +300,15 @@ modest_tny_send_queue_add_async (TnySendQueue *self,
 				 TnyStatusCallback status_callback, 
 				 gpointer user_data)
 {
+	AddAsyncHelper *helper = g_slice_new0 (AddAsyncHelper);
+	helper->callback = callback;
+	helper->user_data = user_data;
+
 	/* Call the superclass passing our own callback */
-	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_async (self, msg, _on_added_to_outbox, NULL, NULL);
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->add_async (self, msg, 
+							     _on_added_to_outbox, 
+							     status_callback, 
+							     helper);
 }
 
 

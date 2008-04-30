@@ -48,6 +48,7 @@ typedef enum _ModestErrorCode {
 	MODEST_MAIL_OPERATION_ERROR_RETRIEVAL_NUMBER_LIMIT, /* There were too many messages to retrieve. */
 	MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED,
 	MODEST_MAIL_OPERATION_ERROR_FILE_IO, /* couldn't retrieve a file to construct a mail */
+	MODEST_MAIL_OPERATION_ERROR_SEND_QUEUE_ADD_ERROR,
 } ModestErrorCode;
 
 G_END_DECLS

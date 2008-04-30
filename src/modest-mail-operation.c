@@ -600,6 +600,35 @@ modest_mail_operation_clone_state (ModestMailOperation *self)
 /* ************************** SEND   ACTIONS ************************* */
 /* ******************************************************************* */
 
+static void
+send_mail_on_added_to_outbox (TnySendQueue *send_queue, 
+			      gboolean cancelled, 
+			      TnyMsg *msg, 
+			      GError *err,
+			      gpointer user_data)
+{
+	ModestMailOperationPrivate *priv;
+	ModestMailOperation *self;
+
+	self = MODEST_MAIL_OPERATION (user_data);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	if (cancelled || err)
+		goto end;
+
+	if (err) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_SEND_QUEUE_ADD_ERROR,
+			     "Error adding a msg to the send queue\n");
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
+	} else {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
+ end:
+	modest_mail_operation_notify_end (self);
+	g_object_unref (self);
+}
+
 void
 modest_mail_operation_send_mail (ModestMailOperation *self,
 				 TnyTransportAccount *transport_account,
@@ -631,22 +660,15 @@ modest_mail_operation_send_mail (ModestMailOperation *self,
 			     "modest: could not find send queue for account\n");
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		modest_mail_operation_notify_end (self);
-
 	} else {
-		/* Add the msg to the queue */
 		modest_mail_operation_notify_start (self);
-
-		tny_send_queue_add_async (send_queue, msg, NULL, NULL, NULL);
-		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), FALSE);
-
-		if (priv->error) {
-			priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
-		} else {
-			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-		}
-		modest_mail_operation_notify_end (self);
+		/* Add the msg to the queue. The callback will
+		   finalize the mail operation */
+		tny_send_queue_add_async (send_queue, msg, send_mail_on_added_to_outbox, 
+					  NULL, g_object_ref (self));
+		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
+								  FALSE);
 	}
-
 }
 
 
