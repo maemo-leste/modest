@@ -656,7 +656,6 @@ show_check_names_banner (gpointer userdata)
 static void
 hide_check_names_banner (GtkWidget **banner, guint banner_timeout)
 {
-	g_source_remove (banner_timeout);
 	if (*banner != NULL) {
 		gtk_widget_destroy (*banner);
 		*banner = NULL;

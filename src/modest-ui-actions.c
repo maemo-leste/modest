@@ -848,7 +848,8 @@ open_msg_banner_idle (gpointer userdata)
 	gdk_threads_enter ();
 	banner_info->idle_handler = 0;
 	banner_info->banner = modest_platform_animation_banner (NULL, NULL, banner_info->message);
-	g_object_ref (banner_info->banner);
+	if (banner_info)
+		g_object_ref (banner_info->banner);
 	
 	gdk_threads_leave ();
 
@@ -3778,8 +3779,10 @@ paste_as_attachment_free (gpointer data)
 {
 	PasteAsAttachmentHelper *helper = (PasteAsAttachmentHelper *) data;
 
-	gtk_widget_destroy (helper->banner);
-	g_object_unref (helper->banner);
+	if (helper->banner) {
+		gtk_widget_destroy (helper->banner);
+		g_object_unref (helper->banner);
+	}
 	g_free (helper);
 }
 
@@ -3833,7 +3836,6 @@ modest_ui_actions_on_paste (GtkAction *action,
 			mail_op = modest_mail_operation_new (G_OBJECT (window));
 			if (helper->banner != NULL) {
 				g_object_ref (G_OBJECT (helper->banner));
-				gtk_window_set_modal (GTK_WINDOW (helper->banner), FALSE);
 				gtk_widget_show (GTK_WIDGET (helper->banner));
 			}
 
@@ -4669,8 +4671,10 @@ move_to_cb (ModestMailOperation *mail_op,
         }
 
 	/* Close the "Pasting" information banner */
-	gtk_widget_destroy (GTK_WIDGET(helper->banner));
-	g_object_unref (helper->banner);
+	if (helper->banner) {
+		gtk_widget_destroy (GTK_WIDGET(helper->banner));
+		g_object_unref (helper->banner);
+	}
 	if (helper->reference != NULL)
 		gtk_tree_row_reference_free (helper->reference);
 	g_free (helper);
@@ -5039,7 +5043,6 @@ xfer_messages_performer  (gboolean canceled,
 							   _CS("ckct_nw_pasting"));
 	if (helper->banner != NULL)  {
 		g_object_ref (helper->banner);
-		gtk_window_set_modal (GTK_WINDOW(helper->banner), FALSE);
 		gtk_widget_show (GTK_WIDGET(helper->banner));
 	}
 
@@ -5097,7 +5100,6 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 			_CS("ckct_nw_pasting"));
 	if (helper->banner != NULL)  {
 		g_object_ref (helper->banner);
-		gtk_window_set_modal (GTK_WINDOW(helper->banner), FALSE);
 		gtk_widget_show (GTK_WIDGET(helper->banner));
 	}
 	/* Clean folder on header view before moving it */

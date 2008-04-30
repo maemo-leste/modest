@@ -1659,9 +1659,11 @@ modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *text)
 {
 	GtkWidget *banner;
-	ModestWindowMgr *mgr;
+	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
-	mgr = modest_runtime_get_window_mgr ();
+	if (modest_window_mgr_num_windows (mgr) == 0)
+		return;
+
 	banner = hildon_banner_show_information (parent, icon_name, text);
 
 	modest_window_mgr_register_banner (mgr);
@@ -1676,6 +1678,10 @@ modest_platform_information_banner_with_timeout (GtkWidget *parent,
 						 gint timeout)
 {
 	GtkWidget *banner;
+
+	if (modest_window_mgr_num_windows (modest_runtime_get_window_mgr ()) == 0)
+		return;
+
 	banner = hildon_banner_show_information (parent, icon_name, text);
 	hildon_banner_set_timeout(HILDON_BANNER(banner), timeout);
 }
@@ -1688,6 +1694,9 @@ modest_platform_animation_banner (GtkWidget *parent,
 	GtkWidget *inf_note = NULL;
 
 	g_return_val_if_fail (text != NULL, NULL);
+
+	if (modest_window_mgr_num_windows (modest_runtime_get_window_mgr ()) == 0)
+		return NULL;
 
 	/* If the parent is not visible then do not show */
 	if (parent && !GTK_WIDGET_VISIBLE (parent))
