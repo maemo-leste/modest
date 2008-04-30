@@ -958,9 +958,11 @@ open_msg_cb (ModestMailOperation *mail_op,
 					if (strcmp (from_header_email, from_email) == 0) {
 						g_free (account);
 						account = g_strdup (node->data);
+						g_free (from_email);
 						g_free (from);
 						break;
 					}
+					g_free (from_email);
 					g_free (from);
 				}
 			}
