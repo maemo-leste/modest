@@ -345,25 +345,6 @@ on_account_removed (TnyAccountStore *account_store,
 
 
 static void
-on_account_changed (TnyAccountStore *account_store, 
-		    TnyAccount *account,
-		    gpointer user_data)
-{
-	ModestAccountView *self = NULL;
-	ModestAccountViewPrivate *priv = NULL;
-
-	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
-	g_return_if_fail (account);
-	g_return_if_fail (TNY_IS_ACCOUNT (account));
-
-	self = MODEST_ACCOUNT_VIEW (user_data);
-	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
-	
-	/* Update account view */
-/* 	update_account_view (priv->account_mgr, self); */
-}
-
-static void
 on_account_default_toggled (GtkCellRendererToggle *cell_renderer, 
 			    gchar *path,
 			    ModestAccountView *self)
@@ -511,12 +492,6 @@ init_view (ModestAccountView *self)
 					   G_OBJECT (modest_runtime_get_account_store ()),
 					   "account_inserted",
 					   G_CALLBACK(on_account_inserted), 
-					   self);
-	priv->sig_handlers = 
-		modest_signal_mgr_connect (priv->sig_handlers, 
-					   G_OBJECT (modest_runtime_get_account_store ()),
-					   "account_changed",
-					   G_CALLBACK(on_account_changed), 
 					   self);
 	priv->sig_handlers = 
 		modest_signal_mgr_connect (priv->sig_handlers, 

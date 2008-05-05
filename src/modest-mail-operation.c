@@ -1306,6 +1306,9 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 	mgr = modest_runtime_get_account_mgr ();
 
+	/* Set the last updated as the current time, do it even if the inbox refresh failed */
+	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
+
 	if (canceled || err) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		if (err)
@@ -1314,6 +1317,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 				     "canceled");
+
 		/* Notify the user about the error and then exit */
 		update_account_notify_user_and_free (info, NULL);
 		return;
@@ -1352,9 +1356,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	g_object_unref (info->inbox_observer);
 	info->inbox_observer = NULL;
 
-	/* Update the last updated key, even if we don't have to get new headers */
-	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
-	
 	if (new_headers_array->len == 0)
 		goto send_mail;
 
