@@ -860,21 +860,22 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 			  G_CALLBACK (entry_changed),
 			  dialog);
 
+
+	/* Some locales like pt_BR need this to get the full window
+	   title shown */
+	gtk_widget_set_size_request (GTK_WIDGET (dialog), 300, -1);
+
 	/* Create the hbox */
 	hbox = gtk_hbox_new (FALSE, 12);
-	gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
 
 	/* Add hbox to dialog */
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			    hbox, FALSE, FALSE, 0);
-
-	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
-
-	/* Some locales like pt_BR need this to get the full window
-	   title shown */
-	gtk_widget_set_size_request (GTK_WIDGET (dialog), 300, -1);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog));
+	gtk_widget_show_all (GTK_WIDGET(dialog));
 		
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	if (result == GTK_RESPONSE_ACCEPT)
