@@ -95,34 +95,30 @@ static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
 static void modest_msg_view_window_clipboard_owner_change (GtkClipboard *clipboard,
 							   GdkEvent *event,
 							   ModestMsgViewWindow *window);
-void modest_msg_view_window_on_row_changed(
-		GtkTreeModel *header_model,
-		GtkTreePath *arg1,
-		GtkTreeIter *arg2,
-		ModestMsgViewWindow *window);
 
-void modest_msg_view_window_on_row_deleted(
-		GtkTreeModel *header_model,
-		GtkTreePath *arg1,
-		ModestMsgViewWindow *window);
+static void modest_msg_view_window_on_row_changed (GtkTreeModel *header_model,
+						   GtkTreePath *arg1,
+						   GtkTreeIter *arg2,
+						   ModestMsgViewWindow *window);
 
-void modest_msg_view_window_on_row_inserted(
-		GtkTreeModel *header_model,
-		GtkTreePath *tree_path,
-		GtkTreeIter *tree_iter,
-		ModestMsgViewWindow *window);
+static void modest_msg_view_window_on_row_deleted (GtkTreeModel *header_model,
+						   GtkTreePath *arg1,
+						   ModestMsgViewWindow *window);
 
-void modest_msg_view_window_on_row_reordered(
-		GtkTreeModel *header_model,
-		GtkTreePath *arg1,
-		GtkTreeIter *arg2,
-		gpointer arg3,
-		ModestMsgViewWindow *window);
+static void modest_msg_view_window_on_row_inserted (GtkTreeModel *header_model,
+						    GtkTreePath *tree_path,
+						    GtkTreeIter *tree_iter,
+						    ModestMsgViewWindow *window);
 
-void modest_msg_view_window_update_model_replaced(
-		ModestHeaderViewObserver *window,
-		GtkTreeModel *model,
-		const gchar *tny_folder_id);
+static void modest_msg_view_window_on_row_reordered (GtkTreeModel *header_model,
+						     GtkTreePath *arg1,
+						     GtkTreeIter *arg2,
+						     gpointer arg3,
+						     ModestMsgViewWindow *window);
+
+static void modest_msg_view_window_update_model_replaced (ModestHeaderViewObserver *window,
+							  GtkTreeModel *model,
+							  const gchar *tny_folder_id);
 
 static void cancel_progressbar  (GtkToolButton *toolbutton,
 				 ModestMsgViewWindow *self);
@@ -157,6 +153,7 @@ static void init_window (ModestMsgViewWindow *obj);
 
 static gboolean msg_is_visible (TnyHeader *header, gboolean check_outbox);
 
+static void check_dimming_rules_after_change (ModestMsgViewWindow *window);
 
 /* list my signals */
 enum {
@@ -882,7 +879,9 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 		}
 	}
 
-	priv->header_model = g_object_ref(model);
+	/* Setup row references and connect signals */
+	priv->header_model = g_object_ref (model);
+
 	if (row_reference) {
 		priv->row_reference = gtk_tree_row_reference_copy (row_reference);
 		priv->next_row_reference = gtk_tree_row_reference_copy (row_reference);
@@ -892,22 +891,23 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 		priv->next_row_reference = NULL;
 	}
 
-	priv->row_changed_handler = g_signal_connect(
-			GTK_TREE_MODEL(model), "row-changed",
-			G_CALLBACK(modest_msg_view_window_on_row_changed),
-			window);
-	priv->row_deleted_handler = g_signal_connect(
-			GTK_TREE_MODEL(model), "row-deleted",
-			G_CALLBACK(modest_msg_view_window_on_row_deleted),
-			window);
-	priv->row_inserted_handler = g_signal_connect (
-			GTK_TREE_MODEL(model), "row-inserted",
-			G_CALLBACK(modest_msg_view_window_on_row_inserted),
-			window);
-	priv->rows_reordered_handler = g_signal_connect(
-			GTK_TREE_MODEL(model), "rows-reordered",
-			G_CALLBACK(modest_msg_view_window_on_row_reordered),
-			window);
+	/* Connect signals */
+	priv->row_changed_handler = 
+		g_signal_connect (GTK_TREE_MODEL(model), "row-changed",
+				  G_CALLBACK(modest_msg_view_window_on_row_changed),
+				  window);
+	priv->row_deleted_handler = 
+		g_signal_connect (GTK_TREE_MODEL(model), "row-deleted",
+				  G_CALLBACK(modest_msg_view_window_on_row_deleted),
+				  window);
+	priv->row_inserted_handler = 
+		g_signal_connect (GTK_TREE_MODEL(model), "row-inserted",
+				  G_CALLBACK(modest_msg_view_window_on_row_inserted),
+				  window);
+	priv->rows_reordered_handler = 
+		g_signal_connect(GTK_TREE_MODEL(model), "rows-reordered",
+				 G_CALLBACK(modest_msg_view_window_on_row_reordered),
+				 window);
 
 	if (header_view != NULL){
 		modest_header_view_add_observer(header_view,
@@ -990,20 +990,52 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	return MODEST_WINDOW(obj);
 }
 
-void modest_msg_view_window_on_row_changed(
-		GtkTreeModel *header_model,
-		GtkTreePath *arg1,
-		GtkTreeIter *arg2,
-		ModestMsgViewWindow *window){
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+static void
+modest_msg_view_window_on_row_changed (GtkTreeModel *header_model,
+				       GtkTreePath *arg1,
+				       GtkTreeIter *arg2,
+				       ModestMsgViewWindow *window)
+{
+	check_dimming_rules_after_change (window);
 }
 
-void modest_msg_view_window_on_row_deleted(
-		GtkTreeModel *header_model,
-		GtkTreePath *arg1,
-		ModestMsgViewWindow *window){
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+static void 
+modest_msg_view_window_on_row_deleted(GtkTreeModel *header_model,
+				      GtkTreePath *arg1,
+				      ModestMsgViewWindow *window)
+{
+	check_dimming_rules_after_change (window);
 }
+
+static gboolean
+check_dimming_rules_after_change_in_idle (gpointer data)
+{
+	/* The window could have dissapeared */
+	if (MODEST_IS_WINDOW (data)) {
+		ModestWindow *win = MODEST_WINDOW (data);
+		gdk_threads_enter ();
+		modest_ui_actions_check_menu_dimming_rules (win);
+		modest_ui_actions_check_toolbar_dimming_rules (win);
+		gdk_threads_leave ();
+	}
+
+	return FALSE;
+}
+
+static void
+check_dimming_rules_after_change (ModestMsgViewWindow *window)
+{
+	static guint dimming_delayer = 0;
+
+	if (dimming_delayer > 0)
+		g_source_remove (dimming_delayer);
+
+	/* We're expecting a lot of changes at the same time so don't
+	   need to check dimming rules for every change that
+	   happens */
+	dimming_delayer = g_timeout_add (100, check_dimming_rules_after_change_in_idle, window);
+}
+
 
 /* On insertions we check if the folder still has the message we are
  * showing or do not. If do not, we do nothing. Which means we are still
@@ -1016,90 +1048,122 @@ void modest_msg_view_window_on_row_deleted(
  * inserted into the model again for example if it is removed by the
  * imap server and the header view is refreshed.)
  */
-void modest_msg_view_window_on_row_inserted(
-		GtkTreeModel *new_model,
-		GtkTreePath *tree_path,
-		GtkTreeIter *tree_iter,
-		ModestMsgViewWindow *window){
+static void 
+modest_msg_view_window_on_row_inserted (GtkTreeModel *model,
+				        GtkTreePath *tree_path,
+					GtkTreeIter *tree_iter,
+					ModestMsgViewWindow *window)
+{
 	ModestMsgViewWindowPrivate *priv = NULL; 
 	TnyHeader *header = NULL;
-	gchar *uid = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
-
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	
-	/* If we already has a model attached then the message shown by
-	 * msg-view is in it, and thus we do not need any actions but
-	 * to check the dimming rules.*/
-	if(priv->header_model != NULL){
-		if (priv->row_reference) {
-			gtk_tree_row_reference_free(priv->next_row_reference);
-			priv->next_row_reference = gtk_tree_row_reference_copy(
-				priv->row_reference);
-			select_next_valid_row (priv->header_model,
-					       &(priv->next_row_reference), FALSE);
-		}
-		modest_ui_actions_check_toolbar_dimming_rules (
-				MODEST_WINDOW (window));
-		return;
-	}
 
+	g_assert (model == priv->header_model);
+	
 	/* Check if the newly inserted message is the same we are actually
 	 * showing. IF not, we should remain detached from the header model
-	 * and thus prev and next toolbarbuttons should remain dimmed. */
-	gtk_tree_model_get (new_model, tree_iter, 
-			TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &header, -1);
-	uid = modest_tny_folder_get_header_unique_id(header);
-	if(!g_str_equal(priv->msg_uid, uid)){
+	 * and thus prev and next toolbar buttons should remain dimmed. */
+	gtk_tree_model_get (model, tree_iter, 
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, 
+			    &header, -1);
+
+	if (TNY_IS_HEADER (header)) {
+		gchar *uid = NULL;
+
+		uid = modest_tny_folder_get_header_unique_id (header);
+		if (!g_str_equal(priv->msg_uid, uid)) {
+			check_dimming_rules_after_change (window);
+			g_free(uid);
+			g_object_unref (G_OBJECT(header));
+			return;
+		}
 		g_free(uid);
 		g_object_unref(G_OBJECT(header));
-		header = NULL;
-		return;
 	}
-	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN))
-		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
-	g_object_unref(G_OBJECT(header));
-	header = NULL;
-	g_free(uid);
+
+	if (priv->row_reference) {
+		gtk_tree_row_reference_free (priv->row_reference); 
+	}
 
 	/* Setup row_reference for the actual msg. */
-	priv->row_reference = gtk_tree_row_reference_new(
-			new_model, tree_path);
-	if(priv->row_reference == NULL){
+	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, tree_path);
+	if (priv->row_reference == NULL) {
 		g_warning("No reference for msg header item.");
 		return;
 	}
 
-	/* Attach new_model and connect some callback to it to become able
-	 * to detect changes in header-view. */
-	priv->header_model = g_object_ref(new_model);
-	priv->row_changed_handler = g_signal_connect (new_model, "row-changed",
-						      G_CALLBACK (modest_msg_view_window_on_row_changed),
-						      window);
-	priv->row_deleted_handler = g_signal_connect (new_model, "row-deleted",
-						      G_CALLBACK (modest_msg_view_window_on_row_deleted),
-						      window);
-	priv->rows_reordered_handler = g_signal_connect (new_model, "rows-reordered",
-							 G_CALLBACK (modest_msg_view_window_on_row_reordered),
-							 window);
-
 	/* Now set up next_row_reference. */
-	priv->next_row_reference = gtk_tree_row_reference_copy(
-			priv->row_reference);
-	select_next_valid_row (priv->header_model,
-			&(priv->next_row_reference), FALSE);
+	if (priv->next_row_reference) {
+		gtk_tree_row_reference_free (priv->next_row_reference); 
+	}
 
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+	select_next_valid_row (priv->header_model,
+			       &(priv->next_row_reference), FALSE);
+
+	/* Connect the remaining callbacks to become able to detect
+	 * changes in header-view. */
+	priv->row_changed_handler = 
+		g_signal_connect (priv->header_model, "row-changed",
+				  G_CALLBACK (modest_msg_view_window_on_row_changed),
+				  window);
+	priv->row_deleted_handler = 
+		g_signal_connect (priv->header_model, "row-deleted",
+				  G_CALLBACK (modest_msg_view_window_on_row_deleted),
+				  window);
+	priv->rows_reordered_handler = 
+		g_signal_connect (priv->header_model, "rows-reordered",
+				  G_CALLBACK (modest_msg_view_window_on_row_reordered),
+				  window);
+
+	check_dimming_rules_after_change (window);	
 }
 
-void modest_msg_view_window_on_row_reordered(
-		GtkTreeModel *header_model,
-		GtkTreePath *arg1,
-		GtkTreeIter *arg2,
-		gpointer arg3,
-		ModestMsgViewWindow *window){
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+static void 
+modest_msg_view_window_on_row_reordered (GtkTreeModel *header_model,
+					 GtkTreePath *arg1,
+					 GtkTreeIter *arg2,
+					 gpointer arg3,
+					 ModestMsgViewWindow *window)
+{
+	ModestMsgViewWindowPrivate *priv = NULL; 
+	gboolean already_changed = FALSE;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(window);
+
+	/* If the current row was reordered select the proper next
+	   valid row. The same if the next row reference changes */
+	if (priv->row_reference && 
+	    gtk_tree_row_reference_valid (priv->row_reference)) {
+		GtkTreePath *path;
+		path = gtk_tree_row_reference_get_path (priv->row_reference);
+		if (gtk_tree_path_compare (path, arg1) == 0) {
+			if (priv->next_row_reference) {
+				gtk_tree_row_reference_free (priv->next_row_reference);
+			}
+			priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+			select_next_valid_row (header_model, &(priv->next_row_reference), FALSE);
+			already_changed = TRUE;
+		}
+		gtk_tree_path_free (path);
+	}
+	if (!already_changed &&
+	    priv->next_row_reference &&
+	    gtk_tree_row_reference_valid (priv->next_row_reference)) {
+		GtkTreePath *path;
+		path = gtk_tree_row_reference_get_path (priv->next_row_reference);
+		if (gtk_tree_path_compare (path, arg1) == 0) {
+			if (priv->next_row_reference) {
+				gtk_tree_row_reference_free (priv->next_row_reference);
+			}
+			priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+			select_next_valid_row (header_model, &(priv->next_row_reference), FALSE);
+		}
+		gtk_tree_path_free (path);
+	}
+	check_dimming_rules_after_change (window);
 }
 
 /* The modest_msg_view_window_update_model_replaced implements update
@@ -1111,10 +1175,11 @@ void modest_msg_view_window_on_row_reordered(
  * the new model. In this case the view will be detached from it's
  * header folder. From this point the next/prev buttons are dimmed.
  */
-void 
-modest_msg_view_window_update_model_replaced(ModestHeaderViewObserver *observer,
-					     GtkTreeModel *model,
-					     const gchar *tny_folder_id){
+static void 
+modest_msg_view_window_update_model_replaced (ModestHeaderViewObserver *observer,
+					      GtkTreeModel *model,
+					      const gchar *tny_folder_id)
+{
 	ModestMsgViewWindowPrivate *priv = NULL; 
 	ModestMsgViewWindow *window = NULL;
 
@@ -1128,54 +1193,61 @@ modest_msg_view_window_update_model_replaced(ModestHeaderViewObserver *observer,
 	 * not care about it's model (msg list). Else if the
 	 * header-view shows the folder the msg shown by us is in, we
 	 * shall replace our model reference and make some check. */
-	if(tny_folder_id == NULL || 
+	if(model == NULL || tny_folder_id == NULL || 
 	   (priv->header_folder_id && !g_str_equal(tny_folder_id, priv->header_folder_id)))
 		return;
-	
+
 	/* Model is changed(replaced), so we should forget the old
 	 * one. Because there might be other references and there
 	 * might be some change on the model even if we unreferenced
 	 * it, we need to disconnect our signals here. */
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->row_changed_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->row_changed_handler);
-	priv->row_changed_handler = 0;
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->row_deleted_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->row_deleted_handler);
-	priv->row_deleted_handler = 0;
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->row_inserted_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->row_inserted_handler);
-	priv->row_inserted_handler = 0;
-	if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
-					   priv->rows_reordered_handler))
-		g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
-					     priv->rows_reordered_handler);
-	priv->rows_reordered_handler = 0;
-	g_object_unref(priv->header_model);
-	priv->header_model = NULL;
-	if (priv->row_reference)
-		gtk_tree_row_reference_free (priv->row_reference);
-	priv->row_reference = NULL;
-	if (priv->next_row_reference)
-		gtk_tree_row_reference_free (priv->next_row_reference);
-	priv->next_row_reference = NULL;
+	if (priv->header_model) {
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->row_changed_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->row_changed_handler);
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->row_deleted_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->row_deleted_handler);
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->row_inserted_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->row_inserted_handler);
+		if (g_signal_handler_is_connected(G_OBJECT (priv->header_model), 
+						  priv->rows_reordered_handler))
+			g_signal_handler_disconnect(G_OBJECT (priv->header_model), 
+						    priv->rows_reordered_handler);
 
-	modest_ui_actions_check_toolbar_dimming_rules(MODEST_WINDOW(window));
+		/* Frees */
+		if (priv->row_reference)
+			gtk_tree_row_reference_free (priv->row_reference);
+		if (priv->next_row_reference)
+			gtk_tree_row_reference_free (priv->next_row_reference);
+		g_object_unref(priv->header_model);
 
-	g_assert(model != NULL);
+		/* Initialize */
+		priv->row_changed_handler = 0;
+		priv->row_deleted_handler = 0;
+		priv->row_inserted_handler = 0;
+		priv->rows_reordered_handler = 0;
+		priv->next_row_reference = NULL;
+		priv->row_reference = NULL;
+		priv->header_model = NULL;
+	}
+
+	priv->header_model = g_object_ref (model);
 
 	/* Also we must connect to the new model for row insertions.
 	 * Only for insertions now. We will need other ones only after
 	 * the msg is show by msg-view is added to the new model. */
-	priv->row_inserted_handler = g_signal_connect (
-			model, "row-inserted",
-			G_CALLBACK(modest_msg_view_window_on_row_inserted),
-			window);
+	priv->row_inserted_handler =
+		g_signal_connect (priv->header_model, "row-inserted",
+				  G_CALLBACK(modest_msg_view_window_on_row_inserted),
+				  window);
+
+	modest_ui_actions_check_menu_dimming_rules(MODEST_WINDOW(window));
+	modest_ui_actions_check_toolbar_dimming_rules(MODEST_WINDOW(window));
 }
 
 gboolean 
