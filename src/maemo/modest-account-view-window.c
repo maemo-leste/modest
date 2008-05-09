@@ -340,14 +340,22 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 }
 
 static void
-on_wizard_response (GtkDialog *dialog, gint response, gpointer user_data)
+on_wizard_response (GtkDialog *dialog, 
+		    gint response, 
+		    gpointer user_data)
 {	
 	/* The response has already been handled by the wizard dialog itself,
 	 * creating the new account.
 	 */	 
-	/* Destroy the dialog: */
 	if (dialog)
 		gtk_widget_destroy (GTK_WIDGET (dialog));
+
+	/* Re-focus the account list view widget */
+	if (MODEST_IS_ACCOUNT_VIEW_WINDOW (user_data)) {
+		ModestAccountViewWindowPrivate *priv;
+		priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (user_data);
+		gtk_widget_grab_focus (GTK_WIDGET (priv->account_view));
+	}
 }
 
 static void
@@ -355,7 +363,7 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	GtkDialog *wizard;
 	GtkWindow *dialog;
-	
+
 	/* Show the easy-setup wizard: */	
 	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
 	if (dialog && MODEST_IS_EASYSETUP_WIZARD_DIALOG(dialog)) {
@@ -391,8 +399,6 @@ on_close_button_clicked (GtkWidget *button, gpointer user_data)
 	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_OK);
 }
 
-
-
 static GtkWidget*
 button_box_new (ModestAccountViewWindow *self)
 {
@@ -420,7 +426,7 @@ button_box_new (ModestAccountViewWindow *self)
 	g_signal_connect (G_OBJECT(priv->close_button), "clicked",
 			  G_CALLBACK(on_close_button_clicked),
 			  self);
-	
+
 	gtk_box_pack_start (GTK_BOX(button_box), priv->new_button, FALSE, FALSE,2);
 	gtk_box_pack_start (GTK_BOX(button_box), priv->edit_button, FALSE, FALSE,2);
 	gtk_box_pack_start (GTK_BOX(button_box), priv->delete_button, FALSE, FALSE,2);
@@ -482,10 +488,16 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		    const gchar *account,
 		    gpointer user_data)
 {
+	ModestAccountViewWindowPrivate *priv;
+
 	/* If there is no account left then close the window */
 	if (!modest_account_mgr_has_accounts (acc_mgr, TRUE)) {
 		gboolean ret_value;
 		g_signal_emit_by_name (G_OBJECT (user_data), "delete-event", NULL, &ret_value);
+	} else {		
+		/* Re-focus the account list view widget */
+		priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (user_data);
+		gtk_widget_grab_focus (GTK_WIDGET (priv->account_view));
 	}
 }
 

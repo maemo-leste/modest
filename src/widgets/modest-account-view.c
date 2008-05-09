@@ -260,6 +260,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	if (selected_name) {
 		modest_account_view_select_account (view, selected_name);
 		g_free (selected_name);
+	} else {
+		modest_account_view_select_first_account (view);
 	}
 }
 
@@ -326,13 +328,18 @@ on_account_removed (TnyAccountStore *account_store,
 {
 	ModestAccountView *self;
 	ModestAccountViewPrivate *priv;
+	gchar *selected_name;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (user_data));
 
 	self = MODEST_ACCOUNT_VIEW (user_data);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
+
+	/* Do not refresh the view with transport accounts */
+	if (!TNY_IS_STORE_ACCOUNT (account))
+		return;
 	
-	gchar *selected_name = modest_account_view_get_selected_account (self);
+	selected_name = modest_account_view_get_selected_account (self);
 	if (selected_name == NULL) {
 		/* we select the first account if none is selected */
 		modest_account_view_select_first_account (self);		

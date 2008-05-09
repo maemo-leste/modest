@@ -1540,6 +1540,11 @@ modest_account_mgr_set_display_name (ModestAccountMgr *self,
 				     const gchar *account_name,
 				     const gchar *display_name)
 {
+	gboolean notify = TRUE;
+
+	if (!modest_account_mgr_get_display_name (self, account_name))
+		notify = FALSE;
+
 	modest_account_mgr_set_string (self, 
 				       account_name,
 				       MODEST_ACCOUNT_DISPLAY_NAME, 
@@ -1547,5 +1552,6 @@ modest_account_mgr_set_display_name (ModestAccountMgr *self,
 				       FALSE /* not server account */);
 
 	/* Notify about the change in the display name */
-	g_signal_emit (self, signals[DISPLAY_NAME_CHANGED_SIGNAL], 0, account_name);
+	if (notify)
+		g_signal_emit (self, signals[DISPLAY_NAME_CHANGED_SIGNAL], 0, account_name);
 }
