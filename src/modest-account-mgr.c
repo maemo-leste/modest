@@ -690,11 +690,6 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		   deleted account */
 		modest_account_mgr_set_first_account_as_default (self);
 	}
-	
-	/* Notify the observers. We do this *after* deleting
-	   the keys, because otherwise a call to account_names
-	   will retrieve also the deleted account */
-	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, name);
 
 	/* if this was the last account, stop any auto-updating */
 	/* (re)set the automatic account update */
@@ -707,6 +702,11 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 		priv->has_accounts = priv->has_enabled_accounts = FALSE; 
 	} else
 		modest_account_mgr_free_account_names (acc_names);
+	
+	/* Notify the observers. We do this *after* deleting
+	   the keys, because otherwise a call to account_names
+	   will retrieve also the deleted account */
+	g_signal_emit (G_OBJECT(self), signals[ACCOUNT_REMOVED_SIGNAL], 0, name);
 	
 	return TRUE;
 }

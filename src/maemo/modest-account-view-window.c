@@ -62,6 +62,7 @@ struct _ModestAccountViewWindowPrivate {
 	GtkWidget           *delete_button;
 	GtkWidget	    *close_button;
 	ModestAccountView   *account_view;
+	guint acc_removed_handler;
 };
 #define MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                         MODEST_TYPE_ACCOUNT_VIEW_WINDOW, \
@@ -106,19 +107,22 @@ modest_account_view_window_class_init (ModestAccountViewWindowClass *klass)
 	gobject_class->finalize = modest_account_view_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestAccountViewWindowPrivate));
-
-	/* signal definitions go here, e.g.: */
-/* 	signals[MY_SIGNAL_1] = */
-/* 		g_signal_new ("my_signal_1",....); */
-/* 	signals[MY_SIGNAL_2] = */
-/* 		g_signal_new ("my_signal_2",....); */
-/* 	etc. */
 }
 
 static void
-modest_account_view_window_finalize (GObject *obj)
+modest_account_view_window_finalize (GObject *self)
 {
-	G_OBJECT_CLASS(parent_class)->finalize (obj);
+	ModestAccountViewWindowPrivate *priv;
+	ModestAccountMgr *mgr;
+	
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (self);
+	mgr = modest_runtime_get_account_mgr ();
+
+	if (g_signal_handler_is_connected (mgr, priv->acc_removed_handler))
+		g_signal_handler_disconnect (mgr, priv->acc_removed_handler);
+	priv->acc_removed_handler = 0;
+
+	G_OBJECT_CLASS(parent_class)->finalize (self);
 }
 
 
@@ -137,7 +141,7 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 
 	/* Set the status of the buttons */
 	gtk_widget_set_sensitive (priv->edit_button, has_selection);
-	gtk_widget_set_sensitive (priv->delete_button, has_selection);	
+	gtk_widget_set_sensitive (priv->delete_button, has_selection);
 }
 
 /** Check whether any connections are active, and cancel them if 
@@ -275,6 +279,7 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 				if (!removed) {
 					g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
 				}
+
 		}
 		g_free (account_title);
 	}		
@@ -465,22 +470,47 @@ window_vbox_new (ModestAccountViewWindow *self)
 
 
 static void
-modest_account_view_window_init (ModestAccountViewWindow *obj)
+modest_account_view_window_init (ModestAccountViewWindow *self)
 {
-	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (obj)->vbox)), GTK_WIDGET (window_vbox_new (obj)), 
-		TRUE, TRUE, 2);
-	
-	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (obj)->action_area)), GTK_WIDGET (button_box_new (obj)), 
-		TRUE, TRUE, 2);
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
-	gtk_window_set_title (GTK_WINDOW (obj), _("mcen_ti_emailsetup_accounts"));
+	priv->acc_removed_handler = 0;
+}
 
+static void
+on_account_removed (ModestAccountMgr *acc_mgr, 
+		    const gchar *account,
+		    gpointer user_data)
+{
+	/* If there is no account left then close the window */
+	if (!modest_account_mgr_has_accounts (acc_mgr, TRUE)) {
+		gboolean ret_value;
+		g_signal_emit_by_name (G_OBJECT (user_data), "delete-event", NULL, &ret_value);
+	}
 }
 
 GtkWidget*
 modest_account_view_window_new (void)
 {
-	GObject *obj = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
+	GObject *self = g_object_new(MODEST_TYPE_ACCOUNT_VIEW_WINDOW, NULL);
+	ModestAccountViewWindowPrivate *priv;
+	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr ();
+
+	/* Add widgets */
+	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (self)->vbox)), 
+			    window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW (self)), 
+			    TRUE, TRUE, 2);
 	
-	return GTK_WIDGET(obj);
+	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (self)->action_area)), 
+			    button_box_new (MODEST_ACCOUNT_VIEW_WINDOW (self)), 
+			    TRUE, TRUE, 2);
+
+	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_emailsetup_accounts"));
+
+	/* Connect signals */
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	priv->acc_removed_handler = g_signal_connect (G_OBJECT(account_mgr), "account_removed",
+						      G_CALLBACK (on_account_removed), self);
+	
+	return GTK_WIDGET (self);
 }
