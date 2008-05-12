@@ -432,8 +432,15 @@ button_box_new (ModestAccountViewWindow *self)
 	gtk_box_pack_start (GTK_BOX(button_box), priv->delete_button, FALSE, FALSE,2);
 	gtk_box_pack_start (GTK_BOX(button_box), priv->close_button, FALSE, FALSE,2);
 
-	gtk_widget_set_sensitive (priv->edit_button, FALSE);
-	gtk_widget_set_sensitive (priv->delete_button, FALSE);	
+	/* Should has been created by window_vbox_new */
+	if (priv->account_view) {
+		GtkTreeSelection *sel;
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
+		if (gtk_tree_selection_count_selected_rows (sel) == 0) {
+			gtk_widget_set_sensitive (priv->edit_button, FALSE);
+			gtk_widget_set_sensitive (priv->delete_button, FALSE);	
+		}
+	}
 
 	gtk_widget_show_all (button_box);
 	return button_box;
