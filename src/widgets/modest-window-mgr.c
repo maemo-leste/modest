@@ -52,6 +52,9 @@ static gboolean on_modal_window_close    (GtkWidget *widget,
 					  GdkEvent *event,
 					  gpointer user_data);
 
+static void on_modal_dialog_destroy      (GtkObject *object,
+					  gpointer   user_data);
+
 static void     on_modal_dialog_close    (GtkDialog *dialog,
 					  gint arg1,
 					  gpointer user_data);
@@ -1130,7 +1133,7 @@ modest_window_mgr_set_modal (ModestWindowMgr *self,
 	g_queue_push_head (priv->modal_windows, window);
 	g_mutex_unlock (priv->queue_lock);
 
-	if (GTK_IS_DIALOG (window))
+	if (GTK_IS_DIALOG (window)) {
 		/* Note that response is not always enough because it
 		   could be captured and removed easily by dialogs but
 		   works for most of situations */
@@ -1140,13 +1143,23 @@ modest_window_mgr_set_modal (ModestWindowMgr *self,
 						   "response",
 						   G_CALLBACK (on_modal_dialog_close), 
 						   self);
-	else
+		/* We need this as well because dialogs are often
+		   destroyed with gtk_widget_destroy and this one will
+		   prevent response from happening */
+		priv->modal_handler_uids = 
+			modest_signal_mgr_connect (priv->modal_handler_uids, 
+						   G_OBJECT (window), 
+						   "destroy",
+						   G_CALLBACK (on_modal_dialog_destroy),
+						   self);
+	} else {
 		priv->modal_handler_uids = 
 			modest_signal_mgr_connect (priv->modal_handler_uids, 
 						   G_OBJECT (window), 
 						   "delete-event",
 						   G_CALLBACK (on_modal_window_close), 
 						   self);
+	}
 }
 
 
@@ -1271,12 +1284,17 @@ remove_modal_from_queue (GtkWidget *widget,
 	g_mutex_unlock (priv->queue_lock);
 
 	/* Disconnect handler */
-	priv->modal_handler_uids = 
-		modest_signal_mgr_disconnect (priv->modal_handler_uids, 
+	priv->modal_handler_uids =
+		modest_signal_mgr_disconnect (priv->modal_handler_uids,
 					      G_OBJECT (widget),
-					      GTK_IS_DIALOG (widget) ? 
-					      "response" : 
-					      "destroy-event");
+					      GTK_IS_DIALOG (widget) ?
+					      "response" :
+					      "delete-event");
+	if (GTK_IS_DIALOG (widget))
+		priv->modal_handler_uids =
+			modest_signal_mgr_disconnect (priv->modal_handler_uids,
+						      G_OBJECT (widget),
+						      "destroy");
 
 	/* Schedule the next one for being shown */
 	g_idle_add (idle_top_modal, self);
@@ -1303,8 +1321,20 @@ on_modal_dialog_close (GtkDialog *dialog,
 {
 	ModestWindowMgr *self = MODEST_WINDOW_MGR (user_data);
 
-	/* Remove modal window from queue */
+	/* Remove modal window from queue. Note that if "destroy"
+	   signal was invoked before the response the window could be
+	   already deleted */
 	remove_modal_from_queue (GTK_WIDGET (dialog), self);
+}
+
+static void
+on_modal_dialog_destroy (GtkObject *object,
+			 gpointer   user_data)
+{
+	ModestWindowMgr *self = MODEST_WINDOW_MGR (user_data);
+
+	/* Remove modal window from queue */
+	remove_modal_from_queue (GTK_WIDGET (object), self);
 }
 
 gint 

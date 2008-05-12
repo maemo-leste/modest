@@ -655,18 +655,6 @@ modest_ui_actions_on_accounts (GtkAction *action,
 	}
 }
 
-#ifdef MODEST_PLATFORM_MAEMO
-static void
-on_smtp_servers_window_hide (GtkWindow* window, gpointer user_data)
-{
-	/* Save any changes. */
-	modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (window));
-	gtk_widget_destroy (GTK_WIDGET (window));
-}
-#endif
-
-
 void
 modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 {
@@ -682,14 +670,10 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 		MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (specific_window), 
 		modest_runtime_get_account_mgr());
 
-	/* Show the window: */	
-	gtk_window_set_transient_for (GTK_WINDOW (specific_window), GTK_WINDOW (win));
-	gtk_window_set_modal (GTK_WINDOW (specific_window), TRUE);
+	/* Show the window: */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (specific_window));
     	gtk_widget_show (specific_window);
-    
-    	/* Save changes when the window is hidden: */
-	g_signal_connect (specific_window, "hide", 
-		G_CALLBACK (on_smtp_servers_window_hide), win);
 #endif /* MODEST_PLATFORM_MAEMO */
 }
 

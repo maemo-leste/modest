@@ -521,9 +521,8 @@ show_wrong_password_dialog (TnyAccount *account)
 { 
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
-	const gchar *modest_account_name;
 	GtkWidget *main_window;
-	GtkWidget *dialog;
+	GtkWidget *dialog = NULL;
 
 	main_window = (GtkWidget *) modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 								       FALSE); /* don't create */
@@ -532,16 +531,16 @@ show_wrong_password_dialog (TnyAccount *account)
 		return;
 	}
 
-	modest_account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-	if (!modest_account_name) {
-		g_warning ("%s: modest_tny_account_get_parent_modest_account_name_for_server_account() failed.\n", 
-			__FUNCTION__);
+	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
+		modest_ui_actions_on_smtp_servers (NULL, NULL);
+	} else {
+		const gchar *modest_account_name;
+		modest_account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);	
+		dialog = modest_tny_account_store_show_account_settings_dialog (self, modest_account_name);
+		modest_account_settings_dialog_save_password (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
 	}
-	
-	dialog = modest_tny_account_store_show_account_settings_dialog (self, modest_account_name);
-	modest_account_settings_dialog_save_password (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
 	/* Show an explanatory temporary banner: */
-	modest_platform_information_banner (GTK_WIDGET(dialog), NULL, _("mcen_ib_username_pw_incorrect"));
+	modest_platform_information_banner (dialog, NULL, _("mcen_ib_username_pw_incorrect"));
 }
 
 /* This callback will be called by Tinymail when it needs the password
@@ -970,16 +969,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	   global OUTBOX hosted in the local account */
 	add_existing_accounts (MODEST_TNY_ACCOUNT_STORE (obj));
 	
-	/* FIXME: I'm doing this (adding an "if (FALSE)"because this
-	   stuff is not working properly and could cause SIGSEVs, for
-	   example one send queue will be created for each connection
-	   specific SMTP server, so when tinymail asks for the outbox
-	   it will return NULL because there is no outbox folder for
-	   this specific transport accounts, and it's a must that the
-	   send queue returns an outbox */
-	if (TRUE)
-		/* Add connection-specific transport accounts */
-		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
+	/* Add connection-specific transport accounts */
+	add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
 	
 	/* This is a singleton, so it does not need to be unrefed. */
 	if (volume_path_is_mounted (MODEST_MCC1_VOLUMEPATH)) {
@@ -1913,6 +1904,9 @@ modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAcc
 		g_object_set_data (G_OBJECT(tny_account), 
 				   "account_store", 
 				   (gpointer)self);
+		g_object_set_data (G_OBJECT(tny_account), 
+				   "connection_specific", 
+				   GINT_TO_POINTER (TRUE));
 		
 		tny_list_append (priv->transport_accounts, G_OBJECT (tny_account));
 		add_outbox_from_transport_account_to_global_outbox (self, 

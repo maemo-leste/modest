@@ -68,7 +68,11 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 	ModestAccountMgr *account_manager;
 };
 
-static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
+static void on_response (GtkDialog *dialog, 
+			 gint response, 
+			 gpointer user_data);
+
+/* static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data); */
 
 static void
 modest_connection_specific_smtp_window_get_property (GObject *object, guint property_id,
@@ -219,11 +223,10 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 	update_model_server_names (self);
 #endif /*MODEST_HAVE_CONIC */
 }
- 	
+	
 static void
-on_button_edit (GtkButton *button, gpointer user_data)
+on_button_edit (ModestConnectionSpecificSmtpWindow *self)
 {
-	ModestConnectionSpecificSmtpWindow *self = MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (user_data);
 	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 	
@@ -235,15 +238,15 @@ on_button_edit (GtkButton *button, gpointer user_data)
 	GtkTreeIter iter;
 	GtkTreeModel *model = 0;
 	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
-		gtk_tree_model_get (priv->model, &iter, 
-				    MODEL_COL_ID, &id, 
-				    MODEL_COL_NAME, &connection_name, 
+		gtk_tree_model_get (priv->model, &iter,
+				    MODEL_COL_ID, &id,
+				    MODEL_COL_NAME, &connection_name,
 				    MODEL_COL_SERVER_ACCOUNT_NAME, &server_account_name,
 				    MODEL_COL_SERVER_ACCOUNT_SETTINGS, &server_settings,
 				    -1);
 	
 		/* printf("DEBUG: %s: BEFORE: connection-specific server_account_name=%s\n", __FUNCTION__, server_account_name); */
-		/* TODO: Is 0 an allowed libconic IAP ID? 
+		/* TODO: Is 0 an allowed libconic IAP ID?
 		 * If not then we should check for it. */
 		
 		/* Get existing server account data if a server account is already specified: */
@@ -266,61 +269,41 @@ on_button_edit (GtkButton *button, gpointer user_data)
 			
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (window));
 		
-		gboolean dialog_finished = FALSE;
-		while (!dialog_finished)
-		{
-			gint response = gtk_dialog_run (GTK_DIALOG (window));
-			if (response == GTK_RESPONSE_OK) {
-				gtk_widget_hide (window);
-				dialog_finished = TRUE;
-				/* Delete any previous data for this row: */
-				if (server_settings) 
-				{
-					g_object_unref (server_settings);
-					server_settings = NULL;
-				}
-				
-				/* Get the new account data and save it in the row for later:
-				 * We free this in finalize(),
-				 * and save it to our configuration in 
-				 * modest_connection_specific_smtp_window_save_server_accounts(). */
-				server_settings = modest_connection_specific_smtp_edit_window_get_settings (
-					MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window));
-				
-				if (server_settings) {
-					gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-							    MODEL_COL_SERVER_ACCOUNT_SETTINGS, server_settings,
-							    MODEL_COL_SERVER_NAME, modest_server_account_settings_get_hostname (server_settings),
-							    -1);
-				} else {
-					gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter, 
-							    MODEL_COL_SERVER_ACCOUNT_SETTINGS, NULL,
-							    MODEL_COL_SERVER_NAME, NULL,
-							    MODEL_COL_SERVER_ACCOUNT_NAME, NULL,
-							    -1);
-				}
+		gint response = gtk_dialog_run (GTK_DIALOG (window));
+		if (response == GTK_RESPONSE_OK) {
+
+			/* Delete any previous data for this row: */
+			if (server_settings) {
+				g_object_unref (server_settings);
+				server_settings = NULL;
 			}
-			else
-			{
-				gtk_widget_hide(window);
-				dialog_finished = TRUE;
+			
+			/* Get the new account data and save it in the row for later:
+			 * We free this in finalize(),
+			 * and save it to our configuration in
+			 * modest_connection_specific_smtp_window_save_server_accounts(). */
+			server_settings = modest_connection_specific_smtp_edit_window_get_settings (
+												    MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (window));
+			
+			if (server_settings) {
+				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter,
+						    MODEL_COL_SERVER_ACCOUNT_SETTINGS, server_settings,
+						    MODEL_COL_SERVER_NAME, modest_server_account_settings_get_hostname (server_settings),
+						    -1);
+			} else {
+				gtk_list_store_set (GTK_LIST_STORE (priv->model), &iter,
+						    MODEL_COL_SERVER_ACCOUNT_SETTINGS, NULL,
+						    MODEL_COL_SERVER_NAME, NULL,
+						    MODEL_COL_SERVER_ACCOUNT_NAME, NULL,
+						    -1);
 			}
 		}
+		gtk_widget_destroy (window);
 	}
 	g_free (connection_name);
 	g_free (id);
 	g_free (server_account_name);
 	update_model_server_names (self);
-}
-
-static void
-on_button_cancel (GtkButton *button, gpointer user_data)
-{
-	ModestConnectionSpecificSmtpWindow *self = MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (user_data);
-
-	/* Hide the window.
-	 * The code that showed it will respond to the hide signal. */	
-	gtk_widget_hide (GTK_WIDGET (self));
 }
 
 static void
@@ -367,7 +350,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 
 	/* Show the column headers,
 	 * which does not seem to be the default on Maemo.
-	 */			
+	 */
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(priv->treeview), TRUE);
 	
 	/* name column:
@@ -417,26 +400,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->treeview));
 	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (scrolled_window), TRUE, TRUE, MODEST_MARGIN_HALF);
 	gtk_widget_show (GTK_WIDGET (priv->treeview));
-	
-	/* Add the buttons: */
-	GtkWidget *hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (hbox);
-	
-	priv->button_edit = gtk_button_new_from_stock (_("mcen_bd_edit"));
-	gtk_box_pack_start (GTK_BOX (hbox), priv->button_edit, TRUE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (priv->button_edit);
-	g_signal_connect (G_OBJECT (priv->button_edit), "clicked",
-        	G_CALLBACK (on_button_edit), self);
-	
-	GtkWidget *button_cancel = gtk_button_new_from_stock (_("mcen_bd_close"));
-	gtk_box_pack_start (GTK_BOX (hbox), button_cancel, TRUE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (button_cancel);
-	g_signal_connect (G_OBJECT (button_cancel), "clicked",
-        	G_CALLBACK (on_button_cancel), self);
-	
-	//gtk_container_add (GTK_CONTAINER (self), GTK_WIDGET (vbox));
 	gtk_widget_show (vbox);
+	
+	/* Hack: we use the response apply to identify the click on the edit button */
+	priv->button_edit = gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_edit"), GTK_RESPONSE_APPLY);
+	gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 	
 	/* Disable the Edit button when nothing is selected: */
 	GtkTreeSelection *sel = gtk_tree_view_get_selection (priv->treeview);
@@ -453,10 +421,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_optionalsmtp_servers"));
 
-	/* Track key presses to close the window if the Escape is pressed */
-	g_signal_connect (G_OBJECT (self), 
-			  "key-press-event", 
-			  G_CALLBACK (on_key_pressed), NULL);
+	g_signal_connect (self, "response", G_CALLBACK (on_response), NULL);
 	
 	hildon_help_dialog_help_enable (GTK_DIALOG(self),
 					"applications_email_connectionsspecificsmtpconf",
@@ -594,15 +559,23 @@ void update_model_server_names (ModestConnectionSpecificSmtpWindow *self)
 	}
 }
 
-static gboolean
-on_key_pressed (GtkWidget *self,
-		GdkEventKey *event,
-		gpointer user_data)
+static void
+on_response (GtkDialog *dialog,
+	     gint response,
+	     gpointer user_data)
 {
-	if (event->keyval == GDK_Escape) {
-		/* Simulate a press on Cancel to close the dialog */
-		on_button_cancel (NULL, self);
+	switch (response) {
+	case GTK_RESPONSE_APPLY:
+		/* We use it for the edit button */
+		on_button_edit (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog));
+		g_signal_stop_emission_by_name (dialog, "response");
+		break;
+	case GTK_RESPONSE_CLOSE:
+	case GTK_RESPONSE_NONE:
+	case GTK_RESPONSE_DELETE_EVENT:
+		/* Generated as a response to delete-event, i.e,
+		   pressin Esc, or by pressing the Close button */
+		modest_connection_specific_smtp_window_save_server_accounts (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog));
+		gtk_widget_destroy (GTK_WIDGET (dialog));
 	}
-	
-	return FALSE;
 }

@@ -757,9 +757,6 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 		 _("mail_fi_emailtype_imap") );
 			
 		
-	/* Note that this produces a compiler warning, 
-	 * because the compiler does not know that the translated string will have a %s in it.
-	 * I do not see a way to avoid the warning while still using these Logical IDs. murrayc. */
 	gchar* incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), type);
 	g_object_set (G_OBJECT (priv->caption_incoming), "label", incomingserver_title, NULL);
 	g_free(incomingserver_title);
