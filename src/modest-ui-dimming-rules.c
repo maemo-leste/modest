@@ -2628,7 +2628,8 @@ _invalid_folder_for_purge (ModestWindow *win,
 									      MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (!folder_view)
 			return FALSE;
-		folder = TNY_FOLDER (modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view)));
+		folder = (TnyFolder *) modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+		/* Could be a folder store */
 		if (folder == NULL || ! TNY_IS_FOLDER (folder))
 			goto frees;		
 	} else {
