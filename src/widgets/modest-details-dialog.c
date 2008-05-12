@@ -315,14 +315,19 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 		size_s = modest_text_utils_get_display_size (size);
 
 	/* Different names for the local folders */
-	if (modest_tny_folder_is_local_folder (folder)) {
+	if (modest_tny_folder_is_local_folder (folder) ||
+	    modest_tny_folder_is_memory_card_folder (folder)) {
 		gint type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 		if (type != TNY_FOLDER_TYPE_UNKNOWN)
 			name = g_strdup(modest_local_folder_info_get_type_display_name (type));
-	} 
+	}
 
-	if (!name)	
-		name = g_strdup (tny_folder_get_name (folder));
+	if (!name) {
+		if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX)
+			name = g_strdup (_("mcen_me_folder_inbox"));
+		else
+			name = g_strdup (tny_folder_get_name (folder));
+	}
 
 	tmp = g_strconcat (_("mcen_fi_folder_properties_foldername"), ":", NULL);
 	modest_details_dialog_add_data (self, tmp, name);
