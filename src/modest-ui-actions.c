@@ -102,6 +102,7 @@ typedef struct _ReplyForwardHelper {
 	ReplyForwardAction action;
 	gchar *account_name;
 	GtkWidget *parent_window;
+	TnyHeader *header;
 } ReplyForwardHelper;
 
 typedef struct _MoveToHelper {
@@ -1415,6 +1416,26 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 	g_object_unref(headers);
 }
 
+static ReplyForwardHelper*
+create_reply_forward_helper (ReplyForwardAction action, 
+			     ModestWindow *win,
+			     guint reply_forward_type,
+			     TnyHeader *header)
+{
+	ReplyForwardHelper *rf_helper = NULL;
+	const gchar *active_acc = modest_window_get_active_account (win);
+
+	rf_helper = g_slice_new0 (ReplyForwardHelper);
+	rf_helper->reply_forward_type = reply_forward_type;
+	rf_helper->action = action;
+	rf_helper->parent_window = (MODEST_IS_WINDOW (win)) ? GTK_WIDGET (win) : NULL;
+	rf_helper->header = (header) ? g_object_ref (header) : NULL;
+	rf_helper->account_name = (active_acc) ? 
+		g_strdup (active_acc) :
+		modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+
+	return rf_helper;
+}
 
 static void
 free_reply_forward_helper (gpointer data)
@@ -1423,6 +1444,8 @@ free_reply_forward_helper (gpointer data)
 
 	helper = (ReplyForwardHelper *) data;
 	g_free (helper->account_name);
+	if (helper->header)
+		g_object_unref (helper->header);
 	g_slice_free (ReplyForwardHelper, helper);
 }
 
@@ -1434,7 +1457,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		  GError *err,
 		  gpointer user_data)
 {
-	TnyMsg *new_msg;
+	TnyMsg *new_msg = NULL;
 	ReplyForwardHelper *rf_helper;
 	ModestWindow *msg_win = NULL;
 	ModestEditType edit_type;
@@ -1447,11 +1470,9 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	/* If there was any error. The mail operation could be NULL,
 	   this means that we already have the message downloaded and
 	   that we didn't do a mail operation to retrieve it */
-	if (mail_op && !modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
-		return;
-			
-	g_return_if_fail (user_data != NULL);
 	rf_helper = (ReplyForwardHelper *) user_data;
+	if (mail_op && !modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
+		goto cleanup;
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name);
@@ -1487,10 +1508,11 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		return;
 	}
 
+	g_free (from);
 	g_free (signature);
 
 	if (!new_msg) {
-		g_printerr ("modest: failed to create message\n");
+		g_warning ("%s: failed to create message\n", __FUNCTION__);
 		goto cleanup;
 	}
 
@@ -1498,7 +1520,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 								       rf_helper->account_name,
 								       TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
-		g_printerr ("modest: failed to get tnyaccount for '%s'\n", rf_helper->account_name);
+		g_warning ("%s: failed to get tnyaccount for '%s'\n", __FUNCTION__, rf_helper->account_name);
 		goto cleanup;
 	}
 
@@ -1524,7 +1546,6 @@ cleanup:
 		g_object_unref (G_OBJECT (new_msg));
 	if (account)
 		g_object_unref (G_OBJECT (account));
-/* 	g_object_unref (msg); */
 	free_reply_forward_helper (rf_helper);
 }
 
@@ -1581,21 +1602,44 @@ connect_to_get_msg (ModestWindow *win,
 	return modest_platform_connect_and_wait((GtkWindow *) win, account);
 }
 
+static void
+reply_forward_performer (gboolean canceled, 
+			 GError *err,
+			 GtkWindow *parent_window, 
+			 TnyAccount *account, 
+			 gpointer user_data)
+{
+	ReplyForwardHelper *rf_helper = NULL;
+	ModestMailOperation *mail_op;
+
+	rf_helper = (ReplyForwardHelper *) user_data;
+
+	if (canceled || err) {
+		free_reply_forward_helper (rf_helper);
+		return;
+	}
+
+	/* Retrieve the message */
+	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (parent_window),
+								 modest_ui_actions_disk_operations_error_handler,
+								 NULL, NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+	modest_mail_operation_get_msg (mail_op, rf_helper->header, TRUE, reply_forward_cb, rf_helper);
+
+	/* Frees */
+	g_object_unref(mail_op);
+}
+
 /*
  * Common code for the reply and forward actions
  */
 static void
 reply_forward (ReplyForwardAction action, ModestWindow *win)
 {
-	ModestMailOperation *mail_op = NULL;
-	TnyList *header_list = NULL;
 	ReplyForwardHelper *rf_helper = NULL;
 	guint reply_forward_type;
-	gboolean continue_download = TRUE;
-	gboolean do_retrieve = TRUE;
 	
 	g_return_if_fail (MODEST_IS_WINDOW(win));
-
 			
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * reply/forward (because it could potentially require a lot of memory */
@@ -1609,114 +1653,115 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			return;
 	}
 	
-	header_list = get_selected_headers (win);
-	if (!header_list)
-		return;
-
-	reply_forward_type = 
+	reply_forward_type =
 		modest_conf_get_int (modest_runtime_get_conf (),
-				     (action == ACTION_FORWARD) ? MODEST_CONF_FORWARD_TYPE : MODEST_CONF_REPLY_TYPE,
+				     (action == ACTION_FORWARD) ? 
+				     MODEST_CONF_FORWARD_TYPE :
+				     MODEST_CONF_REPLY_TYPE,
 				     NULL);
 
-	/* check if we need to download msg before asking about it */
-	do_retrieve = (action == ACTION_FORWARD) ||
-			(reply_forward_type != MODEST_TNY_MSG_REPLY_TYPE_CITE);
-
-	if (do_retrieve){
-		gint num_of_unc_msgs;
-
-		/* check that the messages have been previously downloaded */
-		num_of_unc_msgs = header_list_count_uncached_msgs(header_list);
-		/* If there are any uncached message ask the user
-		 * whether he/she wants to download them. */
-		if (num_of_unc_msgs) {
-			TnyAccount *account = get_account_from_header_list (header_list);
-			if (account) {
-				continue_download = connect_to_get_msg (win, num_of_unc_msgs, account);
-				g_object_unref (account);
-			}
-		}
-	}
-
-	if (!continue_download) {
-		g_object_unref (header_list);
-		return;
-	}
-	
-	/* We assume that we can only select messages of the
-	   same folder and that we reply all of them from the
-	   same account. In fact the interface currently only
-	   allows single selection */
-	
-	/* Fill helpers */
-	rf_helper = g_slice_new0 (ReplyForwardHelper);
-	rf_helper->reply_forward_type = reply_forward_type;
-	rf_helper->action = action;
-	rf_helper->account_name = g_strdup (modest_window_get_active_account (win));
-	
-	if ((win != NULL) && (MODEST_IS_WINDOW (win)))
-		rf_helper->parent_window = GTK_WIDGET (win);
-	if (!rf_helper->account_name)
-		rf_helper->account_name =
-			modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-
-	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
-		TnyMsg *msg;
-		TnyHeader *header;
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		TnyMsg *msg = NULL;
+		TnyHeader *header = NULL;
 		/* Get header and message. Do not free them here, the
 		   reply_forward_cb must do it */
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW(win));
-		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW(win));
- 		if (!msg || !header) {
-			if (msg)
-				g_object_unref (msg);
-			g_printerr ("modest: no message found\n");
-			return;
-		} else {
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
+
+		if (msg && header) {
+			/* Create helper */
+			rf_helper = create_reply_forward_helper (action, win, 
+								 reply_forward_type, header);
 			reply_forward_cb (NULL, header, FALSE, msg, NULL, rf_helper);
+		} else {
+			g_warning("%s: no message or header found in viewer\n", __FUNCTION__);
 		}
-		if (header)
+		
+		if (msg)
+			g_object_unref (msg);
+ 		if (header)
 			g_object_unref (header);
 	} else {
-		TnyHeader *header;
+		TnyHeader *header = NULL;
 		TnyIterator *iter;
+		gboolean do_retrieve = TRUE;
+		TnyList *header_list = NULL;
+
+		header_list = get_selected_headers (win);
+		if (!header_list)
+			return;
+		if (tny_list_get_length (header_list) == 0) {
+			g_object_unref (header_list);
+			return;
+		}
 
 		/* Only reply/forward to one message */
 		iter = tny_list_create_iterator (header_list);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		g_object_unref (iter);
 
-		if (header) {
-			/* Retrieve messages */
-			if (do_retrieve) {
-				mail_op = 
-					modest_mail_operation_new_with_error_handling (G_OBJECT(win),
-										       modest_ui_actions_disk_operations_error_handler, 
-										       NULL, NULL);
-				modest_mail_operation_queue_add (
-					modest_runtime_get_mail_operation_queue (), mail_op);
-				
-				modest_mail_operation_get_msg (mail_op,
-							       header,
-							       TRUE,
-							       reply_forward_cb,
-							       rf_helper);
-				/* Clean */
-				g_object_unref(mail_op);
-			} else {
-				/* we put a ref here to prevent double unref as the reply
-				 * forward callback unrefs the header at its end */
-				reply_forward_cb (NULL, header, FALSE, NULL, NULL, rf_helper);
+		/* Retrieve messages */
+		do_retrieve = (action == ACTION_FORWARD) ||
+			(reply_forward_type != MODEST_TNY_MSG_REPLY_TYPE_CITE);
+
+		if (do_retrieve) {
+			TnyAccount *account = NULL;
+			TnyFolder *folder = NULL;
+			gdouble download = TRUE;
+			guint uncached_msgs = 0;
+
+			folder = tny_header_get_folder (header);
+			if (!folder)
+				goto do_retrieve_frees;
+			account = tny_folder_get_account (folder);
+			if (!account)
+				goto do_retrieve_frees;
+
+			uncached_msgs = header_list_count_uncached_msgs (header_list);
+
+			if (uncached_msgs > 0) {
+				/* Allways download if we are online. */
+				if (!tny_device_is_online (modest_runtime_get_device ())) {
+					gint response;
+					
+					/* If ask for user permission to download the messages */
+					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+											    ngettext("mcen_nc_get_msg",
+												     "mcen_nc_get_msgs",
+												     uncached_msgs));
+					
+					/* End if the user does not want to continue */
+					if (response == GTK_RESPONSE_CANCEL)
+						download = FALSE;
+				}
 			}
-
-
-			g_object_unref (header);
+			
+			if (download) {
+				/* Create helper */
+				rf_helper = create_reply_forward_helper (action, win, 
+									 reply_forward_type, header);
+				if (uncached_msgs > 0) {
+					modest_platform_connect_and_perform (GTK_WINDOW (win), 
+									     TRUE, account, 
+									     reply_forward_performer, 
+									     rf_helper);
+				} else {
+					reply_forward_performer (FALSE, NULL, GTK_WINDOW (win), 
+								 account, rf_helper);
+				}
+			}
+		do_retrieve_frees:
+			if (account)
+				g_object_unref (account);
+			if (folder)
+				g_object_unref (folder);
+		} else {
+			reply_forward_cb (NULL, header, FALSE, NULL, NULL, rf_helper);
 		}
-
+		/* Frees */
+		g_object_unref (header_list);
+		g_object_unref (header);
 	}
-
-	/* Free */
-	g_object_unref (header_list);
 }
 
 void

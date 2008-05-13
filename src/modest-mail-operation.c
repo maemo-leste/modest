@@ -2275,6 +2275,7 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	state->total = 0;
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
 				0, state, NULL);
+	g_slice_free (ModestMailOperationState, state);
 	
 	tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, helper);
 
