@@ -175,7 +175,7 @@ create_folder (TnyFolderStore *self,
 
 	/* If the folder name is been used by our extra folders */
 	if (modest_tny_local_folders_account_folder_name_in_use (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (self), name)) {
-		g_set_error (err, TNY_SERVICE_ERROR, 
+		g_set_error (err, TNY_ERROR_DOMAIN, 
 			     TNY_SERVICE_ERROR_FOLDER_CREATE,
 			     "Folder name already in use");
 		return NULL;
