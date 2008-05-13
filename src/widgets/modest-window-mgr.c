@@ -1160,6 +1160,8 @@ modest_window_mgr_set_modal (ModestWindowMgr *self,
 						   G_CALLBACK (on_modal_window_close), 
 						   self);
 	}
+	/* Destroy width parent */
+	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
 
