@@ -197,7 +197,7 @@ modest_signature_editor_dialog_set_settings (
 	gchar* label_text = g_strdup_printf (_("mcen_ia_email_signatures_edit_dlg_label"), 
 		account_title);
 	gtk_label_set_text (GTK_LABEL (priv->label), label_text);
-	gtk_label_set_ellipsize (GTK_LABEL (priv->label),  PANGO_ELLIPSIZE_NONE);
+	gtk_label_set_ellipsize (GTK_LABEL (priv->label),  PANGO_ELLIPSIZE_END);
 	g_free (label_text);
 	
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_use), use_signature);
