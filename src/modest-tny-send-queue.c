@@ -684,10 +684,13 @@ _on_msg_error_happened (TnySendQueue *self,
 
 		/* Keep in queue so that we remember that the opertion has failed */
 		/* and was not just cancelled */
-		if (err->code == TNY_SYSTEM_ERROR_CANCEL)
+		if (err->code == TNY_SYSTEM_ERROR_CANCEL) {
 			info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
-		else
+		} else {
+			if (err->code == TNY_SERVICE_ERROR_CONNECT)
+				modest_platform_run_alert_dialog (_("emev_ib_ui_smtp_server_invalid"), FALSE);
 			info->status = MODEST_TNY_SEND_QUEUE_FAILED;
+		}
 		priv->current = NULL;
 		
 		/* Notify status has changed */
