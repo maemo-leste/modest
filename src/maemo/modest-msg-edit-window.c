@@ -1219,9 +1219,17 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 
 	if (preserve_is_rich && !is_html) {
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
+		/* We must do this here in order to reset the undo
+		   list, because otherwise this action could be
+		   reverted */
+		wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 	/* Get the default format required from configuration */
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT, NULL)) {
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
+		/* We must do this here in order to reset the undo
+		   list, because otherwise this action could be
+		   reverted */
+		wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 	}
 
 	/* Set the default focus depending on having already a To: field or not */
