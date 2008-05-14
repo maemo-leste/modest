@@ -107,6 +107,8 @@ static void     sync_folder_finish_callback (TnyFolder *self,
 					     GError *err, 
 					     gpointer user_data);
 
+static gboolean _check_memory_low         (ModestMailOperation *mail_op);
+
 enum _ModestMailOperationSignals 
 {
 	PROGRESS_CHANGED_SIGNAL,
@@ -2235,13 +2237,20 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	g_return_if_fail (TNY_IS_HEADER (header));
 	
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	folder = tny_header_get_folder (header);
-
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->total = 1;
 	priv->done = 0;
 
+	/* Check memory low */
+	if (_check_memory_low (self)) {
+		if (user_callback)
+			user_callback (self, header, FALSE, NULL, priv->error, user_data);
+		modest_mail_operation_notify_end (self);
+		return;
+	}
+
 	/* Get account and set it into mail_operation */
+	folder = tny_header_get_folder (header);
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 	
 	/* Check for cached messages */
@@ -2404,6 +2413,28 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->done = 0;
 	priv->total = tny_list_get_length(header_list);
+
+	/* Check memory low */
+	if (_check_memory_low (self)) {
+		if (user_callback) {
+			TnyHeader *header = NULL;
+			TnyIterator *iter;
+
+			if (tny_list_get_length (header_list) > 0) {
+				iter = tny_list_create_iterator (header_list);
+				header = (TnyHeader *) tny_iterator_get_current (iter);
+				g_object_unref (iter);
+			}
+			user_callback (self, header, FALSE, NULL, priv->error, user_data);
+			if (header)
+				g_object_unref (header);
+		}
+		if (notify)
+			notify (user_data);
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);
+		return;
+	}
 
 	/* Check uncached messages */
 	for (iter = tny_list_create_iterator (header_list), has_uncached_messages = FALSE;
@@ -3039,9 +3070,17 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
 
-	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	/* Check memory low */
+	if (_check_memory_low (self)) {
+		if (user_callback)
+			user_callback (self, folder, user_data);
+		/* Notify about operation end */
+		modest_mail_operation_notify_end (self);
+		return;
+	}
 
 	/* Get account and set it into mail_operation */
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
 	priv->account = modest_tny_folder_get_account  (folder);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
 
@@ -3276,4 +3315,26 @@ modest_mail_operation_to_string (ModestMailOperation *self)
 	return g_strdup_printf ("%p \"%s\" (%s) [%s] {%d/%d} '%s'", self, account_id,type, status,
 				priv->done, priv->total,
 				priv->error && priv->error->message ? priv->error->message : "");
+}
+
+/* 
+ * Once the mail operations were objects this will be no longer
+ * needed. I don't like it, but we need it for the moment
+ */
+static gboolean
+_check_memory_low (ModestMailOperation *mail_op)
+{
+	if (modest_platform_check_memory_low (NULL, FALSE)) {
+		ModestMailOperationPrivate *priv;
+
+		priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		g_set_error (&(priv->error),
+			     MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY,
+			     "Not enough memory to complete the operation");
+		return TRUE;
+	} else {
+		return FALSE;
+	}
 }

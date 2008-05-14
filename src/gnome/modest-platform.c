@@ -499,7 +499,9 @@ modest_platform_get_account_settings_wizard (void)
 
 
 
-gboolean modest_platform_check_memory_low (ModestWindow *win)
+gboolean modest_platform_check_memory_low (ModestWindow *win,
+					   gboolean visuals)
 {
+	g_debug ("%s not implemented", __FUNCTION__);
 	return FALSE;
 }

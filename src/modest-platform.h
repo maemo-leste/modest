@@ -513,13 +513,15 @@ ModestConnectedVia modest_platform_get_current_connection (void);
  * modest_platform_check_memory_low:
  * 
  * @win: a ModestWindow, or NULL
+ * @visuals: whether or not show visual information
  *
  * see if memory is too low for big memory consuming operations
  * optionally show a warning dialog if @win was provided
  *
  * Returns: TRUE if we're in lowmem state, FALSE otherwise
  */
-gboolean modest_platform_check_memory_low (ModestWindow *win);
+gboolean modest_platform_check_memory_low (ModestWindow *win,
+					   gboolean visuals);
 
 
 G_END_DECLS

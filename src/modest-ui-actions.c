@@ -702,7 +702,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * composing a message with attachments
 	 */
-	if (attachments && modest_platform_check_memory_low (win))
+	if (attachments && modest_platform_check_memory_low (win, TRUE))
 		goto cleanup;
 
 	account_name = modest_account_mgr_get_default_account(mgr);
@@ -801,6 +801,17 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 	/* If there is no message or the operation was not successful */
 	status = modest_mail_operation_get_status (mail_op);
 	if (!msg || status != MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+		const GError *error;
+
+		/* If it's a memory low issue, then show a banner */
+		error = modest_mail_operation_get_error (mail_op);
+		if (error && error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
+			GObject *source = modest_mail_operation_get_source (mail_op);
+			modest_platform_run_information_dialog (GTK_IS_WINDOW (source) ? GTK_WINDOW (source) : NULL,
+								dgettext("ke-recv","memr_ib_operation_disabled"),
+								TRUE);
+			g_object_unref (source);
+		}
 
 		/* Remove the header from the preregistered uids */
 		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (),  
@@ -1402,7 +1413,7 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * opening
 	 */
-	if (modest_platform_check_memory_low (MODEST_WINDOW(win)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win), TRUE))
 		return;
 
 	/* Get headers */
@@ -1643,7 +1654,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * reply/forward (because it could potentially require a lot of memory */
-	if (modest_platform_check_memory_low (MODEST_WINDOW(win)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win), TRUE))
 		return;
 
 
@@ -2245,7 +2256,7 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * activating headers
 	 */
-	if (modest_platform_check_memory_low (MODEST_WINDOW(main_window)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(main_window), TRUE))
 		return;
 
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
@@ -2300,10 +2311,21 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 {
 	ModestMainWindow *win = NULL;
 	GtkWidget *header_view;
+	const GError *error;
 
 	g_return_if_fail (TNY_IS_FOLDER (folder));
 
 	win = MODEST_MAIN_WINDOW (user_data);
+
+	/* Check if the operation failed due to memory low conditions */
+	error = modest_mail_operation_get_error (mail_op);
+	if (error && error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
+		modest_platform_run_information_dialog (GTK_WINDOW (win),
+							dgettext("ke-recv","memr_ib_operation_disabled"),
+							TRUE);
+		return;
+	}
+
 	header_view = 
 		modest_main_window_get_child_widget(win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
@@ -2482,7 +2504,7 @@ modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, TnyMimePart
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * viewing attachments
 	 */
-	if (modest_platform_check_memory_low (MODEST_WINDOW(win)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win), TRUE))
 		return;
 
 	modest_msg_view_window_view_attachment (MODEST_MSG_VIEW_WINDOW (win), mime_part);
@@ -2566,7 +2588,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	 */
 	if (expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) {
 
-		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window))) {
+		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window), TRUE)) {
 			modest_msg_edit_window_free_msg_data (edit_window, data);
 			return FALSE;
 		}
@@ -2736,7 +2758,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	 * this should still allow for sending anything critical... 
 	 */
 	if (expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) {
-		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window))) {
+		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window), TRUE)) {
 			modest_msg_edit_window_free_msg_data (edit_window, data);
 			return FALSE;
 		}
@@ -2958,7 +2980,7 @@ modest_ui_actions_on_insert_image (GtkAction *action,
 	g_return_if_fail (GTK_IS_ACTION (action));
 
 
-	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 		return;
 
 	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
@@ -2974,7 +2996,7 @@ modest_ui_actions_on_attach_file (GtkAction *action,
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	g_return_if_fail (GTK_IS_ACTION (action));
 
-	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 		return;
 	
 	modest_msg_edit_window_offer_attach_file (window);
@@ -5447,7 +5469,7 @@ modest_ui_actions_save_attachments (GtkAction *action,
 {
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
 
-		if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+		if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 			return;
 
 		modest_msg_view_window_save_attachments (MODEST_MSG_VIEW_WINDOW (window), NULL);
@@ -5504,6 +5526,19 @@ modest_ui_actions_on_help (GtkAction *action,
 		g_warning ("%s: no help for window %p", __FUNCTION__, win);
 }
 
+static void     
+retrieve_contents_cb (ModestMailOperation *mail_op, 
+		      TnyHeader *header, 
+		      gboolean canceled,
+		      TnyMsg *msg,
+		      GError *err,
+		      gpointer user_data)
+{
+	/* We only need this callback to show an error in case of
+	   memory low condition */
+	modest_ui_actions_msg_retrieval_check (mail_op, header, msg);
+}
+
 static void
 retrieve_msg_contents_performer (gboolean canceled, 
 				 GError *err,
@@ -5528,7 +5563,7 @@ retrieve_msg_contents_performer (gboolean canceled,
 								 modest_ui_actions_disk_operations_error_handler, 
 								 NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msgs_full (mail_op, headers, NULL, NULL, NULL);
+	modest_mail_operation_get_msgs_full (mail_op, headers, retrieve_contents_cb, NULL, NULL);
 
 	/* Frees */
 	g_object_unref (mail_op);
@@ -5688,7 +5723,7 @@ modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * searching
 	 */
-	if (modest_platform_check_memory_low (window))
+	if (modest_platform_check_memory_low (window, TRUE))
 		return;
 	
 	modest_platform_show_search_messages (GTK_WINDOW (window));
@@ -5703,7 +5738,7 @@ modest_ui_actions_on_open_addressbook (GtkAction *action, ModestWindow *win)
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * for the addressbook
 	 */
-	if (modest_platform_check_memory_low (win))
+	if (modest_platform_check_memory_low (win, TRUE))
 		return;
 
 

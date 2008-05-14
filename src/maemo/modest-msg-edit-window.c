@@ -2266,7 +2266,7 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 		
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 		return;
 	
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
@@ -2667,9 +2667,8 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * for the addressbook
 	 */
-	if (modest_platform_check_memory_low (MODEST_WINDOW(window)))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 		return;
-
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 

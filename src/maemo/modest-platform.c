@@ -2276,24 +2276,23 @@ modest_platform_get_current_connection (void)
 
 
 gboolean
-modest_platform_check_memory_low (ModestWindow *win)
+modest_platform_check_memory_low (ModestWindow *win,
+				  gboolean visuals)
 {
 	gboolean lowmem;
-
-	g_return_val_if_fail (win == NULL || MODEST_IS_WINDOW(win), FALSE);
 	
 	/* are we in low memory state? */
 	lowmem = osso_mem_in_lowmem_state () ? TRUE : FALSE;
 	
-	if (win && lowmem)
+	if (win && lowmem && visuals)
 		modest_platform_run_information_dialog (
 			GTK_WINDOW(win),
 			dgettext("ke-recv","memr_ib_operation_disabled"),
 			TRUE);
 
 	if (lowmem)
-		g_warning ("%s: low memory reached. disallowing some operations",
-			   __FUNCTION__);
+		g_debug ("%s: low memory reached. disallowing some operations",
+			 __FUNCTION__);
 
 	return lowmem;
 }

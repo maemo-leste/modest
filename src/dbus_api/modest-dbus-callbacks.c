@@ -1842,7 +1842,7 @@ modest_dbus_req_filter (DBusConnection *con,
 					 MODEST_DBUS_METHOD_SEARCH)) {
 		
 	/* don't try to search when there not enough mem */
-		if (modest_platform_check_memory_low (NULL)) {
+		if (modest_platform_check_memory_low (NULL, TRUE)) {
 			g_warning ("%s: not enough memory for searching",
 				   __FUNCTION__);
 			reply_empty_results (con, message);
