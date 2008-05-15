@@ -941,28 +941,19 @@ open_msg_cb (ModestMailOperation *mail_op,
 		if (from_header) {
 			GSList *accounts = modest_account_mgr_account_names (mgr, TRUE);
 			GSList *node = NULL;
-			gchar *from_header_email;
-
-			from_header_email = modest_text_utils_get_email_address ((const gchar *) from_header);
 
 			for (node = accounts; node != NULL; node = g_slist_next (node)) {
-				gchar *from, *from_email;
-				
-				from = modest_account_mgr_get_from_string (mgr, node->data);
-				if (from) {
-					from_email = modest_text_utils_get_email_address ((const gchar *) from);
-					if (strcmp (from_header_email, from_email) == 0) {
-						g_free (account);
-						account = g_strdup (node->data);
-						g_free (from_email);
-						g_free (from);
-						break;
-					}
-					g_free (from_email);
+				gchar *from = modest_account_mgr_get_from_string (mgr, node->data);
+ 				
+				if (from && (strcmp (from_header, from) == 0)) {
+					g_free (account);
+					account = g_strdup (node->data);
 					g_free (from);
-				}
-			}
-			g_free (from_header_email);
+					break;
+ 				}
+				g_free (from);
+ 			}
+
 			g_free (from_header);
 			g_slist_foreach (accounts, (GFunc) g_free, NULL);
 			g_slist_free (accounts);
