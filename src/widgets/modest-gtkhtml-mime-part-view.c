@@ -396,6 +396,7 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	
 	// FIXME: tinymail
 	tny_mime_part_decode_to_stream ((TnyMimePart*)part, text_to_html_stream, NULL);
+	tny_stream_write (text_to_html_stream, "\n", 1);
 	tny_stream_reset (text_to_html_stream);		
 	
 	g_object_unref (G_OBJECT(text_to_html_stream));
