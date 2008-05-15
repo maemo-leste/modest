@@ -88,7 +88,6 @@ typedef struct {
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
 	
-	GtkWidget *specific_window;
 	GtkWidget *signature_dialog;
 	
 } ModestAccountSettingsDialog;

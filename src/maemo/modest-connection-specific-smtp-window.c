@@ -424,7 +424,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	g_signal_connect (self, "response", G_CALLBACK (on_response), NULL);
 	
 	hildon_help_dialog_help_enable (GTK_DIALOG(self),
-					"applications_email_connectionsspecificsmtpconf",
+					"email_connectionsspecificsmtpconf",
 					modest_maemo_utils_get_osso_context());
 }
 

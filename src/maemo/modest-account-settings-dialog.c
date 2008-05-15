@@ -137,9 +137,6 @@ modest_account_settings_dialog_finalize (GObject *object)
 	if (self->account_manager)
 		g_object_unref (G_OBJECT (self->account_manager));
 		
-	if (self->specific_window)
-		gtk_widget_destroy (self->specific_window);
-		
 	if (self->signature_dialog)
 		gtk_widget_destroy (self->signature_dialog);
 
@@ -718,18 +715,15 @@ static void
 on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 {
 	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	
+	ModestConnectionSpecificSmtpWindow *smtp_win;
+
 	/* Create the window if necessary: */
-	if (!(self->specific_window)) {
-		self->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
-		modest_connection_specific_smtp_window_fill_with_connections (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager);
-	}
+	smtp_win = modest_connection_specific_smtp_window_new ();
+	modest_connection_specific_smtp_window_fill_with_connections (smtp_win, self->account_manager);
 
 	/* Show the window: */	
-	gtk_window_set_transient_for (GTK_WINDOW (self->specific_window), GTK_WINDOW (self));
-	gtk_window_set_modal (GTK_WINDOW (self->specific_window), TRUE);
-	gtk_widget_show (self->specific_window);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (smtp_win));
+	gtk_widget_show (GTK_WIDGET (smtp_win));
 	self->modified = TRUE;
 }
 
@@ -1547,13 +1541,7 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	if (account_name != NULL)
 		modest_account_mgr_save_account_settings (dialog->account_manager, dialog->settings);
 
-	if (dialog->specific_window) {
-		return modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window));
-	} else {
-		return TRUE;
-	}
-
+	return TRUE;
 }
 
 static gboolean entry_is_empty (GtkWidget *entry)
