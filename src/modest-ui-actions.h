@@ -98,6 +98,17 @@ void     modest_ui_actions_on_settings      (GtkAction *action, ModestWindow *wi
  **/
 void     modest_ui_actions_on_help          (GtkAction *action, GtkWindow *win);
 
+
+/**
+ * modest_ui_actions_on_csm_elp:
+ * @action: a #GtkAction
+ * @win: a #ModestWindow
+ * 
+ * Shows the help dialog for folder view CSM. It shows the help ID
+ * which refers to the currently selected folder if any
+ **/
+void     modest_ui_actions_on_csm_help      (GtkAction *action, GtkWindow *win);
+
 /**
  * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction

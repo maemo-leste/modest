@@ -5506,15 +5506,40 @@ modest_ui_actions_on_help (GtkAction *action,
 {
 	const gchar *help_id;
 
-	g_return_if_fail (action);
 	g_return_if_fail (win && GTK_IS_WINDOW(win));
 	
 	help_id = modest_window_mgr_get_help_id (modest_runtime_get_window_mgr(), win);
-	
-	if (help_id)
-		modest_platform_show_help (GTK_WINDOW (win), help_id);
+
+        if (help_id)
+                modest_platform_show_help (GTK_WINDOW (win), help_id);
+}
+
+void 
+modest_ui_actions_on_csm_help (GtkAction *action, 
+			       GtkWindow *win)
+{
+	const gchar* help_id = NULL;
+	GtkWidget *folder_view;
+	TnyFolderStore *folder_store;
+
+	g_return_if_fail (win && MODEST_IS_MAIN_WINDOW (win));
+
+	/* Get selected folder */
+	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+
+	/* Switch help_id */
+	if (folder_store && TNY_IS_FOLDER (folder_store))
+		help_id = modest_tny_folder_get_help_id (TNY_FOLDER (folder_store));
+
+	if (folder_store)
+		g_object_unref (folder_store);
+
+        if (help_id)
+                modest_platform_show_help (GTK_WINDOW (win), help_id);
 	else
-		g_warning ("%s: no help for window %p", __FUNCTION__, win);
+		modest_ui_actions_on_help (action, win);
 }
 
 static void     
