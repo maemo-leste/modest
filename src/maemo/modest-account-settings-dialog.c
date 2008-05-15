@@ -429,7 +429,8 @@ static void
 on_button_signature (GtkButton *button, gpointer user_data)
 {
 	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	
+	gint response;
+
 	/* Create the window, if necessary: */
 	if (!(self->signature_dialog)) {
 		self->signature_dialog = GTK_WIDGET (modest_signature_editor_dialog_new ());
@@ -447,19 +448,19 @@ on_button_signature (GtkButton *button, gpointer user_data)
 	}
 
 	/* Show the window: */	
-	gtk_window_set_transient_for (GTK_WINDOW (self->signature_dialog), GTK_WINDOW (self));
-	gtk_window_set_modal (GTK_WINDOW (self->signature_dialog), TRUE);
-    const gint response = gtk_dialog_run (GTK_DIALOG (self->signature_dialog));
-    gtk_widget_hide (self->signature_dialog);
-    if (response != GTK_RESPONSE_OK) {
-    	/* Destroy the widget now, and its data: */
-    	gtk_widget_destroy (self->signature_dialog);
-    	self->signature_dialog = NULL;
-    }
-    else {
-    	/* Mark modified, so we use the dialog's data later: */
-    	self->modified = TRUE;	
-    }
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+				     GTK_WINDOW (self->signature_dialog));
+
+	response = gtk_dialog_run (GTK_DIALOG (self->signature_dialog));
+	gtk_widget_hide (self->signature_dialog);
+	if (response != GTK_RESPONSE_OK) {
+		/* Destroy the widget now, and its data: */
+		gtk_widget_destroy (self->signature_dialog);
+		self->signature_dialog = NULL;
+	} else {
+		/* Mark modified, so we use the dialog's data later: */
+		self->modified = TRUE;	
+	}
 }
 
 static GtkWidget*
