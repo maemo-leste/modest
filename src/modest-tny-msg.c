@@ -506,7 +506,9 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 				g_free (content_disp);
 			}
 			
-			if (g_str_has_prefix (content_type, desired_mime_type) && !has_content_disp_name) {
+			if (g_str_has_prefix (content_type, desired_mime_type) && 
+			    !has_content_disp_name &&
+			    !modest_tny_mime_part_is_attachment_for_modest (part)) {
 				/* we found the desired mime-type! */
 				g_free (content_type);
 				break;
