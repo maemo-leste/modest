@@ -1154,8 +1154,17 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	if (error->code == TNY_SERVICE_ERROR_CERTIFICATE)
 		retval = modest_platform_run_certificate_confirmation_dialog (server_name,
 									      error->message);
-	else
-		retval = modest_platform_run_alert_dialog (prompt, question);
+	else {
+		modest_platform_run_information_dialog (NULL, prompt, TRUE);
+
+		/* Show the account dialog if it was wrong */
+		if (error->code == TNY_SERVICE_ERROR_CONNECT || 
+		    error->code == TNY_SERVICE_ERROR_AUTHENTICATE)
+			show_wrong_password_dialog (account);
+
+		retval = TRUE;
+	}
+
 	
 	if (prompt)
 		g_free (prompt);
