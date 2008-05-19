@@ -805,7 +805,8 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 
 		/* If it's a memory low issue, then show a banner */
 		error = modest_mail_operation_get_error (mail_op);
-		if (error && error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
+		if (error && error->domain == MODEST_MAIL_OPERATION_ERROR &&
+		    error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
 			GObject *source = modest_mail_operation_get_source (mail_op);
 			modest_platform_run_information_dialog (GTK_IS_WINDOW (source) ? GTK_WINDOW (source) : NULL,
 								dgettext("ke-recv","memr_ib_operation_disabled"),
@@ -2310,7 +2311,8 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 
 	/* Check if the operation failed due to memory low conditions */
 	error = modest_mail_operation_get_error (mail_op);
-	if (error && error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
+	if (error && error->domain == MODEST_MAIL_OPERATION_ERROR && 
+	    error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
 		modest_platform_run_information_dialog (GTK_WINDOW (win),
 							dgettext("ke-recv","memr_ib_operation_disabled"),
 							TRUE);
