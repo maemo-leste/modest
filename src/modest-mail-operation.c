@@ -2721,6 +2721,35 @@ transfer_msgs_status_cb (GObject *obj,
 					      &(helper->sum_total_bytes), helper->total_bytes, TRUE);
 }
 
+static void
+transfer_msgs_sync_folder_cb (TnyFolder *self, 
+			      gboolean cancelled, 
+			      GError *err, 
+			      gpointer user_data)
+{
+	XFerMsgsAsyncHelper *helper;
+	/* We don't care here about the results of the
+	   synchronization */
+	helper = (XFerMsgsAsyncHelper *) user_data;
+
+	/* Notify about operation end */
+	modest_mail_operation_notify_end (helper->mail_op);
+
+	/* If user defined callback function was defined, call it */
+	if (helper->user_callback)
+		helper->user_callback (helper->mail_op, helper->user_data);
+	
+	/* Free */
+	if (helper->more_msgs)
+		g_object_unref (helper->more_msgs);
+	if (helper->headers)
+		g_object_unref (helper->headers);
+	if (helper->dest_folder)
+		g_object_unref (helper->dest_folder);
+	if (helper->mail_op)
+		g_object_unref (helper->mail_op);
+	g_slice_free (XFerMsgsAsyncHelper, helper);
+}
 
 static void
 transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer user_data)
@@ -2762,34 +2791,13 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 	}
 
 	if (finished) {
-
-		/* Update folder counts */
-		tny_folder_poke_status (folder);
-		tny_folder_poke_status (helper->dest_folder);
-
-		/* Notify about operation end */
-		modest_mail_operation_notify_end (self);
-
-		/* If user defined callback function was defined, call it */
-		if (helper->user_callback) {
-			/* This is not a GDK lock because we are a Tinymail callback and
-			 * Tinymail already acquires the Gdk lock */
-
-			/* no gdk_threads_enter (), CHECKED */
-			helper->user_callback (self, helper->user_data);
-			/* no gdk_threads_leave (), CHECKED */
-		}
-
-		/* Free */
-		if (helper->more_msgs)
-			g_object_unref (helper->more_msgs);
-		if (helper->headers)
-			g_object_unref (helper->headers);
-		if (helper->dest_folder)
-			g_object_unref (helper->dest_folder);
-		if (helper->mail_op)
-			g_object_unref (helper->mail_op);
-		g_slice_free (XFerMsgsAsyncHelper, helper);
+		/* Synchronize the source folder contents. This should
+		   be done by tinymail but the camel_folder_sync it's
+		   actually disabled in transfer_msgs_thread_clean
+		   because it's supposed to cause hangs */
+		tny_folder_sync_async (folder, helper->delete, 
+				       transfer_msgs_sync_folder_cb, 
+				       NULL, helper);
 	} else {
 		/* Transfer more messages */
 		tny_folder_transfer_msgs_async (folder,
