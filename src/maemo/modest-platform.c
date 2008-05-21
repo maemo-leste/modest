@@ -1051,8 +1051,9 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	GtkWidget *note;
 	
 	note = hildon_note_new_information (parent_window, message);
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-				     GTK_WINDOW (note));
+	if (block)
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+					     GTK_WINDOW (note));
 	
 	if (block) {
 		gtk_dialog_run (GTK_DIALOG (note));
