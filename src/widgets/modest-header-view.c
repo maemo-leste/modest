@@ -1268,8 +1268,10 @@ modest_header_view_set_folder (ModestHeaderView *self,
 	}
 						      
 	if (priv->folder) {
-		if (priv->status_timeout)
+		if (priv->status_timeout) {
 			g_source_remove (priv->status_timeout);
+			priv->status_timeout = 0;
+		}
 
 		g_mutex_lock (priv->observers_lock);
 		tny_folder_remove_observer (priv->folder, TNY_FOLDER_OBSERVER (self));
@@ -1989,6 +1991,10 @@ static void
 notify_filter_change_destroy (gpointer data)
 {
 	NotifyFilterInfo *info = (NotifyFilterInfo *) data;
+	ModestHeaderViewPrivate *priv;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (info->self);
+	priv->status_timeout = 0;
 
 	g_object_unref (info->self);
 	g_object_unref (info->folder);
