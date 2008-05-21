@@ -1634,11 +1634,16 @@ modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
 static gboolean
 msg_is_visible (TnyHeader *header, gboolean check_outbox)
 {
-	return (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED)) &&
-		( (!check_outbox) || 
-		  ((modest_tny_all_send_queues_get_msg_status (header) != MODEST_TNY_SEND_QUEUE_FAILED) &&
-		   (modest_tny_all_send_queues_get_msg_status (header) != MODEST_TNY_SEND_QUEUE_SENDING))) ;
-	
+	if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+		return FALSE;
+	if (!check_outbox) {
+		return TRUE;
+	} else {
+		ModestTnySendQueueStatus status;
+		status = modest_tny_all_send_queues_get_msg_status (header);
+		return ((status != MODEST_TNY_SEND_QUEUE_FAILED) &&
+			(status != MODEST_TNY_SEND_QUEUE_SENDING));
+	}
 }
 
 gboolean
