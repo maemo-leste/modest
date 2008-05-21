@@ -1131,46 +1131,10 @@ on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
  	return OSSO_OK;
 }
 
-static gboolean
-on_idle_open_default_inbox(gpointer user_data)
-{
-	ModestWindow *main_win;
-	GtkWidget *folder_view;
-	
-	if (!check_and_offer_account_creation ()) /* this has it's only lock already */
-		return FALSE;
-
-	/* This is a GDK lock because we are an idle callback and
-	 * the code below is or does Gtk+ code */
-	gdk_threads_enter (); /* CHECKED */
-
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-						      TRUE); /* create if non-existent */
-	if (!main_win) {
-		g_warning ("%s: BUG: no main window", __FUNCTION__);
-		gdk_threads_leave (); /* CHECKED */
-		return FALSE; /* don't call me again */
-	}
-		
-	/* Get the folder view */
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_win),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
-	
-	gdk_threads_leave (); /* CHECKED */
-	
-	/* This D-Bus method is obviously meant to result in the UI being visible,
-	 * so show it, by calling this idle handler directly: */
-	on_idle_top_application(user_data);
-	
-	return FALSE; /* Do not call this callback again. */
-}
-
 static gint 
 on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
-	/* Use g_idle to context-switch into the application's thread: */
- 	g_idle_add(on_idle_open_default_inbox, NULL);
+ 	g_idle_add(on_idle_top_application, NULL);
  	
  	return OSSO_OK;
 }
