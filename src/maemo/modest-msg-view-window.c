@@ -1635,7 +1635,9 @@ static gboolean
 msg_is_visible (TnyHeader *header, gboolean check_outbox)
 {
 	return (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED)) &&
-		( (!check_outbox) || (modest_tny_all_send_queues_get_msg_status (header) != MODEST_TNY_SEND_QUEUE_FAILED)) ;
+		( (!check_outbox) || 
+		  ((modest_tny_all_send_queues_get_msg_status (header) != MODEST_TNY_SEND_QUEUE_FAILED) &&
+		   (modest_tny_all_send_queues_get_msg_status (header) != MODEST_TNY_SEND_QUEUE_SENDING))) ;
 	
 }
 
