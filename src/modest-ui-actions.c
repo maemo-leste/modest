@@ -4687,6 +4687,21 @@ modest_ui_actions_msgs_move_to_confirmation (ModestWindow *win,
 }
 
 static void
+move_to_helper_destroyer (gpointer user_data)
+{
+	MoveToHelper *helper = (MoveToHelper *) user_data;
+
+	/* Close the "Pasting" information banner */
+	if (helper->banner) {
+		gtk_widget_destroy (GTK_WIDGET (helper->banner));
+		g_object_unref (helper->banner);
+	}
+	if (helper->reference != NULL)
+		gtk_tree_row_reference_free (helper->reference);
+	g_free (helper);
+}
+
+static void
 move_to_cb (ModestMailOperation *mail_op, 
 	    gpointer user_data)
 {
@@ -4724,15 +4739,8 @@ move_to_cb (ModestMailOperation *mail_op,
 		}
 		g_object_unref (object);
         }
-
-	/* Close the "Pasting" information banner */
-	if (helper->banner) {
-		gtk_widget_destroy (GTK_WIDGET(helper->banner));
-		g_object_unref (helper->banner);
-	}
-	if (helper->reference != NULL)
-		gtk_tree_row_reference_free (helper->reference);
-	g_free (helper);
+	/* Destroy the helper */
+	move_to_helper_destroyer (helper);
 }
 
 static void
@@ -5019,7 +5027,7 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 			     gpointer user_data)
 {
 	ModestWindow *main_window = NULL;
-	
+
 	/* Disable next automatic folder selection */
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 							 FALSE); /* don't create */
@@ -5031,6 +5039,7 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 		if (win)
 			g_object_unref (win);
 	}
+	move_to_helper_destroyer (user_data);
 }
 
 /**
@@ -5111,7 +5120,7 @@ xfer_messages_performer  (gboolean canceled,
 	ModestMailOperation *mail_op = 
 		modest_mail_operation_new_with_error_handling (G_OBJECT(win),
 							       xfer_messages_error_handler,
-							       NULL, NULL);
+							       helper, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
 
