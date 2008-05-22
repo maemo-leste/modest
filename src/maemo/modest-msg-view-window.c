@@ -1634,7 +1634,7 @@ modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
 static gboolean
 msg_is_visible (TnyHeader *header, gboolean check_outbox)
 {
-	if (!(tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
+	if ((tny_header_get_flags(header) & TNY_HEADER_FLAG_DELETED))
 		return FALSE;
 	if (!check_outbox) {
 		return TRUE;
