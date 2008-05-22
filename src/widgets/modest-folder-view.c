@@ -992,7 +992,7 @@ same_account_selected (ModestFolderView *self,
 
 		if (TNY_IS_FOLDER (priv->cur_folder_store)) {
 			selected_folder_account = 
-				tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store));
+				modest_tny_folder_get_account (TNY_FOLDER (priv->cur_folder_store));
 		} else {
 			selected_folder_account = 
 				TNY_ACCOUNT (g_object_ref (priv->cur_folder_store));

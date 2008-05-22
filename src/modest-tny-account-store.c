@@ -79,7 +79,7 @@ static void    on_account_inserted         (ModestAccountMgr *acc_mgr,
 					    const gchar *account,
 					    gpointer user_data);
 
-static void    add_existing_accounts       (ModestTnyAccountStore *self);
+static void   add_existing_accounts       (ModestTnyAccountStore *self);
 
 static void    insert_account              (ModestTnyAccountStore *self,
 					    const gchar *account,
@@ -108,9 +108,13 @@ static void    forget_password_in_memory (ModestTnyAccountStore *self,
 
 static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self);
 
+static void    remove_connection_specific_transport_accounts      (ModestTnyAccountStore *self);
+
 static void    connection_status_changed   (TnyAccount *account, 
 					    TnyConnectionStatus status, 
 					    gpointer data);
+
+static gboolean only_local_accounts        (ModestTnyAccountStore *self);
 
 /* list my signals */
 enum {
@@ -969,8 +973,10 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	   global OUTBOX hosted in the local account */
 	add_existing_accounts (MODEST_TNY_ACCOUNT_STORE (obj));
 	
-	/* Add connection-specific transport accounts */
-	add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
+	/* Add connection-specific transport accounts if there are any
+	   accounts available */
+	if (!only_local_accounts (MODEST_TNY_ACCOUNT_STORE(obj)))
+		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
 	
 	/* This is a singleton, so it does not need to be unrefed. */
 	if (volume_path_is_mounted (MODEST_MCC1_VOLUMEPATH)) {
@@ -1741,13 +1747,46 @@ insert_account (ModestTnyAccountStore *self,
 	g_object_unref (transport_account);
 }
 
+static gboolean
+only_local_accounts (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv = NULL;
+	gboolean only_local = TRUE;
+	TnyIterator *iter;
+
+	/* Check if this is the first remote account we add */
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	iter = tny_list_create_iterator (priv->store_accounts);
+
+	while (!tny_iterator_is_done (iter) && only_local) {
+		TnyAccount *account = (TnyAccount *) tny_iterator_get_current (iter);
+		if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+			only_local = FALSE;
+		g_object_unref (account);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	return only_local;
+}
+
 static void
 on_account_inserted (ModestAccountMgr *acc_mgr, 
 		     const gchar *account,
 		     gpointer user_data)
 {
+	gboolean add_specific;
+
+	add_specific = only_local_accounts (MODEST_TNY_ACCOUNT_STORE (user_data));
+	    	
 	/* Insert the account and notify the observers */
 	insert_account (MODEST_TNY_ACCOUNT_STORE (user_data), account, TRUE);
+
+	/* If it's the first remote account then add the connection
+	   specific SMTP servers as well */
+	if (add_specific)
+		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE (user_data));
+
 }
 
 /* This is the callback of the tny_camel_account_set_online called in
@@ -1793,6 +1832,60 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 			modest_runtime_remove_send_queue (TNY_TRANSPORT_ACCOUNT (account));
 		}
 	}
+}
+
+/*
+ * We use this one for both removing "normal" and "connection
+ * specific" transport accounts
+ */
+static void
+remove_transport_account (ModestTnyAccountStore *self,
+			  TnyTransportAccount *transport_account)
+{
+	ModestTnyAccountStorePrivate *priv;
+	TnyFolder *outbox = NULL;
+	
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	/* Remove it from the list of accounts and notify the
+	   observers. Do not need to wait for account
+	   disconnection */
+	tny_list_remove (priv->transport_accounts, (GObject *) transport_account);
+	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
+		
+	/* Remove the OUTBOX of the account from the global outbox */
+	outbox = g_hash_table_lookup (priv->outbox_of_transport, transport_account);
+
+	if (TNY_IS_FOLDER (outbox)) {
+		TnyAccount *local_account = NULL;
+		TnyAccount *outbox_account = tny_folder_get_account (outbox);
+
+		if (outbox_account) {
+			tny_list_remove (priv->store_accounts_outboxes, G_OBJECT (outbox_account));
+			/* Remove existing emails to send */
+			tny_store_account_delete_cache (TNY_STORE_ACCOUNT (outbox_account));
+			g_object_unref (outbox_account);
+		}
+
+		local_account = modest_tny_account_store_get_local_folders_account (self);
+		modest_tny_local_folders_account_remove_folder_from_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
+									    outbox);
+
+		g_hash_table_remove (priv->outbox_of_transport, transport_account);
+
+		/* Notify the change in the local account */
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
+		g_object_unref (local_account);
+	} else {
+		g_warning ("Removing a transport account that has no outbox");
+	}
+
+	/* Cancel all pending operations */
+	tny_account_cancel (TNY_ACCOUNT (transport_account));
+
+	/* Disconnect and notify the observers. The callback will free the reference */
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account), FALSE,
+				      on_account_disconnect_when_removing, self);
 }
 
 static void
@@ -1843,54 +1936,22 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	/* If there was any problem creating the account, for example,
 	   with the configuration system this could not exist */
 	if (TNY_IS_TRANSPORT_ACCOUNT(transport_account)) {
-		TnyAccount *local_account = NULL;
-		TnyFolder *outbox = NULL;
 
 		/* Forget any cached password for the account */
 		forget_password_in_memory (self, tny_account_get_id (transport_account));
 
-		/* Remove it from the list of accounts and notify the
-		   observers. Do not need to wait for account
-		   disconnection */
-		tny_list_remove (priv->transport_accounts, (GObject *) transport_account);
-		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
-	
-		/* Remove the OUTBOX of the account from the global outbox */
-		outbox = g_hash_table_lookup (priv->outbox_of_transport, transport_account);
-
-		if (TNY_IS_FOLDER (outbox)) {
-			TnyAccount *outbox_account = tny_folder_get_account (outbox);
-
-			if (outbox_account) {
-				tny_list_remove (priv->store_accounts_outboxes, G_OBJECT (outbox_account));
-				/* Remove existing emails to send */
-				tny_store_account_delete_cache (TNY_STORE_ACCOUNT (outbox_account));
-				g_object_unref (outbox_account);
-			}
-
-			local_account = modest_tny_account_store_get_local_folders_account (self);
-			modest_tny_local_folders_account_remove_folder_from_outbox (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (local_account),
-										    outbox);
-
-			g_hash_table_remove (priv->outbox_of_transport, transport_account);
-
-			/* Notify the change in the local account */
-			g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
-			g_object_unref (local_account);
-		} else {
-			g_warning ("Removing a transport account that has no outbox");
-		}
-
-		/* Cancel all pending operations */
-		tny_account_cancel (TNY_ACCOUNT (transport_account));
-
-		/* Disconnect and notify the observers. The callback will free the reference */
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account), FALSE,
-					      on_account_disconnect_when_removing, self);
+		/* Remove transport account. It'll free the reference
+		   added by get_server_account */
+		remove_transport_account (self, TNY_TRANSPORT_ACCOUNT (transport_account));
 	} else {
 		g_warning ("%s: no transport account for account %s\n", 
 			   __FUNCTION__, account);
 	}
+
+	/* If there are no more user accounts then delete the
+	   transport specific SMTP servers */
+	if (only_local_accounts (self))
+		remove_connection_specific_transport_accounts (self);
 }
 
 TnyTransportAccount *
@@ -1935,19 +1996,16 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 {
 	ModestTnyAccountStorePrivate *priv = NULL;
 	GSList *list_specifics = NULL, *iter = NULL;
+	GError *err = NULL;
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	ModestConf *conf = modest_runtime_get_conf ();
-
-	GError *err = NULL;
-	list_specifics = modest_conf_get_list (conf,
+	list_specifics = modest_conf_get_list (modest_runtime_get_conf (),
 					       MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
 					       MODEST_CONF_VALUE_STRING, &err);
 	if (err) {
-		g_printerr ("modest: %s: error getting list: %s\n.", __FUNCTION__, err->message);
 		g_error_free (err);
-		err = NULL;
+		g_return_if_reached ();
 	}
 				
 	/* Look at each connection-specific transport account for the 
@@ -1967,6 +2025,46 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 		iter = g_slist_next (iter);
 	}
 }
+
+static void
+remove_connection_specific_transport_accounts (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv = NULL;
+	GSList *list_specifics = NULL, *iter = NULL;
+	GError *err = NULL;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	err = NULL;
+	list_specifics = modest_conf_get_list (modest_runtime_get_conf (),
+					       MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST,
+					       MODEST_CONF_VALUE_STRING, &err);
+	if (err) {
+		g_error_free (err);
+		g_return_if_reached ();
+	}
+				
+	/* Look at each connection-specific transport account for the 
+	 * modest account: */
+	iter = list_specifics;
+	while (iter) {
+		/* The list alternates between the connection name and the transport name: */
+		iter = g_slist_next (iter);
+		if (iter) {
+			const gchar* transport_account_name = (const gchar*) (iter->data);
+			TnyAccount * account;
+			account = modest_tny_account_store_get_server_account (self,
+									       transport_account_name,
+									       TNY_ACCOUNT_TYPE_TRANSPORT);
+			if (account) {
+				remove_transport_account (self, TNY_TRANSPORT_ACCOUNT (account));
+				g_object_unref (account);
+			}
+		}				
+		iter = g_slist_next (iter);
+	}
+}
+
 
 TnyMsg *
 modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *self, 
