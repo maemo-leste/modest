@@ -1098,10 +1098,17 @@ on_hildon_program_is_topmost_notify(GObject *self,
 	}	
 }
 
+typedef struct
+{
+	GtkWidget *folder_win;
+	gulong handler_id;
+} ShowHelper;
+
 static void
 modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 {
-	GtkWidget *folder_win = (GtkWidget *) user_data;
+	ShowHelper *helper = (ShowHelper *) user_data;
+	GtkWidget *folder_win = helper->folder_win;
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
@@ -1145,6 +1152,12 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		modest_account_mgr_free_account_names (accounts);
 		update_menus (MODEST_MAIN_WINDOW (self));
 	}
+
+	/* Never call this function again (NOTE that it could happen
+	   as we hide the main window instead of closing it while
+	   there are operations ongoing) and free the helper */
+	g_signal_handler_disconnect (self, helper->handler_id);
+	g_slice_free (ShowHelper, helper);
 }
 
 static void 
@@ -1175,6 +1188,7 @@ modest_main_window_new (void)
 	ModestConf *conf = NULL;
 	GtkAction *action = NULL;
 	GdkPixbuf *window_icon;
+	ShowHelper *helper;
 	
 	self  = MODEST_MAIN_WINDOW(g_object_new(MODEST_TYPE_MAIN_WINDOW, NULL));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -1313,8 +1327,13 @@ modest_main_window_new (void)
 	g_signal_connect (G_OBJECT(app), "notify::is-topmost",
 		G_CALLBACK (on_hildon_program_is_topmost_notify), self);
 
-	g_signal_connect (G_OBJECT(self), "show",
-			  G_CALLBACK (modest_main_window_on_show), folder_win);
+	/* Connect to "show" action. We delay the creation of some
+	   elements until that moment */
+	helper = g_slice_new0 (ShowHelper);
+	helper->folder_win = folder_win;
+	helper->handler_id = g_signal_connect (G_OBJECT(self), "show",
+					       G_CALLBACK (modest_main_window_on_show), 
+					       helper);
 		
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
