@@ -128,8 +128,6 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *button_outgoing_smtp_servers;
 	
 	GtkWidget *page_complete_customsetup;
-	
-	GtkWidget *specific_window;
 };
 
 static void save_to_settings (ModestEasysetupWizardDialog *self);
@@ -206,9 +204,6 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 		
 	if (priv->presets)
 		modest_presets_destroy (priv->presets);
-		
-	if (priv->specific_window)
-	 	gtk_widget_destroy (priv->specific_window);
 
 	if (priv->settings)
 		g_object_unref (priv->settings);
@@ -919,22 +914,19 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
+	GtkWidget *specific_window;
 	
 	/* We set dirty here because setting it depending on the connection specific dialog
 	seems overkill */
 	priv->dirty = TRUE;
 	
 	/* Create the window, if necessary: */
-	if (!(priv->specific_window)) {
-		priv->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
-		modest_connection_specific_smtp_window_fill_with_connections (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (priv->specific_window), priv->account_manager);
-	}
+	specific_window = (GtkWidget *) modest_connection_specific_smtp_window_new ();
+	modest_connection_specific_smtp_window_fill_with_connections (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (specific_window), priv->account_manager);
 
-	/* Show the window: */
-	gtk_window_set_transient_for (GTK_WINDOW (priv->specific_window), GTK_WINDOW (self));
-	gtk_window_set_modal (GTK_WINDOW (priv->specific_window), TRUE);
-	gtk_widget_show (priv->specific_window);
+	/* Show the window */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (specific_window));
+	gtk_widget_show (specific_window);
 }
 
 static void 
@@ -1263,7 +1255,6 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	priv->checkbox_outgoing_smtp_specific = NULL;
 	priv->button_outgoing_smtp_servers = NULL;
 	priv->page_complete_customsetup = NULL;
-	priv->specific_window = NULL;
 
 	/* Add the common pages: */
 	gtk_notebook_append_page (notebook, priv->page_welcome, 
@@ -1967,9 +1958,5 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	display_name = get_entered_account_title (self);
 	modest_account_settings_set_display_name (priv->settings, display_name);
 	g_free (display_name);
-
-	if (priv->specific_window)
-		modest_connection_specific_smtp_window_save_server_accounts (
-			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (priv->specific_window));
 }
 
