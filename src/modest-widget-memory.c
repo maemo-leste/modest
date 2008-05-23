@@ -219,16 +219,17 @@ static gboolean
 save_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 {
 	gchar *key;
-	int pos, percent;
+	gint pos;
+	gdouble percent;
 
 	/* Don't save the paned position if it's not visible, 
 	 * because it could not be correct: */
 	if (GTK_WIDGET_REALIZED (GTK_WIDGET (paned))) {
 		pos = gtk_paned_get_position (paned);
-		percent = pos * 100 / GTK_WIDGET (paned)->allocation.width;
+		percent = (gdouble) (pos * 100) / (gdouble) GTK_WIDGET (paned)->allocation.width;
 
 		key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);
-		modest_conf_set_int (conf, key, percent, NULL);
+		modest_conf_set_float (conf, key, percent, NULL);
 		g_free (key);
 	}
 	
@@ -240,10 +241,11 @@ static gboolean
 restore_settings_paned (ModestConf *conf, GtkPaned *paned, const gchar *name)
 {
  	gchar *key;
-	int percent, pos;
+	gdouble percent;
+	gint pos;
 	
 	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_POS);	
-	percent = modest_conf_get_int (conf, key, NULL);
+	percent = modest_conf_get_float (conf, key, NULL);
 	
 	if (GTK_WIDGET_VISIBLE (GTK_WIDGET (paned)) && GTK_WIDGET_REALIZED (GTK_WIDGET (paned))) {
 		pos = GTK_WIDGET (paned)->allocation.width * percent /100;

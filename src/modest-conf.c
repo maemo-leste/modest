@@ -207,6 +207,18 @@ modest_conf_get_int (ModestConf* self, const gchar* key, GError **err)
 	return gconf_client_get_int (priv->gconf_client, key, err);
 }
 
+gdouble
+modest_conf_get_float (ModestConf* self, const gchar* key, GError **err)
+{
+	ModestConfPrivate *priv;
+
+	g_return_val_if_fail (self, -1);
+	g_return_val_if_fail (key, -1);
+
+	priv = MODEST_CONF_GET_PRIVATE(self);
+	
+	return gconf_client_get_float (priv->gconf_client, key, err);
+}
 
 gboolean
 modest_conf_get_bool (ModestConf* self, const gchar* key, GError **err)
@@ -279,6 +291,27 @@ modest_conf_set_int  (ModestConf* self, const gchar* key, gint val,
 	}
 			
 	return gconf_client_set_int (priv->gconf_client, key, val, err);
+}
+
+gboolean
+modest_conf_set_float (ModestConf* self, 
+		       const gchar* key, 
+		       gdouble val,
+		       GError **err)
+{
+	ModestConfPrivate *priv;
+		
+	g_return_val_if_fail (self,FALSE);
+	g_return_val_if_fail (key, FALSE);
+	
+	priv = MODEST_CONF_GET_PRIVATE(self);
+
+	if (!gconf_client_key_is_writable(priv->gconf_client,key,err)) {
+		g_printerr ("modest: '%s' is not writable\n", key);
+		return FALSE;
+	}
+			
+	return gconf_client_set_float (priv->gconf_client, key, val, err);
 }
 
 

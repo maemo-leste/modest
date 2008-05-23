@@ -121,6 +121,19 @@ gchar*       modest_conf_get_string  (ModestConf* self, const gchar* key, GError
  */
 gint         modest_conf_get_int     (ModestConf* self, const gchar* key, GError **err);
 
+/** 
+ * modest_conf_get_float:
+ * @self: a ModestConf instance
+ * @key: the key of the value to retrieve
+ * @err: a GError ptr, or NULL to ignore.
+ * 
+ * get an integer from the configuration system
+ *  
+ * Returns: an double with the value for the key, or -1 in case of
+ * error (of course, -1 can also be returned in non-error cases).
+ * @err gives details in case of error
+ */
+gdouble      modest_conf_get_float   (ModestConf* self, const gchar* key, GError **err);
 
 /** 
  * modest_conf_get_bool:
@@ -180,6 +193,23 @@ gboolean     modest_conf_set_string (ModestConf* self, const gchar* key, const g
  * @err gives details in case of error
  */
 gboolean     modest_conf_set_int    (ModestConf* self, const gchar* key, int val,
+				     GError **err);
+
+/**
+ * modest_conf_set_float:
+ * @self: a ModestConf instance
+ * @key: the key of the value to set
+ * @val: the value to set
+ * @err: a GError ptr, or NULL if not interested.
+ *
+ * store an integer value in the configuration system
+ * 
+ * Returns: TRUE if succeeded or FALSE in case of error.
+ * @err gives details in case of error
+ */
+gboolean     modest_conf_set_float  (ModestConf* self, 
+				     const gchar* key, 
+				     gdouble val,
 				     GError **err);
 
 /**
