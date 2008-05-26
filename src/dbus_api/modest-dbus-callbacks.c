@@ -71,7 +71,6 @@ typedef struct
 
 
 static gboolean notify_error_in_dbus_callback (gpointer user_data);
-static gboolean notify_msg_not_found_in_idle (gpointer user_data);
 static gboolean on_idle_compose_mail(gpointer user_data);
 static gboolean on_idle_top_application (gpointer user_data);
 
@@ -448,7 +447,8 @@ find_msg_async_cb (TnyFolder *folder,
         OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) user_data;
 
         if (err || cancelled) {
-                g_idle_add (notify_msg_not_found_in_idle, NULL);
+		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
                 goto end;
         }
 
@@ -456,7 +456,8 @@ find_msg_async_cb (TnyFolder *folder,
         if (header && (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)) {
                 g_object_unref (header);
                 g_object_unref (msg);
-                g_idle_add (notify_msg_not_found_in_idle, NULL);
+		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
                 goto end;
         }
 
@@ -577,7 +578,8 @@ on_open_message_performer (gboolean canceled,
 
 	info = (OpenMsgPerformerInfo *) user_data;
         if (canceled || err) {
-                g_idle_add (notify_msg_not_found_in_idle, NULL);
+		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
                 on_find_msg_async_destroy (info);
                 return;
         }
@@ -596,7 +598,8 @@ on_open_message_performer (gboolean canceled,
                 folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), info->uri, NULL);
         }
         if (!folder) {
-                g_idle_add (notify_msg_not_found_in_idle, NULL);
+		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
+		g_idle_add (notify_error_in_dbus_callback, NULL);
                 on_find_msg_async_destroy (info);
                 return;
         }
@@ -1865,16 +1868,6 @@ notify_error_in_dbus_callback (gpointer user_data)
 	modest_mail_operation_queue_add (mail_op_queue, mail_op);
 	modest_mail_operation_noop (mail_op);
 	g_object_unref (mail_op);
-
-	return FALSE;
-}
-
-static gboolean
-notify_msg_not_found_in_idle (gpointer user_data)
-{
-	modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), FALSE);
-
-	g_idle_add (notify_error_in_dbus_callback, NULL);
 
 	return FALSE;
 }
