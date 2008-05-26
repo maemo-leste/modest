@@ -1,3 +1,10 @@
+modest (1.0-2008.22-1) hardy; urgency=low
+
+  * Fixes: NB#85642, NB#85459, NB#84974, NB#85656, NB#85461, NB#85378
+  * Fixes: NB#85743, NB#85574, NB#85502, NB#85396, NB#84952, 
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 26 May 2008 18:19:31 +0300
+
 modest (1.0-2008.21-1) hardy; urgency=low
 
   * Fixes: NB#85378, NB#85399, NB#85397, NB#85158, NB#85439, NB#85443
