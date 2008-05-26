@@ -1850,8 +1850,8 @@ remove_transport_account (ModestTnyAccountStore *self,
 	/* Remove it from the list of accounts and notify the
 	   observers. Do not need to wait for account
 	   disconnection */
-	tny_list_remove (priv->transport_accounts, (GObject *) transport_account);
 	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_REMOVED_SIGNAL], 0, transport_account);
+	tny_list_remove (priv->transport_accounts, (GObject *) transport_account);
 		
 	/* Remove the OUTBOX of the account from the global outbox */
 	outbox = g_hash_table_lookup (priv->outbox_of_transport, transport_account);
