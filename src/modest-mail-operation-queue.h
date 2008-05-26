@@ -142,6 +142,28 @@ GSList* modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *op_
  **/
 gchar* modest_mail_operation_queue_to_string (ModestMailOperationQueue *self);
 
+/**
+ * modest_mail_operation_queue_set_running_shutdown:
+ * @self: a #ModestMailOperationQueue
+ *
+ * Mark the queue as running the final sync.
+ *
+ */
+void
+modest_mail_operation_queue_set_running_shutdown (ModestMailOperationQueue *self);
+
+/**
+ * modest_mail_operation_queue_running_shutdown:
+ * @self: a #ModestMailOperationQueue
+ *
+ * Is the last operation queued a shutdown operation?
+ *
+ * Returns: a #gboolean, %TRUE if the last queued operation is
+ * a shutdown, %FALSE otherwise
+ */
+gboolean
+modest_mail_operation_queue_running_shutdown (ModestMailOperationQueue *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MAIL_OPERATION_QUEUE_H__ */

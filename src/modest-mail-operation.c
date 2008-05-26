@@ -3132,6 +3132,7 @@ run_queue_stop (ModestTnySendQueue *queue,
 	g_signal_handlers_disconnect_by_func (queue, run_queue_stop, self);
 	g_object_unref (self);
 }
+
 void
 modest_mail_operation_run_queue (ModestMailOperation *self,
 				 ModestTnySendQueue *queue)
@@ -3149,6 +3150,42 @@ modest_mail_operation_run_queue (ModestMailOperation *self,
 	modest_mail_operation_notify_start (self);
 	g_object_ref (self);
 	g_signal_connect ((gpointer) queue, "queue-stop", G_CALLBACK (run_queue_stop), (gpointer) self);
+}
+
+static void
+shutdown_callback (ModestTnyAccountStore *account_store, gpointer userdata)
+{
+	ModestMailOperation *self = (ModestMailOperation *) userdata;
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (account_store));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	modest_mail_operation_notify_end (self);
+	g_object_unref (self);
+}
+
+void
+modest_mail_operation_shutdown (ModestMailOperation *self, ModestTnyAccountStore *account_store)
+{
+	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (account_store));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	modest_mail_operation_queue_set_running_shutdown (modest_runtime_get_mail_operation_queue ());
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->account = NULL;
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SHUTDOWN;
+
+	modest_mail_operation_notify_start (self);
+	g_object_ref (self);
+	modest_tny_account_store_shutdown (account_store, shutdown_callback, self);
 }
 
 static void

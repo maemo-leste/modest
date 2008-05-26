@@ -301,20 +301,6 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 
 /* disconnect the list of TnyAccounts */
 static void
-account_disconnect (TnyAccount *account)
-{
-	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
-
-	if (TNY_IS_STORE_ACCOUNT (account) && 
-	    !modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
-		return;
-
-	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, NULL, NULL);
-}
-
-
-/* disconnect the list of TnyAccounts */
-static void
 account_verify_last_ref (TnyAccount *account, const gchar *str)
 {
 	gchar *txt;
@@ -838,14 +824,12 @@ modest_tny_account_store_finalize (GObject *obj)
 
 	/* Destroy all accounts. Disconnect all accounts before they are destroyed */
 	if (priv->store_accounts) {
-		tny_list_foreach (priv->store_accounts, (GFunc)account_disconnect, NULL);
 		tny_list_foreach (priv->store_accounts, (GFunc)account_verify_last_ref, "store");
 		g_object_unref (priv->store_accounts);
 		priv->store_accounts = NULL;
 	}
 	
 	if (priv->transport_accounts) {
-		tny_list_foreach (priv->transport_accounts, (GFunc)account_disconnect, NULL);
 		tny_list_foreach (priv->transport_accounts, (GFunc)account_verify_last_ref, "transport");
 		g_object_unref (priv->transport_accounts);
 		priv->transport_accounts = NULL;
@@ -2187,4 +2171,68 @@ modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *se
 		return dialog;
 	}
 	
+}
+
+typedef struct {
+	ModestTnyAccountStore *account_store;
+	ModestTnyAccountStoreShutdownCallback callback;
+	gpointer userdata;
+	gint pending;
+} ShutdownOpData;
+
+static void
+account_shutdown_callback (TnyCamelAccount *account, gboolean canceled, GError *err, gpointer userdata)
+{
+	ShutdownOpData *op_data = (ShutdownOpData *) userdata;
+	op_data->pending--;
+	if (op_data->pending == 0) {
+		if (op_data->callback)
+			op_data->callback (op_data->account_store, op_data->userdata);
+		g_object_unref (op_data->account_store);
+		g_free (op_data);
+	}
+}
+
+static void
+account_shutdown (TnyAccount *account, ShutdownOpData *op_data)
+{
+	g_return_if_fail (account && TNY_IS_ACCOUNT(account));
+
+	if (TNY_IS_STORE_ACCOUNT (account) && 
+	    !modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		return;
+
+	op_data->pending++;
+
+	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, account_shutdown_callback, op_data);
+}
+
+
+void 
+modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
+				   ModestTnyAccountStoreShutdownCallback callback,
+				   gpointer userdata)
+{
+	ShutdownOpData *op_data = g_new0 (ShutdownOpData, 1);
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	op_data->callback = callback;
+	op_data->userdata = userdata;
+	op_data->pending = 0;
+	op_data->account_store = g_object_ref (self);
+	
+	/* Destroy all accounts. Disconnect all accounts before they are destroyed */
+	if (priv->store_accounts) {
+		tny_list_foreach (priv->store_accounts, (GFunc)account_shutdown, op_data);
+	}
+	
+	if (priv->transport_accounts) {
+		tny_list_foreach (priv->transport_accounts, (GFunc)account_shutdown, op_data);
+	}
+
+	if (op_data->pending == 0) {
+		if (op_data->callback)
+			op_data->callback (op_data->account_store, op_data->userdata);
+		g_object_unref (op_data->account_store);
+		g_free (op_data);
+	}
 }

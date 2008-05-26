@@ -247,6 +247,21 @@ TnyTransportAccount * modest_tny_account_store_new_connection_specific_transport
 GtkWidget *modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *self,
 								  const gchar *account_name);
 
+typedef void (*ModestTnyAccountStoreShutdownCallback) (ModestTnyAccountStore *account_store, gpointer userdata);
+
+/**
+ * modest_tny_account_store_shutdown:
+ * @self: a #ModestTnyAccountStore
+ * @callback: a #ModestTnyAccountStoreShutdownCallback
+ * @userdata: a #gpointer
+ *
+ * Disconnects all registered accounts (forcing syncs for all of them).
+ */
+void modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
+					ModestTnyAccountStoreShutdownCallback callback,
+					gpointer userdata);
+					
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */

@@ -55,6 +55,7 @@ struct _ModestMailOperationQueuePrivate {
 	GMutex *queue_lock;
 	guint   op_id;
 	guint   queue_empty_handler;
+	gboolean running_final_sync;
 };
 #define MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                          MODEST_TYPE_MAIL_OPERATION_QUEUE, \
@@ -148,6 +149,7 @@ modest_mail_operation_queue_init (ModestMailOperationQueue *obj)
 	priv->queue_lock = g_mutex_new ();
 	priv->op_id = 0;
 	priv->queue_empty_handler = 0;
+	priv->running_final_sync = FALSE;
 }
 
 static void
@@ -245,6 +247,8 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (mail_op));
 	
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+
+	priv->running_final_sync = (modest_mail_operation_get_type_operation (mail_op) == MODEST_MAIL_OPERATION_TYPE_SHUTDOWN);
 
 	g_mutex_lock (priv->queue_lock);
 	g_queue_push_tail (priv->op_queue, g_object_ref (mail_op));
@@ -511,4 +515,26 @@ modest_mail_operation_queue_to_string (ModestMailOperationQueue *self)
 	}
 		
 	return str;
+}
+
+gboolean
+modest_mail_operation_queue_running_shutdown (ModestMailOperationQueue *self)
+{
+	ModestMailOperationQueuePrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self), FALSE);
+	
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+	return priv->running_final_sync;
+}
+
+void
+modest_mail_operation_queue_set_running_shutdown (ModestMailOperationQueue *self)
+{
+	ModestMailOperationQueuePrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self));
+	
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+	priv->running_final_sync = TRUE;
 }

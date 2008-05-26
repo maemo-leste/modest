@@ -46,23 +46,35 @@ static gboolean
 on_idle_exit_modest (gpointer data)
 {
 	MainSignalHandlers *handlers;
+	ModestMailOperationQueue *mail_op_queue;
 
 	/* Protect the Gtk calls */
 	gdk_threads_enter ();
+	mail_op_queue = modest_runtime_get_mail_operation_queue ();
 
-	/* Disconnect signals. Will be freed by the destroy notify */
-	handlers = (MainSignalHandlers *) data;
-	g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (), 
-				     handlers->queue_handler);
-	g_signal_handler_disconnect (modest_runtime_get_window_mgr (), 
-				     handlers->window_list_handler);
+	if (modest_mail_operation_queue_running_shutdown (mail_op_queue)) {
 
-	/* Wait for remaining tasks */
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
-
-	gtk_main_quit ();
-
+		/* Disconnect signals. Will be freed by the destroy notify */
+		handlers = (MainSignalHandlers *) data;
+		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (), 
+					     handlers->queue_handler);
+		g_signal_handler_disconnect (modest_runtime_get_window_mgr (), 
+					     handlers->window_list_handler);
+		/* Wait for remaining tasks */
+		while (gtk_events_pending ())
+			gtk_main_iteration ();
+		
+		g_free (handlers);
+		
+		gtk_main_quit ();
+	} else {
+		ModestMailOperation *mail_op;
+		mail_op = modest_mail_operation_new (NULL);
+		modest_mail_operation_queue_add (mail_op_queue, mail_op);
+		modest_mail_operation_shutdown (mail_op, modest_runtime_get_account_store ());
+		g_object_unref (mail_op);
+	}
+		
 	gdk_threads_leave ();
 
 	return FALSE;
@@ -78,7 +90,7 @@ on_queue_empty (ModestMailOperationQueue *queue,
 	   windows. We can exit as well if the main window is hidden
 	   and it's the only one */
 	if (modest_window_mgr_num_windows (mgr) == 0)
-		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, g_free);
+		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, NULL);
 }
 
 static void
@@ -89,7 +101,7 @@ on_window_list_empty (ModestWindowMgr *window_mgr,
 
 	/* Exit if there are no more windows and the queue is empty */
 	if (modest_mail_operation_queue_num_elements (queue) == 0)
-		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, g_free);
+		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, NULL);
 }
 
 int

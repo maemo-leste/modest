@@ -34,6 +34,7 @@
 #include <tny-folder-store.h>
 #include <widgets/modest-msg-edit-window.h>
 #include <modest-tny-send-queue.h>
+#include <modest-tny-account-store.h>
 
 G_BEGIN_DECLS
 
@@ -76,6 +77,7 @@ typedef enum {
 	MODEST_MAIL_OPERATION_TYPE_INFO,
 	MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE,
 	MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER,
+	MODEST_MAIL_OPERATION_TYPE_SHUTDOWN,
 	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
 } ModestMailOperationTypeOperation;
 
@@ -646,6 +648,16 @@ void          modest_mail_operation_run_queue       (ModestMailOperation *self,
  */
 void          modest_mail_operation_sync_folder     (ModestMailOperation *self,
 						     TnyFolder *folder, gboolean expunge);
+
+/**
+ * modest_mail_operation_shutdown:
+ * @self: a #ModestMailOperation
+ * @account_store: a #ModestTnyAccountStore
+ *
+ * disconnects all accounts in the account store (doing the proper syncs).
+ */
+void          modest_mail_operation_shutdown        (ModestMailOperation *self,
+						     ModestTnyAccountStore *account_store);
 
 /* Functions to control mail operations */
 /**
