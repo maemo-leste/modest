@@ -1655,7 +1655,6 @@ modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialo
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
 
 	dialog->save_password = TRUE;
-	dialog->modified = TRUE;
 }
 
 
