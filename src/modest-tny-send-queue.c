@@ -687,8 +687,19 @@ _on_msg_error_happened (TnySendQueue *self,
 		if (err->code == TNY_SYSTEM_ERROR_CANCEL) {
 			info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
 		} else {
-			if (err->code == TNY_SERVICE_ERROR_CONNECT)
-				modest_platform_run_alert_dialog (_("emev_ib_ui_smtp_server_invalid"), FALSE);
+			if (err->code == TNY_SERVICE_ERROR_CONNECT) {
+				TnyCamelTransportAccount* transport;
+
+				transport = tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self));
+				if (transport) {
+					gchar *message;					
+					message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), 
+								   tny_account_get_hostname (TNY_ACCOUNT (transport)));
+					modest_platform_run_alert_dialog (message, FALSE);
+					g_free (message);
+					g_object_unref (transport);
+				}
+			}
 			info->status = MODEST_TNY_SEND_QUEUE_FAILED;
 		}
 		priv->current = NULL;
