@@ -1,3 +1,8 @@
+* 2008-W22:
+- Many stability and performance related issues fixed
+- fixes for some rare crashes
+- SMTP server related fixes
+
 * 2008-W20:
 - a couple of send and receive related issues fixed
 
