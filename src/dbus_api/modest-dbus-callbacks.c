@@ -1176,6 +1176,21 @@ on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
  	
  	return OSSO_OK;
 }
+
+static gboolean 
+on_idle_show_memory_low (gpointer user_data)
+{
+	ModestWindow *main_win = NULL;
+
+	gdk_threads_enter ();
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
+	modest_platform_run_information_dialog (GTK_WINDOW (main_win),
+						dgettext("ke-recv","memr_ib_operation_disabled"),
+						TRUE);
+	gdk_threads_leave ();
+	
+	return FALSE;
+}
                       
 /* Callback for normal D-BUS messages */
 gint 
@@ -1183,6 +1198,12 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 			GArray * arguments, gpointer data,
 			osso_rpc_t * retval)
 {
+	/* Check memory low conditions */
+	if (modest_platform_check_memory_low (NULL, FALSE)) {
+		g_idle_add (on_idle_show_memory_low, NULL);
+		goto param_error;
+	}
+
 	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
 		if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
 			goto param_error;
