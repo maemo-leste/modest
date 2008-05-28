@@ -153,11 +153,12 @@ on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
 static gboolean
 check_for_active_account (ModestAccountViewWindow *self, const gchar* account_name)
 {
+	ModestTnySendQueue *send_queue;
 	ModestTnyAccountStore *acc_store;
 	ModestMailOperationQueue* queue;
-	TnyConnectionStatus store_conn_status, transport_conn_status;
+	TnyConnectionStatus store_conn_status;
 	TnyAccount *store_account = NULL, *transport_account = NULL;
-	gboolean retval = TRUE;
+	gboolean retval = TRUE, sending = FALSE;
 
 	acc_store = modest_runtime_get_account_store ();
 	queue = modest_runtime_get_mail_operation_queue ();
@@ -184,11 +185,14 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 		return FALSE;
 	}
 
-	store_conn_status = tny_account_get_connection_status (store_account);
-	transport_conn_status = tny_account_get_connection_status (transport_account);
+	/* If the transport account was not used yet, then the send
+	   queue could not exist (it's created on demand) */
+	send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (transport_account), FALSE);
+	if (send_queue)
+		sending = modest_tny_send_queue_sending_in_progress (send_queue);
 
-	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED ||
-	    transport_conn_status == TNY_CONNECTION_STATUS_CONNECTED) {
+	store_conn_status = tny_account_get_connection_status (store_account);
+	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED || sending) {
 		gint response;
 
 		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
@@ -198,7 +202,7 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 		} else {
 			retval = FALSE;
 		}
-	} 
+	}
 
 	if (retval) {
 
@@ -211,8 +215,7 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
 						      FALSE, NULL, NULL);
 		}
-		if ((tny_account_get_connection_status (transport_account) != TNY_CONNECTION_STATUS_DISCONNECTED) &&
-		    (tny_account_get_connection_status (transport_account) != TNY_CONNECTION_STATUS_DISCONNECTED_BROKEN)) {
+		if (sending) {
 			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account),
 						      FALSE, NULL, NULL);
 		}
