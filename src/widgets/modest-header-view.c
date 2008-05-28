@@ -115,10 +115,9 @@ static void modest_header_view_notify_observers(
 		GtkTreeModel *model,
 		const gchar *tny_folder_id);
 
-static gboolean modest_header_view_on_expose_event(
-		GtkTreeView *header_view,
-		GdkEventExpose *event,
-		gpointer user_data);
+static gboolean modest_header_view_on_expose_event (GtkTreeView *header_view,
+						    GdkEventExpose *event,
+						    gpointer user_data);
 
 typedef enum {
 	HEADER_VIEW_NON_EMPTY,
@@ -952,27 +951,6 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 	return FALSE;
 }
 
-/* 
- * This function sets a sortable model in the header view. It's just
- * used for developing purposes, because it only does a
- * gtk_tree_view_set_model
- */
-static void
-modest_header_view_set_model (GtkTreeView *header_view, GtkTreeModel *model)
-{
-/* 	GtkTreeModel *old_model_sort = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)); */
-/* 	if (old_model_sort && GTK_IS_TREE_MODEL_SORT (old_model_sort)) { */
-/* 		GtkTreeModel *old_model; */
-/* 		ModestHeaderViewPrivate *priv; */
-/* 		priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view); */
-/* 		old_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (old_model_sort)); */
-
-/* 		/\* Set new model *\/ */
-/* 		gtk_tree_view_set_model (header_view, model); */
-/* 	} else */
-	gtk_tree_view_set_model (header_view, model);
-}
-
 TnyFolder*
 modest_header_view_get_folder (ModestHeaderView *self)
 {
@@ -1087,12 +1065,10 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	}
 
 	/* Set new model */
-	modest_header_view_set_model (GTK_TREE_VIEW (self), filter_model);
+	gtk_tree_view_set_model (GTK_TREE_VIEW (self), filter_model);
 	modest_header_view_notify_observers(self, GTK_TREE_MODEL(filter_model),
 			tny_folder_get_id(folder));
 	g_object_unref (G_OBJECT (filter_model));
-/* 	modest_header_view_set_model (GTK_TREE_VIEW (self), sortable); */
-/* 	g_object_unref (G_OBJECT (sortable)); */
 
 	/* Free */
 	g_list_free (cols);
@@ -1331,7 +1307,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			g_object_unref (G_OBJECT (priv->monitor));
 			priv->monitor = NULL;
 		}
-		modest_header_view_set_model (GTK_TREE_VIEW (self), NULL); 
+		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL); 
 
 		modest_header_view_notify_observers(self, NULL, NULL);
 
