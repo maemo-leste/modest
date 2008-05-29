@@ -3161,6 +3161,11 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	case MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS:
 		message = _CS("ckdg_ib_folder_already_exists");
 		break;
+	case TNY_SERVICE_ERROR_STATE:
+		/* This means that the folder is already in use (a
+		   message is opened for example */
+		message = _("emev_ni_internal_error");
+		break;
 	default:
 		message = _("emev_ib_ui_imap_unable_to_rename");
 	}
