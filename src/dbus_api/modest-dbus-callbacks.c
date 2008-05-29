@@ -932,18 +932,21 @@ on_dbus_method_dump_send_queues (DBusConnection *con, DBusMessage *message)
 			modest_runtime_get_account_store(), accname,
 			TNY_ACCOUNT_TYPE_TRANSPORT);
 		if (TNY_IS_ACCOUNT(acc)) {
-			gchar *tmp, *url = tny_account_get_url_string (acc);
+			gchar *tmp = NULL, *url = tny_account_get_url_string (acc);
 			ModestTnySendQueue *sendqueue =
 				modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT(acc), TRUE);
-			gchar *queue_str = modest_tny_send_queue_to_string (sendqueue);
+
+			if (TNY_IS_SEND_QUEUE (sendqueue)) {
+				gchar *queue_str = modest_tny_send_queue_to_string (sendqueue);
 			
-			tmp = g_strdup_printf ("%s[%s]: '%s': %s\n%s",
-					       str, accname, tny_account_get_id (acc), url,
-					       queue_str);
-			g_free(queue_str);
+				tmp = g_strdup_printf ("%s[%s]: '%s': %s\n%s",
+						       str, accname, tny_account_get_id (acc), url,
+						       queue_str);
+				g_free(queue_str);
+				g_free (str);
+				str = tmp;
+			}
 			g_free (url);
-			g_free (str);
-			str = tmp;
 
 			g_object_unref (acc);
 		}

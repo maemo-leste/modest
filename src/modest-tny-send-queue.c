@@ -480,7 +480,21 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	g_return_val_if_fail (TNY_IS_CAMEL_TRANSPORT_ACCOUNT(account), NULL);
 	
 	self = MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
-	
+
+	/* Set outbox and sentbox */
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	priv->outbox  = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
+							       TNY_FOLDER_TYPE_OUTBOX);
+	priv->sentbox = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
+							       TNY_FOLDER_TYPE_SENT);
+
+	/* NOTE that this could happen if there was not enough disk
+	   space when the account was created */
+	if (!priv->outbox || !priv->sentbox) {
+		g_object_unref (self);
+		return NULL;
+	}
+
 	/* Connect signals to control when a msg is being or has been sent */
 	g_signal_connect (G_OBJECT(self), "msg-sending",
 			  G_CALLBACK(_on_msg_start_sending),
@@ -495,12 +509,7 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 			  G_CALLBACK (_on_queue_start),
 			  NULL);
 
-	/* Set outbox and sentbox */
-	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
-	priv->outbox  = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
-							       TNY_FOLDER_TYPE_OUTBOX);
-	priv->sentbox = modest_tny_account_get_special_folder (TNY_ACCOUNT(account),
-							       TNY_FOLDER_TYPE_SENT);
+
 	priv->requested_send_receive = FALSE;
 
 	headers = tny_simple_list_new ();
@@ -769,11 +778,12 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 			account = TNY_TRANSPORT_ACCOUNT(tny_iterator_get_current (iter));
 			send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account), TRUE);
 			g_object_unref(account);
-
-			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
-			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
-				status = queue_status;
-				break;
+			if (TNY_IS_SEND_QUEUE (send_queue)) {
+				queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
+				if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
+					status = queue_status;
+					break;
+				}
 			}
 			tny_iterator_next (iter);
 		}

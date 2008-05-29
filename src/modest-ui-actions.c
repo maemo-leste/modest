@@ -902,13 +902,15 @@ open_msg_cb (ModestMailOperation *mail_op,
 			account = g_strdup(modest_tny_account_get_parent_modest_account_name_for_server_account(
 						   TNY_ACCOUNT(traccount)));
 			send_queue = modest_runtime_get_send_queue(traccount, TRUE);
-			msg_id = modest_tny_send_queue_get_msg_id (header);
-			status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
-			/* Only open messages in outbox with the editor if they are in Failed state */
-			if (status == MODEST_TNY_SEND_QUEUE_FAILED) {
-				open_in_editor = TRUE;
+			if (TNY_IS_SEND_QUEUE (send_queue)) {
+				msg_id = modest_tny_send_queue_get_msg_id (header);
+				status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
+				/* Only open messages in outbox with the editor if they are in Failed state */
+				if (status == MODEST_TNY_SEND_QUEUE_FAILED) {
+					open_in_editor = TRUE;
+				}
+				g_free(msg_id);
 			}
-			g_free(msg_id);
 			g_object_unref(traccount);
 		} else {
 			g_warning("Cannot get transport account for message in outbox!!");

@@ -1613,9 +1613,13 @@ add_outbox_from_transport_account_to_global_outbox_get_folders_cb (TnyFolderStor
 	self = MODEST_TNY_ACCOUNT_STORE (info->account_store);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
+	/* Note that this could happen if there is not enough space
+	   available on disk, then the outbox folder could not be
+	   created */
 	if (tny_list_get_length (list) != 1) {
-		g_warning ("%s: > 1 outbox found (%d)?!", __FUNCTION__,
+		g_warning ("%s: could not create outbox folder (%d folders found)", __FUNCTION__,
 			   tny_list_get_length (list));
+		goto frees;
 	}
 			
 	iter_folders = tny_list_create_iterator (list);
@@ -1636,10 +1640,11 @@ add_outbox_from_transport_account_to_global_outbox_get_folders_cb (TnyFolderStor
 	
 	/* Notify that the local account changed */
 	g_signal_emit (G_OBJECT (self), signals [ACCOUNT_CHANGED_SIGNAL], 0, local_account);
-
-	g_object_unref (info->transport_account);
 	g_object_unref (local_account);
 	g_object_unref (per_account_outbox);
+
+ frees:
+	g_object_unref (info->transport_account);
 	g_slice_free (AddOutboxInfo, info);
 }
 								   
@@ -1807,7 +1812,7 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 	} else if (TNY_IS_TRANSPORT_ACCOUNT (account)) {
 		ModestTnySendQueue* send_queue;
 		send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (account), FALSE);
-		if (send_queue) {
+		if (TNY_IS_SEND_QUEUE (send_queue)) {
 			if (modest_tny_send_queue_sending_in_progress (send_queue))
 				tny_send_queue_cancel (TNY_SEND_QUEUE (send_queue),
 						       TNY_SEND_QUEUE_CANCEL_ACTION_REMOVE, 
@@ -2107,7 +2112,6 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), NULL);
 	g_return_val_if_fail (TNY_IS_HEADER (header), NULL);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
-
 	msg_id = modest_tny_send_queue_get_msg_id (header);
 	acc_iter = tny_list_create_iterator (priv->transport_accounts);
 	while (!header_acc && !tny_iterator_is_done (acc_iter)) {
@@ -2115,9 +2119,10 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 		ModestTnySendQueue *send_queue;
 		ModestTnySendQueueStatus status;
 		send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account), TRUE);
-		status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
-		if (status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
-			header_acc = g_object_ref(account);
+		if (TNY_IS_SEND_QUEUE (send_queue)) {
+			status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
+			if (status != MODEST_TNY_SEND_QUEUE_UNKNOWN)
+				header_acc = g_object_ref(account);
 		}
 		g_object_unref (account);
 		tny_iterator_next (acc_iter);

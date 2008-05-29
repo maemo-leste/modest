@@ -188,7 +188,7 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 	/* If the transport account was not used yet, then the send
 	   queue could not exist (it's created on demand) */
 	send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (transport_account), FALSE);
-	if (send_queue)
+	if (TNY_IS_SEND_QUEUE (send_queue))
 		sending = modest_tny_send_queue_sending_in_progress (send_queue);
 
 	store_conn_status = tny_account_get_connection_status (store_account);

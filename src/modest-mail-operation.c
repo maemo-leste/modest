@@ -510,7 +510,8 @@ modest_mail_operation_cancel (ModestMailOperation *self)
 						       TRUE);
 
 		/* Cancel the sending of the following next messages */
-		tny_send_queue_cancel (TNY_SEND_QUEUE (queue), TNY_SEND_QUEUE_CANCEL_ACTION_SUSPEND, NULL);
+		if (TNY_IS_SEND_QUEUE (queue))
+			tny_send_queue_cancel (TNY_SEND_QUEUE (queue), TNY_SEND_QUEUE_CANCEL_ACTION_SUSPEND, NULL);
 	}
 	
 	return canceled;
@@ -1440,24 +1441,26 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		send_queue = modest_runtime_get_send_queue (transport_account, TRUE);
 		g_object_unref (transport_account);
 
-		/* Get outbox folder */
-		outbox = tny_send_queue_get_outbox (TNY_SEND_QUEUE (send_queue));
-		if (outbox) { /* this could fail in some cases */
-			num_messages = tny_folder_get_all_count (outbox);
-			g_object_unref (outbox);
-		} else {
-			g_warning ("%s: could not get outbox", __FUNCTION__);
-			num_messages = 0;
-		}
+		if (TNY_IS_SEND_QUEUE (send_queue)) {
+			/* Get outbox folder */
+			outbox = tny_send_queue_get_outbox (TNY_SEND_QUEUE (send_queue));
+			if (outbox) { /* this could fail in some cases */
+				num_messages = tny_folder_get_all_count (outbox);
+				g_object_unref (outbox);
+			} else {
+				g_warning ("%s: could not get outbox", __FUNCTION__);
+				num_messages = 0;
+			}
 		
-		if (num_messages != 0) {
-			/* Reenable suspended items */
-			modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
-
-			/* Try to send */
-			tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
-			modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
-									  info->interactive);
+			if (num_messages != 0) {
+				/* Reenable suspended items */
+				modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
+				
+				/* Try to send */
+				tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
+				modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
+										  info->interactive);
+			}
 		}
 	}
 
@@ -2607,22 +2610,25 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 		if (traccount) {
 			ModestTnySendQueueStatus status;
 			ModestTnySendQueue *send_queue = modest_runtime_get_send_queue(traccount, TRUE);
-			TnyIterator *iter = tny_list_create_iterator(headers);
-			g_object_unref(remove_headers);
-			remove_headers = TNY_LIST(tny_simple_list_new());
-			while (!tny_iterator_is_done(iter)) {
-				char *msg_id;
-				TnyHeader *hdr = TNY_HEADER(tny_iterator_get_current(iter));
-				msg_id = modest_tny_send_queue_get_msg_id (hdr);
-				status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
-				if (status != MODEST_TNY_SEND_QUEUE_SENDING) {
-					tny_list_append(remove_headers, G_OBJECT(hdr));
+
+			if (TNY_IS_SEND_QUEUE (send_queue)) {
+				TnyIterator *iter = tny_list_create_iterator(headers);
+				g_object_unref(remove_headers);
+				remove_headers = TNY_LIST(tny_simple_list_new());
+				while (!tny_iterator_is_done(iter)) {
+					char *msg_id;
+					TnyHeader *hdr = TNY_HEADER(tny_iterator_get_current(iter));
+					msg_id = modest_tny_send_queue_get_msg_id (hdr);
+					status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
+					if (status != MODEST_TNY_SEND_QUEUE_SENDING) {
+						tny_list_append(remove_headers, G_OBJECT(hdr));
+					}
+					g_object_unref(hdr);
+					g_free(msg_id);
+					tny_iterator_next(iter);
 				}
-				g_object_unref(hdr);
-				g_free(msg_id);
-				tny_iterator_next(iter);
+				g_object_unref(iter);
 			}
-			g_object_unref(iter);
 			g_object_unref(traccount);
 		}
 	}

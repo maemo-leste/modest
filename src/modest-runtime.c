@@ -211,26 +211,27 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account,
 	    create) {
 		/* Note that this send queue will start sending messages from its outbox 
 		 * as soon as it is instantiated: */
-		send_queue = (gpointer)modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
+		send_queue = modest_tny_send_queue_new (TNY_CAMEL_TRANSPORT_ACCOUNT(account));
 
-		_sig_handlers = 
-			modest_signal_mgr_connect (_sig_handlers, 
-						   send_queue, 
-						   "error_happened",
-						   G_CALLBACK (modest_ui_actions_on_send_queue_error_happened), 
-						   NULL);
+		if (send_queue) {
+			_sig_handlers = 
+				modest_signal_mgr_connect (_sig_handlers, 
+							   send_queue, 
+							   "error_happened",
+							   G_CALLBACK (modest_ui_actions_on_send_queue_error_happened), 
+							   NULL);
 
-		_sig_handlers = 
-			modest_signal_mgr_connect (_sig_handlers, 
-						   send_queue, 
-						   "status_changed",
-						   G_CALLBACK (modest_ui_actions_on_send_queue_status_changed), 
-						   NULL);
+			_sig_handlers = 
+				modest_signal_mgr_connect (_sig_handlers, 
+							   send_queue, 
+							   "status_changed",
+							   G_CALLBACK (modest_ui_actions_on_send_queue_status_changed), 
+							   NULL);
 
-
-		g_hash_table_insert (send_queue_cache, 
-				     g_object_ref (account), 
-				     g_object_ref (send_queue));
+			g_hash_table_insert (send_queue_cache, 
+					     g_object_ref (account), 
+					     g_object_ref (send_queue));
+		}
 	}
 
 	return (send_queue) ? MODEST_TNY_SEND_QUEUE(send_queue) : NULL;
