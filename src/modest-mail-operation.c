@@ -701,18 +701,19 @@ create_msg_thread (gpointer thread_data)
 	CreateMsgInfo *info = (CreateMsgInfo *) thread_data;
 	TnyMsg *new_msg = NULL;
 	ModestMailOperationPrivate *priv;
+	gint attached = 0;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mail_op);
 	if (info->html_body == NULL) {
 		new_msg = modest_tny_msg_new (info->to, info->from, info->cc, 
 					      info->bcc, info->subject, info->plain_body, 
-					      info->attachments_list,
+					      info->attachments_list, &attached,
 					      &(priv->error));
 	} else {
 		new_msg = modest_tny_msg_new_html_plain (info->to, info->from, info->cc,
 							 info->bcc, info->subject, info->html_body,
 							 info->plain_body, info->attachments_list,
-							 info->images_list,
+							 info->images_list, &attached,
 							 &(priv->error));
 	}
 
@@ -724,7 +725,7 @@ create_msg_thread (gpointer thread_data)
 		tny_header_set_flag (header, info->priority_flags);
 
 		/* Set attachment flags in message */
-		if (info->attachments_list != NULL)
+		if (info->attachments_list != NULL && attached > 0)
 			tny_header_set_flag (header, TNY_HEADER_FLAG_ATTACHMENTS);
 
 		g_object_unref (G_OBJECT(header));

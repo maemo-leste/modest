@@ -70,6 +70,7 @@ typedef enum _ModestTnyMsgReplyMode {
  * @subject: subject for the messdage
  * @body: body for the message
  * @attachments: a list of attachments (local URIs)
+ * @attached: a #gint pointer, returns the number of attachments really included.
  * @error: a pointer for errors in message creation
  * 
  * create a new TnyMsg with the given parameters
@@ -78,7 +79,7 @@ typedef enum _ModestTnyMsgReplyMode {
  */	 
 TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
 			    const gchar *bcc, const gchar* subject, const gchar *body,
-			    GList *attachments, GError **err);
+			    GList *attachments, gint *attached, GError **err);
 
 /**
  * modest_tny_msg_new_html_plain:
@@ -90,7 +91,8 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
  * @html_body: body for the message in HTML
  * @plain_body: body for the message in plain text
  * @attachments: a list of attachments (mime parts)
- * @attachments: a list of images (mime parts)
+ * @images: a list of images (mime parts)
+ * @attached: a #gint pointer, returns the number of attachments really included.
  * @error: a pointer for errors in message creation
  * 
  * create a new TnyMsg with the given parameters
@@ -100,7 +102,7 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
 TnyMsg* modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
 				       const gchar *bcc, const gchar* subject, 
 				       const gchar *html_body, const gchar *plain_body,
-				       GList *attachments, GList *images, GError **err);
+				       GList *attachments, GList *images, gint *attached, GError **err);
 
 /**
  * modest_tny_msg_find_body_part:

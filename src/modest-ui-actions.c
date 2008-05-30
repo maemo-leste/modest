@@ -733,7 +733,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		body = use_signature ? g_strconcat("\n", signature, NULL) : g_strdup("");
 	}
 
-	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL, NULL);
+	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL, NULL, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
