@@ -43,6 +43,7 @@ static void modest_transport_account_decorator_class_init (ModestTransportAccoun
 static void modest_transport_account_decorator_finalize   (GObject *obj);
 static void modest_transport_account_decorator_instance_init (GTypeInstance *instance, gpointer g_class);
 static void modest_transport_account_decorator_send (TnyTransportAccount *self, TnyMsg *msg, GError **err);
+static void modest_transport_account_decorator_cancel (TnyAccount *self);
 
 /* list my signals  */
 /* enum { */
@@ -91,20 +92,49 @@ modest_transport_account_decorator_send (TnyTransportAccount *self, TnyMsg *msg,
 	}
 }
 
+static void 
+modest_transport_account_decorator_cancel (TnyAccount *self) 
+{
+	TnyTransportAccount *conn_specific_account = NULL;
+	ModestTnyAccountStore *store = modest_runtime_get_account_store ();
+	const gchar *account_name;
+
+	g_return_if_fail (TNY_IS_TRANSPORT_ACCOUNT (self));
+
+	account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (self);
+	if (account_name) {
+		conn_specific_account = (TnyTransportAccount *)
+			modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (store, account_name);
+	}
+
+	/* Cancel sending in the connection specific transport account */
+	if (conn_specific_account) {
+		tny_account_cancel (TNY_ACCOUNT (conn_specific_account));
+		g_object_unref (conn_specific_account);
+	}
+
+	/* Also cancel the transport account, we could not be sure
+	   which one was used to send each email */
+	TNY_CAMEL_ACCOUNT_CLASS(parent_class)->cancel (self);
+}
+
 static void
 modest_transport_account_decorator_class_init (ModestTransportAccountDecoratorClass *klass)
 {
 	GObjectClass *gobject_class;
 	TnyCamelTransportAccountClass *transport_class;
+	TnyCamelAccountClass *account_class;
 
 	gobject_class = (GObjectClass*) klass;
 	transport_class = (TnyCamelTransportAccountClass *) klass;
+	account_class = (TnyCamelAccountClass *) klass;
 	
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_transport_account_decorator_finalize;
 
 	transport_class->send = modest_transport_account_decorator_send;
 
+	account_class->cancel = modest_transport_account_decorator_cancel;
 /* 	g_type_class_add_private (gobject_class, sizeof(ModestTransportAccountDecoratorPrivate)); */
 }
 
@@ -129,13 +159,7 @@ modest_transport_account_decorator_finalize (GObject *obj)
 ModestTransportAccountDecorator*
 modest_transport_account_decorator_new (void)
 {
-	ModestTransportAccountDecorator *self;
-/* 	ModestTransportAccountDecoratorPrivate *priv; */
-	
-	self = MODEST_TRANSPORT_ACCOUNT_DECORATOR(g_object_new(MODEST_TYPE_TRANSPORT_ACCOUNT_DECORATOR, NULL));
-/* 	priv = MODEST_TRANSPORT_ACCOUNT_DECORATOR_GET_PRIVATE (self); */
-
-	return self;
+	return g_object_new (MODEST_TYPE_TRANSPORT_ACCOUNT_DECORATOR, NULL);
 }
 
 GType
