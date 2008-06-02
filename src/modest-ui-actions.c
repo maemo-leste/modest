@@ -1359,7 +1359,7 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 			}
 		}
 	}
-	
+
 	/* Register the headers before actually creating the windows: */
 	iter_not_opened = tny_list_create_iterator (not_opened_headers);
 	while (!tny_iterator_is_done (iter_not_opened)) {
@@ -2258,8 +2258,6 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	if (!GTK_WIDGET_IS_SENSITIVE (open_widget))
 		return;
 
-/* 	headers = tny_simple_list_new (); */
-/* 	tny_list_prepend (headers, G_OBJECT (header)); */
 	headers = modest_header_view_get_selected_headers (header_view);
 
 	open_msgs_from_headers (headers, MODEST_WINDOW (main_window));

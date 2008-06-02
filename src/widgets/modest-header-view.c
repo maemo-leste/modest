@@ -1803,7 +1803,7 @@ on_button_press_event(GtkWidget * self, GdkEventButton * event, gpointer userdat
 	/* If it's already opened then do not let the button-press
 	   event go on because it'll perform a message open because
 	   we're clicking on to an already selected header */
-	return (already_opened) ? TRUE : FALSE;
+	return FALSE;
 }
 
 static void
