@@ -1150,6 +1150,7 @@ static gboolean
 on_idle_top_application (gpointer user_data)
 {
 	ModestWindow *main_win;
+	gboolean new_window = FALSE;
 	
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
@@ -1157,14 +1158,29 @@ on_idle_top_application (gpointer user_data)
 	gdk_threads_enter (); /* CHECKED */
 	
 	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-						      TRUE); /* create if non-existent */
+						      FALSE);
+
+	if (!main_win) {
+		main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+							      TRUE);
+		new_window = TRUE;
+	}
+
 	if (main_win) {
 		/* Ideally, we would just use gtk_widget_show(), 
 		 * but this widget is not coded correctly to support that: */
 		gtk_widget_show_all (GTK_WIDGET (main_win));
 		gtk_window_present (GTK_WINDOW (main_win));
-	} else
-		g_warning ("%s: BUG: no main window", __FUNCTION__);
+
+		/* If we're showing an already existing window then
+		   reselect the INBOX */
+		if (!new_window) {
+			GtkWidget *folder_view;
+			folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_win),
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+			modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
+		}
+	}
 
 	gdk_threads_leave (); /* CHECKED */
 	
