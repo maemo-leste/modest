@@ -28,18 +28,19 @@
  */
 
 #include <config.h>
-
+#include <gdk/gdk.h>
+#include <string.h>
 #include <glib.h>
 #include <modest-runtime.h>
 #include <modest-init.h>
 #include "modest-platform.h"
-#include <gdk/gdk.h>
+#include "modest-ui-actions.h"
 #include <widgets/modest-main-window.h>
-#include <string.h>
 
 typedef struct {
 	gulong queue_handler;
 	gulong window_list_handler;
+	gulong get_password_handler;
 } MainSignalHandlers;
 
 static gboolean
@@ -60,11 +61,13 @@ on_idle_exit_modest (gpointer data)
 					     handlers->queue_handler);
 		g_signal_handler_disconnect (modest_runtime_get_window_mgr (), 
 					     handlers->window_list_handler);
+		g_signal_handler_disconnect (modest_runtime_get_account_store (), 
+					     handlers->get_password_handler);		
+		g_free (handlers);
+
 		/* Wait for remaining tasks */
 		while (gtk_events_pending ())
 			gtk_main_iteration ();
-		
-		g_free (handlers);
 		
 		gtk_main_quit ();
 	} else {
@@ -148,19 +151,27 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-	/* Connect to the queue-emtpy signal */
 	handlers = g_malloc0 (sizeof (MainSignalHandlers));
+	/* Connect to the "queue-emtpy" signal */
 	handlers->queue_handler = 
 		g_signal_connect (modest_runtime_get_mail_operation_queue (),
 				  "queue-empty",
 				  G_CALLBACK (on_queue_empty),
 				  handlers);
 
+	/* Connect to the "window-list-emtpy" signal */
 	handlers->window_list_handler = 
 		g_signal_connect (modest_runtime_get_window_mgr (),
 				  "window-list-empty",
 				  G_CALLBACK (on_window_list_empty),
 				  handlers);
+
+	/* Connect to the "password-requested" signal */
+	handlers->get_password_handler = 
+		g_signal_connect (modest_runtime_get_account_store (),
+				  "password_requested",
+				  G_CALLBACK (modest_ui_actions_on_password_requested),
+				  NULL);
 
 	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
 	 * This allows modest to start via D-Bus activation to provide a service,

@@ -415,12 +415,6 @@ connect_signals (ModestMainWindow *self)
 	g_signal_connect (G_OBJECT(priv->msg_preview), "recpt-activated",
 			  G_CALLBACK(modest_ui_actions_on_msg_recpt_activated), self);
 
-	/* Account store */
-	/* Emmitted by our TnyAccountStore::get_password_func() implementation,
-	 * This is not a normal part of tinymail: */
-	g_signal_connect (G_OBJECT (modest_runtime_get_account_store()), "password_requested",
-			  G_CALLBACK (modest_ui_actions_on_password_requested), self);
-	
 	/* Device */
 	g_signal_connect (G_OBJECT(priv->online_toggle), "toggled",
 			  G_CALLBACK(on_online_toggle_toggled), self);

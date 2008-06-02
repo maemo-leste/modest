@@ -1051,13 +1051,6 @@ connect_signals (ModestMainWindow *self)
 					   "account_changed", 
 					   G_CALLBACK (on_account_changed),
 					   self);
-
-	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,
-					   G_OBJECT (modest_runtime_get_account_store()), 
-					   "password_requested",
-					   G_CALLBACK (modest_ui_actions_on_password_requested), 
-					   self);
 }
 
 static void 
@@ -1334,7 +1327,7 @@ modest_main_window_new (void)
 	helper->handler_id = g_signal_connect (G_OBJECT(self), "show",
 					       G_CALLBACK (modest_main_window_on_show), 
 					       helper);
-		
+	
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
 	if (window_icon) {
