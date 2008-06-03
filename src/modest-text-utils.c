@@ -356,23 +356,27 @@ modest_text_utils_remove_duplicate_addresses (const gchar *address_list)
 {
 	GSList *addresses, *cursor;
 	GHashTable *table;
-	gchar *new_list;
+	gchar *new_list = NULL;
 	
 	g_return_val_if_fail (address_list, NULL);
 
 	table = g_hash_table_new (g_str_hash, g_str_equal);
 	addresses = modest_text_utils_split_addresses_list (address_list);
 
-	new_list = g_strdup("");
 	cursor = addresses;
 	while (cursor) {
 		const gchar* address = (const gchar*)cursor->data;
 
 		/* ignore the address if already seen */
 		if (g_hash_table_lookup (table, address) == 0) {
-		
-			gchar *tmp = g_strjoin (",", new_list, address, NULL);
-			g_free (new_list);
+			gchar *tmp;
+
+			if (!new_list) {
+				tmp = g_strdup (address);
+			} else {
+				tmp = g_strjoin (",", new_list, address, NULL);
+				g_free (new_list);
+			}
 			new_list = tmp;
 			
 			g_hash_table_insert (table, (gchar*)address, GINT_TO_POINTER(1));
