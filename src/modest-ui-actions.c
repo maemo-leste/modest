@@ -5047,6 +5047,11 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 	move_to_helper_destroyer (user_data);
 }
 
+typedef struct {
+	TnyFolderStore *dst_folder;
+	TnyList *headers;
+} XferMsgsHelper;
+
 /**
  * Utility function that transfer messages from both the main window
  * and the msg view window when using the "Move to" dialog
@@ -5058,12 +5063,15 @@ xfer_messages_performer  (gboolean canceled,
 			  TnyAccount *account, 
 			  gpointer user_data)
 {
-	TnyFolderStore *dst_folder = TNY_FOLDER_STORE (user_data);
 	ModestWindow *win = MODEST_WINDOW (parent_window);
-	TnyList *headers = NULL;
 	TnyAccount *dst_account = NULL;
 	const gchar *proto_str = NULL;
 	gboolean dst_is_pop = FALSE;
+	XferMsgsHelper *helper;
+	MoveToHelper *movehelper;
+	ModestMailOperation *mail_op;
+
+	helper = (XferMsgsHelper *) user_data;
 
 	if (canceled)
 		goto end;
@@ -5080,7 +5088,7 @@ xfer_messages_performer  (gboolean canceled,
 		goto end;
 	}
 
-	dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
+	dst_account = tny_folder_get_account (TNY_FOLDER (helper->dst_folder));
 	proto_str = tny_account_get_proto (dst_account);
 
 	/* tinymail will return NULL for local folders it seems */
@@ -5090,56 +5098,49 @@ xfer_messages_performer  (gboolean canceled,
 
 	g_object_unref (dst_account);
 
-	/* Get selected headers */
-	headers = get_selected_headers (MODEST_WINDOW (win));
-	if (!headers) {
-		g_warning ("%s: no headers selected", __FUNCTION__);
-		goto end;
-	}
-
 	if (dst_is_pop) {
 		modest_platform_information_banner (GTK_WIDGET (win),
 						    NULL,
 						    ngettext("mail_in_ui_folder_move_target_error",
 							     "mail_in_ui_folder_move_targets_error",
-							     tny_list_get_length (headers)));
-		g_object_unref (headers);
+							     tny_list_get_length (helper->headers)));
 		goto end;
 	}
 
-	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
-	helper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
-							   _CS("ckct_nw_pasting"));
-	if (helper->banner != NULL)  {
-		g_object_ref (helper->banner);
-		gtk_widget_show (GTK_WIDGET(helper->banner));
+	movehelper = g_new0 (MoveToHelper, 1);
+	movehelper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
+							       _CS("ckct_nw_pasting"));
+	if (movehelper->banner != NULL)  {
+		g_object_ref (movehelper->banner);
+		gtk_widget_show (GTK_WIDGET (movehelper->banner));
 	}
 
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *header_view = 
 			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		helper->reference = get_next_after_selected_headers (MODEST_HEADER_VIEW (header_view));
+		movehelper->reference = get_next_after_selected_headers (MODEST_HEADER_VIEW (header_view));
 	}
 
-	ModestMailOperation *mail_op = 
-		modest_mail_operation_new_with_error_handling (G_OBJECT(win),
-							       xfer_messages_error_handler,
-							       helper, NULL);
+	/* Perform the mail operation */
+	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(win),
+								 xfer_messages_error_handler,
+								 movehelper, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 					 mail_op);
 
 	modest_mail_operation_xfer_msgs (mail_op, 
-					 headers,
-					 TNY_FOLDER (dst_folder),
+					 helper->headers,
+					 TNY_FOLDER (helper->dst_folder),
 					 TRUE,
 					 msgs_move_to_cb,
-					 helper);
+					 movehelper);
 
 	g_object_unref (G_OBJECT (mail_op));
-	g_object_unref (headers);
  end:
-	g_object_unref (dst_folder);
+	g_object_unref (helper->dst_folder);
+	g_object_unref (helper->headers);
+	g_slice_free (XferMsgsHelper, helper);
 }
 
 typedef struct {
@@ -5301,6 +5302,7 @@ modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 {
 	gboolean need_connection = TRUE;
 	gboolean do_xfer = TRUE;
+	XferMsgsHelper *helper;
 	
 	modest_ui_actions_xfer_messages_check (win, TNY_FOLDER_STORE (src_folder), 
 					       headers, TNY_FOLDER (dst_folder),
@@ -5311,11 +5313,16 @@ modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 	if (!do_xfer)
 		return;
 
+	/* Create the helper */
+	helper = g_slice_new (XferMsgsHelper);
+	helper->dst_folder = g_object_ref (dst_folder);
+	helper->headers = g_object_ref (headers);
+
 	if (need_connection) {
 		DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
 		connect_info->callback = xfer_messages_performer;
 		connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
-		connect_info->data = g_object_ref (dst_folder);
+		connect_info->data = helper;
 		
 		modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
 							   TNY_FOLDER_STORE (src_folder), 
@@ -5323,7 +5330,7 @@ modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 	} else {
 		TnyAccount *src_account = get_account_from_folder_store (TNY_FOLDER_STORE (src_folder));
 		xfer_messages_performer (FALSE, NULL, GTK_WINDOW (win),
-					 src_account, g_object_ref (dst_folder));
+					 src_account, helper);
 		g_object_unref (src_account);
 	}
 }

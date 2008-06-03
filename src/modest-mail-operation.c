@@ -2866,6 +2866,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	ModestTnyFolderRules rules = 0;
 	TnyAccount *dst_account = NULL;
 	gboolean leave_on_server;
+	ModestMailOperationState *state;
 
 	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (headers && TNY_IS_LIST (headers));
@@ -2977,6 +2978,14 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper->delete = (leave_on_server) ? FALSE : delete_original;
 
 	modest_mail_operation_notify_start (self);
+
+	/* Start notifying progress */
+	state = modest_mail_operation_clone_state (self);
+	state->done = 0;
+	state->total = 0;
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 0, state, NULL);
+	g_slice_free (ModestMailOperationState, state);
+
 	tny_folder_transfer_msgs_async (src_folder, 
 					helper->headers, 
 					folder, 
