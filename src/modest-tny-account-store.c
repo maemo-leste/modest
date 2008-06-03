@@ -2136,7 +2136,7 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 
 GtkWidget *
 modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *self,
-						      const gchar *account_name)
+						       const gchar *account_name)
 {
 	ModestTnyAccountStorePrivate *priv;
 	gpointer dialog_as_gpointer = NULL;
@@ -2154,7 +2154,6 @@ modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *se
 		GtkWidget *dialog;
 		dialog = (GtkWidget *) modest_account_settings_dialog_new ();
 		settings = modest_account_mgr_load_account_settings (priv->account_mgr, account_name);
-		modest_account_settings_dialog_save_password (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
 		modest_account_settings_dialog_set_account (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog), settings);
 		g_object_unref (settings);
 		modest_account_settings_dialog_switch_to_user_info (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));

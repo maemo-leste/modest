@@ -43,7 +43,6 @@ typedef struct {
 	ModestAccountSettings *settings;
 	
 	gboolean modified;
-	gboolean save_password;
 	gchar * account_name; /* This may not change. It is not user visible. */
 	ModestTransportStoreProtocol incoming_protocol; /* This may not change. */
 	ModestTransportStoreProtocol outgoing_protocol; /* This may not change. */
