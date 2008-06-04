@@ -1586,6 +1586,8 @@ get_formatted_data (ModestMsgEditWindow *edit_window)
 
 	wp_text_buffer_save_document (WP_TEXT_BUFFER(priv->text_buffer), get_formatted_data_cb, &string_buffer);
 
+	modest_text_utils_hyperlinkify (string_buffer);
+
 	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 
 	return g_string_free (string_buffer, FALSE);

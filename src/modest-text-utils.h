@@ -221,7 +221,14 @@ gchar*  modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gbo
  */
 size_t modest_text_utils_strftime(char *s, size_t max, const char  *fmt, time_t timet);
 
-
+/**
+ * modest_text_utils_hyperlinkify:
+ * @string_buffer: buffer where we replace uri strings with links
+ *
+ * Replace uri's with links in the buffer. This is required that the document
+ * do not contain linkified links already.
+ */
+void modest_text_utils_hyperlinkify (GString *string_buffer);
 
 /**
  * modest_text_utils_get_display_address:

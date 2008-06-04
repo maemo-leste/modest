@@ -139,9 +139,9 @@ const guint USER_NAME_FORBIDDEN_CHARS_LENGTH = G_N_ELEMENTS (user_name_forbidden
 
 /* private */
 static gchar*   cite                    (const time_t sent_date, const gchar *from);
-static void     hyperlinkify_plain_text (GString *txt);
+static void     hyperlinkify_plain_text (GString *txt, gint offset);
 static gint     cmp_offsets_reverse     (const url_match_t *match1, const url_match_t *match2);
-static GSList*  get_url_matches         (GString *txt);
+static GSList*  get_url_matches         (GString *txt, gint offset);
 
 static GString* get_next_line           (const char *b, const gsize blen, const gchar * iter);
 static int      get_indent_level        (const char *l);
@@ -491,7 +491,7 @@ modest_text_utils_convert_to_html (const gchar *data)
 	g_string_append (html, "</body></html>");
 
 	if (len <= HYPERLINKIFY_MAX_LENGTH)
-		hyperlinkify_plain_text (html);
+		hyperlinkify_plain_text (html, 0);
 
 	modest_text_utils_convert_buffer_to_html_finish (html);
 	
@@ -515,7 +515,7 @@ modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hy
 	modest_text_utils_convert_buffer_to_html_start (html, data, n);
 
 	if (hyperlinkify && (n < HYPERLINKIFY_MAX_LENGTH))
-		hyperlinkify_plain_text (html);
+		hyperlinkify_plain_text (html, 0);
 
 	modest_text_utils_convert_buffer_to_html_finish (html);
 	
@@ -1018,10 +1018,10 @@ modest_text_utils_hyperlinkify_end (void)
 
 
 static GSList*
-get_url_matches (GString *txt)
+get_url_matches (GString *txt, gint offset)
 {
 	regmatch_t rm;
-        guint rv, i, offset = 0;
+        guint rv, i, tmp_offset = 0;
         GSList *match_list = NULL;
 
 	const size_t pattern_num = sizeof(patterns)/sizeof(url_match_pattern_t);
@@ -1031,13 +1031,13 @@ get_url_matches (GString *txt)
 
         /* find all the matches */
 	for (i = 0; i != pattern_num; ++i) {
-		offset     = 0;	
+		tmp_offset     = offset;	
 		while (1) {
 			url_match_t *match;
 			gboolean is_submatch;
 			GSList *cursor;
 			
-			if ((rv = regexec (patterns[i].preg, txt->str + offset, 1, &rm, 0)) != 0) {
+			if ((rv = regexec (patterns[i].preg, txt->str + tmp_offset, 1, &rm, 0)) != 0) {
 				g_return_val_if_fail (rv == REG_NOMATCH, NULL); /* this should not happen */
 				break; /* try next regexp */ 
 			}
@@ -1050,7 +1050,7 @@ get_url_matches (GString *txt)
 			while (cursor && !is_submatch) {
 				const url_match_t *old_match =
 					(const url_match_t *) cursor->data;
-				guint new_offset = offset + rm.rm_so;
+				guint new_offset = tmp_offset + rm.rm_so;
 				is_submatch = (new_offset >  old_match->offset &&
 					       new_offset <  old_match->offset + old_match->len);
 				cursor = g_slist_next (cursor);
@@ -1059,12 +1059,12 @@ get_url_matches (GString *txt)
 			if (!is_submatch) {
 				/* make a list of our matches (<offset, len, prefix> tupels)*/
 				match = g_slice_new (url_match_t);
-				match->offset = offset + rm.rm_so;
+				match->offset = tmp_offset + rm.rm_so;
 				match->len    = rm.rm_eo - rm.rm_so;
 				match->prefix = patterns[i].prefix;
 				match_list = g_slist_prepend (match_list, match);
 			}		
-			offset += rm.rm_eo;
+			tmp_offset += rm.rm_eo;
 		}
 	}
 
@@ -1105,10 +1105,10 @@ replace_string (const gchar *haystack, const gchar *needle, gchar repl)
 }
 
 static void
-hyperlinkify_plain_text (GString *txt)
+hyperlinkify_plain_text (GString *txt, gint offset)
 {
 	GSList *cursor;
-	GSList *match_list = get_url_matches (txt);
+	GSList *match_list = get_url_matches (txt, offset);
 
 	/* we will work backwards, so the offsets stay valid */
 	for (cursor = match_list; cursor; cursor = cursor->next) {
@@ -1142,6 +1142,18 @@ hyperlinkify_plain_text (GString *txt)
 	}
 	
 	g_slist_free (match_list);
+}
+
+void
+modest_text_utils_hyperlinkify (GString *string_buffer)
+{
+	gchar *after_body;
+	gint offset = 0;
+
+	after_body = strstr (string_buffer->str, "<body>");
+	if (after_body != NULL)
+		offset = after_body - string_buffer->str;
+	hyperlinkify_plain_text (string_buffer, offset);
 }
 
 
