@@ -82,8 +82,13 @@ get_book_view_cb (EBook *book, EBookStatus status, EBookView *bookview, gpointer
 	book_view = bookview;
 
 	if (contact_model)
+#if MODEST_ABOOK_API < 4
 		osso_abook_tree_model_set_book_view (OSSO_ABOOK_TREE_MODEL (contact_model),
 						     book_view);
+#else /* MODEST_ABOOK_API < 4 */
+		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model),
+						     book_view);
+#endif /* MODEST_ABOOK_API < 4 */
 
 	e_book_view_start (book_view);
 }
@@ -166,15 +171,21 @@ modest_address_book_add_address (const gchar *address)
 void
 modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 {
+#if MODEST_ABOOK_API < 4
 	GtkWidget *contact_view = NULL;
-	GList *contacts_list = NULL;
 	GtkWidget *contact_dialog;
+#else /* MODEST_ABOOK_API < 4 */
+	OssoABookContactChooser *contact_chooser = NULL;
+#endif /* MODEST_ABOOK_API < 4 */
+
+	GList *contacts_list = NULL;
 	GSList *email_addrs_per_contact = NULL;
 	gchar *econtact_id;
 	gboolean focus_recpt_editor = FALSE;
 
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 
+#if MODEST_ABOOK_API < 4
 	if (!open_addressbook ()) {
 		if (contact_model) {
 			g_object_unref (contact_model);
@@ -198,6 +209,18 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 			osso_abook_contact_selector_get_extended_selection (OSSO_ABOOK_CONTACT_SELECTOR
 									     (contact_view));
 	}
+#else /* MODEST_ABOOK_API < 4 */
+	/* TODO: figure out how to make the contact chooser modal */
+	contact_chooser = osso_abook_contact_chooser_new
+		("title", _("mcen_ti_select_recipients"),
+		 "help-topic", "",
+		 "minimum-selection", 1, NULL);
+
+	if (osso_abook_contact_chooser_run (contact_chooser) == GTK_RESPONSE_OK)
+		contacts_list = osso_abook_contact_chooser_get_selection (contact_chooser);
+
+	g_object_unref (contact_chooser);
+#endif
 	
 	if (contacts_list) {
 		GList *node;
@@ -219,12 +242,14 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 		g_list_free (contacts_list);
 	}
 
+#if MODEST_ABOOK_API < 4
 	if (contact_model) {
 		g_object_unref (contact_model);
 		contact_model = NULL;
 	}
 
 	gtk_widget_destroy (contact_dialog);
+#endif
 
 	if (focus_recpt_editor)
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (recpt_editor));
@@ -341,11 +366,11 @@ commit_contact(EContact * contact, gboolean is_new)
 	if (!contact || !book)
 		return;
 	
-#ifdef MODEST_HAVE_OLD_ABOOK	
+#if MODEST_ABOOK_API < 2
 	osso_abook_contact_commit(contact, is_new, book);
 #else
 	osso_abook_contact_commit(contact, is_new, book, NULL);
-#endif /* MODEST_HILDON_VERSION_0 */
+#endif /* MODEST_ABOOK_API < 2 */
 }
 
 /**
@@ -844,7 +869,11 @@ select_contacts_for_name_dialog (const gchar *name)
 	if (book_view) {
 		GtkWidget *contact_view = NULL;
 		GtkWidget *contact_dialog = NULL;
+#if MODEST_ABOOK_API < 4
 		osso_abook_tree_model_set_book_view (OSSO_ABOOK_TREE_MODEL (contact_model), book_view);
+#else /* MODEST_ABOOK_API < 4 */
+		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model), book_view);
+#endif /* MODEST_ABOOK_API < 4 */
 		e_book_view_start (book_view);
 		
 		contact_view = osso_abook_contact_view_new_basic (contact_model);
