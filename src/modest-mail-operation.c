@@ -95,9 +95,7 @@ static void     notify_progress_of_multiple_messages (ModestMailOperation *self,
 						      gint total_bytes,
 						      gboolean increment_done);
 
-static guint    compute_message_list_size (TnyList *headers);
-
-static guint    compute_message_array_size (GPtrArray *headers);
+static guint    compute_message_list_size (TnyList *headers, guint num_elements);
 
 static int      compare_headers_by_date   (gconstpointer a,
 					   gconstpointer b);
@@ -108,6 +106,35 @@ static void     sync_folder_finish_callback (TnyFolder *self,
 					     gpointer user_data);
 
 static gboolean _check_memory_low         (ModestMailOperation *mail_op);
+
+/* Helpers for the update account operation (send & receive)*/
+typedef struct 
+{
+	ModestMailOperation *mail_op;
+	gchar *account_name;
+	UpdateAccountCallback callback;
+	gpointer user_data;
+	TnyList *folders;
+	gint pending_calls;
+	gboolean poke_all;
+	TnyFolderObserver *inbox_observer;
+	RetrieveAllCallback retrieve_all_cb;
+	gboolean interactive;
+	gboolean msg_readed;
+} UpdateAccountInfo;
+
+static void destroy_update_account_info         (UpdateAccountInfo *info);
+
+static void update_account_send_mail            (UpdateAccountInfo *info);
+
+static void update_account_get_msg_async_cb     (TnyFolder *folder, 
+						 gboolean canceled, 
+						 TnyMsg *msg, 
+						 GError *err, 
+						 gpointer user_data);
+
+static void update_account_notify_user_and_free (UpdateAccountInfo *info, 
+						 TnyList *new_headers);
 
 enum _ModestMailOperationSignals 
 {
@@ -1228,21 +1255,6 @@ internal_folder_observer_class_init (InternalFolderObserverClass *klass)
 	object_class->finalize = internal_folder_observer_finalize;
 }
 
-typedef struct 
-{
-	ModestMailOperation *mail_op;
-	gchar *account_name;
-	UpdateAccountCallback callback;
-	gpointer user_data;
-	TnyList *folders;
-	gint pending_calls;
-	gboolean poke_all;
-	TnyFolderObserver *inbox_observer;
-	RetrieveAllCallback retrieve_all_cb;
-	gboolean interactive;
-} UpdateAccountInfo;
-
-
 static void
 destroy_update_account_info (UpdateAccountInfo *info)
 {
@@ -1250,6 +1262,49 @@ destroy_update_account_info (UpdateAccountInfo *info)
 	g_object_unref (info->folders);
 	g_object_unref (info->mail_op);
 	g_slice_free (UpdateAccountInfo, info);
+}
+
+
+static void
+update_account_send_mail (UpdateAccountInfo *info)
+{
+	TnyTransportAccount *transport_account = NULL;
+
+	/* Get the transport account */
+	transport_account = (TnyTransportAccount *)
+		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
+										    info->account_name);
+
+	if (transport_account) {
+		ModestTnySendQueue *send_queue;
+		TnyFolder *outbox;
+		guint num_messages;
+
+		send_queue = modest_runtime_get_send_queue (transport_account, TRUE);
+		g_object_unref (transport_account);
+
+		if (TNY_IS_SEND_QUEUE (send_queue)) {
+			/* Get outbox folder */
+			outbox = tny_send_queue_get_outbox (TNY_SEND_QUEUE (send_queue));
+			if (outbox) { /* this could fail in some cases */
+				num_messages = tny_folder_get_all_count (outbox);
+				g_object_unref (outbox);
+			} else {
+				g_warning ("%s: could not get outbox", __FUNCTION__);
+				num_messages = 0;
+			}
+		
+			if (num_messages != 0) {
+				/* Reenable suspended items */
+				modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
+				
+				/* Try to send */
+				tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
+				modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
+										  info->interactive);
+			}
+		}
+	}
 }
 
 static void
@@ -1260,12 +1315,55 @@ update_account_get_msg_async_cb (TnyFolder *folder,
 				 gpointer user_data)
 {
 	GetMsgInfo *msg_info = (GetMsgInfo *) user_data;
+	ModestMailOperationPrivate *priv;
 
-	/* Just delete the helper. Don't do anything with the new
-	   msg. There is also no need to check for errors */
-	g_object_unref (msg_info->mail_op);
-	g_object_unref (msg_info->header);
-	g_slice_free (GetMsgInfo, msg_info);
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (msg_info->mail_op);
+	priv->done++;
+
+	if (TNY_IS_MSG (msg)) {
+		TnyHeader *header = tny_msg_get_header (msg);
+
+		if (header) {
+			ModestMailOperationState *state;
+			state = modest_mail_operation_clone_state (msg_info->mail_op);
+			msg_info->sum_total_bytes += tny_header_get_message_size (header);
+			state->bytes_done = msg_info->sum_total_bytes;
+			state->bytes_total = msg_info->total_bytes;
+
+			/* Notify the status change. Only notify about changes
+			   referred to bytes */
+			g_signal_emit (G_OBJECT (msg_info->mail_op), 
+				       signals[PROGRESS_CHANGED_SIGNAL], 
+				       0, state, NULL);
+
+			g_object_unref (header);
+			g_slice_free (ModestMailOperationState, state);
+		}
+	}
+
+	if (priv->done == priv->total) {
+		TnyList *new_headers;
+		UpdateAccountInfo *info;
+
+		/* After getting all the messages send the ones in the
+		   outboxes */
+		info = (UpdateAccountInfo *) msg_info->user_data;
+		update_account_send_mail (info);
+
+		/* Check if the operation was a success */
+		if (!priv->error)
+			priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+		
+		/* Call the user callback and free */
+		new_headers = tny_iterator_get_list (msg_info->more_msgs);
+		update_account_notify_user_and_free (info, new_headers);
+		g_object_unref (new_headers);
+
+		/* Delete the helper */
+		g_object_unref (msg_info->more_msgs);
+		g_object_unref (msg_info->mail_op);
+		g_slice_free (GetMsgInfo, msg_info);
+	}
 }
 
 static void
@@ -1304,7 +1402,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
 	gboolean headers_only, ignore_limit;
-	TnyTransportAccount *transport_account = NULL;
 
 	info = (UpdateAccountInfo *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
@@ -1321,6 +1418,10 @@ inbox_refreshed_cb (TnyFolder *inbox,
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 				     "canceled");
+
+		tny_folder_remove_observer (inbox, info->inbox_observer);
+		g_object_unref (info->inbox_observer);
+		info->inbox_observer = NULL;
 
 		/* Notify the user about the error and then exit */
 		update_account_notify_user_and_free (info, NULL);
@@ -1343,25 +1444,30 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	/* Create the new headers array. We need it to sort the
 	   new headers by date */
 	new_headers_array = g_ptr_array_new ();
-	new_headers_iter = tny_list_create_iterator (((InternalFolderObserver *) info->inbox_observer)->new_headers);
-	while (!tny_iterator_is_done (new_headers_iter)) {
-		TnyHeader *header = NULL;
+	if (info->inbox_observer) {
+		new_headers_iter = tny_list_create_iterator (((InternalFolderObserver *) info->inbox_observer)->new_headers);
+		while (!tny_iterator_is_done (new_headers_iter)) {
+			TnyHeader *header = NULL;
 
-		header = TNY_HEADER (tny_iterator_get_current (new_headers_iter));
-		/* Apply per-message size limits */
-		if (tny_header_get_message_size (header) < max_size)
-			g_ptr_array_add (new_headers_array, g_object_ref (header));
-				
-		g_object_unref (header);
-		tny_iterator_next (new_headers_iter);
+			header = TNY_HEADER (tny_iterator_get_current (new_headers_iter));
+			/* Apply per-message size limits */
+			if (tny_header_get_message_size (header) < max_size)
+				g_ptr_array_add (new_headers_array, g_object_ref (header));
+			
+			g_object_unref (header);
+			tny_iterator_next (new_headers_iter);
+		}
+		g_object_unref (new_headers_iter);
+
+		tny_folder_remove_observer (inbox, info->inbox_observer);
+		g_object_unref (info->inbox_observer);
+		info->inbox_observer = NULL;
 	}
-	g_object_unref (new_headers_iter);
-	tny_folder_remove_observer (inbox, info->inbox_observer);
-	g_object_unref (info->inbox_observer);
-	info->inbox_observer = NULL;
 
-	if (new_headers_array->len == 0)
+	if (new_headers_array->len == 0) {
+		g_ptr_array_free (new_headers_array, FALSE);
 		goto send_mail;
+	}
 
 	/* Get per-account message amount retrieval limit */
 	retrieve_limit = modest_account_mgr_get_retrieve_limit (mgr, info->account_name);
@@ -1388,36 +1494,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 							      new_headers_array->len,
 							      retrieve_limit);
 	}
-	
-	if (!headers_only) {
-		gint msg_num = 0;
-		const gint msg_list_size = compute_message_array_size (new_headers_array);
-
-		priv->done = 0;
-		if (ignore_limit)
-			priv->total = new_headers_array->len;
-		else
-			priv->total = MIN (new_headers_array->len, retrieve_limit);
-		while (msg_num < priv->total) {		
-			TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, msg_num));
-			TnyFolder *folder = tny_header_get_folder (header);
-			GetMsgInfo *msg_info;
-
-			/* Create the message info */
-			msg_info = g_slice_new0 (GetMsgInfo);
-			msg_info->mail_op = g_object_ref (info->mail_op);
-			msg_info->header = g_object_ref (header);
-			msg_info->total_bytes = msg_list_size;
-
-			/* Get message in an async way */
-			tny_folder_get_msg_async (folder, header, update_account_get_msg_async_cb, 
-						  get_msg_status_cb, msg_info);
-
-			g_object_unref (folder);
-			
-			msg_num++;
-		}
-	}
 
 	/* Copy the headers to a list and free the array */
 	new_headers = tny_simple_list_new ();
@@ -1427,48 +1503,55 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	}
 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (new_headers_array, FALSE);
+	
+	if (!headers_only && (tny_list_get_length (new_headers) > 0)) {
+		gint msg_num = 0;
+		TnyIterator *iter;
+		GetMsgInfo *msg_info;
 
- send_mail:
-	/* Get the transport account */
-	transport_account = (TnyTransportAccount *)
-		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
-										    info->account_name);
+		priv->done = 0;
+		if (ignore_limit)
+			priv->total = tny_list_get_length (new_headers);
+		else
+			priv->total = MIN (tny_list_get_length (new_headers), retrieve_limit);
 
-	if (transport_account) {
-		ModestTnySendQueue *send_queue;
-		TnyFolder *outbox;
-		guint num_messages;
+		iter = tny_list_create_iterator (new_headers);
 
-		send_queue = modest_runtime_get_send_queue (transport_account, TRUE);
-		g_object_unref (transport_account);
+		/* Create the message info */
+		msg_info = g_slice_new0 (GetMsgInfo);
+		msg_info->mail_op = g_object_ref (info->mail_op);
+		msg_info->total_bytes = compute_message_list_size (new_headers, priv->total);
+		msg_info->more_msgs = g_object_ref (iter);
+		msg_info->user_data = info;
 
-		if (TNY_IS_SEND_QUEUE (send_queue)) {
-			/* Get outbox folder */
-			outbox = tny_send_queue_get_outbox (TNY_SEND_QUEUE (send_queue));
-			if (outbox) { /* this could fail in some cases */
-				num_messages = tny_folder_get_all_count (outbox);
-				g_object_unref (outbox);
-			} else {
-				g_warning ("%s: could not get outbox", __FUNCTION__);
-				num_messages = 0;
-			}
-		
-			if (num_messages != 0) {
-				/* Reenable suspended items */
-				modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
-				
-				/* Try to send */
-				tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
-				modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
-										  info->interactive);
-			}
+		while ((msg_num < priv->total ) && !tny_iterator_is_done (iter)) {		
+			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
+			TnyFolder *folder = tny_header_get_folder (header);
+
+			/* Get message in an async way */
+			tny_folder_get_msg_async (folder, header, update_account_get_msg_async_cb, 
+						  NULL, msg_info);
+
+			g_object_unref (folder);
+			
+			msg_num++;
+			tny_iterator_next (iter);
 		}
-	}
+		g_object_unref (iter);
 
+		/* The mail operation will finish when the last
+		   message is retrieved */
+		return;
+	}
+ send_mail:
+	/* If we don't have to retrieve the new messages then
+	   simply send mail */
+	update_account_send_mail (info);
+	
 	/* Check if the operation was a success */
 	if (!priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-
+	
 	/* Call the user callback and free */
 	update_account_notify_user_and_free (info, new_headers);
 }
@@ -2469,7 +2552,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		g_object_unref (iterator);
 	}
 
-	msg_list_size = compute_message_list_size (header_list);
+	msg_list_size = compute_message_list_size (header_list, 0);
 
 	modest_mail_operation_notify_start (self);
 	iter = tny_list_create_iterator (header_list);
@@ -2817,38 +2900,32 @@ transfer_msgs_cb (TnyFolder *folder, gboolean cancelled, GError *err, gpointer u
 	}
 }
 
+/* Computes the size of the messages the headers in the list belongs
+   to. If num_elements is different from 0 then it only takes into
+   account the first num_elements for the calculation */
 static guint
-compute_message_list_size (TnyList *headers)
+compute_message_list_size (TnyList *headers, 
+			   guint num_elements)
 {
 	TnyIterator *iter;
-	guint size = 0;
+	guint size = 0, element = 0;
+
+	/* If num_elements is not valid then take all into account */
+	if ((num_elements <= 0) || (num_elements > tny_list_get_length (headers)))
+		num_elements = tny_list_get_length (headers);
 
 	iter = tny_list_create_iterator (headers);
-	while (!tny_iterator_is_done (iter)) {
+	while (!tny_iterator_is_done (iter) && element < num_elements) {
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 		size += tny_header_get_message_size (header);
 		g_object_unref (header);
 		tny_iterator_next (iter);
+		element++;
 	}
 	g_object_unref (iter);
 
 	return size;
 }
-
-static guint
-compute_message_array_size (GPtrArray *headers)
-{
-	guint size = 0;
-	gint i;
-
-	for (i = 0; i < headers->len; i++) {
-		TnyHeader *header = TNY_HEADER (g_ptr_array_index (headers, i));
-		size += tny_header_get_message_size (header);
-	}
-
-	return size;
-}
-
 
 void
 modest_mail_operation_xfer_msgs (ModestMailOperation *self,
@@ -2933,7 +3010,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	helper->user_data = user_data;
 	helper->last_total_bytes = 0;
 	helper->sum_total_bytes = 0;
-	helper->total_bytes = compute_message_list_size (headers);
+	helper->total_bytes = compute_message_list_size (headers, 0);
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (src_folder);
@@ -3123,8 +3200,7 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 	state->total = 0;
 	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
 			0, state, NULL);
-
-	/* FIXME: we're leaking the state here, or? valgrind thinks so */
+	g_slice_free (ModestMailOperationState, state);
 	
 	tny_folder_refresh_async (folder,
 				  on_refresh_folder,

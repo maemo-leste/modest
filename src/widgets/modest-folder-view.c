@@ -49,6 +49,7 @@
 #include <modest-marshal.h>
 #include <modest-icon-names.h>
 #include <modest-tny-account-store.h>
+#include <modest-tny-local-folders-account.h>
 #include <modest-text-utils.h>
 #include <modest-runtime.h>
 #include "modest-folder-view.h"
@@ -1080,7 +1081,7 @@ on_account_changed (TnyAccountStore *account_store,
 
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
-	if (same_account)
+	if (same_account && !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account))
 		g_idle_add (on_idle_select_first_inbox_or_local, self);
 }
 

@@ -981,6 +981,9 @@ set_folder_intern_get_headers_async_cb (TnyFolder *folder,
 	self = MODEST_HEADER_VIEW (user_data);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
+	if (cancelled || err)
+		return;
+
 	/* Add IDLE observer (monitor) and another folder observer for
 	   new messages (self) */
 	g_mutex_lock (priv->observers_lock);
@@ -1225,11 +1228,11 @@ refresh_folder_error_handler (ModestMailOperation *mail_op,
 void
 modest_header_view_set_folder (ModestHeaderView *self, 
 			       TnyFolder *folder,
+			       gboolean refresh,
 			       RefreshAsyncUserCallback callback,
 			       gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv;
-	SetFolderHelper *info;
 	ModestWindow *main_win;
 	
 	g_return_if_fail (self);
@@ -1257,8 +1260,9 @@ modest_header_view_set_folder (ModestHeaderView *self,
 	}
 
 	if (folder) {
-		ModestMailOperation *mail_op = NULL;
 		GtkTreeSelection *selection;
+		SetFolderHelper *info;
+		ModestMailOperation *mail_op = NULL;
 
 		/* Set folder in the model */
 		modest_header_view_set_folder_intern (self, folder);
@@ -1279,7 +1283,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			       0, TRUE, NULL);
 
 		/* create the helper */
-		info = g_malloc0 (sizeof(SetFolderHelper));
+		info = g_malloc0 (sizeof (SetFolderHelper));
 		info->header_view = g_object_ref (self);
 		info->cb = callback;
 		info->user_data = user_data;
@@ -1288,15 +1292,18 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(main_win),
 									 refresh_folder_error_handler,
 									 NULL, NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-						 mail_op);
-
-		/* Refresh the folder asynchronously */
-		modest_mail_operation_refresh_folder (mail_op,
-						      folder,
-						      folder_refreshed_cb,
-						      info);
-
+		if (refresh) {			
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
+			
+			/* Refresh the folder asynchronously */
+			modest_mail_operation_refresh_folder (mail_op,
+							      folder,
+							      folder_refreshed_cb,
+							      info);
+		} else {
+			folder_refreshed_cb (mail_op, folder, info);
+		}
 		/* Free */
 		g_object_unref (mail_op);
 	} else {
@@ -1890,7 +1897,7 @@ modest_header_view_clear (ModestHeaderView *self)
 {
 	g_return_if_fail (self && MODEST_IS_HEADER_VIEW(self));
 	
-	modest_header_view_set_folder (self, NULL, NULL, NULL);
+	modest_header_view_set_folder (self, NULL, FALSE, NULL, NULL);
 }
 
 void 

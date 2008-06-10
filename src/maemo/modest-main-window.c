@@ -2525,9 +2525,6 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		}
 	}
 	
-	modest_folder_view_select_first_inbox_or_local (priv->folder_view);
-
-
 	/* Free */
 	if (settings) {
 		g_object_unref (store_settings);

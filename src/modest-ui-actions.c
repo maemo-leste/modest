@@ -2367,11 +2367,16 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 		}
 	} else {
 		if (TNY_IS_FOLDER (folder_store) && selected) {
-			
+			TnyAccount *account;
+			const gchar *account_name = NULL;
+			gboolean refresh;
+
 			/* Update the active account */
-			TnyAccount *account = modest_tny_folder_get_account (TNY_FOLDER (folder_store));
+			account = modest_tny_folder_get_account (TNY_FOLDER (folder_store));
 			if (account) {
 				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
+				account_name = 
+					modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 				g_object_unref (account);
 				account = NULL;
 			}
@@ -2382,6 +2387,8 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			modest_main_window_set_contents_style (main_window, 
 							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
 
+			refresh = !modest_account_mgr_account_is_busy (modest_runtime_get_account_mgr (), account_name);
+
 			/* Set folder on header view. This function
 			   will call tny_folder_refresh_async so we
 			   pass a callback that will be called when
@@ -2389,6 +2396,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			   empty view if there are no messages */
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
 						       TNY_FOLDER (folder_store),
+						       refresh,
 						       folder_refreshed_cb,
 						       main_window);
 			
