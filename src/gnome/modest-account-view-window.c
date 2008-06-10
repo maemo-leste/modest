@@ -38,12 +38,14 @@
 #include <string.h>
 #include "modest-account-assistant.h"
 #include "modest-tny-platform-factory.h"
+#include "modest-platform.h"
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
 static void                            modest_account_view_window_init         (ModestAccountViewWindow *obj);
 static void                            modest_account_view_window_finalize     (GObject *obj);
-
+static gboolean                        check_for_active_account                (ModestAccountViewWindow *self, 
+										const gchar* account_name);
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -150,33 +152,40 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	ModestAccountMgr *account_mgr;
-	gchar *account_name;
+	gchar *account_name, *account_title;
+	
 	
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
 	account_mgr = modest_runtime_get_account_mgr();	
 	account_name = modest_account_view_get_selected_account (priv->account_view);
 
-	if (account_name) {
+	if (!account_name)
+		return;
+
+	account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
+	if (!account_title)
+		return;
+
+	if (check_for_active_account (self, account_name)) {
 		gboolean removed;
-		GtkWidget *dialog;
 		gchar *txt;
+		gint response;
 
-		dialog = gtk_dialog_new_with_buttons (_("Confirmation dialog"),
-						      GTK_WINDOW (self),
-						      GTK_DIALOG_MODAL,
-						      GTK_STOCK_CANCEL,
-						      GTK_RESPONSE_REJECT,
-						      GTK_STOCK_OK,
-						      GTK_RESPONSE_ACCEPT,
-						      NULL);
-		txt = g_strdup_printf (_("Do you really want to delete the account %s?"), account_name);
-		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-				    gtk_label_new (txt), FALSE, FALSE, 0);
-/* 		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox)); */
+		if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
+		    == MODEST_PROTOCOL_STORE_POP) {
+				txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
+						       account_title);
+		} else {
+			txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
+					       account_title);
+		}
+		
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), txt);
 		g_free (txt);
+		txt = NULL;
 
-		if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		if (response == GTK_RESPONSE_OK) {
 			/* Remove account. If succeeded it removes also 
 			   the account from the ModestAccountView */
 			removed = modest_account_mgr_remove_account (account_mgr,
@@ -188,7 +197,6 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 				g_warning ("Error removing account %s", account_name);
 			}
 		}
-		gtk_widget_destroy (dialog);
 		g_free (account_name);
 	}
 }
@@ -275,17 +283,54 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 }
 
 static void
+on_wizard_response (GtkDialog *dialog, 
+		    gint response, 
+		    gpointer user_data)
+{	
+	/* The response has already been handled by the wizard dialog itself,
+	 * creating the new account.
+	 */	 
+	if (dialog)
+		gtk_widget_destroy (GTK_WIDGET (dialog));
+
+	/* Re-focus the account list view widget */
+	if (MODEST_IS_ACCOUNT_VIEW_WINDOW (user_data)) {
+		ModestAccountViewWindowPrivate *priv;
+		priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (user_data);
+		gtk_widget_grab_focus (GTK_WIDGET (priv->account_view));
+	}
+}
+
+static void
 on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-	GtkWidget *assistant;
-	ModestAccountViewWindowPrivate *priv;
-	
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	assistant = modest_account_assistant_new (modest_runtime_get_account_mgr());
-	gtk_window_set_transient_for (GTK_WINDOW(assistant),
-				      GTK_WINDOW(self));
+	GtkDialog *wizard;
+	GtkWindow *dialog;
 
-	gtk_widget_show (GTK_WIDGET(assistant));
+	/* Show the easy-setup wizard: */	
+	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
+	if (dialog && MODEST_IS_ACCOUNT_ASSISTANT (dialog)) {
+		/* old wizard is active already; 
+		 */
+		gtk_window_present (dialog);
+		return;
+	}
+	
+	/* there is no such wizard yet */
+	wizard = GTK_DIALOG (modest_account_assistant_new (modest_runtime_get_account_mgr ()));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), 
+				     GTK_WINDOW (wizard));
+
+	/* if there is already another modal dialog, make it non-modal */
+	if (dialog)
+		gtk_window_set_modal (GTK_WINDOW(dialog), FALSE);
+	
+	gtk_window_set_modal (GTK_WINDOW (wizard), TRUE);
+	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));
+	/* Destroy the dialog when it is closed: */
+	g_signal_connect (G_OBJECT (wizard), "response", G_CALLBACK
+			  (on_wizard_response), self);
+	gtk_widget_show (GTK_WIDGET (wizard));
 }
 
 
@@ -364,14 +409,15 @@ window_vbox_new (ModestAccountViewWindow *self)
 	main_vbox     = gtk_vbox_new (FALSE, 0);
 	main_hbox     = gtk_hbox_new (FALSE, 12);
 	
+	button_box = button_box_new (self);
+	
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
 	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), 300, 400);
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
+	on_selection_changed (sel, self);
 	g_signal_connect (G_OBJECT(sel), "changed",  G_CALLBACK(on_selection_changed),
 			  self);
-	
-	button_box = button_box_new (self);
 	
 	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);

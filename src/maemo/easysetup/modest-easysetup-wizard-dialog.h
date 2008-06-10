@@ -31,7 +31,7 @@
 #define _MODEST_EAYSETUP_WIZARD_DIALOG
 
 /* #include <hildon-widgets/hildon-wizard-dialog.h> */
-#include "modest-wizard-dialog.h" /* We use a copied-and-improved HildonWizardDialog. */
+#include "widgets/modest-wizard-dialog.h" /* We use a copied-and-improved HildonWizardDialog. */
 #include "modest-account-mgr.h"
 #include <config.h>
 

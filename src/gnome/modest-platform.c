@@ -38,6 +38,8 @@
 #include "modest-runtime.h"
 
 #include "gnome/modest-gnome-global-settings-dialog.h"
+#include "widgets/modest-account-settings-dialog.h"
+#include "gnome/modest-account-assistant.h"
 
 gboolean
 modest_platform_init (int argc, char *argv[])
@@ -417,7 +419,7 @@ modest_platform_double_connect_and_perform (GtkWindow *parent_window,
 					    DoubleConnectionInfo *connect_info)
 {
 	if (connect_info->callback)
-		connect_info->callback (FALSE, NULL, parent_window, folder_store, connect_info->data);
+		connect_info->callback (FALSE, NULL, parent_window, TNY_ACCOUNT (folder_store), connect_info->data);
 }
 
 void 
@@ -482,19 +484,17 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 GtkWidget *
 modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
 {
-	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
-						    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-						    "NOT IMPLEMENTED");
-	return dialog;
+	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+
+	modest_account_settings_dialog_set_account (dialog, settings);
+	return GTK_WIDGET (dialog);
 }
 
 GtkWidget *
 modest_platform_get_account_settings_wizard (void)
 {
-	GtkWidget *dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL,
-						    GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-						    "NOT IMPLEMENTED");
-	return dialog;
+	GtkWidget *widget = modest_account_assistant_new (modest_runtime_get_account_mgr ());
+	return widget;
 }
 
 

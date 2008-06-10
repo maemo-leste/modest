@@ -126,10 +126,6 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 
 	priv->notebook = gtk_notebook_new ();
 
-	/* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
-    
 	/* Connect to the dialog's response signal: */
 	g_signal_connect (G_OBJECT (self), "response", G_CALLBACK (on_response), self);
 

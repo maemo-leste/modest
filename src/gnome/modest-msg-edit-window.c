@@ -1064,8 +1064,8 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 	ModestMsgEditWindowPrivate *priv;
 	GnomeVFSResult result;
 
-	g_return_if_fail (window);
-	g_return_if_fail (uri);
+	g_return_val_if_fail (window, 0);
+	g_return_val_if_fail (uri, 0);
 		
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	
@@ -1120,6 +1120,8 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 		g_object_unref (mime_part);
 		gnome_vfs_file_info_unref (info);
 	}
+	/* TODO: return proper file size */
+	return 0;
 }
 
 void            

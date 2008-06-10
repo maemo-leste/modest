@@ -54,16 +54,19 @@
 #include <config.h>
 #endif
 
+#ifdef MODEST_PLATFORM_MAEMO
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-defines.h>
 #else
 #include <hildon/hildon-defines.h>
 #endif /*MODEST_HAVE_HILDON0_WIDGETS*/
+#endif /*MODEST_PLATFORM_MAEMO*/
 
 #include "modest-wizard-dialog.h"
 
 #include <libintl.h>
 
+#ifdef MODEST_PLATFORM_MAEMO
 /* Specify the hildon-libs translation domain,
  * so we can reuse its translations 
  * instead of repeating them in our own translations.
@@ -71,6 +74,9 @@
 /* #define _(String) dgettext(PACKAGE, String) */
 
 #define _(String) dgettext("hildon-libs", String)
+#else
+#define _(String) gettext(String)
+#endif
 
 static GtkDialogClass *parent_class;
 
@@ -255,6 +261,7 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
+#ifdef MODEST_PLATFORM_MAEMO
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						HILDON_ICON_SIZE_WIDG_WIZARD);
@@ -265,6 +272,9 @@ init (ModestWizardDialog *wizard_dialog)
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						icon_size);
 #endif /*MODEST_HILDON_VERSION_0*/
+#else /*MODEST_PLATFORM_MAEMO*/
+    priv->image = gtk_image_new_from_stock (GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_DIALOG);
+#endif /*MODEST_PLATFORM_MAEMO*/
     /* Default values for user provided properties */
     priv->notebook = NULL;
     priv->wizard_name = NULL;
@@ -276,10 +286,17 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), FALSE, FALSE, 0);
 
     /* Add response buttons: finish, previous, next, cancel */
+#ifdef MODEST_PLATFORM_MAEMO
     gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_finish"), MODEST_WIZARD_DIALOG_FINISH);
     gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_previous"), MODEST_WIZARD_DIALOG_PREVIOUS);
     gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_next"), MODEST_WIZARD_DIALOG_NEXT);
     gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_cancel"), MODEST_WIZARD_DIALOG_CANCEL);
+#else
+    gtk_dialog_add_button (dialog, GTK_STOCK_SAVE, MODEST_WIZARD_DIALOG_FINISH);
+    gtk_dialog_add_button (dialog, GTK_STOCK_GO_BACK, MODEST_WIZARD_DIALOG_PREVIOUS);
+    gtk_dialog_add_button (dialog, GTK_STOCK_GO_FORWARD, MODEST_WIZARD_DIALOG_NEXT);
+    gtk_dialog_add_button (dialog, GTK_STOCK_CANCEL, MODEST_WIZARD_DIALOG_CANCEL);
+#endif
 
     /* Set initial button states: previous and finish buttons are disabled */
     make_buttons_sensitive (wizard_dialog, FALSE, FALSE, TRUE);

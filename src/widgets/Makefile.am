@@ -86,6 +86,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-window.h	               \
 	modest-window-mgr.h            \
 	modest-window-mgr.c            \
+	modest-wizard-dialog.h         \
+	modest-wizard-dialog.c         \
 	modest-zoomable.h              \
 	modest-zoomable.c
 

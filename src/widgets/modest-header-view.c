@@ -380,8 +380,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date_or_status);
 
 	g_object_set (G_OBJECT (renderer_subject_box), "yalign", 1.0, NULL);
+#ifdef MAEMO_PLATFORM
 	gtk_cell_renderer_set_fixed_size (renderer_subject_box, -1, 32);
 	gtk_cell_renderer_set_fixed_size (renderer_recpt_box, -1, 32);
+#endif
 	g_object_set (G_OBJECT (renderer_recpt_box), "yalign", 0.0, NULL);
 	g_object_set(G_OBJECT(renderer_header),
 		     "ellipsize", PANGO_ELLIPSIZE_END,
@@ -403,9 +405,15 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set (G_OBJECT (renderer_attach),
 		      "yalign", 0.0, NULL);
 
+#ifdef MAEMO_PLATFORM
 	gtk_cell_renderer_set_fixed_size (renderer_attach, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_priority, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
+#else
+	gtk_cell_renderer_set_fixed_size (renderer_attach, 26, 26);
+	gtk_cell_renderer_set_fixed_size (renderer_priority, 26, 26);
+	/* gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64); */
+#endif
 	
 	remove_all_columns (self);
 

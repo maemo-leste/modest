@@ -30,8 +30,8 @@
 #ifndef __MODEST_ACCOUNT_ASSISTANT_H__
 #define __MODEST_ACCOUNT_ASSISTANT_H__
 
-#include <gtk/gtkassistant.h>
 #include <modest-account-mgr.h>
+#include <widgets/modest-wizard-dialog.h>
 
 G_BEGIN_DECLS
 
@@ -47,12 +47,12 @@ typedef struct _ModestAccountAssistant      ModestAccountAssistant;
 typedef struct _ModestAccountAssistantClass ModestAccountAssistantClass;
 
 struct _ModestAccountAssistant {
-	GtkAssistant parent;
+	ModestWizardDialog parent;
 	/* insert public members, if any */
 };
 
 struct _ModestAccountAssistantClass {
-	GtkAssistantClass parent_class;
+	ModestWizardDialogClass parent_class;
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestAccountAssistant* obj); */
 };

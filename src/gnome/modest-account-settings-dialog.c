@@ -72,15 +72,6 @@
 
 G_DEFINE_TYPE (ModestAccountSettingsDialog, modest_account_settings_dialog, GTK_TYPE_DIALOG);
 
-#define ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_ACCOUNT_SETTINGS_DIALOG, ModestAccountSettingsDialogPrivate))
-
-typedef struct _ModestAccountSettingsDialogPrivate ModestAccountSettingsDialogPrivate;
-
-struct _ModestAccountSettingsDialogPrivate
-{
-};
-
 static void
 enable_buttons (ModestAccountSettingsDialog *self);
 
@@ -308,13 +299,9 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkAdjustment *focus_adjustment = NULL;
-	GtkAlignment *alignment;
+	GtkWidget *alignment;
 	
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	GtkWidget *scrollwin = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollwin),
-					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-           
 	/* The description widgets: */	
 	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	GtkWidget *field = create_field (self, sizegroup, _("mcen_fi_account_title"), 
@@ -381,18 +368,10 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	gtk_widget_show (self->caption_leave_messages);
 	
 	gtk_widget_show (GTK_WIDGET (box));
-	
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), box);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrollwin), GTK_SHADOW_NONE);
-	gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrollwin))), GTK_SHADOW_NONE);
-	gtk_widget_show (scrollwin);
-
-	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment); 
 
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 12, 12, 12, 12);
-	gtk_container_add (GTK_CONTAINER (alignment), scrollwin);
+	gtk_container_add (GTK_CONTAINER (alignment), box);
 	gtk_widget_show (alignment);
 	
 	return GTK_WIDGET (alignment);
@@ -465,13 +444,9 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkAdjustment *focus_adjustment = NULL;
-	GtkAlignment *alignment;
+	GtkWidget *alignment;
 	
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	GtkWidget *scrollwin = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollwin),
-					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrollwin), GTK_SHADOW_NONE);
 	 
 	/* The name widgets: */
 	self->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
@@ -560,16 +535,10 @@ create_page_user_details (ModestAccountSettingsDialog *self)
         	G_CALLBACK (on_button_signature), self);
         	
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), box);
-	gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (scrollwin)), GTK_SHADOW_NONE);
-	gtk_widget_show (scrollwin);
 
-	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment); 
-	
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 12, 12, 12, 12);
-	gtk_container_add (GTK_CONTAINER (alignment), scrollwin);
+	gtk_container_add (GTK_CONTAINER (alignment), box);
 	gtk_widget_show (alignment);
 	
 	return GTK_WIDGET (alignment);
@@ -614,7 +583,7 @@ static void update_incoming_server_security_choices (ModestAccountSettingsDialog
 static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkAlignment *alignment;
+	GtkWidget *alignment;
 	
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
@@ -770,14 +739,7 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkAdjustment *focus_adjustment = NULL;
-	GtkAlignment *alignment;
-	
-	/* Put it all in a scrolled window, so that all widgets can be 
-	 * accessed even when the on-screen keyboard is visible: */
-	GtkWidget *scrollwin = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin), 
-		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrollwin), GTK_SHADOW_NONE);
+	GtkWidget *alignment;
 	
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
@@ -896,16 +858,10 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
 		
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrollwin), box);
-	gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (scrollwin)), GTK_SHADOW_NONE);
-	gtk_widget_show(scrollwin);
-
-	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment);
 	
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment), 12, 12, 12, 12);
-	gtk_container_add (GTK_CONTAINER (alignment), scrollwin);
+	gtk_container_add (GTK_CONTAINER (alignment), box);
 	gtk_widget_show (alignment);
 	
 	return GTK_WIDGET (alignment);
@@ -1113,8 +1069,7 @@ on_response (GtkDialog *wizard_dialog,
 					g_object_unref (store_settings);
 					g_object_unref (transport_settings);
 
-					if (!self->save_password)
-						modest_platform_information_banner(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
+					modest_platform_information_banner(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
 			} else {
 				modest_platform_information_banner (NULL, NULL, _("mail_ib_setting_failed"));
@@ -1175,7 +1130,6 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
             G_CALLBACK (on_response), self); 
             
     self->modified = FALSE;
-    self->save_password;
 
     /* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
@@ -1620,8 +1574,8 @@ modest_account_settings_dialog_check_allow_changes (ModestAccountSettingsDialog 
 	/* Enable or disable widgets */
 	gtk_widget_set_sensitive (self->entry_user_username, !username_known);
 	gtk_widget_set_sensitive (self->entry_incomingserver, !username_known);
-	gtk_widget_set_sensitive (self->entry_outgoingserver, !username_known);
-	gtk_widget_set_sensitive (self->entry_outgoing_username, !username_known);
+	gtk_widget_set_sensitive (self->entry_incoming_port, !username_known);
+	gtk_widget_set_sensitive (self->combo_incoming_security, !username_known);
 }
 
 void
@@ -1629,7 +1583,6 @@ modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialo
 {
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
 
-	dialog->save_password = TRUE;
 	dialog->modified = TRUE;
 }
 
@@ -1637,8 +1590,6 @@ static void
 modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	g_type_class_add_private (klass, sizeof (ModestAccountSettingsDialogPrivate));
-
 
 	object_class->get_property = modest_account_settings_dialog_get_property;
 	object_class->set_property = modest_account_settings_dialog_set_property;

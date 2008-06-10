@@ -80,6 +80,7 @@ typedef struct {
 
 
 static const guint MODEST_MAIN_PANED_POS_PERCENTAGE = 30;
+static const guint MODEST_MSG_PANED_POS_PERCENTAGE = 50;
 
 static const FolderCols INBOX_COLUMNS_DETAILS[] = {
 	{MODEST_HEADER_VIEW_COLUMN_MSGTYPE, 40, 0},
@@ -429,6 +430,15 @@ init_header_columns (ModestConf *conf, gboolean overwrite)
 	 * there was nothing before */
 	if (overwrite || !modest_conf_key_exists(conf, key, NULL)) 
 		modest_conf_set_int (conf, key, MODEST_MAIN_PANED_POS_PERCENTAGE, NULL);
+	
+	g_free (key);
+
+	key = _modest_widget_memory_get_keyname (MODEST_CONF_MSG_PANED_KEY, 
+						 MODEST_WIDGET_MEMORY_PARAM_POS);
+	/* if we're not in overwrite mode, only write stuff it
+	 * there was nothing before */
+	if (overwrite || !modest_conf_key_exists(conf, key, NULL)) 
+		modest_conf_set_int (conf, key, MODEST_MSG_PANED_POS_PERCENTAGE, NULL);
 	
 	g_free (key);
 	return TRUE;

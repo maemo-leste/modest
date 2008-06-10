@@ -122,6 +122,8 @@ modest_gnome_global_settings_dialog_init (ModestGnomeGlobalSettingsDialog *self)
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
+	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
+
 	ppriv->updating_page = create_updating_page (self);
 	ppriv->composing_page = create_composing_page (self);
     
@@ -132,7 +134,19 @@ modest_gnome_global_settings_dialog_init (ModestGnomeGlobalSettingsDialog *self)
 		gtk_label_new (_("mcen_ti_options_composing")));
 		
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
-	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
+	gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (self)->vbox), 12);
+	gtk_container_set_border_width (GTK_CONTAINER (self), 12);
+	gtk_window_set_default_size (GTK_WINDOW (self), 480, -1);
+
+	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->action_area), 0);
+
+	/* Load current config */
+	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
+
+	/* Add the buttons: */
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_SAVE, GTK_RESPONSE_OK);
+    
 	gtk_widget_show_all (ppriv->notebook);
 }
 
@@ -166,14 +180,14 @@ add_to_table (GtkTable *table,
 	gtk_table_attach (table, 
 			  left, 0, 1, 
 			  n_rows, n_rows + 1, 
-			  GTK_SHRINK|GTK_FILL, 
-			  GTK_SHRINK|GTK_FILL, 
+			  GTK_FILL, 
+			  GTK_FILL, 
 			  0, 0);
 	gtk_table_attach (table, 
 			  right, 1, 2, 
 			  n_rows, n_rows + 1, 
-			  GTK_EXPAND|GTK_FILL, 
-			  GTK_SHRINK|GTK_FILL, 
+			  GTK_EXPAND | GTK_FILL, 
+			  GTK_FILL, 
 			  0, 0);
 }
 
@@ -188,6 +202,7 @@ create_label (const gchar *text)
 
 	label_name = g_strdup_printf ("%s:", text);
 	label = gtk_label_new (label_name);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	g_free (label_name);
 
 	return label;
@@ -200,35 +215,35 @@ static GtkWidget*
 create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *table_update, *table_limit;
-	GtkWidget *label, *check, *combo, *spin;
+	GtkWidget *label;
+	ModestGlobalSettingsDialogPrivate *ppriv;
 
-	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	vbox = gtk_vbox_new (FALSE, 0);
 	table_update = gtk_table_new (3, 2, FALSE);
 	table_limit = gtk_table_new (2, 2, FALSE);
 	/* FIXME: set proper values (HIG) */
-	gtk_table_set_row_spacings (GTK_TABLE (table_update), 6);
+	gtk_table_set_row_spacings (GTK_TABLE (table_update), 3);
 	gtk_table_set_col_spacings (GTK_TABLE (table_update), 12);
-	gtk_table_set_row_spacings (GTK_TABLE (table_limit), 6);
+	gtk_table_set_row_spacings (GTK_TABLE (table_limit), 3);
 	gtk_table_set_col_spacings (GTK_TABLE (table_limit), 12);
 
 	/* Autoupdate */
 	label = create_label (_("mcen_fi_options_autoupdate"));
-	check = gtk_check_button_new ();
-	add_to_table (GTK_TABLE (table_update), label, check);
+	ppriv->auto_update = gtk_check_button_new ();
+	add_to_table (GTK_TABLE (table_update), label, ppriv->auto_update);
 
 	/* Connected via */
 	label = create_label (_("mcen_fi_options_connectiontype"));
-
-	ModestGlobalSettingsDialogPrivate *ppriv = 
-		MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
 	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
-	combo = modest_combo_box_new (ppriv->connect_via_list, g_int_equal);
+	ppriv->connect_via = modest_combo_box_new (ppriv->connect_via_list, g_int_equal);
 
-	add_to_table (GTK_TABLE (table_update), label, combo);
+	add_to_table (GTK_TABLE (table_update), label, ppriv->connect_via);
 
 	/* Update interval */
 	label = create_label (_("mcen_fi_options_updateinterval"));
@@ -237,9 +252,9 @@ create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
 	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
-	combo = modest_combo_box_new (ppriv->update_interval_list, g_int_equal);
+	ppriv->update_interval = modest_combo_box_new (ppriv->update_interval_list, g_int_equal);
 
-	add_to_table (GTK_TABLE (table_update), label, combo);
+	add_to_table (GTK_TABLE (table_update), label, ppriv->update_interval);
 
 	/* Add to vbox */
 	gtk_box_pack_start (GTK_BOX (vbox), table_update, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -249,16 +264,17 @@ create_updating_page (ModestGnomeGlobalSettingsDialog *self)
 
 	/* Limits */
 	label = create_label (_("mcen_fi_advsetup_sizelimit"));
-	spin = gtk_spin_button_new (GTK_ADJUSTMENT (gtk_adjustment_new (1000, 1, 5000, 1, 1, 16)), 
-				    1, 0);
-	add_to_table (GTK_TABLE (table_limit), label, spin);
+	ppriv->size_limit = gtk_spin_button_new (GTK_ADJUSTMENT (gtk_adjustment_new (1000, 1, 5000, 1, 1, 16)), 
+						 1, 0);
+	add_to_table (GTK_TABLE (table_limit), label, ppriv->size_limit);
 
 	label = create_label (_("mcen_fi_options_playsound"));
-	check = gtk_check_button_new ();
-	add_to_table (GTK_TABLE (table_limit), label, check);
+	ppriv->play_sound = gtk_check_button_new ();
+	add_to_table (GTK_TABLE (table_limit), label, ppriv->play_sound);
 
 	/* Add to vbox */
 	gtk_box_pack_start (GTK_BOX (vbox), table_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_container_set_border_width (GTK_CONTAINER (vbox), 12);
 
 	return vbox;
 }
@@ -270,12 +286,12 @@ static GtkWidget*
 create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *table;
-	GtkWidget *label, *check, *combo;
+	GtkWidget *label;
 
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	table = gtk_table_new (2, 2, FALSE);
 	/* FIXME: set proper values */
-	gtk_table_set_row_spacings (GTK_TABLE (table), 6);
+	gtk_table_set_row_spacings (GTK_TABLE (table), 3);
 	gtk_table_set_col_spacings (GTK_TABLE (table), 12);
 
 	/* Update interval */
@@ -288,16 +304,13 @@ create_composing_page (ModestGnomeGlobalSettingsDialog *self)
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */
 	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
-	combo = modest_combo_box_new (ppriv->msg_format_list, g_int_equal);
+	ppriv->msg_format = modest_combo_box_new (ppriv->msg_format_list, g_int_equal);
 
-	add_to_table (GTK_TABLE (table), label, combo);
-
-	label = create_label (_("mcen_va_options_include_original_inreply"));
-	check = gtk_check_button_new ();
-	add_to_table (GTK_TABLE (table), label, check);
+	add_to_table (GTK_TABLE (table), label, ppriv->msg_format);
 
 	/* Add to vbox */
-	gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
+	gtk_container_set_border_width (GTK_CONTAINER (vbox), 12);
 
 	return vbox;
 }

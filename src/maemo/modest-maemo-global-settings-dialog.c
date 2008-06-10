@@ -217,7 +217,11 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 
 	ppriv->updating_page = create_updating_page (self);
 	ppriv->composing_page = create_composing_page (self);
-    
+
+	/* Add the buttons: */
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
+
 	/* Set the default focusable widgets */
 	g_object_set_data (G_OBJECT(ppriv->updating_page), DEFAULT_FOCUS_WIDGET,
 			   (gpointer)ppriv->auto_update);
