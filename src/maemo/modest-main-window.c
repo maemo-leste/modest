@@ -2514,7 +2514,9 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		modest_folder_view_set_account_id_of_visible_server_account 
 			(priv->folder_view,
 			 modest_server_account_settings_get_account_name (store_settings));
+		modest_folder_view_select_first_inbox_or_local (priv->folder_view);
 		modest_window_set_active_account (MODEST_WINDOW (self), account_name);
+
 		action = gtk_action_group_get_action (priv->view_additions_group, account_name);
 		if (action != NULL) {
 			if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action))) {
