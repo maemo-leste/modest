@@ -64,8 +64,42 @@ else
 fi
 
 
+
+dnl -------
+dnl GtkHTML
+dnl -------
+
+AC_MSG_CHECKING(for installed version of libgtkhtml3)
+pkg-config --exists libgtkhtml-3.14
+retval=$?
+gtk_html_found=false
+if test $retval -eq 0 ; then
+    gtk_html_found=true
+    gtk_html_version=3.14
+else
+    pkg-config --exists libgtkhtml-3.8
+    retval=$?
+    if test $retval -eq 0 ; then
+      gtk_html_found=true
+      gtk_html_version=3.8
+    else
+          if [ $gui = "true" ]; then
+            AC_MSG_RESULT(libgtkhtml 3.4 or higher is not found!)
+          fi
+    fi
+fi
+
+if [ $gtk_html_found = "true" ]; then
+   version=`pkg-config --modversion libgtkhtml-${gtk_html_version}`
+   AC_MSG_RESULT(found version $version)
+else
+   AC_MSG_ERROR([install gtkhtml 3.8 or newer])
+fi
+
+
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
-PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-3.8 libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
+
+PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
