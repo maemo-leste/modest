@@ -845,7 +845,7 @@ modest_tny_account_store_finalize (GObject *obj)
 	}
 
 	camel_shutdown ();
-	
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -2045,10 +2045,10 @@ remove_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 			account = modest_tny_account_store_get_server_account (self,
 									       transport_account_name,
 									       TNY_ACCOUNT_TYPE_TRANSPORT);
-			if (account) {
+
+			/* the call will free the reference */
+			if (account)
 				remove_transport_account (self, TNY_TRANSPORT_ACCOUNT (account));
-				g_object_unref (account);
-			}
 		}				
 		iter = g_slist_next (iter);
 	}
