@@ -4864,7 +4864,9 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),_("mcen_nc_purge_file_text_inbox"));
 
 		if (response == GTK_RESPONSE_OK) {
-			modest_platform_information_banner (NULL, NULL, _("mcen_ib_removing_attachment"));
+			GtkWidget *info;
+			info =
+				modest_platform_animation_banner (GTK_WIDGET (win), NULL, _("mcen_ib_removing_attachment"));
 			iter = tny_list_create_iterator (parts);
 			while (!tny_iterator_is_done (iter)) {
 				TnyMimePart *part;
@@ -4881,10 +4883,9 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 			g_object_unref (iter);
 			
 			tny_msg_rewrite_cache (msg);
+
+			gtk_widget_destroy (info);
 		}
-     /* } else { */
-		/* This string no longer exists, refer to NB#75415 for more info */
-		/* modest_platform_information_banner (NULL, NULL, _("mail_ib_attachment_already_purged")); */
 	}
 
 	modest_window_mgr_unregister_header (mgr, header);
