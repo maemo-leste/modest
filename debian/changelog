@@ -1,10 +1,20 @@
+modest (1.0-2008.25-1) hardy; urgency=low
+
+  * Fixes: NB#85201, NB#81798, NB#83920, NB#84538, NB#84757, NB#84808
+  * Fixes: NB#86372, NB#86097, NB#86116, NB#86176, NB#85622, NB#81429
+  * Fixes: NB#82137, NB#83135, NB#83892, NB#85343, NB#84348, NB#84791
+  * Fixes: NB#85034, NB#85344, NB#85873, NB#85931
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 16 Jun 2008 11:29:27 +0300
+
 modest (1.0-2008.24-1) hardy; urgency=low
 
-  * Fixes: NB#86097, NB#85201, NB#81429, NB#81798, NB#83135, NB#83892
-  * Fixes: NB#83920, NB#85343, NB#84348, NB#84538, NB#84757, NB#84791
-  * Fixes: NB#84808, NB#85034, NB#85344, NB#82137, NB#86176, NB#86116
+  * NB#86097, NB#85201, NB#81429, NB#81798, NB#83135, NB#83892
+  * NB#83920, NB#85343, NB#84348, NB#84538, NB#84757, NB#84791
+  * NB#84808, NB#85034, NB#85344, NB#82137, NB#86176, NB#86116
+  * Added the above fixes to week 25 release.
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 10 Jun 2008 14:23:45 +0300
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 16 Jun 2008 11:31:45 +0300
 
 modest (1.0-2008.23-2) hardy; urgency=low
 
