@@ -511,15 +511,7 @@ show_wrong_password_dialog (TnyAccount *account)
 { 
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
-	GtkWidget *main_window;
 	GtkWidget *dialog = NULL;
-
-	main_window = (GtkWidget *) modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-								       FALSE); /* don't create */
-	if (!main_window) {
-		g_warning ("%s: password was wrong; ignoring because no main window", __FUNCTION__);
-		return;
-	}
 
 	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
 		modest_ui_actions_on_smtp_servers (NULL, NULL);

@@ -5867,9 +5867,12 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	TnyTransportAccount *server_account;
 	gchar *message = NULL;
 
-	/* Don't show anything if the user cancelled something or the send receive request is not
-	 * interactive */
+	/* Don't show anything if the user cancelled something or the
+	 * send receive request is not interactive. Authentication
+	 * errors are managed by the account store so no need to show
+	 * a dialog here again */
 	if (err->code == TNY_SYSTEM_ERROR_CANCEL ||
+	    err->code == TNY_SERVICE_ERROR_AUTHENTICATE ||
 	    !modest_tny_send_queue_get_requested_send_receive (MODEST_TNY_SEND_QUEUE (self)))
 		return;
 
@@ -5887,9 +5890,6 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	case TNY_SERVICE_ERROR_CONNECT:
 		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
 		break;
-	case TNY_SERVICE_ERROR_AUTHENTICATE:
-		message = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"), server_name);
-		break;
 	case TNY_SERVICE_ERROR_SEND:
 		message = g_strdup (dgettext("hildon-common-strings", "sfil_ib_unable_to_send"));
 		break;
@@ -5902,10 +5902,6 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 		message = g_strdup (dgettext("hildon-common-strings", "sfil_ib_unable_to_send"));
 		break;	
 	}
-	
-	/* TODO if the username or the password where not defined we
-	   should show the Accounts Settings dialog or the Connection
-	   specific SMTP server window */
 
 	modest_platform_run_information_dialog (NULL, message, FALSE);
 	g_free (message);
