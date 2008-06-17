@@ -534,13 +534,6 @@ modest_tny_account_update_from_account (TnyAccount *tny_account,
 	g_object_unref (server_settings);
 	g_object_unref (settings);
 
-	tny_account_set_forget_pass_func (tny_account, NULL);
-	tny_account_set_pass_func (tny_account, NULL);
-	tny_account_set_forget_pass_func (tny_account,
-					  forget_pass_func ? forget_pass_func : forget_pass_dummy);
-	tny_account_set_pass_func (tny_account,
-				   get_pass_func ? get_pass_func: get_pass_dummy);
-
 	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
 	
 	/* The callback will have an error for you if the reconnect
