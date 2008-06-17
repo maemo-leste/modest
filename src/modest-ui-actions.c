@@ -1854,7 +1854,7 @@ modest_ui_actions_on_sort (GtkAction *action,
 		}
 
 		/* Show sorting dialog */
-		modest_platform_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	
+		modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	
 	}
 }
 

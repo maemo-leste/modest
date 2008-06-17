@@ -40,6 +40,10 @@ typedef enum {
 	MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED
 } ModestUtilsGetSupportedSecureAuthenticationError;
 
+typedef enum _ModestSortDialogType {
+	MODEST_SORT_HEADERS,
+} ModestSortDialogType;
+
 GQuark modest_utils_get_supported_secure_authentication_error_quark (void);
 
 
@@ -123,6 +127,16 @@ void modest_utils_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *d
  * updates the toggle action active status, but blocking the notification of the changes.
  */
 void modest_utils_toggle_action_set_active_block_notify (GtkToggleAction *action, gboolean value);
+
+/**
+ * modest_utils_run_sort_dialog:
+ * @parent_window: the modest window the dialog has been requested from
+ * @type: a #ModestSortDialogType
+ *
+ * raises a sort dialog for this window
+ */
+void modest_utils_run_sort_dialog (GtkWindow *parent_window, ModestSortDialogType type);
+
 
 /**
  * modest_list_index:

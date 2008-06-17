@@ -44,6 +44,10 @@
 #include "modest-utils.h"
 #include "modest-platform.h"
 #include <modest-local-folder-info.h>
+#include "widgets/modest-header-view.h"
+#include "widgets/modest-main-window.h"
+#include "modest-widget-memory.h"
+#include "widgets/modest-sort-criterium-view.h"
 
 GQuark
 modest_utils_get_supported_secure_authentication_error_quark (void)
@@ -523,3 +527,193 @@ modest_folder_available_space (const gchar *maildir_path)
 
 	return (guint64) size;
 }
+
+static void
+on_destroy_dialog (GtkDialog *dialog)
+{
+	gtk_widget_destroy (GTK_WIDGET(dialog));
+	if (gtk_events_pending ())
+		gtk_main_iteration ();
+}
+
+static guint
+checked_modest_sort_criterium_view_add_sort_key (ModestSortCriteriumView *view, const gchar* key, guint max)
+{
+	gint sort_key;
+	
+	g_return_val_if_fail (view && MODEST_IS_SORT_CRITERIUM_VIEW(view), 0);
+	g_return_val_if_fail (key, 0);
+	
+	sort_key = modest_sort_criterium_view_add_sort_key (view, key);
+	if (sort_key < 0 || sort_key >= max) {
+		g_warning ("%s: out of range (%d) for %s", __FUNCTION__, sort_key, key);
+		return 0;
+	} else
+		return (guint)sort_key;	
+}
+
+static void
+launch_sort_headers_dialog (GtkWindow *parent_window,
+			    GtkDialog *dialog)
+{
+	ModestHeaderView *header_view = NULL;
+	GList *cols = NULL;
+	GtkSortType sort_type;
+	gint sort_key;
+	gint default_key = 0;
+	gint result;
+	gboolean outgoing = FALSE;
+	gint current_sort_colid = -1;
+	GtkSortType current_sort_type;
+	gint attachments_sort_id;
+	gint priority_sort_id;
+	GtkTreeSortable *sortable;
+	
+	/* Get header window */
+	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
+		header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_window),
+										      MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
+	}
+	if (!header_view)
+		return;
+	
+	/* Add sorting keys */
+	cols = modest_header_view_get_columns (header_view);
+	if (cols == NULL) 
+		return;
+#define SORT_ID_NUM 6
+	int sort_model_ids[SORT_ID_NUM];
+	int sort_ids[SORT_ID_NUM];
+
+	outgoing = (GPOINTER_TO_INT (g_object_get_data(G_OBJECT(cols->data), MODEST_HEADER_VIEW_COLUMN))==
+		    MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT);
+
+	sort_key = checked_modest_sort_criterium_view_add_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), _("mcen_li_sort_sender_recipient"),
+								    SORT_ID_NUM);
+	if (outgoing) {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
+	} else {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
+	}
+
+	sort_key = checked_modest_sort_criterium_view_add_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), _("mcen_li_sort_date"),
+							    SORT_ID_NUM);
+	if (outgoing) {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_SENT_DATE;
+	} else {
+		sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_RECEIVED_DATE;
+	}
+	default_key = sort_key;
+
+	sort_key = checked_modest_sort_criterium_view_add_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), _("mcen_li_sort_subject"),
+								    SORT_ID_NUM);
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN;
+	if (outgoing)
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT;
+	else
+		sort_ids[sort_key] = MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_IN;
+
+	sort_key = checked_modest_sort_criterium_view_add_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), _("mcen_li_sort_attachment"),
+								    SORT_ID_NUM);
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
+	sort_ids[sort_key] = TNY_HEADER_FLAG_ATTACHMENTS;
+	attachments_sort_id = sort_key;
+
+	sort_key = checked_modest_sort_criterium_view_add_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), _("mcen_li_sort_size"),
+								    SORT_ID_NUM);
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN;
+	sort_ids[sort_key] = 0;
+
+	sort_key = checked_modest_sort_criterium_view_add_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), _("mcen_li_sort_priority"),
+								    SORT_ID_NUM);
+	sort_model_ids[sort_key] = TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN;
+	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
+	priority_sort_id = sort_key;
+	
+	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
+				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)))));
+	/* Launch dialogs */
+	if (!gtk_tree_sortable_get_sort_column_id (sortable,
+						   &current_sort_colid, &current_sort_type)) {
+		modest_sort_criterium_view_set_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), default_key);
+		modest_sort_criterium_view_set_sort_order (MODEST_SORT_CRITERIUM_VIEW (dialog), GTK_SORT_DESCENDING);
+	} else {
+		modest_sort_criterium_view_set_sort_order (MODEST_SORT_CRITERIUM_VIEW (dialog), current_sort_type);
+		if (current_sort_colid == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN) {
+			gpointer flags_sort_type_pointer;
+			flags_sort_type_pointer = g_object_get_data (G_OBJECT (cols->data), MODEST_HEADER_VIEW_FLAG_SORT);
+			if (GPOINTER_TO_INT (flags_sort_type_pointer) == TNY_HEADER_FLAG_PRIORITY_MASK)
+				modest_sort_criterium_view_set_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), priority_sort_id);
+			else
+				modest_sort_criterium_view_set_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), attachments_sort_id);
+		} else {
+			gint current_sort_keyid = 0;
+			while (current_sort_keyid < 6) {
+				if (sort_model_ids[current_sort_keyid] == current_sort_colid)
+					break;
+				else 
+					current_sort_keyid++;
+			}
+			modest_sort_criterium_view_set_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), current_sort_keyid);
+		}
+	}
+
+	result = gtk_dialog_run (GTK_DIALOG (dialog));
+	if (result == GTK_RESPONSE_OK) {
+		sort_key = modest_sort_criterium_view_get_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog));
+		if (sort_key < 0 || sort_key > SORT_ID_NUM -1) {
+			g_warning ("%s: out of range (%d)", __FUNCTION__, sort_key);
+			sort_key = 0;
+		}
+
+		sort_type = modest_sort_criterium_view_get_sort_order (MODEST_SORT_CRITERIUM_VIEW (dialog));
+		if (sort_model_ids[sort_key] == TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN) {
+			g_object_set_data (G_OBJECT(cols->data), MODEST_HEADER_VIEW_FLAG_SORT,
+					   GINT_TO_POINTER (sort_ids[sort_key]));
+			/* This is a hack to make it resort rows always when flag fields are
+			 * selected. If we do not do this, changing sort field from priority to
+			 * attachments does not work */
+			modest_header_view_sort_by_column_id (header_view, 0, sort_type);
+		} else {
+			gtk_tree_view_column_set_sort_column_id (GTK_TREE_VIEW_COLUMN (cols->data), 
+								 sort_model_ids[sort_key]);
+		}
+
+		modest_header_view_sort_by_column_id (header_view, sort_model_ids[sort_key], sort_type);
+		gtk_tree_sortable_sort_column_changed (sortable);
+	}
+
+	modest_widget_memory_save (modest_runtime_get_conf (),
+				   G_OBJECT (header_view), MODEST_CONF_HEADER_VIEW_KEY);
+	
+	/* free */
+	g_list_free(cols);	
+}
+
+void
+modest_utils_run_sort_dialog (GtkWindow *parent_window,
+				 ModestSortDialogType type)
+{
+	GtkWidget *dialog = NULL;
+
+	/* Build dialog */
+	dialog = modest_platform_create_sort_dialog (parent_window);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+				     GTK_WINDOW (dialog));
+
+	/* Fill sort keys */
+	switch (type) {
+	case MODEST_SORT_HEADERS:
+		launch_sort_headers_dialog (parent_window, 
+					    GTK_DIALOG(dialog));
+		break;
+	}
+	
+	/* Free */
+	on_destroy_dialog (GTK_DIALOG(dialog));
+}
+

@@ -59,6 +59,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \
 	modest-hildon-includes.h      \
+	modest-hildon-sort-dialog.c   \
+	modest-hildon-sort-dialog.h   \
 	modest-platform.c	      \
 	modest-signature-editor-dialog.c         \
 	modest-signature-editor-dialog.h         \

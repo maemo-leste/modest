@@ -33,16 +33,13 @@
 #include <tny-device.h>
 #include "widgets/modest-window.h"
 #include "widgets/modest-folder-view.h"
+#include "widgets/modest-sort-criterium-view.h"
 
 G_BEGIN_DECLS
 
 typedef enum _ModestConfirmationDialogType {
 	MODEST_CONFIRMATION_DELETE_FOLDER,
 } ModestConfirmationDialogType;
-
-typedef enum _ModestSortDialogType {
-	MODEST_SORT_HEADERS,
-} ModestSortDialogType;
 
 typedef enum _ModestConnectedVia {
 	MODEST_CONNECTED_VIA_WLAN_OR_WIMAX = 1,
@@ -239,14 +236,14 @@ void      modest_platform_run_information_dialog       (GtkWindow *parent_window
 							gboolean block);
 
 /**
- * modest_platform_run_sort_dialog:
+ * modest_platform_create_sort_dialog:
  * @parent_window: the parent #GtkWindow of the dialog
- * @type: the sort dialog type.
  * 
- * shows a sort dialog
+ * creates a proper sort dialog for the platform
+ *
+ * Returns: a #GtkDialog implementing #ModestSortCriteriumView interface
  **/
-void      modest_platform_run_sort_dialog       (GtkWindow *parent_window, 
-						 ModestSortDialogType type);
+GtkWidget *modest_platform_create_sort_dialog       (GtkWindow *parent_window);
 		
 /*
  * modest_platform_connect_and_wait:

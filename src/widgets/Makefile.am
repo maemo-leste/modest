@@ -78,6 +78,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-scroll-text.h           \
 	modest-serversecurity-combo-box.h modest-serversecurity-combo-box.c \
 	modest-secureauth-combo-box.h modest-secureauth-combo-box.c \
+	modest-sort-criterium-view.c   \
+	modest-sort-criterium-view.h   \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
 	modest-ui-constants.h \
