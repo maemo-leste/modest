@@ -78,8 +78,13 @@
 #define MODEST_MAEMO_PROVIDER_DATA_FILE	  PREFIX "/share/modest/provider-data/maemo-provider-data.keyfile"  
 
 
+#ifdef MAEMO_PLATFORM
 #define MODEST_ICON_SIZE_SMALL            26
 #define MODEST_ICON_SIZE_BIG		  64
+#else
+#define MODEST_ICON_SIZE_SMALL            16
+#define MODEST_ICON_SIZE_BIG		  32
+#endif
 
 /* configuration key definitions for modest */
 #define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"

@@ -31,6 +31,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-icon-names.h           \
 	modest-gnome-global-settings-dialog.c \
 	modest-gnome-global-settings-dialog.h \
+	modest-gnome-sort-dialog.c \
+	modest-gnome-sort-dialog.h \
 	modest-main-window.c          \
 	modest-main-window-ui.h	      \
 	modest-msg-view-window.c      \

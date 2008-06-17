@@ -4401,8 +4401,13 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		return;
 
 	children = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
+#ifdef MAEMO_PLATFORM
 	ok_button = GTK_WIDGET (children->next->next->data);
 	new_button = GTK_WIDGET (children->next->data);
+#else
+	ok_button = GTK_WIDGET (children->data);
+	new_button = GTK_WIDGET (children->next->next->data);
+#endif
 	g_list_free (children);
 
 	/* check if folder_store is an remote account */
@@ -4533,24 +4538,43 @@ create_move_to_dialog (GtkWindow *win,
 {
 	GtkWidget *dialog, *scroll;
 	GtkWidget *new_button;
+#ifndef MAEMO_PLATFORM
+	GtkWidget *folder_view_label;
+#endif
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
 					      GTK_WINDOW (win),
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                      NULL);
 
+#ifdef MAEMO_PLATFORM
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
 	/* We do this manually so GTK+ does not associate a response ID for
 	 * the button. */
 	new_button = gtk_button_new_from_stock (_("mcen_bd_new"));
 	gtk_box_pack_end (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT);
+#else
+	/* We do this manually so GTK+ does not associate a response ID for
+	 * the button. */
+	new_button = gtk_button_new_with_label (_("mcen_ti_new_folder"));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
+	gtk_button_box_set_child_secondary (GTK_BUTTON_BOX (GTK_DIALOG (dialog)->action_area), new_button, TRUE);
+	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT);
+	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_OK, GTK_RESPONSE_ACCEPT);
+	gtk_container_set_border_width (GTK_CONTAINER (dialog), 12);
+	gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 24);
+#endif
 
 	/* Create scrolled window */
 	scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (scroll),
 					 GTK_POLICY_AUTOMATIC,
 					 GTK_POLICY_AUTOMATIC);
+
+#ifndef MAEMO_PLATFORM
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll), GTK_SHADOW_IN);
+#endif
 
 	/* Create folder view */
 	*tree_view = modest_platform_create_folder_view (NULL);
@@ -4631,7 +4655,11 @@ create_move_to_dialog (GtkWindow *win,
 			    scroll, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
+#ifdef MAEMO_PLATFORM
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
+#else
+	gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
+#endif
 
 	return dialog;
 }

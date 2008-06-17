@@ -410,8 +410,8 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	gtk_cell_renderer_set_fixed_size (renderer_priority, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
 #else
-	gtk_cell_renderer_set_fixed_size (renderer_attach, 26, 26);
-	gtk_cell_renderer_set_fixed_size (renderer_priority, 26, 26);
+	gtk_cell_renderer_set_fixed_size (renderer_attach, 16, 16);
+	gtk_cell_renderer_set_fixed_size (renderer_priority, 16, 16);
 	/* gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64); */
 #endif
 	

@@ -40,6 +40,7 @@
 #include "gnome/modest-gnome-global-settings-dialog.h"
 #include "widgets/modest-account-settings-dialog.h"
 #include "gnome/modest-account-assistant.h"
+#include "gnome/modest-gnome-sort-dialog.h"
 
 gboolean
 modest_platform_init (int argc, char *argv[])
@@ -128,6 +129,12 @@ modest_platform_get_icon (const gchar *name, guint icon_size)
 /* 		g_printerr ("modest: error while loading icon '%s': %s\n", */
 /* 			    name, err->message); */
 		g_error_free (err);
+		err = NULL;
+
+		pixbuf = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (), name, icon_size, 0, &err);
+		if (!pixbuf) {
+			g_error_free (err);
+		}
 	}
 	
 	return pixbuf;
@@ -311,11 +318,10 @@ gboolean modest_platform_set_update_interval (guint minutes)
 	return FALSE;
 }
 
-void
-modest_platform_run_sort_dialog (GtkWindow *parent_window,
-				 ModestSortDialogType type)
+GtkWidget *
+modest_platform_create_sort_dialog (GtkWindow *parent_window)
 {
-	/* TODO */
+	return modest_gnome_sort_dialog_new (parent_window);
 }
 
 GtkWidget *

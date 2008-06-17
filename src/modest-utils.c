@@ -702,6 +702,8 @@ modest_utils_run_sort_dialog (GtkWindow *parent_window,
 
 	/* Build dialog */
 	dialog = modest_platform_create_sort_dialog (parent_window);
+	if (dialog == NULL)
+		return;
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (dialog));
 

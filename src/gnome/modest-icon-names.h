@@ -46,7 +46,8 @@
 #define MODEST_HEADER_ICON_READ			PIXMAP_PREFIX "qgn_list_messagin_mail.png"
 #define MODEST_HEADER_ICON_UNREAD		PIXMAP_PREFIX "qgn_list_messagin_mail_unread.png"
 #define MODEST_HEADER_ICON_DELETED		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
-#define MODEST_HEADER_ICON_ATTACH		PIXMAP_PREFIX "qgn_list_gene_attacpap.png"
+/* #define MODEST_HEADER_ICON_ATTACH		PIXMAP_PREFIX "qgn_list_gene_attacpap.png" */
+#define MODEST_HEADER_ICON_ATTACH		"stock_attach"
 
 
 /*
@@ -59,25 +60,26 @@
 #define MODEST_HEADER_ICON_HIGH_PRIORITY        PIXMAP_PREFIX"modest_high_no_attachment.png"
 #define MODEST_HEADER_ICON_LOW_PRIORITY         PIXMAP_PREFIX"modest_low_no_attachment.png"
 #define MODEST_HEADER_ICON_NORM_PRIORITY        PIXMAP_PREFIX"modest_normal_no_attachment.png"
-#define MODEST_HEADER_ICON_HIGH        PIXMAP_PREFIX"modest_high_no_attachment.png"
-#define MODEST_HEADER_ICON_LOW         PIXMAP_PREFIX"modest_low_no_attachment.png"
+#define MODEST_HEADER_ICON_HIGH        "stock_mail-priority-high"
+#define MODEST_HEADER_ICON_LOW         "stock_mail-priority-low"
 /*
  *
  */
 
-#define MODEST_FOLDER_ICON_OPEN			PIXMAP_PREFIX "qgn_list_gene_fldr_opn.png"
-#define MODEST_FOLDER_ICON_CLOSED		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
+#define MODEST_FOLDER_ICON_OPEN			"folder_open"
+#define MODEST_FOLDER_ICON_CLOSED		"folder"
 
-#define MODEST_FOLDER_ICON_ACCOUNT		PIXMAP_PREFIX "qgn_addr_icon_user_group.png"
-#define MODEST_FOLDER_ICON_INBOX		PIXMAP_PREFIX "qgn_list_messagin_inbox.png"
-#define MODEST_FOLDER_ICON_OUTBOX		PIXMAP_PREFIX "qgn_list_messagin_outbox.png"
-#define MODEST_FOLDER_ICON_SENT			PIXMAP_PREFIX "qgn_list_messagin_sent.png"
-#define MODEST_FOLDER_ICON_TRASH		PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
-#define MODEST_FOLDER_ICON_JUNK			PIXMAP_PREFIX "qgn_list_messagin_mail_deleted.png"
-#define MODEST_FOLDER_ICON_DRAFTS		PIXMAP_PREFIX "qgn_list_messagin_drafts.png"
-#define MODEST_FOLDER_ICON_NORMAL		PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
-#define MODEST_FOLDER_ICON_LOCAL_FOLDERS	PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png"
-#define MODEST_FOLDER_ICON_MMC                  PIXMAP_PREFIX "qgn_list_gene_mmc.png"
+#define MODEST_FOLDER_ICON_ACCOUNT		"network-server"
+#define MODEST_FOLDER_ICON_INBOX		"stock_inbox"
+#define MODEST_FOLDER_ICON_OUTBOX		"stock_outbox"
+#define MODEST_FOLDER_ICON_SENT			"stock_sent-mail"
+#define MODEST_FOLDER_ICON_TRASH		"user-trash"
+#define MODEST_FOLDER_ICON_JUNK			"stock_spam"
+#define MODEST_FOLDER_ICON_DRAFTS		"stock_new-text"
+#define MODEST_FOLDER_ICON_NORMAL		"folder"
+/* #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png" */
+#define MODEST_FOLDER_ICON_LOCAL_FOLDERS	"computer"
+#define MODEST_FOLDER_ICON_MMC                  "media-flash"
 
 
 /* toolbar */
@@ -87,7 +89,7 @@
 #define  MODEST_TOOLBAR_ICON_REPLY		PIXMAP_PREFIX "mail-reply-sender.png"
 #define  MODEST_TOOLBAR_ICON_REPLY_ALL		PIXMAP_PREFIX "mail-reply-all.png"
 #define  MODEST_TOOLBAR_ICON_FORWARD		PIXMAP_PREFIX "mail-forward.png"
-#define  MODEST_TOOLBAR_ICON_DELETE		PIXMAP_PREFIX "mail-mark-junk.png" 
+#define  MODEST_TOOLBAR_ICON_DELETE		GTK_STOCK_DELETE
 /* #define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png" */
 /* #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png" */
 #define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.png"
