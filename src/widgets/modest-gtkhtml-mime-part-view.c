@@ -352,7 +352,7 @@ on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 	
 	tny_stream = TNY_STREAM (modest_tny_stream_gtkhtml_new (stream));
 	g_signal_emit_by_name (MODEST_MIME_PART_VIEW (self), "fetch-url", uri, tny_stream, &result);
-	gtk_html_stream_close (stream, result?GTK_HTML_STREAM_OK:GTK_HTML_STREAM_ERROR);
+	tny_stream_close (tny_stream);
 	g_object_unref (tny_stream);
 	return result;
 }
@@ -374,9 +374,8 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	tny_stream_reset (tny_stream);
 
 	tny_mime_part_decode_to_stream ((TnyMimePart*)part, tny_stream, NULL);
+	tny_stream_close (tny_stream);
 	g_object_unref (G_OBJECT(tny_stream));
-	
-	gtk_html_stream_destroy (gtkhtml_stream);
 }
 
 static void
@@ -398,10 +397,11 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	tny_mime_part_decode_to_stream ((TnyMimePart*)part, text_to_html_stream, NULL);
 	tny_stream_write (text_to_html_stream, "\n", 1);
 	tny_stream_reset (text_to_html_stream);		
+	tny_stream_close (text_to_html_stream);
 	
 	g_object_unref (G_OBJECT(text_to_html_stream));
 	g_object_unref (G_OBJECT(tny_stream));
-	gtk_html_stream_destroy (gtkhtml_stream);
+	/* gtk_html_stream_destroy (gtkhtml_stream); */
 }
 
 static void
