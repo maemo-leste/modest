@@ -4401,7 +4401,7 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		return;
 
 	children = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
-#ifdef MAEMO_PLATFORM
+#ifdef MODEST_PLATFORM_MAEMO
 	ok_button = GTK_WIDGET (children->next->next->data);
 	new_button = GTK_WIDGET (children->next->data);
 #else
@@ -4538,7 +4538,7 @@ create_move_to_dialog (GtkWindow *win,
 {
 	GtkWidget *dialog, *scroll;
 	GtkWidget *new_button;
-#ifndef MAEMO_PLATFORM
+#ifndef MODEST_PLATFORM_MAEMO
 	GtkWidget *folder_view_label;
 #endif
 
@@ -4547,7 +4547,7 @@ create_move_to_dialog (GtkWindow *win,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                      NULL);
 
-#ifdef MAEMO_PLATFORM
+#ifdef MODEST_PLATFORM_MAEMO
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
 	/* We do this manually so GTK+ does not associate a response ID for
 	 * the button. */
@@ -4572,7 +4572,7 @@ create_move_to_dialog (GtkWindow *win,
 					 GTK_POLICY_AUTOMATIC,
 					 GTK_POLICY_AUTOMATIC);
 
-#ifndef MAEMO_PLATFORM
+#ifndef MODEST_PLATFORM_MAEMO
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll), GTK_SHADOW_IN);
 #endif
 
@@ -4655,7 +4655,7 @@ create_move_to_dialog (GtkWindow *win,
 			    scroll, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-#ifdef MAEMO_PLATFORM
+#ifdef MODEST_PLATFORM_MAEMO
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
 #else
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
