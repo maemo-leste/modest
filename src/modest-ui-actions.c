@@ -4538,9 +4538,6 @@ create_move_to_dialog (GtkWindow *win,
 {
 	GtkWidget *dialog, *scroll;
 	GtkWidget *new_button;
-#ifndef MODEST_PLATFORM_MAEMO
-	GtkWidget *folder_view_label;
-#endif
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
 					      GTK_WINDOW (win),
