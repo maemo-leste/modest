@@ -43,6 +43,8 @@
  */
 #define MODEST_DIR	                  ".modest"
 #define MODEST_CACHE_DIR                  "cache"
+#define MODEST_IMAGES_CACHE_DIR           "images"
+#define MODEST_IMAGES_CACHE_SIZE          (1024*1024)
 
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_ID   "local_folders"
 #define MODEST_LOCAL_FOLDERS_ACCOUNT_NAME MODEST_LOCAL_FOLDERS_ACCOUNT_ID
@@ -78,7 +80,7 @@
 #define MODEST_MAEMO_PROVIDER_DATA_FILE	  PREFIX "/share/modest/provider-data/maemo-provider-data.keyfile"  
 
 
-#ifdef MAEMO_PLATFORM
+#ifdef MODEST_PLATFORM_MAEMO
 #define MODEST_ICON_SIZE_SMALL            26
 #define MODEST_ICON_SIZE_BIG		  64
 #else
