@@ -312,9 +312,6 @@ account_verify_last_ref (TnyAccount *account, const gchar *str)
 	g_free (txt);
 }
 
-
-
-
 static void
 foreach_account_append_to_list (gpointer data, 
 				gpointer user_data)
@@ -835,8 +832,6 @@ modest_tny_account_store_finalize (GObject *obj)
 		camel_object_unref (CAMEL_OBJECT(priv->session));
 		priv->session = NULL;
 	}
-
-	camel_shutdown ();
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }

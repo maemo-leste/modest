@@ -2210,8 +2210,10 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 			GtkWidget *folder_view = 
 				modest_main_window_get_child_widget (main_window,
 								     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-			if (folder != NULL) 
+			if (folder != NULL) {
 				modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), folder, FALSE);
+				g_object_unref (folder);
+			}
 			gtk_widget_grab_focus (GTK_WIDGET (folder_view));
 			return;
 		}

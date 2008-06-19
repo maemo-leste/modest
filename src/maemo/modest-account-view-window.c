@@ -312,6 +312,7 @@ on_account_settings_dialog_response (GtkDialog *dialog,
 
 	/* Free */
 	g_free (account_name);
+	g_object_unref (store_account);
 }
 
 static void
