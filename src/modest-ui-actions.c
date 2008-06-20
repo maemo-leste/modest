@@ -82,6 +82,8 @@
 
 #include <gtkhtml/gtkhtml.h>
 
+#define MIN_FREE_SPACE 5 * 1024 * 1024
+
 typedef struct _GetMsgAsyncHelper {	
 	ModestWindow *window;
 	ModestMailOperation *mail_op;
@@ -1005,13 +1007,49 @@ cleanup:
 static gboolean
 is_memory_full_error (GError *error)
 {
-	if (error->code == TNY_SYSTEM_ERROR_MEMORY ||
-	    error->code == TNY_IO_ERROR_WRITE ||
-	    error->code == TNY_IO_ERROR_READ) {
+	gboolean enough_free_space = TRUE;
+	GnomeVFSURI *cache_dir_uri;
+	const gchar *cache_dir;
+	GnomeVFSFileSize free_space;
+
+	cache_dir = tny_account_store_get_cache_dir (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+	cache_dir_uri = gnome_vfs_uri_new (cache_dir);
+	if (gnome_vfs_get_volume_free_space (cache_dir_uri, &free_space) == GNOME_VFS_OK) {
+		if (free_space < MIN_FREE_SPACE)
+			enough_free_space = FALSE;
+	}
+	gnome_vfs_uri_unref (cache_dir_uri);
+
+	if ((error->code == TNY_SYSTEM_ERROR_MEMORY ||
+	     error->code == TNY_IO_ERROR_WRITE ||
+	     error->code == TNY_IO_ERROR_READ) && 
+	    !enough_free_space) {
 		return TRUE;
 	} else {
 		return FALSE;
 	}
+}
+
+static gboolean
+check_memory_full_error (GtkWidget *parent_window, GError *err)
+{
+	if (err == NULL)
+		return FALSE;
+
+	if (is_memory_full_error (err))
+		modest_platform_information_banner (parent_window,
+						    NULL, dgettext("ke-recv",
+								   "cerm_device_memory_full"));
+	else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
+		/* If the account was created in memory full
+		   conditions then tinymail won't be able to
+		   connect so it'll return this error code */				
+		modest_platform_information_banner (parent_window,
+						    NULL, _("emev_ui_imap_inbox_select_error"));
+	else
+		return FALSE;
+
+	return TRUE;
 }
 
 void
@@ -1033,6 +1071,9 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, dgettext("ke-recv",
 									   "cerm_device_memory_full"));
+		} else if (error->code == TNY_SYSTEM_ERROR_MEMORY) {
+			modest_platform_information_banner ((GtkWidget *) win,
+							    NULL, _("emev_ui_imap_inbox_select_error"));
 		} else if (error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, dgettext ("hildon-common-strings", "sfil_ni_unable_to_open_file_not_found"));
@@ -1150,11 +1191,8 @@ open_msgs_performer(gboolean canceled,
 		open_msgs_helper_destroyer (helper);
 
 		/* In memory full conditions we could get this error here */
-		if (err && is_memory_full_error (err)) {
-			modest_platform_information_banner ((GtkWidget *) parent_window,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
-		}
+		check_memory_full_error ((GtkWidget *) parent_window, err);
+
 		goto clean;
 	}
 
@@ -1926,11 +1964,8 @@ do_send_receive_performer (gboolean canceled,
 
 	if (err || canceled) {
 		/* In memory full conditions we could get this error here */
-		if (err && is_memory_full_error (err)) {
-			modest_platform_information_banner ((GtkWidget *) parent_window,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
-		}
+		check_memory_full_error ((GtkWidget *) parent_window, err);
+
 		if (info->mail_op) {
 			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (),
 							    info->mail_op);
@@ -3105,11 +3140,7 @@ create_folder_performer (gboolean canceled,
 
 	if (canceled || err) {
 		/* In memory full conditions we could get this error here */
-		if (err && is_memory_full_error (err)) {
-			modest_platform_information_banner ((GtkWidget *) parent_window,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
-		}
+		check_memory_full_error ((GtkWidget *) parent_window, err);
 		goto frees;
 	}
 
@@ -3224,11 +3255,7 @@ on_rename_folder_performer (gboolean canceled,
 
 	if (canceled || err) {
 		/* In memory full conditions we could get this error here */
-		if (err && is_memory_full_error (err)) {
-			modest_platform_information_banner ((GtkWidget *) parent_window,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
-		}
+		check_memory_full_error ((GtkWidget *) parent_window, err);
 	} else if (MODEST_IS_MAIN_WINDOW(parent_window)) {
 
 		folder_view = modest_main_window_get_child_widget (
@@ -5109,15 +5136,8 @@ xfer_messages_performer  (gboolean canceled,
 
 	helper = (XferMsgsHelper *) user_data;
 
-	if (canceled)
-		goto end;
-
-	if (err) {
-		if (is_memory_full_error (err)) {
-			modest_platform_information_banner ((GtkWidget *) parent_window,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
-		} else {
+	if (canceled || err) {
+		if (!check_memory_full_error ((GtkWidget *) parent_window, err)) {
 			/* Show the proper error message */
 			modest_ui_actions_on_account_connection_error (parent_window, account);
 		}
@@ -5625,11 +5645,7 @@ retrieve_msg_contents_performer (gboolean canceled,
 	TnyList *headers = TNY_LIST (user_data);
 
 	if (err || canceled) {
-		if (err && is_memory_full_error (err)) {
-			modest_platform_information_banner ((GtkWidget *) parent_window,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
-		}
+		check_memory_full_error ((GtkWidget *) parent_window, err);
 		goto out;
 	}
 
