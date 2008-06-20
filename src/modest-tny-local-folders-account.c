@@ -67,6 +67,13 @@ static TnyFolder*   create_folder  (TnyFolderStore *self,
 static void
 modest_tny_local_folders_account_finalize (GObject *object)
 {
+	ModestTnyLocalFoldersAccountPrivate *priv;
+
+	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (object);
+	if (priv->outbox_folder) {
+		g_object_unref (priv->outbox_folder);
+		priv->outbox_folder = NULL;
+	}
 	G_OBJECT_CLASS (modest_tny_local_folders_account_parent_class)->finalize (object);
 }
 

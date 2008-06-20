@@ -411,10 +411,9 @@ modest_tny_send_queue_finalize (GObject *obj)
 	g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
 	g_queue_free (priv->queue);
 
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
 	g_object_unref (priv->outbox);
 	g_object_unref (priv->sentbox);
-
-	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
 typedef struct {

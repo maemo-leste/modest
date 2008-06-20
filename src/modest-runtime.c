@@ -89,6 +89,13 @@ modest_runtime_uninit (void)
 	
 	g_debug ("%s: cleaning up", __FUNCTION__);
 
+	if (_sig_handlers) {
+		modest_signal_mgr_disconnect_all_and_destroy (_sig_handlers);
+		_sig_handlers = NULL;
+	}
+
+	g_debug ("%s: cleaned up signal manager", __FUNCTION__);
+
 	MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(_singletons,"");
 	g_object_unref(_singletons);
 	_singletons = NULL;
@@ -104,11 +111,6 @@ modest_runtime_uninit (void)
 	g_debug ("%s: cleaned up the account store", __FUNCTION__);
 
 	
-	if (_sig_handlers) {
-		modest_signal_mgr_disconnect_all_and_destroy (_sig_handlers);
-		_sig_handlers = NULL;
-	}
-
 	g_debug ("%s: all cleaned up", __FUNCTION__);
 
 	
@@ -230,7 +232,7 @@ modest_runtime_get_send_queue  (TnyTransportAccount *account,
 
 			g_hash_table_insert (send_queue_cache, 
 					     g_object_ref (account), 
-					     g_object_ref (send_queue));
+					     send_queue);
 		}
 	}
 
