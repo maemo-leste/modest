@@ -217,10 +217,17 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
 							 TRUE);  /* create if not existent */
 	
-	/* make sure the mainwindow is visible */
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
-	gtk_widget_show_all (GTK_WIDGET(win));
-	gtk_window_present (GTK_WINDOW(win));
+
+	/* make sure the mainwindow is visible. We need to present the
+	   wizard again to give it the focus back. show_all are needed
+	   in order to get the widgets properly drawn (MainWindow main
+	   paned won't be in its right position and the dialog will be
+	   missplaced */
+	gtk_widget_show_all (GTK_WIDGET (win));
+	gtk_widget_show_all (GTK_WIDGET (wizard));
+	gtk_window_present (GTK_WINDOW (win));
+	gtk_window_present (GTK_WINDOW (wizard));
 	
 	dialog_response = gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
