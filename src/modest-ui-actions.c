@@ -1074,7 +1074,8 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 		} else if (error->code == TNY_SYSTEM_ERROR_MEMORY) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, _("emev_ui_imap_inbox_select_error"));
-		} else if (error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
+		} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
+			   error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, dgettext ("hildon-common-strings", "sfil_ni_unable_to_open_file_not_found"));
 		} else if (user_data) {
@@ -2873,7 +2874,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	if (modest_mail_operation_get_error (mail_operation) != NULL) {
 		const GError *error = modest_mail_operation_get_error (mail_operation);
-		if (error->code == MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED) {
+		if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
+		    error->code == MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED) {
 			g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_operation))->message);
 			modest_platform_information_banner (NULL, NULL, _CS("sfil_ni_not_enough_memory"));
 			had_error = TRUE;
@@ -3196,16 +3198,15 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	if (!error)
 		g_return_if_reached ();
 
-	switch (error->code) {
-	case MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS:
+	if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
+	    error->code == MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS) {
 		message = _CS("ckdg_ib_folder_already_exists");
-		break;
-	case TNY_SERVICE_ERROR_STATE:
+	} else if (error->domain == TNY_ERROR_DOMAIN &&
+		   error->code == TNY_SERVICE_ERROR_STATE) {
 		/* This means that the folder is already in use (a
 		   message is opened for example */
 		message = _("emev_ni_internal_error");
-		break;
-	default:
+	} else {
 		message = _("emev_ib_ui_imap_unable_to_rename");
 	}
 
