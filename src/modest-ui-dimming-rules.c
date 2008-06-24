@@ -2125,7 +2125,7 @@ _header_view_is_all_selected (ModestMainWindow *win)
 static gboolean
 _selected_folder_is_empty (ModestMainWindow *win)
 {
-	GtkWidget *folder_view = NULL;
+	GtkWidget *folder_view = NULL, *header_view = NULL;
 	TnyFolderStore *folder = NULL;
 	gboolean result = FALSE;
 
@@ -2134,8 +2134,12 @@ _selected_folder_is_empty (ModestMainWindow *win)
 	/* Get folder view */
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+
+	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
+							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+
 	/* If no folder view, always dimmed */
-	if (!folder_view)
+	if (!folder_view || !header_view)
 		return TRUE;
 	
 	/* Get selected folder as parent of new folder to create */
@@ -2147,7 +2151,9 @@ _selected_folder_is_empty (ModestMainWindow *win)
 	}
 	
 	/* Check folder type */
-	result = tny_folder_get_all_count (TNY_FOLDER (folder)) == 0;
+	if (modest_header_view_is_empty (MODEST_HEADER_VIEW (header_view)) ||
+	    tny_folder_get_all_count (TNY_FOLDER (folder)) == 0)
+		result = TRUE;
 
 	/* free */
 	g_object_unref (folder);

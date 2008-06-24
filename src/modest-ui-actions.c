@@ -521,7 +521,6 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 
 			/* Select next or previous row */
 			if (gtk_tree_row_reference_valid (next_row_reference)) {
-/* 				next_path = gtk_tree_row_reference_get_path (row_reference); */
 				gtk_tree_selection_select_path (sel, next_path);
 			}
 			else if (gtk_tree_row_reference_valid (prev_row_reference)) {				
@@ -540,8 +539,10 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		}
 		
 		/* Update toolbar dimming state */
-		if (main_window)
+		if (main_window) {
+			modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
 			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
+		}
 
 		/* Free */
 		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
