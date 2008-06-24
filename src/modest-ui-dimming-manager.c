@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "modest-debug.h"
 #include "modest-ui-dimming-manager.h"
 #include "modest-dimming-rules-group-priv.h"
 
@@ -40,6 +41,7 @@ static void _process_all_rules (gpointer key, gpointer value, gpointer user_data
 typedef struct _ModestUIDimmingManagerPrivate ModestUIDimmingManagerPrivate;
 struct _ModestUIDimmingManagerPrivate {
 	GHashTable *groups_map;
+	GHashTable *delayed_calls;
 };
 
 #define MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -96,6 +98,10 @@ modest_ui_dimming_manager_init (ModestUIDimmingManager *obj)
 						  (GEqualFunc) g_str_equal,
 						  (GDestroyNotify) g_free,
 						  (GDestroyNotify) g_object_unref);
+	priv->delayed_calls = g_hash_table_new_full (g_str_hash,
+						     g_str_equal,
+						     g_free,
+						     NULL);
 }
 
 static void
@@ -106,7 +112,10 @@ modest_ui_dimming_manager_finalize (GObject *obj)
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(obj);
 
 	if (priv->groups_map != NULL)
-		g_hash_table_destroy (priv->groups_map);
+		g_hash_table_unref (priv->groups_map);
+
+	if (priv->delayed_calls != NULL)
+		g_hash_table_unref (priv->delayed_calls);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -159,12 +168,56 @@ modest_ui_dimming_manager_process_dimming_rules (ModestUIDimmingManager *self)
 	g_hash_table_foreach (priv->groups_map, _process_all_rules, NULL);
 }
 
+typedef struct
+{
+	ModestDimmingRulesGroup *group;
+	ModestUIDimmingManager *manager;
+	gchar *name;
+} DelayedDimmingRules;
+
+static gboolean
+process_dimming_rules_delayed (gpointer data)
+{
+	DelayedDimmingRules *helper = (DelayedDimmingRules *) data;
+	gpointer timeout_handler;
+	ModestUIDimmingManagerPrivate *priv;
+
+	/* We remove the timeout here because the execute action could
+	   take too much time, and so this will be called again */
+	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
+	timeout_handler = g_hash_table_lookup (priv->delayed_calls, helper->name);
+
+	MODEST_DEBUG_BLOCK(g_print ("---------------------HIT %d\n", GPOINTER_TO_INT (timeout_handler)););
+
+	if (GPOINTER_TO_INT (timeout_handler) > 0) {
+		g_source_remove (GPOINTER_TO_INT (timeout_handler));
+	}
+
+	modest_dimming_rules_group_execute (helper->group);
+
+	return FALSE;
+}
+
+static void
+process_dimming_rules_delayed_destroyer (gpointer data)
+{
+	DelayedDimmingRules *helper = (DelayedDimmingRules *) data;
+	ModestUIDimmingManagerPrivate *priv;
+
+	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
+	g_hash_table_remove (priv->delayed_calls, helper->name);
+	g_free (helper->name);
+	g_slice_free (DelayedDimmingRules, helper);
+}
+
 void
 modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *self,
 						       const gchar *group_name)
 {
 	ModestDimmingRulesGroup *group = NULL;
 	ModestUIDimmingManagerPrivate *priv;
+	guint *handler, new_handler;
+	DelayedDimmingRules *helper;
 	
 	g_return_if_fail (group_name != NULL);
 
@@ -173,9 +226,22 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 	/* Search group by name */
 	group = MODEST_DIMMING_RULES_GROUP(g_hash_table_lookup (priv->groups_map, group_name));
 	g_return_if_fail (group != NULL);
-	
-	/* Performs group dimming rules checking */
-	modest_dimming_rules_group_execute (group);
+
+	/* If there was another pending dimming operation check then ignore this */
+	handler = g_hash_table_lookup (priv->delayed_calls, group_name);
+	if (!handler) {
+		/* Create the helper and start the timeout */
+		helper = g_slice_new (DelayedDimmingRules);
+		helper->group = group;
+		helper->manager = self;
+		helper->name = g_strdup (group_name);
+		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 500, process_dimming_rules_delayed, 
+						  helper, process_dimming_rules_delayed_destroyer);
+		g_hash_table_insert (priv->delayed_calls, g_strdup (group_name), GINT_TO_POINTER (new_handler));
+		MODEST_DEBUG_BLOCK(g_print ("---------------------Adding %d\n", new_handler););
+	} else {
+		MODEST_DEBUG_BLOCK(g_print ("---------------------Ignoring\n"););
+	}
 }
 
 

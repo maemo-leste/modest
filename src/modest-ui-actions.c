@@ -4075,9 +4075,9 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		/* Set focuse on header view */
 		gtk_widget_grab_focus (header_view);
 
-
 		/* Enable window dimming management */
 		modest_window_enable_dimming (MODEST_WINDOW(window));
+		modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	}
 

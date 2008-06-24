@@ -99,6 +99,7 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 	gboolean all_seen = TRUE;
 	gboolean all_cached = TRUE;
 	gboolean all_has_attach = TRUE;
+	TnyFolder *folder = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(window), NULL);
 
@@ -173,23 +174,28 @@ _define_main_window_dimming_state (ModestMainWindow *window)
 			state->any_has_attachments = flags & TNY_HEADER_FLAG_ATTACHMENTS;
 	
 		/* sent in progress */
-		msg_uid = modest_tny_send_queue_get_msg_id (header);
-		if (!state->sent_in_progress) {
-			cache_mgr = modest_runtime_get_cache_mgr ();
-			send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
-								       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
+		folder = tny_header_get_folder (header);
+		if (folder) {
+			if (modest_tny_folder_guess_folder_type (folder) == TNY_FOLDER_TYPE_OUTBOX) {
+				msg_uid = modest_tny_send_queue_get_msg_id (header);
+				if (!state->sent_in_progress) {
+					cache_mgr = modest_runtime_get_cache_mgr ();
+					send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
+										       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
 			
-			g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
-			
-			for (node = send_queues; node != NULL && !found; node = g_slist_next (node)) {
-				send_queue = MODEST_TNY_SEND_QUEUE (node->data);
-				
-				/* Check if msg uid is being processed inside send queue */
-				found = modest_tny_send_queue_msg_is_being_sent (send_queue, msg_uid);		
+					g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
+					
+					for (node = send_queues; node != NULL && !found; node = g_slist_next (node)) {
+						send_queue = MODEST_TNY_SEND_QUEUE (node->data);
+						
+						/* Check if msg uid is being processed inside send queue */
+						found = modest_tny_send_queue_msg_is_being_sent (send_queue, msg_uid);		
+					}
+					state->sent_in_progress = found;
+				}
 			}
-			state->sent_in_progress = found;
+			g_object_unref (folder);
 		}
-
 		tny_iterator_next (iter);
 		g_object_unref (header);
 	}
