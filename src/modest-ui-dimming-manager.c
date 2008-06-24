@@ -206,6 +206,7 @@ process_dimming_rules_delayed_destroyer (gpointer data)
 
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
 	g_hash_table_remove (priv->delayed_calls, helper->name);
+	g_object_unref (helper->manager);
 	g_free (helper->name);
 	g_slice_free (DelayedDimmingRules, helper);
 }
@@ -233,7 +234,7 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 		/* Create the helper and start the timeout */
 		helper = g_slice_new (DelayedDimmingRules);
 		helper->group = group;
-		helper->manager = self;
+		helper->manager = g_object_ref (self);
 		helper->name = g_strdup (group_name);
 		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 500, process_dimming_rules_delayed, 
 						  helper, process_dimming_rules_delayed_destroyer);
