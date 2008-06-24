@@ -389,6 +389,16 @@ modest_main_window_finalize (GObject *obj)
 	   call this function before */
 	modest_main_window_disconnect_signals (MODEST_WINDOW (obj));	
 	modest_main_window_cleanup_queue_error_signals ((ModestMainWindow *) obj);
+
+	if (priv->empty_view) {
+		g_object_unref (priv->empty_view);
+		priv->empty_view = NULL;
+	}
+	
+	if (priv->header_view) {
+		g_object_unref (priv->header_view);
+		priv->header_view = NULL;
+	}
 	
 	g_slist_free (priv->progress_widgets);
 
@@ -1274,6 +1284,7 @@ modest_main_window_new (void)
 	/* header view */
 	priv->header_view =
 		MODEST_HEADER_VIEW (modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_DETAILS));
+	g_object_ref (priv->header_view);
 	if (!priv->header_view)
 		g_printerr ("modest: cannot instantiate header view\n");
 	modest_header_view_set_style (priv->header_view, MODEST_HEADER_VIEW_STYLE_TWOLINES);
@@ -1289,6 +1300,7 @@ modest_main_window_new (void)
 	/* Empty view */ 
 	priv->empty_view = create_empty_view ();
 	gtk_widget_show (priv->empty_view);
+	g_object_ref (priv->empty_view);
 		 
 	/* Create scrolled windows */
 	folder_win = gtk_scrolled_window_new (NULL, NULL);
@@ -2042,10 +2054,7 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	   details widget */
 	GtkWidget *content = gtk_bin_get_child (GTK_BIN (priv->contents_widget));
 	if (content) {
-		if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
-			g_object_ref (content);
-		else if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
-			g_object_ref (priv->empty_view);
+		if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY) {
 			gtk_container_remove (GTK_CONTAINER (content), priv->empty_view);
 		}
 		
@@ -2872,6 +2881,7 @@ on_window_hide (GObject    *gobject,
 							 mail_op);
 			modest_mail_operation_sync_folder (mail_op, TNY_FOLDER (folder_store), FALSE);
 			g_object_unref (mail_op);
+			g_object_unref (folder_store);
 		}
 	}
 }

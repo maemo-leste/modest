@@ -255,9 +255,9 @@ modest_window_mgr_finalize (GObject *obj)
 		GList *iter = priv->window_list;
 		/* unregister pending windows */
 		while (iter) {
-			modest_window_mgr_unregister_window (MODEST_WINDOW_MGR (obj), 
-							     MODEST_WINDOW (iter->data));
+			ModestWindow *window = (ModestWindow *) iter->data;
 			iter = g_list_next (iter);
+			modest_window_mgr_unregister_window (MODEST_WINDOW_MGR (obj), window);
 		}
 		g_list_free (priv->window_list);
 		priv->window_list = NULL;
@@ -817,7 +817,7 @@ on_window_destroy (ModestWindow *window,
 		}
 		/* Unregister window */
 		modest_window_mgr_unregister_window (self, window);
-		no_propagate = FALSE;
+		no_propagate = TRUE;
 	}
 
 	return no_propagate;
@@ -889,6 +889,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	priv->window_list = g_list_remove_link (priv->window_list, win);
 	tmp = g_hash_table_lookup (priv->destroy_handlers, window);
 	handler_id = *tmp;
+
 	g_hash_table_remove (priv->destroy_handlers, window);
 
 	/* cancel open and receive operations */
@@ -923,7 +924,9 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 	modest_window_disconnect_signals (window);
 	
 	/* Destroy the window */
+	g_object_unref (win->data);
 	gtk_widget_destroy (win->data);
+	g_list_free (win);
 	
 	/* If there are no more windows registered emit the signal */
 	if (modest_window_mgr_num_windows (self) == 0)

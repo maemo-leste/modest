@@ -783,8 +783,6 @@ cleanup:
 		g_object_unref (G_OBJECT(account));
 	if (folder)
 		g_object_unref (G_OBJECT(folder));
-	if (msg_win)
-		g_object_unref (G_OBJECT(msg_win));
 	if (msg)
 		g_object_unref (G_OBJECT(msg));
 }
@@ -996,7 +994,6 @@ open_msg_cb (ModestMailOperation *mail_op,
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
 		modest_window_mgr_register_window (mgr, win);
-		g_object_unref (win);
 		gtk_widget_show_all (GTK_WIDGET(win));
 	}
 
@@ -1592,8 +1589,6 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
-	if (msg_win)
-		g_object_unref (msg_win);
 	if (new_msg)
 		g_object_unref (G_OBJECT (new_msg));
 	if (account)

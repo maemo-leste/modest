@@ -86,7 +86,7 @@ modest_runtime_uninit (void)
 		return TRUE; 	/* uninit maybe called if runtime_init failed */
 	
 	g_return_val_if_fail (MODEST_IS_SINGLETONS(_singletons), FALSE);
-	
+
 	g_debug ("%s: cleaning up", __FUNCTION__);
 
 	if (_sig_handlers) {
