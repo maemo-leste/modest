@@ -105,6 +105,15 @@ modest_ui_dimming_manager_init (ModestUIDimmingManager *obj)
 }
 
 static void
+remove_all_timeouts (gpointer key, 
+		     gpointer value, 
+		     gpointer user_data)
+{
+	if (GPOINTER_TO_INT (value) > 0)
+		g_source_remove (GPOINTER_TO_INT (value));
+}
+
+static void
 modest_ui_dimming_manager_finalize (GObject *obj)
 {
 	ModestUIDimmingManagerPrivate *priv;
@@ -114,8 +123,14 @@ modest_ui_dimming_manager_finalize (GObject *obj)
 	if (priv->groups_map != NULL)
 		g_hash_table_unref (priv->groups_map);
 
-	if (priv->delayed_calls != NULL)
+	if (priv->delayed_calls != NULL) {
+		/* Remove all pending calls */
+		g_hash_table_foreach (priv->delayed_calls,
+				      remove_all_timeouts,
+				      NULL);
+
 		g_hash_table_unref (priv->delayed_calls);
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -206,7 +221,6 @@ process_dimming_rules_delayed_destroyer (gpointer data)
 
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
 	g_hash_table_remove (priv->delayed_calls, helper->name);
-	g_object_unref (helper->manager);
 	g_free (helper->name);
 	g_slice_free (DelayedDimmingRules, helper);
 }
@@ -234,7 +248,7 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 		/* Create the helper and start the timeout */
 		helper = g_slice_new (DelayedDimmingRules);
 		helper->group = group;
-		helper->manager = g_object_ref (self);
+		helper->manager = self;
 		helper->name = g_strdup (group_name);
 		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 500, process_dimming_rules_delayed, 
 						  helper, process_dimming_rules_delayed_destroyer);
