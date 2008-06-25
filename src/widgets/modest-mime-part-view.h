@@ -55,11 +55,17 @@ struct _ModestMimePartViewIface
 	
 	/* virtuals */
 	gboolean (*is_empty_func) (ModestMimePartView *self);
+	gboolean (*get_view_images_func) (ModestMimePartView *self);
+	void (*set_view_images_func) (ModestMimePartView *self, gboolean view_images);
+	gboolean (*has_external_images_func) (ModestMimePartView *self);
 };
 
 GType modest_mime_part_view_get_type (void);
 
 gboolean modest_mime_part_view_is_empty (ModestMimePartView *self);
+gboolean modest_mime_part_view_get_view_images (ModestMimePartView *self);
+void modest_mime_part_view_set_view_images (ModestMimePartView *self, gboolean view_images);
+gboolean modest_mime_part_view_has_external_images (ModestMimePartView *self);
 
 G_END_DECLS
 

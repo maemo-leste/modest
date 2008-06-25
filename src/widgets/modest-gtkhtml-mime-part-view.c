@@ -67,6 +67,12 @@ static TnyMimePart* modest_gtkhtml_mime_part_view_get_part_default (TnyMimePartV
 /* ModestMimePartView implementation */
 static gboolean modest_gtkhtml_mime_part_view_is_empty (ModestMimePartView *self);
 static gboolean modest_gtkhtml_mime_part_view_is_empty_default (ModestMimePartView *self);
+static gboolean modest_gtkhtml_mime_part_view_get_view_images (ModestMimePartView *self);
+static gboolean modest_gtkhtml_mime_part_view_get_view_images_default (ModestMimePartView *self);
+static void     modest_gtkhtml_mime_part_view_set_view_images (ModestMimePartView *self, gboolean view_images);
+static void     modest_gtkhtml_mime_part_view_set_view_images_default (ModestMimePartView *self, gboolean view_images);
+static gboolean modest_gtkhtml_mime_part_view_has_external_images (ModestMimePartView *self);
+static gboolean modest_gtkhtml_mime_part_view_has_external_images_default (ModestMimePartView *self);
 /* ModestZoomable implementation */
 static gdouble modest_gtkhtml_mime_part_view_get_zoom (ModestZoomable *self);
 static void modest_gtkhtml_mime_part_view_set_zoom (ModestZoomable *self, gdouble value);
@@ -94,6 +100,9 @@ static void          set_text_part   (ModestGtkhtmlMimePartView *self, TnyMimePa
 static void          set_empty_part  (ModestGtkhtmlMimePartView *self);
 static void          set_part   (ModestGtkhtmlMimePartView *self, TnyMimePart *part);
 static gboolean      is_empty   (ModestGtkhtmlMimePartView *self);
+static gboolean      get_view_images   (ModestGtkhtmlMimePartView *self);
+static void          set_view_images   (ModestGtkhtmlMimePartView *self, gboolean view_images);
+static gboolean      has_external_images   (ModestGtkhtmlMimePartView *self);
 static void          set_zoom   (ModestGtkhtmlMimePartView *self, gdouble zoom);
 static gdouble       get_zoom   (ModestGtkhtmlMimePartView *self);
 static gboolean      has_contents_receiver (gpointer engine, const gchar *data,
@@ -107,6 +116,8 @@ typedef struct _ModestGtkhtmlMimePartViewPrivate ModestGtkhtmlMimePartViewPrivat
 struct _ModestGtkhtmlMimePartViewPrivate {
 	TnyMimePart *part;
 	gdouble current_zoom;
+	gboolean view_images;
+	gboolean has_external_images;
 };
 
 #define MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -199,6 +210,9 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 	klass->set_part_func = modest_gtkhtml_mime_part_view_set_part_default;
 	klass->clear_func = modest_gtkhtml_mime_part_view_clear_default;
 	klass->is_empty_func = modest_gtkhtml_mime_part_view_is_empty_default;
+	klass->get_view_images_func = modest_gtkhtml_mime_part_view_get_view_images_default;
+	klass->set_view_images_func = modest_gtkhtml_mime_part_view_set_view_images_default;
+	klass->has_external_images_func = modest_gtkhtml_mime_part_view_has_external_images_default;
 	klass->get_zoom_func = modest_gtkhtml_mime_part_view_get_zoom_default;
 	klass->set_zoom_func = modest_gtkhtml_mime_part_view_set_zoom_default;
 	klass->zoom_minus_func = modest_gtkhtml_mime_part_view_zoom_minus_default;
@@ -219,8 +233,8 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_html_set_editable        (GTK_HTML(self), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(self), TRUE);
 	gtk_html_set_caret_mode      (GTK_HTML(self), FALSE);
-	gtk_html_set_blocking        (GTK_HTML(self), FALSE);
-	gtk_html_set_images_blocking (GTK_HTML(self), FALSE);
+	gtk_html_set_blocking        (GTK_HTML(self), TRUE);
+	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
 
 	g_signal_connect (G_OBJECT(self), "link_clicked",
 			  G_CALLBACK(on_link_clicked), self);
@@ -231,6 +245,8 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 
 	priv->part = NULL;
 	priv->current_zoom = 1.0;
+	priv->view_images = FALSE;
+	priv->has_external_images = FALSE;
 }
 
 static void
@@ -265,65 +281,7 @@ typedef struct {
 	gpointer buffer;
 	GtkHTML *html;
 	GtkHTMLStream *stream;
-	gboolean html_finalized;
 } ImageFetcherInfo;
-
-static void
-html_finalized_notify (ImageFetcherInfo *ifinfo,
-		       GObject *destroyed)
-{
-	ifinfo->html_finalized = TRUE;
-}
-
-static void
-image_fetcher_close (GnomeVFSAsyncHandle *handle,
-		     GnomeVFSResult result,
-		     gpointer data)
-{
-}
-
-static void
-image_fetcher_read (GnomeVFSAsyncHandle *handle,
-		    GnomeVFSResult result,
-		    gpointer buffer,
-		    GnomeVFSFileSize bytes_requested,
-		    GnomeVFSFileSize bytes_read,
-		    ImageFetcherInfo *ifinfo)
-{
-
-	if (ifinfo->html_finalized || result != GNOME_VFS_OK) {
-		gnome_vfs_async_close (handle, (GnomeVFSAsyncCloseCallback) image_fetcher_close, (gpointer) NULL);
-		if (!ifinfo->html_finalized) {
-			gtk_html_stream_close (ifinfo->stream, GTK_HTML_STREAM_OK);
-			g_object_weak_unref ((GObject *) ifinfo->html, (GWeakNotify) html_finalized_notify, (gpointer) ifinfo);
-		}
-		g_slice_free1 (128, ifinfo->buffer);
-		g_slice_free (ImageFetcherInfo, ifinfo);
-		return;
-	}
-	gtk_html_stream_write (ifinfo->stream, buffer, bytes_read);
-	gnome_vfs_async_read (handle, ifinfo->buffer, 128, 
-			      (GnomeVFSAsyncReadCallback)image_fetcher_read, ifinfo);
-	return;
-}
-
-static void
-image_fetcher_open (GnomeVFSAsyncHandle *handle,
-		    GnomeVFSResult result,
-		    ImageFetcherInfo *ifinfo)
-{
-	if (!ifinfo->html_finalized && result == GNOME_VFS_OK) {
-		ifinfo->buffer = g_slice_alloc (128);
-		gnome_vfs_async_read (handle, ifinfo->buffer, 128, 
-				      (GnomeVFSAsyncReadCallback) image_fetcher_read, ifinfo);
-	} else {
-		if (!ifinfo->html_finalized) {
-			gtk_html_stream_close (ifinfo->stream, GTK_HTML_STREAM_OK);
-			g_object_weak_unref ((GObject *) ifinfo->html, (GWeakNotify) html_finalized_notify, (gpointer) ifinfo);
-		}
-		g_slice_free (ImageFetcherInfo, ifinfo);
-	}
-}
 
 static gboolean
 on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream, 
@@ -333,26 +291,15 @@ on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 	TnyStream *tny_stream;
 	g_return_val_if_fail (MODEST_IS_GTKHTML_MIME_PART_VIEW (self), FALSE);
 
-	if (g_str_has_prefix (uri, "http:") &&
-	    modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES, NULL)) {
-		GnomeVFSAsyncHandle *handle;
-		ImageFetcherInfo *ifinfo;
+	if (g_str_has_prefix (uri, "http:")) {
+		ModestGtkhtmlMimePartViewPrivate *priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (self);
 
-		ifinfo = g_slice_new (ImageFetcherInfo);
-		ifinfo->html_finalized = FALSE;
-		ifinfo->html = (GtkHTML *) self;
-		ifinfo->buffer = NULL;
-		ifinfo->stream = stream;
-		g_object_weak_ref ((GObject *) self, (GWeakNotify) html_finalized_notify, (gpointer) ifinfo);
-		gnome_vfs_async_open (&handle, uri, GNOME_VFS_OPEN_READ,
-				      GNOME_VFS_PRIORITY_DEFAULT, 
-				      (GnomeVFSAsyncOpenCallback) image_fetcher_open, ifinfo);
-		return FALSE;
+		if (!priv->view_images)
+			priv->has_external_images = TRUE;
 	}
-	
-	tny_stream = TNY_STREAM (modest_tny_stream_gtkhtml_new (stream));
+			
+	tny_stream = TNY_STREAM (modest_tny_stream_gtkhtml_new (stream, GTK_HTML (widget)));
 	g_signal_emit_by_name (MODEST_MIME_PART_VIEW (self), "fetch-url", uri, tny_stream, &result);
-	tny_stream_close (tny_stream);
 	g_object_unref (tny_stream);
 	return result;
 }
@@ -370,7 +317,7 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self));
 
-	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
+	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	tny_stream_reset (tny_stream);
 
 	tny_mime_part_decode_to_stream ((TnyMimePart*)part, tny_stream, NULL);
@@ -388,7 +335,7 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	g_return_if_fail (part);
 
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self)); 
-	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream));
+	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	text_to_html_stream = TNY_STREAM (modest_stream_text_to_html_new (tny_stream));
 	modest_stream_text_to_html_set_linkify_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 64*1024);
 	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 640*1024);
@@ -421,6 +368,7 @@ set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	g_return_if_fail (self);
 	
 	priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE(self);
+	priv->has_external_images = FALSE;
 
 	if (part != priv->part) {
 		if (priv->part)
@@ -480,6 +428,39 @@ is_empty   (ModestGtkhtmlMimePartView *self)
 			 (GtkHTMLSaveReceiverFn) has_contents_receiver, &has_contents);
 	
 	return !has_contents;
+}
+
+static gboolean      
+get_view_images   (ModestGtkhtmlMimePartView *self)
+{
+	ModestGtkhtmlMimePartViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_GTKHTML_MIME_PART_VIEW (self), FALSE);
+
+	priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (self);
+	return priv->view_images;
+}
+
+static void
+set_view_images   (ModestGtkhtmlMimePartView *self, gboolean view_images)
+{
+	ModestGtkhtmlMimePartViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_GTKHTML_MIME_PART_VIEW (self));
+
+	priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (self);
+	priv->view_images = view_images;
+}
+
+static gboolean      
+has_external_images   (ModestGtkhtmlMimePartView *self)
+{
+	ModestGtkhtmlMimePartViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_GTKHTML_MIME_PART_VIEW (self), FALSE);
+
+	priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (self);
+	return priv->has_external_images;
 }
 
 static void
@@ -602,6 +583,9 @@ modest_mime_part_view_init (gpointer g, gpointer iface_data)
 	ModestMimePartViewIface *klass = (ModestMimePartViewIface *)g;
 
 	klass->is_empty_func = modest_gtkhtml_mime_part_view_is_empty;
+	klass->get_view_images_func = modest_gtkhtml_mime_part_view_get_view_images;
+	klass->set_view_images_func = modest_gtkhtml_mime_part_view_set_view_images;
+	klass->has_external_images_func = modest_gtkhtml_mime_part_view_has_external_images;
 
 	return;
 }
@@ -613,9 +597,45 @@ modest_gtkhtml_mime_part_view_is_empty (ModestMimePartView *self)
 }
 
 static gboolean
+modest_gtkhtml_mime_part_view_get_view_images (ModestMimePartView *self)
+{
+	return MODEST_GTKHTML_MIME_PART_VIEW_GET_CLASS (self)->get_view_images_func (self);
+}
+
+static void
+modest_gtkhtml_mime_part_view_set_view_images (ModestMimePartView *self, gboolean view_images)
+{
+	MODEST_GTKHTML_MIME_PART_VIEW_GET_CLASS (self)->set_view_images_func (self, view_images);
+}
+
+static gboolean
+modest_gtkhtml_mime_part_view_has_external_images (ModestMimePartView *self)
+{
+	return MODEST_GTKHTML_MIME_PART_VIEW_GET_CLASS (self)->has_external_images_func (self);
+}
+
+static gboolean
 modest_gtkhtml_mime_part_view_is_empty_default (ModestMimePartView *self)
 {
 	return is_empty (MODEST_GTKHTML_MIME_PART_VIEW (self));
+}
+
+static gboolean
+modest_gtkhtml_mime_part_view_get_view_images_default (ModestMimePartView *self)
+{
+	return get_view_images (MODEST_GTKHTML_MIME_PART_VIEW (self));
+}
+
+static void
+modest_gtkhtml_mime_part_view_set_view_images_default (ModestMimePartView *self, gboolean view_images)
+{
+	set_view_images (MODEST_GTKHTML_MIME_PART_VIEW (self), view_images);
+}
+
+static gboolean
+modest_gtkhtml_mime_part_view_has_external_images_default (ModestMimePartView *self)
+{
+	return has_external_images (MODEST_GTKHTML_MIME_PART_VIEW (self));
 }
 
 

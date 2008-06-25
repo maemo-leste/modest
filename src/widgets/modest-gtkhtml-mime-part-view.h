@@ -65,6 +65,9 @@ struct _ModestGtkhtmlMimePartViewClass {
 	void (*clear_func) (TnyMimePartView *self);
 	/* ModestMimePartView interface methods */
 	gboolean (*is_empty_func) (ModestMimePartView *self);
+	gboolean (*get_view_images_func) (ModestMimePartView *self);
+	void (*set_view_images_func) (ModestMimePartView *self, gboolean view_images);
+	gboolean (*has_external_images_func) (ModestMimePartView *self);
 	/* ModestZoomable interface methods */
 	gdouble (*get_zoom_func) (ModestZoomable *self);
 	void (*set_zoom_func) (ModestZoomable *self, gdouble value);

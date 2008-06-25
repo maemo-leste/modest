@@ -31,11 +31,13 @@
 
 #include <widgets/modest-msg-view.h>
 #include <widgets/modest-isearch-view.h>
+#include <modest-marshal.h>
 
 enum {
 	ATTACHMENT_CLICKED_SIGNAL,
 	RECPT_ACTIVATED_SIGNAL,
 	LINK_CONTEXTUAL_SIGNAL,
+	FETCH_IMAGE_SIGNAL,
 	LAST_SIGNAL
 };
 static guint signals[LAST_SIGNAL] = {0};
@@ -86,6 +88,12 @@ void
 modest_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags)
 {
 	MODEST_MSG_VIEW_GET_IFACE (self)->set_priority_func (self, flags);
+}
+
+void
+modest_msg_view_set_view_images (ModestMsgView *self, gboolean view_images)
+{
+	MODEST_MSG_VIEW_GET_IFACE (self)->set_view_images_func (self, view_images);
 }
 
 TnyList*
@@ -145,6 +153,15 @@ modest_msg_view_base_init (gpointer g_class)
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__STRING,
 				      G_TYPE_NONE, 1, G_TYPE_STRING);
+		
+		signals[FETCH_IMAGE_SIGNAL] =
+			g_signal_new ("fetch_image",
+				      MODEST_TYPE_MSG_VIEW,
+				      G_SIGNAL_ACTION | G_SIGNAL_RUN_LAST,
+				      G_STRUCT_OFFSET(ModestMsgViewIface, fetch_image),
+				      NULL, NULL,
+				      modest_marshal_BOOLEAN__STRING_OBJECT,
+				      G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_OBJECT);
 		
 		initialized = TRUE;
 	}

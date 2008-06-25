@@ -388,6 +388,8 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	connect_for_modified (self, self->checkbox_leave_messages);
 	gtk_box_pack_start (GTK_BOX (box), self->caption_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (self->caption_leave_messages);
+
+	g_object_unref (sizegroup);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
@@ -572,6 +574,8 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	gtk_widget_show (self->button_signature);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
+
+	g_object_unref (sizegroup);
 		
 	g_signal_connect (G_OBJECT (self->button_signature), "clicked",
         	G_CALLBACK (on_button_signature), self);
@@ -683,6 +687,8 @@ static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
 	gtk_widget_show (self->checkbox_incoming_auth);
 	connect_for_modified (self, self->checkbox_incoming_auth);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+
+	g_object_unref (sizegroup);
 	gtk_widget_show (caption);
 	
 	gtk_widget_show (GTK_WIDGET (box));
@@ -915,6 +921,8 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_togglebutton (self->button_outgoing_smtp_servers, 
 		GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific));
+
+	g_object_unref (sizegroup);
 		
 	g_signal_connect (G_OBJECT (self->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);

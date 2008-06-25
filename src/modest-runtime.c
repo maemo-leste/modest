@@ -126,6 +126,13 @@ modest_runtime_get_account_mgr   (void)
 	return modest_singletons_get_account_mgr (_singletons);
 }
 
+TnyStreamCache*
+modest_runtime_get_images_cache   (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_images_cache (_singletons);
+}
+
 ModestEmailClipboard*
 modest_runtime_get_email_clipboard   (void)
 {

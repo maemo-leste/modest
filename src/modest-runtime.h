@@ -42,6 +42,7 @@
 #include <modest-signal-mgr.h>
 #include <tny-platform-factory.h>
 #include "widgets/modest-window-mgr.h"
+#include <tny-stream-cache.h>
 
 G_BEGIN_DECLS
 
@@ -120,6 +121,15 @@ ModestConf*         modest_runtime_get_conf   (void);
  * Returns: the ModestAccountMgr singleton. This should NOT be unref'd.
  **/
 ModestAccountMgr*         modest_runtime_get_account_mgr   (void);
+
+/**
+ * modest_runtime_get_images_cache:
+ * 
+ * get the images #TnyStreamCache singleton instance
+ * 
+ * Returns: the images #TnyStreamCache singleton. This should NOT be unref'd.
+ **/
+TnyStreamCache*         modest_runtime_get_images_cache   (void);
 
 /**
  * modest_runtime_get_email_clipboard:

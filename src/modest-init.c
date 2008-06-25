@@ -306,7 +306,7 @@ modest_init_uninit (void)
 	
 	if (gnome_vfs_initialized()) /* apparently, this returns TRUE, even after a shutdown */
 		gnome_vfs_shutdown ();
-		
+
 	_is_initialized = FALSE;
 	return TRUE;
 }

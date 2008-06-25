@@ -55,6 +55,47 @@ modest_mime_part_view_is_empty (ModestMimePartView *self)
 	return MODEST_MIME_PART_VIEW_GET_IFACE (self)->is_empty_func (self);
 }
 
+/**
+ * modest_mime_part_view_get_view_images:
+ * @self: a #ModestMimePartView
+ *
+ * checks if we have enabled capability to view contained images.
+ *
+ * Returns: %TRUE if we show images, %FALSE otherwise.
+ */
+gboolean
+modest_mime_part_view_get_view_images (ModestMimePartView *self)
+{
+	return MODEST_MIME_PART_VIEW_GET_IFACE (self)->get_view_images_func (self);
+}
+
+/**
+ * modest_mime_part_view_set_view_images:
+ * @self: a #ModestMimePartView
+ * @view_images: a #gboolean
+ *
+ * set if we want to show images or not.
+ */
+void
+modest_mime_part_view_set_view_images (ModestMimePartView *self, gboolean view_images)
+{
+	MODEST_MIME_PART_VIEW_GET_IFACE (self)->set_view_images_func (self, view_images);
+}
+
+/**
+ * modest_mime_part_view_has_external_images: 
+ * @self: a #ModestMimePartView
+ *
+ * checks if there are external images in the mime part.
+ *
+ * Returns: %TRUE if there are external images, %FALSE otherwise.
+ */
+gboolean
+modest_mime_part_view_has_external_images (ModestMimePartView *self)
+{
+	return MODEST_MIME_PART_VIEW_GET_IFACE (self)->has_external_images_func (self);
+}
+
 static void
 modest_mime_part_view_base_init (gpointer g_class)
 {

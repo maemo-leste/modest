@@ -40,6 +40,7 @@
 #include <modest-cache-mgr.h>
 #include <modest-tny-platform-factory.h>
 #include "widgets/modest-window-mgr.h"
+#include <tny-stream-cache.h>
 
 G_BEGIN_DECLS
 
@@ -186,6 +187,14 @@ ModestMailOperationQueue* modest_singletons_get_mail_operation_queue (ModestSing
  * Return value: the singleton instance of #ModestWindowMgr
  **/
 ModestWindowMgr*          modest_singletons_get_window_mgr           (ModestSingletons *self);
+
+/**
+ * modest_singletons_get_images_cache:
+ * @self: a #ModestSingletons
+ *
+ * Gets the #TnyStreamCache used to store the external images cache.
+ */
+TnyStreamCache*           modest_singletons_get_images_cache         (ModestSingletons *self);
 
 G_END_DECLS
 

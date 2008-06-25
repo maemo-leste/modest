@@ -160,4 +160,16 @@ gint modest_list_index (TnyList *list, GObject *object);
  */
 guint64 modest_folder_available_space (const gchar *maildir_path);
 
+/**
+ * modest_images_cache_get_id:
+ * @account: a #TnyAccount
+ * @uri: an uri string
+ *
+ * obtains the hash corresponding to an image external resource to be
+ * stored in image cache.
+ *
+ * Returns: a newly allocated string containing the hash key
+ */
+gchar *modest_images_cache_get_id (const gchar *account, const gchar *uri);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

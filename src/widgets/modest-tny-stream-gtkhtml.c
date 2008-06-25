@@ -52,6 +52,7 @@ enum {
 typedef struct _ModestTnyStreamGtkhtmlPrivate ModestTnyStreamGtkhtmlPrivate;
 struct _ModestTnyStreamGtkhtmlPrivate {
 	GtkHTMLStream *stream;
+	GtkHTML *html;
 };
 #define MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                        MODEST_TYPE_TNY_STREAM_GTKHTML, \
@@ -116,6 +117,7 @@ modest_tny_stream_gtkhtml_init (ModestTnyStreamGtkhtml *obj)
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
 
 	priv->stream  = NULL;
+	priv->html = NULL;
 }
 
 static void
@@ -125,10 +127,14 @@ modest_tny_stream_gtkhtml_finalize (GObject *obj)
 
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
 	priv->stream = NULL;
+	if (priv->html) {
+		g_object_unref (priv->html);
+		priv->html = NULL;
+	}
 }
 
 GObject*
-modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream)
+modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream, GtkHTML *html)
 {
 	GObject *obj;
 	ModestTnyStreamGtkhtmlPrivate *priv;
@@ -139,6 +145,7 @@ modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream)
 	g_return_val_if_fail (stream, NULL);
 	
 	priv->stream = stream;
+	priv->html = g_object_ref (html);
 
 	return obj;
 }
@@ -168,7 +175,10 @@ gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 
 	if (n == 0 || !buffer)
 		return 0;
-		
+
+	if (!GTK_WIDGET_VISIBLE (priv->html))
+		return -1;
+
 	gtk_html_stream_write (priv->stream, buffer, n);
 	return n; /* hmmm */
 }
@@ -188,8 +198,14 @@ gtkhtml_close (TnyStream *self)
 	g_return_val_if_fail (self, 0);
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
 	
-	gtk_html_stream_close   (priv->stream, GTK_HTML_STREAM_OK);
+	if (GTK_WIDGET_VISIBLE (priv->html)) {
+		gtk_html_stream_close   (priv->stream, GTK_HTML_STREAM_OK);
+	}
 	priv->stream = NULL;
+	if (priv->html) {
+		g_object_unref (priv->html);
+		priv->html = NULL;
+	}
 
 	return 0;
 }

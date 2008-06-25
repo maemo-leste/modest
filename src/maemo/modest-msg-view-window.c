@@ -155,6 +155,11 @@ static gboolean msg_is_visible (TnyHeader *header, gboolean check_outbox);
 
 static void check_dimming_rules_after_change (ModestMsgViewWindow *window);
 
+static gboolean on_fetch_image (ModestMsgView *msgview,
+				const gchar *uri,
+				TnyStream *stream,
+				ModestMsgViewWindow *window);
+
 /* list my signals */
 enum {
 	MSG_CHANGED_SIGNAL,
@@ -823,6 +828,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 			  G_CALLBACK (modest_ui_actions_on_msg_recpt_activated), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_contextual",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_contextual), obj);
+	g_signal_connect (G_OBJECT (priv->msg_view), "fetch_image",
+			  G_CALLBACK (on_fetch_image), obj);
 
 	g_signal_connect (G_OBJECT (obj), "key-release-event",
 			  G_CALLBACK (modest_msg_view_window_key_event),
@@ -2979,3 +2986,116 @@ static void on_move_focus (GtkWidget *widget,
 	g_signal_stop_emission_by_name (G_OBJECT (widget), "move-focus");
 }
 
+static TnyStream *
+fetch_image_open_stream (TnyStreamCache *self, gint64 *expected_size, gchar *uri)
+{
+	GnomeVFSResult result;
+	GnomeVFSHandle *handle = NULL;
+	GnomeVFSFileInfo *info = NULL;
+	TnyStream *stream;
+
+	result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
+	if (result != GNOME_VFS_OK) {
+		*expected_size = 0;
+		return NULL;
+	}
+	
+	info = gnome_vfs_file_info_new ();
+	result = gnome_vfs_get_file_info_from_handle (handle, info, GNOME_VFS_FILE_INFO_DEFAULT);
+	if (result != GNOME_VFS_OK || ! (info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE)) {
+		/* We put a "safe" default size for going to cache */
+		*expected_size = (300*1024);
+	} else {
+		*expected_size = info->size;
+	}
+	gnome_vfs_file_info_unref (info);
+
+	stream = tny_vfs_stream_new (handle);
+
+	return stream;
+
+}
+
+typedef struct {
+	gchar *uri;
+	gchar *cache_id;
+	TnyStream *output_stream;
+	GtkWidget *msg_view;
+} FetchImageData;
+
+gboolean
+on_fetch_image_idle_refresh_view (gpointer userdata)
+{
+
+	FetchImageData *fidata = (FetchImageData *) userdata;
+	g_message ("REFRESH VIEW");
+	if (GTK_WIDGET_DRAWABLE (fidata->msg_view)) {
+		g_message ("QUEUING DRAW");
+		gtk_widget_queue_draw (fidata->msg_view);
+	}
+	g_object_unref (fidata->msg_view);
+	g_slice_free (FetchImageData, fidata);
+	return FALSE;
+}
+
+static gpointer
+on_fetch_image_thread (gpointer userdata)
+{
+	FetchImageData *fidata = (FetchImageData *) userdata;
+	TnyStreamCache *cache;
+	TnyStream *cache_stream;
+
+	cache = modest_runtime_get_images_cache ();
+	cache_stream = tny_stream_cache_get_stream (cache, fidata->cache_id, (TnyStreamCacheOpenStreamFetcher) fetch_image_open_stream, (gpointer) fidata->uri);
+	g_free (fidata->cache_id);
+	g_free (fidata->uri);
+
+	if (cache_stream != NULL) {
+		tny_stream_write_to_stream (cache_stream, fidata->output_stream);
+		tny_stream_close (cache_stream);
+		g_object_unref (cache_stream);
+	}
+
+	tny_stream_close (fidata->output_stream);
+	g_object_unref (fidata->output_stream);
+
+
+	gdk_threads_enter ();
+	g_idle_add (on_fetch_image_idle_refresh_view, fidata);
+	gdk_threads_leave ();
+
+	return NULL;
+}
+
+static gboolean
+on_fetch_image (ModestMsgView *msgview,
+		const gchar *uri,
+		TnyStream *stream,
+		ModestMsgViewWindow *window)
+{
+	const gchar *current_account;
+	ModestMsgViewWindowPrivate *priv;
+	FetchImageData *fidata;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	current_account = modest_window_get_active_account (MODEST_WINDOW (window));
+
+	fidata = g_slice_new0 (FetchImageData);
+	fidata->msg_view = g_object_ref (msgview);
+	fidata->uri = g_strdup (uri);
+	fidata->cache_id = modest_images_cache_get_id (current_account, uri);
+	fidata->output_stream = g_object_ref (stream);
+
+	if (g_thread_create (on_fetch_image_thread, fidata, FALSE, NULL) == NULL) {
+		g_object_unref (fidata->output_stream);
+		g_free (fidata->cache_id);
+		g_free (fidata->uri);
+		g_object_unref (fidata->msg_view);
+		g_slice_free (FetchImageData, fidata);
+		tny_stream_close (stream);
+		return FALSE;
+	}
+
+	return TRUE;;
+}

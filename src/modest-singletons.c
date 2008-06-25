@@ -30,6 +30,7 @@
 #include "modest-singletons.h"
 #include "modest-runtime.h"
 #include "modest-debug.h"
+#include <tny-fs-stream-cache.h>
 
 /* 'private'/'protected' functions */
 static void modest_singletons_class_init (ModestSingletonsClass *klass);
@@ -46,6 +47,7 @@ struct _ModestSingletonsPrivate {
 	TnyPlatformFactory        *platform_fact;
 	TnyDevice                 *device;
 	ModestWindowMgr           *window_mgr;
+	TnyStreamCache            *images_cache;
 };
 #define MODEST_SINGLETONS_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                MODEST_TYPE_SINGLETONS, \
@@ -93,6 +95,7 @@ static void
 modest_singletons_init (ModestSingletons *obj)
 {
 	ModestSingletonsPrivate *priv;
+	gchar *images_cache_path;
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
 
 	priv->conf            = NULL;
@@ -103,6 +106,7 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->platform_fact   = NULL;
 	priv->device          = NULL;
 	priv->window_mgr      = NULL;
+	priv->images_cache    = NULL;
 	
 	priv->conf           = modest_conf_new ();
 	if (!priv->conf) {
@@ -151,6 +155,14 @@ modest_singletons_init (ModestSingletons *obj)
 		g_printerr ("modest: cannot create modest window manager instance\n");
 		return;
 	}
+
+	images_cache_path = g_build_filename (g_get_home_dir (), MODEST_DIR, MODEST_IMAGES_CACHE_DIR, NULL);
+	priv->images_cache = tny_fs_stream_cache_new (images_cache_path, MODEST_IMAGES_CACHE_SIZE);
+	g_free (images_cache_path);
+	if (!priv->images_cache) {
+		g_printerr ("modest: cannot create images cache instance\n");
+		return;
+	}
 }
 
 static void
@@ -159,6 +171,12 @@ modest_singletons_finalize (GObject *obj)
 	ModestSingletonsPrivate *priv;
 		
 	priv = MODEST_SINGLETONS_GET_PRIVATE(obj);
+
+	if (priv->images_cache) {
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF (priv->images_cache, "");
+		g_object_unref (G_OBJECT (priv->images_cache));
+		priv->images_cache = NULL;
+	}
 	
 	if (priv->window_mgr) {
 		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->window_mgr,"");
@@ -300,4 +318,11 @@ modest_singletons_get_window_mgr (ModestSingletons *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->window_mgr;
+}
+
+TnyStreamCache* 
+modest_singletons_get_images_cache (ModestSingletons *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_SINGLETONS_GET_PRIVATE(self)->images_cache;
 }

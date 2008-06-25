@@ -69,7 +69,7 @@ GType       modest_tny_stream_gtkhtml_get_type    (void) G_GNUC_CONST;
  * 
  * Returns: a new #ModestTnyStreamGtkhtml
  **/
-GObject*    modest_tny_stream_gtkhtml_new         (GtkHTMLStream* stream);
+GObject*    modest_tny_stream_gtkhtml_new         (GtkHTMLStream* stream, GtkHTML *html);
 
 
 G_END_DECLS

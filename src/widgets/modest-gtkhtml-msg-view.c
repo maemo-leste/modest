@@ -36,6 +36,7 @@
 #include <glib/gi18n.h>
 #include <tny-list.h>
 #include <tny-simple-list.h>
+#include <tny-vfs-stream.h>
 
 #include <modest-tny-msg.h>
 #include <modest-text-utils.h>
@@ -70,6 +71,7 @@ static void     get_property (GObject *object, guint prop_id, GValue *value, GPa
 /* headers signals */
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestGtkhtmlMsgView *msg_view);
 static void on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_part, gpointer userdata);
+static void on_view_images_clicked (GtkButton * button, gpointer self);
 
 /* body view signals */
 static gboolean on_activate_link (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMsgView *msg_view);
@@ -213,6 +215,7 @@ struct _ModestGtkhtmlMsgViewPrivate {
 	GtkWidget   *headers_box;
 	GtkWidget   *html_scroll;
 	GtkWidget   *attachments_box;
+	GtkWidget   *view_images_button;
 
 	/* internal adjustments for set_scroll_adjustments */
 	GtkAdjustment *hadj;
@@ -1040,8 +1043,9 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	priv->body_view                 = GTK_WIDGET (g_object_new (MODEST_TYPE_GTKHTML_MIME_PART_VIEW, NULL));
 	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new (TRUE));
+	priv->view_images_button = gtk_button_new_with_label (_("TODO: view images"));
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
-
+	gtk_widget_set_no_show_all (priv->view_images_button, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
 
 	g_signal_connect (G_OBJECT(priv->body_view), "activate_link",
@@ -1061,6 +1065,9 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	g_signal_connect (G_OBJECT (priv->attachments_view), "activate",
 			  G_CALLBACK (on_attachment_activated), obj);
 
+	g_signal_connect (G_OBJECT (priv->view_images_button), "clicked",
+			  G_CALLBACK (on_view_images_clicked), obj);
+
 	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(priv->html_scroll));
 
 	g_signal_connect (G_OBJECT (html_vadj), "changed",
@@ -1073,6 +1080,10 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
+	if (priv->view_images_button) {
+		gtk_box_pack_start (GTK_BOX (priv->headers_box), priv->view_images_button, FALSE, FALSE, 0);
+		gtk_widget_hide (priv->view_images_button);
+	}
 	
 	if (priv->attachments_view) {
 		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
@@ -1318,6 +1329,22 @@ on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_par
 	g_signal_emit_by_name (G_OBJECT(self), "attachment_clicked", mime_part);
 }
 
+static void
+on_view_images_clicked (GtkButton * button, gpointer self)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
+	TnyMimePart *part;
+
+	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
+	gtk_widget_hide (priv->view_images_button);
+	part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
+	tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
+	tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
+	g_object_unref (part);
+	
+
+}
+
 static gboolean
 on_activate_link (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMsgView *self)
 {
@@ -1426,8 +1453,12 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 	const gchar* my_uri;
 	TnyMimePart *part = NULL;
 	
+
+
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
+	if (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)))
+		gtk_widget_show (priv->view_images_button);
 	/*
 	 * we search for either something starting with cid:, or something
 	 * with no prefix at all; this latter case occurs when sending mails
@@ -1440,12 +1471,42 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 	
 	/* now try to find the embedded image */
 	part = find_cid_image (priv->msg, my_uri);
+
 	if (!part) {
-		g_printerr ("modest: %s: '%s' not found\n", __FUNCTION__, my_uri);
-		return FALSE;	
+		GtkIconTheme *current_theme;
+		GtkIconInfo *icon_info;
+
+		if (g_str_has_prefix (uri, "http:")) {
+			if (modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {
+				gboolean result = FALSE;
+				g_signal_emit_by_name (self, "fetch-image", uri, stream, &result);
+				return result;
+			} else {
+				current_theme = gtk_icon_theme_get_default ();
+				icon_info = gtk_icon_theme_lookup_icon (current_theme, "qgn_indi_messagin_nullcmas", 26,
+									GTK_ICON_LOOKUP_NO_SVG);
+				if (icon_info != NULL) {
+					const gchar *filename;
+					TnyStream *vfs_stream;
+					GnomeVFSHandle *handle;
+					filename = gtk_icon_info_get_filename (icon_info);
+					gnome_vfs_open (&handle, filename, GNOME_VFS_OPEN_READ);
+					vfs_stream = tny_vfs_stream_new (handle);
+					while (tny_stream_write_to_stream (vfs_stream, stream) > 0);
+					tny_stream_close (vfs_stream);
+					g_object_unref (vfs_stream);
+					gtk_icon_info_free (icon_info);
+				}
+				tny_stream_close (stream);
+				return TRUE;
+			}
+		} else {
+			return FALSE;
+		}
 	}
 
 	tny_mime_part_decode_to_stream ((TnyMimePart*)part, stream, NULL);
+	tny_stream_close (stream);
 	g_object_unref (G_OBJECT(part));
 	return TRUE;
 }
@@ -1462,6 +1523,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
+	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), FALSE);
 
 	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
 	html_vadj->upper = 0;
@@ -1495,6 +1557,8 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW(priv->attachments_view),
 					     msg);
+
+	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), tny_msg_get_allow_external_images (msg));
 	
 	body = modest_tny_msg_find_body_part (msg, TRUE);
 	if (body) {
@@ -1508,6 +1572,13 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 
 	} else 
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
+
+	if (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)) &&
+	    !modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {
+		gtk_widget_show (priv->view_images_button);
+	} else {
+		gtk_widget_hide (priv->view_images_button);
+	}
 
 	gtk_widget_show (priv->body_view);
 	gtk_widget_set_no_show_all (priv->attachments_box, TRUE);

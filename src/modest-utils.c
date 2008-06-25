@@ -719,3 +719,19 @@ modest_utils_run_sort_dialog (GtkWindow *parent_window,
 	on_destroy_dialog (GTK_DIALOG(dialog));
 }
 
+
+gchar *
+modest_images_cache_get_id (const gchar *account, const gchar *uri)
+{
+	GnomeVFSURI *vfs_uri;
+	gchar *result;
+ 
+	vfs_uri = gnome_vfs_uri_new (uri);
+	if (vfs_uri == NULL)
+		return NULL;
+ 
+	result = g_strdup_printf ("%s__%x", account, gnome_vfs_uri_hash (vfs_uri));
+	gnome_vfs_uri_unref (vfs_uri);
+ 
+	return result;
+}
