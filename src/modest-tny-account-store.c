@@ -1864,6 +1864,25 @@ remove_transport_account (ModestTnyAccountStore *self,
 				      on_account_disconnect_when_removing, self);
 }
 
+static gboolean
+images_cache_remove_filter (TnyStreamCache *self, const gchar *id, const gchar *account_name)
+{
+	gchar *account_name_with_separator;
+	gboolean result;
+	if (account_name == NULL || account_name[0] == '\0')
+		return FALSE;
+
+	if (id == NULL || id[0] == '\0')
+		return FALSE;
+
+	account_name_with_separator = g_strconcat (account_name, "__", NULL);
+
+	result = (g_str_has_prefix (id, account_name));
+	g_free (account_name_with_separator);
+
+	return result;
+}
+
 static void
 on_account_removed (ModestAccountMgr *acc_mgr, 
 		    const gchar *account,
@@ -1872,6 +1891,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	TnyAccount *store_account = NULL, *transport_account = NULL;
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
+	TnyStreamCache *stream_cache;
 	
 	self = MODEST_TNY_ACCOUNT_STORE (user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
@@ -1923,6 +1943,10 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 		g_warning ("%s: no transport account for account %s\n", 
 			   __FUNCTION__, account);
 	}
+
+	/* Remove cached images */
+	stream_cache = modest_runtime_get_images_cache ();
+	tny_stream_cache_remove (stream_cache, (TnyStreamCacheRemoveFilter) images_cache_remove_filter, (gpointer) account);
 
 	/* If there are no more user accounts then delete the
 	   transport specific SMTP servers */
