@@ -1131,7 +1131,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	if (error->code == TNY_SERVICE_ERROR_CERTIFICATE)
 		retval = modest_platform_run_certificate_confirmation_dialog (server_name,
 									      error->message);
-	else {
+	else if (error->code == TNY_SERVICE_ERROR_AUTHENTICATE) {
 		modest_platform_run_information_dialog (NULL, prompt, TRUE);
 
 		/* Show the account dialog if it was wrong */
@@ -1142,6 +1142,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		retval = TRUE;
 	}
 
+	g_debug ("%s: error code %d (%s", __FUNCTION__, error->code, error->message);
 	
 	if (prompt)
 		g_free (prompt);
