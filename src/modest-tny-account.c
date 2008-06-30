@@ -336,8 +336,6 @@ update_tny_account (TnyAccount *tny_account,
 			if (protocol == MODEST_PROTOCOL_STORE_IMAP ||
 			    protocol == MODEST_PROTOCOL_STORE_POP)
 				auth_mech_name = NULL;
-			else if (protocol == MODEST_PROTOCOL_TRANSPORT_SMTP)
-				auth_mech_name = NULL; 
 			else
 				auth_mech_name = MODEST_ACCOUNT_AUTH_PLAIN;
 			break;
@@ -365,8 +363,7 @@ update_tny_account (TnyAccount *tny_account,
 			break;
 		}
 		
-		if(auth_mech_name) 
-			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
+		tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		
 		if (modest_protocol_info_protocol_is_store(protocol) && 
 			(protocol == MODEST_PROTOCOL_STORE_IMAP) ) {
