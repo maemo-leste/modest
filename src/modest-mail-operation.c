@@ -1197,7 +1197,7 @@ static void
 foreach_add_item (gpointer header, gpointer user_data)
 {
 	tny_list_prepend (TNY_LIST (user_data), 
-			  g_object_ref (G_OBJECT (header)));
+			  G_OBJECT (header));
 }
 
 /* This is the method that looks for new messages in a folder */
