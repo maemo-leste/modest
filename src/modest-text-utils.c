@@ -360,17 +360,24 @@ modest_text_utils_remove_duplicate_addresses (const gchar *address_list)
 	
 	g_return_val_if_fail (address_list, NULL);
 
-	table = g_hash_table_new (g_str_hash, g_str_equal);
+	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	addresses = modest_text_utils_split_addresses_list (address_list);
 
 	cursor = addresses;
 	while (cursor) {
 		const gchar* address = (const gchar*)cursor->data;
 
+		/* We need only the email to just compare it and not
+		   the full address which would make "a <a@a.com>"
+		   different from "a@a.com" */
+		const gchar *email = get_email_from_address (address);
+
 		/* ignore the address if already seen */
-		if (g_hash_table_lookup (table, address) == 0) {
+		if (g_hash_table_lookup (table, email) == 0) {
 			gchar *tmp;
 
+			/* Include the full address and not only the
+			   email in the returned list */
 			if (!new_list) {
 				tmp = g_strdup (address);
 			} else {
@@ -379,12 +386,12 @@ modest_text_utils_remove_duplicate_addresses (const gchar *address_list)
 			}
 			new_list = tmp;
 			
-			g_hash_table_insert (table, (gchar*)address, GINT_TO_POINTER(1));
+			g_hash_table_insert (table, (gchar*)email, GINT_TO_POINTER(1));
 		}
 		cursor = g_slist_next (cursor);
 	}
 
-	g_hash_table_destroy (table);
+	g_hash_table_unref (table);
 	g_slist_foreach (addresses, (GFunc)g_free, NULL);
 	g_slist_free (addresses);
 
