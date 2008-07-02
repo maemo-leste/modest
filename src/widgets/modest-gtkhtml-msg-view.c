@@ -47,6 +47,7 @@
 #include <widgets/modest-gtkhtml-mime-part-view.h>
 #include <widgets/modest-gtkhtml-msg-view.h>
 #include <widgets/modest-isearch-view.h>
+#include <widgets/modest-ui-constants.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifdef MODEST_PLATFORM_MAEMO
@@ -1043,7 +1044,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	priv->body_view                 = GTK_WIDGET (g_object_new (MODEST_TYPE_GTKHTML_MIME_PART_VIEW, NULL));
 	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new (TRUE));
-	priv->view_images_button = gtk_button_new_with_label (_("TODO: view images"));
+	priv->view_images_button = gtk_button_new_with_label (_("mail_bd_external_images"));
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_set_no_show_all (priv->view_images_button, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
@@ -1074,14 +1075,18 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 			  G_CALLBACK (html_adjustment_changed), obj);
 
 	gtk_widget_push_composite_child ();
-	priv->headers_box = gtk_vbox_new (0, FALSE);
+	priv->headers_box = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_set_composite_name (priv->headers_box, "headers");
 	gtk_widget_pop_composite_child ();
 
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
 	if (priv->view_images_button) {
-		gtk_box_pack_start (GTK_BOX (priv->headers_box), priv->view_images_button, FALSE, FALSE, 0);
+		GtkWidget *hbuttonbox;
+		
+		hbuttonbox = gtk_hbutton_box_new ();
+		gtk_container_add (GTK_CONTAINER (hbuttonbox), priv->view_images_button);
+		gtk_box_pack_start (GTK_BOX (priv->headers_box), hbuttonbox, FALSE, FALSE, 0);
 		gtk_widget_hide (priv->view_images_button);
 	}
 	
@@ -1473,30 +1478,13 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 	part = find_cid_image (priv->msg, my_uri);
 
 	if (!part) {
-		GtkIconTheme *current_theme;
-		GtkIconInfo *icon_info;
-
 		if (g_str_has_prefix (uri, "http:")) {
 			if (modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {
 				gboolean result = FALSE;
 				g_signal_emit_by_name (self, "fetch-image", uri, stream, &result);
 				return result;
 			} else {
-				current_theme = gtk_icon_theme_get_default ();
-				icon_info = gtk_icon_theme_lookup_icon (current_theme, "qgn_indi_messagin_nullcmas", 26,
-									GTK_ICON_LOOKUP_NO_SVG);
-				if (icon_info != NULL) {
-					const gchar *filename;
-					TnyStream *vfs_stream;
-					GnomeVFSHandle *handle;
-					filename = gtk_icon_info_get_filename (icon_info);
-					gnome_vfs_open (&handle, filename, GNOME_VFS_OPEN_READ);
-					vfs_stream = tny_vfs_stream_new (handle);
-					while (tny_stream_write_to_stream (vfs_stream, stream) > 0);
-					tny_stream_close (vfs_stream);
-					g_object_unref (vfs_stream);
-					gtk_icon_info_free (icon_info);
-				}
+				/* we return immediately to get a "image not found" icon */
 				tny_stream_close (stream);
 				return TRUE;
 			}
