@@ -1551,6 +1551,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	body = modest_tny_msg_find_body_part (msg, TRUE);
 	if (body) {
 		tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), body);
+		g_object_unref (body);
 
 		if(modest_attachments_view_has_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view))) {
 			gtk_widget_show_all (priv->attachments_box);

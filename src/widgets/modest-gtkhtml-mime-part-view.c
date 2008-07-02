@@ -51,6 +51,7 @@ static void    modest_zoomable_init                     (gpointer g, gpointer if
 static void    modest_isearch_view_init                 (gpointer g, gpointer iface_data);
 static void    modest_gtkhtml_mime_part_view_init       (ModestGtkhtmlMimePartView *self);
 static void    modest_gtkhtml_mime_part_view_finalize   (GObject *self);
+static void    modest_gtkhtml_mime_part_view_dispose    (GObject *self);
 
 /* GtkHTML signal handlers */
 static gboolean  on_link_clicked  (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMimePartView *self);
@@ -204,6 +205,7 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
+	gobject_class->dispose = modest_gtkhtml_mime_part_view_dispose;
 	gobject_class->finalize = modest_gtkhtml_mime_part_view_finalize;
 
 	klass->get_part_func = modest_gtkhtml_mime_part_view_get_part_default;
@@ -253,6 +255,19 @@ static void
 modest_gtkhtml_mime_part_view_finalize (GObject *obj)
 {
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
+}
+
+static void
+modest_gtkhtml_mime_part_view_dispose (GObject *obj)
+{
+	ModestGtkhtmlMimePartViewPrivate *priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (obj);
+
+	if (priv->part) {
+		g_object_unref (priv->part);
+		priv->part = NULL;
+	}
+
+	G_OBJECT_CLASS (parent_class)->dispose (obj);
 }
 
 /* GTKHTML SIGNALS HANDLERS */
