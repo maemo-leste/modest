@@ -1026,6 +1026,11 @@ is_memory_full_error (GError *error)
 	gnome_vfs_uri_unref (cache_dir_uri);
 
 	if ((error->code == TNY_SYSTEM_ERROR_MEMORY ||
+	     /* When asking for a mail and no space left on device
+		tinymail returns this error */
+	     error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE ||
+	     /* When the folder summary could not be read or
+		written */
 	     error->code == TNY_IO_ERROR_WRITE ||
 	     error->code == TNY_IO_ERROR_READ) && 
 	    !enough_free_space) {
