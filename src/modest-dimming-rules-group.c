@@ -41,6 +41,9 @@ static void modest_dimming_rules_group_finalize   (GObject *obj);
 static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
 #endif
 
+static void on_window_destroy (gpointer data,
+			       GObject *object);
+
 static void _add_rule (ModestDimmingRulesGroup *self,
 		       ModestDimmingRule *rule,
 		       ModestWindow *window);
@@ -250,6 +253,7 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 
 	/* Set window to process dimming rules */
 	priv->window = MODEST_WINDOW (window);
+	g_object_weak_ref (G_OBJECT (window), on_window_destroy, self);
 
 	/* Add dimming rules */
 	for (i=0; i < n_elements; i++) {
@@ -295,6 +299,9 @@ modest_dimming_rules_group_execute (ModestDimmingRulesGroup *self)
 
 	g_return_if_fail (MODEST_IS_DIMMING_RULES_GROUP(self));
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
+
+	if (!priv->window)
+		return;
 
 	/* Init dimming rules init data */
 	state = modest_ui_dimming_rules_define_dimming_state (priv->window);	
@@ -359,3 +366,13 @@ _insensitive_press_callback (GtkWidget *widget, gpointer user_data)
 		g_free(notification);
 }
 #endif
+
+static void
+on_window_destroy (gpointer data,
+		   GObject *object)
+{
+	ModestDimmingRulesGroup *self = MODEST_DIMMING_RULES_GROUP (data);
+	ModestDimmingRulesGroupPrivate *priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE (self);
+
+	priv->window = NULL;
+}
