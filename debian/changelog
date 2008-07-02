@@ -1,3 +1,9 @@
+modest (1.0-2008.27-1) hardy; urgency=low
+
+  * Fixes: NB#86655, NB#86587, NB#83343, NB#86328, NB#86376, NB#86286
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 02 Jul 2008 10:37:11 +0300
+
 modest (1.0-2008.26-1) hardy; urgency=low
 
   * Fixes: NB#83920, NB#86372, NB#86116, NB#84538, NB#84757, NB#85343
