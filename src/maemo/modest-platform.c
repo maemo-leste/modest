@@ -1489,13 +1489,31 @@ modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
-	GtkWidget *banner;
+	GtkWidget *banner, *banner_parent = NULL;
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
 	if (modest_window_mgr_num_windows (mgr) == 0)
 		return;
 
-	banner = hildon_banner_show_information (parent, icon_name, text);
+	if (parent && GTK_IS_WINDOW (parent)) {
+		/* If the window is the active one then show the
+		   banner on top of this window */
+		if (gtk_window_is_active (GTK_WINDOW (parent)))
+			banner_parent = parent;
+		/* If the window is not the topmost but it's visible
+		   (it's minimized for example) then show the banner
+		   with no parent */ 
+		else if (GTK_WIDGET_VISIBLE (parent))
+			banner_parent = NULL;
+		/* If the window is hidden (like the main window when
+		   running in the background) then do not show
+		   anything */
+		else 
+			return;
+	}
+
+
+	banner = hildon_banner_show_information (banner_parent, icon_name, text);
 
 	modest_window_mgr_register_banner (mgr);
 	g_object_ref (mgr);
