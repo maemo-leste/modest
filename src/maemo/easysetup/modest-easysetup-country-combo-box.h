@@ -73,7 +73,7 @@ void easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self);
 gint easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *self);
 
 
-gboolean easysetup_country_combo_box_set_active_country_mcc (EasysetupCountryComboBox *self, guint mcc);
+gboolean easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox *self);
 
 G_END_DECLS
 

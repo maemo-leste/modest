@@ -41,7 +41,8 @@
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
-
+#include <langinfo.h>
+#include <locale.h>
 #include <libintl.h> /* For dgettext(). */
 
 /* Include config.h so that _() works: */
@@ -55,7 +56,8 @@ G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, GTK_TYPE_C
 
 typedef struct
 {
-	GtkTreeModel *model;
+	gint locale_mcc;
+/* 	GtkTreeModel *model; */
 } ModestEasysetupCountryComboBoxPrivate;
 
 #define MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -98,9 +100,6 @@ enum MODEL_COLS {
 static void
 easysetup_country_combo_box_finalize (GObject *object)
 {
-	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (object);
-
-	g_object_unref (G_OBJECT (priv->model));
 	G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->finalize (object);
 }
 
@@ -191,14 +190,26 @@ parse_mcc_mapping_line (const char* line,  char** country)
  * by the operator-wizard-settings package.
  */
 static void
-load_from_file (EasysetupCountryComboBox *self)
+load_from_file (EasysetupCountryComboBox *self, GtkListStore *liststore)
 {
 	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
-	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	
 	char line[MAX_LINE_LEN];
 	guint previous_mcc = 0;
-	
+	gchar *territory, *fallback = NULL;
+	gchar *current_locale;
+
+	/* Get the territory specified for the current locale */
+	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
+
+	/* Tricky stuff, the translations of the OSSO countries does
+	   not always correspond to the country names in locale
+	   databases. Add all these cases here. sergio */
+	if (!strcmp (territory, "United Kingdom"))
+		fallback = g_strdup ("UK");
+
+	current_locale = setlocale (LC_ALL ,NULL);
+
 	FILE *file = modest_maemo_open_mcc_mapping_file ();
 	if (!file) {
 		g_warning("Could not open mcc_mapping file");
@@ -209,6 +220,8 @@ load_from_file (EasysetupCountryComboBox *self)
 
 		int mcc;
 		char *country = NULL;
+		const gchar *name_translated, *english_translation;
+
 		mcc = parse_mcc_mapping_line (line, &country);
 		if (!country || mcc == 0) {
 			g_warning ("%s: error parsing line: '%s'", __FUNCTION__, line);
@@ -220,16 +233,14 @@ load_from_file (EasysetupCountryComboBox *self)
 			continue;
 		}
 		previous_mcc = mcc;
-		
-		/* Get the translation for the country name:
-		 * Note that the osso_countries_1.0 translation domain files are installed 
-		 * by the operator-wizard-settings package. */
-		/* For post-Bora, there is a separate (meta)package osso-countries-l10n-mr0 */
-				
-		/* Note: Even when the untranslated names are different, there may still be 
-		 * duplicate translated names. They would be translation bugs.
-		 */
-		const gchar *name_translated = dgettext ("osso-countries", country);
+
+		if (!priv->locale_mcc) {
+			english_translation = dgettext ("osso-countries", country);
+			if (!strcmp (english_translation, territory) ||
+			    (fallback && !strcmp (english_translation, fallback)))
+				priv->locale_mcc = mcc;
+		}
+		name_translated = dgettext ("osso-countries", country);
 		
 		/* Add the row to the model: */
 		GtkTreeIter iter;
@@ -237,29 +248,31 @@ load_from_file (EasysetupCountryComboBox *self)
 		gtk_list_store_set(liststore, &iter, MODEL_COL_MCC, mcc, MODEL_COL_NAME, name_translated, -1);
 	}	
 	fclose (file);
-	
+
 	/* Sort the items: */
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (liststore), 
 					      MODEL_COL_NAME, GTK_SORT_ASCENDING);
+
+	g_free (fallback);
 }
 
 static void
 easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 {
 	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
-	priv->model = NULL;
+	priv->locale_mcc = 0;
 }
 
 void
 easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 {
-	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	GtkListStore *model;
 
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an int for the MCC ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT));
+	model = gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT);
 	
 	/* Setup the combo box: */
 	GtkComboBox *combobox = GTK_COMBO_BOX (self);
@@ -272,14 +285,11 @@ easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
 	"text", MODEL_COL_NAME, NULL);
 
-	
-	g_assert (GTK_IS_LIST_STORE(priv->model));
-
-	
 	/* Fill the model with rows: */
-	load_from_file (self);
+	load_from_file (self, model);
+
 	/* Set this _after_ loading from file, it makes loading faster */
-	gtk_combo_box_set_model (combobox, priv->model);
+	gtk_combo_box_set_model (combobox, GTK_TREE_MODEL (model));
 }
 
 EasysetupCountryComboBox*
@@ -297,9 +307,9 @@ easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *se
 	GtkTreeIter active;
 	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self), &active);
 	if (found) {
-		ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 		gint mcc = 0;
-		gtk_tree_model_get (priv->model, &active, MODEL_COL_MCC, &mcc, -1); 
+		gtk_tree_model_get (gtk_combo_box_get_model (GTK_COMBO_BOX (self)), 
+				    &active, MODEL_COL_MCC, &mcc, -1);
 		return mcc;	
 	}
 	return 0; /* Failed. */
@@ -311,21 +321,23 @@ easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *se
  * Specify 0 to select no country. 
  */
 gboolean
-easysetup_country_combo_box_set_active_country_mcc (EasysetupCountryComboBox *self, guint mcc)
+easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox *self)
 {
 	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	GtkTreeIter iter;
+	gint current_mcc;
+	GtkTreeModel *model;
 
-	if (!gtk_tree_model_get_iter_first (priv->model, &iter)) 
+	model = gtk_combo_box_get_model (GTK_COMBO_BOX (self));
+	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;
 	do {
-		gint current_mcc = 0;
-		gtk_tree_model_get (priv->model, &iter, MODEL_COL_MCC, &current_mcc, -1);
-		if (current_mcc == mcc) {
+		gtk_tree_model_get (model, &iter, MODEL_COL_MCC, &current_mcc, -1);
+		if (priv->locale_mcc == current_mcc) {
 			gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), &iter);
 			return TRUE;
 		}
-	} while (gtk_tree_model_iter_next (priv->model, &iter));
+	} while (gtk_tree_model_iter_next (model, &iter));
 	
 	return FALSE; /* not found */
 }

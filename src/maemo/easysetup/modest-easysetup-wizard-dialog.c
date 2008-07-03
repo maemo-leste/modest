@@ -40,6 +40,7 @@
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
+#include <string.h> /* For strlen(). */
 #include "maemo/easysetup/modest-easysetup-country-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
@@ -47,6 +48,7 @@
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
+#include "modest-conf.h"
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
@@ -55,8 +57,6 @@
 #include "widgets/modest-account-settings-dialog.h"
 #include "maemo/modest-maemo-utils.h"
 #include "modest-utils.h"
-#include <gconf/gconf-client.h>
-#include <string.h> /* For strlen(). */
 #include "maemo/modest-hildon-includes.h"
 
 /* Include config.h so that _() works: */
@@ -457,44 +457,6 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 {
 	/* ModestEasysetupWizardDialog *dialog = MODEST_EASYSETUP_WIZARD_DIALOG (user_data); */
 	show_error (GTK_WIDGET (self), _CS("ckdg_ib_maximum_characters_reached"));
-}
-
-static gint
-get_default_country_code(void)
-{
-	/* TODO: Default to the current country somehow.
-	 * But I don't know how to get the information that is specified in the
-	 * "Language and region" control panel. It does not seem be anywhere in gconf. murrayc.
-	 *
-	 * This is probably not the best choice of gconf key:
-	 * This is the	"mcc used in the last pairing", ie. the last connection you made.
-	 * set by the osso-operator-wizard package, suggested by Dirk-Jan Binnema.
-	 *
-	 */
-	GError *error = NULL;
-	const gchar* key = "/apps/osso/operator-wizard/last_mcc";
-	gint mcc_id = modest_conf_get_int(modest_runtime_get_conf (), key, &error);
-
-	if(mcc_id < 0)
-		mcc_id = 0;
-
-	if (error) {
-		g_warning ("Error getting gconf key %s:\n%s", key, error->message);
-		g_error_free (error);
-		error = NULL;
-
-		mcc_id = 0;
-	}
-
-	/* Note that modest_conf_get_int() seems to return 0 without an error if the key is not there
-	 * This might just be a Maemo bug.
-	 */
-	if (mcc_id == 0)
-	{
-		/* For now, we default to Finland when there is nothing better: */
-		mcc_id = 244;
-	}
-	return mcc_id;
 }
 
 static GtkWidget*
@@ -1151,12 +1113,17 @@ presets_idle (gpointer userdata)
 	priv->presets = idle_data->presets;
 
 	if (MODEST_EASYSETUP_IS_COUNTRY_COMBO_BOX (priv->combo_account_country)) {
-		gint mcc = get_default_country_code();
+/* 		gint mcc = get_default_country_code(); */
+		gint mcc;
 		/* Fill the combo in an idle call, as it takes a lot of time */
 		easysetup_country_combo_box_load_data(
 			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
-		easysetup_country_combo_box_set_active_country_mcc (
-			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country), mcc);
+/* 		easysetup_country_combo_box_set_active_country_mcc ( */
+/* 			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country), mcc); */
+		easysetup_country_combo_box_set_active_country_locale (
+			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
+		mcc = easysetup_country_combo_box_get_active_country_mcc (
+		        MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
 		easysetup_provider_combo_box_fill (
 			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider),
 			priv->presets, mcc);
