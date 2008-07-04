@@ -44,6 +44,7 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-folder-stats.h>
+#include <tny-merge-folder.h>
 #include <modest-debug.h>
 #include <string.h>
 #ifdef MODEST_PLATFORM_MAEMO
@@ -897,119 +898,109 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 
 
 
-typedef gint (*TnyStatsFunc) (TnyFolderStats *stats);
-#define TASK_GET_ALL_COUNT	0
-#define TASK_GET_LOCAL_SIZE	1
-#define TASK_GET_FOLDER_COUNT	2
+typedef struct _RecurseFoldersAsyncHelper {
+	ModestFolderStats stats;
+	guint pending_calls;
+	GetFolderStatsCallback callback;
+	GetFolderStatsCallback status_callback;
+	gpointer user_data;
+} RecurseFoldersAsyncHelper;
 
-typedef struct _RecurseFoldersHelper {
-	gint task;
-	guint sum;
-	guint folders;
-} RecurseFoldersHelper;
-
-static void
-recurse_folders (TnyFolderStore *store, 
-		 TnyFolderStoreQuery *query, 
-		 RecurseFoldersHelper *helper)
+static void 
+recurse_folders_async_cb (TnyFolderStore *folder_store, 
+			  gboolean canceled,
+			  TnyList *list, 
+			  GError *err, 
+			  gpointer user_data)
 {
-	TnyIterator *iter;
-	TnyList *folders = tny_simple_list_new ();
+	RecurseFoldersAsyncHelper *helper;
+    	TnyIterator *iter;
 
-	tny_folder_store_get_folders (store, folders, query, NULL);
-	iter = tny_list_create_iterator (folders);
+	helper = (RecurseFoldersAsyncHelper *) user_data;
 
-	helper->folders += tny_list_get_length (folders);
+	/* A goto just to avoid an indentation level */
+	if (err || canceled)
+		goto next_folder;
 
+	/* Retrieve children */
+	iter = tny_list_create_iterator (list);
 	while (!tny_iterator_is_done (iter)) {
-		TnyFolder *folder;
+		TnyList *folders = NULL;
+		TnyFolderStore *folder = NULL;
 
-		folder = TNY_FOLDER (tny_iterator_get_current (iter));
-		if (folder) {
-			if (helper->task == TASK_GET_ALL_COUNT)
-				helper->sum += tny_folder_get_all_count (folder);
-
-			if (helper->task == TASK_GET_LOCAL_SIZE)
-				helper->sum += tny_folder_get_local_size (folder);
-
-			if (TNY_IS_FOLDER_STORE (folder))
-				recurse_folders (TNY_FOLDER_STORE (folder), query, helper);
-
- 			g_object_unref (folder);
+		folders = tny_simple_list_new ();
+		folder = (TnyFolderStore*) tny_iterator_get_current (iter);
+	
+		/* Add pending call */
+		helper->pending_calls++;
+		helper->stats.folders++;
+		if (TNY_IS_FOLDER (folder)) {
+			helper->stats.msg_count += tny_folder_get_all_count (TNY_FOLDER (folder));
+			helper->stats.local_size += tny_folder_get_local_size (TNY_FOLDER (folder));
 		}
 
+		/* notify */
+		if (helper->status_callback)
+			helper->status_callback (helper->stats, helper->user_data);
+
+		/* Avoid the outbox */
+		if (!TNY_IS_MERGE_FOLDER (folder) && 
+		    (TNY_IS_FOLDER (folder) && 
+		     tny_folder_get_folder_type (TNY_FOLDER (folder)) != TNY_FOLDER_TYPE_OUTBOX))
+			tny_folder_store_get_folders_async (folder, folders, NULL,
+							    recurse_folders_async_cb, 
+							    NULL, helper);
+		g_object_unref (folders);
+		g_object_unref (G_OBJECT (folder));
+		
 		tny_iterator_next (iter);
 	}
-	 g_object_unref (G_OBJECT (iter));
-	 g_object_unref (G_OBJECT (folders));
+	g_object_unref (G_OBJECT (iter));
+
+next_folder:
+	/* Remove my own pending call */
+	helper->pending_calls--;
+
+	/* This means that we have all the folders */
+	if (helper->pending_calls == 0) {
+		/* notify */
+		if (helper->callback)
+			helper->callback (helper->stats, helper->user_data);
+
+		/* Free resources */
+		g_slice_free (RecurseFoldersAsyncHelper, helper);
+	}
 }
 
-gint 
-modest_tny_folder_store_get_folder_count (TnyFolderStore *self)
+void
+modest_tny_folder_store_get_folder_stats (TnyFolderStore *self,
+					  GetFolderStatsCallback callback,
+					  GetFolderStatsCallback status_callback,
+					  gpointer user_data)
 {
-	RecurseFoldersHelper *helper;
-	gint retval;
+	RecurseFoldersAsyncHelper *helper;
+	TnyList *folders;
 
-	g_return_val_if_fail (TNY_IS_FOLDER_STORE (self), -1);
+	g_return_if_fail (TNY_IS_FOLDER_STORE (self));
 
 	/* Create helper */
-	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
-	helper->task = TASK_GET_FOLDER_COUNT;
-	helper->folders = 0;
+	helper = g_slice_new0 (RecurseFoldersAsyncHelper);
+	helper->pending_calls = 1;
+	helper->callback = callback;
+	helper->status_callback = status_callback;
+	helper->user_data = user_data;
 
-	recurse_folders (self, NULL, helper);
+	if (TNY_IS_FOLDER (self)) {
+		helper->stats.msg_count = tny_folder_get_all_count (TNY_FOLDER (self));
+		helper->stats.local_size = tny_folder_get_local_size (TNY_FOLDER (self));
+	}
 
-	retval = helper->folders;
-
-	g_free (helper);
-
-	return retval;
-}
-
-gint
-modest_tny_folder_store_get_message_count (TnyFolderStore *self)
-{
-	RecurseFoldersHelper *helper;
-	gint retval;
-
-	g_return_val_if_fail (TNY_IS_FOLDER_STORE (self), -1);
-	
-	/* Create helper */
-	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
-	helper->task = TASK_GET_ALL_COUNT;
-	if (TNY_IS_FOLDER (self))
-		helper->sum = tny_folder_get_all_count (TNY_FOLDER (self));
-
-	recurse_folders (self, NULL, helper);
-
-	retval = helper->sum;
-
-	g_free (helper);
-
-	return retval;
-}
-
-gint 
-modest_tny_folder_store_get_local_size (TnyFolderStore *self)
-{
-	RecurseFoldersHelper *helper;
-	gint retval;
-
-	g_return_val_if_fail (TNY_IS_FOLDER_STORE (self), -1);
-
-	/* Create helper */
-	helper = g_malloc0 (sizeof (RecurseFoldersHelper));
-	helper->task = TASK_GET_LOCAL_SIZE;
-	if (TNY_IS_FOLDER (self))
-		helper->sum = tny_folder_get_local_size (TNY_FOLDER (self));
-
-	recurse_folders (self, NULL, helper);
-
-	retval = helper->sum;
-
-	g_free (helper);
-
-	return retval;
+	folders = tny_simple_list_new ();
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (self),
+					    folders, NULL,
+					    recurse_folders_async_cb, 
+					    NULL, helper);
+	g_object_unref (folders);
 }
 
 const gchar* 
