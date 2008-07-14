@@ -455,7 +455,6 @@ find_msg_async_cb (TnyFolder *folder,
         header = tny_msg_get_header (msg);
         if (header && (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)) {
                 g_object_unref (header);
-                g_object_unref (msg);
 		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
                 goto end;
@@ -559,7 +558,6 @@ find_msg_async_cb (TnyFolder *folder,
 
 cleanup:
         g_object_unref (header);
-        g_object_unref (msg);
 
 end:
         on_find_msg_async_destroy (info);
