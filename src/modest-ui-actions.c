@@ -1742,7 +1742,10 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		header_list = get_selected_headers (win);
 		if (!header_list)
 			return;
-		if (tny_list_get_length (header_list) == 0) {
+		/* Check that only one message is selected for replying */
+		if (tny_list_get_length (header_list) != 1) {
+			modest_platform_information_banner ((win) ? GTK_WIDGET (win) : NULL,
+							    NULL, _("mcen_ib_select_one_message"));
 			g_object_unref (header_list);
 			return;
 		}
