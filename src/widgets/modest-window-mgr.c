@@ -1237,6 +1237,10 @@ idle_top_modal (gpointer data)
 	if (topmost) {
 		gdk_threads_enter ();
 		gtk_window_present (topmost);
+		/* It seems that the window looses modality if some
+		   other is shown on top of it after set_transient_for
+		   and set_parent */
+		gtk_window_set_modal (topmost, TRUE);
 		gdk_threads_leave ();
 	}
 
