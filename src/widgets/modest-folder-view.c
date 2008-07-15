@@ -402,6 +402,13 @@ text_cell_data  (GtkTreeViewColumn *column,
 				g_free (fname);
 				fname = g_strdup (modest_local_folder_info_get_type_display_name (type));
 			}
+		} else {
+			/* Sometimes an special folder is reported by the server as
+			   NORMAL, like some versions of Dovecot */
+			if (type == TNY_FOLDER_TYPE_NORMAL ||
+			    type == TNY_FOLDER_TYPE_UNKNOWN) {
+				type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
+			}
 		}
 
 		/* note: we cannot reliably get the counts from the tree model, we need
@@ -574,9 +581,8 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 
 	ThreePixbufs *retval = NULL;
 
-	/* MERGE is not needed anymore as the folder now has the correct type jschmid */
-	/* We include the MERGE type here because it's used to create
-	   the local OUTBOX folder */
+	/* Sometimes an special folder is reported by the server as
+	   NORMAL, like some versions of Dovecot */
 	if (type == TNY_FOLDER_TYPE_NORMAL ||
 	    type == TNY_FOLDER_TYPE_UNKNOWN) {
 		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));

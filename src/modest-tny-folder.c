@@ -69,6 +69,26 @@ modest_tny_folder_guess_folder_type (TnyFolder *folder)
 		type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 	else
 		type = tny_folder_get_folder_type (TNY_FOLDER (folder));
+
+	/* Fallback code, some servers (Dovecot in some versions)
+	   report incorrectly that the INBOX folder is a normal
+	   folder. Really ugly code but... */
+	if (type == TNY_FOLDER_TYPE_NORMAL) {
+		TnyFolderStore *parent = tny_folder_get_folder_store (folder);
+		if (parent) {
+			if (TNY_IS_ACCOUNT (parent)) {
+				gchar *downcase = 
+					g_ascii_strdown (tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder)), 
+							 -1);
+
+				if ((strlen (downcase) == 5) &&
+				    !strncmp (downcase, "inbox", 5))
+					type = TNY_FOLDER_TYPE_INBOX;
+				g_free (downcase);
+			}
+			g_object_unref (parent);
+		}
+	}
 	
 	if (type == TNY_FOLDER_TYPE_UNKNOWN) {
 		const gchar *folder_name =
