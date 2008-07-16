@@ -504,7 +504,7 @@ modest_list_index (TnyList *list, GObject *object)
 }
 
 guint64 
-modest_folder_available_space (const gchar *maildir_path)
+modest_utils_get_available_space (const gchar *maildir_path)
 {
 	gchar *folder;
 	gchar *uri_string;
@@ -519,10 +519,10 @@ modest_folder_available_space (const gchar *maildir_path)
 
 	if (uri) {
 		if (gnome_vfs_get_volume_free_space (uri, &size) != GNOME_VFS_OK)
-			size = -1;
+			size = 0;
 		gnome_vfs_uri_unref (uri);
 	} else {
-		size = -1;
+		size = 0;
 	}
 
 	return (guint64) size;

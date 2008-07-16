@@ -2597,37 +2597,31 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 	g_object_unref(edit_window);
 }
 
-gboolean
-modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edit_window)
+static gboolean
+enough_space_for_message (ModestMsgEditWindow *edit_window,
+			  MsgData *data)
 {
-	TnyTransportAccount *transport_account;
-	ModestMailOperation *mail_operation;
-	MsgData *data;
-	gchar *account_name, *from;
-	ModestAccountMgr *account_mgr;
-/* 	char *info_text; */
-	gboolean had_error = FALSE;
+	TnyAccountStore *acc_store;
 	guint64 available_disk, expected_size;
 	gint parts_count;
 	guint64 parts_size;
-	ModestMainWindow *win;
-
-	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), FALSE);
-	
-	data = modest_msg_edit_window_get_msg_data (edit_window);
 
 	/* Check size */
-	available_disk = modest_folder_available_space (NULL);
+	acc_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store());
+	available_disk = modest_utils_get_available_space (NULL);
 	modest_msg_edit_window_get_parts_size (edit_window, &parts_count, &parts_size);
 	expected_size = modest_tny_msg_estimate_size (data->plain_body,
-						 data->html_body,
-						 parts_count,
-						 parts_size);
+						      data->html_body,
+						      parts_count,
+						      parts_size);
 
-	if ((available_disk != -1) && expected_size > available_disk) {
-		modest_msg_edit_window_free_msg_data (edit_window, data);
+	/* Double check: memory full condition or message too big */
+	if (available_disk < MIN_FREE_SPACE || 
+	    expected_size > available_disk) {
 
-		modest_platform_information_banner (NULL, NULL, dgettext("ke-recv", "cerm_device_memory_full"));
+		modest_platform_information_banner (NULL, NULL, 
+						    dgettext("ke-recv", 
+							     "cerm_device_memory_full"));
 		return FALSE;
 	}
 
@@ -2637,13 +2631,9 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	 * MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE (see modest-defs.h) this
 	 * should still allow for sending anything critical...
 	 */
-	if (expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) {
-
-		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window), TRUE)) {
-			modest_msg_edit_window_free_msg_data (edit_window, data);
-			return FALSE;
-		}
-	}
+	if ((expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) &&
+	    modest_platform_check_memory_low (MODEST_WINDOW(edit_window), TRUE))
+		return FALSE;
 
 	/*
 	 * djcb: we also make sure that the attachments are smaller than the max size
@@ -2656,6 +2646,29 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 			GTK_WINDOW(edit_window),
 			dgettext("ke-recv","memr_ib_operation_disabled"),
 			TRUE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+gboolean
+modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edit_window)
+{
+	TnyTransportAccount *transport_account;
+	ModestMailOperation *mail_operation;
+	MsgData *data;
+	gchar *account_name, *from;
+	ModestAccountMgr *account_mgr;
+	gboolean had_error = FALSE;
+	ModestMainWindow *win;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), FALSE);
+	
+	data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	/* Check size */
+	if (!enough_space_for_message (edit_window, data)) {
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return FALSE;
 	}
@@ -2678,7 +2691,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 
 	transport_account =
 		TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
-				      (modest_runtime_get_account_store(),
+				      (modest_runtime_get_account_store (),
 				       account_name,
 				       TNY_ACCOUNT_TYPE_TRANSPORT));
 	if (!transport_account) {
@@ -2776,62 +2789,27 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	TnyTransportAccount *transport_account = NULL;
 	gboolean had_error = FALSE;
-	guint64 available_disk, expected_size;
-	gint parts_count;
-	guint64 parts_size;
+	MsgData *data;
+	ModestAccountMgr *account_mgr;
+	gchar *account_name;
+	gchar *from;
+	ModestMailOperation *mail_operation;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
 
 	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
 		return TRUE;
 	
-	MsgData *data = modest_msg_edit_window_get_msg_data (edit_window);
+	data = modest_msg_edit_window_get_msg_data (edit_window);
 
 	/* Check size */
-	available_disk = modest_folder_available_space (NULL);
-	modest_msg_edit_window_get_parts_size (edit_window, &parts_count, &parts_size);
-	expected_size = modest_tny_msg_estimate_size (data->plain_body,
-						 data->html_body,
-						 parts_count,
-						 parts_size);
-
-	if ((available_disk != -1) && expected_size > available_disk) {
-		modest_msg_edit_window_free_msg_data (edit_window, data);
-
-		modest_platform_information_banner (NULL, NULL, dgettext("ke-recv", "cerm_device_memory_full"));
-		return FALSE;
-	}
-
-	
-	/*
-	 * djcb: if we're in low-memory state, we only allow for sending messages
-	 * smaller than MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE (see modest-defs.h)
-	 * this should still allow for sending anything critical... 
-	 */
-	if (expected_size > MODEST_MAX_LOW_MEMORY_MESSAGE_SIZE) {
-		if (modest_platform_check_memory_low (MODEST_WINDOW(edit_window), TRUE)) {
-			modest_msg_edit_window_free_msg_data (edit_window, data);
-			return FALSE;
-		}
-	}
-
-	/*
-	 * djcb: we also make sure that the attachments are smaller than the max size
-	 * this is for the case where we'd try to forward a message with attachments 
-	 * bigger than our max allowed size, or sending an message from drafts which
-	 * somehow got past our checks when attaching.
-	 */
-	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
-		modest_platform_run_information_dialog (
-			GTK_WINDOW(edit_window),
-			dgettext("ke-recv","memr_ib_operation_disabled"),
-			TRUE);
+	if (!enough_space_for_message (edit_window, data)) {
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return FALSE;
 	}
 
-	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr();
-	gchar *account_name = g_strdup (data->account_name);
+	account_mgr = modest_runtime_get_account_mgr();
+	account_name = g_strdup (data->account_name);
 	if (!account_name)
 		account_name = g_strdup(modest_window_get_active_account (MODEST_WINDOW(edit_window)));
 
@@ -2848,9 +2826,10 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	
 	/* Get the currently-active transport account for this modest account: */
 	if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) != 0) {
-		transport_account = TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
-							  (modest_runtime_get_account_store(),
-							   account_name, TNY_ACCOUNT_TYPE_TRANSPORT));
+		transport_account = 
+			TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
+					      (modest_runtime_get_account_store (), 
+					       account_name, TNY_ACCOUNT_TYPE_TRANSPORT));
 	}
 	
 	if (!transport_account) {
@@ -2860,10 +2839,10 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 			return TRUE;
 	}
 	
-	gchar *from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */
-	ModestMailOperation *mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler, NULL, NULL);
+	from = modest_account_mgr_get_from_string (account_mgr, account_name);
+	mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler, NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_send_new_mail (mail_operation,

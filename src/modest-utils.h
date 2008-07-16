@@ -150,7 +150,7 @@ void modest_utils_run_sort_dialog (GtkWindow *parent_window, ModestSortDialogTyp
 gint modest_list_index (TnyList *list, GObject *object);
 
 /**
- * modest_folder_available_space:
+ * modest_utils_get_available_space:
  * @maildir_path: the path of the maildir folder, or %NULL to
  * get the space available in local folders
  *
@@ -158,7 +158,7 @@ gint modest_list_index (TnyList *list, GObject *object);
  *
  * Returns: a #guint64
  */
-guint64 modest_folder_available_space (const gchar *maildir_path);
+guint64 modest_utils_get_available_space (const gchar *maildir_path);
 
 /**
  * modest_images_cache_get_id:
