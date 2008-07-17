@@ -539,8 +539,17 @@ static gint
 compare_display_names (ModestAccountSettings *a,
 		       ModestAccountSettings *b)
 {
-	return strcmp (modest_account_settings_get_display_name (a),
-		       modest_account_settings_get_display_name (b));
+	switch (strcmp (modest_account_settings_get_display_name (a),
+			modest_account_settings_get_display_name (b))) {
+	case -1:
+		return 1;
+	case 0:
+		return 0;
+	case 1:
+		return -1;
+	default:
+		g_return_val_if_reached (0);
+	}
 }
 
 /* We use this function to prevent the send&receive CSM to be shown
@@ -701,7 +710,7 @@ update_menus (ModestMainWindow* self)
 			/* Add ui from account data. We allow 2^9-1 account
 			   changes in a single execution because we're
 			   downcasting the guint to a guint8 in order to use a
-			   GByteArray. It should be enough. */
+			   GByteArray. It should be enough :-) */
 			item_name = g_strconcat (account_name, "Menu", NULL);
 			merge_id = (guint8) gtk_ui_manager_new_merge_id (parent_priv->ui_manager);
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
@@ -760,7 +769,8 @@ update_menus (ModestMainWindow* self)
 				item = gtk_menu_item_new ();
 				gtk_container_add (GTK_CONTAINER (item), label);
 
-				gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), GTK_WIDGET (item));
+				gtk_menu_shell_prepend (GTK_MENU_SHELL (priv->accounts_popup), 
+							GTK_WIDGET (item));
 				g_signal_connect_data (G_OBJECT (item), 
 						       "activate", 
 						       G_CALLBACK (on_send_receive_csm_activated),
