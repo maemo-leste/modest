@@ -82,6 +82,7 @@ static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestGtkhtm
 
 #ifdef MAEMO_CHANGES
 static void     on_tap_and_hold (GtkWidget *widget, gpointer userdata); 
+static gboolean on_tap_and_hold_query (GtkWidget *widget, GdkEvent *event, gpointer userdata); 
 #endif /*MAEMO_CHANGES*/
 
 
@@ -1113,6 +1114,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 #ifdef MAEMO_CHANGES
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->body_view), NULL, NULL, 0);
 		g_signal_connect (G_OBJECT (priv->body_view), "tap-and-hold", G_CALLBACK (on_tap_and_hold), obj);
+		g_signal_connect (G_OBJECT (priv->body_view), "tap-and-hold-query", G_CALLBACK (on_tap_and_hold_query), obj);
 #endif
 	}
 	
@@ -1316,6 +1318,18 @@ on_tap_and_hold (GtkWidget *widget,
 	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
 	g_signal_emit_by_name (G_OBJECT (self), "link-contextual", priv->last_url);
+}
+
+static gboolean
+on_tap_and_hold_query (GtkWidget *widget,
+		       GdkEvent *event,
+		       gpointer data)
+{
+	ModestGtkhtmlMsgView *self = (ModestGtkhtmlMsgView *) data;
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
+
+	/* Don't show the tap and hold animation if no url below */
+	return (priv->last_url == NULL);
 }
 #endif
 
