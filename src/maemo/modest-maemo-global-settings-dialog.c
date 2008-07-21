@@ -514,7 +514,7 @@ on_inner_tabs_key_pressed (GtkWidget *widget,
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
 
-	if (widget == user_data) {
+	if (widget == ppriv->notebook) {
 		if (event->keyval == GDK_Right) {
 			gtk_notebook_next_page (GTK_NOTEBOOK (ppriv->notebook));
 			retval = TRUE;
