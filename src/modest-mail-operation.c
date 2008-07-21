@@ -630,17 +630,21 @@ modest_mail_operation_clone_state (ModestMailOperation *self)
 /* ************************** SEND   ACTIONS ************************* */
 /* ******************************************************************* */
 
+typedef struct 
+{
+	ModestMailOperation *mail_op;
+	gboolean notify;
+} SendNewMailHelper;
+
 static void
-send_mail_on_added_to_outbox (TnySendQueue *send_queue, 
-			      gboolean cancelled, 
-			      TnyMsg *msg, 
-			      GError *err,
-			      gpointer user_data)
+send_mail_common_cb (gboolean cancelled, 
+		     GError *err, 
+		     SendNewMailHelper *helper)
 {
 	ModestMailOperationPrivate *priv;
 	ModestMailOperation *self;
 
-	self = MODEST_MAIL_OPERATION (user_data);
+	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
 	if (cancelled || err)
@@ -654,53 +658,33 @@ send_mail_on_added_to_outbox (TnySendQueue *send_queue,
 	} else {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
+
  end:
-	modest_mail_operation_notify_end (self);
-	g_object_unref (self);
-}
-
-void
-modest_mail_operation_send_mail (ModestMailOperation *self,
-				 TnyTransportAccount *transport_account,
-				 TnyMsg* msg)
-{
-	TnySendQueue *send_queue = NULL;
-	ModestMailOperationPrivate *priv;
-	
-	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (transport_account && TNY_IS_TRANSPORT_ACCOUNT (transport_account));
-	g_return_if_fail (msg && TNY_IS_MSG (msg));
-	
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
-
-	/* Get account and set it into mail_operation */
-	priv->account = g_object_ref (transport_account);
-	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
-	priv->done = 1;
-	priv->total = 1;
-
-	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (transport_account, TRUE));
-	if (!TNY_IS_SEND_QUEUE(send_queue)) {
-		if (priv->error) {
-			g_error_free (priv->error);
-			priv->error = NULL;
-		}
-		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
-			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-			     "modest: could not find send queue for account\n");
-		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	if (helper->notify)
 		modest_mail_operation_notify_end (self);
-	} else {
-		modest_mail_operation_notify_start (self);
-		/* Add the msg to the queue. The callback will
-		   finalize the mail operation */
-		tny_send_queue_add_async (send_queue, msg, send_mail_on_added_to_outbox, 
-					  NULL, g_object_ref (self));
-		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
-								  FALSE);
-	}
+
+	g_object_unref (helper->mail_op);
+	g_slice_free (SendNewMailHelper, helper);
 }
 
+static void
+send_mail_on_sync_async_cb (TnyFolder *self, 
+			    gboolean cancelled, 
+			    GError *err, 
+			    gpointer user_data)
+{
+	send_mail_common_cb (cancelled, err, (SendNewMailHelper *) user_data);
+}
+
+static void
+send_mail_on_added_to_outbox (TnySendQueue *send_queue, 
+			      gboolean cancelled, 
+			      TnyMsg *msg, 
+			      GError *err,
+			      gpointer user_data)
+{
+	send_mail_common_cb (cancelled, err, (SendNewMailHelper *) user_data);
+}
 
 static gboolean
 idle_create_msg_cb (gpointer idle_data)
@@ -843,6 +827,7 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 					TnyMsg *msg,
 					gpointer userdata)
 {
+	TnySendQueue *send_queue = NULL;
 	ModestMailOperationPrivate *priv = NULL;
 	SendNewMailInfo *info = (SendNewMailInfo *) userdata;
 	TnyFolder *draft_folder = NULL;
@@ -863,8 +848,31 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 		goto end;
 	}
 
-	/* Call mail operation */
-	modest_mail_operation_send_mail (self, info->transport_account, msg);
+	/* Add message to send queue */
+	send_queue = TNY_SEND_QUEUE (modest_runtime_get_send_queue (info->transport_account, TRUE));
+	if (!TNY_IS_SEND_QUEUE(send_queue)) {
+		if (priv->error) {
+			g_error_free (priv->error);
+			priv->error = NULL;
+		}
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
+			     "modest: could not find send queue for account\n");
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+		modest_mail_operation_notify_end (self);
+		goto end;
+	} else {
+		SendNewMailHelper *helper = g_slice_new (SendNewMailHelper);
+		helper->mail_op = g_object_ref (self);
+		helper->notify = (info->draft_msg == NULL);
+
+		/* Add the msg to the queue. The callback will free
+		   the helper */
+		modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
+								  FALSE);
+		tny_send_queue_add_async (send_queue, msg, send_mail_on_added_to_outbox, 
+					  NULL, helper);
+	}
 
 	if (info->draft_msg != NULL) {
 		TnyList *tmp_headers = NULL;
@@ -872,6 +880,7 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 		TnyFolder *src_folder = NULL;
 		TnyFolderType folder_type;		
 		TnyTransportAccount *transport_account = NULL;
+		SendNewMailHelper *helper = NULL;
 
 		/* To remove the old mail from its source folder, we need to get the
 		 * transport account of the original draft message (the transport account
@@ -890,16 +899,21 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 		if (!draft_folder) {
 			g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL drafts folder",
 				   __FUNCTION__);
+			modest_mail_operation_notify_end (self);
 			goto end;
 		}
 		if (!outbox_folder) {
 			g_warning ("%s: modest_tny_account_get_special_folder(..) returned a NULL outbox folder",
 				   __FUNCTION__);
+			modest_mail_operation_notify_end (self);
 			goto end;
 		}
 
 		folder = tny_msg_get_folder (info->draft_msg);		
-		if (folder == NULL) goto end;
+		if (folder == NULL) {
+			modest_mail_operation_notify_end (self);
+			goto end;
+		}
 		folder_type = modest_tny_folder_guess_folder_type (folder);
 
 		if (folder_type == TNY_FOLDER_TYPE_INVALID)
@@ -912,12 +926,16 @@ modest_mail_operation_send_new_mail_cb (ModestMailOperation *self,
 
 		/* Note: This can fail (with a warning) if the message is not really already in a folder,
 		 * because this function requires it to have a UID. */
+		helper = g_slice_new (SendNewMailHelper);
+		helper->mail_op = g_object_ref (self);
+		helper->notify = TRUE;
+
 		tmp_headers = tny_simple_list_new ();
 		tny_list_append (tmp_headers, (GObject*) header);
 		tny_folder_remove_msgs_async (src_folder, tmp_headers, NULL, NULL, NULL);
 		g_object_unref (tmp_headers);
-		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);  /* expunge */
-		
+		tny_folder_sync_async (src_folder, TRUE, send_mail_on_sync_async_cb, 
+				       NULL, helper);
 		g_object_unref (folder);
 	}
 
@@ -957,7 +975,9 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SEND;
 	priv->account = TNY_ACCOUNT (g_object_ref (transport_account));
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
-	
+
+	modest_mail_operation_notify_start (self);
+
 	/* Check parametters */
 	if (to == NULL) {
  		/* Set status failed and set an error */
@@ -965,6 +985,7 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_BAD_PARAMETER,
 			     _("Error trying to send a mail. You need to set at least one recipient"));
+		modest_mail_operation_notify_end (self);
 		return;
 	}
 	info = g_slice_new0 (SendNewMailInfo);
@@ -976,7 +997,6 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 		g_object_ref (draft_msg);
 
 
-	modest_mail_operation_notify_start (self);
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
 					  attachments_list, images_list, priority_flags,
 					  modest_mail_operation_send_new_mail_cb, info);

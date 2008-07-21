@@ -950,6 +950,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		}
 
 		acc_name = modest_utils_get_account_name_from_recipient (from_header);
+		g_free (from_header);
 		if (acc_name) {
 			g_free (account);
 			account = acc_name;
@@ -2831,7 +2832,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     transport_account,
 					     data->draft_msg,
 					     from,
-					     data->to, 
+					     data->to,
 					     data->cc, 
 					     data->bcc,
 					     data->subject, 
