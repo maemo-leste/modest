@@ -143,6 +143,7 @@ struct _ModestHeaderViewPrivate {
 	/* Filter tree model */
 	gchar **hidding_ids;
 	guint   n_selected;
+	GtkTreeRowReference *autoselect_reference;
 
 	gint    sort_colid[2][TNY_FOLDER_TYPE_NUM];
 	gint    sort_type[2][TNY_FOLDER_TYPE_NUM];
@@ -570,6 +571,7 @@ modest_header_view_init (ModestHeaderView *obj)
 
 	priv->monitor	     = NULL;
 	priv->observers_lock = g_mutex_new ();
+	priv->autoselect_reference = NULL;
 
 	priv->status  = HEADER_VIEW_INIT;
 	priv->status_timeout = 0;
@@ -653,6 +655,11 @@ modest_header_view_finalize (GObject *obj)
 
 	/* Clear hidding array created by cut operation */
 	_clear_hidding_filter (MODEST_HEADER_VIEW (obj));
+
+	if (priv->autoselect_reference != NULL) {
+		gtk_tree_row_reference_free (priv->autoselect_reference);
+		priv->autoselect_reference = NULL;
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -940,21 +947,74 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 	GtkTreeSelection *sel;
 	GtkTreeModel *model;
 	GtkTreeIter tree_iter;
+	ModestHeaderViewPrivate *priv;
 
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
 	model = gtk_tree_view_get_model(header_view);
 
 	if (!model)
 		return FALSE;
 
 	sel = gtk_tree_view_get_selection(header_view);
-	if(!gtk_tree_selection_count_selected_rows(sel))
+	if(!gtk_tree_selection_count_selected_rows(sel)) {
 		if (gtk_tree_model_get_iter_first(model, &tree_iter)) {
+			GtkTreePath *tree_iter_path;
 			/* Prevent the widget from getting the focus
 			   when selecting the first item */
+			tree_iter_path = gtk_tree_model_get_path (model, &tree_iter);
 			g_object_set(header_view, "can-focus", FALSE, NULL);
 			gtk_tree_selection_select_iter(sel, &tree_iter);
+			gtk_tree_view_set_cursor (header_view, tree_iter_path, NULL, FALSE);
 			g_object_set(header_view, "can-focus", TRUE, NULL);
+			if (priv->autoselect_reference) {
+				gtk_tree_row_reference_free (priv->autoselect_reference);
+			}
+			priv->autoselect_reference = gtk_tree_row_reference_new (model, tree_iter_path);
+			gtk_tree_path_free (tree_iter_path);
 		}
+	} else {
+		if (priv->autoselect_reference != NULL) {
+			gboolean moved_selection = FALSE;
+			GtkTreePath * last_path;
+			if (gtk_tree_selection_count_selected_rows (sel) != 1) {
+				moved_selection = TRUE;
+				g_message ("MULTISELECTION %d -> MOVED", gtk_tree_selection_count_selected_rows (sel));
+			} else {
+				GList *rows;
+
+				rows = gtk_tree_selection_get_selected_rows (sel, NULL);
+				last_path = gtk_tree_row_reference_get_path (priv->autoselect_reference);
+				g_message ("SELECTION PATH %s LAST PATH %s", gtk_tree_path_to_string (rows->data), gtk_tree_path_to_string (last_path));
+				if (gtk_tree_path_compare (last_path, (GtkTreePath *) rows->data) != 0)
+					moved_selection = TRUE;
+				g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
+				g_list_free (rows);
+			}
+			if (moved_selection) {
+				gtk_tree_row_reference_free (priv->autoselect_reference);
+				priv->autoselect_reference = NULL;
+			} else {
+
+				if (gtk_tree_model_get_iter_first (model, &tree_iter)) {
+					GtkTreePath *current_path;
+					current_path = gtk_tree_model_get_path (model, &tree_iter);
+					last_path = gtk_tree_row_reference_get_path (priv->autoselect_reference);
+					g_message ("CURRENT PATH %s LAST PATH %s", gtk_tree_path_to_string (current_path), gtk_tree_path_to_string (last_path));
+					if (gtk_tree_path_compare (current_path, last_path) != 0) {
+						g_object_set(header_view, "can-focus", FALSE, NULL);
+						gtk_tree_selection_unselect_all (sel);
+						gtk_tree_selection_select_iter(sel, &tree_iter);
+						gtk_tree_view_set_cursor (header_view, current_path, NULL, FALSE);
+						g_object_set(header_view, "can-focus", TRUE, NULL);
+						gtk_tree_row_reference_free (priv->autoselect_reference);
+						priv->autoselect_reference = gtk_tree_row_reference_new (model, current_path);
+					}
+					gtk_tree_path_free (current_path);
+					gtk_tree_path_free (last_path);
+				}
+			}
+		}
+	}
 
 	return FALSE;
 }
