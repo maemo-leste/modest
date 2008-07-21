@@ -1372,7 +1372,9 @@ modest_main_window_set_style (ModestMainWindow *self,
 	ModestWindowPrivate *parent_priv;
 	GtkAction *action;
 	gboolean active;
-
+	GtkTreeSelection *sel;
+	GList *rows, *list;
+	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -1393,6 +1395,11 @@ modest_main_window_set_style (ModestMainWindow *self,
 	       gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), !active);
 	       g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
        }
+
+       /* We need to store the selection because it's lost when the
+	  widget is reparented */
+       sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->header_view));
+       rows = gtk_tree_selection_get_selected_rows (sel, NULL);
 
 	priv->style = style;
 	switch (style) {
@@ -1422,8 +1429,26 @@ modest_main_window_set_style (ModestMainWindow *self,
 
 		break;
 	default:
+		g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
+		g_list_free (rows);
 		g_return_if_reached ();
 	}
+
+	/* Reselect the previously selected folders. We disable the
+	   dimming rules execution during that time because there is
+	   no need to work out it again and it could take a lot of
+	   time if all the headers are selected */
+	list = rows;
+	modest_window_disable_dimming (MODEST_WINDOW (self));
+	while (list) {
+		gtk_tree_selection_select_path (sel, (GtkTreePath *) list->data);
+		list = g_list_next (list);
+	}
+	modest_window_enable_dimming (MODEST_WINDOW (self));
+
+	/* Free */
+	g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
+	g_list_free (rows);
 
 	/* Let header view grab the focus if it's being shown */
 	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
