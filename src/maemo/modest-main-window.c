@@ -539,17 +539,9 @@ static gint
 compare_display_names (ModestAccountSettings *a,
 		       ModestAccountSettings *b)
 {
-	switch (strcmp (modest_account_settings_get_display_name (a),
-			modest_account_settings_get_display_name (b))) {
-	case -1:
-		return 1;
-	case 0:
-		return 0;
-	case 1:
-		return -1;
-	default:
-		g_return_val_if_reached (0);
-	}
+	return g_utf8_collate (modest_account_settings_get_display_name (a),
+			       modest_account_settings_get_display_name (b));
+
 }
 
 /* We use this function to prevent the send&receive CSM to be shown
