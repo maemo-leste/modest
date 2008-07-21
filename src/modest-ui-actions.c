@@ -935,45 +935,27 @@ open_msg_cb (ModestMailOperation *mail_op,
 	
 	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
-		gchar *from_header = NULL;
+		gchar *from_header = NULL, *acc_name;
 
 		from_header = tny_header_dup_from (header);
 
 		/* we cannot edit without a valid account... */
 		if (!modest_account_mgr_has_accounts(mgr, TRUE)) {
 			if (!modest_ui_actions_run_account_setup_wizard(parent_win)) {
-				modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), 
+				modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (),
 								     header);
 				g_free (from_header);
 				goto cleanup;
 			}
 		}
-		
-		if (from_header) {
-			GSList *accounts = modest_account_mgr_account_names (mgr, TRUE);
-			GSList *node = NULL;
 
-			for (node = accounts; node != NULL; node = g_slist_next (node)) {
-				gchar *from = modest_account_mgr_get_from_string (mgr, node->data);
- 				
-				if (from && (strcmp (from_header, from) == 0)) {
-					g_free (account);
-					account = g_strdup (node->data);
-					g_free (from);
-					break;
- 				}
-				g_free (from);
- 			}
-
-			g_free (from_header);
-			g_slist_foreach (accounts, (GFunc) g_free, NULL);
-			g_slist_free (accounts);
+		acc_name = modest_utils_get_account_name_from_recipient (from_header);
+		if (acc_name) {
+			g_free (account);
+			account = acc_name;
 		}
 
 		win = modest_msg_edit_window_new (msg, account, TRUE);
-
-
-
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
 		

@@ -172,4 +172,16 @@ guint64 modest_utils_get_available_space (const gchar *maildir_path);
  */
 gchar *modest_images_cache_get_id (const gchar *account, const gchar *uri);
 
+
+/**
+ * modest_utils_get_account_name_from_recipient:
+ * @from: the result of a call to tny_header_dup_from
+ *
+ * returns the account name that corresponds to the given from address
+ *
+ * Returns: a newly allocated string containing the account name or
+ * %NULL in case of error
+ */
+gchar *modest_utils_get_account_name_from_recipient (const gchar *from);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

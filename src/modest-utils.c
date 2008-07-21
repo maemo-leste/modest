@@ -43,6 +43,8 @@
 #include <modest-defs.h>
 #include "modest-utils.h"
 #include "modest-platform.h"
+#include "modest-account-mgr-helpers.h"
+#include "modest-text-utils.h"
 #include <modest-local-folder-info.h>
 #include "widgets/modest-header-view.h"
 #include "widgets/modest-main-window.h"
@@ -734,4 +736,42 @@ modest_images_cache_get_id (const gchar *account, const gchar *uri)
 	gnome_vfs_uri_unref (vfs_uri);
  
 	return result;
+}
+
+gchar *
+modest_utils_get_account_name_from_recipient (const gchar *from_header)
+{
+	gchar *account_name = NULL;
+	ModestAccountMgr *mgr = NULL;
+	GSList *accounts = NULL, *node = NULL;
+
+	g_return_val_if_fail (from_header, NULL);
+
+	mgr = modest_runtime_get_account_mgr ();
+	accounts = modest_account_mgr_account_names (mgr, TRUE);
+		
+	for (node = accounts; node != NULL; node = g_slist_next (node)) {
+		gchar *from = 
+			modest_account_mgr_get_from_string (mgr, node->data);
+			
+		if (from) {
+			gchar *from_email = 
+				modest_text_utils_get_email_address (from);
+				
+			if (from_email) {
+				if (!modest_text_utils_utf8_strcmp (from_header, from_email, TRUE)) {
+					account_name = g_strdup (node->data);
+					g_free (from);
+					g_free (from_email);
+					break;
+				}
+				g_free (from_email);
+			}
+			g_free (from);
+		}
+	}
+	g_slist_foreach (accounts, (GFunc) g_free, NULL);
+	g_slist_free (accounts);
+
+	return account_name;
 }

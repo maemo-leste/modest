@@ -34,6 +34,7 @@
 #include "modest-tny-account.h"
 #include "modest-tny-folder.h"
 #include "modest-ui-actions.h"
+#include "modest-utils.h"
 #include "modest-debug.h"
 #include "modest-search.h"
 #include "widgets/modest-msg-edit-window.h"
@@ -499,27 +500,12 @@ find_msg_async_cb (TnyFolder *folder,
 			}
                
 			from_header = tny_header_dup_from (header);
-			if (from_header) {
-				GSList *accounts = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
-				GSList *node = NULL;
-				for (node = accounts; node != NULL; node = g_slist_next (node)) {
-					gchar *from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr (), node->data);
-					
-					if (from && (strcmp (from_header, from) == 0)) {
-						g_free (modest_account_name);
-						modest_account_name = g_strdup (node->data);
-						g_free (from);
-						break;
-					}
-					g_free (from);
-                               }
-				g_slist_foreach (accounts, (GFunc) g_free, NULL);
-				g_slist_free (accounts);
-				g_free (from_header);
-			}
+			modest_account_name = modest_utils_get_account_name_from_recipient (from_header);
+			g_free (from_header);
 			
 			if (modest_account_name == NULL) {
-				modest_account_name = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+				ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
+				modest_account_name = modest_account_mgr_get_default_account (mgr);
 			}
                         msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
 			g_free (modest_account_name);
