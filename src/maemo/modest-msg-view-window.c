@@ -2712,7 +2712,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 	GList *files_to_save = NULL;
 	GtkWidget *save_dialog = NULL;
 	gchar *folder = NULL;
-	const gchar *filename = NULL;
+	gchar *filename = NULL;
 	gchar *save_multiple_str = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
@@ -2736,7 +2736,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		if (!modest_tny_mime_part_is_msg (mime_part) && 
 		    modest_tny_mime_part_is_attachment_for_modest (mime_part) &&
 		    !tny_mime_part_is_purged (mime_part)) {
-			filename = tny_mime_part_get_filename (mime_part);
+			filename = g_strdup (tny_mime_part_get_filename (mime_part));
 		} else {
 			/* TODO: show any error? */
 			g_warning ("Tried to save a non-file attachment");
@@ -2758,9 +2758,11 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 	g_free (folder);
 
 	/* set filename */
-	if (filename != NULL)
+	if (filename) {
 		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (save_dialog), 
 						   filename);
+		g_free (filename);
+	}
 
 	/* if multiple, set multiple string */
 	if (save_multiple_str) {
