@@ -3796,9 +3796,16 @@ modest_ui_actions_on_copy (GtkAction *action,
 		gtk_clipboard_set_can_store (clipboard, NULL, 0);
 		gtk_clipboard_store (clipboard);
 	} else if (GTK_IS_HTML (focused_widget)) {
-		gtk_html_copy (GTK_HTML (focused_widget));
-		gtk_clipboard_set_can_store (clipboard, NULL, 0);
-		gtk_clipboard_store (clipboard);
+		const gchar *sel;
+		int len = -1;
+		sel = gtk_html_get_selection_html (GTK_HTML (focused_widget), &len);
+		if ((sel == NULL) || (sel[0] == '\0')) {
+			copied = FALSE;
+		} else {
+			gtk_html_copy (GTK_HTML (focused_widget));
+			gtk_clipboard_set_can_store (clipboard, NULL, 0);
+			gtk_clipboard_store (clipboard);
+		}
 	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
 		GtkTextBuffer *buffer;
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (focused_widget));
