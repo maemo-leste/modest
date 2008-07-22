@@ -34,6 +34,7 @@
 #include <tny-folder.h>
 #include <widgets/modest-window.h>
 #include <gtk/gtktreemodel.h>
+#include <gtk/gtkenums.h>
 
 G_BEGIN_DECLS
 
@@ -57,6 +58,11 @@ typedef struct {
 			     GtkTreeModel *model,
 			     GtkTreeRowReference *row_reference, 
 			     gpointer user_data);
+
+	gboolean (*scroll_child) (ModestMsgViewWindow *self,
+				   GtkScrollType scroll_type,
+				   gboolean horizontal,
+				   gpointer userdata);
 } ModestMsgViewWindowClass;
 
 /**

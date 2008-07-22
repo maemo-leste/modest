@@ -978,13 +978,11 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 			GtkTreePath * last_path;
 			if (gtk_tree_selection_count_selected_rows (sel) != 1) {
 				moved_selection = TRUE;
-				g_message ("MULTISELECTION %d -> MOVED", gtk_tree_selection_count_selected_rows (sel));
 			} else {
 				GList *rows;
 
 				rows = gtk_tree_selection_get_selected_rows (sel, NULL);
 				last_path = gtk_tree_row_reference_get_path (priv->autoselect_reference);
-				g_message ("SELECTION PATH %s LAST PATH %s", gtk_tree_path_to_string (rows->data), gtk_tree_path_to_string (last_path));
 				if (gtk_tree_path_compare (last_path, (GtkTreePath *) rows->data) != 0)
 					moved_selection = TRUE;
 				g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
@@ -999,7 +997,6 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 					GtkTreePath *current_path;
 					current_path = gtk_tree_model_get_path (model, &tree_iter);
 					last_path = gtk_tree_row_reference_get_path (priv->autoselect_reference);
-					g_message ("CURRENT PATH %s LAST PATH %s", gtk_tree_path_to_string (current_path), gtk_tree_path_to_string (last_path));
 					if (gtk_tree_path_compare (current_path, last_path) != 0) {
 						g_object_set(header_view, "can-focus", FALSE, NULL);
 						gtk_tree_selection_unselect_all (sel);

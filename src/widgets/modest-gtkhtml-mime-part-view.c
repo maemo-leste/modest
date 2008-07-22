@@ -202,6 +202,8 @@ static void
 modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 {
 	GObjectClass *gobject_class;
+	GtkBindingSet *binding_set;
+
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
@@ -222,6 +224,20 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 	klass->search_func = modest_gtkhtml_mime_part_view_search_default;
 	klass->search_next_func = modest_gtkhtml_mime_part_view_search_next_default;
 	klass->get_selection_area_func = modest_gtkhtml_mime_part_view_get_selection_area_default;
+
+	binding_set = gtk_binding_set_by_class (klass);
+	gtk_binding_entry_skip (binding_set, GDK_Down, 0);
+	gtk_binding_entry_skip (binding_set, GDK_Up, 0);
+	gtk_binding_entry_skip (binding_set, GDK_KP_Up, 0);
+	gtk_binding_entry_skip (binding_set, GDK_KP_Down, 0);
+	gtk_binding_entry_skip (binding_set, GDK_Page_Down, 0);
+	gtk_binding_entry_skip (binding_set, GDK_Page_Up, 0);
+	gtk_binding_entry_skip (binding_set, GDK_KP_Page_Up, 0);
+	gtk_binding_entry_skip (binding_set, GDK_KP_Page_Down, 0);
+	gtk_binding_entry_skip (binding_set, GDK_Home, 0);
+	gtk_binding_entry_skip (binding_set, GDK_End, 0);
+	gtk_binding_entry_skip (binding_set, GDK_KP_Home, 0);
+	gtk_binding_entry_skip (binding_set, GDK_KP_End, 0);
 	
 	g_type_class_add_private (gobject_class, sizeof(ModestGtkhtmlMimePartViewPrivate));
 

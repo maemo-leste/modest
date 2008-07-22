@@ -109,6 +109,15 @@ static gboolean motion_notify_event (GtkWidget *widget,
 				     gpointer userdata);
 #endif
 
+static gboolean 
+button_press_event (GtkWidget *widget,
+		    GdkEventButton *event,
+		    gpointer userdata);
+static gboolean 
+button_release_event (GtkWidget *widget,
+		      GdkEventButton *event,
+		      gpointer userdata);
+
 /* GtkContainer methods */
 static void forall (GtkContainer *container, gboolean include_internals,
 		    GtkCallback callback, gpointer userdata);
@@ -228,6 +237,9 @@ struct _ModestGtkhtmlMsgViewPrivate {
 	GdkWindow *view_window;
 	GdkWindow *headers_window;
 	GdkWindow *html_window;
+
+	/* id handler for dragged scroll */
+	guint idle_motion_id;
 
 	/* zoom */
 	gdouble current_zoom;
@@ -1035,6 +1047,8 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	priv->headers_window = NULL;
 	priv->html_window = NULL;
 
+	priv->idle_motion_id = 0;
+
 	gtk_widget_push_composite_child ();
 	priv->html_scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_widget_set_composite_name (priv->html_scroll, "contents");
@@ -1060,6 +1074,10 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	g_signal_connect (G_OBJECT(priv->body_view), "motion-notify-event",
 			  G_CALLBACK (motion_notify_event), obj);
 #endif
+	g_signal_connect (G_OBJECT (priv->body_view), "button-press-event",
+			  G_CALLBACK (button_press_event), obj);
+	g_signal_connect (G_OBJECT (priv->body_view), "button-release-event",
+			  G_CALLBACK (button_release_event), obj);
 
 	g_signal_connect (G_OBJECT (priv->mail_header_view), "recpt-activated", 
 			  G_CALLBACK (on_recpt_activated), obj);
@@ -1131,6 +1149,11 @@ modest_gtkhtml_msg_view_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->msg));
 		priv->msg = NULL;
 	}
+
+	if (priv->idle_motion_id > 0) {
+		g_source_remove (priv->idle_motion_id);
+		priv->idle_motion_id = 0;
+	}
 	
 	/* we cannot disconnect sigs, because priv->body_view is
 	 * already dead */
@@ -1179,10 +1202,62 @@ motion_notify_event (GtkWidget *widget,
 			value = priv->vadj->upper - priv->vadj->page_size;
 		gtk_adjustment_set_value (priv->vadj, value);
 		
-	}
+	} 
 	return FALSE;
 }
 #endif
+
+static gboolean
+idle_motion (gpointer userdata)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (userdata);
+	if (GTK_HTML (priv->body_view)->in_selection_drag) {
+		gdouble offset;
+		GtkAdjustment *adj;
+		gint gdk_y;
+		gdk_window_get_pointer (gtk_widget_get_parent_window (priv->body_view), NULL, &gdk_y, NULL);
+		offset= (gdouble) (priv->headers_box->requisition.height + gdk_y);
+		adj = GTK_ADJUSTMENT (priv->vadj);
+		if (offset < adj->value + adj->step_increment) {
+			gtk_adjustment_set_value (adj, MAX (offset + adj->page_increment - adj->page_size, 0.0));
+		} else if (offset > adj->value + adj->page_increment) {
+			gtk_adjustment_set_value (adj, MIN (offset - adj->page_increment, adj->upper - adj->page_size));
+		}
+		gtk_widget_queue_resize (userdata);
+	}
+	return TRUE;
+}
+
+static gboolean 
+button_press_event (GtkWidget *widget,
+		    GdkEventButton *event,
+		    gpointer userdata)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (userdata);
+
+	if (priv->idle_motion_id == 0) {
+		priv->idle_motion_id = g_timeout_add (200, idle_motion, userdata);
+	}
+	return FALSE;
+}
+
+static gboolean 
+button_release_event (GtkWidget *widget,
+		      GdkEventButton *event,
+		      gpointer userdata)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (userdata);
+
+	if (priv->idle_motion_id > 0) {
+		gint gdk_y;
+		g_source_remove (priv->idle_motion_id);
+		
+		priv->idle_motion_id = 0;;
+		gdk_window_get_pointer (gtk_widget_get_parent_window (priv->body_view), NULL, &gdk_y, NULL);
+		event->y = (gdouble) gdk_y;
+	}
+	return FALSE;
+}
 
 static GtkAdjustment *
 get_vadjustment (ModestGtkhtmlMsgView *self)

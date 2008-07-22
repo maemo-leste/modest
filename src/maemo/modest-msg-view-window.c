@@ -160,9 +160,15 @@ static gboolean on_fetch_image (ModestMsgView *msgview,
 				TnyStream *stream,
 				ModestMsgViewWindow *window);
 
+static gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
+						     GtkScrollType scroll_type,
+						     gboolean horizontal,
+						     gpointer userdata);
+
 /* list my signals */
 enum {
 	MSG_CHANGED_SIGNAL,
+	SCROLL_CHILD_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -309,11 +315,43 @@ restore_settings (ModestMsgViewWindow *self)
 				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
+static gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
+						     GtkScrollType scroll_type,
+						     gboolean horizontal,
+						     gpointer userdata)
+{
+	ModestMsgViewWindowPrivate *priv;
+	gboolean return_value;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+	g_signal_emit_by_name (priv->main_scroll, "scroll-child", scroll_type, horizontal, &return_value);
+	return return_value;
+}
+
+static void
+add_scroll_binding (GtkBindingSet *binding_set,
+		    guint keyval,
+		    GtkScrollType scroll)
+{
+	guint keypad_keyval = keyval - GDK_Left + GDK_KP_Left;
+	
+	gtk_binding_entry_add_signal (binding_set, keyval, 0,
+				      "scroll_child", 2,
+				      GTK_TYPE_SCROLL_TYPE, scroll,
+				      G_TYPE_BOOLEAN, FALSE);
+	gtk_binding_entry_add_signal (binding_set, keypad_keyval, 0,
+				      "scroll_child", 2,
+				      GTK_TYPE_SCROLL_TYPE, scroll,
+				      G_TYPE_BOOLEAN, FALSE);
+}
+
 static void
 modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 {
 	GObjectClass *gobject_class;
 	ModestWindowClass *modest_window_class;
+	GtkBindingSet *binding_set;
+
 	gobject_class = (GObjectClass*) klass;
 	modest_window_class = (ModestWindowClass *) klass;
 
@@ -327,9 +365,9 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 	modest_window_class->show_toolbar_func = modest_msg_view_window_show_toolbar;
 	modest_window_class->disconnect_signals_func = modest_msg_view_window_disconnect_signals;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
-
 	modest_window_class->save_state_func = save_state;
+
+	klass->scroll_child = modest_msg_view_window_scroll_child;
 
 	signals[MSG_CHANGED_SIGNAL] =
 		g_signal_new ("msg-changed",
@@ -339,6 +377,26 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 			      NULL, NULL,
 			      modest_marshal_VOID__POINTER_POINTER,
 			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+
+	signals[SCROLL_CHILD_SIGNAL] =
+		g_signal_new ("scroll-child",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+			      G_STRUCT_OFFSET (ModestMsgViewWindowClass, scroll_child),
+			      NULL, NULL,
+			      modest_marshal_BOOLEAN__ENUM_BOOLEAN,
+			      G_TYPE_BOOLEAN, 2, GTK_TYPE_SCROLL_TYPE, G_TYPE_BOOLEAN);
+
+	binding_set = gtk_binding_set_by_class (klass);
+	add_scroll_binding (binding_set, GDK_Up, GTK_SCROLL_STEP_UP);
+	add_scroll_binding (binding_set, GDK_Down, GTK_SCROLL_STEP_DOWN);
+	add_scroll_binding (binding_set, GDK_Page_Up, GTK_SCROLL_PAGE_UP);
+	add_scroll_binding (binding_set, GDK_Page_Down, GTK_SCROLL_PAGE_DOWN);
+	add_scroll_binding (binding_set, GDK_Home, GTK_SCROLL_START);
+	add_scroll_binding (binding_set, GDK_End, GTK_SCROLL_END);
+
+	g_type_class_add_private (gobject_class, sizeof(ModestMsgViewWindowPrivate));
+
 }
 
 static void modest_header_view_observer_init(
@@ -1576,10 +1634,10 @@ modest_msg_view_window_key_event (GtkWidget *window,
 	    event->keyval == GDK_Page_Down || event->keyval == GDK_KP_Page_Down ||
 	    event->keyval == GDK_Home || event->keyval == GDK_KP_Home ||
 	    event->keyval == GDK_End || event->keyval == GDK_KP_End) {
-		ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-		gboolean return_value;
+		/* ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window); */
+		/* gboolean return_value; */
 
-		if (event->type == GDK_KEY_RELEASE) {
+		if (event->type == GDK_KEY_PRESS) {
 			GtkScrollType scroll_type;
 			
 			switch (event->keyval) {
@@ -1604,9 +1662,9 @@ modest_msg_view_window_key_event (GtkWidget *window,
 			default: scroll_type = GTK_SCROLL_NONE;
 			}
 			
-			g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child", 
-					       scroll_type, FALSE, &return_value);
-			return TRUE;
+			/* g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child",  */
+			/* 		       scroll_type, FALSE, &return_value); */
+			return FALSE;
 		} else {
 			return FALSE;
 		}
