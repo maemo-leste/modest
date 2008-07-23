@@ -1042,7 +1042,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; 
 	const gchar* server_name = "";
 	gchar *prompt = NULL;
-	gboolean retval;
+	gboolean retval = TRUE;
 
 	/* NOTE: account may be NULL in some cases */
 	g_return_val_if_fail (error, FALSE);
