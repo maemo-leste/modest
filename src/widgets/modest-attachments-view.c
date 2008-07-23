@@ -46,6 +46,7 @@ static GObjectClass *parent_class = NULL;
 /* signals */
 enum {
 	ACTIVATE_SIGNAL,
+	DELETE_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -355,6 +356,15 @@ modest_attachments_view_class_init (ModestAttachmentsViewClass *klass)
 			      g_cclosure_marshal_VOID__OBJECT,
 			      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 	
+ 	signals[DELETE_SIGNAL] =
+ 		g_signal_new ("delete",
+			      G_TYPE_FROM_CLASS (object_class),
+			      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+			      G_STRUCT_OFFSET(ModestAttachmentsViewClass, delete),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
 	return;
 }
 
@@ -608,6 +618,11 @@ key_press_event (GtkWidget *widget,
 			set_selected (MODEST_ATTACHMENTS_VIEW (atts_view), MODEST_ATTACHMENT_VIEW (new_sel->data));
 		}
 		g_list_free (box_children);
+		return TRUE;
+	}
+
+	if (event->keyval == GDK_BackSpace) {
+		g_signal_emit (G_OBJECT (widget), signals[DELETE_SIGNAL], 0);
 		return TRUE;
 	}
 

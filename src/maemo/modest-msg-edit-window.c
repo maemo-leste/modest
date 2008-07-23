@@ -173,8 +173,8 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 				  GtkTextIter *iter,
 				  GtkTextMark *mark,
 				  ModestMsgEditWindow *userdata);
-void vadj_changed (GtkAdjustment *adj, 
-		   ModestMsgEditWindow *window);
+static void vadj_changed (GtkAdjustment *adj, 
+			  ModestMsgEditWindow *window);
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -627,8 +627,9 @@ copy_clipboard_check (GtkTextView *text_view,
 	}
 }
 
-void vadj_changed (GtkAdjustment *adj,
-		   ModestMsgEditWindow *window)
+static void 
+vadj_changed (GtkAdjustment *adj,
+	      ModestMsgEditWindow *window)
 {
 	ModestMsgEditWindowPrivate *priv;
 
@@ -638,6 +639,14 @@ void vadj_changed (GtkAdjustment *adj,
 		priv->last_upper = adj->upper;
 		correct_scroll (window);
 	}
+}
+
+static void
+attachment_deleted (ModestAttachmentsView *attachments_view,
+		    gpointer user_data)
+{
+	modest_msg_edit_window_remove_attachments (MODEST_MSG_EDIT_WINDOW (user_data),
+						   NULL);
 }
 
 static void
@@ -708,7 +717,7 @@ connect_signals (ModestMsgEditWindow *obj)
 
 	g_signal_connect (G_OBJECT (priv->msg_body), "cut-clipboard", G_CALLBACK (cut_clipboard_check), NULL);
 	g_signal_connect (G_OBJECT (priv->msg_body), "copy-clipboard", G_CALLBACK (copy_clipboard_check), NULL);
-
+	g_signal_connect (G_OBJECT (priv->attachments_view), "delete", G_CALLBACK (attachment_deleted), obj);
 }
 
 static void
