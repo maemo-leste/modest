@@ -1343,9 +1343,8 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	gint i;
 	const gchar **cursor = NULL;
 	const gchar *forbidden_names[] = { /* windows does not like these */
-		"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
-		"COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-		".", "..", "cur", "tmp", "new", NULL /* cur, tmp new  are reserved for Maildir */
+		"CON", "PRN", "AUX", "NUL", ".", "..", "cur", "tmp", "new", 
+		NULL /* cur, tmp, new are reserved for Maildir */
 	};
 	
 	/* cannot be NULL */
@@ -1369,6 +1368,27 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 	for (i = 0; i < len; i++)
 		if (modest_text_utils_is_forbidden_char (folder_name[i], FOLDER_NAME_FORBIDDEN_CHARS))
 			return FALSE;
+
+	/* Cannot contain Windows port numbers. I'd like to use GRegex
+	   but it's still not available in Maemo. sergio */
+	if (g_str_has_prefix (folder_name, "LTP") ||
+	    g_str_has_prefix (folder_name, "ltp") ||
+	    g_str_has_prefix (folder_name, "COM") ||
+	    g_str_has_prefix (folder_name, "com")) {
+		glong val;
+		gchar *endptr;
+
+		/* We skip the first 3 characters for the
+		   comparison */
+		val = strtol(folder_name+3, &endptr, 10);
+
+		/* If the conversion to long succeeded then the string
+		   is not valid for us */
+		if (*endptr == '\0')
+			return FALSE;
+		else
+			return TRUE;
+	}
 	
 	/* cannot contain a forbidden word */
 	if (len <= 4) {
