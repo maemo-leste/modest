@@ -2319,7 +2319,6 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 	ModestMsgEditWindowPrivate *priv;
 	GnomeVFSResult result;
 	GnomeVFSFileSize size = 0;
-
 	g_return_val_if_fail (window, 0);
 	g_return_val_if_fail (uri, 0);
 		
@@ -2362,8 +2361,8 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 		    info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE) {
 			size = info->size;
 			if (size > allowed_size) {
-				g_warning ("%s: attachment too big", __FUNCTION__);
-				modest_platform_information_banner (NULL, NULL, dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+				modest_platform_information_banner (NULL, NULL, 
+								    dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
 				return 0;
 			}
 		} else

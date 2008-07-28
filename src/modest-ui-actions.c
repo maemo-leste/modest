@@ -754,11 +754,15 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	total_size = 0;
 	allowed_size = MODEST_MAX_ATTACHMENT_SIZE;
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
+
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
+	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (msg_win), set_as_modified);
+	gtk_widget_show_all (GTK_WIDGET (msg_win));
+
 	while (attachments) {
 		total_size +=
-			modest_msg_edit_window_attach_file_one(
-				(ModestMsgEditWindow *)msg_win,
-				attachments->data, allowed_size);
+			modest_msg_edit_window_attach_file_one((ModestMsgEditWindow *)msg_win,
+							       attachments->data, allowed_size);
 
 		if (total_size > allowed_size) {
 			g_warning ("%s: total size: %u",
@@ -769,10 +773,6 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 
 		attachments = g_slist_next(attachments);
 	}
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
-	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (msg_win), set_as_modified);
-
-	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
 	g_free (from_str);
