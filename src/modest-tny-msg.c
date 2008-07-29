@@ -450,7 +450,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		g_free (header_content_type_lower);
 		g_free (header_content_type);
 		return NULL;
-	}
+	}	
 	g_free (header_content_type_lower);
 	g_free (header_content_type);
 
@@ -471,7 +471,9 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		content_type = g_strstrip (content_type);
 		content_type_lower = g_ascii_strdown (content_type, -1);
 		g_free (content_type);
-		is_text_part = g_str_has_prefix (content_type_lower, "text/");
+		is_text_part = 
+			g_str_has_prefix (content_type_lower, "text/") ||
+			g_str_has_prefix (content_type_lower, "message/rfc822");
 		g_free (content_type_lower);
 		/* if this part cannot be a supported body return NULL */
 		if (!is_text_part) {

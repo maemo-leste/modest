@@ -34,6 +34,7 @@
 #include <gtkhtml/gtkhtml-search.h>
 #include <tny-stream.h>
 #include <tny-mime-part-view.h>
+#include "modest-tny-mime-part.h"
 #include <modest-stream-text-to-html.h>
 #include <modest-text-utils.h>
 #include <modest-conf.h>
@@ -414,10 +415,30 @@ set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 		return;
 	}
 
-	if (tny_mime_part_content_type_is (part, "text/html"))
+	if (tny_mime_part_content_type_is (part, "text/html")) {
 		set_html_part (self, part);
-	else
-		set_text_part (self, part);
+	} else {
+		if (tny_mime_part_content_type_is (part, "message/rfc822")) {
+			gchar *header_content_type, *header_content_type_lower;
+			header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
+			if (header_content_type) {
+				header_content_type = g_strstrip (header_content_type);
+				header_content_type_lower = g_ascii_strdown (header_content_type, -1);
+
+				if (!g_ascii_strcasecmp (header_content_type_lower, "text/html"))
+					set_html_part (self, part);
+				else 
+					set_text_part (self, part);
+
+				g_free (header_content_type_lower);
+				g_free (header_content_type);
+			} else {
+				set_text_part (self, part);
+			}
+		} else {
+			set_text_part (self, part);
+		}
+	}
 
 }
 
