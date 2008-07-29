@@ -777,6 +777,15 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
 		}
+
+		/* This could happen if we're viewing a message of the
+		   outbox that has been already sent */
+		if (!dimmed) {
+			ModestMsgViewWindow *view_window = MODEST_MSG_VIEW_WINDOW (win);
+			if (modest_msg_view_window_last_message_selected (view_window) &&
+			    modest_msg_view_window_first_message_selected (view_window))
+				dimmed = TRUE; 
+		}
 		
 		/* The delete button should be dimmed when viewing an attachment,
 		 * but should be enabled when viewing a message from the list, 
@@ -1041,6 +1050,16 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_item"));
 	}
+
+	/* This could happen if we're viewing a message of the outbox
+	   that has been already sent */
+	if (!dimmed) {
+		ModestMsgViewWindow *view_window = MODEST_MSG_VIEW_WINDOW (win);
+		if (modest_msg_view_window_last_message_selected (view_window) &&
+		    modest_msg_view_window_first_message_selected (view_window))
+			dimmed = TRUE; 
+	}
+
 	if (!dimmed) {
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 			/* The move_to button should be dimmed when viewing an attachment,

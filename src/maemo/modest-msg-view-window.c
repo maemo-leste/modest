@@ -1108,34 +1108,13 @@ modest_msg_view_window_on_row_deleted(GtkTreeModel *header_model,
 {
 	check_dimming_rules_after_change (window);
 }
-
-static gboolean
-check_dimming_rules_after_change_in_idle (gpointer data)
-{
 	/* The window could have dissapeared */
-	if (MODEST_IS_WINDOW (data)) {
-		ModestWindow *win = MODEST_WINDOW (data);
-		gdk_threads_enter ();
-		modest_ui_actions_check_menu_dimming_rules (win);
-		modest_ui_actions_check_toolbar_dimming_rules (win);
-		gdk_threads_leave ();
-	}
-
-	return FALSE;
-}
 
 static void
 check_dimming_rules_after_change (ModestMsgViewWindow *window)
 {
-	static guint dimming_delayer = 0;
-
-	if (dimming_delayer > 0)
-		g_source_remove (dimming_delayer);
-
-	/* We're expecting a lot of changes at the same time so don't
-	   need to check dimming rules for every change that
-	   happens */
-	dimming_delayer = g_timeout_add (100, check_dimming_rules_after_change_in_idle, window);
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 }
 
 
@@ -1688,6 +1667,9 @@ modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 	if (!priv->header_model || !priv->row_reference)
 		return TRUE;
 
+	if (!gtk_tree_row_reference_valid (priv->row_reference))
+		return TRUE;
+
 	path = gtk_tree_row_reference_get_path (priv->row_reference);
 	if (path == NULL)
 		return TRUE;
@@ -1755,7 +1737,6 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 	ModestMsgViewWindowPrivate *priv;
 	gboolean is_first_selected;
 	GtkTreeIter tmp_iter;
-/*	gchar * path_string;*/
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), TRUE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -1764,17 +1745,12 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 	if (!priv->header_model || !priv->row_reference)
 		return TRUE;
 
+	if (!gtk_tree_row_reference_valid (priv->row_reference))
+		return TRUE;
+
 	path = gtk_tree_row_reference_get_path (priv->row_reference);
 	if (!path)
 		return TRUE;
-
-/*	path_string = gtk_tree_path_to_string (path);
-	is_first_selected = strcmp (path_string, "0");
-
-	g_free (path_string);
-	gtk_tree_path_free (path);
-
-	return is_first_selected;*/
 
 	is_first_selected = TRUE;
 	while (is_first_selected) {

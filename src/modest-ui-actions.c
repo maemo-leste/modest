@@ -6025,6 +6025,8 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 	/* Rerun dimming rules, because the message could become deletable for example */
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (main_window), 
 						 MODEST_DIMMING_RULES_TOOLBAR);
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (main_window), 
+						 MODEST_DIMMING_RULES_MENU);
 	
 	/* Free */
  frees:
