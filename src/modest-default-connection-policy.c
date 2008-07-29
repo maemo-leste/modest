@@ -65,7 +65,6 @@ modest_default_connection_policy_on_connection_broken (TnyConnectionPolicy *self
 static void
 modest_default_connection_policy_on_disconnect (TnyConnectionPolicy *self, TnyAccount *account)
 {
-	tny_account_cancel (account);
 	return;
 }
 
