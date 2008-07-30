@@ -870,10 +870,6 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	gchar *attachments_string = NULL;
 
 	q = g_string_new ("\n");
-	if (signature != NULL) {
-		q = g_string_append (q, signature);
-		q = g_string_append_c (q, '\n');
-	}
 	q = g_string_append (q, cite);
 	q = g_string_append_c (q, '\n');
 
@@ -924,6 +920,12 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	q = g_string_append (q, attachments_string);
 	g_free (attachments_string);
 
+	if (signature != NULL) {
+		q = g_string_append (q, "\n--\n");
+		q = g_string_append (q, signature);
+		q = g_string_append_c (q, '\n');
+	}
+
 	return g_string_free (q, FALSE);
 }
 
@@ -940,8 +942,8 @@ modest_text_utils_quote_html (const gchar *text,
 		"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
 		"<html>\n" \
 		"<body>\n" \
-		"<br/>%s<br/>" \
 		"<pre>%s<br/>%s<br/>%s</pre>\n" \
+		"<br/>--<br/>%s<br/>\n" \
 		"</body>\n" \
 		"</html>\n";
 	gchar *attachments_string = NULL;
@@ -958,7 +960,7 @@ modest_text_utils_quote_html (const gchar *text,
 	q_attachments_string = modest_text_utils_convert_to_html_body (attachments_string, -1, TRUE);
 	q_cite = modest_text_utils_convert_to_html_body (cite, -1, TRUE);
 	html_text = modest_text_utils_convert_to_html_body (text, -1, TRUE);
-	result = g_strdup_printf (format, signature_result, q_cite, html_text, q_attachments_string);
+	result = g_strdup_printf (format, q_cite, html_text, q_attachments_string, signature_result);
 	g_free (q_cite);
 	g_free (html_text);
 	g_free (attachments_string);
