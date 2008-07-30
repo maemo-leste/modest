@@ -738,9 +738,9 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 
 	signature = modest_account_mgr_get_signature (mgr, account_name, &use_signature);
 	if (body_str != NULL) {
-		body = use_signature ? g_strconcat(body_str, "\n", signature, NULL) : g_strdup(body_str);
+		body = use_signature ? g_strconcat(body_str, "\n--\n", signature, NULL) : g_strdup(body_str);
 	} else {
-		body = use_signature ? g_strconcat("\n", signature, NULL) : g_strdup("");
+		body = use_signature ? g_strconcat("\n--\n", signature, NULL) : g_strdup("");
 	}
 
 	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL, NULL, NULL);
@@ -3290,7 +3290,7 @@ on_rename_folder_performer (gboolean canceled,
 
 		/* Clear the headers view */
 		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
-		gtk_tree_selection_unselect_all (sel);
+ 		gtk_tree_selection_unselect_all (sel);
 
 		/* Actually rename the folder */
 		modest_mail_operation_rename_folder (mail_op,
