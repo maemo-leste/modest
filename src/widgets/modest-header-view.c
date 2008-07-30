@@ -110,14 +110,13 @@ static void          _clipboard_set_selected_data (ModestHeaderView *header_view
 
 static void          _clear_hidding_filter (ModestHeaderView *header_view);
 
-static void modest_header_view_notify_observers(
-		ModestHeaderView *header_view,
-		GtkTreeModel *model,
-		const gchar *tny_folder_id);
+static void          modest_header_view_notify_observers(ModestHeaderView *header_view,
+							 GtkTreeModel *model,
+							 const gchar *tny_folder_id);
 
-static gboolean modest_header_view_on_expose_event (GtkTreeView *header_view,
-						    GdkEventExpose *event,
-						    gpointer user_data);
+static gboolean      modest_header_view_on_expose_event (GtkTreeView *header_view,
+							 GdkEventExpose *event,
+							 gpointer user_data);
 
 typedef enum {
 	HEADER_VIEW_NON_EMPTY,
@@ -1379,6 +1378,12 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			g_object_unref (G_OBJECT (priv->monitor));
 			priv->monitor = NULL;
 		}
+
+		if (priv->autoselect_reference) {
+			gtk_tree_row_reference_free (priv->autoselect_reference);
+			priv->autoselect_reference = NULL;
+		}
+
 		gtk_tree_view_set_model (GTK_TREE_VIEW (self), NULL); 
 
 		modest_header_view_notify_observers(self, NULL, NULL);

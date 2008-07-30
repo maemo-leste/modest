@@ -3298,6 +3298,7 @@ on_rename_folder_performer (gboolean canceled,
 						     (const gchar *) (data->new_name),
 						     on_rename_folder_cb,
 						     folder_view);
+		g_object_unref (data->folder);
 		g_object_unref (mail_op);
 	}
 
@@ -3349,7 +3350,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			do_rename = FALSE;
 		} else {
 			RenameFolderInfo *rename_folder_data = g_new0 (RenameFolderInfo, 1);
-			rename_folder_data->folder = folder;
+			rename_folder_data->folder = g_object_ref (folder);
 			rename_folder_data->new_name = folder_name;
 			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(main_window), TRUE,
 					folder, on_rename_folder_performer, rename_folder_data);
