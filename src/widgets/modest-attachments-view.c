@@ -790,13 +790,6 @@ static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_
 	}
 }
 
-static void clipboard_clear (GtkClipboard *clipboard, gpointer userdata)
-{
-	ModestAttachmentsView *atts_view = (ModestAttachmentsView *) userdata;
-
-	unselect_all (atts_view);
-}
-
 TnyList *
 modest_attachments_view_get_selection (ModestAttachmentsView *atts_view)
 {
@@ -934,7 +927,7 @@ own_clipboard (ModestAttachmentsView *atts_view)
 
 	gtk_clipboard_set_with_owner (gtk_widget_get_clipboard (GTK_WIDGET (atts_view), GDK_SELECTION_PRIMARY),
 				      targets, G_N_ELEMENTS (targets),
-				      clipboard_get, clipboard_clear, G_OBJECT(atts_view));
+				      clipboard_get, NULL, G_OBJECT(atts_view));
 			      
 }
 
