@@ -330,7 +330,7 @@ remove_uid (GSList *list, const gchar *uid)
 	GSList *cursor = list, *start = list;
 	
 	if (!uid)
-		return FALSE;
+		return list;
 	
 	while (cursor) {
 		GSList *next = g_slist_next (cursor);
