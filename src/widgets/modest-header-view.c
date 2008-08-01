@@ -1767,33 +1767,6 @@ on_focus_in (GtkWidget     *self,
 	if (selected == NULL) return FALSE;
 	selected_path = (GtkTreePath *) selected->data;
 
-	/* Check if we need to scroll */
-	#if GTK_CHECK_VERSION(2, 8, 0) /* TODO: gtk_tree_view_get_visible_range() is only available in GTK+ 2.8 */
-	GtkTreePath *start_path = NULL;
-	GtkTreePath *end_path = NULL;
-	if (gtk_tree_view_get_visible_range (GTK_TREE_VIEW (self),
-					     &start_path,
-					     &end_path)) {
-
-		if ((gtk_tree_path_compare (start_path, selected_path) != -1) ||
-		    (gtk_tree_path_compare (end_path, selected_path) != 1)) {
-
-			/* Scroll to first path */
-			gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (self),
-						      selected_path,
-						      NULL,
-						      TRUE,
-						      0.5,
-						      0.0);
-		}
-	}
-	if (start_path)
-		gtk_tree_path_free (start_path);
-	if (end_path)
-		gtk_tree_path_free (end_path);
-
-	#endif /* GTK_CHECK_VERSION */
-
 	/* Frees */	
 	g_list_foreach (selected, (GFunc) gtk_tree_path_free, NULL);
 	g_list_free (selected);

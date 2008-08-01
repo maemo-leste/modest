@@ -1745,8 +1745,45 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 				}
 			}
 		}
-	} else if (MODEST_IS_FOLDER_VIEW (widget) && event->keyval == GDK_Right)
+	} else if (MODEST_IS_FOLDER_VIEW (widget) && (event->keyval == GDK_Right || event->keyval == GDK_Left)) {
+#if GTK_CHECK_VERSION(2, 8, 0) /* TODO: gtk_tree_view_get_visible_range() is only available in GTK+ 2.8 */
+		GtkTreePath *selected_path = NULL;
+		GtkTreePath *start_path = NULL;
+		GtkTreePath *end_path = NULL;
+		GList *selected;
+		GtkTreeSelection *selection;
+
+		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->header_view));
+		selected = gtk_tree_selection_get_selected_rows (selection, NULL);
+		if (selected != NULL) {
+			selected_path = (GtkTreePath *) selected->data;
+			if (gtk_tree_view_get_visible_range (GTK_TREE_VIEW (priv->header_view),
+							     &start_path,
+							     &end_path)) {
+				
+				if ((gtk_tree_path_compare (start_path, selected_path) != -1) ||
+				    (gtk_tree_path_compare (end_path, selected_path) != 1)) {
+					
+					/* Scroll to first path */
+					gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (priv->header_view),
+								      selected_path,
+								      NULL,
+								      TRUE,
+								      0.5,
+								      0.0);
+				}
+			}
+			if (start_path)
+				gtk_tree_path_free (start_path);
+			if (end_path)
+				gtk_tree_path_free (end_path);
+			g_list_foreach (selected, (GFunc) gtk_tree_path_free, NULL);
+			g_list_free (selected);
+		}
+#endif /* GTK_CHECK_VERSION */
+			/* fix scroll */
 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
+	}
 
 	return FALSE;
 }
