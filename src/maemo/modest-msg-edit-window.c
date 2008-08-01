@@ -850,9 +850,9 @@ init_window (ModestMsgEditWindow *obj)
 	g_object_set (priv->text_buffer, "font_scale", DEFAULT_FONT_SCALE, NULL);
 	wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 #if (GTK_MINOR_VERSION >= 10)
-	gtk_text_buffer_register_serialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), "wp-text-buffer");
+	gtk_text_buffer_register_serialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), NULL);
 	deserialize_type = gtk_text_buffer_register_deserialize_tagset(GTK_TEXT_BUFFER(priv->text_buffer), 
-								       "wp-text-buffer");
+								       NULL);
 	gtk_text_buffer_deserialize_set_can_create_tags (GTK_TEXT_BUFFER (priv->text_buffer), 
 							 deserialize_type, TRUE);
 #endif

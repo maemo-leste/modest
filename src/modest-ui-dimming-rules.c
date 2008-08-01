@@ -1870,7 +1870,6 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 			} else if (MODEST_IS_ATTACHMENTS_VIEW (focused)) {
 				do_check = FALSE;
 			}
-			g_warning ("FOCUSED %s", focused?G_OBJECT_TYPE_NAME (focused):"NULL");
 			if (do_check) {
 				clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 				selection = gtk_clipboard_wait_for_text (clipboard);
