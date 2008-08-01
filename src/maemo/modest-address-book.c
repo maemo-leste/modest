@@ -876,8 +876,9 @@ select_contacts_for_name_dialog (const gchar *name)
 #endif /* MODEST_ABOOK_API < 4 */
 		e_book_view_start (book_view);
 		
-		contact_view = osso_abook_contact_view_new_basic (contact_model);
+		contact_view = osso_abook_contact_selector_new_basic (contact_model);
 		contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
+		gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
 
 		if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK) {
 			result = osso_abook_contact_view_get_selection (OSSO_ABOOK_CONTACT_VIEW (contact_view));
