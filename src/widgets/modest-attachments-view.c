@@ -76,7 +76,6 @@ static void set_selected (ModestAttachmentsView *atts_view, ModestAttachmentView
 static void select_range (ModestAttachmentsView *atts_view, ModestAttachmentView *att1, ModestAttachmentView *att2);
 static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_data,
 			   guint info, gpointer userdata);
-static void clipboard_clear (GtkClipboard *clipboard, gpointer userdata);
 static void own_clipboard (ModestAttachmentsView *atts_view);
 
 static guint signals[LAST_SIGNAL] = {0};
