@@ -1373,10 +1373,8 @@ modest_text_utils_validate_folder_name (const gchar *folder_name)
 
 	/* Cannot contain Windows port numbers. I'd like to use GRegex
 	   but it's still not available in Maemo. sergio */
-	if (g_str_has_prefix (folder_name, "LTP") ||
-	    g_str_has_prefix (folder_name, "ltp") ||
-	    g_str_has_prefix (folder_name, "COM") ||
-	    g_str_has_prefix (folder_name, "com")) {
+	if (g_ascii_strncasecmp (folder_name, "LPT", 3) ||
+	    g_ascii_strncasecmp (folder_name, "COM", 3)) {
 		glong val;
 		gchar *endptr;
 
