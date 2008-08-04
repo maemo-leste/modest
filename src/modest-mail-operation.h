@@ -582,9 +582,7 @@ void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
  * @remove_to_trash: TRUE to move it to trash or FALSE to delete it
  * permanently
  * 
- * Deletes a list of messages. This operation is synchronous, so the
- * #ModestMailOperation should not be added to any
- * #ModestMailOperationQueue
+ * Deletes a list of messages.
  **/
 void          modest_mail_operation_remove_msgs     (ModestMailOperation *self,
 						     TnyList *headers,

@@ -851,8 +851,9 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 						modest_dimming_rule_set_notification (rule, "");
 				}
 
+			} else {
+				return TRUE;
 			}
-
 		}
 
 	/* msg view window dimming rules */

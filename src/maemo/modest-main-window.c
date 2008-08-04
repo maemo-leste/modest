@@ -1451,10 +1451,18 @@ modest_main_window_set_style (ModestMainWindow *self,
 	g_list_free (rows);
 
 	/* Let header view grab the focus if it's being shown */
-	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
+	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS) {
 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
-	else 
-		gtk_widget_grab_focus (GTK_WIDGET (priv->contents_widget));
+	} else {
+		if (priv->style == MODEST_MAIN_WINDOW_STYLE_SPLIT)
+			gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
+		else
+			gtk_widget_grab_focus (GTK_WIDGET (priv->contents_widget));
+	}
+
+	/* Check dimming rules */
+        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	/* Show changes */
 	gtk_widget_show_all (GTK_WIDGET (priv->main_vbox));
