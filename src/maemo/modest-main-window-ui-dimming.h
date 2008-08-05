@@ -93,7 +93,7 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/HeaderViewCSM/HeaderViewCSMReplyAll", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/HeaderViewCSM/HeaderViewCSMForward", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/HeaderViewCSM/HeaderViewCSMDelete", G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
-	{ "/HeaderViewCSM/HeaderViewCSMCancelSending", G_CALLBACK(modest_ui_dimming_rules_on_csm_cancel_sending) },
+	{ "/HeaderViewCSM/HeaderViewCSMCancelSending", G_CALLBACK(modest_ui_dimming_rules_on_cancel_sending) },
 	{ "/HeaderViewCSM/HeaderViewCSMHelp", NULL },
 
 	/* Contextual Menus (Folder View) */

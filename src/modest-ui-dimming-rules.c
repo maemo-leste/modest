@@ -70,7 +70,6 @@ static gboolean _selected_folder_is_same_as_source (ModestWindow *win);
 static gboolean _msg_download_in_progress (ModestWindow *win);
 static gboolean _msg_download_completed (ModestMainWindow *win);
 static gboolean _selected_msg_sent_in_progress (ModestWindow *win);
-static gboolean _sending_in_progress (ModestWindow *win);
 static gboolean _invalid_folder_for_purge (ModestWindow *win, ModestDimmingRule *rule);
 static gboolean _transfer_mode_enabled (ModestWindow *win);
 static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win);
@@ -1774,37 +1773,7 @@ modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data
 			modest_dimming_rule_set_notification (rule, "");
  	}
 	if (!dimmed) {
-		dimmed = !_sending_in_progress (win);
- 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
-	}
-
-	return dimmed;
-}
-
-gboolean 
-modest_ui_dimming_rules_on_csm_cancel_sending (ModestWindow *win, gpointer user_data)
-{
- 	ModestDimmingRule *rule = NULL;
-	TnyFolderType types[1];
-	const DimmedState *state = NULL;
-	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
-	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
-	rule = MODEST_DIMMING_RULE (user_data);
-	state = modest_window_get_dimming_state (win);
-
-	types[0] = TNY_FOLDER_TYPE_OUTBOX; 
-
-	/* Check dimmed rules */	
-	if (!dimmed) {
-		dimmed = !_selected_folder_is_any_of_type (win, types, 1);
- 		if (dimmed) 
-			modest_dimming_rule_set_notification (rule, "");
- 	}
-	if (!dimmed) {
-		dimmed = !_sending_in_progress (win);
+		dimmed = !state->sent_in_progress;
  		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
@@ -2643,34 +2612,6 @@ _selected_msg_sent_in_progress (ModestWindow *win)
 	return state->sent_in_progress;
 }
 
-
-static gboolean
-_sending_in_progress (ModestWindow *win)
-{
-	GHashTable *send_queue_cache = NULL;
-	ModestCacheMgr *cache_mgr = NULL;
-	ModestTnySendQueue *send_queue = NULL;
-	GSList *send_queues = NULL, *node = NULL;
-	gboolean result = FALSE;
-	
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (win), FALSE);
-	
-	/* Get send queue */
-	cache_mgr = modest_runtime_get_cache_mgr ();
-	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
-						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
-	
-	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
-	
-	for (node = send_queues; node != NULL && !result; node = g_slist_next (node)) {
-		send_queue = MODEST_TNY_SEND_QUEUE (node->data);
-		
-		/* Check if send operation is in progress */
-		result = modest_tny_send_queue_sending_in_progress (send_queue);
-	}
-       
-	return result;
-}
 
 static gboolean
 _invalid_folder_for_purge (ModestWindow *win, 
