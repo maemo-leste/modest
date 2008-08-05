@@ -288,21 +288,33 @@ modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 gchar *
 modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 {
-	gchar *tmp;
+	gchar *tmp, *subject_dup, *retval;
+	gint prefix_len;
 
 	g_return_val_if_fail (prefix, NULL);
 
 	if (!subject || subject[0] == '\0')
 		subject = _("mail_va_no_subject");
 
-	tmp = g_strchug (g_strdup (subject));
+	subject_dup = g_strdup (subject);
+	tmp = g_strchug (subject_dup);
 
-	if (!strncmp (tmp, prefix, strlen (prefix))) {
-		return tmp;
-	} else {
-		g_free (tmp);
-		return g_strdup_printf ("%s %s", prefix, subject);
-	}
+	/* We do not want things like "Re: Re: Re:" or "Fw: Fw:" so
+	   delete the previous ones */
+	prefix_len = strlen (prefix);
+	do {
+		if (g_str_has_prefix (tmp, prefix)) {
+			tmp += prefix_len;
+			tmp = g_strchug (tmp);
+		} else {
+			break;
+		}
+	} while (tmp);
+
+	retval = g_strdup_printf ("%s %s", prefix, tmp);
+	g_free (subject_dup);
+
+	return retval;
 }
 
 gchar*
