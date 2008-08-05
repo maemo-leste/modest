@@ -713,8 +713,6 @@ icon_cell_data  (GtkTreeViewColumn *column,
 	}
 
 	free_pixbufs (pixbufs);
-
-	return;
 }
 
 static void
@@ -2011,6 +2009,18 @@ drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
 
 	/* Check if the drag is possible */
 	if (forbidden || !gtk_tree_path_compare (helper->source_row, dest_row)) {
+		/* Show error */
+		modest_platform_run_information_dialog ((GtkWindow *) win, 
+							_("mail_in_ui_folder_move_target_error"), 
+							FALSE);
+		/* Restore the previous selection */
+		folder = tree_path_to_folder (source_model, helper->source_row);
+		if (folder) {
+			if (TNY_IS_FOLDER (folder))
+				modest_folder_view_select_folder (helper->folder_view, 
+								  TNY_FOLDER (folder), FALSE);
+			g_object_unref (folder);
+		}
 		dnd_helper_destroyer (helper);
 		return;
 	}
