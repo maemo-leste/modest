@@ -2156,6 +2156,9 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 	modest_maemo_utils_setup_images_filechooser (GTK_FILE_CHOOSER (dialog));
 
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog));
+
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
 	case GTK_RESPONSE_OK:
