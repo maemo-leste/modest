@@ -2738,12 +2738,72 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 
 }
 
+static void
+save_attachments_response (GtkDialog *dialog,
+			   gint       arg1,
+			   gpointer   user_data)  
+{
+	TnyList *mime_parts;
+	gchar *chooser_uri;
+	GList *files_to_save = NULL;
+
+	if (arg1 != GTK_RESPONSE_OK)
+		goto end;
+
+	mime_parts = TNY_LIST (user_data);
+	chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
+
+	if (!modest_utils_folder_writable (chooser_uri)) {
+		hildon_banner_show_information 
+			(NULL, NULL, dgettext("hildon-fm", "sfil_ib_readonly_location"));
+	} else {
+		TnyIterator *iter;
+
+		iter = tny_list_create_iterator (mime_parts);
+		while (!tny_iterator_is_done (iter)) {
+			TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
+
+			if ((modest_tny_mime_part_is_attachment_for_modest (mime_part)) &&
+			    !tny_mime_part_is_purged (mime_part) &&
+			    (tny_mime_part_get_filename (mime_part) != NULL)) {
+				SaveMimePartPair *pair;
+					
+				pair = g_slice_new0 (SaveMimePartPair);
+
+				if (tny_list_get_length (mime_parts) > 1) {
+					gchar *escaped = 
+						gnome_vfs_escape_slashes (tny_mime_part_get_filename (mime_part));
+					pair->filename = g_build_filename (chooser_uri, escaped, NULL);
+					g_free (escaped);
+				} else {
+					pair->filename = g_strdup (chooser_uri);
+				}
+				pair->part = mime_part;
+				files_to_save = g_list_prepend (files_to_save, pair);
+			}
+			tny_iterator_next (iter);
+		}
+		g_object_unref (iter);
+	}
+	g_free (chooser_uri);
+
+	if (files_to_save != NULL) {
+		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
+		info->pairs = files_to_save;
+		info->result = TRUE;
+		save_mime_parts_to_file_with_checks (info);
+	}
+
+ end:
+	/* Free and close the dialog */
+	g_object_unref (mime_parts);
+	gtk_widget_destroy (GTK_WIDGET (dialog));
+}
 
 void
 modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *mime_parts)
 {
 	ModestMsgViewWindowPrivate *priv;
-	GList *files_to_save = NULL;
 	GtkWidget *save_dialog = NULL;
 	gchar *folder = NULL;
 	gchar *filename = NULL;
@@ -2803,55 +2863,14 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		g_object_set (G_OBJECT (save_dialog), "save-multiple", save_multiple_str, NULL);
 		gtk_window_set_title (GTK_WINDOW (save_dialog), _FM("sfil_ti_save_objects_files"));
 	}
-		
-	/* show dialog */
-	if (gtk_dialog_run (GTK_DIALOG (save_dialog)) == GTK_RESPONSE_OK) {
-		gchar *chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (save_dialog));
 
-		if (!modest_utils_folder_writable (chooser_uri)) {
-			hildon_banner_show_information 
-				(NULL, NULL, dgettext("hildon-fm", "sfil_ib_readonly_location"));
-		} else {
-			TnyIterator *iter;
+	/* We must run this asynchronously, because the hildon dialog
+	   performs a gtk_dialog_run by itself which leads to gdk
+	   deadlocks */
+	g_signal_connect (save_dialog, "response", 
+			  G_CALLBACK (save_attachments_response), mime_parts);
 
-			iter = tny_list_create_iterator (mime_parts);
-			while (!tny_iterator_is_done (iter)) {
-				TnyMimePart *mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
-
-				if ((modest_tny_mime_part_is_attachment_for_modest (mime_part)) &&
-				    !tny_mime_part_is_purged (mime_part) &&
-				    (tny_mime_part_get_filename (mime_part) != NULL)) {
-					SaveMimePartPair *pair;
-					
-					pair = g_slice_new0 (SaveMimePartPair);
-					if (save_multiple_str) {
-						gchar *escaped = gnome_vfs_escape_slashes (
-							tny_mime_part_get_filename (mime_part));
-						pair->filename = g_build_filename (chooser_uri, escaped, NULL);
-						g_free (escaped);
-					} else {
-						pair->filename = g_strdup (chooser_uri);
-					}
-					pair->part = mime_part;
-					files_to_save = g_list_prepend (files_to_save, pair);
-				}
-				tny_iterator_next (iter);
-			}
-			g_object_unref (iter);
-		}
-		g_free (chooser_uri);
-	}
-
-	gtk_widget_destroy (save_dialog);
-
-	g_object_unref (mime_parts);
-
-	if (files_to_save != NULL) {
-		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
-		info->pairs = files_to_save;
-		info->result = TRUE;
-		save_mime_parts_to_file_with_checks (info);
-	}
+	gtk_widget_show_all (save_dialog);
 }
 
 static gboolean
