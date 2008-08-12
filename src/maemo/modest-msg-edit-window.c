@@ -1895,6 +1895,9 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 	
 	g_free (current_format);
 
+	/* Check dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 }
 
 static void
@@ -2822,6 +2825,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			break;
 		}
 		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+		modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), window);
 	}
 }
@@ -2974,7 +2978,6 @@ modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
-
 }
 
 void
