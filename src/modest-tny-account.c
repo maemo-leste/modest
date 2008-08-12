@@ -364,7 +364,8 @@ update_tny_account (TnyAccount *tny_account,
 			break;
 		}
 		
-		tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
+		if (auth_mech_name)
+			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		
 		if (modest_protocol_info_protocol_is_store(protocol) && 
 			(protocol == MODEST_PROTOCOL_STORE_IMAP) ) {

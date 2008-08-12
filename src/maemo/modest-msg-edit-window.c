@@ -2428,7 +2428,6 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 	if (tny_list_get_length (att_list) == 0) {
 		hildon_banner_show_information (NULL, NULL, _("TODO: no attachments selected to remove"));
 	} else {
-		GtkWidget *confirmation_dialog = NULL;
 		gboolean dialog_response;
 		gchar *message = NULL;
 		gchar *filename = NULL;
@@ -2457,11 +2456,11 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", "emev_nc_delete_attachments",
 						    tny_list_get_length (att_list)), filename);
 		g_free (filename);
-		confirmation_dialog = hildon_note_new_confirmation (GTK_WINDOW (window), message);
+
+		dialog_response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window), message);
 		g_free (message);
-		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
-		gtk_widget_destroy (confirmation_dialog);
-		if (!dialog_response) {
+
+		if (dialog_response != GTK_RESPONSE_OK) {
 			g_object_unref (att_list);
 			return;
 		}

@@ -2747,10 +2747,11 @@ save_attachments_response (GtkDialog *dialog,
 	gchar *chooser_uri;
 	GList *files_to_save = NULL;
 
+	mime_parts = TNY_LIST (user_data);
+
 	if (arg1 != GTK_RESPONSE_OK)
 		goto end;
 
-	mime_parts = TNY_LIST (user_data);
 	chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
 
 	if (!modest_utils_folder_writable (chooser_uri)) {
@@ -2905,7 +2906,6 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	gint n_attachments;
 	TnyMsg *msg;
 	TnyIterator *iter;
-/* 	TnyFolder *folder; */
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -2968,10 +2968,6 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	}
 
 	priv->purge_timeout = g_timeout_add (2000, show_remove_attachment_information, window);
-/* 	folder = tny_msg_get_folder (msg); */
-/* 	tny_msg_uncache_attachments (msg); */
-/* 	tny_folder_refresh (folder, NULL); */
-/* 	g_object_unref (folder); */
 	
 	iter = tny_list_create_iterator (mime_parts);
 	while (!tny_iterator_is_done (iter)) {
@@ -2979,7 +2975,6 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 
 		part = (TnyMimePart *) tny_iterator_get_current (iter);
 		tny_mime_part_set_purged (TNY_MIME_PART (part));
-/* 		modest_msg_view_remove_attachment (MODEST_MSG_VIEW (priv->msg_view), node->data); */
 		g_object_unref (part);
 		tny_iterator_next (iter);
 	}

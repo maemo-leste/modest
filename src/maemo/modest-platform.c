@@ -807,9 +807,16 @@ modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
 
 
 static void
-on_destroy_dialog (GtkDialog *dialog)
+on_destroy_dialog (GtkWidget *dialog)
 {
-	gtk_widget_destroy (GTK_WIDGET(dialog));
+	/* This could happen when the dialogs get programatically
+	   hidden or destroyed (for example when closing the
+	   application while a dialog is being shown) */
+	if (!GTK_IS_WIDGET (dialog))
+		return;
+
+	gtk_widget_destroy (dialog);
+
 	if (gtk_events_pending ())
 		gtk_main_iteration ();
 }
@@ -827,10 +834,7 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
-	on_destroy_dialog (GTK_DIALOG(dialog));
-	
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
+	on_destroy_dialog (dialog);
 
 	return response;
 }
@@ -853,10 +857,7 @@ modest_platform_run_confirmation_dialog_with_buttons (GtkWindow *parent_window,
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
-	on_destroy_dialog (GTK_DIALOG(dialog));
-	
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
+	on_destroy_dialog (dialog);
 
 	return response;
 }
@@ -875,10 +876,7 @@ modest_platform_run_yes_no_dialog (GtkWindow *parent_window,
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	
-	on_destroy_dialog (GTK_DIALOG(dialog));
-
-	while (gtk_events_pending ())
-		gtk_main_iteration ();
+	on_destroy_dialog (dialog);
 
 	return response;
 }
@@ -900,10 +898,7 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	if (block) {
 		gtk_dialog_run (GTK_DIALOG (note));
 	
-		on_destroy_dialog (GTK_DIALOG (note));
-
-		while (gtk_events_pending ())
-			gtk_main_iteration ();
+		on_destroy_dialog (note);
 	} else {
 		g_signal_connect_swapped (note,
 					  "response", 
@@ -1730,7 +1725,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 				     GTK_WINDOW (note));
 	response = gtk_dialog_run(GTK_DIALOG(note));
 
-	on_destroy_dialog (GTK_DIALOG(note));
+	on_destroy_dialog (note);
 	g_free (question);
 	
 	return response == GTK_RESPONSE_OK;
@@ -1765,7 +1760,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 		retval = (response == GTK_RESPONSE_YES) || (response == GTK_RESPONSE_OK);
 		
-		on_destroy_dialog (GTK_DIALOG(dialog));		
+		on_destroy_dialog (dialog);		
 	} else {
 	 	/* Just show the error text and use the default response: */
 	 	modest_platform_run_information_dialog (GTK_WINDOW (main_win), 
