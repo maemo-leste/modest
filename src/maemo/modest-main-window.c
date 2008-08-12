@@ -1147,14 +1147,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 		gtk_widget_show_all(GTK_WIDGET(self));
 		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
 	} else {
-		GSList *accounts;
-		GtkAction *send_receive_all;
-		ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
-		accounts = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
-		send_receive_all = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-							      "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
-		gtk_action_set_visible (send_receive_all, g_slist_length (accounts) > 0);
-		modest_account_mgr_free_account_names (accounts);
 		update_menus (MODEST_MAIN_WINDOW (self));
 	}
 
