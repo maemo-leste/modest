@@ -202,13 +202,13 @@ process_dimming_rules_delayed (gpointer data)
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
 	timeout_handler = g_hash_table_lookup (priv->delayed_calls, helper->name);
 
-	MODEST_DEBUG_BLOCK(g_print ("---------------------HIT %d\n", GPOINTER_TO_INT (timeout_handler)););
-
 	if (GPOINTER_TO_INT (timeout_handler) > 0) {
 		g_source_remove (GPOINTER_TO_INT (timeout_handler));
 	}
 
+	gdk_threads_enter ();
 	modest_dimming_rules_group_execute (helper->group);
+	gdk_threads_leave ();
 
 	return FALSE;
 }
@@ -251,7 +251,7 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 		helper->group = group;
 		helper->manager = g_object_ref (self);
 		helper->name = g_strdup (group_name);
-		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 500, process_dimming_rules_delayed, 
+		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 100, process_dimming_rules_delayed, 
 						  helper, process_dimming_rules_delayed_destroyer);
 		g_hash_table_insert (priv->delayed_calls, g_strdup (group_name), GINT_TO_POINTER (new_handler));
 		MODEST_DEBUG_BLOCK(g_print ("---------------------Adding %d\n", new_handler););
