@@ -2487,8 +2487,39 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 	return selected_attachments;
 }
 
+typedef struct {
+
+} DecodeAsyncHelper;
+
+static void
+on_decode_to_stream_async_handler (TnyMimePart *mime_part, 
+				   gboolean cancelled, 
+				   TnyStream *stream, 
+				   GError *err, 
+				   gpointer user_data)
+{
+	gchar *filepath = (gchar *) user_data;
+
+	if (cancelled || err) {
+		modest_platform_information_banner (NULL, NULL, 
+						    _("mail_ib_file_operation_failed"));
+		goto free;
+	}
+
+	/* make the file read-only */
+	g_chmod(filepath, 0444);
+	
+	/* Activate the file */
+	modest_platform_activate_file (filepath, tny_mime_part_get_content_type (mime_part));
+
+ free:
+	/* Frees */
+	g_free (filepath);
+}
+
 void
-modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart *mime_part)
+modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, 
+					TnyMimePart *mime_part)
 {
 	ModestMsgViewWindowPrivate *priv;
 	const gchar *msg_uid;
@@ -2539,46 +2570,33 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart
 	if (!modest_tny_mime_part_is_msg (mime_part)) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
-		const gchar *content_type;
 		gboolean show_error_banner = FALSE;
-		GError *err;
 		TnyFsStream *temp_stream = NULL;
 		temp_stream = modest_utils_create_temp_stream (att_filename, attachment_uid,
 							       &filepath);
 		
 		if (temp_stream != NULL) {
-			content_type = tny_mime_part_get_content_type (mime_part);
-			if (tny_mime_part_decode_to_stream (mime_part, TNY_STREAM (temp_stream), &err) >= 0) {
-				/* make the file read-only */
-				if (g_chmod(filepath, 0444) != 0)
-					g_warning ("%s: failed to set file '%s' to read-only: %s",
-							__FUNCTION__, filepath, strerror(errno));
-
-				modest_platform_activate_file (filepath, content_type);
-			} else {
-				/* error while saving attachment, maybe cerm_device_memory_full */
-				show_error_banner = TRUE;
-				if (err != NULL) {
-					g_warning ("%s: tny_mime_part_decode_to_stream failed (%s)", __FUNCTION__, err->message);
-					g_error_free (err);
-				}
-			}
+			tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream), 
+							      on_decode_to_stream_async_handler, 
+							      NULL, 
+							      g_strdup (filepath));
 			g_object_unref (temp_stream);
-			g_free (filepath);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
 		} else {
-			if (filepath != NULL) {
+			if (filepath) {
+				const gchar *content_type;
 				/* the file may already exist but it isn't writable,
 				 * let's try to open it anyway */
 				content_type = tny_mime_part_get_content_type (mime_part);
 				modest_platform_activate_file (filepath, content_type);
-				g_free (filepath);
 			} else {
 				g_warning ("%s: modest_utils_create_temp_stream failed", __FUNCTION__);
 				show_error_banner = TRUE;
 			}
 		}
+		if (filepath)
+			g_free (filepath);
 		if (show_error_banner)
 			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 	} else {
