@@ -5385,6 +5385,10 @@ modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 	gboolean need_connection = TRUE;
 	gboolean do_xfer = TRUE;
 	XferMsgsHelper *helper;
+
+	g_return_if_fail (TNY_IS_FOLDER (src_folder));
+	g_return_if_fail (TNY_IS_FOLDER (dst_folder));
+	g_return_if_fail (TNY_IS_LIST (headers));
 	
 	modest_ui_actions_xfer_messages_check (win, TNY_FOLDER_STORE (src_folder), 
 					       headers, TNY_FOLDER (dst_folder),
@@ -5443,6 +5447,7 @@ modest_ui_actions_on_msg_view_window_move_to (GtkAction *action,
 						    TNY_FOLDER (dst_folder));
 
 	/* Frees */
+	g_object_unref (src_folder);
 	g_object_unref (header);
 	g_object_unref (headers);
 }

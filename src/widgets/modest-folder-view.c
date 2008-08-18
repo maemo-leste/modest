@@ -1817,6 +1817,12 @@ drag_and_drop_from_header_view (GtkTreeModel *source_model,
 	}
 	g_strfreev (uris);
 
+	/* This could happen ig we perform a d&d very quickly over the
+	   same row that row could dissapear because message is
+	   transferred */
+	if (!TNY_IS_FOLDER (src_folder))
+		goto cleanup;
+
 	/* Get the target folder */
 	gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
 	gtk_tree_model_get (dest_model, &dest_iter,
