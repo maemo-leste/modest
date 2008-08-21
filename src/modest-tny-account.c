@@ -325,8 +325,11 @@ update_tny_account (TnyAccount *tny_account,
 			break;
 		}
 		
-		if(option_security)
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), option_security);
+		if(option_security) {
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), 
+						      option_security);
+			g_object_unref (option_security);
+		}
 		
 		/* Secure authentication: */
 		switch (auth_protocol) {
@@ -407,6 +410,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 {
 	ModestServerAccountSettings *server_settings;
 	TnyAccount *tny_account;
+	TnyConnectionPolicy *policy;
 	
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (server_account_name, NULL);
@@ -439,7 +443,9 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 					   get_pass_func ? get_pass_func: get_pass_dummy);
 	}
 
-	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
+	policy = modest_default_connection_policy_new ();
+	tny_account_set_connection_policy (tny_account, policy);
+	g_object_unref (policy);
 
 	g_object_unref (server_settings);
 	
@@ -493,6 +499,7 @@ modest_tny_account_update_from_account (TnyAccount *tny_account,
 	TnyAccountType type;
 	const gchar *display_name;
 	TnyConnectionStatus conn_status;
+	TnyConnectionPolicy *policy;
 
 	g_return_val_if_fail (tny_account, FALSE);
 
@@ -533,7 +540,9 @@ modest_tny_account_update_from_account (TnyAccount *tny_account,
 	g_object_unref (server_settings);
 	g_object_unref (settings);
 
-	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
+	policy = modest_default_connection_policy_new ();
+	tny_account_set_connection_policy (tny_account, policy);
+	g_object_unref (policy);
 	
 	/* The callback will have an error for you if the reconnect
 	 * failed. Please handle it (this is TODO). */
@@ -571,6 +580,7 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 	ModestAccountSettings *settings = NULL;
 	ModestServerAccountSettings *server_settings = NULL;
 	const gchar *display_name;
+	TnyConnectionPolicy *policy;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_name, NULL);
@@ -622,7 +632,9 @@ modest_tny_account_new_from_account (ModestAccountMgr *account_mgr,
 	tny_account_set_pass_func (tny_account,
 				   get_pass_func ? get_pass_func: get_pass_dummy);
 
-	tny_account_set_connection_policy (tny_account, modest_default_connection_policy_new ());
+	policy = modest_default_connection_policy_new ();
+	tny_account_set_connection_policy (tny_account, policy);
+	g_object_unref (policy);
 
         modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account,
 									      account_name);
@@ -731,18 +743,16 @@ TnyAccount*
 modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySessionCamel *session,
 					  const gchar* location_filepath)
 {
-
-	
-	/* Make sure that the directories exist: */
-	modest_init_local_folders (location_filepath);
-
 	TnyStoreAccount *tny_account;
 	CamelURL *url;
 	gchar *maildir, *url_string;
+	TnyConnectionPolicy *policy;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (session, NULL);
-
+	
+	/* Make sure that the directories exist: */
+	modest_init_local_folders (location_filepath);
 	
 	if (!location_filepath) {
 		/* A NULL filepath means that this is the special local-folders maildir 
@@ -816,7 +826,9 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
 
-	tny_account_set_connection_policy (TNY_ACCOUNT (tny_account), modest_default_connection_policy_new ());	
+	policy = modest_default_connection_policy_new ();
+	tny_account_set_connection_policy (TNY_ACCOUNT (tny_account), policy);
+	g_object_unref (policy);
 
 	modest_tny_account_set_parent_modest_account_name_for_server_account (
 		TNY_ACCOUNT (tny_account), id);
@@ -834,15 +846,19 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 							    const gchar* account_name,
 							    TnySessionCamel *session)
 {
+	TnyConnectionPolicy *policy;
+	TnyStoreAccount *tny_account;
+       
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (account_name, NULL);
 	g_return_val_if_fail (session, NULL);
-	
+
 	/* Notice that we create a ModestTnyOutboxAccount here, 
 	 * instead of just a TnyCamelStoreAccount,
 	 * so that we can later identify this as a special account for internal use only.
 	 */
-	TnyStoreAccount *tny_account = TNY_STORE_ACCOUNT (modest_tny_outbox_account_new ());
+	tny_account = TNY_STORE_ACCOUNT (modest_tny_outbox_account_new ());
+
 	if (!tny_account) {
 		g_printerr ("modest: cannot create account for per-account local outbox folder.");
 		return NULL;
@@ -888,7 +904,9 @@ modest_tny_account_new_for_per_account_local_outbox_folder (ModestAccountMgr *ac
 	tny_account_set_forget_pass_func (TNY_ACCOUNT(tny_account), forget_pass_dummy);
 	tny_account_set_pass_func (TNY_ACCOUNT(tny_account), get_pass_dummy);
 
-	tny_account_set_connection_policy (TNY_ACCOUNT (tny_account), modest_default_connection_policy_new ());
+	policy = modest_default_connection_policy_new ();
+	tny_account_set_connection_policy (TNY_ACCOUNT (tny_account), policy);
+	g_object_unref (policy);
 
 	/* Make this think that it belongs to the modest local-folders parent account: */
 	modest_tny_account_set_parent_modest_account_name_for_server_account (

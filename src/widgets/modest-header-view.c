@@ -351,7 +351,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
 
-	/* FIXME: check whether these renderers need to be freed */
+	/* TODO: check whether these renderers need to be freed */
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
 	renderer_priority  = gtk_cell_renderer_pixbuf_new ();
 	renderer_header  = gtk_cell_renderer_text_new ();
@@ -543,7 +543,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						 (GtkTreeIterCompareFunc) cmp_subject_rows,
 						 compact_column, NULL);
 	}
-
 
 	return TRUE;
 }
@@ -976,6 +975,7 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 					moved_selection = TRUE;
 				g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
 				g_list_free (rows);
+				gtk_tree_path_free (last_path);
 			}
 			if (moved_selection) {
 				gtk_tree_row_reference_free (priv->autoselect_reference);
