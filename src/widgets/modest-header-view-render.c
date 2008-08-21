@@ -154,27 +154,6 @@ set_cell_text (GtkCellRenderer *renderer,
 	g_object_thaw_notify (G_OBJECT (renderer));
 }
 
-
-void
-_modest_header_view_msgtype_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
-		   GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)
-{
-	TnyHeaderFlags flags;
-		
-	gtk_tree_model_get (tree_model, iter, TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
-			    &flags, -1);
-
-	if (flags & TNY_HEADER_FLAG_DELETED)
-		g_object_set (G_OBJECT (renderer), "pixbuf",
-			      get_pixbuf_for_flag (TNY_HEADER_FLAG_DELETED), NULL);	      
-	else if (flags & TNY_HEADER_FLAG_SEEN)
-		g_object_set (G_OBJECT (renderer), "pixbuf",
-			      get_pixbuf_for_flag (TNY_HEADER_FLAG_SEEN), NULL);	      
-	else 
-		g_object_set (G_OBJECT (renderer), "pixbuf",
-			      get_pixbuf_for_flag (0), NULL); /* ughh, FIXME */		      
-}
-
 void
 _modest_header_view_attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer *renderer,
 				      GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer user_data)

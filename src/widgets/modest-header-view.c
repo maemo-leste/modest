@@ -337,7 +337,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	GtkTreeModel *tree_filter, *sortable;
 	GtkTreeViewColumn *column=NULL;
 	GtkTreeSelection *selection = NULL;
-	GtkCellRenderer *renderer_msgtype,*renderer_header,
+	GtkCellRenderer *renderer_header,
 		*renderer_attach, *renderer_compact_date_or_status;
 	GtkCellRenderer *renderer_compact_header, *renderer_recpt_box, 
 		*renderer_subject, *renderer_subject_box, *renderer_recpt,
@@ -352,7 +352,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
 
 	/* FIXME: check whether these renderers need to be freed */
-	renderer_msgtype = gtk_cell_renderer_pixbuf_new ();
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
 	renderer_priority  = gtk_cell_renderer_pixbuf_new ();
 	renderer_header  = gtk_cell_renderer_text_new ();
@@ -434,15 +433,6 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 		
 		switch (col) {
 			
-		case MODEST_HEADER_VIEW_COLUMN_MSGTYPE:
-			column = get_new_column (_("M"), renderer_msgtype, FALSE,
-						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
-						 FALSE,
-						 (GtkTreeCellDataFunc)_modest_header_view_msgtype_cell_data,
-						 NULL);
-			gtk_tree_view_column_set_fixed_width (column, 45);
-			break;
-
 		case MODEST_HEADER_VIEW_COLUMN_ATTACH:
 			column = get_new_column (_("A"), renderer_attach, FALSE,
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
