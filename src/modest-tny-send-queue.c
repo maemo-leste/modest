@@ -399,6 +399,8 @@ modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (instance);
 	priv->queue = g_queue_new();
 	priv->current = NULL;
+	priv->outbox = NULL;
+	priv->sentbox = NULL;
 }
 
 static void

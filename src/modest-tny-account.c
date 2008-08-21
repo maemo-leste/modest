@@ -372,11 +372,17 @@ update_tny_account (TnyAccount *tny_account,
 		
 		if (modest_protocol_info_protocol_is_store(protocol) && 
 			(protocol == MODEST_PROTOCOL_STORE_IMAP) ) {
+			TnyPair *use_lsub, *check_all;
+
+			use_lsub = tny_pair_new (MODEST_ACCOUNT_OPTION_USE_LSUB, "");
+			check_all = tny_pair_new (MODEST_ACCOUNT_OPTION_CHECK_ALL, "");
 			/* Other connection options, needed for IMAP. */
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      tny_pair_new (MODEST_ACCOUNT_OPTION_USE_LSUB, ""));
+						      use_lsub);
 			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      tny_pair_new (MODEST_ACCOUNT_OPTION_CHECK_ALL, ""));
+						      check_all);
+			g_object_unref (use_lsub);
+			g_object_unref (check_all);
 		}
 		
 		username = modest_server_account_settings_get_username (server_settings);

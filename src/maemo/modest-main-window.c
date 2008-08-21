@@ -2894,6 +2894,17 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 	return TRUE;
 }
 
+static void
+updating_banner_destroyed (gpointer data,
+			   GObject *where_the_object_was)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (data);
+
+	priv->updating_banner = NULL;
+}
+
 static gboolean
 show_updating_banner (gpointer user_data)
 {
@@ -2908,6 +2919,13 @@ show_updating_banner (gpointer user_data)
 		priv->updating_banner = 
 			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
 							  _CS ("ckdg_pb_updating"));
+
+		/* We need this because banners in Maemo could be
+		   destroyed by dialogs so we need to properly update
+		   our reference to it */
+		g_object_weak_ref (G_OBJECT (priv->updating_banner),
+				   updating_banner_destroyed,
+				   user_data);
 		gdk_threads_leave ();
 	}
 
@@ -3033,6 +3051,17 @@ on_window_destroy (GtkObject *widget,
 	remove_banners (MODEST_MAIN_WINDOW (widget));
 }
 
+static void
+retrieving_banner_destroyed (gpointer data,
+			     GObject *where_the_object_was)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (data);
+
+	priv->retrieving_banner = NULL;
+}
+
 static gboolean
 show_retrieving_banner (gpointer user_data)
 {
@@ -3047,6 +3076,13 @@ show_retrieving_banner (gpointer user_data)
 		priv->retrieving_banner = 
 			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
 							  _("mcen_ib_getting_items"));
+
+		/* We need this because banners in Maemo could be
+		   destroyed by dialogs so we need to properly update
+		   our reference to it */
+		g_object_weak_ref (G_OBJECT (priv->retrieving_banner),
+				   retrieving_banner_destroyed,
+				   user_data);
 		gdk_threads_leave ();
 	}
 
