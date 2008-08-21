@@ -897,7 +897,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
 	TnyAccount *local_account = NULL;
-	
+	TnyLockable *lockable;	
+
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
 
@@ -913,8 +914,10 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 		return NULL;
 	}
 
-	/* Set the ui locker */	
-	tny_session_camel_set_ui_locker (priv->session,	 tny_gtk_lockable_new ());
+	/* Set the ui locker */
+	lockable = tny_gtk_lockable_new ();
+	tny_session_camel_set_ui_locker (priv->session,	lockable);
+	g_object_unref (lockable);
 	
 	/* Connect signals */
 	priv->sighandlers  =  modest_signal_mgr_connect (priv->sighandlers,
