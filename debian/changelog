@@ -1,16 +1,21 @@
-modest (1.0-2008.33-1) hardy; urgency=low
+modest (1.0-2008.35-1) hardy; urgency=low
 
-  * Fixes: NB#87366, NB#87102, NB#86719, NB#84725, NB#87350, NB#86828
+  * Fixes: NB#86199, NB#86112, NB#86137, NB#86176, NB#86637, NB#87257
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Mon, 11 Aug 2008 12:09:11 +0300
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 27 Aug 2008 10:37:21 +0300
 
-modest (1.0-2008.32-1) hardy; urgency=low
+modest (1.0-2008.34-1) hardy; urgency=low
 
-  * Fixes: NB#87029, NB#87093, NB#86984, NB#86213, NB#86176, NB#87174
-  * Fixes: NB#86564, NB#86137, NB#86112, NB#86408, NB#86199, NB#86637
-  * Fixes: NB#87257, NB#87039, NB#87351
+  * Fixes: NB#86213, NB#87351, NB#87350, NB#87456,
 
- -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Wed, 06 Aug 2008 09:47:09 +0300
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 19 Aug 2008 18:47:29 +0300
+
+modest (1.0-2008.33-2) hardy; urgency=low
+
+  * intermediate build with single bug fix.
+  * Fixes: NB#86984
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 14 Aug 2008 15:16:29 +0300
 
 modest (1.0-2008.31-1) hardy; urgency=low
 
