@@ -885,8 +885,6 @@ on_idle_send_receive(gpointer user_data)
 	return FALSE;
 }
 
-
-
 static gint 
 on_dbus_method_dump_send_queues (DBusConnection *con, DBusMessage *message)
 {
@@ -1078,19 +1076,10 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 	return OSSO_OK;
 }
 
-static void
-on_send_receive_performer(gboolean canceled, 
-			  GError *err,
-			  GtkWindow *parent_window,
-			  TnyAccount *account,
-			  gpointer user_data)
-{
+static gint 
+on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
+{ 	
 	ModestConnectedVia connect_when;
-
-	if (err || canceled) {
-		g_idle_add (notify_error_in_dbus_callback, NULL);
-		return;
-	}
 
 	connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
 					    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
@@ -1105,18 +1094,6 @@ on_send_receive_performer(gboolean canceled,
 		/* We need this to allow modest to finish */
 		g_idle_add (notify_error_in_dbus_callback, NULL);
 	}
-}
-
-
-static gint 
-on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
-{ 	
-	TnyDevice *device = modest_runtime_get_device ();
-
-	if (!tny_device_is_online (device))
-		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, NULL);
-	else
-		on_send_receive_performer (FALSE, NULL, NULL, NULL, NULL);
  	
  	return OSSO_OK;
 }
