@@ -33,7 +33,6 @@
 #include <tny-simple-list.h>
 #include <tny-list.h>
 #include <tny-iterator.h>
-#include <tny-maemo-conic-device.h>
 #include <tny-error.h>
 #include "modest-hildon-includes.h"
 #include "modest-defs.h"
