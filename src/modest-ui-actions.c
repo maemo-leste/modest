@@ -4230,9 +4230,10 @@ headers_action_show_details (TnyHeader *header,
 	/* Run dialog */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 	gtk_widget_show_all (dialog);
-	gtk_dialog_run (GTK_DIALOG (dialog));
 
-	gtk_widget_destroy (dialog);
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
 }
 
 /*
