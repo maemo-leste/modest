@@ -2210,6 +2210,8 @@ account_shutdown_callback (TnyCamelAccount *account, gboolean canceled, GError *
 			op_data->callback (op_data->account_store, op_data->userdata);
 		g_object_unref (op_data->account_store);
 		g_free (op_data);
+	} else {
+		g_object_unref (op_data->account_store);
 	}
 }
 
@@ -2220,11 +2222,18 @@ account_shutdown (TnyAccount *account, ShutdownOpData *op_data)
 
 	if (TNY_IS_STORE_ACCOUNT (account) && 
 	    !modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		goto frees;
+
+	/* Disconnect account */
+	if (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED) {
+		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, 
+					      account_shutdown_callback, op_data);
 		return;
+	}
 
-	op_data->pending++;
-
-	tny_camel_account_set_online (TNY_CAMEL_ACCOUNT(account), FALSE, account_shutdown_callback, op_data);
+ frees:
+	op_data->pending--;
+	g_object_unref (op_data->account_store);
 }
 
 
@@ -2233,13 +2242,23 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 				   ModestTnyAccountStoreShutdownCallback callback,
 				   gpointer userdata)
 {
-	ShutdownOpData *op_data = g_new0 (ShutdownOpData, 1);
+	gint i, num_accounts;
+	ShutdownOpData *op_data;
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	/* Get references */
+	num_accounts = tny_list_get_length (priv->store_accounts) + 
+		tny_list_get_length (priv->transport_accounts);
+	for (i = 0 ; i < num_accounts ; i++)
+		g_object_ref (self);
+
+	/* Create the helper object */
+	op_data = g_new0 (ShutdownOpData, 1);
 	op_data->callback = callback;
 	op_data->userdata = userdata;
-	op_data->pending = 0;
-	op_data->account_store = g_object_ref (self);
-	
+	op_data->pending = num_accounts;
+	op_data->account_store = self;
+
 	/* Destroy all accounts. Disconnect all accounts before they are destroyed */
 	if (priv->store_accounts) {
 		tny_list_foreach (priv->store_accounts, (GFunc)account_shutdown, op_data);
@@ -2252,7 +2271,6 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 	if (op_data->pending == 0) {
 		if (op_data->callback)
 			op_data->callback (op_data->account_store, op_data->userdata);
-		g_object_unref (op_data->account_store);
 		g_free (op_data);
 	}
 }
