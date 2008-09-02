@@ -4228,7 +4228,7 @@ headers_action_show_details (TnyHeader *header,
 	dialog = modest_details_dialog_new_with_header (GTK_WINDOW (window), header);
 
 	/* Run dialog */
-	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
 	gtk_widget_show_all (dialog);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 

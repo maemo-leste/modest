@@ -2889,6 +2889,8 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 		      "family-set", !oldfmt.cs.font,
 		      NULL);
 
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog));
 	gtk_widget_show_all (dialog);
 	priv->font_dialog = dialog;
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
