@@ -858,12 +858,16 @@ wakeup_get_headers_async_cb (TnyFolder *folder,
 			/* Notify view */
 			msg_id = modest_tny_send_queue_get_msg_id (header);			
 			item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
-			info = (SendInfo *) item->data;
+			if (!item) {
+				info = g_slice_new (SendInfo);
+				info->msg_id = msg_id;
+				g_queue_push_tail (priv->queue, info);
+			} else {
+				info = (SendInfo *) item->data;
+				g_free (msg_id);
+			}
 			info->status = MODEST_TNY_SEND_QUEUE_WAITING;
-			g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
-			
-			/* Frees */
-			g_free (msg_id);
+			g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);		
 		}
 
 		/* Frees */
