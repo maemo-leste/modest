@@ -43,6 +43,7 @@
 #include <widgets/modest-zoomable.h>
 #include <widgets/modest-tny-stream-gtkhtml.h>
 #include <libgnomevfs/gnome-vfs.h>
+#include <gdk/gdkkeysyms.h>
 
 /* gobject structure methods */
 static void    modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass);

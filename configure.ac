@@ -54,7 +54,7 @@ AC_PROG_LIBTOOL
 
 # Option to enable debugging
 AC_ARG_ENABLE(debug,
-              [AC_HELP_STRING([  --enable-debug],[Debugging (default=no)])],
+              [AC_HELP_STRING([--enable-debug],[Debugging (default=no)])],
               [with_debug=yes], [with_debug=no])
 
 if test "x$with_debug" == "xyes" ; then
