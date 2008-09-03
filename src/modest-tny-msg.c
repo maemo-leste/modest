@@ -725,6 +725,26 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	return new_msg;
 }
 
+
+
+static gint
+count_addresses (const gchar* addresses)
+{
+	gint count = 1;
+
+	if (!addresses)
+		return 0;
+	
+	while (*addresses) {
+		if (*addresses == ',' || *addresses == ';')
+			++count;
+		++addresses;
+	}
+	
+	return count;
+}
+
+
 /* get the new To:, based on the old header,
  * result is newly allocated or NULL in case of error
  * */
@@ -787,7 +807,15 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 		/* remove duplicate entries */
 		gchar *tmp = modest_text_utils_remove_duplicate_addresses (new_to);
 		g_free (new_to);
-		new_to = tmp;		
+		new_to = tmp;
+		
+		/* now, strip me (the new From:) from the new_to, but only if
+		 * there are >1 addresses there */
+		if (count_addresses (new_to) > 1) {
+			gchar *tmp = modest_text_utils_remove_address (new_to, from);
+			g_free (new_to);
+			new_to = tmp;
+		}
 	}
 
 	return new_to;
