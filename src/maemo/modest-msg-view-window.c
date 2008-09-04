@@ -2488,8 +2488,22 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 }
 
 typedef struct {
-
+	gchar *filepath;
+	GtkWidget *banner;
+	guint banner_idle_id;
 } DecodeAsyncHelper;
+
+static gboolean
+decode_async_banner_idle (gpointer user_data)
+{
+	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
+
+	helper->banner_idle_id = 0;
+	helper->banner = hildon_banner_show_animation (NULL, NULL, _("mail_me_opening"));
+	g_object_ref (helper->banner);
+
+	return FALSE;
+}
 
 static void
 on_decode_to_stream_async_handler (TnyMimePart *mime_part, 
@@ -2498,8 +2512,15 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				   GError *err, 
 				   gpointer user_data)
 {
-	gchar *filepath = (gchar *) user_data;
+	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
 
+	if (helper->banner_idle_id > 0) {
+		g_source_remove (helper->banner_idle_id);
+		helper->banner_idle_id = 0;
+	}
+	if (helper->banner) {
+		gtk_widget_destroy (helper->banner);
+	}
 	if (cancelled || err) {
 		modest_platform_information_banner (NULL, NULL, 
 						    _("mail_ib_file_operation_failed"));
@@ -2507,14 +2528,16 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	}
 
 	/* make the file read-only */
-	g_chmod(filepath, 0444);
+	g_chmod(helper->filepath, 0444);
 	
 	/* Activate the file */
-	modest_platform_activate_file (filepath, tny_mime_part_get_content_type (mime_part));
+	modest_platform_activate_file (helper->filepath, tny_mime_part_get_content_type (mime_part));
 
  free:
 	/* Frees */
-	g_free (filepath);
+	g_free (helper->filepath);
+	g_object_unref (helper->banner);
+	g_slice_free (DecodeAsyncHelper, helper);
 }
 
 void
@@ -2576,10 +2599,14 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 							       &filepath);
 		
 		if (temp_stream != NULL) {
+			DecodeAsyncHelper *helper = g_slice_new (DecodeAsyncHelper);
+			helper->filepath = g_strdup (filepath);
+			helper->banner = NULL;
+			helper->banner_idle_id = g_timeout_add (1000, decode_async_banner_idle, helper);
 			tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream), 
 							      on_decode_to_stream_async_handler, 
 							      NULL, 
-							      g_strdup (filepath));
+							      helper);
 			g_object_unref (temp_stream);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
@@ -2704,8 +2731,11 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 
 	info->result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
 	if (info->result == GNOME_VFS_OK) {
+		GError *error = NULL;
 		stream = tny_vfs_stream_new (handle);
-		if (tny_mime_part_decode_to_stream (pair->part, stream, NULL) < 0) {
+		if (tny_mime_part_decode_to_stream (pair->part, stream, &error) < 0) {
+			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename, error?error->code:-1, error?error->message:"Unknown error");
+			
 			info->result = GNOME_VFS_ERROR_IO;
 		}
 		g_object_unref (G_OBJECT (stream));
@@ -2713,6 +2743,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 		g_slice_free (SaveMimePartPair, pair);
 		info->pairs = g_list_delete_link (info->pairs, info->pairs);
 	} else {
+		g_warning ("modest: could not create save attachment %s: %s\n", pair->filename, gnome_vfs_result_to_string (info->result));
 		save_mime_part_info_free (info, FALSE);
 	}
 
