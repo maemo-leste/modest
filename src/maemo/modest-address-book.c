@@ -307,9 +307,17 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
 
 	/*Launch the 'Add e-mail addr to contact' dialog if required */
 	if (email_not_present) {
-		display_name = osso_abook_contact_get_display_name(contact);
-		emailid = get_email_addr_from_user(display_name);
+#if MODEST_ABOOK_API < 4
+		display_name = osso_abook_contact_get_display_name(contact);		
+#else
+		OssoABookContact *abook_contact;
+	       
+		abook_contact = osso_abook_contact_new_from_master (contact);
+		display_name = osso_abook_contact_get_display_name(abook_contact);
+		g_object_unref (abook_contact);
+#endif
 
+		emailid = get_email_addr_from_user(display_name);
 		if (emailid) {
 			e_contact_set(contact, E_CONTACT_EMAIL_1, emailid);
 			commit_contact(contact, FALSE);
