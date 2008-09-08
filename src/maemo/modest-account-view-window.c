@@ -399,14 +399,13 @@ on_close_button_clicked (GtkWidget *button, gpointer user_data)
 	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_OK);
 }
 
-static GtkWidget*
-button_box_new (ModestAccountViewWindow *self)
+static void
+setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 {
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	
-	GtkWidget *button_box = gtk_hbutton_box_new ();
-	gtk_button_box_set_spacing (GTK_BUTTON_BOX (button_box), 6);
-	gtk_button_box_set_layout (GTK_BUTTON_BOX (button_box), 
+	gtk_button_box_set_spacing (GTK_BUTTON_BOX (box), 6);
+	gtk_button_box_set_layout (GTK_BUTTON_BOX (box), 
 				   GTK_BUTTONBOX_START);
 	
 	priv->new_button     = gtk_button_new_from_stock(_("mcen_bd_new"));
@@ -427,10 +426,10 @@ button_box_new (ModestAccountViewWindow *self)
 			  G_CALLBACK(on_close_button_clicked),
 			  self);
 
-	gtk_box_pack_start (GTK_BOX(button_box), priv->new_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(button_box), priv->edit_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(button_box), priv->delete_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(button_box), priv->close_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(box), priv->new_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(box), priv->edit_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(box), priv->delete_button, FALSE, FALSE,2);
+	gtk_box_pack_start (GTK_BOX(box), priv->close_button, FALSE, FALSE,2);
 
 	/* Should has been created by window_vbox_new */
 	if (priv->account_view) {
@@ -442,8 +441,7 @@ button_box_new (ModestAccountViewWindow *self)
 		}
 	}
 
-	gtk_widget_show_all (button_box);
-	return button_box;
+	gtk_widget_show_all (GTK_WIDGET (box));
 }
 
 static GtkWidget*
@@ -520,9 +518,7 @@ modest_account_view_window_new (void)
 			    window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW (self)), 
 			    TRUE, TRUE, 2);
 	
-	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (self)->action_area)), 
-			    button_box_new (MODEST_ACCOUNT_VIEW_WINDOW (self)), 
-			    TRUE, TRUE, 2);
+	setup_button_box (MODEST_ACCOUNT_VIEW_WINDOW (self), GTK_BUTTON_BOX (GTK_DIALOG (self)->action_area));
 
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_emailsetup_accounts"));
 
