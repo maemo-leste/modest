@@ -76,8 +76,11 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		tny_header_set_from (TNY_HEADER (header), from);
 		tny_header_set_replyto (TNY_HEADER (header), from);
 	}
-	if ((mailto != NULL) && (strlen(mailto) > 0)) 
-		tny_header_set_to (TNY_HEADER (header), mailto);
+	if ((mailto != NULL) && (strlen(mailto) > 0)) {
+		gchar *removed_to = modest_text_utils_remove_duplicate_addresses (mailto);
+		tny_header_set_to (TNY_HEADER (header), removed_to);
+		g_free (removed_to);
+	}
 	if ((cc != NULL) && (strlen(cc) > 0)) 
 		tny_header_set_cc (TNY_HEADER (header), cc);
 	if ((bcc != NULL) && (strlen(bcc) > 0)) 
