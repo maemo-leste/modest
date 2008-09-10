@@ -556,7 +556,12 @@ modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 	if (!is_valid_insert (text, len)) {
 		gchar *new_text = create_valid_text (text, len);
 		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
+		g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, 
+						 editor);
 		gtk_text_buffer_insert (buffer, location, new_text, -1);
+		g_signal_handlers_unblock_by_func (buffer, 
+						   modest_recpt_editor_on_insert_text, 
+						   editor);
 		g_free (new_text);
 		return;
 	}
