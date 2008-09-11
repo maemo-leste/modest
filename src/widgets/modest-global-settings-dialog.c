@@ -464,7 +464,7 @@ on_response (GtkDialog *dialog,
 									    _("imum_nc_wizard_confirm_lose_changes"));
 			/* Do not close if the user Cancels */
 			if (response == GTK_RESPONSE_CANCEL)
-				g_signal_stop_emission_by_name (dialog, "response");
+				g_signal_stop_emission_by_name (user_data, "response");
 		}
 	}
 }
