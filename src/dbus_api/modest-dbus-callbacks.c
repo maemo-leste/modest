@@ -732,8 +732,8 @@ on_remove_msgs_finished (ModestMailOperation *mail_op,
 		modest_header_view_refilter (header_view);
 }
 
-static gboolean
-on_idle_delete_message (gpointer user_data)
+static gpointer
+thread_prepare_delete_message (gpointer userdata)
 {
 	TnyList *headers = NULL, *tmp_headers = NULL;
 	TnyFolder *folder = NULL;
@@ -741,13 +741,13 @@ on_idle_delete_message (gpointer user_data)
 	TnyHeader *header = NULL, *msg_header = NULL;
 	TnyMsg *msg = NULL;
 	TnyAccount *account = NULL;
-	const char *uri = NULL;
+	char *uri;
 	gchar *uid = NULL;
 	ModestMailOperation *mail_op = NULL;
 	ModestWindow *main_win = NULL;
 
-	uri = (char *) user_data;
-	
+	uri = (char *) userdata;
+
 	msg = find_message_by_url (uri, &account);
 	if (account)
 		g_object_unref (account);
@@ -755,6 +755,7 @@ on_idle_delete_message (gpointer user_data)
 	if (!msg) {
 		g_warning ("%s: Could not find message '%s'", __FUNCTION__, uri);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
+		g_free (uri);
 		return FALSE; 
 	}
 	
@@ -766,6 +767,7 @@ on_idle_delete_message (gpointer user_data)
 		g_warning ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
 		g_object_unref (msg);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
+		g_free (uri);
 		return FALSE; 
 	}
 
@@ -808,6 +810,7 @@ on_idle_delete_message (gpointer user_data)
 		if (folder)
 			g_object_unref (folder);
 		g_idle_add (notify_error_in_dbus_callback, NULL);			
+		g_free (uri);
 		return FALSE;
 	}
 		
@@ -835,8 +838,22 @@ on_idle_delete_message (gpointer user_data)
 	/* Clean */
 	if (header)
 		g_object_unref (header);
+	g_free (uri);
 	
 	return FALSE;
+}
+
+static gboolean
+on_idle_delete_message (gpointer user_data)
+{
+	const char *uri = NULL;
+
+	uri = (char *) user_data;
+
+	g_thread_create (thread_prepare_delete_message, g_strdup (uri), FALSE, NULL);
+
+	return FALSE;
+	
 }
 
 
