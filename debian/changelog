@@ -1,3 +1,9 @@
+modest (2.0-2008.38-1) hardy; urgency=low
+
+  * Updated modest version to 2.0
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Tue, 16 Sep 2008 18:07:48 +0300
+
 modest (1.0-2008.37-1) hardy; urgency=low
 
   * Fixes: NB#86996, NB#85924, NB#87412
