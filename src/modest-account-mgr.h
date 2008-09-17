@@ -253,6 +253,18 @@ gboolean	modest_account_mgr_account_with_display_name_exists (ModestAccountMgr *
 								     const gchar *display_name);
 
 /**
+ * modest_account_mgr_check_already_configured_account:
+ * @self: a #ModestAccountMgr
+ * @settings: a #ModestAccountSettings *settings
+ *
+ * Checks if there's already an active store account with the same settings
+ *
+ * Returns: %TRUE if account setup exists
+ */
+gboolean        modest_account_mgr_check_already_configured_account (ModestAccountMgr * self,
+								     ModestAccountSettings *settings);
+
+/**
  * modest_account_mgr_unset:
  * @self: a ModestAccountMgr instance
  * @name: the name of the account

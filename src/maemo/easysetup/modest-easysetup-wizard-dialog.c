@@ -1621,6 +1621,13 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		if (priv->pending_load_settings) {
 			save_to_settings (self);
 		}
+
+		/* We check if there's already another account with the same configuration */
+		if (modest_account_mgr_check_already_configured_account (priv->account_manager, priv->settings)) {
+			modest_platform_information_banner (NULL, NULL, _("mail_ib_setting_failed"));
+			return FALSE;
+		}
+
 		modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
 	}
 	

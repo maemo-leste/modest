@@ -1141,6 +1141,88 @@ modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self,
 	return found;
 }
 
+static gboolean
+server_accounts_equal (ModestServerAccountSettings *s1,
+		       ModestServerAccountSettings *s2)
+{
+	const gchar *str1, *str2;
+
+	if (modest_server_account_settings_get_protocol (s1) !=
+	    modest_server_account_settings_get_protocol (s2))
+		return FALSE;
+
+	str1 = modest_server_account_settings_get_username (s1);
+	str2 = modest_server_account_settings_get_username (s2);
+	if (str1 && str2 && (str1 != str2) &&
+	    strcmp (str1, str2) != 0)
+		return FALSE;
+
+	str1 = modest_server_account_settings_get_hostname (s1);
+	str2 = modest_server_account_settings_get_hostname (s2);
+	if (str1 && str2 && (str1 != str2) &&
+	    strcmp (str1, str2) != 0)
+		return FALSE;
+
+	if (modest_server_account_settings_get_port (s1) !=
+	    modest_server_account_settings_get_port (s2))
+		return FALSE;
+
+	return TRUE;
+}
+
+gboolean
+modest_account_mgr_check_already_configured_account  (ModestAccountMgr *self, 
+						      ModestAccountSettings *settings)
+{
+	GSList *account_names = NULL;
+	GSList *cursor = NULL;
+	ModestServerAccountSettings *server_settings;
+	
+	cursor = account_names = modest_account_mgr_account_names (self, 
+								   TRUE /* enabled accounts, because disabled accounts are not user visible. */);
+
+	gboolean found = FALSE;
+
+	server_settings = modest_account_settings_get_store_settings (settings);
+	if (!server_settings) {
+		g_printerr ("modest: couldn't get store settings from settings");
+		modest_account_mgr_free_account_names (account_names);
+		return FALSE;
+	}
+	
+	/* Look at each non-server account to check their display names; */
+	while (cursor && !found) {
+		const gchar *account_name;
+		ModestAccountSettings *from_mgr_settings;
+		ModestServerAccountSettings *from_mgr_server_settings;
+
+		account_name = (gchar*)cursor->data;		
+		from_mgr_settings = modest_account_mgr_load_account_settings (self, account_name);
+		if (!settings) {
+			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			continue;
+		}
+
+		from_mgr_server_settings = modest_account_settings_get_store_settings (from_mgr_settings);
+		if (server_settings) {
+			if (server_accounts_equal (from_mgr_server_settings, server_settings)) {
+				found = TRUE;
+			}
+			g_object_unref (from_mgr_server_settings);
+		} else {
+			g_printerr ("modest: couldn't get store settings from account %s", account_name);
+		}
+		g_object_unref (from_mgr_settings);
+		cursor = cursor->next;
+	}
+
+	g_object_unref (server_settings);
+	modest_account_mgr_free_account_names (account_names);
+	account_names = NULL;
+	
+	return found;
+}
+
 
 
 
