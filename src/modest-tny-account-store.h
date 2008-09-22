@@ -248,6 +248,30 @@ void modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 					gpointer userdata);
 					
 
+/**
+ * modest_tny_account_store_is_send_mail_blocked:
+ * @self: a #ModestTnyAccountStore
+ * 
+ * Tells if we've blocked the send queue flush attempts temporally. This is
+ * usually done when we're editing an account, to prevent sending mails as
+ * it can cause problems
+ *
+ * Returns: %TRUE if sending mail is blocked
+ */
+gboolean modest_tny_account_store_is_send_mail_blocked (ModestTnyAccountStore *self);
+
+/**
+ * modest_tny_account_store_set_send_mail_blocked:
+ * @self: a #ModestTnyAccountStore
+ * @blocked: a #gboolean
+ * 
+ * Sets as blocked/non blocked the send queue flush attempts temporally. This is
+ * usually done when we're editing an account, to prevent sending mails as
+ * it can cause problems
+ */
+void modest_tny_account_store_set_send_mail_blocked (ModestTnyAccountStore *self, gboolean blocked);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */

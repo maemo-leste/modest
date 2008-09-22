@@ -1289,10 +1289,17 @@ static void
 update_account_send_mail (UpdateAccountInfo *info)
 {
 	TnyTransportAccount *transport_account = NULL;
+	ModestTnyAccountStore *account_store;
+
+	account_store = modest_runtime_get_account_store ();
+
+	/* We don't try to send messages while sending mails is blocked */
+	if (modest_tny_account_store_is_send_mail_blocked (account_store))
+		return;
 
 	/* Get the transport account */
 	transport_account = (TnyTransportAccount *)
-		modest_tny_account_store_get_transport_account_for_open_connection (modest_runtime_get_account_store(),
+		modest_tny_account_store_get_transport_account_for_open_connection (account_store,
 										    info->account_name);
 
 	if (transport_account) {

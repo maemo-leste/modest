@@ -145,6 +145,9 @@ struct _ModestTnyAccountStorePrivate {
 	
 	/* Matches transport accounts and outbox folder */
 	GHashTable          *outbox_of_transport;
+
+	/* is sending mail blocked? */
+	gboolean send_mail_blocked;
 };
 
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -266,6 +269,7 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	priv->session                = NULL;
 	priv->device                 = NULL;
 	priv->sighandlers            = NULL;
+	priv->send_mail_blocked      = FALSE;
 	
 	priv->outbox_of_transport = g_hash_table_new_full (g_direct_hash,
 							   g_direct_equal,
@@ -2204,4 +2208,25 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 			op_data->callback (op_data->account_store, op_data->userdata);
 		g_free (op_data);
 	}
+}
+
+gboolean 
+modest_tny_account_store_is_send_mail_blocked (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	return priv->send_mail_blocked;
+}
+
+void 
+modest_tny_account_store_set_send_mail_blocked (ModestTnyAccountStore *self, 
+						gboolean blocked)
+{
+	ModestTnyAccountStorePrivate *priv;
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
+
+	priv->send_mail_blocked = blocked;
 }
