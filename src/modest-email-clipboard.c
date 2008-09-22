@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-defs.h>
 #include <modest-email-clipboard.h>
 #include <modest-tny-folder.h>
 

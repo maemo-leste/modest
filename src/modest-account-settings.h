@@ -34,7 +34,6 @@
 #define __MODEST_ACCOUNT_SETTINGS_H__
 
 #include <glib-object.h>
-#include <modest-defs.h>
 #include <modest-server-account-settings.h>
 
 G_BEGIN_DECLS

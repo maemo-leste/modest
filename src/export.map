@@ -18,5 +18,15 @@
 	_end;
 	_IO_stdin_used;
 	__data_start;
+	modest_account_settings_*;
+	modest_account_mgr_*;
+	modest_account_protocol_*;
+	modest_easysetup_wizard_*;
+	modest_pair_*;
+	modest_platform_*;
+	modest_plugin_*;
+	modest_protocol_*;
+	modest_server_account_settings_*;
+	modest_validating_entry_*;
   local: *;
 };

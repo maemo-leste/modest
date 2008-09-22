@@ -39,8 +39,14 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-cache-mgr.h>
 #include <modest-tny-platform-factory.h>
+#include "modest-plugin-factory.h"
 #include "widgets/modest-window-mgr.h"
+<<<<<<< .working
 #include <tny-stream-cache.h>
+=======
+#include "modest-protocol-registry.h"
+#include <tny-stream-cache.h>
+>>>>>>> .merge-right.r5668
 
 G_BEGIN_DECLS
 
@@ -188,6 +194,7 @@ ModestMailOperationQueue* modest_singletons_get_mail_operation_queue (ModestSing
  **/
 ModestWindowMgr*          modest_singletons_get_window_mgr           (ModestSingletons *self);
 
+<<<<<<< .working
 /**
  * modest_singletons_get_images_cache:
  * @self: a #ModestSingletons
@@ -196,6 +203,35 @@ ModestWindowMgr*          modest_singletons_get_window_mgr           (ModestSing
  */
 TnyStreamCache*           modest_singletons_get_images_cache         (ModestSingletons *self);
 
+=======
+/**
+ * modest_singletons_get_protocol_registry:
+ * @self: 
+ * 
+ * Gets the #ModestProtocolRegistry singleton instance. Don't use this
+ * function directly, use the modest-runtime function instead.
+ *
+ * Return value: the singleton instance of #ModestProtocolRegistry
+ **/
+ModestProtocolRegistry*          modest_singletons_get_protocol_registry           (ModestSingletons *self);
+
+/**
+ * modest_singletons_get_images_cache:
+ * @self: a #ModestSingletons
+ *
+ * Gets the #TnyStreamCache used to store the external images cache.
+ */
+TnyStreamCache*           modest_singletons_get_images_cache         (ModestSingletons *self);
+
+/**
+ * modest_singletons_get_plugin_factory:
+ * @self: a #ModestSingletons
+ *
+ * Gets the #ModestMailPluginFactory singleton.
+ */
+ModestPluginFactory*           modest_singletons_get_plugin_factory         (ModestSingletons *self);
+
+>>>>>>> .merge-right.r5668
 G_END_DECLS
 
 #endif /* __MODEST_SINGLETONS_H__ */

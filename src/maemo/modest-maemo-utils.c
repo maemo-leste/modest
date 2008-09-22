@@ -288,21 +288,3 @@ modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager,
 
 	return new_menu;
 }
-
-void 
-modest_maemo_utils_on_entry_invalid_character (ModestValidatingEntry *self, 
-					       const gchar* character, 
-					       gpointer user_data)
-{
-	gchar *message = NULL;
-	const gchar *show_char = NULL;
-
-	if (character)
-		show_char = character;
-	else {
-		show_char = "' '";
-	}
-	
-	message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), show_char);
-	hildon_banner_show_information(GTK_WIDGET (self), NULL, message);
-}

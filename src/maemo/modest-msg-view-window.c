@@ -2389,7 +2389,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	tmp = priv->progress_widgets;
 	source = modest_mail_operation_get_source(mail_op);
 	if (G_OBJECT (self) == source) {
-		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
+		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ) {
 			set_toolbar_transfer_mode(self);
 			while (tmp) {
 				modest_progress_object_add_operation (
@@ -2416,7 +2416,7 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	tmp = priv->progress_widgets;
 	
-	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ) {
+	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ) {
 		while (tmp) {
 			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								 mail_op);

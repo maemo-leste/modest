@@ -33,7 +33,6 @@
 
 #include <gtk/gtk.h>
 #include <stdio.h> /* for FILE* */
-#include <modest-protocol-info.h>
 #include <tny-fs-stream.h>
 #include <libosso.h>
 #include "widgets/modest-global-settings-dialog.h"
@@ -123,9 +122,5 @@ void modest_maemo_utils_set_osso_context (osso_context_t *osso_context);
  * Returns: a #GtkMenu
  */
 GtkWidget *modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager, const gchar *item_name);
-
-void modest_maemo_utils_on_entry_invalid_character (ModestValidatingEntry *self, 
-						    const gchar* character, 
-						    gpointer user_data);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/

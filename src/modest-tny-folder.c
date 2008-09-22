@@ -31,11 +31,11 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <modest-tny-folder.h>
+#include <modest-tny-account.h>
 #include <modest-tny-outbox-account.h>
 #include <tny-simple-list.h>
 #include <tny-camel-folder.h>
 #include <tny-merge-folder.h>
-#include <modest-protocol-info.h>
 #include <modest-runtime.h>
 #include <modest-tny-account-store.h>
 #include <modest-text-utils.h>
@@ -168,17 +168,20 @@ modest_tny_folder_get_rules   (TnyFolder *folder)
 			break;
 		}
 	} else {
-		ModestTransportStoreProtocol proto;
+		ModestProtocolRegistry *protocol_registry;
+		ModestProtocolType protocol_type;
 		TnyFolderType folder_type;
 		TnyAccount *account;
+
+		protocol_registry = modest_runtime_get_protocol_registry ();
 
 		account = modest_tny_folder_get_account ((TnyFolder*)folder);
 		if (!account)
 			return -1; /* no account: nothing is allowed */
 		
-		proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
+		protocol_type = modest_tny_account_get_protocol_type (account);
 
-		if (proto == MODEST_PROTOCOL_STORE_IMAP) {
+		if (modest_protocol_registry_protocol_type_has_tag (protocol_registry, protocol_type, MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS)) {
 			rules = 0;
 		} else {
 			/* pop, nntp, ... */

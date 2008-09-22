@@ -232,6 +232,8 @@ modest_init (int argc, char *argv[])
 		return FALSE;
 	}
 	
+	modest_plugin_factory_load_all (modest_runtime_get_plugin_factory ());
+
 	/* do an initial guess for the device name */
 	init_device_name (modest_runtime_get_conf());
 	
@@ -770,7 +772,7 @@ init_device_name (ModestConf *conf)
 	gchar *devname = NULL;
 	
 	if (!g_file_get_contents("/etc/hostname", &devname, &len, NULL) || len < 2 || len > 254) {
-		g_printerr ("modest: failed to read hostname\n");
+		g_warning ("%s: failed to read hostname\n", __FUNCTION__);
 		modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,
 					MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME,
 					NULL);

@@ -43,6 +43,7 @@
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
+#include <modest-account-protocol.h>
 #include <tny-folder-stats.h>
 #include <tny-merge-folder.h>
 #include <modest-debug.h>
@@ -171,30 +172,21 @@ create_tny_account (TnySessionCamel *session,
 		    ModestServerAccountSettings *server_settings)
 {
 	TnyAccount *tny_account = NULL;
-	ModestTransportStoreProtocol protocol;
-	const gchar* proto_name;
+	ModestProtocolType protocol_type;
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocol *protocol;
 	
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (server_settings, NULL);
-	protocol = modest_server_account_settings_get_protocol (server_settings);
-	g_return_val_if_fail (protocol != MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN, NULL);
+	protocol_type = modest_server_account_settings_get_protocol (server_settings);
+	g_return_val_if_fail (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID, NULL);
 	
-	switch (protocol) {
-	case MODEST_PROTOCOL_TRANSPORT_SENDMAIL:
-	case MODEST_PROTOCOL_TRANSPORT_SMTP:
-		tny_account = TNY_ACCOUNT (modest_transport_account_decorator_new ()); break;
-	case MODEST_PROTOCOL_STORE_POP:
-		tny_account = TNY_ACCOUNT(tny_camel_pop_store_account_new ()); break;
-	case MODEST_PROTOCOL_STORE_IMAP:
-		tny_account = TNY_ACCOUNT(tny_camel_imap_store_account_new ()); break;
-	case MODEST_PROTOCOL_STORE_MAILDIR:
-	case MODEST_PROTOCOL_STORE_MBOX:
-		/* Note that this is not where we create the special local folders account.
-		 * That happens in modest_tny_account_new_for_local_folders() instead.
-		 */
-		tny_account = TNY_ACCOUNT(tny_camel_store_account_new()); break;
-	default:
-		g_return_val_if_reached (NULL);
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
+
+	if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+		ModestAccountProtocol *acocunt_proto = MODEST_ACCOUNT_PROTOCOL (protocol);
+		tny_account = modest_account_protocol_create_account (acocunt_proto);
 	}
 
 	if (!tny_account) {
@@ -208,8 +200,7 @@ create_tny_account (TnySessionCamel *session,
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
     
 	/* Proto */
-	proto_name =  modest_protocol_info_get_transport_store_protocol_name(protocol);
-	tny_account_set_proto (tny_account, proto_name);
+	tny_account_set_proto (tny_account, modest_protocol_get_name (protocol));
 
 	return tny_account;
 }
@@ -218,40 +209,8 @@ create_tny_account (TnySessionCamel *session,
 
 /* Camel options: */
 
-/* These seem to be listed in 
- * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-store.c 
- */
 #define MODEST_ACCOUNT_OPTION_SSL "use_ssl"
-#define MODEST_ACCOUNT_OPTION_SSL_NEVER "never"
-/* This is a tinymail camel-lite specific option, 
- * roughly equivalent to "always" in regular camel,
- * which is appropriate for a generic "SSL" connection option: */
-#define MODEST_ACCOUNT_OPTION_SSL_WRAPPED "wrapped"
-/* Not used in our UI so far: */
-#define MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE "when-possible"
-/* This is a tinymailcamel-lite specific option that is not in regular camel. */
-#define MODEST_ACCOUNT_OPTION_SSL_TLS "tls"
 
-/* These seem to be listed in 
- * libtinymail-camel/camel-lite/camel/providers/imap/camel-imap-provider.c 
- */
-#define MODEST_ACCOUNT_OPTION_USE_LSUB "use_lsub" /* Show only subscribed folders */
-#define MODEST_ACCOUNT_OPTION_CHECK_ALL "check_all" /* Check for new messages in all folders */
-
-/* Posssible values for tny_account_set_secure_auth_mech().
- * These might be camel-specific.
- * Really, tinymail should use an enum.
- * camel_sasl_authtype() seems to list some possible values.
- */
- 
-/* Note that evolution does not offer these for IMAP: */
-#define MODEST_ACCOUNT_AUTH_PLAIN "PLAIN"
-#define MODEST_ACCOUNT_AUTH_ANONYMOUS "ANONYMOUS"
-
-/* Caeml's IMAP uses NULL instead for "Password".
- * Also, not that Evolution offers "Password" for IMAP, but "Login" for SMTP.*/
-#define MODEST_ACCOUNT_AUTH_PASSWORD "LOGIN" 
-#define MODEST_ACCOUNT_AUTH_CRAMMD5 "CRAM-MD5"
 
 		
 /**
@@ -291,9 +250,14 @@ update_tny_account (TnyAccount *tny_account,
 		/* Enable secure connection settings: */
 		TnyPair *option_security = NULL;
 		const gchar* auth_mech_name = NULL;
-		ModestTransportStoreProtocol protocol;
-		ModestConnectionProtocol security;
-		ModestAuthProtocol auth_protocol;
+		ModestProtocolType protocol_type;
+		ModestProtocol *protocol;
+		ModestProtocolType security_type;
+		ModestProtocol *security;
+		ModestProtocolType auth_protocol_type;
+		ModestProtocol *auth_protocol;
+		ModestProtocolRegistry *protocol_registry;
+		const gchar *security_option_string;
 		const gchar *username;
 		const gchar *hostname;
 		guint port;
@@ -301,101 +265,65 @@ update_tny_account (TnyAccount *tny_account,
 		/* First of all delete old options */
 		tny_camel_account_clear_options (TNY_CAMEL_ACCOUNT (tny_account));
 
-		protocol = modest_server_account_settings_get_protocol (server_settings);
-		security = modest_server_account_settings_get_security (server_settings);
-		auth_protocol = modest_server_account_settings_get_auth_protocol (server_settings);
+		protocol_type = modest_server_account_settings_get_protocol (server_settings);
+		security_type = modest_server_account_settings_get_security_protocol (server_settings);
+		auth_protocol_type = modest_server_account_settings_get_auth_protocol (server_settings);
+		protocol_registry = modest_runtime_get_protocol_registry ();
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
+		security = modest_protocol_registry_get_protocol_by_type (protocol_registry, security_type);
+		auth_protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, auth_protocol_type);
 
-		switch (security) {
-		case MODEST_PROTOCOL_CONNECTION_NORMAL:
-			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_NEVER);
-			break;
-		case MODEST_PROTOCOL_CONNECTION_SSL:
-			/* Apparently, use of "IMAPS" (specified in our UI spec), implies 
-			 * use of the "wrapped" option: */
-			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_WRAPPED);
-			break;
-		case MODEST_PROTOCOL_CONNECTION_TLS:
-			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_TLS);
-			break;
-		case MODEST_PROTOCOL_CONNECTION_TLS_OP:
-			/* This is not actually in our UI: */
-			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL,MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE);
-			break;
-		default:
-			break;
-		}
-		
-		if(option_security) {
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), 
-						      option_security);
+		security_option_string = modest_protocol_get (security, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION);
+		if (security_option_string) {
+			option_security = tny_pair_new (MODEST_ACCOUNT_OPTION_SSL, security_option_string);
+			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account), option_security);
 			g_object_unref (option_security);
 		}
-		
+
 		/* Secure authentication: */
-		switch (auth_protocol) {
-		case MODEST_PROTOCOL_AUTH_NONE:
-			/* IMAP and POP need at least a password,
-			 * which camel uses if we specify NULL.
-			 * This setting should never happen anyway. */
-			if (protocol == MODEST_PROTOCOL_STORE_IMAP ||
-			    protocol == MODEST_PROTOCOL_STORE_POP)
-				auth_mech_name = NULL;
-			else
-				auth_mech_name = MODEST_ACCOUNT_AUTH_PLAIN;
-			break;
-			
-		case MODEST_PROTOCOL_AUTH_PASSWORD:
-			/* Camel use a password for IMAP or POP if we specify NULL,
-			 * For IMAP, at least it will report an error if we use "Password", "Login" or "Plain".
-			 * (POP is know to report an error for Login too. Probably Password and Plain too.) */
-			if (protocol == MODEST_PROTOCOL_STORE_IMAP)
-				auth_mech_name = NULL;
-			else if (protocol == MODEST_PROTOCOL_STORE_POP)
-				auth_mech_name = NULL;
-			else
-				auth_mech_name = MODEST_ACCOUNT_AUTH_PASSWORD;
-			break;
-			
-		case MODEST_PROTOCOL_AUTH_CRAMMD5:
-			auth_mech_name = MODEST_ACCOUNT_AUTH_CRAMMD5;
-			break;
-			
-		default:
-			g_warning ("%s: Unhandled secure authentication setting %d for "
-				   "account_name=%s (%s)", __FUNCTION__, auth_protocol,
-				   account_name, modest_server_account_settings_get_hostname (server_settings));
-			break;
+		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol) &&
+		    modest_account_protocol_has_custom_secure_auth_mech (MODEST_ACCOUNT_PROTOCOL (protocol), auth_protocol_type)) {
+			auth_mech_name = modest_account_protocol_get_custom_secure_auth_mech (MODEST_ACCOUNT_PROTOCOL (protocol), auth_protocol_type);
+		} else {
+			auth_mech_name = modest_protocol_get (auth_protocol, MODEST_PROTOCOL_AUTH_ACCOUNT_OPTION);
 		}
 		
 		if (auth_mech_name)
 			tny_account_set_secure_auth_mech (tny_account, auth_mech_name);
 		
-		if (modest_protocol_info_protocol_is_store(protocol) && 
-			(protocol == MODEST_PROTOCOL_STORE_IMAP) ) {
-			TnyPair *use_lsub, *check_all;
+		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+			TnyList *account_options;
+			TnyIterator *iterator;
 
-			use_lsub = tny_pair_new (MODEST_ACCOUNT_OPTION_USE_LSUB, "");
-			check_all = tny_pair_new (MODEST_ACCOUNT_OPTION_CHECK_ALL, "");
-			/* Other connection options, needed for IMAP. */
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      use_lsub);
-			tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
-						      check_all);
-			g_object_unref (use_lsub);
-			g_object_unref (check_all);
+			account_options = modest_account_protocol_get_account_options (MODEST_ACCOUNT_PROTOCOL (protocol));
+			for (iterator = tny_list_create_iterator (account_options); !tny_iterator_is_done (iterator); tny_iterator_next (iterator)) {
+				TnyPair *current;
+
+				current = TNY_PAIR (tny_iterator_get_current (iterator));
+				tny_camel_account_add_option (TNY_CAMEL_ACCOUNT (tny_account),
+							      current);
+				g_object_unref (current);
+			}
+			g_object_unref (iterator);
+			g_object_unref (account_options);
+			
 		}
-		
-		username = modest_server_account_settings_get_username (server_settings);
-		if (username && strlen (username) > 0) 
-			tny_account_set_user (tny_account, username);
-		hostname = modest_server_account_settings_get_hostname (server_settings);
-		if (hostname)
-			tny_account_set_hostname (tny_account, hostname);
-		 
-		/* Set the port: */
-		port = modest_server_account_settings_get_port (server_settings);
-		if (port)
-			tny_account_set_port (tny_account, port);
+
+		if (modest_server_account_settings_get_uri (server_settings) == NULL) {
+			username = modest_server_account_settings_get_username (server_settings);
+			if (username && strlen (username) > 0) 
+				tny_account_set_user (tny_account, username);
+			hostname = modest_server_account_settings_get_hostname (server_settings);
+			if (hostname && hostname[0] != '\0')
+				tny_account_set_hostname (tny_account, hostname);
+			
+			/* Set the port: */
+			port = modest_server_account_settings_get_port (server_settings);
+			if (port)
+				tny_account_set_port (tny_account, port);
+		} else {
+			tny_account_set_url_string (TNY_ACCOUNT (tny_account), modest_server_account_settings_get_uri (server_settings));
+		}
 	}
 
 	MODEST_DEBUG_BLOCK (
@@ -416,24 +344,27 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 {
 	ModestServerAccountSettings *server_settings;
 	TnyAccount *tny_account;
+	ModestProtocolRegistry *protocol_registry;
 	TnyConnectionPolicy *policy;
 	
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (server_account_name, NULL);
 
+	protocol_registry = modest_runtime_get_protocol_registry ();
 	
-	server_settings = 	modest_account_mgr_load_server_settings (account_mgr, server_account_name);
+	server_settings = modest_account_mgr_load_server_settings (account_mgr, server_account_name, TRUE);
 	if (!server_settings)
 		return NULL;
 
 	tny_account = TNY_ACCOUNT (tny_camel_transport_account_new ());
 
 	if (tny_account) {
+		ModestProtocol *protocol;
 		const gchar* proto_name = NULL;
 		tny_account_set_id (tny_account, server_account_name);
 		tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
-		proto_name = modest_protocol_info_get_transport_store_protocol_name 
-				    (modest_server_account_settings_get_protocol (server_settings));
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, modest_server_account_settings_get_protocol (server_settings));
+		proto_name = modest_protocol_get_name (protocol);
 		tny_account_set_proto (tny_account, proto_name);
 		modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, server_account_name);
 	}
@@ -1102,3 +1033,18 @@ modest_tny_folder_store_is_remote (TnyFolderStore *folder_store)
         return result;
 }
 
+ModestProtocolType 
+modest_tny_account_get_protocol_type (TnyAccount *self)
+{
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocol *protocol;
+	ModestProtocolType result;
+
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	protocol = modest_protocol_registry_get_protocol_by_name (protocol_registry,
+								  MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
+								  tny_account_get_proto (self));
+	result = protocol?modest_protocol_get_type_id (protocol):MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+
+	return result;
+}

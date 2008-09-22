@@ -358,9 +358,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (!priv->combo_outgoing_security)
 		priv->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	modest_serversecurity_combo_box_fill (
-		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOL_TRANSPORT_SMTP);
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_serversecurity_combo_box_set_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOL_CONNECTION_NORMAL);
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), MODEST_PROTOCOLS_CONNECTION_NONE);
 	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_connection"), 
 		priv->combo_outgoing_security, NULL, HILDON_CAPTION_OPTIONAL);
 	gtk_widget_show (priv->combo_outgoing_security);
@@ -450,7 +450,7 @@ modest_connection_specific_smtp_edit_window_set_connection (
 	
 		modest_serversecurity_combo_box_set_active_serversecurity (
 		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), 
-		modest_server_account_settings_get_security (server_settings));
+		modest_server_account_settings_get_security_protocol (server_settings));
 	
 		modest_secureauth_combo_box_set_active_secureauth (
 		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), 
@@ -493,13 +493,13 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	modest_server_account_settings_set_hostname (server_settings, 
 						     gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
 	modest_server_account_settings_set_protocol (server_settings,
-						     MODEST_PROTOCOL_TRANSPORT_SMTP);
+						     MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_server_account_settings_set_username (server_settings,
 						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));
 	modest_server_account_settings_set_password (server_settings,
 						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password)));
 	
-	modest_server_account_settings_set_security (server_settings, 
+	modest_server_account_settings_set_security_protocol (server_settings, 
 						     modest_serversecurity_combo_box_get_active_serversecurity (
 						     MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security)));
 	modest_server_account_settings_set_auth_protocol (server_settings,

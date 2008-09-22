@@ -7,7 +7,7 @@
 #define _MODEST_SECUREAUTH_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-protocol-info.h"
+#include "modest-protocol-registry.h"
 
 G_BEGIN_DECLS
 
@@ -45,10 +45,10 @@ GType modest_secureauth_combo_box_get_type (void);
 
 ModestSecureauthComboBox* modest_secureauth_combo_box_new (void);
 
-ModestAuthProtocol modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox);
+ModestProtocolType modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox);
 
 gboolean modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox,
-							    ModestAuthProtocol secureauth);
+							    ModestProtocolType secureauth);
 
 
 G_END_DECLS

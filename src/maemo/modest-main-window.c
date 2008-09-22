@@ -175,7 +175,7 @@ static void on_updating_msg_list (ModestHeaderView *header_view,
 
 static gboolean restore_paned_timeout_handler (gpointer *data);
 
-static gboolean show_retrieving_banner (gpointer user_data);
+static gboolean show_opening_banner (gpointer user_data);
 
 static void on_window_destroy (GtkObject *widget,
 			       gpointer userdata);
@@ -235,9 +235,9 @@ struct _ModestMainWindowPrivate {
 	GtkWidget *updating_banner;
 	guint updating_banner_timeout;
 
-	/* "Retrieving" banner for header view */
-	GtkWidget *retrieving_banner;
-	guint retrieving_banner_timeout;
+	/* "Opening" banner for header view */
+	GtkWidget *opening_banner;
+	guint opening_banner_timeout;
 
 	/* Display state */
 	osso_display_state_t display_state;
@@ -368,8 +368,8 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->sighandlers = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
-	priv->retrieving_banner = NULL;
-	priv->retrieving_banner_timeout = 0;
+	priv->opening_banner = NULL;
+	priv->opening_banner_timeout = 0;
 	priv->display_state = OSSO_DISPLAY_ON;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
@@ -418,14 +418,14 @@ modest_main_window_finalize (GObject *obj)
 		priv->updating_banner = NULL;
 	}
 
-	if (priv->retrieving_banner_timeout > 0) {
-		g_source_remove (priv->retrieving_banner_timeout);
-		priv->retrieving_banner_timeout = 0;
+	if (priv->opening_banner_timeout > 0) {
+		g_source_remove (priv->opening_banner_timeout);
+		priv->opening_banner_timeout = 0;
 	}
 
-	if (priv->retrieving_banner) {
-		gtk_widget_destroy (priv->retrieving_banner);
-		priv->retrieving_banner = NULL;
+	if (priv->opening_banner) {
+		gtk_widget_destroy (priv->opening_banner);
+		priv->opening_banner = NULL;
 	}
 
 	if (priv->restore_paned_timeout > 0) {
@@ -2222,7 +2222,8 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 				wrap_in_scrolled_window (priv->contents_widget, 
 							 priv->details_widget);
 			}
-			g_object_unref (selected_folderstore);
+			if (selected_folderstore)
+				g_object_unref (selected_folderstore);
 			modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
 							      FALSE);
 		}
@@ -2466,7 +2467,6 @@ get_toolbar_mode_from_mail_operation (ModestMainWindow *self,
 	switch (modest_mail_operation_get_type_operation (mail_op)) {
 	case MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE:
 	case MODEST_MAIL_OPERATION_TYPE_RECEIVE:
-	case MODEST_MAIL_OPERATION_TYPE_OPEN:
 		mode = TOOLBAR_MODE_TRANSFER;
 		if (priv->current_toolbar_mode == TOOLBAR_MODE_NORMAL)
 			*mode_changed = TRUE;
@@ -2496,7 +2496,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	   account is the local account or the MMC one */
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	account = modest_mail_operation_get_account (mail_op);
-	if (account && op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
+	if (account && op_type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
 		gboolean is_remote;
 
 		is_remote = !(modest_tny_account_is_virtual_local_folders (account) ||
@@ -2507,13 +2507,13 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 		}
 
 		/* Show information banner. Remove old timeout */
-		if (priv->retrieving_banner_timeout > 0) {
-			g_source_remove (priv->retrieving_banner_timeout);
-			priv->retrieving_banner_timeout = 0;
+		if (priv->opening_banner_timeout > 0) {
+			g_source_remove (priv->opening_banner_timeout);
+			priv->opening_banner_timeout = 0;
 		}
 		/* Create a new timeout */
-		priv->retrieving_banner_timeout = 
-			g_timeout_add (2000, show_retrieving_banner, self);
+		priv->opening_banner_timeout = 
+			g_timeout_add (2000, show_opening_banner, self);
 	}
 
 	/* Not every mail operation has account, noop does not */
@@ -2565,7 +2565,7 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	   the account was the local account or the MMC one */
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	account = modest_mail_operation_get_account (mail_op);
-	if (account && op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
+	if (account && op_type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
 		gboolean is_remote;
 
 		is_remote = !(modest_tny_account_is_virtual_local_folders (account) ||
@@ -2576,15 +2576,15 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 		}
 
 		/* Remove old timeout */
-		if (priv->retrieving_banner_timeout > 0) {
-			g_source_remove (priv->retrieving_banner_timeout);
-			priv->retrieving_banner_timeout = 0;
+		if (priv->opening_banner_timeout > 0) {
+			g_source_remove (priv->opening_banner_timeout);
+			priv->opening_banner_timeout = 0;
 		}
 
 		/* Remove the banner if exists */
-		if (priv->retrieving_banner) {
-			gtk_widget_destroy (priv->retrieving_banner);
-			priv->retrieving_banner = NULL;
+		if (priv->opening_banner) {
+			gtk_widget_destroy (priv->opening_banner);
+			priv->opening_banner = NULL;
 		}
 	}
 
@@ -2994,14 +2994,14 @@ remove_banners (ModestMainWindow *window)
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (window);
 
-	if (priv->retrieving_banner_timeout > 0) {
-		g_source_remove (priv->retrieving_banner_timeout);
-		priv->retrieving_banner_timeout = 0;
+	if (priv->opening_banner_timeout > 0) {
+		g_source_remove (priv->opening_banner_timeout);
+		priv->opening_banner_timeout = 0;
 	}
 
-	if (priv->retrieving_banner != NULL) {
-		gtk_widget_destroy (priv->retrieving_banner);
-		priv->retrieving_banner = NULL;
+	if (priv->opening_banner != NULL) {
+		gtk_widget_destroy (priv->opening_banner);
+		priv->opening_banner = NULL;
 	}
 	
 	if (priv->updating_banner_timeout > 0) {
@@ -3056,6 +3056,19 @@ on_window_destroy (GtkObject *widget,
 	remove_banners (MODEST_MAIN_WINDOW (widget));
 }
 
+<<<<<<< .working
+static void
+opening_banner_destroyed (gpointer data,
+			  GObject *where_the_object_was)
+{
+	ModestMainWindowPrivate *priv = NULL;
+
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (data);
+
+	priv->opening_banner = NULL;
+}
+
+=======
 static void
 retrieving_banner_destroyed (gpointer data,
 			     GObject *where_the_object_was)
@@ -3067,20 +3080,28 @@ retrieving_banner_destroyed (gpointer data,
 	priv->retrieving_banner = NULL;
 }
 
+>>>>>>> .merge-right.r5668
 static gboolean
-show_retrieving_banner (gpointer user_data)
+show_opening_banner (gpointer user_data)
 {
 	ModestMainWindowPrivate *priv = NULL;
 
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (user_data);
 
-	if (priv->retrieving_banner == NULL) {
+	if (priv->opening_banner == NULL) {
 
 		/* We're outside the main lock */
 		gdk_threads_enter ();
-		priv->retrieving_banner = 
+		priv->opening_banner = 
 			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
-							  _("mcen_ib_getting_items"));
+							  _("mail_me_opening"));
+
+		/* We need this because banners in Maemo could be
+		   destroyed by dialogs so we need to properly update
+		   our reference to it */
+		g_object_weak_ref (G_OBJECT (priv->opening_banner),
+				   opening_banner_destroyed,
+				   user_data);
 
 		/* We need this because banners in Maemo could be
 		   destroyed by dialogs so we need to properly update
@@ -3092,6 +3113,6 @@ show_retrieving_banner (gpointer user_data)
 	}
 
 	/* Remove timeout */
-	priv->retrieving_banner_timeout = 0;
+	priv->opening_banner_timeout = 0;
 	return FALSE;
 }

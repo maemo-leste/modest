@@ -2621,14 +2621,15 @@ remove_msgs_async_cb (TnyFolder *folder,
 {
 	gboolean expunge, leave_on_server;
 	const gchar *account_name;
-	const gchar *proto;
 	TnyAccount *account;
-	ModestTransportStoreProtocol account_proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	ModestProtocolType account_proto = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
+	ModestProtocolRegistry *protocol_registry;
 
 	self = (ModestMailOperation *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	if (canceled || err) {
 		/* If canceled by the user, ignore the error given by Tinymail */
@@ -2650,14 +2651,11 @@ remove_msgs_async_cb (TnyFolder *folder,
 	leave_on_server =
 		modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
 							account_name);	
-	proto = tny_account_get_proto (account);
+	account_proto = modest_tny_account_get_protocol_type (account);
 	g_object_unref (account);
-
-	if (proto)
-		account_proto = modest_protocol_info_get_transport_store_protocol (proto);
 	
-	if (((account_proto == MODEST_PROTOCOL_STORE_POP) && !leave_on_server) ||
-		    modest_tny_folder_is_remote_folder (folder) == FALSE)
+	if (( (modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry, account_proto) && !leave_on_server) ||
+	      modest_tny_folder_is_remote_folder (folder) == FALSE))
 		expunge = TRUE;
 	else
 		expunge = FALSE;
@@ -2964,12 +2962,16 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	TnyAccount *dst_account = NULL;
 	gboolean leave_on_server;
 	ModestMailOperationState *state;
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocolType account_protocol;
 
 	g_return_if_fail (self && MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (headers && TNY_IS_LIST (headers));
 	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
+	protocol_registry = modest_runtime_get_protocol_registry ();
+
 	priv->total = tny_list_get_length (headers);
 	priv->done = 0;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
@@ -3060,8 +3062,8 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 	   this could cause an error if we're offline while
 	   transferring an already downloaded message from a POP
 	   account */
-        if (modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (priv->account)) == 
-	    MODEST_PROTOCOL_STORE_POP) {
+	account_protocol = modest_tny_account_get_protocol_type (priv->account);
+        if (modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry, account_protocol)) {
 		const gchar *account_name;
 
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (priv->account);

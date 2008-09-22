@@ -30,6 +30,7 @@
 #include <string.h>
 #include <modest-marshal.h>
 #include <modest-runtime.h>
+#include <modest-defs.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-priv.h>
 #include <modest-account-mgr-helpers.h>
@@ -292,7 +293,7 @@ modest_account_mgr_add_account_from_settings (ModestAccountMgr *self,
 	 * but let's check again just in case */
 	if (!display_name || 
 	    modest_account_mgr_account_with_display_name_exists (self, display_name)) {
-		return FALSE;
+		display_name = _("mcen_ia_emailsetup_defaultname");
 	}
 
 	/* Increment the non-user visible name if necessary, 
@@ -472,19 +473,21 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 				       guint portnumber,
 				       const gchar *username, 
 				       const gchar *password,
-				       ModestTransportStoreProtocol proto,
-				       ModestConnectionProtocol security,
-				       ModestAuthProtocol auth)
+				       ModestProtocolType proto,
+				       ModestProtocolType security,
+				       ModestProtocolType auth)
 {
 	ModestAccountMgrPrivate *priv;
 	const gchar *key;
 	gboolean ok = TRUE;
 	GError *err = NULL;
+	ModestProtocolRegistry *protocol_registry;
 
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
 	g_return_val_if_fail (name, FALSE);
 	g_return_val_if_fail (strchr(name, '/') == NULL, FALSE);
-			      
+
+	protocol_registry = modest_runtime_get_protocol_registry ();
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 
 	/* hostname */
@@ -531,7 +534,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	/* proto */
 	key = _modest_account_mgr_get_account_keyname_cached (priv, name, MODEST_ACCOUNT_PROTO, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,
-				     modest_protocol_info_get_transport_store_protocol_name(proto),
+				     modest_protocol_get_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, proto)),
 				     &err);
 	if (err) {
 		g_printerr ("modest: failed to set %s: %s\n", key, err->message);
@@ -557,7 +560,7 @@ modest_account_mgr_add_server_account (ModestAccountMgr * self,
 	/* auth mechanism */
 	key = _modest_account_mgr_get_account_keyname_cached (priv, name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,
-				     modest_protocol_info_get_auth_protocol_name (auth),
+				     modest_protocol_get_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, auth)),
 				     &err);
 	if (err) {
 		g_printerr ("modest: failed to set %s: %s\n", key, err->message);
@@ -585,12 +588,13 @@ cleanup:
 gboolean
 modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 					   const gchar *name, 
-					   ModestTransportStoreProtocol proto,
+					   ModestProtocolType proto,
 					   const gchar *uri)
 {
 	ModestAccountMgrPrivate *priv;
 	const gchar *key;
 	gboolean ok;
+	ModestProtocolRegistry *protocol_registry;
 	
 	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
 	g_return_val_if_fail (name, FALSE);
@@ -598,11 +602,12 @@ modest_account_mgr_add_server_account_uri (ModestAccountMgr * self,
 	g_return_val_if_fail (uri, FALSE);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	protocol_registry = modest_runtime_get_protocol_registry ();
 	
 	/* proto */
 	key = _modest_account_mgr_get_account_keyname_cached (priv, name, MODEST_ACCOUNT_PROTO, TRUE);
 	ok = modest_conf_set_string (priv->modest_conf, key,
-				     modest_protocol_info_get_transport_store_protocol_name(proto),
+				     modest_protocol_get_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, proto)),
 				     NULL);
 
 	if (!ok) {
@@ -1504,14 +1509,16 @@ void
 modest_account_mgr_notify_account_update (ModestAccountMgr* self, 
 					  const gchar *server_account_name)
 {
-	ModestTransportStoreProtocol proto;
+	ModestProtocolType proto;
 	ModestAccountMgrPrivate* priv;
+	ModestProtocolRegistry *protocol_registry;
 	gchar *proto_name = NULL;
 
 	g_return_if_fail (self);
 	g_return_if_fail (server_account_name);
 	
 	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	protocol_registry = modest_runtime_get_protocol_registry ();
 	
 	/* Get protocol */
 	proto_name = modest_account_mgr_get_string (self, server_account_name, 
@@ -1520,7 +1527,9 @@ modest_account_mgr_notify_account_update (ModestAccountMgr* self,
 		g_free (proto_name);
 		g_return_if_reached ();
 	}
-	proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+	proto = modest_protocol_get_type_id (modest_protocol_registry_get_protocol_by_name (protocol_registry,
+											    MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
+											    proto_name));
 	g_free (proto_name);
 
 	/* there is some update in the account, so we can't
@@ -1533,7 +1542,7 @@ modest_account_mgr_notify_account_update (ModestAccountMgr* self,
 	g_signal_emit (G_OBJECT(self), 
 		       signals[ACCOUNT_CHANGED_SIGNAL], 0, 
 		       server_account_name, 
-		       (modest_protocol_info_protocol_is_store (proto)) ? 
+		       (modest_protocol_registry_protocol_type_has_tag (protocol_registry, proto, MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS)) ? 
 		       TNY_ACCOUNT_TYPE_STORE : 
 		       TNY_ACCOUNT_TYPE_TRANSPORT);
 }

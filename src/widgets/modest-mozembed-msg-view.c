@@ -120,8 +120,8 @@ static void modest_mozembed_msg_view_set_shadow_type (ModestMsgView *self, GtkSh
 static GtkShadowType modest_mozembed_msg_view_get_shadow_type (ModestMsgView *self);
 static TnyHeaderFlags modest_mozembed_msg_view_get_priority (ModestMsgView *self);
 static void modest_mozembed_msg_view_set_priority (ModestMsgView *self, TnyHeaderFlags flags);
-static GList *modest_mozembed_msg_view_get_selected_attachments (ModestMsgView *self);
-static GList *modest_mozembed_msg_view_get_attachments (ModestMsgView *self);
+static TnyList *modest_mozembed_msg_view_get_selected_attachments (ModestMsgView *self);
+static TnyList *modest_mozembed_msg_view_get_attachments (ModestMsgView *self);
 static void modest_mozembed_msg_view_grab_focus (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 static GtkAdjustment *modest_mozembed_msg_view_get_vadjustment_default (ModestMsgView *self);
@@ -132,8 +132,8 @@ static void modest_mozembed_msg_view_set_shadow_type_default (ModestMsgView *sel
 static GtkShadowType modest_mozembed_msg_view_get_shadow_type_default (ModestMsgView *self);
 static TnyHeaderFlags modest_mozembed_msg_view_get_priority_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_set_priority_default (ModestMsgView *self, TnyHeaderFlags flags);
-static GList *modest_mozembed_msg_view_get_selected_attachments_default (ModestMsgView *self);
-static GList *modest_mozembed_msg_view_get_attachments_default (ModestMsgView *self);
+static TnyList *modest_mozembed_msg_view_get_selected_attachments_default (ModestMsgView *self);
+static TnyList *modest_mozembed_msg_view_get_attachments_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
 
@@ -153,8 +153,8 @@ static void set_shadow_type (ModestMozembedMsgView *self, GtkShadowType type);
 static GtkShadowType get_shadow_type (ModestMozembedMsgView *self);
 static TnyHeaderFlags get_priority (ModestMozembedMsgView *self);
 static void set_priority (ModestMozembedMsgView *self, TnyHeaderFlags flags);
-static GList *get_selected_attachments (ModestMozembedMsgView *self);
-static GList *get_attachments (ModestMozembedMsgView *self);
+static TnyList *get_selected_attachments (ModestMozembedMsgView *self);
+static TnyList *get_attachments (ModestMozembedMsgView *self);
 static void grab_focus (ModestMozembedMsgView *self);
 static void remove_attachment (ModestMozembedMsgView *view, TnyMimePart *attachment);
 
@@ -369,17 +369,18 @@ modest_mozembed_msg_view_init (ModestMozembedMsgView *obj)
 	gtk_box_pack_start (GTK_BOX (main_vbox), body_box, TRUE, TRUE, 0);
 
 	if (priv->body_view) {
-		gtk_widget_set_size_request (priv->body_view, -1, 1000);
-		scroll_area = modest_scroll_area_new (GTK_WIDGET (obj), priv->body_view);
-		gtk_container_add (GTK_CONTAINER (body_box), scroll_area);
+		/* gtk_widget_set_size_request (priv->body_view, 610, 1000); */
+		/* scroll_area = modest_scroll_area_new (GTK_WIDGET (obj), priv->body_view); */
+		/* gtk_container_add (GTK_CONTAINER (body_box), scroll_area); */
 
-/* 		gtk_container_add (GTK_CONTAINER (body_box), priv->body_view); */
-/* 		scroll_area = NULL; */
+		/* gtk_container_add (GTK_CONTAINER (body_box), priv->body_view); */
+		/* scroll_area = NULL; */
 
-/* 		scroll_area = gtk_scrolled_window_new (NULL, NULL); */
-/* 		gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll_area), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC); */
-/* 		gtk_container_add (GTK_CONTAINER (scroll_area), priv->body_view); */
-/* 		gtk_container_add (GTK_CONTAINER (body_box), scroll_area); */
+		scroll_area = gtk_scrolled_window_new (NULL, NULL);
+		gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll_area), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+		gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scroll_area), priv->body_view);
+		gtk_box_pack_start (GTK_BOX (body_box), scroll_area, TRUE, TRUE, 0);
+		gtk_widget_show_all (body_box);
 
 #if HAVE_DECL_GTK_WIDGET_TAP_AND_HOLD_SETUP
 		gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->body_view), NULL, NULL, 0);
@@ -789,7 +790,7 @@ search_next (ModestMozembedMsgView *self)
 	return result;
 }
 
-static GList *
+static TnyList *
 get_selected_attachments (ModestMozembedMsgView *self)
 {
 	ModestMozembedMsgViewPrivate *priv;
@@ -801,7 +802,7 @@ get_selected_attachments (ModestMozembedMsgView *self)
 	
 }
 
-static GList *
+static TnyList *
 get_attachments (ModestMozembedMsgView *self)
 {
 	ModestMozembedMsgViewPrivate *priv;
@@ -845,12 +846,12 @@ tny_msg_view_init (gpointer g, gpointer iface_data)
 {
 	TnyMsgViewIface *klass = (TnyMsgViewIface *)g;
 
-	klass->get_msg_func = modest_msg_view_get_msg;
-	klass->set_msg_func = modest_msg_view_set_msg;
-	klass->set_unavailable_func = modest_msg_view_set_unavailable;
-	klass->clear_func = modest_msg_view_clear;
-	klass->create_mime_part_view_for_func = modest_msg_view_create_mime_part_view_for;
-	klass->create_new_inline_viewer_func = modest_msg_view_create_new_inline_viewer;
+	klass->get_msg = modest_msg_view_get_msg;
+	klass->set_msg = modest_msg_view_set_msg;
+	klass->set_unavailable = modest_msg_view_set_unavailable;
+	klass->clear = modest_msg_view_clear;
+	klass->create_mime_part_view_for = modest_msg_view_create_mime_part_view_for;
+	klass->create_new_inline_viewer = modest_msg_view_create_new_inline_viewer;
 
 	return;
 }
@@ -942,9 +943,9 @@ tny_mime_part_view_init (gpointer g, gpointer iface_data)
 {
 	TnyMimePartViewIface *klass = (TnyMimePartViewIface *)g;
 
-	klass->get_part_func = modest_msg_view_mp_get_part;
-	klass->set_part_func = modest_msg_view_mp_set_part;
-	klass->clear_func = modest_msg_view_mp_clear;
+	klass->get_part = modest_msg_view_mp_get_part;
+	klass->set_part = modest_msg_view_mp_set_part;
+	klass->clear = modest_msg_view_mp_clear;
 
 	return;
 }
@@ -1226,25 +1227,25 @@ modest_mozembed_msg_view_get_priority_default (ModestMsgView *self)
 	return get_priority (MODEST_MOZEMBED_MSG_VIEW (self));
 }
 
-static GList*
+static TnyList*
 modest_mozembed_msg_view_get_selected_attachments (ModestMsgView *self)
 {
 	return MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->get_selected_attachments_func (self);
 }
 
-static GList*
+static TnyList*
 modest_mozembed_msg_view_get_selected_attachments_default (ModestMsgView *self)
 {
 	return get_selected_attachments (MODEST_MOZEMBED_MSG_VIEW (self));
 }
 
-static GList*
+static TnyList*
 modest_mozembed_msg_view_get_attachments (ModestMsgView *self)
 {
 	return MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->get_attachments_func (self);
 }
 
-static GList*
+static TnyList*
 modest_mozembed_msg_view_get_attachments_default (ModestMsgView *self)
 {
 	return get_attachments (MODEST_MOZEMBED_MSG_VIEW (self));

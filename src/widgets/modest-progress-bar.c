@@ -387,9 +387,6 @@ progress_string (ModestMailOperationTypeOperation op_type, guint done, guint tot
 			msg = g_strdup(_("mail_me_sending"));
 		break;
 		
-	case MODEST_MAIL_OPERATION_TYPE_OPEN:		
-		msg = g_strdup(_("mail_me_opening"));
-		break;
 	default:
 		msg = g_strdup("");
 	}

@@ -42,7 +42,13 @@
 #include <modest-signal-mgr.h>
 #include <tny-platform-factory.h>
 #include "widgets/modest-window-mgr.h"
+<<<<<<< .working
 #include <tny-stream-cache.h>
+=======
+#include <modest-protocol-registry.h>
+#include <tny-stream-cache.h>
+#include <modest-plugin-factory.h>
+>>>>>>> .merge-right.r5668
 
 G_BEGIN_DECLS
 
@@ -230,6 +236,24 @@ void modest_runtime_remove_all_send_queues ();
  * Returns: the #ModestWindowMgr singleton. This should NOT be unref'd.
  **/
 ModestWindowMgr* modest_runtime_get_window_mgr (void);
+
+/**
+ * modest_runtime_get_protocol_registry:
+ *
+ * get the #ModestProtocolRegistry singleton instance
+ *
+ * Returns: the #ModestProtocolRegistry singleton. This should NOT be unref'd.
+ **/
+ModestProtocolRegistry* modest_runtime_get_protocol_registry (void);
+
+/**
+ * modest_runtime_get_plugin_factory:
+ *
+ * get the #ModestPluginFactory singleton instance
+ *
+ * Returns: the #ModestPluginFactory singleton. This should NOT be unref'd.
+ **/
+ModestPluginFactory * modest_runtime_get_plugin_factory (void);
 
 
 G_END_DECLS

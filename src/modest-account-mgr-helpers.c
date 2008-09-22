@@ -31,6 +31,7 @@
 #include <modest-account-mgr-priv.h>
 #include <tny-simple-list.h>
 #include <modest-runtime.h>
+#include <modest-defs.h>
 #include <string.h>
 
 static const gchar * null_means_empty (const gchar * str);
@@ -76,16 +77,16 @@ modest_account_mgr_get_signature (ModestAccountMgr *self,
 	return modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SIGNATURE, FALSE);
 }
 
-ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name)
+ModestProtocolType modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name)
 {
-       ModestTransportStoreProtocol result = MODEST_PROTOCOL_STORE_POP; /* Arbitrary default */
+       ModestProtocolType result = MODEST_PROTOCOLS_STORE_POP; /* Arbitrary default */
        
        gchar *server_account_name = modest_account_mgr_get_string (self, name,
 								   MODEST_ACCOUNT_STORE_ACCOUNT,
 								   FALSE);
        if (server_account_name) {
 	       ModestServerAccountSettings* server_settings = 
-                       modest_account_mgr_load_server_settings (self, server_account_name);
+                       modest_account_mgr_load_server_settings (self, server_account_name, FALSE);
                result = modest_server_account_settings_get_protocol (server_settings);
 	       
                g_object_unref (server_settings);
@@ -351,17 +352,26 @@ modest_account_mgr_set_server_account_hostname (ModestAccountMgr *self,
 
 
 
-ModestAuthProtocol
+ModestProtocolType
 modest_account_mgr_get_server_account_secure_auth (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
-	ModestAuthProtocol result = MODEST_PROTOCOL_AUTH_NONE;
-	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, 
-		TRUE /* server account */);
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocolType result = MODEST_PROTOCOLS_AUTH_NONE;
+	gchar* value;
+
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, 
+					       TRUE /* server account */);
 	if (value) {
-		result = modest_protocol_info_get_auth_protocol (value);
-			
+		ModestProtocol *protocol;
+
+		protocol = modest_protocol_registry_get_protocol_by_name (protocol_registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS, value);
 		g_free (value);
+
+		if (protocol)
+			result = modest_protocol_get_type_id (protocol);
+			
 	}
 	
 	return result;
@@ -370,28 +380,42 @@ modest_account_mgr_get_server_account_secure_auth (ModestAccountMgr *self,
 
 void
 modest_account_mgr_set_server_account_secure_auth (ModestAccountMgr *self, 
-	const gchar* account_name, ModestAuthProtocol secure_auth)
+	const gchar* account_name, ModestProtocolType secure_auth)
 {
-	/* Get the conf string for the enum value: */
-	const gchar* str_value = NULL;
+	const gchar* str_value;
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocol *protocol;
 
-	str_value = modest_protocol_info_get_auth_protocol_name (secure_auth);
+	/* Get the conf string for the protocol: */
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, secure_auth);
+	str_value = modest_protocol_get_name (protocol);
 	
 	/* Set it in the configuration: */
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_AUTH_MECH, str_value, TRUE);
 }
 
-ModestConnectionProtocol
+ModestProtocolType
 modest_account_mgr_get_server_account_security (ModestAccountMgr *self, 
 	const gchar* account_name)
 {
-	ModestConnectionProtocol result = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	gchar* value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_SECURITY, 
-		TRUE /* server account */);
+	ModestProtocolType result = MODEST_PROTOCOLS_CONNECTION_NONE;
+	gchar* value;
+
+	value = modest_account_mgr_get_string (self, account_name, MODEST_ACCOUNT_SECURITY, 
+					       TRUE /* server account */);
 	if (value) {
-		result = modest_protocol_info_get_connection_protocol (value);
-			
+		ModestProtocolRegistry *protocol_registry;
+		ModestProtocol *protocol;
+
+		protocol_registry = modest_runtime_get_protocol_registry ();
+		protocol = modest_protocol_registry_get_protocol_by_name (protocol_registry,
+									  MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS,
+									  value);
 		g_free (value);
+
+		if (protocol)
+			result = modest_protocol_get_type_id (protocol);
 	}
 	
 	return result;
@@ -399,23 +423,32 @@ modest_account_mgr_get_server_account_security (ModestAccountMgr *self,
 
 void
 modest_account_mgr_set_server_account_security (ModestAccountMgr *self, 
-	const gchar* account_name, ModestConnectionProtocol security)
+						const gchar* account_name, 
+						ModestProtocolType security)
 {
-	/* Get the conf string for the enum value: */
-	const gchar* str_value = NULL;
-	str_value = modest_protocol_info_get_connection_protocol_name (security);
+	const gchar* str_value;
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocol *protocol;
+
+	/* Get the conf string for the protocol type: */
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, security);
+	str_value = modest_protocol_get_name (protocol);
 	
 	/* Set it in the configuration: */
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY, str_value, TRUE);
 }
 
 ModestServerAccountSettings*
-modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* name)
+modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* name, gboolean is_transport_and_not_store)
 {
 	ModestServerAccountSettings *settings;
+	ModestProtocol *protocol;
+	ModestProtocolRegistry *registry;
 	gchar *string;
 	
 	g_return_val_if_fail (modest_account_mgr_account_exists (self, name, TRUE), NULL);
+	registry = modest_runtime_get_protocol_registry ();
 	settings = modest_server_account_settings_new ();
 
 	modest_server_account_settings_set_account_name (settings, name);
@@ -431,26 +464,47 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	g_free (string);
 
 	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
+	if (is_transport_and_not_store) {
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS, string);
+	} else {
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS, string);
+	}
 	modest_server_account_settings_set_protocol (settings,
-						     modest_protocol_info_get_transport_store_protocol (string));
+						     modest_protocol_get_type_id (protocol));
 	g_free (string);
 
 	modest_server_account_settings_set_port (settings,
 						 modest_account_mgr_get_int (self, name, MODEST_ACCOUNT_PORT, TRUE));
 
 	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
-	modest_server_account_settings_set_auth_protocol (settings,
-							  modest_protocol_info_get_auth_protocol(string));
-	g_free (string);
-		
+	if (string) {
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS, string);
+		modest_server_account_settings_set_auth_protocol (settings,
+								  modest_protocol_get_type_id (protocol));
+		g_free (string);
+	} else {
+		modest_server_account_settings_set_auth_protocol (settings, MODEST_PROTOCOLS_AUTH_NONE);
+	}
+	
 	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SECURITY, TRUE);
-	modest_server_account_settings_set_security (settings,
-						     modest_protocol_info_get_connection_protocol(string));
-	g_free (string);
+	if (string) {
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS, string);
+		modest_server_account_settings_set_security_protocol (settings,
+								      modest_protocol_get_type_id (protocol));
+		g_free (string);
+	} else {
+		modest_server_account_settings_set_security_protocol (settings,
+								      MODEST_PROTOCOLS_CONNECTION_NONE);
+	}
 
 	string = modest_account_mgr_get_string (self, name, 
 						MODEST_ACCOUNT_PASSWORD, TRUE);
 	modest_server_account_settings_set_password (settings, string);
+	g_free (string);
+	
+	string = modest_account_mgr_get_string (self, name, 
+						MODEST_ACCOUNT_URI, TRUE);
+	modest_server_account_settings_set_uri (settings, string);
 	g_free (string);
 	
 	return settings;
@@ -462,27 +516,40 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 {
 	gboolean has_errors = FALSE;
 	const gchar *account_name;
-	const gchar *protocol;
+	const gchar *protocol_name;
 	const gchar *uri;
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocol *protocol;
 	
 	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), FALSE);
+	protocol_registry = modest_runtime_get_protocol_registry ();
 	account_name = modest_server_account_settings_get_account_name (settings);
 
 	/* if we don't have a valid account name we cannot save */
 	g_return_val_if_fail (account_name, FALSE);
 
-	protocol = modest_protocol_info_get_transport_store_protocol_name (
-		modest_server_account_settings_get_protocol (settings));
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry,
+								  modest_server_account_settings_get_protocol (settings));
+	protocol_name = modest_protocol_get_name (protocol);
 	uri = modest_server_account_settings_get_uri (settings);
 	if (!uri) {
-		const gchar *hostname = null_means_empty (modest_server_account_settings_get_hostname (settings));
-		const gchar *username = null_means_empty (modest_server_account_settings_get_username (settings));
-		const gchar *password = null_means_empty (modest_server_account_settings_get_password (settings));
-		gint port = modest_server_account_settings_get_port (settings);
-		const gchar *auth_protocol = modest_protocol_info_get_auth_protocol_name (
-			modest_server_account_settings_get_auth_protocol (settings));
-		const gchar *security = modest_protocol_info_get_connection_protocol_name (
-			modest_server_account_settings_get_security (settings));
+		const gchar *hostname;
+		const gchar *username;
+		const gchar *password;
+		gint port;
+		const gchar *auth_protocol_name;
+		const gchar *security_name;
+
+		hostname = null_means_empty (modest_server_account_settings_get_hostname (settings));
+		username = null_means_empty (modest_server_account_settings_get_username (settings));
+		password = null_means_empty (modest_server_account_settings_get_password (settings));
+		port = modest_server_account_settings_get_port (settings);
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry,
+									  modest_server_account_settings_get_auth_protocol (settings));
+		auth_protocol_name = modest_protocol_get_name (protocol);
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry,
+									  modest_server_account_settings_get_security_protocol (settings));
+		security_name = modest_protocol_get_name (protocol);
 
 		has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_HOSTNAME, 
 							    hostname, TRUE);
@@ -494,17 +561,17 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 									   password, TRUE));
 		if (!has_errors)
 			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PROTO,
-									   protocol, TRUE));
+									   protocol_name, TRUE));
 		if (!has_errors)
 			(has_errors = !modest_account_mgr_set_int (self, account_name, MODEST_ACCOUNT_PORT,
 									port, TRUE));
 		if (!has_errors)
 			(has_errors = !modest_account_mgr_set_string (self, account_name, 
 									   MODEST_ACCOUNT_AUTH_MECH,
-									   auth_protocol, TRUE));		
+									   auth_protocol_name, TRUE));		
 		if (!has_errors)
 			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY,
-									   security,
+									   security_name,
 									   TRUE));
 	} else {
 		const gchar *uri = modest_server_account_settings_get_uri (settings);
@@ -512,7 +579,7 @@ modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 							    uri, TRUE);
 		if (!has_errors)
 			(has_errors = !modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_PROTO,
-									   protocol, TRUE));
+									   protocol_name, TRUE));
 	}
 
 	return !has_errors;
@@ -586,7 +653,7 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 							    FALSE);
 	if (server_account) {
 		ModestServerAccountSettings *store_settings;
-		store_settings = modest_account_mgr_load_server_settings (self, server_account);
+		store_settings = modest_account_mgr_load_server_settings (self, server_account, FALSE);
 		modest_account_settings_set_store_settings (settings,
 							    store_settings);
 		g_object_unref (store_settings);
@@ -599,7 +666,7 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 							FALSE);
 	if (server_account) {
 		ModestServerAccountSettings *transport_settings;
-		transport_settings = modest_account_mgr_load_server_settings (self, server_account);
+		transport_settings = modest_account_mgr_load_server_settings (self, server_account, TRUE);
 		modest_account_settings_set_transport_settings (settings, transport_settings);
 		g_object_unref (transport_settings);
 		g_free (server_account);

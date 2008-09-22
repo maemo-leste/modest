@@ -33,8 +33,9 @@
 
 #include <gtk/gtk.h>
 #include <stdio.h> /* for FILE* */
-#include <modest-protocol-info.h>
 #include <tny-fs-stream.h>
+#include <modest-protocol.h>
+#include "widgets/modest-validating-entry.h"
 
 typedef enum {
 	MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED
@@ -96,7 +97,7 @@ TnyFsStream *modest_utils_create_temp_stream (const gchar *orig_name, const gcha
  *
  */
 
-GList* modest_utils_get_supported_secure_authentication_methods (ModestTransportStoreProtocol proto, 
+GList* modest_utils_get_supported_secure_authentication_methods (ModestProtocolType proto, 
 	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window, GError** error);
 
 /** modest_show_information_note_in_main_context_and_forget:
@@ -160,6 +161,7 @@ gint modest_list_index (TnyList *list, GObject *object);
  */
 guint64 modest_utils_get_available_space (const gchar *maildir_path);
 
+<<<<<<< .working
 /**
  * modest_images_cache_get_id:
  * @account: a #TnyAccount
@@ -184,4 +186,34 @@ gchar *modest_images_cache_get_id (const gchar *account, const gchar *uri);
  */
 gchar *modest_utils_get_account_name_from_recipient (const gchar *from);
 
+=======
+/**
+ * modest_images_cache_get_id:
+ * @account: a #TnyAccount
+ * @uri: an uri string
+ *
+ * obtains the hash corresponding to an image external resource to be
+ * stored in image cache.
+ *
+ * Returns: a newly allocated string containing the hash key
+ */
+gchar *modest_images_cache_get_id (const gchar *account, const gchar *uri);
+
+
+/**
+ * modest_utils_get_account_name_from_recipient:
+ * @from: the result of a call to tny_header_dup_from
+ *
+ * returns the account name that corresponds to the given from address
+ *
+ * Returns: a newly allocated string containing the account name or
+ * %NULL in case of error
+ */
+gchar *modest_utils_get_account_name_from_recipient (const gchar *from);
+
+void modest_utils_on_entry_invalid_character (ModestValidatingEntry *self, 
+					      const gchar* character,
+					      gpointer user_data);
+
+>>>>>>> .merge-right.r5668
 #endif /*__MODEST_MAEMO_UTILS_H__*/

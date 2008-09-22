@@ -139,6 +139,11 @@ if test "$MODEST_PLATFORM" = "detect"; then
 	with_platform=$detected_platform
 fi
 
+if test "$with_platform" = "maemo"; then
+   	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_MAEMO"
+elif test "$with_platform" = "gnome"; then
+	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME"
+fi
 
 dnl Whether to use maemo-launcher or not
 AC_ARG_ENABLE([maemo-launcher],
@@ -345,12 +350,17 @@ fi
 #
 # check the version of the widgets on maemo
 #
+hildonpkgs=
 if test "x$with_platform" == "xmaemo"; then  
 PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS, hildon-1 >= 0.9.9 hildon-fm-2, have_hildon1=true,have_hildon1=false)	
+hildonpkgs=hildon-1
+
 if test "x$have_hildon1" == "xfalse"; then 
    PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS, hildon-libs >= 0.12.0 hildon-fm, have_hildon0=true,have_hildon0=false)	
+   hildonpkgs=hildon-libs
    if test "x$have_hildon0" == "xtrue"; then
       AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON0_WIDGETS, 1, ["Whether hildon0 widgets are used."])		      
+      MODEST_PLUGIN_DEFINES+=" -DMODEST_HAVE_HILDON0_WIDGETS"
    else
       AC_MSG_ERROR([hildon widgets and/or hildon-fm not found])
    fi
@@ -359,7 +369,8 @@ else
 fi
 fi
 
-
+AC_SUBST(hildonpkgs)
+AC_SUBST(MODEST_PLUGIN_DEFINES)
 
 #
 # check the version of the addressbook on maemo
@@ -384,6 +395,9 @@ fi
 #
 AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook" != "xtrue")
 
+
+AM_GLIB_GNU_GETTEXT
+IT_PROG_INTLTOOL([0.35.0])
 
 # gettext support
 GETTEXT_PACKAGE=modest	
@@ -480,14 +494,12 @@ AM_CONDITIONAL(BUILD_DOCS, test x$build_docs = xtrue)
 dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
-dnl Intltool utility programs
-#AC_PROG_INTLTOOL([0.33.0],[no-xml])
-
 AC_OUTPUT([
 po/Makefile.in
 Makefile
 man/Makefile
 src/Makefile
+src/modest-plugin-1.0.pc
 src/dbus_api/Makefile
 src/gnome/Makefile
 src/maemo/Makefile

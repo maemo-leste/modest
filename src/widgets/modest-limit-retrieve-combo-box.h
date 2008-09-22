@@ -7,7 +7,6 @@
 #define _MODEST_LIMIT_RETRIEVE_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-protocol-info.h"
 
 G_BEGIN_DECLS
 

@@ -31,32 +31,13 @@
 #define __MODEST_PRESETS_H__
 
 #include <glib.h>
+#include <modest-protocol.h>
 
 struct _ModestPresets {
 /* private data: don't touch */
 	GKeyFile *keyfile;
 };
 typedef struct _ModestPresets ModestPresets;
-
-typedef enum _ModestPresetsServerType {
-	MODEST_PRESETS_SERVER_TYPE_NONE,                      
-	MODEST_PRESETS_SERVER_TYPE_IMAP,
-	MODEST_PRESETS_SERVER_TYPE_POP,
-	MODEST_PRESETS_SERVER_TYPE_SMTP
-} ModestPresetsServerType;
-
-/** These are flags, which should be ORed.
- */
-typedef enum _ModestPresetsSecurity {
-	MODEST_PRESETS_SECURITY_NONE                           = 0,                           
-	MODEST_PRESETS_SECURITY_APOP                           = 1 << 0,
-	MODEST_PRESETS_SECURITY_SECURE_SMTP                    = 1 << 1, /* if set, port will be 465
-									  * instead of 25 */
-	MODEST_PRESETS_SECURITY_SECURE_INCOMING                = 1 << 2,
-	MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT = 1 << 3, /* POP3S=>995, IMAPS=>993 */
-} ModestPresetsSecurity;
-
-/* typedef enum _ModestPresetsInfo ModestPresetsInfo; */
 
 
 /**
@@ -126,11 +107,11 @@ gchar *                   modest_presets_get_domain      (ModestPresets *self,
  *
  * get information about some incoming or outgoing mailserver
  *
- * Returns: a ModestPresetsServerType with the required information
+ * Returns: a #ModestProtocolType with the required information
  */
-ModestPresetsServerType          modest_presets_get_info_server_type (ModestPresets *self,
-								      const gchar *provider_id,
-								      gboolean incoming_server);
+ModestProtocolType          modest_presets_get_info_server_type (ModestPresets *self,
+								 const gchar *provider_id,
+								 gboolean incoming_server);
 
 /**
  * modest_presets_get_info_server_security:
@@ -141,11 +122,41 @@ ModestPresetsServerType          modest_presets_get_info_server_type (ModestPres
  *
  * get information about some incoming or outgoing mailserver
  *
- * Returns: ModestPresetsSecurity ORable flags with the required information
+ * Returns: #ModestProtocolType with server auth
  */					    
-ModestPresetsSecurity          modest_presets_get_info_server_security (ModestPresets *self,
-									const gchar *provider_id,
-									gboolean incoming_server);
+ModestProtocolType          modest_presets_get_info_server_auth (ModestPresets *self,
+								 const gchar *provider_id,
+								 gboolean incoming_server);
+
+/**
+ * modest_presets_get_info_server_security:
+ * @self: a valid ModestPresets instance
+ * @provider_id: ID of the provider 
+ * @incoming_server: get the incoming mailserver if TRUE, get the
+ * outgoing server otherwise
+ *
+ * get information about some incoming or outgoing mailserver
+ *
+ * Returns: #ModestProtocolType with server security
+ */					    
+ModestProtocolType          modest_presets_get_info_server_security (ModestPresets *self,
+								     const gchar *provider_id,
+								     gboolean incoming_server);
+
+/**
+ * modest_presets_get_info_server_security:
+ * @self: a valid ModestPresets instance
+ * @provider_id: ID of the provider 
+ * @incoming_server: get the incoming mailserver if TRUE, get the
+ * outgoing server otherwise
+ *
+ * get information about some incoming or outgoing mailserver
+ *
+ * Returns: %TRUE if we should use the alternate port.
+ */					    
+gboolean          modest_presets_get_info_server_use_alternate_port (ModestPresets *self,
+								     const gchar *provider_id,
+								     gboolean incoming_server);
 
 
 /**

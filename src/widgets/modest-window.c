@@ -33,6 +33,7 @@
 #include "modest-tny-platform-factory.h"
 #include "modest-runtime.h"
 #include "modest-window-mgr.h"
+#include "modest-defs.h"
 #include <string.h> /* for strcmp */
 #include <gdk/gdkkeysyms.h>
 

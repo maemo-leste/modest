@@ -29,6 +29,8 @@
 
 
 #include "modest-serversecurity-combo-box.h"
+#include <modest-runtime.h>
+#include <modest-account-protocol.h>
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -52,7 +54,7 @@ typedef struct _ModestServersecurityComboBoxPrivate ModestServersecurityComboBox
 struct _ModestServersecurityComboBoxPrivate
 {
 	GtkTreeModel *model;
-	ModestConnectionProtocol protocol;
+	ModestProtocolType protocol;
 };
 
 static void
@@ -146,10 +148,15 @@ modest_serversecurity_combo_box_new (void)
  * #combobox: The combo box.
  * @protocol: IMAP or POP.
  */
-void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestTransportStoreProtocol protocol)
+void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestProtocolType protocol_type)
 {
-	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
-	priv->protocol = protocol; /* Remembered for later. */
+	ModestServersecurityComboBoxPrivate *priv;
+	ModestProtocol *protocol;
+
+	priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
+	priv->protocol = protocol_type; /* Remembered for later. */
+	protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+								  protocol_type);
 	
 	/* Remove any existing rows: */
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
@@ -158,49 +165,47 @@ void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobo
 	GtkTreeIter iter;
 	gtk_list_store_append (liststore, &iter);
 	/* TODO: This logical ID is not in the .po file: */
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_NORMAL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_none"), -1);
-	
-	/* Select the None item: */
-	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint) MODEST_PROTOCOLS_CONNECTION_NONE, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_none"), -1);
 	
 	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_TLS, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_normal"), -1);
+	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOLS_CONNECTION_TLS, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_normal"), -1);
 	
 	/* Add security choices with protocol-specific names, as in the UI spec:
 	 * (Note: Changing the title seems pointless. murrayc) */
-	if(protocol == MODEST_PROTOCOL_STORE_POP) {
+	gchar *protocol_name = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_SSL_PROTO_NAME);
+	if (protocol_name) {
 		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_securepop3s"), -1);
-	} else if(protocol == MODEST_PROTOCOL_STORE_IMAP) {
+		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOLS_CONNECTION_SSL, MODEL_COL_NAME, protocol_name, -1);
+		g_free (protocol_name);
+	} else {
+		/* generic fallback */
 		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_secureimap4s"), -1);
-	} else if(protocol == MODEST_PROTOCOL_TRANSPORT_SMTP) {
-		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_ssl"), -1);
+		gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOLS_CONNECTION_SSL, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_ssl"), -1);
 	}
 }
 
-static gint get_port_for_security (ModestTransportStoreProtocol protocol, ModestConnectionProtocol security)
+static gint get_port_for_security (ModestProtocolType protocol_type, ModestProtocolType security_type)
 {
 	/* See the UI spec, section Email Wizards, Incoming Details [MSG-WIZ001]: */
 	gint result = 0;
+	ModestProtocol *protocol, *security;
+	ModestProtocolRegistry *protocol_registry;
+	gboolean use_alternate_port;
+
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
+	security = modest_protocol_registry_get_protocol_by_type (protocol_registry, security_type);
+
+	g_return_val_if_fail ((security != NULL && protocol != NULL), 0);
+
+	use_alternate_port = modest_protocol_registry_protocol_type_has_tag (protocol_registry, security_type,
+									     MODEST_PROTOCOL_REGISTRY_USE_ALTERNATE_PORT);
 
 	/* Get the default port number for this protocol with this security: */
-	if(protocol == MODEST_PROTOCOL_STORE_POP) {
-		if ((security ==  MODEST_PROTOCOL_CONNECTION_NORMAL) || (security ==  MODEST_PROTOCOL_CONNECTION_TLS))
-			result = 110;
-		else if (security ==  MODEST_PROTOCOL_CONNECTION_SSL)
-			result = 995;
-	} else if (protocol == MODEST_PROTOCOL_STORE_IMAP) {
-		if ((security ==  MODEST_PROTOCOL_CONNECTION_NORMAL) || (security ==  MODEST_PROTOCOL_CONNECTION_TLS))
-			result = 143;
-		else if (security ==  MODEST_PROTOCOL_CONNECTION_SSL)
-			result = 993;
-	} else if (protocol == MODEST_PROTOCOL_TRANSPORT_SMTP) {
-		if ((security ==  MODEST_PROTOCOL_CONNECTION_NORMAL) || (security ==  MODEST_PROTOCOL_CONNECTION_TLS))
-			result = 25;
-		else if (security ==  MODEST_PROTOCOL_CONNECTION_SSL)
-			result = 465;
+	if (use_alternate_port) {
+		result = modest_account_protocol_get_alternate_port (MODEST_ACCOUNT_PROTOCOL (protocol));
+	} else {
+		result = modest_account_protocol_get_port (MODEST_ACCOUNT_PROTOCOL (protocol));
 	}
 
 	return result;
@@ -208,22 +213,24 @@ static gint get_port_for_security (ModestTransportStoreProtocol protocol, Modest
 
 /**
  * Returns the selected serversecurity, 
- * or MODEST_PROTOCOL_CONNECTION_NORMAL if no serversecurity was selected.
+ * or MODEST_PROTOCOLS_CONNECTION_NONE if no serversecurity was selected.
  */
-ModestConnectionProtocol
+ModestProtocolType
 modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox)
 {
 	GtkTreeIter active;
-	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
+	gboolean found;
+
+	found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
 	if (found) {
 		ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestConnectionProtocol serversecurity = MODEST_PROTOCOL_CONNECTION_NORMAL;
+		ModestProtocolType serversecurity = MODEST_PROTOCOLS_CONNECTION_NONE;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &serversecurity, -1);
 		return serversecurity;	
 	}
 
-	return MODEST_PROTOCOL_CONNECTION_NORMAL; /* Failed. */
+	return MODEST_PROTOCOLS_CONNECTION_NONE; /* Failed. */
 }
 
 /**
@@ -235,7 +242,7 @@ modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecu
 {
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	
-	const ModestConnectionProtocol security = modest_serversecurity_combo_box_get_active_serversecurity 
+	ModestProtocolType security = modest_serversecurity_combo_box_get_active_serversecurity 
 		(combobox);
 	return get_port_for_security (priv->protocol, security);
 }
@@ -245,7 +252,7 @@ modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecu
 typedef struct 
 {
 		ModestServersecurityComboBox* self;
-		gint id;
+		ModestProtocolType id;
 		gboolean found;
 } ForEachData;
 
@@ -256,7 +263,7 @@ on_model_foreach_select_id(GtkTreeModel *model,
 	ForEachData *state = (ForEachData*)(user_data);
 	
 	/* Select the item if it has the matching ID: */
-	guint id = 0;
+	ModestProtocolType id = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	gtk_tree_model_get (model, iter, MODEL_COL_ID, &id, -1); 
 	if(id == state->id) {
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (state->self), iter);
@@ -270,11 +277,11 @@ on_model_foreach_select_id(GtkTreeModel *model,
 
 /**
  * Selects the specified serversecurity, 
- * or MODEST_PROTOCOL_CONNECTION_NORMAL if no serversecurity was selected.
+ * or MODEST_PROTOCOLS_CONNECTION_NONE if no serversecurity was selected.
  */
 gboolean
 modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox,
-							   ModestConnectionProtocol serversecurity)
+							   ModestProtocolType serversecurity)
 {
 	ModestServersecurityComboBoxPrivate *priv = SERVERSECURITY_COMBO_BOX_GET_PRIVATE (combobox);
 	

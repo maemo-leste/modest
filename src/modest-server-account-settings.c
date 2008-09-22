@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-protocol-registry.h>
 #include <modest-server-account-settings.h>
 
 /* 'private'/'protected' functions */
@@ -38,11 +39,11 @@ typedef struct _ModestServerAccountSettingsPrivate ModestServerAccountSettingsPr
 struct _ModestServerAccountSettingsPrivate {
 	gchar *hostname;
 	guint port;
-	ModestTransportStoreProtocol protocol;
+	ModestProtocolType protocol;
 	gchar *username;
 	gchar *password;
-	ModestConnectionProtocol security;
-	ModestAuthProtocol auth_protocol;
+	ModestProtocolType security_protocol;
+	ModestProtocolType auth_protocol;
 	gchar *account_name;
 	gchar *uri;
 };
@@ -101,12 +102,12 @@ modest_server_account_settings_instance_init (ModestServerAccountSettings *obj)
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (obj);
 
 	priv->hostname = NULL;
-	priv->protocol = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	priv->protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	priv->port = 0;
 	priv->username = NULL;
 	priv->password = NULL;
-	priv->security = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	priv->auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
+	priv->security_protocol = MODEST_PROTOCOLS_CONNECTION_NONE;
+	priv->auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 	priv->account_name = NULL;
 	priv->uri = NULL;
 }
@@ -122,10 +123,10 @@ modest_server_account_settings_finalize   (GObject *obj)
 	priv->username = NULL;
 	g_free (priv->password);
 	priv->password = NULL;
-	priv->protocol = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	priv->protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	priv->port = 0;
-	priv->security = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	priv->auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
+	priv->security_protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+	priv->auth_protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	g_free (priv->account_name);
 	priv->account_name = NULL;
 	g_free (priv->uri);
@@ -187,9 +188,6 @@ modest_server_account_settings_set_uri (ModestServerAccountSettings *settings,
 	g_free (priv->uri);
 	priv->uri = g_strdup (uri);
 
-	/* we set the protocol to a NULL equivalent value. We should use uri in case
-	 * protocol has this value. */
-	priv->protocol = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
 }
 
 const gchar* 
@@ -267,12 +265,12 @@ modest_server_account_settings_set_account_name (ModestServerAccountSettings *se
 	priv->account_name = g_strdup (account_name);
 }
 
-ModestTransportStoreProtocol  
+ModestProtocolType
 modest_server_account_settings_get_protocol (ModestServerAccountSettings *settings)
 {
 	ModestServerAccountSettingsPrivate *priv;
 
-	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
+	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
 	return priv->protocol;
@@ -280,7 +278,7 @@ modest_server_account_settings_get_protocol (ModestServerAccountSettings *settin
 
 void                          
 modest_server_account_settings_set_protocol (ModestServerAccountSettings *settings,
-					     ModestTransportStoreProtocol protocol)
+					     ModestProtocolType protocol)
 {
 	ModestServerAccountSettingsPrivate *priv;
 
@@ -289,9 +287,6 @@ modest_server_account_settings_set_protocol (ModestServerAccountSettings *settin
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
 	priv->protocol = protocol;
 	
-	/* we also set the uri to NULL, as setting a protocol implies disabling uri setting type */
-	g_free (priv->uri);
-	priv->uri = NULL;
 }
 
 guint  
@@ -317,35 +312,35 @@ modest_server_account_settings_set_port (ModestServerAccountSettings *settings,
 	priv->port = port;
 }
 
-ModestConnectionProtocol 
-modest_server_account_settings_get_security (ModestServerAccountSettings *settings)
+ModestProtocolType
+modest_server_account_settings_get_security_protocol (ModestServerAccountSettings *settings)
 {
 	ModestServerAccountSettingsPrivate *priv;
 
-	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), MODEST_PROTOCOL_CONNECTION_NORMAL);
+	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
-	return priv->security;
+	return priv->security_protocol;
 }
 
 void   
-modest_server_account_settings_set_security (ModestServerAccountSettings *settings,
-					     ModestConnectionProtocol security)
+modest_server_account_settings_set_security_protocol (ModestServerAccountSettings *settings,
+						      ModestProtocolType security_protocol)
 {
 	ModestServerAccountSettingsPrivate *priv;
 
 	g_return_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings));
 
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
-	priv->security = security;
+	priv->security_protocol = security_protocol;
 }
 
-ModestAuthProtocol 
+ModestProtocolType
 modest_server_account_settings_get_auth_protocol (ModestServerAccountSettings *settings)
 {
 	ModestServerAccountSettingsPrivate *priv;
 
-	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), MODEST_PROTOCOL_AUTH_NONE);
+	g_return_val_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings), MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
 	return priv->auth_protocol;
@@ -353,7 +348,7 @@ modest_server_account_settings_get_auth_protocol (ModestServerAccountSettings *s
 
 void   
 modest_server_account_settings_set_auth_protocol (ModestServerAccountSettings *settings,
-						  ModestAuthProtocol auth_protocol)
+						  ModestProtocolType auth_protocol)
 {
 	ModestServerAccountSettingsPrivate *priv;
 

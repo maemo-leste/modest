@@ -63,20 +63,8 @@
 #endif /*MODEST_PLATFORM_MAEMO*/
 
 #include "modest-wizard-dialog.h"
-
-#include <libintl.h>
-
-#ifdef MODEST_PLATFORM_MAEMO
-/* Specify the hildon-libs translation domain,
- * so we can reuse its translations 
- * instead of repeating them in our own translations.
- */
-/* #define _(String) dgettext(PACKAGE, String) */
-
-#define _(String) dgettext("hildon-libs", String)
-#else
-#define _(String) gettext(String)
-#endif
+#include "modest-debug.h"
+#include "modest-text-utils.h"
 
 static GtkDialogClass *parent_class;
 
@@ -287,10 +275,10 @@ init (ModestWizardDialog *wizard_dialog)
 
     /* Add response buttons: finish, previous, next, cancel */
 #ifdef MODEST_PLATFORM_MAEMO
-    gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_finish"), MODEST_WIZARD_DIALOG_FINISH);
-    gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_previous"), MODEST_WIZARD_DIALOG_PREVIOUS);
-    gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_next"), MODEST_WIZARD_DIALOG_NEXT);
-    gtk_dialog_add_button (dialog, _("ecdg_bd_wizard_cancel"), MODEST_WIZARD_DIALOG_CANCEL);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_finish"), MODEST_WIZARD_DIALOG_FINISH);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_previous"), MODEST_WIZARD_DIALOG_PREVIOUS);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_next"), MODEST_WIZARD_DIALOG_NEXT);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_cancel"), MODEST_WIZARD_DIALOG_CANCEL);
 #else
     gtk_dialog_add_button (dialog, GTK_STOCK_SAVE, MODEST_WIZARD_DIALOG_FINISH);
     gtk_dialog_add_button (dialog, GTK_STOCK_GO_BACK, MODEST_WIZARD_DIALOG_PREVIOUS);
@@ -488,7 +476,7 @@ create_title (ModestWizardDialog *wizard_dialog)
 	 * but the Modest UI spec does not want this. */
 	/*
     if (current == 0) {
-        str = g_strdup_printf (_("ecdg_ti_wizard_welcome"), 
+        str = g_strdup_printf (_HL("ecdg_ti_wizard_welcome"), 
                 priv->wizard_name, pages);
     } else {
     */
@@ -499,11 +487,11 @@ create_title (ModestWizardDialog *wizard_dialog)
 		 * but the Modest UI spec does not want this.
 		 */
 		/*
-        str = g_strdup_printf (_("ecdg_ti_wizard_step"), 
+        str = g_strdup_printf (_HL("ecdg_ti_wizard_step"), 
                 priv->wizard_name, current + 1, pages, steps);
         */
 
-        str = g_strdup_printf (_("%s: %s"), 
+        str = g_strdup_printf (_HL("%s: %s"), 
                 priv->wizard_name, steps);
     /* } */
 
@@ -538,7 +526,7 @@ response (ModestWizardDialog   *wizard_dialog,
 
         case MODEST_WIZARD_DIALOG_NEXT:
         	if (invoke_before_next_vfunc (wizard_dialog))
-            	gtk_notebook_next_page (notebook); /* go to next page */
+			gtk_notebook_next_page (notebook); /* go to next page */
             	
             break;
 
@@ -644,6 +632,23 @@ invoke_before_next_vfunc (ModestWizardDialog *wizard_dialog)
 		GtkWidget* next_page_widget = NULL;
 		if ((current_page_num + 1) < gtk_notebook_get_n_pages (priv->notebook))
 			next_page_widget = gtk_notebook_get_nth_page (priv->notebook, current_page_num + 1);
+
+		MODEST_DEBUG_BLOCK (
+		g_debug ("Switching to page %d (%s)",
+			 gtk_notebook_page_num (priv->notebook, next_page_widget),
+			 gtk_notebook_get_tab_label_text (priv->notebook, next_page_widget));
+
+		{
+			GtkWidget *p;
+			gint i;
+			g_debug ("\t***************");
+			for (i=0; i<gtk_notebook_get_n_pages(priv->notebook);i++) {
+				p = gtk_notebook_get_nth_page (priv->notebook, i);
+				g_debug ("\t%d - %s", i, gtk_notebook_get_tab_label_text (priv->notebook, p));
+			}
+			g_debug ("\t***************");
+		}
+				    );
 		
 		/* Ask the vfunc implementation whether navigation should be allowed: */
 		return (*(klass->before_next))(wizard_dialog, current_page_widget, next_page_widget);

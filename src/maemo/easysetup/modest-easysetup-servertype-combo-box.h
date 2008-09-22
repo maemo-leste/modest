@@ -31,7 +31,7 @@
 #define _EASYSETUP_SERVERTYPE_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-protocol-info.h"
+#include "modest-protocol-registry.h"
 
 G_BEGIN_DECLS
 
@@ -67,11 +67,11 @@ typedef struct {
 
 GType easysetup_servertype_combo_box_get_type (void);
 
-EasysetupServertypeComboBox* easysetup_servertype_combo_box_new (void);
+EasysetupServertypeComboBox* easysetup_servertype_combo_box_new (gboolean filter_providers);
 
-ModestTransportStoreProtocol easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox);
+ModestProtocolType easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox);
 
-gboolean easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestTransportStoreProtocol servertype);
+gboolean easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestProtocolType servertype);
 
 
 G_END_DECLS

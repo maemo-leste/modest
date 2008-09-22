@@ -7,7 +7,7 @@
 #define _MODEST_RETRIEVE_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-protocol-info.h"
+#include "modest-protocol-registry.h"
 #include <modest-account-settings.h>
 
 G_BEGIN_DECLS
@@ -46,7 +46,7 @@ GType modest_retrieve_combo_box_get_type (void);
 
 ModestRetrieveComboBox* modest_retrieve_combo_box_new (void);
 
-void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTransportStoreProtocol protocol);
+void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestProtocolType protocol);
 
 ModestAccountRetrieveType modest_retrieve_combo_box_get_active_retrieve_conf (ModestRetrieveComboBox *combobox);
 

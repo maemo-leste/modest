@@ -2065,15 +2065,6 @@ modest_platform_double_connect_and_perform (GtkWindow *parent_window,
 }
 
 GtkWidget *
-modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
-{
-	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
-
-	modest_account_settings_dialog_set_account (dialog, settings);
-	return GTK_WIDGET (dialog);
-}
-
-GtkWidget *
 modest_platform_get_account_settings_wizard (void)
 {
 	ModestEasysetupWizardDialog *dialog = modest_easysetup_wizard_dialog_new ();

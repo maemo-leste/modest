@@ -43,8 +43,9 @@
 
 #include <modest-runtime.h>
 #include <modest-marshal.h>
-#include <modest-protocol-info.h>
+#include <modest-protocol-registry.h>
 #include <modest-local-folder-info.h>
+#include "modest-account-protocol.h"
 #include <modest-tny-account.h>
 #include <modest-tny-local-folders-account.h>
 #include <modest-account-mgr.h>
@@ -53,6 +54,7 @@
 #include <modest-signal-mgr.h>
 #include <modest-debug.h>
 
+#include <modest-defs.h>
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
 #include <tny-gtk-lockable.h>
@@ -130,7 +132,6 @@ typedef struct _ModestTnyAccountStorePrivate ModestTnyAccountStorePrivate;
 struct _ModestTnyAccountStorePrivate {
 	gchar              *cache_dir;	
 	GHashTable         *password_hash;
-	GHashTable         *account_settings_dialog_hash;
 	ModestAccountMgr   *account_mgr;
 	TnySessionCamel    *session;
 	TnyDevice          *device;
@@ -278,11 +279,6 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 	priv->password_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 						     g_free, g_free);
 
-	/* A hash-map of modest account names to dialog pointers,
-	 * so we can avoid showing the account settings twice for the same modest account: */				      
-	priv->account_settings_dialog_hash = g_hash_table_new_full (g_str_hash, g_str_equal, 
-								    g_free, NULL);
-	
 	/* Respond to volume mounts and unmounts, such 
 	 * as the insertion/removal of the memory card: */
 	/* This is a singleton, so it does not need to be unrefed. */
@@ -481,18 +477,6 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 }
 
 static void 
-on_account_settings_hide (GtkWidget *widget, gpointer user_data)
-{
-	/* This is easier than using a struct for the user_data: */
-	ModestTnyAccountStore *self = modest_runtime_get_account_store();
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	
-	gchar *account_name = (gchar *) user_data;
-	if (account_name)
-		g_hash_table_remove (priv->account_settings_dialog_hash, account_name);
-}
-
-static void 
 show_password_warning_only (const gchar *msg)
 {
 	ModestWindow *main_window = 
@@ -506,19 +490,37 @@ show_password_warning_only (const gchar *msg)
 static void 
 show_wrong_password_dialog (TnyAccount *account)
 { 
+<<<<<<< .working
 	/* This is easier than using a struct for the user_data: */
 	ModestTnyAccountStore *self = modest_runtime_get_account_store();
 	GtkWidget *dialog = NULL;
 
+=======
+>>>>>>> .merge-right.r5668
 	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
 		modest_ui_actions_on_smtp_servers (NULL, NULL);
 	} else {
+		ModestAccountProtocol *proto;
+		ModestProtocolType proto_type;
 		const gchar *modest_account_name;
-		modest_account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);	
-		dialog = modest_tny_account_store_show_account_settings_dialog (self, modest_account_name);
+		modest_account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+
+		/* Get proto */
+		proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+								    modest_account_name);
+		proto = (ModestAccountProtocol *)
+			modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
+								       proto_type);
+
+		/* Create and show the dialog */
+		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
+			ModestAccountSettingsDialog *dialog =
+				modest_account_protocol_get_account_settings_dialog (proto, modest_account_name);
+			gtk_widget_show (GTK_WIDGET (dialog));
+		}
 	}
 	/* Show an explanatory temporary banner: */
-	modest_platform_information_banner (dialog, NULL, _("mcen_ib_username_pw_incorrect"));
+	modest_platform_information_banner (NULL, NULL, _("mcen_ib_username_pw_incorrect"));
 }
 
 /* This callback will be called by Tinymail when it needs the password
@@ -600,17 +602,21 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 	/* If it was already asked, it must have been wrong, so ask again */
 	if (already_asked || !pwd || strlen(pwd) == 0) {
+		gboolean settings_have_password;
+		ModestProtocolType protocol_type;
+
 		/* As per the UI spec, if no password was set in the account settings, 
 		 * ask for it now. But if the password is wrong in the account settings, 
 		 * then show a banner and the account settings dialog so it can be corrected:
 		 */
-		ModestTransportStoreProtocol proto;
-		const gboolean settings_have_password = 
+		settings_have_password = 
 			modest_account_mgr_get_server_account_has_password (priv->account_mgr, server_account_name);
 
+		protocol_type = modest_tny_account_get_protocol_type (account);
+
 		/* Show an error and after that ask for a password */
-		proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
-		if (proto == MODEST_PROTOCOL_TRANSPORT_SMTP) {
+		if (modest_protocol_registry_protocol_type_has_tag(modest_runtime_get_protocol_registry (), 
+								   protocol_type, MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS)) {
 			gchar *username = NULL, *msg = NULL;
 			username = modest_account_mgr_get_server_account_username (priv->account_mgr,
 										   server_account_name);
@@ -785,11 +791,6 @@ modest_tny_account_store_finalize (GObject *obj)
 	if (priv->password_hash) {
 		g_hash_table_destroy (priv->password_hash);
 		priv->password_hash = NULL;
-	}
-
-	if (priv->account_settings_dialog_hash) {
-		g_hash_table_destroy (priv->account_settings_dialog_hash);
-		priv->account_settings_dialog_hash = NULL;
 	}
 
 	if (priv->outbox_of_transport) {
@@ -1041,8 +1042,8 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 				gboolean question, 
 				GError *error)
 {
-	ModestTransportStoreProtocol proto =
-		MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; 
+	ModestProtocolType protocol_type = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+	ModestProtocol *protocol;
 	const gchar* server_name = "";
 	gchar *prompt = NULL;
 	gboolean retval = TRUE;
@@ -1053,14 +1054,14 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	/* Get the server name: */
 	if (account) {
 		server_name = tny_account_get_hostname (account);
-		const gchar *proto_name = tny_account_get_proto (account);
-		if (proto_name)
-			proto = modest_protocol_info_get_transport_store_protocol (proto_name);
-		else {
+		protocol_type = modest_tny_account_get_protocol_type (account);
+		if (protocol_type == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID){
 			g_warning("modest: %s: account with id=%s has no proto.\n", __FUNCTION__, 
 				  tny_account_get_id (account));
 			return FALSE;
 		}
+		protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+									  protocol_type);
 	}
 
 	switch (error->code) {
@@ -1076,20 +1077,8 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
 		/* You must be working online for this operation */
 	case TNY_SERVICE_ERROR_CONNECT:
-		switch (proto) {
-		case MODEST_PROTOCOL_STORE_POP:
-			prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"),
-						  server_name);
-			break;
-		case MODEST_PROTOCOL_STORE_IMAP:
-			prompt = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"),
-						  server_name);
-			break;
-		case MODEST_PROTOCOL_TRANSPORT_SMTP:
-			prompt = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"),
-						  server_name);
-			break;
-		default:
+		prompt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_CONNECT_ERROR, server_name);
+		if (!prompt) {
 			g_return_val_if_reached (FALSE);
 		}
 		break;
@@ -1098,20 +1087,8 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		/* It seems that there's no better error to show with
 		 * POP and IMAP because TNY_SERVICE_ERROR_AUTHENTICATE
 		 * may appear if there's a timeout during auth */
-		switch (proto) {
-		case MODEST_PROTOCOL_STORE_POP:
-			prompt = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"),
-						  server_name);
-			break;
-		case MODEST_PROTOCOL_STORE_IMAP:
-			prompt = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"),
-						  server_name);
-			break;
-		case MODEST_PROTOCOL_TRANSPORT_SMTP:
-			prompt = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"),
-						  server_name);
-			break;
-		default:
+		prompt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, server_name);
+		if (!prompt) {
 			g_return_val_if_reached (FALSE);
 		}
 		break;
@@ -2148,49 +2125,6 @@ modest_tny_account_store_get_transport_account_from_outbox_header(ModestTnyAccou
 
 	/* New reference */
 	return header_acc;
-}
-
-GtkWidget *
-modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *self,
-						       const gchar *account_name)
-{
-	ModestTnyAccountStorePrivate *priv;
-	gpointer dialog_as_gpointer = NULL;
-	gboolean found;
-
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-	found = g_hash_table_lookup_extended (priv->account_settings_dialog_hash,
-					      account_name, NULL, (gpointer*)&dialog_as_gpointer);
-
-	if (found) {
-		modest_account_settings_dialog_check_allow_changes ((ModestAccountSettingsDialog *) dialog_as_gpointer);
-		return (GtkWidget *) dialog_as_gpointer;
-	} else {
-		ModestAccountSettings *settings;
-		GtkWidget *dialog;
-		dialog = (GtkWidget *) modest_account_settings_dialog_new ();
-		settings = modest_account_mgr_load_account_settings (priv->account_mgr, account_name);
-		modest_account_settings_dialog_set_account (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog), settings);
-		g_object_unref (settings);
-		modest_account_settings_dialog_switch_to_user_info (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
-		modest_account_settings_dialog_check_allow_changes (MODEST_ACCOUNT_SETTINGS_DIALOG (dialog));
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
-		
-		g_hash_table_insert (priv->account_settings_dialog_hash, g_strdup (account_name), dialog);
-		
-		g_signal_connect (G_OBJECT (dialog), "hide", G_CALLBACK (on_account_settings_hide), 
-				  g_strdup (account_name));
-			
-		/* Show it and delete it when it closes: */
-		g_signal_connect_swapped (dialog, 
-					  "response", 
-					  G_CALLBACK (gtk_widget_destroy), 
-					  dialog);
-		gtk_widget_show (GTK_WIDGET (dialog));
-
-		return dialog;
-	}
-	
 }
 
 typedef struct {

@@ -18,9 +18,25 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmodest-widgets.la
 
-libmodest_widgets_la_SOURCES=          \
-	modest-account-view-window.h   \
+to_remove=\
+	modest-testplugin-easysetup-wizard-page.h \
+	modest-testplugin-account-settings-dialog.h \
+	modest-testplugin-account-settings-widget.h
+
+libmodest_widgets_public_headers = \
 	modest-account-settings-dialog.h \
+	modest-easysetup-wizard-page.h \
+	modest-folder-view.h           \
+	modest-sort-criterium-view.h  \
+	modest-ui-constants.h \
+	modest-validating-entry.h \
+	modest-window.h	
+
+
+libmodest_widgets_la_SOURCES=          \
+	$(libmodest_widgets_public_headers) \
+	modest-account-view-window.h   \
+	modest-account-settings-dialog.c \
 	modest-account-view.c          \
 	modest-account-view.h          \
 	modest-attachment-view.c       \
@@ -29,10 +45,11 @@ libmodest_widgets_la_SOURCES=          \
 	modest-attachments-view.h      \
 	modest-combo-box.c	       \
 	modest-combo-box.h             \
+	modest-default-account-settings-dialog.h \
 	modest-dnd.c                   \
 	modest-dnd.h                   \
+	modest-easysetup-wizard-page.c \
 	modest-folder-view.c           \
-	modest-folder-view.h           \
 	modest-global-settings-dialog.c \
 	modest-global-settings-dialog.h \
 	modest-gtkhtml-mime-part-view.c \
@@ -76,16 +93,19 @@ libmodest_widgets_la_SOURCES=          \
 	modest-scroll-area.c          \
 	modest-scroll-text.c           \
 	modest-scroll-text.h           \
-	modest-serversecurity-combo-box.h modest-serversecurity-combo-box.c \
-	modest-secureauth-combo-box.h modest-secureauth-combo-box.c \
+	modest-security-options-view.h	\
+	modest-security-options-view.c	\
+	modest-serversecurity-combo-box.h \
+	modest-serversecurity-combo-box.c \
+	modest-secureauth-combo-box.h \
+	modest-secureauth-combo-box.c \
+	modest-sort-criterium-view.c   \
 	modest-sort-criterium-view.c   \
 	modest-sort-criterium-view.h   \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
-	modest-ui-constants.h \
-	modest-validating-entry.h modest-validating-entry.c \
+	modest-validating-entry.c \
 	modest-window.c                \
-	modest-window.h	               \
 	modest-window-mgr.h            \
 	modest-window-mgr.c            \
 	modest-wizard-dialog.h         \
@@ -100,6 +120,9 @@ libmodest_widgets_la_SOURCES+=          \
 	modest-mozembed-mime-part-view.cpp \
 	modest-mozembed-mime-part-view.h 	
 endif
+
+libmodest_widgets_la_includedir = $(includedir)/modest-plugin-1.0/widgets/
+libmodest_widgets_la_include_HEADERS = $(libmodest_widgets_public_headers)
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\

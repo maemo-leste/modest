@@ -209,6 +209,16 @@ gboolean modest_tny_account_is_virtual_local_folders (TnyAccount *self);
  **/
 gboolean modest_tny_account_is_memory_card_account (TnyAccount *self);
 
+/**
+ * modest_tny_account_get_protocol_type:
+ * @self: a #TnyAccount
+ *
+ * obtains the transport/store protocol type of @self
+ *
+ * Returns: a #ModestProtocolType
+ */
+ModestProtocolType modest_tny_account_get_protocol_type (TnyAccount *self);
+
 
 G_END_DECLS
 

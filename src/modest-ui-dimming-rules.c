@@ -61,7 +61,6 @@ static gboolean _selected_folder_not_renameable (ModestMainWindow *win);
 static gboolean _selected_folder_not_deletable (ModestMainWindow *win);
 static gboolean _selected_folder_is_any_of_type (ModestWindow *win, TnyFolderType types[], guint ntypes);
 static gboolean _selected_folder_is_root_or_inbox (ModestMainWindow *win);
-static gboolean _selected_folder_is_MMC_or_POP_root (ModestMainWindow *win);
 static gboolean _selected_folder_is_root (ModestMainWindow *win);
 static gboolean _header_view_is_all_selected (ModestMainWindow *win);
 static gboolean _selected_folder_is_empty (ModestMainWindow *win);
@@ -390,11 +389,14 @@ modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data)
 		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
 			dimmed = FALSE;
 		} else {
-			const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
-			if (proto_str != NULL) {
-				/* If it's POP then dim */			
-				dimmed = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-					  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
+			ModestProtocolType protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (parent_folder));
+			if (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
+				ModestProtocolRegistry *protocol_registry;
+
+				protocol_registry = modest_runtime_get_protocol_registry ();
+				/* If account does not support folders (pop) then dim */
+				dimmed = (!modest_protocol_registry_protocol_type_has_tag (protocol_registry, protocol_type,
+											   MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS));
 				if (dimmed)
 					modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_create_error"));
 			}
@@ -505,11 +507,6 @@ modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data)
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
-	}
-	if (!dimmed) {
-		dimmed = _selected_folder_is_MMC_or_POP_root (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mail_in_ui_folder_delete_error"));
 	}
@@ -2051,7 +2048,7 @@ _selected_folder_is_root_or_inbox (ModestMainWindow *win)
 
 	/* Check pop and MMC accounts */
 	if (!result) {
-		result = _selected_folder_is_MMC_or_POP_root (win);
+		result = _selected_folder_is_root (win);
 	}
 		
 	return result;
@@ -2075,6 +2072,7 @@ _selected_folder_is_root (ModestMainWindow *win)
 			modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 		if (folder_store) {
 			is_account = TNY_IS_ACCOUNT (folder_store);
+
 			g_object_unref (folder_store);
 			folder_store = NULL;
 		}
@@ -2089,49 +2087,6 @@ _selected_folder_is_root (ModestMainWindow *win)
 	/* Check folder type */
 	result = _selected_folder_is_any_of_type (MODEST_WINDOW(win), types, 1);
 		
-	/* Check pop and MMC accounts */
-	if (!result) {
-		result = _selected_folder_is_MMC_or_POP_root (win);
-	}
-
-	return result;
-}
-
-static gboolean
-_selected_folder_is_MMC_or_POP_root (ModestMainWindow *win)
-{
-	GtkWidget *folder_view = NULL;
-	TnyFolderStore *parent_folder = NULL;
-	gboolean result = FALSE;
-
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	if (!folder_view)
-		return FALSE;
-
-	/* Get selected folder as parent of new folder to create */
-	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
-	if (!parent_folder)
-		return TRUE;
-	
-	if (TNY_IS_ACCOUNT (parent_folder)) {
-		/* If it's the local account then do not dim */
-		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent_folder))) {
-			result = FALSE;
-		} else {
-				/* If it's the MMC root folder then dim it */
-			if (!strcmp (tny_account_get_id (TNY_ACCOUNT (parent_folder)), MODEST_MMC_ACCOUNT_ID)) {
-					result = TRUE;
-			} else {
-				const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (parent_folder));
-				/* If it's POP then dim */
-				result = (modest_protocol_info_get_transport_store_protocol (proto_str) == 
-						  MODEST_PROTOCOL_STORE_POP) ? TRUE : FALSE;
-			}
-		}
-	}
-	g_object_unref (parent_folder);
-
 	return result;
 }
 
@@ -2657,11 +2612,11 @@ _invalid_folder_for_purge (ModestWindow *win,
 			result = TRUE;
 		}
 	} else {
-		const gchar *proto_str = tny_account_get_proto (TNY_ACCOUNT (account));
-		ModestTransportStoreProtocol proto;
-		proto = modest_protocol_info_get_transport_store_protocol (proto_str);
+		ModestProtocolType protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (account));
 		/* If it's a remote folder then dim */
-		if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP) {
+		if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+								    protocol_type,
+								    MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS)) {
 			result = TRUE;
 		}
 	}

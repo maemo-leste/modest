@@ -2,26 +2,28 @@
 # Makefile.am
 # Time-stamp: <2008-01-06 10:18:49 (djcb)>
 
-SUBDIRS=$(MODEST_PLATFORM) widgets $(dbus_api)
+SUBDIRS= $(MODEST_PLATFORM) widgets $(dbus_api)
 
 DIST_SUBDIRS = widgets gnome maemo dbus_api
 
 INCLUDES=\
-	$(MODEST_GSTUFF_CFLAGS)\
-	$(MODEST_PLATFORM_CFLAGS) \
-	$(MODEST_HILDON_WIDGETS_CFLAGS) \
-	$(MODEST_OGS_CFLAGS) \
-	$(MODEST_HILDON_HELP_CFLAGS) \
-	$(MODEST_LIBCONIC_CFLAGS) \
-	$(MODEST_HILDON_NOTIFY_CFLAGS) \
-	$(MODEST_MOZEMBED_CFLAGS) \
-	-I$(MODEST_PLATFORM) \
-	-DPREFIX=\"@prefix@\" \
-	-DMAEMO_CHANGES \
-	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
-	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
-	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
-	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"
+	$(MODEST_GSTUFF_CFLAGS)					\
+	$(MODEST_PLATFORM_CFLAGS)				\
+	$(MODEST_HILDON_WIDGETS_CFLAGS)				\
+	$(MODEST_OGS_CFLAGS)					\
+	$(MODEST_HILDON_HELP_CFLAGS)				\
+	$(MODEST_LIBCONIC_CFLAGS)				\
+	$(MODEST_HILDON_NOTIFY_CFLAGS)				\
+	$(MODEST_MOZEMBED_CFLAGS)				\
+	-fPIC \
+	-I$(MODEST_PLATFORM)					\
+	-DPREFIX=\"@prefix@\"					\
+	-DMAEMO_CHANGES 					\
+	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\"		\
+	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\"		\
+	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\"		\
+	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"		\
+	-DMODEST_MAILPLUGINDIR=\"$(libdir)/modest/mail-plugins\"
 
 BUILT_SOURCES = modest-marshal.c modest-marshal.h
 
@@ -31,36 +33,57 @@ modest-marshal.c: modest-marshal.list
 modest-marshal.h: modest-marshal.list
 	glib-genmarshal --header --prefix=modest_marshal < modest-marshal.list > modest-marshal.h
 
+noinst_LTLIBRARIES = libmodest.la
+
 bin_PROGRAMS=\
 	modest
+
+to_remove=\
+	modest-testplugin-protocol.c \
+	modest-testplugin-protocol.h
 
 #
 # NOTE: $(addressbook) will be modest-addressbook-dummy.c
 # if no real addressbook has been defined (configure.ac)
 #
-modest_SOURCES=\
-	modest-account-mgr-helpers.c \
+
+modest_public_headers = \
+	modest-account-mgr.h \
 	modest-account-mgr-helpers.h \
+	modest-account-protocol.h \
+	modest-account-settings.h \
+	modest-cache-mgr.h \
+	modest-conf.h \
+	modest-pair.h \
+	modest-platform.h \
+	modest-plugin.h \
+	modest-protocol.h \
+	modest-protocol-registry.h \
+	modest-server-account-settings.h \
+	modest-tny-account-store.h \
+	modest-tny-local-folders-account.h \
+	modest-utils.h
+
+libmodest_la_SOURCES=\
+	$(modest_public_headers) \
+	modest-account-mgr-helpers.c \
 	modest-account-mgr-priv.h \
 	modest-account-mgr.c \
-	modest-account-mgr.h \
+	modest-account-protocol.c \
 	modest-account-settings.c \
-	modest-account-settings.h \
 	modest-address-book.h \
 	modest-cache-mgr.c \
-	modest-cache-mgr.h \
 	modest-conf.c \
-	modest-conf.h \
 	modest-count-stream.c \
 	modest-count-stream.h \
-	modest-defs.h \
 	modest-debug.h \
+	modest-defs.h \
 	modest-dimming-rule.c \
 	modest-dimming-rule.h \
 	modest-dimming-rules-group.c \
 	modest-dimming-rules-group.h \
-	modest-email-clipboard.c \
 	modest-email-clipboard.h \
+	modest-email-clipboard.c \
 	modest-error.h \
 	modest-formatter.c \
 	modest-formatter.h \
@@ -75,14 +98,16 @@ modest_SOURCES=\
 	modest-main.c \
 	modest-marshal.c \
 	modest-marshal.h \
+	modest-module.c \
+	modest-module.h \
 	modest-pair.c \
-	modest-pair.h \
-	modest-platform.h \
-	modest-platform.h \
+	modest-plugin.c \
+	modest-plugin-factory.c \
+	modest-plugin-factory.h \
 	modest-progress-object.c \
 	modest-progress-object.h \
-	modest-protocol-info.c \
-	modest-protocol-info.h \
+	modest-protocol.c \
+	modest-protocol-registry.c \
 	modest-runtime-priv.h \
 	modest-runtime.c \
 	modest-runtime.h \
@@ -93,17 +118,14 @@ modest_SOURCES=\
 	modest-singletons.c \
 	modest-singletons.h \
 	modest-server-account-settings.c \
-	modest-server-account-settings.h \
 	modest-text-utils.c \
 	modest-text-utils.h \
 	modest-tny-account-store.c \
-	modest-tny-account-store.h \
 	modest-tny-account.c \
 	modest-tny-account.h \
 	modest-tny-folder.c \
 	modest-tny-folder.h \
 	modest-tny-local-folders-account.c \
-	modest-tny-local-folders-account.h \
 	modest-tny-mime-part.c \
 	modest-tny-mime-part.h \
 	modest-tny-msg.c \
@@ -125,7 +147,6 @@ modest_SOURCES=\
 	modest-ui-dimming-rules.c \
 	modest-ui-dimming-rules.h \
 	modest-utils.c \
-	modest-utils.h \
 	modest-widget-memory-priv.h \
 	modest-widget-memory.c \
 	modest-widget-memory.h \
@@ -133,16 +154,40 @@ modest_SOURCES=\
 	modest-default-connection-policy.h 
 
 if MODEST_USE_DUMMY_ADDRESS_BOOK
-modest_SOURCES += modest-address-book-dummy.c
+libmodest_la_SOURCES += modest-address-book-dummy.c
 endif 
 
 
-modest_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
-modest_LDFLAGS = -Wl,--version-script=export.map
+libmodest_la_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
+libmodest_la_LIBADD = 						\
+	$(MAEMO_LAUNCHER_LIBS) 				\
+	$(MODEST_GSTUFF_LIBS) 				\
+	$(MODEST_MOZEMBED_LIBS) 			\
+	$(MODEST_PLATFORM_LIBS)	                        \
+	$(MODEST_HILDON_WIDGETS_LIBS)			\
+	$(MODEST_HILDON_HELP_LIBS)			\
+	$(MODEST_HILDON_NOTIFY_LIBS)			\
+	$(MODEST_OGS_LIBS)				\
+	${easysetupmaybe} \
+	widgets/libmodest-widgets.la                    \
+	$(MODEST_PLATFORM)/libmodest-ui.la		
+libmodest_la_LDFLAGS = -rdynamic -export-dynamic -no-undefined -Wl,--version-script=export.map
 
-modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
-modest_LDADD = 						\
-	$(filter-out $(modest_UNWANTED),		\
+if MODEST_HAVE_DBUS_API
+libmodest_la_LIBADD +=	dbus_api/libmodest-dbus-api.la
+endif
+
+
+modest_includedir = $(includedir)/modest-plugin-1.0/
+modest_include_HEADERS = $(modest_public_headers)
+
+modest_SOURCES = modest-main.c
+
+modest_DEPENDENCIES = \
+	libmodest.la
+
+modest_CFLAGS = $(MAEMO_LAUNCHER_CFLAGS)
+modest_LDADD = \
 	$(MAEMO_LAUNCHER_LIBS) 				\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
@@ -152,12 +197,16 @@ modest_LDADD = 						\
 	$(MODEST_HILDON_NOTIFY_LIBS)			\
 	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe}				\
-	$(MODEST_PLATFORM)/libmodest-ui.la		\
-	widgets/libmodest-widgets.la)
+	libmodest.la
 
+modest_LDFLAGS = -rdynamic -export-dynamic -no-undefined -Wl,--version-script=export.map
 
-if MODEST_HAVE_DBUS_API
-modest_LDADD +=	dbus_api/libmodest-dbus-api.la
-endif
+# modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
+
 
 EXTRA_DIST=modest-marshal.list
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = modest-plugin-1.0.pc
+
+DISTCLEANFILES = $(pkgconfig_DATA)

@@ -86,7 +86,7 @@ enum MODEL_COLS {
 	MODEL_COL_RETRIEVE_TYPE = 1 /* a gint (a ModestAccountRetrieveType) */
 };
 
-void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTransportStoreProtocol protocol);
+void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestProtocolType protocol);
 
 static void
 modest_retrieve_combo_box_init (ModestRetrieveComboBox *self)
@@ -125,7 +125,7 @@ modest_retrieve_combo_box_new (void)
  * #combobox: The combo box.
  * @protocol: IMAP or POP.
  */
-void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestTransportStoreProtocol protocol)
+void modest_retrieve_combo_box_fill (ModestRetrieveComboBox *combobox, ModestProtocolType protocol)
 {	
 	ModestRetrieveComboBoxPrivate *priv = RETRIEVE_COMBO_BOX_GET_PRIVATE (combobox);
 	

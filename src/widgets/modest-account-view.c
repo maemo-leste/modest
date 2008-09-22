@@ -229,10 +229,15 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 			const gchar *last_updated_string = get_last_updated_string(account_mgr, settings);
 			
 			if (modest_account_settings_get_enabled (settings)) {
+				ModestProtocolType protocol_type;
+				ModestProtocolRegistry *protocol_registry;
+				ModestProtocol *protocol;
 				const gchar *proto_name;
 
-				proto_name = modest_protocol_info_get_transport_store_protocol_name 
-					(modest_server_account_settings_get_protocol (store_settings));
+				protocol_registry = modest_runtime_get_protocol_registry ();
+				protocol_type = modest_server_account_settings_get_protocol (store_settings);
+				protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
+				proto_name = modest_protocol_get_name (protocol);
 				gtk_list_store_insert_with_values (
 					model, &iter, 0,
 					MODEST_ACCOUNT_VIEW_NAME_COLUMN, account_name,

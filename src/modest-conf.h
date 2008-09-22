@@ -31,7 +31,6 @@
 #define __MODEST_CONF_H__
 
 #include <glib-object.h>
-#include "modest-defs.h"
 
 G_BEGIN_DECLS
 

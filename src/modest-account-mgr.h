@@ -33,8 +33,7 @@
 
 #include <glib-object.h>
 #include <modest-conf.h>
-#include <modest-defs.h>
-#include <modest-protocol-info.h>
+#include <modest-protocol-registry.h>
 #include <modest-account-settings.h>
 
 G_BEGIN_DECLS
@@ -164,9 +163,9 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
 						   const guint portnumber,
 						   const gchar *username,
 						   const gchar *password,
-						   ModestTransportStoreProtocol proto,
-						   ModestConnectionProtocol security,
-						   ModestAuthProtocol auth);
+						   ModestProtocolType proto,
+						   ModestProtocolType security,
+						   ModestProtocolType auth);
 
 
 /**
@@ -182,7 +181,7 @@ gboolean modest_account_mgr_add_server_account    (ModestAccountMgr *self,
  */
 gboolean modest_account_mgr_add_server_account_uri    (ModestAccountMgr *self,
 						       const gchar *name,
-						       ModestTransportStoreProtocol proto,
+						       ModestProtocolType proto,
 						       const gchar* uri);
 
 /**

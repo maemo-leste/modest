@@ -34,8 +34,7 @@
 #define __MODEST_SERVER_ACCOUNT_SETTINGS_H__
 
 #include <glib-object.h>
-#include <modest-defs.h>
-#include <modest-protocol-info.h>
+#include <modest-protocol.h>
 
 G_BEGIN_DECLS
 
@@ -101,19 +100,19 @@ void         modest_server_account_settings_set_hostname (ModestServerAccountSet
  *
  * get the server protocol.
  *
- * Returns: a #ModestTransportStoreProtocol
+ * Returns: a #ModestProtocolType
  */
-ModestTransportStoreProtocol  modest_server_account_settings_get_protocol (ModestServerAccountSettings *settings);
+ModestProtocolType modest_server_account_settings_get_protocol (ModestServerAccountSettings *settings);
 
 /**
  * modest_server_account_settings_set_protocol:
  * @settings: a #ModestServerAccountSettings
- * @protocol: a #ModestTransportStoreProtocol.
+ * @protocol: a #ModestProtocolType
  *
  * set @server_type.
  */
 void                          modest_server_account_settings_set_protocol (ModestServerAccountSettings *settings,
-									   ModestTransportStoreProtocol protocol);
+									   ModestProtocolType protocol_type);
 
 
 /**
@@ -131,7 +130,7 @@ const gchar *modest_server_account_settings_get_uri (ModestServerAccountSettings
  * @settings: a #ModestServerAccountSettings
  * @uri: a string
  *
- * set @uri. When you set an @uri, then the protocol is set to %NULL. This is used for setting maildir or mbox
+ * set @uri. When you set an @uri, then the protocol is set to %MODEST_PROTOCOL_REGISTRY_TYPE_INVALID. This is used for setting maildir or mbox
  * accounts.
  */
 void   modest_server_account_settings_set_uri (ModestServerAccountSettings *settings,
@@ -199,24 +198,24 @@ void   modest_server_account_settings_set_password (ModestServerAccountSettings 
 
 
 /**
- * modest_server_account_settings_get_security:
+ * modest_server_account_settings_get_security_protocol:
  * @settings: a #ModestServerAccountSettings
  *
  * get the secure connection type, if any.
  *
- * Returns: a #ModestConnectionProtocol
+ * Returns: a #ModestProtocolType
  */
-ModestConnectionProtocol modest_server_account_settings_get_security (ModestServerAccountSettings *settings);
+ModestProtocolType modest_server_account_settings_get_security_protocol (ModestServerAccountSettings *settings);
 
 /**
- * modest_server_account_settings_set_security:
+ * modest_server_account_settings_set_security_protocol:
  * @settings: a #ModestServerAccountSettings
- * @security: a #ModestConnectionProtocol
+ * @security: a #ModestProtocolType
  *
  * set the current security connection protocol to @security.
  */
-void   modest_server_account_settings_set_security (ModestServerAccountSettings *settings,
-						    ModestConnectionProtocol security);
+void   modest_server_account_settings_set_security_protocol (ModestServerAccountSettings *settings,
+							     ModestProtocolType security_protocol);
 
 
 /**
@@ -225,19 +224,19 @@ void   modest_server_account_settings_set_security (ModestServerAccountSettings 
  *
  * get the authentication protocol
  *
- * Returns: a #ModestAuthProtocol
+ * Returns: a #ModestProtocolType
  */
-ModestAuthProtocol modest_server_account_settings_get_auth_protocol (ModestServerAccountSettings *settings);
+ModestProtocolType modest_server_account_settings_get_auth_protocol (ModestServerAccountSettings *settings);
 
 /**
  * modest_server_account_settings_set_auth_protocol:
  * @settings: a #ModestServerAccountSettings
- * @auth_protocol: a #ModestAuthProtocol
+ * @auth_protocol: a #ModestProtocolType
  *
  * set the current authentication protocol to @auth_protocol.
  */
 void   modest_server_account_settings_set_auth_protocol (ModestServerAccountSettings *settings,
-							 ModestAuthProtocol auth_protocol);
+							 ModestProtocolType auth_protocol);
 
 /**
  * modest_server_account_settings_get_account_name:

@@ -57,6 +57,21 @@ G_BEGIN_DECLS
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
 	EASYSETUP_TYPE_PROVIDER_COMBO_BOX, EasysetupProviderComboBoxClass))
 
+/** The thype of the ID
+ *
+ * this means the value of returned by get_active_provider_id will be
+ * different depending on the value returned by get_active_id_type
+ *
+ * If the selected option is a provider then the ID will be the provider ID
+ * If the selected option is "Other..." the the ID will be 0
+ * If the selected option is a provider protocol () the the ID will be protocol name
+ **/
+typedef enum {
+	EASYSETUP_PROVIDER_COMBO_BOX_ID_PROVIDER,
+	EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER,
+	EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL
+} EasysetupProviderComboBoxIdType;
+
 typedef struct {
 	GtkComboBox parent;
 } EasysetupProviderComboBox;
@@ -73,6 +88,8 @@ void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, Mod
 					gint mcc);
 
 gchar* easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *combobox);
+
+EasysetupProviderComboBoxIdType easysetup_provider_combo_box_get_active_id_type (EasysetupProviderComboBox *combobox);
 
 G_END_DECLS
 

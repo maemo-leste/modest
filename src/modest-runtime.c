@@ -278,6 +278,20 @@ modest_runtime_get_window_mgr (void)
 	return modest_singletons_get_window_mgr (_singletons);
 }
 
+ModestPluginFactory *
+modest_runtime_get_plugin_factory (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_plugin_factory (_singletons);
+}
+
+ModestProtocolRegistry *
+modest_runtime_get_protocol_registry (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_protocol_registry (_singletons);
+}
+
 /* http://primates.ximian.com/~federico/news-2006-04.html#memory-debugging-infrastructure*/
 ModestRuntimeDebugFlags
 modest_runtime_get_debug_flags ()

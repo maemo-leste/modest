@@ -1,0 +1,399 @@
+/* Copyright (c) 2008, Nokia Corporation
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * * Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+ * * Neither the name of the Nokia Corporation nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <string.h>
+#include <gtk/gtkvbox.h>
+#include "modest-utils.h"
+#include "modest-runtime.h"
+#include "modest-platform.h"
+#include "modest-security-options-view.h"
+#include "modest-security-options-view-priv.h"
+#include "widgets/modest-serversecurity-combo-box.h"
+#include "widgets/modest-secureauth-combo-box.h"
+
+/* list my signals */
+enum {
+	MISSING_MANDATORY_DATA_SIGNAL,
+	LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = {0};
+
+void 
+modest_security_options_view_load_settings (ModestSecurityOptionsView* self, 
+					    ModestAccountSettings *settings)
+{
+	ModestSecurityOptionsViewPrivate *priv;
+	ModestServerAccountSettings *server_settings;
+	ModestProtocolType server_proto, secure_protocol, secure_auth;
+	ModestServersecurityComboBox *combo;
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+
+	/* Save initial settings */
+	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING)
+		server_settings = modest_account_settings_get_store_settings (settings);
+	else
+		server_settings = modest_account_settings_get_transport_settings (settings);
+
+	server_proto = modest_server_account_settings_get_protocol (server_settings);
+	secure_protocol = modest_server_account_settings_get_security_protocol (server_settings);
+	secure_auth = modest_server_account_settings_get_auth_protocol (server_settings);
+
+	priv->initial_state.security = secure_protocol;
+	priv->initial_state.auth = secure_auth;
+	priv->initial_state.port = modest_server_account_settings_get_port (server_settings);
+
+	/* Update UI */
+	combo = MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view);
+	modest_security_options_view_set_server_type (self, server_proto);
+	modest_serversecurity_combo_box_set_active_serversecurity (combo, secure_protocol);
+
+/* 		update_incoming_server_title (dialog, dialog->incoming_protocol); */
+
+	/* Username and password */
+	if (priv->full && self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
+		priv->initial_state.user = 
+			modest_server_account_settings_get_username (server_settings);
+		priv->initial_state.pwd = 
+			modest_server_account_settings_get_password (server_settings);
+
+		if (priv->initial_state.user)
+			gtk_entry_set_text(GTK_ENTRY (priv->user_entry), 
+					   priv->initial_state.user);
+		if (priv->initial_state.pwd)
+			gtk_entry_set_text(GTK_ENTRY (priv->pwd_entry), 
+					   priv->initial_state.pwd);
+	}
+
+	/* Set auth */
+	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) {
+		/* Active the authentication checkbox */
+		if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (), 
+								      secure_auth))
+			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auth_view),
+						      TRUE);
+	} else {
+		modest_secureauth_combo_box_set_active_secureauth (
+		   MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view), secure_auth);
+	}
+
+	MODEST_SECURITY_OPTIONS_VIEW_GET_CLASS (self)->load_settings (self, settings);
+
+	/* Free */
+	g_object_unref (server_settings);
+}
+
+void 
+modest_security_options_view_save_settings (ModestSecurityOptionsView* self, 
+					    ModestAccountSettings *settings)
+{
+	ModestServerAccountSettings *server_settings;
+	ModestProtocolType security_proto, auth_protocol;
+ 	ModestSecurityOptionsViewPrivate *priv;
+	ModestProtocolRegistry *proto_registry;
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+	proto_registry = modest_runtime_get_protocol_registry ();
+
+	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING)
+		server_settings = modest_account_settings_get_store_settings (settings);
+	else
+		server_settings = modest_account_settings_get_transport_settings (settings);
+
+	/* initialize */
+	security_proto = MODEST_PROTOCOLS_CONNECTION_NONE;
+	auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
+
+	/* Get data */
+	security_proto = modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+
+	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) {
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view))) {
+			if (!modest_protocol_registry_protocol_type_is_secure (proto_registry,
+									       security_proto)) {
+				/* TODO */
+				/* 		auth_protocol = check_first_supported_auth_method (self); */
+				auth_protocol = MODEST_PROTOCOLS_AUTH_PASSWORD;
+			} else {
+				auth_protocol = MODEST_PROTOCOLS_AUTH_PASSWORD;
+			}
+		}
+	} else {
+		auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
+			   MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+	}
+
+	/* Save settings */
+	modest_server_account_settings_set_security_protocol (server_settings, 
+							      security_proto);
+	modest_server_account_settings_set_auth_protocol (server_settings, 
+							  auth_protocol);
+
+	if (priv->full && self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
+		const gchar *username, *password;
+
+		username = gtk_entry_get_text (GTK_ENTRY (priv->user_entry));
+		password = gtk_entry_get_text (GTK_ENTRY (priv->pwd_entry));
+
+		modest_server_account_settings_set_username (server_settings, username);
+		modest_server_account_settings_set_password (server_settings, password);
+	}
+
+	MODEST_SECURITY_OPTIONS_VIEW_GET_CLASS (self)->save_settings (self, settings);
+
+
+	/* Free */
+	g_object_unref (server_settings);
+}
+
+void 
+modest_security_options_view_set_server_type (ModestSecurityOptionsView* self, 
+					      ModestProtocolType server_type)
+{
+ 	ModestSecurityOptionsViewPrivate *priv;
+	ModestServersecurityComboBox *combo;
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+	combo = MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view);
+		
+	modest_serversecurity_combo_box_fill (combo, server_type);
+	modest_serversecurity_combo_box_set_active_serversecurity (combo,
+								   MODEST_PROTOCOLS_CONNECTION_NONE);
+}
+
+static void
+get_current_state (ModestSecurityOptionsView* self,
+		   ModestSecurityOptionsState *state)
+{
+	ModestSecurityOptionsViewPrivate *priv;
+	ModestProtocolRegistry *proto_registry;
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+	proto_registry = modest_runtime_get_protocol_registry ();
+
+	/* Get security */
+	state->security = 
+		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+
+	/* Get auth */
+	if (self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
+		state->auth = modest_secureauth_combo_box_get_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+		if (priv->full) {
+		}
+	} else {
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view)))
+			state->auth = priv->initial_state.auth;
+		else
+			state->auth = MODEST_PROTOCOLS_AUTH_NONE;
+	}
+}
+
+gboolean 
+modest_security_options_view_changed (ModestSecurityOptionsView* self,
+				      ModestAccountSettings *settings)
+{
+	ModestSecurityOptionsViewPrivate *priv;
+	ModestSecurityOptionsState state = {0};
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+
+	get_current_state (self, &state);
+
+	if (state.security != priv->initial_state.security ||
+	    state.auth != priv->initial_state.auth)
+		return TRUE;
+
+	if (priv->full && self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
+		const gchar *username, *password;
+
+		username = gtk_entry_get_text (GTK_ENTRY (priv->user_entry));
+		password = gtk_entry_get_text (GTK_ENTRY (priv->pwd_entry));
+
+		if (!priv->initial_state.user && strcmp (username, ""))
+			return TRUE;
+		if (!priv->initial_state.pwd && strcmp (password, ""))
+			return TRUE;
+
+		if ((priv->initial_state.user && 
+		     strcmp (priv->initial_state.user, username)) ||
+		    (priv->initial_state.pwd &&
+		     strcmp (priv->initial_state.pwd, password)))
+			return TRUE;
+	}
+
+	/* Check subclass */
+	return 	MODEST_SECURITY_OPTIONS_VIEW_GET_CLASS (self)->changed (self, settings);
+}
+
+void 
+modest_security_options_view_enable_changes (ModestSecurityOptionsView* self,
+					     gboolean enable)
+{
+	ModestSecurityOptionsViewPrivate *priv;
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+	gtk_widget_set_sensitive (priv->port_view, enable);
+	gtk_widget_set_sensitive (priv->security_view, enable);
+}
+
+gboolean 
+modest_security_options_view_auth_check (ModestSecurityOptionsView* self)
+{
+	ModestSecurityOptionsViewPrivate *priv;
+	ModestProtocolType security_incoming_type; 
+	gboolean auth_active, is_secure;
+	ModestProtocolRegistry *protocol_registry;
+
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+	protocol_registry = modest_runtime_get_protocol_registry ();
+
+	/* Check if the server supports secure authentication */
+	security_incoming_type = 
+		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+
+	auth_active = 
+		gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view));
+	is_secure = 
+		modest_protocol_registry_protocol_type_has_tag (protocol_registry, 
+								security_incoming_type, 
+								MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS);
+
+	if (auth_active && !is_secure)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+GList* 
+modest_security_options_view_get_supported_auth_methods (ModestSecurityOptionsView *self,
+							 const gchar *hostname,
+							 const gchar *username,
+							 ModestProtocolType server_type)
+{
+	GtkWindow *window;
+	GError *error = NULL;
+	GList *list_auth_methods, *retval = NULL;
+	ModestSecurityOptionsViewPrivate *priv;
+	ModestAccountSettings current_settings;
+	ModestServerAccountSettings *server_settings;
+	
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+
+	window = GTK_WINDOW (gtk_widget_get_ancestor (GTK_WIDGET (self), GTK_TYPE_WINDOW));
+
+	/* Get current settings */
+	modest_security_options_view_save_settings (self, &current_settings);
+
+	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING)
+		server_settings = modest_account_settings_get_store_settings (&current_settings);
+	else
+		server_settings = modest_account_settings_get_transport_settings (&current_settings);
+
+	list_auth_methods =
+		modest_utils_get_supported_secure_authentication_methods (server_type,
+									  hostname,
+									  modest_server_account_settings_get_port (server_settings),
+									  username,
+									  window,
+									  &error);
+
+	if (list_auth_methods) {
+		GList *list = NULL, *method = NULL;
+		ModestProtocolRegistry *registry = modest_runtime_get_protocol_registry ();
+
+		for (method = list_auth_methods; method != NULL; method = g_list_next(method)) {
+			ModestProtocolType auth_protocol_type = 
+				(ModestProtocolType) (GPOINTER_TO_INT(method->data));
+			if (modest_protocol_registry_protocol_type_is_secure (registry, 
+									      auth_protocol_type)) {
+				list = g_list_append(list, GINT_TO_POINTER(auth_protocol_type));
+			}
+		}
+		g_list_free(list_auth_methods);
+		if (list) {
+			retval = list;
+			goto end;
+		}
+	}
+
+	if(error == NULL || 
+	   error->domain != modest_utils_get_supported_secure_authentication_error_quark() ||
+	   error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED) {
+		modest_platform_information_banner (GTK_WIDGET(self),
+						    NULL,
+						    _("mcen_ib_unableto_discover_auth_methods"));
+	}
+
+	if(error != NULL)
+		g_error_free(error);
+
+ end:
+	/* Frees */
+	g_object_unref (server_settings);
+
+	return retval;
+}
+
+static void 
+modest_security_options_view_init (ModestSecurityOptionsView *self) 
+{
+	ModestSecurityOptionsViewPrivate *priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+
+	memset (&(priv->initial_state), 0, sizeof (ModestSecurityOptionsState));
+
+	priv->security_view = NULL;
+	priv->port_view = NULL;
+	priv->auth_view = NULL;
+	priv->user_entry = NULL;
+	priv->pwd_entry = NULL;
+}
+
+static void 
+modest_security_options_view_class_init (ModestSecurityOptionsViewClass *klass) 
+{
+	GObjectClass *gobject_class = (GObjectClass*) klass;
+
+	g_type_class_add_private (gobject_class, sizeof (ModestSecurityOptionsViewPrivate));
+
+	/* Register signals */
+	signals[MISSING_MANDATORY_DATA_SIGNAL] =
+		g_signal_new ("missing_mandatory_data",
+			      MODEST_TYPE_SECURITY_OPTIONS_VIEW,
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET(ModestSecurityOptionsViewClass, missing_mandatory_data),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__BOOLEAN,
+			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+}
+
+/* Type definition */
+G_DEFINE_ABSTRACT_TYPE (ModestSecurityOptionsView, 
+			modest_security_options_view,
+			GTK_TYPE_VBOX);

@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-runtime.h>
 #include "modest-easysetup-servertype-combo-box.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
@@ -109,9 +110,6 @@ enum MODEL_COLS {
 };
 
 static void
-easysetup_servertype_combo_box_fill (EasysetupServertypeComboBox *combobox);
-
-static void
 easysetup_servertype_combo_box_init (EasysetupServertypeComboBox *self)
 {
 	EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (self);
@@ -132,53 +130,90 @@ easysetup_servertype_combo_box_init (EasysetupServertypeComboBox *self)
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (combobox), renderer, TRUE);
 	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
 	"text", MODEL_COL_NAME, NULL);
+}
+
+static void 
+easysetup_servertype_combo_box_fill (EasysetupServertypeComboBox *combobox,
+				     gboolean filter_providers)
+{	
+	EasysetupServertypeComboBoxPrivate *priv;
+	GtkListStore *liststore;
+	ModestProtocolRegistry *protocol_registry;
+	GSList *remote_protocols, *node;
+	GtkTreeIter iter;
 	
-	easysetup_servertype_combo_box_fill (self);
+	/* Remove any existing rows: */
+	priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	remote_protocols = modest_protocol_registry_get_by_tag (protocol_registry, MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS);
+
+	liststore = GTK_LIST_STORE (priv->model);
+	gtk_list_store_clear (liststore);
+
+	for (node = remote_protocols; node != NULL; node = g_slist_next (node)) {
+		ModestProtocol* protocol;
+		gboolean add = TRUE;
+
+		protocol = (ModestProtocol *) node->data;
+
+		/* Do not include the protocols that would be listed
+		   in the providers combo */
+		if (filter_providers)
+			if (modest_protocol_registry_protocol_type_is_provider (protocol_registry,
+										modest_protocol_get_type_id (protocol))) {
+				add = FALSE;
+			}
+		
+		if (add) {
+			gtk_list_store_append (liststore, &iter);
+			gtk_list_store_set (liststore, &iter, 
+					    MODEL_COL_ID, 
+					    modest_protocol_get_type_id (protocol),
+					    MODEL_COL_NAME, 
+					    modest_protocol_get_display_name (protocol),
+					    -1);
+		}
+	}
+	
+	g_slist_free (remote_protocols);
 }
 
 EasysetupServertypeComboBox*
-easysetup_servertype_combo_box_new (void)
+easysetup_servertype_combo_box_new (gboolean filter_providers)
 {
-	return g_object_new (EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, NULL);
-}
+	EasysetupServertypeComboBox *combo;
 
-void easysetup_servertype_combo_box_fill (EasysetupServertypeComboBox *combobox)
-{	
-	EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
-	
-	/* Remove any existing rows: */
-	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
-	gtk_list_store_clear (liststore);
-	
-	GtkTreeIter iter;
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_STORE_POP, MODEL_COL_NAME, _("mail_fi_emailtype_pop3"), -1);
-	
-	/* Select the POP item: */
-	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
-	
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_STORE_IMAP, MODEL_COL_NAME, _("mail_fi_emailtype_imap"), -1);
+	combo = g_object_new (EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, NULL);
+
+	/* Fill the combo */	
+	easysetup_servertype_combo_box_fill (combo, filter_providers);
+
+	return combo;
 }
 
 /**
  * Returns the selected servertype, 
- * or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN if no servertype was selected.
+ * or MODEST_PROTOCOL_REGISTRY_TYPE_INVALID if no servertype was selected.
  */
-ModestTransportStoreProtocol
+ModestProtocolType
 easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox)
 {
 	GtkTreeIter active;
-	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
-	if (found) {
-		EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+	gboolean found;
 
-		ModestTransportStoreProtocol servertype = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
+	if (found) {
+		EasysetupServertypeComboBoxPrivate *priv;
+		ModestProtocolType servertype;
+
+		priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+
+		servertype = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &servertype, -1);
 		return servertype;	
 	}
 
-	return MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN; /* Failed. */
+	return MODEST_PROTOCOL_REGISTRY_TYPE_INVALID; /* Failed. */
 }
 
 /* This allows us to pass more than one piece of data to the signal handler,
@@ -186,7 +221,7 @@ easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBo
 typedef struct 
 {
 		EasysetupServertypeComboBox* self;
-		gint id;
+		ModestProtocolType id;
 		gboolean found;
 } ForEachData;
 
@@ -194,10 +229,10 @@ static gboolean
 on_model_foreach_select_id(GtkTreeModel *model, 
 	GtkTreePath *path, GtkTreeIter *iter, gpointer user_data)
 {
+	ModestProtocolType id = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	ForEachData *state = (ForEachData*)(user_data);
 	
 	/* Select the item if it has the matching ID: */
-	guint id = 0;
 	gtk_tree_model_get (model, iter, MODEL_COL_ID, &id, -1); 
 	if(id == state->id) {
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (state->self), iter);
@@ -214,12 +249,16 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN if no servertype was selected.
  */
 gboolean
-easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestTransportStoreProtocol servertype)
+easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestProtocolType servertype)
 {
-	EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+	EasysetupServertypeComboBoxPrivate *priv;
+	ForEachData *state;
+	gboolean result;
 	
+	priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+
 	/* Create a state instance so we can send two items of data to the signal handler: */
-	ForEachData *state = g_new0 (ForEachData, 1);
+	state = g_new0 (ForEachData, 1);
 	state->self = combobox;
 	state->id = servertype;
 	state->found = FALSE;
@@ -227,7 +266,7 @@ easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBo
 	/* Look at each item, and select the one with the correct ID: */
 	gtk_tree_model_foreach (priv->model, &on_model_foreach_select_id, state);
 
-	const gboolean result = state->found;
+	result = state->found;
 	
 	/* Free the state instance: */
 	g_free(state);

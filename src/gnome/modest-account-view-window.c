@@ -268,17 +268,33 @@ check_for_active_account (ModestAccountViewWindow *self, const gchar* account_na
 static void
 on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
-  	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (self);
+	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (self);
 	
 	gchar* account_name = modest_account_view_get_selected_account (priv->account_view);
 	if (!account_name)
 		return;
 		
+	/* Check whether any connections are active, and cancel them if 
+	 * the user wishes.
+	 */
 	if (check_for_active_account (self, account_name)) {
-		modest_tny_account_store_show_account_settings_dialog (modest_runtime_get_account_store (), account_name);
-		
+		ModestAccountProtocol *proto;
+		ModestProtocolType proto_type;
+
+		/* Get proto */
+		proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+								    account_name);
+		proto = (ModestAccountProtocol *)
+			modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
+								       proto_type);
+
+		/* Create and show the dialog */
+		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
+			ModestAccountSettingsDialog *dialog =
+				modest_account_protocol_get_account_settings_dialog (proto, account_name);
+			gtk_widget_show (GTK_WIDGET (dialog));
+		}
 	}
-	
 	g_free (account_name);
 }
 

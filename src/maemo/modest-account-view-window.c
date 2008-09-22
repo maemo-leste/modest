@@ -35,6 +35,7 @@
 
 #include <modest-runtime.h>
 #include "modest-platform.h"
+#include "modest-account-protocol.h"
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
 #include "modest-tny-platform-factory.h"
@@ -251,13 +252,13 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		/* The warning text depends on the account type: */
 		gchar *txt = NULL;	
 		gint response;
-		
-		if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
-		    == MODEST_PROTOCOL_STORE_POP) {
-				txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
-						       account_title);
-		} else {
-			txt = g_strdup_printf (_("emev_nc_delete_mailboximap"), 
+		ModestProtocol *protocol;
+
+		protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+									  modest_account_mgr_get_store_protocol (account_mgr, account_name));
+		txt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_DELETE_MAILBOX, account_title);
+		if (txt == NULL) {
+			txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
 					       account_title);
 		}
 		
@@ -328,14 +329,23 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	 * the user wishes.
 	 */
 	if (check_for_active_account (self, account_name)) {
-		GtkWidget *dialog = modest_tny_account_store_show_account_settings_dialog (modest_runtime_get_account_store (), account_name);
-		
-		/* When the dialog is closed, reconnect */
-		g_signal_connect (dialog, "response", 
-				  G_CALLBACK (on_account_settings_dialog_response), 
-				  self);
+		ModestAccountProtocol *proto;
+		ModestProtocolType proto_type;
+
+		/* Get proto */
+		proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+								    account_name);
+		proto = (ModestAccountProtocol *)
+			modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
+								       proto_type);
+
+		/* Create and show the dialog */
+		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
+			ModestAccountSettingsDialog *dialog =
+				modest_account_protocol_get_account_settings_dialog (proto, account_name);
+			gtk_widget_show (GTK_WIDGET (dialog));
+		}
 	}
-	
 	g_free (account_name);
 }
 
@@ -389,7 +399,6 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 			  (on_wizard_response), self);
 	gtk_widget_show (GTK_WIDGET (wizard));
 }
-
 
 static void
 on_close_button_clicked (GtkWidget *button, gpointer user_data)

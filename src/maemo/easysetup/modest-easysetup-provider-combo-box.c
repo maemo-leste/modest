@@ -33,6 +33,8 @@
 #include <gtk/gtkcellrenderertext.h>
 #include <glib/gi18n.h>
 #include <modest-text-utils.h>
+#include "modest-protocol-registry.h"
+#include "modest-runtime.h"
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
@@ -105,8 +107,9 @@ easysetup_provider_combo_box_class_init (EasysetupProviderComboBoxClass *klass)
 }
 
 enum MODEL_COLS {
-	MODEL_COL_NAME = 0,
-	MODEL_COL_ID   = 1 /* a string, not an int. */
+	MODEL_COL_ID, /* a string, not an int. */
+	MODEL_COL_NAME,
+	MODEL_COL_ID_TYPE
 };
 
 
@@ -147,7 +150,7 @@ easysetup_provider_combo_box_init (EasysetupProviderComboBox *self)
 	 * with a string for the name, and a string for the ID (e.g. "vodafone.it"), and the mcc
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING));
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT));
 
 	/* Setup the combo box: */
 	GtkComboBox *combobox = GTK_COMBO_BOX (self);
@@ -174,25 +177,30 @@ easysetup_provider_combo_box_new (void)
 }
 
 void
-easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets,
+easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, 
+				   ModestPresets *presets,
 				   gint mcc)
 {	
-	g_return_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox));
-	
-	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
-	
-	/* Remove any existing rows: */
-	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
-	gtk_list_store_clear (liststore);
-	
-	GSList *provider_ids_used_already = NULL;
-	
-	/* Add the appropriate rows for this country, from the presets file: */
+	GtkTreeIter other_iter;
+	EasysetupProviderComboBoxPrivate *priv;
+	GtkListStore *liststore;	
+	GSList *provider_ids_used_already = NULL, *provider_protos, *tmp;
 	gchar ** provider_ids = NULL;
-	gchar ** provider_names = modest_presets_get_providers (presets, mcc, 
-								TRUE /* include_globals */, &provider_ids);	
-	gchar ** iter_provider_names = provider_names;
-	gchar ** iter_provider_ids = provider_ids;
+	gchar ** provider_names;	
+	gchar ** iter_provider_names;
+	gchar ** iter_provider_ids;
+	ModestProtocolRegistry *registry;
+
+	g_return_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox));
+
+	priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
+	liststore = GTK_LIST_STORE (priv->model);
+	gtk_list_store_clear (liststore);
+	provider_names = modest_presets_get_providers (presets, mcc, TRUE, &provider_ids);
+
+	iter_provider_names = provider_names;
+	iter_provider_ids = provider_ids;
+
 	while(iter_provider_names && *iter_provider_names && iter_provider_ids && *iter_provider_ids) {
 		const gchar* provider_name = *iter_provider_names;
 		const gchar* provider_id = *iter_provider_ids;
@@ -208,7 +216,9 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 			
 			gtk_list_store_set(liststore, &iter, 
 					   MODEL_COL_ID, provider_id, 
-					   MODEL_COL_NAME, provider_name, -1);
+					   MODEL_COL_NAME, provider_name, 
+					   MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_PROVIDER,
+					   -1);
 			
 			provider_ids_used_already = g_slist_prepend (
 				provider_ids_used_already, (gpointer)g_strdup (provider_id));
@@ -223,19 +233,42 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPr
 	g_strfreev (provider_names);
 	g_strfreev (provider_ids);
 
+	/* Add the provider protocols */
+	registry = modest_runtime_get_protocol_registry ();
+	provider_protos = modest_protocol_registry_get_by_tag (registry, 
+							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
+	tmp = provider_protos;
+	while (tmp) {
+		GtkTreeIter iter;
+		ModestProtocol *proto = MODEST_PROTOCOL (tmp->data);
+		const gchar *name = modest_protocol_get_display_name (proto);
+
+		/* only add store protocols, no need to duplicate them */
+		if (modest_protocol_registry_protocol_type_has_tag (registry, 
+								    modest_protocol_get_type_id (proto),
+								    MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS)) {
+			gtk_list_store_append (liststore, &iter);
+			gtk_list_store_set (liststore, &iter,
+					    MODEL_COL_ID, modest_protocol_get_name (proto),
+					    MODEL_COL_NAME, name,
+					    MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL,
+					    -1);
+		}
+		tmp = g_slist_next (tmp);
+	}
+	g_slist_free (provider_protos);
 	
 	/* Add the "Other" item: */
 	/* Note that ID 0 means "Other" for us: */
-	/* TODO: We need a Logical ID for this text. */
-	GtkTreeIter iter;
-	gtk_list_store_prepend (liststore, &iter);
-	gtk_list_store_set (liststore, &iter,
+	gtk_list_store_prepend (liststore, &other_iter);
+	gtk_list_store_set (liststore, &other_iter,
 			    MODEL_COL_ID, 0,
 			    MODEL_COL_NAME, _("mcen_va_serviceprovider_other"),
+			    MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER,
 			    -1);
-	
+
 	/* Select the "Other" item: */
-	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
+	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &other_iter);
 	
 	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
 	g_slist_free (provider_ids_used_already);
@@ -276,4 +309,24 @@ easysetup_provider_combo_box_set_others_provider (EasysetupProviderComboBox *com
 	
 	if (gtk_tree_model_get_iter_first (model, &others_iter))
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &others_iter);
+}
+
+EasysetupProviderComboBoxIdType 
+easysetup_provider_combo_box_get_active_id_type (EasysetupProviderComboBox *combobox)
+{
+	GtkTreeIter active;
+
+	g_return_val_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX (combobox), 
+			      EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER);
+
+	if (gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active)) {
+		EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
+		EasysetupProviderComboBoxIdType id_type;
+
+		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID_TYPE, &id_type, -1);
+		return id_type;	
+	} else {
+		/* Fallback to other */
+		return EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER;
+	}
 }

@@ -7,7 +7,7 @@
 #define _MODEST_SERVERSECURITY_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-protocol-info.h"
+#include "modest-protocol-registry.h"
 
 G_BEGIN_DECLS
 
@@ -45,12 +45,12 @@ GType modest_serversecurity_combo_box_get_type (void);
 
 ModestServersecurityComboBox* modest_serversecurity_combo_box_new (void);
 
-void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestTransportStoreProtocol protocol);
+void modest_serversecurity_combo_box_fill (ModestServersecurityComboBox *combobox, ModestProtocolType protocol);
 
-ModestConnectionProtocol modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox);
+ModestProtocolType modest_serversecurity_combo_box_get_active_serversecurity (ModestServersecurityComboBox *combobox);
 
 gboolean modest_serversecurity_combo_box_set_active_serversecurity (ModestServersecurityComboBox *combobox,
-								    ModestConnectionProtocol serversecurity);
+								    ModestProtocolType serversecurity);
 
 gint modest_serversecurity_combo_box_get_active_serversecurity_port (ModestServersecurityComboBox *combobox);
 

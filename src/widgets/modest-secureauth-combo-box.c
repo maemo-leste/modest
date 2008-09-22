@@ -4,6 +4,7 @@
  */
 
 #include "modest-secureauth-combo-box.h"
+#include <modest-runtime.h>
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -123,47 +124,53 @@ modest_secureauth_combo_box_new (void)
  */
 void modest_secureauth_combo_box_fill (ModestSecureauthComboBox *combobox)
 {	
-	ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
+	ModestSecureauthComboBoxPrivate *priv;
+	GtkListStore *liststore;
+	ModestProtocolRegistry *protocol_registry;
+	GSList *protocols, *node;
+	GtkTreeIter iter;
+
+	priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 	
 	/* Remove any existing rows: */
-	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
+	liststore = GTK_LIST_STORE (priv->model);
 	gtk_list_store_clear (liststore);
-	
-	GtkTreeIter iter;
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_NONE, MODEL_COL_NAME,
-			    _("mcen_fi_advsetup_smtp_none"), -1);
-	
-	/* Select the None item: */
-	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &iter);
-	
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_PASSWORD, MODEL_COL_NAME,
-			    _("mcen_fi_advsetup_smtp_login"), -1);
-	
-	gtk_list_store_append (liststore, &iter);
-	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOL_AUTH_CRAMMD5, MODEL_COL_NAME,
-			    _("mcen_fi_advsetup_smtp_cram_md5"), -1);
+
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	protocols = modest_protocol_registry_get_by_tag (protocol_registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS);
+
+	for (node = protocols; node != NULL; node = g_slist_next (node)) {
+		ModestProtocol *protocol;
+		protocol = (ModestProtocol *) node->data;
+
+		gtk_list_store_append (liststore, &iter);
+		gtk_list_store_set (liststore, &iter, 
+				    MODEL_COL_ID, (gint)modest_protocol_get_type_id (protocol),
+				    MODEL_COL_NAME, modest_protocol_get_display_name (protocol),
+				    -1);
+	}	
 }
 
 /**
  * Returns the selected secureauth, 
- * or MODEST_PROTOCOL_AUTH_NONE if no secureauth was selected.
+ * or MODEST_PROTOCOL_REGISTRY_TYPE_INVALID if no secureauth was selected.
  */
-ModestAuthProtocol
+ModestProtocolType
 modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *combobox)
 {
 	GtkTreeIter active;
-	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
+	gboolean found;
+
+	found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
 	if (found) {
 		ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 
-		ModestAuthProtocol secureauth = MODEST_PROTOCOL_AUTH_NONE;
+		ModestProtocolType secureauth = MODEST_PROTOCOLS_AUTH_NONE;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &secureauth, -1);
 		return secureauth;	
 	}
 
-	return MODEST_PROTOCOL_AUTH_NONE; /* Failed. */
+	return MODEST_PROTOCOL_REGISTRY_TYPE_INVALID; /* Failed. */
 }
 
 /* This allows us to pass more than one piece of data to the signal handler,
@@ -171,7 +178,7 @@ modest_secureauth_combo_box_get_active_secureauth (ModestSecureauthComboBox *com
 typedef struct 
 {
 		ModestSecureauthComboBox* self;
-		gint id;
+		ModestProtocolType id;
 		gboolean found;
 } ForEachData;
 
@@ -179,10 +186,12 @@ static gboolean
 on_model_foreach_select_id(GtkTreeModel *model, 
 	GtkTreePath *path, GtkTreeIter *iter, gpointer user_data)
 {
-	ForEachData *state = (ForEachData*)(user_data);
+	ForEachData *state;
+	ModestProtocolType id = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+
+	state = (ForEachData*)(user_data);
 	
 	/* Select the item if it has the matching ID: */
-	guint id = 0;
 	gtk_tree_model_get (model, iter, MODEL_COL_ID, &id, -1); 
 	if(id == state->id) {
 		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (state->self), iter);
@@ -196,15 +205,19 @@ on_model_foreach_select_id(GtkTreeModel *model,
 
 /**
  * Selects the specified secureauth, 
- * or MODEST_PROTOCOL_AUTH_NONE if no secureauth was selected.
+ * or MODEST_PROTOCOL_REGISTRY_TYPE_INVALID if no secureauth was selected.
  */
 gboolean
-modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestAuthProtocol secureauth)
+modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *combobox, ModestProtocolType secureauth)
 {
-	ModestSecureauthComboBoxPrivate *priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
+	ModestSecureauthComboBoxPrivate *priv;
+	ForEachData *state;
+	gboolean result;
+
+	priv = SECUREAUTH_COMBO_BOX_GET_PRIVATE (combobox);
 	
 	/* Create a state instance so we can send two items of data to the signal handler: */
-	ForEachData *state = g_new0 (ForEachData, 1);
+	state = g_new0 (ForEachData, 1);
 	state->self = combobox;
 	state->id = secureauth;
 	state->found = FALSE;
@@ -212,7 +225,7 @@ modest_secureauth_combo_box_set_active_secureauth (ModestSecureauthComboBox *com
 	/* Look at each item, and select the one with the correct ID: */
 	gtk_tree_model_foreach (priv->model, &on_model_foreach_select_id, state);
 
-	const gboolean result = state->found;
+	result = state->found;
 	
 	/* Free the state instance: */
 	g_free(state);

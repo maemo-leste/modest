@@ -482,16 +482,6 @@ void modest_platform_double_connect_and_perform (GtkWindow *parent_window,
 						 DoubleConnectionInfo *info);
 
 /**
- * modest_platform_get_account_settings_dialog:
- * @settings: a #ModestAccountSettings
- *
- * creates a dialog for editing @settings
- *
- * Returns: the newly created dialog.
- */
-GtkWidget *modest_platform_get_account_settings_dialog (ModestAccountSettings *settings);
-
-/**
  * modest_platform_get_account_settings_wizard:
  * @settings: a #ModestAccountSettings
  *

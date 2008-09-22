@@ -41,7 +41,6 @@
 #include <modest-address-book.h>
 #include "modest-error.h"
 #include "modest-ui-actions.h"
-#include "modest-protocol-info.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
 #include "modest-debug.h"
@@ -157,7 +156,7 @@ static gboolean connect_to_get_msg (ModestWindow *win,
 				    gint num_of_uncached_msgs,
 				    TnyAccount *account);
 
-static gboolean remote_folder_is_pop (TnyFolderStore *folder);
+static gboolean remote_folder_has_leave_on_server (TnyFolderStore *folder);
 
 static void     do_create_folder (GtkWindow *window, 
 				  TnyFolderStore *parent_folder, 
@@ -171,18 +170,19 @@ static TnyAccount *get_account_from_folder_store (TnyFolderStore *folder_store);
  * This function checks whether a TnyFolderStore is a pop account
  */
 static gboolean
-remote_folder_is_pop (TnyFolderStore *folder)
+remote_folder_has_leave_on_server (TnyFolderStore *folder)
 {
-        const gchar *proto = NULL;
-        TnyAccount *account = NULL;
+        TnyAccount *account;
+	gboolean result;
 
         g_return_val_if_fail (TNY_IS_FOLDER_STORE (folder), FALSE);
 	
 	account = get_account_from_folder_store (folder);
-        proto = tny_account_get_proto (account);
+	result = (modest_protocol_registry_protocol_type_has_leave_on_server (modest_runtime_get_protocol_registry (),
+									      modest_tny_account_get_protocol_type (account)));
         g_object_unref (account);
 
-        return (modest_protocol_info_get_transport_store_protocol (proto) == MODEST_PROTOCOL_STORE_POP);
+	return result;
 }
 
 /* FIXME: this should be merged with the similar code in modest-account-view-window */
@@ -1165,9 +1165,8 @@ open_msgs_performer(gboolean canceled,
 		    gpointer user_data)
 {
 	ModestMailOperation *mail_op = NULL;
-	const gchar *proto_name;
 	gchar *error_msg;
-	ModestTransportStoreProtocol proto;
+	ModestProtocolType proto;
 	TnyList *not_opened_headers;
 	TnyConnectionStatus status;
 	gboolean show_open_draft = FALSE;
@@ -1191,27 +1190,37 @@ open_msgs_performer(gboolean canceled,
 	}
 
 	/* Get the error message depending on the protocol */
-	proto_name = tny_account_get_proto (account);
-	if (proto_name != NULL) {
-		proto = modest_protocol_info_get_transport_store_protocol (proto_name);
-	} else {
-		proto = MODEST_PROTOCOL_STORE_MAILDIR;
+	proto = modest_tny_account_get_protocol_type (account);
+	if (proto == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
+		proto = MODEST_PROTOCOLS_STORE_MAILDIR;
 	}
 	
 	/* Create the error messages */
 	if (tny_list_get_length (not_opened_headers) == 1) {
-		if (proto == MODEST_PROTOCOL_STORE_POP) {
-			error_msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
-		} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
-			TnyIterator *iter = tny_list_create_iterator (not_opened_headers);
-			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-			gchar *subject = tny_header_dup_subject (header);
-			error_msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
-						     subject);
-			g_free (subject);
-			g_object_unref (header);
-			g_object_unref (iter);
-		} else {
+		ModestProtocol *protocol;
+		ModestProtocolRegistry *protocol_registry;
+		TnyIterator *iter;
+		TnyHeader *header;
+		gchar *subject;
+
+		protocol_registry = modest_runtime_get_protocol_registry ();
+		iter = tny_list_create_iterator (not_opened_headers);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		subject = tny_header_dup_subject (header);
+
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, proto);
+		error_msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
+		g_free (subject);
+		g_object_unref (header);
+		g_object_unref (iter);
+		
+		if (error_msg == NULL) {
+			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
+		}
+
+		if (modest_protocol_registry_protocol_type_has_tag (protocol_registry,
+								    proto,
+								    MODEST_PROTOCOL_REGISTRY_LOCAL_STORE_PROTOCOLS)) { 
 			TnyHeader *header;
 			TnyFolder *folder;
 			TnyIterator *iter;
@@ -1225,7 +1234,6 @@ open_msgs_performer(gboolean canceled,
 			g_object_unref (folder);
 			g_object_unref (header);
 			g_object_unref (iter);
-			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
 		}
 	} else {
 		error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
@@ -4478,15 +4486,17 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 
 		if ((gpointer) local_account != (gpointer) folder_store &&
 		    (gpointer) mmc_account != (gpointer) folder_store) {
-			const char *proto_name = tny_account_get_proto (TNY_ACCOUNT (folder_store));
-			ModestTransportStoreProtocol proto = MODEST_PROTOCOL_STORE_MAILDIR;
-			if (proto_name != NULL) {
-				proto = modest_protocol_info_get_transport_store_protocol (proto_name);
+			ModestProtocolType proto;
+			proto = modest_tny_account_get_protocol_type (TNY_ACCOUNT (folder_store));
+			if (proto == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
+				proto = MODEST_PROTOCOLS_STORE_MAILDIR;
 			}
 			is_local_account = FALSE;
 			/* New button should be dimmed on remote
 			   POP account root */
-			new_sensitive = (proto != MODEST_PROTOCOL_STORE_POP);
+			new_sensitive = (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+											 proto,
+											 MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS));
 		}
 		g_object_unref (local_account);
 		g_object_unref (mmc_account);
@@ -5095,7 +5105,7 @@ modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
 		/* The transfer is possible and the user wants to */
 		*do_xfer = TRUE;
 
-		if (remote_folder_is_pop (src_folder) && delete_originals) {
+		if (remote_folder_has_leave_on_server (src_folder) && delete_originals) {
 			const gchar *account_name;
 			gboolean leave_on_server;
 			
@@ -5155,8 +5165,7 @@ xfer_messages_performer  (gboolean canceled,
 {
 	ModestWindow *win = MODEST_WINDOW (parent_window);
 	TnyAccount *dst_account = NULL;
-	const gchar *proto_str = NULL;
-	gboolean dst_is_pop = FALSE;
+	gboolean dst_forbids_message_add = FALSE;
 	XferMsgsHelper *helper;
 	MoveToHelper *movehelper;
 	ModestMailOperation *mail_op;
@@ -5172,16 +5181,14 @@ xfer_messages_performer  (gboolean canceled,
 	}
 
 	dst_account = tny_folder_get_account (TNY_FOLDER (helper->dst_folder));
-	proto_str = tny_account_get_proto (dst_account);
 
 	/* tinymail will return NULL for local folders it seems */
-	dst_is_pop = proto_str &&
-		(modest_protocol_info_get_transport_store_protocol (proto_str) == 
-		 MODEST_PROTOCOL_STORE_POP);
-
+	dst_forbids_message_add = modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+										  modest_tny_account_get_protocol_type (dst_account),
+										  MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD);
 	g_object_unref (dst_account);
 
-	if (dst_is_pop) {
+	if (dst_forbids_message_add) {
 		modest_platform_information_banner (GTK_WIDGET (win),
 						    NULL,
 						    ngettext("mail_in_ui_folder_move_target_error",
@@ -6042,31 +6049,18 @@ void
 modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
 					       TnyAccount *account)
 {
-	ModestTransportStoreProtocol proto;
-	const gchar *proto_name;
+	ModestProtocolType protocol_type;
+	ModestProtocol *protocol;
 	gchar *error_note = NULL;
 	
-	proto_name = tny_account_get_proto (account);
-	proto = modest_protocol_info_get_transport_store_protocol (proto_name);
-	
-	switch (proto) {
-	case MODEST_PROTOCOL_STORE_POP:
-		error_note = g_strdup_printf (_("emev_ni_ui_pop3_msg_connect_error"), 
-					      tny_account_get_hostname (account));
-		break;
-	case MODEST_PROTOCOL_STORE_IMAP:
-		error_note = g_strdup_printf (_("emev_ni_ui_imap_connect_server_error"), 
-					      tny_account_get_hostname (account));
-		break;
-	case MODEST_PROTOCOL_STORE_MAILDIR:
-	case MODEST_PROTOCOL_STORE_MBOX:
-		error_note = g_strdup (_("emev_nc_mailbox_notavailable"));
-		break;
-	default:
-		g_warning ("%s: This should not be reached", __FUNCTION__);
-	}
+	protocol_type = modest_tny_account_get_protocol_type (account);
+	protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+								  protocol_type);
 
-	if (error_note) {
+	error_note = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_ACCOUNT_CONNECTION_ERROR, tny_account_get_hostname (account));
+	if (error_note == NULL) {
+		g_warning ("%s: This should not be reached", __FUNCTION__);
+	} else {
 		modest_platform_run_information_dialog (parent_window, error_note, FALSE);
 		g_free (error_note);
 	}
@@ -6076,9 +6070,11 @@ gchar *
 modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 {
 	gchar *msg = NULL;
+	gchar *subject;
 	TnyFolderStore *folder = NULL;
 	TnyAccount *account = NULL;
-	ModestTransportStoreProtocol proto;
+	ModestProtocolType proto;
+	ModestProtocol *protocol;
 	TnyHeader *header = NULL;
 
 	if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -6105,16 +6101,14 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 
 	/* Get the account type */
 	account = tny_folder_get_account (TNY_FOLDER (folder));
-	proto = modest_protocol_info_get_transport_store_protocol (tny_account_get_proto (account));
-	if (proto == MODEST_PROTOCOL_STORE_POP) {
-		msg = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
-	} else if (proto == MODEST_PROTOCOL_STORE_IMAP) {
-		gchar *subject;
-		subject = tny_header_dup_subject (header);
-		msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"), 
-				       subject);
-		g_free (subject);
-	} else {
+	proto = modest_tny_account_get_protocol_type (account);
+	protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+								  proto);
+
+	subject = tny_header_dup_subject (header);
+	msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
+	g_free (subject);
+	if (msg == NULL) {
 		msg = g_strdup_printf (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
 

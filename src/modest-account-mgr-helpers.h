@@ -135,7 +135,7 @@ gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* na
  *
  * Returns: The protocol type.
  */
-ModestTransportStoreProtocol modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name);
+ModestProtocolType modest_account_mgr_get_store_protocol (ModestAccountMgr *self, const gchar* name);
 
 /**
  * modest_account_mgr_set_connection_specific_smtp
@@ -309,7 +309,7 @@ void  modest_account_mgr_set_server_account_hostname (ModestAccountMgr *self,
  *
  * Returns: The secure authentication enum value.
  */
-ModestAuthProtocol modest_account_mgr_get_server_account_secure_auth (ModestAccountMgr *self, 
+ModestProtocolType modest_account_mgr_get_server_account_secure_auth (ModestAccountMgr *self, 
 								      const gchar* account_name);
 
 /**
@@ -322,7 +322,7 @@ ModestAuthProtocol modest_account_mgr_get_server_account_secure_auth (ModestAcco
  */
 void modest_account_mgr_set_server_account_secure_auth (ModestAccountMgr *self, 
 							const gchar* account_name, 
-							ModestAuthProtocol secure_auth);
+							ModestProtocolType secure_auth);
 	
 /**
  * modest_server_account_data_get_security:
@@ -331,10 +331,10 @@ void modest_account_mgr_set_server_account_secure_auth (ModestAccountMgr *self,
  *
  * Gets the security method for this server account.
  *
- * Returns: The security enum value.
+ * Returns: The security connection protocol.
  */
-ModestConnectionProtocol modest_account_mgr_get_server_account_security (ModestAccountMgr *self, 
-									 const gchar* account_name);
+ModestProtocolType modest_account_mgr_get_server_account_security (ModestAccountMgr *self, 
+								   const gchar* account_name);
 
 /**
  * modest_account_mgr_set_server_account_security:
@@ -345,13 +345,14 @@ ModestConnectionProtocol modest_account_mgr_get_server_account_security (ModestA
  */
 void modest_account_mgr_set_server_account_security (ModestAccountMgr *self, 
 						     const gchar* account_name, 
-						     ModestConnectionProtocol security);
+						     ModestProtocolType security);
 
 gboolean modest_account_mgr_save_server_settings (ModestAccountMgr *self,
 						  ModestServerAccountSettings *settings);
 
 ModestServerAccountSettings *modest_account_mgr_load_server_settings (ModestAccountMgr *self,
-								      const gchar *account_name);
+								      const gchar *account_name,
+								      gboolean is_transport_not_store);
 
 /**
  * modest_account_mgr_get_from_string

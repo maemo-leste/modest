@@ -252,7 +252,7 @@ on_button_edit (ModestConnectionSpecificSmtpWindow *self)
 		/* Get existing server account data if a server account is already specified: */
 		gboolean settings_were_retrieved = FALSE;
 		if (server_account_name && !server_settings) {
-			server_settings = modest_account_mgr_load_server_settings(mgr, server_account_name);
+			server_settings = modest_account_mgr_load_server_settings(mgr, server_account_name, TRUE);
 			if (server_settings)
 				settings_were_retrieved = TRUE;
 		}

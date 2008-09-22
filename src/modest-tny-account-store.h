@@ -34,7 +34,6 @@
 #define __MODEST_TNY_ACCOUNT_STORE_H__
 
 #include <glib-object.h>
-#include <modest-defs.h>
 #include <tny-account-store.h>
 #include <tny-session-camel.h>
 #include <tny-shared.h>
@@ -233,19 +232,6 @@ TnyTransportAccount * modest_tny_account_store_get_transport_account_from_outbox
  */
 TnyTransportAccount * modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAccountStore *self,
 											  const gchar *name);
-
-/**
- * modest_tny_account_store_show_account_settings_dialog:
- * @self: a #ModestTnyAccountStore
- * @account_name: a string
- *
- * obtains (if already created) or creates (and shows) the settings dialog for
- * @account_name
- *
- * Returns: a #ModesAccountSettingsDialog
- */
-GtkWidget *modest_tny_account_store_show_account_settings_dialog (ModestTnyAccountStore *self,
-								  const gchar *account_name);
 
 typedef void (*ModestTnyAccountStoreShutdownCallback) (ModestTnyAccountStore *account_store, gpointer userdata);
 

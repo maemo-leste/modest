@@ -28,6 +28,8 @@
  */
 
 #include <string.h> /* for strcmp */
+#include <modest-protocol-registry.h>
+#include <modest-runtime.h>
 #include "modest-presets.h"
 #include <stdio.h>
 
@@ -193,72 +195,69 @@ modest_presets_get_domain      (ModestPresets *self,
 
 
 
-ModestPresetsServerType
+ModestProtocolType
 modest_presets_get_info_server_type (ModestPresets *self,
 				     const gchar *provider_id,
 				     gboolean incoming_server)
 {
-	ModestPresetsServerType info = MODEST_PRESETS_SERVER_TYPE_NONE;
+	ModestProtocolType protocol_type = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
+	ModestProtocolRegistry *protocol_registry;
+	ModestProtocol *protocol;
 	gchar *val = NULL;
 	
 	g_return_val_if_fail (self && self->keyfile, 0);
+	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	if (incoming_server) {
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_INCOMING, NULL);
 		if (!val)
-			return info;
+			return protocol_type;
 		
 		g_free (val);
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_MAILBOX_TYPE,NULL);
-		if (val && strcmp (val, "pop") == 0)
-			info = MODEST_PRESETS_SERVER_TYPE_POP;
-		if (val && strcmp (val, "imap") == 0)
-			info = MODEST_PRESETS_SERVER_TYPE_IMAP;
+		
+		protocol = modest_protocol_registry_get_protocol_by_name (protocol_registry, MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS, val);
+		if (protocol == NULL)
+			return protocol_type;
+		protocol_type = modest_protocol_get_type_id (protocol);
 	} else {
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_OUTGOING, NULL);
 		if (!val)
-			return info;
-		info = MODEST_PRESETS_SERVER_TYPE_SMTP;
+			return protocol_type;
+
+		protocol_type = MODEST_PROTOCOLS_TRANSPORT_SMTP;
 	}
 	g_free (val);
 
 	/* debug: */
 /* 	g_message ("provider id: %s, server type: %d", provider_id, info); */
-	return info;
+	return protocol_type;
 }
 
 
 
-ModestPresetsSecurity
+ModestProtocolType
 modest_presets_get_info_server_security (ModestPresets *self, const gchar *provider_id,
 					 gboolean incoming_server)
 {
-	ModestPresetsSecurity info = MODEST_PRESETS_SECURITY_NONE;
+	ModestProtocolType protocol_type = MODEST_PROTOCOLS_CONNECTION_NONE;
 	gchar *val = NULL;
 	
-	g_return_val_if_fail (self && self->keyfile, MODEST_PRESETS_SECURITY_NONE);
+	g_return_val_if_fail (self && self->keyfile, MODEST_PROTOCOLS_CONNECTION_NONE);
 
 	if (incoming_server) {
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_INCOMING, NULL);
 		if (val) {
 			g_free (val);	
-			val = g_key_file_get_string (self->keyfile, provider_id,
-						     MODEST_PRESETS_KEY_APOP, NULL);
-			if (val && strcmp(val, "true") == 0)
-				info |= MODEST_PRESETS_SECURITY_APOP;
-			g_free(val);
-			
+
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_INCOMING_SECURITY, NULL);
-			if (val && strcmp (val, "1") == 0) 
-				info |= MODEST_PRESETS_SECURITY_SECURE_INCOMING;
-			if (val && strcmp (val, "2") == 0) {
-				info |= MODEST_PRESETS_SECURITY_SECURE_INCOMING;
-				info |= MODEST_PRESETS_SECURITY_SECURE_INCOMING_ALTERNATE_PORT;
+			if (val && ((strcmp (val, "1") == 0) || (strcmp (val, "2") == 0))) {
+				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			}
 			g_free (val);
 		}
@@ -272,14 +271,79 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 						     MODEST_PRESETS_KEY_SECURE_SMTP, NULL);
 			/* printf("debug: %s: provider_id=%s, secure-smtp val=%s\n", __FUNCTION__, provider_id, val); */
 			if (val && strcmp(val,"true") == 0)
-				info |= MODEST_PRESETS_SECURITY_SECURE_SMTP;
+				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			g_free(val);
 		}
 	}
 
-	return info;
+	return protocol_type;
 }
 
+gboolean 
+modest_presets_get_info_server_use_alternate_port (ModestPresets *self, const gchar *provider_id,
+						   gboolean incoming_server)
+{
+	gboolean result = FALSE;
+	gchar *val = NULL;
+	
+	g_return_val_if_fail (self && self->keyfile, MODEST_PROTOCOLS_CONNECTION_NONE);
+
+	if (incoming_server) {
+		val = g_key_file_get_string (self->keyfile, provider_id,
+					     MODEST_PRESETS_KEY_INCOMING, NULL);
+		if (val) {
+			g_free (val);	
+
+			val = g_key_file_get_string (self->keyfile, provider_id,
+						     MODEST_PRESETS_KEY_INCOMING_SECURITY, NULL);
+			if (val && (strcmp (val, "2") == 0)) {
+				result = TRUE;
+			}
+			g_free (val);
+		}
+	} 
+
+	return result;
+}
+
+ModestProtocolType
+modest_presets_get_info_server_auth (ModestPresets *self, const gchar *provider_id,
+					 gboolean incoming_server)
+{
+	ModestProtocolType protocol_type = MODEST_PROTOCOLS_AUTH_NONE;
+	gchar *val = NULL;
+	
+	g_return_val_if_fail (self && self->keyfile, MODEST_PROTOCOLS_AUTH_NONE);
+
+	if (incoming_server) {
+		val = g_key_file_get_string (self->keyfile, provider_id,
+					     MODEST_PRESETS_KEY_INCOMING, NULL);
+		if (val) {
+                        g_free (val);   
+                        val = g_key_file_get_string (self->keyfile, provider_id,
+                                                     MODEST_PRESETS_KEY_APOP, NULL);
+                        if (val && strcmp(val, "true") == 0)
+				protocol_type = MODEST_PROTOCOLS_AUTH_PASSWORD;
+                        g_free(val);
+
+		}
+	} else /* outgoing: */ {
+		val = g_key_file_get_string (self->keyfile, provider_id,
+					     MODEST_PRESETS_KEY_OUTGOING, NULL);
+		if (val) {
+			g_free (val);
+			
+			val = g_key_file_get_string (self->keyfile, provider_id,
+						     MODEST_PRESETS_KEY_SECURE_SMTP, NULL);
+			/* printf("debug: %s: provider_id=%s, secure-smtp val=%s\n", __FUNCTION__, provider_id, val); */
+			if (val && strcmp(val,"true") == 0)
+				protocol_type = MODEST_PROTOCOLS_AUTH_PASSWORD;
+			g_free(val);
+		}
+	}
+
+	return protocol_type;
+}
 
 /*
  * at the moment, this only for mac.com, which have a special SMTP port
