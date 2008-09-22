@@ -161,32 +161,6 @@ gint modest_list_index (TnyList *list, GObject *object);
  */
 guint64 modest_utils_get_available_space (const gchar *maildir_path);
 
-<<<<<<< .working
-/**
- * modest_images_cache_get_id:
- * @account: a #TnyAccount
- * @uri: an uri string
- *
- * obtains the hash corresponding to an image external resource to be
- * stored in image cache.
- *
- * Returns: a newly allocated string containing the hash key
- */
-gchar *modest_images_cache_get_id (const gchar *account, const gchar *uri);
-
-
-/**
- * modest_utils_get_account_name_from_recipient:
- * @from: the result of a call to tny_header_dup_from
- *
- * returns the account name that corresponds to the given from address
- *
- * Returns: a newly allocated string containing the account name or
- * %NULL in case of error
- */
-gchar *modest_utils_get_account_name_from_recipient (const gchar *from);
-
-=======
 /**
  * modest_images_cache_get_id:
  * @account: a #TnyAccount
@@ -215,5 +189,4 @@ void modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
 					      const gchar* character,
 					      gpointer user_data);
 
->>>>>>> .merge-right.r5668
 #endif /*__MODEST_MAEMO_UTILS_H__*/

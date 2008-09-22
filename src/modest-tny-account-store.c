@@ -490,13 +490,6 @@ show_password_warning_only (const gchar *msg)
 static void 
 show_wrong_password_dialog (TnyAccount *account)
 { 
-<<<<<<< .working
-	/* This is easier than using a struct for the user_data: */
-	ModestTnyAccountStore *self = modest_runtime_get_account_store();
-	GtkWidget *dialog = NULL;
-
-=======
->>>>>>> .merge-right.r5668
 	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
 		modest_ui_actions_on_smtp_servers (NULL, NULL);
 	} else {
@@ -1043,7 +1036,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 				GError *error)
 {
 	ModestProtocolType protocol_type = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
-	ModestProtocol *protocol;
+	ModestProtocol *protocol = NULL;
 	const gchar* server_name = "";
 	gchar *prompt = NULL;
 	gboolean retval = TRUE;
@@ -1077,7 +1070,9 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
 		/* You must be working online for this operation */
 	case TNY_SERVICE_ERROR_CONNECT:
-		prompt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_CONNECT_ERROR, server_name);
+		if (protocol) {
+			prompt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_CONNECT_ERROR, server_name);
+		}
 		if (!prompt) {
 			g_return_val_if_reached (FALSE);
 		}
@@ -1087,7 +1082,9 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		/* It seems that there's no better error to show with
 		 * POP and IMAP because TNY_SERVICE_ERROR_AUTHENTICATE
 		 * may appear if there's a timeout during auth */
-		prompt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, server_name);
+		if (protocol) {
+			prompt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, server_name);
+		}
 		if (!prompt) {
 			g_return_val_if_reached (FALSE);
 		}

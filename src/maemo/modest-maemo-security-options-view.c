@@ -144,7 +144,7 @@ create_incoming_security (ModestSecurityOptionsView* self,
 			  GtkSizeGroup *size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
-	GtkWidget *combo_caption, *check_caption, *entry_caption;
+	GtkWidget *combo_caption, *check_caption, *entry_caption = NULL;
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
@@ -241,8 +241,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 			  GtkSizeGroup *size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
-	GtkWidget *sec_caption, *auth_caption, *user_caption;
-	GtkWidget *pwd_caption, *port_caption;
+	GtkWidget *sec_caption, *auth_caption, *user_caption = NULL;
+	GtkWidget *pwd_caption = NULL, *port_caption = NULL;
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	
@@ -434,12 +434,12 @@ modest_maemo_security_options_view_changed (ModestSecurityOptionsView* self,
 	ModestSecurityOptionsViewPrivate *ppriv;
 	gint server_port;
 
+	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+	
 	/* If we're not showing the port number then it never changes */
 	if (!ppriv->full)
 		return FALSE;
 
-	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
-	
 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING)
 		server_settings = modest_account_settings_get_store_settings (settings);
 	else

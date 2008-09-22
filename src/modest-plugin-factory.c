@@ -189,7 +189,7 @@ modest_plugin_factory_load_all (ModestPluginFactory *self)
 static ModestPlugin*
 modest_plugin_factory_load (const gchar *file)
 {
-	ModestPlugin *plugin;
+	ModestPlugin *plugin = NULL;
 	GKeyFile *plugin_file = NULL;
 	gchar *plugin_name, *dir, *path;
 	GTypeModule *type_module;

@@ -3056,10 +3056,9 @@ on_window_destroy (GtkObject *widget,
 	remove_banners (MODEST_MAIN_WINDOW (widget));
 }
 
-<<<<<<< .working
 static void
 opening_banner_destroyed (gpointer data,
-			  GObject *where_the_object_was)
+			   GObject *where_the_object_was)
 {
 	ModestMainWindowPrivate *priv = NULL;
 
@@ -3068,19 +3067,6 @@ opening_banner_destroyed (gpointer data,
 	priv->opening_banner = NULL;
 }
 
-=======
-static void
-retrieving_banner_destroyed (gpointer data,
-			     GObject *where_the_object_was)
-{
-	ModestMainWindowPrivate *priv = NULL;
-
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (data);
-
-	priv->retrieving_banner = NULL;
-}
-
->>>>>>> .merge-right.r5668
 static gboolean
 show_opening_banner (gpointer user_data)
 {
@@ -3106,8 +3092,8 @@ show_opening_banner (gpointer user_data)
 		/* We need this because banners in Maemo could be
 		   destroyed by dialogs so we need to properly update
 		   our reference to it */
-		g_object_weak_ref (G_OBJECT (priv->retrieving_banner),
-				   retrieving_banner_destroyed,
+		g_object_weak_ref (G_OBJECT (priv->updating_banner),
+				   updating_banner_destroyed,
 				   user_data);
 		gdk_threads_leave ();
 	}
