@@ -1,3 +1,9 @@
+modest (2.0-2008.39-1) unstable; urgency=low
+
+  * Week 39 build with the plugin support.
+
+ -- Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>  Thu, 25 Sep 2008 10:30:45 +0300
+
 modest (2.0-2008.38-1) hardy; urgency=low
 
   * Updated modest version to 2.0
