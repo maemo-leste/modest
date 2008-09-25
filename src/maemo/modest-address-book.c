@@ -312,7 +312,7 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
 #else
 		OssoABookContact *abook_contact;
 	       
-		abook_contact = osso_abook_contact_new_from_master (contact);
+		abook_contact = osso_abook_contact_new_from_template (contact);
 		display_name = osso_abook_contact_get_display_name(abook_contact);
 		g_object_unref (abook_contact);
 #endif
