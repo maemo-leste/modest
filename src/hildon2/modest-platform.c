@@ -33,12 +33,12 @@
 #include <modest-runtime.h>
 #include <modest-main-window.h>
 #include <modest-header-view.h>
-#include "maemo/modest-maemo-global-settings-dialog.h"
+#include "modest-maemo-global-settings-dialog.h"
 #include "modest-widget-memory.h"
 #include <modest-hildon-includes.h>
 #include <modest-maemo-utils.h>
 #include <dbus_api/modest-dbus-callbacks.h>
-#include <maemo/modest-osso-autosave-callbacks.h>
+#include <modest-osso-autosave-callbacks.h>
 #include <libosso.h>
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>

@@ -28,7 +28,7 @@
  */
 
 
-#include <maemo/modest-osso-autosave-callbacks.h>
+#include <modest-osso-autosave-callbacks.h>
 
 void modest_on_osso_application_autosave(gpointer data)
 {

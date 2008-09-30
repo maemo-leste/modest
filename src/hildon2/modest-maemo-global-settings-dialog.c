@@ -45,7 +45,7 @@
 #include "modest-runtime.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "widgets/modest-combo-box.h"
-#include "maemo/modest-maemo-global-settings-dialog.h"
+#include "modest-maemo-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
 #include <tny-account-store.h>
 

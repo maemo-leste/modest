@@ -51,12 +51,12 @@
 #include "modest-account-mgr-helpers.h" /* For modest_account_mgr_get_account_data(). */
 #include <modest-server-account-settings.h>
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
-#include "maemo/modest-connection-specific-smtp-window.h"
-#include "maemo/modest-signature-editor-dialog.h"
+#include "modest-connection-specific-smtp-window.h"
+#include "modest-signature-editor-dialog.h"
 #include <modest-utils.h>
 #include <modest-defs.h>
-#include "maemo/modest-maemo-utils.h"
-#include "maemo/modest-maemo-security-options-view.h"
+#include "modest-maemo-utils.h"
+#include "modest-maemo-security-options-view.h"
 #include "widgets/modest-ui-constants.h"
 #include <tny-account.h>
 #include <tny-status.h>

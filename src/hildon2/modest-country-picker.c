@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2008, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 #include "modest-maemo-utils.h"
-#include "modest-easysetup-country-combo-box.h"
+#include "modest-country-picker.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -52,25 +52,21 @@
 
 #define MAX_LINE_LEN 128 /* max length of a line in MCC file */
 
-#if MODEST_HILDON_API < 2
-G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, GTK_TYPE_COMBO_BOX);
-#else
-G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, HILDON_TYPE_PICKER_BUTTON);
-#endif
+G_DEFINE_TYPE (ModestCountryPicker, modest_country_picker, HILDON_TYPE_PICKER_BUTTON);
 
 typedef struct
 {
 	gint locale_mcc;
 /* 	GtkTreeModel *model; */
-} ModestEasysetupCountryComboBoxPrivate;
+} ModestCountryPickerPrivate;
 
-#define MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
-							MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, \
-							ModestEasysetupCountryComboBoxPrivate))
+#define MODEST_COUNTRY_PICKER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
+									   MODEST_TYPE_COUNTRY_PICKER, \
+									   ModestCountryPickerPrivate))
 
 static void
-easysetup_country_combo_box_get_property (GObject *object, guint property_id,
-															GValue *value, GParamSpec *pspec)
+modest_country_picker_get_property (GObject *object, guint property_id,
+				    GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
 	default:
@@ -79,8 +75,8 @@ easysetup_country_combo_box_get_property (GObject *object, guint property_id,
 }
 
 static void
-easysetup_country_combo_box_set_property (GObject *object, guint property_id,
-															const GValue *value, GParamSpec *pspec)
+modest_country_picker_set_property (GObject *object, guint property_id,
+				    const GValue *value, GParamSpec *pspec)
 {
 	switch (property_id) {
 	default:
@@ -89,10 +85,10 @@ easysetup_country_combo_box_set_property (GObject *object, guint property_id,
 }
 
 static void
-easysetup_country_combo_box_dispose (GObject *object)
+modest_country_picker_dispose (GObject *object)
 {
-	if (G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->dispose)
-		G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->dispose (object);
+	if (G_OBJECT_CLASS (modest_country_picker_parent_class)->dispose)
+		G_OBJECT_CLASS (modest_country_picker_parent_class)->dispose (object);
 }
 
 enum MODEL_COLS {
@@ -102,22 +98,22 @@ enum MODEL_COLS {
 
 	
 static void
-easysetup_country_combo_box_finalize (GObject *object)
+modest_country_picker_finalize (GObject *object)
 {
-	G_OBJECT_CLASS (easysetup_country_combo_box_parent_class)->finalize (object);
+	G_OBJECT_CLASS (modest_country_picker_parent_class)->finalize (object);
 }
 
 static void
-easysetup_country_combo_box_class_init (EasysetupCountryComboBoxClass *klass)
+modest_country_picker_class_init (ModestCountryPickerClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (ModestEasysetupCountryComboBoxPrivate));
+	g_type_class_add_private (klass, sizeof (ModestCountryPickerPrivate));
 
-	object_class->get_property = easysetup_country_combo_box_get_property;
-	object_class->set_property = easysetup_country_combo_box_set_property;
-	object_class->dispose = easysetup_country_combo_box_dispose;
-	object_class->finalize = easysetup_country_combo_box_finalize;
+	object_class->get_property = modest_country_picker_get_property;
+	object_class->set_property = modest_country_picker_set_property;
+	object_class->dispose = modest_country_picker_dispose;
+	object_class->finalize = modest_country_picker_finalize;
 }
 
 
@@ -194,9 +190,9 @@ parse_mcc_mapping_line (const char* line,  char** country)
  * by the operator-wizard-settings package.
  */
 static void
-load_from_file (EasysetupCountryComboBox *self, GtkListStore *liststore)
+load_from_file (ModestCountryPicker *self, GtkListStore *liststore)
 {
-	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestCountryPickerPrivate *priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
 	
 	char line[MAX_LINE_LEN];
 	guint previous_mcc = 0;
@@ -261,14 +257,14 @@ load_from_file (EasysetupCountryComboBox *self, GtkListStore *liststore)
 }
 
 static void
-easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
+modest_country_picker_init (ModestCountryPicker *self)
 {
-	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestCountryPickerPrivate *priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
 	priv->locale_mcc = 0;
 }
 
 void
-easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
+modest_country_picker_load_data(ModestCountryPicker *self)
 {
 	GtkListStore *model;
 
@@ -283,70 +279,45 @@ easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
-#if MODEST_HILDON_API < 2
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (self), renderer, TRUE);
-	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (self), renderer, 
-					"text", MODEL_COL_NAME, NULL);
-#else
 	GtkWidget *selector = hildon_touch_selector_new ();
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
-	hildon_touch_selector_append_column (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)),
-					     GTK_TREE_MODEL (model),
+	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
 					     renderer, "text", MODEL_COL_NAME, NULL);
-#endif
 
 	/* Fill the model with rows: */
 	load_from_file (self, model);
 
 	/* Set this _after_ loading from file, it makes loading faster */
-#if MODEST_HILDON_API < 2
-	gtk_combo_box_set_model (GTK_COMBO_BOX (self), GTK_TREE_MODEL (model));
-#else
-	hildon_touch_selector_set_model (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)),
+	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector),
 					 0, GTK_TREE_MODEL (model));
-#endif
 }
 
-EasysetupCountryComboBox*
-easysetup_country_combo_box_new (void)
+ModestCountryPicker*
+modest_country_picker_new (void)
 {
-#if MODEST_HILDON_API >= 2
-	return g_object_new (MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, 
+	return g_object_new (MODEST_TYPE_COUNTRY_PICKER, 
 			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
 			     "size", HILDON_SIZE_AUTO,
 			     NULL);
-#else
-	return g_object_new (MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, 
-			     NULL);
-#endif
 }
 
 /**
  * Returns the MCC number of the selected country, or 0 if no country was selected. 
  */
 gint
-easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *self)
+modest_country_picker_get_active_country_mcc (ModestCountryPicker *self)
 {
 	GtkTreeIter active;
 	gboolean found;
 
-#if MODEST_HILDON_API < 2
-	found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self), &active);
-#else
 	found = hildon_touch_selector_get_selected (hildon_picker_button_get_selector
 						    (HILDON_PICKER_BUTTON (self)), 0, &active);
-#endif
 	if (found) {
 		gint mcc = 0;
-#if MODEST_HILDON_API < 2
-		gtk_tree_model_get (gtk_combo_box_get_model (GTK_COMBO_BOX (self)), 
-				    &active, MODEL_COL_MCC, &mcc, -1);
-#else
 		gtk_tree_model_get (hildon_touch_selector_get_model (hildon_picker_button_get_selector
 								     (HILDON_PICKER_BUTTON (self)), 
 								     0), 
 				    &active, MODEL_COL_MCC, &mcc, -1);
-#endif
 		return mcc;	
 	}
 	return 0; /* Failed. */
@@ -358,33 +329,23 @@ easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *se
  * Specify 0 to select no country. 
  */
 gboolean
-easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox *self)
+modest_country_picker_set_active_country_locale (ModestCountryPicker *self)
 {
-	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
+	ModestCountryPickerPrivate *priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
 	GtkTreeIter iter;
 	gint current_mcc;
 	GtkTreeModel *model;
 
-#if MODEST_HILDON_API < 2
-	model = gtk_combo_box_get_model (GTK_COMBO_BOX (self));
-	g_message ("HILDON < 2");
-#else
 	model = hildon_touch_selector_get_model (hildon_picker_button_get_selector 
 						 (HILDON_PICKER_BUTTON (self)), 0);
-	g_message ("HILDON >= 2");
-#endif
 	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;
 	do {
 		gtk_tree_model_get (model, &iter, MODEL_COL_MCC, &current_mcc, -1);
 		if (priv->locale_mcc == current_mcc) {
-#if MODEST_HILDON_API < 2
-			gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), &iter);
-#else
 			hildon_touch_selector_select_iter (hildon_picker_button_get_selector 
 							   (HILDON_PICKER_BUTTON (self)), 0, 
 							   &iter, TRUE);
-#endif
 			return TRUE;
 		}
 	} while (gtk_tree_model_iter_next (model, &iter));

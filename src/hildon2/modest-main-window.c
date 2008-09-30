@@ -61,7 +61,7 @@
 #include "modest-progress-bar.h"
 #include "modest-text-utils.h"
 #include "modest-ui-dimming-manager.h"
-#include "maemo/modest-osso-state-saving.h"
+#include "modest-osso-state-saving.h"
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
 

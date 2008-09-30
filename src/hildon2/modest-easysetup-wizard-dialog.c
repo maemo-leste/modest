@@ -40,9 +40,9 @@
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
-#include "maemo/easysetup/modest-easysetup-country-combo-box.h"
-#include "maemo/easysetup/modest-easysetup-provider-combo-box.h"
-#include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
+#include "modest-country-picker.h"
+#include "modest-easysetup-provider-combo-box.h"
+#include "modest-easysetup-servertype-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-conf.h"
@@ -51,14 +51,14 @@
 #include "modest-signal-mgr.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
-#include "maemo/modest-connection-specific-smtp-window.h"
+#include "modest-connection-specific-smtp-window.h"
 #include "widgets/modest-ui-constants.h"
 #include "widgets/modest-default-account-settings-dialog.h"
 #include "widgets/modest-easysetup-wizard-page.h"
-#include "maemo/modest-maemo-utils.h"
+#include "modest-maemo-utils.h"
 #include "modest-utils.h"
-#include "maemo/modest-hildon-includes.h"
-#include "maemo/modest-maemo-security-options-view.h"
+#include "modest-hildon-includes.h"
+#include "modest-maemo-security-options-view.h"
 #include <modest-account-protocol.h>
 
 /* Include config.h so that _() works: */
@@ -103,7 +103,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *page_welcome;
 	
 	GtkWidget *page_account_details;
-	GtkWidget *combo_account_country;
+	GtkWidget *account_country_picker;
 	GtkWidget *combo_account_serviceprovider;
 	GtkWidget *entry_account_title;
 	
@@ -390,13 +390,8 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	return GTK_WIDGET (box);
 }
 
-#if MODEST_HILDON_API < 2
 static void
-on_combo_account_country (GtkComboBox *widget, gpointer user_data)
-#else
-static void
-on_combo_account_country (HildonTouchSelector *widget, gint column, gpointer user_data)
-#endif
+on_account_country_selector_changed (HildonTouchSelector *widget, gint column, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -406,8 +401,8 @@ on_combo_account_country (HildonTouchSelector *widget, gint column, gpointer use
 	
 	/* Fill the providers combo, based on the selected country: */
 	if (priv->presets != NULL) {
-		gint mcc = easysetup_country_combo_box_get_active_country_mcc (
-			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
+		gint mcc = modest_country_picker_get_active_country_mcc (
+			MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		easysetup_provider_combo_box_fill (
 			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider), priv->presets, mcc);
 	}
@@ -466,23 +461,18 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* The country widgets: */
-	priv->combo_account_country = GTK_WIDGET (easysetup_country_combo_box_new ());
+	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new ());
 	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_country"), 
-							      priv->combo_account_country, NULL, HILDON_CAPTION_OPTIONAL);
-	gtk_widget_show (priv->combo_account_country);
+							      priv->account_country_picker, NULL, HILDON_CAPTION_OPTIONAL);
+	gtk_widget_show (priv->account_country_picker);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* connect to country combo's changed signal, so we can fill the provider combo: */
-#if MODEST_HILDON_API < 2
-	g_signal_connect (G_OBJECT (priv->combo_account_country), "changed",
-			  G_CALLBACK (on_combo_account_country), self);
-#else
 	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
-				    (HILDON_PICKER_BUTTON (priv->combo_account_country))),
+				    (HILDON_PICKER_BUTTON (priv->account_country_picker))),
 			  "changed",
-			  G_CALLBACK (on_combo_account_country), self);
-#endif
+			  G_CALLBACK (on_account_country_selector_changed), self);
             
 	GtkWidget *separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -1119,18 +1109,16 @@ presets_idle (gpointer userdata)
 
 	priv->presets = idle_data->presets;
 
-	if (MODEST_EASYSETUP_IS_COUNTRY_COMBO_BOX (priv->combo_account_country)) {
+	if (MODEST_IS_COUNTRY_PICKER (priv->account_country_picker)) {
 /* 		gint mcc = get_default_country_code(); */
 		gint mcc;
 		/* Fill the combo in an idle call, as it takes a lot of time */
-		easysetup_country_combo_box_load_data(
-			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
-/* 		easysetup_country_combo_box_set_active_country_mcc ( */
-/* 			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country), mcc); */
-		easysetup_country_combo_box_set_active_country_locale (
-			MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
-		mcc = easysetup_country_combo_box_get_active_country_mcc (
-		        MODEST_EASYSETUP_COUNTRY_COMBO_BOX (priv->combo_account_country));
+		modest_country_picker_load_data(
+			MODEST_COUNTRY_PICKER (priv->account_country_picker));
+		modest_country_picker_set_active_country_locale (
+			MODEST_COUNTRY_PICKER (priv->account_country_picker));
+		mcc = modest_country_picker_get_active_country_mcc (
+		        MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		easysetup_provider_combo_box_fill (
 			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider),
 			priv->presets, mcc);

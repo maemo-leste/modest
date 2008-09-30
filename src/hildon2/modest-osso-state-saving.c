@@ -28,7 +28,7 @@
  */
 
 
-#include <maemo/modest-osso-state-saving.h>
+#include <modest-osso-state-saving.h>
 #include "modest-runtime.h"
 #include <libosso.h>
 

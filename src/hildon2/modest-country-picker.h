@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2008, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,67 +27,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MODEST_EASYSETUP_COUNTRY_COMBO_BOX
-#define _MODEST_EASYSETUP_COUNTRY_COMBO_BOX
+#ifndef _MODEST_COUNTRY_PICKER
+#define _MODEST_COUNTRY_PICKER
 
-#if MODEST_HILDON_API < 2
-#include <gtk/gtkcombobox.h>
-#else
 #include <hildon/hildon-picker-button.h>
-#endif
 
 G_BEGIN_DECLS
 
-#define MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX easysetup_country_combo_box_get_type()
+#define MODEST_TYPE_COUNTRY_PICKER modest_country_picker_get_type()
 
-#define MODEST_EASYSETUP_COUNTRY_COMBO_BOX(obj) \
+#define MODEST_COUNTRY_PICKER(obj) \
 	(G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-	MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, EasysetupCountryComboBox))
+	MODEST_TYPE_COUNTRY_PICKER, ModestCountryPicker))
 
-#define MODEST_EASYSETUP_COUNTRY_COMBO_BOX_CLASS(klass) \
+#define MODEST_COUNTRY_PICKER_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
-	MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, EasysetupCountryComboBoxClass))
+	MODEST_TYPE_COUNTRY_PICKER, ModestCountryPickerClass))
 
-#define MODEST_EASYSETUP_IS_COUNTRY_COMBO_BOX(obj) \
+#define MODEST_IS_COUNTRY_PICKER(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX))
+	MODEST_TYPE_COUNTRY_PICKER))
 
-#define MODEST_EASYSETUP_IS_COUNTRY_COMBO_BOX_CLASS(klass) \
+#define MODEST_IS_COUNTRY_PICKER_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
-	MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX))
+	MODEST_TYPE_COUNTRY_PICKER))
 
-#define MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_CLASS(obj) \
+#define MODEST_COUNTRY_PICKER_GET_CLASS(obj) \
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
-	MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, EasysetupCountryComboBoxClass))
+	MODEST_TYPE_COUNTRY_PICKER, ModestCountryPickerClass))
 
-#if MODEST_HILDON_API < 2
-typedef struct {
-	GtkComboBox parent;
-} EasysetupCountryComboBox;
-
-typedef struct {
-	GtkComboBoxClass parent_class;
-} EasysetupCountryComboBoxClass;
-#else
 typedef struct {
 	HildonPickerButton parent;
-} EasysetupCountryComboBox;
+} ModestCountryPicker;
 
 typedef struct {
 	HildonPickerButtonClass parent_class;
-} EasysetupCountryComboBoxClass;
-#endif
-GType easysetup_country_combo_box_get_type (void);
+} ModestCountryPickerClass;
 
-EasysetupCountryComboBox* easysetup_country_combo_box_new (void);
+GType modest_country_picker_get_type (void);
 
-void easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self);
+ModestCountryPicker* modest_country_picker_new (void);
 
-gint easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *self);
+void modest_country_picker_load_data(ModestCountryPicker *self);
+
+gint modest_country_picker_get_active_country_mcc (ModestCountryPicker *self);
 
 
-gboolean easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox *self);
+gboolean modest_country_picker_set_active_country_locale (ModestCountryPicker *self);
 
 G_END_DECLS
 
-#endif /* _MODEST_EASYSETUP_COUNTRY_COMBO_BOX */
+#endif /* _MODEST_COUNTRY_PICKER */
