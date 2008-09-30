@@ -8,17 +8,17 @@ INCLUDES=\
 	-I$(top_srcdir) \
 	-DPREFIX=\"@prefix@\" \
 	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\"
-	
+
 objects=\
 	@CHECK_LIBS@ \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_PLATFORM_LIBS)	\
-	$(MODEST_HILDON_WIDGETS_LIBS) \
+	$(MODEST_TOOLKIT_LIBS) \
 	$(MODEST_HILDON_HELP_LIBS) \
 	$(MODEST_HILDON_NOTIFY_LIBS) \
 	$(MODEST_OGS_LIBS) \
 	${top_srcdir}/libmodest-dbus-client/libmodest-dbus-client-1.0.la
-        
+
 noinst_PROGRAMS = \
 	test_mail_to \
 	test_open_message   \

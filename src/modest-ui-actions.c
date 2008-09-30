@@ -51,9 +51,11 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
+#endif /* MODEST_PLATFORM_MAEMO */
+#ifndef MODEST_TOOLKIT_GTK
 #include "maemo/modest-hildon-includes.h"
 #include "maemo/modest-connection-specific-smtp-window.h"
-#endif /* MODEST_PLATFORM_MAEMO */
+#endif /* !MODEST_TOOLKIT_GTK */
 #include <modest-utils.h>
 
 #include "widgets/modest-ui-constants.h"
@@ -673,7 +675,7 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 	 * because it requires an API (libconic) to detect different connection 
 	 * possiblities.
 	 */
-#ifdef MODEST_PLATFORM_MAEMO /* Defined in config.h */
+#ifndef MODEST_TOOLKIT_GTK /* Defined in config.h */
 	
 	/* Create the window if necessary: */
 	GtkWidget *specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
@@ -685,7 +687,7 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (specific_window));
     	gtk_widget_show (specific_window);
-#endif /* MODEST_PLATFORM_MAEMO */
+#endif /* !MODEST_TOOLKIT_GTK */
 }
 
 void
@@ -2452,7 +2454,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			   already being done by the sort
 			   dialog. Remove it when the GNOME version
 			   has the same behaviour */
-#ifdef MODEST_PLATFORM_GNOME
+#ifdef MODEST_TOOLKIT_GTK
 			if (modest_main_window_get_contents_style (main_window) ==
 			    MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
 				modest_widget_memory_save (conf, G_OBJECT (header_view), 
@@ -3032,7 +3034,7 @@ modest_ui_actions_on_remove_attachments (GtkAction *action,
 }
 
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 typedef struct {
 	guint handler;
 	gchar *name;
@@ -3087,7 +3089,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 		/* Try again. Do *NOT* show any error because the mail
 		   operations system will do it for us because we
 		   created the mail_op with new_with_error_handler */
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 		CreateFolderHelper *helper;
 		helper = g_slice_new0 (CreateFolderHelper);
 		helper->name = g_strdup (suggested_name);
@@ -3538,7 +3540,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	if (remember)
 		*remember = TRUE;
 		
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	/* Maemo uses a different (awkward) button order,
 	 * It should probably just use gtk_alternative_dialog_button_order ().
 	 */
@@ -3559,7 +3561,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					      GTK_STOCK_OK,
 					      GTK_RESPONSE_ACCEPT,
 					      NULL);
-#endif /* MODEST_PLATFORM_MAEMO */
+#endif /* !MODEST_TOOLKIT_GTK */
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (dialog));
 	
@@ -3600,7 +3602,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	 */
 	gtk_widget_set_sensitive (entry_username, FALSE);
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_username), HILDON_GTK_INPUT_MODE_FULL);
 	
@@ -3618,14 +3620,14 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 #else 
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_username,
 			    TRUE, FALSE, 0);
-#endif /* MODEST_PLATFORM_MAEMO */	
+#endif /* !MODEST_TOOLKIT_GTK */	
 			    
 	/* password: */
 	GtkWidget *entry_password = gtk_entry_new ();
 	gtk_entry_set_visibility (GTK_ENTRY(entry_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), "*"); */
 	
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
@@ -3640,7 +3642,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 #else 
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_password,
 			    TRUE, FALSE, 0);
-#endif /* MODEST_PLATFORM_MAEMO */	
+#endif /* !MODEST_TOOLKIT_GTK */	
 
 	if (initial_username != NULL)
 		gtk_widget_grab_focus (GTK_WIDGET (entry_password));
@@ -4465,7 +4467,7 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 		return;
 
 	children = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	ok_button = GTK_WIDGET (children->next->next->data);
 	new_button = GTK_WIDGET (children->next->data);
 #else
@@ -4610,7 +4612,7 @@ create_move_to_dialog (GtkWindow *win,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                      NULL);
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
 	/* We do this manually so GTK+ does not associate a response ID for
 	 * the button. */
@@ -4635,7 +4637,7 @@ create_move_to_dialog (GtkWindow *win,
 					 GTK_POLICY_AUTOMATIC,
 					 GTK_POLICY_AUTOMATIC);
 
-#ifndef MODEST_PLATFORM_MAEMO
+#ifdef MODEST_TOOLKIT_GTK
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll), GTK_SHADOW_IN);
 #endif
 
@@ -4718,7 +4720,7 @@ create_move_to_dialog (GtkWindow *win,
 			    scroll, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
 #else
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);

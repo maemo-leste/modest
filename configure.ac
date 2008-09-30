@@ -145,6 +145,82 @@ elif test "$with_platform" = "gnome"; then
 	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME"
 fi
 
+#
+# check the widgets library
+#
+have_hildon2=false
+have_hildon1=false
+have_hildon0=false
+have_gtk=false
+PKG_CHECK_EXISTS(hildon-1, have_hildon1=true,have_hildon1=false)
+if test "$have_hildon1" = "true"; then
+   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0, have_hildon2=true, have_hildon2=false)
+   PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-1 hildon-fm-2)
+   hildonpkgs="hildon-1 hildon-fm-2"
+   detected_toolkit=hildon1
+   echo "DETECTED HILDON 1 $have_hildon2."
+   if test "$have_hildon2" = "true"; then
+      echo "DETECTED HILDON 2 $have_hildon2."
+      detected_toolkit=hildon2
+   fi
+else
+   hildonpkgs="hildon-libs hildon-fm"
+   detected_toolkit=hildon1
+   PKG_CHECK_EXISTS(hildon-libs >= 0.12.0, have_hildon1=true, have_hildon1=false)
+   if test "$have_hildon1" = "false"; then
+      PKG_CHECK_EXISTS(hildon-libs, have_hildon0=true, have_hildon0=false)
+      if test "$have_hildon0" = "false"; then
+      	 have_gtk=true
+	 detected_toolkit=gtk
+	 hildonpkgs=
+      fi
+   fi
+   if test "$have_gtk" = "false"; then
+      PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-libs hildon-fm)
+   fi
+fi
+
+hildon_api=
+if test "$have_hildon0" = "true"; then
+   hildon_api=0
+elif test "$have_hildon1" = "true"; then
+   hildon_api=1
+elif test "$have_gtk" = "false"; then
+   hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
+fi
+
+AC_DEFINE_UNQUOTED(MODEST_HILDON_API, $hildon_api, ["the API version of hildon"])
+MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_HILDON_API=$hildon_api"
+
+AC_ARG_WITH(toolkit, [
+Target toolkit:
+  --with-toolkit=detect  detect target toolkit (default)
+  --with-toolkit=gtk   build for Gnome
+  --with-toolkit=hildon1   build for Hildon 1.x
+  --with-toolkit=hildon2   build for Hildon 2.x
+],
+[case "${with_toolkit}" in
+       gtk|hildon1|hildon2|detect)    MODEST_TOOLKIT=${with_toolkit};;
+       *)        AC_MSG_ERROR([Unknown platform selected]);;
+esac], [MODEST_TOOLKIT=detect])
+
+if test "$MODEST_TOOLKIT" = "detect"; then
+	MODEST_TOOLKIT="$detected_toolkit"
+	with_toolkit=$detected_toolkit
+fi
+
+if test "$with_toolkit" = "hildon1"; then
+   	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON1"
+elif test "$with_platform" = "hildon2"; then
+	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON2"
+elif test "$with_platform" = "gtk"; then
+	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_GNOME"
+fi
+
+AC_SUBST(hildonpkgs)
+AC_SUBST(MODEST_PLUGIN_DEFINES)
+
+
 dnl Whether to use maemo-launcher or not
 AC_ARG_ENABLE([maemo-launcher],
 	      [AS_HELP_STRING([--enable-maemo-launcher],
@@ -162,19 +238,35 @@ then
 fi
 
 have_easysetup=false
+if test "x$with_toolkit" == "xgtk"; then
+   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
+   AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_GTK, 1, ["Whether modest is being build for the gtk toolkit."])
+   MODEST_TOOLKIT_DIR=gnome
+else
+   have_easysetup=true
+   PKG_CHECK_MODULES(MODEST_TOOLKIT,$hildonpkgs)
+   if test "$with_toolkit" = "hildon2"; then
+      AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
+      MODEST_TOOLKIT_DIR=maemo
+   else
+      AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON1, 1, ["Whether modest is being build for the hildon2 toolkit."])
+      MODEST_TOOLKIT_DIR=maemo
+   fi
+    AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
+fi
+AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test "x$have_easysetup" == "xtrue")
+AC_SUBST(MODEST_TOOLKIT)
+AC_SUBST(MODEST_TOOLKIT_DIR)
+
 if test "x$with_platform" == "xgnome"; then
-      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
+      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 libnotify)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 dnl     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
-    have_easysetup=true
     have_dbusapi=true
     PKG_CHECK_MODULES(MODEST_PLATFORM,libosso dbus-1 libtinymail-maemo-1.0 libebook-1.2 )
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
-    AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
-fi		    
-
-AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test "x$have_easysetup" == "xtrue")
+fi
 AM_CONDITIONAL(MODEST_HAVE_DBUS_API,test "x$have_dbusapi" == "xtrue")
 AC_SUBST(MODEST_PLATFORM)
 
@@ -183,7 +275,7 @@ AC_SUBST(MODEST_PLATFORM)
 #
 # check for wpeditor or libwpeditor-plus (on maemo)
 #
-if test "x$with_platform" == "xmaemo"; then  
+if test "x$with_toolkit" != "xgtk"; then  
 PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)
 if test "x$have_wpeditor" == "xfalse"; then
    PKG_CHECK_MODULES(MODEST_WPEDITOR,libwpeditor-plus,have_libwpeditorplus=true,have_libwpeditorplus=false)	
@@ -251,7 +343,7 @@ fi
 #
 # check hildon-help (only for maemo)
 #
-if test "x$with_platform" == "xmaemo"; then  
+if test "x$with_toolkit" != "xgtk"; then  
    PKG_CHECK_MODULES(MODEST_HILDON_HELP,hildon-help,have_hildon_help=true,have_hildon_help=false)
    if test "x$have_hildon_help" == "xfalse"; then
       PKG_CHECK_MODULES(MODEST_HILDON_HELP,libossohelp,have_osso_help=true,have_osso_help=false)	
@@ -272,7 +364,7 @@ fi
 #
 # check for the notification stuff (only maemo)
 #
-if test "x$with_platform" == "xmaemo"; then  
+if test "x$with_toolkit" != "xgtk"; then  
    PKG_CHECK_MODULES(MODEST_HILDON_NOTIFY,hildon-notify libnotify,have_hildon_notify=true,have_hildon_notify=false)
    if test "x$have_hildon_notify" == "xtrue"; then
       AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_NOTIFY, 1, ["Whether hildon-notify is available"])      
@@ -283,7 +375,7 @@ fi
 #
 # check for the uri/mime stuff
 #
-if test "x$with_platform" == "xmaemo"; then  
+if test "x$with_toolkit" != "xgtk"; then  
    PKG_CHECK_MODULES(MODEST_HILDON_MIME,libhildonmime,have_hildonmime=true,have_hildonmime=false)
    if test "x$have_hildonmime" == "xfalse"; then
       PKG_CHECK_MODULES(MODEST_HILDON_MIME,libossomime,have_ossomime=true,have_ossomime=false)	
@@ -347,30 +439,6 @@ fi
 
 
 
-#
-# check the version of the widgets on maemo
-#
-hildonpkgs=
-if test "x$with_platform" == "xmaemo"; then  
-PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS, hildon-1 >= 0.9.9 hildon-fm-2, have_hildon1=true,have_hildon1=false)	
-hildonpkgs=hildon-1
-
-if test "x$have_hildon1" == "xfalse"; then 
-   PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS, hildon-libs >= 0.12.0 hildon-fm, have_hildon0=true,have_hildon0=false)	
-   hildonpkgs=hildon-libs
-   if test "x$have_hildon0" == "xtrue"; then
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON0_WIDGETS, 1, ["Whether hildon0 widgets are used."])		      
-      MODEST_PLUGIN_DEFINES+=" -DMODEST_HAVE_HILDON0_WIDGETS"
-   else
-      AC_MSG_ERROR([hildon widgets and/or hildon-fm not found])
-   fi
-else
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON1_WIDGETS, 1, ["Whether hildon1 widgets are used."])		    
-fi
-fi
-
-AC_SUBST(hildonpkgs)
-AC_SUBST(MODEST_PLUGIN_DEFINES)
 
 #
 # check the version of the addressbook on maemo
@@ -444,19 +512,7 @@ if test "x$with_platform" == "xmaemo"; then
    AC_SUBST(pluginlibdir)
    AC_SUBST(plugindesktopentrydir)
 
-else
-   # gnome frontend 
-   PKG_CHECK_MODULES(MODEST_LIBTINYMAIL_GNOME_DESKTOP,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
-   AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS)
-   AC_SUBST(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS)  
-   AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
-
-  # no dbus api for gnome
-  dbus_api=""
-  AC_SUBST(dbus_api)
-
 fi
-
 
 dnl ## setup the testing framework (ie., make check)
 build_tests=false
@@ -520,6 +576,7 @@ echo
 echo "modest configure results"
 echo "-----------------------------------"
 echo "Platform         : $with_platform"
+echo "Toolkit          : $with_toolkit"
 echo "Prefix           : ${prefix}"
 echo "Build tests      : $build_tests"
 echo "Build docs       : $build_docs"

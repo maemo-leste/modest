@@ -50,9 +50,9 @@
 #include <widgets/modest-ui-constants.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 #include "maemo/modest-hildon-includes.h"
-#endif /*MODEST_PLATFORM_MAEMO*/
+#endif /*!MODEST_TOOLKIT_GTK*/
 
 
 /* 'private'/'protected' functions */

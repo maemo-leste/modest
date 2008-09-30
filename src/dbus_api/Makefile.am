@@ -30,7 +30,7 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
-	$(MODEST_HILDON_WIDGETS_CFLAGS)\
+	$(MODEST_TOOLKIT_CFLAGS)\
 	$(MODEST_OGS_CFLAGS) \
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
@@ -51,6 +51,6 @@ libmodest_dbus_api_la_SOURCES=              \
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_PLATFORM_LIBS) \
-	$(MODEST_HILDON_WIDGETS_LIBS) \
+	$(MODEST_TOOLKIT_LIBS) \
 	$(MODEST_OGS_LIBS)
 

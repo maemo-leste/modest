@@ -194,7 +194,7 @@ restore_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 	   gtk_window_set_default_size() makes "drag-motion" signal
 	   report bad coordinates, so drag-and-drop do not work
 	   properly */
-#ifdef MODEST_PLATFORM_GNOME
+#ifdef MODEST_TOOLKIT_GTK
 	if (height && width)
 		gtk_window_set_default_size (win, width, height);
 #endif

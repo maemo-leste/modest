@@ -13,6 +13,7 @@ Cflags: -I${includedir}/modest-plugin-1.0 @MODEST_PLUGIN_DEFINES@
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
 	$(MODEST_PLATFORM_LIBS)	                        \
+	$(MODEST_TOOLKIT_LIBS)	                        \
 	$(MODEST_HILDON_WIDGETS_LIBS)			\
 	$(MODEST_HILDON_HELP_LIBS)			\
 	$(MODEST_HILDON_NOTIFY_LIBS)			\

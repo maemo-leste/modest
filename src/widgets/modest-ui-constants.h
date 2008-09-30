@@ -35,7 +35,7 @@
  * title "RE: Standard widget spacing and padding?":
  */
 
-#ifdef MODEST_PLATFORM_MAEMO 
+#ifndef MODEST_TOOLKIT_GTK 
 #define MODEST_MARGIN_DEFAULT 6
 #define MODEST_MARGIN_DOUBLE 12
 #define MODEST_MARGIN_TRIPLE 18
@@ -45,8 +45,8 @@
 #define MODEST_DIALOG_WINDOW_MIN_HEIGHT 172
 #define MODEST_DIALOG_WINDOW_MAX_WIDTH 642
 #define MODEST_DIALOG_WINDOW_MIN_WIDTH 172
+#else /* MODEST_TOOLKIT_GTK */
 /* TODO: review this values with GNOME HIG */
-#else
 #define MODEST_MARGIN_DEFAULT 6
 #define MODEST_MARGIN_DOUBLE 12
 #define MODEST_MARGIN_TRIPLE 18

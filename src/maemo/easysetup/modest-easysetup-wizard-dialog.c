@@ -28,7 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
  
-
+#include <config.h>
 #include "modest-easysetup-wizard-dialog.h"
 #include <glib/gi18n.h>
 #include <gtk/gtknotebook.h>
@@ -390,8 +390,13 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	return GTK_WIDGET (box);
 }
 
+#if MODEST_HILDON_API < 2
 static void
 on_combo_account_country (GtkComboBox *widget, gpointer user_data)
+#else
+static void
+on_combo_account_country (HildonTouchSelector *widget, gint column, gpointer user_data)
+#endif
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -469,8 +474,15 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (caption);
 	
 	/* connect to country combo's changed signal, so we can fill the provider combo: */
+#if MODEST_HILDON_API < 2
 	g_signal_connect (G_OBJECT (priv->combo_account_country), "changed",
 			  G_CALLBACK (on_combo_account_country), self);
+#else
+	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
+				    (HILDON_PICKER_BUTTON (priv->combo_account_country))),
+			  "changed",
+			  G_CALLBACK (on_combo_account_country), self);
+#endif
             
 	GtkWidget *separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);

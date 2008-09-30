@@ -30,7 +30,11 @@
 #ifndef _MODEST_EASYSETUP_COUNTRY_COMBO_BOX
 #define _MODEST_EASYSETUP_COUNTRY_COMBO_BOX
 
+#if MODEST_HILDON_API < 2
 #include <gtk/gtkcombobox.h>
+#else
+#include <hildon/hildon-picker-button.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -56,6 +60,7 @@ G_BEGIN_DECLS
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
 	MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, EasysetupCountryComboBoxClass))
 
+#if MODEST_HILDON_API < 2
 typedef struct {
 	GtkComboBox parent;
 } EasysetupCountryComboBox;
@@ -63,7 +68,15 @@ typedef struct {
 typedef struct {
 	GtkComboBoxClass parent_class;
 } EasysetupCountryComboBoxClass;
+#else
+typedef struct {
+	HildonPickerButton parent;
+} EasysetupCountryComboBox;
 
+typedef struct {
+	HildonPickerButtonClass parent_class;
+} EasysetupCountryComboBoxClass;
+#endif
 GType easysetup_country_combo_box_get_type (void);
 
 EasysetupCountryComboBox* easysetup_country_combo_box_new (void);

@@ -58,7 +58,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-notification.h>
 #endif /*MODEST_HILDON_NOTIFY*/
 
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-color-selector.h>
 #include <hildon-widgets/hildon-color-button.h>
 #include <hildon-widgets/hildon-banner.h>
@@ -73,7 +73,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 
 #else
 
-#ifdef MODEST_HAVE_HILDON1_WIDGETS
+#if MODEST_HILDON_API >= 1
 #include <hildon/hildon-helper.h>
 #include <hildon/hildon-file-chooser-dialog.h>
 #include <hildon/hildon-color-chooser.h>

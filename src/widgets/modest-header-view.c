@@ -379,7 +379,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date_or_status);
 
 	g_object_set (G_OBJECT (renderer_subject_box), "yalign", 1.0, NULL);
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	gtk_cell_renderer_set_fixed_size (renderer_subject_box, -1, 32);
 	gtk_cell_renderer_set_fixed_size (renderer_recpt_box, -1, 32);
 #endif
@@ -404,7 +404,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set (G_OBJECT (renderer_attach),
 		      "yalign", 0.0, NULL);
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	gtk_cell_renderer_set_fixed_size (renderer_attach, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_priority, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
@@ -787,7 +787,7 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 static void
 scroll_to_selected (ModestHeaderView *self, GtkTreeIter *iter, gboolean up)
 {
-#ifdef MODEST_PLATFORM_GNOME 
+#ifdef MODEST_TOOLKIT_GTK 
 
 	GtkTreePath *selected_path;
 	GtkTreePath *start, *end;
@@ -812,7 +812,7 @@ scroll_to_selected (ModestHeaderView *self, GtkTreeIter *iter, gboolean up)
 	gtk_tree_path_free (start);
 	gtk_tree_path_free (end);
 
-#endif /* MODEST_PLATFORM_GNOME */
+#endif /* MODEST_TOOLKIT_GTK */
 }
 
 

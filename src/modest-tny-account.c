@@ -48,8 +48,8 @@
 #include <tny-merge-folder.h>
 #include <modest-debug.h>
 #include <string.h>
-#ifdef MODEST_PLATFORM_MAEMO
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#ifndef MODEST_TOOLKIT_GTK
+#if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-file-system-info.h>
 #else
 #include <hildon/hildon-file-system-info.h>
@@ -591,7 +591,7 @@ typedef struct
 
 
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 /* Gets the memory card name: */
 static void 
 on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
@@ -632,7 +632,7 @@ on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
 
 void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data)
 {
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	/* Just use the hard-coded path for the single memory card,
 	 * rather than try to figure out the path to the specific card by 
 	 * looking at the maildir URI:

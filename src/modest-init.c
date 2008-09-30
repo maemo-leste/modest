@@ -51,7 +51,7 @@
 #include <libgnomevfs/gnome-vfs.h>
 #include <string.h>
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 #include "modest-hildon-includes.h"
 #endif
 #include <locale.h>
@@ -111,7 +111,7 @@ static const FolderCols SENT_COLUMNS_TWOLINES[] = {
 	{MODEST_HEADER_VIEW_COLUMN_COMPACT_HEADER_OUT,180, 0},
 };
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 static const TnyFolderType LOCAL_FOLDERS[] = {
 /*	TNY_FOLDER_TYPE_OUTBOX, */
 	TNY_FOLDER_TYPE_DRAFTS,
@@ -125,7 +125,7 @@ static const TnyFolderType LOCAL_FOLDERS[] = {
 	TNY_FOLDER_TYPE_TRASH,
 	TNY_FOLDER_TYPE_ARCHIVE	
 };
-#endif /* MODEST_PLATFORM_MAEMO */
+#endif /* MODEST_TOOLKIT_GTK */
 
 static GList*
 new_cold_ids_gslist_from_array( const FolderCols* cols, guint col_num)
@@ -625,10 +625,10 @@ init_stock_icons (void)
 		gint i;
 
 		static GtkStockItem items[] = {
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 			{ MODEST_STOCK_SORT, "sort mail", 0, 0, NULL },
 			{ MODEST_STOCK_REFRESH, "refresh mail", 0, 0, NULL },
-#endif /*MODEST_PLATFORM_MAEMO*/
+#endif /*MODEST_TOOLKIT_GTK*/
 			{ MODEST_STOCK_SPLIT_VIEW, "split view", 0, 0, NULL },
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
@@ -643,10 +643,10 @@ init_stock_icons (void)
 		};
       
 		static gchar *items_names [] = {
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 			MODEST_TOOLBAR_ICON_SORT,
 			MODEST_TOOLBAR_ICON_REFRESH,
-#endif /*MODEST_PLATFORM_MAEMO*/
+#endif /*MODEST_TOOLKIT_GTK*/
 			MODEST_TOOLBAR_ICON_SPLIT_VIEW,
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
 			MODEST_TOOLBAR_ICON_NEW_MAIL,
@@ -675,7 +675,7 @@ init_stock_icons (void)
 		/* Register icons to accompany stock items */
 		for (i = 0; i < G_N_ELEMENTS (items); i++) {
 
-#ifdef MODEST_PLATFORM_MAEMO  /* MODES_PLATFORM_ID: 1 ==> gnome, 2==> maemo */ 
+#ifndef MODEST_PLATFORM_GTK  
 			pixbuf = gtk_icon_theme_load_icon (current_theme,
 							   items_names[i],
 							   26,

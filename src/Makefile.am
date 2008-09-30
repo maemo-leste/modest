@@ -2,14 +2,13 @@
 # Makefile.am
 # Time-stamp: <2008-01-06 10:18:49 (djcb)>
 
-SUBDIRS= $(MODEST_PLATFORM) widgets $(dbus_api)
-
+SUBDIRS= $(MODEST_TOOLKIT_DIR) widgets $(dbus_api)
 DIST_SUBDIRS = widgets gnome maemo dbus_api
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)					\
 	$(MODEST_PLATFORM_CFLAGS)				\
-	$(MODEST_HILDON_WIDGETS_CFLAGS)				\
+	$(MODEST_TOOLKIT_CFLAGS)				\
 	$(MODEST_OGS_CFLAGS)					\
 	$(MODEST_HILDON_HELP_CFLAGS)				\
 	$(MODEST_LIBCONIC_CFLAGS)				\
@@ -155,7 +154,7 @@ libmodest_la_SOURCES=\
 
 if MODEST_USE_DUMMY_ADDRESS_BOOK
 libmodest_la_SOURCES += modest-address-book-dummy.c
-endif 
+endif
 
 
 libmodest_la_CFLAGS  = $(MAEMO_LAUNCHER_CFLAGS)
@@ -164,7 +163,7 @@ libmodest_la_LIBADD = 						\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
 	$(MODEST_PLATFORM_LIBS)	                        \
-	$(MODEST_HILDON_WIDGETS_LIBS)			\
+	$(MODEST_TOOLKIT_LIBS)			\
 	$(MODEST_HILDON_HELP_LIBS)			\
 	$(MODEST_HILDON_NOTIFY_LIBS)			\
 	$(MODEST_OGS_LIBS)				\
@@ -192,7 +191,7 @@ modest_LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
 	$(MODEST_PLATFORM_LIBS)	                        \
-	$(MODEST_HILDON_WIDGETS_LIBS)			\
+	$(MODEST_TOOLKIT_LIBS)			\
 	$(MODEST_HILDON_HELP_LIBS)			\
 	$(MODEST_HILDON_NOTIFY_LIBS)			\
 	$(MODEST_OGS_LIBS)				\

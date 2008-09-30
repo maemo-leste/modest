@@ -45,18 +45,16 @@ G_BEGIN_DECLS
  * admittedly, the ifdefs for gtk and maemo are rather ugly; still
  * this way is probably the easiest to maintain
  */
-#ifdef MODEST_PLATFORM_GNOME
+#ifdef MODEST_TOOLKIT_GTK
 #include <gtk/gtkwindow.h>
 typedef GtkWindow      ModestWindowParent;
 typedef GtkWindowClass ModestWindowParentClass;
-#endif /* MODEST_PLATFORM_GNOME */
-
-#ifdef MODEST_PLATFORM_MAEMO
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#else
+#if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-window.h>
 #else
 #include <hildon/hildon-window.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
+#endif /*MODEST_HILDON_API == 0*/
 typedef HildonWindow      ModestWindowParent;
 typedef HildonWindowClass ModestWindowParentClass;
 
@@ -64,7 +62,7 @@ typedef HildonWindowClass ModestWindowParentClass;
 #define GTK_STOCK_FULLSCREEN ""
 #endif /*GTK_STOCK_FULLSCREEN*/
 
-#endif /*MODEST_PLATFORM_MAEMO */
+#endif /*!MODEST_TOOLKIT_GTK */
 
 /* Dimmed state variables */
 typedef struct _DimmedState {	

@@ -9,6 +9,7 @@
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
+	$(MODEST_TOOLKIT_CFLAGS) \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
@@ -45,7 +46,8 @@ libmodest_ui_la_SOURCES=              \
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
-	$(MODEST_PLATFORM_LIBS)
+	$(MODEST_PLATFORM_LIBS) \
+	$(MODEST_TOOKIT_LIBS)
 
 pixmapdir = $(datadir)/pixmaps/modest
 pixmap_DATA = $(PIXMAP_FILES)

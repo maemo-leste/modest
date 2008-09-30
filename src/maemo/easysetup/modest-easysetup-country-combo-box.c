@@ -52,7 +52,11 @@
 
 #define MAX_LINE_LEN 128 /* max length of a line in MCC file */
 
+#if MODEST_HILDON_API < 2
 G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, GTK_TYPE_COMBO_BOX);
+#else
+G_DEFINE_TYPE (EasysetupCountryComboBox, easysetup_country_combo_box, HILDON_TYPE_PICKER_BUTTON);
+#endif
 
 typedef struct
 {
@@ -274,28 +278,47 @@ easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 	 */
 	model = gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT);
 	
-	/* Setup the combo box: */
-	GtkComboBox *combobox = GTK_COMBO_BOX (self);
-	
 	/* Country column:
 	 * The ID model column in not shown in the view. */
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (combobox), renderer, TRUE);
-	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
-	"text", MODEL_COL_NAME, NULL);
+
+#if MODEST_HILDON_API < 2
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (self), renderer, TRUE);
+	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (self), renderer, 
+					"text", MODEL_COL_NAME, NULL);
+#else
+	GtkWidget *selector = hildon_touch_selector_new ();
+	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
+	hildon_touch_selector_append_column (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)),
+					     GTK_TREE_MODEL (model),
+					     renderer, "text", MODEL_COL_NAME, NULL);
+#endif
 
 	/* Fill the model with rows: */
 	load_from_file (self, model);
 
 	/* Set this _after_ loading from file, it makes loading faster */
-	gtk_combo_box_set_model (combobox, GTK_TREE_MODEL (model));
+#if MODEST_HILDON_API < 2
+	gtk_combo_box_set_model (GTK_COMBO_BOX (self), GTK_TREE_MODEL (model));
+#else
+	hildon_touch_selector_set_model (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)),
+					 0, GTK_TREE_MODEL (model));
+#endif
 }
 
 EasysetupCountryComboBox*
 easysetup_country_combo_box_new (void)
 {
-	return g_object_new (MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, NULL);
+#if MODEST_HILDON_API >= 2
+	return g_object_new (MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, 
+			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+			     "size", HILDON_SIZE_AUTO,
+			     NULL);
+#else
+	return g_object_new (MODEST_EASYSETUP_TYPE_COUNTRY_COMBO_BOX, 
+			     NULL);
+#endif
 }
 
 /**
@@ -305,11 +328,25 @@ gint
 easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *self)
 {
 	GtkTreeIter active;
-	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self), &active);
+	gboolean found;
+
+#if MODEST_HILDON_API < 2
+	found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (self), &active);
+#else
+	found = hildon_touch_selector_get_selected (hildon_picker_button_get_selector
+						    (HILDON_PICKER_BUTTON (self)), 0, &active);
+#endif
 	if (found) {
 		gint mcc = 0;
+#if MODEST_HILDON_API < 2
 		gtk_tree_model_get (gtk_combo_box_get_model (GTK_COMBO_BOX (self)), 
 				    &active, MODEL_COL_MCC, &mcc, -1);
+#else
+		gtk_tree_model_get (hildon_touch_selector_get_model (hildon_picker_button_get_selector
+								     (HILDON_PICKER_BUTTON (self)), 
+								     0), 
+				    &active, MODEL_COL_MCC, &mcc, -1);
+#endif
 		return mcc;	
 	}
 	return 0; /* Failed. */
@@ -328,13 +365,26 @@ easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox 
 	gint current_mcc;
 	GtkTreeModel *model;
 
+#if MODEST_HILDON_API < 2
 	model = gtk_combo_box_get_model (GTK_COMBO_BOX (self));
+	g_message ("HILDON < 2");
+#else
+	model = hildon_touch_selector_get_model (hildon_picker_button_get_selector 
+						 (HILDON_PICKER_BUTTON (self)), 0);
+	g_message ("HILDON >= 2");
+#endif
 	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;
 	do {
 		gtk_tree_model_get (model, &iter, MODEL_COL_MCC, &current_mcc, -1);
 		if (priv->locale_mcc == current_mcc) {
+#if MODEST_HILDON_API < 2
 			gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), &iter);
+#else
+			hildon_touch_selector_select_iter (hildon_picker_button_get_selector 
+							   (HILDON_PICKER_BUTTON (self)), 0, 
+							   &iter, TRUE);
+#endif
 			return TRUE;
 		}
 	} while (gtk_tree_model_iter_next (model, &iter));

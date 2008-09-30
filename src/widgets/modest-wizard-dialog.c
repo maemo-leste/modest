@@ -54,13 +54,13 @@
 #include <config.h>
 #endif
 
-#ifdef MODEST_PLATFORM_MAEMO
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#ifndef MODEST_TOOLKIT_GTK
+#if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-defines.h>
 #else
 #include <hildon/hildon-defines.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
-#endif /*MODEST_PLATFORM_MAEMO*/
+#endif /*MODEST_HILDON_API == 0*/
+#endif /*!MODEST_TOOLKIT_GTK*/
 
 #include "modest-wizard-dialog.h"
 #include "modest-debug.h"
@@ -249,8 +249,8 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
-#ifdef MODEST_PLATFORM_MAEMO
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#ifndef MODEST_TOOLKIT_GTK
+#if MODEST_HILDON_API == 0
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						HILDON_ICON_SIZE_WIDG_WIZARD);
 #else	    
@@ -259,10 +259,10 @@ init (ModestWizardDialog *wizard_dialog)
 	    icon_size = gtk_icon_size_register("modest_wizard", 50, 50);
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						icon_size);
-#endif /*MODEST_HILDON_VERSION_0*/
-#else /*MODEST_PLATFORM_MAEMO*/
+#endif /*MODEST_HILDON_API == 0*/
+#else /*MODEST_TOOLKIT_GTK*/
     priv->image = gtk_image_new_from_stock (GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_DIALOG);
-#endif /*MODEST_PLATFORM_MAEMO*/
+#endif /*!MODEST_TOOLKIT_GTK*/
     /* Default values for user provided properties */
     priv->notebook = NULL;
     priv->wizard_name = NULL;
@@ -274,7 +274,7 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), FALSE, FALSE, 0);
 
     /* Add response buttons: finish, previous, next, cancel */
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
     gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_finish"), MODEST_WIZARD_DIALOG_FINISH);
     gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_previous"), MODEST_WIZARD_DIALOG_PREVIOUS);
     gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_next"), MODEST_WIZARD_DIALOG_NEXT);

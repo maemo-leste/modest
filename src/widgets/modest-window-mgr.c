@@ -546,7 +546,7 @@ get_show_toolbar_key (GType window_type,
 	return key;
 }
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 static void
 on_window_is_topmost (GObject    *gobject,
 		      GParamSpec *arg1,
@@ -672,7 +672,7 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	/* Listen to window state changes. Unfortunately
 	   window-state-event does not properly work for the Maemo
 	   version, so we need to use is-topmost and the ifdef */
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	priv->window_state_uids = 
 		modest_signal_mgr_connect (priv->window_state_uids, 
 					   G_OBJECT (window), 
@@ -904,7 +904,7 @@ modest_window_mgr_unregister_window (ModestWindowMgr *self,
 
 	/* Disconnect the "window-state-event" handler, we won't need it anymore */
 	if (priv->window_state_uids) {
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 		priv->window_state_uids = 
 			modest_signal_mgr_disconnect (priv->window_state_uids, 
 						      G_OBJECT (window), 

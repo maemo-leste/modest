@@ -42,12 +42,12 @@
 #include "modest-tny-msg.h"
 #include "modest-platform.h"
 #include "widgets/modest-combo-box.h"
-#ifdef MODEST_PLATFORM_MAEMO
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
+#ifndef MODEST_TOOLKIT_GTK
+#if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-number-editor.h>
 #else
 #include <hildon/hildon-number-editor.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
+#endif /*MODEST_HILDON_API = 0*/
 #endif
 /* include other impl specific header files */
 
@@ -168,7 +168,7 @@ _modest_global_settings_dialog_get_connected_via (void)
 	GSList *list = NULL;
 	const gchar *message;
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	const gchar *env_var = getenv ("OSSO_PRODUCT_HARDWARE");
 	/* Check if WIMAX is available */
 	if (env_var && !strncmp (env_var, "RX-48", 5))
@@ -290,7 +290,7 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 	}
 	/* It's better to do this in the subclasses, but it's just one
 	   line, so we'll leave it here for the moment */
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (priv->size_limit), value);
 #else
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit), value);
@@ -330,7 +330,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->auto_update = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
 	state->connect_via = *id;
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 	state->size_limit = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
 #else
 	state->size_limit = gtk_spin_button_get_value (GTK_SPIN_BUTTON (priv->size_limit));

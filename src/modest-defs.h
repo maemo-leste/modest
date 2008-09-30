@@ -80,7 +80,7 @@
 #define MODEST_MAEMO_PROVIDER_DATA_FILE	  PREFIX "/share/modest/provider-data/maemo-provider-data.keyfile"  
 
 
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 #define MODEST_ICON_SIZE_SMALL            26
 #define MODEST_ICON_SIZE_BIG		  64
 #else

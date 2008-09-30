@@ -88,7 +88,7 @@ modest_window_get_type (void)
 			(GInstanceInitFunc) modest_window_init,
 			NULL
 		};
-#ifdef MODEST_PLATFORM_MAEMO
+#ifndef MODEST_TOOLKIT_GTK
 		parent_type = HILDON_TYPE_WINDOW;
 #else
 		parent_type = GTK_TYPE_WINDOW;
