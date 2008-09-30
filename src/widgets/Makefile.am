@@ -9,7 +9,7 @@ INCLUDES=\
 	$(MODEST_HILDON_HELP_CFLAGS)    \
 	$(MODEST_MOZEMBED_CFLAGS) \
 	$(MODEST_HILDON_NOTIFY_CFLAGS) \
-	-I ${top_srcdir}/src/$(MODEST_PLATFORM) \
+	-I ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR) \
 	-I ${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \

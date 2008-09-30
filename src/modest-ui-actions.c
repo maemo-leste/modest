@@ -71,7 +71,11 @@
 #include "modest-text-utils.h"
 
 #ifdef MODEST_HAVE_EASYSETUP
+#ifdef MODEST_TOOLKIT_HILDON2
+#include "modest-easysetup-wizard-dialog.h"
+#else
 #include "easysetup/modest-easysetup-wizard-dialog.h"
+#endif
 #endif /* MODEST_HAVE_EASYSETUP */
 
 #include <modest-widget-memory.h>

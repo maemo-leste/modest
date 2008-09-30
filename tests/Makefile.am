@@ -30,7 +30,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I$(MODEST_PLATFORM) \
+	-I$(MODEST_TOOLKIT_DIR) \
 	-I${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
 	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\"
@@ -39,7 +39,7 @@ objects=\
 	$(MODEST_GSTUFF_LIBS) \
         $(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
         $(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
-        ${top_srcdir}/src/$(MODEST_PLATFORM)/libmodest-ui.la \
+        ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR)/libmodest-ui.la \
         ${top_srcdir}/src/widgets/libmodest-widgets.la \
         ${top_srcdir}/src/dbus_api/libmodest-dbus-api.la \
 	${top_srcdir}/src/modest-runtime.o \

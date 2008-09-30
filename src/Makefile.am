@@ -3,7 +3,7 @@
 # Time-stamp: <2008-01-06 10:18:49 (djcb)>
 
 SUBDIRS= $(MODEST_TOOLKIT_DIR) widgets $(dbus_api)
-DIST_SUBDIRS = widgets gnome maemo dbus_api
+DIST_SUBDIRS = widgets gnome maemo hildon2 dbus_api
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)					\
@@ -15,11 +15,12 @@ INCLUDES=\
 	$(MODEST_HILDON_NOTIFY_CFLAGS)				\
 	$(MODEST_MOZEMBED_CFLAGS)				\
 	-fPIC \
-	-I$(MODEST_PLATFORM)					\
+	-I$(MODEST_TOOLKIT_DIR)					\
 	-DPREFIX=\"@prefix@\"					\
 	-DMAEMO_CHANGES 					\
 	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\"		\
 	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\"		\
+	-DMODEST_TOOLKIT=\"$(MODEST_TOOLKIT)\"		\
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\"		\
 	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"		\
 	-DMODEST_MAILPLUGINDIR=\"$(libdir)/modest/mail-plugins\"
@@ -169,7 +170,7 @@ libmodest_la_LIBADD = 						\
 	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe} \
 	widgets/libmodest-widgets.la                    \
-	$(MODEST_PLATFORM)/libmodest-ui.la		
+	$(MODEST_TOOLKIT_DIR)/libmodest-ui.la		
 libmodest_la_LDFLAGS = -rdynamic -export-dynamic -no-undefined -Wl,--version-script=export.map
 
 if MODEST_HAVE_DBUS_API

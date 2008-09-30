@@ -1,10 +1,13 @@
-# Copyright (c) 2006,2007 Nokia Corporation
+# maemo-provider-data.keyfile -*-mode:sh-*-
+# Time-stamp: <2007-12-01 13:39:11 (djcb)>
+
+# Copyright (c) 2006, Nokia Corporation
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-# 
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
 # * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +16,7 @@
 # * Neither the name of the Nokia Corporation nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -25,28 +28,63 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-INCLUDES=\
-	$(MODEST_GSTUFF_CFLAGS)\
-	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
-	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	$(MODEST_PLATFORM_CFLAGS) \
-	-I$(MODEST_TOOLKIT_DIR) \
-	-I$(top_srcdir)/src \
-	-DPREFIX=\"@prefix@\" \
-	-DMODEST_LOCALEDIR=\"$(MODEST_LOCALEDIR)\" \
-	-DMODEST_PLATFORM=\"$(MODEST_PLATFORM)\" \
-	-DMODEST_PLATFORM_ID=$(MODEST_PLATFORM_ID) \
-	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
-	-DMODEST_UIDIR=\"$(datadir)/modest/ui/\"
+[aim.com]
+Name=AIM
+MCC=0
+Domain=aim.com
+OutgoingMailServer=smtp.aim.com
+IncomingMailServer=imap.aim.com
+IncomingSecurity=0
+MailboxType=imap
+[aol.com]
+Name=AOL
+MCC=0
+Domain=aol.com
+OutgoingMailServer=smtp.aol.com
+IncomingMailServer=imap.aol.com
+IncomingSecurity=0
+MailboxType=imap
+[imap.gmail.com]
+Name=Gmail/IMAP
+MCC=0
+Domain=gmail.com
+OutgoingMailServer=smtp.gmail.com
+SecureSmtp=true
+IncomingMailServer=imap.gmail.com
+IncomingSecurity=2
+MailboxType=imap
+[pop.gmail.com]
+Name=Gmail/POP3
+MCC=0
+Domain=gmail.com
+OutgoingMailServer=smtp.gmail.com
+SecureSmtp=true
+IncomingMailServer=pop.gmail.com
+IncomingSecurity=2
+MailboxType=pop
+[lycos.com]
+Name=Lycos Mail
+MCC=0
+Domain=lycos.com
+OutgoingMailServer=smtp.mail.lycos.com
+IncomingMailServer=pop.mail.lycos.com
+IncomingSecurity=0
+MailboxType=pop
+[yahoo.com]
+Name=Yahoo Mail Plus
+MCC=0
+Domain=yahoo.com
+OutgoingMailServer=smtp.mail.yahoo.com
+IncomingMailServer=pop.mail.yahoo.com
+IncomingSecurity=0
+MailboxType=pop
+[Tinymail]
+Name=Tinymail
+MCC=206
+Domain=tinymail.org
+IncomingMailServer=imap1.tinymail.org
+IncomingSecurity=0
+MailboxType=imap
 
-lib_LTLIBRARIES = libmodest-dbus-client-1.0.la
-libmodest_dbus_client_1_0_la_SOURCES = libmodest-dbus-client.h libmodest-dbus-client.c
-
-library_includedir=$(includedir)/libmodest-dbus-client-1.0/libmodest-dbus-client
-library_include_HEADERS = libmodest-dbus-client.h
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libmodest-dbus-client-1.0.pc
-
-DISTCLEANFILES = $(pkgconfig_DATA)

@@ -247,7 +247,7 @@ else
    PKG_CHECK_MODULES(MODEST_TOOLKIT,$hildonpkgs)
    if test "$with_toolkit" = "hildon2"; then
       AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
-      MODEST_TOOLKIT_DIR=maemo
+      MODEST_TOOLKIT_DIR=hildon2
    else
       AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON1, 1, ["Whether modest is being build for the hildon2 toolkit."])
       MODEST_TOOLKIT_DIR=maemo
@@ -296,15 +296,15 @@ fi
 # check libalarm
 #
 if test "x$with_platform" == "xmaemo"; then  
-PKG_CHECK_MODULES(MODEST_LIBALARM,libalarm,have_libalarm=true,have_libalarm=false)
-if test "x$have_libalarm" == "xtrue"; then
-   libalarm="libalarm"	
-   AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBALARM, 1, ["Whether libalarm is used."])		
-   AC_SUBST(MODEST_LIBALARM_CFLAGS)
-   AC_SUBST(MODEST_LIBALARM_LIBS)
-else
-   libalarm=""
-fi
+   PKG_CHECK_MODULES(MODEST_LIBALARM,libalarm,have_libalarm=true,have_libalarm=false)
+   if test "x$have_libalarm" == "xfalse"; then
+      PKG_CHECK_MODULES(MODEST_LIBALARM, alarm, have_libalarm=true,have_libalarm=false)
+   fi
+   if test "x$have_libalarm" == "xtrue"; then
+      AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBALARM, 1, ["Whether libalarm is used."])		
+      AC_SUBST(MODEST_LIBALARM_CFLAGS)
+      AC_SUBST(MODEST_LIBALARM_LIBS)
+   fi
 fi
 
 #
@@ -560,6 +560,7 @@ src/dbus_api/Makefile
 src/gnome/Makefile
 src/maemo/Makefile
 src/maemo/easysetup/Makefile
+src/hildon2/Makefile
 src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile
@@ -567,6 +568,8 @@ tests/Makefile
 tests/dbus_api/Makefile
 src/maemo/modest.desktop
 src/maemo/com.nokia.modest.service
+src/hildon2/modest.desktop
+src/hildon2/com.nokia.modest.service
 libmodest-dbus-client/Makefile
 libmodest-dbus-client/libmodest-dbus-client-1.0.pc
 ])
