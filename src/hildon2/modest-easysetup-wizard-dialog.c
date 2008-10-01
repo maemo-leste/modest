@@ -41,7 +41,7 @@
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
 #include "modest-country-picker.h"
-#include "modest-easysetup-provider-combo-box.h"
+#include "modest-provider-picker.h"
 #include "modest-easysetup-servertype-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
@@ -104,7 +104,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	
 	GtkWidget *page_account_details;
 	GtkWidget *account_country_picker;
-	GtkWidget *combo_account_serviceprovider;
+	GtkWidget *account_serviceprovider_picker;
 	GtkWidget *entry_account_title;
 	
 	GtkWidget *page_user_details;
@@ -213,91 +213,6 @@ get_port_from_protocol (ModestProtocolType server_type,
 	}
 	return server_port;
 }
-
-/* static GList*  */
-/* check_for_supported_auth_methods (ModestEasysetupWizardDialog* self) */
-/* { */
-/* 	GError *error = NULL; */
-/* 	ModestProtocolType protocol_type; */
-/* 	const gchar* hostname; */
-/* 	const gchar* username; */
-/* 	ModestProtocolType security_protocol_incoming_type; */
-/* 	ModestProtocolRegistry *registry; */
-/* 	int port_num;  */
-/* 	GList *list_auth_methods; */
-/* 	ModestEasysetupWizardDialogPrivate *priv; */
-	
-/* 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self); */
-/* 	registry = modest_runtime_get_protocol_registry (); */
-/* 	protocol_type = easysetup_servertype_combo_box_get_active_servertype ( */
-/* 		EASYSETUP_SERVERTYPE_COMBO_BOX (priv->combo_incoming_servertype)); */
-/* 	hostname = gtk_entry_get_text(GTK_ENTRY(priv->entry_incomingserver)); */
-/* 	username = gtk_entry_get_text(GTK_ENTRY(priv->entry_user_username)); */
-/* 	security_protocol_incoming_type = modest_serversecurity_combo_box_get_active_serversecurity */
-/* 		(MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security)); */
-/* 	port_num = get_port_from_protocol(protocol_type, FALSE);  */
-/* 	list_auth_methods = modest_utils_get_supported_secure_authentication_methods (protocol_type, hostname, port_num,  */
-/* 										      username, GTK_WINDOW (self), &error); */
-
-/* 	if (list_auth_methods) { */
-/* 		/\* TODO: Select the correct method *\/ */
-/* 		GList* list = NULL; */
-/* 		GList* method; */
-/* 		for (method = list_auth_methods; method != NULL; method = g_list_next(method)) { */
-/* 			ModestProtocolType auth_protocol_type = (ModestProtocolType) (GPOINTER_TO_INT(method->data)); */
-/* 			if (modest_protocol_registry_protocol_type_has_tag (registry, auth_protocol_type, */
-/* 									    MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS)) { */
-/* 				list = g_list_append(list, GINT_TO_POINTER(auth_protocol_type)); */
-/* 			} */
-/* 		} */
-
-/* 		g_list_free(list_auth_methods); */
-
-/* 		if (list) */
-/* 			return list; */
-/* 	} */
-
-/* 	if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() || */
-/* 			error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED) */
-/* 	{ */
-/* 		modest_platform_information_banner (GTK_WIDGET(self), NULL, */
-/* 						    _("mcen_ib_unableto_discover_auth_methods")); */
-/* 	} */
-
-/* 	if(error != NULL) */
-/* 		g_error_free(error); */
-
-/* 	return NULL; */
-/* } */
-
-/* static gboolean check_has_supported_auth_methods(ModestEasysetupWizardDialog* self) */
-/* { */
-/* 	GList* methods = check_for_supported_auth_methods(self); */
-/* 	if (!methods) */
-/* 	{ */
-/* 		return FALSE; */
-/* 	} */
-
-/* 	g_list_free(methods); */
-/* 	return TRUE; */
-/* } */
-
-/* static ModestProtocolType check_first_supported_auth_method(ModestEasysetupWizardDialog* self) */
-/* { */
-/* 	ModestProtocolType result; */
-
-/* 	result = MODEST_PROTOCOLS_AUTH_PASSWORD; */
-
-/* 	GList* methods = check_for_supported_auth_methods(self); */
-/* 	if (methods) */
-/* 	{ */
-/* 		/\* Use the first one: *\/ */
-/* 		result = (ModestProtocolType) (GPOINTER_TO_INT(methods->data)); */
-/* 		g_list_free(methods); */
-/* 	} */
-
-/* 	return result; */
-/* } */
 
 static void
 invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
@@ -411,13 +326,13 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gint column, g
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_picker_get_active_country_mcc (
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
-		easysetup_provider_combo_box_fill (
-			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider), priv->presets, mcc);
+		modest_provider_picker_fill (
+			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker), priv->presets, mcc);
 	}
 }
 
 static void
-on_combo_account_serviceprovider (GtkComboBox *widget, gpointer user_data)
+on_account_serviceprovider_selector_changed (GtkComboBox *widget, gint column, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -426,8 +341,8 @@ on_combo_account_serviceprovider (GtkComboBox *widget, gpointer user_data)
 	priv->dirty = TRUE;
 	
 	/* Fill the providers combo, based on the selected country: */
-	gchar* provider_id = easysetup_provider_combo_box_get_active_provider_id (
-		EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider));
+	gchar* provider_id = modest_provider_picker_get_active_provider_id (
+		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
 	
 	gchar* domain_name = NULL;
 	if(provider_id)
@@ -477,7 +392,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->account_country_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->account_country_picker);
 	
-	/* connect to country combo's changed signal, so we can fill the provider combo: */
+	/* connect to country combo's changed signal, so we can fill the provider picker: */
 	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
 				    (HILDON_PICKER_BUTTON (priv->account_country_picker))),
 			  "changed",
@@ -488,18 +403,18 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (separator);
             
 	/* The service provider widgets: */	
-	priv->combo_account_serviceprovider = GTK_WIDGET (easysetup_provider_combo_box_new ());
-	gtk_widget_set_size_request (priv->combo_account_serviceprovider, 320, -1);
-	
-	caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_serviceprovider"), 
-						   priv->combo_account_serviceprovider, NULL, HILDON_CAPTION_OPTIONAL);
-	gtk_widget_show (priv->combo_account_serviceprovider);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new ());
+	hildon_button_set_title (HILDON_BUTTON (priv->account_serviceprovider_picker), _("mcen_fi_serviceprovider"));
+	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
+			  G_CALLBACK (on_picker_button_value_changed), self);
+	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->account_serviceprovider_picker);
 	
 	/* connect to providers combo's changed signal, so we can fill the email address: */
-	g_signal_connect (G_OBJECT (priv->combo_account_serviceprovider), "changed",
-			  G_CALLBACK (on_combo_account_serviceprovider), self);
+	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
+				    (HILDON_PICKER_BUTTON (priv->account_serviceprovider_picker))),
+			  "changed",
+			  G_CALLBACK (on_account_serviceprovider_selector_changed), self);
 	
 	/* The description widgets: */	
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
@@ -1128,9 +1043,10 @@ presets_idle (gpointer userdata)
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		mcc = modest_country_picker_get_active_country_mcc (
 		        MODEST_COUNTRY_PICKER (priv->account_country_picker));
-		easysetup_provider_combo_box_fill (
-			EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider),
+		modest_provider_picker_fill (
+			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker),
 			priv->presets, mcc);
+		modest_provider_picker_set_others_provider (MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
 	}
 
 	priv->dirty = FALSE;
@@ -1426,16 +1342,16 @@ static void
 create_subsequent_pages (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
-	EasysetupProviderComboBox *combo;
-	EasysetupProviderComboBoxIdType id_type;
+	ModestProviderPicker *picker;
+        ModestProviderPickerIdType id_type;
 	GtkNotebook *notebook;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	combo = EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider);
-	id_type = easysetup_provider_combo_box_get_active_id_type (combo);
+	picker = MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker);
+	id_type = modest_provider_picker_get_active_id_type (picker);
 	g_object_get (self, "wizard-notebook", &notebook, NULL);
 
-	if (id_type == EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER) {
+	if (id_type == MODEST_PROVIDER_PICKER_ID_OTHER) {
 		/* "Other..." was selected: */
 
 		/* If we come from a rollbacked easysetup */
@@ -1465,7 +1381,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 		}
 
 		/* It's a pluggable protocol and not a provider with presets */
-		if (id_type == EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL) {
+		if (id_type == MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL) {
 			ModestProtocol *protocol;
 			gchar *proto_name;
 			ModestProtocolType proto_type;
@@ -1480,7 +1396,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 				priv->page_complete_easysetup = NULL;
 			}
 			
-			proto_name = easysetup_provider_combo_box_get_active_provider_id (combo);
+			proto_name = modest_provider_picker_get_active_provider_id (picker);
 			protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
 										  MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
 										  proto_name);
@@ -1880,20 +1796,20 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	ModestProtocolType store_auth_protocol, transport_auth_protocol;
 	ModestServerAccountSettings *store_settings, *transport_settings;
 	const gchar *fullname, *email_address;
-	EasysetupProviderComboBox *combo;
-	EasysetupProviderComboBoxIdType id_type;
+	ModestProviderPicker *picker;
+	ModestProviderPickerIdType id_type;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	combo = EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider);
+	picker = MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Get details from the specified presets: */
-	id_type = easysetup_provider_combo_box_get_active_id_type (combo);
-	provider_id = easysetup_provider_combo_box_get_active_provider_id (combo);
+	id_type = modest_provider_picker_get_active_id_type (picker);
+	provider_id = modest_provider_picker_get_active_provider_id (picker);
 		
 	/* Let the plugin save the settings. We do a return in order
 	   to save an indentation level */
-	if (id_type == EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL) {
+	if (id_type == MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL) {
 		ModestProtocol *protocol;
 
 		protocol = modest_protocol_registry_get_protocol_by_name (

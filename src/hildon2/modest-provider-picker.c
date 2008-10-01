@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, 2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modest-easysetup-provider-combo-box.h"
+#include "modest-provider-picker.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -44,66 +44,35 @@
 #include <config.h>
 #endif
 
-G_DEFINE_TYPE (EasysetupProviderComboBox, easysetup_provider_combo_box, GTK_TYPE_COMBO_BOX);
+G_DEFINE_TYPE (ModestProviderPicker, modest_provider_picker, HILDON_TYPE_PICKER_BUTTON);
 
-#define PROVIDER_COMBO_BOX_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE ((o), EASYSETUP_TYPE_PROVIDER_COMBO_BOX, EasysetupProviderComboBoxPrivate))
+#define MODEST_PROVIDER_PICKER_GET_PRIVATE(o) \
+	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_PROVIDER_PICKER, ModestProviderPickerPrivate))
 
-typedef struct _EasysetupProviderComboBoxPrivate EasysetupProviderComboBoxPrivate;
+typedef struct _ModestProviderPickerPrivate ModestProviderPickerPrivate;
 
-struct _EasysetupProviderComboBoxPrivate
+struct _ModestProviderPickerPrivate
 {
 	GtkTreeModel *model;
 };
-
 static void
-easysetup_provider_combo_box_get_property (GObject *object, guint property_id,
-															GValue *value, GParamSpec *pspec)
+modest_provider_picker_finalize (GObject *object)
 {
-	switch (property_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-	}
-}
-
-static void
-easysetup_provider_combo_box_set_property (GObject *object, guint property_id,
-															const GValue *value, GParamSpec *pspec)
-{
-	switch (property_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-	}
-}
-
-static void
-easysetup_provider_combo_box_dispose (GObject *object)
-{
-	if (G_OBJECT_CLASS (easysetup_provider_combo_box_parent_class)->dispose)
-		G_OBJECT_CLASS (easysetup_provider_combo_box_parent_class)->dispose (object);
-}
-
-static void
-easysetup_provider_combo_box_finalize (GObject *object)
-{
-	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (object);
+	ModestProviderPickerPrivate *priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (object);
 
 	g_object_unref (G_OBJECT (priv->model));
 
-	G_OBJECT_CLASS (easysetup_provider_combo_box_parent_class)->finalize (object);
+	G_OBJECT_CLASS (modest_provider_picker_parent_class)->finalize (object);
 }
 
 static void
-easysetup_provider_combo_box_class_init (EasysetupProviderComboBoxClass *klass)
+modest_provider_picker_class_init (ModestProviderPickerClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasysetupProviderComboBoxPrivate));
+	g_type_class_add_private (klass, sizeof (ModestProviderPickerPrivate));
 
-	object_class->get_property = easysetup_provider_combo_box_get_property;
-	object_class->set_property = easysetup_provider_combo_box_set_property;
-	object_class->dispose = easysetup_provider_combo_box_dispose;
-	object_class->finalize = easysetup_provider_combo_box_finalize;
+	object_class->finalize = modest_provider_picker_finalize;
 }
 
 enum MODEL_COLS {
@@ -141,48 +110,80 @@ provider_sort_func (GtkTreeModel *model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	return retval;
 }
 
-static void
-easysetup_provider_combo_box_init (EasysetupProviderComboBox *self)
+static gchar *
+touch_selector_print_func (HildonTouchSelector *selector)
 {
-	EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (self);
+	GtkTreeIter iter;
+	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &iter)) {
+		GtkTreeModel *model;
+		GValue value = {0,};
+		
+		model = hildon_touch_selector_get_model (HILDON_TOUCH_SELECTOR (selector), 0);
+		gtk_tree_model_get_value (model, &iter, MODEL_COL_NAME, &value);
+		return g_value_dup_string (&value);
+	}
+	return NULL;
+}
 
-	/* Create a tree model for the combo box,
+
+static void
+modest_provider_picker_init (ModestProviderPicker *self)
+{
+	ModestProviderPickerPrivate *priv;
+
+	priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (self);
+	priv->model = NULL;
+}
+
+ModestProviderPicker*
+modest_provider_picker_new (void)
+{
+	ModestProviderPickerPrivate *priv;
+	ModestProviderPicker *self;
+	GtkCellRenderer *renderer;
+	GtkWidget *selector;
+
+	self = g_object_new (MODEST_TYPE_PROVIDER_PICKER, 
+			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+			     "size", HILDON_SIZE_AUTO,
+			     NULL);
+	priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (self);
+
+	/* Create the tree model for the selector,
 	 * with a string for the name, and a string for the ID (e.g. "vodafone.it"), and the mcc
 	 * This must match our MODEL_COLS enum constants.
 	 */
 	priv->model = GTK_TREE_MODEL (gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT));
-
-	/* Setup the combo box: */
-	GtkComboBox *combobox = GTK_COMBO_BOX (self);
-	gtk_combo_box_set_model (combobox, priv->model);
-
-	/* Provider column:
-	 * The ID model column in not shown in the view. */
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (combobox), renderer, TRUE);
-	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer,  "text", MODEL_COL_NAME, NULL);
-	
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(priv->model),
 					      MODEL_COL_NAME, GTK_SORT_ASCENDING);
 	gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(priv->model),
 					  MODEL_COL_NAME,
 					  (GtkTreeIterCompareFunc)provider_sort_func,
 					  NULL, NULL);
-}
 
-EasysetupProviderComboBox*
-easysetup_provider_combo_box_new (void)
-{
-	return g_object_new (EASYSETUP_TYPE_PROVIDER_COMBO_BOX, NULL);
+	renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
+
+	selector = hildon_touch_selector_new ();
+	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (priv->model),
+					     renderer, "text", MODEL_COL_NAME, NULL);
+
+	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector), 0, GTK_TREE_MODEL (priv->model));
+	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), touch_selector_print_func);
+
+	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
+	modest_provider_picker_set_others_provider (MODEST_PROVIDER_PICKER (self));
+
+	return self;
 }
 
 void
-easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, 
-				   ModestPresets *presets,
-				   gint mcc)
+modest_provider_picker_fill (ModestProviderPicker *self, 
+			     ModestPresets *presets,
+			     gint mcc)
 {	
 	GtkTreeIter other_iter;
-	EasysetupProviderComboBoxPrivate *priv;
+	ModestProviderPickerPrivate *priv;
 	GtkListStore *liststore;	
 	GSList *provider_ids_used_already = NULL, *provider_protos, *tmp;
 	gchar ** provider_ids = NULL;
@@ -190,10 +191,11 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox,
 	gchar ** iter_provider_names;
 	gchar ** iter_provider_ids;
 	ModestProtocolRegistry *registry;
+	GtkWidget *selector;
 
-	g_return_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox));
+	g_return_if_fail (MODEST_IS_PROVIDER_PICKER(self));
 
-	priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
+	priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (self);
 	liststore = GTK_LIST_STORE (priv->model);
 	gtk_list_store_clear (liststore);
 	provider_names = modest_presets_get_providers (presets, mcc, TRUE, &provider_ids);
@@ -217,7 +219,7 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox,
 			gtk_list_store_set(liststore, &iter, 
 					   MODEL_COL_ID, provider_id, 
 					   MODEL_COL_NAME, provider_name, 
-					   MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_PROVIDER,
+					   MODEL_COL_ID_TYPE, MODEST_PROVIDER_PICKER_ID_PROVIDER,
 					   -1);
 			
 			provider_ids_used_already = g_slist_prepend (
@@ -251,27 +253,31 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox,
 			gtk_list_store_set (liststore, &iter,
 					    MODEL_COL_ID, modest_protocol_get_name (proto),
 					    MODEL_COL_NAME, name,
-					    MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL,
+					    MODEL_COL_ID_TYPE, MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL,
 					    -1);
 		}
 		tmp = g_slist_next (tmp);
 	}
 	g_slist_free (provider_protos);
 	
+	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
+	g_slist_free (provider_ids_used_already);
+
 	/* Add the "Other" item: */
 	/* Note that ID 0 means "Other" for us: */
 	gtk_list_store_prepend (liststore, &other_iter);
 	gtk_list_store_set (liststore, &other_iter,
 			    MODEL_COL_ID, 0,
 			    MODEL_COL_NAME, _("mcen_va_serviceprovider_other"),
-			    MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER,
+			    MODEL_COL_ID_TYPE, MODEST_PROVIDER_PICKER_ID_OTHER,
 			    -1);
 
 	/* Select the "Other" item: */
-	gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &other_iter);
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+	hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &other_iter, TRUE);
+	hildon_button_set_value (HILDON_BUTTON (self),
+				 hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
 	
-	g_slist_foreach (provider_ids_used_already, (GFunc)g_free, NULL);
-	g_slist_free (provider_ids_used_already);
 }
 
 /**
@@ -279,15 +285,18 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox,
  * or NULL if no provider was selected, or "Other" was selected. 
  */
 gchar*
-easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *combobox)
+modest_provider_picker_get_active_provider_id (ModestProviderPicker *self)
 {
 	GtkTreeIter active;
+	gboolean found;
+	GtkWidget *selector;
 
-	g_return_val_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox), NULL);
+	g_return_val_if_fail (MODEST_IS_PROVIDER_PICKER(self), NULL);
 
-	const gboolean found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+	found = hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &active);
 	if (found) {
-		EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
+		ModestProviderPickerPrivate *priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (self);
 
 		gchar *id = NULL;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &id, -1);
@@ -298,35 +307,43 @@ easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *
 }
 
 void 
-easysetup_provider_combo_box_set_others_provider (EasysetupProviderComboBox *combobox)
+modest_provider_picker_set_others_provider (ModestProviderPicker *self)
 {
 	GtkTreeModel *model;
 	GtkTreeIter others_iter;
+	GtkWidget *selector;
 
-	g_return_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX(combobox));
+	g_return_if_fail (MODEST_IS_PROVIDER_PICKER(self));
 	
-	model = gtk_combo_box_get_model (GTK_COMBO_BOX (combobox));
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+	model = hildon_touch_selector_get_model (HILDON_TOUCH_SELECTOR (selector), 0);
 	
-	if (gtk_tree_model_get_iter_first (model, &others_iter))
-		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (combobox), &others_iter);
+	if (gtk_tree_model_get_iter_first (model, &others_iter)) {
+		hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &others_iter, TRUE);
+		hildon_button_set_value (HILDON_BUTTON (self),
+					 hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
+	}
 }
 
-EasysetupProviderComboBoxIdType 
-easysetup_provider_combo_box_get_active_id_type (EasysetupProviderComboBox *combobox)
+ModestProviderPickerIdType 
+modest_provider_picker_get_active_id_type (ModestProviderPicker *self)
 {
 	GtkTreeIter active;
+	GtkWidget *selector;
 
-	g_return_val_if_fail (EASYSETUP_IS_PROVIDER_COMBO_BOX (combobox), 
-			      EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER);
+	g_return_val_if_fail (MODEST_IS_PROVIDER_PICKER (self), 
+			      MODEST_PROVIDER_PICKER_ID_OTHER);
 
-	if (gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active)) {
-		EasysetupProviderComboBoxPrivate *priv = PROVIDER_COMBO_BOX_GET_PRIVATE (combobox);
-		EasysetupProviderComboBoxIdType id_type;
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON(self)));
+
+	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (self), 0, &active)) {
+		ModestProviderPickerPrivate *priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (self);
+		ModestProviderPickerIdType id_type;
 
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID_TYPE, &id_type, -1);
 		return id_type;	
 	} else {
 		/* Fallback to other */
-		return EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER;
+		return MODEST_PROVIDER_PICKER_ID_OTHER;
 	}
 }

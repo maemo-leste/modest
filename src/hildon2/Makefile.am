@@ -53,7 +53,7 @@ libmodest_ui_la_SOURCES=              \
 	modest-default-account-settings-dialog.c \
 	modest-easysetup-wizard-dialog.h modest-easysetup-wizard-dialog.c \
 	modest-country-picker.h modest-country-picker.c \
-	modest-easysetup-provider-combo-box.h modest-easysetup-provider-combo-box.c \
+	modest-provider-picker.h modest-provider-picker.c \
 	modest-easysetup-servertype-combo-box.h modest-easysetup-servertype-combo-box.c \
 	modest-icon-names.h           \
 	modest-maemo-global-settings-dialog.c \

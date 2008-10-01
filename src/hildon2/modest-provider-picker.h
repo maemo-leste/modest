@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, 2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,35 +27,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EASYSETUP_PROVIDER_COMBO_BOX
-#define _EASYSETUP_PROVIDER_COMBO_BOX
+#ifndef _MODEST_PROVIDER_PICKER
+#define _MODEST_PROVIDER_PICKER
 
-#include <gtk/gtkcombobox.h>
+#include <hildon/hildon-picker-button.h>
 #include "modest-presets.h"
 
 G_BEGIN_DECLS
 
-#define EASYSETUP_TYPE_PROVIDER_COMBO_BOX easysetup_provider_combo_box_get_type()
+#define MODEST_TYPE_PROVIDER_PICKER modest_provider_picker_get_type()
 
-#define EASYSETUP_PROVIDER_COMBO_BOX(obj) \
+#define MODEST_PROVIDER_PICKER(obj) \
 	(G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-	EASYSETUP_TYPE_PROVIDER_COMBO_BOX, EasysetupProviderComboBox))
+	MODEST_TYPE_PROVIDER_PICKER, ModestProviderPicker))
 
-#define EASYSETUP_PROVIDER_COMBO_BOX_CLASS(klass) \
+#define MODEST_PROVIDER_PICKER_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
-	EASYSETUP_TYPE_PROVIDER_COMBO_BOX, EasysetupProviderComboBoxClass))
+	MODEST_TYPE_PROVIDER_PICKER, ModestProviderPickerClass))
 
-#define EASYSETUP_IS_PROVIDER_COMBO_BOX(obj) \
+#define MODEST_IS_PROVIDER_PICKER(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	EASYSETUP_TYPE_PROVIDER_COMBO_BOX))
+	MODEST_TYPE_PROVIDER_PICKER))
 
-#define EASYSETUP_IS_PROVIDER_COMBO_BOX_CLASS(klass) \
+#define MODEST_IS_PROVIDER_PICKER_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
-	EASYSETUP_TYPE_PROVIDER_COMBO_BOX))
+	MODEST_TYPE_PROVIDER_PICKER))
 
-#define EASYSETUP_PROVIDER_COMBO_BOX_GET_CLASS(obj) \
+#define MODEST_PROVIDER_PICKER_GET_CLASS(obj) \
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
-	EASYSETUP_TYPE_PROVIDER_COMBO_BOX, EasysetupProviderComboBoxClass))
+	MODEST_TYPE_PROVIDER_PICKER, ModestProviderPickerClass))
 
 /** The thype of the ID
  *
@@ -67,30 +67,32 @@ G_BEGIN_DECLS
  * If the selected option is a provider protocol () the the ID will be protocol name
  **/
 typedef enum {
-	EASYSETUP_PROVIDER_COMBO_BOX_ID_PROVIDER,
-	EASYSETUP_PROVIDER_COMBO_BOX_ID_OTHER,
-	EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL
-} EasysetupProviderComboBoxIdType;
+	MODEST_PROVIDER_PICKER_ID_PROVIDER,
+	MODEST_PROVIDER_PICKER_ID_OTHER,
+	MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL
+} ModestProviderPickerIdType;
 
 typedef struct {
-	GtkComboBox parent;
-} EasysetupProviderComboBox;
+	HildonPickerButton parent;
+} ModestProviderPicker;
 
 typedef struct {
-	GtkComboBoxClass parent_class;
-} EasysetupProviderComboBoxClass;
+	HildonPickerButtonClass parent_class;
+} ModestProviderPickerClass;
 
-GType easysetup_provider_combo_box_get_type (void);
+GType modest_provider_picker_get_type (void);
 
-EasysetupProviderComboBox* easysetup_provider_combo_box_new (void);
+ModestProviderPicker* modest_provider_picker_new (void);
 
-void easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox, ModestPresets *presets,
-					gint mcc);
+void modest_provider_picker_fill (ModestProviderPicker *combobox, ModestPresets *presets,
+				  gint mcc);
 
-gchar* easysetup_provider_combo_box_get_active_provider_id (EasysetupProviderComboBox *combobox);
+gchar* modest_provider_picker_get_active_provider_id (ModestProviderPicker *combobox);
 
-EasysetupProviderComboBoxIdType easysetup_provider_combo_box_get_active_id_type (EasysetupProviderComboBox *combobox);
+ModestProviderPickerIdType modest_provider_picker_get_active_id_type (ModestProviderPicker *combobox);
+
+void modest_provider_picker_set_others_provider (ModestProviderPicker *self);
 
 G_END_DECLS
 
-#endif /* _EASYSETUP_PROVIDER_COMBO_BOX */
+#endif /* _MODEST_PROVIDER_PICKER */
