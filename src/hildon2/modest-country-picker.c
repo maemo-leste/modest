@@ -290,6 +290,7 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	/* Set this _after_ loading from file, it makes loading faster */
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector),
 					 0, GTK_TREE_MODEL (model));
+	g_object_unref (model);
 }
 
 ModestCountryPicker*
@@ -332,20 +333,22 @@ gboolean
 modest_country_picker_set_active_country_locale (ModestCountryPicker *self)
 {
 	ModestCountryPickerPrivate *priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
+	GtkWidget *selector;
 	GtkTreeIter iter;
 	gint current_mcc;
 	GtkTreeModel *model;
 
-	model = hildon_touch_selector_get_model (hildon_picker_button_get_selector 
-						 (HILDON_PICKER_BUTTON (self)), 0);
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+	model = hildon_touch_selector_get_model (HILDON_TOUCH_SELECTOR (selector), 0);
 	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;
 	do {
 		gtk_tree_model_get (model, &iter, MODEL_COL_MCC, &current_mcc, -1);
 		if (priv->locale_mcc == current_mcc) {
-			hildon_touch_selector_select_iter (hildon_picker_button_get_selector 
-							   (HILDON_PICKER_BUTTON (self)), 0, 
+			hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, 
 							   &iter, TRUE);
+			hildon_button_set_value (HILDON_BUTTON (self), 
+						 hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
 			return TRUE;
 		}
 	} while (gtk_tree_model_iter_next (model, &iter));

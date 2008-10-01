@@ -43,7 +43,7 @@
 #include <modest-account-mgr-helpers.h>
 
 #include <widgets/modest-msg-edit-window.h>
-#include <widgets/modest-combo-box.h>
+#include <modest-selector-picker.h>
 #include <widgets/modest-recpt-editor.h>
 #include <widgets/modest-attachments-view.h>
 
@@ -723,7 +723,7 @@ connect_signals (ModestMsgEditWindow *obj)
 static void
 init_window (ModestMsgEditWindow *obj)
 {
-	GtkWidget *from_caption, *to_caption, *subject_caption;
+	GtkWidget *to_caption, *subject_caption;
 	GtkWidget *main_vbox;
 	ModestMsgEditWindowPrivate *priv;
 	GtkActionGroup *action_group;
@@ -794,7 +794,7 @@ init_window (ModestMsgEditWindow *obj)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
- 	priv->from_field    = modest_combo_box_new (NULL, g_str_equal);
+ 	priv->from_field    = modest_selector_picker_new (NULL, g_str_equal);
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -819,7 +819,6 @@ init_window (ModestMsgEditWindow *obj)
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
-	from_caption = hildon_caption_new (size_group, _("mail_va_from"), priv->from_field, NULL, 0);
 	to_caption = hildon_caption_new (size_group, _("mail_va_to"), priv->to_field, NULL, 0);
 	priv->cc_caption = hildon_caption_new (size_group, _("mail_va_cc"), priv->cc_field, NULL, 0);
 	priv->bcc_caption = hildon_caption_new (size_group, _("mail_va_hotfix1"), priv->bcc_field, NULL, 0);
@@ -835,7 +834,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_size_group_add_widget (size_group, priv->attachments_view);
 	g_object_unref (size_group);
 
-	gtk_box_pack_start (GTK_BOX (priv->header_box), from_caption, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->from_field, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), to_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->cc_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->bcc_caption, FALSE, FALSE, 0);
@@ -1492,8 +1491,13 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	parent_priv->menubar = modest_maemo_utils_get_manager_menubar_as_menu (parent_priv->ui_manager, "/MenuBar");
 	hildon_window_set_menu (HILDON_WINDOW (obj), GTK_MENU (parent_priv->menubar));
 	priv->from_field_protos = get_transports ();
- 	modest_combo_box_set_pair_list (MODEST_COMBO_BOX (priv->from_field), priv->from_field_protos);
-	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), (gpointer) account_name);
+ 	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
+	hildon_button_set_title (HILDON_BUTTON (priv->from_field),
+				 _("mail_va_from"));
+	hildon_button_set_value (HILDON_BUTTON (priv->from_field), 
+				 hildon_touch_selector_get_current_text 
+				 (HILDON_TOUCH_SELECTOR (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->from_field)))));
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
@@ -1608,7 +1612,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (edit_window);
 									
-	account_name = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	g_return_val_if_fail (account_name, NULL);
 	
 	
@@ -3144,7 +3148,7 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 		return TRUE;
 	if (gtk_text_buffer_get_modified (priv->text_buffer))
 		return TRUE;
-	account_name = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
 		return TRUE;
 	}

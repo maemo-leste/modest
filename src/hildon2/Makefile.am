@@ -78,7 +78,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-osso-autosave-callbacks.h \
 	modest-osso-state-saving.c \
 	modest-osso-state-saving.h   \
-	modest-presets.h modest-presets.c
+	modest-presets.h modest-presets.c \
+	modest-selector-picker.h modest-selector-picker.c
 
 if MODEST_USE_DUMMY_ADDRESS_BOOK
 #	 nothing 

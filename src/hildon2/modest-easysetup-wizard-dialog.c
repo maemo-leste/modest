@@ -334,6 +334,14 @@ on_caption_combobox_changed (GtkComboBox *widget, gpointer user_data)
 	invoke_enable_buttons_vfunc(self);
 }
 
+static void
+on_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	g_assert(self);
+	invoke_enable_buttons_vfunc(self);
+}
+
 /** This is a convenience function to create a caption containing a mandatory widget.
  * When the widget is edited, the enable_buttons() vfunc will be called.
  */
@@ -446,6 +454,7 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
 {
+	GtkWidget *caption;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
@@ -462,11 +471,11 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 
 	/* The country widgets: */
 	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new ());
-	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_country"), 
-							      priv->account_country_picker, NULL, HILDON_CAPTION_OPTIONAL);
+	hildon_button_set_title (HILDON_BUTTON (priv->account_country_picker), _("mcen_fi_country"));
+	g_signal_connect (G_OBJECT (priv->account_country_picker), "value-changed",
+			  G_CALLBACK (on_picker_button_value_changed), self);
+	gtk_box_pack_start (GTK_BOX (box), priv->account_country_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->account_country_picker);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
 	
 	/* connect to country combo's changed signal, so we can fill the provider combo: */
 	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
