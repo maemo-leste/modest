@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, 2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #include <modest-runtime.h>
-#include "modest-easysetup-servertype-combo-box.h"
+#include "modest-servertype-picker.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -42,66 +42,36 @@
 #include <config.h>
 #endif
 
-G_DEFINE_TYPE (EasysetupServertypeComboBox, easysetup_servertype_combo_box, GTK_TYPE_COMBO_BOX);
+G_DEFINE_TYPE (ModestServertypePicker, modest_servertype_picker, HILDON_TYPE_PICKER_BUTTON);
 
-#define SERVERTYPE_COMBO_BOX_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE ((o), EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, EasysetupServertypeComboBoxPrivate))
+#define MODEST_SERVERTYPE_PICKER_GET_PRIVATE(o) \
+	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_SERVERTYPE_PICKER, ModestServertypePickerPrivate))
 
-typedef struct _EasysetupServertypeComboBoxPrivate EasysetupServertypeComboBoxPrivate;
+typedef struct _ModestServertypePickerPrivate ModestServertypePickerPrivate;
 
-struct _EasysetupServertypeComboBoxPrivate
+struct _ModestServertypePickerPrivate
 {
 	GtkTreeModel *model;
 };
 
 static void
-easysetup_servertype_combo_box_get_property (GObject *object, guint property_id,
-															GValue *value, GParamSpec *pspec)
+modest_servertype_picker_finalize (GObject *object)
 {
-	switch (property_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-	}
-}
-
-static void
-easysetup_servertype_combo_box_set_property (GObject *object, guint property_id,
-															const GValue *value, GParamSpec *pspec)
-{
-	switch (property_id) {
-	default:
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-	}
-}
-
-static void
-easysetup_servertype_combo_box_dispose (GObject *object)
-{
-	if (G_OBJECT_CLASS (easysetup_servertype_combo_box_parent_class)->dispose)
-		G_OBJECT_CLASS (easysetup_servertype_combo_box_parent_class)->dispose (object);
-}
-
-static void
-easysetup_servertype_combo_box_finalize (GObject *object)
-{
-	EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (object);
+	ModestServertypePickerPrivate *priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (object);
 
 	g_object_unref (G_OBJECT (priv->model));
 
-	G_OBJECT_CLASS (easysetup_servertype_combo_box_parent_class)->finalize (object);
+	G_OBJECT_CLASS (modest_servertype_picker_parent_class)->finalize (object);
 }
 
 static void
-easysetup_servertype_combo_box_class_init (EasysetupServertypeComboBoxClass *klass)
+modest_servertype_picker_class_init (ModestServertypePickerClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (EasysetupServertypeComboBoxPrivate));
+	g_type_class_add_private (klass, sizeof (ModestServertypePickerPrivate));
 
-	object_class->get_property = easysetup_servertype_combo_box_get_property;
-	object_class->set_property = easysetup_servertype_combo_box_set_property;
-	object_class->dispose = easysetup_servertype_combo_box_dispose;
-	object_class->finalize = easysetup_servertype_combo_box_finalize;
+	object_class->finalize = modest_servertype_picker_finalize;
 }
 
 enum MODEL_COLS {
@@ -110,40 +80,44 @@ enum MODEL_COLS {
 };
 
 static void
-easysetup_servertype_combo_box_init (EasysetupServertypeComboBox *self)
+modest_servertype_picker_init (ModestServertypePicker *self)
 {
-	EasysetupServertypeComboBoxPrivate *priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (self);
+	ModestServertypePickerPrivate *priv;
 
-	/* Create a tree model for the combo box,
-	 * with a string for the name, and an ID for the servertype.
-	 * This must match our MODEL_COLS enum constants.
-	 */
-	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT));
+	priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (self);
+	priv->model = NULL;
 
-	/* Setup the combo box: */
-	GtkComboBox *combobox = GTK_COMBO_BOX (self);
-	gtk_combo_box_set_model (combobox, priv->model);
-
-	/* Servertype column:
-	 * The ID model column in not shown in the view. */
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (combobox), renderer, TRUE);
-	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combobox), renderer, 
-	"text", MODEL_COL_NAME, NULL);
 }
 
+static gchar *
+touch_selector_print_func (HildonTouchSelector *selector)
+{
+	GtkTreeIter iter;
+	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &iter)) {
+		GtkTreeModel *model;
+		GValue value = {0,};
+		
+		model = hildon_touch_selector_get_model (HILDON_TOUCH_SELECTOR (selector), 0);
+		gtk_tree_model_get_value (model, &iter, MODEL_COL_NAME, &value);
+		return g_value_dup_string (&value);
+	}
+	return NULL;
+}
+
+
 static void 
-easysetup_servertype_combo_box_fill (EasysetupServertypeComboBox *combobox,
+modest_servertype_picker_fill (ModestServertypePicker *self,
 				     gboolean filter_providers)
 {	
-	EasysetupServertypeComboBoxPrivate *priv;
+	ModestServertypePickerPrivate *priv;
 	GtkListStore *liststore;
 	ModestProtocolRegistry *protocol_registry;
 	GSList *remote_protocols, *node;
 	GtkTreeIter iter;
+	GtkWidget *selector;
 	
 	/* Remove any existing rows: */
-	priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+	priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 	remote_protocols = modest_protocol_registry_get_by_tag (protocol_registry, MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS);
 
@@ -176,19 +150,49 @@ easysetup_servertype_combo_box_fill (EasysetupServertypeComboBox *combobox,
 	}
 	
 	g_slist_free (remote_protocols);
+
+	/* Choose first in list */
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->model), &iter)) {
+		hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
+	}
 }
 
-EasysetupServertypeComboBox*
-easysetup_servertype_combo_box_new (gboolean filter_providers)
+ModestServertypePicker*
+modest_servertype_picker_new (gboolean filter_providers)
 {
-	EasysetupServertypeComboBox *combo;
+	ModestServertypePicker *self;
+	ModestServertypePickerPrivate *priv;
+	GtkCellRenderer *renderer;
+	GtkWidget *selector;
 
-	combo = g_object_new (EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, NULL);
+	self = g_object_new (MODEST_TYPE_SERVERTYPE_PICKER, 
+			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+			     "size", HILDON_SIZE_AUTO,
+			     NULL);
+	priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (self);
 
-	/* Fill the combo */	
-	easysetup_servertype_combo_box_fill (combo, filter_providers);
+	/* Create a tree model,
+	 * with a string for the name, and an ID for the servertype.
+	 * This must match our MODEL_COLS enum constants.
+	 */
+	priv->model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT));
+	renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
-	return combo;
+	selector = hildon_touch_selector_new ();
+	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (priv->model),
+					     renderer, "text", MODEL_COL_NAME, NULL);
+
+	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector), 0, GTK_TREE_MODEL (priv->model));
+	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), touch_selector_print_func);
+
+	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
+
+	/* Fill the model */	
+	modest_servertype_picker_fill (self, filter_providers);
+
+	return self;
 }
 
 /**
@@ -196,17 +200,19 @@ easysetup_servertype_combo_box_new (gboolean filter_providers)
  * or MODEST_PROTOCOL_REGISTRY_TYPE_INVALID if no servertype was selected.
  */
 ModestProtocolType
-easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox)
+modest_servertype_picker_get_active_servertype (ModestServertypePicker *self)
 {
 	GtkTreeIter active;
 	gboolean found;
+	GtkWidget *selector;
 
-	found = gtk_combo_box_get_active_iter (GTK_COMBO_BOX (combobox), &active);
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+	found = hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &active);
 	if (found) {
-		EasysetupServertypeComboBoxPrivate *priv;
+		ModestServertypePickerPrivate *priv;
 		ModestProtocolType servertype;
 
-		priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+		priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (self);
 
 		servertype = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 		gtk_tree_model_get (priv->model, &active, MODEL_COL_ID, &servertype, -1);
@@ -220,7 +226,7 @@ easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBo
  * and get a result: */
 typedef struct 
 {
-		EasysetupServertypeComboBox* self;
+		ModestServertypePicker* self;
 		ModestProtocolType id;
 		gboolean found;
 } ForEachData;
@@ -231,11 +237,15 @@ on_model_foreach_select_id(GtkTreeModel *model,
 {
 	ModestProtocolType id = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	ForEachData *state = (ForEachData*)(user_data);
+	GtkWidget *selector;
 	
 	/* Select the item if it has the matching ID: */
 	gtk_tree_model_get (model, iter, MODEL_COL_ID, &id, -1); 
 	if(id == state->id) {
-		gtk_combo_box_set_active_iter (GTK_COMBO_BOX (state->self), iter);
+		selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (state->self)));
+		hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, iter, TRUE);
+		hildon_button_set_value (HILDON_BUTTON (state->self),
+					 hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
 		
 		state->found = TRUE;
 		return TRUE; /* Stop walking the tree. */
@@ -249,17 +259,17 @@ on_model_foreach_select_id(GtkTreeModel *model,
  * or MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN if no servertype was selected.
  */
 gboolean
-easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestProtocolType servertype)
+modest_servertype_picker_set_active_servertype (ModestServertypePicker *picker, ModestProtocolType servertype)
 {
-	EasysetupServertypeComboBoxPrivate *priv;
+	ModestServertypePickerPrivate *priv;
 	ForEachData *state;
 	gboolean result;
 	
-	priv = SERVERTYPE_COMBO_BOX_GET_PRIVATE (combobox);
+	priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (picker);
 
 	/* Create a state instance so we can send two items of data to the signal handler: */
 	state = g_new0 (ForEachData, 1);
-	state->self = combobox;
+	state->self = picker;
 	state->id = servertype;
 	state->found = FALSE;
 	

@@ -37,7 +37,6 @@
 #include "widgets/modest-validating-entry.h"
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
-#include "modest-easysetup-servertype-combo-box.h"
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-caption.h>
 #include <hildon-widgets/hildon-number-editor.h>
@@ -48,15 +47,6 @@
 
 #define PORT_MIN 1
 #define PORT_MAX 65535
-
-typedef struct _ModestMaemoSecurityOptionsViewPrivate ModestMaemoSecurityOptionsViewPrivate;
-struct _ModestMaemoSecurityOptionsViewPrivate {
-};
-
-#define MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE(o) \
-	(G_TYPE_INSTANCE_GET_PRIVATE((o), \
-				     MODEST_TYPE_MAEMO_SECURITY_OPTIONS_VIEW, \
-				     ModestMaemoSecurityOptionsViewPrivate))
 
 static void modest_maemo_security_options_view_init (ModestMaemoSecurityOptionsView *obj);
 static void modest_maemo_security_options_view_finalize (GObject *obj);
@@ -476,7 +466,6 @@ modest_maemo_security_options_view_class_init (ModestMaemoSecurityOptionsViewCla
 
 	modest_maemo_security_options_view_parent_class = g_type_class_peek_parent (klass);
 
-	g_type_class_add_private (gobject_class, sizeof (ModestMaemoSecurityOptionsViewPrivate));
 	gobject_class->finalize = modest_maemo_security_options_view_finalize;
 
 	MODEST_SECURITY_OPTIONS_VIEW_CLASS (klass)->load_settings = 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, 2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,53 +27,53 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EASYSETUP_SERVERTYPE_COMBO_BOX
-#define _EASYSETUP_SERVERTYPE_COMBO_BOX
+#ifndef _MODEST_SERVERTYPE_PICKER
+#define _MODEST_SERVERTYPE_PICKER
 
-#include <gtk/gtkcombobox.h>
+#include <hildon/hildon-picker-button.h>
 #include "modest-protocol-registry.h"
 
 G_BEGIN_DECLS
 
-#define EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX easysetup_servertype_combo_box_get_type()
+#define MODEST_TYPE_SERVERTYPE_PICKER modest_servertype_picker_get_type()
 
-#define EASYSETUP_SERVERTYPE_COMBO_BOX(obj) \
+#define MODEST_SERVERTYPE_PICKER(obj) \
 	(G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-	EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, EasysetupServertypeComboBox))
+	MODEST_TYPE_SERVERTYPE_PICKER, ModestServertypePicker))
 
-#define EASYSETUP_SERVERTYPE_COMBO_BOX_CLASS(klass) \
+#define MODEST_SERVERTYPE_PICKER_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
-	EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, EasysetupServertypeComboBoxClass))
+	MODEST_TYPE_SERVERTYPE_PICKER, ModestServertypePickerClass))
 
-#define EASYSETUP_IS_SERVERTYPE_COMBO_BOX(obj) \
+#define MODEST_IS_SERVERTYPE_PICKER(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX))
+	MODEST_TYPE_SERVERTYPE_PICKER))
 
-#define EASYSETUP_IS_SERVERTYPE_COMBO_BOX_CLASS(klass) \
+#define MODEST_IS_SERVERTYPE_PICKER_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
-	EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX))
+	MODEST_TYPE_SERVERTYPE_PICKER))
 
-#define EASYSETUP_SERVERTYPE_COMBO_BOX_GET_CLASS(obj) \
+#define MODEST_SERVERTYPE_PICKER_GET_CLASS(obj) \
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
-	EASYSETUP_TYPE_SERVERTYPE_COMBO_BOX, EasysetupServertypeComboBoxClass))
+	MODEST_TYPE_SERVERTYPE_PICKER, ModestServertypePickerClass))
 
 typedef struct {
-	GtkComboBox parent;
-} EasysetupServertypeComboBox;
+	HildonPickerButton parent;
+} ModestServertypePicker;
 
 typedef struct {
-	GtkComboBoxClass parent_class;
-} EasysetupServertypeComboBoxClass;
+	HildonPickerButtonClass parent_class;
+} ModestServertypePickerClass;
 
-GType easysetup_servertype_combo_box_get_type (void);
+GType modest_servertype_picker_get_type (void);
 
-EasysetupServertypeComboBox* easysetup_servertype_combo_box_new (gboolean filter_providers);
+ModestServertypePicker* modest_servertype_picker_new (gboolean filter_providers);
 
-ModestProtocolType easysetup_servertype_combo_box_get_active_servertype (EasysetupServertypeComboBox *combobox);
+ModestProtocolType modest_servertype_picker_get_active_servertype (ModestServertypePicker *picker);
 
-gboolean easysetup_servertype_combo_box_set_active_servertype (EasysetupServertypeComboBox *combobox, ModestProtocolType servertype);
+gboolean modest_servertype_picker_set_active_servertype (ModestServertypePicker *picker, ModestProtocolType servertype);
 
 
 G_END_DECLS
 
-#endif /* _EASYSETUP_PROVIDER_COMBO_BOX */
+#endif /* _MODEST_SERVERTYPE_PICKER */

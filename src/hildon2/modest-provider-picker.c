@@ -336,7 +336,7 @@ modest_provider_picker_get_active_id_type (ModestProviderPicker *self)
 
 	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON(self)));
 
-	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (self), 0, &active)) {
+	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &active)) {
 		ModestProviderPickerPrivate *priv = MODEST_PROVIDER_PICKER_GET_PRIVATE (self);
 		ModestProviderPickerIdType id_type;
 

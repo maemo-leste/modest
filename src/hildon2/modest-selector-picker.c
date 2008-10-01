@@ -198,8 +198,9 @@ modest_selector_picker_new (ModestPairList *pairs, GEqualFunc id_equal_func)
 		GtkWidget *selector;
 
 		selector = create_touch_selector (model);
-		gtk_tree_model_get_iter_first (GTK_TREE_MODEL (model), &iter);
-		hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
+		if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (model), &iter)) {
+			hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
+		}
 		g_object_unref (model);
 
 		hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (obj), HILDON_TOUCH_SELECTOR (selector));
