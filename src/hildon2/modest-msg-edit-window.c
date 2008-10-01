@@ -83,7 +83,6 @@
 #define DEFAULT_FONT_SIZE 3
 #define DEFAULT_FONT 2
 #define DEFAULT_SIZE_BUTTON_FONT_FAMILY "Sans"
-#define DEFAULT_SIZE_COMBOBOX_WIDTH 80
 #define DEFAULT_MAIN_VBOX_SPACING 6
 #define SUBJECT_MAX_LENGTH 1000
 #define IMAGE_MAX_WIDTH 560
@@ -791,8 +790,8 @@ init_window (ModestMsgEditWindow *obj)
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
-	/* Note: This ModestPairList* must exist for as long as the combo
-	 * that uses it, because the ModestComboBox uses the ID opaquely, 
+	/* Note: This ModestPairList* must exist for as long as the picker
+	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
  	priv->from_field    = modest_selector_picker_new (NULL, g_str_equal);
 
@@ -968,7 +967,7 @@ modest_msg_edit_window_finalize (GObject *obj)
 	g_object_unref (priv->attachments);
 	g_object_unref (priv->images);
 
-	/* This had to stay alive for as long as the combobox that used it: */
+	/* This had to stay alive for as long as the picker that used it: */
 	modest_pair_list_free (priv->from_field_protos);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
@@ -1232,10 +1231,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_widget_grab_focus (priv->msg_body);
 	}
 
-	/* TODO: lower priority, select in the From: combo to the
-	   value that comes from msg <- not sure, should it be
-	   allowed? */
-	
 	DEBUG_BUFFER (WP_TEXT_BUFFER (priv->text_buffer));
 
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
