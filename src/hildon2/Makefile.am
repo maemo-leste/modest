@@ -31,6 +31,7 @@ INCLUDES=\
 	$(MODEST_WPEDITOR_CFLAGS)           \
 	$(MODEST_PLATFORM_CFLAGS)           \
 	$(MODEST_TOOLKIT_CFLAGS)           \
+	$(MODEST_PLUGIN_DEFINES)            \
 	$(MODEST_ABOOK_CFLAGS)              \
 	$(MODEST_HILDON_HELP_CFLAGS)        \
 	$(MODEST_LIBCONIC_CFLAGS)	    \

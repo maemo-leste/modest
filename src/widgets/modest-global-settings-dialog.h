@@ -30,7 +30,11 @@
 #ifndef __MODEST_GLOBAL_SETTINGS_DIALOG_H__
 #define __MODEST_GLOBAL_SETTINGS_DIALOG_H__
 
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-dialog.h>
+#else
 #include <gtk/gtkdialog.h>
+#endif
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-platform.h"
 /* other include files */
@@ -59,11 +63,19 @@ typedef struct _ModestGlobalSettingsDialog      ModestGlobalSettingsDialog;
 typedef struct _ModestGlobalSettingsDialogClass ModestGlobalSettingsDialogClass;
 
 struct _ModestGlobalSettingsDialog {
+#ifdef MODEST_TOOLKIT_HILDON2
+	 HildonDialog parent;
+#else
 	 GtkDialog parent;
+#endif
 };
 
 struct _ModestGlobalSettingsDialogClass {
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonDialogClass parent_class;
+#else
 	GtkDialogClass parent_class;
+#endif
 
 	/* Returns the current connection method. Assumes that the device is online */
 	ModestConnectedVia (*current_connection_func) (void);

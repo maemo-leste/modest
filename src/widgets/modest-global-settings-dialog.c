@@ -41,7 +41,12 @@
 #include "modest-ui-constants.h"
 #include "modest-tny-msg.h"
 #include "modest-platform.h"
+#ifdef MODEST_TOOLKIT_HILDON2
+#include "hildon2/modest-selector-picker.h"
+#include "hildon/hildon-check-button.h"
+#else
 #include "widgets/modest-combo-box.h"
+#endif
 #ifndef MODEST_TOOLKIT_GTK
 #if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-number-editor.h>
@@ -96,9 +101,15 @@ modest_global_settings_dialog_get_type (void)
 			(GInstanceInitFunc) modest_global_settings_dialog_init,
 			NULL
 		};
+#ifdef MODEST_TOOLKIT_HILDON2
+		my_type = g_type_register_static (HILDON_TYPE_DIALOG,
+		                                  "ModestGlobalSettingsDialog",
+		                                  &my_info, 0);
+#else
 		my_type = g_type_register_static (GTK_TYPE_DIALOG,
 		                                  "ModestGlobalSettingsDialog",
 		                                  &my_info, 0);
+#endif
 	}
 	return my_type;
 }
@@ -253,7 +264,11 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 		error = NULL;
 		checked = FALSE;
 	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_check_button_set_active (GTK_BUTTON (priv->auto_update), checked);
+#else
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auto_update), checked);
+#endif
 	priv->initial_state.auto_update = checked;
 
 	/* Connected by */
@@ -263,12 +278,21 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 		error = NULL;
 		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
 	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->connect_via), 
+					      (gpointer) &combo_id);
+#else
 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->connect_via), 
 					(gpointer) &combo_id);
+#endif
 	priv->initial_state.connect_via = combo_id;
 
 	/* Emit toggled to update the visibility of connect_by caption */
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_button_clicked (GTK_BUTTON (priv->auto_update));
+#else
 	gtk_toggle_button_toggled (GTK_TOGGLE_BUTTON (priv->auto_update));
+#endif
 
 	/* Update interval */
 	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
@@ -277,8 +301,13 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 		error = NULL;
 		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
 	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->update_interval), 
+					(gpointer) &combo_id);
+#else
 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->update_interval), 
 					(gpointer) &combo_id);
+#endif
 	priv->initial_state.update_interval = combo_id;
 
 	/* Size limit */
@@ -304,7 +333,9 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 		error = NULL;
 		checked = FALSE;
 	}
+#ifndef MODEST_TOOLKIT_HILDON2
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->play_sound), checked);
+#endif
 	priv->initial_state.play_sound = checked;
 
 	/* Msg format */
@@ -315,8 +346,13 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
 	}	
 	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->msg_format), 
+					      (gpointer) &combo_id);
+#else
 	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->msg_format), 
 					(gpointer) &combo_id);
+#endif
 	priv->initial_state.prefer_formatted_text = checked;
 }
 
@@ -327,18 +363,32 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	gint *id;
 
 	/* Get values from UI */
-	state->auto_update = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
+#ifdef MODEST_TOOLKIT_HILDON2
+	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->connect_via));
+	state->auto_update = hildon_check_button_get_active (GTK_BUTTON (priv->auto_update));
+#else
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
+	state->auto_update = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
+#endif
 	state->connect_via = *id;
 #ifndef MODEST_TOOLKIT_GTK
 	state->size_limit = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
 #else
 	state->size_limit = gtk_spin_button_get_value (GTK_SPIN_BUTTON (priv->size_limit));
 #endif
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->update_interval));
+#else
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->update_interval));
+#endif
 	state->update_interval = *id;
+#ifdef MODEST_TOOLKIT_HILDON2
+	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->msg_format));
+#else
 	state->play_sound = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
+#endif
 	state->prefer_formatted_text = (*id == MODEST_FILE_FORMAT_FORMATTED_TEXT) ? TRUE : FALSE;
 }
 

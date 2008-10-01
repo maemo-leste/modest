@@ -31,6 +31,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
 	$(MODEST_TOOLKIT_CFLAGS)\
+	$(MODEST_PLUGIN_DEFINES)\
 	$(MODEST_OGS_CFLAGS) \
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \

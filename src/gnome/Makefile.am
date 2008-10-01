@@ -10,6 +10,7 @@ INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS) \
 	$(MODEST_PLATFORM_CFLAGS) \
 	$(MODEST_TOOLKIT_CFLAGS) \
+	$(MODEST_PLUGIN_DEFINES) \
 	-I ${top_srcdir}/src  \
 	-DPREFIX=\"@prefix@\" \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \

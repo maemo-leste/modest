@@ -211,9 +211,9 @@ fi
 
 if test "$with_toolkit" = "hildon1"; then
    	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON1"
-elif test "$with_platform" = "hildon2"; then
+elif test "$with_toolkit" = "hildon2"; then
 	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON2"
-elif test "$with_platform" = "gtk"; then
+elif test "$with_toolkit" = "gtk"; then
 	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_GNOME"
 fi
 
