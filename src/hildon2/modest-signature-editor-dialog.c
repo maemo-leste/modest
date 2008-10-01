@@ -30,8 +30,6 @@
 #include "modest-signature-editor-dialog.h"
 #include "widgets/modest-ui-constants.h"
 #include "modest-hildon-includes.h"
-#include "widgets/modest-serversecurity-combo-box.h"
-#include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-runtime.h"
 #include <modest-account-mgr-helpers.h>

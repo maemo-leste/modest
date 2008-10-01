@@ -35,7 +35,7 @@
 #include "modest-account-protocol.h"
 #include "widgets/modest-ui-constants.h"
 #include "widgets/modest-validating-entry.h"
-#include "widgets/modest-serversecurity-combo-box.h"
+#include "modest-serversecurity-picker.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
 #include <hildon-widgets/hildon-caption.h>
@@ -64,7 +64,7 @@ on_security_changed (GtkWidget *widget,
 		     ModestMaemoSecurityOptionsView *self)
 {
 	ModestSecurityOptionsViewPrivate* ppriv;
-	ModestServersecurityComboBox *combo;
+	ModestServersecurityPicker *picker;
 	ModestProtocolType proto_type;
 	ModestProtocolRegistry *proto_registry;
 	gboolean is_secure;
@@ -72,8 +72,8 @@ on_security_changed (GtkWidget *widget,
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
 	proto_registry = modest_runtime_get_protocol_registry ();
-	combo = MODEST_SERVERSECURITY_COMBO_BOX (ppriv->security_view);
-	proto_type = modest_serversecurity_combo_box_get_active_serversecurity (combo);
+	picker = MODEST_SERVERSECURITY_PICKER (ppriv->security_view);
+	proto_type = modest_serversecurity_picker_get_active_serversecurity (picker);
 
 	is_secure = modest_protocol_registry_protocol_type_has_tag (proto_registry, proto_type, 
 								    MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS);
@@ -89,7 +89,7 @@ on_security_changed (GtkWidget *widget,
 
 	if (ppriv->full) {
 		gint port_number = 
-			modest_serversecurity_combo_box_get_active_serversecurity_port (MODEST_SERVERSECURITY_COMBO_BOX (ppriv->security_view));
+			modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
 		
 		if(port_number) {
 			hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->port_view), 
@@ -134,15 +134,13 @@ create_incoming_security (ModestSecurityOptionsView* self,
 			  GtkSizeGroup *size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
-	GtkWidget *combo_caption, *check_caption, *entry_caption = NULL;
+	GtkWidget *check_caption, *entry_caption = NULL;
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
 	/* Create widgets for incoming security */
-	ppriv->security_view = GTK_WIDGET (modest_serversecurity_combo_box_new ());
-	combo_caption = hildon_caption_new (size_group, _("mcen_li_emailsetup_secure_connection"),
-					    ppriv->security_view, NULL, 
-					    HILDON_CAPTION_OPTIONAL);
+	ppriv->security_view = GTK_WIDGET (modest_serversecurity_picker_new ());
+	hildon_button_set_title (HILDON_BUTTON (ppriv->security_view), _("mcen_li_emailsetup_secure_connection"));
 
 	if (ppriv->full) {		
 		ppriv->port_view = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
@@ -157,11 +155,11 @@ create_incoming_security (ModestSecurityOptionsView* self,
 				    ppriv->auth_view, NULL, HILDON_CAPTION_OPTIONAL);
 
 	/* Track changes in UI */	
-	g_signal_connect (G_OBJECT (ppriv->security_view), "changed",
+	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
 	                  G_CALLBACK (on_security_changed), self);
 
 	/* Pack into container */
-	gtk_box_pack_start (GTK_BOX (self), combo_caption,
+	gtk_box_pack_start (GTK_BOX (self), ppriv->security_view,
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 	if (ppriv->full)
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, 
@@ -176,7 +174,6 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	}
 	gtk_widget_show (ppriv->security_view);
 	gtk_widget_show (ppriv->auth_view);
-	gtk_widget_show (combo_caption);
 	gtk_widget_show (check_caption);
 }
 
@@ -231,17 +228,16 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 			  GtkSizeGroup *size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
-	GtkWidget *sec_caption, *auth_caption, *user_caption = NULL;
+	GtkWidget *auth_caption, *user_caption = NULL;
 	GtkWidget *pwd_caption = NULL, *port_caption = NULL;
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	
 	/* The secure connection widgets */
-	ppriv->security_view = GTK_WIDGET (modest_serversecurity_combo_box_new ());
-	modest_serversecurity_combo_box_fill (MODEST_SERVERSECURITY_COMBO_BOX (ppriv->security_view), 
+	ppriv->security_view = GTK_WIDGET (modest_serversecurity_picker_new ());
+	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
 					      MODEST_PROTOCOLS_TRANSPORT_SMTP);
-	sec_caption = hildon_caption_new (size_group, _("mcen_li_emailsetup_secure_connection"),
-				      ppriv->security_view, NULL, HILDON_CAPTION_OPTIONAL);
+	hildon_button_set_title (HILDON_BUTTON (ppriv->security_view), _("mcen_li_emailsetup_secure_connection"));
 	
 	/* The secure authentication widgets */
 	ppriv->auth_view = GTK_WIDGET (modest_secureauth_combo_box_new ());
@@ -292,7 +288,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	}
 
 	/* Track changes in UI */	
-	g_signal_connect (G_OBJECT (ppriv->security_view), "changed",
+	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
 	                  G_CALLBACK (on_security_changed), self);
 	if (ppriv->full) {
 		g_signal_connect (G_OBJECT (ppriv->auth_view), "changed",
@@ -302,8 +298,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	}
 
 	/* Initialize widgets */
-	modest_serversecurity_combo_box_set_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (ppriv->security_view), 
+	modest_serversecurity_picker_set_active_serversecurity (
+		MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
 		MODEST_PROTOCOLS_CONNECTION_NONE);
 	modest_secureauth_combo_box_set_active_secureauth (
 	   MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view),
@@ -314,11 +310,11 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		gtk_box_pack_start (GTK_BOX (self), auth_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), user_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), pwd_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), sec_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), port_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	} else {
 		/* The order is different */
-		gtk_box_pack_start (GTK_BOX (self), sec_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), auth_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	}
 
@@ -333,7 +329,6 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	}
 	gtk_widget_show (ppriv->security_view);
 	gtk_widget_show (ppriv->auth_view);
-	gtk_widget_show (sec_caption);
 	gtk_widget_show (auth_caption);
 }
 
@@ -407,7 +402,7 @@ modest_maemo_security_options_view_save_settings (ModestSecurityOptionsView* sel
 	if (ppriv->full) {
 		server_port = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (ppriv->port_view));
 	} else {
-		server_port = modest_serversecurity_combo_box_get_active_serversecurity_port (MODEST_SERVERSECURITY_COMBO_BOX (ppriv->security_view));
+		server_port = modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
 	}
 
 	modest_server_account_settings_set_port (server_settings, server_port);

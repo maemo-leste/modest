@@ -34,7 +34,11 @@
 #include "modest-platform.h"
 #include "modest-security-options-view.h"
 #include "modest-security-options-view-priv.h"
+#ifdef MODEST_TOOLKIT_HILDON2
+#include "modest-serversecurity-picker.h"
+#else
 #include "widgets/modest-serversecurity-combo-box.h"
+#endif
 #include "widgets/modest-secureauth-combo-box.h"
 
 /* list my signals */
@@ -52,7 +56,6 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 	ModestSecurityOptionsViewPrivate *priv;
 	ModestServerAccountSettings *server_settings;
 	ModestProtocolType server_proto, secure_protocol, secure_auth;
-	ModestServersecurityComboBox *combo;
 
 	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
@@ -71,9 +74,12 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 	priv->initial_state.port = modest_server_account_settings_get_port (server_settings);
 
 	/* Update UI */
-	combo = MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view);
 	modest_security_options_view_set_server_type (self, server_proto);
-	modest_serversecurity_combo_box_set_active_serversecurity (combo, secure_protocol);
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_serversecurity_picker_set_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view), secure_protocol);
+#else
+	modest_serversecurity_combo_box_set_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view), secure_protocol);
+#endif
 
 /* 		update_incoming_server_title (dialog, dialog->incoming_protocol); */
 
@@ -132,7 +138,11 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 	auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 
 	/* Get data */
+#ifdef MODEST_TOOLKIT_HILDON2
+	security_proto = modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+#else
 	security_proto = modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+#endif
 
 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) {
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view))) {
@@ -178,14 +188,17 @@ modest_security_options_view_set_server_type (ModestSecurityOptionsView* self,
 					      ModestProtocolType server_type)
 {
  	ModestSecurityOptionsViewPrivate *priv;
-	ModestServersecurityComboBox *combo;
-
 	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
-	combo = MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view);
-		
-	modest_serversecurity_combo_box_fill (combo, server_type);
-	modest_serversecurity_combo_box_set_active_serversecurity (combo,
+
+#ifdef MODEST_TOOLKIT_HILDON2		
+	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (priv->security_view), server_type);
+	modest_serversecurity_picker_set_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view),
+								MODEST_PROTOCOLS_CONNECTION_NONE);
+#else
+	modest_serversecurity_combo_box_fill (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view), server_type);
+	modest_serversecurity_combo_box_set_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view),
 								   MODEST_PROTOCOLS_CONNECTION_NONE);
+#endif
 }
 
 static void
@@ -199,8 +212,13 @@ get_current_state (ModestSecurityOptionsView* self,
 	proto_registry = modest_runtime_get_protocol_registry ();
 
 	/* Get security */
+#ifdef MODEST_TOOLKIT_HILDON2
+	state->security = 
+		modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+#else
 	state->security = 
 		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+#endif
 
 	/* Get auth */
 	if (self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
@@ -275,8 +293,13 @@ modest_security_options_view_auth_check (ModestSecurityOptionsView* self)
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Check if the server supports secure authentication */
+#ifdef MODEST_TOOLKIT_HILDON2
+	security_incoming_type = 
+		modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+#else
 	security_incoming_type = 
 		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+#endif
 
 	auth_active = 
 		gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view));

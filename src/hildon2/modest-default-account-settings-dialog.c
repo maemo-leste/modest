@@ -41,7 +41,6 @@
 #include "modest-hildon-includes.h"
 #include "modest-default-account-settings-dialog.h"
 #include "modest-account-mgr.h"
-#include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "widgets/modest-validating-entry.h"
 #include "widgets/modest-retrieve-combo-box.h"
@@ -678,19 +677,6 @@ update_incoming_server_title (ModestDefaultAccountSettingsDialog *self,
 	g_free (with_asterisk);
 }
 
-/** Change the caption title for the incoming server, 
- * as specified in the UI spec:
- */
-/* static void  */
-/* update_incoming_server_security_choices (ModestDefaultAccountSettingsDialog *self,  */
-/* 					 ModestProtocolType protocol) */
-/* { */
-/* 	/\* Fill the combo with appropriately titled choices for POP or IMAP. *\/ */
-/* 	/\* The choices are the same, but the titles are different, as in the UI spec. *\/ */
-/* 	modest_serversecurity_combo_box_fill ( */
-/* 		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security), protocol); */
-/* } */
-           
 static GtkWidget* 
 create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 {
@@ -780,41 +766,6 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	gtk_widget_show (GTK_WIDGET (smtp_win));
 	priv->modified = TRUE;
 }
-
-/* static void */
-/* on_combo_outgoing_auth_changed (GtkComboBox *widget, gpointer user_data) */
-/* { */
-/* 	ModestDefaultAccountSettingsDialog *self; */
-/* 	ModestProtocolRegistry *protocol_registry; */
-/* 	ModestProtocolType protocol_security;	 */
-/* 	gboolean secureauth_used; */
-
-/* 	self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data); */
-/* 	protocol_registry = modest_runtime_get_protocol_registry (); */
-	
-/* 	protocol_security =  */
-/* 		modest_secureauth_combo_box_get_active_secureauth ( */
-/* 			MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth)); */
-/* 	secureauth_used = modest_protocol_registry_protocol_type_is_secure (protocol_registry, protocol_security); */
-	
-/* 	gtk_widget_set_sensitive (priv->caption_outgoing_username, secureauth_used); */
-/* 	gtk_widget_set_sensitive (priv->caption_outgoing_password, secureauth_used); */
-/* } */
-
-/* static void */
-/* on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data) */
-/* { */
-/* 	ModestDefaultAccountSettingsDialog *self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data); */
-	
-/* 	const gint port_number =  */
-/* 		modest_serversecurity_combo_box_get_active_serversecurity_port ( */
-/* 			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security)); */
-
-/* 	if(port_number != 0) { */
-/* 		hildon_number_editor_set_value ( */
-/* 			HILDON_NUMBER_EDITOR (priv->entry_outgoing_port), port_number); */
-/* 	}		 */
-/* } */
 
 static void
 on_missing_mandatory_data (ModestSecurityOptionsView *security_view,
@@ -997,62 +948,6 @@ check_data (ModestDefaultAccountSettingsDialog *self)
 		gtk_editable_select_region (GTK_EDITABLE (priv->entry_outgoingserver), 0, -1);
 		return FALSE;
 	}
-	
-/* 	/\* Find a suitable authentication method when secure authentication is desired *\/ */
-/* 	port_num = hildon_number_editor_get_value ( */
-/* 		HILDON_NUMBER_EDITOR (priv->entry_incoming_port)); */
-/* 	username = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)); */
-
-/* 	protocol_registry = modest_runtime_get_protocol_registry (); */
-
-/* 	protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity ( */
-/* 		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security)); */
-/* 	if (!modest_protocol_registry_protocol_type_is_secure(protocol_registry, protocol_security_incoming)) */
-/* 	{ */
-/* 		if (gtk_toggle_button_get_active ( */
-/* 				GTK_TOGGLE_BUTTON (priv->checkbox_incoming_auth))) { */
-/* 			GError *error = NULL; */
-/* 			GList *list_auth_methods; */
-
-/* 			list_auth_methods =  */
-/* 				modest_utils_get_supported_secure_authentication_methods (priv->incoming_protocol,  */
-/* 											  hostname, port_num, username, GTK_WINDOW (self), &error); */
-/* 			if (list_auth_methods) { */
-/* 				GList* method; */
-
-/* 				/\* Use the first supported method. */
-/* 				 * TODO: Should we prioritize them, to prefer a particular one? *\/ */
-/* 				for (method = list_auth_methods; method != NULL; method = g_list_next(method)) */
-/* 				{ */
-/* 					ModestProtocolType proto = (ModestProtocolType)(GPOINTER_TO_INT(method->data)); */
-/* 					// Allow secure methods, e.g MD5 only */
-/* 					if (modest_protocol_registry_protocol_type_is_secure(protocol_registry, proto)) */
-/* 					{ */
-/* 						priv->protocol_authentication_incoming = proto; */
-/* 						break; */
-/* 					} */
-/* 				} */
-/* 				g_list_free (list_auth_methods); */
-/* 			} */
-
-/* 			if (list_auth_methods == NULL ||  */
-/* 			    !modest_protocol_registry_protocol_type_is_secure(protocol_registry, priv->protocol_authentication_incoming)) */
-/* 			{ */
-/* 		  		if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() || */
-/* 						error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED) */
-/* 					modest_platform_information_banner(GTK_WIDGET (self), NULL,  */
-/* 								       _("mcen_ib_unableto_discover_auth_methods")); */
-
-/* 				if(error != NULL) */
-/* 					g_error_free(error); */
-					
-/* 				/\* This is a nasty hack. jschmid. *\/ */
-/* 				/\* Don't let the dialog close *\/ */
-/* 				/\*g_signal_stop_emission_by_name (dialog, "response");*\/ */
-/* 				return FALSE; */
-/* 			} */
-/* 		} */
-/* 	} */
 	
 	return TRUE;
 }
