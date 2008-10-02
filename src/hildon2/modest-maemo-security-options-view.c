@@ -285,7 +285,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
 	                  G_CALLBACK (on_security_changed), self);
 	if (ppriv->full) {
-		g_signal_connect (G_OBJECT (ppriv->auth_view), "changed",
+		g_signal_connect (G_OBJECT (ppriv->auth_view), "value-changed",
 				  G_CALLBACK (on_auth_changed), self);
 		g_signal_connect (G_OBJECT (ppriv->user_entry), "changed",
 				  G_CALLBACK (on_entry_changed), self);

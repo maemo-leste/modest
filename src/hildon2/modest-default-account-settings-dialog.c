@@ -41,9 +41,9 @@
 #include "modest-hildon-includes.h"
 #include "modest-default-account-settings-dialog.h"
 #include "modest-account-mgr.h"
-#include "widgets/modest-secureauth-combo-box.h"
+#include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
-#include "widgets/modest-retrieve-combo-box.h"
+#include "modest-retrieve-picker.h"
 #include "widgets/modest-limit-retrieve-combo-box.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
@@ -104,7 +104,7 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	
 	GtkWidget *page_account_details;
 	GtkWidget *entry_account_title;
-	GtkWidget *combo_retrieve;
+	GtkWidget *retrieve_picker;
 	GtkWidget *combo_limit_retrieve;
 	GtkWidget *caption_leave_messages;
 	GtkWidget *checkbox_leave_messages;
@@ -122,18 +122,9 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *page_incoming;
 	GtkWidget *caption_incoming;
 	GtkWidget *entry_incomingserver;
-/* 	GtkWidget *combo_incoming_security; */
-/* 	GtkWidget *checkbox_incoming_auth; */
 
 	GtkWidget *page_outgoing;
 	GtkWidget *entry_outgoingserver;
-/* 	GtkWidget *caption_outgoing_username; */
-/* 	GtkWidget *entry_outgoing_username; */
-/* 	GtkWidget *caption_outgoing_password; */
-/* 	GtkWidget *entry_outgoing_password; */
-/* 	GtkWidget *combo_outgoing_security; */
-/* 	GtkWidget *combo_outgoing_auth; */
-/* 	GtkWidget *entry_outgoing_port; */
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
 	
@@ -209,6 +200,12 @@ on_modified_combobox_changed (GtkComboBox *widget, gpointer user_data)
 }
 
 static void
+on_modified_picker_changed (HildonPickerButton *widget, gpointer user_data)
+{
+	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
+}
+
+static void
 on_modified_entry_changed (GtkEditable *editable, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
@@ -251,7 +248,10 @@ connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widge
 			G_CALLBACK (on_modified_entry_changed), self);
 	} else if (GTK_IS_COMBO_BOX (widget)) {
 		g_signal_connect (G_OBJECT (widget), "changed",
-        		G_CALLBACK (on_modified_combobox_changed), self);	
+        		G_CALLBACK (on_modified_combobox_changed), self);
+	} else if (HILDON_IS_PICKER_BUTTON (widget)) {
+		g_signal_connect (G_OBJECT (widget), "value-changed",
+				  G_CALLBACK (on_modified_picker_changed), self);
 	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "toggled",
 			G_CALLBACK (on_modified_checkbox_toggled), self);
@@ -406,13 +406,11 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 		on_entry_max, self);
 	
 	/* The retrieve combobox: */
-	priv->combo_retrieve = GTK_WIDGET (modest_retrieve_combo_box_new ());
-	caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_advsetup_retrievetype"), 
-		priv->combo_retrieve, NULL, HILDON_CAPTION_MANDATORY);
-	gtk_widget_show (priv->combo_retrieve);
-	connect_for_modified (self, priv->combo_retrieve);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	priv->retrieve_picker = GTK_WIDGET (modest_retrieve_picker_new ());
+	hildon_button_set_title (HILDON_BUTTON (priv->retrieve_picker), _("mcen_fi_advsetup_retrievetype"));
+	gtk_widget_show (priv->retrieve_picker);
+	connect_for_modified (self, priv->retrieve_picker);
+	gtk_box_pack_start (GTK_BOX (box), priv->retrieve_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* The limit-retrieve combobox: */
 	priv->combo_limit_retrieve = GTK_WIDGET (modest_limit_retrieve_combo_box_new ());
@@ -1167,8 +1165,6 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 			    null_means_empty (modest_account_settings_get_fullname (settings)));
 	gtk_entry_set_text( GTK_ENTRY (priv->entry_user_email), 
 			    null_means_empty (modest_account_settings_get_email_address (settings)));
-	modest_retrieve_combo_box_set_active_retrieve_conf (MODEST_RETRIEVE_COMBO_BOX (priv->combo_retrieve), 
-							    modest_account_settings_get_retrieve_type (settings));
 	modest_limit_retrieve_combo_box_set_active_limit_retrieve (
 		MODEST_LIMIT_RETRIEVE_COMBO_BOX (priv->combo_limit_retrieve), 
 		modest_account_settings_get_retrieve_limit (settings));
@@ -1183,7 +1179,9 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		gchar *proto_name, *title;
 		ModestProtocolType incoming_protocol;
 
-		modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (priv->combo_retrieve), modest_server_account_settings_get_protocol (incoming_account));
+		modest_retrieve_picker_fill (MODEST_RETRIEVE_PICKER (priv->retrieve_picker), modest_server_account_settings_get_protocol (incoming_account));
+		modest_retrieve_picker_set_active_retrieve_conf (MODEST_RETRIEVE_PICKER (priv->retrieve_picker), 
+								 modest_account_settings_get_retrieve_type (settings));
 		
 		if (!modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry,
 										 modest_server_account_settings_get_protocol (incoming_account))) {
@@ -1317,8 +1315,8 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 		modest_account_settings_set_signature (priv->settings, signature);
 	}
 	
-	retrieve_type = modest_retrieve_combo_box_get_active_retrieve_conf (
-		MODEST_RETRIEVE_COMBO_BOX (priv->combo_retrieve));
+	retrieve_type = modest_retrieve_picker_get_active_retrieve_conf (
+		MODEST_RETRIEVE_PICKER (priv->retrieve_picker));
 	modest_account_settings_set_retrieve_type (priv->settings, retrieve_type);
 	
 	retrieve_limit = modest_limit_retrieve_combo_box_get_active_limit_retrieve (
