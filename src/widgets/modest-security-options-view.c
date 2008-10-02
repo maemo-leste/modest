@@ -36,10 +36,11 @@
 #include "modest-security-options-view-priv.h"
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-serversecurity-picker.h"
+#include "modest-secureauth-picker.h"
 #else
 #include "widgets/modest-serversecurity-combo-box.h"
-#endif
 #include "widgets/modest-secureauth-combo-box.h"
+#endif
 
 /* list my signals */
 enum {
@@ -106,8 +107,13 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auth_view),
 						      TRUE);
 	} else {
+#ifdef MODEST_TOOLKIT_HILDON2
+		modest_secureauth_picker_set_active_secureauth (
+		   MODEST_SECUREAUTH_PICKER (priv->auth_view), secure_auth);
+#else
 		modest_secureauth_combo_box_set_active_secureauth (
 		   MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view), secure_auth);
+#endif
 	}
 
 	MODEST_SECURITY_OPTIONS_VIEW_GET_CLASS (self)->load_settings (self, settings);
@@ -156,8 +162,13 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 			}
 		}
 	} else {
+#ifdef MODEST_TOOLKIT_HILDON2
+		auth_protocol = modest_secureauth_picker_get_active_secureauth (
+			MODEST_SECUREAUTH_PICKER (priv->auth_view));
+#else
 		auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
-			   MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+			MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+#endif
 	}
 
 	/* Save settings */
@@ -222,7 +233,11 @@ get_current_state (ModestSecurityOptionsView* self,
 
 	/* Get auth */
 	if (self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
+#ifdef MODEST_TOOLKIT_HILDON2
+		state->auth = modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->auth_view));
+#else
 		state->auth = modest_secureauth_combo_box_get_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+#endif
 		if (priv->full) {
 		}
 	} else {

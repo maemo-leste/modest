@@ -266,6 +266,8 @@ modest_country_picker_init (ModestCountryPicker *self)
 void
 modest_country_picker_load_data(ModestCountryPicker *self)
 {
+	GtkCellRenderer *renderer;
+	GtkWidget *selector;
 	GtkListStore *model;
 
 	/* Create a tree model for the combo box,
@@ -276,10 +278,10 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	
 	/* Country column:
 	 * The ID model column in not shown in the view. */
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+	renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
-	GtkWidget *selector = hildon_touch_selector_new ();
+	selector = hildon_touch_selector_new ();
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
 					     renderer, "text", MODEL_COL_NAME, NULL);

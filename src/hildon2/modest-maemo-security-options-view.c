@@ -36,14 +36,9 @@
 #include "widgets/modest-ui-constants.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-serversecurity-picker.h"
-#include "widgets/modest-secureauth-combo-box.h"
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-number-editor.h>
-#else
+#include "modest-secureauth-picker.h"
 #include <hildon/hildon-caption.h>
 #include <hildon/hildon-number-editor.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 
 #define PORT_MIN 1
 #define PORT_MAX 65535
@@ -58,7 +53,7 @@ G_DEFINE_TYPE (ModestMaemoSecurityOptionsView,
 
 static void on_entry_changed (GtkEditable *editable, gpointer user_data);
 
-/* Tracks changes in the incoming security combo box */
+/* Tracks changes in the incoming security picker */
 static void
 on_security_changed (GtkWidget *widget, 
 		     ModestMaemoSecurityOptionsView *self)
@@ -103,7 +98,7 @@ on_auth_changed (GtkWidget *widget,
 		 ModestMaemoSecurityOptionsView *self)
 {
 	ModestSecurityOptionsViewPrivate* ppriv;
-	ModestSecureauthComboBox *combo;
+	ModestSecureauthPicker *picker;
 	ModestProtocolRegistry *protocol_registry;
 	ModestProtocolType auth_proto;
 	gboolean secureauth_used;
@@ -111,9 +106,9 @@ on_auth_changed (GtkWidget *widget,
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
-	combo = MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view);
+	picker = MODEST_SECUREAUTH_PICKER (ppriv->auth_view);
 
-	auth_proto = modest_secureauth_combo_box_get_active_secureauth (combo);
+	auth_proto = modest_secureauth_picker_get_active_secureauth (picker);
 	secureauth_used = modest_protocol_registry_protocol_type_is_secure (protocol_registry, 
 									    auth_proto);
 
@@ -186,7 +181,7 @@ on_entry_max (ModestValidatingEntry *self,
 }
 
 /*
- * TODO: call this whenever the auth combo changes. If we set it
+ * TODO: call this whenever the auth picker changes. If we set it
  * explicitely at the beggining to a value then there is no need to
  * call this handler directly at the beginning
  */
@@ -197,7 +192,7 @@ on_entry_changed (GtkEditable *editable,
 	ModestSecurityOptionsView* self;
  	ModestSecurityOptionsViewPrivate *ppriv;
 	ModestProtocolType auth_proto;
-	ModestSecureauthComboBox *combo;
+	ModestSecureauthPicker *picker;
 	gboolean is_secure, missing;
 	ModestProtocolRegistry *protocol_registry;
 
@@ -206,8 +201,8 @@ on_entry_changed (GtkEditable *editable,
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Outgoing username is mandatory if outgoing auth is secure */
-	combo = MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view);
-	auth_proto = modest_secureauth_combo_box_get_active_secureauth (combo);
+	picker = MODEST_SECUREAUTH_PICKER (ppriv->auth_view);
+	auth_proto = modest_secureauth_picker_get_active_secureauth (picker);
 	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry, 
 								      auth_proto);
 
@@ -228,7 +223,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 			  GtkSizeGroup *size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
-	GtkWidget *auth_caption, *user_caption = NULL;
+	GtkWidget *user_caption = NULL;
 	GtkWidget *pwd_caption = NULL, *port_caption = NULL;
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
@@ -240,9 +235,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	hildon_button_set_title (HILDON_BUTTON (ppriv->security_view), _("mcen_li_emailsetup_secure_connection"));
 	
 	/* The secure authentication widgets */
-	ppriv->auth_view = GTK_WIDGET (modest_secureauth_combo_box_new ());
-	auth_caption = hildon_caption_new (size_group, _("mcen_li_emailsetup_secure_authentication"),
-					   ppriv->auth_view, NULL, HILDON_CAPTION_OPTIONAL);
+	ppriv->auth_view = GTK_WIDGET (modest_secureauth_picker_new ());
+	hildon_button_set_title (HILDON_BUTTON (ppriv->auth_view), _("mcen_li_emailsetup_secure_authentication"));
 
 	if (ppriv->full) {
 		gchar *user_label;
@@ -301,13 +295,13 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	modest_serversecurity_picker_set_active_serversecurity (
 		MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
 		MODEST_PROTOCOLS_CONNECTION_NONE);
-	modest_secureauth_combo_box_set_active_secureauth (
-	   MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view),
+	modest_secureauth_picker_set_active_secureauth (
+	   MODEST_SECUREAUTH_PICKER (ppriv->auth_view),
 	   MODEST_PROTOCOLS_AUTH_NONE);
 
 	/* Pack into container */
 	if (ppriv->full) {
-		gtk_box_pack_start (GTK_BOX (self), auth_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), user_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), pwd_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -315,7 +309,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	} else {
 		/* The order is different */
 		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), auth_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 	}
 
 	/* Show widgets */
@@ -329,7 +323,6 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	}
 	gtk_widget_show (ppriv->security_view);
 	gtk_widget_show (ppriv->auth_view);
-	gtk_widget_show (auth_caption);
 }
 
 GtkWidget *    

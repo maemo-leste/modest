@@ -33,7 +33,7 @@
 #include "modest-runtime.h"
 
 #include "modest-serversecurity-picker.h"
-#include "widgets/modest-secureauth-combo-box.h"
+#include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
@@ -61,7 +61,7 @@ typedef struct _ModestConnectionSpecificSmtpEditWindowPrivate ModestConnectionSp
 struct _ModestConnectionSpecificSmtpEditWindowPrivate
 {
 	GtkWidget *entry_outgoingserver;
-	GtkWidget *combo_outgoing_auth;
+	GtkWidget *outgoing_auth_picker;
 	GtkWidget *entry_user_username;
 	GtkWidget *entry_user_password;
 	GtkWidget *outgoing_security_picker;
@@ -311,14 +311,13 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_widget_show (caption);
 	
 	/* The secure authentication widgets: */
-	if (!priv->combo_outgoing_auth)
-		priv->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
-	caption = hildon_caption_new (sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
-		priv->combo_outgoing_auth, NULL, HILDON_CAPTION_OPTIONAL);
-	g_signal_connect (G_OBJECT (priv->combo_outgoing_auth), "changed", G_CALLBACK(on_change), self);
-	gtk_widget_show (priv->combo_outgoing_auth);
-	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	if (!priv->outgoing_auth_picker) {
+		priv->outgoing_auth_picker = GTK_WIDGET (modest_secureauth_picker_new ());
+		hildon_button_set_title (HILDON_BUTTON (priv->outgoing_auth_picker), _("mcen_li_emailsetup_secure_authentication"));
+	}
+	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", G_CALLBACK(on_change), self);
+	gtk_widget_show (priv->outgoing_auth_picker);
+	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_auth_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* The username widgets: */	
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
@@ -450,8 +449,8 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), 
 		modest_server_account_settings_get_security_protocol (server_settings));
 	
-		modest_secureauth_combo_box_set_active_secureauth (
-		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), 
+		modest_secureauth_picker_set_active_secureauth (
+		MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker), 
 		modest_server_account_settings_get_auth_protocol (server_settings));
 		
 		/* port: */
@@ -501,8 +500,8 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 						     modest_serversecurity_picker_get_active_serversecurity (
 						     MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker)));
 	modest_server_account_settings_set_auth_protocol (server_settings,
-							  modest_secureauth_combo_box_get_active_secureauth (
-							  MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth)));
+							  modest_secureauth_picker_get_active_secureauth (
+							  MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker)));
 	modest_server_account_settings_set_account_name (server_settings,
 							 priv->account_name);
 	
