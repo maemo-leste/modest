@@ -107,7 +107,8 @@ touch_selector_print_func (HildonTouchSelector *selector)
 }
 
 ModestServersecurityPicker*
-modest_serversecurity_picker_new (void)
+modest_serversecurity_picker_new (HildonSizeType size,
+				  HildonButtonArrangement arrangement)
 {
 	ModestServersecurityPicker *self;
 	ModestServersecurityPickerPrivate *priv;
@@ -115,8 +116,8 @@ modest_serversecurity_picker_new (void)
 	GtkWidget *selector;
 
 	self = g_object_new (MODEST_TYPE_SERVERSECURITY_PICKER, 
-			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-			     "size", HILDON_SIZE_AUTO,
+			     "arrangement", arrangement,
+			     "size", size,
 			     NULL);
 	priv = MODEST_SERVERSECURITY_PICKER_GET_PRIVATE (self);
 

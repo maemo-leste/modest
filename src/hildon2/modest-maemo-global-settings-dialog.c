@@ -153,8 +153,7 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->updating_page);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
-
-	/* gtk_window_set_default_size (GTK_WINDOW (self), 700, 300); */
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, 340);
 
 	/* Load current config */
 	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
@@ -192,6 +191,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	GtkWidget *vbox, *vbox_update, *vbox_limit, *label, *hbox;
 	GtkSizeGroup *size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
+	GtkWidget *pannable;
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
@@ -200,7 +200,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Auto update */
-	ppriv->auto_update = hildon_check_button_new (HILDON_SIZE_AUTO);
+	ppriv->auto_update = hildon_check_button_new (MODEST_EDITABLE_SIZE);
 	gtk_button_set_label (GTK_BUTTON (ppriv->auto_update), _("mcen_fi_options_autoupdate"));
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->auto_update, FALSE, FALSE, MODEST_MARGIN_HALF);
 	g_signal_connect (ppriv->auto_update, "clicked", G_CALLBACK (on_auto_update_clicked), self);
@@ -211,8 +211,11 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
 	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
-	ppriv->connect_via = modest_selector_picker_new (ppriv->connect_via_list, g_int_equal);
-	hildon_button_set_title (HILDON_BUTTON (ppriv->connect_via), _("mcen_fi_options_connectiontype"));
+	ppriv->connect_via = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							 MODEST_EDITABLE_ARRANGEMENT,
+							 ppriv->connect_via_list, g_int_equal);
+	modest_maemo_utils_create_picker_layout (size_group, _("mcen_fi_options_connectiontype"),
+						 ppriv->connect_via);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->connect_via, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Update interval */
@@ -221,8 +224,11 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
 	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
-	ppriv->update_interval = modest_selector_picker_new (ppriv->update_interval_list, g_int_equal);
-	hildon_button_set_title (HILDON_BUTTON (ppriv->update_interval), _("mcen_fi_options_updateinterval"));
+	ppriv->update_interval = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							     MODEST_EDITABLE_ARRANGEMENT,
+							     ppriv->update_interval_list, g_int_equal);
+	modest_maemo_utils_create_picker_layout (size_group, _("mcen_fi_options_updateinterval"), 
+						 ppriv->update_interval);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->update_interval, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Add to vbox */
@@ -255,12 +261,21 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
 	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
-	ppriv->msg_format = modest_selector_picker_new (ppriv->msg_format_list, g_int_equal);
-	hildon_button_set_title (HILDON_BUTTON (ppriv->msg_format), _("mcen_fi_options_messageformat"));
+	ppriv->msg_format = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							MODEST_EDITABLE_ARRANGEMENT,
+							ppriv->msg_format_list, g_int_equal);
+	modest_maemo_utils_create_picker_layout (size_group, _("mcen_fi_options_messageformat"), 
+						 ppriv->msg_format);
 
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, MODEST_MARGIN_HALF);
 
-	return vbox;
+	pannable = hildon_pannable_area_new ();
+
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), vbox);
+	gtk_widget_show (vbox);
+	gtk_widget_show (pannable);
+
+	return pannable;
 }
 
 

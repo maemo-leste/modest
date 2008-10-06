@@ -312,7 +312,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The secure authentication widgets: */
 	if (!priv->outgoing_auth_picker) {
-		priv->outgoing_auth_picker = GTK_WIDGET (modest_secureauth_picker_new ());
+		priv->outgoing_auth_picker = 
+			GTK_WIDGET (modest_secureauth_picker_new (MODEST_EDITABLE_SIZE,
+								  MODEST_EDITABLE_ARRANGEMENT));
 		hildon_button_set_title (HILDON_BUTTON (priv->outgoing_auth_picker), _("mcen_li_emailsetup_secure_authentication"));
 	}
 	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", G_CALLBACK(on_change), self);
@@ -355,7 +357,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The secure connection widgets: */	
 	if (!priv->outgoing_security_picker)
-		priv->outgoing_security_picker = GTK_WIDGET (modest_serversecurity_picker_new ());
+		priv->outgoing_security_picker = 
+			GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE,
+								      MODEST_EDITABLE_ARRANGEMENT));
 	modest_serversecurity_picker_fill (
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_serversecurity_picker_set_active_serversecurity (

@@ -77,7 +77,9 @@ GType        modest_selector_picker_get_type    (void) G_GNUC_CONST;
  * 
  * Returns: a new ModestSelectorPicker instance, or NULL in case of failure
  */
-GtkWidget*   modest_selector_picker_new         (ModestPairList* pairs,
+GtkWidget*   modest_selector_picker_new         (HildonSizeType size,
+						 HildonButtonArrangement arrangement,
+						 ModestPairList* pairs,
 						 GEqualFunc id_equal_func);
 
 /**

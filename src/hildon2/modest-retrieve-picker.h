@@ -68,7 +68,8 @@ typedef struct {
 
 GType modest_retrieve_picker_get_type (void);
 
-ModestRetrievePicker* modest_retrieve_picker_new (void);
+ModestRetrievePicker* modest_retrieve_picker_new (HildonSizeType size,
+						  HildonButtonArrangement arrangement);
 
 void modest_retrieve_picker_fill (ModestRetrievePicker *picker, ModestProtocolType protocol);
 

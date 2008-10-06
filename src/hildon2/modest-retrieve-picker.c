@@ -108,7 +108,8 @@ modest_retrieve_picker_init (ModestRetrievePicker *self)
 
 
 ModestRetrievePicker*
-modest_retrieve_picker_new (void)
+modest_retrieve_picker_new (HildonSizeType size,
+			    HildonButtonArrangement arrangement)
 {
 	ModestRetrievePicker *self;
 	ModestRetrievePickerPrivate *priv;
@@ -116,8 +117,8 @@ modest_retrieve_picker_new (void)
 	GtkWidget *selector;
 
 	self = g_object_new (MODEST_TYPE_RETRIEVE_PICKER, 
-			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-			     "size", HILDON_SIZE_AUTO,
+			     "arrangement", arrangement,
+			     "size", size,
 			     NULL);
 	priv = MODEST_RETRIEVE_PICKER_GET_PRIVATE (self);
 

@@ -67,7 +67,8 @@ typedef struct {
 
 GType modest_serversecurity_picker_get_type (void);
 
-ModestServersecurityPicker* modest_serversecurity_picker_new (void);
+ModestServersecurityPicker* modest_serversecurity_picker_new (HildonSizeType size,
+							      HildonButtonArrangement arrangement);
 
 void modest_serversecurity_picker_fill (ModestServersecurityPicker *picker, ModestProtocolType protocol);
 

@@ -30,7 +30,6 @@
 #include <string.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
-#include <widgets/modest-combo-box.h>
 #include "widgets/modest-progress-bar.h"
 #include "modest-tny-account.h"
 #include "modest-platform.h"

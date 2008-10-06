@@ -67,7 +67,8 @@ typedef struct {
 
 GType modest_secureauth_picker_get_type (void);
 
-ModestSecureauthPicker* modest_secureauth_picker_new (void);
+ModestSecureauthPicker* modest_secureauth_picker_new (HildonSizeType size,
+						      HildonButtonArrangement arrangement);
 
 ModestProtocolType modest_secureauth_picker_get_active_secureauth (ModestSecureauthPicker *picker);
 

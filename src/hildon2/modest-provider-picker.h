@@ -82,7 +82,8 @@ typedef struct {
 
 GType modest_provider_picker_get_type (void);
 
-ModestProviderPicker* modest_provider_picker_new (void);
+ModestProviderPicker* modest_provider_picker_new (HildonSizeType size,
+						  HildonButtonArrangement arrangement);
 
 void modest_provider_picker_fill (ModestProviderPicker *combobox, ModestPresets *presets,
 				  gint mcc);

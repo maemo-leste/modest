@@ -296,11 +296,12 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 }
 
 ModestCountryPicker*
-modest_country_picker_new (void)
+modest_country_picker_new (HildonSizeType size,
+			   HildonButtonArrangement arrangement)
 {
 	return g_object_new (MODEST_TYPE_COUNTRY_PICKER, 
-			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-			     "size", HILDON_SIZE_AUTO,
+			     "arrangement", arrangement,
+			     "size", size,
 			     NULL);
 }
 

@@ -104,7 +104,8 @@ modest_limit_retrieve_picker_init (ModestLimitRetrievePicker *self)
 }
 
 ModestLimitRetrievePicker*
-modest_limit_retrieve_picker_new (void)
+modest_limit_retrieve_picker_new (HildonSizeType size,
+				  HildonButtonArrangement arrangement)
 {
 	ModestLimitRetrievePicker *self;
 	ModestLimitRetrievePickerPrivate *priv;
@@ -112,8 +113,8 @@ modest_limit_retrieve_picker_new (void)
 	GtkWidget *selector;
 
 	self = g_object_new (MODEST_TYPE_LIMIT_RETRIEVE_PICKER, 
-			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-			     "size", HILDON_SIZE_AUTO,
+			     "arrangement", arrangement,
+			     "size", size,
 			     NULL);
 	priv = MODEST_LIMIT_RETRIEVE_PICKER_GET_PRIVATE (self);
 

@@ -78,6 +78,7 @@
 #endif
 #include <modest-utils.h>
 #include "modest-maemo-utils.h"
+#include <modest-ui-constants.h>
 
 
 #define DEFAULT_FONT_SIZE 3
@@ -737,6 +738,7 @@ init_window (ModestMsgEditWindow *obj)
 #if (GTK_MINOR_VERSION >= 10)
 	GdkAtom deserialize_type;
 #endif
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
 
@@ -793,7 +795,12 @@ init_window (ModestMsgEditWindow *obj)
 	/* Note: This ModestPairList* must exist for as long as the picker
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
- 	priv->from_field    = modest_selector_picker_new (NULL, g_str_equal);
+ 	priv->from_field    = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							  MODEST_EDITABLE_ARRANGEMENT,
+							  NULL, g_str_equal);
+	hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 0.0);
+	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
+	hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -801,7 +808,8 @@ init_window (ModestMsgEditWindow *obj)
 	subject_box = gtk_hbox_new (FALSE, 0);
 	priv->priority_icon = gtk_image_new ();
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->priority_icon, FALSE, FALSE, 0);
-	priv->subject_field = gtk_entry_new_with_max_length (SUBJECT_MAX_LENGTH);
+	priv->subject_field = hildon_entry_new (MODEST_EDITABLE_SIZE);
+	gtk_entry_set_max_length (GTK_ENTRY (priv->subject_field) ,SUBJECT_MAX_LENGTH);
 	g_object_set (G_OBJECT (priv->subject_field), "truncate-multiline", TRUE, NULL);
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
@@ -810,7 +818,7 @@ init_window (ModestMsgEditWindow *obj)
 	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (priv->add_attachment_button), GTK_CAN_FOCUS);
 	gtk_button_set_relief (GTK_BUTTON (priv->add_attachment_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
-	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 1.0);
+	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 0.5);
 	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, GTK_ICON_SIZE_BUTTON);
 	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
@@ -818,14 +826,16 @@ init_window (ModestMsgEditWindow *obj)
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
-	to_caption = hildon_caption_new (size_group, _("mail_va_to"), priv->to_field, NULL, 0);
-	priv->cc_caption = hildon_caption_new (size_group, _("mail_va_cc"), priv->cc_field, NULL, 0);
-	priv->bcc_caption = hildon_caption_new (size_group, _("mail_va_hotfix1"), priv->bcc_field, NULL, 0);
-	subject_caption = hildon_caption_new (size_group, _("mail_va_subject"), subject_box, NULL, 0);
-	priv->attachments_caption = hildon_caption_new (size_group, _("mail_va_attachment"), priv->attachments_view, NULL, 0);
+	hildon_button_add_title_size_group (HILDON_BUTTON (priv->from_field), size_group);
+	to_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_to"), priv->to_field);
+	priv->cc_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_cc"), priv->cc_field);
+	priv->bcc_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_hotfix1"), priv->bcc_field);
+	subject_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_subject"), subject_box);
+	priv->attachments_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_attachment"), priv->attachments_view);
 	g_object_unref (size_group);
 
 	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	hildon_button_add_value_size_group (HILDON_BUTTON (priv->from_field), size_group);
 	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->to_field), size_group);
 	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), size_group);
 	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), size_group);

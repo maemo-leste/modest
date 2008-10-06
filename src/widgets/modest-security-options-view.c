@@ -37,6 +37,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
+#include <hildon/hildon-check-button.h>
 #else
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
@@ -104,8 +105,13 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 		/* Active the authentication checkbox */
 		if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (), 
 								      secure_auth))
+#ifdef MODEST_TOOLKIT_HILDON2
+			hildon_check_button_set_active (GTK_BUTTON (priv->auth_view),
+							TRUE);
+#else
 			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auth_view),
 						      TRUE);
+#endif
 	} else {
 #ifdef MODEST_TOOLKIT_HILDON2
 		modest_secureauth_picker_set_active_secureauth (
@@ -151,7 +157,11 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 #endif
 
 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) {
+#ifdef MODEST_TOOLKIT_HILDON2
+		if (hildon_check_button_get_active (GTK_BUTTON (priv->auth_view))) {
+#else
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view))) {
+#endif
 			if (!modest_protocol_registry_protocol_type_is_secure (proto_registry,
 									       security_proto)) {
 				/* TODO */
@@ -241,7 +251,11 @@ get_current_state (ModestSecurityOptionsView* self,
 		if (priv->full) {
 		}
 	} else {
+#ifdef MODEST_TOOLKIT_HILDON2
+		if (hildon_check_button_get_active (GTK_BUTTON (priv->auth_view)))
+#else
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view)))
+#endif
 			state->auth = priv->initial_state.auth;
 		else
 			state->auth = MODEST_PROTOCOLS_AUTH_NONE;
@@ -316,8 +330,13 @@ modest_security_options_view_auth_check (ModestSecurityOptionsView* self)
 		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
 #endif
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	auth_active = 
+		hildon_check_button_get_active (GTK_BUTTON (priv->auth_view));
+#else
 	auth_active = 
 		gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view));
+#endif
 	is_secure = 
 		modest_protocol_registry_protocol_type_has_tag (protocol_registry, 
 								security_incoming_type, 

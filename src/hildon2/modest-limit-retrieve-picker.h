@@ -66,7 +66,8 @@ typedef struct {
 
 GType modest_limit_retrieve_picker_get_type (void);
 
-ModestLimitRetrievePicker* modest_limit_retrieve_picker_new (void);
+ModestLimitRetrievePicker* modest_limit_retrieve_picker_new (HildonSizeType size,
+							     HildonButtonArrangement arrangement);
 
 gint modest_limit_retrieve_picker_get_active_limit_retrieve (ModestLimitRetrievePicker *picker);
 

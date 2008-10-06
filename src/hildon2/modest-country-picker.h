@@ -66,7 +66,8 @@ typedef struct {
 
 GType modest_country_picker_get_type (void);
 
-ModestCountryPicker* modest_country_picker_new (void);
+ModestCountryPicker* modest_country_picker_new (HildonSizeType size,
+						HildonButtonArrangement arrangement);
 
 void modest_country_picker_load_data(ModestCountryPicker *self);
 

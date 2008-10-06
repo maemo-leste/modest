@@ -29,7 +29,6 @@
 
 
 #include <glib/gi18n.h>
-#include <gtk/gtknotebook.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkentry.h>
@@ -61,6 +60,7 @@
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
+
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -99,7 +99,7 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 
 	ModestProtocolType protocol_authentication_incoming;
 	
-	GtkNotebook *notebook;
+	GtkWidget *main_container;
 	
 	GtkWidget *page_account_details;
 	GtkWidget *entry_account_title;
@@ -205,7 +205,7 @@ on_modified_entry_changed (GtkEditable *editable, gpointer user_data)
 }
 
 static void
-on_modified_checkbox_toggled (GtkToggleButton *togglebutton, gpointer user_data)
+on_modified_checkbutton_clicked (GtkButton *button, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
@@ -242,9 +242,9 @@ connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widge
 	} else if (HILDON_IS_PICKER_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "value-changed",
 				  G_CALLBACK (on_modified_picker_changed), self);
-	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
-		g_signal_connect (G_OBJECT (widget), "toggled",
-			G_CALLBACK (on_modified_checkbox_toggled), self);
+	} else if (GTK_IS_BUTTON (widget)) {
+		g_signal_connect (G_OBJECT (widget), "clicked",
+			G_CALLBACK (on_modified_checkbutton_clicked), self);
 	}
 }
 
@@ -256,31 +256,16 @@ on_caption_entry_changed (GtkEditable *editable, gpointer user_data)
 	enable_buttons(self);
 }
 
-/** This is a convenience function to create a caption containing a mandatory widget.
- * When the widget is edited, the enable_buttons() vfunc will be called.
- */
 static GtkWidget* 
-create_caption_new_with_asterisk(ModestDefaultAccountSettingsDialog *self,
-	GtkSizeGroup *group,
-	const gchar *value,
-	GtkWidget *control,
-	GtkWidget *icon,
-	HildonCaptionStatus flag)
+create_captioned (ModestDefaultAccountSettingsDialog *self,
+		  GtkSizeGroup *group,
+		  const gchar *label_text,
+		  GtkWidget *control)
 {
- 	GtkWidget *caption = NULL;
-  
-	/* Note: Previously, the translated strings already contained the "*",
-	 * Comment out this code if they do again.
-	 */
-	/* Add a * character to indicate mandatory fields,
-	 * as specified in our "Email UI Specification": */
-	if (flag == HILDON_CAPTION_MANDATORY) {
-		gchar* title = g_strdup_printf("%s*", value);
-		caption = hildon_caption_new (group, title, control, icon, flag);	
-		g_free(title);
-	}	
-	else
-		caption = hildon_caption_new (group, value, control, icon, flag);
+
+	GtkWidget *result;
+
+	result = modest_maemo_utils_create_captioned (group, label_text, control);
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -291,7 +276,7 @@ create_caption_new_with_asterisk(ModestDefaultAccountSettingsDialog *self,
 		
 	}
 	 
-	return caption;
+	return result;
 }
 
 static void
@@ -335,24 +320,19 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *box;
-	GtkAdjustment *focus_adjustment = NULL;
 	GtkSizeGroup* sizegroup;
-	GtkWidget *scrollwin;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	scrollwin = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollwin),
-					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
            
 	/* The description widgets: */	
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	/* Do use auto-capitalization: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
-	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_account_title"), 
-		priv->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
+	GtkWidget *caption = create_captioned (self, sizegroup, _("mcen_fi_account_title"), 
+					       priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	connect_for_modified (self, priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -384,15 +364,18 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 		on_entry_max, self);
 	
 	/* The retrieve picker: */
-	priv->retrieve_picker = GTK_WIDGET (modest_retrieve_picker_new ());
-	hildon_button_set_title (HILDON_BUTTON (priv->retrieve_picker), _("mcen_fi_advsetup_retrievetype"));
+	priv->retrieve_picker = GTK_WIDGET (modest_retrieve_picker_new (MODEST_EDITABLE_SIZE,
+									MODEST_EDITABLE_ARRANGEMENT));
+	modest_maemo_utils_create_picker_layout (sizegroup, _("mcen_fi_advsetup_retrievetype"), priv->retrieve_picker);
+	
 	gtk_widget_show (priv->retrieve_picker);
 	connect_for_modified (self, priv->retrieve_picker);
 	gtk_box_pack_start (GTK_BOX (box), priv->retrieve_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* The limit-retrieve picker: */
-	priv->limit_retrieve_picker = GTK_WIDGET (modest_limit_retrieve_picker_new ());
-	hildon_button_set_title (HILDON_BUTTON (priv->limit_retrieve_picker), _("mcen_fi_advsetup_limit_retrieve"));
+	priv->limit_retrieve_picker = GTK_WIDGET (modest_limit_retrieve_picker_new (MODEST_EDITABLE_SIZE,
+										    MODEST_EDITABLE_ARRANGEMENT));
+	modest_maemo_utils_create_picker_layout (sizegroup, _("mcen_fi_advsetup_limit_retrieve"), priv->limit_retrieve_picker);
 	gtk_widget_show (priv->limit_retrieve_picker);
 	connect_for_modified (self, priv->limit_retrieve_picker);
 	gtk_box_pack_start (GTK_BOX (box), priv->limit_retrieve_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -401,8 +384,9 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 	if(!priv->checkbox_leave_messages)
 		priv->checkbox_leave_messages = gtk_check_button_new ();
 	if (!priv->caption_leave_messages) {
-		priv->caption_leave_messages = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
-			priv->checkbox_leave_messages, NULL, HILDON_CAPTION_MANDATORY);
+		priv->caption_leave_messages = 
+			create_captioned (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
+					  priv->checkbox_leave_messages);
 	}
 			
 	gtk_widget_show (priv->checkbox_leave_messages);
@@ -414,13 +398,7 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 	
 	gtk_widget_show (GTK_WIDGET (box));
 	
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), box);
-	gtk_widget_show (scrollwin);
-
-	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment); 
-	
-	return GTK_WIDGET (scrollwin);
+	return GTK_WIDGET (box);
 }
 
 static gchar*
@@ -499,17 +477,12 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *box;
-	GtkAdjustment *focus_adjustment = NULL;
 	GtkSizeGroup* sizegroup;
-	GtkWidget *scrollwin;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	scrollwin = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollwin),
-					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	 
 	/* The name widgets: */
 	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
@@ -521,8 +494,9 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_name), 64);
 	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name), 
 		on_entry_max, self);
-	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
-		_("mcen_li_emailsetup_name"), priv->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
+	GtkWidget *caption = 
+		create_captioned (self, sizegroup, 
+				  _("mcen_li_emailsetup_name"), priv->entry_user_name);
 	gtk_widget_show (priv->entry_user_name);
 	connect_for_modified (self, priv->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -544,8 +518,8 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_caption_new_with_asterisk (self, sizegroup, _("mail_fi_username"), 
-		priv->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
+	caption = create_captioned (self, sizegroup, _("mail_fi_username"), 
+				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	connect_for_modified (self, priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -566,14 +540,14 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 		on_entry_max, self);
 	
 	/* The password widgets: */	
-	priv->entry_user_password = gtk_entry_new ();
+	priv->entry_user_password = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
-	caption = create_caption_new_with_asterisk (self, sizegroup, 
-		_("mail_fi_password"), priv->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
+	caption = create_captioned (self, sizegroup, 
+				    _("mail_fi_password"), priv->entry_user_password);
 	gtk_widget_show (priv->entry_user_password);
 	connect_for_modified (self, priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -583,8 +557,8 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_caption_new_with_asterisk (self, sizegroup, 
-		_("mcen_li_emailsetup_email_address"), priv->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
+	caption = create_captioned (self, sizegroup, 
+				    _("mcen_li_emailsetup_email_address"), priv->entry_user_email);
 	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (priv->entry_user_email);
 	connect_for_modified (self, priv->entry_user_email);
@@ -600,9 +574,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	/* Signature button: */
 	if (!priv->button_signature)
 		priv->button_signature = gtk_button_new_with_label (_("mcen_bd_edit"));
-	caption = hildon_caption_new (sizegroup, _("mcen_fi_email_signature"), 
-		priv->button_signature, NULL, HILDON_CAPTION_OPTIONAL);
-	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
+	caption = create_captioned (self, sizegroup, _("mcen_fi_email_signature"), priv->button_signature);
 	gtk_widget_show (priv->button_signature);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -613,13 +585,8 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
         	G_CALLBACK (on_button_signature), self);
         	
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollwin), box);
-	gtk_widget_show (scrollwin);
 
-	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment); 
-	
-	return GTK_WIDGET (scrollwin);
+	return GTK_WIDGET (box);
 }
 
 /* Change the caption title for the incoming server */
@@ -668,7 +635,7 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 	 
 	/* The incoming server widgets: */
 	if(!priv->entry_incomingserver)
-		priv->entry_incomingserver = gtk_entry_new ();
+		priv->entry_incomingserver = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
 
@@ -678,8 +645,8 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
-	priv->caption_incoming = create_caption_new_with_asterisk (self, sizegroup, 
-		"Incoming Server", priv->entry_incomingserver, NULL, HILDON_CAPTION_MANDATORY);
+	priv->caption_incoming = create_captioned (self, sizegroup, 
+						   "Incoming Server", priv->entry_incomingserver);
 	gtk_widget_show (priv->entry_incomingserver);
 	connect_for_modified (self, priv->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -701,25 +668,25 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 }
 
 static void
-on_toggle_button_changed (GtkToggleButton *togglebutton, gpointer user_data)
+on_check_button_clicked (GtkButton *button, gpointer user_data)
 {
 	GtkWidget *widget = GTK_WIDGET (user_data);
 	
-	/* Enable the widget only if the toggle button is active: */
-	const gboolean enable = gtk_toggle_button_get_active (togglebutton);
+	/* Enable the widget only if the check button is active: */
+	const gboolean enable = hildon_check_button_get_active (button);
 	gtk_widget_set_sensitive (widget, enable);
 }
 
-/* Make the sensitivity of a widget depend on a toggle button.
+/* Make the sensitivity of a widget depend on a check button.
  */
 static void
-enable_widget_for_togglebutton (GtkWidget *widget, GtkToggleButton* button)
+enable_widget_for_checkbutton (GtkWidget *widget, GtkButton* button)
 {
-	g_signal_connect (G_OBJECT (button), "toggled",
-		G_CALLBACK (on_toggle_button_changed), widget);
+	g_signal_connect (G_OBJECT (button), "clicked",
+		G_CALLBACK (on_check_button_clicked), widget);
 	
 	/* Set the starting sensitivity: */
-	on_toggle_button_changed (button, widget);
+	on_check_button_clicked (button, widget);
 }
 
 static void
@@ -757,15 +724,8 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkAdjustment *focus_adjustment = NULL;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
-	
-	/* Put it all in a scrolled window, so that all widgets can be 
-	 * accessed even when the on-screen keyboard is visible: */
-	GtkWidget *scrollwin = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin), 
-		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -774,11 +734,12 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	 
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
-		priv->entry_outgoingserver = gtk_entry_new ();
+		priv->entry_outgoingserver = 
+			hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
-		_("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
+	GtkWidget *caption = create_captioned (self, sizegroup, 
+					       _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
 	connect_for_modified (self, priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -800,12 +761,12 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	
 	/* connection-specific checkbox: */
 	if (!priv->checkbox_outgoing_smtp_specific) {
-		priv->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
-		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_outgoing_smtp_specific), 
+		priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+		hildon_check_button_set_active (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
 			FALSE);
 	}
-	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
-		priv->checkbox_outgoing_smtp_specific, NULL, HILDON_CAPTION_OPTIONAL);
+	caption = create_captioned (self, sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
+				    priv->checkbox_outgoing_smtp_specific);
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -814,16 +775,15 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!priv->button_outgoing_smtp_servers)
 		priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
-	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
-		priv->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
-	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
+	caption = create_captioned (self, sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
+				    priv->button_outgoing_smtp_servers);
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Only enable the button when the checkbox is checked: */
-	enable_widget_for_togglebutton (priv->button_outgoing_smtp_servers, 
-		GTK_TOGGLE_BUTTON (priv->checkbox_outgoing_smtp_specific));
+	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
+		GTK_BUTTON (priv->checkbox_outgoing_smtp_specific));
 
 	g_object_unref (sizegroup);
 		
@@ -831,13 +791,8 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
 		
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW(scrollwin), box);
-	gtk_widget_show(scrollwin);
-
-	focus_adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollwin));
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box), focus_adjustment);
 	
-	return GTK_WIDGET (scrollwin);
+	return GTK_WIDGET (box);
 }
 	
 static gboolean
@@ -1016,15 +971,14 @@ static void
 modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog *self)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
+	GtkWidget *pannable;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self);
 
 	priv->incoming_security = NULL;
 	priv->outgoing_security = NULL;
 
-	/* Create the notebook to be used by the GtkDialog base class:
-	 * Each page of the notebook will be a page of the wizard: */
-	priv->notebook = GTK_NOTEBOOK (gtk_notebook_new());
+	priv->main_container = gtk_vbox_new (FALSE, MODEST_MARGIN_DOUBLE);
 	priv->settings = modest_account_settings_new ();
 
 	/* Get the account manager object, 
@@ -1044,23 +998,36 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	priv->page_outgoing = create_page_outgoing (self);
 	
 	/* Add the notebook pages: */
-	gtk_notebook_append_page (priv->notebook, priv->page_account_details, 
-		gtk_label_new (_("mcen_ti_account_settings_account")));
-	gtk_notebook_append_page (priv->notebook, priv->page_user_details, 
-		gtk_label_new (_("mcen_ti_account_settings_userinfo")));
-	gtk_notebook_append_page (priv->notebook, priv->page_incoming,
-		gtk_label_new (_("mcen_ti_advsetup_retrieval")));
-	gtk_notebook_append_page (priv->notebook, priv->page_outgoing,
-		gtk_label_new (_("mcen_ti_advsetup_sending")));
+	gtk_box_pack_start (GTK_BOX (priv->main_container),
+			    modest_maemo_utils_create_group_box (_("mcen_ti_account_settings_account"),
+								 priv->page_account_details),
+			    FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->main_container),
+			    modest_maemo_utils_create_group_box (_("mcen_ti_account_settings_userinfo"),
+								 priv->page_user_details),
+			    FALSE, FALSE, 0);
+
+	gtk_box_pack_start (GTK_BOX (priv->main_container),
+			    modest_maemo_utils_create_group_box (_("mcen_ti_advsetup_retrieval"),
+								 priv->page_incoming),
+			    FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->main_container),
+			    modest_maemo_utils_create_group_box (_("mcen_ti_advsetup_sending"),
+								 priv->page_outgoing),
+			    FALSE, FALSE, 0);
 		
 	GtkDialog *dialog = GTK_DIALOG (self);
-	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (priv->notebook));
+	pannable = hildon_pannable_area_new ();
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), priv->main_container);
+	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (pannable));
 	gtk_container_set_border_width (GTK_CONTAINER (dialog->vbox), MODEST_MARGIN_HALF);
-	gtk_widget_show (GTK_WIDGET (priv->notebook));
+	gtk_widget_show (GTK_WIDGET (priv->main_container));
+	gtk_widget_show (GTK_WIDGET (pannable));
         
     /* Add the buttons: */
     gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
-    gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
+
+    gtk_window_set_default_size (GTK_WINDOW (self), -1, 340);
     
     /* Connect to the dialog's response signal: */
     /* We use connect-before 
@@ -1103,7 +1070,6 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	ModestProtocolRegistry *protocol_registry;
 	const gchar *account_name, *server_account_name;
 	ModestDefaultAccountSettingsDialogPrivate *priv;
-	gint page_num;
 	gboolean username_known;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
@@ -1146,8 +1112,8 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		modest_account_settings_get_retrieve_limit (settings));
 	
 	
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_leave_messages), 
-				      modest_account_settings_get_leave_messages_on_server (settings));
+	hildon_check_button_set_active (GTK_BUTTON (priv->checkbox_leave_messages), 
+					modest_account_settings_get_leave_messages_on_server (settings));
 	
 
 	if (incoming_account) {
@@ -1228,16 +1194,13 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 
 		const gboolean has_specific = 
 			modest_account_settings_get_use_connection_specific_smtp (settings);
-		gtk_toggle_button_set_active (
-			GTK_TOGGLE_BUTTON (priv->checkbox_outgoing_smtp_specific), 
+		hildon_check_button_set_active (
+			GTK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
 			has_specific);
 		g_object_unref (outgoing_account);
 	}
 
 	/* Switch to user page */
-	page_num = gtk_notebook_page_num (priv->notebook,priv->page_user_details);
-	gtk_notebook_set_current_page (priv->notebook, page_num);
-
 	/* Check if we allow changes or not */
 	server_account_name = modest_server_account_settings_get_account_name (incoming_account);
 	username_known = 
@@ -1299,7 +1262,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 		MODEST_LIMIT_RETRIEVE_PICKER (priv->limit_retrieve_picker));
 	modest_account_settings_set_retrieve_limit (priv->settings, retrieve_limit);
 	
-	leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->checkbox_leave_messages));
+	leave_on_server = hildon_check_button_get_active (GTK_BUTTON (priv->checkbox_leave_messages));
 	modest_account_settings_set_leave_messages_on_server (priv->settings, leave_on_server); 
 
 	store_settings = modest_account_settings_get_store_settings (priv->settings);
@@ -1344,7 +1307,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 	/* Save connection-specific SMTP server accounts: */
 	modest_account_settings_set_use_connection_specific_smtp 
 		(priv->settings, 
-		 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(priv->checkbox_outgoing_smtp_specific)));
+		 hildon_check_button_get_active(GTK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
 
 	/* this configuration is not persistent, we should not save */
 	if (account_name != NULL)

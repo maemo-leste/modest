@@ -180,7 +180,9 @@ modest_selector_picker_set_pair_list (ModestSelectorPicker *self, ModestPairList
 
 
 GtkWidget*
-modest_selector_picker_new (ModestPairList *pairs, GEqualFunc id_equal_func)
+modest_selector_picker_new (HildonSizeType size,
+			    HildonButtonArrangement arrangement,
+			    ModestPairList *pairs, GEqualFunc id_equal_func)
 {
 	GtkTreeModel *model;
 	GObject *obj;
@@ -188,8 +190,8 @@ modest_selector_picker_new (ModestPairList *pairs, GEqualFunc id_equal_func)
 	GtkTreeIter iter;
 
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_SELECTOR_PICKER,
-				     "size", HILDON_SIZE_AUTO,
-				     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+				     "size", size,
+				     "arrangement", arrangement,
 				     NULL));
 	priv = MODEST_SELECTOR_PICKER_GET_PRIVATE(obj);
 	

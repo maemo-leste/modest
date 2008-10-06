@@ -105,7 +105,8 @@ modest_secureauth_picker_init (ModestSecureauthPicker *self)
 }
 
 ModestSecureauthPicker*
-modest_secureauth_picker_new (void)
+modest_secureauth_picker_new (HildonSizeType size,
+			      HildonButtonArrangement arrangement)
 {
 	ModestSecureauthPicker *self;
 	ModestSecureauthPickerPrivate *priv;
@@ -113,8 +114,8 @@ modest_secureauth_picker_new (void)
 	GtkWidget *selector;
 
 	self = g_object_new (MODEST_TYPE_SECUREAUTH_PICKER, 
-			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-			     "size", HILDON_SIZE_AUTO,
+			     "arrangement", arrangement,
+			     "size", size,
 			     NULL);
 	priv = MODEST_SECUREAUTH_PICKER_GET_PRIVATE (self);
 

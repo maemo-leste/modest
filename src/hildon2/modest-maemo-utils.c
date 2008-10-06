@@ -51,6 +51,7 @@
 #include "modest-maemo-utils.h"
 #include "modest-text-utils.h"
 #include "modest-platform.h"
+#include "modest-ui-constants.h"
 
 /*
  * For getting and tracking the Bluetooth name
@@ -287,4 +288,56 @@ modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager,
 	g_list_free (children);
 
 	return new_menu;
+}
+
+GtkWidget *
+modest_maemo_utils_create_captioned    (GtkSizeGroup *group,
+					const gchar *label_text,
+					GtkWidget *control)
+{
+ 	GtkWidget *label;
+	GtkWidget *box;
+  
+	label = gtk_label_new (label_text);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+	gtk_widget_show (label);
+	box = gtk_hbox_new (FALSE, MODEST_MARGIN_NONE);
+	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, MODEST_MARGIN_HALF);
+	if (group)
+		gtk_size_group_add_widget (group, label);
+
+	hildon_gtk_widget_set_theme_size (control, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+
+	return box;
+}
+
+void
+modest_maemo_utils_create_picker_layout (GtkSizeGroup *sizegroup, 
+					 const gchar *label, 
+					 GtkWidget *picker)
+{
+	hildon_button_set_title (HILDON_BUTTON (picker), label);
+	if (sizegroup)
+		hildon_button_add_title_size_group (HILDON_BUTTON (picker), sizegroup);
+	hildon_button_set_alignment (HILDON_BUTTON (picker), 0.0, 0.5, 1.0, 0.0);
+	hildon_button_set_title_alignment (HILDON_BUTTON (picker), 0.0, 0.5);
+	hildon_button_set_value_alignment (HILDON_BUTTON (picker), 0.0, 0.5);
+}
+
+GtkWidget *
+modest_maemo_utils_create_group_box (const gchar *label_text, GtkWidget *contents)
+{
+	GtkWidget *label;
+	GtkWidget *box;
+
+	label = gtk_label_new (label_text);
+	gtk_widget_show (label);
+
+	box = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), contents, TRUE, TRUE, 0);
+	gtk_widget_show (box);
+
+	return box;
 }

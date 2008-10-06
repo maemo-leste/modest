@@ -67,7 +67,9 @@ typedef struct {
 
 GType modest_servertype_picker_get_type (void);
 
-ModestServertypePicker* modest_servertype_picker_new (gboolean filter_providers);
+ModestServertypePicker* modest_servertype_picker_new (HildonSizeType size,
+						      HildonButtonArrangement arrangement,
+						      gboolean filter_providers);
 
 ModestProtocolType modest_servertype_picker_get_active_servertype (ModestServertypePicker *picker);
 

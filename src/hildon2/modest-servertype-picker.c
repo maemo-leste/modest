@@ -159,7 +159,9 @@ modest_servertype_picker_fill (ModestServertypePicker *self,
 }
 
 ModestServertypePicker*
-modest_servertype_picker_new (gboolean filter_providers)
+modest_servertype_picker_new (HildonSizeType size,
+			      HildonButtonArrangement arrangement,
+			      gboolean filter_providers)
 {
 	ModestServertypePicker *self;
 	ModestServertypePickerPrivate *priv;
@@ -167,8 +169,8 @@ modest_servertype_picker_new (gboolean filter_providers)
 	GtkWidget *selector;
 
 	self = g_object_new (MODEST_TYPE_SERVERTYPE_PICKER, 
-			     "arrangement", HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-			     "size", HILDON_SIZE_AUTO,
+			     "arrangement", arrangement,
+			     "size", size,
 			     NULL);
 	priv = MODEST_SERVERTYPE_PICKER_GET_PRIVATE (self);
 

@@ -258,27 +258,14 @@ on_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
  * When the widget is edited, the enable_buttons() vfunc will be called.
  */
 static GtkWidget* 
-create_caption_new_with_asterisk (ModestEasysetupWizardDialog *self,
-				  GtkSizeGroup *group,
-				  const gchar *value,
-				  GtkWidget *control,
-				  GtkWidget *icon,
-				  HildonCaptionStatus flag)
+create_captioned (ModestEasysetupWizardDialog *self,
+		  GtkSizeGroup *group,
+		  const gchar *value,
+		  GtkWidget *control)
 {
-	GtkWidget *caption = NULL;
-  
-	/* Note: Previously, the translated strings already contained the "*",
-	 * Comment out this code if they do again.
-	 */
-	/* Add a * character to indicate mandatory fields,
-	 * as specified in our "Email UI Specification": */
-	if (flag == HILDON_CAPTION_MANDATORY) {
-		gchar* title = g_strdup_printf("%s*", value);
-		caption = hildon_caption_new (group, title, control, icon, flag);	
-		g_free(title);
-	}	
-	else
-		caption = hildon_caption_new (group, value, control, icon, flag);
+
+	GtkWidget *result;
+	result = modest_maemo_utils_create_captioned (group, value, control);
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -293,7 +280,7 @@ create_caption_new_with_asterisk (ModestEasysetupWizardDialog *self,
 				  G_CALLBACK (on_caption_combobox_changed), self);
 	}
 	 
-	return caption;
+	return result;
 }
            
 static GtkWidget*
@@ -382,7 +369,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* The country widgets: */
-	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new ());
+	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new (MODEST_EDITABLE_SIZE,
+									      MODEST_EDITABLE_ARRANGEMENT));
 	hildon_button_set_title (HILDON_BUTTON (priv->account_country_picker), _("mcen_fi_country"));
 	g_signal_connect (G_OBJECT (priv->account_country_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
@@ -394,7 +382,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (separator);
             
 	/* The service provider widgets: */	
-	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new ());
+	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE,
+										       MODEST_EDITABLE_ARRANGEMENT));
 	hildon_button_set_title (HILDON_BUTTON (priv->account_serviceprovider_picker), _("mcen_fi_serviceprovider"));
 	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
@@ -421,8 +410,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_free (default_account_name);
 	default_account_name = NULL;
 
-	caption = create_caption_new_with_asterisk (self, sizegroup, _("mcen_fi_account_title"), 
-						   priv->entry_account_title, NULL, HILDON_CAPTION_MANDATORY);
+	caption = create_captioned (self, sizegroup, _("mcen_fi_account_title"), 
+				    priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -484,8 +473,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_name), 64);
 	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name), 
 					      on_entry_max, self);
-	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
-							      _("mcen_li_emailsetup_name"), priv->entry_user_name, NULL, HILDON_CAPTION_OPTIONAL);
+	GtkWidget *caption = create_captioned (self, sizegroup, 
+					       _("mcen_li_emailsetup_name"), priv->entry_user_name);
 	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_name);
@@ -508,9 +497,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), 
 					 HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_caption_new_with_asterisk (self, sizegroup, _("mail_fi_username"), 
-						   priv->entry_user_username, 
-						    NULL, HILDON_CAPTION_MANDATORY);
+	caption = create_captioned (self, sizegroup, _("mail_fi_username"), 
+				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", 
@@ -537,8 +525,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
-	caption = create_caption_new_with_asterisk (self, sizegroup, 
-						   _("mail_fi_password"), priv->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
+	caption = create_captioned (self, sizegroup, 
+				    _("mail_fi_password"), priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_password);
@@ -549,8 +537,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_caption_new_with_asterisk (self, sizegroup, 
-						   _("mcen_li_emailsetup_email_address"), priv->entry_user_email, NULL, HILDON_CAPTION_MANDATORY);
+	caption = create_captioned (self, sizegroup, 
+				    _("mcen_li_emailsetup_email_address"), priv->entry_user_email);
 	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (priv->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -712,7 +700,9 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The incoming server widgets: */
-	priv->incoming_servertype_picker = GTK_WIDGET (modest_servertype_picker_new (TRUE));
+	priv->incoming_servertype_picker = GTK_WIDGET (modest_servertype_picker_new (MODEST_EDITABLE_SIZE,
+										     MODEST_EDITABLE_ARRANGEMENT,
+										     TRUE));
 	hildon_button_set_title (HILDON_BUTTON (priv->incoming_servertype_picker), _("mcen_li_emailsetup_type"));
 	g_signal_connect (G_OBJECT (priv->incoming_servertype_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
@@ -728,10 +718,9 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
-	priv->caption_incoming = create_caption_new_with_asterisk (self, sizegroup, 
-								  "Incoming Server", 
-								   priv->entry_incomingserver, 
-								   NULL, HILDON_CAPTION_MANDATORY);
+	priv->caption_incoming = create_captioned (self, sizegroup, 
+						   "Incoming Server", 
+						   priv->entry_incomingserver);
 	update_incoming_server_title (self);
 	gtk_widget_show (priv->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -837,8 +826,8 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
                   G_CALLBACK (on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	GtkWidget *caption = create_caption_new_with_asterisk (self, sizegroup, 
-							      _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
+	GtkWidget *caption = create_captioned (self, sizegroup, 
+					       _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -864,16 +853,16 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	g_signal_connect (G_OBJECT (priv->checkbox_outgoing_smtp_specific), "toggled",
                   G_CALLBACK (on_easysetup_changed), self);
 
-	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
-				      priv->checkbox_outgoing_smtp_specific, NULL, HILDON_CAPTION_OPTIONAL);
+	caption = modest_maemo_utils_create_captioned (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
+						       priv->checkbox_outgoing_smtp_specific);
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	
 	/* Connection-specific SMTP-Severs Edit button: */
 	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
-	caption = hildon_caption_new (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
-				      priv->button_outgoing_smtp_servers, NULL, HILDON_CAPTION_OPTIONAL);
+	caption = modest_maemo_utils_create_captioned (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
+						       priv->button_outgoing_smtp_servers);
 	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -946,8 +935,8 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
-	GtkWidget *caption = hildon_caption_new (NULL, _("mcen_fi_advanced_settings"), 
-						 button_edit, NULL, HILDON_CAPTION_OPTIONAL);
+	GtkWidget *caption = modest_maemo_utils_create_captioned (NULL, _("mcen_fi_advanced_settings"), 
+								  button_edit);
 	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
