@@ -1721,7 +1721,7 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 		return FALSE;
 
 	if (MODEST_IS_HEADER_VIEW (widget)) {
-		if (event->keyval == GDK_Left)
+		if (event->keyval == GDK_Left || event->keyval == GDK_KP_Left)
 			gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
 		else if ((event->keyval == GDK_Return)||(event->keyval == GDK_KP_Enter)) {
 			guint selected_headers = modest_header_view_count_selected_headers (MODEST_HEADER_VIEW (widget));
@@ -1744,7 +1744,8 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 				}
 			}
 		}
-	} else if (MODEST_IS_FOLDER_VIEW (widget) && (event->keyval == GDK_Right || event->keyval == GDK_Left)) {
+	} else if (MODEST_IS_FOLDER_VIEW (widget) && 
+		   (event->keyval == GDK_Right || event->keyval == GDK_KP_Right || event->keyval == GDK_Left || event->keyval == GDK_KP_Left)) {
 #if GTK_CHECK_VERSION(2, 8, 0) /* TODO: gtk_tree_view_get_visible_range() is only available in GTK+ 2.8 */
 		GtkTreePath *selected_path = NULL;
 		GtkTreePath *start_path = NULL;

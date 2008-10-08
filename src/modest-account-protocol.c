@@ -447,10 +447,6 @@ modest_account_protocol_get_account_settings_dialog (ModestAccountProtocol *self
 /* 	modest_account_settings_dialog_switch_to_user_info (dialog); */
 /* 	modest_account_settings_dialog_check_allow_changes (dialog); */
 	
-	/* Set modal */
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (dialog));
-	
 	/* TODO: review this. When the dialog is closed, reconnect */
 	/* 			g_signal_connect (dialog, "response",  */
 	/* 					  G_CALLBACK (on_account_settings_dialog_response),  */

@@ -716,7 +716,7 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			    hbox, FALSE, FALSE, 0);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (dialog));
+				     GTK_WINDOW (dialog), GTK_WINDOW (parent_window));
 	gtk_widget_show_all (GTK_WIDGET(dialog));
 		
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
@@ -830,7 +830,7 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 	
 	dialog = hildon_note_new_confirmation (parent_window, message);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (dialog));
+				     GTK_WINDOW (dialog), GTK_WINDOW (parent_window));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -853,7 +853,7 @@ modest_platform_run_confirmation_dialog_with_buttons (GtkWindow *parent_window,
 							   button_cancel, GTK_RESPONSE_CANCEL,
 							   NULL);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (dialog));
+				     GTK_WINDOW (dialog), GTK_WINDOW (parent_window));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -873,7 +873,8 @@ modest_platform_run_yes_no_dialog (GtkWindow *parent_window,
 							   _("mcen_bd_yes"), GTK_RESPONSE_YES,
 							   _("mcen_bd_no"), GTK_RESPONSE_NO,
 							   NULL);
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), GTK_WINDOW (parent_window));
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	
 	on_destroy_dialog (dialog);
@@ -893,7 +894,7 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 	note = hildon_note_new_information (parent_window, message);
 	if (block)
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-					     GTK_WINDOW (note));
+					     GTK_WINDOW (note), GTK_WINDOW (parent_window));
 	
 	if (block) {
 		gtk_dialog_run (GTK_DIALOG (note));
@@ -1722,7 +1723,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 			  (gpointer) certificate);
 	
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-				     GTK_WINDOW (note));
+				     GTK_WINDOW (note), (GtkWindow *) main_win);
 	response = gtk_dialog_run(GTK_DIALOG(note));
 
 	on_destroy_dialog (note);
@@ -1755,7 +1756,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_win), 
 									      prompt));
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-					     GTK_WINDOW (dialog));
+					     GTK_WINDOW (dialog), (GtkWindow *) main_win);
 		
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 		retval = (response == GTK_RESPONSE_YES) || (response == GTK_RESPONSE_OK);

@@ -908,7 +908,8 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	modest_connection_specific_smtp_window_fill_with_connections (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (specific_window), priv->account_manager);
 
 	/* Show the window */
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (specific_window));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (specific_window), GTK_WINDOW (self));
 	gtk_widget_show (specific_window);
 }
 
@@ -1011,7 +1012,8 @@ show_advanced_edit(gpointer user_data)
 	}
 	modest_account_settings_dialog_load_settings (dialog, priv->settings);
 	
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), GTK_WINDOW (self));
 	
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 

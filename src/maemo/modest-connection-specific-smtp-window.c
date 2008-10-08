@@ -267,7 +267,9 @@ on_button_edit (ModestConnectionSpecificSmtpWindow *self)
 			server_settings = NULL;
 		}
 			
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (window));
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+					     GTK_WINDOW (window),
+					     GTK_WINDOW (self));
 		
 		gint response = gtk_dialog_run (GTK_DIALOG (window));
 		if (response == GTK_RESPONSE_OK) {

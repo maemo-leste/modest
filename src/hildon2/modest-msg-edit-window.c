@@ -2169,7 +2169,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	modest_maemo_utils_setup_images_filechooser (GTK_FILE_CHOOSER (dialog));
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (dialog));
+				     GTK_WINDOW (dialog), GTK_WINDOW (window));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
@@ -2283,7 +2283,7 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), GTK_WINDOW (window));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
@@ -2862,7 +2862,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 	
 	dialog = hildon_font_selection_dialog_new (GTK_WINDOW (window), NULL);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(),
-				     GTK_WINDOW(dialog));
+				     GTK_WINDOW(dialog), GTK_WINDOW (window));
 
 	/* First we get the currently selected font information */
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &oldfmt, TRUE);
@@ -2899,7 +2899,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 		      NULL);
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (dialog));
+				     GTK_WINDOW (dialog), GTK_WINDOW (window));
 	gtk_widget_show_all (dialog);
 	priv->font_dialog = dialog;
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -3554,7 +3554,7 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 		}
 		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
 		if (GTK_WIDGET_REALIZED (window))
-			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window));
+			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window), NULL);
 	}
 
 	priv->draft_msg = draft;

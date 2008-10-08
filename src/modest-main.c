@@ -191,8 +191,6 @@ main (int argc, char *argv[])
 			goto cleanup;
 		}
 	
-		gtk_widget_show_all (GTK_WIDGET(main_win));
-
 		/* Remove new mail notifications if exist */
 		modest_platform_remove_new_mail_notifications (FALSE);
 	}

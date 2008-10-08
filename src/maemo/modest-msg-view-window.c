@@ -2653,7 +2653,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, attachment_uid);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win), 
 						modest_window_get_zoom (MODEST_WINDOW (window)));
-			modest_window_mgr_register_window (mgr, msg_win);
+			modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window));
 			gtk_widget_show_all (GTK_WIDGET (msg_win));
 		}
 	}

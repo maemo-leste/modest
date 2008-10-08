@@ -174,6 +174,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 #if MODEST_ABOOK_API < 4
 	GtkWidget *contact_view = NULL;
 	GtkWidget *contact_dialog;
+	GtkWidget *toplevel;
 #else /* MODEST_ABOOK_API < 4 */
 	OssoABookContactChooser *contact_chooser = NULL;
 #endif /* MODEST_ABOOK_API < 4 */
@@ -200,7 +201,8 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 
 	contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
 	gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (contact_dialog));
+	toplevel = gtk_widget_get_toplevel (recpt_editor);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (contact_dialog), toplevel);
 
 	gtk_widget_show (contact_dialog);
 

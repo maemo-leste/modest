@@ -537,7 +537,7 @@ find_msg_async_cb (TnyFolder *folder,
                 }
 
 		if (msg_view != NULL) {
-			modest_window_mgr_register_window (win_mgr, msg_view);
+			modest_window_mgr_register_window (win_mgr, msg_view, NULL);
 			gtk_widget_show_all (GTK_WIDGET (msg_view));
 		}
         }
@@ -1168,11 +1168,6 @@ on_idle_top_application (gpointer user_data)
 	}
 
 	if (main_win) {
-		/* Ideally, we would just use gtk_widget_show(), 
-		 * but this widget is not coded correctly to support that: */
-		gtk_widget_show_all (GTK_WIDGET (main_win));
-		gtk_window_present (GTK_WINDOW (main_win));
-
 		/* If we're showing an already existing window then
 		   reselect the INBOX */
 		if (!new_window) {

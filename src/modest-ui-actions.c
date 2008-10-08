@@ -199,22 +199,12 @@ gboolean
 modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 {
 	gboolean result = FALSE;	
-	GtkWindow *dialog, *wizard;
+	GtkWindow *wizard;
 	gint dialog_response;
-
-	/* Show the easy-setup wizard: */	
-	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
-	if (dialog) {
-		/* old wizard is active already; 
-		 */
-		gtk_window_present (GTK_WINDOW(dialog));
-		return FALSE;
-	}
-	
 
 	/* there is no such wizard yet */	
 	wizard = GTK_WINDOW (modest_platform_get_account_settings_wizard ());
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), wizard);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (wizard), (GtkWindow *) win);
 
 	/* always present a main window in the background 
 	 * we do it here, so we cannot end up with two wizards (as this
@@ -230,10 +220,12 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 	   in order to get the widgets properly drawn (MainWindow main
 	   paned won't be in its right position and the dialog will be
 	   missplaced */
+#ifndef MODEST_TOOLKIT_HILDON2
 	gtk_widget_show_all (GTK_WIDGET (win));
 	gtk_widget_show_all (GTK_WIDGET (wizard));
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_window_present (GTK_WINDOW (wizard));
+#endif
 	
 	dialog_response = gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
@@ -667,7 +659,7 @@ modest_ui_actions_on_accounts (GtkAction *action,
 		GtkWindow *account_win = GTK_WINDOW (modest_account_view_window_new ());
 		
 		/* The accounts dialog must be modal */
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), account_win);
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (account_win), (GtkWindow *) win);
 		modest_utils_show_dialog_and_forget (GTK_WINDOW (win), GTK_DIALOG (account_win)); 
 	}
 }
@@ -689,7 +681,7 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 
 	/* Show the window: */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
-				     GTK_WINDOW (specific_window));
+				     GTK_WINDOW (specific_window), (GtkWindow *) win);
     	gtk_widget_show (specific_window);
 #endif /* !MODEST_TOOLKIT_GTK */
 }
@@ -761,7 +753,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	allowed_size = MODEST_MAX_ATTACHMENT_SIZE;
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
 
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win);
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win, NULL);
 	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (msg_win), set_as_modified);
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
@@ -982,7 +974,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	/* Register and show new window */
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
-		modest_window_mgr_register_window (mgr, win);
+		modest_window_mgr_register_window (mgr, win, NULL);
 		gtk_widget_show_all (GTK_WIDGET(win));
 	}
 
@@ -1346,7 +1338,9 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 		   window to the user */
 		if (found) {
 			if (window) {
+#ifndef MODEST_TOOLKIT_HILDON2
 				gtk_window_present (GTK_WINDOW (window));
+#endif
 			} else {
 				/* the header has been registered already, we don't do
 				 * anything but wait for the window to come up*/
@@ -1578,7 +1572,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	/* Create and register the windows */
 	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
-	modest_window_mgr_register_window (mgr, msg_win);
+	modest_window_mgr_register_window (mgr, msg_win, (ModestWindow *) rf_helper->parent_window);
 
 	if (rf_helper->parent_window != NULL) {
 		gdouble parent_zoom;
@@ -3567,7 +3561,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					      NULL);
 #endif /* !MODEST_TOOLKIT_GTK */
 
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (dialog));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (dialog), NULL);
 	
 	gchar *server_name = modest_account_mgr_get_server_account_hostname (
 		modest_runtime_get_account_mgr(), server_account_name);
@@ -4207,7 +4201,9 @@ modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
 
 	if (active != fullscreen) {
 		modest_window_mgr_set_fullscreen_mode (mgr, active);
+#ifndef MODEST_TOOLKIT_HILDON2
 		gtk_window_present (GTK_WINDOW (window));
+#endif
 	}
 }
 
@@ -4224,7 +4220,9 @@ modest_ui_actions_on_change_fullscreen (GtkAction *action,
 	fullscreen = modest_window_mgr_get_fullscreen_mode (mgr);
 	modest_window_mgr_set_fullscreen_mode (mgr, !fullscreen);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	gtk_window_present (GTK_WINDOW (window));
+#endif
 }
 
 /* 
@@ -4242,7 +4240,7 @@ headers_action_show_details (TnyHeader *header,
 	dialog = modest_details_dialog_new_with_header (GTK_WINDOW (window), header);
 
 	/* Run dialog */
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), (GtkWindow *) window);
 	gtk_widget_show_all (dialog);
 
 	g_signal_connect_swapped (dialog, "response", 
@@ -5496,7 +5494,7 @@ modest_ui_actions_on_move_to (GtkAction *action,
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view, &tree_view);
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), (GtkWindow *) win);
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	g_object_ref (tree_view);
 	gtk_widget_destroy (dialog);

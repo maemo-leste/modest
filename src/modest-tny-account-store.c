@@ -513,6 +513,7 @@ show_wrong_password_dialog (TnyAccount *account)
 		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
 			ModestAccountSettingsDialog *dialog =
 				modest_account_protocol_get_account_settings_dialog (proto, modest_account_name);
+			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), NULL);
 			gtk_widget_show (GTK_WIDGET (dialog));
 		}
 	}

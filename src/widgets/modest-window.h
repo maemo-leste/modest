@@ -53,10 +53,19 @@ typedef GtkWindowClass ModestWindowParentClass;
 #if MODEST_HILDON_API == 0
 #include <hildon-widgets/hildon-window.h>
 #else
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-stackable-window.h>
+#else
 #include <hildon/hildon-window.h>
+#endif
 #endif /*MODEST_HILDON_API == 0*/
+#ifdef MODEST_TOOLKIT_HILDON2
+typedef HildonStackableWindow      ModestWindowParent;
+typedef HildonStackableWindowClass ModestWindowParentClass;
+#else
 typedef HildonWindow      ModestWindowParent;
 typedef HildonWindowClass ModestWindowParentClass;
+#endif
 
 #ifndef GTK_STOCK_FULLSCREEN
 #define GTK_STOCK_FULLSCREEN ""

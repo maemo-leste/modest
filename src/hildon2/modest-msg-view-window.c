@@ -1840,8 +1840,6 @@ message_reader (ModestMsgViewWindow *window,
 		TnyHeader *header,
 		GtkTreeRowReference *row_reference)
 {
-	gboolean already_showing = FALSE;
-	ModestWindow *msg_window = NULL;
 	ModestWindowMgr *mgr;
 	TnyAccount *account;
 	TnyFolder *folder;
@@ -1850,15 +1848,6 @@ message_reader (ModestMsgViewWindow *window,
 	g_return_val_if_fail (row_reference != NULL, FALSE);
 
 	mgr = modest_runtime_get_window_mgr ();
-	already_showing = modest_window_mgr_find_registered_header (mgr, header, &msg_window);
-	if (already_showing && (msg_window != MODEST_WINDOW (window))) {
-		gboolean retval;
-		if (msg_window)
-			gtk_window_present (GTK_WINDOW (msg_window));
-		g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &retval);
-		return TRUE;
-	}
-
 	/* Msg download completed */
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
 		/* Ask the user if he wants to download the message if
@@ -2643,12 +2632,9 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		found = modest_window_mgr_find_registered_header (mgr, header, &msg_win);
 
 		if (found) {
-			if (msg_win) 				/* there is already a window for this uid; top it */
-				gtk_window_present (GTK_WINDOW(msg_win));
-			else 
-				/* if it's found, but there is no msg_win, it's probably in the process of being created;
-				 * thus, we don't do anything */
-				g_warning ("window for is already being created");
+			/* if it's found, but there is no msg_win, it's probably in the process of being created;
+			 * thus, we don't do anything */
+			g_warning ("window for is already being created");
 		} else { 
 			/* it's not found, so create a new window for it */
 			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
@@ -2658,7 +2644,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, attachment_uid);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win), 
 						modest_window_get_zoom (MODEST_WINDOW (window)));
-			modest_window_mgr_register_window (mgr, msg_win);
+			modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window));
 			gtk_widget_show_all (GTK_WIDGET (msg_win));
 		}
 	}

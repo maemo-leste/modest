@@ -335,7 +335,7 @@ on_add_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	/* there is no such wizard yet */
 	wizard = GTK_DIALOG (modest_account_assistant_new (modest_runtime_get_account_mgr ()));
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), 
-				     GTK_WINDOW (wizard));
+				     GTK_WINDOW (wizard), self);
 
 	/* if there is already another modal dialog, make it non-modal */
 	if (dialog)

@@ -31,6 +31,7 @@
 #include "modest-runtime.h"
 #include "modest-defs.h"
 #include "modest-debug.h"
+#include "widgets/modest-hildon1-window-mgr.h"
 #include <tny-fs-stream-cache.h>
 
 /* 'private'/'protected' functions */
@@ -162,7 +163,7 @@ modest_singletons_init (ModestSingletons *obj)
 		return;
 	}
 
-	priv->window_mgr = modest_window_mgr_new ();
+	priv->window_mgr = modest_hildon1_window_mgr_new ();
 	if (!priv->window_mgr) {
 		g_printerr ("modest: cannot create modest window manager instance\n");
 		return;

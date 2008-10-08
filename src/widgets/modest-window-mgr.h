@@ -38,7 +38,7 @@ G_BEGIN_DECLS
 /* convenience macros */
 #define MODEST_TYPE_WINDOW_MGR             (modest_window_mgr_get_type())
 #define MODEST_WINDOW_MGR(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_WINDOW_MGR,ModestWindowMgr))
-#define MODEST_WINDOW_MGR_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_WINDOW_MGR,GObject))
+#define MODEST_WINDOW_MGR_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_WINDOW_MGR,ModestWindowMgrClass))
 #define MODEST_IS_WINDOW_MGR(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_WINDOW_MGR))
 #define MODEST_IS_WINDOW_MGR_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_WINDOW_MGR))
 #define MODEST_WINDOW_MGR_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_WINDOW_MGR,ModestWindowMgrClass))
@@ -52,6 +52,32 @@ struct _ModestWindowMgr {
 
 struct _ModestWindowMgrClass {
 	GObjectClass parent_class;
+
+	/* Virtuals */
+	gboolean              (*register_window)                (ModestWindowMgr *self, 
+								 ModestWindow *window, 
+								 ModestWindow *parent);
+	void                  (*unregister_window)              (ModestWindowMgr *self,
+								 ModestWindow *window);
+	void                  (*set_fullscreen_mode)            (ModestWindowMgr *self,
+								 gboolean on);
+	gboolean              (*get_fullscreen_mode)            (ModestWindowMgr *self);
+	void                  (*show_toolbars)                  (ModestWindowMgr *self,
+								 GType window_type,
+								 gboolean show_toolbars,
+								 gboolean fullscreen);
+	ModestWindow *        (*get_main_window)                (ModestWindowMgr *self,
+								 gboolean show);
+	void                  (*close_all_windows)              (ModestWindowMgr *self);
+	GtkWindow *           (*get_modal)                      (ModestWindowMgr *self);
+	void                  (*set_modal)                      (ModestWindowMgr *self,
+								 GtkWindow *window,
+								 GtkWindow *parent);
+	gboolean              (*find_registered_header)         (ModestWindowMgr *self, 
+								 TnyHeader *header,
+								 ModestWindow **win);
+	GList *               (*get_window_list)                (ModestWindowMgr *self);
+					 
 
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
@@ -73,8 +99,9 @@ ModestWindowMgr*    modest_window_mgr_new         (void);
  * Registers a new window in the window manager. The window manager
  * will keep a reference.
  **/
-void           modest_window_mgr_register_window       (ModestWindowMgr *self, 
-							ModestWindow *window);
+gboolean           modest_window_mgr_register_window       (ModestWindowMgr *self, 
+							    ModestWindow *window,
+							    ModestWindow *parent);
 
 /**
  * modest_window_mgr_unregister_window:
@@ -145,7 +172,7 @@ void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 /**
  * modest_window_mgr_get_main_window:
  * @self: a #ModestWindowMgr
- * @create: if TRUE, create the main window if it was not yet existing
+ * @show: if TRUE, create the main window and show it if it was not existing.
  *
  * get the main window, and depending on @create, create one if it does not exist yet
  *
@@ -153,7 +180,14 @@ void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
  * did not yet exist
  **/
 ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self,
-							gboolean create);
+							gboolean show);
+
+/**
+ * modest_window_mgr_set_main_window:
+ * @self: a #ModestWindowMgr
+ * @main_win: a #ModestMainWindow
+ */
+void modest_window_mgr_set_main_window (ModestWindowMgr *self, ModestWindow *main_win);
 
 
 /**
@@ -187,7 +221,8 @@ GtkWindow*    modest_window_mgr_get_modal  (ModestWindowMgr *self);
  *
  **/
 void          modest_window_mgr_set_modal  (ModestWindowMgr *self,
-					    GtkWindow *window);
+					    GtkWindow *window,
+					    GtkWindow *parent);
 
 /**
  * modest_window_mgr_prevent_hibernation_while_window_is_shown:
@@ -246,6 +281,15 @@ modest_window_mgr_get_help_id (ModestWindowMgr *self, GtkWindow *win);
 gboolean modest_window_mgr_find_registered_header (ModestWindowMgr *self,  TnyHeader *header,
 					       ModestWindow **win);
 
+/**
+ * modest_window_mgr_get_window_list:
+ * @self: a #ModestWindowMgr
+ *
+ * get the list of windows registered in window mgr.
+ *
+ * Returns: a #GList, that caller should free
+ */
+GList *modest_window_mgr_get_window_list (ModestWindowMgr *self);
 
 /**
  * modest_window_mgr_close_all_windows

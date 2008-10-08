@@ -458,7 +458,7 @@ on_button_signature (GtkButton *button, gpointer user_data)
 
 	/* Show the window: */	
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-				     GTK_WINDOW (priv->signature_dialog));
+				     GTK_WINDOW (priv->signature_dialog), GTK_WINDOW (self));
 
 	response = gtk_dialog_run (GTK_DIALOG (priv->signature_dialog));
 	gtk_widget_hide (priv->signature_dialog);
@@ -703,7 +703,7 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	modest_connection_specific_smtp_window_fill_with_connections (smtp_win, priv->account_manager);
 
 	/* Show the window: */	
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (smtp_win));
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (smtp_win), GTK_WINDOW (self));
 	gtk_widget_show (GTK_WIDGET (smtp_win));
 	priv->modified = TRUE;
 }

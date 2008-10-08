@@ -75,6 +75,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-picker-button.h>
 #include <hildon/hildon-check-button.h>
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-stackable-window.h>
 
 
 /* backward compatibility... */

@@ -89,7 +89,11 @@ modest_window_get_type (void)
 			NULL
 		};
 #ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
+		parent_type = HILDON_TYPE_STACKABLE_WINDOW;
+#else
 		parent_type = HILDON_TYPE_WINDOW;
+#endif
 #else
 		parent_type = GTK_TYPE_WINDOW;
 #endif 

@@ -343,6 +343,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
 			ModestAccountSettingsDialog *dialog =
 				modest_account_protocol_get_account_settings_dialog (proto, account_name);
+			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), (GtkWindow *) self);
 			gtk_widget_show (GTK_WIDGET (dialog));
 		}
 	}
@@ -386,7 +387,8 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	/* there is no such wizard yet */
 	wizard = GTK_DIALOG (modest_easysetup_wizard_dialog_new ());
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), 
-				     GTK_WINDOW (wizard));
+				     GTK_WINDOW (wizard),
+				     GTK_WINDOW (self));
 
 	/* if there is already another modal dialog, make it non-modal */
 	if (dialog)
