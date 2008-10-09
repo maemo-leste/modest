@@ -429,7 +429,7 @@ init_header_columns (ModestConf *conf, gboolean overwrite)
 	/* if we're not in overwrite mode, only write stuff it
 	 * there was nothing before */
 	if (overwrite || !modest_conf_key_exists(conf, key, NULL)) 
-		modest_conf_set_int (conf, key, MODEST_MAIN_PANED_POS_PERCENTAGE, NULL);
+		modest_conf_set_float (conf, key, MODEST_MAIN_PANED_POS_PERCENTAGE, NULL);
 	
 	g_free (key);
 
@@ -438,7 +438,7 @@ init_header_columns (ModestConf *conf, gboolean overwrite)
 	/* if we're not in overwrite mode, only write stuff it
 	 * there was nothing before */
 	if (overwrite || !modest_conf_key_exists(conf, key, NULL)) 
-		modest_conf_set_int (conf, key, MODEST_MSG_PANED_POS_PERCENTAGE, NULL);
+		modest_conf_set_float (conf, key, MODEST_MSG_PANED_POS_PERCENTAGE, NULL);
 	
 	g_free (key);
 	return TRUE;
