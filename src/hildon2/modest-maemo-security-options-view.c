@@ -40,6 +40,7 @@
 #include "modest-maemo-utils.h"
 #include <hildon/hildon-number-editor.h>
 #include <hildon/hildon-check-button.h>
+#include "modest-hildon-includes.h"
 
 #define PORT_MIN 1
 #define PORT_MAX 65535
@@ -76,7 +77,7 @@ on_security_changed (GtkWidget *widget,
 
 	if (MODEST_SECURITY_OPTIONS_VIEW (self)->type == MODEST_SECURITY_OPTIONS_INCOMING) {
 		/* Activate and dim checkbutton if it's secure */
-		hildon_check_button_set_active (GTK_BUTTON (ppriv->auth_view), 
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->auth_view), 
 						is_secure);
 		gtk_widget_set_sensitive (ppriv->auth_view, !is_secure);
 	} else {

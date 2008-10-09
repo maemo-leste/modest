@@ -673,7 +673,7 @@ on_check_button_clicked (GtkButton *button, gpointer user_data)
 	GtkWidget *widget = GTK_WIDGET (user_data);
 	
 	/* Enable the widget only if the check button is active: */
-	const gboolean enable = hildon_check_button_get_active (button);
+	const gboolean enable = hildon_check_button_get_active (HILDON_CHECK_BUTTON (button));
 	gtk_widget_set_sensitive (widget, enable);
 }
 
@@ -762,7 +762,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	/* connection-specific checkbox: */
 	if (!priv->checkbox_outgoing_smtp_specific) {
 		priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (MODEST_EDITABLE_SIZE);
-		hildon_check_button_set_active (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
 			FALSE);
 	}
 	caption = create_captioned (self, sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
@@ -1112,7 +1112,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		modest_account_settings_get_retrieve_limit (settings));
 	
 	
-	hildon_check_button_set_active (GTK_BUTTON (priv->checkbox_leave_messages), 
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages), 
 					modest_account_settings_get_leave_messages_on_server (settings));
 	
 
@@ -1195,7 +1195,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		const gboolean has_specific = 
 			modest_account_settings_get_use_connection_specific_smtp (settings);
 		hildon_check_button_set_active (
-			GTK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
+			HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
 			has_specific);
 		g_object_unref (outgoing_account);
 	}
@@ -1262,7 +1262,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 		MODEST_LIMIT_RETRIEVE_PICKER (priv->limit_retrieve_picker));
 	modest_account_settings_set_retrieve_limit (priv->settings, retrieve_limit);
 	
-	leave_on_server = hildon_check_button_get_active (GTK_BUTTON (priv->checkbox_leave_messages));
+	leave_on_server = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages));
 	modest_account_settings_set_leave_messages_on_server (priv->settings, leave_on_server); 
 
 	store_settings = modest_account_settings_get_store_settings (priv->settings);
@@ -1307,7 +1307,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 	/* Save connection-specific SMTP server accounts: */
 	modest_account_settings_set_use_connection_specific_smtp 
 		(priv->settings, 
-		 hildon_check_button_get_active(GTK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
+		 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
 
 	/* this configuration is not persistent, we should not save */
 	if (account_name != NULL)

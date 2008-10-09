@@ -109,6 +109,10 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #endif /*MODEST_HAVE_HILDON_HELP*/
 #endif /*MODEST_HAVE_OSSO_HELP*/
 
+#ifndef HILDON_CHECK_BUTTON
+#define HILDON_CHECK_BUTTON GTK_BUTTON
+#endif
+
 /* some extra #defines, so it will compile with the 'normal' gtk */
 #ifndef MODEST_HAVE_HILDON_GTK
 #define hildon_gtk_entry_set_input_mode(a,b) \

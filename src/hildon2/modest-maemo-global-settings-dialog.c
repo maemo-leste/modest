@@ -45,7 +45,6 @@
 #include "modest-runtime.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-selector-picker.h"
-#include "hildon/hildon-check-button.h"
 #include "hildon/hildon-pannable-area.h"
 #include "modest-maemo-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
@@ -78,6 +77,7 @@ static void       on_size_notify         (HildonNumberEditor *editor,
 
 static void       on_auto_update_clicked (GtkButton *button,
 					  gpointer user_data);
+static void       update_sensitive       (ModestGlobalSettingsDialog *dialog);
 
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
@@ -157,6 +157,8 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 
 	/* Load current config */
 	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
+	/* force update of sensitiveness */
+	update_sensitive (MODEST_GLOBAL_SETTINGS_DIALOG (self));
 
 	/* Set first page */
 	hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_options_dialog",
@@ -280,14 +282,14 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 
 
 static void
-on_auto_update_clicked (GtkButton *button,
-			gpointer user_data)
+update_sensitive (ModestGlobalSettingsDialog *dialog)
 {
 	ModestGlobalSettingsDialogPrivate *ppriv;
 
-	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+	g_return_if_fail (MODEST_IS_GLOBAL_SETTINGS_DIALOG (dialog));
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (dialog);
 
-	if (hildon_check_button_get_active (button)) {
+	if (hildon_check_button_get_active (HILDON_CHECK_BUTTON (ppriv->auto_update))) {
 		gtk_widget_set_sensitive (ppriv->connect_via, TRUE);
 		gtk_widget_set_sensitive (ppriv->update_interval, TRUE);
 	} else {
@@ -296,6 +298,13 @@ on_auto_update_clicked (GtkButton *button,
 	}
 }
 
+static void
+on_auto_update_clicked (GtkButton *button,
+			gpointer user_data)
+{
+	g_return_if_fail (MODEST_IS_GLOBAL_SETTINGS_DIALOG (user_data));
+	update_sensitive ((ModestGlobalSettingsDialog *) user_data);
+}
 static gboolean
 on_range_error (HildonNumberEditor *editor, 
 		HildonNumberEditorErrorType type,

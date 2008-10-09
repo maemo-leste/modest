@@ -37,7 +37,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
-#include <hildon/hildon-check-button.h>
+#include <modest-hildon-includes.h>
 #else
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
@@ -106,7 +106,7 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 		if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (), 
 								      secure_auth))
 #ifdef MODEST_TOOLKIT_HILDON2
-			hildon_check_button_set_active (GTK_BUTTON (priv->auth_view),
+			hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->auth_view),
 							TRUE);
 #else
 			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auth_view),
@@ -158,7 +158,7 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 
 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) {
 #ifdef MODEST_TOOLKIT_HILDON2
-		if (hildon_check_button_get_active (GTK_BUTTON (priv->auth_view))) {
+		if (hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->auth_view))) {
 #else
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view))) {
 #endif
@@ -252,7 +252,7 @@ get_current_state (ModestSecurityOptionsView* self,
 		}
 	} else {
 #ifdef MODEST_TOOLKIT_HILDON2
-		if (hildon_check_button_get_active (GTK_BUTTON (priv->auth_view)))
+		if (hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->auth_view)))
 #else
 		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view)))
 #endif
@@ -332,7 +332,7 @@ modest_security_options_view_auth_check (ModestSecurityOptionsView* self)
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	auth_active = 
-		hildon_check_button_get_active (GTK_BUTTON (priv->auth_view));
+		hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->auth_view));
 #else
 	auth_active = 
 		gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auth_view));

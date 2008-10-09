@@ -43,7 +43,7 @@
 #include "modest-platform.h"
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "hildon2/modest-selector-picker.h"
-#include "hildon/hildon-check-button.h"
+#include "modest-hildon-includes.h"
 #else
 #include "widgets/modest-combo-box.h"
 #endif
@@ -265,7 +265,7 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 		checked = FALSE;
 	}
 #ifdef MODEST_TOOLKIT_HILDON2
-	hildon_check_button_set_active (GTK_BUTTON (priv->auto_update), checked);
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->auto_update), checked);
 #else
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auto_update), checked);
 #endif
@@ -288,9 +288,7 @@ _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
 	priv->initial_state.connect_via = combo_id;
 
 	/* Emit toggled to update the visibility of connect_by caption */
-#ifdef MODEST_TOOLKIT_HILDON2
-	gtk_button_clicked (GTK_BUTTON (priv->auto_update));
-#else
+#ifndef MODEST_TOOLKIT_HILDON2
 	gtk_toggle_button_toggled (GTK_TOGGLE_BUTTON (priv->auto_update));
 #endif
 
@@ -365,7 +363,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	/* Get values from UI */
 #ifdef MODEST_TOOLKIT_HILDON2
 	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->connect_via));
-	state->auto_update = hildon_check_button_get_active (GTK_BUTTON (priv->auto_update));
+	state->auto_update = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->auto_update));
 #else
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
 	state->auto_update = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
@@ -385,6 +383,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->update_interval = *id;
 #ifdef MODEST_TOOLKIT_HILDON2
 	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->msg_format));
+	state->play_sound = priv->initial_state.play_sound;
 #else
 	state->play_sound = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
