@@ -84,6 +84,7 @@ static gboolean modest_hildon1_window_mgr_find_registered_header (ModestWindowMg
 								  TnyHeader *header,
 								  ModestWindow **win);
 static GList *modest_hildon1_window_mgr_get_window_list (ModestWindowMgr *self);
+static void modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self);
 
 typedef struct _ModestHildon1WindowMgrPrivate ModestHildon1WindowMgrPrivate;
 struct _ModestHildon1WindowMgrPrivate {
@@ -153,6 +154,7 @@ modest_hildon1_window_mgr_class_init (ModestHildon1WindowMgrClass *klass)
 	mgr_class->set_modal = modest_hildon1_window_mgr_set_modal;
 	mgr_class->find_registered_header = modest_hildon1_window_mgr_find_registered_header;
 	mgr_class->get_window_list = modest_hildon1_window_mgr_get_window_list;
+	mgr_class->close_all_windows = modest_hildon1_window_mgr_close_all_windows;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon1WindowMgrPrivate));
 
@@ -237,7 +239,7 @@ modest_hildon1_window_mgr_new (void)
 	return MODEST_WINDOW_MGR(g_object_new(MODEST_TYPE_HILDON1_WINDOW_MGR, NULL));
 }
 
-void
+static void
 modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
 	ModestHildon1WindowMgrPrivate *priv = NULL;
