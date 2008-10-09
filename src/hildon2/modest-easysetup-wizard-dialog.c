@@ -71,6 +71,8 @@ G_DEFINE_TYPE (ModestEasysetupWizardDialog, modest_easysetup_wizard_dialog, MODE
    						    MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, \
 						    ModestEasysetupWizardDialogPrivate))
 
+#define LABELS_WIDTH -1
+
 typedef struct _ModestEasysetupWizardDialogPrivate ModestEasysetupWizardDialogPrivate;
 
 
@@ -290,7 +292,7 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is not truncated: */
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
@@ -359,7 +361,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (label);
 
@@ -565,7 +567,7 @@ create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 	
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	/* The documentation for gtk_label_set_line_wrap() says that we must 
 	 * call gtk_widget_set_size_request() with a hard-coded width, 
@@ -575,7 +577,7 @@ create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 	
 	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
@@ -690,7 +692,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	/* Show note that account type cannot be changed in future: */
 	label = gtk_label_new (_("mcen_ia_emailsetup_account_type"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
@@ -923,14 +925,14 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	GtkWidget *button_edit = gtk_button_new_with_label (_("mcen_bd_edit"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
 	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-	gtk_widget_set_size_request (label, 600, -1);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);

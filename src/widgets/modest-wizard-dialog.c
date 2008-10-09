@@ -249,7 +249,12 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
+    priv->image = NULL;
+#else
+#ifdef MODEST_TOOLKIT_GTK
+    priv->image = gtk_image_new_from_stock (GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_DIALOG);
+#else /*MODEST_TOOLKIT_GTK*/
 #if MODEST_HILDON_API == 0
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						HILDON_ICON_SIZE_WIDG_WIZARD);
@@ -260,9 +265,8 @@ init (ModestWizardDialog *wizard_dialog)
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						icon_size);
 #endif /*MODEST_HILDON_API == 0*/
-#else /*MODEST_TOOLKIT_GTK*/
-    priv->image = gtk_image_new_from_stock (GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_DIALOG);
 #endif /*!MODEST_TOOLKIT_GTK*/
+#endif /*MODEST_TOOLKIT_HILDON2 */
     /* Default values for user provided properties */
     priv->notebook = NULL;
     priv->wizard_name = NULL;
@@ -271,7 +275,8 @@ init (ModestWizardDialog *wizard_dialog)
     /* Build wizard layout */
     gtk_box_pack_start_defaults (GTK_BOX (dialog->vbox), GTK_WIDGET (priv->box));
     gtk_box_pack_start_defaults (GTK_BOX (priv->box), GTK_WIDGET (vbox));
-    gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), FALSE, FALSE, 0);
+    if (priv->image)
+      gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), FALSE, FALSE, 0);
 
     /* Add response buttons: finish, previous, next, cancel */
 #ifdef MODEST_TOOLKIT_HILDON1
@@ -566,10 +571,12 @@ response (ModestWizardDialog   *wizard_dialog,
 
     /* We show the default image on first and last pages */
     last = gtk_notebook_get_n_pages (notebook) - 1;
-    if (current == last || current == 0)
-        gtk_widget_show (GTK_WIDGET(priv->image));
-    else
-        gtk_widget_hide (GTK_WIDGET(priv->image));
+    if (priv->image) {
+	    if (current == last || current == 0)
+		    gtk_widget_show (GTK_WIDGET(priv->image));
+	    else
+		    gtk_widget_hide (GTK_WIDGET(priv->image));
+    }
 
     /* New page number may appear in the title, update it */
     if (priv->autotitle) 
