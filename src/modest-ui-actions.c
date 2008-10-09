@@ -88,6 +88,8 @@
 #include <gtkhtml/gtkhtml.h>
 
 #define MIN_FREE_SPACE 5 * 1024 * 1024
+#define MOVE_FOLDER_OK_BUTTON "ok-button"
+#define MOVE_FOLDER_NEW_BUTTON "new-button"
 
 typedef struct _GetMsgAsyncHelper {	
 	ModestWindow *window;
@@ -4451,7 +4453,6 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 {
 	GtkWidget *dialog = NULL;
 	GtkWidget *ok_button = NULL, *new_button = NULL;
-	GList *children = NULL;
 	gboolean ok_sensitive = TRUE, new_sensitive = TRUE;
 	gboolean moving_folder = FALSE;
 	gboolean is_local_account = TRUE;
@@ -4468,15 +4469,8 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	if (!dialog)
 		return;
 
-	children = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
-#ifndef MODEST_TOOLKIT_GTK
-	ok_button = GTK_WIDGET (children->next->next->data);
-	new_button = GTK_WIDGET (children->next->data);
-#else
-	ok_button = GTK_WIDGET (children->data);
-	new_button = GTK_WIDGET (children->next->next->data);
-#endif
-	g_list_free (children);
+	ok_button = g_object_get_data (G_OBJECT (dialog), MOVE_FOLDER_OK_BUTTON);
+	new_button = g_object_get_data (G_OBJECT (dialog), MOVE_FOLDER_NEW_BUTTON);
 
 	/* check if folder_store is an remote account */
 	if (TNY_IS_ACCOUNT (folder_store)) {
@@ -4607,7 +4601,7 @@ create_move_to_dialog (GtkWindow *win,
 		       GtkWidget **tree_view)
 {
 	GtkWidget *dialog, *scroll;
-	GtkWidget *new_button;
+	GtkWidget *new_button, *ok_button;
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
 					      GTK_WINDOW (win),
@@ -4615,12 +4609,15 @@ create_move_to_dialog (GtkWindow *win,
 	                                      NULL);
 
 #ifndef MODEST_TOOLKIT_GTK
-	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
+	ok_button = gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
 	/* We do this manually so GTK+ does not associate a response ID for
 	 * the button. */
 	new_button = gtk_button_new_from_stock (_("mcen_bd_new"));
 	gtk_box_pack_end (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
+	gtk_widget_show (new_button);
+#ifndef MODEST_TOOLKIT_HILDON2
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT);
+#endif
 #else
 	/* We do this manually so GTK+ does not associate a response ID for
 	 * the button. */
@@ -4628,10 +4625,12 @@ create_move_to_dialog (GtkWindow *win,
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
 	gtk_button_box_set_child_secondary (GTK_BUTTON_BOX (GTK_DIALOG (dialog)->action_area), new_button, TRUE);
 	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT);
-	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_OK, GTK_RESPONSE_ACCEPT);
+	ok_button = gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_OK, GTK_RESPONSE_ACCEPT);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 12);
 	gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 24);
 #endif
+	g_object_set_data (G_OBJECT (dialog), MOVE_FOLDER_OK_BUTTON, ok_button);
+	g_object_set_data (G_OBJECT (dialog), MOVE_FOLDER_NEW_BUTTON, new_button);
 
 	/* Create scrolled window */
 	scroll = gtk_scrolled_window_new (NULL, NULL);
