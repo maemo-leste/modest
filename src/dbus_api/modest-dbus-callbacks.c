@@ -1657,6 +1657,7 @@ add_folders_to_list (TnyFolderStore *folder_store, GList** list)
 	tny_folder_store_get_folders (folder_store,
 				      all_folders,
 				      NULL /* query */,
+				      FALSE,
 				      NULL /* error */);
 
 	TnyIterator *iter = tny_list_create_iterator (all_folders);

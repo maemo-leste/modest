@@ -117,7 +117,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	/* There is no need to do this _async, as these are local folders. */
 	/* TODO: However, this seems to fail sometimes when the network is busy, 
 	 * returning an empty list. murrayc. */	
-	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account), folders, NULL, &error);
+	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account), folders, NULL, FALSE, &error);
 	if (error) {
 		g_warning ("%s: tny_folder_store_get_folders() failed:%s\n", __FUNCTION__, error->message);
 		g_error_free (error);
@@ -903,7 +903,7 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 		if (!TNY_IS_MERGE_FOLDER (folder) && 
 		    (TNY_IS_FOLDER (folder) && 
 		     tny_folder_get_folder_type (TNY_FOLDER (folder)) != TNY_FOLDER_TYPE_OUTBOX))
-			tny_folder_store_get_folders_async (folder, folders, NULL,
+			tny_folder_store_get_folders_async (folder, folders, NULL, FALSE,
 							    recurse_folders_async_cb, 
 							    NULL, helper);
 		g_object_unref (folders);
@@ -953,7 +953,7 @@ modest_tny_folder_store_get_folder_stats (TnyFolderStore *self,
 
 	folders = tny_simple_list_new ();
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (self),
-					    folders, NULL,
+					    folders, NULL, FALSE,
 					    recurse_folders_async_cb, 
 					    NULL, helper);
 	g_object_unref (folders);
