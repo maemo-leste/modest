@@ -715,7 +715,12 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	if (attachments && modest_platform_check_memory_low (win, TRUE))
 		goto cleanup;
 
-	account_name = modest_account_mgr_get_default_account(mgr);
+#ifdef MODEST_TOOLKIT_HILDON2
+	account_name = g_strdup (modest_window_get_active_account(win));
+#endif
+	if (!account_name) {
+		account_name = modest_account_mgr_get_default_account(mgr);
+	}
 	if (!account_name) {
 		g_printerr ("modest: no account found\n");
 		goto cleanup;
