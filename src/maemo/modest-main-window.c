@@ -2245,6 +2245,10 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 
 	/* Show */
 	gtk_widget_show_all (priv->contents_widget);
+
+	/* Recompute dimming rules */
+        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 }
 
 ModestMainWindowContentsStyle

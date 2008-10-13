@@ -6035,7 +6035,8 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 
 		tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (header_view), 
 							TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN);
-		gtk_tree_view_column_queue_resize (tree_column);
+		if (tree_column)
+			gtk_tree_view_column_queue_resize (tree_column);
 	}
 #else
 	gtk_widget_queue_draw (header_view);
