@@ -1556,6 +1556,8 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
 	default:
+		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (),
+						     header);
 		g_return_if_reached ();
 		return;
 	}
@@ -1592,6 +1594,11 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 cleanup:
+	/* We always unregister the header because the message is
+	   forwarded or replied so the original one is no longer
+	   opened */
+	modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (),
+					     header);
 	if (new_msg)
 		g_object_unref (G_OBJECT (new_msg));
 	if (account)
@@ -1670,6 +1677,7 @@ reply_forward_performer (gboolean canceled,
 	}
 
 	/* Retrieve the message */
+	modest_window_mgr_register_header (modest_runtime_get_window_mgr (), rf_helper->header, NULL);
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (parent_window),
 								 modest_ui_actions_disk_operations_error_handler,
 								 NULL, NULL);
