@@ -84,7 +84,7 @@ static gboolean modest_hildon1_window_mgr_find_registered_header (ModestWindowMg
 								  TnyHeader *header,
 								  ModestWindow **win);
 static GList *modest_hildon1_window_mgr_get_window_list (ModestWindowMgr *self);
-static void modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self);
+static gboolean modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self);
 
 typedef struct _ModestHildon1WindowMgrPrivate ModestHildon1WindowMgrPrivate;
 struct _ModestHildon1WindowMgrPrivate {
@@ -239,14 +239,14 @@ modest_hildon1_window_mgr_new (void)
 	return MODEST_WINDOW_MGR(g_object_new(MODEST_TYPE_HILDON1_WINDOW_MGR, NULL));
 }
 
-static void
+static gboolean
 modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
 	ModestHildon1WindowMgrPrivate *priv = NULL;
 	gboolean ret_value = FALSE;
 	ModestWindow *main_window;
 	
-	g_return_if_fail (MODEST_IS_HILDON1_WINDOW_MGR (self));
+	g_return_val_if_fail (MODEST_IS_HILDON1_WINDOW_MGR (self), FALSE);
 	priv = MODEST_HILDON1_WINDOW_MGR_GET_PRIVATE (self);
 	
 	/* If there is a main window then try to close it, and it will
@@ -254,6 +254,7 @@ modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self)
 	main_window = modest_window_mgr_get_main_window (self, FALSE);
 	if (main_window) {
 		g_signal_emit_by_name (main_window, "delete-event", NULL, &ret_value);
+		return ret_value;
 	} else {
 		GList *wins = NULL, *next = NULL;
 
@@ -262,9 +263,13 @@ modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self)
 		while (wins) {
 			next = g_list_next (wins);
 			g_signal_emit_by_name (G_OBJECT (wins->data), "delete-event", NULL, &ret_value);
+			if (ret_value)
+				break;
 			wins = next;
 		}
 	}
+
+	return ret_value;
 }
 
 static gint

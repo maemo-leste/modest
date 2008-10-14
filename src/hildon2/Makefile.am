@@ -84,7 +84,9 @@ libmodest_ui_la_SOURCES=              \
 	modest-limit-retrieve-picker.h modest-limit-retrieve-picker.c \
 	modest-retrieve-picker.h modest-retrieve-picker.c \
 	modest-secureauth-picker.h modest-secureauth-picker.c \
-	modest-selector-picker.h modest-selector-picker.c
+	modest-selector-picker.h modest-selector-picker.c \
+	modest-hildon2-window-mgr.h modest-hildon2-window-mgr.c
+
 
 if MODEST_USE_DUMMY_ADDRESS_BOOK
 #	 nothing 

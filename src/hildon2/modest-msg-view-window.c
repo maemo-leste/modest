@@ -1023,7 +1023,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (window));
-	gtk_widget_show_all (GTK_WIDGET (window));
+	/* gtk_widget_show_all (GTK_WIDGET (window)); */
 	modest_msg_view_window_update_priority (window);
 
 	/* Check dimming rules */
@@ -1057,7 +1057,7 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	
 	update_window_title (window);
-	gtk_widget_show_all (GTK_WIDGET (window));
+	/* gtk_widget_show_all (GTK_WIDGET (window));*/
 	modest_msg_view_window_update_priority (window);
 
 	/* Check dimming rules */
@@ -1087,7 +1087,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
-	gtk_widget_show_all (GTK_WIDGET (obj));
+	/* gtk_widget_show_all (GTK_WIDGET (obj)); */
 
 	/* Check dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (obj));
@@ -2645,7 +2645,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			modest_window_set_zoom (MODEST_WINDOW (msg_win), 
 						modest_window_get_zoom (MODEST_WINDOW (window)));
 			modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window));
-			gtk_widget_show_all (GTK_WIDGET (msg_win));
+			/* gtk_widget_show_all (GTK_WIDGET (msg_win));*/
 		}
 	}
 	g_object_unref (mime_part);

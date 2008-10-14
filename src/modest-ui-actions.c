@@ -760,7 +760,10 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	allowed_size = MODEST_MAX_ATTACHMENT_SIZE;
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
 
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win, NULL);
+	if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win, NULL)) {
+		gtk_widget_destroy (GTK_WIDGET (msg_win));
+		goto cleanup;
+	}
 	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (msg_win), set_as_modified);
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
@@ -981,7 +984,10 @@ open_msg_cb (ModestMailOperation *mail_op,
 	/* Register and show new window */
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
-		modest_window_mgr_register_window (mgr, win, NULL);
+		if (!modest_window_mgr_register_window (mgr, win, NULL)) {
+			gtk_widget_destroy (GTK_WIDGET (win));
+			goto cleanup;
+		}
 		gtk_widget_show_all (GTK_WIDGET(win));
 	}
 
@@ -2726,6 +2732,14 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	/* In hildon2 we always show the information banner on saving to drafts.
+	 * It will be a system information banner in this case.
+	 */
+	gchar *text = g_strdup_printf (_("mail_va_saved_to_drafts"), _("mcen_me_folder_drafts"));
+	modest_platform_information_banner (NULL, NULL, text);
+	g_free (text);
+#else
 	/* Use the main window as the parent of the banner, if the
 	   main window does not exist it won't be shown, if the parent
 	   window exists then it's properly shown. We don't use the
@@ -2738,6 +2752,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 		modest_platform_information_banner (GTK_WIDGET (win), NULL, text);
 		g_free (text);
 	}
+#endif
 	modest_msg_edit_window_set_modified (edit_window, FALSE);
 
 	/* Frees */

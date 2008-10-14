@@ -537,8 +537,11 @@ find_msg_async_cb (TnyFolder *folder,
                 }
 
 		if (msg_view != NULL) {
-			modest_window_mgr_register_window (win_mgr, msg_view, NULL);
-			gtk_widget_show_all (GTK_WIDGET (msg_view));
+			if (!modest_window_mgr_register_window (win_mgr, msg_view, NULL)) {
+				gtk_widget_destroy (GTK_WIDGET (msg_view));
+			} else {
+				gtk_widget_show_all (GTK_WIDGET (msg_view));
+			}
 		}
         }
 
@@ -1158,6 +1161,11 @@ on_idle_top_application (gpointer user_data)
 
 	gdk_threads_enter (); /* CHECKED */
 	
+#ifdef MODEST_TOOLKIT_HILDON2
+	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
+						      TRUE);
+	new_window = TRUE;
+#else
 	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 						      FALSE);
 
@@ -1166,6 +1174,7 @@ on_idle_top_application (gpointer user_data)
 							      TRUE);
 		new_window = TRUE;
 	}
+#endif
 
 	if (main_win) {
 		/* If we're showing an already existing window then
@@ -1177,6 +1186,13 @@ on_idle_top_application (gpointer user_data)
 			modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 		}
 	}
+
+#ifndef MODEST_TOOLKIT_HILDON2
+	if (main_win) {
+		gtk_widget_show_all (GTK_WIDGET (main_win));
+		gtk_window_present (GTK_WINDOW (main_win));
+	}
+#endif
 
 	gdk_threads_leave (); /* CHECKED */
 	

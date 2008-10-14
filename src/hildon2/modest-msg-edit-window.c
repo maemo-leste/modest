@@ -3553,8 +3553,12 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 			priv->msg_uid = NULL;
 		}
 		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
-		if (GTK_WIDGET_REALIZED (window))
-			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window), NULL);
+		if (GTK_WIDGET_REALIZED (window)) {
+			if (!modest_window_mgr_register_window (mgr, MODEST_WINDOW (window), NULL)) {
+				gtk_widget_destroy (GTK_WIDGET (window));
+				return;
+			}
+		}
 	}
 
 	priv->draft_msg = draft;

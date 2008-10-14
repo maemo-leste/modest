@@ -61,7 +61,7 @@ static GtkWindow *modest_window_mgr_get_modal_default (ModestWindowMgr *self);
 static void modest_window_mgr_set_modal_default (ModestWindowMgr *self, 
 						 GtkWindow *window,
 						 GtkWindow *parent);
-static void modest_window_mgr_close_all_windows_default (ModestWindowMgr *self);
+static gboolean modest_window_mgr_close_all_windows_default (ModestWindowMgr *self);
 static gboolean modest_window_mgr_find_registered_header_default (ModestWindowMgr *self, 
 								  TnyHeader *header,
 								  ModestWindow **win);
@@ -385,16 +385,16 @@ modest_window_mgr_get_help_id (ModestWindowMgr *self, GtkWindow *win)
 	return g_object_get_data (G_OBJECT(win), MODEST_WINDOW_HELP_ID_PARAM);
 }
 
-void
+gboolean
 modest_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
-	MODEST_WINDOW_MGR_GET_CLASS (self)->close_all_windows (self);
+	return MODEST_WINDOW_MGR_GET_CLASS (self)->close_all_windows (self);
 }
 
-static void
+static gboolean
 modest_window_mgr_close_all_windows_default (ModestWindowMgr *self)
 {
-	return ;
+	return TRUE;
 }
 
 

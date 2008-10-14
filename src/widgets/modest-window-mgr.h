@@ -68,7 +68,7 @@ struct _ModestWindowMgrClass {
 								 gboolean fullscreen);
 	ModestWindow *        (*get_main_window)                (ModestWindowMgr *self,
 								 gboolean show);
-	void                  (*close_all_windows)              (ModestWindowMgr *self);
+	gboolean              (*close_all_windows)              (ModestWindowMgr *self);
 	GtkWindow *           (*get_modal)                      (ModestWindowMgr *self);
 	void                  (*set_modal)                      (ModestWindowMgr *self,
 								 GtkWindow *window,
@@ -295,9 +295,10 @@ GList *modest_window_mgr_get_window_list (ModestWindowMgr *self);
  * modest_window_mgr_close_all_windows
  * @self: a #ModestWindowMgr
  * 
- * Close all registered windows. 
+ * Close all registered windows. If failed (for example because
+ * one confirmation dialog rejected the operation), return %FALSE
  **/
-void modest_window_mgr_close_all_windows (ModestWindowMgr *self);
+gboolean modest_window_mgr_close_all_windows (ModestWindowMgr *self);
 
 /**
  * modest_window_mgr_register_header
