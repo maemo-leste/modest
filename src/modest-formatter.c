@@ -177,6 +177,7 @@ modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 	TnyMsg *new_msg = NULL;
 	TnyMimePart *body_part = NULL;
 	ModestFormatterPrivate *priv;
+	gchar *txt;
 
 	/* Build new part */
 	new_msg     = modest_formatter_create_message (self, TRUE, TRUE, FALSE);
@@ -184,7 +185,10 @@ modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 
 	/* Create the two parts */
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
-	construct_from_text (body_part, "", priv->content_type);
+	txt = modest_text_utils_cite ("", priv->content_type, priv->signature,
+				      NULL, tny_header_get_date_sent (header));
+	construct_from_text (body_part, txt, priv->content_type);
+	g_free (txt);
 	g_object_unref (body_part);
 
 	if (msg) {

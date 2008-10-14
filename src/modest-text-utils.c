@@ -63,7 +63,7 @@
  * will hang modest
  */
 #define HYPERLINKIFY_MAX_LENGTH (1024*50)
-
+#define SIGNATURE_MARKER "--"
 
 
 /*
@@ -215,11 +215,11 @@ modest_text_utils_cite (const gchar *text,
 	if (!signature)
 		retval = g_strdup ("");
 	else if (strcmp(content_type, "text/html") == 0) {
-		tmp_sig = g_strconcat ("\n", signature, NULL);
+		tmp_sig = g_strconcat (SIGNATURE_MARKER,"\n", signature, NULL);
 		retval = modest_text_utils_convert_to_html_body(tmp_sig, -1, TRUE);
 		g_free (tmp_sig);
 	} else {
-		retval = g_strconcat (text, "\n", signature, NULL);
+		retval = g_strconcat (text, SIGNATURE_MARKER, "\n", signature, NULL);
 	}
 
 	return retval;
@@ -941,6 +941,17 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	return g_string_free (q, FALSE);
 }
 
+static void
+quote_html_add_to_gstring (GString *string,
+			   const gchar *text)
+{
+	if (text && strcmp (text, "")) {
+		gchar *html_text = modest_text_utils_convert_to_html_body (text, -1, TRUE);
+		g_string_append_printf (string, "%s<br/>", html_text);
+		g_free (html_text);
+	}
+}
+
 static gchar*
 modest_text_utils_quote_html (const gchar *text, 
 			      const gchar *cite, 
@@ -948,38 +959,33 @@ modest_text_utils_quote_html (const gchar *text,
 			      GList *attachments,
 			      int limit)
 {
-	gchar *result = NULL;
-	gchar *signature_result = NULL;
-	const gchar *format = \
-		"<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
-		"<html>\n" \
-		"<body>\n" \
-		"<pre>%s<br/>%s<br/>%s</pre>\n" \
-		"<br/>--<br/>%s<br/>\n" \
-		"</body>\n" \
-		"</html>\n";
-	gchar *attachments_string = NULL;
-	gchar *q_attachments_string = NULL;
-	gchar *q_cite = NULL;
-	gchar *html_text = NULL;
+	GString *result_string;
 
-	if (signature == NULL)
-		signature_result = g_strdup ("");
-	else
-		signature_result = modest_text_utils_convert_to_html_body (signature, -1, TRUE);
+	result_string = 
+		g_string_new ( \
+			      "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
+			      "<html>\n"				\
+			      "<body>\n");
 
-	attachments_string = quoted_attachments (attachments);
-	q_attachments_string = modest_text_utils_convert_to_html_body (attachments_string, -1, TRUE);
-	q_cite = modest_text_utils_convert_to_html_body (cite, -1, TRUE);
-	html_text = modest_text_utils_convert_to_html_body (text, -1, TRUE);
-	result = g_strdup_printf (format, q_cite, html_text, q_attachments_string, signature_result);
-	g_free (q_cite);
-	g_free (html_text);
-	g_free (attachments_string);
-	g_free (q_attachments_string);
-	g_free (signature_result);
-	
-	return result;
+	if (text || cite || signature) {
+		g_string_append (result_string, "<pre>");
+		quote_html_add_to_gstring (result_string, cite);
+		quote_html_add_to_gstring (result_string, text);
+		if (attachments) {
+			gchar *attachments_string = quoted_attachments (attachments);
+			quote_html_add_to_gstring (result_string, attachments_string);
+			g_free (attachments_string);
+		}
+		if (signature) {
+			quote_html_add_to_gstring (result_string, SIGNATURE_MARKER);
+			quote_html_add_to_gstring (result_string, signature);
+		}
+		g_string_append (result_string, "</pre>");
+	}
+	g_string_append (result_string, "</body>");
+	g_string_append (result_string, "</html>");
+
+	return g_string_free (result_string, FALSE);
 }
 
 static gint 
