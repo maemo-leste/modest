@@ -269,6 +269,7 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	GtkCellRenderer *renderer;
 	GtkWidget *selector;
 	GtkListStore *model;
+	HildonTouchSelectorColumn *column;
 
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an int for the MCC ID.
@@ -283,8 +284,9 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 
 	selector = hildon_touch_selector_new ();
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
-	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
-					     renderer, "text", MODEL_COL_NAME, NULL);
+	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
+						      renderer, "text", MODEL_COL_NAME, NULL);
+	g_object_set (G_OBJECT (column), "text-column", MODEL_COL_NAME, NULL);
 
 	/* Fill the model with rows: */
 	load_from_file (self, model);
