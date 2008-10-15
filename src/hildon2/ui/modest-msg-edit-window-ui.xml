@@ -100,10 +100,6 @@
       <menuitem name="ToolsHelpMenu" action="Help"/>
     </menu>
 
-    <menu name="CloseMenu" action="Close">
-      <menuitem name="CloseWindowMenu" action="CloseWindow"/>
-      <menuitem name="CloseAllWindowsMenu" action="CloseAllWindows"/>
-    </menu>
   </menubar>
 
   <toolbar name="ToolBar">
