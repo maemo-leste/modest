@@ -1586,6 +1586,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		/* Aavoid a clash with an existing display name: */
 		const gboolean name_in_use = modest_account_mgr_account_with_display_name_exists (
 			priv->account_manager, account_title);
+		g_free (account_title);
 
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
