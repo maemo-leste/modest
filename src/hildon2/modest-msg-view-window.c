@@ -1430,6 +1430,7 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
 	} else {
 		gtk_widget_hide (priv->find_toolbar);
+		modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 	}
 
 	/* update the toggle buttons status */
