@@ -1008,6 +1008,8 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 		readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
 		size += readed;
 		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, &error)) {
+			if (error)
+				g_error_free (error);
 			break;
 		}
 	}
