@@ -1904,6 +1904,7 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 	
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), self);
 	
+	g_free (buffer_format);
 	g_free (current_format);
 
 	/* Check dimming rules */
