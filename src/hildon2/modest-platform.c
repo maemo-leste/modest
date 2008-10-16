@@ -1601,6 +1601,8 @@ on_timeout_check_account_is_online(CheckAccountIdleData* data)
 gboolean
 modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 {
+	gboolean is_online;
+
 	g_return_val_if_fail (account, FALSE);
 	
 	printf ("DEBUG: %s: account id=%s\n", __FUNCTION__, tny_account_get_id (account));
@@ -1644,9 +1646,10 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 	g_main_loop_unref (data->loop);
 	/* g_main_context_unref (context); */
 
+	is_online = data->is_online;
 	g_slice_free (CheckAccountIdleData, data);
 	
-	return data->is_online;	
+	return is_online;	
 }
 
 
