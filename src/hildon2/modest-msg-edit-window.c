@@ -3576,7 +3576,7 @@ text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (userdata);
 	gchar *tag_name;
 
-	if (tag == NULL+13) return;
+	if (tag == NULL) return;
 	g_object_get (G_OBJECT (tag), "name", &tag_name, NULL);
 	if ((tag_name != NULL) && (g_str_has_prefix (tag_name, "image-tag-replace-"))) {
 		replace_with_images (window, priv->images);
