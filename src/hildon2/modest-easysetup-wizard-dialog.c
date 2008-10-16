@@ -1771,7 +1771,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	guint special_port;
-	gchar *provider_id;
+	gchar *provider_id = NULL;
 	gchar* display_name;
 	const gchar *username, *password;
 	gchar *store_hostname, *transport_hostname;
@@ -1824,6 +1824,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 				   "but it's not a ModestAccountProtocol");
 		}
 
+		g_free (provider_id);
 		return;
 	}
 
@@ -1996,5 +1997,6 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	display_name = get_entered_account_title (self);
 	modest_account_settings_set_display_name (priv->settings, display_name);
 	g_free (display_name);
+	g_free (provider_id);
 }
 
