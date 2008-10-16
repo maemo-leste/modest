@@ -63,15 +63,8 @@
 	<menuitem name="Zoom200Menu" action="Zoom200"/>
       </menu>
       <separator/>
-      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
-      <separator/>
-      <menu name="ViewShowToolbarMenu" action="ViewShowToolbar">
-	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
-	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
-      </menu>
-      <separator/>
-      <menuitem name="ViewPreviousMessageMenu" action="ViewPreviousMessage"/>
       <menuitem name="ViewNextMessageMenu" action="ViewNextMessage"/>
+      <menuitem name="ViewPreviousMessageMenu" action="ViewPreviousMessage"/>
     </menu>
 
     <menu name="AttachmentsMenu" action="Attachments">

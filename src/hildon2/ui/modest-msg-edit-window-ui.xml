@@ -54,13 +54,6 @@
     </menu>
 
     <menu name="ViewMenu" action="View">
-      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
-      <separator/>
-      <menu name="ShowToolbarMenu" action="ShowToolbar">
-	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
-	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
-      </menu>
-      <separator/>
       <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
     </menu>
