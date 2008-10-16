@@ -531,6 +531,7 @@ entry_insert_text (GtkEditable *editable,
 
 	chars = gtk_editable_get_chars (editable, 0, -1);
 	chars_length = g_utf8_strlen (chars, -1);
+	g_free (chars);
 
 	/* Show WID-INF036 */
 	if (chars_length >= 20) {
