@@ -830,6 +830,17 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 			g_object_unref (source);
 		}
 
+		if (error && ((error->code == TNY_SERVICE_ERROR_NO_SUCH_MESSAGE) ||
+			      error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE)) {
+			gchar *subject, *msg;
+			subject = tny_header_dup_subject (header);
+			msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
+					       subject);
+			modest_platform_run_information_dialog (NULL, msg, FALSE);
+			g_free (msg);
+			g_free (subject);
+		}
+
 		/* Remove the header from the preregistered uids */
 		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (),  
 						     header);
