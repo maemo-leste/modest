@@ -780,6 +780,7 @@ select_next_valid_row (GtkTreeModel *model,
 				if (msg_is_visible (header, is_outbox)) {
 					next = gtk_tree_model_get_path (model, &tmp_iter);
 					*row_reference = gtk_tree_row_reference_new (model, next);
+					gtk_tree_path_free (next);
 					retval = TRUE;
 					finished = TRUE;
 				}
@@ -809,6 +810,7 @@ select_next_valid_row (GtkTreeModel *model,
 				   message */
 				finished = TRUE;
 			}
+			gtk_tree_path_free (next);
 		} else {
 			/* If there are no more messages and we don't
 			   want to start again in the first one then
@@ -819,8 +821,6 @@ select_next_valid_row (GtkTreeModel *model,
 
 	/* Free */
 	gtk_tree_path_free (path);
-	if (next)
-		gtk_tree_path_free (next);
 
 	return retval;
 }
