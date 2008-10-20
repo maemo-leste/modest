@@ -318,19 +318,19 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gint column, g
 }
 
 static void
-on_account_serviceprovider_selector_changed (HildonTouchSelector *widget, gint column, gpointer user_data)
+update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 {
-	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	ModestEasysetupWizardDialogPrivate *priv; 
+	gchar* provider_id;
+	gchar* domain_name = NULL;
+
 	g_assert(self);
-	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	
-	priv->dirty = TRUE;
-	
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
 	/* Fill the providers combo, based on the selected country: */
-	gchar* provider_id = modest_provider_picker_get_active_provider_id (
+	provider_id = modest_provider_picker_get_active_provider_id (
 		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
 	
-	gchar* domain_name = NULL;
 	if(provider_id)
 		domain_name = modest_presets_get_domain (priv->presets, provider_id);
 	
@@ -343,6 +343,18 @@ on_account_serviceprovider_selector_changed (HildonTouchSelector *widget, gint c
 	g_free (domain_name);
 	
 	g_free (provider_id);
+}
+
+static void
+on_account_serviceprovider_selector_changed (HildonTouchSelector *widget, gint column, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	g_assert(self);
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	
+	priv->dirty = TRUE;
+
+	update_user_email_from_provider (self);
 }
 
 static void
@@ -541,7 +553,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_captioned (self, sizegroup, 
 				    _("mcen_li_emailsetup_email_address"), priv->entry_user_email);
-	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
+	update_user_email_from_provider (self);
 	gtk_widget_show (priv->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	g_signal_connect(G_OBJECT(priv->entry_user_email), "changed", 
