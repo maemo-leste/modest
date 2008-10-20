@@ -353,6 +353,7 @@ on_key_press_event (GtkWindow *window, GdkEventKey *event, gpointer userdata)
 		vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (focused));
 		switch (event->keyval) {
 		case GDK_Up:
+		case GDK_KP_Up:
 			if (vadj->value > 0.0) {
 				g_signal_emit_by_name (G_OBJECT (focused), "scroll-child", GTK_SCROLL_STEP_UP, FALSE, 
 						       &return_value);
@@ -360,6 +361,7 @@ on_key_press_event (GtkWindow *window, GdkEventKey *event, gpointer userdata)
 			}
 			break;
 		case GDK_Down:
+		case GDK_KP_Down:
 			if (vadj->value < vadj->upper - vadj->page_size) {
 				g_signal_emit_by_name (G_OBJECT (focused), "scroll-child", GTK_SCROLL_STEP_DOWN, FALSE, 
 						       &return_value);
