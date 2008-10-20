@@ -452,7 +452,7 @@ window_vbox_new (ModestAccountViewWindow *self)
 
 	/* Only force the height, the width of the widget will depend
 	   on the size of the column titles */
-	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), -1, 400);
+	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), -1, 320);
 	gtk_widget_show (GTK_WIDGET (priv->account_view));
 
 	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
