@@ -317,8 +317,10 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->outgoing_auth_picker = 
 			GTK_WIDGET (modest_secureauth_picker_new (MODEST_EDITABLE_SIZE,
 								  MODEST_EDITABLE_ARRANGEMENT));
-		hildon_button_set_title (HILDON_BUTTON (priv->outgoing_auth_picker), _("mcen_li_emailsetup_secure_authentication"));
 	}
+	modest_maemo_utils_create_picker_layout (sizegroup, 
+						 _("mcen_li_emailsetup_secure_authentication"),
+						 priv->outgoing_auth_picker);
 	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->outgoing_auth_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_auth_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -366,7 +368,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_serversecurity_picker_set_active_serversecurity (
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_CONNECTION_NONE);
-	hildon_button_set_title (HILDON_BUTTON (priv->outgoing_security_picker), _("mcen_li_emailsetup_secure_connection"));
+	modest_maemo_utils_create_picker_layout (sizegroup,  _("mcen_li_emailsetup_secure_connection"), priv->outgoing_security_picker);
 	gtk_widget_show (priv->outgoing_security_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_security_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
