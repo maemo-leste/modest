@@ -38,7 +38,7 @@
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtkliststore.h>
-#include <gtk/gtkscrolledwindow.h>
+#include <hildon/hildon-pannable-area.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
@@ -346,7 +346,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 		G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER));
 
 	/* Setup the tree view: */
-	priv->treeview = GTK_TREE_VIEW (gtk_tree_view_new_with_model (priv->model));
+	priv->treeview = GTK_TREE_VIEW (hildon_gtk_tree_view_new_with_model (HILDON_UI_MODE_EDIT, priv->model));
 
 	/* Show the column headers,
 	 * which does not seem to be the default on Maemo.
@@ -383,28 +383,26 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is shown without being truncated: */
-	gtk_label_set_max_width_chars (GTK_LABEL (label), 20);
+	/* gtk_label_set_max_width_chars (GTK_LABEL (label), 20); */
 	/* The documentation for gtk_label_set_line_wrap() says that we must 
 	 * call gtk_widget_set_size_request() with a hard-coded width, 
 	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
-	gtk_widget_set_size_request (label, 400, -1);
+	/* gtk_widget_set_size_request (label, 400, -1); */
 	gtk_widget_show (label);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
-	/* Put the treeview in a scrolled window and add it to the box: */
-	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
-	gtk_container_set_border_width (GTK_CONTAINER (scrolled_window), MODEST_MARGIN_DEFAULT);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, 
-		GTK_POLICY_AUTOMATIC);
-	gtk_widget_show (scrolled_window);
-	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->treeview));
-	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (scrolled_window), TRUE, TRUE, MODEST_MARGIN_HALF);
+	/* Put the treeview in a pannable and add it to the box: */
+	GtkWidget *pannable = hildon_pannable_area_new ();
+	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (pannable), MODEST_MARGIN_DEFAULT);
+	gtk_widget_show (pannable);
+	gtk_container_add (GTK_CONTAINER (pannable), GTK_WIDGET (priv->treeview));
+	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (pannable), TRUE, TRUE, MODEST_MARGIN_HALF);
 	gtk_widget_show (GTK_WIDGET (priv->treeview));
 	gtk_widget_show (vbox);
 	
 	/* Hack: we use the response apply to identify the click on the edit button */
 	priv->button_edit = gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_edit"), GTK_RESPONSE_APPLY);
-	gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 	
 	/* Disable the Edit button when nothing is selected: */
 	GtkTreeSelection *sel = gtk_tree_view_get_selection (priv->treeview);
