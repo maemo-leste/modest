@@ -1650,7 +1650,7 @@ add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
 	info = g_slice_new0 (AddOutboxInfo);
 	info->account_store = self;
 	info->transport_account = g_object_ref (transport_account);
-	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account_outbox), folders, NULL, FALSE, 
+	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account_outbox), folders, NULL, 
 					    add_outbox_from_transport_account_to_global_outbox_get_folders_cb, NULL, (gpointer) info);
 	g_object_unref (account_outbox);
 }
@@ -2068,7 +2068,7 @@ modest_tny_account_store_find_msg_in_outboxes (ModestTnyAccountStore *self,
 		TnyAccount *account = TNY_ACCOUNT (tny_iterator_get_current (acc_iter));
 		TnyIterator *folders_iter = NULL;
 
-		tny_folder_store_get_folders (TNY_FOLDER_STORE (account), folders, NULL, FALSE, NULL);
+		tny_folder_store_get_folders (TNY_FOLDER_STORE (account), folders, NULL, NULL);
 		folders_iter = tny_list_create_iterator (folders);
 
 		while (msg == NULL && !tny_iterator_is_done (folders_iter)) {

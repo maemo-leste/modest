@@ -418,7 +418,7 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 	
 	/* Get direct subfolders */
 	subfolders = tny_simple_list_new ();
-	tny_folder_store_get_folders (parent, subfolders, NULL, FALSE, &err);
+	tny_folder_store_get_folders (parent, subfolders, NULL, &err);
 
 	/* Check names */
 	iter = tny_list_create_iterator (subfolders);
