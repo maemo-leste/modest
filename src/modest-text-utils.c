@@ -215,11 +215,11 @@ modest_text_utils_cite (const gchar *text,
 	if (!signature)
 		retval = g_strdup ("");
 	else if (strcmp(content_type, "text/html") == 0) {
-		tmp_sig = g_strconcat (SIGNATURE_MARKER,"\n", signature, NULL);
+		tmp_sig = g_strconcat ("\n", SIGNATURE_MARKER,"\n", signature, NULL);
 		retval = modest_text_utils_convert_to_html_body(tmp_sig, -1, TRUE);
 		g_free (tmp_sig);
 	} else {
-		retval = g_strconcat (text, SIGNATURE_MARKER, "\n", signature, NULL);
+		retval = g_strconcat (text, "\n", SIGNATURE_MARKER, "\n", signature, NULL);
 	}
 
 	return retval;
@@ -881,7 +881,14 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	gsize len;
 	gchar *attachments_string = NULL;
 
-	q = g_string_new ("\n");
+	q = g_string_new ("");
+
+	if (signature != NULL) {
+		q = g_string_append (q, "\n--\n");
+		q = g_string_append (q, signature);
+	}
+
+	q = g_string_append (q, "\n");
 	q = g_string_append (q, cite);
 	q = g_string_append_c (q, '\n');
 
@@ -932,12 +939,6 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	q = g_string_append (q, attachments_string);
 	g_free (attachments_string);
 
-	if (signature != NULL) {
-		q = g_string_append (q, "\n--\n");
-		q = g_string_append (q, signature);
-		q = g_string_append_c (q, '\n');
-	}
-
 	return g_string_free (q, FALSE);
 }
 
@@ -965,20 +966,20 @@ modest_text_utils_quote_html (const gchar *text,
 		g_string_new ( \
 			      "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
 			      "<html>\n"				\
-			      "<body>\n");
+			      "<body>\n<br/>\n");
 
 	if (text || cite || signature) {
-		g_string_append (result_string, "<pre>");
+		g_string_append (result_string, "<pre>\n");
+		if (signature) {
+			quote_html_add_to_gstring (result_string, SIGNATURE_MARKER);
+			quote_html_add_to_gstring (result_string, signature);
+		}
 		quote_html_add_to_gstring (result_string, cite);
 		quote_html_add_to_gstring (result_string, text);
 		if (attachments) {
 			gchar *attachments_string = quoted_attachments (attachments);
 			quote_html_add_to_gstring (result_string, attachments_string);
 			g_free (attachments_string);
-		}
-		if (signature) {
-			quote_html_add_to_gstring (result_string, SIGNATURE_MARKER);
-			quote_html_add_to_gstring (result_string, signature);
 		}
 		g_string_append (result_string, "</pre>");
 	}
