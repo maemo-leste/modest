@@ -206,7 +206,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 
 	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
 
-	if ((response_id == GTK_RESPONSE_CANCEL) &&
+	if ((response_id != GTK_RESPONSE_OK) &&
 	    (priv->range_error_banner_timeout > 0)) {
 		g_source_remove (priv->range_error_banner_timeout);
 		priv->range_error_banner_timeout = 0;
@@ -237,7 +237,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 			gint response;
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (user_data), 
 									    _("imum_nc_wizard_confirm_lose_changes"));
-			if (response == GTK_RESPONSE_CANCEL)
+			if (response != GTK_RESPONSE_OK)
 				g_signal_stop_emission_by_name (dialog, "response");
 		}
 	}
@@ -386,7 +386,6 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
 	
 	priv->is_dirty = FALSE;
 	priv->range_error_occured = FALSE;
