@@ -304,11 +304,13 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_change), self);
 	
-	GtkWidget *caption = hildon_caption_new (sizegroup, 
-		_("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, HILDON_CAPTION_OPTIONAL);
+	GtkWidget *captioned = 
+	  modest_maemo_utils_create_captioned (sizegroup, 
+					       _("mcen_li_emailsetup_smtp"), 
+					       priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
-	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (captioned);
 	
 	/* The secure authentication widgets: */
 	if (!priv->outgoing_auth_picker) {
@@ -325,12 +327,12 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
-	caption = hildon_caption_new (sizegroup, _("mail_fi_username"), 
-		priv->entry_user_username, NULL, HILDON_CAPTION_MANDATORY);
+	captioned = modest_maemo_utils_create_captioned (sizegroup, _("mail_fi_username"), 
+							 priv->entry_user_username);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_username);
-	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (captioned);
 	
 	/* Prevent the use of some characters in the username, 
 	 * as required by our UI specification: */
@@ -348,12 +350,12 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
-	caption = hildon_caption_new (sizegroup, 
-		_("mail_fi_password"), priv->entry_user_password, NULL, HILDON_CAPTION_OPTIONAL);
+	captioned = modest_maemo_utils_create_captioned (sizegroup, 
+		_("mail_fi_password"), priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_password);
-	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (captioned);
 	
 	/* The secure connection widgets: */	
 	if (!priv->outgoing_security_picker)
@@ -371,14 +373,14 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* The port number widgets: */
 	if (!priv->entry_port)
 		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
-	caption = hildon_caption_new (sizegroup, 
-		_("mcen_fi_emailsetup_port"), priv->entry_port, NULL, HILDON_CAPTION_OPTIONAL);
+	captioned = modest_maemo_utils_create_captioned (sizegroup, 
+		_("mcen_fi_emailsetup_port"), priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
 	g_signal_connect(G_OBJECT(priv->entry_port), "range-error", G_CALLBACK(on_range_error), self);
 	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
 	gtk_widget_show (priv->entry_port);
-	gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (captioned);
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
 	g_signal_connect (G_OBJECT (priv->outgoing_security_picker), "value-changed", (GCallback)on_security_picker_changed, self);
