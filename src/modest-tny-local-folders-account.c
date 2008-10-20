@@ -57,8 +57,7 @@ struct _ModestTnyLocalFoldersAccountPrivate
 
 static void         get_folders    (TnyFolderStore *self, 
 				    TnyList *list, 
-				    TnyFolderStoreQuery *query,
-				    gboolean refresh, 
+				    TnyFolderStoreQuery *query, 
 				    GError **err);
 
 static TnyFolder*   create_folder  (TnyFolderStore *self, 
@@ -155,18 +154,14 @@ modest_tny_local_folders_account_query_passes (TnyFolderStoreQuery *query, TnyFo
 }
 
 static void
-get_folders (TnyFolderStore *self, 
-	     TnyList *list, 
-	     TnyFolderStoreQuery *query, 
-	     gboolean refresh, 
-	     GError **err)
+get_folders (TnyFolderStore *self, TnyList *list, TnyFolderStoreQuery *query, GError **err)
 {
 	TnyCamelStoreAccountClass *parent_class;
 	ModestTnyLocalFoldersAccountPrivate *priv;
 
 	/* Call the base class implementation: */
 	parent_class = g_type_class_peek_parent (MODEST_TNY_LOCAL_FOLDERS_ACCOUNT_GET_CLASS (self));
-	parent_class->get_folders (self, list, query, refresh, err);
+	parent_class->get_folders (self, list, query, err);
 	
 	/* Add our extra folder only if it passes the query */
 	priv = TNY_LOCAL_FOLDERS_ACCOUNT_GET_PRIVATE (self);
