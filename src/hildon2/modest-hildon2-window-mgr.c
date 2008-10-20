@@ -341,6 +341,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
+	program = hildon_program_get_instance ();
 	win = g_list_find (priv->window_list, window);
 	if (win) {
 		/* this is for the case we want to register the window and it was already
@@ -357,7 +358,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
-	program = hildon_program_get_instance ();
 	current_top = GTK_WIDGET (hildon_program_peek_window_stack (program));
 
 	if (!parent || ((GtkWidget *) parent != current_top)) {

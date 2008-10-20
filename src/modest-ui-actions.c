@@ -2681,7 +2681,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	gchar *account_name, *from;
 	ModestAccountMgr *account_mgr;
 	gboolean had_error = FALSE;
-	ModestMainWindow *win;
+	ModestMainWindow *win = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), FALSE);
 	
