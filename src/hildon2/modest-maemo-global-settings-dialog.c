@@ -271,7 +271,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, MODEST_MARGIN_HALF);
 
-	pannable = hildon_pannable_area_new ();
+	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
 
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), vbox);
 	gtk_widget_show (vbox);
