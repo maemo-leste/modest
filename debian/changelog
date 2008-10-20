@@ -1,3 +1,11 @@
+modest (2.0-2008.43) unstable; urgency=low
+
+  * Fixes: NB#89140, NB#87746, NB#89211, NB#89212, NB#89363, NB#90146, NB#90187
+  * Fixes: NB#90196, NB#90197, NB#90198, NB#90204, NB#90206, NB#90207, NB#90213
+  * Fixes: NB#90214, NB#90215, NB#90136
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 20 Oct 2008 15:24:19 +0300
+
 modest (2.0-2008.42-1) unstable; urgency=low
 
   * Fixes: NB#89326, NB#89464, NB#89704, NB#88453, NB#89126
