@@ -171,6 +171,14 @@ void modest_secureauth_picker_fill (ModestSecureauthPicker *picker)
 				    MODEL_COL_ID, (gint)modest_protocol_get_type_id (protocol),
 				    MODEL_COL_NAME, modest_protocol_get_display_name (protocol),
 				    -1);
+		if (modest_protocol_get_type_id (protocol) == MODEST_PROTOCOLS_AUTH_NONE) {
+			HildonTouchSelector *selector;
+			selector = hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (picker));
+			hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
+			hildon_button_set_value (HILDON_BUTTON (picker), 
+						 hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
+			
+		}
 	}	
 }
 

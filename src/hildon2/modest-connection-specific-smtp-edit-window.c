@@ -439,7 +439,7 @@ modest_connection_specific_smtp_edit_window_set_connection (
 
 	if (server_settings) 
 	{
-		
+		/* Setting known values */
 		if (priv->account_name)
 			g_free (priv->account_name);
 		priv->account_name = g_strdup (modest_server_account_settings_get_account_name (server_settings));

@@ -149,6 +149,7 @@ void modest_serversecurity_picker_fill (ModestServersecurityPicker *picker, Mode
 {
 	ModestServersecurityPickerPrivate *priv;
 	ModestProtocol *protocol;
+	GtkWidget *selector;
 
 	priv = MODEST_SERVERSECURITY_PICKER_GET_PRIVATE (picker);
 	priv->protocol = protocol_type; /* Remembered for later. */
@@ -163,6 +164,10 @@ void modest_serversecurity_picker_fill (ModestServersecurityPicker *picker, Mode
 	gtk_list_store_append (liststore, &iter);
 	/* TODO: This logical ID is not in the .po file: */
 	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint) MODEST_PROTOCOLS_CONNECTION_NONE, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_none"), -1);
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (picker)));
+	hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
+	hildon_button_set_value (HILDON_BUTTON (picker), 
+				 hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
 	
 	gtk_list_store_append (liststore, &iter);
 	gtk_list_store_set (liststore, &iter, MODEL_COL_ID, (gint)MODEST_PROTOCOLS_CONNECTION_TLS, MODEL_COL_NAME, _("mcen_fi_advsetup_other_security_normal"), -1);
