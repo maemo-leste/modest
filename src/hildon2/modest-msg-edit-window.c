@@ -455,8 +455,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 }
 
 
-/* FIXME: this is a dup from the one in gtk/ */
-
 /** 
  * @result: A ModestPairList, which must be freed with modest_pair_list_free().
  */
@@ -2250,6 +2248,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				insert_mark = gtk_text_buffer_get_insert (GTK_TEXT_BUFFER (priv->text_buffer));
 				gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &position, insert_mark);
 				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (mime_part)), pixbuf);
+				g_object_unref (pixbuf);
 			} 
 
 			tny_list_prepend (priv->images, (GObject *) mime_part);
