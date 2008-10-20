@@ -40,6 +40,7 @@
 #include "modest-platform.h"
 #include "modest-runtime.h"
 #include "widgets/modest-window-mgr.h"
+#include "widgets/modest-ui-constants.h"
 #include <string.h>
 #include <gtk/gtksizegroup.h>
 #include <gtk/gtkbox.h>
@@ -115,7 +116,8 @@ open_addressbook ()
 	if (!book)
 		return FALSE;
 
-	e_book_async_open (book, FALSE, book_open_cb, NULL);
+	if (e_book_async_open (book, FALSE, book_open_cb, NULL) != E_BOOK_ERROR_OK)
+		return FALSE;
 
 	return TRUE; /* FIXME */	
 }
@@ -127,9 +129,7 @@ open_addressbook_sync ()
 	if (!book)
 		return FALSE;
 
-	e_book_open (book, FALSE, NULL);
-
-	return TRUE;
+	return e_book_open (book, FALSE, NULL);
 }
 
 void
@@ -566,7 +566,7 @@ select_email_addrs_for_contact(GList * email_addr_list)
 
 	/* Make the window approximately big enough, because it doesn't resize to be big enough 
 	 * for the window title text: */
-	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), 400, -1);
+	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), MODEST_DIALOG_WINDOW_MAX_HEIGHT, -1);
 
 	scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(select_email_addr_dlg)->vbox), scrolledwindow, TRUE,
@@ -628,8 +628,11 @@ add_to_address_book (const gchar* address)
 	
 	g_return_val_if_fail (address, FALSE);
 	
-	if (!book)
-		open_addressbook ();
+	if (!book) {
+		if (!open_addressbook ()) {
+			g_return_val_if_reached (FALSE);
+		}
+	}
 	
 	g_return_val_if_fail (book, FALSE);
 
