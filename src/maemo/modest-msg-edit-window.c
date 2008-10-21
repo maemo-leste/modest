@@ -1000,6 +1000,8 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 		readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
 		size += readed;
 		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, &error)) {
+			if (error)
+				g_free (error);
 			break;
 		}
 	}
@@ -1893,6 +1895,7 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 	
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), self);
 	
+	g_free (buffer_format);
 	g_free (current_format);
 
 	/* Check dimming rules */
@@ -3561,7 +3564,7 @@ text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (userdata);
 	gchar *tag_name;
 
-	if (tag == NULL+13) return;
+	if (tag == NULL) return;
 	g_object_get (G_OBJECT (tag), "name", &tag_name, NULL);
 	if ((tag_name != NULL) && (g_str_has_prefix (tag_name, "image-tag-replace-"))) {
 		replace_with_images (window, priv->images);

@@ -79,7 +79,7 @@ enum MODEL_COLS {
 	MODEL_COL_ID = 1 /* an int. */
 };
 
-void modest_secureauth_picker_fill (ModestSecureauthPicker *picker);
+static void modest_secureauth_picker_fill (ModestSecureauthPicker *picker);
 
 static gchar *
 touch_selector_print_func (HildonTouchSelector *selector)
@@ -145,7 +145,8 @@ modest_secureauth_picker_new (HildonSizeType size,
  * #picker: The combo box.
  * @protocol: IMAP or POP.
  */
-void modest_secureauth_picker_fill (ModestSecureauthPicker *picker)
+static void 
+modest_secureauth_picker_fill (ModestSecureauthPicker *picker)
 {	
 	ModestSecureauthPickerPrivate *priv;
 	GtkListStore *liststore;

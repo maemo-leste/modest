@@ -531,6 +531,7 @@ entry_insert_text (GtkEditable *editable,
 
 	chars = gtk_editable_get_chars (editable, 0, -1);
 	chars_length = g_utf8_strlen (chars, -1);
+	g_free (chars);
 
 	/* Show WID-INF036 */
 	if (chars_length >= 20) {
@@ -1615,6 +1616,8 @@ on_timeout_check_account_is_online(CheckAccountIdleData* data)
 gboolean
 modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 {
+	gboolean is_online;
+
 	g_return_val_if_fail (account, FALSE);
 	
 	printf ("DEBUG: %s: account id=%s\n", __FUNCTION__, tny_account_get_id (account));
@@ -1658,9 +1661,10 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 	g_main_loop_unref (data->loop);
 	/* g_main_context_unref (context); */
 
+	is_online = data->is_online;
 	g_slice_free (CheckAccountIdleData, data);
 	
-	return data->is_online;	
+	return is_online;	
 }
 
 
