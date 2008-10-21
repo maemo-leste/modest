@@ -149,6 +149,7 @@ void modest_secureauth_combo_box_fill (ModestSecureauthComboBox *combobox)
 				    MODEL_COL_NAME, modest_protocol_get_display_name (protocol),
 				    -1);
 	}	
+	g_slist_free (protocols);
 }
 
 /**
