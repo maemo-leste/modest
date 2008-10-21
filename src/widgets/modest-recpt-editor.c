@@ -153,7 +153,7 @@ modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const gchar
 	ModestRecptEditorPrivate *priv;
 	GtkTextBuffer *buffer = NULL;
 	GtkTextIter iter;
-	gchar * string_to_add;
+	gchar *string_to_add;
 
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
@@ -173,13 +173,14 @@ modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const gchar
 
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 
-	gtk_text_buffer_insert (buffer, &iter, recipients, -1);
+	gtk_text_buffer_insert (buffer, &iter, string_to_add, -1);
 	
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 
 	if (GTK_WIDGET_REALIZED (recpt_editor))
 		gtk_widget_queue_resize (GTK_WIDGET (recpt_editor));
 
+	g_free (string_to_add);
 }
 
 void 
