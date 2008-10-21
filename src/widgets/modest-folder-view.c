@@ -843,6 +843,13 @@ modest_folder_view_finalize (GObject *obj)
 		priv->account_store = NULL;
 	}
 
+	if (g_signal_handler_is_connected (modest_runtime_get_account_mgr (), 
+					   priv->display_name_changed_signal)) {
+		g_signal_handler_disconnect (modest_runtime_get_account_mgr (),
+					     priv->display_name_changed_signal);
+		priv->display_name_changed_signal = 0;
+	}
+
 	if (priv->query) {
 		g_object_unref (G_OBJECT (priv->query));
 		priv->query = NULL;
