@@ -58,7 +58,7 @@
 #include "modest-utils.h"
 #include "modest-hildon-includes.h"
 #include "modest-maemo-security-options-view.h"
-#include <modest-account-protocol.h>
+#include "modest-account-protocol.h"
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -1884,10 +1884,15 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 		/* we check if there is a *special* port */
 		special_port = modest_presets_get_port (priv->presets, provider_id, TRUE /* incoming */);
-		if (special_port != 0)
+		if (special_port != 0) {
 			store_port = special_port;
-		else 
-			store_port = get_port_from_protocol(store_provider_server_type, store_security);
+		} else {
+			gboolean use_alternate_port = FALSE;
+			if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (),
+									      store_security))
+				use_alternate_port = TRUE;
+			store_port = get_port_from_protocol(store_provider_server_type, use_alternate_port);
+		}
 
 		modest_server_account_settings_set_security_protocol (store_settings, 
 								      store_security);
