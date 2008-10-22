@@ -31,7 +31,7 @@
 #define __MODEST_HILDON_SORT_DIALOG
 
 #include <glib.h>
-#include <hildon/hildon-sort-dialog.h>
+#include <hildon/hildon-picker-dialog.h>
 #include <widgets/modest-sort-criterium-view.h>
 
 G_BEGIN_DECLS
@@ -59,12 +59,12 @@ G_BEGIN_DECLS
 	MODEST_TYPE_HILDON_SORT_DIALOG, ModestHildonSortDialogClass))
 
 typedef struct {
-	HildonSortDialog parent;
+	HildonPickerDialog parent;
 	
 } ModestHildonSortDialog;
 
 typedef struct {
-	HildonSortDialogClass parent_class;
+	HildonPickerDialogClass parent_class;
 
 } ModestHildonSortDialogClass;
 
