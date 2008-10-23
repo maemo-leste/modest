@@ -61,6 +61,7 @@ modest_public_headers = \
 	modest-protocol.h \
 	modest-protocol-registry.h \
 	modest-server-account-settings.h \
+	modest-text-utils.h \
 	modest-tny-account-store.h \
 	modest-tny-local-folders-account.h \
 	modest-utils.h
@@ -120,7 +121,6 @@ libmodest_la_SOURCES=\
 	modest-singletons.h \
 	modest-server-account-settings.c \
 	modest-text-utils.c \
-	modest-text-utils.h \
 	modest-tny-account-store.c \
 	modest-tny-account.c \
 	modest-tny-account.h \
