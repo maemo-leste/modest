@@ -1264,10 +1264,6 @@ modest_main_window_new (void)
 					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu");
 	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
 				      modest_conf_get_bool (conf, MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarFullScreenMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
 	gtk_widget_show (parent_priv->menubar);
 
@@ -1557,8 +1553,6 @@ modest_main_window_show_toolbar (ModestWindow *self,
 	GtkWidget *reply_button = NULL, *menu = NULL;
 	GtkWidget *placeholder = NULL;
 	gint insert_index;
-	const gchar *action_name;
-	GtkAction *action;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
@@ -1623,20 +1617,6 @@ modest_main_window_show_toolbar (ModestWindow *self,
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 
 	}
-
-	/* Update also the actions (to update the toggles in the
-	   menus), we have to do it manually because some other window
-	   of the same time could have changed it (remember that the
-	   toolbar fullscreen mode is shared by all the windows of the
-	   same type */
-	if (modest_window_mgr_get_fullscreen_mode (modest_runtime_get_window_mgr ()))
-		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarFullScreenMenu";
-	else
-		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu";
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-							    show_toolbar);
 }
 
 static void
