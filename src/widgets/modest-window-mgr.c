@@ -217,6 +217,8 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 
 	priv->cached_view = NULL;
 	priv->cached_editor = NULL;
+
+	priv->windows_that_prevent_hibernation = NULL;
 }
 
 static void
@@ -240,6 +242,11 @@ modest_window_mgr_finalize (GObject *obj)
 	}
 	if (priv->cached_editor) {
 		gtk_widget_destroy (priv->cached_editor);
+		priv->cached_editor = NULL;
+	}
+
+	if (priv->windows_that_prevent_hibernation) {
+		g_slist_free (priv->windows_that_prevent_hibernation);
 		priv->cached_editor = NULL;
 	}
 
