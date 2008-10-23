@@ -138,6 +138,8 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	/* Create widgets for incoming security */
 	ppriv->security_view = GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE,
 									     MODEST_EDITABLE_ARRANGEMENT));
+	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
+					   modest_protocol_registry_get_pop_type_id ());
 	modest_maemo_utils_create_picker_layout (size_group, 
 						 _("mcen_li_emailsetup_secure_connection"), 
 						 ppriv->security_view);
