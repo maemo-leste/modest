@@ -623,7 +623,6 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 		protocol_display_name = modest_protocol_get_display_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type));
 		
 		incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), protocol_display_name);
-		g_object_set (G_OBJECT (priv->caption_incoming), "label", incomingserver_title, NULL);
 		g_free(incomingserver_title);
 	}
 }
@@ -757,6 +756,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 							FALSE, sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show_all (priv->incoming_security);
 
 	/* Set default selection */
 	modest_servertype_picker_set_active_servertype (
@@ -877,7 +877,6 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	caption = modest_maemo_utils_create_captioned (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
 						       priv->button_outgoing_smtp_servers);
-	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
@@ -951,7 +950,6 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	
 	GtkWidget *caption = modest_maemo_utils_create_captioned (NULL, _("mcen_fi_advanced_settings"), 
 								  button_edit);
-	hildon_caption_set_child_expand (HILDON_CAPTION (caption), FALSE);
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);

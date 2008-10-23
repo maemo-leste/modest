@@ -283,7 +283,6 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
 	selector = hildon_touch_selector_new ();
-	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
 						      renderer, "text", MODEL_COL_NAME, NULL);
 	g_object_set (G_OBJECT (column), "text-column", MODEL_COL_NAME, NULL);
@@ -294,6 +293,8 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	/* Set this _after_ loading from file, it makes loading faster */
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector),
 					 0, GTK_TREE_MODEL (model));
+	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
+
 	g_object_unref (model);
 }
 

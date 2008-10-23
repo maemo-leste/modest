@@ -1181,8 +1181,6 @@ modest_main_window_new (void)
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
 	HildonProgram *app;
-	ModestConf *conf = NULL;
-	GtkAction *action = NULL;
 	GdkPixbuf *window_icon;
 	ShowHelper *helper;
 	
@@ -1259,11 +1257,6 @@ modest_main_window_new (void)
 
 	/* Menubar. Update the state of some toggles */
 	parent_priv->menubar = modest_maemo_utils_get_manager_menubar_as_menu (parent_priv->ui_manager, "/MenuBar");
-	conf = modest_runtime_get_conf ();
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR, NULL));
 	hildon_window_set_menu (HILDON_WINDOW (self), GTK_MENU (parent_priv->menubar));
 	gtk_widget_show (parent_priv->menubar);
 
