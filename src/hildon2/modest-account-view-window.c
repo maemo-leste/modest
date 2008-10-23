@@ -392,7 +392,7 @@ on_close_button_clicked (GtkWidget *button, gpointer user_data)
 {		
 	ModestAccountViewWindow *self = MODEST_ACCOUNT_VIEW_WINDOW (user_data);
 
-	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_OK);
+	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_DELETE_EVENT);
 }
 
 static void
