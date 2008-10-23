@@ -131,7 +131,7 @@ create_incoming_security (ModestSecurityOptionsView* self,
 			  GtkSizeGroup *size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
-	GtkWidget *check_caption, *entry_caption = NULL;
+	GtkWidget *entry_caption = NULL;
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
@@ -149,9 +149,8 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	}
 
 	ppriv->auth_view = hildon_check_button_new (MODEST_EDITABLE_SIZE);
-	check_caption = modest_maemo_utils_create_captioned (size_group, 
-							     _("mcen_li_emailsetup_secure_authentication"),
-							     ppriv->auth_view);
+	gtk_button_set_label (GTK_BUTTON (ppriv->auth_view), _("mcen_li_emailsetup_secure_authentication"));
+	gtk_size_group_add_widget (size_group, ppriv->auth_view);
 
 	/* Track changes in UI */	
 	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
@@ -163,7 +162,7 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	if (ppriv->full)
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, 
 				    FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (self), check_caption,
+	gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view,
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Show widgets */
@@ -173,7 +172,6 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	}
 	gtk_widget_show (ppriv->security_view);
 	gtk_widget_show (ppriv->auth_view);
-	gtk_widget_show (check_caption);
 }
 
 static void
