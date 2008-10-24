@@ -43,6 +43,7 @@
 #include "modest-account-settings-dialog.h"
 #include <modest-utils.h>
 #include "widgets/modest-ui-constants.h"
+#include <hildon/hildon-pannable-area.h>
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -61,7 +62,6 @@ struct _ModestAccountViewWindowPrivate {
 	GtkWidget           *new_button;
 	GtkWidget           *edit_button;
 	GtkWidget           *delete_button;
-	GtkWidget	    *close_button;
 	ModestAccountView   *account_view;
 	guint acc_removed_handler;
 };
@@ -388,14 +388,6 @@ on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 }
 
 static void
-on_close_button_clicked (GtkWidget *button, gpointer user_data)
-{		
-	ModestAccountViewWindow *self = MODEST_ACCOUNT_VIEW_WINDOW (user_data);
-
-	gtk_dialog_response (GTK_DIALOG (self), GTK_RESPONSE_DELETE_EVENT);
-}
-
-static void
 setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 {
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
@@ -407,7 +399,6 @@ setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 	priv->new_button     = gtk_button_new_from_stock(_("mcen_bd_new"));
 	priv->edit_button = gtk_button_new_with_label(_("mcen_bd_edit"));
 	priv->delete_button  = gtk_button_new_from_stock(_("mcen_bd_delete"));
-	priv->close_button    = gtk_button_new_from_stock(_("mcen_bd_close"));
 	
 	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
 			  G_CALLBACK(on_new_button_clicked),
@@ -418,14 +409,10 @@ setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 	g_signal_connect (G_OBJECT(priv->edit_button), "clicked",
 			  G_CALLBACK(on_edit_button_clicked),
 			  self);
-	g_signal_connect (G_OBJECT(priv->close_button), "clicked",
-			  G_CALLBACK(on_close_button_clicked),
-			  self);
 
 	gtk_box_pack_start (GTK_BOX(box), priv->new_button, FALSE, FALSE,2);
 	gtk_box_pack_start (GTK_BOX(box), priv->edit_button, FALSE, FALSE,2);
 	gtk_box_pack_start (GTK_BOX(box), priv->delete_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(box), priv->close_button, FALSE, FALSE,2);
 
 	/* Should has been created by window_vbox_new */
 	if (priv->account_view) {
@@ -443,34 +430,34 @@ setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 static GtkWidget*
 window_vbox_new (ModestAccountViewWindow *self)
 {
-	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	ModestAccountViewWindowPrivate *priv;
+	GtkWidget *main_vbox, *main_hbox, *pannable;
+	GtkTreeSelection *sel;
 
-	GtkWidget *main_vbox     = gtk_vbox_new (FALSE, 6);
-	GtkWidget *main_hbox     = gtk_hbox_new (FALSE, 6);
-	
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
 
-	/* Only force the height, the width of the widget will depend
-	   on the size of the column titles */
-	gtk_widget_set_size_request (GTK_WIDGET(priv->account_view), -1, 320);
-	gtk_widget_show (GTK_WIDGET (priv->account_view));
+	main_vbox = gtk_vbox_new (FALSE, 6);
+	main_hbox = gtk_hbox_new (FALSE, 6);
 
-	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
 	g_signal_connect (G_OBJECT(sel), "changed",  G_CALLBACK(on_selection_changed),
 			  self);
 			  
-	GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
-	gtk_container_set_border_width (GTK_CONTAINER (scrolled_window), MODEST_MARGIN_DEFAULT);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_NEVER, 
-		GTK_POLICY_AUTOMATIC);
-	gtk_container_add (GTK_CONTAINER (scrolled_window), GTK_WIDGET (priv->account_view));
-	gtk_widget_show (GTK_WIDGET (scrolled_window));
+	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), 
+						GTK_WIDGET (priv->account_view));
+
+	/* Only force the height, the width of the widget will depend
+	   on the size of the column titles */
+	gtk_widget_set_size_request (pannable, -1, 320);
 	
-	gtk_box_pack_start (GTK_BOX(main_hbox), GTK_WIDGET(scrolled_window), TRUE, TRUE, 2);
-	
+	gtk_box_pack_start (GTK_BOX(main_hbox), pannable, TRUE, TRUE, 2);
 	gtk_box_pack_start (GTK_BOX(main_vbox), main_hbox, TRUE, TRUE, 2);
-	gtk_widget_show (GTK_WIDGET (main_hbox));
-	gtk_widget_show (GTK_WIDGET (main_vbox));
+
+	gtk_widget_show_all (pannable);
+	gtk_widget_show (main_hbox);
+	gtk_widget_show (main_vbox);
 
 	return main_vbox;
 }
