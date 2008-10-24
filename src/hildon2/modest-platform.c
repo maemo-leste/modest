@@ -572,13 +572,13 @@ entry_changed (GtkEditable *editable,
 	GList *buttons;
 
 	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (user_data)->action_area));
-	ok_button = GTK_WIDGET (buttons->next->data);
+	ok_button = GTK_WIDGET (buttons->data);
 	
 	chars = gtk_editable_get_chars (editable, 0, -1);
 	g_return_if_fail (chars != NULL);
 
 	
-	if (g_utf8_strlen (chars,-1) >= 21)
+	if (g_utf8_strlen (chars,-1) >= 20)
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
 	else
@@ -665,19 +665,17 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
 					      _("mcen_bd_dialog_ok"),
 					      GTK_RESPONSE_ACCEPT,
-					      _("mcen_bd_dialog_cancel"),
-					      GTK_RESPONSE_REJECT,
 					      NULL);
 
 	/* Add accept button (with unsensitive handler) */
 	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
-	accept_btn = GTK_WIDGET (buttons->next->data);
+	accept_btn = GTK_WIDGET (buttons->data);
 	/* Create label and entry */
 	label = gtk_label_new (label_text);
-	/* TODO: check that the suggested name does not exist */
-	/* We set 21 as maximum because we want to show WID-INF036
-	   when the user inputs more that 20 */
-	entry = gtk_entry_new_with_max_length (21);
+
+	entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	gtk_entry_set_max_length (GTK_ENTRY (entry), 20);
+
 	if (suggested_name)
 		gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
 	else
