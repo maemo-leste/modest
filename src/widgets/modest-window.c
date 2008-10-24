@@ -161,6 +161,10 @@ modest_window_finalize (GObject *obj)
 		g_object_unref (G_OBJECT(priv->ui_dimming_manager));
 		priv->ui_dimming_manager = NULL;
 	}
+	if (priv->dimming_state != NULL) {
+		g_slice_free (DimmedState, priv->dimming_state);
+		priv->dimming_state = NULL;
+	}
 
 	g_free (priv->active_account);
 	
