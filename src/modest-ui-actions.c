@@ -4536,7 +4536,10 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 											 MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS));
 		}
 		g_object_unref (local_account);
-		g_object_unref (mmc_account);
+
+		/* It could not exist */
+		if (mmc_account)
+			g_object_unref (mmc_account);
 	}
 
 	/* Check the target folder rules */

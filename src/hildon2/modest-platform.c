@@ -853,7 +853,6 @@ modest_platform_run_confirmation_dialog_with_buttons (GtkWindow *parent_window,
 							   button_accept, GTK_RESPONSE_ACCEPT,
 							   button_cancel, GTK_RESPONSE_CANCEL,
 							   NULL);
-	gtk_widget_set_no_show_all (button_cancel, FALSE);
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), parent_window);
