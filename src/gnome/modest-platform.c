@@ -41,6 +41,7 @@
 #include "widgets/modest-account-settings-dialog.h"
 #include "gnome/modest-account-assistant.h"
 #include "gnome/modest-gnome-sort-dialog.h"
+#include "widgets/modest-details-dialog.h"
 
 gboolean
 modest_platform_init (int argc, char *argv[])
@@ -510,4 +511,44 @@ gboolean modest_platform_check_memory_low (ModestWindow *win,
 {
 	g_debug ("%s not implemented", __FUNCTION__);
 	return FALSE;
+}
+
+void 
+modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
+					   TnyFolder *folder)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_details_dialog_new_with_folder (parent_window, folder);
+
+	/* Run dialog */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), 
+				     parent_window);
+	gtk_widget_show_all (dialog);
+
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
+}
+
+void
+modest_platform_run_header_details_dialog (GtkWindow *parent_window,
+					   TnyHeader *header)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_details_dialog_new_with_header (parent_window, header);
+
+	/* Run dialog */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog),
+				     parent_window);
+	gtk_widget_show_all (dialog);
+
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
 }

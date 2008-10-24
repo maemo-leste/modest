@@ -498,6 +498,27 @@ gboolean modest_platform_check_memory_low (ModestWindow *win,
 					   gboolean visuals);
 
 
+/**
+ * modest_platform_run_folder_details_dialog:
+ * @parent_window: the parent #GtkWindow for the new dialog
+ * @folder: the #TnyFolder whose details will be shown
+ * 
+ * Shows the folder details dialog
+ **/
+void     modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
+						    TnyFolder *folder);
+
+/**
+ * modest_platform_run_header_details_dialog:
+ * @parent_window: the parent #GtkWindow for the new dialog
+ * @header: the #TnyHeader whose details will be shown
+ * 
+ * Shows the header details dialog
+ **/
+void     modest_platform_run_header_details_dialog (GtkWindow *parent_window,
+						    TnyHeader *header);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */

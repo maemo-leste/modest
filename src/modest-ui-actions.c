@@ -4275,38 +4275,7 @@ headers_action_show_details (TnyHeader *header,
 			     gpointer user_data)
 
 {
-	GtkWidget *dialog;
-	
-	/* Create dialog */
-	dialog = modest_details_dialog_new_with_header (GTK_WINDOW (window), header);
-
-	/* Run dialog */
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), (GtkWindow *) window);
-	gtk_widget_show_all (dialog);
-
-	g_signal_connect_swapped (dialog, "response", 
-				  G_CALLBACK (gtk_widget_destroy),
-				  dialog);
-}
-
-/*
- * Show the folder details in a ModestDetailsDialog widget
- */
-static void
-show_folder_details (TnyFolder *folder, 
-		     GtkWindow *window)
-{
-	GtkWidget *dialog;
-	
-	/* Create dialog */
-	dialog = modest_details_dialog_new_with_folder (window, folder);
-
-	/* Run dialog */
-	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-	gtk_widget_show_all (dialog);
-	gtk_dialog_run (GTK_DIALOG (dialog));
-
-	gtk_widget_destroy (dialog);
+	modest_platform_run_header_details_dialog (GTK_WINDOW (window), header);
 }
 
 /*
@@ -4360,7 +4329,8 @@ modest_ui_actions_on_details (GtkAction *action,
 			/* This function should not be called for account items, 
 			 * because we dim the menu item for them. */
 			if (TNY_IS_FOLDER (folder_store)) {
-				show_folder_details (TNY_FOLDER (folder_store), GTK_WINDOW (win));
+				modest_platform_run_folder_details_dialog (GTK_WINDOW (win), 
+									   TNY_FOLDER (folder_store));
 			}
 
 			g_object_unref (folder_store);

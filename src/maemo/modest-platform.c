@@ -58,6 +58,7 @@
 #include "modest-hildon-sort-dialog.h"
 #include <hildon/hildon-sound.h>
 #include <osso-mem.h>
+#include "widgets/modest-details-dialog.h"
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -2090,8 +2091,6 @@ modest_platform_get_current_connection (void)
 	return retval;
 }
 
-
-
 gboolean
 modest_platform_check_memory_low (ModestWindow *win,
 				  gboolean visuals)
@@ -2112,4 +2111,44 @@ modest_platform_check_memory_low (ModestWindow *win,
 			 __FUNCTION__);
 
 	return lowmem;
+}
+
+void 
+modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
+					   TnyFolder *folder)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_details_dialog_new_with_folder (parent_window, folder);
+
+	/* Run dialog */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), 
+				     parent_window);
+	gtk_widget_show_all (dialog);
+
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
+}
+
+void
+modest_platform_run_header_details_dialog (GtkWindow *parent_window,
+					   TnyHeader *header)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_details_dialog_new_with_header (parent_window, header);
+
+	/* Run dialog */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog),
+				     parent_window);
+	gtk_widget_show_all (dialog);
+
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
 }

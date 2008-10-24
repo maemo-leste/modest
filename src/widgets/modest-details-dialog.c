@@ -113,6 +113,9 @@ modest_details_dialog_new_with_header (GtkWindow *parent,
 
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header);
 
+	/* Add close button */
+	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
+
 	return GTK_WIDGET (dialog);
 }
 
@@ -130,6 +133,9 @@ modest_details_dialog_new_with_folder  (GtkWindow *parent,
 							NULL));
 
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_folder_func (dialog, folder);
+
+	/* Add close button */
+	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 
 	return GTK_WIDGET (dialog);
 }
@@ -196,9 +202,8 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 #define DATE_TIME_BUFFER_SIZE 128
 	gchar date_time_buffer [DATE_TIME_BUFFER_SIZE];
 	
-	/* Set window title & Add close button */
+	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_message_properties"));
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 
 	folder = tny_header_get_folder (header);
 	folder_type = modest_tny_folder_guess_folder_type (folder);
@@ -294,7 +299,6 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_folder_properties"));
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
 
 	/* Get data. We use our function because it's recursive */
 	count = tny_folder_get_all_count (TNY_FOLDER (folder));

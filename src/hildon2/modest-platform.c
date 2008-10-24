@@ -55,9 +55,10 @@
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 #include <modest-account-settings-dialog.h>
 #include <modest-easysetup-wizard-dialog.h>
-#include "modest-hildon-sort-dialog.h"
+#include "modest-hildon2-sort-dialog.h"
 #include <hildon/hildon-sound.h>
 #include <osso-mem.h>
+#include "hildon2/modest-hildon2-details-dialog.h"
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -1065,7 +1066,7 @@ modest_platform_create_sort_dialog       (GtkWindow *parent_window)
 {
 	GtkWidget *dialog;
 
-	dialog = modest_hildon_sort_dialog_new (parent_window);
+	dialog = modest_hildon2_sort_dialog_new (parent_window);
 
 	hildon_help_dialog_help_enable (GTK_DIALOG(dialog),
 					"applications_email_sort",
@@ -2099,4 +2100,44 @@ modest_platform_check_memory_low (ModestWindow *win,
 			 __FUNCTION__);
 
 	return lowmem;
+}
+
+void 
+modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
+					   TnyFolder *folder)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_hildon2_details_dialog_new_with_folder (parent_window, folder);
+
+	/* Run dialog */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), 
+				     parent_window);
+	gtk_widget_show_all (dialog);
+
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
+}
+
+void
+modest_platform_run_header_details_dialog (GtkWindow *parent_window,
+					   TnyHeader *header)
+{
+	GtkWidget *dialog;
+	
+	/* Create dialog */
+	dialog = modest_hildon2_details_dialog_new_with_header (parent_window, header);
+
+	/* Run dialog */
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog),
+				     parent_window);
+	gtk_widget_show_all (dialog);
+
+	g_signal_connect_swapped (dialog, "response", 
+				  G_CALLBACK (gtk_widget_destroy),
+				  dialog);
 }

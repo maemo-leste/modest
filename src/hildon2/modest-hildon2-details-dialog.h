@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2008, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,51 +27,56 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_HILDON_SORT_DIALOG
-#define __MODEST_HILDON_SORT_DIALOG
+#ifndef __MODEST_HILDON2_DETAILS_DIALOG
+#define __MODEST_HILDON2_DETAILS_DIALOG
 
 #include <glib.h>
-#include <hildon/hildon-picker-dialog.h>
-#include <widgets/modest-sort-criterium-view.h>
+#include <gtk/gtkdialog.h>
+#include <tny-header.h>
+#include "widgets/modest-details-dialog.h"
 
 G_BEGIN_DECLS
 
-#define MODEST_TYPE_HILDON_SORT_DIALOG modest_hildon_sort_dialog_get_type()
+#define MODEST_TYPE_HILDON2_DETAILS_DIALOG modest_hildon2_details_dialog_get_type()
 
-#define MODEST_HILDON_SORT_DIALOG(obj) \
+#define MODEST_HILDON2_DETAILS_DIALOG(obj) \
 	(G_TYPE_CHECK_INSTANCE_CAST ((obj), \
-	MODEST_TYPE_HILDON_SORT_DIALOG, ModestHildonSortDialog))
+	MODEST_TYPE_HILDON2_DETAILS_DIALOG, ModestHildon2DetailsDialog))
 
-#define MODEST_HILDON_SORT_DIALOG_CLASS(klass) \
+#define MODEST_HILDON2_DETAILS_DIALOG_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_CAST ((klass), \
-	MODEST_TYPE_HILDON_SORT_DIALOG, ModestHildonSortDialogClass))
+	MODEST_TYPE_HILDON2_DETAILS_DIALOG, ModestHildon2DetailsDialogClass))
 
-#define MODEST_IS_HILDON_SORT_DIALOG(obj) \
+#define MODEST_IS_HILDON2_DETAILS_DIALOG(obj) \
 	(G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
-	MODEST_TYPE_HILDON_SORT_DIALOG))
+	MODEST_TYPE_HILDON2_DETAILS_DIALOG))
 
-#define MODEST_IS_HILDON_SORT_DIALOG_CLASS(klass) \
+#define MODEST_IS_HILDON2_DETAILS_DIALOG_CLASS(klass) \
 	(G_TYPE_CHECK_CLASS_TYPE ((klass), \
-	MODEST_TYPE_HILDON_SORT_DIALOG))
+	MODEST_TYPE_HILDON2_DETAILS_DIALOG))
 
-#define MODEST_HILDON_SORT_DIALOG_GET_CLASS(obj) \
+#define MODEST_HILDON2_DETAILS_DIALOG_GET_CLASS(obj) \
 	(G_TYPE_INSTANCE_GET_CLASS ((obj), \
-	MODEST_TYPE_HILDON_SORT_DIALOG, ModestHildonSortDialogClass))
+	MODEST_TYPE_HILDON2_DETAILS_DIALOG, ModestHildon2DetailsDialogClass))
 
 typedef struct {
-	HildonPickerDialog parent;
+	ModestDetailsDialog parent;
 	
-} ModestHildonSortDialog;
+} ModestHildon2DetailsDialog;
 
 typedef struct {
-	HildonPickerDialogClass parent_class;
+	ModestDetailsDialogClass parent_class;
 
-} ModestHildonSortDialogClass;
+} ModestHildon2DetailsDialogClass;
 
-GType modest_hildon_sort_dialog_get_type (void);
+GType modest_hildon2_details_dialog_get_type (void);
 
-GtkWidget* modest_hildon_sort_dialog_new (GtkWindow *parent);
+GtkWidget* modest_hildon2_details_dialog_new_with_header (GtkWindow *parent, 
+							  TnyHeader *header);
+
+GtkWidget* modest_hildon2_details_dialog_new_with_folder  (GtkWindow *parent, 
+							   TnyFolder *folder);
 
 G_END_DECLS
 
-#endif /* __MODEST_HILDON_SORT_DIALOG */
+#endif /* __MODEST_HILDON2_DETAILS_DIALOG */
