@@ -530,11 +530,11 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			}
 
 			/* Free */
-			if (next_row_reference != NULL) 
+			if (gtk_tree_row_reference_valid (next_row_reference)) 
 				gtk_tree_row_reference_free (next_row_reference);
 			if (next_path != NULL) 
 				gtk_tree_path_free (next_path);				
-			if (prev_row_reference != NULL) 
+			if (gtk_tree_row_reference_valid (prev_row_reference)) 
 				gtk_tree_row_reference_free (prev_row_reference);
 			if (prev_path != NULL) 
 				gtk_tree_path_free (prev_path);
@@ -4820,8 +4820,10 @@ move_to_helper_destroyer (gpointer user_data)
 		gtk_widget_destroy (GTK_WIDGET (helper->banner));
 		g_object_unref (helper->banner);
 	}
-	if (helper->reference != NULL)
+	if (gtk_tree_row_reference_valid (helper->reference)) {
 		gtk_tree_row_reference_free (helper->reference);
+		helper->reference = NULL;
+	}
 	g_free (helper);
 }
 
@@ -4845,7 +4847,8 @@ move_to_cb (ModestMailOperation *mail_op,
 				/* No more messages to view, so close this window */
 				modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 			}
-		} else if (MODEST_IS_MAIN_WINDOW (object) && helper->reference != NULL) {
+		} else if (MODEST_IS_MAIN_WINDOW (object) && 
+			   gtk_tree_row_reference_valid (helper->reference)) {
 			GtkWidget *header_view;
 			GtkTreePath *path;
 			GtkTreeSelection *sel;
