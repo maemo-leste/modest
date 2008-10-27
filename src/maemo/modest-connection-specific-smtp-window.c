@@ -208,8 +208,9 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 				MODEL_COL_NAME, connection_name,
 				MODEL_COL_SERVER_ACCOUNT_NAME, server_account_name,
 				-1);
-				
-			g_free (server_account_name);
+
+			if (server_account_name)				
+				g_free (server_account_name);
 		}
 		
 		iter = g_slist_next (iter);	
