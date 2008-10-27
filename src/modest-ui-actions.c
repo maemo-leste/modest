@@ -447,6 +447,8 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		if (header) {
 			gchar *subject;
 			subject = tny_header_dup_subject (header);
+			if (!subject)
+				subject = g_strdup (_("mail_va_no_subject"));
 			desc = g_strdup_printf ("%s", subject); 
 			g_free (subject);
 			g_object_unref (header);
@@ -834,6 +836,8 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 			      error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE)) {
 			gchar *subject, *msg;
 			subject = tny_header_dup_subject (header);
+			if (!subject)
+				subject = g_strdup (_("mail_va_no_subject"));;
 			msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
 					       subject);
 			modest_platform_run_information_dialog (NULL, msg, FALSE);
@@ -1232,7 +1236,8 @@ open_msgs_performer(gboolean canceled,
 
 		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, proto);
 		error_msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
-		g_free (subject);
+		if (subject)
+			g_free (subject);
 		g_object_unref (header);
 		g_object_unref (iter);
 		
@@ -6123,7 +6128,8 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 
 	subject = tny_header_dup_subject (header);
 	msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
-	g_free (subject);
+	if (subject)
+		g_free (subject);
 	if (msg == NULL) {
 		msg = g_strdup_printf (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
