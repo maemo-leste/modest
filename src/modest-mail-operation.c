@@ -1657,7 +1657,7 @@ recurse_folders_async_cb (TnyFolderStore *folder_store,
 				/* Add pending call */
 				info->pending_calls++;
 				
-				tny_folder_store_get_folders_async (folder, folders, NULL,
+				tny_folder_store_get_folders_async (folder, folders, NULL, FALSE,
 								    recurse_folders_async_cb, 
 								    NULL, info);
 				g_object_unref (folders);
@@ -1808,7 +1808,7 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	/* Get all folders and continue in the callback */ 
 	folders = tny_simple_list_new ();
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (priv->account),
-					    folders, NULL,
+					    folders, NULL, FALSE,
 					    recurse_folders_async_cb, 
 					    NULL, info);
 	g_object_unref (folders);

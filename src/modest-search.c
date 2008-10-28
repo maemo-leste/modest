@@ -612,7 +612,7 @@ modest_search_account_get_folders_cb (TnyFolderStore *self,
 			TnyList *children = tny_simple_list_new ();
 			helper->pending_calls++;
 			tny_folder_store_get_folders_async (TNY_FOLDER_STORE (folder), children, NULL, 
-							    modest_search_account_get_folders_cb, 
+							    FALSE, modest_search_account_get_folders_cb, 
 							    NULL, helper);
 		}
 
@@ -654,7 +654,7 @@ _search_account (TnyAccount *account,
 
 	/* Get folders */
 	tny_folder_store_get_folders_async (TNY_FOLDER_STORE (account), folders, NULL, 
-					    modest_search_account_get_folders_cb, 
+					    FALSE, modest_search_account_get_folders_cb, 
 					    NULL, helper);
 }
 
