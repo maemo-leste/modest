@@ -33,6 +33,7 @@
 #include <modest-runtime.h>
 #include <modest-defs.h>
 #include <string.h>
+#include <strings.h>
 
 static const gchar * null_means_empty (const gchar * str);
 
@@ -321,8 +322,11 @@ modest_account_mgr_get_server_account_has_password (ModestAccountMgr *self, cons
 		TRUE /* server account */);
 	if (password && strlen (password)) {
 		result = TRUE;
-	}
 	
+		/* Clean password */
+		bzero (password, strlen (password));
+	}
+
 	g_free (password);
 	return result;
 }
