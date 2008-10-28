@@ -818,6 +818,8 @@ modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name)
 static gchar*
 util_increment_name (const gchar* text)
 {
+	g_return_val_if_fail (text, NULL);
+
 	/* Get the end character,
 	 * also doing a UTF-8 validation which is required for using g_utf8_prev_char().
 	 */
@@ -842,7 +844,7 @@ util_increment_name (const gchar* text)
   			break;
   		}
   		
-  		p = g_utf8_prev_char (p);	
+  		p = g_utf8_find_prev_char (text, p);	
   	}
   	
   	if(!alpha_end) {
