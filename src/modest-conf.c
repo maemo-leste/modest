@@ -135,13 +135,16 @@ modest_conf_init (ModestConf *obj)
 			      &error);
 
 	/* Notify every change under namespace */
-	if (!error)
+	if (!error) {
 		gconf_client_notify_add (priv->gconf_client,
 					 "/apps/modest",
 					 modest_conf_on_change,
 					 obj,
 					 NULL,
 					 &error);
+	} else {
+		g_error_free (error);
+	}
 }
 
 static void
