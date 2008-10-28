@@ -105,7 +105,6 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *entry_account_title;
 	GtkWidget *retrieve_picker;
 	GtkWidget *limit_retrieve_picker;
-	GtkWidget *caption_leave_messages;
 	GtkWidget *checkbox_leave_messages;
 	
 	GtkWidget *page_user_details;
@@ -205,7 +204,7 @@ on_modified_entry_changed (GtkEditable *editable, gpointer user_data)
 }
 
 static void
-on_modified_checkbutton_clicked (GtkButton *button, gpointer user_data)
+on_modified_checkbutton_toggled (GtkButton *button, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
@@ -242,9 +241,9 @@ connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widge
 	} else if (HILDON_IS_PICKER_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "value-changed",
 				  G_CALLBACK (on_modified_picker_changed), self);
-	} else if (GTK_IS_BUTTON (widget)) {
-		g_signal_connect (G_OBJECT (widget), "clicked",
-			G_CALLBACK (on_modified_checkbutton_clicked), self);
+	} else if (HILDON_IS_CHECK_BUTTON (widget)) {
+		g_signal_connect (G_OBJECT (widget), "toggled",
+			G_CALLBACK (on_modified_checkbutton_toggled), self);
 	}
 }
 
@@ -381,18 +380,16 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->limit_retrieve_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* The leave-messages widgets: */
-	if(!priv->checkbox_leave_messages)
-		priv->checkbox_leave_messages = gtk_check_button_new ();
-	if (!priv->caption_leave_messages) {
-		priv->caption_leave_messages = 
-			create_captioned (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
-					  priv->checkbox_leave_messages);
+	if(!priv->checkbox_leave_messages) {
+		priv->checkbox_leave_messages = 
+			hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+		gtk_button_set_label (GTK_BUTTON (priv->checkbox_leave_messages),
+				      _("mcen_fi_advsetup_leave_on_server"));
+		gtk_size_group_add_widget (sizegroup, priv->checkbox_leave_messages);
 	}
-			
-	gtk_widget_show (priv->checkbox_leave_messages);
 	connect_for_modified (self, priv->checkbox_leave_messages);
-	gtk_box_pack_start (GTK_BOX (box), priv->caption_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (priv->caption_leave_messages);
+	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->checkbox_leave_messages);
 
 	g_object_unref (sizegroup);
 	
@@ -1127,9 +1124,9 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		
 		if (!modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry,
 										 modest_server_account_settings_get_protocol (incoming_account))) {
-			gtk_widget_hide (priv->caption_leave_messages);
+			gtk_widget_hide (priv->checkbox_leave_messages);
 		} else {
-			gtk_widget_show (priv->caption_leave_messages);
+			gtk_widget_show (priv->checkbox_leave_messages);
 		}
 
 		/* Remember this for later: */
