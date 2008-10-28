@@ -33,7 +33,6 @@
 #include "widgets/modest-validating-entry.h"
 #include "modest-runtime.h"
 #include <modest-account-mgr-helpers.h>
-#include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtktextview.h>
@@ -42,6 +41,7 @@
 #include <gtk/gtkstock.h>
 #include <glib/gi18n.h>
 #include <modest-maemo-utils.h>
+#include "modest-text-utils.h"
 
 G_DEFINE_TYPE (ModestSignatureEditorDialog, modest_signature_editor_dialog, GTK_TYPE_DIALOG);
 
@@ -110,7 +110,7 @@ enable_widgets (ModestSignatureEditorDialog *self)
 	ModestSignatureEditorDialogPrivate *priv = 
 		SIGNATURE_EDITOR_DIALOG_GET_PRIVATE (self);
 		
-	const gboolean enable = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->checkbox_use));
+	const gboolean enable = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
 	gtk_widget_set_sensitive (priv->label, enable);
 	gtk_widget_set_sensitive (priv->scrolledwindow, enable);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->textview), enable);
@@ -133,15 +133,15 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 		
 	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
 	gtk_container_set_border_width (GTK_CONTAINER (box), MODEST_MARGIN_HALF);
-	
-	priv->checkbox_use = gtk_check_button_new_with_label (
-		_("mcen_fi_email_signatures_use_signature"));
+
+	priv->checkbox_use = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (priv->checkbox_use), 
+			      _("mcen_fi_email_signatures_use_signature"));
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_use, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->checkbox_use);
 	
 	g_signal_connect (G_OBJECT (priv->checkbox_use), "toggled",
-		G_CALLBACK (on_toggle_button_changed), self);
-		
+			  G_CALLBACK (on_toggle_button_changed), self);		
 	
 	priv->label = gtk_label_new (""); /* Set in modest_signature_editor_dialog_set_settings(). */
 	gtk_box_pack_start (GTK_BOX (box), priv->label, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -162,8 +162,7 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_text_buffer_set_text (buffer, "--\n", -1); /* Default, as per the UI spec. */
 	
 	/* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
+	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
 	
 	gtk_widget_show (box);
 	gtk_widget_set_size_request (GTK_WIDGET (self), 480, -1);
@@ -198,7 +197,7 @@ modest_signature_editor_dialog_set_settings (
 	gtk_label_set_ellipsize (GTK_LABEL (priv->label),  PANGO_ELLIPSIZE_END);
 	g_free (label_text);
 	
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_use), use_signature);
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_use), use_signature);
 	
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
 	if (signature)
@@ -220,7 +219,7 @@ modest_signature_editor_dialog_get_settings (
 		
 	g_assert(use_signature);
 	
-	*use_signature = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->checkbox_use));
+	*use_signature = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
 			
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
 	
