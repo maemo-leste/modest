@@ -31,6 +31,7 @@
 #define __MODEST_HILDON2_SORT_DIALOG
 
 #include <glib.h>
+#include <hildon/hildon-touch-selector.h>
 #include <hildon/hildon-picker-dialog.h>
 #include <widgets/modest-sort-criterium-view.h>
 
