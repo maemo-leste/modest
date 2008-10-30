@@ -431,7 +431,7 @@ modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *self)
 	g_queue_foreach (priv->op_queue, (GFunc) on_cancel_all_foreach, &operations_to_cancel);
 	g_mutex_unlock (priv->queue_lock);
 	
-	/* TODO: Reverse the list, to remove operations in order? */
+	operations_to_cancel = g_slist_reverse (operations_to_cancel);
 
 	for(cur = operations_to_cancel; cur != NULL; cur = cur->next) {
 		if (!MODEST_IS_MAIL_OPERATION(cur->data))
