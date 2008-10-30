@@ -601,11 +601,6 @@ modest_mail_operation_clone_state (ModestMailOperation *self)
 	ModestMailOperationState *state;
 	ModestMailOperationPrivate *priv;
 
-	/* FIXME: this should be fixed properly
-	 * 
-	 * in some cases, priv was NULL, so checking here to
-	 * make sure.
-	 */
 	g_return_val_if_fail (self, NULL);
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 	g_return_val_if_fail (priv, NULL);
