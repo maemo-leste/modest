@@ -203,7 +203,6 @@ modest_count_stream_get_type (void)
 					       "ModestCountStream",
 					       &info, 0);
 
-                /* TODO? : FIX THIS (ADD _TYPE): */
                 g_type_add_interface_static (type, TNY_TYPE_STREAM,
                         &tny_stream_info);
 
