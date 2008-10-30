@@ -33,6 +33,7 @@
 #include <glib/gi18n.h>
 #include "modest-defs.h"
 #include "modest-conf.h"
+#include "modest-error.h"
 #include "modest-marshal.h"
 #include <stdio.h>
 
@@ -475,11 +476,12 @@ modest_conf_type_to_gconf_type (ModestConfValueType value_type, GError **err)
 		gconf_type = GCONF_VALUE_STRING;
 		break;
 	default:
-		/* FIXME: use MODEST_ERROR, and error code */
 		gconf_type = GCONF_VALUE_INVALID;
 		g_printerr ("modest: invalid list value type %d\n", value_type);
-		*err = g_error_new_literal (0, 0, "invalid list value type");
-	}	
+		*err = g_error_new_literal (MODEST_CONF_ERROR, 
+					    MODEST_CONF_ERROR_INVALID_VALUE, 
+					    "invalid list value type");
+	}
 	return gconf_type;
 }
 

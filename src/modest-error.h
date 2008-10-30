@@ -36,7 +36,8 @@
 G_BEGIN_DECLS
 
 typedef enum _ModestErrorDomain {
-	MODEST_MAIL_OPERATION_ERROR
+	MODEST_MAIL_OPERATION_ERROR,
+	MODEST_CONF_ERROR,
 } ModestErrorDomain;
 
 typedef enum _ModestErrorCode {
@@ -50,6 +51,8 @@ typedef enum _ModestErrorCode {
 	MODEST_MAIL_OPERATION_ERROR_FILE_IO, /* couldn't retrieve a file to construct a mail */
 	MODEST_MAIL_OPERATION_ERROR_SEND_QUEUE_ADD_ERROR,
 	MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY,
+
+	MODEST_CONF_ERROR_INVALID_VALUE,
 } ModestErrorCode;
 
 G_END_DECLS
