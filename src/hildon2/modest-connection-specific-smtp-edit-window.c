@@ -375,7 +375,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	on_security_picker_changed (HILDON_PICKER_BUTTON (priv->outgoing_security_picker), self);
 	
 	/* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG (self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
 	
 	priv->is_dirty = FALSE;
 	priv->range_error_occured = FALSE;
