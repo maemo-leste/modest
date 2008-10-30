@@ -1529,8 +1529,8 @@ modest_account_mgr_notify_account_update (ModestAccountMgr* self,
 	proto_name = modest_account_mgr_get_string (self, server_account_name, 
 						    MODEST_ACCOUNT_PROTO, TRUE);
 	if (!proto_name) {
-		g_free (proto_name);
 		g_return_if_reached ();
+		return;
 	}
 	proto = modest_protocol_get_type_id (modest_protocol_registry_get_protocol_by_name (protocol_registry,
 											    MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
