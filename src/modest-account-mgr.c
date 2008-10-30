@@ -219,9 +219,8 @@ modest_account_mgr_finalize (GObject * obj)
 		MODEST_ACCOUNT_MGR_GET_PRIVATE (obj);
 
 	if (priv->notification_id_accounts) {
-		/* TODO: forget dirs */
-
 		g_hash_table_destroy (priv->notification_id_accounts);
+		priv->notification_id_accounts = NULL;
 	}
 
 	if (priv->modest_conf) {
@@ -241,6 +240,12 @@ modest_account_mgr_finalize (GObject * obj)
 	if (priv->account_key_hash) {
 		g_hash_table_destroy (priv->account_key_hash);
 		priv->account_key_hash = NULL;
+	}
+
+	if (priv->busy_accounts) {
+		g_slist_foreach (priv->busy_accounts, (GFunc) g_free, NULL);
+		g_slist_free (priv->busy_accounts);
+		priv->busy_accounts = NULL;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
