@@ -220,6 +220,7 @@ modest_formatter_instance_init (GTypeInstance *instance, gpointer g_class)
 	ModestFormatterPrivate *priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
 	priv->content_type = NULL;
+	priv->signature = NULL;
 }
 
 static void
@@ -345,9 +346,8 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 			if ((filename == NULL)||(filename[0] == '\0'))
 				filename = g_strdup ("");
 		}
-		filenames = g_list_append (filenames, filename);
+		filenames = g_list_prepend (filenames, filename);
 	}
-	filenames = g_list_reverse (filenames);
 
 	/* TODO: get 80 from the configuration */
 	from = tny_header_dup_from (header);
