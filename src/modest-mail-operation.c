@@ -2774,9 +2774,6 @@ notify_progress_of_multiple_messages (ModestMailOperation *self,
 
 	/* We know that tinymail sends us information about
 	 *  transferred bytes with this particular message
-	 *  
-	 *  (FIXME: this is very ugly, and no I (djcb) didn't write this code,
-	 *  I just added the 'if' so we don't get runtime warning)
 	 */
 	if (status->message)
 		is_num_bytes = (g_ascii_strcasecmp (status->message, "Retrieving message") == 0);
