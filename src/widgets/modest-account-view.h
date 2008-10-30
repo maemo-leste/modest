@@ -87,6 +87,17 @@ ModestAccountView*   modest_account_view_new         (ModestAccountMgr *account_
  **/
 gchar*   modest_account_view_get_selected_account    (ModestAccountView *account_view);
 
+/**
+ * modest_account_view_get_path_account:
+ * @account_view: a #ModestAccountView
+ * @path: a #GtkTreePath
+ * 
+ * Gets the name of the account pointed by @path
+ * 
+ * Returns: the name of the account or NULL if no account in path
+ **/
+gchar *  modest_account_view_get_path_account (ModestAccountView *self, GtkTreePath *path);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_VIEW_H__ */

@@ -132,6 +132,13 @@ modest_account_view_init (ModestAccountView *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	priv->sig_handlers = NULL;
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_rc_parse_string ("style \"fremantle-modest-account-view\" {\n"
+			     "  GtkWidget::hildon-mode = 1\n"
+			     "} widget \"*.fremantle-modest-account-view\" style \"fremantle-modest-account-view\""
+			     "widget_class \"*<HildonPannableArea>.ModestAccountView\" style :highest \"fremantle-modest-account-view\"");
+	
+#endif
 }
 
 static void
@@ -233,7 +240,13 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 				ModestProtocolRegistry *protocol_registry;
 				ModestProtocol *protocol;
 				const gchar *proto_name;
+#ifdef MODEST_TOOLKIT_HILDON2
+				gchar *last_updated_hildon2;
 
+				last_updated_hildon2 = g_strconcat ("<span size='x-small'>", _("mcen_ti_lastupdated"), "\n", 
+								   last_updated_string, "</span>",
+								   NULL);
+#endif
 				protocol_registry = modest_runtime_get_protocol_registry ();
 				protocol_type = modest_server_account_settings_get_protocol (store_settings);
 				protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
@@ -248,8 +261,15 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, 
 					modest_account_settings_get_is_default (settings),
 					MODEST_ACCOUNT_VIEW_PROTO_COLUMN, proto_name,
+#ifdef MODEST_TOOLKIT_HILDON2
+					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_hildon2,
+#else
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
+#endif
 					-1);
+#ifdef MODEST_TOOLKIT_HILDON2
+				g_free (last_updated_hildon2);
+#endif
 			}
 		}
 		
@@ -448,10 +468,14 @@ init_view (ModestAccountView *self)
 
 	/* the is_default column */
 	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE, "radio", TRUE, NULL);
+	column = gtk_tree_view_column_new_with_attributes 
+		(_("mcen_ti_default"), toggle_renderer,
+		 "active", MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
-				     gtk_tree_view_column_new_with_attributes (
-					     _("mcen_ti_default"), toggle_renderer,
-					     "active", MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, NULL));
+				     column);
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_tree_view_column_set_visible (column, FALSE);
+#endif
 					
 	/* Disable the Maemo GtkTreeView::allow-checkbox-mode Maemo modification, 
 	 * which causes the model column to be updated automatically when the row is clicked.
@@ -481,17 +505,25 @@ init_view (ModestAccountView *self)
 						NULL, NULL);
 
 	/* last update for this account */
-	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_lastupdated"), text_renderer,"text",
+	text_renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (text_renderer), 
+		      "alignment", PANGO_ALIGN_RIGHT, 
+		      "xalign", 1.0,
+		      NULL);
+
+	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_lastupdated"), text_renderer,"markup",
 							    MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
-	gtk_tree_view_column_set_expand (column, TRUE);
+	gtk_tree_view_column_set_expand (column, FALSE);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
 						NULL, NULL);
 			
 	/* Show the column headers,
 	 * which does not seem to be the default on Maemo.
-	 */			
+	 */
+#ifndef MODEST_TOOLKIT_HILDON2
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
+#endif
 
 	priv->sig_handlers = 
 		modest_signal_mgr_connect (priv->sig_handlers, 
@@ -540,7 +572,11 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 	
 	g_return_val_if_fail (account_mgr, NULL);
 	
-	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW, NULL);
+	obj  = g_object_new(MODEST_TYPE_ACCOUNT_VIEW, 
+#ifdef MODEST_TOOLKIT_HILDON2
+			    "hildon-ui-mode", HILDON_UI_MODE_NORMAL,
+#endif
+			    NULL);
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	g_object_ref (G_OBJECT (account_mgr));
@@ -564,6 +600,25 @@ modest_account_view_get_selected_account (ModestAccountView *self)
 	
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
 	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
+		gtk_tree_model_get (model, &iter, 
+				    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
+				    &account_name, -1);
+	}
+
+	return account_name;
+}
+
+gchar *
+modest_account_view_get_path_account (ModestAccountView *self, GtkTreePath *path)
+{
+	gchar *account_name = NULL;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_VIEW (self), NULL);
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (gtk_tree_model_get_iter (model, &iter, path)) {
 		gtk_tree_model_get (model, &iter, 
 				    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
 				    &account_name, -1);
@@ -608,6 +663,9 @@ static void
 modest_account_view_select_account (ModestAccountView *account_view, 
 				    const gchar* account_name)
 {	
+#ifdef MODEST_TOOLKIT_HILDON2
+	return;
+#endif
 	/* Create a state instance so we can send two items of data to the signal handler: */
 	ForEachData *state = g_new0 (ForEachData, 1);
 	state->self = account_view;

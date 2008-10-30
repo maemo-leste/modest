@@ -126,23 +126,6 @@ modest_account_view_window_finalize (GObject *self)
 }
 
 
-static void
-on_selection_changed (GtkTreeSelection *sel, ModestAccountViewWindow *self)
-{
-	ModestAccountViewWindowPrivate *priv;
-	GtkTreeModel                   *model;
-	GtkTreeIter                     iter;
-	gboolean                        has_selection;
-	
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-
-	has_selection =
-		gtk_tree_selection_get_selected (sel, &model, &iter);
-
-	/* Set the status of the buttons */
-	gtk_widget_set_sensitive (priv->edit_button, has_selection);
-}
-
 /** Check whether any connections are active, and cancel them if 
  * the user wishes.
  * Returns TRUE is there was no problem, 
@@ -258,11 +241,14 @@ on_account_settings_dialog_response (GtkDialog *dialog,
 }
 
 static void
-on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
+on_account_activated (GtkTreeView *account_view,
+		      GtkTreePath *path,
+		      GtkTreeViewColumn *column,
+		      ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (self);
 	
-	gchar* account_name = modest_account_view_get_selected_account (priv->account_view);
+	gchar* account_name = modest_account_view_get_path_account (priv->account_view, path);
 	if (!account_name)
 		return;
 		
@@ -333,77 +319,57 @@ setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 {
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	
-	gtk_button_box_set_spacing (GTK_BUTTON_BOX (box), 6);
-	gtk_button_box_set_layout (GTK_BUTTON_BOX (box), 
-				   GTK_BUTTONBOX_START);
-	
 	priv->new_button     = gtk_button_new_from_stock(_("mcen_bd_new"));
-	priv->edit_button = gtk_button_new_with_label(_("mcen_bd_edit"));
 	
 	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
 			  G_CALLBACK(on_new_button_clicked),
 			  self);
-	g_signal_connect (G_OBJECT(priv->edit_button), "clicked",
-			  G_CALLBACK(on_edit_button_clicked),
-			  self);
-
-	gtk_box_pack_start (GTK_BOX(box), priv->new_button, FALSE, FALSE,2);
-	gtk_box_pack_start (GTK_BOX(box), priv->edit_button, FALSE, FALSE,2);
-
-	/* Should has been created by window_vbox_new */
-	if (priv->account_view) {
-		GtkTreeSelection *sel;
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
-		if (gtk_tree_selection_count_selected_rows (sel) == 0) {
-			gtk_widget_set_sensitive (priv->edit_button, FALSE);
-		}
-	}
+	gtk_box_pack_start (GTK_BOX(box), priv->new_button, FALSE, FALSE,0);
 
 	gtk_widget_show_all (GTK_WIDGET (box));
 }
 
-static GtkWidget*
+static void
 window_vbox_new (ModestAccountViewWindow *self)
 {
-	ModestAccountViewWindowPrivate *priv;
-	GtkWidget *main_vbox, *main_hbox, *pannable;
-	GtkTreeSelection *sel;
-
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
-
-	main_vbox = gtk_vbox_new (FALSE, 6);
-	main_hbox = gtk_hbox_new (FALSE, 6);
-
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(priv->account_view));
-	g_signal_connect (G_OBJECT(sel), "changed",  G_CALLBACK(on_selection_changed),
-			  self);
-			  
-	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), 
-						GTK_WIDGET (priv->account_view));
-
-	/* Only force the height, the width of the widget will depend
-	   on the size of the column titles */
-	gtk_widget_set_size_request (pannable, -1, 320);
-	
-	gtk_box_pack_start (GTK_BOX(main_hbox), pannable, TRUE, TRUE, 2);
-	gtk_box_pack_start (GTK_BOX(main_vbox), main_hbox, TRUE, TRUE, 2);
-
-	gtk_widget_show_all (pannable);
-	gtk_widget_show (main_hbox);
-	gtk_widget_show (main_vbox);
-
-	return main_vbox;
 }
 
 
 static void
 modest_account_view_window_init (ModestAccountViewWindow *self)
 {
-	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
+	ModestAccountViewWindowPrivate *priv;
+	GtkWidget *main_vbox, *pannable;
 
+
+	/* Specify a default size */
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, 320);
+	
+	/* This seems to be necessary to make the window show at the front with decoration.
+	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
+	 * then the window will be below the others. */
+	gtk_window_set_type_hint (GTK_WINDOW (self),
+			    GDK_WINDOW_TYPE_HINT_DIALOG);
+
+	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	priv->acc_removed_handler = 0;
+	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
+
+	main_vbox = GTK_DIALOG (self)->vbox;
+
+	pannable = hildon_pannable_area_new ();
+	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (pannable), MODEST_MARGIN_DEFAULT);
+	gtk_widget_show (pannable);
+	gtk_container_add (GTK_CONTAINER (pannable), 
+			   GTK_WIDGET (priv->account_view));
+	gtk_widget_show (GTK_WIDGET (priv->account_view));
+
+	g_signal_connect (G_OBJECT (priv->account_view), "row-activated",
+			  G_CALLBACK (on_account_activated), self);
+
+	gtk_box_pack_start (GTK_BOX(main_vbox), pannable, TRUE, TRUE, MODEST_MARGIN_HALF);
+
 }
 
 static void
@@ -432,9 +398,7 @@ modest_account_view_window_new (void)
 	ModestAccountMgr *account_mgr = modest_runtime_get_account_mgr ();
 
 	/* Add widgets */
-	gtk_box_pack_start (GTK_BOX((GTK_DIALOG (self)->vbox)), 
-			    window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW (self)), 
-			    TRUE, TRUE, 2);
+	window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW (self));
 	
 	setup_button_box (MODEST_ACCOUNT_VIEW_WINDOW (self), GTK_BUTTON_BOX (GTK_DIALOG (self)->action_area));
 
