@@ -337,6 +337,7 @@ modest_account_protocol_set_account_options (ModestAccountProtocol *self,
 	priv = MODEST_ACCOUNT_PROTOCOL_GET_PRIVATE (self);	
 
 	if (priv->account_options) {
+		g_object_unref (priv->account_options);
 		priv->account_options = NULL;
 	}
 	priv->account_options = tny_list_copy (list);
@@ -441,16 +442,6 @@ modest_account_protocol_get_account_settings_dialog (ModestAccountProtocol *self
 	settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (), 
 							     account_name);
 	modest_account_settings_dialog_load_settings (dialog, settings);
-	
-	/* TODO: Those methods should be removed from the
-	   interface and moved to specific implementations */
-/* 	modest_account_settings_dialog_switch_to_user_info (dialog); */
-/* 	modest_account_settings_dialog_check_allow_changes (dialog); */
-	
-	/* TODO: review this. When the dialog is closed, reconnect */
-	/* 			g_signal_connect (dialog, "response",  */
-	/* 					  G_CALLBACK (on_account_settings_dialog_response),  */
-	/* 					  self); */
 	
 	/* Close dialog on response */
 	g_signal_connect_swapped (dialog,
