@@ -1107,6 +1107,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 		
 	GtkDialog *dialog = GTK_DIALOG (self);
 	pannable = hildon_pannable_area_new ();
+	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), priv->main_container);
 	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (pannable));
 	gtk_container_set_border_width (GTK_CONTAINER (dialog->vbox), MODEST_MARGIN_HALF);
