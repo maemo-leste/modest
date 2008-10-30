@@ -345,7 +345,6 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 	ModestServerAccountSettings *server_settings;
 	TnyAccount *tny_account;
 	ModestProtocolRegistry *protocol_registry;
-	TnyConnectionPolicy *policy;
 	
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (server_account_name, NULL);
@@ -369,20 +368,25 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 		modest_tny_account_set_parent_modest_account_name_for_server_account (tny_account, server_account_name);
 	}
 
-	if (!tny_account)
+	if (!tny_account) {
 		g_warning ("%s: failed to create tny_account", __FUNCTION__);
-	else if (!update_tny_account (tny_account, server_settings))
-		g_warning ("%s: failed to initialize tny_account", __FUNCTION__);
-	else {
-		tny_account_set_forget_pass_func (tny_account,
-						  forget_pass_func ? forget_pass_func : forget_pass_dummy);
-		tny_account_set_pass_func (tny_account,
-					   get_pass_func ? get_pass_func: get_pass_dummy);
-	}
+	} else {
+		TnyConnectionPolicy *policy;
 
-	policy = modest_default_connection_policy_new ();
-	tny_account_set_connection_policy (tny_account, policy);
-	g_object_unref (policy);
+		if (!update_tny_account (tny_account, server_settings)) {
+			g_warning ("%s: failed to initialize tny_account", __FUNCTION__);
+		} else {
+			
+			tny_account_set_forget_pass_func (tny_account,
+							  forget_pass_func ? forget_pass_func : forget_pass_dummy);
+			tny_account_set_pass_func (tny_account,
+						   get_pass_func ? get_pass_func: get_pass_dummy);
+			
+		}
+		policy = modest_default_connection_policy_new ();
+		tny_account_set_connection_policy (tny_account, policy);
+		g_object_unref (policy);
+	}
 
 	g_object_unref (server_settings);
 	
