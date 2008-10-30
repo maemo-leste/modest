@@ -128,7 +128,8 @@ on_auth_changed (GtkWidget *widget,
 
 static void
 create_incoming_security (ModestSecurityOptionsView* self,
-			  GtkSizeGroup *size_group)
+			  GtkSizeGroup *title_size_group,
+			  GtkSizeGroup *value_size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
 	GtkWidget *entry_caption = NULL;
@@ -137,22 +138,25 @@ create_incoming_security (ModestSecurityOptionsView* self,
 
 	/* Create widgets for incoming security */
 	ppriv->security_view = GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE,
-									     MODEST_EDITABLE_ARRANGEMENT));
+									     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
 	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
 					   modest_protocol_registry_get_pop_type_id ());
-	modest_maemo_utils_create_picker_layout (size_group, 
-						 _("mcen_li_emailsetup_secure_connection"), 
-						 ppriv->security_view);
+	modest_maemo_utils_set_hbutton_layout (title_size_group, 
+					       value_size_group,
+					       _("mcen_li_emailsetup_secure_connection"), 
+					       ppriv->security_view);
 
 	if (ppriv->full) {		
 		ppriv->port_view = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
-		entry_caption = modest_maemo_utils_create_captioned (size_group, _("mcen_fi_emailsetup_port"), 
+		entry_caption = modest_maemo_utils_create_captioned (title_size_group,
+								     value_size_group,
+								     _("mcen_fi_emailsetup_port"), 
 								     ppriv->port_view);
 	}
 
 	ppriv->auth_view = hildon_check_button_new (MODEST_EDITABLE_SIZE);
 	gtk_button_set_label (GTK_BUTTON (ppriv->auth_view), _("mcen_li_emailsetup_secure_authentication"));
-	gtk_size_group_add_widget (size_group, ppriv->auth_view);
+	gtk_button_set_alignment (GTK_BUTTON (ppriv->auth_view), 0.0, 0.5);
 
 	/* Track changes in UI */	
 	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
@@ -224,7 +228,8 @@ on_entry_changed (GtkEditable *editable,
 
 static void
 create_outgoing_security (ModestSecurityOptionsView* self,
-			  GtkSizeGroup *size_group)
+			  GtkSizeGroup *title_size_group,
+			  GtkSizeGroup *value_size_group)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
 	GtkWidget *user_caption = NULL;
@@ -234,17 +239,21 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	
 	/* The secure connection widgets */
 	ppriv->security_view = GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE,
-									     MODEST_EDITABLE_ARRANGEMENT));
+									     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
 	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
 					      MODEST_PROTOCOLS_TRANSPORT_SMTP);
-	modest_maemo_utils_create_picker_layout (size_group, _("mcen_li_emailsetup_secure_connection"), 
-						 ppriv->security_view);
+	modest_maemo_utils_set_hbutton_layout (title_size_group,
+					       value_size_group,
+					       _("mcen_li_emailsetup_secure_connection"), 
+					       ppriv->security_view);
 	
 	/* The secure authentication widgets */
 	ppriv->auth_view = GTK_WIDGET (modest_secureauth_picker_new (MODEST_EDITABLE_SIZE,
-								     MODEST_EDITABLE_ARRANGEMENT));
-	modest_maemo_utils_create_picker_layout (size_group, _("mcen_li_emailsetup_secure_authentication"), 
-						 ppriv->auth_view);
+								     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
+	modest_maemo_utils_set_hbutton_layout (title_size_group,
+					       value_size_group,
+					       _("mcen_li_emailsetup_secure_authentication"), 
+					       ppriv->auth_view);
 
 	if (ppriv->full) {
 		gchar *user_label;
@@ -257,7 +266,9 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						 HILDON_GTK_INPUT_MODE_FULL);
 
 		user_label = g_strdup_printf("%s*", _("mail_fi_username"));
-		user_caption = modest_maemo_utils_create_captioned (size_group, user_label, 
+		user_caption = modest_maemo_utils_create_captioned (title_size_group,
+								    value_size_group,
+								    user_label, 
 								    ppriv->user_entry);
 		g_free (user_label);
 	
@@ -278,11 +289,15 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						 HILDON_GTK_INPUT_MODE_INVISIBLE);
 		gtk_entry_set_visibility (GTK_ENTRY (ppriv->pwd_entry), FALSE);
 
-		pwd_caption = modest_maemo_utils_create_captioned (size_group, _("mail_fi_password"), 
+		pwd_caption = modest_maemo_utils_create_captioned (title_size_group,
+								   value_size_group,
+								   _("mail_fi_password"), 
 								   ppriv->pwd_entry);
 
 		ppriv->port_view = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
-		port_caption = modest_maemo_utils_create_captioned (size_group, _("mcen_fi_emailsetup_port"), 
+		port_caption = modest_maemo_utils_create_captioned (title_size_group,
+								    value_size_group,
+								    _("mcen_fi_emailsetup_port"), 
 								    ppriv->port_view);
 	}
 
@@ -333,7 +348,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 GtkWidget *    
 modest_maemo_security_options_view_new  (ModestSecurityOptionsType type,
 					 gboolean full,
-					 GtkSizeGroup *size_group)
+					 GtkSizeGroup *title_size_group,
+					 GtkSizeGroup *value_size_group)
 {
 	ModestSecurityOptionsView* self;
  	ModestSecurityOptionsViewPrivate *ppriv;
@@ -345,9 +361,9 @@ modest_maemo_security_options_view_new  (ModestSecurityOptionsType type,
 	ppriv->full = full;
 	self->type = type;
 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING)
-		create_incoming_security (self, size_group);
+		create_incoming_security (self, title_size_group, value_size_group);
 	else
-		create_outgoing_security (self, size_group);
+		create_outgoing_security (self, title_size_group, value_size_group);
 
 	return (GtkWidget *) self;
 }

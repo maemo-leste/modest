@@ -277,7 +277,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
-	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkSizeGroup *title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkSizeGroup *value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
@@ -287,7 +288,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_change), self);
 	
 	GtkWidget *captioned = 
-	  modest_maemo_utils_create_captioned (sizegroup, 
+	  modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_smtp"), 
 					       priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
@@ -298,11 +299,11 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (!priv->outgoing_auth_picker) {
 		priv->outgoing_auth_picker = 
 			GTK_WIDGET (modest_secureauth_picker_new (MODEST_EDITABLE_SIZE,
-								  MODEST_EDITABLE_ARRANGEMENT));
+								  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
 	}
-	modest_maemo_utils_create_picker_layout (sizegroup, 
-						 _("mcen_li_emailsetup_secure_authentication"),
-						 priv->outgoing_auth_picker);
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+					       _("mcen_li_emailsetup_secure_authentication"),
+					       priv->outgoing_auth_picker);
 	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->outgoing_auth_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_auth_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -311,7 +312,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
-	captioned = modest_maemo_utils_create_captioned (sizegroup, _("mail_fi_username"), 
+	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+							 _("mail_fi_username"), 
 							 priv->entry_user_username);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_username);
@@ -334,7 +336,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
-	captioned = modest_maemo_utils_create_captioned (sizegroup, 
+	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 		_("mail_fi_password"), priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_password);
@@ -345,20 +347,22 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (!priv->outgoing_security_picker)
 		priv->outgoing_security_picker = 
 			GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE,
-								      MODEST_EDITABLE_ARRANGEMENT));
+								      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
 	modest_serversecurity_picker_fill (
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_serversecurity_picker_set_active_serversecurity (
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_CONNECTION_NONE);
-	modest_maemo_utils_create_picker_layout (sizegroup,  _("mcen_li_emailsetup_secure_connection"), priv->outgoing_security_picker);
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+					       _("mcen_li_emailsetup_secure_connection"), 
+					       priv->outgoing_security_picker);
 	gtk_widget_show (priv->outgoing_security_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_security_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
 		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
-	captioned = modest_maemo_utils_create_captioned (sizegroup, 
-		_("mcen_fi_emailsetup_port"), priv->entry_port);
+	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+							 _("mcen_fi_emailsetup_port"), priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
 	g_signal_connect(G_OBJECT(priv->entry_port), "range-error", G_CALLBACK(on_range_error), self);
 	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
@@ -387,7 +391,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	gtk_widget_show_all (dialog_box);
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, 220);
-	
+
+	g_object_unref (title_sizegroup);
+	g_object_unref (value_sizegroup);
 	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */

@@ -191,7 +191,8 @@ static GtkWidget*
 create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *vbox_update, *vbox_limit, *label, *hbox;
-	GtkSizeGroup *size_group;
+	GtkSizeGroup *title_size_group;
+	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 	GtkWidget *pannable;
 
@@ -199,11 +200,13 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
 	vbox_update = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
-	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Auto update */
 	ppriv->auto_update = hildon_check_button_new (MODEST_EDITABLE_SIZE);
 	gtk_button_set_label (GTK_BUTTON (ppriv->auto_update), _("mcen_fi_options_autoupdate"));
+	gtk_button_set_alignment (GTK_BUTTON (ppriv->auto_update), 0.0, 0.5);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->auto_update, FALSE, FALSE, MODEST_MARGIN_HALF);
 	g_signal_connect (ppriv->auto_update, "clicked", G_CALLBACK (on_auto_update_clicked), self);
 
@@ -214,10 +217,11 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	 * so it can't know how to manage its memory. */ 
 	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
 	ppriv->connect_via = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							 MODEST_EDITABLE_ARRANGEMENT,
+							 HILDON_BUTTON_ARRANGEMENT_VERTICAL,
 							 ppriv->connect_via_list, g_int_equal);
-	modest_maemo_utils_create_picker_layout (size_group, _("mcen_fi_options_connectiontype"),
-						 ppriv->connect_via);
+	modest_maemo_utils_set_vbutton_layout (title_size_group, 
+					       _("mcen_fi_options_connectiontype"),
+					       ppriv->connect_via);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->connect_via, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Update interval */
@@ -227,10 +231,11 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	 * so it can't know how to manage its memory. */ 
 	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
 	ppriv->update_interval = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							     MODEST_EDITABLE_ARRANGEMENT,
+							     HILDON_BUTTON_ARRANGEMENT_VERTICAL,
 							     ppriv->update_interval_list, g_int_equal);
-	modest_maemo_utils_create_picker_layout (size_group, _("mcen_fi_options_updateinterval"), 
-						 ppriv->update_interval);
+	modest_maemo_utils_set_vbutton_layout (title_size_group, 
+					       _("mcen_fi_options_updateinterval"), 
+					       ppriv->update_interval);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->update_interval, FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Add to vbox */
@@ -239,9 +244,13 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	/* Separator */
 	gtk_box_pack_start (GTK_BOX (vbox), gtk_hseparator_new (), FALSE, FALSE, MODEST_MARGIN_HALF);
 
+	g_object_unref (title_size_group);
+	g_object_unref (value_size_group);
+
 	/* Limits */
 	vbox_limit = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
-	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Size limit */
 	ppriv->size_limit = hildon_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);
@@ -264,10 +273,11 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	 * so it can't know how to manage its memory. */ 
 	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
 	ppriv->msg_format = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							MODEST_EDITABLE_ARRANGEMENT,
+							HILDON_BUTTON_ARRANGEMENT_VERTICAL,
 							ppriv->msg_format_list, g_int_equal);
-	modest_maemo_utils_create_picker_layout (size_group, _("mcen_fi_options_messageformat"), 
-						 ppriv->msg_format);
+	modest_maemo_utils_set_vbutton_layout (title_size_group, 
+					       _("mcen_fi_options_messageformat"), 
+					       ppriv->msg_format);
 
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, MODEST_MARGIN_HALF);
 
@@ -276,6 +286,9 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), vbox);
 	gtk_widget_show (vbox);
 	gtk_widget_show (pannable);
+
+	g_object_unref (title_size_group);
+	g_object_unref (value_size_group);
 
 	return pannable;
 }

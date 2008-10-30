@@ -37,7 +37,7 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtktextview.h>
 #include <gtk/gtklabel.h>
-#include <gtk/gtkscrolledwindow.h>
+#include <hildon/hildon-pannable-area.h>
 #include <gtk/gtkstock.h>
 #include <glib/gi18n.h>
 #include <modest-maemo-utils.h>
@@ -54,7 +54,7 @@ struct _ModestSignatureEditorDialogPrivate
 {
 	GtkWidget *checkbox_use;
 	GtkWidget *label;
-	GtkWidget *scrolledwindow;
+	GtkWidget *pannable;
 	GtkWidget *textview;
 };
 
@@ -112,7 +112,7 @@ enable_widgets (ModestSignatureEditorDialog *self)
 		
 	const gboolean enable = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
 	gtk_widget_set_sensitive (priv->label, enable);
-	gtk_widget_set_sensitive (priv->scrolledwindow, enable);
+	gtk_widget_set_sensitive (priv->pannable, enable);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->textview), enable);
 }
 
@@ -137,6 +137,7 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	priv->checkbox_use = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (priv->checkbox_use), 
 			      _("mcen_fi_email_signatures_use_signature"));
+	gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_use), 0.0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_use, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->checkbox_use);
 	
@@ -144,28 +145,25 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 			  G_CALLBACK (on_toggle_button_changed), self);		
 	
 	priv->label = gtk_label_new (""); /* Set in modest_signature_editor_dialog_set_settings(). */
+	gtk_misc_set_alignment (GTK_MISC (priv->label), 0.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (box), priv->label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->label);
 	
-	priv->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-	gtk_container_set_border_width (GTK_CONTAINER (priv->scrolledwindow), MODEST_MARGIN_DEFAULT);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolledwindow), 
-		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scrolledwindow), GTK_SHADOW_IN);
-	gtk_box_pack_start (GTK_BOX (box), priv->scrolledwindow, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (priv->scrolledwindow);
+	priv->pannable = hildon_pannable_area_new ();
+	gtk_box_pack_start (GTK_BOX (box), priv->pannable, TRUE, TRUE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->pannable);
 		
 	priv->textview = gtk_text_view_new ();
-	gtk_container_add (GTK_CONTAINER (priv->scrolledwindow), priv->textview);
+	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->textview);
 	gtk_widget_show (priv->textview);
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
-	gtk_text_buffer_set_text (buffer, "--\n", -1); /* Default, as per the UI spec. */
+	gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
 	
 	gtk_widget_show (box);
-	gtk_widget_set_size_request (GTK_WIDGET (self), 480, -1);
+	gtk_widget_set_size_request (GTK_WIDGET (self), -1, 320);
 	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
@@ -200,10 +198,10 @@ modest_signature_editor_dialog_set_settings (
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_use), use_signature);
 	
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
-	if (signature)
+	if (signature && signature[0] != '\0')
 		gtk_text_buffer_set_text (buffer, signature, -1);
 	else
-		gtk_text_buffer_set_text (buffer, "--\n", -1); /* Default, as per the UI spec. */
+		gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
 		
 	enable_widgets (window);
 }

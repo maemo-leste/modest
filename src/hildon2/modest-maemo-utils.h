@@ -123,14 +123,18 @@ void modest_maemo_utils_set_osso_context (osso_context_t *osso_context);
  */
 GtkWidget *modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager, const gchar *item_name);
 
-GtkWidget *modest_maemo_utils_create_captioned    (GtkSizeGroup *group,
-						   const gchar *label_text,
+GtkWidget *modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
+						   GtkSizeGroup *value_size_group,
+						   const gchar *title,
 						   GtkWidget *control);
 
-void
-modest_maemo_utils_create_picker_layout (GtkSizeGroup *sizegroup, 
-					 const gchar *label, 
-					 GtkWidget *picker);
+void       modest_maemo_utils_set_hbutton_layout (GtkSizeGroup *title_sizegroup, 
+						  GtkSizeGroup *value_sizegroup,
+						  const gchar *title, 
+						  GtkWidget *button);
+void       modest_maemo_utils_set_vbutton_layout (GtkSizeGroup *sizegroup, 
+						  const gchar *title, 
+						  GtkWidget *button);
 
 GtkWidget *modest_maemo_utils_create_group_box (const gchar *label, GtkWidget *contents);
 

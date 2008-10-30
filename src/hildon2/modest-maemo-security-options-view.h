@@ -61,7 +61,8 @@ GType        modest_maemo_security_options_view_get_type    (void) G_GNUC_CONST;
 
 GtkWidget* modest_maemo_security_options_view_new (ModestSecurityOptionsType type,
 						   gboolean full,
-						   GtkSizeGroup *size_group);
+						   GtkSizeGroup *title_size_group,
+						   GtkSizeGroup *value_size_group);
 
 G_END_DECLS
 

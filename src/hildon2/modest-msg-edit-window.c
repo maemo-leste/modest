@@ -729,7 +729,8 @@ init_window (ModestMsgEditWindow *obj)
 	GdkPixbuf *window_icon = NULL;
 	GError *error = NULL;
 
-	GtkSizeGroup *size_group;
+	GtkSizeGroup *title_size_group;
+	GtkSizeGroup *value_size_group;
 	GtkWidget *subject_box;
 	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
@@ -788,17 +789,17 @@ init_window (ModestMsgEditWindow *obj)
 
 	parent_priv->menubar = NULL;
 
-	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Note: This ModestPairList* must exist for as long as the picker
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
  	priv->from_field    = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							  MODEST_EDITABLE_ARRANGEMENT,
+							  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
 							  NULL, g_str_equal);
-	hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 0.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
-	hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
+	modest_maemo_utils_set_hbutton_layout (title_size_group, value_size_group, 
+					       _("mail_va_from"), priv->from_field);
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -824,22 +825,22 @@ init_window (ModestMsgEditWindow *obj)
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
-	hildon_button_add_title_size_group (HILDON_BUTTON (priv->from_field), size_group);
-	to_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_to"), priv->to_field);
-	priv->cc_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_cc"), priv->cc_field);
-	priv->bcc_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_hotfix1"), priv->bcc_field);
-	subject_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_subject"), subject_box);
-	priv->attachments_caption = modest_maemo_utils_create_captioned (size_group, _("mail_va_attachment"), priv->attachments_view);
-	g_object_unref (size_group);
-
-	size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-	hildon_button_add_value_size_group (HILDON_BUTTON (priv->from_field), size_group);
-	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->to_field), size_group);
-	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), size_group);
-	modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), size_group);
-	gtk_size_group_add_widget (size_group, priv->subject_field);
-	gtk_size_group_add_widget (size_group, priv->attachments_view);
-	g_object_unref (size_group);
+	to_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+							  _("mail_va_to"), priv->to_field);
+	priv->cc_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+								_("mail_va_cc"), priv->cc_field);
+	priv->bcc_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+								 _("mail_va_hotfix1"), priv->bcc_field);
+	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+							       _("mail_va_subject"), subject_box);
+	priv->attachments_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+									 _("mail_va_attachment"), 
+									 priv->attachments_view);
+	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->to_field), value_size_group); */
+	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), value_size_group); */
+	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), value_size_group); */
+	g_object_unref (title_size_group);
+	g_object_unref (value_size_group);
 
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->from_field, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), to_caption, FALSE, FALSE, 0);

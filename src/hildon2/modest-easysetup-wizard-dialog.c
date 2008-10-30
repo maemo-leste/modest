@@ -261,13 +261,15 @@ on_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
  */
 static GtkWidget* 
 create_captioned (ModestEasysetupWizardDialog *self,
-		  GtkSizeGroup *group,
+		  GtkSizeGroup *title_size_group,
+		  GtkSizeGroup *value_size_group,
 		  const gchar *value,
 		  GtkWidget *control)
 {
 
 	GtkWidget *result;
-	result = modest_maemo_utils_create_captioned (group, value, control);
+	result = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+						      value, control);
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -380,12 +382,14 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
-	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkSizeGroup* title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkSizeGroup* value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* The country widgets: */
 	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new (MODEST_EDITABLE_SIZE,
-									      MODEST_EDITABLE_ARRANGEMENT));
-	hildon_button_set_title (HILDON_BUTTON (priv->account_country_picker), _("mcen_fi_country"));
+									      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
+					       _("mcen_fi_country"), priv->account_country_picker);
 	g_signal_connect (G_OBJECT (priv->account_country_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
 	gtk_box_pack_start (GTK_BOX (box), priv->account_country_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -397,8 +401,10 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
             
 	/* The service provider widgets: */	
 	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE,
-										       MODEST_EDITABLE_ARRANGEMENT));
-	hildon_button_set_title (HILDON_BUTTON (priv->account_serviceprovider_picker), _("mcen_fi_serviceprovider"));
+										       HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+					       _("mcen_fi_serviceprovider"), 
+					       priv->account_serviceprovider_picker);
 	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
 	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -424,7 +430,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_free (default_account_name);
 	default_account_name = NULL;
 
-	caption = create_captioned (self, sizegroup, _("mcen_fi_account_title"), 
+	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mcen_fi_account_title"), 
 				    priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -458,6 +464,9 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 					      on_entry_max, self);
 	
 	gtk_widget_show (GTK_WIDGET (box));
+
+	g_object_unref (title_sizegroup);
+	g_object_unref (value_sizegroup);
 	
 	return GTK_WIDGET (box);
 }
@@ -465,7 +474,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 static GtkWidget*
 create_page_user_details (ModestEasysetupWizardDialog *self)
 {
-	GtkSizeGroup* sizegroup;
+	GtkSizeGroup* title_sizegroup;
+	GtkSizeGroup* value_sizegroup;
 	GtkWidget *box;
 	ModestEasysetupWizardDialogPrivate *priv;
 
@@ -475,7 +485,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The name widgets: (use auto cap) */
 	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
@@ -487,7 +498,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_name), 64);
 	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name), 
 					      on_entry_max, self);
-	GtkWidget *caption = create_captioned (self, sizegroup, 
+	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_name"), priv->entry_user_name);
 	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
@@ -511,7 +522,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), 
 					 HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_captioned (self, sizegroup, _("mail_fi_username"), 
+	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), 
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -539,7 +550,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
-	caption = create_captioned (self, sizegroup, 
+	caption = create_captioned (self, title_sizegroup, value_sizegroup,
 				    _("mail_fi_password"), priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
@@ -551,7 +562,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_captioned (self, sizegroup, 
+	caption = create_captioned (self, title_sizegroup, value_sizegroup,
 				    _("mcen_li_emailsetup_email_address"), priv->entry_user_email);
 	update_user_email_from_provider (self);
 	gtk_widget_show (priv->entry_user_email);
@@ -568,6 +579,8 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	
 	
 	gtk_widget_show (GTK_WIDGET (box));
+	g_object_unref (title_sizegroup);
+	g_object_unref (value_sizegroup);
 	
 	return GTK_WIDGET (box);
 }
@@ -688,7 +701,8 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	GtkWidget *box; 
 	GtkWidget *scrolled_window;
 	GtkWidget *label;
-	GtkSizeGroup *sizegroup;
+	GtkSizeGroup *title_sizegroup;
+	GtkSizeGroup *value_sizegroup;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
@@ -710,11 +724,12 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
-	sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The incoming server widgets: */
 	priv->incoming_servertype_picker = GTK_WIDGET (modest_servertype_picker_new (MODEST_EDITABLE_SIZE,
-										     MODEST_EDITABLE_ARRANGEMENT,
+										     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
 										     TRUE));
 	hildon_button_set_title (HILDON_BUTTON (priv->incoming_servertype_picker), _("mcen_li_emailsetup_type"));
 	g_signal_connect (G_OBJECT (priv->incoming_servertype_picker), "value-changed",
@@ -731,7 +746,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
-	priv->caption_incoming = create_captioned (self, sizegroup, 
+	priv->caption_incoming = create_captioned (self, title_sizegroup, value_sizegroup,
 						   "Incoming Server", 
 						   priv->entry_incomingserver);
 	update_incoming_server_title (self);
@@ -753,7 +768,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	   protocols with security */	
 	priv->incoming_security = 
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
-							FALSE, sizegroup);
+							FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show_all (priv->incoming_security);
@@ -768,6 +783,9 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolled_window)));
 	gtk_widget_show (GTK_WIDGET (box));
 	gtk_widget_show (scrolled_window);
+
+	g_object_unref (title_sizegroup);
+	g_object_unref (value_sizegroup);
 
 	return GTK_WIDGET (scrolled_window);
 }
@@ -831,7 +849,8 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
-	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkSizeGroup *title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	GtkSizeGroup *value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	 
 	/* The outgoing server widgets: */
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
@@ -840,7 +859,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
                   G_CALLBACK (on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	GtkWidget *caption = create_captioned (self, sizegroup, 
+	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -851,7 +870,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	   protocols with security */	
 	priv->outgoing_security = 
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
-							FALSE, sizegroup);
+							FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->outgoing_security);
@@ -867,7 +886,8 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	g_signal_connect (G_OBJECT (priv->checkbox_outgoing_smtp_specific), "toggled",
                   G_CALLBACK (on_easysetup_changed), self);
 
-	caption = modest_maemo_utils_create_captioned (sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
+	caption = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+						       _("mcen_fi_advsetup_connection_smtp"), 
 						       priv->checkbox_outgoing_smtp_specific);
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -875,7 +895,8 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	
 	/* Connection-specific SMTP-Severs Edit button: */
 	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
-	caption = modest_maemo_utils_create_captioned (sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
+	caption = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+						       _("mcen_fi_advsetup_optional_smtp"), 
 						       priv->button_outgoing_smtp_servers);
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -893,6 +914,9 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	
 	
 	gtk_widget_show (GTK_WIDGET (box));
+
+	g_object_unref (title_sizegroup);
+	g_object_unref (value_sizegroup);
 	
 	return GTK_WIDGET (box);
 }
@@ -948,7 +972,8 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	
-	GtkWidget *caption = modest_maemo_utils_create_captioned (NULL, _("mcen_fi_advanced_settings"), 
+	GtkWidget *caption = modest_maemo_utils_create_captioned (NULL, NULL,
+								  _("mcen_fi_advanced_settings"), 
 								  button_edit);
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);

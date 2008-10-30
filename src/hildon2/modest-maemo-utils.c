@@ -290,39 +290,87 @@ modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager,
 	return new_menu;
 }
 
+/**
+ * modest_maemo_utils_create_captioned:
+ * @title_size_group: a #GtkSizeGroup
+ * @value_size_group: a #GtkSizeGroup
+ * @title: a string
+ * @control: a #GtkWidget
+ *
+ * this creates a widget (a #GtkHBox) with a control, and a label
+ * (@string) captioning it. It also uses the proper size groups for title
+ * and control.
+ *
+ * Returns: a widget containing the control and a proper label.
+ */
 GtkWidget *
-modest_maemo_utils_create_captioned    (GtkSizeGroup *group,
-					const gchar *label_text,
+modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
+					GtkSizeGroup *value_size_group,
+					const gchar *title,
 					GtkWidget *control)
 {
  	GtkWidget *label;
 	GtkWidget *box;
   
-	label = gtk_label_new (label_text);
+	label = gtk_label_new (title);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	gtk_widget_show (label);
-	box = gtk_hbox_new (FALSE, MODEST_MARGIN_NONE);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	box = gtk_hbox_new (TRUE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, MODEST_MARGIN_HALF);
 	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, MODEST_MARGIN_HALF);
-	if (group)
-		gtk_size_group_add_widget (group, label);
+	if (title_size_group)
+		gtk_size_group_add_widget (title_size_group, label);
+	if (value_size_group)
+		gtk_size_group_add_widget (value_size_group, control);
 
 	hildon_gtk_widget_set_theme_size (control, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 
 	return box;
 }
 
+/**
+ * modest_maemo_utils_set_hbutton_layout:
+ * @title_sizegroup: a #GtkSizeGroup, or %NULL
+ * @value_sizegroup: a #GtkSizeGroup, or %NULL
+ * @title: a string
+ * @button: a #HildonButton
+ *
+ * Configures the alignment and layout of @button. If @title_sizegroup is provided,
+ * the title will be aligned to the left using it. If @value_sizegroup is provided,
+ * the value will be aligned to the left using it. It also sets the title
+ * of the button.
+ *
+ * The alignment is left for the title and for the value.
+ */
 void
-modest_maemo_utils_create_picker_layout (GtkSizeGroup *sizegroup, 
-					 const gchar *label, 
-					 GtkWidget *picker)
+modest_maemo_utils_set_hbutton_layout (GtkSizeGroup *title_sizegroup, 
+				       GtkSizeGroup *value_sizegroup,
+				       const gchar *title, 
+				       GtkWidget *button)
 {
-	hildon_button_set_title (HILDON_BUTTON (picker), label);
-	if (sizegroup)
-		hildon_button_add_title_size_group (HILDON_BUTTON (picker), sizegroup);
-	hildon_button_set_alignment (HILDON_BUTTON (picker), 0.0, 0.5, 1.0, 0.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (picker), 0.0, 0.5);
-	hildon_button_set_value_alignment (HILDON_BUTTON (picker), 0.0, 0.5);
+	hildon_button_set_title (HILDON_BUTTON (button), title);
+	if (title_sizegroup)
+		hildon_button_add_title_size_group (HILDON_BUTTON (button), title_sizegroup);
+	if (value_sizegroup)
+		hildon_button_add_title_size_group (HILDON_BUTTON (button), value_sizegroup);
+	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 0.0);
+	hildon_button_set_title_alignment (HILDON_BUTTON (button), 0.0, 0.5);
+	hildon_button_set_value_alignment (HILDON_BUTTON (button), 0.0, 0.5);
+}
+
+void
+modest_maemo_utils_set_vbutton_layout (GtkSizeGroup *sizegroup, 
+				       const gchar *title, 
+				       GtkWidget *button)
+{
+	hildon_button_set_title (HILDON_BUTTON (button), title);
+	if (sizegroup) {
+		hildon_button_add_title_size_group (HILDON_BUTTON (button), sizegroup);
+		hildon_button_add_value_size_group (HILDON_BUTTON (button), sizegroup);
+	}
+	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 0.0);
+	hildon_button_set_title_alignment (HILDON_BUTTON (button), 0.0, 0.5);
+	hildon_button_set_value_alignment (HILDON_BUTTON (button), 0.0, 0.5);
 }
 
 GtkWidget *
