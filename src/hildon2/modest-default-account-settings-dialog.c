@@ -114,6 +114,7 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *entry_user_email;
 /* 	GtkWidget *entry_incoming_port; */
 	GtkWidget *button_signature;
+	GtkWidget *button_delete;
 	
 	GtkWidget *page_complete_easysetup;
 	
@@ -482,6 +483,62 @@ on_button_signature (GtkButton *button, gpointer user_data)
 	}
 }
 
+static void
+on_button_delete (GtkButton *button, gpointer user_data)
+{
+	ModestDefaultAccountSettingsDialog *self;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+	ModestAccountMgr *account_mgr;
+	gchar *account_title = NULL;
+
+	self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	account_mgr = modest_runtime_get_account_mgr();	
+	if(!priv->account_name)
+		return;
+
+	account_title = get_entered_account_title (self);
+	
+	/* The warning text depends on the account type: */
+	gchar *txt = NULL;	
+	gint response;
+	ModestProtocol *protocol;
+
+	protocol = modest_protocol_registry_get_protocol_by_type (
+		modest_runtime_get_protocol_registry (),
+		modest_account_mgr_get_store_protocol (account_mgr, priv->account_name));
+	txt = modest_protocol_get_translation (protocol, 
+					       MODEST_PROTOCOL_TRANSLATION_DELETE_MAILBOX, 
+					       account_title);
+	if (txt == NULL) {
+		txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
+				       account_title);
+	}
+		
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), txt);
+	g_free (txt);
+	txt = NULL;
+		
+	if (response == GTK_RESPONSE_OK) {
+		/* Remove account. If it succeeds then it also removes
+		   the account from the ModestAccountView: */				  
+		gboolean is_default = FALSE;
+		gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
+		if (default_account_name && (strcmp (default_account_name, priv->account_name) == 0))
+			is_default = TRUE;
+		g_free (default_account_name);
+		
+		gboolean removed = modest_account_mgr_remove_account (account_mgr, priv->account_name);
+		if (!removed) {
+			g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
+		}
+		gtk_widget_destroy (GTK_WIDGET (self));
+	}
+	g_free (account_title);
+	
+}
+
 static GtkWidget*
 create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 {
@@ -591,11 +648,20 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->button_signature);
 
+	/* Delete button: */
+	if (!priv->button_delete)
+		priv->button_delete = gtk_button_new_with_label (_("mcen_bd_delete"));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (self)->action_area), priv->button_delete, 
+			    FALSE, FALSE, 0);
+
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
 		
 	g_signal_connect (G_OBJECT (priv->button_signature), "clicked",
         	G_CALLBACK (on_button_signature), self);
+        	
+	g_signal_connect (G_OBJECT (priv->button_delete), "clicked",
+        	G_CALLBACK (on_button_delete), self);
         	
 	gtk_widget_show (GTK_WIDGET (box));
 
@@ -1110,6 +1176,11 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	if (priv->account_name)
 		g_free (priv->account_name);
 	priv->account_name = g_strdup (account_name);
+
+	if (priv->account_name)
+		gtk_widget_show (priv->button_delete);
+	else
+		gtk_widget_hide (priv->button_delete);
 
 	if (priv->settings)
 		g_object_unref (priv->settings);
