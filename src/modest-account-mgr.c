@@ -1591,7 +1591,6 @@ modest_account_mgr_get_default_account  (ModestAccountMgr *self)
 		g_printerr ("modest: failed to get '%s': %s\n",
 			    MODEST_CONF_DEFAULT_ACCOUNT, err->message);
 		g_error_free (err);
-		g_free (account);
 		return  NULL;
 	}
 	
