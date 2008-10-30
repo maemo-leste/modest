@@ -2332,6 +2332,9 @@ setup_drag_and_drop (GtkTreeView *self)
 	/* Set up the folder view as a dnd destination. Set only the
 	   highlight flag, otherwise gtk will have a different
 	   behaviour */
+#ifdef MODEST_TOOLKIT_HILDON2
+	return;
+#endif
 	gtk_drag_dest_set (GTK_WIDGET (self),
 			   GTK_DEST_DEFAULT_HIGHLIGHT,
 			   folder_view_drag_types,

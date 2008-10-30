@@ -48,6 +48,9 @@
 #include <tny-camel-folder.h>
 #include <tny-camel-imap-folder.h>
 #include <tny-camel-pop-folder.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-pannable-area.h>
+#endif
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include "maemo/modest-osso-state-saving.h"
@@ -4617,7 +4620,12 @@ create_move_to_dialog (GtkWindow *win,
 		       GtkWidget *folder_view,
 		       GtkWidget **tree_view)
 {
-	GtkWidget *dialog, *scroll;
+	GtkWidget *dialog;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *pannable;
+#else
+	GtkWidget *scroll;
+#endif
 	GtkWidget *new_button, *ok_button;
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
@@ -4650,10 +4658,14 @@ create_move_to_dialog (GtkWindow *win,
 	g_object_set_data (G_OBJECT (dialog), MOVE_FOLDER_NEW_BUTTON, new_button);
 
 	/* Create scrolled window */
+#ifdef MODEST_TOOLKIT_HILDON2
+	pannable = hildon_pannable_area_new ();
+#else
 	scroll = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (scroll),
 					 GTK_POLICY_AUTOMATIC,
 					 GTK_POLICY_AUTOMATIC);
+#endif
 
 #ifdef MODEST_TOOLKIT_GTK
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll), GTK_SHADOW_IN);
@@ -4731,11 +4743,17 @@ create_move_to_dialog (GtkWindow *win,
 	/* Hide special folders */
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (*tree_view), FALSE);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_container_add (GTK_CONTAINER (pannable), *tree_view);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    pannable, TRUE, TRUE, 0);
+#else
 	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
-
 	/* Add scroll to dialog */
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
 			    scroll, TRUE, TRUE, 0);
+#endif
+
 
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 #ifndef MODEST_TOOLKIT_GTK
