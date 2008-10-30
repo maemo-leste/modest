@@ -41,7 +41,6 @@
 #include <gtk/gtknotebook.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkcheckbutton.h>
-#include <gtk/gtkhseparator.h>
 #include "modest-runtime.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-selector-picker.h"
@@ -50,6 +49,7 @@
 #include "widgets/modest-ui-constants.h"
 #include "modest-text-utils.h"
 #include <tny-account-store.h>
+#include <modest-account-mgr-helpers.h>
 
 
 #define MSG_SIZE_MAX_VAL 5000
@@ -78,6 +78,7 @@ static void       on_size_notify         (HildonNumberEditor *editor,
 static void       on_auto_update_clicked (GtkButton *button,
 					  gpointer user_data);
 static void       update_sensitive       (ModestGlobalSettingsDialog *dialog);
+static ModestPairList * get_accounts_list (void);
 
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
@@ -195,11 +196,13 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 	GtkWidget *pannable;
+	ModestMaemoGlobalSettingsDialogPrivate *priv;
 
+	priv = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
-	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 
-	vbox_update = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	vbox_update = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
@@ -238,17 +241,40 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 					       ppriv->update_interval);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->update_interval, FALSE, FALSE, MODEST_MARGIN_HALF);
 
+	/* Default account selector */
+	ppriv->accounts_list = get_accounts_list ();
+	ppriv->default_account_selector = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+								      HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+								      ppriv->accounts_list,
+								      g_str_equal);
+	if (ppriv->accounts_list == NULL) {
+		gtk_widget_set_sensitive (GTK_WIDGET (ppriv->default_account_selector), FALSE);
+	} else {
+		gchar *default_account;
+
+		default_account = modest_account_mgr_get_default_account (
+			modest_runtime_get_account_mgr ());
+		if (default_account) {
+			modest_selector_picker_set_active_id (
+				MODEST_SELECTOR_PICKER (ppriv->default_account_selector),
+				default_account);
+			g_free (default_account);
+		}
+	}
+	modest_maemo_utils_set_vbutton_layout (title_size_group, 
+					       _("mcen_ti_default_account"), 
+					       ppriv->default_account_selector);
+	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->default_account_selector, 
+			    FALSE, FALSE, MODEST_MARGIN_HALF);
+
 	/* Add to vbox */
 	gtk_box_pack_start (GTK_BOX (vbox), vbox_update, FALSE, FALSE, MODEST_MARGIN_HALF);
-
-	/* Separator */
-	gtk_box_pack_start (GTK_BOX (vbox), gtk_hseparator_new (), FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
 
 	/* Limits */
-	vbox_limit = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	vbox_limit = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
@@ -264,9 +290,6 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (vbox_limit), hbox, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show_all (vbox_limit);
-
-	/* Separator */
-	gtk_box_pack_start (GTK_BOX (vbox), gtk_hseparator_new (), FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Note: This ModestPairList* must exist for as long as the picker
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
@@ -387,3 +410,48 @@ current_connection (void)
 	return modest_platform_get_current_connection ();
 }
 
+static ModestPairList * 
+get_accounts_list (void)
+{
+	GSList *list = NULL;
+	GSList *cursor, *account_names;
+	ModestAccountMgr *account_mgr;
+
+	account_mgr = modest_runtime_get_account_mgr ();
+
+	cursor = account_names = modest_account_mgr_account_names (account_mgr, TRUE /*only enabled*/);
+	while (cursor) {
+		gchar *account_name;
+		ModestAccountSettings *settings;
+		ModestServerAccountSettings *store_settings;
+		
+		account_name = (gchar*)cursor->data;
+		
+		settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
+		if (!settings) {
+			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			continue;
+		}
+		store_settings = modest_account_settings_get_store_settings (settings);
+
+		/* don't display accounts without stores */
+		if (modest_server_account_settings_get_account_name (store_settings) != NULL) {
+
+			if (modest_account_settings_get_enabled (settings)) {
+				ModestPair *pair;
+
+				pair = modest_pair_new (
+					g_strdup (account_name),
+					g_strdup (modest_account_settings_get_display_name (settings)),
+					FALSE);
+				list = g_slist_prepend (list, pair);
+			}
+		}
+		
+		g_object_unref (store_settings);
+		g_object_unref (settings);
+		cursor = cursor->next;
+	}
+
+	return (ModestPairList *) g_slist_reverse (list);
+}

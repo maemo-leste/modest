@@ -136,6 +136,8 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	priv->notebook = gtk_notebook_new ();
+	priv->default_account_selector = NULL;
+	priv->accounts_list = NULL;
 
 	/* Connect to the dialog's response signal: */
 	g_signal_connect (G_OBJECT (self), "response", G_CALLBACK (on_response), self);
@@ -154,6 +156,7 @@ modest_global_settings_dialog_finalize (GObject *obj)
 	modest_pair_list_free (priv->connect_via_list);
 	modest_pair_list_free (priv->update_interval_list);
 	modest_pair_list_free (priv->msg_format_list);
+	modest_pair_list_free (priv->accounts_list);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -364,9 +367,11 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 #ifdef MODEST_TOOLKIT_HILDON2
 	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->connect_via));
 	state->auto_update = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->auto_update));
+	state->default_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->default_account_selector));
 #else
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
 	state->auto_update = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
+	state->default_account = NULL;
 #endif
 	state->connect_via = *id;
 #ifndef MODEST_TOOLKIT_GTK
@@ -418,24 +423,30 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, current_state.prefer_formatted_text, NULL);
 	RETURN_FALSE_ON_ERROR(error);
+	if (current_state.default_account &&
+	    (!priv->initial_state.default_account || 
+	     strcmp (current_state.default_account, priv->initial_state.default_account)!= 0)) {
+		modest_account_mgr_set_default_account (modest_runtime_get_account_mgr (),
+							current_state.default_account);
+	}
 
 	/* Apply changes */
 	if (priv->initial_state.auto_update != current_state.auto_update || 
 	    priv->initial_state.connect_via != current_state.connect_via ||
 	    priv->initial_state.update_interval != current_state.update_interval) {
-
+		
 		TnyAccountStore *account_store;
 		TnyDevice *device;
-
+		
 		if (!current_state.auto_update) {
 			modest_platform_set_update_interval (0);
 			/* To avoid a new indentation level */
 			goto exit;
 		}
-
+		
 		account_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 		device = tny_account_store_get_device (account_store);
-
+		
 		if (tny_device_is_online (device)) {
 			/* If connected via any then set update interval */
 			if (current_state.connect_via == MODEST_CONNECTED_VIA_ANY) {
@@ -459,7 +470,7 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 		}
 		g_object_unref (device);
 	}
-
+	
 exit:
 	return TRUE;
 }
@@ -473,7 +484,10 @@ settings_changed (ModestGlobalSettingsState initial_state,
 	    initial_state.update_interval != current_state.update_interval ||
 	    initial_state.size_limit != current_state.size_limit ||
 	    initial_state.play_sound != current_state.play_sound ||
-	    initial_state.prefer_formatted_text != current_state.prefer_formatted_text)
+	    initial_state.prefer_formatted_text != current_state.prefer_formatted_text ||
+	    (current_state.default_account &&
+	     (!initial_state.default_account || 
+	      strcmp (current_state.default_account, initial_state.default_account)!= 0)))
 		return TRUE;
 	else
 		return FALSE;
