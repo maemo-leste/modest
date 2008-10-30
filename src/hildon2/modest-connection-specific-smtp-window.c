@@ -63,7 +63,6 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 {
 	GtkTreeView *treeview;
 	GtkTreeModel *model;
-	GtkWidget *button_edit;
 	
 	ModestAccountMgr *account_manager;
 };
@@ -226,7 +225,7 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 }
 	
 static void
-on_button_edit (ModestConnectionSpecificSmtpWindow *self)
+edit_account (ModestConnectionSpecificSmtpWindow *self, GtkTreePath *path)
 {
 	ModestConnectionSpecificSmtpWindowPrivate *priv = CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
@@ -235,10 +234,8 @@ on_button_edit (ModestConnectionSpecificSmtpWindow *self)
 	gchar *connection_name = NULL;
 	gchar *server_account_name = NULL;
 	ModestServerAccountSettings *server_settings = NULL;
-	GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->treeview));
 	GtkTreeIter iter;
-	GtkTreeModel *model = 0;
-	if (gtk_tree_selection_get_selected (sel, &model, &iter)) {
+	if (gtk_tree_model_get_iter (priv->model, &iter, path)) {
 		gtk_tree_model_get (priv->model, &iter,
 				    MODEL_COL_ID, &id,
 				    MODEL_COL_NAME, &connection_name,
@@ -308,17 +305,10 @@ on_button_edit (ModestConnectionSpecificSmtpWindow *self)
 }
 
 static void
-on_selection_changed (GtkTreeSelection *sel, ModestConnectionSpecificSmtpWindow *self)
+on_row_activated (GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn *column, 
+		  ModestConnectionSpecificSmtpWindow *self)
 {
-	ModestConnectionSpecificSmtpWindowPrivate *priv = 
-		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
-
-	GtkTreeModel *model = NULL;
-	GtkTreeIter iter;
-	const gboolean has_selection =
-		gtk_tree_selection_get_selected (sel, &model, &iter);
-
-	gtk_widget_set_sensitive (priv->button_edit, has_selection);
+	edit_account (self, path);
 }
 
 static void
@@ -326,9 +316,8 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 {
 	ModestWindowMgr *mgr;
 
-	/* Specify a default size, because the GtkTreeView's default requested size  
-	 * is not big enough: */
-	gtk_window_set_default_size (GTK_WINDOW (self), 500, 300);
+	/* Specify a default size */
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, 320);
 	
 	/* This seems to be necessary to make the window show at the front with decoration.
 	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
@@ -347,13 +336,8 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 		G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER));
 
 	/* Setup the tree view: */
-	priv->treeview = GTK_TREE_VIEW (hildon_gtk_tree_view_new_with_model (HILDON_UI_MODE_EDIT, priv->model));
+	priv->treeview = GTK_TREE_VIEW (hildon_gtk_tree_view_new_with_model (HILDON_UI_MODE_NORMAL, priv->model));
 
-	/* Show the column headers,
-	 * which does not seem to be the default on Maemo.
-	 */
-	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(priv->treeview), TRUE);
-	
 	/* name column:
 	 * The ID model column in not shown in the view. */
 	GtkTreeViewColumn *view_column = gtk_tree_view_column_new ();
@@ -361,7 +345,6 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_tree_view_column_pack_start(view_column, renderer, TRUE);
 	gtk_tree_view_column_set_attributes (view_column, renderer, 
 	"text", MODEL_COL_NAME, NULL);
-	gtk_tree_view_column_set_title (view_column, _("mcen_ia_optionalsmtp_connection_name"));
 	gtk_tree_view_append_column (priv->treeview, view_column);
 
 	
@@ -371,7 +354,6 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_tree_view_column_pack_start(view_column, renderer, TRUE);
 	gtk_tree_view_column_set_attributes (view_column, renderer, 
 	"text", MODEL_COL_SERVER_NAME, NULL);
-	gtk_tree_view_column_set_title (view_column, _("mcen_ia_optionalsmtp_servername"));
 	gtk_tree_view_append_column (priv->treeview, view_column);
 	
 	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
@@ -383,6 +365,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* TODO: For some reason this label does not wrap. It is truncated. */
 	GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	/* So that it is shown without being truncated: */
 	/* gtk_label_set_max_width_chars (GTK_LABEL (label), 20); */
 	/* The documentation for gtk_label_set_line_wrap() says that we must 
@@ -402,14 +385,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_widget_show (GTK_WIDGET (priv->treeview));
 	gtk_widget_show (vbox);
 	
-	/* Hack: we use the response apply to identify the click on the edit button */
-	priv->button_edit = gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_edit"), GTK_RESPONSE_APPLY);
-	
-	/* Disable the Edit button when nothing is selected: */
-	GtkTreeSelection *sel = gtk_tree_view_get_selection (priv->treeview);
-	g_signal_connect (sel, "changed",
-			  G_CALLBACK(on_selection_changed), self);
-	on_selection_changed (sel, self);
+	g_signal_connect (G_OBJECT (priv->treeview), "row-activated", G_CALLBACK (on_row_activated), self);
 	
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
@@ -563,18 +539,6 @@ on_response (GtkDialog *dialog,
 	     gint response,
 	     gpointer user_data)
 {
-	switch (response) {
-	case GTK_RESPONSE_APPLY:
-		/* We use it for the edit button */
-		on_button_edit (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog));
-		g_signal_stop_emission_by_name (dialog, "response");
-		break;
-	case GTK_RESPONSE_CLOSE:
-	case GTK_RESPONSE_NONE:
-	case GTK_RESPONSE_DELETE_EVENT:
-		/* Generated as a response to delete-event, i.e,
-		   pressin Esc, or by pressing the Close button */
-		modest_connection_specific_smtp_window_save_server_accounts (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog));
-		gtk_widget_destroy (GTK_WIDGET (dialog));
-	}
+	modest_connection_specific_smtp_window_save_server_accounts (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog));
+	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
