@@ -956,7 +956,7 @@ modest_account_mgr_get_list (ModestAccountMgr *self, const gchar *name,
 		g_printerr ("modest: error getting list '%s': %s\n", keyname,
 			    err->message);
 		g_error_free (err);
-		retval = FALSE;
+		retval = NULL;
 	}
 	return retval;
 }
