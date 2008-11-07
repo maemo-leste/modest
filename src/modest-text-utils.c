@@ -278,6 +278,11 @@ modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 {
         struct tm tm;
 
+	/* To prevent possible problems in strftime that could leave
+	   garbage in the s variable */
+	if (s)
+		s[0] = '\0';
+
 	/* does not work on old maemo glib: 
 	 *   g_date_set_time_t (&date, timet);
 	 */
@@ -995,7 +1000,7 @@ cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
 	return match2->offset - match1->offset;
 }
 
-static gboolean url_matches_block = 0;
+static gint url_matches_block = 0;
 static url_match_pattern_t patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
 
 
