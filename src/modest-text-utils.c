@@ -1304,7 +1304,8 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 	if (!insensitive) {
 
 		/* optimization: shortcut if first char is ascii */ 
-		if (((s1[0] & 0xf0)== 0) && ((s2[0] & 0xf0) == 0)) 
+		if (((s1[0] & 0x80)== 0) && ((s2[0] & 0x80) == 0) &&
+		    (s1[0] != s2[0])) 
 			return s1[0] - s2[0];
 		
 		return g_utf8_collate (s1, s2);
@@ -1313,8 +1314,9 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 		gint result;
 		gchar *n1, *n2;
 
-		/* optimization: short cut iif first char is ascii */ 
-		if (((s1[0] & 0xf0) == 0) && ((s2[0] & 0xf0) == 0)) 
+		/* optimization: shortcut if first char is ascii */ 
+		if (((s1[0] & 0x80) == 0) && ((s2[0] & 0x80) == 0) &&
+		    (s1[0] != s2[0])) 
 			return tolower(s1[0]) - tolower(s2[0]);
 		
 		n1 = g_utf8_strdown (s1, -1);
