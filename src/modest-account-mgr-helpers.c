@@ -99,8 +99,10 @@ ModestProtocolType modest_account_mgr_get_store_protocol (ModestAccountMgr *self
 }
 
 
-gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
-	const gchar* connection_id, const gchar* server_account_name)
+gboolean 
+modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self, 
+						 const gchar* connection_id, 
+						 const gchar* server_account_name)
 {
 	modest_account_mgr_remove_connection_specific_smtp (self, connection_id);
 	
@@ -117,8 +119,8 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 		result = FALSE;
 	} else {	
 		/* The server account is in the item after the connection name: */
-		list = g_slist_append (list, (gpointer)connection_id);
-		list = g_slist_append (list, (gpointer)server_account_name);
+		list = g_slist_append (list, g_strdup (connection_id));
+		list = g_slist_append (list, g_strdup (server_account_name));
 	
 		/* Reset the changed list: */
 		modest_conf_set_list (conf, MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST, list,
@@ -130,8 +132,11 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
 		}
 	}
 				
-	/* TODO: Should we free the items too, or just the list? */
-	g_slist_free (list);
+	/* Free the list */
+	if (list) {
+		g_slist_foreach (list, (GFunc) g_free, NULL);
+		g_slist_free (list);
+	}
 	
 	return result;
 }
@@ -146,8 +151,9 @@ gboolean modest_account_mgr_set_connection_specific_smtp (ModestAccountMgr *self
  *
  * Returns: TRUE if it worked, FALSE otherwise
  */				 
-gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, 
-	const gchar* connection_id)
+gboolean 
+modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *self, 
+						    const gchar* connection_id)
 {
 	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
 	
@@ -184,8 +190,11 @@ gboolean modest_account_mgr_remove_connection_specific_smtp (ModestAccountMgr *s
 		result = FALSE;
 	}
 				
-	/* TODO: Should we free the items too, or just the list? */
-	g_slist_free (list);
+	/* Free the list */
+	if (list) {
+		g_slist_foreach (list, (GFunc) g_free, NULL);
+		g_slist_free (list);
+	}
 	
 	return result;
 }
@@ -253,14 +262,11 @@ gchar* modest_account_mgr_get_connection_specific_smtp (ModestAccountMgr *self, 
 			iter = g_slist_next (iter);
 	}
 		
-	/*
-	if (!result) {
-		printf ("  debug: no server found for connection_id=%s.\n", connection_id);	
+	/* Free the list */
+	if (list) {
+		g_slist_foreach (list, (GFunc) g_free, NULL);
+		g_slist_free (list);
 	}
-	*/
-				
-	/* TODO: Should we free the items too, or just the list? */
-	g_slist_free (list);
 	
 	return result;
 }
