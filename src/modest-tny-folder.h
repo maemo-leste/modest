@@ -53,13 +53,7 @@ typedef enum {
  * functions for working with a TnyFolder. tinymail does not seem to offer any 
  * easy way to cause derived TnyFolders to be instantiated.
  */
- 
-/* TODO: These "const TnyFolder*" arguments will eventually need to 
- * be "TnyFolder*". C cannot support constness for complex objects like C++ 
- * can, because it lacks the mutable keyword and doesn't allow both const 
- * and non-const get function overloads.
- */
- 
+  
 /**
  * modest_tny_folder_guess_type:
  * @folder: a valid tnymail folder
@@ -138,7 +132,7 @@ ModestTnyFolderRules  modest_tny_folder_get_rules   (TnyFolder *folder);
  *  
  * Returns: get the help_id for this folder, or NULL in case of error
  */
-const gchar* modest_tny_folder_get_help_id (const TnyFolder *folder);
+const gchar* modest_tny_folder_get_help_id (TnyFolder *folder);
 
 
 /**

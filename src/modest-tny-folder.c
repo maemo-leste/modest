@@ -104,7 +104,7 @@ modest_tny_folder_guess_folder_type (TnyFolder *folder)
 
 
 const gchar*
-modest_tny_folder_get_help_id (const TnyFolder *folder)
+modest_tny_folder_get_help_id (TnyFolder *folder)
 {
 	TnyFolderType type;
 	const gchar* help_id = NULL;
