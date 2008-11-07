@@ -154,7 +154,8 @@ modest_protocol_registry_instance_init (ModestProtocolRegistry *obj)
 
 	priv = MODEST_PROTOCOL_REGISTRY_GET_PRIVATE (obj);
 
-	priv->tags_table = g_hash_table_new (g_str_hash, g_str_equal);
+	priv->tags_table = g_hash_table_new_full (g_str_hash, g_str_equal, 
+						  g_free, (GDestroyNotify) g_hash_table_unref);
 	priv->priorities = g_hash_table_new (g_direct_hash, g_direct_equal);
 	
 	modest_protocol_registry_create_tag (obj, TAG_ALL_PROTOCOLS);
@@ -163,6 +164,15 @@ modest_protocol_registry_instance_init (ModestProtocolRegistry *obj)
 static void   
 modest_protocol_registry_finalize   (GObject *obj)
 {
+	ModestProtocolRegistryPrivate *priv;
+
+	priv = MODEST_PROTOCOL_REGISTRY_GET_PRIVATE (obj);
+
+	/* Free hash tables */
+	if (priv->tags_table)
+		g_hash_table_unref (priv->tags_table);
+	if (priv->priorities)
+		g_hash_table_unref (priv->priorities);
 
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
@@ -205,7 +215,7 @@ modest_protocol_registry_add (ModestProtocolRegistry *self, ModestProtocol *prot
 		tag_table = g_hash_table_lookup (priv->tags_table, node->data);
 		if (tag_table == NULL)
 			tag_table = modest_protocol_registry_create_tag (self, node->data);
-		g_hash_table_insert (tag_table, GINT_TO_POINTER (modest_protocol_get_type_id (protocol)), protocol);
+		g_hash_table_insert (tag_table, GINT_TO_POINTER (modest_protocol_get_type_id (protocol)), g_object_ref (protocol));
 	}
 	g_slist_free (tags_list);
 }
@@ -372,7 +382,8 @@ modest_protocol_registry_create_tag (ModestProtocolRegistry *self, const gchar *
 
 	g_assert (tag != NULL);
 	priv = MODEST_PROTOCOL_REGISTRY_GET_PRIVATE (self);
-	tag_table = g_hash_table_new (g_direct_hash, g_direct_equal);
+	tag_table = g_hash_table_new_full (g_direct_hash, g_direct_equal, 
+					   NULL, g_object_unref);
 	g_hash_table_insert (priv->tags_table, g_strdup (tag), tag_table);
 
 	return tag_table;
