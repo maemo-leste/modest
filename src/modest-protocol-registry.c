@@ -429,6 +429,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
 
 	protocol = modest_account_protocol_new ("smtp", N_("SMTP Server"),
 						25, 465,
@@ -440,6 +441,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
 
 	protocol = modest_account_protocol_new ("pop", _("mail_fi_emailtype_pop3"),
 						110, 995,
@@ -457,6 +459,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_HAS_LEAVE_ON_SERVER_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD,
 				      NULL);
+	g_object_unref (protocol);
 
 	protocol = modest_account_protocol_new ("imap", _("mail_fi_emailtype_imap"),
 						143, 993,
@@ -483,6 +486,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS,
 				      NULL);
+	g_object_unref (protocol);
 
 	protocol = modest_account_protocol_new ("maildir", N_("Maildir"),
 						0, 0,
@@ -496,6 +500,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_LOCAL_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS,
 				      NULL);
+	g_object_unref (protocol);
 
 	protocol = modest_account_protocol_new ("mbox", N_("MBox"),
 						0, 0,
@@ -509,6 +514,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_LOCAL_STORE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS,
 				      NULL);
+	g_object_unref (protocol);
 
 	protocol = modest_protocol_new ("none", N_("None"));
 	modest_protocol_set (protocol, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION, MODEST_ACCOUNT_OPTION_SSL_NEVER);
@@ -516,6 +522,8 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 	modest_protocol_registry_add (self, protocol, 7,
 				      MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
+
 	protocol = modest_protocol_new ("ssl", N_("SSL"));
 	modest_protocol_set (protocol, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION, MODEST_ACCOUNT_OPTION_SSL_WRAPPED);
 	ssl_connection_protocol_type_id = modest_protocol_get_type_id (protocol);
@@ -524,6 +532,8 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_USE_ALTERNATE_PORT,
 				      NULL);
+	g_object_unref (protocol);
+
 	protocol = modest_protocol_new ("tls", N_("TLS"));
 	modest_protocol_set (protocol, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION, MODEST_ACCOUNT_OPTION_SSL_TLS);
 	tls_connection_protocol_type_id = modest_protocol_get_type_id (protocol);
@@ -531,6 +541,8 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
+
 	protocol = modest_protocol_new ("tls-op", N_("TLS when possible"));
 	modest_protocol_set (protocol, MODEST_PROTOCOL_SECURITY_ACCOUNT_OPTION, MODEST_ACCOUNT_OPTION_SSL_WHEN_POSSIBLE);
 	tlsop_connection_protocol_type_id = modest_protocol_get_type_id (protocol);
@@ -538,12 +550,16 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
+
 	protocol = modest_protocol_new (MODEST_ACCOUNT_AUTH_MECH_VALUE_NONE, _("mcen_fi_advsetup_smtp_none"));
 	none_auth_protocol_type_id = modest_protocol_get_type_id (protocol);
 	modest_protocol_set (protocol, MODEST_PROTOCOL_AUTH_ACCOUNT_OPTION, MODEST_ACCOUNT_AUTH_PLAIN);
 	modest_protocol_registry_add (self, protocol, 11,
 				      MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
+
 	protocol = modest_protocol_new (MODEST_ACCOUNT_AUTH_MECH_VALUE_PASSWORD, _("mcen_fi_advsetup_smtp_login"));
 	password_auth_protocol_type_id = modest_protocol_get_type_id (protocol);
 	modest_protocol_set (protocol, MODEST_PROTOCOL_AUTH_ACCOUNT_OPTION, MODEST_ACCOUNT_AUTH_PASSWORD);
@@ -551,6 +567,8 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS,
 				      NULL);
+	g_object_unref (protocol);
+
 	protocol = modest_protocol_new (MODEST_ACCOUNT_AUTH_MECH_VALUE_CRAMMD5, _("mcen_fi_advsetup_smtp_cram_md5"));
 	crammd5_auth_protocol_type_id = modest_protocol_get_type_id (protocol);
 	modest_protocol_set (protocol, MODEST_PROTOCOL_AUTH_ACCOUNT_OPTION, MODEST_ACCOUNT_AUTH_CRAMMD5);
@@ -558,35 +576,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 				      MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS,
 				      MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS,
 				      NULL);
-
-#if 0
-	/********** WARNING: Test code ( *********/
-#include "modest-testplugin-protocol.h"
-	protocol = (ModestProtocol *)
-		modest_testplugin_protocol_new ("testplugin", _("mcen_va_testplugin"),
-						 80, 443,
-						 TNY_TYPE_CAMEL_IMAP_STORE_ACCOUNT);
-	modest_protocol_registry_add (self, protocol, 50,
-				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
-				      MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS,
-				      MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS,
-				      MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS,
-				      MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
-				      NULL);
-
-	protocol =  (ModestProtocol *)
-		modest_testplugin_protocol_new ("testplugin-transport", _("mcen_va_testplugin"),
-						 80, 443,
-						 TNY_TYPE_CAMEL_TRANSPORT_ACCOUNT);
-	modest_protocol_registry_add (self, protocol, 51,
-				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
-				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
-				      MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
-				      NULL);
-
-	/********* WARNING: Test code ( *********/
-#endif
-
+	g_object_unref (protocol);
 
 	/* set the custom auth mechs. We do this after creating all the protocols, because if we don't, then we
 	 * won't register the auth protocol type id's properly */

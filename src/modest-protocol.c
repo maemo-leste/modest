@@ -183,10 +183,10 @@ modest_protocol_finalize   (GObject *obj)
 	g_free (priv->display_name);
 	priv->display_name = NULL;
 
-	g_hash_table_destroy (priv->properties);
+	g_hash_table_unref (priv->properties);
 	priv->properties = NULL;
 
-	g_hash_table_destroy (priv->translations);
+	g_hash_table_unref (priv->translations);
 	priv->translations = NULL;
 
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
@@ -350,7 +350,7 @@ modest_protocol_set_translation (ModestProtocol *self,
 	translation->userdata = userdata;
 	translation->data_destroy_func = data_destroy_func;
 
-	g_hash_table_replace (priv->translations, (gpointer) id, (gpointer) translation);
+	g_hash_table_replace (priv->translations, g_strdup(id), (gpointer) translation);
 }
 
 gchar *
