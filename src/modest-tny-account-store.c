@@ -1973,6 +1973,12 @@ modest_tny_account_store_new_connection_specific_transport_account (ModestTnyAcc
 	return TNY_TRANSPORT_ACCOUNT (tny_account);
 }
 
+static void 
+foreach_free_string(gpointer data,
+		    gpointer user_data)
+{
+	g_free (data);
+}
 
 static void
 add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
@@ -1989,6 +1995,7 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 	if (err) {
 		g_error_free (err);
 		g_return_if_reached ();
+		return;
 	}
 				
 	/* Look at each connection-specific transport account for the 
@@ -2007,6 +2014,10 @@ add_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 		}				
 		iter = g_slist_next (iter);
 	}
+
+	/* Free the list */
+	g_slist_foreach (list_specifics, foreach_free_string, NULL);
+	g_slist_free (list_specifics);
 }
 
 static void
@@ -2025,6 +2036,7 @@ remove_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 	if (err) {
 		g_error_free (err);
 		g_return_if_reached ();
+		return;
 	}
 				
 	/* Look at each connection-specific transport account for the 
@@ -2046,6 +2058,10 @@ remove_connection_specific_transport_accounts (ModestTnyAccountStore *self)
 		}				
 		iter = g_slist_next (iter);
 	}
+
+	/* Free the list */
+	g_slist_foreach (list_specifics, foreach_free_string, NULL);
+	g_slist_free (list_specifics);
 }
 
 
