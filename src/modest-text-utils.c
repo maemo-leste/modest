@@ -1269,7 +1269,7 @@ modest_text_utils_get_subject_prefix_len (const gchar *sub)
 		int c = prefix_len + 1;
 		while (sub[c] && sub[c] != ']')
 			++c;
-		if (sub[c])
+		if (!sub[c])
 			return 0; /* no end to the ']' found */
 		else
 			prefix_len = c + 1;
