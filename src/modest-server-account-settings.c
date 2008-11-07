@@ -121,8 +121,13 @@ modest_server_account_settings_finalize   (GObject *obj)
 	priv->hostname = NULL;
 	g_free (priv->username);
 	priv->username = NULL;
-	g_free (priv->password);
+
+	if (priv->password) {
+		bzero (priv->password, strlen (priv->password));
+		g_free (priv->password);
+	}
 	priv->password = NULL;
+
 	priv->protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	priv->port = 0;
 	priv->security_protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
@@ -234,7 +239,10 @@ modest_server_account_settings_set_password (ModestServerAccountSettings *settin
 	g_return_if_fail (MODEST_IS_SERVER_ACCOUNT_SETTINGS (settings));
 
 	priv = MODEST_SERVER_ACCOUNT_SETTINGS_GET_PRIVATE (settings);
-	g_free (priv->password);
+	if (priv->password) {
+		bzero (priv->password, strlen (priv->password));
+		g_free (priv->password);
+	}
 	priv->password = g_strdup (password);
 }
 
