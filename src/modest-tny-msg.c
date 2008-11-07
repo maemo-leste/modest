@@ -755,7 +755,7 @@ static gchar*
 get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	    ModestTnyMsgReplyMode reply_mode)
 {
-	const gchar* old_reply_to;
+	gchar* old_reply_to;
 	gchar* old_from;
 	gchar* new_to;
 	
@@ -771,12 +771,11 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 
 
 	/* reply to sender, use ReplyTo or From */
-	//old_reply_to = tny_header_get_replyto (header);
 	old_reply_to = modest_tny_mime_part_get_header_value (TNY_MIME_PART(msg), 
 							      "Reply-To"); 
 	old_from     = tny_header_dup_from (header);
 	
-	if (!old_from &&  !old_reply_to) {
+	if (!old_from && !old_reply_to) {
 		g_warning ("%s: failed to get either Reply-To: or From: from header",
 			   __FUNCTION__);
 		return NULL;
@@ -792,6 +791,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 		/* otherwise use either Reply-To: (preferred) or From: */
 		new_to = g_strdup (old_reply_to ? old_reply_to : old_from);
 	g_free (old_from);
+	g_free (old_reply_to);
 
 	/* in case of ReplyAll, we need to add the Recipients in the old To: */
 	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
