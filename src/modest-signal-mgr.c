@@ -89,9 +89,9 @@ obj_in_a_signal_handler (gconstpointer a,
 
 	if (list_item_handler->obj == handler->obj &&
 	    !strcmp (list_item_handler->signal_name, handler->signal_name))
-		return 0;
+		return FALSE;
 	else 
-		return 1;
+		return TRUE;
 }
 
 GSList *
