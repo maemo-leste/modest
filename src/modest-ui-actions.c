@@ -3390,7 +3390,7 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 		return;
 
 	if (TNY_IS_FOLDER (folder)) {
-		gchar *folder_name;
+		gchar *folder_name = NULL;
 		gint response;
 		const gchar *current_name;
 		TnyFolderStore *parent;
