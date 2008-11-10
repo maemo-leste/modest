@@ -66,7 +66,11 @@ struct _ModestAttachmentViewPrivate
 
 };
 
+#ifdef MODEST_TOOLKIT_HILDON2
+#define UNKNOWN_FILE_ICON "filemanager_unknown_file_48"
+#else
 #define UNKNOWN_FILE_ICON "qgn_list_gene_unknown_file"
+#endif
 
 #define MODEST_ATTACHMENT_VIEW_GET_PRIVATE(o)	\
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_ATTACHMENT_VIEW, ModestAttachmentViewPrivate))

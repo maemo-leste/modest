@@ -2776,13 +2776,13 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 
 		switch (priority_flags) {
 		case TNY_HEADER_FLAG_HIGH_PRIORITY:
-			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_high", GTK_ICON_SIZE_MENU);
+			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), MODEST_HEADER_ICON_HIGH, GTK_ICON_SIZE_MENU);
 			gtk_widget_show (priv->priority_icon);
 			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityHighMenu");
 			break;
 		case TNY_HEADER_FLAG_LOW_PRIORITY:
-			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_low", GTK_ICON_SIZE_MENU);
+			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "MODEST_HEADER_ICON_LOW", GTK_ICON_SIZE_MENU);
 			gtk_widget_show (priv->priority_icon);
 			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
 								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityLowMenu");
