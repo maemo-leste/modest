@@ -3772,6 +3772,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		*remember = FALSE;
 */
 
+	g_free (initial_username);
 	gtk_widget_destroy (dialog);
 	g_slice_free (PasswordDialogFields, fields);
 	
