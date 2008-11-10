@@ -3618,6 +3618,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		g_warning("%s: Could not get server name for server account '%s'", __FUNCTION__, server_account_name);
 		if (cancel)
 			*cancel = TRUE;
+		gtk_widget_destroy (dialog);
 		return;
 	}
 	
