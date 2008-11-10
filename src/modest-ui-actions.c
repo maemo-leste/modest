@@ -3732,6 +3732,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 							   "username in the get_password() callback.\n", __FUNCTION__);
 					}
 				} else {
+					g_free (*username);
 					/* Show error */
 					modest_platform_information_banner (GTK_WIDGET (dialog), NULL, 
 									    _("mcen_ib_username_pw_incorrect"));
@@ -4007,8 +4008,8 @@ modest_ui_actions_on_paste (GtkAction *action,
 			gtk_text_buffer_paste_clipboard (buffer, clipboard, NULL, TRUE);
 		} else if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
 			ModestMailOperation *mail_op;
-			TnyFolder *src_folder;
-			TnyList *data;
+			TnyFolder *src_folder = NULL;
+			TnyList *data = NULL;
 			gboolean delete;
 			PasteAsAttachmentHelper *helper = g_new0 (PasteAsAttachmentHelper, 1);
 			helper->window = MODEST_MSG_EDIT_WINDOW (window);
@@ -4028,6 +4029,12 @@ modest_ui_actions_on_paste (GtkAction *action,
 								     helper,
 								     paste_as_attachment_free);
 			}
+			/* Free */
+			if (data) 
+				g_object_unref (data);
+			if (src_folder) 
+				g_object_unref (src_folder);
+
 		}
 	} else if (MODEST_IS_FOLDER_VIEW (focused_widget)) {
 		ModestEmailClipboard *clipboard = NULL;
@@ -4393,7 +4400,7 @@ modest_ui_actions_on_toggle_toolbar (GtkToggleAction *toggle,
 
 	active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (toggle));
 
-	/* Check if we want to toggle the toolbar vuew in fullscreen
+	/* Check if we want to toggle the toolbar view in fullscreen
 	   or normal mode */
 	if (!strcmp (gtk_action_get_name (GTK_ACTION (toggle)), 
 		     "ViewShowToolbarFullScreen")) {
