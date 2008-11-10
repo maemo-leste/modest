@@ -932,7 +932,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		if (traccount) {
 			ModestTnySendQueue *send_queue = NULL;
 			ModestTnySendQueueStatus status;
-			char *msg_id;
+			gchar *msg_id;
 			account = g_strdup(modest_tny_account_get_parent_modest_account_name_for_server_account(
 						   TNY_ACCOUNT(traccount)));
 			send_queue = modest_runtime_get_send_queue(traccount, TRUE);
