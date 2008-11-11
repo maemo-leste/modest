@@ -254,8 +254,33 @@ on_security_picker_changed (HildonPickerButton *widget, gpointer user_data)
 	if(port_number != 0) {
 		hildon_number_editor_set_value (
 			HILDON_NUMBER_EDITOR (priv->entry_port), port_number);
-	}		
+	}
 }
+
+static void
+on_auth_picker_changed (HildonPickerButton *widget, gpointer user_data)
+{
+	ModestConnectionSpecificSmtpEditWindow *self = 
+		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	ModestProtocolType auth_proto;
+	
+	on_change (GTK_WIDGET(widget), self);
+
+	/* Enable/disable username and password fields */
+	auth_proto = 
+		modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker));
+
+	if (auth_proto == modest_protocol_registry_get_none_auth_type_id ()) {
+		gtk_widget_set_sensitive (priv->entry_user_username, FALSE);
+		gtk_widget_set_sensitive (priv->entry_user_password, FALSE);
+	} else {
+		gtk_widget_set_sensitive (priv->entry_user_username, TRUE);
+		gtk_widget_set_sensitive (priv->entry_user_password, TRUE);
+	}
+}
+
 
 static void
 modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEditWindow *self)
@@ -304,7 +329,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_secure_authentication"),
 					       priv->outgoing_auth_picker);
-	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", G_CALLBACK(on_change), self);
+	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", (GCallback)on_auth_picker_changed, self);
 	gtk_widget_show (priv->outgoing_auth_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_auth_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
@@ -372,7 +397,6 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
 	g_signal_connect (G_OBJECT (priv->outgoing_security_picker), "value-changed", (GCallback)on_security_picker_changed, self);
-	on_security_picker_changed (HILDON_PICKER_BUTTON (priv->outgoing_security_picker), self);
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
@@ -403,6 +427,10 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	hildon_help_dialog_help_enable (GTK_DIALOG(self),
 					"applications_email_connectionspecificsmtpconf",
 					modest_maemo_utils_get_osso_context());
+
+	/* Refresh view with current settings */
+	on_auth_picker_changed (HILDON_PICKER_BUTTON (priv->outgoing_auth_picker), self);
+	on_security_picker_changed (HILDON_PICKER_BUTTON (priv->outgoing_security_picker), self);
 }
 
 ModestConnectionSpecificSmtpEditWindow*
