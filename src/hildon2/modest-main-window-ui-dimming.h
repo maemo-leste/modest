@@ -79,7 +79,6 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_send_receive_all) },
 	{ "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu", G_CALLBACK(modest_ui_dimming_rules_on_cancel_sending) },
 	{ "/MenuBar/ToolsMenu/ToolsContactsMenu", NULL },
-	{ "/MenuBar/ToolsMenu/ToolsSearchMessagesMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsHelpMenu", NULL },
 
 	/* Close Menu */

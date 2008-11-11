@@ -118,7 +118,7 @@ save_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
 static gboolean
 restore_settings_widget (ModestConf *conf, GtkWidget *widget, const gchar *name)
 {
-	GtkRequisition req;
+	GtkRequisition req = {0, 0};
 	gchar *key;
 
 	key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_HEIGHT);
