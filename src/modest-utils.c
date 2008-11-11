@@ -69,13 +69,19 @@ modest_utils_folder_writable (const gchar *filename)
 	if (g_strncasecmp (filename, "obex", 4) != 0) {
 		GnomeVFSFileInfo *folder_info;
 		gchar *folder;
+		GnomeVFSResult result;
+
 		folder = g_path_get_dirname (filename);
 		folder_info = gnome_vfs_file_info_new ();
-		gnome_vfs_get_file_info (folder, folder_info,
-					 GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS);
+		result = gnome_vfs_get_file_info (folder, folder_info,
+						  GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS);
 		g_free (folder);
-		if (!((folder_info->permissions & GNOME_VFS_PERM_ACCESS_WRITABLE) ||
-		      (folder_info->permissions & GNOME_VFS_PERM_USER_WRITE))) {
+
+		if ((result != GNOME_VFS_OK) ||
+		    (!((folder_info->permissions & GNOME_VFS_PERM_ACCESS_WRITABLE) ||
+		       (folder_info->permissions & GNOME_VFS_PERM_USER_WRITE)))) {
+
+			gnome_vfs_file_info_unref (folder_info);
 			return FALSE;
 		}
 		gnome_vfs_file_info_unref (folder_info);
@@ -202,83 +208,82 @@ static void
 on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gboolean cancelled,
 	TnyList *auth_types, GError *err, gpointer user_data)
 {
+	ModestPairList *pairs;
+	GList *result;
+	ModestProtocolRegistry *protocol_registry;
+	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
+	TnyIterator* iter;
+
+	g_return_if_fail (user_data);
 	g_return_if_fail (TNY_IS_CAMEL_ACCOUNT(self));
 	g_return_if_fail (TNY_IS_LIST(auth_types));
 	
-	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
-	g_return_if_fail (info);
-	
+	info = (ModestGetSupportedAuthInfo *) user_data;
 
 	/* Free everything if the actual action was canceled */
 	if (info->cancel) {
-		/* The operation was canceled and the ownership of the info given to us
-		 * so that we could still check the cancel flag. */
-		g_slice_free (ModestGetSupportedAuthInfo, info);
-		info = NULL;
+		info->cancel = TRUE;
+		g_debug ("%s: operation canceled\n", __FUNCTION__);
+		goto close_dialog;
 	}
-	else
-	{
-		if (err) {
-			if (info->error) {
-				g_error_free (info->error);
-				info->error = NULL;
-			}
-			
-			info->error = g_error_copy (err);
-		}
 
-		if (!auth_types) {
-			g_warning ("DEBUG: %s: auth_types is NULL.\n", __FUNCTION__);
-		}
-		else if (tny_list_get_length(auth_types) == 0) 
-			g_warning ("DEBUG: %s: auth_types is an empty TnyList.\n", __FUNCTION__);
-		else {
-			ModestPairList *pairs;
-			GList *result;
-			ModestProtocolRegistry *protocol_registry;
+	if (err) {
+		if (info->error) {
+			g_error_free (info->error);
+			info->error = NULL;
+		}			
+		info->error = g_error_copy (err);
+		goto close_dialog;
+	}
 
-			protocol_registry = modest_runtime_get_protocol_registry ();
-			pairs = modest_protocol_registry_get_pair_list_by_tag (protocol_registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS);
+	if (!auth_types) {
+		g_debug ("%s: auth_types is NULL.\n", __FUNCTION__);
+		goto close_dialog;
+	}
+
+	if (tny_list_get_length(auth_types) == 0) {
+		g_debug ("%s: auth_types is an empty TnyList.\n", __FUNCTION__);
+		goto close_dialog;
+	}
+
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	pairs = modest_protocol_registry_get_pair_list_by_tag (protocol_registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS);
   
-			/* Get the enum value for the strings: */
-			result = NULL;
-			TnyIterator* iter = tny_list_create_iterator(auth_types);
-			while (!tny_iterator_is_done(iter)) {
-				TnyPair *pair;
-				const gchar *auth_name;
-				ModestProtocolType protocol_type;
-
-				pair = TNY_PAIR(tny_iterator_get_current(iter));
-				auth_name = NULL;
-				if (pair) {
-					auth_name = tny_pair_get_name(pair);
-					g_object_unref (pair);
-					pair = NULL;
-				}
-
-				printf("DEBUG: %s: auth_name=%s\n", __FUNCTION__, auth_name);
-
-				protocol_type = modest_protocol_get_type_id (modest_protocol_registry_get_protocol_by_name (protocol_registry,
-															    MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS,
-															    auth_name));
-
-				if(modest_protocol_registry_protocol_type_is_secure (protocol_registry, protocol_type))
-						result = g_list_prepend(result, GINT_TO_POINTER(protocol_type));
-
-				tny_iterator_next(iter);
-			}
-			g_object_unref (iter);
-
-			modest_pair_list_free (pairs);
-	
-			info->result = result;
+	/* Get the enum value for the strings: */
+	result = NULL;
+	iter = tny_list_create_iterator(auth_types);
+	while (!tny_iterator_is_done(iter)) {
+		TnyPair *pair;
+		const gchar *auth_name;
+		ModestProtocolType protocol_type;
+		
+		pair = TNY_PAIR(tny_iterator_get_current(iter));
+		auth_name = NULL;
+		if (pair) {
+			auth_name = tny_pair_get_name(pair);
+			g_object_unref (pair);
+			pair = NULL;
 		}
-
-		printf("DEBUG: finished\n");
-				
-		/* Close the dialog in a main thread */
-		g_idle_add(on_idle_secure_auth_finished, info);
+		
+		g_debug ("%s: auth_name=%s\n", __FUNCTION__, auth_name);
+		
+		protocol_type = modest_protocol_get_type_id (modest_protocol_registry_get_protocol_by_name (protocol_registry,
+													    MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS,
+													    auth_name));
+		
+		if (modest_protocol_registry_protocol_type_is_secure (protocol_registry, protocol_type))
+			result = g_list_prepend(result, GINT_TO_POINTER(protocol_type));
+		
+		tny_iterator_next(iter);
 	}
+	g_object_unref (iter);
+
+	modest_pair_list_free (pairs);
+	info->result = result;
+
+ close_dialog:
+	/* Close the dialog in a main thread */
+	g_idle_add(on_idle_secure_auth_finished, info);
 }
 
 static void
@@ -376,15 +381,11 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 	info->error = NULL;
 	info->progress = gtk_progress_bar_new();
 
-	/* FIXME: the title (first arg) here is empty; there should be 'accountwizard_fi_authentication', 
-	 *  but that does not exist yet; see bug #82487. so, for now, we simply leave it empty
-         */
 	info->dialog = gtk_dialog_new_with_buttons(" ", 
 	                                           parent_window, GTK_DIALOG_MODAL,
 	                                           _("mcen_bd_dialog_cancel"),
 	                                           GTK_RESPONSE_REJECT,
 	                                           NULL);
-	//gtk_window_set_default_size(GTK_WINDOW(info->dialog), 300, 100);
 	
 	g_signal_connect(G_OBJECT(info->dialog), "response", G_CALLBACK(on_secure_auth_cancel), info);
 	
@@ -400,8 +401,6 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 	/* Starts the pulsing of the progressbar */
 	g_timeout_add (500, keep_pulsing, pi);
 	
-	printf ("DEBUG: %s: STARTING.\n", __FUNCTION__);
-	
 	tny_camel_account_get_supported_secure_authentication (
 		TNY_CAMEL_ACCOUNT (tny_account),
 		on_camel_account_get_supported_secure_authentication,
@@ -414,25 +413,20 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 	/* pi is freed in the timeout itself to avoid a GCond here */
 	
 	gtk_widget_destroy(info->dialog);
+	info->dialog = NULL;
 			
 	GList *result = info->result;
-	if (!info->cancel)
-	{
+	if (!info->cancel) {
 		if (info->error) {
 			gchar * debug_url_string = tny_account_get_url_string  (tny_account);
-			g_warning ("DEBUG: %s:\n  error: %s\n  account url: %s", __FUNCTION__, info->error->message, 
-				debug_url_string);
+			g_warning ("%s:\n  error: %s\n  account url: %s", __FUNCTION__, info->error->message, 
+				   debug_url_string);
 			g_free (debug_url_string);
 			
 			g_propagate_error(error, info->error);
 			info->error = NULL;
 		}
-
-		g_slice_free (ModestGetSupportedAuthInfo, info);
-		info = NULL;
-	}
-	else
-	{
+	} else {
 		// Tell the caller that the operation was canceled so it can
 		// make a difference
 		g_set_error(error,
@@ -440,6 +434,17 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 		            MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED,
 			    "User has canceled query");
 	}
+
+	/* Free the info */
+	if (info->error)
+		g_free (info->error);
+	if (info->result)
+		g_list_free (info->result);
+	if (info->dialog)
+		gtk_widget_destroy (info->dialog);
+	if (info->progress)
+		gtk_widget_destroy (info->progress);
+	g_slice_free (ModestGetSupportedAuthInfo, info);
 
 	return result;
 }
@@ -661,7 +666,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 				modest_sort_criterium_view_set_sort_key (MODEST_SORT_CRITERIUM_VIEW (dialog), attachments_sort_id);
 		} else {
 			gint current_sort_keyid = 0;
-			while (current_sort_keyid < 6) {
+			while (current_sort_keyid < SORT_ID_NUM) {
 				if (sort_model_ids[current_sort_keyid] == current_sort_colid)
 					break;
 				else 
