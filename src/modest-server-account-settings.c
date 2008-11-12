@@ -30,6 +30,7 @@
 #include <modest-protocol-registry.h>
 #include <modest-server-account-settings.h>
 #include <strings.h>
+#include <string.h>
 
 /* 'private'/'protected' functions */
 static void   modest_server_account_settings_class_init (ModestServerAccountSettingsClass *klass);
