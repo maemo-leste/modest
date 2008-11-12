@@ -2,12 +2,18 @@ Source: modest
 Section: mail
 Priority: optional
 Maintainer: Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com> 
-Build-Depends: debhelper (>= 4.0.0), cdbs, gnome-common, gtkhtml-dev, libconic0-dev, libhildon1-dev, libdbus-1-dev, libdbus-glib-1-dev, libebook-dev, osso-af-settings, libedataserver-dev, libhildonnotify-dev, libgconf2-dev, libglib2.0-dev, libosso-abook-dev, libosso-gnomevfs2-dev, libhildonmime-dev,libtinymail-1.0-0-dev, libtinymail-camel-1.0-0-dev, libtinymail-maemo-1.0-0-dev,libtinymailui-1.0-0-dev,libtinymail-gnomevfs-1.0-0-dev,libtinymailui-gtk-1.0-0-dev,wpeditor0,wpeditor-dev,libhildonhelp-dev, modest-providers-data, libalarm-dev, gtk-doc-tools, libhildonnotify-dev, libnotify-dev, libogs1.2-dev, microb-engine-dev, mce-dev, maemo-launcher-dev
+Build-Depends: debhelper (>= 4.0.0), cdbs, gnome-common, gtkhtml-dev, libconic0-dev, libhildon1-dev, libdbus-1-dev,
+ libdbus-glib-1-dev, libebook-dev, osso-af-settings, libedataserver-dev, libhildonnotify-dev, libgconf2-dev,
+ libglib2.0-dev, libosso-abook-dev, libosso-gnomevfs2-dev, libhildonmime-dev,libtinymail-1.0-0-dev, libtinymail-camel-1.0-0-dev,
+ libtinymail-maemo-1.0-0-dev, libtinymailui-1.0-0-dev, libtinymail-gnomevfs-1.0-0-dev, libtinymailui-gtk-1.0-0-dev, wpeditor0,
+ wpeditor-dev, libhildonhelp-dev, modest-providers-data, libalarm-dev, gtk-doc-tools, libhildonnotify-dev, libnotify-dev,
+ libogs1.2-dev, microb-engine-dev, mce-dev, maemo-launcher-dev
 Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends},modest-providers-data,modest-l10n-mr0,osso-icons-theme,operator-wizard-settings,osso-countries-l10n-mr0
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends}, modest-providers-data, modest-l10n-mr0,
+ osso-icons-theme, operator-wizard-settings, osso-countries-l10n-mr0, microb-engine
 Description: an e-mail client for platforms with modest resources
  e-mail client for osso
 
