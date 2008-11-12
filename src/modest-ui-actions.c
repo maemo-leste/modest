@@ -3733,6 +3733,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					}
 				} else {
 					g_free (*username);
+					*username = NULL;
 					/* Show error */
 					modest_platform_information_banner (GTK_WIDGET (dialog), NULL, 
 									    _("mcen_ib_username_pw_incorrect"));
