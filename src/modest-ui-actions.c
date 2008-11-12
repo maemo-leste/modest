@@ -714,10 +714,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	ModestTnyAccountStore *store = modest_runtime_get_account_store();
 	GnomeVFSFileSize total_size, allowed_size;
 
-	/* we check for low-mem; in that case, show a warning, and don't allow
-	 * composing a message with attachments
-	 */
-	if (attachments && modest_platform_check_memory_low (win, TRUE))
+	/* we check for low-mem */
+	if (modest_platform_check_memory_low (win, TRUE))
 		goto cleanup;
 
 #ifdef MODEST_TOOLKIT_HILDON2
