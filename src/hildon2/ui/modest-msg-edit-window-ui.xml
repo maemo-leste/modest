@@ -88,7 +88,6 @@
       </menu>
       <separator/>
       <menuitem name="FindInMessageMenu" action="FindInMessage"/>
-      <menuitem name="ToolSearchMessagesMenu" action="SearchMessages"/>
       <separator/>
       <menuitem name="ToolsHelpMenu" action="Help"/>
     </menu>

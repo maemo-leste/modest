@@ -85,7 +85,6 @@
       </menu>
       <separator/>
       <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
-      <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
       <separator/>
       <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
     </menu>
@@ -125,7 +124,6 @@
 <!--    <menuitem action="FolderViewCSMPasteMsgs"/> -->
     <separator/>
     <separator/>
-    <menuitem action="FolderViewCSMSearchMessages"/>
     <menuitem action="FolderViewCSMHelp"/>
   </popup>
 

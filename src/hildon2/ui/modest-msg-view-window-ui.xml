@@ -77,7 +77,6 @@
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
       <separator/>
       <menuitem name="ToolsFindInMessageMenu" action="ToolsFindInMessage"/>
-      <menuitem name="ToolsSearchMessagesMenu" action="ToolsSearchMessages"/>
       <separator/>
       <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
    </menu>
