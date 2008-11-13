@@ -2390,7 +2390,7 @@ _purged_attach_selected (ModestWindow *win, gboolean all, ModestDimmingRule *rul
 	if (attachments == NULL)
 		return FALSE;
 
-	if (tny_list_get_length (attachments)) {
+	if (tny_list_get_length (attachments) == 0) {
 		g_object_unref (attachments);
 		return FALSE;
 	}
