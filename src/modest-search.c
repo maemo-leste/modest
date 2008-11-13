@@ -109,7 +109,7 @@ add_hit (GList *list, TnyHeader *header, TnyFolder *folder)
 	 * so we can find what we get. Philip is working on this.
 	 */
 	uid = tny_header_dup_uid (header);
-	if (!furl) {
+	if (!uid) {
 		gchar *subject = tny_header_dup_subject (header);
 		g_warning ("%s: tny_header_get_uid(): returned NULL for message with subject=%s\n", __FUNCTION__, subject);
 		g_free (subject);
