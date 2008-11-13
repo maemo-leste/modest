@@ -35,6 +35,7 @@
 
 #include <modest-runtime.h>
 #include "modest-platform.h"
+#include "modest-ui-actions.h"
 #include "modest-account-protocol.h"
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
@@ -240,49 +241,12 @@ on_delete_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 
 	account_mgr = modest_runtime_get_account_mgr();	
 	account_name = modest_account_view_get_selected_account (priv->account_view);
-	if(!account_name)
-		return;
-
 	account_title = modest_account_mgr_get_display_name(account_mgr, account_name);
-	/* This could happen if the account is being deleted */
-	if (!account_title)
-		return;
-	
-	if (check_for_active_account (self, account_name)) {
-		/* The warning text depends on the account type: */
-		gchar *txt = NULL;	
-		gint response;
-		ModestProtocol *protocol;
 
-		protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
-									  modest_account_mgr_get_store_protocol (account_mgr, account_name));
-		txt = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_DELETE_MAILBOX, account_title);
-		if (txt == NULL) {
-			txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
-					       account_title);
-		}
-		
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), txt);
-		g_free (txt);
-		txt = NULL;
-		
-		if (response == GTK_RESPONSE_OK) {
-			/* Remove account. If it succeeds then it also removes
-			   the account from the ModestAccountView: */				  
-			gboolean is_default = FALSE;
-			gchar *default_account_name = modest_account_mgr_get_default_account (account_mgr);
-			if (default_account_name && (strcmp (default_account_name, account_name) == 0))
-				is_default = TRUE;
-			g_free (default_account_name);
-			
-				gboolean removed = modest_account_mgr_remove_account (account_mgr, account_name);
-				if (!removed) {
-					g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
-				}
+	if (check_for_active_account (self, account_name))
+		modest_ui_actions_on_delete_account (GTK_WINDOW (self), account_name, account_title);
 
-		}
-		g_free (account_title);
-	}		
+	g_free (account_title);
 	g_free (account_name);
 }
 
