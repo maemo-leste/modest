@@ -17,13 +17,10 @@ static const ModestDimmingEntry modest_msg_edit_window_menu_dimming_entries [] =
 	{ "/MenuBar/FormatMenu/AlignmentRightMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
 	{ "/MenuBar/FormatMenu/AlignmentCenterMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
 	{ "/MenuBar/FormatMenu/InsertImageMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
-	{ "/MenuBar/EditMenu/SelectAllMenu", G_CALLBACK (modest_ui_dimming_rules_on_select_all) },	
-	{ "/MenuBar/EditMenu/UndoMenu", G_CALLBACK (modest_ui_dimming_rules_on_undo) },	
-	{ "/MenuBar/EditMenu/RedoMenu", G_CALLBACK (modest_ui_dimming_rules_on_redo) },	
-	{ "/MenuBar/EditMenu/PasteMenu", G_CALLBACK (modest_ui_dimming_rules_on_editor_paste) },	
-	{ "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu", G_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment) },	
+	{ "/MenuBar/EditMenu/UndoMenu", G_CALLBACK (modest_ui_dimming_rules_on_undo) },
+	{ "/MenuBar/EditMenu/RedoMenu", G_CALLBACK (modest_ui_dimming_rules_on_redo) },
+	{ "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu", G_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment) },
 	{ "/MenuBar/AttachmentsMenu/InsertImageMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
-	{ "/MenuBar/EmailMenu/SendMenu", G_CALLBACK (modest_ui_dimming_rules_on_send) },
 	{ "/MenuBar/EmailMenu/SaveToDraftsMenu", G_CALLBACK (modest_ui_dimming_rules_on_save_to_drafts) },
 
 };
@@ -35,15 +32,6 @@ static const ModestDimmingEntry modest_msg_edit_window_toolbar_dimming_entries [
 	{ "/ToolBar/ToolbarSend", G_CALLBACK(modest_ui_dimming_rules_on_send) },
 	{ "/ToolBar/ActionsBold", G_CALLBACK(modest_ui_dimming_rules_on_set_style) },
 	{ "/ToolBar/ActionsItalics", G_CALLBACK(modest_ui_dimming_rules_on_set_style) },
-};
-
-/* Clipboard Dimming rules entries */
-static const ModestDimmingEntry modest_msg_edit_window_clipboard_dimming_entries [] = {
-
-	/* Toolbar */
-	{ "/MenuBar/EditMenu/CutMenu", G_CALLBACK(modest_ui_dimming_rules_on_cut) },
-	{ "/MenuBar/EditMenu/CopyMenu", G_CALLBACK(modest_ui_dimming_rules_on_copy) },
-	{ "/MenuBar/EditMenu/PasteMenu", G_CALLBACK(modest_ui_dimming_rules_on_editor_paste) },
 };
 
 G_END_DECLS

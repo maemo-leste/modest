@@ -33,24 +33,14 @@
   <menubar name="MenuBar">
 
     <menu name="EmailMenu" action="Email">
-      <menuitem name="SendMenu" action="ActionsSend"/>
       <menuitem name="SaveToDraftsMenu" action="ActionsSaveToDrafts"/>
       <separator/>
-      <menuitem name="SelectContactsMenu" action="SelectContacts"/>
       <menuitem name="CheckNamesMenu" action="CheckNames"/>
-      <separator/>
-      <menuitem name="NewMessageMenu" action="ActionsNewMessage"/>
     </menu>
 
     <menu name="EditMenu" action="Edit">
       <menuitem name="UndoMenu" action="Undo"/>
       <menuitem name="RedoMenu" action="Redo"/>
-      <separator/>
-      <menuitem name="CutMenu" action="Cut"/>
-      <menuitem name="CopyMenu" action="Copy"/>
-      <menuitem name="PasteMenu" action="Paste"/>
-      <separator/>
-      <menuitem name="SelectAllMenu" action="SelectAll"/>
     </menu>
 
     <menu name="ViewMenu" action="View">
@@ -60,21 +50,17 @@
 
     <menu name="FormatMenu" action="Format">
       <menuitem name="SelectFontMenu" action="SelectFont"/>
-<!--      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/> -->
       <menu name="AlignmentMenu" action="Alignment">
          <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
          <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>
          <menuitem name="AlignmentRightMenu" action="AlignmentRight"/>
       </menu>
       <separator/>
-      <menu name="FileFormatMenu" action="FileFormat">
-	<menuitem name="FileFormatPlainTextMenu" action="FileFormatPlainText"/>
-	<menuitem name="FileFormatFormattedTextMenu" action="FileFormatFormattedText"/>
-      </menu>
+      <menuitem name="FileFormatPlainTextMenu" action="FileFormatPlainText"/>
+      <menuitem name="FileFormatFormattedTextMenu" action="FileFormatFormattedText"/>
     </menu>
 
     <menu name="AttachmentsMenu" action="Attachments">
-      <menuitem name="AttachFileMenu" action="AttachFile"/>
       <menuitem name="InsertImageMenu" action="InsertImage"/>
       <separator/>
       <menuitem name="RemoveAttachmentsMenu" action="RemoveAttachments"/>
@@ -88,8 +74,6 @@
       </menu>
       <separator/>
       <menuitem name="FindInMessageMenu" action="FindInMessage"/>
-      <separator/>
-      <menuitem name="ToolsHelpMenu" action="Help"/>
     </menu>
 
   </menubar>

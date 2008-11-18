@@ -56,19 +56,17 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "ActionsSaveToDrafts", NULL, N_("mcen_me_editor_save_as_draft"), "<CTRL>S", NULL, G_CALLBACK (modest_ui_actions_on_save_to_drafts) },
 	{ "ActionsDelete", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
 	{ "ActionsSend", NULL, N_("mcen_me_editor_send"), "<CTRL>KP_Enter", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
-/* 	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)}, */
-/* 	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)}, */
 	{ "InsertImage", NULL, N_("mcen_me_editor_attach_inlineimage"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_insert_image)},
+#ifndef MODEST_TOOLKIT_HILDON2
 	{ "AttachFile", NULL, N_("mcen_me_editor_attachfile"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attach_file)},
+#endif
 	{ "RemoveAttachments", NULL, N_("mcen_me_inbox_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_remove_attachments) },
 	{ "Undo", NULL, N_("mcen_me_inbox_undo"), "<CTRL>Z", NULL, G_CALLBACK (modest_ui_actions_on_undo)},
 	{ "Redo", NULL, N_("mcen_me_inbox_redo"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_redo)},
-	{ "Cut", NULL, N_("mcen_me_inbox_cut"),  "<CTRL>X", NULL, G_CALLBACK (modest_ui_actions_on_cut)},
-	{ "Copy", NULL, N_("mcen_me_inbox_copy"),  "<CTRL>C", NULL, G_CALLBACK (modest_ui_actions_on_copy)},
-	{ "Paste", NULL, N_("mcen_me_inbox_paste"),  "<CTRL>V", NULL, G_CALLBACK (modest_ui_actions_on_paste)},
-	{ "SelectAll", NULL, N_("mcen_me_viewer_selectall"),  "<CTRL>A", NULL, G_CALLBACK (modest_ui_actions_on_select_all)},
 	{ "SelectFont", NULL, N_("mcen_me_editor_font"), NULL, NULL, G_CALLBACK (modest_ui_actions_msg_edit_on_select_font)},
+#ifndef MODEST_TOOLKIT_HILDON2
 	{ "SelectContacts", NULL, N_("mcen_me_editor_selectrecipients"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_select_contacts)},
+#endif
 	{ "CheckNames", NULL, N_("mcen_me_editor_checknames"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_check_names)},
 	{ "CloseWindow", NULL, N_("mcen_me_inbox_close_window"), "<CTRL>W", NULL, G_CALLBACK (modest_ui_actions_on_close_window)},
 	{ "CloseAllWindows", NULL, N_("mcen_me_inbox_close_windows"), "<CTRL>Q", NULL, G_CALLBACK (modest_ui_actions_on_quit) },

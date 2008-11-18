@@ -44,6 +44,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* Toplevel menus */
 	{ "Email",       NULL, N_("mcen_me_inbox_email"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
 	{ "Edit",        NULL, N_("mcen_me_inbox_edit"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
+	{ "View",        NULL, N_("mcen_me_inbox_view"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated) },
 	{ "Accounts",        NULL, N_("mcen_me_inbox_accounts"),         NULL, NULL, NULL },
 	{ "Tools",       NULL, N_("mcen_me_inbox_tools"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_tools_menu_activated) },
 	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
@@ -79,9 +80,10 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditMarkAsRead", NULL,      N_("mcen_me_inbox_mark_as_read"),       NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_mark_as_read) },
 	{ "EditMarkAsUnread", NULL,      N_("mcen_me_inbox_mark_as_unread"),       NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_mark_as_unread) },
 	{ "EditMoveTo",      NULL, 	N_("mcen_me_inbox_moveto"),    NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_move_to) },
-	
-	/* View */
 
+	/* View */
+	{ "ViewPreviousMessage", NULL,    N_("mcen_me_viewer_previousmessage"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
+	{ "ViewNextMessage", NULL, N_("mcen_me_viewer_nextmessage"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
 
 	/* Attachments */
 	{ "SaveAttachment", NULL, N_("mcen_me_viewer_save_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_save_attachments) },
@@ -119,12 +121,6 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarMessageNext",    MODEST_TOOLBAR_ICON_NEXT, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
 	{ "ToolbarMessageMoveTo",     MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER, N_("qgn_toolb_gene_movetofldr"),   NULL, NULL, G_CALLBACK(modest_ui_actions_on_move_to) },
 	{ "ToolbarCancel",       GTK_STOCK_STOP,   "",      NULL, NULL,  NULL },
-};
-
-static const GtkToggleActionEntry modest_toggle_action_entries [] = {
-	{ "ViewToggleFullscreen",     GTK_STOCK_FULLSCREEN, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE },
-	{ "ViewShowToolbarNormalScreen", NULL, N_("mcen_me_inbox_normalview"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
-	{ "ViewShowToolbarFullScreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_toolbar), TRUE },
 };
 
 G_END_DECLS

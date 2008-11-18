@@ -119,9 +119,7 @@ static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
 static void  modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
 						 gpointer userdata);
 static void  modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window);
-static gboolean modest_msg_edit_window_window_state_event (GtkWidget *widget, 
-							   GdkEventWindowState *event, 
-							   gpointer userdata);
+
 static void modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 						     ModestRecptEditor *editor);
 static void modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
@@ -342,22 +340,6 @@ restore_settings (ModestMsgEditWindow *self)
 	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 
 	conf = modest_runtime_get_conf ();
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu");
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
-
-	/* set initial state of cc and bcc */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_CC, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-					       modest_conf_get_bool(modest_runtime_get_conf(), MODEST_CONF_SHOW_BCC, NULL));
 
 	/* Dim at start clipboard actions */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
@@ -367,8 +349,7 @@ restore_settings (ModestMsgEditWindow *self)
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
 	gtk_action_set_sensitive (action, FALSE);
 
-	modest_widget_memory_restore (conf,
-				      G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
+	modest_widget_memory_restore (conf, G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
 
@@ -664,9 +645,6 @@ connect_signals (ModestMsgEditWindow *obj)
                           G_CALLBACK (body_changed), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "modified-changed",
                           G_CALLBACK (body_changed), obj);
-	g_signal_connect (G_OBJECT (obj), "window-state-event",
-			  G_CALLBACK (modest_msg_edit_window_window_state_event),
-			  NULL);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "end-user-action",
 			  G_CALLBACK (text_buffer_end_user_action), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "mark-set",
@@ -1538,10 +1516,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_face_toolitem,
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
-	modest_dimming_rules_group_add_rules (clipboard_rules_group, 
-					      modest_msg_edit_window_clipboard_dimming_entries,
-					      G_N_ELEMENTS (modest_msg_edit_window_clipboard_dimming_entries),
-					      MODEST_WINDOW (obj));
 	/* Insert dimming rules group for this window */
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
@@ -1925,11 +1899,11 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))) {
-		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu");
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu");
 		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
 			modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
 	} else {
-		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatPlainTextMenu");
+		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatPlainTextMenu");
 		if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
 			modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), TRUE);
 	}
@@ -2602,31 +2576,6 @@ modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
 	}
 }
 
-static gboolean
-modest_msg_edit_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
-{
-	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
-		ModestWindowPrivate *parent_priv;
-		ModestWindowMgr *mgr;
-		gboolean is_fullscreen;
-		GtkAction *fs_toggle_action;
-		gboolean active;
-
-		mgr = modest_runtime_get_window_mgr ();
-		is_fullscreen = (modest_window_mgr_get_fullscreen_mode (mgr))?1:0;
-
-		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
-		
-		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewToggleFullscreenMenu");
-		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
-		if (is_fullscreen != active)
-			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
-	}
-
-	return FALSE;
-
-}
-
 void
 modest_msg_edit_window_show_cc (ModestMsgEditWindow *window, 
 				gboolean show)
@@ -2727,9 +2676,7 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
 {
 	ModestWindowPrivate *parent_priv;
-	const gchar *action_name;
-	GtkAction *action;
-	
+
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
@@ -2740,21 +2687,6 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 	else
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
-
-	/* Update also the actions (to update the toggles in the
-	   menus), we have to do it manually because some other window
-	   of the same time could have changed it (remember that the
-	   toolbar fullscreen mode is shared by all the windows of the
-	   same type */
-	if (modest_window_mgr_get_fullscreen_mode (modest_runtime_get_window_mgr ()))
-		action_name = "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarFullScreenMenu";
-	else
-		action_name = "/MenuBar/ViewMenu/ShowToolbarMenu/ViewShowToolbarNormalScreenMenu";
-	
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-							    show_toolbar);
-
 }
 
 void
@@ -2830,7 +2762,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			if (response == GTK_RESPONSE_OK) {
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 			} else {
-				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatMenu/FileFormatFormattedTextMenu"));
+				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu"));
 				modest_utils_toggle_action_set_active_block_notify (action, TRUE);
 			}
 		}

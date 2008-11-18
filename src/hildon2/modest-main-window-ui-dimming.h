@@ -42,7 +42,6 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 
 	/* Email Menu */
 	{ "/MenuBar/EmailMenu/EmailNewMainMenu", NULL },
-	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewMessageMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_msg) },
 	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewFolderMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
 	{ "/MenuBar/EmailMenu/EmailOpenMenu", G_CALLBACK(modest_ui_dimming_rules_on_open_msg) },
 	{ "/MenuBar/EmailMenu/EmailReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
@@ -61,15 +60,6 @@ static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 	{ "/MenuBar/EditMenu/EditMarkAsUnreadMenu", G_CALLBACK(modest_ui_dimming_rules_on_mark_as_unread_msg) },
 	{ "/MenuBar/EditMenu/EditMoveToMenu", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
 
-	/* View Menu */
-	{ "/MenuBar/ViewMenu", NULL },
-	{ "/MenuBar/ViewMenu/ViewSortMenu", G_CALLBACK(modest_ui_dimming_rules_on_sort) },
-	{ "/MenuBar/ViewMenu/ViewToggleFoldersMenu", NULL },
-	{ "/MenuBar/ViewMenu/ViewToggleFullscreenMenu", NULL },
-	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu", NULL },
-	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarNormalScreenMenu", NULL },
-	{ "/MenuBar/ViewMenu/ViewShowToolbarMainMenu/ViewShowToolbarFullScreenMenu", NULL },
-	
 	/* Tools Menu */
 	{ "/MenuBar/ToolsMenu", NULL },
 	{ "/MenuBar/ToolsMenu/ToolsSettingsMenu", NULL },

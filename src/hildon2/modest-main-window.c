@@ -77,10 +77,6 @@ static void modest_main_window_class_init  (ModestMainWindowClass *klass);
 static void modest_main_window_init        (ModestMainWindow *obj);
 static void modest_main_window_finalize    (GObject *obj);
 
-static gboolean modest_main_window_window_state_event (GtkWidget *widget, 
-						       GdkEventWindowState *event, 
-						       gpointer userdata);
-
 static void connect_signals (ModestMainWindow *self);
 
 static void modest_main_window_disconnect_signals (ModestWindow *self);
@@ -166,7 +162,7 @@ static void      on_folder_selection_changed (ModestFolderView *folder_view,
 					      TnyFolderStore *folder_store, 
 					      gboolean selected,
 					      ModestMainWindow *main_window);
-						
+
 static void set_at_least_one_account_visible(ModestMainWindow *self);
 
 static void on_updating_msg_list (ModestHeaderView *header_view,
@@ -203,7 +199,7 @@ struct _ModestMainWindowPrivate {
 	GtkWidget   *refresh_toolitem;
 	ModestToolBarModes current_toolbar_mode;
 
-	/* Merge ids used to add/remove accounts to the ViewMenu*/
+	/* Merge ids used to add/remove accounts to the Accounts Menu*/
 	GByteArray *merge_ids;
 	GtkActionGroup *view_additions_group;
 
@@ -552,7 +548,7 @@ tap_and_hold_query_cb (GtkWidget *widget, GdkEvent *event)
 
 static void
 update_menus (ModestMainWindow* self)
-{	
+{
 	GSList *account_names, *iter, *accounts;
 	ModestMainWindowPrivate *priv;
 	ModestWindowPrivate *parent_priv;
@@ -644,10 +640,10 @@ update_menus (ModestMainWindow* self)
 	/* Create a new action group */
 	default_account = modest_account_mgr_get_default_account (mgr);
 	active_account_name = modest_window_get_active_account (MODEST_WINDOW (self));
-	
+
 	if (!active_account_name) 
 		modest_window_set_active_account (MODEST_WINDOW (self), default_account);
-	
+
 	priv->view_additions_group = gtk_action_group_new (MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS);
 	radio_group = NULL;
 	for (i = 0; i < num_accounts; i++) {
@@ -660,7 +656,7 @@ update_menus (ModestMainWindow* self)
 			continue;
 		}
 		account_name = modest_account_settings_get_account_name (settings);
-	
+
 		if (default_account && account_name && 
 		    !(strcmp (default_account, account_name) == 0)) {
 			display_name = g_strdup_printf (_("mcen_me_toolbar_sendreceive_default"), 
@@ -670,8 +666,8 @@ update_menus (ModestMainWindow* self)
 							modest_account_settings_get_display_name (settings));
 		}
 
-		
-		
+
+
 		/* Create action and add it to the action group. The
 		   action name must be the account name, this way we
 		   could know in the handlers the account to show */
@@ -1004,12 +1000,8 @@ connect_signals (ModestMainWindow *self)
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "tap-and-hold",
 					   G_CALLBACK(_header_view_csm_menu_activated),
 					   self);
-	
+
 	/* window */
-	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT (self), "window-state-event",
-					   G_CALLBACK (modest_main_window_window_state_event),
-					   NULL);
 	/* we don't register this in sighandlers, as it should be run after disconnecting all signals,
 	 * in destroy stage */
 	g_signal_connect (G_OBJECT (self), "destroy", G_CALLBACK (on_window_destroy), NULL);
@@ -1211,11 +1203,6 @@ modest_main_window_new (void)
 				      modest_header_view_action_entries,
 				      G_N_ELEMENTS (modest_header_view_action_entries),
 				      self);
-
-	gtk_action_group_add_toggle_actions (action_group,
-					     modest_toggle_action_entries,
-					     G_N_ELEMENTS (modest_toggle_action_entries),
-					     self);
 
 	gtk_action_group_add_toggle_actions (action_group,
 					     modest_main_window_toggle_action_entries,
@@ -1503,37 +1490,6 @@ toolbar_resize (ModestMainWindow *self)
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->sort_toolitem), TRUE);
 	}
 		
-}
-
-
-
-static gboolean
-modest_main_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
-{
-	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
-		ModestWindowPrivate *parent_priv;
-		ModestWindowMgr *mgr;
-		gboolean is_fullscreen;
-		GtkAction *fs_toggle_action;
-		gboolean active;
-		
-		mgr = modest_runtime_get_window_mgr ();
-		
-		is_fullscreen = modest_window_mgr_get_fullscreen_mode (mgr);
-
-		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
-		
-		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewToggleFullscreenMenu");
-		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
-		if (is_fullscreen != active) {
-			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
-		}
-
-		toolbar_resize (MODEST_MAIN_WINDOW (widget));
-	}
-
-	return FALSE;
-
 }
 
 static void 

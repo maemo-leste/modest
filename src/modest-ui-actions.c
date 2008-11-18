@@ -203,11 +203,11 @@ remote_folder_has_leave_on_server (TnyFolderStore *folder)
 gboolean
 modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 {
-	gboolean result = FALSE;	
+	gboolean result = FALSE;
 	GtkWindow *wizard;
 	gint dialog_response;
 
-	/* there is no such wizard yet */	
+	/* there is no such wizard yet */
 	wizard = GTK_WINDOW (modest_platform_get_account_settings_wizard ());
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (wizard), (GtkWindow *) win);
 
@@ -217,7 +217,7 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 	if (!win) 
 		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
 							 TRUE);  /* create if not existent */
-	
+
 	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 
 	/* make sure the mainwindow is visible. We need to present the
@@ -231,7 +231,7 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 	gtk_window_present (GTK_WINDOW (win));
 	gtk_window_present (GTK_WINDOW (wizard));
 #endif
-	
+
 	dialog_response = gtk_dialog_run (GTK_DIALOG (wizard));
 	gtk_widget_destroy (GTK_WIDGET (wizard));
 	if (gtk_events_pending ())
