@@ -322,12 +322,17 @@ find_protocol_by_name (ModestProtocolType type_id,
 }
 
 ModestProtocol *
-modest_protocol_registry_get_protocol_by_name (ModestProtocolRegistry *self, const gchar *tag, const gchar *name)
+modest_protocol_registry_get_protocol_by_name (ModestProtocolRegistry *self, 
+					       const gchar *tag, 
+					       const gchar *name)
 {
 	ModestProtocolRegistryPrivate *priv;
 	GHashTable *tag_table;
 
 	g_return_val_if_fail (MODEST_IS_PROTOCOL_REGISTRY (self), NULL);
+	g_return_val_if_fail (tag, NULL);
+	g_return_val_if_fail (name, NULL);
+
 	priv = MODEST_PROTOCOL_REGISTRY_GET_PRIVATE (self);
 
 	tag_table = g_hash_table_lookup (priv->tags_table, tag);

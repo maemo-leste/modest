@@ -449,15 +449,19 @@ modest_account_mgr_set_server_account_security (ModestAccountMgr *self,
 	modest_account_mgr_set_string (self, account_name, MODEST_ACCOUNT_SECURITY, str_value, TRUE);
 }
 
-ModestServerAccountSettings*
+ModestServerAccountSettings *
 modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* name, gboolean is_transport_and_not_store)
 {
 	ModestServerAccountSettings *settings;
 	ModestProtocol *protocol;
 	ModestProtocolRegistry *registry;
 	gchar *string;
-	
-	g_return_val_if_fail (modest_account_mgr_account_exists (self, name, TRUE), NULL);
+
+	if (!modest_account_mgr_account_exists (self, name, TRUE)) {
+		g_message ("%s account %s does not exist", __FUNCTION__, name);
+		return NULL;
+	}
+
 	registry = modest_runtime_get_protocol_registry ();
 	settings = modest_server_account_settings_new ();
 
@@ -465,23 +469,38 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 
 	string = modest_account_mgr_get_string (self, name, 
 						MODEST_ACCOUNT_HOSTNAME,TRUE);
-	modest_server_account_settings_set_hostname (settings, string);
-	g_free (string);
+	if (string) {
+		modest_server_account_settings_set_hostname (settings, string);
+		g_free (string);
+	} else {
+		goto on_error;
+	}
 
 	string = modest_account_mgr_get_string (self, name, 
 						MODEST_ACCOUNT_USERNAME,TRUE);
-	modest_server_account_settings_set_username (settings, string);	
-	g_free (string);
+	if (string) {
+		modest_server_account_settings_set_username (settings, string);	
+		g_free (string);
+	} else {
+		goto on_error;
+	}
 
 	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
-	if (is_transport_and_not_store) {
-		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS, string);
+	if (string) {
+		gchar *tag = NULL;
+		if (is_transport_and_not_store) {
+			tag = MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS;
+		} else {
+			tag = MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS;
+		}
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, tag, string);
+
+		modest_server_account_settings_set_protocol (settings,
+							     modest_protocol_get_type_id (protocol));
+		g_free (string);
 	} else {
-		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS, string);
+		goto on_error;
 	}
-	modest_server_account_settings_set_protocol (settings,
-						     modest_protocol_get_type_id (protocol));
-	g_free (string);
 
 	modest_server_account_settings_set_port (settings,
 						 modest_account_mgr_get_int (self, name, MODEST_ACCOUNT_PORT, TRUE));
@@ -495,7 +514,7 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	} else {
 		modest_server_account_settings_set_auth_protocol (settings, MODEST_PROTOCOLS_AUTH_NONE);
 	}
-	
+
 	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SECURITY, TRUE);
 	if (string) {
 		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS, string);
@@ -509,15 +528,23 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 
 	string = modest_account_mgr_get_string (self, name, 
 						MODEST_ACCOUNT_PASSWORD, TRUE);
-	modest_server_account_settings_set_password (settings, string);
-	g_free (string);
-	
+	if (string) {
+		modest_server_account_settings_set_password (settings, string);
+		g_free (string);
+	}
+
 	string = modest_account_mgr_get_string (self, name, 
 						MODEST_ACCOUNT_URI, TRUE);
-	modest_server_account_settings_set_uri (settings, string);
-	g_free (string);
-	
+	if (string) {
+		modest_server_account_settings_set_uri (settings, string);
+		g_free (string);
+	}
+
 	return settings;
+
+ on_error:
+	g_free (settings);
+	return NULL;
 }
 
 gboolean 
@@ -664,10 +691,19 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 	if (server_account) {
 		ModestServerAccountSettings *store_settings;
 		store_settings = modest_account_mgr_load_server_settings (self, server_account, FALSE);
-		modest_account_settings_set_store_settings (settings,
-							    store_settings);
-		g_object_unref (store_settings);
 		g_free (server_account);
+
+		/* It could happen that the account data is corrupted
+		   so it's not loaded properly */
+		if (store_settings) {
+			modest_account_settings_set_store_settings (settings,
+								    store_settings);
+			g_object_unref (store_settings);
+		} else {
+			g_message ("%s can not load server settings. Account corrupted?", __FUNCTION__);
+			g_object_unref (settings);
+			return NULL;
+		}
 	}
 
 	/* transport */
@@ -677,9 +713,16 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 	if (server_account) {
 		ModestServerAccountSettings *transport_settings;
 		transport_settings = modest_account_mgr_load_server_settings (self, server_account, TRUE);
-		modest_account_settings_set_transport_settings (settings, transport_settings);
-		g_object_unref (transport_settings);
 		g_free (server_account);
+
+		if (transport_settings) {
+			modest_account_settings_set_transport_settings (settings, transport_settings);
+			g_object_unref (transport_settings);
+		} else {
+			g_message ("%s can not load server settings. Account corrupted?", __FUNCTION__);
+			g_object_unref (settings);
+			return NULL;
+		}
 	}
 
 	return settings;
