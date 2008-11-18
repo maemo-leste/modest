@@ -663,7 +663,7 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
 					      parent_window,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
-					      _("mcen_bd_dialog_ok"),
+					      _HL("wdgt_bd_done"),
 					      GTK_RESPONSE_ACCEPT,
 					      NULL);
 
