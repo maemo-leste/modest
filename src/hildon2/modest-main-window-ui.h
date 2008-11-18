@@ -44,7 +44,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	/* Toplevel menus */
 	{ "Email",       NULL, N_("mcen_me_inbox_email"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_email_menu_activated) },
 	{ "Edit",        NULL, N_("mcen_me_inbox_edit"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_edit_menu_activated) },
-	{ "View",        NULL, N_("mcen_me_inbox_view"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_view_menu_activated) },
+	{ "Accounts",        NULL, N_("mcen_me_inbox_accounts"),         NULL, NULL, NULL },
 	{ "Tools",       NULL, N_("mcen_me_inbox_tools"),        NULL, NULL, G_CALLBACK (modest_ui_actions_on_tools_menu_activated) },
 	{ "Attachments", NULL, N_("mcen_me_viewer_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_attachment_menu_activated) },
 	{ "Close",       NULL, N_("mcen_me_inbox_close") },
@@ -81,15 +81,12 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EditMoveTo",      NULL, 	N_("mcen_me_inbox_moveto"),    NULL,	  NULL, G_CALLBACK (modest_ui_actions_on_move_to) },
 	
 	/* View */
-	{ "ViewSort",            NULL,        N_("mcen_me_inbox_sort"),     NULL,      NULL,  G_CALLBACK (modest_ui_actions_on_sort) },
-	{ "ViewShowToolbar", NULL, N_("mcen_me_inbox_toolbar") }, /* submenu */
-	{ "ViewPreviousMessage", NULL,    N_("mcen_me_viewer_previousmessage"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
-	{ "ViewNextMessage", NULL, N_("mcen_me_viewer_nextmessage"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
+
 
 	/* Attachments */
 	{ "SaveAttachment", NULL, N_("mcen_me_viewer_save_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_save_attachments) },
 	{ "RemoveAttachment", NULL, N_("mcen_me_inbox_remove_attachments"), NULL, NULL, G_CALLBACK (modest_ui_actions_remove_attachments) },
-	
+
 	/* Tools */
 	{ "ToolsSettings",        NULL,      N_("mcen_me_inbox_options"),	              NULL, NULL, G_CALLBACK (modest_ui_actions_on_settings) },
 	{ "ToolsAccounts",        NULL,      N_("mcen_me_inbox_accounts"),                NULL, NULL,  G_CALLBACK(modest_ui_actions_on_accounts) },

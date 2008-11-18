@@ -706,7 +706,7 @@ update_menus (ModestMainWindow* self)
 			priv->merge_ids = g_byte_array_append (priv->merge_ids, &merge_id, 1);
 			gtk_ui_manager_add_ui (parent_priv->ui_manager,
 					       merge_id,
-					       "/MenuBar/ViewMenu/ViewMenuAdditions",
+					       "/MenuBar/AccountsMenu/AccountsMenuAdditions",
 					       item_name,
 					       account_name,
 					       GTK_UI_MANAGER_MENUITEM,
@@ -793,10 +793,10 @@ update_menus (ModestMainWindow* self)
 
 		/* Get the item of the view menu */
 		item_name = g_strconcat (account_name, "Menu", NULL);
-		path = g_strconcat ("/MenuBar/ViewMenu/ViewMenuAdditions/", item_name, NULL);
+		path = g_strconcat ("/MenuBar/AccountsMenu/AccountsMenuAdditions/", item_name, NULL);
 		item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
 		g_free(path);
-		
+
 		if (item) {
 			GtkWidget *child = gtk_bin_get_child (GTK_BIN (item));
 			if (GTK_IS_LABEL (child)) {
@@ -809,7 +809,7 @@ update_menus (ModestMainWindow* self)
 				gtk_label_set_ellipsize (GTK_LABEL (child),  PANGO_ELLIPSIZE_END);
 			}
 		}
-			
+
 		/* Get the item of the tools menu */
 		path = g_strconcat("/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions/", item_name, NULL);
 		item = gtk_ui_manager_get_widget (parent_priv->ui_manager, path);
@@ -2072,19 +2072,19 @@ modest_main_window_notify_send_receive_completed (ModestMainWindow *self)
 	GtkAction *action = NULL;
 	GtkWidget *widget = NULL;
 	ModestMainWindowPrivate *priv = NULL;
-	        
+
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 
 	priv->send_receive_in_progress  = FALSE;
 
-        action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");	
+        action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveAllMenu");
 	gtk_action_set_sensitive (action, TRUE);
 /*         action = modest_window_get_action (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsSendReceiveCancelSendingMenu");	 */
 /* 	gtk_action_set_sensitive (action, TRUE); */
-        widget = modest_window_get_action_widget (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions");	
+        widget = modest_window_get_action_widget (MODEST_WINDOW(self), "/MenuBar/ToolsMenu/ToolsSendReceiveMainMenu/ToolsMenuAdditions");
 	gtk_widget_set_sensitive (widget, TRUE);
-} 
+}
 
 
 static void

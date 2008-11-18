@@ -51,7 +51,7 @@
       <separator/>
       <menuitem name="EmailDetailsMenu" action="EmailDetails"/>
     </menu>
-    
+
     <menu name="EditMenu" action="Edit">
 <!--       <menuitem name="EditCutMenu" action="EditCut"/> -->
 <!--       <menuitem name="EditCopyMenu" action="EditCopy"/> -->
@@ -62,18 +62,14 @@
       <menuitem name="EditMarkAsUnreadMenu" action="EditMarkAsUnread"/>
       <separator/>
       <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
-    </menu> 
+    </menu>
 
-    <menu name="ViewMenu" action="View">
-      <menuitem name="ViewSortMenu" action="ViewSort"/>
-      <separator/>
-      <menuitem name="ViewToggleFoldersMenu" action="ToggleFolders"/>
-      <separator/>
-      <placeholder name="ViewMenuAdditions" />
+    <menu name="AccountsMenu" action="Accounts">
+      <placeholder name="AccountsMenuAdditions" />
    </menu>
-    
+
     <menu name="ToolsMenu" action="Tools">
-      <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>   
+      <menuitem name="ToolsSettingsMenu" action="ToolsSettings"/>
       <menuitem name="ToolsAccountsMenu" action="ToolsAccounts"/>
       <menuitem name="ToolsSMTPServersMenu" action="ToolsSMTPServers"/>
       <separator/>
