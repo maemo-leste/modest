@@ -269,7 +269,6 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 	{ "FolderViewCSMRenameFolder", NULL, N_("mcen_me_user_renamefolder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
 	{ "FolderViewCSMPasteMsgs", NULL, N_("mcen_me_inbox_paste"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_paste)},
 	{ "FolderViewCSMDeleteFolder", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
-	{ "FolderViewCSMSearchMessages", NULL, N_("mcen_me_inbox_search"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_search_messages) },
 	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_csm_help) },
 };
 
