@@ -33,13 +33,8 @@
   <menubar name="MenuBar">
     
     <menu name="EmailMenu" action="Email">
-      <menu name="EmailNewMainMenu" action="EmailNew">
-	<menuitem name="EmailNewMessageMenu"  action="EmailNewMessage"/>
-	<menuitem name="EmailNewFolderMenu" action="EmailNewFolder"/>
-      </menu>
-      <menuitem name="EmailOpenMenu" action="EmailOpen"/>
+      <menuitem name="EmailNewFolderMenu" action="EmailNewFolder"/>
       <separator/>
-      <menuitem name="EmailReplyMenu" action="EmailReply"/>
       <menuitem name="EmailReplyAllMenu" action="EmailReplyAll"/>
       <menuitem name="EmailForwardMenu" action="EmailForward"/>
       <separator/>
@@ -47,16 +42,11 @@
       <menuitem name="EmailPurgeAttachmentsMenu" action="EmailPurgeAttachments"/>
       <separator/>
       <menuitem name="EmailRenameMenu" action="EmailRenameFolder"/>
-      <menuitem name="EmailDeleteMenu" action="EmailDelete"/>
       <separator/>
       <menuitem name="EmailDetailsMenu" action="EmailDetails"/>
     </menu>
 
     <menu name="EditMenu" action="Edit">
-<!--       <menuitem name="EditCutMenu" action="EditCut"/> -->
-<!--       <menuitem name="EditCopyMenu" action="EditCopy"/> -->
-<!--       <menuitem name="EditPasteMenu" action="EditPaste"/> -->
-<!--       <separator/> -->
       <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
       <menuitem name="EditMarkAsReadMenu" action="EditMarkAsRead"/>
       <menuitem name="EditMarkAsUnreadMenu" action="EditMarkAsUnread"/>

@@ -41,16 +41,12 @@ G_BEGIN_DECLS
 static const ModestDimmingEntry modest_main_window_menu_dimming_entries [] = {
 
 	/* Email Menu */
-	{ "/MenuBar/EmailMenu/EmailNewMainMenu", NULL },
-	{ "/MenuBar/EmailMenu/EmailNewMainMenu/EmailNewFolderMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
-	{ "/MenuBar/EmailMenu/EmailOpenMenu", G_CALLBACK(modest_ui_dimming_rules_on_open_msg) },
-	{ "/MenuBar/EmailMenu/EmailReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/MenuBar/EmailMenu/EmailNewFolderMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_folder) },
 	{ "/MenuBar/EmailMenu/EmailReplyAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/EmailMenu/EmailForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/EmailMenu/EmailContentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_contents_msg) },
 	{ "/MenuBar/EmailMenu/EmailPurgeAttachmentsMenu", G_CALLBACK(modest_ui_dimming_rules_on_remove_attachments) },
 	{ "/MenuBar/EmailMenu/EmailRenameMenu",  G_CALLBACK(modest_ui_dimming_rules_on_rename_folder) },
-	{ "/MenuBar/EmailMenu/EmailDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete) },
 	{ "/MenuBar/EmailMenu/EmailDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details) },
 
 	/* Edit Menu */
