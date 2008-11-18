@@ -77,17 +77,12 @@ static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 							ModestMsgViewWindow *obj);
 
 static void modest_msg_view_window_disconnect_signals (ModestWindow *self);
-static void modest_msg_view_window_set_zoom (ModestWindow *window,
-					     gdouble zoom);
+
 static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
-static gboolean modest_msg_view_window_zoom_minus (ModestWindow *window);
-static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
 static gboolean modest_msg_view_window_key_event (GtkWidget *window,
 						  GdkEventKey *event,
 						  gpointer userdata);
-static gboolean modest_msg_view_window_window_state_event (GtkWidget *widget, 
-							   GdkEventWindowState *event, 
-							   gpointer userdata);
+
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
@@ -175,16 +170,6 @@ enum {
 
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
 	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
-	{ "ToolsFindInMessage", NULL, N_("mcen_me_viewer_find"), "<CTRL>F", NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
-};
-
-static const GtkRadioActionEntry msg_view_zoom_action_entries [] = {
-	{ "Zoom50", NULL, N_("mcen_me_viewer_50"), NULL, NULL, 50 },
-	{ "Zoom80", NULL, N_("mcen_me_viewer_80"), NULL, NULL, 80 },
-	{ "Zoom100", NULL, N_("mcen_me_viewer_100"), NULL, NULL, 100 },
-	{ "Zoom120", NULL, N_("mcen_me_viewer_120"), NULL, NULL, 120 },
-	{ "Zoom150", NULL, N_("mcen_me_viewer_150"), NULL, NULL, 150 },
-	{ "Zoom200", NULL, N_("mcen_me_viewer_200"), NULL, NULL, 200 }
 };
 
 typedef struct _ModestMsgViewWindowPrivate ModestMsgViewWindowPrivate;
@@ -294,32 +279,11 @@ save_state (ModestWindow *self)
 				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
-
-static void
-restore_settings (ModestMsgViewWindow *self)
-{
-	ModestConf *conf;
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
-	GtkAction *action;
-
-	conf = modest_runtime_get_conf ();
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarNormalScreenMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR, NULL));
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarFullScreenMenu");
-	gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action),
-				      modest_conf_get_bool (conf, MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN, NULL));
-	modest_widget_memory_restore (conf,
-				      G_OBJECT(self), 
-				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
-}
-
-static gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
-						     GtkScrollType scroll_type,
-						     gboolean horizontal,
-						     gpointer userdata)
+static 
+gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
+					      GtkScrollType scroll_type,
+					      gboolean horizontal,
+					      gpointer userdata)
 {
 	ModestMsgViewWindowPrivate *priv;
 	gboolean return_value;
@@ -359,10 +323,7 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_window_finalize;
 
-	modest_window_class->set_zoom_func = modest_msg_view_window_set_zoom;
 	modest_window_class->get_zoom_func = modest_msg_view_window_get_zoom;
-	modest_window_class->zoom_minus_func = modest_msg_view_window_zoom_minus;
-	modest_window_class->zoom_plus_func = modest_msg_view_window_zoom_plus;
 	modest_window_class->show_toolbar_func = modest_msg_view_window_show_toolbar;
 	modest_window_class->disconnect_signals_func = modest_msg_view_window_disconnect_signals;
 
@@ -428,19 +389,9 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 				      G_N_ELEMENTS (modest_action_entries),
 				      obj);
 	gtk_action_group_add_toggle_actions (action_group,
-					     modest_toggle_action_entries,
-					     G_N_ELEMENTS (modest_toggle_action_entries),
-					     obj);
-	gtk_action_group_add_toggle_actions (action_group,
 					     msg_view_toggle_action_entries,
 					     G_N_ELEMENTS (msg_view_toggle_action_entries),
 					     obj);
-	gtk_action_group_add_radio_actions (action_group,
-					    msg_view_zoom_action_entries,
-					    G_N_ELEMENTS (msg_view_zoom_action_entries),
-					    100,
-					    G_CALLBACK (modest_ui_actions_on_change_zoom),
-					    obj);
 
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
@@ -876,8 +827,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 
-	restore_settings (MODEST_MSG_VIEW_WINDOW(obj));
-	
  	/* g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj); */
 
 	priv->clipboard_change_handler = g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change", G_CALLBACK (modest_msg_view_window_clipboard_owner_change), obj);
@@ -900,10 +849,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 	g_signal_connect (G_OBJECT (obj), "key-press-event",
 			  G_CALLBACK (modest_msg_view_window_key_event),
-			  NULL);
-
-	g_signal_connect (G_OBJECT (obj), "window-state-event",
-			  G_CALLBACK (modest_msg_view_window_window_state_event),
 			  NULL);
 
 	g_signal_connect (G_OBJECT (obj), "move-focus",
@@ -1436,9 +1381,6 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 	/* update the toggle buttons status */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
 	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/ToolsFindInMessageMenu");
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
-	
 }
 
 static void
@@ -1506,27 +1448,6 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		
 }
 
-static void
-modest_msg_view_window_set_zoom (ModestWindow *window,
-				 gdouble zoom)
-{
-	ModestMsgViewWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkAction *action = NULL;
-	gint int_zoom = (gint) rint (zoom*100.0+0.1);
-     
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
-
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom);
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
-					    "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu");
-
-	gtk_radio_action_set_current_value (GTK_RADIO_ACTION (action), int_zoom);
-}
-
 static gdouble
 modest_msg_view_window_get_zoom (ModestWindow *window)
 {
@@ -1536,61 +1457,6 @@ modest_msg_view_window_get_zoom (ModestWindow *window)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 	return modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
-}
-
-static gboolean
-modest_msg_view_window_zoom_plus (ModestWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	GtkRadioAction *zoom_radio_action;
-	GSList *group, *node;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
-									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
-
-	group = gtk_radio_action_get_group (zoom_radio_action);
-
-	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (group->data))) {
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_max_zoom_level_reached"));
-		return FALSE;
-	}
-
-	for (node = group; node != NULL; node = g_slist_next (node)) {
-		if ((node->next != NULL) && gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->next->data))) {
-			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->data), TRUE);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-static gboolean
-modest_msg_view_window_zoom_minus (ModestWindow *window)
-{
-	ModestWindowPrivate *parent_priv;
-	GtkRadioAction *zoom_radio_action;
-	GSList *group, *node;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	zoom_radio_action = GTK_RADIO_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, 
-									 "/MenuBar/ViewMenu/ZoomMenu/Zoom50Menu"));
-
-	group = gtk_radio_action_get_group (zoom_radio_action);
-
-	for (node = group; node != NULL; node = g_slist_next (node)) {
-		if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (node->data))) {
-			if (node->next != NULL) {
-				gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (node->next->data), TRUE);
-				return TRUE;
-			} else {
-			  hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_min_zoom_level_reached"));
-				return FALSE;
-			}
-			break;
-		}
-	}
-	return FALSE;
 }
 
 static gboolean
@@ -2173,33 +2039,6 @@ toolbar_resize (ModestMsgViewWindow *self)
 		
 }
 
-static gboolean
-modest_msg_view_window_window_state_event (GtkWidget *widget, GdkEventWindowState *event, gpointer userdata)
-{
-	if (event->changed_mask & GDK_WINDOW_STATE_FULLSCREEN) {
-		ModestWindowPrivate *parent_priv;
-		ModestWindowMgr *mgr;
-		gboolean is_fullscreen;
-		GtkAction *fs_toggle_action;
-		gboolean active;
-
-		mgr = modest_runtime_get_window_mgr ();
-		is_fullscreen = (modest_window_mgr_get_fullscreen_mode (mgr))?1:0;
-
-		parent_priv = MODEST_WINDOW_GET_PRIVATE (widget);
-		
-		fs_toggle_action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewToggleFullscreenMenu");
-		active = (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (fs_toggle_action)))?1:0;
-		if (is_fullscreen != active) {
-			gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (fs_toggle_action), is_fullscreen);
-		}
-		toolbar_resize (MODEST_MSG_VIEW_WINDOW (widget));
-	}
-
-	return FALSE;
-
-}
-
 static void
 modest_msg_view_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
@@ -2209,9 +2048,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 	GtkWidget *reply_button = NULL, *menu = NULL;
 	GtkWidget *placeholder = NULL;
 	gint insert_index;
-	const gchar *action_name;
-	GtkAction *action;
-	
+
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -2236,12 +2073,12 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 		gtk_container_add (GTK_CONTAINER (priv->progress_toolitem), priv->progress_bar);
 		gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (priv->progress_toolitem), insert_index);
-		
+
 		/* Connect cancel 'clicked' signal to abort progress mode */
 		g_signal_connect(priv->cancel_toolitem, "clicked",
 				 G_CALLBACK(cancel_progressbar),
 				 self);
-		
+
 		/* Add it to the observers list */
 		priv->progress_widgets = g_slist_prepend(priv->progress_widgets, priv->progress_bar);
 
@@ -2249,7 +2086,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
 
-		/* Set reply button tap and hold menu */	
+		/* Set reply button tap and hold menu */
 		reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 							  "/ToolBar/ToolbarMessageReply");
 		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
@@ -2272,20 +2109,6 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
 	}
-
-	/* Update also the actions (to update the toggles in the
-	   menus), we have to do it manually because some other window
-	   of the same time could have changed it (remember that the
-	   toolbar fullscreen mode is shared by all the windows of the
-	   same type */
-	if (modest_window_mgr_get_fullscreen_mode (modest_runtime_get_window_mgr ()))
-		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarFullScreenMenu";
-	else
-		action_name = "/MenuBar/ViewMenu/ViewShowToolbarMenu/ViewShowToolbarNormalScreenMenu";
-
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, action_name);
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action),
-							    show_toolbar);
 }
 
 static void 

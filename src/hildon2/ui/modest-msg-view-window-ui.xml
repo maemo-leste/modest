@@ -32,39 +32,12 @@
 
   <menubar name="MenuBar">
     <menu name="MessageMenu" action="Email">
-      <menuitem name="MessageReplyMenu" action="EmailReply"/>
       <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
       <menuitem name="MessageForwardMenu" action="EmailForward"/>
       <separator/>
       <menuitem name="MessageNewMenu"  action="EmailNewDefault"/>
       <separator/>
-      <menuitem name="MessageDeleteMenu" action="EmailDelete"/>
-      <separator/>
       <menuitem name="MessageDetailsMenu"      action="EmailDetails"/>
-    </menu>
-       
-    <menu name="EditMenu" action="Edit">
-      <menuitem name="EditCutMenu" action="EditCut"/>
-      <menuitem name="EditCopyMenu" action="EditCopy"/>
-      <menuitem name="EditPasteMenu" action="EditPaste"/>
-      <separator/>
-      <menuitem name="EditSelectAllMenu" action="EditSelectAll"/>
-      <separator/>
-      <menuitem name="EditMoveToMenu" action="EditMoveTo"/>
-    </menu> 
- 
-    <menu name="ViewMenu" action="View">
-      <menu name="ZoomMenu" action="Zoom">
-	<menuitem name="Zoom50Menu" action="Zoom50"/>
-	<menuitem name="Zoom80Menu" action="Zoom80"/>
-	<menuitem name="Zoom100Menu" action="Zoom100"/>
-	<menuitem name="Zoom120Menu" action="Zoom120"/>
-	<menuitem name="Zoom150Menu" action="Zoom150"/>
-	<menuitem name="Zoom200Menu" action="Zoom200"/>
-      </menu>
-      <separator/>
-      <menuitem name="ViewNextMessageMenu" action="ViewNextMessage"/>
-      <menuitem name="ViewPreviousMessageMenu" action="ViewPreviousMessage"/>
     </menu>
 
     <menu name="AttachmentsMenu" action="Attachments">
@@ -74,10 +47,6 @@
 
    <menu name="ToolsMenu" action="Tools">
       <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
-      <separator/>
-      <menuitem name="ToolsFindInMessageMenu" action="ToolsFindInMessage"/>
-      <separator/>
-      <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
    </menu>
 
   </menubar>
