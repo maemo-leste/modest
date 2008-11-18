@@ -611,13 +611,13 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	
 	/* Delete button: */
 	if (!priv->button_delete)
-		priv->button_delete = gtk_button_new_with_label (_("mcen_bd_delete"));
+		priv->button_delete = gtk_button_new_with_label (_HL("wdgt_bd_delete"));
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (self)->action_area), priv->button_delete, 
 			    FALSE, FALSE, 0);
 
 	/* Signature button: */
 	if (!priv->button_signature)
-		priv->button_signature = gtk_button_new_with_label (_("mcen_fi_email_signature"));
+		priv->button_signature = gtk_button_new_with_label (_("mcen_bd_email_signature"));
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (self)->action_area), priv->button_signature, 
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->button_signature);
