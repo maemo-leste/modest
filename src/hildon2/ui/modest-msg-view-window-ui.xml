@@ -68,7 +68,6 @@
     </menu>
 
     <menu name="AttachmentsMenu" action="Attachments">
-      <menuitem name="ViewAttachmentMenu" action="ViewAttachment"/>
       <menuitem name="SaveAttachmentMenu" action="SaveAttachment"/>
       <menuitem name="RemoveAttachmentMenu" action="RemoveAttachment"/>
     </menu>
