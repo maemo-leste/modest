@@ -41,6 +41,7 @@
 #include <tny-simple-list.h>
 #include <tny-send-queue.h>
 #include <tny-status.h>
+#include <tny-error.h>
 #include <tny-folder-observer.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
@@ -106,6 +107,18 @@ static void     sync_folder_finish_callback (TnyFolder *self,
 					     gpointer user_data);
 
 static gboolean _check_memory_low         (ModestMailOperation *mail_op);
+
+
+typedef struct {
+	ModestTnySendQueue *queue;
+	ModestMailOperation *self;
+	guint error_handler;
+	guint start_handler;
+	guint stop_handler;
+} RunQueueHelper;
+
+static void run_queue_notify_and_destroy (RunQueueHelper *helper,
+					  ModestMailOperationStatus status);
 
 /* Helpers for the update account operation (send & receive)*/
 typedef struct 
@@ -632,13 +645,16 @@ typedef struct
 } SendNewMailHelper;
 
 static void
-send_mail_common_cb (gboolean cancelled, 
-		     GError *err, 
-		     SendNewMailHelper *helper)
+send_mail_on_sync_async_cb (TnyFolder *folder, 
+			    gboolean cancelled, 
+			    GError *err, 
+			    gpointer user_data)
 {
 	ModestMailOperationPrivate *priv;
 	ModestMailOperation *self;
+	SendNewMailHelper *helper;
 
+	helper = (SendNewMailHelper *) user_data;
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
@@ -663,12 +679,53 @@ send_mail_common_cb (gboolean cancelled,
 }
 
 static void
-send_mail_on_sync_async_cb (TnyFolder *self, 
-			    gboolean cancelled, 
-			    GError *err, 
-			    gpointer user_data)
+run_queue_start (TnySendQueue *self,
+		 gpointer user_data)
 {
-	send_mail_common_cb (cancelled, err, (SendNewMailHelper *) user_data);
+	RunQueueHelper *helper = (RunQueueHelper *) user_data;
+	ModestMailOperation *mail_op;
+			
+	g_debug ("%s sending queue successfully started", __FUNCTION__);
+
+	/* Wait for the message to be sent */
+	mail_op = modest_mail_operation_new (NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+	modest_mail_operation_run_queue (mail_op, helper->queue);
+	g_object_unref (mail_op);
+
+	/* Free the helper and end operation */
+	run_queue_notify_and_destroy (helper, MODEST_MAIL_OPERATION_STATUS_SUCCESS);
+}
+
+static void 
+run_queue_error_happened (TnySendQueue *queue, 
+			  TnyHeader *header, 
+			  TnyMsg *msg, 
+			  GError *error, 
+			  gpointer user_data)
+{
+	RunQueueHelper *helper = (RunQueueHelper *) user_data;
+	ModestMailOperationPrivate *priv;
+
+	/* If we are here this means that the send queue could not
+	   start to send emails. Shouldn't happen as this means that
+	   we could not create the thread */
+	g_debug ("%s sending queue failed to create the thread", __FUNCTION__);
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (helper->self);
+	priv->error = g_error_copy ((const GError *) error);
+
+	if (error->code != TNY_SYSTEM_ERROR_UNKNOWN) {
+		/* This code is here for safety reasons. It should
+		   never be called, because that would mean that we
+		   are not controlling some error case */
+		g_warning ("%s Error %s should not happen", 
+			   __FUNCTION__, error->message);
+	}
+
+	/* Free helper and end operation */
+	run_queue_notify_and_destroy (helper, MODEST_MAIL_OPERATION_STATUS_FAILED);
 }
 
 static void
@@ -678,7 +735,65 @@ send_mail_on_added_to_outbox (TnySendQueue *send_queue,
 			      GError *err,
 			      gpointer user_data)
 {
-	send_mail_common_cb (cancelled, err, (SendNewMailHelper *) user_data);
+	ModestMailOperationPrivate *priv;
+	ModestMailOperation *self;
+	SendNewMailHelper *helper;
+
+	helper = (SendNewMailHelper *) user_data;
+	self = helper->mail_op;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	if (cancelled || err)
+		goto end;
+
+	if (err) {
+		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
+			     MODEST_MAIL_OPERATION_ERROR_SEND_QUEUE_ADD_ERROR,
+			     "Error adding a msg to the send queue\n");
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
+	} else {
+		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	}
+
+ end:
+	if (helper->notify) {
+		TnyTransportAccount *trans_account;
+		ModestTnySendQueue *queue;
+
+		trans_account = (TnyTransportAccount *) modest_mail_operation_get_account (self);
+		queue = modest_runtime_get_send_queue (trans_account, TRUE);
+		if (queue) {
+			RunQueueHelper *helper;
+
+			/* Create the helper */
+			helper = g_slice_new0 (RunQueueHelper);
+			helper->queue = g_object_ref (queue);
+			helper->self = g_object_ref (self);
+
+			/* if sending is ongoing wait for the queue to
+			   stop. Otherwise wait for the queue-start
+			   signal. It could happen that the queue
+			   could not start, then check also the error
+			   happened signal */
+			if (modest_tny_send_queue_sending_in_progress (queue)) {
+				run_queue_start (TNY_SEND_QUEUE (queue), helper);
+			} else {
+				helper->start_handler = g_signal_connect (queue, "queue-start", 
+									  G_CALLBACK (run_queue_start), 
+									  helper);
+				helper->error_handler = g_signal_connect (queue, "error-happened", 
+									  G_CALLBACK (run_queue_error_happened), 
+									  helper);
+			}
+		} else {
+			/* Finalize this mail operation */
+			modest_mail_operation_notify_end (self);
+		}
+		g_object_unref (trans_account);
+	}
+
+	g_object_unref (helper->mail_op);
+	g_slice_free (SendNewMailHelper, helper);
 }
 
 static gboolean
@@ -1036,12 +1151,14 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 		TnyHeader *header = tny_msg_get_header (info->draft_msg);
 		TnyFolder *src_folder = tny_header_get_folder (header);
 
+		g_debug ("--- REMOVE AND SYNC");
 		/* Remove the old draft */
 		tny_folder_remove_msg (src_folder, header, NULL);
 
 		/* Synchronize to expunge and to update the msg counts */
 		tny_folder_sync_async (info->drafts, TRUE, NULL, NULL, NULL);
 		tny_folder_sync_async (src_folder, TRUE, NULL, NULL, NULL);
+		g_debug ("--- REMOVED - SYNCED");
 
 		g_object_unref (G_OBJECT(header));
 		g_object_unref (G_OBJECT(src_folder));
@@ -1173,6 +1290,7 @@ modest_mail_operation_save_to_drafts (ModestMailOperation *self,
 	info->callback = callback;
 	info->user_data = user_data;
 
+	g_debug ("--- CREATE MESSAGE");
 	modest_mail_operation_notify_start (self);
 	modest_mail_operation_create_msg (self, from, to, cc, bcc, subject, plain_body, html_body,
 					  attachments_list, images_list, priority_flags,
@@ -3230,20 +3348,45 @@ modest_mail_operation_refresh_folder  (ModestMailOperation *self,
 }
 
 static void
-run_queue_stop (ModestTnySendQueue *queue,
-		ModestMailOperation *self)
+run_queue_notify_and_destroy (RunQueueHelper *helper,
+			      ModestMailOperationStatus status)
 {
 	ModestMailOperationPrivate *priv;
 
-	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
-	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (queue));
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	/* Disconnect */
+	if (helper->error_handler &&
+	    g_signal_handler_is_connected (helper->queue, helper->error_handler))
+		g_signal_handler_disconnect (helper->queue, helper->error_handler);
+	if (helper->start_handler &&
+	    g_signal_handler_is_connected (helper->queue, helper->start_handler))
+		g_signal_handler_disconnect (helper->queue, helper->start_handler);
+	if (helper->stop_handler &&
+	    g_signal_handler_is_connected (helper->queue, helper->stop_handler))
+		g_signal_handler_disconnect (helper->queue, helper->stop_handler);
 
-	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	/* Set status */
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (helper->self);
+	priv->status = status;
 
-	modest_mail_operation_notify_end (self);
-	g_signal_handlers_disconnect_by_func (queue, run_queue_stop, self);
-	g_object_unref (self);
+	/* Notify end */
+	modest_mail_operation_notify_end (helper->self);
+
+	/* Free data */
+	g_object_unref (helper->queue);
+	g_object_unref (helper->self);
+	g_slice_free (RunQueueHelper, helper);
+}
+
+static void
+run_queue_stop (ModestTnySendQueue *queue,
+		gpointer user_data)
+{
+	RunQueueHelper *helper;
+
+	g_debug ("%s sending queue stopped", __FUNCTION__);
+
+	helper = (RunQueueHelper *) user_data;
+	run_queue_notify_and_destroy (helper, MODEST_MAIL_OPERATION_STATUS_SUCCESS);
 }
 
 void
@@ -3251,6 +3394,7 @@ modest_mail_operation_run_queue (ModestMailOperation *self,
 				 ModestTnySendQueue *queue)
 {
 	ModestMailOperationPrivate *priv;
+ 	RunQueueHelper *helper;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (queue));
@@ -3260,9 +3404,17 @@ modest_mail_operation_run_queue (ModestMailOperation *self,
 	priv->account = TNY_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (queue)));
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE;
 
+	/* Create the helper */
+	helper = g_slice_new0 (RunQueueHelper);
+	helper->queue = g_object_ref (queue);
+	helper->self = g_object_ref (self);
+	helper->stop_handler = g_signal_connect (queue, "queue-stop", 
+						 G_CALLBACK (run_queue_stop), 
+						 helper);
+
+	/* Notify operation has started */
 	modest_mail_operation_notify_start (self);
-	g_object_ref (self);
-	g_signal_connect ((gpointer) queue, "queue-stop", G_CALLBACK (run_queue_stop), (gpointer) self);
+	g_debug ("%s, run queue started", __FUNCTION__);
 }
 
 static void

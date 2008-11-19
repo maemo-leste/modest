@@ -73,6 +73,9 @@ static void _on_msg_error_happened (TnySendQueue *self,
 static void _on_queue_start        (TnySendQueue *self, 
 				    gpointer user_data);
 
+static void _on_queue_stop         (TnySendQueue *self,
+				    gpointer data);
+
 static void modest_tny_send_queue_add_async (TnySendQueue *self, 
 					     TnyMsg *msg, 
 					     TnySendQueueAddCallback callback, 
@@ -108,6 +111,8 @@ struct _ModestTnySendQueuePrivate {
 
 	/* last was send receive operation?*/
 	gboolean requested_send_receive;
+
+	gboolean sending;
 };
 
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -401,13 +406,14 @@ modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->current = NULL;
 	priv->outbox = NULL;
 	priv->sentbox = NULL;
+	priv->sending = FALSE;
 }
 
 static void
 modest_tny_send_queue_finalize (GObject *obj)
 {
 	ModestTnySendQueuePrivate *priv;
-		
+
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (obj);
 
 	g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
@@ -506,10 +512,14 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	g_signal_connect (G_OBJECT(self), "error-happened",
 	                  G_CALLBACK(_on_msg_error_happened),
 			  NULL);
+
 	g_signal_connect (G_OBJECT (self), "queue-start",
 			  G_CALLBACK (_on_queue_start),
 			  NULL);
 
+	g_signal_connect (G_OBJECT (self), "queue-stop",
+			  G_CALLBACK (_on_queue_stop),
+			  NULL);
 
 	priv->requested_send_receive = FALSE;
 
@@ -545,7 +555,7 @@ modest_tny_send_queue_sending_in_progress (ModestTnySendQueue* self)
 	
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	
-	return priv->current != NULL;
+	return priv->sending;
 }
 
 ModestTnySendQueueStatus
@@ -740,6 +750,7 @@ static void
 _on_queue_start (TnySendQueue *self,
 		 gpointer data)
 {
+	ModestTnySendQueuePrivate *priv;
 	ModestMailOperation *mail_op;
 
 	mail_op = modest_mail_operation_new (NULL);
@@ -747,6 +758,19 @@ _on_queue_start (TnySendQueue *self,
 					 mail_op);
 	modest_mail_operation_run_queue (mail_op, MODEST_TNY_SEND_QUEUE (self));
 	g_object_unref (mail_op);
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	priv->sending = TRUE;
+}
+
+static void 
+_on_queue_stop (TnySendQueue *self,
+		gpointer data)
+{
+	ModestTnySendQueuePrivate *priv;
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+	priv->sending = FALSE;
 }
 
 static void 
