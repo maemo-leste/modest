@@ -35,6 +35,7 @@
 
 #include <modest-runtime.h>
 #include "modest-platform.h"
+#include "modest-text-utils.h"
 #include "modest-account-protocol.h"
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
@@ -318,9 +319,9 @@ static void
 setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 {
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-	
-	priv->new_button     = gtk_button_new_from_stock(_("mcen_bd_new"));
-	
+
+	priv->new_button     = gtk_button_new_from_stock(_HL("wdgt_bd_new"));
+
 	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
 			  G_CALLBACK(on_new_button_clicked),
 			  self);
