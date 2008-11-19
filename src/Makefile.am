@@ -58,6 +58,7 @@ modest_public_headers = \
 	modest-pair.h \
 	modest-platform.h \
 	modest-plugin.h \
+	modest-plugin-ui-actions.h \
 	modest-protocol.h \
 	modest-protocol-registry.h \
 	modest-server-account-settings.h \
@@ -106,6 +107,7 @@ libmodest_la_SOURCES=\
 	modest-plugin.c \
 	modest-plugin-factory.c \
 	modest-plugin-factory.h \
+	modest-plugin-ui-actions.c \
 	modest-progress-object.c \
 	modest-progress-object.h \
 	modest-protocol.c \
