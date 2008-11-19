@@ -171,9 +171,9 @@ on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer us
 	priv->range_error_occured = TRUE;
 
 	if (type == HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED) {
-		msg = g_strdup (_HL("ckct_ib_maximum_value"));
+		msg = g_strdup_printf (dgettext ("hildon-libs", "ckct_ib_maximum_value"), 65535);
 	} else if (type == HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED) {
-		msg = g_strdup (_HL("ckct_ib_minimum_value"));
+		msg = g_strdup_printf (dgettext ("hildon-libs", "ckct_ib_minimum_value"), 1);
 	} else {
 		msg = g_strdup_printf (_HL("ckct_ib_set_a_value_within_range"), PORT_RANGE_MIN, PORT_RANGE_MAX);
 	}
