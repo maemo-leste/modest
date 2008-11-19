@@ -874,11 +874,11 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->outgoing_security);
-	
+
 	GtkWidget *separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (separator);
-	
+
 	/* connection-specific checkbox: */
 	priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
@@ -893,26 +893,24 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific,
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
-	
+
 	/* Connection-specific SMTP-Severs Edit button: */
-	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_fi_advsetup_optional_smtp"));
+	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_advsetup_optional_smtp"));
 	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers, 
 					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);	
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, 
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
-	
+
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
 				       HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific));
-		
+
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
 			  G_CALLBACK (on_button_outgoing_smtp_servers), self);
 
 	g_signal_connect (G_OBJECT (priv->entry_outgoingserver), "changed",
 	                  G_CALLBACK (on_entry_outgoing_servername_changed), self);
-	
-	
 	gtk_widget_show (GTK_WIDGET (box));
 
 	g_object_unref (title_sizegroup);

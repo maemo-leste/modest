@@ -809,7 +809,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	GtkWidget *separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (separator);
-	
+
 	/* connection-specific checkbox: */
 	if (!priv->checkbox_outgoing_smtp_specific) {
 		priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (MODEST_EDITABLE_SIZE);
@@ -823,27 +823,27 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific, 
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 	connect_for_modified (self, priv->checkbox_outgoing_smtp_specific);
-	
+
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!priv->button_outgoing_smtp_servers)
-		priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_fi_advsetup_optional_smtp"));
+		priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_advsetup_optional_smtp"));
 	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers, 
 					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);	
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, FALSE, FALSE, MODEST_MARGIN_HALF);
-	
+
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
 		GTK_BUTTON (priv->checkbox_outgoing_smtp_specific));
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-		
+
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
-		
+
 	gtk_widget_show (GTK_WIDGET (box));
-	
+
 	return GTK_WIDGET (box);
 }
 	
