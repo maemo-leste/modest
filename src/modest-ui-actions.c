@@ -1277,7 +1277,11 @@ open_msgs_performer(gboolean canceled,
 
 	if (show_open_draft) {
 		helper->banner_info = g_slice_new (OpenMsgBannerInfo);
+#ifdef MODEST_TOOLKIT_HILDON2
+		helper->banner_info->message = g_strdup (_("mail_me_opening"));
+#else
 		helper->banner_info->message = g_strdup (_("mail_ib_opening_draft_message"));
+#endif
 		helper->banner_info->banner = NULL;
 		helper->banner_info->idle_handler = g_timeout_add (500, open_msg_banner_idle, 
 								   helper->banner_info);
