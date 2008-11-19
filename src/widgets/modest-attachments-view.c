@@ -100,13 +100,14 @@ modest_attachments_view_new (TnyMsg *msg)
 	return GTK_WIDGET (self);
 }
 
+
 void
 modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg)
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (attachments_view);
 	TnyList *parts;
 	TnyIterator *iter;
-	const gchar *msg_content_type = NULL;
+	gchar *msg_content_type = NULL;
 	
 	if (msg == priv->msg) return;
 
@@ -128,20 +129,18 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 	/* If the top mime part is a multipart/related, we don't show the attachments, as they're
 	 * embedded images in body */
-	msg_content_type = tny_mime_part_get_content_type (TNY_MIME_PART (priv->msg));
+	msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (priv->msg));
 	if ((msg_content_type != NULL) && !strcasecmp (msg_content_type, "multipart/related")) {
 		gchar *header_content_type;
-		gchar *header_content_type_lower;
 		gboolean application_multipart = FALSE;
-		header_content_type = modest_tny_mime_part_get_header_value (TNY_MIME_PART (priv->msg), "Content-Type");
-		header_content_type = g_strstrip (header_content_type);
-		header_content_type_lower = (header_content_type ) ?
-			g_ascii_strdown (header_content_type, -1) : NULL;
+
+		g_free (msg_content_type);
+
+		header_content_type = modest_tny_mime_part_get_headers_content_type (TNY_MIME_PART (priv->msg));
 		
-		if ((header_content_type_lower != NULL) && 
-		    !strstr (header_content_type_lower, "application/")) {
+		if ((header_content_type != NULL) && 
+		    !strstr (header_content_type, "application/")) {
 			application_multipart = TRUE;
-			g_free (header_content_type_lower);
 		}
 		g_free (header_content_type);
 
@@ -150,14 +149,14 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 			return;
 		}
 	} else {
-		gchar *lower;
 		gboolean direct_attach;
 
-		lower = g_ascii_strdown (msg_content_type, -1);
-		direct_attach = (!g_str_has_prefix (lower, "message/rfc822") && 
-				 !g_str_has_prefix (lower, "multipart") && 
-				 !g_str_has_prefix (lower, "text/"));
-		g_free (lower);
+		direct_attach = (!g_str_has_prefix (msg_content_type, "message/rfc822") && 
+				 !g_str_has_prefix (msg_content_type, "multipart") && 
+				 !g_str_has_prefix (msg_content_type, "text/"));
+
+		g_free (msg_content_type);
+
 		if (direct_attach) {
 			modest_attachments_view_add_attachment (attachments_view, TNY_MIME_PART (msg), TRUE, 0);
 			gtk_widget_queue_draw (GTK_WIDGET (attachments_view));

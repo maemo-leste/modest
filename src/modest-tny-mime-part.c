@@ -207,3 +207,43 @@ modest_tny_mime_part_to_string (TnyMimePart *part, gint indent)
 	g_string_free (indent_prefix, TRUE);
 }
 
+gchar *
+modest_tny_mime_part_get_headers_content_type (TnyMimePart *part)
+{
+	gchar *header_content_type;
+	gchar *header_content_type_lower;
+	gchar *suffix;
+
+	g_return_val_if_fail (TNY_IS_MIME_PART (part), NULL);
+
+	header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
+	header_content_type = g_strstrip (header_content_type);
+
+	/* remove the ; suffix */
+	suffix = index (header_content_type, ';');
+	suffix[0] = '\0';
+
+	header_content_type_lower = (header_content_type ) ?
+		g_ascii_strdown (header_content_type, -1) : NULL;
+	return header_content_type_lower;
+}
+
+gchar *
+modest_tny_mime_part_get_content_type (TnyMimePart *part)
+{
+	const gchar *content_type;
+	gchar *retval = NULL;
+
+	g_return_val_if_fail (TNY_IS_MIME_PART (part), NULL);
+	content_type = tny_mime_part_get_content_type (part);
+
+	if (g_str_has_prefix (content_type, "message/rfc822")) {
+		retval = modest_tny_mime_part_get_headers_content_type (part);
+	} 
+
+	if (retval == NULL) {
+		retval = g_ascii_strdown (content_type, -1);
+	}
+
+	return retval;
+}

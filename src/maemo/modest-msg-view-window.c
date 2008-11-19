@@ -2532,7 +2532,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	g_chmod(helper->filepath, 0444);
 	
 	/* Activate the file */
-	modest_platform_activate_file (helper->filepath, tny_mime_part_get_content_type (mime_part));
+	modest_platform_activate_file (helper->filepath, modest_tny_mime_part_get_content_type (mime_part));
 
  free:
 	/* Frees */
@@ -2550,6 +2550,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 	gchar *attachment_uid = NULL;
 	gint attachment_index = 0;
 	TnyList *attachments;
+	TnyMimePart *window_msg;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	g_return_if_fail (TNY_IS_MIME_PART (mime_part) || (mime_part == NULL));
@@ -2591,7 +2592,11 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		return;
 	}
 
-	if (!modest_tny_mime_part_is_msg (mime_part)) {
+	/* we also check for mime_part == priv->msg, as this means it's a direct attachment
+	 * shown as attachment, so it should behave as a file */
+	window_msg = TNY_MIME_PART (tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view)));
+	if (!modest_tny_mime_part_is_msg (mime_part)||
+	    mime_part == window_msg) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		gboolean show_error_banner = FALSE;
@@ -2616,7 +2621,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 				const gchar *content_type;
 				/* the file may already exist but it isn't writable,
 				 * let's try to open it anyway */
-				content_type = tny_mime_part_get_content_type (mime_part);
+				content_type = modest_tny_mime_part_get_content_type (mime_part);
 				modest_platform_activate_file (filepath, content_type);
 			} else {
 				g_warning ("%s: modest_utils_create_temp_stream failed", __FUNCTION__);
@@ -2658,6 +2663,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			gtk_widget_show_all (GTK_WIDGET (msg_win));
 		}
 	}
+	g_object_unref (window_msg);
 	g_object_unref (mime_part);
 }
 
@@ -2859,6 +2865,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 	gchar *folder = NULL;
 	gchar *filename = NULL;
 	gchar *save_multiple_str = NULL;
+	TnyMsg *window_msg;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -2871,6 +2878,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		g_object_ref (mime_parts);
 	}
 
+	window_msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 	/* prepare dialog */
 	if (tny_list_get_length (mime_parts) == 1) {
 		TnyIterator *iter;
@@ -2893,6 +2901,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		save_multiple_str = g_strdup_printf (_FM("sfil_va_number_of_objects_attachments"), 
 						     tny_list_get_length (mime_parts));
 	}
+	g_object_unref (window_msg);
 	
 	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
 						      GTK_FILE_CHOOSER_ACTION_SAVE);

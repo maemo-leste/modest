@@ -77,4 +77,22 @@ gboolean modest_tny_mime_part_is_msg (TnyMimePart *part);
  */
 void modest_tny_mime_part_to_string (TnyMimePart *part, gint indent);
 
+/**
+ * modest_tny_mime_part_get_content_type:
+ * @part: a #TnyMimePart
+ *
+ * obtains the content type in headers
+ */
+gchar *modest_tny_mime_part_get_headers_content_type (TnyMimePart *part);
+
+/**
+ * modest_tny_mime_part_get_content_type:
+ * @part: a #TnyMimePart
+ *
+ * obtains the content type of a mime part, taking into account that,
+ * for messages with type message/rfc822 it has to get it from
+ * the headers
+ */
+gchar *modest_tny_mime_part_get_content_type (TnyMimePart *part);
+
 #endif /*__MODEST_TNY_MIME_PART_H__*/

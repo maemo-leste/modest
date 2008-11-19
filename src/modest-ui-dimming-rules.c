@@ -2330,9 +2330,15 @@ _invalid_attach_selected (ModestWindow *win,
 			while (!tny_iterator_is_done (iter) && !result) {
 				TnyMimePart *mime_part = TNY_MIME_PART (tny_iterator_get_current (iter));
 				TnyList *nested_list = tny_simple_list_new ();
+
 				if (!for_remove && modest_tny_mime_part_is_msg (mime_part)) {
-					selected_messages = TRUE;
-					result = TRUE;
+					TnyMsg *window_msg;
+					window_msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+					if ((TnyMimePart *) window_msg != mime_part) {
+						selected_messages = TRUE;
+						result = TRUE;
+					}
+					g_object_unref (window_msg);
 				}
 				tny_mime_part_get_parts (mime_part, nested_list);
 				if (!for_remove && tny_list_get_length (nested_list) > 0) {

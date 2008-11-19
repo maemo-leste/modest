@@ -37,6 +37,7 @@
 #include <modest-attachment-view.h>
 #include <modest-platform.h>
 #include <modest-text-utils.h>
+#include <modest-tny-mime-part.h>
 #include <tny-msg.h>
 #include <modest-mail-operation.h>
 #include <modest-mail-operation-queue.h>
@@ -256,12 +257,24 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 				filename = tny_header_dup_subject (header);
 			if (filename == NULL || filename[0] == '\0')
 				filename = g_strdup (_("mail_va_no_subject"));
-			if (priv->is_purged)
+			if (priv->is_purged) {
 				file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
-			else
-				file_icon_name = 
-					modest_platform_get_file_icon_name (
-						NULL, tny_mime_part_get_content_type (mime_part), NULL);
+			} else {
+				gchar *header_content_type;
+				header_content_type = modest_tny_mime_part_get_content_type (mime_part);
+				if ((g_str_has_prefix (header_content_type, "message/rfc822") ||
+				     g_str_has_prefix (header_content_type, "multipart/") ||
+				     g_str_has_prefix (header_content_type, "text/"))) {
+					file_icon_name = 
+						modest_platform_get_file_icon_name (
+							NULL, tny_mime_part_get_content_type (mime_part), NULL);
+				} else {
+					file_icon_name = 
+						modest_platform_get_file_icon_name (
+							NULL, header_content_type, NULL);
+				}
+				g_free (header_content_type);
+			}
 			g_object_unref (header);
 		}
 	} else {
@@ -270,7 +283,7 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 			file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
 		} else {
 			file_icon_name = modest_platform_get_file_icon_name (
-				filename, tny_mime_part_get_content_type (mime_part), NULL);
+				filename, modest_tny_mime_part_get_content_type (mime_part), NULL);
 			show_size = TRUE;
 		}
 	}

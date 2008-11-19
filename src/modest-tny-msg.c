@@ -465,19 +465,14 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	/* no parts? assume it's single-part message */
 	if (tny_iterator_is_done(iter)) {
 		gchar *content_type;
-		gchar *content_type_lower;
 		gboolean is_text_part;
 		g_object_unref (G_OBJECT(iter));
-		content_type = g_strdup (tny_mime_part_get_content_type (msg));
+		content_type = modest_tny_mime_part_get_content_type (msg);
 		if (content_type == NULL)
 			return NULL;
-		content_type = g_strstrip (content_type);
-		content_type_lower = g_ascii_strdown (content_type, -1);
-		g_free (content_type);
 		is_text_part = 
-			g_str_has_prefix (content_type_lower, "text/") ||
-			g_str_has_prefix (content_type_lower, "message/rfc822");
-		g_free (content_type_lower);
+			g_str_has_prefix (content_type, "text/");
+		g_free (content_type);
 		/* if this part cannot be a supported body return NULL */
 		if (!is_text_part) {
 			return NULL;
