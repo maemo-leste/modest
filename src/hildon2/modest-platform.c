@@ -2139,3 +2139,9 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 				  G_CALLBACK (gtk_widget_destroy),
 				  dialog);
 }
+
+osso_context_t *
+modest_platform_get_osso_context (void)
+{
+	return modest_maemo_utils_get_osso_context ();
+}

@@ -34,6 +34,9 @@
 #include "widgets/modest-window.h"
 #include "widgets/modest-folder-view.h"
 #include "widgets/modest-sort-criterium-view.h"
+#ifndef MODEST_TOOLKIT_GTK
+#include <libosso.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -517,6 +520,18 @@ void     modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
  **/
 void     modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 						    TnyHeader *header);
+
+#ifndef MODEST_TOOLKIT_GTK
+/**
+ * modest_platform_get_osso_context:
+ *
+ * Obtains the osso context pointer for the application
+ *
+ * Returns: the osso context pointer
+ */
+osso_context_t *modest_platform_get_osso_context (void);
+#endif
+
 
 
 G_END_DECLS
