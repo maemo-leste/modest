@@ -452,7 +452,7 @@ modest_account_mgr_set_server_account_security (ModestAccountMgr *self,
 ModestServerAccountSettings *
 modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* name, gboolean is_transport_and_not_store)
 {
-	ModestServerAccountSettings *settings;
+	ModestServerAccountSettings *settings = NULL;
 	ModestProtocol *protocol;
 	ModestProtocolRegistry *registry;
 	gchar *string;
@@ -543,7 +543,8 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	return settings;
 
  on_error:
-	g_free (settings);
+	if (settings)
+		g_object_unref (settings);
 	return NULL;
 }
 
