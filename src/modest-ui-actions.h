@@ -35,6 +35,7 @@
 #include <widgets/modest-recpt-view.h>
 #include "modest-mail-operation.h"
 #include "modest-tny-send-queue.h"
+#include "modest-plugin-ui-actions.h"
 
 G_BEGIN_DECLS
 
@@ -540,22 +541,6 @@ void modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 						 TnyList *headers,
 						 TnyFolder *dst_folder);
 
-/**
- * modest_ui_actions_on_delete_account:
- * @parent_window: the parent #GtkWindow of the dialog that will be shown
- * @account_name: the modest name for the account to be deleted
- * @account_display_name: the display name that will be used in the dialog
- *
- * This function will perform the actions required to delete an
- * account. This function assumes that the account to be deleted is
- * already disconnected, so the caller must verify that this is the
- * case. Otherwise weird behaviours could happen
- *
- * Returns: TRUE if the account was successfully deleted, FALSE otherwise
- **/
-gboolean modest_ui_actions_on_delete_account (GtkWindow *parent_window,
-					      const gchar *account_name,
-					      const gchar *account_display_name);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

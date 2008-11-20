@@ -107,7 +107,6 @@ libmodest_la_SOURCES=\
 	modest-plugin.c \
 	modest-plugin-factory.c \
 	modest-plugin-factory.h \
-	modest-plugin-ui-actions.c \
 	modest-progress-object.c \
 	modest-progress-object.h \
 	modest-protocol.c \
