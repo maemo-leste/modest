@@ -3,7 +3,7 @@ modest (2.1-2008.48) unstable; urgency=low
   * Fixes: NB#92212, NB#92691, NB#92695, NB#92692, NB#92694, NB#92688, NB#92832
   * Fixes: NB#92806, NB#92780, NB#92787, NB#92782, NB#92786, NB#92794, NB#92799
   * Fixes: NB#92938, NB#92784, NB#92686, NB#92693, NB#92178, NB#93003, NB#93064
-  * Fixes: NB#90887, NB#93069, NB#93072, NB#89639, NB#89778, 
+  * Fixes: NB#90887, NB#93069, NB#93072, NB#89639, NB#89778
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 20 Nov 2008 13:01:32 +0200
 
