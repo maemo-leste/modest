@@ -28,5 +28,6 @@
 	modest_protocol_*;
 	modest_server_account_settings_*;
 	modest_validating_entry_*;
+	modest_ui_actions_*;
   local: *;
 };
