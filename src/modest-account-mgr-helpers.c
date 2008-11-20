@@ -455,7 +455,7 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	ModestServerAccountSettings *settings = NULL;
 	ModestProtocol *protocol;
 	ModestProtocolRegistry *registry;
-	gchar *string;
+	gchar *hostname, *username, *pwd, *uri, *proto, *auth, *sec;
 
 	if (!modest_account_mgr_account_exists (self, name, TRUE)) {
 		g_message ("%s account %s does not exist", __FUNCTION__, name);
@@ -467,37 +467,19 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 
 	modest_server_account_settings_set_account_name (settings, name);
 
-	string = modest_account_mgr_get_string (self, name, 
-						MODEST_ACCOUNT_HOSTNAME,TRUE);
-	if (string) {
-		modest_server_account_settings_set_hostname (settings, string);
-		g_free (string);
-	} else {
-		goto on_error;
-	}
-
-	string = modest_account_mgr_get_string (self, name, 
-						MODEST_ACCOUNT_USERNAME,TRUE);
-	if (string) {
-		modest_server_account_settings_set_username (settings, string);	
-		g_free (string);
-	} else {
-		goto on_error;
-	}
-
-	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
-	if (string) {
+	proto = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
+	if (proto) {
 		gchar *tag = NULL;
 		if (is_transport_and_not_store) {
 			tag = MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS;
 		} else {
 			tag = MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS;
 		}
-		protocol = modest_protocol_registry_get_protocol_by_name (registry, tag, string);
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, tag, proto);
 
 		modest_server_account_settings_set_protocol (settings,
 							     modest_protocol_get_type_id (protocol));
-		g_free (string);
+		g_free (proto);
 	} else {
 		goto on_error;
 	}
@@ -505,40 +487,63 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	modest_server_account_settings_set_port (settings,
 						 modest_account_mgr_get_int (self, name, MODEST_ACCOUNT_PORT, TRUE));
 
-	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
-	if (string) {
-		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS, string);
+	auth = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_AUTH_MECH, TRUE);
+	if (auth) {
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS, auth);
 		modest_server_account_settings_set_auth_protocol (settings,
 								  modest_protocol_get_type_id (protocol));
-		g_free (string);
+		g_free (auth);
 	} else {
 		modest_server_account_settings_set_auth_protocol (settings, MODEST_PROTOCOLS_AUTH_NONE);
 	}
 
-	string = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SECURITY, TRUE);
-	if (string) {
-		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS, string);
+	sec = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_SECURITY, TRUE);
+	if (sec) {
+		protocol = modest_protocol_registry_get_protocol_by_name (registry, MODEST_PROTOCOL_REGISTRY_CONNECTION_PROTOCOLS, sec);
 		modest_server_account_settings_set_security_protocol (settings,
 								      modest_protocol_get_type_id (protocol));
-		g_free (string);
+		g_free (sec);
 	} else {
 		modest_server_account_settings_set_security_protocol (settings,
 								      MODEST_PROTOCOLS_CONNECTION_NONE);
 	}
 
-	string = modest_account_mgr_get_string (self, name, 
-						MODEST_ACCOUNT_PASSWORD, TRUE);
-	if (string) {
-		modest_server_account_settings_set_password (settings, string);
-		g_free (string);
+	/* Username, password and URI. Note that the URI could include
+	   the former two, so in this case there is no need to have
+	   them */
+	username = modest_account_mgr_get_string (self, name,
+						  MODEST_ACCOUNT_USERNAME,TRUE);
+	if (username)
+		modest_server_account_settings_set_username (settings, username);
+
+	pwd = modest_account_mgr_get_string (self, name,
+					     MODEST_ACCOUNT_PASSWORD, TRUE);
+	if (pwd) {
+		modest_server_account_settings_set_password (settings, pwd);
+		g_free (pwd);
 	}
 
-	string = modest_account_mgr_get_string (self, name, 
-						MODEST_ACCOUNT_URI, TRUE);
-	if (string) {
-		modest_server_account_settings_set_uri (settings, string);
-		g_free (string);
+	uri = modest_account_mgr_get_string (self, name,
+					     MODEST_ACCOUNT_URI, TRUE);
+	if (uri)
+		modest_server_account_settings_set_uri (settings, uri);
+
+	hostname = modest_account_mgr_get_string (self, name,
+						  MODEST_ACCOUNT_HOSTNAME,TRUE);
+	if (hostname)
+		modest_server_account_settings_set_hostname (settings, hostname);
+
+	if (!uri) {
+		if (!username || !hostname) {
+			g_free (username);
+			g_free (hostname);
+			goto on_error;
+		}
 	}
+
+	g_free (username);
+	g_free (hostname);
+	g_free (uri);
 
 	return settings;
 
