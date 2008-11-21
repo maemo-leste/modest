@@ -317,7 +317,6 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
 	       
 		abook_contact = osso_abook_contact_new_from_template (contact);
 		display_name = osso_abook_contact_get_display_name(abook_contact);
-		g_object_unref (abook_contact);
 #endif
 
 		emailid = get_email_addr_from_user(display_name);
@@ -325,6 +324,9 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
 			e_contact_set(contact, E_CONTACT_EMAIL_1, emailid);
 			commit_contact(contact, FALSE);
 		}
+#if MODEST_ABOOK_API >= 4
+		g_object_unref (abook_contact);
+#endif
 	}
 
 	if (emailid) {
