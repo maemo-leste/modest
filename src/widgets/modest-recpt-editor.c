@@ -337,7 +337,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	GTK_WIDGET_UNSET_FLAGS (priv->abook_button, GTK_CAN_FOCUS);
 	gtk_button_set_alignment (GTK_BUTTON (priv->abook_button), 1.0, 1.0);
 #ifdef MODEST_TOOLKIT_HILDON2
-	abook_icon = gtk_image_new_from_icon_name ("tasklaunch_contact_64", GTK_ICON_SIZE_BUTTON);
+	abook_icon = gtk_image_new_from_icon_name ("tasklaunch_contact", GTK_ICON_SIZE_BUTTON);
 #else
 	abook_icon = gtk_image_new_from_icon_name ("qgn_list_addressbook", GTK_ICON_SIZE_BUTTON);
 #endif
