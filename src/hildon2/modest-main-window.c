@@ -898,26 +898,6 @@ modest_main_window_cleanup_queue_error_signals (ModestMainWindow *self)
 
 
 static void
-_folder_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
-{
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
-
-	/* Update dimmed */
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW(user_data));
-}
-
-static void
-_header_view_csm_menu_activated (GtkWidget *widget, gpointer user_data)
-{
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (user_data));
-
-	/* Update visibility */
-
-	/* Update dimmed */
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW(user_data));
-}
-
-static void
 modest_main_window_disconnect_signals (ModestWindow *self)
 {	
 	ModestMainWindowPrivate *priv;	
@@ -932,7 +912,6 @@ connect_signals (ModestMainWindow *self)
 {	
 	ModestWindowPrivate *parent_priv;
 	ModestMainWindowPrivate *priv;
-	GtkWidget *menu;
 	
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
@@ -959,12 +938,6 @@ connect_signals (ModestMainWindow *self)
 					   G_CALLBACK (on_folder_view_focus_in), 
 					   self);
 
-	/* Folder view CSM */
-	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
-	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "tap-and-hold",
-						       G_CALLBACK(_folder_view_csm_menu_activated),
-						       self);
 	/* header view */
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_selected",
@@ -991,14 +964,6 @@ connect_signals (ModestMainWindow *self)
 					   G_CALLBACK (on_updating_msg_list), 
 					   self);
 	
-	/* Header view CSM */
-	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/HeaderViewCSM");
-	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->header_view), menu, NULL, 0);
-	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "tap-and-hold",
-					   G_CALLBACK(_header_view_csm_menu_activated),
-					   self);
-
 	/* window */
 	/* we don't register this in sighandlers, as it should be run after disconnecting all signals,
 	 * in destroy stage */

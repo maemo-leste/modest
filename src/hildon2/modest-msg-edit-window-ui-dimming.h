@@ -11,7 +11,6 @@ G_BEGIN_DECLS
 static const ModestDimmingEntry modest_msg_edit_window_menu_dimming_entries [] = {
 
 	/* Format Menu */
-	{ "/MenuBar/FormatMenu/SelectFontMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
 	{ "/MenuBar/FormatMenu/AlignmentMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
 	{ "/MenuBar/FormatMenu/AlignmentLeftMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },
 	{ "/MenuBar/FormatMenu/AlignmentRightMenu", G_CALLBACK (modest_ui_dimming_rules_on_set_style) },

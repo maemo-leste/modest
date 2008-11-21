@@ -86,29 +86,6 @@
     <toolitem action="ToolbarCancel" position="bot"/>
   </toolbar>
 
-  <popup name="HeaderViewCSM">
-    <menuitem action="HeaderViewCSMReply"/>
-    <menuitem action="HeaderViewCSMReplyAll"/>
-    <menuitem action="HeaderViewCSMForward"/>
-    <menuitem action="HeaderViewCSMCancelSending"/>
-<!--     <separator/> -->
-<!--     <menuitem action="HeaderViewCSMCut"/> -->
-<!--     <menuitem action="HeaderViewCSMCopy"/> -->
-<!--     <menuitem action="HeaderViewCSMPaste"/> -->
-    <separator/>
-    <menuitem action="HeaderViewCSMDelete"/>
-  </popup>
-
-  <popup name="FolderViewCSM">
-    <menuitem action="FolderViewCSMNewFolder"/>
-    <menuitem action="FolderViewCSMRenameFolder"/>
-    <menuitem action="FolderViewCSMDeleteFolder"/>
-    <separator/>
-<!--    <menuitem action="FolderViewCSMPasteMsgs"/> -->
-    <separator/>
-    <separator/>
-  </popup>
-
   <popup name="ToolbarReplyCSM" action="ToolbarCSM">
     <menuitem action="ToolbarMessageForward"/>
     <menuitem action="ToolbarMessageReplyAll"/>
