@@ -445,11 +445,18 @@ fi
 #
 if test "x$with_platform" == "xmaemo"; then  
    PKG_CHECK_MODULES(MODEST_ABOOK,osso-addressbook-1.0,have_abook=true,have_abook=false)
+   abook_api=`$PKG_CONFIG --modversion osso-addressbook-1.0 | cut -d. -f1`
    AC_SUBST(MODEST_ABOOK_CFLAGS)
    AC_SUBST(MODEST_ABOOK_LIBS)
 
+   if test "x$have_abook" == "xfalse"; then
+     PKG_CHECK_MODULES(MODEST_ABOOK, libosso-abook-1.0,have_abook=true,have_abook=false)
+     abook_api=`$PKG_CONFIG --modversion libosso-abook-1.0 | cut -d. -f1`
+     AC_SUBST(MODEST_ABOOK_CFLAGS)
+     AC_SUBST(MODEST_ABOOK_LIBE)
+   fi
+
    if test "x$have_abook" == "xtrue"; then
-      abook_api=`$PKG_CONFIG --modversion osso-addressbook-1.0 | cut -d. -f1`
       AC_DEFINE_UNQUOTED(OSSO_ABOOK_ENABLE_DEPRECATED, 1, ["use deprecated addressbook API"])
       AC_DEFINE_UNQUOTED(MODEST_ABOOK_API, $abook_api, ["the API version of osso-addressbook"])
       AC_DEFINE_UNQUOTED(MODEST_HAVE_ABOOK, 1, ["whether we have osso-addressbook"])

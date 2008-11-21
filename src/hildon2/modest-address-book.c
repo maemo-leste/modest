@@ -176,7 +176,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	GtkWidget *contact_dialog;
 	GtkWidget *toplevel;
 #else /* MODEST_ABOOK_API < 4 */
-	OssoABookContactChooser *contact_chooser = NULL;
+	GtkWidget *contact_chooser = NULL;
 #endif /* MODEST_ABOOK_API < 4 */
 
 	GList *contacts_list = NULL;
@@ -213,13 +213,14 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	}
 #else /* MODEST_ABOOK_API < 4 */
 	/* TODO: figure out how to make the contact chooser modal */
-	contact_chooser = osso_abook_contact_chooser_new
-		("title", _("mcen_ti_select_recipients"),
-		 "help-topic", "",
-		 "minimum-selection", 1, NULL);
+	contact_chooser = osso_abook_contact_chooser_new_with_capabilities (NULL,
+									    _("mcen_ti_select_recipients"),
+									    OSSO_ABOOK_CAPS_EMAIL, 
+									    OSSO_ABOOK_CONTACT_ORDER_NAME);
 
-	if (osso_abook_contact_chooser_run (contact_chooser) == GTK_RESPONSE_OK)
-		contacts_list = osso_abook_contact_chooser_get_selection (contact_chooser);
+	if (gtk_dialog_run (GTK_DIALOG (contact_chooser)) == GTK_RESPONSE_OK)
+		contacts_list = osso_abook_contact_chooser_get_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_chooser));
+	gtk_widget_destroy (contact_chooser);
 
 	g_object_unref (contact_chooser);
 #endif
