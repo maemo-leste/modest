@@ -800,7 +800,6 @@ update_menus (ModestMainWindow* self)
 					gtk_label_set_markup (GTK_LABEL (child), bold_name);
 					g_free (bold_name);
 				}
-				gtk_label_set_ellipsize (GTK_LABEL (child),  PANGO_ELLIPSIZE_END);
 			}
 		}
 
