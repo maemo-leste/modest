@@ -49,7 +49,6 @@
     </menu>
 
     <menu name="FormatMenu" action="Format">
-      <menuitem name="SelectFontMenu" action="SelectFont"/>
       <menu name="AlignmentMenu" action="Alignment">
          <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
          <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>
