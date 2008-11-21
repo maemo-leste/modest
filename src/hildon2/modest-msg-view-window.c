@@ -446,8 +446,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	hildon_program_add_window (hildon_program_get_instance(),
 				   HILDON_WINDOW(obj));
 
-	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
-					    GTK_WINDOW(obj),"applications_email_viewer");
 }
 
 

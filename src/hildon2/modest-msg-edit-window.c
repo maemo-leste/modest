@@ -421,9 +421,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->font_dialog = NULL;
 
-	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
-					    GTK_WINDOW(obj),"applications_email_editor");
-
 	if (!is_wp_text_buffer_started) {
 		is_wp_text_buffer_started = TRUE;
 		wp_text_buffer_library_init ();

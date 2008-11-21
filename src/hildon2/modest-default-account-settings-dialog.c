@@ -1106,8 +1106,6 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
      * while sending messages causes an error dialog and we have a lock */
     modest_tny_account_store_set_send_mail_blocked (modest_runtime_get_account_store (), TRUE);
 
-    hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_accountsettings",
-				    modest_maemo_utils_get_osso_context());
 }
 
 ModestAccountSettingsDialog*

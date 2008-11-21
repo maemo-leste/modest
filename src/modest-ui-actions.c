@@ -5671,6 +5671,8 @@ void
 modest_ui_actions_on_help (GtkAction *action, 
 			   GtkWindow *win)
 {
+	/* Help app is not available at all in fremantle */
+#ifndef MODEST_TOOLKIT_HILDON2
 	const gchar *help_id;
 
 	g_return_if_fail (win && GTK_IS_WINDOW(win));
@@ -5679,12 +5681,16 @@ modest_ui_actions_on_help (GtkAction *action,
 
         if (help_id)
                 modest_platform_show_help (GTK_WINDOW (win), help_id);
+#endif
 }
 
 void 
 modest_ui_actions_on_csm_help (GtkAction *action, 
 			       GtkWindow *win)
 {
+	/* Help app is not available at all in fremantle */
+#ifndef MODEST_TOOLKIT_HILDON2
+
 	const gchar* help_id = NULL;
 	GtkWidget *folder_view;
 	TnyFolderStore *folder_store;
@@ -5707,6 +5713,7 @@ modest_ui_actions_on_csm_help (GtkAction *action,
                 modest_platform_show_help (GTK_WINDOW (win), help_id);
 	else
 		modest_ui_actions_on_help (action, win);
+#endif
 }
 
 static void     

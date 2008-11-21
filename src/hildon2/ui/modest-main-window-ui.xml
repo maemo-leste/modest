@@ -71,8 +71,6 @@
       </menu>
       <separator/>
       <menuitem name="ToolsContactsMenu" action="ToolsContacts"/>
-      <separator/>
-      <menuitem name="ToolsHelpMenu" action="ToolsHelp"/>
     </menu>
     
   </menubar>
@@ -99,7 +97,6 @@
 <!--     <menuitem action="HeaderViewCSMPaste"/> -->
     <separator/>
     <menuitem action="HeaderViewCSMDelete"/>
-    <menuitem action="HeaderViewCSMHelp"/>
   </popup>
 
   <popup name="FolderViewCSM">
@@ -110,7 +107,6 @@
 <!--    <menuitem action="FolderViewCSMPasteMsgs"/> -->
     <separator/>
     <separator/>
-    <menuitem action="FolderViewCSMHelp"/>
   </popup>
 
   <popup name="ToolbarReplyCSM" action="ToolbarCSM">

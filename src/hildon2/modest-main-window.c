@@ -265,7 +265,6 @@ static const GtkActionEntry modest_folder_view_action_entries [] = {
 	{ "FolderViewCSMRenameFolder", NULL, N_("mcen_me_user_renamefolder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
 	{ "FolderViewCSMPasteMsgs", NULL, N_("mcen_me_inbox_paste"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_paste)},
 	{ "FolderViewCSMDeleteFolder", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
-	{ "FolderViewCSMHelp", NULL, N_("mcen_me_inbox_help"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_csm_help) },
 };
 
 static const GtkActionEntry modest_header_view_action_entries [] = {
@@ -280,7 +279,6 @@ static const GtkActionEntry modest_header_view_action_entries [] = {
 	{ "HeaderViewCSMPaste",         NULL,  N_("mcen_me_inbox_paste"),       "<CTRL>V", NULL, G_CALLBACK (modest_ui_actions_on_paste) },
 	{ "HeaderViewCSMDelete",        NULL,  N_("mcen_me_inbox_delete"),      NULL,      NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
 	{ "HeaderViewCSMCancelSending", NULL,  N_("mcen_me_outbox_cancelsend"), NULL,      NULL, G_CALLBACK (modest_ui_actions_cancel_send) },
-	{ "HeaderViewCSMHelp",          NULL,  N_("mcen_me_inbox_help"),        NULL,      NULL, G_CALLBACK (modest_ui_actions_on_help) },
 };
 
 static const GtkToggleActionEntry modest_main_window_toggle_action_entries [] = {

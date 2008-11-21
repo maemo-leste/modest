@@ -161,9 +161,6 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 	/* force update of sensitiveness */
 	update_sensitive (MODEST_GLOBAL_SETTINGS_DIALOG (self));
 
-	/* Set first page */
-	hildon_help_dialog_help_enable (GTK_DIALOG(self), "applications_email_options_dialog",
-					modest_maemo_utils_get_osso_context());
 }
 
 static void

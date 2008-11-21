@@ -1066,10 +1066,6 @@ modest_platform_create_sort_dialog       (GtkWindow *parent_window)
 
 	dialog = modest_hildon2_sort_dialog_new (parent_window);
 
-	hildon_help_dialog_help_enable (GTK_DIALOG(dialog),
-					"applications_email_sort",
-					modest_maemo_utils_get_osso_context());
-
 	return dialog;
 }
 
@@ -1376,20 +1372,7 @@ void
 modest_platform_show_help (GtkWindow *parent_window, 
 			   const gchar *help_id)
 {
-	osso_return_t result;
-	g_return_if_fail (help_id);
-
-	result = hildon_help_show (modest_maemo_utils_get_osso_context(),
-				   help_id, HILDON_HELP_SHOW_DIALOG);
-	
-	if (result != OSSO_OK) {
-		gchar *error_msg;
-		error_msg = g_strdup_printf ("FIXME The help topic %s could not be found", help_id); 
-		hildon_banner_show_information (GTK_WIDGET (parent_window),
-						NULL,
-						error_msg);
-		g_free (error_msg);
-	}
+	return;
 }
 
 void 
