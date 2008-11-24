@@ -5006,7 +5006,7 @@ open_msg_for_purge_cb (ModestMailOperation *mail_op,
 		if (response == GTK_RESPONSE_OK) {
 			GtkWidget *info;
 			info =
-				modest_platform_animation_banner (GTK_WIDGET (win), NULL, _("mcen_ib_removing_attachment"));
+				modest_platform_animation_banner (GTK_WIDGET (win), NULL, _("mcen_me_inbox_remove_attachments"));
 			iter = tny_list_create_iterator (parts);
 			while (!tny_iterator_is_done (iter)) {
 				TnyMimePart *part;

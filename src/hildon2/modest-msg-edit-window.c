@@ -2450,7 +2450,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 			g_object_unref (att_list);
 			return;
 		}
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_removing_attachment"));
+		hildon_banner_show_information (NULL, NULL, _("mcen_me_inbox_remove_attachments"));
 		
 		for (iter = tny_list_create_iterator (att_list);
 		     !tny_iterator_is_done (iter);

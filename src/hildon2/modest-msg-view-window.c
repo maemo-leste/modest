@@ -2751,7 +2751,7 @@ show_remove_attachment_information (gpointer userdata)
 	}
 
 	priv->remove_attachment_banner = g_object_ref (
-		hildon_banner_show_animation (NULL, NULL, _("mcen_ib_removing_attachment")));
+		hildon_banner_show_animation (NULL, NULL, _("mcen_me_inbox_remove_attachments")));
 
 	gdk_threads_leave ();
 
