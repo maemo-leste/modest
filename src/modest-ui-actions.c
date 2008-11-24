@@ -902,7 +902,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	TnyFolder *folder;
 	gboolean open_in_editor = FALSE;
 	OpenMsgHelper *helper = (OpenMsgHelper *) user_data;
-	
+
 	/* Do nothing if there was any problem with the mail
 	   operation. The error will be shown by the error_handler of
 	   the mail operation */
@@ -922,7 +922,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 	}
 
-		
+
 	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
 		TnyTransportAccount *traccount = NULL;
 		ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
@@ -937,11 +937,22 @@ open_msg_cb (ModestMailOperation *mail_op,
 			if (TNY_IS_SEND_QUEUE (send_queue)) {
 				msg_id = modest_tny_send_queue_get_msg_id (header);
 				status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
+				g_free(msg_id);
+
 				/* Only open messages in outbox with the editor if they are in Failed state */
 				if (status == MODEST_TNY_SEND_QUEUE_FAILED) {
 					open_in_editor = TRUE;
+				} 
+#ifdef  MODEST_TOOLKIT_HILDON2
+				else {
+					/* In Fremantle we can not
+					   open any message from
+					   outbox which is not in
+					   failed state */
+					g_object_unref(traccount);
+					goto cleanup;
 				}
-				g_free(msg_id);
+#endif
 			}
 			g_object_unref(traccount);
 		} else {
@@ -956,7 +967,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-	
+
 	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 		gchar *from_header = NULL, *acc_name;
@@ -983,12 +994,12 @@ open_msg_cb (ModestMailOperation *mail_op,
 		win = modest_msg_edit_window_new (msg, account, TRUE);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
-		
+
 		if (MODEST_IS_MAIN_WINDOW (parent_win)) {
 			GtkTreeRowReference *row_reference;
 
 			row_reference = (GtkTreeRowReference *) g_hash_table_lookup (helper->row_refs_per_header, header);
-				
+
 			win = modest_msg_view_window_new_with_header_model (msg, account, (const gchar*) uid,
 									    helper->model, row_reference);
 		} else {
@@ -996,7 +1007,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		}
 		g_free (uid);
 	}
-	
+
 	/* Register and show new window */
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
@@ -1221,7 +1232,7 @@ open_msgs_performer(gboolean canceled,
 	if (proto == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
 		proto = MODEST_PROTOCOLS_STORE_MAILDIR;
 	}
-	
+
 	/* Create the error messages */
 	if (tny_list_get_length (not_opened_headers) == 1) {
 		ModestProtocol *protocol;
@@ -1241,7 +1252,7 @@ open_msgs_performer(gboolean canceled,
 			g_free (subject);
 		g_object_unref (header);
 		g_object_unref (iter);
-		
+
 		if (error_msg == NULL) {
 			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
 		}
@@ -1320,7 +1331,7 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 	OpenMsgHelper *helper;
 	GtkTreeSelection *sel;
 	GList *sel_list = NULL, *sel_list_iter = NULL;
-		
+
 	g_return_if_fail (headers != NULL);
 
 	/* Check that only one message is selected for opening */
@@ -1360,14 +1371,14 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 		ModestWindow *window = NULL;
 		TnyHeader *header = NULL;
 		gboolean found = FALSE;
-		
+
 		header = TNY_HEADER (tny_iterator_get_current (iter));
 		if (header)
 			flags = tny_header_get_flags (header);
 
 		window = NULL;
 		found = modest_window_mgr_find_registered_header (mgr, header, &window);
-		
+
 		/* Do not open again the message and present the
 		   window to the user */
 		if (found) {
