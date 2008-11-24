@@ -86,8 +86,13 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 
 	/* VIEW */
-	{ "ViewCcField",   NULL,    N_("mcen_me_editor_showcc"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_toggle_show_cc), TRUE  },
+#ifdef MODEST_TOOLKIT_HILDON2
+	{ "ViewCcField",   NULL,    N_("mcen_me_editor_showcc"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_toggle_show_cc), FALSE },
+	{ "ViewBccField",  NULL,    N_("mcen_me_editor_showbcc"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_show_bcc), FALSE },
+#else
+	{ "ViewCcField",   NULL,    N_("mcen_me_editor_showcc"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_toggle_show_cc), TRUE },
 	{ "ViewBccField",  NULL,    N_("mcen_me_editor_showbcc"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_show_bcc), TRUE },
+#endif
 
 	/* Fullscreen toggle */
 	{ "ViewToggleFullscreen", NULL, N_("mcen_me_inbox_fullscreen"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_fullscreen), FALSE},
