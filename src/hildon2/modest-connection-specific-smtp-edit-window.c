@@ -184,6 +184,21 @@ on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer us
 	return TRUE;
 }
 
+static gboolean
+on_delete_event (GtkWidget *widget,
+                 GdkEvent  *event,
+                 gpointer   user_data)
+{
+	ModestConnectionSpecificSmtpEditWindow *self = user_data;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+       		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	/* If it's dirty, them the response method already asked the
+	   user, because it's always executed before (see GtkDialog
+	   code). If it's not then simply close */
+	return priv->is_dirty;
+}
+
 static void
 on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 {
@@ -204,7 +219,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 	}
 
 	/* Don't close the dialog if a range error occured */
-	if(response_id == GTK_RESPONSE_OK) {
+	if (response_id == GTK_RESPONSE_OK) {
 		if (hostname && (hostname[0] != '\0') &&
 		    (!modest_text_utils_validate_domain_name (hostname))) { 
 			g_signal_stop_emission_by_name (dialog, "response");
@@ -219,13 +234,15 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 			gint response;
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (user_data), 
 									    _("imum_nc_wizard_confirm_lose_changes"));
+
 			if (response != GTK_RESPONSE_OK)
 				g_signal_stop_emission_by_name (dialog, "response");
 		}
 	}
 }
 
-static void on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpointer user_data)
+static void 
+on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpEditWindow *self = user_data;
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
@@ -238,15 +255,8 @@ static void on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpoi
 }
 
 static void
-on_security_picker_changed (HildonPickerButton *widget, gpointer user_data)
+security_picker_set_port (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
 {
-	ModestConnectionSpecificSmtpEditWindow *self = 
-		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
-	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
-		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
-	
-	on_change(GTK_WIDGET(widget), self);
-	
 	const gint port_number = 
 		modest_serversecurity_picker_get_active_serversecurity_port (
 			MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker));
@@ -258,18 +268,25 @@ on_security_picker_changed (HildonPickerButton *widget, gpointer user_data)
 }
 
 static void
-on_auth_picker_changed (HildonPickerButton *widget, gpointer user_data)
+on_security_picker_changed (HildonPickerButton *widget, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpEditWindow *self = 
 		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
-	ModestProtocolType auth_proto;
-	
-	on_change (GTK_WIDGET(widget), self);
+
+	on_change(GTK_WIDGET(widget), self);
 
 	/* Enable/disable username and password fields */
-	auth_proto = 
+	security_picker_set_port (priv);
+}
+
+static void
+auth_picker_set_sensitive (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
+{
+	ModestProtocolType auth_proto;
+
+	auth_proto =
 		modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker));
 
 	if (auth_proto == modest_protocol_registry_get_none_auth_type_id ()) {
@@ -279,8 +296,22 @@ on_auth_picker_changed (HildonPickerButton *widget, gpointer user_data)
 		gtk_widget_set_sensitive (priv->entry_user_username, TRUE);
 		gtk_widget_set_sensitive (priv->entry_user_password, TRUE);
 	}
+
 }
 
+static void
+on_auth_picker_changed (HildonPickerButton *widget, gpointer user_data)
+{
+	ModestConnectionSpecificSmtpEditWindow *self =
+		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
+		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	on_change (GTK_WIDGET(widget), self);
+
+	/* Enable/disable username and password fields */
+	auth_picker_set_sensitive (priv);
+}
 
 static void
 modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEditWindow *self)
@@ -329,7 +360,6 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_secure_authentication"),
 					       priv->outgoing_auth_picker);
-	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker), "value-changed", (GCallback)on_auth_picker_changed, self);
 	gtk_widget_show (priv->outgoing_auth_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_auth_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
@@ -389,21 +419,17 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("mcen_fi_emailsetup_port"), priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
-	g_signal_connect(G_OBJECT(priv->entry_port), "range-error", G_CALLBACK(on_range_error), self);
-	g_signal_connect(G_OBJECT(priv->entry_port), "notify::value", G_CALLBACK(on_value_changed), self);
 	gtk_widget_show (priv->entry_port);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (captioned);
-	
-	/* Show a default port number when the security method changes, as per the UI spec: */
-	g_signal_connect (G_OBJECT (priv->outgoing_security_picker), "value-changed", (GCallback)on_security_picker_changed, self);
-	
+
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
 	
 	priv->is_dirty = FALSE;
 	priv->range_error_occured = FALSE;
 	g_signal_connect(G_OBJECT(self), "response", G_CALLBACK(on_response), self);
+	g_signal_connect(G_OBJECT(self), "delete-event", G_CALLBACK(on_delete_event), self);
 	g_signal_connect(G_OBJECT(vbox), "set-focus-child", G_CALLBACK(on_set_focus_child), self);
 
 	priv->account_name = NULL;
@@ -412,21 +438,44 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), vbox);
 	gtk_box_pack_start (GTK_BOX (dialog_box), pannable, TRUE, TRUE, 0);
-	
+
 	gtk_widget_show_all (dialog_box);
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, 220);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-	
+
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
 		modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
-	
+
+	hildon_help_dialog_help_enable (GTK_DIALOG(self),
+					"applications_email_connectionspecificsmtpconf",
+					modest_maemo_utils_get_osso_context());
+
 	/* Refresh view with current settings */
-	on_auth_picker_changed (HILDON_PICKER_BUTTON (priv->outgoing_auth_picker), self);
-	on_security_picker_changed (HILDON_PICKER_BUTTON (priv->outgoing_security_picker), self);
+	auth_picker_set_sensitive (priv);
+	security_picker_set_port (priv);
+
+	/* Connect signals to track changes */
+	g_signal_connect (G_OBJECT (priv->outgoing_security_picker),
+			  "value-changed",
+			  (GCallback) on_security_picker_changed,
+			  self);
+	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker),
+			  "value-changed",
+			  (GCallback) on_auth_picker_changed,
+			  self);
+	g_signal_connect(G_OBJECT(priv->entry_port),
+			 "range-error",
+			 G_CALLBACK(on_range_error),
+			 self);
+	g_signal_connect(G_OBJECT(priv->entry_port),
+			 "notify::value",
+			 G_CALLBACK(on_value_changed),
+			 self);
+
 }
 
 ModestConnectionSpecificSmtpEditWindow*
