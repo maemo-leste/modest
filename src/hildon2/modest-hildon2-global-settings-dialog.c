@@ -45,9 +45,10 @@
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-selector-picker.h"
 #include "hildon/hildon-pannable-area.h"
-#include "modest-maemo-global-settings-dialog.h"
+#include "modest-hildon2-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
 #include "modest-text-utils.h"
+#include "modest-defs.h"
 #include <tny-account-store.h>
 #include <modest-account-mgr-helpers.h>
 
@@ -59,13 +60,13 @@
 #define DEFAULT_FOCUS_WIDGET "default-focus-widget"
 
 /* 'private'/'protected' functions */
-static void modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass);
-static void modest_maemo_global_settings_dialog_init       (ModestMaemoGlobalSettingsDialog *obj);
-static void modest_maemo_global_settings_dialog_finalize   (GObject *obj);
+static void modest_hildon2_global_settings_dialog_class_init (ModestHildon2GlobalSettingsDialogClass *klass);
+static void modest_hildon2_global_settings_dialog_init       (ModestHildon2GlobalSettingsDialog *obj);
+static void modest_hildon2_global_settings_dialog_finalize   (GObject *obj);
 
 static ModestConnectedVia current_connection (void);
 
-static GtkWidget* create_updating_page   (ModestMaemoGlobalSettingsDialog *self);
+static GtkWidget* create_updating_page   (ModestHildon2GlobalSettingsDialog *self);
 
 static gboolean   on_range_error         (HildonNumberEditor *editor, 
 					  HildonNumberEditorErrorType type,
@@ -80,67 +81,69 @@ static void       on_auto_update_clicked (GtkButton *button,
 static void       update_sensitive       (ModestGlobalSettingsDialog *dialog);
 static ModestPairList * get_accounts_list (void);
 
-typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
-struct _ModestMaemoGlobalSettingsDialogPrivate {
+static void modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog *self);
+
+typedef struct _ModestHildon2GlobalSettingsDialogPrivate ModestHildon2GlobalSettingsDialogPrivate;
+struct _ModestHildon2GlobalSettingsDialogPrivate {
 	ModestPairList *connect_via_list;
 };
-#define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
-                                                           MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, \
-                                                           ModestMaemoGlobalSettingsDialogPrivate))
+#define MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
+                                                           MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG, \
+                                                           ModestHildon2GlobalSettingsDialogPrivate))
 /* globals */
 static GtkDialogClass *parent_class = NULL;
 
 GType
-modest_maemo_global_settings_dialog_get_type (void)
+modest_hildon2_global_settings_dialog_get_type (void)
 {
 	static GType my_type = 0;
 	if (!my_type) {
 		static const GTypeInfo my_info = {
-			sizeof(ModestMaemoGlobalSettingsDialogClass),
+			sizeof(ModestHildon2GlobalSettingsDialogClass),
 			NULL,		/* base init */
 			NULL,		/* base finalize */
-			(GClassInitFunc) modest_maemo_global_settings_dialog_class_init,
+			(GClassInitFunc) modest_hildon2_global_settings_dialog_class_init,
 			NULL,		/* class finalize */
 			NULL,		/* class data */
-			sizeof(ModestMaemoGlobalSettingsDialog),
+			sizeof(ModestHildon2GlobalSettingsDialog),
 			1,		/* n_preallocs */
-			(GInstanceInitFunc) modest_maemo_global_settings_dialog_init,
+			(GInstanceInitFunc) modest_hildon2_global_settings_dialog_init,
 			NULL
 		};
 		my_type = g_type_register_static (MODEST_TYPE_GLOBAL_SETTINGS_DIALOG,
-		                                  "ModestMaemoGlobalSettingsDialog",
+		                                  "ModestHildon2GlobalSettingsDialog",
 		                                  &my_info, 0);
 	}
 	return my_type;
 }
 
 static void
-modest_maemo_global_settings_dialog_class_init (ModestMaemoGlobalSettingsDialogClass *klass)
+modest_hildon2_global_settings_dialog_class_init (ModestHildon2GlobalSettingsDialogClass *klass)
 {
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
-	gobject_class->finalize = modest_maemo_global_settings_dialog_finalize;
+	gobject_class->finalize = modest_hildon2_global_settings_dialog_finalize;
 
-	g_type_class_add_private (gobject_class, sizeof(ModestMaemoGlobalSettingsDialogPrivate));
+	g_type_class_add_private (gobject_class, sizeof(ModestHildon2GlobalSettingsDialogPrivate));
 
 	MODEST_GLOBAL_SETTINGS_DIALOG_CLASS (klass)->current_connection_func = current_connection;
 }
 
 typedef struct {
-	ModestMaemoGlobalSettingsDialog *dia;
+	ModestHildon2GlobalSettingsDialog *dia;
 	GtkWidget *focus_widget;
 } SwitchPageHelper;
 
 
 static void
-modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
+modest_hildon2_global_settings_dialog_init (ModestHildon2GlobalSettingsDialog *self)
 {
-	ModestMaemoGlobalSettingsDialogPrivate *priv;
+	ModestHildon2GlobalSettingsDialogPrivate *priv;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 
-	priv  = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	priv  = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	ppriv->updating_page = create_updating_page (self);
@@ -155,21 +158,15 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->updating_page);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, 340);
-
-	/* Load current config */
-	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
-	/* force update of sensitiveness */
-	update_sensitive (MODEST_GLOBAL_SETTINGS_DIALOG (self));
-
 }
 
 static void
-modest_maemo_global_settings_dialog_finalize (GObject *obj)
+modest_hildon2_global_settings_dialog_finalize (GObject *obj)
 {
 	ModestGlobalSettingsDialogPrivate *ppriv;
-	ModestMaemoGlobalSettingsDialogPrivate *priv;
+	ModestHildon2GlobalSettingsDialogPrivate *priv;
 
-	priv = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
+	priv = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (obj);
 
 /* 	free/unref instance resources here */
@@ -177,25 +174,30 @@ modest_maemo_global_settings_dialog_finalize (GObject *obj)
 }
 
 GtkWidget*
-modest_maemo_global_settings_dialog_new (void)
+modest_hildon2_global_settings_dialog_new (void)
 {
-	return GTK_WIDGET(g_object_new(MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, NULL));
+	GtkWidget *self = GTK_WIDGET(g_object_new(MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG, NULL));
+
+	/* Load settings */
+	modest_hildon2_global_settings_dialog_load_settings (MODEST_GLOBAL_SETTINGS_DIALOG (self));
+
+	return self;
 }
 
 /*
  * Creates the updating page
  */
 static GtkWidget*
-create_updating_page (ModestMaemoGlobalSettingsDialog *self)
+create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *vbox_update, *vbox_limit, *label, *hbox;
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 	GtkWidget *pannable;
-	ModestMaemoGlobalSettingsDialogPrivate *priv;
+	ModestHildon2GlobalSettingsDialogPrivate *priv;
 
-	priv = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	priv = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 
@@ -255,7 +257,7 @@ create_updating_page (ModestMaemoGlobalSettingsDialog *self)
 			modest_selector_picker_set_active_id (
 				MODEST_SELECTOR_PICKER (ppriv->default_account_selector),
 				default_account);
-			g_free (default_account);
+			ppriv->initial_state.default_account = default_account;
 		}
 	}
 	modest_maemo_utils_set_vbutton_layout (title_size_group, 
@@ -347,27 +349,15 @@ on_range_error (HildonNumberEditor *editor,
 	gint new_val;
 
 	switch (type) {
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	case MAXIMUM_VALUE_EXCEED:
-#else
 	case HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
-#endif
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
 		new_val = MSG_SIZE_MAX_VAL;
 		break;
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	case MINIMUM_VALUE_EXCEED:
-#else
 	case HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
-#endif
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
 		new_val = MSG_SIZE_MIN_VAL;
 		break;
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	case ERRONEOUS_VALUE:
-#else
 	case HILDON_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
-#endif
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_set_a_value_within_range"), 
 				       MSG_SIZE_MIN_VAL, 
 				       MSG_SIZE_MAX_VAL);
@@ -390,12 +380,12 @@ on_range_error (HildonNumberEditor *editor,
 	return TRUE;
 }
 
-static void       
+static void
 on_size_notify         (HildonNumberEditor *editor, 
 			GParamSpec *arg1,
 			gpointer user_data)
 {
-	ModestMaemoGlobalSettingsDialog *dialog = MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG (user_data);
+	ModestHildon2GlobalSettingsDialog *dialog = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG (user_data);
 	gint value = hildon_number_editor_get_value (editor);
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
@@ -444,11 +434,97 @@ get_accounts_list (void)
 				list = g_slist_prepend (list, pair);
 			}
 		}
-		
+
 		g_object_unref (store_settings);
 		g_object_unref (settings);
 		cursor = cursor->next;
 	}
 
 	return (ModestPairList *) g_slist_reverse (list);
+}
+
+
+static void
+modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog *self)
+{
+	ModestConf *conf;
+	gboolean checked;
+	gint combo_id, value;
+	GError *error = NULL;
+	ModestGlobalSettingsDialogPrivate *ppriv;
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	conf = modest_runtime_get_conf ();
+
+	/* Autoupdate */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->auto_update), checked);
+	ppriv->initial_state.auto_update = checked;
+
+	/* Connected by */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
+	}
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->connect_via),
+					      (gpointer) &combo_id);
+	ppriv->initial_state.connect_via = combo_id;
+
+	/* Emit toggled to update the visibility of connect_by caption */
+	gtk_toggle_button_toggled (GTK_TOGGLE_BUTTON (ppriv->auto_update));
+
+	/* Update interval */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
+	}
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->update_interval),
+					(gpointer) &combo_id);
+	ppriv->initial_state.update_interval = combo_id;
+
+	/* Size limit */
+	value  = modest_conf_get_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		value = 1000;
+	}
+	/* It's better to do this in the subclasses, but it's just one
+	   line, so we'll leave it here for the moment */
+	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), value);
+	ppriv->initial_state.size_limit = value;
+
+	/* Play sound */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ppriv->play_sound), checked);
+	ppriv->initial_state.play_sound = checked;
+
+	/* Msg format */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
+	}
+	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->msg_format),
+					      (gpointer) &combo_id);
+	ppriv->initial_state.prefer_formatted_text = checked;
+
+	/* force update of sensitiveness */
+	update_sensitive (MODEST_GLOBAL_SETTINGS_DIALOG (self));
 }

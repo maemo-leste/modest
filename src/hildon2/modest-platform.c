@@ -33,7 +33,7 @@
 #include <modest-runtime.h>
 #include <modest-main-window.h>
 #include <modest-header-view.h>
-#include "modest-maemo-global-settings-dialog.h"
+#include "modest-hildon2-global-settings-dialog.h"
 #include "modest-widget-memory.h"
 #include <modest-hildon-includes.h>
 #include <modest-maemo-utils.h>
@@ -43,8 +43,6 @@
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
-#include <tny-camel-imap-store-account.h>
-#include <tny-camel-pop-store-account.h>
 #include <gtk/gtkicontheme.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
@@ -982,7 +980,7 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 	/* Connect the device */
 	if (!device_online) {
 		/* Track account connection status changes */
-		data->handler = g_signal_connect (account, "connection-status-changed",					    
+		data->handler = g_signal_connect (account, "connection-status-changed",
 						  G_CALLBACK (on_connection_status_changed),
 						  data);
 		/* Try to connect the device */
@@ -1027,8 +1025,7 @@ gboolean
 modest_platform_connect_and_wait_if_network_account (GtkWindow *parent_window, TnyAccount *account)
 {
 	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
-		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
-		    !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
+		if (!modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account))) {
 			/* This must be a maildir account, which does not require a connection: */
 			return TRUE;
 		}
@@ -1365,7 +1362,7 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 GtkWidget * 
 modest_platform_get_global_settings_dialog ()
 {
-	return modest_maemo_global_settings_dialog_new ();
+	return modest_hildon2_global_settings_dialog_new ();
 }
 
 void
@@ -1566,24 +1563,17 @@ modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 	gboolean is_online;
 
 	g_return_val_if_fail (account, FALSE);
-	
-	printf ("DEBUG: %s: account id=%s\n", __FUNCTION__, tny_account_get_id (account));
-	
+
 	if (!tny_device_is_online (modest_runtime_get_device())) {
 		printf ("DEBUG: %s: device is offline.\n", __FUNCTION__);
 		return FALSE;
 	}
-	
+
 	/* The local_folders account never seems to leave TNY_CONNECTION_STATUS_INIT,
 	 * so we avoid wait unnecessarily: */
-	if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) && 
-		!TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account) ) {
-		return TRUE;		
-	}
-		
-	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n",
-		__FUNCTION__, tny_account_get_connection_status (account));
-	
+	if (!modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
+		return TRUE;
+
 	/* The POP & IMAP store accounts seem to be TNY_CONNECTION_STATUS_DISCONNECTED, 
 	 * and that seems to be an OK time to use them. Maybe it's just TNY_CONNECTION_STATUS_INIT that 
 	 * we want to avoid. */
@@ -1947,11 +1937,8 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		if (callback) {
  			callback (FALSE, NULL, parent_window, NULL, user_data);
  		}
- 		return; 
- 		
- 		/* Original comment: Maybe it is something local. */
- 		/* PVH's comment: maybe we should KNOW this in stead of assuming? */
- 		
+ 		return;
+
  	} else if (TNY_IS_FOLDER (folder_store)) {
  		/* Get the folder's parent account: */
  		account = tny_folder_get_account (TNY_FOLDER (folder_store));
@@ -1959,11 +1946,9 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		/* Use the folder store as an account: */
  		account = TNY_ACCOUNT (g_object_ref (folder_store));
  	}
- 
+
 	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
- 		if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
- 		    !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
- 
+ 		if (!modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account))) {
  			/* No need to connect a local account */
  			if (callback)
  				callback (FALSE, NULL, parent_window, account, user_data);
@@ -1972,17 +1957,17 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		}
  	}
   	modest_platform_connect_and_perform (parent_window, force, account, callback, user_data);
- 
+
  clean:
 	if (account)
 		g_object_unref (account);
 }
 
 static void
-src_account_connect_performer (gboolean canceled, 
+src_account_connect_performer (gboolean canceled,
 			       GError *err,
-			       GtkWindow *parent_window, 
-			       TnyAccount *src_account, 
+			       GtkWindow *parent_window,
+			       TnyAccount *src_account,
 			       gpointer user_data)
 {
 	DoubleConnectionInfo *info = (DoubleConnectionInfo *) user_data;

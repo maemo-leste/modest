@@ -140,9 +140,6 @@ modest_gnome_global_settings_dialog_init (ModestGnomeGlobalSettingsDialog *self)
 
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->action_area), 0);
 
-	/* Load current config */
-	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
-
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_SAVE, GTK_RESPONSE_OK);
@@ -160,7 +157,12 @@ modest_gnome_global_settings_dialog_finalize (GObject *obj)
 GtkWidget*
 modest_gnome_global_settings_dialog_new (void)
 {
-	return GTK_WIDGET(g_object_new(MODEST_TYPE_GNOME_GLOBAL_SETTINGS_DIALOG, NULL));
+	GtkWidget *self = GTK_WIDGET(g_object_new(MODEST_TYPE_GNOME_GLOBAL_SETTINGS_DIALOG, NULL));
+
+	/* Load settings */
+	modest_gnome_global_settings_dialog_load_settings (MODEST_GLOBAL_SETTINGS_DIALOG (self));
+
+	return self;
 }
 
 
@@ -319,4 +321,83 @@ static ModestConnectedVia
 current_connection (void)
 {
 	return MODEST_CONNECTED_VIA_ANY;
+}
+
+static void
+modest_gnome_global_settings_dialog_load_settings (ModestGlobalSettingsDialog *self)
+{
+	ModestConf *conf;
+	gboolean checked;
+	gint combo_id, value;
+	GError *error = NULL;
+	ModestGlobalSettingsDialogPrivate *priv;
+
+	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	conf = modest_runtime_get_conf ();
+
+	/* Autoupdate */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auto_update), checked);
+	priv->initial_state.auto_update = checked;
+
+	/* Connected by */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->connect_via),
+					(gpointer) &combo_id);
+	priv->initial_state.connect_via = combo_id;
+
+	/* Update interval */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->update_interval),
+					(gpointer) &combo_id);
+	priv->initial_state.update_interval = combo_id;
+
+	/* Size limit */
+	value  = modest_conf_get_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		value = 1000;
+	}
+	/* It's better to do this in the subclasses, but it's just one
+	   line, so we'll leave it here for the moment */
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit), value);
+	priv->initial_state.size_limit = value;
+
+	/* Play sound */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->play_sound), checked);
+	priv->initial_state.play_sound = checked;
+
+	/* Msg format */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
+	}
+	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->msg_format),
+					(gpointer) &combo_id);
+	priv->initial_state.prefer_formatted_text = checked;
 }

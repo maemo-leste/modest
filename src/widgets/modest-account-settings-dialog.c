@@ -5,8 +5,8 @@
 
 static void modest_account_settings_dialog_base_init (gpointer g_class);
 
-void     
-modest_account_settings_dialog_load_settings (ModestAccountSettingsDialog *self, 
+void
+modest_account_settings_dialog_load_settings (ModestAccountSettingsDialog *self,
 					    ModestAccountSettings *settings)
 {
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (self));

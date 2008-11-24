@@ -79,16 +79,13 @@ struct _ModestGlobalSettingsDialogClass {
 
 	/* Returns the current connection method. Assumes that the device is online */
 	ModestConnectedVia (*current_connection_func) (void);
+	gboolean (*save_settings_func)  (ModestGlobalSettingsDialog *self);
 };
 
 /* member functions */
 GType        modest_global_settings_dialog_get_type    (void) G_GNUC_CONST;
 
-/* Do *NOT* use this functions directly. They must be only used by
-   subclasses. We put them here and not in the -priv header file
-   because recursive dependencies */
-void     _modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self);
-gboolean _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self);
+gboolean modest_global_settings_dialog_save_settings (ModestGlobalSettingsDialog *self);
 
 
 G_END_DECLS

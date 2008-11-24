@@ -27,38 +27,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_H__
-#define __MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_H__
+#ifndef __MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_H__
+#define __MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_H__
 
 #include "widgets/modest-global-settings-dialog.h"
 
 G_BEGIN_DECLS
 
 /* convenience macros */
-#define MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG             (modest_maemo_global_settings_dialog_get_type())
-#define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG,ModestMaemoGlobalSettingsDialog))
-#define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG,ModestMaemoGlobalSettingsDialogClass))
-#define MODEST_IS_MAEMO_GLOBAL_SETTINGS_DIALOG(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG))
-#define MODEST_IS_MAEMO_GLOBAL_SETTINGS_DIALOG_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG))
-#define MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG,ModestMaemoGlobalSettingsDialogClass))
+#define MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG             (modest_hildon2_global_settings_dialog_get_type())
+#define MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG,ModestHildon2GlobalSettingsDialog))
+#define MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass),MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG,ModestHildon2GlobalSettingsDialogClass))
+#define MODEST_IS_HILDON2_GLOBAL_SETTINGS_DIALOG(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG))
+#define MODEST_IS_HILDON2_GLOBAL_SETTINGS_DIALOG_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE((klass),MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG))
+#define MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS((obj),MODEST_TYPE_HILDON2_GLOBAL_SETTINGS_DIALOG,ModestHildon2GlobalSettingsDialogClass))
 
-typedef struct _ModestMaemoGlobalSettingsDialog      ModestMaemoGlobalSettingsDialog;
-typedef struct _ModestMaemoGlobalSettingsDialogClass ModestMaemoGlobalSettingsDialogClass;
+typedef struct _ModestHildon2GlobalSettingsDialog      ModestHildon2GlobalSettingsDialog;
+typedef struct _ModestHildon2GlobalSettingsDialogClass ModestHildon2GlobalSettingsDialogClass;
 
-struct _ModestMaemoGlobalSettingsDialog {
+struct _ModestHildon2GlobalSettingsDialog {
 	 ModestGlobalSettingsDialog parent;
 };
 
-struct _ModestMaemoGlobalSettingsDialogClass {
+struct _ModestHildon2GlobalSettingsDialogClass {
 	ModestGlobalSettingsDialogClass parent_class;
 };
 
 /* member functions */
-GType        modest_maemo_global_settings_dialog_get_type    (void) G_GNUC_CONST;
+GType        modest_hildon2_global_settings_dialog_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_maemo_global_settings_dialog_new         (void);
+GtkWidget*   modest_hildon2_global_settings_dialog_new         (void);
 
 G_END_DECLS
 
-#endif /* __MODEST_MAEMO_GLOBAL_SETTINGS_DIALOG_H__ */
+#endif /* __MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_H__ */
 

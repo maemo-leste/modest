@@ -58,8 +58,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-serversecurity-picker.h modest-serversecurity-picker.c \
 	modest-servertype-picker.h modest-servertype-picker.c \
 	modest-icon-names.h           \
-	modest-maemo-global-settings-dialog.c \
-	modest-maemo-global-settings-dialog.h \
+	modest-hildon2-global-settings-dialog.c \
+	modest-hildon2-global-settings-dialog.h \
 	modest-maemo-security-options-view.c \
 	modest-main-window.c          \
 	modest-main-window-ui.h       \

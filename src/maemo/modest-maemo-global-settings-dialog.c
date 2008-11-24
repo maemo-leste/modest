@@ -43,6 +43,7 @@
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkhseparator.h>
 #include "modest-runtime.h"
+#include "modest-defs.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "widgets/modest-combo-box.h"
 #include "maemo/modest-maemo-global-settings-dialog.h"
@@ -87,6 +88,8 @@ static void       on_auto_update_toggled (GtkToggleButton *togglebutton,
 static gboolean   on_inner_tabs_key_pressed (GtkWidget *widget,
 					     GdkEventKey *event,
 					     gpointer user_data);
+
+static void modest_maemo_global_settings_dialog_load_settings (ModestGlobalSettingsDialog *self);
 
 typedef struct _ModestMaemoGlobalSettingsDialogPrivate ModestMaemoGlobalSettingsDialogPrivate;
 struct _ModestMaemoGlobalSettingsDialogPrivate {
@@ -228,7 +231,7 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 				  gtk_label_new (_("mcen_ti_options_updating")));
 	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->composing_page, 
 				  gtk_label_new (_("mcen_ti_options_composing")));
-		
+
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 
@@ -238,9 +241,6 @@ modest_maemo_global_settings_dialog_init (ModestMaemoGlobalSettingsDialog *self)
 			  G_CALLBACK (on_inner_tabs_key_pressed), self);
 	priv->switch_handler = g_signal_connect (G_OBJECT(ppriv->notebook), "switch-page",
 						 G_CALLBACK(on_switch_page), self);
-
-	/* Load current config */
-	_modest_global_settings_dialog_load_conf (MODEST_GLOBAL_SETTINGS_DIALOG (self));
 
 	/* Set first page */
 	gtk_notebook_set_current_page (GTK_NOTEBOOK (ppriv->notebook), 0);
@@ -271,7 +271,12 @@ modest_maemo_global_settings_dialog_finalize (GObject *obj)
 GtkWidget*
 modest_maemo_global_settings_dialog_new (void)
 {
-	return GTK_WIDGET(g_object_new(MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, NULL));
+	GtkWidget *self = GTK_WIDGET(g_object_new(MODEST_TYPE_MAEMO_GLOBAL_SETTINGS_DIALOG, NULL));
+
+	/* Load settings */
+	modest_maemo_global_settings_dialog_load_settings (MODEST_GLOBAL_SETTINGS_DIALOG (self));
+
+	return self;
 }
 
 /*
@@ -520,4 +525,86 @@ on_inner_tabs_key_pressed (GtkWidget *widget,
 	}
 
 	return retval;
+}
+
+static void 
+modest_maemo_global_settings_dialog_load_settings (ModestGlobalSettingsDialog *self)
+{
+	ModestConf *conf;
+	gboolean checked;
+	gint combo_id, value;
+	GError *error = NULL;
+	ModestGlobalSettingsDialogPrivate *ppriv;
+
+	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
+	conf = modest_runtime_get_conf ();
+
+	/* Autoupdate */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ppriv->auto_update), checked);
+	ppriv->initial_state.auto_update = checked;
+
+	/* Connected by */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (ppriv->connect_via), 
+					(gpointer) &combo_id);
+	ppriv->initial_state.connect_via = combo_id;
+
+	/* Emit toggled to update the visibility of connect_by caption */
+	gtk_toggle_button_toggled (GTK_TOGGLE_BUTTON (ppriv->auto_update));
+
+	/* Update interval */
+	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
+	}
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (ppriv->update_interval), 
+					(gpointer) &combo_id);
+	ppriv->initial_state.update_interval = combo_id;
+
+	/* Size limit */
+	value  = modest_conf_get_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		value = 1000;
+	}
+	/* It's better to do this in the subclasses, but it's just one
+	   line, so we'll leave it here for the moment */
+	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), value);
+	ppriv->initial_state.size_limit = value;
+
+	/* Play sound */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		checked = FALSE;
+	}
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ppriv->play_sound), checked);
+	ppriv->initial_state.play_sound = checked;
+
+	/* Msg format */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
+	if (error) {
+		g_error_free (error);
+		error = NULL;
+		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
+	}
+	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (ppriv->msg_format),
+					(gpointer) &combo_id);
+	ppriv->initial_state.prefer_formatted_text = checked;
 }

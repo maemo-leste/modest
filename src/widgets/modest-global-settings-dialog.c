@@ -66,10 +66,16 @@ static void modest_global_settings_dialog_finalize   (GObject *obj);
 static void on_response (GtkDialog *dialog,
 			 gint arg1,
 			 gpointer user_data);
-static void get_current_settings (ModestGlobalSettingsDialogPrivate *priv, 
+static gboolean on_delete_event (GtkWidget *widget,
+				 GdkEvent  *event,
+				 gpointer   user_data);
+
+static void get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 				  ModestGlobalSettingsState *state);
 
 static ModestConnectedVia current_connection_default (void);
+
+static gboolean modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog *self);
 
 /* list my signals  */
 enum {
@@ -126,6 +132,7 @@ modest_global_settings_dialog_class_init (ModestGlobalSettingsDialogClass *klass
 	g_type_class_add_private (gobject_class, sizeof(ModestGlobalSettingsDialogPrivate));
 
 	klass->current_connection_func = current_connection_default;
+	klass->save_settings_func = modest_global_settings_dialog_save_settings_default;
 }
 
 static void
@@ -139,8 +146,9 @@ modest_global_settings_dialog_init (ModestGlobalSettingsDialog *self)
 	priv->default_account_selector = NULL;
 	priv->accounts_list = NULL;
 
-	/* Connect to the dialog's response signal: */
+	/* Connect to the dialog's "response" and "delete-event" signals */
 	g_signal_connect (G_OBJECT (self), "response", G_CALLBACK (on_response), self);
+	g_signal_connect (G_OBJECT (self), "delete-event", G_CALLBACK (on_delete_event), self);
 
 	/* Set title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_options"));
@@ -157,7 +165,7 @@ modest_global_settings_dialog_finalize (GObject *obj)
 	modest_pair_list_free (priv->update_interval_list);
 	modest_pair_list_free (priv->msg_format_list);
 	modest_pair_list_free (priv->accounts_list);
-	
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -248,118 +256,9 @@ _modest_global_settings_dialog_get_msg_formats (void)
 	return (ModestPairList *) g_slist_reverse (list);
 }
 
-void   
-_modest_global_settings_dialog_load_conf (ModestGlobalSettingsDialog *self)
-{
-	ModestConf *conf;
-	gboolean checked;
-	gint combo_id, value;
-	GError *error = NULL;
-	ModestGlobalSettingsDialogPrivate *priv;
-
-	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
-	conf = modest_runtime_get_conf ();
-
-	/* Autoupdate */
-	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);
-	if (error) {
-		g_clear_error (&error);
-		error = NULL;
-		checked = FALSE;
-	}
-#ifdef MODEST_TOOLKIT_HILDON2
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->auto_update), checked);
-#else
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->auto_update), checked);
-#endif
-	priv->initial_state.auto_update = checked;
-
-	/* Connected by */
-	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
-	}
-#ifdef MODEST_TOOLKIT_HILDON2
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->connect_via), 
-					      (gpointer) &combo_id);
-#else
-	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->connect_via), 
-					(gpointer) &combo_id);
-#endif
-	priv->initial_state.connect_via = combo_id;
-
-	/* Emit toggled to update the visibility of connect_by caption */
-#ifndef MODEST_TOOLKIT_HILDON2
-	gtk_toggle_button_toggled (GTK_TOGGLE_BUTTON (priv->auto_update));
-#endif
-
-	/* Update interval */
-	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
-	}
-#ifdef MODEST_TOOLKIT_HILDON2
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->update_interval), 
-					(gpointer) &combo_id);
-#else
-	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->update_interval), 
-					(gpointer) &combo_id);
-#endif
-	priv->initial_state.update_interval = combo_id;
-
-	/* Size limit */
-	value  = modest_conf_get_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		value = 1000;
-	}
-	/* It's better to do this in the subclasses, but it's just one
-	   line, so we'll leave it here for the moment */
-#ifndef MODEST_TOOLKIT_GTK
-	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (priv->size_limit), value);
-#else
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (priv->size_limit), value);
-#endif
-	priv->initial_state.size_limit = value;
-
-	/* Play sound */
-	checked = modest_conf_get_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		checked = FALSE;
-	}
-#ifndef MODEST_TOOLKIT_HILDON2
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->play_sound), checked);
-#endif
-	priv->initial_state.play_sound = checked;
-
-	/* Msg format */
-	checked = modest_conf_get_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
-	}	
-	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
-#ifdef MODEST_TOOLKIT_HILDON2
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->msg_format), 
-					      (gpointer) &combo_id);
-#else
-	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->msg_format), 
-					(gpointer) &combo_id);
-#endif
-	priv->initial_state.prefer_formatted_text = checked;
-}
-
-static void 
-get_current_settings (ModestGlobalSettingsDialogPrivate *priv, 
-		      ModestGlobalSettingsState *state) 
+static void
+get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
+		      ModestGlobalSettingsState *state)
 {
 	gint *id;
 
@@ -396,8 +295,8 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->prefer_formatted_text = (*id == MODEST_FILE_FORMAT_FORMATTED_TEXT) ? TRUE : FALSE;
 }
 
-gboolean
-_modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
+static gboolean
+modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog *self)
 {
 	ModestConf *conf;
 	ModestGlobalSettingsState current_state;
@@ -424,14 +323,14 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 	modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, current_state.prefer_formatted_text, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 	if (current_state.default_account &&
-	    (!priv->initial_state.default_account || 
+	    (!priv->initial_state.default_account ||
 	     strcmp (current_state.default_account, priv->initial_state.default_account)!= 0)) {
 		modest_account_mgr_set_default_account (modest_runtime_get_account_mgr (),
 							current_state.default_account);
 	}
 
 	/* Apply changes */
-	if (priv->initial_state.auto_update != current_state.auto_update || 
+	if (priv->initial_state.auto_update != current_state.auto_update ||
 	    priv->initial_state.connect_via != current_state.connect_via ||
 	    priv->initial_state.update_interval != current_state.update_interval) {
 		
@@ -456,7 +355,7 @@ _modest_global_settings_dialog_save_conf (ModestGlobalSettingsDialog *self)
 				   selected the same connect_via
 				   method than the one already used by
 				   the device */
-				ModestConnectedVia connect_via = 
+				ModestConnectedVia connect_via =
 					MODEST_GLOBAL_SETTINGS_DIALOG_GET_CLASS(self)->current_connection_func ();
 				
 				if (current_state.connect_via == connect_via)
@@ -493,6 +392,23 @@ settings_changed (ModestGlobalSettingsState initial_state,
 		return FALSE;
 }
 
+static gboolean
+on_delete_event (GtkWidget *widget,
+                 GdkEvent  *event,
+                 gpointer   user_data)
+{
+	ModestGlobalSettingsDialogPrivate *priv;
+	ModestGlobalSettingsState current_state;
+
+	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
+
+	/* If settings changed, them the response method already asked
+	   the user, because it's always executed before (see
+	   GtkDialog code). If it's not then simply close */
+	get_current_settings (priv, &current_state);
+	return settings_changed (priv->initial_state, current_state);
+}
+
 static void
 on_response (GtkDialog *dialog,
 	     gint arg1,
@@ -511,7 +427,7 @@ on_response (GtkDialog *dialog,
 		if (changed) {
 			gboolean saved;
 
-			saved = _modest_global_settings_dialog_save_conf (MODEST_GLOBAL_SETTINGS_DIALOG (dialog));
+			saved = modest_global_settings_dialog_save_settings (MODEST_GLOBAL_SETTINGS_DIALOG (dialog));
 			if (saved) {
 				modest_platform_information_banner (NULL, NULL,
 								    _("mcen_ib_advsetup_settings_saved"));
@@ -523,18 +439,26 @@ on_response (GtkDialog *dialog,
 	} else {
 		if (changed) {
 			gint response;
-			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (user_data), 
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (user_data),
 									    _("imum_nc_wizard_confirm_lose_changes"));
 			/* Do not close if the user Cancels */
-			if (response == GTK_RESPONSE_CANCEL)
+			if (response != GTK_RESPONSE_OK)
 				g_signal_stop_emission_by_name (user_data, "response");
 		}
 	}
 }
 
-static ModestConnectedVia 
+static ModestConnectedVia
 current_connection_default (void)
 {
 	g_warning ("You must implement %s", __FUNCTION__);
 	g_return_val_if_reached (MODEST_CONNECTED_VIA_ANY);
+}
+
+gboolean
+modest_global_settings_dialog_save_settings (ModestGlobalSettingsDialog *self)
+{
+	g_return_val_if_fail (MODEST_IS_GLOBAL_SETTINGS_DIALOG (self), FALSE);
+
+	return MODEST_GLOBAL_SETTINGS_DIALOG_GET_CLASS(self)->save_settings_func (self);
 }
