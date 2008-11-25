@@ -309,6 +309,34 @@ modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
 					const gchar *title,
 					GtkWidget *control)
 {
+	return modest_maemo_utils_create_captioned_with_size_type (title_size_group,
+								   value_size_group,
+								   title,
+								   control,
+								   HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+}
+
+/**
+ * modest_maemo_utils_create_captioned_with_size_type:
+ * @title_size_group: a #GtkSizeGroup
+ * @value_size_group: a #GtkSizeGroup
+ * @title: a string
+ * @control: a #GtkWidget
+ * @size_type: a #HildonSizeType
+ *
+ * this creates a widget (a #GtkHBox) with a control, and a label
+ * (@string) captioning it. It also uses the proper size groups for title
+ * and control.
+ *
+ * Returns: a widget containing the control and a proper label.
+ */
+GtkWidget *
+modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_group,
+						       GtkSizeGroup *value_size_group,
+						       const gchar *title,
+						       GtkWidget *control,
+						       HildonSizeType size_type)
+{
  	GtkWidget *label;
 	GtkWidget *box;
   
@@ -323,7 +351,7 @@ modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
 	if (value_size_group)
 		gtk_size_group_add_widget (value_size_group, control);
 
-	hildon_gtk_widget_set_theme_size (control, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	hildon_gtk_widget_set_theme_size (control, size_type);
 
 	return box;
 }

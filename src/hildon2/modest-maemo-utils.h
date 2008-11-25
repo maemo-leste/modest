@@ -37,6 +37,7 @@
 #include <libosso.h>
 #include "widgets/modest-global-settings-dialog.h"
 #include "widgets/modest-validating-entry.h"
+#include <hildon/hildon-gtk.h>
 
 #define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
@@ -127,6 +128,12 @@ GtkWidget *modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_grou
 						   GtkSizeGroup *value_size_group,
 						   const gchar *title,
 						   GtkWidget *control);
+
+GtkWidget *modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_group,
+								  GtkSizeGroup *value_size_group,
+								  const gchar *title,
+								  GtkWidget *control,
+								  HildonSizeType size_type);
 
 void       modest_maemo_utils_set_hbutton_layout (GtkSizeGroup *title_sizegroup, 
 						  GtkSizeGroup *value_sizegroup,
