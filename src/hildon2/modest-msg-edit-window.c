@@ -800,12 +800,18 @@ init_window (ModestMsgEditWindow *obj)
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
-	to_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							  _("mail_va_to"), priv->to_field);
-	priv->cc_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								_("mail_va_cc"), priv->cc_field);
-	priv->bcc_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								 _("mail_va_hotfix1"), priv->bcc_field);
+	to_caption = modest_maemo_utils_create_captioned_with_size_type 
+		(title_size_group, value_size_group,
+		 _("mail_va_to"), priv->to_field,
+		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	priv->cc_caption = modest_maemo_utils_create_captioned_with_size_type 
+		(title_size_group, value_size_group,
+		 _("mail_va_cc"), priv->cc_field,
+		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	priv->bcc_caption = modest_maemo_utils_create_captioned_with_size_type
+		(title_size_group, value_size_group,
+		 _("mail_va_hotfix1"), priv->bcc_field,
+		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
 							       _("mail_va_subject"), subject_box);
 	priv->attachments_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
