@@ -341,6 +341,7 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 	GtkWidget *box;
   
 	label = gtk_label_new (title);
+	hildon_gtk_widget_set_theme_size (label, HILDON_SIZE_FINGER_HEIGHT);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	gtk_widget_show (label);
 	box = gtk_hbox_new (TRUE, MODEST_MARGIN_HALF);
