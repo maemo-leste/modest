@@ -3771,15 +3771,17 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 				 */
 			}
 			if (cancel)
-				*cancel   = FALSE;			
+				*cancel   = FALSE;
 		} else {
+#ifndef MODEST_TOOLKIT_HILDON2
 			/* Set parent to NULL or the banner will disappear with its parent dialog */
 			modest_platform_information_banner(NULL, NULL, _("mail_ib_login_cancelled"));
+#endif
 			completed = TRUE;
 			if (username)
-				*username = NULL;			
+				*username = NULL;
 			if (password)
-				*password = NULL;			
+				*password = NULL;
 			if (cancel)
 				*cancel   = TRUE;
 		}
