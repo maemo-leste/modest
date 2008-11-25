@@ -3577,50 +3577,61 @@ password_dialog_check_field (GtkEditable *editable,
 }
 
 void
-modest_ui_actions_on_password_requested (TnyAccountStore *account_store, 
+modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					 const gchar* server_account_name,
 					 gchar **username,
-					 gchar **password, 
-					 gboolean *cancel, 
+					 gchar **password,
+					 gboolean *cancel,
 					 gboolean *remember,
 					 ModestMainWindow *main_window)
 {
 	g_return_if_fail(server_account_name);
 	gboolean completed = FALSE;
 	PasswordDialogFields *fields = NULL;
-	
+
 	/* Initalize output parameters: */
 	if (cancel)
 		*cancel = FALSE;
-		
+
 	if (remember)
 		*remember = TRUE;
-		
+
 #ifndef MODEST_TOOLKIT_GTK
 	/* Maemo uses a different (awkward) button order,
 	 * It should probably just use gtk_alternative_dialog_button_order ().
 	 */
-	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
-					      NULL,
-					      GTK_DIALOG_MODAL,
-					      _("mcen_bd_dialog_ok"),
-					      GTK_RESPONSE_ACCEPT,
-					      _("mcen_bd_dialog_cancel"),
-					      GTK_RESPONSE_REJECT,
-					      NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *dialog =
+		gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
+					     NULL,
+					     GTK_DIALOG_MODAL,
+					     _HL("wdgt_bd_done"),
+					     GTK_RESPONSE_ACCEPT,
+					     NULL);
 #else
-	GtkWidget *dialog = gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
-					      NULL,
-					      GTK_DIALOG_MODAL,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      GTK_STOCK_OK,
-					      GTK_RESPONSE_ACCEPT,
-					      NULL);
-#endif /* !MODEST_TOOLKIT_GTK */
+	GtkWidget *dialog =
+		gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
+					     NULL,
+					     _("mcen_bd_dialog_ok"),
+					     GTK_RESPONSE_ACCEPT,
+					     _("mcen_bd_dialog_cancel"),
+					     GTK_RESPONSE_REJECT,
+					     NULL);
+#endif /* MODEST_TOOLKIT_HILDON2 */
+#else
+	GtkWidget *dialog = 
+		gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
+					     NULL,
+					     GTK_DIALOG_MODAL,
+					     GTK_STOCK_CANCEL,
+					     GTK_RESPONSE_REJECT,
+					     GTK_STOCK_OK,
+					     GTK_RESPONSE_ACCEPT,
+					     NULL);
+#endif /* MODEST_TOOLKIT_GTK */
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (dialog), NULL);
-	
+
 	gchar *server_name = modest_account_mgr_get_server_account_hostname (
 		modest_runtime_get_account_mgr(), server_account_name);
 	if (!server_name) {/* This happened once, though I don't know why. murrayc. */
@@ -3630,9 +3641,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		gtk_widget_destroy (dialog);
 		return;
 	}
-	
-	/* This causes a warning because the logical ID has no %s in it, 
-	 * though the translation does, but there is not much we can do about that: */
+
 	gchar *txt = g_strdup_printf (_("mail_ia_password_info"), server_name);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
 			    FALSE, FALSE, 0);
@@ -3643,7 +3652,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	/* username: */
 	gchar *initial_username = modest_account_mgr_get_server_account_username (
 		modest_runtime_get_account_mgr(), server_account_name);
-	
+
 	GtkWidget *entry_username = gtk_entry_new ();
 	if (initial_username)
 		gtk_entry_set_text (GTK_ENTRY (entry_username), initial_username);
@@ -3662,48 +3671,48 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 #ifndef MODEST_TOOLKIT_GTK
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_username), HILDON_GTK_INPUT_MODE_FULL);
-	
+
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	
+
 	GtkWidget *caption = hildon_caption_new (sizegroup, 
 		_("mail_fi_username"), entry_username, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (entry_username);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption, 
 		FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
-#else 
+#else
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_username,
 			    TRUE, FALSE, 0);
-#endif /* !MODEST_TOOLKIT_GTK */	
-			    
+#endif /* !MODEST_TOOLKIT_GTK */
+
 	/* password: */
 	GtkWidget *entry_password = gtk_entry_new ();
 	gtk_entry_set_visibility (GTK_ENTRY(entry_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), "*"); */
-	
+
 #ifndef MODEST_TOOLKIT_GTK
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password), 
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password),
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
-	
-	caption = hildon_caption_new (sizegroup, 
+
+	caption = hildon_caption_new (sizegroup,
 		_("mail_fi_password"), entry_password, NULL, HILDON_CAPTION_MANDATORY);
 	gtk_widget_show (entry_password);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption, 
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption,
 		FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	g_object_unref (sizegroup);
-#else 
+#else
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_password,
 			    TRUE, FALSE, 0);
-#endif /* !MODEST_TOOLKIT_GTK */	
+#endif /* !MODEST_TOOLKIT_GTK */
 
 	if (initial_username != NULL)
 		gtk_widget_grab_focus (GTK_WIDGET (entry_password));
-			    	
+
 /* This is not in the Maemo UI spec:
 	remember_pass_check = gtk_check_button_new_with_label (_("Remember password"));
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), remember_pass_check,
@@ -3722,18 +3731,18 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 
 	while (!completed) {
-	
+
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			if (username) {
 				*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
-				
+
 				/* Note that an empty field becomes the "" string */
 				if (*username && strlen (*username) > 0) {
 					modest_account_mgr_set_server_account_username (modest_runtime_get_account_mgr(), 
 											server_account_name, 
 											*username);
 					completed = TRUE;
-				
+
 					const gboolean username_was_changed = 
 						(strcmp (*username, initial_username) != 0);
 					if (username_was_changed) {
@@ -3749,10 +3758,10 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					completed = FALSE;
 				}
 			}
-			
+
 			if (password) {
 				*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
-			
+
 				/* We do not save the password in the configuration, 
 				 * because this function is only called for passwords that should 
 				 * not be remembered:
@@ -3760,7 +3769,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 				 modest_runtime_get_account_mgr(), server_account_name, 
 				 *password);
 				 */
-			}			
+			}
 			if (cancel)
 				*cancel   = FALSE;			
 		} else {
