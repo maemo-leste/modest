@@ -516,3 +516,10 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;	
 }
+
+void
+modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
+{
+	modest_ui_actions_on_add_to_contacts (NULL, MODEST_WINDOW (self));
+}
+

@@ -292,6 +292,18 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window);
 gboolean 
 modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self);
 
+/**
+ * modest_msg_view_window_add_to_contacts:
+ * @self: a #ModestMsgViewWindow
+ *
+ * activates the add to contacts use case. In Diablo and gnome it gets the
+ * clipboard selection current value and tries to add it to the addressbook.
+ * In fremantle, it shows the add to contacts dialog to select the recipient
+ * to add.
+ */
+void
+modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */

@@ -3208,3 +3208,10 @@ on_fetch_image (ModestMsgView *msgview,
 
 	return TRUE;;
 }
+
+void
+modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
+{
+	modest_ui_actions_on_add_to_contacts (NULL, MODEST_WINDOW (self));
+}
+

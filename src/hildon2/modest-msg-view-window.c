@@ -48,7 +48,8 @@
 #include <modest-text-utils.h>
 #include <modest-account-mgr-helpers.h>
 #include "modest-progress-bar.h"
-#include "hildon/hildon-pannable-area.h"
+#include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-picker-dialog.h>
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include "modest-ui-dimming-manager.h"
@@ -57,6 +58,7 @@
 #include <modest-mime-part-view.h>
 #include <modest-isearch-view.h>
 #include <modest-tny-mime-part.h>
+#include <modest-address-book.h>
 #include <math.h>
 #include <errno.h>
 #include <glib/gstdio.h>
@@ -3010,4 +3012,83 @@ on_fetch_image (ModestMsgView *msgview,
 	}
 
 	return TRUE;;
+}
+
+static GSList *
+all_recipients_list (TnyMsg *msg)
+{
+	TnyHeader *header = NULL;
+	GSList *recipients = NULL;
+	gchar *from = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
+
+	if (msg == NULL)
+		return NULL;
+
+	header = tny_msg_get_header (msg);
+	if (header == NULL)
+		return NULL;
+
+	from = tny_header_dup_from (header);
+	to = tny_header_dup_to (header);
+	cc = tny_header_dup_cc (header);
+	bcc = tny_header_dup_bcc (header);
+
+	recipients = NULL;
+	if (from)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (from));
+	if (to)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (to));
+	if (cc)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (cc));
+	if (bcc)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (bcc));
+
+	g_free (from);
+	g_free (to);
+	g_free (cc);
+	g_free (bcc);
+
+	return recipients;
+}
+
+void
+modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	GSList *recipients = NULL;
+	TnyMsg *msg = NULL;
+
+	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+	if (msg == NULL) return;
+	recipients = all_recipients_list (msg);
+
+	if (recipients != NULL) {
+		GtkWidget *picker_dialog;
+		GtkWidget *selector;
+		GSList *node;
+		gchar *selected;
+
+		picker_dialog = hildon_picker_dialog_new (GTK_WINDOW (self));
+		gtk_window_set_title (GTK_WINDOW (picker_dialog), _("mcen_me_viewer_addtocontacts"));
+
+		selector = hildon_touch_selector_new_text ();
+		for (node = recipients; node != NULL; node = g_slist_next (node)) {
+			hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), (const gchar *) node->data);
+		}
+
+		hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (picker_dialog), 
+						   HILDON_TOUCH_SELECTOR (selector));
+
+		gtk_dialog_run (GTK_DIALOG (picker_dialog));
+		selected = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+		gtk_widget_destroy (picker_dialog);
+
+		if (selected)
+			modest_address_book_add_address (selected);
+		g_free (selected);
+	}
+	
+	if (recipients) {g_slist_foreach (recipients, (GFunc) g_free, NULL); g_slist_free (recipients);}
+	g_object_unref (msg);
 }

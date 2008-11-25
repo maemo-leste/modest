@@ -1749,6 +1749,13 @@ modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_da
 	return dimmed;
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
+gboolean
+modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
+{
+	return FALSE;
+}
+#else
 gboolean
 modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
 {
@@ -1796,6 +1803,7 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 
 	return dimmed;
 }
+#endif
 
 /* *********************** static utility functions ******************** */
 
