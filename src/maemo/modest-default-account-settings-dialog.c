@@ -1059,7 +1059,27 @@ check_data (ModestDefaultAccountSettingsDialog *self)
 	return TRUE;
 }
 
-static void 
+static gboolean
+on_delete_event (GtkWidget *widget,
+                 GdkEvent  *event,
+                 gpointer   user_data)
+{
+	ModestDefaultAccountSettingsDialog *self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+	ModestSecurityOptionsView *incoming_sec, *outgoing_sec;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	/* Check if security widgets changed */
+	incoming_sec = MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security);
+	outgoing_sec = MODEST_SECURITY_OPTIONS_VIEW (priv->outgoing_security);
+
+	return modest_security_options_view_changed (incoming_sec, priv->settings) ||
+		modest_security_options_view_changed (outgoing_sec, priv->settings) ||
+		priv->modified;
+}
+
+static void
 on_response (GtkDialog *wizard_dialog,
 	     gint response_id,
 	     gpointer user_data)
@@ -1080,14 +1100,14 @@ on_response (GtkDialog *wizard_dialog,
 		modest_security_options_view_changed (outgoing_sec, priv->settings);
 
 	/* Warn about unsaved changes: */
-	if (response_id == GTK_RESPONSE_CANCEL && (priv->modified || sec_changed)) {
+	if ((response_id == GTK_RESPONSE_CANCEL || response_id == GTK_RESPONSE_DELETE_EVENT) && 
+	    (priv->modified || sec_changed)) {
 		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
 			_("imum_nc_wizard_confirm_lose_changes")));
-		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
-		 
+
 		 const gint dialog_response = gtk_dialog_run (dialog);
 		 gtk_widget_destroy (GTK_WIDGET (dialog));
-		 
+
 		if (dialog_response != GTK_RESPONSE_OK)
 			prevent_response = TRUE;
 	}
@@ -1095,7 +1115,7 @@ on_response (GtkDialog *wizard_dialog,
 	else if (response_id != GTK_RESPONSE_CANCEL && !check_data (self)) {
 		prevent_response = TRUE;
 	}
-		
+
 	if (prevent_response) {
 		/* This is a nasty hack. murrayc. */
 		/* Don't let the dialog close */
@@ -1104,7 +1124,7 @@ on_response (GtkDialog *wizard_dialog,
 	} else {
 		modest_tny_account_store_set_send_mail_blocked (modest_runtime_get_account_store (), FALSE);
 	}
-		
+
 	if (response_id == GTK_RESPONSE_OK) {
 		/* Try to save the changes if modified (NB #59251): */
 		if (priv->modified || sec_changed) {
@@ -1124,7 +1144,7 @@ on_response (GtkDialog *wizard_dialog,
 					transport_settings = modest_account_settings_get_transport_settings (priv->settings);
 					store_account_name = modest_server_account_settings_get_account_name (store_settings);
 					transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
-					
+
 					if (store_account_name) {
 						modest_account_mgr_notify_account_update (priv->account_manager, 
 											  store_account_name);
@@ -1135,7 +1155,7 @@ on_response (GtkDialog *wizard_dialog,
 					}
 					g_object_unref (store_settings);
 					g_object_unref (transport_settings);
-					
+
 					modest_platform_information_banner(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
 			} else {
@@ -1190,25 +1210,25 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (priv->notebook));
 	gtk_container_set_border_width (GTK_CONTAINER (dialog->vbox), MODEST_MARGIN_HALF);
 	gtk_widget_show (GTK_WIDGET (priv->notebook));
-        
+
     /* Add the buttons: */
     gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK);
     gtk_dialog_add_button (GTK_DIALOG(self), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL);
-    
+
     /* Connect to the dialog's response signal: */
-    /* We use connect-before 
-     * so we can stop the signal emission, 
+    /* We use connect-before
+     * so we can stop the signal emission,
      * to stop the default signal handler from closing the dialog.
      */
-    g_signal_connect (G_OBJECT (self), "response",
-            G_CALLBACK (on_response), self); 
-            
+    g_signal_connect (G_OBJECT (self), "response", G_CALLBACK (on_response), self);
+    g_signal_connect (G_OBJECT (self), "delete-event", G_CALLBACK (on_delete_event), self);
+
     priv->modified = FALSE;
 
-    /* When this window is shown, hibernation should not be possible, 
+    /* When this window is shown, hibernation should not be possible,
 	 * because there is no sensible way to save the state: */
     modest_window_mgr_prevent_hibernation_while_window_is_shown (
-    	modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+    	modest_runtime_get_window_mgr (), GTK_WINDOW (self));
 
     /* Prevent sending mails while editing an account, to avoid hangs on unprotected locks
      * while sending messages causes an error dialog and we have a lock */

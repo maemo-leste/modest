@@ -163,16 +163,16 @@ modest_default_account_settings_dialog_finalize (GObject *object)
 
 	self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (object);
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
-	
+
 	if (priv->account_name)
 		g_free (priv->account_name);
-		
+
 	if (priv->original_account_title)
 		g_free (priv->original_account_title);
-		
+
 	if (priv->account_manager)
 		g_object_unref (G_OBJECT (priv->account_manager));
-		
+
 	if (priv->signature_dialog)
 		gtk_widget_destroy (priv->signature_dialog);
 
@@ -180,11 +180,11 @@ modest_default_account_settings_dialog_finalize (GObject *object)
 		g_object_unref (priv->settings);
 		priv->settings = NULL;
 	}
-	
+
 	G_OBJECT_CLASS (modest_default_account_settings_dialog_parent_class)->finalize (object);
 }
 
-static void 
+static void
 set_modified (ModestDefaultAccountSettingsDialog *self, gboolean modified)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
@@ -363,7 +363,7 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 	g_list_free (list_prevent);
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_account_title),
 					 on_entry_invalid_account_title_character, self);
-	
+
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_account_title), 64);
@@ -376,11 +376,11 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 									HILDON_BUTTON_ARRANGEMENT_VERTICAL));
 	modest_maemo_utils_set_vbutton_layout (title_sizegroup, 
 					       _("mcen_fi_advsetup_retrievetype"), priv->retrieve_picker);
-	
+
 	gtk_widget_show (priv->retrieve_picker);
 	connect_for_modified (self, priv->retrieve_picker);
 	gtk_box_pack_start (GTK_BOX (hbox), priv->retrieve_picker, TRUE, TRUE, MODEST_MARGIN_HALF);
-	
+
 	/* The limit-retrieve picker: */
 	priv->limit_retrieve_picker = GTK_WIDGET (modest_limit_retrieve_picker_new (MODEST_EDITABLE_SIZE,
 										    HILDON_BUTTON_ARRANGEMENT_VERTICAL));
@@ -929,11 +929,31 @@ check_data (ModestDefaultAccountSettingsDialog *self)
 		gtk_editable_select_region (GTK_EDITABLE (priv->entry_outgoingserver), 0, -1);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
-static void 
+static gboolean
+on_delete_event (GtkWidget *widget,
+                 GdkEvent  *event,
+                 gpointer   user_data)
+{
+	ModestDefaultAccountSettingsDialog *self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+	ModestSecurityOptionsView *incoming_sec, *outgoing_sec;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
+	/* Check if security widgets changed */
+	incoming_sec = MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security);
+	outgoing_sec = MODEST_SECURITY_OPTIONS_VIEW (priv->outgoing_security);
+
+	return modest_security_options_view_changed (incoming_sec, priv->settings) ||
+		modest_security_options_view_changed (outgoing_sec, priv->settings) ||
+		priv->modified;
+}
+
+static void
 on_response (GtkDialog *wizard_dialog,
 	     gint response_id,
 	     gpointer user_data)
@@ -954,14 +974,15 @@ on_response (GtkDialog *wizard_dialog,
 		modest_security_options_view_changed (outgoing_sec, priv->settings);
 
 	/* Warn about unsaved changes: */
-	if (response_id == GTK_RESPONSE_CANCEL && (priv->modified || sec_changed)) {
+	if ((response_id == GTK_RESPONSE_CANCEL || response_id == GTK_RESPONSE_DELETE_EVENT) && 
+	    (priv->modified || sec_changed)) {
 		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
 			_("imum_nc_wizard_confirm_lose_changes")));
 		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
-		 
+
 		 const gint dialog_response = gtk_dialog_run (dialog);
 		 gtk_widget_destroy (GTK_WIDGET (dialog));
-		 
+
 		if (dialog_response != GTK_RESPONSE_OK)
 			prevent_response = TRUE;
 	}
@@ -969,16 +990,16 @@ on_response (GtkDialog *wizard_dialog,
 	else if (response_id != GTK_RESPONSE_CANCEL && !check_data (self)) {
 		prevent_response = TRUE;
 	}
-		
+
 	if (prevent_response) {
 		/* This is a nasty hack. murrayc. */
 		/* Don't let the dialog close */
 		g_signal_stop_emission_by_name (wizard_dialog, "response");
-		return;	
+		return;
 	} else {
 		modest_tny_account_store_set_send_mail_blocked (modest_runtime_get_account_store (), FALSE);
 	}
-		
+
 	if (response_id == GTK_RESPONSE_OK) {
 		/* Try to save the changes if modified (NB #59251): */
 		if (priv->modified || sec_changed) {
@@ -998,7 +1019,7 @@ on_response (GtkDialog *wizard_dialog,
 					transport_settings = modest_account_settings_get_transport_settings (priv->settings);
 					store_account_name = modest_server_account_settings_get_account_name (store_settings);
 					transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
-					
+
 					if (store_account_name) {
 						modest_account_mgr_notify_account_update (priv->account_manager, 
 											  store_account_name);
@@ -1009,7 +1030,7 @@ on_response (GtkDialog *wizard_dialog,
 					}
 					g_object_unref (store_settings);
 					g_object_unref (transport_settings);
-					
+
 					modest_platform_information_banner(NULL, NULL, _("mcen_ib_advsetup_settings_saved"));
 				}
 			} else {
@@ -1086,15 +1107,11 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	gtk_dialog_add_button (GTK_DIALOG(self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
 
     gtk_window_set_default_size (GTK_WINDOW (self), -1, 340);
-    
-    /* Connect to the dialog's response signal: */
-    /* We use connect-before 
-     * so we can stop the signal emission, 
-     * to stop the default signal handler from closing the dialog.
-     */
-    g_signal_connect (G_OBJECT (self), "response",
-            G_CALLBACK (on_response), self); 
-            
+
+    /* Connect to the dialog's "response" and "delete-event" signals */
+    g_signal_connect (G_OBJECT (self), "response", G_CALLBACK (on_response), self); 
+    g_signal_connect (G_OBJECT (self), "delete-event", G_CALLBACK (on_delete_event), self); 
+
     priv->modified = FALSE;
 
     /* When this window is shown, hibernation should not be possible, 
