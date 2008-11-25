@@ -352,6 +352,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	
 	priv->recipients = NULL;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	priv->scrolled_window = NULL;
+	gtk_box_pack_start (GTK_BOX (instance), priv->text_view, TRUE, TRUE, 0);
+#else
 	priv->scrolled_window = modest_scroll_text_new (GTK_TEXT_VIEW (priv->text_view), 1024);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scrolled_window), GTK_POLICY_NEVER,
 					GTK_POLICY_AUTOMATIC);
@@ -360,6 +364,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	gtk_box_pack_start (GTK_BOX (instance), priv->scrolled_window, TRUE, TRUE, 0);
 /* 	gtk_box_pack_start (GTK_BOX (instance), priv->text_view, TRUE, TRUE, 0); */
+#endif
 	gtk_box_pack_end (GTK_BOX (instance), priv->abook_button, FALSE, FALSE, 0);
 
 	gtk_text_view_set_accepts_tab (GTK_TEXT_VIEW (priv->text_view), FALSE);
@@ -392,7 +397,11 @@ modest_recpt_editor_set_field_size_group (ModestRecptEditor *recpt_editor, GtkSi
 	g_return_if_fail (GTK_IS_SIZE_GROUP (size_group));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_size_group_add_widget (size_group, priv->text_view);
+#else
 	gtk_size_group_add_widget (size_group, priv->scrolled_window);
+#endif
 }
 
 GtkTextBuffer *
