@@ -99,6 +99,7 @@ modest_hildon2_details_dialog_new_with_header (GtkWindow *parent,
 							"transient-for", parent, 
 							NULL));
 
+	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->create_container_func (dialog);
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header);
 
 	return GTK_WIDGET (dialog);
@@ -117,6 +118,7 @@ modest_hildon2_details_dialog_new_with_folder  (GtkWindow *parent,
 							"transient-for", parent, 
 							NULL));
 
+	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->create_container_func (dialog);
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_folder_func (dialog, folder);
 
 	return GTK_WIDGET (dialog);

@@ -95,7 +95,6 @@ modest_details_dialog_class_init (ModestDetailsDialogClass *klass)
 static void
 modest_details_dialog_init (ModestDetailsDialog *self)
 {
-	MODEST_DETAILS_DIALOG_GET_CLASS (self)->create_container_func (self);
 }
 
 GtkWidget*
@@ -111,6 +110,7 @@ modest_details_dialog_new_with_header (GtkWindow *parent,
 							"transient-for", parent, 
 							NULL));
 
+	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->create_container_func (dialog);
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header);
 
 	/* Add close button */
@@ -132,6 +132,7 @@ modest_details_dialog_new_with_folder  (GtkWindow *parent,
 							"transient-for", parent, 
 							NULL));
 
+	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->create_container_func (dialog);
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_folder_func (dialog, folder);
 
 	/* Add close button */
