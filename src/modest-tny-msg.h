@@ -197,4 +197,16 @@ modest_tny_msg_estimate_size (const gchar *plain_body, const gchar *html_body,
 			      guint64 parts_count,
 			      guint64 parts_size);
 
+/**
+ * modest_tny_msg_get_all_recipients_list:
+ * @msg: a #TnyMsg
+ *
+ * Obtains a list of all the addresses available in a message header.
+ *
+ * Returns: a newly allocated #GSList of strings. Caller should free strings and list.
+ */
+GSList *
+modest_tny_msg_get_all_recipients_list (TnyMsg *msg);
+
+
 #endif /* __MODEST_TNY_MSG_H__ */

@@ -957,3 +957,41 @@ modest_tny_msg_estimate_size (const gchar *plain_body, const gchar *html_body,
 
 	return result;
 }
+
+GSList *
+modest_tny_msg_get_all_recipients_list (TnyMsg *msg)
+{
+	TnyHeader *header = NULL;
+	GSList *recipients = NULL;
+	gchar *from = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
+
+	if (msg == NULL)
+		return NULL;
+
+	header = tny_msg_get_header (msg);
+	if (header == NULL)
+		return NULL;
+
+	from = tny_header_dup_from (header);
+	to = tny_header_dup_to (header);
+	cc = tny_header_dup_cc (header);
+	bcc = tny_header_dup_bcc (header);
+
+	recipients = NULL;
+	if (from)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (from));
+	if (to)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (to));
+	if (cc)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (cc));
+	if (bcc)
+		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (bcc));
+
+	g_free (from);
+	g_free (to);
+	g_free (cc);
+	g_free (bcc);
+
+	return recipients;
+}
+
