@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, 2008, Nokia Corporation
+/* Copyright (c) 2006, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,7 @@
 
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
-#ifdef MODEST_TOOLKIT_HILDON2
-#include <hildon/hildon-pannable-area.h>
-#else
 #include <gtk/gtkscrolledwindow.h>
-#endif
 #include <gtk/gtktable.h>
 #include <gtk/gtkstock.h>
 #include <gtk/gtklabel.h>
@@ -157,7 +153,7 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 					const gchar *label,
 					const gchar *value)
 {
- 	ModestDetailsDialogPrivate *priv;
+	ModestDetailsDialogPrivate *priv;
 	guint n_rows = 0;
 	GtkWidget *label_w, *value_w;
 
@@ -348,7 +344,6 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	g_free (count_s);
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_key_press_event (GtkWindow *window, GdkEventKey *event, gpointer userdata)
 {
@@ -382,44 +377,28 @@ on_key_press_event (GtkWindow *window, GdkEventKey *event, gpointer userdata)
 
 	return FALSE;
 }
-#endif
 
 static void
 modest_details_dialog_create_container_default (ModestDetailsDialog *self)
 {
 	ModestDetailsDialogPrivate *priv;
-#ifdef MODEST_TOOLKIT_HILDON2
-	GtkWidget *pannable;
-#else
 	GtkWidget *scrollbar;
-#endif
 
 	priv = MODEST_DETAILS_DIALOG_GET_PRIVATE (self);
-
-#ifdef MODEST_TOOLKIT_HILDON2
-	pannable= hildon_pannable_area_new ();
-#else
 	scrollbar = gtk_scrolled_window_new (NULL, NULL);
-#endif
 
 	gtk_window_set_default_size (GTK_WINDOW (self), 400, 220);
 
 	priv->props_table = gtk_table_new (0, 2, FALSE);
 	gtk_table_set_col_spacings (GTK_TABLE (priv->props_table), 12);
 	gtk_table_set_row_spacings (GTK_TABLE (priv->props_table), 1);
-
-#ifdef MODEST_TOOLKIT_HILDON2
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), priv->props_table);
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), pannable);
-#else
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollbar), priv->props_table);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollbar), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->props_table), 
 					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrollbar)));
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), scrollbar);
 
-	g_signal_connect (self, "key-press-event", G_CALLBACK (on_key_press_event), self);
-#endif
-
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
+
+	g_signal_connect (self, "key-press-event", G_CALLBACK (on_key_press_event), self);
 }
