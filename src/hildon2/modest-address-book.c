@@ -35,6 +35,7 @@
 #include <modest-text-utils.h>
 #include <libebook/e-book.h>
 #include <libebook/e-book-view.h>
+#include <libebook/e-vcard.h>
 #include <libosso-abook/osso-abook.h>
 #include "modest-hildon-includes.h"
 #include "modest-platform.h"
@@ -135,36 +136,25 @@ open_addressbook_sync ()
 void
 modest_address_book_add_address (const gchar *address)
 {
-	OssoABookAccount *account = NULL;
 	GtkWidget *dialog = NULL;
-	gchar *email_address = NULL;
+	gchar *email_address;
+	EVCardAttribute *attribute;
 
-	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook ()) {
-		if (contact_model) {
-			g_object_unref (contact_model);
-			contact_model = NULL;
-		}
 		return;
 	}
 
 	email_address = modest_text_utils_get_email_address (address);
 	
-	account = osso_abook_account_get (EVC_EMAIL, NULL, email_address);
+	attribute = e_vcard_attribute_new (NULL, EVC_EMAIL);
+	e_vcard_attribute_add_value (attribute, email_address);
+	dialog = osso_abook_temporary_contact_dialog_new (NULL, book, attribute, NULL);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+
+	gtk_widget_destroy (dialog);
+
+	e_vcard_attribute_free (attribute);
 	g_free (email_address);
-	if (account)
-	{
-		dialog = osso_abook_add_to_contacts_dialog_new (contact_model, account);
-		g_object_unref (account);
-		gtk_dialog_run (GTK_DIALOG (dialog));
-
-		if (contact_model) {
-			g_object_unref (contact_model);
-			contact_model = NULL;
-		}
-
-		gtk_widget_destroy (dialog);
-	}
 
 }
 
