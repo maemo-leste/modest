@@ -67,6 +67,17 @@ modest_address_book_select_addresses (ModestRecptEditor *editor);
 gboolean
 modest_address_book_check_names (ModestRecptEditor *editor, gboolean update_addressbook);
 
+/**
+ * modest_address_book_has_address:
+ * @address: a string
+ *
+ * Checks if an address is already stored in addressbook.
+ *
+ * Returns: %TRUE is @address is in addressbook. %FALSE otherwise.
+ */
+gboolean
+modest_address_book_has_address (const gchar *address);
+
 
 
 #endif /* __MODEST_ADDRESS_BOOK_H__ */

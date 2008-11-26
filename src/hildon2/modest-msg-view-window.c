@@ -3074,7 +3074,11 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 
 		selector = hildon_touch_selector_new_text ();
 		for (node = recipients; node != NULL; node = g_slist_next (node)) {
-			hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), (const gchar *) node->data);
+			if (!modest_address_book_has_address ((const gchar *) node->data)) {
+				hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), 
+								   (const gchar *) node->data);
+				contacts_to_add = TRUE;
+			}
 		}
 
 		hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (picker_dialog), 
