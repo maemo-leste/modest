@@ -38,8 +38,10 @@
 #include "modest-debug.h"
 #include "modest-tny-folder.h"
 #include "modest-tny-account.h"
+#include "modest-tny-msg.h"
 #include "modest-tny-mime-part.h"
 #include "modest-text-utils.h"
+#include <modest-address-book.h>
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
@@ -1753,7 +1755,29 @@ modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_da
 gboolean
 modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
 {
-	return FALSE;
+	TnyMsg *msg;
+	GSList *recipients, *node;
+	gboolean has_recipients_to_add;
+
+ 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+
+	msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+	recipients = modest_tny_msg_get_all_recipients_list (msg);
+
+	has_recipients_to_add = FALSE;
+	for (node = recipients; node != NULL; node = g_slist_next (node)) {
+		if (!modest_address_book_has_address ((const gchar *) node->data)) {
+			has_recipients_to_add = TRUE;
+			break;
+		}
+	}
+
+	g_slist_foreach (recipients, (GFunc) g_free, NULL);
+	g_slist_free (recipients);
+	g_object_unref (msg);
+  
+	return !has_recipients_to_add;
 }
 #else
 gboolean
@@ -1763,7 +1787,7 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 	gboolean dimmed = FALSE;
 	GtkWidget *focused = NULL;
 
-	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+ 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 	focused = gtk_window_get_focus (GTK_WINDOW (win));
 
