@@ -3620,6 +3620,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	GtkWidget *dialog =
 		gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
 					     NULL,
+					     GTK_DIALOG_MODAL,
 					     _("mcen_bd_dialog_ok"),
 					     GTK_RESPONSE_ACCEPT,
 					     _("mcen_bd_dialog_cancel"),
