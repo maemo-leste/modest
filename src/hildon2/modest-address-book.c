@@ -211,8 +211,6 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	if (gtk_dialog_run (GTK_DIALOG (contact_chooser)) == GTK_RESPONSE_OK)
 		contacts_list = osso_abook_contact_chooser_get_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_chooser));
 	gtk_widget_destroy (contact_chooser);
-
-	g_object_unref (contact_chooser);
 #endif
 	
 	if (contacts_list) {
