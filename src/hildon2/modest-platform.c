@@ -518,7 +518,7 @@ modest_platform_get_app_name (void)
 	return _("mcen_ap_name");
 }
 
-static void 
+static void
 entry_insert_text (GtkEditable *editable,
 		   const gchar *text,
 		   gint         length,
@@ -540,15 +540,15 @@ entry_insert_text (GtkEditable *editable,
 		if (modest_text_utils_is_forbidden_char (*text, FOLDER_NAME_FORBIDDEN_CHARS)) {
 			/* Show an error */
 			gchar *tmp, *msg;
-			
-			tmp = g_strndup (folder_name_forbidden_chars, 
+
+			tmp = g_strndup (folder_name_forbidden_chars,
 					 FOLDER_NAME_FORBIDDEN_CHARS_LENGTH);
 			msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
-			hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), 
+			hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)),
 							 NULL, msg);
 			g_free (msg);
 			g_free (tmp);
-		} else {	
+		} else {
 			/* Write the text in the entry if it's valid */
 			g_signal_handlers_block_by_func (editable,
 							 (gpointer) entry_insert_text, data);
@@ -571,17 +571,17 @@ entry_changed (GtkEditable *editable,
 
 	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (user_data)->action_area));
 	ok_button = GTK_WIDGET (buttons->data);
-	
+
 	chars = gtk_editable_get_chars (editable, 0, -1);
 	g_return_if_fail (chars != NULL);
 
-	
+
 	if (g_utf8_strlen (chars,-1) >= 20)
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
 	else
 		gtk_widget_set_sensitive (ok_button, modest_text_utils_validate_folder_name(chars));
-		
+
 	/* Free */
 	g_list_free (buttons);
 	g_free (chars);
