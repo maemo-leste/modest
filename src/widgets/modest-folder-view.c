@@ -300,9 +300,6 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_rc_parse_string ("class \"ModestFolderView\" style \"fremantle-touchlist\"");
-	/* gtk_rc_parse_string ("style \"fremantle-modest-fv\" {\n" */
-	/* 		     "  GtkWidget::hildon-mode = 1\n" */
-	/* 		     "} class \"ModestFolderView\" style \"fremantle-modest-fv\""); */
 	
 #endif
 

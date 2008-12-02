@@ -250,8 +250,8 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestHeaderViewClass,header_activated),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__POINTER,
-			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+			      gtk_marshal_VOID__POINTER_POINTER,
+			      G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 	
 	
 	signals[ITEM_NOT_FOUND_SIGNAL] = 
@@ -280,6 +280,11 @@ modest_header_view_class_init (ModestHeaderViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__BOOLEAN,
 			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_rc_parse_string ("class \"ModestHeaderView\" style \"fremantle-touchlist\"");
+	
+#endif
 }
 
 static void
@@ -943,6 +948,13 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 	if (!model)
 		return FALSE;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonUIMode ui_mode;
+	g_object_get (G_OBJECT (header_view), "hildon-ui-mode", &ui_mode, NULL);
+	if (ui_mode == HILDON_UI_MODE_NORMAL)
+		/* As in hildon 2.2 normal mode there's no selection, we just simply return */
+		return FALSE;
+#endif
 	sel = gtk_tree_view_get_selection(header_view);
 	if(!gtk_tree_selection_count_selected_rows(sel)) {
 		if (gtk_tree_model_get_iter_first(model, &tree_iter)) {
@@ -1424,7 +1436,7 @@ on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
 	/* Emit signal */
 	g_signal_emit (G_OBJECT(self), 
 		       signals[HEADER_ACTIVATED_SIGNAL], 
-		       0, header);
+		       0, header, path);
 
 	/* Free */
  frees:

@@ -115,6 +115,7 @@ struct _ModestHeaderViewClass {
 
 	void (*header_activated) (ModestHeaderView* self,
 				  TnyHeader *header,
+				  GtkTreePath *path,
 				  gpointer user_data);
 
 	void (*msg_count_changed) (ModestHeaderView* self,

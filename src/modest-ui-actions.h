@@ -140,8 +140,9 @@ void     modest_ui_actions_on_header_selected          (ModestHeaderView *folder
 							TnyHeader *header,
 							ModestMainWindow *main_window);
 void     modest_ui_actions_on_header_activated         (ModestHeaderView *folder_view, 
-						         TnyHeader *header,
-						         ModestMainWindow *main_window);
+							TnyHeader *header,
+							GtkTreePath *path,
+							ModestWindow *main_window);
 
 void     modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 							 TnyFolderStore *folder_store, 

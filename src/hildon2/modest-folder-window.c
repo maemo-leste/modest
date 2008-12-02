@@ -45,6 +45,7 @@
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
 #include <tny-account-store-view.h>
+#include <modest-header-window.h>
 
 /* 'private'/'protected' functions */
 static void modest_folder_window_class_init  (ModestFolderWindowClass *klass);
@@ -55,6 +56,9 @@ static void connect_signals (ModestFolderWindow *self);
 static void modest_folder_window_disconnect_signals (ModestWindow *self);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
+static void on_folder_activated (ModestFolderView *folder_view,
+				 TnyFolder *folder,
+				 gpointer userdata);
 static void add_to_menu (ModestFolderWindow *self,
 			 HildonAppMenu *menu,
 			 gchar *label,
@@ -171,6 +175,9 @@ connect_signals (ModestFolderWindow *self)
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 
 	/* folder view */
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
+						       G_OBJECT (priv->folder_view), "folder-activated", 
+						       G_CALLBACK (on_folder_activated), self);
 
 	/* TODO: connect folder view activate */
 	
@@ -370,4 +377,27 @@ static void setup_menu (ModestFolderWindow *self)
 	
 	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
 					       HILDON_APP_MENU (app_menu));
+}
+
+static void
+on_folder_activated (ModestFolderView *folder_view,
+		     TnyFolder *folder,
+		     gpointer userdata)
+{
+	ModestFolderWindowPrivate *priv = NULL;
+	ModestWindow *headerwin;
+	ModestFolderWindow *self = (ModestFolderWindow *) userdata;
+
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	if (!folder)
+		return;
+
+	headerwin = modest_header_window_new (folder);
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
+					   MODEST_WINDOW (headerwin),
+					   MODEST_WINDOW (self));
+	gtk_widget_show (GTK_WIDGET (headerwin));
 }

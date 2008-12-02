@@ -50,6 +50,7 @@
 #include <tny-camel-pop-folder.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-pannable-area.h>
+#include <modest-header-window.h>
 #endif
 
 #ifdef MODEST_PLATFORM_MAEMO
@@ -1002,12 +1003,10 @@ open_msg_cb (ModestMailOperation *mail_op,
 		win = modest_msg_edit_window_new (msg, account, TRUE);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
+		GtkTreeRowReference *row_reference;
 
-		if (MODEST_IS_MAIN_WINDOW (parent_win)) {
-			GtkTreeRowReference *row_reference;
-
-			row_reference = (GtkTreeRowReference *) g_hash_table_lookup (helper->row_refs_per_header, header);
-
+		row_reference = (GtkTreeRowReference *) g_hash_table_lookup (helper->row_refs_per_header, header);
+		if (row_reference && helper->model) {		
 			win = modest_msg_view_window_new_with_header_model (msg, account, (const gchar*) uid,
 									    helper->model, row_reference);
 		} else {
@@ -1325,7 +1324,7 @@ open_msgs_performer(gboolean canceled,
  * same when trying to open messages.
  */
 static void
-open_msgs_from_headers (TnyList *headers, ModestWindow *win)
+open_msgs_from_headers (TnyList *headers, GtkTreePath *path, ModestWindow *win)
 {
 	ModestWindowMgr *mgr = NULL;
 	TnyIterator *iter = NULL, *iter_not_opened = NULL;
@@ -1333,7 +1332,7 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 	TnyHeaderFlags flags = 0;
 	TnyAccount *account;
 	gint uncached_msgs = 0;
-	GtkWidget *header_view;
+	GtkWidget *header_view = NULL;
 	GtkTreeModel *model;
 	GHashTable *refs_for_headers;
 	OpenMsgHelper *helper;
@@ -1358,14 +1357,32 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 	if (!account)
 		return;
 
-	/* Get the selections, we need to get the references to the
-	   rows here because the treeview/model could dissapear (the
-	   user might want to select another folder)*/
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+	if (!MODEST_IS_MAIN_WINDOW (win) && path == NULL)
+		return;
+	
+        /* get model */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_HEADER_WINDOW (win)){
+#endif
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
+	}
+
+	if (!header_view)
+		return;
+
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
+	if (path && MODEST_IS_HEADER_WINDOW (win)) {
+		sel_list = g_list_prepend (NULL, gtk_tree_path_copy (path));
+	} else {
+		/* Get the selections, we need to get the references to the
+		   rows here because the treeview/model could dissapear (the
+		   user might want to select another folder)*/
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+		sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
+	}
 	refs_for_headers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, 
 						  (GDestroyNotify) gtk_tree_row_reference_free);
 
@@ -1373,6 +1390,7 @@ open_msgs_from_headers (TnyList *headers, ModestWindow *win)
 	   true, then remove the header from the list of headers to
 	   open */
 	sel_list_iter = sel_list;
+
 	not_opened_headers = tny_simple_list_new ();
 	while (!tny_iterator_is_done (iter) && sel_list_iter) {
 
@@ -1509,7 +1527,7 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 		return;
 
 	/* Open them */
-	open_msgs_from_headers (headers, win);
+	open_msgs_from_headers (headers, NULL, win);
 
 	g_object_unref(headers);
 }
@@ -2333,16 +2351,18 @@ modest_ui_actions_on_header_selected (ModestHeaderView *header_view,
 void
 modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 				       TnyHeader *header,
-				       ModestMainWindow *main_window)
+				       GtkTreePath *path,
+				       ModestWindow *window)
 {
 	TnyList *headers;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	g_return_if_fail (MODEST_IS_WINDOW(window));
 
 	if (!header)
 		return;
 
-	if (modest_header_view_count_selected_headers (header_view) > 1) {
+	if (MODEST_IS_MAIN_WINDOW (window) &&
+	    modest_header_view_count_selected_headers (header_view) > 1) {
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_select_one_message"));
 		return;
 	}
@@ -2350,14 +2370,24 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * activating headers
 	 */
-	if (modest_platform_check_memory_low (MODEST_WINDOW(main_window), TRUE))
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 		return;
 
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+		open_widget = modest_window_get_action_widget (MODEST_WINDOW (window), "/MenuBar/EmailMenu/EmailOpenMenu");
+		if (!GTK_WIDGET_IS_SENSITIVE (open_widget))
+			return;
+	}
 
-	headers = modest_header_view_get_selected_headers (header_view);
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		headers = modest_header_view_get_selected_headers (header_view);
+	} else {
+		headers = tny_simple_list_new ();
+		tny_list_prepend (TNY_LIST (headers), G_OBJECT (header));
+	}
 
-	open_msgs_from_headers (headers, MODEST_WINDOW (main_window));
+	open_msgs_from_headers (headers, path, MODEST_WINDOW (window));
 
 	g_object_unref (headers);
 }
