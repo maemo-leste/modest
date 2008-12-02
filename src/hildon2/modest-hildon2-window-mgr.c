@@ -491,7 +491,16 @@ on_window_destroy (ModestWindow *window,
 	/* Specific stuff first */
 	if (MODEST_IS_MAIN_WINDOW (window)) {
 		ModestHildon2WindowMgrPrivate *priv;
+		ModestMainWindowContentsStyle style;
 		priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+
+		/* If we're on header view, then just go to folder view and don't close */
+		style = modest_main_window_get_contents_style (MODEST_MAIN_WINDOW (window));
+		if (style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS) {
+			modest_main_window_set_contents_style (MODEST_MAIN_WINDOW (window),
+							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_FOLDERS);
+			return TRUE;
+		}
 
 		/* Do not unregister it, just hide */
 		gtk_widget_hide_all (GTK_WIDGET (window));

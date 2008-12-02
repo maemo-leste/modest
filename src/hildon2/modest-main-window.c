@@ -65,6 +65,7 @@
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
 #include <tny-gtk-folder-store-tree-model.h>
+#include <modest-folder-window.h>
 
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
@@ -2131,6 +2132,14 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		g_object_unref (store_settings);
 		g_object_unref (settings);
 	}
+
+	GtkWidget *folder_window;
+
+	folder_window = GTK_WIDGET (modest_folder_window_new (NULL));
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
+					   MODEST_WINDOW (folder_window),
+					   MODEST_WINDOW (self));
+	gtk_widget_show (folder_window);
 }
 
 /* Make sure that at least one account is "viewed": */
