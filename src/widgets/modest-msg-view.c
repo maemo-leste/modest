@@ -38,6 +38,7 @@ enum {
 	RECPT_ACTIVATED_SIGNAL,
 	LINK_CONTEXTUAL_SIGNAL,
 	FETCH_IMAGE_SIGNAL,
+	SHOW_DETAILS_SIGNAL,
 	LAST_SIGNAL
 };
 static guint signals[LAST_SIGNAL] = {0};
@@ -162,6 +163,15 @@ modest_msg_view_base_init (gpointer g_class)
 				      NULL, NULL,
 				      modest_marshal_BOOLEAN__STRING_OBJECT,
 				      G_TYPE_BOOLEAN, 2, G_TYPE_STRING, G_TYPE_OBJECT);
+		
+		signals[SHOW_DETAILS_SIGNAL] =
+			g_signal_new ("show_details",
+				      MODEST_TYPE_MSG_VIEW,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestMsgViewIface, show_details),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__VOID,
+				      G_TYPE_NONE, 0);
 		
 		initialized = TRUE;
 	}

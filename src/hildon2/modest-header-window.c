@@ -43,6 +43,8 @@
 #include <modest-defs.h>
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
+#include <modest-platform.h>
+#include <modest-text-utils.h>
 #include <hildon/hildon-button.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
@@ -64,6 +66,10 @@ struct _ModestHeaderWindowPrivate {
 	ContentsState contents_state;
 
 	TnyFolder *folder;
+
+	/* banners */
+	GtkWidget *updating_banner;
+	guint updating_banner_timeout;
 
 	/* signals */
 	GSList *sighandlers;
@@ -105,6 +111,9 @@ static void on_header_activated (ModestHeaderView *header_view,
 				 TnyHeader *header,
 				 GtkTreePath *path,
 				 ModestHeaderWindow *header_window);
+static void on_updating_msg_list (ModestHeaderView *header_view,
+				  gboolean starting,
+				  gpointer user_data);
 
 
 /* globals */
@@ -175,6 +184,8 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->contents_view = NULL;
 	priv->contents_state = CONTENTS_STATE_NONE;
 	priv->folder = NULL;
+	priv->updating_banner = NULL;
+	priv->updating_banner_timeout = 0;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -195,6 +206,15 @@ modest_header_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_header_window_disconnect_signals (MODEST_WINDOW (obj));	
+
+	if (priv->updating_banner_timeout > 0) {
+		g_source_remove (priv->updating_banner_timeout);
+		priv->updating_banner_timeout = 0;
+	}
+	if (priv->updating_banner) {
+		gtk_widget_destroy (priv->updating_banner);
+		priv->updating_banner = NULL;
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -226,7 +246,13 @@ connect_signals (ModestHeaderWindow *self)
 		modest_signal_mgr_connect (priv->sighandlers, G_OBJECT (priv->header_view),
 					   "header-activated",
 					   G_CALLBACK (on_header_activated), self);
-
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->header_view), 
+					   "updating-msg-list",
+					   G_CALLBACK (on_updating_msg_list), 
+					   self);
+	
 	/* TODO: connect header view activate */
 
 	/* new message button */
@@ -419,8 +445,12 @@ static void setup_menu (ModestHeaderWindow *self)
 
 	app_menu = hildon_app_menu_new ();
 
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_newemail"),
+		     G_CALLBACK (modest_ui_actions_on_new_msg));
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_sendandreceive"),
 		     G_CALLBACK (modest_ui_actions_on_send_receive));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_messagedetails"),
+		     G_CALLBACK (modest_ui_actions_on_details));
 
 	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
 					       HILDON_APP_MENU (app_menu));
@@ -525,4 +555,80 @@ on_header_activated (ModestHeaderView *header_view,
 		     ModestHeaderWindow *header_window)
 {
 	modest_ui_actions_on_header_activated (header_view, header, path, MODEST_WINDOW (header_window));
+}
+
+static void
+updating_banner_destroyed (gpointer data,
+			   GObject *where_the_object_was)
+{
+	ModestHeaderWindowPrivate *priv = NULL;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (data);
+
+	priv->updating_banner = NULL;
+}
+
+static gboolean
+show_updating_banner (gpointer user_data)
+{
+	ModestHeaderWindowPrivate *priv = NULL;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data);
+
+	if (priv->updating_banner == NULL) {
+
+		/* We're outside the main lock */
+		gdk_threads_enter ();
+		priv->updating_banner = 
+			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
+							  _CS ("ckdg_pb_updating"));
+
+		/* We need this because banners in Maemo could be
+		   destroyed by dialogs so we need to properly update
+		   our reference to it */
+		g_object_weak_ref (G_OBJECT (priv->updating_banner),
+				   updating_banner_destroyed,
+				   user_data);
+		gdk_threads_leave ();
+	}
+
+	/* Remove timeout */
+	priv->updating_banner_timeout = 0;
+	return FALSE;
+}
+
+/**
+ * We use this function to show/hide a progress banner showing
+ * "Updating" while the header view is being filled. We're not showing
+ * it unless the update takes more than 2 seconds
+ *
+ * If starting = TRUE then the refresh is starting, otherwise it means
+ * that is has just finished
+ */
+static void 
+on_updating_msg_list (ModestHeaderView *header_view,
+		      gboolean starting,
+		      gpointer user_data)
+{
+	ModestHeaderWindowPrivate *priv = NULL;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data);
+	
+	/* Remove old timeout */
+	if (priv->updating_banner_timeout > 0) {
+		g_source_remove (priv->updating_banner_timeout);
+		priv->updating_banner_timeout = 0;
+	}
+
+	/* Create a new timeout */
+	if (starting) {
+		priv->updating_banner_timeout = 
+			g_timeout_add (2000, show_updating_banner, user_data);
+	} else {
+		/* Remove the banner if exists */
+		if (priv->updating_banner) {
+			gtk_widget_destroy (priv->updating_banner);
+			priv->updating_banner = NULL;
+		}
+	}
 }

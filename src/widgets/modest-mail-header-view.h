@@ -1,4 +1,4 @@
-/* Copyright (c) 2007, Nokia Corporation
+/* Copyright (c) 2008, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,58 +27,61 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MODEST_MAIL_HEADER_VIEW_H
-#define MODEST_MAIL_HEADER_VIEW_H
-
-#include <gtk/gtk.h>
-#include <glib-object.h>
+#ifndef __MODEST_MAIL_HEADER_VIEW_H__
+#define __MODEST_MAIL_HEADER_VIEW_H__
 
 #include <tny-header-view.h>
-#include <modest-recpt-view.h>
+#include <gtk/gtkwidget.h>
 
 G_BEGIN_DECLS
 
-#define MODEST_TYPE_MAIL_HEADER_VIEW             (modest_mail_header_view_get_type ())
-#define MODEST_MAIL_HEADER_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), MODEST_TYPE_MAIL_HEADER_VIEW, ModestMailHeaderView))
-#define MODEST_MAIL_HEADER_VIEW_CLASS(vtable)    (G_TYPE_CHECK_CLASS_CAST ((vtable), MODEST_TYPE_MAIL_HEADER_VIEW, ModestMailHeaderViewClass))
-#define MODEST_IS_MAIL_HEADER_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), MODEST_TYPE_MAIL_HEADER_VIEW))
-#define MODEST_IS_MAIL_HEADER_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_MAIL_HEADER_VIEW))
-#define MODEST_MAIL_HEADER_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_MAIL_HEADER_VIEW, ModestMailHeaderViewClass))
+/* convenience macros */
+#define MODEST_TYPE_MAIL_HEADER_VIEW             (modest_mail_header_view_get_type())
+#define MODEST_MAIL_HEADER_VIEW(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),MODEST_TYPE_MAIL_HEADER_VIEW,ModestMailHeaderView))
+#define MODEST_IS_MAIL_HEADER_VIEW(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj),MODEST_TYPE_MAIL_HEADER_VIEW))
+#define MODEST_MAIL_HEADER_VIEW_GET_IFACE(obj)   (G_TYPE_INSTANCE_GET_INTERFACE((obj),MODEST_TYPE_MAIL_HEADER_VIEW,ModestMailHeaderViewIface))
 
-typedef struct _ModestMailHeaderView ModestMailHeaderView;
-typedef struct _ModestMailHeaderViewClass ModestMailHeaderViewClass;
+typedef struct _ModestMailHeaderView      ModestMailHeaderView;
+typedef struct _ModestMailHeaderViewIface ModestMailHeaderViewIface;
 
-struct _ModestMailHeaderView
-{
-	GtkHBox parent;
+struct _ModestMailHeaderViewIface {
+	GTypeInterface parent;
 
-};
-
-struct _ModestMailHeaderViewClass
-{
-	GtkHBoxClass parent_class;
-
-	/* virtual methods */
-	void (*set_header_func) (TnyHeaderView *self, TnyHeader *header);
-	void (*clear_func) (TnyHeaderView *self);
-
+	TnyHeaderFlags (*get_priority) (ModestMailHeaderView *self);
+	void (*set_priority) (ModestMailHeaderView *self, TnyHeaderFlags flags);
+	const GtkWidget *(*add_custom_header) (ModestMailHeaderView *self,
+					       const gchar *label,
+					       GtkWidget *custom_widget,
+					       gboolean with_expander,
+					       gboolean start);
+	
 	/* signals */
-	void (*recpt_activated) (const gchar *address);
+	void (*show_details) (ModestMailHeaderView *msgview,
+			      gpointer user_data);
+	void (*recpt_activated)    (ModestMailHeaderView *msgview, const gchar *address,
+				    gpointer user_data);
 };
 
-GType modest_mail_header_view_get_type (void);
-TnyHeaderView* modest_mail_header_view_new (gboolean expanded);
 
+/**
+ *
+ * modest_mail_header_view_get_type
+ *
+ * get the GType for the this interface
+ *
+ * Returns: the GType for this interface
+ */
+GType        modest_mail_header_view_get_type    (void) G_GNUC_CONST;
+
+TnyHeaderFlags modest_mail_header_view_get_priority (ModestMailHeaderView *self);
+void modest_mail_header_view_set_priority (ModestMailHeaderView *self, TnyHeaderFlags flags);
 const GtkWidget *modest_mail_header_view_add_custom_header (ModestMailHeaderView *header_view,
 							    const gchar *label,
 							    GtkWidget *custom_widget,
 							    gboolean with_expander,
 							    gboolean start);
 
-TnyHeaderFlags modest_mail_header_view_get_priority (ModestMailHeaderView *header_view);
-void modest_mail_header_view_set_priority (ModestMailHeaderView *header_view, TnyHeaderFlags flags);
-						     
 
 G_END_DECLS
 
-#endif
+#endif /* __MODEST_MAIL_HEADER_VIEW_H__ */

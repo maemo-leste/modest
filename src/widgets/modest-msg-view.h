@@ -80,6 +80,7 @@ struct _ModestMsgViewIface {
 				    gpointer user_data);
 	gboolean (*fetch_image)    (ModestMsgView *msgview, const gchar *uri,
 				    TnyStream *stream);
+	void (*show_details)       (ModestMsgView *msgview, gpointer userdata);
 };
 
 

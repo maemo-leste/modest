@@ -41,7 +41,11 @@
 #include <modest-tny-msg.h>
 #include <modest-text-utils.h>
 #include <widgets/modest-msg-view.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <widgets/modest-compact-mail-header-view.h>
+#else
 #include <widgets/modest-mail-header-view.h>
+#endif
 #include <widgets/modest-attachments-view.h>
 #include <modest-marshal.h>
 #include <widgets/modest-gtkhtml-mime-part-view.h>
@@ -71,6 +75,7 @@ static void     get_property (GObject *object, guint prop_id, GValue *value, GPa
 
 /* headers signals */
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestGtkhtmlMsgView *msg_view);
+static void on_show_details (ModestMailHeaderView *header_view, ModestGtkhtmlMsgView *msg_view);
 static void on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_part, gpointer userdata);
 static void on_view_images_clicked (GtkButton * button, gpointer self);
 
@@ -1058,7 +1063,11 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	priv->msg                     = NULL;
 
 	priv->body_view                 = GTK_WIDGET (g_object_new (MODEST_TYPE_GTKHTML_MIME_PART_VIEW, NULL));
-	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new (TRUE));
+#ifdef MODEST_TOOLKIT_HILDON2
+	priv->mail_header_view        = GTK_WIDGET(modest_compact_mail_header_view_new ());
+#else
+	priv->mail_header_view        = GTK_WIDGET(modest_expander_mail_header_view_new (TRUE));
+#endif
 	priv->view_images_button = gtk_button_new_with_label (_("mail_bd_external_images"));
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_set_no_show_all (priv->view_images_button, TRUE);
@@ -1081,6 +1090,8 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	g_signal_connect (G_OBJECT (priv->mail_header_view), "recpt-activated", 
 			  G_CALLBACK (on_recpt_activated), obj);
+	g_signal_connect (G_OBJECT (priv->mail_header_view), "show-details", 
+			  G_CALLBACK (on_show_details), obj);
 
 	g_signal_connect (G_OBJECT (priv->attachments_view), "activate",
 			  G_CALLBACK (on_attachment_activated), obj);
@@ -1414,6 +1425,13 @@ on_recpt_activated (ModestMailHeaderView *header_view,
 		    ModestGtkhtmlMsgView *self)
 {
 	g_signal_emit_by_name (G_OBJECT (self), "recpt-activated", address);
+}
+
+static void
+on_show_details (ModestMailHeaderView *header_view, 
+		 ModestGtkhtmlMsgView *self)
+{
+	g_signal_emit_by_name (G_OBJECT (self), "show-details");
 }
 
 static void

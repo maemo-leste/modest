@@ -457,11 +457,15 @@ text_cell_data  (GtkTreeViewColumn *column,
 			gchar * substring;
 			if (number > 0) {
 				substring = g_strdup_printf (drafts?"TODO:%d messages":"TODO:%d new messages", number);
+				item_name = g_strdup_printf ("<span weight='800'>%s</span>\n<span weight='800' size='x-small' color='grey'>%s</span>", 
+							     fname, substring);
+				item_weight = 800;
 			} else {
 				substring = g_strdup ("");
+				item_name = g_strdup_printf ("%s\n<span size='x-small' color='grey'>%s</span>", 
+							     fname, substring);
+				item_weight = 400;
 			}
-			item_name = g_strdup_printf ("%s\n<span size='x-small' color='grey'>%s</span>", 
-						     fname, substring);
 			g_free (substring);
 		} else {
 			/* Use bold font style if there are unread or unset messages */

@@ -332,7 +332,7 @@ modest_mozembed_msg_view_init (ModestMozembedMsgView *obj)
 	priv->current_zoom = 1.0;
 
 	priv->body_view                 = GTK_WIDGET (g_object_new (MODEST_TYPE_MOZEMBED_MIME_PART_VIEW, NULL));
-	priv->mail_header_view        = GTK_WIDGET(modest_mail_header_view_new (TRUE));
+	priv->mail_header_view        = GTK_WIDGET(modest_compact_mail_header_view_new (TRUE));
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
 

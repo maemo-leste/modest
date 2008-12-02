@@ -873,9 +873,9 @@ typedef struct {
 
 typedef struct {
 	GtkTreeModel *model;
-	TnyList *headers;
+	TnyHeader *header;
 	OpenMsgBannerInfo *banner_info;
-	GHashTable *row_refs_per_header;
+	GtkTreeRowReference *rowref;
 } OpenMsgHelper;
 
 gboolean
@@ -895,43 +895,42 @@ open_msg_banner_idle (gpointer userdata)
 	
 }
 
-static void
-open_msg_cb (ModestMailOperation *mail_op, 
-	     TnyHeader *header,  
-	     gboolean canceled,
-	     TnyMsg *msg, 
-	     GError *err,
-	     gpointer user_data)
+static GtkWidget *
+get_header_view_from_window (ModestWindow *window)
 {
-	ModestWindowMgr *mgr = NULL;
-	ModestWindow *parent_win = NULL;
-	ModestWindow *win = NULL;
-	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
-	gchar *account = NULL;
+	GtkWidget *header_view;
+
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_HEADER_WINDOW (window)){
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (window)));
+#endif
+	} else {
+		header_view = NULL;
+	}
+
+	return header_view;
+}
+
+static gchar *
+get_info_from_header (TnyHeader *header, gboolean *is_draft)
+{
 	TnyFolder *folder;
-	gboolean open_in_editor = FALSE;
-	OpenMsgHelper *helper = (OpenMsgHelper *) user_data;
+	gchar *account = NULL;
+	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
 
-	/* Do nothing if there was any problem with the mail
-	   operation. The error will be shown by the error_handler of
-	   the mail operation */
-	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
-		return;
+	*is_draft = FALSE;
 
-	parent_win = (ModestWindow *) modest_mail_operation_get_source (mail_op);
 	folder = tny_header_get_folder (header);
-
-	/* Mark header as read */
-	headers_action_mark_as_read (header, MODEST_WINDOW(parent_win), NULL);
-
 	/* Gets folder type (OUTBOX headers will be opened in edit window */
 	if (modest_tny_folder_is_local_folder (folder)) {
 		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
 		if (folder_type == TNY_FOLDER_TYPE_INVALID)
 			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 	}
-
-
+		
 	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
 		TnyTransportAccount *traccount = NULL;
 		ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
@@ -950,16 +949,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 
 				/* Only open messages in outbox with the editor if they are in Failed state */
 				if (status == MODEST_TNY_SEND_QUEUE_FAILED) {
-					open_in_editor = TRUE;
-				} 
-#ifdef  MODEST_TOOLKIT_HILDON2
-				else {
-					/* In Fremantle we can not
-					   open any message from
-					   outbox which is not in
-					   failed state */
-					g_object_unref(traccount);
-					goto cleanup;
+					*is_draft = TRUE;
 				}
 #endif
 			}
@@ -968,8 +958,41 @@ open_msg_cb (ModestMailOperation *mail_op,
 			g_warning("Cannot get transport account for message in outbox!!");
 		}
 	} else if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
-		open_in_editor = TRUE; /* Open in editor if the message is in the Drafts folder */
+		*is_draft = TRUE; /* Open in editor if the message is in the Drafts folder */
 	}
+
+	g_object_unref (folder);
+
+	return account;
+}
+
+static void
+open_msg_cb (ModestMailOperation *mail_op, 
+	     TnyHeader *header,  
+	     gboolean canceled,
+	     TnyMsg *msg, 
+	     GError *err,
+	     gpointer user_data)
+{
+	ModestWindowMgr *mgr = NULL;
+	ModestWindow *parent_win = NULL;
+	ModestWindow *win = NULL;
+	gchar *account = NULL;
+	gboolean open_in_editor = FALSE;
+	OpenMsgHelper *helper = (OpenMsgHelper *) user_data;
+	
+	/* Do nothing if there was any problem with the mail
+	   operation. The error will be shown by the error_handler of
+	   the mail operation */
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg))
+		return;
+
+	parent_win = (ModestWindow *) modest_mail_operation_get_source (mail_op);
+
+	/* Mark header as read */
+	headers_action_mark_as_read (header, MODEST_WINDOW(parent_win), NULL);
+
+	account = get_info_from_header (header, &open_in_editor);
 
 	/* Get account */
 	if (!account)
@@ -1003,12 +1026,10 @@ open_msg_cb (ModestMailOperation *mail_op,
 		win = modest_msg_edit_window_new (msg, account, TRUE);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
-		GtkTreeRowReference *row_reference;
 
-		row_reference = (GtkTreeRowReference *) g_hash_table_lookup (helper->row_refs_per_header, header);
-		if (row_reference && helper->model) {		
+		if (helper->rowref && helper->model) {		
 			win = modest_msg_view_window_new_with_header_model (msg, account, (const gchar*) uid,
-									    helper->model, row_reference);
+									    helper->model, helper->rowref);
 		} else {
 			win = modest_msg_view_window_new_for_attachment (msg, account, (const gchar*) uid);
 		}
@@ -1034,7 +1055,6 @@ cleanup:
 	/* Free */
 	g_free(account);
 	g_object_unref (parent_win);
-	g_object_unref (folder);
 }
 
 static gboolean
@@ -1167,18 +1187,24 @@ get_account_from_header_list (TnyList *headers)
 	return account;
 }
 
-static void 
-foreach_unregister_headers (gpointer data,
-			    gpointer user_data)
+static TnyAccount*
+get_account_from_header (TnyHeader *header)
 {
-	ModestWindowMgr *mgr = (ModestWindowMgr *) user_data;
-	TnyHeader *header = TNY_HEADER (data);
+	TnyAccount *account = NULL;
+	TnyFolder *folder;
 
-	modest_window_mgr_unregister_header (mgr, header);
+	folder = tny_header_get_folder (header);
+		
+	if (folder) {
+		account = tny_folder_get_account (folder);
+		g_object_unref (folder);
+	}
+		
+	return account;
 }
 
 static void
-open_msgs_helper_destroyer (gpointer user_data)
+open_msg_helper_destroyer (gpointer user_data)
 {
 	OpenMsgHelper *helper = (OpenMsgHelper *) user_data;
 
@@ -1197,13 +1223,13 @@ open_msgs_helper_destroyer (gpointer user_data)
 		helper->banner_info = NULL;
 	}
 	g_object_unref (helper->model);
-	g_object_unref (helper->headers);
-	g_hash_table_destroy (helper->row_refs_per_header);
+	g_object_unref (helper->header);
+	gtk_tree_row_reference_free (helper->rowref);
 	g_slice_free (OpenMsgHelper, helper);
 }
 
 static void
-open_msgs_performer(gboolean canceled, 
+open_msg_performer(gboolean canceled, 
 		    GError *err,
 		    GtkWindow *parent_window,
 		    TnyAccount *account,
@@ -1212,25 +1238,21 @@ open_msgs_performer(gboolean canceled,
 	ModestMailOperation *mail_op = NULL;
 	gchar *error_msg;
 	ModestProtocolType proto;
-	TnyList *not_opened_headers;
 	TnyConnectionStatus status;
 	gboolean show_open_draft = FALSE;
 	OpenMsgHelper *helper = NULL;
 
 	helper = (OpenMsgHelper *) user_data;
-	not_opened_headers = helper->headers;
 
 	status = tny_account_get_connection_status (account);
 	if (err || canceled) {
-		/* Unregister the already registered headers */
-		tny_list_foreach (not_opened_headers, foreach_unregister_headers, 
-				  modest_runtime_get_window_mgr ());
+		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), helper->header);
 		/* Free the helper */
-		open_msgs_helper_destroyer (helper);
-
+		open_msg_helper_destroyer (helper);
+		
 		/* In memory full conditions we could get this error here */
 		check_memory_full_error ((GtkWidget *) parent_window, err);
-
+		
 		goto clean;
 	}
 
@@ -1239,52 +1261,65 @@ open_msgs_performer(gboolean canceled,
 	if (proto == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
 		proto = MODEST_PROTOCOLS_STORE_MAILDIR;
 	}
+	
+	ModestProtocol *protocol;
+	ModestProtocolRegistry *protocol_registry;
+	gchar *subject;
+		
+	protocol_registry = modest_runtime_get_protocol_registry ();
+	subject = tny_header_dup_subject (helper->header);
 
-	/* Create the error messages */
-	if (tny_list_get_length (not_opened_headers) == 1) {
-		ModestProtocol *protocol;
-		ModestProtocolRegistry *protocol_registry;
-		TnyIterator *iter;
-		TnyHeader *header;
-		gchar *subject;
-
-		protocol_registry = modest_runtime_get_protocol_registry ();
-		iter = tny_list_create_iterator (not_opened_headers);
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		subject = tny_header_dup_subject (header);
-
-		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, proto);
-		error_msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
-		if (subject)
-			g_free (subject);
-		g_object_unref (header);
-		g_object_unref (iter);
-
-		if (error_msg == NULL) {
-			error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
-		}
-
-		if (modest_protocol_registry_protocol_type_has_tag (protocol_registry,
-								    proto,
-								    MODEST_PROTOCOL_REGISTRY_LOCAL_STORE_PROTOCOLS)) { 
-			TnyHeader *header;
-			TnyFolder *folder;
-			TnyIterator *iter;
-			TnyFolderType folder_type;
-
-			iter = tny_list_create_iterator (not_opened_headers);
-			header = TNY_HEADER (tny_iterator_get_current (iter));
-			folder = tny_header_get_folder (header);
-			folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
-			show_open_draft = (folder_type == TNY_FOLDER_TYPE_DRAFTS);
-			g_object_unref (folder);
-			g_object_unref (header);
-			g_object_unref (iter);
-		}
-	} else {
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, proto);
+	error_msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
+	if (subject)
+		g_free (subject);
+		
+	if (error_msg == NULL) {
 		error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
 
+	if (modest_protocol_registry_protocol_type_has_tag (protocol_registry,
+							    proto,
+							    MODEST_PROTOCOL_REGISTRY_LOCAL_STORE_PROTOCOLS)) { 
+		TnyFolder *folder;
+		TnyFolderType folder_type;
+
+		folder = tny_header_get_folder (helper->header);
+		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+		show_open_draft = (folder_type == TNY_FOLDER_TYPE_DRAFTS);
+		g_object_unref (folder);
+	}
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	gboolean is_draft;
+	gchar *account_name = get_info_from_header (helper->header, &is_draft);
+
+	if (!is_draft) {
+		ModestWindow *window;
+		GtkWidget *header_view;
+		gchar *uid;
+
+		header_view = get_header_view_from_window (MODEST_WINDOW (parent_window));
+		uid = modest_tny_folder_get_header_unique_id (helper->header);
+		if (header_view) {
+			window = modest_msg_view_window_new_from_header_view 
+				(MODEST_HEADER_VIEW (header_view), account_name, uid, helper->rowref);
+			if (window != NULL) {
+				if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
+									window, NULL)) {
+					gtk_widget_destroy (GTK_WIDGET (window));
+				} else {
+					gtk_widget_show_all (GTK_WIDGET(window));
+				}
+			}
+		}
+		g_free (account_name);
+		g_free (uid);
+		open_msg_helper_destroyer (helper);
+		goto clean;
+	}
+	g_free (account_name);
+#endif
 	/* Create the mail operation */
 	mail_op = 
 		modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
@@ -1305,11 +1340,15 @@ open_msgs_performer(gboolean canceled,
 								   helper->banner_info);
 	}
 
+	TnyList *headers;
+	headers = TNY_LIST (tny_simple_list_new ());
+	tny_list_prepend (headers, G_OBJECT (helper->header));
 	modest_mail_operation_get_msgs_full (mail_op,
-					     not_opened_headers,
+					     headers,
 					     open_msg_cb,
 					     helper,
-					     open_msgs_helper_destroyer);
+					     open_msg_helper_destroyer);
+	g_object_unref (headers);
 
 	/* Frees */
  clean:
@@ -1324,196 +1363,100 @@ open_msgs_performer(gboolean canceled,
  * same when trying to open messages.
  */
 static void
-open_msgs_from_headers (TnyList *headers, GtkTreePath *path, ModestWindow *win)
+open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWindow *win)
 {
 	ModestWindowMgr *mgr = NULL;
-	TnyIterator *iter = NULL, *iter_not_opened = NULL;
-	TnyList *not_opened_headers = NULL;
-	TnyHeaderFlags flags = 0;
 	TnyAccount *account;
-	gint uncached_msgs = 0;
+	gboolean cached = FALSE;
+	gboolean found;
 	GtkWidget *header_view = NULL;
-	GtkTreeModel *model;
-	GHashTable *refs_for_headers;
 	OpenMsgHelper *helper;
-	GtkTreeSelection *sel;
-	GList *sel_list = NULL, *sel_list_iter = NULL;
-
-	g_return_if_fail (headers != NULL);
-
-	/* Check that only one message is selected for opening */
-	if (tny_list_get_length (headers) != 1) {
-		modest_platform_information_banner ((win) ? GTK_WIDGET (win) : NULL,
-						    NULL, _("mcen_ib_select_one_message"));
-		return;
-	}
+	ModestWindow *window;
+		
+	g_return_if_fail (header != NULL && rowref != NULL);
 
 	mgr = modest_runtime_get_window_mgr ();
-	iter = tny_list_create_iterator (headers);
+
+        /* get model */
+	header_view = get_header_view_from_window (MODEST_WINDOW (win));
+	if (header_view == NULL)
+		return;
 
 	/* Get the account */
-	account = get_account_from_header_list (headers);
-
+	account = get_account_from_header (header);
 	if (!account)
 		return;
 
-	if (!MODEST_IS_MAIN_WINDOW (win) && path == NULL)
-		return;
-	
-        /* get model */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-#ifdef MODEST_TOOLKIT_HILDON2
-	} else if (MODEST_IS_HEADER_WINDOW (win)){
-#endif
-		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
-	}
-
-	if (!header_view)
-		return;
-
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (path && MODEST_IS_HEADER_WINDOW (win)) {
-		sel_list = g_list_prepend (NULL, gtk_tree_path_copy (path));
-	} else {
-		/* Get the selections, we need to get the references to the
-		   rows here because the treeview/model could dissapear (the
-		   user might want to select another folder)*/
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-		sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
-	}
-	refs_for_headers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, 
-						  (GDestroyNotify) gtk_tree_row_reference_free);
-
-	/* Look if we already have a message view for each header. If
-	   true, then remove the header from the list of headers to
-	   open */
-	sel_list_iter = sel_list;
-
-	not_opened_headers = tny_simple_list_new ();
-	while (!tny_iterator_is_done (iter) && sel_list_iter) {
-
-		ModestWindow *window = NULL;
-		TnyHeader *header = NULL;
-		gboolean found = FALSE;
-
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		if (header)
-			flags = tny_header_get_flags (header);
-
-		window = NULL;
-		found = modest_window_mgr_find_registered_header (mgr, header, &window);
-
-		/* Do not open again the message and present the
-		   window to the user */
-		if (found) {
-			if (window) {
+	window = NULL;
+	found = modest_window_mgr_find_registered_header (mgr, header, &window);
+		
+	/* Do not open again the message and present the
+	   window to the user */
+	if (found) {
+		if (window) {
 #ifndef MODEST_TOOLKIT_HILDON2
-				gtk_window_present (GTK_WINDOW (window));
+			gtk_window_present (GTK_WINDOW (window));
 #endif
-			} else {
-				/* the header has been registered already, we don't do
-				 * anything but wait for the window to come up*/
-				g_debug ("header %p already registered, waiting for window", header);
-			}
 		} else {
-			GtkTreeRowReference *row_reference;
-
-			tny_list_append (not_opened_headers, G_OBJECT (header));
-			/* Create a new row reference and add it to the hash table */
-			row_reference = gtk_tree_row_reference_new (model, (GtkTreePath *) sel_list_iter->data);
-			g_hash_table_insert (refs_for_headers, header, row_reference);
+			/* the header has been registered already, we don't do
+			 * anything but wait for the window to come up*/
+			g_debug ("header %p already registered, waiting for window", header);
 		}
-
-		if (header)
-			g_object_unref (header);
-
-		/* Go to next */
-		tny_iterator_next (iter);
-		sel_list_iter = g_list_next (sel_list_iter);
-	}
-	g_object_unref (iter);
-	iter = NULL;
-	g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
-	g_list_free (sel_list);
-
-	/* Open each message */
-	if (tny_list_get_length (not_opened_headers) == 0) {
-		g_hash_table_destroy (refs_for_headers);
 		goto cleanup;
 	}
-	
-	/* If some messages would have to be downloaded, ask the user to 
-	 * make a connection. It's generally easier to do this here (in the mainloop) 
-	 * than later in a thread:
-	 */
-	if (tny_list_get_length (not_opened_headers) > 0) {
-		uncached_msgs = header_list_count_uncached_msgs (not_opened_headers);
 
-		if (uncached_msgs > 0) {
-			/* Allways download if we are online. */
-			if (!tny_device_is_online (modest_runtime_get_device ())) {
-				gint response;
+	/* Open each message */
+	cached = tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED;
+	if (!cached) {
+		/* Allways download if we are online. */
+		if (!tny_device_is_online (modest_runtime_get_device ())) {
+			gint response;
 
-				/* If ask for user permission to download the messages */
-				response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-										    ngettext("mcen_nc_get_msg",
-											     "mcen_nc_get_msgs",
-											     uncached_msgs));
+			/* If ask for user permission to download the messages */
+			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+									    _("mcen_nc_get_msg"));
 
-				/* End if the user does not want to continue */
-				if (response == GTK_RESPONSE_CANCEL) {
-					g_hash_table_destroy (refs_for_headers);
-					goto cleanup;
-				}
+			/* End if the user does not want to continue */
+			if (response == GTK_RESPONSE_CANCEL) {
+				goto cleanup;
 			}
 		}
 	}
 
-	/* Register the headers before actually creating the windows: */
-	iter_not_opened = tny_list_create_iterator (not_opened_headers);
-	while (!tny_iterator_is_done (iter_not_opened)) {
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter_not_opened));
-		if (header) {
-			modest_window_mgr_register_header (mgr, header, NULL);
-			g_object_unref (header);
-		}
-		tny_iterator_next (iter_not_opened);
-	}
-	g_object_unref (iter_not_opened);
-	iter_not_opened = NULL;
+	/* We register the window for opening */
+	modest_window_mgr_register_header (mgr, header, NULL);
 
 	/* Create the helper. We need to get a reference to the model
 	   here because it could change while the message is readed
 	   (the user could switch between folders) */
 	helper = g_slice_new (OpenMsgHelper);
-	helper->model = g_object_ref (model);
-	helper->headers = g_object_ref (not_opened_headers);
-	helper->row_refs_per_header = refs_for_headers;
+	helper->model = g_object_ref (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)));
+	helper->header = g_object_ref (header);
+	helper->rowref = gtk_tree_row_reference_copy (rowref);
 	helper->banner_info = NULL;
 
 	/* Connect to the account and perform */
-	if (uncached_msgs > 0) {
+	if (!cached) {
 		modest_platform_connect_and_perform ((GtkWindow *) win, TRUE, g_object_ref (account), 
-						     open_msgs_performer, helper);
+						     open_msg_performer, helper);
 	} else {
 		/* Call directly the performer, do not need to connect */
-		open_msgs_performer (FALSE, NULL, (GtkWindow *) win, 
-				     g_object_ref (account), helper);
+		open_msg_performer (FALSE, NULL, (GtkWindow *) win, 
+				    g_object_ref (account), helper);
 	}
 cleanup:
 	/* Clean */
 	if (account)
 		g_object_unref (account);
-	if (not_opened_headers)
-		g_object_unref (not_opened_headers);
 }
 
 void
 modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 {
 	TnyList *headers;
+	TnyHeader *header;
+	gint headers_count;
+	TnyIterator *iter;
 	
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * opening
@@ -1526,8 +1469,26 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 	if (!headers)
 		return;
 
+	headers_count = tny_list_get_length (headers);
+	if (headers_count != 1) {
+		if (headers_count > 1) {
+			/* Don't allow activation if there are more than one message selected */
+			modest_platform_information_banner (NULL, NULL, _("mcen_ib_select_one_message"));
+		}
+
+		g_object_unref (headers);
+		return;
+	}
+
+	iter = tny_list_create_iterator (headers);
+	header = TNY_HEADER (tny_iterator_get_current (iter));
+	g_object_unref (iter);
+
 	/* Open them */
-	open_msgs_from_headers (headers, NULL, win);
+	if (header) {
+		open_msg_from_header (header, NULL, win);
+		g_object_unref (header);
+	}
 
 	g_object_unref(headers);
 }
@@ -2354,15 +2315,15 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 				       GtkTreePath *path,
 				       ModestWindow *window)
 {
-	TnyList *headers;
+	GtkWidget *open_widget;
+	GtkTreeRowReference *rowref;
 
 	g_return_if_fail (MODEST_IS_WINDOW(window));
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (header_view));
+	g_return_if_fail (TNY_IS_HEADER (header));
 
-	if (!header)
-		return;
-
-	if (MODEST_IS_MAIN_WINDOW (window) &&
-	    modest_header_view_count_selected_headers (header_view) > 1) {
+	if (modest_header_view_count_selected_headers (header_view) > 1) {
+		/* Don't allow activation if there are more than one message selected */
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_select_one_message"));
 		return;
 	}
@@ -2380,16 +2341,9 @@ modest_ui_actions_on_header_activated (ModestHeaderView *header_view,
 			return;
 	}
 
-	if (MODEST_IS_MAIN_WINDOW (window)) {
-		headers = modest_header_view_get_selected_headers (header_view);
-	} else {
-		headers = tny_simple_list_new ();
-		tny_list_prepend (TNY_LIST (headers), G_OBJECT (header));
-	}
-
-	open_msgs_from_headers (headers, path, MODEST_WINDOW (window));
-
-	g_object_unref (headers);
+	rowref = gtk_tree_row_reference_new (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)), path);
+	open_msg_from_header (header, rowref, MODEST_WINDOW (window));
+	gtk_tree_row_reference_free (rowref);
 }
 
 static void
@@ -4418,6 +4372,19 @@ modest_ui_actions_on_details (GtkAction *action,
 			/* Show details of each header */
 			do_headers_action (win, headers_action_show_details, header_view);
 		}
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_HEADER_WINDOW (win)) {
+		TnyFolder *folder;
+		GtkWidget *header_view;
+
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
+		folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
+		if (folder) {
+			modest_platform_run_folder_details_dialog (GTK_WINDOW (win), 
+								   folder);
+			g_object_unref (folder);
+		}
+#endif
 	}
 }
 

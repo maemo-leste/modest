@@ -67,6 +67,61 @@
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
 
+typedef struct _ModestMsgViewWindowPrivate ModestMsgViewWindowPrivate;
+struct _ModestMsgViewWindowPrivate {
+
+	GtkWidget   *msg_view;
+	GtkWidget   *main_scroll;
+	GtkWidget   *find_toolbar;
+	gchar       *last_search;
+
+	/* Progress observers */
+	GtkWidget        *progress_bar;
+	GSList           *progress_widgets;
+
+	/* Tollbar items */
+	GtkWidget   *progress_toolitem;
+	GtkWidget   *cancel_toolitem;
+	GtkWidget   *prev_toolitem;
+	GtkWidget   *next_toolitem;
+	ModestToolBarModes current_toolbar_mode;
+
+	/* Optimized view enabled */
+	gboolean optimized_view;
+
+	/* Whether this was created via the *_new_for_search_result() function. */
+	gboolean is_search_result;
+
+	/* Whether the message is in outbox */
+	gboolean is_outbox;
+	
+	/* A reference to the @model of the header view 
+	 * to allow selecting previous/next messages,
+	 * if the message is currently selected in the header view.
+	 */
+	const gchar *header_folder_id;
+	GtkTreeModel *header_model;
+	GtkTreeRowReference *row_reference;
+	GtkTreeRowReference *next_row_reference;
+
+	gulong clipboard_change_handler;
+	gulong queue_change_handler;
+	gulong account_removed_handler;
+	gulong row_changed_handler;
+	gulong row_deleted_handler;
+	gulong row_inserted_handler;
+	gulong rows_reordered_handler;
+
+	guint purge_timeout;
+	GtkWidget *remove_attachment_banner;
+
+	guint progress_bar_timeout;
+
+	gchar *msg_uid;
+	
+	GSList *sighandlers;
+};
+
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
 static void  modest_header_view_observer_init(
@@ -163,6 +218,10 @@ static gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
 						     GtkScrollType scroll_type,
 						     gboolean horizontal,
 						     gpointer userdata);
+static gboolean message_reader (ModestMsgViewWindow *window,
+				ModestMsgViewWindowPrivate *priv,
+				TnyHeader *header,
+				GtkTreeRowReference *row_reference);
 
 /* list my signals */
 enum {
@@ -173,61 +232,6 @@ enum {
 
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
 	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
-};
-
-typedef struct _ModestMsgViewWindowPrivate ModestMsgViewWindowPrivate;
-struct _ModestMsgViewWindowPrivate {
-
-	GtkWidget   *msg_view;
-	GtkWidget   *main_scroll;
-	GtkWidget   *find_toolbar;
-	gchar       *last_search;
-
-	/* Progress observers */
-	GtkWidget        *progress_bar;
-	GSList           *progress_widgets;
-
-	/* Tollbar items */
-	GtkWidget   *progress_toolitem;
-	GtkWidget   *cancel_toolitem;
-	GtkWidget   *prev_toolitem;
-	GtkWidget   *next_toolitem;
-	ModestToolBarModes current_toolbar_mode;
-
-	/* Optimized view enabled */
-	gboolean optimized_view;
-
-	/* Whether this was created via the *_new_for_search_result() function. */
-	gboolean is_search_result;
-
-	/* Whether the message is in outbox */
-	gboolean is_outbox;
-	
-	/* A reference to the @model of the header view 
-	 * to allow selecting previous/next messages,
-	 * if the message is currently selected in the header view.
-	 */
-	const gchar *header_folder_id;
-	GtkTreeModel *header_model;
-	GtkTreeRowReference *row_reference;
-	GtkTreeRowReference *next_row_reference;
-
-	gulong clipboard_change_handler;
-	gulong queue_change_handler;
-	gulong account_removed_handler;
-	gulong row_changed_handler;
-	gulong row_deleted_handler;
-	gulong row_inserted_handler;
-	gulong rows_reordered_handler;
-
-	guint purge_timeout;
-	GtkWidget *remove_attachment_banner;
-
-	guint progress_bar_timeout;
-
-	gchar *msg_uid;
-	
-	GSList *sighandlers;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -282,11 +286,21 @@ save_state (ModestWindow *self)
 				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
-static 
-gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
-					      GtkScrollType scroll_type,
-					      gboolean horizontal,
-					      gpointer userdata)
+static void
+restore_settings (ModestMsgViewWindow *self)
+{
+	ModestConf *conf;
+
+	conf = modest_runtime_get_conf ();
+	modest_widget_memory_restore (conf,
+				      G_OBJECT(self), 
+				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
+}
+
+static gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
+						     GtkScrollType scroll_type,
+						     gboolean horizontal,
+						     gpointer userdata)
 {
 	ModestMsgViewWindowPrivate *priv;
 	gboolean return_value;
@@ -839,6 +853,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 			  G_CALLBACK (modest_ui_actions_on_msg_attachment_clicked), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "recpt_activated",
 			  G_CALLBACK (modest_ui_actions_on_msg_recpt_activated), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "show_details",
+			  G_CALLBACK (modest_ui_actions_on_details), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_contextual",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_contextual), obj);
 	g_signal_connect (G_OBJECT (priv->msg_view), "fetch_image",
@@ -872,6 +888,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	priv->last_search = NULL;
+
+	modest_msg_view_window_show_toolbar (MODEST_WINDOW (obj), TRUE);
 
 	/* Init the clipboard actions dim status */
 	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));
@@ -969,8 +987,101 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (window));
+
 	/* gtk_widget_show_all (GTK_WIDGET (window)); */
 	modest_msg_view_window_update_priority (window);
+	/* Check dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
+
+	return MODEST_WINDOW(window);
+}
+
+ModestWindow *
+modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view, 
+					      const gchar *modest_account_name,
+					      const gchar *msg_uid,
+					      GtkTreeRowReference *row_reference)
+{
+	ModestMsgViewWindow *window = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+	TnyFolder *header_folder = NULL;
+	ModestWindowMgr *mgr = NULL;
+	GtkTreePath *path;
+	GtkTreeIter iter;
+
+	mgr = modest_runtime_get_window_mgr ();
+	window = MODEST_MSG_VIEW_WINDOW (modest_window_mgr_get_msg_view_window (mgr));
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
+
+	modest_msg_view_window_construct (window, modest_account_name, msg_uid);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	/* Remember the message list's TreeModel so we can detect changes 
+	 * and change the list selection when necessary: */
+
+	if (header_view != NULL){
+		header_folder = modest_header_view_get_folder(header_view);
+		/* This could happen if the header folder was
+		   unseleted before opening this msg window (for
+		   example if the user selects an account in the
+		   folder view of the main window */
+		if (header_folder) {
+			priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == TNY_FOLDER_TYPE_OUTBOX);
+			priv->header_folder_id = tny_folder_get_id(header_folder);
+			g_assert(priv->header_folder_id != NULL);
+			g_object_unref(header_folder);
+		}
+	}
+
+	/* Setup row references and connect signals */
+	priv->header_model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+
+	if (row_reference) {
+		priv->row_reference = gtk_tree_row_reference_copy (row_reference);
+		priv->next_row_reference = gtk_tree_row_reference_copy (row_reference);
+		select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE, priv->is_outbox);
+	} else {
+		priv->row_reference = NULL;
+		priv->next_row_reference = NULL;
+	}
+
+	/* Connect signals */
+	priv->row_changed_handler = 
+		g_signal_connect (GTK_TREE_MODEL(priv->header_model), "row-changed",
+				  G_CALLBACK(modest_msg_view_window_on_row_changed),
+				  window);
+	priv->row_deleted_handler = 
+		g_signal_connect (GTK_TREE_MODEL(priv->header_model), "row-deleted",
+				  G_CALLBACK(modest_msg_view_window_on_row_deleted),
+				  window);
+	priv->row_inserted_handler = 
+		g_signal_connect (GTK_TREE_MODEL(priv->header_model), "row-inserted",
+				  G_CALLBACK(modest_msg_view_window_on_row_inserted),
+				  window);
+	priv->rows_reordered_handler = 
+		g_signal_connect(GTK_TREE_MODEL(priv->header_model), "rows-reordered",
+				 G_CALLBACK(modest_msg_view_window_on_row_reordered),
+				 window);
+
+	if (header_view != NULL){
+		modest_header_view_add_observer(header_view,
+				MODEST_HEADER_VIEW_OBSERVER(window));
+	}
+
+	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), NULL);
+
+	path = gtk_tree_row_reference_get_path (row_reference);
+	if (gtk_tree_model_get_iter (priv->header_model, &iter, path)) {
+		TnyHeader *header;
+		gtk_tree_model_get (priv->header_model, &iter, 
+				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+				    &header, -1);
+		message_reader (window, priv, header, row_reference);
+	}
+	gtk_tree_path_free (path);
 
 	/* Check dimming rules */
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));

@@ -33,6 +33,7 @@
 #include <tny-msg.h>
 #include <tny-folder.h>
 #include <widgets/modest-window.h>
+#include <widgets/modest-header-view.h>
 #include <gtk/gtktreemodel.h>
 #include <gtk/gtkenums.h>
 
@@ -110,6 +111,25 @@ ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 							      const gchar *msg_uid,
 							      GtkTreeModel *model, 
 							      GtkTreeRowReference *row_reference);
+
+/**
+ * modest_msg_view_window_new_from_header_view:
+ * @header_view: an #ModestHeaderView instance
+ * @modest_account_name: the account name 
+ * @msg_uid: the initial uid reserved by this window
+ * @row_reference: a #GtkTreeRowReference, pointing to the selected position @model.
+ * 
+ * instantiates a new #ModestMsgViewWindow widget. The account name is used to
+ * set the proper account when choosing reply/forward from the msg view window.
+ * It's different from new_with_header_model, as it creates the window and then
+ * loads the message in that window.
+ *
+ * Returns: a new #ModestMsgViewWindow, or NULL in case of error
+ */
+ModestWindow*   modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view, 
+							     const gchar *modest_account_name, 
+							     const gchar *msg_uid,
+							     GtkTreeRowReference *row_reference);
 
 
 /**

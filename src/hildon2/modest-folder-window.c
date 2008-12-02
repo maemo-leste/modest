@@ -399,5 +399,8 @@ on_folder_activated (ModestFolderView *folder_view,
 	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
 					   MODEST_WINDOW (headerwin),
 					   MODEST_WINDOW (self));
+
+	modest_window_set_active_account (MODEST_WINDOW (headerwin), 
+					  modest_window_get_active_account (MODEST_WINDOW (self)));
 	gtk_widget_show (GTK_WIDGET (headerwin));
 }

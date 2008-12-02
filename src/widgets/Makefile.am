@@ -46,10 +46,14 @@ libmodest_widgets_la_SOURCES=          \
 	modest-attachments-view.h      \
 	modest-combo-box.c	       \
 	modest-combo-box.h             \
+	modest-compact-mail-header-view.c \
+	modest-compact-mail-header-view.h \
 	modest-default-account-settings-dialog.h \
 	modest-dnd.c                   \
 	modest-dnd.h                   \
 	modest-easysetup-wizard-page.c \
+	modest-expander-mail-header-view.c      \
+	modest-expander-mail-header-view.h      \
 	modest-folder-view.c           \
 	modest-global-settings-dialog.c \
 	modest-global-settings-dialog.h \
@@ -70,8 +74,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-isearch-view.h          \
 	modest-limit-retrieve-combo-box.h \
 	modest-limit-retrieve-combo-box.c \
-	modest-mail-header-view.c      \
-	modest-mail-header-view.h      \
+	modest-mail-header-view.h \
+	modest-mail-header-view.c \
 	modest-main-window.h	       \
 	modest-mime-part-view.c        \
 	modest-mime-part-view.h        \
