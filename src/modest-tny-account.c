@@ -637,11 +637,13 @@ on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
 void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAccountGetMmcAccountNameCallback callback, gpointer user_data)
 {
 #ifndef MODEST_TOOLKIT_GTK
-	/* Just use the hard-coded path for the single memory card,
+	/* Just use the path for the single memory card,
 	 * rather than try to figure out the path to the specific card by 
 	 * looking at the maildir URI:
 	 */
-	const gchar *uri_real = MODEST_MCC1_VOLUMEPATH_URI;
+	gchar *uri_real = g_strconcat (MODEST_MMC1_VOLUMEPATH_URI_PREFIX,
+				       g_getenv (MODEST_MMC1_VOLUMEPATH_ENV),
+				       NULL);
 
 	/*
 	gchar* uri = tny_account_get_url_string (TNY_ACCOUNT (self));
@@ -671,7 +673,7 @@ void modest_tny_account_get_mmc_account_name (TnyStoreAccount* self, ModestTnyAc
 		hildon_file_system_info_async_new(uri_real, 
 			on_modest_file_system_info, callback_data /* user_data */);
 
-		/* g_free (uri_real); */
+		g_free (uri_real);
 	}
 
 	/* g_free (uri); */
@@ -730,7 +732,7 @@ modest_tny_account_new_for_local_folders (ModestAccountMgr *account_mgr, TnySess
 	 * via a derived TnyCamelStoreAccount ? */
 	const gboolean is_mmc = 
 		location_filepath && 
-		(strcmp (location_filepath, MODEST_MCC1_VOLUMEPATH) == 0);
+		(strcmp (location_filepath, g_getenv (MODEST_MMC1_VOLUMEPATH_ENV)) == 0);
 		
 	/* The name of memory card locations will be updated asynchronously.
 	 * This is just a default: */

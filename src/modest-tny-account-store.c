@@ -335,8 +335,8 @@ add_mmc_account(ModestTnyAccountStore *self, gboolean emit_insert_signal)
 	g_return_if_fail (priv->session);
 	
 	TnyAccount *mmc_account = modest_tny_account_new_for_local_folders (priv->account_mgr, 
-									priv->session, 
-									MODEST_MCC1_VOLUMEPATH);
+									    priv->session, 
+									    g_getenv (MODEST_MMC1_VOLUMEPATH_ENV));
 
 	/* Add to the list of store accounts */
 	tny_list_append (priv->store_accounts, G_OBJECT (mmc_account));
@@ -358,6 +358,7 @@ on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor,
 {
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
+	gchar *volume_path_uri;
  
 	gchar *uri = NULL;
 
@@ -367,10 +368,14 @@ on_vfs_volume_mounted(GnomeVFSVolumeMonitor *volume_monitor,
 	/* Check whether this was the external MMC1 card: */
 	uri = gnome_vfs_volume_get_activation_uri (volume);
 
-	if (uri && (!strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI))) {
+	volume_path_uri = g_strconcat (MODEST_MMC1_VOLUMEPATH_URI_PREFIX,
+				       g_getenv (MODEST_MMC1_VOLUMEPATH_ENV),
+				       NULL);
+	if (uri && (!strcmp (uri, volume_path_uri))) {
 		add_mmc_account (self, TRUE /* emit the insert signal. */);
 	}
-	
+
+	g_free (volume_path_uri);	
 	g_free (uri);
 }
 
@@ -382,13 +387,17 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 	ModestTnyAccountStore *self;
 	ModestTnyAccountStorePrivate *priv;
 	gchar *uri = NULL;
+	gchar *volume_path_uri;
 
 	self = MODEST_TNY_ACCOUNT_STORE(user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 	
 	/* Check whether this was the external MMC1 card: */
 	uri = gnome_vfs_volume_get_activation_uri (volume);
-	if (uri && (strcmp (uri, MODEST_MCC1_VOLUMEPATH_URI) == 0)) {
+	volume_path_uri = g_strconcat (MODEST_MMC1_VOLUMEPATH_URI_PREFIX,
+				       g_getenv (MODEST_MMC1_VOLUMEPATH_ENV),
+				       NULL);
+	if (uri && (strcmp (uri, volume_path_uri) == 0)) {
 		TnyAccount *mmc_account = NULL;
 		gboolean found = FALSE;
 		TnyIterator *iter = NULL;
@@ -422,6 +431,7 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 				   __FUNCTION__);
 		}
 	}
+	g_free (volume_path_uri);
 	g_free (uri);
 }
 
@@ -851,7 +861,7 @@ volume_path_is_mounted (const gchar* path)
 	 * GnomeVFSVolume even if the drive is not mounted: */
 	/*
 	GnomeVFSVolume *volume = gnome_vfs_volume_monitor_get_volume_for_path (monitor, 
-		MODEST_MCC1_VOLUMEPATH);
+	                         g_getenv (MODEST_MMC1_VOLUMEPATH_ENV));
 	if (volume) {
 		gnome_vfs_volume_unref(volume);
 	}
@@ -951,7 +961,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
 	
 	/* This is a singleton, so it does not need to be unrefed. */
-	if (volume_path_is_mounted (MODEST_MCC1_VOLUMEPATH)) {
+	if (volume_path_is_mounted (g_getenv (MODEST_MMC1_VOLUMEPATH_ENV))) {
 		/* It is mounted: */
 		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */); 
 	}

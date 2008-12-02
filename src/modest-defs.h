@@ -63,11 +63,10 @@
 
 #define MODEST_MMC_ACCOUNT_ID             "mcc"
 
-/* FIXME: get these from the environment */
 /* Without the trailing / because gnome-vfs reports mounted 
  * volume URIs without the trailing, and we want to match them: */
-#define MODEST_MCC1_VOLUMEPATH	  "/media/mmc1" 
-#define MODEST_MCC1_VOLUMEPATH_URI "file://" MODEST_MCC1_VOLUMEPATH
+#define MODEST_MMC1_VOLUMEPATH_ENV	  "MMC_MOUNTPOINT" 
+#define MODEST_MMC1_VOLUMEPATH_URI_PREFIX "file://"
 
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		"/apps/modest"
