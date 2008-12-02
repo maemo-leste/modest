@@ -64,7 +64,8 @@
 #include <glib/gstdio.h>
 #include <modest-debug.h>
 
-#define DEFAULT_FOLDER "MyDocs/.documents"
+#define MYDOCS_ENV "MYDOCSDIR"
+#define DOCS_FOLDER ".documents"
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
@@ -2712,7 +2713,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
 
 	/* set folder */
-	folder = g_build_filename (g_get_home_dir (), DEFAULT_FOLDER, NULL);
+	folder = g_build_filename (g_get_home_dir (), g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
 	gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
 	g_free (folder);
 

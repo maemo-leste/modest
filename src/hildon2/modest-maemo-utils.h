@@ -39,7 +39,7 @@
 #include "widgets/modest-validating-entry.h"
 #include <hildon/hildon-gtk.h>
 
-#define MODEST_MAEMO_UTILS_MYDOCS_FOLDER "MyDocs"
+#define MODEST_MAEMO_UTILS_MYDOCS_ENV "MYDOCSDIR"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
 
 
