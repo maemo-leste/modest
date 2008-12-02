@@ -80,6 +80,11 @@ static void         modest_folder_view_set_account_store (TnyAccountStoreView *s
 static void         on_selection_changed   (GtkTreeSelection *sel,
 					    gpointer data);
 
+static void         on_row_activated       (GtkTreeView *treeview,
+					    GtkTreePath *path,
+					    GtkTreeViewColumn *column,
+					    gpointer userdata);
+
 static void         on_account_removed     (TnyAccountStore *self,
 					    TnyAccount *account,
 					    gpointer user_data);
@@ -158,6 +163,7 @@ static void         on_display_name_changed (ModestAccountMgr *self,
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
+	FOLDER_ACTIVATED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -188,6 +194,7 @@ struct _ModestFolderViewPrivate {
 	gchar                *local_account_name;
 	gchar                *visible_account_id;
 	ModestFolderViewStyle style;
+	ModestFolderViewCellStyle cell_style;
 
 	gboolean  reselect; /* we use this to force a reselection of the INBOX */
 	gboolean  show_non_move;
@@ -279,7 +286,25 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
+ 	signals[FOLDER_ACTIVATED_SIGNAL] =
+		g_signal_new ("folder_activated",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestFolderViewClass,
+					       folder_activated),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__POINTER,
+			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+
 	treeview_class->select_cursor_parent = NULL;
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_rc_parse_string ("class \"ModestFolderView\" style \"fremantle-touchlist\"");
+	/* gtk_rc_parse_string ("style \"fremantle-modest-fv\" {\n" */
+	/* 		     "  GtkWidget::hildon-mode = 1\n" */
+	/* 		     "} class \"ModestFolderView\" style \"fremantle-modest-fv\""); */
+	
+#endif
 
 }
 
@@ -394,6 +419,7 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 	if (type != TNY_FOLDER_TYPE_ROOT) {
 		gint number = 0;
+		gboolean drafts;
 
 		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
 		    modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance))) {
@@ -411,30 +437,44 @@ text_cell_data  (GtkTreeViewColumn *column,
 			}
 		}
 
+		if (type == TNY_FOLDER_TYPE_INBOX) {
+			g_free (fname);
+			fname = g_strdup (_("mcen_me_folder_inbox"));
+		}
+
 		/* note: we cannot reliably get the counts from the tree model, we need
 		 * to use explicit calls on tny_folder for some reason.
 		 */
 		/* Select the number to show: the unread or unsent messages. in case of outbox/drafts, show all */
 		if ((type == TNY_FOLDER_TYPE_DRAFTS) ||
 		    (type == TNY_FOLDER_TYPE_OUTBOX) ||
-		    (type == TNY_FOLDER_TYPE_MERGE)) /* _OUTBOX actually returns _MERGE... */
+		    (type == TNY_FOLDER_TYPE_MERGE)) { /* _OUTBOX actually returns _MERGE... */
 			number = tny_folder_get_all_count (TNY_FOLDER(instance));
-		else
-			number = tny_folder_get_unread_count (TNY_FOLDER(instance));
-
-		/* Use bold font style if there are unread or unset messages */
-		if (number > 0) {
-			if (type == TNY_FOLDER_TYPE_INBOX)
-				item_name = g_strdup_printf ("%s (%d)", _("mcen_me_folder_inbox"), number);
-			else
-				item_name = g_strdup_printf ("%s (%d)", fname, number);
-			item_weight = 800;
+			drafts = TRUE;
 		} else {
-			if (type == TNY_FOLDER_TYPE_INBOX)
-				item_name = g_strdup (_("mcen_me_folder_inbox"));
-			else
+			number = tny_folder_get_unread_count (TNY_FOLDER(instance));
+			drafts = FALSE;
+		}
+
+		if (priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT) {
+			gchar * substring;
+			if (number > 0) {
+				substring = g_strdup_printf (drafts?"TODO:%d messages":"TODO:%d new messages", number);
+			} else {
+				substring = g_strdup ("");
+			}
+			item_name = g_strdup_printf ("%s\n<span size='x-small' color='grey'>%s</span>", 
+						     fname, substring);
+			g_free (substring);
+		} else {
+			/* Use bold font style if there are unread or unset messages */
+			if (number > 0) {
+				item_name = g_strdup_printf ("%s (%d)", fname, number);
+				item_weight = 800;
+			} else {
 				item_name = g_strdup (fname);
-			item_weight = 400;
+				item_weight = 400;
+			}
 		}
 
 	} else if (TNY_IS_ACCOUNT (instance)) {
@@ -460,7 +500,7 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 	if (item_name && item_weight) {
 		/* Set the name in the treeview cell: */
-		g_object_set (rendobj,"text", item_name, "weight", item_weight, NULL);
+		g_object_set (rendobj,"markup", item_name, "weight", item_weight, NULL);
 
 		/* Notify display name observers */
 		/* TODO: What listens for this signal, and how can it use only the new name? */
@@ -1240,7 +1280,11 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	ModestFolderViewPrivate *priv;
 	GtkTreeSelection *sel;
 
-	self = G_OBJECT (g_object_new (MODEST_TYPE_FOLDER_VIEW, NULL));
+	self = G_OBJECT (g_object_new (MODEST_TYPE_FOLDER_VIEW, 
+#ifdef MODEST_TOOLKIT_HILDON2
+				       "hildon-ui-mode", HILDON_UI_MODE_NORMAL,
+#endif
+				       NULL));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
 	if (query)
@@ -1249,6 +1293,8 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->changed_signal = g_signal_connect (sel, "changed",
 						 G_CALLBACK (on_selection_changed), self);
+
+	g_signal_connect (self, "row-activated", G_CALLBACK (on_row_activated), self);
 
 	g_signal_connect (self, "expose-event", G_CALLBACK (modest_folder_view_on_map), NULL);
 
@@ -1504,6 +1550,40 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 			       signals[FOLDER_SELECTION_CHANGED_SIGNAL],
 			       0, priv->cur_folder_store, TRUE);
 	}
+}
+
+static void
+on_row_activated (GtkTreeView *treeview,
+		  GtkTreePath *treepath,
+		  GtkTreeViewColumn *column,
+		  gpointer user_data)
+{
+	GtkTreeModel *model = NULL;
+	TnyFolderStore *folder = NULL;
+	GtkTreeIter iter;
+	ModestFolderView *self = NULL;
+	ModestFolderViewPrivate *priv = NULL;
+
+	g_return_if_fail (treeview);
+	g_return_if_fail (user_data);
+
+	self = MODEST_FOLDER_VIEW (user_data);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(user_data);
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+
+	if (!gtk_tree_model_get_iter (model, &iter, treepath))
+		return;
+
+	gtk_tree_model_get (model, &iter,
+			    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder,
+			    -1);
+
+	g_signal_emit (G_OBJECT(self),
+		       signals[FOLDER_ACTIVATED_SIGNAL],
+		       0, folder);
+
+	g_object_unref (folder);
 }
 
 TnyFolderStore *
@@ -2890,4 +2970,18 @@ on_display_name_changed (ModestAccountMgr *mgr,
 #else
 	gtk_widget_queue_draw (GTK_WIDGET (self));
 #endif
+}
+
+void 
+modest_folder_view_set_cell_style (ModestFolderView *self,
+				   ModestFolderViewCellStyle cell_style)
+{
+	ModestFolderViewPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	priv->cell_style = cell_style;
+	
+	gtk_widget_queue_draw (GTK_WIDGET (self));
 }

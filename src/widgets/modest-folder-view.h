@@ -50,6 +50,11 @@ typedef enum _ModestFolderViewStyle {
 	MODEST_FOLDER_VIEW_STYLE_SHOW_ONE
 } ModestFolderViewStyle;
 
+typedef enum _ModestFolderViewCellStyle {
+	MODEST_FOLDER_VIEW_CELL_STYLE_DEFAULT,
+	MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT
+} ModestFolderViewCellStyle;
+
 typedef struct _ModestFolderView      ModestFolderView;
 typedef struct _ModestFolderViewClass ModestFolderViewClass;
 
@@ -70,6 +75,10 @@ struct _ModestFolderViewClass {
 	void     (*folder_display_name_changed) (ModestFolderView* self,
 						 const gchar *display_name,
 						 gpointer user_data);
+
+	void     (*folder_activated) (ModestFolderView *self,
+				      TnyFolderStore *folder,
+				      gpointer userdata);
 };
 
 /**
@@ -241,6 +250,16 @@ void modest_folder_view_copy_model (ModestFolderView *folder_view_src, ModestFol
  * 
  **/
 void modest_folder_view_disable_next_folder_selection (ModestFolderView *self);
+
+/**
+ * modest_folder_view_set_cell_style:
+ * @self: a #ModestFolderView
+ * @cell_style: a #ModestFolderViewCellStyle
+ *
+ * Sets the way cells are shown
+ */
+void modest_folder_view_set_cell_style (ModestFolderView *self,
+					ModestFolderViewCellStyle cell_style);
 
 G_END_DECLS
 
