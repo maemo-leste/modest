@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006, y2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@
 #include "modest-osso-state-saving.h"
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
+#include <tny-gtk-folder-store-tree-model.h>
 
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
@@ -140,6 +141,10 @@ static void on_refresh_account_action_activated   (GtkAction *action,
 static void on_send_receive_csm_activated         (GtkMenuItem *item,
 						   gpointer user_data);
 
+static void on_folder_view_row_activated (GtkTreeView *tree_view,
+					  GtkTreePath *tree_path,
+					  GtkTreeViewColumn *column,
+					  gpointer userdata);
 static void on_msg_count_changed (ModestHeaderView *header_view,
 				  TnyFolder *folder,
 				  TnyFolderChange *change,
@@ -169,8 +174,6 @@ static void on_updating_msg_list (ModestHeaderView *header_view,
 				  gboolean starting,
 				  gpointer user_data);
 
-static gboolean restore_paned_timeout_handler (gpointer *data);
-
 static gboolean show_opening_banner (gpointer user_data);
 
 static void on_window_destroy (GtkObject *widget,
@@ -182,8 +185,6 @@ static void on_window_hide (GObject    *gobject,
 
 typedef struct _ModestMainWindowPrivate ModestMainWindowPrivate;
 struct _ModestMainWindowPrivate {
-	GtkWidget *msg_paned;
-	GtkWidget *main_paned;
 	GtkWidget *main_vbox;
 	GtkWidget *contents_widget;
 	GtkWidget *empty_view;
@@ -221,7 +222,6 @@ struct _ModestMainWindowPrivate {
 	gboolean wait_for_settings;
 
 	guint progress_bar_timeout;
-	guint restore_paned_timeout;
 
 	/* Signal handler UIDs */
 	GList *queue_err_signals;
@@ -338,8 +338,6 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(obj);
 
 	priv->queue_err_signals = NULL;
-	priv->msg_paned    = NULL;
-	priv->main_paned   = NULL;	
 	priv->main_vbox    = NULL;
 	priv->header_view  = NULL;
 	priv->folder_view  = NULL;
@@ -357,7 +355,6 @@ modest_main_window_init (ModestMainWindow *obj)
 	priv->optimized_view  = FALSE;
 	priv->send_receive_in_progress  = FALSE;
 	priv->progress_bar_timeout = 0;
-	priv->restore_paned_timeout = 0;
 	priv->sighandlers = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
@@ -421,11 +418,6 @@ modest_main_window_finalize (GObject *obj)
 		priv->opening_banner = NULL;
 	}
 
-	if (priv->restore_paned_timeout > 0) {
-		g_source_remove (priv->restore_paned_timeout);
-		priv->restore_paned_timeout = 0;
-	}
-	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -456,25 +448,6 @@ modest_main_window_get_child_widget (ModestMainWindow *self,
 	return (widget && GTK_IS_WIDGET(widget)) ? GTK_WIDGET(widget) : NULL;
 }
 
-static gboolean 
-restore_paned_timeout_handler (gpointer *data)
-{
-	ModestMainWindow *main_window = MODEST_MAIN_WINDOW (data);
-	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE (main_window);
-	ModestConf *conf;
-
-	/* Timeouts are outside the main lock */
-	gdk_threads_enter ();
-	if (GTK_WIDGET_VISIBLE (main_window)) {
-		conf = modest_runtime_get_conf ();
-		modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned),
-					      MODEST_CONF_MAIN_PANED_KEY);
-	}
-	gdk_threads_leave ();
-
-	return FALSE;
-}
-
 
 static void
 restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
@@ -496,13 +469,6 @@ restore_settings (ModestMainWindow *self, gboolean do_folder_view_too)
 		modest_widget_memory_restore (conf, G_OBJECT(priv->folder_view),
 				      MODEST_CONF_FOLDER_VIEW_KEY);
 
-/* 	modest_widget_memory_restore (conf, G_OBJECT(priv->main_paned), */
-/* 				      MODEST_CONF_MAIN_PANED_KEY); */
-
-	g_timeout_add (250, (GSourceFunc) restore_paned_timeout_handler, self);
-
-	/* We need to force a redraw here in order to get the right
-	   position of the horizontal paned separator */
 	gtk_widget_show (GTK_WIDGET (self));
 }
 
@@ -519,10 +485,6 @@ save_state (ModestWindow *window)
 	
 	modest_widget_memory_save (conf,G_OBJECT(self), 
 				   MODEST_CONF_MAIN_WINDOW_KEY);
-	/* Only save main paned position if we're in split mode */
-	if (priv->style == MODEST_MAIN_WINDOW_STYLE_SPLIT)
-		modest_widget_memory_save (conf, G_OBJECT(priv->main_paned), 
-					   MODEST_CONF_MAIN_PANED_KEY);
 	modest_widget_memory_save (conf, G_OBJECT(priv->folder_view), 
 				   MODEST_CONF_FOLDER_VIEW_KEY);
 }
@@ -937,6 +899,18 @@ connect_signals (ModestMainWindow *self)
 					   G_CALLBACK (on_folder_view_focus_in), 
 					   self);
 
+	/* Folder view CSM */
+	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
+	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "tap-and-hold",
+						       G_CALLBACK(_folder_view_csm_menu_activated),
+						       self);
+
+	/* folder view row activated */
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "row-activated",
+						       G_CALLBACK(on_folder_view_row_activated),
+						       self);
+
 	/* header view */
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,G_OBJECT(priv->header_view), "header_selected",
@@ -1057,7 +1031,6 @@ on_hildon_program_is_topmost_notify(GObject *self,
 
 typedef struct
 {
-	GtkWidget *folder_win;
 	gulong handler_id;
 } ShowHelper;
 
@@ -1065,11 +1038,12 @@ static void
 modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 {
 	ShowHelper *helper = (ShowHelper *) user_data;
-	GtkWidget *folder_win = helper->folder_win;
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
 	
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
-	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
+	modest_main_window_set_contents_style (MODEST_MAIN_WINDOW (self), 
+					       MODEST_MAIN_WINDOW_CONTENTS_STYLE_FOLDERS);
+	gtk_tree_view_expand_all (GTK_TREE_VIEW (priv->folder_view));
 
 	gtk_widget_show (GTK_WIDGET (priv->folder_view));
 
@@ -1128,7 +1102,6 @@ modest_main_window_new (void)
 	ModestMainWindow *self = NULL;	
 	ModestMainWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
-	GtkWidget *folder_win = NULL;
 	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	GtkActionGroup *action_group = NULL;
@@ -1233,25 +1206,15 @@ modest_main_window_new (void)
 	g_object_ref (priv->empty_view);
 		 
 	/* Create scrolled windows */
-	folder_win = gtk_scrolled_window_new (NULL, NULL);
 	priv->contents_widget = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (folder_win),
-					GTK_POLICY_NEVER,
-					GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->contents_widget),
 					GTK_POLICY_NEVER,
 					GTK_POLICY_AUTOMATIC);
 	/* gtk_widget_show (priv->contents_widget); */
 
-	/* paned */
-	priv->main_paned = gtk_hpaned_new ();
-	gtk_paned_pack1 (GTK_PANED(priv->main_paned), folder_win, TRUE, TRUE);
-	gtk_paned_pack2 (GTK_PANED(priv->main_paned), priv->contents_widget, TRUE, TRUE);
-	gtk_tree_view_columns_autosize (GTK_TREE_VIEW(priv->header_view));
-
 	/* putting it all together... */
 	priv->main_vbox = gtk_vbox_new (FALSE, 6);
-	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->main_paned, TRUE, TRUE,0);
+	gtk_box_pack_start (GTK_BOX(priv->main_vbox), priv->contents_widget, TRUE, TRUE,0);
 	gtk_widget_show (priv->main_vbox);
 	
 	gtk_container_add (GTK_CONTAINER(self), priv->main_vbox);
@@ -1265,7 +1228,6 @@ modest_main_window_new (void)
 	/* Connect to "show" action. We delay the creation of some
 	   elements until that moment */
 	helper = g_slice_new0 (ShowHelper);
-	helper->folder_win = folder_win;
 	helper->handler_id = g_signal_connect (G_OBJECT(self), "show",
 					       G_CALLBACK (modest_main_window_on_show), 
 					       helper);
@@ -1296,115 +1258,18 @@ void
 modest_main_window_set_style (ModestMainWindow *self, 
 			      ModestMainWindowStyle style)
 {
-	ModestMainWindowPrivate *priv;
-	ModestWindowPrivate *parent_priv;
-	GtkAction *action;
-	gboolean active;
-	GtkTreeSelection *sel;
-	GList *rows, *list;
-	
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW (self));
 
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-
-	/* no change -> nothing to do */
-	if (priv->style == style)
-		return;
-
-       /* Get toggle button and update the state if needed. This will
-	  happen only when the set_style is not invoked from the UI,
-	  for example when it's called from widget memory */
-       action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/ToggleFolders");
-       active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
-       if ((active && style == MODEST_MAIN_WINDOW_STYLE_SIMPLE) ||
-	   (!active && style == MODEST_MAIN_WINDOW_STYLE_SPLIT)) {
-	       g_signal_handlers_block_by_func (action, modest_ui_actions_toggle_folders_view, self);
-	       gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), !active);
-	       g_signal_handlers_unblock_by_func (action, modest_ui_actions_toggle_folders_view, self);
-       }
-
-       /* We need to store the selection because it's lost when the
-	  widget is reparented */
-       sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->header_view));
-       rows = gtk_tree_selection_get_selected_rows (sel, NULL);
-
-	priv->style = style;
-	switch (style) {
-	case MODEST_MAIN_WINDOW_STYLE_SIMPLE:
-
-		if (!priv->wait_for_settings)
-			modest_widget_memory_save (modest_runtime_get_conf (), G_OBJECT (priv->main_paned),
-						   MODEST_CONF_MAIN_PANED_KEY);
-		/* Remove main paned */
-		g_object_ref (priv->main_paned);
-		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
-
-		/* Reparent the contents widget to the main vbox */
-		gtk_widget_reparent (priv->contents_widget, priv->main_vbox);
-
-		break;
-	case MODEST_MAIN_WINDOW_STYLE_SPLIT:
-		/* Remove header view */
-		g_object_ref (priv->contents_widget);
-		gtk_container_remove (GTK_CONTAINER (priv->main_vbox), priv->contents_widget);
-
-		/* Reparent the main paned */
-		gtk_paned_add2 (GTK_PANED (priv->main_paned), priv->contents_widget);
-		gtk_container_add (GTK_CONTAINER (priv->main_vbox), priv->main_paned);
-
-		g_timeout_add (500, (GSourceFunc) restore_paned_timeout_handler, self);
-
-		break;
-	default:
-		g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
-		g_list_free (rows);
-		g_return_if_reached ();
-	}
-
-	/* Reselect the previously selected folders. We disable the
-	   dimming rules execution during that time because there is
-	   no need to work out it again and it could take a lot of
-	   time if all the headers are selected */
-	list = rows;
-	modest_window_disable_dimming (MODEST_WINDOW (self));
-	while (list) {
-		gtk_tree_selection_select_path (sel, (GtkTreePath *) list->data);
-		list = g_list_next (list);
-	}
-	modest_window_enable_dimming (MODEST_WINDOW (self));
-
-	/* Free */
-	g_list_foreach (rows, (GFunc) gtk_tree_path_free, NULL);
-	g_list_free (rows);
-
-	/* Let header view grab the focus if it's being shown */
-	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS) {
-		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
-	} else {
-		if (priv->style == MODEST_MAIN_WINDOW_STYLE_SPLIT)
-			gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
-		else
-			gtk_widget_grab_focus (GTK_WIDGET (priv->contents_widget));
-	}
-
-	/* Check dimming rules */
-        modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
-
-	/* Show changes */
-	gtk_widget_show_all (GTK_WIDGET (priv->main_vbox));
+	/* We only provide simple style */
+	return;
 }
 
 ModestMainWindowStyle
 modest_main_window_get_style (ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv;
-
 	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW (self), -1);
 
-	priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	return priv->style;
+	return MODEST_MAIN_WINDOW_STYLE_SIMPLE;
 }
 
 static void
@@ -1572,13 +1437,9 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Transport accounts and local ones (MMC and the Local
 	   folders account do now cause menu changes */
 	if (TNY_IS_STORE_ACCOUNT (account)) {
-		/* We need to refresh the details widget because it could have changed */
-		if (modest_main_window_get_contents_style(win) == MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
-			modest_main_window_set_contents_style (win, MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS);
-
 		/* Update the menus as well, name could change */
 		if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
-			update_menus (MODEST_MAIN_WINDOW (user_data));
+			update_menus (MODEST_MAIN_WINDOW (win));
 	}
 }
 
@@ -1677,14 +1538,6 @@ on_inner_widgets_key_pressed (GtkWidget *widget,
 	return FALSE;
 }
 
-static void
-set_alignment (GtkWidget *widget,
-	       gpointer data)
-{
-	gtk_misc_set_alignment (GTK_MISC (widget), 0.0, 0.0);
-	gtk_misc_set_padding (GTK_MISC (widget), 0, 0);
-}
-
 static GtkWidget *
 create_empty_view (void)
 {
@@ -1699,258 +1552,6 @@ create_empty_view (void)
 	return GTK_WIDGET(align);
 }
 
-/*
- * Free the returned string
- */
-static gchar *
-get_gray_color_markup (GtkWidget *styled_widget)
-{
-	gchar *gray_color_markup = NULL;
-#ifndef MODEST_HAVE_HILDON0_WIDGETS
-	/* Obtain the secondary text color. We need a realized widget, that's why 
-	   we get styled_widget from outside */
-	GdkColor color;
-	if (gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color)) 
-		gray_color_markup = modest_text_utils_get_color_string (&color);
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
-	
-	if (!gray_color_markup) 
-		gray_color_markup = g_strdup ("#BBBBBB");
-
-	return gray_color_markup;
-}
-
-/*
- * Free the returned string
- */
-static gchar*
-create_device_name_visual_string (const gchar *device_name,
-				  const gchar *gray_color_markup)
-{
-	gchar *tmp, *label;
-
-	/* We have to use "" to fill the %s of the translation. We can
-	   not just use the device name because the device name is
-	   shown in a different color, so it could not be included
-	   into the <span> tag */
-	tmp = g_strdup_printf (_("mcen_fi_localroot_description"), "");
-	label = g_markup_printf_escaped ("<span color='%s'>%s</span>%s", 
-					 gray_color_markup, 
-					 tmp, 
-					 device_name);
-	g_free (tmp);
-
-	return label;
-}
-
-typedef struct
-{
-	GtkWidget *count_label;
-	GtkWidget *msg_count_label;
-	GtkWidget *size_label;
-	gchar *color_markup;
-} DetailsWidgets;
-
-static gchar *
-create_uint_label (const gchar *markup,
-		   const gchar *name,
-		   guint count)
-{
-	return g_markup_printf_escaped ("<span color='%s'>%s:</span> %d", markup, name, count);
-}
-
-static gchar *
-create_gchar_label (const gchar *markup,
-		    const gchar *name,
-		    gchar *count)
-{
-	return g_markup_printf_escaped ("<span color='%s'>%s:</span> %s", markup, name, count);
-}
-
-static void
-update_folder_stats_status_cb (ModestFolderStats stats,
-			       gpointer user_data)
-{
-	DetailsWidgets *widgets = (DetailsWidgets *) user_data;
-	gchar *label, *tmp;
-
-	label = create_uint_label (widgets->color_markup, _("mcen_fi_rootfolder_folders"), stats.folders);
-	gtk_label_set_markup (GTK_LABEL (widgets->count_label), label);
-	g_free (label);
-
-	label = create_uint_label (widgets->color_markup, _("mcen_fi_rootfolder_messages"), stats.msg_count);
-	gtk_label_set_markup (GTK_LABEL (widgets->msg_count_label), label);
-	g_free (label);
-
-	if (widgets->size_label) {
-		tmp = modest_text_utils_get_display_size (stats.local_size);
-		label = create_gchar_label (widgets->color_markup, _("mcen_fi_rootfolder_size"), tmp);
-		gtk_label_set_markup (GTK_LABEL (widgets->size_label), label);
-		g_free (label);
-		g_free (tmp);
-	}
-}
-
-static void
-update_folder_stats_cb (ModestFolderStats stats,
-			gpointer user_data)
-{
-	DetailsWidgets *widgets = (DetailsWidgets *) user_data;
-
-	/* refresh data */
-	update_folder_stats_status_cb (stats, user_data);
-
-	/* frees. Note that the widgets could have been destroyed but
-	   we still keep a reference */
-	g_free (widgets->color_markup);
-	if (widgets->count_label)
-		g_object_unref (widgets->count_label);
-	if (widgets->msg_count_label)
-		g_object_unref (widgets->msg_count_label);
-	if (widgets->size_label)
-	g_object_unref (widgets->size_label);
-	g_slice_free (DetailsWidgets, widgets);
-}
-
-static GtkWidget *
-create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
-{
-	/* TODO: Clean up this function. It's a mess, with lots of copy/paste. murrayc. */
-	
-	GtkWidget *vbox;
-	GtkWidget *label_w;
-	gchar *label;
-	gchar *gray_color_markup;
-	DetailsWidgets *widgets;
-
-	vbox = gtk_vbox_new (FALSE, 0);
-	widgets = g_slice_new0 (DetailsWidgets);
-
-	gray_color_markup = get_gray_color_markup (styled_widget);
-	widgets->color_markup = g_strdup (gray_color_markup);
-
-	/* Account description: */
-	if (modest_tny_account_is_virtual_local_folders (account)
-		|| (modest_tny_account_is_memory_card_account (account))) {
-	
-		/* Get device name */
-		gchar *device_name = NULL;
-		if (modest_tny_account_is_virtual_local_folders (account))
-			device_name = modest_conf_get_string (modest_runtime_get_conf(),
-						      MODEST_CONF_DEVICE_NAME, NULL);
-		else
-			device_name = g_strdup (tny_account_get_name (account));
-
-		label = create_device_name_visual_string ((const gchar *) device_name, 
-							  (const gchar *) gray_color_markup);
-		label_w = gtk_label_new (NULL);
-		gtk_label_set_markup (GTK_LABEL (label_w), label);
-		gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
-		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-		g_free (device_name);
-		g_free (label);
-	} else {
-		if(!strcmp (tny_account_get_id (account), MODEST_MMC_ACCOUNT_ID)) {
-			gtk_box_pack_start (GTK_BOX (vbox), 
-				gtk_label_new (tny_account_get_name (account)), 
-				FALSE, FALSE, 0);
-		} else {
-			/* Other accounts, such as IMAP and POP: */
-			
-			GString *proto;
-			gchar *tmp;
-	
-			/* Put proto in uppercase */
-			proto = g_string_new (tny_account_get_proto (account));
-			proto = g_string_ascii_up (proto);
-			
-			/* note: mcen_fi_localroot_description is something like "%s account"
-			 * however, we should display "%s account: %s"... therefore, ugly tmp */
-			tmp   = g_strdup_printf (_("mcen_fi_remoteroot_account"),proto->str);
-			label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %s", 
-							 gray_color_markup, tmp, tny_account_get_name (account));
-			g_free (tmp);
-
-			label_w = gtk_label_new (NULL);
-			gtk_label_set_markup (GTK_LABEL (label_w), label);
-			gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
-			gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-			g_string_free (proto, TRUE);
-			g_free (label);
-		}
-	}
-
-	/* Message count */
-	TnyFolderStore *folder_store = TNY_FOLDER_STORE (account);
-	label = create_uint_label (gray_color_markup, _("mcen_fi_rootfolder_messages"), 0);
-	label_w = gtk_label_new (NULL);
-	gtk_label_set_markup (GTK_LABEL (label_w), label);
-	gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
-	gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-	g_free (label);
-
-	widgets->msg_count_label = g_object_ref (label_w);
-
-	/* Folder count */
-	label = create_uint_label (gray_color_markup, _("mcen_fi_rootfolder_folders"), 0);
-	label_w = gtk_label_new (NULL);
-	gtk_label_set_markup (GTK_LABEL (label_w), label);
-	gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
-	gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-	g_free (label);
-
-	widgets->count_label = g_object_ref (label_w);
-
-	/* Size / Date */
-	if (modest_tny_account_is_virtual_local_folders (account)
-		|| modest_tny_account_is_memory_card_account (account)) {
-
-		label = create_gchar_label (gray_color_markup, _("mcen_fi_rootfolder_size"), "0");
-		
-		label_w = gtk_label_new (NULL);
-		gtk_label_set_markup (GTK_LABEL (label_w), label);
-		gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
-		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-		g_free (label);
-
-		widgets->size_label = g_object_ref (label_w);
-
-	} else if (TNY_IS_ACCOUNT(folder_store)) {
-		TnyAccount *account = TNY_ACCOUNT(folder_store);
-		
-		time_t last_updated;
-		const gchar *last_updated_string;
-		/* Get last updated from configuration */
-		last_updated = modest_account_mgr_get_last_updated (modest_runtime_get_account_mgr (), 
-								    tny_account_get_id (account));
-
-		if (last_updated > 0) 
-			last_updated_string = modest_text_utils_get_display_date(last_updated);
-		else
-			last_updated_string = g_strdup (_("mcen_va_never"));
-
-		label = g_markup_printf_escaped ("<span color='%s'>%s:</span> %s", 
-						 gray_color_markup, _("mcen_ti_lastupdated"), last_updated_string);
-		label_w = gtk_label_new (NULL);
-		gtk_label_set_markup (GTK_LABEL (label_w), label);
-		gtk_label_set_ellipsize (GTK_LABEL (label_w),  PANGO_ELLIPSIZE_END);
-		gtk_box_pack_start (GTK_BOX (vbox), label_w, FALSE, FALSE, 0);
-		g_free (label);
-	}
-
-	g_free (gray_color_markup);
-
-	/* Refresh folder stats asynchronously */
-	modest_tny_folder_store_get_folder_stats (TNY_FOLDER_STORE (account),
-						  update_folder_stats_cb,
-						  update_folder_stats_status_cb,
-						  widgets);
-
-	/* Set alignment */
-	gtk_container_foreach (GTK_CONTAINER (vbox), (GtkCallback) set_alignment, NULL);
-
-	return vbox;
-}
 
 gboolean
 modest_main_window_send_receive_in_progress (ModestMainWindow *self)
@@ -2046,13 +1647,16 @@ on_msg_count_changed (ModestHeaderView *header_view,
 	folder_empty = folder_empty || all_marked_as_deleted;
 
 	/* Set contents style of headers view */
-	if (folder_empty)  {
-		modest_main_window_set_contents_style (main_window,
-						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
-		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
-	} else {
-		modest_main_window_set_contents_style (main_window,
-						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+	if (priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY ||
+	    priv->contents_style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS) {
+		if (folder_empty)  {
+			modest_main_window_set_contents_style (main_window,
+							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
+			gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
+		} else {
+			modest_main_window_set_contents_style (main_window,
+							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+		}
 	}
 
 	if (refilter)
@@ -2091,36 +1695,22 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	priv->contents_style = style;
 
 	switch (priv->contents_style) {
+	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_FOLDERS:
+		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->folder_view));
+		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
+						      TRUE);
+		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
+		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->header_view));
 		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
 						      TRUE);
-		if (priv->style == MODEST_MAIN_WINDOW_STYLE_SIMPLE)
-			gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
+		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
+		gtk_widget_show (GTK_WIDGET (priv->header_view));
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
-	{
-		/* if we're started without main win, there may not be a folder
-		 * view. this fixes a GLib-Critical */
-		if (priv->folder_view) {
-			TnyFolderStore *selected_folderstore = 
-				modest_folder_view_get_selected (priv->folder_view);
-			if (TNY_IS_ACCOUNT (selected_folderstore)) {	
-				priv->details_widget = create_details_widget (GTK_WIDGET (self),
-								TNY_ACCOUNT (selected_folderstore));
-				
-				wrap_in_scrolled_window (priv->contents_widget, 
-							 priv->details_widget);
-			}
-			if (selected_folderstore)
-				g_object_unref (selected_folderstore);
-			modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
-							      FALSE);
-		}
-		if (priv->style == MODEST_MAIN_WINDOW_STYLE_SIMPLE)
-			gtk_widget_grab_focus (GTK_WIDGET (priv->details_widget));
+		g_message ("This view is not supported in Fremantle style");
 		break;
-	}
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->empty_view));
 		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
@@ -2155,43 +1745,10 @@ on_configuration_key_changed (ModestConf* conf,
 			      ModestConfNotificationId id, 
 			      ModestMainWindow *self)
 {
-	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	TnyAccount *account = NULL;
+	/* TODO: remove this handler. Now we don't support details view, 
+	 *  so this must be removed */
 
-	if (!key || strcmp (key, MODEST_CONF_DEVICE_NAME))
-		return;
-
-	if (priv->contents_style != MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS)
-		return;
-
-	if (priv->folder_view) 
-		account = (TnyAccount *) modest_folder_view_get_selected (priv->folder_view);
-
-	if (account && TNY_IS_ACCOUNT (account) &&
-	    strcmp (tny_account_get_id (account), MODEST_LOCAL_FOLDERS_ACCOUNT_ID) == 0) {
-		GList *children;
-		GtkLabel *label;
-		const gchar *device_name;
-		gchar *new_text, *gray_color_markup;
-		
-		/* Get label */
-		children = gtk_container_get_children (GTK_CONTAINER (priv->details_widget));
-		label = GTK_LABEL (children->data);
-		
-		device_name = modest_conf_get_string (modest_runtime_get_conf(),
-						      MODEST_CONF_DEVICE_NAME, NULL);
-
-		gray_color_markup = get_gray_color_markup (GTK_WIDGET (self));		
-		new_text = create_device_name_visual_string (device_name, gray_color_markup);
-		
-		gtk_label_set_markup (label, new_text);
-		gtk_widget_show (GTK_WIDGET (label));
-		
-		g_free (gray_color_markup);
-		g_free (new_text);
-		g_list_free (children);
-	}
-	g_object_unref (account);
+	return;
 }
 
 static gboolean
@@ -2754,9 +2311,6 @@ on_folder_selection_changed (ModestFolderView *folder_view,
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/HeaderViewCSM/HeaderViewCSMDelete");
 	gtk_action_set_visible (action, show_delete);
 
-	/* We finally call to the ui actions handler, after updating properly
-	 * the header view CSM */
-	modest_ui_actions_on_folder_selection_changed (folder_view, folder_store, selected, main_window);
 }
 
 gboolean 
@@ -2863,6 +2417,46 @@ on_updating_msg_list (ModestHeaderView *header_view,
 			priv->updating_banner = NULL;
 		}
 	}
+}
+
+static void on_folder_view_row_activated (GtkTreeView *tree_view,
+					  GtkTreePath *tree_path,
+					  GtkTreeViewColumn *column,
+					  gpointer userdata)
+{
+	GtkTreeModel  *model;
+	GtkTreeIter iter;
+	TnyFolderStore *folder_store = NULL;
+	ModestMainWindow *self = (ModestMainWindow *) userdata;
+	ModestMainWindowPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_MAIN_WINDOW(self));
+	priv = MODEST_MAIN_WINDOW_GET_PRIVATE (self);
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (tree_view));
+
+	if (gtk_tree_model_get_iter (model, &iter, tree_path)) {
+		gtk_tree_model_get (model, &iter,
+				    TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN, &folder_store,
+				    -1);
+		if (folder_store && TNY_IS_FOLDER (folder_store)) {
+			modest_header_view_set_folder (MODEST_HEADER_VIEW (priv->header_view), 
+						       TNY_FOLDER (folder_store), TRUE,
+						       NULL, NULL);
+			modest_main_window_set_contents_style (MODEST_MAIN_WINDOW (self),
+							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);
+			modest_widget_memory_restore (modest_runtime_get_conf (), 
+						      G_OBJECT(priv->header_view),
+						      MODEST_CONF_HEADER_VIEW_KEY);
+			on_msg_count_changed (MODEST_HEADER_VIEW (priv->header_view), TNY_FOLDER (folder_store), NULL, self);
+		}
+
+		if (folder_store)
+			g_object_unref (folder_store);
+	}
+
+	g_message ("FOLDER VIEW CELL ACTIVATED");
+	
 }
 
 gboolean
