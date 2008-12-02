@@ -42,6 +42,7 @@
 #include <modest-main-window-ui.h>
 #include "modest-msg-view-window-ui-dimming.h"
 #include <modest-widget-memory.h>
+#include <modest-progress-object.h>
 #include <modest-runtime.h>
 #include <modest-window-priv.h>
 #include <modest-tny-folder.h>
@@ -50,6 +51,7 @@
 #include "modest-progress-bar.h"
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-picker-dialog.h>
+#include "hildon/hildon-pannable-area.h"
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include "modest-ui-dimming-manager.h"
@@ -76,15 +78,12 @@ struct _ModestMsgViewWindowPrivate {
 	gchar       *last_search;
 
 	/* Progress observers */
-	GtkWidget        *progress_bar;
 	GSList           *progress_widgets;
 
 	/* Tollbar items */
-	GtkWidget   *progress_toolitem;
-	GtkWidget   *cancel_toolitem;
 	GtkWidget   *prev_toolitem;
 	GtkWidget   *next_toolitem;
-	ModestToolBarModes current_toolbar_mode;
+	gboolean    progress_hint;
 
 	/* Optimized view enabled */
 	gboolean optimized_view;
@@ -114,8 +113,6 @@ struct _ModestMsgViewWindowPrivate {
 
 	guint purge_timeout;
 	GtkWidget *remove_attachment_banner;
-
-	guint progress_bar_timeout;
 
 	gchar *msg_uid;
 	
@@ -174,9 +171,6 @@ static void modest_msg_view_window_update_model_replaced (ModestHeaderViewObserv
 							  GtkTreeModel *model,
 							  const gchar *tny_folder_id);
 
-static void cancel_progressbar  (GtkToolButton *toolbutton,
-				 ModestMsgViewWindow *self);
-
 static void on_queue_changed    (ModestMailOperationQueue *queue,
 				 ModestMailOperation *mail_op,
 				 ModestMailOperationQueueNotification type,
@@ -197,8 +191,8 @@ static void view_msg_cb         (ModestMailOperation *mail_op,
 				 GError *error,
 				 gpointer user_data);
 
-static void set_toolbar_mode    (ModestMsgViewWindow *self, 
-				 ModestToolBarModes mode);
+static void set_progress_hint    (ModestMsgViewWindow *self, 
+				  gboolean enabled);
 
 static void update_window_title (ModestMsgViewWindow *window);
 
@@ -440,10 +434,9 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->row_deleted_handler = 0;
 	priv->row_inserted_handler = 0;
 	priv->rows_reordered_handler = 0;
-	priv->current_toolbar_mode = TOOLBAR_MODE_NORMAL;
+	priv->progress_hint = FALSE;
 
 	priv->optimized_view  = FALSE;
-	priv->progress_bar_timeout = 0;
 	priv->purge_timeout = 0;
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
@@ -475,88 +468,28 @@ set_toolbar_transfer_mode (ModestMsgViewWindow *self)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
-	set_toolbar_mode (self, TOOLBAR_MODE_TRANSFER);
-	
-	if (priv->progress_bar_timeout > 0) {
-		g_source_remove (priv->progress_bar_timeout);
-		priv->progress_bar_timeout = 0;
-	}
+	set_progress_hint (self, TRUE);
 	
 	return FALSE;
 }
 
 static void 
-set_toolbar_mode (ModestMsgViewWindow *self, 
-		  ModestToolBarModes mode)
+set_progress_hint (ModestMsgViewWindow *self, 
+		   gboolean enabled)
 {
 	ModestWindowPrivate *parent_priv;
 	ModestMsgViewWindowPrivate *priv;
-/* 	GtkWidget *widget = NULL; */
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 			
-	/* Sets current toolbar mode */
-	priv->current_toolbar_mode = mode;
+	/* Sets current progress hint */
+	priv->progress_hint = enabled;
 
-	/* Update toolbar dimming state */
-	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
-
-	switch (mode) {
-	case TOOLBAR_MODE_NORMAL:		
-		if (priv->progress_toolitem) {
-			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
-			gtk_widget_hide (priv->progress_toolitem);
-		}
-
-		if (priv->progress_bar)
-			gtk_widget_hide (priv->progress_bar);
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_hide (priv->cancel_toolitem);
-
-		if (priv->prev_toolitem)
-			gtk_widget_show (priv->prev_toolitem);
-		
-		if (priv->next_toolitem)
-			gtk_widget_show (priv->next_toolitem);
-			
-		/* Hide toolbar if optimized view is enabled */
-		if (priv->optimized_view) {
-			gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
-			gtk_widget_hide (GTK_WIDGET(parent_priv->toolbar));
-		}
-
-		break;
-	case TOOLBAR_MODE_TRANSFER:
-		if (priv->prev_toolitem)
-			gtk_widget_hide (priv->prev_toolitem);
-		
-		if (priv->next_toolitem)
-			gtk_widget_hide (priv->next_toolitem);
-		
-		if (priv->progress_bar)
-			gtk_widget_show (priv->progress_bar);
-
-		if (priv->progress_toolitem) {
-			gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
-			gtk_widget_show (priv->progress_toolitem);
-		}
-			
-		if (priv->cancel_toolitem)
-			gtk_widget_show (priv->cancel_toolitem);
-
-		/* Show toolbar if it's hiden (optimized view ) */
-		if (priv->optimized_view) {
-			gtk_widget_set_no_show_all (parent_priv->toolbar, FALSE);
-			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-		}
-
-		break;
-	default:
-		g_return_if_reached ();
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
 	}
 
 }
@@ -679,11 +612,6 @@ modest_msg_view_window_finalize (GObject *obj)
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
 		priv->header_model = NULL;
-	}
-
-	if (priv->progress_bar_timeout > 0) {
-		g_source_remove (priv->progress_bar_timeout);
-		priv->progress_bar_timeout = 0;
 	}
 
 	if (priv->remove_attachment_banner) {
@@ -1401,7 +1329,7 @@ modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
-	return priv->current_toolbar_mode == TOOLBAR_MODE_TRANSFER;
+	return priv->progress_hint;
 }
 
 TnyHeader*
@@ -2139,10 +2067,6 @@ toolbar_resize (ModestMsgViewWindow *self)
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
 		
- 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->progress_toolitem), FALSE);
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->progress_toolitem), TRUE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->cancel_toolitem), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->prev_toolitem), TRUE);
@@ -2158,9 +2082,9 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv;
 	GtkWidget *reply_button = NULL, *menu = NULL;
-	GtkWidget *placeholder = NULL;
-	gint insert_index;
-
+	const gchar *action_name;
+	GtkAction *action;
+	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -2172,28 +2096,10 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 								  "/ToolBar");
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 
-		priv->progress_toolitem = GTK_WIDGET (gtk_tool_item_new ());
-		priv->cancel_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarCancel");
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
 		priv->prev_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
 		toolbar_resize (MODEST_MSG_VIEW_WINDOW (self));
-
-		/* Add ProgressBar (Transfer toolbar) */ 
-		priv->progress_bar = modest_progress_bar_new ();
-		gtk_widget_set_no_show_all (priv->progress_bar, TRUE);
-		placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ProgressbarView");
-		insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
-		gtk_container_add (GTK_CONTAINER (priv->progress_toolitem), priv->progress_bar);
-		gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (priv->progress_toolitem), insert_index);
-
-		/* Connect cancel 'clicked' signal to abort progress mode */
-		g_signal_connect(priv->cancel_toolitem, "clicked",
-				 G_CALLBACK(cancel_progressbar),
-				 self);
-
-		/* Add it to the observers list */
-		priv->progress_widgets = g_slist_prepend(priv->progress_widgets, priv->progress_bar);
-
+		
 		/* Add to window */
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
@@ -2213,9 +2119,9 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 
 		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
 		if (modest_msg_view_window_transfer_mode_enabled (MODEST_MSG_VIEW_WINDOW (self))) 
-			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW (self), TOOLBAR_MODE_TRANSFER);
+			set_progress_hint (MODEST_MSG_VIEW_WINDOW (self), TRUE);
 		else
-			set_toolbar_mode (MODEST_MSG_VIEW_WINDOW (self), TOOLBAR_MODE_NORMAL);
+			set_progress_hint (MODEST_MSG_VIEW_WINDOW (self), FALSE);
 
 	} else {
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
@@ -2242,25 +2148,9 @@ modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
-	return priv->current_toolbar_mode == TOOLBAR_MODE_TRANSFER;
+	return priv->progress_hint;
 }
 
-static void
-cancel_progressbar (GtkToolButton *toolbutton,
-		    ModestMsgViewWindow *self)
-{
-	GSList *tmp;
-	ModestMsgViewWindowPrivate *priv;
-	
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
-
-	/* Get operation observers and cancel its current operation */
-	tmp = priv->progress_widgets;
-	while (tmp) {
-		modest_progress_object_cancel_current_operation (MODEST_PROGRESS_OBJECT(tmp->data));
-		tmp=g_slist_next(tmp);
-	}
-}
 static gboolean
 observers_empty (ModestMsgViewWindow *self)
 {
@@ -2355,7 +2245,7 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 
 		/* If no more operations are being observed, NORMAL mode is enabled again */
 		if (observers_empty (self)) {
-			set_toolbar_mode (self, TOOLBAR_MODE_NORMAL);
+			set_progress_hint (self, FALSE);
 		}
 
 		/* Update dimming rules. We have to do this right here
