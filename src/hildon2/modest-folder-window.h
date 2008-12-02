@@ -84,6 +84,16 @@ ModestWindow* modest_folder_window_new (TnyFolderStoreQuery *query);
  */
 ModestFolderView *modest_folder_window_get_folder_view (ModestFolderWindow *self);
 
+/**
+ * modest_folder_window_set_account:
+ * @self: a #ModestFolderWindow
+ * @account_name: a string
+ *
+ * Sets the current active account in the folder window.
+ */
+void modest_folder_window_set_account (ModestFolderWindow *self,
+				       const gchar *account_name);
+
 G_END_DECLS
 
 #endif

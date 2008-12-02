@@ -38,7 +38,10 @@
 #include <modest-maemo-utils.h>
 #include <modest-icon-names.h>
 #include <modest-ui-constants.h>
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
 #include <modest-defs.h>
+#include <modest-ui-actions.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
 #include <tny-account-store-view.h>
@@ -52,6 +55,11 @@ static void connect_signals (ModestFolderWindow *self);
 static void modest_folder_window_disconnect_signals (ModestWindow *self);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
+static void add_to_menu (ModestFolderWindow *self,
+			 HildonAppMenu *menu,
+			 gchar *label,
+			 GCallback callback);
+static void setup_menu (ModestFolderWindow *self);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -200,6 +208,10 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 	pannable = hildon_pannable_area_new ();
 	priv->folder_view  = modest_platform_create_folder_view (query);
+	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
+					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
+
+	setup_menu (self);
 
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
@@ -267,3 +279,95 @@ modest_folder_window_screen_is_on (ModestFolderWindow *self)
 	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
 }
 
+ModestFolderView *
+modest_folder_window_get_folder_view (ModestFolderWindow *self)
+{
+	ModestFolderWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(self), FALSE);
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+	
+	return MODEST_FOLDER_VIEW (priv->folder_view);
+}
+
+void
+modest_folder_window_set_account (ModestFolderWindow *self,
+				  const gchar *account_name)
+{
+	ModestFolderWindowPrivate *priv = NULL;
+	ModestAccountMgr *mgr;
+	ModestAccountSettings *settings = NULL;
+	ModestServerAccountSettings *store_settings = NULL;
+
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+	
+	/* Get account data */
+	mgr = modest_runtime_get_account_mgr ();
+
+	settings = modest_account_mgr_load_account_settings (mgr, account_name);
+	if (!settings)
+		goto free_refs;
+
+	store_settings = modest_account_settings_get_store_settings (settings);
+	if (!store_settings)
+		goto free_refs;
+
+	modest_folder_view_set_account_id_of_visible_server_account 
+		(MODEST_FOLDER_VIEW (priv->folder_view),
+		 modest_server_account_settings_get_account_name (store_settings));
+
+	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
+	gtk_window_set_title (GTK_WINDOW (self), 
+			      modest_account_settings_get_display_name (settings));
+
+free_refs:
+	if (store_settings) 
+		g_object_unref (store_settings);
+	if (settings)
+		g_object_unref (settings);
+
+}
+
+static void add_to_menu (ModestFolderWindow *self,
+			 HildonAppMenu *menu,
+			 gchar *label,
+			 GCallback callback)
+{
+	GtkWidget *button;
+
+	button = gtk_button_new_with_label (label);
+	g_signal_connect_after (G_OBJECT (button), "clicked",
+				callback, (gpointer) self);
+	hildon_app_menu_append (menu, GTK_BUTTON (button));
+}
+
+static void setup_menu (ModestFolderWindow *self)
+{
+	ModestFolderWindowPrivate *priv = NULL;
+	GtkWidget *app_menu;
+
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	app_menu = hildon_app_menu_new ();
+
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_newemail"),
+		     G_CALLBACK (modest_ui_actions_on_new_msg));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_sendandreceive"),
+		     G_CALLBACK (modest_ui_actions_on_send_receive));
+
+	/* Settings menu buttons */
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_options"),
+		     G_CALLBACK (modest_ui_actions_on_settings));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_accounts"),
+		     G_CALLBACK (modest_ui_actions_on_accounts));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_globalsmtpservers"),
+		     G_CALLBACK (modest_ui_actions_on_smtp_servers));
+	
+	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
+					       HILDON_APP_MENU (app_menu));
+}

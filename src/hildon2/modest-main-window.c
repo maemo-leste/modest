@@ -2099,6 +2099,14 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 	ModestAccountSettings *settings;
 	ModestServerAccountSettings *store_settings = NULL;
 
+	GtkWidget *folder_window;
+
+	folder_window = GTK_WIDGET (modest_folder_window_new (NULL));
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
+					   MODEST_WINDOW (folder_window),
+					   MODEST_WINDOW (self));
+	gtk_widget_show (folder_window);
+
 	/* Get account data */
 	mgr = modest_runtime_get_account_mgr ();
 	settings = modest_account_mgr_load_account_settings (mgr, acc_name);
@@ -2117,6 +2125,8 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		modest_folder_view_select_first_inbox_or_local (priv->folder_view);
 		modest_window_set_active_account (MODEST_WINDOW (self), account_name);
 
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), acc_name);
+
 		action = gtk_action_group_get_action (priv->view_additions_group, account_name);
 		if (action != NULL) {
 			if (!gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action))) {
@@ -2133,13 +2143,6 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		g_object_unref (settings);
 	}
 
-	GtkWidget *folder_window;
-
-	folder_window = GTK_WIDGET (modest_folder_window_new (NULL));
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
-					   MODEST_WINDOW (folder_window),
-					   MODEST_WINDOW (self));
-	gtk_widget_show (folder_window);
 }
 
 /* Make sure that at least one account is "viewed": */
