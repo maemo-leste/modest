@@ -36,8 +36,8 @@
 #include <libebook/e-book.h>
 #include <libebook/e-book-view.h>
 #include <libebook/e-vcard.h>
-#include <libosso-abook/osso-abook.h>
 #include "modest-hildon-includes.h"
+#include <libosso-abook/osso-abook.h>
 #include "modest-platform.h"
 #include "modest-runtime.h"
 #include "widgets/modest-window-mgr.h"
