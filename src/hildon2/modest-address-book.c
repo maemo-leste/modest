@@ -871,13 +871,10 @@ select_contacts_for_name_dialog (const gchar *name)
 	e_book_query_unref (full_name_book_query);
 
 	if (book_view) {
-		GtkWidget *contact_view = NULL;
 		GtkWidget *contact_dialog = NULL;
 #if MODEST_ABOOK_API < 4
+		GtkWidget *contact_view = NULL;
 		osso_abook_tree_model_set_book_view (OSSO_ABOOK_TREE_MODEL (contact_model), book_view);
-#else /* MODEST_ABOOK_API < 4 */
-		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model), book_view);
-#endif /* MODEST_ABOOK_API < 4 */
 		e_book_view_start (book_view);
 		
 		contact_view = osso_abook_contact_selector_new_basic (contact_model);
@@ -890,6 +887,24 @@ select_contacts_for_name_dialog (const gchar *name)
 		e_book_view_stop (book_view);
 		g_object_unref (book_view);
 		gtk_widget_destroy (contact_dialog);
+#else /* MODEST_ABOOK_API < 4 */
+		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model), book_view);
+		e_book_view_start (book_view);
+
+		/* TODO: figure out how to make the contact chooser modal */
+		contact_dialog = osso_abook_contact_chooser_new_with_capabilities (NULL,
+										    _("mcen_ti_select_recipients"),
+										    OSSO_ABOOK_CAPS_EMAIL, 
+										    OSSO_ABOOK_CONTACT_ORDER_NAME);
+		osso_abook_contact_chooser_set_model (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
+						      contact_model);
+
+		if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK)
+			result = osso_abook_contact_chooser_get_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog));
+		e_book_view_stop (book_view);
+		g_object_unref (book_view);
+		gtk_widget_destroy (contact_dialog);
+#endif /* MODEST_ABOOK_API < 4 */
 	}
 
 	return result;
