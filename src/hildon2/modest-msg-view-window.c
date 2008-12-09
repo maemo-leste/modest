@@ -2320,7 +2320,6 @@ decode_async_banner_idle (gpointer user_data)
 
 	helper->banner_idle_id = 0;
 	helper->banner = hildon_banner_show_animation (NULL, NULL, _("mail_me_opening"));
-	g_object_ref (helper->banner);
 
 	return FALSE;
 }
@@ -2340,6 +2339,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	}
 	if (helper->banner) {
 		gtk_widget_destroy (helper->banner);
+		helper->banner = NULL;
 	}
 	if (cancelled || err) {
 		modest_platform_information_banner (NULL, NULL, 
@@ -2349,14 +2349,13 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 
 	/* make the file read-only */
 	g_chmod(helper->filepath, 0444);
-	
+
 	/* Activate the file */
 	modest_platform_activate_file (helper->filepath, tny_mime_part_get_content_type (mime_part));
 
  free:
 	/* Frees */
 	g_free (helper->filepath);
-	g_object_unref (helper->banner);
 	g_slice_free (DecodeAsyncHelper, helper);
 }
 
