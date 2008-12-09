@@ -370,7 +370,7 @@ commit_contact(EContact * contact, gboolean is_new)
 #if MODEST_ABOOK_API < 4
 	osso_abook_contact_commit(contact, is_new, book);
 #else
-	if (OSSO_IS_ABOOK_CONTACT (contact)) {
+	if (OSSO_ABOOK_IS_CONTACT (contact)) {
 		osso_abook_contact_commit(contact, is_new, book, NULL);
 	} else {
 		e_book_commit_contact (book, contact, NULL);
