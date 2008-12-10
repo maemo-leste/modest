@@ -39,7 +39,7 @@
 #include "modest-ui-actions.h"
 #include "modest-debug.h"
 #include "modest-tny-folder.h"
-#include <hildon/hildon-program.h>
+#include <hildon/hildon.h>
 
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass);
@@ -231,19 +231,17 @@ modest_hildon2_window_mgr_new (void)
 static gboolean
 modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
-	ModestHildon2WindowMgrPrivate *priv = NULL;
 	gboolean ret_value = FALSE;
-	HildonStackableWindow *window;
-	HildonProgram *program;
+	GtkWidget *window;
 	gboolean failed = FALSE;
-	
-	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
-	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
-	
-	program = hildon_program_get_instance ();
+	HildonWindowStack *stack;
 
-	while ((window = hildon_program_peek_window_stack (program)) != NULL) {
-		g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &ret_value);
+	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
+
+	stack = hildon_window_stack_get_default ();
+
+	while ((window = hildon_window_stack_peek (stack)) != NULL) {
+		g_signal_emit_by_name (window, "delete-event", NULL, &ret_value);
 		if (ret_value == TRUE) {
 			failed = TRUE;
 			break;
@@ -335,6 +333,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	ModestWindow *main_window;
 	HildonProgram *program;
 	GtkWidget *current_top;
+	HildonWindowStack *stack;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
@@ -350,19 +349,25 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 		gtk_window_present (GTK_WINDOW (win));
 		return TRUE;
 	}
-	
+
 	if (!MODEST_WINDOW_MGR_CLASS (parent_class)->register_window (self, window, parent))
 		goto fail;
-	
+
 	/* Add to list. Keep a reference to the window */
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
-	current_top = GTK_WIDGET (hildon_program_peek_window_stack (program));
+	stack = hildon_window_stack_get_default ();
+	current_top = hildon_window_stack_peek (stack);
 
+	/* TODO: rethink this method it will be different depending on
+	   the type of the window that we're registering */
 	if (!parent || ((GtkWidget *) parent != current_top)) {
+		guint num_windows = hildon_window_stack_size (stack);
+
 		/* We have to close all windows with the exception of the root window */
-		hildon_program_go_to_root_window (program);
+		if (num_windows > 1)
+			hildon_window_stack_pop (stack, num_windows - 1, NULL);
 
 		/* We remove 1 because we added it before */
 		if (modest_window_mgr_num_windows (MODEST_WINDOW_MGR (self)) - 1> 1) {
@@ -372,7 +377,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 			goto fail;
 		}
 
-		current_top = GTK_WIDGET (hildon_program_peek_window_stack (program));
 		if ((current_top != NULL) && !MODEST_IS_MAIN_WINDOW (current_top)) {
 			gboolean retval;
 			g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
@@ -380,7 +384,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 				/* Cancelled closing top window, then we fail to register */
 				goto fail;
 			}
-			current_top = GTK_WIDGET (hildon_program_peek_window_stack (program));
+			current_top = hildon_window_stack_peek (stack);
 		}
 		if ((current_top != NULL) && !MODEST_IS_MAIN_WINDOW (current_top)) {
 			/* Closing the stacked windows failed, then we shouldn't show the
@@ -404,13 +408,13 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	if (MODEST_IS_MSG_VIEW_WINDOW(window) && main_window) {
 		gulong *handler;
 		handler = g_malloc0 (sizeof (gulong));
-		*handler = g_signal_connect (window, "msg-changed", 
-					     G_CALLBACK (modest_main_window_on_msg_view_window_msg_changed), 
+		*handler = g_signal_connect (window, "msg-changed",
+					     G_CALLBACK (modest_main_window_on_msg_view_window_msg_changed),
 					     main_window);
 		g_hash_table_insert (priv->viewer_handlers, window, handler);
 	}
 
-	/* Show toolbar always */	
+	/* Show toolbar always */
 	modest_window_show_toolbar (window, TRUE);
 
 	return TRUE;
@@ -418,7 +422,8 @@ fail:
 	/* Add to list. Keep a reference to the window */
 	priv->window_list = g_list_remove (priv->window_list, window);
 	g_object_unref (window);
-	current_top = GTK_WIDGET (hildon_program_peek_window_stack (program));
+
+	current_top = hildon_window_stack_peek (stack);
 	if (current_top)
 		gtk_window_present (GTK_WINDOW (current_top));
 	return FALSE;
@@ -430,7 +435,7 @@ cancel_window_operations (ModestWindow *window)
 	GSList* pending_ops = NULL;
 
 	/* cancel open and receive operations */
-	pending_ops = modest_mail_operation_queue_get_by_source (modest_runtime_get_mail_operation_queue (), 
+	pending_ops = modest_mail_operation_queue_get_by_source (modest_runtime_get_mail_operation_queue (),
 								 G_OBJECT (window));
 	while (pending_ops != NULL) {
 		ModestMailOperationTypeOperation type;
