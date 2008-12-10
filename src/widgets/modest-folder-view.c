@@ -629,6 +629,16 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
 	}
 
+	/* Remote folders should not be treated as special folders */
+	if (TNY_IS_FOLDER_STORE (instance) &&
+	    type != TNY_FOLDER_TYPE_INBOX &&
+	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
+		return get_composite_icons (MODEST_FOLDER_ICON_NORMAL,
+					    &normal_pixbuf,
+					    &normal_pixbuf_open,
+					    &normal_pixbuf_close);
+	}
+
 	switch (type) {
 	case TNY_FOLDER_TYPE_INVALID:
 		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
