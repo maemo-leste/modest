@@ -9,9 +9,9 @@ Exec=@prefix@/bin/modest
 X-Osso-Service=com.nokia.modest
 X-Osso-Type=application/x-executable
 
-Icon=qgn_list_messagin
-X-Window-Icon=qgn_list_messagin
-X-Window-Icon-Dimmed=qgn_list_messagin
+Icon=general_email
+X-Window-Icon=general_email
+X-Window-Icon-Dimmed=general_email
 
 StartupWMClass=modest
 
