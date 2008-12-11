@@ -66,8 +66,8 @@
 
 #define MODEST_FOLDER_ICON_ACCOUNT		"general_web"
 #define MODEST_FOLDER_ICON_INBOX		"general_received"
-#define MODEST_FOLDER_ICON_OUTBOX		"general_sent"
-#define MODEST_FOLDER_ICON_SENT			"email_message_sent"
+#define MODEST_FOLDER_ICON_OUTBOX		"general_outbox"
+#define MODEST_FOLDER_ICON_SENT			"general_sent"
 #define MODEST_FOLDER_ICON_TRASH		"general_folder"
 #define MODEST_FOLDER_ICON_JUNK			"general_folder"
 #define MODEST_FOLDER_ICON_DRAFTS		"email_message_drafts"
