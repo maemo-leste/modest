@@ -350,6 +350,8 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 		return TRUE;
 	}
 
+	stack = hildon_window_stack_get_default ();
+
 	if (!MODEST_WINDOW_MGR_CLASS (parent_class)->register_window (self, window, parent))
 		goto fail;
 
@@ -357,7 +359,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
-	stack = hildon_window_stack_get_default ();
 	current_top = hildon_window_stack_peek (stack);
 
 	/* TODO: rethink this method it will be different depending on
