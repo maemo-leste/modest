@@ -43,6 +43,7 @@
 #include <gtk/gtkliststore.h>
 #include <string.h> /* For strcmp(). */
 #include <modest-account-mgr-helpers.h>
+#include <modest-datetime-formatter.h>
 
 /* 'private'/'protected' functions */
 static void modest_account_view_class_init    (ModestAccountViewClass *klass);
@@ -63,6 +64,7 @@ static void modest_account_view_select_first_account (ModestAccountView *account
 
 static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
+static void update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view);
 
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
@@ -78,6 +80,8 @@ typedef enum {
 typedef struct _ModestAccountViewPrivate ModestAccountViewPrivate;
 struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
+
+	ModestDatetimeFormatter *datetime_formatter;
 
 	/* Signal handlers */
 	GSList *sig_handlers;
@@ -125,6 +129,16 @@ modest_account_view_class_init (ModestAccountViewClass *klass)
 }
 
 static void
+datetime_format_changed (ModestDatetimeFormatter *formatter,
+			 ModestAccountView *self)
+{
+ 	ModestAccountViewPrivate *priv;
+	
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+	update_account_view (priv->account_mgr, self);
+}
+
+static void
 modest_account_view_init (ModestAccountView *obj)
 {
  	ModestAccountViewPrivate *priv;
@@ -132,6 +146,10 @@ modest_account_view_init (ModestAccountView *obj)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 	
 	priv->sig_handlers = NULL;
+
+	priv->datetime_formatter = modest_datetime_formatter_new ();
+	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
+			  G_CALLBACK (datetime_format_changed), (gpointer) obj);
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_rc_parse_string ("style \"fremantle-modest-account-view\" {\n"
 			     "  GtkWidget::hildon-mode = 1\n"
@@ -148,6 +166,11 @@ modest_account_view_finalize (GObject *obj)
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(obj);
 
+	if (priv->datetime_formatter) {
+		g_object_unref (priv->datetime_formatter);
+		priv->datetime_formatter = NULL;
+	}
+
 	/* Disconnect signals */
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sig_handlers);
 
@@ -161,7 +184,7 @@ modest_account_view_finalize (GObject *obj)
 
 /* Get the string for the last updated time. Result must NOT be g_freed */
 static const gchar*
-get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountSettings *settings)
+get_last_updated_string(ModestAccountView *self, ModestAccountMgr* account_mgr, ModestAccountSettings *settings)
 {
 	/* FIXME: let's assume that 'last update' applies to the store account... */
 	const gchar *last_updated_string;
@@ -169,17 +192,22 @@ get_last_updated_string(ModestAccountMgr* account_mgr, ModestAccountSettings *se
 	const gchar *account_name;
 	time_t last_updated;
 	ModestServerAccountSettings *server_settings;
+	ModestAccountViewPrivate *priv;
 
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE (self);
 	server_settings = modest_account_settings_get_store_settings (settings);
 	store_account_name = modest_server_account_settings_get_account_name (server_settings);
 	last_updated = modest_account_mgr_get_last_updated (account_mgr, store_account_name);
 	g_object_unref (server_settings);
 	account_name = modest_account_settings_get_account_name (settings);
 	if (!modest_account_mgr_account_is_busy(account_mgr, account_name)) {
-		if (last_updated > 0) 
-			last_updated_string = modest_text_utils_get_display_date(last_updated);
-		else
+		if (last_updated > 0) {
+			last_updated_string = 
+				modest_datetime_formatter_display_datetime (priv->datetime_formatter,
+									   last_updated);
+		} else {
 			last_updated_string = _("mcen_va_never");
+		}
 	} else 	{
 		last_updated_string = _("mcen_va_refreshing");
 	}
@@ -233,7 +261,7 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 			GtkTreeIter iter;
 
 			/* don't free */
-			const gchar *last_updated_string = get_last_updated_string(account_mgr, settings);
+			const gchar *last_updated_string = get_last_updated_string(view, account_mgr, settings);
 			
 			if (modest_account_settings_get_enabled (settings)) {
 				ModestProtocolType protocol_type;
@@ -316,7 +344,7 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 				g_free (cur_name);
 				return;
 			}
-			const gchar* last_updated_string = get_last_updated_string(account_mgr, settings);
+			const gchar* last_updated_string = get_last_updated_string(self, account_mgr, settings);
 			gtk_list_store_set(model, &iter, 
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
 					   -1);

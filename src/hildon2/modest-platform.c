@@ -57,6 +57,7 @@
 #include <hildon/hildon-sound.h>
 #include <osso-mem.h>
 #include "hildon2/modest-hildon2-details-dialog.h"
+#include <modest-datetime-formatter.h>
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -1226,9 +1227,13 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		gboolean first_notification = TRUE;
 		gint notif_id;
 		gchar *str;
+		ModestDatetimeFormatter *datetime_formatter;
 
 		/* constant string, don't free */
-		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
+		datetime_formatter = modest_datetime_formatter_new ();
+		display_date = modest_datetime_formatter_display_datetime (datetime_formatter,
+									   tny_header_get_date_received (header));
+		g_object_unref (datetime_formatter);
 
 		display_address = tny_header_dup_from (header);
 		modest_text_utils_get_display_address (display_address); /* string is changed in-place */
