@@ -124,7 +124,7 @@ static void
 update_format (ModestDatetimeFormatter *obj)
 {
 	GConfClient *gconf;
-	GError *error = NULL;
+	GError *err = NULL;
 	gboolean gconf_value;
 	ModestDatetimeFormatterPrivate *priv;
 
@@ -132,11 +132,11 @@ update_format (ModestDatetimeFormatter *obj)
 
 	gconf = gconf_client_get_default ();
 	gconf_value = gconf_client_get_bool (gconf, HILDON2_GCONF_FORMAT_KEY,
-					     &error);
+					     &err);
 
-	if (error != NULL) {
-		g_warning ("Error reading time format in gconf %s", error->message);
-		g_error_free (error);
+	if (err != NULL) {
+		g_warning ("Error reading time format in gconf %s", err->message);
+		g_error_free (err);
 	} else {
 		priv->current_format = gconf_value?DATETIME_FORMAT_24H:DATETIME_FORMAT_12H;
 	}
@@ -166,16 +166,16 @@ init_format (ModestDatetimeFormatter *obj)
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	GConfClient *gconf;
-	GError *error = NULL;
+	GError *err = NULL;
 
 	gconf = gconf_client_get_default ();
 	priv->gconf_handler = gconf_client_notify_add (gconf, HILDON2_GCONF_FORMAT_KEY,
 						       clock_format_changed, (gpointer) obj,
-						       NULL, &error);
+						       NULL, &err);
 
-	if (error != NULL) {
-		g_warning ("Error listening to time format in gconf %s", error->message);
-		g_error_free (error);
+	if (err != NULL) {
+		g_warning ("Error listening to time format in gconf %s", err->message);
+		g_error_free (err);
 	}
 	update_format (obj);
 #endif
