@@ -49,6 +49,7 @@
 #include "modest-platform.h"
 #include <modest-hbox-cell-renderer.h>
 #include <modest-vbox-cell-renderer.h>
+#include <modest-datetime-formatter.h>
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -155,6 +156,8 @@ struct _ModestHeaderViewPrivate {
 	HeaderViewStatus status;
 	guint status_timeout;
 	gboolean notify_status; /* whether or not the filter_row should notify about changes in the filtering */
+
+	ModestDatetimeFormatter *datetime_formatter;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -553,6 +556,13 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 }
 
 static void
+datetime_format_changed (ModestDatetimeFormatter *formatter,
+			 ModestHeaderView *self)
+{
+	gtk_widget_queue_draw (GTK_WIDGET (self));
+}
+
+static void
 modest_header_view_init (ModestHeaderView *obj)
 {
 	ModestHeaderViewPrivate *priv;
@@ -587,6 +597,10 @@ modest_header_view_init (ModestHeaderView *obj)
 		}			
 	}
 
+	priv->datetime_formatter = modest_datetime_formatter_new ();
+	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
+			  G_CALLBACK (datetime_format_changed), (gpointer) obj);
+
 	setup_drag_and_drop (GTK_WIDGET(obj));
 }
 
@@ -599,6 +613,11 @@ modest_header_view_dispose (GObject *obj)
 	
 	self = MODEST_HEADER_VIEW(obj);
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+
+	if (priv->datetime_formatter) {
+		g_object_unref (priv->datetime_formatter);
+		priv->datetime_formatter = NULL;
+	}
 
 	/* Free in the dispose to avoid unref cycles */
 	if (priv->folder) {
@@ -2231,3 +2250,11 @@ modest_header_view_notify_observers(ModestHeaderView *header_view,
 	g_mutex_unlock(priv->observer_list_lock);
 }
 
+const gchar *
+_modest_header_view_get_display_date (ModestHeaderView *self, time_t date)
+{
+	ModestHeaderViewPrivate *priv = NULL;
+	
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
+	return modest_datetime_formatter_display_datetime (priv->datetime_formatter, date);
+}
