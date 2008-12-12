@@ -42,7 +42,8 @@ typedef enum {
 	DATETIME_FORMAT_LOCALE,
 } DatetimeFormat;
 
-#define HILDON2_GCONF_FORMAT_KEY "/apps/clock/time-format"
+#define HILDON2_GCONF_FORMAT_DIR "/apps/clock"
+#define HILDON2_GCONF_FORMAT_KEY HILDON2_GCONF_FORMAT_DIR "/time-format"
 
 /* 'private'/'protected' functions */
 static void   modest_datetime_formatter_class_init (ModestDatetimeFormatterClass *klass);
@@ -169,6 +170,9 @@ init_format (ModestDatetimeFormatter *obj)
 	GError *err = NULL;
 
 	gconf = gconf_client_get_default ();
+	gconf_client_add_dir (gconf, HILDON2_GCONF_FORMAT_DIR,
+			      GCONF_CLIENT_PRELOAD_ONELEVEL,
+			      &err);
 	priv->gconf_handler = gconf_client_notify_add (gconf, HILDON2_GCONF_FORMAT_KEY,
 						       clock_format_changed, (gpointer) obj,
 						       NULL, &err);
@@ -196,11 +200,15 @@ modest_datetime_formatter_finalize   (GObject *obj)
 {
 #ifdef MODEST_TOOLKIT_HILDON2
 	ModestDatetimeFormatterPrivate *priv;
+	GConfClient *gconf;
 
 	priv = MODEST_DATETIME_FORMATTER_GET_PRIVATE (obj);
-	gconf_client_notify_remove (gconf_client_get_default (),
+	gconf = gconf_client_get_default ();
+	gconf_client_notify_remove (gconf,
 				    priv->gconf_handler);
 	priv->gconf_handler = 0;
+	gconf_client_remove_dir (gconf, HILDON2_GCONF_FORMAT_DIR,
+				 NULL);
 #endif
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
