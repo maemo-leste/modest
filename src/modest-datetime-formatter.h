@@ -75,6 +75,8 @@ const gchar *modest_datetime_formatter_format_time (ModestDatetimeFormatter *sel
 						    time_t date);
 const gchar *modest_datetime_formatter_display_datetime (ModestDatetimeFormatter *self,
 							 time_t date);
+const gchar *modest_datetime_formatter_display_long_datetime (ModestDatetimeFormatter *self,
+							      time_t date);
 G_END_DECLS
 
 #endif

@@ -242,7 +242,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	if (received && (folder_type != TNY_FOLDER_TYPE_SENT) &&
 	    (folder_type != TNY_FOLDER_TYPE_DRAFTS) &&
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
-		date_time_str = modest_datetime_formatter_display_datetime (datetime_formatter, 
+		date_time_str = modest_datetime_formatter_display_long_datetime (datetime_formatter, 
 									    received);
 		
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_received"),
@@ -251,7 +251,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 
 	/* for drafts (created) */
 	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
-		date_time_str = modest_datetime_formatter_display_datetime (datetime_formatter, 
+		date_time_str = modest_datetime_formatter_display_long_datetime (datetime_formatter, 
 									    received);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_created"),
 						date_time_str);
@@ -261,7 +261,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	if (sent && (folder_type != TNY_FOLDER_TYPE_DRAFTS)&&
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
 		
-		date_time_str = modest_datetime_formatter_display_datetime (datetime_formatter, 
+		date_time_str = modest_datetime_formatter_display_long_datetime (datetime_formatter, 
 									    sent);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_sent"),
 						date_time_str);

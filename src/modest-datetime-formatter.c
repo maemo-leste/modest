@@ -279,6 +279,22 @@ modest_datetime_formatter_format_time (ModestDatetimeFormatter *self,
 }
 
 const gchar *
+modest_datetime_formatter_display_long_datetime (ModestDatetimeFormatter *self,
+						 time_t date)
+{
+
+#define DATE_BUF_DOUBLE_SIZE 128 
+
+	static gchar date_buf[DATE_BUF_DOUBLE_SIZE];
+	
+	snprintf (date_buf, DATE_BUF_DOUBLE_SIZE, 
+		  "%s %s", modest_datetime_formatter_format_date (self, date), 
+		  modest_datetime_formatter_format_time (self, date));
+
+	return date_buf;
+}
+
+const gchar *
 modest_datetime_formatter_display_datetime (ModestDatetimeFormatter *self,
 					    time_t date)
 {
