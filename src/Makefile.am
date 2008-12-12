@@ -79,6 +79,8 @@ libmodest_la_SOURCES=\
 	modest-conf.c \
 	modest-count-stream.c \
 	modest-count-stream.h \
+	modest-datetime-formatter.c \
+	modest-datetime-formatter.h \
 	modest-debug.h \
 	modest-defs.h \
 	modest-dimming-rule.c \
