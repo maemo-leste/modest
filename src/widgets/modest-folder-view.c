@@ -631,6 +631,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 
 	/* Remote folders should not be treated as special folders */
 	if (TNY_IS_FOLDER_STORE (instance) &&
+	    !TNY_IS_ACCOUNT (instance) &&
 	    type != TNY_FOLDER_TYPE_INBOX &&
 	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
 		return get_composite_icons (MODEST_FOLDER_ICON_NORMAL,
