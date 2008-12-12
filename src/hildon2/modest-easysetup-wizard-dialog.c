@@ -71,7 +71,8 @@ G_DEFINE_TYPE (ModestEasysetupWizardDialog, modest_easysetup_wizard_dialog, MODE
    						    MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, \
 						    ModestEasysetupWizardDialogPrivate))
 
-#define LABELS_WIDTH -1
+#define LABELS_WIDTH 480
+#define DIALOG_WIDTH LABELS_WIDTH + MODEST_MARGIN_DOUBLE
 
 typedef struct _ModestEasysetupWizardDialogPrivate ModestEasysetupWizardDialogPrivate;
 
@@ -295,6 +296,7 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is not truncated: */
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
@@ -956,7 +958,8 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
-	GtkWidget *button_edit = gtk_button_new_with_label (_("mcen_bd_edit"));
+	GtkWidget *button_edit = gtk_button_new_with_label (_("mcen_fi_advanced_settings"));
+	hildon_gtk_widget_set_theme_size (button_edit, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
@@ -964,18 +967,14 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (label);
 	
 	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
-	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_widget_show (label);
 	
-	GtkWidget *caption = modest_maemo_utils_create_captioned (NULL, NULL,
-								  _("mcen_fi_advanced_settings"), 
-								  button_edit);
 	gtk_widget_show (button_edit);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	g_signal_connect (G_OBJECT (button_edit), "clicked", 
 			  G_CALLBACK (on_button_edit_advanced_settings), self);
@@ -1169,6 +1168,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Create the notebook to be used by the ModestWizardDialog base class:
 	 * Each page of the notebook will be a page of the wizard: */
 	GtkNotebook *notebook = GTK_NOTEBOOK (gtk_notebook_new());
+	gtk_widget_set_size_request (GTK_WIDGET (notebook), DIALOG_WIDTH, -1);
 	
 	/* Set the notebook used by the ModestWizardDialog base class: */
 	g_object_set (G_OBJECT(self), "wizard-notebook", notebook, NULL);

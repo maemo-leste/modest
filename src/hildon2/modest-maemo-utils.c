@@ -341,11 +341,12 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 	GtkWidget *box;
   
 	label = gtk_label_new (title);
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	hildon_gtk_widget_set_theme_size (label, HILDON_SIZE_FINGER_HEIGHT);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	gtk_widget_show (label);
-	box = gtk_hbox_new (TRUE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, MODEST_MARGIN_HALF);
+	box = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, MODEST_MARGIN_HALF);
 	if (title_size_group)
 		gtk_size_group_add_widget (title_size_group, label);
@@ -381,7 +382,7 @@ modest_maemo_utils_set_hbutton_layout (GtkSizeGroup *title_sizegroup,
 	if (title_sizegroup)
 		hildon_button_add_title_size_group (HILDON_BUTTON (button), title_sizegroup);
 	if (value_sizegroup)
-		hildon_button_add_title_size_group (HILDON_BUTTON (button), value_sizegroup);
+		hildon_button_add_value_size_group (HILDON_BUTTON (button), value_sizegroup);
 	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 0.0);
 	hildon_button_set_title_alignment (HILDON_BUTTON (button), 0.0, 0.5);
 	hildon_button_set_value_alignment (HILDON_BUTTON (button), 0.0, 0.5);
