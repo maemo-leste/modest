@@ -42,6 +42,7 @@
 #include <modest-tny-folder.h>
 #include <modest-tny-account.h>
 #include <modest-text-utils.h>
+#include <modest-datetime-formatter.h>
 #include <string.h> /* for strlen */
 
 static void    modest_details_dialog_set_header_default          (ModestDetailsDialog *self,
@@ -200,8 +201,10 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	gchar *size_s;
 	TnyFolder *folder;
 	TnyFolderType folder_type;
-#define DATE_TIME_BUFFER_SIZE 128
-	gchar date_time_buffer [DATE_TIME_BUFFER_SIZE];
+	ModestDatetimeFormatter *datetime_formatter;
+	const gchar *date_time_str;
+
+	datetime_formatter = modest_datetime_formatter_new ();
 	
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_message_properties"));
@@ -239,29 +242,29 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	if (received && (folder_type != TNY_FOLDER_TYPE_SENT) &&
 	    (folder_type != TNY_FOLDER_TYPE_DRAFTS) &&
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
+		date_time_str = modest_datetime_formatter_display_datetime (datetime_formatter, 
+									    received);
 		
-		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
-					    received);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_received"),
-						date_time_buffer);
+						date_time_str);
 	}
 
 	/* for drafts (created) */
 	if (folder_type == TNY_FOLDER_TYPE_DRAFTS) {
- 		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
-					    received);
+		date_time_str = modest_datetime_formatter_display_datetime (datetime_formatter, 
+									    received);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_created"),
-						date_time_buffer);
+						date_time_str);
 	}
 
 	/* for everyting except outbox, drafts: Sent */
 	if (sent && (folder_type != TNY_FOLDER_TYPE_DRAFTS)&&
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
 		
-		modest_text_utils_strftime (date_time_buffer, DATE_TIME_BUFFER_SIZE, "%x %X",
-					    sent);
+		date_time_str = modest_datetime_formatter_display_datetime (datetime_formatter, 
+									    sent);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_sent"),
-						date_time_buffer);
+						date_time_str);
 	}
 	
 	/* Set To and CC */
@@ -280,6 +283,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	g_free (size_s);
 
 	/* Frees */
+	g_object_unref (datetime_formatter);
 	g_free (to);
 	g_free (from);
 	g_free (subject);
