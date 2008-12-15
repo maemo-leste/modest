@@ -88,7 +88,7 @@
 #define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         "general_foldertree"
 #define  MODEST_TOOLBAR_ICON_SORT               "general_sort"
 #define  MODEST_TOOLBAR_ICON_REFRESH            "general_refresh"
-#define  MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER     "filemanager_move_to_folder"
+#define  MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER     "general_move_to_folder"
 #define  MODEST_TOOLBAR_ICON_BOLD               "general_bold"
 #define  MODEST_TOOLBAR_ICON_ITALIC             "general_italic"
 #define  MODEST_TOOLBAR_ICON_NEXT               "general_forward"
