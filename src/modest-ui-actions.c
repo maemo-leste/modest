@@ -1608,7 +1608,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win, (ModestWindow *) rf_helper->parent_window);
 
-	if (rf_helper->parent_window != NULL) {
+	if (MODEST_IS_WINDOW (rf_helper->parent_window)) {
 		gdouble parent_zoom;
 
 		parent_zoom = modest_window_get_zoom (MODEST_WINDOW (rf_helper->parent_window));

@@ -334,6 +334,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	HildonProgram *program;
 	GtkWidget *current_top;
 	HildonWindowStack *stack;
+	gboolean nested_msg = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
@@ -360,15 +361,15 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
 	current_top = hildon_window_stack_peek (stack);
+	nested_msg = MODEST_IS_MSG_VIEW_WINDOW (window) && 
+		MODEST_IS_MSG_VIEW_WINDOW (parent);
 
-	/* Close views if they're being shown */
-	if (MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
-	    MODEST_IS_MSG_VIEW_WINDOW (current_top)) {
+	/* Close views if they're being shown. Nevertheless we must
+	   allow nested messages */
+	if (!nested_msg &&
+	    (MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
+	     MODEST_IS_MSG_VIEW_WINDOW (current_top))) {
 		gboolean retval;
-
-		/* TODO: allow nested messages, maybe we should add
-		   something to the msg view when it's showing an
-		   email sent as attachment */
 
 		/* If the current view has modal dialogs then
 		   we fail to register the new view */
