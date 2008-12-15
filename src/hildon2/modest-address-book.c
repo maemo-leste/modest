@@ -190,7 +190,6 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	osso_abook_contact_selector_set_minimum_selection (OSSO_ABOOK_CONTACT_SELECTOR (contact_view), 1);
 
 	contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
-	gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
 	toplevel = gtk_widget_get_toplevel (GTK_WIDGET (recpt_editor));
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (contact_dialog), GTK_WINDOW (toplevel));
 
@@ -212,7 +211,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 		contacts_list = osso_abook_contact_chooser_get_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_chooser));
 	gtk_widget_destroy (contact_chooser);
 #endif
-	
+
 	if (contacts_list) {
 		GList *node;
 
@@ -880,10 +879,9 @@ select_contacts_for_name_dialog (const gchar *name)
 		GtkWidget *contact_view = NULL;
 		osso_abook_tree_model_set_book_view (OSSO_ABOOK_TREE_MODEL (contact_model), book_view);
 		e_book_view_start (book_view);
-		
+
 		contact_view = osso_abook_contact_selector_new_basic (contact_model);
 		contact_dialog = osso_abook_select_dialog_new (OSSO_ABOOK_TREE_VIEW (contact_view));
-		gtk_window_set_title (GTK_WINDOW (contact_dialog), _("mcen_ti_select_recipients"));
 
 		if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK) {
 			result = osso_abook_contact_view_get_selection (OSSO_ABOOK_CONTACT_VIEW (contact_view));
@@ -920,7 +918,7 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 	GList *resolved_contacts;
 	guint banner_timeout;
 	GtkWidget *banner = NULL;
-	
+
 	banner_timeout = g_timeout_add (500, show_check_names_banner, &banner);
 
 	contact_model = osso_abook_contact_model_new ();
