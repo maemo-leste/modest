@@ -80,7 +80,7 @@ static void   modest_protocol_registry_instance_init (ModestProtocolRegistry *ob
 static GHashTable *   modest_protocol_registry_create_tag (ModestProtocolRegistry *obj, const gchar *tag);
 
 /* translation handlers */
-static gchar * translation_is_userdata (gpointer userdata, ...);
+static gchar * translation_is_userdata (gpointer userdata, va_list args);
 
 typedef struct _ModestProtocolRegistryPrivate ModestProtocolRegistryPrivate;
 struct _ModestProtocolRegistryPrivate {
@@ -395,21 +395,20 @@ modest_protocol_registry_create_tag (ModestProtocolRegistry *self, const gchar *
 }
 
 static gchar * 
-translation_is_userdata (gpointer userdata, ...)
+translation_is_userdata (gpointer userdata, va_list args)
 {
-	va_list args, dest;
+	va_list dest;
 	gchar *result;
 
-	va_start(args, userdata);
-	va_copy (dest, args);
-	result = g_strdup_printf (_(userdata), dest);
-	va_end (args);
+	G_VA_COPY (dest, args);
+	result = g_strdup_vprintf (_(userdata), dest);
+	va_end (dest);
 
 	return result;
 }
 
 static gchar * 
-translation_is_userdata_no_param (gpointer userdata, ...)
+translation_is_userdata_no_param (gpointer userdata, va_list args)
 {
 	gchar *result;
 

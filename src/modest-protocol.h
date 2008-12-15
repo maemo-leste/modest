@@ -48,7 +48,7 @@ G_BEGIN_DECLS
 
 #define MODEST_PROTOCOL_TYPE_INVALID -1
 
-typedef gchar * (*TranslationFunc) (gpointer userdata, ...);
+typedef gchar * (*TranslationFunc) (gpointer userdata, va_list args);
 
 typedef struct _ModestProtocol      ModestProtocol;
 typedef struct _ModestProtocolClass ModestProtocolClass;
