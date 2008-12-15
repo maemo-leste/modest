@@ -361,40 +361,27 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 
 	current_top = hildon_window_stack_peek (stack);
 
-	/* TODO: rethink this method it will be different depending on
-	   the type of the window that we're registering */
-	if (!parent || ((GtkWidget *) parent != current_top)) {
-		guint num_windows = hildon_window_stack_size (stack);
+	/* Close views if they're being shown */
+	if (MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
+	    MODEST_IS_MSG_VIEW_WINDOW (current_top)) {
+		gboolean retval;
 
-		/* We have to close all windows with the exception of the root window */
-		if (num_windows > 1)
-			hildon_window_stack_pop (stack, num_windows - 1, NULL);
+		/* TODO: allow nested messages, maybe we should add
+		   something to the msg view when it's showing an
+		   email sent as attachment */
 
-		/* We remove 1 because we added it before */
-		if (modest_window_mgr_num_windows (MODEST_WINDOW_MGR (self)) - 1> 1) {
-			/* Then we couldn't close one of the preceding windows, so we have to stop the 
-			 * window register process and fail.
-			 */
-			goto fail;
-		}
-
-		if ((current_top != NULL) && !MODEST_IS_MAIN_WINDOW (current_top)) {
-			gboolean retval;
-			g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
-			if (retval == TRUE) {
-				/* Cancelled closing top window, then we fail to register */
-				goto fail;
-			}
-			current_top = hildon_window_stack_peek (stack);
-		}
-		if ((current_top != NULL) && !MODEST_IS_MAIN_WINDOW (current_top)) {
-			/* Closing the stacked windows failed, then we shouldn't show the
-			   new window */
-			goto fail;
-		}
-		if ((current_top != NULL) && 
+		/* If the current view has modal dialogs then
+		   we fail to register the new view */
+		if ((current_top != NULL) &&
 		    window_has_modals (MODEST_WINDOW (current_top))) {
 			/* Window on top but it has opened dialogs */
+			goto fail;
+		}
+
+		/* Close the current view */
+		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+		if (retval == TRUE) {
+			/* Cancelled closing top window, then we fail to register */
 			goto fail;
 		}
 	}

@@ -772,7 +772,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	allowed_size = MODEST_MAX_ATTACHMENT_SIZE;
 	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
 
-	if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win, NULL)) {
+	if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win, win)) {
 		gtk_widget_destroy (GTK_WIDGET (msg_win));
 		goto cleanup;
 	}
