@@ -189,7 +189,6 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	TnyHeaderFlags flags;
 	guint date, date_col;
 	gboolean received = GPOINTER_TO_INT(user_data);
-	ModestHeaderView *header_view;
 
 	if (received)
 		date_col = TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN;
@@ -200,11 +199,17 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    date_col, &date,
 			    -1);
-	
+
+#if GTK_CHECK_VERSION (2, 12, 0)
+	ModestHeaderView *header_view;
 	header_view = MODEST_HEADER_VIEW (gtk_tree_view_column_get_tree_view (column));
-	set_cell_text (renderer, 
+	set_cell_text (renderer,
 		       _modest_header_view_get_display_date (header_view, date),
 		       flags, RENDER_CELL_STYLE_DEFAULT);
+#else
+	set_cell_text (renderer, modest_text_utils_get_display_date (date),
+ 		       flags, RENDER_CELL_STYLE_DEFAULT);
+#endif
 }
 
 void
@@ -261,14 +266,11 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		*recipient_box, *subject_box = NULL;
 	TnyHeader *msg_header = NULL;
 	TnyHeaderFlags prio = 0;
-	ModestHeaderView *header_view;
 
 
 	g_return_if_fail (GTK_IS_TREE_VIEW_COLUMN (column));
 	g_return_if_fail (GTK_IS_CELL_RENDERER (renderer));
 	g_return_if_fail (GTK_IS_TREE_MODEL (tree_model));
-
-	header_view = MODEST_HEADER_VIEW (gtk_tree_view_column_get_tree_view (column));
 
 #ifdef MAEMO_CHANGES
 #ifdef HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT
@@ -343,11 +345,19 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		
 		status_str = get_status_string (status);
 		set_cell_text (date_or_status_cell, status_str, flags, RENDER_CELL_STYLE_GREY);
-	} else {		
-		set_cell_text (date_or_status_cell, date ? _modest_header_view_get_display_date (header_view, date) : "",
+	} else {
+#if GTK_CHECK_VERSION (2, 12, 0)
+		ModestHeaderView *header_view;
+		header_view = MODEST_HEADER_VIEW (gtk_tree_view_column_get_tree_view (column));
+		set_cell_text (date_or_status_cell, 
+			       date ? _modest_header_view_get_display_date (header_view, date) : "",
 			       flags, RENDER_CELL_STYLE_GREY);
+#else
+		set_cell_text (date_or_status_cell, 
+			       date ? modest_text_utils_get_display_date (date) : "",
+ 			       flags, RENDER_CELL_STYLE_GREY);
+#endif
 	}
-	
 	if (msg_header != NULL)
 		g_object_unref (msg_header);
 }

@@ -31,10 +31,10 @@
 #include <modest-datetime-formatter.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <gconf/gconf-client.h>
-#include <glib/gi18n.h>
-#include <modest-text-utils.h>
 #include <gtk/gtkmarshal.h>
 #endif
+#include <glib/gi18n.h>
+#include "modest-text-utils.h"
 
 typedef enum {
 	DATETIME_FORMAT_12H,
@@ -116,7 +116,7 @@ modest_datetime_formatter_class_init (ModestDatetimeFormatterClass *klass)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestDatetimeFormatterClass, format_changed),
 			      NULL, NULL,
-			      gtk_marshal_VOID__VOID,
+			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
 }
 
