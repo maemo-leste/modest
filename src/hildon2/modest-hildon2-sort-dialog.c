@@ -374,7 +374,7 @@ modest_hildon2_sort_dialog_new (GtkWindow *parent)
 		gtk_window_set_transient_for(GTK_WINDOW(result), parent);
 
 	/* Set title */
-	gtk_window_set_title (GTK_WINDOW (result), _CS("ckdg_ti_sort"));
+	gtk_window_set_title (GTK_WINDOW (result), _HL("ckdg_ti_sort"));
 
 	return result;
 }
