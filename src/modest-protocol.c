@@ -358,9 +358,26 @@ modest_protocol_get_translation (ModestProtocol *self,
 				 const gchar *id,
 				 ...)
 {
+	va_list args;
+	gchar *result;
+
+	g_return_val_if_fail (MODEST_IS_PROTOCOL (self), NULL);
+
+	va_start (args, id);
+	result = modest_protocol_va_get_translation (self, id, args);
+	va_end (args);
+
+	return result;
+}
+
+gchar *
+modest_protocol_va_get_translation (ModestProtocol *self,
+				    const gchar *id,
+				    va_list args)
+{
 	ModestProtocolPrivate *priv;
 	ModestProtocolTranslation *translation;
-	va_list orig, dest;
+	va_list dest;
 	gchar *result;
 
 	g_return_val_if_fail (MODEST_IS_PROTOCOL (self), NULL);
@@ -372,10 +389,9 @@ modest_protocol_get_translation (ModestProtocol *self,
 		return NULL;
 	g_return_val_if_fail (translation->translation_func != NULL, NULL);
 
-	va_start (orig, id);
-	G_VA_COPY (dest, orig);
+	G_VA_COPY (dest, args);
 	result = translation->translation_func (translation->userdata, dest);
-	va_end (orig);
+	va_end (dest);
 
 	return result;
 }

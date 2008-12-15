@@ -182,6 +182,21 @@ modest_protocol_get_translation (ModestProtocol *protocol,
 				 const gchar *id,
 				 ...);
 
+/**
+ * modest_protocol_va_get_translation:
+ * @protocol: a @ModestProtocol
+ * @id: the id for the translation set
+ * @args: a @va_list of the parameters for the translation
+ *
+ * applies the translation with parameters to obtain the full string expected.
+ *
+ * Returns: a newly allocated string
+ */
+gchar *
+modest_protocol_va_get_translation (ModestProtocol *protocol,
+				    const gchar *id,
+				    va_list args);
+
 G_END_DECLS
 
 #endif /* __MODEST_PROTOCOL_H__ */
