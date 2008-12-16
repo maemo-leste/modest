@@ -206,6 +206,7 @@ modest_attachments_view_add_attachment (ModestAttachmentsView *attachments_view,
 		modest_attachment_view_set_size (MODEST_ATTACHMENT_VIEW (att_view), size);
 	gtk_box_pack_end (GTK_BOX (priv->box), att_view, FALSE, FALSE, 0);
 	gtk_widget_show_all (att_view);
+	gtk_widget_queue_resize (GTK_WIDGET (attachments_view));
 }
 
 void
@@ -257,6 +258,7 @@ modest_attachments_view_remove_attachment (ModestAttachmentsView *atts_view, Tny
 		own_clipboard (atts_view);
 	}
 
+	gtk_widget_queue_resize (GTK_WIDGET (atts_view));
 }
 
 void
@@ -287,6 +289,7 @@ modest_attachments_view_remove_attachment_by_id (ModestAttachmentsView *atts_vie
 
 	own_clipboard (atts_view);
 
+	gtk_widget_queue_resize (GTK_WIDGET (atts_view));
 }
 
 static void
