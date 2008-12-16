@@ -264,7 +264,7 @@ modest_datetime_formatter_format_time (ModestDatetimeFormatter *self,
 
 	switch (priv->current_format) {
 	case DATETIME_FORMAT_12H:
-		format_string = is_pm?_HL("wdgt_12h_time_pm"):_HL("wdgt_12h_time_am");
+		format_string = is_pm?_HL("wdgt_va_12h_time_pm"):_HL("wdgt_va_12h_time_am");
 		break;
 	case DATETIME_FORMAT_24H:
 		format_string = _HL("wdgt_va_24h_time");
