@@ -1,3 +1,10 @@
+modest (2.1-2008.51-3) unstable; urgency=low
+
+  * Fixes: NB#95888, NB#94245
+  * Week 51 - 2nd build with modest old ui to be sent to product queue.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 16 Dec 2008 16:27:37 +0200
+
 modest (2.1-2008.51-1) unstable; urgency=low
 
   * Fixes: NB#94581, NB#93037, NB#95233, NB#89657, NB#93398, NB#94069, NB#94076
