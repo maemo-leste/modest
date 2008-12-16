@@ -68,7 +68,7 @@ struct _ModestAttachmentViewPrivate
 };
 
 #ifdef MODEST_TOOLKIT_HILDON2
-#define UNKNOWN_FILE_ICON "filemanager_unknown_file_48"
+#define UNKNOWN_FILE_ICON "filemanager_unknown_file"
 #else
 #define UNKNOWN_FILE_ICON "qgn_list_gene_unknown_file"
 #endif
