@@ -814,9 +814,11 @@ init_window (ModestMsgEditWindow *obj)
 		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
 							       _("mail_va_subject"), subject_box);
-	priv->attachments_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-									 _("mail_va_attachment"), 
-									 priv->attachments_view);
+	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
+											_("mail_va_attachment"), 
+											priv->attachments_view,
+											HILDON_SIZE_AUTO_WIDTH |
+											HILDON_SIZE_AUTO_HEIGHT);
 	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->to_field), value_size_group); */
 	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), value_size_group); */
 	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), value_size_group); */
