@@ -203,7 +203,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 #else /* MODEST_ABOOK_API < 4 */
 	/* TODO: figure out how to make the contact chooser modal */
 	contact_chooser = osso_abook_contact_chooser_new_with_capabilities (NULL,
-									    _("mcen_me_editor_selectrecipients"),
+									    _AB("addr_ti_dia_select_contacts"),
 									    OSSO_ABOOK_CAPS_EMAIL, 
 									    OSSO_ABOOK_CONTACT_ORDER_NAME);
 	/* Enable multiselection */
@@ -896,8 +896,8 @@ select_contacts_for_name_dialog (const gchar *name)
 
 		/* TODO: figure out how to make the contact chooser modal */
 		contact_dialog = osso_abook_contact_chooser_new_with_capabilities (NULL,
-										   _("mcen_me_editor_selectrecipients"),
-										   OSSO_ABOOK_CAPS_EMAIL, 
+										   _AB("addr_ti_dia_select_contacts"),
+										   OSSO_ABOOK_CAPS_EMAIL,
 										   OSSO_ABOOK_CONTACT_ORDER_NAME);
 
 		osso_abook_contact_chooser_set_model (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),

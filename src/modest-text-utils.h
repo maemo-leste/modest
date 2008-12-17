@@ -43,6 +43,7 @@
 #define _CS(str) dgettext("hildon-common-strings",str)
 #define _HL(str) dgettext("hildon-libs",str)
 #define _MD(str) dgettext("maemo-af-desktop",str)
+#define _AB(str) dgettext("osso-addressbook",str)
 
 /* Forbidden char arrays */
 extern const gchar account_title_forbidden_chars[];
