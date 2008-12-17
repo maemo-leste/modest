@@ -397,7 +397,30 @@ current_connection (void)
 	return modest_platform_get_current_connection ();
 }
 
-static ModestPairList * 
+static gint
+order_by_acc_name (gconstpointer a,
+		   gconstpointer b)
+{
+	ModestPair *pair_a, *pair_b;
+
+	pair_a = (ModestPair *) a;
+	pair_b = (ModestPair *) b;
+
+	if (pair_a->second && pair_b->second) {
+		gint compare = g_utf8_collate ((gchar *) pair_a->second,
+					       (gchar *) pair_b->second);
+		if (compare > 0)
+			compare = -1;
+		else if (compare < 0)
+			compare = 1;
+
+		return compare;
+	} else {
+		return 0;
+	}
+}
+
+static ModestPairList *
 get_accounts_list (void)
 {
 	GSList *list = NULL;
@@ -411,9 +434,9 @@ get_accounts_list (void)
 		gchar *account_name;
 		ModestAccountSettings *settings;
 		ModestServerAccountSettings *store_settings;
-		
+
 		account_name = (gchar*)cursor->data;
-		
+
 		settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
 		if (!settings) {
 			g_printerr ("modest: failed to get account data for %s\n", account_name);
@@ -431,7 +454,7 @@ get_accounts_list (void)
 					g_strdup (account_name),
 					g_strdup (modest_account_settings_get_display_name (settings)),
 					FALSE);
-				list = g_slist_prepend (list, pair);
+				list = g_slist_insert_sorted (list, pair, order_by_acc_name);
 			}
 		}
 

@@ -365,10 +365,10 @@ commit_contact(EContact * contact, gboolean is_new)
 {
 	g_return_if_fail (contact);
 	g_return_if_fail (book);
-	
+
 	if (!contact || !book)
 		return;
-	
+
 #if MODEST_ABOOK_API < 4
 	osso_abook_contact_commit(contact, is_new, book);
 #else
