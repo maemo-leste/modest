@@ -42,7 +42,6 @@ INCLUDES=\
 	-I ${top_srcdir}/src                \
 	-DPREFIX=\"@prefix@\" 	            \
 	-DMAEMO_CHANGES                     \
-	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-Wall
 
@@ -113,14 +112,6 @@ libmodest_ui_la_LIBADD = \
 	$(MODEST_LIBALARM_LIBS)   \
 	$(MODEST_HILDON_NOTIFY_LIBS)
 
-PIXMAP_FILES=\
-	pixmaps/*.png 
-
-pixmapdir = $(datadir)/pixmaps/modest
-pixmap_DATA = $(PIXMAP_FILES)
-
-
-
 UI_FILES=\
 	ui/modest-main-window-ui.xml \
 	ui/modest-msg-edit-window-ui.xml \
@@ -132,8 +123,6 @@ ui_DATA = $(UI_FILES)
 serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
-
-icon_26x26_DATA     = pixmaps/modest-icon.png
 
 # mcc_mapping may be provided by the operator-wizard-settings package:
 # the one here is a copy, as that package is not available in chinook
@@ -151,6 +140,5 @@ EXTRA_DIST=\
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
 	$(backupsettings_DATA) \
-	$(icon_26x26_DATA)     \
 	$(MMC_MAPPING_FILE)    \
 	$(PROVIDER_DATA_FILE)
