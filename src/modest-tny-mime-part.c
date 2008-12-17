@@ -217,6 +217,10 @@ modest_tny_mime_part_get_headers_content_type (TnyMimePart *part)
 	g_return_val_if_fail (TNY_IS_MIME_PART (part), NULL);
 
 	header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
+
+	if (!header_content_type)
+		return NULL;
+
 	header_content_type = g_strstrip (header_content_type);
 
 	/* remove the ; suffix */
