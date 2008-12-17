@@ -1493,6 +1493,15 @@ modest_ui_actions_on_open (GtkAction *action, ModestWindow *win)
 	g_object_unref(headers);
 }
 
+static void
+rf_helper_window_closed (gpointer data,
+			 GObject *object)
+{
+	ReplyForwardHelper *helper = (ReplyForwardHelper *) data;
+
+	helper->parent_window = NULL;
+}
+
 static ReplyForwardHelper*
 create_reply_forward_helper (ReplyForwardAction action, 
 			     ModestWindow *win,
@@ -1511,6 +1520,13 @@ create_reply_forward_helper (ReplyForwardAction action,
 		g_strdup (active_acc) :
 		modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 
+	/* Note that window could be destroyed just AFTER calling
+	   register_window so we must ensure that this pointer does
+	   not hold invalid references */
+	if (rf_helper->parent_window)
+		g_object_weak_ref (G_OBJECT (rf_helper->parent_window), 
+				   rf_helper_window_closed, rf_helper);
+
 	return rf_helper;
 }
 
@@ -1523,6 +1539,9 @@ free_reply_forward_helper (gpointer data)
 	g_free (helper->account_name);
 	if (helper->header)
 		g_object_unref (helper->header);
+	if (helper->parent_window) 
+		g_object_weak_unref (G_OBJECT (helper->parent_window), 
+				     rf_helper_window_closed, helper);
 	g_slice_free (ReplyForwardHelper, helper);
 }
 
@@ -1721,9 +1740,9 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 {
 	ReplyForwardHelper *rf_helper = NULL;
 	guint reply_forward_type;
-	
+
 	g_return_if_fail (MODEST_IS_WINDOW(win));
-			
+
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * reply/forward (because it could potentially require a lot of memory */
 	if (modest_platform_check_memory_low (MODEST_WINDOW(win), TRUE))
@@ -1735,10 +1754,10 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		if (!modest_ui_actions_run_account_setup_wizard (win))
 			return;
 	}
-	
+
 	reply_forward_type =
 		modest_conf_get_int (modest_runtime_get_conf (),
-				     (action == ACTION_FORWARD) ? 
+				     (action == ACTION_FORWARD) ?
 				     MODEST_CONF_FORWARD_TYPE :
 				     MODEST_CONF_REPLY_TYPE,
 				     NULL);
@@ -1753,13 +1772,13 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 		if (msg && header) {
 			/* Create helper */
-			rf_helper = create_reply_forward_helper (action, win, 
+			rf_helper = create_reply_forward_helper (action, win,
 								 reply_forward_type, header);
 			reply_forward_cb (NULL, header, FALSE, msg, NULL, rf_helper);
 		} else {
 			g_warning("%s: no message or header found in viewer\n", __FUNCTION__);
 		}
-		
+
 		if (msg)
 			g_object_unref (msg);
  		if (header)
@@ -1809,19 +1828,19 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				/* Allways download if we are online. */
 				if (!tny_device_is_online (modest_runtime_get_device ())) {
 					gint response;
-					
+
 					/* If ask for user permission to download the messages */
 					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
 											    ngettext("mcen_nc_get_msg",
 												     "mcen_nc_get_msgs",
 												     uncached_msgs));
-					
+
 					/* End if the user does not want to continue */
 					if (response == GTK_RESPONSE_CANCEL)
 						download = FALSE;
 				}
 			}
-			
+
 			if (download) {
 				/* Create helper */
 				rf_helper = create_reply_forward_helper (action, win, 
