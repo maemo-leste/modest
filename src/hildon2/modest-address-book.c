@@ -467,8 +467,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 	add_email_addr_to_contact_dlg =
 	    gtk_dialog_new_with_buttons(_("mcen_ti_add_email_title"), NULL,
 					GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-					_("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT,
-					_("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT, NULL);
+					_HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
 	gtk_dialog_set_has_separator(GTK_DIALOG(add_email_addr_to_contact_dlg), FALSE);
 	/*Set app_name & state_save related tags to the window */
 
@@ -557,8 +556,7 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	    gtk_dialog_new_with_buttons(_("mcen_ti_select_email_title"),
 					NULL,
 					GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-					_("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT,
-					_("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT, NULL);
+					_HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
 	gtk_dialog_set_has_separator(GTK_DIALOG(select_email_addr_dlg), FALSE);
 
 	/* Make the window approximately big enough, because it doesn't resize to be big enough 
