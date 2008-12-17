@@ -206,6 +206,9 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 									    _("mcen_me_editor_selectrecipients"),
 									    OSSO_ABOOK_CAPS_EMAIL, 
 									    OSSO_ABOOK_CONTACT_ORDER_NAME);
+	/* Enable multiselection */
+	osso_abook_contact_chooser_set_maximum_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_chooser),
+							  G_MAXUINT);
 
 	if (gtk_dialog_run (GTK_DIALOG (contact_chooser)) == GTK_RESPONSE_OK)
 		contacts_list = osso_abook_contact_chooser_get_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_chooser));
@@ -898,6 +901,7 @@ select_contacts_for_name_dialog (const gchar *name)
 										   _("mcen_me_editor_selectrecipients"),
 										   OSSO_ABOOK_CAPS_EMAIL, 
 										   OSSO_ABOOK_CONTACT_ORDER_NAME);
+
 		osso_abook_contact_chooser_set_model (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
 						      contact_model);
 
