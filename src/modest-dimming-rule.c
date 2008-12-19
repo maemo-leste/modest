@@ -187,7 +187,18 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 		else
 			g_printerr ("modest: action path '%s' has not associatd action\n", priv->action_path);
 	} else if (priv->widget != NULL) {
+#ifdef MODEST_TOOLKIT_HILDON2
+		if (GTK_IS_TOOL_ITEM (priv->widget)) {
+			gtk_widget_set_sensitive (priv->widget, !dimmed);
+		} else {
+			if (dimmed)
+				gtk_widget_hide (priv->widget);
+			else
+				gtk_widget_show (priv->widget);
+		}
+#else
 		gtk_widget_set_sensitive (priv->widget, !dimmed);
+#endif
 	}
 }
 

@@ -162,6 +162,8 @@ if test "$have_hildon1" = "true"; then
    if test "$have_hildon2" = "true"; then
       echo "DETECTED HILDON 2 $have_hildon2."
       detected_toolkit=hildon2
+      hildonpkgs="$hildonpkgs libcanberra profile"
+      echo "HILDON 2 PACKAGES $hildonpkgs"
    fi
 else
    hildonpkgs="hildon-libs hildon-fm"

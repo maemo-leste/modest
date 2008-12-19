@@ -342,7 +342,7 @@ update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 		domain_name = g_strdup (MODEST_EXAMPLE_EMAIL_ADDRESS);
 		
 	if (priv->entry_user_email)
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), domain_name);
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_email), domain_name);
 		
 	g_free (domain_name);
 	
@@ -428,7 +428,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_free (default_account_name_start);
 	default_account_name_start = NULL;
 	
-	gtk_entry_set_text( GTK_ENTRY (priv->entry_account_title), default_account_name);
+	hildon_entry_set_text (HILDON_ENTRY (priv->entry_account_title), default_account_name);
 	g_free (default_account_name);
 	default_account_name = NULL;
 
@@ -546,7 +546,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 					      on_entry_max, self);
 	
 	/* The password widgets: */	
-	priv->entry_user_password = gtk_entry_new ();
+	priv->entry_user_password = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
@@ -739,7 +739,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->incoming_servertype_picker);
 	
-	priv->entry_incomingserver = gtk_entry_new ();
+	priv->entry_incomingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	g_signal_connect(G_OBJECT(priv->entry_incomingserver), "changed", G_CALLBACK(on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
@@ -856,7 +856,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	 
 	/* The outgoing server widgets: */
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	priv->entry_outgoingserver = gtk_entry_new ();
+	priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	g_signal_connect (G_OBJECT (priv->entry_outgoingserver), "changed",
                   G_CALLBACK (on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
@@ -1527,13 +1527,13 @@ set_default_custom_servernames (ModestEasysetupWizardDialog *self)
 
 		/* This could happen when the combo box has still no active iter */
 		if (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
-			const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(priv->entry_user_email));	
+			const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY(priv->entry_user_email));	
 			gchar* servername = util_get_default_servername_from_email_address (email_address, 
 											    protocol_type);
 
 			/* Do not set the INCOMING_CHANGED flag because of this edit */
 			g_signal_handlers_block_by_func (G_OBJECT (priv->entry_incomingserver), G_CALLBACK (on_entry_incoming_servername_changed), self);
-			gtk_entry_set_text (GTK_ENTRY (priv->entry_incomingserver), servername);
+			hildon_entry_set_text (HILDON_ENTRY (priv->entry_incomingserver), servername);
 			g_signal_handlers_unblock_by_func (G_OBJECT (priv->entry_incomingserver), G_CALLBACK (on_entry_incoming_servername_changed), self);
 			
 			g_free (servername);
@@ -1548,13 +1548,13 @@ set_default_custom_servernames (ModestEasysetupWizardDialog *self)
 		
 	if (priv->entry_user_email
 	    && ((priv->server_changes & MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED) == 0)) {
-		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY(priv->entry_user_email));
+		const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY(priv->entry_user_email));
 		
 		gchar* servername = util_get_default_servername_from_email_address (email_address, MODEST_PROTOCOLS_TRANSPORT_SMTP);
 
 		/* Do not set the OUTGOING_CHANGED flag because of this edit */
 		g_signal_handlers_block_by_func (G_OBJECT (priv->entry_outgoingserver), G_CALLBACK (on_entry_outgoing_servername_changed), self);
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_outgoingserver), servername);
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_outgoingserver), servername);
 		g_signal_handlers_unblock_by_func (G_OBJECT (priv->entry_outgoingserver), G_CALLBACK (on_entry_outgoing_servername_changed), self);
 
 		g_free (servername);
@@ -1568,7 +1568,7 @@ get_entered_account_title (ModestEasysetupWizardDialog *self)
 	const gchar* account_title;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
-	account_title = gtk_entry_get_text (GTK_ENTRY (priv->entry_account_title));
+	account_title = hildon_entry_get_text (HILDON_ENTRY (priv->entry_account_title));
 
 	if (!account_title || (g_utf8_strlen (account_title, -1) == 0)) {
 		return NULL;
@@ -1630,7 +1630,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 
 	} else if (current_page == priv->page_user_details) {
 		/* Check that the email address is valud: */
-		const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_email));
+		const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_email));
 		if ((!email_address) || (g_utf8_strlen (email_address, -1) == 0))
 			return FALSE;
 			
@@ -1686,7 +1686,7 @@ static gboolean entry_is_empty (GtkWidget *entry)
 	if (!entry)
 		return FALSE;
 		
-	const gchar* text = gtk_entry_get_text (GTK_ENTRY (entry));
+	const gchar* text = hildon_entry_get_text (HILDON_ENTRY (entry));
 	if ((!text) || (g_utf8_strlen (text, -1) == 0))
 		return TRUE;
 	else {
@@ -1860,8 +1860,8 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	}
 
 	/* username and password (for both incoming and outgoing): */
-	username = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username));
-	password = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password));
+	username = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username));
+	password = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_password));
 
 	store_settings = modest_account_settings_get_store_settings (priv->settings);
 	transport_settings = modest_account_settings_get_transport_settings (priv->settings);
@@ -1920,7 +1920,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 			modest_server_account_settings_set_port (store_settings, store_port);
 	} else {
 		/* Use custom pages because no preset was specified: */
-		store_hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_incomingserver) ));		
+		store_hostname = g_strdup (hildon_entry_get_text (HILDON_ENTRY (priv->entry_incomingserver) ));		
 		store_protocol = modest_servertype_picker_get_active_servertype (
 			MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));		
 
@@ -1991,7 +1991,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 		registry = modest_runtime_get_protocol_registry ();
 		/* Use custom pages because no preset was specified: */
-		transport_hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver) ));
+		transport_hostname = g_strdup (hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver) ));
 
 		store_proto = modest_protocol_registry_get_protocol_by_type (registry, 
 									     store_protocol);
@@ -2018,8 +2018,8 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	g_object_unref (transport_settings);
 	g_free (transport_hostname);
 	
-	fullname = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_name));
-	email_address = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_email));
+	fullname = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_name));
+	email_address = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_email));
 	modest_account_settings_set_fullname (priv->settings, fullname);
 	modest_account_settings_set_email_address (priv->settings, email_address);
 	/* we don't set retrieve type to preserve advanced settings if

@@ -36,7 +36,7 @@
 
 /* icons */
 
-#define MODEST_APP_ICON				"general_mail"
+#define MODEST_APP_ICON				"general_email"
 #define MODEST_APP_MSG_VIEW_ICON		"email_message_viewer"
 #define MODEST_APP_MSG_EDIT_ICON		"email_message_editor"
 

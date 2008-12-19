@@ -83,6 +83,10 @@ ModestWindow* modest_header_window_new (TnyFolder *folder);
  */
 ModestHeaderView *modest_header_window_get_header_view (ModestHeaderWindow *self);
 
+gboolean  modest_header_window_toolbar_on_transfer_mode     (ModestHeaderWindow *self);
+gboolean  modest_header_window_transfer_mode_enabled (ModestHeaderWindow *self);
+
+
 G_END_DECLS
 
 #endif

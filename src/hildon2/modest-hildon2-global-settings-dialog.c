@@ -68,11 +68,11 @@ static ModestConnectedVia current_connection (void);
 
 static GtkWidget* create_updating_page   (ModestHildon2GlobalSettingsDialog *self);
 
-static gboolean   on_range_error         (HildonNumberEditor *editor, 
-					  HildonNumberEditorErrorType type,
+static gboolean   on_range_error         (ModestNumberEditor *editor, 
+					  ModestNumberEditorErrorType type,
 					  gpointer user_data);
 
-static void       on_size_notify         (HildonNumberEditor *editor, 
+static void       on_size_notify         (ModestNumberEditor *editor, 
 					  GParamSpec *arg1,
 					  gpointer user_data);
 
@@ -278,8 +278,8 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* Size limit */
-	ppriv->size_limit = hildon_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);
-	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);
+	ppriv->size_limit = modest_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);
+	modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);
 	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
 	g_signal_connect (ppriv->size_limit, "notify", G_CALLBACK (on_size_notify), self);
 	label = gtk_label_new (_("mcen_fi_advsetup_sizelimit"));
@@ -341,23 +341,23 @@ on_auto_update_clicked (GtkButton *button,
 	update_sensitive ((ModestGlobalSettingsDialog *) user_data);
 }
 static gboolean
-on_range_error (HildonNumberEditor *editor, 
-		HildonNumberEditorErrorType type,
+on_range_error (ModestNumberEditor *editor, 
+		ModestNumberEditorErrorType type,
 		gpointer user_data)
 {
 	gchar *msg;
 	gint new_val;
 
 	switch (type) {
-	case HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
+	case MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
 		new_val = MSG_SIZE_MAX_VAL;
 		break;
-	case HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
+	case MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
 		new_val = MSG_SIZE_MIN_VAL;
 		break;
-	case HILDON_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
+	case MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_set_a_value_within_range"), 
 				       MSG_SIZE_MIN_VAL, 
 				       MSG_SIZE_MAX_VAL);
@@ -369,7 +369,7 @@ on_range_error (HildonNumberEditor *editor,
 	}
 
 	/* Restore value */
-	hildon_number_editor_set_value (editor, new_val);
+	modest_number_editor_set_value (editor, new_val);
 
 	/* Show error */
 	hildon_banner_show_information (GTK_WIDGET (user_data), NULL, msg);
@@ -381,12 +381,12 @@ on_range_error (HildonNumberEditor *editor,
 }
 
 static void
-on_size_notify         (HildonNumberEditor *editor, 
+on_size_notify         (ModestNumberEditor *editor, 
 			GParamSpec *arg1,
 			gpointer user_data)
 {
 	ModestHildon2GlobalSettingsDialog *dialog = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG (user_data);
-	gint value = hildon_number_editor_get_value (editor);
+	gint value = modest_number_editor_get_value (editor);
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
 }
@@ -523,7 +523,7 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 	}
 	/* It's better to do this in the subclasses, but it's just one
 	   line, so we'll leave it here for the moment */
-	hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->size_limit), value);
+	modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->size_limit), value);
 	ppriv->initial_state.size_limit = value;
 
 	/* Play sound */

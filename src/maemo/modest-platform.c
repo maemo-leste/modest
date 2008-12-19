@@ -1460,7 +1460,7 @@ banner_finish (gpointer data, GObject *object)
 	g_object_unref (mgr);
 }
 
-void 
+void
 modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
@@ -1468,7 +1468,7 @@ modest_platform_information_banner (GtkWidget *parent,
 	GtkWidget *banner, *banner_parent = NULL;
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
-	if (modest_window_mgr_num_windows (mgr) == 0)
+	if (modest_window_mgr_get_num_windows (mgr) == 0)
 		return;
 
 	if (parent && GTK_IS_WINDOW (parent)) {
@@ -1478,7 +1478,7 @@ modest_platform_information_banner (GtkWidget *parent,
 			banner_parent = parent;
 		/* If the window is not the topmost but it's visible
 		   (it's minimized for example) then show the banner
-		   with no parent */ 
+		   with no parent */
 		else if (GTK_WIDGET_VISIBLE (parent))
 			banner_parent = NULL;
 		/* If the window is hidden (like the main window when
@@ -1504,7 +1504,7 @@ modest_platform_information_banner_with_timeout (GtkWidget *parent,
 {
 	GtkWidget *banner;
 
-	if (modest_window_mgr_num_windows (modest_runtime_get_window_mgr ()) == 0)
+	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0)
 		return;
 
 	banner = hildon_banner_show_information (parent, icon_name, text);
@@ -1520,7 +1520,7 @@ modest_platform_animation_banner (GtkWidget *parent,
 
 	g_return_val_if_fail (text != NULL, NULL);
 
-	if (modest_window_mgr_num_windows (modest_runtime_get_window_mgr ()) == 0)
+	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0)
 		return NULL;
 
 	/* If the parent is not visible then do not show */
@@ -2157,4 +2157,85 @@ osso_context_t *
 modest_platform_get_osso_context (void)
 {
 	return modest_maemo_utils_get_osso_context ();
+}
+
+GtkWidget* 
+modest_platform_create_move_to_dialog (GtkWindow *parent_window,
+				       GtkWidget **folder_view)
+{
+	GtkWidget *dialog, *folder_view_container;
+
+	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
+					      GTK_WINDOW (parent_window),
+					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
+					      GTK_DIALOG_DESTROY_WITH_PARENT,
+					      _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK,
+					      _("mcen_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
+					      _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL,
+	                                      NULL);
+
+	/* Create folder view */
+	*folder_view = modest_platform_create_folder_view (NULL);
+
+	/* Create pannable and add it to the dialog */
+	folder_view_container = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (folder_view_container),
+					 GTK_POLICY_AUTOMATIC,
+					 GTK_POLICY_AUTOMATIC);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), folder_view_container);
+	gtk_container_add (GTK_CONTAINER (folder_view_container), *folder_view);
+
+	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
+
+	gtk_widget_show (GTK_DIALOG (dialog)->vbox);
+	gtk_widget_show (folder_view_container);
+	gtk_widget_show (*folder_view);
+
+	return dialog;
+}
+
+
+TnyList *
+modest_platform_get_list_to_move (ModestWindow *window)
+{
+	TnyList *list = NULL;
+
+	/* If it's a main window then it could be that we're moving a
+	   folder or a set of messages */
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		ModestHeaderView *header_view = NULL;
+		ModestFolderView *folder_view = NULL;
+
+		folder_view = (ModestFolderView *)
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		header_view = (ModestHeaderView *)
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+
+		/* Get folder or messages to transfer */
+		if (gtk_widget_is_focus (GTK_WIDGET (folder_view))) {
+			TnyFolderStore *src_folder;
+
+			src_folder = modest_folder_view_get_selected (folder_view);
+			if (src_folder) {
+				list = tny_simple_list_new ();
+				tny_list_prepend (list, G_OBJECT (src_folder));
+				g_object_unref (src_folder);
+			}
+		} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
+			list = modest_header_view_get_selected_headers(header_view);
+		}
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		TnyHeader *header = NULL;
+
+		/* We simply return the currently viewed message */
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (window));
+		if (header) {
+			list = tny_simple_list_new ();
+			tny_list_prepend (list, G_OBJECT (header));
+			g_object_unref (header);
+		}
+	}
+	return list;
 }

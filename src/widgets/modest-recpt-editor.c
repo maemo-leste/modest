@@ -46,7 +46,7 @@
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifndef MODEST_TOOLKIT_GTK
-#include "maemo/modest-hildon-includes.h"
+#include "modest-hildon-includes.h"
 #endif /*!MODEST_TOOLKIT_GTK*/
 
 
@@ -135,7 +135,11 @@ modest_recpt_editor_set_recipients (ModestRecptEditor *recpt_editor, const gchar
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 
 	valid_recipients = create_valid_text (recipients, -1);
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
@@ -161,7 +165,11 @@ modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const gchar
 	if (recipients == NULL)
 		return;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 
 	if (gtk_text_buffer_get_char_count (buffer) > 0) {
 		string_to_add = g_strconcat (";\n", recipients, NULL);
@@ -196,7 +204,11 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 	gtk_text_buffer_get_bounds (buffer, &start, &end);
@@ -257,7 +269,11 @@ modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *recpt_ed
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 
 	gtk_text_buffer_delete (buffer, start, end);
@@ -306,7 +322,11 @@ modest_recpt_editor_get_recipients (ModestRecptEditor *recpt_editor)
 		priv->recipients = NULL;
 	}
 
+#ifdef MODEST_TOOKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 
 	gtk_text_buffer_get_start_iter (buffer, &start);
 	gtk_text_buffer_get_end_iter (buffer, &end);
@@ -337,13 +357,17 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	GTK_WIDGET_UNSET_FLAGS (priv->abook_button, GTK_CAN_FOCUS);
 	gtk_button_set_alignment (GTK_BUTTON (priv->abook_button), 1.0, 1.0);
 #ifdef MODEST_TOOLKIT_HILDON2
-	abook_icon = gtk_image_new_from_icon_name ("general_contacts", GTK_ICON_SIZE_BUTTON);
+	abook_icon = gtk_image_new_from_icon_name ("general_contacts", HILDON_ICON_SIZE_FINGER);
 #else
 	abook_icon = gtk_image_new_from_icon_name ("qgn_list_addressbook", GTK_ICON_SIZE_BUTTON);
 #endif
 	gtk_container_add (GTK_CONTAINER (priv->abook_button), abook_icon);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	priv->text_view = hildon_text_view_new ();
+#else
 	priv->text_view = gtk_text_view_new ();
+#endif
 	/* Auto-capitalization is the default, so let's turn it off: */
 #ifdef MAEMO_CHANGES
 	hildon_gtk_text_view_set_input_mode (GTK_TEXT_VIEW (priv->text_view), 
@@ -376,7 +400,11 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	gtk_widget_set_size_request (priv->text_view, 75, -1);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 	g_signal_connect (G_OBJECT (priv->abook_button), "clicked", G_CALLBACK (modest_recpt_editor_on_abook_clicked), instance);
 	g_signal_connect (G_OBJECT (priv->text_view), "button-release-event", G_CALLBACK (modest_recpt_editor_on_button_release_event), instance);
 	g_signal_connect (G_OBJECT (priv->text_view), "key-press-event", G_CALLBACK (modest_recpt_editor_on_key_press_event), instance);
@@ -412,7 +440,11 @@ modest_recpt_editor_get_buffer (ModestRecptEditor *recpt_editor)
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), NULL);
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	return hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	return gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 }
 
 static void
@@ -715,7 +747,11 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	GtkTextIter location, selection_loc;
 	GtkTextTag *tag;
      
+#ifdef MODEST_TOOLKIT_HILDON2
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (text_view));
+#else
 	buffer = gtk_text_view_get_buffer (text_view);
+#endif
 	insert = gtk_text_buffer_get_insert (buffer);
 	selection = gtk_text_buffer_get_selection_bound (buffer);
 
@@ -872,7 +908,11 @@ static void
 modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor)
 {
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
+#else
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
+#endif
 	GtkTextIter start, end;
 
 	gtk_text_buffer_get_end_iter (buffer, &start);

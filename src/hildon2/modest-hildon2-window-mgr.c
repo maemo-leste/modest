@@ -28,6 +28,7 @@
  */
 
 #include <string.h>
+#include <hildon/hildon.h>
 #include "modest-hildon2-window-mgr.h"
 #include "modest-msg-edit-window.h"
 #include "modest-main-window.h"
@@ -39,7 +40,8 @@
 #include "modest-ui-actions.h"
 #include "modest-debug.h"
 #include "modest-tny-folder.h"
-#include <hildon/hildon.h>
+#include "modest-folder-window.h"
+#include "modest-accounts-window.h"
 
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass);
@@ -74,19 +76,20 @@ static GList *modest_hildon2_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *self);
 static gboolean window_can_close (ModestWindow *window);
 static gboolean window_has_modals (ModestWindow *window);
+static ModestWindow *modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self);
 
 typedef struct _ModestHildon2WindowMgrPrivate ModestHildon2WindowMgrPrivate;
 struct _ModestHildon2WindowMgrPrivate {
 	GList        *window_list;
 	GMutex       *queue_lock;
 	GQueue       *modal_windows;
-	
+
 	gboolean     fullscreen_mode;
-	
+
 	GHashTable   *destroy_handlers;
 	GHashTable   *viewer_handlers;
 	GSList       *window_state_uids;
-	
+
 	guint        closing_time;
 
 	GSList       *modal_handler_uids;
@@ -144,6 +147,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->find_registered_header = modest_hildon2_window_mgr_find_registered_header;
 	mgr_class->get_window_list = modest_hildon2_window_mgr_get_window_list;
 	mgr_class->close_all_windows = modest_hildon2_window_mgr_close_all_windows;
+	mgr_class->show_initial_window = modest_hildon2_window_mgr_show_initial_window;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowMgrPrivate));
 
@@ -162,10 +166,10 @@ modest_hildon2_window_mgr_instance_init (ModestHildon2WindowMgr *obj)
 
 	priv->modal_windows = g_queue_new ();
 	priv->queue_lock = g_mutex_new ();
-	
+
 	/* Could not initialize it from gconf, singletons are not
 	   ready yet */
-	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);	
+	priv->destroy_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 	priv->viewer_handlers = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
 	priv->closing_time = 0;
@@ -214,11 +218,10 @@ modest_hildon2_window_mgr_finalize (GObject *obj)
 		g_mutex_unlock (priv->queue_lock);
 	}
 	g_mutex_free (priv->queue_lock);
-	
+
 	/* Do not unref priv->main_window because it does not hold a
 	   new reference */
 
-	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -231,17 +234,19 @@ modest_hildon2_window_mgr_new (void)
 static gboolean
 modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
+	ModestHildon2WindowMgrPrivate *priv = NULL;
 	gboolean ret_value = FALSE;
 	GtkWidget *window;
-	gboolean failed = FALSE;
 	HildonWindowStack *stack;
+	gboolean failed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
 	stack = hildon_window_stack_get_default ();
 
 	while ((window = hildon_window_stack_peek (stack)) != NULL) {
-		g_signal_emit_by_name (window, "delete-event", NULL, &ret_value);
+		g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &ret_value);
 		if (ret_value == TRUE) {
 			failed = TRUE;
 			break;
@@ -330,7 +335,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	GList *win;
 	ModestHildon2WindowMgrPrivate *priv;
 	gint *handler_id;
-	ModestWindow *main_window;
 	HildonProgram *program;
 	GtkWidget *current_top;
 	HildonWindowStack *stack;
@@ -392,17 +396,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	*handler_id = g_signal_connect (window, "delete-event", G_CALLBACK (on_window_destroy), self);
 	g_hash_table_insert (priv->destroy_handlers, window, handler_id);
 
-	main_window = modest_window_mgr_get_main_window (self, FALSE);
-	/* If there is a msg view window, let the main window listen the msg-changed signal */
-	if (MODEST_IS_MSG_VIEW_WINDOW(window) && main_window) {
-		gulong *handler;
-		handler = g_malloc0 (sizeof (gulong));
-		*handler = g_signal_connect (window, "msg-changed",
-					     G_CALLBACK (modest_main_window_on_msg_view_window_msg_changed),
-					     main_window);
-		g_hash_table_insert (priv->viewer_handlers, window, handler);
-	}
-
 	/* Show toolbar always */
 	modest_window_show_toolbar (window, TRUE);
 
@@ -411,7 +404,6 @@ fail:
 	/* Add to list. Keep a reference to the window */
 	priv->window_list = g_list_remove (priv->window_list, window);
 	g_object_unref (window);
-
 	current_top = hildon_window_stack_peek (stack);
 	if (current_top)
 		gtk_window_present (GTK_WINDOW (current_top));
@@ -424,7 +416,7 @@ cancel_window_operations (ModestWindow *window)
 	GSList* pending_ops = NULL;
 
 	/* cancel open and receive operations */
-	pending_ops = modest_mail_operation_queue_get_by_source (modest_runtime_get_mail_operation_queue (),
+	pending_ops = modest_mail_operation_queue_get_by_source (modest_runtime_get_mail_operation_queue (), 
 								 G_OBJECT (window));
 	while (pending_ops != NULL) {
 		ModestMailOperationTypeOperation type;
@@ -452,7 +444,8 @@ window_has_modals (ModestWindow *window)
 	toplevels = gtk_window_list_toplevels ();
 	for (node = toplevels; node != NULL; node = g_list_next (node)) {
 		if (GTK_IS_WINDOW (node->data) &&
-		    gtk_window_get_transient_for (GTK_WINDOW (node->data)) == GTK_WINDOW (window)) {
+		    gtk_window_get_transient_for (GTK_WINDOW (node->data)) == GTK_WINDOW (window) &&
+		    GTK_WIDGET_VISIBLE (node->data)) {
 			retvalue = TRUE;
 			break;
 		}
@@ -479,73 +472,36 @@ on_window_destroy (ModestWindow *window,
 {
 	gboolean no_propagate = FALSE;
 
-	if (!window_can_close (window)) {
+	if (!window_can_close (window))
 		return TRUE;
-	}
-	/* Specific stuff first */
-	if (MODEST_IS_MAIN_WINDOW (window)) {
-		ModestHildon2WindowMgrPrivate *priv;
-		ModestMainWindowContentsStyle style;
-		priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
-		/* If we're on header view, then just go to folder view and don't close */
-		style = modest_main_window_get_contents_style (MODEST_MAIN_WINDOW (window));
-		if (style == MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS) {
-			modest_main_window_set_contents_style (MODEST_MAIN_WINDOW (window),
-							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_FOLDERS);
-			return TRUE;
+	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
+		gboolean sent = FALSE;
+		sent = modest_msg_edit_window_get_sent (MODEST_MSG_EDIT_WINDOW (window));
+		/* Save currently edited message to Drafts if it was not sent */
+		if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
+
+			if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
+				return TRUE;
 		}
-
-		/* Do not unregister it, just hide */
-		gtk_widget_hide_all (GTK_WIDGET (window));
-
-		/* Cancel pending operations */
-		cancel_window_operations (window);
-
-		/* Fake the window system, make it think that there is no window */
-		if (modest_window_mgr_num_windows (MODEST_WINDOW_MGR (self)) == 0)
-			g_signal_emit_by_name (self, "window-list-empty");
-
-		no_propagate = TRUE;
 	}
-	else {
-		if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
-			gboolean sent = FALSE;
-			sent = modest_msg_edit_window_get_sent (MODEST_MSG_EDIT_WINDOW (window));
-			/* Save currently edited message to Drafts if it was not sent */
-			if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
 
-			  if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
-				  return TRUE;
-			}
-		}
-		/* Unregister window */
-		modest_window_mgr_unregister_window (MODEST_WINDOW_MGR (self), window);
-		no_propagate = FALSE;
-	}
+	/* Unregister window */
+	modest_window_mgr_unregister_window (MODEST_WINDOW_MGR (self), window);
+	no_propagate = FALSE;
 
 	return no_propagate;
 }
 
 static void
-disconnect_msg_changed (gpointer key, 
-			gpointer value, 
-			gpointer user_data)
-{
-	guint handler_id;
-	handler_id = GPOINTER_TO_UINT(value);
-	
-	if (key && G_IS_OBJECT(key))
-		g_signal_handler_disconnect (G_OBJECT (key), handler_id);
-}
-
-static void 
 modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self, 
 					     ModestWindow *window)
 {
 	GList *win;
 	ModestHildon2WindowMgrPrivate *priv;
 	gulong *tmp, handler_id;
+	gboolean check_close_all = FALSE;
+	guint num_windows;
 
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
@@ -558,19 +514,9 @@ modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self,
 		return;
 	}
 
-	/* If it's the main window unset it */
-	if (MODEST_IS_MAIN_WINDOW (window)) {
-		modest_window_mgr_set_main_window (self, NULL);
-
-		/* Disconnect all emissions of msg-changed */
-		if (priv->viewer_handlers) {
-			g_hash_table_foreach (priv->viewer_handlers, 
-					      disconnect_msg_changed, 
-					      NULL);
-			g_hash_table_destroy (priv->viewer_handlers);
-			priv->viewer_handlers = NULL;
-		}
-	}
+	/* Remember this for the end of the method */
+	if (MODEST_IS_FOLDER_WINDOW (window))
+		check_close_all = TRUE;
 
 	/* Remove the viewer window handler from the hash table. The
 	   HashTable could not exist if the main window was closed
@@ -605,33 +551,38 @@ modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self,
 
 	/* Disconnect the "window-state-event" handler, we won't need it anymore */
 	if (priv->window_state_uids) {
-#ifndef MODEST_TOOLKIT_GTK
 		priv->window_state_uids = 
 			modest_signal_mgr_disconnect (priv->window_state_uids, 
 						      G_OBJECT (window), 
 						      "notify::is-topmost");
-#else
-		priv->window_state_uids = 
-			modest_signal_mgr_disconnect (priv->window_state_uids, 
-						      G_OBJECT (window), 
-						      "window-state-event");
-#endif
 	}
-	
+
 	/* Disconnect the "delete-event" handler, we won't need it anymore */
 	g_signal_handler_disconnect (window, handler_id);
 
 	/* Destroy the window */
 	g_object_unref (win->data);
 	g_list_free (win);
-	
+
 	MODEST_WINDOW_MGR_CLASS (parent_class)->unregister_window (self, window);
 
+	/* We have to get the number of windows here in order not to
+	   emit the signal too many times */
+	num_windows = modest_window_mgr_get_num_windows (self);
+
+	/* Check if we have to destroy the accounts window as
+	   well. This happens if we only have one or none remote
+	   accounts */
+	if (check_close_all) {
+		ModestTnyAccountStore *acc_store = modest_runtime_get_account_store ();
+		if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 2)
+			modest_window_mgr_close_all_windows (self);
+	}
+
 	/* If there are no more windows registered emit the signal */
-	if (modest_window_mgr_num_windows (self) == 0)
+	if (num_windows == 0)
 		g_signal_emit_by_name (self, "window-list-empty");
 }
-
 
 
 static void
@@ -665,10 +616,12 @@ modest_hildon2_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show)
 {
 	ModestHildon2WindowMgrPrivate *priv;
 	ModestWindow *result;
-	
+
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), NULL);
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
-	
+
+	/* TODO: make this return NULL always */
+
 	result = MODEST_WINDOW_MGR_CLASS (parent_class)->get_main_window (self, FALSE);
 	/* create the main window, if it hasn't been created yet */
 	if (!result && show) {
@@ -733,3 +686,37 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
+static ModestWindow *
+modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
+{
+	ModestWindow *initial_window = NULL;
+	ModestTnyAccountStore *acc_store;
+
+	/* Always create accounts window. We'll decide later if we
+	   want to show it or not, depending the number of accounts */
+	initial_window = MODEST_WINDOW (modest_accounts_window_new ());
+	modest_window_mgr_register_window (self, initial_window, NULL);
+
+	/* If there are less than 2 remote accounts then directly show
+	   the folder window and do not show the accounts window */
+	acc_store = modest_runtime_get_account_store ();
+	if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 2) {
+		ModestAccountMgr *mgr;
+
+		/* Show first the accounts window to add it to the
+		   stack. This has to be changed when the new
+		   stackable API is available. There will be a method
+		   to show all the windows that will only show the
+		   last one to the user. The current code shows both
+		   windows, one after the other */
+		gtk_widget_show (GTK_WIDGET (initial_window));
+
+		initial_window = MODEST_WINDOW (modest_folder_window_new (NULL));
+		mgr = modest_runtime_get_account_mgr ();
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (initial_window),
+						  modest_account_mgr_get_default_account (mgr));
+		modest_window_mgr_register_window (self, initial_window, NULL);
+	}
+
+	return initial_window;
+}

@@ -271,6 +271,7 @@ gboolean modest_tny_account_store_is_send_mail_blocked (ModestTnyAccountStore *s
  */
 void modest_tny_account_store_set_send_mail_blocked (ModestTnyAccountStore *self, gboolean blocked);
 
+guint modest_tny_account_store_get_num_remote_accounts (ModestTnyAccountStore *self);
 
 G_END_DECLS
 

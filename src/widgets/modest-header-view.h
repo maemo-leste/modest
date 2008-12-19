@@ -161,6 +161,7 @@ GtkWidget*   modest_header_view_new        (TnyFolder *folder,
 void         modest_header_view_set_folder (ModestHeaderView *self,
 					    TnyFolder *folder,
 					    gboolean refresh,
+					    ModestWindow *progress_window,
 					    RefreshAsyncUserCallback callback,
 					    gpointer user_data);
 

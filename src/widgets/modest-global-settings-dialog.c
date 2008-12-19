@@ -274,7 +274,11 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 #endif
 	state->connect_via = *id;
 #ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
+	state->size_limit = modest_number_editor_get_value (MODEST_NUMBER_EDITOR (priv->size_limit));
+#else
 	state->size_limit = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
+#endif
 #else
 	state->size_limit = gtk_spin_button_get_value (GTK_SPIN_BUTTON (priv->size_limit));
 #endif

@@ -61,8 +61,21 @@ struct _ModestHildon2WindowMgrClass {
 GType        modest_hildon2_window_mgr_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
-ModestWindowMgr*    modest_hildon2_window_mgr_new         (void);
-	
+ModestWindowMgr*    modest_hildon2_window_mgr_new  (void);
+
+/**
+ * modest_hildon2_window_mgr_set_account_store:
+ * @self: a #ModestHildon2WindowMgr
+ * @acc_store: a #TnyAccountStore
+ *
+ * The window manager will use this function to connect itself to the
+ * account-created and account-removed signals of the
+ * #TnyAccountStore, because it ill create/destroy the accounts window
+ * depending on the existence of 0, 1 or more accounts.
+ **/
+void modest_hildon2_window_mgr_set_account_store   (ModestHildon2WindowMgr *self,
+						    TnyAccountStore *acc_store);
+
 G_END_DECLS
 
 #endif /* __MODEST_HILDON2_WINDOW_MGR_H__ */

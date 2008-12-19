@@ -66,6 +66,7 @@ static gboolean modest_window_mgr_find_registered_header_default (ModestWindowMg
 								  TnyHeader *header,
 								  ModestWindow **win);
 static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
+static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
 
 /* list my signals  */
 enum {
@@ -145,6 +146,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->close_all_windows = modest_window_mgr_close_all_windows_default;
 	mgr_class->find_registered_header = modest_window_mgr_find_registered_header_default;
 	mgr_class->get_window_list = modest_window_mgr_get_window_list_default;
+	mgr_class->show_initial_window = modest_window_mgr_show_initial_window_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
 
@@ -731,33 +733,33 @@ modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self)
 			/* This calls the vfunc, 
 			 * so each window can do its own thing: */
 			modest_window_save_state (window);
-		}	
-		
+		}
+
 		node = g_list_next (node);
 	}
 	g_list_free (window_list);
 }
 
-gint 
-modest_window_mgr_num_windows (ModestWindowMgr *self)
+guint
+modest_window_mgr_get_num_windows (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv;
 	gint num_windows = 0;
 	GList *window_list;
 
 	g_return_val_if_fail (self && MODEST_IS_WINDOW_MGR(self), -1);
-	
+
 	priv =  MODEST_WINDOW_MGR_GET_PRIVATE(self);
 
 	window_list = modest_window_mgr_get_window_list (self);
-	
+
 	if (window_list) {
 		num_windows = g_list_length (window_list);
 		g_list_free (window_list);
 	}
 
 	/* Do not take into account the main window if it was hidden */
-	if (priv->main_window && !GTK_WIDGET_VISIBLE (priv->main_window))
+	if (num_windows && priv->main_window && !GTK_WIDGET_VISIBLE (priv->main_window))
 		num_windows--;
 
 	return num_windows + priv->banner_counter;
@@ -805,7 +807,7 @@ modest_window_mgr_get_msg_view_window (ModestWindowMgr *self)
 	return result;
 }
 
-void           
+void
 modest_window_mgr_register_banner (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv;
@@ -814,10 +816,9 @@ modest_window_mgr_register_banner (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	priv->banner_counter++;
-	
 }
 
-void           
+void
 modest_window_mgr_unregister_banner (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv;
@@ -826,6 +827,37 @@ modest_window_mgr_unregister_banner (ModestWindowMgr *self)
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	priv->banner_counter--;
-	if (modest_window_mgr_num_windows (self) == 0)
+	if (modest_window_mgr_get_num_windows (self) == 0)
 		g_signal_emit (self, signals[WINDOW_LIST_EMPTY_SIGNAL], 0);
+}
+
+ModestWindow *
+modest_window_mgr_show_initial_window (ModestWindowMgr *self)
+{
+	ModestWindow *window = NULL;
+
+	/* Call the children */
+	window = MODEST_WINDOW_MGR_GET_CLASS (self)->show_initial_window (self);
+
+	if (window) {
+		ModestAccountMgr *mgr;
+
+		/* Show the initial window */
+		gtk_widget_show (GTK_WIDGET (window));
+
+		/* If there are no accounts then show the account wizard */
+		mgr = modest_runtime_get_account_mgr();
+		if (!modest_account_mgr_has_accounts (mgr, TRUE))
+			modest_ui_actions_run_account_setup_wizard (window);
+	}
+
+	return window;
+}
+
+static ModestWindow *
+modest_window_mgr_show_initial_window_default (ModestWindowMgr *self)
+{
+	/* By default it returns the main window creating it if
+	   needed */
+	return modest_window_mgr_get_main_window (self, TRUE);
 }

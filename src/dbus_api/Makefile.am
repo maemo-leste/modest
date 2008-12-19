@@ -35,6 +35,7 @@ INCLUDES=\
 	$(MODEST_OGS_CFLAGS) \
 	-I ${top_srcdir}/src/widgets  \
 	-I ${top_srcdir}/src  \
+	-I ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR) \
 	-DPREFIX=\"@prefix@\" \
 	-DMAEMO_CHANGES \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \

@@ -579,7 +579,7 @@ on_window_destroy (ModestWindow *window,
 		cancel_window_operations (window);
 
 		/* Fake the window system, make it think that there is no window */
-		if (modest_window_mgr_num_windows (MODEST_WINDOW_MGR (self)) == 0)
+		if (modest_window_mgr_get_num_windows (MODEST_WINDOW_MGR (self)) == 0)
 			g_signal_emit_by_name (self, "window-list-empty");
 
 		no_propagate = TRUE;
@@ -714,7 +714,7 @@ modest_hildon1_window_mgr_unregister_window (ModestWindowMgr *self,
 	MODEST_WINDOW_MGR_CLASS (parent_class)->unregister_window (self, window);
 
 	/* If there are no more windows registered emit the signal */
-	if (modest_window_mgr_num_windows (self) == 0)
+	if (modest_window_mgr_get_num_windows (self) == 0)
 		g_signal_emit_by_name (self, "window-list-empty");
 }
 

@@ -1114,7 +1114,8 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	ShowHelper *helper = (ShowHelper *) user_data;
 	GtkWidget *folder_win = helper->folder_win;
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	
+	ModestAccountMgr *mgr;
+
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
 	wrap_in_scrolled_window (folder_win, GTK_WIDGET(priv->folder_view));
 
@@ -1136,18 +1137,10 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
 	priv->wait_for_settings = FALSE;
 
-	/* Check if accounts exist and show the account wizard if not */
-	gboolean accounts_exist = 
-		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
-
-	if (!accounts_exist) {
-		/* This is necessary to have the main window shown behind the dialog 
-		It's an ugly hack... jschmid */
-		gtk_widget_show_all(GTK_WIDGET(self));
-		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
-	} else {
+	/* Update the menus if there are accounts */
+	mgr = modest_runtime_get_account_mgr();
+	if (modest_account_mgr_has_accounts(mgr, TRUE))
 		update_menus (MODEST_MAIN_WINDOW (self));
-	}
 
 	/* Never call this function again (NOTE that it could happen
 	   as we hide the main window instead of closing it while

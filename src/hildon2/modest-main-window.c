@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, y2008 Nokia Corporation
+/* Copyright (c) 2006, 2008 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
 #include <tny-gtk-folder-store-tree-model.h>
-#include <modest-folder-window.h>
+#include <modest-accounts-window.h>
 
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
@@ -900,13 +900,6 @@ connect_signals (ModestMainWindow *self)
 					   G_CALLBACK (on_folder_view_focus_in), 
 					   self);
 
-	/* Folder view CSM */
-	menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/FolderViewCSM");
-	gtk_widget_tap_and_hold_setup (GTK_WIDGET (priv->folder_view), menu, NULL, 0);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "tap-and-hold",
-						       G_CALLBACK(_folder_view_csm_menu_activated),
-						       self);
-
 	/* folder view row activated */
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, G_OBJECT(priv->folder_view), "row-activated",
 						       G_CALLBACK(on_folder_view_row_activated),
@@ -1040,7 +1033,7 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 {
 	ShowHelper *helper = (ShowHelper *) user_data;
 	ModestMainWindowPrivate *priv = MODEST_MAIN_WINDOW_GET_PRIVATE(self);
-	
+
 	priv->folder_view = MODEST_FOLDER_VIEW (modest_platform_create_folder_view (NULL));
 	modest_main_window_set_contents_style (MODEST_MAIN_WINDOW (self), 
 					       MODEST_MAIN_WINDOW_CONTENTS_STYLE_FOLDERS);
@@ -1055,21 +1048,21 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
-	/* Load previous osso state, for instance if we are being restored from 
+	/* Load previous osso state, for instance if we are being restored from
 	 * hibernation:  */
 	modest_osso_load_state ();
 
-	/* Restore window & widget settings */	
+	/* Restore window & widget settings */
 	priv->wait_for_settings = TRUE;
 	restore_settings (MODEST_MAIN_WINDOW(self), TRUE);
 	priv->wait_for_settings = FALSE;
 
 	/* Check if accounts exist and show the account wizard if not */
-	gboolean accounts_exist = 
+	gboolean accounts_exist =
 		modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), TRUE);
 
 	if (!accounts_exist) {
-		/* This is necessary to have the main window shown behind the dialog 
+		/* This is necessary to have the main window shown behind the dialog
 		It's an ugly hack... jschmid */
 		gtk_widget_show_all(GTK_WIDGET(self));
 		modest_ui_actions_on_accounts (NULL, MODEST_WINDOW(self));
@@ -2099,13 +2092,20 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 	ModestAccountSettings *settings;
 	ModestServerAccountSettings *store_settings = NULL;
 
-	GtkWidget *folder_window;
+/* 	GtkWidget *folder_window; */
 
-	folder_window = GTK_WIDGET (modest_folder_window_new (NULL));
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
-					   MODEST_WINDOW (folder_window),
+/* 	folder_window = GTK_WIDGET (modest_folder_window_new (NULL)); */
+/* 	modest_window_mgr_register_window (modest_runtime_get_window_mgr (),  */
+/* 					   MODEST_WINDOW (folder_window), */
+/* 					   MODEST_WINDOW (self)); */
+/* 	gtk_widget_show (folder_window); */
+	GtkWidget *accounts_window;
+
+	accounts_window = GTK_WIDGET (modest_accounts_window_new ());
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
+					   MODEST_WINDOW (accounts_window),
 					   MODEST_WINDOW (self));
-	gtk_widget_show (folder_window);
+	gtk_widget_show (accounts_window);
 
 	/* Get account data */
 	mgr = modest_runtime_get_account_mgr ();
@@ -2125,7 +2125,7 @@ set_account_visible(ModestMainWindow *self, const gchar *acc_name)
 		modest_folder_view_select_first_inbox_or_local (priv->folder_view);
 		modest_window_set_active_account (MODEST_WINDOW (self), account_name);
 
-		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), acc_name);
+/* 		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), acc_name); */
 
 		action = gtk_action_group_get_action (priv->view_additions_group, account_name);
 		if (action != NULL) {
@@ -2453,7 +2453,7 @@ static void on_folder_view_row_activated (GtkTreeView *tree_view,
 				    -1);
 		if (folder_store && TNY_IS_FOLDER (folder_store)) {
 			modest_header_view_set_folder (MODEST_HEADER_VIEW (priv->header_view), 
-						       TNY_FOLDER (folder_store), TRUE,
+						       TNY_FOLDER (folder_store), TRUE, MODEST_WINDOW (self),
 						       NULL, NULL);
 			modest_main_window_set_contents_style (MODEST_MAIN_WINDOW (self),
 							       MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS);

@@ -552,3 +552,34 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 				  G_CALLBACK (gtk_widget_destroy),
 				  dialog);
 }
+
+GtkWidget* 
+modest_platform_create_move_to_dialog (GtkWindow *parent_window,
+				       GtkWidget **folder_view)
+{
+	GtkWidget *dialog, *folder_view_container;
+
+	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
+					      GTK_WINDOW (parent_window),
+					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
+					      GTK_DIALOG_DESTROY_WITH_PARENT,
+					      _("mcen_bd_dialog_ok"), GTK_RESPONSE_OK,
+					      _("mcen_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
+					      _("mcen_bd_dialog_cancel"), GTK_RESPONSE_CANCEL,
+	                                      NULL);
+
+	/* Create folder view */
+	*folder_view = modest_platform_create_folder_view (NULL);
+
+	/* Create pannable and add it to the dialog */
+	folder_view_container = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (*folder_view_container),
+					 GTK_POLICY_AUTOMATIC,
+					 GTK_POLICY_AUTOMATIC);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), folder_view_container);
+	gtk_container_add (GTK_CONTAINER (folder_view_container), *folder_view);
+
+	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
+
+	return dialog;
+}

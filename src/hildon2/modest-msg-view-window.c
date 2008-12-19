@@ -48,10 +48,9 @@
 #include <modest-tny-folder.h>
 #include <modest-text-utils.h>
 #include <modest-account-mgr-helpers.h>
-#include "modest-progress-bar.h"
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-picker-dialog.h>
-#include "hildon/hildon-pannable-area.h"
+#include <hildon/hildon-app-menu.h>
 #include "modest-defs.h"
 #include "modest-hildon-includes.h"
 #include "modest-ui-dimming-manager.h"
@@ -65,6 +64,7 @@
 #include <errno.h>
 #include <glib/gstdio.h>
 #include <modest-debug.h>
+#include <modest-header-window.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -134,10 +134,16 @@ static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 static void modest_msg_view_window_disconnect_signals (ModestWindow *self);
 
 static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
+static void modest_msg_view_window_set_zoom (ModestWindow *window,
+					     gdouble zoom);
+static gboolean modest_msg_view_window_zoom_minus (ModestWindow *window);
+static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
 static gboolean modest_msg_view_window_key_event (GtkWidget *window,
 						  GdkEventKey *event,
 						  gpointer userdata);
-
+static gboolean modest_msg_view_window_toggle_menu (HildonWindow *window,
+						    guint button,
+						    guint32 time);
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
@@ -217,6 +223,15 @@ static gboolean message_reader (ModestMsgViewWindow *window,
 				TnyHeader *header,
 				GtkTreeRowReference *row_reference);
 
+static void add_to_menu (ModestMsgViewWindow *self,
+			 HildonAppMenu *menu,
+			 gchar *label,
+			 GCallback callback,
+			 ModestDimmingRulesGroup *group,
+			 GCallback dimming_callback);
+static void setup_menu (ModestMsgViewWindow *self,
+			ModestDimmingRulesGroup *group);
+
 /* list my signals */
 enum {
 	MSG_CHANGED_SIGNAL,
@@ -227,6 +242,7 @@ enum {
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
 	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
 };
+
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                     MODEST_TYPE_MSG_VIEW_WINDOW, \
@@ -280,21 +296,11 @@ save_state (ModestWindow *self)
 				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
-static void
-restore_settings (ModestMsgViewWindow *self)
-{
-	ModestConf *conf;
-
-	conf = modest_runtime_get_conf ();
-	modest_widget_memory_restore (conf,
-				      G_OBJECT(self), 
-				      MODEST_CONF_MSG_VIEW_WINDOW_KEY);
-}
-
-static gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
-						     GtkScrollType scroll_type,
-						     gboolean horizontal,
-						     gpointer userdata)
+static 
+gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
+					      GtkScrollType scroll_type,
+					      gboolean horizontal,
+					      gpointer userdata)
 {
 	ModestMsgViewWindowPrivate *priv;
 	gboolean return_value;
@@ -325,16 +331,23 @@ static void
 modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 {
 	GObjectClass *gobject_class;
+	HildonWindowClass *hildon_window_class;
 	ModestWindowClass *modest_window_class;
 	GtkBindingSet *binding_set;
 
 	gobject_class = (GObjectClass*) klass;
+	hildon_window_class = (HildonWindowClass *) klass;
 	modest_window_class = (ModestWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_window_finalize;
 
+	hildon_window_class->toggle_menu = modest_msg_view_window_toggle_menu;
+
+	modest_window_class->set_zoom_func = modest_msg_view_window_set_zoom;
 	modest_window_class->get_zoom_func = modest_msg_view_window_get_zoom;
+	modest_window_class->zoom_plus_func = modest_msg_view_window_zoom_plus;
+	modest_window_class->zoom_minus_func = modest_msg_view_window_zoom_minus;
 	modest_window_class->show_toolbar_func = modest_msg_view_window_show_toolbar;
 	modest_window_class->disconnect_signals_func = modest_msg_view_window_disconnect_signals;
 
@@ -536,8 +549,8 @@ static void
 modest_msg_view_window_disconnect_signals (ModestWindow *self)
 {
 	ModestMsgViewWindowPrivate *priv;
-	ModestHeaderView *header_view = NULL;
-	ModestWindow *main_window = NULL;
+	GtkWidget *header_view = NULL;
+	GtkWindow *parent_window = NULL;
 	
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
@@ -581,21 +594,15 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
 	priv->sighandlers = NULL;
-	
-	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
-							 FALSE); /* don't create */
-	if (!main_window)
-		return;
-	
-	header_view = MODEST_HEADER_VIEW(
-			modest_main_window_get_child_widget(
-				MODEST_MAIN_WINDOW(main_window),
-				MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
-	if (header_view == NULL)
-		return;
-	
-	modest_header_view_remove_observer(header_view,
-			MODEST_HEADER_VIEW_OBSERVER(self));
+
+	parent_window = gtk_window_get_transient_for (GTK_WINDOW (self));
+	if (parent_window && MODEST_IS_HEADER_WINDOW (parent_window)) {
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (parent_window)));
+		if (header_view) {
+			modest_header_view_remove_observer(MODEST_HEADER_VIEW (header_view),
+							   MODEST_HEADER_VIEW_OBSERVER(self));
+		}
+	}
 }	
 
 static void
@@ -739,15 +746,14 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	priv->msg_uid = g_strdup (msg_uid);
 
 	/* Menubar */
-	parent_priv->menubar = modest_maemo_utils_get_manager_menubar_as_menu (parent_priv->ui_manager, "/MenuBar");
-	hildon_window_set_menu    (HILDON_WINDOW(obj), GTK_MENU(parent_priv->menubar));
-	gtk_widget_show (parent_priv->menubar);
+	parent_priv->menubar = NULL;
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 
 	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
 
+	setup_menu (self, menu_rules_group);
 	/* Add common dimming rules */
 	modest_dimming_rules_group_add_rules (menu_rules_group, 
 					      modest_msg_view_menu_dimming_entries,
@@ -966,6 +972,7 @@ modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
 
 	/* Setup row references and connect signals */
 	priv->header_model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	g_object_ref (priv->header_model);
 
 	if (row_reference) {
 		priv->row_reference = gtk_tree_row_reference_copy (row_reference);
@@ -1420,7 +1427,9 @@ modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 
 	/* update the toggle buttons status */
 	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-	modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+	if (action)
+		modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
+
 }
 
 static void
@@ -1433,7 +1442,7 @@ modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
-	
+
 	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"));
 	gtk_toggle_action_set_active (toggle, FALSE);
 	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
@@ -1488,6 +1497,21 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		
 }
 
+static void
+modest_msg_view_window_set_zoom (ModestWindow *window,
+				 gdouble zoom)
+{
+	ModestMsgViewWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+     
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom);
+
+}
+
 static gdouble
 modest_msg_view_window_get_zoom (ModestWindow *window)
 {
@@ -1497,6 +1521,76 @@ modest_msg_view_window_get_zoom (ModestWindow *window)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 	return modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
+}
+
+static gboolean
+modest_msg_view_window_zoom_plus (ModestWindow *window)
+{
+	gdouble zoom_level;
+	ModestMsgViewWindowPrivate *priv;
+     
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), 1.0);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+  
+	zoom_level =  modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
+
+	if (zoom_level >= 2.0) {
+		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_max_zoom_level_reached"));
+		return FALSE;
+	} else if (zoom_level >= 1.5) {
+		zoom_level = 2.0;
+	} else if (zoom_level >= 1.2) {
+		zoom_level = 1.5;
+	} else if (zoom_level >= 1.0) {
+		zoom_level = 1.2;
+	} else if (zoom_level >= 0.8) {
+		zoom_level = 1.0;
+	} else if (zoom_level >= 0.5) {
+		zoom_level = 0.8;
+	} else {
+		zoom_level = 0.5;
+	}
+
+	/* set zoom level */
+	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
+
+	return TRUE;
+	
+}
+
+static gboolean
+modest_msg_view_window_zoom_minus (ModestWindow *window)
+{
+	gdouble zoom_level;
+	ModestMsgViewWindowPrivate *priv;
+     
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), 1.0);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+  
+	zoom_level =  modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
+
+	if (zoom_level <= 0.5) {
+			  hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_min_zoom_level_reached"));
+		return FALSE;
+	} else if (zoom_level <= 0.8) {
+		zoom_level = 0.5;
+	} else if (zoom_level <= 1.0) {
+		zoom_level = 0.8;
+	} else if (zoom_level <= 1.2) {
+		zoom_level = 1.0;
+	} else if (zoom_level <= 1.5) {
+		zoom_level = 1.2;
+	} else if (zoom_level <= 2.0) {
+		zoom_level = 1.5;
+	} else {
+		zoom_level = 2.0;
+	}
+
+	/* set zoom level */
+	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
+
+	return TRUE;
+	
 }
 
 static gboolean
@@ -2082,9 +2176,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv;
 	GtkWidget *reply_button = NULL, *menu = NULL;
-	const gchar *action_name;
-	GtkAction *action;
-	
+
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
@@ -2099,7 +2191,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
 		priv->prev_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
 		toolbar_resize (MODEST_MSG_VIEW_WINDOW (self));
-		
+
 		/* Add to window */
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
@@ -2109,7 +2201,8 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 							  "/ToolBar/ToolbarMessageReply");
 		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 						  "/ToolbarReplyCSM");
-		gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
+		if (menu && reply_button)
+			gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 	}
 
 	if (show_toolbar) {
@@ -3015,6 +3108,82 @@ on_fetch_image (ModestMsgView *msgview,
 	return TRUE;;
 }
 
+static void 
+add_to_menu (ModestMsgViewWindow *self,
+	     HildonAppMenu *menu,
+	     gchar *label,
+	     GCallback callback,
+	     ModestDimmingRulesGroup *dimming_group,
+	     GCallback dimming_callback)
+{
+	GtkWidget *button;
+
+	button = gtk_button_new_with_label (label);
+	g_signal_connect_after (G_OBJECT (button), "clicked",
+				callback, (gpointer) self);
+	modest_dimming_rules_group_add_widget_rule (dimming_group,
+						    button,
+						    dimming_callback,
+						    MODEST_WINDOW (self));
+	hildon_app_menu_append (menu, GTK_BUTTON (button));
+}
+
+static void 
+setup_menu (ModestMsgViewWindow *self, ModestDimmingRulesGroup *group)
+{
+	ModestMsgViewWindowPrivate *priv = NULL;
+	GtkWidget *app_menu;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(self));
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	app_menu = hildon_app_menu_new ();
+
+	/* Settings menu buttons */
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_replytoall"),
+		     G_CALLBACK (modest_ui_actions_on_reply_all),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_forward"),
+		     G_CALLBACK (modest_ui_actions_on_forward),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
+
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_mark_as_read"),
+		     G_CALLBACK (modest_ui_actions_on_mark_as_read),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_mark_as_read_msg_in_view));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_mark_as_unread"),
+		     G_CALLBACK (modest_ui_actions_on_mark_as_unread),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_mark_as_unread_msg_in_view));
+
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_save_attachments"),
+		     G_CALLBACK (modest_ui_actions_save_attachments),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_save_attachments));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_remove_attachments"),
+		     G_CALLBACK (modest_ui_actions_remove_attachments),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_remove_attachments));
+
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_newemail"),
+		     G_CALLBACK (modest_ui_actions_on_new_msg),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_new_msg));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_addtocontacts"),
+		     G_CALLBACK (modest_ui_actions_add_to_contacts),
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
+
+	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
+					       HILDON_APP_MENU (app_menu));
+}
+
+static gboolean 
+modest_msg_view_window_toggle_menu (HildonWindow *window,
+				    guint button,
+				    guint32 time)
+{
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+
+	return HILDON_WINDOW_CLASS (parent_class)->toggle_menu (window, button, time);
+}
+
+
 void
 modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 {
@@ -3032,9 +3201,11 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 		GtkWidget *picker_dialog;
 		GtkWidget *selector;
 		GSList *node;
-		gchar *selected;
+		gchar *selected = NULL;
 
 		selector = hildon_touch_selector_new_text ();
+		g_object_ref (selector);
+
 		for (node = recipients; node != NULL; node = g_slist_next (node)) {
 			if (!modest_address_book_has_address ((const gchar *) node->data)) {
 				hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), 
@@ -3044,6 +3215,7 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 		}
 
 		if (contacts_to_add) {
+			gint picker_result;
 
 			picker_dialog = hildon_picker_dialog_new (GTK_WINDOW (self));
 			gtk_window_set_title (GTK_WINDOW (picker_dialog), _("mcen_me_viewer_addtocontacts"));
@@ -3051,8 +3223,11 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 			hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (picker_dialog), 
 							   HILDON_TOUCH_SELECTOR (selector));
 			
-			gtk_dialog_run (GTK_DIALOG (picker_dialog));
-			selected = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+			picker_result = gtk_dialog_run (GTK_DIALOG (picker_dialog));
+
+			if (picker_result == GTK_RESPONSE_OK) {
+				selected = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+			}
 			gtk_widget_destroy (picker_dialog);
 
 			if (selected)

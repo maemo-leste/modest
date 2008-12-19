@@ -46,11 +46,19 @@
 #include <string.h>
 #include <glib/gstdio.h>
 #ifdef MODEST_HAVE_HILDON0_WIDGETS
+#include <hildon-widgets/hildon-program.h>
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 #else
+#include <hildon/hildon-program.h>
 #include <libgnomevfs/gnome-vfs-mime.h>
 #endif
 #include <tny-fs-stream.h>
+
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#include <modest-accounts-window.h>
+#include <modest-folder-window.h>
+#endif
 
 #include <tny-list.h>
 #include <tny-iterator.h>
@@ -708,7 +716,6 @@ on_remove_msgs_finished (ModestMailOperation *mail_op,
 {	
 	TnyHeader *header;
 	ModestWindow *main_win = NULL, *msg_view = NULL;
-	ModestHeaderView *header_view;
 
 	header = (TnyHeader *) user_data;
 
@@ -727,12 +734,10 @@ on_remove_msgs_finished (ModestMailOperation *mail_op,
 	}	
 	g_object_unref (header);
 
-	/* Refilter the header view explicitly */
-	header_view = (ModestHeaderView *)
-		modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(main_win),
-						     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-	if (header_view && MODEST_IS_HEADER_VIEW (header_view))
-		modest_header_view_refilter (header_view);
+	/* Refilter the header views explicitely */
+
+	/* TODO: call modest_window_mgr_refilter_header_views */
+	/* this call will go through all the windows, get the header views and refilter them */
 }
 
 static gpointer
@@ -1149,7 +1154,40 @@ on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
  	return OSSO_OK;
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
+static gboolean
+on_idle_top_application (gpointer user_data)
+{
+	HildonWindowStack *stack;
+	GtkWidget *window;
 
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
+
+	stack = hildon_window_stack_get_default ();
+	window = GTK_WIDGET (hildon_window_stack_peek (stack));
+
+	if (window) {
+		gtk_window_present (GTK_WINDOW (window));
+	} else {
+		ModestWindowMgr *mgr;
+
+		mgr = modest_runtime_get_window_mgr ();
+		window = (GtkWidget *) modest_window_mgr_show_initial_window (mgr);
+		if (window) {
+			modest_platform_remove_new_mail_notifications (FALSE);
+		} else {
+			g_printerr ("modest: failed to get main window instance\n");
+		}
+	}
+
+	gdk_threads_leave (); /* CHECKED */
+	
+	return FALSE; /* Do not call this callback again. */
+}
+#else
 static gboolean 
 on_idle_top_application (gpointer user_data)
 {
@@ -1161,11 +1199,6 @@ on_idle_top_application (gpointer user_data)
 
 	gdk_threads_enter (); /* CHECKED */
 	
-#ifdef MODEST_TOOLKIT_HILDON2
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-						      TRUE);
-	new_window = TRUE;
-#else
 	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 						      FALSE);
 
@@ -1174,7 +1207,6 @@ on_idle_top_application (gpointer user_data)
 							      TRUE);
 		new_window = TRUE;
 	}
-#endif
 
 	if (main_win) {
 		/* If we're showing an already existing window then
@@ -1187,17 +1219,16 @@ on_idle_top_application (gpointer user_data)
 		}
 	}
 
-#ifndef MODEST_TOOLKIT_HILDON2
 	if (main_win) {
 		gtk_widget_show_all (GTK_WIDGET (main_win));
 		gtk_window_present (GTK_WINDOW (main_win));
 	}
-#endif
 
 	gdk_threads_leave (); /* CHECKED */
 	
 	return FALSE; /* Do not call this callback again. */
 }
+#endif
 
 static gint 
 on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)

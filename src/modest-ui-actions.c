@@ -49,7 +49,9 @@
 #include <tny-camel-imap-folder.h>
 #include <tny-camel-pop-folder.h>
 #ifdef MODEST_TOOLKIT_HILDON2
+#include <modest-accounts-window.h>
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-gtk.h>
 #include <modest-header-window.h>
 #endif
 
@@ -73,15 +75,6 @@
 #include "modest-account-mgr-helpers.h"
 #include "modest-mail-operation.h"
 #include "modest-text-utils.h"
-
-#ifdef MODEST_HAVE_EASYSETUP
-#ifdef MODEST_TOOLKIT_HILDON2
-#include "modest-easysetup-wizard-dialog.h"
-#else
-#include "easysetup/modest-easysetup-wizard-dialog.h"
-#endif
-#endif /* MODEST_HAVE_EASYSETUP */
-
 #include <modest-widget-memory.h>
 #include <tny-error.h>
 #include <tny-simple-list.h>
@@ -92,8 +85,7 @@
 #include <gtkhtml/gtkhtml.h>
 
 #define MIN_FREE_SPACE 5 * 1024 * 1024
-#define MOVE_FOLDER_OK_BUTTON "ok-button"
-#define MOVE_FOLDER_NEW_BUTTON "new-button"
+#define MODEST_MOVE_TO_DIALOG_FOLDER_VIEW "move-to-dialog-folder-view"
 
 typedef struct _GetMsgAsyncHelper {	
 	ModestWindow *window;
@@ -128,6 +120,10 @@ typedef struct _PasteAsAttachmentHelper {
 	GtkWidget *banner;
 } PasteAsAttachmentHelper;
 
+typedef struct {
+	TnyList *list;
+	ModestWindow *win;
+} MoveToInfo;
 
 /*
  * The do_headers_action uses this kind of functions to perform some
@@ -174,9 +170,17 @@ static void     do_create_folder (GtkWindow *window,
 				  TnyFolderStore *parent_folder, 
 				  const gchar *suggested_name);
 
-static GtkWidget* get_folder_view_from_move_to_dialog (GtkWidget *move_to_dialog);
-
 static TnyAccount *get_account_from_folder_store (TnyFolderStore *folder_store);
+
+static void modest_ui_actions_on_main_window_move_to (GtkAction *action,
+						      GtkWidget *folder_view,
+						      TnyFolderStore *dst_folder,
+						      ModestMainWindow *win);
+
+static void modest_ui_actions_on_window_move_to (GtkAction *action,
+						 TnyList *list_to_move,
+						 TnyFolderStore *dst_folder,
+						 ModestWindow *win);
 
 /*
  * This function checks whether a TnyFolderStore is a pop account
@@ -308,6 +312,13 @@ get_selected_headers (ModestWindow *win)
 
 		return list;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_HEADER_WINDOW (win)) {
+		GtkWidget *header_view;
+
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
+		return modest_header_view_get_selected_headers (MODEST_HEADER_VIEW(header_view));
+#endif
 	} else
 		return NULL;
 }
@@ -388,6 +399,12 @@ modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWindow* win)
 void
 modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 {
+	modest_ui_actions_on_edit_mode_delete_message (win);
+}
+
+gboolean
+modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
+{
 	TnyList *header_list = NULL;
 	TnyIterator *iter = NULL;
 	TnyHeader *header = NULL;
@@ -396,8 +413,9 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 	gint response;
 	ModestWindowMgr *mgr;
 	GtkWidget *header_view = NULL;
+	gboolean retval = TRUE;
 
-	g_return_if_fail (MODEST_IS_WINDOW(win));
+	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 	
 	/* Check first if the header view has the focus */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -405,13 +423,13 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (!gtk_widget_is_focus (header_view))
-			return;
+			return FALSE;
 	}
 	
 	/* Get the headers, either from the header view (if win is the main window),
 	 * or from the message view window: */
 	header_list = get_selected_headers (win);
-	if (!header_list) return;
+	if (!header_list) return FALSE;
 			
 	/* Check if any of the headers are already opened, or in the process of being opened */
 	if (MODEST_IS_MAIN_WINDOW (win)) {
@@ -440,7 +458,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			
 			g_free (msg);
 			g_object_unref (header_list);
-			return;
+			return FALSE;
 		}
 	}
 
@@ -521,7 +539,7 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 			/* Get main window */
 			mgr = modest_runtime_get_window_mgr ();
 			main_window = modest_window_mgr_get_main_window (mgr, FALSE); /* don't create */
-		} else {			
+		} else if (MODEST_IS_MAIN_WINDOW (win)) {
 			/* Move cursor to next row */
 			main_window = win; 
 
@@ -553,12 +571,17 @@ modest_ui_actions_on_delete_message (GtkAction *action, ModestWindow *win)
 		/* Free */
 		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);
 		g_list_free (sel_list);
+		retval = TRUE;
+	} else {
+		retval = FALSE;
 	}
 
 	/* Free*/
 	g_free(message);
 	g_free(desc);
 	g_object_unref (header_list);
+
+	return retval;
 }
 
 
@@ -636,9 +659,9 @@ modest_ui_actions_on_close_window (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_add_to_contacts (GtkAction *action, ModestWindow *win)
 {
-	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win));
-
-	modest_msg_view_window_add_to_contacts (MODEST_MSG_VIEW_WINDOW (win));
+       g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win));
+       
+       modest_msg_view_window_add_to_contacts (MODEST_MSG_VIEW_WINDOW (win));
 }
 
 void
@@ -661,19 +684,19 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 }
 
 void
-modest_ui_actions_on_accounts (GtkAction *action, 
+modest_ui_actions_on_accounts (GtkAction *action,
 			       ModestWindow *win)
 {
 	/* This is currently only implemented for Maemo */
 	if (!modest_account_mgr_has_accounts (modest_runtime_get_account_mgr(), TRUE)) {
-		if (!modest_ui_actions_run_account_setup_wizard (win)) 
+		if (!modest_ui_actions_run_account_setup_wizard (win))
 			g_debug ("%s: wizard was already running", __FUNCTION__);
-		
+
 		return;
 	} else {
 		/* Show the list of accounts */
 		GtkWindow *account_win = GTK_WINDOW (modest_account_view_window_new ());
-		
+
 		/* The accounts dialog must be modal */
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (account_win), (GtkWindow *) win);
 		modest_utils_show_dialog_and_forget (GTK_WINDOW (win), GTK_DIALOG (account_win)); 
@@ -688,7 +711,7 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 	 * possiblities.
 	 */
 #ifndef MODEST_TOOLKIT_GTK /* Defined in config.h */
-	
+
 	/* Create the window if necessary: */
 	GtkWidget *specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
 	modest_connection_specific_smtp_window_fill_with_connections (
@@ -945,12 +968,19 @@ get_info_from_header (TnyHeader *header, gboolean *is_draft)
 			if (TNY_IS_SEND_QUEUE (send_queue)) {
 				msg_id = modest_tny_send_queue_get_msg_id (header);
 				status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
-				g_free(msg_id);
-
+				g_free (msg_id);
 				/* Only open messages in outbox with the editor if they are in Failed state */
 				if (status == MODEST_TNY_SEND_QUEUE_FAILED) {
 					*is_draft = TRUE;
 				}
+#ifdef MODEST_TOOLKIT_HILDON2
+				else {
+					/* In Fremantle we can not
+					   open any message from
+					   outbox which is not in
+					   failed state */
+					g_object_unref(traccount);
+                                }
 #endif
 			}
 			g_object_unref(traccount);
@@ -999,7 +1029,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-
+	
 	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 		gchar *from_header = NULL, *acc_name;
@@ -1035,7 +1065,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		}
 		g_free (uid);
 	}
-
+	
 	/* Register and show new window */
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
@@ -1627,6 +1657,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win, (ModestWindow *) rf_helper->parent_window);
 
+	/* Note that register_window could have deleted the account */
 	if (MODEST_IS_WINDOW (rf_helper->parent_window)) {
 		gdouble parent_zoom;
 
@@ -1941,21 +1972,27 @@ void
 modest_ui_actions_on_sort (GtkAction *action, 
 			   ModestWindow *window)
 {
+	GtkWidget *header_view = NULL;
+
 	g_return_if_fail (MODEST_IS_WINDOW(window));
 
 	if (MODEST_IS_MAIN_WINDOW (window)) {
-		GtkWidget *header_view;
 		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(window),
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		if (!header_view) {
-			modest_platform_information_banner (NULL, NULL, _CS("ckdg_ib_nothing_to_sort"));
-
-			return;
-		}
-
-		/* Show sorting dialog */
-		modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_HEADER_WINDOW (window)) {
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (window)));
+#endif
 	}
+
+	if (!header_view) {
+		modest_platform_information_banner (NULL, NULL, _CS("ckdg_ib_nothing_to_sort"));
+		
+		return;
+	}
+
+	/* Show sorting dialog */
+	modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	
 }
 
 static void
@@ -2250,11 +2287,20 @@ modest_ui_actions_on_send_receive (GtkAction *action, ModestWindow *win)
 	
 		if (folder_store)
 			g_object_unref (folder_store);
-	}	
+		/* Refresh the active account. Force the connection if needed
+		   and poke the status of all folders */
+		modest_ui_actions_do_send_receive (NULL, TRUE, TRUE, TRUE, win);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_ACCOUNTS_WINDOW (win)) {
+		modest_ui_actions_do_send_receive_all (win, TRUE, TRUE, TRUE);
+#endif
+	} else {
+		const gchar *active_account;
+		active_account = modest_window_get_active_account (MODEST_WINDOW (win));
+
+		modest_ui_actions_do_send_receive (active_account, TRUE, TRUE, TRUE, win);
+	} 
 	
-	/* Refresh the active account. Force the connection if needed
-	   and poke the status of all folders */
-	modest_ui_actions_do_send_receive (NULL, TRUE, TRUE, TRUE, win);
 }
 
 
@@ -2495,6 +2541,7 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 			modest_header_view_set_folder (MODEST_HEADER_VIEW(header_view),
 						       TNY_FOLDER (folder_store),
 						       TRUE,
+						       MODEST_WINDOW (main_window),
 						       folder_refreshed_cb,
 						       main_window);
 			
@@ -2599,7 +2646,7 @@ modest_ui_actions_on_msg_link_contextual (ModestMsgView *msgview, const gchar* l
 void
 modest_ui_actions_on_msg_attachment_clicked (ModestMsgView *msgview, TnyMimePart *mime_part,
 					     ModestWindow *win)
-{		
+{
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * viewing attachments
 	 */
@@ -2623,6 +2670,9 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 		      gpointer user_data)
 {
 	ModestMsgEditWindow *edit_window;
+
+	/* TODO: in hildon 2 we have to dim and undim the header views while we're saving */
+#ifndef MODEST_TOOLKIT_HILDON2
 	ModestMainWindow *win;
 
 	/* FIXME. Make the header view sensitive again. This is a
@@ -2635,6 +2685,7 @@ on_save_to_drafts_cb (ModestMailOperation *mail_op,
 			win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 		if (hdrview) gtk_widget_set_sensitive(hdrview, TRUE);
 	}
+#endif
 
 	edit_window = MODEST_MSG_EDIT_WINDOW (user_data);
 
@@ -3173,7 +3224,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 #endif
 	} else {
 		/* the 'source_win' is either the ModestMainWindow, or the 'Move to folder'-dialog
-		 * FIXME: any other? */		
+		 * FIXME: any other? */
 		GtkWidget *folder_view;
 
 		if (MODEST_IS_MAIN_WINDOW(source_win)) 
@@ -3181,9 +3232,9 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 				modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (source_win),
 								     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		else
-			folder_view =
-				get_folder_view_from_move_to_dialog (GTK_WIDGET(source_win));
-		
+			folder_view = GTK_WIDGET(g_object_get_data (G_OBJECT (source_win),
+								    MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
+
 		/* Select the newly created folder. It could happen
 		   that the widget is no longer there (i.e. the window
 		   has been destroyed, so we need to check this */
@@ -4502,13 +4553,7 @@ modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *window
 	modest_msg_edit_window_check_names (window, FALSE);
 }
 
-static void
-create_move_to_dialog_on_new_folder(GtkWidget *button, gpointer user_data)
-{
-	modest_ui_actions_create_folder (gtk_widget_get_toplevel (button),
-	                                 GTK_WIDGET (user_data));
-}
-
+#ifndef MODEST_TOOLKIT_HILDON2
 /*
  * This function is used to track changes in the selection of the
  * folder view that is inside the "move to" dialog to enable/disable
@@ -4524,7 +4569,6 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 					    gpointer user_data)
 {
 	GtkWidget *dialog = NULL;
-	GtkWidget *ok_button = NULL, *new_button = NULL;
 	gboolean ok_sensitive = TRUE, new_sensitive = TRUE;
 	gboolean moving_folder = FALSE;
 	gboolean is_local_account = TRUE;
@@ -4532,17 +4576,13 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	ModestTnyFolderRules rules;
 
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW(self));
-	
+
 	if (!selected)
 		return;
-	
-	/* Get the OK button */
+
 	dialog = gtk_widget_get_ancestor (GTK_WIDGET (self), GTK_TYPE_DIALOG);
 	if (!dialog)
 		return;
-
-	ok_button = g_object_get_data (G_OBJECT (dialog), MOVE_FOLDER_OK_BUTTON);
-	new_button = g_object_get_data (G_OBJECT (dialog), MOVE_FOLDER_NEW_BUTTON);
 
 	/* check if folder_store is an remote account */
 	if (TNY_IS_ACCOUNT (folder_store)) {
@@ -4599,21 +4639,21 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 
 		/* Get the folder to move */
 		moved_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-		
+
 		/* Check that we're not moving to the same folder */
 		if (TNY_IS_FOLDER (moved_folder)) {
 			parent = tny_folder_get_folder_store (TNY_FOLDER (moved_folder));
 			if (parent == folder_store)
 				ok_sensitive = FALSE;
 			g_object_unref (parent);
-		} 
+		}
 
 		if (ok_sensitive && TNY_IS_ACCOUNT (folder_store)) {
 			/* Do not allow to move to an account unless it's the
 			   local folders account */
 			if (!is_local_account)
 				ok_sensitive = FALSE;
-		} 
+		}
 
 		if (ok_sensitive && (moved_folder == folder_store)) {
 			/* Do not allow to move to itself */
@@ -4654,94 +4694,82 @@ on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
 	}
 
  end:
-	/* Set sensitivity of the OK button */
-	gtk_widget_set_sensitive (ok_button, ok_sensitive);
-	/* Set sensitivity of the NEW button */
-	gtk_widget_set_sensitive (new_button, new_sensitive);
+	/* Set sensitivity of the OK and NEW button */
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, ok_sensitive);
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), MODEST_GTK_RESPONSE_NEW_FOLDER, new_sensitive);
 }
+#endif
 
-
-#define MODEST_MOVE_TO_DIALOG_FOLDER_VIEW "move-to-dialog-folder-view"
-
-static GtkWidget*
-get_folder_view_from_move_to_dialog (GtkWidget *move_to_dialog)
+static void
+on_move_to_dialog_response (GtkDialog *dialog,
+			    gint       response,
+			    gpointer   user_data)
 {
-	return GTK_WIDGET(g_object_get_data (G_OBJECT(move_to_dialog),
-					     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
+	GtkWidget *parent_win, *folder_view;
+	MoveToInfo *helper = NULL;
+
+	helper = (MoveToInfo *) user_data;
+
+	parent_win = (GtkWidget *) helper->win;
+	folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog),
+						     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
+
+	switch (response) {
+		TnyFolderStore *dst_folder;
+
+	case MODEST_GTK_RESPONSE_NEW_FOLDER:
+		modest_ui_actions_create_folder (GTK_WIDGET (dialog), folder_view);
+		return;
+	case GTK_RESPONSE_NONE:
+	case GTK_RESPONSE_CANCEL:
+	case GTK_RESPONSE_DELETE_EVENT:
+		break;
+	case GTK_RESPONSE_OK:
+		dst_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+		/* Do window specific stuff */
+		if (MODEST_IS_MAIN_WINDOW (parent_win)) {
+			modest_ui_actions_on_main_window_move_to (NULL,
+								  folder_view,
+								  dst_folder,
+								  MODEST_MAIN_WINDOW (parent_win));
+		} else {
+			/* Moving from headers window in edit mode */
+			modest_ui_actions_on_window_move_to (NULL, helper->list,
+							     dst_folder, 
+							     MODEST_WINDOW (parent_win));
+		}
+
+		if (dst_folder)
+			g_object_unref (dst_folder);
+
+		break;
+	default:
+		g_warning ("%s unexpected response id %d", __FUNCTION__, response);
+	}
+
+	/* Free the helper and exit */
+	g_object_unref (helper->list);
+	g_slice_free (MoveToInfo, helper);
+	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
 static GtkWidget*
 create_move_to_dialog (GtkWindow *win,
-		       GtkWidget *folder_view,
-		       GtkWidget **tree_view)
+		       GtkWidget *folder_view)
 {
-	GtkWidget *dialog;
-#ifdef MODEST_TOOLKIT_HILDON2
-	GtkWidget *pannable;
-#else
-	GtkWidget *scroll;
-#endif
-	GtkWidget *new_button, *ok_button;
+	GtkWidget *dialog, *tree_view = NULL;
 
-	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
-					      GTK_WINDOW (win),
-					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                      NULL);
+	dialog = modest_platform_create_move_to_dialog (win, &tree_view);
 
-#ifndef MODEST_TOOLKIT_GTK
-	ok_button = gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_ok"), GTK_RESPONSE_ACCEPT);
-	/* We do this manually so GTK+ does not associate a response ID for
-	 * the button. */
-	new_button = gtk_button_new_from_stock (_("mcen_bd_new"));
-	gtk_box_pack_end (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
-	gtk_widget_show (new_button);
 #ifndef MODEST_TOOLKIT_HILDON2
-	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_dialog_cancel"), GTK_RESPONSE_REJECT);
-#endif
-#else
-	/* We do this manually so GTK+ does not associate a response ID for
-	 * the button. */
-	new_button = gtk_button_new_with_label (_("mcen_ti_new_folder"));
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), new_button, FALSE, FALSE, 0);
-	gtk_button_box_set_child_secondary (GTK_BUTTON_BOX (GTK_DIALOG (dialog)->action_area), new_button, TRUE);
-	gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT);
-	ok_button = gtk_dialog_add_button (GTK_DIALOG (dialog), GTK_STOCK_OK, GTK_RESPONSE_ACCEPT);
-	gtk_container_set_border_width (GTK_CONTAINER (dialog), 12);
-	gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 24);
-#endif
-	g_object_set_data (G_OBJECT (dialog), MOVE_FOLDER_OK_BUTTON, ok_button);
-	g_object_set_data (G_OBJECT (dialog), MOVE_FOLDER_NEW_BUTTON, new_button);
-
-	/* Create scrolled window */
-#ifdef MODEST_TOOLKIT_HILDON2
-	pannable = hildon_pannable_area_new ();
-#else
-	scroll = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (scroll),
-					 GTK_POLICY_AUTOMATIC,
-					 GTK_POLICY_AUTOMATIC);
-#endif
-
-#ifdef MODEST_TOOLKIT_GTK
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroll), GTK_SHADOW_IN);
-#endif
-
-	/* Create folder view */
-	*tree_view = modest_platform_create_folder_view (NULL);
-
 	/* Track changes in the selection to
 	 * disable the OK button whenever "Move to" is not possible
 	 * disbale NEW button whenever New is not possible */
-	g_signal_connect (*tree_view,
+	g_signal_connect (tree_view,
 			  "folder_selection_changed",
 			  G_CALLBACK (on_move_to_dialog_folder_selection_changed),
 			  win);
-
-	/* Listen to clicks on New button */
-	g_signal_connect (G_OBJECT (new_button), 
-			  "clicked", 
-			  G_CALLBACK(create_move_to_dialog_on_new_folder), 
-			  *tree_view);
+#endif
 
 	/* It could happen that we're trying to move a message from a
 	   window (msg window for example) after the main window was
@@ -4750,16 +4778,16 @@ create_move_to_dialog (GtkWindow *win,
 	if (MODEST_IS_FOLDER_VIEW (folder_view)) {
 		const gchar *visible_id = NULL;
 
-		modest_folder_view_set_style (MODEST_FOLDER_VIEW (*tree_view),
+		modest_folder_view_set_style (MODEST_FOLDER_VIEW (tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 		modest_folder_view_copy_model (MODEST_FOLDER_VIEW(folder_view), 
-					       MODEST_FOLDER_VIEW(*tree_view));
+					       MODEST_FOLDER_VIEW(tree_view));
 
 		visible_id = 
 			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(folder_view));
 
 		/* Show the same account than the one that is shown in the main window */
-		modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(*tree_view), 
+		modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(tree_view),
 									     visible_id);
 	} else {
 		const gchar *active_account_name = NULL;
@@ -4767,9 +4795,9 @@ create_move_to_dialog (GtkWindow *win,
 		ModestAccountSettings *settings = NULL;
 		ModestServerAccountSettings *store_settings = NULL;
 
-		modest_folder_view_set_style (MODEST_FOLDER_VIEW (*tree_view),
+		modest_folder_view_set_style (MODEST_FOLDER_VIEW (tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
-		modest_folder_view_update_model (MODEST_FOLDER_VIEW (*tree_view), 
+		modest_folder_view_update_model (MODEST_FOLDER_VIEW (tree_view),
 						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
 		active_account_name = modest_window_get_active_account (MODEST_WINDOW (win));
@@ -4781,46 +4809,29 @@ create_move_to_dialog (GtkWindow *win,
 			store_settings = modest_account_settings_get_store_settings (settings);
 			store_account_name = modest_server_account_settings_get_account_name (store_settings);
 
-			modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (*tree_view),
+			modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (tree_view),
 										     store_account_name);
 			g_object_unref (store_settings);
 			g_object_unref (settings);
 		}
 	}
 
-	/* we keep a pointer to the embedded folder view, so we can retrieve it with
-	 *   get_folder_view_from_move_to_dialog 
-	 * (see above) later (needed for focus handling) 
+	/* we keep a pointer to the embedded folder view, so we can
+	 *   retrieve it with get_folder_view_from_move_to_dialog (see
+	 *   above) later (needed for focus handling)
 	 */
-	g_object_set_data (G_OBJECT(dialog), MODEST_MOVE_TO_DIALOG_FOLDER_VIEW, *tree_view);
+	g_object_set_data (G_OBJECT(dialog), MODEST_MOVE_TO_DIALOG_FOLDER_VIEW, tree_view);
 
-	
 	/* Hide special folders */
-	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (*tree_view), FALSE);
-
-#ifdef MODEST_TOOLKIT_HILDON2
-	gtk_container_add (GTK_CONTAINER (pannable), *tree_view);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
-			    pannable, TRUE, TRUE, 0);
-#else
-	gtk_container_add (GTK_CONTAINER (scroll), *tree_view);
-	/* Add scroll to dialog */
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
-			    scroll, TRUE, TRUE, 0);
+	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (tree_view), FALSE);
+#ifndef MODEST_TOOLKIT_HILDON2
+	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
 #endif
 
-
-	gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
-#ifndef MODEST_TOOLKIT_GTK
-	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
-#else
-	gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
-#endif
+	gtk_widget_show (GTK_WIDGET (tree_view));
 
 	return dialog;
 }
-
-
 
 /*
  * Shows a confirmation dialog to the user when we're moving messages
@@ -5430,7 +5441,8 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 	/* Get header view */
-	header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
+	header_view = (ModestHeaderView *)
+		modest_main_window_get_child_widget (win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 	/* Get folder or messages to transfer */
 	if (gtk_widget_is_focus (folder_view)) {
@@ -5446,7 +5458,7 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 			do_xfer = FALSE;
 		}
 
-		if (do_xfer) {			
+		if (do_xfer) {
 			MoveFolderInfo *info = g_new0 (MoveFolderInfo, 1);
 			DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
 
@@ -5529,44 +5541,45 @@ modest_ui_actions_transfer_messages_helper (GtkWindow *win,
  * UI handler for the "Move to" action when invoked from the
  * ModestMsgViewWindow
  */
-static void 
-modest_ui_actions_on_msg_view_window_move_to (GtkAction *action, 
-					      TnyFolderStore *dst_folder,
-					      ModestMsgViewWindow *win)
+static void
+modest_ui_actions_on_window_move_to (GtkAction *action,
+				     TnyList *headers,
+				     TnyFolderStore *dst_folder,
+				     ModestWindow *win)
 {
-	TnyList *headers = NULL;
-	TnyHeader *header = NULL;
 	TnyFolder *src_folder = NULL;
 
 	g_return_if_fail (TNY_IS_FOLDER (dst_folder));
 
-	/* Create header list */
-	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
-	src_folder = TNY_FOLDER (tny_header_get_folder(header));
-	headers = tny_simple_list_new ();
-	tny_list_append (headers, G_OBJECT (header));
+	if (headers) {
+		TnyHeader *header = NULL;
+		TnyIterator *iter;
 
-	/* Transfer the messages */
-	modest_ui_actions_transfer_messages_helper (GTK_WINDOW (win), src_folder, headers, 
-						    TNY_FOLDER (dst_folder));
+		iter = tny_list_create_iterator (headers);
+		header = (TnyHeader *) tny_iterator_get_current (iter);
+		src_folder = tny_header_get_folder (header);
 
-	/* Frees */
-	g_object_unref (src_folder);
-	g_object_unref (header);
-	g_object_unref (headers);
+		/* Transfer the messages */
+		modest_ui_actions_transfer_messages_helper (GTK_WINDOW (win), src_folder, 
+							    headers,
+							    TNY_FOLDER (dst_folder));
+
+		/* Frees */
+		g_object_unref (header);
+		g_object_unref (iter);
+		g_object_unref (src_folder);
+	}
 }
 
 void 
 modest_ui_actions_on_move_to (GtkAction *action, 
 			      ModestWindow *win)
 {
-	GtkWidget *dialog = NULL, *folder_view = NULL, *tree_view = NULL;
-	gint result = 0;
-	TnyFolderStore *dst_folder = NULL;
+	GtkWidget *dialog = NULL, *folder_view = NULL;
 	ModestMainWindow *main_window;
+	MoveToInfo *helper = NULL;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win) ||
-			  MODEST_IS_MSG_VIEW_WINDOW (win));
+	g_return_if_fail (MODEST_IS_WINDOW (win));
 
 	/* Get the main window if exists */
 	if (MODEST_IS_MAIN_WINDOW (win))
@@ -5584,31 +5597,21 @@ modest_ui_actions_on_move_to (GtkAction *action,
 		folder_view = NULL;
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view, &tree_view);
-	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), (GtkWindow *) win);
-	result = gtk_dialog_run (GTK_DIALOG(dialog));
-	g_object_ref (tree_view);
-	gtk_widget_destroy (dialog);
+	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), 
+				     (GtkWindow *) win);
 
-	if (result != GTK_RESPONSE_ACCEPT)
-		return;
+	/* Create helper */
+	helper = g_slice_new0 (MoveToInfo);
+	helper->list = modest_platform_get_list_to_move (MODEST_WINDOW (win));
+	helper->win = win;
 
-	dst_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (tree_view));
-	/* Do window specific stuff */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		modest_ui_actions_on_main_window_move_to (action,
-				folder_view,
-				dst_folder,
-				MODEST_MAIN_WINDOW (win));
-	} else {
-		modest_ui_actions_on_msg_view_window_move_to (action,
-				dst_folder,
-				MODEST_MSG_VIEW_WINDOW (win));
-	}
+	/* Listen to response signal */
+	g_signal_connect (dialog, "response", G_CALLBACK (on_move_to_dialog_response), helper);
 
-	if (dst_folder)
-		g_object_unref (dst_folder);
+	/* Show the dialog */
+	gtk_widget_show (dialog);
 }
 
 /*
@@ -6198,6 +6201,24 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
 		g_object_unref (iter);
 		g_object_unref (headers);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_HEADER_WINDOW (win)) {
+		GtkWidget *header_view;
+		TnyList* headers = NULL;
+		TnyIterator *iter;
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
+		headers = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
+		if (!headers || tny_list_get_length (headers) == 0) {
+			if (headers)
+				g_object_unref (headers);
+			return NULL;
+		}
+		iter = tny_list_create_iterator (headers);
+		header = TNY_HEADER (tny_iterator_get_current (iter));
+		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
+		g_object_unref (iter);
+		g_object_unref (headers);
+#endif
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
 		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));

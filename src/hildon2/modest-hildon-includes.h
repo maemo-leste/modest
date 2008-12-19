@@ -70,12 +70,14 @@
 #include <hildon/hildon-find-toolbar.h>
 #include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
+#include <modest-number-editor.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-entry.h>
 #include <hildon/hildon-picker-button.h>
 #include <hildon/hildon-check-button.h>
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-stackable-window.h>
+#include <hildon/hildon-text-view.h>
 
 
 /* backward compatibility... */

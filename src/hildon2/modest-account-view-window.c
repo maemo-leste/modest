@@ -321,6 +321,8 @@ setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 
 	priv->new_button     = gtk_button_new_from_stock(_HL("wdgt_bd_new"));
+	hildon_gtk_widget_set_theme_size (priv->new_button,
+					  HILDON_SIZE_FINGER_HEIGHT);
 
 	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
 			  G_CALLBACK(on_new_button_clicked),

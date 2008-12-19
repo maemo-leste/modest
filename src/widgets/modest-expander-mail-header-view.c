@@ -36,6 +36,8 @@
 #include <modest-expander-mail-header-view.h>
 #include <modest-tny-folder.h>
 #include <modest-recpt-view.h>
+#include <modest-icon-names.h>
+#include <modest-datetime-formatter.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -55,6 +57,7 @@ struct _ModestExpanderMailHeaderViewPriv
 	gboolean     is_draft;
 	TnyHeader    *header;
 	TnyHeaderFlags priority_flags;
+	ModestDatetimeFormatter *datetime_formatter;
 };
 
 #define MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_PRIVATE(o)	\
@@ -103,16 +106,16 @@ static void expander_activate (GtkWidget *expander, ModestExpanderMailHeaderView
 static void
 add_date_time_header (ModestExpanderMailHeaderView *mail_header, const gchar *name, time_t date)
 {
-	const guint BUF_SIZE = 64; 
-	gchar date_buf [BUF_SIZE];
-	gchar time_buf [BUF_SIZE];
+	const gchar *date_buf;
+	const gchar *time_buf;
 
 	ModestExpanderMailHeaderViewPriv *priv = MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_PRIVATE (mail_header);
 	GtkWidget *hbox, *date_hbox, *time_hbox;
 	GtkWidget *label;
 
-	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x", date);
-	modest_text_utils_strftime (time_buf, BUF_SIZE, "%X", date);
+	date_buf = modest_datetime_formatter_format_date (priv->datetime_formatter, date);
+	time_buf = modest_datetime_formatter_format_time (priv->datetime_formatter, date);
+
 
 	hbox = gtk_hbox_new (FALSE, 48);
 	date_hbox = gtk_hbox_new (FALSE, 12);
@@ -442,6 +445,8 @@ modest_expander_mail_header_view_instance_init (GTypeInstance *instance, gpointe
 
 	priv->header = NULL;
 
+	priv->datetime_formatter = modest_datetime_formatter_new ();
+
 	priv->expander = gtk_expander_new (NULL);
 	priv->main_vbox = gtk_vbox_new (FALSE, 1);
 	gtk_box_pack_start (GTK_BOX (instance), priv->expander, FALSE, FALSE, 0);
@@ -483,6 +488,11 @@ modest_expander_mail_header_view_finalize (GObject *object)
 {
 	ModestExpanderMailHeaderView *self = (ModestExpanderMailHeaderView *)object;	
 	ModestExpanderMailHeaderViewPriv *priv = MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_PRIVATE (self);
+
+	if (priv->datetime_formatter) {
+		g_object_unref (priv->datetime_formatter);
+		priv->datetime_formatter = NULL;
+	}
 
 	if (G_LIKELY (priv->header))
 		g_object_unref (G_OBJECT (priv->header));
@@ -634,11 +644,11 @@ modest_expander_mail_header_view_set_priority_default (ModestMailHeaderView *hea
 			priv->priority_icon = NULL;
 		}
 	} else if (priv->priority_flags == TNY_HEADER_FLAG_HIGH_PRIORITY) {
-		priv->priority_icon = gtk_image_new_from_icon_name ("qgn_list_messaging_high", GTK_ICON_SIZE_MENU);
+		priv->priority_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_HIGH, GTK_ICON_SIZE_MENU);
 		gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 		gtk_widget_show (priv->priority_icon);
 	} else if (priv->priority_flags == TNY_HEADER_FLAG_LOW_PRIORITY) {
-		priv->priority_icon = gtk_image_new_from_icon_name ("qgn_list_messaging_low", GTK_ICON_SIZE_MENU);
+		priv->priority_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_LOW, GTK_ICON_SIZE_MENU);
 		gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 		gtk_widget_show (priv->priority_icon);
 	}

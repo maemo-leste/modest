@@ -899,7 +899,6 @@ select_contacts_for_name_dialog (const gchar *name)
 										   _AB("addr_ti_dia_select_contacts"),
 										   OSSO_ABOOK_CAPS_EMAIL,
 										   OSSO_ABOOK_CONTACT_ORDER_NAME);
-
 		osso_abook_contact_chooser_set_model (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
 						      contact_model);
 

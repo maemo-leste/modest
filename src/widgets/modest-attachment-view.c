@@ -380,6 +380,12 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	PangoContext *context;
 	GtkWidget *box = NULL;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	PangoAttrList *attr_list;
+	attr_list = pango_attr_list_new ();
+	pango_attr_list_insert (attr_list, pango_attr_underline_new (PANGO_UNDERLINE_SINGLE));
+#endif
+
 	priv->mime_part = NULL;
 	priv->icon = gtk_image_new ();
 	priv->filename_view = gtk_label_new ("");
@@ -392,6 +398,11 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_label_set_selectable (GTK_LABEL (priv->size_view), FALSE);
 	gtk_misc_set_alignment (GTK_MISC (priv->size_view), 0.0, 0.5);
 	gtk_misc_set_alignment (GTK_MISC (priv->filename_view), 0.0, 0.5);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_label_set_attributes (GTK_LABEL (priv->filename_view), attr_list);
+	gtk_label_set_attributes (GTK_LABEL (priv->size_view), attr_list);
+#endif
 
 	priv->get_size_stream = NULL;
 	priv->size = 0;
@@ -414,6 +425,10 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_event_box_set_above_child (GTK_EVENT_BOX (instance), FALSE);
 	gtk_event_box_set_visible_window (GTK_EVENT_BOX (instance), TRUE);
 	gtk_widget_set_events (GTK_WIDGET (instance), 0);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	pango_attr_list_unref (attr_list);
+#endif
 
 	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (instance), GTK_CAN_FOCUS);
 

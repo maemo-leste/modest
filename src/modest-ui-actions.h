@@ -46,6 +46,8 @@ void     modest_ui_actions_refresh_message_window_after_delete (ModestMsgViewWin
 
 void     modest_ui_actions_on_delete_message     (GtkAction *action, ModestWindow *win);
 
+gboolean modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win);
+
 void     modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *win);

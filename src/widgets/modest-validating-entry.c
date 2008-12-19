@@ -4,6 +4,7 @@
  */
 
 #include "modest-validating-entry.h"
+#include <modest-ui-constants.h>
 #include <gtk/gtksignal.h> /* For the gtk_signal_stop_emit_by_name() convenience function. */
 #include <string.h> /* For strlen(). */
 
@@ -12,7 +13,12 @@
 #include <config.h>
 #endif
 
+
+#ifdef MODEST_TOOLKIT_HILDON2
+G_DEFINE_TYPE (ModestValidatingEntry, modest_validating_entry, HILDON_TYPE_ENTRY);
+#else
 G_DEFINE_TYPE (ModestValidatingEntry, modest_validating_entry, GTK_TYPE_ENTRY);
+#endif
 
 #define VALIDATING_ENTRY_GET_PRIVATE(o) \
 	(G_TYPE_INSTANCE_GET_PRIVATE ((o), MODEST_TYPE_VALIDATING_ENTRY, ModestValidatingEntryPrivate))
@@ -203,7 +209,13 @@ modest_validating_entry_init (ModestValidatingEntry *self)
 ModestValidatingEntry*
 modest_validating_entry_new (void)
 {
-	return g_object_new (MODEST_TYPE_VALIDATING_ENTRY, NULL);
+	ModestValidatingEntry *entry;
+	
+	entry = g_object_new (MODEST_TYPE_VALIDATING_ENTRY, NULL);
+
+	hildon_gtk_widget_set_theme_size (GTK_WIDGET (entry), MODEST_EDITABLE_SIZE);
+
+	return entry;
 }
 
 /** Specify characters that may not be entered into this GtkEntry.

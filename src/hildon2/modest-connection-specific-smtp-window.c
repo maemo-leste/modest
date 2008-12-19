@@ -39,6 +39,7 @@
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtkliststore.h>
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-gtk.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>

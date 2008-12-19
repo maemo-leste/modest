@@ -43,8 +43,9 @@
 #include <widgets/modest-msg-view.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <widgets/modest-compact-mail-header-view.h>
+#include <hildon/hildon-gtk.h>
 #else
-#include <widgets/modest-mail-header-view.h>
+#include <widgets/modest-expander-mail-header-view.h>
 #endif
 #include <widgets/modest-attachments-view.h>
 #include <modest-marshal.h>
@@ -1069,6 +1070,10 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	priv->mail_header_view        = GTK_WIDGET(modest_expander_mail_header_view_new (TRUE));
 #endif
 	priv->view_images_button = gtk_button_new_with_label (_("mail_bd_external_images"));
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_gtk_widget_set_theme_size (priv->view_images_button, 
+					  HILDON_SIZE_HALFSCREEN_WIDTH | HILDON_SIZE_FINGER_HEIGHT);
+#endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_set_no_show_all (priv->view_images_button, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
@@ -1116,7 +1121,12 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 		
 		hbuttonbox = gtk_hbutton_box_new ();
 		gtk_container_add (GTK_CONTAINER (hbuttonbox), priv->view_images_button);
+#ifdef MODEST_TOOLKIT_HILDON2
+		gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_START);
+		gtk_box_pack_start (GTK_BOX (priv->headers_box), hbuttonbox, TRUE, TRUE, 0);
+#else
 		gtk_box_pack_start (GTK_BOX (priv->headers_box), hbuttonbox, FALSE, FALSE, 0);
+#endif
 		gtk_widget_hide (priv->view_images_button);
 	}
 	

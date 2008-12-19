@@ -42,6 +42,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-defs.h>
 #include <modest-ui-actions.h>
+#include <modest-window.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
 #include <tny-account-store-view.h>
@@ -393,6 +394,9 @@ on_folder_activated (ModestFolderView *folder_view,
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
 
 	if (!folder)
+		return;
+
+	if (!TNY_IS_FOLDER (folder))
 		return;
 
 	headerwin = modest_header_window_new (folder);

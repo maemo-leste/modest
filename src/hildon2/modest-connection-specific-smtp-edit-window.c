@@ -36,6 +36,8 @@
 #include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-entry.h>
+#include <modest-ui-constants.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
@@ -158,7 +160,7 @@ on_value_changed(GtkWidget* widget, GValue* value, ModestConnectionSpecificSmtpE
 }
 
 static gboolean
-on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer user_data)
+on_range_error (GtkWidget *widget, ModestNumberEditorErrorType type, gpointer user_data)
 {
 	gchar *msg;
 	ModestConnectionSpecificSmtpEditWindow *self = user_data;
@@ -170,9 +172,9 @@ on_range_error (GtkWidget *widget, HildonNumberEditorErrorType type, gpointer us
 	 * remember that such an error occured. */
 	priv->range_error_occured = TRUE;
 
-	if (type == HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED) {
+	if (type == MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED) {
 		msg = g_strdup_printf (dgettext ("hildon-libs", "ckct_ib_maximum_value"), 65535);
-	} else if (type == HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED) {
+	} else if (type == MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED) {
 		msg = g_strdup_printf (dgettext ("hildon-libs", "ckct_ib_minimum_value"), 1);
 	} else {
 		msg = g_strdup_printf (_HL("ckct_ib_set_a_value_within_range"), PORT_RANGE_MIN, PORT_RANGE_MAX);
@@ -207,7 +209,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
        		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 
-	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
+	hostname = hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver));
 
 	/* Don't close the dialog if a range error occured */
 	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
@@ -262,8 +264,8 @@ security_picker_set_port (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
 			MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker));
 
 	if(port_number != 0) {
-		hildon_number_editor_set_value (
-			HILDON_NUMBER_EDITOR (priv->entry_port), port_number);
+		modest_number_editor_set_value (
+			MODEST_NUMBER_EDITOR (priv->entry_port), port_number);
 	}
 }
 
@@ -338,7 +340,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	 
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
-		priv->entry_outgoingserver = gtk_entry_new ();
+		priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_change), self);
@@ -385,7 +387,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_username), 64);
 	
 	/* The password widgets: */	
-	priv->entry_user_password = gtk_entry_new ();
+	priv->entry_user_password = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
@@ -415,7 +417,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
-		priv->entry_port = GTK_WIDGET (hildon_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
+		priv->entry_port = GTK_WIDGET (modest_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("mcen_fi_emailsetup_port"), priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
@@ -503,12 +505,12 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		if (priv->account_name)
 			g_free (priv->account_name);
 		priv->account_name = g_strdup (modest_server_account_settings_get_account_name (server_settings));
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_outgoingserver), 
-				    modest_server_account_settings_get_hostname (server_settings));
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_username),
-				    modest_server_account_settings_get_username (server_settings));	
-		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_password), 
-				    modest_server_account_settings_get_password (server_settings));
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_outgoingserver), 
+				       modest_server_account_settings_get_hostname (server_settings));
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_username),
+				       modest_server_account_settings_get_username (server_settings));	
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_password), 
+				       modest_server_account_settings_get_password (server_settings));
 	
 		modest_serversecurity_picker_set_active_serversecurity (
 		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), 
@@ -519,8 +521,8 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		modest_server_account_settings_get_auth_protocol (server_settings));
 		
 		/* port: */
-		hildon_number_editor_set_value (
-			HILDON_NUMBER_EDITOR (priv->entry_port), 
+		modest_number_editor_set_value (
+			MODEST_NUMBER_EDITOR (priv->entry_port), 
 			modest_server_account_settings_get_port (server_settings));
 		
 		
@@ -537,7 +539,7 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	const gchar *outgoing_server = NULL;
 
 	priv = 	CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
-	outgoing_server = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
+	outgoing_server = hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver));
 
 	/* If the outgoing server is NULL, we are removing the connection specific
 	 * settings */
@@ -548,13 +550,13 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	server_settings = modest_server_account_settings_new ();
 	
 	modest_server_account_settings_set_hostname (server_settings, 
-						     gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver)));
+						     hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver)));
 	modest_server_account_settings_set_protocol (server_settings,
 						     MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_server_account_settings_set_username (server_settings,
-						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)));
+						     hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username)));
 	modest_server_account_settings_set_password (server_settings,
-						     gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password)));
+						     hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_password)));
 	
 	modest_server_account_settings_set_security_protocol (server_settings, 
 						     modest_serversecurity_picker_get_active_serversecurity (
@@ -567,7 +569,7 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	
 	/* port: */
 	modest_server_account_settings_set_port (server_settings,
-						 hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->entry_port)));
+						 modest_number_editor_get_value (MODEST_NUMBER_EDITOR (priv->entry_port)));
 			
 	return server_settings;
 }

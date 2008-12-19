@@ -94,6 +94,7 @@ static void          disable_drag_and_drop  (GtkWidget *self);
 
 static GtkTreePath * get_selected_row       (GtkTreeView *self, GtkTreeModel **model);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 static gboolean      on_focus_in            (GtkWidget     *sef,
 					     GdkEventFocus *event,
 					     gpointer       user_data);
@@ -101,6 +102,7 @@ static gboolean      on_focus_in            (GtkWidget     *sef,
 static gboolean      on_focus_out            (GtkWidget     *self,
 					      GdkEventFocus *event,
 					      gpointer       user_data);
+#endif
 
 static void          folder_monitor_update  (TnyFolderObserver *self, 
 					     TnyFolderChange *change);
@@ -709,10 +711,12 @@ modest_header_view_new (TnyFolder *folder, ModestHeaderViewStyle style)
 	g_signal_connect (self, "row-activated",
 			  G_CALLBACK (on_header_row_activated), NULL);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	g_signal_connect (self, "focus-in-event",
 			  G_CALLBACK(on_focus_in), NULL);
 	g_signal_connect (self, "focus-out-event",
 			  G_CALLBACK(on_focus_out), NULL);
+#endif
 
 	g_signal_connect (self, "button-press-event",
 			  G_CALLBACK(on_button_press_event), NULL);
@@ -968,11 +972,7 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 		return FALSE;
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	HildonUIMode ui_mode;
-	g_object_get (G_OBJECT (header_view), "hildon-ui-mode", &ui_mode, NULL);
-	if (ui_mode == HILDON_UI_MODE_NORMAL)
-		/* As in hildon 2.2 normal mode there's no selection, we just simply return */
-		return FALSE;
+	return FALSE;
 #endif
 	sel = gtk_tree_view_get_selection(header_view);
 	if(!gtk_tree_selection_count_selected_rows(sel)) {
@@ -1314,23 +1314,16 @@ void
 modest_header_view_set_folder (ModestHeaderView *self, 
 			       TnyFolder *folder,
 			       gboolean refresh,
+			       ModestWindow *progress_window,
 			       RefreshAsyncUserCallback callback,
 			       gpointer user_data)
 {
 	ModestHeaderViewPrivate *priv;
-	ModestWindow *main_win;
 	
 	g_return_if_fail (self);
 
 	priv =     MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-						      FALSE); /* don't create */
-	if (!main_win) {
-		g_warning ("%s: BUG: no main window", __FUNCTION__);
-		return;
-	}
-						      
 	if (priv->folder) {
 		if (priv->status_timeout) {
 			g_source_remove (priv->status_timeout);
@@ -1374,9 +1367,10 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		info->user_data = user_data;
 
 		/* Create the mail operation (source will be the parent widget) */
-		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(main_win),
-									 refresh_folder_error_handler,
-									 NULL, NULL);
+		if (progress_window)
+			mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(progress_window),
+										 refresh_folder_error_handler,
+										 NULL, NULL);
 		if (refresh) {			
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
@@ -1700,6 +1694,9 @@ const GtkTargetEntry header_view_drag_types[] = {
 static void
 enable_drag_and_drop (GtkWidget *self)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
+	return;
+#endif
 	gtk_drag_source_set (self, GDK_BUTTON1_MASK,
 			     header_view_drag_types,
 			     G_N_ELEMENTS (header_view_drag_types),
@@ -1709,12 +1706,18 @@ enable_drag_and_drop (GtkWidget *self)
 static void
 disable_drag_and_drop (GtkWidget *self)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
+	return;
+#endif
 	gtk_drag_source_unset (self);
 }
 
 static void
 setup_drag_and_drop (GtkWidget *self)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
+	return;
+#endif
 	enable_drag_and_drop(self);
 	g_signal_connect(G_OBJECT (self), "drag_data_get",
 			 G_CALLBACK(drag_data_get_cb), NULL);
@@ -1750,6 +1753,7 @@ get_selected_row (GtkTreeView *self, GtkTreeModel **model)
 	return path;
 }
 
+#ifndef MODEST_TOOLKIT_HILDON2
 /*
  * This function moves the tree view scroll to the current selected
  * row when the widget grabs the focus 
@@ -1817,6 +1821,7 @@ on_focus_out (GtkWidget     *self,
 	}
 	return FALSE;
 }
+#endif
 
 static gboolean
 on_button_release_event(GtkWidget * self, GdkEventButton * event, gpointer userdata)
@@ -1961,7 +1966,7 @@ modest_header_view_clear (ModestHeaderView *self)
 {
 	g_return_if_fail (self && MODEST_IS_HEADER_VIEW(self));
 	
-	modest_header_view_set_folder (self, NULL, FALSE, NULL, NULL);
+	modest_header_view_set_folder (self, NULL, FALSE, NULL, NULL, NULL);
 }
 
 void 

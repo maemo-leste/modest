@@ -57,7 +57,12 @@
 #include <hildon/hildon-sound.h>
 #include <osso-mem.h>
 #include "hildon2/modest-hildon2-details-dialog.h"
+#include "hildon2/modest-hildon2-window-mgr.h"
+#include <keys_nokia.h>
+#include <libprofile.h>
+#include <canberra.h>
 #include <modest-datetime-formatter.h>
+#include "modest-header-window.h"
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -74,8 +79,12 @@
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
-#define MODEST_NEW_MAIL_SOUND_FILE "/usr/share/sounds/ui-new_email.wav"
 #define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternCommunicationEmail"
+#define PROFILE_MAIL_TONE PROFILEKEY_EMAIL_ALERT_TONE
+#define PROFILE_MAIL_VOLUME PROFILEKEY_EMAIL_ALERT_VOLUME
+
+static void _modest_platform_play_email_tone (void);
+
 
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, 
@@ -1145,19 +1154,7 @@ modest_platform_set_update_interval (guint minutes)
 void
 modest_platform_push_email_notification(void)
 {
-	gboolean play_sound;
-	ModestWindow *main_window;
 	gboolean screen_on = TRUE, app_in_foreground;
-
-	/* Check whether or not we should play a sound */
-	play_sound = modest_conf_get_bool (modest_runtime_get_conf (),
-					   MODEST_CONF_PLAY_SOUND_MSG_ARRIVE,
-					   NULL);
-
-	/* Get the screen status */
-	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
-	if (main_window)
-		screen_on = modest_main_window_screen_is_on (MODEST_MAIN_WINDOW (main_window));
 
 	/* Get the window status */
 	app_in_foreground = hildon_program_get_is_topmost (hildon_program_get_instance ());
@@ -1165,9 +1162,8 @@ modest_platform_push_email_notification(void)
 	/* If the screen is on and the app is in the
 	   foreground we don't show anything */
 	if (!(screen_on && app_in_foreground)) {
-		/* Play a sound */
-		if (play_sound)
-			hildon_play_system_sound (MODEST_NEW_MAIL_SOUND_FILE);
+
+		_modest_platform_play_email_tone ();
 
 		/* Activate LED. This must be deactivated by
 		   modest_platform_remove_new_mail_notifications */
@@ -1202,13 +1198,6 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 	}
 
 #ifdef MODEST_HAVE_HILDON_NOTIFY
-	gboolean play_sound;
-
-	/* Check whether or not we should play a sound */
-	play_sound = modest_conf_get_bool (modest_runtime_get_conf (),
-					   MODEST_CONF_PLAY_SOUND_MSG_ARRIVE,
-					   NULL);
-
 	HildonNotification *notification;
 	TnyIterator *iter;
 	GSList *notifications_list = NULL;
@@ -1264,11 +1253,25 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		/* Play sound if the user wants. Show the LED
 		   pattern. Show and play just one */
 		if (G_UNLIKELY (first_notification)) {
+			gchar *active_profile;
+			gchar *mail_tone;
+			gchar *mail_volume;
+			gint mail_volume_int;
+
 			first_notification = FALSE;
-			if (play_sound)  {
+
+			active_profile = profile_get_profile ();
+			mail_tone = profile_get_value (active_profile, PROFILE_MAIL_TONE);
+			mail_volume = profile_get_value (active_profile, PROFILE_MAIL_VOLUME);
+			mail_volume_int = profile_parse_int (mail_volume);
+
+			if (mail_volume_int > 0)
 				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-								    "sound-file", MODEST_NEW_MAIL_SOUND_FILE);
-			}
+								    "sound-file", mail_tone);
+
+			g_free (mail_volume);
+			g_free (mail_tone);
+			g_free (active_profile);
 
 			/* Set the led pattern */
 			notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
@@ -1395,7 +1398,7 @@ void
 modest_platform_show_addressbook (GtkWindow *parent_window)
 {
 	osso_return_t result = OSSO_ERROR;
-	
+
 	result = osso_rpc_run_with_defaults (modest_maemo_utils_get_osso_context(),
 					     "osso_addressbook",
 					     "top_application", NULL, DBUS_TYPE_INVALID);
@@ -1438,7 +1441,7 @@ modest_platform_information_banner (GtkWidget *parent,
 	GtkWidget *banner, *banner_parent = NULL;
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
-	if (modest_window_mgr_num_windows (mgr) == 0)
+	if (modest_window_mgr_get_num_windows (mgr) == 0)
 		return;
 
 	if (parent && GTK_IS_WINDOW (parent)) {
@@ -1474,7 +1477,7 @@ modest_platform_information_banner_with_timeout (GtkWidget *parent,
 {
 	GtkWidget *banner;
 
-	if (modest_window_mgr_num_windows (modest_runtime_get_window_mgr ()) == 0)
+	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0)
 		return;
 
 	banner = hildon_banner_show_information (parent, icon_name, text);
@@ -1490,7 +1493,7 @@ modest_platform_animation_banner (GtkWidget *parent,
 
 	g_return_val_if_fail (text != NULL, NULL);
 
-	if (modest_window_mgr_num_windows (modest_runtime_get_window_mgr ()) == 0)
+	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0)
 		return NULL;
 
 	/* If the parent is not visible then do not show */
@@ -1636,19 +1639,18 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 {
 	GtkWidget *note;
 	gint response;
-	ModestWindow *main_win;
-	
-	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
-		g_warning ("%s: don't show dialogs if there's no main window; assuming 'Cancel'",
+	ModestWindow *win;
+	HildonWindowStack *stack;
+
+	stack = hildon_window_stack_get_default ();
+	win = MODEST_WINDOW (hildon_window_stack_peek (stack));
+
+	if (!win) {
+	  g_warning ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
 			   __FUNCTION__);
 		return FALSE;
 	}
 
-	/* don't create it */
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
-	g_return_val_if_fail (main_win, FALSE); /* should not happen */
-	
-	
 	gchar *question = g_strdup_printf (_("mcen_nc_unknown_certificate"),
 					   server_name);
 	
@@ -1657,7 +1659,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	   example. With GTK_RESPONSE_HELP the view button is aligned
 	   to the left while the other two to the right */
 	note = hildon_note_new_confirmation_add_buttons  (
-		GTK_WINDOW(main_win),
+		NULL,
 		question,
 		_HL("wdgt_bd_yes"),     GTK_RESPONSE_OK,
 		_HL("wdgt_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
@@ -1668,8 +1670,6 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 			  G_CALLBACK(on_cert_dialog_response),
 			  (gpointer) certificate);
 	
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-				     GTK_WINDOW (note), GTK_WINDOW (main_win));
 	response = gtk_dialog_run(GTK_DIALOG(note));
 
 	on_destroy_dialog (note);
@@ -2098,7 +2098,7 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 					   TnyHeader *header)
 {
 	GtkWidget *dialog;
-	
+
 	/* Create dialog */
 	dialog = modest_hildon2_details_dialog_new_with_header (parent_window, header);
 
@@ -2117,4 +2117,106 @@ osso_context_t *
 modest_platform_get_osso_context (void)
 {
 	return modest_maemo_utils_get_osso_context ();
+}
+
+static void
+_modest_platform_play_email_tone (void)
+{
+	gchar *active_profile;
+	gchar *mail_tone;
+	gchar *mail_volume;
+	gint mail_volume_int;
+	int ret;
+	ca_context *ca_con = NULL;
+	ca_proplist *pl = NULL;
+
+	active_profile = profile_get_profile ();
+	mail_tone = profile_get_value (active_profile, PROFILE_MAIL_TONE);
+	mail_volume = profile_get_value (active_profile, PROFILE_MAIL_VOLUME);
+	mail_volume_int = profile_parse_int (mail_volume);
+
+	if (mail_volume_int > 0) {
+
+		if ((ret = ca_context_create(&ca_con)) != CA_SUCCESS) {
+			g_warning("ca_context_create: %s\n", ca_strerror(ret));
+			return;
+		}
+
+		if ((ret = ca_context_open(ca_con)) != CA_SUCCESS) {
+			g_warning("ca_context_open: %s\n", ca_strerror(ret));
+			ca_context_destroy(ca_con);
+			return;
+		}
+
+		ca_proplist_create(&pl);
+		ca_proplist_sets(pl, CA_PROP_MEDIA_FILENAME, mail_tone);
+		ca_proplist_setf(pl, CA_PROP_CANBERRA_VOLUME, "%f", (gfloat) mail_volume_int);
+
+		ret = ca_context_play_full(ca_con, 0, pl, NULL, NULL);
+		g_debug("ca_context_play_full (vol %f): %s\n", (gfloat) mail_volume_int, ca_strerror(ret));
+
+		ca_proplist_destroy(pl);
+		ca_context_destroy(ca_con);
+	}
+
+	g_free (mail_volume);
+	g_free (mail_tone);
+	g_free (active_profile);
+}
+
+static void
+on_move_to_dialog_folder_activated (GtkTreeView       *tree_view,
+                                    GtkTreePath       *path,
+                                    GtkTreeViewColumn *column,
+                                    gpointer           user_data)
+{
+        gtk_dialog_response (GTK_DIALOG (user_data), GTK_RESPONSE_OK);
+}
+
+GtkWidget *
+modest_platform_create_move_to_dialog (GtkWindow *parent_window,
+				       GtkWidget **folder_view)
+{
+	GtkWidget *dialog, *folder_view_container;
+
+	/* Create dialog. We cannot use a touch selector because we
+	   need to use here the folder view widget directly */
+	dialog = gtk_dialog_new_with_buttons (_("mcen_ti_moveto_folders_title"),
+					      GTK_WINDOW (parent_window),
+					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
+					      GTK_DIALOG_DESTROY_WITH_PARENT,
+					      _("mcen_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
+	                                      NULL);
+
+	/* Create folder view */
+	*folder_view = modest_platform_create_folder_view (NULL);
+
+        /* Simulate the behaviour of a HildonPickerDialog by emitting
+	   a response when a folder is selected */
+        g_signal_connect (*folder_view, "row-activated",
+                          G_CALLBACK (on_move_to_dialog_folder_activated),
+                          dialog);
+
+	/* Create pannable and add it to the dialog */
+	folder_view_container = hildon_pannable_area_new ();
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), folder_view_container);
+	gtk_container_add (GTK_CONTAINER (folder_view_container), *folder_view);
+
+	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
+
+	gtk_widget_show (GTK_DIALOG (dialog)->vbox);
+	gtk_widget_show (folder_view_container);
+	gtk_widget_show (*folder_view);
+
+	return dialog;
+}
+
+TnyList *
+modest_platform_get_list_to_move (ModestWindow *window)
+{
+	ModestHeaderView *header_view;
+
+	header_view = modest_header_window_get_header_view (MODEST_HEADER_WINDOW (window));
+
+	return modest_header_view_get_selected_headers (header_view);
 }

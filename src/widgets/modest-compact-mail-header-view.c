@@ -36,6 +36,8 @@
 #include <modest-compact-mail-header-view.h>
 #include <modest-tny-folder.h>
 #include <modest-ui-constants.h>
+#include <modest-icon-names.h>
+#include <modest-datetime-formatter.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-gtk.h>
 #endif
@@ -56,14 +58,16 @@ struct _ModestCompactMailHeaderViewPriv
 	GtkWidget    *date_label;
 	GtkWidget    *subject_label;
 
-	GtkSizeGroup *labels_size_group;
+	GSList       *custom_labels;
 
 	gboolean     is_outgoing;
 	gboolean     is_draft;
-	gchar        *first_address;
 	
 	TnyHeader    *header;
 	TnyHeaderFlags priority_flags;
+
+	time_t       date_to_show;
+	ModestDatetimeFormatter *datetime_formatter;
 };
 
 #define MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE(o)	\
@@ -103,22 +107,33 @@ static const GtkWidget *modest_compact_mail_header_view_add_custom_header_defaul
 /* internal */
 static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
 static void on_details_button_clicked  (GtkButton *button, gpointer userdata);
-static void on_fromto_button_clicked  (GtkButton *button, gpointer userdata);
 static void update_style (ModestCompactMailHeaderView *self);
-static void set_date_time (ModestCompactMailHeaderView *compact_mail_header, time_t date);
+static void set_date_time (ModestCompactMailHeaderView *compact_mail_header);
 static void fill_address (ModestCompactMailHeaderView *self);
 
 static void
-set_date_time (ModestCompactMailHeaderView *compact_mail_header, time_t date)
+set_date_time (ModestCompactMailHeaderView *compact_mail_header)
 {
 	const guint BUF_SIZE = 64; 
-	gchar date_buf [BUF_SIZE];
+	const gchar *date_str;
+	gchar date_buf[BUF_SIZE];
+	GString *buffer = g_string_new ("");
 
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (compact_mail_header);
 
-	modest_text_utils_strftime (date_buf, BUF_SIZE, "%x %X", date);
+	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_week"), priv->date_to_show);
+	buffer = g_string_append (buffer, date_buf);
+	buffer = g_string_append_c (buffer, ' ');
+	buffer = g_string_append_unichar (buffer, 0x2015);
+	buffer = g_string_append_c (buffer, ' ');
+	date_str = modest_datetime_formatter_format_time (priv->datetime_formatter, priv->date_to_show);
+	buffer = g_string_append (buffer, date_str);
+	buffer = g_string_append (buffer, "\n");
+	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_long"), priv->date_to_show);
+	buffer = g_string_append (buffer, date_buf);
 
-	gtk_label_set_text (GTK_LABEL (priv->date_label), date_buf);
+	gtk_label_set_text (GTK_LABEL (priv->date_label), buffer->str);
+	g_string_free (buffer, TRUE);
 
 }
 
@@ -184,7 +199,6 @@ modest_compact_mail_header_view_set_header_default (TnyHeaderView *self, TnyHead
 	if (header && G_IS_OBJECT (header))
 	{
 		gchar *subject;
-		time_t date_to_show;
 
 		g_object_ref (G_OBJECT (header)); 
 		priv->header = header;
@@ -199,11 +213,11 @@ modest_compact_mail_header_view_set_header_default (TnyHeaderView *self, TnyHead
 			gtk_label_set_text (GTK_LABEL (priv->subject_label), _("mail_va_no_subject"));
 
 		if (priv->is_outgoing && priv->is_draft) {
-			date_to_show = tny_header_get_date_sent (header);
+			priv->date_to_show = tny_header_get_date_sent (header);
 		} else {
-			date_to_show = tny_header_get_date_received (header);
+			priv->date_to_show = tny_header_get_date_received (header);
 		}
-		set_date_time (MODEST_COMPACT_MAIL_HEADER_VIEW (self), date_to_show);
+		set_date_time (MODEST_COMPACT_MAIL_HEADER_VIEW (self));
 
 		fill_address (MODEST_COMPACT_MAIL_HEADER_VIEW (self));
 
@@ -269,10 +283,10 @@ modest_compact_mail_header_view_add_custom_header_default (ModestMailHeaderView 
 	hbox = gtk_hbox_new (FALSE, 12);
 	label_field = gtk_label_new (NULL);
 	gtk_label_set_text (GTK_LABEL (label_field), label);
+	priv->custom_labels = g_slist_prepend (priv->custom_labels, (gpointer) label_field);
 	gtk_misc_set_alignment (GTK_MISC (label_field), 1.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (hbox), label_field, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (hbox), custom_widget, TRUE, TRUE, 0);
-	gtk_size_group_add_widget (priv->labels_size_group, label_field);
 
 	if (start)
 		gtk_box_pack_start (GTK_BOX (priv->headers_vbox), hbox, FALSE, FALSE, 0);
@@ -299,16 +313,23 @@ modest_compact_mail_header_view_new ()
 }
 
 static void
+datetime_format_changed (ModestDatetimeFormatter *formatter,
+			 ModestCompactMailHeaderView *self)
+{
+	set_date_time (self);
+}
+
+static void
 modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestCompactMailHeaderView *self = (ModestCompactMailHeaderView *)instance;
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 	GtkWidget *first_hbox, *second_hbox, *vbox, *main_vbox;
-	GtkWidget *details_button, *fromto_button;
+	GtkWidget *details_button;
 	PangoAttrList *attr_list;
 
 	priv->header = NULL;
-	priv->first_address = NULL;
+	priv->custom_labels = NULL;
 
 	main_vbox = gtk_vbox_new (FALSE, 0);
 	vbox = gtk_vbox_new (FALSE, 0);
@@ -338,7 +359,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_box_pack_start (GTK_BOX (first_hbox), priv->subject_box, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (first_hbox), details_button, FALSE, FALSE, 0);
 
-	second_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
+	second_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
 
 	priv->fromto_label = gtk_label_new (NULL);
 	gtk_misc_set_alignment (GTK_MISC (priv->fromto_label), 0.0, 1.0);
@@ -346,36 +367,28 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	priv->fromto_contents = gtk_label_new (NULL);
 	gtk_misc_set_alignment (GTK_MISC (priv->fromto_contents), 0.0, 1.0);
 	gtk_label_set_ellipsize (GTK_LABEL (priv->fromto_contents), PANGO_ELLIPSIZE_END);
-	attr_list = pango_attr_list_new ();
-	pango_attr_list_insert (attr_list, pango_attr_underline_new (PANGO_UNDERLINE_SINGLE));
-	gtk_label_set_attributes (GTK_LABEL (priv->fromto_contents), attr_list);
-	pango_attr_list_unref (attr_list);
-	fromto_button = gtk_button_new ();
-	gtk_button_set_relief (GTK_BUTTON (fromto_button), GTK_RELIEF_NONE);
-	gtk_container_add (GTK_CONTAINER (fromto_button), priv->fromto_contents);
 
 	priv->date_label = gtk_label_new (NULL);
+	gtk_label_set_justify (GTK_LABEL (priv->date_label), GTK_JUSTIFY_RIGHT);
 	gtk_misc_set_alignment (GTK_MISC (priv->date_label), 1.0, 1.0);
 	gtk_misc_set_padding (GTK_MISC (priv->date_label), MODEST_MARGIN_DEFAULT, 0);
 
 	gtk_box_pack_start (GTK_BOX (second_hbox), priv->fromto_label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (second_hbox), fromto_button, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (second_hbox), priv->fromto_contents, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (second_hbox), priv->date_label, FALSE, FALSE, 0);
 
 	gtk_box_pack_start (GTK_BOX (vbox), first_hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (vbox), second_hbox, FALSE, FALSE, 0);
 
-	priv->labels_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-	gtk_size_group_add_widget (priv->labels_size_group, priv->fromto_label);
-	
 	update_style (self);
 
 	g_signal_connect (G_OBJECT (self), "notify::style", G_CALLBACK (on_notify_style), (gpointer) self);
 
  	g_signal_connect (G_OBJECT (details_button), "clicked", G_CALLBACK (on_details_button_clicked), instance);
-	g_signal_connect (G_OBJECT (fromto_button), "clicked", G_CALLBACK (on_fromto_button_clicked), instance);
 
-	gtk_box_pack_start (GTK_BOX (main_vbox), vbox, FALSE, FALSE, 0);
+	priv->datetime_formatter = modest_datetime_formatter_new ();
+	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
+			  G_CALLBACK (datetime_format_changed), (gpointer) self);
 
 	priv->headers_vbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_set_focus_chain (GTK_CONTAINER (priv->headers_vbox), NULL);
@@ -401,6 +414,16 @@ modest_compact_mail_header_view_finalize (GObject *object)
 	ModestCompactMailHeaderView *self = (ModestCompactMailHeaderView *)object;	
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 
+	if (priv->datetime_formatter) {
+		g_object_unref (priv->datetime_formatter);
+		priv->datetime_formatter = NULL;
+	}
+
+	if (priv->custom_labels) {
+		g_slist_free (priv->custom_labels);
+		priv->custom_labels = NULL;
+	}
+
 	if (G_LIKELY (priv->header))
 		g_object_unref (G_OBJECT (priv->header));
 	priv->header = NULL;
@@ -409,8 +432,6 @@ modest_compact_mail_header_view_finalize (GObject *object)
 		g_object_unref (G_OBJECT (priv->headers_vbox));
 
 	priv->headers_vbox = NULL;
-
-	g_object_unref (priv->labels_size_group);
 
 	(*parent_class->finalize) (object);
 
@@ -549,11 +570,11 @@ modest_compact_mail_header_view_set_priority_default (ModestMailHeaderView *head
 			priv->priority_icon = NULL;
 		}
 	} else if (priv->priority_flags == TNY_HEADER_FLAG_HIGH_PRIORITY) {
-		priv->priority_icon = gtk_image_new_from_icon_name ("qgn_list_messaging_high", GTK_ICON_SIZE_MENU);
+		priv->priority_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_HIGH, GTK_ICON_SIZE_MENU);
 		gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 		gtk_widget_show (priv->priority_icon);
 	} else if (priv->priority_flags == TNY_HEADER_FLAG_LOW_PRIORITY) {
-		priv->priority_icon = gtk_image_new_from_icon_name ("qgn_list_messaging_low", GTK_ICON_SIZE_MENU);
+		priv->priority_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_LOW, GTK_ICON_SIZE_MENU);
 		gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 		gtk_widget_show (priv->priority_icon);
 	}
@@ -577,7 +598,7 @@ update_style (ModestCompactMailHeaderView *self)
 	GdkColor style_color;
 	PangoColor color;
 	PangoAttrList *attr_list;
-	GSList *custom_widgets;
+	GSList *node;
 
 	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
@@ -614,12 +635,11 @@ update_style (ModestCompactMailHeaderView *self)
 	/* set style of custom headers */
 	attr_list = pango_attr_list_new ();
 	pango_attr_list_insert (attr_list, pango_attr_foreground_new (color.red, color.green, color.blue));
-	custom_widgets = gtk_size_group_get_widgets (priv->labels_size_group);
-	while (custom_widgets) {		
-		gtk_label_set_attributes (GTK_LABEL (custom_widgets->data), attr_list);
-		custom_widgets = g_slist_next (custom_widgets);
+	for (node = priv->custom_labels; node != NULL; node = g_slist_next (node)) {
+		gtk_label_set_attributes (GTK_LABEL (node->data), attr_list);
 	}
 	pango_attr_list_unref (attr_list);
+
 }
 
 static void
@@ -629,6 +649,7 @@ fill_address (ModestCompactMailHeaderView *self)
 	gchar *recipients;
 	const gchar *label;
 	GSList *recipient_list;
+	gchar *first_address;
 	
 	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
@@ -641,39 +662,26 @@ fill_address (ModestCompactMailHeaderView *self)
 		recipients = tny_header_dup_from (TNY_HEADER (priv->header));
 	}
 
-	g_free (priv->first_address);
 	recipient_list = modest_text_utils_split_addresses_list (recipients);
 	if (recipient_list == NULL) {
-		priv->first_address = NULL;
+		first_address = NULL;
 	} else {
 		gchar *first_recipient;
 
 		first_recipient = (gchar *) recipient_list->data;
-		priv->first_address = first_recipient?g_strdup (first_recipient):NULL;
+		first_address = first_recipient?g_strdup (first_recipient):NULL;
 	}
 	g_slist_foreach (recipient_list, (GFunc) g_free, NULL);
 	g_slist_free (recipient_list);
 
 	gtk_label_set_text (GTK_LABEL (priv->fromto_label), label);
-	if (recipients)
-		gtk_label_set_text (GTK_LABEL (priv->fromto_contents), priv->first_address);
-
-	g_free (recipients);
-}
-
-static void 
-on_fromto_button_clicked (GtkButton *button,
-			  gpointer userdata)
-{
-	ModestCompactMailHeaderViewPriv *priv;
-	ModestCompactMailHeaderView *self = (ModestCompactMailHeaderView *) userdata;
-
-	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
-	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
-
-	if (priv->first_address) {
-		g_signal_emit_by_name (G_OBJECT (self), "recpt-activated", priv->first_address);
+	if (recipients) {
+		modest_text_utils_get_display_address (first_address);
+		gtk_label_set_text (GTK_LABEL (priv->fromto_contents), first_address);
+		g_free (recipients);
+		g_free (first_address);
 	}
+
 }
 
 static void 

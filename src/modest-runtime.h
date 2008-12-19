@@ -66,7 +66,7 @@ typedef enum {
  * environment, instantiates singletons and so on)
  * modest_runtime_init should only be called once, and
  * when done with it, modest_runtime_uninit should be called
- *  
+ *
  * TRUE if this succeeded, FALSE otherwise.
  */
 gboolean modest_runtime_init (void);
@@ -81,10 +81,10 @@ gboolean modest_runtime_init (void);
  * TRUE if this succeeded, FALSE otherwise
  */
 gboolean modest_runtime_uninit (void);
-	
+
 
 /**
- * modest_runtime_get_debug_flags 
+ * modest_runtime_get_debug_flags
  *
  * get the debug flags for modest; they are read from the MODEST_DEBUG
  * environment variable; the flags specified as strings, separated by ':'.

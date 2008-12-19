@@ -63,7 +63,7 @@
 #include <tny-simple-list.h>
 #include <wptextview.h>
 #include <wptextbuffer.h>
-#include "modest-scroll-area.h"
+#include <hildon/hildon-pannable-area.h>
 #include "modest-msg-edit-window-ui-dimming.h"
 
 #include "modest-hildon-includes.h"
@@ -171,8 +171,6 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 				  GtkTextIter *iter,
 				  GtkTextMark *mark,
 				  ModestMsgEditWindow *userdata);
-static void vadj_changed (GtkAdjustment *adj, 
-			  ModestMsgEditWindow *window);
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -254,6 +252,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *font_size_toolitem;
 	GtkWidget   *font_face_toolitem;
 	GtkWidget   *font_color_button;
+	GtkWidget   *font_color_toolitem;
 	GSList      *font_items_group;
 	GtkWidget   *font_tool_button_label;
 	GSList      *size_items_group;
@@ -264,7 +263,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *font_dialog;
 
-	GtkWidget   *scroll;
+	GtkWidget   *pannable;
 	guint        scroll_drag_timeout_id;
 	gdouble      last_upper;
 
@@ -497,10 +496,8 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focu
 	GtkTextMark *insert;
 	GtkTextIter iter;
 	GdkRectangle rectangle;
-	GtkAdjustment *vadj;
 	gdouble new_value;
 	gint offset;
-	GdkWindow *window;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
 
@@ -511,37 +508,11 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focu
 	gtk_text_buffer_get_iter_at_mark (priv->text_buffer, &iter, insert);
 
 	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->msg_body), &iter, &rectangle);
-	vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll));
 	offset = priv->msg_body->allocation.y;
 
-	new_value = vadj->value;
-	
-	if ((offset + rectangle.y + rectangle.height) > 
-	    ((gint) (vadj->value +vadj->page_size))) {
-		new_value = (offset + rectangle.y) - vadj->page_size * 0.25;
-		if (new_value > vadj->upper - vadj->page_size)
-			new_value = vadj->upper - vadj->page_size;
-	} else if ((offset + rectangle.y) < ((gint) vadj->value)) {
-		new_value = (offset + rectangle.y - vadj->page_size * 0.75);
-		if (((gint) (new_value + vadj->page_size)) < (offset + rectangle.y + rectangle.height))
-			new_value = offset + rectangle.y + rectangle.height - (gint) vadj->page_size;
-		if (new_value < 0.0)
-			new_value = 0.0;
-		if (new_value > vadj->value)
-			new_value = vadj->value;
-	}
+	new_value = (offset + rectangle.y);
 
-	if (vadj->value != new_value) {
-		g_signal_emit_by_name (GTK_TEXT_VIEW(priv->msg_body)->layout,
-				       "invalidated");
-		vadj->value = new_value;
-		gtk_adjustment_value_changed (vadj);
-		/* invalidate body */
-		window = gtk_widget_get_parent_window (priv->msg_body);
-		if (window)
-			gdk_window_invalidate_rect (window, NULL, TRUE);
-	}
-
+	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (priv->pannable), -1, new_value);
 }
 
 static void
@@ -600,20 +571,6 @@ copy_clipboard_check (GtkTextView *text_view,
 	buffer = gtk_text_view_get_buffer (text_view);
 	if (!modest_text_utils_buffer_selection_is_valid (buffer)) {
 		g_signal_stop_emission_by_name ((gpointer )text_view, "copy-clipboard");
-	}
-}
-
-static void 
-vadj_changed (GtkAdjustment *adj,
-	      ModestMsgEditWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	if (priv->last_upper != adj->upper) {
-		priv->last_upper = adj->upper;
-		correct_scroll (window);
 	}
 }
 
@@ -676,11 +633,6 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
 
-	g_signal_connect (G_OBJECT (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll))),
-			  "changed",
-			  G_CALLBACK (vadj_changed),
-			  obj);
-
 	priv->clipboard_change_handler_id = 
 		g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 				  G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
@@ -692,6 +644,17 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (priv->msg_body), "copy-clipboard", G_CALLBACK (copy_clipboard_check), NULL);
 	g_signal_connect (G_OBJECT (priv->attachments_view), "delete", G_CALLBACK (attachment_deleted), obj);
 }
+
+static void
+init_wp_text_view_style ()
+{
+	static gboolean initialized = FALSE;
+
+	if (!initialized) {
+		gtk_rc_parse_string ("class \"WPTextView\" style \"fremantle-textview\"");
+		initialized = TRUE;
+	}
+}	
 
 static void
 init_window (ModestMsgEditWindow *obj)
@@ -793,7 +756,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_button_set_relief (GTK_BUTTON (priv->add_attachment_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
 	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 0.5);
-	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, GTK_ICON_SIZE_BUTTON);
+	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, HILDON_ICON_SIZE_FINGER);
 	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
@@ -833,8 +796,11 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->attachments_caption, FALSE, FALSE, 0);
 	gtk_widget_set_no_show_all (priv->attachments_caption, TRUE);
 
+	init_wp_text_view_style ();
 
 	priv->msg_body = wp_text_view_new ();
+	
+
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->msg_body), GTK_WRAP_WORD_CHAR);
 	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	g_object_set (priv->text_buffer, "font_scale", DEFAULT_FONT_SCALE, NULL);
@@ -853,25 +819,21 @@ init_window (ModestMsgEditWindow *obj)
 
 /* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
 
-	priv->scroll = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->scroll), GTK_SHADOW_NONE);
-	modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->scroll), TRUE);
-
+	priv->pannable = hildon_pannable_area_new ();
+	
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
 	priv->frame = gtk_frame_new (NULL);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->frame, TRUE, TRUE, 0);
 
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (priv->scroll), main_vbox);
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->scroll)));
-	gtk_widget_show_all (GTK_WIDGET(priv->scroll));
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), main_vbox);
+	gtk_widget_show_all (GTK_WIDGET(priv->pannable));
 	
 	window_box = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 
-	gtk_box_pack_start (GTK_BOX (window_box), priv->scroll, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (window_box), priv->pannable, TRUE, TRUE, 0);
 
 	gtk_container_add (GTK_CONTAINER (priv->frame), priv->msg_body);
 
@@ -1140,15 +1102,19 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	gchar *to, *cc, *bcc, *subject;
 	gchar *body;
 	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 	GtkTextIter iter;
 	TnyHeaderFlags priority_flags;
 	TnyFolder *msg_folder;
 	gboolean is_html = FALSE;
+	GtkAction *action;
+	gboolean field_view_set;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 
 	header = tny_msg_get_header (msg);
 	to      = tny_header_dup_to (header);
@@ -1159,6 +1125,9 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 
 	if (to)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
+	field_view_set = TRUE;
 	if (cc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  cc);
 		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
@@ -1166,7 +1135,13 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_CC, NULL)) {
 		gtk_widget_set_no_show_all (priv->cc_caption, TRUE);
 		gtk_widget_hide (priv->cc_caption);
+		field_view_set = FALSE;
 	}
+	if (action)
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), field_view_set);
+
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
+	field_view_set = TRUE;
 	if (bcc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
 		gtk_widget_set_no_show_all (priv->bcc_caption, FALSE);
@@ -1174,7 +1149,12 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_BCC, NULL)) {
 		gtk_widget_set_no_show_all (priv->bcc_caption, TRUE);
 		gtk_widget_hide (priv->bcc_caption);
-	} 
+		field_view_set = FALSE;
+	}
+	if (action)
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), field_view_set);
+
+
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW(self),
@@ -1331,14 +1311,14 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 
 	/* font color */
-	tool_item = GTK_WIDGET (gtk_tool_item_new ());
+	priv->font_color_toolitem = GTK_WIDGET (gtk_tool_item_new ());
 	priv->font_color_button = hildon_color_button_new ();
 	GTK_WIDGET_UNSET_FLAGS (tool_item, GTK_CAN_FOCUS);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_button, GTK_CAN_FOCUS);
-	gtk_container_add (GTK_CONTAINER (tool_item), priv->font_color_button);
-	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
-	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
-	gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
+	gtk_container_add (GTK_CONTAINER (priv->font_color_toolitem), priv->font_color_button);
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->font_color_toolitem), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->font_color_toolitem), TRUE);
+	gtk_toolbar_insert(GTK_TOOLBAR(parent_priv->toolbar), GTK_TOOL_ITEM (priv->font_color_toolitem), insert_index);
 	g_signal_connect_swapped (G_OBJECT (priv->font_color_button), 
 				  "notify::color", 
 				  G_CALLBACK (modest_msg_edit_window_color_button_change), 
@@ -1512,7 +1492,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 					      modest_msg_edit_window_toolbar_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_edit_window_toolbar_dimming_entries),
 					      MODEST_WINDOW (obj));
-	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_color_button,
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_color_toolitem,
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_size_toolitem,

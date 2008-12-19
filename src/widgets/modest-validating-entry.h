@@ -6,7 +6,11 @@
 #ifndef _MODEST_VALIDATING_ENTRY
 #define _MODEST_VALIDATING_ENTRY
 
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-entry.h>
+#else
 #include <gtk/gtkentry.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -33,11 +37,19 @@ G_BEGIN_DECLS
 	MODEST_TYPE_VALIDATING_ENTRY, ModestValidatingEntryClass))
 
 typedef struct {
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonEntry parent;
+#else
 	GtkEntry parent;
+#endif
 } ModestValidatingEntry;
 
 typedef struct {
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonEntryClass parent_class;
+#else
 	GtkEntryClass parent_class;
+#endif
 } ModestValidatingEntryClass;
 
 GType modest_validating_entry_get_type (void);

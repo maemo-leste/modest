@@ -31,11 +31,10 @@
 #include <gdk/gdk.h>
 #include <string.h>
 #include <glib.h>
-#include <modest-runtime.h>
-#include <modest-init.h>
+#include "modest-runtime.h"
+#include "modest-init.h"
 #include "modest-platform.h"
 #include "modest-ui-actions.h"
-#include <widgets/modest-main-window.h>
 
 typedef struct {
 	gulong queue_handler;
@@ -57,18 +56,18 @@ on_idle_exit_modest (gpointer data)
 
 		/* Disconnect signals. Will be freed by the destroy notify */
 		handlers = (MainSignalHandlers *) data;
-		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (), 
+		g_signal_handler_disconnect (modest_runtime_get_mail_operation_queue (),
 					     handlers->queue_handler);
-		g_signal_handler_disconnect (modest_runtime_get_window_mgr (), 
+		g_signal_handler_disconnect (modest_runtime_get_window_mgr (),
 					     handlers->window_list_handler);
-		g_signal_handler_disconnect (modest_runtime_get_account_store (), 
-					     handlers->get_password_handler);		
+		g_signal_handler_disconnect (modest_runtime_get_account_store (),
+					     handlers->get_password_handler);
 		g_free (handlers);
 
 		/* Wait for remaining tasks */
 		while (gtk_events_pending ())
 			gtk_main_iteration ();
-		
+
 		gtk_main_quit ();
 	} else {
 		ModestMailOperation *mail_op;
@@ -77,7 +76,7 @@ on_idle_exit_modest (gpointer data)
 		modest_mail_operation_shutdown (mail_op, modest_runtime_get_account_store ());
 		g_object_unref (mail_op);
 	}
-		
+
 	gdk_threads_leave ();
 
 	return FALSE;
@@ -92,7 +91,7 @@ on_queue_empty (ModestMailOperationQueue *queue,
 	/* Exit if the queue is empty and there are no more
 	   windows. We can exit as well if the main window is hidden
 	   and it's the only one */
-	if (modest_window_mgr_num_windows (mgr) == 0)
+	if (modest_window_mgr_get_num_windows (mgr) == 0)
 		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, NULL);
 }
 
@@ -110,9 +109,9 @@ on_window_list_empty (ModestWindowMgr *window_mgr,
 int
 main (int argc, char *argv[])
 {
-	/* Usually we don't show the application at first, 
-	 * because we wait for the top_application D-Bus method to 
-	 * be called. But that's annoying when starting from the 
+	/* Usually we don't show the application at first,
+	 * because we wait for the top_application D-Bus method to
+	 * be called. But that's annoying when starting from the
 	 * command line.: */
 	gboolean show_ui_without_top_application_method = FALSE;
 	int retval  = 0;
@@ -125,8 +124,8 @@ main (int argc, char *argv[])
 
 	if (!show_ui_without_top_application_method) {
 		g_print ("modest: use 'modest showui' to start from cmdline  with UI\n");
-	}	
-		
+	}
+
 	if (!g_thread_supported())
 		g_thread_init (NULL);
 
@@ -138,7 +137,7 @@ main (int argc, char *argv[])
 		retval = 1;
 		goto cleanup;
 	}
-	
+
 	if (!gtk_init_check (&argc, &argv)) {
 		g_printerr ("modest: failed to initialize gtk\n");
 		retval = 1;
@@ -153,21 +152,21 @@ main (int argc, char *argv[])
 
 	handlers = g_malloc0 (sizeof (MainSignalHandlers));
 	/* Connect to the "queue-emtpy" signal */
-	handlers->queue_handler = 
+	handlers->queue_handler =
 		g_signal_connect (modest_runtime_get_mail_operation_queue (),
 				  "queue-empty",
 				  G_CALLBACK (on_queue_empty),
 				  handlers);
 
 	/* Connect to the "window-list-emtpy" signal */
-	handlers->window_list_handler = 
+	handlers->window_list_handler =
 		g_signal_connect (modest_runtime_get_window_mgr (),
 				  "window-list-empty",
 				  G_CALLBACK (on_window_list_empty),
 				  handlers);
 
 	/* Connect to the "password-requested" signal */
-	handlers->get_password_handler = 
+	handlers->get_password_handler =
 		g_signal_connect (modest_runtime_get_account_store (),
 				  "password_requested",
 				  G_CALLBACK (modest_ui_actions_on_password_requested),
@@ -180,21 +179,20 @@ main (int argc, char *argv[])
 	 * when we receive the "top_application" D-Bus method.
 	 */
 	if (show_ui_without_top_application_method) {
-		ModestWindow *main_win;
+		ModestWindow *window;
+		ModestWindowMgr *mgr;
 
-		/* this will create & register the window */
-		main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), 
-							      TRUE);
-		if (!main_win) {
+		mgr = modest_runtime_get_window_mgr();
+		window = modest_window_mgr_show_initial_window (mgr);
+		if (!window) {
 			g_printerr ("modest: failed to get main window instance\n");
 			retval = 1;
 			goto cleanup;
 		}
-	
 		/* Remove new mail notifications if exist */
 		modest_platform_remove_new_mail_notifications (FALSE);
 	}
-	
+
 	gtk_main ();
 
 cleanup:

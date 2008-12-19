@@ -286,9 +286,9 @@ init (ModestWizardDialog *wizard_dialog)
     gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_cancel"), MODEST_WIZARD_DIALOG_CANCEL);
 #endif
 #ifdef MODEST_TOOLKIT_HILDON2
-    gtk_dialog_add_button (dialog, _HL("wdgt_bd_finish"), MODEST_WIZARD_DIALOG_FINISH);
-    gtk_dialog_add_button (dialog, _HL("wdgt_bd_previous"), MODEST_WIZARD_DIALOG_PREVIOUS);
-    gtk_dialog_add_button (dialog, _HL("wdgt_bd_next"), MODEST_WIZARD_DIALOG_NEXT);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_finish"), MODEST_WIZARD_DIALOG_FINISH);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_previous"), MODEST_WIZARD_DIALOG_PREVIOUS);
+    gtk_dialog_add_button (dialog, _HL("ecdg_bd_wizard_next"), MODEST_WIZARD_DIALOG_NEXT);
 #endif
 #ifdef MODEST_TOOLKIT_GTK
     gtk_dialog_add_button (dialog, GTK_STOCK_SAVE, MODEST_WIZARD_DIALOG_FINISH);
@@ -559,8 +559,9 @@ response (ModestWizardDialog   *wizard_dialog,
     
     /* If first page, previous and finish are disabled, 
        if last page, next is disabled */
-    make_buttons_sensitive (wizard_dialog,
-            !is_first /* previous */, !is_first /* finish */, !is_last /* next*/);
+/*     make_buttons_sensitive (wizard_dialog, */
+/*             !is_first /\* previous *\/, !is_first /\* finish *\/, !is_last /\* next*\/); */
+    make_buttons_sensitive (wizard_dialog, TRUE, TRUE, TRUE);
             
     /* Allow derived classes to disable buttons to prevent navigation,
      * according to their own validation logic: */

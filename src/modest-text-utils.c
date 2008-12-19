@@ -626,8 +626,17 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	/* nope, we are at the start of some address
 	 * now, let's find the end of the address */
 	end = my_addrs + 1;
-	while (end[0] && end[0] != ',' && end[0] != ';')
+	while (end[0] && end[0] != ';') {
+		if (end[0] == '\"') {
+			while (end[0] && end[0] != '\"')
+				++end;
+		}
+		if ((end[0] && end[0] == '>')&&(end[1] && end[1] == ',')) {
+			++end;
+			break;
+		}
 		++end;
+	}
 
 	/* we got the address; copy it and remove trailing whitespace */
 	addr = g_strndup (my_addrs, end - my_addrs);
@@ -1351,10 +1360,11 @@ modest_text_utils_get_display_date (time_t date)
 
 	/* if it's today, show the time, if it's not today, show the date instead */
 
+	/* TODO: take into account the system config for 24/12h */
 	if (day == date_day) /* is the date today? */
-		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%X", date);
+		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, _HL("wdgt_va_24h_time"), date);
 	else 
-		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%x", date); 
+		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, _HL("wdgt_va_date"), date); 
 
 	return date_buf; /* this is a static buffer, don't free! */
 }

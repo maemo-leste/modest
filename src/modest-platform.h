@@ -49,11 +49,13 @@ typedef enum _ModestConnectedVia {
 	MODEST_CONNECTED_VIA_ANY,
 } ModestConnectedVia;
 
+#define MODEST_GTK_RESPONSE_NEW_FOLDER 1
+
 /**
  * modest_platform_platform_init:
  *
  * platform specific initialization function
- * 
+ *
  * Returns: TRUE if succeeded, FALSE otherwise
  */
 gboolean modest_platform_init (int argc, char *argv[]);
@@ -505,7 +507,7 @@ gboolean modest_platform_check_memory_low (ModestWindow *win,
  * modest_platform_run_folder_details_dialog:
  * @parent_window: the parent #GtkWindow for the new dialog
  * @folder: the #TnyFolder whose details will be shown
- * 
+ *
  * Shows the folder details dialog
  **/
 void     modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
@@ -515,11 +517,20 @@ void     modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
  * modest_platform_run_header_details_dialog:
  * @parent_window: the parent #GtkWindow for the new dialog
  * @header: the #TnyHeader whose details will be shown
- * 
+ *
  * Shows the header details dialog
  **/
 void     modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 						    TnyHeader *header);
+
+/**
+ * modest_platform_on_runtime_initialized:
+ *
+ * This function will be used by platforms to connect objects between
+ * themselves once all the singletons have been created. So this
+ * function MUST be called *before* modest_init
+ **/
+void     modest_platform_on_runtime_initialized ();
 
 #ifndef MODEST_TOOLKIT_GTK
 /**
@@ -534,7 +545,11 @@ osso_context_t *modest_platform_get_osso_context (void);
 
 
 
+GtkWidget* modest_platform_create_move_to_dialog (GtkWindow *parent_window,
+						  GtkWidget **folder_view);
+
+TnyList* modest_platform_get_list_to_move (ModestWindow *window);
+
 G_END_DECLS
 
 #endif /* __MODEST_PLATFORM_UTILS_H__ */
-

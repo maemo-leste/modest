@@ -53,6 +53,8 @@ gboolean modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_
 gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_always_dimmed (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_mark_as_read_msg_in_view (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_mark_as_unread_msg_in_view (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data);
@@ -72,6 +74,7 @@ gboolean modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer u
 gboolean modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_cancel_sending_all (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data);
@@ -84,6 +87,9 @@ gboolean modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer us
 gboolean modest_ui_dimming_rules_on_editor_paste_show_menu (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_save_to_drafts (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_insert_image (ModestWindow *win, gpointer user_data);
+#ifdef MODEST_TOOLKIT_HILDON2
+gboolean modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data);
+#endif
 
 G_END_DECLS
 #endif 

@@ -38,7 +38,7 @@
 #include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
 #include "modest-maemo-utils.h"
-#include <hildon/hildon-number-editor.h>
+#include <modest-number-editor.h>
 #include <hildon/hildon-check-button.h>
 #include "modest-hildon-includes.h"
 
@@ -89,7 +89,7 @@ on_security_changed (GtkWidget *widget,
 			modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
 		
 		if(port_number) {
-			hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->port_view), 
+			modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->port_view), 
 							port_number);
 		}
 	}
@@ -147,7 +147,7 @@ create_incoming_security (ModestSecurityOptionsView* self,
 					       ppriv->security_view);
 
 	if (ppriv->full) {		
-		ppriv->port_view = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
+		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
 		entry_caption = modest_maemo_utils_create_captioned (title_size_group,
 								     value_size_group,
 								     _("mcen_fi_emailsetup_port"), 
@@ -215,7 +215,7 @@ on_entry_changed (GtkEditable *editable,
 								      auth_proto);
 
 	if (is_secure && 
-	    !g_ascii_strcasecmp (gtk_entry_get_text (GTK_ENTRY (ppriv->user_entry)), "")) {
+	    !g_ascii_strcasecmp (hildon_entry_get_text (HILDON_ENTRY (ppriv->user_entry)), "")) {
 		missing = TRUE;
 	} else {
 		missing = FALSE;
@@ -281,7 +281,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						      on_entry_max, self);
 		
 		/* Password widgets */
-		ppriv->pwd_entry = gtk_entry_new ();
+		ppriv->pwd_entry = hildon_entry_new (MODEST_EDITABLE_SIZE);
 
 		/* Auto-capitalization is the default, so let's turn it off */
 		hildon_gtk_entry_set_input_mode (GTK_ENTRY (ppriv->pwd_entry),
@@ -294,7 +294,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 								   _("mail_fi_password"), 
 								   ppriv->pwd_entry);
 
-		ppriv->port_view = GTK_WIDGET (hildon_number_editor_new (PORT_MIN, PORT_MAX));
+		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
 		port_caption = modest_maemo_utils_create_captioned (title_size_group,
 								    value_size_group,
 								    _("mcen_fi_emailsetup_port"), 
@@ -391,7 +391,7 @@ modest_maemo_security_options_view_load_settings (ModestSecurityOptionsView* sel
 	} else if (ppriv->full) {
 		/* Keep the user-entered port-number, or the
 		 * already-appropriate automatic port number */
-		hildon_number_editor_set_value (HILDON_NUMBER_EDITOR (ppriv->port_view), 
+		modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->port_view), 
 						port_number);
 	}
 	/* Frees */
@@ -414,7 +414,7 @@ modest_maemo_security_options_view_save_settings (ModestSecurityOptionsView* sel
 		server_settings = modest_account_settings_get_transport_settings (settings);
 
 	if (ppriv->full) {
-		server_port = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (ppriv->port_view));
+		server_port = modest_number_editor_get_value (MODEST_NUMBER_EDITOR (ppriv->port_view));
 	} else {
 		server_port = modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
 	}
@@ -445,7 +445,7 @@ modest_maemo_security_options_view_changed (ModestSecurityOptionsView* self,
 		server_settings = modest_account_settings_get_transport_settings (settings);
 	
 	server_port = 
-		hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (ppriv->port_view));
+		modest_number_editor_get_value (MODEST_NUMBER_EDITOR (ppriv->port_view));
 
 	/* Frees */
 	g_object_unref (server_settings);

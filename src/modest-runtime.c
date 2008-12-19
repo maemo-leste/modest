@@ -69,13 +69,13 @@ modest_runtime_init (void)
 		g_printerr ("modest: modest_runtime_init can only be run once\n");
 		return FALSE;
 	}
-	
+
 	_singletons = modest_singletons_new ();
 	if (!_singletons) {
 		g_printerr ("modest: failed to create singletons\n");
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -143,9 +143,10 @@ modest_runtime_get_email_clipboard   (void)
 ModestTnyAccountStore*
 modest_runtime_get_account_store   (void)
 {
-	// we get the account store here instead of in Singletons
-        // as it leads to various chicken & problems with initialization
-	g_return_val_if_fail (_singletons, NULL);	
+	g_return_val_if_fail (_singletons, NULL);
+	/* we get the account store here instead of in Singletons as
+	   it leads to various chicken & egg problems with
+	   initialization */
 	if (!_account_store) {
 		_account_store  = modest_tny_account_store_new (modest_runtime_get_account_mgr(),
 								modest_runtime_get_device());

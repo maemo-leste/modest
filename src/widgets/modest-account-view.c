@@ -345,9 +345,24 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 				return;
 			}
 			const gchar* last_updated_string = get_last_updated_string(self, account_mgr, settings);
+#ifdef MODEST_TOOLKIT_HILDON2
+			gchar *last_updated_hildon2;
+
+			last_updated_hildon2 = g_strconcat ("<span size='x-small'>", _("mcen_ti_lastupdated"), "\n", 
+							    last_updated_string, "</span>",
+							    NULL);
+#endif
 			gtk_list_store_set(model, &iter, 
+#ifdef MODEST_TOOLKIT_HILDON2
+					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_hildon2,
+#else
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
+#endif
 					   -1);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+			g_free (last_updated_hildon2);
+#endif
 			g_object_unref (settings);
 			found = TRUE;
 		}

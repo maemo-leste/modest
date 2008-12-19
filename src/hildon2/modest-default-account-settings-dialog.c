@@ -212,16 +212,16 @@ on_modified_checkbutton_toggled (GtkButton *button, gpointer user_data)
 }
 
 static void
-on_modified_number_editor_changed (HildonNumberEditor *number_editor, gint new_value, gpointer user_data)
+on_modified_number_editor_changed (ModestNumberEditor *number_editor, gint new_value, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
 
 static void       
-on_number_editor_notify (HildonNumberEditor *editor, GParamSpec *arg1, gpointer user_data)
+on_number_editor_notify (ModestNumberEditor *editor, GParamSpec *arg1, gpointer user_data)
 {
 	ModestDefaultAccountSettingsDialog *dialog = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
-	gint value = hildon_number_editor_get_value (editor);
+	gint value = modest_number_editor_get_value (editor);
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
 }
@@ -232,7 +232,7 @@ on_number_editor_notify (HildonNumberEditor *editor, GParamSpec *arg1, gpointer 
 static void
 connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widget)
 {
-	if (HILDON_IS_NUMBER_EDITOR (widget)) {
+	if (MODEST_IS_NUMBER_EDITOR (widget)) {
 		g_signal_connect (G_OBJECT (widget), "notify::value",
 			G_CALLBACK (on_modified_number_editor_changed), self);
 		g_signal_connect (G_OBJECT (widget), "notify", G_CALLBACK (on_number_editor_notify), self);

@@ -42,6 +42,7 @@
 #include <glib/gi18n.h>
 #include <modest-maemo-utils.h>
 #include "modest-text-utils.h"
+#include <hildon/hildon-text-view.h>
 
 G_DEFINE_TYPE (ModestSignatureEditorDialog, modest_signature_editor_dialog, GTK_TYPE_DIALOG);
 
@@ -153,10 +154,10 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->pannable, TRUE, TRUE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->pannable);
 		
-	priv->textview = gtk_text_view_new ();
+	priv->textview = hildon_text_view_new ();
 	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->textview);
 	gtk_widget_show (priv->textview);
-	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
+	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
 	
 	/* Add the buttons: */
@@ -195,7 +196,7 @@ modest_signature_editor_dialog_set_settings (
 	
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_use), use_signature);
 	
-	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
+	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	if (signature && signature[0] != '\0')
 		gtk_text_buffer_set_text (buffer, signature, -1);
 	else
@@ -217,7 +218,7 @@ modest_signature_editor_dialog_get_settings (
 	
 	*use_signature = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
 			
-	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->textview));
+	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds (buffer, &start, &end);

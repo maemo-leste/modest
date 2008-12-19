@@ -54,8 +54,8 @@ struct _ModestWindowMgrClass {
 	GObjectClass parent_class;
 
 	/* Virtuals */
-	gboolean              (*register_window)                (ModestWindowMgr *self, 
-								 ModestWindow *window, 
+	gboolean              (*register_window)                (ModestWindowMgr *self,
+								 ModestWindow *window,
 								 ModestWindow *parent);
 	void                  (*unregister_window)              (ModestWindowMgr *self,
 								 ModestWindow *window);
@@ -73,11 +73,11 @@ struct _ModestWindowMgrClass {
 	void                  (*set_modal)                      (ModestWindowMgr *self,
 								 GtkWindow *window,
 								 GtkWindow *parent);
-	gboolean              (*find_registered_header)         (ModestWindowMgr *self, 
+	gboolean              (*find_registered_header)         (ModestWindowMgr *self,
 								 TnyHeader *header,
 								 ModestWindow **win);
 	GList *               (*get_window_list)                (ModestWindowMgr *self);
-					 
+	ModestWindow *        (*show_initial_window)            (ModestWindowMgr *self);
 
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
@@ -349,14 +349,14 @@ gboolean modest_window_mgr_get_hibernation_is_prevented (ModestWindowMgr *self);
 void modest_window_mgr_save_state_for_all_windows (ModestWindowMgr *self);
 
 /**
- * modest_window_mgr_num_windows:
+ * modest_window_mgr_get_num_windows:
  * @self: a #ModestWindowMgr
  * 
  * Gets the number of already registered windows, and pending banners
  *
  * Returns: the number of already registered windows, and pending banners
  **/
-gint modest_window_mgr_num_windows (ModestWindowMgr *self);
+guint modest_window_mgr_get_num_windows (ModestWindowMgr *self);
 
 /**
  * modest_window_mgr_get_msg_view_window:
@@ -379,8 +379,20 @@ GtkWidget *   modest_window_mgr_get_msg_view_window (ModestWindowMgr *self);
  * Returns: a #ModestMsgEditWindow
  */
 GtkWidget *   modest_window_mgr_get_msg_edit_window (ModestWindowMgr *self);
-	
+
+/**
+ * modest_window_mgr_show_initial_window:
+ * @self: a #ModestWindowMgr
+ *
+ * This function determines which is the window that should be
+ * initially launched. After that it shows that window. If there is no
+ * account available this function also launches the account setup
+ * wizard.
+ *
+ * Returns: the initial window. NULL if something goes wrong
+ **/
+ModestWindow* modest_window_mgr_show_initial_window (ModestWindowMgr *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_WINDOW_MGR_H__ */
-

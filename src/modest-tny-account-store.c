@@ -116,7 +116,7 @@ static void    connection_status_changed   (TnyAccount *account,
 					    TnyConnectionStatus status, 
 					    gpointer data);
 
-static gboolean only_local_accounts        (ModestTnyAccountStore *self);
+static inline gboolean only_local_accounts        (ModestTnyAccountStore *self);
 
 /* list my signals */
 enum {
@@ -1716,27 +1716,10 @@ insert_account (ModestTnyAccountStore *self,
 	g_object_unref (transport_account);
 }
 
-static gboolean
+static inline gboolean
 only_local_accounts (ModestTnyAccountStore *self)
 {
-	ModestTnyAccountStorePrivate *priv = NULL;
-	gboolean only_local = TRUE;
-	TnyIterator *iter;
-
-	/* Check if this is the first remote account we add */
-	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
-	iter = tny_list_create_iterator (priv->store_accounts);
-
-	while (!tny_iterator_is_done (iter) && only_local) {
-		TnyAccount *account = (TnyAccount *) tny_iterator_get_current (iter);
-		if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account)))
-			only_local = FALSE;
-		g_object_unref (account);
-		tny_iterator_next (iter);
-	}
-	g_object_unref (iter);
-
-	return only_local;
+	return (modest_tny_account_store_get_num_remote_accounts (self) > 0) ? FALSE : TRUE;
 }
 
 static void
@@ -2256,4 +2239,26 @@ modest_tny_account_store_set_send_mail_blocked (ModestTnyAccountStore *self,
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	priv->send_mail_blocked = blocked;
+}
+
+static void
+count_remote_accounts (gpointer data, gpointer user_data)
+{
+	TnyFolderStore *account = TNY_FOLDER_STORE (data);
+	gint *count = (gint *) user_data;
+
+	if (modest_tny_folder_store_is_remote (account))
+		(*count)++;
+}
+
+guint
+modest_tny_account_store_get_num_remote_accounts (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	gint count = 0;
+
+	/* Count remote accounts */
+	tny_list_foreach (priv->store_accounts, (GFunc) count_remote_accounts, &count);
+
+	return count;
 }

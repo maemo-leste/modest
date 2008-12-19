@@ -729,7 +729,7 @@ init_default_settings (ModestConf *conf)
 
 	/* Editor keys */
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_CC, NULL))
-		modest_conf_set_bool (conf, MODEST_CONF_SHOW_CC, TRUE, NULL);
+		modest_conf_set_bool (conf, MODEST_CONF_SHOW_CC, FALSE, NULL);
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_BCC, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_BCC, FALSE, NULL);
