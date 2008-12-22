@@ -66,6 +66,7 @@
     </menu>
 
     <menu name="ToolsMenu" action="Tools">
+      <menuitem name="MessageSettingsMenu" action="MessageSettings"/>
       <menu name="MessagePriorityMenu" action="MessagePriority">
 	<menuitem name="MessagePriorityHighMenu" action="MessagePriorityHigh"/>
 	<menuitem name="MessagePriorityNormalMenu" action="MessagePriorityNormal"/>

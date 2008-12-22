@@ -171,6 +171,8 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 				  GtkTextIter *iter,
 				  GtkTextMark *mark,
 				  ModestMsgEditWindow *userdata);
+static void on_message_settings (GtkAction *action,
+				 ModestMsgEditWindow *window);
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -210,6 +212,10 @@ static void DEBUG_BUFFER (WPTextBuffer *buffer)
 	g_message ("END BUFFER");
 #endif
 }
+
+static const GtkActionEntry hildon2_msg_edit_action_entries [] = {
+	{ "MessageSettings", NULL, N_("TODO: settings..."), NULL, NULL, G_CALLBACK (on_message_settings)},
+};
 
 
 /* static gboolean */
@@ -687,6 +693,10 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_action_group_add_actions (action_group,
 				      modest_msg_edit_action_entries,
 				      G_N_ELEMENTS (modest_msg_edit_action_entries),
+				      obj);
+	gtk_action_group_add_actions (action_group,
+				      hildon2_msg_edit_action_entries,
+				      G_N_ELEMENTS (hildon2_msg_edit_action_entries),
 				      obj);
 	gtk_action_group_add_toggle_actions (action_group,
 					     modest_msg_edit_toggle_action_entries,
@@ -3614,3 +3624,55 @@ get_zoom_do_nothing (ModestWindow *window)
 	return 1.0;
 }
 
+static void
+modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
+{
+	GtkWidget *dialog;
+	GtkWidget *vbox;
+	GtkWidget *priority_hbox;
+	GtkWidget *high_toggle, *medium_toggle, *low_toggle;
+	GtkWidget *captioned;
+	GtkSizeGroup *title_sizegroup, *value_sizegroup;
+
+	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+
+	dialog = gtk_dialog_new ();
+	vbox = gtk_vbox_new (FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), vbox);
+	gtk_widget_show (vbox);
+
+	priority_hbox = gtk_hbox_new (0, TRUE);
+	high_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (high_toggle), _("TDHigh"));
+	medium_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("TDMedium"));
+	low_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (low_toggle), _("TDLow"));
+	gtk_box_pack_start (GTK_BOX (priority_hbox), low_toggle, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priority_hbox), medium_toggle, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, FALSE, FALSE, 0);
+	gtk_widget_show_all (priority_hbox);
+	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+							 _("TODO: Priority"), priority_hbox);
+	gtk_widget_show (captioned);
+	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
+	
+	g_object_unref (title_sizegroup);
+	g_object_unref (value_sizegroup);
+	
+	/* Set current values */
+	
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	
+	/* Read new values */
+	
+	gtk_widget_destroy (dialog);
+	
+}
+
+static void on_message_settings (GtkAction *action,
+				 ModestMsgEditWindow *window)
+{
+	modest_msg_edit_window_show_msg_settings_dialog (window);
+}
