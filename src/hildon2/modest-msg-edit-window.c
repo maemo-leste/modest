@@ -3624,24 +3624,39 @@ get_zoom_do_nothing (ModestWindow *window)
 	return 1.0;
 }
 
+typedef struct _MessageSettingsHelper {
+	ModestMsgEditWindow *window;
+	GSList *priority_group;
+} MessageSettingsHelper;
+
 static void
 on_priority_toggle (HildonCheckButton *button, 
-		    GSList *priority_group)
+		    MessageSettingsHelper *helper)
 {
 	GSList *node;
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (helper->window);
 	if (hildon_check_button_get_active (button)) {
 
-		for (node = priority_group; node != NULL; node = g_slist_next (node)) {
+		for (node = helper->priority_group; node != NULL; node = g_slist_next (node)) {
 			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
 			if ((node_button != button) &&
 			    hildon_check_button_get_active (node_button)) {
 				hildon_check_button_set_active (node_button, FALSE);
 			}
+			if (priv->priority_flags != (TnyHeaderFlags) g_object_get_data (G_OBJECT (button), "priority"))
+				modest_msg_edit_window_set_priority_flags (helper->window,
+									   (TnyHeaderFlags) 
+									   g_object_get_data (G_OBJECT (button), 
+											      "priority"));
 		}
+
+		
 	} else {
 		gboolean found = FALSE;
 		/* If no one is active, activate it again */
-		for (node = priority_group; node != NULL; node = g_slist_next (node)) {
+		for (node = helper->priority_group; node != NULL; node = g_slist_next (node)) {
 			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
 			if (hildon_check_button_get_active (node_button)) {
 				found = TRUE;
@@ -3655,6 +3670,41 @@ on_priority_toggle (HildonCheckButton *button,
 }
 
 static void
+on_format_picker_value_changed (HildonPickerButton *button,
+				MessageSettingsHelper *helper)
+{
+	ModestMsgEditFormat new_format, old_format;
+	gint file_format;
+
+	switch (hildon_picker_button_get_active (button)) {
+	case 1:
+		new_format = MODEST_MSG_EDIT_FORMAT_HTML;
+		file_format = MODEST_FILE_FORMAT_FORMATTED_TEXT;
+		break;
+	case 0:
+	default:
+		new_format = MODEST_MSG_EDIT_FORMAT_TEXT;
+		file_format = MODEST_FILE_FORMAT_PLAIN_TEXT;
+		break;
+	}
+
+	old_format = modest_msg_edit_window_get_format (helper->window);
+	if (new_format != old_format) {
+		modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (helper->window), file_format);
+
+		switch (modest_msg_edit_window_get_format (helper->window)) {
+		case MODEST_MSG_EDIT_FORMAT_TEXT:
+			hildon_picker_button_set_active (button, 0);
+			break;
+		case MODEST_MSG_EDIT_FORMAT_HTML:
+		default:
+			hildon_picker_button_set_active (button, 1);
+			break;
+		}
+	}
+}
+
+static void
 modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 {
 	GtkWidget *dialog;
@@ -3663,13 +3713,15 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	GtkWidget *high_toggle, *medium_toggle, *low_toggle;
 	GtkWidget *captioned;
 	GtkSizeGroup *title_sizegroup, *value_sizegroup;
-	GSList *priority_group = NULL;
 	GtkWidget *format_picker;
 	GtkWidget *format_selector;
 	ModestMsgEditWindowPrivate *priv;
+	MessageSettingsHelper helper = {0,};
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	helper.window = window;
+	helper.priority_group = NULL;
 
 	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -3683,19 +3735,19 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	priority_hbox = gtk_hbox_new (TRUE, 0);
 	high_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (high_toggle), _("TDHigh"));
-	priority_group = g_slist_prepend (priority_group, high_toggle);
+	helper.priority_group = g_slist_prepend (helper.priority_group, high_toggle);
+	g_object_set_data (G_OBJECT (high_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_HIGH_PRIORITY));
 	medium_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("TDMedium"));
-	priority_group = g_slist_prepend (priority_group, medium_toggle);
+	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("TDNormal"));
+	helper.priority_group = g_slist_prepend (helper.priority_group, medium_toggle);
+	g_object_set_data (G_OBJECT (medium_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_NORMAL_PRIORITY));
 	low_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (low_toggle), _("TDLow"));
-	priority_group = g_slist_prepend (priority_group, low_toggle);
+	helper.priority_group = g_slist_prepend (helper.priority_group, low_toggle);
+	g_object_set_data (G_OBJECT (low_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_LOW_PRIORITY));
 	gtk_box_pack_start (GTK_BOX (priority_hbox), low_toggle, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priority_hbox), medium_toggle, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, FALSE, FALSE, 0);
-	g_signal_connect (G_OBJECT (high_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
-	g_signal_connect (G_OBJECT (medium_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
-	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
 	gtk_widget_show_all (priority_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("TODO: Priority:"), priority_hbox);
@@ -3738,13 +3790,19 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (format_picker), 1);
 		break;
 	}
+
+	/* Signal connects */
+	g_signal_connect (G_OBJECT (high_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
+	g_signal_connect (G_OBJECT (medium_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
+	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
+	g_signal_connect (G_OBJECT (format_picker), "value-changed", G_CALLBACK (on_format_picker_value_changed), &helper);
 	
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	
 	/* Read new values */
 	
 	gtk_widget_destroy (dialog);
-	g_slist_free (priority_group);
+	g_slist_free (helper.priority_group);
 	
 }
 
