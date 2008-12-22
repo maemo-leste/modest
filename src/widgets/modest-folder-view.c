@@ -3325,9 +3325,7 @@ modest_folder_view_set_filter (ModestFolderView *self,
 	priv->filter = filter;
 
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
-		return;
+	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
 	}
-	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
 }

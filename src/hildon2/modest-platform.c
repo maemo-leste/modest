@@ -91,6 +91,8 @@
 
 #define COMMON_FOLDER_DIALOG_ENTRY "entry"
 #define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
+#define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
+
 
 static void _modest_platform_play_email_tone (void);
 
@@ -630,16 +632,10 @@ on_response (GtkDialog *dialog,
 	exists = FALSE;
 	
 	if (picker != NULL) {
-		const gchar *active_id;
 
-		active_id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (picker));
-		parent = TNY_FOLDER_STORE (
-			modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-								     active_id,
-								     TNY_ACCOUNT_TYPE_STORE));
-	} else {
-		g_object_ref (parent);
+		parent = g_object_get_data (G_OBJECT (picker), FOLDER_PICKER_CURRENT_FOLDER);
 	}
+
 	/* Look for another folder with the same name */
 	if (modest_tny_folder_has_subfolder_with_name (parent, 
 						       new_name,
@@ -668,7 +664,6 @@ on_response (GtkDialog *dialog,
 		g_signal_stop_emission_by_name (dialog, "response");
 	}
 
-	g_object_unref (parent);
 }
 
 typedef struct _FolderChooserData {
@@ -722,8 +717,6 @@ folder_chooser_dialog_run (ModestFolderView *original)
 	return userdata.store;
 }
 
-#define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
-
 static gchar *
 folder_store_get_display_name (TnyFolderStore *store)
 {
@@ -760,6 +753,23 @@ folder_store_get_display_name (TnyFolderStore *store)
 }
 
 static void
+folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
+{
+	gchar *name;
+
+	if (store == NULL) {
+		g_object_set_data (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER, NULL);
+	} else {
+		g_object_ref (store);
+		g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER, 
+					store, (GDestroyNotify) g_object_unref);
+		name = folder_store_get_display_name (store);
+		hildon_button_set_value (HILDON_BUTTON (button), name);
+		g_free (name);
+	}
+}
+
+static void
 folder_picker_clicked (GtkButton *button,
 		       ModestFolderView *folder_view)
 {
@@ -767,16 +777,12 @@ folder_picker_clicked (GtkButton *button,
 
 	store = folder_chooser_dialog_run (folder_view);
 	if (store) {
-		gchar *name;
-		g_object_set_data (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER, store);
-		name = folder_store_get_display_name (store);
-		hildon_button_set_value (HILDON_BUTTON (button), name);
-		g_free (name);
+		folder_picker_set_store (GTK_BUTTON (button), store);
 	}
 }
 
 static GtkWidget *
-folder_picker_new (ModestFolderView *folder_view)
+folder_picker_new (ModestFolderView *folder_view, TnyFolderStore *suggested)
 {
 	GtkWidget *button;
 	GdkPixbuf *pixbuf;
@@ -789,6 +795,10 @@ folder_picker_new (ModestFolderView *folder_view)
 	hildon_button_set_image (HILDON_BUTTON (button), 
 				 gtk_image_new_from_pixbuf (pixbuf));
 	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 1.0);
+
+	if (suggested) {
+		folder_picker_set_store (GTK_BUTTON (button), suggested);
+	}
 
 	g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (folder_picker_clicked), folder_view);
 
@@ -858,7 +868,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 		gtk_misc_set_alignment (GTK_MISC (label_location), 0.0, 0.5);
 		gtk_size_group_add_widget (sizegroup, label_location);
 
-		account_picker = folder_picker_new (folder_view);
+		account_picker = folder_picker_new (folder_view, suggested_parent);
 	}
 
 	g_object_unref (sizegroup);
@@ -919,6 +929,8 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 			*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
 		if (show_parent) {
 			*parent = g_object_get_data (G_OBJECT (account_picker), FOLDER_PICKER_CURRENT_FOLDER);
+			if (*parent)
+				g_object_ref (*parent);
 		}
 	}
 
@@ -972,6 +984,12 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	} else {
 		real_suggested_name = suggested_name;
 	}
+
+	/* In hildon 2.2 we always suggest the archive folder as parent */
+	suggested_folder = TNY_FOLDER_STORE (
+		modest_tny_account_get_special_folder 
+		(modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store ()),
+		 TNY_FOLDER_TYPE_ARCHIVE));
 
 	tmp = g_strconcat (_("mcen_fi_new_folder_name"), ":", NULL);
 	result = modest_platform_run_folder_common_dialog (parent_window, 
