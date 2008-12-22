@@ -3158,7 +3158,6 @@ modest_ui_actions_on_remove_attachments (GtkAction *action,
 					 ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
-	g_return_if_fail (GTK_IS_ACTION (action));
 
 	modest_msg_edit_window_remove_attachments (window, NULL);
 }
