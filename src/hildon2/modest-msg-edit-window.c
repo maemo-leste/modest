@@ -306,6 +306,8 @@ struct _ModestMsgEditWindowPrivate {
 	gboolean    sent;
 
 	GtkWidget   *app_menu;
+	GtkWidget   *cc_button;
+	GtkWidget   *bcc_button;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -3897,6 +3899,21 @@ static void on_message_settings (GtkAction *action,
 	modest_msg_edit_window_show_msg_settings_dialog (window);
 }
 
+
+static void add_button_to_menu (ModestMsgEditWindow *self,
+				HildonAppMenu *menu,
+				GtkButton *button,
+				ModestDimmingRulesGroup *group,
+				GCallback dimming_callback)
+{
+	if (dimming_callback)
+		modest_dimming_rules_group_add_widget_rule (group,
+							    GTK_WIDGET (button),
+							    dimming_callback,
+							    MODEST_WINDOW (self));
+	hildon_app_menu_append (menu, GTK_BUTTON (button));
+}
+
 static void add_to_menu (ModestMsgEditWindow *self,
 			 HildonAppMenu *menu,
 			 gchar *label,
@@ -3909,12 +3926,7 @@ static void add_to_menu (ModestMsgEditWindow *self,
 	button = gtk_button_new_with_label (label);
 	g_signal_connect_after (G_OBJECT (button), "clicked",
 				callback, (gpointer) self);
-	if (dimming_callback)
-		modest_dimming_rules_group_add_widget_rule (group,
-							    button,
-							    dimming_callback,
-							    MODEST_WINDOW (self));
-	hildon_app_menu_append (menu, GTK_BUTTON (button));
+	add_button_to_menu (self, menu, GTK_BUTTON (button), group, dimming_callback);
 }
 
 static void 
@@ -3936,7 +3948,18 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 		     G_CALLBACK (modest_ui_actions_on_undo),
 		     group, NULL);
 
-	/* TODO: Show/Hide CC/BCC check buttons */
+	priv->cc_button = hildon_check_button_new (0);
+	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("TODO: Show CC"));
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button),
+					FALSE);
+	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->cc_button),
+			    group, NULL);
+	priv->bcc_button = hildon_check_button_new (0);
+	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("TODO: Show BCC"));
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button),
+					FALSE);
+	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->bcc_button),
+			    group, NULL);
 
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_editor_attach_inlineimage"),
 		     G_CALLBACK (modest_ui_actions_on_insert_image),
