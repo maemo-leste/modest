@@ -1330,7 +1330,7 @@ modest_text_utils_utf8_strcmp (const gchar* s1, const gchar *s2, gboolean insens
 
 		/* optimization: shortcut if first char is ascii */ 
 		if (((s1[0] & 0x80) == 0) && ((s2[0] & 0x80) == 0) &&
-		    (s1[0] != s2[0])) 
+		    (tolower(s1[0]) != tolower (s2[0]))) 
 			return tolower(s1[0]) - tolower(s2[0]);
 		
 		n1 = g_utf8_strdown (s1, -1);
