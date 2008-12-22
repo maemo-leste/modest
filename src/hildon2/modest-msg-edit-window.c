@@ -3924,6 +3924,26 @@ static void add_to_menu (ModestMsgEditWindow *self,
 	add_button_to_menu (self, menu, GTK_BUTTON (button), group, dimming_callback);
 }
 
+static void
+on_cc_button_toggled (HildonCheckButton *button,
+		      ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	modest_msg_edit_window_show_cc (MODEST_MSG_EDIT_WINDOW (window),
+					hildon_check_button_get_active (button));
+}
+
+static void
+on_bcc_button_toggled (HildonCheckButton *button,
+		      ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+
+	modest_msg_edit_window_show_bcc (MODEST_MSG_EDIT_WINDOW (window),
+					hildon_check_button_get_active (button));
+}
+
 static void 
 setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 {
@@ -3949,12 +3969,16 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 					FALSE);
 	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->cc_button),
 			    group, NULL);
+	g_signal_connect (G_OBJECT (priv->cc_button), "toggled",
+			  G_CALLBACK (on_cc_button_toggled), (gpointer) self);
 	priv->bcc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("TODO: Show BCC"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button),
 					FALSE);
 	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->bcc_button),
 			    group, NULL);
+	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
+			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
 
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_editor_attach_inlineimage"),
 		     G_CALLBACK (modest_ui_actions_on_insert_image),
