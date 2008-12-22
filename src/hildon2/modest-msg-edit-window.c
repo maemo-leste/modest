@@ -3971,7 +3971,7 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 		     group, NULL);
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_undo"),
 		     G_CALLBACK (modest_ui_actions_on_undo),
-		     group, NULL);
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_undo));
 
 	priv->cc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("mcen_me_editor_showcc"));
@@ -3992,10 +3992,10 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_editor_attach_inlineimage"),
 		     G_CALLBACK (modest_ui_actions_on_insert_image),
-		     group, NULL);
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_set_style));
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_remove_attachments"),
 		     G_CALLBACK (modest_ui_actions_on_remove_attachments),
-		     group, NULL);
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: Message settings..."),
 		     G_CALLBACK (on_message_settings),
 		     group, NULL);
