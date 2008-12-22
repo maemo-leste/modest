@@ -308,6 +308,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *app_menu;
 	GtkWidget   *cc_button;
 	GtkWidget   *bcc_button;
+	GtkWidget   *find_toolbar_button;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -3450,12 +3451,11 @@ static void
 modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
 					   ModestMsgEditWindow *window)
 {
-	GtkToggleAction *toggle;
-	ModestWindowPrivate *parent_priv;
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	ModestMsgEditWindowPrivate *priv;
 
-	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ToolsMenu/FindInMessageMenu"));
-	gtk_toggle_action_set_active (toggle, FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
+
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->find_toolbar_button), FALSE);
 }
 
 gboolean 
@@ -3944,6 +3944,16 @@ on_bcc_button_toggled (HildonCheckButton *button,
 					hildon_check_button_get_active (button));
 }
 
+static void
+on_find_toolbar_button_toggled (HildonCheckButton *button,
+				ModestMsgEditWindow *window)
+{
+	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
+	modest_msg_edit_window_toggle_find_toolbar (MODEST_MSG_EDIT_WINDOW (window),
+						    hildon_check_button_get_active (button));
+
+}
+
 static void 
 setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 {
@@ -3989,8 +3999,14 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: Message settings..."),
 		     G_CALLBACK (on_message_settings),
 		     group, NULL);
-
-	/* TODO: find in toolbar check button */
+	priv->find_toolbar_button = hildon_check_button_new (0);
+	gtk_button_set_label (GTK_BUTTON (priv->find_toolbar_button), _("TODO: Find in message"));
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->find_toolbar_button),
+					FALSE);
+	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->find_toolbar_button),
+			    group, NULL);
+	g_signal_connect (G_OBJECT (priv->find_toolbar_button), "toggled",
+			  G_CALLBACK (on_find_toolbar_button_toggled), (gpointer) self);
 
 	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
 					       HILDON_APP_MENU (priv->app_menu));
