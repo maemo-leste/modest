@@ -335,13 +335,6 @@ static void add_to_menu (ModestAccountsWindow *self,
 	hildon_app_menu_append (menu, GTK_BUTTON (button));
 }
 
-static void
-on_new_account (GtkAction *action,
-		ModestWindow *window)
-{
-	modest_ui_actions_run_account_setup_wizard (window);
-}
-
 static void setup_menu (ModestAccountsWindow *self, ModestDimmingRulesGroup *group)
 {
 	ModestAccountsWindowPrivate *priv = NULL;
@@ -354,7 +347,7 @@ static void setup_menu (ModestAccountsWindow *self, ModestDimmingRulesGroup *gro
 
 	/* Settings menu buttons */
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: new account"),
-		     G_CALLBACK (on_new_account),
+		     G_CALLBACK (modest_ui_actions_on_new_account),
 		     group, NULL);
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: edit accounts"),
 		     G_CALLBACK (modest_ui_actions_on_accounts),

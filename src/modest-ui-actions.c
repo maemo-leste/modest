@@ -684,6 +684,13 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 }
 
 void
+modest_ui_actions_on_new_account (GtkAction *action,
+				  ModestWindow *window)
+{
+	modest_ui_actions_run_account_setup_wizard (window);
+}
+
+void
 modest_ui_actions_on_accounts (GtkAction *action,
 			       ModestWindow *win)
 {
