@@ -1225,14 +1225,15 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		g_object_unref (datetime_formatter);
 
 		display_address = tny_header_dup_from (header);
-		modest_text_utils_get_display_address (display_address); /* string is changed in-place */
-		
+		/* string is changed in-place */
+		modest_text_utils_get_display_address (display_address);
+
 		summary = g_strdup_printf ("%s - %s", display_date, display_address);
 		str = tny_header_dup_subject (header);
 		notification = hildon_notification_new (summary,
 							str,
 							"qgn_list_messagin",
-							"email.arrive");
+							"email-message");
 		g_free (str);
 		/* Create the message URL */
 		str = tny_header_dup_uid (header);
