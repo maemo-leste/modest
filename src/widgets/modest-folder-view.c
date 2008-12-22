@@ -1667,6 +1667,12 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 
 			capabilities = tny_folder_get_caps (TNY_FOLDER (instance));
 			retval = !(capabilities & TNY_FOLDER_CAPS_NOCHILDREN);
+
+			if (retval) {
+				retval = ((type != TNY_FOLDER_TYPE_DRAFTS) &&
+					  (type != TNY_FOLDER_TYPE_OUTBOX) &&
+					  (type != TNY_FOLDER_TYPE_SENT));
+			}
 		} else if (TNY_IS_ACCOUNT (instance)) {
 			retval = FALSE;
 		}
