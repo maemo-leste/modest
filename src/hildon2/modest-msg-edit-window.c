@@ -3766,15 +3766,15 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	/* Priority toggles */
 	priority_hbox = gtk_hbox_new (TRUE, 0);
 	high_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	gtk_button_set_label (GTK_BUTTON (high_toggle), _("TDHigh"));
+	gtk_button_set_label (GTK_BUTTON (high_toggle), _("mcen_me_editor_priority_high"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, high_toggle);
 	g_object_set_data (G_OBJECT (high_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_HIGH_PRIORITY));
 	medium_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("TDNormal"));
+	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("mcen_me_editor_priority_normal"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, medium_toggle);
 	g_object_set_data (G_OBJECT (medium_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_NORMAL_PRIORITY));
 	low_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	gtk_button_set_label (GTK_BUTTON (low_toggle), _("TDLow"));
+	gtk_button_set_label (GTK_BUTTON (low_toggle), _("mcen_me_editor_priority_low"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, low_toggle);
 	g_object_set_data (G_OBJECT (low_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_LOW_PRIORITY));
 	gtk_box_pack_start (GTK_BOX (priority_hbox), low_toggle, FALSE, FALSE, 0);
@@ -3782,37 +3782,38 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, FALSE, FALSE, 0);
 	gtk_widget_show_all (priority_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("TODO: Priority:"), priority_hbox);
+							 _("mcen_me_editor_message_priority"), priority_hbox);
 	gtk_widget_show (captioned);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 
 	/* format selector */
 	format_selector = hildon_touch_selector_new_text ();
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("TD:Plain text"));
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("TD:Formatted text"));
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("mcen_me_editor_plain_text"));
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("mcen_me_editor_formatted_text"));
 	format_picker = hildon_picker_button_new (MODEST_EDITABLE_SIZE,
 						  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (format_picker), HILDON_TOUCH_SELECTOR (format_selector));
 	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
-					       _("TODO:Format:"), format_picker);
+					       _("mcen_me_editor_format"), format_picker);
 	gtk_widget_show_all (format_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), format_picker, FALSE, FALSE, 0);
 	
 	/* alignment selector */
 	align_selector = hildon_touch_selector_new_text ();
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("TD:Left"));
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("TD:Centered"));
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("TD:Right"));
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("mcen_me_editor_align_left"));
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("mcen_me_editor_align_centred"));
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("mcen_me_editor_align_right"));
 	helper.align_picker = hildon_picker_button_new (MODEST_EDITABLE_SIZE,
 						 HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (helper.align_picker), HILDON_TOUCH_SELECTOR (align_selector));
 	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
-					       _("TODO:Alignment:"), helper.align_picker);
+					       _("mcen_me_editor_align"), helper.align_picker);
 	gtk_widget_show_all (helper.align_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), helper.align_picker, FALSE, FALSE, 0);
 	
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
+	gtk_window_set_title (GTK_WINDOW (dialog), _("TODO: Message settings"));
 	
 	/* Set current values */
 	switch (priv->priority_flags) {
