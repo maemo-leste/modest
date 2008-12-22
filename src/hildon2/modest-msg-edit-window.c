@@ -3625,6 +3625,23 @@ get_zoom_do_nothing (ModestWindow *window)
 }
 
 static void
+on_priority_toggle (HildonCheckButton *button, 
+		    GSList *priority_group)
+{
+	if (hildon_check_button_get_active (button)) {
+		GSList *node;
+
+		for (node = priority_group; node != NULL; node = g_slist_next (node)) {
+			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
+			if ((node_button != button) &&
+			    hildon_check_button_get_active (node_button)) {
+				hildon_check_button_set_active (node_button, FALSE);
+			}
+		}
+	}
+}
+
+static void
 modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 {
 	GtkWidget *dialog;
@@ -3633,6 +3650,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	GtkWidget *high_toggle, *medium_toggle, *low_toggle;
 	GtkWidget *captioned;
 	GtkSizeGroup *title_sizegroup, *value_sizegroup;
+	GSList *priority_group = NULL;
 
 	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -3645,13 +3663,19 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	priority_hbox = gtk_hbox_new (0, TRUE);
 	high_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (high_toggle), _("TDHigh"));
+	priority_group = g_slist_prepend (priority_group, high_toggle);
 	medium_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("TDMedium"));
+	priority_group = g_slist_prepend (priority_group, medium_toggle);
 	low_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (low_toggle), _("TDLow"));
+	priority_group = g_slist_prepend (priority_group, low_toggle);
 	gtk_box_pack_start (GTK_BOX (priority_hbox), low_toggle, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priority_hbox), medium_toggle, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (high_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
+	g_signal_connect (G_OBJECT (medium_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
+	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
 	gtk_widget_show_all (priority_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("TODO: Priority"), priority_hbox);
@@ -3668,6 +3692,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	/* Read new values */
 	
 	gtk_widget_destroy (dialog);
+	g_slist_free (priority_group);
 	
 }
 
