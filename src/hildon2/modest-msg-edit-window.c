@@ -3666,6 +3666,10 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	GSList *priority_group = NULL;
 	GtkWidget *format_picker;
 	GtkWidget *format_selector;
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -3714,6 +3718,26 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	g_object_unref (value_sizegroup);
 	
 	/* Set current values */
+	switch (priv->priority_flags) {
+	case TNY_HEADER_FLAG_HIGH_PRIORITY:
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (high_toggle), TRUE);
+		break;
+	case TNY_HEADER_FLAG_LOW_PRIORITY:
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (low_toggle), TRUE);
+		break;
+	default:
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (medium_toggle), TRUE);
+		break;
+	}
+	switch (modest_msg_edit_window_get_format (window)) {
+	case MODEST_MSG_EDIT_FORMAT_TEXT:
+		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (format_picker), 0);
+		break;
+	case MODEST_MSG_EDIT_FORMAT_HTML:
+	default:
+		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (format_picker), 1);
+		break;
+	}
 	
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	
