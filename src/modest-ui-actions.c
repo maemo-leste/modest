@@ -3262,18 +3262,20 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 
 static void
 do_create_folder (GtkWindow *parent_window, 
-		  TnyFolderStore *parent_folder, 
+		  TnyFolderStore *suggested_parent, 
 		  const gchar *suggested_name)
 {
 	gint result;
 	gchar *folder_name = NULL;
+	TnyFolderStore *parent_folder;
 
 	result = modest_platform_run_new_folder_dialog (GTK_WINDOW (parent_window),
-							parent_folder,
+							suggested_parent,
 							(gchar *) suggested_name,
-							&folder_name);
+							&folder_name,
+							&parent_folder);
 	
-	if (result == GTK_RESPONSE_ACCEPT) {
+	if (result == GTK_RESPONSE_ACCEPT && parent_folder) {
 		ModestMailOperation *mail_op;
 		
 		mail_op  = modest_mail_operation_new ((GObject *) parent_window);
@@ -3286,6 +3288,7 @@ do_create_folder (GtkWindow *parent_window,
 						     folder_name);
 		g_object_unref (mail_op);
 	}
+	g_object_unref (parent_folder);
 }
 
 static void

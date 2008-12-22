@@ -150,9 +150,10 @@ modest_platform_get_app_name (void)
 
 gint 
 modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
-				       TnyFolderStore *parent_folder,
+				       TnyFolderStore *suggested_parent,
 				       gchar *suggested_name,
-				       gchar **folder_name)
+				       gchar **folder_name,
+				       TnyFolderStore **parent_folder)
 {
 	GtkWidget *dialog, *entry;
 	gint result;
@@ -182,6 +183,10 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
 
 	gtk_widget_destroy (dialog);
+
+	if (parent_folder != NULL) {
+		parent_folder = suggested_parent?g_object_ref (suggested_parent): NULL;
+	}
 
 	return result;
 }

@@ -152,9 +152,10 @@ const gchar* modest_platform_get_app_name (void);
 /**
  * modest_platform_run_new_folder_dialog:
  * @parent_window: a #GtkWindow
- * @parent: the parent of the new folder
+ * @suggested_parent: the parent of the new folder
  * @suggested_name: the suggested name for the new folder
  * @folder_name: the folder name selected by the user for the new folder
+ * @parent: the chosen #TnyFolderStore (should be unreffed)
  * 
  * runs a "new folder" confirmation dialog. The dialog will suggest a
  * folder name which depends of the platform if the #suggested_name
@@ -164,9 +165,10 @@ const gchar* modest_platform_get_app_name (void);
  * Returns: the #GtkResponseType returned by the dialog
  **/
 gint      modest_platform_run_new_folder_dialog        (GtkWindow *parent_window,
-							TnyFolderStore *parent,
+							TnyFolderStore *suggested_parent,
 							gchar *suggested_name,
-							gchar **folder_name);
+							gchar **folder_name,
+							TnyFolderStore **parent);
 
 /**
  * modest_platform_run_rename_folder_dialog:

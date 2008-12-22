@@ -735,9 +735,10 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 
 gint
 modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
-				       TnyFolderStore *parent_folder,
+				       TnyFolderStore *suggested_parent,
 				       gchar *suggested_name,
-				       gchar **folder_name)
+				       gchar **folder_name,
+				       TnyFolderStore **parent_folder)
 {
 	gchar *real_suggested_name = NULL, *tmp = NULL;
 	gint result;
@@ -777,7 +778,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 
 	tmp = g_strconcat (_("mcen_fi_new_folder_name"), ":", NULL);
 	result = modest_platform_run_folder_name_dialog (parent_window, 
-							 parent_folder,
+							 suggested_parent,
 	                                                 _("mcen_ti_new_folder"),
 	                                                 tmp,
 	                                                 real_suggested_name,
@@ -786,6 +787,10 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 
 	if (suggested_name == NULL)
 		g_free(real_suggested_name);
+
+	if (parent_folder != NULL) {
+		parent_folder = suggested_parent?g_object_ref (suggested_parent): NULL;
+	}
 
 	return result;
 }

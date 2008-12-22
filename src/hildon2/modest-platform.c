@@ -64,6 +64,10 @@
 #include <modest-datetime-formatter.h>
 #include "modest-header-window.h"
 #include <modest-folder-window.h>
+#include <modest-account-mgr.h>
+#include <modest-account-mgr-helpers.h>
+#include <modest-ui-constants.h>
+#include <modest-selector-picker.h>
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -83,6 +87,9 @@
 #define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternCommunicationEmail"
 #define PROFILE_MAIL_TONE PROFILEKEY_EMAIL_ALERT_TONE
 #define PROFILE_MAIL_VOLUME PROFILEKEY_EMAIL_ALERT_VOLUME
+
+#define COMMON_FOLDER_DIALOG_ENTRY "entry"
+#define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
 
 static void _modest_platform_play_email_tone (void);
 
@@ -605,8 +612,7 @@ on_response (GtkDialog *dialog,
 	     gint response,
 	     gpointer user_data)
 {
-	GList *child_vbox, *child_hbox;
-	GtkWidget *hbox, *entry;
+	GtkWidget *entry, *picker;
 	TnyFolderStore *parent;
 	const gchar *new_name;
 	gboolean exists;
@@ -615,15 +621,24 @@ on_response (GtkDialog *dialog,
 		return;
 	
 	/* Get entry */
-	child_vbox = gtk_container_get_children (GTK_CONTAINER (dialog->vbox));
-	hbox = child_vbox->data;
-	child_hbox = gtk_container_get_children (GTK_CONTAINER (hbox));
-	entry = child_hbox->next->data;
+	entry = g_object_get_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ENTRY);
+	picker = g_object_get_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ACCOUNT_PICKER);
 	
 	parent = TNY_FOLDER_STORE (user_data);
 	new_name = gtk_entry_get_text (GTK_ENTRY (entry));
 	exists = FALSE;
 	
+	if (picker != NULL) {
+		const gchar *active_id;
+
+		active_id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (picker));
+		parent = TNY_FOLDER_STORE (
+			modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+								     active_id,
+								     TNY_ACCOUNT_TYPE_STORE));
+	} else {
+		g_object_ref (parent);
+	}
 	/* Look for another folder with the same name */
 	if (modest_tny_folder_has_subfolder_with_name (parent, 
 						       new_name,
@@ -651,22 +666,113 @@ on_response (GtkDialog *dialog,
 		/* Do not close the dialog */
 		g_signal_stop_emission_by_name (dialog, "response");
 	}
+
+	g_object_unref (parent);
+}
+
+static gint
+order_by_acc_name (gconstpointer a,
+		   gconstpointer b)
+{
+	ModestPair *pair_a, *pair_b;
+
+	pair_a = (ModestPair *) a;
+	pair_b = (ModestPair *) b;
+
+	if (pair_a->second && pair_b->second) {
+		gint compare = g_utf8_collate ((gchar *) pair_a->second,
+					       (gchar *) pair_b->second);
+		if (compare > 0)
+			compare = -1;
+		else if (compare < 0)
+			compare = 1;
+
+		return compare;
+	} else {
+		return 0;
+	}
+}
+
+static ModestPairList *
+get_folders_accounts_list (void)
+{
+	GSList *list = NULL;
+	GSList *cursor, *account_names;
+	ModestAccountMgr *account_mgr;
+	ModestPair *pair;
+
+	account_mgr = modest_runtime_get_account_mgr ();
+
+	cursor = account_names = modest_account_mgr_account_names (account_mgr, TRUE /*only enabled*/);
+	while (cursor) {
+		gchar *account_name;
+		ModestAccountSettings *settings;
+		ModestServerAccountSettings *store_settings;
+
+		account_name = (gchar*)cursor->data;
+
+		settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
+		if (!settings) {
+			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			continue;
+		}
+		store_settings = modest_account_settings_get_store_settings (settings);
+
+		/* don't display accounts not able to show folders */
+		if (modest_server_account_settings_get_account_name (store_settings) != NULL) {
+			ModestProtocolType protocol_type;
+
+			protocol_type = modest_server_account_settings_get_protocol (store_settings);
+			/* we cannot create folders on accounts without folders */
+			if (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (), 
+									    protocol_type,
+									    MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS)) {
+				if (modest_account_settings_get_enabled (settings)) {
+					
+					pair = modest_pair_new (
+						g_strdup (account_name),
+						g_strdup (modest_account_settings_get_display_name (settings)),
+						FALSE);
+					list = g_slist_insert_sorted (list, pair, order_by_acc_name);
+				}
+			}
+		}
+
+		g_object_unref (store_settings);
+		g_object_unref (settings);
+		cursor = cursor->next;
+	}
+
+	/* Create also entries for local account and mmc */
+	pair = modest_pair_new (g_strdup (MODEST_LOCAL_FOLDERS_ACCOUNT_ID),
+				g_strdup (MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME),
+				FALSE);
+	list = g_slist_insert_sorted (list, pair, order_by_acc_name);
+
+	/* TODO: add mmc account */
+
+	return (ModestPairList *) g_slist_reverse (list);
 }
 
 
 
 static gint
-modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
-					TnyFolderStore *parent,
-					const gchar *dialog_title,
-					const gchar *label_text,
-					const gchar *suggested_name,
-					gchar **folder_name)
+modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
+					  TnyFolderStore *suggested_parent,
+					  const gchar *dialog_title,
+					  const gchar *label_text,
+					  const gchar *suggested_name,
+					  gboolean show_name,
+					  gboolean show_parent,
+					  gchar **folder_name,
+					  TnyFolderStore **parent)
 {
 	GtkWidget *accept_btn = NULL; 
 	GtkWidget *dialog, *entry, *label, *hbox;
+	GtkWidget *account_picker;
 	GList *buttons = NULL;
 	gint result;
+	GSList *accounts_list;
 
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
@@ -682,34 +788,49 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	/* Create label and entry */
 	label = gtk_label_new (label_text);
 
-	entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
-	gtk_entry_set_max_length (GTK_ENTRY (entry), 20);
+	if (show_name) {
+		entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+		gtk_entry_set_max_length (GTK_ENTRY (entry), 20);
 
-	if (suggested_name)
-		gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
-	else
-		gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
-	gtk_entry_set_width_chars (GTK_ENTRY (entry),
-				   MAX (g_utf8_strlen (gtk_entry_get_text (GTK_ENTRY (entry)), -1),
-					g_utf8_strlen (_("mcen_ia_default_folder_name"), -1)));
-	gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
+		if (suggested_name)
+			gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
+		else
+			gtk_entry_set_text (GTK_ENTRY (entry), _("mcen_ia_default_folder_name"));
+		gtk_entry_set_width_chars (GTK_ENTRY (entry),
+					   MAX (g_utf8_strlen (gtk_entry_get_text (GTK_ENTRY (entry)), -1),
+						g_utf8_strlen (_("mcen_ia_default_folder_name"), -1)));
+		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
+	}
+
+	if (show_parent) {
+
+		accounts_list = get_folders_accounts_list ();
+		account_picker = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
+							     accounts_list,
+							     g_str_equal);
+		/* TODO: set the active account in window */
+		hildon_button_set_title (HILDON_BUTTON (account_picker), _("TODO: Account:"));
+	}
 
 	/* Connect to the response method to avoid closing the dialog
 	   when an invalid name is selected*/
 	g_signal_connect (dialog,
 			  "response",
 			  G_CALLBACK (on_response),
-			  parent);
+			  suggested_parent);
 
-	/* Track entry changes */
-	g_signal_connect (entry,
-			  "insert-text",
-			  G_CALLBACK (entry_insert_text),
-			  dialog);
-	g_signal_connect (entry,
-			  "changed",
-			  G_CALLBACK (entry_changed),
-			  dialog);
+	if (show_name) {
+		/* Track entry changes */
+		g_signal_connect (entry,
+				  "insert-text",
+				  G_CALLBACK (entry_insert_text),
+				  dialog);
+		g_signal_connect (entry,
+				  "changed",
+				  G_CALLBACK (entry_changed),
+				  dialog);
+	}
 
 
 	/* Some locales like pt_BR need this to get the full window
@@ -717,22 +838,46 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 	gtk_widget_set_size_request (GTK_WIDGET (dialog), 300, -1);
 
 	/* Create the hbox */
-	hbox = gtk_hbox_new (FALSE, 12);
-	gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+	if (show_name) {
+		hbox = gtk_hbox_new (FALSE, 12);
+		gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
 
-	/* Add hbox to dialog */
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			    hbox, FALSE, FALSE, 0);
+		/* Add hbox to dialog */
+		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+				    hbox, FALSE, FALSE, 0);
+		g_object_set_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ENTRY, entry);
+	}
+
+	if (show_parent) {
+		gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
+				    account_picker, FALSE, FALSE, 0);
+		g_object_set_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ACCOUNT_PICKER, account_picker);
+	}
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), parent_window);
 	gtk_widget_show_all (GTK_WIDGET(dialog));
 		
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
-	if (result == GTK_RESPONSE_ACCEPT)
-		*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+	if (result == GTK_RESPONSE_ACCEPT) {
+		if (show_name)
+			*folder_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+		if (show_parent) {
+			const gchar *active_id;
+
+			active_id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (account_picker));
+			*parent = TNY_FOLDER_STORE (
+				modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+									     active_id,
+									     TNY_ACCOUNT_TYPE_STORE));
+		}
+	}
 
 	gtk_widget_destroy (dialog);
+
+	if (show_parent) {
+		modest_pair_list_free (accounts_list);
+	}
 
 	while (gtk_events_pending ())
 		gtk_main_iteration ();
@@ -742,9 +887,10 @@ modest_platform_run_folder_name_dialog (GtkWindow *parent_window,
 
 gint
 modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
-				       TnyFolderStore *parent_folder,
+				       TnyFolderStore *suggested_folder,
 				       gchar *suggested_name,
-				       gchar **folder_name)
+				       gchar **folder_name,
+				       TnyFolderStore **parent_folder)
 {
 	gchar *real_suggested_name = NULL, *tmp = NULL;
 	gint result;
@@ -765,7 +911,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 			else
 				real_suggested_name = g_strdup_printf (_("mcen_ia_default_folder_name_s"),
 				                                       num_str);
-			exists = modest_tny_folder_has_subfolder_with_name (parent_folder,
+			exists = modest_tny_folder_has_subfolder_with_name (suggested_folder,
 									    real_suggested_name,
 									    TRUE);
 
@@ -783,12 +929,15 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	}
 
 	tmp = g_strconcat (_("mcen_fi_new_folder_name"), ":", NULL);
-	result = modest_platform_run_folder_name_dialog (parent_window, 
-							 parent_folder,
-	                                                 _("mcen_ti_new_folder"),
-	                                                 tmp,
-	                                                 real_suggested_name,
-	                                                 folder_name);
+	result = modest_platform_run_folder_common_dialog (parent_window, 
+							   suggested_folder,
+							   _("mcen_ti_new_folder"),
+							   tmp,
+							   real_suggested_name,
+							   TRUE,
+							   TRUE,
+							   folder_name,
+							   parent_folder);
 	g_free (tmp);
 
 	if (suggested_name == NULL)
@@ -805,12 +954,15 @@ modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
 {
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent_folder), GTK_RESPONSE_REJECT);
 
-	return modest_platform_run_folder_name_dialog (parent_window, 
-						       parent_folder,
-						       _HL("ckdg_ti_rename_folder"),
-						       _HL("ckdg_fi_rename_name"),
-						       suggested_name,
-						       folder_name);
+	return modest_platform_run_folder_common_dialog (parent_window, 
+							 parent_folder,
+							 _HL("ckdg_ti_rename_folder"),
+							 _HL("ckdg_fi_rename_name"),
+							 suggested_name,
+							 TRUE,
+							 FALSE,
+							 folder_name,
+							 NULL);
 }
 
 
