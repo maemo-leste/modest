@@ -3651,6 +3651,8 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	GtkWidget *captioned;
 	GtkSizeGroup *title_sizegroup, *value_sizegroup;
 	GSList *priority_group = NULL;
+	GtkWidget *format_picker;
+	GtkWidget *format_selector;
 
 	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -3660,7 +3662,8 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), vbox);
 	gtk_widget_show (vbox);
 
-	priority_hbox = gtk_hbox_new (0, TRUE);
+	/* Priority toggles */
+	priority_hbox = gtk_hbox_new (TRUE, 0);
 	high_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (high_toggle), _("TDHigh"));
 	priority_group = g_slist_prepend (priority_group, high_toggle);
@@ -3678,9 +3681,21 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), priority_group);
 	gtk_widget_show_all (priority_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("TODO: Priority"), priority_hbox);
+							 _("TODO: Priority:"), priority_hbox);
 	gtk_widget_show (captioned);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
+
+	/* format selector */
+	format_selector = hildon_touch_selector_new_text ();
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("TD:Plain text"));
+	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("TD:Formatted text"));
+	format_picker = hildon_picker_button_new (MODEST_EDITABLE_SIZE,
+						  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (format_picker), HILDON_TOUCH_SELECTOR (format_selector));
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
+					       _("TODO:Format:"), format_picker);
+	gtk_widget_show_all (format_picker);
+	gtk_box_pack_start (GTK_BOX (vbox), format_picker, FALSE, FALSE, 0);
 	
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
