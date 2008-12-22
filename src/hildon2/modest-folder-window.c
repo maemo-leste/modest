@@ -363,16 +363,33 @@ static void setup_menu (ModestFolderWindow *self)
 
 	app_menu = hildon_app_menu_new ();
 
+	/* folders actions */
+/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: new folder"), */
+/* 		     G_CALLBACK ()); */
+/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_user_renamefolder"), */
+/* 		     G_CALLBACK ()); */
+/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: move folder"), */
+/* 		     G_CALLBACK ()); */
+/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: delete folder"), */
+/* 		     G_CALLBACK ()); */
+
+	/* new message */
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_newemail"),
 		     G_CALLBACK (modest_ui_actions_on_new_msg));
+
+	/* send receive actions should be only one visible always */
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_sendandreceive"),
 		     G_CALLBACK (modest_ui_actions_on_send_receive));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_outbox_cancelsend"),
+		     G_CALLBACK (modest_ui_actions_cancel_send));
 
 	/* Settings menu buttons */
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: new account"),
+		     G_CALLBACK (modest_ui_actions_on_new_account));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: edit accounts"),
+		     G_CALLBACK (modest_ui_actions_on_accounts));
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_options"),
 		     G_CALLBACK (modest_ui_actions_on_settings));
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_accounts"),
-		     G_CALLBACK (modest_ui_actions_on_accounts));
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_globalsmtpservers"),
 		     G_CALLBACK (modest_ui_actions_on_smtp_servers));
 	
