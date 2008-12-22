@@ -3974,7 +3974,7 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 		     group, NULL);
 
 	priv->cc_button = hildon_check_button_new (0);
-	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("TODO: Show CC"));
+	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("mcen_me_editor_showcc"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button),
 					FALSE);
 	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->cc_button),
@@ -3982,7 +3982,7 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 	g_signal_connect (G_OBJECT (priv->cc_button), "toggled",
 			  G_CALLBACK (on_cc_button_toggled), (gpointer) self);
 	priv->bcc_button = hildon_check_button_new (0);
-	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("TODO: Show BCC"));
+	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("mcen_me_editor_showbcc"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button),
 					FALSE);
 	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->bcc_button),
@@ -4000,7 +4000,7 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 		     G_CALLBACK (on_message_settings),
 		     group, NULL);
 	priv->find_toolbar_button = hildon_check_button_new (0);
-	gtk_button_set_label (GTK_BUTTON (priv->find_toolbar_button), _("TODO: Find in message"));
+	gtk_button_set_label (GTK_BUTTON (priv->find_toolbar_button), _("mcen_me_viewer_find"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->find_toolbar_button),
 					FALSE);
 	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->find_toolbar_button),
