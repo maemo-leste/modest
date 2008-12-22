@@ -1136,7 +1136,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	TnyHeaderFlags priority_flags;
 	TnyFolder *msg_folder;
 	gboolean is_html = FALSE;
-	GtkAction *action;
 	gboolean field_view_set;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
@@ -1155,7 +1154,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	if (to)
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewCcFieldMenu");
 	field_view_set = TRUE;
 	if (cc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  cc);
@@ -1166,10 +1164,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_widget_hide (priv->cc_caption);
 		field_view_set = FALSE;
 	}
-	if (action)
-		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), field_view_set);
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button), field_view_set);
 
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/ViewMenu/ViewBccFieldMenu");
 	field_view_set = TRUE;
 	if (bcc) {
 		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
@@ -1180,8 +1176,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_widget_hide (priv->bcc_caption);
 		field_view_set = FALSE;
 	}
-	if (action)
-		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (action), field_view_set);
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button), field_view_set);
 
 
 	if (subject)
