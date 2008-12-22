@@ -53,6 +53,7 @@
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-gtk.h>
 #include <modest-header-window.h>
+#include <modest-folder-window.h>
 #endif
 
 #ifdef MODEST_PLATFORM_MAEMO
@@ -3324,18 +3325,30 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 }
 
 void 
-modest_ui_actions_on_new_folder (GtkAction *action, ModestMainWindow *main_window)
+modest_ui_actions_on_new_folder (GtkAction *action, ModestWindow *window)
 {
-	GtkWidget *folder_view;
 	
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	g_return_if_fail (MODEST_IS_WINDOW(window));
 
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	if (!folder_view)
-		return;
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		GtkWidget *folder_view;
 
-	modest_ui_actions_create_folder (GTK_WIDGET (main_window), folder_view);
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		if (!folder_view)
+			return;
+
+		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
+		GtkWidget *folder_view;
+
+		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
+		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view);
+#endif
+	} else {
+		g_assert_not_reached ();
+	}
 }
 
 static void

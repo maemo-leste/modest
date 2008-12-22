@@ -364,8 +364,8 @@ static void setup_menu (ModestFolderWindow *self)
 	app_menu = hildon_app_menu_new ();
 
 	/* folders actions */
-/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: new folder"), */
-/* 		     G_CALLBACK ()); */
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: new folder"),
+		     G_CALLBACK (modest_ui_actions_on_new_folder));
 /* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_user_renamefolder"), */
 /* 		     G_CALLBACK ()); */
 /* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: move folder"), */
