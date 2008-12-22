@@ -68,6 +68,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-ui-constants.h>
 #include <modest-selector-picker.h>
+#include <modest-icon-names.h>
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -768,11 +769,12 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 					  TnyFolderStore **parent)
 {
 	GtkWidget *accept_btn = NULL; 
-	GtkWidget *dialog, *entry, *label, *hbox;
+	GtkWidget *dialog, *entry, *label_entry, *label_location, *hbox;
 	GtkWidget *account_picker;
 	GList *buttons = NULL;
 	gint result;
 	GSList *accounts_list;
+	GtkSizeGroup *sizegroup;
 
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
@@ -785,12 +787,16 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	/* Add accept button (with unsensitive handler) */
 	buttons = gtk_container_get_children (GTK_CONTAINER (GTK_DIALOG (dialog)->action_area));
 	accept_btn = GTK_WIDGET (buttons->data);
-	/* Create label and entry */
-	label = gtk_label_new (label_text);
+
+	sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
 	if (show_name) {
+		label_entry = gtk_label_new (label_text);
 		entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 		gtk_entry_set_max_length (GTK_ENTRY (entry), 20);
+
+		gtk_misc_set_alignment (GTK_MISC (label_entry), 0.0, 0.5);
+		gtk_size_group_add_widget (sizegroup, label_entry);
 
 		if (suggested_name)
 			gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
@@ -803,15 +809,26 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	}
 
 	if (show_parent) {
+		GdkPixbuf *pixbuf;
+
+		label_location = gtk_label_new (_FM("ckdg_fi_new_folder_location"));
+
+		gtk_misc_set_alignment (GTK_MISC (label_location), 0.0, 0.5);
+		gtk_size_group_add_widget (sizegroup, label_location);
 
 		accounts_list = get_folders_accounts_list ();
 		account_picker = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
 							     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
 							     accounts_list,
 							     g_str_equal);
-		/* TODO: set the active account in window */
-		hildon_button_set_title (HILDON_BUTTON (account_picker), _("TODO: Account:"));
+		pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL,
+						   MODEST_ICON_SIZE_SMALL);
+		hildon_button_set_image (HILDON_BUTTON (account_picker), 
+					 gtk_image_new_from_pixbuf (pixbuf));
+		hildon_button_set_alignment (HILDON_BUTTON (account_picker), 0.0, 0.5, 1.0, 1.0);
 	}
+
+	g_object_unref (sizegroup);
 
 	/* Connect to the response method to avoid closing the dialog
 	   when an invalid name is selected*/
@@ -840,7 +857,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	/* Create the hbox */
 	if (show_name) {
 		hbox = gtk_hbox_new (FALSE, 12);
-		gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (hbox), label_entry, FALSE, FALSE, 0);
 		gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
 
 		/* Add hbox to dialog */
@@ -850,8 +867,13 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	}
 
 	if (show_parent) {
-		gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
-				    account_picker, FALSE, FALSE, 0);
+		hbox = gtk_hbox_new (FALSE, 12);
+		gtk_box_pack_start (GTK_BOX (hbox), label_location, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (hbox), account_picker, TRUE, TRUE, 0);
+
+		/* Add hbox to dialog */
+		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+				    hbox, FALSE, FALSE, 0);
 		g_object_set_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ACCOUNT_PICKER, account_picker);
 	}
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
