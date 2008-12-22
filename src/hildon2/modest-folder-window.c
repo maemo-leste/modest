@@ -450,10 +450,10 @@ static void setup_menu (ModestFolderWindow *self,
 	/* send receive actions should be only one visible always */
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_sendandreceive"),
 		     G_CALLBACK (modest_ui_actions_on_send_receive),
-		     group, NULL);
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_outbox_cancelsend"),
 		     G_CALLBACK (modest_ui_actions_cancel_send),
-		     group, NULL);
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 
 	/* Settings menu buttons */
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: new account"),
@@ -467,7 +467,7 @@ static void setup_menu (ModestFolderWindow *self,
 		     group, NULL);
 	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_globalsmtpservers"),
 		     G_CALLBACK (modest_ui_actions_on_smtp_servers),
-		     group, NULL);
+		     group, G_CALLBACK (modest_ui_dimming_rules_on_tools_smtp_servers));
 	
 	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
 					       HILDON_APP_MENU (priv->app_menu));
