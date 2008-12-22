@@ -600,7 +600,7 @@ modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *
 		w = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
 							 MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 		if (gtk_widget_is_focus (w)) {
-			modest_ui_actions_on_delete_folder (action, MODEST_MAIN_WINDOW(win));
+			modest_ui_actions_on_delete_folder (action, MODEST_WINDOW(win));
 			return;
 		}
 	}
@@ -3536,15 +3536,21 @@ on_delete_folder_cb (gboolean canceled,
 	ModestMailOperation *mail_op;
 	GtkTreeSelection *sel;
 	
-	if (!MODEST_IS_MAIN_WINDOW(parent_window) || canceled || (err!=NULL)) {
+	if (!MODEST_IS_WINDOW(parent_window) || canceled || (err!=NULL)) {
 		g_object_unref (G_OBJECT (info->folder));
 		g_free (info);
 		return;
 	}
 	
-	folder_view = modest_main_window_get_child_widget (
+	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
+		folder_view = modest_main_window_get_child_widget (
 			MODEST_MAIN_WINDOW (parent_window),
 			MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_FOLDER_WINDOW (parent_window)) {
+		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (parent_window)));
+#endif
+	}
 
 	/* Unselect the folder before deleting it to free the headers */
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
@@ -3567,36 +3573,43 @@ on_delete_folder_cb (gboolean canceled,
 	g_free (info);
 }
 
-static void
-delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
+static gboolean
+delete_folder (ModestWindow *window, gboolean move_to_trash)
 {
 	TnyFolderStore *folder;
 	GtkWidget *folder_view;
 	gint response;
 	gchar *message;
 	
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	g_return_val_if_fail (MODEST_IS_WINDOW(window), FALSE);
 
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
+		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
+#endif
+	}
 	if (!folder_view)
-		return;
+		return FALSE;
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 	/* Show an error if it's an account */
 	if (!TNY_IS_FOLDER (folder)) {
-		modest_platform_run_information_dialog (GTK_WINDOW (main_window),
+		modest_platform_run_information_dialog (GTK_WINDOW (window),
 							_("mail_in_ui_folder_delete_error"),
 							FALSE);
 		g_object_unref (G_OBJECT (folder));
-		return;
+		return FALSE;
 	}
 
 	/* Ask the user */	
 	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"), 
 				    tny_folder_get_name (TNY_FOLDER (folder)));
-	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (main_window),
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
 							    (const gchar *) message);
 	g_free (message);
 
@@ -3607,22 +3620,31 @@ delete_folder (ModestMainWindow *main_window, gboolean move_to_trash)
 		info->move_to_trash = move_to_trash;
 		g_object_ref (G_OBJECT (info->folder));
 		TnyAccount *account = tny_folder_get_account (TNY_FOLDER (folder));
-		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (main_window), 
+		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (window), 
 							       TRUE,
 							       TNY_FOLDER_STORE (account), 
 							       on_delete_folder_cb, info);
 		g_object_unref (account);
+		return TRUE;
+	} else {
+		return FALSE;
 	}
 	g_object_unref (G_OBJECT (folder));
 }
 
-void 
+void
 modest_ui_actions_on_delete_folder (GtkAction *action,
-				     ModestMainWindow *main_window)
+				    ModestWindow *window)
 {
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	modest_ui_actions_on_edit_mode_delete_folder (window);
+}
+
+gboolean
+modest_ui_actions_on_edit_mode_delete_folder (ModestWindow *window)
+{
+	g_return_val_if_fail (MODEST_IS_WINDOW(window), TRUE);
 	
-	delete_folder (main_window, FALSE);
+	return delete_folder (window, FALSE);
 }
 
 void 
@@ -3630,7 +3652,7 @@ modest_ui_actions_on_move_folder_to_trash_folder (GtkAction *action, ModestMainW
 {
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
 	
-	delete_folder (main_window, TRUE);
+	delete_folder (MODEST_WINDOW (main_window), TRUE);
 }
 
 

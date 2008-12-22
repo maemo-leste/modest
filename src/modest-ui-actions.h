@@ -48,6 +48,8 @@ void     modest_ui_actions_on_delete_message     (GtkAction *action, ModestWindo
 
 gboolean modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win);
 
+gboolean modest_ui_actions_on_edit_mode_delete_folder (ModestWindow *win);
+
 void     modest_ui_actions_on_delete_message_or_folder (GtkAction *action, ModestWindow *win);
 
 void     modest_ui_actions_on_quit          (GtkAction *action, ModestWindow *win);
@@ -262,7 +264,7 @@ void     modest_ui_actions_on_rename_folder            (GtkAction *action,
 							ModestMainWindow *main_window);
 
 void     modest_ui_actions_on_delete_folder            (GtkAction *action,
-							 ModestMainWindow *main_window);
+							ModestWindow *window);
 
 void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkAction *action,
 							       ModestMainWindow *main_window);

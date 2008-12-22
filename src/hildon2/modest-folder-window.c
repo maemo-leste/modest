@@ -542,7 +542,7 @@ edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
 
 	switch (priv->edit_command) {
 	case EDIT_MODE_COMMAND_DELETE:
-/* 		if (modest_ui_actions_on_edit_mode_delete_folder (MODEST_WINDOW (self))) */
+		if (modest_ui_actions_on_edit_mode_delete_folder (MODEST_WINDOW (self)))
 			set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
 		break;
 	case EDIT_MODE_COMMAND_MOVE:
