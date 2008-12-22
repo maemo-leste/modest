@@ -55,6 +55,11 @@ typedef enum _ModestFolderViewCellStyle {
 	MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT
 } ModestFolderViewCellStyle;
 
+typedef enum _ModestFolderViewFilter {
+	MODEST_FOLDER_VIEW_FILTER_NONE = 0,
+	MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS = 1 << 0,
+} ModestFolderViewFilter;
+
 typedef struct _ModestFolderView      ModestFolderView;
 typedef struct _ModestFolderViewClass ModestFolderViewClass;
 
@@ -260,6 +265,17 @@ void modest_folder_view_disable_next_folder_selection (ModestFolderView *self);
  */
 void modest_folder_view_set_cell_style (ModestFolderView *self,
 					ModestFolderViewCellStyle cell_style);
+
+/**
+ * modest_folder_view_filter:
+ * @self: a #ModestFolderView
+ * @filter: a filter mask to be applied to files
+ *
+ * sets the special filter to be applied (affects visibility of items).
+ * It's a mask, and filters applied are applied with an AND.
+ */
+void modest_folder_view_set_filter (ModestFolderView *self,
+				    ModestFolderViewFilter filter);
 
 G_END_DECLS
 

@@ -220,6 +220,7 @@ struct _ModestFolderViewPrivate {
 	/* Filter tree model */
 	gchar **hidding_ids;
 	guint n_selected;
+	ModestFolderViewFilter filter;
 
 	TnyFolderStoreQuery  *query;
 	guint                 timer_expander;
@@ -1028,6 +1029,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->clipboard = modest_runtime_get_email_clipboard ();
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
+	priv->filter = MODEST_FOLDER_VIEW_FILTER_NONE;
 	priv->reselect = FALSE;
 	priv->show_non_move = TRUE;
 
@@ -1655,6 +1657,18 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 				break;
 			default:
 				break;
+		}
+	}
+
+	/* apply special filters */
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS)) {
+		if (TNY_IS_FOLDER (instance)) {
+			TnyFolderCaps capabilities;
+
+			capabilities = tny_folder_get_caps (TNY_FOLDER (instance));
+			retval = !(capabilities & TNY_FOLDER_CAPS_NOCHILDREN);
+		} else if (TNY_IS_ACCOUNT (instance)) {
+			retval = FALSE;
 		}
 	}
 
@@ -3292,3 +3306,22 @@ on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
 	} 
 }
 
+void 
+modest_folder_view_set_filter (ModestFolderView *self,
+			       ModestFolderViewFilter filter)
+{
+	ModestFolderViewPrivate *priv;
+	GtkTreeModel *filter_model;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	priv->filter = filter;
+
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		return;
+	}
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
+}
