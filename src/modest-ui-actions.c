@@ -177,6 +177,10 @@ static void modest_ui_actions_on_main_window_move_to (GtkAction *action,
 						      GtkWidget *folder_view,
 						      TnyFolderStore *dst_folder,
 						      ModestMainWindow *win);
+static void modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
+							TnyFolderStore *dst_folder,
+							TnyList *selection,
+							GtkWindow *win);
 
 static void modest_ui_actions_on_window_move_to (GtkAction *action,
 						 TnyList *list_to_move,
@@ -4774,6 +4778,13 @@ on_move_to_dialog_response (GtkDialog *dialog,
 								  folder_view,
 								  dst_folder,
 								  MODEST_MAIN_WINDOW (parent_win));
+#ifdef MODEST_TOOLKIT_HILDON2
+		} else if (MODEST_IS_FOLDER_WINDOW (parent_win)) {
+			modest_ui_actions_on_folder_window_move_to (folder_view,
+								    dst_folder,
+								    helper->list,
+								    GTK_WINDOW (parent_win));
+#endif
 		} else {
 			/* Moving from headers window in edit mode */
 			modest_ui_actions_on_window_move_to (NULL, helper->list,
@@ -5005,13 +5016,17 @@ folder_move_to_cb (ModestMailOperation *mail_op,
 	GObject *object;
 
 	object = modest_mail_operation_get_source (mail_op);
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	g_object_ref (folder_view);
-	g_object_unref (object);
-	move_to_cb (mail_op, user_data);
-	modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), new_folder, FALSE);
-	g_object_unref (folder_view);
+	if (MODEST_IS_MAIN_WINDOW (object)) {
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		g_object_ref (folder_view);
+		g_object_unref (object);
+		move_to_cb (mail_op, user_data);
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), new_folder, FALSE);
+		g_object_unref (folder_view);
+	} else {
+		move_to_cb (mail_op, user_data);
+	}
 }
 
 static void
@@ -5397,7 +5412,7 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	GtkTreeSelection *sel;
 	ModestMailOperation *mail_op = NULL;
 	
-	if (canceled || err || !MODEST_IS_MAIN_WINDOW (parent_window)) {
+	if (canceled || err || !MODEST_IS_WINDOW (parent_window)) {
 		g_object_unref (G_OBJECT (info->src_folder));
 		g_object_unref (G_OBJECT (info->dst_folder));
 		g_free (info);
@@ -5436,8 +5451,10 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	/* 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), */
 	/* 							  TNY_FOLDER (src_folder), TRUE); */
 
-	modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
-					  TNY_FOLDER (info->dst_folder), TRUE);
+	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
+		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
+						  TNY_FOLDER (info->dst_folder), TRUE);
+	}
 	modest_mail_operation_xfer_folder (mail_op,
 			TNY_FOLDER (info->src_folder),
 			info->dst_folder,
@@ -5533,6 +5550,62 @@ modest_ui_actions_on_main_window_move_to (GtkAction *action,
 	g_object_unref (src_folder);
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
+/*
+ * UI handler for the "Move to" action when invoked from the
+ * ModestFolderWindow
+ */
+static void 
+modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
+					    TnyFolderStore *dst_folder,
+					    TnyList *selection,
+					    GtkWindow *win)
+{
+	TnyFolderStore *src_folder = NULL;
+	TnyIterator *iterator;
+
+	if (tny_list_get_length (selection) != 1)
+		return;
+
+	iterator = tny_list_create_iterator (selection);
+	src_folder = TNY_FOLDER_STORE (tny_iterator_get_current (iterator));
+	g_object_unref (iterator);
+
+
+	gboolean do_xfer = TRUE;
+
+	/* Allow only to transfer folders to the local root folder */
+	if (TNY_IS_ACCOUNT (dst_folder) && 
+	    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder) &&
+	    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (dst_folder))) {
+		do_xfer = FALSE;
+	} else if (!TNY_IS_FOLDER (src_folder)) {
+		g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
+		do_xfer = FALSE;
+	}
+
+	if (do_xfer) {
+		MoveFolderInfo *info = g_new0 (MoveFolderInfo, 1);
+		DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
+		
+		info->src_folder = g_object_ref (src_folder);
+		info->dst_folder = g_object_ref (dst_folder);
+		info->delete_original = TRUE;
+		info->folder_view = folder_view;
+
+		connect_info->callback = on_move_folder_cb;
+		connect_info->dst_account = get_account_from_folder_store (TNY_FOLDER_STORE (dst_folder));
+		connect_info->data = info;
+
+		modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+							   TNY_FOLDER_STORE (src_folder), 
+							   connect_info);
+	}
+	/* Frees */
+	g_object_unref (src_folder);
+}
+#endif
+
 
 void
 modest_ui_actions_transfer_messages_helper (GtkWindow *win,
@@ -5617,11 +5690,17 @@ void
 modest_ui_actions_on_move_to (GtkAction *action, 
 			      ModestWindow *win)
 {
+	modest_ui_actions_on_edit_mode_move_to (win);
+}
+
+gboolean 
+modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
+{
 	GtkWidget *dialog = NULL, *folder_view = NULL;
 	ModestMainWindow *main_window;
 	MoveToInfo *helper = NULL;
 
-	g_return_if_fail (MODEST_IS_WINDOW (win));
+	g_return_val_if_fail (MODEST_IS_WINDOW (win), FALSE);
 
 	/* Get the main window if exists */
 	if (MODEST_IS_MAIN_WINDOW (win))
@@ -5654,6 +5733,8 @@ modest_ui_actions_on_move_to (GtkAction *action,
 
 	/* Show the dialog */
 	gtk_widget_show (dialog);
+
+	return TRUE;
 }
 
 /*

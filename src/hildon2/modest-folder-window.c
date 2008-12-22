@@ -546,8 +546,8 @@ edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
 			set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
 		break;
 	case EDIT_MODE_COMMAND_MOVE:
-/* 		modest_ui_actions_on_move_to (NULL, MODEST_WINDOW (self)); */
-		set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
+		if (modest_ui_actions_on_edit_mode_move_to (MODEST_WINDOW (self)))
+			set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
 		break;
 	case EDIT_MODE_COMMAND_RENAME:
 /* 		modest_ui_actions_on_rename (NULL, MODEST_WINDOW (self)); */
