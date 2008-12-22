@@ -3628,8 +3628,8 @@ static void
 on_priority_toggle (HildonCheckButton *button, 
 		    GSList *priority_group)
 {
+	GSList *node;
 	if (hildon_check_button_get_active (button)) {
-		GSList *node;
 
 		for (node = priority_group; node != NULL; node = g_slist_next (node)) {
 			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
@@ -3637,6 +3637,19 @@ on_priority_toggle (HildonCheckButton *button,
 			    hildon_check_button_get_active (node_button)) {
 				hildon_check_button_set_active (node_button, FALSE);
 			}
+		}
+	} else {
+		gboolean found = FALSE;
+		/* If no one is active, activate it again */
+		for (node = priority_group; node != NULL; node = g_slist_next (node)) {
+			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
+			if (hildon_check_button_get_active (node_button)) {
+				found = TRUE;
+				break;
+			}
+		}
+		if (!found) {
+			hildon_check_button_set_active (button, TRUE);
 		}
 	}
 }
