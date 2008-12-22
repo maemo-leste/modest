@@ -262,8 +262,10 @@ void    modest_ui_actions_on_send_receive              (GtkAction *action,
 void     modest_ui_actions_on_new_folder               (GtkAction *action,
 							ModestWindow *main_window);
 
+gboolean     modest_ui_actions_on_edit_mode_rename_folder            (ModestWindow *window);
+
 void     modest_ui_actions_on_rename_folder            (GtkAction *action,
-							ModestMainWindow *main_window);
+							ModestWindow *window);
 
 void     modest_ui_actions_on_delete_folder            (GtkAction *action,
 							ModestWindow *window);

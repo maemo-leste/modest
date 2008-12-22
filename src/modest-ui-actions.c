@@ -3396,8 +3396,8 @@ on_rename_folder_cb (ModestMailOperation *mail_op,
 {
 	ModestFolderView *folder_view;
 
-	/* If the window was closed when renaming a folder this could
-	   happen */
+	/* If the window was closed when renaming a folder, or if
+	 * it's not a main window this will happen */
 	if (!MODEST_IS_FOLDER_VIEW (user_data))
 		return;
 
@@ -3426,11 +3426,7 @@ on_rename_folder_performer (gboolean canceled,
 	if (canceled || err) {
 		/* In memory full conditions we could get this error here */
 		check_memory_full_error ((GtkWidget *) parent_window, err);
-	} else if (MODEST_IS_MAIN_WINDOW(parent_window)) {
-
-		folder_view = modest_main_window_get_child_widget (
-				MODEST_MAIN_WINDOW (parent_window),
-				MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	} else {
 
 		mail_op = 
 			modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
@@ -3440,9 +3436,18 @@ on_rename_folder_performer (gboolean canceled,
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 				mail_op);
 
-		/* Clear the headers view */
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
- 		gtk_tree_selection_unselect_all (sel);
+		if (MODEST_IS_MAIN_WINDOW(parent_window)) {
+
+			folder_view = modest_main_window_get_child_widget (
+				MODEST_MAIN_WINDOW (parent_window),
+				MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+
+			/* Clear the headers view */
+			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+			gtk_tree_selection_unselect_all (sel);
+		} else {
+			folder_view = NULL;
+		}
 
 		/* Actually rename the folder */
 		modest_mail_operation_rename_folder (mail_op,
@@ -3460,40 +3465,46 @@ on_rename_folder_performer (gboolean canceled,
 
 void 
 modest_ui_actions_on_rename_folder (GtkAction *action,
-				     ModestMainWindow *main_window)
+				     ModestWindow *window)
+{
+	modest_ui_actions_on_edit_mode_rename_folder (window);
+}
+
+gboolean 
+modest_ui_actions_on_edit_mode_rename_folder (ModestWindow *window)
 {
 	TnyFolderStore *folder;
 	GtkWidget *folder_view;
-	GtkWidget *header_view;	
+	gboolean do_rename = TRUE;
 
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
+	g_return_val_if_fail (MODEST_IS_WINDOW(window), FALSE);
 
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	if (!folder_view)
-		return;
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		if (!folder_view)
+			return FALSE;
 
-	header_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-	
-	if (!header_view)
-		return;
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
+		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
+#endif
+	}
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 
 	if (!folder)
-		return;
+		return FALSE;
 
 	if (TNY_IS_FOLDER (folder)) {
 		gchar *folder_name = NULL;
 		gint response;
 		const gchar *current_name;
 		TnyFolderStore *parent;
-		gboolean do_rename = TRUE;
 
 		current_name = tny_folder_get_name (TNY_FOLDER (folder));
 		parent = tny_folder_get_folder_store (TNY_FOLDER (folder));
-		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (main_window), 
+		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (window),
 								     parent, current_name, 
 								     &folder_name);
 		g_object_unref (parent);
@@ -3504,11 +3515,12 @@ modest_ui_actions_on_rename_folder (GtkAction *action,
 			RenameFolderInfo *rename_folder_data = g_new0 (RenameFolderInfo, 1);
 			rename_folder_data->folder = g_object_ref (folder);
 			rename_folder_data->new_name = folder_name;
-			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(main_window), TRUE,
+			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(window), TRUE,
 					folder, on_rename_folder_performer, rename_folder_data);
 		}
 	}
 	g_object_unref (folder);
+	return do_rename;
 }
 
 static void
