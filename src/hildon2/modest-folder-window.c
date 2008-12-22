@@ -45,8 +45,16 @@
 #include <modest-window.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
+#include <hildon/hildon-edit-toolbar.h>
 #include <tny-account-store-view.h>
 #include <modest-header-window.h>
+
+typedef enum {
+	EDIT_MODE_COMMAND_NONE = 0,
+	EDIT_MODE_COMMAND_MOVE = 1,
+	EDIT_MODE_COMMAND_DELETE = 2,
+	EDIT_MODE_COMMAND_RENAME = 3,
+} EditModeCommand;
 
 /* 'private'/'protected' functions */
 static void modest_folder_window_class_init  (ModestFolderWindowClass *klass);
@@ -66,10 +74,28 @@ static void add_to_menu (ModestFolderWindow *self,
 			 GCallback callback);
 static void setup_menu (ModestFolderWindow *self);
 
+static void set_edit_mode (ModestFolderWindow *self,
+			   EditModeCommand command);
+static void edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
+					 ModestFolderWindow *self);
+static void edit_toolbar_arrow_clicked (HildonEditToolbar *toolbar,
+					ModestFolderWindow *self);
+static void set_delete_edit_mode (GtkButton *button,
+				  ModestFolderWindow *self);
+static void set_moveto_edit_mode (GtkButton *button,
+				  ModestFolderWindow *self);
+static void set_rename_edit_mode (GtkButton *button,
+				  ModestFolderWindow *self);
+
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
 
 	GtkWidget *folder_view;
+	GtkWidget *edit_toolbar;
+	GtkWidget *top_vbox;
+
+	gboolean edit_mode;
+	EditModeCommand edit_command;
 
 	/* signals */
 	GSList *sighandlers;
@@ -138,6 +164,11 @@ modest_folder_window_init (ModestFolderWindow *obj)
 	priv->display_state = OSSO_DISPLAY_ON;
 	
 	priv->folder_view = NULL;
+
+	priv->top_vbox = NULL;
+	priv->edit_mode = FALSE;
+	priv->edit_command = EDIT_MODE_COMMAND_NONE;
+	priv->edit_toolbar = NULL;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -225,11 +256,15 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
+	priv->top_vbox = gtk_vbox_new (0, FALSE);
+
 	gtk_container_add (GTK_CONTAINER (pannable), priv->folder_view);
-	gtk_container_add (GTK_CONTAINER (self), pannable);
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), pannable, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (self), priv->top_vbox);
 
 	gtk_widget_show (priv->folder_view);
 	gtk_widget_show (pannable);
+	gtk_widget_show (priv->top_vbox);
 
 	connect_signals (MODEST_FOLDER_WINDOW (self));
 
@@ -366,12 +401,12 @@ static void setup_menu (ModestFolderWindow *self)
 	/* folders actions */
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: new folder"),
 		     G_CALLBACK (modest_ui_actions_on_new_folder));
-/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_user_renamefolder"), */
-/* 		     G_CALLBACK ()); */
-/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: move folder"), */
-/* 		     G_CALLBACK ()); */
-/* 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: delete folder"), */
-/* 		     G_CALLBACK ()); */
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_user_renamefolder"),
+		     G_CALLBACK (set_rename_edit_mode));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: move folder"),
+		     G_CALLBACK (set_moveto_edit_mode));
+	add_to_menu (self, HILDON_APP_MENU (app_menu), _("TODO: delete folder"),
+		     G_CALLBACK (set_delete_edit_mode));
 
 	/* new message */
 	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_newemail"),
@@ -425,3 +460,129 @@ on_folder_activated (ModestFolderView *folder_view,
 					  modest_window_get_active_account (MODEST_WINDOW (self)));
 	gtk_widget_show (GTK_WIDGET (headerwin));
 }
+
+static void
+set_edit_mode (ModestFolderWindow *self,
+	       EditModeCommand command)
+{
+	ModestFolderWindowPrivate *priv;
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+	if (priv->edit_toolbar) {
+		gtk_widget_destroy (priv->edit_toolbar);
+		priv->edit_toolbar = NULL;
+	}
+
+	if (command == EDIT_MODE_COMMAND_NONE) {
+		if (priv->edit_mode) {
+			priv->edit_mode = FALSE;
+			priv->edit_command = command;
+			g_object_set (G_OBJECT (priv->folder_view), 
+				      "hildon-ui-mode", HILDON_UI_MODE_NORMAL, 
+				      NULL);
+			gtk_widget_queue_resize (priv->folder_view);
+			gtk_window_unfullscreen (GTK_WINDOW (self));
+		}
+	} else {
+		if (!priv->edit_mode) {
+			GtkTreeSelection *selection;
+
+			g_object_set (G_OBJECT (priv->folder_view),
+				      "hildon-ui-mode", HILDON_UI_MODE_EDIT,
+				      NULL);
+			selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->folder_view));
+			gtk_tree_selection_set_mode (selection, GTK_SELECTION_SINGLE);
+			gtk_tree_selection_unselect_all (selection);
+
+			priv->edit_mode = TRUE;
+			priv->edit_command = command;
+
+			/* Setup toolbar */
+			priv->edit_toolbar = hildon_edit_toolbar_new ();
+			switch (command) {
+			case EDIT_MODE_COMMAND_DELETE:
+				hildon_edit_toolbar_set_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+							       _("TODO: Select folder to delete"));
+				hildon_edit_toolbar_set_button_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+								      _("TODO: Delete"));
+				break;
+			case EDIT_MODE_COMMAND_MOVE:
+				hildon_edit_toolbar_set_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+							       _("TODO: Select folder to move"));
+				hildon_edit_toolbar_set_button_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+								      _("TODO: Move"));
+				break;
+			case EDIT_MODE_COMMAND_RENAME:
+				hildon_edit_toolbar_set_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+							       _("TODO: Select folder to rename"));
+				hildon_edit_toolbar_set_button_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+								      _("TODO: Rename"));
+				break;
+			case EDIT_MODE_COMMAND_NONE:
+				g_assert ("Shouldn't reach");
+			}
+			gtk_box_pack_start (GTK_BOX (priv->top_vbox), priv->edit_toolbar, FALSE, FALSE, 0);
+			g_signal_connect (G_OBJECT (priv->edit_toolbar), "button-clicked",
+					  G_CALLBACK (edit_toolbar_button_clicked), (gpointer) self);
+			g_signal_connect (G_OBJECT (priv->edit_toolbar), "arrow-clicked",
+					  G_CALLBACK (edit_toolbar_arrow_clicked), (gpointer) self);
+			gtk_widget_show (priv->edit_toolbar);
+
+			gtk_widget_queue_resize (priv->folder_view);
+			gtk_window_fullscreen (GTK_WINDOW (self));
+		}
+	}
+}
+
+static void
+edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
+			     ModestFolderWindow *self)
+{
+	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	switch (priv->edit_command) {
+	case EDIT_MODE_COMMAND_DELETE:
+/* 		if (modest_ui_actions_on_edit_mode_delete_folder (MODEST_WINDOW (self))) */
+			set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
+		break;
+	case EDIT_MODE_COMMAND_MOVE:
+/* 		modest_ui_actions_on_move_to (NULL, MODEST_WINDOW (self)); */
+		set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
+		break;
+	case EDIT_MODE_COMMAND_RENAME:
+/* 		modest_ui_actions_on_rename (NULL, MODEST_WINDOW (self)); */
+		set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
+		break;
+	case EDIT_MODE_COMMAND_NONE:
+			g_assert_not_reached ();
+	}
+}
+
+static void
+edit_toolbar_arrow_clicked (HildonEditToolbar *toolbar,
+			    ModestFolderWindow *self)
+{
+	set_edit_mode (self, EDIT_MODE_COMMAND_NONE);
+}
+
+static void
+set_delete_edit_mode (GtkButton *button,
+		      ModestFolderWindow *self)
+{
+	set_edit_mode (self, EDIT_MODE_COMMAND_DELETE);
+}
+
+static void
+set_moveto_edit_mode (GtkButton *button,
+		      ModestFolderWindow *self)
+{
+	set_edit_mode (self, EDIT_MODE_COMMAND_MOVE);
+}
+
+static void
+set_rename_edit_mode (GtkButton *button,
+		      ModestFolderWindow *self)
+{
+	set_edit_mode (self, EDIT_MODE_COMMAND_RENAME);
+}
+
