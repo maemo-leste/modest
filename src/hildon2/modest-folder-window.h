@@ -30,7 +30,7 @@
 #ifndef __MODEST_FOLDER_WINDOW_H__
 #define __MODEST_FOLDER_WINDOW_H__
 
-#include <widgets/modest-window.h>
+#include <modest-hildon2-window.h>
 #include <widgets/modest-folder-view.h>
 #include <tny-folder-store-query.h>
 
@@ -49,11 +49,11 @@ typedef struct _ModestFolderWindow      ModestFolderWindow;
 typedef struct _ModestFolderWindowClass ModestFolderWindowClass;
 
 struct _ModestFolderWindow {
-	ModestWindow parent;
+	ModestHildon2Window parent;
 };
 
 struct _ModestFolderWindowClass {
-	ModestWindowClass parent_class;
+	ModestHildon2WindowClass parent_class;
 };
 
 /**

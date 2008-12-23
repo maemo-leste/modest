@@ -67,18 +67,10 @@ static void modest_folder_window_finalize    (GObject *obj);
 static void connect_signals (ModestFolderWindow *self);
 static void modest_folder_window_disconnect_signals (ModestWindow *self);
 
-static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 static void on_folder_activated (ModestFolderView *folder_view,
 				 TnyFolder *folder,
 				 gpointer userdata);
-static void add_to_menu (ModestFolderWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback);
-static void setup_menu (ModestFolderWindow *self,
-			ModestDimmingRulesGroup *group);
+static void setup_menu (ModestFolderWindow *self);
 
 static void set_edit_mode (ModestFolderWindow *self,
 			   EditModeCommand command);
@@ -92,9 +84,6 @@ static void set_moveto_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
 static void set_rename_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
-static gboolean modest_folder_window_toggle_menu (HildonWindow *window,
-						  guint button,
-						  guint32 time);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -102,7 +91,6 @@ struct _ModestFolderWindowPrivate {
 	GtkWidget *folder_view;
 	GtkWidget *edit_toolbar;
 	GtkWidget *top_vbox;
-	GtkWidget *app_menu;
 
 	gboolean edit_mode;
 	EditModeCommand edit_command;
@@ -139,7 +127,7 @@ modest_folder_window_get_type (void)
 			(GInstanceInitFunc) modest_folder_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
 		                                  "ModestFolderWindow",
 		                                  &my_info, 0);
 	}
@@ -152,17 +140,12 @@ modest_folder_window_class_init (ModestFolderWindowClass *klass)
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
-	HildonWindowClass *hildon_window_class = (HildonWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestFolderWindowPrivate));
 	
-	hildon_window_class->toggle_menu = modest_folder_window_toggle_menu;
-
-	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
-	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->disconnect_signals_func = modest_folder_window_disconnect_signals;
 }
 
@@ -255,25 +238,16 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GtkWidget *pannable;
-	ModestWindowPrivate *parent_priv = NULL;
-	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-
-	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
-	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 
 	pannable = hildon_pannable_area_new ();
 	priv->folder_view  = modest_platform_create_folder_view (query);
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
 
-	setup_menu (self, menu_rules_group);
-
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
-	g_object_unref (menu_rules_group);
+	setup_menu (self);
 
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
@@ -321,16 +295,6 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	 */
 
 	return MODEST_WINDOW(self);
-}
-
-static gboolean
-on_zoom_minus_plus_not_implemented (ModestWindow *window)
-{
-	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW (window), FALSE);
-
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
-	return FALSE;
-
 }
 
 gboolean
@@ -397,96 +361,51 @@ free_refs:
 
 }
 
-static void add_to_menu (ModestFolderWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback)
+static void setup_menu (ModestFolderWindow *self)
 {
-	GtkWidget *button;
-
-	button = gtk_button_new_with_label (label);
-	g_signal_connect_after (G_OBJECT (button), "clicked",
-				callback, (gpointer) self);
-	if (dimming_callback)
-		modest_dimming_rules_group_add_widget_rule (group,
-							    button,
-							    dimming_callback,
-							    MODEST_WINDOW (self));
-	hildon_app_menu_append (menu, GTK_BUTTON (button));
-}
-
-static void setup_menu (ModestFolderWindow *self,
-			ModestDimmingRulesGroup *group)
-{
-	ModestFolderWindowPrivate *priv = NULL;
-
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
 
-	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
-
-	priv->app_menu = hildon_app_menu_new ();
-
 	/* folders actions */
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: new folder"),
-		     G_CALLBACK (modest_ui_actions_on_new_folder),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_user_renamefolder"),
-		     G_CALLBACK (set_rename_edit_mode),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: move folder"),
-		     G_CALLBACK (set_moveto_edit_mode),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: delete folder"),
-		     G_CALLBACK (set_delete_edit_mode),
-		     group, NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: new folder"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_folder),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_user_renamefolder"),
+					   APP_MENU_CALLBACK (set_rename_edit_mode),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: move folder"),
+					   APP_MENU_CALLBACK (set_moveto_edit_mode),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: delete folder"),
+					   APP_MENU_CALLBACK (set_delete_edit_mode),
+					   NULL);
 
 	/* new message */
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_viewer_newemail"),
-		     G_CALLBACK (modest_ui_actions_on_new_msg),
-		     group, NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+					   NULL);
 
 	/* send receive actions should be only one visible always */
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_sendandreceive"),
-		     G_CALLBACK (modest_ui_actions_on_send_receive),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_outbox_cancelsend"),
-		     G_CALLBACK (modest_ui_actions_cancel_send),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"),
+					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 
 	/* Settings menu buttons */
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: new account"),
-		     G_CALLBACK (modest_ui_actions_on_new_account),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: edit accounts"),
-		     G_CALLBACK (modest_ui_actions_on_accounts),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_options"),
-		     G_CALLBACK (modest_ui_actions_on_settings),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_globalsmtpservers"),
-		     G_CALLBACK (modest_ui_actions_on_smtp_servers),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_tools_smtp_servers));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: new account"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_account),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: edit accounts"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_accounts),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_options"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_settings),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_globalsmtpservers"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_smtp_servers),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_tools_smtp_servers));
 	
-	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
-					       HILDON_APP_MENU (priv->app_menu));
-}
-
-static gboolean 
-modest_folder_window_toggle_menu (HildonWindow *window,
-				  guint button,
-				  guint32 time)
-{
-	ModestFolderWindowPrivate *priv = NULL;
-
-	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (window);
-
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
-
-	gtk_widget_queue_resize (priv->app_menu);
-
-	return HILDON_WINDOW_CLASS (parent_class)->toggle_menu (window, button, time);
 }
 
 static void
