@@ -30,7 +30,7 @@
 #ifndef __MODEST_HEADER_WINDOW_H__
 #define __MODEST_HEADER_WINDOW_H__
 
-#include <widgets/modest-window.h>
+#include <modest-hildon2-window.h>
 #include <widgets/modest-header-view.h>
 
 G_BEGIN_DECLS
@@ -48,11 +48,11 @@ typedef struct _ModestHeaderWindow      ModestHeaderWindow;
 typedef struct _ModestHeaderWindowClass ModestHeaderWindowClass;
 
 struct _ModestHeaderWindow {
-	ModestWindow parent;
+	ModestHildon2Window parent;
 };
 
 struct _ModestHeaderWindowClass {
-	ModestWindowClass parent_class;
+	ModestHildon2WindowClass parent_class;
 };
 
 /**
