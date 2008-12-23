@@ -51,6 +51,9 @@ static void modest_hildon2_window_show_toolbar (ModestWindow *self,
 static gboolean modest_hildon2_window_toggle_menu (HildonWindow *window,
 						    guint button,
 						    guint32 time);
+static void modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
+								GtkPackType pack_type,
+								GtkWidget *toolbar);
 
 typedef struct _ModestHildon2WindowPrivate ModestHildon2WindowPrivate;
 struct _ModestHildon2WindowPrivate {
@@ -99,6 +102,7 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
 	HildonWindowClass *hildon_window_class = (HildonWindowClass *) klass;
+	ModestHildon2WindowClass *modest_hildon2_window_class = (ModestHildon2WindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_hildon2_window_finalize;
@@ -110,6 +114,8 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_hildon2_window_show_toolbar;
+
+	modest_hildon2_window_class->pack_toolbar_func = modest_hildon2_window_pack_toolbar_not_implemented;
 }
 
 static void
@@ -159,6 +165,16 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
 	return FALSE;
 
+}
+
+static void 
+modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
+						    GtkPackType pack_type,
+						    GtkWidget *toolbar)
+{
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+
+	g_warning ("%s not implemented", __FUNCTION__);
 }
 
 void 

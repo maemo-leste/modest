@@ -54,6 +54,8 @@ struct _ModestHildon2Window {
 
 struct _ModestHildon2WindowClass {
 	ModestWindowClass parent_class;
+
+	void (*pack_toolbar_func) (ModestHildon2Window *self, GtkPackType pack_type, GtkWidget *toolbar);
 };
 
 typedef void (*ModestHildon2AppMenuCallback) (GObject *control, gpointer userdata);
