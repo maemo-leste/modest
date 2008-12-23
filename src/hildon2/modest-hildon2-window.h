@@ -32,6 +32,7 @@
 
 #include <widgets/modest-window.h>
 #include <widgets/modest-account-view.h>
+#include <modest-dimming-rule.h>
 
 G_BEGIN_DECLS
 
@@ -56,6 +57,8 @@ struct _ModestHildon2WindowClass {
 };
 
 typedef void (*ModestHildon2AppMenuCallback) (GObject *control, gpointer userdata);
+
+#define APP_MENU_CALLBACK(x) ((ModestHildon2AppMenuCallback) (x))
 
 /**
  * modest_hildon2_window_get_type:

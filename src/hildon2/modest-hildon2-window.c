@@ -34,7 +34,6 @@
 #include <modest-defs.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-ui-dimming-manager.h>
-#include <modest-dimming-rule.h>
 #include <modest-window-priv.h>
 #include <modest-hildon2-window.h>
 #include <modest-ui-actions.h>

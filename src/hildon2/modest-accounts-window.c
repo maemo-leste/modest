@@ -55,31 +55,17 @@ static void modest_accounts_window_finalize    (GObject *obj);
 static void connect_signals (ModestAccountsWindow *self);
 static void modest_accounts_window_disconnect_signals (ModestWindow *self);
 
-static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 static void on_account_activated (GtkTreeView *treeview,
 				  GtkTreePath *path,
 				  GtkTreeViewColumn *column,
 				  ModestAccountsWindow *accounts_window);
-static void add_to_menu (ModestAccountsWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback);
-static void setup_menu (ModestAccountsWindow *self,
-			ModestDimmingRulesGroup *group);
+static void setup_menu (ModestAccountsWindow *self);
 
-static void modest_accounts_window_show_toolbar (ModestWindow *self,
-						 gboolean show_toolbar);
-static gboolean modest_accounts_window_toggle_menu (HildonWindow *window,
-						    guint button,
-						    guint32 time);
 
 typedef struct _ModestAccountsWindowPrivate ModestAccountsWindowPrivate;
 struct _ModestAccountsWindowPrivate {
 
 	GtkWidget *account_view;
-	GtkWidget *app_menu;
 
 	/* signals */
 	GSList *sighandlers;
@@ -113,7 +99,7 @@ modest_accounts_window_get_type (void)
 			(GInstanceInitFunc) modest_accounts_window_instance_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
 		                                  "ModestAccountsWindow",
 		                                  &my_info, 0);
 	}
@@ -126,18 +112,12 @@ modest_accounts_window_class_init (ModestAccountsWindowClass *klass)
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
-	HildonWindowClass *hildon_window_class = (HildonWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_accounts_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestAccountsWindowPrivate));
 	
-	hildon_window_class->toggle_menu = modest_accounts_window_toggle_menu;
-
-	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
-	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
-	modest_window_class->show_toolbar_func = modest_accounts_window_show_toolbar;
 	modest_window_class->disconnect_signals_func = modest_accounts_window_disconnect_signals;
 }
 
@@ -223,23 +203,14 @@ modest_accounts_window_new (void)
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GtkWidget *pannable;
-	ModestWindowPrivate *parent_priv = NULL;
-	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-
-	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
-	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 
 	pannable = hildon_pannable_area_new ();
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 
-	setup_menu (self, menu_rules_group);
-
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
-	g_object_unref (menu_rules_group);
+	setup_menu (self);
 
 	gtk_container_add (GTK_CONTAINER (pannable), priv->account_view);
 	gtk_container_add (GTK_CONTAINER (self), pannable);
@@ -281,16 +252,6 @@ modest_accounts_window_new (void)
 	return MODEST_WINDOW(self);
 }
 
-static gboolean
-on_zoom_minus_plus_not_implemented (ModestWindow *window)
-{
-	g_return_val_if_fail (MODEST_IS_ACCOUNTS_WINDOW (window), FALSE);
-
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
-	return FALSE;
-
-}
-
 gboolean
 modest_accounts_window_screen_is_on (ModestAccountsWindow *self)
 {
@@ -315,79 +276,34 @@ modest_accounts_window_get_account_view (ModestAccountsWindow *self)
 	return MODEST_ACCOUNT_VIEW (priv->account_view);
 }
 
-static void add_to_menu (ModestAccountsWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback)
+static void 
+setup_menu (ModestAccountsWindow *self)
 {
-	GtkWidget *button;
-
-	button = gtk_button_new_with_label (label);
-	g_signal_connect_after (G_OBJECT (button), "clicked",
-				callback, (gpointer) self);
-	if (dimming_callback)
-		modest_dimming_rules_group_add_widget_rule (group,
-							    button,
-							    dimming_callback,
-							    MODEST_WINDOW (self));
-	hildon_app_menu_append (menu, GTK_BUTTON (button));
-}
-
-static void setup_menu (ModestAccountsWindow *self, ModestDimmingRulesGroup *group)
-{
-	ModestAccountsWindowPrivate *priv = NULL;
-
 	g_return_if_fail (MODEST_IS_ACCOUNTS_WINDOW(self));
 
-	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
-
-	priv->app_menu = hildon_app_menu_new ();
-
 	/* Settings menu buttons */
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: new account"),
-		     G_CALLBACK (modest_ui_actions_on_new_account),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: edit accounts"),
-		     G_CALLBACK (modest_ui_actions_on_accounts),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_options"),
-		     G_CALLBACK (modest_ui_actions_on_settings),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_globalsmtpservers"),
-		     G_CALLBACK (modest_ui_actions_on_smtp_servers),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_tools_smtp_servers));
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_viewer_newemail"),
-		     G_CALLBACK (modest_ui_actions_on_new_msg),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_new_msg));
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_sendandreceive"),
-		     G_CALLBACK (modest_ui_actions_on_send_receive),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_outbox_cancelsend"),
-		     G_CALLBACK (modest_ui_actions_cancel_send),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
-	
-	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
-					       HILDON_APP_MENU (priv->app_menu));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: new account"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_account), 
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: edit accounts"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_accounts), 
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_options"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_settings), 
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_globalsmtpservers"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_smtp_servers),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_tools_smtp_servers));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"),
+					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 }
-
-static gboolean 
-modest_accounts_window_toggle_menu (HildonWindow *window,
-				    guint button,
-				    guint32 time)
-{
-	ModestAccountsWindowPrivate *priv = NULL;
-
-	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (window);
-
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
-
-	gtk_widget_queue_resize (priv->app_menu);
-
-	return HILDON_WINDOW_CLASS (parent_class)->toggle_menu (window, button, time);
-}
-
 
 
 static void
@@ -416,10 +332,3 @@ on_account_activated (GtkTreeView *account_view,
 
 }
 
-static void
-modest_accounts_window_show_toolbar (ModestWindow *self,
-				     gboolean show_toolbar)
-{
-	/* Empty implementation, this view does not show any
-	   toolbar */
-}
