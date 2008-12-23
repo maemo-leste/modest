@@ -1886,48 +1886,49 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	g_signal_connect (G_OBJECT(note), "response", 
 			  G_CALLBACK(on_cert_dialog_response),
 			  (gpointer) certificate);
-	
+
 	response = gtk_dialog_run(GTK_DIALOG(note));
 
 	on_destroy_dialog (note);
 	g_free (question);
-	
+
 	return response == GTK_RESPONSE_OK;
 }
 
 gboolean
-modest_platform_run_alert_dialog (const gchar* prompt, 
+modest_platform_run_alert_dialog (const gchar* prompt,
 				  gboolean is_question)
-{	
-	ModestWindow *main_win; 
+{
+	ModestWindow *top_win;
+	HildonWindowStack *stack;
 
-	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
-		g_warning ("%s:\n'%s'\ndon't show dialogs if there's no main window;"
-			   " assuming 'Cancel' for questions, 'Ok' otherwise", prompt, __FUNCTION__);
-		return is_question ? FALSE : TRUE;
+	stack = hildon_window_stack_get_default ();
+	top_win = MODEST_WINDOW (hildon_window_stack_peek (stack));
+
+	if (!top_win) {
+		g_warning ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
+			   __FUNCTION__);
+		return FALSE;
 	}
 
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
-	g_return_val_if_fail (main_win, FALSE); /* should not happen */
-	
 	gboolean retval = TRUE;
 	if (is_question) {
-		/* The Tinymail documentation says that we should show Yes and No buttons, 
+		/* The Tinymail documentation says that we should show Yes and No buttons,
 		 * when it is a question.
 		 * Obviously, we need tinymail to use more specific error codes instead,
 		 * so we know what buttons to show. */
-		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (main_win), 
+		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (top_win), 
 									      prompt));
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-					     GTK_WINDOW (dialog), GTK_WINDOW (main_win));
-		
+					     GTK_WINDOW (dialog), GTK_WINDOW (top_win));
+
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 		retval = (response == GTK_RESPONSE_YES) || (response == GTK_RESPONSE_OK);
-		
-		on_destroy_dialog (dialog);		
+
+		on_destroy_dialog (dialog);
 	} else {
 	 	/* Just show the error text and use the default response: */
-	 	modest_platform_run_information_dialog (GTK_WINDOW (main_win), 
+	 	modest_platform_run_information_dialog (GTK_WINDOW (top_win), 
 							prompt, FALSE);
 	}
 	return retval;
