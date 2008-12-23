@@ -37,6 +37,15 @@
 #include <modest-window-priv.h>
 #include <modest-hildon2-window.h>
 #include <modest-ui-actions.h>
+#include <hildon/hildon-edit-toolbar.h>
+
+typedef struct _EditModeRegister {
+	gchar *description;
+	gchar *button_label;
+	GtkWidget *tree_view;
+	GtkSelectionMode mode;
+	ModestHildon2EditModeCallback action;
+} EditModeRegister;
 
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_class_init  (gpointer klass, gpointer class_data);
@@ -54,6 +63,16 @@ static gboolean modest_hildon2_window_toggle_menu (HildonWindow *window,
 static void modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
 								GtkPackType pack_type,
 								GtkWidget *toolbar);
+static EditModeRegister *edit_mode_register_new (const gchar *description,
+						 const gchar *button_label,
+						 GtkTreeView *tree_view,
+						 GtkSelectionMode mode,
+						 ModestHildon2EditModeCallback action);
+static void edit_mode_register_destroy (gpointer data);
+static void edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
+					 ModestHildon2Window *self);
+static void edit_toolbar_arrow_clicked (HildonEditToolbar *toolbar,
+					ModestHildon2Window *self);
 
 typedef struct _ModestHildon2WindowPrivate ModestHildon2WindowPrivate;
 struct _ModestHildon2WindowPrivate {
@@ -61,6 +80,12 @@ struct _ModestHildon2WindowPrivate {
 	GtkWidget *app_menu;
 	ModestDimmingRulesGroup *app_menu_dimming_group;
 
+	/* Edit mode support */
+	gboolean edit_mode;
+	gint edit_command;
+	GtkWidget *edit_toolbar;
+	GtkWidget *current_edit_tree_view;
+	GHashTable *edit_mode_registry;
 };
 #define MODEST_HILDON2_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									    MODEST_TYPE_HILDON2_WINDOW, \
@@ -128,6 +153,9 @@ modest_hildon2_window_finalize (GObject *obj)
 	g_object_unref (priv->app_menu_dimming_group);
 	priv->app_menu_dimming_group = NULL;
 
+	g_hash_table_destroy (priv->edit_mode_registry);
+	priv->edit_mode_registry = NULL;
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -141,6 +169,13 @@ modest_hildon2_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	self = (ModestHildon2Window *) instance;
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
+
+	priv->edit_mode = FALSE;
+	priv->edit_toolbar = NULL;
+	priv->current_edit_tree_view = NULL;
+	priv->edit_command = -1;
+	priv->edit_mode_registry = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+							  NULL, edit_mode_register_destroy);
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 	priv->app_menu_dimming_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
@@ -268,3 +303,168 @@ modest_hildon2_window_show_toolbar (ModestWindow *self,
 	/* Empty implementation: Hildon 2.2 implementation
 	 * doesn't switch toolbar visibility */
 }
+
+void 
+modest_hildon2_window_register_edit_mode (ModestHildon2Window *self,
+					  gint edit_mode_id,
+					  const gchar *description,
+					  const gchar *button_label,
+					  GtkTreeView *tree_view,
+					  GtkSelectionMode mode,
+					  ModestHildon2EditModeCallback action)
+{
+	ModestHildon2WindowPrivate *priv = NULL;
+	EditModeRegister *reg;
+
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+	g_return_if_fail (edit_mode_id >= 0);
+	g_return_if_fail (description);
+	g_return_if_fail (button_label);
+	g_return_if_fail (GTK_IS_TREE_VIEW (tree_view));
+
+	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
+
+	reg = (EditModeRegister *) g_hash_table_lookup (priv->edit_mode_registry, GINT_TO_POINTER (edit_mode_id));
+	g_return_if_fail (reg == NULL);
+
+	reg = edit_mode_register_new (description, button_label, tree_view, mode, action);
+	g_hash_table_insert (priv->edit_mode_registry, GINT_TO_POINTER (edit_mode_id), (gpointer) reg);
+}
+
+void
+modest_hildon2_window_set_edit_mode (ModestHildon2Window *self,
+				     gint edit_mode_id)
+{
+	ModestHildon2WindowPrivate *priv = NULL;
+	EditModeRegister *reg;
+	GtkTreeSelection *selection;
+
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+	g_return_if_fail (edit_mode_id >= 0);
+
+	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
+	reg = (EditModeRegister *) g_hash_table_lookup (priv->edit_mode_registry, GINT_TO_POINTER (edit_mode_id));
+	g_return_if_fail (reg != NULL);
+
+	if (priv->edit_mode) {
+		modest_hildon2_window_unset_edit_mode (self);
+	}
+
+	priv->edit_mode = TRUE;
+	priv->edit_command = edit_mode_id;
+
+	priv->current_edit_tree_view = reg->tree_view;
+	g_object_set (G_OBJECT (priv->current_edit_tree_view),
+		      "hildon-ui-mode", HILDON_UI_MODE_EDIT,
+		      NULL);
+
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->current_edit_tree_view));
+	gtk_tree_selection_set_mode (selection, reg->mode);
+	gtk_tree_selection_unselect_all (selection);
+
+	priv->edit_toolbar = hildon_edit_toolbar_new ();
+	hildon_edit_toolbar_set_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+				       reg->description);
+	hildon_edit_toolbar_set_button_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
+					      reg->button_label);
+	modest_hildon2_window_pack_toolbar (self, GTK_PACK_START,
+					    priv->edit_toolbar);
+
+	g_signal_connect (G_OBJECT (priv->edit_toolbar), "button-clicked",
+			  G_CALLBACK (edit_toolbar_button_clicked), (gpointer) self);
+	g_signal_connect (G_OBJECT (priv->edit_toolbar), "arrow-clicked",
+			  G_CALLBACK (edit_toolbar_arrow_clicked), (gpointer) self);
+
+	gtk_widget_show (priv->edit_toolbar);
+	gtk_widget_queue_resize (priv->current_edit_tree_view);
+	gtk_window_fullscreen (GTK_WINDOW (self));
+
+}
+
+void 
+modest_hildon2_window_unset_edit_mode (ModestHildon2Window *self)
+{
+	ModestHildon2WindowPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
+
+	if (priv->edit_toolbar) {
+		gtk_widget_destroy (priv->edit_toolbar);
+		priv->edit_toolbar = NULL;
+	}
+
+	if (priv->edit_mode) {
+		priv->edit_mode = FALSE;
+		priv->edit_command = -1;
+		if (priv->current_edit_tree_view) {
+			g_object_set (G_OBJECT (priv->current_edit_tree_view), 
+				      "hildon-ui-mode", HILDON_UI_MODE_NORMAL, 
+				      NULL);
+			gtk_widget_queue_resize (priv->current_edit_tree_view);
+			priv->current_edit_tree_view = NULL;
+		}
+		gtk_window_unfullscreen (GTK_WINDOW (self));
+	}
+}
+
+static EditModeRegister *
+edit_mode_register_new (const gchar *description,
+			const gchar *button_label,
+			GtkTreeView *tree_view,
+			GtkSelectionMode mode,
+			ModestHildon2EditModeCallback action)
+{
+	EditModeRegister *reg;
+
+	reg = g_slice_new (EditModeRegister);
+
+	reg->description = g_strdup (description);
+	reg->button_label = g_strdup (button_label);
+	reg->tree_view = g_object_ref (tree_view);
+	reg->mode = mode;
+	reg->action = action;
+
+	return reg;
+}
+
+static void 
+edit_mode_register_destroy (gpointer data)
+{
+	EditModeRegister *reg = (EditModeRegister *) data;
+
+	g_free (reg->description);
+	g_free (reg->button_label);
+	g_object_unref (reg->tree_view);
+
+	g_slice_free (EditModeRegister, reg);
+}
+
+static void
+edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
+			     ModestHildon2Window *self)
+{
+	ModestHildon2WindowPrivate *priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
+	EditModeRegister *reg;
+
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+	
+	reg = (EditModeRegister *) g_hash_table_lookup (priv->edit_mode_registry, 
+							GINT_TO_POINTER (priv->edit_command));
+	if (reg == NULL)
+		modest_hildon2_window_unset_edit_mode (self);
+
+	if ((reg->action == NULL) || reg->action (self))
+		modest_hildon2_window_unset_edit_mode (self);
+
+}
+
+static void
+edit_toolbar_arrow_clicked (HildonEditToolbar *toolbar,
+			    ModestHildon2Window *self)
+{
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+	
+	modest_hildon2_window_unset_edit_mode (self);
+}
+

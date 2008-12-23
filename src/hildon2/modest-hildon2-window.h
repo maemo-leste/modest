@@ -59,8 +59,10 @@ struct _ModestHildon2WindowClass {
 };
 
 typedef void (*ModestHildon2AppMenuCallback) (GObject *control, gpointer userdata);
+typedef gboolean (*ModestHildon2EditModeCallback) (ModestHildon2Window *self);
 
 #define APP_MENU_CALLBACK(x) ((ModestHildon2AppMenuCallback) (x))
+#define EDIT_MODE_CALLBACK(x) ((ModestHildon2EditModeCallback) (x))
 
 /**
  * modest_hildon2_window_get_type:
@@ -114,6 +116,18 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 void modest_hildon2_window_pack_toolbar (ModestHildon2Window *self,
 					 GtkPackType pack_type,
 					 GtkWidget *toolbar);
+
+void modest_hildon2_window_register_edit_mode (ModestHildon2Window *self,
+					       gint edit_mode_id,
+					       const gchar *description,
+					       const gchar *button,
+					       GtkTreeView *tree_view,
+					       GtkSelectionMode mode,
+					       ModestHildon2EditModeCallback action);
+
+void modest_hildon2_window_set_edit_mode (ModestHildon2Window *self,
+					  gint edit_mode_id);
+void modest_hildon2_window_unset_edit_mode (ModestHildon2Window *self);
 
 G_END_DECLS
 
