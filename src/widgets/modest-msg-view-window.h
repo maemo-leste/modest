@@ -32,6 +32,9 @@
 
 #include <tny-msg.h>
 #include <tny-folder.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <modest-hildon2-window.h>
+#endif
 #include <widgets/modest-window.h>
 #include <widgets/modest-header-view.h>
 #include <gtk/gtktreemodel.h>
@@ -49,11 +52,19 @@ G_BEGIN_DECLS
 
 
 typedef struct {
-	 ModestWindow parent;
+#ifdef MODEST_TOOLKIT_HILDON2
+	ModestHildon2Window parent;
+#else
+	ModestWindow parent;
+#endif
 } ModestMsgViewWindow;
 	
 typedef struct {
+#ifdef MODEST_TOOLKIT_HILDON2
+	ModestHildon2WindowClass parent_class;
+#else
 	ModestWindowClass parent_class;
+#endif
 
 	void (*msg_changed) (ModestMsgViewWindow *self,
 			     GtkTreeModel *model,

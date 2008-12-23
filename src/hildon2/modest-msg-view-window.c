@@ -141,9 +141,6 @@ static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
 static gboolean modest_msg_view_window_key_event (GtkWidget *window,
 						  GdkEventKey *event,
 						  gpointer userdata);
-static gboolean modest_msg_view_window_toggle_menu (HildonWindow *window,
-						    guint button,
-						    guint32 time);
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
@@ -223,14 +220,7 @@ static gboolean message_reader (ModestMsgViewWindow *window,
 				TnyHeader *header,
 				GtkTreeRowReference *row_reference);
 
-static void add_to_menu (ModestMsgViewWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback);
-static void setup_menu (ModestMsgViewWindow *self,
-			ModestDimmingRulesGroup *group);
+static void setup_menu (ModestMsgViewWindow *self);
 
 /* list my signals */
 enum {
@@ -270,7 +260,7 @@ modest_msg_view_window_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
 		                                  "ModestMsgViewWindow",
 		                                  &my_info, 0);
 
@@ -341,8 +331,6 @@ modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_view_window_finalize;
-
-	hildon_window_class->toggle_menu = modest_msg_view_window_toggle_menu;
 
 	modest_window_class->set_zoom_func = modest_msg_view_window_set_zoom;
 	modest_window_class->get_zoom_func = modest_msg_view_window_get_zoom;
@@ -735,7 +723,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv = NULL;
-	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 
@@ -749,16 +736,11 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	parent_priv->menubar = NULL;
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 
-	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
 
-	setup_menu (self, menu_rules_group);
+	setup_menu (self);
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (menu_rules_group, 
-					      modest_msg_view_menu_dimming_entries,
-					      G_N_ELEMENTS (modest_msg_view_menu_dimming_entries),
-					      MODEST_WINDOW (self));
 	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
 					      modest_msg_view_toolbar_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_view_toolbar_dimming_entries),
@@ -769,10 +751,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 					      MODEST_WINDOW (self));
 
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
-	g_object_unref (menu_rules_group);
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 
@@ -3109,80 +3089,39 @@ on_fetch_image (ModestMsgView *msgview,
 }
 
 static void 
-add_to_menu (ModestMsgViewWindow *self,
-	     HildonAppMenu *menu,
-	     gchar *label,
-	     GCallback callback,
-	     ModestDimmingRulesGroup *dimming_group,
-	     GCallback dimming_callback)
+setup_menu (ModestMsgViewWindow *self)
 {
-	GtkWidget *button;
-
-	button = gtk_button_new_with_label (label);
-	g_signal_connect_after (G_OBJECT (button), "clicked",
-				callback, (gpointer) self);
-	modest_dimming_rules_group_add_widget_rule (dimming_group,
-						    button,
-						    dimming_callback,
-						    MODEST_WINDOW (self));
-	hildon_app_menu_append (menu, GTK_BUTTON (button));
-}
-
-static void 
-setup_menu (ModestMsgViewWindow *self, ModestDimmingRulesGroup *group)
-{
-	ModestMsgViewWindowPrivate *priv = NULL;
-	GtkWidget *app_menu;
-
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(self));
 
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
-
-	app_menu = hildon_app_menu_new ();
-
 	/* Settings menu buttons */
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_replytoall"),
-		     G_CALLBACK (modest_ui_actions_on_reply_all),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_forward"),
-		     G_CALLBACK (modest_ui_actions_on_forward),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
-
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_mark_as_read"),
-		     G_CALLBACK (modest_ui_actions_on_mark_as_read),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_mark_as_read_msg_in_view));
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_mark_as_unread"),
-		     G_CALLBACK (modest_ui_actions_on_mark_as_unread),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_mark_as_unread_msg_in_view));
-
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_save_attachments"),
-		     G_CALLBACK (modest_ui_actions_save_attachments),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_save_attachments));
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_inbox_remove_attachments"),
-		     G_CALLBACK (modest_ui_actions_remove_attachments),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_remove_attachments));
-
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_newemail"),
-		     G_CALLBACK (modest_ui_actions_on_new_msg),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_new_msg));
-	add_to_menu (self, HILDON_APP_MENU (app_menu), _("mcen_me_viewer_addtocontacts"),
-		     G_CALLBACK (modest_ui_actions_add_to_contacts),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
-
-	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
-					       HILDON_APP_MENU (app_menu));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_replytoall"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_reply_all),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_forward"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_forward),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
+	
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_mark_as_read"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_mark_as_read),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_mark_as_read_msg_in_view));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_mark_as_unread"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_mark_as_unread),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_mark_as_unread_msg_in_view));
+	
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_save_attachments"),
+					   APP_MENU_CALLBACK (modest_ui_actions_save_attachments),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_save_attachments));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"),
+					   APP_MENU_CALLBACK (modest_ui_actions_remove_attachments),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_remove_attachments));
+	
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_addtocontacts"),
+					   APP_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
 }
-
-static gboolean 
-modest_msg_view_window_toggle_menu (HildonWindow *window,
-				    guint button,
-				    guint32 time)
-{
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
-
-	return HILDON_WINDOW_CLASS (parent_class)->toggle_menu (window, button, time);
-}
-
 
 void
 modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
