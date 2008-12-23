@@ -156,10 +156,6 @@ static void on_account_removed (TnyAccountStore *account_store,
 				TnyAccount *account,
 				gpointer user_data);
 
-static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
-static void set_zoom_do_nothing (ModestWindow *window, gdouble zoom);
-static gdouble get_zoom_do_nothing (ModestWindow *window);
-
 static void init_window (ModestMsgEditWindow *obj);
 
 gboolean scroll_drag_timeout (gpointer userdata);
@@ -173,17 +169,7 @@ static void text_buffer_mark_set (GtkTextBuffer *buffer,
 				  ModestMsgEditWindow *userdata);
 static void on_message_settings (GtkAction *action,
 				 ModestMsgEditWindow *window);
-static void add_to_menu (ModestMsgEditWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback);
-static void setup_menu (ModestMsgEditWindow *self,
-			ModestDimmingRulesGroup *group);
-static gboolean modest_msg_edit_window_toggle_menu (HildonWindow *window,
-						    guint button,
-						    guint32 time);
+static void setup_menu (ModestMsgEditWindow *self);
 
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -337,7 +323,7 @@ modest_msg_edit_window_get_type (void)
 			(GInstanceInitFunc) modest_msg_edit_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
+		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
 		                                  "ModestMsgEditWindow",
 		                                  &my_info, 0);
 
@@ -379,19 +365,12 @@ modest_msg_edit_window_class_init (ModestMsgEditWindowClass *klass)
 {
 	GObjectClass *gobject_class;
 	ModestWindowClass *modest_window_class;
-	HildonWindowClass *hildon_window_class = (HildonWindowClass *) klass;
 	gobject_class = (GObjectClass*) klass;
 	modest_window_class = (ModestWindowClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_msg_edit_window_finalize;
 
-	hildon_window_class->toggle_menu = modest_msg_edit_window_toggle_menu;
-
-	modest_window_class->set_zoom_func = set_zoom_do_nothing;
-	modest_window_class->get_zoom_func = get_zoom_do_nothing;
-	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
-	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_msg_edit_window_show_toolbar;
 	modest_window_class->save_state_func = save_state;
 	modest_window_class->disconnect_signals_func = modest_msg_edit_window_disconnect_signals;
@@ -1466,7 +1445,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
-	ModestDimmingRulesGroup *menu_rules_group = NULL;
 	ModestDimmingRulesGroup *toolbar_rules_group = NULL;
 	ModestDimmingRulesGroup *clipboard_rules_group = NULL;
 	ModestWindowMgr *mgr = NULL;
@@ -1503,14 +1481,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	priv->original_account_name = (account_name) ? g_strdup (account_name) : NULL;
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
-	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
 	/* Add common dimming rules */
-	modest_dimming_rules_group_add_rules (menu_rules_group, 
-					      modest_msg_edit_window_menu_dimming_entries,
-					      G_N_ELEMENTS (modest_msg_edit_window_menu_dimming_entries),
-					      MODEST_WINDOW (obj));
 	modest_dimming_rules_group_add_rules (toolbar_rules_group, 
 					      modest_msg_edit_window_toolbar_dimming_entries,
 					      G_N_ELEMENTS (modest_msg_edit_window_toolbar_dimming_entries),
@@ -1525,15 +1498,13 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
 						    MODEST_WINDOW (obj));
 	/* Insert dimming rules group for this window */
-	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, menu_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, clipboard_rules_group);
 
 	/* Setup app menu */
-	setup_menu (MODEST_MSG_EDIT_WINDOW (obj), menu_rules_group);
+	setup_menu (MODEST_MSG_EDIT_WINDOW (obj));
 
         /* Checks the dimming rules */
-	g_object_unref (menu_rules_group);
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
@@ -3618,28 +3589,6 @@ on_account_removed (TnyAccountStore *account_store,
 	}
 }
 
-static gboolean
-on_zoom_minus_plus_not_implemented (ModestWindow *window)
-{
-	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
-
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
-	return FALSE;
-
-}
-
-static void
-set_zoom_do_nothing (ModestWindow *window,
-				 gdouble zoom)
-{
-}
-
-static gdouble
-get_zoom_do_nothing (ModestWindow *window)
-{
-	return 1.0;
-}
-
 typedef struct _MessageSettingsHelper {
 	ModestMsgEditWindow *window;
 	GSList *priority_group;
@@ -3894,36 +3843,6 @@ static void on_message_settings (GtkAction *action,
 	modest_msg_edit_window_show_msg_settings_dialog (window);
 }
 
-
-static void add_button_to_menu (ModestMsgEditWindow *self,
-				HildonAppMenu *menu,
-				GtkButton *button,
-				ModestDimmingRulesGroup *group,
-				GCallback dimming_callback)
-{
-	if (dimming_callback)
-		modest_dimming_rules_group_add_widget_rule (group,
-							    GTK_WIDGET (button),
-							    dimming_callback,
-							    MODEST_WINDOW (self));
-	hildon_app_menu_append (menu, GTK_BUTTON (button));
-}
-
-static void add_to_menu (ModestMsgEditWindow *self,
-			 HildonAppMenu *menu,
-			 gchar *label,
-			 GCallback callback,
-			 ModestDimmingRulesGroup *group,
-			 GCallback dimming_callback)
-{
-	GtkWidget *button;
-
-	button = gtk_button_new_with_label (label);
-	g_signal_connect_after (G_OBJECT (button), "clicked",
-				callback, (gpointer) self);
-	add_button_to_menu (self, menu, GTK_BUTTON (button), group, dimming_callback);
-}
-
 static void
 on_cc_button_toggled (HildonCheckButton *button,
 		      ModestMsgEditWindow *window)
@@ -3955,7 +3874,7 @@ on_find_toolbar_button_toggled (HildonCheckButton *button,
 }
 
 static void 
-setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
+setup_menu (ModestMsgEditWindow *self)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
 
@@ -3963,68 +3882,47 @@ setup_menu (ModestMsgEditWindow *self, ModestDimmingRulesGroup *group)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
-	priv->app_menu = hildon_app_menu_new ();
-
 	/* Settings menu buttons */
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_editor_checknames"),
-		     G_CALLBACK (modest_ui_actions_on_check_names),
-		     group, NULL);
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_undo"),
-		     G_CALLBACK (modest_ui_actions_on_undo),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_undo));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_checknames"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_check_names),
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_undo"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_undo),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
 
 	priv->cc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("mcen_me_editor_showcc"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button),
 					FALSE);
-	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->cc_button),
-			    group, NULL);
+	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->cc_button),
+						  NULL);
 	g_signal_connect (G_OBJECT (priv->cc_button), "toggled",
 			  G_CALLBACK (on_cc_button_toggled), (gpointer) self);
 	priv->bcc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("mcen_me_editor_showbcc"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button),
 					FALSE);
-	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->bcc_button),
-			    group, NULL);
+	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->bcc_button),
+						  NULL);
 	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
 			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
 
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_editor_attach_inlineimage"),
-		     G_CALLBACK (modest_ui_actions_on_insert_image),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_set_style));
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("mcen_me_inbox_remove_attachments"),
-		     G_CALLBACK (modest_ui_actions_on_remove_attachments),
-		     group, G_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
-	add_to_menu (self, HILDON_APP_MENU (priv->app_menu), _("TODO: Message settings..."),
-		     G_CALLBACK (on_message_settings),
-		     group, NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_insert_image),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: Message settings..."),
+					   APP_MENU_CALLBACK (on_message_settings),
+					   NULL);
 	priv->find_toolbar_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->find_toolbar_button), _("mcen_me_viewer_find"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->find_toolbar_button),
 					FALSE);
-	add_button_to_menu (self, HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (priv->find_toolbar_button),
-			    group, NULL);
+	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->find_toolbar_button),
+						  NULL);
 	g_signal_connect (G_OBJECT (priv->find_toolbar_button), "toggled",
 			  G_CALLBACK (on_find_toolbar_button_toggled), (gpointer) self);
-
-	hildon_stackable_window_set_main_menu (HILDON_STACKABLE_WINDOW (self), 
-					       HILDON_APP_MENU (priv->app_menu));
-}
-
-static gboolean 
-modest_msg_edit_window_toggle_menu (HildonWindow *window,
-				    guint button,
-				    guint32 time)
-{
-	ModestMsgEditWindowPrivate *priv = NULL;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
-
-	gtk_widget_queue_resize (priv->app_menu);
-
-	return HILDON_WINDOW_CLASS (parent_class)->toggle_menu (window, button, time);
 }
 
