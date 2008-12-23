@@ -1480,7 +1480,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 
 	priv->original_account_name = (account_name) ? g_strdup (account_name) : NULL;
 
-	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
 	/* Add common dimming rules */

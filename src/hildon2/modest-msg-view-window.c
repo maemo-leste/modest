@@ -734,7 +734,6 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 	/* Menubar */
 	parent_priv->menubar = NULL;
-	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
