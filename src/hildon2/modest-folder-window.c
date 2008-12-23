@@ -84,6 +84,9 @@ static void set_moveto_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
 static void set_rename_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
+static void modest_folder_window_pack_toolbar (ModestHildon2Window *self,
+					       GtkPackType pack_type,
+					       GtkWidget *toolbar);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -140,6 +143,7 @@ modest_folder_window_class_init (ModestFolderWindowClass *klass)
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
+	ModestHildon2WindowClass *modest_hildon2_window_class = (ModestHildon2WindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_window_finalize;
@@ -147,6 +151,7 @@ modest_folder_window_class_init (ModestFolderWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestFolderWindowPrivate));
 	
 	modest_window_class->disconnect_signals_func = modest_folder_window_disconnect_signals;
+	modest_hildon2_window_class->pack_toolbar_func = modest_folder_window_pack_toolbar;
 }
 
 static void
@@ -497,7 +502,8 @@ set_edit_mode (ModestFolderWindow *self,
 			case EDIT_MODE_COMMAND_NONE:
 				g_assert ("Shouldn't reach");
 			}
-			gtk_box_pack_start (GTK_BOX (priv->top_vbox), priv->edit_toolbar, FALSE, FALSE, 0);
+			modest_hildon2_window_pack_toolbar (MODEST_HILDON2_WINDOW (self), GTK_PACK_START,
+							    priv->edit_toolbar);
 			g_signal_connect (G_OBJECT (priv->edit_toolbar), "button-clicked",
 					  G_CALLBACK (edit_toolbar_button_clicked), (gpointer) self);
 			g_signal_connect (G_OBJECT (priv->edit_toolbar), "arrow-clicked",
@@ -562,3 +568,19 @@ set_rename_edit_mode (GtkButton *button,
 	set_edit_mode (self, EDIT_MODE_COMMAND_RENAME);
 }
 
+static void
+modest_folder_window_pack_toolbar (ModestHildon2Window *self,
+				   GtkPackType pack_type,
+				   GtkWidget *toolbar)
+{
+	ModestFolderWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW (self));
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	if (pack_type == GTK_PACK_START) {
+		gtk_box_pack_start (GTK_BOX (priv->top_vbox), toolbar, FALSE, FALSE, 0);
+	} else {
+		gtk_box_pack_end (GTK_BOX (priv->top_vbox), toolbar, FALSE, FALSE, 0);
+	}
+}
