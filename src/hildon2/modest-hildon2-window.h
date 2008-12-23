@@ -103,7 +103,17 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 					  GtkButton *button,
 					  ModestDimmingCallback dimming_callback);
 
-
+/**
+ * modest_hildon2_window_pack_toolbar:
+ * @self: a #ModestHildon2Window
+ * @pack_type: a #GtkPackType
+ * @toolbar: a toolbar widget
+ *
+ * packs a toolbar (widget @toolbar) in @self with @pack_type
+ */
+void modest_hildon2_window_pack_toolbar (ModestHildon2Window *self,
+					 GtkPackType pack_type,
+					 GtkWidget *toolbar);
 
 G_END_DECLS
 

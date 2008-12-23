@@ -177,6 +177,16 @@ modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
 	g_warning ("%s not implemented", __FUNCTION__);
 }
 
+void
+modest_hildon2_window_pack_toolbar (ModestHildon2Window *self,
+				    GtkPackType pack_type,
+				    GtkWidget *toolbar)
+{
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
+
+	MODEST_HILDON2_WINDOW_GET_CLASS (self)->pack_toolbar_func (self, pack_type, toolbar);
+}
+
 void 
 modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 					  GtkButton *button,
