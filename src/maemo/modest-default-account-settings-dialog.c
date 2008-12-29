@@ -115,7 +115,6 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *entry_user_username;
 	GtkWidget *entry_user_password;
 	GtkWidget *entry_user_email;
-/* 	GtkWidget *entry_incoming_port; */
 	GtkWidget *button_signature;
 	
 	GtkWidget *page_complete_easysetup;
@@ -123,18 +122,9 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *page_incoming;
 	GtkWidget *caption_incoming;
 	GtkWidget *entry_incomingserver;
-/* 	GtkWidget *combo_incoming_security; */
-/* 	GtkWidget *checkbox_incoming_auth; */
 
 	GtkWidget *page_outgoing;
 	GtkWidget *entry_outgoingserver;
-/* 	GtkWidget *caption_outgoing_username; */
-/* 	GtkWidget *entry_outgoing_username; */
-/* 	GtkWidget *caption_outgoing_password; */
-/* 	GtkWidget *entry_outgoing_password; */
-/* 	GtkWidget *combo_outgoing_security; */
-/* 	GtkWidget *combo_outgoing_auth; */
-/* 	GtkWidget *entry_outgoing_port; */
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
 	

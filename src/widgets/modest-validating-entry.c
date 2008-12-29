@@ -213,7 +213,9 @@ modest_validating_entry_new (void)
 	
 	entry = g_object_new (MODEST_TYPE_VALIDATING_ENTRY, NULL);
 
+#ifndef MODEST_TOOLKIT_GTK
 	hildon_gtk_widget_set_theme_size (GTK_WIDGET (entry), MODEST_EDITABLE_SIZE);
+#endif
 
 	return entry;
 }

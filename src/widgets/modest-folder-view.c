@@ -62,7 +62,7 @@
 #include <modest-widget-memory.h>
 #include <modest-ui-actions.h>
 #include "modest-dnd.h"
-#include <modest-ui-constants.h>
+#include "modest-ui-constants.h"
 #include "widgets/modest-window.h"
 
 /* Folder view drag types */

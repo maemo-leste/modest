@@ -36,9 +36,8 @@
 #include "modest-platform.h"
 #include "modest-mail-operation-queue.h"
 #include "modest-runtime.h"
-
 #include "gnome/modest-gnome-global-settings-dialog.h"
-#include "widgets/modest-account-settings-dialog.h"
+#include "widgets/modest-default-account-settings-dialog.h"
 #include "gnome/modest-account-assistant.h"
 #include "gnome/modest-gnome-sort-dialog.h"
 #include "widgets/modest-details-dialog.h"
@@ -496,9 +495,9 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 GtkWidget *
 modest_platform_get_account_settings_dialog (ModestAccountSettings *settings)
 {
-	ModestAccountSettingsDialog *dialog = modest_account_settings_dialog_new ();
+	ModestAccountSettingsDialog *dialog = modest_default_account_settings_dialog_new ();
 
-	modest_account_settings_dialog_set_account (dialog, settings);
+	modest_account_settings_dialog_load_settings (dialog, settings);
 	return GTK_WIDGET (dialog);
 }
 
@@ -578,7 +577,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 
 	/* Create pannable and add it to the dialog */
 	folder_view_container = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (*folder_view_container),
+	gtk_scrolled_window_set_policy  (GTK_SCROLLED_WINDOW (folder_view_container),
 					 GTK_POLICY_AUTOMATIC,
 					 GTK_POLICY_AUTOMATIC);
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), folder_view_container);

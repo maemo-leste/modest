@@ -1125,8 +1125,8 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 }
 
 void            
-modest_msg_edit_window_set_draft           (ModestMsgEditWindow *window,
-					    TnyMsg *draft)
+modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
+				  TnyMsg *draft)
 {
 	ModestMsgEditWindowPrivate *priv;
 	TnyHeader *header = NULL;
@@ -1150,7 +1150,7 @@ modest_msg_edit_window_set_draft           (ModestMsgEditWindow *window,
 		}
 		priv->msg_uid = modest_tny_folder_get_header_unique_id (header);
 		if (GTK_WIDGET_REALIZED (window))
-			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window));
+			modest_window_mgr_register_window (mgr, MODEST_WINDOW (window), NULL);
 	}
 
 	priv->draft_msg = draft;

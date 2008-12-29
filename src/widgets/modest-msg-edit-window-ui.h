@@ -34,6 +34,7 @@
 #include <gtk/gtk.h>
 #include "modest-icon-names.h"
 #include "modest-ui-actions.h"
+#include "modest-defs.h"
 
 G_BEGIN_DECLS
 

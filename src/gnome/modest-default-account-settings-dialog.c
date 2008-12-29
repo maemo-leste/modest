@@ -45,17 +45,16 @@
 #include "widgets/modest-validating-entry.h"
 #include "widgets/modest-retrieve-combo-box.h"
 #include "widgets/modest-limit-retrieve-combo-box.h"
+#include "modest-defs.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h" /* For modest_account_mgr_get_account_data(). */
 #include "modest-runtime.h" /* For modest_runtime_get_account_mgr(). */
-#include "modest-protocol-info.h"
-/* #include "maemo/modest-connection-specific-smtp-window.h" */
-/* #include "maemo/modest-signature-editor-dialog.h" */
+#include "modest-protocol-registry.h"
 #include <modest-utils.h>
 #include <modest-platform.h>
-/* #include "maemo/modest-maemo-utils.h" */
 #include "widgets/modest-ui-constants.h"
+#include "widgets/modest-default-account-settings-dialog.h"
 #include <tny-account.h>
 #include <tny-status.h>
 
@@ -70,15 +69,81 @@
 #define PORT_MIN 1
 #define PORT_MAX 65535
 
-G_DEFINE_TYPE (ModestAccountSettingsDialog, modest_account_settings_dialog, GTK_TYPE_DIALOG);
+static void modest_account_settings_dialog_init (gpointer g, gpointer iface_data);
 
-static void
-enable_buttons (ModestAccountSettingsDialog *self);
+G_DEFINE_TYPE_EXTENDED (ModestDefaultAccountSettingsDialog, 
+                        modest_default_account_settings_dialog, 
+                        GTK_TYPE_DIALOG,
+                        0, 
+                        G_IMPLEMENT_INTERFACE (MODEST_TYPE_ACCOUNT_SETTINGS_DIALOG, 
+                                               modest_account_settings_dialog_init));
 
-static gboolean
-save_configuration (ModestAccountSettingsDialog *dialog);
+#define MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(o) \
+	(G_TYPE_INSTANCE_GET_PRIVATE ((o), \
+				      MODEST_TYPE_DEFAULT_ACCOUNT_SETTINGS_DIALOG, \
+				      ModestDefaultAccountSettingsDialogPrivate))
 
-static const gchar * null_means_empty (const gchar * str);
+typedef struct _ModestDefaultAccountSettingsDialogPrivate ModestDefaultAccountSettingsDialogPrivate;
+
+struct _ModestDefaultAccountSettingsDialogPrivate
+{
+	/* Used by derived widgets to query existing accounts,
+	 * and to create new accounts: */
+	ModestAccountMgr *account_manager;
+	ModestAccountSettings *settings;
+	
+	gboolean modified;
+	gchar * account_name; /* This may not change. It is not user visible. */
+	ModestProtocolType incoming_protocol; /* This may not change. */
+	ModestProtocolType outgoing_protocol; /* This may not change. */
+	gchar * original_account_title;
+
+	ModestProtocolType protocol_authentication_incoming;
+	
+	GtkNotebook *notebook;
+	
+	GtkWidget *page_account_details;
+	GtkWidget *entry_account_title;
+	GtkWidget *combo_retrieve;
+	GtkWidget *combo_limit_retrieve;
+	GtkWidget *caption_leave_messages;
+	GtkWidget *checkbox_leave_messages;
+	
+	GtkWidget *page_user_details;
+	GtkWidget *entry_user_name;
+	GtkWidget *entry_user_username;
+	GtkWidget *entry_user_password;
+	GtkWidget *entry_user_email;
+	GtkWidget *entry_incoming_port;
+	GtkWidget *button_signature;
+	
+	GtkWidget *page_complete_easysetup;
+	
+	GtkWidget *page_incoming;
+	GtkWidget *caption_incoming;
+	GtkWidget *entry_incomingserver;
+	GtkWidget *combo_incoming_security;
+	GtkWidget *checkbox_incoming_auth;
+
+	GtkWidget *page_outgoing;
+	GtkWidget *entry_outgoingserver;
+	GtkWidget *caption_outgoing_username;
+	GtkWidget *entry_outgoing_username;
+	GtkWidget *caption_outgoing_password;
+	GtkWidget *entry_outgoing_password;
+	GtkWidget *combo_outgoing_security;
+	GtkWidget *combo_outgoing_auth;
+	GtkWidget *entry_outgoing_port;
+	GtkWidget *checkbox_outgoing_smtp_specific;
+	GtkWidget *button_outgoing_smtp_servers;
+	
+	GtkWidget *signature_dialog;
+};
+
+static void enable_buttons (ModestAccountSettingsDialog *self);
+static gboolean save_configuration (ModestAccountSettingsDialog *dialog);
+static void modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialog *dialog, 
+								  ModestAccountSettings *settings);
 
 static const gchar *
 null_means_empty (const gchar * str)
@@ -110,33 +175,36 @@ modest_account_settings_dialog_set_property (GObject *object, guint property_id,
 static void
 modest_account_settings_dialog_dispose (GObject *object)
 {
-	if (G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->dispose)
-		G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->dispose (object);
+	if (G_OBJECT_CLASS (modest_default_account_settings_dialog_parent_class)->dispose)
+		G_OBJECT_CLASS (modest_default_account_settings_dialog_parent_class)->dispose (object);
 }
 
 static void
 modest_account_settings_dialog_finalize (GObject *object)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (object);
-	
-	if (self->account_name)
-		g_free (self->account_name);
-		
-	if (self->original_account_title)
-		g_free (self->original_account_title);
-		
-	if (self->account_manager)
-		g_object_unref (G_OBJECT (self->account_manager));
-		
-	if (self->signature_dialog)
-		gtk_widget_destroy (self->signature_dialog);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
 
-	if (self->settings) {
-		g_object_unref (self->settings);
-		self->settings = NULL;
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+	
+	if (priv->account_name)
+		g_free (priv->account_name);
+		
+	if (priv->original_account_title)
+		g_free (priv->original_account_title);
+		
+	if (priv->account_manager)
+		g_object_unref (G_OBJECT (priv->account_manager));
+		
+	if (priv->signature_dialog)
+		gtk_widget_destroy (priv->signature_dialog);
+
+	if (priv->settings) {
+		g_object_unref (priv->settings);
+		priv->settings = NULL;
 	}
 	
-	G_OBJECT_CLASS (modest_account_settings_dialog_parent_class)->finalize (object);
+	G_OBJECT_CLASS (modest_default_account_settings_dialog_parent_class)->finalize (object);
 }
 
 static void
@@ -149,38 +217,51 @@ static void
 on_modified_combobox_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	self->modified = TRUE;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+	priv->modified = TRUE;
 }
 
 static void
 on_modified_entry_changed (GtkEditable *editable, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	self->modified = TRUE;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+	priv->modified = TRUE;
 }
 
 static void
 on_modified_checkbox_toggled (GtkToggleButton *togglebutton, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	self->modified = TRUE;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+	priv->modified = TRUE;
 }
 
 static void
 on_modified_spin_button_changed (GtkSpinButton *spin_button, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	gint value = gtk_spin_button_get_value_as_int (spin_button);
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (self), GTK_RESPONSE_OK, value > 0);
-	self->modified = TRUE;
+	priv->modified = TRUE;
 }
 
 /* Set a modified boolean whenever the widget is changed, 
  * so we can check for it later.
  */
 static void
-connect_for_modified (ModestAccountSettingsDialog *self, GtkWidget *widget)
+connect_for_modified (ModestDefaultAccountSettingsDialog *self, 
+		      GtkWidget *widget)
 {
 	if (GTK_SPIN_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "value_changed",
@@ -217,12 +298,13 @@ on_field_combobox_changed (GtkComboBox *widget, gpointer user_data)
 /** This is a convenience function to create a field containing a mandatory widget.
  * When the widget is edited, the enable_buttons() vfunc will be called.
  */
-static GtkWidget* create_field(ModestAccountSettingsDialog *self,
-			       GtkSizeGroup *group,
-			       const gchar *value,
-			       GtkWidget *control,
-			       GtkWidget *icon,
-			       gboolean mandatory)
+static GtkWidget* 
+create_field(ModestDefaultAccountSettingsDialog *self,
+	     GtkSizeGroup *group,
+	     const gchar *value,
+	     GtkWidget *control,
+	     GtkWidget *icon,
+	     gboolean mandatory)
 {
 	GtkWidget *hbox;
 	gchar *title;
@@ -295,19 +377,21 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 }
 
 static GtkWidget*
-create_page_account_details (ModestAccountSettingsDialog *self)
+create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkAdjustment *focus_adjustment = NULL;
-	GtkWidget *alignment;
-	
+	GtkWidget *alignment;	
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	/* The description widgets: */	
-	self->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
+	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	GtkWidget *field = create_field (self, sizegroup, _("mcen_fi_account_title"), 
-		self->entry_account_title, NULL, TRUE);
-	gtk_widget_show (self->entry_account_title);
-	connect_for_modified (self, self->entry_account_title);
+		priv->entry_account_title, NULL, TRUE);
+	gtk_widget_show (priv->entry_account_title);
+	connect_for_modified (self, priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
@@ -325,47 +409,47 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 	list_prevent = g_list_append (list_prevent, "|");
 	list_prevent = g_list_append (list_prevent, "^"); 	
 	modest_validating_entry_set_unallowed_characters (
-	 	MODEST_VALIDATING_ENTRY (self->entry_account_title), list_prevent);
+	 	MODEST_VALIDATING_ENTRY (priv->entry_account_title), list_prevent);
 	g_list_free (list_prevent);
-	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_account_title),
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_account_title),
 					 on_entry_invalid_account_title_character, self);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
-	gtk_entry_set_max_length (GTK_ENTRY (self->entry_account_title), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (self->entry_account_title), 
+	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_account_title), 64);
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_account_title), 
 		on_entry_max, self);
 	
 	/* The retrieve combobox: */
-	self->combo_retrieve = GTK_WIDGET (modest_retrieve_combo_box_new ());
+	priv->combo_retrieve = GTK_WIDGET (modest_retrieve_combo_box_new ());
 	field = create_field (self, sizegroup, _("mcen_fi_advsetup_retrievetype"), 
-			      self->combo_retrieve, NULL, TRUE);
-	gtk_widget_show (self->combo_retrieve);
-	connect_for_modified (self, self->combo_retrieve);
+			      priv->combo_retrieve, NULL, TRUE);
+	gtk_widget_show (priv->combo_retrieve);
+	connect_for_modified (self, priv->combo_retrieve);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* The limit-retrieve combobox: */
-	self->combo_limit_retrieve = GTK_WIDGET (modest_limit_retrieve_combo_box_new ());
+	priv->combo_limit_retrieve = GTK_WIDGET (modest_limit_retrieve_combo_box_new ());
 	field = create_field (self, sizegroup, _("mcen_fi_advsetup_limit_retrieve"), 
-			      self->combo_limit_retrieve, NULL, TRUE);
-	gtk_widget_show (self->combo_limit_retrieve);
-	connect_for_modified (self, self->combo_limit_retrieve);
+			      priv->combo_limit_retrieve, NULL, TRUE);
+	gtk_widget_show (priv->combo_limit_retrieve);
+	connect_for_modified (self, priv->combo_limit_retrieve);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 
 	/* The leave-messages widgets: */
-	if(!self->checkbox_leave_messages)
-		self->checkbox_leave_messages = gtk_check_button_new ();
-	if (!self->caption_leave_messages) {
-		self->caption_leave_messages = create_field (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
-							     self->checkbox_leave_messages, NULL, TRUE);
+	if(!priv->checkbox_leave_messages)
+		priv->checkbox_leave_messages = gtk_check_button_new ();
+	if (!priv->caption_leave_messages) {
+		priv->caption_leave_messages = create_field (self, sizegroup, _("mcen_fi_advsetup_leave_on_server"), 
+							     priv->checkbox_leave_messages, NULL, TRUE);
 	}
 			
-	gtk_widget_show (self->checkbox_leave_messages);
-	connect_for_modified (self, self->checkbox_leave_messages);
-	gtk_box_pack_start (GTK_BOX (box), self->caption_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (self->caption_leave_messages);
+	gtk_widget_show (priv->checkbox_leave_messages);
+	connect_for_modified (self, priv->checkbox_leave_messages);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->caption_leave_messages);
 	
 	gtk_widget_show (GTK_WIDGET (box));
 
@@ -380,8 +464,12 @@ create_page_account_details (ModestAccountSettingsDialog *self)
 static gchar*
 get_entered_account_title (ModestAccountSettingsDialog *dialog)
 {
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (dialog);
+
 	const gchar* account_title = 
-		gtk_entry_get_text (GTK_ENTRY (dialog->entry_account_title));
+		gtk_entry_get_text (GTK_ENTRY (priv->entry_account_title));
 	if (!account_title || (strlen (account_title) == 0))
 		return NULL;
 	else {
@@ -408,14 +496,14 @@ on_button_signature (GtkButton *button, gpointer user_data)
 /* 	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data); */
 	
 /* 	/\* Create the window, if necessary: *\/ */
-/* 	if (!(self->signature_dialog)) { */
-/* 		self->signature_dialog = GTK_WIDGET (modest_signature_editor_dialog_new ()); */
+/* 	if (!(priv->signature_dialog)) { */
+/* 		priv->signature_dialog = GTK_WIDGET (modest_signature_editor_dialog_new ()); */
 	
-/* 		gboolean use_signature = modest_account_settings_get_use_signature (self->settings); */
-/* 		const gchar *signature = modest_account_settings_get_signature(self->settings); */
+/* 		gboolean use_signature = modest_account_settings_get_use_signature (priv->settings); */
+/* 		const gchar *signature = modest_account_settings_get_signature(priv->settings); */
 /* 		gchar* account_title = get_entered_account_title (self); */
 /* 		modest_signature_editor_dialog_set_settings ( */
-/* 			MODEST_SIGNATURE_EDITOR_DIALOG (self->signature_dialog),  */
+/* 			MODEST_SIGNATURE_EDITOR_DIALOG (priv->signature_dialog),  */
 /* 			use_signature, signature, account_title); */
 
 /* 		g_free (account_title); */
@@ -424,42 +512,43 @@ on_button_signature (GtkButton *button, gpointer user_data)
 /* 	} */
 
 /* 	/\* Show the window: *\/	 */
-/* 	gtk_window_set_transient_for (GTK_WINDOW (self->signature_dialog), GTK_WINDOW (self)); */
-/* 	gtk_window_set_modal (GTK_WINDOW (self->signature_dialog), TRUE); */
-/*     const gint response = gtk_dialog_run (GTK_DIALOG (self->signature_dialog)); */
-/*     gtk_widget_hide (self->signature_dialog); */
+/* 	gtk_window_set_transient_for (GTK_WINDOW (priv->signature_dialog), GTK_WINDOW (self)); */
+/* 	gtk_window_set_modal (GTK_WINDOW (priv->signature_dialog), TRUE); */
+/*     const gint response = gtk_dialog_run (GTK_DIALOG (priv->signature_dialog)); */
+/*     gtk_widget_hide (priv->signature_dialog); */
 /*     if (response != GTK_RESPONSE_OK) { */
 /*     	/\* Destroy the widget now, and its data: *\/ */
-/*     	gtk_widget_destroy (self->signature_dialog); */
-/*     	self->signature_dialog = NULL; */
+/*     	gtk_widget_destroy (priv->signature_dialog); */
+/*     	priv->signature_dialog = NULL; */
 /*     } */
 /*     else { */
 /*     	/\* Mark modified, so we use the dialog's data later: *\/ */
-/*     	self->modified = TRUE;	 */
+/*     	priv->modified = TRUE;	 */
 /*     } */
 }
 
 static GtkWidget*
-create_page_user_details (ModestAccountSettingsDialog *self)
+create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkAdjustment *focus_adjustment = NULL;
-	GtkWidget *alignment;
-	
+	GtkWidget *alignment;	
 	GtkSizeGroup* sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	 
 	/* The name widgets: */
-	self->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
+	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
 
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
-	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_name), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (self->entry_user_name), 
+	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_name), 64);
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name), 
 		on_entry_max, self);
 	GtkWidget *field = create_field (self, sizegroup, 
-					 _("mcen_li_emailsetup_name"), self->entry_user_name, NULL, FALSE);
-	gtk_widget_show (self->entry_user_name);
-	connect_for_modified (self, self->entry_user_name);
+					 _("mcen_li_emailsetup_name"), priv->entry_user_name, NULL, FALSE);
+	gtk_widget_show (priv->entry_user_name);
+	connect_for_modified (self, priv->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 
@@ -470,68 +559,68 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 	list_prevent = g_list_append (list_prevent, "<");
 	list_prevent = g_list_append (list_prevent, ">");
 	modest_validating_entry_set_unallowed_characters (
-	 	MODEST_VALIDATING_ENTRY (self->entry_user_name), list_prevent);
+	 	MODEST_VALIDATING_ENTRY (priv->entry_user_name), list_prevent);
 	g_list_free (list_prevent);
-	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(self->entry_user_name),
+	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_user_name),
 					 on_entry_invalid_fullname_character, self);
 	
 	/* The username widgets: */	
-	self->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
+	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	field = create_field (self, sizegroup, _("mail_fi_username"), 
-				self->entry_user_username, NULL, TRUE);
-	gtk_widget_show (self->entry_user_username);
-	connect_for_modified (self, self->entry_user_username);
+				priv->entry_user_username, NULL, TRUE);
+	gtk_widget_show (priv->entry_user_username);
+	connect_for_modified (self, priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* Prevent the use of some characters in the username, 
 	 * as required by our UI specification: */
 	modest_validating_entry_set_unallowed_characters_whitespace (
-	 	MODEST_VALIDATING_ENTRY (self->entry_user_username));
+	 	MODEST_VALIDATING_ENTRY (priv->entry_user_username));
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
-	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_username), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (self->entry_user_username), 
+	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_username), 64);
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_username), 
 		on_entry_max, self);
 	
 	/* The password widgets: */	
-	self->entry_user_password = gtk_entry_new ();
-	gtk_entry_set_visibility (GTK_ENTRY (self->entry_user_password), FALSE);
-	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_user_password), '*'); */
+	priv->entry_user_password = gtk_entry_new ();
+	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
+	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	field = create_field (self, sizegroup, 
-			      _("mail_fi_password"), self->entry_user_password, NULL, FALSE);
-	gtk_widget_show (self->entry_user_password);
-	connect_for_modified (self, self->entry_user_password);
+			      _("mail_fi_password"), priv->entry_user_password, NULL, FALSE);
+	gtk_widget_show (priv->entry_user_password);
+	connect_for_modified (self, priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* The email address widgets: */	
-	self->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
+	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	field = create_field (self, sizegroup, 
-			      _("mcen_li_emailsetup_email_address"), self->entry_user_email, NULL, TRUE);
-	gtk_entry_set_text (GTK_ENTRY (self->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
-	gtk_widget_show (self->entry_user_email);
-	connect_for_modified (self, self->entry_user_email);
+			      _("mcen_li_emailsetup_email_address"), priv->entry_user_email, NULL, TRUE);
+	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
+	gtk_widget_show (priv->entry_user_email);
+	connect_for_modified (self, priv->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
-	gtk_entry_set_max_length (GTK_ENTRY (self->entry_user_email), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (self->entry_user_email), 
+	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_email), 64);
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_email), 
 		on_entry_max, self);
 	
 	/* Signature button: */
-	if (!self->button_signature)
-		self->button_signature = gtk_button_new_with_label (_("mcen_bd_edit"));
+	if (!priv->button_signature)
+		priv->button_signature = gtk_button_new_with_label (_("mcen_bd_edit"));
 	field = create_field (self, sizegroup, _("mcen_fi_email_signature"), 
-		self->button_signature, NULL, FALSE);
-	gtk_widget_show (self->button_signature);
+		priv->button_signature, NULL, FALSE);
+	gtk_widget_show (priv->button_signature);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 		
-	g_signal_connect (G_OBJECT (self->button_signature), "clicked",
+	g_signal_connect (G_OBJECT (priv->button_signature), "clicked",
         	G_CALLBACK (on_button_signature), self);
         	
 	gtk_widget_show (GTK_WIDGET (box));
@@ -547,10 +636,16 @@ create_page_user_details (ModestAccountSettingsDialog *self)
 /** Change the field title for the incoming server, 
  * as specified in the UI spec:
  */
-static void update_incoming_server_title (ModestAccountSettingsDialog *self, ModestTransportStoreProtocol protocol)
+static void 
+update_incoming_server_title (ModestAccountSettingsDialog *self, 
+			      ModestProtocolType protocol)
 {
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	const gchar* type = 
-		(protocol == MODEST_PROTOCOL_STORE_POP ? 
+		(protocol == MODEST_PROTOCOLS_STORE_POP ? 
 			_("mail_fi_emailtype_pop3") : 
 			_("mail_fi_emailtype_imap") );
 			
@@ -565,77 +660,86 @@ static void update_incoming_server_title (ModestAccountSettingsDialog *self, Mod
 	gchar *with_asterisk = g_strconcat (incomingserver_title, "*", NULL);
 	g_free (incomingserver_title);
 	
-	g_object_set (G_OBJECT (self->caption_incoming), "label", with_asterisk, NULL);
+	g_object_set (G_OBJECT (priv->caption_incoming), "label", with_asterisk, NULL);
 	g_free(with_asterisk);
 }
 
 /** Change the field title for the incoming server, 
  * as specified in the UI spec:
  */
-static void update_incoming_server_security_choices (ModestAccountSettingsDialog *self, ModestTransportStoreProtocol protocol)
+static void 
+update_incoming_server_security_choices (ModestAccountSettingsDialog *self, 
+					 ModestProtocolType protocol)
 {
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	/* Fill the combo with appropriately titled choices for POP or IMAP. */
 	/* The choices are the same, but the titles are different, as in the UI spec. */
 	modest_serversecurity_combo_box_fill (
-		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security), protocol);
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security), protocol);
 }
            
-static GtkWidget* create_page_incoming (ModestAccountSettingsDialog *self)
+static GtkWidget* 
+create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *alignment;
-	
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	 
 	/* The incoming server widgets: */
-	if(!self->entry_incomingserver)
-		self->entry_incomingserver = gtk_entry_new ();
+	if(!priv->entry_incomingserver)
+		priv->entry_incomingserver = gtk_entry_new ();
 
-	if (self->caption_incoming)
-	  gtk_widget_destroy (self->caption_incoming);
+	if (priv->caption_incoming)
+	  gtk_widget_destroy (priv->caption_incoming);
 	   
 	/* The field title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
-	self->caption_incoming = create_field (self, sizegroup, 
-					     "Incoming Server", self->entry_incomingserver, NULL, TRUE);
-	gtk_widget_show (self->entry_incomingserver);
-	connect_for_modified (self, self->entry_incomingserver);
-	gtk_box_pack_start (GTK_BOX (box), self->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (self->caption_incoming);
+	priv->caption_incoming = create_field (self, sizegroup, 
+					     "Incoming Server", priv->entry_incomingserver, NULL, TRUE);
+	gtk_widget_show (priv->entry_incomingserver);
+	connect_for_modified (self, priv->entry_incomingserver);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->caption_incoming);
 	
 	/* The secure connection widgets: */
 	/* This will be filled by update_incoming_server_security_choices(). */
-	if (!self->combo_incoming_security)
-		self->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+	if (!priv->combo_incoming_security)
+		priv->combo_incoming_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	GtkWidget *field = create_field (self, sizegroup, _("mcen_li_emailsetup_secure_connection"), 
-					 self->combo_incoming_security, NULL, FALSE);
-	gtk_widget_show (self->combo_incoming_security);
-	connect_for_modified (self, self->combo_incoming_security);
+					 priv->combo_incoming_security, NULL, FALSE);
+	gtk_widget_show (priv->combo_incoming_security);
+	connect_for_modified (self, priv->combo_incoming_security);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
-	g_signal_connect (G_OBJECT (self->combo_incoming_security), "changed", (GCallback)on_combo_incoming_security_changed, self);
+	g_signal_connect (G_OBJECT (priv->combo_incoming_security), "changed", (GCallback)on_combo_incoming_security_changed, self);
 	
 	
 	/* The port widgets: */
-	if (!self->entry_incoming_port)
-		self->entry_incoming_port = GTK_WIDGET (gtk_spin_button_new_with_range ((gdouble) PORT_MIN, (gdouble) PORT_MAX, 1.0));
+	if (!priv->entry_incoming_port)
+		priv->entry_incoming_port = GTK_WIDGET (gtk_spin_button_new_with_range ((gdouble) PORT_MIN, (gdouble) PORT_MAX, 1.0));
 	field = create_field (self, sizegroup, _("mcen_fi_emailsetup_port"), 
-		self->entry_incoming_port, NULL, FALSE);
-	gtk_widget_show (self->entry_incoming_port);
-	connect_for_modified (self, self->entry_incoming_port);
+		priv->entry_incoming_port, NULL, FALSE);
+	gtk_widget_show (priv->entry_incoming_port);
+	connect_for_modified (self, priv->entry_incoming_port);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* The secure authentication widgets: */
-	if(!self->checkbox_incoming_auth)
-		self->checkbox_incoming_auth = gtk_check_button_new ();
+	if(!priv->checkbox_incoming_auth)
+		priv->checkbox_incoming_auth = gtk_check_button_new ();
 	field = create_field (self, sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
-			      self->checkbox_incoming_auth, NULL, FALSE);
-	gtk_widget_show (self->checkbox_incoming_auth);
-	connect_for_modified (self, self->checkbox_incoming_auth);
+			      priv->checkbox_incoming_auth, NULL, FALSE);
+	gtk_widget_show (priv->checkbox_incoming_auth);
+	connect_for_modified (self, priv->checkbox_incoming_auth);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
@@ -677,45 +781,51 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 /* 	ModestAccountSettingsDialog * self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data); */
 	
 /* 	/\* Create the window if necessary: *\/ */
-/* 	if (!(self->specific_window)) { */
-/* 		self->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ()); */
+/* 	if (!(priv->specific_window)) { */
+/* 		priv->specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ()); */
 /* 		modest_connection_specific_smtp_window_fill_with_connections ( */
-/* 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (self->specific_window), self->account_manager); */
+/* 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (priv->specific_window), priv->account_manager); */
 /* 	} */
 
 /* 	/\* Show the window: *\/	 */
-/* 	gtk_window_set_transient_for (GTK_WINDOW (self->specific_window), GTK_WINDOW (self)); */
-/* 	gtk_window_set_modal (GTK_WINDOW (self->specific_window), TRUE); */
-/* 	gtk_widget_show (self->specific_window); */
-/* 	self->modified = TRUE; */
+/* 	gtk_window_set_transient_for (GTK_WINDOW (priv->specific_window), GTK_WINDOW (self)); */
+/* 	gtk_window_set_modal (GTK_WINDOW (priv->specific_window), TRUE); */
+/* 	gtk_widget_show (priv->specific_window); */
+/* 	priv->modified = TRUE; */
 }
 
 static void
 on_combo_outgoing_auth_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	
-	ModestAuthProtocol protocol_security = 
+	ModestProtocolType protocol_security = 
 		modest_secureauth_combo_box_get_active_secureauth (
-			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
-	const gboolean secureauth_used = protocol_security != MODEST_PROTOCOL_AUTH_NONE;
+			MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
+	const gboolean secureauth_used = protocol_security != MODEST_PROTOCOLS_AUTH_NONE;
 	
-	gtk_widget_set_sensitive (self->caption_outgoing_username, secureauth_used);
-	gtk_widget_set_sensitive (self->caption_outgoing_password, secureauth_used);
+	gtk_widget_set_sensitive (priv->caption_outgoing_username, secureauth_used);
+	gtk_widget_set_sensitive (priv->caption_outgoing_password, secureauth_used);
 }
 
 static void
 on_combo_outgoing_security_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	
 	const gint port_number = 
 		modest_serversecurity_combo_box_get_active_serversecurity_port (
-			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_outgoing_security));
+			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
 
 	if(port_number != 0) {
 		gtk_spin_button_set_value (
-			GTK_SPIN_BUTTON (self->entry_outgoing_port), (gdouble) port_number);
+			GTK_SPIN_BUTTON (priv->entry_outgoing_port), (gdouble) port_number);
 	}		
 }
 
@@ -723,104 +833,110 @@ static void
 on_combo_incoming_security_changed (GtkComboBox *widget, gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (user_data);
-	
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	const gint port_number = 
 		modest_serversecurity_combo_box_get_active_serversecurity_port (
-			MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security));
 
 	if(port_number != 0) {
 		gtk_spin_button_set_value (
-			GTK_SPIN_BUTTON (self->entry_incoming_port), (gdouble) port_number);
+			GTK_SPIN_BUTTON (priv->entry_incoming_port), (gdouble) port_number);
 	}		
 }
 
 
-static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
+static GtkWidget* 
+create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkAdjustment *focus_adjustment = NULL;
 	GtkWidget *alignment;
-	
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	 
 	/* The outgoing server widgets: */
-	if (!self->entry_outgoingserver)
-		self->entry_outgoingserver = gtk_entry_new ();
+	if (!priv->entry_outgoingserver)
+		priv->entry_outgoingserver = gtk_entry_new ();
 	GtkWidget *field = create_field (self, sizegroup, 
-					 _("mcen_li_emailsetup_smtp"), self->entry_outgoingserver, NULL, FALSE);
-	gtk_widget_show (self->entry_outgoingserver);
-	connect_for_modified (self, self->entry_outgoingserver);
+					 _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver, NULL, FALSE);
+	gtk_widget_show (priv->entry_outgoingserver);
+	connect_for_modified (self, priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* The secure authentication widgets: */
-	if (!self->combo_outgoing_auth)
-		self->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
+	if (!priv->combo_outgoing_auth)
+		priv->combo_outgoing_auth = GTK_WIDGET (modest_secureauth_combo_box_new ());
 	field = create_field (self, sizegroup, _("mcen_li_emailsetup_secure_authentication"), 
-		self->combo_outgoing_auth, NULL, FALSE);
-	gtk_widget_show (self->combo_outgoing_auth);
-	connect_for_modified (self, self->combo_outgoing_auth);
+		priv->combo_outgoing_auth, NULL, FALSE);
+	gtk_widget_show (priv->combo_outgoing_auth);
+	connect_for_modified (self, priv->combo_outgoing_auth);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* Dim the outgoing username and password when no secure authentication is used, as per the UI spec: */
-	g_signal_connect (G_OBJECT (self->combo_outgoing_auth), "changed", (GCallback)on_combo_outgoing_auth_changed, self);
+	g_signal_connect (G_OBJECT (priv->combo_outgoing_auth), "changed", (GCallback)on_combo_outgoing_auth_changed, self);
 	
 	/* The username widgets: */	
-	self->entry_outgoing_username = GTK_WIDGET (modest_validating_entry_new ());
-	self->caption_outgoing_username = create_field (self, sizegroup, _("mail_fi_username"), 
-						      self->entry_outgoing_username, NULL, TRUE);
-	gtk_widget_show (self->entry_outgoing_username);
-	connect_for_modified (self, self->entry_outgoing_username);
-	gtk_box_pack_start (GTK_BOX (box), self->caption_outgoing_username, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (self->caption_outgoing_username);
+	priv->entry_outgoing_username = GTK_WIDGET (modest_validating_entry_new ());
+	priv->caption_outgoing_username = create_field (self, sizegroup, _("mail_fi_username"), 
+						      priv->entry_outgoing_username, NULL, TRUE);
+	gtk_widget_show (priv->entry_outgoing_username);
+	connect_for_modified (self, priv->entry_outgoing_username);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_outgoing_username, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->caption_outgoing_username);
 	
 	/* Prevent the use of some characters in the username, 
 	 * as required by our UI specification: */
 	modest_validating_entry_set_unallowed_characters_whitespace (
-	 	MODEST_VALIDATING_ENTRY (self->entry_outgoing_username));
+	 	MODEST_VALIDATING_ENTRY (priv->entry_outgoing_username));
 	
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
-	gtk_entry_set_max_length (GTK_ENTRY (self->entry_outgoing_username), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (self->entry_outgoing_username), 
+	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_outgoing_username), 64);
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_outgoing_username), 
 		on_entry_max, self);
 		
 	/* The password widgets: */	
-	self->entry_outgoing_password = gtk_entry_new ();
-	gtk_entry_set_visibility (GTK_ENTRY (self->entry_outgoing_password), FALSE);
-	/* gtk_entry_set_invisible_char (GTK_ENTRY (self->entry_outgoing_password), '*'); */
-	self->caption_outgoing_password = create_field (self, sizegroup, 
-						      _("mail_fi_password"), self->entry_outgoing_password, NULL, FALSE);
-	gtk_widget_show (self->entry_outgoing_password);
-	connect_for_modified (self, self->entry_outgoing_password);
-	gtk_box_pack_start (GTK_BOX (box), self->caption_outgoing_password, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (self->caption_outgoing_password);
+	priv->entry_outgoing_password = gtk_entry_new ();
+	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_outgoing_password), FALSE);
+	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_outgoing_password), '*'); */
+	priv->caption_outgoing_password = create_field (self, sizegroup, 
+						      _("mail_fi_password"), priv->entry_outgoing_password, NULL, FALSE);
+	gtk_widget_show (priv->entry_outgoing_password);
+	connect_for_modified (self, priv->entry_outgoing_password);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_outgoing_password, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_widget_show (priv->caption_outgoing_password);
 	
 	/* The secure connection widgets: */
 	/* This will be filled and set with modest_serversecurity_combo_box_fill() 
 	 * and modest_serversecurity_combo_box_set_active_serversecurity().
 	 */
-	if (!self->combo_outgoing_security)
+	if (!priv->combo_outgoing_security)
 		
-		self->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+		priv->combo_outgoing_security = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 	field = create_field (self, sizegroup, _("mcen_li_emailsetup_secure_connection"), 
-			      self->combo_outgoing_security, NULL, FALSE);
-	gtk_widget_show (self->combo_outgoing_security);
-	connect_for_modified (self, self->combo_outgoing_security);
+			      priv->combo_outgoing_security, NULL, FALSE);
+	gtk_widget_show (priv->combo_outgoing_security);
+	connect_for_modified (self, priv->combo_outgoing_security);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* Show a default port number when the security method changes, as per the UI spec: */
-	g_signal_connect (G_OBJECT (self->combo_outgoing_security), "changed", (GCallback)on_combo_outgoing_security_changed, self);
+	g_signal_connect (G_OBJECT (priv->combo_outgoing_security), "changed", (GCallback)on_combo_outgoing_security_changed, self);
 	
 	/* The port widgets: */
-	if (!self->entry_outgoing_port)
-		self->entry_outgoing_port = GTK_WIDGET (gtk_spin_button_new_with_range ((gdouble)PORT_MIN, (gdouble) PORT_MAX, 1.0));
+	if (!priv->entry_outgoing_port)
+		priv->entry_outgoing_port = GTK_WIDGET (gtk_spin_button_new_with_range ((gdouble)PORT_MIN, (gdouble) PORT_MAX, 1.0));
 	field = create_field (self, sizegroup, _("mcen_fi_emailsetup_port"), 
-			      self->entry_outgoing_port, NULL, FALSE);
-	gtk_widget_show (self->entry_outgoing_port);
-	connect_for_modified (self, self->entry_outgoing_port);
+			      priv->entry_outgoing_port, NULL, FALSE);
+	gtk_widget_show (priv->entry_outgoing_port);
+	connect_for_modified (self, priv->entry_outgoing_port);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
@@ -829,32 +945,32 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 	gtk_widget_show (separator);
 	
 	/* connection-specific checkbox: */
-	if (!self->checkbox_outgoing_smtp_specific) {
-		self->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
-		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific), 
+	if (!priv->checkbox_outgoing_smtp_specific) {
+		priv->checkbox_outgoing_smtp_specific = gtk_check_button_new ();
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_outgoing_smtp_specific), 
 			FALSE);
 	}
 	field = create_field (self, sizegroup, _("mcen_fi_advsetup_connection_smtp"), 
-			      self->checkbox_outgoing_smtp_specific, NULL, FALSE);
-	gtk_widget_show (self->checkbox_outgoing_smtp_specific);
+			      priv->checkbox_outgoing_smtp_specific, NULL, FALSE);
+	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
-	connect_for_modified (self, self->checkbox_outgoing_smtp_specific);
+	connect_for_modified (self, priv->checkbox_outgoing_smtp_specific);
 	
 	/* Connection-specific SMTP-Severs Edit button: */
-	if (!self->button_outgoing_smtp_servers)
-		self->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
+	if (!priv->button_outgoing_smtp_servers)
+		priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_edit"));
 	field = create_field (self, sizegroup, _("mcen_fi_advsetup_optional_smtp"), 
-			      self->button_outgoing_smtp_servers, NULL, FALSE);
-	gtk_widget_show (self->button_outgoing_smtp_servers);
+			      priv->button_outgoing_smtp_servers, NULL, FALSE);
+	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), field, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (field);
 	
 	/* Only enable the button when the checkbox is checked: */
-	enable_widget_for_togglebutton (self->button_outgoing_smtp_servers, 
-		GTK_TOGGLE_BUTTON (self->checkbox_outgoing_smtp_specific));
+	enable_widget_for_togglebutton (priv->button_outgoing_smtp_servers, 
+		GTK_TOGGLE_BUTTON (priv->checkbox_outgoing_smtp_specific));
 		
-	g_signal_connect (G_OBJECT (self->button_outgoing_smtp_servers), "clicked",
+	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
 		
 	gtk_widget_show (GTK_WIDGET (box));
@@ -870,14 +986,18 @@ static GtkWidget* create_page_outgoing (ModestAccountSettingsDialog *self)
 static gboolean
 check_data (ModestAccountSettingsDialog *self)
 {
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	/* Check that the title is not already in use: */
 	gchar* account_title = get_entered_account_title (self);
 	if (!account_title)
 		return FALSE; /* Should be prevented already anyway. */
 		
-	if (strcmp(account_title, self->original_account_title) != 0) {
+	if (strcmp(account_title, priv->original_account_title) != 0) {
 		/* Check the changed title: */
-		const gboolean name_in_use  = modest_account_mgr_account_with_display_name_exists (self->account_manager,
+		const gboolean name_in_use  = modest_account_mgr_account_with_display_name_exists (priv->account_manager,
 			account_title);
 	
 		if (name_in_use) {
@@ -893,7 +1013,7 @@ check_data (ModestAccountSettingsDialog *self)
 	account_title  = NULL;
 
 	/* Check that the email address is valid: */
-	const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (self->entry_user_email));
+	const gchar* email_address = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_email));
 	if ((!email_address) || (strlen(email_address) == 0)) {
 		return FALSE;
 	}
@@ -903,13 +1023,13 @@ check_data (ModestAccountSettingsDialog *self)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_invalid_email"));
                                          
 	        /* Return focus to the email address entry: */
-        	gtk_widget_grab_focus (self->entry_user_email);
-		gtk_editable_select_region (GTK_EDITABLE (self->entry_user_email), 0, -1);
+        	gtk_widget_grab_focus (priv->entry_user_email);
+		gtk_editable_select_region (GTK_EDITABLE (priv->entry_user_email), 0, -1);
 		return FALSE;
 	}
 
 	/* make sure the domain name for the incoming server is valid */
-	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (self->entry_incomingserver));
+	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_incomingserver));
 	if ((!hostname) || (strlen(hostname) == 0)) {
 		return FALSE;
 	}
@@ -919,36 +1039,36 @@ check_data (ModestAccountSettingsDialog *self)
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_invalid_servername"));
                                          
 		/* Return focus to the email address entry: */
-		gtk_widget_grab_focus (self->entry_incomingserver);
-		gtk_editable_select_region (GTK_EDITABLE (self->entry_incomingserver), 0, -1);
+		gtk_widget_grab_focus (priv->entry_incomingserver);
+		gtk_editable_select_region (GTK_EDITABLE (priv->entry_incomingserver), 0, -1);
 		return FALSE;
 	}
 
 	/* make sure the domain name for the outgoing server is valid */
-	const gchar* hostname2 = gtk_entry_get_text (GTK_ENTRY (self->entry_outgoingserver));
+	const gchar* hostname2 = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
 	if ((!hostname2) || (strlen(hostname2) == 0)) {
 		return FALSE;
 	}
 	
 	if (!modest_text_utils_validate_domain_name (hostname2)) {
 		/* Warn the user via a dialog: */
-		modest_platform_information_banner (self->entry_outgoingserver, NULL, _("mcen_ib_invalid_servername"));
+		modest_platform_information_banner (priv->entry_outgoingserver, NULL, _("mcen_ib_invalid_servername"));
 
 		/* Return focus to the email address entry: */
-		gtk_widget_grab_focus (self->entry_outgoingserver);
-		gtk_editable_select_region (GTK_EDITABLE (self->entry_outgoingserver), 0, -1);
+		gtk_widget_grab_focus (priv->entry_outgoingserver);
+		gtk_editable_select_region (GTK_EDITABLE (priv->entry_outgoingserver), 0, -1);
 		return FALSE;
 	}
 	
 	/* Find a suitable authentication method when secure authentication is desired */
 
 	const gint port_num = gtk_spin_button_get_value_as_int (
-			GTK_SPIN_BUTTON (self->entry_incoming_port));
-	const gchar* username = gtk_entry_get_text (GTK_ENTRY (self->entry_user_username));
+			GTK_SPIN_BUTTON (priv->entry_incoming_port));
+	const gchar* username = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username));
 
 	/*
-	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (self->combo_incoming_security));
+	const ModestProtocolType protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security));
 	*/
 	/* If we use an encrypted protocol then there is no need to encrypt the password */
 	/* I don't think this is a good assumption. It overrides the user's request. murrayc: 
@@ -956,11 +1076,11 @@ check_data (ModestAccountSettingsDialog *self)
 	if (TRUE)
 	{
 		if (gtk_toggle_button_get_active (
-				GTK_TOGGLE_BUTTON (self->checkbox_incoming_auth))) {
+				GTK_TOGGLE_BUTTON (priv->checkbox_incoming_auth))) {
 			GError *error = NULL;
 
 			GList *list_auth_methods = 
-				modest_utils_get_supported_secure_authentication_methods (self->incoming_protocol, 
+				modest_utils_get_supported_secure_authentication_methods (priv->incoming_protocol, 
 					hostname, port_num, username, GTK_WINDOW (self), &error);
 			if (list_auth_methods) {
 				/* Use the first supported method.
@@ -968,11 +1088,11 @@ check_data (ModestAccountSettingsDialog *self)
 				GList* method;
 				for (method = list_auth_methods; method != NULL; method = g_list_next(method))
 				{
-					ModestAuthProtocol proto = (ModestAuthProtocol)(GPOINTER_TO_INT(method->data));
+					ModestProtocolType proto = (ModestProtocolType)(GPOINTER_TO_INT(method->data));
 					// Allow secure methods, e.g MD5 only
-					if (modest_protocol_info_auth_is_secure(proto))
+					if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (), proto))
 					{
-						self->protocol_authentication_incoming = proto;
+						priv->protocol_authentication_incoming = proto;
 						break;
 					}
 				}
@@ -980,8 +1100,8 @@ check_data (ModestAccountSettingsDialog *self)
 			}
 
 			if (list_auth_methods == NULL || 
-					!modest_protocol_info_auth_is_secure(self->protocol_authentication_incoming))
-			{
+			    !modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (),
+									       priv->protocol_authentication_incoming)) {
 		  		if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() ||
 						error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
 					modest_platform_information_banner(GTK_WIDGET (self), NULL, 
@@ -1008,12 +1128,16 @@ on_response (GtkDialog *wizard_dialog,
 	gpointer user_data)
 {
 	ModestAccountSettingsDialog *self = MODEST_ACCOUNT_SETTINGS_DIALOG (wizard_dialog);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	enable_buttons (self);
 	
 	gboolean prevent_response = FALSE;
 
 	/* Warn about unsaved changes: */
-	if (response_id == GTK_RESPONSE_CANCEL && self->modified) {
+	if (response_id == GTK_RESPONSE_CANCEL && priv->modified) {
 		GtkDialog *dialog = GTK_DIALOG (modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
 											 _("imum_nc_wizard_confirm_lose_changes")));
 		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
@@ -1038,7 +1162,7 @@ on_response (GtkDialog *wizard_dialog,
 		
 	if (response_id == GTK_RESPONSE_OK) {
 		/* Try to save the changes if modified (NB #59251): */
-		if (self->modified)
+		if (priv->modified)
 		{
 			const gboolean saved = save_configuration (self);
 			if (saved) {
@@ -1046,24 +1170,24 @@ on_response (GtkDialog *wizard_dialog,
 				 * temporarily, because from the user's point of view it will not 
 				 * really be saved (saved + enabled) until later
 				 */
-				if (modest_account_settings_get_account_name (self->settings) != NULL) {
+				if (modest_account_settings_get_account_name (priv->settings) != NULL) {
 					ModestServerAccountSettings *store_settings;
 					ModestServerAccountSettings *transport_settings;
 					const gchar *store_account_name;
 					const gchar *transport_account_name;
 
 
-					store_settings = modest_account_settings_get_store_settings (self->settings);
-					transport_settings = modest_account_settings_get_transport_settings (self->settings);
+					store_settings = modest_account_settings_get_store_settings (priv->settings);
+					transport_settings = modest_account_settings_get_transport_settings (priv->settings);
 					store_account_name = modest_server_account_settings_get_account_name (store_settings);
 					transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
 					
 					if (store_account_name) {
-						modest_account_mgr_notify_account_update (self->account_manager, 
+						modest_account_mgr_notify_account_update (priv->account_manager, 
 											  store_account_name);
 					}
 					if (transport_account_name) {
-						modest_account_mgr_notify_account_update (self->account_manager, 
+						modest_account_mgr_notify_account_update (priv->account_manager, 
 											  transport_account_name);
 					}
 					g_object_unref (store_settings);
@@ -1078,44 +1202,56 @@ on_response (GtkDialog *wizard_dialog,
 	}
 }
 
-static void
-modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
+static void 
+modest_account_settings_dialog_init (gpointer g, gpointer iface_data)
 {
+	ModestAccountSettingsDialogClass *iface = (ModestAccountSettingsDialogClass *) g;
+
+	iface->load_settings = modest_default_account_settings_dialog_load_settings;
+}
+
+static void
+modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog *self)
+{
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
+
 	/* Create the notebook to be used by the GtkDialog base class:
 	 * Each page of the notebook will be a page of the wizard: */
-	self->notebook = GTK_NOTEBOOK (gtk_notebook_new());
-	self->settings = modest_account_settings_new ();
+	priv->notebook = GTK_NOTEBOOK (gtk_notebook_new());
+	priv->settings = modest_account_settings_new ();
 
 	/* Get the account manager object, 
 	 * so we can check for existing accounts,
 	 * and create new accounts: */
-	self->account_manager = modest_runtime_get_account_mgr ();
-	g_assert (self->account_manager);
-	g_object_ref (self->account_manager);
+	priv->account_manager = modest_runtime_get_account_mgr ();
+	g_assert (priv->account_manager);
+	g_object_ref (priv->account_manager);
 	
-	self->protocol_authentication_incoming = MODEST_PROTOCOL_AUTH_PASSWORD;
+	priv->protocol_authentication_incoming = MODEST_PROTOCOLS_AUTH_PASSWORD;
 
     /* Create the common pages, 
      */
-	self->page_account_details = create_page_account_details (self);
-	self->page_user_details = create_page_user_details (self);
-	self->page_incoming = create_page_incoming (self);
-	self->page_outgoing = create_page_outgoing (self);
+	priv->page_account_details = create_page_account_details (self);
+	priv->page_user_details = create_page_user_details (self);
+	priv->page_incoming = create_page_incoming (self);
+	priv->page_outgoing = create_page_outgoing (self);
 	
 	/* Add the notebook pages: */
-	gtk_notebook_append_page (self->notebook, self->page_account_details, 
+	gtk_notebook_append_page (priv->notebook, priv->page_account_details, 
 		gtk_label_new (_("mcen_ti_account_settings_account")));
-	gtk_notebook_append_page (self->notebook, self->page_user_details, 
+	gtk_notebook_append_page (priv->notebook, priv->page_user_details, 
 		gtk_label_new (_("mcen_ti_account_settings_userinfo")));
-	gtk_notebook_append_page (self->notebook, self->page_incoming,
+	gtk_notebook_append_page (priv->notebook, priv->page_incoming,
 		gtk_label_new (_("mcen_ti_advsetup_retrieval")));
-	gtk_notebook_append_page (self->notebook, self->page_outgoing,
+	gtk_notebook_append_page (priv->notebook, priv->page_outgoing,
 		gtk_label_new (_("mcen_ti_advsetup_sending")));
 		
 	GtkDialog *dialog = GTK_DIALOG (self);
-	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (self->notebook));
+	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (priv->notebook));
 	gtk_container_set_border_width (GTK_CONTAINER (dialog->vbox), MODEST_MARGIN_HALF);
-	gtk_widget_show (GTK_WIDGET (self->notebook));
+	gtk_widget_show (GTK_WIDGET (priv->notebook));
         
     /* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
@@ -1129,7 +1265,7 @@ modest_account_settings_dialog_init (ModestAccountSettingsDialog *self)
     g_signal_connect (G_OBJECT (self), "response",
             G_CALLBACK (on_response), self); 
             
-    self->modified = FALSE;
+    priv->modified = FALSE;
 
     /* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
@@ -1151,13 +1287,18 @@ modest_account_settings_dialog_new (void)
 /** Update the UI with the stored account details, so they can be edited.
  * @account_name: Name of the account, which should contain incoming and outgoing server accounts.
  */
-void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *dialog, ModestAccountSettings *settings)
+static void 
+modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialog *dialog, 
+						      ModestAccountSettings *settings)
 {
 	ModestServerAccountSettings *incoming_account;
 	ModestServerAccountSettings *outgoing_account;
 	const gchar *account_name;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS (settings));
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (dialog);
 
 	incoming_account = modest_account_settings_get_store_settings (settings);
 	outgoing_account = modest_account_settings_get_transport_settings (settings);
@@ -1165,47 +1306,47 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 	account_name = modest_account_settings_get_account_name (settings);
 		
 	/* Save the account name so we can refer to it later: */
-	if (dialog->account_name)
-		g_free (dialog->account_name);
-	dialog->account_name = g_strdup (account_name);
+	if (priv->account_name)
+		g_free (priv->account_name);
+	priv->account_name = g_strdup (account_name);
 
-	if (dialog->settings)
-		g_object_unref (dialog->settings);
-	dialog->settings = g_object_ref (settings);
+	if (priv->settings)
+		g_object_unref (priv->settings);
+	priv->settings = g_object_ref (settings);
 	
 	/* Save the account title so we can refer to it if the user changes it: */
-	if (dialog->original_account_title)
-		g_free (dialog->original_account_title);
-	dialog->original_account_title = g_strdup (modest_account_settings_get_display_name (settings));
+	if (priv->original_account_title)
+		g_free (priv->original_account_title);
+	priv->original_account_title = g_strdup (modest_account_settings_get_display_name (settings));
 	
 	/* Show the account data in the widgets: */
 	
 	/* Note that we never show the non-display name in the UI.
 	 * (Though the display name defaults to the non-display name at the start.) */
-	gtk_entry_set_text( GTK_ENTRY (dialog->entry_account_title),
+	gtk_entry_set_text( GTK_ENTRY (priv->entry_account_title),
 			    null_means_empty (modest_account_settings_get_display_name (settings)));
-	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_name), 
+	gtk_entry_set_text( GTK_ENTRY (priv->entry_user_name), 
 			    null_means_empty (modest_account_settings_get_fullname (settings)));
-	gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_email), 
+	gtk_entry_set_text( GTK_ENTRY (priv->entry_user_email), 
 			    null_means_empty (modest_account_settings_get_email_address (settings)));
-	modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), 
+	modest_retrieve_combo_box_fill (MODEST_RETRIEVE_COMBO_BOX (priv->combo_retrieve), 
 					modest_server_account_settings_get_protocol (incoming_account));
-	modest_retrieve_combo_box_set_active_retrieve_conf (MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve), 
+	modest_retrieve_combo_box_set_active_retrieve_conf (MODEST_RETRIEVE_COMBO_BOX (priv->combo_retrieve), 
 							    modest_account_settings_get_retrieve_type (settings));
 	modest_limit_retrieve_combo_box_set_active_limit_retrieve (
-		MODEST_LIMIT_RETRIEVE_COMBO_BOX (dialog->combo_limit_retrieve), 
+		MODEST_LIMIT_RETRIEVE_COMBO_BOX (priv->combo_limit_retrieve), 
 		modest_account_settings_get_retrieve_limit (settings));
 	
 	
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages), 
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->checkbox_leave_messages), 
 				      modest_account_settings_get_leave_messages_on_server (settings));
 	
 	/* Only show the leave-on-server checkbox for POP, 
 	 * as per the UI spec: */
-	if (modest_server_account_settings_get_protocol (incoming_account) != MODEST_PROTOCOL_STORE_POP) {
-		gtk_widget_hide (dialog->caption_leave_messages);
+	if (modest_server_account_settings_get_protocol (incoming_account) != MODEST_PROTOCOLS_STORE_POP) {
+		gtk_widget_hide (priv->caption_leave_messages);
 	} else {
-		gtk_widget_show (dialog->caption_leave_messages);
+		gtk_widget_show (priv->caption_leave_messages);
 	}
 	
 	update_incoming_server_security_choices (dialog, modest_server_account_settings_get_protocol (incoming_account));
@@ -1214,17 +1355,17 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 		const gchar *password;
 		const gchar *hostname;
 		/* Remember this for later: */
-		dialog->incoming_protocol = modest_server_account_settings_get_protocol (incoming_account);;
+		priv->incoming_protocol = modest_server_account_settings_get_protocol (incoming_account);;
 		
 		hostname = modest_server_account_settings_get_hostname (incoming_account);
 		username = modest_server_account_settings_get_username (incoming_account);
 		password = modest_server_account_settings_get_password (incoming_account);
-		gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_username),
+		gtk_entry_set_text( GTK_ENTRY (priv->entry_user_username),
 				    null_means_empty (username));
-		gtk_entry_set_text( GTK_ENTRY (dialog->entry_user_password), 
+		gtk_entry_set_text( GTK_ENTRY (priv->entry_user_password), 
 				    null_means_empty (password));
 			
-		gtk_entry_set_text( GTK_ENTRY (dialog->entry_incomingserver), 
+		gtk_entry_set_text( GTK_ENTRY (priv->entry_incomingserver), 
 				    null_means_empty (hostname));
 			
 		/* The UI spec says:
@@ -1233,40 +1374,41 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 	  	 * TODO: Do we need to discover which of these (SSL, TLS, CRAM-MD5) is supported?
          */														 
 		modest_serversecurity_combo_box_set_active_serversecurity (
-			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security), 
-			modest_server_account_settings_get_security (incoming_account));
+			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security), 
+			modest_server_account_settings_get_security_protocol (incoming_account));
 		
 		/* Check if we have
 		 - a secure protocol
 		 OR
 		 - use encrypted passwords
 		*/
-		const ModestAuthProtocol secure_auth = modest_server_account_settings_get_auth_protocol (incoming_account);
-		dialog->protocol_authentication_incoming = (secure_auth != MODEST_PROTOCOL_AUTH_NONE)?
-			secure_auth:MODEST_PROTOCOL_AUTH_PASSWORD;
-		if (modest_protocol_info_auth_is_secure(secure_auth))
+		const ModestProtocolType secure_auth = modest_server_account_settings_get_auth_protocol (incoming_account);
+		priv->protocol_authentication_incoming = (secure_auth != MODEST_PROTOCOLS_AUTH_NONE)?
+			secure_auth:MODEST_PROTOCOLS_AUTH_PASSWORD;
+		if (modest_protocol_registry_protocol_type_is_secure(modest_runtime_get_protocol_registry (),
+								     secure_auth))
 		{
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (priv->checkbox_incoming_auth), 
 						     TRUE);
 		}
 		else
 		{
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (dialog->checkbox_incoming_auth), 
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (priv->checkbox_incoming_auth), 
 						     FALSE);
 		};
 					
-		update_incoming_server_title (dialog, dialog->incoming_protocol);
+		update_incoming_server_title (dialog, priv->incoming_protocol);
 		
 		const gint port_num = modest_server_account_settings_get_port (incoming_account);
 		if (port_num == 0) {
 			/* Show the appropriate port number: */
 			on_combo_incoming_security_changed (
-				GTK_COMBO_BOX (dialog->combo_incoming_security), dialog);
+				GTK_COMBO_BOX (priv->combo_incoming_security), dialog);
 		} else {
 			/* Keep the user-entered port-number,
 			 * or the already-appropriate automatic port number: */
 			gtk_spin_button_set_value (
-				GTK_SPIN_BUTTON (dialog->entry_incoming_port), (gdouble) port_num);
+				GTK_SPIN_BUTTON (priv->entry_incoming_port), (gdouble) port_num);
 		}
 		g_object_unref (incoming_account);
 	}
@@ -1278,52 +1420,53 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 		const gchar *password;
 
 		/* Remember this for later: */
-		dialog->outgoing_protocol = 
+		priv->outgoing_protocol = 
 			modest_server_account_settings_get_protocol (outgoing_account);
 
 		hostname = modest_server_account_settings_get_hostname (outgoing_account);
 		username = modest_server_account_settings_get_username (outgoing_account);
 		password = modest_server_account_settings_get_password (outgoing_account);
-		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoingserver), 
+		gtk_entry_set_text( GTK_ENTRY (priv->entry_outgoingserver), 
 				    null_means_empty (hostname));
 		
-		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoing_username), 
+		gtk_entry_set_text( GTK_ENTRY (priv->entry_outgoing_username), 
 				    null_means_empty (username));
-		gtk_entry_set_text( GTK_ENTRY (dialog->entry_outgoing_password), 
+		gtk_entry_set_text( GTK_ENTRY (priv->entry_outgoing_password), 
 				    null_means_empty (password));
 		
 		/* Get the secure-auth setting: */
-		const ModestAuthProtocol secure_auth = modest_server_account_settings_get_auth_protocol (outgoing_account);
+		const ModestProtocolType secure_auth = modest_server_account_settings_get_auth_protocol (outgoing_account);
 		modest_secureauth_combo_box_set_active_secureauth (
-			MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth), secure_auth);
-		on_combo_outgoing_auth_changed (GTK_COMBO_BOX (dialog->combo_outgoing_auth), dialog);
+			MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth), secure_auth);
+		on_combo_outgoing_auth_changed (GTK_COMBO_BOX (priv->combo_outgoing_auth), dialog);
 		
 		modest_serversecurity_combo_box_fill (
-			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), 
-			dialog->outgoing_protocol);
+			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), 
+			priv->outgoing_protocol);
 		
 		/* Get the security setting: */
-		const ModestConnectionProtocol security = modest_server_account_settings_get_security (outgoing_account);
+		const ModestProtocolType security = 
+			modest_server_account_settings_get_security_protocol (outgoing_account);
 		modest_serversecurity_combo_box_set_active_serversecurity (
-			MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security), security);
+			MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security), security);
 		
 		const gint port_num = modest_server_account_settings_get_port (outgoing_account);
 		if (port_num == 0) {
 			/* Show the appropriate port number: */
 			on_combo_outgoing_security_changed (
-				GTK_COMBO_BOX (dialog->combo_outgoing_security), dialog);
+				GTK_COMBO_BOX (priv->combo_outgoing_security), dialog);
 		}
 		else {
 			/* Keep the user-entered port-number,
 			 * or the already-appropriate automatic port number: */
 			gtk_spin_button_set_value (
-				GTK_SPIN_BUTTON (dialog->entry_outgoing_port), (gdouble) port_num);
+				GTK_SPIN_BUTTON (priv->entry_outgoing_port), (gdouble) port_num);
 		}
 		
 		const gboolean has_specific = 
 			modest_account_settings_get_use_connection_specific_smtp (settings);
 		gtk_toggle_button_set_active (
-			GTK_TOGGLE_BUTTON (dialog->checkbox_outgoing_smtp_specific), 
+			GTK_TOGGLE_BUTTON (priv->checkbox_outgoing_smtp_specific), 
 			has_specific);
 		g_object_unref (outgoing_account);
 	}
@@ -1331,7 +1474,11 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 	/* Set window title according to account: */
 	/* TODO: Is this the correct way to find a human-readable name for
 	 * the protocol used? */
-	const gchar* proto_str = modest_protocol_info_get_transport_store_protocol_name (dialog->incoming_protocol);
+	ModestProtocol *proto = 
+		modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
+							       priv->incoming_protocol);
+
+	const gchar* proto_str = modest_protocol_get_display_name (proto);
 	gchar *proto_name = g_utf8_strup(proto_str, -1);
 	const gchar *account_title = modest_account_settings_get_display_name(settings);
 
@@ -1345,14 +1492,19 @@ void modest_account_settings_dialog_set_account (ModestAccountSettingsDialog *di
 	/*account_data->is_default,  */
 
 	/* Unset the modified flag so we can detect changes later: */
-	dialog->modified = FALSE;
+	priv->modified = FALSE;
 }
 
 /** Show the User Info tab.
  */
-void modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDialog *dialog)
+void 
+modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDialog *dialog)
 {
-	const gint page_num = gtk_notebook_page_num (dialog->notebook, dialog->page_user_details);
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (dialog);
+
+	const gint page_num = gtk_notebook_page_num (priv->notebook, priv->page_user_details);
 	if (page_num == -1) {
 		g_warning ("%s: notebook page not found.\n", __FUNCTION__);	
 	}
@@ -1360,62 +1512,65 @@ void modest_account_settings_dialog_switch_to_user_info (ModestAccountSettingsDi
 	/* Ensure that the widget is visible so that gtk_notebook_set_current_page() works: */
 	/* TODO: even this hack (recommened by the GTK+ documentation) doesn't seem to work. */
 	
-	gtk_widget_show (dialog->page_user_details);
-	gtk_widget_show (GTK_WIDGET (dialog->notebook));
+	gtk_widget_show (priv->page_user_details);
+	gtk_widget_show (GTK_WIDGET (priv->notebook));
 	gtk_widget_show (GTK_WIDGET (dialog));
-	gtk_notebook_set_current_page (dialog->notebook, page_num);
+	gtk_notebook_set_current_page (priv->notebook, page_num);
 }
 
 static gboolean
 save_configuration (ModestAccountSettingsDialog *dialog)
 {
-	const gchar* account_name = dialog->account_name;
 	ModestServerAccountSettings *store_settings;
 	ModestServerAccountSettings *transport_settings;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (dialog);
 		
 	/* Set the account data from the widgets: */
-	const gchar* user_fullname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_name));
-	modest_account_settings_set_fullname (dialog->settings, user_fullname);
+	const gchar* account_name = priv->account_name;
+	const gchar* user_fullname = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_name));
+	modest_account_settings_set_fullname (priv->settings, user_fullname);
 	
-	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_email));
-	modest_account_settings_set_email_address (dialog->settings, emailaddress);
+	const gchar* emailaddress = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_email));
+	modest_account_settings_set_email_address (priv->settings, emailaddress);
 		
 /* 	/\* Signature: *\/ */
-/* 	if (dialog->signature_dialog) { */
+/* 	if (priv->signature_dialog) { */
 /* 		gboolean use_signature = FALSE; */
 /* 		gchar *signature =  */
-/* 			modest_signature_editor_dialog_get_settings (MODEST_SIGNATURE_EDITOR_DIALOG (dialog->signature_dialog), */
+/* 			modest_signature_editor_dialog_get_settings (MODEST_SIGNATURE_EDITOR_DIALOG (priv->signature_dialog), */
 /* 								     &use_signature); */
     	
-/* 		modest_account_settings_set_use_signature (dialog->settings, use_signature); */
-/* 		modest_account_settings_set_signature (dialog->settings, signature); */
+/* 		modest_account_settings_set_use_signature (priv->settings, use_signature); */
+/* 		modest_account_settings_set_signature (priv->settings, signature); */
 /* 	} */
 	
 	ModestAccountRetrieveType retrieve_type = modest_retrieve_combo_box_get_active_retrieve_conf (
-		MODEST_RETRIEVE_COMBO_BOX (dialog->combo_retrieve));
-	modest_account_settings_set_retrieve_type (dialog->settings, retrieve_type);
+		MODEST_RETRIEVE_COMBO_BOX (priv->combo_retrieve));
+	modest_account_settings_set_retrieve_type (priv->settings, retrieve_type);
 	
 	gint retrieve_limit = modest_limit_retrieve_combo_box_get_active_limit_retrieve (
-		MODEST_LIMIT_RETRIEVE_COMBO_BOX (dialog->combo_limit_retrieve));
-	modest_account_settings_set_retrieve_limit (dialog->settings, retrieve_limit);
+		MODEST_LIMIT_RETRIEVE_COMBO_BOX (priv->combo_limit_retrieve));
+	modest_account_settings_set_retrieve_limit (priv->settings, retrieve_limit);
 	
-	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (dialog->checkbox_leave_messages));
-	modest_account_settings_set_leave_messages_on_server (dialog->settings, leave_on_server); 
+	const gboolean leave_on_server = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->checkbox_leave_messages));
+	modest_account_settings_set_leave_messages_on_server (priv->settings, leave_on_server); 
 
-	store_settings = modest_account_settings_get_store_settings (dialog->settings);
+	store_settings = modest_account_settings_get_store_settings (priv->settings);
 			
-	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_incomingserver));
+	const gchar* hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_incomingserver));
 	modest_server_account_settings_set_hostname (store_settings, hostname);
 				
-	const gchar* username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_username));
+	const gchar* username = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username));
 	modest_server_account_settings_set_username (store_settings, username);
 	
-	const gchar* password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_user_password));
+	const gchar* password = gtk_entry_get_text (GTK_ENTRY (priv->entry_user_password));
 	modest_server_account_settings_set_password (store_settings, password);
 			
 	/* port: */
 	gint port_num = gtk_spin_button_get_value_as_int (
-			GTK_SPIN_BUTTON (dialog->entry_incoming_port));
+			GTK_SPIN_BUTTON (priv->entry_incoming_port));
 	modest_server_account_settings_set_port (store_settings, port_num);
 			
 	/* The UI spec says:
@@ -1424,36 +1579,39 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 	 * methods during connection: SSL, TLS, CRAM-MD5 etc. 
 	 */
 	
-	const ModestConnectionProtocol protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_incoming_security));
-	modest_server_account_settings_set_security (store_settings, protocol_security_incoming);	
-	modest_server_account_settings_set_auth_protocol (store_settings, dialog->protocol_authentication_incoming);
+	const ModestProtocolType protocol_security_incoming = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_incoming_security));
+	modest_server_account_settings_set_security_protocol (store_settings, 
+							      protocol_security_incoming);	
+	modest_server_account_settings_set_auth_protocol (store_settings, 
+							  priv->protocol_authentication_incoming);
 
 	g_object_unref (store_settings);
 	
 	/* Outgoing: */
-	transport_settings = modest_account_settings_get_transport_settings (dialog->settings);
+	transport_settings = modest_account_settings_get_transport_settings (priv->settings);
 	
-	hostname = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoingserver));
+	hostname = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoingserver));
 	modest_server_account_settings_set_hostname (transport_settings, hostname);
 		
-	username = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_username));
+	username = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoing_username));
 	modest_server_account_settings_set_username (transport_settings, username);
 		
-	password = gtk_entry_get_text (GTK_ENTRY (dialog->entry_outgoing_password));
+	password = gtk_entry_get_text (GTK_ENTRY (priv->entry_outgoing_password));
 	modest_server_account_settings_set_password (transport_settings, password);
 	
-	const ModestConnectionProtocol protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
-		MODEST_SERVERSECURITY_COMBO_BOX (dialog->combo_outgoing_security));
-	modest_server_account_settings_set_security (transport_settings, protocol_security_outgoing);
+	const ModestProtocolType protocol_security_outgoing = modest_serversecurity_combo_box_get_active_serversecurity (
+		MODEST_SERVERSECURITY_COMBO_BOX (priv->combo_outgoing_security));
+	modest_server_account_settings_set_security_protocol (transport_settings, 
+							      protocol_security_outgoing);
 	
-	const ModestAuthProtocol protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
-		MODEST_SECUREAUTH_COMBO_BOX (dialog->combo_outgoing_auth));
+	const ModestProtocolType protocol_authentication_outgoing = modest_secureauth_combo_box_get_active_secureauth (
+		MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
 	modest_server_account_settings_set_auth_protocol (transport_settings, protocol_authentication_outgoing);	
 	
 	/* port: */
 	port_num = gtk_spin_button_get_value_as_int (
-			GTK_SPIN_BUTTON (dialog->entry_outgoing_port));
+			GTK_SPIN_BUTTON (priv->entry_outgoing_port));
 	modest_server_account_settings_set_port (transport_settings, port_num);
 	g_object_unref (transport_settings);
 	
@@ -1464,23 +1622,23 @@ save_configuration (ModestAccountSettingsDialog *dialog)
 		return FALSE; /* Should be prevented already anyway. */
 		
 /* 	if (strcmp (account_title, account_name) != 0) { */
-	modest_account_settings_set_display_name (dialog->settings, account_title);
+	modest_account_settings_set_display_name (priv->settings, account_title);
 /* 	} */
 	g_free (account_title);
 	account_title = NULL;
 	
 	/* Save connection-specific SMTP server accounts: */
 	modest_account_settings_set_use_connection_specific_smtp 
-		(dialog->settings, 
-		 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog->checkbox_outgoing_smtp_specific)));
+		(priv->settings, 
+		 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(priv->checkbox_outgoing_smtp_specific)));
 
 	/* this configuration is not persistent, we should not save */
 	if (account_name != NULL)
-		modest_account_mgr_save_account_settings (dialog->account_manager, dialog->settings);
+		modest_account_mgr_save_account_settings (priv->account_manager, priv->settings);
 
-/* 	if (dialog->specific_window) { */
+/* 	if (priv->specific_window) { */
 /* 		return modest_connection_specific_smtp_window_save_server_accounts ( */
-/* 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (dialog->specific_window)); */
+/* 			MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (priv->specific_window)); */
 /* 	} else { */
 		return TRUE;
 /* 	} */
@@ -1514,35 +1672,38 @@ static void
 enable_buttons (ModestAccountSettingsDialog *self)
 {
 	gboolean enable_ok = TRUE;
-	ModestAuthProtocol outgoing_auth_protocol;
+	ModestProtocolType outgoing_auth_protocol;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);;
 	
 	/* The account details title is mandatory: */
-	if (entry_is_empty(self->entry_account_title))
+	if (entry_is_empty(priv->entry_account_title))
 		enable_ok = FALSE;
 
 	/* The user details username is mandatory: */
-	if (enable_ok && entry_is_empty(self->entry_user_username))
+	if (enable_ok && entry_is_empty(priv->entry_user_username))
 		enable_ok = FALSE;
 		
 	/* The user details email address is mandatory: */
-	if (enable_ok && entry_is_empty (self->entry_user_email))
+	if (enable_ok && entry_is_empty (priv->entry_user_email))
 		enable_ok = FALSE;
 
 	/* The custom incoming server is mandatory: */
-	if (enable_ok && entry_is_empty(self->entry_incomingserver))
+	if (enable_ok && entry_is_empty(priv->entry_incomingserver))
 		enable_ok = FALSE;
 
 	/* The custom incoming server is mandatory: */
-	if (enable_ok && entry_is_empty(self->entry_outgoingserver))
+	if (enable_ok && entry_is_empty(priv->entry_outgoingserver))
 		enable_ok = FALSE;
 
 	/* Outgoing username is mandatory if outgoing auth is secure */
-	if (self->combo_outgoing_auth) {
+	if (priv->combo_outgoing_auth) {
 		outgoing_auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
-			MODEST_SECUREAUTH_COMBO_BOX (self->combo_outgoing_auth));
+			MODEST_SECUREAUTH_COMBO_BOX (priv->combo_outgoing_auth));
 		if (enable_ok && 
-		    outgoing_auth_protocol != MODEST_PROTOCOL_AUTH_NONE &&
-		    entry_is_empty (self->entry_outgoing_username))
+		    outgoing_auth_protocol != MODEST_PROTOCOLS_AUTH_NONE &&
+		    entry_is_empty (priv->entry_outgoing_username))
 			enable_ok = FALSE;
 	}
 			
@@ -1561,35 +1722,42 @@ modest_account_settings_dialog_check_allow_changes (ModestAccountSettingsDialog 
 	ModestServerAccountSettings *incoming_settings;
 	const gchar *server_account_name;
 	gboolean username_known;
+	ModestDefaultAccountSettingsDialogPrivate *priv;
 
-	if (!G_IS_OBJECT (self->settings))
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);;
+
+	if (!G_IS_OBJECT (priv->settings))
 		return;
 
-	incoming_settings = modest_account_settings_get_store_settings (self->settings);
+	incoming_settings = modest_account_settings_get_store_settings (priv->settings);
 	server_account_name = modest_server_account_settings_get_account_name (incoming_settings);
 
-	username_known = modest_account_mgr_get_server_account_username_has_succeeded (self->account_manager, 
+	username_known = modest_account_mgr_get_server_account_username_has_succeeded (priv->account_manager, 
 										       server_account_name);
 
 	/* Enable or disable widgets */
-	gtk_widget_set_sensitive (self->entry_user_username, !username_known);
-	gtk_widget_set_sensitive (self->entry_incomingserver, !username_known);
-	gtk_widget_set_sensitive (self->entry_incoming_port, !username_known);
-	gtk_widget_set_sensitive (self->combo_incoming_security, !username_known);
+	gtk_widget_set_sensitive (priv->entry_user_username, !username_known);
+	gtk_widget_set_sensitive (priv->entry_incomingserver, !username_known);
+	gtk_widget_set_sensitive (priv->entry_incoming_port, !username_known);
+	gtk_widget_set_sensitive (priv->combo_incoming_security, !username_known);
 }
 
 void
 modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialog)
 {
+	ModestDefaultAccountSettingsDialogPrivate *priv;
+
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
 
-	dialog->modified = TRUE;
+	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (dialog);
+	priv->modified = TRUE;
 }
 
 static void
 modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	g_type_class_add_private (klass, sizeof (ModestDefaultAccountSettingsDialogPrivate));
 
 	object_class->get_property = modest_account_settings_dialog_get_property;
 	object_class->set_property = modest_account_settings_dialog_set_property;

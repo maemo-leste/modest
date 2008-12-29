@@ -42,6 +42,8 @@
 #include <gtk/gtkspinbutton.h>
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "widgets/modest-combo-box.h"
+#include "modest-runtime.h"
+#include "modest-defs.h"
 #include "gnome/modest-gnome-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
 
@@ -60,6 +62,7 @@ enum {
 	LAST_SIGNAL
 };
 
+static void modest_gnome_global_settings_dialog_load_settings (ModestGlobalSettingsDialog *self);
 static GtkWidget* create_updating_page  (ModestGnomeGlobalSettingsDialog *self);
 static GtkWidget* create_composing_page (ModestGnomeGlobalSettingsDialog *self);
 static ModestConnectedVia current_connection (void);

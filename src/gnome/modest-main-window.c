@@ -45,7 +45,7 @@
 #include "modest-main-window-ui.h"
 #include "modest-main-window-ui-dimming.h"
 #include "modest-account-mgr.h"
-#include "modest-conf.h"
+#include "modest-defs.h"
 #include <modest-tny-msg.h>
 #include "modest-mail-operation.h"
 #include "modest-icon-names.h"

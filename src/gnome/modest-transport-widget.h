@@ -33,6 +33,7 @@
 G_BEGIN_DECLS
 
 #include <gtk/gtkvbox.h>
+#include "modest-protocol-registry.h"
 
 /* convenience macros */
 #define MODEST_TYPE_TRANSPORT_WIDGET             (modest_transport_widget_get_type())
@@ -59,13 +60,13 @@ struct _ModestTransportWidgetClass {
 /* member functions */
 GType        modest_transport_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*   modest_transport_widget_new         (ModestTransportStoreProtocol proto);
+GtkWidget*   modest_transport_widget_new         (ModestProtocolType proto);
 
 gboolean        modest_transport_widget_get_remember_password (ModestTransportWidget *self);
 gboolean        modest_transport_widget_get_requires_auth     (ModestTransportWidget *self);
 const gchar*    modest_transport_widget_get_username          (ModestTransportWidget *self);
 const gchar*    modest_transport_widget_get_servername        (ModestTransportWidget *self);
-ModestTransportStoreProtocol  modest_transport_widget_get_proto             (ModestTransportWidget *self);
+ModestProtocolType  modest_transport_widget_get_proto             (ModestTransportWidget *self);
 
 G_END_DECLS
 

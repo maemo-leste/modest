@@ -37,7 +37,7 @@
 #include "modest-text-utils.h"
 #include "modest-runtime.h"
 #include "modest-utils.h"
-#include <modest-protocol-info.h>
+#include "modest-protocol-registry.h"
 #include "modest-platform.h"
 
 #include <string.h>
@@ -165,16 +165,26 @@ on_assistant_changed(GtkWidget* widget, ModestAccountAssistant* assistant)
 static void
 on_incoming_security_changed(GtkWidget* widget, ModestAccountAssistant* assistant)
 {
-	ModestAccountAssistantPrivate* priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(assistant);
-	ModestConnectionProtocol protocol_security_incoming;
+	ModestAccountAssistantPrivate* priv;
+	ModestProtocolType protocol_id;
+	ModestProtocol *protocol_security_incoming;
 	const gchar *name;
+	ModestProtocolRegistry *registry;
+	gboolean is_secure;
 
-	g_return_if_fail (priv != NULL);
+	g_return_if_fail (MODEST_IS_ACCOUNT_ASSISTANT (assistant));
+
+	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(assistant);
+	registry = modest_runtime_get_protocol_registry ();
 	name = (const gchar *) modest_combo_box_get_active_id  (MODEST_COMBO_BOX (priv->store_security_combo));
-	protocol_security_incoming = modest_protocol_info_get_transport_store_protocol (name);
+	protocol_security_incoming = modest_protocol_registry_get_protocol_by_name (registry, 
+										    MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS,
+										    name);
+	protocol_id = modest_protocol_get_type_id (protocol_security_incoming);
+	is_secure = modest_protocol_registry_protocol_type_is_secure (registry, protocol_id);
 
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->store_secure_auth), modest_protocol_info_is_secure (protocol_security_incoming));
-	gtk_widget_set_sensitive (priv->store_secure_auth, !modest_protocol_info_is_secure (protocol_security_incoming));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->store_secure_auth), is_secure);
+	gtk_widget_set_sensitive (priv->store_secure_auth, !is_secure);
 	
 	on_assistant_changed (widget, assistant);
 }
@@ -504,7 +514,8 @@ on_sending_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
 {
 	ModestAccountAssistantPrivate *priv;
 	gchar *chosen;
-	
+	ModestProtocol *proto;
+
 	priv = MODEST_ACCOUNT_ASSISTANT_GET_PRIVATE(self);
 
 	chosen = gtk_combo_box_get_active_text (GTK_COMBO_BOX(combo));
@@ -512,8 +523,11 @@ on_sending_combo_box_changed (GtkComboBox *combo, ModestAccountAssistant *self)
 	if (priv->transport_widget)
 		gtk_container_remove (GTK_CONTAINER(priv->transport_holder),
 				      priv->transport_widget);
-	priv->transport_widget =
-		modest_transport_widget_new (modest_protocol_info_get_transport_store_protocol(chosen));
+
+	proto = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+							       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+							       chosen);
+	priv->transport_widget = modest_transport_widget_new (modest_protocol_get_type_id (proto));
 
 	gtk_container_add (GTK_CONTAINER(priv->transport_holder),
 			   priv->transport_widget);
@@ -712,19 +726,20 @@ get_email (ModestAccountAssistant *self)
  * somewhere else
  */
 static gchar*
-get_account_uri (ModestTransportStoreProtocol proto, const gchar* path)
+get_account_uri (ModestProtocolType proto, const gchar* path)
 {
 	CamelURL *url;
 	gchar *uri;
 	
-	switch (proto) {
-	case MODEST_PROTOCOL_STORE_MBOX:
-		url = camel_url_new ("mbox:", NULL); break;
-	case MODEST_PROTOCOL_STORE_MAILDIR:
-		url = camel_url_new ("maildir:", NULL); break;
-	default:
-		g_return_val_if_reached (NULL);
+	if (proto == modest_protocol_registry_get_mbox_type_id ()) {
+		url = camel_url_new ("mbox:", NULL);
+	} else {
+		if (proto == modest_protocol_registry_get_maildir_type_id ())
+			url = camel_url_new ("maildir:", NULL);
+		else
+			g_return_val_if_reached (NULL);
 	}
+
 	camel_url_set_path (url, path);
 	uri = camel_url_to_string (url, 0);
 	camel_url_free (url);
@@ -733,15 +748,24 @@ get_account_uri (ModestTransportStoreProtocol proto, const gchar* path)
 }
 
 static gchar*
-get_new_server_account_name (ModestAccountMgr* acc_mgr, ModestTransportStoreProtocol proto,
-			     const gchar* username, const gchar *servername)
+get_new_server_account_name (ModestAccountMgr* acc_mgr, 
+			     ModestProtocolType proto_id,
+			     const gchar *username, 
+			     const gchar *servername)
 {
 	gchar *name;
+	const gchar *proto_name;
 	gint  i = 0;
-	
+	ModestProtocolRegistry *registry;
+	ModestProtocol *proto;
+
+	registry = modest_runtime_get_protocol_registry ();
+	proto = modest_protocol_registry_get_protocol_by_type (registry, proto_id);
+	proto_name = modest_protocol_get_name (proto);
+
 	while (TRUE) {
-		name = g_strdup_printf ("%s:%d",
-					modest_protocol_info_get_transport_store_protocol_name(proto), i++);
+		name = g_strdup_printf ("%s:%d", proto_name, i++);
+
 		if (modest_account_mgr_account_exists (acc_mgr, name, TRUE))
 			g_free (name);
 		else
@@ -820,34 +844,30 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	return TRUE;
 }
 
-static gint get_serverport_incoming(ModestTransportStoreProtocol protocol,
-                                    ModestConnectionProtocol security)
+static gint 
+get_serverport_incoming(ModestProtocolType protocol,
+			ModestProtocolType security)
 {
 	int serverport_incoming = 0;
-		/* We don't check for SMTP here as that is impossible for an incoming server. */
-		if (protocol == MODEST_PROTOCOL_STORE_IMAP) {
-			switch (security) {
-			case MODEST_PROTOCOL_CONNECTION_NORMAL:
-			case MODEST_PROTOCOL_CONNECTION_TLS:
-			case MODEST_PROTOCOL_CONNECTION_TLS_OP:
-				serverport_incoming = 143;
-				break;
-			case MODEST_PROTOCOL_CONNECTION_SSL:
-				serverport_incoming = 993;
-				break;
-			}
-		} else if (protocol == MODEST_PROTOCOL_STORE_POP) {
-			switch (security) {
-			case MODEST_PROTOCOL_CONNECTION_NORMAL:
-			case MODEST_PROTOCOL_CONNECTION_TLS:
-			case MODEST_PROTOCOL_CONNECTION_TLS_OP:
-				serverport_incoming = 110;
-				break;
-			case MODEST_PROTOCOL_CONNECTION_SSL:
-				serverport_incoming = 995;
-				break;
-			}
+
+	/* We don't check for SMTP here as that is impossible for an incoming server. */
+	if ((security == modest_protocol_registry_get_none_connection_type_id ()) ||
+	    (security == modest_protocol_registry_get_tls_connection_type_id ()) ||
+	    (security == modest_protocol_registry_get_tlsop_connection_type_id ())) {
+
+		if (protocol == MODEST_PROTOCOLS_STORE_IMAP) {
+			serverport_incoming = 143;
+		} else if (protocol == MODEST_PROTOCOLS_STORE_POP) {
+			serverport_incoming = 110;
 		}
+	} else if (security == modest_protocol_registry_get_ssl_connection_type_id ()) {
+		if (protocol == MODEST_PROTOCOLS_STORE_IMAP) {
+			serverport_incoming = 993;
+		} else if  (protocol == MODEST_PROTOCOLS_STORE_POP) {
+			serverport_incoming = 995;
+		}
+	}
+
 	return serverport_incoming;
 }
 
@@ -855,11 +875,11 @@ static GList*
 check_for_supported_auth_methods (ModestAccountAssistant* self)
 {
 	GError *error = NULL;
-	ModestTransportStoreProtocol protocol;
+	ModestProtocolType protocol;
 	const gchar* hostname;
 	const gchar* username;
 	gchar *store_protocol_name, *store_security_name;
-	ModestConnectionProtocol security_protocol;
+	ModestProtocolType security_protocol;
 	int port_num; 
 	GList *list_auth_methods;
 	ModestAccountAssistantPrivate *priv;
@@ -882,7 +902,7 @@ check_for_supported_auth_methods (ModestAccountAssistant* self)
 		GList* list = NULL;
 		GList* method;
 		for (method = list_auth_methods; method != NULL; method = g_list_next(method)) {
-			ModestAuthProtocol auth = (ModestAuthProtocol) (GPOINTER_TO_INT(method->data));
+			ModestProtocolType auth = (ModestProtocolType) (GPOINTER_TO_INT(method->data));
 			if (modest_protocol_info_auth_is_secure(auth)) {
 				list = g_list_append(list, GINT_TO_POINTER(auth));
 			}
@@ -900,15 +920,15 @@ check_for_supported_auth_methods (ModestAccountAssistant* self)
 	return NULL;
 }
 
-static ModestAuthProtocol check_first_supported_auth_method(ModestAccountAssistant* self)
+static ModestProtocolType check_first_supported_auth_method(ModestAccountAssistant* self)
 {
-	ModestAuthProtocol result = MODEST_PROTOCOL_AUTH_PASSWORD;
+	ModestProtocolType result = MODEST_PROTOCOLS_AUTH_PASSWORD;
 
 	GList* methods = check_for_supported_auth_methods(self);
 	if (methods)
 	{
 		/* Use the first one: */
-		result = (ModestAuthProtocol) (GPOINTER_TO_INT(methods->data));
+		result = (ModestProtocolType) (GPOINTER_TO_INT(methods->data));
 		g_list_free(methods);
 	}
 
@@ -929,9 +949,9 @@ save_to_settings (ModestAccountAssistant *self)
 	const gchar *username, *password;
 	gchar *store_hostname, *transport_hostname;
 	guint store_port, transport_port;
-	ModestTransportStoreProtocol store_protocol, transport_protocol;
-	ModestConnectionProtocol store_security, transport_security;
-	ModestAuthProtocol store_auth_protocol, transport_auth_protocol;
+	ModestProtocolType store_protocol, transport_protocol;
+	ModestProtocolType store_security, transport_security;
+	ModestProtocolType store_auth_protocol, transport_auth_protocol;
 	ModestServerAccountSettings *store_settings, *transport_settings;
 	const gchar *fullname, *email_address;
 
@@ -943,9 +963,9 @@ save_to_settings (ModestAccountAssistant *self)
 	/* Note: We need something as default for the ModestTransportStoreProtocol* values, 
 	 * or modest_account_mgr_add_server_account will fail. */
 	store_port = 0;
-	store_protocol = MODEST_PROTOCOL_STORE_POP;
-	store_security = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	store_auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
+	store_protocol = MODEST_PROTOCOLS_STORE_POP;
+	store_security = MODEST_PROTOCOLS_CONNECTION_NONE;
+	store_auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 
 	/* Use custom pages because no preset was specified: */
 	store_hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->store_server_widget) ));		
@@ -957,10 +977,11 @@ save_to_settings (ModestAccountAssistant *self)
 	 * If secure authentication is checked, require one of the secure methods during 
 	 * connection: SSL, TLS, CRAM-MD5 etc. */
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->store_secure_auth)) &&
-	    !modest_protocol_info_is_secure(store_security)) {
+	    !modest_protocol_registry_protocol_type_is_secure(modest_runtime_get_protocol_registry (),
+							      store_security)) {
 		store_auth_protocol = check_first_supported_auth_method (self);
 	} else {
-		store_auth_protocol = MODEST_PROTOCOL_AUTH_PASSWORD;
+		store_auth_protocol = MODEST_PROTOCOLS_AUTH_PASSWORD;
 	}
 
 	/* now we store the store account settings */
@@ -979,13 +1000,13 @@ save_to_settings (ModestAccountAssistant *self)
 	
 	/* Outgoing server: */
 	transport_hostname = NULL;
-	transport_protocol = MODEST_PROTOCOL_STORE_POP;
-	transport_security = MODEST_PROTOCOL_CONNECTION_NORMAL;
-	transport_auth_protocol = MODEST_PROTOCOL_AUTH_NONE;
+	transport_protocol = MODEST_PROTOCOLS_STORE_POP;
+	transport_security = MODEST_PROTOCOLS_CONNECTION_NONE;
+	transport_auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 	transport_port = 0;
 	
 	transport_hostname = g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->transport_server_widget) ));
-	transport_protocol = MODEST_PROTOCOL_TRANSPORT_SMTP; /* It's always SMTP for outgoing. */
+	transport_protocol = MODEST_PROTOCOLS_TRANSPORT_SMTP; /* It's always SMTP for outgoing. */
 	transport_security = modest_protocol_info_get_connection_protocol (modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->transport_security_combo)));
 	transport_auth_protocol = modest_protocol_info_get_auth_protocol (modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->transport_secure_auth_combo)));
 	    

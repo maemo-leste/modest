@@ -26,7 +26,7 @@ PIXMAP_FILES=\
 libmodest_ui_la_SOURCES=              \
 	modest-account-assistant.c    \
 	modest-account-assistant.h    \
-	modest-account-settings-dialog.c \
+	modest-default-account-settings-dialog.c \
 	modest-account-view-window.c  \
 	modest-address-book.c         \
 	modest-msg-edit-window.c      \

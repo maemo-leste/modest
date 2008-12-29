@@ -37,6 +37,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
 #include "modest-account-assistant.h"
+#include "modest-account-protocol.h"
 #include "modest-tny-platform-factory.h"
 #include "modest-platform.h"
 
@@ -173,7 +174,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 		gint response;
 
 		if (modest_account_mgr_get_store_protocol (account_mgr, account_name) 
-		    == MODEST_PROTOCOL_STORE_POP) {
+		    == MODEST_PROTOCOLS_STORE_POP) {
 				txt = g_strdup_printf (_("emev_nc_delete_mailbox"), 
 						       account_title);
 		} else {

@@ -34,8 +34,8 @@
 #define __MODEST_PROTOCOL_REGISTRY_H__
 
 #include <glib-object.h>
-#include <modest-protocol.h>
-#include <modest-pair.h>
+#include "modest-protocol.h"
+#include "modest-pair.h"
 
 G_BEGIN_DECLS
 

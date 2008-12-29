@@ -31,6 +31,7 @@
 #include <gtk/gtk.h>
 #include <widgets/modest-combo-box.h>
 #include "modest-store-widget.h"
+#include "modest-runtime.h"
 #include <string.h>
 
 /* 'private'/'protected' functions */
@@ -57,7 +58,7 @@ struct _ModestStoreWidgetPrivate {
 	
 	GtkWidget *chooser;
 
-	ModestTransportStoreProtocol proto;
+	ModestProtocolType proto;
 };
 #define MODEST_STORE_WIDGET_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                  MODEST_TYPE_STORE_WIDGET, \
@@ -120,7 +121,7 @@ modest_store_widget_init (ModestStoreWidget *obj)
  	ModestStoreWidgetPrivate *priv;
 	
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(obj); 
-	priv->proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	priv->proto = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 }
 
 
@@ -283,7 +284,7 @@ modest_store_widget_finalize (GObject *obj)
 
 
 GtkWidget*
-modest_store_widget_new (ModestTransportStoreProtocol proto)
+modest_store_widget_new (ModestProtocolType proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -298,11 +299,11 @@ modest_store_widget_new (ModestTransportStoreProtocol proto)
 
 	priv->proto = proto;
 	
-	if (proto == MODEST_PROTOCOL_STORE_POP || proto == MODEST_PROTOCOL_STORE_IMAP)
+	if (proto == MODEST_PROTOCOLS_STORE_POP || proto == MODEST_PROTOCOLS_STORE_IMAP)
 		w = imap_pop_configuration (self);
-	else if (proto == MODEST_PROTOCOL_STORE_MAILDIR) 
+	else if (proto == MODEST_PROTOCOLS_STORE_MAILDIR) 
 		w = maildir_configuration (self);
-	else if (proto == MODEST_PROTOCOL_STORE_MBOX)
+	else if (proto == MODEST_PROTOCOLS_STORE_MBOX)
 		w = mbox_configuration (self);
 	else
 		w = gtk_label_new ("");
@@ -342,12 +343,12 @@ modest_store_widget_get_servername (ModestStoreWidget *self)
 }
 
 
-ModestTransportStoreProtocol
+ModestProtocolType
 modest_store_widget_get_proto (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;
@@ -368,37 +369,42 @@ modest_store_widget_get_path (ModestStoreWidget *self)
 		return NULL;
 }
 
-static gint
+static ModestProtocolType
 get_value_from_combo (GtkWidget *combo)
 {
 	gchar *chosen;
+	ModestProtocol *proto;
+	const gchar *tag;
 
-	if (!combo)
-		return -1;
+	g_return_val_if_fail (combo, MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 
 	chosen = gtk_combo_box_get_active_text (GTK_COMBO_BOX (combo));
+	tag = MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS;
+	proto = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+							       tag,
+							       chosen);
 
-	return modest_protocol_info_get_transport_store_protocol (chosen);
+	return modest_protocol_get_type_id (proto);
 
 }
 
-ModestAuthProtocol
+ModestProtocolType
 modest_store_widget_get_auth (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;	
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_AUTH_NONE);
+	g_return_val_if_fail (self, MODEST_PROTOCOLS_AUTH_NONE);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return get_value_from_combo (priv->auth);
 }
 
-ModestConnectionProtocol
+ModestProtocolType
 modest_store_widget_get_security (ModestStoreWidget *self)
 {
 	ModestStoreWidgetPrivate *priv;	
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_CONNECTION_NORMAL);
+	g_return_val_if_fail (self, MODEST_PROTOCOLS_CONNECTION_NONE);
 	priv = MODEST_STORE_WIDGET_GET_PRIVATE(self);
 
 	return get_value_from_combo (priv->security);

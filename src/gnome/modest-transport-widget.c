@@ -30,7 +30,6 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 #include <widgets/modest-combo-box.h>
-#include <modest-protocol-info.h>
 #include "modest-transport-widget.h"
 #include <string.h>
 
@@ -49,7 +48,7 @@ enum {
 
 typedef struct _ModestTransportWidgetPrivate ModestTransportWidgetPrivate;
 struct _ModestTransportWidgetPrivate {
-	ModestTransportStoreProtocol proto;
+	ModestProtocolType proto;
 	GtkWidget *servername;
 	GtkWidget *username;
 	GtkWidget *auth;
@@ -116,7 +115,7 @@ modest_transport_widget_init (ModestTransportWidget *obj)
 	ModestTransportWidgetPrivate *priv;
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(obj); 
 	
-	priv->proto = MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN;
+	priv->proto = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 }
 
 static void
@@ -223,7 +222,7 @@ smtp_configuration (ModestTransportWidget *self)
 
 
 GtkWidget*
-modest_transport_widget_new (ModestTransportStoreProtocol proto)
+modest_transport_widget_new (ModestProtocolType proto)
 {
 	GObject *obj;
 	GtkWidget *w;
@@ -238,7 +237,7 @@ modest_transport_widget_new (ModestTransportStoreProtocol proto)
 
 	priv->proto = proto;
 	
-	if (proto == MODEST_PROTOCOL_TRANSPORT_SMTP) 
+	if (proto == MODEST_PROTOCOLS_TRANSPORT_SMTP) 
 		w = smtp_configuration (self);
 	else
 		w = gtk_label_new ("");
@@ -295,12 +294,12 @@ modest_transport_widget_get_servername (ModestTransportWidget *self)
 }
 
 
-ModestTransportStoreProtocol
+ModestProtocolType
 modest_transport_widget_get_proto (ModestTransportWidget *self)
 {
 	ModestTransportWidgetPrivate *priv;
 
-	g_return_val_if_fail (self, MODEST_PROTOCOL_TRANSPORT_STORE_UNKNOWN);
+	g_return_val_if_fail (self, MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(self);
 
 	return priv->proto;

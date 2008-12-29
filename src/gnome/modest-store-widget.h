@@ -31,7 +31,7 @@
 #define __MODEST_STORE_WIDGET_H__
 
 #include <gtk/gtkvbox.h>
-#include <modest-protocol-info.h>
+#include "modest-protocol.h"
 
 G_BEGIN_DECLS
 
@@ -60,14 +60,14 @@ struct _ModestStoreWidgetClass {
 /* member functions */
 GType           modest_store_widget_get_type    (void) G_GNUC_CONST;
 
-GtkWidget*      modest_store_widget_new         (ModestTransportStoreProtocol proto);
+GtkWidget*      modest_store_widget_new         (ModestProtocolType proto);
 
 const gchar*    modest_store_widget_get_username          (ModestStoreWidget *self);
 const gchar*    modest_store_widget_get_servername        (ModestStoreWidget *self);
-ModestTransportStoreProtocol  modest_store_widget_get_proto             (ModestStoreWidget *self);
 gchar *         modest_store_widget_get_path              (ModestStoreWidget *self);
-ModestAuthProtocol  modest_store_widget_get_auth              (ModestStoreWidget *self);
-ModestConnectionProtocol  modest_store_widget_get_security          (ModestStoreWidget *self);
+ModestProtocolType  modest_store_widget_get_proto             (ModestStoreWidget *self);
+ModestProtocolType  modest_store_widget_get_auth              (ModestStoreWidget *self);
+ModestProtocolType  modest_store_widget_get_security          (ModestStoreWidget *self);
 
 G_END_DECLS
 

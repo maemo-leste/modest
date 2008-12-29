@@ -37,7 +37,7 @@
 #include <modest-runtime.h>
 #include <modest-main-window-ui.h>
 #include "modest-msg-view-window-ui-dimming.h"
-
+#include "modest-defs.h"
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-window-priv.h>
 #include "widgets/modest-msg-view.h"
