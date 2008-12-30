@@ -148,6 +148,7 @@ smtp_configuration (ModestTransportWidget *self)
 {
 	ModestTransportWidgetPrivate *priv;
 	GtkWidget *label, *box, *hbox, *combo;
+	const gchar *tag = MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS;
 	
 	priv = MODEST_TRANSPORT_WIDGET_GET_PRIVATE(self);
 	box = gtk_vbox_new (FALSE, 6);
@@ -194,7 +195,7 @@ smtp_configuration (ModestTransportWidget *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
-	priv->transport_store_protos = modest_protocol_info_get_transport_store_protocol_pair_list ();
+	priv->transport_store_protos = modest_gnome_utils_get_protocols_pair_list (tag);
 	combo  = modest_combo_box_new (priv->transport_store_protos, g_str_equal);
 	
 	gtk_box_pack_start (GTK_BOX(hbox), combo, FALSE, FALSE,0);
@@ -209,7 +210,8 @@ smtp_configuration (ModestTransportWidget *self)
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
-	priv->auth_protos = modest_protocol_info_get_auth_protocol_pair_list ();
+	tag = MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS;
+	priv->auth_protos = modest_gnome_utils_get_protocols_pair_list (tag);
 	combo  = modest_combo_box_new (priv->auth_protos, g_str_equal);
 	
 	gtk_box_pack_start (GTK_BOX(hbox), combo, FALSE, FALSE, 0);

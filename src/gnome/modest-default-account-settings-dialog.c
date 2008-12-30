@@ -57,6 +57,7 @@
 #include "widgets/modest-default-account-settings-dialog.h"
 #include <tny-account.h>
 #include <tny-status.h>
+#include <tny-simple-list.h>
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
@@ -1279,7 +1280,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 }
 
 ModestAccountSettingsDialog*
-modest_account_settings_dialog_new (void)
+modest_default_account_settings_dialog_new (void)
 {
 	return g_object_new (MODEST_TYPE_ACCOUNT_SETTINGS_DIALOG, NULL);
 }
@@ -1754,7 +1755,7 @@ modest_account_settings_dialog_save_password (ModestAccountSettingsDialog *dialo
 }
 
 static void
-modest_account_settings_dialog_class_init (ModestAccountSettingsDialogClass *klass)
+modest_default_account_settings_dialog_class_init (ModestDefaultAccountSettingsDialogClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	g_type_class_add_private (klass, sizeof (ModestDefaultAccountSettingsDialogPrivate));

@@ -32,7 +32,7 @@
 #include <tny-gnome-device.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
-
+#include <tny-simple-list.h>
 #include "modest-platform.h"
 #include "modest-mail-operation-queue.h"
 #include "modest-runtime.h"
@@ -41,6 +41,7 @@
 #include "gnome/modest-account-assistant.h"
 #include "gnome/modest-gnome-sort-dialog.h"
 #include "widgets/modest-details-dialog.h"
+#include "widgets/modest-main-window.h"
 
 gboolean
 modest_platform_init (int argc, char *argv[])
@@ -586,4 +587,49 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
 
 	return dialog;
+}
+
+TnyList *
+modest_platform_get_list_to_move (ModestWindow *window)
+{
+	TnyList *list = NULL;
+
+	/* If it's a main window then it could be that we're moving a
+	   folder or a set of messages */
+	if (MODEST_IS_MAIN_WINDOW (window)) {
+		ModestHeaderView *header_view = NULL;
+		ModestFolderView *folder_view = NULL;
+
+		folder_view = (ModestFolderView *)
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		header_view = (ModestHeaderView *)
+			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
+							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+
+		/* Get folder or messages to transfer */
+		if (gtk_widget_is_focus (GTK_WIDGET (folder_view))) {
+			TnyFolderStore *src_folder;
+
+			src_folder = modest_folder_view_get_selected (folder_view);
+			if (src_folder) {
+				list = tny_simple_list_new ();
+				tny_list_prepend (list, G_OBJECT (src_folder));
+				g_object_unref (src_folder);
+			}
+		} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
+			list = modest_header_view_get_selected_headers(header_view);
+		}
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		TnyHeader *header = NULL;
+
+		/* We simply return the currently viewed message */
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (window));
+		if (header) {
+			list = tny_simple_list_new ();
+			tny_list_prepend (list, G_OBJECT (header));
+			g_object_unref (header);
+		}
+	}
+	return list;
 }
