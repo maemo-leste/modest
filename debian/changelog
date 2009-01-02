@@ -1,3 +1,9 @@
+modest (2.1-2009.2) unstable; urgency=low
+
+  * Week 02 release with new email ui for the first time in product.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 02 Jan 2009 15:57:47 +0200
+
 modest (2.1-2008.51-3) unstable; urgency=low
 
   * Fixes: NB#95888, NB#94245
