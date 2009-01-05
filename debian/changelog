@@ -1,4 +1,4 @@
-modest (2.1-2009.2) unstable; urgency=low
+modest (2.1-2009.02-1) unstable; urgency=low
 
   * Fixes: NB#93083, NB#96400, NB#96495, NB#94152, NB#96691, NB#96890
   * Week 02 release with new email ui for the first time in product.
