@@ -41,6 +41,7 @@
 static void modest_window_class_init (ModestWindowClass *klass);
 static void modest_window_init       (ModestWindow *obj);
 static void modest_window_finalize   (GObject *obj);
+static void modest_window_dispose    (GObject *obj);
 
 static gdouble  modest_window_get_zoom_default           (ModestWindow *window);
 
@@ -112,6 +113,7 @@ modest_window_class_init (ModestWindowClass *klass)
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
+	gobject_class->dispose  = modest_window_dispose;
 	gobject_class->finalize = modest_window_finalize;
 
 	klass->set_zoom_func = modest_window_set_zoom_default;
@@ -153,14 +155,6 @@ modest_window_finalize (GObject *obj)
 
 	priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
-	if (priv->ui_manager) {
-		g_object_unref (G_OBJECT(priv->ui_manager));
-		priv->ui_manager = NULL;
-	}
-	if (priv->ui_dimming_manager) {
-		g_object_unref (G_OBJECT(priv->ui_dimming_manager));
-		priv->ui_dimming_manager = NULL;
-	}
 	if (priv->dimming_state != NULL) {
 		g_slice_free (DimmedState, priv->dimming_state);
 		priv->dimming_state = NULL;
@@ -169,6 +163,26 @@ modest_window_finalize (GObject *obj)
 	g_free (priv->active_account);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
+modest_window_dispose (GObject *obj)
+{
+	ModestWindowPrivate *priv;	
+
+	priv = MODEST_WINDOW_GET_PRIVATE(obj);
+
+	priv->ui_dimming_enabled = FALSE;
+
+	if (priv->ui_manager) {
+		g_object_unref (G_OBJECT(priv->ui_manager));
+		priv->ui_manager = NULL;
+	}
+	if (priv->ui_dimming_manager) {
+		g_object_unref (G_OBJECT(priv->ui_dimming_manager));
+		priv->ui_dimming_manager = NULL;
+	}
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 
