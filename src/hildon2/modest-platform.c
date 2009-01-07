@@ -818,8 +818,8 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 					  TnyFolderStore **parent)
 {
 	GtkWidget *accept_btn = NULL; 
-	GtkWidget *dialog, *entry, *label_entry, *label_location, *hbox;
-	GtkWidget *account_picker;
+	GtkWidget *dialog, *entry = NULL, *label_entry = NULL,  *label_location = NULL, *hbox;
+	GtkWidget *account_picker = NULL;
 	GList *buttons = NULL;
 	gint result;
 	GtkSizeGroup *sizegroup;

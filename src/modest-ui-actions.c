@@ -3506,6 +3506,8 @@ modest_ui_actions_on_edit_mode_rename_folder (ModestWindow *window)
 	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
 #endif
+	} else {
+		return FALSE;
 	}
 
 	folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
@@ -3583,6 +3585,10 @@ on_delete_folder_cb (gboolean canceled,
 	} else if (MODEST_IS_FOLDER_WINDOW (parent_window)) {
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (parent_window)));
 #endif
+	} else {
+		g_object_unref (G_OBJECT (info->folder));
+		g_free (info);
+		return;
 	}
 
 	/* Unselect the folder before deleting it to free the headers */
@@ -3624,6 +3630,8 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
 #endif
+	} else {
+		return FALSE;
 	}
 	if (!folder_view)
 		return FALSE;

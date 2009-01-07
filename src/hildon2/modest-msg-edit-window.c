@@ -1317,7 +1317,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* font color */
 	priv->font_color_toolitem = GTK_WIDGET (gtk_tool_item_new ());
 	priv->font_color_button = hildon_color_button_new ();
-	GTK_WIDGET_UNSET_FLAGS (tool_item, GTK_CAN_FOCUS);
+	GTK_WIDGET_UNSET_FLAGS (priv->font_color_toolitem, GTK_CAN_FOCUS);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_button, GTK_CAN_FOCUS);
 	gtk_container_add (GTK_CONTAINER (priv->font_color_toolitem), priv->font_color_button);
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->font_color_toolitem), TRUE);
