@@ -2773,13 +2773,14 @@ remove_msgs_async_cb (TnyFolder *folder,
 							account_name);	
 	account_proto = modest_tny_account_get_protocol_type (account);
 	g_object_unref (account);
-	
-	if (( (modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry, account_proto) && !leave_on_server) ||
-	      modest_tny_folder_is_remote_folder (folder) == FALSE))
+
+	if ((modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry, account_proto) && 
+	     !leave_on_server) ||
+	    !modest_tny_folder_is_remote_folder (folder))
 		expunge = TRUE;
 	else
 		expunge = FALSE;
-	
+
 	/* Sync folder */
 	tny_folder_sync_async(folder, expunge, sync_folder_finish_callback, 
 			      NULL, self);
