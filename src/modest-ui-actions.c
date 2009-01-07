@@ -3331,24 +3331,21 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 #else
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 #endif
-	
+
 	if (parent_folder) {
 		/* The parent folder will be freed in the callback */
-		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window), 
+		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window),
 							       TRUE,
 							       parent_folder,
-							       create_folder_performer, 
+							       create_folder_performer,
 							       parent_folder);
 	}
-#ifdef MODEST_TOOLKIT_HILDON2
-	g_object_unref (parent_folder);
-#endif
 }
 
-void 
+void
 modest_ui_actions_on_new_folder (GtkAction *action, ModestWindow *window)
 {
-	
+
 	g_return_if_fail (MODEST_IS_WINDOW(window));
 
 	if (MODEST_IS_MAIN_WINDOW (window)) {
@@ -4801,7 +4798,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 		TnyFolderStore *dst_folder;
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
-		modest_ui_actions_create_folder (GTK_WIDGET (dialog), folder_view);
+		modest_ui_actions_create_folder (GTK_WIDGET (parent_win), folder_view);
 		return;
 	case GTK_RESPONSE_NONE:
 	case GTK_RESPONSE_CANCEL:

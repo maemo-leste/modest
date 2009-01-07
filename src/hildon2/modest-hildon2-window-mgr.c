@@ -720,3 +720,27 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 
 	return initial_window;
 }
+
+gint 
+find_folder_window (gconstpointer a,
+		    gconstpointer b)
+{
+	return (MODEST_IS_FOLDER_WINDOW (a)) ? 0 : 1;
+}
+
+ModestWindow *
+modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self)
+{
+	ModestHildon2WindowMgrPrivate *priv;
+	GList *window;
+
+	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), NULL);
+
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+
+	window = g_list_find_custom (priv->window_list,
+				     NULL,
+				     find_folder_window);
+
+	return (window != NULL) ? MODEST_WINDOW (window->data) : NULL;
+}

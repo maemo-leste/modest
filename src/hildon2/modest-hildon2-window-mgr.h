@@ -76,6 +76,8 @@ ModestWindowMgr*    modest_hildon2_window_mgr_new  (void);
 void modest_hildon2_window_mgr_set_account_store   (ModestHildon2WindowMgr *self,
 						    TnyAccountStore *acc_store);
 
+ModestWindow *modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_HILDON2_WINDOW_MGR_H__ */

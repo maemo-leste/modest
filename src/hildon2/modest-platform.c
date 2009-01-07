@@ -824,10 +824,14 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	gint result;
 	GtkSizeGroup *sizegroup;
 	ModestFolderView *folder_view;
+	ModestWindow *folder_window;
+	ModestHildon2WindowMgr *window_mgr;
 
-	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW (parent_window), GTK_RESPONSE_NONE);
+	window_mgr = (ModestHildon2WindowMgr *) modest_runtime_get_window_mgr ();
+	folder_window = modest_hildon2_window_mgr_get_folder_window (window_mgr);
+	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW (folder_window), GTK_RESPONSE_NONE);
 
-	folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (parent_window));
+	folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (folder_window));
 
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
@@ -922,7 +926,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), parent_window);
 	gtk_widget_show_all (GTK_WIDGET(dialog));
-		
+
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
 	if (result == GTK_RESPONSE_ACCEPT) {
 		if (show_name)
