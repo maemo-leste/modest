@@ -34,6 +34,7 @@
 static void modest_ui_dimming_manager_class_init (ModestUIDimmingManagerClass *klass);
 static void modest_ui_dimming_manager_init       (ModestUIDimmingManager *obj);
 static void modest_ui_dimming_manager_finalize   (GObject *obj);
+static void modest_ui_dimming_manager_dispose    (GObject *obj);
 
 static void _process_all_rules (gpointer key, gpointer value, gpointer user_data);
 
@@ -83,6 +84,7 @@ modest_ui_dimming_manager_class_init (ModestUIDimmingManagerClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_ui_dimming_manager_finalize;
+	gobject_class->dispose  = modest_ui_dimming_manager_dispose;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestUIDimmingManagerPrivate));
 }
@@ -133,6 +135,24 @@ modest_ui_dimming_manager_finalize (GObject *obj)
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
+modest_ui_dimming_manager_dispose (GObject *obj)
+{
+	ModestUIDimmingManagerPrivate *priv;
+
+	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(obj);
+
+	if (priv->delayed_calls != NULL) {
+		/* Remove all pending calls */
+		g_hash_table_foreach (priv->delayed_calls,
+				      remove_all_timeouts,
+				      NULL);
+		g_hash_table_remove_all (priv->delayed_calls);
+	}
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 

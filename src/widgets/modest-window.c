@@ -179,6 +179,7 @@ modest_window_dispose (GObject *obj)
 		priv->ui_manager = NULL;
 	}
 	if (priv->ui_dimming_manager) {
+		g_object_run_dispose (G_OBJECT (priv->ui_dimming_manager));
 		g_object_unref (G_OBJECT(priv->ui_dimming_manager));
 		priv->ui_dimming_manager = NULL;
 	}
