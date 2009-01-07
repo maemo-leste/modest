@@ -78,7 +78,7 @@ struct _ModestWindowMgrClass {
 								 ModestWindow **win);
 	GList *               (*get_window_list)                (ModestWindowMgr *self);
 	ModestWindow *        (*show_initial_window)            (ModestWindowMgr *self);
-
+	ModestWindow *        (*get_current_top)                (ModestWindowMgr *self);
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
 };
@@ -392,6 +392,16 @@ GtkWidget *   modest_window_mgr_get_msg_edit_window (ModestWindowMgr *self);
  * Returns: the initial window. NULL if something goes wrong
  **/
 ModestWindow* modest_window_mgr_show_initial_window (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_get_current_top:
+ * @self: a #ModestWindowMgr
+ * 
+ * this function returns the ModestWindow that is currently on top of all the others
+ * 
+ * Returns: the topmost #ModestWindow
+ **/
+ModestWindow* modest_window_mgr_get_current_top (ModestWindowMgr *self);
 
 G_END_DECLS
 

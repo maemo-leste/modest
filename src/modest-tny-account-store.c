@@ -1512,9 +1512,9 @@ connection_status_changed (TnyAccount *account,
 	   runnning */
 	if (status == TNY_CONNECTION_STATUS_CONNECTED) {
 		const gchar *account_name;
-		ModestWindow *main_window;
+		ModestWindow *top_window;
 		ModestTnyAccountStorePrivate *priv = NULL;
-		
+
 		priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (data);
 
 		/* Remove this handler */
@@ -1524,8 +1524,8 @@ connection_status_changed (TnyAccount *account,
 
 		/* Perform a send receive */
 		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
-		modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, TRUE, main_window);
+		top_window = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
+		modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, TRUE, top_window);
 	}
 }
 

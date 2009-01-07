@@ -77,6 +77,7 @@ static gboolean modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *se
 static gboolean window_can_close (ModestWindow *window);
 static gboolean window_has_modals (ModestWindow *window);
 static ModestWindow *modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self);
+static ModestWindow *modest_hildon2_window_mgr_get_current_top (ModestWindowMgr *self);
 
 typedef struct _ModestHildon2WindowMgrPrivate ModestHildon2WindowMgrPrivate;
 struct _ModestHildon2WindowMgrPrivate {
@@ -148,6 +149,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->get_window_list = modest_hildon2_window_mgr_get_window_list;
 	mgr_class->close_all_windows = modest_hildon2_window_mgr_close_all_windows;
 	mgr_class->show_initial_window = modest_hildon2_window_mgr_show_initial_window;
+	mgr_class->get_current_top = modest_hildon2_window_mgr_get_current_top;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowMgrPrivate));
 
@@ -336,7 +338,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	ModestHildon2WindowMgrPrivate *priv;
 	gint *handler_id;
 	HildonProgram *program;
-	GtkWidget *current_top;
 	HildonWindowStack *stack;
 	gboolean nested_msg = FALSE;
 
@@ -364,27 +365,28 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
-	current_top = hildon_window_stack_peek (stack);
+	if (priv->current_top == NULL)
+		priv->current_top = (ModestWindow *) hildon_window_stack_peek (stack);
 	nested_msg = MODEST_IS_MSG_VIEW_WINDOW (window) && 
 		MODEST_IS_MSG_VIEW_WINDOW (parent);
 
 	/* Close views if they're being shown. Nevertheless we must
 	   allow nested messages */
 	if (!nested_msg &&
-	    (MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
-	     MODEST_IS_MSG_VIEW_WINDOW (current_top))) {
+	    (MODEST_IS_MSG_EDIT_WINDOW (priv->current_top) ||
+	     MODEST_IS_MSG_VIEW_WINDOW (priv->current_top))) {
 		gboolean retval;
 
 		/* If the current view has modal dialogs then
 		   we fail to register the new view */
-		if ((current_top != NULL) &&
-		    window_has_modals (MODEST_WINDOW (current_top))) {
+		if ((priv->current_top != NULL) &&
+		    window_has_modals (MODEST_WINDOW (priv->current_top))) {
 			/* Window on top but it has opened dialogs */
 			goto fail;
 		}
 
 		/* Close the current view */
-		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+		g_signal_emit_by_name (G_OBJECT (priv->current_top), "delete-event", NULL, &retval);
 		if (retval == TRUE) {
 			/* Cancelled closing top window, then we fail to register */
 			goto fail;
@@ -404,9 +406,9 @@ fail:
 	/* Add to list. Keep a reference to the window */
 	priv->window_list = g_list_remove (priv->window_list, window);
 	g_object_unref (window);
-	current_top = hildon_window_stack_peek (stack);
-	if (current_top)
-		gtk_window_present (GTK_WINDOW (current_top));
+	priv->current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+	if (priv->current_top)
+		gtk_window_present (GTK_WINDOW (priv->current_top));
 	return FALSE;
 }
 
@@ -721,7 +723,17 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 	return initial_window;
 }
 
-gint 
+
+static ModestWindow *
+modest_hildon2_window_mgr_get_current_top (ModestWindowMgr *self)
+{
+	ModestHildon2WindowMgrPrivate *priv;
+
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+	return priv->current_top;
+}
+
+static gint 
 find_folder_window (gconstpointer a,
 		    gconstpointer b)
 {

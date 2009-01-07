@@ -67,6 +67,7 @@ static gboolean modest_window_mgr_find_registered_header_default (ModestWindowMg
 								  ModestWindow **win);
 static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
+static ModestWindow *modest_window_mgr_get_current_top_default (ModestWindowMgr *self);
 
 /* list my signals  */
 enum {
@@ -147,6 +148,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->find_registered_header = modest_window_mgr_find_registered_header_default;
 	mgr_class->get_window_list = modest_window_mgr_get_window_list_default;
 	mgr_class->show_initial_window = modest_window_mgr_show_initial_window_default;
+	mgr_class->get_current_top = modest_window_mgr_get_current_top_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
 
@@ -860,4 +862,18 @@ modest_window_mgr_show_initial_window_default (ModestWindowMgr *self)
 	/* By default it returns the main window creating it if
 	   needed */
 	return modest_window_mgr_get_main_window (self, TRUE);
+}
+
+
+ModestWindow *
+modest_window_mgr_get_current_top (ModestWindowMgr *self) 
+{
+	return MODEST_WINDOW_MGR_GET_CLASS (self)->get_current_top (self);
+}
+
+
+static ModestWindow *
+modest_window_mgr_get_current_top_default (ModestWindowMgr *self)
+{
+	g_return_val_if_reached (NULL);
 }

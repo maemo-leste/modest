@@ -85,6 +85,7 @@ static gboolean modest_hildon1_window_mgr_find_registered_header (ModestWindowMg
 								  ModestWindow **win);
 static GList *modest_hildon1_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self);
+static ModestWindow *modest_hildon1_window_mgr_get_current_top (ModestWindowMgr *self);
 
 typedef struct _ModestHildon1WindowMgrPrivate ModestHildon1WindowMgrPrivate;
 struct _ModestHildon1WindowMgrPrivate {
@@ -155,6 +156,7 @@ modest_hildon1_window_mgr_class_init (ModestHildon1WindowMgrClass *klass)
 	mgr_class->find_registered_header = modest_hildon1_window_mgr_find_registered_header;
 	mgr_class->get_window_list = modest_hildon1_window_mgr_get_window_list;
 	mgr_class->close_all_windows = modest_hildon1_window_mgr_close_all_windows;
+	mgr_class->get_current_top = modest_hildon1_window_mgr_get_current_top;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon1WindowMgrPrivate));
 
@@ -1025,3 +1027,12 @@ on_modal_dialog_destroy (GtkObject *object,
 	remove_modal_from_queue (GTK_WIDGET (object), self);
 }
 
+static ModestWindow*
+modest_hildon1_window_mgr_get_current_top (ModestWindowMgr *self)
+{
+	ModestHildon1WindowMgrPrivate *priv;
+
+	priv = MODEST_HILDON1_WINDOW_MGR_GET_PRIVATE (self);
+
+	return priv->current_top;
+}
