@@ -1,3 +1,13 @@
+modest (2.1-2009.03-1) unstable; urgency=low
+
+  * Week 03 official pre-release - first build
+  * Fixes: NB#97118, NB#97124, NB#93071, NB#94094, NB#97221, NB#88130, NB#91078, NB#94922
+  * Fixes: NB#95542, NB#96132, NB#96400, NB#96495, NB#90014, NB#94245, NB#93737, NB#94030
+  * Fixes: NB#94070, NB#94152, NB#94666, NB#94682, NB#95783, NB#96025, NB#96049, NB#96184
+  * Fixes: NB#96424, NB#96512, NB#96515, NB#96622, NB#96691, NB#96890, NB#96198
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 08 Jan 2009 11:58:54 +0200
+
 modest (2.1-2009.02-1) unstable; urgency=low
 
   * Fixes: NB#93083, NB#96400, NB#96495, NB#94152, NB#96691, NB#96890
