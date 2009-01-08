@@ -266,7 +266,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_sent"),
 						date_time_str);
 	}
-	
+
 	/* Set To and CC */
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_to"), to);
 
@@ -275,10 +275,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_cc"), cc);
 
 	/* Set size */
-	if (size <= 0)
-		size_s = g_strdup (_("mcen_va_message_properties_size_noinfo"));
-	else
-		size_s = modest_text_utils_get_display_size (size);
+	size_s = modest_text_utils_get_display_size (size);
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_size"), size_s);
 	g_free (size_s);
 
@@ -296,12 +293,12 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 {
 	gchar *count_s, *size_s, *name = NULL;
 	gchar *tmp = NULL;
-	gint size, count;
+	guint size, count;
 
 	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
 	g_return_if_fail (modest_tny_folder_guess_folder_type (folder)
 			  != TNY_FOLDER_TYPE_INVALID);
-	
+
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_folder_properties"));
 
@@ -311,10 +308,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 
 	/* Format count and size */
 	count_s = g_strdup_printf ("%d", count);
-	if (size <= 0)
-		size_s = g_strdup (_("mcen_va_message_properties_size_noinfo"));
-	else
-		size_s = modest_text_utils_get_display_size (size);
+	size_s = modest_text_utils_get_display_size (size);
 
 	/* Different names for the local folders */
 	if (modest_tny_folder_is_local_folder (folder) ||
