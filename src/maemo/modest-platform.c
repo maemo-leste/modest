@@ -759,7 +759,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 			else
 				real_suggested_name = g_strdup_printf (_("mcen_ia_default_folder_name_s"),
 				                                       num_str);
-			exists = modest_tny_folder_has_subfolder_with_name (parent_folder,
+			exists = modest_tny_folder_has_subfolder_with_name (suggested_parent,
 									    real_suggested_name,
 									    TRUE);
 

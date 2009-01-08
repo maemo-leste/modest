@@ -177,10 +177,12 @@ static void modest_ui_actions_on_main_window_move_to (GtkAction *action,
 						      GtkWidget *folder_view,
 						      TnyFolderStore *dst_folder,
 						      ModestMainWindow *win);
+#ifdef MODEST_TOOLKIT_HILDON2
 static void modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 							TnyFolderStore *dst_folder,
 							TnyList *selection,
 							GtkWindow *win);
+#endif
 
 static void modest_ui_actions_on_window_move_to (GtkAction *action,
 						 TnyList *list_to_move,
