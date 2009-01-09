@@ -803,15 +803,25 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 {
 	ModestHeaderWindow *self;
 	ModestMailOperationTypeOperation op_type;
-	
+	GSList *operations = NULL;
+	ModestMailOperationQueue *queue;
+
 	self = MODEST_HEADER_WINDOW (user_data);
 	op_type = modest_mail_operation_get_type_operation (mail_op);
-	
-	/* If no more operations are being observed, NORMAL mode is enabled again */
-	if (modest_mail_operation_queue_num_elements (modest_runtime_get_mail_operation_queue ()) == 0) {
+
+	queue = modest_runtime_get_mail_operation_queue ();
+	operations = modest_mail_operation_queue_get_by_source (queue, user_data);
+
+	/* There should be at least the current one */
+	if (!operations)
+		g_return_if_reached ();
+
+	/* Don't disable the progress hint if there are more pending
+	   operations from this window */
+	if (g_slist_length (operations) == 1)
 		set_progress_hint (self, FALSE);
-	}
-	
+
+	g_slist_free (operations);
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 }
 
