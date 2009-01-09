@@ -3268,17 +3268,17 @@ do_create_folder (GtkWindow *parent_window,
 {
 	gint result;
 	gchar *folder_name = NULL;
-	TnyFolderStore *parent_folder;
+	TnyFolderStore *parent_folder = NULL;
 
 	result = modest_platform_run_new_folder_dialog (GTK_WINDOW (parent_window),
 							suggested_parent,
 							(gchar *) suggested_name,
 							&folder_name,
 							&parent_folder);
-	
+
 	if (result == GTK_RESPONSE_ACCEPT && parent_folder) {
 		ModestMailOperation *mail_op;
-		
+
 		mail_op  = modest_mail_operation_new ((GObject *) parent_window);
 		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
 						 mail_op);
@@ -3289,7 +3289,9 @@ do_create_folder (GtkWindow *parent_window,
 						     folder_name);
 		g_object_unref (mail_op);
 	}
-	g_object_unref (parent_folder);
+
+	if (parent_folder)
+		g_object_unref (parent_folder);
 }
 
 static void
@@ -3323,13 +3325,20 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 #ifdef MODEST_TOOLKIT_HILDON2
 	const gchar *active_account;
 	TnyAccount *account;
+	ModestTnyAccountStore *acc_store;
 
 	/* In hildon 2.2 we use the current account as default parent */
+	acc_store = modest_runtime_get_account_store ();
 	active_account = modest_window_get_active_account (MODEST_WINDOW (parent_window));
-	account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-							       active_account,
-							       TNY_ACCOUNT_TYPE_STORE);
-	parent_folder = TNY_FOLDER_STORE (account);
+	if (active_account) {
+		account = modest_tny_account_store_get_server_account (acc_store,
+								       active_account,
+								       TNY_ACCOUNT_TYPE_STORE);
+		parent_folder = TNY_FOLDER_STORE (account);
+	} else {
+		parent_folder = (TnyFolderStore *) 
+			modest_tny_account_store_get_local_folders_account (acc_store);
+	}
 #else
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 #endif

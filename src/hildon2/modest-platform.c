@@ -955,6 +955,8 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 {
 	gchar *real_suggested_name = NULL, *tmp = NULL;
 	gint result;
+	ModestTnyAccountStore *acc_store;
+	TnyAccount *account;
 
 	if(suggested_name == NULL)
 	{
@@ -990,10 +992,20 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	}
 
 	/* In hildon 2.2 we always suggest the archive folder as parent */
-	suggested_folder = TNY_FOLDER_STORE (
-		modest_tny_account_get_special_folder 
-		(modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store ()),
-		 TNY_FOLDER_TYPE_ARCHIVE));
+	acc_store = modest_runtime_get_account_store ();
+	account = modest_tny_account_store_get_mmc_folders_account (acc_store);
+	if (account) {
+		suggested_folder = (TnyFolderStore *)
+			modest_tny_account_get_special_folder (account, 
+							       TNY_FOLDER_TYPE_ARCHIVE);
+		g_object_unref (account);
+		account = NULL;
+	}
+
+	/* If there is not archive folder then fallback to local folders account */ 
+	if (!suggested_folder)
+		suggested_folder = (TnyFolderStore *)
+			modest_tny_account_store_get_local_folders_account (acc_store);
 
 	tmp = g_strconcat (_("mcen_fi_new_folder_name"), ":", NULL);
 	result = modest_platform_run_folder_common_dialog (parent_window, 
@@ -1874,7 +1886,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 
 	gchar *question = g_strdup_printf (_("mcen_nc_unknown_certificate"),
 					   server_name);
-	
+
 	/* We use GTK_RESPONSE_APPLY because we want the button in the
 	   middle of OK and CANCEL the same as the browser does for
 	   example. With GTK_RESPONSE_HELP the view button is aligned
@@ -1886,7 +1898,7 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 		_HL("wdgt_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
 		_HL("wdgt_bd_no"), GTK_RESPONSE_CANCEL,
 		NULL, NULL);
-	
+
 	g_signal_connect (G_OBJECT(note), "response", 
 			  G_CALLBACK(on_cert_dialog_response),
 			  (gpointer) certificate);
