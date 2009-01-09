@@ -50,6 +50,7 @@
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
 #include <modest-ui-dimming-rules.h>
+#include <modest-tny-folder.h>
 
 typedef enum {
 	CONTENTS_STATE_NONE = 0,
@@ -420,6 +421,15 @@ modest_header_window_new (TnyFolder *folder)
 	if (window_icon) {
 		gtk_window_set_icon (GTK_WINDOW (self), window_icon);
 		g_object_unref (window_icon);
+	}
+
+	/* Set window title */
+	if (TNY_IS_FOLDER (folder)) {
+		gchar *folder_name;
+
+		folder_name = modest_tny_folder_get_display_name (folder);
+		gtk_window_set_title (GTK_WINDOW (self), folder_name);
+		g_free (folder_name);
 	}
 
 	/* Listen for changes in the screen, we don't want to show a
