@@ -489,3 +489,38 @@ modest_tny_folder_is_ancestor (TnyFolder *folder,
 	}
 	return found;
 }
+
+gchar * 
+modest_tny_folder_get_display_name (TnyFolder *folder)
+{
+	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
+	gchar *fname;
+
+	g_return_val_if_fail (TNY_IS_FOLDER (folder), NULL);
+
+	fname = g_strdup (tny_folder_get_name (folder));
+	type = tny_folder_get_folder_type (folder);
+
+	if (modest_tny_folder_is_local_folder (TNY_FOLDER (folder)) ||
+	    modest_tny_folder_is_memory_card_folder (TNY_FOLDER (folder))) {
+		type = modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (folder));
+		if (type != TNY_FOLDER_TYPE_UNKNOWN) {
+			g_free (fname);
+				fname = g_strdup (modest_local_folder_info_get_type_display_name (type));
+		}
+	} else {
+		/* Sometimes an special folder is reported by the server as
+		   NORMAL, like some versions of Dovecot */
+		if (type == TNY_FOLDER_TYPE_NORMAL ||
+		    type == TNY_FOLDER_TYPE_UNKNOWN) {
+			type = modest_tny_folder_guess_folder_type (TNY_FOLDER (folder));
+		}
+	}
+
+	if (type == TNY_FOLDER_TYPE_INBOX) {
+		g_free (fname);
+		fname = g_strdup (_("mcen_me_folder_inbox"));
+	}
+
+	return fname;
+}

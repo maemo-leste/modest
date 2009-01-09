@@ -203,6 +203,16 @@ gboolean modest_tny_folder_has_subfolder_with_name (TnyFolderStore *folder,
 gboolean modest_tny_folder_is_ancestor (TnyFolder *folder,
 					TnyFolderStore *ancestor);
 
+/**
+ * modest_tny_folder_get_display_name:
+ * @folder: a #TnyFolder
+ *
+ * obtain the display name for @folder
+ *
+ * Returns: a newly allocated string
+ */
+gchar * modest_tny_folder_get_display_name (TnyFolder *folder);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_FOLDER_H__*/
