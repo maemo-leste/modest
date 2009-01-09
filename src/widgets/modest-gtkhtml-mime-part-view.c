@@ -252,7 +252,7 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 
 	gtk_html_set_editable        (GTK_HTML(self), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(self), TRUE);
-	gtk_html_set_caret_mode      (GTK_HTML(self), TRUE);
+	gtk_html_set_caret_mode      (GTK_HTML(self), FALSE);
 	gtk_html_set_blocking        (GTK_HTML(self), TRUE);
 	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
 
