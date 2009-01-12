@@ -211,7 +211,7 @@ static void DEBUG_BUFFER (WPTextBuffer *buffer)
 }
 
 static const GtkActionEntry hildon2_msg_edit_action_entries [] = {
-	{ "MessageSettings", NULL, N_("TODO: settings..."), NULL, NULL, G_CALLBACK (on_message_settings)},
+	{ "MessageSettings", NULL, N_("mcen_me_message_settings"), NULL, NULL, G_CALLBACK (on_message_settings)},
 };
 
 
@@ -3777,7 +3777,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("TODO: Message settings"));
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_me_message_settings"));
 	
 	/* Set current values */
 	switch (priv->priority_flags) {
@@ -3912,7 +3912,7 @@ setup_menu (ModestMsgEditWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"),
 					   APP_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: Message settings..."),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_message_settings"),
 					   APP_MENU_CALLBACK (on_message_settings),
 					   NULL);
 	priv->find_toolbar_button = hildon_check_button_new (0);

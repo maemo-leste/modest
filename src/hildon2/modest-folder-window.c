@@ -286,17 +286,17 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 
 	/* Register edit modes */
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_DELETE,
-						  _("TODO: Select folder to delete"), _("TODO: Delete"),
+						  _("mcen_ti_edit_folder_delete"), _HL("wdgt_bd_delete"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_delete_folder));
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_MOVE,
-						  _("TODO: Select folder to move"), _("TODO: Move"),
+						  _("mcen_ti_edit_move_folder"), _("mcen_me_move"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));	
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_RENAME,
-						  _("TODO: Select folder to rename"), _("TODO: Rename"),
+						  _("mcen_ti_edit_rename_folde"), _HL("wdgt_bd_rename"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_rename_folder));
@@ -373,16 +373,16 @@ static void setup_menu (ModestFolderWindow *self)
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
 
 	/* folders actions */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: new folder"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_folder"),
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_folder),
 					   NULL);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_user_renamefolder"),
 					   APP_MENU_CALLBACK (set_rename_edit_mode),
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: move folder"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_folder"),
 					   APP_MENU_CALLBACK (set_moveto_edit_mode),
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: delete folder"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_delete_folder"),
 					   APP_MENU_CALLBACK (set_delete_edit_mode),
 					   NULL);
 
@@ -400,10 +400,10 @@ static void setup_menu (ModestFolderWindow *self)
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 
 	/* Settings menu buttons */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: new account"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_accounts"),
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_account),
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: edit accounts"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_edit_accounts"),
 					   APP_MENU_CALLBACK (modest_ui_actions_on_accounts),
 					   NULL);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_options"),

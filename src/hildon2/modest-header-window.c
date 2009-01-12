@@ -446,12 +446,12 @@ modest_header_window_new (TnyFolder *folder)
 
 	/* setup edit modes */
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_DELETE,
-						  _("TODO: Select messages to delete"), _("TODO: Delete"),
+						  _("mcen_ti_edit_delete"), _HL("wdgt_bd_delete"),
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_delete_message));
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_MOVE,
-						  _("TODO: Select messages to move"), _("TODO: Move"),
+						  _("mcen_ti_edit_move"), _("mcen_me_move"),
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
