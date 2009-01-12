@@ -4845,7 +4845,8 @@ on_move_to_dialog_response (GtkDialog *dialog,
 	}
 
 	/* Free the helper and exit */
-	g_object_unref (helper->list);
+	if (helper->list)
+		g_object_unref (helper->list);
 	g_slice_free (MoveToInfo, helper);
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }

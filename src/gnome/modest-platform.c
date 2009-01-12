@@ -630,6 +630,9 @@ modest_platform_get_list_to_move (ModestWindow *window)
 			tny_list_prepend (list, G_OBJECT (header));
 			g_object_unref (header);
 		}
+	} else {
+		g_return_val_if_reached (NULL);
 	}
+
 	return list;
 }

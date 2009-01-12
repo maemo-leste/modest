@@ -2450,16 +2450,16 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 TnyList *
 modest_platform_get_list_to_move (ModestWindow *window)
 {
+	TnyList *list = NULL;
+
 	if (MODEST_IS_HEADER_WINDOW (window)) {
 		ModestHeaderView *header_view;
 
 		header_view = modest_header_window_get_header_view (MODEST_HEADER_WINDOW (window));
-
-		return modest_header_view_get_selected_headers (header_view);
+		list = modest_header_view_get_selected_headers (header_view);
 	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
 		ModestFolderView *folder_view;
 		TnyFolderStore *selected_folder;
-		TnyList *list;
 
 		list = TNY_LIST (tny_simple_list_new ());
 		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window));
@@ -2469,7 +2469,18 @@ modest_platform_get_list_to_move (ModestWindow *window)
 			g_object_unref (selected_folder);
 		}
 		return list;
+	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		TnyHeader *header;
+
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (window));
+		if (header) {
+			list = TNY_LIST (tny_simple_list_new ());
+			tny_list_prepend (list, G_OBJECT (header));
+			g_object_unref (header);
+		}
 	} else {
-		return NULL;
+		g_return_val_if_reached (NULL);
 	}
+
+	return list;
 }
