@@ -50,6 +50,7 @@
 #include <modest-ui-dimming-rules.h>
 #include <modest-ui-dimming-manager.h>
 #include <modest-window-priv.h>
+#include "modest-text-utils.h"
 
 typedef enum {
 	EDIT_MODE_COMMAND_MOVE = 1,
