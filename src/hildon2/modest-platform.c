@@ -1386,10 +1386,12 @@ modest_platform_set_update_interval (guint minutes)
 void
 modest_platform_push_email_notification(void)
 {
-	gboolean screen_on = TRUE, app_in_foreground;
+	gboolean screen_on, app_in_foreground;
 
 	/* Get the window status */
 	app_in_foreground = hildon_program_get_is_topmost (hildon_program_get_instance ());
+
+	screen_on = modest_window_mgr_screen_is_on (modest_runtime_get_window_mgr ());
 
 	/* If the screen is on and the app is in the
 	   foreground we don't show anything */

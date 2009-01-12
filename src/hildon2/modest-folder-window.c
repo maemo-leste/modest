@@ -90,8 +90,6 @@ struct _ModestFolderWindowPrivate {
 	/* signals */
 	GSList *sighandlers;
 
-	/* Display state */
-	osso_display_state_t display_state;
 };
 #define MODEST_FOLDER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_FOLDER_WINDOW, \
@@ -151,7 +149,6 @@ modest_folder_window_init (ModestFolderWindow *obj)
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(obj);
 
 	priv->sighandlers = NULL;
-	priv->display_state = OSSO_DISPLAY_ON;
 	
 	priv->folder_view = NULL;
 
@@ -208,19 +205,6 @@ connect_signals (ModestFolderWindow *self)
 	
 }
 
-static void 
-osso_display_event_cb (osso_display_state_t state, 
-		       gpointer data)
-{
-	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (data);
-
-	priv->display_state = state;
-
-	/* Stop blinking if the screen becomes on */
-	if (priv->display_state == OSSO_DISPLAY_ON)
-		modest_platform_remove_new_mail_notifications (TRUE);
-}
-
 ModestWindow *
 modest_folder_window_new (TnyFolderStoreQuery *query)
 {
@@ -273,12 +257,6 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 		g_object_unref (window_icon);
 	}
 
-	/* Listen for changes in the screen, we don't want to show a
-	   led pattern when the display is on for example */
-	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
-				      osso_display_event_cb,
-				      self); 
-
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
 	 * and we don't want to do that until later,
@@ -303,18 +281,6 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_rename_folder));
 	
 	return MODEST_WINDOW(self);
-}
-
-gboolean
-modest_folder_window_screen_is_on (ModestFolderWindow *self)
-{
-	ModestFolderWindowPrivate *priv = NULL;
-
-	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(self), FALSE);
-
-	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
-	
-	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
 }
 
 ModestFolderView *

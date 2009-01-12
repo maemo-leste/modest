@@ -86,6 +86,7 @@ static gboolean modest_hildon1_window_mgr_find_registered_header (ModestWindowMg
 static GList *modest_hildon1_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_hildon1_window_mgr_close_all_windows (ModestWindowMgr *self);
 static ModestWindow *modest_hildon1_window_mgr_get_current_top (ModestWindowMgr *self);
+static gboolean modest_hildon1_window_mgr_screen_is_on (ModestWindowMgr *self);
 
 typedef struct _ModestHildon1WindowMgrPrivate ModestHildon1WindowMgrPrivate;
 struct _ModestHildon1WindowMgrPrivate {
@@ -157,6 +158,7 @@ modest_hildon1_window_mgr_class_init (ModestHildon1WindowMgrClass *klass)
 	mgr_class->get_window_list = modest_hildon1_window_mgr_get_window_list;
 	mgr_class->close_all_windows = modest_hildon1_window_mgr_close_all_windows;
 	mgr_class->get_current_top = modest_hildon1_window_mgr_get_current_top;
+	mgr_class->screen_is_on = modest_hildon1_window_mgr_screen_is_on;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon1WindowMgrPrivate));
 
@@ -1035,4 +1037,20 @@ modest_hildon1_window_mgr_get_current_top (ModestWindowMgr *self)
 	priv = MODEST_HILDON1_WINDOW_MGR_GET_PRIVATE (self);
 
 	return priv->current_top;
+}
+
+static gboolean
+modest_hildon1_window_mgr_screen_is_on (ModestWindowMgr *self)
+{
+	ModestHildon1WindowMgrPrivate *priv;
+	ModestWindow *main_window;
+
+	priv = MODEST_HILDON1_WINDOW_MGR_GET_PRIVATE (self);
+
+	main_window = modest_window_mgr_get_main_window (self, FALSE);
+	if (main_window && MODEST_IS_MAIN_WINDOW (main_window)) {
+		return modest_main_window_screen_is_on (MODEST_MAIN_WINDOW (main_window));
+	} else {
+		return TRUE;
+	}
 }

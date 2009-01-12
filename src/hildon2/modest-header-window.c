@@ -87,9 +87,6 @@ struct _ModestHeaderWindowPrivate {
 	GSList *sighandlers;
 	gulong queue_change_handler;
 
-	/* Display state */
-	osso_display_state_t display_state;
-
 	/* progress hint */
 	gboolean progress_hint;
 };
@@ -211,7 +208,6 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
 	priv->sighandlers = NULL;
-	priv->display_state = OSSO_DISPLAY_ON;
 	
 	priv->header_view = NULL;
 	priv->empty_view = NULL;
@@ -318,19 +314,6 @@ connect_signals (ModestHeaderWindow *self)
 				  self);
 }
 
-static void 
-osso_display_event_cb (osso_display_state_t state, 
-		       gpointer data)
-{
-	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (data);
-
-	priv->display_state = state;
-
-	/* Stop blinking if the screen becomes on */
-	if (priv->display_state == OSSO_DISPLAY_ON)
-		modest_platform_remove_new_mail_notifications (TRUE);
-}
-
 static GtkWidget *
 create_header_view (ModestWindow *progress_window, TnyFolder *folder)
 {
@@ -432,12 +415,6 @@ modest_header_window_new (TnyFolder *folder)
 		g_free (folder_name);
 	}
 
-	/* Listen for changes in the screen, we don't want to show a
-	   led pattern when the display is on for example */
-	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
-				      osso_display_event_cb,
-				      self); 
-
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
 	 * and we don't want to do that until later,
@@ -457,18 +434,6 @@ modest_header_window_new (TnyFolder *folder)
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
 
 	return MODEST_WINDOW(self);
-}
-
-gboolean
-modest_header_window_screen_is_on (ModestHeaderWindow *self)
-{
-	ModestHeaderWindowPrivate *priv = NULL;
-
-	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW(self), FALSE);
-
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
-	
-	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
 }
 
 ModestHeaderView *

@@ -68,6 +68,7 @@ static gboolean modest_window_mgr_find_registered_header_default (ModestWindowMg
 static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_get_current_top_default (ModestWindowMgr *self);
+static gboolean modest_window_mgr_screen_is_on_default (ModestWindowMgr *self);
 
 /* list my signals  */
 enum {
@@ -149,6 +150,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->get_window_list = modest_window_mgr_get_window_list_default;
 	mgr_class->show_initial_window = modest_window_mgr_show_initial_window_default;
 	mgr_class->get_current_top = modest_window_mgr_get_current_top_default;
+	mgr_class->screen_is_on = modest_window_mgr_screen_is_on_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
 
@@ -876,4 +878,18 @@ static ModestWindow *
 modest_window_mgr_get_current_top_default (ModestWindowMgr *self)
 {
 	g_return_val_if_reached (NULL);
+}
+
+gboolean
+modest_window_mgr_screen_is_on (ModestWindowMgr *self)
+{
+	return MODEST_WINDOW_MGR_GET_CLASS (self)->screen_is_on (self);
+}
+
+static gboolean
+modest_window_mgr_screen_is_on_default (ModestWindowMgr *self)
+{
+	/* Default implementation is assuming screen is always on */
+
+	return TRUE;
 }

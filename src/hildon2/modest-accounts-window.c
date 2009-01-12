@@ -70,8 +70,6 @@ struct _ModestAccountsWindowPrivate {
 	/* signals */
 	GSList *sighandlers;
 
-	/* Display state */
-	osso_display_state_t display_state;
 };
 #define MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									    MODEST_TYPE_ACCOUNTS_WINDOW, \
@@ -129,7 +127,6 @@ modest_accounts_window_instance_init (ModestAccountsWindow *obj)
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(obj);
 
 	priv->sighandlers = NULL;
-	priv->display_state = OSSO_DISPLAY_ON;
 	
 	priv->account_view = NULL;
 	
@@ -182,19 +179,6 @@ connect_signals (ModestAccountsWindow *self)
 	
 }
 
-static void 
-osso_display_event_cb (osso_display_state_t state, 
-		       gpointer data)
-{
-	ModestAccountsWindowPrivate *priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (data);
-
-	priv->display_state = state;
-
-	/* Stop blinking if the screen becomes on */
-	if (priv->display_state == OSSO_DISPLAY_ON)
-		modest_platform_remove_new_mail_notifications (TRUE);
-}
-
 ModestWindow *
 modest_accounts_window_new (void)
 {
@@ -237,12 +221,6 @@ modest_accounts_window_new (void)
 		g_object_unref (window_icon);
 	}
 
-	/* Listen for changes in the screen, we don't want to show a
-	   led pattern when the display is on for example */
-	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
-				      osso_display_event_cb,
-				      self); 
-
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
 	 * and we don't want to do that until later,
@@ -250,18 +228,6 @@ modest_accounts_window_new (void)
 	 */
 
 	return MODEST_WINDOW(self);
-}
-
-gboolean
-modest_accounts_window_screen_is_on (ModestAccountsWindow *self)
-{
-	ModestAccountsWindowPrivate *priv = NULL;
-
-	g_return_val_if_fail (MODEST_IS_ACCOUNTS_WINDOW(self), FALSE);
-
-	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
-	
-	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
 }
 
 ModestAccountView *

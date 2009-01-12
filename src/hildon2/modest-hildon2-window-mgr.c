@@ -42,6 +42,7 @@
 #include "modest-tny-folder.h"
 #include "modest-folder-window.h"
 #include "modest-accounts-window.h"
+#include <modest-maemo-utils.h>
 
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass);
@@ -78,6 +79,9 @@ static gboolean window_can_close (ModestWindow *window);
 static gboolean window_has_modals (ModestWindow *window);
 static ModestWindow *modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self);
 static ModestWindow *modest_hildon2_window_mgr_get_current_top (ModestWindowMgr *self);
+static gboolean modest_hildon2_window_mgr_screen_is_on (ModestWindowMgr *self);
+static void osso_display_event_cb (osso_display_state_t state, 
+				   gpointer data);
 
 typedef struct _ModestHildon2WindowMgrPrivate ModestHildon2WindowMgrPrivate;
 struct _ModestHildon2WindowMgrPrivate {
@@ -95,6 +99,9 @@ struct _ModestHildon2WindowMgrPrivate {
 
 	GSList       *modal_handler_uids;
 	ModestWindow *current_top;
+
+	/* Display state */
+	osso_display_state_t display_state;
 };
 #define MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 										   MODEST_TYPE_HILDON2_WINDOW_MGR, \
@@ -150,6 +157,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->close_all_windows = modest_hildon2_window_mgr_close_all_windows;
 	mgr_class->show_initial_window = modest_hildon2_window_mgr_show_initial_window;
 	mgr_class->get_current_top = modest_hildon2_window_mgr_get_current_top;
+	mgr_class->screen_is_on = modest_hildon2_window_mgr_screen_is_on;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowMgrPrivate));
 
@@ -177,6 +185,14 @@ modest_hildon2_window_mgr_instance_init (ModestHildon2WindowMgr *obj)
 	priv->closing_time = 0;
 
 	priv->modal_handler_uids = NULL;
+	priv->display_state = OSSO_DISPLAY_ON;
+
+	/* Listen for changes in the screen, we don't want to show a
+	   led pattern when the display is on for example */
+	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
+				      osso_display_event_cb,
+				      obj); 
+
 }
 
 static void
@@ -187,6 +203,9 @@ modest_hildon2_window_mgr_finalize (GObject *obj)
 	modest_signal_mgr_disconnect_all_and_destroy (priv->window_state_uids);
 	priv->window_state_uids = NULL;
 
+	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
+				      NULL,
+				      NULL); 
 	if (priv->window_list) {
 		GList *iter = priv->window_list;
 		/* unregister pending windows */
@@ -756,3 +775,29 @@ modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self)
 
 	return (window != NULL) ? MODEST_WINDOW (window->data) : NULL;
 }
+
+static gboolean
+modest_hildon2_window_mgr_screen_is_on (ModestWindowMgr *self)
+{
+	ModestHildon2WindowMgrPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
+
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+	
+	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
+}
+
+static void 
+osso_display_event_cb (osso_display_state_t state, 
+		       gpointer data)
+{
+	ModestHildon2WindowMgrPrivate *priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (data);
+
+	priv->display_state = state;
+
+	/* Stop blinking if the screen becomes on */
+	if (priv->display_state == OSSO_DISPLAY_ON)
+		modest_platform_remove_new_mail_notifications (TRUE);
+}
+

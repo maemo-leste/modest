@@ -79,6 +79,7 @@ struct _ModestWindowMgrClass {
 	GList *               (*get_window_list)                (ModestWindowMgr *self);
 	ModestWindow *        (*show_initial_window)            (ModestWindowMgr *self);
 	ModestWindow *        (*get_current_top)                (ModestWindowMgr *self);
+	gboolean              (*screen_is_on)                   (ModestWindowMgr *self);
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
 };
@@ -402,6 +403,16 @@ ModestWindow* modest_window_mgr_show_initial_window (ModestWindowMgr *self);
  * Returns: the topmost #ModestWindow
  **/
 ModestWindow* modest_window_mgr_get_current_top (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_screen_is_on:
+ * @self: a #ModestWindowMgr
+ *
+ * this function returns if device display is on or not
+ *
+ * Returns: %TRUE if screen is on, %FALSE if not
+ */
+gboolean modest_window_mgr_screen_is_on (ModestWindowMgr *self);
 
 G_END_DECLS
 
