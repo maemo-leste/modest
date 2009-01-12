@@ -3126,11 +3126,10 @@ modest_ui_actions_on_select_editor_background_color (GtkAction *action,
 }
 
 void 
-modest_ui_actions_on_insert_image (GtkAction *action,
+modest_ui_actions_on_insert_image (GObject *object,
 				   ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
-	g_return_if_fail (GTK_IS_ACTION (action));
 
 
 	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))

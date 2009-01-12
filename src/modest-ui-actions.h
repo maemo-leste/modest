@@ -199,7 +199,7 @@ void     modest_ui_actions_on_select_editor_color      (GtkAction *action,
 void     modest_ui_actions_on_select_editor_background_color      (GtkAction *action,
 								   ModestMsgEditWindow *window);
 
-void     modest_ui_actions_on_insert_image             (GtkAction *action,
+void     modest_ui_actions_on_insert_image             (GObject *object,
 							ModestMsgEditWindow *window);
 
 void     modest_ui_actions_on_attach_file             (GtkAction *action,
