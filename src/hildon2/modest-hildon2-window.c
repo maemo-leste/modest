@@ -79,6 +79,7 @@ struct _ModestHildon2WindowPrivate {
 
 	GtkWidget *app_menu;
 	ModestDimmingRulesGroup *app_menu_dimming_group;
+	GtkAccelGroup *accel_group;
 
 	/* Edit mode support */
 	gboolean edit_mode;
@@ -170,6 +171,8 @@ modest_hildon2_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
 
+	priv->accel_group = gtk_accel_group_new ();
+
 	priv->edit_mode = FALSE;
 	priv->edit_toolbar = NULL;
 	priv->current_edit_tree_view = NULL;
@@ -179,6 +182,7 @@ modest_hildon2_window_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 	priv->app_menu_dimming_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
+	gtk_window_add_accel_group (GTK_WINDOW (self), priv->accel_group);
 
 	setup_menu (self);
 
@@ -244,6 +248,7 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 void 
 modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
 				   gchar *label,
+				   const gchar *accelerator,
 				   ModestHildon2AppMenuCallback callback,
 				   ModestDimmingCallback dimming_callback)
 {
@@ -259,6 +264,15 @@ modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
 	button = gtk_button_new_with_label (label);
 	g_signal_connect_after (G_OBJECT (button), "clicked",
 				G_CALLBACK (callback), (gpointer) self);
+
+	if (accelerator != NULL) {
+		guint accel_key;
+		GdkModifierType accel_mods;
+
+		gtk_accelerator_parse (accelerator, &accel_key, &accel_mods);
+		gtk_widget_add_accelerator (button, "clicked", priv->accel_group,
+					    accel_key, accel_mods, 0);
+	}
 
 	modest_hildon2_window_add_button_to_menu (self, GTK_BUTTON (button), dimming_callback);
 }

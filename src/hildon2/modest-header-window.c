@@ -452,25 +452,25 @@ static void setup_menu (ModestHeaderWindow *self)
 {
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_moveto"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_moveto"), NULL,
 					   APP_MENU_CALLBACK (set_moveto_edit_mode),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_delete"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_delete"), NULL,
 					   APP_MENU_CALLBACK (set_delete_edit_mode),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_messagedetails"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_messagedetails"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sort"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sort"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_sort),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_sort));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"), "<Control>n",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 }

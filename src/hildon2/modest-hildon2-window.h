@@ -87,6 +87,7 @@ GType modest_hildon2_window_get_type (void) G_GNUC_CONST;
 void 
 modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
 				   gchar *label,
+				   const gchar *accelerator,
 				   ModestHildon2AppMenuCallback callback,
 				   ModestDimmingCallback dimming_callback);
 

@@ -3851,10 +3851,10 @@ setup_menu (ModestMsgEditWindow *self)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	/* Settings menu buttons */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_checknames"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_checknames"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_check_names),
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_undo"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_undo"), "<Ctrl>z",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_undo),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
 
@@ -3875,16 +3875,16 @@ setup_menu (ModestMsgEditWindow *self)
 	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
 			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_insert_image),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_message_settings"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_message_settings"), NULL,
 					   APP_MENU_CALLBACK (on_message_settings),
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"),
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"), "<Ctrl>f",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
 					   NULL);
 }
