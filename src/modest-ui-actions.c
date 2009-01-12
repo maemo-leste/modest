@@ -6151,12 +6151,19 @@ modest_ui_actions_on_open_addressbook (GtkAction *action, ModestWindow *win)
 
 
 void
-modest_ui_actions_on_toggle_find_in_page (GtkToggleAction *action,
+modest_ui_actions_on_toggle_find_in_page (GtkAction *action,
 					  ModestWindow *window)
 {
+	gboolean active;
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	modest_msg_edit_window_toggle_find_toolbar (MODEST_MSG_EDIT_WINDOW (window), gtk_toggle_action_get_active (action));
+	if (GTK_IS_TOGGLE_ACTION (action))
+		active = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
+	else
+		active = TRUE;
+
+	modest_msg_edit_window_toggle_find_toolbar (MODEST_MSG_EDIT_WINDOW (window), 
+						    active);
 }
 
 static void 

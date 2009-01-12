@@ -451,12 +451,12 @@ void     modest_ui_actions_on_search_messages             (GtkAction *action,
 
 /**
  * modest_ui_actions_on_find_in_page:
- * @action: a #GtkToggleAction
+ * @action: a #GtkAction
  * @window: a #ModestWindow
  *
  * Toggles the visibility of the find in page toolbar
  **/
-void     modest_ui_actions_on_toggle_find_in_page             (GtkToggleAction *action,
+void     modest_ui_actions_on_toggle_find_in_page             (GtkAction *action,
 							       ModestWindow *window);
 
 /**

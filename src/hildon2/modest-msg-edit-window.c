@@ -260,7 +260,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *font_tool_button_label;
 	GSList      *size_items_group;
 	GtkWidget   *size_tool_button_label;
-	
+
 	GtkWidget   *find_toolbar;
 	gchar       *last_search;
 
@@ -277,7 +277,7 @@ struct _ModestMsgEditWindowPrivate {
 	gint images_count;
 
 	TnyHeaderFlags priority_flags;
-	
+
 	gboolean    can_undo, can_redo;
 	gulong      clipboard_change_handler_id;
 	gulong      default_clipboard_change_handler_id;
@@ -294,7 +294,6 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *app_menu;
 	GtkWidget   *cc_button;
 	GtkWidget   *bcc_button;
-	GtkWidget   *find_toolbar_button;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -635,9 +634,9 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect_after (G_OBJECT (priv->subject_field), "move-cursor", G_CALLBACK (subject_field_move_cursor), obj);
 	g_signal_connect (G_OBJECT (priv->subject_field), "insert-text", G_CALLBACK (subject_field_insert_text), obj);
 
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
-
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
+ 
 	priv->clipboard_change_handler_id = 
 		g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
 				  G_CALLBACK (modest_msg_edit_window_clipboard_owner_change), obj);
@@ -3273,7 +3272,6 @@ subject_field_insert_text (GtkEditable *editable,
 						dgettext("hildon-common-strings",
 							 "ckdg_ib_maximum_characters_reached"));
 	}
-	
 	g_string_free (result, TRUE);
 }
 
@@ -3295,7 +3293,6 @@ modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 		gtk_widget_hide_all (priv->find_toolbar);
 		gtk_widget_grab_focus (priv->msg_body);
 	}
-    
 }
 
 static gboolean 
@@ -3417,17 +3414,6 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 	g_free (current_search);
 }
 
-static void
-modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
-					   ModestMsgEditWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv;
-
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(window);
-
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->find_toolbar_button), FALSE);
-}
-
 gboolean 
 modest_msg_edit_window_get_sent (ModestMsgEditWindow *window)
 {
@@ -3447,8 +3433,14 @@ modest_msg_edit_window_set_sent (ModestMsgEditWindow *window,
 	priv->sent = sent;
 }
 
+static void
+modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
+                                          ModestMsgEditWindow *window)
+{
+	modest_msg_edit_window_toggle_find_toolbar (window, FALSE);
+}
 
-void            
+void
 modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 				  TnyMsg *draft)
 {
@@ -3849,16 +3841,6 @@ on_bcc_button_toggled (HildonCheckButton *button,
 					hildon_check_button_get_active (button));
 }
 
-static void
-on_find_toolbar_button_toggled (HildonCheckButton *button,
-				ModestMsgEditWindow *window)
-{
-	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
-	modest_msg_edit_window_toggle_find_toolbar (MODEST_MSG_EDIT_WINDOW (window),
-						    hildon_check_button_get_active (button));
-
-}
-
 static void 
 setup_menu (ModestMsgEditWindow *self)
 {
@@ -3902,13 +3884,8 @@ setup_menu (ModestMsgEditWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_message_settings"),
 					   APP_MENU_CALLBACK (on_message_settings),
 					   NULL);
-	priv->find_toolbar_button = hildon_check_button_new (0);
-	gtk_button_set_label (GTK_BUTTON (priv->find_toolbar_button), _("mcen_me_viewer_find"));
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->find_toolbar_button),
-					FALSE);
-	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->find_toolbar_button),
-						  NULL);
-	g_signal_connect (G_OBJECT (priv->find_toolbar_button), "toggled",
-			  G_CALLBACK (on_find_toolbar_button_toggled), (gpointer) self);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"),
+					   APP_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
+					   NULL);
 }
 
