@@ -703,10 +703,11 @@ folder_chooser_dialog_run (ModestFolderView *original)
 
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (userdata.dialog)->vbox), pannable);
 	gtk_container_add (GTK_CONTAINER (pannable), folder_view);
+	gtk_widget_set_size_request (pannable, -1, 320);
+
 	gtk_widget_show (folder_view);
 	gtk_widget_show (pannable);
-	gtk_widget_show_all (userdata.dialog);
-	gtk_widget_set_size_request (pannable, -1, 320);
+	gtk_widget_show (userdata.dialog);
 	g_signal_connect (G_OBJECT (folder_view), "folder-activated", 
 			  G_CALLBACK (folder_chooser_activated), 
 			  (gpointer) &userdata);
