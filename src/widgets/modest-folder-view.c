@@ -777,7 +777,7 @@ get_composite_icons (const gchar *icon_code,
 	return retval;
 }
 
-static ThreePixbufs*
+static inline ThreePixbufs*
 get_folder_icons (TnyFolderType type, GObject *instance)
 {
 	static GdkPixbuf *inbox_pixbuf = NULL, *outbox_pixbuf = NULL,
@@ -819,6 +819,8 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	}
 
 	switch (type) {
+		const gchar *icon_code;
+
 	case TNY_FOLDER_TYPE_INVALID:
 		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 		break;
@@ -886,7 +888,13 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 		break;
 	case TNY_FOLDER_TYPE_NORMAL:
 	default:
-		retval = get_composite_icons (MODEST_FOLDER_ICON_NORMAL,
+		/* Memory card folders could have an special icon */
+		if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance)))
+			icon_code = MODEST_FOLDER_ICON_MMC_FOLDER;
+		else
+			icon_code = MODEST_FOLDER_ICON_NORMAL;
+
+		retval = get_composite_icons (icon_code,
 					      &normal_pixbuf,
 					      &normal_pixbuf_open,
 					      &normal_pixbuf_close);

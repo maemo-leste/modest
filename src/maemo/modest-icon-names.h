@@ -74,7 +74,7 @@
 #define MODEST_FOLDER_ICON_NORMAL		"qgn_list_gene_fldr_cls"
 #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	"qgn_list_shell_mydevice"
 #define MODEST_FOLDER_ICON_MMC                  "qgn_list_gene_mmc"
-
+#define MODEST_FOLDER_ICON_MMC_FOLDER           MODEST_FOLDER_ICON_NORMAL
 
 /* toolbar */
 #define  MODEST_TOOLBAR_ICON_MAIL_SEND		"qgn_toolb_messagin_send"

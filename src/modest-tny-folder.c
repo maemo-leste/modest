@@ -255,9 +255,9 @@ gboolean
 modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 {
 	g_return_val_if_fail (folder, FALSE);
-	
-	/* The merge folder is a special case, 
-	 * used to merge the per-account local outbox folders. 
+
+	/* The merge folder is a special case,
+	 * used to merge the per-account local outbox folders.
 	 * and can have no get_account() implementation.
 	 */
 	if (TNY_IS_MERGE_FOLDER (folder))
@@ -268,15 +268,15 @@ modest_tny_folder_is_memory_card_folder   (TnyFolder *folder)
 		return FALSE;
 
 	const gchar* account_id = tny_account_get_id (account);
-	if (!account_id) {	
+	if (!account_id) {
 		g_object_unref (account);
 		return FALSE;
 	}
 
 	g_object_unref (account);
-	
+
 	return (strcmp (account_id, MODEST_MMC_ACCOUNT_ID) == 0);
-}	
+}
 
 gboolean
 modest_tny_folder_is_remote_folder   (TnyFolder *folder)

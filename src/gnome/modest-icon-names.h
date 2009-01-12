@@ -80,7 +80,7 @@
 /* #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	PIXMAP_PREFIX "qgn_list_gene_fldr_cls.png" */
 #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	"computer"
 #define MODEST_FOLDER_ICON_MMC                  "media-flash"
-
+#define MODEST_FOLDER_ICON_MMC_FOLDER           MODEST_FOLDER_ICON_NORMAL
 
 /* toolbar */
 #define  MODEST_TOOLBAR_ICON_MAIL_SEND		PIXMAP_PREFIX "qgn_list_messagin_sent.png"
