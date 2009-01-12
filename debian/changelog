@@ -1,3 +1,15 @@
+modest (2.1-2009.03-3) unstable; urgency=low
+
+  * Week 03, 2009 - third build
+  * Fixes: NB#88130, NB#90014, NB#91078, NB#92465, NB#92793, NB#93036, NB#93071
+  * Fixes: NB#93291, NB#93737, NB#94030, NB#94070, NB#94152, NB#94245, NB#94666
+  * Fixes: NB#94922, NB#95542, NB#95783, NB#96025, NB#96049, NB#96132, NB#96184
+  * Fixes: NB#96198, NB#96400, NB#96424, NB#96495, NB#96512, NB#96515, NB#96622
+  * Fixes: NB#96691, NB#96890, NB#97110, NB#97118, NB#97123, NB#97124, NB#97134
+  * Fixes: NB#97135, NB#97137, NB#97139, NB#97221, NB#97265, NB#97280
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 12 Jan 2009 14:56:01 +0200
+
 modest (2.1-2009.03-2) unstable; urgency=low
 
   * Week 03, 2009 - second build
