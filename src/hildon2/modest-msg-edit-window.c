@@ -3709,7 +3709,6 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	GtkSizeGroup *title_sizegroup, *value_sizegroup;
 	GtkWidget *format_picker;
 	GtkWidget *format_selector;
-	GtkWidget *align_selector;
 	ModestMsgEditWindowPrivate *priv;
 	MessageSettingsHelper helper = {0,};
 	ModestMsgEditFormatState *format_state = NULL;
@@ -3757,28 +3756,16 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	format_picker = hildon_picker_button_new (MODEST_EDITABLE_SIZE,
 						  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (format_picker), HILDON_TOUCH_SELECTOR (format_selector));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
 					       _("mcen_me_editor_format"), format_picker);
 	gtk_widget_show_all (format_picker);
 	gtk_box_pack_start (GTK_BOX (vbox), format_picker, FALSE, FALSE, 0);
-	
-	/* alignment selector */
-	align_selector = hildon_touch_selector_new_text ();
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("mcen_me_editor_align_left"));
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("mcen_me_editor_align_centred"));
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (align_selector), _("mcen_me_editor_align_right"));
-	helper.align_picker = hildon_picker_button_new (MODEST_EDITABLE_SIZE,
-						 HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
-	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (helper.align_picker), HILDON_TOUCH_SELECTOR (align_selector));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
-					       _("mcen_me_editor_align"), helper.align_picker);
-	gtk_widget_show_all (helper.align_picker);
-	gtk_box_pack_start (GTK_BOX (vbox), helper.align_picker, FALSE, FALSE, 0);
-	
+
+
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_me_message_settings"));
-	
+
 	/* Set current values */
 	switch (priv->priority_flags) {
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
