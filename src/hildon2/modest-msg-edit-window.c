@@ -3587,20 +3587,20 @@ typedef struct _MessageSettingsHelper {
 } MessageSettingsHelper;
 
 static void
-on_priority_toggle (HildonCheckButton *button, 
+on_priority_toggle (GtkToggleButton *button, 
 		    MessageSettingsHelper *helper)
 {
 	GSList *node;
 	ModestMsgEditWindowPrivate *priv;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (helper->window);
-	if (hildon_check_button_get_active (button)) {
+	if (gtk_toggle_button_get_active (button)) {
 
 		for (node = helper->priority_group; node != NULL; node = g_slist_next (node)) {
-			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
+			GtkToggleButton *node_button = (GtkToggleButton *) node->data;
 			if ((node_button != button) &&
-			    hildon_check_button_get_active (node_button)) {
-				hildon_check_button_set_active (node_button, FALSE);
+			    gtk_toggle_button_get_active (node_button)) {
+				gtk_toggle_button_set_active (node_button, FALSE);
 			}
 			if (priv->priority_flags != (TnyHeaderFlags) g_object_get_data (G_OBJECT (button), "priority"))
 				modest_msg_edit_window_set_priority_flags (helper->window,
@@ -3614,14 +3614,14 @@ on_priority_toggle (HildonCheckButton *button,
 		gboolean found = FALSE;
 		/* If no one is active, activate it again */
 		for (node = helper->priority_group; node != NULL; node = g_slist_next (node)) {
-			HildonCheckButton *node_button = (HildonCheckButton *) node->data;
-			if (hildon_check_button_get_active (node_button)) {
+			GtkToggleButton *node_button = (GtkToggleButton *) node->data;
+			if (gtk_toggle_button_get_active (node_button)) {
 				found = TRUE;
 				break;
 			}
 		}
 		if (!found) {
-			hildon_check_button_set_active (button, TRUE);
+			gtk_toggle_button_set_active (button, TRUE);
 		}
 	}
 }
@@ -3720,21 +3720,21 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	/* Priority toggles */
 	priority_hbox = gtk_hbox_new (TRUE, 0);
-	high_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	high_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (high_toggle), _("mcen_me_editor_priority_high"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, high_toggle);
 	g_object_set_data (G_OBJECT (high_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_HIGH_PRIORITY));
-	medium_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	medium_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("mcen_me_editor_priority_normal"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, medium_toggle);
 	g_object_set_data (G_OBJECT (medium_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_NORMAL_PRIORITY));
-	low_toggle = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	low_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (low_toggle), _("mcen_me_editor_priority_low"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, low_toggle);
 	g_object_set_data (G_OBJECT (low_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_LOW_PRIORITY));
-	gtk_box_pack_start (GTK_BOX (priority_hbox), low_toggle, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (priority_hbox), medium_toggle, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priority_hbox), low_toggle, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (priority_hbox), medium_toggle, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, TRUE, TRUE, 0);
 	gtk_widget_show_all (priority_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("mcen_me_editor_message_priority"), priority_hbox);
@@ -3761,13 +3761,13 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	/* Set current values */
 	switch (priv->priority_flags) {
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
-		hildon_check_button_set_active (HILDON_CHECK_BUTTON (high_toggle), TRUE);
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (high_toggle), TRUE);
 		break;
 	case TNY_HEADER_FLAG_LOW_PRIORITY:
-		hildon_check_button_set_active (HILDON_CHECK_BUTTON (low_toggle), TRUE);
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (low_toggle), TRUE);
 		break;
 	default:
-		hildon_check_button_set_active (HILDON_CHECK_BUTTON (medium_toggle), TRUE);
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (medium_toggle), TRUE);
 		break;
 	}
 
