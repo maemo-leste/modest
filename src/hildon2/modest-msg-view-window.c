@@ -3114,7 +3114,7 @@ setup_menu (ModestMsgViewWindow *self)
 					   APP_MENU_CALLBACK (modest_ui_actions_remove_attachments),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_remove_attachments));
 	
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"), "<Control>n",
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_addtocontacts"), NULL,

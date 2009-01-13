@@ -354,7 +354,7 @@ static void setup_menu (ModestFolderWindow *self)
 					   NULL);
 
 	/* new message */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_newemail"), "<Ctrl>n",
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Ctrl>n",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
 					   NULL);
 
