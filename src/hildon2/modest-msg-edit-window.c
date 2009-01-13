@@ -3597,7 +3597,7 @@ on_account_removed (TnyAccountStore *account_store,
 typedef struct _MessageSettingsHelper {
 	ModestMsgEditWindow *window;
 	GSList *priority_group;
-	GtkWidget *align_picker;
+	GSList *format_group;
 } MessageSettingsHelper;
 
 static void
@@ -3616,13 +3616,12 @@ on_priority_toggle (GtkToggleButton *button,
 			    gtk_toggle_button_get_active (node_button)) {
 				gtk_toggle_button_set_active (node_button, FALSE);
 			}
-			if (priv->priority_flags != (TnyHeaderFlags) g_object_get_data (G_OBJECT (button), "priority"))
-				modest_msg_edit_window_set_priority_flags (helper->window,
-									   (TnyHeaderFlags) 
-									   g_object_get_data (G_OBJECT (button), 
-											      "priority"));
 		}
-
+		if (priv->priority_flags != (TnyHeaderFlags) g_object_get_data (G_OBJECT (button), "priority"))
+			modest_msg_edit_window_set_priority_flags (helper->window,
+								   (TnyHeaderFlags) 
+								   g_object_get_data (G_OBJECT (button), 
+										      "priority"));
 		
 	} else {
 		gboolean found = FALSE;
@@ -3641,67 +3640,44 @@ on_priority_toggle (GtkToggleButton *button,
 }
 
 static void
-on_format_picker_value_changed (HildonPickerButton *button,
-				MessageSettingsHelper *helper)
+on_format_toggle (GtkToggleButton *button,
+		  MessageSettingsHelper *helper)
 {
-	ModestMsgEditFormat new_format, old_format;
-	gint file_format;
+	GSList *node;
+	ModestMsgEditWindowPrivate *priv;
+	ModestMsgEditFormat old_format;
 
-	switch (hildon_picker_button_get_active (button)) {
-	case 1:
-		new_format = MODEST_MSG_EDIT_FORMAT_HTML;
-		file_format = MODEST_FILE_FORMAT_FORMATTED_TEXT;
-		break;
-	case 0:
-	default:
-		new_format = MODEST_MSG_EDIT_FORMAT_TEXT;
-		file_format = MODEST_FILE_FORMAT_PLAIN_TEXT;
-		break;
-	}
-
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (helper->window);
 	old_format = modest_msg_edit_window_get_format (helper->window);
-	if (new_format != old_format) {
-		modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (helper->window), file_format);
+	if (gtk_toggle_button_get_active (button)) {
 
-		switch (modest_msg_edit_window_get_format (helper->window)) {
-		case MODEST_MSG_EDIT_FORMAT_TEXT:
-			hildon_picker_button_set_active (button, 0);
-			gtk_widget_set_sensitive (helper->align_picker, FALSE);
-			break;
-		case MODEST_MSG_EDIT_FORMAT_HTML:
-		default:
-			hildon_picker_button_set_active (button, 1);
-			gtk_widget_set_sensitive (helper->align_picker, TRUE);
-			break;
+		for (node = helper->format_group; node != NULL; node = g_slist_next (node)) {
+			GtkToggleButton *node_button = (GtkToggleButton *) node->data;
+			if ((node_button != button) &&
+			    gtk_toggle_button_get_active (node_button)) {
+				gtk_toggle_button_set_active (node_button, FALSE);
+			}
+		}
+		if (old_format != (ModestMsgEditFormat) g_object_get_data (G_OBJECT (button), "format")) {
+			modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (helper->window), 
+								GPOINTER_TO_INT (g_object_get_data (G_OBJECT (button), "file-format")));
+		}
+		
+	} else {
+		gboolean found = FALSE;
+		/* If no one is active, activate it again */
+		for (node = helper->format_group; node != NULL; node = g_slist_next (node)) {
+			GtkToggleButton *node_button = (GtkToggleButton *) node->data;
+			if (gtk_toggle_button_get_active (node_button)) {
+				found = TRUE;
+				break;
+			}
+		}
+		if (!found) {
+			gtk_toggle_button_set_active (button, TRUE);
 		}
 	}
-}
 
-static void
-on_align_picker_value_changed (HildonPickerButton *button,
-				MessageSettingsHelper *helper)
-{
-	GtkJustification new_justify;
-	ModestMsgEditFormatState *format_state = NULL;
-
-	switch (hildon_picker_button_get_active (button)) {
-	case 1:
-		new_justify = GTK_JUSTIFY_CENTER;
-		break;
-	case 2:
-		new_justify = GTK_JUSTIFY_RIGHT;
-		break;
-	case 0:
-	default:
-		new_justify = GTK_JUSTIFY_LEFT;
-		break;
-	}
-
-	format_state = modest_msg_edit_window_get_format_state (helper->window);
-	if (format_state->justification != new_justify)
-		format_state->justification = new_justify;
-	modest_msg_edit_window_set_format_state (helper->window, format_state);
-	g_free (format_state);
 }
 
 static void
@@ -3713,11 +3689,10 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	GtkWidget *high_toggle, *medium_toggle, *low_toggle;
 	GtkWidget *captioned;
 	GtkSizeGroup *title_sizegroup, *value_sizegroup;
-	GtkWidget *format_picker;
-	GtkWidget *format_selector;
+	GtkWidget *format_hbox;
+	GtkWidget *html_toggle, *text_toggle;
 	ModestMsgEditWindowPrivate *priv;
 	MessageSettingsHelper helper = {0,};
-	ModestMsgEditFormatState *format_state = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
@@ -3755,17 +3730,25 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_widget_show (captioned);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 
-	/* format selector */
-	format_selector = hildon_touch_selector_new_text ();
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("mcen_me_editor_plain_text"));
-	hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (format_selector), _("mcen_me_editor_formatted_text"));
-	format_picker = hildon_picker_button_new (MODEST_EDITABLE_SIZE,
-						  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
-	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (format_picker), HILDON_TOUCH_SELECTOR (format_selector));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-					       _("mcen_me_editor_format"), format_picker);
-	gtk_widget_show_all (format_picker);
-	gtk_box_pack_start (GTK_BOX (vbox), format_picker, FALSE, FALSE, 0);
+	/* format toggles */
+	format_hbox = gtk_hbox_new (TRUE, 0);
+	html_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (html_toggle), _("mcen_me_editor_formatted_text"));
+	helper.format_group = g_slist_prepend (helper.format_group, html_toggle);
+	g_object_set_data (G_OBJECT (html_toggle), "format", GINT_TO_POINTER (MODEST_MSG_EDIT_FORMAT_HTML));
+	g_object_set_data (G_OBJECT (html_toggle), "file-format", GINT_TO_POINTER (MODEST_FILE_FORMAT_FORMATTED_TEXT));
+	text_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (text_toggle), _("mcen_me_editor_plain_text"));
+	helper.format_group = g_slist_prepend (helper.format_group, text_toggle);
+	g_object_set_data (G_OBJECT (text_toggle), "format", GINT_TO_POINTER (MODEST_MSG_EDIT_FORMAT_TEXT));
+	g_object_set_data (G_OBJECT (text_toggle), "file-format", GINT_TO_POINTER (MODEST_FILE_FORMAT_PLAIN_TEXT));
+	gtk_box_pack_start (GTK_BOX (format_hbox), html_toggle, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (format_hbox), text_toggle, TRUE, TRUE, 0);
+	gtk_widget_show_all (format_hbox);
+	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+							 _("mcen_me_editor_format"), format_hbox);
+	gtk_widget_show (captioned);
+	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 
 
 	g_object_unref (title_sizegroup);
@@ -3787,38 +3770,20 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	switch (modest_msg_edit_window_get_format (window)) {
 	case MODEST_MSG_EDIT_FORMAT_TEXT:
-		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (format_picker), 0);
-		gtk_widget_set_sensitive (helper.align_picker, FALSE);
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (text_toggle), TRUE);
 		break;
 	case MODEST_MSG_EDIT_FORMAT_HTML:
 	default:
-		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (format_picker), 1);
-		gtk_widget_set_sensitive (helper.align_picker, TRUE);
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (html_toggle), TRUE);
 		break;
 	}
-
-	format_state = modest_msg_edit_window_get_format_state (window);
-	switch (format_state->justification) {
-	case GTK_JUSTIFY_RIGHT:
-		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (helper.align_picker), 2);
-		break;
-	case GTK_JUSTIFY_CENTER:
-		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (helper.align_picker), 1);
-		break;
-	default:
-		hildon_picker_button_set_active (HILDON_PICKER_BUTTON (helper.align_picker), 0);
-		break;
-	
-	}
-	g_free (format_state);
 
 	/* Signal connects */
 	g_signal_connect (G_OBJECT (high_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
 	g_signal_connect (G_OBJECT (medium_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
 	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
-	g_signal_connect (G_OBJECT (format_picker), "value-changed", G_CALLBACK (on_format_picker_value_changed), &helper);
-	g_signal_connect (G_OBJECT (helper.align_picker), "value-changed", 
-			  G_CALLBACK (on_align_picker_value_changed), &helper);
+	g_signal_connect (G_OBJECT (html_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
+	g_signal_connect (G_OBJECT (text_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
 	
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	
