@@ -343,7 +343,7 @@ static void setup_menu (ModestFolderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_folder"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_folder),
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_user_renamefolder"), NULL,
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_rename_folder"), NULL,
 					   APP_MENU_CALLBACK (set_rename_edit_mode),
 					   NULL);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_folder"), NULL,

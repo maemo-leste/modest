@@ -65,7 +65,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "EmailReply",       NULL,  N_("mcen_me_inbox_reply"),         "<CTRL>R",      NULL,   G_CALLBACK (modest_ui_actions_on_reply) },
 	{ "EmailReplyAll",    NULL,  N_("mcen_me_inbox_replytoall"),      NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_reply_all) },
 	{ "EmailForward",     NULL,  N_("mcen_me_inbox_forward"),      "<CTRL>D",      NULL,   G_CALLBACK (modest_ui_actions_on_forward) },
-	{ "EmailRenameFolder", NULL, N_("mcen_me_user_renamefolder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
+	{ "EmailRenameFolder", NULL, N_("mcen_me_rename_folder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
 	{ "EmailDelete",      NULL,  N_("mcen_me_inbox_delete"),    "BackSpace",      NULL,   G_CALLBACK (modest_ui_actions_on_delete_message_or_folder) },
 	{ "EmailContents",    NULL,  N_("mcen_me_inbox_retrieve_contents"), NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_retrieve_msg_contents) },
 	{ "EmailDetails",     NULL,  N_("mcen_me_inbox_messagedetails"),        NULL,      NULL,   G_CALLBACK (modest_ui_actions_on_details) },
