@@ -2785,7 +2785,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
 
 	/* set folder */
-	folder = g_build_filename (g_get_home_dir (), g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
+	folder = g_build_filename (g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
 	gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
 	g_free (folder);
 

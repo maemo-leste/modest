@@ -203,8 +203,7 @@ modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 	g_return_if_fail (GTK_IS_FILE_CHOOSER (chooser));
 
 	/* Set the default folder to images folder */
-	images_folder = g_build_filename (g_get_home_dir (), 
-					  g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
+	images_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
 					  MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER, NULL);
 	gtk_file_chooser_set_current_folder (chooser, images_folder);
 	g_free (images_folder);
