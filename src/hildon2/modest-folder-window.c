@@ -264,18 +264,24 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	 */
 
 	/* Register edit modes */
-	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_DELETE,
-						  _("mcen_ti_edit_folder_delete"), _HL("wdgt_bd_delete"),
+	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), 
+						  EDIT_MODE_COMMAND_DELETE,
+						  _("mcen_ti_edit_folder_delete"), 
+						  _HL("wdgt_bd_delete"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_delete_folder));
-	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_MOVE,
-						  _("mcen_ti_edit_move_folder"), _("mcen_me_move"),
+	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), 
+						  EDIT_MODE_COMMAND_MOVE,
+						  _("mcen_ti_edit_move_folder"), 
+						  _("mcen_me_move"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));	
-	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_RENAME,
-						  _("mcen_ti_edit_rename_folde"), _HL("wdgt_bd_rename"),
+	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), 
+						  EDIT_MODE_COMMAND_RENAME,
+						  _("mcen_ti_edit_rename_folder"), 
+						  _HL("wdgt_bd_rename"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_rename_folder));
