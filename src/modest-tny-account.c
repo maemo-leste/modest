@@ -1024,12 +1024,20 @@ modest_tny_folder_store_is_remote (TnyFolderStore *folder_store)
 
         if (account != NULL) {
                 if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
-                        if (!TNY_IS_CAMEL_POP_STORE_ACCOUNT (account) &&
-                            !TNY_IS_CAMEL_IMAP_STORE_ACCOUNT (account)) {
-                                /* This must be a maildir account, which does
-                                 * not require a connection: */
-                                result = FALSE;
-                        }
+			ModestProtocolType proto_type;
+			const gchar *tag;
+			ModestProtocolRegistry *registry;
+
+			proto_type = modest_tny_account_get_protocol_type (account);
+			registry = modest_runtime_get_protocol_registry ();
+			tag = MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS;
+			if (modest_protocol_registry_protocol_type_has_tag (registry, 
+									    proto_type,
+									    tag)) {
+				result = TRUE;
+			} else {
+				result = FALSE;
+			}
                 }
                 g_object_unref (account);
         } else {
