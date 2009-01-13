@@ -2266,7 +2266,7 @@ on_attach_file_response (GtkDialog *dialog,
 	g_slist_foreach (uris, (GFunc) g_free, NULL);
 	g_slist_free (uris);
 
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
 void
