@@ -354,10 +354,13 @@ _insensitive_press_callback (GtkWidget *widget, gpointer user_data)
 	notification = modest_dimming_rule_get_notification (rule);
 	if (notification == NULL)
 		goto frees;
-	
+
+	/* Notifications for dimmed items are not shown in Hildon2 */
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Show notification banner */
-	modest_platform_information_banner (NULL, NULL, notification);	
-	
+	modest_platform_information_banner (NULL, NULL, notification);
+#endif
+
 	/* Free */
  frees:
 	if (group != NULL)
