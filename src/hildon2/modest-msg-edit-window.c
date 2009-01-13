@@ -2219,66 +2219,80 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 }
 
-void
-modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
-{	
-	GtkWidget *dialog = NULL;
-	gint response = 0;
+static void
+on_attach_file_response (GtkDialog *dialog,
+			 gint       arg1,
+			 gpointer   user_data)
+{
 	GSList *uris = NULL;
 	GSList *uri_node;
 	GnomeVFSFileSize total_size, allowed_size;
+	ModestMsgEditWindow *window;
 	ModestMsgEditWindowPrivate *priv;
 	gint att_num;
 	guint64 att_size;
 
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(window));
-		
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
-		return;
-	
-	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
-	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), GTK_WINDOW (window));
-
-	response = gtk_dialog_run (GTK_DIALOG (dialog));
-	switch (response) {
+	switch (arg1) {
 	case GTK_RESPONSE_OK:
 		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (dialog));
 		break;
 	default:
 		break;
 	}
-	gtk_widget_destroy (dialog);
+
+	window = MODEST_MSG_EDIT_WINDOW (user_data);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	/* allowed size is the maximum size - what's already there */
-	modest_attachments_view_get_sizes (
-		MODEST_ATTACHMENTS_VIEW (priv->attachments_view), 
-		&att_num, &att_size);
+	modest_attachments_view_get_sizes (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+					   &att_num, &att_size);
 	allowed_size = MODEST_MAX_ATTACHMENT_SIZE - att_size;
 
 	total_size = 0;
 	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
 
 		const gchar *uri = (const gchar *) uri_node->data;
-		
-		total_size += modest_msg_edit_window_attach_file_one 
-			(window, uri, allowed_size);
-		
+
+		total_size += 
+			modest_msg_edit_window_attach_file_one (window, uri, allowed_size);
+
 		if (total_size > allowed_size) {
 			g_warning ("%s: total size: %u", 
 				   __FUNCTION__, (unsigned int)total_size);
 			break;
 		}
-
 		allowed_size -= total_size;
-		
-
 	}
 	g_slist_foreach (uris, (GFunc) g_free, NULL);
 	g_slist_free (uris);
+
+	gtk_widget_destroy (dialog);
+}
+
+void
+modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
+{
+	GtkWidget *dialog = NULL;
+	ModestMsgEditWindowPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(window));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
+		return;
+
+	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
+						 GTK_FILE_CHOOSER_ACTION_OPEN);
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
+	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+				     GTK_WINDOW (dialog), GTK_WINDOW (window));
+
+	/* Connect to response & show */
+	g_signal_connect (dialog, "response", 
+			  G_CALLBACK (on_attach_file_response), window);
+	gtk_widget_show (dialog);
 }
 
 
@@ -2294,9 +2308,9 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 	GnomeVFSFileSize size = 0;
 	g_return_val_if_fail (window, 0);
 	g_return_val_if_fail (uri, 0);
-		
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	
+
 	result = gnome_vfs_open (&handle, uri, GNOME_VFS_OPEN_READ);
 	if (result == GNOME_VFS_OK) {
 		TnyMimePart *mime_part;
