@@ -144,6 +144,7 @@ if test "$with_platform" = "maemo"; then
 elif test "$with_platform" = "gnome"; then
 	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME"
 fi
+AC_SUBST(MODEST_PLUGIN_DEFINES)
 
 #
 # check the widgets library
@@ -159,12 +160,6 @@ if test "$have_hildon1" = "true"; then
    hildonpkgs="hildon-1 hildon-fm-2"
    detected_toolkit=hildon1
    echo "DETECTED HILDON 1 $have_hildon2."
-   if test "$have_hildon2" = "true"; then
-      echo "DETECTED HILDON 2 $have_hildon2."
-      detected_toolkit=hildon2
-      hildonpkgs="$hildonpkgs libcanberra profile"
-      echo "HILDON 2 PACKAGES $hildonpkgs"
-   fi
 else
    hildonpkgs="hildon-libs hildon-fm"
    detected_toolkit=hildon1
@@ -182,6 +177,21 @@ else
    fi
 fi
 
+dnl --------------- HILDON & PLUGIN PKGS -----------
+pluginpkgs=$hildonpkgs
+echo "Plugin Packages $pluginpkgs"
+AC_SUBST(pluginpkgs)
+
+# Plugin packages must not include libcanberra and libprofile
+if test "$have_hildon2" = "true"; then
+   echo "DETECTED HILDON 2 $have_hildon2."
+   detected_toolkit=hildon2
+   hildonpkgs="$hildonpkgs libcanberra profile"
+   echo "HILDON 2 PACKAGES $hildonpkgs"
+fi
+AC_SUBST(hildonpkgs)
+
+dnl --------------- HILDON API ------------
 hildon_api=
 if test "$have_hildon0" = "true"; then
    hildon_api=0
@@ -218,10 +228,6 @@ elif test "$with_toolkit" = "hildon2"; then
 elif test "$with_toolkit" = "gtk"; then
 	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_GNOME"
 fi
-
-AC_SUBST(hildonpkgs)
-AC_SUBST(MODEST_PLUGIN_DEFINES)
-
 
 dnl Whether to use maemo-launcher or not
 AC_ARG_ENABLE([maemo-launcher],
