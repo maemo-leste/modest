@@ -71,19 +71,28 @@ modest_utils_folder_writable (const gchar *filename)
 	
 	if (g_strncasecmp (filename, "obex", 4) != 0) {
 		GnomeVFSFileInfo *folder_info;
-		gchar *folder;
 		GnomeVFSResult result;
+		GnomeVFSURI *uri;
+		GnomeVFSURI *folder_uri;
 
-		folder = g_path_get_dirname (filename);
-		folder_info = gnome_vfs_file_info_new ();
-		result = gnome_vfs_get_file_info (folder, folder_info,
-						  GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS);
-		g_free (folder);
+		uri = gnome_vfs_uri_new (filename);
+		folder_uri = gnome_vfs_uri_get_parent (uri);
+
+		if (folder_uri != NULL) {
+			folder_info = gnome_vfs_file_info_new ();
+			result = gnome_vfs_get_file_info_uri (folder_uri, folder_info,
+							      GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS);
+			gnome_vfs_uri_unref (folder_uri);
+		}
+		gnome_vfs_uri_unref (uri);
+
+		if (folder_uri == NULL)
+			return FALSE;
 
 		if ((result != GNOME_VFS_OK) ||
 		    (!((folder_info->permissions & GNOME_VFS_PERM_ACCESS_WRITABLE) ||
 		       (folder_info->permissions & GNOME_VFS_PERM_USER_WRITE)))) {
-
+			
 			gnome_vfs_file_info_unref (folder_info);
 			return FALSE;
 		}
