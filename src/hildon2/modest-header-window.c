@@ -461,7 +461,7 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_folder details"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sort"), NULL,
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_sort"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_sort),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_sort));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
