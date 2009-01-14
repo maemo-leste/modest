@@ -424,6 +424,42 @@ on_get_mmc_account_name (TnyStoreAccount* account, gpointer user_data)
 }
 
 static void
+convert_parent_folders_to_dots (gchar **item_name)
+{
+	gint n_parents = 0;
+	gchar *c;
+	gchar *last_separator;
+
+	if (item_name == NULL)
+		return;
+
+	for (c = *item_name; *c != '\0'; c++) {
+		if (g_str_has_prefix (c, MODEST_FOLDER_PATH_SEPARATOR)) {
+			n_parents++;
+		}
+	}
+
+	last_separator = g_strrstr (*item_name, MODEST_FOLDER_PATH_SEPARATOR);
+	if (last_separator != NULL) {
+		last_separator = last_separator + strlen (MODEST_FOLDER_PATH_SEPARATOR);
+	}
+
+	if (n_parents > 0) {
+		GString *buffer;
+		gint i;
+
+		buffer = g_string_new ("");
+		for (i = 0; i < n_parents; i++) {
+			buffer = g_string_append (buffer, MODEST_FOLDER_DOT);
+		}
+		buffer = g_string_append (buffer, last_separator);
+		g_free (*item_name);
+		*item_name = g_string_free (buffer, FALSE);
+	}
+
+}
+
+static void
 format_compact_style (gchar **item_name, 
 		      GObject *instance,
 		      gboolean bold,
@@ -452,6 +488,9 @@ format_compact_style (gchar **item_name,
 		if (account == NULL)
 			return;
 
+		/* convert parent folders to dots */
+		convert_parent_folders_to_dots  (item_name);
+
 		folder_name = tny_folder_get_name (folder);
 		if (g_str_has_suffix (*item_name, folder_name)) {
 			gchar *offset = g_strrstr (*item_name, folder_name);
@@ -460,8 +499,7 @@ format_compact_style (gchar **item_name,
 		}
 
 		buffer = g_string_new ("");
-		buffer = g_string_append (buffer, tny_account_get_name (account));
-		buffer = g_string_append (buffer, MODEST_FOLDER_PATH_SEPARATOR);
+
 		buffer = g_string_append (buffer, *item_name);
 		if (concat_folder_name) {
 			if (bold) buffer = g_string_append (buffer, "<span weight='bold'>");
