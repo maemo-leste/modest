@@ -821,19 +821,19 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	static GdkPixbuf *inbox_pixbuf = NULL, *outbox_pixbuf = NULL,
 		*junk_pixbuf = NULL, *sent_pixbuf = NULL,
 		*trash_pixbuf = NULL, *draft_pixbuf = NULL,
-		*normal_pixbuf = NULL, *anorm_pixbuf = NULL,
+		*normal_pixbuf = NULL, *anorm_pixbuf = NULL, *mmc_pixbuf = NULL,
 		*ammc_pixbuf = NULL, *avirt_pixbuf = NULL;
 
 	static GdkPixbuf *inbox_pixbuf_open = NULL, *outbox_pixbuf_open = NULL,
 		*junk_pixbuf_open = NULL, *sent_pixbuf_open = NULL,
 		*trash_pixbuf_open = NULL, *draft_pixbuf_open = NULL,
-		*normal_pixbuf_open = NULL, *anorm_pixbuf_open = NULL,
+		*normal_pixbuf_open = NULL, *anorm_pixbuf_open = NULL, *mmc_pixbuf_open = NULL,
 		*ammc_pixbuf_open = NULL, *avirt_pixbuf_open = NULL;
 
 	static GdkPixbuf *inbox_pixbuf_close = NULL, *outbox_pixbuf_close = NULL,
 		*junk_pixbuf_close = NULL, *sent_pixbuf_close = NULL,
 		*trash_pixbuf_close = NULL, *draft_pixbuf_close = NULL,
-		*normal_pixbuf_close = NULL, *anorm_pixbuf_close = NULL,
+		*normal_pixbuf_close = NULL, *anorm_pixbuf_close = NULL, *mmc_pixbuf_close = NULL,
 		*ammc_pixbuf_close = NULL, *avirt_pixbuf_close = NULL;
 
 	ThreePixbufs *retval = NULL;
@@ -850,14 +850,20 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    !TNY_IS_ACCOUNT (instance) &&
 	    type != TNY_FOLDER_TYPE_INBOX &&
 	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
+#ifdef MODEST_TOOLKIT_HILDON2
+		return get_composite_icons (MODEST_FOLDER_ICON_ACCOUNT,
+					    &anorm_pixbuf,
+					    &anorm_pixbuf_open,
+					    &anorm_pixbuf_close);
+#else
 		return get_composite_icons (MODEST_FOLDER_ICON_NORMAL,
 					    &normal_pixbuf,
 					    &normal_pixbuf_open,
 					    &normal_pixbuf_close);
+#endif
 	}
 
 	switch (type) {
-		const gchar *icon_code;
 
 	case TNY_FOLDER_TYPE_INVALID:
 		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
@@ -924,18 +930,26 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 					      &draft_pixbuf_open,
 					      &draft_pixbuf_close);
 		break;
+	case TNY_FOLDER_TYPE_ARCHIVE:
+		retval = get_composite_icons (MODEST_FOLDER_ICON_MMC_FOLDER,
+					      &mmc_pixbuf,
+					      &mmc_pixbuf_open,
+					      &mmc_pixbuf_close);
+					      
 	case TNY_FOLDER_TYPE_NORMAL:
 	default:
 		/* Memory card folders could have an special icon */
-		if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance)))
-			icon_code = MODEST_FOLDER_ICON_MMC_FOLDER;
-		else
-			icon_code = MODEST_FOLDER_ICON_NORMAL;
-
-		retval = get_composite_icons (icon_code,
-					      &normal_pixbuf,
-					      &normal_pixbuf_open,
-					      &normal_pixbuf_close);
+		if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance))) {
+			retval = get_composite_icons (MODEST_FOLDER_ICON_MMC_FOLDER,
+						      &mmc_pixbuf,
+						      &mmc_pixbuf_open,
+						      &mmc_pixbuf_close);
+		} else {
+			retval = get_composite_icons (MODEST_FOLDER_ICON_NORMAL,
+						      &normal_pixbuf,
+						      &normal_pixbuf_open,
+						      &normal_pixbuf_close);
+		}
 		break;
 	}
 
