@@ -92,8 +92,17 @@ struct _ModestHildon2WindowPrivate {
 									    MODEST_TYPE_HILDON2_WINDOW, \
 									    ModestHildon2WindowPrivate))
 
+/* list my signals */
+enum {
+	EDIT_MODE_CHANGED_SIGNAL,
+	LAST_SIGNAL
+};
+
 /* globals */
 static GtkWindowClass *parent_class = NULL;
+
+/* uncomment the following if you have defined any signals */
+static guint signals[LAST_SIGNAL] = {0};
 
 /************************************************************************/
 
@@ -132,6 +141,15 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_hildon2_window_finalize;
+
+	signals[EDIT_MODE_CHANGED_SIGNAL] =
+		g_signal_new ("edit-mode-changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestHildon2WindowClass, edit_mode_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__INT,
+			      G_TYPE_NONE, 1, G_TYPE_INT);
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowPrivate));
 	
@@ -176,7 +194,7 @@ modest_hildon2_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->edit_mode = FALSE;
 	priv->edit_toolbar = NULL;
 	priv->current_edit_tree_view = NULL;
-	priv->edit_command = -1;
+	priv->edit_command = MODEST_HILDON2_WINDOW_EDIT_MODE_NONE;
 	priv->edit_mode_registry = g_hash_table_new_full (g_direct_hash, g_direct_equal,
 							  NULL, edit_mode_register_destroy);
 
@@ -393,6 +411,9 @@ modest_hildon2_window_set_edit_mode (ModestHildon2Window *self,
 	gtk_widget_queue_resize (priv->current_edit_tree_view);
 	gtk_window_fullscreen (GTK_WINDOW (self));
 
+	g_signal_emit (G_OBJECT (self), signals[EDIT_MODE_CHANGED_SIGNAL], 0,
+		       priv->edit_command);
+		       
 }
 
 void 
@@ -410,7 +431,7 @@ modest_hildon2_window_unset_edit_mode (ModestHildon2Window *self)
 
 	if (priv->edit_mode) {
 		priv->edit_mode = FALSE;
-		priv->edit_command = -1;
+		priv->edit_command = MODEST_HILDON2_WINDOW_EDIT_MODE_NONE;
 		if (priv->current_edit_tree_view) {
 			g_object_set (G_OBJECT (priv->current_edit_tree_view), 
 				      "hildon-ui-mode", HILDON_UI_MODE_NORMAL, 
@@ -419,6 +440,9 @@ modest_hildon2_window_unset_edit_mode (ModestHildon2Window *self)
 			priv->current_edit_tree_view = NULL;
 		}
 		gtk_window_unfullscreen (GTK_WINDOW (self));
+		g_signal_emit (G_OBJECT (self), signals[EDIT_MODE_CHANGED_SIGNAL], 0,
+			       priv->edit_command);
+		       
 	}
 }
 

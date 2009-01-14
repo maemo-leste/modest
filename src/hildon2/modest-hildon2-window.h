@@ -56,6 +56,7 @@ struct _ModestHildon2WindowClass {
 	ModestWindowClass parent_class;
 
 	void (*pack_toolbar_func) (ModestHildon2Window *self, GtkPackType pack_type, GtkWidget *toolbar);
+	void (*edit_mode_changed) (ModestHildon2Window *self, gint edit_mode);
 };
 
 typedef void (*ModestHildon2AppMenuCallback) (GObject *control, gpointer userdata);
@@ -63,6 +64,9 @@ typedef gboolean (*ModestHildon2EditModeCallback) (ModestHildon2Window *self);
 
 #define APP_MENU_CALLBACK(x) ((ModestHildon2AppMenuCallback) (x))
 #define EDIT_MODE_CALLBACK(x) ((ModestHildon2EditModeCallback) (x))
+
+/* edit mode id for no edit mode */
+#define MODEST_HILDON2_WINDOW_EDIT_MODE_NONE -1
 
 /**
  * modest_hildon2_window_get_type:
