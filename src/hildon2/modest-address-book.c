@@ -375,7 +375,10 @@ commit_contact(EContact * contact, gboolean is_new)
 	if (OSSO_ABOOK_IS_CONTACT (contact)) {
 		osso_abook_contact_commit(OSSO_ABOOK_CONTACT(contact), is_new, book, NULL);
 	} else {
-		e_book_commit_contact (book, contact, NULL);
+		if (is_new)
+			e_book_add_contact (book, contact, NULL);
+		else
+			e_book_commit_contact (book, contact, NULL);
 	}
 #endif /* MODEST_ABOOK_API < 2 */
 }
