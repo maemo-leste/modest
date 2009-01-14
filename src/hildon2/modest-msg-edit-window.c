@@ -2437,19 +2437,20 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 		} else {
 			filename = g_strdup ("");
 		}
-		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", "emev_nc_delete_attachments",
+		message = g_strdup_printf (ngettext("emev_nc_delete_attachment", 
+						    "emev_nc_delete_attachments",
 						    tny_list_get_length (att_list)), filename);
 		g_free (filename);
 
-		dialog_response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window), message);
+		dialog_response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window), 
+									   message);
 		g_free (message);
 
 		if (dialog_response != GTK_RESPONSE_OK) {
 			g_object_unref (att_list);
 			return;
 		}
-		hildon_banner_show_information (NULL, NULL, _("mcen_me_inbox_remove_attachments"));
-		
+
 		for (iter = tny_list_create_iterator (att_list);
 		     !tny_iterator_is_done (iter);
 		     tny_iterator_next (iter)) {
