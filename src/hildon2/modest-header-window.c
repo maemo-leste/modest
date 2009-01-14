@@ -452,7 +452,7 @@ static void setup_menu (ModestHeaderWindow *self)
 {
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_moveto"), NULL,
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_messages"), NULL,
 					   APP_MENU_CALLBACK (set_moveto_edit_mode),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_delete_messages"), NULL,
