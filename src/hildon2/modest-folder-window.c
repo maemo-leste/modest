@@ -80,6 +80,9 @@ static void set_rename_edit_mode (GtkButton *button,
 static void modest_folder_window_pack_toolbar (ModestHildon2Window *self,
 					       GtkPackType pack_type,
 					       GtkWidget *toolbar);
+static void edit_mode_changed (ModestFolderWindow *folder_window,
+			       gint edit_mode_id,
+			       ModestFolderWindow *self);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -221,6 +224,8 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	priv->folder_view  = modest_platform_create_folder_view (query);
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
+	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
+			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 
 	setup_menu (self);
 
