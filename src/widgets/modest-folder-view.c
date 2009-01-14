@@ -935,7 +935,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 					      &mmc_pixbuf,
 					      &mmc_pixbuf_open,
 					      &mmc_pixbuf_close);
-					      
+		break;
 	case TNY_FOLDER_TYPE_NORMAL:
 	default:
 		/* Memory card folders could have an special icon */

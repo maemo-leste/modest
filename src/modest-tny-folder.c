@@ -84,6 +84,9 @@ modest_tny_folder_guess_folder_type (TnyFolder *folder)
 				if ((strlen (downcase) == 5) &&
 				    !strncmp (downcase, "inbox", 5))
 					type = TNY_FOLDER_TYPE_INBOX;
+				if ((strlen (downcase) == 7) &&
+				    !strncmp (downcase, "archive", 7))
+					type = TNY_FOLDER_TYPE_ARCHIVE;
 				g_free (downcase);
 			}
 			g_object_unref (parent);
