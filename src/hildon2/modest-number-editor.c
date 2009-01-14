@@ -37,6 +37,7 @@
 #include                                        "modest-number-editor.h"
 #include                                        "modest-marshal.h"
 #include                                        <hildon/hildon-banner.h>
+#include                                        "modest-text-utils.h"
 
 #define                                         _(String) dgettext("modest-libs", String)
 
@@ -383,16 +384,16 @@ modest_number_editor_range_error                (ModestNumberEditor *editor,
     switch (type)
     {
         case MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
-            err_msg = g_strdup_printf (_("ckct_ib_maximum_value"), max, max);
+            err_msg = g_strdup_printf (_HL("ckct_ib_maximum_value"), max, max);
             break;
 
         case MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
-            err_msg = g_strdup_printf (_("ckct_ib_minimum_value"), min, min);
+            err_msg = g_strdup_printf (_HL("ckct_ib_minimum_value"), min, min);
             break;
 
         case MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
             err_msg =
-                g_strdup_printf (_("ckct_ib_set_a_value_within_range"), min, max);
+                g_strdup_printf (_HL("ckct_ib_set_a_value_within_range"), min, max);
             break;
     }
 
