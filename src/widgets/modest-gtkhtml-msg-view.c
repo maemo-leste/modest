@@ -1131,7 +1131,11 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	}
 	
 	if (priv->attachments_view) {
+#ifndef MODEST_TOOLKIT_HILDON2
 		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
+#else
+		gchar *att_label = g_strconcat (_("mail_va_attachment"), ":", NULL);
+#endif
 
 		priv->attachments_box = (GtkWidget *)
 			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),

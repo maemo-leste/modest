@@ -348,7 +348,11 @@ modest_mozembed_msg_view_init (ModestMozembedMsgView *obj)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
 	
 	if (priv->attachments_view) {
+#ifndef MODEST_TOOLKIT_HILDON2
 		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
+#else
+		gchar *att_label = g_strconcat (_("mail_va_attachment"), ":", NULL);
+#endif
 
 		priv->attachments_box = (GtkWidget *)
 			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),
