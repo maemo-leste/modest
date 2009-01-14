@@ -1364,6 +1364,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 			modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
 	}
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Messages as attachments could not be removed */
 	if (!dimmed && MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		TnyList *attachments;
@@ -1383,6 +1384,7 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 			g_object_unref (attachments);
 		}
 	}
+#endif
 
 	if (!dimmed) {
 
