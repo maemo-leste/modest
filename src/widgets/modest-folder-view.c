@@ -1561,6 +1561,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	guint i;
 	gboolean found = FALSE;
 	gboolean cleared = FALSE;
+	ModestTnyFolderRules rules = 0;
 
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (data), FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (data);
@@ -1711,6 +1712,34 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 				break;
 			}
 			
+		} else if (TNY_IS_ACCOUNT (instance)) {
+			retval = FALSE;
+		}
+	}
+
+	if (retval && TNY_IS_FOLDER (instance)) {
+		rules = modest_tny_folder_get_rules (TNY_FOLDER (instance));
+	}
+
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_DELETABLE)) {
+		if (TNY_IS_FOLDER (instance)) {
+			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE);
+		} else if (TNY_IS_ACCOUNT (instance)) {
+			retval = FALSE;
+		}
+	}
+
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_RENAMEABLE)) {
+		if (TNY_IS_FOLDER (instance)) {
+			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE);
+		} else if (TNY_IS_ACCOUNT (instance)) {
+			retval = FALSE;
+		}
+	}
+
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_MOVEABLE)) {
+		if (TNY_IS_FOLDER (instance)) {
+			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE);
 		} else if (TNY_IS_ACCOUNT (instance)) {
 			retval = FALSE;
 		}

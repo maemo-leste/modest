@@ -454,3 +454,32 @@ modest_folder_window_pack_toolbar (ModestHildon2Window *self,
 		gtk_box_pack_end (GTK_BOX (priv->top_vbox), toolbar, FALSE, FALSE, 0);
 	}
 }
+
+static void 
+edit_mode_changed (ModestFolderWindow *folder_window,
+		   gint edit_mode_id,
+		   ModestFolderWindow *self)
+{
+	ModestFolderWindowPrivate *priv;
+	ModestFolderViewFilter filter = MODEST_FOLDER_VIEW_FILTER_NONE;
+
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW (self));
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	switch (edit_mode_id) {
+	case EDIT_MODE_COMMAND_MOVE:
+		filter = MODEST_FOLDER_VIEW_FILTER_MOVEABLE;
+		break;
+	case EDIT_MODE_COMMAND_DELETE:
+		filter = MODEST_FOLDER_VIEW_FILTER_DELETABLE;
+		break;
+	case EDIT_MODE_COMMAND_RENAME:
+		filter = MODEST_FOLDER_VIEW_FILTER_RENAMEABLE;
+		break;
+	case MODEST_HILDON2_WINDOW_EDIT_MODE_NONE:
+		filter = MODEST_FOLDER_VIEW_FILTER_NONE;
+		break;
+	}
+
+	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), filter);
+}
