@@ -58,6 +58,7 @@ typedef enum _ModestFolderViewCellStyle {
 typedef enum _ModestFolderViewFilter {
 	MODEST_FOLDER_VIEW_FILTER_NONE = 0,
 	MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS = 1 << 0,
+	MODEST_FOLDER_VIEW_FILTER_HIDE_MANDATORY_FOLDERS = 1 << 1,
 } ModestFolderViewFilter;
 
 typedef struct _ModestFolderView      ModestFolderView;

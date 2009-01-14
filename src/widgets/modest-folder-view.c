@@ -1686,6 +1686,36 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 		}
 	}
 
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_MANDATORY_FOLDERS)) {
+		if (TNY_IS_FOLDER (instance)) {
+			TnyFolderType guess_type;
+			
+			if (TNY_FOLDER_TYPE_NORMAL) {
+				guess_type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
+			} else {
+				guess_type = type;
+			}
+
+			switch (type) {
+			case TNY_FOLDER_TYPE_OUTBOX:
+			case TNY_FOLDER_TYPE_SENT:
+			case TNY_FOLDER_TYPE_DRAFTS:
+			case TNY_FOLDER_TYPE_ARCHIVE:
+			case TNY_FOLDER_TYPE_INBOX:
+				retval = FALSE;
+				break;
+			case TNY_FOLDER_TYPE_UNKNOWN:
+			case TNY_FOLDER_TYPE_NORMAL:
+				break;
+			default:
+				break;
+			}
+			
+		} else if (TNY_IS_ACCOUNT (instance)) {
+			retval = FALSE;
+		}
+	}
+
 	/* Free */
 	g_object_unref (instance);
 
