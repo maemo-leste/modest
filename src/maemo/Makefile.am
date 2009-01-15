@@ -117,6 +117,7 @@ ui_DATA = $(UI_FILES)
 serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
+ossocudscripts_DATA = modest-clean.sh
 
 icon_26x26_DATA     = pixmaps/modest-icon.png
 
@@ -126,4 +127,5 @@ EXTRA_DIST=\
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
 	$(backupsettings_DATA) \
+	$(ossocudscripts_DATA) \
 	$(icon_26x26_DATA)	

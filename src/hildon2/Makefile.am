@@ -129,6 +129,7 @@ ui_DATA = $(UI_FILES)
 serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
+ossocudscripts_DATA = modest-clean.sh
 
 # mcc_mapping may be provided by the operator-wizard-settings package:
 # the one here is a copy, as that package is not available in chinook
@@ -146,5 +147,6 @@ EXTRA_DIST=\
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
 	$(backupsettings_DATA) \
+	$(ossocudscripts_DATA) \
 	$(MMC_MAPPING_FILE)    \
 	$(PROVIDER_DATA_FILE)
