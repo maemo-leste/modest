@@ -1833,6 +1833,7 @@ message_reader (ModestMsgViewWindow *window,
 
 		/* We set the header from model while we're loading */
 		tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
+		gtk_window_set_title (GTK_WINDOW (window), _CS("ckdg_pb_updating"));
 
 		/* Ask the user if he wants to download the message if
 		   we're not online */
