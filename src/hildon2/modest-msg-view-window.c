@@ -1832,7 +1832,7 @@ message_reader (ModestMsgViewWindow *window,
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
 
 		/* We set the header from model while we're loading */
-		
+		tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
 
 		/* Ask the user if he wants to download the message if
 		   we're not online */
