@@ -40,7 +40,7 @@
 #include <modest-tny-msg.h>
 #include <modest-text-utils.h>
 #include <widgets/modest-msg-view.h>
-#include <widgets/modest-mail-header-view.h>
+#include <widgets/modest-compact-mail-header-view.h>
 #include <widgets/modest-attachments-view.h>
 #include <modest-marshal.h>
 #include <widgets/modest-isearch-view.h>
@@ -51,6 +51,7 @@
 
 /* 'private'/'protected' functions */
 static void     modest_mozembed_msg_view_class_init   (ModestMozembedMsgViewClass *klass);
+static void     tny_header_view_init (gpointer g, gpointer iface_data);
 static void     tny_msg_view_init (gpointer g, gpointer iface_data);
 static void     tny_mime_part_view_init (gpointer g, gpointer iface_data);
 static void     modest_mime_part_view_init (gpointer g, gpointer iface_data);
@@ -84,6 +85,11 @@ static TnyMimePart* modest_msg_view_mp_get_part_default (TnyMimePartView *self);
 /* ModestMimePartView implementation */
 static gboolean modest_msg_view_mp_is_empty (ModestMimePartView *self);
 static gboolean modest_msg_view_mp_is_empty_default (ModestMimePartView *self);
+/* TnyHeaderView implementation */
+static void modest_msg_view_set_header (TnyHeaderView *self, TnyHeader *header);
+static void modest_msg_view_set_header_default (TnyHeaderView *self, TnyHeader *header);
+static void modest_msg_view_clear_header (TnyHeaderView *self);
+static void modest_msg_view_clear_header_default (TnyHeaderView *self);
 /* TnyMsgView implementation */
 static TnyMsg *modest_msg_view_get_msg (TnyMsgView *self);
 static TnyMsg *modest_msg_view_get_msg_default (TnyMsgView *self);
@@ -138,6 +144,7 @@ static void modest_mozembed_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
 
 /* internal api */
+static void     set_header     (ModestMozembedMsgView *self, TnyHeader *header);
 static TnyMsg   *get_message   (ModestMozembedMsgView *self);
 static void     set_message    (ModestMozembedMsgView *self, TnyMsg *tny_msg);
 static gboolean is_empty       (ModestMozembedMsgView *self); 
@@ -216,6 +223,13 @@ modest_mozembed_msg_view_get_type (void)
 		  NULL          /* interface_data */
 		};
 
+		static const GInterfaceInfo tny_header_view_info = 
+		{
+		  (GInterfaceInitFunc) tny_header_view_init, /* interface_init */
+		  NULL,         /* interface_finalize */
+		  NULL          /* interface_data */
+		};
+
 		static const GInterfaceInfo modest_mime_part_view_info = 
 		{
 		  (GInterfaceInitFunc) modest_mime_part_view_init, /* interface_init */
@@ -247,6 +261,9 @@ modest_mozembed_msg_view_get_type (void)
  		my_type = g_type_register_static (GTK_TYPE_SCROLLED_WINDOW,
 		                                  "ModestMozembedMsgView",
 		                                  &my_info, 0);
+
+		g_type_add_interface_static (my_type, TNY_TYPE_HEADER_VIEW, 
+			&tny_header_view_info);
 
 		g_type_add_interface_static (my_type, TNY_TYPE_MIME_PART_VIEW, 
 			&tny_mime_part_view_info);
@@ -285,6 +302,8 @@ modest_mozembed_msg_view_class_init (ModestMozembedMsgViewClass *klass)
 	gobject_class->finalize = modest_mozembed_msg_view_finalize;
 	gtkobject_class->destroy = modest_mozembed_msg_view_destroy;
 
+	klass->set_header_func = modest_msg_view_set_header_default;
+	klass->clear_header_func = modest_msg_view_clear_header_default;
 	klass->set_scroll_adjustments = NULL;
 	klass->get_part_func = modest_msg_view_mp_get_part_default;
 	klass->set_part_func = modest_msg_view_mp_set_part_default;
@@ -692,6 +711,31 @@ set_message (ModestMozembedMsgView *self, TnyMsg *msg)
 
 }
 
+static void
+set_header (ModestMozembedMsgView *self, TnyHeader *header)
+{
+	ModestMozembedMsgViewPrivate *priv;
+	
+	g_return_if_fail (self);
+
+	if (header == NULL)
+		set_message (self, NULL);
+	
+	priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE(self);
+	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
+
+	if (priv->msg)
+		g_object_unref (G_OBJECT(priv->msg));
+	priv->msg = NULL;
+	
+	tny_header_view_set_header (TNY_HEADER_VIEW (priv->mail_header_view), header);
+	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
+	gtk_widget_show_all (priv->mail_header_view);
+	gtk_widget_hide_all (priv->attachments_box);
+	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
+	tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
+}
+
 
 static TnyMsg*
 get_message (ModestMozembedMsgView *self)
@@ -841,6 +885,45 @@ remove_attachment (ModestMozembedMsgView *self, TnyMimePart *attachment)
 	modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 						   attachment);
 	
+}
+
+/* TNY HEADER VIEW IMPLEMENTATION */
+
+static void
+tny_header_view_init (gpointer g, gpointer iface_data)
+{
+	TnyHeaderViewIface *klass = (TnyHeaderViewIface *)g;
+
+	klass->set_header = modest_msg_view_set_header;
+	klass->clear = modest_msg_view_clear_header;
+
+	return;
+}
+
+static void
+modest_msg_view_set_header (TnyHeaderView *self, TnyHeader *header)
+{
+	MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->set_header_func (self, header);
+}
+
+
+static void
+modest_msg_view_set_header_default (TnyHeaderView *self, TnyHeader *header)
+{
+	set_header (MODEST_MOZEMBED_MSG_VIEW (self), header);
+}
+
+static void
+modest_msg_view_clear_header (TnyHeaderView *self)
+{
+	MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->clear_header_func (self);
+}
+
+
+static void
+modest_msg_view_clear_header_default (TnyHeaderView *self)
+{
+	set_message (MODEST_MOZEMBED_MSG_VIEW (self), NULL);
 }
 
 /* TNY MSG IMPLEMENTATION */
