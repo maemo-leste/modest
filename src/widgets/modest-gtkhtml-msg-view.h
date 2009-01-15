@@ -59,6 +59,9 @@ struct _ModestGtkhtmlMsgView {
 struct _ModestGtkhtmlMsgViewClass {
 	GtkContainerClass parent_class;
 
+	/* TnyHeaderView interface */
+	void (*set_header_func) (TnyHeaderView *self, TnyHeader *header);
+	void (*clear_header_func) (TnyHeaderView *self);
 	/* TnyMimePartView interface */
 	TnyMimePart* (*get_part_func) (TnyMimePartView *self);
 	void (*set_part_func) (TnyMimePartView *self, TnyMimePart *part);

@@ -1830,6 +1830,10 @@ message_reader (ModestMsgViewWindow *window,
 	mgr = modest_runtime_get_window_mgr ();
 	/* Msg download completed */
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
+
+		/* We set the header from model while we're loading */
+		
+
 		/* Ask the user if he wants to download the message if
 		   we're not online */
 		if (!tny_device_is_online (modest_runtime_get_device())) {

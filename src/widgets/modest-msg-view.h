@@ -34,6 +34,7 @@
 #include <tny-msg.h>
 #include <tny-mime-part.h>
 #include <tny-msg-view.h>
+#include <tny-header-view.h>
 #include <widgets/modest-recpt-view.h>
 #include <widgets/modest-zoomable.h>
 #include <widgets/modest-isearch-view.h>

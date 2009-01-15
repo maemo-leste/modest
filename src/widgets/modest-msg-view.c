@@ -206,6 +206,8 @@ modest_msg_view_get_type (void)
 		g_type_interface_add_prerequisite (my_type,
 						   TNY_TYPE_MIME_PART_VIEW);
 		g_type_interface_add_prerequisite (my_type,
+						   TNY_TYPE_HEADER_VIEW);
+		g_type_interface_add_prerequisite (my_type,
 						   MODEST_TYPE_MIME_PART_VIEW);
 
 	}
