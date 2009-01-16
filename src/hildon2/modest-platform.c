@@ -92,6 +92,7 @@
 #define COMMON_FOLDER_DIALOG_ENTRY "entry"
 #define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
 #define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
+#define MODEST_ALARMD_APPID PACKAGE_NAME
 
 
 static void _modest_platform_play_email_tone (void);
@@ -1324,7 +1325,7 @@ modest_platform_set_update_interval (guint minutes)
 	/* Delete any existing alarm,
 	 * because we will replace it: */
 	if (alarm_cookie) {
-		if (alarmd_event_del(alarm_cookie) != 1)
+		if (alarmd_event_del(alarm_cookie) != 0)
 			g_warning ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
 		alarm_cookie = 0;
 		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
@@ -1341,6 +1342,7 @@ modest_platform_set_update_interval (guint minutes)
 	alarm_event_t *event = alarm_event_create ();
 	alarm_event_add_actions (event, 1);
 	alarm_action_t *action = alarm_event_get_action (event, 0);
+	alarm_event_set_alarm_appid (event, MODEST_ALARMD_APPID);
 	event->alarm_time = minutes * 60; /* seconds */
 	
 	/* Set recurrence every few minutes: */
@@ -1354,7 +1356,7 @@ modest_platform_set_update_interval (guint minutes)
 	action->dbus_interface = g_strdup (MODEST_DBUS_IFACE);
 	action->dbus_service = g_strdup (MODEST_DBUS_SERVICE);
 	action->dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
-	action->flags = ALARM_ACTION_TYPE_DBUS | ALARM_ACTION_DBUS_USE_ACTIVATION;
+	action->flags = ALARM_ACTION_WHEN_TRIGGERED | ALARM_ACTION_TYPE_DBUS | ALARM_ACTION_DBUS_USE_ACTIVATION;
 
 	/* Use ALARM_EVENT_NO_DIALOG: Otherwise, a dialog will be shown if 
 	 * exec_name or dbus_path is NULL, even though we have specified no dialog text.
