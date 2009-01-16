@@ -5014,40 +5014,42 @@ move_to_cb (ModestMailOperation *mail_op,
 	    gpointer user_data)
 {
 	MoveToHelper *helper = (MoveToHelper *) user_data;
+	GObject *object = modest_mail_operation_get_source (mail_op);
 
 	/* Note that the operation could have failed, in that case do
 	   nothing */
-	if (modest_mail_operation_get_status (mail_op) == 
-	    MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+	if (modest_mail_operation_get_status (mail_op) != 
+	    MODEST_MAIL_OPERATION_STATUS_SUCCESS)
+		goto frees;
 
-		GObject *object = modest_mail_operation_get_source (mail_op);
-		if (MODEST_IS_MSG_VIEW_WINDOW (object)) {
-			ModestMsgViewWindow *self = MODEST_MSG_VIEW_WINDOW (object);
+	if (MODEST_IS_MSG_VIEW_WINDOW (object)) {
+		ModestMsgViewWindow *self = MODEST_MSG_VIEW_WINDOW (object);
 
-			if (!modest_msg_view_window_select_next_message (self) &&
-			    !modest_msg_view_window_select_previous_message (self)) {
-				/* No more messages to view, so close this window */
-				modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
-			}
-		} else if (MODEST_IS_MAIN_WINDOW (object) && 
-			   gtk_tree_row_reference_valid (helper->reference)) {
-			GtkWidget *header_view;
-			GtkTreePath *path;
-			GtkTreeSelection *sel;
-
-			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
-									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-			path = gtk_tree_row_reference_get_path (helper->reference);
-			/* We need to unselect the previous one
-			   because we could be copying instead of
-			   moving */
-			gtk_tree_selection_unselect_all (sel);
-			gtk_tree_selection_select_path (sel, path);
-			gtk_tree_path_free (path);
+		if (!modest_msg_view_window_select_next_message (self) &&
+		    !modest_msg_view_window_select_previous_message (self)) {
+			/* No more messages to view, so close this window */
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 		}
-		g_object_unref (object);
-        }
+	} else if (MODEST_IS_MAIN_WINDOW (object) && 
+		   gtk_tree_row_reference_valid (helper->reference)) {
+		GtkWidget *header_view;
+		GtkTreePath *path;
+		GtkTreeSelection *sel;
+
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
+		path = gtk_tree_row_reference_get_path (helper->reference);
+		/* We need to unselect the previous one
+		   because we could be copying instead of
+		   moving */
+		gtk_tree_selection_unselect_all (sel);
+		gtk_tree_selection_select_path (sel, path);
+		gtk_tree_path_free (path);
+	}
+	g_object_unref (object);
+
+ frees:
 	/* Destroy the helper */
 	move_to_helper_destroyer (helper);
 }
@@ -5340,20 +5342,12 @@ static void
 xfer_messages_error_handler (ModestMailOperation *mail_op, 
 			     gpointer user_data)
 {
-	ModestWindow *main_window = NULL;
-
-	/* Disable next automatic folder selection */
-	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-							 FALSE); /* don't create */
-	if (main_window) {
-		GObject *win = modest_mail_operation_get_source (mail_op);
-		modest_platform_run_information_dialog ((GtkWindow *) win, 
-							_("mail_in_ui_folder_move_target_error"), 
-							FALSE);
-		if (win)
-			g_object_unref (win);
-	}
-	move_to_helper_destroyer (user_data);
+	GObject *win = modest_mail_operation_get_source (mail_op);
+	modest_platform_run_information_dialog ((GtkWindow *) win, 
+						_("mail_in_ui_folder_move_target_error"), 
+						FALSE);
+	if (win)
+		g_object_unref (win);
 }
 
 typedef struct {
@@ -5407,12 +5401,15 @@ xfer_messages_performer  (gboolean canceled,
 	}
 
 	movehelper = g_new0 (MoveToHelper, 1);
+
+#ifndef MODEST_TOOLKIT_HILDON2
 	movehelper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
 							       _CS("ckct_nw_pasting"));
 	if (movehelper->banner != NULL)  {
 		g_object_ref (movehelper->banner);
 		gtk_widget_show (GTK_WIDGET (movehelper->banner));
 	}
+#endif
 
 	if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *header_view = 

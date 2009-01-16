@@ -1907,7 +1907,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 		TnyAccount *account;
 		ModestTnyAccountStore *acc_store;
 
-		acc_store = MODEST_TNY_ACCOUNT_STORE (priv->account_store);
+		acc_store = modest_runtime_get_account_store ();
 		account = modest_tny_account_store_get_local_folders_account (acc_store);
 
 		if (g_signal_handler_is_connected (account,

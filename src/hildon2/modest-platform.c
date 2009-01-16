@@ -43,6 +43,7 @@
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
+#include <tny-account-store-view.h>
 #include <gtk/gtkicontheme.h>
 #include <gtk/gtkmenuitem.h>
 #include <gtk/gtkmain.h>
@@ -695,7 +696,8 @@ folder_chooser_dialog_run (ModestFolderView *original)
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 				       MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS);
 
-	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original), MODEST_FOLDER_VIEW (folder_view));
+	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original), 
+				       MODEST_FOLDER_VIEW (folder_view));
 
 	visible_id = 
 		modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(original));
@@ -2435,6 +2437,9 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
         g_signal_connect (*folder_view, "row-activated",
                           G_CALLBACK (on_move_to_dialog_folder_activated),
                           dialog);
+
+	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (*folder_view),
+						  (TnyAccountStore *) modest_runtime_get_account_store ());
 
 	/* Create pannable and add it to the dialog */
 	folder_view_container = hildon_pannable_area_new ();
