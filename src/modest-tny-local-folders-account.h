@@ -61,11 +61,15 @@ G_BEGIN_DECLS
  * of its own.
  */
 typedef struct {
-  TnyCamelStoreAccount parent;
+	TnyCamelStoreAccount parent;
 } ModestTnyLocalFoldersAccount;
 
 typedef struct {
-  TnyCamelStoreAccountClass parent_class;
+	TnyCamelStoreAccountClass parent_class;
+
+	/* Signal */
+	void (*outbox_deleted) (ModestTnyLocalFoldersAccount *self);
+
 } ModestTnyLocalFoldersAccountClass;
 
 GType modest_tny_local_folders_account_get_type (void);

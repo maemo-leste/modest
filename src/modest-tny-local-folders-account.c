@@ -65,6 +65,13 @@ static TnyFolder*   create_folder  (TnyFolderStore *self,
 				    const gchar *name, 
 				    GError **err);
 
+enum {
+	OUTBOX_DELETED_SIGNAL,
+	LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = {0};
+
 static void
 modest_tny_local_folders_account_finalize (GObject *object)
 {
@@ -82,11 +89,24 @@ static void
 modest_tny_local_folders_account_class_init (ModestTnyLocalFoldersAccountClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	
+
 	g_type_class_add_private (klass, sizeof (ModestTnyLocalFoldersAccountPrivate));
-	
+
 	object_class->finalize = modest_tny_local_folders_account_finalize;
-	  
+
+	/* Signals */
+
+	/* Note that this signal is removed before unsetting my own
+	   reference to outbox, this means that by the time of this
+	   call, modest_tny_local_folders_account_get_merged_outbox is
+	   still valid. The reason is that the listeners of the signal
+	   might want to do something with the outbox instance */
+	signals[OUTBOX_DELETED_SIGNAL] = g_signal_new
+	("outbox-deleted", MODEST_TYPE_TNY_LOCAL_FOLDERS_ACCOUNT,
+	G_SIGNAL_RUN_FIRST, G_STRUCT_OFFSET
+	(ModestTnyLocalFoldersAccountClass, outbox_deleted), NULL,
+	NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+
 	/* Override virtual functions from the parent class: */
 	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->get_folders = get_folders;
 	TNY_CAMEL_STORE_ACCOUNT_CLASS(klass)->create_folder = create_folder;
@@ -248,10 +268,12 @@ modest_tny_local_folders_account_add_folder_to_outbox (ModestTnyLocalFoldersAcco
 
 	/* Create on-demand */
 	if (!priv->outbox_folder) {
-		priv->outbox_folder = TNY_MERGE_FOLDER (tny_merge_folder_new_with_ui_locker (_("mcen_me_folder_outbox"), tny_gtk_lockable_new ()));
-	
+		priv->outbox_folder = (TnyMergeFolder *) 
+			tny_merge_folder_new_with_ui_locker (_("mcen_me_folder_outbox"), 
+							     tny_gtk_lockable_new ());
 		/* Set type to outbox */
-		tny_merge_folder_set_folder_type (priv->outbox_folder, TNY_FOLDER_TYPE_OUTBOX);
+		tny_merge_folder_set_folder_type (priv->outbox_folder, 
+						  TNY_FOLDER_TYPE_OUTBOX);
 	}
 
 	/* Add outbox to the global OUTBOX folder */
@@ -277,6 +299,10 @@ modest_tny_local_folders_account_remove_folder_from_outbox (ModestTnyLocalFolder
 	merged_folders = tny_simple_list_new ();
 	tny_merge_folder_get_folders (priv->outbox_folder, merged_folders);
 	if (tny_list_get_length (merged_folders) == 0) {
+		/* Emit signal */
+		g_signal_emit ((GObject *)self, signals[OUTBOX_DELETED_SIGNAL], 0);
+
+		/* Unref my own reference */
 		g_object_unref (priv->outbox_folder);
 		priv->outbox_folder = NULL;
 	}

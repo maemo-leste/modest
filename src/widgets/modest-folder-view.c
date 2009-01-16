@@ -193,6 +193,11 @@ static void         update_style (ModestFolderView *self);
 static void         on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
 static gint         get_cmp_pos (TnyFolderType t, TnyFolder *folder_store);
 
+static gboolean     get_inner_models        (ModestFolderView *self,
+					     GtkTreeModel **filter_model,
+					     GtkTreeModel **sort_model,
+					     GtkTreeModel **tny_model);
+
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
@@ -235,6 +240,8 @@ struct _ModestFolderViewPrivate {
 	gboolean  reexpand; /* next time we expose, we'll expand all root folders */
 
 	GtkCellRenderer *messages_renderer;
+
+	gulong                outbox_deleted_handler;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -339,6 +346,41 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 	
 #endif
 
+}
+
+/* Retrieves the filter, sort and tny models of the folder view. If
+   any of these does not exist then it returns FALSE */
+static gboolean
+get_inner_models (ModestFolderView *self, 
+		  GtkTreeModel **filter_model,
+		  GtkTreeModel **sort_model,
+		  GtkTreeModel **tny_model)
+{
+	GtkTreeModel *s_model, *f_model, *t_model;
+
+	f_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (!GTK_IS_TREE_MODEL_FILTER(f_model)) {
+		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		return FALSE;
+	}
+
+	s_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (f_model));
+	if (!GTK_IS_TREE_MODEL_SORT(s_model)) {
+		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
+		return FALSE;
+	}
+
+	t_model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (s_model));
+
+	/* Assign values */
+	if (filter_model)
+		*filter_model = f_model;
+	if (sort_model)
+		*sort_model = s_model;
+	if (tny_model)
+		*tny_model = t_model;
+
+	return TRUE;
 }
 
 /* Simplify checks for NULLs: */
@@ -1078,7 +1120,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->cur_folder_store   = NULL;
 	priv->visible_account_id = NULL;
 	priv->folder_to_select = NULL;
-
+	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
 
 	/* Initialize the local account name */
@@ -1138,6 +1180,7 @@ modest_folder_view_finalize (GObject *obj)
 {
 	ModestFolderViewPrivate *priv;
 	GtkTreeSelection    *sel;
+	TnyAccount *local_account;
 
 	g_return_if_fail (obj);
 
@@ -1146,6 +1189,16 @@ modest_folder_view_finalize (GObject *obj)
 	if (priv->timer_expander != 0) {
 		g_source_remove (priv->timer_expander);
 		priv->timer_expander = 0;
+	}
+
+	local_account = (TnyAccount *)
+		modest_tny_account_store_get_local_folders_account ((ModestTnyAccountStore *)priv->account_store);
+	if (local_account) {
+		if (g_signal_handler_is_connected (local_account,
+						   priv->outbox_deleted_handler))
+			g_signal_handler_disconnect (local_account,
+						     priv->outbox_deleted_handler);
+		g_object_unref (local_account);
 	}
 
 	if (priv->account_store) {
@@ -1252,12 +1305,34 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 }
 
 static void
+on_outbox_deleted_cb (ModestTnyLocalFoldersAccount *local_account,
+		      gpointer user_data)
+{
+	ModestFolderView *self;
+	GtkTreeModel *model, *filter_model;
+	TnyFolder *outbox;
+
+	self = MODEST_FOLDER_VIEW (user_data);
+
+	if (!get_inner_models (self, &filter_model, NULL, &model))
+		return;
+
+	/* Remove outbox from model */
+	outbox = modest_tny_local_folders_account_get_merged_outbox (local_account);
+	tny_list_remove (TNY_LIST (model), G_OBJECT (outbox));
+	g_object_unref (outbox);
+
+	/* Refilter view */
+	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
+}
+
+static void
 on_account_inserted (TnyAccountStore *account_store,
 		     TnyAccount *account,
 		     gpointer user_data)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *sort_model, *filter_model;
+	GtkTreeModel *model, *filter_model;
 
 	/* Ignore transport account insertions, we're not showing them
 	   in the folder view */
@@ -1275,31 +1350,29 @@ on_account_inserted (TnyAccountStore *account_store,
 					      G_OBJECT (user_data),
 					      MODEST_CONF_FOLDER_VIEW_KEY);
 
-	if (!GTK_IS_TREE_VIEW(user_data)) {
-		g_warning ("BUG: %s: not a valid tree view", __FUNCTION__);
-		return;
-	}
 
-	/* Get the inner model */
-	/* check, is some rare cases, we did not get the right thing here,
-	 * NB#84097 */
-	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
-	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+	/* Get models */
+	if (!get_inner_models (MODEST_FOLDER_VIEW (user_data),
+			       &filter_model, NULL, &model))
 		return;
-	}
-
-	/* check, is some rare cases, we did not get the right thing here,
-	 * NB#84097 */
-	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
-	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
-		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
-		return;
-	}
 
 	/* Insert the account in the model */
-	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
-			 G_OBJECT (account));
+	tny_list_append (TNY_LIST (model), G_OBJECT (account));
+
+	/* When the model is a list store (plain representation) the
+	   outbox is not a child of any account so we have to manually
+	   delete it because removing the local folders account won't
+	   delete it (because tny_folder_get_account() is not defined
+	   for a merge folder */
+	if (TNY_IS_GTK_FOLDER_LIST_STORE (model) &&
+	    MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (account)) {
+
+		priv->outbox_deleted_handler =
+			g_signal_connect (account,
+					  "outbox-deleted",
+					  G_CALLBACK (on_outbox_deleted_cb),
+					  user_data);
+	}
 
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
@@ -1357,7 +1430,7 @@ on_account_changed (TnyAccountStore *account_store,
 {
 	ModestFolderView *self;
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *sort_model, *filter_model;
+	GtkTreeModel *model, *filter_model;
 	GtkTreeSelection *sel;
 	gboolean same_account;
 
@@ -1366,26 +1439,15 @@ on_account_changed (TnyAccountStore *account_store,
 	if (TNY_IS_TRANSPORT_ACCOUNT (tny_account))
 		return;
 
-	if (!MODEST_IS_FOLDER_VIEW(user_data)) {
-		g_warning ("BUG: %s: not a valid folder view", __FUNCTION__);
-		return;
-	}
-
 	self = MODEST_FOLDER_VIEW (user_data);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (user_data);
 
 	/* Get the inner model */
-	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
-	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+	if (!get_inner_models (MODEST_FOLDER_VIEW (user_data),
+			       &filter_model, NULL, &model))
 		return;
-	}
 
-	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
-	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
-		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
-		return;
-	}
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (user_data));
 
 	/* Invalidate the cur_folder_store only if the selected folder
 	   belongs to the account that is being removed */
@@ -1396,12 +1458,10 @@ on_account_changed (TnyAccountStore *account_store,
 	}
 
 	/* Remove the account from the model */
-	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
-			 G_OBJECT (tny_account));
+	tny_list_remove (TNY_LIST (model), G_OBJECT (tny_account));
 
 	/* Insert the account in the model */
-	tny_list_append (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
-			 G_OBJECT (tny_account));
+	tny_list_append (TNY_LIST (model), G_OBJECT (tny_account));
 
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
@@ -1419,7 +1479,7 @@ on_account_removed (TnyAccountStore *account_store,
 {
 	ModestFolderView *self = NULL;
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *sort_model, *filter_model;
+	GtkTreeModel *model, *filter_model;
 	GtkTreeSelection *sel = NULL;
 	gboolean same_account = FALSE;
 
@@ -1458,21 +1518,21 @@ on_account_removed (TnyAccountStore *account_store,
 		g_object_unref (folder_to_select_account);
 	}
 
+	if (!get_inner_models (MODEST_FOLDER_VIEW (user_data),
+			       &filter_model, NULL, &model))
+		return;
+
+	/* Disconnect the signal handler */
+	if (TNY_IS_GTK_FOLDER_LIST_STORE (model) &&
+	    MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (account)) {
+		if (g_signal_handler_is_connected (account,
+						   priv->outbox_deleted_handler))
+			g_signal_handler_disconnect (account,
+						     priv->outbox_deleted_handler);
+	}
+
 	/* Remove the account from the model */
-	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	if (!GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
-		return;
-	}
-
-	sort_model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter_model));
-	if (!GTK_IS_TREE_MODEL_SORT(sort_model)) {
-		g_warning ("BUG: %s: not a valid sort model", __FUNCTION__);
-		return;
-	}
-
-	tny_list_remove (TNY_LIST (gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sort_model))),
-			 G_OBJECT (account));
+	tny_list_remove (TNY_LIST (model), G_OBJECT (account));
 
 	/* If the removed account is the currently viewed one then
 	   clear the configuration value. The new visible account will be the default account */
@@ -1837,6 +1897,31 @@ modest_folder_view_update_model (ModestFolderView *self,
 #else
 	model = tny_gtk_folder_store_tree_model_new (NULL);
 #endif
+
+	/* When the model is a list store (plain representation) the
+	   outbox is not a child of any account so we have to manually
+	   delete it because removing the local folders account won't
+	   delete it (because tny_folder_get_account() is not defined
+	   for a merge folder */
+	if (TNY_IS_GTK_FOLDER_LIST_STORE (model)) {
+		TnyAccount *account;
+		ModestTnyAccountStore *acc_store;
+
+		acc_store = MODEST_TNY_ACCOUNT_STORE (priv->account_store);
+		account = modest_tny_account_store_get_local_folders_account (acc_store);
+
+		if (g_signal_handler_is_connected (account,
+						   priv->outbox_deleted_handler))
+			g_signal_handler_disconnect (account,
+						     priv->outbox_deleted_handler);
+
+		priv->outbox_deleted_handler =
+			g_signal_connect (account,
+					  "outbox-deleted",
+					  G_CALLBACK (on_outbox_deleted_cb),
+					  self);
+		g_object_unref (account);
+	}
 
 	/* Get the accounts: */
 	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),

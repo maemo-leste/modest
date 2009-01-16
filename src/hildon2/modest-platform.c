@@ -520,7 +520,7 @@ modest_platform_get_icon (const gchar *name, guint icon_size)
 	 */
 	if (!name || strlen(name) == 0)
 		return NULL;
-	
+
 	current_theme = gtk_icon_theme_get_default ();
 	pixbuf = gtk_icon_theme_load_icon (current_theme, name, icon_size,
 					   GTK_ICON_LOOKUP_NO_SVG,
