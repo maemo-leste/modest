@@ -234,7 +234,9 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,
 			    -1);
 	
 	modest_text_utils_get_display_address (address); /* string is changed in-place */
-	set_cell_text (renderer, address, flags, RENDER_CELL_STYLE_DEFAULT);
+	
+	set_cell_text (renderer, (address && address[0] != '\0')?address:_("mail_va_no_to"),
+		       flags, RENDER_CELL_STYLE_DEFAULT);
 	g_free (address);
 }
 /*
@@ -330,7 +332,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	/* FIXME: we hardcode the color to #666666; instead we should use SecondaryTextColour from the
 	 * theme (gtkrc file) */
 	modest_text_utils_get_display_address (address); /* changed in-place */
-	set_cell_text (recipient_cell, address, flags, RENDER_CELL_STYLE_GREY);
+	set_cell_text (recipient_cell, (address && address[0] != '\0')?address:_("mail_va_no_to"), flags, RENDER_CELL_STYLE_GREY);
 	g_free (address);
 	
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
