@@ -267,6 +267,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *font_dialog;
 
 	GtkWidget   *pannable;
+	guint        correct_scroll_idle;
 	guint        scroll_drag_timeout_id;
 	gdouble      last_upper;
 
@@ -419,6 +420,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->sent = FALSE;
 
 	priv->scroll_drag_timeout_id = 0;
+	priv->correct_scroll_idle = 0;
 	priv->last_upper = 0.0;
 
 	priv->font_dialog = NULL;
@@ -493,21 +495,19 @@ scroll_drag_timeout (gpointer userdata)
 	return FALSE;
 }
 
-static void
-correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focused)
+static gboolean 
+correct_scroll_without_drag_check_idle (gpointer userdata)
 {
+	ModestMsgEditWindow *w = (ModestMsgEditWindow *) userdata;
 	ModestMsgEditWindowPrivate *priv;
-	GtkTextMark *insert;
 	GtkTextIter iter;
 	GdkRectangle rectangle;
 	gdouble new_value;
 	gint offset;
+	GtkTextMark *insert;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
-
-	if (only_if_focused && !gtk_widget_is_focus (priv->msg_body))
-		return;
-
+	
 	insert = gtk_text_buffer_get_insert (priv->text_buffer);
 	gtk_text_buffer_get_iter_at_mark (priv->text_buffer, &iter, insert);
 
@@ -517,6 +517,27 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focu
 	new_value = (offset + rectangle.y);
 
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (priv->pannable), -1, new_value);
+
+	priv->correct_scroll_idle = 0;
+	return FALSE;
+}
+
+static void
+correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focused)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
+
+	if (only_if_focused && !gtk_widget_is_focus (priv->msg_body))
+		return;
+
+	if (priv->correct_scroll_idle > 0) {
+		return;
+	}
+
+	priv->correct_scroll_idle = g_idle_add ((GSourceFunc) correct_scroll_without_drag_check_idle,
+						(gpointer) w);
 }
 
 static void
@@ -911,6 +932,10 @@ modest_msg_edit_window_finalize (GObject *obj)
 		}
 		g_object_unref (priv->outbox_msg);
 		priv->outbox_msg = NULL;
+	}
+	if (priv->correct_scroll_idle > 0) {
+		g_source_remove (priv->correct_scroll_idle);
+		priv->correct_scroll_idle = 0;
 	}
 	if (priv->scroll_drag_timeout_id > 0) {
 		g_source_remove (priv->scroll_drag_timeout_id);
