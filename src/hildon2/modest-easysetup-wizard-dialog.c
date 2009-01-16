@@ -626,18 +626,34 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
-	
+
 	protocol_type = modest_servertype_picker_get_active_servertype (
 		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
 
 	/* This could happen when the combo box has still no active iter */
 	if (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
 		gchar* incomingserver_title;
-		const gchar *protocol_display_name; 
+		const gchar *protocol_display_name;
+		ModestProtocol *protocol;
+		GtkWidget *label;
+		GList *children;
 
-		protocol_display_name = modest_protocol_get_display_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type));
-		
-		incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), protocol_display_name);
+		/* Get the label and change it. This is ugly */
+		children = gtk_container_get_children (GTK_CONTAINER (priv->caption_incoming));
+		label = (GtkWidget *) children->data;
+
+		if (!GTK_IS_LABEL (label))
+			return;
+
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, 
+									  protocol_type);
+		protocol_display_name = modest_protocol_get_display_name (protocol);
+
+		incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), 
+						       protocol_display_name);
+
+		gtk_label_set_markup (GTK_LABEL (label), incomingserver_title);
+
 		g_free(incomingserver_title);
 	}
 }
@@ -747,9 +763,8 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
-	/* (Note: Changing the title seems pointless. murrayc) */
 	priv->caption_incoming = create_captioned (self, title_sizegroup, value_sizegroup,
-						   "Incoming Server", 
+						   "This will be removed", 
 						   priv->entry_incomingserver);
 	update_incoming_server_title (self);
 	gtk_widget_show (priv->entry_incomingserver);
