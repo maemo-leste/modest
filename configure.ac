@@ -38,8 +38,6 @@ MODEST_LOCALE_DIR='$prefix/${DATADIRNAME}/locale'
 AM_GLIB_DEFINE_LOCALEDIR([MODEST_LOCALE_DIR])
 AM_GLIB_GNU_GETTEXT
 
-
-
 if test x$prefix = xNONE; then
    prefix=/usr/local
 fi
@@ -188,6 +186,7 @@ if test "$have_hildon2" = "true"; then
    detected_toolkit=hildon2
    hildonpkgs="$hildonpkgs libcanberra profile"
    echo "HILDON 2 PACKAGES $hildonpkgs"
+   AC_CHECK_HEADER([profiled/keys_nokia.h], [], AC_MSG_ERROR([You have to install package profile-data-dev]))
 fi
 AC_SUBST(hildonpkgs)
 
