@@ -641,8 +641,8 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 									  protocol_type);
 		protocol_display_name = modest_protocol_get_display_name (protocol);
 
-		incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), 
-						       protocol_display_name);
+		incomingserver_title = g_strconcat (_("mcen_li_emailsetup_servertype"), "\n<small>(",
+						    protocol_display_name, ")</small>", NULL);
 
 		modest_maemo_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
 
