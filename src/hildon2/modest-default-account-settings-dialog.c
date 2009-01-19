@@ -774,6 +774,7 @@ static GtkWidget*
 create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
+	gchar *smtp_caption_label;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
@@ -790,8 +791,10 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 			hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
+	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_smtp"), FALSE, priv->entry_outgoingserver);
+					       smtp_caption_label, TRUE, priv->entry_outgoingserver);
+	g_free (smtp_caption_label);
 	gtk_widget_show (priv->entry_outgoingserver);
 	connect_for_modified (self, priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
