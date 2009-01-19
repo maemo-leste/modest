@@ -646,7 +646,6 @@ update_incoming_server_title (ModestDefaultAccountSettingsDialog *self,
 	ModestProtocol *protocol;
 	const gchar *protocol_display_name;
 	gchar* incomingserver_title;
-	gchar *with_asterisk;
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
@@ -654,16 +653,11 @@ update_incoming_server_title (ModestDefaultAccountSettingsDialog *self,
 	protocol_registry = modest_runtime_get_protocol_registry ();
 	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
 	protocol_display_name = modest_protocol_get_display_name (protocol);
-	incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), 
-					       protocol_display_name);
+	incomingserver_title = g_strconcat(_("mcen_li_emailsetup_servertype"), "*", 
+					   "\n<small>(", protocol_display_name, ")</small>", NULL);
 	
-	/* This is a mandatory field, so add a *. This is usually done by
-	 * create_caption_new_with_asterisk() but we can't use that here. */
-	with_asterisk = g_strconcat (incomingserver_title, "*", NULL);
+	modest_maemo_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
 	g_free (incomingserver_title);
-	
-	modest_maemo_utils_captioned_set_label (priv->caption_incoming, with_asterisk, FALSE);
-	g_free (with_asterisk);
 }
 
 static GtkWidget* 
