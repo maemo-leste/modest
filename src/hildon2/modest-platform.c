@@ -463,7 +463,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 			GSList *node;			
 			popup_info->actions = actions_list;
 			popup_info->uri = g_strdup (uri);
-			
+
 			for (node = actions_list; node != NULL; node = g_slist_next (node)) {
 				GtkWidget *menu_item;
 				const gchar *action_name;
@@ -475,7 +475,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 				g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
 				g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
 						  popup_info);
-				
+
 				if (hildon_uri_is_default_action (action, NULL)) {
 					gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
 				} else {
@@ -485,25 +485,15 @@ modest_platform_show_uri_popup (const gchar *uri)
 			}
 		}
 
-		/* always add the copy item */
-		GtkWidget* menu_item = gtk_menu_item_new_with_label (dgettext("osso-uri",
-									      "uri_link_copy_link_location"));
-		g_object_set_data_full (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION,
-					g_strconcat (URI_ACTION_COPY, uri, NULL),
-					g_free);
-		g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),NULL);
-		gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
-		gtk_widget_show (menu_item);
 
-		
 		/* and what to do when the link is deleted */
 		g_signal_connect (G_OBJECT (menu), "delete-event", G_CALLBACK (delete_uri_popup), popup_info);
 		gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
-						  
+
 	} else {
 		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
 	}
-	
+
 	return TRUE;
 }
 
