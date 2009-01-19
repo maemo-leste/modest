@@ -68,6 +68,9 @@
 #define BTNAME_MATCH_RULE "type='signal',interface='" BTNAME_SIGNAL_IF \
                           "',member='" BTNAME_SIG_CHANGED "'"
 
+/* Label child of a captioned */
+#define CAPTIONED_LABEL_CHILD "captioned-label"
+
 
 static osso_context_t *__osso_context = NULL; /* urgh global */
 
@@ -363,7 +366,36 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 
 	hildon_gtk_widget_set_theme_size (control, size_type);
 
+	g_object_set_data (G_OBJECT (box), CAPTIONED_LABEL_CHILD, label);
+
 	return box;
+}
+
+/**
+ * modest_maemo_utils_captioned_set_label:
+ * @captioned: a #GtkWidget built as captioned
+ * @new_label: a string
+ * @use_markup: a #gboolean
+ *
+ * set a new label for the captioned
+ */
+void
+modest_maemo_utils_captioned_set_label (GtkWidget *captioned,
+					const gchar *new_label,
+					gboolean use_markup)
+{
+	GtkWidget *label;
+
+	g_return_if_fail (GTK_IS_WIDGET (captioned));
+
+	label = g_object_get_data (G_OBJECT (captioned), CAPTIONED_LABEL_CHILD);
+	g_return_if_fail (GTK_IS_LABEL (label));
+
+	if (use_markup) {
+		gtk_label_set_markup (GTK_LABEL (label), new_label);
+	} else {
+		gtk_label_set_text (GTK_LABEL (label), new_label);
+	}
 }
 
 /**

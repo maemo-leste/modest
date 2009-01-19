@@ -137,6 +137,10 @@ GtkWidget *modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *
 								  GtkWidget *control,
 								  HildonSizeType size_type);
 
+void       modest_maemo_utils_captioned_set_label (GtkWidget *captioned,
+						   const gchar *new_label,
+						   gboolean use_markup);
+
 void       modest_maemo_utils_set_hbutton_layout (GtkSizeGroup *title_sizegroup, 
 						  GtkSizeGroup *value_sizegroup,
 						  const gchar *title, 
