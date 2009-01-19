@@ -5453,14 +5453,14 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	MoveFolderInfo *info = (MoveFolderInfo*)user_data;
 	GtkTreeSelection *sel;
 	ModestMailOperation *mail_op = NULL;
-	
+
 	if (canceled || err || !MODEST_IS_WINDOW (parent_window)) {
 		g_object_unref (G_OBJECT (info->src_folder));
 		g_object_unref (G_OBJECT (info->dst_folder));
 		g_free (info);
 		return;
 	}
-	
+
 	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
 	helper->banner = modest_platform_animation_banner (GTK_WIDGET (parent_window), NULL,
 			_CS("ckct_nw_pasting"));

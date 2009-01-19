@@ -1978,17 +1978,21 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
 					       gpointer user_data)
 {
 	TnyAccount *account = NULL;
-	
-	if (!folder_store) {
+
+	if (!folder_store ||
+	    (TNY_IS_MERGE_FOLDER (folder_store) &&
+	     (tny_folder_get_folder_type (TNY_FOLDER(folder_store)) == TNY_FOLDER_TYPE_OUTBOX))) {
+
  		/* We promise to instantly perform the callback, so ... */
  		if (callback) {
- 			callback (FALSE, NULL, parent_window, NULL, user_data);
- 		}
- 		return; 
- 		
- 		/* Original comment: Maybe it is something local. */
- 		/* PVH's comment: maybe we should KNOW this in stead of assuming? */
- 		
+			GError *error = NULL;
+			g_set_error (&error, TNY_ERROR_DOMAIN, TNY_SERVICE_ERROR_UNKNOWN,
+				     "Unable to move or not found folder");
+ 			callback (FALSE, error, parent_window, NULL, user_data);
+			g_error_free (error);
+		}
+ 		return;
+
  	} else if (TNY_IS_FOLDER (folder_store)) {
  		/* Get the folder's parent account: */
  		account = tny_folder_get_account (TNY_FOLDER (folder_store));
