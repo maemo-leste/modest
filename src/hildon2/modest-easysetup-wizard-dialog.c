@@ -636,15 +636,6 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 		gchar* incomingserver_title;
 		const gchar *protocol_display_name;
 		ModestProtocol *protocol;
-		GtkWidget *label;
-		GList *children;
-
-		/* Get the label and change it. This is ugly */
-		children = gtk_container_get_children (GTK_CONTAINER (priv->caption_incoming));
-		label = (GtkWidget *) children->data;
-
-		if (!GTK_IS_LABEL (label))
-			return;
 
 		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, 
 									  protocol_type);
@@ -653,7 +644,7 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 		incomingserver_title = g_strdup_printf(_("mcen_li_emailsetup_servertype"), 
 						       protocol_display_name);
 
-		gtk_label_set_markup (GTK_LABEL (label), incomingserver_title);
+		modest_maemo_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
 
 		g_free(incomingserver_title);
 	}

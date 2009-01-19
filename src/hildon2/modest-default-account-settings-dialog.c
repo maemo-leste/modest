@@ -662,7 +662,7 @@ update_incoming_server_title (ModestDefaultAccountSettingsDialog *self,
 	with_asterisk = g_strconcat (incomingserver_title, "*", NULL);
 	g_free (incomingserver_title);
 	
-	g_object_set (G_OBJECT (priv->caption_incoming), "label", with_asterisk, NULL);
+	modest_maemo_utils_captioned_set_label (priv->caption_incoming, with_asterisk, FALSE);
 	g_free (with_asterisk);
 }
 
