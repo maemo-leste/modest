@@ -262,13 +262,14 @@ create_captioned (ModestDefaultAccountSettingsDialog *self,
 		  GtkSizeGroup *title_sizegroup,
 		  GtkSizeGroup *value_sizegroup,
 		  const gchar *label_text,
+		  gboolean use_markup,
 		  GtkWidget *control)
 {
 
 	GtkWidget *result;
 
 	result = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-						      label_text, control);
+						      label_text, use_markup, control);
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -338,7 +339,7 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
-					       _("mcen_fi_account_title"), 
+					       _("mcen_fi_account_title"), FALSE,
 					       priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	connect_for_modified (self, priv->entry_account_title);
@@ -533,7 +534,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 		on_entry_max, self);
 	GtkWidget *caption = 
 		create_captioned (self, title_sizegroup, value_sizegroup,
-				  _("mcen_li_emailsetup_name"), priv->entry_user_name);
+				  _("mcen_li_emailsetup_name"), FALSE, priv->entry_user_name);
 	gtk_widget_show (priv->entry_user_name);
 	connect_for_modified (self, priv->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -556,7 +557,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
-				    _("mail_fi_username"), 
+				    _("mail_fi_username"), FALSE,
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	connect_for_modified (self, priv->entry_user_username);
@@ -585,7 +586,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
-				    _("mail_fi_password"), priv->entry_user_password);
+				    _("mail_fi_password"), FALSE, priv->entry_user_password);
 	gtk_widget_show (priv->entry_user_password);
 	connect_for_modified (self, priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -596,7 +597,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
-				    _("mcen_li_emailsetup_email_address"), priv->entry_user_email);
+				    _("mcen_li_emailsetup_email_address"), FALSE, priv->entry_user_email);
 	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (priv->entry_user_email);
 	connect_for_modified (self, priv->entry_user_email);
@@ -695,7 +696,7 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
 	priv->caption_incoming = create_captioned (self, title_sizegroup, value_sizegroup,
-						   "Incoming Server", priv->entry_incomingserver);
+						   "Incoming Server", FALSE, priv->entry_incomingserver);
 	gtk_widget_show (priv->entry_incomingserver);
 	connect_for_modified (self, priv->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -790,7 +791,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver);
+					       _("mcen_li_emailsetup_smtp"), FALSE, priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
 	connect_for_modified (self, priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);

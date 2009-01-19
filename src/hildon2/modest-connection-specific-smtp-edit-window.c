@@ -347,7 +347,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	GtkWidget *captioned = 
 	  modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_smtp"), 
+					       _("mcen_li_emailsetup_smtp"), FALSE,
 					       priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -370,7 +370,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mail_fi_username"), 
+							 _("mail_fi_username"), FALSE,
 							 priv->entry_user_username);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_username);
@@ -394,7 +394,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-		_("mail_fi_password"), priv->entry_user_password);
+							 _("mail_fi_password"), FALSE, priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -419,7 +419,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (!priv->entry_port)
 		priv->entry_port = GTK_WIDGET (modest_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mcen_fi_emailsetup_port"), priv->entry_port);
+							 _("mcen_fi_emailsetup_port"), FALSE, priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
 	gtk_widget_show (priv->entry_port);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);

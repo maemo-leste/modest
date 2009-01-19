@@ -127,11 +127,13 @@ GtkWidget *modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager
 GtkWidget *modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
 						   GtkSizeGroup *value_size_group,
 						   const gchar *title,
+						   gboolean use_markup,
 						   GtkWidget *control);
 
 GtkWidget *modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_group,
 								  GtkSizeGroup *value_size_group,
 								  const gchar *title,
+								  gboolean use_markup,
 								  GtkWidget *control,
 								  HildonSizeType size_type);
 

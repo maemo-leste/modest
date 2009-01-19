@@ -265,12 +265,13 @@ create_captioned (ModestEasysetupWizardDialog *self,
 		  GtkSizeGroup *title_size_group,
 		  GtkSizeGroup *value_size_group,
 		  const gchar *value,
+		  gboolean use_markup,
 		  GtkWidget *control)
 {
 
 	GtkWidget *result;
 	result = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-						      value, control);
+						      value, use_markup, control);
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -432,7 +433,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_free (default_account_name);
 	default_account_name = NULL;
 
-	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mcen_fi_account_title"), 
+	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mcen_fi_account_title"), FALSE,
 				    priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -501,7 +502,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name), 
 					      on_entry_max, self);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_name"), priv->entry_user_name);
+					       _("mcen_li_emailsetup_name"), FALSE, priv->entry_user_name);
 	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_name);
@@ -524,7 +525,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), 
 					 HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), 
+	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), FALSE,
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -553,7 +554,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
-				    _("mail_fi_password"), priv->entry_user_password);
+				    _("mail_fi_password"), FALSE, priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_password);
@@ -565,7 +566,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
-				    _("mcen_li_emailsetup_email_address"), priv->entry_user_email);
+				    _("mcen_li_emailsetup_email_address"), FALSE, priv->entry_user_email);
 	update_user_email_from_provider (self);
 	gtk_widget_show (priv->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -765,7 +766,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	 * so this default text will never be seen: */
 	priv->caption_incoming = create_captioned (self, title_sizegroup, value_sizegroup,
 						   "This will be removed", 
-						   priv->entry_incomingserver);
+						   FALSE, priv->entry_incomingserver);
 	update_incoming_server_title (self);
 	gtk_widget_show (priv->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -877,7 +878,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_smtp"), priv->entry_outgoingserver);
+					       _("mcen_li_emailsetup_smtp"), FALSE, priv->entry_outgoingserver);
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);

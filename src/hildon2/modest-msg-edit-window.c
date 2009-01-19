@@ -794,20 +794,21 @@ init_window (ModestMsgEditWindow *obj)
 	
 	to_caption = modest_maemo_utils_create_captioned_with_size_type 
 		(title_size_group, value_size_group,
-		 _("mail_va_to"), priv->to_field,
+		 _("mail_va_to"), FALSE, priv->to_field,
 		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	priv->cc_caption = modest_maemo_utils_create_captioned_with_size_type 
 		(title_size_group, value_size_group,
-		 _("mail_va_cc"), priv->cc_field,
+		 _("mail_va_cc"), FALSE, priv->cc_field,
 		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	priv->bcc_caption = modest_maemo_utils_create_captioned_with_size_type
 		(title_size_group, value_size_group,
-		 _("mail_va_hotfix1"), priv->bcc_field,
+		 _("mail_va_hotfix1"), FALSE, priv->bcc_field,
 		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							       _("mail_va_subject"), subject_box);
+							       _("mail_va_subject"), FALSE, subject_box);
 	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
 											_("mail_va_attachment"), 
+											FALSE,
 											priv->attachments_view,
 											HILDON_SIZE_AUTO_WIDTH |
 											HILDON_SIZE_AUTO_HEIGHT);
@@ -3752,7 +3753,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, TRUE, TRUE, 0);
 	gtk_widget_show_all (priority_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mcen_me_editor_message_priority"), priority_hbox);
+							 _("mcen_me_editor_message_priority"), FALSE, priority_hbox);
 	gtk_widget_show (captioned);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 
@@ -3772,7 +3773,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_box_pack_start (GTK_BOX (format_hbox), text_toggle, TRUE, TRUE, 0);
 	gtk_widget_show_all (format_hbox);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mcen_me_editor_format"), format_hbox);
+							 _("mcen_me_editor_format"), FALSE, format_hbox);
 	gtk_widget_show (captioned);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 

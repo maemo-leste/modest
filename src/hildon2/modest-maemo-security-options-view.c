@@ -151,6 +151,7 @@ create_incoming_security (ModestSecurityOptionsView* self,
 		entry_caption = modest_maemo_utils_create_captioned (title_size_group,
 								     value_size_group,
 								     _("mcen_fi_emailsetup_port"), 
+								     FALSE,
 								     ppriv->port_view);
 	}
 
@@ -268,7 +269,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		user_label = g_strdup_printf("%s*", _("mail_fi_username"));
 		user_caption = modest_maemo_utils_create_captioned (title_size_group,
 								    value_size_group,
-								    user_label, 
+								    user_label,
+								    FALSE,
 								    ppriv->user_entry);
 		g_free (user_label);
 	
@@ -292,12 +294,14 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		pwd_caption = modest_maemo_utils_create_captioned (title_size_group,
 								   value_size_group,
 								   _("mail_fi_password"), 
+								   FALSE,
 								   ppriv->pwd_entry);
 
 		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
 		port_caption = modest_maemo_utils_create_captioned (title_size_group,
 								    value_size_group,
 								    _("mcen_fi_emailsetup_port"), 
+								    FALSE,
 								    ppriv->port_view);
 	}
 
