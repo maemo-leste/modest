@@ -3137,8 +3137,18 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 	gboolean contacts_to_add = FALSE;
 
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
-	if (msg == NULL) return;
-	recipients = modest_tny_msg_get_all_recipients_list (msg);
+	if (msg == NULL) {
+		TnyHeader *header;
+
+		header = modest_msg_view_window_get_header (self);
+		if (header == NULL)
+			return;
+		recipients = modest_tny_msg_header_get_all_recipients_list (header);
+		g_object_unref (header);
+	} else {
+		recipients = modest_tny_msg_get_all_recipients_list (msg);
+		g_object_unref (msg);
+	}
 
 	if (recipients != NULL) {
 		GtkWidget *picker_dialog;
@@ -3185,5 +3195,4 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 	}
 	
 	if (recipients) {g_slist_foreach (recipients, (GFunc) g_free, NULL); g_slist_free (recipients);}
-	g_object_unref (msg);
 }

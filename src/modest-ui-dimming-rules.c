@@ -1915,10 +1915,23 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 	msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
 
 	/* Message is loaded asynchronously, so this could happen */
-	if (!msg)
-		return TRUE;
+	if (!msg) {
+#ifdef MODEST_TOOLKIT_HILDON2
+		TnyHeader *header;
 
-	recipients = modest_tny_msg_get_all_recipients_list (msg);
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
+		if (!header)
+			return TRUE;
+
+		recipients = modest_tny_msg_header_get_all_recipients_list (header);
+		g_object_unref (header);
+#else
+		return TRUE;
+#endif
+	} else {
+		recipients = modest_tny_msg_get_all_recipients_list (msg);
+		g_object_unref (msg);
+	}
 
 	has_recipients_to_add = FALSE;
 	for (node = recipients; node != NULL; node = g_slist_next (node)) {
@@ -1930,7 +1943,6 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 
 	g_slist_foreach (recipients, (GFunc) g_free, NULL);
 	g_slist_free (recipients);
-	g_object_unref (msg);
   
 	return !has_recipients_to_add;
 }

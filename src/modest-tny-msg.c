@@ -959,16 +959,11 @@ modest_tny_msg_estimate_size (const gchar *plain_body, const gchar *html_body,
 }
 
 GSList *
-modest_tny_msg_get_all_recipients_list (TnyMsg *msg)
+modest_tny_msg_header_get_all_recipients_list (TnyHeader *header)
 {
-	TnyHeader *header = NULL;
 	GSList *recipients = NULL;
 	gchar *from = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
 
-	if (msg == NULL)
-		return NULL;
-
-	header = tny_msg_get_header (msg);
 	if (header == NULL)
 		return NULL;
 
@@ -991,6 +986,25 @@ modest_tny_msg_get_all_recipients_list (TnyMsg *msg)
 	g_free (to);
 	g_free (cc);
 	g_free (bcc);
+
+	return recipients;
+}
+
+GSList *
+modest_tny_msg_get_all_recipients_list (TnyMsg *msg)
+{
+	TnyHeader *header = NULL;
+	GSList *recipients = NULL;
+
+	if (msg == NULL)
+		return NULL;
+
+	header = tny_msg_get_header (msg);
+	if (header == NULL)
+		return NULL;
+
+	recipients = modest_tny_msg_header_get_all_recipients_list (header);
+	g_object_unref (header);
 
 	return recipients;
 }
