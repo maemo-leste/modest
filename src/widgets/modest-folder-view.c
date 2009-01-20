@@ -32,11 +32,8 @@
 #include <gdk/gdkkeysyms.h>
 #include <tny-account-store-view.h>
 #include <tny-gtk-account-list-model.h>
-#ifdef MODEST_TOOLKIT_HILDON2
 #include <tny-gtk-folder-list-store.h>
-#else
 #include <tny-gtk-folder-store-tree-model.h>
-#endif
 #include <tny-gtk-header-list-model.h>
 #include <tny-merge-folder.h>
 #include <tny-folder.h>
