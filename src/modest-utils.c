@@ -61,19 +61,19 @@ modest_utils_get_supported_secure_authentication_error_quark (void)
 	return g_quark_from_static_string("modest-utils-get-supported-secure-authentication-error-quark");
 }
 
-gboolean 
+gboolean
 modest_utils_folder_writable (const gchar *filename)
 {
 	g_return_val_if_fail (filename, FALSE);
 
 	if (!filename)
 		return FALSE;
-	
+
 	if (g_strncasecmp (filename, "obex", 4) != 0) {
-		GnomeVFSFileInfo *folder_info;
-		GnomeVFSResult result;
-		GnomeVFSURI *uri;
-		GnomeVFSURI *folder_uri;
+		GnomeVFSFileInfo *folder_info = NULL;
+		GnomeVFSResult result = GNOME_VFS_OK;
+		GnomeVFSURI *uri = NULL;
+		GnomeVFSURI *folder_uri = NULL;
 
 		uri = gnome_vfs_uri_new (filename);
 		folder_uri = gnome_vfs_uri_get_parent (uri);
@@ -92,7 +92,7 @@ modest_utils_folder_writable (const gchar *filename)
 		if ((result != GNOME_VFS_OK) ||
 		    (!((folder_info->permissions & GNOME_VFS_PERM_ACCESS_WRITABLE) ||
 		       (folder_info->permissions & GNOME_VFS_PERM_USER_WRITE)))) {
-			
+
 			gnome_vfs_file_info_unref (folder_info);
 			return FALSE;
 		}
@@ -101,14 +101,14 @@ modest_utils_folder_writable (const gchar *filename)
 	return TRUE;
 }
 
-gboolean 
+gboolean
 modest_utils_file_exists (const gchar *filename)
 {
 	GnomeVFSURI *uri = NULL;
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (filename, FALSE);
-	
+
 	uri = gnome_vfs_uri_new (filename);
 	if (uri) {
 		result = gnome_vfs_uri_exists (uri);
