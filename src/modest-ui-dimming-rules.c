@@ -345,9 +345,11 @@ modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data)
 		
 	/* Check dimmed rule */	
 	if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
+#ifndef MODEST_TOOLKIT_HILDON2
 		dimmed = _msg_download_in_progress (win);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");		
+			modest_dimming_rule_set_notification (rule, "");
+#endif
 	} else if (MODEST_IS_MAIN_WINDOW(win)) {
 		dimmed = !modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), 
 							  TRUE);	
