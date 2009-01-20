@@ -858,6 +858,8 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->frame, TRUE, TRUE, 0);
 
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), main_vbox);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), 
+					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable)));
 	gtk_widget_show_all (GTK_WIDGET(priv->pannable));
 	
 	window_box = gtk_vbox_new (FALSE, 0);
