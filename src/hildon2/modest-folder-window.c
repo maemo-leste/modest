@@ -224,6 +224,8 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	priv->folder_view  = modest_platform_create_folder_view (query);
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
+	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
+				       MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 

@@ -756,12 +756,48 @@ folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
 	if (store == NULL) {
 		g_object_set_data (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER, NULL);
 	} else {
+		GdkPixbuf *pixbuf;
+		const gchar *icon_name = NULL;
+
 		g_object_ref (store);
 		g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER, 
 					store, (GDestroyNotify) g_object_unref);
 		name = folder_store_get_display_name (store);
 		hildon_button_set_value (HILDON_BUTTON (button), name);
 		g_free (name);
+
+		/* Select icon */
+		if (TNY_IS_ACCOUNT (store)) {
+			if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (store)))
+			    icon_name = MODEST_FOLDER_ICON_LOCAL_FOLDERS;
+			else if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (store)))
+				icon_name = MODEST_FOLDER_ICON_MMC;
+			else
+				icon_name = MODEST_FOLDER_ICON_ACCOUNT;
+		} else {
+			if (modest_tny_folder_is_remote_folder (TNY_FOLDER (store))) {
+				TnyFolderType type = modest_tny_folder_guess_folder_type (TNY_FOLDER (store));
+				switch (type) {
+				case TNY_FOLDER_TYPE_INBOX:
+					icon_name = MODEST_FOLDER_ICON_INBOX;
+					break;
+				default:
+					icon_name = MODEST_FOLDER_ICON_ACCOUNT;
+				}
+			} else if (modest_tny_folder_is_local_folder (TNY_FOLDER (store)))
+				icon_name = MODEST_FOLDER_ICON_NORMAL;
+			else if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (store)))
+				icon_name = MODEST_FOLDER_ICON_MMC_FOLDER;
+		}
+
+		/* Set icon */
+		pixbuf = modest_platform_get_icon (icon_name, MODEST_ICON_SIZE_SMALL);
+
+		if (pixbuf) {
+			hildon_button_set_image (HILDON_BUTTON (button),
+						 gtk_image_new_from_pixbuf (pixbuf));
+			g_object_unref (pixbuf);
+		}
 	}
 }
 
@@ -781,15 +817,10 @@ static GtkWidget *
 folder_picker_new (ModestFolderView *folder_view, TnyFolderStore *suggested)
 {
 	GtkWidget *button;
-	GdkPixbuf *pixbuf;
 
 	button = hildon_button_new (MODEST_EDITABLE_SIZE,
 				    HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
-	pixbuf = modest_platform_get_icon (MODEST_FOLDER_ICON_NORMAL,
-					   MODEST_ICON_SIZE_SMALL);
 
-	hildon_button_set_image (HILDON_BUTTON (button), 
-				 gtk_image_new_from_pixbuf (pixbuf));
 	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 1.0);
 
 	if (suggested) {

@@ -1189,7 +1189,7 @@ modest_folder_view_finalize (GObject *obj)
 	}
 
 	local_account = (TnyAccount *)
-		modest_tny_account_store_get_local_folders_account ((ModestTnyAccountStore *)priv->account_store);
+		modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store ());
 	if (local_account) {
 		if (g_signal_handler_is_connected (local_account,
 						   priv->outbox_deleted_handler))
@@ -1688,10 +1688,6 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 		return FALSE;
 
 	if (TNY_IS_ACCOUNT (instance)) {
-#ifdef MODEST_TOOLKIT_HILDON2
-		/* In hildon 2.2 we don't show the account rows */
-		return FALSE;
-#else
 		TnyAccount *acc = TNY_ACCOUNT (instance);
 		const gchar *account_id = tny_account_get_id (acc);
 
@@ -1714,7 +1710,6 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 		 * in the local-folders account instead: */
 		if (retval && MODEST_IS_TNY_OUTBOX_ACCOUNT (acc))
 			retval = FALSE;
-#endif
 	} else {
 		if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ONE) {
 			/* Only show special folders for current account if needed */
@@ -1779,27 +1774,31 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	}
 
 	/* apply special filters */
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS)) {
+		if (TNY_IS_ACCOUNT (instance))
+			return FALSE;
+	}
+
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS)) {
 		if (TNY_IS_FOLDER (instance)) {
-			TnyFolderCaps capabilities;
+			/* Check folder rules */
+			ModestTnyFolderRules rules;
 
-			capabilities = tny_folder_get_caps (TNY_FOLDER (instance));
-			retval = !(capabilities & TNY_FOLDER_CAPS_NOCHILDREN);
-
-			if (retval) {
-				retval = ((type != TNY_FOLDER_TYPE_DRAFTS) &&
-					  (type != TNY_FOLDER_TYPE_OUTBOX) &&
-					  (type != TNY_FOLDER_TYPE_SENT));
-			}
+			rules = modest_tny_folder_get_rules (TNY_FOLDER (instance));
+			retval = !(rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE);
 		} else if (TNY_IS_ACCOUNT (instance)) {
-			retval = FALSE;
+			if (modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
+				retval = FALSE;
+			} else {
+				retval = TRUE;
+			}
 		}
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_MANDATORY_FOLDERS)) {
 		if (TNY_IS_FOLDER (instance)) {
 			TnyFolderType guess_type;
-			
+
 			if (TNY_FOLDER_TYPE_NORMAL) {
 				guess_type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
 			} else {
@@ -1820,7 +1819,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 			default:
 				break;
 			}
-			
+
 		} else if (TNY_IS_ACCOUNT (instance)) {
 			retval = FALSE;
 		}
@@ -3524,6 +3523,24 @@ modest_folder_view_set_filter (ModestFolderView *self,
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
 	priv->filter = filter;
+
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
+	}
+}
+
+void 
+modest_folder_view_unset_filter (ModestFolderView *self,
+				 ModestFolderViewFilter filter)
+{
+	ModestFolderViewPrivate *priv;
+	GtkTreeModel *filter_model;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	priv->filter &= ~filter;
 
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {

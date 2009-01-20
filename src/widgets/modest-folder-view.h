@@ -62,6 +62,7 @@ typedef enum _ModestFolderViewFilter {
 	MODEST_FOLDER_VIEW_FILTER_RENAMEABLE = 1 << 2,
 	MODEST_FOLDER_VIEW_FILTER_MOVEABLE = 1 << 3,
 	MODEST_FOLDER_VIEW_FILTER_DELETABLE = 1 << 4,
+	MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS = 1 << 5,
 } ModestFolderViewFilter;
 
 typedef struct _ModestFolderView      ModestFolderView;
@@ -271,7 +272,7 @@ void modest_folder_view_set_cell_style (ModestFolderView *self,
 					ModestFolderViewCellStyle cell_style);
 
 /**
- * modest_folder_view_filter:
+ * modest_folder_view_set_filter:
  * @self: a #ModestFolderView
  * @filter: a filter mask to be applied to files
  *
@@ -280,6 +281,18 @@ void modest_folder_view_set_cell_style (ModestFolderView *self,
  */
 void modest_folder_view_set_filter (ModestFolderView *self,
 				    ModestFolderViewFilter filter);
+
+/**
+ * modest_folder_view_unset_filter:
+ * @self: a #ModestFolderView
+ * @filter: a filter mask to be unapplied to files
+ *
+ * Unsets the special filter to be applied (affects visibility of
+ * items).  It's a mask, and filters applied are applied with an AND.
+ */
+void modest_folder_view_unset_filter (ModestFolderView *self,
+				      ModestFolderViewFilter filter);
+
 
 G_END_DECLS
 
