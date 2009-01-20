@@ -3522,7 +3522,7 @@ modest_folder_view_set_filter (ModestFolderView *self,
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
-	priv->filter = filter;
+	priv->filter |= filter;
 
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {

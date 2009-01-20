@@ -30,6 +30,7 @@
 #include <hildon/hildon-banner.h>
 #include <modest-platform.h>
 #include <hildon/hildon-program.h>
+#include "modest-marshal.h"
 #include <modest-maemo-utils.h>
 #include <modest-defs.h>
 #include <modest-ui-dimming-rules.h>
@@ -148,8 +149,8 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestHildon2WindowClass, edit_mode_changed),
 			      NULL, NULL,
-			      g_cclosure_marshal_VOID__INT,
-			      G_TYPE_NONE, 1, G_TYPE_INT);
+			      modest_marshal_VOID__INT_BOOLEAN,
+			      G_TYPE_NONE, 2, G_TYPE_INT, G_TYPE_BOOLEAN);
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowPrivate));
 	
@@ -412,8 +413,7 @@ modest_hildon2_window_set_edit_mode (ModestHildon2Window *self,
 	gtk_window_fullscreen (GTK_WINDOW (self));
 
 	g_signal_emit (G_OBJECT (self), signals[EDIT_MODE_CHANGED_SIGNAL], 0,
-		       priv->edit_command);
-		       
+		       priv->edit_command, priv->edit_mode);
 }
 
 void 
@@ -431,7 +431,6 @@ modest_hildon2_window_unset_edit_mode (ModestHildon2Window *self)
 
 	if (priv->edit_mode) {
 		priv->edit_mode = FALSE;
-		priv->edit_command = MODEST_HILDON2_WINDOW_EDIT_MODE_NONE;
 		if (priv->current_edit_tree_view) {
 			g_object_set (G_OBJECT (priv->current_edit_tree_view), 
 				      "hildon-ui-mode", HILDON_UI_MODE_NORMAL, 
@@ -441,8 +440,8 @@ modest_hildon2_window_unset_edit_mode (ModestHildon2Window *self)
 		}
 		gtk_window_unfullscreen (GTK_WINDOW (self));
 		g_signal_emit (G_OBJECT (self), signals[EDIT_MODE_CHANGED_SIGNAL], 0,
-			       priv->edit_command);
-		       
+			       priv->edit_command, priv->edit_mode);
+		priv->edit_command = MODEST_HILDON2_WINDOW_EDIT_MODE_NONE;
 	}
 }
 

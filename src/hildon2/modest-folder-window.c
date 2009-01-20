@@ -82,6 +82,7 @@ static void modest_folder_window_pack_toolbar (ModestHildon2Window *self,
 					       GtkWidget *toolbar);
 static void edit_mode_changed (ModestFolderWindow *folder_window,
 			       gint edit_mode_id,
+			       gboolean enabled,
 			       ModestFolderWindow *self);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
@@ -469,6 +470,7 @@ modest_folder_window_pack_toolbar (ModestHildon2Window *self,
 static void 
 edit_mode_changed (ModestFolderWindow *folder_window,
 		   gint edit_mode_id,
+		   gboolean enabled,
 		   ModestFolderWindow *self)
 {
 	ModestFolderWindowPrivate *priv;
@@ -492,5 +494,10 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 		break;
 	}
 
-	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), filter);
+	if (enabled)
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
+					       filter);
+	else
+		modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
+						 filter);
 }
