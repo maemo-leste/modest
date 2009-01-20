@@ -160,7 +160,7 @@ ModestUIDimmingManager*
 modest_ui_dimming_manager_new()
 {
 	ModestUIDimmingManager *obj;
-		
+
 	obj = MODEST_UI_DIMMING_MANAGER(g_object_new(MODEST_TYPE_UI_DIMMING_MANAGER, NULL));
 
 
@@ -241,7 +241,6 @@ process_dimming_rules_delayed_destroyer (gpointer data)
 
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
 	g_hash_table_remove (priv->delayed_calls, helper->name);
-	priv->delayed_calls = NULL;
 	g_free (helper->name);
 	g_object_unref (helper->manager);
 	g_slice_free (DelayedDimmingRules, helper);
