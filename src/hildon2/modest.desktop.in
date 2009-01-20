@@ -5,6 +5,7 @@ Type=Application
 Name=mcen_ap_name
 Comment=mcen_ap_name_thumb
 Exec=@prefix@/bin/modest
+X-Text-Domain=modest
 
 X-Osso-Service=com.nokia.modest
 X-Osso-Type=application/x-executable
