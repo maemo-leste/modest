@@ -43,6 +43,8 @@
 #include <tny-maemo-conic-device.h>
 #include <tny-simple-list.h>
 #include <tny-folder.h>
+#include <tny-error.h>
+#include <tny-merge-folder.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <gtk/gtkicontheme.h>
