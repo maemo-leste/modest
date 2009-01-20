@@ -952,13 +952,14 @@ get_header_view_from_window (ModestWindow *window)
 }
 
 static gchar *
-get_info_from_header (TnyHeader *header, gboolean *is_draft)
+get_info_from_header (TnyHeader *header, gboolean *is_draft, gboolean *can_open)
 {
 	TnyFolder *folder;
 	gchar *account = NULL;
 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
 
 	*is_draft = FALSE;
+	*can_open = TRUE;
 
 	folder = tny_header_get_folder (header);
 	/* Gets folder type (OUTBOX headers will be opened in edit window */
@@ -967,7 +968,7 @@ get_info_from_header (TnyHeader *header, gboolean *is_draft)
 		if (folder_type == TNY_FOLDER_TYPE_INVALID)
 			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 	}
-		
+
 	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
 		TnyTransportAccount *traccount = NULL;
 		ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
@@ -993,6 +994,7 @@ get_info_from_header (TnyHeader *header, gboolean *is_draft)
 					   open any message from
 					   outbox which is not in
 					   failed state */
+					*can_open = FALSE;
 					g_object_unref(traccount);
                                 }
 #endif
@@ -1023,8 +1025,9 @@ open_msg_cb (ModestMailOperation *mail_op,
 	ModestWindow *win = NULL;
 	gchar *account = NULL;
 	gboolean open_in_editor = FALSE;
+	gboolean can_open;
 	OpenMsgHelper *helper = (OpenMsgHelper *) user_data;
-	
+
 	/* Do nothing if there was any problem with the mail
 	   operation. The error will be shown by the error_handler of
 	   the mail operation */
@@ -1036,14 +1039,14 @@ open_msg_cb (ModestMailOperation *mail_op,
 	/* Mark header as read */
 	headers_action_mark_as_read (header, MODEST_WINDOW(parent_win), NULL);
 
-	account = get_info_from_header (header, &open_in_editor);
+	account = get_info_from_header (header, &open_in_editor, &can_open);
 
 	/* Get account */
 	if (!account)
 		account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_win)));
 	if (!account)
 		account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
-	
+
 	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 		gchar *from_header = NULL, *acc_name;
@@ -1071,7 +1074,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
 
-		if (helper->rowref && helper->model) {		
+		if (helper->rowref && helper->model) {
 			win = modest_msg_view_window_new_with_header_model (msg, account, (const gchar*) uid,
 									    helper->model, helper->rowref);
 		} else {
@@ -1079,7 +1082,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 		}
 		g_free (uid);
 	}
-	
+
 	/* Register and show new window */
 	if (win != NULL) {
 		mgr = modest_runtime_get_window_mgr ();
@@ -1285,6 +1288,9 @@ open_msg_performer(gboolean canceled,
 	TnyConnectionStatus status;
 	gboolean show_open_draft = FALSE;
 	OpenMsgHelper *helper = NULL;
+	ModestProtocol *protocol;
+	ModestProtocolRegistry *protocol_registry;
+	gchar *subject;
 
 	helper = (OpenMsgHelper *) user_data;
 
@@ -1293,10 +1299,10 @@ open_msg_performer(gboolean canceled,
 		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), helper->header);
 		/* Free the helper */
 		open_msg_helper_destroyer (helper);
-		
+
 		/* In memory full conditions we could get this error here */
 		check_memory_full_error ((GtkWidget *) parent_window, err);
-		
+
 		goto clean;
 	}
 
@@ -1305,11 +1311,7 @@ open_msg_performer(gboolean canceled,
 	if (proto == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
 		proto = MODEST_PROTOCOLS_STORE_MAILDIR;
 	}
-	
-	ModestProtocol *protocol;
-	ModestProtocolRegistry *protocol_registry;
-	gchar *subject;
-		
+
 	protocol_registry = modest_runtime_get_protocol_registry ();
 	subject = tny_header_dup_subject (helper->header);
 
@@ -1317,7 +1319,7 @@ open_msg_performer(gboolean canceled,
 	error_msg = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
 	if (subject)
 		g_free (subject);
-		
+
 	if (error_msg == NULL) {
 		error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
@@ -1336,7 +1338,15 @@ open_msg_performer(gboolean canceled,
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	gboolean is_draft;
-	gchar *account_name = get_info_from_header (helper->header, &is_draft);
+	gboolean can_open;
+	gchar *account_name = get_info_from_header (helper->header, &is_draft, &can_open);
+
+	if (!can_open) {
+		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), helper->header);
+		g_free (account_name);
+		open_msg_helper_destroyer (helper);
+		goto clean;
+	}
 
 	if (!is_draft) {
 		ModestWindow *window;
