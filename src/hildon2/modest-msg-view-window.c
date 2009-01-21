@@ -1618,7 +1618,7 @@ modest_msg_view_window_key_event (GtkWidget *window,
 
 		if (event->type == GDK_KEY_PRESS) {
 			GtkScrollType scroll_type;
-			
+
 			switch (event->keyval) {
 			case GDK_Up: 
 			case GDK_KP_Up:
@@ -1640,7 +1640,7 @@ modest_msg_view_window_key_event (GtkWidget *window,
 				scroll_type = GTK_SCROLL_END; break;
 			default: scroll_type = GTK_SCROLL_NONE;
 			}
-			
+
 			/* g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child",  */
 			/* 		       scroll_type, FALSE, &return_value); */
 			return FALSE;

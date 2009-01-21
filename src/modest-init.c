@@ -50,6 +50,7 @@
 #include "modest-tny-msg.h"
 #include <libgnomevfs/gnome-vfs.h>
 #include <string.h>
+#include "modest-text-utils.h"
 
 #ifndef MODEST_TOOLKIT_GTK
 #include "modest-hildon-includes.h"

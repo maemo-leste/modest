@@ -40,7 +40,7 @@
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
-
+#include "modest-text-utils.h"
 #include <modest-runtime.h>
 #include <modest-marshal.h>
 #include <modest-protocol-registry.h>
