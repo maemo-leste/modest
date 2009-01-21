@@ -393,7 +393,18 @@ modest_hildon2_window_set_edit_mode (ModestHildon2Window *self,
 
 	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->current_edit_tree_view));
 	gtk_tree_selection_set_mode (selection, reg->mode);
-	gtk_tree_selection_unselect_all (selection);
+	if (reg->mode == GTK_SELECTION_SINGLE || reg->mode == GTK_SELECTION_BROWSE) {
+		GtkTreeModel *model;
+		GtkTreeIter iter;
+
+		model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->current_edit_tree_view));
+		if (gtk_tree_model_get_iter_first (model, &iter)) {
+			gtk_tree_view_scroll_to_point (GTK_TREE_VIEW (priv->current_edit_tree_view), 0, 0);
+			gtk_tree_selection_select_iter (selection, &iter);
+		}
+	} else {
+		gtk_tree_selection_unselect_all (selection);
+	}
 
 	priv->edit_toolbar = hildon_edit_toolbar_new ();
 	hildon_edit_toolbar_set_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
