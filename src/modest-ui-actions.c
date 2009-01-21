@@ -5748,6 +5748,7 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 	GtkWidget *dialog = NULL, *folder_view = NULL;
 	ModestMainWindow *main_window;
 	MoveToInfo *helper = NULL;
+	TnyList *list_to_move;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW (win), FALSE);
 
@@ -5765,6 +5766,12 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	else
 		folder_view = NULL;
+
+	list_to_move = modest_platform_get_list_to_move (MODEST_WINDOW (win));
+	if (tny_list_get_length (list_to_move) < 1) {
+		g_object_unref (list_to_move);
+		return FALSE;
+	}
 
 	/* Create and run the dialog */
 	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view);
