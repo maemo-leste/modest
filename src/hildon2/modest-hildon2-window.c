@@ -38,6 +38,7 @@
 #include <modest-window-priv.h>
 #include <modest-hildon2-window.h>
 #include <modest-ui-actions.h>
+#include "modest-text-utils.h"
 #include <hildon/hildon-edit-toolbar.h>
 
 typedef struct _EditModeRegister {
@@ -220,9 +221,8 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 {
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW (window), FALSE);
 
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
+	hildon_banner_show_information (NULL, NULL, _CS("ckct_ib_cannot_zoom_here"));
 	return FALSE;
-
 }
 
 static void 

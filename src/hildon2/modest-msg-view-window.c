@@ -1443,7 +1443,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 
 	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
 		g_free (current_search);
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ecdg_ib_find_rep_enter_text"));
+		hildon_banner_show_information (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
 		return;
 	}
 
@@ -1454,7 +1454,8 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		result = modest_isearch_view_search (MODEST_ISEARCH_VIEW (priv->msg_view),
 						     priv->last_search);
 		if (!result) {
-			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_no_matches"));
+			hildon_banner_show_information (NULL, NULL, 
+							_HL("ckct_ib_find_no_matches"));
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
@@ -1463,7 +1464,8 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		}
 	} else {
 		if (!modest_isearch_view_search_next (MODEST_ISEARCH_VIEW (priv->msg_view))) {
-			hildon_banner_show_information (NULL, NULL, dgettext("hildon-libs", "ckct_ib_find_search_complete"));
+			hildon_banner_show_information (NULL, NULL, 
+							_HL("ckct_ib_find_search_complete"));
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
@@ -1516,7 +1518,8 @@ modest_msg_view_window_zoom_plus (ModestWindow *window)
 	zoom_level =  modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
 
 	if (zoom_level >= 2.0) {
-		hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_max_zoom_level_reached"));
+		hildon_banner_show_information (NULL, NULL, 
+						_CS("ckct_ib_max_zoom_level_reached"));
 		return FALSE;
 	} else if (zoom_level >= 1.5) {
 		zoom_level = 2.0;
@@ -1556,7 +1559,8 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 	zoom_level =  modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
 
 	if (zoom_level <= 0.5) {
-			  hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_min_zoom_level_reached"));
+		hildon_banner_show_information (NULL, NULL, 
+						_CS("ckct_ib_min_zoom_level_reached"));
 		return FALSE;
 	} else if (zoom_level <= 0.8) {
 		zoom_level = 0.5;
@@ -2615,8 +2619,8 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 		if (info->result == GNOME_VFS_OK) {
 			hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
 		} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
-			hildon_banner_show_information (NULL, NULL, dgettext("ke-recv", 
-									     "cerm_device_memory_full"));
+			hildon_banner_show_information (NULL, NULL, 
+							_KR("cerm_device_memory_full"));
 		} else {
 			hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
 		}
@@ -2709,7 +2713,7 @@ save_attachments_response (GtkDialog *dialog,
 
 	if (!modest_utils_folder_writable (chooser_uri)) {
 		hildon_banner_show_information 
-			(NULL, NULL, dgettext("hildon-fm", "sfil_ib_readonly_location"));
+			(NULL, NULL, _FM("sfil_ib_readonly_location"));
 	} else {
 		TnyIterator *iter;
 
@@ -2721,7 +2725,7 @@ save_attachments_response (GtkDialog *dialog,
 			    !tny_mime_part_is_purged (mime_part) &&
 			    (tny_mime_part_get_filename (mime_part) != NULL)) {
 				SaveMimePartPair *pair;
-					
+
 				pair = g_slice_new0 (SaveMimePartPair);
 
 				if (tny_list_get_length (mime_parts) > 1) {
