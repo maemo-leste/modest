@@ -28,43 +28,26 @@ noinst_PROGRAMS=				    \
 INCLUDES=\
 	@CHECK_CFLAGS@ \
 	$(MODEST_GSTUFF_CFLAGS)\
+	$(MODEST_PLATFORM_CFLAGS)\
+	$(MODEST_TOOLKIT_CFLAGS)\
+	$(MODEST_PLUGIN_DEFINES)\
 	$(MODEST_LIBTINYMAIL_GNOME_DESKTOP_CFLAGS) \
 	$(MODEST_LIBTINYMAIL_MAEMO_CFLAGS) \
-	-I$(MODEST_TOOLKIT_DIR) \
+	-I${top_srcdir}/src/$(MODEST_TOOLKIT_DIR) \
 	-I${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
 	-DMODESTLOCALEDIR=\""$(modestlocaledir)"\"
 objects=\
 	@CHECK_LIBS@ \
 	$(MODEST_GSTUFF_LIBS) \
+	$(MODEST_PLATFORM_LIBS) \
+	$(MODEST_TOOLKIT_LIBS) \
         $(MODEST_LIBTINYMAIL_GNOME_DESKTOP_LIBS) \
         $(MODEST_LIBTINYMAIL_MAEMO_LIBS) \
         ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR)/libmodest-ui.la \
         ${top_srcdir}/src/widgets/libmodest-widgets.la \
         ${top_srcdir}/src/dbus_api/libmodest-dbus-api.la \
-	${top_srcdir}/src/modest-runtime.o \
-	${top_srcdir}/src/modest-singletons.o \
-	${top_srcdir}/src/modest-tny-account.o \
-	${top_srcdir}/src/modest-tny-msg.o \
-	${top_srcdir}/src/modest-tny-send-queue.o \
-	${top_srcdir}/src/modest-widget-memory.o \
-        ${top_srcdir}/src/modest-account-mgr-helpers.o \
-        ${top_srcdir}/src/modest-account-mgr-priv.o \
-        ${top_srcdir}/src/modest-account-mgr.o \
-        ${top_srcdir}/src/modest-cache-mgr.o \
-        ${top_srcdir}/src/modest-conf.o \
-        ${top_srcdir}/src/modest-formatter.o \
-        ${top_srcdir}/src/modest-local-folder-info.o \
-        ${top_srcdir}/src/modest-mail-operation-queue.o \
-        ${top_srcdir}/src/modest-mail-operation.o \
-        ${top_srcdir}/src/modest-marshal.o \
-        ${top_srcdir}/src/modest-pair.o \
-        ${top_srcdir}/src/modest-protocol-info.o \
-        ${top_srcdir}/src/modest-ui-actions.o \
-        ${top_srcdir}/src/modest-text-utils.o \
-        ${top_srcdir}/src/modest-tny-account-store.o \
-        ${top_srcdir}/src/modest-tny-folder.o \
-        ${top_srcdir}/src/modest-tny-platform-factory.o
+	${top_srcdir}/src/libmodest.la
 
 
 check_folder_xfer_SOURCES=\

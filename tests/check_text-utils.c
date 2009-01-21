@@ -62,7 +62,7 @@ START_TEST (test_get_display_address_regular)
 	/* Tests 1, 2, 3, 4 */
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
 		gchar *str = g_strdup (tests[i].original);
-		str = modest_text_utils_get_display_address (str);
+		modest_text_utils_get_display_address (str);
 		fail_unless (str && strcmp(str, tests[i].expected) == 0,
 			"modest_text_utils_get_display_address failed for '%s': "
 			     "expected '%s' but got '%s'",
@@ -80,8 +80,7 @@ END_TEST
 START_TEST (test_get_display_address_invalid)
 {
 	/* Test 1 */
-	fail_unless (modest_text_utils_get_display_address (NULL) == NULL,
-		     "modest_text_utils_get_display_address(NULL) should be NULL");
+	modest_text_utils_get_display_address (NULL);
 }
 END_TEST
 
@@ -164,7 +163,8 @@ START_TEST (test_quote_regular)
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
 		text = g_strdup (tests[i].original);
 		expected_quoted_text = g_strdup (tests[i].expected);
-		quoted_text = modest_text_utils_quote (text, "text/plain", "foo@bar",  0, 15);
+		quoted_text = modest_text_utils_quote (text, "text/plain", NULL /*signature*/,
+						       "foo@bar",  0 /* date */, NULL /*attachments*/, 15 /*limit*/);
 		fail_unless (quoted_text && strcmp(expected_quoted_text, quoted_text)==0,
 			     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
 			     "Expected quotation:\n\"%s\"\nQuoted text:\n\"%s\"",
@@ -178,7 +178,8 @@ START_TEST (test_quote_regular)
 	text = g_strdup ("Quotation test example");
 	expected_quoted_text = 
 		g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> Quotation\n> test\n> example\n> \n");
-	quoted_text = modest_text_utils_quote (text, "text/plain", "foo@bar",  0, 1);
+	quoted_text = modest_text_utils_quote (text, "text/plain", NULL /*signature */,
+					       "foo@bar",  0 /*date*/, NULL /*attachments*/, 1 /*limit*/);
 	fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
 		     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
 		     "Expected quotation:\n\"%s\"\nQuoted text:\n\"%s\"",
@@ -205,7 +206,7 @@ START_TEST (test_quote_invalid)
 
 	/* Test 1 (Fault) */
 	text = NULL;
-	quoted_text = modest_text_utils_quote (NULL, "text/plain", "foo@bar",  0, 15);
+	quoted_text = modest_text_utils_quote (NULL, "text/plain", NULL, "foo@bar",  0, NULL, 15);
 	fail_unless (quoted_text == NULL,
 		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
 		     "Expected quotation: NULL\nQuoted text: \"%s\"",
@@ -216,7 +217,7 @@ START_TEST (test_quote_invalid)
 	/* Test 2 (Fault) */
 	text = g_strdup ("Text");
 	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> Text\n");
-	quoted_text = modest_text_utils_quote (text, NULL, "foo@bar",  0, 15);
+	quoted_text = modest_text_utils_quote (text, NULL, NULL, "foo@bar",  0, NULL, 15);
 	fail_unless (quoted_text == NULL,
 		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
 		     "Expected quotation: NULL\nQuoted text: \"%s\"",
@@ -228,7 +229,7 @@ START_TEST (test_quote_invalid)
 	/* Test 3 */
 	text = g_strdup ("Text");
 	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, (null) wrote:\n> Text\n");
-	quoted_text = modest_text_utils_quote (text, "text/plain", NULL,  0, 15);
+	quoted_text = modest_text_utils_quote (text, "text/plain", NULL, NULL,  0, NULL, 15);
 	fail_unless (quoted_text == NULL,
 		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
 		     "Expected quotation: NULL\nQuoted text: \"%s\"",
@@ -240,7 +241,7 @@ START_TEST (test_quote_invalid)
 	/* Test 4 */
 	text = g_strdup ("This is a text");
 	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> This\n> is\n> a\n> text\n> \n");
-	quoted_text = modest_text_utils_quote (text, "text/plain", "foo@bar",  0, 0);
+	quoted_text = modest_text_utils_quote (text, "text/plain", NULL, "foo@bar",  0, NULL, 0);
 	fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
 		     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
 		     "Expected quotation:\n\"%s\"\nQuoted text:\n\"%s\"",
@@ -277,7 +278,7 @@ START_TEST (test_cite_regular)
 
 	/* Tests 1, 2, 3, 4 */
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
-		cited_text = modest_text_utils_cite (tests[i].original, "text/plain", "foo@bar", 0);
+		cited_text = modest_text_utils_cite (tests[i].original, "text/plain", NULL, "foo@bar", 0);
 		fail_unless (cited_text && !strcmp (tests[i].expected, cited_text),
 			     "modest_text_utils_cite failed:\nOriginal text:\n\"%s\"\n" \
 			     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
@@ -302,7 +303,7 @@ START_TEST (test_cite_invalid)
 	/* Test 1 */
 	text = NULL;
 	expected_cite = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n(null)\n");
-	cited_text = modest_text_utils_cite (text, "text/plain", "foo@bar", 0);
+	cited_text = modest_text_utils_cite (text, "text/plain", NULL, "foo@bar", 0);
 	fail_unless (cited_text && !strcmp (expected_cite, cited_text),
 		     "modest_text_utils_cite failed:\nOriginal text:\nNULL\n" \
 		     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
@@ -313,7 +314,7 @@ START_TEST (test_cite_invalid)
 	/* Test 2 */
 	text = g_strdup ("This is some text");
 	expected_cite = g_strdup ("On Thu Jan  1 01:00:00 1970, (null) wrote:\nThis is some text\n");
-	cited_text = modest_text_utils_cite (text, "text/plain", NULL, 0);
+	cited_text = modest_text_utils_cite (text, "text/plain", NULL, NULL, 0);
 	fail_unless (cited_text && !strcmp (expected_cite, cited_text),
 		     "modest_text_utils_cite failed:\nOriginal text:\n\"%s\"\n" \
 		     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
@@ -364,6 +365,7 @@ START_TEST (test_inline_regular)
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
 		inlined_text = 	modest_text_utils_inline (tests[i].original, 
 							  "text/plain", 
+							  NULL, 
 							  "foo@bar", 
 							  0, 
 							  "bar@foo", 
@@ -401,6 +403,7 @@ START_TEST (test_inline_invalid)
 				   "(null)");
 	inlined_text = 	modest_text_utils_inline (NULL, 
 						  "text/plain", 
+						  NULL,
 						  "foo@bar", 
 						  0, 
 						  "bar@foo", 
@@ -418,6 +421,7 @@ START_TEST (test_inline_invalid)
 				   "Subject: Any subject\n\n" \
 				   "Some text");
 	inlined_text = 	modest_text_utils_inline (text,
+						  NULL,
 						  NULL,
 						  "foo@bar",
 						  0,
@@ -438,6 +442,7 @@ START_TEST (test_inline_invalid)
 	inlined_text = 	modest_text_utils_inline (text, 
 						  "text/plain", 
 						  NULL, 
+						  NULL, 
 						  0, 
 						  "bar@foo", 
 						  "Any subject");
@@ -456,6 +461,7 @@ START_TEST (test_inline_invalid)
 				   "Some text");
 	inlined_text = 	modest_text_utils_inline (text, 
 						  "text/plain", 
+						  NULL,
 						  "foo@bar", 
 						  0, 
 						  NULL, 
@@ -474,6 +480,7 @@ START_TEST (test_inline_invalid)
 				   "Some text");
 	inlined_text = 	modest_text_utils_inline (text, 
 						  "text/plain", 
+						  NULL, 
 						  "foo@bar", 
 						  0, 
 						  "bar@foo", 

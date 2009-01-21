@@ -42,6 +42,7 @@
 
 #include <modest-account-mgr.h>
 #include <modest-mail-operation.h>
+#include <modest-init.h>
 
 static gchar *cachedir=NULL;
 static gboolean move=FALSE;
@@ -59,7 +60,7 @@ find_folders (TnyFolderStore *store, TnyFolderStoreQuery *query,
 		return;
 
 	folders = tny_simple_list_new ();
-	tny_folder_store_get_folders (store, folders, query, NULL);
+	tny_folder_store_get_folders (store, folders, query, FALSE /*no poke*/, NULL);
 	iter = tny_list_create_iterator (folders);
 
 	while (!tny_iterator_is_done (iter) && (!*folder_src || !*folder_dst))
@@ -126,6 +127,10 @@ main (int argc, char **argv)
 	}
 	g_option_context_free (context);
 
+	if (!modest_init (argc, argv)) {
+		return 0;
+	}
+
 	acc_mgr = modest_runtime_get_account_mgr ();
 	account_store = modest_runtime_get_account_store();
 
@@ -168,11 +173,12 @@ main (int argc, char **argv)
 	src_headers = tny_simple_list_new ();
 	tny_folder_get_headers (folder_src, src_headers, TRUE, NULL);
 
-	mail_op = modest_mail_operation_new ();
+	mail_op = modest_mail_operation_new (NULL);
 		
 	modest_mail_operation_xfer_folder (mail_op, 
 					   folder_src, 
-					   TNY_FOLDER_STORE (folder_dst), move);
+					   TNY_FOLDER_STORE (folder_dst), move,
+					   NULL, NULL);
 	
 	g_object_unref (G_OBJECT (src_headers));
 	g_object_unref (G_OBJECT (mail_op));

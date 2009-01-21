@@ -88,13 +88,14 @@ func (gpointer_data)
 	g_object_unref (G_OBJECT (accounts));
 
 	queue   = modest_runtime_get_mail_operation_queue ();
-	mail_op = modest_mail_operation_new ();
+	mail_op = modest_mail_operation_new (NULL);
 	
 	g_signal_connect (G_OBJECT (mail_op), "progress_changed", 
 			  G_CALLBACK (on_progress_changed), queue);
 
-	if (modest_mail_operation_update_account (mail_op, account))
-		modest_mail_operation_queue_add (queue, mail_op);
+	modest_mail_operation_update_account (mail_op, tny_account_get_name (TNY_ACCOUNT (account)), 
+					      TRUE, FALSE, NULL, NULL, NULL);
+	modest_mail_operation_queue_add (queue, mail_op);
 
 	g_object_unref (G_OBJECT (mail_op));
 	

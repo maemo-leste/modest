@@ -31,7 +31,6 @@
 #include <string.h>
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
-#include <modest-protocol-info.h>
 
 /* ----------------------- Defines ---------------------- */
 
@@ -63,14 +62,12 @@ fx_setup_default_account_mgr ()
 					      TEST_MODEST_ACCOUNT_NAME,
 					      FALSE))
 		modest_account_mgr_remove_account (account_mgr,
-						   TEST_MODEST_ACCOUNT_NAME,
-						   FALSE);
+						   TEST_MODEST_ACCOUNT_NAME);
 	if (modest_account_mgr_account_exists(account_mgr,
 					      TEST_MODEST_ACCOUNT_NAME,
 					      TRUE))
 		modest_account_mgr_remove_account (account_mgr,
-						   TEST_MODEST_ACCOUNT_NAME,
-						   TRUE);
+						   TEST_MODEST_ACCOUNT_NAME);
 }
 
 static void
@@ -104,7 +101,8 @@ START_TEST (test_add_exists_remove_account_regular)
 	gchar *hostname = NULL;
 	gchar *username = NULL;
 	gchar *password = NULL;
-	ModestTransportStoreProtocol proto;
+	gint portnum;
+	ModestProtocolType proto;
 	gboolean result;
 	
 	name = g_strdup (TEST_MODEST_ACCOUNT_NAME);
@@ -113,6 +111,10 @@ START_TEST (test_add_exists_remove_account_regular)
 	transport_account = g_strdup ("local-smtp");
 	result = modest_account_mgr_add_account (account_mgr,
 						 name,
+						 "test display name",
+						 "user fullname",
+						 "user@email.com",
+						 MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY,
 						 store_account,
 						 transport_account, TRUE);
 	fail_unless (result,
@@ -134,8 +136,7 @@ START_TEST (test_add_exists_remove_account_regular)
 
 	/* Test 3 */
 	result = modest_account_mgr_remove_account (account_mgr,
-						    name,
-						    FALSE);
+						    name);
 	fail_unless (result,
 		     "modest_account_mgr_remove_account failed:\nname: %s\nerror: %s",
 		     name);
@@ -145,15 +146,17 @@ START_TEST (test_add_exists_remove_account_regular)
 	hostname = g_strdup ("myhostname.mydomain.com");
 	username = g_strdup ("myusername");
 	password = g_strdup ("mypassword");
-	proto = MODEST_PROTOCOL_TRANSPORT_SMTP;
+	proto = MODEST_PROTOCOLS_TRANSPORT_SMTP;
+	portnum = 25;
 	result = modest_account_mgr_add_server_account (account_mgr,
 							name,
 							hostname,
+							portnum,
 							username,
 							password,
 							proto,
-							MODEST_PROTOCOL_SECURITY_NONE,
-							MODEST_PROTOCOL_AUTH_NONE); 
+							MODEST_PROTOCOLS_CONNECTION_NONE,
+							MODEST_PROTOCOLS_AUTH_NONE); 
 	fail_unless (result,
 		     "modest_account_mgr_add_server_account failed:\n" \
 		     "name: %s\nhostname: %s\nusername: %s\npassword: %s\nproto: %s",
@@ -171,8 +174,7 @@ START_TEST (test_add_exists_remove_account_regular)
 
 	/* Test 6 */
 	result = modest_account_mgr_remove_account (account_mgr,
-						    name,
-						    TRUE);
+						    name);
 	fail_unless (result,
 		     "modest_account_mgr_remove_account failed:\nname: %s\nerror: %s",
 		     name);
@@ -211,7 +213,7 @@ END_TEST
  *  - Test 5: Create server account with NULL name
  *  - Test 6: Create server account with invalid name string
  *  - Test 7: Remove a non-existing account
- *  - Test 8: Remove a non-existing server account
+ *  - Test 8: Remove a non-existing server account (REMOVED)
  *  - Test 9: Remove with NULL acount manager
  *  - Test 10: Remove with NULL name
  *  - Test 11: Check if an  account exists with NULL account_mgr
@@ -226,6 +228,10 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 1 */
 	result = modest_account_mgr_add_account (NULL,
 						 TEST_MODEST_ACCOUNT_NAME,
+						 "test display name",
+						 "user fullname",
+						 "user@email.com",
+						 MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY,
 						 "store_account",
 						 "transport_account", TRUE);
 	fail_unless (!result,
@@ -235,6 +241,10 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 2 */
 	result = modest_account_mgr_add_account (account_mgr,
 						 NULL,
+						 "test display name",
+						 "user fullname",
+						 "user@email.com",
+						 MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY,
 						 "store_account",
 						 "transport_account", TRUE);
 	fail_unless (!result,
@@ -244,6 +254,10 @@ START_TEST (test_add_exists_remove_account_invalid)
 	/* Test 3*/
 	result = modest_account_mgr_add_account (account_mgr,
 						 "ïnválid//accountñ//nÄméç",
+						 "test display name",
+						 "user fullname",
+						 "user@email.com",
+						 MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY,
 						 "store_account",
 						 "transport_account", TRUE);
 	fail_unless (!result,
@@ -254,11 +268,12 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_server_account (NULL,
 							TEST_MODEST_ACCOUNT_NAME,
 							"hostname",
+							143,
 							"username",
 							"password",
-							MODEST_PROTOCOL_STORE_IMAP,
-						       MODEST_PROTOCOL_SECURITY_NONE,
-						       MODEST_PROTOCOL_AUTH_NONE);
+							MODEST_PROTOCOLS_STORE_IMAP,
+						       MODEST_PROTOCOLS_CONNECTION_NONE,
+						       MODEST_PROTOCOLS_AUTH_NONE);
 	fail_unless (!result,
 		     "modest_account_mgr_add_server_account does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
@@ -267,11 +282,12 @@ START_TEST (test_add_exists_remove_account_invalid)
 	result = modest_account_mgr_add_server_account (account_mgr,
 							NULL,
 							"hostname",
+							143,
 							"username",
 							"password",
-							MODEST_PROTOCOL_STORE_IMAP,
-							MODEST_PROTOCOL_SECURITY_NONE,
-							MODEST_PROTOCOL_AUTH_NONE); 
+							MODEST_PROTOCOLS_STORE_IMAP,
+							MODEST_PROTOCOLS_CONNECTION_NONE,
+							MODEST_PROTOCOLS_AUTH_NONE); 
 	fail_unless (!result,
 		     "modest_account_mgr_add_server_account does not return " \
 		     "FALSE when passing a NULL account name");
@@ -280,43 +296,33 @@ START_TEST (test_add_exists_remove_account_invalid)
  	result = modest_account_mgr_add_server_account (account_mgr, 
  							"ïnválid//accountñ//nÄméç",
  							"hostname", 
+							143,
  							"username", 
  							"password", 
- 							MODEST_PROTOCOL_STORE_IMAP,
-							MODEST_PROTOCOL_SECURITY_NONE,
-							MODEST_PROTOCOL_AUTH_NONE); 
+ 							MODEST_PROTOCOLS_STORE_IMAP,
+							MODEST_PROTOCOLS_CONNECTION_NONE,
+							MODEST_PROTOCOLS_AUTH_NONE); 
  	fail_unless (!result, 
  		     "modest_account_mgr_add_server_account does not return " \
  		     "FALSE when passing an invalid account name"); 
 
 	/* Test 7 */
 	result = modest_account_mgr_remove_account (account_mgr,
-						    "a_name_that_does_not_exist",
-						    FALSE);
+						    "a_name_that_does_not_exist");
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return FALSE " \
 		     "when trying to remove an account that does not exist");
 
-	/* Test 8 */
-	result = modest_account_mgr_remove_account (account_mgr,
-						    "a_name_that_does_not_exist",
-						    TRUE);
-	fail_unless (!result,
-		     "modest_account_mgr_remove_acccount does not return FALSE " \
-		     "when trying to remove a server account that does not exist");
-
 	/* Test 9 */
 	result = modest_account_mgr_remove_account (NULL,
-						    TEST_MODEST_ACCOUNT_NAME,
-						    FALSE);
+						    TEST_MODEST_ACCOUNT_NAME);
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return " \
 		     "FALSE when passing a NULL ModestAccountMgr");
 
 	/* Test 10 */
 	result = modest_account_mgr_remove_account (account_mgr,
-						    NULL,
-						    FALSE);
+						    NULL);
 	fail_unless (!result,
 		     "modest_account_mgr_remove_acccount does not return " \
 		     "FALSE when passing a NULL account name");

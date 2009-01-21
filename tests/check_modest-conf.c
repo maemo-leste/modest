@@ -28,6 +28,7 @@
  */
 
 #include <check.h>
+#include <modest-defs.h>
 #include <modest-conf.h>
 #include <string.h>
 
