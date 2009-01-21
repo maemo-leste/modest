@@ -626,7 +626,7 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	/* nope, we are at the start of some address
 	 * now, let's find the end of the address */
 	end = my_addrs + 1;
-	while (end[0] && end[0] != ';') {
+	while (end[0] && (end[0] != ';') && (end[0] != ',')) {
 		if (end[0] == '\"') {
 			while (end[0] && end[0] != '\"')
 				++end;

@@ -153,7 +153,6 @@ gchar*   modest_text_utils_remove_address (const gchar *address_list,
  * in case of error or the original @address_list was NULL
  */
 gchar*   modest_text_utils_remove_duplicate_addresses (const gchar *address_list); 
-						    
 
 
 /**

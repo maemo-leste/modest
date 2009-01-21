@@ -593,17 +593,17 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	   part of the message to create the reply/forwarded mail */
 	if (msg != NULL)
 		body   = modest_tny_msg_find_body_part (msg, FALSE);
-	
+
 	if (modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT,
 				  NULL))
 		formatter = modest_formatter_new ("text/html", signature);
 	else
 		formatter = modest_formatter_new ("text/plain", signature);
-	
+
 
 	/* if we don't have a text-part */
 	no_text_part = (!body) || (strcmp (tny_mime_part_get_content_type (body), "text/html")==0);
-	
+
 	/* when we're reply, include the text part if we have it, or nothing otherwise. */
 	if (is_reply)
 		new_msg = modest_formatter_quote  (formatter, no_text_part ? NULL: body, header,
@@ -618,11 +618,11 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 							    attachments);
 		}
 	}
-	
+
 	g_object_unref (G_OBJECT(formatter));
 	if (body)
 		g_object_unref (G_OBJECT(body));
-	
+
 	/* Fill the header */
 	new_header = tny_msg_get_header (new_msg);	
 	tny_header_set_from (new_header, from);
@@ -825,15 +825,16 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 static gchar*
 get_new_cc (TnyHeader *header, const gchar* from)
 {
-	gchar *old_cc;
-	gchar *result;
+	gchar *old_cc, *result, *dup;
 
 	old_cc = tny_header_dup_cc (header);
 	if (!old_cc)
 		return NULL;
 
 	/* remove me (the new From:) from the Cc: list */
-	result =  modest_text_utils_remove_address (old_cc, from);
+	dup =  modest_text_utils_remove_address (old_cc, from);
+	result = modest_text_utils_remove_duplicate_addresses (dup);
+	g_free (dup);
 	g_free (old_cc);
 	return result;
 }
@@ -882,8 +883,8 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	else {
 		tny_header_set_to (new_header, new_to);
 		g_free (new_to);
-	}	
-	
+	}
+
 	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
 		gchar *new_cc = get_new_cc (header, from);
 		if (new_cc) { 
@@ -891,7 +892,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 			g_free (new_cc);
 		}
 	}
-	
+
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
 	g_object_unref (G_OBJECT (header));
