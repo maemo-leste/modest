@@ -2114,7 +2114,7 @@ modest_platform_check_memory_low (ModestWindow *win,
 	if (win && lowmem && visuals)
 		modest_platform_run_information_dialog (
 			GTK_WINDOW(win),
-			dgettext("ke-recv","memr_ib_operation_disabled"),
+			_KR("memr_ib_operation_disabled"),
 			TRUE);
 
 	if (lowmem)

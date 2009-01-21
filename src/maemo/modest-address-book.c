@@ -508,7 +508,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 				if ((invalid_char_offset != NULL)&&(*invalid_char_offset != '\0')) {
 					gchar *char_in_string = g_strdup_printf ("%c", *invalid_char_offset);
 					gchar *message = g_strdup_printf(
-						dgettext("hildon-common-strings", "ckdg_ib_illegal_characters_entered"), 
+						_CS("ckdg_ib_illegal_characters_entered"), 
 						char_in_string);
 					hildon_banner_show_information (
 						add_email_addr_to_contact_dlg, NULL, message );
@@ -753,11 +753,11 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 			if ((invalid_char_position != NULL) && (*invalid_char_position != '\0')) {
 				gchar *char_in_string = g_strdup_printf("%c", *invalid_char_position);
 				gchar *message = g_strdup_printf(
-					dgettext("hildon-common-strings", "ckdg_ib_illegal_characters_entered"), 
+					_CS("ckdg_ib_illegal_characters_entered"), 
 					char_in_string);
 				g_free (char_in_string);
 				hildon_banner_show_information (NULL, NULL, message );
-				g_free (message);				
+				g_free (message);
 				result = FALSE;
 			} else if (strstr (address, "@") == NULL) {
 				/* here goes searching in addressbook */

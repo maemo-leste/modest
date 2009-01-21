@@ -2216,7 +2216,8 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 			if (stream == NULL) {
 
-				modest_platform_information_banner (NULL, NULL, dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+				modest_platform_information_banner (NULL, NULL, 
+								    _FM("sfil_ib_opening_not_allowed"));
 				
 				g_object_unref (mime_part);
 				gnome_vfs_file_info_unref (info);
@@ -2372,7 +2373,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 			size = info->size;
 			if (size > allowed_size) {
 				modest_platform_information_banner (NULL, NULL, 
-								    dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+								    _FM("sfil_ib_opening_not_allowed"));
 				return 0;
 			}
 		} else
@@ -2382,7 +2383,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 		
 		if (stream == NULL) {
 
-			modest_platform_information_banner (NULL, NULL, dgettext("hildon-fm", "sfil_ib_opening_not_allowed"));
+			modest_platform_information_banner (NULL, NULL, _FM("sfil_ib_opening_not_allowed"));
 
 			g_object_unref (mime_part);
 			gnome_vfs_file_info_unref (info);
@@ -3344,8 +3345,7 @@ subject_field_insert_text (GtkEditable *editable,
 
 	if (result_len + old_length > 1000) {
 		hildon_banner_show_information (GTK_WIDGET (window), NULL, 
-						dgettext("hildon-common-strings",
-							 "ckdg_ib_maximum_characters_reached"));
+						_CS("ckdg_ib_maximum_characters_reached"));
 	}
 	
 	g_string_free (result, TRUE);
@@ -3453,7 +3453,8 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 		g_free (priv->last_search);
 		priv->last_search = NULL;
 		/* Information banner about empty search */
-		hildon_banner_show_information (NULL, NULL, dgettext ("hildon-common-strings", "ecdg_ib_find_rep_enter_text"));
+		hildon_banner_show_information (NULL, NULL, 
+						_CS ("ecdg_ib_find_rep_enter_text"));
 		return;
 	}
 
@@ -3469,14 +3470,16 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 		result = gtk_text_iter_forward_search_insensitive (&selection_end, current_search, 
 								   &match_start, &match_end);
 		if (!result)
-			hildon_banner_show_information (NULL, NULL, dgettext ("hildon-libs", "ckct_ib_find_search_complete"));
+			hildon_banner_show_information (NULL, NULL, 
+							_HL ("ckct_ib_find_search_complete"));
 	} else {
 		GtkTextIter buffer_start;
 		gtk_text_buffer_get_start_iter (priv->text_buffer, &buffer_start);
 		result = gtk_text_iter_forward_search_insensitive (&buffer_start, current_search, 
 								   &match_start, &match_end);
 		if (!result)
-			hildon_banner_show_information (NULL, NULL, dgettext ("hildon-libs", "ckct_ib_find_no_matches"));
+			hildon_banner_show_information (NULL, NULL, 
+							_HL ("ckct_ib_find_no_matches"));
 	}
 
 	/* Mark as selected the string found in search */
@@ -3664,7 +3667,8 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 {
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
 
-	hildon_banner_show_information (NULL, NULL, dgettext("hildon-common-strings", "ckct_ib_cannot_zoom_here"));
+	hildon_banner_show_information (NULL, NULL, 
+					_CS("ckct_ib_cannot_zoom_here"));
 	return FALSE;
 
 }
