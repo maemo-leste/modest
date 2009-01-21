@@ -874,7 +874,7 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 		    error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
 			GObject *source = modest_mail_operation_get_source (mail_op);
 			modest_platform_run_information_dialog (GTK_IS_WINDOW (source) ? GTK_WINDOW (source) : NULL,
-								dgettext("ke-recv","memr_ib_operation_disabled"),
+								_KR("memr_ib_operation_disabled"),
 								TRUE);
 			g_object_unref (source);
 		}
@@ -1143,8 +1143,7 @@ check_memory_full_error (GtkWidget *parent_window, GError *err)
 
 	if (is_memory_full_error (err))
 		modest_platform_information_banner (parent_window,
-						    NULL, dgettext("ke-recv",
-								   "cerm_device_memory_full"));
+						    NULL, _KR("cerm_device_memory_full"));
 	else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
 		/* If the account was created in memory full
 		   conditions then tinymail won't be able to
@@ -1174,15 +1173,14 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 	if (status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
 		if (is_memory_full_error ((GError *) error)) {
 			modest_platform_information_banner ((GtkWidget *) win,
-							    NULL, dgettext("ke-recv",
-									   "cerm_device_memory_full"));
+							    NULL, _KR("cerm_device_memory_full"));
 		} else if (error->code == TNY_SYSTEM_ERROR_MEMORY) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, _("emev_ui_imap_inbox_select_error"));
 		} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
 			   error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
 			modest_platform_information_banner ((GtkWidget *) win,
-							    NULL, dgettext ("hildon-common-strings", "sfil_ni_unable_to_open_file_not_found"));
+							    NULL, _CS ("sfil_ni_unable_to_open_file_not_found"));
 		} else if (user_data) {
 			modest_platform_information_banner ((GtkWidget *) win, 
 							    NULL, user_data);
@@ -2484,7 +2482,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	if (error && error->domain == MODEST_MAIL_OPERATION_ERROR && 
 	    error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
 		modest_platform_run_information_dialog (GTK_WINDOW (win),
-							dgettext("ke-recv","memr_ib_operation_disabled"),
+							_KR("memr_ib_operation_disabled"),
 							TRUE);
 		return;
 	}
@@ -2743,8 +2741,7 @@ enough_space_for_message (ModestMsgEditWindow *edit_window,
 	    expected_size > available_disk) {
 
 		modest_platform_information_banner (NULL, NULL, 
-						    dgettext("ke-recv", 
-							     "cerm_device_memory_full"));
+						    _KR("cerm_device_memory_full"));
 		return FALSE;
 	}
 
@@ -2767,7 +2764,7 @@ enough_space_for_message (ModestMsgEditWindow *edit_window,
 	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
 		modest_platform_run_information_dialog (
 			GTK_WINDOW(edit_window),
-			dgettext("ke-recv","memr_ib_operation_disabled"),
+			_KR("memr_ib_operation_disabled"),
 			TRUE);
 		return FALSE;
 	}
@@ -6262,7 +6259,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
 		break;
 	case TNY_SERVICE_ERROR_SEND:
-		message = g_strdup (dgettext("hildon-common-strings", "sfil_ib_unable_to_send"));
+		message = g_strdup (_CS("sfil_ib_unable_to_send"));
 		break;
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
 		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
@@ -6270,7 +6267,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	default:
 		g_warning ("%s: unexpected ERROR %d",
 			   __FUNCTION__, err->code);
-		message = g_strdup (dgettext("hildon-common-strings", "sfil_ib_unable_to_send"));
+		message = g_strdup (_CS("sfil_ib_unable_to_send"));
 		break;	
 	}
 

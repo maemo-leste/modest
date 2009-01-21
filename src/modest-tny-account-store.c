@@ -676,7 +676,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 											     server_account_name);
 			/* If the login has ever succeeded then show a specific message */
 			if (username_known)
-				msg = dgettext ("hildon-common-strings", "ecdg_ib_set_password_incorrect");
+				msg = _CS ("ecdg_ib_set_password_incorrect");
 			else
 				msg = _("mcen_ib_username_pw_incorrect");
 			show_password_warning_only (msg);

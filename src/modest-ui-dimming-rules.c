@@ -466,7 +466,7 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 		    !gtk_widget_is_focus (header_view) &&
 		    !gtk_widget_is_focus (folder_view)) {
 			dimmed = TRUE;
-			modest_dimming_rule_set_notification (rule, dgettext("hildon-common-strings", "ckct_ib_nothing_to_delete"));
+			modest_dimming_rule_set_notification (rule, _CS("ckct_ib_nothing_to_delete"));
 		}
 			
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -1222,28 +1222,24 @@ modest_ui_dimming_rules_on_paste (ModestWindow *win, gpointer user_data)
 	dimmed = _clipboard_is_empty (win);
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, 
-						      dgettext("hildon-common-strings", 
-							       "ecoc_ib_edwin_nothing_to_paste"));
+						      _CS("ecoc_ib_edwin_nothing_to_paste"));
 	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 3);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, 
-							      dgettext("hildon-common-strings", 
-								       "ckct_ib_unable_to_paste_here"));
+							      _CS("ckct_ib_unable_to_paste_here"));
 	}
 	if (!dimmed) {
 		dimmed = !_folder_view_has_focus (win);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule,
-					dgettext("hildon-common-strings",
-					"ckct_ib_unable_to_paste_here"));
+					_CS("ckct_ib_unable_to_paste_here"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_not_writeable (MODEST_MAIN_WINDOW(win), TRUE);
 		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, 
-							      dgettext("hildon-common-strings", 
-								       "ckct_ib_unable_to_paste_here"));
+							      _CS("ckct_ib_unable_to_paste_here"));
 	}
 	if (!dimmed) {
 		dimmed = _selected_folder_is_same_as_source (win);

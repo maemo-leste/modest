@@ -183,7 +183,7 @@ static gboolean
 force_ke_recv_load (void)
 {
 	if (strcmp ("cerm_device_memory_full",
-		    dgettext("ke-recv", "cerm_device_memory_full")) == 0) {
+		    _KR("cerm_device_memory_full")) == 0) {
 		g_warning ("%s: cannot get translation for cerm_device_memory_full",
 			   __FUNCTION__);
 		return FALSE;
