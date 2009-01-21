@@ -564,10 +564,18 @@ entry_insert_text (GtkEditable *editable,
 			g_free (msg);
 			g_free (tmp);
 		} else {
+			gint insert_length;
+
+			insert_length = g_utf8_strlen (text, -1);
+
+			if (insert_length + chars_length >= 20) {
+				hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
+								 _CS("ckdg_ib_maximum_characters_reached"));
+			}
 			/* Write the text in the entry if it's valid */
 			g_signal_handlers_block_by_func (editable,
 							 (gpointer) entry_insert_text, data);
-			gtk_editable_insert_text (editable, text, length, position);
+			gtk_editable_insert_text (editable, text, MIN (chars_length + insert_length, 20), position);
 			g_signal_handlers_unblock_by_func (editable,
 							   (gpointer) entry_insert_text, data);
 		}
@@ -591,11 +599,11 @@ entry_changed (GtkEditable *editable,
 	g_return_if_fail (chars != NULL);
 
 
-	if (g_utf8_strlen (chars,-1) >= 20)
+	if (g_utf8_strlen (chars,-1) >= 20) {
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
 						 _CS("ckdg_ib_maximum_characters_reached"));
-	else
-		gtk_widget_set_sensitive (ok_button, modest_text_utils_validate_folder_name(chars));
+	}
+	gtk_widget_set_sensitive (ok_button, modest_text_utils_validate_folder_name(chars));
 
 	/* Free */
 	g_list_free (buttons);
