@@ -128,7 +128,8 @@ modest_dimming_rules_group_finalize (GObject *obj)
 
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(obj);
 
-	g_object_weak_unref (G_OBJECT (priv->window), on_window_destroy, obj);
+	if (priv->window)
+		g_object_weak_unref (G_OBJECT (priv->window), on_window_destroy, obj);
 
 	if (priv->name != NULL)
 		g_free(priv->name);
