@@ -64,6 +64,8 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 {
 	GtkTreeView *treeview;
 	GtkTreeModel *model;
+	GtkWidget *no_connection_label;
+	GtkWidget *pannable;
 	
 	ModestAccountMgr *account_manager;
 };
@@ -135,6 +137,9 @@ modest_connection_specific_smtp_window_finalize (GObject *object)
 	}
 	
 	g_object_unref (G_OBJECT (priv->model));
+
+	g_object_unref (priv->treeview);
+	g_object_unref (priv->no_connection_label);
 	
 	G_OBJECT_CLASS (modest_connection_specific_smtp_window_parent_class)->finalize (object);
 }
@@ -161,6 +166,7 @@ void
 modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSpecificSmtpWindow *self,
 							      ModestAccountMgr *account_manager)
 {
+	gboolean empty = TRUE;
 #ifdef MODEST_HAVE_CONIC
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
@@ -182,6 +188,9 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 	/* printf("debug: list_iaps=%p, list_iaps size = %d\n", list_iaps, g_slist_length(list_iaps)); */
 	
 	GSList* iter = list_iaps;
+	if (list_iaps != NULL)
+		empty = FALSE;
+
 	while (iter) {
 		ConIcIap *iap = (ConIcIap*)iter->data;
 		if (iap) {
@@ -223,6 +232,21 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 		
 	update_model_server_names (self);
 #endif /*MODEST_HAVE_CONIC */
+
+	GtkWidget *child;
+	child = gtk_bin_get_child (GTK_BIN (priv->pannable));
+	if (child) {
+		gtk_container_remove (GTK_CONTAINER (priv->pannable), child);
+	}
+
+	if (empty) {
+		hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), 
+							priv->no_connection_label);
+		gtk_widget_show (priv->no_connection_label);
+	} else {
+		gtk_container_add (GTK_CONTAINER (priv->pannable), GTK_WIDGET (priv->treeview));
+		gtk_widget_show (GTK_WIDGET (priv->treeview));
+	}
 }
 	
 static void
@@ -338,6 +362,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 
 	/* Setup the tree view: */
 	priv->treeview = GTK_TREE_VIEW (hildon_gtk_tree_view_new_with_model (HILDON_UI_MODE_NORMAL, priv->model));
+	g_object_ref_sink (G_OBJECT (priv->treeview));
+
+	/* No connections label */
+	priv->no_connection_label = gtk_label_new (_("mcen_ia_optionalsmtp_noconnection"));
+	g_object_ref_sink (G_OBJECT (priv->no_connection_label));
 
 	/* name column:
 	 * The ID model column in not shown in the view. */
@@ -377,13 +406,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 	
 	/* Put the treeview in a pannable and add it to the box: */
-	GtkWidget *pannable = hildon_pannable_area_new ();
-	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
-	gtk_container_set_border_width (GTK_CONTAINER (pannable), MODEST_MARGIN_DEFAULT);
-	gtk_widget_show (pannable);
-	gtk_container_add (GTK_CONTAINER (pannable), GTK_WIDGET (priv->treeview));
-	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (pannable), TRUE, TRUE, MODEST_MARGIN_HALF);
-	gtk_widget_show (GTK_WIDGET (priv->treeview));
+	priv->pannable = hildon_pannable_area_new ();
+	g_object_set (G_OBJECT (priv->pannable), "initial-hint", TRUE, NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (priv->pannable), MODEST_MARGIN_DEFAULT);
+	gtk_widget_show (priv->pannable);
+	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->pannable), TRUE, TRUE, MODEST_MARGIN_HALF);
 	gtk_widget_show (vbox);
 	
 	g_signal_connect (G_OBJECT (priv->treeview), "row-activated", G_CALLBACK (on_row_activated), self);
