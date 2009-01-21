@@ -906,6 +906,7 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 
 	iter = text;
 	len = strlen(text);
+	remaining = g_string_new ("");
 	do {
 		l = get_next_line (text, len, iter);
 		iter = iter + l->len + 1;
@@ -1004,13 +1005,17 @@ modest_text_utils_quote_html (const gchar *text,
 			      "<body>\n<br/>\n");
 
 	if (text || cite || signature) {
+		GString *quoted_text;
 		g_string_append (result_string, "<pre>\n");
 		if (signature) {
 			quote_html_add_to_gstring (result_string, SIGNATURE_MARKER);
 			quote_html_add_to_gstring (result_string, signature);
 		}
 		quote_html_add_to_gstring (result_string, cite);
-		quote_html_add_to_gstring (result_string, text);
+		quoted_text = g_string_new ("");
+		quoted_text = modest_text_utils_quote_body (quoted_text, text, ">", limit);
+		quote_html_add_to_gstring (result_string, quoted_text->str);
+		g_string_free (quoted_text, TRUE);
 		if (attachments) {
 			gchar *attachments_string = quoted_attachments (attachments);
 			quote_html_add_to_gstring (result_string, attachments_string);
