@@ -612,6 +612,7 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	const gchar *my_addrs = addresses;
 	const gchar *end;
 	gchar *addr;
+	gboolean after_at = FALSE;
 
 	g_return_val_if_fail (addresses, NULL);
 	
@@ -626,10 +627,13 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	/* nope, we are at the start of some address
 	 * now, let's find the end of the address */
 	end = my_addrs + 1;
-	while (end[0] && (end[0] != ';') && (end[0] != ',')) {
+	while (end[0] && end[0] != ';' && !(after_at && end[0] == ',')) {
 		if (end[0] == '\"') {
 			while (end[0] && end[0] != '\"')
 				++end;
+		}
+		if (end[0] == '@') {
+			after_at = TRUE;
 		}
 		if ((end[0] && end[0] == '>')&&(end[1] && end[1] == ',')) {
 			++end;
