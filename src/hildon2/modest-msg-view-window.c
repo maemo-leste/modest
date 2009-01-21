@@ -1531,10 +1531,10 @@ modest_msg_view_window_zoom_plus (ModestWindow *window)
 	}
 
 	/* set zoom level */
+	hildon_banner_show_information (NULL, NULL, _HL("wdgt_ib_zoom"));
 	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
 
 	return TRUE;
-	
 }
 
 static gboolean
@@ -1566,6 +1566,7 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 	}
 
 	/* set zoom level */
+	hildon_banner_show_information (NULL, NULL, _HL("wdgt_ib_zoom"));
 	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
 
 	return TRUE;
