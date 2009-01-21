@@ -145,8 +145,9 @@ static GSList*  get_url_matches         (GString *txt, gint offset);
 
 static GString* get_next_line           (const char *b, const gsize blen, const gchar * iter);
 static int      get_indent_level        (const char *l);
-static void     unquote_line            (GString * l);
-static void     append_quoted           (GString * buf, const int indent, const GString * str, 
+static void     unquote_line            (GString * l, const gchar *quote_symbol);
+static void     append_quoted           (GString * buf, const gchar *quote_symbol,
+					 const int indent, const GString * str, 
 					 const int cutpoint);
 static int      get_breakpoint_utf8     (const gchar * s, const gint indent, const gint limit);
 static int      get_breakpoint_ascii    (const gchar * s, const gint indent, const gint limit);
@@ -770,15 +771,17 @@ get_indent_level (const char *l)
 }
 
 static void
-unquote_line (GString * l)
+unquote_line (GString * l, const gchar *quote_symbol)
 {
 	gchar *p;
+	gint quote_len;
 
 	p = l->str;
+	quote_len = strlen (quote_symbol);
 	while (p[0]) {
-		if (p[0] == '>') {
-			if (p[1] == ' ') {
-				p++;
+		if (g_str_has_prefix (p, quote_symbol)) {
+			if (p[quote_len] == ' ') {
+				p += quote_len;
 			}
 		} else {
 			break;
@@ -789,15 +792,19 @@ unquote_line (GString * l)
 }
 
 static void
-append_quoted (GString * buf, int indent, const GString * str,
+append_quoted (GString * buf, const gchar *quote_symbol,
+	       int indent, const GString * str,
 	       const int cutpoint)
 {
 	int i;
+	gchar *quote_concat;
 
 	indent = indent < 0 ? abs (indent) - 1 : indent;
+	quote_concat = g_strconcat (quote_symbol, " ", NULL);
 	for (i = 0; i <= indent; i++) {
-		g_string_append (buf, "> ");
+		g_string_append (buf, quote_concat);
 	}
+	g_free (quote_concat);
 	if (cutpoint > 0) {
 		g_string_append_len (buf, str->str, cutpoint);
 	} else {
@@ -886,32 +893,16 @@ quoted_attachments (GList *attachments)
 
 }
 
-static gchar *
-modest_text_utils_quote_plain_text (const gchar *text, 
-				    const gchar *cite, 
-				    const gchar *signature,
-				    GList *attachments,
-				    int limit)
+static GString *
+modest_text_utils_quote_body (GString *output, const gchar *text,
+			      const gchar *quote_symbol,
+			      int limit)
 {
+
 	const gchar *iter;
-	gint indent, breakpoint, rem_indent = 0;
-	GString *q, *l, *remaining;
 	gsize len;
-	gchar *attachments_string = NULL;
-
-	q = g_string_new ("");
-
-	if (signature != NULL) {
-		q = g_string_append (q, "\n--\n");
-		q = g_string_append (q, signature);
-	}
-
-	q = g_string_append (q, "\n");
-	q = g_string_append (q, cite);
-	q = g_string_append_c (q, '\n');
-
-	/* remaining will store the rest of the line if we have to break it */
-	remaining = g_string_new ("");
+	gint indent, breakpoint, rem_indent = 0;
+	GString *l, *remaining;
 
 	iter = text;
 	len = strlen(text);
@@ -919,7 +910,7 @@ modest_text_utils_quote_plain_text (const gchar *text,
 		l = get_next_line (text, len, iter);
 		iter = iter + l->len + 1;
 		indent = get_indent_level (l->str);
-		unquote_line (l);
+		unquote_line (l, quote_symbol);
 
 		if (remaining->len) {
 			if (l->len && indent == rem_indent) {
@@ -931,7 +922,7 @@ modest_text_utils_quote_plain_text (const gchar *text,
 						get_breakpoint (remaining->str,
 								rem_indent,
 								limit);
-					append_quoted (q, rem_indent,
+					append_quoted (output, quote_symbol, rem_indent,
 						       remaining, breakpoint);
 					g_string_erase (remaining, 0,
 							breakpoint);
@@ -949,9 +940,35 @@ modest_text_utils_quote_plain_text (const gchar *text,
 			g_string_erase (remaining, 0, 1);
 		}
 		rem_indent = indent;
-		append_quoted (q, indent, l, breakpoint);
+		append_quoted (output, quote_symbol, indent, l, breakpoint);
 		g_string_free (l, TRUE);
 	} while ((iter < text + len) || (remaining->str[0]));
+
+	return output;
+}
+
+static gchar *
+modest_text_utils_quote_plain_text (const gchar *text, 
+				    const gchar *cite, 
+				    const gchar *signature,
+				    GList *attachments,
+				    int limit)
+{
+	GString *q;
+	gchar *attachments_string = NULL;
+
+	q = g_string_new ("");
+
+	if (signature != NULL) {
+		q = g_string_append (q, "\n--\n");
+		q = g_string_append (q, signature);
+	}
+
+	q = g_string_append (q, "\n");
+	q = g_string_append (q, cite);
+	q = g_string_append_c (q, '\n');
+
+	q = modest_text_utils_quote_body (q, text, ">", limit);
 
 	attachments_string = quoted_attachments (attachments);
 	q = g_string_append (q, attachments_string);
