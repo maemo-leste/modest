@@ -358,6 +358,8 @@ void  modest_account_mgr_set_display_name (ModestAccountMgr *self,
 					   const gchar *account_name,
 					   const gchar *display_name);
 
+gboolean modest_account_mgr_singleton_protocol_exists (ModestAccountMgr *mgr,
+						       ModestProtocolType protocol_type);
 
 G_END_DECLS
 

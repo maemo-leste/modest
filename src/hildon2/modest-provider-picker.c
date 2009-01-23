@@ -240,24 +240,34 @@ modest_provider_picker_fill (ModestProviderPicker *self,
 	registry = modest_runtime_get_protocol_registry ();
 	provider_protos = modest_protocol_registry_get_by_tag (registry, 
 							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
-	tmp = provider_protos;
-	while (tmp) {
+	for (tmp = provider_protos; tmp != NULL; tmp = g_slist_next (tmp)) {
+
 		GtkTreeIter iter;
 		ModestProtocol *proto = MODEST_PROTOCOL (tmp->data);
 		const gchar *name = modest_protocol_get_display_name (proto);
 
 		/* only add store protocols, no need to duplicate them */
-		if (modest_protocol_registry_protocol_type_has_tag (registry, 
-								    modest_protocol_get_type_id (proto),
-								    MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS)) {
-			gtk_list_store_append (liststore, &iter);
-			gtk_list_store_set (liststore, &iter,
-					    MODEL_COL_ID, modest_protocol_get_name (proto),
-					    MODEL_COL_NAME, name,
-					    MODEL_COL_ID_TYPE, MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL,
-					    -1);
+		if (!modest_protocol_registry_protocol_type_has_tag (registry, 
+								     modest_protocol_get_type_id (proto),
+								     MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS))
+			continue;
+		  
+		if (modest_protocol_registry_protocol_type_has_tag 
+		    (registry,
+		     modest_protocol_get_type_id (proto),
+		     MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS)) {
+			/* Check if there's already an account configured with this account type */
+			if (modest_account_mgr_singleton_protocol_exists (modest_runtime_get_account_mgr (),
+									  modest_protocol_get_type_id (proto)))
+				continue;
 		}
-		tmp = g_slist_next (tmp);
+
+		gtk_list_store_append (liststore, &iter);
+		gtk_list_store_set (liststore, &iter,
+				    MODEL_COL_ID, modest_protocol_get_name (proto),
+				    MODEL_COL_NAME, name,
+				    MODEL_COL_ID_TYPE, MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL,
+				    -1);
 	}
 	g_slist_free (provider_protos);
 	

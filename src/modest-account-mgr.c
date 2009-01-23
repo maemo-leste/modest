@@ -1650,3 +1650,28 @@ modest_account_mgr_set_display_name (ModestAccountMgr *self,
 	if (notify)
 		g_signal_emit (self, signals[DISPLAY_NAME_CHANGED_SIGNAL], 0, account_name);
 }
+
+gboolean 
+modest_account_mgr_singleton_protocol_exists (ModestAccountMgr *mgr,
+					      ModestProtocolType protocol_type)
+{
+	GSList *account_names, *node;
+	gboolean found = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR (mgr), FALSE);
+	account_names = modest_account_mgr_account_names (mgr, TRUE);
+
+	for (node = account_names; node != NULL; node = g_slist_next (node)) {
+		ModestProtocolType current_protocol;
+
+		current_protocol = modest_account_mgr_get_store_protocol (mgr, (gchar *) node->data);
+		if (current_protocol == protocol_type) {
+			found = TRUE;
+			break;
+		}
+	}
+
+	modest_account_mgr_free_account_names (account_names);
+
+	return found;
+}
