@@ -1537,7 +1537,7 @@ modest_msg_view_window_zoom_plus (ModestWindow *window)
 
 	/* set zoom level */
 	int_zoom = (gint) rint (zoom_level*100.0+0.1);
-	banner_text = g_strdup_printf (_("wdgt_ib_zoom"), int_zoom);
+	banner_text = g_strdup_printf (_HL("wdgt_ib_zoom"), int_zoom);
 	modest_platform_information_banner (GTK_WIDGET (window), NULL, banner_text);
 	g_free (banner_text);
 	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
@@ -1578,7 +1578,7 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 
 	/* set zoom level */
 	int_zoom = (gint) rint (zoom_level*100.0+0.1);
-	banner_text = g_strdup_printf (_("wdgt_ib_zoom"), int_zoom);
+	banner_text = g_strdup_printf (_HL("wdgt_ib_zoom"), int_zoom);
 	modest_platform_information_banner (GTK_WIDGET (window), NULL, banner_text);
 	g_free (banner_text);
 	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
