@@ -5778,6 +5778,10 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 		folder_view = NULL;
 
 	list_to_move = modest_platform_get_list_to_move (MODEST_WINDOW (win));
+
+	if (!list_to_move)
+		return FALSE;
+
 	if (tny_list_get_length (list_to_move) < 1) {
 		g_object_unref (list_to_move);
 		return FALSE;
