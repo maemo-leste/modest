@@ -31,6 +31,7 @@
 #include <modest-account-protocol.h>
 #include <modest-defs.h>
 #include <modest-protocol-registry.h>
+#include <modest-transport-account-decorator.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-store-account.h>
@@ -437,7 +438,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 
 	protocol = modest_account_protocol_new ("smtp", N_("SMTP Server"),
 						25, 465,
-						TNY_TYPE_CAMEL_TRANSPORT_ACCOUNT);
+						MODEST_TYPE_TRANSPORT_ACCOUNT_DECORATOR);
 	smtp_protocol_type_id = modest_protocol_get_type_id (protocol);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_CONNECT_ERROR, translation_is_userdata, "emev_ib_ui_smtp_server_invalid", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, translation_is_userdata, "emev_ni_ui_smtp_authentication_fail_error", NULL);
