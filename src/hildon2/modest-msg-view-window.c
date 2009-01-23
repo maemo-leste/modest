@@ -2280,7 +2280,7 @@ on_account_removed (TnyAccountStore *account_store,
 		parent_acc = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 
 		/* Close this window if I'm showing a message of the removed account */
-		if (strcmp (parent_acc, our_acc) == 0)
+		if (our_acc && parent_acc && strcmp (parent_acc, our_acc) == 0)
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
 	}
 }

@@ -1007,6 +1007,15 @@ get_info_from_header (TnyHeader *header, gboolean *is_draft, gboolean *can_open)
 		*is_draft = TRUE; /* Open in editor if the message is in the Drafts folder */
 	}
 
+	if (!account) {
+		TnyAccount *acc = tny_folder_get_account (folder);
+		if (acc) {
+			account =
+				g_strdup (modest_tny_account_get_parent_modest_account_name_for_server_account (acc));
+			g_object_unref (acc);
+		}
+	}
+
 	g_object_unref (folder);
 
 	return account;
