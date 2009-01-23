@@ -1244,7 +1244,6 @@ get_account_from_header (TnyHeader *header)
 		account = tny_folder_get_account (folder);
 		g_object_unref (folder);
 	}
-		
 	return account;
 }
 
@@ -1284,7 +1283,6 @@ open_msg_performer(gboolean canceled,
 	gchar *error_msg;
 	ModestProtocolType proto;
 	TnyConnectionStatus status;
-	gboolean show_open_draft = FALSE;
 	OpenMsgHelper *helper = NULL;
 	ModestProtocol *protocol;
 	ModestProtocolRegistry *protocol_registry;
@@ -1322,6 +1320,8 @@ open_msg_performer(gboolean canceled,
 		error_msg = g_strdup (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
 
+#ifndef MODEST_TOOLKIT_HILDON2
+	gboolean show_open_draft = FALSE;
 	if (modest_protocol_registry_protocol_type_has_tag (protocol_registry,
 							    proto,
 							    MODEST_PROTOCOL_REGISTRY_LOCAL_STORE_PROTOCOLS)) { 
@@ -1333,6 +1333,7 @@ open_msg_performer(gboolean canceled,
 		show_open_draft = (folder_type == TNY_FOLDER_TYPE_DRAFTS);
 		g_object_unref (folder);
 	}
+#endif
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	gboolean is_draft;
@@ -1380,17 +1381,17 @@ open_msg_performer(gboolean canceled,
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 
+
+#ifndef MODEST_TOOLKIT_HILDON2
 	if (show_open_draft) {
 		helper->banner_info = g_slice_new (OpenMsgBannerInfo);
-#ifdef MODEST_TOOLKIT_HILDON2
-		helper->banner_info->message = g_strdup (_("mail_me_opening"));
-#else
 		helper->banner_info->message = g_strdup (_("mail_ib_opening_draft_message"));
-#endif
 		helper->banner_info->banner = NULL;
 		helper->banner_info->idle_handler = g_timeout_add (500, open_msg_banner_idle, 
 								   helper->banner_info);
 	}
+#endif
+
 
 	TnyList *headers;
 	headers = TNY_LIST (tny_simple_list_new ());
