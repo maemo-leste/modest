@@ -5104,32 +5104,34 @@ void
 modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op, 
 					     gpointer user_data)
 {
+	GObject *win = NULL;
+
+#ifndef MODEST_TOOLKIT_HILDON2
 	ModestWindow *main_window = NULL;
-	
+
 	/* Disable next automatic folder selection */
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 							 FALSE); /* don't create */
 	if (main_window) {
-		GObject *win = NULL;
 		GtkWidget *folder_view = NULL;
-	
+
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);	
 		modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));
-		
+
 		if (user_data && TNY_IS_FOLDER (user_data)) {
 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), 
 							  TNY_FOLDER (user_data), FALSE);
 		}
-
-		/* Show notification dialog only if the main window exists */
-		win = modest_mail_operation_get_source (mail_op);
-		modest_platform_run_information_dialog ((GtkWindow *) win, 
-							_("mail_in_ui_folder_move_target_error"), 
-							FALSE);
-		if (win)
-			g_object_unref (win);
 	}
+#endif
+	/* Show notification dialog only if the main window exists */
+	win = modest_mail_operation_get_source (mail_op);
+	modest_platform_run_information_dialog ((GtkWindow *) win, 
+						_("mail_in_ui_folder_move_target_error"), 
+						FALSE);
+	if (win)
+		g_object_unref (win);
 }
 
 static void
