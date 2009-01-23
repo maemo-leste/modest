@@ -49,6 +49,7 @@ G_BEGIN_DECLS
 #define MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS "secure"
 #define MODEST_PROTOCOL_REGISTRY_HAS_LEAVE_ON_SERVER_PROTOCOLS "leave-on-server-available"
 #define MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS "providers"
+#define MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS "singleton-providers"
 #define MODEST_PROTOCOL_REGISTRY_USE_ALTERNATE_PORT "use-alternate-port"
 #define MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS "store-has-folders"
 #define MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD "store-forbid-message-add"
@@ -211,6 +212,10 @@ gboolean modest_protocol_registry_protocol_type_has_tag (ModestProtocolRegistry 
 #define modest_protocol_registry_protocol_type_is_provider(registry,protocol_type) \
 	modest_protocol_registry_protocol_type_has_tag ((registry), (protocol_type), \
 							MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS)
+
+#define modest_protocol_registry_protocol_type_is_singleton_provider(registry,protocol_type) \
+	modest_protocol_registry_protocol_type_has_tag ((registry), (protocol_type), \
+							MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS)
 
 #define modest_protocol_registry_protocol_type_has_leave_on_server(registry,protocol_type) \
 	modest_protocol_registry_protocol_type_has_tag ((registry), (protocol_type), \
