@@ -3277,6 +3277,46 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 	g_object_unref (source_win);
 }
 
+typedef struct {
+	gchar *folder_name;
+	TnyFolderStore *parent;
+} CreateFolderConnect;
+
+static void
+do_create_folder_performer (gboolean canceled, 
+			 GError *err,
+			 GtkWindow *parent_window, 
+			 TnyAccount *account, 
+			 gpointer user_data)
+{
+	CreateFolderConnect *helper = (CreateFolderConnect *) user_data;
+	ModestMailOperation *mail_op;
+
+	if (canceled || err) {
+		/* In memory full conditions we could get this error here */
+		check_memory_full_error ((GtkWidget *) parent_window, err);
+		goto frees;
+	}
+
+	mail_op  = modest_mail_operation_new ((GObject *) parent_window);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
+					 mail_op);
+	modest_mail_operation_create_folder (mail_op,
+					     helper->parent,
+					     (const gchar *) helper->folder_name,
+					     do_create_folder_cb,
+					     g_strdup (helper->folder_name));
+	g_object_unref (mail_op);
+
+ frees:
+	if (helper->parent)
+		g_object_unref (helper->parent);
+	if (helper->folder_name)
+		g_free (helper->folder_name);
+	g_slice_free (CreateFolderConnect, helper);
+}
+
+
 static void
 do_create_folder (GtkWindow *parent_window, 
 		  TnyFolderStore *suggested_parent, 
@@ -3293,43 +3333,21 @@ do_create_folder (GtkWindow *parent_window,
 							&parent_folder);
 
 	if (result == GTK_RESPONSE_ACCEPT && parent_folder) {
-		ModestMailOperation *mail_op;
+		CreateFolderConnect *helper = (CreateFolderConnect *) g_slice_new0 (CreateFolderHelper);
+		helper->folder_name = g_strdup (folder_name);
+		helper->parent = g_object_ref (parent_folder);
 
-		mail_op  = modest_mail_operation_new ((GObject *) parent_window);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), 
-						 mail_op);
-		modest_mail_operation_create_folder (mail_op,
-						     parent_folder,
-						     (const gchar *) folder_name,
-						     do_create_folder_cb,
-						     folder_name);
-		g_object_unref (mail_op);
+		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window),
+							       TRUE,
+							       parent_folder,
+							       do_create_folder_performer,
+							       helper);
 	}
 
+	if (folder_name)
+		g_free (folder_name);
 	if (parent_folder)
 		g_object_unref (parent_folder);
-}
-
-static void
-create_folder_performer (gboolean canceled, 
-			 GError *err,
-			 GtkWindow *parent_window, 
-			 TnyAccount *account, 
-			 gpointer user_data)
-{
-	TnyFolderStore *parent_folder = TNY_FOLDER_STORE (user_data);
-
-	if (canceled || err) {
-		/* In memory full conditions we could get this error here */
-		check_memory_full_error ((GtkWidget *) parent_window, err);
-		goto frees;
-	}
-
-	/* Run the new folder dialog */
-	do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
-
- frees:
-	g_object_unref (parent_folder);
 }
 
 static void
@@ -3359,14 +3377,8 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 #endif
 
-	if (parent_folder) {
-		/* The parent folder will be freed in the callback */
-		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window),
-							       TRUE,
-							       parent_folder,
-							       create_folder_performer,
-							       parent_folder);
-	}
+	if (parent_folder)
+		do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
 }
 
 void
