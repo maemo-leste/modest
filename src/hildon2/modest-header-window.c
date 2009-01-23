@@ -144,6 +144,10 @@ static void modest_header_window_show_toolbar   (ModestWindow *window,
 static void modest_header_window_pack_toolbar (ModestHildon2Window *self,
 					       GtkPackType pack_type,
 					       GtkWidget *toolbar);
+static void edit_mode_changed (ModestHeaderWindow *header_window,
+			       gint edit_mode_id,
+			       gboolean enabled,
+			       ModestHeaderWindow *self);
 
 
 /* globals */
@@ -315,13 +319,15 @@ connect_signals (ModestHeaderWindow *self)
 }
 
 static GtkWidget *
-create_header_view (ModestWindow *progress_window, TnyFolder *folder)
+create_header_view (ModestWindow *self, TnyFolder *folder)
 {
 	GtkWidget *header_view;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder, 
-				       TRUE, progress_window, NULL, NULL);
+				       TRUE, self, NULL, NULL);
+	modest_header_view_set_filter (MODEST_HEADER_VIEW (header_view), 
+				       MODEST_HEADER_VIEW_FILTER_NONE);
 	modest_widget_memory_restore (modest_runtime_get_conf (), G_OBJECT(header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
 
@@ -375,6 +381,8 @@ modest_header_window_new (TnyFolder *folder)
 	priv->empty_view = create_empty_view ();
 	g_object_ref (priv->header_view);
 	g_object_ref (priv->empty_view);
+	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
+			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 	setup_menu (self);
 
         priv->top_vbox = gtk_vbox_new (FALSE, 0);
@@ -850,4 +858,36 @@ modest_header_window_pack_toolbar (ModestHildon2Window *self,
 	} else {
 		gtk_box_pack_end (GTK_BOX (priv->top_vbox), toolbar, FALSE, FALSE, 0);
 	}
+}
+
+static void 
+edit_mode_changed (ModestHeaderWindow *header_window,
+		   gint edit_mode_id,
+		   gboolean enabled,
+		   ModestHeaderWindow *self)
+{
+	ModestHeaderWindowPrivate *priv;
+	ModestHeaderViewFilter filter = MODEST_HEADER_VIEW_FILTER_NONE;
+
+	g_return_if_fail (MODEST_IS_HEADER_WINDOW (self));
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	switch (edit_mode_id) {
+	case EDIT_MODE_COMMAND_MOVE:
+		filter = MODEST_HEADER_VIEW_FILTER_MOVEABLE;
+		break;
+	case EDIT_MODE_COMMAND_DELETE:
+		filter = MODEST_HEADER_VIEW_FILTER_DELETABLE;
+		break;
+	case MODEST_HILDON2_WINDOW_EDIT_MODE_NONE:
+		filter = MODEST_HEADER_VIEW_FILTER_NONE;
+		break;
+	}
+
+	if (enabled)
+		modest_header_view_set_filter (MODEST_HEADER_VIEW (priv->header_view), 
+					       filter);
+	else
+		modest_header_view_unset_filter (MODEST_HEADER_VIEW (priv->header_view), 
+						 filter);
 }

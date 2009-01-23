@@ -2100,6 +2100,22 @@ filter_row (GtkTreeModel *model,
 		goto frees;
 	}
 
+	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_DELETABLE)) {
+		if (priv->is_outbox &&
+		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING) {
+			visible = FALSE;
+			goto frees;
+		}
+	}
+
+	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_MOVEABLE)) {
+		if (priv->is_outbox &&
+		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING) {
+			visible = FALSE;
+			goto frees;
+		}
+	}
+
 	/* If no data on clipboard, return always TRUE */
 	if (modest_email_clipboard_cleared(priv->clipboard)) {
 		visible = TRUE;
@@ -2121,18 +2137,6 @@ filter_row (GtkTreeModel *model,
 	
 		visible = !found;
 		g_free(id);
-	}
-
-	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_DELETABLE)) {
-		if (priv->is_outbox &&
-		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING)
-			visible = FALSE;
-	}
-
-	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_MOVEABLE)) {
-		if (priv->is_outbox &&
-		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING)
-			visible = FALSE;
 	}
 
  frees:
