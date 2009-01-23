@@ -102,6 +102,12 @@ typedef enum _ModestItemType {
 } ModestItemType;
 
 
+typedef enum _ModestHeaderViewFilter {
+	MODEST_HEADER_VIEW_FILTER_NONE = 0,
+	MODEST_HEADER_VIEW_FILTER_MOVEABLE = 1 << 0,
+	MODEST_HEADER_VIEW_FILTER_DELETABLE = 1 << 1,
+} ModestHeaderViewFilter;
+
 struct _ModestHeaderViewClass {
 	GtkTreeViewClass parent_class;
 
@@ -391,6 +397,30 @@ modest_header_view_paste_selection (ModestHeaderView *header_view,
 				    gboolean *delete);
 
 void modest_header_view_refilter (ModestHeaderView *header_view);
+
+/**
+ * modest_header_view_set_filter:
+ * @self: a #ModestHeaderView
+ * @filter: a filter mask to be applied to messages
+ *
+ * sets the special filter to be applied (affects visibility of items).
+ * It's a mask, and filters applied are applied with an AND.
+ */
+void modest_header_view_set_filter (ModestHeaderView *self,
+				    ModestHeaderViewFilter filter);
+
+/**
+ * modest_header_view_unset_filter:
+ * @self: a #ModestHeaderView
+ * @filter: a filter mask to be unapplied to headers
+ *
+ * Unsets the special filter to be applied (affects visibility of
+ * items).  It's a mask, and filters applied are applied with an AND.
+ */
+void modest_header_view_unset_filter (ModestHeaderView *self,
+				      ModestHeaderViewFilter filter);
+
+
 
 /**
  * modest_header_view_add_observer:

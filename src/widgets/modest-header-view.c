@@ -131,6 +131,7 @@ typedef struct _ModestHeaderViewPrivate ModestHeaderViewPrivate;
 struct _ModestHeaderViewPrivate {
 	TnyFolder            *folder;
 	ModestHeaderViewStyle style;
+	gboolean is_outbox;
 
 	TnyFolderMonitor     *monitor;
 	GMutex               *observers_lock;
@@ -146,6 +147,7 @@ struct _ModestHeaderViewPrivate {
 	gchar **hidding_ids;
 	guint   n_selected;
 	GtkTreeRowReference *autoselect_reference;
+	ModestHeaderViewFilter filter;
 
 	gint    sort_colid[2][TNY_FOLDER_TYPE_NUM];
 	gint    sort_type[2][TNY_FOLDER_TYPE_NUM];
@@ -361,6 +363,8 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self); 
 
+	priv->is_outbox = (type == TNY_FOLDER_TYPE_OUTBOX);
+
 	/* TODO: check whether these renderers need to be freed */
 	renderer_attach  = gtk_cell_renderer_pixbuf_new ();
 	renderer_priority  = gtk_cell_renderer_pixbuf_new ();
@@ -573,6 +577,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj); 
 
 	priv->folder  = NULL;
+	priv->is_outbox = FALSE;
 
 	priv->monitor	     = NULL;
 	priv->observers_lock = g_mutex_new ();
@@ -588,6 +593,7 @@ modest_header_view_init (ModestHeaderView *obj)
 	priv->clipboard = modest_runtime_get_email_clipboard ();
 	priv->hidding_ids = NULL;
 	priv->n_selected = 0;
+	priv->filter = MODEST_HEADER_VIEW_FILTER_NONE;
 	priv->selection_changed_handler = 0;
 	priv->acc_removed_handler = 0;
 
@@ -2117,6 +2123,18 @@ filter_row (GtkTreeModel *model,
 		g_free(id);
 	}
 
+	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_DELETABLE)) {
+		if (priv->is_outbox &&
+		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING)
+			visible = FALSE;
+	}
+
+	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_MOVEABLE)) {
+		if (priv->is_outbox &&
+		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING)
+			visible = FALSE;
+	}
+
  frees:
 	old_status = priv->status;
 	priv->status = ((gboolean) priv->status) && !visible;
@@ -2262,4 +2280,40 @@ _modest_header_view_get_display_date (ModestHeaderView *self, time_t date)
 	
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 	return modest_datetime_formatter_display_datetime (priv->datetime_formatter, date);
+}
+
+void 
+modest_header_view_set_filter (ModestHeaderView *self,
+			       ModestHeaderViewFilter filter)
+{
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *filter_model;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	priv->filter |= filter;
+
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
+	}
+}
+
+void 
+modest_header_view_unset_filter (ModestHeaderView *self,
+				 ModestHeaderViewFilter filter)
+{
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *filter_model;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	priv->filter &= ~filter;
+
+	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {
+		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
+	}
 }
