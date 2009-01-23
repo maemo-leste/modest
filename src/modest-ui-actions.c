@@ -3357,22 +3357,12 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 	TnyFolderStore *parent_folder;
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	const gchar *active_account;
-	TnyAccount *account;
 	ModestTnyAccountStore *acc_store;
 
-	/* In hildon 2.2 we use the current account as default parent */
 	acc_store = modest_runtime_get_account_store ();
-	active_account = modest_window_get_active_account (MODEST_WINDOW (parent_window));
-	if (active_account) {
-		account = modest_tny_account_store_get_server_account (acc_store,
-								       active_account,
-								       TNY_ACCOUNT_TYPE_STORE);
-		parent_folder = TNY_FOLDER_STORE (account);
-	} else {
-		parent_folder = (TnyFolderStore *) 
-			modest_tny_account_store_get_local_folders_account (acc_store);
-	}
+
+	parent_folder = (TnyFolderStore *) 
+		modest_tny_account_store_get_local_folders_account (acc_store);
 #else
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 #endif
