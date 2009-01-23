@@ -2460,7 +2460,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 					      GTK_WINDOW (parent_window),
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
 					      GTK_DIALOG_DESTROY_WITH_PARENT,
-					      _("mcen_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
+					      _HL("wdgt_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
 	                                      NULL);
 
 	/* Create folder view */
