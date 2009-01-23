@@ -5493,12 +5493,14 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	}
 
 	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
+#ifndef MODEST_TOOLKIT_HILDON2
 	helper->banner = modest_platform_animation_banner (GTK_WIDGET (parent_window), NULL,
 			_CS("ckct_nw_pasting"));
 	if (helper->banner != NULL)  {
 		g_object_ref (helper->banner);
 		gtk_widget_show (GTK_WIDGET(helper->banner));
 	}
+#endif
 	/* Clean folder on header view before moving it */
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (info->folder_view));
 	gtk_tree_selection_unselect_all (sel);
