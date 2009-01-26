@@ -1019,7 +1019,6 @@ get_info_from_header (TnyHeader *header, gboolean *is_draft, gboolean *can_open)
 					   outbox which is not in
 					   failed state */
 					*can_open = FALSE;
-					g_object_unref(traccount);
                                 }
 #endif
 			}
