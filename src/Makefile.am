@@ -174,8 +174,8 @@ libmodest_la_LIBADD = 						\
 	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe} \
 	widgets/libmodest-widgets.la                    \
-	$(MODEST_TOOLKIT_DIR)/libmodest-ui.la		
-libmodest_la_LDFLAGS = -rdynamic -export-dynamic -no-undefined -Wl,--version-script=export.map
+	$(MODEST_TOOLKIT_DIR)/libmodest-ui.la
+libmodest_la_LDFLAGS = -rdynamic -no-undefined -Wl,--version-script=export.map
 
 if MODEST_HAVE_DBUS_API
 libmodest_la_LIBADD +=	dbus_api/libmodest-dbus-api.la
@@ -203,7 +203,7 @@ modest_LDADD = \
 	${easysetupmaybe}				\
 	libmodest.la
 
-modest_LDFLAGS = -rdynamic -export-dynamic -no-undefined -Wl,--version-script=export.map
+modest_LDFLAGS = -rdynamic -no-undefined -Wl,--version-script=export.map
 
 # modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 
