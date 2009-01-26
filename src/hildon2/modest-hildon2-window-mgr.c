@@ -694,6 +694,24 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 }
 
 static void
+create_folders_view (ModestWindowMgr *self)
+{
+	ModestWindow *folders_window;
+	ModestAccountMgr *mgr;
+	const gchar *acc_name;
+
+	folders_window = MODEST_WINDOW (modest_folder_window_new (NULL));
+	mgr = modest_runtime_get_account_mgr ();
+	acc_name = modest_account_mgr_get_default_account (mgr);
+	if (!acc_name)
+		acc_name = MODEST_LOCAL_FOLDERS_ACCOUNT_NAME;
+	modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folders_window),
+					  acc_name);
+	modest_window_mgr_register_window (self, folders_window, NULL);
+	gtk_widget_show (GTK_WIDGET (folders_window));
+}
+
+static void
 on_account_removed (TnyAccountStore *acc_store, 
 		    TnyAccount *account,
 		    gpointer user_data)
@@ -708,18 +726,8 @@ on_account_removed (TnyAccountStore *acc_store,
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
 
-	if (current_top && MODEST_IS_ACCOUNTS_WINDOW (current_top)) {
-		ModestWindow *folders_window;
-		ModestAccountMgr *mgr;
-
-                folders_window = MODEST_WINDOW (modest_folder_window_new (NULL));
-                mgr = modest_runtime_get_account_mgr ();
-                modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folders_window),
-                                                  modest_account_mgr_get_default_account (mgr));
-                modest_window_mgr_register_window (MODEST_WINDOW_MGR (user_data),
-						   folders_window, NULL);
-		gtk_widget_show (GTK_WIDGET (folders_window));
-	}
+	if (current_top && MODEST_IS_ACCOUNTS_WINDOW (current_top))
+		create_folders_view (MODEST_WINDOW_MGR (user_data));
 }
 
 static ModestWindow *
@@ -737,8 +745,6 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 	   the folders window */
         acc_store = modest_runtime_get_account_store ();
         if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 1) {
-                 ModestAccountMgr *mgr;
-
                /* Show first the accounts window to add it to the
                    stack. This has to be changed when the new
                    stackable API is available. There will be a method
@@ -747,11 +753,7 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
                    windows, one after the other */
                 gtk_widget_show (GTK_WIDGET (initial_window));
 
-                initial_window = MODEST_WINDOW (modest_folder_window_new (NULL));
-                mgr = modest_runtime_get_account_mgr ();
-                modest_folder_window_set_account (MODEST_FOLDER_WINDOW (initial_window),
-                                                  modest_account_mgr_get_default_account (mgr));
-                modest_window_mgr_register_window (self, initial_window, NULL);
+		create_folders_view (MODEST_WINDOW_MGR (self));
 	}
 
 	/* Connect to the account store "account-removed" signal". If
