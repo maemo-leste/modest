@@ -223,14 +223,38 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 	wizard = GTK_WINDOW (modest_platform_get_account_settings_wizard ());
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), GTK_WINDOW (wizard), (GtkWindow *) win);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* always present a main window in the background 
 	 * we do it here, so we cannot end up with two wizards (as this
 	 * function might be called in modest_window_mgr_get_main_window as well */
-	if (!win) 
+	if (!win)
 		win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
 							 TRUE);  /* create if not existent */
+#else
+	if (!win) {
+		GList *window_list;
+		ModestWindowMgr *mgr;
 
-	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
+		mgr = modest_runtime_get_window_mgr ();
+
+		window_list = modest_window_mgr_get_window_list (mgr);
+		if (window_list == NULL) {
+			win = MODEST_WINDOW (modest_accounts_window_new ());
+			modest_window_mgr_register_window (mgr, win, NULL);
+			gtk_widget_show_all (GTK_WIDGET (win));
+
+			win = MODEST_WINDOW (modest_folder_window_new (NULL));
+			modest_window_mgr_register_window (mgr, win, NULL);
+
+			gtk_widget_show_all (GTK_WIDGET (win));
+		} else {
+			g_list_free (window_list);
+		}
+	}
+#endif
+
+	if (win)
+		gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
 
 	/* make sure the mainwindow is visible. We need to present the
 	   wizard again to give it the focus back. show_all are needed
