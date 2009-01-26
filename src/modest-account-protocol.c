@@ -47,6 +47,8 @@ struct _ModestAccountProtocolPrivate {
 	TnyList *account_options;
 	GHashTable *custom_auth_mechs;
 	GType account_g_type;
+
+	GHashTable *account_dialogs;
 };
 
 /* 'private'/'protected' functions */
@@ -174,6 +176,30 @@ modest_account_protocol_instance_init (ModestAccountProtocol *obj)
 	priv->account_g_type = 0;
 	priv->account_options = tny_simple_list_new ();
 	priv->custom_auth_mechs = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+
+	priv->account_dialogs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+}
+
+static gboolean
+remove_account (const gchar *account_name, GObject *account, GObject *account_to_remove)
+{
+	return (account == account_to_remove);
+}
+
+static void
+account_dialog_weak_handler (ModestAccountProtocol *self, GObject *where_the_object_was)
+{
+	ModestAccountProtocolPrivate *priv = MODEST_ACCOUNT_PROTOCOL_GET_PRIVATE (self);
+
+	g_hash_table_foreach_remove (priv->account_dialogs, (GHRFunc) remove_account, where_the_object_was);
+}
+
+static gboolean
+dialogs_remove (const gchar *account_name, GObject *account_dialog, ModestAccountProtocol *self)
+{
+	g_object_weak_unref (account_dialog, (GWeakNotify) account_dialog_weak_handler, self);
+
+	return TRUE;
 }
 
 static void   
@@ -181,6 +207,11 @@ modest_account_protocol_finalize   (GObject *obj)
 {
 	ModestAccountProtocol *protocol = MODEST_ACCOUNT_PROTOCOL (obj);
 	ModestAccountProtocolPrivate *priv = MODEST_ACCOUNT_PROTOCOL_GET_PRIVATE (protocol);
+
+	if (priv->account_dialogs) {
+		g_hash_table_foreach_remove (priv->account_dialogs, (GHRFunc) dialogs_remove, obj);
+		g_hash_table_destroy (priv->account_dialogs);
+	}
 
 	if (priv->account_options)
 		g_object_unref (priv->account_options);
@@ -435,19 +466,29 @@ modest_account_protocol_get_account_settings_dialog (ModestAccountProtocol *self
 {
 	ModestAccountSettingsDialog *dialog;
 	ModestAccountSettings *settings;
+	ModestAccountProtocolPrivate *priv;
 
-	dialog = MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->create_account_settings_dialog (self);
+	priv = MODEST_ACCOUNT_PROTOCOL_GET_PRIVATE (self);
+	dialog = g_hash_table_lookup (priv->account_dialogs, account_name);
+
+	if (dialog == NULL) {
+
+		dialog = MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->create_account_settings_dialog (self);
 	
-	/* Load settings */
-	settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (), 
-							     account_name);
-	modest_account_settings_dialog_load_settings (dialog, settings);
+		/* Load settings */
+		settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (), 
+								     account_name);
+		modest_account_settings_dialog_load_settings (dialog, settings);
 	
-	/* Close dialog on response */
-	g_signal_connect_swapped (dialog,
-				  "response",
-				  G_CALLBACK (gtk_widget_destroy),
-				  dialog);
+		/* Close dialog on response */
+		g_signal_connect_swapped (dialog,
+					  "response",
+					  G_CALLBACK (gtk_widget_destroy),
+					  dialog);
+
+		g_hash_table_insert (priv->account_dialogs, g_strdup (account_name), dialog);
+		g_object_weak_ref (G_OBJECT (dialog), (GWeakNotify) account_dialog_weak_handler, self);
+	}
 
 	return dialog;
 }
