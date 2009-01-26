@@ -1458,7 +1458,7 @@ open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWind
 	GtkWidget *header_view = NULL;
 	OpenMsgHelper *helper;
 	ModestWindow *window;
-		
+
 	g_return_if_fail (header != NULL && rowref != NULL);
 
 	mgr = modest_runtime_get_window_mgr ();
@@ -1475,7 +1475,7 @@ open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWind
 
 	window = NULL;
 	found = modest_window_mgr_find_registered_header (mgr, header, &window);
-		
+
 	/* Do not open again the message and present the
 	   window to the user */
 	if (found) {

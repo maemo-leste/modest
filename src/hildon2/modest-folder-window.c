@@ -282,7 +282,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), 
 						  EDIT_MODE_COMMAND_MOVE,
 						  _("mcen_ti_edit_move_folder"), 
-						  _("mcen_me_move"),
+						  _HL("wdgt_bd_move"),
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));	

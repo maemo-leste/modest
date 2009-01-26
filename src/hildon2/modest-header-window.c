@@ -436,7 +436,7 @@ modest_header_window_new (TnyFolder *folder)
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_delete_message));
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_MOVE,
-						  _("mcen_ti_edit_move"), _("mcen_me_move"),
+						  _("mcen_ti_edit_move"), _HL("wdgt_bd_move"),
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
