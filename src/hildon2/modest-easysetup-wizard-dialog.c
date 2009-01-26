@@ -257,6 +257,41 @@ on_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
 	invoke_enable_buttons_vfunc(self);
 }
 
+static void
+on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
+{
+	gchar* default_account_name_start;
+	gchar* default_account_name;
+	ModestEasysetupWizardDialog *self;
+	ModestEasysetupWizardDialogPrivate *priv;
+	ModestProviderPickerIdType provider_id_type;
+
+	self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	on_picker_button_value_changed (widget, user_data);
+
+	provider_id_type = modest_provider_picker_get_active_id_type (
+		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+	if (provider_id_type == MODEST_PROVIDER_PICKER_ID_OTHER) {
+		default_account_name_start = g_strdup (_("mcen_ia_emailsetup_defaultname"));
+	} else {
+		GtkWidget *selector;
+
+		selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (widget)));
+		default_account_name_start = 
+			g_strdup (hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
+		
+	}
+	default_account_name = modest_account_mgr_get_unused_account_display_name (
+		priv->account_manager, default_account_name_start);
+	g_free (default_account_name_start);
+	default_account_name_start = NULL;
+
+	hildon_entry_set_text (HILDON_ENTRY (priv->entry_account_title), default_account_name);
+	g_free (default_account_name);
+}
+
 /** This is a convenience function to create a caption containing a mandatory widget.
  * When the widget is edited, the enable_buttons() vfunc will be called.
  */
@@ -409,7 +444,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 					       _("mcen_fi_serviceprovider"), 
 					       priv->account_serviceprovider_picker);
 	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
-			  G_CALLBACK (on_picker_button_value_changed), self);
+			  G_CALLBACK (on_serviceprovider_picker_button_value_changed), self);
 	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->account_serviceprovider_picker);
 	
