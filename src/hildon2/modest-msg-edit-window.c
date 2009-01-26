@@ -3731,7 +3731,9 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
-	dialog = gtk_dialog_new ();
+	dialog = gtk_dialog_new_with_buttons (_("mcen_me_message_settings"), NULL,
+					      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+					      _HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
 	vbox = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), vbox);
 	gtk_widget_show (vbox);
@@ -3782,7 +3784,6 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_me_message_settings"));
 
 	/* Set current values */
 	switch (priv->priority_flags) {
@@ -3813,18 +3814,17 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
 	g_signal_connect (G_OBJECT (html_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
 	g_signal_connect (G_OBJECT (text_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
-	
+
+	/* Show */
 	gtk_dialog_run (GTK_DIALOG (dialog));
-	
-	/* Read new values */
-	
+
 	gtk_widget_destroy (dialog);
 	g_slist_free (helper.priority_group);
-	
 }
 
-static void on_message_settings (GtkAction *action,
-				 ModestMsgEditWindow *window)
+static void 
+on_message_settings (GtkAction *action,
+		     ModestMsgEditWindow *window)
 {
 	modest_msg_edit_window_show_msg_settings_dialog (window);
 }
