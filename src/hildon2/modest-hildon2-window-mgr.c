@@ -100,6 +100,8 @@ struct _ModestHildon2WindowMgrPrivate {
 	GSList       *modal_handler_uids;
 	ModestWindow *current_top;
 
+	gulong        accounts_handler;
+
 	/* Display state */
 	osso_display_state_t display_state;
 };
@@ -198,6 +200,7 @@ static void
 modest_hildon2_window_mgr_finalize (GObject *obj)
 {
 	ModestHildon2WindowMgrPrivate *priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE(obj);
+	ModestTnyAccountStore *acc_store;
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->window_state_uids);
 	priv->window_state_uids = NULL;
@@ -205,6 +208,11 @@ modest_hildon2_window_mgr_finalize (GObject *obj)
 	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
 				      NULL,
 				      NULL); 
+
+	acc_store = modest_runtime_get_account_store ();
+	if (acc_store && g_signal_handler_is_connected (acc_store, priv->accounts_handler))
+	    g_signal_handler_disconnect (acc_store, priv->accounts_handler);
+
 	if (priv->window_list) {
 		GList *iter = priv->window_list;
 		/* unregister pending windows */
@@ -685,14 +693,75 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
+static void
+on_account_removed (TnyAccountStore *acc_store, 
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	HildonWindowStack *stack;
+	ModestWindow *current_top;
+
+	/* Ignore transport account removals */
+	if (TNY_IS_TRANSPORT_ACCOUNT (account))
+		return;
+
+	stack = hildon_window_stack_get_default ();
+	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+
+	if (current_top && MODEST_IS_ACCOUNTS_WINDOW (current_top)) {
+		ModestWindow *folders_window;
+		ModestAccountMgr *mgr;
+
+                folders_window = MODEST_WINDOW (modest_folder_window_new (NULL));
+                mgr = modest_runtime_get_account_mgr ();
+                modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folders_window),
+                                                  modest_account_mgr_get_default_account (mgr));
+                modest_window_mgr_register_window (MODEST_WINDOW_MGR (user_data),
+						   folders_window, NULL);
+		gtk_widget_show (GTK_WIDGET (folders_window));
+	}
+}
+
 static ModestWindow *
 modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 {
 	ModestWindow *initial_window = NULL;
+        ModestTnyAccountStore *acc_store;
+	ModestHildon2WindowMgrPrivate *priv;
 
 	/* Return accounts window */
 	initial_window = MODEST_WINDOW (modest_accounts_window_new ());
 	modest_window_mgr_register_window (self, initial_window, NULL);
+
+	/* Check if we have at least one remote account to create also
+	   the folders window */
+        acc_store = modest_runtime_get_account_store ();
+        if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 1) {
+                 ModestAccountMgr *mgr;
+
+               /* Show first the accounts window to add it to the
+                   stack. This has to be changed when the new
+                   stackable API is available. There will be a method
+                   to show all the windows that will only show the
+                   last one to the user. The current code shows both
+                   windows, one after the other */
+                gtk_widget_show (GTK_WIDGET (initial_window));
+
+                initial_window = MODEST_WINDOW (modest_folder_window_new (NULL));
+                mgr = modest_runtime_get_account_mgr ();
+                modest_folder_window_set_account (MODEST_FOLDER_WINDOW (initial_window),
+                                                  modest_account_mgr_get_default_account (mgr));
+                modest_window_mgr_register_window (self, initial_window, NULL);
+	}
+
+	/* Connect to the account store "account-removed" signal". If
+	   we're showing the accounts window and all the accounts are
+	   deleted we need to move to folders window automatically */
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+	priv->accounts_handler = g_signal_connect (acc_store, 
+						   "account-removed",
+						   G_CALLBACK (on_account_removed),
+						   self);
 
 	return initial_window;
 }
