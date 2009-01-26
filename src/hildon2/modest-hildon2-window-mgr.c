@@ -521,7 +521,6 @@ modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self,
 	GList *win;
 	ModestHildon2WindowMgrPrivate *priv;
 	gulong *tmp, handler_id;
-	gboolean check_close_all = FALSE;
 	guint num_windows;
 
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self));
@@ -534,10 +533,6 @@ modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self,
 		g_warning ("Trying to unregister a window that has not being registered yet");
 		return;
 	}
-
-	/* Remember this for the end of the method */
-	if (MODEST_IS_FOLDER_WINDOW (window))
-		check_close_all = TRUE;
 
 	/* Remove the viewer window handler from the hash table. The
 	   HashTable could not exist if the main window was closed
@@ -590,15 +585,6 @@ modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self,
 	/* We have to get the number of windows here in order not to
 	   emit the signal too many times */
 	num_windows = modest_window_mgr_get_num_windows (self);
-
-	/* Check if we have to destroy the accounts window as
-	   well. This happens if we only have one or none remote
-	   accounts */
-	if (check_close_all) {
-		ModestTnyAccountStore *acc_store = modest_runtime_get_account_store ();
-		if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 2)
-			modest_window_mgr_close_all_windows (self);
-	}
 
 	/* If there are no more windows registered emit the signal */
 	if (num_windows == 0)
@@ -711,33 +697,10 @@ static ModestWindow *
 modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 {
 	ModestWindow *initial_window = NULL;
-	ModestTnyAccountStore *acc_store;
 
-	/* Always create accounts window. We'll decide later if we
-	   want to show it or not, depending the number of accounts */
+	/* Return accounts window */
 	initial_window = MODEST_WINDOW (modest_accounts_window_new ());
 	modest_window_mgr_register_window (self, initial_window, NULL);
-
-	/* If there are less than 2 remote accounts then directly show
-	   the folder window and do not show the accounts window */
-	acc_store = modest_runtime_get_account_store ();
-	if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 2) {
-		ModestAccountMgr *mgr;
-
-		/* Show first the accounts window to add it to the
-		   stack. This has to be changed when the new
-		   stackable API is available. There will be a method
-		   to show all the windows that will only show the
-		   last one to the user. The current code shows both
-		   windows, one after the other */
-		gtk_widget_show (GTK_WIDGET (initial_window));
-
-		initial_window = MODEST_WINDOW (modest_folder_window_new (NULL));
-		mgr = modest_runtime_get_account_mgr ();
-		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (initial_window),
-						  modest_account_mgr_get_default_account (mgr));
-		modest_window_mgr_register_window (self, initial_window, NULL);
-	}
 
 	return initial_window;
 }
