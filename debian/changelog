@@ -1,9 +1,21 @@
+modest (2.1-2009.05-2) unstable; urgency=low
+
+  * Week 05, 2009 - second build
+  * Fixes: NB#98616, NB#99236, NB#94030, NB#98021, NB#90378, NB#88972, NB#90429
+  * Fixes: NB#92234, NB#98859, NB#99211, NB#99264, NB#89889, NB#92344, NB#93291
+  * Fixes: NB#93459, NB#93577, NB#97139, NB#97256, NB#98237, NB#97299, NB#97401
+  * Fixes: NB#99049, NB#98216, NB#98294, NB#98310, NB#98503, NB#98608, NB#98679
+  * Fixes: NB#98684, NB#98705, NB#98759, NB#98761, NB#98787, NB#98788, NB#98795
+  * Fixes: NB#99187, NB#98881, NB#99097, NB#99145, NB#99161, NB#99219
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 26 Jan 2009 13:53:34 +0200
+
 modest (2.1-2009.05-1) unstable; urgency=low
 
   * Week 05, 2009 - first build
-  * Fixes: NB#98021, NB#88972, NB#90429, NB#92344, NB#93459, NB#98216, NB#98294
-  * Fixes: NB#98310, NB#98608, NB#98679, NB#98684, NB#98705, NB#98759, NB#98761
-  * Fixes: NB#98787, NB#98788, NB#98795
+  * Fixes NB#98021, NB#88972, NB#90429, NB#92344, NB#93459, NB#98216, NB#98294
+  * Fixes NB#98310, NB#98608, NB#98679, NB#98684, NB#98705, NB#98759, NB#98761
+  * Fixes NB#98787, NB#98788, NB#98795
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 22 Jan 2009 16:17:37 +0200
 
