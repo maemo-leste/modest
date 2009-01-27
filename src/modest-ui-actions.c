@@ -3442,7 +3442,7 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 		   message is opened for example */
 		message = _("emev_ni_internal_error");
 	} else {
-		message = _("emev_ib_ui_imap_unable_to_rename");
+		message = _CS("ckdg_ib_unable_to_remove");
 	}
 
 	/* We don't set a parent for the dialog because the dialog
