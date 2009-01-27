@@ -46,6 +46,11 @@ G_BEGIN_DECLS
 #define MODEST_IS_ATTACHMENTS_VIEW_CLASS(vtable) (G_TYPE_CHECK_CLASS_TYPE ((vtable), MODEST_TYPE_ATTACHMENTS_VIEW))
 #define MODEST_ATTACHMENTS_VIEW_GET_CLASS(inst)  (G_TYPE_INSTANCE_GET_CLASS ((inst), MODEST_TYPE_ATTACHMENTS_VIEW, ModestAttachmentsViewClass))
 
+typedef enum _ModestAttachmentsViewStyle {
+	MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE,
+	MODEST_ATTACHMENTS_VIEW_STYLE_LINKS,
+} ModestAttachmentsViewStyle;
+
 typedef struct _ModestAttachmentsView ModestAttachmentsView;
 typedef struct _ModestAttachmentsViewClass ModestAttachmentsViewClass;
 
@@ -81,6 +86,9 @@ gboolean modest_attachments_view_has_attachments (ModestAttachmentsView *attachm
 void modest_attachments_view_get_sizes (ModestAttachmentsView *attachments_view,
 					gint *attachments_count,
 					guint64 *attachments_size);
+
+void modest_attachments_view_set_style (ModestAttachmentsView *attachments_view,
+					ModestAttachmentsViewStyle style);
 
 G_END_DECLS
 

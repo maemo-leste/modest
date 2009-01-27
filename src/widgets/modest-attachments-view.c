@@ -1,4 +1,4 @@
-/* Copyright (c) 2007, Nokia Corporation
+/* Copyright (c) 2007, 2009, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,7 @@ struct _ModestAttachmentsViewPrivate
 	GtkWidget *box;
 	GList *selected;
 	GtkWidget *rubber_start;
+	ModestAttachmentsViewStyle style;
 };
 
 #define MODEST_ATTACHMENTS_VIEW_GET_PRIVATE(o)	\
@@ -301,6 +302,7 @@ modest_attachments_view_instance_init (GTypeInstance *instance, gpointer g_class
 	priv->box = gtk_vbox_new (FALSE, 0);
 	priv->rubber_start = NULL;
 	priv->selected = NULL;
+	priv->style = MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE;
 
 	gtk_container_add (GTK_CONTAINER (instance), priv->box);
 	gtk_event_box_set_above_child (GTK_EVENT_BOX (instance), TRUE);
@@ -405,7 +407,8 @@ button_press_event (GtkWidget *widget,
 		    ModestAttachmentsView *atts_view)
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
-	if (!GTK_WIDGET_HAS_FOCUS (widget))
+	if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE && 
+	    !GTK_WIDGET_HAS_FOCUS (widget))
 		gtk_widget_grab_focus (widget);
 
 	if (event->button == 1 && event->type == GDK_BUTTON_PRESS) {
@@ -415,7 +418,8 @@ button_press_event (GtkWidget *widget,
 						   (gint) event->x_root, (gint) event->y_root);
 
 		if (att_view != NULL) {
-			if (GTK_WIDGET_STATE (att_view) == GTK_STATE_SELECTED && (g_list_length (priv->selected) < 2)) {
+			if ((priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) ||
+			    (GTK_WIDGET_STATE (att_view) == GTK_STATE_SELECTED && (g_list_length (priv->selected) < 2))) {
 				TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
 				if (TNY_IS_MIME_PART (mime_part)) {
 					g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0, mime_part);
@@ -845,6 +849,9 @@ modest_attachments_view_select_all (ModestAttachmentsView *atts_view)
 
 	unselect_all (atts_view);
 
+	if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS)
+		return;
+
 	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
 	g_list_free (priv->selected);
 	priv->selected = NULL;
@@ -959,4 +966,25 @@ focus (GtkWidget *widget, GtkDirectionType direction, ModestAttachmentsView *att
 	g_list_free (children);
 
 	return FALSE;
+}
+
+void 
+modest_attachments_view_set_style (ModestAttachmentsView *self,
+				   ModestAttachmentsViewStyle style)
+{
+	ModestAttachmentsViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_ATTACHMENTS_VIEW (self));
+	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (self);
+
+	if (priv->style != style) {
+		priv->style = style;
+		gtk_widget_queue_draw (GTK_WIDGET (self));
+		if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) {
+			GTK_WIDGET_UNSET_FLAGS (self, GTK_CAN_FOCUS);
+		} else {
+			GTK_WIDGET_SET_FLAGS (self, GTK_CAN_FOCUS);
+		}
+
+	}
 }
