@@ -29,6 +29,7 @@
 
 #include <config.h>
 #include <glib/gi18n.h>
+
 #include <modest-platform.h>
 #include <modest-runtime.h>
 #include <modest-main-window.h>
@@ -57,7 +58,7 @@
 #include <modest-account-settings-dialog.h>
 #include <modest-easysetup-wizard-dialog.h>
 #include "modest-hildon2-sort-dialog.h"
-#include <hildon/hildon-sound.h>
+#include <hildon/hildon.h>
 #include <osso-mem.h>
 #include "hildon2/modest-hildon2-details-dialog.h"
 #include "hildon2/modest-hildon2-window-mgr.h"
