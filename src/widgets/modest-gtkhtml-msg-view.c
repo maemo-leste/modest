@@ -1096,6 +1096,13 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_set_no_show_all (priv->view_images_button, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+					   MODEST_ATTACHMENTS_VIEW_STYLE_LINKS);
+#else
+	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+					   MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE);
+#endif
 
 	g_signal_connect (G_OBJECT(priv->body_view), "activate_link",
 				       G_CALLBACK(on_activate_link), obj);
