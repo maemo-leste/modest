@@ -2523,29 +2523,48 @@ _invalid_attach_selected (ModestWindow *win,
 			TnyIterator *iter;
 			iter = tny_list_create_iterator (attachments);
 			while (!tny_iterator_is_done (iter) && !result) {
+#ifdef MODEST_TOOLKIT_HILDON2
+				gboolean not_selectable = FALSE;
+#endif
 				TnyMimePart *mime_part = TNY_MIME_PART (tny_iterator_get_current (iter));
 				TnyList *nested_list = tny_simple_list_new ();
+				tny_mime_part_get_parts (mime_part, nested_list);
 
 				if (!for_remove && modest_tny_mime_part_is_msg (mime_part)) {
 					TnyMsg *window_msg;
 					window_msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
 					if ((TnyMimePart *) window_msg != mime_part) {
 						selected_messages = TRUE;
+#ifdef MODEST_TOOLKIT_HILDON2
+						not_selectable = TRUE;
+#else
 						result = TRUE;
+#endif
 					}
 					g_object_unref (window_msg);
 				}
-				tny_mime_part_get_parts (mime_part, nested_list);
 				if (!for_remove && tny_list_get_length (nested_list) > 0) {
 					nested_attachments = TRUE;
+#ifdef MODEST_TOOLKIT_HILDON2
+					not_selectable = TRUE;
+#else
 					result = TRUE;
+#endif
 				}
+#ifdef MODEST_TOOLKIT_HILDON2
+				if (not_selectable)
+					n_selected --;
+#endif
 				g_object_unref (nested_list);
 				g_object_unref (mime_part);
 				tny_iterator_next (iter);
 			}
 			g_object_unref (iter);
 		}
+
+		/* No valid attachment available */
+		if (n_selected == 0)
+			result = TRUE;
 		
 		/* Set notifications */
 		if (result && rule != NULL) {

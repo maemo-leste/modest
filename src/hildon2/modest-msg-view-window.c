@@ -2394,7 +2394,8 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (win);
 
-	selected_attachments = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	/* In Hildon 2.2 as there's no selection we assume we have all attachments selected */
+	selected_attachments = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
 	
 	return selected_attachments;
 }
@@ -2771,7 +2772,9 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (mime_parts == NULL) {
-		mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
+		 * selection available */
+		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
 		if (mime_parts == NULL || tny_list_get_length (mime_parts) == 0)
 			return;
 	} else {
@@ -2867,10 +2870,10 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	if (get_all)
-		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-	else
-		mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+	/* In hildon 2.2 we ignore the get_all flag as we always get all attachments. This is
+	 * because we don't have selection
+	 */
+	mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
 		
 	/* Remove already purged messages from mime parts list */
 	iter = tny_list_create_iterator (mime_parts);
