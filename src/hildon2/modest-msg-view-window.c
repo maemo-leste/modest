@@ -33,6 +33,7 @@
 #include <tny-msg.h>
 #include <tny-mime-part.h>
 #include <tny-vfs-stream.h>
+#include <tny-error.h>
 #include "modest-marshal.h"
 #include "modest-platform.h"
 #include <modest-utils.h>
@@ -2644,8 +2645,14 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 		stream = tny_vfs_stream_new (handle);
 		if (tny_mime_part_decode_to_stream (pair->part, stream, &error) < 0) {
 			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename, error?error->code:-1, error?error->message:"Unknown error");
-			
-			info->result = GNOME_VFS_ERROR_IO;
+
+			if ((error->domain == TNY_ERROR_DOMAIN) && 
+			    (error->code = TNY_IO_ERROR_WRITE) &&
+			    (errno == ENOSPC)) {
+				info->result = GNOME_VFS_ERROR_NO_SPACE;
+			} else {
+				info->result = GNOME_VFS_ERROR_IO;
+			}
 		}
 		g_object_unref (G_OBJECT (stream));
 		g_object_unref (pair->part);
