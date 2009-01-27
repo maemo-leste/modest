@@ -41,7 +41,7 @@
 #include "modest-tny-msg.h"
 #include "modest-tny-mime-part.h"
 #include "modest-text-utils.h"
-#include <modest-address-book.h>
+#include "modest-address-book.h"
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
@@ -1877,13 +1877,13 @@ modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_da
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
-	
+
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
  
 	/* Check dimmed rule */	
 	GSList *account_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
-	if (g_slist_length (account_names) <= 1)
+	if (g_slist_length (account_names) < 1)
 		dimmed = TRUE;
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
