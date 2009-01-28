@@ -496,7 +496,10 @@ on_button_delete (GtkButton *button, gpointer user_data)
 	self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 
-	account_title = get_entered_account_title (self);
+	if (priv->modified)
+		account_title = g_strdup (priv->original_account_title);
+	else
+		account_title = get_entered_account_title (self);
 
 	removed = modest_ui_actions_on_delete_account (GTK_WINDOW (self),
 						       priv->account_name, 
