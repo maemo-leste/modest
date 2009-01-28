@@ -5667,6 +5667,10 @@ modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 	    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder) &&
 	    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (dst_folder))) {
 		do_xfer = FALSE;
+		/* Show an error */
+		modest_platform_run_information_dialog (win,
+							_("mail_in_ui_folder_move_target_error"),
+							FALSE);
 	} else if (!TNY_IS_FOLDER (src_folder)) {
 		g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
 		do_xfer = FALSE;
@@ -5675,7 +5679,7 @@ modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 	if (do_xfer) {
 		MoveFolderInfo *info = g_new0 (MoveFolderInfo, 1);
 		DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
-		
+
 		info->src_folder = g_object_ref (src_folder);
 		info->dst_folder = g_object_ref (dst_folder);
 		info->delete_original = TRUE;
@@ -5689,6 +5693,7 @@ modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 							   TNY_FOLDER_STORE (src_folder), 
 							   connect_info);
 	}
+
 	/* Frees */
 	g_object_unref (src_folder);
 }
