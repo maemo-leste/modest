@@ -12,7 +12,6 @@ TESTS_ENVIRONMENT       = top_builddir=$(top_builddir)  \
 			  CK_VERBOSITY=verbose
 
 TESTS                   =                           \
-                        check_folder-xfer           \
 			check_text-utils            \
 			check_modest-conf           \
 			check_update-account        \

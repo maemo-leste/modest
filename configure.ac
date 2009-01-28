@@ -61,6 +61,16 @@ else
         CFLAGS="$CFLAGS -O2 -Wall"
 fi
 
+# Option to enable debugging
+AC_ARG_ENABLE(gcov,
+              [AC_HELP_STRING([--enable-gcov],[Coverage reporting (default=no)])],
+              [with_gcov=yes], [with_gcov=no])
+
+if test "x$with_gcov" == "xyes" ; then
+        CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
+	LDFLAGS="$LDFLAGS -lgcov"
+fi
+
 
 
 dnl -------

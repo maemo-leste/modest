@@ -213,14 +213,17 @@ modest_text_utils_cite (const gchar *text,
 	g_return_val_if_fail (text, NULL);
 	g_return_val_if_fail (content_type, NULL);
 	
-	if (!signature)
-		retval = g_strdup ("");
-	else if (strcmp(content_type, "text/html") == 0) {
-		tmp_sig = g_strconcat ("\n", SIGNATURE_MARKER,"\n", signature, NULL);
-		retval = modest_text_utils_convert_to_html_body(tmp_sig, -1, TRUE);
+	if (!signature) {
+		tmp_sig = g_strdup (text);
+	} else {
+		tmp_sig = g_strconcat (text, "\n", SIGNATURE_MARKER, "\n", signature, NULL);
+	}
+
+	if (strcmp (content_type, "text/html") == 0) {
+		retval = modest_text_utils_convert_to_html_body (tmp_sig, -1, TRUE);
 		g_free (tmp_sig);
 	} else {
-		retval = g_strconcat (text, "\n", SIGNATURE_MARKER, "\n", signature, NULL);
+		retval = tmp_sig;
 	}
 
 	return retval;
@@ -1247,14 +1250,16 @@ modest_text_utils_get_display_address (gchar *address)
 		
 	for (i = 0; address[i]; ++i) {
 		if (address[i] == '<') {
-			if (G_UNLIKELY(i == 0))
-				return; /* there's nothing else, leave it */
-			else {
+			if (G_UNLIKELY(i == 0)) {
+				break; /* there's nothing else, leave it */
+			}else {
 				address[i] = '\0'; /* terminate the string here */
-				return;
+				break;
 			}
 		}
 	}
+
+	g_strchomp (address);
 }
 
 

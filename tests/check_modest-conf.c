@@ -183,7 +183,7 @@ main ()
 	suite   = modest_conf_suite ();
 	srunner = srunner_create (suite);
 
-	srunner_run_all (srunner, CK_NORMAL);
+	srunner_run_all (srunner, CK_ENV);
 	failures = srunner_ntests_failed (srunner);
 	srunner_free (srunner);
 	

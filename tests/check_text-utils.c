@@ -32,11 +32,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <modest-text-utils.h>
+#include <modest-init.h>
 
 typedef struct {
 	const gchar *original;
 	const gchar *expected;
 } StringPair;
+
+static void
+fx_setup_i18n ()
+{
+	fail_unless (gtk_init_check (NULL, NULL));
+	fail_unless (modest_init (0, NULL), "Failed running modest_init");
+}
 
 /* ----------------- display address tests -------------- */
 
@@ -53,7 +61,7 @@ START_TEST (test_get_display_address_regular)
 	gint i;
 	const StringPair tests[] = {
 		{ "John Doe <foo@bar>", "John Doe" },
-		{ "Rupert Griffin (test)", "Rupert Griffin"},
+		{ "Rupert Griffin (test)", "Rupert Griffin (test)"},
 		{ "    Hyvää päivää    ", "Hyvää päivää"},
 		{ "  John Doe  <foo@bar>  (test)  ", "John Doe" },
 		{ "", "" },
@@ -99,9 +107,9 @@ START_TEST (test_derived_subject_regular)
 	const gchar *prefix="Re:";
 	const StringPair tests[] = {
 		{ "subject", "Re: subject" },
-		{ NULL,      "Re:"},
+		{ NULL,      "Re: (no subject)"},
 		{ "Hyvää päivää", "Re: Hyvää päivää"},
-		{ "", "Re: "},
+		{ "", "Re: (no subject)"},
 	};
 
 	/* Tests 1, 2, 3, 4 */
@@ -151,13 +159,13 @@ START_TEST (test_quote_regular)
 	/* Tests 1, 2, 3 */
 	const StringPair tests[] = {
 		{ "", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> \n" },
+		  "\n----- Original message -----\n> \n" },
 		{ "This text should be quoted", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> This text\n> should be quoted\n> \n" },
+		  "\n----- Original message -----\n> This text\n> should be quoted\n> \n" },
 		{ "These are several\nlines\nof plain text", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> These are\n> several lines\n> of plain text\n" },
+		  "\n----- Original message -----\n> These are\n> several lines\n> of plain text\n" },
 		{ "áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš\n" },
+		  "\n----- Original message -----\n> áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš\n" },
 	};
 
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
@@ -177,7 +185,7 @@ START_TEST (test_quote_regular)
 	/* Test 5 */
 	text = g_strdup ("Quotation test example");
 	expected_quoted_text = 
-		g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> Quotation\n> test\n> example\n> \n");
+		g_strdup ("\n----- Original message -----\n> Quotation\n> test\n> example\n> \n");
 	quoted_text = modest_text_utils_quote (text, "text/plain", NULL /*signature */,
 					       "foo@bar",  0 /*date*/, NULL /*attachments*/, 1 /*limit*/);
 	fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
@@ -216,31 +224,29 @@ START_TEST (test_quote_invalid)
 	
 	/* Test 2 (Fault) */
 	text = g_strdup ("Text");
-	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> Text\n");
 	quoted_text = modest_text_utils_quote (text, NULL, NULL, "foo@bar",  0, NULL, 15);
 	fail_unless (quoted_text == NULL,
 		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
 		     "Expected quotation: NULL\nQuoted text: \"%s\"",
 		     quoted_text);
 	g_free (text);
-	g_free (expected_quoted_text);
 	g_free (quoted_text);
 
 	/* Test 3 */
 	text = g_strdup ("Text");
-	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, (null) wrote:\n> Text\n");
+	expected_quoted_text = g_strdup ("\n----- Original message -----\n> Text\n");
 	quoted_text = modest_text_utils_quote (text, "text/plain", NULL, NULL,  0, NULL, 15);
-	fail_unless (quoted_text == NULL,
+	fail_unless (quoted_text && strcmp (quoted_text, expected_quoted_text) == 0,
 		     "modest_text_utils_quote failed:\nOriginal text: NULL\n" \
-		     "Expected quotation: NULL\nQuoted text: \"%s\"",
-		     quoted_text);
+		     "Expected quotation: %s\nQuoted text: \"%s\"",
+		     expected_quoted_text, quoted_text);
 	g_free (text);
 	g_free (expected_quoted_text);
 	g_free (quoted_text);
 
 	/* Test 4 */
 	text = g_strdup ("This is a text");
-	expected_quoted_text = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n> This\n> is\n> a\n> text\n> \n");
+	expected_quoted_text = g_strdup ("\n----- Original message -----\n> This\n> is\n> a\n> text\n> \n");
 	quoted_text = modest_text_utils_quote (text, "text/plain", NULL, "foo@bar",  0, NULL, 0);
 	fail_unless (quoted_text && !strcmp (expected_quoted_text, quoted_text),
 		     "modest_text_utils_quote failed:\nOriginal text:\n\"%s\"\n" \
@@ -267,18 +273,18 @@ START_TEST (test_cite_regular)
 	gchar *cited_text = NULL;
 	const StringPair tests[] = {
 		{ "", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n\n" },
+		  "\n--\nSIGNATURE" },
 		{ "This is some text", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\nThis is some text\n" },
+		  "This is some text\n--\nSIGNATURE" },
 		{ "This\nis some\ntext", 
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\nThis\nis some\ntext\n" },
+		  "This\nis some\ntext\n--\nSIGNATURE" },
 		{ "áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš",
-		  "On Thu Jan  1 01:00:00 1970, foo@bar wrote:\náéíÍÓÚäëïÏÖÜñÑçÇŽÊîš\n" },
+		  "áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš\n--\nSIGNATURE" },
 	};
 
 	/* Tests 1, 2, 3, 4 */
 	for (i = 0; i !=  sizeof(tests)/sizeof(StringPair); ++i) {
-		cited_text = modest_text_utils_cite (tests[i].original, "text/plain", NULL, "foo@bar", 0);
+		cited_text = modest_text_utils_cite (tests[i].original, "text/plain", "SIGNATURE", "foo@bar", 0);
 		fail_unless (cited_text && !strcmp (tests[i].expected, cited_text),
 			     "modest_text_utils_cite failed:\nOriginal text:\n\"%s\"\n" \
 			     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
@@ -302,19 +308,30 @@ START_TEST (test_cite_invalid)
 
 	/* Test 1 */
 	text = NULL;
-	expected_cite = g_strdup ("On Thu Jan  1 01:00:00 1970, foo@bar wrote:\n(null)\n");
-	cited_text = modest_text_utils_cite (text, "text/plain", NULL, "foo@bar", 0);
-	fail_unless (cited_text && !strcmp (expected_cite, cited_text),
+	cited_text = modest_text_utils_cite (text, "text/plain", "SIGNATURE", "foo@bar", 0);
+	fail_unless (cited_text == NULL,
 		     "modest_text_utils_cite failed:\nOriginal text:\nNULL\n" \
-		     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
-		     expected_cite, cited_text);
+		     "Expected cite:\nNULL\nCite obtained:\n\"%s\"",
+		     cited_text);
 	g_free (expected_cite);
 	g_free (cited_text);
 
 	/* Test 2 */
 	text = g_strdup ("This is some text");
-	expected_cite = g_strdup ("On Thu Jan  1 01:00:00 1970, (null) wrote:\nThis is some text\n");
-	cited_text = modest_text_utils_cite (text, "text/plain", NULL, NULL, 0);
+	expected_cite = g_strdup ("This is some text\n--\nSIGNATURE");
+	cited_text = modest_text_utils_cite (text, "text/plain", "SIGNATURE", NULL, 0);
+	fail_unless (cited_text && !strcmp (expected_cite, cited_text),
+		     "modest_text_utils_cite failed:\nOriginal text:\n\"%s\"\n" \
+		     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
+		     text, expected_cite, cited_text);
+	g_free (text);
+	g_free (expected_cite);
+	g_free (cited_text);
+
+	/* Test 3 */
+	text = g_strdup ("This is some text");
+	expected_cite = g_strdup ("This is some text");
+	cited_text = modest_text_utils_cite (text, "text/plain", NULL, "foo@bar", 0);
 	fail_unless (cited_text && !strcmp (expected_cite, cited_text),
 		     "modest_text_utils_cite failed:\nOriginal text:\n\"%s\"\n" \
 		     "Expected cite:\n\"%s\"\nCite obtained:\n\"%s\"",
@@ -340,25 +357,25 @@ START_TEST (test_inline_regular)
 	gchar *inlined_text = NULL;
 	const StringPair tests[] = {
 		{ "", 
-		  "-----Forwarded Message-----\n" \
+		  "\n----- Original message -----\n" \
 		  "From: foo@bar\n" \
-		  "Sent: Thu Jan  1 01:00:00 1970\n" \
+		  "Sent:  Thu,  1 Jan 1970, 01:00:00 CET\n" \
 		  "To: bar@foo\n" \
-		  "Subject: Any subject\n\n" },
+		  "Subject: Any subject\n\n> \n" },
 		{ "Some text\nto inline", 
-		  "-----Forwarded Message-----\n" \
+		  "\n----- Original message -----\n" \
 		  "From: foo@bar\n" \
-		  "Sent: Thu Jan  1 01:00:00 1970\n" \
+		  "Sent:  Thu,  1 Jan 1970, 01:00:00 CET\n" \
 		  "To: bar@foo\n" \
 		  "Subject: Any subject\n\n" \
-		  "Some text\nto inline" },
+		  "> Some text\n> to inline\n" },
 		{ "áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš", 
-		  "-----Forwarded Message-----\n" \
+		  "\n----- Original message -----\n" \
 		  "From: foo@bar\n" \
-		  "Sent: Thu Jan  1 01:00:00 1970\n" \
+		  "Sent:  Thu,  1 Jan 1970, 01:00:00 CET\n" \
 		  "To: bar@foo\n" \
 		  "Subject: Any subject\n\n" \
-		  "áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš" },
+		  "> áéíÍÓÚäëïÏÖÜñÑçÇŽÊîš\n" },
 	};
 
 	/* Tests 1, 2, 3 */
@@ -410,6 +427,7 @@ START_TEST (test_inline_invalid)
 						  "Any subject");
 	fail_unless (inlined_text == NULL, 
 		     "modest_text_utils_inline failed: it should return NULL");
+	g_free (expected_inline);
 	g_free (inlined_text);
 
 	/* Test 2 (Fault) */
@@ -429,16 +447,17 @@ START_TEST (test_inline_invalid)
 						  "Any subject");
 	fail_unless (inlined_text == NULL, 
 		     "modest_text_utils_inline failed: it should return NULL");
+	g_free (expected_inline);
 	g_free (inlined_text);
 
 	/* Test 3 */
 	text = g_strdup ("Some text");
-	expected_inline = g_strdup("-----Forwarded Message-----\n" \
-				   "From: (null)\n" \
-				   "Sent: Thu Jan  1 01:00:00 1970\n" \
+	expected_inline = g_strdup("\n----- Original message -----\n"	\
+				   "From: \n" \
+				   "Sent:  Thu,  1 Jan 1970, 01:00:00 CET\n" \
 				   "To: bar@foo\n" \
 				   "Subject: Any subject\n\n" \
-				   "Some text");
+				   "> Some text\n");
 	inlined_text = 	modest_text_utils_inline (text, 
 						  "text/plain", 
 						  NULL, 
@@ -446,19 +465,21 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  "bar@foo", 
 						  "Any subject");
-	fail_unless (inlined_text == NULL, 
-		     "modest_text_utils_inline failed: it should return NULL");
+	fail_unless (inlined_text && strcmp (inlined_text, expected_inline) == 0, 
+		     "modest_text_utils_inline failed: it should return %s and returned %s",
+		     expected_inline, inlined_text);
 
+	g_free (expected_inline);
 	g_free (inlined_text);
 
 	/* Test 4 */
 	text = g_strdup ("Some text");
-	expected_inline = g_strdup("-----Forwarded Message-----\n" \
+	expected_inline = g_strdup("\n----- Original message -----\n"	\
 				   "From: foo@bar\n" \
-				   "Sent: Thu Jan  1 01:00:00 1970\n" \
-				   "To: (null)\n" \
+				   "Sent:  Thu,  1 Jan 1970, 01:00:00 CET\n" \
+				   "To: \n" \
 				   "Subject: Any subject\n\n" \
-				   "Some text");
+				   "> Some text\n");
 	inlined_text = 	modest_text_utils_inline (text, 
 						  "text/plain", 
 						  NULL,
@@ -466,18 +487,20 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  NULL, 
 						  "Any subject");
-	fail_unless (inlined_text == NULL, 
-		     "modest_text_utils_inline failed: it should return NULL");
+	fail_unless (inlined_text && strcmp (inlined_text, expected_inline) == 0, 
+		     "modest_text_utils_inline failed: it should return %s and returned %s",
+		     expected_inline, inlined_text);
+	g_free (expected_inline);
 	g_free (inlined_text);
 	
 	/* Test 5 */
 	text = g_strdup ("Some text");
-	expected_inline = g_strdup("-----Forwarded Message-----\n" \
+	expected_inline = g_strdup("\n----- Original message -----\n" \
 				   "From: foo@bar\n" \
-				   "Sent: Thu Jan  1 01:00:00 1970\n" \
+				   "Sent:  Thu,  1 Jan 1970, 01:00:00 CET\n" \
 				   "To: bar@foo\n" \
-				   "Subject: (null)\n\n" \
-				   "Some text");
+				   "Subject: \n\n" \
+				   "> Some text\n");
 	inlined_text = 	modest_text_utils_inline (text, 
 						  "text/plain", 
 						  NULL, 
@@ -485,9 +508,11 @@ START_TEST (test_inline_invalid)
 						  0, 
 						  "bar@foo", 
 						  NULL);
-	fail_unless (inlined_text == NULL, 
-		     "modest_text_utils_inline failed: it should return NULL");
+	fail_unless (inlined_text && strcmp (inlined_text, expected_inline) == 0, 
+		     "modest_text_utils_inline failed: it should return %s and returned %s",
+		     expected_inline, inlined_text);
 
+	g_free (expected_inline);
 	g_free (inlined_text);
 }
 END_TEST
@@ -718,11 +743,11 @@ START_TEST (test_convert_to_html_regular)
 
 	const StringPair tests[] = {
 		{ "This is some text.", 
-		  "<tt>This is some text.</tt>" },
+		  "<body>This is some text.</body>" },
 		{ "http://xxx.yyy.zzz/myfile", 
-		  "<tt><a href=\"http://xxx.yyy.zzz/myfile\">http://xxx.yyy.zzz/myfile</a></tt>" },
+		  "<body><a href=\"http://xxx.yyy.zzz/myfile\">http://xxx.yyy.zzz/myfile</a></body>" },
 		{ "<a  &  b>\n\tx", 
-		  "<tt>&lt;a &nbsp;&quot;&nbsp;&nbsp;b&gt;<br>\n&nbsp; &nbsp;&nbsp;x</tt>" },
+		  "<body>&lt;a&nbsp; &amp;&nbsp; b&gt;<br>\n&nbsp;&nbsp;&nbsp; x</body>" },
 	};
 
 	/* Tests 1, 2, 3 */
@@ -732,15 +757,17 @@ START_TEST (test_convert_to_html_regular)
 			     "modest_text_utils_convert_to_html failed:" \
 			     "Original text:\n\"%s\"\nExpected html:\n\"%s\"\nObtained html:\nNULL",
 			     tests[i].original, tests[i].expected);
-		html_start = strstr (html, "<tt>");
+		html_start = strstr (html, "<body>");
 		html_end = strstr (html, "</body>");
+		if (html_end != NULL)
+			html_end += strlen ("</body>");
 		bytes = html_end - html_start;
 		text_in_html = g_strndup (html_start, bytes);
 		
 		fail_unless (strstr (html, tests[i].expected) != NULL,
 			     "modest_text_utils_convert_to_html failed:" \
-			     "Original text:\n\"%s\"\nExpected html:\n\"%s\"\nObtained html:\n\"%s\"",
-			     tests[i].original, tests[i].expected, text_in_html);
+			     "Original text:\n\"%s\"\nExpected html:\n\"%s\"\n\nObtained string:\n\"%s\"\nObtained html:\n\"%s\"",
+			     tests[i].original, tests[i].expected, html, text_in_html);
 //		g_free (html_start);
 //		g_free (text_in_html);
 //		g_free (html);
@@ -775,36 +802,54 @@ text_utils_suite (void)
 
 	/* Tests case for "display adress" */
 	tc = tcase_create ("display_adress");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
 	tcase_add_test (tc, test_get_display_address_regular);
 	tcase_add_test (tc, test_get_display_address_invalid);
 	suite_add_tcase (suite, tc);
 
 	/* Test case for "derived subject" */
 	tc = tcase_create ("derived_subject");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
         tcase_add_test (tc, test_derived_subject_regular);
 	tcase_add_test (tc, test_derived_subject_invalid);
 	suite_add_tcase (suite, tc);
 
 	/* Test case for "quote" */
 	tc = tcase_create ("quote");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
         tcase_add_test (tc, test_quote_regular);
 	tcase_add_test (tc, test_quote_invalid);
 	suite_add_tcase (suite, tc);
 
 	/* Test case for "cite" */
 	tc = tcase_create ("cite");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
         tcase_add_test (tc, test_cite_regular);
 	tcase_add_test (tc, test_cite_invalid);
 	suite_add_tcase (suite, tc);
 
 	/* Test case for "inline" */
 	tc = tcase_create ("inline");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
         tcase_add_test (tc, test_inline_regular);
 	tcase_add_test (tc, test_inline_invalid);
 	suite_add_tcase (suite, tc);
 
 	/* Test case for "remove address" */
 	tc = tcase_create ("remove_address");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
         tcase_add_test (tc, test_remove_address_regular);
         tcase_add_test (tc, test_remove_address_limits);
 	tcase_add_test (tc, test_remove_address_invalid);
@@ -812,6 +857,9 @@ text_utils_suite (void)
 
 	/* Test case for "convert to html" */
 	tc = tcase_create ("convert_to_html");
+	tcase_add_checked_fixture (tc,
+				   fx_setup_i18n,
+				   NULL);
         tcase_add_test (tc, test_convert_to_html_regular);
 	tcase_add_test (tc, test_convert_to_html_invalid);
 	suite_add_tcase (suite, tc);
@@ -829,6 +877,8 @@ main ()
 	int     failures;
 
 	setenv ("TZ", "Europe/Paris", 1);
+	setenv ("LANG", "en_GB", 1);
+	setenv ("LC_MESSAGES", "en_GB", 1);
 	
 	suite   = text_utils_suite ();
 	srunner = srunner_create (suite);
