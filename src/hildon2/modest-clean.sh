@@ -2,4 +2,4 @@
 
 rm -rf /home/user/.modest
 
-return 0
+exit 0
