@@ -348,75 +348,16 @@ modest_security_options_view_auth_check (ModestSecurityOptionsView* self)
 		return FALSE;
 }
 
-/* GList*  */
-/* modest_security_options_view_get_supported_auth_methods (ModestSecurityOptionsView *self, */
-/* 							 const gchar *hostname, */
-/* 							 const gchar *username, */
-/* 							 ModestProtocolType server_type) */
-/* { */
-/* 	GtkWindow *window; */
-/* 	GError *error = NULL; */
-/* 	GList *list_auth_methods, *retval = NULL; */
-/* 	ModestSecurityOptionsViewPrivate *priv; */
-/* 	ModestAccountSettings current_settings; */
-/* 	ModestServerAccountSettings *server_settings; */
-	
-/* 	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self); */
+ModestProtocolType 
+modest_security_options_view_get_connection_protocol (ModestSecurityOptionsView *self)
+{
+	ModestSecurityOptionsViewPrivate *priv;
 
-/* 	window = GTK_WINDOW (gtk_widget_get_ancestor (GTK_WIDGET (self), GTK_TYPE_WINDOW)); */
+	g_return_val_if_fail (MODEST_IS_SECURITY_OPTIONS_VIEW (self), MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
+	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
-/* 	/\* Get current settings *\/ */
-/* 	modest_security_options_view_save_settings (self, &current_settings); */
-
-/* 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) */
-/* 		server_settings = modest_account_settings_get_store_settings (&current_settings); */
-/* 	else */
-/* 		server_settings = modest_account_settings_get_transport_settings (&current_settings); */
-
-/* 	list_auth_methods = */
-/* 		modest_utils_get_supported_secure_authentication_methods (server_type, */
-/* 									  hostname, */
-/* 									  modest_server_account_settings_get_port (server_settings), */
-/* 									  username, */
-/* 									  window, */
-/* 									  &error); */
-
-/* 	if (list_auth_methods) { */
-/* 		GList *list = NULL, *method = NULL; */
-/* 		ModestProtocolRegistry *registry = modest_runtime_get_protocol_registry (); */
-
-/* 		for (method = list_auth_methods; method != NULL; method = g_list_next(method)) { */
-/* 			ModestProtocolType auth_protocol_type =  */
-/* 				(ModestProtocolType) (GPOINTER_TO_INT(method->data)); */
-/* 			if (modest_protocol_registry_protocol_type_is_secure (registry,  */
-/* 									      auth_protocol_type)) { */
-/* 				list = g_list_append(list, GINT_TO_POINTER(auth_protocol_type)); */
-/* 			} */
-/* 		} */
-/* 		g_list_free(list_auth_methods); */
-/* 		if (list) { */
-/* 			retval = list; */
-/* 			goto end; */
-/* 		} */
-/* 	} */
-
-/* 	if(error != NULL &&  */
-/* 	   error->domain == modest_utils_get_supported_secure_authentication_error_quark() && */
-/* 	   error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED) { */
-/* 		modest_platform_information_banner (GTK_WIDGET(self), */
-/* 						    NULL, */
-/* 						    _("mcen_ib_unableto_discover_auth_methods")); */
-/* 	} */
-
-/* 	if(error != NULL) */
-/* 		g_error_free(error); */
-
-/*  end: */
-/* 	/\* Frees *\/ */
-/* 	g_object_unref (server_settings); */
-
-/* 	return retval; */
-/* } */
+	return modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+}
 
 static void 
 modest_security_options_view_init (ModestSecurityOptionsView *self) 

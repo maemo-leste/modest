@@ -139,6 +139,8 @@ struct _ModestEasysetupWizardDialogPrivate
 
 static void save_to_settings (ModestEasysetupWizardDialog *self);
 static void real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next);
+static GList* check_for_supported_auth_methods (ModestEasysetupWizardDialog* self);
+static gboolean check_has_supported_auth_methods(ModestEasysetupWizardDialog* self);
 
 static gboolean
 on_delete_event (GtkWidget *widget,
@@ -1697,9 +1699,9 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		set_default_custom_servernames (self);
 
 		/* Check if the server supports secure authentication */
-/* 		if (modest_security_options_view_auth_check (security_options)) */
-/* 			if (!check_has_supported_auth_methods (self)) */
-/* 				return FALSE; */
+		if (modest_security_options_view_auth_check (MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security)))
+			if (!check_has_supported_auth_methods (self))
+				return FALSE;
 		gtk_widget_show (priv->outgoing_security);
 	}
 	
@@ -2079,5 +2081,74 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	modest_account_settings_set_display_name (priv->settings, display_name);
 	g_free (display_name);
 	g_free (provider_id);
+}
+
+static GList*
+check_for_supported_auth_methods (ModestEasysetupWizardDialog* self)
+{
+	GError *error = NULL;
+	ModestProtocolType protocol_type;
+	const gchar* hostname;
+	const gchar* username;
+	ModestProtocolType security_protocol_incoming_type;
+	ModestProtocolRegistry *registry;
+	int port_num;
+	GList *list_auth_methods;
+	ModestEasysetupWizardDialogPrivate *priv;
+	
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	registry = modest_runtime_get_protocol_registry ();
+	protocol_type = modest_servertype_picker_get_active_servertype (
+		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
+	hostname = gtk_entry_get_text(GTK_ENTRY(priv->entry_incomingserver));
+	username = gtk_entry_get_text(GTK_ENTRY(priv->entry_user_username));
+	security_protocol_incoming_type = modest_security_options_view_get_connection_protocol
+		(MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security));
+	port_num = get_port_from_protocol(protocol_type, FALSE);
+	list_auth_methods = modest_utils_get_supported_secure_authentication_methods (protocol_type, hostname, port_num,
+										      username, GTK_WINDOW (self), &error);
+
+	if (list_auth_methods) {
+		/* TODO: Select the correct method */
+		GList* list = NULL;
+		GList* method;
+		for (method = list_auth_methods; method != NULL; method = g_list_next(method)) {
+			ModestProtocolType auth_protocol_type = (ModestProtocolType) (GPOINTER_TO_INT(method->data));
+			if (modest_protocol_registry_protocol_type_has_tag (registry, auth_protocol_type,
+									    MODEST_PROTOCOL_REGISTRY_SECURE_PROTOCOLS)) {
+				list = g_list_append(list, GINT_TO_POINTER(auth_protocol_type));
+			}
+		}
+
+		g_list_free(list_auth_methods);
+
+		if (list)
+			return list;
+	}
+
+	if(error == NULL || error->domain != modest_utils_get_supported_secure_authentication_error_quark() ||
+			error->code != MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED)
+	{
+		modest_platform_information_banner (GTK_WIDGET(self), NULL,
+						    _("mcen_ib_unableto_discover_auth_methods"));
+	}
+
+	if(error != NULL)
+		g_error_free(error);
+
+	return NULL;
+}
+
+static gboolean 
+check_has_supported_auth_methods(ModestEasysetupWizardDialog* self)
+{
+	GList* methods = check_for_supported_auth_methods(self);
+	if (!methods)
+	{
+		return FALSE;
+	}
+
+	g_list_free(methods);
+	return TRUE;
 }
 

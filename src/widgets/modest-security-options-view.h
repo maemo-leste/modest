@@ -84,6 +84,8 @@ void modest_security_options_view_save_settings (ModestSecurityOptionsView* self
 void modest_security_options_view_set_server_type (ModestSecurityOptionsView* self, 
 						   ModestProtocolType server_type);
 
+ModestProtocolType modest_security_options_view_get_connection_protocol (ModestSecurityOptionsView *self);
+
 gboolean modest_security_options_view_changed (ModestSecurityOptionsView* self,
 					       ModestAccountSettings *settings);
 
