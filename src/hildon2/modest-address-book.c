@@ -683,7 +683,7 @@ show_check_names_banner (gpointer userdata)
 	GtkWidget **banner = (GtkWidget **) userdata;
 
 	gdk_threads_enter ();
-	*banner = modest_platform_animation_banner (NULL, NULL, _("mail_ib_checking_names"));
+	*banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
 	gdk_threads_leave ();
 
 	return FALSE;
