@@ -905,14 +905,30 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 
 		if (error && ((error->code == TNY_SERVICE_ERROR_NO_SUCH_MESSAGE) ||
 			      error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE)) {
-			gchar *subject, *msg;
+			gchar *subject, *msg, *format = NULL;
+			TnyAccount *account;
 			subject = tny_header_dup_subject (header);
 			if (!subject)
-				subject = g_strdup (_("mail_va_no_subject"));;
-			msg = g_strdup_printf (_("emev_ni_ui_imap_message_not_available_in_server"),
-					       subject);
+				subject = g_strdup (_("mail_va_no_subject"));
+
+			account = modest_mail_operation_get_account (mail_op);
+			if (account) {
+				ModestProtocol *protocol;
+				ModestProtocolType proto;
+				proto = modest_tny_account_get_protocol_type (account);
+				protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), proto);
+				if (protocol)
+					format = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE);
+				g_object_unref (account);
+			}
+
+			if (!format)
+				format = g_strdup (_("emev_ni_ui_imap_message_not_available_in_server"));
+
+			msg = g_strdup_printf (format, subject);
 			modest_platform_run_information_dialog (NULL, msg, FALSE);
 			g_free (msg);
+			g_free (format);
 			g_free (subject);
 		}
 
