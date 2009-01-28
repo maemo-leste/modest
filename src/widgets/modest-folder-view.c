@@ -1751,7 +1751,9 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	/* If this is a move to dialog, hide Sent, Outbox and Drafts
 	folder as no message can be move there according to UI specs */
 	if (!priv->show_non_move) {
-		switch (type) {
+		if (TNY_IS_FOLDER (instance) && 
+		    modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
+			switch (type) {
 			case TNY_FOLDER_TYPE_OUTBOX:
 			case TNY_FOLDER_TYPE_SENT:
 			case TNY_FOLDER_TYPE_DRAFTS:
@@ -1762,7 +1764,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 				type = modest_tny_folder_guess_folder_type(TNY_FOLDER(instance));
 				if (type == TNY_FOLDER_TYPE_INVALID)
 					g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
-
+				
 				if (type == TNY_FOLDER_TYPE_OUTBOX ||
 				    type == TNY_FOLDER_TYPE_SENT
 				    || type == TNY_FOLDER_TYPE_DRAFTS)
@@ -1770,6 +1772,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 				break;
 			default:
 				break;
+			}
 		}
 	}
 
