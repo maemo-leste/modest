@@ -406,15 +406,17 @@ typedef struct {
 	GtkWidget *animation;
 } OpenMsgPerformerInfo;
 
+#ifndef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_show_opening_animation (gpointer userdata)
 {
 	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) userdata;
 	info->animation = modest_platform_animation_banner (NULL, NULL, _("mail_me_opening"));
 	info->animation_timeout = 0;
-	
+
 	return FALSE;
 }
+#endif
 
 static gboolean
 on_find_msg_async_destroy (gpointer userdata)
@@ -583,7 +585,7 @@ on_open_message_performer (gboolean canceled,
         if (!account) {
                 ModestTnyAccountStore *account_store;
                 ModestTnyLocalFoldersAccount *local_folders_account;
-                
+ 
                 account_store = modest_runtime_get_account_store ();
                 local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
                         modest_tny_account_store_get_local_folders_account (account_store));
@@ -598,8 +600,9 @@ on_open_message_performer (gboolean canceled,
                 on_find_msg_async_destroy (info);
                 return;
         }
-        
+#ifndef MODEST_TOOLKIT_HILDON2
 	info->animation_timeout = g_timeout_add (1000, on_show_opening_animation, info);
+#endif
         /* Get message */
         tny_folder_find_msg_async (folder, info->uri, find_msg_async_cb, NULL, info);
         g_object_unref (folder);
