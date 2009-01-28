@@ -768,9 +768,11 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 	/* Unescape the keys to get the account names: */
 	GSList *iter = accounts;
 	while (iter) {
-		if (!(iter->data))
+		if (!(iter->data)) {
+			iter = iter->next;
 			continue;
-			
+		}
+
 		const gchar* account_name_key = (const gchar*)iter->data;
 		gchar* unescaped_name = account_name_key ? 
 			modest_conf_key_unescape (account_name_key) 
@@ -1132,6 +1134,7 @@ modest_account_mgr_account_with_display_name_exists  (ModestAccountMgr *self,
 		ModestAccountSettings *settings = modest_account_mgr_load_account_settings (self, account_name);
 		if (!settings) {
 			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			cursor = cursor->next;
 			continue;
 		}
 
@@ -1210,6 +1213,7 @@ modest_account_mgr_check_already_configured_account  (ModestAccountMgr *self,
 		from_mgr_settings = modest_account_mgr_load_account_settings (self, account_name);
 		if (!settings) {
 			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			cursor = cursor->next;
 			continue;
 		}
 

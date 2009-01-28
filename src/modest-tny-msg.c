@@ -488,6 +488,7 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 
 			if (!part) {
 				g_warning ("%s: not a valid mime part", __FUNCTION__);
+				tny_iterator_next (iter);
 				continue;
 			}
 

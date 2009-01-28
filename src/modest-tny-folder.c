@@ -432,6 +432,7 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 		folder = (TnyFolder*)tny_iterator_get_current (iter);
 		if (!folder || ! TNY_IS_FOLDER(folder)) {
 			g_warning ("%s: invalid folder", __FUNCTION__);
+			tny_iterator_next (iter);
 			continue;
 		}
 		
@@ -439,6 +440,7 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 		if (!name) {
 			g_warning ("%s: folder name == NULL", __FUNCTION__);
 			g_object_unref (folder);
+			tny_iterator_next (iter);
 			continue;
 		}
 

@@ -440,6 +440,7 @@ get_accounts_list (void)
 		settings = modest_account_mgr_load_account_settings (account_mgr, account_name);
 		if (!settings) {
 			g_printerr ("modest: failed to get account data for %s\n", account_name);
+			cursor = cursor->next;
 			continue;
 		}
 		store_settings = modest_account_settings_get_store_settings (settings);
