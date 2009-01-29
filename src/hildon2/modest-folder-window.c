@@ -380,6 +380,7 @@ static void setup_menu (ModestFolderWindow *self)
 					   NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
+
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));

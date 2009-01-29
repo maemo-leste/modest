@@ -611,19 +611,20 @@ on_open_message_performer (gboolean canceled,
 static gboolean
 on_idle_open_message_performer (gpointer user_data)
 {
-	ModestWindow *main_win = NULL;
+	ModestWindow *top_win = NULL;
 	OpenMsgPerformerInfo *info = (OpenMsgPerformerInfo *) user_data;
 
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
-						      FALSE); /* don't create */
+	top_win = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
 
 	/* Lock before the call as we're in an idle handler */
 	gdk_threads_enter ();
 	if (info->connect) {
-		modest_platform_connect_and_perform (GTK_WINDOW (main_win), TRUE, info->account, 
+		modest_platform_connect_and_perform (GTK_WINDOW (top_win), TRUE, 
+						     info->account, 
 						     on_open_message_performer, info);
 	} else {
-		on_open_message_performer (FALSE, NULL, GTK_WINDOW (main_win), info->account, info);
+		on_open_message_performer (FALSE, NULL, GTK_WINDOW (top_win), 
+					   info->account, info);
 	}
 	gdk_threads_leave ();
 
@@ -718,14 +719,13 @@ on_remove_msgs_finished (ModestMailOperation *mail_op,
 			 gpointer user_data)
 {	
 	TnyHeader *header;
-	ModestWindow *main_win = NULL, *msg_view = NULL;
+	ModestWindow *top_win = NULL, *msg_view = NULL;
 
 	header = (TnyHeader *) user_data;
 
 	/* Get the main window if exists */
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
-						      FALSE); /* don't create */
-	if (!main_win) {
+	top_win = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
+	if (!top_win) {
 		g_object_unref (header);
 		return;
 	}
@@ -755,7 +755,7 @@ thread_prepare_delete_message (gpointer userdata)
 	char *uri;
 	gchar *uid = NULL;
 	ModestMailOperation *mail_op = NULL;
-	ModestWindow *main_win = NULL;
+	ModestWindow *top_win = NULL;
 
 	uri = (char *) userdata;
 
@@ -769,10 +769,9 @@ thread_prepare_delete_message (gpointer userdata)
 		g_free (uri);
 		return FALSE; 
 	}
-	
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(),
-						      FALSE); /* don't create */
-	
+
+	top_win = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
+
 	folder = tny_msg_get_folder (msg);
 	if (!folder) {
 		g_warning ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
@@ -829,7 +828,7 @@ thread_prepare_delete_message (gpointer userdata)
 	 * the code below is or does Gtk+ code */
 	gdk_threads_enter (); /* CHECKED */
 
-	mail_op = modest_mail_operation_new (main_win ? G_OBJECT(main_win) : NULL);
+	mail_op = modest_mail_operation_new (top_win ? G_OBJECT(top_win) : NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 
 	g_signal_connect (G_OBJECT (mail_op),

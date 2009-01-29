@@ -493,11 +493,8 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 static void 
 show_password_warning_only (const gchar *msg)
 {
-	ModestWindow *main_window = 
-		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE); /* don't create */
-	
 	/* Show an explanatory temporary banner: */
-	if (main_window) 
+	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()))
 		modest_platform_information_banner (NULL, NULL, msg);
 }
 
@@ -584,10 +581,10 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 			   __FUNCTION__, server_account_name ? server_account_name : "<NULL>");
 		if (cancel)
 			*cancel = TRUE;
-		
+
 		return NULL;
 	}
-	
+
 	/* This hash map stores passwords, including passwords that are not stored in gconf. */
 	/* Is it in the hash? if it's already there, it must be wrong... */
 	pwd_ptr = (gpointer)&pwd; /* pwd_ptr so the compiler does not complained about
@@ -600,7 +597,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	MODEST_DEBUG_BLOCK(
 		g_debug ("%s: Already asked = %d\n", __FUNCTION__, already_asked);
 	);
-		
+
 	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
 		pwd  = modest_account_mgr_get_server_account_password (priv->account_mgr,
@@ -657,18 +654,18 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		if (settings_have_password) {
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
 			show_wrong_password_dialog (account);
-			
+
 			if (cancel)
 				*cancel = TRUE;
-				
+
 			return NULL;
 		}
-	
+
 		/* we don't have it yet. Get the password from the user */
 		const gchar* account_id = tny_account_get_id (account);
 		gboolean remember = FALSE;
 		pwd = NULL;
-		
+
 		if (already_asked) {
 			const gchar *msg;
 			gboolean username_known = 

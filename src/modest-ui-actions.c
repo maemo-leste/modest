@@ -5805,14 +5805,15 @@ modest_ui_actions_on_move_to (GtkAction *action,
 gboolean 
 modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 {
-	GtkWidget *dialog = NULL, *folder_view = NULL;
-	ModestMainWindow *main_window;
+	GtkWidget *dialog = NULL;
 	MoveToInfo *helper = NULL;
 	TnyList *list_to_move;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW (win), FALSE);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Get the main window if exists */
+	ModestMainWindow *main_window;
 	if (MODEST_IS_MAIN_WINDOW (win))
 		main_window = MODEST_MAIN_WINDOW (win);
 	else
@@ -5826,6 +5827,7 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 	else
 		folder_view = NULL;
+#endif
 
 	list_to_move = modest_platform_get_list_to_move (MODEST_WINDOW (win));
 
@@ -5838,14 +5840,14 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 	}
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (GTK_WINDOW (win), folder_view);
+	dialog = create_move_to_dialog (GTK_WINDOW (win), NULL);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), 
 				     (GtkWindow *) win);
 
 	/* Create helper */
 	helper = g_slice_new0 (MoveToInfo);
-	helper->list = modest_platform_get_list_to_move (MODEST_WINDOW (win));
+	helper->list = list_to_move;
 	helper->win = win;
 
 	/* Listen to response signal */
@@ -6359,6 +6361,8 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 	TnyFolderStore *selected_folder = NULL;
 	TnyFolderType folder_type;
 
+
+	/* TODO: this does not work in Fremantle */
 	mgr = modest_runtime_get_window_mgr ();
 	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr,
 									     FALSE));/* don't create */

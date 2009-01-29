@@ -2903,12 +2903,12 @@ _msgs_send_in_progress (void)
 	cache_mgr = modest_runtime_get_cache_mgr ();
 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
-	
+
 	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
-		
+
 	for (node = send_queues; node != NULL && !found; node = g_slist_next (node)) {
 		send_queue = MODEST_TNY_SEND_QUEUE (node->data);
-		
+
 		/* Check if msg uid is being processed inside send queue */
 		if (modest_tny_send_queue_sending_in_progress (send_queue)) {
 			found = TRUE;
