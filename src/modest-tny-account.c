@@ -361,6 +361,7 @@ modest_tny_account_new_from_server_account_name (ModestAccountMgr *account_mgr,
 		ModestProtocol *protocol;
 		const gchar* proto_name = NULL;
 		tny_account_set_id (tny_account, server_account_name);
+		tny_account_set_name (tny_account, server_account_name);
 		tny_camel_account_set_session (TNY_CAMEL_ACCOUNT (tny_account), session);
 		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, modest_server_account_settings_get_protocol (server_settings));
 		proto_name = modest_protocol_get_name (protocol);
