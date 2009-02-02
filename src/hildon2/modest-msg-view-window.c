@@ -222,6 +222,9 @@ static gboolean message_reader (ModestMsgViewWindow *window,
 				GtkTreeRowReference *row_reference);
 
 static void setup_menu (ModestMsgViewWindow *self);
+static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
+						   GdkEvent *event,
+						   gpointer userdata);
 
 /* list my signals */
 enum {
@@ -490,7 +493,9 @@ set_progress_hint (ModestMsgViewWindow *self,
 	/* Sets current progress hint */
 	priv->progress_hint = enabled;
 
-	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
+	}
 
 }
 
@@ -782,6 +787,10 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 	g_signal_connect (G_OBJECT (obj), "move-focus",
 			  G_CALLBACK (on_move_focus), obj);
+
+	g_signal_connect (G_OBJECT (obj), "expose-event",
+			  G_CALLBACK (_modest_msg_view_window_map_event),
+			  G_OBJECT (obj));
 
 	/* Mail Operation Queue */
 	priv->queue_change_handler = g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
@@ -3218,4 +3227,17 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 	}
 	
 	if (recipients) {g_slist_foreach (recipients, (GFunc) g_free, NULL); g_slist_free (recipients);}
+}
+
+static gboolean 
+_modest_msg_view_window_map_event (GtkWidget *widget,
+				   GdkEvent *event,
+				   gpointer userdata)
+{
+	ModestMsgViewWindow *self = (ModestMsgViewWindow *) userdata;
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	if (priv->progress_hint) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+	}
 }
