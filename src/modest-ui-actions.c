@@ -6355,65 +6355,70 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 						guint status,
 						gpointer user_data)
 {
-	ModestMainWindow *main_window = NULL;
+	ModestWindow *top_window = NULL;
 	ModestWindowMgr *mgr = NULL;
-	GtkWidget *folder_view = NULL, *header_view = NULL;
-	TnyFolderStore *selected_folder = NULL;
+	GtkWidget *header_view = NULL;
+	TnyFolder *selected_folder = NULL;
 	TnyFolderType folder_type;
 
-
-	/* TODO: this does not work in Fremantle */
 	mgr = modest_runtime_get_window_mgr ();
-	main_window = MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (mgr,
-									     FALSE));/* don't create */
-	if (!main_window)
+	top_window = modest_window_mgr_get_current_top (mgr);
+
+	if (!top_window)
 		return;
 
-	/* Check if selected folder is OUTBOX */
-	folder_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	header_view = modest_main_window_get_child_widget (main_window,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+#ifndef MODEST_TOOLKIT_HILDON2
+	if (MODEST_IS_MAIN_WINDOW (top_window)) {
+		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (top_window),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+	}
+#else
+	if (MODEST_IS_HEADER_WINDOW (top_window)) {
+		header_view = (GtkWidget *)
+			modest_header_window_get_header_view (MODEST_HEADER_WINDOW (top_window));
+	}
+#endif
 
-	selected_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-	if (!TNY_IS_FOLDER (selected_folder)) 
-		goto frees;
+	/* Get selected folder */
+	selected_folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
+	if (!selected_folder)
+		return;
 
 	/* gtk_tree_view_column_queue_resize is only available in GTK+ 2.8 */
-#if GTK_CHECK_VERSION(2, 8, 0) 
-	folder_type = modest_tny_folder_guess_folder_type (TNY_FOLDER (selected_folder)); 
-	if (folder_type ==  TNY_FOLDER_TYPE_OUTBOX) {		
+#if GTK_CHECK_VERSION(2, 8, 0)
+	folder_type = modest_tny_folder_guess_folder_type (selected_folder);
+	if (folder_type ==  TNY_FOLDER_TYPE_OUTBOX) {
 		GtkTreeViewColumn *tree_column;
 
-		tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (header_view), 
+		tree_column = gtk_tree_view_get_column (GTK_TREE_VIEW (header_view),
 							TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN);
 		if (tree_column)
 			gtk_tree_view_column_queue_resize (tree_column);
-	}
-#else
+		}
+#else /* #if GTK_CHECK_VERSION(2, 8, 0) */
 	gtk_widget_queue_draw (header_view);
-#endif		
+#endif
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Rerun dimming rules, because the message could become deletable for example */
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (main_window), 
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (top_window),
 						 MODEST_DIMMING_RULES_TOOLBAR);
-	modest_window_check_dimming_rules_group (MODEST_WINDOW (main_window), 
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (top_window),
 						 MODEST_DIMMING_RULES_MENU);
-	
+#endif
+
 	/* Free */
- frees:
-	if (selected_folder != NULL)
-		g_object_unref (selected_folder);
+	g_object_unref (selected_folder);
 }
 
-void 
+void
 modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
 					       TnyAccount *account)
 {
 	ModestProtocolType protocol_type;
 	ModestProtocol *protocol;
 	gchar *error_note = NULL;
-	
+
 	protocol_type = modest_tny_account_get_protocol_type (account);
 	protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
 								  protocol_type);
