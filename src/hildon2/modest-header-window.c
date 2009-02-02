@@ -130,6 +130,9 @@ static void set_moveto_edit_mode (GtkButton *button,
 static gboolean on_expose_event(GtkTreeView *header_view,
 				GdkEventExpose *event,
 				gpointer user_data);
+static gboolean on_map_event (GtkWidget *widget,
+			      GdkEvent *event,
+			      gpointer userdata);
 static void on_vertical_movement (HildonPannableArea *area,
 				  HildonMovementDirection direction,
 				  gdouble x, gdouble y, gpointer user_data);
@@ -301,6 +304,13 @@ connect_signals (ModestHeaderWindow *self)
 					   G_OBJECT (priv->header_view),
 					   "expose-event",
 					   G_CALLBACK (on_expose_event),
+					   self);
+
+	priv->sighandlers =
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (self),
+					   "map-event",
+					   G_CALLBACK (on_map_event),
 					   self);
 
 	priv->sighandlers =
@@ -687,6 +697,22 @@ on_expose_event(GtkTreeView *header_view,
 	if (priv->autoscroll)
 		hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (priv->contents_view), 0.0, 0.0);
 
+	return FALSE;
+}
+
+static gboolean 
+on_map_event(GtkWidget *widget,
+	     GdkEvent *event,
+	     gpointer user_data)
+{
+	ModestHeaderWindow *self = (ModestHeaderWindow *) user_data;
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW (self), FALSE);
+
+	if (priv->progress_hint) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+	}
 	return FALSE;
 }
 
