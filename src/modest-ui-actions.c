@@ -5896,10 +5896,12 @@ do_headers_action (ModestWindow *win,
 
 	/* Trick: do a poke status in order to speed up the signaling
 	   of observers */
-	tny_folder_poke_status (folder);
+	if (folder) {
+		tny_folder_poke_status (folder);
+		g_object_unref (folder);
+	}
 
 	/* Frees */
-	g_object_unref (folder);
 	g_object_unref (iter);
 	g_object_unref (headers_list);
 }
