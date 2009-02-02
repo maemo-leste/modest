@@ -88,7 +88,7 @@ static gboolean modest_recpt_editor_on_button_release_event (GtkWidget *widget,
 							     GdkEventButton *event,
 							     ModestRecptEditor *editor);
 static void modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor);
-static void modest_recpt_editor_on_focus_in (GtkTextView *text_view,
+static gboolean modest_recpt_editor_on_focus_in (GtkTextView *text_view,
 					     GdkEventFocus *event,
 					     ModestRecptEditor *editor);
 static void modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
@@ -498,13 +498,15 @@ modest_recpt_editor_on_button_release_event (GtkWidget *widget,
 	return FALSE;
 }
 
-static void 
+static gboolean 
 modest_recpt_editor_on_focus_in (GtkTextView *text_view,
 				 GdkEventFocus *event,
 				 ModestRecptEditor *editor)
 {
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
 	gtk_text_view_place_cursor_onscreen (GTK_TEXT_VIEW (priv->text_view));
+
+	return FALSE;
 }
 
 static gboolean
