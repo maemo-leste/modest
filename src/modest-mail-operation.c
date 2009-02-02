@@ -1411,9 +1411,9 @@ update_account_send_mail (UpdateAccountInfo *info)
 		return;
 
 	/* Get the transport account */
-	transport_account = (TnyTransportAccount *)
-		modest_tny_account_store_get_transport_account_for_open_connection (account_store,
-										    info->account_name);
+	transport_account = (TnyTransportAccount *) 
+		modest_tny_account_store_get_server_account (account_store, info->account_name, 
+							     TNY_ACCOUNT_TYPE_TRANSPORT);
 
 	if (transport_account) {
 		ModestTnySendQueue *send_queue;
