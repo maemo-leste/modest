@@ -3776,10 +3776,8 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_box_pack_start (GTK_BOX (format_hbox), html_toggle, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (format_hbox), text_toggle, TRUE, TRUE, 0);
 	gtk_widget_show_all (format_hbox);
-	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mcen_me_editor_format"), FALSE, format_hbox);
-	gtk_widget_show (captioned);
-	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
+	gtk_widget_show (format_hbox);
+	gtk_box_pack_start (GTK_BOX (vbox), format_hbox, FALSE, FALSE, 0);
 
 
 	g_object_unref (title_sizegroup);
