@@ -490,9 +490,7 @@ set_progress_hint (ModestMsgViewWindow *self,
 	/* Sets current progress hint */
 	priv->progress_hint = enabled;
 
-	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
-	}
+	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
 
 }
 
