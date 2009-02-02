@@ -3240,4 +3240,6 @@ _modest_msg_view_window_map_event (GtkWidget *widget,
 	if (priv->progress_hint) {
 		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
 	}
+
+	return FALSE;
 }
