@@ -918,7 +918,7 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 				proto = modest_tny_account_get_protocol_type (account);
 				protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), proto);
 				if (protocol)
-					format = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE);
+				  format = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
 				g_object_unref (account);
 			}
 
