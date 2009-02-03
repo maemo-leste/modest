@@ -1329,8 +1329,7 @@ G_DEFINE_TYPE_WITH_CODE (InternalFolderObserver,
 static void
 foreach_add_item (gpointer header, gpointer user_data)
 {
-	tny_list_prepend (TNY_LIST (user_data), 
-			  G_OBJECT (header));
+	tny_list_append (TNY_LIST (user_data), G_OBJECT (header));
 }
 
 /* This is the method that looks for new messages in a folder */
