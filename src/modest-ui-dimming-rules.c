@@ -912,16 +912,20 @@ modest_ui_dimming_rules_on_mark_as_read_msg_in_view (ModestWindow *win, gpointer
 	TnyHeader *header;
 	TnyHeaderFlags flags;
 	gboolean dimmed = FALSE;
-	
+
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
-	
+
 	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
 	if (!header) {
 		dimmed = TRUE;
 	}
+
+	/* If the viewer is showing a message sent as attachment */
+	if (!dimmed)
+		dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
 
 	if (!dimmed) {
 		flags = tny_header_get_flags (header);
@@ -952,6 +956,10 @@ modest_ui_dimming_rules_on_mark_as_unread_msg_in_view (ModestWindow *win, gpoint
 	if (!header) {
 		dimmed = TRUE;
 	}
+
+	/* If the viewer is showing a message sent as attachment */
+	if (!dimmed)
+		dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
 
 	if (!dimmed) {
 		flags = tny_header_get_flags (header);
