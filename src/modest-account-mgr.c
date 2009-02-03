@@ -746,7 +746,8 @@ modest_account_mgr_account_names (ModestAccountMgr * self, gboolean only_enabled
 	ModestAccountMgrPrivate *priv;
 	GError *err = NULL;
 	
-	const size_t prefix_len = strlen (MODEST_ACCOUNT_NAMESPACE "/");
+	/* we add 1 for the trailing "/" */
+	const size_t prefix_len = strlen (MODEST_ACCOUNT_NAMESPACE) + 1;
 
 	g_return_val_if_fail (self, NULL);
 
@@ -1277,8 +1278,8 @@ _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key
 	if (is_server_account)
 		*is_server_account = FALSE;
 
-	const gchar* account_ns        = MODEST_ACCOUNT_NAMESPACE "/";
-	const gchar* server_account_ns = MODEST_SERVER_ACCOUNT_NAMESPACE "/";
+	const gchar* account_ns        = modest_defs_namespace (MODEST_ACCOUNT_SUBNAMESPACE "/");
+	const gchar* server_account_ns = modest_defs_namespace (MODEST_SERVER_ACCOUNT_SUBNAMESPACE "/");
 	gchar *cursor;
 	gchar *account = NULL;
 
@@ -1349,7 +1350,7 @@ _modest_account_mgr_get_account_keyname (const gchar *account_name, const gchar*
 					 gboolean server_account)
 {
 	gchar *retval = NULL;	
-	gchar *namespace = server_account ? MODEST_SERVER_ACCOUNT_NAMESPACE : MODEST_ACCOUNT_NAMESPACE;
+	gchar *namespace = server_account ? (gchar *) MODEST_SERVER_ACCOUNT_NAMESPACE : (gchar *) MODEST_ACCOUNT_NAMESPACE;
 	gchar *escaped_account_name, *escaped_name;
 	
 	if (!account_name)

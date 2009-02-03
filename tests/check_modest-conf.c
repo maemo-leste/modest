@@ -46,8 +46,8 @@ END_TEST
 START_TEST (test_modest_conf_store_retrieve_string)
 {
 	ModestConf *conf  = modest_conf_new ();
-	const gchar *key  =  MODEST_CONF_NAMESPACE "/teststring";
-	const gchar *key2 =  MODEST_CONF_NAMESPACE "/teststring2";
+	const gchar *key  =  modest_defs_namespace ("/teststring");
+	const gchar *key2 =  modest_defs_namespace ("/teststring2");
 
 	const gchar *data = "hello in Korean:  안녕하세요";
 	gchar *data2;
@@ -86,8 +86,8 @@ END_TEST
 START_TEST (test_modest_conf_store_retrieve_bool)
 {
 	ModestConf *conf  = modest_conf_new ();
-	const gchar *key  =  MODEST_CONF_NAMESPACE "/teststring";
-	const gchar *key2 =  MODEST_CONF_NAMESPACE "/teststring2";
+	const gchar *key  =  modest_defs_namespace ("/teststring");
+	const gchar *key2 =  modest_defs_namespace ("/teststring2");
 
 	gboolean data = TRUE, data2;
 	
@@ -121,8 +121,8 @@ END_TEST
 START_TEST (test_modest_conf_store_retrieve_int)
 {
 	ModestConf *conf  = modest_conf_new ();
-	const gchar *key  =  MODEST_CONF_NAMESPACE "/teststring";
-	const gchar *key2 =  MODEST_CONF_NAMESPACE "/teststring2";
+	const gchar *key  =  modest_defs_namespace ("/teststring");
+	const gchar *key2 =  modest_defs_namespace ("/teststring2");
 
 	gint data = 99, data2;
 	

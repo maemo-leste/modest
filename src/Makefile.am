@@ -83,6 +83,7 @@ libmodest_la_SOURCES=\
 	modest-datetime-formatter.h \
 	modest-debug.h \
 	modest-defs.h \
+	modest-defs.c \
 	modest-dimming-rule.c \
 	modest-dimming-rule.h \
 	modest-dimming-rules-group.c \

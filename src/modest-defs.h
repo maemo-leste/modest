@@ -1,4 +1,4 @@
-/* Copyright (c) 2006, Nokia Corporation
+/* Copyright (c) 2006-2009, Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,17 @@
 #include <config.h>
 #include <glib/gi18n.h>
 
+const gchar *modest_defs_dir (const gchar *string);
+const gchar *modest_defs_namespace (const gchar *string);
+
+
+/* Default paths. We set them this way so that we can define on runtime
+ * different values */
+#define MODEST_DEFAULT_DIR ".modest"
+#define MODEST_DEFAULT_NAMESPACE "/apps/modest"
+#define MODEST_DIR_ENV "MODEST_DIR"
+#define MODEST_NAMESPACE_ENV "MODEST_GCONF_NAMESPACE"
+
 /* Some interesting directories. NOTE, they should be prefixed
  * with $HOME; Also, except for MODEST_DIR itself, they
  * need to be prefixed with MODEST_DIR;
@@ -41,7 +52,7 @@
  * building of dirs from their components.
  * g_build_dir is your friend
  */
-#define MODEST_DIR	                  ".modest"
+#define MODEST_DIR	                  modest_defs_dir (NULL)
 #define MODEST_CACHE_DIR                  "cache"
 #define MODEST_IMAGES_CACHE_DIR           "images"
 #define MODEST_IMAGES_CACHE_SIZE          (1024*1024)
@@ -69,7 +80,7 @@
 #define MODEST_MMC1_VOLUMEPATH_URI_PREFIX "file://"
 
 /* configuration key definitions for modest */
-#define MODEST_CONF_NAMESPACE		"/apps/modest"
+#define MODEST_CONF_NAMESPACE		(modest_defs_namespace (NULL))
 
 /* the mapping files, there are two possibilities; used in modest_maemo_open_mcc_mapping_file */
 #define MODEST_MCC_MAPPING                 PREFIX "/share/modest/provider-data/mcc_mapping"
@@ -88,19 +99,20 @@
 #endif
 
 /* configuration key definitions for modest */
-#define MODEST_ACCOUNT_NAMESPACE         MODEST_CONF_NAMESPACE "/accounts"
-#define MODEST_CONF_DEFAULT_ACCOUNT      MODEST_CONF_NAMESPACE "/default_account"
+#define MODEST_ACCOUNT_SUBNAMESPACE      "/accounts"
+#define MODEST_ACCOUNT_NAMESPACE         (modest_defs_namespace (MODEST_ACCOUNT_SUBNAMESPACE))
+#define MODEST_CONF_DEFAULT_ACCOUNT      (modest_defs_namespace ("/default_account"))
 
 /* Not used: #define MODEST_CONF_CONNECT_AT_STARTUP   MODEST_CONF_NAMESPACE "/connect_at_startup" */      
 
-#define MODEST_CONF_SHOW_CC              MODEST_CONF_NAMESPACE "/show_cc"           
-#define MODEST_CONF_SHOW_BCC             MODEST_CONF_NAMESPACE "/show_bcc"           
+#define MODEST_CONF_SHOW_CC              (modest_defs_namespace ("/show_cc"))
+#define MODEST_CONF_SHOW_BCC             (modest_defs_namespace ("/show_bcc"))
 
 /* This is the alarmd cookie, obtained from alarm_event_add(), 
  * which apparently remains valid between application instances.
  * We store it so that we can remove it later.
  */
-#define MODEST_CONF_ALARM_ID MODEST_CONF_NAMESPACE "/alarm_id"
+#define MODEST_CONF_ALARM_ID (modest_defs_namespace ("/alarm_id"))
 
 /*
  * in the maemo case, we try to replace this
@@ -111,11 +123,12 @@
 /* the name of the device; in case of maemo this is set and updated
  * using dbus; see modest-maemo-utils.[ch]
  */
-#define MODEST_CONF_DEVICE_NAME       MODEST_CONF_NAMESPACE "/device_name"
+#define MODEST_CONF_DEVICE_NAME       (modest_defs_namespace ("/device_name"))
 
 
 /* place for widget settings */
-#define MODEST_CONF_WIDGET_NAMESPACE     MODEST_CONF_NAMESPACE "/widgets"
+#define MODEST_CONF_WIDGET_SUBNAMESPACE  "/widgets"
+#define MODEST_CONF_WIDGET_NAMESPACE     (modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE))
 #define MODEST_CONF_FOLDER_VIEW_KEY      "folder-view"
 #define MODEST_CONF_HEADER_VIEW_KEY      "header-view"
 #define MODEST_CONF_MAIN_PANED_KEY       "modest-main-paned"
@@ -125,15 +138,28 @@
 #define MODEST_CONF_EDIT_WINDOW_KEY      "modest-edit-msg-window"
 #define MODEST_CONF_MSG_VIEW_WINDOW_KEY  "modest-msg-view-window"
 
-#define MODEST_SERVER_ACCOUNT_NAMESPACE  MODEST_CONF_NAMESPACE "/" "server_accounts"
+#define MODEST_SERVER_ACCOUNT_SUBNAMESPACE "/server_accounts"
+#define MODEST_SERVER_ACCOUNT_NAMESPACE  (modest_defs_namespace (MODEST_SERVER_ACCOUNT_SUBNAMESPACE))
 
 /* show toolbar settings */
-#define MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MAIN_WINDOW_KEY "/show_toolbar"
-#define MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_EDIT_WINDOW_KEY "/show_toolbar"
-#define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar"
-#define MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR_FULLSCREEN MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MAIN_WINDOW_KEY "/show_toolbar_fullscreen"
-#define MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_EDIT_WINDOW_KEY "/show_toolbar_fullscreen"
-#define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN MODEST_CONF_WIDGET_NAMESPACE "/" MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar_fullscreen"
+#define MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR \
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_MAIN_WINDOW_KEY "/show_toolbar"))
+#define MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR \
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_EDIT_WINDOW_KEY "/show_toolbar"))
+#define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR \
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar"))
+#define MODEST_CONF_MAIN_WINDOW_SHOW_TOOLBAR_FULLSCREEN \
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_MAIN_WINDOW_KEY "/show_toolbar_fullscreen"))
+#define MODEST_CONF_EDIT_WINDOW_SHOW_TOOLBAR_FULLSCREEN			\
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_EDIT_WINDOW_KEY "/show_toolbar_fullscreen"))
+#define MODEST_CONF_MSG_VIEW_WINDOW_SHOW_TOOLBAR_FULLSCREEN		\
+	(modest_defs_namespace (MODEST_CONF_WIDGET_SUBNAMESPACE "/"	\
+				MODEST_CONF_MSG_VIEW_WINDOW_KEY "/show_toolbar_fullscreen"))
 
 /* per-account data */
 #define MODEST_ACCOUNT_DISPLAY_NAME      "display_name"      /* string */
@@ -146,7 +172,8 @@
  * alernating between a connection name, followed by a corresponding server account name.
  * That's not pretty, but it's nicer than dealing with escaping of a = separator if 
  * putting them both in one string. */
-#define MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST MODEST_CONF_NAMESPACE "/specific_smtp" /* one list used for all accounts. */
+#define MODEST_CONF_CONNECTION_SPECIFIC_SMTP_LIST \
+	(modest_defs_namespace ("/specific_smtp")) /* one list used for all accounts. */
 #define MODEST_ACCOUNT_USE_CONNECTION_SPECIFIC_SMTP  "use_specific_smtp" /* boolean */
 
 /* server account keys */
@@ -192,20 +219,20 @@
 #define MODEST_FILE_FORMAT_FORMATTED_TEXT 1
 
 /* Global settings */
-#define MODEST_CONF_AUTO_UPDATE MODEST_CONF_NAMESPACE "/auto_update" /* bool */
-#define MODEST_CONF_UPDATE_WHEN_CONNECTED_BY MODEST_CONF_NAMESPACE "/update_when_connected_by" /* int */
-#define MODEST_CONF_UPDATE_INTERVAL MODEST_CONF_NAMESPACE "/update_interval" /* int */
-#define MODEST_CONF_MSG_SIZE_LIMIT MODEST_CONF_NAMESPACE "/msg_size_limit" /* int */
-#define MODEST_CONF_PLAY_SOUND_MSG_ARRIVE MODEST_CONF_NAMESPACE "/play_sound_msg_arrive" /* bool */
-#define MODEST_CONF_PREFER_FORMATTED_TEXT MODEST_CONF_NAMESPACE "/prefer_formatted_text" /* bool */
-#define MODEST_CONF_REPLY_TYPE           MODEST_CONF_NAMESPACE "/reply_type"        /*  int  */
-#define MODEST_CONF_FORWARD_TYPE         MODEST_CONF_NAMESPACE "/forward_type"      /*  int  */
+#define MODEST_CONF_AUTO_UPDATE (modest_defs_namespace ("/auto_update")) /* bool */
+#define MODEST_CONF_UPDATE_WHEN_CONNECTED_BY (modest_defs_namespace ("/update_when_connected_by")) /* int */
+#define MODEST_CONF_UPDATE_INTERVAL (modest_defs_namespace ("/update_interval")) /* int */
+#define MODEST_CONF_MSG_SIZE_LIMIT (modest_defs_namespace ("/msg_size_limit")) /* int */
+#define MODEST_CONF_PLAY_SOUND_MSG_ARRIVE (modest_defs_namespace ("/play_sound_msg_arrive")) /* bool */
+#define MODEST_CONF_PREFER_FORMATTED_TEXT (modest_defs_namespace ("/prefer_formatted_text")) /* bool */
+#define MODEST_CONF_REPLY_TYPE           (modest_defs_namespace ("/reply_type"))        /*  int  */
+#define MODEST_CONF_FORWARD_TYPE         (modest_defs_namespace  ("/forward_type"))      /*  int  */
 
 /* hidden global settings */
-#define MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES MODEST_CONF_NAMESPACE "/fetch_external_images" /* bool */
+#define MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES (modest_defs_namespace ("/fetch_external_images")) /* bool */
 
 /* Notification ids */
-#define MODEST_CONF_NOTIFICATION_IDS MODEST_CONF_NAMESPACE "/notification_ids"      /* list of ints */
+#define MODEST_CONF_NOTIFICATION_IDS (modest_defs_namespace ("/notification_ids"))      /* list of ints */
 
 
 #define MODEST_EXAMPLE_EMAIL_ADDRESS "first.last@example.com"
