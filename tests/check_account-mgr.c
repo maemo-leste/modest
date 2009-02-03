@@ -29,8 +29,11 @@
 
 #include <check.h>
 #include <string.h>
+#include <modest-defs.h>
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
+#include <gtk/gtk.h>
+#include <modest-init.h>
 
 /* ----------------------- Defines ---------------------- */
 
@@ -45,15 +48,13 @@ static ModestAccountMgr *account_mgr = NULL;
 static void
 fx_setup_default_account_mgr ()
 {
-	ModestConf *conf = NULL;
+	fail_unless (gtk_init_check (NULL, NULL));
 
-	g_type_init ();
+	fail_unless (g_setenv (MODEST_DIR_ENV, ".modesttest", TRUE));
+	fail_unless (g_setenv (MODEST_NAMESPACE_ENV, "/apps/modesttest", TRUE));
+	fail_unless (modest_init (0, NULL), "Failed running modest_init");
 
-	conf = modest_conf_new ();
-	fail_unless (MODEST_IS_CONF (conf), 
-		     "modest_conf_new failed");
-
-	account_mgr = modest_account_mgr_new (conf);
+	account_mgr = modest_runtime_get_account_mgr ();
 	fail_unless (MODEST_IS_ACCOUNT_MGR (account_mgr),
 		     "modest_account_mgr_new failed");
 
@@ -65,15 +66,10 @@ fx_setup_default_account_mgr ()
 						   TEST_MODEST_ACCOUNT_NAME);
 	if (modest_account_mgr_account_exists(account_mgr,
 					      TEST_MODEST_ACCOUNT_NAME,
-					      TRUE))
-		modest_account_mgr_remove_account (account_mgr,
-						   TEST_MODEST_ACCOUNT_NAME);
-}
-
-static void
-fx_teardown_default_account_mgr ()
-{
-	g_object_unref (account_mgr);
+					      TRUE)) {
+		modest_account_mgr_remove_server_account (account_mgr,
+							  TEST_MODEST_ACCOUNT_NAME);
+	}
 }
 
 /* ---------- add/exists/remove account tests  ---------- */
@@ -159,7 +155,7 @@ START_TEST (test_add_exists_remove_account_regular)
 							MODEST_PROTOCOLS_AUTH_NONE); 
 	fail_unless (result,
 		     "modest_account_mgr_add_server_account failed:\n" \
-		     "name: %s\nhostname: %s\nusername: %s\npassword: %s\nproto: %s",
+		     "name: %s\nhostname: %s\nusername: %s\npassword: %s\nproto: %d",
 		     name, hostname, username, password, proto);
 
 	g_free (hostname);
@@ -173,10 +169,10 @@ START_TEST (test_add_exists_remove_account_regular)
 		     "Server account with name \"%s\" should exist. Error: %s", name);
 
 	/* Test 6 */
-	result = modest_account_mgr_remove_account (account_mgr,
-						    name);
+	result = modest_account_mgr_remove_server_account (account_mgr,
+							   name);
 	fail_unless (result,
-		     "modest_account_mgr_remove_account failed:\nname: %s\nerror: %s",
+		     "modest_account_mgr_remove_server_account failed:\nname: %s\nerror: %s",
 		     name);
 
 
@@ -184,7 +180,7 @@ START_TEST (test_add_exists_remove_account_regular)
 	result = modest_account_mgr_account_exists (account_mgr,
 						    "a_name_that_does_not_exist",
 						    FALSE);
-	fail_unless (result,
+	fail_unless (!result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing an account that does not exist");
 
@@ -192,7 +188,7 @@ START_TEST (test_add_exists_remove_account_regular)
 	result = modest_account_mgr_account_exists (account_mgr,
 						    "a_name_that_does_not_exist",
 						    TRUE);
-	fail_unless (result,
+	fail_unless (!result,
 		     "modest_account_mgr_exists_account does not return " \
 		     "FALSE when passing a server account that does not exist");
 	
@@ -371,9 +367,8 @@ account_mgr_suite (void)
 
 	/* Tests case for "add/exists/remove account" */
 	tc = tcase_create ("add_exists_remove_account");
-	tcase_add_checked_fixture (tc, 
-				   fx_setup_default_account_mgr, 
-				   fx_teardown_default_account_mgr);
+	tcase_add_unchecked_fixture (tc, 
+				     fx_setup_default_account_mgr, NULL);
 	tcase_add_test (tc, test_add_exists_remove_account_regular);
 	tcase_add_test (tc, test_add_exists_remove_account_invalid);
 	suite_add_tcase (suite, tc);

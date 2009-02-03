@@ -721,6 +721,26 @@ modest_account_mgr_remove_account (ModestAccountMgr * self,
 	return TRUE;
 }
 
+gboolean
+modest_account_mgr_remove_server_account (ModestAccountMgr * self,
+					  const gchar* name)
+{
+	ModestAccountMgrPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_MGR(self), FALSE);
+	g_return_val_if_fail (name, FALSE);
+
+	if (!modest_account_mgr_account_exists (self, name, TRUE)) {
+		g_printerr ("modest: %s: server account '%s' does not exist\n", __FUNCTION__, name);
+		return FALSE;
+	}
+
+	priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	real_remove_account (priv->modest_conf, name, TRUE);
+
+	return TRUE;
+}
+
 
 
 /* strip the first /n/ character from each element

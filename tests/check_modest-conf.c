@@ -30,7 +30,21 @@
 #include <check.h>
 #include <modest-defs.h>
 #include <modest-conf.h>
+#include <gtk/gtk.h>
 #include <string.h>
+#include <modest-init.h>
+
+static void
+fx_setup_modest_conf ()
+{
+	fail_unless (gtk_init_check (NULL, NULL));
+
+	fail_unless (g_setenv (MODEST_DIR_ENV, ".modesttest", TRUE));
+	fail_unless (g_setenv (MODEST_NAMESPACE_ENV, "/apps/modesttest", TRUE));
+
+	fail_unless (modest_init (0, NULL), "Failed running modest_init");
+
+}
 
 START_TEST (test_modest_conf_new)
 {
@@ -160,6 +174,9 @@ modest_conf_suite (void)
 	Suite *suite = suite_create ("ModestConf");
 
 	TCase *tc_core = tcase_create ("core");
+	tcase_add_checked_fixture (tc_core,
+				   fx_setup_modest_conf,
+				   NULL);
 	tcase_add_test (tc_core, test_modest_conf_new);
 	tcase_add_test (tc_core, test_modest_conf_store_retrieve_string);
 	tcase_add_test (tc_core, test_modest_conf_store_retrieve_bool);

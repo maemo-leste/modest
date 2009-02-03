@@ -201,6 +201,18 @@ gboolean        modest_account_mgr_remove_account         (ModestAccountMgr *sel
 							   const gchar* name);
 
 /**
+ * modest_account_mgr_remove_account:
+ * @self: a ModestAccountMgr instance
+ * @name: the name of the server account to remove
+ * 
+ * remove an existing server account. This is only for internal use.
+ *
+ * Returns: TRUE if the operation succeeded, FALSE otherwise,
+ */
+gboolean        modest_account_mgr_remove_server_account         (ModestAccountMgr *self,
+								  const gchar* name);
+
+/**
  * modest_account_mgr_account_names:
  * @self: a ModestAccountMgr instance
  * @only_enabled: Whether only enabled accounts should be returned.
