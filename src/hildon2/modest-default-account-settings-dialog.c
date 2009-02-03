@@ -505,6 +505,10 @@ on_button_delete (GtkButton *button, gpointer user_data)
 						       priv->account_name, 
 						       (const gchar *) account_title);
 	g_free (account_title);
+
+	/* Close window */
+	if (removed)
+		gtk_widget_destroy (GTK_WIDGET (self));
 }
 
 static GtkWidget*
