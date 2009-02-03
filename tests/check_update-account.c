@@ -43,49 +43,53 @@
 #include "modest-account-mgr.h"
 #include "modest-mail-operation.h"
 #include "modest-mail-operation-queue.h"
+#include <modest-init.h>
+#include <modest-tny-account.h>
+
+/* seconds we will wait for test to finish */
+#define TEST_TIMEOUT 60
 
 GMainLoop *main_loop;
+gint retval = 0;
 
 static void
-on_progress_changed (ModestMailOperation *mail_op, gpointer user_data)
+on_progress_changed (ModestMailOperation *mail_op, ModestMailOperationState *state, gpointer user_data)
 {
-	ModestMailOperationQueue *queue = NULL;
-
 	g_print ("Refreshed %d of %d\n", 
 		 modest_mail_operation_get_task_done  (mail_op), 
 		 modest_mail_operation_get_task_total (mail_op));
 
-	if (modest_mail_operation_is_finished (mail_op)) {
-		queue = MODEST_MAIL_OPERATION_QUEUE (user_data);
-		modest_mail_operation_queue_remove (queue, mail_op);
+}
+
+static void
+update_account_cb (ModestMailOperation *self,
+		   TnyList *new_headers,
+		   gpointer userdata)
+{
+	ModestMailOperationQueue *queue;
+
+	if (modest_mail_operation_get_error (self))
+		retval = 1;
+	
+	if (modest_mail_operation_is_finished (self)) {
+		queue = MODEST_MAIL_OPERATION_QUEUE (userdata);
+		modest_mail_operation_queue_remove (queue, self);
 		g_main_loop_quit (main_loop);
 	}
+
 }
 
 static gboolean
 func (gpointer_data) 
 {
-	TnyStoreAccount *account;
-	TnyIterator *iter;
+	TnyStoreAccount *account = NULL;
 	ModestAccountMgr *acc_mgr = NULL;
 	ModestMailOperation *mail_op = NULL;
 	ModestMailOperationQueue *queue = NULL;
-	ModestTnyAccountStore *account_store = NULL;
-	TnyList *accounts;
+
+	modest_init (0, NULL);
 
 	acc_mgr       = modest_runtime_get_account_mgr();
-	account_store = modest_runtime_get_account_store();
-
-	/* Get accounts */
-	accounts = tny_simple_list_new ();
-	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store), accounts,
-					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
-    
-	iter = tny_list_create_iterator (accounts);
-	account = TNY_STORE_ACCOUNT (tny_iterator_get_current (iter));
-
-	g_object_unref (G_OBJECT (iter));
-	g_object_unref (G_OBJECT (accounts));
 
 	queue   = modest_runtime_get_mail_operation_queue ();
 	mail_op = modest_mail_operation_new (NULL);
@@ -93,8 +97,8 @@ func (gpointer_data)
 	g_signal_connect (G_OBJECT (mail_op), "progress_changed", 
 			  G_CALLBACK (on_progress_changed), queue);
 
-	modest_mail_operation_update_account (mail_op, tny_account_get_name (TNY_ACCOUNT (account)), 
-					      TRUE, FALSE, NULL, NULL, NULL);
+	modest_mail_operation_update_account (mail_op, modest_account_mgr_get_default_account (acc_mgr),
+					      TRUE, FALSE, NULL, update_account_cb, queue);
 	modest_mail_operation_queue_add (queue, mail_op);
 
 	g_object_unref (G_OBJECT (mail_op));
@@ -102,6 +106,15 @@ func (gpointer_data)
 	if (account)
 		g_object_unref (account);
 
+	return FALSE;
+}
+
+static gboolean 
+got_timeout (gpointer userdata)
+{
+	retval = 1;
+
+	g_main_loop_quit (main_loop);
 	return FALSE;
 }
 
@@ -115,8 +128,9 @@ main (int argc, char **argv)
 
 	main_loop = g_main_loop_new (NULL, FALSE);
         id = g_timeout_add(10, func, main_loop);
+	g_timeout_add_seconds (TEST_TIMEOUT, got_timeout, NULL);
 
 	g_main_loop_run(main_loop);
 
-	return 0;
+	return retval;
 }
