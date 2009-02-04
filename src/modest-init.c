@@ -387,7 +387,7 @@ init_header_columns (ModestConf *conf, gboolean overwrite)
 	gchar *key;
 	
 	for (folder_type = TNY_FOLDER_TYPE_UNKNOWN;
-	     folder_type <= TNY_FOLDER_TYPE_CALENDAR; ++folder_type) {		
+	     folder_type < TNY_FOLDER_TYPE_NUM; ++folder_type) {		
 		
 		switch (folder_type) {
 		case TNY_FOLDER_TYPE_SENT:
