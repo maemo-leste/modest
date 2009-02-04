@@ -2161,19 +2161,29 @@ compare_account_names (TnyAccount *a1, TnyAccount *a2)
 static gint
 compare_accounts (TnyFolderStore *s1, TnyFolderStore *s2)
 {
-	TnyAccount *a1, *a2;
+	TnyAccount *a1 = NULL, *a2 = NULL;
 	gint cmp;
 
 	if (TNY_IS_ACCOUNT (s1)) {
 		a1 = TNY_ACCOUNT (g_object_ref (s1));
-	} else {
+	} else if (!TNY_IS_MERGE_FOLDER (s1)) {
 		a1 = tny_folder_get_account (TNY_FOLDER (s1));
 	}
 
 	if (TNY_IS_ACCOUNT (s2)) {
 		a2 = TNY_ACCOUNT (g_object_ref (s2));
-	} else {
+	} else  if (!TNY_IS_MERGE_FOLDER (s2)) {
 		a2 = tny_folder_get_account (TNY_FOLDER (s2));
+	}
+
+	if (!a1 || !a2) {
+		if (!a1 && !a2)
+			cmp = 0;
+		else if (!a1)
+			cmp = 1;
+		else
+			cmp = -1;
+		goto finish;
 	}
 
 	if (a1 == a2) {
@@ -2188,8 +2198,10 @@ compare_accounts (TnyFolderStore *s1, TnyFolderStore *s2)
 	cmp = compare_account_names (a1, a2);
 
 finish:
-	g_object_unref (a1);
-	g_object_unref (a2);
+	if (a1)
+		g_object_unref (a1);
+	if (a2)
+		g_object_unref (a2);
 
 	return cmp;
 }
@@ -2247,14 +2259,17 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		goto finish;
 
 	/* Now we sort using the account of each folder */
-	cmp = compare_accounts (TNY_FOLDER_STORE (folder1), TNY_FOLDER_STORE (folder2));
-	if (cmp != 0)
-		goto finish;
+	if (TNY_IS_FOLDER_STORE (folder1) && 
+	    TNY_IS_FOLDER_STORE (folder2)) {
+		cmp = compare_accounts (TNY_FOLDER_STORE (folder1), TNY_FOLDER_STORE (folder2));
+		if (cmp != 0)
+			goto finish;
 
-	/* Each group is preceeded by its account */
-	cmp = compare_accounts_first (TNY_FOLDER_STORE (folder1), TNY_FOLDER_STORE (folder2));
-	if (cmp != 0)
-		goto finish;
+		/* Each group is preceeded by its account */
+		cmp = compare_accounts_first (TNY_FOLDER_STORE (folder1), TNY_FOLDER_STORE (folder2));
+		if (cmp != 0)
+			goto finish;
+	}
 
 	/* Pure sort by name */
 	cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
