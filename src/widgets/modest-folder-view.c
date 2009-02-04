@@ -2110,7 +2110,7 @@ get_cmp_pos (TnyFolderType t, TnyFolder *folder_store)
 	TnyAccount *account;
 	gboolean is_special;
 	/* Inbox, Outbox, Drafts, Sent, User */
-	/* 0, 1, 2, 3, 4 */
+ 	/* 0, 1, 2, 3, 4 */
 
 	if (!TNY_IS_FOLDER (folder_store))
 		return 4;
@@ -2119,12 +2119,34 @@ get_cmp_pos (TnyFolderType t, TnyFolder *folder_store)
 	{
 		account = tny_folder_get_account (folder_store);
 		is_special = (get_cmp_rows_type_pos (G_OBJECT (account)) == 0);
+
+		/* In inbox case we need to know if the inbox is really the top
+		 * inbox of the account, or if it's a submailbox inbox. To do
+		 * this we'll apply an heuristic rule: Find last "/" and check
+		 * if it's preceeded by another Inbox */
+		if (is_special && TNY_IS_FOLDER (folder_store)) {
+			const gchar *id;
+			gchar *downcase;
+			gchar *last_bar;
+			gchar *last_inbox_bar;
+
+			id = tny_folder_get_id (TNY_FOLDER (folder_store));
+			downcase = g_utf8_strdown (id, -1);
+			last_bar = g_strrstr (downcase, "/");
+			if (last_bar) {
+				last_inbox_bar = g_strrstr  (downcase, "inbox/");
+				if ((last_inbox_bar == NULL) || (last_inbox_bar + 5 != last_bar))
+					is_special = FALSE;
+			}
+			g_free (downcase);
+		}
+
 		g_object_unref (account);
 		return is_special?0:4;
 	}
 	break;
 	case TNY_FOLDER_TYPE_OUTBOX:
-		return 2;
+		return (TNY_IS_MERGE_FOLDER (folder_store))?2:4;
 		break;
 	case TNY_FOLDER_TYPE_DRAFTS:
 	{
