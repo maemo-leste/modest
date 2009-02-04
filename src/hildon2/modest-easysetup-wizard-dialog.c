@@ -572,8 +572,6 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	
 	/* Prevent the use of some characters in the username, 
 	 * as required by our UI specification: */
-	modest_validating_entry_set_unallowed_characters_whitespace (
-	 	MODEST_VALIDATING_ENTRY (priv->entry_user_username));
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_user_username),
 		modest_utils_on_entry_invalid_character, self);
 	
