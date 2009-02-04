@@ -405,6 +405,10 @@ on_folder_activated (ModestFolderView *folder_view,
 	if (!TNY_IS_FOLDER (folder))
 		return;
 
+	/* We cannot open noselect folders (fake ones) */
+	if (tny_folder_get_caps (folder) & TNY_FOLDER_CAPS_NOSELECT)
+		return;
+
 	headerwin = modest_header_window_new (folder);
 	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
 					   MODEST_WINDOW (headerwin),
