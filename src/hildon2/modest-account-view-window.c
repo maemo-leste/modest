@@ -272,6 +272,7 @@ on_account_activated (GtkTreeView *account_view,
 			ModestAccountSettingsDialog *dialog =
 				modest_account_protocol_get_account_settings_dialog (proto, account_name);
 			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), GTK_WINDOW (self));
+			gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), FALSE);
 			gtk_widget_show (GTK_WIDGET (dialog));
 		}
 	}
