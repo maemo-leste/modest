@@ -189,6 +189,7 @@ static void         on_display_name_changed (ModestAccountMgr *self,
 static void         update_style (ModestFolderView *self);
 static void         on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
 static gint         get_cmp_pos (TnyFolderType t, TnyFolder *folder_store);
+static gboolean     inbox_is_special (TnyFolderStore *folder_store);
 
 static gboolean     get_inner_models        (ModestFolderView *self,
 					     GtkTreeModel **filter_model,
@@ -604,8 +605,10 @@ text_cell_data  (GtkTreeViewColumn *column,
 		}
 
 		if (type == TNY_FOLDER_TYPE_INBOX) {
-			g_free (fname);
-			fname = g_strdup (_("mcen_me_folder_inbox"));
+			if (inbox_is_special (TNY_FOLDER_STORE (instance))) {
+				g_free (fname);
+				fname = g_strdup (_("mcen_me_folder_inbox"));
+			}
 		}
 
 		/* note: we cannot reliably get the counts from the tree model, we need
@@ -2104,6 +2107,30 @@ get_cmp_rows_type_pos (GObject *folder)
 	}
 }
 
+static gboolean
+inbox_is_special (TnyFolderStore *folder_store)
+{
+	gboolean is_special = TRUE;
+
+	if (TNY_IS_FOLDER (folder_store)) {
+		const gchar *id;
+		gchar *downcase;
+		gchar *last_bar;
+		gchar *last_inbox_bar;
+
+		id = tny_folder_get_id (TNY_FOLDER (folder_store));
+		downcase = g_utf8_strdown (id, -1);
+		last_bar = g_strrstr (downcase, "/");
+		if (last_bar) {
+			last_inbox_bar = g_strrstr  (downcase, "inbox/");
+			if ((last_inbox_bar == NULL) || (last_inbox_bar + 5 != last_bar))
+				is_special = FALSE;
+		}
+		g_free (downcase);
+	}
+	return is_special;
+}
+
 static gint
 get_cmp_pos (TnyFolderType t, TnyFolder *folder_store)
 {
@@ -2124,23 +2151,7 @@ get_cmp_pos (TnyFolderType t, TnyFolder *folder_store)
 		 * inbox of the account, or if it's a submailbox inbox. To do
 		 * this we'll apply an heuristic rule: Find last "/" and check
 		 * if it's preceeded by another Inbox */
-		if (is_special && TNY_IS_FOLDER (folder_store)) {
-			const gchar *id;
-			gchar *downcase;
-			gchar *last_bar;
-			gchar *last_inbox_bar;
-
-			id = tny_folder_get_id (TNY_FOLDER (folder_store));
-			downcase = g_utf8_strdown (id, -1);
-			last_bar = g_strrstr (downcase, "/");
-			if (last_bar) {
-				last_inbox_bar = g_strrstr  (downcase, "inbox/");
-				if ((last_inbox_bar == NULL) || (last_inbox_bar + 5 != last_bar))
-					is_special = FALSE;
-			}
-			g_free (downcase);
-		}
-
+		is_special = is_special && inbox_is_special (TNY_FOLDER_STORE (folder_store));
 		g_object_unref (account);
 		return is_special?0:4;
 	}
