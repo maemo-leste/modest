@@ -1,3 +1,11 @@
+modest (2.1-2009.07-1) unstable; urgency=low
+
+  * Fixes: NB#92465, NB#97122, NB#97184, NB#97518, NB#98672, NB#98705, NB#99958
+  * Fixes: NB#100010, NB#100026, NB#100064, NB#100097, NB#100112, NB#100153, NB#100159
+  * Fixes: NB#100172, NB#100259, NB#100265, NB#100419, NB#100523
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 05 Feb 2009 13:59:29 +0200
+
 modest (2.1-2009.06-1) unstable; urgency=low
 
   * Week 06, 2009 - first build with 25 fixes
