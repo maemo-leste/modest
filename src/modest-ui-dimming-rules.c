@@ -468,15 +468,15 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 			dimmed = TRUE;
 			modest_dimming_rule_set_notification (rule, _CS("ckct_ib_nothing_to_delete"));
 		}
-			
+
 #ifdef MODEST_TOOLKIT_HILDON2
 	} else if (MODEST_IS_HEADER_WINDOW (win)) {
 
-		if (!dimmed) {
+		if (!dimmed)
 			dimmed = _transfer_mode_enabled (win);
-		}
+
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 
 		if (!dimmed) {
 			GtkWidget *header_view;
@@ -729,7 +729,7 @@ _message_already_sent (ModestMsgViewWindow *view_window)
 		folder = tny_header_get_folder (header);
 		if (folder) {
 			if (modest_tny_folder_guess_folder_type (folder) ==
-			    TNY_FOLDER_TYPE_OUTBOX) {				
+			    TNY_FOLDER_TYPE_OUTBOX) {
 				ModestTnySendQueueStatus status = 
 					modest_tny_all_send_queues_get_msg_status (header);
 				if (status == MODEST_TNY_SEND_QUEUE_UNKNOWN ||
@@ -753,13 +753,20 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
-	state = modest_window_get_dimming_state (win);		
-	
-	/* Check dimmed rule */		
+	state = modest_window_get_dimming_state (win);
+
+	/* If we're in transfer mode then do not allow to delete messages */
+	dimmed = _transfer_mode_enabled (win);
+	if (dimmed) {
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
+		return dimmed;
+	}
+
+	/* Check dimmed rule */	
 	if (MODEST_IS_MAIN_WINDOW (win)) {
-		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+		dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _CS("ckct_ib_nothing_to_delete"));	
+			modest_dimming_rule_set_notification (rule, _CS("ckct_ib_nothing_to_delete"));
 		if (!dimmed) {
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
 		}
@@ -781,18 +788,15 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
  			if (dimmed) {
 				gchar *message = NULL;
 
-				message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"), 
+				message = g_strdup_printf(_("mcen_nc_unable_to_delete_n_messages"),
 							  state->already_opened_msg);
 				modest_dimming_rule_set_notification (rule, message);
  				g_free(message);
 			}
-			
+
 		}
 	} 
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
-		dimmed = _transfer_mode_enabled (win);			
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));		
 		if (!dimmed) {
 			dimmed = state->any_marked_as_deleted;
 			if (dimmed) {
@@ -811,7 +815,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		   outbox that has been already sent */
 		if (!dimmed)
 			dimmed = _message_already_sent (MODEST_MSG_VIEW_WINDOW(win));
-		
+
 		/* The delete button should be dimmed when viewing an attachment,
 		 * but should be enabled when viewing a message from the list, 
 		 * or when viewing a search result.
@@ -1173,7 +1177,7 @@ modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer us
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
-	dimmed = _transfer_mode_enabled (win);			
+	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
 

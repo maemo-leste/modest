@@ -472,10 +472,10 @@ static void setup_menu (ModestHeaderWindow *self)
 
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_messages"), NULL,
 					   APP_MENU_CALLBACK (set_moveto_edit_mode),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_delete_messages"), NULL,
 					   APP_MENU_CALLBACK (set_delete_edit_mode),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_folder_details"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
