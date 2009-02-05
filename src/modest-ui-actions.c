@@ -1195,7 +1195,7 @@ check_memory_full_error (GtkWidget *parent_window, GError *err)
 	else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
 		/* If the account was created in memory full
 		   conditions then tinymail won't be able to
-		   connect so it'll return this error code */				
+		   connect so it'll return this error code */
 		modest_platform_information_banner (parent_window,
 						    NULL, _("emev_ui_imap_inbox_select_error"));
 	else
@@ -5325,7 +5325,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
  * Checks if we need a connection to do the transfer and if the user
  * wants to connect to complete it
  */
-void
+static void
 modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
 				       TnyFolderStore *src_folder,
 				       TnyList *headers,
@@ -5336,8 +5336,6 @@ modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
 {
 	TnyAccount *src_account;
 	gint uncached_msgs = 0;
-
-	uncached_msgs = header_list_count_uncached_msgs (headers);
 
 	/* We don't need any further check if
 	 *
@@ -5360,6 +5358,7 @@ modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
 	 * offline, it'll take place the next time we get a
 	 * connection)
 	 */
+	uncached_msgs = header_list_count_uncached_msgs (headers);
 	src_account = get_account_from_folder_store (src_folder);
 	if (uncached_msgs > 0) {
 		guint num_headers;
@@ -5382,11 +5381,11 @@ modest_ui_actions_xfer_messages_check (GtkWindow *parent_window,
 		if (remote_folder_has_leave_on_server (src_folder) && delete_originals) {
 			const gchar *account_name;
 			gboolean leave_on_server;
-			
+
 			account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (src_account);
 			leave_on_server = modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
 										  account_name);
-			
+
 			if (leave_on_server == TRUE) {
 				*need_connection = FALSE;
 			} else {
@@ -5405,10 +5404,19 @@ static void
 xfer_messages_error_handler (ModestMailOperation *mail_op, 
 			     gpointer user_data)
 {
-	GObject *win = modest_mail_operation_get_source (mail_op);
-	modest_platform_run_information_dialog ((GtkWindow *) win, 
-						_("mail_in_ui_folder_move_target_error"), 
-						FALSE);
+	GObject *win;
+	const GError *error;
+
+	win = modest_mail_operation_get_source (mail_op);
+	error = modest_mail_operation_get_error (mail_op);
+
+	if (error && is_memory_full_error ((GError *) error))
+		modest_platform_information_banner ((GtkWidget *) win,
+						    NULL, _KR("cerm_device_memory_full"));
+	else
+		modest_platform_run_information_dialog ((GtkWindow *) win, 
+							_("mail_in_ui_folder_move_target_error"), 
+							FALSE);
 	if (win)
 		g_object_unref (win);
 }
