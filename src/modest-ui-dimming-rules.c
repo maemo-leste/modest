@@ -1723,9 +1723,8 @@ modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 	const DimmedState *state = NULL;
 	gboolean dimmed = FALSE;
 	GtkWidget *subject_field, *body_field;
-	GtkTextBuffer *body_buffer;
 	const gchar *subject = NULL;
-	
+
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
 	rule = MODEST_DIMMING_RULE (user_data);
@@ -1737,13 +1736,12 @@ modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 	subject_field = modest_msg_edit_window_get_child_widget (
 								 MODEST_MSG_EDIT_WINDOW (win),
 								 MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_SUBJECT);
-	body_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (body_field));
 	subject = gtk_entry_get_text (GTK_ENTRY (subject_field));
 
 	dimmed = (subject == NULL || subject[0] == '\0');
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mcen_ib_subject_not_modified"));
-	       
+
 	if (!dimmed) {
 		GtkWidget *to_field, *cc_field, *bcc_field;
 		GtkTextBuffer * to_buffer, *cc_buffer, *bcc_buffer;
