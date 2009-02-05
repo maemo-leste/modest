@@ -1872,7 +1872,11 @@ modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data)
 
 	/* Check dimmed rule */
 	account_name = modest_window_get_active_account (win);
-	dimmed = modest_account_mgr_account_is_busy (mgr, account_name);
+
+	if (account_name)
+		dimmed = modest_account_mgr_account_is_busy (mgr, account_name);
+	else
+		dimmed = TRUE;
 
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mcen_nc_no_email_acnts_defined"));
