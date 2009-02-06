@@ -1335,6 +1335,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
 	hildon_window_add_toolbar (HILDON_WINDOW (window), GTK_TOOLBAR (parent_priv->toolbar));
 
 	/* Font color placeholder */
