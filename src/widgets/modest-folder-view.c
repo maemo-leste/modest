@@ -1062,6 +1062,12 @@ add_columns (GtkWidget *treeview)
 
 	/* Set icon and text render function */
 	renderer = gtk_cell_renderer_pixbuf_new();
+#ifdef MODEST_TOOLKIT_HILDON2
+	g_object_set (renderer,
+		      "xpad", MODEST_MARGIN_DEFAULT,
+		      "ypad", MODEST_MARGIN_DEFAULT,
+		      NULL);
+#endif
 	gtk_tree_view_column_pack_start (column, renderer, FALSE);
 	gtk_tree_view_column_set_cell_data_func(column, renderer,
 						icon_cell_data, treeview, NULL);
@@ -1070,6 +1076,7 @@ add_columns (GtkWidget *treeview)
 	g_object_set (renderer, 
 #ifdef MODEST_TOOLKIT_HILDON2
 		      "ellipsize", PANGO_ELLIPSIZE_MIDDLE,
+		      "ypad", MODEST_MARGIN_DEFAULT,
 #else
 		      "ellipsize", PANGO_ELLIPSIZE_END,
 #endif
@@ -1080,7 +1087,11 @@ add_columns (GtkWidget *treeview)
 
 	priv->messages_renderer = gtk_cell_renderer_text_new ();
 	g_object_set (priv->messages_renderer, 
-#ifndef MODEST_TOOLKIT_HILDON2
+#ifdef MODEST_TOOLKIT_HILDON2
+		      "yalign", 0.0,
+		      "ypad", MODEST_MARGIN_DEFAULT,
+		      "xpad", MODEST_MARGIN_DOUBLE,
+#else
 		      "scale", PANGO_SCALE_X_SMALL,
 		      "scale-set", TRUE,
 #endif
