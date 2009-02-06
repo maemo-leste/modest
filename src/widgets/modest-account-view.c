@@ -275,8 +275,8 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 #ifdef MODEST_TOOLKIT_HILDON2
 				gchar *last_updated_hildon2;
 
-				last_updated_hildon2 = g_strconcat ("<span size='x-small'>", _("mcen_ti_lastupdated"), "\n", 
-								   last_updated_string, "</span>",
+				last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", 
+								   last_updated_string,
 								   NULL);
 #endif
 				protocol_registry = modest_runtime_get_protocol_registry ();
@@ -352,8 +352,8 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 #ifdef MODEST_TOOLKIT_HILDON2
 			gchar *last_updated_hildon2;
 
-			last_updated_hildon2 = g_strconcat ("<span size='x-small'>", _("mcen_ti_lastupdated"), "\n", 
-							    last_updated_string, "</span>",
+			last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", 
+							    last_updated_string,
 							    NULL);
 #endif
 			gtk_list_store_set(model, &iter, 
@@ -469,16 +469,80 @@ on_account_updated (ModestAccountMgr* mgr,
 	update_account_view (mgr, MODEST_ACCOUNT_VIEW (user_data));
 }
 
-void
-bold_if_default_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
-			    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
+static void
+bold_if_default_account_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+				    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
 	gboolean is_default;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkStyle *style;
+	const gchar *font_style;
+	PangoAttribute *attr;
+	PangoAttrList *attr_list = NULL;
+	GtkWidget *widget;
+#endif
 	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
 			    &is_default, -1);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	widget = gtk_tree_view_column_get_tree_view (column);
+	font_style = is_default?"EmpSystemFont":"SystemFont";
+	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings (GTK_WIDGET(widget)),
+					   font_style, NULL,
+					   G_TYPE_NONE);
+	attr = pango_attr_font_desc_new (pango_font_description_copy (style->font_desc));
+
+	attr_list = pango_attr_list_new ();
+	pango_attr_list_insert (attr_list, attr);
+
+	g_object_set (G_OBJECT(renderer),
+		      "attributes", attr_list, 
+		      NULL);
+
+	pango_attr_list_unref (attr_list);
+#else
 	g_object_set (G_OBJECT(renderer),
 		      "weight", is_default ? 800: 400,
 		      NULL);
+#endif
+}
+
+static void
+bold_if_default_last_updated_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
+					 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
+{
+	gboolean is_default;
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkStyle *style;
+	const gchar *font_style;
+	PangoAttribute *attr;
+	PangoAttrList *attr_list = NULL;
+	GtkWidget *widget;
+#endif
+	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
+			    &is_default, -1);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	widget = gtk_tree_view_column_get_tree_view (column);
+	font_style = is_default?"EmpSmallSystemFont":"SmallSystemFont";
+	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings (GTK_WIDGET(widget)),
+					   font_style, NULL,
+					   G_TYPE_NONE);
+	attr = pango_attr_font_desc_new (pango_font_description_copy (style->font_desc));
+
+	attr_list = pango_attr_list_new ();
+	pango_attr_list_insert (attr_list, attr);
+
+	g_object_set (G_OBJECT(renderer),
+		      "attributes", attr_list, 
+		      NULL);
+
+	pango_attr_list_unref (attr_list);
+#else
+	g_object_set (G_OBJECT(renderer),
+		      "weight", is_default ? 800: 400,
+		      NULL);
+#endif
 }
 
 static void
@@ -552,7 +616,7 @@ init_view (ModestAccountView *self)
 							    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
 	gtk_tree_view_column_set_expand (column, TRUE);
-	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
+	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_account_cell_data,
 						NULL, NULL);
 
 	/* last update for this account */
@@ -569,7 +633,7 @@ init_view (ModestAccountView *self)
 							    MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
 	gtk_tree_view_column_set_expand (column, FALSE);
-	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_cell_data,
+	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_last_updated_cell_data,
 						NULL, NULL);
 			
 	/* Show the column headers,
