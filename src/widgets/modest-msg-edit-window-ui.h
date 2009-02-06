@@ -65,7 +65,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 #else
 	{ "ActionsDelete", NULL, N_("mcen_me_inbox_delete"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_message) },
 #endif
-	{ "ActionsSend", NULL, N_("mcen_me_editor_send"), "<CTRL>KP_Enter", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+	{ "ActionsSend", NULL, N_("mcen_me_editor_send"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 #ifndef MODEST_TOOLKIT_HILDON2
  	{ "ActionsFontColor", GTK_STOCK_SELECT_COLOR, N_("Color"), NULL, N_("Change text color"), G_CALLBACK (modest_ui_actions_on_select_editor_color)},
  	{ "BackgroundColor", GTK_STOCK_SELECT_COLOR, N_("Background color"), NULL, N_("Change background color"), G_CALLBACK (modest_ui_actions_on_select_editor_background_color)},
@@ -101,7 +101,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "CloseWindowShortcut", NULL, NULL, "Escape", NULL, NULL },
 
 	/* TOOLBAR ACTIONS */
-	{ "ToolbarSend", MODEST_STOCK_MAIL_SEND, N_("qgn_toolb_messagin_send"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+	{ "ToolbarSend", MODEST_STOCK_MAIL_SEND, N_("qgn_toolb_messagin_send"),  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	/* Find in page. This is a normal menu option in Hildon2, and a checkbox in the others */
