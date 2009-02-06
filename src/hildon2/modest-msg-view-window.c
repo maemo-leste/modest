@@ -2193,6 +2193,7 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 	if (!parent_priv->toolbar) {
 		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 								  "/ToolBar");
+		gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
