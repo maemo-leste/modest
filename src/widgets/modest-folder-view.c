@@ -1080,8 +1080,10 @@ add_columns (GtkWidget *treeview)
 
 	priv->messages_renderer = gtk_cell_renderer_text_new ();
 	g_object_set (priv->messages_renderer, 
+#ifndef MODEST_TOOLKIT_HILDON2
 		      "scale", PANGO_SCALE_X_SMALL,
 		      "scale-set", TRUE,
+#endif
 		      "alignment", PANGO_ALIGN_RIGHT,
 		      "align-set", TRUE,
 		      "xalign", 1.0,
@@ -3540,18 +3542,37 @@ update_style (ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv;
 	GdkColor style_color;
+	PangoAttrList *attr_list;
+	GtkStyle *style;
+	PangoAttribute *attr;
 
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
 
+	/* Set color */
+
+	attr_list = pango_attr_list_new ();
 	if (!gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
 		gdk_color_parse ("grey", &style_color);
 	}
+	attr = pango_attr_foreground_new (style_color.red, style_color.green, style_color.blue);
+	pango_attr_list_insert (attr_list, attr);
+	
+	/* set font */
+	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings
+					   (GTK_WIDGET(self)),
+					   "SmallSystemFont", NULL,
+					   G_TYPE_NONE);  
+	attr = pango_attr_font_desc_new (pango_font_description_copy
+					 (style->font_desc));
+	pango_attr_list_insert (attr_list, attr);
 
 	g_object_set (G_OBJECT (priv->messages_renderer),
 		      "foreground-gdk", &style_color,
 		      "foreground-set", TRUE,
+		      "attributes", attr_list,
 		      NULL);
+	pango_attr_list_unref (attr_list);
 }
 
 static void 
