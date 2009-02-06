@@ -2147,7 +2147,7 @@ toolbar_resize (ModestMsgViewWindow *self)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	mgr = modest_runtime_get_window_mgr ();
-	static_button_size = modest_window_mgr_get_fullscreen_mode (mgr)?118:108;
+	static_button_size = modest_window_mgr_get_fullscreen_mode (mgr)?120:120;
 
 	if (parent_priv->toolbar) {
 		/* left size buttons */
