@@ -32,6 +32,7 @@
 #include <modest-defs.h>
 #include <modest-conf.h>
 #include <modest-account-mgr.h>
+#include <modest-utils.h>
 #include <gtk/gtk.h>
 #include <modest-init.h>
 
@@ -128,6 +129,19 @@ START_TEST (test_add_exists_remove_account_regular)
 	fail_unless (result,
 		     "modest_account_mgr_account_exists failed: " \
 		     "Account with name \"%s\" should exist.\n", name);
+
+	/* Test 2b */
+	gchar *account_name_from_recipient;
+	account_name_from_recipient = modest_utils_get_account_name_from_recipient ("user@email.com");
+	fail_unless (account_name_from_recipient != NULL,
+		     "modest_utils_get_account_name_from_recipient failed: "\
+		     "From user@email.com should match account");
+	
+	/* Test 2c */
+	account_name_from_recipient = modest_utils_get_account_name_from_recipient ("egg@egg.com");
+	fail_unless (account_name_from_recipient == NULL,
+		     "modest_utils_get_account_name_from_recipient failed: "\
+		     "From egg@egg.com shouldn't match account");
 	
 
 	/* Test 3 */
@@ -367,7 +381,7 @@ account_mgr_suite (void)
 
 	/* Tests case for "add/exists/remove account" */
 	tc = tcase_create ("add_exists_remove_account");
-	tcase_add_unchecked_fixture (tc, 
+	tcase_add_checked_fixture (tc, 
 				     fx_setup_default_account_mgr, NULL);
 	tcase_add_test (tc, test_add_exists_remove_account_regular);
 	tcase_add_test (tc, test_add_exists_remove_account_invalid);

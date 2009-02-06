@@ -15,12 +15,14 @@ TESTS                   =                           \
 			check_text-utils            \
 			check_modest-conf           \
 			check_update-account        \
+			check_modest-utils          \
 			check_account-mgr           
 
 noinst_PROGRAMS=				    \
 			check_folder-xfer           \
 			check_modest-conf	    \
 			check_text-utils            \
+			check_modest-utils          \
 			check_update-account        \
 			check_account-mgr
 
@@ -60,6 +62,10 @@ check_update_account_LDADD = $(objects)
 check_modest_conf_SOURCES=\
 	check_modest-conf.c
 check_modest_conf_LDADD = $(objects)
+
+check_modest_utils_SOURCES=\
+	check_modest-utils.c
+check_modest_utils_LDADD = $(objects)
 
 check_text_utils_SOURCES=\
 	check_text-utils.c
