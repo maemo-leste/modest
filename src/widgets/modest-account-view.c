@@ -44,6 +44,9 @@
 #include <string.h> /* For strcmp(). */
 #include <modest-account-mgr-helpers.h>
 #include <modest-datetime-formatter.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-defines.h>
+#endif
 
 /* 'private'/'protected' functions */
 static void modest_account_view_class_init    (ModestAccountViewClass *klass);
@@ -506,10 +509,6 @@ init_view (ModestAccountView *self)
 	g_object_unref (G_OBJECT (model));
 
 	toggle_renderer = gtk_cell_renderer_toggle_new ();
-	text_renderer = gtk_cell_renderer_text_new ();
-	g_object_set (G_OBJECT (text_renderer), "ellipsize", PANGO_ELLIPSIZE_END,
-			"ellipsize-set", TRUE, NULL);
-
 	/* the is_default column */
 	g_object_set (G_OBJECT(toggle_renderer), "activatable", TRUE, "radio", TRUE, NULL);
 	column = gtk_tree_view_column_new_with_attributes 
@@ -541,6 +540,14 @@ init_view (ModestAccountView *self)
 					   self);
 	
 	/* account name */
+	text_renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (text_renderer), 
+		      "ellipsize", PANGO_ELLIPSIZE_END, "ellipsize-set", TRUE, 
+#ifdef MODEST_TOOLKIT_HILDON2
+		      "xpad", HILDON_MARGIN_DOUBLE,
+#endif
+		      NULL);
+
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), text_renderer, "text",
 							    MODEST_ACCOUNT_VIEW_DISPLAY_NAME_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
@@ -553,6 +560,9 @@ init_view (ModestAccountView *self)
 	g_object_set (G_OBJECT (text_renderer), 
 		      "alignment", PANGO_ALIGN_RIGHT, 
 		      "xalign", 1.0,
+#ifdef MODEST_TOOLKIT_HILDON2
+		      "xpad", HILDON_MARGIN_DOUBLE,
+#endif
 		      NULL);
 
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_lastupdated"), text_renderer,"markup",
