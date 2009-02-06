@@ -144,7 +144,7 @@ modest_ui_dimming_manager_dispose (GObject *obj)
 
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(obj);
 
-	if (priv->delayed_calls != NULL) {
+	if (priv->delayed_calls != NULL && (g_hash_table_size (priv->delayed_calls) > 0)) {
 		/* Remove all pending calls */
 		g_hash_table_foreach (priv->delayed_calls,
 				      remove_all_timeouts,
