@@ -68,6 +68,7 @@ static void modest_account_view_select_first_account (ModestAccountView *account
 static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
 static void update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view);
+static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
 
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
@@ -160,6 +161,7 @@ modest_account_view_init (ModestAccountView *obj)
 			     "widget_class \"*<HildonPannableArea>.ModestAccountView\" style :highest \"fremantle-modest-account-view\"");
 	
 #endif
+	g_signal_connect (G_OBJECT (obj), "notify::style", G_CALLBACK (on_notify_style), (gpointer) obj);
 }
 
 static void
@@ -857,3 +859,12 @@ on_display_name_changed (ModestAccountMgr *mgr,
 	/* Update the view */
 	update_account_view (mgr, MODEST_ACCOUNT_VIEW (user_data));
 }
+
+static void 
+on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
+{
+	if (strcmp ("style", spec->name) == 0) {
+		gtk_widget_queue_draw (GTK_WIDGET (obj));
+	} 
+}
+
