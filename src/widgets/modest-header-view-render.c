@@ -41,11 +41,6 @@
 #include <modest-platform.h>
 #include <string.h>
 
-typedef enum {
-	RENDER_CELL_STYLE_DEFAULT=0,
-	RENDER_CELL_STYLE_GREY
-} RenderCellStyle;
-
 static const gchar *
 get_status_string (ModestTnySendQueueStatus status)
 {
@@ -127,8 +122,7 @@ set_common_flags (GtkCellRenderer *renderer, TnyHeaderFlags flags)
 static void
 set_cell_text (GtkCellRenderer *renderer, 
 	       const gchar *text, 
-	       TnyHeaderFlags flags,
-	       RenderCellStyle style)
+	       TnyHeaderFlags flags)
 {
 	PangoWeight weight;
 	gboolean strikethrough;
@@ -141,16 +135,6 @@ set_cell_text (GtkCellRenderer *renderer,
 		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? PANGO_WEIGHT_NORMAL : PANGO_WEIGHT_ULTRABOLD,
 		      "strikethrough", (flags &TNY_HEADER_FLAG_DELETED) ? TRUE : FALSE,
 		      NULL);
-	switch (style) {
-	case RENDER_CELL_STYLE_GREY:
-		g_object_set (G_OBJECT (renderer), 
-			      "foreground", "#666666",
-			      "scale", PANGO_SCALE_SMALL,
-			      NULL);
-		break;
-	case RENDER_CELL_STYLE_DEFAULT:
-		break;
-	}
 	g_object_thaw_notify (G_OBJECT (renderer));
 }
 
@@ -205,10 +189,10 @@ _modest_header_view_date_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	header_view = MODEST_HEADER_VIEW (gtk_tree_view_column_get_tree_view (column));
 	set_cell_text (renderer,
 		       _modest_header_view_get_display_date (header_view, date),
-		       flags, RENDER_CELL_STYLE_DEFAULT);
+		       flags);
 #else
 	set_cell_text (renderer, modest_text_utils_get_display_date (date),
- 		       flags, RENDER_CELL_STYLE_DEFAULT);
+ 		       flags);
 #endif
 }
 
@@ -236,7 +220,7 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,
 	modest_text_utils_get_display_address (address); /* string is changed in-place */
 	
 	set_cell_text (renderer, (address && address[0] != '\0')?address:_("mail_va_no_to"),
-		       flags, RENDER_CELL_STYLE_DEFAULT);
+		       flags);
 	g_free (address);
 }
 /*
@@ -326,13 +310,13 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		      NULL);
 
 	set_cell_text (subject_cell, (subject && subject[0] != 0)?subject:_("mail_va_no_subject"), 
-		       flags, RENDER_CELL_STYLE_DEFAULT);
+		       flags);
 	g_free (subject);
 
 	/* FIXME: we hardcode the color to #666666; instead we should use SecondaryTextColour from the
 	 * theme (gtkrc file) */
 	modest_text_utils_get_display_address (address); /* changed in-place */
-	set_cell_text (recipient_cell, (address && address[0] != '\0')?address:_("mail_va_no_to"), flags, RENDER_CELL_STYLE_GREY);
+	set_cell_text (recipient_cell, (address && address[0] != '\0')?address:_("mail_va_no_to"), flags);
 	g_free (address);
 	
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
@@ -346,18 +330,18 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		}
 		
 		status_str = get_status_string (status);
-		set_cell_text (date_or_status_cell, status_str, flags, RENDER_CELL_STYLE_GREY);
+		set_cell_text (date_or_status_cell, status_str, flags);
 	} else {
 #if GTK_CHECK_VERSION (2, 12, 0)
 		ModestHeaderView *header_view;
 		header_view = MODEST_HEADER_VIEW (gtk_tree_view_column_get_tree_view (column));
 		set_cell_text (date_or_status_cell, 
 			       date ? _modest_header_view_get_display_date (header_view, date) : "",
-			       flags, RENDER_CELL_STYLE_GREY);
+			       flags);
 #else
 		set_cell_text (date_or_status_cell, 
 			       date ? modest_text_utils_get_display_date (date) : "",
- 			       flags, RENDER_CELL_STYLE_GREY);
+ 			       flags);
 #endif
 	}
 	if (msg_header != NULL)
@@ -381,7 +365,7 @@ _modest_header_view_size_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer
 	
 	size_str = modest_text_utils_get_display_size (size);
 	
-	set_cell_text (renderer, size_str, flags, RENDER_CELL_STYLE_DEFAULT);
+	set_cell_text (renderer, size_str, flags);
 
 	g_free (size_str);
  }
@@ -404,7 +388,7 @@ _modest_header_view_status_cell_data  (GtkTreeViewColumn *column,  GtkCellRender
        else	       
 	       status_str = g_strdup(_("mcen_li_outbox_waiting"));
        
-	set_cell_text (renderer, status_str, flags, RENDER_CELL_STYLE_DEFAULT);
+	set_cell_text (renderer, status_str, flags);
 
 	g_free (status_str);
  }

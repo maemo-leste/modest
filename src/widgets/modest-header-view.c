@@ -121,6 +121,9 @@ static gboolean      modest_header_view_on_expose_event (GtkTreeView *header_vie
 							 GdkEventExpose *event,
 							 gpointer user_data);
 
+static void         on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
+static void         update_style (ModestHeaderView *self);
+
 typedef enum {
 	HEADER_VIEW_NON_EMPTY,
 	HEADER_VIEW_EMPTY,
@@ -162,6 +165,9 @@ struct _ModestHeaderViewPrivate {
 	gboolean notify_status; /* whether or not the filter_row should notify about changes in the filtering */
 
 	ModestDatetimeFormatter *datetime_formatter;
+
+	GtkCellRenderer *renderer_address;
+	GtkCellRenderer *renderer_date_status;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -374,8 +380,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	renderer_recpt_box = modest_hbox_cell_renderer_new ();
 	renderer_subject_box = modest_hbox_cell_renderer_new ();
 	renderer_recpt = gtk_cell_renderer_text_new ();
+	priv->renderer_address = renderer_recpt;
 	renderer_subject = gtk_cell_renderer_text_new ();
 	renderer_compact_date_or_status  = gtk_cell_renderer_text_new ();
+	priv->renderer_date_status = renderer_compact_date_or_status;
 
 	modest_vbox_cell_renderer_append (MODEST_VBOX_CELL_RENDERER (renderer_compact_header), renderer_subject_box, FALSE);
 	g_object_set_data (G_OBJECT (renderer_compact_header), "subject-box-renderer", renderer_subject_box);
@@ -557,6 +565,9 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 						 (GtkTreeIterCompareFunc) cmp_subject_rows,
 						 compact_column, NULL);
 	}
+
+	update_style (self);
+	g_signal_connect (G_OBJECT (self), "notify::style", G_CALLBACK (on_notify_style), (gpointer) self);
 
 	return TRUE;
 }
@@ -2321,3 +2332,56 @@ modest_header_view_unset_filter (ModestHeaderView *self,
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
 	}
 }
+
+static void 
+on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
+{
+	if (strcmp ("style", spec->name) == 0) {
+		update_style (MODEST_HEADER_VIEW (obj));
+		gtk_widget_queue_draw (GTK_WIDGET (obj));
+	} 
+}
+
+static void
+update_style (ModestHeaderView *self)
+{
+	ModestHeaderViewPrivate *priv;
+	GdkColor style_color;
+	PangoAttrList *attr_list;
+	GtkStyle *style;
+	PangoAttribute *attr;
+
+	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
+
+	/* Set color */
+
+	attr_list = pango_attr_list_new ();
+	if (!gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
+		gdk_color_parse ("grey", &style_color);
+	}
+	attr = pango_attr_foreground_new (style_color.red, style_color.green, style_color.blue);
+	pango_attr_list_insert (attr_list, attr);
+	
+	/* set font */
+	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings
+					   (GTK_WIDGET(self)),
+					   "SmallSystemFont", NULL,
+					   G_TYPE_NONE);  
+	attr = pango_attr_font_desc_new (pango_font_description_copy
+					 (style->font_desc));
+	pango_attr_list_insert (attr_list, attr);
+
+	g_object_set (G_OBJECT (priv->renderer_address),
+		      "foreground-gdk", &style_color,
+		      "foreground-set", TRUE,
+		      "attributes", attr_list,
+		      NULL);
+	g_object_set (G_OBJECT (priv->renderer_date_status),
+		      "foreground-gdk", &style_color,
+		      "foreground-set", TRUE,
+		      "attributes", attr_list,
+		      NULL);
+	pango_attr_list_unref (attr_list);
+}
+
