@@ -89,6 +89,7 @@ struct _ModestHeaderWindowPrivate {
 
 	/* progress hint */
 	gboolean progress_hint;
+	gchar *current_store_account;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_HEADER_WINDOW, \
@@ -136,14 +137,10 @@ static gboolean on_map_event (GtkWidget *widget,
 static void on_vertical_movement (HildonPannableArea *area,
 				  HildonMovementDirection direction,
 				  gdouble x, gdouble y, gpointer user_data);
-static void set_progress_hint    (ModestHeaderWindow *self, 
-				  gboolean enabled);
 static void on_queue_changed    (ModestMailOperationQueue *queue,
 				 ModestMailOperation *mail_op,
 				 ModestMailOperationQueueNotification type,
 				 ModestHeaderWindow *self);
-static void modest_header_window_show_toolbar   (ModestWindow *window,
-						 gboolean show_toolbar);
 static void modest_header_window_pack_toolbar (ModestHildon2Window *self,
 					       GtkPackType pack_type,
 					       GtkWidget *toolbar);
@@ -151,6 +148,9 @@ static void edit_mode_changed (ModestHeaderWindow *header_window,
 			       gint edit_mode_id,
 			       gboolean enabled,
 			       ModestHeaderWindow *self);
+static void on_progress_list_changed (ModestWindowMgr *mgr,
+				      ModestHeaderWindow *self);
+static void update_progress_hint (ModestHeaderWindow *self);
 
 
 /* globals */
@@ -202,7 +202,6 @@ modest_header_window_class_init (ModestHeaderWindowClass *klass)
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHeaderWindowPrivate));
 	
-	modest_window_class->show_toolbar_func = modest_header_window_show_toolbar;
 	modest_window_class->disconnect_signals_func = modest_header_window_disconnect_signals;
 	modest_hildon2_window_class->pack_toolbar_func = modest_header_window_pack_toolbar;
 }
@@ -227,6 +226,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->autoscroll = TRUE;
 	priv->progress_hint = FALSE;
 	priv->queue_change_handler = 0;
+	priv->current_store_account = NULL;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -243,6 +243,11 @@ modest_header_window_finalize (GObject *obj)
 	g_object_unref (priv->header_view);
 	g_object_unref (priv->empty_view);
 	g_object_unref (priv->folder);
+
+	if (priv->current_store_account) {
+		g_free (priv->current_store_account);
+		priv->current_store_account = NULL;
+	}
 
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
@@ -326,6 +331,10 @@ connect_signals (ModestHeaderWindow *self)
 				  "queue-changed",
 				  G_CALLBACK (on_queue_changed),
 				  self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (modest_runtime_get_window_mgr ()),
+						       "progress-list-changed",
+						       G_CALLBACK (on_progress_list_changed), self);
 }
 
 static GtkWidget *
@@ -373,12 +382,15 @@ on_vertical_movement (HildonPannableArea *area,
 
 
 ModestWindow *
-modest_header_window_new (TnyFolder *folder)
+modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 {
 	ModestHeaderWindow *self = NULL;	
 	ModestHeaderWindowPrivate *priv = NULL;
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
+	ModestAccountMgr *mgr;
+	ModestAccountSettings *settings = NULL;
+	ModestServerAccountSettings *store_settings = NULL;
 	
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
@@ -450,6 +462,20 @@ modest_header_window_new (TnyFolder *folder)
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
+
+	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
+	mgr = modest_runtime_get_account_mgr ();
+	settings = modest_account_mgr_load_account_settings (mgr, account_name);
+	if (settings) {
+		store_settings = modest_account_settings_get_store_settings (settings);
+		if (store_settings) {
+			priv->current_store_account = 
+				g_strdup (modest_server_account_settings_get_account_name (store_settings));
+			g_object_unref (store_settings);
+		}
+		g_object_unref (settings);
+	}
+	update_progress_hint (self);
 
 	return MODEST_WINDOW(self);
 }
@@ -716,39 +742,52 @@ on_map_event(GtkWidget *widget,
 	return FALSE;
 }
 
-static gboolean
-set_toolbar_transfer_mode (ModestHeaderWindow *self)
+static void
+on_progress_list_changed (ModestWindowMgr *mgr,
+			  ModestHeaderWindow *self)
 {
-	ModestHeaderWindowPrivate *priv = NULL;
-	
-	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW (self), FALSE);
-
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
-
-	set_progress_hint (self, TRUE);
-	
-	return FALSE;
+	update_progress_hint (self);
 }
 
-static void 
-set_progress_hint (ModestHeaderWindow *self, 
-		   gboolean enabled)
+static gboolean
+has_active_operations (ModestHeaderWindow *self)
 {
-	ModestWindowPrivate *parent_priv;
-	ModestHeaderWindowPrivate *priv;
+	GSList *operations = NULL, *node;
+	ModestMailOperationQueue *queue;
+	gboolean has_active = FALSE;
 
-	g_return_if_fail (MODEST_IS_HEADER_WINDOW (self));
+	queue = modest_runtime_get_mail_operation_queue ();
+	operations = modest_mail_operation_queue_get_by_source (queue, G_OBJECT (self));
+	for (node = operations; node != NULL; node = g_slist_next (node)) {
+		if (!modest_mail_operation_is_finished (MODEST_MAIL_OPERATION (node->data))) {
+			has_active = TRUE;
+			break;
+		}
+	}
+	g_slist_free (operations);
+	return has_active;
+}
 
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
-			
-	/* Sets current progress hint */
-	priv->progress_hint = enabled;
+static void
+update_progress_hint (ModestHeaderWindow *self)
+{
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	priv->progress_hint = FALSE;
 
-	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
+	if (has_active_operations (self)) {
+		priv->progress_hint = TRUE;
 	}
 
+	if (!priv->progress_hint && priv->current_store_account) {
+		priv->progress_hint = modest_window_mgr_has_progress_operation_on_account (modest_runtime_get_window_mgr (),
+											   priv->current_store_account);
+	}
+	
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
+
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
+	}
 }
 
 gboolean 
@@ -760,22 +799,6 @@ modest_header_window_toolbar_on_transfer_mode     (ModestHeaderWindow *self)
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	return priv->progress_hint;
-}
-
-static void
-modest_header_window_show_toolbar (ModestWindow *self,
-				   gboolean show_toolbar)
-{
-	ModestHeaderWindowPrivate *priv = NULL;
-	ModestWindowPrivate *parent_priv;
-
-	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
-
-	if (modest_header_window_transfer_mode_enabled (MODEST_HEADER_WINDOW (self))) 
-		set_progress_hint (MODEST_HEADER_WINDOW (self), TRUE);
-	else
-		set_progress_hint (MODEST_HEADER_WINDOW (self), FALSE);
 }
 
 gboolean 
@@ -801,7 +824,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	source = modest_mail_operation_get_source(mail_op);
 	if (G_OBJECT (self) == source) {
-		set_toolbar_transfer_mode(self);
+		update_progress_hint (self);
 	}
 	g_object_unref (source);
 }
@@ -821,14 +844,9 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	queue = modest_runtime_get_mail_operation_queue ();
 	operations = modest_mail_operation_queue_get_by_source (queue, user_data);
 
-	/* There should be at least the current one */
-	if (!operations)
-		g_return_if_reached ();
-
 	/* Don't disable the progress hint if there are more pending
 	   operations from this window */
-	if (g_slist_length (operations) == 1)
-		set_progress_hint (self, FALSE);
+	update_progress_hint (self);
 
 	g_slist_free (operations);
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
