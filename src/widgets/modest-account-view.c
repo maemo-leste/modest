@@ -63,7 +63,9 @@ static void on_display_name_changed            (ModestAccountMgr *self,
 						const gchar *account,
 						gpointer user_data);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 static void modest_account_view_select_first_account (ModestAccountView *account_view);
+#endif
 
 static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
@@ -320,7 +322,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 		modest_account_view_select_account (view, selected_name);
 		g_free (selected_name);
 	} else {
+#ifndef MODEST_TOOLKIT_HILDON2
 		modest_account_view_select_first_account (view);
+#endif
 	}
 }
 
@@ -415,8 +419,10 @@ on_account_removed (TnyAccountStore *account_store,
 	
 	selected_name = modest_account_view_get_selected_account (self);
 	if (selected_name == NULL) {
+#ifndef MODEST_TOOLKIT_HILDON2
 		/* we select the first account if none is selected */
-		modest_account_view_select_first_account (self);		
+		modest_account_view_select_first_account (self);
+#endif
 	} else {
 		g_free (selected_name);
 	}
@@ -799,6 +805,7 @@ modest_account_view_select_account (ModestAccountView *account_view,
 	g_free (state);
 }
 
+#ifndef MODEST_TOOLKIT_HILDON2
 static void
 modest_account_view_select_first_account (ModestAccountView *account_view)
 {
@@ -807,10 +814,11 @@ modest_account_view_select_first_account (ModestAccountView *account_view)
 
 	if (gtk_tree_model_get_iter_first (model, &iter)) {
 		GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (account_view));
-	
+
 		gtk_tree_selection_select_iter (selection, &iter);
 	}
 }
+#endif
 
 static void
 on_default_account_changed (ModestAccountMgr *mgr,
