@@ -186,39 +186,29 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 
 typedef struct 
 {
-	gboolean cancel;
-	GList *result;
+	GList **result;
 	GtkWidget* dialog;
 	GtkWidget* progress;
-	GError* error;
 } ModestGetSupportedAuthInfo;
-
-static void on_camel_account_get_supported_secure_authentication_status (
-	GObject *self, TnyStatus *status, gpointer user_data)
-{
-	/*ModestGetSupportedAuthInfo* info = (ModestGetSupportedAuthInfo*) user_data;*/
-}
 
 static gboolean
 on_idle_secure_auth_finished (gpointer user_data)
 {
-	ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
 	/* Operation has finished, close the dialog. Control continues after
 	 * gtk_dialog_run in modest_utils_get_supported_secure_authentication_methods() */
-
-	/* This is a GDK lock because we are an idle callback and
-	 * the code below is or does Gtk+ code */
-
 	gdk_threads_enter(); /* CHECKED */
-	gtk_dialog_response (GTK_DIALOG (info->dialog), GTK_RESPONSE_ACCEPT);
+	gtk_dialog_response (GTK_DIALOG (user_data), GTK_RESPONSE_ACCEPT);
 	gdk_threads_leave(); /* CHECKED */
 
 	return FALSE;
 }
 
 static void
-on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gboolean cancelled,
-	TnyList *auth_types, GError *err, gpointer user_data)
+on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self,
+						      gboolean cancelled,
+						      TnyList *auth_types,
+						      GError *err,
+						      gpointer user_data)
 {
 	ModestPairList *pairs;
 	GList *result;
@@ -229,22 +219,17 @@ on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gbo
 	g_return_if_fail (user_data);
 	g_return_if_fail (TNY_IS_CAMEL_ACCOUNT(self));
 	g_return_if_fail (TNY_IS_LIST(auth_types));
-	
+
 	info = (ModestGetSupportedAuthInfo *) user_data;
 
 	/* Free everything if the actual action was canceled */
-	if (info->cancel) {
-		info->cancel = TRUE;
+	if (cancelled) {
 		g_debug ("%s: operation canceled\n", __FUNCTION__);
 		goto close_dialog;
 	}
 
 	if (err) {
-		if (info->error) {
-			g_error_free (info->error);
-			info->error = NULL;
-		}			
-		info->error = g_error_copy (err);
+		g_debug ("%s: error getting the supported auth methods\n", __FUNCTION__);
 		goto close_dialog;
 	}
 
@@ -260,7 +245,7 @@ on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gbo
 
 	protocol_registry = modest_runtime_get_protocol_registry ();
 	pairs = modest_protocol_registry_get_pair_list_by_tag (protocol_registry, MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS);
-  
+
 	/* Get the enum value for the strings: */
 	result = NULL;
 	iter = tny_list_create_iterator(auth_types);
@@ -268,7 +253,7 @@ on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gbo
 		TnyPair *pair;
 		const gchar *auth_name;
 		ModestProtocolType protocol_type;
-		
+
 		pair = TNY_PAIR(tny_iterator_get_current(iter));
 		auth_name = NULL;
 		if (pair) {
@@ -276,43 +261,33 @@ on_camel_account_get_supported_secure_authentication (TnyCamelAccount *self, gbo
 			g_object_unref (pair);
 			pair = NULL;
 		}
-		
+
 		g_debug ("%s: auth_name=%s\n", __FUNCTION__, auth_name);
-		
+
 		protocol_type = modest_protocol_get_type_id (modest_protocol_registry_get_protocol_by_name (protocol_registry,
 													    MODEST_PROTOCOL_REGISTRY_AUTH_PROTOCOLS,
 													    auth_name));
-		
+
 		if (modest_protocol_registry_protocol_type_is_secure (protocol_registry, protocol_type))
 			result = g_list_prepend(result, GINT_TO_POINTER(protocol_type));
-		
+
 		tny_iterator_next(iter);
 	}
 	g_object_unref (iter);
 
 	modest_pair_list_free (pairs);
-	info->result = result;
+	*(info->result) = result;
 
  close_dialog:
 	/* Close the dialog in a main thread */
-	g_idle_add(on_idle_secure_auth_finished, info);
+	g_idle_add(on_idle_secure_auth_finished, info->dialog);
+
+	/* Free the info */
+	g_slice_free (ModestGetSupportedAuthInfo, info);
 }
 
-static void
-on_secure_auth_cancel(GtkWidget* dialog, int response, gpointer user_data)
-{
-	g_return_if_fail (GTK_IS_WIDGET(dialog));
-	
-	if(response == GTK_RESPONSE_REJECT || response == GTK_RESPONSE_DELETE_EVENT) {
-		ModestGetSupportedAuthInfo *info = (ModestGetSupportedAuthInfo*)user_data;
-		g_return_if_fail(info);
-		/* This gives the ownership of the info to the worker thread. */
-		info->result = NULL;
-		info->cancel = TRUE;
-	}
-}
 typedef struct {
-	GtkProgressBar *progress;
+	GtkWidget *progress;
 	gboolean not_finished;
 } KeepPulsing;
 
@@ -320,38 +295,42 @@ static gboolean
 keep_pulsing (gpointer user_data)
 {
 	KeepPulsing *info = (KeepPulsing *) user_data;
-	
-	gtk_progress_bar_pulse (info->progress);
 
 	if (!info->not_finished) {
-		g_object_unref (info->progress);
 		g_slice_free (KeepPulsing, info);
 		return FALSE;
 	}
-	
+
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (info->progress));
 	return TRUE;
 }
 
 GList*
-modest_utils_get_supported_secure_authentication_methods (ModestProtocolType protocol_type, 
-	const gchar* hostname, gint port, const gchar* username, GtkWindow *parent_window, GError** error)
+modest_utils_get_supported_secure_authentication_methods (ModestProtocolType protocol_type,
+							  const gchar* hostname,
+							  gint port,
+							  const gchar* username,
+							  GtkWindow *parent_window,
+							  GError** error)
 {
 	TnyAccount * tny_account = NULL;
 	ModestProtocolRegistry *protocol_registry;
-	ModestProtocol *protocol;
+	GtkWidget *dialog;
+	gint retval;
+	ModestTnyAccountStore *account_store;
+	TnySessionCamel *session = NULL;
+	ModestProtocol *protocol = NULL;
+	GList *result = NULL;
+	GtkWidget *progress;
 
 	g_return_val_if_fail (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID, NULL);
 
 	protocol_registry = modest_runtime_get_protocol_registry ();
-	
+
 	/* We need a connection to get the capabilities; */
 	if (!modest_platform_connect_and_wait (GTK_WINDOW (parent_window), NULL))
 		return NULL;
-	 
-	/*
-	result = g_list_append (result, GINT_TO_POINTER (MODEST_PROTOCOL_AUTH_CRAMMD5));
-	*/
-	
+
 	/* Create a TnyCamelAccount so we can use 
 	 * tny_camel_account_get_supported_secure_authentication(): */
 	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
@@ -359,121 +338,86 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 	if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
 		tny_account = modest_account_protocol_create_account (MODEST_ACCOUNT_PROTOCOL (protocol));
 	}
-	
+
 	if (!tny_account) {
 		g_printerr ("%s could not create tny account.", __FUNCTION__);
 		return NULL;
 	}
-	
-	/* Set proto, so that the prepare_func() vfunc will work when we call 
-	 * set_session(): */
-	 /* TODO: Why isn't this done in account_new()? */
-	tny_account_set_proto (tny_account,
-			       modest_protocol_get_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type)));
 
+	/* Set proto, so that the prepare_func() vfunc will work when
+	 * we call set_session(): */
+	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
+	tny_account_set_id (tny_account, "temp_account");
+	tny_account_set_proto (tny_account, modest_protocol_get_name (protocol));
 	tny_account_set_hostname (tny_account, hostname);
-	/* Required for POP, at least */
 	tny_account_set_user (tny_account, username);
-			       
+
 	if(port > 0)
 		tny_account_set_port (tny_account, port);
-		
+
 	/* Set the session for the account, so we can use it: */
-	ModestTnyAccountStore *account_store = modest_runtime_get_account_store ();
-	TnySessionCamel *session = 
-		modest_tny_account_store_get_session (TNY_ACCOUNT_STORE (account_store));
+	account_store = modest_runtime_get_account_store ();
+	session = modest_tny_account_store_get_session (TNY_ACCOUNT_STORE (account_store));
 	g_return_val_if_fail (session, NULL);
 	tny_camel_account_set_session (TNY_CAMEL_ACCOUNT(tny_account), session);
-	
-	
+
+	dialog = gtk_dialog_new_with_buttons(" ",
+					     parent_window,
+					     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+					     _("mcen_bd_dialog_cancel"),
+					     GTK_RESPONSE_REJECT,
+					     NULL);
+
 	/* Ask camel to ask the server, asynchronously: */
 	ModestGetSupportedAuthInfo *info = g_slice_new (ModestGetSupportedAuthInfo);
-	info->result = NULL;
-	info->cancel = FALSE;
-	info->error = NULL;
-	info->progress = gtk_progress_bar_new();
+	info->result = &result;
+	info->dialog = dialog;
 
-	info->dialog = gtk_dialog_new_with_buttons(" ", 
-	                                           parent_window, GTK_DIALOG_MODAL,
-	                                           _("mcen_bd_dialog_cancel"),
-	                                           GTK_RESPONSE_REJECT,
-	                                           NULL);
-	
-	g_signal_connect(G_OBJECT(info->dialog), "response", G_CALLBACK(on_secure_auth_cancel), info);
-	
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox),
 	                  gtk_label_new(_("emev_ni_checking_supported_auth_methods")));
-	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), info->progress);
+	progress = gtk_progress_bar_new();
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(info->dialog)->vbox), progress);
 	gtk_widget_show_all(info->dialog);
 
 	KeepPulsing *pi = g_slice_new (KeepPulsing);
-	pi->progress = (GtkProgressBar *) g_object_ref (info->progress);
+	pi->progress = progress;
 	pi->not_finished = TRUE;
-	
+
 	/* Starts the pulsing of the progressbar */
 	g_timeout_add (500, keep_pulsing, pi);
-	
-	tny_camel_account_get_supported_secure_authentication (
-		TNY_CAMEL_ACCOUNT (tny_account),
-		on_camel_account_get_supported_secure_authentication,
-		on_camel_account_get_supported_secure_authentication_status,
-		info);
 
-	gtk_dialog_run (GTK_DIALOG (info->dialog));
-	
+	tny_camel_account_get_supported_secure_authentication (TNY_CAMEL_ACCOUNT (tny_account),
+							       on_camel_account_get_supported_secure_authentication,
+							       NULL,
+							       info);
+
+	retval = gtk_dialog_run (GTK_DIALOG (info->dialog));
+
 	pi->not_finished = FALSE;
 	/* pi is freed in the timeout itself to avoid a GCond here */
-	
-	gtk_widget_destroy(info->dialog);
-	info->dialog = NULL;
-			
-	GList *result = info->result;
-	if (!info->cancel) {
-		if (info->error) {
-			gchar * debug_url_string = tny_account_get_url_string  (tny_account);
-			g_warning ("%s:\n  error: %s\n  account url: %s", __FUNCTION__, info->error->message, 
-				   debug_url_string);
-			g_free (debug_url_string);
-			
-			g_propagate_error(error, info->error);
-			info->error = NULL;
-		}
-	} else {
-		// Tell the caller that the operation was canceled so it can
-		// make a difference
-		g_set_error(error,
-		            modest_utils_get_supported_secure_authentication_error_quark(),
-		            MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED,
-			    "User has canceled query");
-	}
 
-	/* Free the info */
-	if (info->error)
-		g_free (info->error);
-	if (info->result)
-		g_list_free (info->result);
-	if (info->dialog)
-		gtk_widget_destroy (info->dialog);
-	if (info->progress)
-		gtk_widget_destroy (info->progress);
-	g_slice_free (ModestGetSupportedAuthInfo, info);
+	gtk_widget_destroy(dialog);
+
+	/* Frees */
+	tny_account_cancel (tny_account);
+	g_object_unref (tny_account);
 
 	return result;
 }
 
-void 
-modest_utils_show_dialog_and_forget (GtkWindow *parent_window, 
+void
+modest_utils_show_dialog_and_forget (GtkWindow *parent_window,
 				     GtkDialog *dialog)
 {
 	g_return_if_fail (GTK_IS_WINDOW(parent_window));
 	g_return_if_fail (GTK_IS_DIALOG(dialog));
 
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
-	
+
 	/* Destroy the dialog when it is closed: */
-	g_signal_connect_swapped (dialog, 
-				  "response", 
-				  G_CALLBACK (gtk_widget_destroy), 
+	g_signal_connect_swapped (dialog,
+				  "response",
+				  G_CALLBACK (gtk_widget_destroy),
 				  dialog);
 
 	gtk_widget_show (GTK_WIDGET (dialog));
