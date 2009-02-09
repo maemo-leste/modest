@@ -2409,23 +2409,6 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 	return selected_attachments;
 }
 
-typedef struct {
-	gchar *filepath;
-	GtkWidget *banner;
-	guint banner_idle_id;
-} DecodeAsyncHelper;
-
-static gboolean
-decode_async_banner_idle (gpointer user_data)
-{
-	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
-
-	helper->banner_idle_id = 0;
-	helper->banner = hildon_banner_show_animation (NULL, NULL, _("mail_me_opening"));
-
-	return FALSE;
-}
-
 static void
 on_decode_to_stream_async_handler (TnyMimePart *mime_part, 
 				   gboolean cancelled, 
@@ -2433,16 +2416,8 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				   GError *err, 
 				   gpointer user_data)
 {
-	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
+	gchar *filepath = (gchar *) user_data;
 
-	if (helper->banner_idle_id > 0) {
-		g_source_remove (helper->banner_idle_id);
-		helper->banner_idle_id = 0;
-	}
-	if (helper->banner) {
-		gtk_widget_destroy (helper->banner);
-		helper->banner = NULL;
-	}
 	if (cancelled || err) {
 		modest_platform_information_banner (NULL, NULL, 
 						    _("mail_ib_file_operation_failed"));
@@ -2450,15 +2425,14 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	}
 
 	/* make the file read-only */
-	g_chmod(helper->filepath, 0444);
+	g_chmod(filepath, 0444);
 
 	/* Activate the file */
-	modest_platform_activate_file (helper->filepath, tny_mime_part_get_content_type (mime_part));
+	modest_platform_activate_file (filepath, tny_mime_part_get_content_type (mime_part));
 
  free:
 	/* Frees */
-	g_free (helper->filepath);
-	g_slice_free (DecodeAsyncHelper, helper);
+	g_free (filepath);
 }
 
 void
@@ -2518,16 +2492,12 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		TnyFsStream *temp_stream = NULL;
 		temp_stream = modest_utils_create_temp_stream (att_filename, attachment_uid,
 							       &filepath);
-		
+
 		if (temp_stream != NULL) {
-			DecodeAsyncHelper *helper = g_slice_new (DecodeAsyncHelper);
-			helper->filepath = g_strdup (filepath);
-			helper->banner = NULL;
-			helper->banner_idle_id = g_timeout_add (1000, decode_async_banner_idle, helper);
 			tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream), 
 							      on_decode_to_stream_async_handler, 
-							      NULL, 
-							      helper);
+							      NULL,
+							      g_strdup (filepath));
 			g_object_unref (temp_stream);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
