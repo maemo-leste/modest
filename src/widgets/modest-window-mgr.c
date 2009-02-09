@@ -37,6 +37,7 @@
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
 #include "modest-debug.h"
+#include <tny-simple-list.h>
 
 
 /* 'private'/'protected' functions */
@@ -69,10 +70,19 @@ static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_get_current_top_default (ModestWindowMgr *self);
 static gboolean modest_window_mgr_screen_is_on_default (ModestWindowMgr *self);
+static void modest_window_mgr_on_queue_changed (ModestMailOperationQueue *queue,
+						ModestMailOperation *mail_op,
+						ModestMailOperationQueueNotification type,
+						ModestWindowMgr *self);
+static void on_mail_operation_started (ModestMailOperation *mail_op,
+				       gpointer user_data);
+static void on_mail_operation_finished (ModestMailOperation *mail_op,
+					gpointer user_data);
 
 /* list my signals  */
 enum {
 	WINDOW_LIST_EMPTY_SIGNAL,
+	PROGRESS_LIST_CHANGED_SIGNAL,
 	NUM_SIGNALS
 };
 
@@ -91,6 +101,10 @@ struct _ModestWindowMgrPrivate {
 	GtkWidget    *cached_editor;
 	guint        idle_load_view_id;
 	guint        idle_load_editor_id;
+
+	guint        queue_change_handler;
+	TnyList      *progress_operations;
+	GSList       *sighandlers;
 };
 
 #define MODEST_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -170,6 +184,22 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
+
+	/**
+	 * ModestWindowMgr::progress-list-changed
+	 * @self: the #ModestWindowMgr that emits the signal
+	 * @user_data: user data set when the signal handler was connected
+	 *
+	 * Issued whenever the progress mail operations list becomes changed
+	 */
+	signals[PROGRESS_LIST_CHANGED_SIGNAL] =
+		g_signal_new ("progress-list-changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestWindowMgrClass, progress_list_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static gboolean
@@ -225,6 +255,9 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 	priv->cached_editor = NULL;
 
 	priv->windows_that_prevent_hibernation = NULL;
+
+	priv->queue_change_handler = 0;
+	priv->progress_operations = TNY_LIST (tny_simple_list_new ());
 }
 
 static void
@@ -254,6 +287,20 @@ modest_window_mgr_finalize (GObject *obj)
 	if (priv->windows_that_prevent_hibernation) {
 		g_slist_free (priv->windows_that_prevent_hibernation);
 		priv->cached_editor = NULL;
+	}
+
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
+	priv->sighandlers = NULL;
+
+	if (priv->queue_change_handler > 0) {
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+					     priv->queue_change_handler);
+		priv->queue_change_handler = 0;
+	}
+
+	if (priv->progress_operations) {
+		g_object_unref (priv->progress_operations);
+		priv->progress_operations = NULL;
 	}
 
 	g_slist_foreach (priv->preregistered_uids, (GFunc)g_free, NULL);
@@ -472,6 +519,14 @@ modest_window_mgr_register_window_default (ModestWindowMgr *self,
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* We set up the queue change handler */
+	if (priv->queue_change_handler == 0) {
+		priv->queue_change_handler = g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+							       "queue-changed",
+							       G_CALLBACK (modest_window_mgr_on_queue_changed),
+							       self);
+	}
 
 	/* Check that it's not a second main window */
 	if (MODEST_IS_MAIN_WINDOW (window)) {
@@ -892,4 +947,158 @@ modest_window_mgr_screen_is_on_default (ModestWindowMgr *self)
 	/* Default implementation is assuming screen is always on */
 
 	return TRUE;
+}
+
+static gboolean
+tny_list_find (TnyList *list, GObject *item)
+{
+	TnyIterator *iterator;
+	gboolean found = FALSE;
+
+	for (iterator = tny_list_create_iterator (list);
+	     !tny_iterator_is_done (iterator) && !found;
+	     tny_iterator_next (iterator)) {
+		GObject *current = tny_iterator_get_current (iterator);
+		if (current == item)
+			found = TRUE;
+		g_object_unref (current);
+	}
+	g_object_unref (iterator);
+	
+	return found;
+}
+
+static void
+modest_window_mgr_on_queue_changed (ModestMailOperationQueue *queue,
+				    ModestMailOperation *mail_op,
+				    ModestMailOperationQueueNotification type,
+				    ModestWindowMgr *self)
+{	
+	ModestWindowMgrPrivate *priv;
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* We register to track progress */
+	if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED) {
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-started",
+							       G_CALLBACK (on_mail_operation_started),
+							       self);
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-finished",
+							       G_CALLBACK (on_mail_operation_finished),
+							       self);
+	} else if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED) {
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-started");
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-finished");
+		if (tny_list_find  (priv->progress_operations, G_OBJECT (mail_op))) {
+			tny_list_remove (priv->progress_operations, G_OBJECT (mail_op));
+			g_signal_emit (self, signals[PROGRESS_LIST_CHANGED_SIGNAL], 0);
+		}
+	}
+}
+
+static void 
+on_mail_operation_started (ModestMailOperation *mail_op,
+			   gpointer user_data)
+{
+	ModestWindowMgr *self;
+	ModestWindowMgrPrivate *priv;
+	ModestMailOperationTypeOperation op_type;
+
+	self = MODEST_WINDOW_MGR (user_data);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* First we check if the operation is a send receive operation,
+	 * If now, we don't handle this */
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	if (op_type != MODEST_MAIL_OPERATION_TYPE_SEND &&
+	    op_type != MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE) {
+		return;
+	}
+
+	if (!tny_list_find (priv->progress_operations, G_OBJECT (mail_op))) {
+		tny_list_prepend (priv->progress_operations, G_OBJECT (mail_op));
+		g_signal_emit (self, signals[PROGRESS_LIST_CHANGED_SIGNAL], 0);
+	}
+}
+
+static void 
+on_mail_operation_finished (ModestMailOperation *mail_op,
+			    gpointer user_data)
+{
+	ModestWindowMgr *self;
+	ModestWindowMgrPrivate *priv;
+
+	self = MODEST_WINDOW_MGR (user_data);
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	if (tny_list_find (priv->progress_operations, G_OBJECT (mail_op))) {
+		tny_list_remove (priv->progress_operations, G_OBJECT (mail_op));
+		g_signal_emit (self, signals[PROGRESS_LIST_CHANGED_SIGNAL], 0);
+	}
+}
+
+TnyList *
+modest_window_mgr_get_progress_operations (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return tny_list_copy (priv->progress_operations);
+}
+
+gboolean 
+modest_window_mgr_has_progress_operation (ModestWindowMgr *self)
+{
+	ModestWindowMgrPrivate *priv;
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	return tny_list_get_length (priv->progress_operations) > 0;
+}
+
+gboolean 
+modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
+						     const gchar *account_name)
+{
+	ModestWindowMgrPrivate *priv;
+	gint account_ops = 0;
+	TnyIterator *iterator;
+
+	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
+
+	if (account_name == NULL)
+		return 0;
+
+	for (iterator = tny_list_create_iterator (priv->progress_operations);
+	     !tny_iterator_is_done (iterator);
+	     tny_iterator_next (iterator)) {
+		ModestMailOperation *mail_op; 
+		TnyAccount *account;
+
+		mail_op= MODEST_MAIL_OPERATION (tny_iterator_get_current (iterator));
+		account = modest_mail_operation_get_account (mail_op);
+
+		if (account != NULL) {
+			const gchar *current_name;
+
+			current_name = tny_account_get_name (account);
+			if (current_name && strcmp (current_name, account_name) == 0)
+				account_ops ++;
+			g_object_unref (account);
+		}
+
+		g_object_unref (mail_op);
+	}
+	g_object_unref (iterator);
+
+	return account_ops;
 }

@@ -59,7 +59,13 @@ static void on_account_activated (GtkTreeView *treeview,
 				  GtkTreePath *path,
 				  GtkTreeViewColumn *column,
 				  ModestAccountsWindow *accounts_window);
+static void on_progress_list_changed (ModestWindowMgr *mgr,
+				      ModestAccountsWindow *self);
 static void setup_menu (ModestAccountsWindow *self);
+static gboolean _modest_accounts_window_map_event (GtkWidget *widget,
+						   GdkEvent *event,
+						   gpointer userdata);
+static void update_progress_hint (ModestAccountsWindow *self);
 
 
 typedef struct _ModestAccountsWindowPrivate ModestAccountsWindowPrivate;
@@ -70,6 +76,7 @@ struct _ModestAccountsWindowPrivate {
 	/* signals */
 	GSList *sighandlers;
 
+	gboolean progress_hint;
 };
 #define MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									    MODEST_TYPE_ACCOUNTS_WINDOW, \
@@ -129,6 +136,7 @@ modest_accounts_window_instance_init (ModestAccountsWindow *obj)
 	priv->sighandlers = NULL;
 	
 	priv->account_view = NULL;
+	priv->progress_hint = FALSE;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -170,6 +178,12 @@ connect_signals (ModestAccountsWindow *self)
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
 						       G_OBJECT (priv->account_view), "row-activated", 
 						       G_CALLBACK (on_account_activated), self);
+
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (modest_runtime_get_window_mgr ()),
+						       "progress-list-changed",
+						       G_CALLBACK (on_progress_list_changed), self);
+								 
 
 	/* window */
 
@@ -226,6 +240,12 @@ modest_accounts_window_new (void)
 	 * and we don't want to do that until later,
 	 * so that the UI is not visible for non-menu D-Bus activation.
 	 */
+
+	g_signal_connect (G_OBJECT (self), "map-event",
+			  G_CALLBACK (_modest_accounts_window_map_event),
+			  G_OBJECT (self));
+	update_progress_hint (self);
+
 
 	return MODEST_WINDOW(self);
 }
@@ -298,3 +318,36 @@ on_account_activated (GtkTreeView *account_view,
 
 }
 
+static gboolean 
+_modest_accounts_window_map_event (GtkWidget *widget,
+				   GdkEvent *event,
+				   gpointer userdata)
+{
+	ModestAccountsWindow *self = (ModestAccountsWindow *) userdata;
+	ModestAccountsWindowPrivate *priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
+
+	if (priv->progress_hint) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+	}
+
+	return FALSE;
+}
+
+static void
+update_progress_hint (ModestAccountsWindow *self)
+{
+	ModestAccountsWindowPrivate *priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
+
+	priv->progress_hint = modest_window_mgr_has_progress_operation (modest_runtime_get_window_mgr ());
+	
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
+	}
+}
+
+static void
+on_progress_list_changed (ModestWindowMgr *mgr,
+			  ModestAccountsWindow *self)
+{
+	update_progress_hint (self);
+}

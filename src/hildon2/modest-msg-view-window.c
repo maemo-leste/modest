@@ -788,7 +788,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	g_signal_connect (G_OBJECT (obj), "move-focus",
 			  G_CALLBACK (on_move_focus), obj);
 
-	g_signal_connect (G_OBJECT (obj), "expose-event",
+	g_signal_connect (G_OBJECT (obj), "map-event",
 			  G_CALLBACK (_modest_msg_view_window_map_event),
 			  G_OBJECT (obj));
 

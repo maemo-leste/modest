@@ -82,6 +82,7 @@ struct _ModestWindowMgrClass {
 	gboolean              (*screen_is_on)                   (ModestWindowMgr *self);
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
+	void (*progress_list_changed) (ModestWindowMgr *self);
 };
 
 
@@ -413,6 +414,38 @@ ModestWindow* modest_window_mgr_get_current_top (ModestWindowMgr *self);
  * Returns: %TRUE if screen is on, %FALSE if not
  */
 gboolean modest_window_mgr_screen_is_on (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_get_progress_operations:
+ * @self: a #ModestWindowMgr
+ *
+ * get a list of operations in progress
+ *
+ * Returns: a newly allocated #TnyList
+ */
+TnyList *modest_window_mgr_get_progress_operations (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_has_progress_operation:
+ * @self: a #ModestWindowMgr
+ *
+ * is there are send/receive or receive operations in progress for any account.
+ *
+ * Returns: %TRUE if receive progress operations are in progress.
+ */
+gboolean modest_window_mgr_has_progress_operation (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_has_progress_operation:
+ * @self: a #ModestWindowMgr
+ * @account_name: a string
+ *
+ * is there are send/receive or receive operations in progress for @account_name.
+ *
+ * Returns: %TRUE if receive progress operations are in progress.
+ */
+gboolean modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
+							      const gchar *account_name);
 
 G_END_DECLS
 
