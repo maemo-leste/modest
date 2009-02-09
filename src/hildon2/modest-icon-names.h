@@ -65,7 +65,7 @@
 #define MODEST_FOLDER_ICON_CLOSED		"qgn_list_gene_fldr_cls"
 
 #define MODEST_FOLDER_ICON_ACCOUNT		"general_web"
-#define MODEST_FOLDER_ICON_INBOX		"general_received"
+#define MODEST_FOLDER_ICON_INBOX		"email_inbox"
 #define MODEST_FOLDER_ICON_OUTBOX		"general_outbox"
 #define MODEST_FOLDER_ICON_SENT			"general_sent"
 #define MODEST_FOLDER_ICON_TRASH		"general_folder"
