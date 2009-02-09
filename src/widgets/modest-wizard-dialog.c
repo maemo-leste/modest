@@ -94,7 +94,7 @@ static void make_buttons_sensitive  (ModestWizardDialog *wizard_dialog,
                                      gboolean           previous,
                                      gboolean           finish,
                                      gboolean next);
-                                     
+
 static gboolean invoke_before_next_vfunc (ModestWizardDialog *wizard_dialog);
 static void invoke_enable_buttons_vfunc (ModestWizardDialog *wizard_dialog);
 
@@ -556,17 +556,18 @@ response (ModestWizardDialog   *wizard_dialog,
     gint last = gtk_notebook_get_n_pages (notebook) - 1;
     is_last = current == last;
     is_first = current == 0;
-    
+
     /* If first page, previous and finish are disabled, 
        if last page, next is disabled */
-/*     make_buttons_sensitive (wizard_dialog, */
-/*             !is_first /\* previous *\/, !is_first /\* finish *\/, !is_last /\* next*\/); */
-    make_buttons_sensitive (wizard_dialog, TRUE, TRUE, TRUE);
-            
+    make_buttons_sensitive (wizard_dialog,
+			    (is_first) ? FALSE : TRUE,
+			    TRUE,
+			    (is_last) ? FALSE : TRUE);
+
     /* Allow derived classes to disable buttons to prevent navigation,
      * according to their own validation logic: */
     invoke_enable_buttons_vfunc (wizard_dialog);
-    
+
     /* Don't let the dialog close */
     g_signal_stop_emission_by_name (wizard_dialog, "response");
 
