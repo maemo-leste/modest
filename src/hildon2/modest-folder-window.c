@@ -390,10 +390,10 @@ static void setup_menu (ModestFolderWindow *self)
 					   NULL);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_folder"), NULL,
 					   APP_MENU_CALLBACK (set_moveto_edit_mode),
-					   NULL);
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_move_to));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_delete_folder"), NULL,
 					   APP_MENU_CALLBACK (set_delete_edit_mode),
-					   NULL);
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_delete));
 
 	/* new message */
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), 

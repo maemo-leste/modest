@@ -89,6 +89,8 @@ gboolean modest_ui_dimming_rules_on_save_to_drafts (ModestWindow *win, gpointer 
 gboolean modest_ui_dimming_rules_on_insert_image (ModestWindow *win, gpointer user_data);
 #ifdef MODEST_TOOLKIT_HILDON2
 gboolean modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data);
 #endif
 
 G_END_DECLS

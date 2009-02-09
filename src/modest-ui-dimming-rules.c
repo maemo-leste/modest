@@ -471,6 +471,8 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 		}
 
 #ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_FOLDER_WINDOW (win)) {
+		dimmed = modest_ui_dimming_rules_on_folder_window_delete (win, user_data);
 	} else if (MODEST_IS_HEADER_WINDOW (win)) {
 
 		if (!dimmed)
@@ -1043,6 +1045,8 @@ modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data)
 #ifdef MODEST_TOOLKIT_HILDON2
 	else if (MODEST_IS_HEADER_WINDOW (win))
 		dimmed = modest_ui_dimming_rules_on_header_window_move_to (win, user_data);
+	else if (MODEST_IS_FOLDER_WINDOW (win))
+		dimmed = modest_ui_dimming_rules_on_folder_window_move_to (win, user_data);
 #endif
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) 
 		 dimmed = modest_ui_dimming_rules_on_view_window_move_to (win, user_data);
@@ -1193,6 +1197,42 @@ modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer us
 			g_object_unref (folder);
 		}
 	}
+
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	dimmed = _transfer_mode_enabled (win);
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	dimmed = _transfer_mode_enabled (win);
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
 
 	return dimmed;
 }
