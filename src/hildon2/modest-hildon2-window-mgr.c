@@ -726,7 +726,9 @@ on_account_removed (TnyAccountStore *acc_store,
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
 
-	if (current_top && MODEST_IS_ACCOUNTS_WINDOW (current_top))
+	if (current_top &&
+	    MODEST_IS_ACCOUNTS_WINDOW (current_top) &&
+	    !modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE))
 		create_folders_view (MODEST_WINDOW_MGR (user_data));
 }
 
