@@ -169,39 +169,36 @@ modest_accounts_window_disconnect_signals (ModestWindow *self)
 
 static void
 connect_signals (ModestAccountsWindow *self)
-{	
+{
 	ModestAccountsWindowPrivate *priv;
-	
+
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 
 	/* accounts view */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
-						       G_OBJECT (priv->account_view), "row-activated", 
-						       G_CALLBACK (on_account_activated), self);
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->account_view), "row-activated", 
+					   G_CALLBACK (on_account_activated), self);
 
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
-						       G_OBJECT (modest_runtime_get_window_mgr ()),
-						       "progress-list-changed",
-						       G_CALLBACK (on_progress_list_changed), self);
-								 
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (modest_runtime_get_window_mgr ()),
+					   "progress-list-changed",
+					   G_CALLBACK (on_progress_list_changed), self);
 
-	/* window */
-
-	/* we don't register this in sighandlers, as it should be run after disconnecting all signals,
-	 * in destroy stage */
-
-	
+	/* we don't register this in sighandlers, as it should be run
+	 * after disconnecting all signals, in destroy stage */
 }
 
 ModestWindow *
 modest_accounts_window_new (void)
 {
-	ModestAccountsWindow *self = NULL;	
+	ModestAccountsWindow *self = NULL;
 	ModestAccountsWindowPrivate *priv = NULL;
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GtkWidget *pannable;
-	
+
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 
@@ -303,7 +300,7 @@ on_account_activated (GtkTreeView *account_view,
 	GtkWidget *folder_window;
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
-	
+
 	account_name = modest_account_view_get_path_account (MODEST_ACCOUNT_VIEW (priv->account_view), path);
 	if (!account_name)
 		return;

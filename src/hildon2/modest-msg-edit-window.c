@@ -3628,6 +3628,8 @@ typedef struct _MessageSettingsHelper {
 	ModestMsgEditWindow *window;
 	GSList *priority_group;
 	GSList *format_group;
+	GtkToggleButton *current_priority;
+	GtkToggleButton *current_format;
 } MessageSettingsHelper;
 
 static void
@@ -3647,12 +3649,7 @@ on_priority_toggle (GtkToggleButton *button,
 				gtk_toggle_button_set_active (node_button, FALSE);
 			}
 		}
-		if (priv->priority_flags != (TnyHeaderFlags) g_object_get_data (G_OBJECT (button), "priority"))
-			modest_msg_edit_window_set_priority_flags (helper->window,
-								   (TnyHeaderFlags) 
-								   g_object_get_data (G_OBJECT (button), 
-										      "priority"));
-		
+		helper->current_priority = button;
 	} else {
 		gboolean found = FALSE;
 		/* If no one is active, activate it again */
@@ -3675,10 +3672,8 @@ on_format_toggle (GtkToggleButton *button,
 {
 	GSList *node;
 	ModestMsgEditWindowPrivate *priv;
-	ModestMsgEditFormat old_format;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (helper->window);
-	old_format = modest_msg_edit_window_get_format (helper->window);
 	if (gtk_toggle_button_get_active (button)) {
 
 		for (node = helper->format_group; node != NULL; node = g_slist_next (node)) {
@@ -3688,11 +3683,7 @@ on_format_toggle (GtkToggleButton *button,
 				gtk_toggle_button_set_active (node_button, FALSE);
 			}
 		}
-		if (old_format != (ModestMsgEditFormat) g_object_get_data (G_OBJECT (button), "format")) {
-			modest_msg_edit_window_set_file_format (MODEST_MSG_EDIT_WINDOW (helper->window), 
-								GPOINTER_TO_INT (g_object_get_data (G_OBJECT (button), "file-format")));
-		}
-		
+		helper->current_format = button;
 	} else {
 		gboolean found = FALSE;
 		/* If no one is active, activate it again */
@@ -3814,14 +3805,30 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	g_signal_connect (G_OBJECT (html_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
 	g_signal_connect (G_OBJECT (text_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
 
-	/* Show */
-	gtk_dialog_run (GTK_DIALOG (dialog));
+	/* Save settings if the user clicked on done */
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		TnyHeaderFlags flags;
+		ModestMsgEditFormat old_format, new_format;
+
+		/* Set priority flags */
+		flags = (TnyHeaderFlags) g_object_get_data (G_OBJECT (helper.current_priority), "priority");
+		if (priv->priority_flags !=  flags)
+			modest_msg_edit_window_set_priority_flags (window, flags);
+
+		/* Set edit format */
+		old_format = modest_msg_edit_window_get_format (window);
+		new_format = (ModestMsgEditFormat) g_object_get_data (G_OBJECT (helper.current_format), "format");
+		if (old_format != new_format) {
+			gint file_format = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (helper.current_format), "file-format"));
+			modest_msg_edit_window_set_file_format (window, file_format);
+		}
+	}
 
 	gtk_widget_destroy (dialog);
 	g_slist_free (helper.priority_group);
 }
 
-static void 
+static void
 on_message_settings (GtkAction *action,
 		     ModestMsgEditWindow *window)
 {
