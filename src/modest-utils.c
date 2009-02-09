@@ -671,7 +671,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 
 void
 modest_utils_run_sort_dialog (GtkWindow *parent_window,
-				 ModestSortDialogType type)
+			      ModestSortDialogType type)
 {
 	GtkWidget *dialog = NULL;
 

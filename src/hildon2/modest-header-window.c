@@ -90,6 +90,9 @@ struct _ModestHeaderWindowPrivate {
 	/* progress hint */
 	gboolean progress_hint;
 	gchar *current_store_account;
+
+	/* sort button */
+	GtkWidget *sort_button;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_HEADER_WINDOW, \
@@ -151,6 +154,9 @@ static void edit_mode_changed (ModestHeaderWindow *header_window,
 static void on_progress_list_changed (ModestWindowMgr *mgr,
 				      ModestHeaderWindow *self);
 static void update_progress_hint (ModestHeaderWindow *self);
+static void on_sort_column_changed (GtkTreeSortable *treesortable,
+				    gpointer         user_data);
+static void update_sort_button (ModestHeaderWindow *self);
 
 
 /* globals */
@@ -227,6 +233,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->progress_hint = FALSE;
 	priv->queue_change_handler = 0;
 	priv->current_store_account = NULL;
+	priv->sort_button = NULL;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -285,6 +292,7 @@ static void
 connect_signals (ModestHeaderWindow *self)
 {	
 	ModestHeaderWindowPrivate *priv;
+	GtkTreeSortable *sortable;
 	
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
@@ -309,6 +317,16 @@ connect_signals (ModestHeaderWindow *self)
 					   G_OBJECT (priv->header_view),
 					   "expose-event",
 					   G_CALLBACK (on_expose_event),
+					   self);
+
+	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
+				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (
+								      GTK_TREE_VIEW (priv->header_view)))));
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (sortable),
+					   "sort-column-changed",
+					   G_CALLBACK (on_sort_column_changed),
 					   self);
 
 	priv->sighandlers =
@@ -476,6 +494,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 		g_object_unref (settings);
 	}
 	update_progress_hint (self);
+	update_sort_button (self);
 
 	return MODEST_WINDOW(self);
 }
@@ -494,7 +513,10 @@ modest_header_window_get_header_view (ModestHeaderWindow *self)
 
 static void setup_menu (ModestHeaderWindow *self)
 {
+	ModestHeaderWindowPrivate *priv;
+
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_messages"), NULL,
 					   APP_MENU_CALLBACK (set_moveto_edit_mode),
@@ -505,9 +527,13 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_folder_details"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_sort"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_sort),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_sort));
+	priv->sort_button = hildon_button_new (MODEST_EDITABLE_SIZE,
+					       HILDON_BUTTON_ARRANGEMENT_VERTICAL);
+	hildon_button_set_title (HILDON_BUTTON (priv->sort_button), _("mcen_me_sort"));
+	g_signal_connect (G_OBJECT (priv->sort_button), "clicked",
+			  G_CALLBACK (modest_ui_actions_on_sort), (gpointer) self);
+	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->sort_button),
+						  modest_ui_dimming_rules_on_sort);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
@@ -934,4 +960,78 @@ edit_mode_changed (ModestHeaderWindow *header_window,
 	else
 		modest_header_view_unset_filter (MODEST_HEADER_VIEW (priv->header_view), 
 						 filter);
+}
+
+static void 
+on_sort_column_changed (GtkTreeSortable *treesortable,
+			gpointer         user_data)
+{
+	update_sort_button (MODEST_HEADER_WINDOW (user_data));
+}
+
+static void
+update_sort_button (ModestHeaderWindow *self)
+{
+	ModestHeaderWindowPrivate *priv;
+	GtkTreeSortable *sortable;
+	gint current_sort_colid = -1;
+	GtkSortType current_sort_type;
+	const gchar *value = NULL;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
+				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (
+								      GTK_TREE_VIEW (priv->header_view)))));
+
+	if (!gtk_tree_sortable_get_sort_column_id (sortable,
+						   &current_sort_colid, &current_sort_type)) {
+		value =  _("mcen_li_sort_sender_date_newest");
+	} else {
+		switch (current_sort_colid) {
+		case TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN:
+		{
+			GList *cols = NULL;
+			cols = modest_header_view_get_columns (MODEST_HEADER_VIEW (priv->header_view));
+			if (cols != NULL) {
+				gpointer flags_sort_type_pointer;
+				flags_sort_type_pointer = g_object_get_data (G_OBJECT (cols->data), 
+									     MODEST_HEADER_VIEW_FLAG_SORT);
+				if (GPOINTER_TO_INT (flags_sort_type_pointer) == TNY_HEADER_FLAG_PRIORITY_MASK)
+					value = _("mcen_li_sort_priority");
+				else
+					value = _("mcen_li_sort_attachment");
+				g_list_free(cols);	
+			}
+		} 
+		break;
+		case TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN:
+		case TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN:
+			if (current_sort_type == GTK_SORT_ASCENDING)
+				value = _("mcen_li_sort_sender_recipient_az");
+			else
+				value = _("mcen_li_sort_sender_recipient_za");
+			break;
+		case TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN:
+		case TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN:
+			if (current_sort_type == GTK_SORT_ASCENDING)
+				value = _("mcen_li_sort_date_oldest");
+			else
+				value = _("mcen_li_sort_date_newest");
+			break;
+		case TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN:
+			if (current_sort_type == GTK_SORT_ASCENDING)
+				value = _("mcen_li_sort_subject_az");
+			else
+				value = _("mcen_li_sort_subject_za");
+			break;
+		case TNY_GTK_HEADER_LIST_MODEL_MESSAGE_SIZE_COLUMN:
+			if (current_sort_type == GTK_SORT_ASCENDING)
+				value = _("mcen_li_sort_size_smallest");
+			else
+				value = _("mcen_li_sort_size_largest");
+			break;
+		} 
+	}
+
+	hildon_button_set_value (HILDON_BUTTON (priv->sort_button), value?value:"");
 }
