@@ -3573,17 +3573,19 @@ update_style (ModestFolderView *self)
 	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings
 					   (GTK_WIDGET(self)),
 					   "SmallSystemFont", NULL,
-					   G_TYPE_NONE);  
-	attr = pango_attr_font_desc_new (pango_font_description_copy
-					 (style->font_desc));
-	pango_attr_list_insert (attr_list, attr);
+					   G_TYPE_NONE);
+	if (style) {
+		attr = pango_attr_font_desc_new (pango_font_description_copy
+						 (style->font_desc));
+		pango_attr_list_insert (attr_list, attr);
 
-	g_object_set (G_OBJECT (priv->messages_renderer),
-		      "foreground-gdk", &style_color,
-		      "foreground-set", TRUE,
-		      "attributes", attr_list,
-		      NULL);
-	pango_attr_list_unref (attr_list);
+		g_object_set (G_OBJECT (priv->messages_renderer),
+			      "foreground-gdk", &style_color,
+			      "foreground-set", TRUE,
+			      "attributes", attr_list,
+			      NULL);
+		pango_attr_list_unref (attr_list);
+	}
 }
 
 static void 

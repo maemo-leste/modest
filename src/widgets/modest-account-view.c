@@ -482,37 +482,36 @@ bold_if_default_account_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer 
 				    GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
 	gboolean is_default;
-#ifdef MODEST_TOOLKIT_HILDON2
 	GtkStyle *style;
 	const gchar *font_style;
 	PangoAttribute *attr;
 	PangoAttrList *attr_list = NULL;
 	GtkWidget *widget;
-#endif
+
 	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
 			    &is_default, -1);
 
-#ifdef MODEST_TOOLKIT_HILDON2
 	widget = gtk_tree_view_column_get_tree_view (column);
 	font_style = is_default?"EmpSystemFont":"SystemFont";
 	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings (GTK_WIDGET(widget)),
 					   font_style, NULL,
 					   G_TYPE_NONE);
-	attr = pango_attr_font_desc_new (pango_font_description_copy (style->font_desc));
+	if (style) {
+		attr = pango_attr_font_desc_new (pango_font_description_copy (style->font_desc));
 
-	attr_list = pango_attr_list_new ();
-	pango_attr_list_insert (attr_list, attr);
+		attr_list = pango_attr_list_new ();
+		pango_attr_list_insert (attr_list, attr);
 
-	g_object_set (G_OBJECT(renderer),
-		      "attributes", attr_list, 
-		      NULL);
+		g_object_set (G_OBJECT(renderer),
+			      "attributes", attr_list, 
+			      NULL);
 
-	pango_attr_list_unref (attr_list);
-#else
-	g_object_set (G_OBJECT(renderer),
-		      "weight", is_default ? 800: 400,
-		      NULL);
-#endif
+		pango_attr_list_unref (attr_list);
+	} else {
+		g_object_set (G_OBJECT(renderer),
+			      "weight", is_default ? 800: 400,
+			      NULL);
+	}
 }
 
 static void
@@ -520,37 +519,36 @@ bold_if_default_last_updated_cell_data  (GtkTreeViewColumn *column,  GtkCellRend
 					 GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
 	gboolean is_default;
-#ifdef MODEST_TOOLKIT_HILDON2
 	GtkStyle *style;
 	const gchar *font_style;
 	PangoAttribute *attr;
 	PangoAttrList *attr_list = NULL;
 	GtkWidget *widget;
-#endif
+
 	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
 			    &is_default, -1);
 
-#ifdef MODEST_TOOLKIT_HILDON2
 	widget = gtk_tree_view_column_get_tree_view (column);
 	font_style = is_default?"EmpSmallSystemFont":"SmallSystemFont";
 	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings (GTK_WIDGET(widget)),
 					   font_style, NULL,
 					   G_TYPE_NONE);
-	attr = pango_attr_font_desc_new (pango_font_description_copy (style->font_desc));
+	if (style) {
+		attr = pango_attr_font_desc_new (pango_font_description_copy (style->font_desc));
 
-	attr_list = pango_attr_list_new ();
-	pango_attr_list_insert (attr_list, attr);
+		attr_list = pango_attr_list_new ();
+		pango_attr_list_insert (attr_list, attr);
 
-	g_object_set (G_OBJECT(renderer),
-		      "attributes", attr_list, 
-		      NULL);
+		g_object_set (G_OBJECT(renderer),
+			      "attributes", attr_list, 
+			      NULL);
 
-	pango_attr_list_unref (attr_list);
-#else
-	g_object_set (G_OBJECT(renderer),
-		      "weight", is_default ? 800: 400,
-		      NULL);
-#endif
+		pango_attr_list_unref (attr_list);
+	} else {
+		g_object_set (G_OBJECT(renderer),
+			      "weight", is_default ? 800: 400,
+			      NULL);
+	}
 }
 
 static void
