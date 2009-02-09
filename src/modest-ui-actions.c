@@ -5831,13 +5831,6 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 		main_window = 
 			MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 									       FALSE)); /* don't create */
-
-	/* Get the folder view widget if exists */
-	if (main_window)
-		folder_view = modest_main_window_get_child_widget (main_window,
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	else
-		folder_view = NULL;
 #endif
 
 	list_to_move = modest_platform_get_list_to_move (MODEST_WINDOW (win));
