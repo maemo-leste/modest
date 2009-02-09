@@ -436,7 +436,7 @@ TnyList *modest_window_mgr_get_progress_operations (ModestWindowMgr *self);
 gboolean modest_window_mgr_has_progress_operation (ModestWindowMgr *self);
 
 /**
- * modest_window_mgr_has_progress_operation:
+ * modest_window_mgr_has_progress_operation_on_account:
  * @self: a #ModestWindowMgr
  * @account_name: a string
  *

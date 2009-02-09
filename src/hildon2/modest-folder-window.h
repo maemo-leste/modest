@@ -94,6 +94,16 @@ ModestFolderView *modest_folder_window_get_folder_view (ModestFolderWindow *self
 void modest_folder_window_set_account (ModestFolderWindow *self,
 				       const gchar *account_name);
 
+/**
+ * modest_folder_Window_transfer_mode_enabled:
+ * @self: a #ModestFolderWindow
+ *
+ * if @self is in transfer mode (progress hint visible)
+ *
+ * Returns: %TRUE if progress hint should be visible
+ */
+gboolean modest_folder_window_transfer_mode_enabled (ModestFolderWindow *self);
+
 G_END_DECLS
 
 #endif

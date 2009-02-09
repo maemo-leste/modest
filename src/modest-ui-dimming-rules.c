@@ -50,6 +50,7 @@
 #include <modest-runtime.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-header-window.h>
+#include <modest-folder-window.h>
 #endif
 
 
@@ -2803,6 +2804,8 @@ _transfer_mode_enabled (ModestWindow *win)
         } else if (MODEST_IS_MAIN_WINDOW(win)) {
                 result = modest_main_window_transfer_mode_enabled (MODEST_MAIN_WINDOW (win));
 #ifdef MODEST_TOOLKIT_HILDON2
+	} else if (MODEST_IS_FOLDER_WINDOW (win)) {
+		result = modest_folder_window_transfer_mode_enabled (MODEST_FOLDER_WINDOW (win));
 	} else if (MODEST_IS_HEADER_WINDOW (win)) {
 		result = modest_header_window_transfer_mode_enabled (MODEST_HEADER_WINDOW (win));
 #endif

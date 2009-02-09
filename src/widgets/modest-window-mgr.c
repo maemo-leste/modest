@@ -1090,7 +1090,7 @@ modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
 		if (account != NULL) {
 			const gchar *current_name;
 
-			current_name = tny_account_get_name (account);
+			current_name = tny_account_get_id (account);
 			if (current_name && strcmp (current_name, account_name) == 0)
 				account_ops ++;
 			g_object_unref (account);

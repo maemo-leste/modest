@@ -84,6 +84,12 @@ static void edit_mode_changed (ModestFolderWindow *folder_window,
 			       gint edit_mode_id,
 			       gboolean enabled,
 			       ModestFolderWindow *self);
+static void on_progress_list_changed (ModestWindowMgr *mgr,
+				      ModestFolderWindow *self);
+static gboolean on_map_event (GtkWidget *widget,
+			      GdkEvent *event,
+			      gpointer userdata);
+static void update_progress_hint (ModestFolderWindow *self);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -94,6 +100,8 @@ struct _ModestFolderWindowPrivate {
 	/* signals */
 	GSList *sighandlers;
 
+	gchar *current_store_account;
+	gboolean progress_hint;
 };
 #define MODEST_FOLDER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_FOLDER_WINDOW, \
@@ -161,6 +169,8 @@ modest_folder_window_init (ModestFolderWindow *obj)
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
 					    "applications_email_folderview");
+	priv->progress_hint = FALSE;
+	priv->current_store_account = NULL;
 }
 
 static void
@@ -169,6 +179,11 @@ modest_folder_window_finalize (GObject *obj)
 	ModestFolderWindowPrivate *priv;
 
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(obj);
+
+	if (priv->current_store_account) {
+		g_free (priv->current_store_account);
+		priv->current_store_account = NULL;
+	}
 
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
@@ -199,6 +214,10 @@ connect_signals (ModestFolderWindow *self)
 						       G_OBJECT (priv->folder_view), "folder-activated", 
 						       G_CALLBACK (on_folder_activated), self);
 
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (modest_runtime_get_window_mgr ()),
+						       "progress-list-changed",
+						       G_CALLBACK (on_progress_list_changed), self);
 	/* TODO: connect folder view activate */
 	
 	/* window */
@@ -294,6 +313,11 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_rename_folder));
 	
+	g_signal_connect (G_OBJECT (self), "map-event",
+			  G_CALLBACK (on_map_event),
+			  G_OBJECT (self));
+	update_progress_hint (self);
+
 	return MODEST_WINDOW(self);
 }
 
@@ -333,9 +357,13 @@ modest_folder_window_set_account (ModestFolderWindow *self,
 	if (!store_settings)
 		goto free_refs;
 
+	if (priv->current_store_account != NULL)
+		g_free (priv->current_store_account);
+	priv->current_store_account = g_strdup (modest_server_account_settings_get_account_name (store_settings));
+	
 	modest_folder_view_set_account_id_of_visible_server_account 
 		(MODEST_FOLDER_VIEW (priv->folder_view),
-		 modest_server_account_settings_get_account_name (store_settings));
+		 priv->current_store_account);
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
 	gtk_window_set_title (GTK_WINDOW (self), 
@@ -490,4 +518,50 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 	else
 		modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 						 filter);
+}
+
+static gboolean 
+on_map_event (GtkWidget *widget,
+	      GdkEvent *event,
+	      gpointer userdata)
+{
+	ModestFolderWindow *self = (ModestFolderWindow *) userdata;
+	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	if (priv->progress_hint) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+	}
+
+	return FALSE;
+}
+
+static void
+update_progress_hint (ModestFolderWindow *self)
+{
+	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	if (!priv->current_store_account)
+		return;
+
+	priv->progress_hint = modest_window_mgr_has_progress_operation_on_account (modest_runtime_get_window_mgr (),
+										   priv->current_store_account);
+	
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
+	}
+}
+
+static void
+on_progress_list_changed (ModestWindowMgr *mgr,
+			  ModestFolderWindow *self)
+{
+	update_progress_hint (self);
+}
+
+gboolean
+modest_folder_window_transfer_mode_enabled (ModestFolderWindow *self)
+{
+	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	return priv->progress_hint;
 }
