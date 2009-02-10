@@ -101,7 +101,7 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 	{ "CloseWindowShortcut", NULL, NULL, "Escape", NULL, NULL },
 
 	/* TOOLBAR ACTIONS */
-	{ "ToolbarSend", MODEST_STOCK_MAIL_SEND, N_("qgn_toolb_messagin_send"),  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+	{ "ToolbarSend", MODEST_TOOLBAR_ICON_MAIL_SEND, MODEST_TOOLBAR_ICON_MAIL_SEND,  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	/* Find in page. This is a normal menu option in Hildon2, and a checkbox in the others */

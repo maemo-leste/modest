@@ -1335,6 +1335,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	gtk_toolbar_set_show_arrow (GTK_TOOLBAR (parent_priv->toolbar), FALSE);
 	gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
 	hildon_window_add_toolbar (HILDON_WINDOW (window), GTK_TOOLBAR (parent_priv->toolbar));
 
@@ -1345,6 +1346,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* font color */
 	priv->font_color_toolitem = GTK_WIDGET (gtk_tool_item_new ());
 	priv->font_color_button = hildon_color_button_new ();
+	gtk_widget_set_size_request (priv->font_color_button, -1, 48);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_toolitem, GTK_CAN_FOCUS);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_button, GTK_CAN_FOCUS);
 	gtk_container_add (GTK_CONTAINER (priv->font_color_toolitem), priv->font_color_button);
@@ -1367,6 +1369,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 			      size_text,"</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 	g_free (markup);
+	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->size_tool_button_label);
 	sizes_menu = gtk_menu_new ();
 	priv->size_items_group = NULL;
@@ -1395,8 +1398,8 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), sizes_menu);
 	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
-	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
 	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
 	priv->font_size_toolitem = tool_item;
 
@@ -1406,6 +1409,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 	g_free(markup);
+	hildon_helper_set_logical_font (priv->font_tool_button_label, "LargeSystemFont");
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->font_tool_button_label);
 	fonts_menu = gtk_menu_new ();
 	priv->font_items_group = NULL;
@@ -1438,8 +1442,8 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), fonts_menu);
 	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
-	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
 	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
 	priv->font_face_toolitem = tool_item;
 

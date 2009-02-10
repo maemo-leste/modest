@@ -79,12 +79,12 @@
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ToolbarSend"/>
-    <separator/>
     <placeholder name="FontAttributes" />
     <toolitem action="ActionsBold"/>
     <toolitem action="ActionsItalics"/>
     <placeholder name="FontColor" />
+    <separator/>
+    <toolitem action="ToolbarSend"/>
   </toolbar>
 
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
