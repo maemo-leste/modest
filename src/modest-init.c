@@ -679,7 +679,11 @@ init_stock_icons (void)
 #ifndef MODEST_PLATFORM_GTK  
 			pixbuf = gtk_icon_theme_load_icon (current_theme,
 							   items_names[i],
+#ifdef MODEST_TOOLKIT_HILDON2
+							   48,
+#else
 							   26,
+#endif
 							   GTK_ICON_LOOKUP_NO_SVG,
 							   NULL);
 #else
