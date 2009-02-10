@@ -540,75 +540,40 @@ static GSList *
 select_email_addrs_for_contact(GList * email_addr_list)
 {
 	GtkWidget *select_email_addr_dlg = NULL;
-	GtkWidget *view = NULL, *pannable = NULL;
-	GtkTreeSelection *selection = NULL;
-	GtkCellRenderer *renderer = NULL;
-	GtkTreeViewColumn *col = NULL;
-	GtkListStore *list_store = NULL;
-	GtkTreeModel *model = NULL;
-	GtkTreeIter iter;
-	GList *pathslist = NULL, *node = NULL;
-	gint result = -1;
-	gchar *email_addr = NULL;
 	GSList *selected_email_addr_list = NULL;
+	GList *node;
+	GtkWidget *selector;
+	gint result = -1;
 
 	if (!email_addr_list)
 		return NULL;
 
-	select_email_addr_dlg =
-	    gtk_dialog_new_with_buttons(_("mcen_ti_select_email_title"),
-					NULL,
-					GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-					_HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
-	gtk_dialog_set_has_separator(GTK_DIALOG(select_email_addr_dlg), FALSE);
+	select_email_addr_dlg = hildon_picker_dialog_new (NULL);
+	gtk_window_set_title (GTK_WINDOW (select_email_addr_dlg), _("mcen_ti_select_email_title"));
 
-	/* Make the window approximately big enough, because it doesn't resize to be big enough 
-	 * for the window title text: */
-	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), MODEST_DIALOG_WINDOW_MAX_HEIGHT, -1);
-
-	pannable = hildon_pannable_area_new();
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(select_email_addr_dlg)->vbox), pannable, TRUE,
-			   TRUE, 0);
-
-	view = gtk_tree_view_new();
-	col = gtk_tree_view_column_new();
-	renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), col);
-	gtk_tree_view_column_pack_start(col, renderer, TRUE);
-	gtk_tree_view_column_add_attribute(col, renderer, "text", 0);
-	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-	gtk_container_add(GTK_CONTAINER(pannable), view);
-
-	list_store = gtk_list_store_new(1, G_TYPE_STRING);
-	model = GTK_TREE_MODEL(list_store);
-	gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
-
+	selector = hildon_touch_selector_new_text ();
 	for (node = email_addr_list; node != NULL && node->data != NULL; node = node->next) {
+		gchar *email_addr;
 		email_addr = g_strstrip(g_strdup(node->data));
-		gtk_list_store_append(list_store, &iter);
-		gtk_list_store_set(list_store, &iter, 0, email_addr, -1);
+		hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), email_addr);
 		g_free(email_addr);
 	}
-	gtk_tree_model_get_iter_first (GTK_TREE_MODEL (list_store), &iter);
-	gtk_tree_selection_select_iter (selection, &iter);
 
+	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (select_email_addr_dlg),
+					   HILDON_TOUCH_SELECTOR (selector));
+	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), MODEST_DIALOG_WINDOW_MAX_HEIGHT, -1);
+	
 	gtk_widget_show_all(select_email_addr_dlg);
 	result = gtk_dialog_run(GTK_DIALOG(select_email_addr_dlg));
 
-	if (result == GTK_RESPONSE_ACCEPT) {
-		pathslist = gtk_tree_selection_get_selected_rows(selection, NULL);
-		for (node = pathslist; node != NULL; node = node->next) {
-			if (gtk_tree_model_get_iter(model, &iter, (GtkTreePath *) node->data)) {
-				gtk_tree_model_get(model, &iter, 0, &email_addr, -1);
-				selected_email_addr_list =
-				    g_slist_append(selected_email_addr_list, g_strdup(email_addr));
-				g_free(email_addr);
-			}
-		}
+	if (result == GTK_RESPONSE_OK) {
+		gchar *current_text;
+
+		current_text = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+		selected_email_addr_list = g_slist_append (selected_email_addr_list, current_text);
+		
 	}
 
-	gtk_list_store_clear(list_store);
 	gtk_widget_destroy(select_email_addr_dlg);
 	return selected_email_addr_list;
 }
