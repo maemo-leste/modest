@@ -1467,6 +1467,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			    proto_type != priv->last_plugin_protocol_selected) {
 				ModestPairList *tabs;
 				GSList *tmp;
+				gboolean first_page = TRUE;
 
 				/* Remember the last selected plugin protocol */
 				priv->last_plugin_protocol_selected = proto_type;
@@ -1479,6 +1480,11 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 					modest_easysetup_wizard_dialog_append_page (notebook,
 										    GTK_WIDGET (pair->second),
 										    (const gchar *) pair->first);
+					if (first_page) {
+						gtk_container_set_focus_child (GTK_CONTAINER (notebook),
+									       GTK_WIDGET (pair->second));
+						first_page = FALSE;
+					}
 
 					/* Connect signals */
 					priv->missing_data_signals = 
