@@ -49,6 +49,8 @@
 #include "modest-hildon-includes.h"
 #endif /*!MODEST_TOOLKIT_GTK*/
 
+#define RECPT_BUTTON_WIDTH_HILDON2 118
+
 
 static GObjectClass *parent_class = NULL;
 
@@ -352,10 +354,14 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (instance);
 
 	priv->abook_button = gtk_button_new ();
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_widget_set_size_request (priv->abook_button, RECPT_BUTTON_WIDTH_HILDON2, -1);
+#else
 	gtk_button_set_relief (GTK_BUTTON (priv->abook_button), GTK_RELIEF_NONE);
+#endif
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->abook_button), FALSE);
 	GTK_WIDGET_UNSET_FLAGS (priv->abook_button, GTK_CAN_FOCUS);
-	gtk_button_set_alignment (GTK_BUTTON (priv->abook_button), 1.0, 1.0);
+	gtk_button_set_alignment (GTK_BUTTON (priv->abook_button), 0.5, 0.5);
 #ifdef MODEST_TOOLKIT_HILDON2
 	abook_icon = gtk_image_new_from_icon_name ("general_contacts", HILDON_ICON_SIZE_FINGER);
 #else

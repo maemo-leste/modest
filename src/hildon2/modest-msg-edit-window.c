@@ -88,6 +88,7 @@
 #define SUBJECT_MAX_LENGTH 1000
 #define IMAGE_MAX_WIDTH 560
 #define DEFAULT_FONT_SCALE 1.5
+#define ATTACHMENT_BUTTON_WIDTH 118
 
 static gboolean is_wp_text_buffer_started = FALSE;
 
@@ -780,13 +781,12 @@ init_window (ModestMsgEditWindow *obj)
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->subject_field, TRUE, TRUE, 0);
-	priv->add_attachment_button = gtk_button_new ();
+	priv->add_attachment_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
+	gtk_widget_set_size_request (priv->add_attachment_button, ATTACHMENT_BUTTON_WIDTH, -1);
 	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (priv->add_attachment_button), GTK_CAN_FOCUS);
-	gtk_button_set_relief (GTK_BUTTON (priv->add_attachment_button), GTK_RELIEF_NONE);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
-	gtk_button_set_alignment (GTK_BUTTON (priv->add_attachment_button), 1.0, 0.5);
 	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, HILDON_ICON_SIZE_FINGER);
-	gtk_container_add (GTK_CONTAINER (priv->add_attachment_button), attachment_icon);
+	hildon_button_set_image (HILDON_BUTTON (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	
