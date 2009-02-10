@@ -540,7 +540,7 @@ static GSList *
 select_email_addrs_for_contact(GList * email_addr_list)
 {
 	GtkWidget *select_email_addr_dlg = NULL;
-	GtkWidget *view = NULL, *scrolledwindow = NULL;
+	GtkWidget *view = NULL, *pannable = NULL;
 	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer = NULL;
 	GtkTreeViewColumn *col = NULL;
@@ -566,11 +566,9 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	 * for the window title text: */
 	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), MODEST_DIALOG_WINDOW_MAX_HEIGHT, -1);
 
-	scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(select_email_addr_dlg)->vbox), scrolledwindow, TRUE,
+	pannable = hildon_pannable_area_new();
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(select_email_addr_dlg)->vbox), pannable, TRUE,
 			   TRUE, 0);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_AUTOMATIC,
-				       GTK_POLICY_AUTOMATIC);
 
 	view = gtk_tree_view_new();
 	col = gtk_tree_view_column_new();
@@ -580,7 +578,7 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	gtk_tree_view_column_add_attribute(col, renderer, "text", 0);
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-	gtk_container_add(GTK_CONTAINER(scrolledwindow), view);
+	gtk_container_add(GTK_CONTAINER(pannable), view);
 
 	list_store = gtk_list_store_new(1, G_TYPE_STRING);
 	model = GTK_TREE_MODEL(list_store);
