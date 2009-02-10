@@ -1799,6 +1799,7 @@ message_reader_performer (gboolean canceled,
 
 	info = (MsgReaderInfo *) user_data;
 	if (canceled || err) {
+		update_window_title (MODEST_MSG_VIEW_WINDOW (parent_window));
 		goto frees;
 	}
 
@@ -1809,7 +1810,7 @@ message_reader_performer (gboolean canceled,
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
 								 modest_ui_actions_disk_operations_error_handler, 
 								 NULL, NULL);
-				
+
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
 	modest_mail_operation_get_msg (mail_op, info->header, TRUE, view_msg_cb, info->row_reference);
 	g_object_unref (mail_op);
@@ -1865,9 +1866,11 @@ message_reader (ModestMsgViewWindow *window,
 
 			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
 									    _("mcen_nc_get_msg"));
-			if (response == GTK_RESPONSE_CANCEL)
+			if (response == GTK_RESPONSE_CANCEL) {
+				update_window_title (window);
 				return FALSE;
-		
+			}
+
 			folder = tny_header_get_folder (header);
 			info = g_slice_new (MsgReaderInfo);
 			info->header = g_object_ref (header);
@@ -2014,12 +2017,24 @@ view_msg_cb (ModestMailOperation *mail_op,
 	row_reference = (GtkTreeRowReference *) user_data;
 	if (canceled) {
 		gtk_tree_row_reference_free (row_reference);
+		self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
+		if (self) {
+			/* Restore window title */
+			update_window_title (self);
+			g_object_unref (self);
+		}
 		return;
 	}
-	
+
 	/* If there was any error */
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
-		gtk_tree_row_reference_free (row_reference);			
+		gtk_tree_row_reference_free (row_reference);
+		self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
+		if (self) {
+			/* Restore window title */
+			update_window_title (self);
+			g_object_unref (self);
+		}
 		return;
 	}
 
@@ -2955,7 +2970,7 @@ update_window_title (ModestMsgViewWindow *window)
 	TnyMsg *msg = NULL;
 	TnyHeader *header = NULL;
 	gchar *subject = NULL;
-	
+
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
 	if (msg != NULL) {

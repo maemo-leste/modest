@@ -662,9 +662,9 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 
 	/* main window dimming rules */
 	if (MODEST_IS_MAIN_WINDOW(win)) {
-		
+
 		if (!dimmed) {
-			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));			
+			dimmed = _selected_folder_is_empty (MODEST_MAIN_WINDOW(win));
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_nothing_to_reply"));
 		}
@@ -673,10 +673,18 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 		}
 	/* msg view window dimming rules */
 	} else if (MODEST_IS_MSG_VIEW_WINDOW(win)) {
-		
-		/* Check dimmed rule */	
+
+		/* This could happen if we load the msg view window with a
+		   preview before loading the full message */
+		TnyMsg *msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		if (!msg) {
+			dimmed = TRUE;
+		} else {
+			g_object_unref (msg);
+		}
+
 		if (!dimmed) {
-			dimmed = _transfer_mode_enabled (win);			
+			dimmed = _transfer_mode_enabled (win);
 			if (dimmed)
 				modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 		}
@@ -686,7 +694,7 @@ modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data)
 				modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
 		}
 	}
-	
+
 	return dimmed;
 }
 
@@ -800,6 +808,15 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 		}
 	} 
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		/* This could happen if we load the msg view window with a
+		   preview before loading the full message */
+		TnyMsg *msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		if (!msg) {
+			dimmed = TRUE;
+		} else {
+			g_object_unref (msg);
+		}
+
 		if (!dimmed) {
 			dimmed = state->any_marked_as_deleted;
 			if (dimmed) {
@@ -1118,7 +1135,7 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	return dimmed;
 }
 
-gboolean 
+gboolean
 modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
@@ -1128,8 +1145,18 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	/* Check dimmed rule */	
-	dimmed = _transfer_mode_enabled (win);			
+	/* This could happen if we load the msg view window with a
+	   preview before loading the full message */
+	TnyMsg *msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+	if (!msg) {
+		return TRUE;
+	} else {
+		g_object_unref (msg);
+	}
+
+	/* Check dimmed rule */
+
+	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
 	if (!dimmed) {
@@ -1248,8 +1275,19 @@ modest_ui_dimming_rules_on_find_msg (ModestWindow *win, gpointer user_data)
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
+	/* This could happen if we load the msg view window with a
+	   preview before loading the full message */
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		TnyMsg *msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+		if (!msg) {
+			return TRUE;
+		} else {
+			g_object_unref (msg);
+		}
+	}
+
 	/* Check dimmed rule */	
-	dimmed = _transfer_mode_enabled (win);			
+	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
 
