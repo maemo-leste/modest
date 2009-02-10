@@ -732,7 +732,7 @@ enable_widget_for_checkbutton (GtkWidget *widget, GtkButton* button)
 {
 	g_signal_connect (G_OBJECT (button), "clicked",
 		G_CALLBACK (on_check_button_clicked), widget);
-	
+
 	/* Set the starting sensitivity: */
 	on_check_button_clicked (button, widget);
 }
@@ -750,10 +750,9 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	smtp_win = modest_connection_specific_smtp_window_new ();
 	modest_connection_specific_smtp_window_fill_with_connections (smtp_win, priv->account_manager);
 
-	/* Show the window: */	
+	/* Show the window: */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (smtp_win), GTK_WINDOW (self));
 	gtk_widget_show (GTK_WIDGET (smtp_win));
-	priv->modified = TRUE;
 }
 
 static void
@@ -775,13 +774,13 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
-	
+
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup *title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	GtkSizeGroup *value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	 
+ 
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
 		priv->entry_outgoingserver = 
