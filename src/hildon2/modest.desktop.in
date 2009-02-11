@@ -10,6 +10,9 @@ X-Text-Domain=modest
 X-Osso-Service=com.nokia.modest
 X-Osso-Type=application/x-executable
 
+X-Maemo-Prestarted=always
+X-Maemo-Prestarted-Priority=7000
+
 Icon=general_email
 X-Window-Icon=general_email
 X-Window-Icon-Dimmed=general_email
