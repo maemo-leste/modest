@@ -60,7 +60,6 @@ enum {
 
 typedef struct _ModestAccountViewWindowPrivate ModestAccountViewWindowPrivate;
 struct _ModestAccountViewWindowPrivate {
-	GtkWidget           *new_button;
 	GtkWidget           *edit_button;
 	ModestAccountView   *account_view;
 	guint acc_removed_handler;
@@ -280,60 +279,6 @@ on_account_activated (GtkTreeView *account_view,
 }
 
 static void
-on_wizard_response (GtkDialog *dialog, 
-		    gint response, 
-		    gpointer user_data)
-{	
-	/* The response has already been handled by the wizard dialog itself,
-	 * creating the new account.
-	 */	 
-	if (dialog)
-		gtk_widget_destroy (GTK_WIDGET (dialog));
-
-	/* Re-focus the account list view widget */
-	if (MODEST_IS_ACCOUNT_VIEW_WINDOW (user_data)) {
-		ModestAccountViewWindowPrivate *priv;
-		priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (user_data);
-		gtk_widget_grab_focus (GTK_WIDGET (priv->account_view));
-	}
-}
-
-static void
-on_new_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
-{
-	GtkDialog *wizard;
-
-	/* there is no such wizard yet */
-	wizard = GTK_DIALOG (modest_easysetup_wizard_dialog_new ());
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr(), 
-				     GTK_WINDOW (wizard), GTK_WINDOW (self));
-
-	gtk_window_set_modal (GTK_WINDOW (wizard), TRUE);
-	gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (self));
-	/* Destroy the dialog when it is closed: */
-	g_signal_connect (G_OBJECT (wizard), "response", G_CALLBACK
-			  (on_wizard_response), self);
-	gtk_widget_show (GTK_WIDGET (wizard));
-}
-
-static void
-setup_button_box (ModestAccountViewWindow *self, GtkButtonBox *box)
-{
-	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
-
-	priv->new_button     = gtk_button_new_from_stock(_HL("wdgt_bd_new"));
-	hildon_gtk_widget_set_theme_size (priv->new_button,
-					  HILDON_SIZE_FINGER_HEIGHT);
-
-	g_signal_connect (G_OBJECT(priv->new_button), "clicked",
-			  G_CALLBACK(on_new_button_clicked),
-			  self);
-	gtk_box_pack_start (GTK_BOX(box), priv->new_button, FALSE, FALSE,0);
-
-	gtk_widget_show_all (GTK_WIDGET (box));
-}
-
-static void
 window_vbox_new (ModestAccountViewWindow *self)
 {
 }
@@ -404,8 +349,6 @@ modest_account_view_window_new (void)
 	/* Add widgets */
 	window_vbox_new (MODEST_ACCOUNT_VIEW_WINDOW (self));
 	
-	setup_button_box (MODEST_ACCOUNT_VIEW_WINDOW (self), GTK_BUTTON_BOX (GTK_DIALOG (self)->action_area));
-
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_emailsetup_accounts"));
 
 	/* Connect signals */
