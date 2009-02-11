@@ -395,13 +395,6 @@ static void setup_menu (ModestFolderWindow *self)
 					   APP_MENU_CALLBACK (set_delete_edit_mode),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_delete));
 
-	/* new message */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), 
-					   _("mcen_me_new_message"), 
-					   "<Ctrl>n",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
-					   NULL);
-
 	/* send receive actions should be only one visible always */
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), 
 					   _("mcen_me_inbox_sendandreceive"), 
@@ -412,6 +405,13 @@ static void setup_menu (ModestFolderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	/* new message */
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), 
+					   _("mcen_me_new_message"), 
+					   "<Ctrl>n",
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+					   NULL);
+
 }
 
 static void
