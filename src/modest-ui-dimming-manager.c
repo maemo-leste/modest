@@ -208,6 +208,7 @@ typedef struct
 	ModestDimmingRulesGroup *group;
 	ModestUIDimmingManager *manager;
 	gchar *name;
+	gboolean delete;
 } DelayedDimmingRules;
 
 static gboolean
@@ -216,6 +217,9 @@ process_dimming_rules_delayed (gpointer data)
 	DelayedDimmingRules *helper = (DelayedDimmingRules *) data;
 	gpointer timeout_handler;
 	ModestUIDimmingManagerPrivate *priv;
+
+	/* Let the destroyer remove it from the hash table */
+	helper->delete = TRUE;
 
 	/* We remove the timeout here because the execute action could
 	   take too much time, and so this will be called again */
@@ -240,7 +244,15 @@ process_dimming_rules_delayed_destroyer (gpointer data)
 	ModestUIDimmingManagerPrivate *priv;
 
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(helper->manager);
-	g_hash_table_remove (priv->delayed_calls, helper->name);
+
+	/* We can only destroy it if we had really executed it. If the
+	   source is removed because the manager is finalized then we
+	   cannot remove it because it removes the sources in a
+	   foreach, that does not allow you to modify the hash table
+	   in the mean time */
+	if (helper->delete)
+		g_hash_table_remove (priv->delayed_calls, helper->name);
+
 	g_free (helper->name);
 	g_object_unref (helper->manager);
 	g_slice_free (DelayedDimmingRules, helper);
@@ -254,7 +266,7 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 	ModestUIDimmingManagerPrivate *priv;
 	guint *handler, new_handler;
 	DelayedDimmingRules *helper;
-	
+
 	g_return_if_fail (group_name != NULL);
 
 	priv = MODEST_UI_DIMMING_MANAGER_GET_PRIVATE(self);
@@ -271,9 +283,13 @@ modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *s
 		helper->group = group;
 		helper->manager = g_object_ref (self);
 		helper->name = g_strdup (group_name);
-		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 100, process_dimming_rules_delayed, 
+		helper->delete = FALSE;
+		new_handler = g_timeout_add_full (G_PRIORITY_DEFAULT, 100,
+						  process_dimming_rules_delayed,
 						  helper, process_dimming_rules_delayed_destroyer);
-		g_hash_table_insert (priv->delayed_calls, g_strdup (group_name), GINT_TO_POINTER (new_handler));
+		g_hash_table_insert (priv->delayed_calls, 
+				     g_strdup (group_name), 
+				     GINT_TO_POINTER (new_handler));
 		MODEST_DEBUG_BLOCK(g_print ("---------------------Adding %d\n", new_handler););
 	} else {
 		MODEST_DEBUG_BLOCK(g_print ("---------------------Ignoring\n"););
@@ -285,7 +301,7 @@ static void
 _process_all_rules (gpointer key, gpointer value, gpointer user_data)
 {
 	g_return_if_fail (MODEST_IS_DIMMING_RULES_GROUP (value));
-	
+
 	modest_dimming_rules_group_execute (MODEST_DIMMING_RULES_GROUP (value));
 }
 

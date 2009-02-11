@@ -2369,7 +2369,6 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	   transfer mode is still enabled so the dimming rule
 	   won't let the user delete the message that has been
 	   readed for example */
-	g_debug ("%s Check dimming rules", __FUNCTION__);
 	check_dimming_rules_after_change (self);
 
 }
