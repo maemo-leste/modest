@@ -94,7 +94,7 @@ struct _ModestMsgViewWindowPrivate {
 
 	/* Whether the message is in outbox */
 	gboolean is_outbox;
-	
+
 	/* A reference to the @model of the header view 
 	 * to allow selecting previous/next messages,
 	 * if the message is currently selected in the header view.
@@ -116,7 +116,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget *remove_attachment_banner;
 
 	gchar *msg_uid;
-	
+
 	GSList *sighandlers;
 };
 
@@ -2965,11 +2965,15 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 static void
 update_window_title (ModestMsgViewWindow *window)
 {
-	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	ModestMsgViewWindowPrivate *priv;
 	TnyMsg *msg = NULL;
 	TnyHeader *header = NULL;
 	gchar *subject = NULL;
 
+	if (!GTK_WIDGET_VISIBLE (window))
+		return;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
 	if (msg != NULL) {
@@ -2988,9 +2992,10 @@ update_window_title (ModestMsgViewWindow *window)
 }
 
 
-static void on_move_focus (GtkWidget *widget,
-			   GtkDirectionType direction,
-			   gpointer userdata)
+static void
+on_move_focus (GtkWidget *widget,
+	       GtkDirectionType direction,
+	       gpointer userdata)
 {
 	g_signal_stop_emission_by_name (G_OBJECT (widget), "move-focus");
 }
