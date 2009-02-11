@@ -195,7 +195,7 @@ static void
 modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 					  TnyHeader *header)
 {
-	gchar *from, *subject, *to, *cc;
+	gchar *from = NULL, *subject = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
 	time_t received, sent;
  	guint size;
 	gchar *size_s;
@@ -218,12 +218,13 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	}
 
 	g_return_if_fail (folder_type != TNY_FOLDER_TYPE_INVALID);
-	
+
 	/* Get header data */
 	from = tny_header_dup_from (header);
 	to = tny_header_dup_to (header);
 	subject = tny_header_dup_subject (header);
 	cc = tny_header_dup_cc (header);
+	bcc = tny_header_dup_bcc (header);
 	received = tny_header_get_date_received (header);
 	sent = tny_header_get_date_sent (header);
 	size = tny_header_get_message_size (header);
@@ -278,6 +279,10 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	if (cc && strlen(cc) > 0)
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_cc"), cc);
 
+	/* only show cc when it's there */
+	if (bcc && strlen(bcc) > 0)
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_bcc"), bcc);
+
 	/* Set size */
 	size_s = modest_text_utils_get_display_size (size);
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_size"), size_s);
@@ -289,6 +294,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	g_free (from);
 	g_free (subject);
 	g_free (cc);
+	g_free (bcc);
 }
 
 static void

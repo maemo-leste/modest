@@ -4522,7 +4522,7 @@ modest_ui_actions_on_change_fullscreen (GtkAction *action,
  * Used by modest_ui_actions_on_details to call do_headers_action 
  */
 static void
-headers_action_show_details (TnyHeader *header, 
+headers_action_show_details (TnyHeader *header,
 			     ModestWindow *window,
 			     gpointer user_data)
 
@@ -4533,36 +4533,24 @@ headers_action_show_details (TnyHeader *header,
 /*
  * Show the header details in a ModestDetailsDialog widget
  */
-void     
-modest_ui_actions_on_details (GtkAction *action, 
+void
+modest_ui_actions_on_details (GtkAction *action,
 			      ModestWindow *win)
 {
-	TnyList * headers_list;
-	TnyIterator *iter;
-	TnyHeader *header;		
-
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		TnyMsg *msg;
+		TnyHeader *header;
 
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
 		if (!msg)
 			return;
-		g_object_unref (msg);		
 
-		headers_list = get_selected_headers (win);
-		if (!headers_list)
-			return;
-
-		iter = tny_list_create_iterator (headers_list);
-
-		header = TNY_HEADER (tny_iterator_get_current (iter));
+		header = tny_msg_get_header (msg);
 		if (header) {
 			headers_action_show_details (header, win, NULL);
 			g_object_unref (header);
 		}
-
-		g_object_unref (iter);
-		g_object_unref (headers_list);
+		g_object_unref (msg);
 
 	} else if (MODEST_IS_MAIN_WINDOW (win)) {
 		GtkWidget *folder_view, *header_view;
