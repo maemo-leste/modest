@@ -370,6 +370,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* name column:
 	 * The ID model column in not shown in the view. */
 	GtkTreeViewColumn *view_column = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_expand (view_column, TRUE);
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_column_pack_start(view_column, renderer, TRUE);
 	gtk_tree_view_column_set_attributes (view_column, renderer, 
@@ -378,6 +379,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 
 	/* server name column: */
 	view_column = gtk_tree_view_column_new ();
+	gtk_tree_view_column_set_expand (view_column, TRUE);
 	renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_column_pack_start(view_column, renderer, TRUE);
 	gtk_tree_view_column_set_attributes (view_column, renderer, 
