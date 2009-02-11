@@ -321,6 +321,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv; 
 	GtkWidget *dialog_box;
 	GtkWidget *pannable, *vbox;
+	gchar *server_label;
 
 	/* The title of this dialog is quite long, so make the window wide enough */
 	gtk_widget_set_size_request (GTK_WIDGET (self), 600, 320);
@@ -344,11 +345,14 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_change), self);
+
+	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	
 	GtkWidget *captioned = 
 	  modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_smtp"), FALSE,
+					       server_label, TRUE,
 					       priv->entry_outgoingserver);
+	g_free (server_label);
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (captioned);
