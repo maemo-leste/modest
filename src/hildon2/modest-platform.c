@@ -1476,28 +1476,19 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 
 	iter = tny_list_create_iterator (header_list);
 	while (!tny_iterator_is_done (iter)) {
-		gchar *url = NULL, *display_address = NULL,  *summary = NULL;
-		const gchar *display_date;
+		gchar *url = NULL, *display_address = NULL;
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 		TnyFolder *folder = tny_header_get_folder (header);
 		gboolean first_notification = TRUE;
 		gint notif_id;
 		gchar *str;
-		ModestDatetimeFormatter *datetime_formatter;
-
-		/* constant string, don't free */
-		datetime_formatter = modest_datetime_formatter_new ();
-		display_date = modest_datetime_formatter_display_datetime (datetime_formatter,
-									   tny_header_get_date_received (header));
-		g_object_unref (datetime_formatter);
 
 		display_address = tny_header_dup_from (header);
 		/* string is changed in-place */
 		modest_text_utils_get_display_address (display_address);
 
-		summary = g_strdup_printf ("%s - %s", display_date, display_address);
 		str = tny_header_dup_subject (header);
-		notification = hildon_notification_new (summary,
+		notification = hildon_notification_new (display_address,
 							str,
 							"qgn_list_messagin",
 							"email-message");
@@ -1562,7 +1553,6 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 	
 		/* Free & carry on */
 		g_free (display_address);
-		g_free (summary);
 		g_free (url);
 		g_object_unref (folder);
 		g_object_unref (header);
