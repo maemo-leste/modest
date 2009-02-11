@@ -262,7 +262,7 @@ static GtkWindowClass *parent_class = NULL;
 static const GtkActionEntry modest_folder_view_action_entries [] = {
 
 	/* Folder View CSM actions */
-	{ "FolderViewCSMNewFolder", NULL, N_("mcen_ti_new_folder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
+	{ "FolderViewCSMNewFolder", NULL, N_("ckdg_fi_new_folder_name"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_new_folder) },
 	{ "FolderViewCSMRenameFolder", NULL, N_("mcen_me_rename_folder"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_rename_folder) },
 	{ "FolderViewCSMPasteMsgs", NULL, N_("mcen_me_inbox_paste"), NULL, NULL,  G_CALLBACK (modest_ui_actions_on_paste)},
 	{ "FolderViewCSMDeleteFolder", NULL, N_("mcen_me_delete_messages"), NULL, NULL, G_CALLBACK (modest_ui_actions_on_delete_folder) },
