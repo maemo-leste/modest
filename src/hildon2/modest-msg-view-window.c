@@ -2182,13 +2182,12 @@ toolbar_resize (ModestMsgViewWindow *self)
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
-		
+
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->prev_toolitem), TRUE);
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->prev_toolitem), TRUE);
 	}
-		
 }
 
 static void
@@ -2325,7 +2324,7 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	tmp = priv->progress_widgets;
 	source = modest_mail_operation_get_source(mail_op);
 	if (G_OBJECT (self) == source) {
-		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ) {
+		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
 			set_toolbar_transfer_mode(self);
 			while (tmp) {
 				modest_progress_object_add_operation (
@@ -2352,7 +2351,7 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	tmp = priv->progress_widgets;
 	
-	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ) {
+	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
 		while (tmp) {
 			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								 mail_op);
@@ -2363,15 +2362,16 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 		if (observers_empty (self)) {
 			set_progress_hint (self, FALSE);
 		}
-
-		/* Update dimming rules. We have to do this right here
-		   and not in view_msg_cb because at that point the
-		   transfer mode is still enabled so the dimming rule
-		   won't let the user delete the message that has been
-		   readed for example */
-		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
-		modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 	}
+
+	/* Update dimming rules. We have to do this right here
+	   and not in view_msg_cb because at that point the
+	   transfer mode is still enabled so the dimming rule
+	   won't let the user delete the message that has been
+	   readed for example */
+	g_debug ("%s Check dimming rules", __FUNCTION__);
+	check_dimming_rules_after_change (self);
+
 }
 
 static void
