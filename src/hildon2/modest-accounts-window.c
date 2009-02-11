@@ -305,21 +305,21 @@ setup_menu (ModestAccountsWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_edit_accounts"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_accounts), 
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_options"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_settings), 
-					   NULL);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_globalsmtpservers"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_smtp_servers),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_tools_smtp_servers));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive_all));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_options"), NULL,
+					   APP_MENU_CALLBACK (modest_ui_actions_on_settings), 
+					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
+					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
 }
 
 
