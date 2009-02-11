@@ -151,4 +151,6 @@ void       modest_maemo_utils_set_vbutton_layout (GtkSizeGroup *sizegroup,
 
 GtkWidget *modest_maemo_utils_create_group_box (const gchar *label, GtkWidget *contents);
 
+gboolean   modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

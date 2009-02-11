@@ -2438,7 +2438,12 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	if (att_list == NULL) {
-		att_list = modest_attachments_view_get_selection (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+		att_list = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
+		if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), att_list)) {
+			g_object_unref (att_list);
+			return;
+		}
+		
 	} else {
 		g_object_ref (att_list);
 	}

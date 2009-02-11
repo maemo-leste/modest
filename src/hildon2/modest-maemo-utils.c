@@ -52,6 +52,7 @@
 #include "modest-text-utils.h"
 #include "modest-platform.h"
 #include "modest-ui-constants.h"
+#include <hildon/hildon-picker-dialog.h>
 
 /*
  * For getting and tracking the Bluetooth name
@@ -458,4 +459,95 @@ modest_maemo_utils_create_group_box (const gchar *label_text, GtkWidget *content
 	gtk_widget_show (box);
 
 	return box;
+}
+
+static gboolean match_all (TnyList *list, GObject *item, gpointer match_data)
+{
+	return TRUE;
+}
+
+gboolean
+modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list)
+{
+	GtkTreeModel *model;
+	TnyIterator *iterator;
+	GtkWidget *selector;
+	GtkCellRenderer *renderer;
+	GtkWidget *dialog;
+	gint response;
+	gboolean result = TRUE;
+
+	model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_OBJECT));
+	for (iterator = tny_list_create_iterator (att_list);
+	     !tny_iterator_is_done (iterator);
+	     tny_iterator_next (iterator)) {
+		GtkTreeIter iter;
+		TnyMimePart *part;
+		gchar *label;
+		gchar *filename = NULL;
+
+		part = (TnyMimePart *) tny_iterator_get_current (iterator);
+
+		if (TNY_IS_MSG (part)) {
+			TnyHeader *header;
+			
+			header = tny_msg_get_header (TNY_MSG (part));
+			if (TNY_IS_HEADER (header)) {
+				filename = g_strdup (tny_mime_part_get_filename (part));
+				if (!filename)
+					filename = tny_header_dup_subject (header);
+				if (filename == NULL || filename[0] == '\0')
+					filename = g_strdup (_("mail_va_no_subject"));
+			}
+		} else {
+			filename = g_strdup (tny_mime_part_get_filename (part));
+		}
+
+		label = g_strconcat (filename, NULL);
+		gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+		gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, label, 1, part, -1);
+		g_free (label);
+		g_object_unref (part);
+	}
+
+	selector = GTK_WIDGET (hildon_touch_selector_new ());
+	renderer = gtk_cell_renderer_text_new ();
+	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model, renderer,
+					     "text", 0, NULL);
+	hildon_touch_selector_set_column_selection_mode (HILDON_TOUCH_SELECTOR (selector), 
+							 HILDON_TOUCH_SELECTOR_SELECTION_MODE_MULTIPLE);
+
+	dialog = hildon_picker_dialog_new (window);
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
+	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
+	hildon_picker_dialog_set_done_label (HILDON_PICKER_DIALOG (dialog), _HL("wdgt_bd_done"));
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+
+	if (response == GTK_RESPONSE_OK) {
+		GList *selected_rows, *node;
+
+		tny_list_remove_matches (att_list, match_all, NULL);
+		selected_rows = hildon_touch_selector_get_selected_rows (HILDON_TOUCH_SELECTOR (selector), 0);
+		for (node = selected_rows; node != NULL; node = g_list_next (node)) {
+			GtkTreePath *path;
+			GObject *selected;
+			GtkTreeIter iter;
+
+			path = (GtkTreePath *) node->data;
+			gtk_tree_model_get_iter (model, &iter, path);
+			gtk_tree_model_get (model, &iter, 1, &selected, -1);
+			tny_list_append (att_list, selected);
+		}
+		if (tny_list_get_length (att_list) == 0)
+			result = FALSE;
+	} else {
+		result = FALSE;
+	}
+
+	gtk_widget_destroy (dialog);
+
+	g_object_unref (model);
+
+	return result;
 }

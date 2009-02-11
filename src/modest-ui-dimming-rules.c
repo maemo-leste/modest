@@ -1785,8 +1785,13 @@ modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer
 								    MODEST_MSG_EDIT_WINDOW (win),
 								    MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_ATTACHMENTS);
 	
+#ifdef MODEST_TOOLKIT_HILDON2
+	selected_attachments = modest_attachments_view_get_attachments (
+								      MODEST_ATTACHMENTS_VIEW (attachments_view));
+#else
 	selected_attachments = modest_attachments_view_get_selection (
 								      MODEST_ATTACHMENTS_VIEW (attachments_view));
+#endif
 	n_att_selected = tny_list_get_length (selected_attachments);
 	g_object_unref (selected_attachments);
 	
