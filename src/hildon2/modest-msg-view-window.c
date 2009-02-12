@@ -2801,7 +2801,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		save_multiple_str = g_strdup_printf (_FM("sfil_va_number_of_objects_attachments"), 
 						     tny_list_get_length (mime_parts));
 	}
-	
+
 	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
 

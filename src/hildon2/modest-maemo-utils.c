@@ -483,31 +483,21 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list)
 	     tny_iterator_next (iterator)) {
 		GtkTreeIter iter;
 		TnyMimePart *part;
-		gchar *label;
-		gchar *filename = NULL;
 
 		part = (TnyMimePart *) tny_iterator_get_current (iterator);
 
-		if (TNY_IS_MSG (part)) {
-			TnyHeader *header;
-			
-			header = tny_msg_get_header (TNY_MSG (part));
-			if (TNY_IS_HEADER (header)) {
-				filename = g_strdup (tny_mime_part_get_filename (part));
-				if (!filename)
-					filename = tny_header_dup_subject (header);
-				if (filename == NULL || filename[0] == '\0')
-					filename = g_strdup (_("mail_va_no_subject"));
-			}
-		} else {
-			filename = g_strdup (tny_mime_part_get_filename (part));
-		}
+		/* Embbeded messages are not offered to be saved */
+		if (!TNY_IS_MSG (part)) {
+			gchar *label;
+			gchar *filename = NULL;
 
-		label = g_strconcat (filename, NULL);
-		gtk_list_store_append (GTK_LIST_STORE (model), &iter);
-		gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, label, 1, part, -1);
-		g_free (label);
-		g_object_unref (part);
+			filename = g_strdup (tny_mime_part_get_filename (part));
+			label = g_strconcat (filename, NULL);
+			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, label, 1, part, -1);
+			g_free (label);
+			g_object_unref (part);
+		}
 	}
 
 	selector = GTK_WIDGET (hildon_touch_selector_new ());
