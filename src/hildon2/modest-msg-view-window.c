@@ -2571,7 +2571,6 @@ typedef struct
 typedef struct
 {
 	GList *pairs;
-	GtkWidget *banner;
 	GnomeVFSResult result;
 } SaveMimePartInfo;
 
@@ -2594,7 +2593,6 @@ save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
 	g_list_free (info->pairs);
 	info->pairs = NULL;
 	if (with_struct) {
-		gtk_widget_destroy (info->banner);
 		g_slice_free (SaveMimePartInfo, info);
 	}
 }
@@ -2687,9 +2685,6 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 	if (!is_ok) {
 		save_mime_part_info_free (info, TRUE);
 	} else {
-		GtkWidget *banner = hildon_banner_show_animation (NULL, NULL, 
-								  _CS("sfil_ib_saving"));
-		info->banner = banner;
 		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
 	}
 
