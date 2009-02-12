@@ -438,7 +438,7 @@ on_folder_activated (ModestFolderView *folder_view,
 		return;
 
 	headerwin = modest_header_window_new (folder, modest_window_get_active_account (MODEST_WINDOW (self)));
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
+	modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
 					   MODEST_WINDOW (headerwin),
 					   MODEST_WINDOW (self));
 

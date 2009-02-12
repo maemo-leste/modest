@@ -3537,10 +3537,10 @@ on_rename_folder_performer (gboolean canceled,
 						     (const gchar *) (data->new_name),
 						     on_rename_folder_cb,
 						     folder_view);
-		g_object_unref (data->folder);
 		g_object_unref (mail_op);
 	}
 
+	g_object_unref (data->folder);
 	g_free (data->new_name);
 	g_free (data);
 }

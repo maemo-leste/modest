@@ -117,7 +117,7 @@ void    modest_mail_operation_queue_cancel     (ModestMailOperationQueue *op_que
 /**
  * modest_mail_operation_queue_cancel_all:
  * @op_queue:  a #ModestMailOperationQueue
- * 
+ *
  * Cancels all the unfinished #ModestMailOperation of the queue
  **/
 void    modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *op_queue);
@@ -126,16 +126,18 @@ void    modest_mail_operation_queue_cancel_all (ModestMailOperationQueue *op_que
  * modest_mail_operation_queue_get_by_source:
  * @op_queue:  a #ModestMailOperationQueue
  * @source: the source of the operations
- * 
- * Returns a list with the #ModestMailOperation that have the given source 
+ *
+ * Returns a list with the #ModestMailOperation that have the given
+ * source. Each #ModestMailOperation is getting a new reference so you
+ * MUST unref it when done
  **/
 GSList* modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *op_queue, GObject *source);
 
 
 /**
- * modest_mail_operation_queue_get_by_source:
+ * modest_mail_operation_queue_queue_to_string:
  * @op_queue:  a #ModestMailOperationQueue
- * 
+ *
  * Returns a string representation of the operation queue (for debugging)
  *
  * Returns: a newly allocated string, or NULL in case of error

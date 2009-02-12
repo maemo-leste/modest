@@ -2985,8 +2985,10 @@ _send_receive_in_progress (ModestWindow *win)
 		}
 	}
 
-	g_slist_foreach (op_list, (GFunc) g_object_unref, NULL);
-	g_slist_free (op_list);
+	if (op_list) {
+		g_slist_foreach (op_list, (GFunc) g_object_unref, NULL);
+		g_slist_free (op_list);
+	}
 
 	return found_send_receive;
 }

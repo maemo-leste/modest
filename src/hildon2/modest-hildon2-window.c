@@ -496,7 +496,7 @@ edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
 	EditModeRegister *reg;
 
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
-	
+
 	reg = (EditModeRegister *) g_hash_table_lookup (priv->edit_mode_registry, 
 							GINT_TO_POINTER (priv->edit_command));
 	if (reg == NULL)
@@ -512,7 +512,7 @@ edit_toolbar_arrow_clicked (HildonEditToolbar *toolbar,
 			    ModestHildon2Window *self)
 {
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
-	
+
 	modest_hildon2_window_unset_edit_mode (self);
 }
 

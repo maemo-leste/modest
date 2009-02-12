@@ -452,18 +452,20 @@ typedef struct
 static void
 on_find_by_source_foreach (gpointer op, gpointer data)
 {
-	FindBySourceInfo *info = (FindBySourceInfo*) data; 
+	FindBySourceInfo *info = (FindBySourceInfo*) data;
+	GObject *source;
 
-	if ( info->source == modest_mail_operation_get_source (MODEST_MAIL_OPERATION (op))) {
+	source = modest_mail_operation_get_source (MODEST_MAIL_OPERATION (op));
+	if ( info->source == source) {
 		g_object_ref (G_OBJECT (op));
 		*(info->new_list) = g_slist_prepend (*(info->new_list), MODEST_MAIL_OPERATION (op));
 	}
+	g_object_unref (source);
 }
 
 GSList*
-modest_mail_operation_queue_get_by_source (
-		ModestMailOperationQueue *self, 
-		GObject *source)
+modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *self,
+					   GObject *source)
 {
 	ModestMailOperationQueuePrivate *priv;
 	GSList* found_operations= NULL;
@@ -471,18 +473,18 @@ modest_mail_operation_queue_get_by_source (
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self), NULL);
 	g_return_val_if_fail (source != NULL, NULL);
-	
+
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	info->new_list = &found_operations;
 	info->source = source;
-	
+
 	g_mutex_lock (priv->queue_lock);
 	g_queue_foreach (priv->op_queue, (GFunc) on_find_by_source_foreach, info);
 	g_mutex_unlock (priv->queue_lock);
-	
+
 	g_free (info);
-	
+
 	return found_operations;
 }
 

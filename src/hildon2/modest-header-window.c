@@ -247,8 +247,6 @@ modest_header_window_finalize (GObject *obj)
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
-	g_object_unref (priv->header_view);
-	g_object_unref (priv->empty_view);
 	g_object_unref (priv->folder);
 
 	if (priv->current_store_account) {
@@ -274,8 +272,8 @@ modest_header_window_finalize (GObject *obj)
 
 static void
 modest_header_window_disconnect_signals (ModestWindow *self)
-{	
-	ModestHeaderWindowPrivate *priv;	
+{
+	ModestHeaderWindowPrivate *priv;
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
 	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
@@ -419,8 +417,6 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 
 	priv->header_view  = create_header_view (MODEST_WINDOW (self), folder);
 	priv->empty_view = create_empty_view ();
-	g_object_ref (priv->header_view);
-	g_object_ref (priv->empty_view);
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 	setup_menu (self);
@@ -446,7 +442,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 
 	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
-	
+
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
 	if (window_icon) {
@@ -481,6 +477,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
 
+
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
 	mgr = modest_runtime_get_account_mgr ();
 	settings = modest_account_mgr_load_account_settings (mgr, account_name);
@@ -493,6 +490,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 		}
 		g_object_unref (settings);
 	}
+
 	update_progress_hint (self);
 	update_sort_button (self);
 
@@ -784,31 +782,43 @@ has_active_operations (ModestHeaderWindow *self)
 
 	queue = modest_runtime_get_mail_operation_queue ();
 	operations = modest_mail_operation_queue_get_by_source (queue, G_OBJECT (self));
+
 	for (node = operations; node != NULL; node = g_slist_next (node)) {
 		if (!modest_mail_operation_is_finished (MODEST_MAIL_OPERATION (node->data))) {
 			has_active = TRUE;
 			break;
 		}
 	}
-	g_slist_free (operations);
+
+	if (operations) {
+		g_slist_foreach (operations, (GFunc) g_object_unref, NULL);
+		g_slist_free (operations);
+	}
+
 	return has_active;
 }
 
 static void
 update_progress_hint (ModestHeaderWindow *self)
 {
-	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	ModestHeaderWindowPrivate *priv;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
 	priv->progress_hint = FALSE;
 
 	if (has_active_operations (self)) {
 		priv->progress_hint = TRUE;
 	}
 
+	return;
+
 	if (!priv->progress_hint && priv->current_store_account) {
-		priv->progress_hint = modest_window_mgr_has_progress_operation_on_account (modest_runtime_get_window_mgr (),
-											   priv->current_store_account);
+		priv->progress_hint = 
+			modest_window_mgr_has_progress_operation_on_account (modest_runtime_get_window_mgr (),
+									     priv->current_store_account);
 	}
-	
+
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	if (GTK_WIDGET_VISIBLE (self)) {
@@ -816,7 +826,7 @@ update_progress_hint (ModestHeaderWindow *self)
 	}
 }
 
-gboolean 
+gboolean
 modest_header_window_toolbar_on_transfer_mode     (ModestHeaderWindow *self)
 {
 	ModestHeaderWindowPrivate *priv= NULL; 
@@ -860,21 +870,13 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 			    gpointer user_data)
 {
 	ModestHeaderWindow *self;
-	ModestMailOperationTypeOperation op_type;
-	GSList *operations = NULL;
-	ModestMailOperationQueue *queue;
 
 	self = MODEST_HEADER_WINDOW (user_data);
-	op_type = modest_mail_operation_get_type_operation (mail_op);
-
-	queue = modest_runtime_get_mail_operation_queue ();
-	operations = modest_mail_operation_queue_get_by_source (queue, user_data);
 
 	/* Don't disable the progress hint if there are more pending
 	   operations from this window */
 	update_progress_hint (self);
 
-	g_slist_free (operations);
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 }
 
