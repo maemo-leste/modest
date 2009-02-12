@@ -510,12 +510,21 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 		break;
 	}
 
-	if (enabled)
+	if (enabled) {
 		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 					       filter);
-	else
+	} else {
+		GtkTreeSelection *sel;
+
+		/* Unselect all. This will prevent us from keeping a
+		   reference to a TnyObject that we don't want to
+		   have */
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->folder_view));
+		gtk_tree_selection_unselect_all (sel);
+
 		modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 						 filter);
+	}
 }
 
 static gboolean 

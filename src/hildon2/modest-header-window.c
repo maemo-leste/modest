@@ -956,12 +956,21 @@ edit_mode_changed (ModestHeaderWindow *header_window,
 		break;
 	}
 
-	if (enabled)
+	if (enabled) {
 		modest_header_view_set_filter (MODEST_HEADER_VIEW (priv->header_view), 
 					       filter);
-	else
+	} else {
+		GtkTreeSelection *sel;
+
+		/* Unselect all. This will prevent us from keeping a
+		   reference to a TnyObject that we don't want to
+		   have */
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->header_view));
+		gtk_tree_selection_unselect_all (sel);
+
 		modest_header_view_unset_filter (MODEST_HEADER_VIEW (priv->header_view), 
 						 filter);
+	}
 }
 
 static void 

@@ -3510,7 +3510,7 @@ on_rename_folder_performer (gboolean canceled,
 		check_memory_full_error ((GtkWidget *) parent_window, err);
 	} else {
 
-		mail_op = 
+		mail_op =
 			modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
 					modest_ui_actions_rename_folder_error_handler,
 					parent_window, NULL);
@@ -3523,13 +3523,17 @@ on_rename_folder_performer (gboolean canceled,
 			folder_view = modest_main_window_get_child_widget (
 				MODEST_MAIN_WINDOW (parent_window),
 				MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-
-			/* Clear the headers view */
-			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
-			gtk_tree_selection_unselect_all (sel);
-		} else {
-			folder_view = NULL;
+		} 
+#ifdef MODEST_TOOLKIT_HILDON2
+		else if (MODEST_IS_FOLDER_WINDOW (parent_window)) {
+			ModestFolderWindow *folder_window = (ModestFolderWindow *) parent_window;
+			folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (folder_window));
 		}
+#endif
+
+		/* Clear the folders view */
+		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (folder_view));
+		gtk_tree_selection_unselect_all (sel);
 
 		/* Actually rename the folder */
 		modest_mail_operation_rename_folder (mail_op,
