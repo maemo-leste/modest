@@ -491,7 +491,8 @@ bold_if_default_account_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer 
 	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
 			    &is_default, -1);
 
-	widget = gtk_tree_view_column_get_tree_view (column);
+/* 	widget = gtk_tree_view_column_get_tree_view (column); */
+	widget = GTK_WIDGET (user_data);
 	font_style = is_default?"EmpSystemFont":"SystemFont";
 	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings (GTK_WIDGET(widget)),
 					   font_style, NULL,
@@ -528,7 +529,8 @@ bold_if_default_last_updated_cell_data  (GtkTreeViewColumn *column,  GtkCellRend
 	gtk_tree_model_get (tree_model, iter, MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN,
 			    &is_default, -1);
 
-	widget = gtk_tree_view_column_get_tree_view (column);
+/* 	widget = gtk_tree_view_column_get_tree_view (column); */
+	widget = GTK_WIDGET (user_data);
 	font_style = is_default?"EmpSmallSystemFont":"SmallSystemFont";
 	style = gtk_rc_get_style_by_paths (gtk_widget_get_settings (GTK_WIDGET(widget)),
 					   font_style, NULL,
@@ -623,7 +625,7 @@ init_view (ModestAccountView *self)
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self), column);
 	gtk_tree_view_column_set_expand (column, TRUE);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_account_cell_data,
-						NULL, NULL);
+						self, NULL);
 
 	/* last update for this account */
 	text_renderer = gtk_cell_renderer_text_new ();
@@ -640,8 +642,8 @@ init_view (ModestAccountView *self)
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),column);
 	gtk_tree_view_column_set_expand (column, FALSE);
 	gtk_tree_view_column_set_cell_data_func(column, text_renderer, bold_if_default_last_updated_cell_data,
-						NULL, NULL);
-			
+						self, NULL);
+
 	/* Show the column headers,
 	 * which does not seem to be the default on Maemo.
 	 */

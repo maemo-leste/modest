@@ -356,7 +356,11 @@ modest_security_options_view_get_connection_protocol (ModestSecurityOptionsView 
 	g_return_val_if_fail (MODEST_IS_SECURITY_OPTIONS_VIEW (self), MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	return modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+#else
+	return modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+#endif
 }
 
 static void 
