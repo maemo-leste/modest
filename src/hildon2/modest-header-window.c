@@ -342,11 +342,6 @@ connect_signals (ModestHeaderWindow *self)
 					   self);
 
 	/* Mail Operation Queue */
-	priv->queue_change_handler =
-		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
-				  "queue-changed",
-				  G_CALLBACK (on_queue_changed),
-				  self);
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT (modest_runtime_get_window_mgr ()),
 						       "progress-list-changed",
@@ -414,6 +409,15 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 	priv->folder = g_object_ref (folder);
 
 	priv->contents_view = hildon_pannable_area_new ();
+
+	/* We need to do this here to properly listen for mail
+	   operations because create_header_view launches a mail
+	   operation */
+	priv->queue_change_handler =
+		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+				  "queue-changed",
+				  G_CALLBACK (on_queue_changed),
+				  self);
 
 	priv->header_view  = create_header_view (MODEST_WINDOW (self), folder);
 	priv->empty_view = create_empty_view ();
@@ -810,8 +814,6 @@ update_progress_hint (ModestHeaderWindow *self)
 	if (has_active_operations (self)) {
 		priv->progress_hint = TRUE;
 	}
-
-	return;
 
 	if (!priv->progress_hint && priv->current_store_account) {
 		priv->progress_hint = 
