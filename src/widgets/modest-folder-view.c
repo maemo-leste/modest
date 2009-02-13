@@ -500,7 +500,7 @@ convert_parent_folders_to_dots (gchar **item_name)
 }
 
 static void
-format_compact_style (gchar **item_name, 
+format_compact_style (gchar **item_name,
 		      GObject *instance,
 		      gboolean bold,
 		      gboolean multiaccount,
@@ -604,17 +604,11 @@ text_cell_data  (GtkTreeViewColumn *column,
 			}
 		}
 
-		if (type == TNY_FOLDER_TYPE_INBOX) {
-			if (inbox_is_special (TNY_FOLDER_STORE (instance))) {
-				g_free (fname);
-				fname = g_strdup (_("mcen_me_folder_inbox"));
-			}
-		}
-
-		/* note: we cannot reliably get the counts from the tree model, we need
-		 * to use explicit calls on tny_folder for some reason.
-		 */
-		/* Select the number to show: the unread or unsent messages. in case of outbox/drafts, show all */
+		/* note: we cannot reliably get the counts from the
+		 * tree model, we need to use explicit calls on
+		 * tny_folder for some reason. Select the number to
+		 * show: the unread or unsent messages. in case of
+		 * outbox/drafts, show all */
 		if ((type == TNY_FOLDER_TYPE_DRAFTS) ||
 		    (type == TNY_FOLDER_TYPE_OUTBOX) ||
 		    (type == TNY_FOLDER_TYPE_MERGE)) { /* _OUTBOX actually returns _MERGE... */
@@ -886,6 +880,13 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 	    type == TNY_FOLDER_TYPE_UNKNOWN) {
 		type = modest_tny_folder_guess_folder_type (TNY_FOLDER (instance));
 	}
+
+	/* It's not enough with check the folder type. We need to
+	   ensure that we're not giving a special folder icon to a
+	   normal folder with the same name than a special folder */
+	if (TNY_IS_FOLDER (instance) &&
+	    get_cmp_pos (type, TNY_FOLDER (instance)) ==  4)
+		type = TNY_FOLDER_TYPE_NORMAL;
 
 	/* Remote folders should not be treated as special folders */
 	if (TNY_IS_FOLDER_STORE (instance) &&
@@ -2138,6 +2139,8 @@ inbox_is_special (TnyFolderStore *folder_store)
 			last_inbox_bar = g_strrstr  (downcase, "inbox/");
 			if ((last_inbox_bar == NULL) || (last_inbox_bar + 5 != last_bar))
 				is_special = FALSE;
+		} else {
+			is_special = FALSE;
 		}
 		g_free (downcase);
 	}
@@ -2164,7 +2167,7 @@ get_cmp_pos (TnyFolderType t, TnyFolder *folder_store)
 		 * inbox of the account, or if it's a submailbox inbox. To do
 		 * this we'll apply an heuristic rule: Find last "/" and check
 		 * if it's preceeded by another Inbox */
-		is_special = is_special && inbox_is_special (TNY_FOLDER_STORE (folder_store));
+		is_special = is_special && !inbox_is_special (TNY_FOLDER_STORE (folder_store));
 		g_object_unref (account);
 		return is_special?0:4;
 	}
