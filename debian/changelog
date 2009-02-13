@@ -1,5 +1,7 @@
 modest (2.1-2009.08-1) unstable; urgency=low
 
+  * Week 08, 2009 release of modest with 30 bug fixes
+  *
   * Fixes: NB#93291, NB#97180, NB#97644, NB#97948, NB#100223, NB#100323
   * Fixes: NB#100599, NB#100670, NB#100678, NB#100695, NB#100707, NB#100845
   * Fixes: NB#100867, NB#100968, NB#100997, NB#101011, NB#101040, NB#101055
