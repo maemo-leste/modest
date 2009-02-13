@@ -633,7 +633,10 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 				gchar *password;
 				password  = modest_account_mgr_get_server_account_password (priv->account_mgr,
 											    server_account_name);
-				if (!password || strlen(password) == 0)
+
+				if (already_asked)
+					msg = g_strdup (_("mcen_ib_username_pw_incorrect"));
+				else if (!password || strlen(password) == 0)
 					msg = g_strdup_printf (_("emev_ni_ui_smtp_passwd_invalid"), 
 							       tny_account_get_name (account),
 							       tny_account_get_hostname (account));
