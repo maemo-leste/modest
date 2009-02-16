@@ -347,6 +347,7 @@ on_account_activated (GtkTreeView *account_view,
 
 	if (!registered) {
 		gtk_widget_destroy (folder_window);
+		folder_window = NULL;
 	} else {
 		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), account_name);
 		gtk_widget_show (folder_window);

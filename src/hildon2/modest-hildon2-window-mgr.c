@@ -31,6 +31,7 @@
 #include <hildon/hildon.h>
 #include "modest-hildon2-window-mgr.h"
 #include "modest-msg-edit-window.h"
+#include "modest-header-window.h"
 #include "modest-main-window.h"
 #include "modest-conf.h"
 #include "modest-defs.h"
@@ -389,6 +390,12 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 		return FALSE;
 	}
 
+	if (MODEST_IS_HEADER_WINDOW (current_top) && MODEST_IS_HEADER_WINDOW (window)) {
+		g_debug ("Trying to register a second header window is not allowed");
+		gtk_window_present (GTK_WINDOW (current_top));
+		return FALSE;
+	}
+
 	if (!MODEST_WINDOW_MGR_CLASS (parent_class)->register_window (self, window, parent))
 		goto fail;
 
@@ -716,7 +723,7 @@ create_folders_view (ModestWindowMgr *self)
 		gtk_widget_destroy (folders_window);
 		folders_window = NULL;
 	}
-	return folders_window;
+	return MODEST_WINDOW (folders_window);
 }
 
 static void
