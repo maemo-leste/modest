@@ -363,7 +363,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	GList *win;
 	ModestHildon2WindowMgrPrivate *priv;
 	gint *handler_id;
-	HildonProgram *program;
 	HildonWindowStack *stack;
 	gboolean nested_msg = FALSE;
 	ModestWindow *current_top;
@@ -373,17 +372,22 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
-	program = hildon_program_get_instance ();
+	stack = hildon_window_stack_get_default ();
+	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+
 	win = g_list_find (priv->window_list, window);
 	if (win) {
-		/* this is for the case we want to register the window and it was already
-		 * registered. We leave silently, telling the operation was succesful.
-		 */
+		/* this is for the case we want to register the window
+		   and it was already registered */
 		gtk_window_present (GTK_WINDOW (win));
-		return TRUE;
+		return FALSE;
 	}
 
-	stack = hildon_window_stack_get_default ();
+	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
+		g_debug ("Trying to register a second folder window is not allowed");
+		gtk_window_present (GTK_WINDOW (current_top));
+		return FALSE;
+	}
 
 	if (!MODEST_WINDOW_MGR_CLASS (parent_class)->register_window (self, window, parent))
 		goto fail;
@@ -392,7 +396,6 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
-	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
 	nested_msg = MODEST_IS_MSG_VIEW_WINDOW (window) && 
 		MODEST_IS_MSG_VIEW_WINDOW (parent);
 
@@ -696,20 +699,23 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 static ModestWindow *
 create_folders_view (ModestWindowMgr *self)
 {
-	ModestWindow *folders_window;
+	GtkWidget *folders_window;
 	ModestAccountMgr *mgr;
 	const gchar *acc_name;
 
-	folders_window = MODEST_WINDOW (modest_folder_window_new (NULL));
+	folders_window = (GtkWidget *) modest_folder_window_new (NULL);
 	mgr = modest_runtime_get_account_mgr ();
 	acc_name = modest_account_mgr_get_default_account (mgr);
 	if (!acc_name)
 		acc_name = MODEST_LOCAL_FOLDERS_ACCOUNT_NAME;
 	modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folders_window),
 					  acc_name);
-	modest_window_mgr_register_window (self, folders_window, NULL);
-	gtk_widget_show (GTK_WIDGET (folders_window));
-
+	if (modest_window_mgr_register_window (self, MODEST_WINDOW (folders_window), NULL)) {
+		gtk_widget_show (folders_window);
+	} else {
+		gtk_widget_destroy (folders_window);
+		folders_window = NULL;
+	}
 	return folders_window;
 }
 
@@ -749,6 +755,7 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 	   the folders window */
         acc_store = modest_runtime_get_account_store ();
         if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 1) {
+		ModestWindow *win;
                /* Show first the accounts window to add it to the
                    stack. This has to be changed when the new
                    stackable API is available. There will be a method
@@ -757,7 +764,9 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
                    windows, one after the other */
                 gtk_widget_show (GTK_WIDGET (initial_window));
 
-		initial_window = create_folders_view (MODEST_WINDOW_MGR (self));
+		win = create_folders_view (MODEST_WINDOW_MGR (self));
+		if (win)
+			initial_window = win;
 	}
 
 	/* Connect to the account store "account-removed" signal". If

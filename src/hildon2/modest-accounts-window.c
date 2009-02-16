@@ -332,6 +332,7 @@ on_account_activated (GtkTreeView *account_view,
 	ModestAccountsWindowPrivate *priv;
 	gchar* account_name; 
 	GtkWidget *folder_window;
+	gboolean registered;
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
 
@@ -340,16 +341,20 @@ on_account_activated (GtkTreeView *account_view,
 		return;
 
 	folder_window = GTK_WIDGET (modest_folder_window_new (NULL));
-	modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
-					   MODEST_WINDOW (folder_window),
-					   MODEST_WINDOW (self));
-	modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), account_name);
-	gtk_widget_show (folder_window);
-	g_free (account_name);
+	registered = modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
+							MODEST_WINDOW (folder_window),
+							MODEST_WINDOW (self));
 
+	if (!registered) {
+		gtk_widget_destroy (folder_window);
+	} else {
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), account_name);
+		gtk_widget_show (folder_window);
+	}
+	g_free (account_name);
 }
 
-static gboolean 
+static gboolean
 _modest_accounts_window_map_event (GtkWidget *widget,
 				   GdkEvent *event,
 				   gpointer userdata)
