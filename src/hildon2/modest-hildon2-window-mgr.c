@@ -693,7 +693,7 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
-static void
+static ModestWindow *
 create_folders_view (ModestWindowMgr *self)
 {
 	ModestWindow *folders_window;
@@ -709,6 +709,8 @@ create_folders_view (ModestWindowMgr *self)
 					  acc_name);
 	modest_window_mgr_register_window (self, folders_window, NULL);
 	gtk_widget_show (GTK_WIDGET (folders_window));
+
+	return folders_window;
 }
 
 static void
@@ -755,7 +757,7 @@ modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
                    windows, one after the other */
                 gtk_widget_show (GTK_WIDGET (initial_window));
 
-		create_folders_view (MODEST_WINDOW_MGR (self));
+		initial_window = create_folders_view (MODEST_WINDOW_MGR (self));
 	}
 
 	/* Connect to the account store "account-removed" signal". If
