@@ -4861,7 +4861,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 		TnyFolderStore *dst_folder;
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
-		modest_ui_actions_create_folder (GTK_WIDGET (parent_win), folder_view);
+		modest_ui_actions_create_folder (GTK_WIDGET (dialog), folder_view);
 		return;
 	case GTK_RESPONSE_NONE:
 	case GTK_RESPONSE_CANCEL:
