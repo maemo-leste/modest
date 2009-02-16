@@ -3155,22 +3155,27 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to
 		return FALSE;
 	}
 
+	g_object_ref (window);
 	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field),  add_to_addressbook)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
+		g_object_unref (window);
 		return FALSE;
 	}
 	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field),  add_to_addressbook)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->cc_field));
+		g_object_unref (window);
 		return FALSE;
 	}
 	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field), add_to_addressbook)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->bcc_field));
+		g_object_unref (window);
 		return FALSE;
 	}
 
 	if (!modest_recpt_editor_has_focus (MODEST_RECPT_EDITOR (priv->cc_field)) &&
 	    !modest_recpt_editor_has_focus (MODEST_RECPT_EDITOR (priv->bcc_field)))
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
+	g_object_unref (window);
 
 	return TRUE;
 

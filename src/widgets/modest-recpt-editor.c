@@ -938,7 +938,7 @@ modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor)
 	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
-	if (GTK_WIDGET_DRAWABLE (recpt_editor)) {
+	if (GTK_WIDGET_VISIBLE (recpt_editor)) {
 		gtk_widget_grab_focus (priv->text_view);
 	}
 }
@@ -951,7 +951,7 @@ modest_recpt_editor_has_focus (ModestRecptEditor *recpt_editor)
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
-	return GTK_WIDGET_DRAWABLE (priv->text_view) && 
+	return GTK_WIDGET_VISIBLE (priv->text_view) && 
 		gtk_widget_is_focus (priv->text_view);
 }
 

@@ -186,12 +186,12 @@ open_addressbook_sync ()
 
 	info = g_slice_new (OpenAddressbookSyncInfo);
 	info->mainloop = g_main_loop_new (NULL, FALSE);
+	info->retval = FALSE;
 	if (e_book_async_open (book, FALSE, book_open_sync_cb, info) == E_BOOK_ERROR_OK) {
 		GDK_THREADS_LEAVE ();
 		g_main_loop_run (info->mainloop);
 		GDK_THREADS_ENTER ();
 	}
-	info->retval = FALSE;
 	retval = info->retval;
 	g_main_loop_unref (info->mainloop);
 	g_slice_free (OpenAddressbookSyncInfo, info);
@@ -872,12 +872,32 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 
 }
 
+typedef struct _GetContactsInfo {
+	GMainLoop *mainloop;
+	GList *result;
+} GetContactsInfo;
+
+static void 
+get_contacts_for_name_cb (EBook *book, 
+			  EBookStatus status, 
+			  GList *list, 
+			  gpointer userdata)
+{
+	GetContactsInfo *info = (GetContactsInfo *) userdata;
+
+	if (status == E_BOOK_ERROR_OK)
+		info->result = list;
+
+	g_main_loop_quit (info->mainloop);
+}
+
 static GList *
 get_contacts_for_name (const gchar *name)
 {
 	EBookQuery *full_name_book_query = NULL;
 	GList *result;
 	gchar *unquoted;
+	GetContactsInfo *info;
 
 	if (name == NULL)
 		return NULL;
@@ -887,8 +907,18 @@ get_contacts_for_name (const gchar *name)
 	g_free (unquoted);
 
 	/* TODO: Make it launch a mainloop */
-	e_book_get_contacts (book, full_name_book_query, &result, NULL);
+	info = g_slice_new (GetContactsInfo);
+	info->mainloop = g_main_loop_new (NULL, FALSE);
+	info->result = NULL;
+	if (e_book_async_get_contacts (book, full_name_book_query, get_contacts_for_name_cb, info) == 0) {
+		GDK_THREADS_LEAVE ();
+		g_main_loop_run (info->mainloop);
+		GDK_THREADS_ENTER ();
+	} 
+	result = info->result;
 	e_book_query_unref (full_name_book_query);
+	g_main_loop_unref (info->mainloop);
+	g_slice_free (GetContactsInfo, info);
 
 	return result;
 }
