@@ -123,13 +123,79 @@ open_addressbook ()
 	return TRUE; /* FIXME */	
 }
 
+typedef struct _OpenAddressbookSyncInfo {
+	gboolean retval;
+	GMainLoop *mainloop;
+} OpenAddressbookSyncInfo;
+
+static void
+get_book_view_sync_cb (EBook *book, EBookStatus status, EBookView *bookview, gpointer data)
+{
+	OpenAddressbookSyncInfo *info = (OpenAddressbookSyncInfo *) data;
+
+	if (status != E_BOOK_ERROR_OK) {
+		g_object_unref (book);
+		book = NULL;
+		info->retval = FALSE;
+		g_main_loop_quit (info->mainloop);
+		return;
+	}
+	book_view = bookview;
+
+	if (contact_model)
+#if MODEST_ABOOK_API < 4
+		osso_abook_tree_model_set_book_view (OSSO_ABOOK_TREE_MODEL (contact_model),
+						     book_view);
+#else /* MODEST_ABOOK_API < 4 */
+		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model),
+						     book_view);
+#endif /* MODEST_ABOOK_API < 4 */
+
+	e_book_view_start (book_view);
+	info->retval = TRUE;
+	g_main_loop_quit (info->mainloop);
+}
+
+static void
+book_open_sync_cb (EBook *view, EBookStatus status, gpointer data)
+{
+	EBookQuery *query = NULL;
+	OpenAddressbookSyncInfo *info = (OpenAddressbookSyncInfo *) data;
+
+	if (status != E_BOOK_ERROR_OK) {
+		g_object_unref (book);
+		book = NULL;
+		info->retval = FALSE;
+		g_main_loop_quit (info->mainloop);
+		return;
+	}
+	query = e_book_query_any_field_contains ("");
+	e_book_async_get_book_view (book, query, NULL, -1, get_book_view_sync_cb, info);
+	e_book_query_unref (query);
+}
+
 static gboolean
 open_addressbook_sync ()
 {
+	OpenAddressbookSyncInfo *info;
+	gboolean retval;
+
 	book = e_book_new_system_addressbook (NULL);
 	if (!book)
 		return FALSE;
 
+	info = g_slice_new (OpenAddressbookSyncInfo);
+	info->mainloop = g_main_loop_new (NULL, FALSE);
+	if (e_book_async_open (book, FALSE, book_open_sync_cb, info) == E_BOOK_ERROR_OK) {
+		GDK_THREADS_LEAVE ();
+		g_main_loop_run (info->mainloop);
+		GDK_THREADS_ENTER ();
+	}
+	info->retval = FALSE;
+	retval = info->retval;
+	g_main_loop_unref (info->mainloop);
+	g_slice_free (OpenAddressbookSyncInfo, info);
+	/* Make it launch a main loop */
 	return e_book_open (book, FALSE, NULL);
 }
 
@@ -820,6 +886,7 @@ get_contacts_for_name (const gchar *name)
 	full_name_book_query = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, unquoted);
 	g_free (unquoted);
 
+	/* TODO: Make it launch a mainloop */
 	e_book_get_contacts (book, full_name_book_query, &result, NULL);
 	e_book_query_unref (full_name_book_query);
 
