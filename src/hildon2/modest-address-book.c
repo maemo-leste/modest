@@ -547,7 +547,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 
 	size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	name_label = gtk_label_new(contact_name);
-	gtk_misc_set_alignment(GTK_MISC(name_label), 0, 0);
+	gtk_misc_set_alignment(GTK_MISC(name_label), 0.0, 0.5);
 	cptn_cntrl =
 		modest_maemo_utils_create_captioned (size_group, NULL,
 						     _("mcen_ia_add_email_name"), FALSE,
