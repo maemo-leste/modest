@@ -744,7 +744,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	ModestProtocolRegistry *protocol_registry;
 	ModestEasysetupWizardDialogPrivate* priv; 
 	GtkWidget *box; 
-	GtkWidget *scrolled_window;
+	GtkWidget *pannable;
 	GtkWidget *label;
 	GtkSizeGroup *title_sizegroup;
 	GtkSizeGroup *value_sizegroup;
@@ -753,11 +753,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	scrolled_window = gtk_scrolled_window_new (NULL, NULL);
-
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
-					GTK_POLICY_NEVER,
-					GTK_POLICY_AUTOMATIC);
+	pannable = hildon_pannable_area_new ();
 
 	/* Show note that account type cannot be changed in future: */
 	label = gtk_label_new (_("mcen_ia_emailsetup_account_type"));
@@ -822,16 +818,16 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker), 
 		MODEST_PROTOCOLS_STORE_POP);
 
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolled_window), box);
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), box);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
-					     gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (scrolled_window)));
+					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (pannable)));
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_widget_show (scrolled_window);
+	gtk_widget_show (pannable);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
 
-	return GTK_WIDGET (scrolled_window);
+	return GTK_WIDGET (pannable);
 }
 
 static void
@@ -889,7 +885,10 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
 	gchar *smtp_caption_label;
+	GtkWidget *pannable;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+
+	pannable = hildon_pannable_area_new ();
 	
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -958,12 +957,18 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	g_signal_connect (G_OBJECT (priv->entry_outgoingserver), "changed",
 	                  G_CALLBACK (on_entry_outgoing_servername_changed), self);
+
+
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), box);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
+					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (pannable)));
 	gtk_widget_show (GTK_WIDGET (box));
+	gtk_widget_show (pannable);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
 	
-	return GTK_WIDGET (box);
+	return GTK_WIDGET (pannable);
 }
 
 static gboolean
