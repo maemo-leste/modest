@@ -44,6 +44,7 @@
 #include <modest-text-utils.h>
 #include "modest-hildon2-details-dialog.h"
 #include <hildon/hildon-pannable-area.h>
+#include <modest-ui-constants.h>
 
 static void modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *self);
 
@@ -133,7 +134,7 @@ modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *sel
 
 	priv = MODEST_HILDON2_DETAILS_DIALOG_GET_PRIVATE (self);
 
-	gtk_window_set_default_size (GTK_WINDOW (self), 400, 220);
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 
 	priv->props_table = gtk_table_new (0, 2, FALSE);
 	gtk_table_set_col_spacings (GTK_TABLE (priv->props_table), 12);
