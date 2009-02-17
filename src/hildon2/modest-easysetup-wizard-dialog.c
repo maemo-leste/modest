@@ -1213,7 +1213,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Create the notebook to be used by the ModestWizardDialog base class:
 	 * Each page of the notebook will be a page of the wizard: */
 	GtkNotebook *notebook = GTK_NOTEBOOK (gtk_notebook_new());
-	gtk_widget_set_size_request (GTK_WIDGET (notebook), DIALOG_WIDTH, -1);
+	gtk_widget_set_size_request (GTK_WIDGET (notebook), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 	
 	/* Set the notebook used by the ModestWizardDialog base class: */
 	g_object_set (G_OBJECT(self), "wizard-notebook", notebook, NULL);
