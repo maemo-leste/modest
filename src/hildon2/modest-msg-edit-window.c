@@ -3662,7 +3662,7 @@ from_field_changed (HildonPickerButton *button,
 	mgr = modest_runtime_get_account_mgr ();
 	signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_old_signature);
 	if (has_old_signature) {
-		full_signature = g_strconcat ("--\n", signature, NULL);
+		full_signature = g_strconcat ("\n--\n", signature, NULL);
 		if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
 			gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
 			iter = match_start;
@@ -3677,7 +3677,7 @@ from_field_changed (HildonPickerButton *button,
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_new_signature);
 	if (has_new_signature) {
-		full_signature = g_strconcat ("--\n", signature, NULL);
+		full_signature = g_strconcat ("\n--\n", signature, NULL);
 		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
 		g_free (full_signature);
 	}
