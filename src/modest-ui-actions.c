@@ -3843,6 +3843,8 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					     _HL("wdgt_bd_done"),
 					     GTK_RESPONSE_ACCEPT,
 					     NULL);
+	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), 
+					HILDON_MARGIN_DOUBLE);
 #else
 	GtkWidget *dialog =
 		gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
