@@ -54,6 +54,7 @@
 #include <hildon/hildon-gtk.h>
 #include <modest-header-window.h>
 #include <modest-folder-window.h>
+#include <modest-maemo-utils.h>
 #endif
 
 #ifdef MODEST_PLATFORM_MAEMO
@@ -3791,11 +3792,19 @@ password_dialog_check_field (GtkEditable *editable,
 	const gchar *value;
 	gboolean any_value_empty = FALSE;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	value = hildon_entry_get_text (HILDON_ENTRY (fields->username));
+#else
 	value = gtk_entry_get_text (GTK_ENTRY (fields->username));
+#endif
 	if ((value == NULL) || value[0] == '\0') {
 		any_value_empty = TRUE;
 	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	value = hildon_entry_get_text (HILDON_ENTRY (fields->password));
+#else
 	value = gtk_entry_get_text (GTK_ENTRY (fields->password));
+#endif
 	if ((value == NULL) || value[0] == '\0') {
 		any_value_empty = TRUE;
 	}
@@ -3880,9 +3889,15 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gchar *initial_username = modest_account_mgr_get_server_account_username (
 		modest_runtime_get_account_mgr(), server_account_name);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *entry_username = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	if (initial_username)
+		hildon_entry_set_text (HILDON_ENTRY (entry_username), initial_username);
+#else
 	GtkWidget *entry_username = gtk_entry_new ();
 	if (initial_username)
 		gtk_entry_set_text (GTK_ENTRY (entry_username), initial_username);
+#endif
 	/* Dim this if a connection has ever succeeded with this username,
 	 * as per the UI spec: */
 	/* const gboolean username_known =  */
@@ -3904,8 +3919,14 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *caption = modest_maemo_utils_create_captioned (sizegroup, NULL, 
+								  _("mail_fi_username"), FALSE,
+								  entry_username);
+#else
 	GtkWidget *caption = hildon_caption_new (sizegroup, 
 		_("mail_fi_username"), entry_username, NULL, HILDON_CAPTION_MANDATORY);
+#endif
 	gtk_widget_show (entry_username);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption, 
 		FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -3916,7 +3937,11 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 #endif /* !MODEST_TOOLKIT_GTK */
 
 	/* password: */
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *entry_password = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+#else
 	GtkWidget *entry_password = gtk_entry_new ();
+#endif
 	gtk_entry_set_visibility (GTK_ENTRY(entry_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), "*"); */
 
@@ -3925,8 +3950,14 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password),
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	caption = modest_maemo_utils_create_captioned (sizegroup, NULL,
+						       _("mail_fi_password"), FALSE,
+						       entry_password);
+#else
 	caption = hildon_caption_new (sizegroup,
 		_("mail_fi_password"), entry_password, NULL, HILDON_CAPTION_MANDATORY);
+#endif
 	gtk_widget_show (entry_password);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption,
 		FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -3961,7 +3992,11 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			if (username) {
+#ifdef MODEST_TOOLKIT_HILDON2
+				*username = g_strdup (hildon_entry_get_text (HILDON_ENTRY(entry_username)));
+#else
 				*username = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_username)));
+#endif
 
 				/* Note that an empty field becomes the "" string */
 				if (*username && strlen (*username) > 0) {
@@ -3987,7 +4022,11 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 			}
 
 			if (password) {
+#ifdef MODEST_TOOLKIT_HILDON2
+				*password = g_strdup (hildon_entry_get_text (HILDON_ENTRY(entry_password)));
+#else
 				*password = g_strdup (gtk_entry_get_text (GTK_ENTRY(entry_password)));
+#endif
 
 				/* We do not save the password in the configuration, 
 				 * because this function is only called for passwords that should 
