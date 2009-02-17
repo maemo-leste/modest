@@ -3793,22 +3793,27 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	switch (priv->priority_flags) {
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (high_toggle), TRUE);
+		helper.current_priority = GTK_TOGGLE_BUTTON (high_toggle);
 		break;
 	case TNY_HEADER_FLAG_LOW_PRIORITY:
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (low_toggle), TRUE);
+		helper.current_priority = GTK_TOGGLE_BUTTON (low_toggle);
 		break;
 	default:
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (medium_toggle), TRUE);
+		helper.current_priority = GTK_TOGGLE_BUTTON (medium_toggle);
 		break;
 	}
 
 	switch (modest_msg_edit_window_get_format (window)) {
 	case MODEST_MSG_EDIT_FORMAT_TEXT:
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (text_toggle), TRUE);
+		helper.current_format = GTK_TOGGLE_BUTTON (text_toggle);
 		break;
 	case MODEST_MSG_EDIT_FORMAT_HTML:
 	default:
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (html_toggle), TRUE);
+		helper.current_format = GTK_TOGGLE_BUTTON (html_toggle);
 		break;
 	}
 
