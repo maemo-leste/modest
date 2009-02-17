@@ -446,7 +446,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_box_pack_start (GTK_BOX (dialog_box), pannable, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (dialog_box);
-	gtk_window_set_default_size (GTK_WINDOW (self), -1, 220);
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
