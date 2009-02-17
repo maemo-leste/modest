@@ -897,7 +897,7 @@ update_picker_mode (ModestAccountView *self)
 	gtk_tree_view_column_set_visible (column, !priv->picker_mode);
 
 	/* Name column */
-	column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 2);
+	column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 1);
 	renderers = gtk_tree_view_column_get_cell_renderers (column);
 	renderer = (GtkCellRenderer *) renderers->data;
 	g_object_set (renderer, 

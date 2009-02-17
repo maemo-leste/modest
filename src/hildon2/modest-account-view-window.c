@@ -303,6 +303,7 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE(self);
 	priv->acc_removed_handler = 0;
 	priv->account_view = modest_account_view_new (modest_runtime_get_account_mgr());
+	modest_account_view_set_picker_mode (MODEST_ACCOUNT_VIEW (priv->account_view), TRUE);
 
 	main_vbox = GTK_DIALOG (self)->vbox;
 
