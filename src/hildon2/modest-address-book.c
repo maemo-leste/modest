@@ -538,6 +538,10 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 					GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 					_HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
 	gtk_dialog_set_has_separator(GTK_DIALOG(add_email_addr_to_contact_dlg), FALSE);
+#ifdef MODEST_TOOLKIT_HILDON2
+	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (add_email_addr_to_contact_dlg)->vbox), 
+					HILDON_MARGIN_DOUBLE);
+#endif
 	/*Set app_name & state_save related tags to the window */
 
 	size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
