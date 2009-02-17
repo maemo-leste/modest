@@ -308,7 +308,6 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 
 	pannable = hildon_pannable_area_new ();
 	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
-	gtk_container_set_border_width (GTK_CONTAINER (pannable), MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (pannable);
 	gtk_container_add (GTK_CONTAINER (pannable), 
 			   GTK_WIDGET (priv->account_view));
@@ -317,7 +316,7 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	g_signal_connect (G_OBJECT (priv->account_view), "row-activated",
 			  G_CALLBACK (on_account_activated), self);
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), pannable, TRUE, TRUE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX(main_vbox), pannable, TRUE, TRUE, MODEST_MARGIN_DEFAULT);
 
 }
 
