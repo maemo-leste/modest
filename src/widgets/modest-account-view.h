@@ -98,6 +98,26 @@ gchar*   modest_account_view_get_selected_account    (ModestAccountView *account
  **/
 gchar *  modest_account_view_get_path_account (ModestAccountView *self, GtkTreePath *path);
 
+/**
+ * modest_account_view_set_picker_mode:
+ * @self: a #ModestAccountView
+ * @enable: a #gboolean
+ *
+ * Sets the account view to be shown in picker mode (only names shown, centered).
+ * This is used in Hildon2.2 to show accounts as in a picker
+ */
+void modest_account_view_set_picker_mode (ModestAccountView *self, gboolean enable);
+
+/**
+ * modest_account_view_get_picker_mode:
+ * @self: a #ModestAccountView
+ *
+ * Gets if account view is in picker mode.
+ *
+ * Returns: %TRUE if @self in picker mode, %FALSE otherwise
+ */
+gboolean modest_account_view_get_picker_mode (ModestAccountView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_VIEW_H__ */

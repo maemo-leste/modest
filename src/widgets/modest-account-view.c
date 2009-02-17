@@ -71,6 +71,7 @@ static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
 static void update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view);
 static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
+static void update_picker_mode (ModestAccountView *self);
 
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
@@ -88,6 +89,7 @@ struct _ModestAccountViewPrivate {
 	ModestAccountMgr *account_mgr;
 
 	ModestDatetimeFormatter *datetime_formatter;
+	gboolean picker_mode;
 
 	/* Signal handlers */
 	GSList *sig_handlers;
@@ -154,6 +156,7 @@ modest_account_view_init (ModestAccountView *obj)
 	priv->sig_handlers = NULL;
 
 	priv->datetime_formatter = modest_datetime_formatter_new ();
+	priv->picker_mode = FALSE;
 	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
 			  G_CALLBACK (datetime_format_changed), (gpointer) obj);
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -651,6 +654,8 @@ init_view (ModestAccountView *self)
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 #endif
 
+	update_picker_mode (self);
+
 	priv->sig_handlers = 
 		modest_signal_mgr_connect (priv->sig_handlers, 
 					   G_OBJECT (modest_runtime_get_account_store ()),
@@ -876,3 +881,51 @@ on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
 	} 
 }
 
+static void
+update_picker_mode (ModestAccountView *self)
+{
+	ModestAccountViewPrivate *priv;
+	GtkTreeViewColumn *column;
+	GList *renderers;
+	GtkCellRenderer *renderer;
+	
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+
+	/* Last updated column */
+	column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 2);
+	gtk_tree_view_column_set_visible (column, !priv->picker_mode);
+
+	/* Name column */
+	column = gtk_tree_view_get_column (GTK_TREE_VIEW (self), 2);
+	renderers = gtk_tree_view_column_get_cell_renderers (column);
+	renderer = (GtkCellRenderer *) renderers->data;
+	g_object_set (renderer, 
+		      "align-set", TRUE,
+		      "alignment", priv->picker_mode?PANGO_ALIGN_CENTER:PANGO_ALIGN_LEFT,
+		      NULL);
+	g_list_free (renderers);
+}
+
+void 
+modest_account_view_set_picker_mode (ModestAccountView *self, gboolean enable)
+{
+	ModestAccountViewPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+
+	priv->picker_mode = enable;
+	update_picker_mode (self);
+}
+
+gboolean 
+modest_account_view_get_picker_mode (ModestAccountView *self)
+{
+	ModestAccountViewPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_VIEW (self), FALSE);
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+
+	return priv->picker_mode;
+}
