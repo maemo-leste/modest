@@ -3879,10 +3879,12 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	}
 
 	gchar *txt = g_strdup_printf (_("mail_ia_password_info"), server_name);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), gtk_label_new(txt),
-			    FALSE, FALSE, 0);
+	GtkWidget *label = gtk_label_new (txt);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	g_free (txt);
 	g_free (server_name);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), label,
+			    FALSE, FALSE, 0);
 	server_name = NULL;
 
 	/* username: */
