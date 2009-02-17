@@ -164,12 +164,12 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	                  G_CALLBACK (on_security_changed), self);
 
 	/* Pack into container */
-	gtk_box_pack_start (GTK_BOX (self), ppriv->security_view,
+	gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view,
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 	if (ppriv->full)
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, 
 				    FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view,
+	gtk_box_pack_start (GTK_BOX (self), ppriv->security_view,
 			    FALSE, FALSE, MODEST_MARGIN_HALF);
 
 	/* Show widgets */
@@ -331,9 +331,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), port_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	} else {
-		/* The order is different */
-		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
 	}
 
 	/* Show widgets */
