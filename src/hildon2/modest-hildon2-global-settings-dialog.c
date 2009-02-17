@@ -157,7 +157,7 @@ modest_hildon2_global_settings_dialog_init (ModestHildon2GlobalSettingsDialog *s
 
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->updating_page);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
-	gtk_window_set_default_size (GTK_WINDOW (self), -1, 340);
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 }
 
 static void
