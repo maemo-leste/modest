@@ -3653,28 +3653,35 @@ from_field_changed (HildonPickerButton *button,
 	GtkTextIter iter;
 	GtkTextIter match_start, match_end;
 	ModestAccountMgr *mgr;
-	gchar *old_signature;
-	gchar *new_signature;
+	gchar *signature;
+	gchar *full_signature;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	mgr = modest_runtime_get_account_mgr ();
-	old_signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_old_signature);
+	signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_old_signature);
 	if (has_old_signature) {
-		if (gtk_text_iter_forward_search (&iter, old_signature, 0, &match_start, &match_end, NULL)) {
+		full_signature = g_strconcat ("--\n", signature, NULL);
+		if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
 			gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
 			iter = match_start;
+		} else if (gtk_text_iter_forward_search (&iter, _("mcen_ia_editor_original_message"), 0,
+							 &match_start, &match_end, NULL)) {
+			iter = match_start;
 		}
+		g_free (full_signature);
 	}
-	g_free (old_signature);
+	g_free (signature);
 
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	new_signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_new_signature);
+	signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_new_signature);
 	if (has_new_signature) {
-		gtk_text_buffer_insert (priv->text_buffer, &iter, new_signature, -1);
+		full_signature = g_strconcat ("--\n", signature, NULL);
+		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
+		g_free (full_signature);
 	}
-	g_free (new_signature);
+	g_free (signature);
 }
 
 typedef struct _MessageSettingsHelper {
