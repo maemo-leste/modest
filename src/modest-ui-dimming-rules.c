@@ -41,6 +41,7 @@
 #include "modest-tny-msg.h"
 #include "modest-tny-mime-part.h"
 #include "modest-text-utils.h"
+#include "widgets/modest-folder-view.h"
 #include "modest-address-book.h"
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
@@ -82,7 +83,6 @@ static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win
 static void fill_list_of_caches (gpointer key, gpointer value, gpointer userdata);
 static gboolean _send_receive_in_progress (ModestWindow *win);
 static gboolean _msgs_send_in_progress (void);
-
 
 static DimmedState *
 _define_main_window_dimming_state (ModestMainWindow *window)
@@ -578,24 +578,35 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 	TnyFolderType types[4];
 	gboolean dimmed = FALSE;
 
-	g_return_val_if_fail (MODEST_IS_MAIN_WINDOW(win), FALSE);
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	types[0] = TNY_FOLDER_TYPE_DRAFTS; 
+	types[0] = TNY_FOLDER_TYPE_DRAFTS;
 	types[1] = TNY_FOLDER_TYPE_OUTBOX;
 	types[2] = TNY_FOLDER_TYPE_SENT;
 	types[3] = TNY_FOLDER_TYPE_ARCHIVE;
-	
-	/* Check dimmed rule */	
-	dimmed = _selected_folder_not_renameable (MODEST_MAIN_WINDOW(win));
-	if (dimmed)
-		modest_dimming_rule_set_notification (rule, "");
-	if (!dimmed) {
-		dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+
+	/* Check dimmed rule */
+	if (MODEST_IS_MAIN_WINDOW (win)) {
+		dimmed = _selected_folder_not_renameable (MODEST_MAIN_WINDOW(win));
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
+		if (!dimmed) {
+			dimmed = _selected_folder_is_root_or_inbox (MODEST_MAIN_WINDOW(win));
+			if (dimmed)
+				modest_dimming_rule_set_notification (rule, "");
+		}
 	}
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (MODEST_IS_FOLDER_WINDOW (win)) {
+		ModestFolderView *folder_view;
+		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
+		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
+								       MODEST_FOLDER_RULES_FOLDER_NON_RENAMEABLE);
+	}
+#endif
+
 	if (!dimmed) {
 		dimmed = _selected_folder_is_any_of_type (win, types, 4);
 		if (dimmed)
@@ -1243,6 +1254,15 @@ modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer us
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (MODEST_IS_FOLDER_WINDOW (win)) {
+		ModestFolderView *folder_view;
+		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
+		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
+								       MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE);
+	}
+#endif
+
 	return dimmed;
 }
 
@@ -1259,7 +1279,16 @@ modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer use
 	/* Check dimmed rule */	
 	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (MODEST_IS_FOLDER_WINDOW (win)) {
+		ModestFolderView *folder_view;
+		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
+		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
+								       MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE);
+	}
+#endif
 
 	return dimmed;
 }

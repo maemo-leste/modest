@@ -3635,3 +3635,36 @@ modest_folder_view_unset_filter (ModestFolderView *self,
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));	
 	}
 }
+
+gboolean
+modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
+					     ModestTnyFolderRules rules)
+{
+	GtkTreeModel *filter_model;
+	GtkTreeIter iter;
+	gboolean fulfil = FALSE;
+
+	if (!get_inner_models (self, &filter_model, NULL, NULL))
+		return FALSE;
+
+	if (!gtk_tree_model_get_iter_first (filter_model, &iter))
+		return FALSE;
+
+	do {
+		TnyFolderStore *folder;
+
+		gtk_tree_model_get (filter_model, &iter, INSTANCE_COLUMN, &folder, -1);
+		if (folder) {
+			if (TNY_IS_FOLDER (folder)) {
+				ModestTnyFolderRules folder_rules = modest_tny_folder_get_rules (TNY_FOLDER (folder));
+				/* Folder rules are negative: non_writable, non_deletable... */
+				if (!(folder_rules & rules))
+					fulfil = TRUE;
+			}
+			g_object_unref (folder);
+		}
+
+	} while (gtk_tree_model_iter_next (filter_model, &iter) && !fulfil);
+
+	return fulfil;
+}

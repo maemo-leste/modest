@@ -34,6 +34,7 @@
 #include <tny-gtk-account-list-model.h>
 #include <tny-account-store.h>
 #include <modest-tny-account-store.h>
+#include <modest-tny-folder.h>
 
 G_BEGIN_DECLS
 
@@ -293,6 +294,8 @@ void modest_folder_view_set_filter (ModestFolderView *self,
 void modest_folder_view_unset_filter (ModestFolderView *self,
 				      ModestFolderViewFilter filter);
 
+gboolean modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
+						      ModestTnyFolderRules rules);
 
 G_END_DECLS
 
