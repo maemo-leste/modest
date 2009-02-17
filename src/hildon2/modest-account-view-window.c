@@ -292,7 +292,7 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 
 
 	/* Specify a default size */
-	gtk_window_set_default_size (GTK_WINDOW (self), -1, 320);
+	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 	
 	/* This seems to be necessary to make the window show at the front with decoration.
 	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
