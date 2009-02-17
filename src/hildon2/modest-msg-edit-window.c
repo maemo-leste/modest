@@ -3648,23 +3648,33 @@ static void
 from_field_changed (HildonPickerButton *button,
 		    ModestMsgEditWindow *self)
 {
-	gchar *current_text;
 	ModestMsgEditWindowPrivate *priv;
-	gboolean old_signature;
+	gboolean has_old_signature, has_new_signature;
+	GtkTextIter iter;
+	GtkTextIter match_start, match_end;
+	ModestAccountMgr *mgr;
+	gchar *old_signature;
+	gchar *new_signature;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
-	g_message ("Current value is %s", hildon_touch_selector_get_current_text (hildon_picker_button_get_selector (button)));
-	current_text = modest_text_utils_text_buffer_get_text (priv->text_buffer);
-	g_message ("Current body is [\n%s\n]", current_text);
-	g_free (current_text);
-	g_message ("Old signature is [\n%s\n]", modest_account_mgr_get_signature (modest_runtime_get_account_mgr (),
-										  priv->last_from_account,
-										  &old_signature));
-	g_message ("New signature is [\n%s\n]", modest_account_mgr_get_signature (modest_runtime_get_account_mgr (),
-										  modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (button)),
-										  &old_signature));
+	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
+	mgr = modest_runtime_get_account_mgr ();
+	old_signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_old_signature);
+	if (has_old_signature) {
+		if (gtk_text_iter_forward_search (&iter, old_signature, 0, &match_start, &match_end, NULL)) {
+			gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
+			iter = match_start;
+		}
+	}
+	g_free (old_signature);
+
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	new_signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_new_signature);
+	if (has_new_signature) {
+		gtk_text_buffer_insert (priv->text_buffer, &iter, new_signature, -1);
+	}
+	g_free (new_signature);
 }
 
 typedef struct _MessageSettingsHelper {
