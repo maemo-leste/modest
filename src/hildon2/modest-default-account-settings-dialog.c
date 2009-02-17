@@ -1106,7 +1106,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
     /* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG(self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
 
-    gtk_window_set_default_size (GTK_WINDOW (self), -1, 340);
+    gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 
     /* Connect to the dialog's "response" and "delete-event" signals */
     g_signal_connect (G_OBJECT (self), "response", G_CALLBACK (on_response), self); 
