@@ -83,7 +83,7 @@ modest_transport_account_decorator_send (TnyTransportAccount *self, TnyMsg *msg,
 		connection_specific_account = TNY_TRANSPORT_ACCOUNT 
 			(modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection (store, account_name));
 	}
-	
+
 	if (connection_specific_account) {
 		tny_transport_account_send (connection_specific_account, msg, err);
 		g_object_unref (connection_specific_account);

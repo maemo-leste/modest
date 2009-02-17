@@ -6304,7 +6304,7 @@ on_send_receive_finished (ModestMailOperation  *mail_op,
 }
 
 
-void 
+void
 modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self, 
 						TnyHeader *header, 
 						TnyMsg *msg, 
@@ -6326,10 +6326,10 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 
 
 	/* Get the server name: */
-	server_account = 
+	server_account =
 		TNY_TRANSPORT_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self)));
 	if (server_account)
-		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));		
+		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));
 	else
 		g_return_if_reached ();
 
@@ -6348,7 +6348,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 		g_warning ("%s: unexpected ERROR %d",
 			   __FUNCTION__, err->code);
 		message = g_strdup (_CS("sfil_ib_unable_to_send"));
-		break;	
+		break;
 	}
 
 	modest_platform_run_information_dialog (NULL, message, FALSE);

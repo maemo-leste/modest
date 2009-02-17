@@ -1388,17 +1388,17 @@ modest_tny_account_store_get_smtp_specific_transport_account_for_open_connection
 	if (!server_account_name) {
 		return NULL; /* No connection-specific SMTP server was specified for this connection. */
 	}
-		
+
 	TnyAccount* account = modest_tny_account_store_get_tny_account_by (self, 
 									   MODEST_TNY_ACCOUNT_STORE_QUERY_ID, 
 									   server_account_name);
 
 	/* printf ("DEBUG: %s: account=%p\n", __FUNCTION__, account); */
-	g_free (server_account_name);	
+	g_free (server_account_name);
 
 	/* Unref the get()ed object, as required by the tny_maemo_conic_device_get_iap() documentation. */
 	g_object_unref (connection);
-	
+
 	return account;
 #else
 	return NULL; /* TODO: Implement this for GNOME, instead of just Maemo? */
