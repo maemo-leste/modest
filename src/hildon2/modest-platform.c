@@ -890,10 +890,10 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 		if (suggested_name)
 			gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
 		else
-			gtk_entry_set_text (GTK_ENTRY (entry), _CS("ckdg_va_new_folder_name_stub"));
+			gtk_entry_set_text (GTK_ENTRY (entry), _FM("ckdg_va_new_folder_name_stub"));
 		gtk_entry_set_width_chars (GTK_ENTRY (entry),
 					   MAX (g_utf8_strlen (gtk_entry_get_text (GTK_ENTRY (entry)), -1),
-						g_utf8_strlen (_CS("ckdg_va_new_folder_name_stub"), -1)));
+						g_utf8_strlen (_FM("ckdg_va_new_folder_name_stub"), -1)));
 		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 	}
 
@@ -985,14 +985,14 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 				       gchar **folder_name,
 				       TnyFolderStore **parent_folder)
 {
-	gchar *real_suggested_name = NULL, *tmp = NULL;
+	gchar *real_suggested_name = NULL;
 	gint result;
 	ModestTnyAccountStore *acc_store;
 	TnyAccount *account;
 
 	if(suggested_name == NULL)
 	{
-		const gchar *default_name = _CS("ckdg_va_new_folder_name_stub");
+		const gchar *default_name = _FM("ckdg_va_new_folder_name_stub");
 		unsigned int i;
 
 		for(i = 0; i < 100; ++ i) {
@@ -1002,7 +1002,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 				real_suggested_name = g_strdup (default_name);
 			else
 				real_suggested_name = g_strdup_printf ("%s(%d)",
-								       _CS("ckdg_va_new_folder_name_stub"),
+								       _FM("ckdg_va_new_folder_name_stub"),
 				                                       i);
 			exists = modest_tny_folder_has_subfolder_with_name (suggested_folder,
 									    real_suggested_name,
@@ -1037,17 +1037,15 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 		suggested_folder = (TnyFolderStore *)
 			modest_tny_account_store_get_local_folders_account (acc_store);
 
-	tmp = g_strconcat (_CS("ckdg_fi_new_folder_name"), ":", NULL);
 	result = modest_platform_run_folder_common_dialog (parent_window, 
 							   suggested_folder,
-							   _CS("ckdg_fi_new_folder_name"),
-							   tmp,
+							   _HL("ckdg_ti_new_folder"),
+							   _FM("ckdg_fi_new_folder_name"),
 							   real_suggested_name,
 							   TRUE,
 							   TRUE,
 							   folder_name,
 							   parent_folder);
-	g_free (tmp);
 
 	if (suggested_name == NULL)
 		g_free(real_suggested_name);
