@@ -172,6 +172,8 @@ static void on_message_settings (GtkAction *action,
 				 ModestMsgEditWindow *window);
 static void setup_menu (ModestMsgEditWindow *self);
 
+static void from_field_changed (HildonPickerButton *button,
+				ModestMsgEditWindow *self);
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -236,6 +238,7 @@ struct _ModestMsgEditWindowPrivate {
 	
 	ModestPairList *from_field_protos;
 	GtkWidget   *from_field;
+	gchar       *last_from_account;
 	gchar       *original_account_name;
 	
 	GtkWidget   *to_field;
@@ -640,6 +643,8 @@ connect_signals (ModestMsgEditWindow *obj)
 
 	g_signal_connect (G_OBJECT (priv->add_attachment_button), "clicked",
 			  G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), obj);
+	g_signal_connect (G_OBJECT (priv->from_field), "value-changed",
+			  G_CALLBACK (from_field_changed), obj);
 
 	g_signal_connect (G_OBJECT (priv->msg_body), "focus-in-event",
 			  G_CALLBACK (msg_body_focus), obj);
@@ -1495,6 +1500,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	priv->from_field_protos = get_transports ();
  	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
 	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
+	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	hildon_button_set_title (HILDON_BUTTON (priv->from_field),
 				 _("mail_va_from"));
 	hildon_button_set_value (HILDON_BUTTON (priv->from_field), 
@@ -3636,6 +3642,29 @@ on_account_removed (TnyAccountStore *account_store,
 		if (strcmp (parent_acc, our_acc) == 0)
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
 	}
+}
+
+static void
+from_field_changed (HildonPickerButton *button,
+		    ModestMsgEditWindow *self)
+{
+	gchar *current_text;
+	ModestMsgEditWindowPrivate *priv;
+	gboolean old_signature;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	g_message ("Current value is %s", hildon_touch_selector_get_current_text (hildon_picker_button_get_selector (button)));
+	current_text = modest_text_utils_text_buffer_get_text (priv->text_buffer);
+	g_message ("Current body is [\n%s\n]", current_text);
+	g_free (current_text);
+	g_message ("Old signature is [\n%s\n]", modest_account_mgr_get_signature (modest_runtime_get_account_mgr (),
+										  priv->last_from_account,
+										  &old_signature));
+	g_message ("New signature is [\n%s\n]", modest_account_mgr_get_signature (modest_runtime_get_account_mgr (),
+										  modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (button)),
+										  &old_signature));
+	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 }
 
 typedef struct _MessageSettingsHelper {
