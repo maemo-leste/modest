@@ -319,7 +319,7 @@ modest_presets_get_info_server_auth (ModestPresets *self, const gchar *provider_
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_INCOMING, NULL);
 		if (val) {
-                        g_free (val);   
+                        g_free (val);
                         val = g_key_file_get_string (self->keyfile, provider_id,
                                                      MODEST_PRESETS_KEY_APOP, NULL);
                         if (val && strcmp(val, "true") == 0)

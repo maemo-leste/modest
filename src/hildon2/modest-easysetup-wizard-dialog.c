@@ -1879,7 +1879,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	/* Get details from the specified presets: */
 	id_type = modest_provider_picker_get_active_id_type (picker);
 	provider_id = modest_provider_picker_get_active_provider_id (picker);
-		
+
 	/* Let the plugin save the settings. We do a return in order
 	   to save an indentation level */
 	if (id_type == MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL) {
@@ -1934,20 +1934,20 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 		ModestProtocolType store_provider_server_type;
 		gboolean store_provider_use_alternate_port;
 		/* Use presets: */
-		store_hostname = modest_presets_get_server (priv->presets, provider_id, 
+		store_hostname = modest_presets_get_server (priv->presets, provider_id,
 							    TRUE /* store */);
-		
+
 		store_provider_server_type = modest_presets_get_info_server_type (priv->presets,
-									 provider_id, 
+									 provider_id,
 									 TRUE /* store */);
 		store_security  = modest_presets_get_info_server_security (priv->presets,
-										    provider_id, 
-										    TRUE /* store */);
+									   provider_id,
+									   TRUE /* store */);
 		store_auth_protocol  = modest_presets_get_info_server_auth (priv->presets,
-										     provider_id, 
-										     TRUE /* store */);
+									    provider_id,
+									    TRUE /* store */);
 		store_provider_use_alternate_port  = modest_presets_get_info_server_use_alternate_port (priv->presets,
-													provider_id, 
+													provider_id,
 													TRUE /* store */);
 
 		/* We don't check for SMTP here as that is impossible for an incoming server. */

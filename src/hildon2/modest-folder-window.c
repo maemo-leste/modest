@@ -345,7 +345,7 @@ modest_folder_window_set_account (ModestFolderWindow *self,
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
 
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
-	
+
 	/* Get account data */
 	mgr = modest_runtime_get_account_mgr ();
 
@@ -360,24 +360,26 @@ modest_folder_window_set_account (ModestFolderWindow *self,
 	if (priv->current_store_account != NULL)
 		g_free (priv->current_store_account);
 	priv->current_store_account = g_strdup (modest_server_account_settings_get_account_name (store_settings));
-	
-	modest_folder_view_set_account_id_of_visible_server_account 
+
+	modest_folder_view_set_account_id_of_visible_server_account
 		(MODEST_FOLDER_VIEW (priv->folder_view),
 		 priv->current_store_account);
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
-	gtk_window_set_title (GTK_WINDOW (self), 
+	gtk_window_set_title (GTK_WINDOW (self),
 			      modest_account_settings_get_display_name (settings));
+	update_progress_hint (self);
 
 free_refs:
-	if (store_settings) 
+	if (store_settings)
 		g_object_unref (store_settings);
 	if (settings)
 		g_object_unref (settings);
 
 }
 
-static void setup_menu (ModestFolderWindow *self)
+static void
+setup_menu (ModestFolderWindow *self)
 {
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
 
@@ -556,9 +558,9 @@ update_progress_hint (ModestFolderWindow *self)
 
 	priv->progress_hint = modest_window_mgr_has_progress_operation_on_account (modest_runtime_get_window_mgr (),
 										   priv->current_store_account);
-	
+
 	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint ? 1:0);
 	}
 }
 
