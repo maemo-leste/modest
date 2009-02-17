@@ -397,7 +397,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* The documentation for gtk_label_set_line_wrap() says that we must 
 	 * call gtk_widget_set_size_request() with a hard-coded width, 
 	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
-	/* gtk_widget_set_size_request (label, 400, -1); */
+	gtk_widget_set_size_request (label, 600, -1);
 	gtk_widget_show (label);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
 
