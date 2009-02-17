@@ -49,6 +49,7 @@
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtktreeselection.h>
 #include <gtk/gtkentry.h>
+#include <modest-maemo-utils.h>
 
 static OssoABookContactModel *contact_model =  NULL;
 static EBook *book = NULL;
@@ -548,15 +549,16 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 	name_label = gtk_label_new(contact_name);
 	gtk_misc_set_alignment(GTK_MISC(name_label), 0, 0);
 	cptn_cntrl =
-	    hildon_caption_new(size_group, _("mcen_ia_add_email_name"), name_label, NULL,
-			       HILDON_CAPTION_OPTIONAL);
+		modest_maemo_utils_create_captioned (size_group, NULL,
+						     _("mcen_ia_add_email_name"), FALSE,
+						     name_label);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(add_email_addr_to_contact_dlg)->vbox), cptn_cntrl,
 			   FALSE, FALSE, 0);
 
-	email_entry = gtk_entry_new();
-	cptn_cntrl =
-	    hildon_caption_new(size_group, _("mcen_fi_add_email_name"), email_entry, NULL,
-			       HILDON_CAPTION_OPTIONAL);
+	email_entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	cptn_cntrl = modest_maemo_utils_create_captioned (size_group, NULL, 
+							  _("mcen_fi_add_email_name"), FALSE,
+							  email_entry);
 	hildon_gtk_entry_set_input_mode(GTK_ENTRY(email_entry), HILDON_GTK_INPUT_MODE_FULL);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(add_email_addr_to_contact_dlg)->vbox), cptn_cntrl,
 			   TRUE, TRUE, 0);
@@ -570,7 +572,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 
 		if (result == GTK_RESPONSE_ACCEPT) {
 			const gchar *invalid_char_offset = NULL;
-			new_email_addr = g_strdup(gtk_entry_get_text(GTK_ENTRY(email_entry)));
+			new_email_addr = g_strdup(hildon_entry_get_text(HILDON_ENTRY(email_entry)));
 			new_email_addr = g_strstrip(new_email_addr);
 			if (!modest_text_utils_validate_email_address (new_email_addr, &invalid_char_offset)) {
 				gtk_widget_grab_focus(email_entry);
