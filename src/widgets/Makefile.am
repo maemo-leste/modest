@@ -31,7 +31,8 @@ libmodest_widgets_public_headers = \
 	modest-sort-criterium-view.h  \
 	modest-ui-constants.h \
 	modest-validating-entry.h \
-	modest-window.h	
+	modest-window.h	\
+	modest-wizard-dialog.h
 
 
 libmodest_widgets_la_SOURCES=          \
