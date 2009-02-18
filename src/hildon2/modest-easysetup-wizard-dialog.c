@@ -619,33 +619,31 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (GTK_WIDGET (box));
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-	
+
 	return GTK_WIDGET (box);
 }
 
-static GtkWidget* 
+static GtkWidget*
 create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	
+
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-	/* The documentation for gtk_label_set_line_wrap() says that we must 
-	 * call gtk_widget_set_size_request() with a hard-coded width, 
-	 * though I wonder why gtk_label_set_max_width_chars() isn't enough. */
+
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
-	
+
 	label = gtk_label_new (_("mcen_ia_easysetup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
-	
+
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
-	
+
 	gtk_widget_show (GTK_WIDGET (box));
 	return GTK_WIDGET (box);
 }
@@ -1015,20 +1013,20 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
-	
+
 	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_widget_show (label);
-	
+
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, MODEST_MARGIN_HALF);
-	
+
 	g_signal_connect (G_OBJECT (button_edit), "clicked", 
 			  G_CALLBACK (on_button_edit_advanced_settings), self);
-	
+
 	gtk_widget_show (GTK_WIDGET (box));
 	return GTK_WIDGET (box);
 }

@@ -4935,6 +4935,13 @@ on_move_to_dialog_response (GtkDialog *dialog,
 								    GTK_WINDOW (parent_win));
 #endif
 		} else {
+			/* if the user selected a root folder
+			   (account) then do not perform any action */
+			if (TNY_IS_ACCOUNT (dst_folder)) {
+				g_signal_stop_emission_by_name (dialog, "response");
+				return;
+			}
+
 			/* Moving from headers window in edit mode */
 			modest_ui_actions_on_window_move_to (NULL, helper->list,
 							     dst_folder, 
