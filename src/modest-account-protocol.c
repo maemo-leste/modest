@@ -85,6 +85,8 @@ static void modest_account_protocol_save_wizard_settings_default (ModestAccountP
 static ModestWizardDialogResponseOverrideFunc 
 modest_account_protocol_get_wizard_response_override_default (ModestAccountProtocol *self);
 
+static gboolean modest_account_protocol_is_supported_default (ModestAccountProtocol *self);
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -167,6 +169,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_create_account_default;
 	account_class->get_wizard_response_override =
 		modest_account_protocol_get_wizard_response_override_default;
+	account_class->is_supported =
+		modest_account_protocol_is_supported_default;
 }
 
 static void
@@ -575,3 +579,14 @@ modest_account_protocol_get_wizard_response_override (ModestAccountProtocol *sel
 	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_wizard_response_override (self);	
 }
 
+static gboolean
+modest_account_protocol_is_supported_default (ModestAccountProtocol *self)
+{
+	return TRUE;
+}
+
+gboolean
+modest_account_protocol_is_supported (ModestAccountProtocol *self)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->is_supported (self);
+}

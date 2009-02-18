@@ -68,6 +68,7 @@ struct _ModestAccountProtocolClass {
 	ModestWizardDialogResponseOverrideFunc (*get_wizard_response_override) (ModestAccountProtocol *self);
 	void (*save_settings) (ModestAccountProtocol *self, ModestAccountSettingsDialog *dialog, ModestAccountSettings *settings);
 	void (*save_wizard_settings) (ModestAccountProtocol *self, GList *wizard_pages, ModestAccountSettings *settings);
+	gboolean (*is_supported) (ModestAccountProtocol *self);
 };
 
 /**
@@ -285,6 +286,15 @@ void modest_account_protocol_save_wizard_settings (ModestAccountProtocol *self,
  */
 ModestWizardDialogResponseOverrideFunc modest_account_protocol_get_wizard_response_override (ModestAccountProtocol *self);
 
+/**
+ * modest_account_protocol_is_supported:
+ * @self: a #ModestAccountProtocol
+ *
+ * Determines if the account protocol is supported on this device.
+ *
+ * Returns: %TRUE if the protocol is supported, %FALSE otherwise
+ */
+gboolean modest_account_protocol_is_supported (ModestAccountProtocol *self);
 
 G_END_DECLS
 

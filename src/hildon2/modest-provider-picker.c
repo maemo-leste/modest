@@ -35,6 +35,7 @@
 #include <modest-text-utils.h>
 #include "modest-protocol-registry.h"
 #include "modest-runtime.h"
+#include <modest-account-protocol.h>
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
@@ -260,6 +261,11 @@ modest_provider_picker_fill (ModestProviderPicker *self,
 			if (modest_account_mgr_singleton_protocol_exists (modest_runtime_get_account_mgr (),
 									  modest_protocol_get_type_id (proto)))
 				continue;
+		}
+
+		if (MODEST_ACCOUNT_PROTOCOL (proto) && 
+		    !modest_account_protocol_is_supported (MODEST_ACCOUNT_PROTOCOL (proto))) {
+			continue;
 		}
 
 		gtk_list_store_append (liststore, &iter);

@@ -35,6 +35,7 @@
 #include <modest-text-utils.h>
 #include "modest-protocol-registry.h"
 #include "modest-runtime.h"
+#include <modest-account-protocol.h>
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
@@ -241,18 +242,25 @@ easysetup_provider_combo_box_fill (EasysetupProviderComboBox *combobox,
 	while (tmp) {
 		GtkTreeIter iter;
 		ModestProtocol *proto = MODEST_PROTOCOL (tmp->data);
-		const gchar *name = modest_protocol_get_display_name (proto);
 
 		/* only add store protocols, no need to duplicate them */
 		if (modest_protocol_registry_protocol_type_has_tag (registry, 
 								    modest_protocol_get_type_id (proto),
 								    MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS)) {
-			gtk_list_store_append (liststore, &iter);
-			gtk_list_store_set (liststore, &iter,
-					    MODEL_COL_ID, modest_protocol_get_name (proto),
-					    MODEL_COL_NAME, name,
-					    MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL,
-					    -1);
+			gboolean supported;
+
+			supported = modest_account_protocol_is_supported (MODEST_ACCOUNT_PROTOCOL (proto));
+
+			if (supported) {
+				const gchar *name = modest_protocol_get_display_name (proto);
+
+				gtk_list_store_append (liststore, &iter);
+				gtk_list_store_set (liststore, &iter,
+						    MODEL_COL_ID, modest_protocol_get_name (proto),
+						    MODEL_COL_NAME, name,
+						    MODEL_COL_ID_TYPE, EASYSETUP_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL,
+						    -1);
+			}
 		}
 		tmp = g_slist_next (tmp);
 	}

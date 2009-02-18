@@ -505,7 +505,7 @@ create_title (ModestWizardDialog *wizard_dialog)
                 priv->wizard_name, current + 1, pages, steps);
         */
 
-        str = g_strdup_printf (_HL("%s: %s"), 
+        str = g_strdup_printf ((steps&&*steps)?_HL("%s: %s"):_HL("%s"), 
                 priv->wizard_name, steps);
     /* } */
 
