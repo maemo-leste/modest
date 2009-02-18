@@ -537,7 +537,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 	add_email_addr_to_contact_dlg =
 	    gtk_dialog_new_with_buttons(_AB("addr_ti_sel_contact"), NULL,
 					GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-					_HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
+					_HL("wdgt_bd_save"), GTK_RESPONSE_ACCEPT, NULL);
 	gtk_dialog_set_has_separator(GTK_DIALOG(add_email_addr_to_contact_dlg), FALSE);
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (add_email_addr_to_contact_dlg)->vbox), 
