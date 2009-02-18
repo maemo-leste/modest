@@ -150,6 +150,21 @@ on_change(GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
 }
 
 static void
+on_outgoing_server_changed (GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
+{
+	const gchar *text;
+	gboolean sensitive = FALSE;
+
+	on_change (widget, self);
+	text = hildon_entry_get_text (HILDON_ENTRY (widget));
+	if (text && (strlen(text) > 0))
+		sensitive = TRUE;
+
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (self), GTK_RESPONSE_OK, sensitive);
+}
+
+
+static void
 on_value_changed(GtkWidget* widget, GValue* value, ModestConnectionSpecificSmtpEditWindow *self)
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
@@ -344,7 +359,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_change), self);
+	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_outgoing_server_changed), self);
 
 	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	
@@ -429,9 +444,10 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (captioned);
 
-	/* Add the buttons: */
+	/* Add the button. Disabled by default */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
-	
+	gtk_dialog_set_response_sensitive (GTK_DIALOG (self), GTK_RESPONSE_OK, FALSE);
+
 	priv->is_dirty = FALSE;
 	priv->range_error_occured = FALSE;
 	g_signal_connect(G_OBJECT(self), "response", G_CALLBACK(on_response), self);
