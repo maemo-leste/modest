@@ -1535,7 +1535,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	UpdateAccountInfo *info;
 	ModestMailOperationPrivate *priv;
 	TnyIterator *new_headers_iter;
-	GPtrArray *new_headers_array = NULL;   
+	GPtrArray *new_headers_array = NULL;
 	gint max_size, retrieve_limit, i;
 	ModestAccountMgr *mgr;
 	ModestAccountRetrieveType retrieve_type;
@@ -1545,9 +1545,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	info = (UpdateAccountInfo *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
 	mgr = modest_runtime_get_account_mgr ();
-
-	/* Set the last updated as the current time, do it even if the inbox refresh failed */
-	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
 
 	if (canceled || err) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
@@ -1571,6 +1568,9 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		/* Try to send anyway */
 		goto send_mail;
 	}
+
+	/* Set the last updated as the current time */
+	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
 
 	/* Get the message max size */
 	max_size  = modest_conf_get_int (modest_runtime_get_conf (),
