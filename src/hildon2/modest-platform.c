@@ -690,6 +690,9 @@ folder_chooser_dialog_run (ModestFolderView *original)
 	userdata.dialog = hildon_dialog_new ();
 	pannable = hildon_pannable_area_new ();
 	folder_view = modest_platform_create_folder_view (NULL);
+
+	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM("ckdg_ti_change_folder"));
+
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 				       MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS);
 
