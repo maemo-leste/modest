@@ -693,9 +693,6 @@ folder_chooser_dialog_run (ModestFolderView *original)
 
 	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM("ckdg_ti_change_folder"));
 
-	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
-				       MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS);
-
 	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original), 
 				       MODEST_FOLDER_VIEW (folder_view));
 
