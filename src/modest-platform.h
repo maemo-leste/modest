@@ -46,7 +46,7 @@ typedef enum _ModestConfirmationDialogType {
 
 typedef enum _ModestConnectedVia {
 	MODEST_CONNECTED_VIA_WLAN_OR_WIMAX = 1,
-	MODEST_CONNECTED_VIA_ANY,
+	MODEST_CONNECTED_VIA_ANY = 2,
 } ModestConnectedVia;
 
 #define MODEST_GTK_RESPONSE_NEW_FOLDER 1
