@@ -93,6 +93,9 @@ struct _ModestWizardDialogClass {
     void (*_gtk_reserved4)  (void);
 };
 
+typedef void (* ModestWizardDialogResponseOverrideFunc) (ModestWizardDialog *dialog, 
+							 gint response_id, gint page_number);
+
 
 GType modest_wizard_dialog_get_type   (void) G_GNUC_CONST;
 
@@ -101,6 +104,9 @@ GtkWidget* modest_wizard_dialog_new   (GtkWindow        *parent,
                                        GtkNotebook      *notebook);
                                        
 void modest_wizard_dialog_force_title_update (ModestWizardDialog* wizard_dialog);
+
+void modest_wizard_dialog_set_response_override_handler (ModestWizardDialog *wizard_dialog,
+							 ModestWizardDialogResponseOverrideFunc callback);
 
 G_END_DECLS
 

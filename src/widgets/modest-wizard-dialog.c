@@ -111,6 +111,8 @@ struct _ModestWizardDialogPrivate {
     GtkBox      *box;
     GtkWidget   *image;
     gboolean    autotitle;
+
+    ModestWizardDialogResponseOverrideFunc override_func;
 };
 
 
@@ -248,6 +250,7 @@ init (ModestWizardDialog *wizard_dialog)
     GtkWidget *vbox = gtk_vbox_new (FALSE, 0);
     gtk_dialog_set_has_separator (dialog, FALSE);
     wizard_dialog->priv = priv;
+    priv->override_func = NULL;
     priv->box = GTK_BOX (gtk_hbox_new (FALSE, 0));
 #ifdef MODEST_TOOLKIT_HILDON2
     priv->image = NULL;
@@ -528,6 +531,10 @@ response (ModestWizardDialog   *wizard_dialog,
     GtkNotebook *notebook = priv->notebook;
     gint current = 0;
     gboolean is_first, is_last;
+
+    if (priv->override_func) {
+	priv->override_func (wizard_dialog, response_id, gtk_notebook_get_current_page (notebook));
+    }
     
     switch (response_id) {
         
@@ -688,4 +695,13 @@ invoke_enable_buttons_vfunc (ModestWizardDialog *wizard_dialog)
 			
 		(*(klass->enable_buttons))(wizard_dialog, current_page_widget);
 	}
+}
+
+void 
+modest_wizard_dialog_set_response_override_handler (ModestWizardDialog *wizard_dialog,
+						    ModestWizardDialogResponseOverrideFunc callback)
+{
+    ModestWizardDialogPrivate *priv = wizard_dialog->priv;
+
+    priv->override_func = callback;
 }
