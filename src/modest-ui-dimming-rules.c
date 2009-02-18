@@ -1209,89 +1209,6 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 }
 
 #ifdef MODEST_TOOLKIT_HILDON2
-gboolean 
-modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data)
-{
-	ModestDimmingRule *rule = NULL;
-	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW(win), FALSE);
-	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
-	rule = MODEST_DIMMING_RULE (user_data);
-
-	/* Check dimmed rule */	
-	dimmed = _transfer_mode_enabled (win);
-	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
-
-	if (!dimmed) {
-		GtkWidget *header_view;
-		TnyFolder *folder;
-
-		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
-		folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
-		if (folder) {
-			dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
-			g_object_unref (folder);
-		}
-	}
-
-	return dimmed;
-}
-
-gboolean 
-modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data)
-{
-	ModestDimmingRule *rule = NULL;
-	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(win), FALSE);
-	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
-	rule = MODEST_DIMMING_RULE (user_data);
-
-	/* Check dimmed rule */	
-	dimmed = _transfer_mode_enabled (win);
-	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
-
-#ifdef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_FOLDER_WINDOW (win)) {
-		ModestFolderView *folder_view;
-		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
-		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
-								       MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE);
-	}
-#endif
-
-	return dimmed;
-}
-
-gboolean 
-modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data)
-{
-	ModestDimmingRule *rule = NULL;
-	gboolean dimmed = FALSE;
-
-	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(win), FALSE);
-	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
-	rule = MODEST_DIMMING_RULE (user_data);
-
-	/* Check dimmed rule */	
-	dimmed = _transfer_mode_enabled (win);
-	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
-
-#ifdef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_FOLDER_WINDOW (win)) {
-		ModestFolderView *folder_view;
-		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
-		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
-								       MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE);
-	}
-#endif
-
-	return dimmed;
-}
 #endif
 
 gboolean 
@@ -1560,8 +1477,8 @@ modest_ui_dimming_rules_on_undo (ModestWindow *win, gpointer user_data)
 	if (!dimmed && MODEST_IS_MSG_EDIT_WINDOW (win)) {
 		dimmed = !modest_msg_edit_window_can_undo (MODEST_MSG_EDIT_WINDOW (win));
 	}
-				
-	return dimmed;	
+
+	return dimmed;
 }
 
 gboolean 
@@ -3051,3 +2968,95 @@ _msgs_send_in_progress (void)
 
 	return found;
 }
+
+/*****************************************************************************/
+/********************** HILDON2 only dimming rules ***************************/
+/*****************************************************************************/
+
+#ifdef MODEST_TOOLKIT_HILDON2
+gboolean 
+modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	dimmed = _transfer_mode_enabled (win);
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+
+	if (!dimmed) {
+		GtkWidget *header_view;
+		TnyFolder *folder;
+
+		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
+		folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
+		if (folder) {
+			dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+			g_object_unref (folder);
+		}
+	}
+
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	dimmed = _transfer_mode_enabled (win);
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+
+	if (MODEST_IS_FOLDER_WINDOW (win)) {
+		ModestFolderView *folder_view;
+		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
+		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
+								       MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE);
+	}
+
+	return dimmed;
+}
+
+gboolean 
+modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data)
+{
+	ModestDimmingRule *rule = NULL;
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW(win), FALSE);
+	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
+
+	/* Check dimmed rule */	
+	dimmed = _transfer_mode_enabled (win);
+	if (dimmed)
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
+
+	if (MODEST_IS_FOLDER_WINDOW (win)) {
+		ModestFolderView *folder_view;
+		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
+		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
+								       MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE);
+	}
+
+	return dimmed;
+}
+
+gboolean
+modest_ui_dimming_rules_on_edit_accounts (ModestWindow *win, gpointer user_data)
+{
+	return !modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE);
+}
+#endif

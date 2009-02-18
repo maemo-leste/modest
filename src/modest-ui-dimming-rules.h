@@ -91,6 +91,7 @@ gboolean modest_ui_dimming_rules_on_insert_image (ModestWindow *win, gpointer us
 gboolean modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_edit_accounts (ModestWindow *win, gpointer user_data);
 #endif
 
 G_END_DECLS
