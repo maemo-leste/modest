@@ -1498,12 +1498,14 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 					}
 
 					/* Connect signals */
-					priv->missing_data_signals = 
-						modest_signal_mgr_connect (priv->missing_data_signals, 
-									   G_OBJECT (pair->second), 
-									   "missing-mandatory-data",
-									   G_CALLBACK (on_missing_mandatory_data), 
-									   self);
+					if (MODEST_IS_EASYSETUP_WIZARD_PAGE (pair->second)) {
+						priv->missing_data_signals = 
+							modest_signal_mgr_connect (priv->missing_data_signals, 
+										   G_OBJECT (pair->second), 
+										   "missing-mandatory-data",
+										   G_CALLBACK (on_missing_mandatory_data), 
+										   self);
+					}
 
 					g_free (pair->first);
 					tmp = g_slist_next (tmp);
