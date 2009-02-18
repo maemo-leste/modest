@@ -35,6 +35,7 @@
 
 #include "widgets/modest-account-settings-dialog.h"
 #include "modest-protocol.h"
+#include "widgets/modest-wizard-dialog.h"
 #include "modest-pair.h"
 #include <tny-account.h>
 #include <tny-list.h>
@@ -64,6 +65,7 @@ struct _ModestAccountProtocolClass {
 	TnyAccount * (*create_account) (ModestAccountProtocol *self);
 	ModestAccountSettingsDialog* (*create_account_settings_dialog) (ModestAccountProtocol* self);
 	ModestPairList* (*get_easysetupwizard_tabs) (ModestAccountProtocol* self);
+	ModestWizardDialogResponseOverrideFunc (*get_wizard_response_override) (ModestAccountProtocol *self);
 	void (*save_settings) (ModestAccountProtocol *self, ModestAccountSettingsDialog *dialog, ModestAccountSettings *settings);
 	void (*save_wizard_settings) (ModestAccountProtocol *self, GList *wizard_pages, ModestAccountSettings *settings);
 };
@@ -271,6 +273,18 @@ void modest_account_protocol_save_settings (ModestAccountProtocol *self,
 void modest_account_protocol_save_wizard_settings (ModestAccountProtocol *self, 
 						   GList *wizard_pages,
 						   ModestAccountSettings *settings);
+
+/**
+ * modest_account_protocol_get_wizard_response_override:
+ * @self: a #ModestAccountProtocol
+ *
+ * obtains the method that should be used to override wizard response behavior when the
+ * wizard is setting up this account type.
+ *
+ * Returns: a #ModestWizardDialogResponseOverrideFunc
+ */
+ModestWizardDialogResponseOverrideFunc modest_account_protocol_get_wizard_response_override (ModestAccountProtocol *self);
+
 
 G_END_DECLS
 

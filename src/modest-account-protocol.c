@@ -82,6 +82,9 @@ static void modest_account_protocol_save_wizard_settings_default (ModestAccountP
 								  GList *wizard_pages,
 								  ModestAccountSettings *settings);
 
+static ModestWizardDialogResponseOverrideFunc 
+modest_account_protocol_get_wizard_response_override_default (ModestAccountProtocol *self);
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -162,6 +165,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_save_wizard_settings_default;
 	account_class->create_account =
 		modest_account_protocol_create_account_default;
+	account_class->get_wizard_response_override =
+		modest_account_protocol_get_wizard_response_override_default;
 }
 
 static void
@@ -553,3 +558,20 @@ modest_account_protocol_save_wizard_settings_default (ModestAccountProtocol *sel
 
 	g_warning ("You must implement save_wizard_settings");
 }
+
+static ModestWizardDialogResponseOverrideFunc
+modest_account_protocol_get_wizard_response_override_default (ModestAccountProtocol *self)
+{
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
+
+	return NULL;
+}
+
+ModestWizardDialogResponseOverrideFunc
+modest_account_protocol_get_wizard_response_override (ModestAccountProtocol *self)
+{
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
+
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_wizard_response_override (self);	
+}
+
