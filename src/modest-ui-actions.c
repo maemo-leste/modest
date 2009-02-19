@@ -4965,7 +4965,8 @@ on_move_to_dialog_response (GtkDialog *dialog,
 
 static GtkWidget*
 create_move_to_dialog (GtkWindow *win,
-		       GtkWidget *folder_view)
+		       GtkWidget *folder_view,
+		       TnyList *list_to_move)
 {
 	GtkWidget *dialog, *tree_view = NULL;
 
@@ -5034,6 +5035,8 @@ create_move_to_dialog (GtkWindow *win,
 
 	/* Hide special folders */
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (tree_view), FALSE);
+	if (list_to_move)
+		modest_folder_view_set_list_to_move (MODEST_FOLDER_VIEW (tree_view), list_to_move);
 #ifndef MODEST_TOOLKIT_HILDON2
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
 #endif
@@ -5895,7 +5898,7 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 	}
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (GTK_WINDOW (win), NULL);
+	dialog = create_move_to_dialog (GTK_WINDOW (win), NULL, list_to_move);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), 
 				     (GtkWindow *) win);
