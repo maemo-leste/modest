@@ -235,6 +235,7 @@ struct _ModestFolderViewPrivate {
 
 	gboolean  reselect; /* we use this to force a reselection of the INBOX */
 	gboolean  show_non_move;
+	TnyList   *list_to_move;
 	gboolean  reexpand; /* next time we expose, we'll expand all root folders */
 
 	GtkCellRenderer *messages_renderer;
@@ -1148,6 +1149,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->filter = MODEST_FOLDER_VIEW_FILTER_NONE;
 	priv->reselect = FALSE;
 	priv->show_non_move = TRUE;
+	priv->list_to_move = NULL;
 
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
@@ -1259,6 +1261,11 @@ modest_folder_view_finalize (GObject *obj)
 	if (priv->cur_folder_store) {
 		g_object_unref (priv->cur_folder_store);
 		priv->cur_folder_store = NULL;
+	}
+
+	if (priv->list_to_move) {
+		g_object_unref (priv->list_to_move);
+		priv->list_to_move = NULL;
 	}
 
 	/* Clear hidding array created by cut operation */
@@ -3667,4 +3674,22 @@ modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
 	} while (gtk_tree_model_iter_next (filter_model, &iter) && !fulfil);
 
 	return fulfil;
+}
+
+void 
+modest_folder_view_set_list_to_move (ModestFolderView *self,
+				     TnyList *list)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	if (priv->list_to_move)
+		g_object_unref (priv->list_to_move);
+
+	if (list)
+		g_object_ref (list);
+
+	priv->list_to_move = list;
 }

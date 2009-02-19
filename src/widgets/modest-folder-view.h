@@ -297,6 +297,17 @@ void modest_folder_view_unset_filter (ModestFolderView *self,
 gboolean modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
 						      ModestTnyFolderRules rules);
 
+/**
+ * modest_folder_view_set_list_to_move:
+ * @self: a #ModestFolderView
+ * @list: a #TnyList, or %NULL for unsetting the current list.
+ * 
+ * list of folders or messages we're moving. This has some effects on 
+ * "show_non_move_to".
+ */
+void modest_folder_view_set_list_to_move (ModestFolderView *self,
+					  TnyList *list);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */
