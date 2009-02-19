@@ -201,6 +201,7 @@ enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
 	FOLDER_ACTIVATED_SIGNAL,
+	VISIBLE_ACCOUNT_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -338,6 +339,19 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__POINTER,
 			      G_TYPE_NONE, 1, G_TYPE_POINTER);
+
+	/*
+	 * Emitted whenever the visible account changes
+	 */
+	signals[VISIBLE_ACCOUNT_CHANGED_SIGNAL] =
+		g_signal_new ("visible-account-changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestFolderViewClass,
+					       visible_account_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__STRING,
+			      G_TYPE_NONE, 1, G_TYPE_STRING);
 
 	treeview_class->select_cursor_parent = NULL;
 
@@ -3270,6 +3284,11 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 	/* Save settings to gconf */
 	modest_widget_memory_save (modest_runtime_get_conf (), G_OBJECT(self),
 				   MODEST_CONF_FOLDER_VIEW_KEY);
+
+	/* Notify observers */
+	g_signal_emit (G_OBJECT(self),
+		       signals[VISIBLE_ACCOUNT_CHANGED_SIGNAL], 0,
+		       account_id);
 }
 
 const gchar *

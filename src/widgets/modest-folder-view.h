@@ -90,6 +90,10 @@ struct _ModestFolderViewClass {
 	void     (*folder_activated) (ModestFolderView *self,
 				      TnyFolderStore *folder,
 				      gpointer userdata);
+
+	void     (*visible_account_changed) (ModestFolderView* self,
+					     const gchar *account_id,
+					     gpointer user_data);
 };
 
 /**
