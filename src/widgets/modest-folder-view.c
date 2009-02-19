@@ -1698,10 +1698,54 @@ is_parent_of (TnyFolder *a, TnyFolder *b)
 	return retval;
 }
 
+typedef struct _ForeachFolderInfo {
+	gchar *needle;
+	gboolean found;
+} ForeachFolderInfo;
+
+static gboolean 
+foreach_folder_with_id (GtkTreeModel *model,
+			GtkTreePath *path,
+			GtkTreeIter *iter,
+			gpointer data)
+{
+	ForeachFolderInfo *info;
+	GObject *instance;
+
+	info = (ForeachFolderInfo *) data;
+	gtk_tree_model_get (model, iter,
+			    INSTANCE_COLUMN, &instance,
+			    -1);
+
+	if (TNY_IS_FOLDER (instance)) {
+		const gchar *id;
+		gchar *collate;
+		id = tny_folder_get_id (TNY_FOLDER (instance));
+		if (id) {
+			collate = g_utf8_collate_key (id, -1);
+			info->found = !strcmp (info->needle, collate);
+			g_free (collate);
+		}
+	}
+
+	return info->found;
+	
+}
+
+
 static gboolean
 has_folder_with_id (ModestFolderView *self, const gchar *id)
 {
-	return FALSE;
+	GtkTreeModel *model;
+	ForeachFolderInfo info = {NULL, FALSE};
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
+	info.needle = g_utf8_collate_key (id, -1);
+	
+	gtk_tree_model_foreach (model, foreach_folder_with_id, &info);
+	g_free (info.needle);
+
+	return info.found;
 }
 
 static gboolean
@@ -1719,7 +1763,9 @@ has_child_with_name_of (ModestFolderView *self, TnyFolder *a, TnyFolder *b)
 			const gchar *last_bar;
 			gchar *string_to_match;
 			last_bar = g_strrstr (b_id, "/");
-			if (!last_bar)
+			if (last_bar)
+				last_bar++;
+			else
 				last_bar = b_id;
 			string_to_match = g_strconcat (a_id, "/", last_bar, NULL);
 			retval = has_folder_with_id (self, string_to_match);
@@ -1755,6 +1801,7 @@ check_move_to_this_folder_valid (ModestFolderView *self, TnyFolder *folder)
 		}
 		g_object_unref (instance);
 	}
+	g_object_unref (iterator);
 
 	return retval;
 }
