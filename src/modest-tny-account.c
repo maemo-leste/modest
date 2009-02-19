@@ -28,6 +28,7 @@
  */
 
 #include <modest-platform.h>
+#include <modest-defs.h>
 #include <modest-tny-platform-factory.h>
 #include <modest-tny-account.h>
 #include <modest-tny-account-store.h>

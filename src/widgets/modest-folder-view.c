@@ -44,6 +44,7 @@
 #include <tny-camel-folder.h>
 #include <tny-simple-list.h>
 #include <tny-camel-account.h>
+#include <modest-defs.h>
 #include <modest-tny-account.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-local-folders-account.h>

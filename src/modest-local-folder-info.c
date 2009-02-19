@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <string.h> /* strcmp */
 #include <modest-local-folder-info.h>
+#include <modest-defs.h>
 #include <stdio.h>
 
 typedef struct {

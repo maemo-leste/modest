@@ -35,6 +35,7 @@
 #include <glib/gprintf.h>
 #include <string.h>
 #include <modest-runtime.h>
+#include <modest-defs.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-msg.h>
 #include <modest-tny-account.h>

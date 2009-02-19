@@ -33,7 +33,6 @@
 G_BEGIN_DECLS
 
 #include <glib.h>
-#include <modest-defs.h>
 #include <tny-folder.h>
 
 /**

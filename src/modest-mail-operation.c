@@ -45,6 +45,7 @@
 #include <tny-folder-observer.h>
 #include <camel/camel-stream-mem.h>
 #include <glib/gi18n.h>
+#include <modest-defs.h>
 #include "modest-platform.h"
 #include "modest-account-mgr-helpers.h"
 #include <modest-tny-account.h>

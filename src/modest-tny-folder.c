@@ -30,6 +30,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <string.h>
+#include <modest-defs.h>
 #include <modest-tny-folder.h>
 #include <modest-tny-account.h>
 #include <modest-tny-outbox-account.h>

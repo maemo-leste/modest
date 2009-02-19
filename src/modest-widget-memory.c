@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modest-defs.h>
 #include <modest-widget-memory.h>
 #include <modest-widget-memory-priv.h>
 #include <modest-runtime.h>

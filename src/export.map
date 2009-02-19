@@ -21,6 +21,7 @@
 	modest_account_settings_*;
 	modest_account_mgr_*;
 	modest_account_protocol_*;
+	modest_defs_*
 	modest_conf_*;
 	modest_easysetup_wizard_*;
 	modest_pair_*;

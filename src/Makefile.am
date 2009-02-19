@@ -55,6 +55,8 @@ modest_public_headers = \
 	modest-account-settings.h \
 	modest-cache-mgr.h \
 	modest-conf.h \
+	modest-defs.h \
+	modest-local-folder-info.h \
 	modest-pair.h \
 	modest-platform.h \
 	modest-plugin.h \
@@ -64,6 +66,7 @@ modest_public_headers = \
 	modest-server-account-settings.h \
 	modest-text-utils.h \
 	modest-tny-account-store.h \
+	modest-tny-folder.h \
 	modest-tny-local-folders-account.h \
 	modest-utils.h
 
@@ -82,7 +85,6 @@ libmodest_la_SOURCES=\
 	modest-datetime-formatter.c \
 	modest-datetime-formatter.h \
 	modest-debug.h \
-	modest-defs.h \
 	modest-defs.c \
 	modest-dimming-rule.c \
 	modest-dimming-rule.h \
@@ -96,7 +98,6 @@ libmodest_la_SOURCES=\
 	modest-init.c \
 	modest-init.h \
 	modest-local-folder-info.c \
-	modest-local-folder-info.h \
 	modest-mail-operation-queue.c \
 	modest-mail-operation-queue.h \
 	modest-mail-operation.c \
@@ -129,7 +130,6 @@ libmodest_la_SOURCES=\
 	modest-tny-account.c \
 	modest-tny-account.h \
 	modest-tny-folder.c \
-	modest-tny-folder.h \
 	modest-tny-local-folders-account.c \
 	modest-tny-mime-part.c \
 	modest-tny-mime-part.h \

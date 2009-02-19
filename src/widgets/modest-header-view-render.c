@@ -30,6 +30,7 @@
 #include <tny-simple-list.h>
 #include <modest-header-view.h>
 #include <modest-header-view-priv.h>
+#include <modest-defs.h>
 #include <modest-icon-names.h>
 #include <modest-text-utils.h>
 #include <modest-tny-account-store.h>

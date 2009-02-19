@@ -33,6 +33,7 @@
 #include <tny-simple-list.h>
 #include <tny-folder.h>
 #include <modest-runtime.h>
+#include <modest-defs.h>
 #include "modest-formatter.h"
 #include <tny-camel-mem-stream.h>
 #include <tny-camel-mime-part.h>

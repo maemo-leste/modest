@@ -31,6 +31,7 @@
 #include <glib/gi18n.h>
 
 #include <modest-platform.h>
+#include <modest-defs.h>
 #include <modest-runtime.h>
 #include <modest-main-window.h>
 #include <modest-header-view.h>

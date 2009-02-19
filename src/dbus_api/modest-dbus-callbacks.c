@@ -40,6 +40,7 @@
 #include "widgets/modest-msg-edit-window.h"
 #include "modest-tny-msg.h"
 #include "modest-platform.h"
+#include "modest-defs.h"
 #include <libmodest-dbus-client/libmodest-dbus-client.h>
 #include <libgnomevfs/gnome-vfs-utils.h>
 #include <stdio.h>

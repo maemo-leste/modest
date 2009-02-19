@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <gtk/gtk.h>
+#include <modest-defs.h>
 #include <modest-text-utils.h>
 #include <modest-expander-mail-header-view.h>
 #include <modest-tny-folder.h>
