@@ -43,7 +43,8 @@
 #include "modest-tny-folder.h"
 #include "modest-folder-window.h"
 #include "modest-accounts-window.h"
-#include <modest-maemo-utils.h>
+#include "modest-maemo-utils.h"
+#include <tny-merge-folder.h>
 
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass);
@@ -733,6 +734,7 @@ on_account_removed (TnyAccountStore *acc_store,
 {
 	HildonWindowStack *stack;
 	ModestWindow *current_top;
+	gboolean has_accounts;
 
 	/* Ignore transport account removals */
 	if (TNY_IS_TRANSPORT_ACCOUNT (account))
@@ -740,10 +742,11 @@ on_account_removed (TnyAccountStore *acc_store,
 
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+	has_accounts = modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE);
 
 	if (current_top &&
 	    MODEST_IS_ACCOUNTS_WINDOW (current_top) &&
-	    !modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE))
+	    !has_accounts) {
 		create_folders_view (MODEST_WINDOW_MGR (user_data));
 	}
 
