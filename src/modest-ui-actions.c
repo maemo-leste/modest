@@ -4900,36 +4900,43 @@ on_move_to_dialog_response (GtkDialog *dialog,
 			    gint       response,
 			    gpointer   user_data)
 {
-	GtkWidget *parent_win, *folder_view;
+	GtkWidget *parent_win;
 	MoveToInfo *helper = NULL;
+	ModestFolderView *folder_view;
 
 	helper = (MoveToInfo *) user_data;
 
 	parent_win = (GtkWidget *) helper->win;
-	folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog),
-						     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
+	folder_view = MODEST_FOLDER_VIEW (g_object_get_data (G_OBJECT (dialog),
+							     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
 
 	switch (response) {
 		TnyFolderStore *dst_folder;
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
-		modest_ui_actions_create_folder (GTK_WIDGET (dialog), folder_view);
+		modest_ui_actions_create_folder (GTK_WIDGET (dialog), GTK_WIDGET (folder_view));
 		return;
 	case GTK_RESPONSE_NONE:
 	case GTK_RESPONSE_CANCEL:
 	case GTK_RESPONSE_DELETE_EVENT:
 		break;
 	case GTK_RESPONSE_OK:
-		dst_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-		/* Do window specific stuff */
+		dst_folder = modest_folder_view_get_selected (folder_view);
+
 		if (MODEST_IS_MAIN_WINDOW (parent_win)) {
+			/* Clean list to move used for filtering */
+			modest_folder_view_set_list_to_move (folder_view, NULL);
+
 			modest_ui_actions_on_main_window_move_to (NULL,
-								  folder_view,
+								  GTK_WIDGET (folder_view),
 								  dst_folder,
 								  MODEST_MAIN_WINDOW (parent_win));
 #ifdef MODEST_TOOLKIT_HILDON2
 		} else if (MODEST_IS_FOLDER_WINDOW (parent_win)) {
-			modest_ui_actions_on_folder_window_move_to (folder_view,
+			/* Clean list to move used for filtering */
+			modest_folder_view_set_list_to_move (folder_view, NULL);
+
+			modest_ui_actions_on_folder_window_move_to (GTK_WIDGET (folder_view),
 								    dst_folder,
 								    helper->list,
 								    GTK_WINDOW (parent_win));
@@ -4941,6 +4948,9 @@ on_move_to_dialog_response (GtkDialog *dialog,
 				g_signal_stop_emission_by_name (dialog, "response");
 				return;
 			}
+
+			/* Clean list to move used for filtering */
+			modest_folder_view_set_list_to_move (folder_view, NULL);
 
 			/* Moving from headers window in edit mode */
 			modest_ui_actions_on_window_move_to (NULL, helper->list,
