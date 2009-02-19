@@ -745,6 +745,53 @@ on_account_removed (TnyAccountStore *acc_store,
 	    MODEST_IS_ACCOUNTS_WINDOW (current_top) &&
 	    !modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE))
 		create_folders_view (MODEST_WINDOW_MGR (user_data));
+	}
+
+	/* if we're showing the header view of the currently deleted
+	   account, or the outbox and we deleted the last account,
+	   then close the window */
+	if (current_top && MODEST_IS_HEADER_WINDOW (current_top)) {
+		ModestHeaderView *header_view;
+		TnyFolder *folder;
+		gboolean deleted = FALSE;
+
+		header_view = modest_header_window_get_header_view (MODEST_HEADER_WINDOW (current_top));
+		folder = modest_header_view_get_folder (header_view);
+		if (folder) {
+			gboolean retval;
+
+			/* Close if it's my account */
+			if (!TNY_IS_MERGE_FOLDER (folder)) {
+				TnyAccount *my_account;
+
+				my_account = tny_folder_get_account (folder);
+				if (my_account) {
+					if (my_account == account) {
+						g_signal_emit_by_name (G_OBJECT (current_top),
+								       "delete-event",
+								       NULL, &retval);
+						deleted = TRUE;
+					}
+					g_object_unref (my_account);
+				}
+			}
+
+			/* Close if viewing outbox and no account left */
+			if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_OUTBOX) {
+				if (!has_accounts) {
+					g_signal_emit_by_name (G_OBJECT (current_top),
+							       "delete-event",
+							       NULL, &retval);
+					deleted = TRUE;
+				}
+			}
+			g_object_unref (folder);
+
+			if (deleted) {
+				current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+			}
+		}
+	}
 }
 
 static ModestWindow *

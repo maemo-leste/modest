@@ -51,6 +51,7 @@
 #include <modest-ui-dimming-manager.h>
 #include <modest-window-priv.h>
 #include "modest-text-utils.h"
+#include "modest-tny-account.h"
 
 typedef enum {
 	EDIT_MODE_COMMAND_MOVE = 1,
@@ -194,19 +195,49 @@ modest_folder_window_finalize (GObject *obj)
 
 static void
 modest_folder_window_disconnect_signals (ModestWindow *self)
-{	
-	ModestFolderWindowPrivate *priv;	
+{
+	ModestFolderWindowPrivate *priv;
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
-	priv->sighandlers = NULL;	
+	priv->sighandlers = NULL;
+}
+
+static void
+on_visible_account_changed (ModestFolderView *folder_view,
+			    const gchar *account_id,
+			    gpointer user_data)
+{
+	if (account_id) {
+		TnyAccount *acc = 
+			modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
+								     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+								     account_id);
+		if (acc) {
+			const gchar *name;
+			gchar *title = NULL;
+
+			name = modest_tny_account_get_parent_modest_account_name_for_server_account (acc);
+			title = modest_account_mgr_get_display_name (modest_runtime_get_account_mgr(),
+								     name);
+			if (title) {
+				gtk_window_set_title (GTK_WINDOW (user_data), title);
+				g_free (title);
+			} else {
+				gtk_window_set_title (GTK_WINDOW (user_data), _("mcen_ap_name"));
+			}
+			g_object_unref (acc);
+		}
+	} else {
+		gtk_window_set_title (GTK_WINDOW (user_data), _("mcen_ap_name"));
+	}
 }
 
 static void
 connect_signals (ModestFolderWindow *self)
-{	
+{
 	ModestFolderWindowPrivate *priv;
-	
+
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 
 	/* folder view */
@@ -218,14 +249,11 @@ connect_signals (ModestFolderWindow *self)
 						       G_OBJECT (modest_runtime_get_window_mgr ()),
 						       "progress-list-changed",
 						       G_CALLBACK (on_progress_list_changed), self);
-	/* TODO: connect folder view activate */
-	
-	/* window */
 
-	/* we don't register this in sighandlers, as it should be run after disconnecting all signals,
-	 * in destroy stage */
-
-	
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (priv->folder_view),
+						       "visible-account-changed",
+						       G_CALLBACK (on_visible_account_changed), self);
 }
 
 ModestWindow *
@@ -246,6 +274,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 				       MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
+
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 
@@ -366,8 +395,6 @@ modest_folder_window_set_account (ModestFolderWindow *self,
 		 priv->current_store_account);
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
-	gtk_window_set_title (GTK_WINDOW (self),
-			      modest_account_settings_get_display_name (settings));
 	update_progress_hint (self);
 
 free_refs:
