@@ -38,7 +38,7 @@ libmodest_ui_la_SOURCES=              	\
 	modest-gnome-utils.h		\
 	modest-gnome-utils.c		\
 	modest-main-window.c          	\
-	modest-main-window-ui.h	      	\	
+	modest-main-window-ui.h	      	\
 	modest-msg-view-window.c      	\
 	modest-platform.c	      	\
 	modest-platform.c	      	\

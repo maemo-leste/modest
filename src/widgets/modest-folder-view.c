@@ -1678,6 +1678,48 @@ expand_root_items (ModestFolderView *self)
 	gtk_tree_path_free (path);
 }
 
+static gboolean
+is_parent_of (TnyFolder *a, TnyFolder *b)
+{
+	return FALSE;
+}
+
+static gboolean
+has_child_with_name_of (TnyFolder *a, TnyFolder *b)
+{
+	return FALSE;
+}
+
+static gboolean
+check_move_to_this_folder_valid (ModestFolderView *self, TnyFolder *folder)
+{
+	ModestFolderViewPrivate *priv;
+	TnyIterator *iterator;
+	gboolean retval = TRUE;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	for (iterator = tny_list_create_iterator (priv->list_to_move);
+	     retval && !tny_iterator_is_done (iterator);
+	     tny_iterator_next (iterator)) {
+		GObject *instance;
+		instance = tny_iterator_get_current (iterator);
+		if (instance == (GObject *) folder) {
+			retval = FALSE;
+		} else if (TNY_IS_FOLDER (instance)) {
+			retval = !is_parent_of (TNY_FOLDER (instance), folder);
+			if (retval) {
+				retval = !has_child_with_name_of (folder, TNY_FOLDER (instance));
+			}
+		}
+		g_object_unref (instance);
+	}
+
+	return retval;
+}
+
+
 /*
  * We use this function to implement the
  * MODEST_FOLDER_VIEW_STYLE_SHOW_ONE style. We only show the default
@@ -1775,7 +1817,12 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	/* If this is a move to dialog, hide Sent, Outbox and Drafts
 	folder as no message can be move there according to UI specs */
 	if (!priv->show_non_move) {
-		if (TNY_IS_FOLDER (instance) && 
+		if (priv->list_to_move && 
+		    tny_list_get_length (priv->list_to_move) > 0 &&
+		    TNY_IS_FOLDER (instance)) {
+			retval = check_move_to_this_folder_valid (MODEST_FOLDER_VIEW (data), TNY_FOLDER (instance));
+		}
+		if (retval && TNY_IS_FOLDER (instance) && 
 		    modest_tny_folder_is_local_folder (TNY_FOLDER (instance))) {
 			switch (type) {
 			case TNY_FOLDER_TYPE_OUTBOX:
