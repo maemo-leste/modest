@@ -1681,7 +1681,21 @@ expand_root_items (ModestFolderView *self)
 static gboolean
 is_parent_of (TnyFolder *a, TnyFolder *b)
 {
-	return FALSE;
+	const gchar *a_id;
+	gboolean retval = FALSE;
+
+	a_id = tny_folder_get_id (a);
+	if (a_id) {
+		gchar *string_to_match;
+		const gchar *b_id;
+
+		string_to_match = g_strconcat (a_id, "/", NULL);
+		b_id = tny_folder_get_id (b);
+		retval = g_str_has_prefix (b_id, string_to_match);
+		g_free (string_to_match);
+	}
+	
+	return retval;
 }
 
 static gboolean
