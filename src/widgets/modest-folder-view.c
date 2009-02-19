@@ -1699,9 +1699,35 @@ is_parent_of (TnyFolder *a, TnyFolder *b)
 }
 
 static gboolean
-has_child_with_name_of (TnyFolder *a, TnyFolder *b)
+has_folder_with_id (ModestFolderView *self, const gchar *id)
 {
 	return FALSE;
+}
+
+static gboolean
+has_child_with_name_of (ModestFolderView *self, TnyFolder *a, TnyFolder *b)
+{
+	const gchar *a_id;
+	gboolean retval = FALSE;
+
+	a_id = tny_folder_get_id (a);
+	if (a_id) {
+		const gchar *b_id;
+		b_id = tny_folder_get_id (b);
+		
+		if (b_id) {
+			const gchar *last_bar;
+			gchar *string_to_match;
+			last_bar = g_strrstr (b_id, "/");
+			if (!last_bar)
+				last_bar = b_id;
+			string_to_match = g_strconcat (a_id, "/", last_bar, NULL);
+			retval = has_folder_with_id (self, string_to_match);
+			g_free (string_to_match);
+		}
+	}
+
+	return retval;
 }
 
 static gboolean
@@ -1724,7 +1750,7 @@ check_move_to_this_folder_valid (ModestFolderView *self, TnyFolder *folder)
 		} else if (TNY_IS_FOLDER (instance)) {
 			retval = !is_parent_of (TNY_FOLDER (instance), folder);
 			if (retval) {
-				retval = !has_child_with_name_of (folder, TNY_FOLDER (instance));
+				retval = !has_child_with_name_of (self, folder, TNY_FOLDER (instance));
 			}
 		}
 		g_object_unref (instance);
