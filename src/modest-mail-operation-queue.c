@@ -453,14 +453,15 @@ static void
 on_find_by_source_foreach (gpointer op, gpointer data)
 {
 	FindBySourceInfo *info = (FindBySourceInfo*) data;
-	GObject *source;
+	GObject *source = NULL;
 
 	source = modest_mail_operation_get_source (MODEST_MAIL_OPERATION (op));
-	if ( info->source == source) {
+	if (info->source == source) {
 		g_object_ref (G_OBJECT (op));
 		*(info->new_list) = g_slist_prepend (*(info->new_list), MODEST_MAIL_OPERATION (op));
 	}
-	g_object_unref (source);
+	if (source)
+		g_object_unref (source);
 }
 
 GSList*
