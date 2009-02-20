@@ -205,7 +205,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	const gchar *date_time_str;
 
 	datetime_formatter = modest_datetime_formatter_new ();
-	
+
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_message_properties"));
 
@@ -229,14 +229,10 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	sent = tny_header_get_date_sent (header);
 	size = tny_header_get_message_size (header);
 
-	if (from == NULL)
-		from = g_strdup ("");
-	if (to == NULL)
-		to = g_strdup ("");
-	if (subject == NULL)
-		subject = g_strdup ("");
-	if (cc == NULL)
-		cc = g_strdup ("");
+	if (!strcmp (subject, "")) {
+		g_free (subject);
+		subject = g_strdup (_("mail_va_no_subject "));
+	}
 
 	/* Add from and subject for all folders */
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_from"), from);
@@ -249,7 +245,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	    (folder_type != TNY_FOLDER_TYPE_OUTBOX)) {
 		date_time_str = modest_datetime_formatter_display_long_datetime (datetime_formatter, 
 									    received);
-		
+
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_received"),
 						date_time_str);
 	}
