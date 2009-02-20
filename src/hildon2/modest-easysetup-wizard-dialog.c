@@ -2081,18 +2081,20 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 	g_object_unref (transport_settings);
 	g_free (transport_hostname);
-	
+
 	fullname = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_name));
 	email_address = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_email));
 	modest_account_settings_set_fullname (priv->settings, fullname);
 	modest_account_settings_set_email_address (priv->settings, email_address);
 	/* we don't set retrieve type to preserve advanced settings if
 	   any. By default account settings are set to headers only */
-	
+
 	/* Save the connection-specific SMTP server accounts. */
-        modest_account_settings_set_use_connection_specific_smtp 
-		(priv->settings, 
-		 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
+	if (priv->checkbox_outgoing_smtp_specific) {
+		modest_account_settings_set_use_connection_specific_smtp
+			(priv->settings,
+			 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
+	}
 
 	display_name = get_entered_account_title (self);
 	modest_account_settings_set_display_name (priv->settings, display_name);
