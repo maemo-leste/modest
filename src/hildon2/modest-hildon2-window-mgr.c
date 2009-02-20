@@ -44,6 +44,8 @@
 #include "modest-folder-window.h"
 #include "modest-accounts-window.h"
 #include "modest-maemo-utils.h"
+#include "modest-utils.h"
+#include "modest-tny-msg.h"
 #include <tny-merge-folder.h>
 
 /* 'private'/'protected' functions */
@@ -519,9 +521,41 @@ on_window_destroy (ModestWindow *window,
 		sent = modest_msg_edit_window_get_sent (MODEST_MSG_EDIT_WINDOW (window));
 		/* Save currently edited message to Drafts if it was not sent */
 		if (!sent && modest_msg_edit_window_is_modified (MODEST_MSG_EDIT_WINDOW (window))) {
+			ModestMsgEditWindow *edit_window;
+			MsgData *data;
 
-			if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
-				return TRUE;
+			edit_window = MODEST_MSG_EDIT_WINDOW (window);
+			data = modest_msg_edit_window_get_msg_data (edit_window);
+
+			if (data) {
+				gint parts_count;
+				guint64 parts_size, available_size, expected_size;
+
+				available_size = modest_utils_get_available_space (NULL);
+				modest_msg_edit_window_get_parts_size (edit_window, &parts_count, &parts_size);
+				expected_size = modest_tny_msg_estimate_size (data->plain_body,
+									      data->html_body,
+									      parts_count,
+									      parts_size);
+				modest_msg_edit_window_free_msg_data (edit_window, data);
+				data = NULL;
+
+				/* If there is not enough space
+				   available for saving the message
+				   then show an error and do not close
+				   the window */
+				if (expected_size >= available_size) {
+					modest_platform_run_information_dialog (GTK_WINDOW (edit_window),
+										_("mail_in_ui_save_error"),
+										FALSE);
+					return TRUE;
+				} else {
+					if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
+						return TRUE;
+				}
+			} else {
+				g_warning ("Edit window without message data. This is probably a bug");
+			}
 		}
 	}
 
