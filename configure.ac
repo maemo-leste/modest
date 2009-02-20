@@ -113,19 +113,19 @@ AC_SUBST(MODEST_GSTUFF_LIBS)
 
 modest_save_cflags="$CFLAGS"
 modest_save_libs="$LIBS"
-CFLAGS="$MODEST_GSTUFF_CFLAGS"
-LIBS="$MODEST_GSTUFF_LIBS"
+PKG_CHECK_MODULES(MODEST_GTKHTML,libgtkhtml-${gtk_html_version})
+AC_SUBST(MODEST_GTKHTML_CFLAGS)
+AC_SUBST(MODEST_GTKHTML_LIBS)
+CFLAGS="$MODEST_GTKHTML_CFLAGS"
+LIBS="$MODEST_GTKHTML_LIBS"
 AC_CHECK_DECLS([gtk_widget_tap_and_hold_setup],[],[], [#include <gtk/gtk.h>])
-CFLAGS="$modest_save_cflags"
-LIBS="$modest_save_libs"
-
-__COPY_LIBS="$LIBS"
-LIBS="$LIBS $MODEST_GSTUFF_LIBS"
 AC_CHECK_FUNCS(gtk_html_get_selection_area)
 AC_SUBST(HAVE_GTK_HTML_GET_SELECTION_AREA)
 AC_CHECK_FUNCS(gtk_tree_view_column_get_cell_data_hint)
 AC_SUBST(HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT)
-LIBS="$__COPY_LIBS"
+CFLAGS="$modest_save_cflags"
+LIBS="$modest_save_libs"
+
 
 dnl dnl now, determine what to build
 dnl AC_MSG_NOTICE([Determining what platform to build])
