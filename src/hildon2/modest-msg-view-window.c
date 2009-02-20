@@ -1467,7 +1467,6 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
-			modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 			hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
 		}
 	} else {
@@ -1477,7 +1476,6 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
-			modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 			hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
 		}
 	}
