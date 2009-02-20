@@ -1,3 +1,16 @@
+modest (2.1-2009.09-1) unstable; urgency=low
+
+  * Week 09, 2009 release - 28 bug fixes
+  * modest r7610
+  *
+  * Fixes: NB#97235, NB#97314, NB#98705, NB#100011, NB#100856, NB#100902
+  * Fixes: NB#101111, NB#101571, NB#101681, NB#101695, NB#101898, NB#101936
+  * Fixes: NB#102082, NB#102096, NB#102097, NB#102192, NB#102281, NB#102317
+  * Fixes: NB#102322, NB#102354, NB#102356, NB#102359, NB#102377, NB#102379
+  * Fixes: NB#102386, NB#102393, NB#102397, NB#102523
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 20 Feb 2009 12:40:37 +0200
+
 modest (2.1-2009.08-1) unstable; urgency=low
 
   * Week 08, 2009 release of modest with 30 bug fixes
