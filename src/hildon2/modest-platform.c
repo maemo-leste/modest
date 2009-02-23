@@ -2451,6 +2451,7 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
+	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
 
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
@@ -2478,10 +2479,15 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	if (modest_tny_account_is_virtual_local_folders (account)) {
 		account_id = "";
 		selection_label_text = g_strconcat (_("TODO: local folders"), "/", NULL);
+	} else if (modest_tny_account_is_memory_card_account (account)) {
+		account_id = "";
+		selection_label_text = g_strconcat (_("TODO: MMC ACCOUNT"), "/", NULL);
 	} else {
 		account_id = tny_account_get_id (account);
 
 		selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), 
+					       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	}
 	gtk_label_set_text (GTK_LABEL (selection_label), selection_label_text);
 	g_free (selection_label_text);

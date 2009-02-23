@@ -65,6 +65,7 @@ typedef enum _ModestFolderViewFilter {
 	MODEST_FOLDER_VIEW_FILTER_DELETABLE = 1 << 4,
 	MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS = 1 << 5,
 	MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS = 1 << 6,
+	MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS = 1 << 7,
 } ModestFolderViewFilter;
 
 typedef struct _ModestFolderView      ModestFolderView;
