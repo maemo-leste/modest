@@ -413,14 +413,18 @@ modest_search_folder_get_headers_cb (TnyFolder *folder,
 
 	while (!tny_iterator_is_done (iter)) {
 
-		TnyHeader *cur = (TnyHeader *) tny_iterator_get_current (iter);
-		const time_t t = tny_header_get_date_sent (cur);
-		gboolean found = FALSE;
-		
+		TnyHeader *cur;
+		time_t t;
+		gboolean found;
+
+		cur = (TnyHeader *) tny_iterator_get_current (iter);
+		t = tny_header_get_date_sent (cur);
+		found = FALSE;
+
 		/* Ignore deleted (not yet expunged) emails: */
 		if (tny_header_get_flags(cur) & TNY_HEADER_FLAG_DELETED)
 			goto go_next;
-			
+
 		if (helper->search->flags & MODEST_SEARCH_BEFORE)
 			if (!(t <= helper->search->end_date))
 				goto go_next;

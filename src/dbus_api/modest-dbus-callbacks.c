@@ -1528,12 +1528,12 @@ on_dbus_method_search (DBusConnection *con, DBusMessage *message)
 	}
 
 	if (sd_v > 0) {
-		search->flags |= MODEST_SEARCH_BEFORE;
+		search->flags |= MODEST_SEARCH_AFTER;
 		search->start_date = start_date;
 	}
 
 	if (ed_v > 0) {
-		search->flags |= MODEST_SEARCH_AFTER;
+		search->flags |= MODEST_SEARCH_BEFORE;
 		search->end_date = end_date;
 	}
 
