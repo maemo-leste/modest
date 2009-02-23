@@ -2427,6 +2427,10 @@ _modest_platform_play_email_tone (void)
 	g_free (active_profile);
 }
 
+#define MOVE_TO_DIALOG_FOLDER_VIEW "folder-view"
+#define MOVE_TO_DIALOG_BACK_BUTTON "back-button"
+#define MOVE_TO_DIALOG_SELECTION_BUTTON "selection-button"
+
 static void
 on_move_to_dialog_folder_activated (GtkTreeView       *tree_view,
                                     GtkTreePath       *path,
@@ -2434,6 +2438,26 @@ on_move_to_dialog_folder_activated (GtkTreeView       *tree_view,
                                     gpointer           user_data)
 {
         gtk_dialog_response (GTK_DIALOG (user_data), GTK_RESPONSE_OK);
+}
+
+static void
+move_to_dialog_show_accounts (GtkWidget *dialog)
+{
+	GtkWidget *selection_button;
+	GtkWidget *back_button;
+	GtkWidget *folder_view;
+
+        selection_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_BUTTON));
+        back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
+        folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
+	
+	gtk_widget_hide (selection_button);
+	gtk_widget_set_sensitive (back_button, FALSE);
+
+	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
+	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
+	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
+	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
 }
 
 GtkWidget *
@@ -2492,6 +2516,12 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_widget_show (*folder_view);
 	gtk_widget_show_all (back_button);
 	gtk_widget_show (buttons_hbox);
+
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW, *folder_view);
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON, back_button);
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_BUTTON, selection_button);
+
+	move_to_dialog_show_accounts (dialog);
 
 	return dialog;
 }
