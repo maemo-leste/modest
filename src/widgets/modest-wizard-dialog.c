@@ -309,6 +309,7 @@ init (ModestWizardDialog *wizard_dialog)
     /* connect to dialog's response signal */
     g_signal_connect (G_OBJECT (dialog), "response",
             G_CALLBACK (response), NULL);
+
 }
 
 #if GTK_CHECK_VERSION(2, 10, 0) /* These signals were added in GTK+ 2.10: */
@@ -342,6 +343,17 @@ static void on_notebook_page_removed(GtkNotebook *notebook,
 #endif /* GTK_CHECK_VERSION */
 
 static void
+on_notebook_switch_page (GtkNotebook *notebook,
+			 GtkNotebookPage *page,
+			 guint page_num,
+			 ModestWizardDialog *self)
+{
+	g_return_if_fail (MODEST_IS_WIZARD_DIALOG(self));
+
+	create_title (self);
+}
+
+static void
 connect_to_notebook_signals(ModestWizardDialog* dialog)
 {
 #if GTK_CHECK_VERSION(2, 10, 0) /* These signals were added in GTK+ 2.10: */
@@ -355,6 +367,8 @@ connect_to_notebook_signals(ModestWizardDialog* dialog)
 	g_signal_connect (G_OBJECT (priv->notebook), "page-removed",
 		      G_CALLBACK (on_notebook_page_removed), dialog);
 #endif /* GTK_CHECK_VERSION */
+	g_signal_connect_after (G_OBJECT (priv->notebook), "switch-page",
+				G_CALLBACK (on_notebook_switch_page), dialog);
 }
 
 
