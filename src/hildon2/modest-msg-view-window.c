@@ -3109,7 +3109,7 @@ on_fetch_image (ModestMsgView *msgview,
 		return FALSE;
 	}
 
-	return TRUE;;
+	return TRUE;
 }
 
 static void 

@@ -248,6 +248,8 @@ modest_header_window_finalize (GObject *obj)
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
 	g_object_unref (priv->folder);
+	g_object_unref (priv->header_view);
+	g_object_unref (priv->empty_view);
 
 	if (priv->current_store_account) {
 		g_free (priv->current_store_account);
@@ -421,6 +423,15 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 
 	priv->header_view  = create_header_view (MODEST_WINDOW (self), folder);
 	priv->empty_view = create_empty_view ();
+
+	/* Transform the floating reference in a "hard" reference. We
+	   need to do this because the widgets could be added/removed
+	   to containers many times so we always need to keep a
+	   reference. It could happen also that some widget is never
+	   added to any container */
+	g_object_ref_sink (priv->header_view);
+	g_object_ref_sink (priv->empty_view);
+
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 	setup_menu (self);
@@ -625,7 +636,6 @@ set_contents_state (ModestHeaderWindow *self,
 		break;
 	}
 	priv->contents_state = state;
-	
 }
 
 static void
@@ -633,9 +643,9 @@ on_msg_count_changed (ModestHeaderView *header_view,
 		      TnyFolder *folder,
 		      TnyFolderChange *change,
 		      ModestHeaderWindow *header_window)
-{	
+{
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW (header_window));
-	
+
 	update_view (MODEST_HEADER_WINDOW (header_window), change);
 }
 
