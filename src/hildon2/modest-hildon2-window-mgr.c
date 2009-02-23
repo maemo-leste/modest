@@ -542,13 +542,12 @@ on_window_destroy (ModestWindow *window,
 
 				/* If there is not enough space
 				   available for saving the message
-				   then show an error and do not close
-				   the window */
+				   then show an error and close the
+				   window without saving */
 				if (expected_size >= available_size) {
 					modest_platform_run_information_dialog (GTK_WINDOW (edit_window),
 										_("mail_in_ui_save_error"),
 										FALSE);
-					return TRUE;
 				} else {
 					if (!modest_ui_actions_on_save_to_drafts (NULL, MODEST_MSG_EDIT_WINDOW (window)))
 						return TRUE;
