@@ -2448,6 +2448,7 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	
 	gtk_widget_set_sensitive (back_button, FALSE);
 
+	gtk_label_set_text (GTK_LABEL (selection_label), "");
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
