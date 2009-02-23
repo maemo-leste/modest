@@ -2470,10 +2470,10 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 
 	account = TNY_ACCOUNT (folder_store);
 	if (modest_tny_account_is_virtual_local_folders (account)) {
-		account_id = NULL;
+		account_id = "";
 		selection_label_text = g_strconcat (_("TODO: local folders"), "/", NULL);
 	} else {
-		account_id = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		account_id = tny_account_get_id (account);
 
 		selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
 	}

@@ -1918,7 +1918,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 
 	/* If this is a move to dialog, hide Sent, Outbox and Drafts
 	folder as no message can be move there according to UI specs */
-	if (!priv->show_non_move) {
+	if (retval && !priv->show_non_move) {
 		if (priv->list_to_move && 
 		    tny_list_get_length (priv->list_to_move) > 0 &&
 		    TNY_IS_FOLDER (instance)) {
