@@ -93,8 +93,11 @@ struct _ModestWizardDialogClass {
     void (*_gtk_reserved4)  (void);
 };
 
-typedef void (* ModestWizardDialogResponseOverrideFunc) (ModestWizardDialog *dialog, 
-							 gint response_id, gint page_number);
+/*
+ * Returning %TRUE means you don't allow further processing of the event in ModestWizardDialog
+ */
+typedef gboolean (* ModestWizardDialogResponseOverrideFunc) (ModestWizardDialog *dialog, 
+							     gint response_id, gint page_number);
 
 
 GType modest_wizard_dialog_get_type   (void) G_GNUC_CONST;

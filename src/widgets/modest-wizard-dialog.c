@@ -533,7 +533,15 @@ response (ModestWizardDialog   *wizard_dialog,
     gboolean is_first, is_last;
 
     if (priv->override_func) {
-	priv->override_func (wizard_dialog, response_id, gtk_notebook_get_current_page (notebook));
+	    if (priv->override_func (wizard_dialog, response_id, gtk_notebook_get_current_page (notebook))) {
+		    /* Don't let the dialog close */
+		    g_signal_stop_emission_by_name (wizard_dialog, "response");
+		    
+		    /* Force refresh of title */
+		    if (priv->autotitle) 
+			    create_title (wizard_dialog);
+		    return;
+	    }
     }
     
     switch (response_id) {
