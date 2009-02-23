@@ -2569,6 +2569,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 		g_object_unref (back_pixbuf);
 	}
 	selection_label = gtk_label_new ("");
+	gtk_misc_set_alignment (GTK_MISC (selection_label), 0.0, 0.5);
 	gtk_box_pack_start (GTK_BOX (buttons_hbox), back_button, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (buttons_hbox), selection_label, TRUE, TRUE, 0);
 	gtk_widget_set_sensitive (GTK_WIDGET (back_button), FALSE);
