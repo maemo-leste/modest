@@ -548,6 +548,7 @@ static void setup_menu (ModestHeaderWindow *self)
 	hildon_button_set_title (HILDON_BUTTON (priv->sort_button), _("mcen_me_sort"));
 	g_signal_connect (G_OBJECT (priv->sort_button), "clicked",
 			  G_CALLBACK (modest_ui_actions_on_sort), (gpointer) self);
+	hildon_button_set_style(HILDON_BUTTON (priv->sort_button), HILDON_BUTTON_STYLE_PICKER);
 	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->sort_button),
 						  modest_ui_dimming_rules_on_sort);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
