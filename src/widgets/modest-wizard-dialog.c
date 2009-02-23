@@ -97,6 +97,7 @@ static void make_buttons_sensitive  (ModestWizardDialog *wizard_dialog,
 
 static gboolean invoke_before_next_vfunc (ModestWizardDialog *wizard_dialog);
 static void invoke_enable_buttons_vfunc (ModestWizardDialog *wizard_dialog);
+static void invoke_save_settings_vfunc (ModestWizardDialog *wizard_dialog);
 
 enum {
     PROP_ZERO,
@@ -158,6 +159,10 @@ class_init (ModestWizardDialogClass *wizard_dialog_class)
     object_class->set_property = set_property;
     object_class->get_property = get_property;
     object_class->finalize     = finalize;
+
+    wizard_dialog_class->before_next = NULL;
+    wizard_dialog_class->save_settings = NULL;
+    wizard_dialog_class->enable_buttons = NULL;
 
     /**
      * ModestWizardDialog:wizard-name:
@@ -719,6 +724,17 @@ invoke_enable_buttons_vfunc (ModestWizardDialog *wizard_dialog)
 	}
 }
 
+static void
+invoke_save_settings_vfunc (ModestWizardDialog *wizard_dialog)
+{
+	ModestWizardDialogClass *klass = MODEST_WIZARD_DIALOG_GET_CLASS (wizard_dialog);
+	
+	/* Call the vfunc, which may be overridden by derived classes: */
+	if (klass->save_settings) {
+		(*(klass->save_settings)) (wizard_dialog);
+	}
+}
+
 void 
 modest_wizard_dialog_set_response_override_handler (ModestWizardDialog *wizard_dialog,
 						    ModestWizardDialogResponseOverrideFunc callback)
@@ -726,4 +742,12 @@ modest_wizard_dialog_set_response_override_handler (ModestWizardDialog *wizard_d
     ModestWizardDialogPrivate *priv = wizard_dialog->priv;
 
     priv->override_func = callback;
+}
+
+void
+modest_wizard_dialog_save_settings (ModestWizardDialog *wizard_dialog)
+{
+	g_return_if_fail (MODEST_IS_WIZARD_DIALOG (wizard_dialog));
+
+	invoke_save_settings_vfunc (wizard_dialog);
 }

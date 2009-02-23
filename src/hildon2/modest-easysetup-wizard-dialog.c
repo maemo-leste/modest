@@ -139,6 +139,7 @@ struct _ModestEasysetupWizardDialogPrivate
 
 static void save_to_settings (ModestEasysetupWizardDialog *self);
 static void real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next);
+static void on_save_settings (ModestWizardDialog *dialog);
 static GList* check_for_supported_auth_methods (ModestEasysetupWizardDialog* self);
 static gboolean check_has_supported_auth_methods(ModestEasysetupWizardDialog* self);
 
@@ -1853,6 +1854,7 @@ modest_easysetup_wizard_dialog_class_init (ModestEasysetupWizardDialogClass *kla
 	ModestWizardDialogClass *base_klass = (ModestWizardDialogClass*)(klass);
 	base_klass->before_next = on_before_next;
 	base_klass->enable_buttons = on_enable_buttons;
+	base_klass->save_settings = on_save_settings;
 }
 
 /**
@@ -2101,6 +2103,16 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	g_free (display_name);
 	g_free (provider_id);
 }
+
+
+static void
+on_save_settings (ModestWizardDialog *dialog)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (dialog);
+	save_to_settings (self);
+
+}
+
 
 static GList*
 check_for_supported_auth_methods (ModestEasysetupWizardDialog* self)

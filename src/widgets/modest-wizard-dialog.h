@@ -88,7 +88,7 @@ struct _ModestWizardDialogClass {
 	void (* enable_buttons) (ModestWizardDialog *dialog, GtkWidget *current_page);
 
 
-    void (*_gtk_reserved2)  (void);
+    void (* save_settings)  (ModestWizardDialog *dialog);
     void (*_gtk_reserved3)  (void);
     void (*_gtk_reserved4)  (void);
 };
@@ -107,6 +107,7 @@ GtkWidget* modest_wizard_dialog_new   (GtkWindow        *parent,
                                        GtkNotebook      *notebook);
                                        
 void modest_wizard_dialog_force_title_update (ModestWizardDialog* wizard_dialog);
+void modest_wizard_dialog_save_settings (ModestWizardDialog *wizard_dialog);
 
 void modest_wizard_dialog_set_response_override_handler (ModestWizardDialog *wizard_dialog,
 							 ModestWizardDialogResponseOverrideFunc callback);
