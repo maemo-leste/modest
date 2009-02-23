@@ -83,6 +83,7 @@ static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win
 static void fill_list_of_caches (gpointer key, gpointer value, gpointer userdata);
 static gboolean _send_receive_in_progress (ModestWindow *win);
 static gboolean _msgs_send_in_progress (void);
+static gboolean _all_msgs_in_sending_status (ModestHeaderView *header_view);
 
 static DimmedState *
 _define_main_window_dimming_state (ModestMainWindow *window)
@@ -489,6 +490,11 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 			folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 			if (folder) {
 				dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+
+				if (!dimmed &&
+				    (tny_folder_get_folder_type (TNY_FOLDER (folder)) == TNY_FOLDER_TYPE_OUTBOX)) {
+					dimmed = _all_msgs_in_sending_status (MODEST_HEADER_VIEW (header_view));;
+				}
 				g_object_unref (folder);
 			}
 		}
@@ -2879,7 +2885,36 @@ _selected_folder_has_subfolder_with_same_name (ModestWindow *win)
 
 
 	return result;
-}	
+}
+
+static gboolean
+_all_msgs_in_sending_status (ModestHeaderView *header_view)
+{
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	gboolean all_sending = TRUE;
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (gtk_tree_model_get_iter_first (model, &iter)) {
+		do {
+			TnyHeader *header;
+
+			gtk_tree_model_get (model, &iter,
+					    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+					    &header,
+					    -1);
+
+			if (header) {
+				if (modest_tny_all_send_queues_get_msg_status (header) !=
+				    MODEST_TNY_SEND_QUEUE_SENDING)
+					all_sending = FALSE;
+				g_object_unref (header);
+			}
+
+		} while (all_sending && gtk_tree_model_iter_next (model, &iter));
+	}
+	return all_sending;
+}
 
 gboolean 
 modest_ui_dimming_rules_on_save_to_drafts (ModestWindow *win, 
@@ -2984,7 +3019,7 @@ modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer us
 	/* Check dimmed rule */	
 	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 
 	if (!dimmed) {
 		GtkWidget *header_view;
@@ -2994,6 +3029,11 @@ modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer us
 		folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 		if (folder) {
 			dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+
+			if (!dimmed &&
+			    (tny_folder_get_folder_type (TNY_FOLDER (folder)) == TNY_FOLDER_TYPE_OUTBOX)) {
+				dimmed = _all_msgs_in_sending_status (MODEST_HEADER_VIEW (header_view));;
+			}
 			g_object_unref (folder);
 		}
 	}
@@ -3014,7 +3054,7 @@ modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer us
 	/* Check dimmed rule */	
 	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 
 	if (MODEST_IS_FOLDER_WINDOW (win)) {
 		ModestFolderView *folder_view;
