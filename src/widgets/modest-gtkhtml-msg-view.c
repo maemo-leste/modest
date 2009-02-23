@@ -1487,15 +1487,17 @@ on_view_images_clicked (GtkButton * button, gpointer self)
 	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 	TnyMimePart *part;
 
-	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
-	gtk_widget_hide (priv->view_images_button);
-	part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
-	if (part) {
-		tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
-		g_object_unref (part);
-	}
-	if (priv->msg)
+	/* The message could have not been downloaded yet */
+	if (priv->msg) {
+		modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
+		gtk_widget_hide (priv->view_images_button);
+		part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
+		if (part) {
+			tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
+			g_object_unref (part);
+		}
 		tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
+	}
 }
 
 static gboolean
