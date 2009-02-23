@@ -2431,6 +2431,7 @@ _modest_platform_play_email_tone (void)
 #define MOVE_TO_DIALOG_BACK_BUTTON "back-button"
 #define MOVE_TO_DIALOG_SELECTION_LABEL "selection-label"
 #define MOVE_TO_DIALOG_SHOWING_FOLDERS "showing-folders"
+#define MOVE_TO_DIALOG_PANNABLE "pannable"
 
 static void
 move_to_dialog_show_accounts (GtkWidget *dialog)
@@ -2438,16 +2439,19 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	GtkWidget *selection_label;
 	GtkWidget *back_button;
 	GtkWidget *folder_view;
+	GtkWidget *pannable;
 
         selection_label = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL));
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
+        pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
 	
 	gtk_widget_set_sensitive (back_button, FALSE);
 
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
+	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
 
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
 }
@@ -2461,10 +2465,12 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	TnyAccount *account;
 	const gchar *account_id;
 	gchar *selection_label_text;
+	GtkWidget *pannable;
 
         selection_label = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL));
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
+        pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
 	
 	gtk_widget_set_sensitive (back_button, TRUE);
 
@@ -2486,6 +2492,7 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), FALSE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
+	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
 
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (TRUE));
 }
@@ -2578,6 +2585,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW, *folder_view);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON, back_button);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL, selection_label);
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE, folder_view_container);
 
         /* Simulate the behaviour of a HildonPickerDialog by emitting
 	   a response when a folder is selected */
