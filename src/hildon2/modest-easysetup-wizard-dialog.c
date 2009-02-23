@@ -139,7 +139,8 @@ struct _ModestEasysetupWizardDialogPrivate
 
 static void save_to_settings (ModestEasysetupWizardDialog *self);
 static void real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next);
-static void on_save_settings (ModestWizardDialog *dialog);
+static void on_update_model (ModestWizardDialog *dialog);
+static gboolean on_save (ModestWizardDialog *dialog);
 static GList* check_for_supported_auth_methods (ModestEasysetupWizardDialog* self);
 static gboolean check_has_supported_auth_methods(ModestEasysetupWizardDialog* self);
 
@@ -1854,7 +1855,8 @@ modest_easysetup_wizard_dialog_class_init (ModestEasysetupWizardDialogClass *kla
 	ModestWizardDialogClass *base_klass = (ModestWizardDialogClass*)(klass);
 	base_klass->before_next = on_before_next;
 	base_klass->enable_buttons = on_enable_buttons;
-	base_klass->save_settings = on_save_settings;
+	base_klass->update_model = on_update_model;
+	base_klass->save = on_save;
 }
 
 /**
@@ -2106,10 +2108,27 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 
 static void
-on_save_settings (ModestWizardDialog *dialog)
+on_update_model (ModestWizardDialog *dialog)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (dialog);
 	save_to_settings (self);
+
+}
+
+static gboolean
+on_save (ModestWizardDialog *dialog)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (dialog);
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	save_to_settings (self);
+
+	if (modest_account_mgr_check_already_configured_account (priv->account_manager, priv->settings)) {
+		modest_platform_information_banner (NULL, NULL, _("mail_ib_setting_failed"));
+		return FALSE;
+	}
+
+	return modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
 
 }
 

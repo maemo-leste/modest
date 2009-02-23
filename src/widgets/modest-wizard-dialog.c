@@ -97,7 +97,8 @@ static void make_buttons_sensitive  (ModestWizardDialog *wizard_dialog,
 
 static gboolean invoke_before_next_vfunc (ModestWizardDialog *wizard_dialog);
 static void invoke_enable_buttons_vfunc (ModestWizardDialog *wizard_dialog);
-static void invoke_save_settings_vfunc (ModestWizardDialog *wizard_dialog);
+static void invoke_update_model_vfunc (ModestWizardDialog *wizard_dialog);
+static gboolean invoke_save_vfunc (ModestWizardDialog *wizard_dialog);
 
 enum {
     PROP_ZERO,
@@ -161,7 +162,8 @@ class_init (ModestWizardDialogClass *wizard_dialog_class)
     object_class->finalize     = finalize;
 
     wizard_dialog_class->before_next = NULL;
-    wizard_dialog_class->save_settings = NULL;
+    wizard_dialog_class->update_model = NULL;
+    wizard_dialog_class->save = NULL;
     wizard_dialog_class->enable_buttons = NULL;
 
     /**
@@ -725,13 +727,26 @@ invoke_enable_buttons_vfunc (ModestWizardDialog *wizard_dialog)
 }
 
 static void
-invoke_save_settings_vfunc (ModestWizardDialog *wizard_dialog)
+invoke_update_model_vfunc (ModestWizardDialog *wizard_dialog)
 {
 	ModestWizardDialogClass *klass = MODEST_WIZARD_DIALOG_GET_CLASS (wizard_dialog);
 	
 	/* Call the vfunc, which may be overridden by derived classes: */
-	if (klass->save_settings) {
-		(*(klass->save_settings)) (wizard_dialog);
+	if (klass->update_model) {
+		(*(klass->update_model)) (wizard_dialog);
+	}
+}
+
+static gboolean
+invoke_save_vfunc (ModestWizardDialog *wizard_dialog)
+{
+	ModestWizardDialogClass *klass = MODEST_WIZARD_DIALOG_GET_CLASS (wizard_dialog);
+	
+	/* Call the vfunc, which may be overridden by derived classes: */
+	if (klass->save) {
+		return (*(klass->save)) (wizard_dialog);
+	} else {
+		return TRUE;
 	}
 }
 
@@ -745,9 +760,17 @@ modest_wizard_dialog_set_response_override_handler (ModestWizardDialog *wizard_d
 }
 
 void
-modest_wizard_dialog_save_settings (ModestWizardDialog *wizard_dialog)
+modest_wizard_dialog_update_model (ModestWizardDialog *wizard_dialog)
 {
 	g_return_if_fail (MODEST_IS_WIZARD_DIALOG (wizard_dialog));
 
-	invoke_save_settings_vfunc (wizard_dialog);
+	invoke_update_model_vfunc (wizard_dialog);
+}
+
+gboolean
+modest_wizard_dialog_save (ModestWizardDialog *wizard_dialog)
+{
+	g_return_val_if_fail (MODEST_IS_WIZARD_DIALOG (wizard_dialog), FALSE);
+
+	return invoke_save_vfunc (wizard_dialog);
 }
