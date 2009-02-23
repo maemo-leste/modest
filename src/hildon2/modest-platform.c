@@ -2441,6 +2441,9 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 				       GtkWidget **folder_view)
 {
 	GtkWidget *dialog, *folder_view_container;
+	GtkWidget *buttons_hbox;
+	GtkWidget *back_button, *selection_button;
+	GdkPixbuf *back_pixbuf;
 
 	/* Create dialog. We cannot use a touch selector because we
 	   need to use here the folder view widget directly */
@@ -2463,9 +2466,23 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (*folder_view),
 						  (TnyAccountStore *) modest_runtime_get_account_store ());
 
+	buttons_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
+	back_button = gtk_button_new ();
+	back_pixbuf = modest_platform_get_icon (_FM("filemanager_folder_up"), MODEST_ICON_SIZE_BIG);
+	if (back_pixbuf) {
+		gtk_button_set_image (GTK_BUTTON (back_button), gtk_image_new_from_pixbuf (back_pixbuf));
+		g_object_unref (back_pixbuf);
+	}
+	selection_button = gtk_button_new ();
+	gtk_box_pack_start (GTK_BOX (buttons_hbox), back_button, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (buttons_hbox), selection_button, TRUE, TRUE, 0);
+	gtk_widget_set_sensitive (GTK_WIDGET (back_button), FALSE);
+	gtk_widget_hide (selection_button);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), buttons_hbox, FALSE, FALSE, 0);
+
 	/* Create pannable and add it to the dialog */
 	folder_view_container = hildon_pannable_area_new ();
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), folder_view_container);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), folder_view_container, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (folder_view_container), *folder_view);
 
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
@@ -2473,6 +2490,8 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_widget_show (GTK_DIALOG (dialog)->vbox);
 	gtk_widget_show (folder_view_container);
 	gtk_widget_show (*folder_view);
+	gtk_widget_show_all (back_button);
+	gtk_widget_show (buttons_hbox);
 
 	return dialog;
 }
