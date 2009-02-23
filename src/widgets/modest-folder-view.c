@@ -1961,8 +1961,9 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS)) {
-		if (TNY_IS_FOLDER (instance) && !modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance)))
+		if (!modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
 			return FALSE;
+		}
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS)) {
