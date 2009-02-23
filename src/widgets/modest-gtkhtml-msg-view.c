@@ -1490,11 +1490,12 @@ on_view_images_clicked (GtkButton * button, gpointer self)
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
 	gtk_widget_hide (priv->view_images_button);
 	part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
-	tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
-	tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
-	g_object_unref (part);
-	
-
+	if (part) {
+		tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
+		g_object_unref (part);
+	}
+	if (priv->msg)
+		tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
 }
 
 static gboolean
@@ -1502,7 +1503,7 @@ on_activate_link (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMsgView *sel
 {
 	gboolean result;
 	g_return_val_if_fail (self, FALSE);
-	
+
 	g_signal_emit_by_name (G_OBJECT(self), "activate-link", uri, &result);
 
 	return result;
