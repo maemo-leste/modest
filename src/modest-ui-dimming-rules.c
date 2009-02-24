@@ -1358,6 +1358,68 @@ modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointer user_da
 	return dimmed;
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
+static gboolean
+_not_valid_attachments (ModestWindow *win, gboolean save_not_remove)
+{
+	gint n_attachments;
+	TnyList *attachments;
+	gboolean result = FALSE;
+
+	/* Get atachments */
+	attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW(win));
+	n_attachments = tny_list_get_length (attachments);
+
+	/* Check unique */		
+	if (!result) {
+		result = n_attachments < 1;
+	}
+		
+	/* Check attached type (view operation not required) */
+	if (!result)  {
+		gint n_valid = 0;
+
+		TnyIterator *iter;
+		iter = tny_list_create_iterator (attachments);
+		while (!tny_iterator_is_done (iter)) {
+			gboolean is_valid = TRUE;
+			TnyMimePart *mime_part = TNY_MIME_PART (tny_iterator_get_current (iter));
+			TnyList *nested_list = tny_simple_list_new ();
+			tny_mime_part_get_parts (mime_part, nested_list);
+
+			if (tny_mime_part_is_purged (mime_part)) {
+				is_valid = FALSE;
+			}
+			
+			if (is_valid && modest_tny_mime_part_is_msg (mime_part)) {
+				TnyMsg *window_msg;
+				window_msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+				if (window_msg) {
+					if (save_not_remove && (TnyMimePart *) window_msg != mime_part) {
+						is_valid = FALSE;
+					}
+					g_object_unref (window_msg);
+				}
+				if (is_valid && save_not_remove && tny_list_get_length (nested_list) > 0) {
+					is_valid = FALSE;
+				}
+			}
+			g_object_unref (nested_list);
+			g_object_unref (mime_part);
+			tny_iterator_next (iter);
+
+			if (is_valid) 
+				n_valid++;
+		}
+		g_object_unref (iter);
+		result = (n_valid == 0);
+	}
+	g_object_unref (attachments);
+	return result;
+
+}
+#endif
+
 gboolean 
 modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_data)
 {
@@ -1369,15 +1431,19 @@ modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_da
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	/* Check dimmed rule */	
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	dimmed = _not_valid_attachments (win, TRUE);
+#else
 	dimmed = _invalid_attach_selected (win, FALSE, FALSE, FALSE, rule);
 
 	if (!dimmed) {
-		dimmed = _purged_attach_selected (win, FALSE, NULL);
+		dimmed = _purged_attach_selected (win, TRUE);
 		if (dimmed) {
 			modest_dimming_rule_set_notification (rule, _("mail_ib_attach_not_local"));
 		}
 	}
-		
+#endif
 	return dimmed;
 }
 
