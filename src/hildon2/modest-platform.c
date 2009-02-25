@@ -90,6 +90,7 @@
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
+#define MODEST_NOTIFICATION_CATEGORY "email-message"
 #define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternCommunicationEmail"
 #define PROFILE_MAIL_TONE PROFILEKEY_EMAIL_ALERT_TONE
 #define PROFILE_MAIL_VOLUME PROFILEKEY_EMAIL_ALERT_VOLUME
@@ -1488,7 +1489,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		notification = hildon_notification_new (display_address,
 							str,
 							"qgn_list_messagin",
-							"email-message");
+							MODEST_NOTIFICATION_CATEGORY);
 		g_free (str);
 		/* Create the message URL */
 		str = tny_header_dup_uid (header);
@@ -1509,25 +1510,8 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		/* Play sound if the user wants. Show the LED
 		   pattern. Show and play just one */
 		if (G_UNLIKELY (first_notification)) {
-			gchar *active_profile;
-			gchar *mail_tone;
-			gchar *mail_volume;
-			gint mail_volume_int;
 
 			first_notification = FALSE;
-
-			active_profile = profile_get_profile ();
-			mail_tone = profile_get_value (active_profile, PROFILE_MAIL_TONE);
-			mail_volume = profile_get_value (active_profile, PROFILE_MAIL_VOLUME);
-			mail_volume_int = profile_parse_int (mail_volume);
-
-			if (mail_volume_int > 0)
-				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-								    "sound-file", mail_tone);
-
-			g_free (mail_volume);
-			g_free (mail_tone);
-			g_free (active_profile);
 
 			/* Set the led pattern */
 			notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
