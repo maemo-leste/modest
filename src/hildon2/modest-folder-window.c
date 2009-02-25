@@ -566,6 +566,7 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 		break;
 	}
 
+	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->folder_view), !enabled);
 	if (enabled) {
 		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 					       filter);
