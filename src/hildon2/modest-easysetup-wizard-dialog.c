@@ -103,6 +103,12 @@ struct _ModestEasysetupWizardDialogPrivate
 	
 	/* notebook pages: */
 	GtkWidget *page_welcome;
+	GtkWidget *check_support_progress;
+	gboolean  check_support_done;
+	guint check_support_show_progress_id;
+	guint check_support_progress_pulse_id;
+	gint pending_check_support;
+	gboolean destroyed;
 	
 	GtkWidget *page_account_details;
 	GtkWidget *account_country_picker;
@@ -143,6 +149,12 @@ static void on_update_model (ModestWizardDialog *dialog);
 static gboolean on_save (ModestWizardDialog *dialog);
 static GList* check_for_supported_auth_methods (ModestEasysetupWizardDialog* self);
 static gboolean check_has_supported_auth_methods(ModestEasysetupWizardDialog* self);
+static void check_support_callback (ModestAccountProtocol *protocol,
+				    gboolean supported,
+				    gpointer userdata);
+static void check_support_of_protocols (ModestEasysetupWizardDialog *self);
+static gboolean check_support_show_progress (gpointer userdata);
+static gboolean check_support_progress_pulse (gpointer userdata);
 
 static gboolean
 on_delete_event (GtkWidget *widget,
@@ -164,6 +176,19 @@ on_easysetup_changed(GtkWidget* widget, ModestEasysetupWizardDialog* wizard)
 static void
 modest_easysetup_wizard_dialog_dispose (GObject *object)
 {
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (object);
+	priv->destroyed = TRUE;
+
+	if (priv->check_support_show_progress_id > 0) {
+		g_source_remove (priv->check_support_show_progress_id);
+		priv->check_support_show_progress_id = 0;
+	}
+
+	if (priv->check_support_progress_pulse_id > 0) {
+		g_source_remove (priv->check_support_progress_pulse_id);
+		priv->check_support_progress_pulse_id = 0;
+	}
+
 	if (G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->dispose)
 		G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->dispose (object);
 }
@@ -331,13 +356,20 @@ create_captioned (ModestEasysetupWizardDialog *self,
 static GtkWidget*
 create_page_welcome (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
+	GtkWidget *box;
+	GtkWidget *label; 
+	ModestEasysetupWizardDialogPrivate *priv;
+
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
+	priv->check_support_progress = gtk_progress_bar_new ();
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is not truncated: */
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+	gtk_box_pack_end (GTK_BOX (box), priv->check_support_progress, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
 	return GTK_WIDGET (box);
@@ -1073,23 +1105,10 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 	}
 }
 
-typedef struct IdleData {
-	ModestEasysetupWizardDialog *dialog;
-	ModestPresets *presets;
-} IdleData;
-
-static gboolean
-presets_idle (gpointer userdata)
+static void
+fill_providers (ModestEasysetupWizardDialog *self)
 {
-	IdleData *idle_data = (IdleData *) userdata;
-	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (idle_data->dialog);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-
-	g_assert (idle_data->presets);
-
-	gdk_threads_enter ();
-
-	priv->presets = idle_data->presets;
 
 	if (MODEST_IS_COUNTRY_PICKER (priv->account_country_picker)) {
 /* 		gint mcc = get_default_country_code(); */
@@ -1120,6 +1139,29 @@ presets_idle (gpointer userdata)
 	}
 
 	priv->dirty = FALSE;
+
+}
+
+typedef struct IdleData {
+	ModestEasysetupWizardDialog *dialog;
+	ModestPresets *presets;
+} IdleData;
+
+static gboolean
+presets_idle (gpointer userdata)
+{
+	IdleData *idle_data = (IdleData *) userdata;
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (idle_data->dialog);
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	g_assert (idle_data->presets);
+
+	gdk_threads_enter ();
+
+	priv->presets = idle_data->presets;
+
+	if (priv->check_support_done)
+		fill_providers (self);
 
 	g_object_unref (idle_data->dialog);
 	g_free (idle_data);
@@ -1241,6 +1283,11 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	g_object_ref (priv->account_manager);
 	
 	/* Initialize fields */
+	priv->check_support_done = FALSE;
+	priv->check_support_show_progress_id = 0;
+	priv->check_support_progress_pulse_id = 0;
+	priv->pending_check_support = 0;
+	priv->destroyed = FALSE;
 	priv->page_welcome = create_page_welcome (self);
 	priv->page_account_details = create_page_account_details (self);
 
@@ -1297,6 +1344,8 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	g_thread_create (presets_loader, self, FALSE, NULL);
 
 	priv->settings = modest_account_settings_new ();
+
+	check_support_of_protocols (self);
 }
 
 ModestEasysetupWizardDialog*
@@ -1798,6 +1847,7 @@ real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next)
 		gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog),
 						   MODEST_WIZARD_DIALOG_FINISH,
 						   FALSE);
+		enable_next = priv->check_support_done;
 	}
     	
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog),
@@ -2202,3 +2252,119 @@ check_has_supported_auth_methods(ModestEasysetupWizardDialog* self)
 	return TRUE;
 }
 
+static gboolean 
+check_support_progress_pulse (gpointer userdata)
+{
+	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	if (priv->destroyed) {
+		priv->check_support_progress_pulse_id = 0;
+		return FALSE;
+	}
+
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->check_support_progress));
+
+	return TRUE;
+}
+
+static gboolean 
+check_support_show_progress (gpointer userdata)
+{
+	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	priv->check_support_show_progress_id = 0;
+
+	if (priv->destroyed)
+		return FALSE;
+
+	gtk_widget_show (priv->check_support_progress);
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->check_support_progress));
+
+	priv->check_support_progress_pulse_id = g_timeout_add (200, check_support_progress_pulse, self);
+
+	return FALSE;
+}
+
+static void
+check_support_callback (ModestAccountProtocol *protocol,
+			gboolean supported,
+			gpointer userdata)
+{
+	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	priv->pending_check_support --;
+
+	if (priv->check_support_show_progress_id > 0) {
+		g_source_remove (priv->check_support_show_progress_id);
+		priv->check_support_show_progress_id = 0;
+	}
+
+	if (priv->check_support_progress_pulse_id > 0) {
+		g_source_remove (priv->check_support_progress_pulse_id);
+		priv->check_support_progress_pulse_id = 0;
+	}
+
+	if (priv->pending_check_support == 0) {
+		priv->check_support_done = TRUE;
+
+		if (!priv->destroyed) {
+			if (priv->presets)
+				fill_providers (self);
+			gtk_widget_hide (priv->check_support_progress);
+			invoke_enable_buttons_vfunc (self);
+		}
+		g_object_unref (self);
+	}
+}
+
+
+static void
+check_support_of_protocols (ModestEasysetupWizardDialog *self)
+{
+	ModestProtocolRegistry *registry;
+	GSList *provider_protos, *node;
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	registry = modest_runtime_get_protocol_registry ();
+	provider_protos = modest_protocol_registry_get_by_tag (registry, 
+							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
+
+	for (node = provider_protos; node != NULL; node = g_slist_next (node)) {
+		ModestProtocol *proto = MODEST_PROTOCOL (node->data);
+
+		if (!modest_protocol_registry_protocol_type_has_tag (registry, 
+								     modest_protocol_get_type_id (proto),
+								     MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS))
+			continue;
+
+		if (modest_protocol_registry_protocol_type_has_tag 
+		    (registry,
+		     modest_protocol_get_type_id (proto),
+		     MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS)) {
+			/* Check if there's already an account configured with this account type */
+			if (modest_account_mgr_singleton_protocol_exists (modest_runtime_get_account_mgr (),
+									  modest_protocol_get_type_id (proto)))
+				continue;
+		}
+
+		if (MODEST_ACCOUNT_PROTOCOL (proto)) {
+			priv->pending_check_support ++;
+			modest_account_protocol_check_support (MODEST_ACCOUNT_PROTOCOL (proto),
+							       check_support_callback,
+							       self);
+		}
+	}
+	g_slist_free (provider_protos);
+
+	if (priv->pending_check_support > 0) {
+		g_object_ref  (self);
+		priv->check_support_show_progress_id = g_timeout_add (1000, check_support_show_progress, self);
+		
+	} else {
+		priv->check_support_done = TRUE;
+	}
+	invoke_enable_buttons_vfunc (self);
+}
