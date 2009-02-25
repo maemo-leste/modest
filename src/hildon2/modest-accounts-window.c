@@ -449,10 +449,8 @@ static void row_count_changed (ModestAccountsWindow *self)
 	count = gtk_tree_model_iter_n_children (model, NULL);
 
 	if (count == 0) {
-		gtk_widget_hide (priv->account_view);
 		gtk_widget_show (priv->no_accounts_label);
 	} else {
 		gtk_widget_hide (priv->no_accounts_label);
-		gtk_widget_show (priv->account_view);
 	}
 }
