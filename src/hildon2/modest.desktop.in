@@ -11,7 +11,7 @@ X-Osso-Service=com.nokia.modest
 X-Osso-Type=application/x-executable
 
 X-Maemo-Prestarted=always
-X-Maemo-Prestarted-Priority=7000
+X-Maemo-Prestarted-Priority=2000
 
 Icon=general_email
 X-Window-Icon=general_email
