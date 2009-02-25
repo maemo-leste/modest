@@ -27,6 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/utsname.h>
 #include <config.h>
 #include <glib.h>
 #include <glib-object.h>
@@ -773,28 +774,16 @@ init_default_settings (ModestConf *conf)
 static void
 init_device_name (ModestConf *conf)
 {
-	gsize len = 255; /* max len */
-	gchar *devname = NULL;
-	
-	if (!g_file_get_contents("/etc/hostname", &devname, &len, NULL) || len < 2 || len > 254) {
-		g_warning ("%s: failed to read hostname\n", __FUNCTION__);
-		modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,
-					MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME,
+	struct utsname name;
+
+	if (uname (&name) == 0) {
+		modest_conf_set_string (modest_runtime_get_conf(),
+					MODEST_CONF_DEVICE_NAME, name.nodename,
 					NULL);
 	} else {
-		/* remove the \n at the end */
-		if (devname[len-1] == '\n')
-			devname[len-1] = '\0';
-		else
-			devname[len] = '\0';
-
-		GError *err = NULL;
-		if (!modest_conf_set_string (conf, MODEST_CONF_DEVICE_NAME,devname, &err)) {
-			g_printerr ("modest: error setting device name '%s': %s",
-				    devname, err ? err->message: "?");
-			g_error_free (err);
-		}
+		modest_conf_set_string (modest_runtime_get_conf(),
+					MODEST_CONF_DEVICE_NAME,
+					MODEST_LOCAL_FOLDERS_DEFAULT_DISPLAY_NAME,
+					NULL);
 	}
-	
-	g_free (devname);
 }

@@ -724,7 +724,11 @@ static gchar *
 folder_store_get_display_name (TnyFolderStore *store)
 {
 	if (TNY_IS_ACCOUNT (store)) {
-		return g_strdup (tny_account_get_name (TNY_ACCOUNT (store)));
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (store)))
+			return modest_conf_get_string (modest_runtime_get_conf(),
+						       MODEST_CONF_DEVICE_NAME, NULL);
+		else
+			return g_strdup (tny_account_get_name (TNY_ACCOUNT (store)));
 	} else {
 		gchar *fname;
 		TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
