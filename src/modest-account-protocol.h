@@ -53,6 +53,9 @@ G_BEGIN_DECLS
 typedef struct _ModestAccountProtocol      ModestAccountProtocol;
 typedef struct _ModestAccountProtocolClass ModestAccountProtocolClass;
 
+typedef void (*ModestAccountProtocolCheckSupportFunc) (ModestAccountProtocol *self, 
+						       gboolean supported, gpointer userdata);
+
 
 struct _ModestAccountProtocol {
 	ModestProtocol parent;
@@ -69,6 +72,7 @@ struct _ModestAccountProtocolClass {
 	void (*save_settings) (ModestAccountProtocol *self, ModestAccountSettingsDialog *dialog, ModestAccountSettings *settings);
 	void (*save_wizard_settings) (ModestAccountProtocol *self, GList *wizard_pages, ModestAccountSettings *settings);
 	gboolean (*is_supported) (ModestAccountProtocol *self);
+	void (*check_support) (ModestAccountProtocol *self, ModestAccountProtocolCheckSupportFunc func, gpointer userdata);
 };
 
 /**
@@ -286,6 +290,23 @@ void modest_account_protocol_save_wizard_settings (ModestAccountProtocol *self,
  */
 ModestWizardDialogResponseOverrideFunc modest_account_protocol_get_wizard_response_override (ModestAccountProtocol *self);
 
+
+/**
+ * modest_account_protocol_check_support:
+ * @self: a #ModestAccountProtocol
+ * @func: a #ModestAccountProtocolCheckSupportFunc
+ * @userdata: a gpointer
+ *
+ * This method checks asynchronously if the account protocol @self is
+ * supported. Once checked, @func will be called with the result in the
+ * mainloop.
+ *
+ * modest_account_protocol_is_supported() should return the cached response
+ * from this method.
+ */
+void modest_account_protocol_check_support (ModestAccountProtocol *self, 
+					    ModestAccountProtocolCheckSupportFunc func, 
+					    gpointer userdata);
 /**
  * modest_account_protocol_is_supported:
  * @self: a #ModestAccountProtocol

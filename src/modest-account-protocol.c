@@ -85,6 +85,9 @@ static void modest_account_protocol_save_wizard_settings_default (ModestAccountP
 static ModestWizardDialogResponseOverrideFunc 
 modest_account_protocol_get_wizard_response_override_default (ModestAccountProtocol *self);
 
+static void modest_account_protocol_check_support_default (ModestAccountProtocol *self,
+							   ModestAccountProtocolCheckSupportFunc func,
+							   gpointer userdata);
 static gboolean modest_account_protocol_is_supported_default (ModestAccountProtocol *self);
 
 /* globals */
@@ -171,6 +174,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_get_wizard_response_override_default;
 	account_class->is_supported =
 		modest_account_protocol_is_supported_default;
+	account_class->check_support =
+		modest_account_protocol_check_support_default;
 }
 
 static void
@@ -589,4 +594,21 @@ gboolean
 modest_account_protocol_is_supported (ModestAccountProtocol *self)
 {
 	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->is_supported (self);
+}
+
+static void
+modest_account_protocol_check_support_default (ModestAccountProtocol *self,
+					       ModestAccountProtocolCheckSupportFunc func,
+					       gpointer userdata)
+{
+	if (func)
+		func (self, TRUE, userdata);
+}
+
+void
+modest_account_protocol_check_support (ModestAccountProtocol *self,
+				       ModestAccountProtocolCheckSupportFunc func,
+				       gpointer userdata)
+{
+	MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->check_support (self, func, userdata);
 }
