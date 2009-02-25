@@ -46,6 +46,7 @@
 #include <modest-ui-dimming-rules.h>
 #include <modest-ui-dimming-manager.h>
 #include <modest-window-priv.h>
+#include <modest-ui-constants.h>
 
 
 /* 'private'/'protected' functions */
@@ -82,7 +83,7 @@ struct _ModestAccountsWindowPrivate {
 	GtkWidget *box;
 	GtkWidget *pannable;
 	GtkWidget *account_view;
-	GtkWidget *no_accounts_label;
+	GtkWidget *no_accounts_container;
 	GtkWidget *new_message_button;
 
 	/* signals */
@@ -235,16 +236,35 @@ modest_accounts_window_new (void)
 	guint accel_key;
 	GdkModifierType accel_mods;
 	GtkAccelGroup *accel_group;
+	GtkWidget *no_accounts_label;
+	GtkWidget *empty_view_new_message_button;
 
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 
+	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
+
 	priv->box = gtk_vbox_new (FALSE, 0);
 
-	priv->no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
-	gtk_misc_set_alignment (GTK_MISC (priv->no_accounts_label), 0.5, 0.0);
-	gtk_box_pack_end (GTK_BOX (priv->box), priv->no_accounts_label, TRUE, TRUE, 0);
+	no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
+	gtk_misc_set_alignment (GTK_MISC (no_accounts_label), 0.5, 0.0);
 
+	empty_view_new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+	hildon_button_set_title (HILDON_BUTTON (empty_view_new_message_button), _("mcen_ti_new_message"));
+	hildon_button_set_image (HILDON_BUTTON (empty_view_new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
+
+
+	priv->no_accounts_container = gtk_vbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->no_accounts_container), empty_view_new_message_button, FALSE, FALSE, 0);
+	gtk_widget_show_all (empty_view_new_message_button);
+	gtk_box_pack_end (GTK_BOX (priv->no_accounts_container), no_accounts_label, TRUE, TRUE, 0);
+	gtk_widget_show (no_accounts_label);
+	gtk_box_pack_start (GTK_BOX (priv->box), priv->no_accounts_container, TRUE, TRUE, 0);
+
+	g_signal_connect (G_OBJECT (empty_view_new_message_button),
+			  "clicked",
+			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
+	
 	priv->pannable = hildon_pannable_area_new ();
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 
@@ -252,14 +272,13 @@ modest_accounts_window_new (void)
 	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
 	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
-	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
 	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
-	g_object_unref (new_message_pixbuf);
 
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
 
+	g_object_unref (new_message_pixbuf);
 	setup_menu (self);
 
 	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
@@ -453,9 +472,9 @@ static void row_count_changed (ModestAccountsWindow *self)
 	count = gtk_tree_model_iter_n_children (model, NULL);
 
 	if (count == 0) {
-		gtk_widget_show (priv->no_accounts_label);
+		gtk_widget_show (priv->no_accounts_container);
 	} else {
-		gtk_widget_hide (priv->no_accounts_label);
+		gtk_widget_hide (priv->no_accounts_container);
 	}
 	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->pannable, 
 				 "expand", count > 0,
