@@ -889,11 +889,9 @@ static gboolean
 on_idle_send_receive(gpointer user_data)
 {
 	gboolean auto_update;
-	ModestWindow *main_win = NULL;
+	ModestWindow *top_win = NULL;
 
-	main_win =
-		modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-						   FALSE); /* don't create */
+	top_win = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
 
 	gdk_threads_enter (); /* CHECKED */
 
@@ -903,7 +901,7 @@ on_idle_send_receive(gpointer user_data)
 
 	if (auto_update)
 		/* Do send receive */
-		modest_ui_actions_do_send_receive_all (main_win, FALSE, FALSE, FALSE);
+		modest_ui_actions_do_send_receive_all (top_win, FALSE, FALSE, FALSE);
 	else
 		/* Disable auto update */
 		modest_platform_set_update_interval (0);
