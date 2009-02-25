@@ -45,6 +45,7 @@
 #include <modest-window.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
+#include <hildon/hildon-button.h>
 #include <tny-account-store-view.h>
 #include <modest-header-window.h>
 #include <modest-ui-dimming-rules.h>
@@ -97,6 +98,7 @@ struct _ModestFolderWindowPrivate {
 
 	GtkWidget *folder_view;
 	GtkWidget *top_vbox;
+	GtkWidget *new_message_button;
 
 	/* signals */
 	GSList *sighandlers;
@@ -254,6 +256,13 @@ connect_signals (ModestFolderWindow *self)
 						       G_OBJECT (priv->folder_view),
 						       "visible-account-changed",
 						       G_CALLBACK (on_visible_account_changed), self);
+
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->new_message_button),
+					   "clicked",
+					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+
 }
 
 ModestWindow *
@@ -264,6 +273,8 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GtkWidget *pannable;
+	GtkWidget *action_area_box;
+	GdkPixbuf *new_message_pixbuf;
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
@@ -278,6 +289,18 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 
+	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->folder_view));
+	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+
+	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
+	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
+	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
+	g_object_unref (new_message_pixbuf);
+
+	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
+	gtk_widget_show_all (priv->new_message_button);
+	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->folder_view), TRUE);
+	
 	setup_menu (self);
 
 	/* Set account store */
