@@ -232,6 +232,9 @@ modest_accounts_window_new (void)
 	GdkPixbuf *window_icon;
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *action_area_box;
+	guint accel_key;
+	GdkModifierType accel_mods;
+	GtkAccelGroup *accel_group;
 
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
@@ -256,7 +259,6 @@ modest_accounts_window_new (void)
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
-	
 
 	setup_menu (self);
 
@@ -300,6 +302,11 @@ modest_accounts_window_new (void)
 
 	row_count_changed (self);
 
+	accel_group = gtk_accel_group_new ();
+	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
+	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
+				    accel_key, accel_mods, 0);
+	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
 
 	return MODEST_WINDOW(self);
 }
@@ -340,9 +347,6 @@ setup_menu (ModestAccountsWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_options"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_settings), 
 					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
 }
 
 
