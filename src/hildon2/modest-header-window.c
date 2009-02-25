@@ -108,7 +108,7 @@ static void connect_signals (ModestHeaderWindow *self);
 static void modest_header_window_disconnect_signals (ModestWindow *self);
 
 static void setup_menu (ModestHeaderWindow *self);
-static GtkWidget *create_empty_view (void);
+static GtkWidget *create_empty_view (ModestWindow *self);
 static GtkWidget *create_header_view (ModestWindow *progress_window,
 				      TnyFolder *folder);
 
@@ -235,6 +235,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->queue_change_handler = 0;
 	priv->current_store_account = NULL;
 	priv->sort_button = NULL;
+	priv->new_message_button = NULL;
 	
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -373,10 +374,15 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 }
 
 static GtkWidget *
-create_empty_view (void)
+create_empty_view (ModestWindow *self)
 {
 	GtkWidget *label = NULL;
 	GtkWidget *align = NULL;
+	GtkWidget *vbox = NULL;
+	GtkWidget *button = NULL;
+	GdkPixbuf *new_message_pixbuf;
+
+	vbox = gtk_vbox_new (0, FALSE);
 
 	align = gtk_alignment_new(EMPTYVIEW_XALIGN, EMPTYVIEW_YALIGN, EMPTYVIEW_XSPACE, EMPTYVIEW_YSPACE);
 	label = gtk_label_new (_("mcen_ia_nomessages"));
@@ -384,8 +390,26 @@ create_empty_view (void)
 	gtk_widget_show (align);
 	gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);	
 	gtk_container_add (GTK_CONTAINER (align), label);
+	gtk_box_pack_end (GTK_BOX (vbox), align, TRUE, TRUE, 0);
 
-	return align;
+	button = hildon_button_new (MODEST_EDITABLE_SIZE, 
+				    HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+
+	hildon_button_set_title (HILDON_BUTTON (button), _("mcen_ti_new_message"));
+	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
+	hildon_button_set_image (HILDON_BUTTON (button), 
+				 gtk_image_new_from_pixbuf (new_message_pixbuf));
+	g_object_unref (new_message_pixbuf);
+	gtk_widget_show_all (button);
+	gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
+
+	gtk_widget_show (vbox);
+
+	g_signal_connect (button,
+			  "clicked",
+			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
+
+	return vbox;
 }
 
 static void
@@ -430,7 +454,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 				  self);
 
 	priv->header_view  = create_header_view (MODEST_WINDOW (self), folder);
-	priv->empty_view = create_empty_view ();
+	priv->empty_view = create_empty_view (MODEST_WINDOW (self));
 
 	/* Transform the floating reference in a "hard" reference. We
 	   need to do this because the widgets could be added/removed
