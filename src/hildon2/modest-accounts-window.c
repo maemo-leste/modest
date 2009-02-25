@@ -79,6 +79,8 @@ static void row_count_changed (ModestAccountsWindow *self);
 typedef struct _ModestAccountsWindowPrivate ModestAccountsWindowPrivate;
 struct _ModestAccountsWindowPrivate {
 
+	GtkWidget *box;
+	GtkWidget *pannable;
 	GtkWidget *account_view;
 	GtkWidget *no_accounts_label;
 	GtkWidget *new_message_button;
@@ -228,21 +230,19 @@ modest_accounts_window_new (void)
 	ModestAccountsWindowPrivate *priv = NULL;
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
-	GtkWidget *pannable;
-	GtkWidget *box;
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *action_area_box;
 
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 
-	box = gtk_vbox_new (FALSE, 0);
+	priv->box = gtk_vbox_new (FALSE, 0);
 
 	priv->no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
 	gtk_misc_set_alignment (GTK_MISC (priv->no_accounts_label), 0.5, 0.0);
-	gtk_box_pack_start (GTK_BOX (box), priv->no_accounts_label, TRUE, TRUE, 0);
+	gtk_box_pack_end (GTK_BOX (priv->box), priv->no_accounts_label, TRUE, TRUE, 0);
 
-	pannable = hildon_pannable_area_new ();
+	priv->pannable = hildon_pannable_area_new ();
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
@@ -260,13 +260,13 @@ modest_accounts_window_new (void)
 
 	setup_menu (self);
 
-	gtk_container_add (GTK_CONTAINER (pannable), priv->account_view);
-	gtk_box_pack_start (GTK_BOX (box), pannable, TRUE, TRUE, 0);
-	gtk_container_add (GTK_CONTAINER (self), box);
+	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
+	gtk_box_pack_start (GTK_BOX (priv->box), priv->pannable, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (self), priv->box);
 
 	gtk_widget_show (priv->account_view);
-	gtk_widget_show (pannable);
-	gtk_widget_show (box);
+	gtk_widget_show (priv->pannable);
+	gtk_widget_show (priv->box);
 
 	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
 
@@ -453,4 +453,8 @@ static void row_count_changed (ModestAccountsWindow *self)
 	} else {
 		gtk_widget_hide (priv->no_accounts_label);
 	}
+	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->pannable, 
+				 "expand", count > 0,
+				 "fill", count > 0,
+				 NULL);
 }
