@@ -2968,9 +2968,6 @@ update_window_title (ModestMsgViewWindow *window)
 	TnyHeader *header = NULL;
 	gchar *subject = NULL;
 
-	if (!GTK_WIDGET_VISIBLE (window))
-		return;
-
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
