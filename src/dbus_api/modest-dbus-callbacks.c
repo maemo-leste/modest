@@ -1120,7 +1120,7 @@ on_send_receive_performer(gboolean canceled,
 
 	connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
 					    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
-	
+
 	/* Perform a send and receive if the user selected to connect
 	   via any mean or if the current connection method is the
 	   same as the one specified by the user */
@@ -1134,24 +1134,24 @@ on_send_receive_performer(gboolean canceled,
 }
 
 
-static gint 
+static gint
 on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
-{ 	
+{
 	TnyDevice *device = modest_runtime_get_device ();
 
 	if (!tny_device_is_online (device))
 		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, NULL);
 	else
 		on_send_receive_performer (FALSE, NULL, NULL, NULL, NULL);
- 	
+
  	return OSSO_OK;
 }
 
-static gint 
+static gint
 on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
  	g_idle_add(on_idle_top_application, NULL);
- 	
+
  	return OSSO_OK;
 }
 
@@ -1185,21 +1185,21 @@ on_idle_top_application (gpointer user_data)
 	}
 
 	gdk_threads_leave (); /* CHECKED */
-	
+
 	return FALSE; /* Do not call this callback again. */
 }
 #else
-static gboolean 
+static gboolean
 on_idle_top_application (gpointer user_data)
 {
 	ModestWindow *main_win;
 	gboolean new_window = FALSE;
-	
+
 	/* This is a GDK lock because we are an idle callback and
 	 * the code below is or does Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED */
-	
+
 	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 						      FALSE);
 
@@ -1226,7 +1226,7 @@ on_idle_top_application (gpointer user_data)
 	}
 
 	gdk_threads_leave (); /* CHECKED */
-	
+
 	return FALSE; /* Do not call this callback again. */
 }
 #endif

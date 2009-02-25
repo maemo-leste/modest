@@ -1455,7 +1455,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		g_warning ("%s: header list is empty", __FUNCTION__);
 		return;
 	}
-	
+
 	if (!show_visual) {
                 modest_platform_push_email_notification ();
 		/* We do a return here to avoid indentation with an else */
@@ -1468,8 +1468,8 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 	GSList *notifications_list = NULL;
 
 	/* Get previous notifications ids */
-	notifications_list = modest_conf_get_list (modest_runtime_get_conf (), 
-						   MODEST_CONF_NOTIFICATION_IDS, 
+	notifications_list = modest_conf_get_list (modest_runtime_get_conf (),
+						   MODEST_CONF_NOTIFICATION_IDS,
 						   MODEST_CONF_VALUE_INT, NULL);
 
 	iter = tny_list_create_iterator (header_list);

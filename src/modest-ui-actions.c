@@ -2069,12 +2069,12 @@ modest_ui_actions_on_sort (GtkAction *action,
 
 	if (!header_view) {
 		modest_platform_information_banner (NULL, NULL, _CS("ckdg_ib_nothing_to_sort"));
-		
+
 		return;
 	}
 
 	/* Show sorting dialog */
-	modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);	
+	modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);
 }
 
 static void
