@@ -2386,6 +2386,14 @@ _modest_platform_play_email_tone (void)
 	mail_volume = profile_get_value (active_profile, PROFILE_MAIL_VOLUME);
 	mail_volume_int = profile_parse_int (mail_volume);
 
+	if (mail_tone && !strstr (mail_tone, "/")) {
+		gchar *tmp;
+
+		tmp = g_strconcat ("/usr/share/sounds", mail_tone, NULL);
+		g_free (mail_tone);
+		mail_tone = tmp;
+	}
+
 	if (mail_volume_int > 0) {
 
 		if ((ret = ca_context_create(&ca_con)) != CA_SUCCESS) {
