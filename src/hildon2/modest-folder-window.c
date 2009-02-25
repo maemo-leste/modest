@@ -275,6 +275,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	GtkWidget *pannable;
 	GtkWidget *action_area_box;
 	GdkPixbuf *new_message_pixbuf;
+	guint accel_key;
+	GdkModifierType accel_mods;
+	GtkAccelGroup *accel_group;
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
@@ -370,6 +373,12 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 			  G_OBJECT (self));
 	update_progress_hint (self);
 
+	accel_group = gtk_accel_group_new ();
+	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
+	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
+				    accel_key, accel_mods, 0);
+	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
+
 	return MODEST_WINDOW(self);
 }
 
@@ -457,13 +466,6 @@ setup_menu (ModestFolderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
-	/* new message */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), 
-					   _("mcen_me_new_message"), 
-					   "<Ctrl>n",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
-					   NULL);
-
 }
 
 static void
