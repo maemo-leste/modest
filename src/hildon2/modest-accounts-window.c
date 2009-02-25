@@ -38,6 +38,7 @@
 #include <modest-runtime.h>
 #include <modest-platform.h>
 #include <hildon/hildon-program.h>
+#include <hildon/hildon-button.h>
 #include <modest-maemo-utils.h>
 #include <modest-icon-names.h>
 #include <modest-defs.h>
@@ -80,6 +81,7 @@ struct _ModestAccountsWindowPrivate {
 
 	GtkWidget *account_view;
 	GtkWidget *no_accounts_label;
+	GtkWidget *new_message_button;
 
 	/* signals */
 	GSList *sighandlers;
@@ -209,6 +211,12 @@ connect_signals (ModestAccountsWindow *self)
 					   "row-deleted",
 					   G_CALLBACK (on_row_deleted), self);
 
+	priv->sighandlers = 
+		modest_signal_mgr_connect (priv->sighandlers,
+					   G_OBJECT (priv->new_message_button),
+					   "clicked",
+					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+
 	/* we don't register this in sighandlers, as it should be run
 	 * after disconnecting all signals, in destroy stage */
 }
@@ -222,6 +230,8 @@ modest_accounts_window_new (void)
 	GdkPixbuf *window_icon;
 	GtkWidget *pannable;
 	GtkWidget *box;
+	GdkPixbuf *new_message_pixbuf;
+	GtkWidget *action_area_box;
 
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
@@ -234,6 +244,19 @@ modest_accounts_window_new (void)
 
 	pannable = hildon_pannable_area_new ();
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
+
+	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
+	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+
+	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
+	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
+	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
+	g_object_unref (new_message_pixbuf);
+
+	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
+	gtk_widget_show_all (priv->new_message_button);
+	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
+	
 
 	setup_menu (self);
 
