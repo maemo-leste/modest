@@ -60,6 +60,8 @@ static gboolean  on_link_clicked  (GtkWidget *widget, const gchar *uri, ModestGt
 static gboolean  on_url           (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMimePartView *self);
 static gboolean  on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 				   ModestGtkhtmlMimePartView *self);
+static void      on_notify_style  (GObject *obj, GParamSpec *spec, gpointer userdata);
+static gboolean  update_style     (ModestGtkhtmlMimePartView *self);
 /* TnyMimePartView implementation */
 static void modest_gtkhtml_mime_part_view_clear (TnyMimePartView *self);
 static void modest_gtkhtml_mime_part_view_clear_default (TnyMimePartView *self);
@@ -249,6 +251,8 @@ static void
 modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 {
 	ModestGtkhtmlMimePartViewPrivate *priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (self);
+	GdkColor base;
+	GdkColor text;
 
 	gtk_html_set_editable        (GTK_HTML(self), FALSE);
 	gtk_html_allow_selection     (GTK_HTML(self), TRUE);
@@ -256,12 +260,19 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_html_set_blocking        (GTK_HTML(self), TRUE);
 	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
 
+	gdk_color_parse ("#fff", &base);
+	gdk_color_parse ("#000", &text);
+	gtk_widget_modify_base (GTK_WIDGET (self), GTK_STATE_NORMAL, &base);
+	gtk_widget_modify_text (GTK_WIDGET (self), GTK_STATE_NORMAL, &text);
+
 	g_signal_connect (G_OBJECT(self), "link_clicked",
 			  G_CALLBACK(on_link_clicked), self);
 	g_signal_connect (G_OBJECT(self), "url_requested",
 			  G_CALLBACK(on_url_requested), self);
 	g_signal_connect (G_OBJECT(self), "on_url",
 			  G_CALLBACK(on_url), self);
+	g_signal_connect (G_OBJECT(self), "notify::style",
+			  G_CALLBACK (on_notify_style), (gpointer) self);
 
 	priv->part = NULL;
 	priv->current_zoom = 1.0;
@@ -289,6 +300,49 @@ modest_gtkhtml_mime_part_view_dispose (GObject *obj)
 }
 
 /* GTKHTML SIGNALS HANDLERS */
+
+static void 
+on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
+{
+	if (strcmp ("style", spec->name) == 0) {
+		g_idle_add ((GSourceFunc) update_style, (gpointer) obj);
+		gtk_widget_queue_draw (GTK_WIDGET (obj));
+	} 
+}
+
+gboolean
+same_color (GdkColor *a, GdkColor *b)
+{
+	return ((a->red == b->red) && 
+		(a->green == b->green) && 
+		(a->blue == b->blue));
+}
+
+static gboolean
+update_style (ModestGtkhtmlMimePartView *self)
+{
+	GdkColor base;
+	GdkColor text;
+	GtkRcStyle *rc_style;
+
+	rc_style = gtk_widget_get_modifier_style (GTK_WIDGET (self));
+
+	gdk_color_parse ("#fff", &base);
+	gdk_color_parse ("#000", &text);
+
+	if (!same_color (&(rc_style->base[GTK_STATE_NORMAL]), &base) &&
+	    !same_color (&(rc_style->text[GTK_STATE_NORMAL]), &text)) {
+
+		rc_style->base[GTK_STATE_NORMAL] = base;
+		rc_style->text[GTK_STATE_NORMAL] = text;
+		gtk_widget_modify_style (GTK_WIDGET (self), rc_style);
+
+	}
+
+	return FALSE;
+}
+
+
 
 static gboolean
 on_link_clicked (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMimePartView *self)
