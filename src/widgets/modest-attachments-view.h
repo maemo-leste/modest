@@ -49,6 +49,7 @@ G_BEGIN_DECLS
 typedef enum _ModestAttachmentsViewStyle {
 	MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE,
 	MODEST_ATTACHMENTS_VIEW_STYLE_LINKS,
+	MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS,
 } ModestAttachmentsViewStyle;
 
 typedef struct _ModestAttachmentsView ModestAttachmentsView;

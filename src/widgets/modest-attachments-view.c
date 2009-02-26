@@ -419,7 +419,9 @@ button_press_event (GtkWidget *widget,
 						   (gint) event->x_root, (gint) event->y_root);
 
 		if (att_view != NULL) {
-			if ((priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) ||
+			if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS) {
+				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
+			} else if ((priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) ||
 			    (GTK_WIDGET_STATE (att_view) == GTK_STATE_SELECTED && (g_list_length (priv->selected) < 2))) {
 				TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
 				if (TNY_IS_MIME_PART (mime_part)) {
@@ -535,6 +537,11 @@ key_press_event (GtkWidget *widget,
 		 ModestAttachmentsView *atts_view)
 {
 	ModestAttachmentsViewPrivate *priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+
+	if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS) {
+		unselect_all (atts_view);
+		return FALSE;
+	}
 
 	/* If grabbed (for example rubber banding), escape leaves the rubberbanding mode */
 	if (gtk_grab_get_current () == widget) {
@@ -960,11 +967,13 @@ focus (GtkWidget *widget, GtkDirectionType direction, ModestAttachmentsView *att
 	if (!gtk_window_has_toplevel_focus (GTK_WINDOW (toplevel)))
 		return FALSE;
 
-	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
-	if (children != NULL) {
-		set_selected (atts_view, MODEST_ATTACHMENT_VIEW (children->data));
+	if (priv->style != MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS) {
+		children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+		if (children != NULL) {
+			set_selected (atts_view, MODEST_ATTACHMENT_VIEW (children->data));
+		}
+		g_list_free (children);
 	}
-	g_list_free (children);
 
 	return FALSE;
 }
@@ -981,10 +990,10 @@ modest_attachments_view_set_style (ModestAttachmentsView *self,
 	if (priv->style != style) {
 		priv->style = style;
 		gtk_widget_queue_draw (GTK_WIDGET (self));
-		if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) {
-			GTK_WIDGET_UNSET_FLAGS (self, GTK_CAN_FOCUS);
-		} else {
+		if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE) {
 			GTK_WIDGET_SET_FLAGS (self, GTK_CAN_FOCUS);
+		} else {
+			GTK_WIDGET_UNSET_FLAGS (self, GTK_CAN_FOCUS);
 		}
 
 	}

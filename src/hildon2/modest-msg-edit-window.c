@@ -794,6 +794,8 @@ init_window (ModestMsgEditWindow *obj)
 	hildon_button_set_image (HILDON_BUTTON (priv->add_attachment_button), attachment_icon);
 	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
+	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
+					   MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS);
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
