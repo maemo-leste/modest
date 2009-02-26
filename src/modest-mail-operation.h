@@ -78,6 +78,7 @@ typedef enum {
 	MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE,
 	MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER,
 	MODEST_MAIL_OPERATION_TYPE_SHUTDOWN,
+	MODEST_MAIL_OPERATION_TYPE_QUEUE_WAKEUP,
 	MODEST_MAIL_OPERATION_TYPE_UNKNOWN,
 } ModestMailOperationTypeOperation;
 
@@ -634,6 +635,18 @@ void          modest_mail_operation_get_msgs_full   (ModestMailOperation *self,
  */
 void          modest_mail_operation_run_queue       (ModestMailOperation *self,
 						     ModestTnySendQueue *queue);
+
+/**
+ * modest_mail_operation_queue_wakeup:
+ * @self: a #ModestMailOperation
+ * @queue: a #ModestTnySendQueue
+ *
+ * This mail operation is special. It should be running every time the send queue
+ * wakeup is running and we should notify end of the operation
+ * after wakeup has done msg-sent notification.
+ */
+void          modest_mail_operation_queue_wakeup       (ModestMailOperation *self,
+							ModestTnySendQueue *queue);
 
 /**
  * modest_mail_operation_sync_folder:

@@ -145,6 +145,8 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header);
  */
 gchar* modest_tny_send_queue_to_string (ModestTnySendQueue *self);
 
+typedef void (*ModestTnySendQueueWakeupFunc) (ModestTnySendQueue *self, gboolean cancelled, GError *err, gpointer userdata);
+
 /**
  * modest_tny_send_queue_wakeup:
  * @self: a valid #ModestTnySendQueue instance
@@ -153,7 +155,9 @@ gchar* modest_tny_send_queue_to_string (ModestTnySendQueue *self);
  * the send queue will try to send them again. Note that you'd
  * probably need a tny_send_queue_flush to force it
  */
-void   modest_tny_send_queue_wakeup (ModestTnySendQueue *self);
+void   modest_tny_send_queue_wakeup (ModestTnySendQueue *self, 
+				     ModestTnySendQueueWakeupFunc callback,
+				     gpointer userdata);
 
 /**
  * modest_tny_send_queue_get_requested_send_receive:

@@ -439,6 +439,7 @@ new_queue_get_headers_async_cb (TnyFolder *folder,
 	ModestTnySendQueue *self;
 	TnyIterator *iter;
 	GetHeadersInfo *info;
+	ModestMailOperation *wakeup_op;
 
 	info = (GetHeadersInfo *) user_data;
 	self = MODEST_TNY_SEND_QUEUE (info->queue);
@@ -457,7 +458,10 @@ new_queue_get_headers_async_cb (TnyFolder *folder,
 	}
 
 	/* Reenable suspended items */
-	modest_tny_send_queue_wakeup (self);
+	wakeup_op = modest_mail_operation_new (NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 wakeup_op);
+	modest_mail_operation_queue_wakeup (wakeup_op, MODEST_TNY_SEND_QUEUE (self));
 
 	/* Frees */
 	g_object_unref (iter);
@@ -846,6 +850,24 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 	return status;
 }
 
+typedef struct _WakeupHelper {
+	ModestTnySendQueue *self;
+	ModestTnySendQueueWakeupFunc callback;
+	gpointer userdata;
+} WakeupHelper;
+
+static void
+wakeup_sync_cb (TnyFolder *self, gboolean cancelled, GError *err, gpointer userdata)
+{
+	WakeupHelper *helper = (WakeupHelper *) userdata;
+
+	if (helper->callback) {
+		helper->callback (helper->self, cancelled, err, helper->userdata);
+	}
+	g_object_unref (helper->self);
+	g_slice_free (WakeupHelper, helper);
+}
+
 static void
 wakeup_get_headers_async_cb (TnyFolder *folder, 
 			     gboolean cancelled, 
@@ -856,13 +878,19 @@ wakeup_get_headers_async_cb (TnyFolder *folder,
 	ModestTnySendQueue *self;
 	ModestTnySendQueuePrivate *priv;
 	TnyIterator *iter;
+	WakeupHelper *helper = (WakeupHelper *) user_data;
 
-	self = MODEST_TNY_SEND_QUEUE (user_data);
+	self = MODEST_TNY_SEND_QUEUE (helper->self);
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 
 	if (cancelled || err) {
 		g_debug ("Failed to wake up the headers of the send queue");
 		g_object_unref (self);
+		if (helper->callback) {
+			helper->callback (helper->self, cancelled, err, helper->userdata);
+		}
+		g_object_unref (helper->self);
+		g_slice_free (WakeupHelper, helper);
 		return;
 	}
 
@@ -900,7 +928,7 @@ wakeup_get_headers_async_cb (TnyFolder *folder,
 	}
 
 	/* Make changes persistent on disk */
-	tny_folder_sync_async (priv->outbox, FALSE, NULL, NULL, NULL);
+	tny_folder_sync_async (priv->outbox, FALSE, wakeup_sync_cb, NULL, helper);
 
 	/* Frees */
 	g_object_unref (iter);
@@ -908,21 +936,27 @@ wakeup_get_headers_async_cb (TnyFolder *folder,
 	g_object_unref (self);
 }
 
-
 void   
-modest_tny_send_queue_wakeup (ModestTnySendQueue *self)
+modest_tny_send_queue_wakeup (ModestTnySendQueue *self, 
+			      ModestTnySendQueueWakeupFunc callback,
+			      gpointer userdata)
 {
 	ModestTnySendQueuePrivate *priv;
 	TnyList *headers;
+	WakeupHelper *helper;
 
 	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (self));
-
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	helper = g_slice_new (WakeupHelper);
+	helper->self = g_object_ref (self);
+	helper->callback = callback;
+	helper->userdata = userdata;
 
 	headers = tny_simple_list_new ();
 	tny_folder_get_headers_async (priv->outbox, headers, TRUE, 
 				      wakeup_get_headers_async_cb, 
-				      NULL, g_object_ref (self));
+				      NULL, helper);
 }
 
 gboolean 

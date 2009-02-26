@@ -1435,8 +1435,12 @@ update_account_send_mail (UpdateAccountInfo *info)
 			}
 		
 			if (num_messages != 0) {
+				ModestMailOperation *mail_op;
 				/* Reenable suspended items */
-				modest_tny_send_queue_wakeup (MODEST_TNY_SEND_QUEUE (send_queue));
+				mail_op = modest_mail_operation_new (NULL);
+				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+								 mail_op);
+				modest_mail_operation_queue_wakeup (mail_op, MODEST_TNY_SEND_QUEUE (send_queue));
 				
 				/* Try to send */
 				tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
@@ -3416,6 +3420,45 @@ modest_mail_operation_run_queue (ModestMailOperation *self,
 	/* Notify operation has started */
 	modest_mail_operation_notify_start (self);
 	g_debug ("%s, run queue started", __FUNCTION__);
+}
+
+static void
+queue_wakeup_callback (ModestTnySendQueue *queue,
+		       gboolean cancelled,
+		       GError *error,
+		       gpointer userdata)
+{
+	ModestMailOperation *mail_op;
+	ModestMailOperationPrivate *priv;
+
+	mail_op = (ModestMailOperation *) userdata;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+
+	/* Notify end */
+	modest_mail_operation_notify_end (mail_op);
+	g_object_unref (mail_op);
+}
+
+void
+modest_mail_operation_queue_wakeup (ModestMailOperation *self,
+				    ModestTnySendQueue *queue)
+{
+  	ModestMailOperationPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (MODEST_IS_TNY_SEND_QUEUE (queue));
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->account = TNY_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (queue)));
+	priv->op_type = MODEST_MAIL_OPERATION_TYPE_QUEUE_WAKEUP;
+
+	g_object_ref (self);
+
+	modest_tny_send_queue_wakeup (queue, queue_wakeup_callback, self);
+	modest_mail_operation_notify_start (self);
 }
 
 static void
