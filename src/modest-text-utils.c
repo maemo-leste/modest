@@ -109,7 +109,7 @@ struct _url_match_t {
 
 /* note: match MARK_AMP_URI_STR as well, because after txt->html, a '&' will look like $(MARK_AMP_URI_STR)"amp;" */
 #define MAIL_VIEWER_URL_MATCH_PATTERNS  {				\
-	{ "(file|rtsp|http|ftp|https|mms|mmsh|webcal|feed|rtsp|rdp|lastfm)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR \
+	{ "(file|rtsp|http|ftp|https|mms|mmsh|webcal|feed|rtsp|rdp|lastfm|sip)://[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR \
 			"]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",	\
 	  NULL, NULL },\
 	{ "www\\.[-a-z0-9_$.+!*(),;:@%=?/~#" MARK_AMP_URI_STR "]+[-a-z0-9_$%" MARK_AMP_URI_STR "=?/~#]",\
