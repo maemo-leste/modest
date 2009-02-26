@@ -818,6 +818,12 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 					new_length = g_utf8_strlen (recipients, -1);
 					offset_delta = offset_delta + new_length - last_length;
 					last_length = new_length;					
+				} else {
+					/* We have to remove the recipient if not resolved */
+					modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
+											     &start_iter, &end_iter,
+											     NULL,
+											     NULL);
 				}
 			} else {
 				/* this address is not valid, select it and return control to user showing banner */

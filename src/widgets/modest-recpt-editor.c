@@ -280,27 +280,30 @@ modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *recpt_ed
 
 	gtk_text_buffer_delete (buffer, start, end);
 
-	tag = gtk_text_buffer_create_tag (buffer, NULL, 
-					  "underline", PANGO_UNDERLINE_SINGLE,
-					  "wrap-mode", GTK_WRAP_NONE,
-					  "editable", TRUE, NULL);
+	if (email_list) {
+	  
+		tag = gtk_text_buffer_create_tag (buffer, NULL, 
+						  "underline", PANGO_UNDERLINE_SINGLE,
+						  "wrap-mode", GTK_WRAP_NONE,
+						  "editable", TRUE, NULL);
 
-	g_object_set_data (G_OBJECT (tag), "recipient-tag-id", GINT_TO_POINTER (RECIPIENT_TAG_ID));
-	g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
+		g_object_set_data (G_OBJECT (tag), "recipient-tag-id", GINT_TO_POINTER (RECIPIENT_TAG_ID));
+		g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
+		
+		for (node = email_list; node != NULL; node = g_slist_next (node)) {
+			gchar *recipient = (gchar *) node->data;
 
-	for (node = email_list; node != NULL; node = g_slist_next (node)) {
-		gchar *recipient = (gchar *) node->data;
+			if ((recipient) && (strlen (recipient) != 0)) {
+				
+				if (!is_first_recipient)
+					gtk_text_buffer_insert (buffer, start, "\n", -1);
 
-		if ((recipient) && (strlen (recipient) != 0)) {
-
-			if (!is_first_recipient)
-			gtk_text_buffer_insert (buffer, start, "\n", -1);
-
-			gtk_text_buffer_insert_with_tags (buffer, start, recipient, -1, tag, NULL);
-
-			if (node->next != NULL)
-				gtk_text_buffer_insert (buffer, start, ";", -1);
-			is_first_recipient = FALSE;
+				gtk_text_buffer_insert_with_tags (buffer, start, recipient, -1, tag, NULL);
+				
+				if (node->next != NULL)
+					gtk_text_buffer_insert (buffer, start, ";", -1);
+				is_first_recipient = FALSE;
+			}
 		}
 	}
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
