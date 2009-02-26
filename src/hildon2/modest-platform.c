@@ -1869,7 +1869,7 @@ on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert
 		g_signal_stop_emission_by_name (dialog, "response");
 
 		msg = g_strdup_printf (_("mcen_ni_view_unknown_certificate"), cert);	
-		note = hildon_note_new_information (GTK_WINDOW(dialog), msg);
+		note = hildon_note_new_information (NULL, msg);
 		gtk_dialog_run (GTK_DIALOG(note));
 		gtk_widget_destroy (note);
 	}
