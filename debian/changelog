@@ -1,7 +1,7 @@
 modest (2.1-2009.10-1) unstable; urgency=low
 
   * Week 10, 2009 release 
-  *  modest r7717
+  *  modest r7707
   * Fixes: NB#89492, NB#94686, NB#96721, NB#97132, NB#97985, NB#101428
   * Fixes: NB#101754, NB#102423, NB#102518, NB#102651, NB#102665, NB#102745
   * Fixes: NB#102766, NB#102797, NB#102852, NB#102916, NB#102981, NB#102986
