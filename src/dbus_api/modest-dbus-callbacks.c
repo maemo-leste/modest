@@ -1155,6 +1155,78 @@ on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
  	return OSSO_OK;
 }
 
+
+static gboolean
+on_idle_open_account (gpointer user_data)
+{
+	ModestWindow *top;
+	ModestWindowMgr *mgr;
+	gchar *acc_name;
+	gboolean retval = TRUE;
+
+	gdk_threads_enter ();
+
+	acc_name = (gchar *) user_data;
+	mgr = modest_runtime_get_window_mgr ();
+
+	/* If Modest is already launched then just ignore this call */
+	if (modest_window_mgr_get_current_top (mgr)) {
+		retval = FALSE;
+		goto end;
+	}
+
+	top = modest_window_mgr_show_initial_window (mgr);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (MODEST_IS_ACCOUNTS_WINDOW (top)) {
+		GtkWidget *folder_window;
+
+		folder_window = (GtkWidget *) modest_folder_window_new (NULL);
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window),
+						  acc_name);
+		if (modest_window_mgr_register_window (mgr, MODEST_WINDOW (folder_window), NULL)) {
+			gtk_widget_show (folder_window);
+		} else {
+			gtk_widget_destroy (folder_window);
+			folder_window = NULL;
+		}
+	}
+#else
+	if (MODEST_IS_MAIN_WINDOW (top)) {
+		gchar *server_name;
+		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (top),
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+		server_name = modest_account_mgr_get_server_account_name (mgr, acc_name,
+									  TNY_ACCOUNT_TYPE_STORE);
+		if (server_name) {
+			modest_folder_view_set_account_id_of_visible_server_account (folder_view,
+										     server_name);
+			g_free (server_name);
+		}
+	}
+#endif
+	gdk_threads_leave ();
+
+ end:
+	g_free (acc_name);
+	return FALSE;
+}
+
+static gint
+on_open_account (GArray *arguments, gpointer data, osso_rpc_t *retval)
+{
+ 	osso_rpc_t val;
+ 	gchar *account_id;
+
+	/* Get the arguments: */
+ 	val = g_array_index(arguments, osso_rpc_t, MODEST_DBUS_OPEN_MESSAGE_ARG_URI);
+ 	account_id = g_strdup (val.value.s);
+
+ 	g_idle_add (on_idle_open_account, account_id);
+
+	return OSSO_OK;
+}
+
 #ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_idle_top_application (gpointer user_data)
@@ -1251,12 +1323,12 @@ on_idle_show_memory_low (gpointer user_data)
 						dgettext("ke-recv","memr_ib_operation_disabled"),
 						TRUE);
 	gdk_threads_leave ();
-	
+
 	return FALSE;
 }
-                      
+
 /* Callback for normal D-BUS messages */
-gint 
+gint
 modest_dbus_req_handler(const gchar * interface, const gchar * method,
 			GArray * arguments, gpointer data,
 			osso_rpc_t * retval)
@@ -1270,11 +1342,15 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
 		if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
 			goto param_error;
-		return on_mail_to (arguments, data, retval);		
+		return on_mail_to (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
 		if (arguments->len != MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT)
 			goto param_error;
 		return on_open_message (arguments, data, retval);
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_ACCOUNT) == 0) {
+		if (arguments->len != MODEST_DBUS_OPEN_ACCOUNT_ARGS_COUNT)
+			goto param_error;
+		return on_open_account (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
 		if (arguments->len != 0)
 			goto param_error;

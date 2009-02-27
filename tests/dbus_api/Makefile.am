@@ -28,7 +28,8 @@ noinst_PROGRAMS = \
 	test_open_default_inbox \
 	test_get_folders \
 	test_top_application \
-	test_update_account
+	test_update_account \
+	test_open_account
 
 test_mail_to_SOURCES = test_mail_to.c
 test_mail_to_LDADD = $(objects)
@@ -56,3 +57,6 @@ test_top_application_LDADD = $(objects)
 
 test_update_account_SOURCES = test_update_account.c
 test_update_account_LDADD = $(objects)
+
+test_open_account_SOURCES = test_open_account.c
+test_open_account_LDADD = $(objects)
