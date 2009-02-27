@@ -619,7 +619,7 @@ static void
 init_stock_icons (void)
 {
 	static gboolean registered = FALSE;
-  
+
 	if (!registered) {
 		GtkIconTheme *current_theme;
 		GdkPixbuf *pixbuf;
@@ -634,16 +634,12 @@ init_stock_icons (void)
 			{ MODEST_STOCK_SPLIT_VIEW, "split view", 0, 0, NULL },
 			{ MODEST_STOCK_MAIL_SEND, "send mail", 0, 0, NULL },
 			{ MODEST_STOCK_NEW_MAIL, "new mail", 0, 0, NULL },
-/*  			{ MODEST_STOCK_SEND_RECEIVE, "send receive", 0, 0, NULL },  */
 			{ MODEST_STOCK_REPLY, "reply", 0, 0, NULL },
 			{ MODEST_STOCK_REPLY_ALL, "reply all", 0, 0, NULL },
 			{ MODEST_STOCK_FORWARD, "forward", 0, 0, NULL },
- 			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL }, 
-/* 			{ MODEST_STOCK_NEXT, "next", 0, 0, NULL }, */
-/* 			{ MODEST_STOCK_PREV, "prev", 0, 0, NULL }, */
-/* 			{ MODEST_STOCK_STOP, "stop", 0, 0, NULL } */
+ 			{ MODEST_STOCK_DELETE, "delete", 0, 0, NULL },
 		};
-      
+
 		static gchar *items_names [] = {
 #ifndef MODEST_TOOLKIT_GTK
 			MODEST_TOOLBAR_ICON_SORT,
@@ -652,22 +648,17 @@ init_stock_icons (void)
 			MODEST_TOOLBAR_ICON_SPLIT_VIEW,
 			MODEST_TOOLBAR_ICON_MAIL_SEND,
 			MODEST_TOOLBAR_ICON_NEW_MAIL,
-/*  			MODEST_TOOLBAR_ICON_SEND_RECEIVE,  */
-			MODEST_TOOLBAR_ICON_REPLY,	
+			MODEST_TOOLBAR_ICON_REPLY,
 			MODEST_TOOLBAR_ICON_REPLY_ALL,
 			MODEST_TOOLBAR_ICON_FORWARD,
- 			MODEST_TOOLBAR_ICON_DELETE, 
-/* 			MODEST_TOOLBAR_ICON_NEXT, */
-/* 			MODEST_TOOLBAR_ICON_PREV, */
-/* 			MODEST_TOOLBAR_ICON_STOP */
-/* 			MODEST_TOOLBAR_ICON_FORMAT_BULLETS, */
+ 			MODEST_TOOLBAR_ICON_DELETE,
 		};
 
 		registered = TRUE;
 
 		/* Register our stock items */
 		gtk_stock_add (items, G_N_ELEMENTS (items));
-      
+
 		/* Add our custom icon factory to the list of defaults */
 		factory = gtk_icon_factory_new ();
 		gtk_icon_factory_add_default (factory);
@@ -677,13 +668,13 @@ init_stock_icons (void)
 		/* Register icons to accompany stock items */
 		for (i = 0; i < G_N_ELEMENTS (items); i++) {
 
-#ifndef MODEST_PLATFORM_GTK  
+#ifndef MODEST_PLATFORM_GTK
 			pixbuf = gtk_icon_theme_load_icon (current_theme,
 							   items_names[i],
 #ifdef MODEST_TOOLKIT_HILDON2
-							   48,
+							   MODEST_ICON_SIZE_BIG,
 #else
-							   26,
+							   MODEST_ICON_SIZE_SMALL,
 #endif
 							   GTK_ICON_LOOKUP_NO_SVG,
 							   NULL);
@@ -693,14 +684,18 @@ init_stock_icons (void)
 
 			if (pixbuf != NULL) {
 				GtkIconSet *icon_set;
-				GdkPixbuf *transparent;
 
+#ifndef MODEST_TOOLKIT_HILDON2
+				GdkPixbuf *transparent;
 				transparent = gdk_pixbuf_add_alpha (pixbuf, TRUE, 0xff, 0xff, 0xff);
 				icon_set = gtk_icon_set_new_from_pixbuf (transparent);
+				g_object_unref (transparent);
+#else
+				icon_set = gtk_icon_set_new_from_pixbuf (pixbuf);
+#endif
 				gtk_icon_factory_add (factory, items[i].stock_id, icon_set);
 				gtk_icon_set_unref (icon_set);
 				g_object_unref (pixbuf);
-				g_object_unref (transparent);
 			}
 			else
 				g_warning ("Modest: %s: failed to load %s icon", __FUNCTION__, items_names[i]);
