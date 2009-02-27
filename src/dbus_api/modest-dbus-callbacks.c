@@ -1194,12 +1194,14 @@ on_idle_open_account (gpointer user_data)
 #else
 	if (MODEST_IS_MAIN_WINDOW (top)) {
 		gchar *server_name;
+		GtkWidget *folder_view;
+
 		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (top),
 								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		server_name = modest_account_mgr_get_server_account_name (mgr, acc_name,
-									  TNY_ACCOUNT_TYPE_STORE);
+		server_name = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (), 
+									  acc_name, TNY_ACCOUNT_TYPE_STORE);
 		if (server_name) {
-			modest_folder_view_set_account_id_of_visible_server_account (folder_view,
+			modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (folder_view),
 										     server_name);
 			g_free (server_name);
 		}

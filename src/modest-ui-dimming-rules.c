@@ -83,7 +83,7 @@ static gboolean _selected_folder_has_subfolder_with_same_name (ModestWindow *win
 static void fill_list_of_caches (gpointer key, gpointer value, gpointer userdata);
 static gboolean _send_receive_in_progress (ModestWindow *win);
 static gboolean _msgs_send_in_progress (void);
-static gboolean _all_msgs_in_sending_status (ModestHeaderView *header_view);
+static gboolean _all_msgs_in_sending_status (ModestHeaderView *header_view) G_GNUC_UNUSED;
 
 static DimmedState *
 _define_main_window_dimming_state (ModestMainWindow *window)
@@ -1438,7 +1438,7 @@ modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_da
 	dimmed = _invalid_attach_selected (win, FALSE, FALSE, FALSE, rule);
 
 	if (!dimmed) {
-		dimmed = _purged_attach_selected (win, TRUE);
+		dimmed = _purged_attach_selected (win, TRUE, NULL);
 		if (dimmed) {
 			modest_dimming_rule_set_notification (rule, _("mail_ib_attach_not_local"));
 		}
