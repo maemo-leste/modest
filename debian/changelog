@@ -1,8 +1,13 @@
 modest (2.1-2009.10-1) unstable; urgency=low
 
   * Week 10, 2009 release 
+  *  modest r7717
+  * Fixes: NB#89492, NB#94686, NB#96721, NB#97132, NB#97985, NB#101428
+  * Fixes: NB#101754, NB#102423, NB#102518, NB#102651, NB#102665, NB#102745
+  * Fixes: NB#102766, NB#102797, NB#102852, NB#102916, NB#102981, NB#102986
+  * Fixes: NB#103036, NB#103073, NB#103149, NB#103326, NB#103531
 
- -- Moises Martinez <moises.martinez@nokia.com>  Thu, 26 Feb 2009 17:47:05 +0200
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 27 Feb 2009 10:41:05 +0200
 
 modest (2.1-2009.09-1) unstable; urgency=low
 
