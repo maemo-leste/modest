@@ -1514,6 +1514,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		/* Play sound if the user wants. Show the LED
 		   pattern. Show and play just one */
 		if (G_UNLIKELY (first_notification)) {
+			TnyAccount *account;
 
 			first_notification = FALSE;
 
@@ -1522,7 +1523,16 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 							    "dialog-type", 4);
 			notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
 							    "led-pattern",
-							    MODEST_NEW_MAIL_LIGHTING_PATTERN);			
+							    MODEST_NEW_MAIL_LIGHTING_PATTERN);
+
+			/* Set the account of the headers */
+			account = tny_folder_get_account (folder);
+			if (account) {
+				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
+								    "email-account",
+								    tny_account_get_id (account));
+				g_object_unref (account);
+			}
 		}
 
 		/* Notify. We need to do this in an idle because this function
