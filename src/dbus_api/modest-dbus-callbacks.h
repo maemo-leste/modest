@@ -38,7 +38,7 @@
 gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       GArray * arguments, gpointer data,
                       osso_rpc_t * retval);
-                      
+
 void modest_osso_cb_hw_state_handler(osso_hw_state_t *state, gpointer data);
 
 DBusHandlerResult modest_dbus_req_filter (DBusConnection *con,

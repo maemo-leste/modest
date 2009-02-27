@@ -55,6 +55,13 @@ enum ModestDbusOpenMessageArguments
 	MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT
 };
 
+#define MODEST_DBUS_METHOD_OPEN_ACCOUNT "OpenAccount"
+enum ModestDbusOpenAccountArguments
+{
+	MODEST_DBUS_OPEN_ACCOUNT_ARG_ID,
+	MODEST_DBUS_OPEN_ACCOUNT_ARGS_COUNT
+};
+
 #define MODEST_DBUS_METHOD_SEND_RECEIVE "SendReceive"
 
 #define MODEST_DBUS_METHOD_COMPOSE_MAIL "ComposeMail"
