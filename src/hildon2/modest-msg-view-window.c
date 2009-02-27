@@ -533,7 +533,10 @@ init_window (ModestMsgViewWindow *obj)
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
 	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
-	
+
+	/* NULL-ize fields if the window is destroyed */
+	g_signal_connect (priv->msg_view, "destroy", G_CALLBACK (gtk_widget_destroyed), &(priv->msg_view));
+
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 }
 
@@ -2969,6 +2972,12 @@ update_window_title (ModestMsgViewWindow *window)
 	gchar *subject = NULL;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	/* Note that if the window is closed while we're retrieving
+	   the message, this widget could de deleted */
+	if (!priv->msg_view)
+		return;
+
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
 	if (msg != NULL) {
