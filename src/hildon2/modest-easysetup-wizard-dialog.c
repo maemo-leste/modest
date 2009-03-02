@@ -198,10 +198,10 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (object);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	
+
 	if (priv->account_manager)
 		g_object_unref (G_OBJECT (priv->account_manager));
-		
+
 	if (priv->presets)
 		modest_presets_destroy (priv->presets);
 
@@ -212,7 +212,7 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 		modest_signal_mgr_disconnect_all_and_destroy (priv->missing_data_signals);
 		priv->missing_data_signals = NULL;
 	}
-	 	
+
 	G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->finalize (object);
 }
 
@@ -1333,7 +1333,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 
 	/* Reset dirty, because there was no user input until now */
 	priv->dirty = FALSE;
-	
+
 	/* When this window is shown, hibernation should not be possible, 
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
@@ -2316,8 +2316,8 @@ check_support_callback (ModestAccountProtocol *protocol,
 			gtk_widget_hide (priv->check_support_progress);
 			invoke_enable_buttons_vfunc (self);
 		}
-		g_object_unref (self);
 	}
+	g_object_unref (self);
 }
 
 
@@ -2354,15 +2354,15 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 			priv->pending_check_support ++;
 			modest_account_protocol_check_support (MODEST_ACCOUNT_PROTOCOL (proto),
 							       check_support_callback,
-							       self);
+							       g_object_ref (self));
 		}
 	}
 	g_slist_free (provider_protos);
 
 	if (priv->pending_check_support > 0) {
-		g_object_ref  (self);
-		priv->check_support_show_progress_id = g_timeout_add (1000, check_support_show_progress, self);
-		
+		priv->check_support_show_progress_id = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
+									   check_support_show_progress, 
+									   g_object_ref (self), g_object_unref);
 	} else {
 		priv->check_support_done = TRUE;
 	}
