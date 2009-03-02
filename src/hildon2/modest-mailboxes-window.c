@@ -307,6 +307,9 @@ modest_mailboxes_window_new (const gchar *account)
 				    accel_key, accel_mods, 0);
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
 
+	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view),
+				       MODEST_FOLDER_VIEW_FILTER_SHOW_ONLY_MAILBOXES);
+
 	modest_mailboxes_window_set_account (MODEST_MAILBOXES_WINDOW (self), account);
 
 	return MODEST_WINDOW(self);
