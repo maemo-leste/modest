@@ -123,6 +123,7 @@ struct _ModestGtkhtmlMimePartViewPrivate {
 	gdouble current_zoom;
 	gboolean view_images;
 	gboolean has_external_images;
+	GSList *sighandlers;
 };
 
 #define MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -265,14 +266,18 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_widget_modify_base (GTK_WIDGET (self), GTK_STATE_NORMAL, &base);
 	gtk_widget_modify_text (GTK_WIDGET (self), GTK_STATE_NORMAL, &text);
 
-	g_signal_connect (G_OBJECT(self), "link_clicked",
-			  G_CALLBACK(on_link_clicked), self);
-	g_signal_connect (G_OBJECT(self), "url_requested",
-			  G_CALLBACK(on_url_requested), self);
-	g_signal_connect (G_OBJECT(self), "on_url",
-			  G_CALLBACK(on_url), self);
-	g_signal_connect (G_OBJECT(self), "notify::style",
-			  G_CALLBACK (on_notify_style), (gpointer) self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self), "link_clicked",
+						       G_CALLBACK(on_link_clicked), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self), "url_requested",
+						       G_CALLBACK(on_url_requested), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self), "on_url",
+						       G_CALLBACK(on_url), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self), "notify::style",
+						       G_CALLBACK (on_notify_style), (gpointer) self);
 
 	priv->part = NULL;
 	priv->current_zoom = 1.0;
@@ -283,6 +288,11 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 static void
 modest_gtkhtml_mime_part_view_finalize (GObject *obj)
 {
+	ModestGtkhtmlMimePartViewPrivate *priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (obj);
+
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
+	priv->sighandlers = NULL;
+
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
 
@@ -305,9 +315,10 @@ static void
 on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
 {
 	if (strcmp ("style", spec->name) == 0) {
-		g_idle_add ((GSourceFunc) update_style, (gpointer) obj);
+		g_idle_add_full (G_PRIORITY_DEFAULT, (GSourceFunc) update_style, 
+				 g_object_ref (obj), g_object_unref);
 		gtk_widget_queue_draw (GTK_WIDGET (obj));
-	} 
+	}
 }
 
 gboolean
@@ -325,19 +336,24 @@ update_style (ModestGtkhtmlMimePartView *self)
 	GdkColor text;
 	GtkRcStyle *rc_style;
 
-	rc_style = gtk_widget_get_modifier_style (GTK_WIDGET (self));
+	gdk_threads_enter ();
 
-	gdk_color_parse ("#fff", &base);
-	gdk_color_parse ("#000", &text);
+	if (GTK_WIDGET_VISIBLE (self)) {
+		rc_style = gtk_widget_get_modifier_style (GTK_WIDGET (self));
 
-	if (!same_color (&(rc_style->base[GTK_STATE_NORMAL]), &base) &&
-	    !same_color (&(rc_style->text[GTK_STATE_NORMAL]), &text)) {
+		gdk_color_parse ("#fff", &base);
+		gdk_color_parse ("#000", &text);
 
-		rc_style->base[GTK_STATE_NORMAL] = base;
-		rc_style->text[GTK_STATE_NORMAL] = text;
-		gtk_widget_modify_style (GTK_WIDGET (self), rc_style);
+		if (!same_color (&(rc_style->base[GTK_STATE_NORMAL]), &base) &&
+		    !same_color (&(rc_style->text[GTK_STATE_NORMAL]), &text)) {
 
+			rc_style->base[GTK_STATE_NORMAL] = base;
+			rc_style->text[GTK_STATE_NORMAL] = text;
+			gtk_widget_modify_style (GTK_WIDGET (self), rc_style);
+		}
 	}
+
+	gdk_threads_leave ();
 
 	return FALSE;
 }
