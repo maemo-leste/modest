@@ -47,6 +47,8 @@
 #include <modest-ui-dimming-manager.h>
 #include <modest-window-priv.h>
 #include <modest-ui-constants.h>
+#include <modest-account-mgr-helpers.h>
+#include <modest-mailboxes-window.h>
 
 
 /* 'private'/'protected' functions */
@@ -377,8 +379,10 @@ on_account_activated (GtkTreeView *account_view,
 {
 	ModestAccountsWindowPrivate *priv;
 	gchar* account_name; 
-	GtkWidget *folder_window;
+	GtkWidget *new_window;
 	gboolean registered;
+	ModestProtocolType store_protocol;
+	gboolean mailboxes_protocol;
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
 
@@ -386,17 +390,32 @@ on_account_activated (GtkTreeView *account_view,
 	if (!account_name)
 		return;
 
-	folder_window = GTK_WIDGET (modest_folder_window_new (NULL));
+	/* If it's a multimailbox container, we have to show the mailboxes window */
+	store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+								account_name);
+	mailboxes_protocol = 
+		modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+								store_protocol,
+								MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS);
+	if (mailboxes_protocol) {
+		new_window = GTK_WIDGET (modest_mailboxes_window_new (account_name));
+	} else {
+
+		new_window = GTK_WIDGET (modest_folder_window_new (NULL));
+	}
+
 	registered = modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
-							MODEST_WINDOW (folder_window),
+							MODEST_WINDOW (new_window),
 							MODEST_WINDOW (self));
 
 	if (!registered) {
-		gtk_widget_destroy (folder_window);
-		folder_window = NULL;
+		gtk_widget_destroy (new_window);
+		new_window = NULL;
 	} else {
-		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window), account_name);
-		gtk_widget_show (folder_window);
+		if (!mailboxes_protocol) {
+			modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window), account_name);
+		}
+		gtk_widget_show (new_window);
 	}
 	g_free (account_name);
 }

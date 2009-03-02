@@ -307,6 +307,8 @@ modest_mailboxes_window_new (const gchar *account)
 				    accel_key, accel_mods, 0);
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
 
+	modest_mailboxes_window_set_account (MODEST_MAILBOXES_WINDOW (self), account);
+
 	return MODEST_WINDOW(self);
 }
 
