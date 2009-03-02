@@ -1371,6 +1371,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* font_size */
 	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
 	priv->size_tool_button_label = gtk_label_new (NULL);
+	hildon_helper_set_logical_color (GTK_WIDGET (priv->size_tool_button_label), GTK_RC_TEXT,
+					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
+	hildon_helper_set_logical_color (GTK_WIDGET (priv->size_tool_button_label), GTK_RC_FG,
+					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
 	snprintf(size_text, sizeof(size_text), "%d", wp_font_size[DEFAULT_FONT_SIZE]);
 	markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>",
 			      size_text,"</span>", NULL);
@@ -1413,6 +1417,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* font face */
 	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
 	priv->font_tool_button_label = gtk_label_new (NULL);
+	hildon_helper_set_logical_color (GTK_WIDGET (priv->font_tool_button_label), GTK_RC_TEXT,
+					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
+	hildon_helper_set_logical_color (GTK_WIDGET (priv->font_tool_button_label), GTK_RC_FG,
+					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
 	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 	g_free(markup);
