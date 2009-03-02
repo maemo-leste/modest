@@ -519,6 +519,7 @@ convert_parent_folders_to_dots (gchar **item_name)
 static void
 format_compact_style (gchar **item_name,
 		      GObject *instance,
+		      const gchar *mailbox,
 		      gboolean bold,
 		      gboolean multiaccount,
 		      gboolean *use_markup)
@@ -534,6 +535,18 @@ format_compact_style (gchar **item_name,
 
 	folder_type = tny_folder_get_folder_type (folder);
 	is_special = (get_cmp_pos (folder_type, folder)!= 4);
+
+	if (mailbox) {
+		/* Remove mailbox prefix if any */
+		gchar *prefix = g_strconcat (mailbox, MODEST_FOLDER_PATH_SEPARATOR, NULL);
+		if (g_str_has_prefix (*item_name, prefix)) {
+			gchar *new_item_name;
+
+			new_item_name = g_strdup (*item_name + strlen (prefix));
+			g_free (*item_name);
+			*item_name = new_item_name;
+		}
+	}
 
 	if (!is_special || multiaccount) {
 		TnyAccount *account = tny_folder_get_account (folder);
@@ -680,7 +693,7 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 		multiaccount = (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 		/* Convert item_name to markup */
-		format_compact_style (&item_name, instance, 
+		format_compact_style (&item_name, instance, priv->mailbox,
 				      item_weight == 800, 
 				      multiaccount, &use_markup);
 	}
