@@ -1904,7 +1904,11 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 						  if (strcmp (account_id, priv->visible_account_id)) {
 							  retval = FALSE;
 						  } else if (priv->mailbox) {
+							  /* Filter mailboxes */
 							  if (!g_str_has_prefix (fname, priv->mailbox)) {
+								  retval = FALSE;
+							  } else if (!strcmp (fname, priv->mailbox)) {
+								  /* Hide mailbox parent */
 								  retval = FALSE;
 							  }
 						  }
