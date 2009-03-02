@@ -1966,6 +1966,20 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 		}
 	}
 
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_SHOW_ONLY_MAILBOXES)) {
+		/* A mailbox is a fake folder with an @ in the middle of the name */
+		if (!TNY_IS_FOLDER (instance) ||
+		    !(tny_folder_get_caps (TNY_FOLDER (instance)) & TNY_FOLDER_CAPS_NOSELECT)) {
+			return FALSE;
+		} else {
+			const gchar *folder_name;
+			folder_name = tny_folder_get_name (TNY_FOLDER (instance));
+			if (!folder_name || strchr (folder_name, '@') == NULL)
+				return FALSE;
+		}
+		
+	}
+
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_CAN_HAVE_FOLDERS)) {
 		if (TNY_IS_FOLDER (instance)) {
 			/* Check folder rules */
