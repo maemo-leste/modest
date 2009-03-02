@@ -511,6 +511,9 @@ correct_scroll_without_drag_check_idle (gpointer userdata)
 	GtkTextMark *insert;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
+
+	if (!gtk_widget_is_focus (priv->msg_body))
+		return FALSE;
 	
 	insert = gtk_text_buffer_get_insert (priv->text_buffer);
 	gtk_text_buffer_get_iter_at_mark (priv->text_buffer, &iter, insert);
