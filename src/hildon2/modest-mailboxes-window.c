@@ -53,6 +53,7 @@
 #include <modest-window-priv.h>
 #include "modest-text-utils.h"
 #include "modest-tny-account.h"
+#include <modest-folder-window.h>
 
 /* 'private'/'protected' functions */
 static void modest_mailboxes_window_class_init  (ModestMailboxesWindowClass *klass);
@@ -375,8 +376,10 @@ on_mailbox_activated (ModestFolderView *mailboxes_view,
 		      gpointer userdata)
 {
 	ModestMailboxesWindowPrivate *priv = NULL;
-/* 	ModestWindow *headerwin; */
 	ModestMailboxesWindow *self = (ModestMailboxesWindow *) userdata;
+	GtkWidget *new_window;
+	gboolean registered;
+	const gchar *active_account;
 
 	g_return_if_fail (MODEST_IS_MAILBOXES_WINDOW(self));
 
@@ -388,17 +391,19 @@ on_mailbox_activated (ModestFolderView *mailboxes_view,
 	if (!TNY_IS_FOLDER (folder))
 		return;
 
-	g_message ("MAILBOX SELECTED");
+	new_window = GTK_WIDGET (modest_folder_window_new (NULL));
+	registered = modest_window_mgr_register_window (modest_runtime_get_window_mgr (), 
+							MODEST_WINDOW (new_window),
+							MODEST_WINDOW (self));
 
-/* 	headerwin = modest_header_window_new (mailboxes, modest_window_get_active_account (MODEST_WINDOW (self))); */
-
-/* 	if (modest_window_mgr_register_window (modest_runtime_get_window_mgr (), */
-/* 					       MODEST_WINDOW (headerwin), */
-/* 					       MODEST_WINDOW (self))) { */
-/* 		gtk_widget_show (GTK_WIDGET (headerwin)); */
-/* 	} else { */
-/* 		gtk_widget_destroy (GTK_WIDGET (headerwin)); */
-/* 		headerwin = NULL; */
-/* 	} */
+	if (!registered) {
+		gtk_widget_destroy (new_window);
+		new_window = NULL;
+	} else {
+		active_account = modest_window_get_active_account (MODEST_WINDOW (self));
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window), active_account);
+		gtk_widget_show (new_window);
+	}
+	
 }
 
