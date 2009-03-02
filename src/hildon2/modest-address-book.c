@@ -999,20 +999,20 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 
 	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook_sync ()) {
+		hide_check_names_banner (&banner, banner_timeout);
 		if (contact_model) {
 			g_object_unref (contact_model);
 			contact_model = NULL;
 		}
 		return FALSE;
 	}
+	hide_check_names_banner (&banner, banner_timeout);
 
 	resolved_contacts = get_contacts_for_name (address);
 
 	if (resolved_contacts == NULL) {
 		/* no matching contacts for the search string */
 		modest_platform_run_information_dialog (NULL, _("mcen_nc_no_matching_contacts"), FALSE);
-		hide_check_names_banner (&banner, banner_timeout);
-     
 		return FALSE;
 	}
 
@@ -1020,19 +1020,17 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 		/* show a dialog to select the contact from the resolved ones */
 		g_list_free (resolved_contacts);
 
-		hide_check_names_banner (&banner, banner_timeout);     
 		resolved_contacts = select_contacts_for_name_dialog (address);
 		banner_timeout = g_timeout_add (500, show_check_names_banner, &banner);
 
 	}
-	
+
 	/* get the resolved contacts (can be no contact) */
 	if (resolved_contacts) {
 		gboolean found;
 		EContact *contact = (EContact *) resolved_contacts->data;
 
 		*resolved_addresses = get_recipients_for_given_contact (contact);
-		hide_check_names_banner (&banner, banner_timeout);     
 		if (*resolved_addresses) {
 			*contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
 			found = TRUE;
@@ -1047,7 +1045,6 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 	} else {
 		/* cancelled dialog to select more than one contact or
 		 * selected no contact */
-		hide_check_names_banner (&banner, banner_timeout);     
 		return FALSE;
 	}
 
