@@ -195,6 +195,16 @@ void         modest_folder_view_set_mailbox (ModestFolderView *self,
 					     const gchar *mailbox);
 
 /**
+ * modest_folder_view_get_mailbox:
+ * @self: a #ModestFolderView
+ *
+ * Return the current mailbox set for filtering in folder view
+ *
+ * Returns: a string, or %NULL
+ */
+const gchar *modest_folder_view_get_mailbox (ModestFolderView *self);
+
+/**
  * modest_folder_view_get_account_id_of_visible_server_account:
  * @self: a #ModestFolderView
  * 

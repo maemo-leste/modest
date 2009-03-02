@@ -3899,4 +3899,20 @@ modest_folder_view_set_mailbox (ModestFolderView *self, const gchar *mailbox)
 		g_free (priv->mailbox);
 
 	priv->mailbox = g_strdup (mailbox);
+
+	/* Notify observers */
+	g_signal_emit (G_OBJECT(self),
+		       signals[VISIBLE_ACCOUNT_CHANGED_SIGNAL], 0,
+		       priv->visible_account_id);
+}
+
+const gchar *
+modest_folder_view_get_mailbox (ModestFolderView *self)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), NULL);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	return (const gchar *) priv->mailbox;
 }

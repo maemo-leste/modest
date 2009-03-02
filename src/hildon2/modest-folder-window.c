@@ -217,11 +217,20 @@ on_visible_account_changed (ModestFolderView *folder_view,
 								     account_id);
 		if (acc) {
 			const gchar *name;
+			const gchar *mailbox;
 			gchar *title = NULL;
+			ModestFolderWindowPrivate *priv;
 
-			name = modest_tny_account_get_parent_modest_account_name_for_server_account (acc);
-			title = modest_account_mgr_get_display_name (modest_runtime_get_account_mgr(),
-								     name);
+			priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (user_data);
+
+			mailbox = modest_folder_view_get_mailbox (MODEST_FOLDER_VIEW (priv->folder_view));
+			if (mailbox) {
+				title = g_strdup (mailbox);
+			} else {
+				name = modest_tny_account_get_parent_modest_account_name_for_server_account (acc);
+				title = modest_account_mgr_get_display_name (modest_runtime_get_account_mgr(),
+									     name);
+			}
 			if (title) {
 				gtk_window_set_title (GTK_WINDOW (user_data), title);
 				g_free (title);
