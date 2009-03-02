@@ -543,6 +543,10 @@ format_compact_style (gchar **item_name,
 			gchar *new_item_name;
 
 			new_item_name = g_strdup (*item_name + strlen (prefix));
+			if (!g_ascii_strcasecmp (new_item_name, "Inbox")) {
+				g_free (new_item_name);
+				new_item_name = g_strdup (_("mcen_me_folder_inbox"));
+			}
 			g_free (*item_name);
 			*item_name = new_item_name;
 		}
