@@ -184,6 +184,17 @@ void         modest_folder_view_set_account_id_of_visible_server_account (Modest
 									  const gchar *account_id);
 
 /**
+ * modest_folder_view_set_visible_mailbox:
+ * @self: a #ModestFolderView
+ * @account_id: the remote account mailbox to show
+ * 
+ * if set an account id to filter, this filters also to show only
+ * folders of a specific mailbox.
+ **/
+void         modest_folder_view_set_mailbox (ModestFolderView *self,
+					     const gchar *mailbox);
+
+/**
  * modest_folder_view_get_account_id_of_visible_server_account:
  * @self: a #ModestFolderView
  * 

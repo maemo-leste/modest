@@ -232,6 +232,7 @@ struct _ModestFolderViewPrivate {
 
 	gchar                *local_account_name;
 	gchar                *visible_account_id;
+	gchar                *mailbox;
 	ModestFolderViewStyle style;
 	ModestFolderViewCellStyle cell_style;
 
@@ -1149,6 +1150,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->style          = MODEST_FOLDER_VIEW_STYLE_SHOW_ALL;
 	priv->cur_folder_store   = NULL;
 	priv->visible_account_id = NULL;
+	priv->mailbox = NULL;
 	priv->folder_to_select = NULL;
 	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
@@ -1266,6 +1268,7 @@ modest_folder_view_finalize (GObject *obj)
 
 	g_free (priv->local_account_name);
 	g_free (priv->visible_account_id);
+	g_free (priv->mailbox);
 
 	if (priv->conf_key_signal) {
 		g_signal_handler_disconnect (modest_runtime_get_conf (),
@@ -1577,6 +1580,7 @@ on_account_removed (TnyAccountStore *account_store,
 
 		/* Clear the current visible account_id */
 		modest_folder_view_set_account_id_of_visible_server_account (self, NULL);
+		modest_folder_view_set_mailbox (self, NULL);
 
 		/* Call the restore method, this will set the new visible account */
 		modest_widget_memory_restore (modest_runtime_get_conf(), G_OBJECT(self),
@@ -1839,11 +1843,13 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	gboolean found = FALSE;
 	gboolean cleared = FALSE;
 	ModestTnyFolderRules rules = 0;
+	gchar *fname;
 
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (data), FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (data);
 
 	gtk_tree_model_get (model, iter,
+			    NAME_COLUMN, &fname,
 			    TYPE_COLUMN, &type,
 			    INSTANCE_COLUMN, &instance,
 			    -1);
@@ -1852,8 +1858,10 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	   happen when the model is being modified while it's being
 	   drawn. This could occur for example when moving folders
 	   using drag&drop */
-	if (!instance)
+	if (!instance) {
+		g_free (fname);
 		return FALSE;
+	}
 
 	if (TNY_IS_ACCOUNT (instance)) {
 		TnyAccount *acc = TNY_ACCOUNT (instance);
@@ -1893,8 +1901,13 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 					    strcmp (account_id, MODEST_MMC_ACCOUNT_ID)) {
 						/* Show only the visible account id */
 						if (priv->visible_account_id) {
-							if (strcmp (account_id, priv->visible_account_id))
-								retval = FALSE;
+						  if (strcmp (account_id, priv->visible_account_id)) {
+							  retval = FALSE;
+						  } else if (priv->mailbox) {
+							  if (!g_str_has_prefix (fname, priv->mailbox)) {
+								  retval = FALSE;
+							  }
+						  }
 						}
 					}
 						g_object_unref (account);
@@ -2056,6 +2069,7 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 
 	/* Free */
 	g_object_unref (instance);
+        g_free (fname);
 
 	return retval;
 }
@@ -3871,4 +3885,18 @@ modest_folder_view_set_list_to_move (ModestFolderView *self,
 		g_object_ref (list);
 
 	priv->list_to_move = list;
+}
+
+void
+modest_folder_view_set_mailbox (ModestFolderView *self, const gchar *mailbox)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (self));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	if (priv->mailbox)
+		g_free (priv->mailbox);
+
+	priv->mailbox = g_strdup (mailbox);
 }

@@ -437,6 +437,19 @@ free_refs:
 
 }
 
+void
+modest_folder_window_set_mailbox (ModestFolderWindow *self,
+				  const gchar *mailbox)
+{
+	ModestFolderWindowPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+	modest_folder_view_set_mailbox (MODEST_FOLDER_VIEW (priv->folder_view), mailbox);
+
+}
+
 static void
 setup_menu (ModestFolderWindow *self)
 {

@@ -400,8 +400,13 @@ on_mailbox_activated (ModestFolderView *mailboxes_view,
 		gtk_widget_destroy (new_window);
 		new_window = NULL;
 	} else {
+		const gchar *name;
 		active_account = modest_window_get_active_account (MODEST_WINDOW (self));
 		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window), active_account);
+		name = tny_folder_get_name (folder);
+		if (name) {
+			modest_folder_window_set_mailbox (MODEST_FOLDER_WINDOW (new_window), name);
+		}
 		gtk_widget_show (new_window);
 	}
 	

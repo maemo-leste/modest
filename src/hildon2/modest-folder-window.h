@@ -95,6 +95,16 @@ void modest_folder_window_set_account (ModestFolderWindow *self,
 				       const gchar *account_name);
 
 /**
+ * modest_folder_window_set_mailbox:
+ * @self: a #ModestFolderWindow
+ * @mailbox: a string
+ *
+ * Sets the current mailbox in the folder window.
+ */
+void modest_folder_window_set_mailbox (ModestFolderWindow *self,
+				       const gchar *mailbox);
+
+/**
  * modest_folder_Window_transfer_mode_enabled:
  * @self: a #ModestFolderWindow
  *
