@@ -86,6 +86,9 @@ static ModestWindow *modest_hildon2_window_mgr_get_current_top (ModestWindowMgr 
 static gboolean modest_hildon2_window_mgr_screen_is_on (ModestWindowMgr *self);
 static void osso_display_event_cb (osso_display_state_t state, 
 				   gpointer data);
+static void on_account_removed (TnyAccountStore *acc_store, 
+				TnyAccount *account,
+				gpointer user_data);
 
 typedef struct _ModestHildon2WindowMgrPrivate ModestHildon2WindowMgrPrivate;
 struct _ModestHildon2WindowMgrPrivate {
@@ -192,6 +195,12 @@ modest_hildon2_window_mgr_instance_init (ModestHildon2WindowMgr *obj)
 	priv->modal_handler_uids = NULL;
 	priv->display_state = OSSO_DISPLAY_ON;
 
+	/* Connect to the account store "account-removed" signal" */
+	priv->accounts_handler = g_signal_connect (modest_runtime_get_account_store (),
+						   "account-removed",
+						   G_CALLBACK (on_account_removed),
+						   obj);
+
 	/* Listen for changes in the screen, we don't want to show a
 	   led pattern when the display is on for example */
 	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
@@ -210,12 +219,11 @@ modest_hildon2_window_mgr_finalize (GObject *obj)
 	priv->window_state_uids = NULL;
 
 	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
-				      NULL,
-				      NULL); 
+				      NULL, NULL);
 
 	acc_store = modest_runtime_get_account_store ();
 	if (acc_store && g_signal_handler_is_connected (acc_store, priv->accounts_handler))
-	    g_signal_handler_disconnect (acc_store, priv->accounts_handler);
+		g_signal_handler_disconnect (acc_store, priv->accounts_handler);
 
 	if (priv->window_list) {
 		GList *iter = priv->window_list;
@@ -737,29 +745,6 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
-static ModestWindow *
-create_folders_view (ModestWindowMgr *self)
-{
-	GtkWidget *folders_window;
-	ModestAccountMgr *mgr;
-	const gchar *acc_name;
-
-	folders_window = (GtkWidget *) modest_folder_window_new (NULL);
-	mgr = modest_runtime_get_account_mgr ();
-	acc_name = modest_account_mgr_get_default_account (mgr);
-	if (!acc_name)
-		acc_name = MODEST_LOCAL_FOLDERS_ACCOUNT_NAME;
-	modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folders_window),
-					  acc_name);
-	if (modest_window_mgr_register_window (self, MODEST_WINDOW (folders_window), NULL)) {
-		gtk_widget_show (folders_window);
-	} else {
-		gtk_widget_destroy (folders_window);
-		folders_window = NULL;
-	}
-	return MODEST_WINDOW (folders_window);
-}
-
 static void
 on_account_removed (TnyAccountStore *acc_store, 
 		    TnyAccount *account,
@@ -776,12 +761,6 @@ on_account_removed (TnyAccountStore *acc_store,
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
 	has_accounts = modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE);
-
-	if (current_top &&
-	    MODEST_IS_ACCOUNTS_WINDOW (current_top) &&
-	    !has_accounts) {
-		create_folders_view (MODEST_WINDOW_MGR (user_data));
-	}
 
 	/* if we're showing the header view of the currently deleted
 	   account, or the outbox and we deleted the last account,
@@ -834,39 +813,10 @@ static ModestWindow *
 modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 {
 	ModestWindow *initial_window = NULL;
-        ModestTnyAccountStore *acc_store;
-	ModestHildon2WindowMgrPrivate *priv;
 
 	/* Return accounts window */
 	initial_window = MODEST_WINDOW (modest_accounts_window_new ());
 	modest_window_mgr_register_window (self, initial_window, NULL);
-
-	/* Check if we have at least one remote account to create also
-	   the folders window */
-        acc_store = modest_runtime_get_account_store ();
-        if (modest_tny_account_store_get_num_remote_accounts (acc_store) < 1) {
-		ModestWindow *win;
-               /* Show first the accounts window to add it to the
-                   stack. This has to be changed when the new
-                   stackable API is available. There will be a method
-                   to show all the windows that will only show the
-                   last one to the user. The current code shows both
-                   windows, one after the other */
-                gtk_widget_show (GTK_WIDGET (initial_window));
-
-		win = create_folders_view (MODEST_WINDOW_MGR (self));
-		if (win)
-			initial_window = win;
-	}
-
-	/* Connect to the account store "account-removed" signal". If
-	   we're showing the accounts window and all the accounts are
-	   deleted we need to move to folders window automatically */
-	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
-	priv->accounts_handler = g_signal_connect (acc_store, 
-						   "account-removed",
-						   G_CALLBACK (on_account_removed),
-						   self);
 
 	return initial_window;
 }
