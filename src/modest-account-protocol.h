@@ -73,6 +73,9 @@ struct _ModestAccountProtocolClass {
 	void (*save_wizard_settings) (ModestAccountProtocol *self, GList *wizard_pages, ModestAccountSettings *settings);
 	gboolean (*is_supported) (ModestAccountProtocol *self);
 	void (*check_support) (ModestAccountProtocol *self, ModestAccountProtocolCheckSupportFunc func, gpointer userdata);
+	gchar * (*get_from) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
+	ModestPairList * (*get_from_list) (ModestAccountProtocol *self, const gchar *account_id);
+	gchar * (*get_signature) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
 };
 
 /**
@@ -316,6 +319,48 @@ void modest_account_protocol_check_support (ModestAccountProtocol *self,
  * Returns: %TRUE if the protocol is supported, %FALSE otherwise
  */
 gboolean modest_account_protocol_is_supported (ModestAccountProtocol *self);
+
+/**
+ * modest_account_protocol_get_from:
+ * @self: a #ModestAccountProtocol
+ * @account_id: a transport account name
+ * @mailbox: a mailbox
+ *
+ * Obtain the From: string for the account and mailbox. Should be used only
+ * with transports with multi mailbox support.
+ *
+ * Returns: a newly allocated string
+ */
+gchar *modest_account_protocol_get_from (ModestAccountProtocol *self,
+					 const gchar *account_id,
+					 const gchar *mailbox);
+
+/**
+ * modest_account_protocol_get_from_list:
+ * @self: a #ModestAccountProtocol
+ * @account_id: a transport account name
+ *
+ * Obtain a list of pairs (mailbox - From: string) for filling the From picker.
+ *
+ * Returns: a ModestPairList
+ */
+ModestPairList *modest_account_protocol_get_from_list (ModestAccountProtocol *self,
+						       const gchar *account_id);
+
+/**
+ * modest_account_protocol_get_signature:
+ * @self: a #ModestAccountProtocol
+ * @account_id: a transport account name
+ * @mailbox: a mailbox
+ *
+ * Obtain the signature string for the account and mailbox. Should be used only
+ * with transports with multi mailbox support.
+ *
+ * Returns: a newly allocated string
+ */
+gchar *modest_account_protocol_get_signature (ModestAccountProtocol *self,
+					      const gchar *account_id,
+					      const gchar *mailbox);
 
 G_END_DECLS
 

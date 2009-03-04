@@ -89,6 +89,15 @@ static void modest_account_protocol_check_support_default (ModestAccountProtocol
 							   ModestAccountProtocolCheckSupportFunc func,
 							   gpointer userdata);
 static gboolean modest_account_protocol_is_supported_default (ModestAccountProtocol *self);
+static gchar *modest_account_protocol_get_from_default (ModestAccountProtocol *self,
+							const gchar *account_id,
+							const gchar *mailbox);
+static ModestPairList *modest_account_protocol_get_from_list_default (ModestAccountProtocol *self,
+								      const gchar *account_id);
+static gchar *modest_account_protocol_get_signature_default (ModestAccountProtocol *self,
+							     const gchar *account_id,
+							     const gchar *mailbox);
+
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -176,6 +185,12 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_is_supported_default;
 	account_class->check_support =
 		modest_account_protocol_check_support_default;
+	account_class->get_from =
+		modest_account_protocol_get_from_default;
+	account_class->get_from_list =
+		modest_account_protocol_get_from_list_default;
+	account_class->get_signature =
+		modest_account_protocol_get_signature_default;
 }
 
 static void
@@ -612,3 +627,53 @@ modest_account_protocol_check_support (ModestAccountProtocol *self,
 {
 	MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->check_support (self, func, userdata);
 }
+
+gchar *
+modest_account_protocol_get_from (ModestAccountProtocol *self,
+				  const gchar *account_id,
+				  const gchar *mailbox)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_from (self, account_id, mailbox);
+}
+static gchar *
+modest_account_protocol_get_from_default (ModestAccountProtocol *self,
+					  const gchar *account_id,
+					  const gchar *mailbox)
+{
+	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+
+	return NULL;
+}
+
+ModestPairList *
+modest_account_protocol_get_from_list (ModestAccountProtocol *self,
+				       const gchar *account_id)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_from_list (self, account_id);
+}
+static ModestPairList *
+modest_account_protocol_get_from_list_default (ModestAccountProtocol *self,
+					       const gchar *account_id)
+{
+	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+
+	return NULL;
+}
+
+gchar *
+modest_account_protocol_get_signature (ModestAccountProtocol *self,
+				       const gchar *account_id,
+				       const gchar *mailbox)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_signature (self, account_id, mailbox);
+}
+static gchar *
+modest_account_protocol_get_signature_default (ModestAccountProtocol *self,
+					       const gchar *account_id,
+					       const gchar *mailbox)
+{
+	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+
+	return NULL;
+}
+
