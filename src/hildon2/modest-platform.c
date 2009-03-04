@@ -786,8 +786,8 @@ folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
 			else
 				icon_name = MODEST_FOLDER_ICON_ACCOUNT;
 		} else {
+			TnyFolderType type = modest_tny_folder_guess_folder_type (TNY_FOLDER (store));
 			if (modest_tny_folder_is_remote_folder (TNY_FOLDER (store))) {
-				TnyFolderType type = modest_tny_folder_guess_folder_type (TNY_FOLDER (store));
 				switch (type) {
 				case TNY_FOLDER_TYPE_INBOX:
 					icon_name = MODEST_FOLDER_ICON_INBOX;
@@ -795,10 +795,23 @@ folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
 				default:
 					icon_name = MODEST_FOLDER_ICON_ACCOUNT;
 				}
-			} else if (modest_tny_folder_is_local_folder (TNY_FOLDER (store)))
-				icon_name = MODEST_FOLDER_ICON_NORMAL;
-			else if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (store)))
+			} else if (modest_tny_folder_is_local_folder (TNY_FOLDER (store))) {
+				switch (type) {
+				case TNY_FOLDER_TYPE_OUTBOX:
+					icon_name = MODEST_FOLDER_ICON_OUTBOX;
+					break;
+				case TNY_FOLDER_TYPE_DRAFTS:
+					icon_name = MODEST_FOLDER_ICON_DRAFTS;
+					break;
+				case TNY_FOLDER_TYPE_SENT:
+					icon_name = MODEST_FOLDER_ICON_SENT;
+					break;
+				default:
+					icon_name = MODEST_FOLDER_ICON_NORMAL;
+				}
+			} else if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (store))) {
 				icon_name = MODEST_FOLDER_ICON_MMC_FOLDER;
+			}
 		}
 
 		/* Set icon */
