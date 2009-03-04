@@ -619,10 +619,14 @@ if test "x$with_platform" == "xmaemo"; then
    echo "libconic support : $have_libconic"
    echo "Alarm            : $have_libalarm"
    echo "MCE              : $have_mce"
-   echo "Hildon-Notify    : $have_hildon_notify"    
+   echo "Hildon-Notify    : $have_hildon_notify"
    echo "LibOGS support   : $have_ogs_support"
-   echo "MozEmbed support : $use_mozembed"
-fi 
+fi
+
+echo "MozEmbed support : $use_mozembed"
+if [ $gtk_html_found = "true" ]; then
+   echo "GtkHTML version  : $gtk_html_version"
+fi
 
 echo "CFLAGS           : $CFLAGS"
 echo "Debug version    : $with_debug"
