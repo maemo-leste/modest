@@ -96,7 +96,8 @@ static ModestPairList *modest_account_protocol_get_from_list_default (ModestAcco
 								      const gchar *account_id);
 static gchar *modest_account_protocol_get_signature_default (ModestAccountProtocol *self,
 							     const gchar *account_id,
-							     const gchar *mailbox);
+							     const gchar *mailbox,
+							     gboolean *has_signature);
 
 
 /* globals */
@@ -663,16 +664,21 @@ modest_account_protocol_get_from_list_default (ModestAccountProtocol *self,
 gchar *
 modest_account_protocol_get_signature (ModestAccountProtocol *self,
 				       const gchar *account_id,
-				       const gchar *mailbox)
+				       const gchar *mailbox,
+				       gboolean *has_signature)
 {
-	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_signature (self, account_id, mailbox);
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_signature (self, account_id, mailbox, has_signature);
 }
+
 static gchar *
 modest_account_protocol_get_signature_default (ModestAccountProtocol *self,
 					       const gchar *account_id,
-					       const gchar *mailbox)
+					       const gchar *mailbox,
+					       gboolean *has_signature)
 {
 	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	if (has_signature)
+		*has_signature = FALSE;
 
 	return NULL;
 }

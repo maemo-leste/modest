@@ -75,7 +75,7 @@ struct _ModestAccountProtocolClass {
 	void (*check_support) (ModestAccountProtocol *self, ModestAccountProtocolCheckSupportFunc func, gpointer userdata);
 	gchar * (*get_from) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
 	ModestPairList * (*get_from_list) (ModestAccountProtocol *self, const gchar *account_id);
-	gchar * (*get_signature) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
+	gchar * (*get_signature) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox, gboolean *has_signature);
 };
 
 /**
@@ -360,7 +360,8 @@ ModestPairList *modest_account_protocol_get_from_list (ModestAccountProtocol *se
  */
 gchar *modest_account_protocol_get_signature (ModestAccountProtocol *self,
 					      const gchar *account_id,
-					      const gchar *mailbox);
+					      const gchar *mailbox,
+					      gboolean *has_signature);
 
 G_END_DECLS
 
