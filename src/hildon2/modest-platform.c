@@ -812,20 +812,78 @@ folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
 	}
 }
 
+/* Always returns DUPs so you must free the returned value */
+static gchar *
+get_next_folder_name (const gchar *suggested_name, 
+		      TnyFolderStore *suggested_folder)
+{
+	const gchar *default_name = _FM("ckdg_va_new_folder_name_stub");
+	unsigned int i;
+	gchar *real_suggested_name;
+
+	if (suggested_name !=NULL) {
+		return g_strdup (suggested_name);
+	}
+
+	for(i = 0; i < 100; ++ i) {
+		gboolean exists = FALSE;
+
+		if (i == 0)
+			real_suggested_name = g_strdup (default_name);
+		else
+			real_suggested_name = g_strdup_printf ("%s(%d)",
+							       _FM("ckdg_va_new_folder_name_stub"),
+							       i);
+		exists = modest_tny_folder_has_subfolder_with_name (suggested_folder,
+								    real_suggested_name,
+								    TRUE);
+
+		if (!exists)
+			break;
+
+		g_free (real_suggested_name);
+	}
+
+	/* Didn't find a free number */
+	if (i == 100)
+		real_suggested_name = g_strdup (default_name);
+
+	return real_suggested_name;
+}
+
+typedef struct {
+	ModestFolderView *folder_view;
+	GtkEntry *entry;
+} FolderPickerHelper;
+
 static void
 folder_picker_clicked (GtkButton *button,
-		       ModestFolderView *folder_view)
+		       FolderPickerHelper *helper)
 {
 	TnyFolderStore *store;
 
-	store = folder_chooser_dialog_run (folder_view);
+	store = folder_chooser_dialog_run (helper->folder_view);
 	if (store) {
+		const gchar *current_name;
+		gboolean exists;
+
 		folder_picker_set_store (GTK_BUTTON (button), store);
+
+		/* Update the name of the folder */
+		current_name = gtk_entry_get_text (helper->entry);
+		exists = modest_tny_folder_has_subfolder_with_name (store,
+								    current_name,
+								    TRUE);
+		if (exists) {
+			gchar *new_name = get_next_folder_name (NULL, store);
+			gtk_entry_set_text (helper->entry, new_name);
+			g_free (new_name);
+		}
 	}
 }
 
 static GtkWidget *
-folder_picker_new (ModestFolderView *folder_view, TnyFolderStore *suggested)
+folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 {
 	GtkWidget *button;
 
@@ -838,7 +896,9 @@ folder_picker_new (ModestFolderView *folder_view, TnyFolderStore *suggested)
 		folder_picker_set_store (GTK_BUTTON (button), suggested);
 	}
 
-	g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (folder_picker_clicked), folder_view);
+	g_signal_connect (G_OBJECT (button), "clicked",
+			  G_CALLBACK (folder_picker_clicked),
+			  helper);
 
 	return button;
 }
@@ -864,6 +924,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	ModestFolderView *folder_view;
 	ModestWindow *folder_window;
 	ModestHildon2WindowMgr *window_mgr;
+	FolderPickerHelper *helper = NULL;
 
 	window_mgr = (ModestHildon2WindowMgr *) modest_runtime_get_window_mgr ();
 	folder_window = modest_hildon2_window_mgr_get_folder_window (window_mgr);
@@ -910,7 +971,11 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 		gtk_misc_set_alignment (GTK_MISC (label_location), 0.0, 0.5);
 		gtk_size_group_add_widget (sizegroup, label_location);
 
-		account_picker = folder_picker_new (folder_view, suggested_parent);
+		helper = g_slice_new0 (FolderPickerHelper);
+		helper->folder_view = folder_view;
+		helper->entry = (GtkEntry *) entry;
+
+		account_picker = folder_picker_new (suggested_parent, helper);
 	}
 
 	g_object_unref (sizegroup);
@@ -978,6 +1043,9 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 
 	gtk_widget_destroy (dialog);
 
+	if (helper)
+		g_slice_free (FolderPickerHelper, helper);
+
 	while (gtk_events_pending ())
 		gtk_main_iteration ();
 
@@ -996,54 +1064,26 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	ModestTnyAccountStore *acc_store;
 	TnyAccount *account;
 
-	if(suggested_name == NULL)
-	{
-		const gchar *default_name = _FM("ckdg_va_new_folder_name_stub");
-		unsigned int i;
-
-		for(i = 0; i < 100; ++ i) {
-			gboolean exists = FALSE;
-
-			if (i == 0)
-				real_suggested_name = g_strdup (default_name);
-			else
-				real_suggested_name = g_strdup_printf ("%s(%d)",
-								       _FM("ckdg_va_new_folder_name_stub"),
-				                                       i);
-			exists = modest_tny_folder_has_subfolder_with_name (suggested_folder,
-									    real_suggested_name,
-									    TRUE);
-
-			if (!exists)
-				break;
-
-			g_free (real_suggested_name);
-		}
-
-		/* Didn't find a free number */
-		if (i == 100)
-			real_suggested_name = g_strdup (default_name);
-	} else {
-		real_suggested_name = suggested_name;
-	}
+	real_suggested_name = get_next_folder_name ((const gchar *) suggested_name,
+						    suggested_folder);
 
 	/* In hildon 2.2 we always suggest the archive folder as parent */
 	acc_store = modest_runtime_get_account_store ();
 	account = modest_tny_account_store_get_mmc_folders_account (acc_store);
 	if (account) {
 		suggested_folder = (TnyFolderStore *)
-			modest_tny_account_get_special_folder (account, 
+			modest_tny_account_get_special_folder (account,
 							       TNY_FOLDER_TYPE_ARCHIVE);
 		g_object_unref (account);
 		account = NULL;
 	}
 
-	/* If there is not archive folder then fallback to local folders account */ 
+	/* If there is not archive folder then fallback to local folders account */
 	if (!suggested_folder)
 		suggested_folder = (TnyFolderStore *)
 			modest_tny_account_store_get_local_folders_account (acc_store);
 
-	result = modest_platform_run_folder_common_dialog (parent_window, 
+	result = modest_platform_run_folder_common_dialog (parent_window,
 							   suggested_folder,
 							   _HL("ckdg_ti_new_folder"),
 							   _FM("ckdg_fi_new_folder_name"),
@@ -1053,8 +1093,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 							   folder_name,
 							   parent_folder);
 
-	if (suggested_name == NULL)
-		g_free(real_suggested_name);
+	g_free(real_suggested_name);
 
 	return result;
 }
