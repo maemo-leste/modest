@@ -150,30 +150,38 @@ modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win,
 }
 
 FILE*
-modest_maemo_open_mcc_mapping_file (void)
+modest_maemo_open_mcc_mapping_file (gboolean *translated)
 {
-	FILE* result;
-	
+	FILE* result = NULL;
 	const gchar* path;
-	const gchar* path1 = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
+	gchar *path1 = g_strdup_printf ("%s.%s", MODEST_OPERATOR_WIZARD_MCC_MAPPING, getenv("LANG"));
 	const gchar* path2 = MODEST_MCC_MAPPING;
-	
-	if (access(path1, R_OK) == 0) 
+
+	if (translated)
+		*translated = TRUE;
+
+	if (access (path1, R_OK) == 0) {
 		path = path1;
-	else if (access(path2, R_OK) == 0)
+	} else if (access (MODEST_OPERATOR_WIZARD_MCC_MAPPING, R_OK) == 0) {
+		path = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
+		if (translated)
+			*translated = FALSE;
+	} else if (access (path2, R_OK) == 0) {
 		path = path2;
-	else {
+	} else {
 		g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
 			   __FUNCTION__, path1, path2);
-		return NULL;
+		goto end;
 	}
-	
+
 	result = fopen (path, "r");
 	if (!result) {
 		g_warning ("%s: error opening mapping file '%s': %s",
 			   __FUNCTION__, path, strerror(errno));
-		return NULL;
+		goto end;
 	}
+ end:
+	g_free (path1);
 	return result;
 }
 

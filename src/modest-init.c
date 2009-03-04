@@ -600,8 +600,8 @@ init_i18n (void)
 		setenv ("LC_MESSAGES", "en_GB", 1);
 	} else {
 		gchar *language = g_strdup_printf ("%s:en_GB", lc_messages);
-               setenv ("LANGUAGE", language, 1);
-               g_free (language);
+		setenv ("LC_MESSAGES", language, 1);
+		g_free (language);
 	}
 	/* end of little trick */
 

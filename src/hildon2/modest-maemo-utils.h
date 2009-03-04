@@ -81,7 +81,7 @@ osso_context_t *modest_maemo_utils_get_osso_context (void);
  *
  * Returns: file ptr or NULL in case of error
  */
-FILE* modest_maemo_open_mcc_mapping_file (void);
+FILE* modest_maemo_open_mcc_mapping_file (gboolean *translated);
 
 /**
  * modest_maemo_set_thumbable_scrollbar:

@@ -125,7 +125,7 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 static gboolean
 check_required_files (void)
 {
-	FILE *mcc_file = modest_maemo_open_mcc_mapping_file ();
+	FILE *mcc_file = modest_maemo_open_mcc_mapping_file (NULL);
 	if (!mcc_file) {
 		g_printerr ("modest: check for mcc file failed\n");
 		return FALSE;

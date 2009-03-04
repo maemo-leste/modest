@@ -142,7 +142,7 @@ effective_mcc (gint mcc)
 
 /* each line is of the form:
    xxx    logical_id
-   
+
   NOTE: this function is NOT re-entrant, the out-param country
   are static strings that should NOT be freed. and will change when
   calling this function again
@@ -156,32 +156,29 @@ effective_mcc (gint mcc)
 static int
 parse_mcc_mapping_line (const char* line,  char** country)
 {
-	int i, j;
 	char mcc[4];  /* the mcc code, always 3 bytes*/
-	static char my_country[128];
+	gchar *iter, *tab, *final;
 
 	if (!line) {
 		*country = NULL;
 		return 0;
 	}
-	
-	for (i = 3, j = 0; i < 128; ++i) {
-		char kar = line[i];
-		if (kar == '\0')
-			break;
-		else if (kar < '_')
-			continue;
-		else 
-			my_country [j++] = kar;
-	}
-	my_country[j] = '\0';
 
-	mcc[0] = line[0];
-	mcc[1] = line[1];
-	mcc[2] = line[2];
+	/* Go to the first tab (Country separator) */
+	tab = g_utf8_strrchr (line, -1, '\t');
+	*country = g_utf8_find_next_char (tab, NULL);
+
+	/* Replace by end of string */
+	final = g_utf8_strrchr (tab, g_utf8_strlen (tab, 100) + 1, '\n');
+	*final = '\0';
+
+	/* Get MCC code */
+	mcc[0] = g_utf8_get_char (line);
+	iter = g_utf8_find_next_char (line, NULL);
+	mcc[1] = g_utf8_get_char (iter);
+	iter = g_utf8_find_next_char (iter, NULL);
+	mcc[2] = g_utf8_get_char (iter);
 	mcc[3] = '\0';
-	
-	*country = my_country;
 
 	return effective_mcc ((int) strtol ((const char*)mcc, NULL, 10));
 }
@@ -193,34 +190,25 @@ static void
 load_from_file (ModestCountryPicker *self, GtkListStore *liststore)
 {
 	ModestCountryPickerPrivate *priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
-	
+	gboolean translated;
 	char line[MAX_LINE_LEN];
 	guint previous_mcc = 0;
-	gchar *territory, *fallback = NULL;
-	gchar *current_locale;
+	gchar *territory;
 
-	/* Get the territory specified for the current locale */
-	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
-
-	/* Tricky stuff, the translations of the OSSO countries does
-	   not always correspond to the country names in locale
-	   databases. Add all these cases here. sergio */
-	if (!strcmp (territory, "United Kingdom"))
-		fallback = g_strdup ("UK");
-
-	current_locale = setlocale (LC_ALL ,NULL);
-
-	FILE *file = modest_maemo_open_mcc_mapping_file ();
+	FILE *file = modest_maemo_open_mcc_mapping_file (&translated);
 	if (!file) {
 		g_warning("Could not open mcc_mapping file");
 		return;
 	}
 
-	while (fgets (line, MAX_LINE_LEN, file) != NULL) { 
+	/* Get the territory specified for the current locale */
+	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
+
+	while (fgets (line, MAX_LINE_LEN, file) != NULL) {
 
 		int mcc;
 		char *country = NULL;
-		const gchar *name_translated, *english_translation;
+		const gchar *name_translated;
 
 		mcc = parse_mcc_mapping_line (line, &country);
 		if (!country || mcc == 0) {
@@ -235,25 +223,33 @@ load_from_file (ModestCountryPicker *self, GtkListStore *liststore)
 		previous_mcc = mcc;
 
 		if (!priv->locale_mcc) {
-			english_translation = dgettext ("osso-countries", country);
-			if (!strcmp (english_translation, territory) ||
-			    (fallback && !strcmp (english_translation, fallback)))
-				priv->locale_mcc = mcc;
+			if (translated) {
+				if (!g_utf8_collate (country, territory))
+					priv->locale_mcc = mcc;
+				g_debug ("'%s' || '%s' || %d", territory, country, mcc);
+			} else {
+				gchar *translation = dgettext ("osso-countries", country);
+				if (!g_utf8_collate (translation, territory))
+					priv->locale_mcc = mcc;
+				g_debug ("'%s' || '%s' || %d", territory, translation, mcc);
+			}
 		}
 		name_translated = dgettext ("osso-countries", country);
-		
+
 		/* Add the row to the model: */
 		GtkTreeIter iter;
 		gtk_list_store_append (liststore, &iter);
 		gtk_list_store_set(liststore, &iter, MODEL_COL_MCC, mcc, MODEL_COL_NAME, name_translated, -1);
-	}	
+	}
 	fclose (file);
+
+	/* Fallback to Finland */
+	if (!priv->locale_mcc)
+		priv->locale_mcc = 244;
 
 	/* Sort the items: */
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (liststore), 
 					      MODEL_COL_NAME, GTK_SORT_ASCENDING);
-
-	g_free (fallback);
 }
 
 static void
@@ -276,7 +272,7 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	 * This must match our MODEL_COLS enum constants.
 	 */
 	model = gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT);
-	
+
 	/* Country column:
 	 * The ID model column in not shown in the view. */
 	renderer = gtk_cell_renderer_text_new ();
