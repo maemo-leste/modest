@@ -130,7 +130,14 @@ struct _ModestGtkhtmlMimePartViewPrivate {
 										       MODEST_TYPE_GTKHTML_MIME_PART_VIEW, \
 										       ModestGtkhtmlMimePartViewPrivate))
 
+enum {
+	STOP_STREAMS_SIGNAL,
+	LAST_SIGNAL
+};
+
 static GtkHTMLClass *parent_class = NULL;
+
+static guint signals[LAST_SIGNAL] = {0};
 
 GtkWidget *
 modest_gtkhtml_mime_part_view_new ()
@@ -246,6 +253,15 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 	
 	g_type_class_add_private (gobject_class, sizeof(ModestGtkhtmlMimePartViewPrivate));
 
+	signals[STOP_STREAMS_SIGNAL] = 
+		g_signal_new ("stop-streams",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestGtkhtmlMimePartViewClass,stop_streams),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
 }
 
 static void    
@@ -300,6 +316,8 @@ static void
 modest_gtkhtml_mime_part_view_dispose (GObject *obj)
 {
 	ModestGtkhtmlMimePartViewPrivate *priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (obj);
+
+	g_signal_emit (G_OBJECT (obj), signals[STOP_STREAMS_SIGNAL], 0);
 
 	if (priv->part) {
 		g_object_unref (priv->part);
@@ -417,6 +435,8 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	
 	g_return_if_fail (self);
 	g_return_if_fail (part);
+
+	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
 	
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self));
 
@@ -437,6 +457,8 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	g_return_if_fail (self);
 	g_return_if_fail (part);
 
+	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
+	
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self)); 
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	text_to_html_stream = TNY_STREAM (modest_stream_text_to_html_new (tny_stream));
@@ -459,6 +481,8 @@ set_empty_part (ModestGtkhtmlMimePartView *self)
 {
 	g_return_if_fail (self);
 
+	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
+	
 	gtk_html_load_from_string (GTK_HTML(self),
 				   "", 1);
 }

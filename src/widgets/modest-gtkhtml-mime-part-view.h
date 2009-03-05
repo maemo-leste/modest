@@ -77,6 +77,9 @@ struct _ModestGtkhtmlMimePartViewClass {
 	gboolean (*search_func)             (ModestISearchView *self, const gchar *string);
 	gboolean (*search_next_func)        (ModestISearchView *self);
 	gboolean (*get_selection_area_func) (ModestISearchView *self, gint *x, gint *y, gint *width, gint *height);
+
+	/* signals */
+	void (*stop_streams) (ModestGtkhtmlMimePartView *self);
 };
 
 

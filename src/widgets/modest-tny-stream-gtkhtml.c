@@ -31,6 +31,7 @@
 /* modest-tny-stream-gtkhtml.c */
 
 #include "modest-tny-stream-gtkhtml.h"
+#include "modest-gtkhtml-mime-part-view.h"
 #include <tny-stream.h>
 #include <gtkhtml/gtkhtml-stream.h>
 #include <gtkhtml/gtkhtml-search.h>
@@ -41,6 +42,8 @@ static void  modest_tny_stream_gtkhtml_init         (ModestTnyStreamGtkhtml *obj
 static void  modest_tny_stream_gtkhtml_finalize     (GObject *obj);
 
 static void  modest_tny_stream_gtkhml_iface_init (gpointer g_iface, gpointer iface_data);
+
+static void  stop_streams (ModestGtkhtmlMimePartView *view, gpointer userdata);
 
 /* list my signals */
 enum {
@@ -53,6 +56,7 @@ typedef struct _ModestTnyStreamGtkhtmlPrivate ModestTnyStreamGtkhtmlPrivate;
 struct _ModestTnyStreamGtkhtmlPrivate {
 	GtkHTMLStream *stream;
 	GtkHTML *html;
+	guint stop_streams_id;
 };
 #define MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                        MODEST_TYPE_TNY_STREAM_GTKHTML, \
@@ -118,6 +122,7 @@ modest_tny_stream_gtkhtml_init (ModestTnyStreamGtkhtml *obj)
 
 	priv->stream  = NULL;
 	priv->html = NULL;
+	priv->stop_streams_id = 0;
 }
 
 static void
@@ -127,6 +132,12 @@ modest_tny_stream_gtkhtml_finalize (GObject *obj)
 
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(obj);
 	priv->stream = NULL;
+
+	if (priv->stop_streams_id > 0) {
+		g_signal_handler_disconnect (G_OBJECT (priv->html), priv->stop_streams_id);
+		priv->stop_streams_id = 0;
+	}
+
 	if (priv->html) {
 		g_object_unref (priv->html);
 		priv->html = NULL;
@@ -146,6 +157,9 @@ modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream, GtkHTML *html)
 	
 	priv->stream = stream;
 	priv->html = g_object_ref (html);
+
+	priv->stop_streams_id = g_signal_connect (G_OBJECT (html), "stop-streams",
+						  G_CALLBACK (stop_streams), obj);
 
 	return obj;
 }
@@ -176,7 +190,7 @@ gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 	if (n == 0 || !buffer)
 		return 0;
 
-	if (!GTK_WIDGET_VISIBLE (priv->html))
+	if (!priv->html || !GTK_WIDGET_VISIBLE (priv->html))
 		return -1;
 
 	gtk_html_stream_write (priv->stream, buffer, n);
@@ -198,10 +212,14 @@ gtkhtml_close (TnyStream *self)
 	g_return_val_if_fail (self, 0);
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
 	
-	if (GTK_WIDGET_VISIBLE (priv->html)) {
+	if (priv->html && GTK_WIDGET_VISIBLE (priv->html)) {
 		gtk_html_stream_close   (priv->stream, GTK_HTML_STREAM_OK);
 	}
 	priv->stream = NULL;
+	if (priv->html && priv->stop_streams_id > 0) {
+		g_signal_handler_disconnect (G_OBJECT (priv->html), priv->stop_streams_id);
+		priv->stop_streams_id = 0;
+	}
 	if (priv->html) {
 		g_object_unref (priv->html);
 		priv->html = NULL;
@@ -232,6 +250,25 @@ gtkhtml_write_to_stream (TnyStream *self, TnyStream *output)
 	return 0;
 }
 
+static void
+stop_streams (ModestGtkhtmlMimePartView *view, gpointer userdata)
+{
+	ModestTnyStreamGtkhtml *self = (ModestTnyStreamGtkhtml *) userdata;
+	ModestTnyStreamGtkhtmlPrivate *priv;
+	
+	g_return_if_fail (self);
+	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
+
+	if (priv->html && priv->stop_streams_id > 0) {
+		g_signal_handler_disconnect (G_OBJECT (priv->html), priv->stop_streams_id);
+		priv->stop_streams_id = 0;
+	}
+	
+	if (priv->html) {
+		g_object_unref (priv->html);
+		priv->html = NULL;
+	}
+}
 
 static void
 modest_tny_stream_gtkhml_iface_init (gpointer g_iface, gpointer iface_data)
