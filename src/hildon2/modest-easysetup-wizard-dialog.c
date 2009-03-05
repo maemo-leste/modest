@@ -247,16 +247,16 @@ static void
 invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
 {
 	ModestWizardDialogClass *klass = MODEST_WIZARD_DIALOG_GET_CLASS (wizard_dialog);
-	
+
 	/* Call the vfunc, which may be overridden by derived classes: */
 	if (klass->enable_buttons) {
 		GtkNotebook *notebook = NULL;
 		g_object_get (wizard_dialog, "wizard-notebook", &notebook, NULL);
-		
+
 		const gint current_page_num = gtk_notebook_get_current_page (notebook);
 		if (current_page_num == -1)
 			return;
-			
+
 		GtkWidget* current_page_widget = gtk_notebook_get_nth_page (notebook, current_page_num);
 		(*(klass->enable_buttons))(MODEST_WIZARD_DIALOG (wizard_dialog), current_page_widget);
 	}
@@ -265,9 +265,28 @@ invoke_enable_buttons_vfunc (ModestEasysetupWizardDialog *wizard_dialog)
 static void
 on_caption_entry_changed (GtkEditable *editable, gpointer user_data)
 {
-	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	g_assert(self);
+	ModestEasysetupWizardDialog *self;
+	gboolean mandatory, empty;
+	ModestEasysetupWizardDialogPrivate *priv;
+
+	g_return_if_fail (user_data);
+
+	self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
 	invoke_enable_buttons_vfunc(self);
+
+	empty = !g_utf8_collate (gtk_entry_get_text (GTK_ENTRY (editable)), "");
+	mandatory = ((GtkWidget *) editable == priv->entry_account_title) ||
+		((GtkWidget *) editable == priv->entry_user_username) || 
+		((GtkWidget *) editable == priv->entry_user_email);
+
+	/* Show a banner & get focus */
+	if (empty && mandatory) {
+		modest_platform_information_banner ((GtkWidget *) editable, NULL, 
+						    _CS("ckct_ib_enter_some_text"));
+		gtk_widget_grab_focus (GTK_WIDGET (editable));
+	}
 }
 
 static void
@@ -1830,7 +1849,7 @@ real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next)
 	/* Get data */
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (dialog);
 	g_object_get (dialog, "wizard-notebook", &notebook, NULL);
-    	
+
 	/* Disable the Finish button until we are on the last page,
 	 * because HildonWizardDialog enables this for all but the
 	 * first page */
@@ -1847,9 +1866,12 @@ real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next)
 		gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog),
 						   MODEST_WIZARD_DIALOG_FINISH,
 						   FALSE);
-		enable_next = priv->check_support_done;
+
+		/* If the check support is not done then do not enable
+		   the wizard to continue */
+		enable_next = enable_next && priv->check_support_done;
 	}
-    	
+
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog),
 					   MODEST_WIZARD_DIALOG_NEXT,
 					   enable_next);

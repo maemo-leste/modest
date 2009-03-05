@@ -226,12 +226,10 @@ load_from_file (ModestCountryPicker *self, GtkListStore *liststore)
 			if (translated) {
 				if (!g_utf8_collate (country, territory))
 					priv->locale_mcc = mcc;
-				g_debug ("'%s' || '%s' || %d", territory, country, mcc);
 			} else {
 				gchar *translation = dgettext ("osso-countries", country);
 				if (!g_utf8_collate (translation, territory))
 					priv->locale_mcc = mcc;
-				g_debug ("'%s' || '%s' || %d", territory, translation, mcc);
 			}
 		}
 		name_translated = dgettext ("osso-countries", country);
