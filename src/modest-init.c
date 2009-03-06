@@ -480,7 +480,7 @@ gboolean modest_init_one_local_folder (gchar *maildir_path)
  */
 gboolean
 modest_init_local_folders (const gchar* location_filepath)
-{	
+{
 	gboolean retval = TRUE;
 
 	gchar *maildir_path = modest_local_folder_info_get_maildir_path (location_filepath);
@@ -495,18 +495,10 @@ modest_init_local_folders (const gchar* location_filepath)
 					       NULL);
 		const gboolean created = modest_init_one_local_folder (dir);
 		g_free(dir);
-			
+
 		if (!created) {
 			retval = FALSE;
 		}
-
-		#if 0
-		/* Do this if we only create the top-level dir: */
-		if (g_mkdir_with_parents (maildir_path, 0755) < 0) {
-			g_printerr ("modest: %s: failed to create %s\n", __FUNCTION__, location_filepath);
-			retval = FALSE;
-		}
-		#endif
 	}
 	else {
 		/* Create each of the standard on-disk folders.
@@ -515,16 +507,16 @@ modest_init_local_folders (const gchar* location_filepath)
 		for (i = 0; i != G_N_ELEMENTS(LOCAL_FOLDERS); ++i) {
 			gchar *dir = g_build_filename (maildir_path,
 							modest_local_folder_info_get_type_name(LOCAL_FOLDERS[i]),
-							NULL);			
+							NULL);
 			const gboolean created = modest_init_one_local_folder (dir);
 			g_free(dir);
-			
+
 			if (!created) {
 				retval = FALSE;
 			}
 		}
 	}
-	
+
 	g_free (maildir_path);
 	return retval;
 }
