@@ -416,8 +416,7 @@ static void
 update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv; 
-	gchar* provider_id;
-	gchar* domain_name = NULL;
+	gchar* provider_id = NULL, *with_at = NULL;
 
 	g_assert(self);
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
@@ -425,18 +424,21 @@ update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 	/* Fill the providers combo, based on the selected country: */
 	provider_id = modest_provider_picker_get_active_provider_id (
 		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
-	
-	if(provider_id)
-		domain_name = modest_presets_get_domain (priv->presets, provider_id);
-	
-	if(!domain_name)
-		domain_name = g_strdup (MODEST_EXAMPLE_EMAIL_ADDRESS);
-		
+
+	if (provider_id) {
+		gchar *domain_name = modest_presets_get_domain (priv->presets, provider_id);
+		with_at = g_strdup_printf ("%c%s", '@', domain_name);
+		g_free (domain_name);
+	}
+
+	/* The sample address already contains the '@' */
+	if (!with_at)
+		with_at = g_strdup (MODEST_EXAMPLE_EMAIL_ADDRESS);
+
 	if (priv->entry_user_email)
-		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_email), domain_name);
-		
-	g_free (domain_name);
-	
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_email), with_at);
+
+	g_free (with_at);
 	g_free (provider_id);
 }
 
