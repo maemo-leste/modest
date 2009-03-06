@@ -1995,8 +1995,22 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 	}
 
 	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS)) {
-		if (!modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
-			return FALSE;
+		if (TNY_IS_ACCOUNT (instance)) {
+			if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (instance)))
+				return FALSE;
+		} else if (TNY_IS_FOLDER (instance)) {
+			if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance)))
+				return FALSE;
+		}
+	}
+
+	if (retval && (priv->filter & MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS)) {
+		if (TNY_IS_ACCOUNT (instance)) {
+			if (modest_tny_account_is_memory_card_account (TNY_ACCOUNT (instance)))
+				return FALSE;
+		} else if (TNY_IS_FOLDER (instance)) {
+			if (modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance)))
+				return FALSE;
 		}
 	}
 

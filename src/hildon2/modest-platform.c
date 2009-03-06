@@ -2503,14 +2503,13 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
         pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
-	
+
 	gtk_widget_set_sensitive (back_button, FALSE);
 
 	gtk_label_set_text (GTK_LABEL (selection_label), "");
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
-	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
 
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
@@ -2531,7 +2530,7 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
         pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
-	
+
 	gtk_widget_set_sensitive (back_button, TRUE);
 
 	account = TNY_ACCOUNT (folder_store);
@@ -2546,15 +2545,21 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 		} else {
 			selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
 		}
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
+					       MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
 	} else if (modest_tny_account_is_memory_card_account (account)) {
 		account_id = tny_account_get_id (account);
 		selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
+					       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	} else {
 		account_id = tny_account_get_id (account);
 
 		selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
-		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), 
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 					       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
+		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
+					       MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
 	}
 	gtk_label_set_text (GTK_LABEL (selection_label), selection_label_text);
 	g_free (selection_label_text);
@@ -2575,7 +2580,16 @@ on_move_to_dialog_back_clicked (GtkButton *button,
 				gpointer userdata)
 {
 	GtkWidget *dialog = (GtkWidget *) userdata;
+	ModestFolderView *folder_view;
 
+	/* Revert the effect of show_folders filters */
+        folder_view = MODEST_FOLDER_VIEW (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
+	modest_folder_view_set_account_id_of_visible_server_account (folder_view, NULL);
+	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
+	modest_folder_view_unset_filter (folder_view, MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
+	modest_folder_view_unset_filter (folder_view, MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
+
+	/* Back to show accounts */
 	move_to_dialog_show_accounts (dialog);
 }
 
