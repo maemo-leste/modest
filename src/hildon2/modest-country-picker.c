@@ -290,6 +290,9 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 					 0, GTK_TREE_MODEL (model));
 	hildon_touch_selector_entry_set_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector),
 						     MODEL_COL_NAME);
+	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
+						    HILDON_GTK_INPUT_MODE_ALPHA |
+						    HILDON_GTK_INPUT_MODE_AUTOCAP);
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 
