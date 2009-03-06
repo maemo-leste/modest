@@ -195,12 +195,6 @@ modest_hildon2_window_mgr_instance_init (ModestHildon2WindowMgr *obj)
 	priv->modal_handler_uids = NULL;
 	priv->display_state = OSSO_DISPLAY_ON;
 
-	/* Connect to the account store "account-removed" signal" */
-	priv->accounts_handler = g_signal_connect (modest_runtime_get_account_store (),
-						   "account-removed",
-						   G_CALLBACK (on_account_removed),
-						   obj);
-
 	/* Listen for changes in the screen, we don't want to show a
 	   led pattern when the display is on for example */
 	osso_hw_set_display_event_cb (modest_maemo_utils_get_osso_context (),
@@ -813,6 +807,20 @@ static ModestWindow *
 modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self)
 {
 	ModestWindow *initial_window = NULL;
+	ModestHildon2WindowMgrPrivate *priv;
+
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* Connect to the account store "account-removed" signal". We
+	   do this here because in the init the singletons are still
+	   not initialized properly */
+	if (!g_signal_handler_is_connected (modest_runtime_get_account_store (),
+					    priv->accounts_handler)) {
+		priv->accounts_handler = g_signal_connect (modest_runtime_get_account_store (),
+							   "account-removed",
+							   G_CALLBACK (on_account_removed),
+							   self);
+	}
 
 	/* Return accounts window */
 	initial_window = MODEST_WINDOW (modest_accounts_window_new ());
