@@ -112,10 +112,6 @@ static void    add_connection_specific_transport_accounts         (ModestTnyAcco
 
 static void    remove_connection_specific_transport_accounts      (ModestTnyAccountStore *self);
 
-static void    connection_status_changed   (TnyAccount *account, 
-					    TnyConnectionStatus status, 
-					    gpointer data);
-
 static inline gboolean only_local_accounts        (ModestTnyAccountStore *self);
 
 /* list my signals */
@@ -1502,34 +1498,6 @@ add_existing_accounts (ModestTnyAccountStore *self)
 	modest_account_mgr_free_account_names (account_names);
 }
 
-static void 
-connection_status_changed (TnyAccount *account, 
-			   TnyConnectionStatus status, 
-			   gpointer data)
-{
-	/* We do this here and not in the connection policy because we
-	   don't want to do it for every account, just for the
-	   accounts that are interactively added when modest is
-	   runnning */
-	if (status == TNY_CONNECTION_STATUS_CONNECTED) {
-		const gchar *account_name;
-		ModestWindow *top_window;
-		ModestTnyAccountStorePrivate *priv = NULL;
-
-		priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (data);
-
-		/* Remove this handler */
-		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers, 
-								  G_OBJECT (account),
-								  "connection_status_changed");
-
-		/* Perform a send receive */
-		account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		top_window = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
-		modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, TRUE, top_window);
-	}
-}
-
 static TnyAccount*
 create_tny_account (ModestTnyAccountStore *self,
 		    const gchar *name,
@@ -1538,7 +1506,7 @@ create_tny_account (ModestTnyAccountStore *self,
 {
 	TnyAccount *account = NULL;
 	ModestTnyAccountStorePrivate *priv = NULL;
-	
+
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	account = modest_tny_account_new_from_account (priv->account_mgr,
@@ -1551,18 +1519,6 @@ create_tny_account (ModestTnyAccountStore *self,
 		/* Forget any cached password for the account, so that
 		   we use a new account if any */
 		forget_password_in_memory (self, tny_account_get_id (account));
-
-		/* Install a signal handler that will refresh the
-		   account the first time it becomes online. Do this
-		   only if we're adding a new account while the
-		   program is running (we do not want to do this
-		   allways) */
-		if (type == TNY_ACCOUNT_TYPE_STORE && notify)
-			priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
-								       G_OBJECT (account), 
-								       "connection_status_changed",
-								       G_CALLBACK (connection_status_changed),
-								       self);
 
 		/* Set the account store */
 		g_object_set_data (G_OBJECT(account), "account_store", self);
@@ -1755,15 +1711,6 @@ on_account_disconnect_when_removing (TnyCamelAccount *account,
 
 	self = MODEST_TNY_ACCOUNT_STORE (user_data);
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
-
-	/* Remove the connection-status-changed handler if it's still there */
-	if (modest_signal_mgr_is_connected (priv->sighandlers, 
-					    G_OBJECT (account),
-					    "connection_status_changed")) {
-		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers, 
-								  G_OBJECT (account),
-								  "connection_status_changed");
-	}
 
 	/* Cancel all pending operations */
 	tny_account_cancel (TNY_ACCOUNT (account));

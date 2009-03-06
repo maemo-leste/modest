@@ -31,8 +31,11 @@
 #include <glib.h>
 
 #include "modest-default-connection-policy.h"
+#include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h"
 #include "modest-runtime.h"
+#include "modest-tny-account.h"
+#include "modest-ui-actions.h"
 #include <tny-account.h>
 #include <tny-store-account.h>
 
@@ -48,10 +51,29 @@ static void
 modest_default_connection_policy_on_connect (TnyConnectionPolicy *self, TnyAccount *account)
 {
 	/* Set the username as succedded */
-	if (TNY_IS_STORE_ACCOUNT (account))
-		modest_account_mgr_set_server_account_username_has_succeeded (modest_runtime_get_account_mgr (), 
-									      tny_account_get_id (account), 
-									      TRUE);
+	if (TNY_IS_STORE_ACCOUNT (account)) {
+		gboolean first_time = FALSE;
+		const gchar *id;
+		ModestAccountMgr *acc_mgr;
+
+		acc_mgr = modest_runtime_get_account_mgr ();
+		id = tny_account_get_id (account);
+		first_time = !modest_account_mgr_get_server_account_username_has_succeeded (acc_mgr, id);
+
+		/* If it's the first connection then perform a send&receive */
+		if (first_time) {
+			const gchar *account_name;
+			ModestWindow *top_window;
+
+			modest_account_mgr_set_server_account_username_has_succeeded (acc_mgr, id, TRUE);
+
+			/* Perform a send receive */
+			account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			top_window = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
+			if (top_window)
+				modest_ui_actions_do_send_receive (account_name, FALSE, FALSE, TRUE, top_window);
+		}
+	}
 
 	return;
 }
