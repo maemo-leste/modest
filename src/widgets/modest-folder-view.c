@@ -375,7 +375,7 @@ get_inner_models (ModestFolderView *self,
 
 	f_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (!GTK_IS_TREE_MODEL_FILTER(f_model)) {
-		g_warning ("BUG: %s: not a valid filter model", __FUNCTION__);
+		g_debug ("%s: emtpy model or not filter model", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -3417,6 +3417,7 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 void
 modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 {
+#ifndef MODEST_TOOLKIT_HILDON2
 	GtkTreeModel *model;
 	GtkTreeIter iter, inbox_iter;
 	GtkTreeSelection *sel;
@@ -3448,6 +3449,7 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 
 	/* set focus */
 	gtk_widget_grab_focus (GTK_WIDGET(self));
+#endif
 }
 
 
