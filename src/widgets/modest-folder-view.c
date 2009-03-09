@@ -1764,6 +1764,9 @@ foreach_folder_with_id (GtkTreeModel *model,
 		}
 	}
 
+	if (instance)
+		g_object_unref (instance);
+
 	return info->found;
 	
 }
