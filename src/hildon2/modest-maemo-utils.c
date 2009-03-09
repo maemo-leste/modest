@@ -270,7 +270,7 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 		label = gtk_label_new (title);
 	}
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_TRIPLE);
 
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	hildon_gtk_widget_set_theme_size (label, HILDON_SIZE_FINGER_HEIGHT);
