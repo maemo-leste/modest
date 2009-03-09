@@ -201,6 +201,7 @@ static GtkWidget*
 create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 {
 	GtkWidget *vbox, *vbox_update, *vbox_limit, *label, *hbox;
+	GtkWidget *align;
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
@@ -211,7 +212,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 
-	vbox_update = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	vbox_update = gtk_vbox_new (FALSE, 0);
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
@@ -234,7 +235,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	modest_maemo_utils_set_vbutton_layout (title_size_group, 
 					       _("mcen_fi_options_connectiontype"),
 					       ppriv->connect_via);
-	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->connect_via, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->connect_via, FALSE, FALSE, 0);
 
 	/* Update interval */
 
@@ -248,7 +249,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	modest_maemo_utils_set_vbutton_layout (title_size_group, 
 					       _("mcen_fi_options_updateinterval"), 
 					       ppriv->update_interval);
-	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->update_interval, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->update_interval, FALSE, FALSE, 0);
 
 	/* Default account selector */
 	ppriv->accounts_list = get_accounts_list ();
@@ -274,16 +275,16 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 					       _("mcen_ti_default_account"), 
 					       ppriv->default_account_selector);
 	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->default_account_selector, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 
 	/* Add to vbox */
-	gtk_box_pack_start (GTK_BOX (vbox), vbox_update, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), vbox_update, FALSE, FALSE, 0);
 
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
 
 	/* Limits */
-	vbox_limit = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
+	vbox_limit = gtk_vbox_new (FALSE, 0);
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 
@@ -293,11 +294,14 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
 	g_signal_connect (ppriv->size_limit, "notify", G_CALLBACK (on_size_notify), self);
 	label = gtk_label_new (_("mcen_fi_advsetup_sizelimit"));
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 	hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (align), label);
+	gtk_box_pack_start (GTK_BOX (hbox), align, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (hbox), ppriv->size_limit, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (vbox_limit), hbox, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox_limit), hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, 0);
 	gtk_widget_show_all (vbox_limit);
 
 	/* Note: This ModestPairList* must exist for as long as the picker
@@ -311,7 +315,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 					       _("mcen_fi_options_messageformat"), 
 					       ppriv->msg_format);
 
-	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, 0);
 
 	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
 
