@@ -142,11 +142,16 @@ modest_hildon2_global_settings_dialog_init (ModestHildon2GlobalSettingsDialog *s
 {
 	ModestHildon2GlobalSettingsDialogPrivate *priv;
 	ModestGlobalSettingsDialogPrivate *ppriv;
+	GtkWidget *align;
+	GtkWidget *top_vbox;
 
 	priv  = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	ppriv->updating_page = create_updating_page (self);
+	top_vbox = gtk_vbox_new (FALSE, 0);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
@@ -155,9 +160,14 @@ modest_hildon2_global_settings_dialog_init (ModestHildon2GlobalSettingsDialog *s
 	g_object_set_data (G_OBJECT(ppriv->updating_page), DEFAULT_FOCUS_WIDGET,
 			   (gpointer)ppriv->auto_update);
 
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->updating_page);
+	gtk_container_add (GTK_CONTAINER (top_vbox), ppriv->updating_page);
+	gtk_container_add (GTK_CONTAINER (align), top_vbox);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), align);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
+
+	gtk_widget_show (align);
+	gtk_widget_show (top_vbox);
 }
 
 static void
