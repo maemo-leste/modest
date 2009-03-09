@@ -582,6 +582,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	GtkSizeGroup* value_sizegroup;
 	GtkWidget *box;
 	ModestEasysetupWizardDialogPrivate *priv;
+	GtkWidget *align;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 	
@@ -684,7 +685,12 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
 
-	return GTK_WIDGET (box);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), box);
+	
+	return GTK_WIDGET (align);
 }
 
 static GtkWidget*
