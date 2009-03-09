@@ -1112,6 +1112,7 @@ add_columns (GtkWidget *treeview)
 #ifdef MODEST_TOOLKIT_HILDON2
 		      "ellipsize", PANGO_ELLIPSIZE_MIDDLE,
 		      "ypad", MODEST_MARGIN_DEFAULT,
+		      "xpad", MODEST_MARGIN_DEFAULT,
 #else
 		      "ellipsize", PANGO_ELLIPSIZE_END,
 #endif
