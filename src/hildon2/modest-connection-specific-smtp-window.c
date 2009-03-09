@@ -335,6 +335,7 @@ static void
 modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow *self)
 {
 	ModestWindowMgr *mgr;
+	GtkWidget *align;
 
 	/* Specify a default size */
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
@@ -368,6 +369,7 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	GtkTreeViewColumn *view_column = gtk_tree_view_column_new ();
 	gtk_tree_view_column_set_expand (view_column, TRUE);
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (renderer), "xpad", MODEST_MARGIN_DOUBLE, NULL);
 	gtk_tree_view_column_pack_start(view_column, renderer, TRUE);
 	gtk_tree_view_column_set_attributes (view_column, renderer, 
 	"text", MODEL_COL_NAME, NULL);
@@ -385,22 +387,25 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* The application must call modest_connection_specific_smtp_window_fill_with_connections(). */
 
 	GtkWidget *vbox = GTK_DIALOG(self)->vbox;
-	//gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 
 	/* Introductory note: */
 	GtkWidget *label = gtk_label_new(_("mcen_ia_optionalsmtp_note"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE + MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 	gtk_widget_set_size_request (label, 600, -1);
 	gtk_widget_show (label);
-	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
 	/* Put the treeview in a pannable and add it to the box: */
 	priv->pannable = hildon_pannable_area_new ();
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 	g_object_set (G_OBJECT (priv->pannable), "initial-hint", TRUE, NULL);
-	gtk_container_set_border_width (GTK_CONTAINER (priv->pannable), MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (priv->pannable);
-	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->pannable), TRUE, TRUE, MODEST_MARGIN_HALF);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), GTK_WIDGET (priv->pannable));
+	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (align), TRUE, TRUE, 0);
 	gtk_widget_show (vbox);
 
 	g_signal_connect (G_OBJECT (priv->treeview), "row-activated", G_CALLBACK (on_row_activated), self);
