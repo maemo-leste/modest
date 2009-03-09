@@ -31,6 +31,7 @@
 #include <modest-osso-state-saving.h>
 #include <libosso.h>
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-helper.h>
 #include <modest-window-mgr.h>
 #include <modest-window-priv.h>
 #include <modest-signal-mgr.h>
@@ -164,9 +165,9 @@ static void update_sort_button (ModestHeaderWindow *self);
 static GtkWindowClass *parent_class = NULL;
 
 #define EMPTYVIEW_XALIGN 0.5
-#define EMPTYVIEW_YALIGN 0.0
+#define EMPTYVIEW_YALIGN 0.5
 #define EMPTYVIEW_XSPACE 1.0
-#define EMPTYVIEW_YSPACE 0.0
+#define EMPTYVIEW_YSPACE 1.0
 
 
 
@@ -386,6 +387,8 @@ create_empty_view (ModestWindow *self)
 
 	align = gtk_alignment_new(EMPTYVIEW_XALIGN, EMPTYVIEW_YALIGN, EMPTYVIEW_XSPACE, EMPTYVIEW_YSPACE);
 	label = gtk_label_new (_("mcen_ia_nomessages"));
+	hildon_helper_set_logical_font (label, "LargeSystemFont");
+	gtk_misc_set_alignment (GTK_MISC (label), 0.5, 0.5);
 	gtk_widget_show (label);
 	gtk_widget_show (align);
 	gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);	
