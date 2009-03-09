@@ -113,7 +113,7 @@ enable_widgets (ModestSignatureEditorDialog *self)
 		
 	const gboolean enable = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
 	gtk_widget_set_sensitive (priv->label, enable);
-	gtk_widget_set_sensitive (priv->pannable, enable);
+	gtk_widget_set_sensitive (priv->textview, enable);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->textview), enable);
 }
 
@@ -152,15 +152,11 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_box_pack_start (GTK_BOX (top_box), priv->label, FALSE, FALSE, 0);
 	gtk_widget_show (priv->label);
 	
-	priv->pannable = hildon_pannable_area_new ();
-	gtk_box_pack_start (GTK_BOX (top_box), priv->pannable, TRUE, TRUE, 0);
-	gtk_widget_show (priv->pannable);
-		
 	priv->textview = hildon_text_view_new ();
-	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->textview);
 	gtk_widget_show (priv->textview);
 	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
+	gtk_box_pack_start (GTK_BOX (top_box), priv->textview, TRUE, TRUE, 0);
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
@@ -169,9 +165,16 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), top_box);
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), align);
 	
 	gtk_widget_show (top_box);
+
+	priv->pannable = hildon_pannable_area_new ();
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), align);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (top_box), 
+					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable)));
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), priv->pannable);
+	gtk_widget_show (priv->pannable);		
+
 	gtk_widget_show (box);
 	gtk_widget_set_size_request (GTK_WIDGET (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 	
