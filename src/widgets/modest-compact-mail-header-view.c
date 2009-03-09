@@ -373,7 +373,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	priv->date_label = gtk_label_new (NULL);
 	gtk_label_set_justify (GTK_LABEL (priv->date_label), GTK_JUSTIFY_RIGHT);
 	gtk_misc_set_alignment (GTK_MISC (priv->date_label), 1.0, 1.0);
-	gtk_misc_set_padding (GTK_MISC (priv->date_label), MODEST_MARGIN_DEFAULT, 0);
+	gtk_misc_set_padding (GTK_MISC (priv->date_label), MODEST_MARGIN_DOUBLE, 0);
 
 	gtk_box_pack_start (GTK_BOX (second_hbox), priv->fromto_label, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (second_hbox), priv->fromto_contents, TRUE, TRUE, 0);
