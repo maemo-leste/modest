@@ -44,6 +44,7 @@
 #include <widgets/modest-tny-stream-gtkhtml.h>
 #include <libgnomevfs/gnome-vfs.h>
 #include <gdk/gdkkeysyms.h>
+#include <modest-ui-constants.h>
 
 /* gobject structure methods */
 static void    modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass);
@@ -276,6 +277,7 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_html_set_caret_mode      (GTK_HTML(self), FALSE);
 	gtk_html_set_blocking        (GTK_HTML(self), TRUE);
 	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
+	gtk_container_set_border_width (GTK_CONTAINER (self), MODEST_MARGIN_DEFAULT);
 
 	gdk_color_parse ("#fff", &base);
 	gdk_color_parse ("#000", &text);
