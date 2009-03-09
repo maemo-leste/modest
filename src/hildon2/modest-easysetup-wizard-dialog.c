@@ -696,11 +696,13 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 static GtkWidget*
 create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 {
+	GtkWidget *align;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
@@ -710,12 +712,19 @@ create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 
-	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 1.0);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_widget_show (label);
 
 	gtk_widget_show (GTK_WIDGET (box));
-	return GTK_WIDGET (box);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), box);
+	
+	return GTK_WIDGET (align);
 }
 
 /** Change the caption title for the incoming server, 
