@@ -376,6 +376,7 @@ static GtkWidget*
 create_page_welcome (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box;
+	GtkWidget *align;
 	GtkWidget *label; 
 	ModestEasysetupWizardDialogPrivate *priv;
 
@@ -383,15 +384,20 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
 	priv->check_support_progress = gtk_progress_bar_new ();
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	/* So that it is not truncated: */
-	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_box_pack_end (GTK_BOX (box), priv->check_support_progress, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (align), box);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
-	return GTK_WIDGET (box);
+	gtk_widget_show (align);
+	return GTK_WIDGET (align);
 }
 
 static void
