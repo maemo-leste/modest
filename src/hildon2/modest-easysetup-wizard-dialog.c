@@ -470,8 +470,9 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 
 	/* Create a size group to be used by all captions.
@@ -490,10 +491,6 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->account_country_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->account_country_picker);
 	
-	GtkWidget *separator = gtk_hseparator_new ();
-	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (separator);
-            
 	/* The service provider widgets: */	
 	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE,
 										       HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
@@ -502,7 +499,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 					       priv->account_serviceprovider_picker);
 	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
 			  G_CALLBACK (on_serviceprovider_picker_button_value_changed), self);
-	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, 0);
 	gtk_widget_show (priv->account_serviceprovider_picker);
 	
 	/* The description widgets: */	
