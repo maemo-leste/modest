@@ -43,6 +43,7 @@
 #include <string.h>
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
+#include <modest-ui-constants.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifndef MODEST_TOOLKIT_GTK
@@ -121,7 +122,7 @@ modest_recpt_editor_new (void)
 {
 	ModestRecptEditor *self = g_object_new (MODEST_TYPE_RECPT_EDITOR, 
 						"homogeneous", FALSE,
-						"spacing", 1,
+						"spacing", MODEST_MARGIN_DOUBLE,
 						NULL);
 
 	return GTK_WIDGET (self);
