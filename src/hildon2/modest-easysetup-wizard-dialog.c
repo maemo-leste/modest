@@ -471,6 +471,7 @@ static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *caption;
+	GtkWidget *align;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
@@ -531,7 +532,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mcen_fi_account_title"), FALSE,
 				    priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the account title, 
@@ -565,8 +566,13 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), box);
 	
-	return GTK_WIDGET (box);
+	return GTK_WIDGET (align);
 }
 
 static GtkWidget*
