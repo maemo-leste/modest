@@ -343,7 +343,7 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 					       priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	connect_for_modified (self, priv->entry_account_title);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the account title, 
@@ -380,7 +380,7 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 
 	gtk_widget_show (priv->retrieve_picker);
 	connect_for_modified (self, priv->retrieve_picker);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->retrieve_picker, TRUE, TRUE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (hbox), priv->retrieve_picker, TRUE, TRUE, 0);
 
 	/* The limit-retrieve picker: */
 	priv->limit_retrieve_picker = GTK_WIDGET (modest_limit_retrieve_picker_new (MODEST_EDITABLE_SIZE,
@@ -390,8 +390,8 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 					       priv->limit_retrieve_picker);
 	gtk_widget_show (priv->limit_retrieve_picker);
 	connect_for_modified (self, priv->limit_retrieve_picker);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->limit_retrieve_picker, TRUE, TRUE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (hbox), priv->limit_retrieve_picker, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
 	gtk_widget_show (hbox);
 
 	/* The leave-messages widgets: */
@@ -403,7 +403,7 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 		gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_leave_messages), 0.0, 0.5);
 	}
 	connect_for_modified (self, priv->checkbox_leave_messages);
-	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_leave_messages, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_leave_messages, FALSE, FALSE, 0);
 	gtk_widget_show (priv->checkbox_leave_messages);
 
 	g_object_unref (title_sizegroup);
@@ -540,7 +540,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 				  _("mcen_li_emailsetup_name"), FALSE, priv->entry_user_name);
 	gtk_widget_show (priv->entry_user_name);
 	connect_for_modified (self, priv->entry_user_name);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 
 
@@ -564,7 +564,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	connect_for_modified (self, priv->entry_user_username);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the username, 
@@ -592,7 +592,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 				    _("mail_fi_password"), FALSE, priv->entry_user_password);
 	gtk_widget_show (priv->entry_user_password);
 	connect_for_modified (self, priv->entry_user_password);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* The email address widgets: */	
@@ -604,7 +604,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
 	gtk_widget_show (priv->entry_user_email);
 	connect_for_modified (self, priv->entry_user_email);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* Set max length as in the UI spec:
@@ -696,7 +696,7 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 						   "Incoming Server", FALSE, priv->entry_incomingserver);
 	gtk_widget_show (priv->entry_incomingserver);
 	connect_for_modified (self, priv->entry_incomingserver);
-	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_incoming);
 
 	/* Incoming security widgets */
@@ -704,7 +704,7 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
 							TRUE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 
 	gtk_widget_show (priv->incoming_security);
 
@@ -793,7 +793,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	g_free (smtp_caption_label);
 	gtk_widget_show (priv->entry_outgoingserver);
 	connect_for_modified (self, priv->entry_outgoingserver);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 
 	/* Outgoing security widgets */
@@ -801,13 +801,13 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
 							TRUE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->outgoing_security);
 	g_signal_connect (priv->outgoing_security, "missing-mandatory-data",
 			  G_CALLBACK (on_missing_mandatory_data), self);
 
 	GtkWidget *separator = gtk_hseparator_new ();
-	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, 0);
 	gtk_widget_show (separator);
 
 	/* connection-specific checkbox: */
@@ -821,7 +821,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	}
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 	connect_for_modified (self, priv->checkbox_outgoing_smtp_specific);
 
 	/* Connection-specific SMTP-Severs Edit button: */
@@ -830,7 +830,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers, 
 					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);	
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
-	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, FALSE, FALSE, 0);
 
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
@@ -1046,13 +1046,14 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *pannable;
 	GtkWidget *separator;
+	GtkWidget *align;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self);
 
 	priv->incoming_security = NULL;
 	priv->outgoing_security = NULL;
 
-	priv->main_container = gtk_vbox_new (FALSE, MODEST_MARGIN_DOUBLE);
+	priv->main_container = gtk_vbox_new (FALSE, 0);
 	priv->settings = modest_account_settings_new ();
 
 	/* Get the account manager object, 
@@ -1097,9 +1098,14 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	GtkDialog *dialog = GTK_DIALOG (self);
 	pannable = hildon_pannable_area_new ();
 	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), priv->main_container);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), priv->main_container);
+	
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
 	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (pannable));
-	gtk_container_set_border_width (GTK_CONTAINER (dialog->vbox), MODEST_MARGIN_HALF);
 	gtk_widget_show (GTK_WIDGET (priv->main_container));
 	gtk_widget_show (GTK_WIDGET (pannable));
         
