@@ -973,6 +973,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate *priv;
 	gchar *smtp_caption_label;
 	GtkWidget *pannable;
+	GtkWidget *align;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
 	pannable = hildon_pannable_area_new ();
@@ -995,7 +996,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 					       smtp_caption_label, TRUE, priv->entry_outgoingserver);
 	g_free (smtp_caption_label);
 	gtk_widget_show (priv->entry_outgoingserver);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	set_default_custom_servernames (self);
 
@@ -1005,11 +1006,11 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
 							FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->outgoing_security);
 
 	GtkWidget *separator = gtk_hseparator_new ();
-	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, 0);
 	gtk_widget_show (separator);
 
 	/* connection-specific checkbox: */
@@ -1025,7 +1026,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific,
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 
 	/* Connection-specific SMTP-Severs Edit button: */
 	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_advsetup_optional_smtp"));
@@ -1033,7 +1034,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);	
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
@@ -1046,7 +1047,12 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	                  G_CALLBACK (on_entry_outgoing_servername_changed), self);
 
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), box);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), box);
+	
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
 					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (pannable)));
 	gtk_widget_show (GTK_WIDGET (box));
