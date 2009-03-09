@@ -283,10 +283,10 @@ init (ModestWizardDialog *wizard_dialog)
     priv->autotitle = TRUE;
 
     /* Build wizard layout */
-    gtk_box_pack_start_defaults (GTK_BOX (dialog->vbox), GTK_WIDGET (priv->box));
-    gtk_box_pack_start_defaults (GTK_BOX (priv->box), GTK_WIDGET (vbox));
+    gtk_box_pack_start (GTK_BOX (dialog->vbox), GTK_WIDGET (priv->box), TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (priv->box), GTK_WIDGET (vbox), FALSE, FALSE, 0);
     if (priv->image)
-      gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), FALSE, FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), TRUE, TRUE, 0);
 
     /* Add response buttons: finish, previous, next, cancel */
 #ifdef MODEST_TOOLKIT_HILDON1
@@ -432,7 +432,7 @@ set_property (GObject      *object,
              * and remove borders) to make it look like a nice wizard widget */
             gtk_notebook_set_show_tabs (priv->notebook, FALSE);
             gtk_notebook_set_show_border (priv->notebook, FALSE);
-            gtk_box_pack_start_defaults (GTK_BOX( priv->box), GTK_WIDGET (priv->notebook));
+            gtk_box_pack_start (GTK_BOX( priv->box), GTK_WIDGET (priv->notebook), TRUE, TRUE, 0);
 
             /* Show the notebook so that a gtk_widget_show on the dialog is
              * all that is required to display the dialog correctly */
