@@ -608,7 +608,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_name);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the name, 
@@ -630,7 +630,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), FALSE,
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (caption);
@@ -658,7 +658,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_password);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
 	
 	/* The email address widgets: */	
@@ -669,7 +669,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 				    _("mcen_li_emailsetup_email_address"), FALSE, priv->entry_user_email);
 	update_user_email_from_provider (self);
 	gtk_widget_show (priv->entry_user_email);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(priv->entry_user_email), "changed", 
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (caption);
