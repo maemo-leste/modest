@@ -32,6 +32,7 @@
 #include <libosso.h>
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-banner.h>
+#include <hildon/hildon-helper.h>
 #include <modest-ui-actions.h>
 #include <modest-window-mgr.h>
 #include <modest-signal-mgr.h>
@@ -254,7 +255,9 @@ modest_accounts_window_new (void)
 	priv->box = gtk_vbox_new (FALSE, 0);
 
 	no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
-	gtk_misc_set_alignment (GTK_MISC (no_accounts_label), 0.5, 0.0);
+	
+	gtk_misc_set_alignment (GTK_MISC (no_accounts_label), 0.5, 0.5);
+	hildon_helper_set_logical_font (no_accounts_label, "LargeSystemFont");
 
 	empty_view_new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 	hildon_button_set_title (HILDON_BUTTON (empty_view_new_message_button), _("mcen_ti_new_message"));
