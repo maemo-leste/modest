@@ -938,13 +938,18 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	ModestWindow *folder_window;
 	ModestHildon2WindowMgr *window_mgr;
 	FolderPickerHelper *helper = NULL;
+	GtkWidget *top_vbox, *top_align;
 
 	window_mgr = (ModestHildon2WindowMgr *) modest_runtime_get_window_mgr ();
 	folder_window = modest_hildon2_window_mgr_get_folder_window (window_mgr);
 	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW (folder_window), GTK_RESPONSE_NONE);
-
+	
 	folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (folder_window));
-
+	
+	top_vbox = gtk_vbox_new (FALSE, 0);
+	top_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (top_align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	
 	/* Ask the user for the folder name */
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
 					      parent_window,
@@ -966,9 +971,9 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 
 		gtk_misc_set_alignment (GTK_MISC (label_entry), 0.0, 0.5);
 		gtk_size_group_add_widget (sizegroup, label_entry);
-
+		
 		if (suggested_name)
-			gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
+		  gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
 		else
 			gtk_entry_set_text (GTK_ENTRY (entry), _FM("ckdg_va_new_folder_name_stub"));
 		gtk_entry_set_width_chars (GTK_ENTRY (entry),
@@ -976,9 +981,9 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 						g_utf8_strlen (_FM("ckdg_va_new_folder_name_stub"), -1)));
 		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 	}
-
+	
 	if (show_parent) {
-
+	  
 		label_location = gtk_label_new (_FM("ckdg_fi_new_folder_location"));
 
 		gtk_misc_set_alignment (GTK_MISC (label_location), 0.0, 0.5);
@@ -992,14 +997,14 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	}
 
 	g_object_unref (sizegroup);
-
+	
 	/* Connect to the response method to avoid closing the dialog
 	   when an invalid name is selected*/
 	g_signal_connect (dialog,
 			  "response",
 			  G_CALLBACK (on_response),
 			  suggested_parent);
-
+	
 	if (show_name) {
 		/* Track entry changes */
 		g_signal_connect (entry,
@@ -1011,20 +1016,20 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 				  G_CALLBACK (entry_changed),
 				  dialog);
 	}
-
-
+	
+	
 	/* Some locales like pt_BR need this to get the full window
 	   title shown */
 	gtk_widget_set_size_request (GTK_WIDGET (dialog), 300, -1);
-
+	
 	/* Create the hbox */
 	if (show_name) {
 		hbox = gtk_hbox_new (FALSE, 12);
 		gtk_box_pack_start (GTK_BOX (hbox), label_entry, FALSE, FALSE, 0);
 		gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-
+		
 		/* Add hbox to dialog */
-		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		gtk_box_pack_start (GTK_BOX (top_vbox), 
 				    hbox, FALSE, FALSE, 0);
 		g_object_set_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ENTRY, entry);
 	}
@@ -1035,12 +1040,16 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 		gtk_box_pack_start (GTK_BOX (hbox), account_picker, TRUE, TRUE, 0);
 
 		/* Add hbox to dialog */
-		gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		gtk_box_pack_start (GTK_BOX (top_vbox), 
 				    hbox, FALSE, FALSE, 0);
 		g_object_set_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ACCOUNT_PICKER, account_picker);
 	}
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), parent_window);
+
+	gtk_container_add (GTK_CONTAINER (top_align), top_vbox);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), top_align, TRUE, TRUE, 0);
+
 	gtk_widget_show_all (GTK_WIDGET(dialog));
 
 	result = gtk_dialog_run (GTK_DIALOG(dialog));
