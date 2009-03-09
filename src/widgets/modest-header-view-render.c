@@ -42,6 +42,12 @@
 #include <modest-platform.h>
 #include <string.h>
 
+#ifdef MODEST_TOOLKIT_HILDON2
+#define SMALL_ICON_SIZE MODEST_ICON_SIZE_XSMALL
+#else
+#define SMALL_ICON_SIZE MODEST_ICON_SIZE_SMALL
+#endif
+
 static const gchar *
 get_status_string (ModestTnySendQueueStatus status)
 {
@@ -79,34 +85,34 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	case TNY_HEADER_FLAG_DELETED:
 		if (G_UNLIKELY(!deleted_pixbuf))
 			deleted_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_DELETED,
-								   MODEST_ICON_SIZE_SMALL);
+								   SMALL_ICON_SIZE);
 		return deleted_pixbuf;
 	case TNY_HEADER_FLAG_SEEN:
 		if (G_UNLIKELY(!seen_pixbuf))
 			seen_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_READ,
-								MODEST_ICON_SIZE_SMALL);
+								SMALL_ICON_SIZE);
 		return seen_pixbuf;
 	case TNY_HEADER_FLAG_ATTACHMENTS:
 		if (G_UNLIKELY(!attachments_pixbuf))
 			attachments_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_ATTACH,
-								       MODEST_ICON_SIZE_SMALL);
+								       SMALL_ICON_SIZE);
 		return attachments_pixbuf;
 	case TNY_HEADER_FLAG_HIGH_PRIORITY:
 		if (G_UNLIKELY(!high_pixbuf))
 			high_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_HIGH,
-								MODEST_ICON_SIZE_SMALL);
+								SMALL_ICON_SIZE);
 		return high_pixbuf;
 	case TNY_HEADER_FLAG_LOW_PRIORITY:
 		if (G_UNLIKELY(!low_pixbuf))
 			low_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_LOW,
-							       MODEST_ICON_SIZE_SMALL);
+							       SMALL_ICON_SIZE);
 		return low_pixbuf;
 	case TNY_HEADER_FLAG_NORMAL_PRIORITY:
 		return NULL;
 	default:
 		if (G_UNLIKELY(!unread_pixbuf))
 			unread_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_UNREAD,
-								  MODEST_ICON_SIZE_SMALL);
+								  SMALL_ICON_SIZE);
 		return unread_pixbuf;
 	}
 }

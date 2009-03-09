@@ -92,13 +92,16 @@ const gchar *modest_defs_namespace (const gchar *string);
 
 #ifndef MODEST_TOOLKIT_GTK
 #ifdef MODEST_TOOLKIT_HILDON2
+#define MODEST_ICON_SIZE_XSMALL           16
 #define MODEST_ICON_SIZE_SMALL            24
 #define MODEST_ICON_SIZE_BIG		  48
 #else
+#define MODEST_ICON_SIZE_XSMALL           16
 #define MODEST_ICON_SIZE_SMALL            26
 #define MODEST_ICON_SIZE_BIG		  64
 #endif
 #else
+#define MODEST_ICON_SIZE_XSMALL           16
 #define MODEST_ICON_SIZE_SMALL            16
 #define MODEST_ICON_SIZE_BIG		  32
 #endif
