@@ -247,6 +247,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *subject_field;
 	GtkWidget   *attachments_view;
 	GtkWidget   *priority_icon;
+	GtkWidget   *subject_box;
 	GtkWidget   *add_attachment_button;
 
 	GtkWidget   *cc_caption;
@@ -703,7 +704,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
-	GtkWidget *subject_box;
 	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
 #if (GTK_MINOR_VERSION >= 10)
@@ -780,22 +780,22 @@ init_window (ModestMsgEditWindow *obj)
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
 	priv->bcc_field     = modest_recpt_editor_new ();
-	subject_box = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
+	priv->subject_box = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
 	priv->priority_icon = gtk_image_new ();
-	gtk_box_pack_start (GTK_BOX (subject_box), priv->priority_icon, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 	priv->subject_field = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	gtk_entry_set_max_length (GTK_ENTRY (priv->subject_field) ,SUBJECT_MAX_LENGTH);
 	g_object_set (G_OBJECT (priv->subject_field), "truncate-multiline", TRUE, NULL);
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
-	gtk_box_pack_start (GTK_BOX (subject_box), priv->subject_field, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->subject_field, TRUE, TRUE, 0);
 	priv->add_attachment_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
 	gtk_widget_set_size_request (priv->add_attachment_button, ATTACHMENT_BUTTON_WIDTH, -1);
 	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (priv->add_attachment_button), GTK_CAN_FOCUS);
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
 	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, HILDON_ICON_SIZE_FINGER);
 	hildon_button_set_image (HILDON_BUTTON (priv->add_attachment_button), attachment_icon);
-	gtk_box_pack_start (GTK_BOX (subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 					   MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS);
@@ -815,7 +815,7 @@ init_window (ModestMsgEditWindow *obj)
 		 _("mail_va_hotfix1"), FALSE, priv->bcc_field,
 		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							       _("mail_va_subject"), FALSE, subject_box);
+							       _("mail_va_subject"), FALSE, priv->subject_box);
 	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
 											_("mail_va_attachment"), 
 											FALSE,
@@ -1557,6 +1557,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
         /* Checks the dimming rules */
 	g_object_unref (toolbar_rules_group);
 	g_object_unref (clipboard_rules_group);
+	gtk_widget_hide (priv->priority_icon);
+	gtk_widget_queue_resize (priv->subject_box);
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
@@ -2764,7 +2766,7 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 		case TNY_HEADER_FLAG_HIGH_PRIORITY:
 			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon),
 						      MODEST_HEADER_ICON_HIGH, 
-						      HILDON_ICON_SIZE_XSMALL);
+						      HILDON_ICON_SIZE_SMALL);
 			gtk_widget_show (priv->priority_icon);
 			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager,
 								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityHighMenu");
@@ -2772,7 +2774,7 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 		case TNY_HEADER_FLAG_LOW_PRIORITY:
 			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon),
 						      MODEST_HEADER_ICON_LOW,
-						      HILDON_ICON_SIZE_XSMALL);
+						      HILDON_ICON_SIZE_SMALL);
 			gtk_widget_show (priv->priority_icon);
 			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager,
 								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityLowMenu");
@@ -2786,6 +2788,7 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (priority_action), TRUE);
 		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 	}
+	gtk_widget_queue_resize (priv->subject_box);
 }
 
 void
