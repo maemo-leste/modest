@@ -3784,6 +3784,7 @@ static void
 modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 {
 	GtkWidget *dialog;
+	GtkWidget *align;
 	GtkWidget *vbox;
 	GtkWidget *priority_hbox;
 	GtkWidget *high_toggle, *medium_toggle, *low_toggle;
@@ -3798,6 +3799,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	helper.window = window;
 	helper.priority_group = NULL;
+	helper.format_group = NULL;
 
 	title_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
@@ -3806,7 +3808,11 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 					      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 					      _HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
 	vbox = gtk_vbox_new (FALSE, 0);
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), vbox);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
+	gtk_container_add (GTK_CONTAINER (align), vbox);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), align);
+	gtk_widget_show (align);
 	gtk_widget_show (vbox);
 
 	/* Priority toggles */
