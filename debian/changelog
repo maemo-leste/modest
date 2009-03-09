@@ -1,24 +1,52 @@
+modest (2.1-2009.11-2) unstable; urgency=low
+
+  * Week 11-Tuesday release of modest 
+  *   modest trunk r7847
+  *   19 bug fixes
+  * Fixes: NB#104896    mail-vie        Removed attachment is included in Save attachment dialog
+  * Fixes: NB#97644
+  * Fixes: NB#98705 	mail-vie 	When forwarding a mail with multiple attachments a new editor opens with To field overlapped
+  * Fixes: NB#100392
+  * Fixes: NB#101311 	mail-tin 	A newly configured account is not refreshed until Email is relaunched and "Send&Receive" is tapped
+  * Fixes: NB#102751 	mail-vie 	Modest Crashes on moving message with external images from viewer view
+  * Fixes: NB#103682 	mail-gen 	Default region in email account creation does not reflect chosen country/region if country and region are not the same
+  * Fixes: NB#103843 	mail-sen 	Modest crashes in "update_style"
+  * Fixes: NB#103875 	mail-gen 	Modest application got crashed upon tapping on folders view menu after cancelling the account setup wizard
+  * Fixes: NB#103894 	mail-gen 	Not able to delete IMAP Inbox subfolder with the same name "Inbox"
+  * Fixes: NB#103918 	mail-ui 	"Checking names" should not be shown after the connection to database has been established
+  * Fixes: NB#104017 	mail-ui 	When Email is launched for the first time Accounts view should be shown
+  * Fixes: NB#104083 	mail-gen 	MMC user folders is also shown along with local user folders under local root folder path in "Move to Folder" dialog
+  * Fixes: NB#104208
+  * Fixes: NB#104249 	mail-acc 	"Enter text first" info banner not shown with an empty string in Account field.
+  * Fixes: NB#104352 	mail-gen 	icon of outbox and sent folder is changing in location field of new folder dialog box
+  * Fixes: NB#104367 	mail-gen 	auto increment is not happening for IMAP user created folder
+  * Fixes: NB#104433 	mail-ui 	new version of gtkhtml is delivered
+  * Fixes: NB#104476 	mail-gen 	New Folder: Unable to delete the folder name via Backspace key when default focus is available.
+  * Fixes: NB#104720 	mail-ui 	Account setup wizard: "Email address" field should be prefilled with "@" 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 09 Mar 2009 14:31:42 +0200
+
 modest (2.1-2009.11-1) unstable; urgency=low
 
   * Week 11-Monday release of modest
   *  modest r7811
   *
-  * Fixes: NB#98705  When forwarding a mail with multiple attachments a new editor opens with To field overlapped
-  * Fixes: NB#100392
-  * Fixes: NB#101311 A newly configured account is not refreshed until Email is relaunched and "Send&Receive" is tapped
-  * Fixes: NB#102751 Modest Crashes on moving message with external images from viewer view
-  * Fixes: NB#103682 Default region in email account creation does not reflect chosen country/region if country and region are not the same
-  * Fixes: NB#103843 Modest crashes in "update_style"
-  * Fixes: NB#103875 Modest application got crashed upon tapping on folders view menu after cancelling the account setup wizard
-  * Fixes: NB#103894 Not able to delete IMAP Inbox subfolder with the same name "Inbox"
-  * Fixes: NB#103918 "Checking names" should not be shown after the connection to database has been established
-  * Fixes: NB#104017 When Email is launched for the first time Accounts view should be shown
-  * Fixes: NB#104249 "Enter text first" info banner not shown with an empty string in Account field.
-  * Fixes: NB#104352 icon of outbox and sent folder is changing in location field of new folder dialog box
-  * Fixes: NB#104367 auto increment is not happening for IMAP user created folder
-  * Fixes: NB#104433 new version of gtkhtml is delivered
-  * Fixes: NB#104476 New Folder: Unable to delete the folder name via Backspace key when default focus is available.
-  * Fixes: NB#104720 Account setup wizard: "Email address" field should be prefilled with "@"
+  * Fixes NB#98705  When forwarding a mail with multiple attachments a new editor opens with To field overlapped
+  * Fixes NB#100392
+  * Fixes NB#101311 A newly configured account is not refreshed until Email is relaunched and "Send&Receive" is tapped
+  * Fixes NB#102751 Modest Crashes on moving message with external images from viewer view
+  * Fixes NB#103682 Default region in email account creation does not reflect chosen country/region if country and region are not the same
+  * Fixes NB#103843 Modest crashes in "update_style"
+  * Fixes NB#103875 Modest application got crashed upon tapping on folders view menu after cancelling the account setup wizard
+  * Fixes NB#103894 Not able to delete IMAP Inbox subfolder with the same name "Inbox"
+  * Fixes NB#103918 "Checking names" should not be shown after the connection to database has been established
+  * Fixes NB#104017 When Email is launched for the first time Accounts view should be shown
+  * Fixes NB#104249 "Enter text first" info banner not shown with an empty string in Account field.
+  * Fixes NB#104352 icon of outbox and sent folder is changing in location field of new folder dialog box
+  * Fixes NB#104367 auto increment is not happening for IMAP user created folder
+  * Fixes NB#104433 new version of gtkhtml is delivered
+  * Fixes NB#104476 New Folder: Unable to delete the folder name via Backspace key when default focus is available.
+  * Fixes NB#104720 Account setup wizard: "Email address" field should be prefilled with "@"
 
  -- Moises Martinez <moises.martinez@nokia.com>  Fri, 06 Mar 2009 13:55:50 +0200
 
