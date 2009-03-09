@@ -705,6 +705,7 @@ init_window (ModestMsgEditWindow *obj)
 	GtkSizeGroup *value_size_group;
 	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
+	GtkWidget *window_align;
 #if (GTK_MINOR_VERSION >= 10)
 	GdkAtom deserialize_type;
 #endif
@@ -864,11 +865,14 @@ init_window (ModestMsgEditWindow *obj)
 	priv->pannable = hildon_pannable_area_new ();
 	
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
+	window_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (window_align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (window_align), main_vbox);
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), main_vbox);
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), window_align);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), 
 					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable)));
 	gtk_widget_show_all (GTK_WIDGET(priv->pannable));
