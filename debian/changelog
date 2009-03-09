@@ -3,7 +3,6 @@ modest (2.1-2009.11-1) unstable; urgency=low
   * Week 11-Monday release of modest
   *  modest r7811
   *
-  * Fixes: NB#97644
   * Fixes: NB#98705  When forwarding a mail with multiple attachments a new editor opens with To field overlapped
   * Fixes: NB#100392
   * Fixes: NB#101311 A newly configured account is not refreshed until Email is relaunched and "Send&Receive" is tapped
