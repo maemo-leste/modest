@@ -50,6 +50,7 @@
 #include <modest-hbox-cell-renderer.h>
 #include <modest-vbox-cell-renderer.h>
 #include <modest-datetime-formatter.h>
+#include <modest-ui-constants.h>
 
 static void modest_header_view_class_init  (ModestHeaderViewClass *klass);
 static void modest_header_view_init        (ModestHeaderView *obj);
@@ -400,6 +401,9 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_compact_date_or_status, FALSE);
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date_or_status);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	g_object_set (G_OBJECT (renderer_compact_header), "xpad", MODEST_MARGIN_DOUBLE, NULL);
+#endif
 	g_object_set (G_OBJECT (renderer_subject_box), "yalign", 1.0, NULL);
 #ifndef MODEST_TOOLKIT_GTK
 	gtk_cell_renderer_set_fixed_size (renderer_subject_box, -1, 32);
@@ -414,21 +418,34 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 		      NULL);
 	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_subject), 1);
 	g_object_set (G_OBJECT (renderer_recpt),
-		      "ellipsize", PANGO_ELLIPSIZE_END, "yalign", 0.0,
+		      "ellipsize", PANGO_ELLIPSIZE_END, "yalign", 0.1,
 		      NULL);
 	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_recpt), 1);
 	g_object_set(G_OBJECT(renderer_compact_date_or_status),
-		     "xalign", 1.0, "yalign", 0.0,
+		     "xalign", 1.0, "yalign", 0.1,
 		     NULL);
 	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_compact_date_or_status), 1);
+#ifdef MODEST_TOOLKIT_HILDON2
 	g_object_set (G_OBJECT (renderer_priority),
-		      "yalign", 1.0, NULL);
+		      "yalign", 0.5,
+		      "xalign", 0.0, NULL);
+	g_object_set (G_OBJECT (renderer_attach),
+		      "yalign", 0.5, 
+		      "xalign", 0.0, NULL);
+#else
+	g_object_set (G_OBJECT (renderer_priority),
+		      "yalign", 0.5, NULL);
 	g_object_set (G_OBJECT (renderer_attach),
 		      "yalign", 0.0, NULL);
+#endif
 
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON1
 	gtk_cell_renderer_set_fixed_size (renderer_attach, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_priority, 32, 26);
+	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
+#elif MODEST_TOOLKIT_HILDON2
+	gtk_cell_renderer_set_fixed_size (renderer_attach, 24, 26);
+	gtk_cell_renderer_set_fixed_size (renderer_priority, 24, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
 #else
 	gtk_cell_renderer_set_fixed_size (renderer_attach, 16, 16);
