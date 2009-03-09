@@ -353,6 +353,7 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestRecptEditorPrivate *priv;
 	GtkWidget *abook_icon;
+	GtkWidget *abook_align;
 	GtkTextBuffer *buffer;
 
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (instance);
@@ -399,7 +400,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	gtk_box_pack_start (GTK_BOX (instance), priv->scrolled_window, TRUE, TRUE, 0);
 /* 	gtk_box_pack_start (GTK_BOX (instance), priv->text_view, TRUE, TRUE, 0); */
 #endif
-	gtk_box_pack_end (GTK_BOX (instance), priv->abook_button, FALSE, FALSE, 0);
+	abook_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (abook_align), 0, 0, MODEST_MARGIN_DEFAULT, 0);
+	gtk_container_add (GTK_CONTAINER (abook_align), priv->abook_button);
+	gtk_box_pack_end (GTK_BOX (instance), abook_align, FALSE, FALSE, 0);
 
 	gtk_text_view_set_accepts_tab (GTK_TEXT_VIEW (priv->text_view), FALSE);
 	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (priv->text_view), TRUE);

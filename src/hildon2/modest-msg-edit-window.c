@@ -696,6 +696,7 @@ init_window (ModestMsgEditWindow *obj)
 {
 	GtkWidget *to_caption, *subject_caption;
 	GtkWidget *main_vbox;
+	GtkWidget *add_attachment_align;
 	ModestMsgEditWindowPrivate *priv;
 	GtkActionGroup *action_group;
 	ModestWindowPrivate *parent_priv;
@@ -795,7 +796,10 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
 	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, HILDON_ICON_SIZE_FINGER);
 	hildon_button_set_image (HILDON_BUTTON (priv->add_attachment_button), attachment_icon);
-	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->add_attachment_button, FALSE, FALSE, 0);
+	add_attachment_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (add_attachment_align), 0, 0, MODEST_MARGIN_DEFAULT, 0);
+	gtk_container_add (GTK_CONTAINER (add_attachment_align), priv->add_attachment_button);
+	gtk_box_pack_start (GTK_BOX (priv->subject_box), add_attachment_align, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 					   MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS);
