@@ -61,7 +61,7 @@
 #include "modest-address-book.h"
 #include "modest-text-utils.h"
 #include <tny-simple-list.h>
-#include <wptextview.h>
+#include <modest-wp-text-view.h>
 #include <wptextbuffer.h>
 #include <hildon/hildon-pannable-area.h>
 #include "modest-msg-edit-window-ui-dimming.h"
@@ -841,7 +841,7 @@ init_window (ModestMsgEditWindow *obj)
 
 	init_wp_text_view_style ();
 
-	priv->msg_body = wp_text_view_new ();
+	priv->msg_body = modest_wp_text_view_new ();
 	
 
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->msg_body), GTK_WRAP_WORD_CHAR);
