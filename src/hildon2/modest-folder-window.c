@@ -327,9 +327,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 
 	gtk_container_add (GTK_CONTAINER (pannable), priv->folder_view);
-	gtk_box_pack_end (GTK_BOX (priv->top_vbox), pannable, TRUE, TRUE, 0);
-	gtk_container_add (GTK_CONTAINER (top_alignment), priv->top_vbox);
-	gtk_container_add (GTK_CONTAINER (self), top_alignment);
+	gtk_container_add (GTK_CONTAINER (top_alignment), pannable);
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), top_alignment, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (self), priv->top_vbox);
 
 	gtk_widget_show (priv->folder_view);
 	gtk_widget_show (pannable);
