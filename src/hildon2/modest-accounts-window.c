@@ -240,12 +240,17 @@ modest_accounts_window_new (void)
 	GtkAccelGroup *accel_group;
 	GtkWidget *no_accounts_label;
 	GtkWidget *empty_view_new_message_button;
+	GtkWidget *box_alignment;
 
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 
 	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
 
+	box_alignment = gtk_alignment_new (0, 0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (box_alignment), 
+				   0, 0,
+				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 	priv->box = gtk_vbox_new (FALSE, 0);
 
 	no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
@@ -285,11 +290,13 @@ modest_accounts_window_new (void)
 
 	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
 	gtk_box_pack_start (GTK_BOX (priv->box), priv->pannable, TRUE, TRUE, 0);
-	gtk_container_add (GTK_CONTAINER (self), priv->box);
+	gtk_container_add (GTK_CONTAINER (box_alignment), priv->box);
+	gtk_container_add (GTK_CONTAINER (self), box_alignment);
 
 	gtk_widget_show (priv->account_view);
 	gtk_widget_show (priv->pannable);
 	gtk_widget_show (priv->box);
+	gtk_widget_show (box_alignment);
 
 	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
 
