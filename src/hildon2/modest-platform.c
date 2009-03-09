@@ -2623,9 +2623,11 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 				       GtkWidget **folder_view)
 {
 	GtkWidget *dialog, *folder_view_container;
+	GtkWidget *align;
 	GtkWidget *buttons_hbox;
 	GtkWidget *back_button, *selection_label;
 	GdkPixbuf *back_pixbuf;
+	GtkWidget *top_vbox;
 
 	/* Create dialog. We cannot use a touch selector because we
 	   need to use here the folder view widget directly */
@@ -2635,6 +2637,10 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 					      GTK_DIALOG_DESTROY_WITH_PARENT,
 					      _HL("wdgt_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
 	                                      NULL);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_NONE);
+	top_vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 
 	/* Create folder view */
 	*folder_view = modest_platform_create_folder_view (NULL);
@@ -2654,17 +2660,22 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_box_pack_start (GTK_BOX (buttons_hbox), back_button, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (buttons_hbox), selection_label, TRUE, TRUE, 0);
 	gtk_widget_set_sensitive (GTK_WIDGET (back_button), FALSE);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), buttons_hbox, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (top_vbox), buttons_hbox, FALSE, FALSE, 0);
 
 	/* Create pannable and add it to the dialog */
 	folder_view_container = hildon_pannable_area_new ();
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), folder_view_container, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (folder_view_container), *folder_view);
+	gtk_box_pack_start (GTK_BOX (top_vbox), folder_view_container, TRUE, TRUE, 0);
+
+	gtk_container_add (GTK_CONTAINER (align), top_vbox);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), align, TRUE, TRUE, 0);
 
 	gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 300);
 
 	gtk_widget_show (GTK_DIALOG (dialog)->vbox);
 	gtk_widget_show (folder_view_container);
+	gtk_widget_show (align);
+	gtk_widget_show (top_vbox);
 	gtk_widget_show (*folder_view);
 	gtk_widget_show_all (back_button);
 	gtk_widget_show (selection_label);
