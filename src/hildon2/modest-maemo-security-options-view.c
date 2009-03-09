@@ -165,12 +165,12 @@ create_incoming_security (ModestSecurityOptionsView* self,
 
 	/* Pack into container */
 	gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view,
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 	if (ppriv->full)
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, 
 				    FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_box_pack_start (GTK_BOX (self), ppriv->security_view,
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 
 	/* Show widgets */
 	if (ppriv->full) {

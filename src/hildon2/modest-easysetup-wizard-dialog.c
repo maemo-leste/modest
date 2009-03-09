@@ -820,7 +820,8 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 {
 	ModestProtocolRegistry *protocol_registry;
 	ModestEasysetupWizardDialogPrivate* priv; 
-	GtkWidget *box; 
+	GtkWidget *box;
+	GtkWidget *align;
 	GtkWidget *pannable;
 	GtkWidget *label;
 	GtkSizeGroup *title_sizegroup;
@@ -835,6 +836,8 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	/* Show note that account type cannot be changed in future: */
 	label = gtk_label_new (_("mcen_ia_emailsetup_account_type"));
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
@@ -849,10 +852,12 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	priv->incoming_servertype_picker = GTK_WIDGET (modest_servertype_picker_new (MODEST_EDITABLE_SIZE,
 										     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
 										     TRUE));
-	hildon_button_set_title (HILDON_BUTTON (priv->incoming_servertype_picker), _("mcen_li_emailsetup_type"));
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+					       _("mcen_li_emailsetup_type"),
+					       priv->incoming_servertype_picker);
 	g_signal_connect (G_OBJECT (priv->incoming_servertype_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
-	gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_picker, FALSE, FALSE, 0);
 	gtk_widget_show (priv->incoming_servertype_picker);
 	
 	priv->entry_incomingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
@@ -868,7 +873,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 						   FALSE, priv->entry_incomingserver);
 	update_incoming_server_title (self);
 	gtk_widget_show (priv->entry_incomingserver);
-	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_incoming);
 	
 	/* Change the caption title when the servertype changes, 
@@ -887,7 +892,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
 							FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
-			    FALSE, FALSE, MODEST_MARGIN_HALF);
+			    FALSE, FALSE, 0);
 	gtk_widget_show_all (priv->incoming_security);
 
 	/* Set default selection */
@@ -895,7 +900,12 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker), 
 		MODEST_PROTOCOLS_STORE_POP);
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), box);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), box);
+	
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
 					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (pannable)));
 	gtk_widget_show (GTK_WIDGET (box));
