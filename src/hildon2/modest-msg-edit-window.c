@@ -233,7 +233,6 @@ enum {
 typedef struct _ModestMsgEditWindowPrivate ModestMsgEditWindowPrivate;
 struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *msg_body;
-	GtkWidget   *frame;
 	GtkWidget   *header_box;
 	
 	ModestPairList *from_field_protos;
@@ -390,7 +389,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
 	priv->msg_body      = NULL;
-	priv->frame         = NULL;
 	priv->from_field    = NULL;
 	priv->to_field      = NULL;
 	priv->cc_field      = NULL;
@@ -868,8 +866,7 @@ init_window (ModestMsgEditWindow *obj)
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->header_box, FALSE, FALSE, 0);
-	priv->frame = gtk_frame_new (NULL);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->frame, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 0);
 
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), main_vbox);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (main_vbox), 
@@ -880,8 +877,6 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 
 	gtk_box_pack_start (GTK_BOX (window_box), priv->pannable, TRUE, TRUE, 0);
-
-	gtk_container_add (GTK_CONTAINER (priv->frame), priv->msg_body);
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG); 
