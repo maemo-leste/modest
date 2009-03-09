@@ -792,7 +792,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 		g_free(real_suggested_name);
 
 	if (parent_folder != NULL) {
-		parent_folder = suggested_parent?g_object_ref (suggested_parent): NULL;
+		*parent_folder = suggested_parent?g_object_ref (suggested_parent): NULL;
 	}
 
 	return result;
