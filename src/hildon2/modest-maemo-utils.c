@@ -402,8 +402,9 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list)
 
 		part = (TnyMimePart *) tny_iterator_get_current (iterator);
 
-		/* Embbeded messages are not offered to be saved */
-		if (!TNY_IS_MSG (part)) {
+		/* Embbeded messages are not offered to be
+		   saved. Purged attachments are ignored as well */
+		if (!TNY_IS_MSG (part) && !tny_mime_part_is_purged (part)) {
 			gchar *label;
 			gchar *filename = NULL;
 
