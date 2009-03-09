@@ -296,7 +296,6 @@ modest_accounts_window_new (void)
 	gtk_container_add (GTK_CONTAINER (box_alignment), priv->box);
 	gtk_container_add (GTK_CONTAINER (self), box_alignment);
 
-	gtk_widget_show (priv->account_view);
 	gtk_widget_show (priv->pannable);
 	gtk_widget_show (priv->box);
 	gtk_widget_show (box_alignment);
@@ -501,9 +500,11 @@ static void row_count_changed (ModestAccountsWindow *self)
 	count = gtk_tree_model_iter_n_children (model, NULL);
 
 	if (count == 0) {
+		gtk_widget_hide (priv->account_view);
 		gtk_widget_show (priv->no_accounts_container);
 	} else {
 		gtk_widget_hide (priv->no_accounts_container);
+		gtk_widget_show (priv->account_view);
 	}
 	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->pannable, 
 				 "expand", count > 0,
