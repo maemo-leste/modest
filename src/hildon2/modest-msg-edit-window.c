@@ -780,7 +780,7 @@ init_window (ModestMsgEditWindow *obj)
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
 	priv->bcc_field     = modest_recpt_editor_new ();
-	priv->subject_box = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
+	priv->subject_box = gtk_hbox_new (FALSE, MODEST_MARGIN_NONE);
 	priv->priority_icon = gtk_image_new ();
 	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 	priv->subject_field = hildon_entry_new (MODEST_EDITABLE_SIZE);
