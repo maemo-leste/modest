@@ -129,17 +129,18 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 {
 	ModestSignatureEditorDialogPrivate *priv = 
 		SIGNATURE_EDITOR_DIALOG_GET_PRIVATE (self);
+	GtkWidget *top_box, *align;
 	
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_email_signatures_edit_title"));
 		
 	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
-	gtk_container_set_border_width (GTK_CONTAINER (box), MODEST_MARGIN_HALF);
+	top_box = gtk_vbox_new (FALSE, 0);
 
 	priv->checkbox_use = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (priv->checkbox_use), 
 			      _("mcen_fi_email_signatures_use_signature"));
 	gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_use), 0.0, 0.5);
-	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_use, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (top_box), priv->checkbox_use, FALSE, FALSE, 0);
 	gtk_widget_show (priv->checkbox_use);
 	
 	g_signal_connect (G_OBJECT (priv->checkbox_use), "toggled",
@@ -147,11 +148,12 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	
 	priv->label = gtk_label_new (""); /* Set in modest_signature_editor_dialog_set_settings(). */
 	gtk_misc_set_alignment (GTK_MISC (priv->label), 0.0, 0.0);
-	gtk_box_pack_start (GTK_BOX (box), priv->label, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_misc_set_padding (GTK_MISC (priv->label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_box_pack_start (GTK_BOX (top_box), priv->label, FALSE, FALSE, 0);
 	gtk_widget_show (priv->label);
 	
 	priv->pannable = hildon_pannable_area_new ();
-	gtk_box_pack_start (GTK_BOX (box), priv->pannable, TRUE, TRUE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (top_box), priv->pannable, TRUE, TRUE, 0);
 	gtk_widget_show (priv->pannable);
 		
 	priv->textview = hildon_text_view_new ();
@@ -162,7 +164,14 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), top_box);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), align);
 	
+	gtk_widget_show (top_box);
 	gtk_widget_show (box);
 	gtk_widget_set_size_request (GTK_WIDGET (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 	
