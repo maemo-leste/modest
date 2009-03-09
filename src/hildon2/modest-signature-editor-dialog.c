@@ -156,6 +156,7 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_widget_show (priv->textview);
 	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
+	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->textview), GTK_WRAP_WORD_CHAR);
 	gtk_box_pack_start (GTK_BOX (top_box), priv->textview, TRUE, TRUE, 0);
 	
 	/* Add the buttons: */
