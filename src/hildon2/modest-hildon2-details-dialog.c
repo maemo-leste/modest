@@ -131,6 +131,7 @@ modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *sel
 {
 	ModestHildon2DetailsDialogPrivate *priv;
 	GtkWidget *pannable;
+	GtkWidget *align;
 
 	priv = MODEST_HILDON2_DETAILS_DIALOG_GET_PRIVATE (self);
 
@@ -140,9 +141,13 @@ modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *sel
 	gtk_table_set_col_spacings (GTK_TABLE (priv->props_table), 12);
 	gtk_table_set_row_spacings (GTK_TABLE (priv->props_table), 1);
 
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
+
 	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
+	gtk_container_add (GTK_CONTAINER (align), priv->props_table);
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), 
-						GTK_WIDGET (priv->props_table));
+						GTK_WIDGET (align));
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), pannable);
 
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
