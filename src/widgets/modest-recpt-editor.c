@@ -122,7 +122,7 @@ modest_recpt_editor_new (void)
 {
 	ModestRecptEditor *self = g_object_new (MODEST_TYPE_RECPT_EDITOR, 
 						"homogeneous", FALSE,
-						"spacing", MODEST_MARGIN_DOUBLE,
+						"spacing", MODEST_MARGIN_NONE,
 						NULL);
 
 	return GTK_WIDGET (self);
