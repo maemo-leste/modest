@@ -436,6 +436,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 	ModestServerAccountSettings *store_settings = NULL;
 	GtkWidget *action_area_box;
 	GdkPixbuf *new_message_pixbuf;
+	GtkWidget *alignment;
 	
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
@@ -443,6 +444,10 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 	priv->folder = g_object_ref (folder);
 
 	priv->contents_view = hildon_pannable_area_new ();
+	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment),
+				   0, 0,
+				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 
 	/* We need to do this here to properly listen for mail
 	   operations because create_header_view launches a mail
@@ -482,10 +487,12 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 	setup_menu (self);
 
         priv->top_vbox = gtk_vbox_new (FALSE, 0);
-	gtk_box_pack_end (GTK_BOX (priv->top_vbox), priv->contents_view, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (alignment), priv->contents_view);
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), alignment, TRUE, TRUE, 0);
 
 	gtk_container_add (GTK_CONTAINER (self), priv->top_vbox);
 
+	gtk_widget_show (alignment);
 	gtk_widget_show (priv->contents_view);
 	gtk_widget_show (priv->top_vbox);
 
