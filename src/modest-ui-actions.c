@@ -3383,7 +3383,7 @@ do_create_folder (GtkWindow *parent_window,
 							&parent_folder);
 
 	if (result == GTK_RESPONSE_ACCEPT && parent_folder) {
-		CreateFolderConnect *helper = (CreateFolderConnect *) g_slice_new0 (CreateFolderHelper);
+		CreateFolderConnect *helper = (CreateFolderConnect *) g_slice_new0 (CreateFolderConnect);
 		helper->folder_name = g_strdup (folder_name);
 		helper->parent = g_object_ref (parent_folder);
 

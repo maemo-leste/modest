@@ -33,6 +33,8 @@
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
 #include <tny-simple-list.h>
+#include <tny-error.h>
+#include <tny-merge-folder.h>
 #include "modest-platform.h"
 #include "modest-mail-operation-queue.h"
 #include "modest-runtime.h"

@@ -276,7 +276,7 @@ AC_SUBST(MODEST_TOOLKIT)
 AC_SUBST(MODEST_TOOLKIT_DIR)
 
 if test "x$with_platform" == "xgnome"; then
-      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 libnm_glib glib-2.0 >= 2.8 libnotify)
+      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 glib-2.0 >= 2.8 libnotify)
     AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 dnl     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
 else
