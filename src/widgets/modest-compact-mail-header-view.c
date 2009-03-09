@@ -328,6 +328,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	GtkWidget *first_hbox, *second_hbox, *vbox, *main_vbox;
 	GtkWidget *details_button;
 	PangoAttrList *attr_list;
+	GtkWidget *main_align;
 
 	priv->header = NULL;
 	priv->custom_labels = NULL;
@@ -397,11 +398,13 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	gtk_box_pack_start (GTK_BOX (main_vbox), vbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (main_vbox), priv->headers_vbox, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (self), main_vbox, TRUE, TRUE, 0);
 
-	gtk_container_set_border_width (GTK_CONTAINER (self), MODEST_MARGIN_DOUBLE);
+	main_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (main_align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_container_add (GTK_CONTAINER (main_align), main_vbox);
+	gtk_box_pack_start (GTK_BOX (self), main_align, TRUE, TRUE, 0);
 
-	gtk_widget_show_all (main_vbox);
+	gtk_widget_show_all (main_align);
 
 	priv->is_outgoing = FALSE;
 	priv->is_draft = FALSE;
