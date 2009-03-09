@@ -568,7 +568,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_object_unref (value_sizegroup);
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
 	
@@ -686,7 +686,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	g_object_unref (value_sizegroup);
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
 	
@@ -720,7 +720,7 @@ create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (GTK_WIDGET (box));
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
 	
@@ -1099,6 +1099,7 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 static GtkWidget* 
 create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
+	GtkWidget *align;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
 	GtkWidget *button_edit = gtk_button_new_with_label (_("mcen_fi_advanced_settings"));
@@ -1106,6 +1107,8 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
 
@@ -1113,17 +1116,25 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_widget_show (label);
 
 	gtk_widget_show (button_edit);
-	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, MODEST_MARGIN_HALF);
+	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, 0);
 
 	g_signal_connect (G_OBJECT (button_edit), "clicked", 
 			  G_CALLBACK (on_button_edit_advanced_settings), self);
 
 	gtk_widget_show (GTK_WIDGET (box));
-	return GTK_WIDGET (box);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_show (align);
+	gtk_container_add (GTK_CONTAINER (align), box);
+	
+	return GTK_WIDGET (align);
 }
 
 
