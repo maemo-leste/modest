@@ -287,6 +287,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	guint accel_key;
 	GdkModifierType accel_mods;
 	GtkAccelGroup *accel_group;
+	GtkWidget *top_alignment;
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
@@ -320,14 +321,20 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
 
 	priv->top_vbox = gtk_vbox_new (0, FALSE);
+	top_alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (top_alignment),
+				   0, 0,
+				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 
 	gtk_container_add (GTK_CONTAINER (pannable), priv->folder_view);
 	gtk_box_pack_end (GTK_BOX (priv->top_vbox), pannable, TRUE, TRUE, 0);
-	gtk_container_add (GTK_CONTAINER (self), priv->top_vbox);
+	gtk_container_add (GTK_CONTAINER (top_alignment), priv->top_vbox);
+	gtk_container_add (GTK_CONTAINER (self), top_alignment);
 
 	gtk_widget_show (priv->folder_view);
 	gtk_widget_show (pannable);
 	gtk_widget_show (priv->top_vbox);
+	gtk_widget_show (top_alignment);
 
 	connect_signals (MODEST_FOLDER_WINDOW (self));
 
