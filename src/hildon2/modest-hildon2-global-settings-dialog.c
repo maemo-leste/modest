@@ -295,7 +295,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	g_signal_connect (ppriv->size_limit, "notify", G_CALLBACK (on_size_notify), self);
 	label = gtk_label_new (_("mcen_fi_advsetup_sizelimit"));
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_TRIPLE);
 	hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
 	gtk_container_add (GTK_CONTAINER (align), label);
 	gtk_box_pack_start (GTK_BOX (hbox), align, FALSE, FALSE, 0);
