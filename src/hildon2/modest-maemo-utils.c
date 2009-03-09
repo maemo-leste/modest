@@ -260,6 +260,7 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 						       HildonSizeType size_type)
 {
  	GtkWidget *label;
+	GtkWidget *align;
 	GtkWidget *box;
   
 	if (use_markup) {
@@ -268,14 +269,18 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 	} else {
 		label = gtk_label_new (title);
 	}
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	hildon_gtk_widget_set_theme_size (label, HILDON_SIZE_FINGER_HEIGHT);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	gtk_widget_show (label);
-	box = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, MODEST_MARGIN_HALF);
+	gtk_widget_show (align);
+	box = gtk_hbox_new (FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (align), label);
+	gtk_box_pack_start (GTK_BOX (box), align, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, 0);
 	if (title_size_group)
 		gtk_size_group_add_widget (title_size_group, label);
 	if (value_size_group)
