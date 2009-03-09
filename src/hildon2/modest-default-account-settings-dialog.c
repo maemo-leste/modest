@@ -807,7 +807,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 			  G_CALLBACK (on_missing_mandatory_data), self);
 
 	GtkWidget *separator = gtk_hseparator_new ();
-	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);
 
 	/* connection-specific checkbox: */
@@ -1082,14 +1082,14 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 
 	separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (priv->main_container), separator,
-			    FALSE, FALSE, 0);
+			    FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);
 	gtk_box_pack_start (GTK_BOX (priv->main_container),
 			    priv->page_incoming,
 			    FALSE, FALSE, 0);
 	separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (priv->main_container), separator,
-			    FALSE, FALSE, 0);
+			    FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);
 	gtk_box_pack_start (GTK_BOX (priv->main_container),
 			    priv->page_outgoing,
