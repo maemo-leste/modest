@@ -1,3 +1,19 @@
+modest (2.99-2009.11-3) unstable; urgency=low
+
+  * Week 11, 2009 - Wednesday release of email
+  *   modest trunk r7916
+  * Fixes: NB#100070
+  * Fixes: NB#104978 	mail-acc   Modest crashes in "fill_providers"
+  * Fixes: NB#104982 	mail-vie   Editor view doesn't scroll when attempt to Find in message
+  * Fixes: NB#104998
+  * Fixes: NB#105062 	mail-gen   after showing 'No matching contact found' , the enterred text disappearing from TO field
+  * Fixes: NB#105115 	mail-gen   'checking names' banner is showing after cancelling the 'select contact' dialog box
+  * Fixes: NB#105153 	mail-gen   modest shouldn't depend on libhildonhelp0
+  * Fixes: NB#105163
+  * Fixes: NB#101877   	mail-gen   Memory full: No error note is shown when account is not refreshed after it has been configured
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 10 Mar 2009 14:24:13 +0200
+
 modest (2.1-2009.11-2) unstable; urgency=low
 
   * Week 11-Tuesday release of modest 
