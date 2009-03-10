@@ -1040,8 +1040,6 @@ resolve_address (const gchar *address,
 		g_list_free (resolved_contacts);
 
 		resolved_contacts = select_contacts_for_name_dialog (address);
-		banner_timeout = g_timeout_add (500, show_check_names_banner, &banner);
-
 	}
 
 	/* get the resolved contacts (can be no contact) */
