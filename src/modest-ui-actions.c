@@ -3417,8 +3417,10 @@ modest_ui_actions_create_folder(GtkWidget *parent_window,
 	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 #endif
 
-	if (parent_folder)
+	if (parent_folder) {
 		do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
+		g_object_unref (parent_folder);
+	}
 }
 
 void
