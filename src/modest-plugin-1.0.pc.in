@@ -6,7 +6,7 @@ plugindir=@libdir@/modest/mail-plugins
 
 Name: modest-plugin-1.0
 Description: Library for developing plugins for modest.
-Requires: glib-2.0 gobject-2.0 gtk+-2.0 gconf-2.0 gnome-vfs-2.0 libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0 libosso dbus-1 libtinymail-maemo-1.0 libebook-1.2 hildon-1 hildon-fm-2 hildon-help hildon-notify libnotify @pluginpkgs@
+Requires: glib-2.0 gobject-2.0 gtk+-2.0 gconf-2.0 gnome-vfs-2.0 libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0 libosso dbus-1 libtinymail-maemo-1.0 libebook-1.2 hildon-1 hildon-fm-2 hildon-notify libnotify @pluginpkgs@
 Version: @VERSION@
 Cflags: -I${includedir}/modest-plugin-1.0 @MODEST_PLUGIN_DEFINES@
 
