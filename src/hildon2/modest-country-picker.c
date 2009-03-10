@@ -169,9 +169,13 @@ parse_mcc_mapping_line (const char* line,  char** country)
 	tab = g_utf8_strrchr (line, -1, '\t');
 	*country = g_utf8_find_next_char (tab, NULL);
 
-	/* Replace by end of string */
-	final = g_utf8_strrchr (tab, g_utf8_strlen (tab, 100) + 1, '\n');
-	*final = '\0';
+	/* Replace by end of string. We need to use strlen, because
+	   g_utf8_strrchr expects bytes and not UTF8 characters  */
+	final = g_utf8_strrchr (tab, strlen (tab) + 1, '\n');
+	if (G_LIKELY (final))
+		*final = '\0';
+	else
+		tab[strlen(tab) - 1] = '\0';
 
 	/* Get MCC code */
 	mcc[0] = g_utf8_get_char (line);
