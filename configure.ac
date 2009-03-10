@@ -358,9 +358,9 @@ fi
 fi
 
 #
-# check hildon-help (only for maemo)
+# check hildon-help (only for maemo AND NOT fremantle)
 #
-if test "x$with_toolkit" != "xgtk"; then  
+if test "x$with_toolkit" == "xhildon1"; then
    PKG_CHECK_MODULES(MODEST_HILDON_HELP,hildon-help,have_hildon_help=true,have_hildon_help=false)
    if test "x$have_hildon_help" == "xfalse"; then
       PKG_CHECK_MODULES(MODEST_HILDON_HELP,libossohelp,have_osso_help=true,have_osso_help=false)	
@@ -371,7 +371,7 @@ if test "x$with_toolkit" != "xgtk"; then
 	AC_MSG_ERROR([you need to have either osso-help or hildon-help installed])
       fi
    else
-     helplib="hildon-help"	
+     helplib="hildon-help"
      AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_HELP, 1, ["Whether hildon-help is used."])		
    fi
 fi
@@ -615,7 +615,9 @@ if test "x$with_platform" == "xmaemo"; then
    echo "Maemo Launcher   : $maemo_launcher"
    echo "Editor lib       : $wpeditor"
    echo "Addressbook      : $have_abook"
-   echo "Help lib         : $helplib"
+   if test "x$with_toolkit" == "xhildon1"; then
+      echo "Help lib         : $helplib"
+   fi
    echo "libconic support : $have_libconic"
    echo "Alarm            : $have_libalarm"
    echo "MCE              : $have_mce"
