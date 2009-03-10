@@ -55,14 +55,14 @@ static OssoABookContactModel *contact_model =  NULL;
 static EBook *book = NULL;
 static EBookView * book_view = NULL;
 
-static GSList *get_recipients_for_given_contact(EContact * contact);
+static GSList *get_recipients_for_given_contact (EContact * contact, gboolean *canceled);
 static void commit_contact(EContact * contact, gboolean is_new);
-static gchar *get_email_addr_from_user(const gchar * given_name);
+static gchar *get_email_addr_from_user(const gchar * given_name, gboolean *canceled);
 static gchar *ui_get_formatted_email_id(gchar * current_given_name,
 					gchar * current_sur_name, gchar * current_email_id);
-static gchar *run_add_email_addr_to_contact_dlg(const gchar * contact_name);
+static gchar *run_add_email_addr_to_contact_dlg(const gchar * contact_name, gboolean *canceled);
 static GSList *select_email_addrs_for_contact(GList * email_addr_list);
-static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id);
+static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id, gboolean *canceled);
 static gchar *unquote_string (const gchar *str);
 
 
@@ -287,8 +287,9 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 
 		for (node = contacts_list; node != NULL; node = g_list_next (node)) {
 			EContact *contact = (EContact *) node->data;
+			gboolean canceled;
 
-			email_addrs_per_contact = get_recipients_for_given_contact (contact);
+			email_addrs_per_contact = get_recipients_for_given_contact (contact, &canceled);
 			if (email_addrs_per_contact) {
 				econtact_id = (gchar *) e_contact_get_const (contact, E_CONTACT_UID);
 				modest_recpt_editor_add_resolved_recipient (MODEST_RECPT_EDITOR (recpt_editor), 
@@ -326,7 +327,9 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
  * @param  Contact of type #EContact
  * @return List of resolved recipient strings, to be freed by calling function.
  */
-static GSList *get_recipients_for_given_contact(EContact * contact)
+static GSList *
+get_recipients_for_given_contact (EContact * contact,
+				  gboolean *canceled)
 {
 	gchar *givenname = NULL;
 	gchar *familyname = NULL;
@@ -368,15 +371,15 @@ static GSList *get_recipients_for_given_contact(EContact * contact)
 	/*Launch the 'Add e-mail addr to contact' dialog if required */
 	if (email_not_present) {
 #if MODEST_ABOOK_API < 4
-		display_name = osso_abook_contact_get_display_name(contact);		
+		display_name = osso_abook_contact_get_display_name(contact);
 #else
 		OssoABookContact *abook_contact;
-	       
+
 		abook_contact = osso_abook_contact_new_from_template (contact);
 		display_name = osso_abook_contact_get_display_name(abook_contact);
 #endif
 
-		emailid = get_email_addr_from_user(display_name);
+		emailid = get_email_addr_from_user(display_name, canceled);
 		if (emailid) {
 			e_contact_set(contact, E_CONTACT_EMAIL_1, emailid);
 			commit_contact(contact, FALSE);
@@ -460,7 +463,7 @@ commit_contact(EContact * contact, gboolean is_new)
  * @return E-mail address string entered by user, to be freed by calling function.
  */
 static gchar *
-get_email_addr_from_user(const gchar * given_name)
+get_email_addr_from_user(const gchar * given_name, gboolean *canceled)
 {
 	gchar *notification = NULL;
 	gchar *email_addr = NULL;
@@ -476,7 +479,7 @@ get_email_addr_from_user(const gchar * given_name)
 	g_free(notification);
 
 	if (note_response == GTK_RESPONSE_OK) {
-		email_addr = run_add_email_addr_to_contact_dlg(given_name);
+		email_addr = run_add_email_addr_to_contact_dlg (given_name, canceled);
 	}
 
 	return email_addr;
@@ -519,11 +522,14 @@ ui_get_formatted_email_id(gchar * current_given_name,
  * It allows user to enter an e-mail address, and shows appropriate infonote if the
  * entered string is not a valid e-mail address.
  *
+ * It must return TRUE in canceled if the dialog was canceled by the user
+ *
  * @param  contact_name  Full name of the contact
  * @return E-mail address string entered by user, to be freed by calling function.
  */
 static gchar *
-run_add_email_addr_to_contact_dlg(const gchar * contact_name)
+run_add_email_addr_to_contact_dlg(const gchar * contact_name,
+				  gboolean *canceled)
 {
 	GtkWidget *add_email_addr_to_contact_dlg = NULL;
 	GtkSizeGroup *size_group = NULL;
@@ -533,6 +539,10 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 	gint result = -1;
 	gchar *new_email_addr = NULL;
 	gboolean run_dialog = TRUE;
+
+	g_return_val_if_fail (canceled, NULL);
+
+	*canceled = FALSE;
 
 	add_email_addr_to_contact_dlg =
 	    gtk_dialog_new_with_buttons(_("mcen_ti_add_email_title"), NULL,
@@ -592,6 +602,8 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name)
 				g_free(new_email_addr);
 				new_email_addr = NULL;
 			}
+		} else {
+			*canceled = TRUE;
 		}
 	}
 
@@ -793,14 +805,15 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 							char_in_string);
 				g_free (char_in_string);
 				hildon_banner_show_information (NULL, NULL, message );
-				g_free (message);				
+				g_free (message);
 				result = FALSE;
 			} else if (strstr (address, "@") == NULL) {
 				/* here goes searching in addressbook */
+				gboolean canceled;
 				gchar *contact_id = NULL;
 				GSList *resolved_addresses = NULL;
 
-				result = resolve_address (address, &resolved_addresses, &contact_id);
+				result = resolve_address (address, &resolved_addresses, &contact_id, &canceled);
 
 				if (result) {
 					gint new_length;
@@ -817,8 +830,8 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 					recipients = modest_recpt_editor_get_recipients (recpt_editor);
 					new_length = g_utf8_strlen (recipients, -1);
 					offset_delta = offset_delta + new_length - last_length;
-					last_length = new_length;					
-				} else {
+					last_length = new_length;
+				} else if (canceled) {
 					/* We have to remove the recipient if not resolved */
 					modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
 											     &start_iter, &end_iter,
@@ -989,12 +1002,18 @@ select_contacts_for_name_dialog (const gchar *name)
 }
 
 static gboolean
-resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id)
+resolve_address (const gchar *address, 
+		 GSList **resolved_addresses, 
+		 gchar **contact_id,
+		 gboolean *canceled)
 {
 	GList *resolved_contacts;
 	guint banner_timeout;
 	GtkWidget *banner = NULL;
 
+	g_return_val_if_fail (canceled, FALSE);
+
+	*canceled = FALSE;
 	banner_timeout = g_timeout_add (500, show_check_names_banner, &banner);
 
 	contact_model = osso_abook_contact_model_new ();
@@ -1030,7 +1049,7 @@ resolve_address (const gchar *address, GSList **resolved_addresses, gchar **cont
 		gboolean found;
 		EContact *contact = (EContact *) resolved_contacts->data;
 
-		*resolved_addresses = get_recipients_for_given_contact (contact);
+		*resolved_addresses = get_recipients_for_given_contact (contact, canceled);
 		if (*resolved_addresses) {
 			*contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
 			found = TRUE;
@@ -1067,7 +1086,7 @@ unquote_string (const gchar *str)
 				if (*p == '\\') {
 					g_string_append_unichar (buffer, g_utf8_get_char (p));
 					p = g_utf8_next_char (p);
-					
+
 				}
 				g_string_append_unichar (buffer, g_utf8_get_char (p));
 				p = g_utf8_next_char (p);
