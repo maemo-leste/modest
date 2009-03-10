@@ -505,24 +505,24 @@ correct_scroll_without_drag_check_idle (gpointer userdata)
 	ModestMsgEditWindowPrivate *priv;
 	GtkTextIter iter;
 	GdkRectangle rectangle;
-	gdouble new_value;
-	gint offset;
+	gint offset_min, offset_max;
 	GtkTextMark *insert;
+	GtkAdjustment *vadj;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
 
-	if (!gtk_widget_is_focus (priv->msg_body))
-		return FALSE;
-	
 	insert = gtk_text_buffer_get_insert (priv->text_buffer);
 	gtk_text_buffer_get_iter_at_mark (priv->text_buffer, &iter, insert);
 
 	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->msg_body), &iter, &rectangle);
-	offset = priv->msg_body->allocation.y;
+	offset_min = priv->msg_body->allocation.y + rectangle.y;
+	offset_max = offset_min + rectangle.height;
 
-	new_value = (offset + rectangle.y);
+	vadj = hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable));
+	offset_min = MAX (offset_min - 48, 0);
+	offset_max = MIN (offset_max + 48, vadj->upper);
 
-	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (priv->pannable), -1, new_value);
+	gtk_adjustment_clamp_page (vadj, (gdouble) offset_min, (gdouble) offset_max);
 
 	priv->correct_scroll_idle = 0;
 	return FALSE;
