@@ -87,12 +87,13 @@ static void modest_recpt_editor_class_init (ModestRecptEditorClass *klass);
 /* widget events */
 static void modest_recpt_editor_on_abook_clicked (GtkButton *button,
 						  ModestRecptEditor *editor);
-static gboolean modest_recpt_editor_on_button_release_event (GtkWidget *widget,
-							     GdkEventButton *event,
-							     ModestRecptEditor *editor);
 static void modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor);
 static gboolean modest_recpt_editor_on_focus_in (GtkTextView *text_view,
 					     GdkEventFocus *event,
+					     ModestRecptEditor *editor);
+static void modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
+					     GtkTextIter *iter,
+					     GtkTextMark *mark,
 					     ModestRecptEditor *editor);
 static void modest_recpt_editor_on_insert_text (GtkTextBuffer *buffer,
 						GtkTextIter *location,
@@ -420,10 +421,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
 #endif
 	g_signal_connect (G_OBJECT (priv->abook_button), "clicked", G_CALLBACK (modest_recpt_editor_on_abook_clicked), instance);
-	g_signal_connect (G_OBJECT (priv->text_view), "button-release-event", G_CALLBACK (modest_recpt_editor_on_button_release_event), instance);
 	g_signal_connect (G_OBJECT (priv->text_view), "key-press-event", G_CALLBACK (modest_recpt_editor_on_key_press_event), instance);
 	g_signal_connect (G_OBJECT (priv->text_view), "focus-in-event", G_CALLBACK (modest_recpt_editor_on_focus_in), instance);
 	g_signal_connect (G_OBJECT (buffer), "insert-text", G_CALLBACK (modest_recpt_editor_on_insert_text), instance);
+	g_signal_connect (G_OBJECT (buffer), "mark-set", G_CALLBACK (modest_recpt_editor_on_mark_set), instance);
 
 /* 	gtk_container_set_focus_child (GTK_CONTAINER (instance), priv->text_view); */
 
@@ -469,23 +470,25 @@ modest_recpt_editor_on_abook_clicked (GtkButton *button, ModestRecptEditor *edit
 	g_signal_emit_by_name (G_OBJECT (editor), "open-addressbook");
 }
 
-static gboolean
-modest_recpt_editor_on_button_release_event (GtkWidget *widget,
-					     GdkEventButton *event,
-					     ModestRecptEditor *recpt_editor)
+static void
+modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
+				 GtkTextIter *iter,
+				 GtkTextMark *mark,
+				 ModestRecptEditor *recpt_editor)
 {
 	ModestRecptEditorPrivate *priv;
-	GtkTextIter location, start, end;
-	GtkTextMark *mark;
-	GtkTextBuffer *buffer;
+	GtkTextIter start, end;
+	GtkTextMark *selection_bound;
 	GtkTextTag *tag;
 	gboolean selection_changed = FALSE;
 	
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
-	mark = gtk_text_buffer_get_insert (buffer);
-	gtk_text_buffer_get_iter_at_mark (buffer, &location, mark);
+	selection_bound = gtk_text_buffer_get_selection_bound (buffer);
+
+	if (mark != selection_bound)
+		return;
 
 	gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
 
@@ -505,11 +508,7 @@ modest_recpt_editor_on_button_release_event (GtkWidget *widget,
 
 	if (selection_changed) {
 		gtk_text_buffer_select_range (buffer, &start, &end);
-	} else {
-		GTK_TEXT_VIEW (priv->text_view)->pending_place_cursor_button = 0;
 	}
-
-	return FALSE;
 }
 
 static gboolean 
