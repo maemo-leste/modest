@@ -1,7 +1,19 @@
+modest (2.99-2009.11-4) unstable; urgency=low
+  
+  * Week 11, 2009 - Thursday release of email
+  *   modest trunk r7931
+  *   3 bug fixes
+  * Fixes: NB#105206 	mail-vie 	Conflict of behavior with respect to spec while attaching files
+  * Fixes: NB#105239
+  * Fixes: NB#105319 	mail-ui 	After renaming imap user defined folder it's status is not shown until the folder is accessed
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 11 Mar 2009 14:47:44 +0200
+
 modest (2.99-2009.11-3) unstable; urgency=low
 
   * Week 11, 2009 - Wednesday release of email
   *   modest trunk r7922
+  *   10 bug fixes
   * Fixes: NB#100011    mail-gen   just created child folder under user defined local folder disappears if Folders view is closed
   * Fixes: NB#100070
   * Fixes: NB#104978 	mail-acc   Modest crashes in "fill_providers"
