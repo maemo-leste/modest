@@ -2192,7 +2192,6 @@ transfer_folder_status_cb (GObject *obj,
 	g_slice_free (ModestMailOperationState, state);
 }
 
-
 static void
 transfer_folder_cb (TnyFolder *folder, 
 		    gboolean cancelled, 
@@ -2206,7 +2205,7 @@ transfer_folder_cb (TnyFolder *folder,
 	ModestMailOperationPrivate *priv = NULL;
 
 	helper = (XFerFolderAsyncHelper *) user_data;
-	g_return_if_fail (helper != NULL);       
+	g_return_if_fail (helper != NULL);
 
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(self);
@@ -2225,7 +2224,11 @@ transfer_folder_cb (TnyFolder *folder,
 		priv->done = 1;
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
-		
+
+	/* Update state of new folder */
+	tny_folder_refresh_async (new_folder, NULL, NULL, NULL);
+	tny_folder_poke_status (new_folder);
+
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
 
