@@ -724,28 +724,86 @@ add_to_address_book (const gchar* address)
 	return TRUE;
 }
 
-static gboolean
-show_check_names_banner (gpointer userdata)
+typedef struct _CheckNamesInfo {
+	GtkWidget *banner;
+	guint show_banner_timeout;
+	guint hide_banner_timeout;
+	gboolean hide;
+	gboolean free_info;
+} CheckNamesInfo;
+
+static void
+hide_check_names_banner (CheckNamesInfo *info)
 {
-	GtkWidget **banner = (GtkWidget **) userdata;
+	if (info->show_banner_timeout > 0) {
+		g_source_remove (info->show_banner_timeout);
+		info->show_banner_timeout = 0;
+	}
+	if (info->hide_banner_timeout > 0) {
+		info->hide = TRUE;
+		return;
+	}
 
-	gdk_threads_enter ();
-	*banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
-	gdk_threads_leave ();
+	if (info->banner) {
+		gtk_widget_destroy (info->banner);
+		info->banner = NULL;
+		info->hide = FALSE;
+	}
 
+	if (info->free_info) {
+		g_slice_free (CheckNamesInfo, info);
+	}
+}
+
+static gboolean hide_banner_timeout_handler (CheckNamesInfo *info)
+{
+	info->hide_banner_timeout = 0;
+	if (info->hide) {
+		gtk_widget_destroy (info->banner);
+		info->banner = NULL;
+	}
+	if (info->free_info) {
+		g_slice_free (CheckNamesInfo, info);
+	}
 	return FALSE;
 }
 
-static void
-hide_check_names_banner (GtkWidget **banner, guint banner_timeout)
+static gboolean show_banner_timeout_handler (CheckNamesInfo *info)
 {
-	if (*banner != NULL) {
-		gtk_widget_destroy (*banner);
-		*banner = NULL;
-	} else {
-		g_source_remove (banner_timeout);
+	info->show_banner_timeout = 0;
+	info->banner = hildon_banner_show_animation (NULL, NULL, _("mail_ib_checking_names"));
+	info->hide_banner_timeout = g_timeout_add (1000, (GSourceFunc) hide_banner_timeout_handler, (gpointer) info);
+	return FALSE;
+}
+
+static void show_check_names_banner (CheckNamesInfo *info)
+{
+	if (info->hide_banner_timeout > 0) {
+		g_source_remove (info->hide_banner_timeout);
+		info->hide_banner_timeout = 0;
 	}
 
+	info->hide = FALSE;
+	if (info->show_banner_timeout > 0)
+		return;
+
+	if (info->banner == NULL) {
+		info->show_banner_timeout = g_timeout_add (500, (GSourceFunc) show_banner_timeout_handler, (gpointer) info);
+	}
+}
+
+static void clean_check_names_banner (CheckNamesInfo *info)
+{
+	if (info->hide_banner_timeout) {
+		info->free_info = TRUE;
+	} else {
+		if (info->show_banner_timeout) {
+			g_source_remove (info->show_banner_timeout);
+		}
+		if (info->banner)
+			gtk_widget_destroy (info->banner);
+		g_slice_free (CheckNamesInfo, info);
+	}
 }
 
 gboolean
@@ -1008,30 +1066,32 @@ resolve_address (const gchar *address,
 		 gboolean *canceled)
 {
 	GList *resolved_contacts;
-	guint banner_timeout;
-	GtkWidget *banner = NULL;
+	CheckNamesInfo *info;;
 
 	g_return_val_if_fail (canceled, FALSE);
 
 	*canceled = FALSE;
-	banner_timeout = g_timeout_add (500, show_check_names_banner, &banner);
-
+	info = g_slice_new0 (CheckNamesInfo);
+	show_check_names_banner (info);
+	
 	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook_sync ()) {
-		hide_check_names_banner (&banner, banner_timeout);
+		hide_check_names_banner (info);
 		if (contact_model) {
 			g_object_unref (contact_model);
 			contact_model = NULL;
 		}
+		clean_check_names_banner (info);
 		return FALSE;
 	}
-	hide_check_names_banner (&banner, banner_timeout);
+	hide_check_names_banner (info);
 
 	resolved_contacts = get_contacts_for_name (address);
 
 	if (resolved_contacts == NULL) {
 		/* no matching contacts for the search string */
 		modest_platform_run_information_dialog (NULL, _("mcen_nc_no_matching_contacts"), FALSE);
+		clean_check_names_banner (info);
 		return FALSE;
 	}
 
@@ -1057,11 +1117,13 @@ resolve_address (const gchar *address,
 
 		g_list_foreach (resolved_contacts, (GFunc)unref_gobject, NULL);
 		g_list_free (resolved_contacts);
+		clean_check_names_banner (info);
 
 		return found;
 	} else {
 		/* cancelled dialog to select more than one contact or
 		 * selected no contact */
+		clean_check_names_banner (info);
 		return FALSE;
 	}
 
