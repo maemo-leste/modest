@@ -1469,25 +1469,6 @@ modest_ui_dimming_rules_on_remove_attachments (ModestWindow *win, gpointer user_
 		dimmed = _invalid_attach_selected (win, FALSE, FALSE, TRUE, NULL);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("FIXME:no attachment selected"));
-
-		if (!dimmed) {
-			TnyList *attachments;
-			TnyIterator *iter;
-			attachments = modest_msg_view_window_get_attachments (MODEST_MSG_VIEW_WINDOW (win));
-			if (attachments) {
-				iter = tny_list_create_iterator (attachments);
-				while (!tny_iterator_is_done (iter) && !dimmed) {
-					TnyMimePart *mime_part = (TnyMimePart *)
-						tny_iterator_get_current (iter);
-					if (modest_tny_mime_part_is_msg (mime_part))
-						dimmed = TRUE;
-					g_object_unref (mime_part);
-					tny_iterator_next (iter);
-				}
-				g_object_unref (iter);
-				g_object_unref (attachments);
-			}
-		}
 	}
 
 	if (!dimmed) {
