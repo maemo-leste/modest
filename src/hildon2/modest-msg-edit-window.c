@@ -1348,6 +1348,8 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	GSList *radio_group = NULL;
 	GSList *node = NULL;
 	gchar *markup;
+	gchar ldots[8];
+	gint ldots_len;
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
@@ -1385,8 +1387,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	hildon_helper_set_logical_color (GTK_WIDGET (priv->size_tool_button_label), GTK_RC_FG,
 					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
 	snprintf(size_text, sizeof(size_text), "%d", wp_font_size[DEFAULT_FONT_SIZE]);
+	ldots_len = g_unichar_to_utf8 (0x2026, ldots);
+	ldots[ldots_len] = '\0';
 	markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>",
-			      size_text,"</span>", NULL);
+			      size_text, ldots, "</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 	g_free (markup);
 	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
@@ -1986,11 +1990,16 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 		if (gtk_tree_model_get_iter (priv->sizes_model, &iter, path)) {
 			gchar *size_text;
 			gchar *markup;
+			gchar ldots[8];
+			gint ldots_len;
+
 			priv->current_size_index = buffer_format->font_size;
 
 			gtk_tree_model_get (priv->sizes_model, &iter, 0, &size_text, -1);
+			ldots_len = g_unichar_to_utf8 (0x2026, ldots);
+			ldots[ldots_len] = '\0';
 			markup = g_strconcat ("<span font_family='Sans'>", 
-					      size_text, "</span>", NULL);
+					      size_text, ldots, "</span>", NULL);
 			
 			gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 			g_free (markup);
@@ -2581,6 +2590,8 @@ font_size_clicked (GtkToolButton *button,
 		gchar *size_text;
 		gchar *markup;
 		WPTextBufferFormat format;
+		gchar ldots[8];
+		gint ldots_len;
 
 		new_index = hildon_touch_selector_get_active (HILDON_TOUCH_SELECTOR (selector), 0);
 
@@ -2599,8 +2610,10 @@ font_size_clicked (GtkToolButton *button,
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
 		size_text = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+		ldots_len = g_unichar_to_utf8 (0x2026, ldots);
+		ldots[ldots_len] = '\0';
 		markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>", 
-				      size_text, "</span>", NULL);
+				      size_text, ldots, "</span>", NULL);
 		g_free (size_text);
 		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 		g_free (markup);
