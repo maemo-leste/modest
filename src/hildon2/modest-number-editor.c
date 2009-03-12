@@ -221,9 +221,8 @@ modest_number_editor_init                       (ModestNumberEditor *editor)
             G_CALLBACK (modest_number_editor_entry_focusout),
             editor);
 
-
-    g_object_set (G_OBJECT (editor),
-            "hildon-input-mode", HILDON_GTK_INPUT_MODE_NUMERIC, NULL);
+    hildon_gtk_entry_set_input_mode (GTK_ENTRY (editor), 
+				     HILDON_GTK_INPUT_MODE_NUMERIC);
 
     modest_number_editor_set_range (editor, G_MININT, G_MAXINT);
 }
