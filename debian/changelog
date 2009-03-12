@@ -1,3 +1,16 @@
+modest (2.99-2009.12-1) unstable; urgency=low
+
+  * Week 12, 2009 - first release on Firday
+  *  modest trunk r7980
+  *  5 bug fixes
+  * Fixes:NB#101939 	Modest relaunch needed to update the fodler structure when a mailbox is added or deleted on an TEST account
+  * Fixes:NB#102852 	Blank "Select attachment" dialog opened and "Done" button is active for remove email attachment from local folder
+  * Fixes:NB#104301 	"Checking names" info banner shown blank in a particular scenario
+  * Fixes:NB#104780 	Editor: a one tap on a resolved recipient should highlight the recipient.
+  * Fixes:NB#105412 	Forward email Editor: Remove attachment opens blank select attachment dialog for email attachment type
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 12 Mar 2009 16:06:53 +0200
+
 modest (2.99-2009.11-4) unstable; urgency=low
   
   * Week 11, 2009 - Thursday release of email
