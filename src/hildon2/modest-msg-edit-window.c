@@ -64,6 +64,8 @@
 #include <modest-wp-text-view.h>
 #include <wptextbuffer.h>
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-touch-selector.h>
+#include <hildon/hildon-picker-dialog.h>
 #include "modest-msg-edit-window-ui-dimming.h"
 
 #include "modest-hildon-includes.h"
@@ -115,8 +117,6 @@ static void  subject_field_insert_text (GtkEditable *editable,
 					ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
-static void  modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
-						 gpointer userdata);
 static void  modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
 						 gpointer userdata);
 static void  modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window);
@@ -174,6 +174,8 @@ static void setup_menu (ModestMsgEditWindow *self);
 
 static void from_field_changed (HildonPickerButton *button,
 				ModestMsgEditWindow *self);
+static void font_size_clicked (GtkToolButton *button,
+			       ModestMsgEditWindow *window);
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -262,7 +264,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *font_color_toolitem;
 	GSList      *font_items_group;
 	GtkWidget   *font_tool_button_label;
-	GSList      *size_items_group;
+	GtkTreeModel *sizes_model;
+	gint         current_size_index;
 	GtkWidget   *size_tool_button_label;
 
 	GtkWidget   *find_toolbar;
@@ -966,7 +969,7 @@ modest_msg_edit_window_finalize (GObject *obj)
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
 	g_slist_free (priv->font_items_group);
-	g_slist_free (priv->size_items_group);
+	g_object_unref (priv->sizes_model);
 	g_object_unref (priv->attachments);
 	g_object_unref (priv->images);
 
@@ -1375,7 +1378,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontAttributes");
 	insert_index = gtk_toolbar_get_item_index(GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM(placeholder));
 	/* font_size */
-	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
+	tool_item = GTK_WIDGET (gtk_tool_button_new (NULL, NULL));
 	priv->size_tool_button_label = gtk_label_new (NULL);
 	hildon_helper_set_logical_color (GTK_WIDGET (priv->size_tool_button_label), GTK_RC_TEXT,
 					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
@@ -1389,31 +1392,23 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->size_tool_button_label);
 	sizes_menu = gtk_menu_new ();
-	priv->size_items_group = NULL;
-	radio_group = NULL;
+	priv->sizes_model = GTK_TREE_MODEL (gtk_list_store_new (1, G_TYPE_STRING));
 	for (size_index = 0; size_index < WP_FONT_SIZE_COUNT; size_index++) {
-		GtkWidget *size_menu_item;
+		GtkTreeIter iter;
 
 		snprintf(size_text, sizeof(size_text), "%d", wp_font_size[size_index]);
-		size_menu_item = gtk_radio_menu_item_new_with_label (radio_group, size_text);
-		radio_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (size_menu_item));
-		gtk_menu_shell_append (GTK_MENU_SHELL (sizes_menu), size_menu_item);
-		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (size_menu_item), (wp_font_size[size_index] == 12));
-		gtk_widget_show (size_menu_item);
+		gtk_list_store_append (GTK_LIST_STORE (priv->sizes_model), &iter);
 
-		priv->size_items_group = g_slist_prepend (priv->size_items_group, size_menu_item);
-			
+		gtk_list_store_set (GTK_LIST_STORE (priv->sizes_model), &iter, 
+				    0, size_text,
+				    -1);
+
+		if (wp_font_size[size_index] == 12)
+			priv->current_size_index = size_index;
+					
 	}
 
-	for (node = radio_group; node != NULL; node = g_slist_next (node)) {
-		GtkWidget *item = (GtkWidget *) node->data;
-		g_signal_connect (G_OBJECT (item), "toggled", G_CALLBACK (modest_msg_edit_window_size_change),
-				  window);
-	}
-
-	priv->size_items_group = g_slist_reverse (priv->size_items_group);
-	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), sizes_menu);
-	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
+	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (font_size_clicked), window);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
@@ -1930,7 +1925,6 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	GtkAction *action;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
-	GtkWidget *new_size_menuitem;
 	GtkWidget *new_font_menuitem;
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
@@ -1984,23 +1978,25 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 					   G_CALLBACK (modest_msg_edit_window_color_button_change),
 					   window);
 
-	new_size_menuitem = GTK_WIDGET ((g_slist_nth (priv->size_items_group, 
-						      buffer_format->font_size))->data);
-	if (!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (new_size_menuitem))) {
-		GtkWidget *label;
-		gchar *markup;
+	if (priv->current_size_index != buffer_format->font_size) {
+		GtkTreeIter iter;
+		GtkTreePath *path;
 
-		label = gtk_bin_get_child (GTK_BIN (new_size_menuitem));
-		markup = g_strconcat ("<span font_family='Sans'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
-		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
-		g_free (markup);
-		g_signal_handlers_block_by_func (G_OBJECT (new_size_menuitem),
-						 G_CALLBACK (modest_msg_edit_window_size_change),
-						 window);
-		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (new_size_menuitem), TRUE);
-		g_signal_handlers_unblock_by_func (G_OBJECT (new_size_menuitem),
-						   G_CALLBACK (modest_msg_edit_window_size_change),
-						   window);
+		path = gtk_tree_path_new_from_indices (buffer_format->font_size, -1);
+		if (gtk_tree_model_get_iter (priv->sizes_model, &iter, path)) {
+			gchar *size_text;
+			gchar *markup;
+			priv->current_size_index = buffer_format->font_size;
+
+			gtk_tree_model_get (priv->sizes_model, &iter, 0, &size_text, -1);
+			markup = g_strconcat ("<span font_family='Sans'>", 
+					      size_text, "</span>", NULL);
+			
+			gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
+			g_free (markup);
+			g_free (size_text);
+		}
+		gtk_tree_path_free (path);		
 	}
 
 	new_font_menuitem = GTK_WIDGET ((g_slist_nth (priv->font_items_group, 
@@ -2565,43 +2561,55 @@ modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 }
 
 static void
-modest_msg_edit_window_size_change (GtkCheckMenuItem *menu_item,
-				    gpointer userdata)
+font_size_clicked (GtkToolButton *button,
+		   ModestMsgEditWindow *window)
 {
 	ModestMsgEditWindowPrivate *priv;
-	gint new_size_index;
-	ModestMsgEditWindow *window;
-	GtkWidget *label;
+	GtkWidget *selector, *dialog;
 	
-	window = MODEST_MSG_EDIT_WINDOW (userdata);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
 
-	if (gtk_check_menu_item_get_active (menu_item)) {
+	selector = hildon_touch_selector_new ();
+	hildon_touch_selector_append_text_column (HILDON_TOUCH_SELECTOR (selector), priv->sizes_model, TRUE);
+	hildon_touch_selector_set_active (HILDON_TOUCH_SELECTOR (selector), 0, priv->current_size_index);
+
+	dialog = hildon_picker_dialog_new (GTK_WINDOW (window));
+	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
+
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
+		gint new_index;
+		gchar *size_text;
 		gchar *markup;
 		WPTextBufferFormat format;
+
+		new_index = hildon_touch_selector_get_active (HILDON_TOUCH_SELECTOR (selector), 0);
 
 		memset (&format, 0, sizeof (format));
 		wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), &format, FALSE);
 
-		label = gtk_bin_get_child (GTK_BIN (menu_item));
-		
-		new_size_index = atoi (gtk_label_get_text (GTK_LABEL (label)));
 		format.cs.font_size = TRUE;
 		format.cs.text_position = TRUE;
 		format.cs.font = TRUE;
-		format.font_size = wp_get_font_size_index (new_size_index, DEFAULT_FONT_SIZE);
+		format.font_size = new_index;
 /* 		wp_text_buffer_set_format (WP_TEXT_BUFFER (priv->text_buffer), &format); */
 
 		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT_SIZE,
-						   GINT_TO_POINTER (wp_get_font_size_index (new_size_index, 12))))
+						   GINT_TO_POINTER (new_index)))
 			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
-		markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>", gtk_label_get_text (GTK_LABEL (label)), "</span>", NULL);
+		size_text = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+		markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>", 
+				      size_text, "</span>", NULL);
+		g_free (size_text);
 		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 		g_free (markup);
+
 	}
+	gtk_widget_destroy (dialog);
+
+	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
+
 }
 
 static void
