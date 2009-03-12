@@ -117,8 +117,6 @@ static void  subject_field_insert_text (GtkEditable *editable,
 					ModestMsgEditWindow *window);
 static void  modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 							 gpointer userdata);
-static void  modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
-						 gpointer userdata);
 static void  modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window);
 
 static void modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
@@ -175,6 +173,8 @@ static void setup_menu (ModestMsgEditWindow *self);
 static void from_field_changed (HildonPickerButton *button,
 				ModestMsgEditWindow *self);
 static void font_size_clicked (GtkToolButton *button,
+			       ModestMsgEditWindow *window);
+static void font_face_clicked (GtkToolButton *button,
 			       ModestMsgEditWindow *window);
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
@@ -263,6 +263,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *font_color_button;
 	GtkWidget   *font_color_toolitem;
 	GSList      *font_items_group;
+	GtkTreeModel *faces_model;
+	gint         current_face_index;
 	GtkWidget   *font_tool_button_label;
 	GtkTreeModel *sizes_model;
 	gint         current_size_index;
@@ -968,7 +970,7 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_free (priv->original_account_name);
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
-	g_slist_free (priv->font_items_group);
+	g_object_unref (priv->faces_model);
 	g_object_unref (priv->sizes_model);
 	g_object_unref (priv->attachments);
 	g_object_unref (priv->images);
@@ -1293,25 +1295,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 }
 
 static void
-menu_tool_button_clicked_popup (GtkMenuToolButton *item,
-				gpointer data)
-{
-	GList *item_children, *node;
-	GtkWidget *bin_child;
-
-	bin_child = gtk_bin_get_child (GTK_BIN(item));
-
-	item_children = gtk_container_get_children (GTK_CONTAINER (bin_child));
-	
-	for (node = item_children; node != NULL; node = g_list_next (node)) {
-		if (GTK_IS_TOGGLE_BUTTON (node->data)) {
-			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (node->data), TRUE);
-		}
-	}
-	g_list_free (item_children);
-}
-
-static void
 menu_tool_button_dont_expand (GtkMenuToolButton *item)
 {
 	GtkWidget *box;
@@ -1345,11 +1328,12 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gint font_index;
 	GtkWidget *sizes_menu;
 	GtkWidget *fonts_menu;
-	GSList *radio_group = NULL;
-	GSList *node = NULL;
 	gchar *markup;
 	gchar ldots[8];
 	gint ldots_len;
+
+	ldots_len = g_unichar_to_utf8 (0x2026, ldots);
+	ldots[ldots_len] = '\0';
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
@@ -1387,8 +1371,6 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	hildon_helper_set_logical_color (GTK_WIDGET (priv->size_tool_button_label), GTK_RC_FG,
 					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
 	snprintf(size_text, sizeof(size_text), "%d", wp_font_size[DEFAULT_FONT_SIZE]);
-	ldots_len = g_unichar_to_utf8 (0x2026, ldots);
-	ldots[ldots_len] = '\0';
 	markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>",
 			      size_text, ldots, "</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
@@ -1420,47 +1402,32 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	priv->font_size_toolitem = tool_item;
 
 	/* font face */
-	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
+	tool_item = GTK_WIDGET (gtk_tool_button_new (NULL, NULL));
 	priv->font_tool_button_label = gtk_label_new (NULL);
 	hildon_helper_set_logical_color (GTK_WIDGET (priv->font_tool_button_label), GTK_RC_TEXT,
 					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
 	hildon_helper_set_logical_color (GTK_WIDGET (priv->font_tool_button_label), GTK_RC_FG,
 					 GTK_STATE_INSENSITIVE, "SecondaryTextColor");
-	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt</span>", NULL);
+	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt",ldots,"</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 	g_free(markup);
 	hildon_helper_set_logical_font (priv->font_tool_button_label, "LargeSystemFont");
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->font_tool_button_label);
 	fonts_menu = gtk_menu_new ();
-	priv->font_items_group = NULL;
-	radio_group = NULL;
+	priv->faces_model = GTK_TREE_MODEL (gtk_list_store_new (1, G_TYPE_STRING));
 	for (font_index = 0; font_index < wp_get_font_count (); font_index++) {
-		GtkWidget *font_menu_item;
-		GtkWidget *child_label;
+		GtkTreeIter iter;
 
-		font_menu_item = gtk_radio_menu_item_new_with_label (radio_group, "");
-		child_label = gtk_bin_get_child (GTK_BIN (font_menu_item));
-		markup = g_strconcat ("<span font_family='", wp_get_font_name (font_index),"'>", 
-				      wp_get_font_name (font_index), "</span>", NULL);
-		gtk_label_set_markup (GTK_LABEL (child_label), markup);
-		g_free (markup);
-		
-		radio_group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (font_menu_item));
-		gtk_menu_shell_append (GTK_MENU_SHELL (fonts_menu), font_menu_item);
-		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (font_menu_item), (font_index == DEFAULT_FONT));
-		gtk_widget_show (font_menu_item);
+		gtk_list_store_append (GTK_LIST_STORE (priv->faces_model), &iter);
 
-		priv->font_items_group = g_slist_prepend (priv->font_items_group, font_menu_item);
-			
+		gtk_list_store_set (GTK_LIST_STORE (priv->faces_model), &iter, 
+				    0, wp_get_font_name (font_index),
+				    -1);
+
+		if (font_index == DEFAULT_FONT)
+			priv->current_face_index = font_index;
 	}
-	for (node = radio_group; node != NULL; node = g_slist_next (node)) {
-		GtkWidget *item = (GtkWidget *) node->data;
-		g_signal_connect (G_OBJECT (item), "toggled", G_CALLBACK (modest_msg_edit_window_font_change),
-				  window);
-	}
-	priv->font_items_group = g_slist_reverse (priv->font_items_group);
-	gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (tool_item), fonts_menu);
-	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (menu_tool_button_clicked_popup), NULL);
+	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (font_face_clicked), window);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
@@ -1929,10 +1896,14 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	GtkAction *action;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
-	GtkWidget *new_font_menuitem;
+	gchar ldots[8];
+	gint ldots_len;
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	ldots_len = g_unichar_to_utf8 (0x2026, ldots);
+	ldots[ldots_len] = '\0';
 
 	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))) {
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu");
@@ -1990,14 +1961,10 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 		if (gtk_tree_model_get_iter (priv->sizes_model, &iter, path)) {
 			gchar *size_text;
 			gchar *markup;
-			gchar ldots[8];
-			gint ldots_len;
 
 			priv->current_size_index = buffer_format->font_size;
 
 			gtk_tree_model_get (priv->sizes_model, &iter, 0, &size_text, -1);
-			ldots_len = g_unichar_to_utf8 (0x2026, ldots);
-			ldots[ldots_len] = '\0';
 			markup = g_strconcat ("<span font_family='Sans'>", 
 					      size_text, ldots, "</span>", NULL);
 			
@@ -2008,23 +1975,23 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 		gtk_tree_path_free (path);		
 	}
 
-	new_font_menuitem = GTK_WIDGET ((g_slist_nth (priv->font_items_group, 
-						      buffer_format->font))->data);
-	if (!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (new_font_menuitem))) {
-		GtkWidget *label;
-		gchar *markup;
+	if (priv->current_face_index != buffer_format->font) {
+		GtkTreeIter iter;
+		GtkTreePath *path;
 
-		label = gtk_bin_get_child (GTK_BIN (new_font_menuitem));
-		markup = g_strconcat ("<span font_family='", gtk_label_get_text (GTK_LABEL (label)),"'>Tt</span>", NULL);
-		gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
-		g_free (markup);
-		g_signal_handlers_block_by_func (G_OBJECT (new_font_menuitem),
-						 G_CALLBACK (modest_msg_edit_window_font_change),
-						 window);
-		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (new_font_menuitem), TRUE);
-		g_signal_handlers_unblock_by_func (G_OBJECT (new_font_menuitem),
-						   G_CALLBACK (modest_msg_edit_window_font_change),
-						   window);
+		path = gtk_tree_path_new_from_indices (buffer_format->font, -1);
+		if (gtk_tree_model_get_iter (priv->faces_model, &iter, path)) {
+			gchar *face_name;
+			gchar *markup;
+
+			priv->current_face_index = buffer_format->font;
+			gtk_tree_model_get (priv->faces_model, &iter, 0, &face_name, -1);
+			markup = g_strconcat ("<span font_family='", face_name, "'>Tt", ldots, "</span>", NULL);
+			gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
+			g_free (face_name);
+			g_free (markup);
+		}
+
 	}
 
 	g_free (buffer_format);
@@ -2626,34 +2593,59 @@ font_size_clicked (GtkToolButton *button,
 }
 
 static void
-modest_msg_edit_window_font_change (GtkCheckMenuItem *menu_item,
-				    gpointer userdata)
+font_face_clicked (GtkToolButton *button,
+		   ModestMsgEditWindow *window)
 {
 	ModestMsgEditWindowPrivate *priv;
-	gint new_font_index;
-	ModestMsgEditWindow *window;
-	GtkWidget *label;
+	GtkWidget *selector, *dialog;
+	GtkCellRenderer *renderer;
 	
-	window = MODEST_MSG_EDIT_WINDOW (userdata);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	selector = hildon_touch_selector_new ();
+	renderer = gtk_cell_renderer_text_new ();
+	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), priv->faces_model, 
+					     renderer, "family", 0, "text", 0, NULL);
+	hildon_touch_selector_set_active (HILDON_TOUCH_SELECTOR (selector), 0, priv->current_face_index);
+
+	dialog = hildon_picker_dialog_new (GTK_WINDOW (window));
+	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
+
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
+		gint new_font_index;
+		GtkTreePath *path;
+		GtkTreeIter iter;
+
+		new_font_index = hildon_touch_selector_get_active (HILDON_TOUCH_SELECTOR (selector), 0);
+		path = gtk_tree_path_new_from_indices (new_font_index, -1);
+		if (gtk_tree_model_get_iter (priv->faces_model, &iter, path)) {
+			gchar *face_name;
+			gchar *markup;
+			gchar ldots[8];
+			gint ldots_len;
+
+			gtk_tree_model_get (priv->faces_model, &iter, 0, &face_name, -1);
+
+			if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, 
+							   GINT_TO_POINTER(new_font_index)))
+				wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
+
+			ldots_len = g_unichar_to_utf8 (0x2026, ldots);
+			ldots[ldots_len] = '\0';
+			markup = g_strconcat ("<span font_family='", face_name, "'>Tt", ldots, "</span>", NULL);
+			gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
+
+			text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
+			g_free (face_name);
+			g_free (markup);
+		}
+		gtk_tree_path_free (path);
+
+	}
+	gtk_widget_destroy (dialog);
+
 	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
 
-	if (gtk_check_menu_item_get_active (menu_item)) {
-		gchar *markup;
-
-		label = gtk_bin_get_child (GTK_BIN (menu_item));
-		
-		new_font_index = wp_get_font_index (gtk_label_get_text (GTK_LABEL (label)), DEFAULT_FONT);
-
-		if (!wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FONT, 
-						   GINT_TO_POINTER(new_font_index)))
-			wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
-		
-		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
-		    markup = g_strconcat ("<span font_family='",gtk_label_get_text (GTK_LABEL (label)),"'>Tt</span>", NULL);
-		gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
-		g_free (markup);
-	}
 }
 
 void
