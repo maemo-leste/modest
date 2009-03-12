@@ -1164,20 +1164,39 @@ cleanup:
 }
 
 static gboolean
-is_memory_full_error (GError *error)
+is_memory_full_error (GError *error, ModestMailOperation *mail_op)
 {
 	gboolean enough_free_space = TRUE;
 	GnomeVFSURI *cache_dir_uri;
-	const gchar *cache_dir;
+	const gchar *cache_dir = NULL;
 	GnomeVFSFileSize free_space;
+	TnyAccountStore *acc_store;
 
-	cache_dir = tny_account_store_get_cache_dir (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
-	cache_dir_uri = gnome_vfs_uri_new (cache_dir);
-	if (gnome_vfs_get_volume_free_space (cache_dir_uri, &free_space) == GNOME_VFS_OK) {
-		if (free_space < MIN_FREE_SPACE)
-			enough_free_space = FALSE;
+	acc_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
+
+	/* Cache dir is different in case we're using an external storage (like MMC account) */
+	if (mail_op) {
+		TnyAccount *account = modest_mail_operation_get_account (mail_op);
+		if (account) {
+			if (modest_tny_account_is_memory_card_account (account)) {
+				cache_dir = g_getenv (MODEST_MMC1_VOLUMEPATH_ENV);
+			}
+			g_object_unref (account);
+		}
 	}
-	gnome_vfs_uri_unref (cache_dir_uri);
+
+	/* Get the default local cache dir */
+	if (!cache_dir)
+		cache_dir = tny_account_store_get_cache_dir (acc_store);
+
+	cache_dir_uri = gnome_vfs_uri_new (cache_dir);
+	if (cache_dir_uri) {
+		if (gnome_vfs_get_volume_free_space (cache_dir_uri, &free_space) == GNOME_VFS_OK) {
+			if (free_space < MIN_FREE_SPACE)
+				enough_free_space = FALSE;
+		}
+		gnome_vfs_uri_unref (cache_dir_uri);
+	}
 
 	if ((error->code == TNY_SYSTEM_ERROR_MEMORY ||
 	     /* When asking for a mail and no space left on device
@@ -1200,7 +1219,7 @@ check_memory_full_error (GtkWidget *parent_window, GError *err)
 	if (err == NULL)
 		return FALSE;
 
-	if (is_memory_full_error (err))
+	if (is_memory_full_error (err, NULL))
 		modest_platform_information_banner (parent_window,
 						    NULL, _KR("cerm_device_memory_full"));
 	else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
@@ -1230,7 +1249,7 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 	/* If the mail op has been cancelled then it's not an error:
 	   don't show any message */
 	if (status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-		if (is_memory_full_error ((GError *) error)) {
+		if (is_memory_full_error ((GError *) error, mail_op)) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, _KR("cerm_device_memory_full"));
 		} else if (error->code == TNY_SYSTEM_ERROR_MEMORY) {
@@ -5477,7 +5496,7 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
 
-	if (error && is_memory_full_error ((GError *) error))
+	if (error && is_memory_full_error ((GError *) error, mail_op))
 		modest_platform_information_banner ((GtkWidget *) win,
 						    NULL, _KR("cerm_device_memory_full"));
 	else
