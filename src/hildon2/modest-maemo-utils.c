@@ -388,7 +388,7 @@ static gboolean match_all (TnyList *list, GObject *item, gpointer match_data)
 }
 
 gboolean
-modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list)
+modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs)
 {
 	GtkTreeModel *model;
 	TnyIterator *iterator;

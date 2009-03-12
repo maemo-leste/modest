@@ -2770,7 +2770,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts)) {
+		if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, FALSE)) {
 			g_object_unref (mime_parts);
 			return;
 		}
@@ -2886,7 +2886,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	}
 	g_object_unref (iter);
 
-	if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts) ||
+	if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, TRUE) ||
 	    tny_list_get_length (mime_parts) == 0) {
 		g_object_unref (mime_parts);
 		return;
