@@ -404,16 +404,23 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 	     tny_iterator_next (iterator)) {
 		GtkTreeIter iter;
 		TnyMimePart *part;
+		gchar *label;
+		gchar *filename = NULL;
 
 		part = (TnyMimePart *) tny_iterator_get_current (iterator);
 
-		/* Embbeded messages are not offered to be
-		   saved. Purged attachments are ignored as well */
-		if (!TNY_IS_MSG (part) && !tny_mime_part_is_purged (part)) {
-			gchar *label;
-			gchar *filename = NULL;
+		/* Ignore purged attachments and messages if ignore is
+		   set to TRUE */
+		if (!(tny_mime_part_is_purged (part) ||
+		      (TNY_IS_MSG (part) && !include_msgs))) {
 
-			filename = g_strdup (tny_mime_part_get_filename (part));
+			if (TNY_IS_MSG (part)) {
+				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
+				filename = tny_header_dup_subject (header);
+				g_object_unref (header);
+			} else {
+				filename = g_strdup (tny_mime_part_get_filename (part));
+			}
 			label = g_strconcat (filename, NULL);
 			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
 			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, label, 1, part, -1);
