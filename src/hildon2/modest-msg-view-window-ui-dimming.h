@@ -44,10 +44,6 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 	{ "/MenuBar/ToolsMenu/CloseWindowMenu", NULL },
 	{ "/MenuBar/ToolsMenu/CloseAllWindowsMenu", NULL },
 
-	/* Contextual Menus (Toolbar) */
-	{ "/ToolbarReplyCSM/MessageForwardMenu", NULL },
-	{ "/ToolbarReplyCSM/MessageReplyAllMenu", NULL },
-	{ "/ToolbarReplyCSM/MessageReplyMenu", NULL },
 	
 };
 

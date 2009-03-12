@@ -60,11 +60,6 @@
     <toolitem action="ToolbarMessageNext" position="bot"/>
   </toolbar>
 
-  <popup name="ToolbarReplyCSM">
-      <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
-      <menuitem name="MessageForwardMenu" action="EmailForward"/>
-  </popup>
-
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
   <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>

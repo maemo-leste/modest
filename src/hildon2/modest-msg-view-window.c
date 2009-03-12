@@ -2197,7 +2197,6 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 {
 	ModestMsgViewWindowPrivate *priv = NULL;
 	ModestWindowPrivate *parent_priv;
-	GtkWidget *reply_button = NULL, *menu = NULL;
 
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
@@ -2219,13 +2218,6 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
 
-		/* Set reply button tap and hold menu */
-		reply_button = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
-							  "/ToolBar/ToolbarMessageReply");
-		menu = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
-						  "/ToolbarReplyCSM");
-		if (menu && reply_button)
-			gtk_widget_tap_and_hold_setup (GTK_WIDGET (reply_button), menu, NULL, 0);
 	}
 
 	if (show_toolbar) {
