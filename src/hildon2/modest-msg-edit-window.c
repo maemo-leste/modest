@@ -1294,26 +1294,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	g_free (bcc);
 }
 
-static void
-menu_tool_button_dont_expand (GtkMenuToolButton *item)
-{
-	GtkWidget *box;
-	GList *item_children, *node;
-
-	box = gtk_bin_get_child (GTK_BIN (item));
-	gtk_box_set_homogeneous (GTK_BOX (box), TRUE);
-	item_children = gtk_container_get_children (GTK_CONTAINER (box));
-	
-	for (node = item_children; node != NULL; node = g_list_next (node)) {
-		gtk_box_set_child_packing (GTK_BOX (box), GTK_WIDGET (node->data), TRUE, TRUE, 0, GTK_PACK_START);
-		if (GTK_IS_TOGGLE_BUTTON (node->data))
-			gtk_button_set_alignment (GTK_BUTTON (node->data), 0.0, 0.5);
-		else if (GTK_IS_BUTTON (node->data))
-			gtk_button_set_alignment (GTK_BUTTON (node->data), 1.0, 0.5);
-	}
-	g_list_free (item_children);
-}
-
 
 static void
 modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
@@ -1396,9 +1376,8 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (font_size_clicked), window);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
-	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
-	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	priv->font_size_toolitem = tool_item;
 
 	/* font face */
@@ -1429,9 +1408,8 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	}
 	g_signal_connect (G_OBJECT (tool_item), "clicked", G_CALLBACK (font_face_clicked), window);
 	gtk_toolbar_insert (GTK_TOOLBAR (parent_priv->toolbar), GTK_TOOL_ITEM (tool_item), insert_index);
-	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
-	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
-	menu_tool_button_dont_expand (GTK_MENU_TOOL_BUTTON (tool_item));
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	priv->font_face_toolitem = tool_item;
 
 	/* Set expand and homogeneous for remaining items */
