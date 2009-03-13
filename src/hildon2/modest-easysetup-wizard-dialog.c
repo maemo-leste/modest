@@ -114,6 +114,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *account_country_picker;
 	GtkWidget *account_serviceprovider_picker;
 	GtkWidget *entry_account_title;
+	GtkWidget *caption_account_title;
 	
 	GtkWidget *page_user_details;
 	GtkWidget *entry_user_name;
@@ -313,6 +314,10 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 	ModestEasysetupWizardDialog *self;
 	ModestEasysetupWizardDialogPrivate *priv;
 	ModestProviderPickerIdType provider_id_type;
+	ModestProtocol *protocol;
+	gchar *proto_name;
+	ModestProtocolType proto_type;
+	gboolean hide_account_title;
 
 	self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
@@ -335,6 +340,31 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 		priv->account_manager, default_account_name_start);
 	g_free (default_account_name_start);
 	default_account_name_start = NULL;
+
+	hide_account_title = FALSE;
+	proto_name = modest_provider_picker_get_active_provider_id (MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+	if (proto_name != NULL) {
+		protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+									  MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
+									  proto_name);
+		if (protocol != NULL) {
+			proto_type = modest_protocol_get_type_id (protocol);
+			
+			hide_account_title = (modest_protocol_registry_protocol_type_has_tag 
+					      (modest_runtime_get_protocol_registry (),
+					       proto_type,
+					       MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS) ||
+					      modest_protocol_registry_protocol_type_has_tag
+					      (modest_runtime_get_protocol_registry (),
+					       proto_type,
+					       MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS));
+		}
+	}
+	
+	if (hide_account_title)
+		gtk_widget_hide (priv->caption_account_title);
+	else
+		gtk_widget_show (priv->caption_account_title);
 
 	hildon_entry_set_text (HILDON_ENTRY (priv->entry_account_title), default_account_name);
 	g_free (default_account_name);
@@ -470,7 +500,6 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 static GtkWidget*
 create_page_account_details (ModestEasysetupWizardDialog *self)
 {
-	GtkWidget *caption;
 	GtkWidget *align;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
@@ -529,11 +558,12 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_free (default_account_name);
 	default_account_name = NULL;
 
-	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mcen_fi_account_title"), FALSE,
-				    priv->entry_account_title);
+	priv->caption_account_title = create_captioned (self, title_sizegroup, value_sizegroup, 
+							_("mcen_fi_account_title"), FALSE,
+							priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
-	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
-	gtk_widget_show (caption);
+	gtk_box_pack_start (GTK_BOX (box), priv->caption_account_title, FALSE, FALSE, 0);
+	gtk_widget_show (priv->caption_account_title);
 	
 	/* Prevent the use of some characters in the account title, 
 	 * as required by our UI specification: */
