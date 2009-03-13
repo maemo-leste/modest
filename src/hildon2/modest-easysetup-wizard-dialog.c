@@ -426,7 +426,6 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_container_add (GTK_CONTAINER (align), box);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_widget_show (align);
 	return GTK_WIDGET (align);
 }
 
@@ -564,6 +563,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_account_title, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_account_title);
+	gtk_widget_set_no_show_all (priv->caption_account_title, TRUE);
 	
 	/* Prevent the use of some characters in the account title, 
 	 * as required by our UI specification: */
@@ -923,7 +923,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 							FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
 			    FALSE, FALSE, 0);
-	gtk_widget_show_all (priv->incoming_security);
+	gtk_widget_show (priv->incoming_security);
 
 	/* Set default selection */
 	modest_servertype_picker_set_active_servertype (
@@ -1391,6 +1391,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	priv->pending_check_support = 0;
 	priv->destroyed = FALSE;
 	priv->page_welcome = create_page_welcome (self);
+	gtk_widget_show (priv->page_welcome);
 	priv->page_account_details = create_page_account_details (self);
 
 	init_user_page (priv);

@@ -285,8 +285,12 @@ init (ModestWizardDialog *wizard_dialog)
     /* Build wizard layout */
     gtk_box_pack_start (GTK_BOX (dialog->vbox), GTK_WIDGET (priv->box), TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (priv->box), GTK_WIDGET (vbox), FALSE, FALSE, 0);
-    if (priv->image)
-      gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), TRUE, TRUE, 0);
+    gtk_widget_show (vbox);
+    gtk_widget_show (GTK_WIDGET (priv->box));
+    if (priv->image) {
+	    gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (priv->image), TRUE, TRUE, 0);
+	    gtk_widget_show (priv->image);
+    }
 
     /* Add response buttons: finish, previous, next, cancel */
 #ifdef MODEST_TOOLKIT_HILDON1
@@ -310,8 +314,7 @@ init (ModestWizardDialog *wizard_dialog)
     /* Set initial button states: previous and finish buttons are disabled */
     make_buttons_sensitive (wizard_dialog, FALSE, FALSE, TRUE);
 
-    /* Show all the internal widgets */
-    gtk_widget_show_all (GTK_WIDGET (dialog->vbox));
+    gtk_widget_show (GTK_WIDGET (dialog->vbox));
 
     /* connect to dialog's response signal */
     g_signal_connect (G_OBJECT (dialog), "response",
