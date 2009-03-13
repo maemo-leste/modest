@@ -1433,7 +1433,7 @@ update_account_send_mail (UpdateAccountInfo *info)
 				g_warning ("%s: could not get outbox", __FUNCTION__);
 				num_messages = 0;
 			}
-		
+
 			if (num_messages != 0) {
 				ModestMailOperation *mail_op;
 				/* Reenable suspended items */
@@ -1441,9 +1441,8 @@ update_account_send_mail (UpdateAccountInfo *info)
 				modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 								 mail_op);
 				modest_mail_operation_queue_wakeup (mail_op, MODEST_TNY_SEND_QUEUE (send_queue));
-				
+
 				/* Try to send */
-				tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (send_queue));
 				modest_tny_send_queue_set_requested_send_receive (MODEST_TNY_SEND_QUEUE (send_queue), 
 										  info->interactive);
 			}
@@ -3438,6 +3437,7 @@ queue_wakeup_callback (ModestTnySendQueue *queue,
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
 
 	priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
+	tny_camel_send_queue_flush (TNY_CAMEL_SEND_QUEUE (queue));
 
 	/* Notify end */
 	modest_mail_operation_notify_end (mail_op);
