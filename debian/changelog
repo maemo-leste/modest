@@ -1,3 +1,17 @@
+modest (2.99-2009.12-2) unstable; urgency=low
+
+  * Week 12, 2009 - second release on Monday
+  *   modest trunk r8009
+  *   6 bug fixes
+  * Fixes: NB#105128 	Modest crash found while retrieving the mails after creating the account
+  * Fixes: NB#105322 	Remove the CSM for Reply toolbar item in message viewer
+  * Fixes: NB#105392 	Message editor: Font Face and Font Size to use picker dialogs
+  * Fixes: NB#105450 	'unable to create folder' is showing instead of 'Not enough memory in target location'
+  * Fixes: NB#105451 	'unable to move to current location' is coming instead of 'not enough memory in target location'
+  * Fixes: NB#105808 	Not able to send previously stop sending message. 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 13 Mar 2009 14:23:00 +0200
+
 modest (2.99-2009.12-1) unstable; urgency=low
 
   * Week 12, 2009 - first release on Firday
