@@ -441,6 +441,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 						MODEST_TYPE_TRANSPORT_ACCOUNT_DECORATOR);
 	smtp_protocol_type_id = modest_protocol_get_type_id (protocol);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_CONNECT_ERROR, translation_is_userdata, "emev_ib_ui_smtp_server_invalid", NULL);
+	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_ACCOUNT_CONNECTION_ERROR, translation_is_userdata, "emev_ib_ui_smtp_server_invalid", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, translation_is_userdata, "emev_ni_ui_smtp_authentication_fail_error", NULL);
 	modest_protocol_registry_add (self, protocol, 2,
 				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,

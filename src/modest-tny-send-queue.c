@@ -703,7 +703,7 @@ _on_msg_error_happened (TnySendQueue *self,
 			g_free(msg_uid);
 			return;
 		}
-		
+
 		info = item->data;
 
 		/* Keep in queue so that we remember that the opertion has failed */
@@ -711,37 +711,10 @@ _on_msg_error_happened (TnySendQueue *self,
 		if (err->code == TNY_SYSTEM_ERROR_CANCEL) {
 			info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
 		} else {
-			if (err->code == TNY_SERVICE_ERROR_CONNECT) {
-				TnyCamelTransportAccount* transport;
-				TnyTransportAccount *conn_specific;
-
-				transport = tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self));
-				if (transport) {
-					gchar *message;
-					ModestTnyAccountStore *acc_store;
-					const gchar *acc_name;
-
-					acc_store = modest_runtime_get_account_store();
-					acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (TNY_ACCOUNT (transport));
-					conn_specific = (TnyTransportAccount *)
-						modest_tny_account_store_get_transport_account_for_open_connection (acc_store, acc_name);
-					if (conn_specific) {
-						message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), 
-									   tny_account_get_hostname (TNY_ACCOUNT (conn_specific)));
-						g_object_unref (conn_specific);
-					} else {
-						message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), 
-									   tny_account_get_hostname (TNY_ACCOUNT (transport)));
-					}
-					modest_platform_run_alert_dialog (message, FALSE);
-					g_free (message);
-					g_object_unref (transport);
-				}
-			}
 			info->status = MODEST_TNY_SEND_QUEUE_FAILED;
 		}
 		priv->current = NULL;
-		
+
 		/* Notify status has changed */
 		g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0, info->msg_id, info->status);
 

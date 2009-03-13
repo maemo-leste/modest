@@ -6397,8 +6397,9 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 						gpointer user_data)
 {
 	const gchar* server_name = NULL;
-	TnyTransportAccount *server_account;
+	TnyTransportAccount *transport;
 	gchar *message = NULL;
+	ModestProtocol *protocol;
 
 	/* Don't show anything if the user cancelled something or the
 	 * send receive request is not interactive. Authentication
@@ -6410,24 +6411,51 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 		return;
 
 
-	/* Get the server name: */
-	server_account =
-		TNY_TRANSPORT_ACCOUNT (tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self)));
-	if (server_account)
-		server_name = tny_account_get_hostname (TNY_ACCOUNT (server_account));
-	else
-		g_return_if_reached ();
+	/* Get the server name. Note that we could be using a
+	   connection specific transport account */
+	transport = (TnyTransportAccount *)
+		tny_camel_send_queue_get_transport_account (TNY_CAMEL_SEND_QUEUE (self));
+	if (transport) {
+		ModestTnyAccountStore *acc_store;
+		const gchar *acc_name;
+		TnyTransportAccount *conn_specific;
+
+		acc_store = modest_runtime_get_account_store();
+		acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (TNY_ACCOUNT (transport));
+		conn_specific = (TnyTransportAccount *)
+			modest_tny_account_store_get_transport_account_for_open_connection (acc_store, acc_name);
+		if (conn_specific) {
+			server_name = tny_account_get_hostname (TNY_ACCOUNT (conn_specific));
+			g_object_unref (conn_specific);
+		} else {
+			server_name = tny_account_get_hostname (TNY_ACCOUNT (transport));
+		}
+		g_object_unref (transport);
+	}
+
+	/* Get protocol */
+	protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+								  MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
+								  tny_account_get_proto (TNY_ACCOUNT (transport)));
+	if (!protocol) {
+		g_warning ("%s: Account with no proto", __FUNCTION__);
+		return;
+	}
 
 	/* Show the appropriate message text for the GError: */
 	switch (err->code) {
 	case TNY_SERVICE_ERROR_CONNECT:
-		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+		message = modest_protocol_get_translation (protocol,
+							   MODEST_PROTOCOL_TRANSLATION_ACCOUNT_CONNECTION_ERROR, 
+							   server_name);
 		break;
 	case TNY_SERVICE_ERROR_SEND:
 		message = g_strdup (_CS("sfil_ib_unable_to_send"));
 		break;
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
-		message = g_strdup_printf (_("emev_ib_ui_smtp_server_invalid"), server_name);
+		message = modest_protocol_get_translation (protocol,
+							   MODEST_PROTOCOL_TRANSLATION_CONNECT_ERROR, 
+							   server_name);
 		break;
 	default:
 		g_warning ("%s: unexpected ERROR %d",
@@ -6438,7 +6466,6 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 
 	modest_platform_run_information_dialog (NULL, message, FALSE);
 	g_free (message);
-	g_object_unref (server_account);
 }
 
 void
