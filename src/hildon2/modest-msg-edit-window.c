@@ -1300,11 +1300,6 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	GtkWidget *sizes_menu;
 	GtkWidget *fonts_menu;
 	gchar *markup;
-	gchar ldots[8];
-	gint ldots_len;
-
-	ldots_len = g_unichar_to_utf8 (0x2026, ldots);
-	ldots[ldots_len] = '\0';
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
@@ -1339,7 +1334,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	priv->size_tool_button_label = gtk_label_new (NULL);
 	snprintf(size_text, sizeof(size_text), "%d", wp_font_size[DEFAULT_FONT_SIZE]);
 	markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>",
-			      size_text, ldots, "</span>", NULL);
+			      size_text, "</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 	g_free (markup);
 	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
@@ -1370,7 +1365,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* font face */
 	tool_item = GTK_WIDGET (gtk_tool_button_new (NULL, NULL));
 	priv->font_tool_button_label = gtk_label_new (NULL);
-	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt",ldots,"</span>", NULL);
+	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 	g_free(markup);
 	hildon_helper_set_logical_font (priv->font_tool_button_label, "LargeSystemFont");
@@ -1857,14 +1852,9 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	GtkAction *action;
 	ModestWindowPrivate *parent_priv;
 	ModestMsgEditWindowPrivate *priv;
-	gchar ldots[8];
-	gint ldots_len;
 	
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-
-	ldots_len = g_unichar_to_utf8 (0x2026, ldots);
-	ldots[ldots_len] = '\0';
 
 	if (wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))) {
 		action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu");
@@ -1927,7 +1917,7 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 
 			gtk_tree_model_get (priv->sizes_model, &iter, 0, &size_text, -1);
 			markup = g_strconcat ("<span font_family='Sans'>", 
-					      size_text, ldots, "</span>", NULL);
+					      size_text, "</span>", NULL);
 			
 			gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 			g_free (markup);
@@ -1947,7 +1937,7 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 
 			priv->current_face_index = buffer_format->font;
 			gtk_tree_model_get (priv->faces_model, &iter, 0, &face_name, -1);
-			markup = g_strconcat ("<span font_family='", face_name, "'>Tt", ldots, "</span>", NULL);
+			markup = g_strconcat ("<span font_family='", face_name, "'>Tt</span>", NULL);
 			gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 			g_free (face_name);
 			g_free (markup);
@@ -2518,8 +2508,6 @@ font_size_clicked (GtkToolButton *button,
 		gchar *size_text;
 		gchar *markup;
 		WPTextBufferFormat format;
-		gchar ldots[8];
-		gint ldots_len;
 
 		new_index = hildon_touch_selector_get_active (HILDON_TOUCH_SELECTOR (selector), 0);
 
@@ -2538,10 +2526,8 @@ font_size_clicked (GtkToolButton *button,
 		
 		text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
 		size_text = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
-		ldots_len = g_unichar_to_utf8 (0x2026, ldots);
-		ldots[ldots_len] = '\0';
 		markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>", 
-				      size_text, ldots, "</span>", NULL);
+				      size_text, "</span>", NULL);
 		g_free (size_text);
 		gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 		g_free (markup);
@@ -2582,8 +2568,6 @@ font_face_clicked (GtkToolButton *button,
 		if (gtk_tree_model_get_iter (priv->faces_model, &iter, path)) {
 			gchar *face_name;
 			gchar *markup;
-			gchar ldots[8];
-			gint ldots_len;
 
 			gtk_tree_model_get (priv->faces_model, &iter, 0, &face_name, -1);
 
@@ -2591,9 +2575,7 @@ font_face_clicked (GtkToolButton *button,
 							   GINT_TO_POINTER(new_font_index)))
 				wp_text_view_reset_and_show_im (WP_TEXT_VIEW (priv->msg_body));
 
-			ldots_len = g_unichar_to_utf8 (0x2026, ldots);
-			ldots[ldots_len] = '\0';
-			markup = g_strconcat ("<span font_family='", face_name, "'>Tt", ldots, "</span>", NULL);
+			markup = g_strconcat ("<span font_family='", face_name, "'>Tt</span>", NULL);
 			gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 
 			text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (window));
