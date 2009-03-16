@@ -167,6 +167,9 @@ parse_mcc_mapping_line (const char* line,  char** country)
 
 	/* Go to the first tab (Country separator) */
 	tab = g_utf8_strrchr (line, -1, '\t');
+	if (!tab)
+		return 0;
+
 	*country = g_utf8_find_next_char (tab, NULL);
 
 	/* Replace by end of string. We need to use strlen, because
