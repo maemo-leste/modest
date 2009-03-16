@@ -191,7 +191,7 @@ modest_number_editor_class_init                 (ModestNumberEditorClass *editor
         g_signal_new ("valid_changed", MODEST_TYPE_NUMBER_EDITOR,
                 G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET
                 (ModestNumberEditorClass, valid_changed),
-                g_signal_accumulator_true_handled, NULL,
+                NULL, NULL,
                 g_cclosure_marshal_VOID__BOOLEAN,
                 G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
@@ -356,8 +356,8 @@ modest_number_editor_validate_value             (ModestNumberEditor *editor,
 	}
 
 	if (priv->is_valid != is_valid) {
-		g_signal_emit (editor, ModestNumberEditor_signal[VALID_CHANGED], 0, is_valid);
 		priv->is_valid = is_valid;
+		g_signal_emit (editor, ModestNumberEditor_signal[VALID_CHANGED], 0, is_valid);
 	}
 }
 

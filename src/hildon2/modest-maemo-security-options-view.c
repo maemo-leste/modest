@@ -221,10 +221,21 @@ on_entry_changed (GtkEditable *editable,
 	} else {
 		missing = FALSE;
 	}
+
+	if (!missing && ppriv->full && !modest_number_editor_is_valid (MODEST_NUMBER_EDITOR (ppriv->port_view)))
+		missing = TRUE;
 	
 	/* Emit a signal to notify if mandatory data is missing */
 	g_signal_emit_by_name (G_OBJECT (self), "missing_mandatory_data", 
 			       missing, NULL);
+}
+
+void
+on_valid_changed (ModestNumberEditor *editor,
+		  gboolean valid,
+		  ModestSecurityOptionsView *self)
+{
+	on_entry_changed (NULL, (gpointer) self);
 }
 
 static void
@@ -313,6 +324,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 				  G_CALLBACK (on_auth_changed), self);
 		g_signal_connect (G_OBJECT (ppriv->user_entry), "changed",
 				  G_CALLBACK (on_entry_changed), self);
+		g_signal_connect (G_OBJECT (ppriv->port_view), "valid-changed",
+					    G_CALLBACK (on_valid_changed), self);
 	}
 
 	/* Initialize widgets */
