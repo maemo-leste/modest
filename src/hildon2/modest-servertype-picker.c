@@ -90,7 +90,7 @@ modest_servertype_picker_init (ModestServertypePicker *self)
 }
 
 static gchar *
-touch_selector_print_func (HildonTouchSelector *selector)
+touch_selector_print_func (HildonTouchSelector *selector, gpointer userdata)
 {
 	GtkTreeIter iter;
 	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &iter)) {

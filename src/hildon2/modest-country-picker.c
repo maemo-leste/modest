@@ -263,7 +263,7 @@ modest_country_picker_init (ModestCountryPicker *self)
 }
 
 static gchar *
-country_picker_print_func (HildonTouchSelector *selector)
+country_picker_print_func (HildonTouchSelector *selector, gpointer userdata)
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter;
