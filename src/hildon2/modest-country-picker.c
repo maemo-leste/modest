@@ -274,9 +274,17 @@ country_picker_print_func (HildonTouchSelector *selector, gpointer userdata)
 	model = hildon_touch_selector_get_model (selector, 0);
 	if (hildon_touch_selector_get_selected (selector, 0, &iter)) {
 		gint column;
+		GtkWidget *entry;
+		const gchar *entry_text;
 
 		column = hildon_touch_selector_entry_get_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector));
 		gtk_tree_model_get (model, &iter, column, &text, -1);
+
+		entry = GTK_WIDGET (hildon_touch_selector_entry_get_entry (HILDON_TOUCH_SELECTOR_ENTRY (selector)));
+		entry_text = hildon_entry_get_text (HILDON_ENTRY (entry));
+		if (entry_text != NULL && text != NULL && strcmp (entry_text, text)) {
+			hildon_entry_set_text (HILDON_ENTRY (entry), text);
+		}
 	}
 	return text;
 }
