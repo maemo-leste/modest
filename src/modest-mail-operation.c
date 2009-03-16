@@ -2225,8 +2225,10 @@ transfer_folder_cb (TnyFolder *folder,
 	}
 
 	/* Update state of new folder */
-	tny_folder_refresh_async (new_folder, NULL, NULL, NULL);
-	tny_folder_poke_status (new_folder);
+	if (new_folder) {
+		tny_folder_refresh_async (new_folder, NULL, NULL, NULL);
+		tny_folder_poke_status (new_folder);
+	}
 
 	/* Notify about operation end */
 	modest_mail_operation_notify_end (self);
