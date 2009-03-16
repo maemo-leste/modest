@@ -978,6 +978,7 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 	GdkPixbufLoader *loader;
 	GdkPixbuf *pixbuf;
 	guint64 size;
+	GError *error = NULL;
 	
 	size = 0;
 
@@ -991,22 +992,22 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 
 	tny_stream_reset (TNY_STREAM (stream));
 	while (!tny_stream_is_eos (TNY_STREAM (stream))) {
-		GError *error = NULL;
 		unsigned char read_buffer[128];
 		gint readed;
 		readed = tny_stream_read (TNY_STREAM (stream), (char *) read_buffer, 128);
 		size += readed;
 		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, &error)) {
-			if (error)
-				g_error_free (error);
 			break;
 		}
 	}
 
+	gdk_pixbuf_loader_close (loader, &error);
+
+	if (error)
+		g_error_free (error);
 	pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
 	if (pixbuf) 
 		g_object_ref (pixbuf);
-	gdk_pixbuf_loader_close (loader, NULL);
 	g_object_unref (loader);
 
 	if (!pixbuf)
