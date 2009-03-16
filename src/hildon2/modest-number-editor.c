@@ -375,10 +375,15 @@ modest_number_editor_entry_focusout             (GtkWidget *widget,
                                                  GdkEventFocus *event,
                                                  gpointer data)
 {
-    g_assert (MODEST_IS_NUMBER_EDITOR(data));
+	GtkWidget *window;
+	
+	g_assert (MODEST_IS_NUMBER_EDITOR(data));
 
-    modest_number_editor_validate_value (MODEST_NUMBER_EDITOR(data), FALSE);
-    return FALSE;
+	window = gtk_widget_get_toplevel (widget);
+	if (window && gtk_window_has_toplevel_focus (GTK_WINDOW (window)))
+		modest_number_editor_validate_value (MODEST_NUMBER_EDITOR(data), FALSE);
+
+	return FALSE;
 }
 
 static gboolean
