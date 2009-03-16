@@ -1,3 +1,15 @@
+modest (2.99-2009.12-3) unstable; urgency=low
+
+  * Week 12, 2009 - third release on Tuesday
+  *  modest trunk r8041
+  *  4 bug fixes
+  * Fixes: NB#99258
+  * Fixes: NB#105818 	mail-sen 	message is sent instead of incorrect SMTP server name in connection specific SMTP server configuration
+  * Fixes: NB#105903 	mail-vie 	Inline image is not inserted without any notification
+  * Fixes: NB#105914 	mail-gen 	Modest crashes when renaming [Gmail] folder 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 16 Mar 2009 16:35:28 +0200
+
 modest (2.99-2009.12-2) unstable; urgency=low
 
   * Week 12, 2009 - second release on Monday
