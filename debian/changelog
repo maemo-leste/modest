@@ -1,7 +1,7 @@
 modest (2.99-2009.12-3) unstable; urgency=low
 
   * Week 12, 2009 - third release on Tuesday
-  *  modest trunk r8041
+  *  modest trunk r8048
   *  4 bug fixes
   * Fixes: NB#99258
   * Fixes: NB#105818 	mail-sen 	message is sent instead of incorrect SMTP server name in connection specific SMTP server configuration
