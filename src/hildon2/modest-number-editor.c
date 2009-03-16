@@ -483,6 +483,26 @@ modest_number_editor_set_range                  (ModestNumberEditor *editor,
 }
 
 /**
+ * modest_number_editor_is_valid:
+ * @editor: pointer to #ModestNumberEditor
+ *
+ * Returns: if @editor contents are valid
+ */
+gboolean
+modest_number_editor_is_valid                  (ModestNumberEditor *editor)
+{
+    ModestNumberEditorPrivate *priv;
+
+    g_return_val_if_fail (MODEST_IS_NUMBER_EDITOR (editor), FALSE);
+
+    priv = MODEST_NUMBER_EDITOR_GET_PRIVATE (editor);
+    g_assert (priv);
+
+    return priv->is_valid;
+
+}
+
+/**
  * modest_number_editor_get_value:
  * @editor: pointer to #ModestNumberEditor
  *

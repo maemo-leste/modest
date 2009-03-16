@@ -74,6 +74,9 @@ void
 modest_number_editor_set_value                  (ModestNumberEditor *editor, 
                                                  gint value);
 
+gboolean
+modest_number_editor_is_valid                   (ModestNumberEditor *editor);
+
 
 GType modest_number_editor_error_type_get_type (void);
 #define MODEST_TYPE_NUMBER_EDITOR_ERROR_TYPE (modest_number_editor_error_type_get_type())
