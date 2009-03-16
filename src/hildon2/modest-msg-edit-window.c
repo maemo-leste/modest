@@ -2187,10 +2187,14 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 				gtk_text_buffer_get_iter_at_mark (GTK_TEXT_BUFFER (priv->text_buffer), &position, insert_mark);
 				wp_text_buffer_insert_image (WP_TEXT_BUFFER (priv->text_buffer), &position, g_strdup (tny_mime_part_get_content_id (mime_part)), pixbuf);
 				g_object_unref (pixbuf);
-			} 
 
-			tny_list_prepend (priv->images, (GObject *) mime_part);
-			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+				tny_list_prepend (priv->images, (GObject *) mime_part);
+				gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+			} else {
+				modest_platform_information_banner (NULL, NULL,
+								    _("mail_ib_file_operation_failed"));
+			}
+
 			g_free (filename);
 			g_object_unref (mime_part);
 			gnome_vfs_file_info_unref (info);
