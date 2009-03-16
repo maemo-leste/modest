@@ -155,7 +155,7 @@ create_touch_selector (GtkTreeModel *model)
 					     renderer, "text", COLUMN_DISPLAY_NAME, NULL);
 
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR(selector), 0, model);
-	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), touch_selector_print_func);
+	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) touch_selector_print_func);
 
 	return selector;
 }

@@ -301,7 +301,7 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
 	selector = hildon_touch_selector_entry_new ();
-	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), country_picker_print_func);
+	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) country_picker_print_func);
 	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
 						      renderer, "text", MODEL_COL_NAME, NULL);
 	g_object_set (G_OBJECT (column), "text-column", MODEL_COL_NAME, NULL);

@@ -134,7 +134,7 @@ modest_serversecurity_picker_new (HildonSizeType size,
 					     renderer, "text", MODEL_COL_NAME, NULL);
 
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector), 0, GTK_TREE_MODEL (priv->model));
-	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), touch_selector_print_func);
+	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) touch_selector_print_func);
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 
