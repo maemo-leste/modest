@@ -50,9 +50,10 @@ typedef enum
 
 struct                                          _ModestNumberEditorClass 
 {
-    GtkEntryClass parent_class;
-  
-    gboolean  (*range_error)  (ModestNumberEditor *editor, ModestNumberEditorErrorType type); 
+	GtkEntryClass parent_class;
+	
+	gboolean  (*range_error)  (ModestNumberEditor *editor, ModestNumberEditorErrorType type); 
+	void      (*valid_changed) (ModestNumberEditor *editor, gboolean valid);
 };
 
 GType G_GNUC_CONST

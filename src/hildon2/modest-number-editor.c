@@ -49,13 +49,14 @@ typedef struct                                  _ModestNumberEditorPrivate Modes
 
 struct                                          _ModestNumberEditorPrivate
 {
-    gint start; /* Minimum */
-    gint end;   /* Maximum */
-    gint default_val;
+	gint start; /* Minimum */
+	gint end;   /* Maximum */
+	gint default_val;
+	gboolean is_valid;
 
-    /* Timer IDs */
-    guint select_all_idle_id; /* Selection repaint hack
-				 see modest_number_editor_select_all */
+	/* Timer IDs */
+	guint select_all_idle_id; /* Selection repaint hack
+				     see modest_number_editor_select_all */
 };
 
 
@@ -103,6 +104,7 @@ modest_number_editor_get_property               (GObject *object,
 enum
 {
     RANGE_ERROR,
+    VALID_CHANGED,
     LAST_SIGNAL
 };
 
@@ -184,6 +186,14 @@ modest_number_editor_class_init                 (ModestNumberEditorClass *editor
                 g_signal_accumulator_true_handled, NULL,
                 modest_marshal_BOOLEAN__ENUM,
                 G_TYPE_BOOLEAN, 1, MODEST_TYPE_NUMBER_EDITOR_ERROR_TYPE);
+
+    ModestNumberEditor_signal[VALID_CHANGED] =
+        g_signal_new ("valid_changed", MODEST_TYPE_NUMBER_EDITOR,
+                G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET
+                (ModestNumberEditorClass, valid_changed),
+                g_signal_accumulator_true_handled, NULL,
+                g_cclosure_marshal_VOID__BOOLEAN,
+                G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
 static void
@@ -225,6 +235,8 @@ modest_number_editor_init                       (ModestNumberEditor *editor)
 				     HILDON_GTK_INPUT_MODE_NUMERIC);
 
     modest_number_editor_set_range (editor, G_MININT, G_MAXINT);
+
+    priv->is_valid = TRUE;
 }
 
 /* Format given number to editor field, no checks performed, all signals
@@ -259,89 +271,94 @@ static void
 modest_number_editor_validate_value             (ModestNumberEditor *editor, 
                                                  gboolean allow_intermediate)
 {
-    ModestNumberEditorPrivate *priv;
-    gint error_code, fixup_value;
-    const gchar *text;
-    long value;
-    gchar *tail;
-    gboolean r;
+	ModestNumberEditorPrivate *priv;
+	gint error_code, fixup_value;
+	const gchar *text;
+	long value;
+	gchar *tail;
+	gboolean r;
+	gboolean is_valid = TRUE;
 
-    g_assert (MODEST_IS_NUMBER_EDITOR(editor));
+	g_assert (MODEST_IS_NUMBER_EDITOR(editor));
+	
+	priv = MODEST_NUMBER_EDITOR_GET_PRIVATE (editor);
+	g_assert (priv);
 
-    priv = MODEST_NUMBER_EDITOR_GET_PRIVATE (editor);
-    g_assert (priv);
+	text = gtk_entry_get_text (GTK_ENTRY (editor));
+	error_code = -1;
+	fixup_value = priv->default_val;
 
-    text = gtk_entry_get_text (GTK_ENTRY (editor));
-    error_code = -1;
-    fixup_value = priv->default_val;
+	if (text && text[0]) {
+		/* Try to convert entry text to number */
+		value = strtol (text, &tail, 10);
 
-    if (text && text[0])
-    { 
-        /* Try to convert entry text to number */
-        value = strtol (text, &tail, 10);
+		/* Check if conversion succeeded */
+		if (tail[0] == 0) {
+			/* Check if value is in allowed range. This is tricky in those
+			   cases when user is editing a value. 
+			   For example: Range = [100, 500] and user have just inputted "4".
+			   This should not lead into error message. Otherwise value is
+			   resetted back to "100" and next "4" press will reset it back
+			   and so on. */
 
-        /* Check if conversion succeeded */
-        if (tail[0] == 0)
-        {    
-            /* Check if value is in allowed range. This is tricky in those
-               cases when user is editing a value. 
-               For example: Range = [100, 500] and user have just inputted "4".
-               This should not lead into error message. Otherwise value is
-               resetted back to "100" and next "4" press will reset it back
-               and so on. */
-            if (allow_intermediate)
-            {
-                /* We now have the following error cases:
-                 * If inputted value as above maximum and
-                 maximum is either positive or then maximum
-                 negative and value is positive.
-                 * If inputted value is below minimum and minimum
-                 is negative or minumum positive and value
-                 negative or zero.
-                 In all other cases situation can be fixed just by
-                 adding new numbers to the string.
-                 */
-                if (value > priv->end && (priv->end >= 0 || (priv->end < 0 && value >= 0)))
-                {
-                    error_code = MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED;
-                    fixup_value = priv->end;
-                }
-                else if (value < priv->start && (priv->start < 0 || (priv->start >= 0 && value <= 0)))
-                {
-                    error_code = MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED;
-                    fixup_value = priv->start;
-                }
-            }
-            else
-            {
-                if (value > priv->end) {
-                    error_code = MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED;
-                    fixup_value = priv->end;
-                }
-                else if (value < priv->start) {
-                    error_code = MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED;
-                    fixup_value = priv->start;
-                }
-            }
-        }
-        /* The only valid case when conversion can fail is when we
-           have plain '-', intermediate forms are allowed AND
-           minimum bound is negative */
-        else if (! allow_intermediate || strcmp (text, "-") != 0 || priv->start >= 0)
-            error_code = MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE;
-    }
-    else if (! allow_intermediate)
-        error_code = MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE;
+			if (allow_intermediate) {
+				/* We now have the following error cases:
+				 * If inputted value as above maximum and
+				 maximum is either positive or then maximum
+				 negative and value is positive.
+				 * If inputted value is below minimum and minimum
+				 is negative or minumum positive and value
+				 negative or zero.
+				 In all other cases situation can be fixed just by
+				 adding new numbers to the string.
+				*/
+				if (value > priv->end && (priv->end >= 0 || (priv->end < 0 && value >= 0))) {
+					error_code = MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED;
+					fixup_value = priv->end;
+					is_valid = FALSE;
+				} else if (value < priv->start && (priv->start < 0 || (priv->start >= 0 && value <= 0))) {
+					error_code = MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED;
+					fixup_value = priv->start;
+					is_valid = FALSE;
+				}
+			} else {
+				if (value > priv->end) {
+					error_code = MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED;
+					fixup_value = priv->end;
+					is_valid = FALSE;
+				} else if (value < priv->start) {
+					error_code = MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED;
+					fixup_value = priv->start;
+					is_valid = FALSE;
+				}
+			}
+			/* The only valid case when conversion can fail is when we
+			   have plain '-', intermediate forms are allowed AND
+			   minimum bound is negative */
+		} else {
+			is_valid = FALSE;
+			if (! allow_intermediate || strcmp (text, "-") != 0 || priv->start >= 0)
+				error_code = MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE;
+		}
+	} else {
+		is_valid = FALSE;
+		if (! allow_intermediate)
+			error_code = MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE;
+	}
 
-    if (error_code != -1)
-    {
-        /* If entry is empty and intermediate forms are nor allowed, 
-           emit error signal */
-        /* Change to default value */
-        modest_number_editor_set_value (editor, fixup_value);
-        g_signal_emit (editor, ModestNumberEditor_signal[RANGE_ERROR], 0, error_code, &r);
-        add_select_all_idle (editor);
-    }
+	if (error_code != -1) {
+		/* If entry is empty and intermediate forms are nor allowed, 
+		   emit error signal */
+		/* Change to default value */
+		modest_number_editor_set_value (editor, fixup_value);
+		g_signal_emit (editor, ModestNumberEditor_signal[RANGE_ERROR], 0, error_code, &r);
+		add_select_all_idle (editor);
+	}
+
+	if (priv->is_valid != is_valid) {
+		g_signal_emit (editor, ModestNumberEditor_signal[VALID_CHANGED], 0, is_valid);
+		priv->is_valid = is_valid;
+	}
 }
 
 static void 
