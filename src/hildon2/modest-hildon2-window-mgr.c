@@ -31,6 +31,7 @@
 #include <hildon/hildon.h>
 #include "modest-hildon2-window-mgr.h"
 #include "modest-msg-edit-window.h"
+#include "modest-mailboxes-window.h"
 #include "modest-header-window.h"
 #include "modest-main-window.h"
 #include "modest-conf.h"
@@ -390,8 +391,27 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	}
 
 	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
-		g_debug ("Trying to register a second folder window is not allowed");
+		gtk_window_present (GTK_WINDOW (win));
+		return FALSE;
+	}
+
+	if (MODEST_IS_MAILBOXES_WINDOW (current_top) && MODEST_IS_MAILBOXES_WINDOW (window)) {
+		gtk_window_present (GTK_WINDOW (win));
+		return FALSE;
+	}
+
+	/* Mailboxes window can not replace folder windows */
+	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_MAILBOXES_WINDOW (window)) {
 		gtk_window_present (GTK_WINDOW (current_top));
+		return FALSE;
+	}
+
+	/* Trying to open a folders window and a mailboxes window at
+	   the same time from the accounts window is not allowed */
+	if (MODEST_IS_MAILBOXES_WINDOW (current_top) &&
+	    MODEST_IS_FOLDER_WINDOW (window) &&
+	    MODEST_IS_ACCOUNTS_WINDOW (parent)) {
+		gtk_window_present (GTK_WINDOW (win));
 		return FALSE;
 	}
 
@@ -408,7 +428,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	g_object_ref (window);
 	priv->window_list = g_list_prepend (priv->window_list, window);
 
-	nested_msg = MODEST_IS_MSG_VIEW_WINDOW (window) && 
+	nested_msg = MODEST_IS_MSG_VIEW_WINDOW (window) &&
 		MODEST_IS_MSG_VIEW_WINDOW (parent);
 
 	/* Close views if they're being shown. Nevertheless we must
