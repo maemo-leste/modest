@@ -1775,10 +1775,14 @@ modest_msg_edit_window_set_format_state (ModestMsgEditWindow *self,
 					 const ModestMsgEditFormatState *format_state)
 {
 	ModestMsgEditWindowPrivate *priv;
-	WPTextBufferFormat *buffer_format = g_new0 (WPTextBufferFormat, 1);
-	WPTextBufferFormat *current_format = g_new0 (WPTextBufferFormat, 1);
+	WPTextBufferFormat *buffer_format;
+	WPTextBufferFormat *current_format;
+
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (format_state != NULL);
+
+	buffer_format = g_new0 (WPTextBufferFormat, 1);
+	current_format = g_new0 (WPTextBufferFormat, 1);
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 	gtk_widget_grab_focus (priv->msg_body);
