@@ -2655,15 +2655,33 @@ on_move_to_dialog_folder_activated (GtkTreeView       *tree_view,
 
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
-	if (showing_folders) {
-		move_to_dialog_set_selected_folder (dialog, selected);
-	} else {
+	if (!showing_folders) {
 		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
 
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 		if (selected) {
 			move_to_dialog_show_folders (dialog, selected);
 		}
+	}
+}
+
+static void
+on_move_to_dialog_selection_changed (GtkTreeSelection       *selection,
+                                    gpointer           user_data)
+{
+	TnyFolderStore *selected;
+	GtkWidget *dialog;
+	GtkWidget *folder_view;
+	gboolean showing_folders;
+
+	dialog = (GtkWidget *) user_data;
+	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
+	if (showing_folders) {		
+		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
+		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
+
+		if (selected)
+			move_to_dialog_set_selected_folder (dialog, selected);
 	}
 }
 
@@ -2678,6 +2696,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	GdkPixbuf *back_pixbuf;
 	GtkWidget *top_vbox;
 	GtkWidget *action_button;
+	GtkTreeSelection *selection;
 
 	/* Create dialog. We cannot use a touch selector because we
 	   need to use here the folder view widget directly */
@@ -2752,6 +2771,11 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
         g_signal_connect (*folder_view, "row-activated",
                           G_CALLBACK (on_move_to_dialog_folder_activated),
                           dialog);
+
+	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (*folder_view));
+	g_signal_connect (selection, "changed",
+			  G_CALLBACK (on_move_to_dialog_selection_changed),
+			  dialog);
 
 	g_signal_connect (back_button, "clicked",
 			  G_CALLBACK (on_move_to_dialog_back_clicked),
