@@ -806,6 +806,14 @@ static void clean_check_names_banner (CheckNamesInfo *info)
 	}
 }
 
+void free_resolved_addresses_list (gpointer data,
+				   gpointer ignored)
+{
+	GSList *list = (GSList *)data;
+	g_slist_foreach (list, (GFunc) g_free, NULL);
+	g_slist_free (list);
+}
+
 gboolean
 modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
 {
@@ -875,30 +883,13 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 
 				if (result) {
 					gint new_length;
-					GSList *contact_ids_node, *resolved_addresses_node;
 
-					contact_ids_node = contact_ids;
-					resolved_addresses_node = resolved_addresses;
-
-					while (contact_ids_node != NULL) {
-						gchar *contact_id = (gchar *) contact_ids_node->data;
-						GSList *resolved_addresses_for_contact = 
-							(GSList *) resolved_addresses_node->data;
-
-						/* replace string */
-						modest_recpt_editor_replace_with_resolved_recipient 
-							(recpt_editor,
-							 &start_iter, &end_iter,
-							 resolved_addresses_for_contact, 
-							 contact_id);
-
-						g_free (contact_id);
-						g_slist_foreach (resolved_addresses_for_contact, (GFunc) g_free, NULL);
-						g_slist_free (resolved_addresses_for_contact);
-
-						contact_ids_node = g_slist_next (contact_ids_node);
-						resolved_addresses_node = g_slist_next (resolved_addresses_node);
-					}
+					modest_recpt_editor_replace_with_resolved_recipients (recpt_editor,
+											      &start_iter, &end_iter,
+											      resolved_addresses,
+											      contact_ids);
+					g_slist_foreach (contact_ids, (GFunc) g_free, NULL);
+					g_slist_foreach (resolved_addresses, free_resolved_addresses_list, NULL);
 					g_slist_free (contact_ids);
 					g_slist_free (resolved_addresses);
 

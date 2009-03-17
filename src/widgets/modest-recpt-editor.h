@@ -76,6 +76,11 @@ void modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *rec
 							  GSList *email_list, 
 							  const gchar *recipient_id);
 
+void modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_editor, 
+							   GtkTextIter *start, GtkTextIter *end,
+							   GSList *email_lists_list, 
+							   GSList *recipient_ids_list);
+
 void modest_recpt_editor_set_field_size_group (ModestRecptEditor *recpt_editor, GtkSizeGroup *size_group);
 GtkTextBuffer *modest_recpt_editor_get_buffer (ModestRecptEditor *recpt_editor);
 void modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor);

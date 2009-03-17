@@ -264,6 +264,25 @@ modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *recpt_ed
 						     GtkTextIter *start, GtkTextIter *end,
 						     GSList *email_list, const gchar * recipient_id)
 {
+	GSList *email_lists_list;
+	GSList *recipient_ids_list;
+
+	email_lists_list = g_slist_append (NULL, email_list);
+	recipient_ids_list = g_slist_append (NULL, (gpointer) recipient_id);
+
+	modest_recpt_editor_replace_with_resolved_recipients (recpt_editor, start, end,
+							      email_lists_list, recipient_ids_list);
+
+	g_slist_free (email_lists_list);
+	g_slist_free (recipient_ids_list);
+
+}
+
+void 
+modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_editor, 
+						     GtkTextIter *start, GtkTextIter *end,
+						     GSList *email_lists_list, GSList * recipient_ids_list)
+{
 	ModestRecptEditorPrivate *priv;
 	GtkTextBuffer *buffer;
 	GtkTextTag *tag;
@@ -282,7 +301,10 @@ modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *recpt_ed
 
 	gtk_text_buffer_delete (buffer, start, end);
 
-	if (email_list) {
+	while (email_lists_list) {
+		gchar *recipient_id = (gchar *) recipient_ids_list->data;
+		GSList *email_list = (GSList *) email_lists_list->data;
+		
 	  
 		tag = gtk_text_buffer_create_tag (buffer, NULL, 
 						  "underline", PANGO_UNDERLINE_SINGLE,
@@ -307,6 +329,9 @@ modest_recpt_editor_replace_with_resolved_recipient (ModestRecptEditor *recpt_ed
 				is_first_recipient = FALSE;
 			}
 		}
+
+		email_lists_list = g_slist_next (email_lists_list);
+		recipient_ids_list = g_slist_next (recipient_ids_list);
 	}
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 
