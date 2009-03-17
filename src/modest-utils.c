@@ -133,13 +133,13 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 			   __FUNCTION__, orig_name);
 		return NULL;
 	}
-	
+
 	if (g_strstr_len (orig_name, strlen(orig_name), "/") != NULL) {
 		g_warning ("%s: filename contains '/' character(s) (%s)",
 			   __FUNCTION__, orig_name);
 		return NULL;
 	}
-		
+
 	/* make a random subdir under /tmp or /var/tmp */
 	if (hash_base != NULL) {
 		hash_number = g_str_hash (hash_base);
@@ -169,7 +169,7 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 		fd = g_open (filepath, O_CREAT|O_WRONLY|O_TRUNC, 0644);
 		if (fd == -1) {
 			g_warning ("%s: failed to create '%s': %s",
-					__FUNCTION__, filepath, g_strerror(errno));			
+					__FUNCTION__, filepath, g_strerror(errno));
 			g_free (filepath);
 			g_free (tmpdir);
 			return NULL;
@@ -180,6 +180,8 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 
 	if (path)
 		*path = filepath;
+	else
+		g_free (filepath);
 
 	return TNY_FS_STREAM (tny_fs_stream_new (fd));
 }
