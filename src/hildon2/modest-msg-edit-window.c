@@ -973,7 +973,10 @@ modest_msg_edit_window_finalize (GObject *obj)
 }
 
 static GdkPixbuf *
-pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_size)
+pixbuf_from_stream (TnyStream *stream,
+		    const gchar *mime_type,
+		    guint64 *stream_size,
+		    ModestMsgEditWindow *self)
 {
 	GdkPixbufLoader *loader;
 	GdkPixbuf *pixbuf;
@@ -990,6 +993,8 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 		return NULL;
 	}
 
+	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+
 	tny_stream_reset (TNY_STREAM (stream));
 	while (!tny_stream_is_eos (TNY_STREAM (stream))) {
 		unsigned char read_buffer[128];
@@ -999,7 +1004,11 @@ pixbuf_from_stream (TnyStream *stream, const gchar *mime_type, guint64 *stream_s
 		if (!gdk_pixbuf_loader_write (loader, read_buffer, readed, &error)) {
 			break;
 		}
+		/* Allow some UI responsiveness */
+		while (gtk_events_pending ())
+			gtk_main_iteration ();
 	}
+	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), FALSE);
 
 	gdk_pixbuf_loader_close (loader, &error);
 
@@ -1046,7 +1055,7 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 		if ((cid != NULL)&&(mime_type != NULL)) {
 			guint64 stream_size;
 			TnyStream *stream = tny_mime_part_get_decoded_stream (part);
-			GdkPixbuf *pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size);
+			GdkPixbuf *pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size, self);
 
 
 			g_object_unref (stream);
@@ -2097,9 +2106,9 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	gint response = 0;
 	GSList *uris = NULL;
 	GSList *uri_node = NULL;
-	
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	
+
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ia_select_inline_image_title"));
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
@@ -2118,6 +2127,10 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 		break;
 	}
 	gtk_widget_destroy (dialog);
+
+	/* The operation could take some time so allow the dialog to be closed */
+	while (gtk_events_pending ())
+		gtk_main_iteration ();
 
 	for (uri_node = uris; uri_node != NULL; uri_node = g_slist_next (uri_node)) {
 		const gchar *uri;
@@ -2178,7 +2191,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			tny_mime_part_set_filename (mime_part, basename);
 			g_free (basename);
 
-			pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size);
+			pixbuf = pixbuf_from_stream (stream, mime_type, &stream_size, window);
 
 			if (pixbuf != NULL) {
 				priv->images_size += stream_size;
