@@ -2592,6 +2592,31 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 }
 
 static void
+move_to_dialog_set_selected_folder (GtkWidget *dialog, TnyFolderStore *folder_store)
+{
+	GtkWidget *selection_label;
+	GtkWidget *action_button;
+	gchar *folder_name;
+
+        selection_label = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL));
+        action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
+
+	gtk_widget_set_sensitive (action_button, TRUE);
+
+	if (TNY_IS_FOLDER (folder_store)) {
+		folder_name = modest_tny_folder_get_display_name (TNY_FOLDER (folder_store));
+	} else if (TNY_IS_ACCOUNT (folder_store)) {
+		folder_name = g_strdup (tny_account_get_name (TNY_ACCOUNT (folder_store)));
+	} else {
+		folder_name = g_strdup ("");
+	}
+
+	gtk_label_set_text (GTK_LABEL (selection_label), folder_name);
+	g_free (folder_name);
+
+}
+
+static void
 on_move_to_dialog_back_clicked (GtkButton *button,
 				gpointer userdata)
 {
@@ -2623,7 +2648,7 @@ on_move_to_dialog_folder_activated (GtkTreeView       *tree_view,
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
 	if (showing_folders) {
-		gtk_dialog_response (GTK_DIALOG (user_data), GTK_RESPONSE_OK);
+		move_to_dialog_set_selected_folder (dialog, selected);
 	} else {
 		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
 
