@@ -2427,15 +2427,8 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 
 	if (cancelled || err) {
 		if (err) {
-			if ((err->domain == TNY_ERROR_DOMAIN) &&
-			    (err->code == TNY_IO_ERROR_WRITE) &&
-			    (errno == ENOSPC)) {
-				modest_platform_information_banner (NULL, NULL,
-								    _KR("cerm_device_memory_full"));
-			} else {
-				modest_platform_information_banner (NULL, NULL, 
-								    _("mail_ib_file_operation_failed"));
-			}
+			modest_platform_information_banner (NULL, NULL,
+							    _KR("cerm_device_memory_full"));
 		}
 		goto free;
 	}
