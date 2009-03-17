@@ -1208,6 +1208,7 @@ modest_address_book_has_address (const gchar *address)
 			    err ? err->message : "<unknown>");
 		if (err)
 			g_error_free (err);
+		g_free (email);
 		return FALSE;
 	}
 	e_book_query_unref (query);
