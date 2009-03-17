@@ -328,7 +328,7 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 	GList *node = NULL;
 	gchar *result = NULL;
 	gchar *from;
-       
+
 	/* First we need a GList of attachments filenames */
 	for (node = attachments; node != NULL; node = g_list_next (node)) {
 		TnyMimePart *part = (TnyMimePart *) node->data;
@@ -343,8 +343,10 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 			g_object_unref (header);
 		} else {
 			filename = g_strdup (tny_mime_part_get_filename (part));
-			if ((filename == NULL)||(filename[0] == '\0'))
+			if ((filename == NULL)||(filename[0] == '\0')) {
+				g_free (filename);
 				filename = g_strdup ("");
+			}
 		}
 		filenames = g_list_prepend (filenames, filename);
 	}
