@@ -499,12 +499,13 @@ edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
 
 	reg = (EditModeRegister *) g_hash_table_lookup (priv->edit_mode_registry, 
 							GINT_TO_POINTER (priv->edit_command));
-	if (reg == NULL)
-		modest_hildon2_window_unset_edit_mode (self);
 
-	if ((reg->action == NULL) || reg->action (self))
+	if (reg) {
+		if ((reg->action == NULL) || reg->action (self))
+			modest_hildon2_window_unset_edit_mode (self);
+	} else {
 		modest_hildon2_window_unset_edit_mode (self);
-
+	}
 }
 
 static void
