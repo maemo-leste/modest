@@ -1,3 +1,18 @@
+modest (2.99-2009.12-4) unstable; urgency=low
+
+  * Week 12, 2009 - fourth release on Wednesday
+  *  modest trunk r8076
+  *   7 bug fixes
+  * Fixes: NB#100070
+  * Fixes: NB#103682 	mail-gen 	Default region in email account creation does not reflect chosen country/region if country and region are not the same
+  * Fixes: NB#104978 	mail-acc 	Modest crashes in "fill_providers"
+  * Fixes: NB#105240
+  * Fixes: NB#105557
+  * Fixes: NB#105761
+  * Fixes: NB#106143 	mail-gen 	Modest crashed once in "tny_camel_folder_poke_status_default" 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 17 Mar 2009 16:21:35 +0200
+
 modest (2.99-2009.12-3) unstable; urgency=low
 
   * Week 12, 2009 - third release on Tuesday
