@@ -982,7 +982,7 @@ pixbuf_from_stream (TnyStream *stream,
 	GdkPixbuf *pixbuf;
 	guint64 size;
 	GError *error = NULL;
-	
+
 	size = 0;
 
 	loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, NULL);
@@ -1046,6 +1046,7 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
+	g_object_ref (self);
 	for (iter = tny_list_create_iterator (attachments);
 	     !tny_iterator_is_done (iter);
 	     tny_iterator_next (iter)) {
@@ -1070,6 +1071,7 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 		g_object_unref (part);
 	}
 	g_object_unref (iter);
+	g_object_unref (self);
 }
 
 static void
@@ -1080,7 +1082,7 @@ get_related_images (ModestMsgEditWindow *self, TnyMsg *msg)
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
-	
+
 	if (content_type && !g_strcasecmp (content_type, "multipart/related")) {
 		parent = g_object_ref (msg);
 	} else if (content_type && !g_strcasecmp (content_type, "multipart/mixed")) {
@@ -2128,6 +2130,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	}
 	gtk_widget_destroy (dialog);
 
+	g_object_ref (window);
 	/* The operation could take some time so allow the dialog to be closed */
 	while (gtk_events_pending ())
 		gtk_main_iteration ();
@@ -2214,8 +2217,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 		}
 	}
-
-
+	g_object_unref (window);
 }
 
 static void
