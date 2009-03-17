@@ -235,6 +235,7 @@ struct _ModestFolderViewPrivate {
 	gchar                *mailbox;
 	ModestFolderViewStyle style;
 	ModestFolderViewCellStyle cell_style;
+	gboolean show_message_count;
 
 	gboolean  reselect; /* we use this to force a reselection of the INBOX */
 	gboolean  show_non_move;
@@ -667,7 +668,11 @@ text_cell_data  (GtkTreeViewColumn *column,
 		} else {
 			/* Use bold font style if there are unread or unset messages */
 			if (number > 0) {
-				item_name = g_strdup_printf ("%s (%d)", fname, number);
+				if (priv->show_message_count) {
+					item_name = g_strdup_printf ("%s (%d)", fname, number);
+				} else {
+					item_name = g_strdup (fname);
+				}
 				item_weight = 800;
 			} else {
 				item_name = g_strdup (fname);
@@ -1189,6 +1194,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->reselect = FALSE;
 	priv->show_non_move = TRUE;
 	priv->list_to_move = NULL;
+	priv->show_message_count = TRUE;
 
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
@@ -3722,6 +3728,22 @@ modest_folder_view_show_non_move_folders (ModestFolderView *folder_view,
 	}
 }
 
+void
+modest_folder_view_show_message_count (ModestFolderView *folder_view,
+					  gboolean show)
+{
+	ModestFolderViewPrivate* priv;
+
+	g_return_if_fail (folder_view && MODEST_IS_FOLDER_VIEW (folder_view));
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE(folder_view);
+	priv->show_message_count = show;
+
+	g_object_set (G_OBJECT (priv->messages_renderer),
+		      "visible", (priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT && priv->show_message_count),
+		      NULL);
+}
+
 /* Returns FALSE if it did not selected anything */
 static gboolean
 _clipboard_set_selected_data (ModestFolderView *folder_view,
@@ -3800,7 +3822,7 @@ modest_folder_view_set_cell_style (ModestFolderView *self,
 	priv->cell_style = cell_style;
 
 	g_object_set (G_OBJECT (priv->messages_renderer),
-		      "visible", (cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT),
+		      "visible", (cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT && priv->show_message_count),
 		      NULL);
 	
 	gtk_widget_queue_draw (GTK_WIDGET (self));

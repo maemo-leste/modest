@@ -337,6 +337,16 @@ gboolean modest_folder_view_any_folder_fulfils_rules (ModestFolderView *self,
 void modest_folder_view_set_list_to_move (ModestFolderView *self,
 					  TnyList *list);
 
+/**
+ * modest_folder_view_show_message_count:
+ * @self: a #ModestFolderView
+ * @show: a #gboolean
+ *
+ * Set if the message count should be shown or not
+ */
+void modest_folder_view_show_message_count (ModestFolderView *self,
+					    gboolean show);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */
