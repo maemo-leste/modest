@@ -62,7 +62,7 @@ static gchar *ui_get_formatted_email_id(gchar * current_given_name,
 					gchar * current_sur_name, gchar * current_email_id);
 static gchar *run_add_email_addr_to_contact_dlg(const gchar * contact_name, gboolean *canceled);
 static GSList *select_email_addrs_for_contact(GList * email_addr_list);
-static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id, gboolean *canceled);
+static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, GSList **contact_id, gboolean *canceled);
 static gchar *unquote_string (const gchar *str);
 
 
@@ -868,20 +868,38 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 			} else if (strstr (address, "@") == NULL) {
 				/* here goes searching in addressbook */
 				gboolean canceled;
-				gchar *contact_id = NULL;
+				GSList *contact_ids = NULL;
 				GSList *resolved_addresses = NULL;
 
-				result = resolve_address (address, &resolved_addresses, &contact_id, &canceled);
+				result = resolve_address (address, &resolved_addresses, &contact_ids, &canceled);
 
 				if (result) {
 					gint new_length;
-					/* replace string */
-					modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
-											     &start_iter, &end_iter,
-											     resolved_addresses, 
-											     contact_id);
-					g_free (contact_id);
-					g_slist_foreach (resolved_addresses, (GFunc) g_free, NULL);
+					GSList *contact_ids_node, *resolved_addresses_node;
+
+					contact_ids_node = contact_ids;
+					resolved_addresses_node = resolved_addresses;
+
+					while (contact_ids_node != NULL) {
+						gchar *contact_id = (gchar *) contact_ids_node->data;
+						GSList *resolved_addresses_for_contact = 
+							(GSList *) resolved_addresses_node->data;
+
+						/* replace string */
+						modest_recpt_editor_replace_with_resolved_recipient 
+							(recpt_editor,
+							 &start_iter, &end_iter,
+							 resolved_addresses_for_contact, 
+							 contact_id);
+
+						g_free (contact_id);
+						g_slist_foreach (resolved_addresses_for_contact, (GFunc) g_free, NULL);
+						g_slist_free (resolved_addresses_for_contact);
+
+						contact_ids_node = g_slist_next (contact_ids_node);
+						resolved_addresses_node = g_slist_next (resolved_addresses_node);
+					}
+					g_slist_free (contact_ids);
 					g_slist_free (resolved_addresses);
 
 					/* update offset delta */
@@ -1045,6 +1063,9 @@ select_contacts_for_name_dialog (const gchar *name)
 										   _AB("addr_ti_dia_select_contacts"),
 										   OSSO_ABOOK_CAPS_EMAIL,
 										   OSSO_ABOOK_CONTACT_ORDER_NAME);
+		/* Enable multiselection */
+		osso_abook_contact_chooser_set_maximum_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
+								  G_MAXUINT);
 		osso_abook_contact_chooser_set_model (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
 						      contact_model);
 
@@ -1062,7 +1083,7 @@ select_contacts_for_name_dialog (const gchar *name)
 static gboolean
 resolve_address (const gchar *address, 
 		 GSList **resolved_addresses, 
-		 gchar **contact_id,
+		 GSList **contact_ids,
 		 gboolean *canceled)
 {
 	GList *resolved_contacts;
@@ -1070,6 +1091,8 @@ resolve_address (const gchar *address,
 
 	g_return_val_if_fail (canceled, FALSE);
 
+	*resolved_addresses = NULL;
+	*contact_ids = NULL;
 	*canceled = FALSE;
 	info = g_slice_new0 (CheckNamesInfo);
 	show_check_names_banner (info);
@@ -1104,15 +1127,21 @@ resolve_address (const gchar *address,
 
 	/* get the resolved contacts (can be no contact) */
 	if (resolved_contacts) {
-		gboolean found;
-		EContact *contact = (EContact *) resolved_contacts->data;
+		GList *node;
+		gboolean found = FALSE;
 
-		*resolved_addresses = get_recipients_for_given_contact (contact, canceled);
-		if (*resolved_addresses) {
-			*contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
-			found = TRUE;
-		} else {
-			found = FALSE;
+		for (node = resolved_contacts; node != NULL; node = g_list_next (node)) {
+			EContact *contact = (EContact *) node->data;
+			GSList *resolved;
+			gchar *contact_id;
+
+			resolved = get_recipients_for_given_contact (contact, canceled);
+			if (resolved) {
+				contact_id = g_strdup (e_contact_get_const (contact, E_CONTACT_UID));
+				*contact_ids = g_slist_append (*contact_ids, contact_id);
+				found = TRUE;
+				*resolved_addresses = g_slist_append (*resolved_addresses, resolved);
+			}
 		}
 
 		g_list_foreach (resolved_contacts, (GFunc)unref_gobject, NULL);
