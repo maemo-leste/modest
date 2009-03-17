@@ -475,15 +475,16 @@ modest_window_mgr_find_registered_header_default (ModestWindowMgr *self, TnyHead
 
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (TNY_IS_HEADER(header), FALSE);
-	
+
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	uid = modest_tny_folder_get_header_unique_id (header);
-	
+
 	if (win)
 		*win = NULL;
 
 	has_header = has_uid (priv->preregistered_uids, uid);
+	g_free (uid);
 
 	return has_header;
 }
