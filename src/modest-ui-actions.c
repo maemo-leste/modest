@@ -6499,7 +6499,8 @@ modest_ui_actions_on_send_queue_status_changed (ModestTnySendQueue *send_queue,
 #endif
 
 	/* Get selected folder */
-	selected_folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
+	if (header_view)
+		selected_folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 	if (!selected_folder)
 		return;
 
