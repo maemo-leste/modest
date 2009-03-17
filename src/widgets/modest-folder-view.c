@@ -550,6 +550,10 @@ format_compact_style (gchar **item_name,
 			g_free (*item_name);
 			*item_name = new_item_name;
 		}
+	} else if (!g_ascii_strcasecmp (*item_name, "Inbox")) {
+
+		g_free (*item_name);
+		*item_name = g_strdup (_("mcen_me_folder_inbox"));
 	}
 
 	if (!is_special || multiaccount) {
