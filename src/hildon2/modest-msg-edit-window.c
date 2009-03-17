@@ -2352,6 +2352,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 			if (size > allowed_size) {
 				modest_platform_information_banner (NULL, NULL, 
 								    _FM("sfil_ib_opening_not_allowed"));
+				g_free (filename);
 				return 0;
 			}
 		} else
@@ -2364,6 +2365,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 			modest_platform_information_banner (NULL, NULL, _FM("sfil_ib_opening_not_allowed"));
 
 			g_object_unref (mime_part);
+			g_free (filename);
 			gnome_vfs_file_info_unref (info);
 			return 0;
 		}
