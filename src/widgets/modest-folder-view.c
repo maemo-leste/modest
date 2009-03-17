@@ -1985,6 +1985,16 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 				break;
 			}
 		}
+		if (retval && TNY_IS_ACCOUNT (instance) &&
+		    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
+			ModestProtocolType protocol_type;
+
+			protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (instance));
+			retval  = !modest_protocol_registry_protocol_type_has_tag 
+				(modest_runtime_get_protocol_registry (),
+				 protocol_type,
+				 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD);
+		}
 	}
 
 	/* apply special filters */
