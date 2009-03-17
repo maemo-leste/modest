@@ -591,6 +591,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name,
 					gchar *message = g_strdup_printf(
 						_CS("ckdg_ib_illegal_characters_entered"), 
 						char_in_string);
+					g_free (char_in_string);
 					hildon_banner_show_information (
 						add_email_addr_to_contact_dlg, NULL, message );
 					g_free (message);
