@@ -155,6 +155,12 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 	}
 
 	filepath = g_strconcat (tmpdir, "/", orig_name, NULL);
+
+	/* if file exists, first we try to remove it */
+	if (modest_utils_file_exists (filepath)) {
+		g_unlink (filepath);
+	}
+
 	/* don't overwrite if it already exists, even if it is writable */
 	if (modest_utils_file_exists (filepath)) {
 		if (path!=NULL) {
