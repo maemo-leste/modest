@@ -558,6 +558,7 @@ find_msg_async_cb (TnyFolder *folder,
 
 cleanup:
         g_object_unref (header);
+	g_free (msg_uid);
 
 end:
         on_find_msg_async_destroy (info);
