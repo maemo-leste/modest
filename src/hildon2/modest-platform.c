@@ -2525,6 +2525,10 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
 
+	g_object_set (G_OBJECT (folder_view), 
+		      "hildon-ui-mode", HILDON_UI_MODE_NORMAL, 
+		      NULL);
+
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
 }
 
@@ -2548,6 +2552,10 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 
 	gtk_widget_set_sensitive (back_button, TRUE);
 	gtk_widget_set_sensitive (action_button, FALSE);
+
+	g_object_set (G_OBJECT (folder_view), 
+		      "hildon-ui-mode", HILDON_UI_MODE_EDIT, 
+		      NULL);
 
 	account = TNY_ACCOUNT (folder_store);
 	if (modest_tny_account_is_virtual_local_folders (account)) {
