@@ -2482,15 +2482,13 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		g_object_unref (selected_attachments);
 
 		if (error)
-			return;
+			goto frees;
 	} else {
 		g_object_ref (mime_part);
 	}
 
-	if (tny_mime_part_is_purged (mime_part)) {
-		g_object_unref (mime_part);
-		return;
-	}
+	if (tny_mime_part_is_purged (mime_part))
+		goto frees;
 
 	if (!modest_tny_mime_part_is_msg (mime_part)) {
 		gchar *filepath = NULL;
@@ -2552,7 +2550,12 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			gtk_widget_show_all (GTK_WIDGET (msg_win));
 		}
 	}
-	g_object_unref (mime_part);
+
+ frees:
+	if (attachment_uid)
+		g_free (attachment_uid);
+	if (mime_part)
+		g_object_unref (mime_part);
 }
 
 typedef struct
