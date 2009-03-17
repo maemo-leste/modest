@@ -493,7 +493,9 @@ modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *self,
 static void
 accumulate_mail_op_strings (ModestMailOperation *op, gchar **str)
 {
-	*str = g_strdup_printf ("%s\n%s", *str, modest_mail_operation_to_string (op));
+	gchar *mail_op_to_str = modest_mail_operation_to_string (op);
+	*str = g_strdup_printf ("%s\n%s", *str, mail_op_to_str);
+	g_free (mail_op_to_str);
 }
 
 
