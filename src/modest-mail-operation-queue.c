@@ -470,13 +470,14 @@ modest_mail_operation_queue_get_by_source (ModestMailOperationQueue *self,
 {
 	ModestMailOperationQueuePrivate *priv;
 	GSList* found_operations= NULL;
-	FindBySourceInfo *info = g_new0 (FindBySourceInfo, 1);
+	FindBySourceInfo *info;
 
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self), NULL);
 	g_return_val_if_fail (source != NULL, NULL);
 
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
+	info = g_new0 (FindBySourceInfo, 1);
 	info->new_list = &found_operations;
 	info->source = source;
 
