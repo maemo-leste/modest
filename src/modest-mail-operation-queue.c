@@ -499,19 +499,20 @@ accumulate_mail_op_strings (ModestMailOperation *op, gchar **str)
 gchar*
 modest_mail_operation_queue_to_string (ModestMailOperationQueue *self)
 {
-	gchar *str;
+	gchar *str = NULL;
 	guint len;
 	ModestMailOperationQueuePrivate *priv;
-	
+
 	g_return_val_if_fail (MODEST_IS_MAIL_OPERATION_QUEUE (self), NULL);
-	
+
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
 	len = g_queue_get_length (priv->op_queue);
 	str = g_strdup_printf ("mail operation queue (%02d)\n-------------------------", len);
-	if (len == 0)
+	if (len == 0) {
+		g_free (str);
 		str = g_strdup_printf ("%s\n%s", str, "<empty>");
-	else {
+	} else {
 		g_mutex_lock (priv->queue_lock);
 		g_queue_foreach (priv->op_queue, (GFunc)accumulate_mail_op_strings, &str);
 		g_mutex_unlock (priv->queue_lock);
