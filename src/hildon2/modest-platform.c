@@ -2656,6 +2656,8 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (*folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
+	modest_folder_view_show_message_count (MODEST_FOLDER_VIEW (*folder_view),
+					       FALSE);
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (*folder_view),
 						  (TnyAccountStore *) modest_runtime_get_account_store ());
 
