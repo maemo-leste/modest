@@ -243,14 +243,14 @@ modest_attachments_view_remove_attachment (ModestAttachmentsView *atts_view, Tny
 
 		box_children = gtk_container_get_children (GTK_CONTAINER (priv->box));
 		node = g_list_find (box_children, found_att_view);
-		if (node->next)
+		if (node && node->next)
 			next_widget = node->next->data;
 
 		g_list_free (box_children);
 		gtk_widget_destroy (GTK_WIDGET (found_att_view));
 
 		node = g_list_find (priv->selected, found_att_view);
-		if (node != NULL) {
+		if (node) {
 			priv->selected = g_list_delete_link (priv->selected, node);
 			if ((priv->selected == NULL) && (next_widget != NULL))
 				set_selected (MODEST_ATTACHMENTS_VIEW (atts_view), 
