@@ -2426,8 +2426,17 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	gchar *filepath = (gchar *) user_data;
 
 	if (cancelled || err) {
-		modest_platform_information_banner (NULL, NULL, 
-						    _("mail_ib_file_operation_failed"));
+		if (err) {
+			if ((err->domain == TNY_ERROR_DOMAIN) &&
+			    (err->code == TNY_IO_ERROR_WRITE) &&
+			    (errno == ENOSPC)) {
+				modest_platform_information_banner (NULL, NULL,
+								    _KR("cerm_device_memory_full"));
+			} else {
+				modest_platform_information_banner (NULL, NULL, 
+								    _("mail_ib_file_operation_failed"));
+			}
+		}
 		goto free;
 	}
 
@@ -2633,7 +2642,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename, error?error->code:-1, error?error->message:"Unknown error");
 
 			if ((error->domain == TNY_ERROR_DOMAIN) && 
-			    (error->code = TNY_IO_ERROR_WRITE) &&
+			    (error->code == TNY_IO_ERROR_WRITE) &&
 			    (errno == ENOSPC)) {
 				info->result = GNOME_VFS_ERROR_NO_SPACE;
 			} else {
