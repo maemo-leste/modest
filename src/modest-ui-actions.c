@@ -1358,7 +1358,7 @@ open_msg_performer(gboolean canceled,
 		    gpointer user_data)
 {
 	ModestMailOperation *mail_op = NULL;
-	gchar *error_msg;
+	gchar *error_msg = NULL;
 	ModestProtocolType proto;
 	TnyConnectionStatus status;
 	OpenMsgHelper *helper = NULL;
@@ -1483,6 +1483,8 @@ open_msg_performer(gboolean canceled,
 
 	/* Frees */
  clean:
+	if (error_msg)
+		g_free (error_msg);
 	if (mail_op)
 		g_object_unref (mail_op);
 	g_object_unref (account);
