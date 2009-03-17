@@ -2496,6 +2496,7 @@ _modest_platform_play_email_tone (void)
 
 #define MOVE_TO_DIALOG_FOLDER_VIEW "folder-view"
 #define MOVE_TO_DIALOG_BACK_BUTTON "back-button"
+#define MOVE_TO_DIALOG_ACTION_BUTTON "action-button"
 #define MOVE_TO_DIALOG_SELECTION_LABEL "selection-label"
 #define MOVE_TO_DIALOG_SHOWING_FOLDERS "showing-folders"
 #define MOVE_TO_DIALOG_PANNABLE "pannable"
@@ -2507,13 +2508,16 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	GtkWidget *back_button;
 	GtkWidget *folder_view;
 	GtkWidget *pannable;
+	GtkWidget *action_button;
 
         selection_label = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL));
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
+        action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
         pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
 
 	gtk_widget_set_sensitive (back_button, FALSE);
+	gtk_widget_set_sensitive (action_button, FALSE);
 
 	gtk_label_set_text (GTK_LABEL (selection_label), "");
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
@@ -2534,13 +2538,16 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	const gchar *account_id;
 	gchar *selection_label_text;
 	GtkWidget *pannable;
+	GtkWidget *action_button;
 
         selection_label = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL));
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
+        action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
         pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
 
 	gtk_widget_set_sensitive (back_button, TRUE);
+	gtk_widget_set_sensitive (action_button, FALSE);
 
 	account = TNY_ACCOUNT (folder_store);
 	if (modest_tny_account_is_virtual_local_folders (account)) {
@@ -2637,6 +2644,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	GtkWidget *back_button, *selection_label;
 	GdkPixbuf *back_pixbuf;
 	GtkWidget *top_vbox;
+	GtkWidget *action_button;
 
 	/* Create dialog. We cannot use a touch selector because we
 	   need to use here the folder view widget directly */
@@ -2670,9 +2678,14 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	}
 	selection_label = gtk_label_new ("");
 	gtk_misc_set_alignment (GTK_MISC (selection_label), 0.0, 0.5);
+
+	action_button = gtk_button_new ();
+	gtk_container_add (GTK_CONTAINER (action_button), selection_label);
+
 	gtk_box_pack_start (GTK_BOX (buttons_hbox), back_button, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (buttons_hbox), selection_label, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (buttons_hbox), action_button, TRUE, TRUE, 0);
 	gtk_widget_set_sensitive (GTK_WIDGET (back_button), FALSE);
+	gtk_widget_set_sensitive (GTK_WIDGET (action_button), FALSE);
 	gtk_box_pack_start (GTK_BOX (top_vbox), buttons_hbox, FALSE, FALSE, 0);
 
 	/* Create pannable and add it to the dialog */
@@ -2692,10 +2705,12 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_widget_show (*folder_view);
 	gtk_widget_show_all (back_button);
 	gtk_widget_show (selection_label);
+	gtk_widget_show (action_button);
 	gtk_widget_show (buttons_hbox);
 
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW, *folder_view);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON, back_button);
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON, action_button);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SELECTION_LABEL, selection_label);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE, folder_view_container);
 
