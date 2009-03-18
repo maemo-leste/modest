@@ -71,7 +71,7 @@ struct _ModestRecptEditorPrivate
 	GtkWidget *abook_button;
 	GtkWidget *scrolled_window;
 	gchar *recipients;
-
+	gulong on_mark_set_handler;
 };
 
 #define MODEST_RECPT_EDITOR_GET_PRIVATE(o)	\
@@ -449,9 +449,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 	g_signal_connect (G_OBJECT (priv->text_view), "key-press-event", G_CALLBACK (modest_recpt_editor_on_key_press_event), instance);
 	g_signal_connect (G_OBJECT (priv->text_view), "focus-in-event", G_CALLBACK (modest_recpt_editor_on_focus_in), instance);
 	g_signal_connect (G_OBJECT (buffer), "insert-text", G_CALLBACK (modest_recpt_editor_on_insert_text), instance);
-	g_signal_connect (G_OBJECT (buffer), "mark-set", G_CALLBACK (modest_recpt_editor_on_mark_set), instance);
 
-/* 	gtk_container_set_focus_child (GTK_CONTAINER (instance), priv->text_view); */
+	priv->on_mark_set_handler = g_signal_connect (G_OBJECT (buffer), "mark-set", 
+						      G_CALLBACK (modest_recpt_editor_on_mark_set), 
+						      instance);
 
 	return;
 }
@@ -532,7 +533,13 @@ modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
 		}
 
 	if (selection_changed) {
+		/* We block this signal handler in order to prevent a
+		   stack overflow caused by recursive calls to this
+		   handler as the select_range call could issue a
+		   "mark-set" signal */
+		g_signal_handler_block (recpt_editor, priv->on_mark_set_handler);
 		gtk_text_buffer_select_range (buffer, &start, &end);
+		g_signal_handler_unblock (recpt_editor, priv->on_mark_set_handler);
 	}
 }
 
@@ -992,6 +999,10 @@ modest_recpt_editor_finalize (GObject *object)
 {
 	ModestRecptEditorPrivate *priv;
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (object);
+
+	if (g_signal_handler_is_connected (object, priv->on_mark_set_handler))
+		g_signal_handler_disconnect (object, priv->on_mark_set_handler);
+	priv->on_mark_set_handler = 0;
 
 	if (priv->recipients) {
 		g_free (priv->recipients);
