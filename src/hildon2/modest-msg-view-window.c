@@ -2481,7 +2481,8 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 			g_object_unref (iter);
 		}
-		g_object_unref (selected_attachments);
+		if (selected_attachments)
+			g_object_unref (selected_attachments);
 
 		if (error)
 			goto frees;
