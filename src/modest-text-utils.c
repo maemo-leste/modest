@@ -1016,7 +1016,7 @@ modest_text_utils_quote_html (const gchar *text,
 		}
 		quote_html_add_to_gstring (result_string, cite);
 		quoted_text = g_string_new ("");
-		quoted_text = modest_text_utils_quote_body (quoted_text, text, ">", limit);
+		quoted_text = modest_text_utils_quote_body (quoted_text, (text) ? text : "", ">", limit);
 		quote_html_add_to_gstring (result_string, quoted_text->str);
 		g_string_free (quoted_text, TRUE);
 		if (attachments) {
