@@ -1,3 +1,17 @@
+modest (2.99-2009.12-5) unstable; urgency=low
+
+  * Week 12, 2009 - fifth release on thursday
+  *  modest trunk r8155
+  *  6 bug fixes
+  * Fixes: NB#104309 	mail-gen  	progressing animation not stopping
+  * Fixes: NB#106248 	mail-ui 	multiple folder views are opening
+  * Fixes: NB#106335 	mail-gen 	Contradictory behavior observed when attempt to create New folder under device root folder and IMAP account.
+  * Fixes: NB#106340 	mail-ui 	"Select inline image" dialog stays for 8 sec on the screen and no progress indication is shown when inserting a large image
+  * Fixes: NB#106346 	mail-gen 	<coverity> Major defects for modest
+  * Fixes: NB#106423 	mail-gen 	Legal bug: modest component: license info missing from the files 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 18 Mar 2009 14:21:11 +0200
+
 modest (2.99-2009.12-4) unstable; urgency=low
 
   * Week 12, 2009 - fourth release on Wednesday
