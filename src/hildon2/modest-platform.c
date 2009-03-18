@@ -2274,7 +2274,7 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  		account = TNY_ACCOUNT (g_object_ref (folder_store));
  	}
 
-	if (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE) {
+	if (account && (tny_account_get_account_type (account) == TNY_ACCOUNT_TYPE_STORE)) {
  		if (!modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (account))) {
  			/* No need to connect a local account */
  			if (callback)
