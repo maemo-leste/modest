@@ -3251,38 +3251,6 @@ modest_ui_actions_on_remove_attachments (GtkAction *action,
 	modest_msg_edit_window_remove_attachments (window, NULL);
 }
 
-
-#ifndef MODEST_TOOLKIT_GTK
-typedef struct {
-	guint handler;
-	gchar *name;
-	GtkWindow *win;
-	TnyFolderStore *folder;
-} CreateFolderHelper;
-
-static gboolean
-show_create_folder_in_timeout (gpointer data)
-{
-	CreateFolderHelper *helper = (CreateFolderHelper *) data;
-
-	/* Remove the timeout ASAP, we can not wait until the dialog
-	   is shown because it could take a lot of time and so the
-	   timeout could be called twice or more times */
-	g_source_remove (helper->handler);
-
-	gdk_threads_enter ();
-	do_create_folder (helper->win, helper->folder, helper->name);
-	gdk_threads_leave ();
-
-	g_object_unref (helper->win);
-	g_object_unref (helper->folder);
-	g_free (helper->name);
-	g_slice_free (CreateFolderHelper, helper);
-
-	return FALSE;
-}
-#endif
-
 static void
 do_create_folder_cb (ModestMailOperation *mail_op,
 		     TnyFolderStore *parent_folder, 
@@ -3291,8 +3259,10 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 {
 	gchar *suggested_name = (gchar *) user_data;
 	GtkWindow *source_win = (GtkWindow *) modest_mail_operation_get_source (mail_op);
+	const GError *error;
 
-	if (modest_mail_operation_get_error (mail_op)) {
+	error = modest_mail_operation_get_error (mail_op);
+	if (error) {
 
 		/* Show an error. If there was some problem writing to
 		   disk, show it, otherwise show the generic folder
@@ -3304,24 +3274,10 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 		modest_ui_actions_disk_operations_error_handler (mail_op,
 								 _("mail_in_ui_folder_create_error"));
 
-		/* Try again. Do *NOT* show any error because the mail
-		   operations system will do it for us because we
-		   created the mail_op with new_with_error_handler */
-#ifndef MODEST_TOOLKIT_GTK
-		CreateFolderHelper *helper;
-		helper = g_slice_new0 (CreateFolderHelper);
-		helper->name = g_strdup (suggested_name);
-		helper->folder = g_object_ref (parent_folder);
-		helper->win = g_object_ref (source_win);
-
-		/* Ugly but neccesary stuff. The problem is that the
-		   dialog when is shown calls a function that destroys
-		   all the temporary windows, so the banner is
-		   destroyed */
-		helper->handler = g_timeout_add (2000, show_create_folder_in_timeout, helper);
-#else
-		do_create_folder (source_win, parent_folder, (const gchar *) suggested_name);
-#endif
+		if (!is_memory_full_error ((GError *) error, mail_op)) {
+			/* Try again if there is no full memory condition */
+			do_create_folder (source_win, parent_folder, (const gchar *) suggested_name);
+		}
 	} else {
 		/* the 'source_win' is either the ModestMainWindow, or the 'Move to folder'-dialog
 		 * FIXME: any other? */
