@@ -451,8 +451,8 @@ find_msg_async_cb (TnyFolder *folder,
                    GError *err, 
                    gpointer user_data)
 {
-        TnyHeader *header;
-        gchar *msg_uid;
+        TnyHeader *header = NULL;
+        gchar *msg_uid = NULL;
         ModestWindowMgr *win_mgr;
         ModestWindow *msg_view = NULL;
         gboolean is_draft = FALSE;
@@ -465,8 +465,7 @@ find_msg_async_cb (TnyFolder *folder,
         }
 
         header = tny_msg_get_header (msg);
-        if (header && (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)) {
-                g_object_unref (header);
+        if (!header || (tny_header_get_flags (header) & TNY_HEADER_FLAG_DELETED)) {
 		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
                 goto end;
@@ -495,18 +494,18 @@ find_msg_async_cb (TnyFolder *folder,
                 } else {
                         modest_account_name = NULL;
                 }
-                        
+
                 /* Drafts will be opened in the editor, and others will be opened in the viewer */
                 if (is_draft) {
 			gchar *modest_account_name = NULL;
 			gchar *from_header;
-			
+
 			/* we cannot edit without a valid account... */
 			if (!modest_account_mgr_has_accounts(modest_runtime_get_account_mgr (), TRUE)) {
 				if (!modest_ui_actions_run_account_setup_wizard(NULL)) {
 					modest_window_mgr_unregister_header (win_mgr, 
 									     header);
-					goto cleanup;
+					goto end;
 				}
 			}
                
@@ -556,11 +555,11 @@ find_msg_async_cb (TnyFolder *folder,
 		}
         }
 
-cleanup:
-        g_object_unref (header);
-	g_free (msg_uid);
-
 end:
+	if (header)
+		g_object_unref (header);
+	if (msg_uid)
+		g_free (msg_uid);
         on_find_msg_async_destroy (info);
 }
 
