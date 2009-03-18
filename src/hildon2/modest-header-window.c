@@ -879,6 +879,8 @@ update_progress_hint (ModestHeaderWindow *self)
 
 	if (has_active_operations (self)) {
 		priv->progress_hint = TRUE;
+	} else {
+		priv->progress_hint = FALSE;
 	}
 
 	if (!priv->progress_hint && priv->current_store_account) {
