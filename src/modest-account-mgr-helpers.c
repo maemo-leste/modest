@@ -778,12 +778,14 @@ modest_account_mgr_save_account_settings (ModestAccountMgr *mgr,
 	g_object_unref (store_settings);
 
 	transport_settings = modest_account_settings_get_transport_settings (settings);
-	transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
-	if (transport_settings != NULL) {
+	if (transport_settings) {
+		transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
+		if (transport_account_name)
+			modest_account_mgr_set_string (mgr, account_name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT, 
+						       transport_account_name, FALSE);
 		modest_account_mgr_save_server_settings (mgr, transport_settings);
+		g_object_unref (transport_settings);
 	}
-	modest_account_mgr_set_string (mgr, account_name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT, transport_account_name, FALSE);
-	g_object_unref (transport_settings);
 	modest_account_mgr_set_enabled (mgr, account_name, TRUE);
 }
 
