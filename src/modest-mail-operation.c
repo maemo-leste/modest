@@ -1232,16 +1232,18 @@ modest_mail_operation_save_to_drafts_cb (ModestMailOperation *self,
 	}
 
 	if (!priv->error || priv->error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
-		SaveToDraftsAddMsgInfo *cb_info = g_slice_new(SaveToDraftsAddMsgInfo);
-		cb_info->transport_account = g_object_ref(info->transport_account);
-		cb_info->draft_msg = info->draft_msg ? g_object_ref(info->draft_msg) : NULL;
-		cb_info->callback = info->callback;
-		cb_info->user_data = info->user_data;
-		cb_info->drafts = g_object_ref(drafts);
-		cb_info->msg = g_object_ref(msg);
-		cb_info->mailop = g_object_ref(self);
-		tny_folder_add_msg_async(drafts, msg, modest_mail_operation_save_to_drafts_add_msg_cb,
-					 NULL, cb_info);
+		if (drafts) {
+			SaveToDraftsAddMsgInfo *cb_info = g_slice_new(SaveToDraftsAddMsgInfo);
+			cb_info->transport_account = g_object_ref(info->transport_account);
+			cb_info->draft_msg = info->draft_msg ? g_object_ref(info->draft_msg) : NULL;
+			cb_info->callback = info->callback;
+			cb_info->user_data = info->user_data;
+			cb_info->drafts = g_object_ref(drafts);
+			cb_info->msg = g_object_ref(msg);
+			cb_info->mailop = g_object_ref(self);
+			tny_folder_add_msg_async(drafts, msg, modest_mail_operation_save_to_drafts_add_msg_cb,
+						 NULL, cb_info);
+		}
 	} else {
 		/* Call the user callback */
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
