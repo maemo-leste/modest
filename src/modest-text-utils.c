@@ -286,6 +286,8 @@ modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 	   garbage in the s variable */
 	if (s)
 		s[0] = '\0';
+	else
+		return 0;
 
 	/* does not work on old maemo glib: 
 	 *   g_date_set_time_t (&date, timet);
