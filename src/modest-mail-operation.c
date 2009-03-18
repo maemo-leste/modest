@@ -1559,7 +1559,8 @@ inbox_refreshed_cb (TnyFolder *inbox,
 				     MODEST_MAIL_OPERATION_ERROR_OPERATION_CANCELED,
 				     "canceled");
 
-		tny_folder_remove_observer (inbox, info->inbox_observer);
+		if (inbox)
+			tny_folder_remove_observer (inbox, info->inbox_observer);
 		g_object_unref (info->inbox_observer);
 		info->inbox_observer = NULL;
 
