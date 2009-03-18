@@ -6561,6 +6561,9 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
 	}
 
+	if (!header || !folder)
+		goto frees;
+
 	/* Get the account type */
 	account = tny_folder_get_account (TNY_FOLDER (folder));
 	proto = modest_tny_account_get_protocol_type (account);
@@ -6575,10 +6578,14 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 		msg = g_strdup_printf (_("mail_ni_ui_folder_get_msg_folder_error"));
 	}
 
+ frees:
 	/* Frees */
-	g_object_unref (account);
-	g_object_unref (folder);
-	g_object_unref (header);
+	if (account)
+		g_object_unref (account);
+	if (folder)
+		g_object_unref (folder);
+	if (header)
+		g_object_unref (header);
 
 	return msg;
 }
