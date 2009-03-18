@@ -1418,7 +1418,8 @@ modest_header_view_set_folder (ModestHeaderView *self,
 			folder_refreshed_cb (mail_op, folder, info);
 		}
 		/* Free */
-		g_object_unref (mail_op);
+		if (mail_op)
+			g_object_unref (mail_op);
 	} else {
 		g_mutex_lock (priv->observers_lock);
 
