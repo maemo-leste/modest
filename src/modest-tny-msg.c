@@ -368,9 +368,9 @@ add_images (TnyMsg *msg, GList *images_list, GError **err)
 			if (part && !g_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
 				related_part = part;
 				break;
-			} else {
-				g_object_unref (part);
 			}
+			if (part)
+				g_object_unref (part);
 			tny_iterator_next (iter);
 		}
 		g_object_unref (iter);
