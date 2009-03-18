@@ -1596,7 +1596,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 			/* Apply per-message size limits */
 			if (tny_header_get_message_size (header) < max_size)
 				g_ptr_array_add (new_headers_array, g_object_ref (header));
-			
+
 			g_object_unref (header);
 			tny_iterator_next (new_headers_iter);
 		}
@@ -1616,14 +1616,14 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	retrieve_limit = modest_account_mgr_get_retrieve_limit (mgr, info->account_name);
 	if (retrieve_limit == 0)
 		retrieve_limit = G_MAXINT;
-	
+
 	/* Get per-account retrieval type */
 	retrieve_type = modest_account_mgr_get_retrieve_type (mgr, info->account_name);
 	headers_only = (retrieve_type == MODEST_ACCOUNT_RETRIEVE_HEADERS_ONLY);
 
 	/* Order by date */
 	g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date);
-	
+
 	/* Ask the users if they want to retrieve all the messages
 	   even though the limit was exceeded */
 	ignore_limit = FALSE;
@@ -1646,7 +1646,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	}
 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (new_headers_array, FALSE);
-	
+
 	if (!headers_only && (tny_list_get_length (new_headers) > 0)) {
 		gint msg_num = 0;
 		TnyIterator *iter;
@@ -1667,16 +1667,16 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		msg_info->more_msgs = g_object_ref (iter);
 		msg_info->user_data = info;
 
-		while ((msg_num < priv->total ) && !tny_iterator_is_done (iter)) {		
+		while ((msg_num < priv->total ) && !tny_iterator_is_done (iter)) {
 			TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
 			TnyFolder *folder = tny_header_get_folder (header);
 
 			/* Get message in an async way */
-			tny_folder_get_msg_async (folder, header, update_account_get_msg_async_cb, 
+			tny_folder_get_msg_async (folder, header, update_account_get_msg_async_cb,
 						  NULL, msg_info);
 
 			g_object_unref (folder);
-			
+
 			msg_num++;
 			tny_iterator_next (iter);
 		}
@@ -1690,11 +1690,11 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	/* If we don't have to retrieve the new messages then
 	   simply send mail */
 	update_account_send_mail (info);
-	
+
 	/* Check if the operation was a success */
 	if (!priv->error)
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
-	
+
 	/* Call the user callback and free */
 	update_account_notify_user_and_free (info, new_headers);
 }
@@ -1966,9 +1966,9 @@ compare_headers_by_date (gconstpointer a,
 	/* We want the most recent ones (greater time_t) at the
 	   beginning */
 	if (sent1 < sent2)
-		return 1;
-	else
 		return -1;
+	else
+		return 1;
 }
 
 
