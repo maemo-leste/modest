@@ -1455,7 +1455,7 @@ open_msg_performer(gboolean canceled,
 	mail_op = 
 		modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
 							       modest_ui_actions_disk_operations_error_handler,
-							       error_msg, g_free);
+							       g_strdup (error_msg), g_free);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 
