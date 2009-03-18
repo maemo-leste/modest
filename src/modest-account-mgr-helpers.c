@@ -738,14 +738,12 @@ void
 modest_account_mgr_save_account_settings (ModestAccountMgr *mgr,
 					  ModestAccountSettings *settings)
 {
-	g_return_if_fail (MODEST_IS_ACCOUNT_MGR (mgr));
-	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS (settings));
-
 	const gchar *account_name;
-	const gchar *store_account_name;
-	const gchar *transport_account_name;
 	ModestServerAccountSettings *store_settings;
 	ModestServerAccountSettings *transport_settings;
+
+	g_return_if_fail (MODEST_IS_ACCOUNT_MGR (mgr));
+	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS (settings));
 
 	account_name = modest_account_settings_get_account_name (settings);
 	g_return_if_fail (account_name != NULL);
@@ -770,15 +768,19 @@ modest_account_mgr_save_account_settings (ModestAccountMgr *mgr,
 		 modest_account_settings_get_use_connection_specific_smtp (settings));
 
 	store_settings = modest_account_settings_get_store_settings (settings);
-	store_account_name = modest_server_account_settings_get_account_name (store_settings);
-	if (store_settings != NULL) {
+	if (store_settings) {
+		const gchar *store_account_name;
+		store_account_name = modest_server_account_settings_get_account_name (store_settings);
+		if (store_account_name)
+			modest_account_mgr_set_string (mgr, account_name, MODEST_ACCOUNT_STORE_ACCOUNT, 
+						       store_account_name, FALSE);
 		modest_account_mgr_save_server_settings (mgr, store_settings);
+		g_object_unref (store_settings);
 	}
-	modest_account_mgr_set_string (mgr, account_name, MODEST_ACCOUNT_STORE_ACCOUNT, store_account_name, FALSE);
-	g_object_unref (store_settings);
 
 	transport_settings = modest_account_settings_get_transport_settings (settings);
 	if (transport_settings) {
+		const gchar *transport_account_name;
 		transport_account_name = modest_server_account_settings_get_account_name (transport_settings);
 		if (transport_account_name)
 			modest_account_mgr_set_string (mgr, account_name, MODEST_ACCOUNT_TRANSPORT_ACCOUNT, 
