@@ -1,7 +1,7 @@
 modest (2.99-2009.13-1) unstable; urgency=low
 
   * Wee 13, 2009 - first release on friday
-  *  modest trunk r8210
+  *  modest trunk r8213
   *  14 bug fixes
   *
   * Fixes: NB#100026   Notification for latest mail is showing first , if received multiple mails.
