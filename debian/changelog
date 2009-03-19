@@ -1,3 +1,26 @@
+modest (2.99-2009.13-1) unstable; urgency=low
+
+  * Wee 13, 2009 - first release on friday
+  *  modest trunk r8210
+  *  14 bug fixes
+  *
+  * Fixes: NB#100026   Notification for latest mail is showing first , if received multiple mails.
+  * Fixes: NB#106361   Random crash at '_gtk_text_iter_get_text_line ' after sending the message.
+  * Fixes: NB#106609   <coverity> FORWARD_NULL defects in "modest" component
+  * Fixes: NB#94954    'file error ' information banner is dispalying instead of 'device storage memory full ' error banner.
+  * Fixes: NB#100246   Modest crashed when moving to Accounts view from Folders view
+  * Fixes: NB#101068   'Done' button is missing in select contact dialog box after checking names
+  * Fixes: NB#102518
+  * Fixes: NB#103983   There should be no action on tapping the path that is not allowed for moving messages
+  * Fixes: NB#105531   selected value is not shown in touch selector
+  * Fixes: NB#105869   'Value must be between 1 and 65535' error banner is not showing
+  * Fixes: NB#105911   When moving a folder show progress indication
+  * Fixes: NB#106115
+  * Fixes: NB#106165   Untranslated string for Â§mcen_me_folder_inboxÂ§ in Email application
+  * Fixes: NB#106443
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 19 Mar 2009 16:35:33 +0200
+
 modest (2.99-2009.12-5) unstable; urgency=low
 
   * Week 12, 2009 - fifth release on thursday
