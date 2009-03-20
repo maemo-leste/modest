@@ -2128,7 +2128,7 @@ account_shutdown (TnyAccount *account, ShutdownOpData *op_data)
 }
 
 
-void 
+void
 modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 				   ModestTnyAccountStoreShutdownCallback callback,
 				   gpointer userdata)
@@ -2138,8 +2138,12 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
 
 	/* Get references */
-	num_accounts = tny_list_get_length (priv->store_accounts) + 
-		tny_list_get_length (priv->transport_accounts);
+	num_accounts = 0;
+	if (priv->store_accounts)
+		num_accounts += tny_list_get_length (priv->store_accounts);
+	if (priv->transport_accounts) {
+		num_accounts += tny_list_get_length (priv->transport_accounts);
+
 	for (i = 0 ; i < num_accounts ; i++)
 		g_object_ref (self);
 
@@ -2154,7 +2158,7 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 	if (priv->store_accounts) {
 		tny_list_foreach (priv->store_accounts, (GFunc)account_shutdown, op_data);
 	}
-	
+
 	if (priv->transport_accounts) {
 		tny_list_foreach (priv->transport_accounts, (GFunc)account_shutdown, op_data);
 	}
