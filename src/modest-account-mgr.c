@@ -1291,6 +1291,11 @@ modest_account_mgr_unset (ModestAccountMgr *self, const gchar *name,
 gchar*
 _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key, gboolean *is_server_account)
 {
+	const gchar* account_ns;
+	const gchar* server_account_ns;
+	gchar *account = NULL;
+	gchar *unescaped_name = NULL;
+
 	/* Initialize input parameters: */
 	if (is_account_key)
 		*is_account_key = FALSE;
@@ -1298,10 +1303,8 @@ _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key
 	if (is_server_account)
 		*is_server_account = FALSE;
 
-	const gchar* account_ns        = modest_defs_namespace (MODEST_ACCOUNT_SUBNAMESPACE "/");
-	const gchar* server_account_ns = modest_defs_namespace (MODEST_SERVER_ACCOUNT_SUBNAMESPACE "/");
-	gchar *cursor;
-	gchar *account = NULL;
+	account_ns        = modest_defs_namespace (MODEST_ACCOUNT_SUBNAMESPACE "/");
+	server_account_ns = modest_defs_namespace (MODEST_SERVER_ACCOUNT_SUBNAMESPACE "/");
 
 	/* determine whether it's an account or a server account,
 	 * based on the prefix */
@@ -1309,37 +1312,40 @@ _modest_account_mgr_account_from_key (const gchar *key, gboolean *is_account_key
 
 		if (is_server_account)
 			*is_server_account = FALSE;
-		
+
 		account = g_strdup (key + strlen (account_ns));
 
 	} else if (g_str_has_prefix (key, server_account_ns)) {
 
 		if (is_server_account)
 			*is_server_account = TRUE;
-		
-		account = g_strdup (key + strlen (server_account_ns));	
+
+		account = g_strdup (key + strlen (server_account_ns));
 	} else
 		return NULL;
-
-	/* if there are any slashes left in the key, it's not
-	 * the toplevel entry for an account
-	 */
-	cursor = strstr(account, "/");
-	
-	if (is_account_key && cursor)
-		*is_account_key = TRUE;
-
-	/* put a NULL where the first slash was */
-	if (cursor)
-		*cursor = '\0';
 
 	if (account) {
-		/* The key is an escaped string, so unescape it to get the actual account name: */
-		gchar *unescaped_name = modest_conf_key_unescape (account);
+		gchar *cursor;
+
+		/* if there are any slashes left in the key, it's not
+		 * the toplevel entry for an account
+		 */
+		cursor = strstr(account, "/");
+
+		if (cursor) {
+			if (is_account_key)
+				*is_account_key = TRUE;
+
+			/* put a NULL where the first slash was */
+			*cursor = '\0';
+		}
+
+		/* The key is an escaped string, so unescape it to get the actual account name */
+		unescaped_name = modest_conf_key_unescape (account);
 		g_free (account);
-		return unescaped_name;
-	} else
-		return NULL;
+	}
+
+	return unescaped_name;
 }
 
 
