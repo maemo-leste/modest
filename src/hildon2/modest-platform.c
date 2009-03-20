@@ -1346,13 +1346,11 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 	g_mutex_unlock (data->mutex);
 
  frees:
-	if (data) {
-		if (g_signal_handler_is_connected (account, data->handler))
-			g_signal_handler_disconnect (account, data->handler);
-		g_mutex_free (data->mutex);
-		g_main_loop_unref (data->wait_loop);
-		g_slice_free (ConnectAndWaitData, data);
-	}
+	if (g_signal_handler_is_connected (account, data->handler))
+		g_signal_handler_disconnect (account, data->handler);
+	g_mutex_free (data->mutex);
+	g_main_loop_unref (data->wait_loop);
+	g_slice_free (ConnectAndWaitData, data);
 
 	conn_status = tny_account_get_connection_status (account);
 	return (conn_status == TNY_CONNECTION_STATUS_CONNECTED)	? TRUE: FALSE;
