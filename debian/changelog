@@ -1,3 +1,18 @@
+modest (2.99-2009.13-2) unstable; urgency=low
+
+  * Week 13, 2009 - second release on monday
+  *  modest trunk r8253
+  *  7 bug fixes
+  * Fixes: NB#101939
+  * Fixes: NB#105328 TOP10: Internal memory card is not mounted to PC in USB Mass storage mode
+  * Fixes: NB#106740 Device freezes and restarted when attempt to insert a certain image into the message body
+  * Fixes: NB#106752 Modest gets crashed when Closing the Editor though back button while inserting large size image file
+  * Fixes: NB#106823 <coverity> REVERSE_INULL type of defects for modest component
+  * Fixes: NB#106826 Folder location is disabled for root folder path in Move to folder dialog
+  * Fixes: NB#107056 All items in the "Every" setting are not selected by default
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 20 Mar 2009 14:51:10 +0200
+
 modest (2.99-2009.13-1) unstable; urgency=low
 
   * Wee 13, 2009 - first release on friday
