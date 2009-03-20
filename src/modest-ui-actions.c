@@ -974,13 +974,12 @@ open_msg_banner_idle (gpointer userdata)
 	gdk_threads_enter ();
 	banner_info->idle_handler = 0;
 	banner_info->banner = modest_platform_animation_banner (NULL, NULL, banner_info->message);
-	if (banner_info)
+	if (banner_info->banner)
 		g_object_ref (banner_info->banner);
-	
+
 	gdk_threads_leave ();
 
 	return FALSE;
-	
 }
 
 static GtkWidget *
