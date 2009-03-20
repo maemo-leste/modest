@@ -467,8 +467,7 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 	}
 
 	/* free */
-	if (iter != NULL)
-		g_object_unref (iter);
+	g_object_unref (iter);
 	g_object_unref (subfolders);
 
 	return has_name;
