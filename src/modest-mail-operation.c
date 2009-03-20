@@ -2580,11 +2580,10 @@ get_msg_async_cb (TnyFolder *folder,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_CANCELED;
 	} else if (err) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FINISHED_WITH_ERRORS;
-		if (err) {
-			priv->error = g_error_copy ((const GError *) err);
+		priv->error = g_error_copy ((const GError *) err);
+		if (priv->error) {
 			priv->error->domain = MODEST_MAIL_OPERATION_ERROR;
-		}
-		if (!priv->error) {
+		} else {
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
 				     err->message);
