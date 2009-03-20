@@ -53,6 +53,13 @@ G_BEGIN_DECLS
 typedef struct _ModestAccountProtocol      ModestAccountProtocol;
 typedef struct _ModestAccountProtocolClass ModestAccountProtocolClass;
 
+typedef enum {
+	MODEST_ACCOUNT_PROTOCOL_ICON_MAILBOX = 0,
+	MODEST_ACCOUNT_PROTOCOL_ICON_PROTOCOL,
+	MODEST_ACCOUNT_PROTOCOL_ICON_ACCOUNT,
+	MODEST_ACCOUNT_PROTOCOL_ICON_FOLDER,
+} ModestAccountProtocolIconType;
+
 typedef void (*ModestAccountProtocolCheckSupportFunc) (ModestAccountProtocol *self, 
 						       gboolean supported, gpointer userdata);
 
@@ -76,6 +83,8 @@ struct _ModestAccountProtocolClass {
 	gchar * (*get_from) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
 	ModestPairList * (*get_from_list) (ModestAccountProtocol *self, const gchar *account_id);
 	gchar * (*get_signature) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox, gboolean *has_signature);
+	const GdkPixbuf * (*get_icon) (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
+				       GObject *object, guint icon_size);
 };
 
 /**
@@ -362,6 +371,22 @@ gchar *modest_account_protocol_get_signature (ModestAccountProtocol *self,
 					      const gchar *account_id,
 					      const gchar *mailbox,
 					      gboolean *has_signature);
+
+/**
+ * modest_account_protocol_get_icon:
+ * @self: a #ModestAccountProtocl
+ * @icon_type: a #ModestAccountProtocolIconType
+ * @object: a #GObject
+ * @icon_size: the icon size to get
+ *
+ * Returns a @self owned #GdkPixbuf with the icon for @icon_type and @object. @object type
+ * should match @icon_type.
+ *
+ * Returns: a #GdkPixbuf (don't free or manipulate this, just copy)
+ */
+const GdkPixbuf * modest_account_protocol_get_icon (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
+						    GObject *object, guint icon_size);
+
 
 G_END_DECLS
 

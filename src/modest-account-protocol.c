@@ -98,6 +98,10 @@ static gchar *modest_account_protocol_get_signature_default (ModestAccountProtoc
 							     const gchar *account_id,
 							     const gchar *mailbox,
 							     gboolean *has_signature);
+static const GdkPixbuf *modest_account_protocol_get_icon_default (ModestAccountProtocol *self,
+								  ModestAccountProtocolIconType icon_type, 
+								  GObject *object, 
+								  guint icon_size);
 
 
 /* globals */
@@ -192,6 +196,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_get_from_list_default;
 	account_class->get_signature =
 		modest_account_protocol_get_signature_default;
+	account_class->get_icon =
+		modest_account_protocol_get_icon_default;
 }
 
 static void
@@ -683,3 +689,20 @@ modest_account_protocol_get_signature_default (ModestAccountProtocol *self,
 	return NULL;
 }
 
+const GdkPixbuf*
+modest_account_protocol_get_icon (ModestAccountProtocol *self,
+				  ModestAccountProtocolIconType icon_type,
+				  GObject *object,
+				  guint icon_size)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_icon (self, icon_type, object, icon_size);
+}
+
+static const GdkPixbuf * 
+modest_account_protocol_get_icon_default (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
+					  GObject *object, guint icon_size)
+{
+	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+
+	return NULL;
+}
