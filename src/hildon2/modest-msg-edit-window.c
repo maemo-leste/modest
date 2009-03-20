@@ -972,6 +972,27 @@ modest_msg_edit_window_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
+static void
+pixbuf_size_prepared (GdkPixbufLoader *loader,
+		      gint width,
+		      gint height,
+		      ModestMsgEditWindow *self)
+{
+	gint new_height, new_width;
+	gboolean set_size;
+	
+	new_height = height;
+	new_width = width;
+	set_size = FALSE;
+
+	if (width > IMAGE_MAX_WIDTH) {
+		new_height = height * IMAGE_MAX_WIDTH / width;
+		new_width = IMAGE_MAX_WIDTH;
+	}
+
+	gdk_pixbuf_loader_set_size (loader, new_width, new_height);
+}
+
 static GdkPixbuf *
 pixbuf_from_stream (TnyStream *stream,
 		    const gchar *mime_type,
@@ -992,6 +1013,7 @@ pixbuf_from_stream (TnyStream *stream,
 			*stream_size = 0;
 		return NULL;
 	}
+	g_signal_connect (G_OBJECT (loader), "size-prepared", G_CALLBACK (pixbuf_size_prepared), self);
 
 	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
 
