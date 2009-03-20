@@ -62,6 +62,7 @@
 #include "modest-dnd.h"
 #include "modest-ui-constants.h"
 #include "widgets/modest-window.h"
+#include <modest-account-protocol.h>
 
 /* Folder view drag types */
 const GtkTargetEntry folder_view_drag_types[] =
@@ -894,9 +895,38 @@ get_composite_icons (const gchar *icon_code,
 	return retval;
 }
 
+static inline ThreePixbufs *
+get_account_protocol_pixbufs (ModestProtocolType protocol_type,
+			      GObject *object)
+{
+	ModestProtocol *protocol;
+	const GdkPixbuf *pixbuf = NULL;
+
+	protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+								  protocol_type);
+
+	if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+		pixbuf = modest_account_protocol_get_icon (MODEST_ACCOUNT_PROTOCOL (protocol), 
+							   MODEST_ACCOUNT_PROTOCOL_ICON_FOLDER,
+							   object, FOLDER_ICON_SIZE);
+	}
+
+	if (pixbuf) {
+		ThreePixbufs *retval;
+		retval = g_slice_new0 (ThreePixbufs);
+		retval->pixbuf = g_object_ref ((GObject *) pixbuf);
+		retval->pixbuf_open = g_object_ref ((GObject *) pixbuf);
+		retval->pixbuf_close = g_object_ref ((GObject *) pixbuf);
+		return retval;
+	} else {
+		return NULL;
+	}
+}
+
 static inline ThreePixbufs*
 get_folder_icons (TnyFolderType type, GObject *instance)
 {
+	TnyAccount *account = NULL;
 	static GdkPixbuf *inbox_pixbuf = NULL, *outbox_pixbuf = NULL,
 		*junk_pixbuf = NULL, *sent_pixbuf = NULL,
 		*trash_pixbuf = NULL, *draft_pixbuf = NULL,
@@ -916,6 +946,23 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 		*ammc_pixbuf_close = NULL, *avirt_pixbuf_close = NULL;
 
 	ThreePixbufs *retval = NULL;
+
+	if (TNY_IS_ACCOUNT (instance)) {
+		account = g_object_ref (instance);
+	} else if (TNY_IS_FOLDER (instance)) {
+		account = tny_folder_get_account (TNY_FOLDER (instance));
+	}
+
+	if (account) {
+		ModestProtocolType account_store_protocol;
+
+		account_store_protocol = modest_tny_account_get_protocol_type (account);
+		retval = get_account_protocol_pixbufs (account_store_protocol, instance);
+		g_object_unref (account);
+	}
+
+	if (retval)
+		return retval;
 
 	/* Sometimes an special folder is reported by the server as
 	   NORMAL, like some versions of Dovecot */
