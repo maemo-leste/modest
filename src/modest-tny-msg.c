@@ -585,7 +585,8 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	ModestFormatter *formatter;
 	gchar *subject_prefix;
 	gboolean no_text_part;
-	
+	gchar *parent_uid;
+
 	if (header)
 		g_object_ref (header);
 	else
@@ -626,7 +627,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 		g_object_unref (G_OBJECT(body));
 
 	/* Fill the header */
-	new_header = tny_msg_get_header (new_msg);	
+	new_header = tny_msg_get_header (new_msg);
 	tny_header_set_from (new_header, from);
 	tny_header_set_replyto (new_header, from);
 
@@ -643,13 +644,11 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	g_free (subject_prefix);
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
-	
+
 	/* get the parent uid, and set it as a gobject property on the new msg */
-	if (new_msg) {
-		gchar* parent_uid = modest_tny_folder_get_header_unique_id (header);
-		g_object_set_data_full (G_OBJECT(new_msg), MODEST_TNY_MSG_PARENT_UID,
-					parent_uid, g_free);
-	}
+	parent_uid = modest_tny_folder_get_header_unique_id (header);
+	g_object_set_data_full (G_OBJECT(new_msg), MODEST_TNY_MSG_PARENT_UID,
+				parent_uid, g_free);
 
 	/* set modest as the X-Mailer
 	 * we could this in the platform factory, but then the header
