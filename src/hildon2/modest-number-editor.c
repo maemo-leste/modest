@@ -376,6 +376,7 @@ modest_number_editor_validate_value             (ModestNumberEditor *editor,
 		modest_number_editor_set_value (editor, fixup_value);
 		g_signal_emit (editor, ModestNumberEditor_signal[RANGE_ERROR], 0, error_code, &r);
 		add_select_all_idle (editor);
+		is_valid = modest_number_editor_is_valid (editor);
 	}
 
 	if (priv->is_valid != is_valid) {
