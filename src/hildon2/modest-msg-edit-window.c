@@ -485,6 +485,10 @@ scroll_drag_timeout (gpointer userdata)
 	ModestMsgEditWindow *win = (ModestMsgEditWindow *) userdata;
 	ModestMsgEditWindowPrivate *priv;
 
+	/* It could happen that the window was already closed */
+	if (!GTK_WIDGET_VISIBLE (win))
+		return FALSE;
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(win);
 
 	correct_scroll_without_drag_check (win, TRUE);
@@ -504,6 +508,10 @@ correct_scroll_without_drag_check_idle (gpointer userdata)
 	gint offset_min, offset_max;
 	GtkTextMark *insert;
 	GtkAdjustment *vadj;
+
+	/* It could happen that the window was already closed */
+	if (!GTK_WIDGET_VISIBLE (w))
+		return FALSE;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
 
@@ -538,8 +546,10 @@ correct_scroll_without_drag_check (ModestMsgEditWindow *w, gboolean only_if_focu
 		return;
 	}
 
-	priv->correct_scroll_idle = g_idle_add ((GSourceFunc) correct_scroll_without_drag_check_idle,
-						(gpointer) w);
+	priv->correct_scroll_idle = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+						     (GSourceFunc) correct_scroll_without_drag_check_idle,
+						     g_object_ref (w),
+						     g_object_unref);
 }
 
 static void
@@ -550,8 +560,11 @@ correct_scroll (ModestMsgEditWindow *w)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(w);
 	if (gtk_grab_get_current () == priv->msg_body) {
 		if (priv->scroll_drag_timeout_id == 0) {
-			priv->scroll_drag_timeout_id = g_timeout_add (500, (GSourceFunc) scroll_drag_timeout,
-								      (gpointer) w);
+			priv->scroll_drag_timeout_id = g_timeout_add_full (G_PRIORITY_DEFAULT,
+									   500,
+									   (GSourceFunc) scroll_drag_timeout,
+									   g_object_ref (w),
+									   g_object_unref);
 		}
 		return;
 	}
@@ -3234,6 +3247,8 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	GtkClipboard *selection_clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
 	gchar *text = NULL;
+
+	/* It could happen that the window was already closed */
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
@@ -3245,9 +3260,8 @@ modest_msg_edit_window_clipboard_owner_change (GtkClipboard *clipboard,
 	}
 	priv->clipboard_text = text;
 
-	if (GTK_WIDGET_VISIBLE (window)) {
-		modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
-	}
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
+
 	g_object_unref (window);
 }
 
@@ -3272,7 +3286,10 @@ modest_msg_edit_window_clipboard_owner_handle_change_in_idle (ModestMsgEditWindo
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	if (priv->clipboard_owner_idle == 0) {
-		priv->clipboard_owner_idle = g_idle_add (clipboard_owner_change_idle, window);
+		priv->clipboard_owner_idle = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+							      clipboard_owner_change_idle, 
+							      g_object_ref (window),
+							      g_object_unref);
 	}
 }
 
@@ -3283,6 +3300,7 @@ subject_field_move_cursor (GtkEntry *entry,
 			   gboolean a2,
 			   gpointer window)
 {
+	/* It could happen that the window was already closed */
 	if (!GTK_WIDGET_VISIBLE (window))
 		return;
 
