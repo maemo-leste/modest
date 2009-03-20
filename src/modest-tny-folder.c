@@ -406,7 +406,7 @@ modest_tny_folder_get_account (TnyFolder *folder)
  *
  * The code that uses the query is available in revision 3152.
  */
-gboolean 
+gboolean
 modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 					   const gchar *new_name,
 					   gboolean non_strict)
@@ -419,7 +419,7 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent), FALSE);
 	g_return_val_if_fail (new_name, FALSE);
-	
+
 	/* Get direct subfolders */
 	subfolders = tny_simple_list_new ();
 	tny_folder_store_get_folders (parent, subfolders, NULL, FALSE, &err);
@@ -427,16 +427,16 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 	/* Check names */
 	iter = tny_list_create_iterator (subfolders);
 	while (!tny_iterator_is_done (iter) && !has_name) {
-		
+
 		const gchar *name;
-		
+
 		folder = (TnyFolder*)tny_iterator_get_current (iter);
 		if (!folder || ! TNY_IS_FOLDER(folder)) {
 			g_warning ("%s: invalid folder", __FUNCTION__);
 			tny_iterator_next (iter);
 			continue;
 		}
-		
+
 		name = tny_folder_get_name (folder);
 		if (!name) {
 			g_warning ("%s: folder name == NULL", __FUNCTION__);
@@ -461,17 +461,16 @@ modest_tny_folder_has_subfolder_with_name (TnyFolderStore *parent,
 		} else {
 			has_name = FALSE;
 		}
-		
+
 		g_object_unref (folder);
 		tny_iterator_next(iter);
 	}
-	
+
 	/* free */
 	if (iter != NULL)
 		g_object_unref (iter);
-	if (subfolders != NULL)
-		g_object_unref (subfolders);
-		
+	g_object_unref (subfolders);
+
 	return has_name;
 }
 
