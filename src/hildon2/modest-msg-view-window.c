@@ -2753,7 +2753,8 @@ save_attachments_response (GtkDialog *dialog,
 }
 
 void
-modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *mime_parts)
+modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, 
+					 TnyList *mime_parts)
 {
 	ModestMsgViewWindowPrivate *priv;
 	GtkWidget *save_dialog = NULL;
@@ -2768,12 +2769,17 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *m
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, FALSE)) {
+		if (mime_parts && !modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, FALSE)) {
 			g_object_unref (mime_parts);
 			return;
 		}
-		if (mime_parts == NULL || tny_list_get_length (mime_parts) == 0)
+		if (mime_parts == NULL || tny_list_get_length (mime_parts) == 0) {
+			if (mime_parts) {
+				g_object_unref (mime_parts);
+				mime_parts = NULL;
+			}
 			return;
+		}
 	} else {
 		g_object_ref (mime_parts);
 	}
