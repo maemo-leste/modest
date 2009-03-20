@@ -896,17 +896,23 @@ get_composite_icons (const gchar *icon_code,
 }
 
 static inline ThreePixbufs *
-get_account_protocol_pixbufs (ModestProtocolType protocol_type,
+get_account_protocol_pixbufs (ModestFolderView *folder_view,
+			      ModestProtocolType protocol_type,
 			      GObject *object)
 {
 	ModestProtocol *protocol;
 	const GdkPixbuf *pixbuf = NULL;
+	ModestFolderViewPrivate *priv;
+
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
 
 	protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
 								  protocol_type);
 
 	if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
 		pixbuf = modest_account_protocol_get_icon (MODEST_ACCOUNT_PROTOCOL (protocol), 
+							   priv->filter & MODEST_FOLDER_VIEW_FILTER_SHOW_ONLY_MAILBOXES?
+							   MODEST_ACCOUNT_PROTOCOL_ICON_MAILBOX:
 							   MODEST_ACCOUNT_PROTOCOL_ICON_FOLDER,
 							   object, FOLDER_ICON_SIZE);
 	}
@@ -924,7 +930,7 @@ get_account_protocol_pixbufs (ModestProtocolType protocol_type,
 }
 
 static inline ThreePixbufs*
-get_folder_icons (TnyFolderType type, GObject *instance)
+get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *instance)
 {
 	TnyAccount *account = NULL;
 	static GdkPixbuf *inbox_pixbuf = NULL, *outbox_pixbuf = NULL,
@@ -949,7 +955,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 
 	if (TNY_IS_ACCOUNT (instance)) {
 		account = g_object_ref (instance);
-	} else if (TNY_IS_FOLDER (instance)) {
+	} else if (TNY_IS_FOLDER (instance) && !TNY_IS_MERGE_FOLDER (instance)) {
 		account = tny_folder_get_account (TNY_FOLDER (instance));
 	}
 
@@ -957,7 +963,7 @@ get_folder_icons (TnyFolderType type, GObject *instance)
 		ModestProtocolType account_store_protocol;
 
 		account_store_protocol = modest_tny_account_get_protocol_type (account);
-		retval = get_account_protocol_pixbufs (account_store_protocol, instance);
+		retval = get_account_protocol_pixbufs (folder_view, account_store_protocol, instance);
 		g_object_unref (account);
 	}
 
@@ -1112,6 +1118,7 @@ icon_cell_data  (GtkTreeViewColumn *column,
 	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
 	gboolean has_children;
 	ThreePixbufs *pixbufs;
+	ModestFolderView *folder_view = (ModestFolderView *) data;
 
 	rendobj = (GObject *) renderer;
 
@@ -1124,7 +1131,7 @@ icon_cell_data  (GtkTreeViewColumn *column,
 		return;
 
 	has_children = gtk_tree_model_iter_has_child (tree_model, iter);
-	pixbufs = get_folder_icons (type, instance);
+	pixbufs = get_folder_icons (folder_view, type, instance);
 	g_object_unref (instance);
 
 	/* Set pixbuf */
