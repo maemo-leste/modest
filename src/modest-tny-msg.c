@@ -868,8 +868,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 		g_list_foreach (attachments_list, (GFunc) g_object_unref, NULL);
 		g_list_free (attachments_list);
 	}
-	if (parts)
-		g_object_unref (G_OBJECT (parts));
+	g_object_unref (parts);
 
 	/* Fill the header */
 	if (header)
