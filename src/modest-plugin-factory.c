@@ -222,11 +222,12 @@ modest_plugin_factory_load (const gchar *file)
 	g_free (dir);
 
 	/* plugin = g_module_open (path, G_MODULE_BIND_LAZY); */
-	g_message ("PLUGIN TYPE IS %d", (gint) modest_plugin_get_type ());
 	type_module = G_TYPE_MODULE (modest_module_new (path));
 	if (type_module) {
 		g_type_module_use (type_module);
 		plugin = MODEST_PLUGIN (modest_module_new_object (MODEST_MODULE (type_module)));
+		if (plugin)
+			g_message ("Plugin %s API version %s", plugin_name, modest_plugin_get_api_version (plugin));
 	}
 	g_free (path);
 

@@ -34,6 +34,10 @@
 #include <modest-account-mgr.h>
 #include <modest-protocol-registry.h>
 
+#define MODEST_API_VERSION_STR2_HELPER(x) #x
+#define MODEST_API_VERSION_STR_HELPER(x) MODEST_API_VERSION_STR2_HELPER(x)
+#define MODEST_API_VERSION_STR MODEST_API_VERSION_STR_HELPER(MODEST_API_VERSION)
+
 G_BEGIN_DECLS
 
 /* convenience macros */
@@ -53,6 +57,7 @@ struct _ModestPlugin {
 
 struct _ModestPluginClass {
 	GObjectClass parent_class;
+	const gchar * (*get_version) (void);
 };
 
 /**
@@ -75,10 +80,15 @@ plugin_name##_get_type (void)							\
 static void     plugin_name##_init              (PluginName        *self);	\
 static void     plugin_name##_class_init        (PluginName##Class *klass);	\
 static gpointer plugin_name##_parent_class = NULL;				\
+static const gchar *plugin_name##_internal_get_version (void)      		\
+{                                                                               \
+        return MODEST_API_VERSION_STR;					        \
+}                                                                               \
 static void     plugin_name##_class_intern_init (gpointer klass)		\
 {										\
 	plugin_name##_parent_class = g_type_class_peek_parent (klass);		\
 	plugin_name##_class_init ((PluginName##Class *) klass);			\
+	((ModestPluginClass *)klass)->get_version = plugin_name##_internal_get_version; \
 }										\
 										\
 G_MODULE_EXPORT GType								\
@@ -110,6 +120,7 @@ register_modest_plugin (GTypeModule *module)					\
 /* Global methods providing access to singletons without using modest runtime */
 ModestAccountMgr *modest_plugin_get_account_mgr (void);
 ModestProtocolRegistry *modest_plugin_get_protocol_registry (void);
+const gchar *modest_plugin_get_api_version (ModestPlugin *plugin);
 
 G_END_DECLS
 

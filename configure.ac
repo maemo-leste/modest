@@ -29,8 +29,23 @@
 AC_INIT([modest],[1.0],[http://maemo.org])
 AC_CONFIG_HEADERS([config.h])
 
+m4_define([modest_api_major_version], [1])
+m4_define([modest_api_minor_version], [0])
+m4_define([modest_api_micro_version], [0])
+m4_define([modest_api_version], [modest_api_major_version.modest_api_minor_version.modest_api_micro_version])
+
+
 AC_CONFIG_SRCDIR(src/modest-main.c)
 AM_INIT_AUTOMAKE([dist-bzip2])
+
+MODEST_API_MAJOR_VERSION=modest_api_major_version
+MODEST_API_MINOR_VERSION=modest_api_minor_version
+MODEST_API_MICRO_VERSION=modest_api_micro_version
+MODEST_API_VERSION=modest_api_version
+AC_SUBST(MODEST_API_MAJOR_VERSION)
+AC_SUBST(MODEST_API_MINOR_VERSION)
+AC_SUBST(MODEST_API_MICRO_VERSION)
+AC_SUBST(MODEST_API_VERSION)
 
 ALL_LINGUAS="en_GB"
 
@@ -148,9 +163,9 @@ if test "$MODEST_PLATFORM" = "detect"; then
 fi
 
 if test "$with_platform" = "maemo"; then
-   	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_MAEMO"
+   	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_MAEMO -DMODEST_API_VERSION=${MODEST_API_VERSION}"
 elif test "$with_platform" = "gnome"; then
-	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME"
+	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME -DMODEST_API_VERSION=${MODEST_API_VERSION}"
 fi
 AC_SUBST(MODEST_PLUGIN_DEFINES)
 

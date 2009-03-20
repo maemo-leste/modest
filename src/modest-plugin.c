@@ -91,3 +91,15 @@ modest_plugin_get_protocol_registry (void)
 	/* This is for avoiding including modest runtime itself */
 	return modest_runtime_get_protocol_registry ();
 }
+
+const gchar *
+modest_plugin_get_api_version (ModestPlugin *plugin)
+{
+	ModestPluginClass *plugin_class;
+
+	plugin_class = MODEST_PLUGIN_GET_CLASS (plugin);
+	if (plugin_class->get_version)
+		return plugin_class->get_version ();
+	else
+		return NULL;
+}
