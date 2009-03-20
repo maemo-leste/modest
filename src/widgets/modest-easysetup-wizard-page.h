@@ -57,6 +57,16 @@ struct _ModestEasysetupWizardPageClass {
 	void (*missing_mandatory_data) (ModestEasysetupWizardPage* self, 
 					gboolean missing, 
 					gpointer user_data);
+
+	/* Padding for the future */
+	void (*_reserved1) (void);
+	void (*_reserved2) (void);
+	void (*_reserved3) (void);
+	void (*_reserved4) (void);
+	void (*_reserved5) (void);
+	void (*_reserved6) (void);
+	void (*_reserved7) (void);
+	void (*_reserved8) (void);
 };
 
 GType        modest_easysetup_wizard_page_get_type    (void) G_GNUC_CONST;

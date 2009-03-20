@@ -85,6 +85,24 @@ struct _ModestAccountProtocolClass {
 	gchar * (*get_signature) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox, gboolean *has_signature);
 	const GdkPixbuf * (*get_icon) (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
 				       GObject *object, guint icon_size);
+
+	/* Padding for future expansions */
+	void (*_reserved1) (void);
+	void (*_reserved2) (void);
+	void (*_reserved3) (void);
+	void (*_reserved4) (void);
+	void (*_reserved5) (void);
+	void (*_reserved6) (void);
+	void (*_reserved7) (void);
+	void (*_reserved8) (void);
+	void (*_reserved9) (void);
+	void (*_reserved10) (void);
+	void (*_reserved11) (void);
+	void (*_reserved12) (void);
+	void (*_reserved13) (void);
+	void (*_reserved14) (void);
+	void (*_reserved15) (void);
+	void (*_reserved16) (void);
 };
 
 /**
