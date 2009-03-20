@@ -466,7 +466,7 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 	account_list = (account_type == TNY_ACCOUNT_TYPE_STORE ? 
 			priv->store_accounts : 
 			priv->transport_accounts);
-	
+
 	iter = tny_list_create_iterator (account_list);
 	while (!tny_iterator_is_done (iter) && !found) {
 		TnyAccount *tny_account;
@@ -481,9 +481,7 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 		}
 		tny_iterator_next (iter);
 	}
-
-	if (iter)
-		g_object_unref (iter);
+	g_object_unref (iter);
 }
 
 static void 
