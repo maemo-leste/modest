@@ -211,7 +211,6 @@ gchar *
 modest_tny_mime_part_get_headers_content_type (TnyMimePart *part)
 {
 	gchar *header_content_type;
-	gchar *header_content_type_lower;
 	gchar *suffix;
 
 	g_return_val_if_fail (TNY_IS_MIME_PART (part), NULL);
@@ -225,11 +224,10 @@ modest_tny_mime_part_get_headers_content_type (TnyMimePart *part)
 
 	/* remove the ; suffix */
 	suffix = index (header_content_type, ';');
-	suffix[0] = '\0';
+	if (suffix)
+		suffix[0] = '\0';
 
-	header_content_type_lower = (header_content_type ) ?
-		g_ascii_strdown (header_content_type, -1) : NULL;
-	return header_content_type_lower;
+	return g_ascii_strdown (header_content_type, -1);
 }
 
 gchar *
