@@ -2141,7 +2141,7 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 	num_accounts = 0;
 	if (priv->store_accounts)
 		num_accounts += tny_list_get_length (priv->store_accounts);
-	if (priv->transport_accounts) {
+	if (priv->transport_accounts)
 		num_accounts += tny_list_get_length (priv->transport_accounts);
 
 	for (i = 0 ; i < num_accounts ; i++)
