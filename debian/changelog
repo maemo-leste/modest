@@ -1,3 +1,17 @@
+modest (2.99-2009.13-3) unstable; urgency=low
+
+  * Week 13, 2009 - third release on tuesday
+  *   modest trunk r8286
+  *   6 bug fixes
+  * Fixes: NB#96696  symbols dynamic exporting should be disabled as it was in Diablo
+  * Fixes: NB#103572 embedded attachment not opening in viewer view
+  * Fixes: NB#106552 Observed once Modest crashed when attempt to access the modest application after device is left idle
+  * Fixes: NB#107139 Save" button is dimmed when value less than 1 is entered in account settings for SMTP server port field
+  * Fixes: NB#107231 Show a user created local folder name in bold if it has a non zero status
+  * Fixes: NB#107232 Wrong icon is shown for a just moved folder if Folders view menu is activated 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 23 Mar 2009 15:01:40 +0200
+
 modest (2.99-2009.13-2) unstable; urgency=low
 
   * Week 13, 2009 - second release on monday
