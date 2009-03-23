@@ -2517,10 +2517,6 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	gtk_widget_set_sensitive (back_button, FALSE);
 	gtk_widget_set_sensitive (action_button, FALSE);
 
-	/* Need to set this here, otherwise callbacks called because
-	   of filtering won't perform correctly */
-	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
-
 	gtk_label_set_text (GTK_LABEL (selection_label), "");
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
@@ -2530,6 +2526,8 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	g_object_set (G_OBJECT (folder_view), 
 		      "hildon-ui-mode", HILDON_UI_MODE_NORMAL, 
 		      NULL);
+
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
 }
 
 static void
@@ -2553,12 +2551,8 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	gtk_widget_set_sensitive (back_button, TRUE);
 	gtk_widget_set_sensitive (action_button, FALSE);
 
-	/* Need to set this here, otherwise callbacks called because
-	   of filtering won't perform correctly */
-	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (TRUE));
-
-	g_object_set (G_OBJECT (folder_view),
-		      "hildon-ui-mode", HILDON_UI_MODE_EDIT,
+	g_object_set (G_OBJECT (folder_view), 
+		      "hildon-ui-mode", HILDON_UI_MODE_EDIT, 
 		      NULL);
 
 	account = TNY_ACCOUNT (folder_store);
@@ -2599,6 +2593,8 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
+
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (TRUE));
 }
 
 static void
@@ -2678,7 +2674,7 @@ on_move_to_dialog_selection_changed (GtkTreeSelection       *selection,
 
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
-	if (showing_folders) {
+	if (showing_folders) {		
 		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
@@ -2698,7 +2694,7 @@ on_move_to_dialog_action_clicked (GtkButton       *selection,
 
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
-	if (showing_folders) {
+	if (showing_folders) {		
 		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
