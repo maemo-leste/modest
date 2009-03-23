@@ -2671,19 +2671,22 @@ static void
 on_move_to_dialog_selection_changed (GtkTreeSelection       *selection,
                                     gpointer           user_data)
 {
-	TnyFolderStore *selected;
-	GtkWidget *dialog;
-	GtkWidget *folder_view;
 	gboolean showing_folders;
+	GtkWidget *dialog;
 
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
 	if (showing_folders) {
+		TnyFolderStore *selected;
+		GtkWidget *folder_view;
+
 		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
-		if (selected)
+		if (selected) {
 			move_to_dialog_set_selected_folder (dialog, selected);
+			g_object_unref (selected);
+		}
 	}
 }
 
