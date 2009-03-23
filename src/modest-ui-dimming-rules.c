@@ -3110,6 +3110,12 @@ modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer us
 								       MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE);
 	}
 
+	if (!dimmed) {
+		dimmed = _transfer_mode_enabled (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
+	}
+
 	return dimmed;
 }
 
@@ -3133,6 +3139,12 @@ modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer use
 		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
 		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
 								       MODEST_FOLDER_RULES_FOLDER_NON_DELETABLE);
+	}
+
+	if (!dimmed) {
+		dimmed = _transfer_mode_enabled (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, "");
 	}
 
 	return dimmed;
