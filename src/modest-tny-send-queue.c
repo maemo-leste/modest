@@ -906,7 +906,6 @@ wakeup_get_headers_async_cb (TnyFolder *folder,
 	/* Frees */
 	g_object_unref (iter);
 	g_object_unref (headers);
-	g_object_unref (self);
 }
 
 void   
