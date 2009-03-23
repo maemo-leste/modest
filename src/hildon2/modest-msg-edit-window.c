@@ -1784,9 +1784,11 @@ modest_msg_edit_window_get_format_state (ModestMsgEditWindow *self)
 {
 	ModestMsgEditFormatState *format_state = NULL;
 	ModestMsgEditWindowPrivate *priv;
-	WPTextBufferFormat *buffer_format = g_new0 (WPTextBufferFormat, 1);
+	WPTextBufferFormat *buffer_format;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self), NULL);
+
+	buffer_format = g_new0 (WPTextBufferFormat, 1);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, TRUE);
