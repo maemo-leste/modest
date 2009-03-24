@@ -197,12 +197,19 @@ static gboolean     get_inner_models        (ModestFolderView *self,
 					     GtkTreeModel **filter_model,
 					     GtkTreeModel **sort_model,
 					     GtkTreeModel **tny_model);
+#ifdef MODEST_TOOLKIT_HILDON2
+static void
+on_activity_changed (TnyGtkFolderListStore *store,
+		     gboolean activity,
+		     ModestFolderView *folder_view);
+#endif
 
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
 	FOLDER_DISPLAY_NAME_CHANGED_SIGNAL,
 	FOLDER_ACTIVATED_SIGNAL,
 	VISIBLE_ACCOUNT_CHANGED_SIGNAL,
+	ACTIVITY_CHANGED_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -246,6 +253,9 @@ struct _ModestFolderViewPrivate {
 	GtkCellRenderer *messages_renderer;
 
 	gulong                outbox_deleted_handler;
+
+	guint    activity_changed_handler;
+	gboolean activity;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -355,6 +365,19 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1, G_TYPE_STRING);
+
+	/*
+	 * Emitted when the underlying GtkListStore is updating data
+	 */
+	signals[ACTIVITY_CHANGED_SIGNAL] =
+		g_signal_new ("activity-changed",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestFolderViewClass,
+					       activity_changed),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__BOOLEAN,
+			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
 	treeview_class->select_cursor_parent = NULL;
 
@@ -1235,6 +1258,8 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->folder_to_select = NULL;
 	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
+	priv->activity = FALSE;
+	priv->activity_changed_handler = 0;
 
 	/* Initialize the local account name */
 	conf = modest_runtime_get_conf();
@@ -2193,7 +2218,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 				 TnyAccountStore *account_store)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *model /* , *old_model */;
+	GtkTreeModel *model;
 	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
 	g_return_val_if_fail (self && MODEST_IS_FOLDER_VIEW (self), FALSE);
@@ -2267,12 +2292,27 @@ modest_folder_view_update_model (ModestFolderView *self,
 						self,
 						NULL);
 
+	if (priv->activity_changed_handler > 0) {
+		GtkTreeModel *old_tny_model;
+
+		if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
+			g_signal_handler_disconnect (G_OBJECT (old_tny_model), priv->activity_changed_handler);
+		}
+		priv->activity_changed_handler = 0;
+	}
+
 	/* Set new model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
 #ifndef MODEST_TOOLKIT_HILDON2
 	g_signal_connect (G_OBJECT(filter_model), "row-inserted",
 			  (GCallback) on_row_inserted_maybe_select_folder, self);
 #endif
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	priv->activity_changed_handler = 
+		g_signal_connect (G_OBJECT (model), "activity-changed", G_CALLBACK (on_activity_changed), self);
+#endif
+	priv->activity = FALSE;
 
 	g_object_unref (model);
 	g_object_unref (filter_model);
@@ -3736,11 +3776,22 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 	GtkTreeModel *filter_model = NULL;
 	GtkTreeModel *model = NULL;
 	GtkTreeModel *new_filter_model = NULL;
+	GtkTreeModel *old_tny_model = NULL;
+	GtkTreeModel *new_tny_model = NULL;
+	ModestFolderViewPrivate *dst_priv;
 
 	g_return_if_fail (folder_view_src && MODEST_IS_FOLDER_VIEW (folder_view_src));
 	g_return_if_fail (folder_view_dst && MODEST_IS_FOLDER_VIEW (folder_view_dst));
 
+	dst_priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view_dst);
+	if (!get_inner_models (folder_view_src, NULL, NULL, &new_tny_model))
+		new_tny_model = NULL;
+
 	/* Get src model*/
+	if (get_inner_models (folder_view_dst, NULL, NULL, &old_tny_model)) {
+		g_signal_handler_disconnect (G_OBJECT (old_tny_model), dst_priv->activity_changed_handler);
+		dst_priv->activity_changed_handler = 0;
+	}
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view_src));
 	model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(filter_model));
 
@@ -3750,12 +3801,21 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 						filter_row,
 						folder_view_dst,
 						NULL);
+
+
+
 	/* Set copied model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW (folder_view_dst), new_filter_model);
 #ifndef MODEST_TOOLKIT_HILDON2
 	g_signal_connect (G_OBJECT(new_filter_model), "row-inserted",
 			  (GCallback) on_row_inserted_maybe_select_folder, folder_view_dst);
 #endif
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (new_tny_model)
+		dst_priv->activity_changed_handler = g_signal_connect (G_OBJECT (new_tny_model), "activity-changed",
+								       G_CALLBACK (on_activity_changed), folder_view_dst);
+#endif
+	dst_priv->activity = FALSE;
 
 	/* Free */
 	g_object_unref (new_filter_model);
@@ -4047,3 +4107,30 @@ modest_folder_view_get_mailbox (ModestFolderView *self)
 
 	return (const gchar *) priv->mailbox;
 }
+
+gboolean 
+modest_folder_view_get_activity (ModestFolderView *self)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+
+	return priv->activity;
+}
+
+#ifdef MODEST_TOOLKIT_HILDON2
+static void
+on_activity_changed (TnyGtkFolderListStore *store,
+		     gboolean activity,
+		     ModestFolderView *folder_view)
+{
+	ModestFolderViewPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
+	g_return_if_fail (TNY_IS_GTK_FOLDER_LIST_STORE (store));
+	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
+
+	priv->activity = activity;
+}
+#endif

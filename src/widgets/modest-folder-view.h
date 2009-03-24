@@ -98,6 +98,9 @@ struct _ModestFolderViewClass {
 	void     (*visible_account_changed) (ModestFolderView* self,
 					     const gchar *account_id,
 					     gpointer user_data);
+	void     (*activity_changed) (ModestFolderView* self,
+				      gboolean activity,
+				      gpointer user_data);
 };
 
 /**
@@ -346,6 +349,16 @@ void modest_folder_view_set_list_to_move (ModestFolderView *self,
  */
 void modest_folder_view_show_message_count (ModestFolderView *self,
 					    gboolean show);
+
+/**
+ * modest_folder_view_get_activity:
+ * @self: a #ModestFolderView
+ *
+ * tells if widget is retrieving information
+ *
+ * Returns: %TRUE if retrieving, %FALSE otherwise
+ */
+gboolean modest_folder_view_get_activity (ModestFolderView *self);
 
 G_END_DECLS
 
