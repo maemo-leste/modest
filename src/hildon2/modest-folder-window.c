@@ -96,6 +96,9 @@ static void on_queue_changed    (ModestMailOperationQueue *queue,
 				 ModestMailOperation *mail_op,
 				 ModestMailOperationQueueNotification type,
 				 ModestFolderWindow *self);
+static void on_activity_changed (ModestFolderView *view,
+				 gboolean activity,
+				 ModestFolderWindow *folder_window);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -276,6 +279,11 @@ connect_signals (ModestFolderWindow *self)
 						       G_OBJECT (priv->folder_view),
 						       "visible-account-changed",
 						       G_CALLBACK (on_visible_account_changed), self);
+
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (priv->folder_view),
+						       "activity-changed",
+						       G_CALLBACK (on_activity_changed), self);
 
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,
@@ -689,6 +697,10 @@ update_progress_hint (ModestFolderWindow *self)
 											   priv->current_store_account);
 	}
 
+	if (!priv->progress_hint) {
+		priv->progress_hint = modest_folder_view_get_activity (MODEST_FOLDER_VIEW (priv->folder_view));
+	}
+
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	if (GTK_WIDGET_VISIBLE (self)) {
@@ -778,3 +790,12 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	}
 }
 
+static void
+on_activity_changed (ModestFolderView *view,
+		     gboolean activity,
+		     ModestFolderWindow *folder_window)
+{
+	g_return_if_fail (MODEST_IS_FOLDER_WINDOW (folder_window));
+
+	update_progress_hint (folder_window);
+}

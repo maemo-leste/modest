@@ -4132,5 +4132,8 @@ on_activity_changed (TnyGtkFolderListStore *store,
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
 
 	priv->activity = activity;
+
+	g_signal_emit (G_OBJECT (folder_view), signals[ACTIVITY_CHANGED_SIGNAL], 0,
+		       activity);
 }
 #endif
