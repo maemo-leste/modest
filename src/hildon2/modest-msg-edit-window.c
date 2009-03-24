@@ -2566,6 +2566,7 @@ font_size_clicked (GtkToolButton *button,
 
 	dialog = hildon_picker_dialog_new (GTK_WINDOW (window));
 	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_font_size"));
 
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
 		gint new_index;
@@ -2621,6 +2622,7 @@ font_face_clicked (GtkToolButton *button,
 
 	dialog = hildon_picker_dialog_new (GTK_WINDOW (window));
 	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_font_face"));
 
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
 		gint new_font_index;
