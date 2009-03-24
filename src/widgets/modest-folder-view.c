@@ -255,7 +255,6 @@ struct _ModestFolderViewPrivate {
 	gulong                outbox_deleted_handler;
 
 	guint    activity_changed_handler;
-	gboolean activity;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -1258,7 +1257,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->folder_to_select = NULL;
 	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
-	priv->activity = FALSE;
 	priv->activity_changed_handler = 0;
 
 	/* Initialize the local account name */
@@ -2312,7 +2310,6 @@ modest_folder_view_update_model (ModestFolderView *self,
 	priv->activity_changed_handler = 
 		g_signal_connect (G_OBJECT (model), "activity-changed", G_CALLBACK (on_activity_changed), self);
 #endif
-	priv->activity = FALSE;
 
 	g_object_unref (model);
 	g_object_unref (filter_model);
@@ -3815,7 +3812,6 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 		dst_priv->activity_changed_handler = g_signal_connect (G_OBJECT (new_tny_model), "activity-changed",
 								       G_CALLBACK (on_activity_changed), folder_view_dst);
 #endif
-	dst_priv->activity = FALSE;
 
 	/* Free */
 	g_object_unref (new_filter_model);
@@ -4112,11 +4108,17 @@ gboolean
 modest_folder_view_get_activity (ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv;
+	GtkTreeModel *inner_model;
 
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
+	g_return_val_if_fail (get_inner_models (self, NULL, NULL, &inner_model), FALSE);
 
-	return priv->activity;
+	if (TNY_IS_GTK_FOLDER_LIST_STORE (inner_model)) {
+		return tny_gtk_folder_list_store_get_activity (TNY_GTK_FOLDER_LIST_STORE (inner_model));
+	} else {
+		return FALSE;
+	}
 }
 
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -4130,8 +4132,6 @@ on_activity_changed (TnyGtkFolderListStore *store,
 	g_return_if_fail (MODEST_IS_FOLDER_VIEW (folder_view));
 	g_return_if_fail (TNY_IS_GTK_FOLDER_LIST_STORE (store));
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (folder_view);
-
-	priv->activity = activity;
 
 	g_signal_emit (G_OBJECT (folder_view), signals[ACTIVITY_CHANGED_SIGNAL], 0,
 		       activity);
