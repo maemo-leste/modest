@@ -1,3 +1,19 @@
+modest (3.0-rc1) unstable; urgency=low
+
+  * Week 13, 2009 - thursday release
+  *   modest trunk r8354
+  *  8 bug fixes.
+  * Fixes: NB#107106
+  * Fixes: NB#107607 	deleting a POP email in modest does not clear its content from .modest/cache
+  * Fixes: NB#107697 	Does not retrieve mailboxes until the previously trusted devices are removed for an alpo5 account
+  * Fixes: NB#107761 	Select Font face - Hildon Touch picker dialog uses incorrect title
+  * Fixes: NB#107763 	Select Font Size - Hildon Touch picker dialog uses incorrect title
+  * Fixes: NB#107840
+  * Fixes: NB#107853 	AOL: some remote folders with a non zero status change font when scrolling the folders view
+  * Fixes: NB#107917 	WHEN and WHAT pickers should be insensitive when account has not been connected 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 25 Mar 2009 14:30:06 +0200
+
 modest (2.99-2009.13-4) unstable; urgency=low
 
   * Week 13. 2009 - fourth release on wednesday 
