@@ -91,6 +91,7 @@
   <accelerator name="AccelZoomPlus" action="ZoomPlus"/>
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
   <accelerator name="AccelCloseWindow" action="CloseWindowShortcut"/>
+  <accelerator name="AccelSend" action="SendShortcut"/>
   <accelerator name="CutMenu" action="Cut"/>
   <accelerator name="CopyMenu" action="Copy"/>
   <accelerator name="PasteMenu" action="Paste"/>
