@@ -1385,12 +1385,15 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	markup = g_strconcat ("<span font_family='", DEFAULT_SIZE_BUTTON_FONT_FAMILY, "'>",
 			      size_text, "</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
+	gtk_misc_set_alignment (GTK_MISC (priv->size_tool_button_label), 1.0, 0.5);
 	g_free (markup);
 	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
-	hbox = gtk_hbox_new (0, FALSE);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->size_tool_button_label, FALSE, FALSE, 0);
+	hbox = gtk_hbox_new (MODEST_MARGIN_DEFAULT, FALSE);
+	gtk_box_pack_start (GTK_BOX (hbox), priv->size_tool_button_label, TRUE, TRUE, 0);
 	arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_NONE);
-	gtk_box_pack_start (GTK_BOX (hbox), arrow, FALSE, FALSE, 0);
+	gtk_misc_set_alignment (GTK_MISC (arrow), 0.0, 0.5);
+	gtk_box_pack_start (GTK_BOX (hbox), arrow, TRUE, TRUE, 0);
+	gtk_widget_set_sensitive (arrow, FALSE);
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), hbox);
 	sizes_menu = gtk_menu_new ();
 	priv->sizes_model = GTK_TREE_MODEL (gtk_list_store_new (1, G_TYPE_STRING));
