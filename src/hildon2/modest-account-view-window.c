@@ -308,7 +308,6 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	main_vbox = GTK_DIALOG (self)->vbox;
 
 	pannable = hildon_pannable_area_new ();
-	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
 	gtk_widget_show (pannable);
 	gtk_container_add (GTK_CONTAINER (pannable), 
 			   GTK_WIDGET (priv->account_view));
