@@ -34,6 +34,7 @@
 #include <string.h>
 #include "modest-ui-dimming-rules.h"
 #include "modest-ui-actions.h"
+#include "modest-account-mgr-helpers.h"
 #include "modest-dimming-rule.h"
 #include "modest-debug.h"
 #include "modest-tny-folder.h"
@@ -1891,20 +1892,52 @@ modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data)
 	if (!dimmed) {
 		dimmed = modest_msg_view_window_last_message_selected (MODEST_MSG_VIEW_WINDOW (win));
 		modest_dimming_rule_set_notification (rule, NULL);
-	}		
+	}
 
 	return dimmed;
 }
 
 
-gboolean 
+gboolean
 modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_data)
 {
-	return !modest_account_mgr_has_accounts(modest_runtime_get_account_mgr(), 
-						TRUE);	
+	gboolean dimmed;
+	ModestAccountMgr *mgr;
+
+	mgr = modest_runtime_get_account_mgr();
+	dimmed = !modest_account_mgr_has_accounts(mgr, TRUE);
+
+	/* Dimm it if we only have metaaccounts */
+	if (!dimmed) {
+		ModestProtocolRegistry *reg = modest_runtime_get_protocol_registry ();
+		GSList *account_names = modest_account_mgr_account_names (mgr, TRUE);
+
+		if (account_names) {
+			ModestProtocolType store_protocol;
+			gboolean found = FALSE;
+			GSList *iter = account_names;
+			const gchar *tag = MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS;
+
+			while (iter && !found) {
+				gchar* account_name;
+
+				account_name = (gchar *) iter->data;
+				store_protocol = modest_account_mgr_get_store_protocol (mgr, account_name);
+
+				if (!modest_protocol_registry_protocol_type_has_tag (reg, store_protocol, tag))
+					found = TRUE;
+				else
+					iter = g_slist_next (iter);
+			}
+			modest_account_mgr_free_account_names (account_names);
+			dimmed = !found;
+		}
+	}
+
+	return dimmed;
 }
 
-gboolean 
+gboolean
 modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data)
 {
  	ModestDimmingRule *rule = NULL;
