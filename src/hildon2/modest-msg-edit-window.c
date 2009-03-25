@@ -1347,6 +1347,8 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	GtkWidget *sizes_menu;
 	GtkWidget *fonts_menu;
 	gchar *markup;
+	GtkWidget *arrow;
+	GtkWidget *hbox;
 
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
@@ -1385,7 +1387,11 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 	g_free (markup);
 	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
-	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), priv->size_tool_button_label);
+	hbox = gtk_hbox_new (0, FALSE);
+	gtk_box_pack_start (GTK_BOX (hbox), priv->size_tool_button_label, FALSE, FALSE, 0);
+	arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_NONE);
+	gtk_box_pack_start (GTK_BOX (hbox), arrow, FALSE, FALSE, 0);
+	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (tool_item), hbox);
 	sizes_menu = gtk_menu_new ();
 	priv->sizes_model = GTK_TREE_MODEL (gtk_list_store_new (1, G_TYPE_STRING));
 	for (size_index = 0; size_index < WP_FONT_SIZE_COUNT; size_index++) {
@@ -1410,7 +1416,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	priv->font_size_toolitem = tool_item;
 
 	/* font face */
-	tool_item = GTK_WIDGET (gtk_tool_button_new (NULL, NULL));
+	tool_item = GTK_WIDGET (gtk_menu_tool_button_new (NULL, NULL));
 	priv->font_tool_button_label = gtk_label_new (NULL);
 	markup = g_strconcat ("<span font_family='", wp_get_font_name(DEFAULT_FONT), "'>Tt</span>", NULL);
 	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
