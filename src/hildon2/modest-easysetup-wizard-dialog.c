@@ -267,27 +267,12 @@ static void
 on_caption_entry_changed (GtkEditable *editable, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self;
-	gboolean mandatory, empty;
-	ModestEasysetupWizardDialogPrivate *priv;
 
 	g_return_if_fail (user_data);
 
 	self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
 	invoke_enable_buttons_vfunc(self);
-
-	empty = !g_utf8_collate (gtk_entry_get_text (GTK_ENTRY (editable)), "");
-	mandatory = ((GtkWidget *) editable == priv->entry_account_title) ||
-		((GtkWidget *) editable == priv->entry_user_username) || 
-		((GtkWidget *) editable == priv->entry_user_email);
-
-	/* Show a banner & get focus */
-	if (empty && mandatory) {
-		modest_platform_information_banner ((GtkWidget *) editable, NULL, 
-						    _CS("ckct_ib_enter_some_text"));
-		gtk_widget_grab_focus (GTK_WIDGET (editable));
-	}
 }
 
 static void
