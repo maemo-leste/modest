@@ -649,9 +649,12 @@ text_cell_data  (GtkTreeViewColumn *column,
 	if (type != TNY_FOLDER_TYPE_ROOT) {
 		gint number = 0;
 		gboolean drafts;
+		gboolean is_local;
 
-		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
-		    modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance))) {
+		is_local = modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
+			modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance));
+
+		if (is_local) {
 			type = modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (instance));
 			if (type != TNY_FOLDER_TYPE_UNKNOWN) {
 				g_free (fname);
@@ -671,9 +674,9 @@ text_cell_data  (GtkTreeViewColumn *column,
 		 * tny_folder for some reason. Select the number to
 		 * show: the unread or unsent messages. in case of
 		 * outbox/drafts, show all */
-		if ((type == TNY_FOLDER_TYPE_DRAFTS) ||
-		    (type == TNY_FOLDER_TYPE_OUTBOX) ||
-		    (type == TNY_FOLDER_TYPE_MERGE)) { /* _OUTBOX actually returns _MERGE... */
+		if (is_local && ((type == TNY_FOLDER_TYPE_DRAFTS) ||
+				 (type == TNY_FOLDER_TYPE_OUTBOX) ||
+				 (type == TNY_FOLDER_TYPE_MERGE))) { /* _OUTBOX actually returns _MERGE... */
 			number = tny_folder_get_all_count (TNY_FOLDER(instance));
 			drafts = TRUE;
 		} else {
@@ -737,9 +740,9 @@ text_cell_data  (GtkTreeViewColumn *column,
 	if (item_name && item_weight) {
 		/* Set the name in the treeview cell: */
 		if (use_markup)
-			g_object_set (rendobj, "markup", item_name, NULL);
+			g_object_set (rendobj, "markup", item_name, "weight-set", FALSE, NULL);
 		else
-			g_object_set (rendobj, "text", item_name, "weight", item_weight, NULL);
+			g_object_set (rendobj, "text", item_name, "weight-set", TRUE, "weight", item_weight, NULL);
 
 		/* Notify display name observers */
 		/* TODO: What listens for this signal, and how can it use only the new name? */
@@ -804,9 +807,12 @@ messages_cell_data  (GtkTreeViewColumn *column,
 	if (type != TNY_FOLDER_TYPE_ROOT) {
 		gint number = 0;
 		gboolean drafts;
+		gboolean is_local;
 
-		if (modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
-		    modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance))) {
+		is_local = modest_tny_folder_is_local_folder (TNY_FOLDER (instance)) ||
+			modest_tny_folder_is_memory_card_folder (TNY_FOLDER (instance));
+
+		if (is_local) {
 			type = modest_tny_folder_get_local_or_mmc_folder_type (TNY_FOLDER (instance));
 		} else {
 			/* Sometimes an special folder is reported by the server as
@@ -821,9 +827,9 @@ messages_cell_data  (GtkTreeViewColumn *column,
 		 * to use explicit calls on tny_folder for some reason.
 		 */
 		/* Select the number to show: the unread or unsent messages. in case of outbox/drafts, show all */
-		if ((type == TNY_FOLDER_TYPE_DRAFTS) ||
-		    (type == TNY_FOLDER_TYPE_OUTBOX) ||
-		    (type == TNY_FOLDER_TYPE_MERGE)) { /* _OUTBOX actually returns _MERGE... */
+		if (is_local && ((type == TNY_FOLDER_TYPE_DRAFTS) ||
+				 (type == TNY_FOLDER_TYPE_OUTBOX) ||
+				 (type == TNY_FOLDER_TYPE_MERGE))) { /* _OUTBOX actually returns _MERGE... */
 			number = tny_folder_get_all_count (TNY_FOLDER(instance));
 			drafts = TRUE;
 		} else {
