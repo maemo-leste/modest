@@ -116,7 +116,7 @@ modest_plugin_factory_finalize (GObject *obj)
 
 	/* Free the plugin list */
 	for (iter = priv->plugins; iter; iter = g_slist_next (iter))
-		g_module_close ((GModule*) iter->data);
+		g_object_unref ((GObject *) iter->data);
 
 	g_slist_free (priv->plugins);
 	priv->plugins = NULL;
@@ -127,18 +127,7 @@ modest_plugin_factory_finalize (GObject *obj)
 ModestPluginFactory*
 modest_plugin_factory_new (void)
 {
-	ModestPluginFactory *self;
-	ModestPluginFactoryPrivate *priv;
-
-	self = MODEST_PLUGIN_FACTORY (g_object_new (MODEST_TYPE_PLUGIN_FACTORY, NULL));
-	priv = MODEST_PLUGIN_FACTORY_GET_PRIVATE(self);
-
-/* 	if (priv->plugins == NULL) { */
-/* 		g_critical ("%s, no mail plugins detected", __FUNCTION__); */
-/* 		g_object_unref (self); */
-/* 		self = NULL; */
-/* 	} */
-	return self;
+	return MODEST_PLUGIN_FACTORY (g_object_new (MODEST_TYPE_PLUGIN_FACTORY, NULL));
 }
 
 void
@@ -171,7 +160,7 @@ modest_plugin_factory_load_all (ModestPluginFactory *self)
 		if (g_str_has_suffix (dirent, PLUGIN_EXT)) {
 			gchar *plugin_file;
 			ModestPlugin *plugin;
-			
+
 			plugin_file = g_build_filename (MODEST_MAILPLUGINDIR, dirent, NULL);
 			plugin = modest_plugin_factory_load (plugin_file);
 			g_free (plugin_file);
@@ -217,7 +206,7 @@ modest_plugin_factory_load (const gchar *file)
 	g_key_file_free (plugin_file);
 
 	/* Build path to plugin */
-	dir = g_path_get_dirname (file);	
+	dir = g_path_get_dirname (file);
 	path = g_module_build_path (dir, plugin_name);
 	g_free (dir);
 
@@ -228,6 +217,7 @@ modest_plugin_factory_load (const gchar *file)
 		plugin = MODEST_PLUGIN (modest_module_new_object (MODEST_MODULE (type_module)));
 		if (plugin)
 			g_message ("Plugin %s API version %s", plugin_name, modest_plugin_get_api_version (plugin));
+		g_type_module_unuse (type_module);
 	}
 	g_free (path);
 
