@@ -229,6 +229,15 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	sent = tny_header_get_date_sent (header);
 	size = tny_header_get_message_size (header);
 
+	if (from == NULL)
+		from = g_strdup ("");
+	if (to == NULL)
+		to = g_strdup ("");
+	if (subject == NULL)
+		subject = g_strdup ("");
+	if (cc == NULL)
+		cc = g_strdup ("");
+
 	if (!strcmp (subject, "")) {
 		g_free (subject);
 		subject = g_strdup (_("mail_va_no_subject "));
