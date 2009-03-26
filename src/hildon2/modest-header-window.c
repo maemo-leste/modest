@@ -377,6 +377,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 static GtkWidget *
 create_empty_view (ModestWindow *self)
 {
+	GtkWidget *viewport = NULL;
 	GtkWidget *label = NULL;
 	GtkWidget *align = NULL;
 	GtkWidget *vbox = NULL;
@@ -412,7 +413,11 @@ create_empty_view (ModestWindow *self)
 			  "clicked",
 			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
-	return vbox;
+	viewport = gtk_viewport_new ((GtkAdjustment *) gtk_adjustment_new (0, 0, 0, 0, 0, 0), 
+				     (GtkAdjustment *) gtk_adjustment_new (0, 0, 0, 0, 0, 0));
+	gtk_container_add (GTK_CONTAINER (viewport), vbox);
+
+	return viewport;
 }
 
 static void
