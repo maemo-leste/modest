@@ -2784,6 +2784,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_widget_show (selection_label);
 	gtk_widget_show (action_button);
 	gtk_widget_show (buttons_hbox);
+	gtk_widget_show (dialog);
 
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW, *folder_view);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON, back_button);
