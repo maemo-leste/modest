@@ -40,7 +40,6 @@
 
     <menu name="EditMenu" action="Edit">
       <menuitem name="UndoMenu" action="Undo"/>
-      <menuitem name="RedoMenu" action="Redo"/>
     </menu>
 
     <menu name="ViewMenu" action="View">
@@ -92,9 +91,5 @@
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
   <accelerator name="AccelCloseWindow" action="CloseWindowShortcut"/>
   <accelerator name="AccelSend" action="SendShortcut"/>
-  <accelerator name="CutMenu" action="Cut"/>
-  <accelerator name="CopyMenu" action="Copy"/>
-  <accelerator name="PasteMenu" action="Paste"/>
-  <accelerator name="SelectAllMenu" action="SelectAll"/>
 
 </ui>
