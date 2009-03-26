@@ -420,7 +420,7 @@ on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 		if (!priv->view_images)
 			priv->has_external_images = TRUE;
 	}
-			
+
 	tny_stream = TNY_STREAM (modest_tny_stream_gtkhtml_new (stream, GTK_HTML (widget)));
 	g_signal_emit_by_name (MODEST_MIME_PART_VIEW (self), "fetch-url", uri, tny_stream, &result);
 	g_object_unref (tny_stream);
@@ -428,26 +428,42 @@ on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream,
 }
 
 /* INTERNAL API */
+static void
+decode_to_stream_cb (TnyMimePart *self,
+		     gboolean cancelled,
+		     TnyStream *stream,
+		     GError *err,
+		     gpointer user_data)
+{
+	gboolean is_text = GPOINTER_TO_INT (user_data);
+
+	if (is_text) {
+		tny_stream_write (stream, "\n", 1);
+		tny_stream_reset (stream);
+	}
+	tny_stream_close (stream);
+}
 
 static void
 set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 {
 	GtkHTMLStream *gtkhtml_stream;
-	TnyStream *tny_stream;	
-	
+	TnyStream *tny_stream;
+
 	g_return_if_fail (self);
 	g_return_if_fail (part);
 
 	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
-	
+
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self));
 
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	tny_stream_reset (tny_stream);
 
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, tny_stream, NULL);
-	tny_stream_close (tny_stream);
-	g_object_unref (G_OBJECT(tny_stream));
+	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
+					      tny_stream, decode_to_stream_cb,
+					      NULL, GINT_TO_POINTER (FALSE));
+	g_object_unref (tny_stream);
 }
 
 static void
@@ -455,27 +471,26 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 {
 	TnyStream* text_to_html_stream, *tny_stream;
 	GtkHTMLStream *gtkhtml_stream;
-	
+
 	g_return_if_fail (self);
 	g_return_if_fail (part);
 
 	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
-	
-	gtkhtml_stream = gtk_html_begin(GTK_HTML(self)); 
+
+	gtkhtml_stream = gtk_html_begin(GTK_HTML(self));
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	text_to_html_stream = TNY_STREAM (modest_stream_text_to_html_new (tny_stream));
-	modest_stream_text_to_html_set_linkify_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 64*1024);
-	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream), 640*1024);
-	
-	// FIXME: tinymail
-	tny_mime_part_decode_to_stream ((TnyMimePart*)part, text_to_html_stream, NULL);
-	tny_stream_write (text_to_html_stream, "\n", 1);
-	tny_stream_reset (text_to_html_stream);		
-	tny_stream_close (text_to_html_stream);
-	
+	modest_stream_text_to_html_set_linkify_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream),
+						      64*1024);
+	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream),
+						   640*1024);
+
+	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
+					      text_to_html_stream, decode_to_stream_cb,
+					      NULL, GINT_TO_POINTER (TRUE));
+
 	g_object_unref (G_OBJECT(text_to_html_stream));
 	g_object_unref (G_OBJECT(tny_stream));
-	/* gtk_html_stream_destroy (gtkhtml_stream); */
 }
 
 static void
@@ -484,9 +499,7 @@ set_empty_part (ModestGtkhtmlMimePartView *self)
 	g_return_if_fail (self);
 
 	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
-	
-	gtk_html_load_from_string (GTK_HTML(self),
-				   "", 1);
+	gtk_html_load_from_string (GTK_HTML(self), "", 1);
 }
 
 static void
