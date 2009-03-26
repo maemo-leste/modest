@@ -99,6 +99,12 @@ static void on_queue_changed    (ModestMailOperationQueue *queue,
 static void on_activity_changed (ModestFolderView *view,
 				 gboolean activity,
 				 ModestFolderWindow *folder_window);
+static void on_visible_account_changed (ModestFolderView *folder_view,
+					const gchar *account_id,
+					gpointer user_data);
+static void on_account_changed (TnyAccountStore *account_store,
+				TnyAccount *account,
+				gpointer user_data);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -220,45 +226,6 @@ modest_folder_window_disconnect_signals (ModestWindow *self)
 }
 
 static void
-on_visible_account_changed (ModestFolderView *folder_view,
-			    const gchar *account_id,
-			    gpointer user_data)
-{
-	if (account_id) {
-		TnyAccount *acc = 
-			modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
-								     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
-								     account_id);
-		if (acc) {
-			const gchar *name;
-			const gchar *mailbox;
-			gchar *title = NULL;
-			ModestFolderWindowPrivate *priv;
-
-			priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (user_data);
-
-			mailbox = modest_folder_view_get_mailbox (MODEST_FOLDER_VIEW (priv->folder_view));
-			if (mailbox) {
-				title = g_strdup (mailbox);
-			} else {
-				name = modest_tny_account_get_parent_modest_account_name_for_server_account (acc);
-				title = modest_account_mgr_get_display_name (modest_runtime_get_account_mgr(),
-									     name);
-			}
-			if (title) {
-				gtk_window_set_title (GTK_WINDOW (user_data), title);
-				g_free (title);
-			} else {
-				gtk_window_set_title (GTK_WINDOW (user_data), _("mcen_ap_name"));
-			}
-			g_object_unref (acc);
-		}
-	} else {
-		gtk_window_set_title (GTK_WINDOW (user_data), _("mcen_ap_name"));
-	}
-}
-
-static void
 connect_signals (ModestFolderWindow *self)
 {
 	ModestFolderWindowPrivate *priv;
@@ -266,8 +233,8 @@ connect_signals (ModestFolderWindow *self)
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(self);
 
 	/* folder view */
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
-						       G_OBJECT (priv->folder_view), "folder-activated", 
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (priv->folder_view), "folder-activated",
 						       G_CALLBACK (on_folder_activated), self);
 
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
@@ -285,12 +252,15 @@ connect_signals (ModestFolderWindow *self)
 						       "activity-changed",
 						       G_CALLBACK (on_activity_changed), self);
 
-	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,
-					   G_OBJECT (priv->new_message_button),
-					   "clicked",
-					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (priv->new_message_button),
+						       "clicked",
+						       G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (modest_runtime_get_account_store()),
+						       "account-changed",
+						       G_CALLBACK (on_account_changed), self);
 }
 
 ModestWindow *
@@ -798,4 +768,75 @@ on_activity_changed (ModestFolderView *view,
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW (folder_window));
 
 	update_progress_hint (folder_window);
+}
+
+
+static void
+update_window_title (ModestFolderWindow *self,
+		     TnyAccount *account)
+{
+	if (account) {
+		const gchar *name;
+		const gchar *mailbox;
+		gchar *title = NULL;
+		ModestFolderWindowPrivate *priv;
+
+		priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
+
+		mailbox = modest_folder_view_get_mailbox (MODEST_FOLDER_VIEW (priv->folder_view));
+		if (mailbox) {
+			title = g_strdup (mailbox);
+		} else {
+			name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			title = modest_account_mgr_get_display_name (modest_runtime_get_account_mgr(),
+								     name);
+		}
+		if (title) {
+			gtk_window_set_title (GTK_WINDOW (self), title);
+			g_free (title);
+		} else {
+			gtk_window_set_title (GTK_WINDOW (self), _("mcen_ap_name"));
+		}
+	} else {
+		gtk_window_set_title (GTK_WINDOW (self), _("mcen_ap_name"));
+	}
+}
+
+static void
+on_visible_account_changed (ModestFolderView *folder_view,
+			    const gchar *account_id,
+			    gpointer user_data)
+{
+	TnyAccount *account;
+
+	account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
+							       MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+							       account_id);
+
+	/* Update window title */
+	update_window_title (MODEST_FOLDER_WINDOW (user_data), account);
+
+	if (account)
+		g_object_unref (account);
+}
+
+static void
+on_account_changed (TnyAccountStore *account_store,
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	const gchar *acc_id, *visible;
+	ModestFolderWindowPrivate *priv;
+
+	if (!TNY_IS_STORE_ACCOUNT (account))
+		return;
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (user_data);
+
+	acc_id = tny_account_get_id (account);
+	visible = modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (priv->folder_view));
+
+	/* Update title if the visible account is the one that have just changed */
+	if (acc_id && visible && !g_utf8_collate (acc_id, visible))
+		update_window_title (MODEST_FOLDER_WINDOW (user_data), account);
 }
