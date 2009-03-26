@@ -1,3 +1,25 @@
+modest (3.0.1-rc1) unstable; urgency=low
+
+  * Week 14, 2009 - friday release
+  *  15 bug fixes, modest trunk r8424
+  * Fixes: NB#96600     feed protocol support for email is not working
+  * Fixes: NB#100845 	Ctrl+Enter shortcut is not working in email application
+  * Fixes: NB#104249 	"Enter text first" info banner not shown with an empty string in Account field.
+  * Fixes: NB#107215 	Sometimes after account is tapped and navigating to Folders view remote imap folders are shown with a delay
+  * Fixes: NB#107764 	Layout of the "E-mail accounts" Hildon Touch Picker Dialog is distorted
+  * Fixes: NB#107766 	"Downward triangle" indicating a list is missing for the Font face button in editor toolbar
+  * Fixes: NB#107767 	Font Size button in editor toolbar does not have a downward triangle representing list
+  * Fixes: NB#108071 	modest & Global Search
+  * Fixes: NB#108077
+  * Fixes: NB#108236 	modest: GLIB CRITICAL ** GModule - g_module_close: assertion `module->ref_count > 0' failed
+  * Fixes: NB#108253 	modest: GLIB CRITICAL ** default - modest_account_mgr_get_bool: assertion `account' failed
+  * Fixes: NB#108254 	modest: GLIB CRITICAL ** Gtk - gtk_widget_destroy: assertion `GTK_IS_WIDGET (widget)' failed
+  * Fixes: NB#108275 	modest: GLIB WARNING ** hildon-1 - hildon_pannable_area_add: cannot add non scrollable widget, wrap it in a viewport
+  * Fixes: NB#108277 	New message gives GLIB WARNINGS about missing actions
+  * Fixes: NB#108281 	modest: GLIB CRITICAL ** hildon-1 - hildon_pannable_area_jump_to: assertion `GTK_WIDGET_REALIZED (area)' failed 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 26 Mar 2009 15:35:05 +0200
+
 modest (3.0-rc1) unstable; urgency=low
 
   * Week 13, 2009 - thursday release
