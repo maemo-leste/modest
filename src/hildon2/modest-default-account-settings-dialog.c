@@ -1149,7 +1149,6 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	ModestProtocolRegistry *protocol_registry;
 	const gchar *account_name, *server_account_name;
 	ModestDefaultAccountSettingsDialogPrivate *priv;
-	gboolean username_known;
 
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS_DIALOG (dialog));
 	g_return_if_fail (MODEST_IS_ACCOUNT_SETTINGS (settings));
@@ -1161,7 +1160,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	outgoing_account = modest_account_settings_get_transport_settings (settings);
 
 	account_name = modest_account_settings_get_account_name (settings);
-		
+
 	/* Save the account name so we can refer to it later: */
 	if (priv->account_name)
 		g_free (priv->account_name);
@@ -1175,14 +1174,14 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	if (priv->settings)
 		g_object_unref (priv->settings);
 	priv->settings = g_object_ref (settings);
-	
+
 	/* Save the account title so we can refer to it if the user changes it: */
 	if (priv->original_account_title)
 		g_free (priv->original_account_title);
 	priv->original_account_title = g_strdup (modest_account_settings_get_display_name (settings));
-	
+
 	/* Show the account data in the widgets: */
-	
+
 	/* Note that we never show the non-display name in the UI.
 	 * (Though the display name defaults to the non-display name at the start.) */
 	gtk_entry_set_text( GTK_ENTRY (priv->entry_account_title),
@@ -1194,11 +1193,9 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	modest_limit_retrieve_picker_set_active_limit_retrieve (
 		MODEST_LIMIT_RETRIEVE_PICKER (priv->limit_retrieve_picker), 
 		modest_account_settings_get_retrieve_limit (settings));
-	
-	
+
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages), 
 					modest_account_settings_get_leave_messages_on_server (settings));
-	
 
 	if (incoming_account) {
 		const gchar *username, *password, *hostname, *proto_str, *account_title;
@@ -1208,7 +1205,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		modest_retrieve_picker_fill (MODEST_RETRIEVE_PICKER (priv->retrieve_picker), modest_server_account_settings_get_protocol (incoming_account));
 		modest_retrieve_picker_set_active_retrieve_conf (MODEST_RETRIEVE_PICKER (priv->retrieve_picker), 
 								 modest_account_settings_get_retrieve_type (settings));
-		
+
 		if (!modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry,
 										 modest_server_account_settings_get_protocol (incoming_account))) {
 			gtk_widget_hide (priv->checkbox_leave_messages);
@@ -1218,7 +1215,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 
 		/* Remember this for later: */
 		incoming_protocol = modest_server_account_settings_get_protocol (incoming_account);;
-		
+
 		hostname = modest_server_account_settings_get_hostname (incoming_account);
 		username = modest_server_account_settings_get_username (incoming_account);
 		password = modest_server_account_settings_get_password (incoming_account);
@@ -1226,7 +1223,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 				    null_means_empty (username));
 		gtk_entry_set_text( GTK_ENTRY (priv->entry_user_password), 
 				    null_means_empty (password));
-			
+
 		gtk_entry_set_text( GTK_ENTRY (priv->entry_incomingserver), 
 				    null_means_empty (hostname));
 
@@ -1235,24 +1232,24 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 			    MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security), 
 			    settings);
 		gtk_widget_show (priv->incoming_security);
-					
+
 		/* Update the incoming label */
 		update_incoming_server_title (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (dialog), 
 					      incoming_protocol);
-		
+
 		/* Set window title according to account */
 		proto_str = modest_protocol_get_display_name (modest_protocol_registry_get_protocol_by_type (protocol_registry, incoming_protocol));
 		proto_name = g_utf8_strup (proto_str, -1);
 		account_title = modest_account_settings_get_display_name(settings);
 		title = g_strdup_printf(_("mcen_ti_account_settings"), proto_name, account_title);
-		
+
 		gtk_window_set_title (GTK_WINDOW (dialog), title);
 
 		g_free (proto_name);
 		g_free (title);
 		g_object_unref (incoming_account);
 	}
-	
+
 	outgoing_account = modest_account_settings_get_transport_settings (settings);
 	if (outgoing_account) {
 		const gchar *hostname;
@@ -1287,14 +1284,17 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	/* Switch to user page */
 	/* Check if we allow changes or not */
 	server_account_name = modest_server_account_settings_get_account_name (incoming_account);
-	username_known = 
-		modest_account_mgr_get_server_account_username_has_succeeded (priv->account_manager,
-									      server_account_name);
-	gtk_widget_set_sensitive (priv->entry_user_username, !username_known);
-	gtk_widget_set_sensitive (priv->entry_incomingserver, !username_known);
-	modest_security_options_view_enable_changes (MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security),
-						     !username_known);
+	if (server_account_name) {
+		gboolean username_known;
 
+		username_known =
+			modest_account_mgr_get_server_account_username_has_succeeded (priv->account_manager,
+										      server_account_name);
+		gtk_widget_set_sensitive (priv->entry_user_username, !username_known);
+		gtk_widget_set_sensitive (priv->entry_incomingserver, !username_known);
+		modest_security_options_view_enable_changes (MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security),
+							     !username_known);
+	}
 
 	/* Unset the modified flag so we can detect changes later: */
 	priv->modified = FALSE;
