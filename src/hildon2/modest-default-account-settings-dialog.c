@@ -173,9 +173,6 @@ modest_default_account_settings_dialog_finalize (GObject *object)
 	if (priv->account_manager)
 		g_object_unref (G_OBJECT (priv->account_manager));
 
-	if (priv->signature_dialog)
-		gtk_widget_destroy (priv->signature_dialog);
-
 	if (priv->settings) {
 		g_object_unref (priv->settings);
 		priv->settings = NULL;
