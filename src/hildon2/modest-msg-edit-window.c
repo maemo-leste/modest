@@ -241,6 +241,9 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *from_field;
 	gchar       *last_from_account;
 	gchar       *original_account_name;
+
+	gchar       *references;
+	gchar       *in_reply_to;
 	
 	GtkWidget   *to_field;
 	GtkWidget   *cc_field;
@@ -424,6 +427,9 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->font_dialog = NULL;
 	priv->app_menu = NULL;
+
+	priv->references = NULL;
+	priv->in_reply_to = NULL;
 
 	if (!is_wp_text_buffer_started) {
 		is_wp_text_buffer_started = TRUE;
@@ -974,6 +980,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_free (priv->original_account_name);
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
+	g_free (priv->references);
+	g_free (priv->in_reply_to);
 	g_object_unref (priv->faces_model);
 	g_object_unref (priv->sizes_model);
 	g_object_unref (priv->attachments);
@@ -1212,6 +1220,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	cc      = tny_header_dup_cc (header);
 	bcc     = tny_header_dup_bcc (header);
 	subject = tny_header_dup_subject (header);
+
+	modest_tny_msg_get_references (TNY_MSG (msg), NULL, &(priv->references), &(priv->in_reply_to));
 	priority_flags = tny_header_get_priority (header);
 
 	if (to)
@@ -1628,6 +1638,8 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->cc      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field)));
 	data->bcc     =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->bcc_field)));
 	data->subject =  g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->subject_field)));
+	data->references = g_strdup (priv->references);
+	data->in_reply_to = g_strdup (priv->in_reply_to);
 	if (priv->draft_msg) {
 		data->draft_msg = g_object_ref (priv->draft_msg);
 	} else if (priv->outbox_msg) {
@@ -1727,6 +1739,8 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->plain_body);
 	g_free (data->html_body);
 	g_free (data->account_name);
+	g_free (data->references);
+	g_free (data->in_reply_to);
 	
 	if (data->draft_msg != NULL) {
 		g_object_unref (data->draft_msg);

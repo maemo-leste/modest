@@ -61,7 +61,9 @@ static gboolean is_ascii(const gchar *s);
 
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
-		    const gchar *bcc, const gchar* subject, const gchar *body,
+		    const gchar *bcc, const gchar* subject, 
+		    const gchar *references, const gchar *in_reply_to,
+		    const gchar *body,
 		    GList *attachments, gint *attached, GError **err)
 {
 	TnyMsg *new_msg;
@@ -98,6 +100,12 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	 */
 	tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "X-Mailer", "Modest "
 				       VERSION);
+
+	if (references)
+		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "References", references);
+
+	if (in_reply_to)
+		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "In-Reply-To", in_reply_to);
 	
 	/* Add the body of the new mail */
 	/* This is needed even if body is NULL or empty. */
@@ -118,6 +126,7 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 TnyMsg*
 modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gchar *cc,
 			       const gchar *bcc, const gchar* subject, 
+			       const gchar *references, const gchar *in_reply_to,
 			       const gchar *html_body, const gchar *plain_body,
 			       GList *attachments, GList *images, gint *attached, GError **err)
 {
@@ -153,6 +162,12 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 	tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "X-Mailer", "Modest "
 				       VERSION);
 
+	if (references)
+		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "References", references);
+
+	if (in_reply_to)
+		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "In-Reply-To", in_reply_to);
+	
 	/* Add the body of the new mail */	
 	add_body_part (new_msg, plain_body, content_type);
 	add_html_body_part (new_msg, html_body);
@@ -840,6 +855,108 @@ get_new_cc (TnyHeader *header, const gchar* from)
 	return result;
 }
 
+void 
+modest_tny_msg_get_references (TnyMsg *msg, gchar **message_id, gchar **references, gchar **in_reply_to)
+{
+	TnyList *headers;
+	TnyIterator *iterator;
+	gchar *l_message_id;
+	gchar *l_references;
+	gchar *l_in_reply_to;
+
+	g_return_if_fail (TNY_IS_MSG (msg));
+
+	l_message_id = NULL;
+	l_references = NULL;
+	l_in_reply_to = NULL;
+
+	headers = TNY_LIST (tny_simple_list_new ());
+	tny_mime_part_get_header_pairs (TNY_MIME_PART (msg), headers);
+
+	iterator = tny_list_create_iterator (headers);
+	while (!tny_iterator_is_done (iterator)) {
+		TnyPair *pair;
+		const gchar *name;
+
+		pair = TNY_PAIR (tny_iterator_get_current (iterator));
+		name = tny_pair_get_name (pair);
+		if (!g_strcasecmp (name, "References")) {
+			if (l_references) g_free (l_references);
+			l_references = g_strdup (tny_pair_get_value (pair));
+		} else if (!g_strcasecmp (name, "In-Reply-To")) {
+			if (l_in_reply_to) g_free (l_in_reply_to);
+			l_in_reply_to = g_strdup (tny_pair_get_value (pair));
+		} else if (!g_strcasecmp (name, "Message-ID")) {
+			if (l_message_id) g_free (l_message_id);
+			l_message_id = g_strdup (tny_pair_get_value (pair));
+		}
+
+		g_object_unref (pair);
+		tny_iterator_next (iterator);
+	}
+
+	g_object_unref (iterator);
+	g_object_unref (headers);
+
+	if (message_id) {
+		*message_id = l_message_id;
+	} else {
+		g_free (l_message_id);
+	}
+
+	if (in_reply_to) {
+		*in_reply_to = l_in_reply_to;
+	} else {
+		g_free (l_in_reply_to);
+	}
+
+	if (references) {
+		*references = l_references;
+	} else {
+		g_free (l_references);
+	}
+}
+
+static void 
+set_references (TnyMsg *reply_msg, TnyMsg *original_msg)
+{
+	gchar *orig_references, *orig_in_reply_to, *orig_message_id;
+	gchar *references, *in_reply_to;
+
+	modest_tny_msg_get_references (original_msg, &orig_message_id, &orig_references, &orig_in_reply_to);
+
+	references = NULL;
+	in_reply_to = NULL;
+
+	if (orig_message_id)
+		in_reply_to = g_strdup (orig_message_id);
+
+	if (orig_references) {
+		if (orig_message_id)
+			references = g_strconcat (orig_references, "\n        ", orig_message_id, NULL);
+		else
+			references = g_strdup (orig_references);
+
+	} else if (orig_in_reply_to) {
+		if (orig_message_id)
+			references = g_strconcat (orig_in_reply_to, "\n        ", orig_message_id, NULL);
+		else
+			references = g_strdup (orig_in_reply_to);
+	} else if (orig_message_id) {
+		references = g_strdup (orig_message_id);
+	}
+
+	g_free (orig_references);
+	g_free (orig_in_reply_to);
+	g_free (orig_message_id);
+
+	if (in_reply_to) {
+		tny_mime_part_set_header_pair (TNY_MIME_PART (reply_msg), "In-Reply-To", in_reply_to);
+	}
+	if (references) {
+		tny_mime_part_set_header_pair (TNY_MIME_PART (reply_msg), "References", references);
+	}
+}
 
 TnyMsg* 
 modest_tny_msg_create_reply_msg (TnyMsg *msg,
@@ -863,6 +980,8 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 
 	new_msg = create_reply_forward_mail (msg, header, from, signature, TRUE, reply_type,
 					     attachments_list);
+
+	set_references (new_msg, msg);
 	if (attachments_list != NULL) {
 		g_list_foreach (attachments_list, (GFunc) g_object_unref, NULL);
 		g_list_free (attachments_list);

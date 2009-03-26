@@ -288,6 +288,8 @@ struct _ModestMsgEditWindowPrivate {
 	TnyMsg      *draft_msg;
 	TnyMsg      *outbox_msg;
 	gchar       *msg_uid;
+	gchar       *references;
+	gchar       *in_reply_to;
 
 	gboolean    sent;
 };
@@ -425,6 +427,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->draft_msg = NULL;
 	priv->outbox_msg = NULL;
 	priv->msg_uid = NULL;
+	priv->references = NULL;
+	priv->in_reply_to = NULL;
 
 	priv->can_undo = FALSE;
 	priv->can_redo = FALSE;
@@ -963,6 +967,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 	if (priv->original_account_name)
 		g_free (priv->original_account_name);
 	g_free (priv->msg_uid);
+	g_free (priv->references);
+	g_free (priv->in_reply_to);
 	g_free (priv->last_search);
 	g_slist_free (priv->font_items_group);
 	g_slist_free (priv->size_items_group);
@@ -1189,6 +1195,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW(self),
 						   priority_flags);
+	modest_tny_msg_get_references (TNY_MSG (msg), NULL, &(priv->references), &(priv->in_reply_to));
 
 	update_window_title (self);
 
@@ -1623,6 +1630,8 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->cc      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field)));
 	data->bcc     =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->bcc_field)));
 	data->subject =  g_strdup (gtk_entry_get_text (GTK_ENTRY (priv->subject_field)));
+	data->references = g_strdup (priv->references);
+	data->in_reply_to = g_strdup (priv->in_reply_to);
 	if (priv->draft_msg) {
 		data->draft_msg = g_object_ref (priv->draft_msg);
 	} else if (priv->outbox_msg) {
@@ -1722,6 +1731,8 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->plain_body);
 	g_free (data->html_body);
 	g_free (data->account_name);
+	g_free (data->in_reply_to);
+	g_free (data->references);
 	
 	if (data->draft_msg != NULL) {
 		g_object_unref (data->draft_msg);

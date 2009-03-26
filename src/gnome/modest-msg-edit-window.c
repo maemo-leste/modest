@@ -89,6 +89,9 @@ struct _ModestMsgEditWindowPrivate {
 	TnyMsg      *outbox_msg;
 	gchar       *msg_uid;
 
+	gchar       *references;
+	gchar       *in_reply_to;
+
 	gboolean    sent;
 };
 
@@ -179,6 +182,8 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->draft_msg = NULL;
 	priv->outbox_msg = NULL;
 	priv->msg_uid = NULL;
+	priv->references = NULL;
+	priv->in_reply_to = NULL;
 }
 
 /** 
@@ -339,6 +344,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 		priv->outbox_msg = NULL;
 	}
 	g_free (priv->msg_uid);
+	g_free (priv->references);
+	g_free (priv->in_reply_to);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -404,6 +411,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),  bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
+
+	modest_tny_msg_get_references (TNY_MSG (msg), NULL, &(priv->references), &(priv->in_reply_to));
 
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
 	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
@@ -599,6 +608,8 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->cc      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->cc_field)));
 	data->bcc     =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->bcc_field)));
 	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
+	data->references = g_strdup (priv->references);
+	data->in_reply_to = g_strdup (priv->in_reply_to);
 
 /* 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)); */
 /* 	GtkTextIter b, e; */
@@ -663,6 +674,8 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->subject);
 	g_free (data->plain_body);
 	g_free (data->html_body);
+	g_free (data->references);
+	g_free (data->in_reply_to);
 
 	if (data->draft_msg != NULL) {
 		g_object_unref (data->draft_msg);

@@ -832,7 +832,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		body = use_signature ? g_strconcat("\n--\n", signature, NULL) : g_strdup("");
 	}
 
-	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, body, NULL, NULL, NULL);
+	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, NULL, NULL, body, NULL, NULL, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
@@ -2920,6 +2920,8 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 					      data->attachments,
 					      data->images,
 					      data->priority_flags,
+					      data->references,
+					      data->in_reply_to,
 					      on_save_to_drafts_cb,
 					      g_object_ref(edit_window));
 
@@ -3066,6 +3068,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 					     data->html_body,
 					     data->attachments,
 					     data->images,
+					     data->references,
+					     data->in_reply_to,
 					     data->priority_flags);
 
 	if (modest_mail_operation_get_status (mail_operation) == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS)

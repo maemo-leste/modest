@@ -78,7 +78,9 @@ typedef enum _ModestTnyMsgReplyMode {
  * Returns: a new TnyMsg (free with g_object_unref)
  */	 
 TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
-			    const gchar *bcc, const gchar* subject, const gchar *body,
+			    const gchar *bcc, const gchar* subject, 
+			    const gchar *references, const gchar *in_reply_to,
+			    const gchar *body,
 			    GList *attachments, gint *attached, GError **err);
 
 /**
@@ -100,7 +102,8 @@ TnyMsg* modest_tny_msg_new (const gchar* mailto, const gchar* mailfrom, const gc
  * Returns: a new TnyMsg (free with g_object_unref)
  */	 
 TnyMsg* modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* mailfrom, const gchar *cc,
-				       const gchar *bcc, const gchar* subject, 
+				       const gchar *bcc, const gchar* subject,
+				       const gchar *references, const gchar *in_reply_to,
 				       const gchar *html_body, const gchar *plain_body,
 				       GList *attachments, GList *images, gint *attached, GError **err);
 
@@ -218,6 +221,18 @@ modest_tny_msg_header_get_all_recipients_list (TnyHeader *header);
  */
 GSList *
 modest_tny_msg_get_all_recipients_list (TnyMsg *msg);
+
+/**
+ * modest_tny_msg_get_references:
+ * @msg: a #TnyMsg
+ * @message_id: a pointer to a string
+ * @references: a pointer to a string
+ * @in_reply_to: a pointer to a string
+ *
+ * obtains the Message-ID, References and In-Reply-To fields of a
+ * message
+ */
+void modest_tny_msg_get_references (TnyMsg *msg, gchar **message_id, gchar **references, gchar **in_reply_to);
 
 
 #endif /* __MODEST_TNY_MSG_H__ */
