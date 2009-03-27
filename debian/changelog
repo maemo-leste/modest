@@ -1,3 +1,17 @@
+modest (3.0.2-rc1) unstable; urgency=low
+
+  * Week 14, 2009 - monday release of email
+  *  modest trunk r8452
+  *  6 bug fixes
+  * Fixes: NB#103571    for embedded attachment '.eml' extension is showing
+  * Fixes: NB#107674 	"mcen_ib_advsetup_settings_saved" to be shown only when changes are made to one or more fields
+  * Fixes: NB#107847
+  * Fixes: NB#108268 	Folder view title is not update after renaming the account title in account settings dialog opened from error note
+  * Fixes: NB#108353 	Trying to open a particular message in a viewier takes a long time and in process shows no progress indicator
+  * Fixes: NB#108366 	Trying to access the details of the attched messages crashes modest 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 27 Mar 2009 17:03:42 +0200
+
 modest (3.0.1-rc1) unstable; urgency=low
 
   * Week 14, 2009 - friday release
