@@ -437,7 +437,7 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 							 HILDON_TOUCH_SELECTOR_SELECTION_MODE_MULTIPLE);
 
 	dialog = hildon_picker_dialog_new (window);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
+	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachments_title"));
 	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
 	hildon_picker_dialog_set_done_label (HILDON_PICKER_DIALOG (dialog), _HL("wdgt_bd_done"));
 
