@@ -1,3 +1,15 @@
+modest (3.0.3-rc1) unstable; urgency=low
+
+  * Week 14, 2009 - tuesday release
+  * modest trunk r8467
+  * 3 bug fixes
+  * Fixes: NB#108387    When Outbox or Drafts folder contains 1 message show "mcen_ti_message" in folder status
+  * Fixes: NB#108391 	"Attachments" dialog should have "mcen_ti_select_attachments_title" title
+  * Fixes: NB#108705 	Logical string "mail_va_no_subject" in "Message details" dialog 
+  * Fixes: NB#108753    [Scrums server] : For longer timeout cases, error to connect to server is not notified to user
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 30 Mar 2009 16:03:32 +0300
+
 modest (3.0.2-rc1) unstable; urgency=low
 
   * Week 14, 2009 - monday release of email
