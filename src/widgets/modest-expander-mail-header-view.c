@@ -56,6 +56,7 @@ struct _ModestExpanderMailHeaderViewPriv
 	GtkSizeGroup *labels_size_group;
 	gboolean     is_outgoing;
 	gboolean     is_draft;
+	gboolean     is_loading;
 	TnyHeader    *header;
 	TnyHeaderFlags priority_flags;
 	ModestDatetimeFormatter *datetime_formatter;
@@ -84,6 +85,10 @@ static TnyHeaderFlags modest_expander_mail_header_view_get_priority_default (Mod
 static void modest_expander_mail_header_view_set_priority (ModestMailHeaderView *self, TnyHeaderFlags flags);
 static void modest_expander_mail_header_view_set_priority_default (ModestMailHeaderView *headers_view,
 								   TnyHeaderFlags flags);
+static gboolean modest_expander_mail_header_view_get_loading (ModestMailHeaderView *headers_view);
+static gboolean modest_expander_mail_header_view_get_loading_default (ModestMailHeaderView *headers_view);
+static void modest_expander_mail_header_view_set_loading (ModestMailHeaderView *headers_view, gboolean is_loading);
+static void modest_expander_mail_header_view_set_loading_default (ModestMailHeaderView *headers_view, gboolean is_loading);
 static const GtkWidget *modest_expander_mail_header_view_add_custom_header (ModestMailHeaderView *self,
 									    const gchar *label,
 									    GtkWidget *custom_widget,
@@ -481,6 +486,8 @@ modest_expander_mail_header_view_instance_init (GTypeInstance *instance, gpointe
 	priv->is_outgoing = FALSE;
 	priv->is_draft = FALSE;
 
+	priv->is_loading = FALSE;
+
 	return;
 }
 
@@ -529,6 +536,8 @@ modest_mail_header_view_init (gpointer g, gpointer iface_data)
 
 	klass->get_priority = modest_expander_mail_header_view_get_priority;
 	klass->set_priority = modest_expander_mail_header_view_set_priority;
+	klass->get_loading = modest_expander_mail_header_view_get_loading;
+	klass->set_loading = modest_expander_mail_header_view_set_loading;
 	klass->add_custom_header = modest_expander_mail_header_view_add_custom_header;
 
 	return;
@@ -546,6 +555,8 @@ modest_expander_mail_header_view_class_init (ModestExpanderMailHeaderViewClass *
 	klass->clear_func = modest_expander_mail_header_view_clear_default;
 	klass->set_priority_func = modest_expander_mail_header_view_set_priority_default;
 	klass->get_priority_func = modest_expander_mail_header_view_get_priority_default;
+	klass->set_loading_func = modest_expander_mail_header_view_set_loading_default;
+	klass->get_loading_func = modest_expander_mail_header_view_get_loading_default;
 	klass->add_custom_header_func = modest_expander_mail_header_view_add_custom_header_default;
 
 	object_class->finalize = modest_expander_mail_header_view_finalize;
@@ -653,4 +664,38 @@ modest_expander_mail_header_view_set_priority_default (ModestMailHeaderView *hea
 		gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 		gtk_widget_show (priv->priority_icon);
 	}
+}
+
+static gboolean
+modest_expander_mail_header_view_get_loading (ModestMailHeaderView *headers_view)
+{
+	return MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_CLASS (headers_view)->get_loading_func (headers_view);
+}
+
+static gboolean
+modest_expander_mail_header_view_get_loading_default (ModestMailHeaderView *headers_view)
+{
+	ModestExpanderMailHeaderViewPriv *priv;
+
+	g_return_val_if_fail (MODEST_IS_EXPANDER_MAIL_HEADER_VIEW (headers_view), FALSE);
+	priv = MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
+
+	return priv->is_loading;
+}
+
+static void
+modest_expander_mail_header_view_set_loading (ModestMailHeaderView *headers_view, gboolean is_loading)
+{
+	MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_CLASS (headers_view)->set_loading_func (headers_view, is_loading);
+}
+
+static void
+modest_expander_mail_header_view_set_loading_default (ModestMailHeaderView *headers_view, gboolean is_loading)
+{
+	ModestExpanderMailHeaderViewPriv *priv;
+
+	g_return_if_fail (MODEST_IS_EXPANDER_MAIL_HEADER_VIEW (headers_view));
+	priv = MODEST_EXPANDER_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
+
+	priv->is_loading = is_loading;
 }

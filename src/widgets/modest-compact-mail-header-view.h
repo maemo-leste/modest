@@ -63,6 +63,8 @@ struct _ModestCompactMailHeaderViewClass
 	void (*clear_func) (TnyHeaderView *self);
 	void (*set_priority_func) (ModestMailHeaderView *self, TnyHeaderFlags flags);
 	TnyHeaderFlags (*get_priority_func) (ModestMailHeaderView *self);
+	void (*set_loading_func) (ModestMailHeaderView *self, gboolean is_loading);
+	gboolean (*get_loading_func) (ModestMailHeaderView *self);
 	const GtkWidget * (*add_custom_header_func) (ModestMailHeaderView *self,
 						     const gchar *label,
 						     GtkWidget *custom_widget,

@@ -56,6 +56,7 @@ struct _ModestCompactMailHeaderViewPriv
 	GtkWidget    *fromto_contents;
 	GtkWidget    *priority_icon;
 	GtkWidget    *details_label;
+	GtkWidget    *details_button;
 	GtkWidget    *date_label;
 	GtkWidget    *subject_label;
 
@@ -66,6 +67,8 @@ struct _ModestCompactMailHeaderViewPriv
 	
 	TnyHeader    *header;
 	TnyHeaderFlags priority_flags;
+
+	gboolean     is_loading;
 
 	time_t       date_to_show;
 	ModestDatetimeFormatter *datetime_formatter;
@@ -94,6 +97,10 @@ static TnyHeaderFlags modest_compact_mail_header_view_get_priority_default (Mode
 static void modest_compact_mail_header_view_set_priority (ModestMailHeaderView *self, TnyHeaderFlags flags);
 static void modest_compact_mail_header_view_set_priority_default (ModestMailHeaderView *headers_view,
 								   TnyHeaderFlags flags);
+static gboolean modest_compact_mail_header_view_get_loading (ModestMailHeaderView *headers_view);
+static gboolean modest_compact_mail_header_view_get_loading_default (ModestMailHeaderView *headers_view);
+static void modest_compact_mail_header_view_set_loading (ModestMailHeaderView *headers_view, gboolean is_loading);
+static void modest_compact_mail_header_view_set_loading_default (ModestMailHeaderView *headers_view, gboolean is_loading);
 static const GtkWidget *modest_compact_mail_header_view_add_custom_header (ModestMailHeaderView *self,
 									    const gchar *label,
 									    GtkWidget *custom_widget,
@@ -326,7 +333,6 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	ModestCompactMailHeaderView *self = (ModestCompactMailHeaderView *)instance;
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 	GtkWidget *first_hbox, *second_hbox, *vbox, *main_vbox;
-	GtkWidget *details_button;
 	PangoAttrList *attr_list;
 	GtkWidget *main_align;
 
@@ -351,15 +357,15 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_label_set_attributes (GTK_LABEL (priv->subject_label), attr_list);
 	pango_attr_list_unref (attr_list);
 
-	details_button = gtk_button_new ();
+	priv->details_button = gtk_button_new ();
 	priv->details_label = gtk_label_new (_("mcen_ti_message_properties"));
 	gtk_misc_set_alignment (GTK_MISC (priv->details_label), 1.0, 0.5);
-	gtk_container_add (GTK_CONTAINER (details_button), priv->details_label);
-	gtk_button_set_relief (GTK_BUTTON (details_button), GTK_RELIEF_NONE);
+	gtk_container_add (GTK_CONTAINER (priv->details_button), priv->details_label);
+	gtk_button_set_relief (GTK_BUTTON (priv->details_button), GTK_RELIEF_NONE);
 
 	gtk_box_pack_end (GTK_BOX (priv->subject_box), priv->subject_label, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (first_hbox), priv->subject_box, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (first_hbox), details_button, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (first_hbox), priv->details_button, FALSE, FALSE, 0);
 
 	second_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
 
@@ -386,7 +392,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	g_signal_connect (G_OBJECT (self), "notify::style", G_CALLBACK (on_notify_style), (gpointer) self);
 
- 	g_signal_connect (G_OBJECT (details_button), "clicked", G_CALLBACK (on_details_button_clicked), instance);
+ 	g_signal_connect (G_OBJECT (priv->details_button), "clicked", G_CALLBACK (on_details_button_clicked), instance);
 
 	priv->datetime_formatter = modest_datetime_formatter_new ();
 	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
@@ -408,6 +414,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	priv->is_outgoing = FALSE;
 	priv->is_draft = FALSE;
+	priv->is_loading = FALSE;
 
 	return;
 }
@@ -460,6 +467,8 @@ modest_mail_header_view_init (gpointer g, gpointer iface_data)
 
 	klass->get_priority = modest_compact_mail_header_view_get_priority;
 	klass->set_priority = modest_compact_mail_header_view_set_priority;
+	klass->get_loading = modest_compact_mail_header_view_get_loading;
+	klass->set_loading = modest_compact_mail_header_view_set_loading;
 	klass->add_custom_header = modest_compact_mail_header_view_add_custom_header;
 
 	return;
@@ -477,6 +486,8 @@ modest_compact_mail_header_view_class_init (ModestCompactMailHeaderViewClass *kl
 	klass->clear_func = modest_compact_mail_header_view_clear_default;
 	klass->set_priority_func = modest_compact_mail_header_view_set_priority_default;
 	klass->get_priority_func = modest_compact_mail_header_view_get_priority_default;
+	klass->set_loading_func = modest_compact_mail_header_view_set_loading_default;
+	klass->get_loading_func = modest_compact_mail_header_view_get_loading_default;
 	klass->add_custom_header_func = modest_compact_mail_header_view_add_custom_header_default;
 	object_class->finalize = modest_compact_mail_header_view_finalize;
 
@@ -581,6 +592,45 @@ modest_compact_mail_header_view_set_priority_default (ModestMailHeaderView *head
 		priv->priority_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_LOW, GTK_ICON_SIZE_MENU);
 		gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
 		gtk_widget_show (priv->priority_icon);
+	}
+}
+
+static gboolean
+modest_compact_mail_header_view_get_loading (ModestMailHeaderView *headers_view)
+{
+	return MODEST_COMPACT_MAIL_HEADER_VIEW_GET_CLASS (headers_view)->get_loading_func (headers_view);
+}
+
+static gboolean
+modest_compact_mail_header_view_get_loading_default (ModestMailHeaderView *headers_view)
+{
+	ModestCompactMailHeaderViewPriv *priv;
+
+	g_return_val_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (headers_view), FALSE);
+	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
+
+	return priv->is_loading;
+}
+
+static void
+modest_compact_mail_header_view_set_loading (ModestMailHeaderView *headers_view, gboolean is_loading)
+{
+	MODEST_COMPACT_MAIL_HEADER_VIEW_GET_CLASS (headers_view)->set_loading_func (headers_view, is_loading);
+}
+
+static void
+modest_compact_mail_header_view_set_loading_default (ModestMailHeaderView *headers_view, gboolean is_loading)
+{
+	ModestCompactMailHeaderViewPriv *priv;
+
+	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (headers_view));
+	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
+
+	priv->is_loading = is_loading;
+	if (is_loading) {
+		gtk_widget_hide (priv->details_button);
+	} else {
+		gtk_widget_show (priv->details_button);
 	}
 }
 

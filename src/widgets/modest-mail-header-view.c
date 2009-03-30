@@ -51,6 +51,18 @@ modest_mail_header_view_set_priority (ModestMailHeaderView *self, TnyHeaderFlags
 	MODEST_MAIL_HEADER_VIEW_GET_IFACE (self)->set_priority (self, flags);
 }
 
+gboolean
+modest_mail_header_view_get_loading (ModestMailHeaderView *self)
+{
+	return MODEST_MAIL_HEADER_VIEW_GET_IFACE (self)->get_loading (self);
+}
+
+void
+modest_mail_header_view_set_loading (ModestMailHeaderView *self, gboolean is_loading)
+{
+	MODEST_MAIL_HEADER_VIEW_GET_IFACE (self)->set_loading (self, is_loading);
+}
+
 const GtkWidget *
 modest_mail_header_view_add_custom_header (ModestMailHeaderView *self,
 					   const gchar *label,
