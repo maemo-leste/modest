@@ -234,5 +234,15 @@ modest_tny_msg_get_all_recipients_list (TnyMsg *msg);
  */
 void modest_tny_msg_get_references (TnyMsg *msg, gchar **message_id, gchar **references, gchar **in_reply_to);
 
+/**
+ * modest_tny_msg_get_attachments_parent:
+ * @msg: a #TnyMsg
+ *
+ * the mime part of the message attachments should be below
+ *
+ * Returns: the mime part (ref owned by caller)
+ */
+TnyMimePart *modest_tny_msg_get_attachments_parent (TnyMsg *msg);
+
 
 #endif /* __MODEST_TNY_MSG_H__ */

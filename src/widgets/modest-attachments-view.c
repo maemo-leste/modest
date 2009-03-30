@@ -40,6 +40,7 @@
 #include <modest-attachment-view.h>
 #include <modest-attachments-view.h>
 #include <modest-tny-mime-part.h>
+#include <modest-tny-msg.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -129,39 +130,9 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		return;
 	}
 
-	msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (priv->msg));
-	/* If the top mime part is a multipart/signed, we have to work with its first child (if available)
-	 * as "message" for showing attachments */
+	part_to_check = modest_tny_msg_get_attachments_parent (TNY_MSG (msg));
 
-	part_to_check = NULL;
-	if ((msg_content_type != NULL) && !strcasecmp (msg_content_type, "multipart/signed")) {
-		TnyList *msg_children;
-		guint length;
-
-		msg_children = TNY_LIST (tny_simple_list_new ());
-		tny_mime_part_get_parts (TNY_MIME_PART (priv->msg), msg_children);
-
-		length = tny_list_get_length (msg_children);
-		if (length == 1 || length == 2) {
-			TnyIterator *iterator;
-
-			iterator = tny_list_create_iterator (msg_children);
-
-			part_to_check = TNY_MIME_PART (tny_iterator_get_current (iterator));
-
-			g_object_unref (iterator);
-		}
-
-		g_object_unref (msg_children);
-
-	}
-
-	if (part_to_check == NULL) {
-		part_to_check = g_object_ref (priv->msg);
-	} else {
-		msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (part_to_check));
-	}
-
+	msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (part_to_check));
 
 	/* If the top mime part is a multipart/related, we don't show the attachments, as they're
 	 * embedded images in body */

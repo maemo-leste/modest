@@ -692,6 +692,101 @@ modest_tny_msg_get_parent_uid (TnyMsg *msg)
 	return g_object_get_data (G_OBJECT(msg), MODEST_TNY_MSG_PARENT_UID);
 }
 
+static gchar *get_signed_protocol (TnyMimePart *part)
+{
+	TnyList *header_pairs;
+	TnyIterator *iterator;
+	gchar *result = NULL;
+
+	header_pairs = TNY_LIST (tny_simple_list_new ());
+	tny_mime_part_get_header_pairs (part, header_pairs);
+	iterator = tny_list_create_iterator (header_pairs);
+
+	while (!result && !tny_iterator_is_done (iterator)) {
+		TnyPair *pair;
+		const gchar *name;
+
+		pair = TNY_PAIR (tny_iterator_get_current (iterator));
+		name = tny_pair_get_name (pair);
+		if (name && !g_ascii_strcasecmp (name, "Content-Type")) {
+			const gchar *s;
+			s = tny_pair_get_value (pair);
+			if (s) {
+				s = strstr (s, "protocol=");
+				if (s) {
+					const gchar *t;
+					s += 9;
+					if (*s == '\"') {
+						s++;
+						t = strstr (s, "\"");
+					} else {
+						t = strstr (s, ";");
+					}
+					result = g_strndup (s, t - s);
+				}
+			}
+		}
+
+		g_object_unref (pair);
+		tny_iterator_next (iterator);
+	}
+
+	g_object_unref (iterator);
+	g_object_unref (header_pairs);
+
+	return result;
+}
+
+TnyMimePart *
+modest_tny_msg_get_attachments_parent (TnyMsg *msg)
+{
+	TnyMimePart *result;
+	const gchar *content_type;
+
+	result = NULL;
+
+	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
+	if (content_type && !strcmp (content_type, "multipart/signed")) {
+		TnyList *msg_children;
+		TnyIterator *iterator;
+		gchar *signed_protocol;
+
+		msg_children = TNY_LIST (tny_simple_list_new ());
+		tny_mime_part_get_parts (TNY_MIME_PART (msg), msg_children);
+
+		iterator = tny_list_create_iterator (msg_children);
+		signed_protocol = get_signed_protocol (TNY_MIME_PART (msg));
+			
+		while (!result && !tny_iterator_is_done (iterator)) {
+			TnyMimePart *part;
+
+			part = TNY_MIME_PART (tny_iterator_get_current (iterator));
+			if (signed_protocol) {
+				const gchar *part_content_type;
+
+				part_content_type = tny_mime_part_get_content_type (part);
+				if (part_content_type && g_ascii_strcasecmp (part_content_type, signed_protocol)) {
+					result = g_object_ref (part);
+				}
+			} else {
+				result = g_object_ref (part);
+			}
+
+			g_object_unref (part);
+			tny_iterator_next (iterator);
+		}
+
+		g_object_unref (iterator);
+		g_free (signed_protocol);
+		g_object_unref (msg_children);
+	}
+	if (result == NULL) {
+		result = g_object_ref (msg);
+	}
+
+	return result;
+}
+
 
 
 static void
@@ -719,34 +814,10 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 	TnyMimePart *part_to_check = NULL;
-	const gchar *content_type;
 
 	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
-	
-	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
-	if (content_type && !strcmp (content_type, "multipart/signed")) {
-		TnyList *msg_children;
-		guint length;
 
-		msg_children = TNY_LIST (tny_simple_list_new ());
-		tny_mime_part_get_parts (TNY_MIME_PART (msg), msg_children);
-
-		length = tny_list_get_length (msg_children);
-		if (length == 1 || length == 2) {
-			TnyIterator *iterator;
-
-			iterator = tny_list_create_iterator (msg_children);
-
-			part_to_check = TNY_MIME_PART (tny_iterator_get_current (iterator));
-
-			g_object_unref (iterator);
-		}
-
-		g_object_unref (msg_children);
-	}
-	if (part_to_check == NULL) {
-		part_to_check = g_object_ref (msg);
-	}
+	part_to_check = modest_tny_msg_get_attachments_parent (TNY_MSG (msg));
 	
 	/* Add attachments */
 	parts = TNY_LIST (tny_simple_list_new());
@@ -1000,35 +1071,11 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
 	TnyMimePart *part_to_check = NULL;
-	const gchar *content_type;
 
 	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
 
-	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
-	if (content_type && !strcmp (content_type, "multipart/signed")) {
-		TnyList *msg_children;
-		guint length;
+	part_to_check = modest_tny_msg_get_attachments_parent (TNY_MSG (msg));
 
-		msg_children = TNY_LIST (tny_simple_list_new ());
-		tny_mime_part_get_parts (TNY_MIME_PART (msg), msg_children);
-
-		length = tny_list_get_length (msg_children);
-		if (length == 1 || length == 2) {
-			TnyIterator *iterator;
-
-			iterator = tny_list_create_iterator (msg_children);
-
-			part_to_check = TNY_MIME_PART (tny_iterator_get_current (iterator));
-
-			g_object_unref (iterator);
-		}
-
-		g_object_unref (msg_children);
-	}
-	if (part_to_check == NULL) {
-		part_to_check = g_object_ref (msg);
-	}
-	
 	parts = TNY_LIST (tny_simple_list_new());
 	tny_mime_part_get_parts (TNY_MIME_PART (part_to_check), parts);
 	tny_list_foreach (parts, add_if_attachment, &attachments_list);
