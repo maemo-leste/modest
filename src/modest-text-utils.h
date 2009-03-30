@@ -176,14 +176,14 @@ void     modest_text_utils_address_range_at_position (const gchar *recipients_li
 /**
  * modest_text_utils_hyperlinkify_begin:
  *
- * begin a linkify block, compiling the caches to be reused.
+ * begin a linkify block, compiling the caches to be reused. Use it in mainloop.
  */
 void modest_text_utils_hyperlinkify_begin (void);
 
 /**
  * modest_text_utils_hyperlinkify_end:
  *
- * end a linkify block, freeing the caches to be reused.
+ * end a linkify block, freeing the caches to be reused. Use it in mainloop.
  */
 void modest_text_utils_hyperlinkify_end (void);
 

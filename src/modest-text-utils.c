@@ -1042,6 +1042,7 @@ cmp_offsets_reverse (const url_match_t *match1, const url_match_t *match2)
 
 static gint url_matches_block = 0;
 static url_match_pattern_t patterns[] = MAIL_VIEWER_URL_MATCH_PATTERNS;
+static GMutex *url_patterns_mutex = NULL;
 
 
 static gboolean
@@ -1076,17 +1077,25 @@ free_patterns ()
 void
 modest_text_utils_hyperlinkify_begin (void)
 {
+
+	if (url_patterns_mutex == NULL) {
+		url_patterns_mutex = g_mutex_new ();
+	}
+	g_mutex_lock (url_patterns_mutex);
 	if (url_matches_block == 0)
 		compile_patterns ();
 	url_matches_block ++;
+	g_mutex_unlock (url_patterns_mutex);
 }
 
 void
 modest_text_utils_hyperlinkify_end (void)
 {
+	g_mutex_lock (url_patterns_mutex);
 	url_matches_block--;
 	if (url_matches_block <= 0)
 		free_patterns ();
+	g_mutex_unlock (url_patterns_mutex);
 }
 
 

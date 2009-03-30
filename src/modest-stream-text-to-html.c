@@ -125,6 +125,7 @@ modest_stream_text_to_html_init (ModestStreamTextToHtml *obj)
 	priv->linkify_limit = 0;
 	priv->full_limit = 0;
 	priv->total_output = 0;
+	modest_text_utils_hyperlinkify_begin ();
 }
 
 static void
@@ -139,6 +140,7 @@ modest_stream_text_to_html_finalize (GObject *obj)
 	if (priv->line_buffer != NULL) {
 		g_string_free (priv->line_buffer, TRUE);
 	}
+	modest_text_utils_hyperlinkify_end ();
 }
 
 GObject*
