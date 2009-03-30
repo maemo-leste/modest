@@ -240,7 +240,7 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 
 	if (!strcmp (subject, "")) {
 		g_free (subject);
-		subject = g_strdup (_("mail_va_no_subject "));
+		subject = g_strdup (_("mail_va_no_subject"));
 	}
 
 	/* Add from and subject for all folders */
