@@ -718,12 +718,39 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 	TnyMsg *new_msg;
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
+	TnyMimePart *part_to_check = NULL;
+	const gchar *content_type;
 
 	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
 	
+	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
+	if (content_type && !strcmp (content_type, "multipart/signed")) {
+		TnyList *msg_children;
+		guint length;
+
+		msg_children = TNY_LIST (tny_simple_list_new ());
+		tny_mime_part_get_parts (TNY_MIME_PART (msg), msg_children);
+
+		length = tny_list_get_length (msg_children);
+		if (length == 1 || length == 2) {
+			TnyIterator *iterator;
+
+			iterator = tny_list_create_iterator (msg_children);
+
+			part_to_check = TNY_MIME_PART (tny_iterator_get_current (iterator));
+
+			g_object_unref (iterator);
+		}
+
+		g_object_unref (msg_children);
+	}
+	if (part_to_check == NULL) {
+		part_to_check = g_object_ref (msg);
+	}
+	
 	/* Add attachments */
 	parts = TNY_LIST (tny_simple_list_new());
-	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+	tny_mime_part_get_parts (TNY_MIME_PART (part_to_check), parts);
 	tny_list_foreach (parts, add_if_attachment, &attachments_list);
 
 	new_msg = create_reply_forward_mail (msg, NULL, from, signature, FALSE, forward_type,
@@ -735,6 +762,7 @@ modest_tny_msg_create_forward_msg (TnyMsg *msg,
 		g_list_free (attachments_list);
 	}
 	g_object_unref (G_OBJECT (parts));
+	g_object_unref (part_to_check);
 
 	return new_msg;
 }
@@ -971,11 +999,38 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	gchar *new_to = NULL;
 	TnyList *parts = NULL;
 	GList *attachments_list = NULL;
+	TnyMimePart *part_to_check = NULL;
+	const gchar *content_type;
 
 	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+
+	content_type = tny_mime_part_get_content_type (TNY_MIME_PART (msg));
+	if (content_type && !strcmp (content_type, "multipart/signed")) {
+		TnyList *msg_children;
+		guint length;
+
+		msg_children = TNY_LIST (tny_simple_list_new ());
+		tny_mime_part_get_parts (TNY_MIME_PART (msg), msg_children);
+
+		length = tny_list_get_length (msg_children);
+		if (length == 1 || length == 2) {
+			TnyIterator *iterator;
+
+			iterator = tny_list_create_iterator (msg_children);
+
+			part_to_check = TNY_MIME_PART (tny_iterator_get_current (iterator));
+
+			g_object_unref (iterator);
+		}
+
+		g_object_unref (msg_children);
+	}
+	if (part_to_check == NULL) {
+		part_to_check = g_object_ref (msg);
+	}
 	
 	parts = TNY_LIST (tny_simple_list_new());
-	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+	tny_mime_part_get_parts (TNY_MIME_PART (part_to_check), parts);
 	tny_list_foreach (parts, add_if_attachment, &attachments_list);
 
 	new_msg = create_reply_forward_mail (msg, header, from, signature, TRUE, reply_type,
@@ -1015,6 +1070,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
 	g_object_unref (G_OBJECT (header));
+	g_object_unref (G_OBJECT (part_to_check));
 
 	return new_msg;
 }
