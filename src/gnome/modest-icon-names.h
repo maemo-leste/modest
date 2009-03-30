@@ -83,17 +83,17 @@
 #define MODEST_FOLDER_ICON_MMC_FOLDER           MODEST_FOLDER_ICON_NORMAL
 
 /* toolbar */
-#define  MODEST_TOOLBAR_ICON_MAIL_SEND		PIXMAP_PREFIX "qgn_list_messagin_sent.png"
-#define  MODEST_TOOLBAR_ICON_NEW_MAIL		PIXMAP_PREFIX "mail-message-new.png"
+#define  MODEST_TOOLBAR_ICON_MAIL_SEND		"mail_send"
+#define  MODEST_TOOLBAR_ICON_NEW_MAIL		"mail_new"
 /* #define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	PIXMAP_PREFIX "gtk-refresh.png"  */
-#define  MODEST_TOOLBAR_ICON_REPLY		PIXMAP_PREFIX "mail-reply-sender.png"
-#define  MODEST_TOOLBAR_ICON_REPLY_ALL		PIXMAP_PREFIX "mail-reply-all.png"
-#define  MODEST_TOOLBAR_ICON_FORWARD		PIXMAP_PREFIX "mail-forward.png"
+#define  MODEST_TOOLBAR_ICON_REPLY		"mail_reply"
+#define  MODEST_TOOLBAR_ICON_REPLY_ALL		"mail-reply-all"
+#define  MODEST_TOOLBAR_ICON_FORWARD		"mail-forward"
 #define  MODEST_TOOLBAR_ICON_DELETE		GTK_STOCK_DELETE
 /* #define  MODEST_TOOLBAR_ICON_NEXT		PIXMAP_PREFIX "forward.png" */
 /* #define  MODEST_TOOLBAR_ICON_PREV		PIXMAP_PREFIX "back.png" */
-#define  MODEST_TOOLBAR_ICON_STOP		PIXMAP_PREFIX "stock-stop.png"
-#define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     PIXMAP_PREFIX "qgn_list_gene_bullets"
+#define  MODEST_TOOLBAR_ICON_STOP		GTK_STOCK_STOP
+#define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     GTK_STOCK_INDENT
 #define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         PIXMAP_PREFIX "qgn_toolb_rss_fldonoff"
 #define  MODEST_TOOLBAR_ICON_BOLD               GTK_STOCK_BOLD
 #define  MODEST_TOOLBAR_ICON_ITALIC             GTK_STOCK_ITALIC
