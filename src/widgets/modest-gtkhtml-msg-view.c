@@ -1660,6 +1660,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	g_return_if_fail (self);
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
+	modest_mail_header_view_set_loading (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), FALSE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), FALSE);
 
@@ -1755,6 +1756,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	}
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
+	modest_mail_header_view_set_loading (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), TRUE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), FALSE);
 

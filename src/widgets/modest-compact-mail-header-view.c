@@ -351,17 +351,21 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	priv->subject_label = gtk_label_new (NULL);
 	gtk_misc_set_alignment (GTK_MISC (priv->subject_label), 0.0, 1.0);
-	gtk_label_set_ellipsize (GTK_LABEL (priv->subject_label), PANGO_ELLIPSIZE_END);
+	gtk_label_set_ellipsize (GTK_LABEL (priv->subject_label), PANGO_ELLIPSIZE_NONE);
 	attr_list = pango_attr_list_new ();
 	pango_attr_list_insert (attr_list, pango_attr_scale_new (PANGO_SCALE_LARGE));
 	gtk_label_set_attributes (GTK_LABEL (priv->subject_label), attr_list);
 	pango_attr_list_unref (attr_list);
 
 	priv->details_button = gtk_button_new ();
+	gtk_widget_set_no_show_all (priv->details_button, TRUE);
+	gtk_widget_show (priv->details_button);
 	priv->details_label = gtk_label_new (_("mcen_ti_message_properties"));
+	gtk_widget_show (priv->details_label);
 	gtk_misc_set_alignment (GTK_MISC (priv->details_label), 1.0, 0.5);
 	gtk_container_add (GTK_CONTAINER (priv->details_button), priv->details_label);
 	gtk_button_set_relief (GTK_BUTTON (priv->details_button), GTK_RELIEF_NONE);
+	gtk_widget_set_size_request (priv->details_button, 200, -1);
 
 	gtk_box_pack_end (GTK_BOX (priv->subject_box), priv->subject_label, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (first_hbox), priv->subject_box, TRUE, TRUE, 0);
@@ -627,10 +631,11 @@ modest_compact_mail_header_view_set_loading_default (ModestMailHeaderView *heade
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
 
 	priv->is_loading = is_loading;
+	gtk_widget_set_sensitive (priv->details_button, !is_loading);
 	if (is_loading) {
-		gtk_widget_hide (priv->details_button);
+		gtk_widget_hide (priv->details_label);
 	} else {
-		gtk_widget_show (priv->details_button);
+		gtk_widget_show (priv->details_label);
 	}
 }
 
