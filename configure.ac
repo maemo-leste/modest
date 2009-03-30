@@ -205,13 +205,18 @@ pluginpkgs=$hildonpkgs
 echo "Plugin Packages $pluginpkgs"
 AC_SUBST(pluginpkgs)
 
+use_profile_data=false
 # Plugin packages must not include libcanberra and libprofile
 if test "$have_hildon2" = "true"; then
    echo "DETECTED HILDON 2 $have_hildon2."
    detected_toolkit=hildon2
-   hildonpkgs="$hildonpkgs libcanberra profile"
+   hildonpkgs="$hildonpkgs libcanberra"
+   AC_CHECK_HEADER([profiled/keys_nokia.h], use_profile_data=true, use_profile_data=false)
+   if test "$use_profile_data" = "true"; then
+      hildonpkgs="$hildonpkgs profile"
+      AC_DEFINE_UNQUOTED(MODEST_USE_PROFILE, 1, ["Use the Profile data include"])
+   fi
    echo "HILDON 2 PACKAGES $hildonpkgs"
-   AC_CHECK_HEADER([profiled/keys_nokia.h], [], AC_MSG_ERROR([You have to install package profile-data-dev]))
 fi
 AC_SUBST(hildonpkgs)
 

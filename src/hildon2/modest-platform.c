@@ -63,8 +63,10 @@
 #include <osso-mem.h>
 #include "hildon2/modest-hildon2-details-dialog.h"
 #include "hildon2/modest-hildon2-window-mgr.h"
+#ifdef MODEST_USE_PROFILE
 #include <keys_nokia.h>
 #include <libprofile.h>
+#endif
 #include <canberra.h>
 #include <modest-datetime-formatter.h>
 #include "modest-header-window.h"
@@ -92,8 +94,12 @@
 #define URI_ACTION_COPY "copy:"
 #define MODEST_NOTIFICATION_CATEGORY "email-message"
 #define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternCommunicationEmail"
+#ifdef MODEST_USE_PROFILE
 #define PROFILE_MAIL_TONE PROFILEKEY_EMAIL_ALERT_TONE
 #define PROFILE_MAIL_VOLUME PROFILEKEY_EMAIL_ALERT_VOLUME
+#else
+#define MAIL_TONE "message-new-email"
+#endif
 
 #define COMMON_FOLDER_DIALOG_ENTRY "entry"
 #define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
@@ -2442,18 +2448,26 @@ modest_platform_get_osso_context (void)
 static void
 _modest_platform_play_email_tone (void)
 {
-	gchar *active_profile;
 	gchar *mail_tone;
-	gchar *mail_volume;
 	gint mail_volume_int;
 	int ret;
 	ca_context *ca_con = NULL;
 	ca_proplist *pl = NULL;
 
+#ifdef MODEST_USE_PROFILE
+	gchar *active_profile;
+	gchar *mail_volume;
+
 	active_profile = profile_get_profile ();
 	mail_tone = profile_get_value (active_profile, PROFILE_MAIL_TONE);
 	mail_volume = profile_get_value (active_profile, PROFILE_MAIL_VOLUME);
 	mail_volume_int = profile_parse_int (mail_volume);
+	g_free (mail_volume);
+	g_free (active_profile);
+#else
+	mail_tone = MAIL_TONE;
+	mail_volume_int = 100;
+#endif
 
 	if (mail_tone && !strstr (mail_tone, "/")) {
 		gchar *tmp;
@@ -2487,9 +2501,7 @@ _modest_platform_play_email_tone (void)
 		ca_context_destroy(ca_con);
 	}
 
-	g_free (mail_volume);
 	g_free (mail_tone);
-	g_free (active_profile);
 }
 
 #define MOVE_TO_DIALOG_FOLDER_VIEW "folder-view"
