@@ -445,10 +445,18 @@ commit_contact(EContact * contact, gboolean is_new)
 	if (OSSO_ABOOK_IS_CONTACT (contact)) {
 		osso_abook_contact_commit(OSSO_ABOOK_CONTACT(contact), is_new, book, NULL);
 	} else {
-		if (is_new)
-			e_book_add_contact (book, contact, NULL);
-		else
-			e_book_commit_contact (book, contact, NULL);
+		GError *err = NULL;
+		if (is_new) {
+			if (!e_book_add_contact (book, contact, &err)) {
+				g_warning ("Failed to add contact: %s", err->message);
+				g_error_free (err);
+			}
+		} else {
+			if (!e_book_commit_contact (book, contact, &err)) {
+				g_warning ("Failed to commit contact: %s", err->message);
+				g_error_free (err);
+			}
+		}
 	}
 #endif /* MODEST_ABOOK_API < 2 */
 }
