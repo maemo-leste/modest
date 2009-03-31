@@ -452,8 +452,12 @@ on_account_default_toggled (GtkCellRendererToggle *cell_renderer,
 		return;
 
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));	
-	gtk_tree_model_get_iter_from_string (model, &iter, path);
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW(self));
+
+	if (!gtk_tree_model_get_iter_from_string (model, &iter, path)) {
+		g_warning ("Got path of a not existing iter");
+		return;
+	}
 	
 	gtk_tree_model_get (model, &iter, 
 			    MODEST_ACCOUNT_VIEW_NAME_COLUMN, 
