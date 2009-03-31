@@ -1602,7 +1602,9 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 
 		/* Notify. We need to do this in an idle because this function
 		   could be called from a thread */
-		notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL);
+		if (!notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL)) {
+			g_warning ("Failed to send notification");
+		}
 
 		/* Save id in the list */
 		g_object_get(G_OBJECT(notification), "id", &notif_id, NULL);
