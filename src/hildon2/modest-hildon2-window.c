@@ -262,6 +262,7 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 							    (GCallback) dimming_callback,
 							    MODEST_WINDOW (self));
 	hildon_app_menu_append (HILDON_APP_MENU (priv->app_menu), GTK_BUTTON (button));
+	gtk_widget_show (GTK_WIDGET (button));
 }
 
 void 
