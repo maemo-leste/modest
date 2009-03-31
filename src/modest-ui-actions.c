@@ -729,7 +729,9 @@ void
 modest_ui_actions_on_new_account (GtkAction *action,
 				  ModestWindow *window)
 {
-	modest_ui_actions_run_account_setup_wizard (window);
+	if (!modest_ui_actions_run_account_setup_wizard (window)) {
+		g_debug ("%s: wizard was already running", __FUNCTION__);
+	}
 }
 
 void
