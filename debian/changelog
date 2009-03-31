@@ -1,3 +1,16 @@
+modest (3.0.4-rc1) unstable; urgency=low
+
+  * Week 14, 2009 - wednesday release
+  *  5 bug fixes. modest trunk r8505
+  * 
+  * Fixes: NB#108704 	New message saved with shortcut command "Ctrl+s" doesn't open
+  * Fixes: NB#108765 	<coverity> moderate defects in modest
+  * Fixes: NB#108791 	Modest crashes at "modest_text_utils_hyperlinkify_begin" and "modest_text_utils_hyperlinkify_end" while trying to pane through the attached messages' content
+  * Fixes: NB#108797
+  * Fixes: NB#108973
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 31 Mar 2009 16:28:09 +0300
+
 modest (3.0.3-rc1) unstable; urgency=low
 
   * Week 14, 2009 - tuesday release
