@@ -1109,9 +1109,9 @@ resolve_address (const gchar *address,
 		clean_check_names_banner (info);
 		return FALSE;
 	}
-	hide_check_names_banner (info);
 
 	resolved_contacts = get_contacts_for_name (address);
+	hide_check_names_banner (info);
 
 	if (resolved_contacts == NULL) {
 		/* no matching contacts for the search string */
