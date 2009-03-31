@@ -6558,7 +6558,11 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 		}
 		iter = tny_list_create_iterator (headers);
 		header = TNY_HEADER (tny_iterator_get_current (iter));
-		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
+		if (header) {
+			folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
+		} else {
+			g_warning ("List should contain headers");
+		}
 		g_object_unref (iter);
 		g_object_unref (headers);
 #endif
