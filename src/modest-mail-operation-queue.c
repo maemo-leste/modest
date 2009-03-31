@@ -513,8 +513,10 @@ modest_mail_operation_queue_to_string (ModestMailOperationQueue *self)
 	len = g_queue_get_length (priv->op_queue);
 	str = g_strdup_printf ("mail operation queue (%02d)\n-------------------------", len);
 	if (len == 0) {
-		g_free (str);
-		str = g_strdup_printf ("%s\n%s", str, "<empty>");
+		gchar *copy;
+		copy = str;
+		str = g_strdup_printf ("%s\n%s", copy, "<empty>");
+		g_free (copy);
 	} else {
 		g_mutex_lock (priv->queue_lock);
 		g_queue_foreach (priv->op_queue, (GFunc)accumulate_mail_op_strings, &str);
