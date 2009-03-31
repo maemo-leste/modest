@@ -907,8 +907,11 @@ modest_window_mgr_show_initial_window (ModestWindowMgr *self)
 
 		/* If there are no accounts then show the account wizard */
 		mgr = modest_runtime_get_account_mgr();
-		if (!modest_account_mgr_has_accounts (mgr, TRUE))
-			modest_ui_actions_run_account_setup_wizard (window);
+		if (!modest_account_mgr_has_accounts (mgr, TRUE)) {
+			if (!modest_ui_actions_run_account_setup_wizard (window)) {
+				g_debug ("%s: couldn't show account setup wizard", __FUNCTION__);
+			}
+		}
 	}
 
 	return window;
