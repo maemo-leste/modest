@@ -6075,7 +6075,9 @@ retrieve_contents_cb (ModestMailOperation *mail_op,
 {
 	/* We only need this callback to show an error in case of
 	   memory low condition */
-	modest_ui_actions_msg_retrieval_check (mail_op, header, msg);
+	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
+		g_debug ("%s: message failed to retrieve. Memory low?", __FUNCTION__);
+	}
 }
 
 static void
