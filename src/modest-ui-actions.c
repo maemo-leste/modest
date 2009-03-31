@@ -2524,7 +2524,7 @@ set_active_account_from_tny_account (TnyAccount *account,
 	/* We need the TnyAccount provided by the
 	   account store because that is the one that
 	   knows the name of the Modest account */
-	TnyAccount *modest_server_account = modest_server_account =
+	TnyAccount *modest_server_account =
 		modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store (),
 							     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
 							     server_acc_name);
