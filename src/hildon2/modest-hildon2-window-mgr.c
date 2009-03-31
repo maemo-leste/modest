@@ -386,17 +386,17 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	if (win) {
 		/* this is for the case we want to register the window
 		   and it was already registered */
-		gtk_window_present (GTK_WINDOW (win));
+		gtk_window_present (GTK_WINDOW (window));
 		return FALSE;
 	}
 
 	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
-		gtk_window_present (GTK_WINDOW (win));
+		gtk_window_present (GTK_WINDOW (window));
 		return FALSE;
 	}
 
 	if (MODEST_IS_MAILBOXES_WINDOW (current_top) && MODEST_IS_MAILBOXES_WINDOW (window)) {
-		gtk_window_present (GTK_WINDOW (win));
+		gtk_window_present (GTK_WINDOW (window));
 		return FALSE;
 	}
 
@@ -411,7 +411,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	if (MODEST_IS_MAILBOXES_WINDOW (current_top) &&
 	    MODEST_IS_FOLDER_WINDOW (window) &&
 	    MODEST_IS_ACCOUNTS_WINDOW (parent)) {
-		gtk_window_present (GTK_WINDOW (win));
+		gtk_window_present (GTK_WINDOW (window));
 		return FALSE;
 	}
 
