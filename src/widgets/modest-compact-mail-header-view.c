@@ -667,7 +667,12 @@ update_style (ModestCompactMailHeaderView *self)
 		color.green = style_color.green;
 		color.blue = style_color.blue;
 	} else {
-		pango_color_parse (&color, "grey");
+		if (!pango_color_parse (&color, "grey")) {
+			g_warning ("Failed to parse color grey");
+			color.red = 0xc0c0;
+			color.green = 0xc0c0;
+			color.blue = 0xc0c0;
+		}
 	}
 
 	/* style of from:/to: label */
