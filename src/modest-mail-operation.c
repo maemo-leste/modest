@@ -765,35 +765,39 @@ send_mail_on_added_to_outbox (TnySendQueue *send_queue,
 		ModestTnySendQueue *queue;
 
 		trans_account = (TnyTransportAccount *) modest_mail_operation_get_account (self);
-		queue = modest_runtime_get_send_queue (trans_account, TRUE);
-		if (queue) {
-			RunQueueHelper *helper;
+		if (trans_account) {
+			queue = modest_runtime_get_send_queue (trans_account, TRUE);
+			if (queue) {
+				RunQueueHelper *helper;
 
-			/* Create the helper */
-			helper = g_slice_new0 (RunQueueHelper);
-			helper->queue = g_object_ref (queue);
-			helper->self = g_object_ref (self);
+				/* Create the helper */
+				helper = g_slice_new0 (RunQueueHelper);
+				helper->queue = g_object_ref (queue);
+				helper->self = g_object_ref (self);
 
-			/* if sending is ongoing wait for the queue to
-			   stop. Otherwise wait for the queue-start
-			   signal. It could happen that the queue
-			   could not start, then check also the error
-			   happened signal */
-			if (modest_tny_send_queue_sending_in_progress (queue)) {
-				run_queue_start (TNY_SEND_QUEUE (queue), helper);
+				/* if sending is ongoing wait for the queue to
+				   stop. Otherwise wait for the queue-start
+				   signal. It could happen that the queue
+				   could not start, then check also the error
+				   happened signal */
+				if (modest_tny_send_queue_sending_in_progress (queue)) {
+					run_queue_start (TNY_SEND_QUEUE (queue), helper);
+				} else {
+					helper->start_handler = g_signal_connect (queue, "queue-start", 
+										  G_CALLBACK (run_queue_start), 
+										  helper);
+					helper->error_handler = g_signal_connect (queue, "error-happened", 
+										  G_CALLBACK (run_queue_error_happened), 
+										  helper);
+				}
 			} else {
-				helper->start_handler = g_signal_connect (queue, "queue-start", 
-									  G_CALLBACK (run_queue_start), 
-									  helper);
-				helper->error_handler = g_signal_connect (queue, "error-happened", 
-									  G_CALLBACK (run_queue_error_happened), 
-									  helper);
+				/* Finalize this mail operation */
+				modest_mail_operation_notify_end (self);
 			}
+			g_object_unref (trans_account);
 		} else {
-			/* Finalize this mail operation */
-			modest_mail_operation_notify_end (self);
+			g_warning ("No transport account for the operation");
 		}
-		g_object_unref (trans_account);
 	}
 
 	g_object_unref (helper->mail_op);
