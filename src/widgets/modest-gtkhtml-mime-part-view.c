@@ -438,7 +438,9 @@ decode_to_stream_cb (TnyMimePart *self,
 	gboolean is_text = GPOINTER_TO_INT (user_data);
 
 	if (is_text) {
-		tny_stream_write (stream, "\n", 1);
+		if (tny_stream_write (stream, "\n", 1) == -1) {
+			g_warning ("failed to write CR in %s", __FUNCTION__);
+		}
 		tny_stream_reset (stream);
 	}
 	tny_stream_close (stream);
