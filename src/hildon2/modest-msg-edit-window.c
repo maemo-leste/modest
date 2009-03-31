@@ -3476,8 +3476,10 @@ gtk_text_iter_forward_search_insensitive (const GtkTextIter *iter,
 		if (!g_utf8_collate (range_subtext, str_casefold)) {
 			gchar *found_text = g_strndup (range_text + offset, str_chars_n);
 			result = TRUE;
-			gtk_text_iter_forward_search (iter, found_text, GTK_TEXT_SEARCH_VISIBLE_ONLY|GTK_TEXT_SEARCH_TEXT_ONLY,
-						      match_start, match_end, NULL);
+			if (!gtk_text_iter_forward_search (iter, found_text, GTK_TEXT_SEARCH_VISIBLE_ONLY|GTK_TEXT_SEARCH_TEXT_ONLY,
+							   match_start, match_end, NULL)) {
+				g_warning ("Matched string with collate, but not matched in model");
+			}
 			g_free (found_text);
 		}
 		g_free (range_subtext);
