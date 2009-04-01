@@ -633,11 +633,13 @@ set_scroll_adjustments (ModestGtkhtmlMsgView *self,
 			GtkAdjustment *hadj,
 			GtkAdjustment *vadj)
 {
-	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 	set_hadjustment (self, hadj);
 	set_vadjustment (self, vadj);
 
+#ifndef MODEST_TOOLKIT_HILDON2
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->body_view), vadj);
+#endif
 }
 
 static void
