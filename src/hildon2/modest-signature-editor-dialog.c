@@ -171,8 +171,6 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 
 	priv->pannable = hildon_pannable_area_new ();
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), align);
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (top_box), 
-					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable)));
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), priv->pannable);
 	gtk_widget_show (priv->pannable);		
 

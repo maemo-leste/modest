@@ -921,8 +921,6 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_container_add (GTK_CONTAINER (align), box);
 	
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
-					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (pannable)));
 	gtk_widget_show (GTK_WIDGET (box));
 	gtk_widget_show (pannable);
 
@@ -1068,8 +1066,6 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	gtk_container_add (GTK_CONTAINER (align), box);
 	
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
-	gtk_container_set_focus_vadjustment (GTK_CONTAINER (box),
-					     hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (pannable)));
 	gtk_widget_show (GTK_WIDGET (box));
 	gtk_widget_show (pannable);
 
