@@ -57,7 +57,12 @@ struct _ModestSignatureEditorDialogPrivate
 	GtkWidget *label;
 	GtkWidget *pannable;
 	GtkWidget *textview;
+
+	guint correct_scroll_idle;
 };
+
+static void text_buffer_end_user_action (GtkTextBuffer *buffer,
+					 ModestSignatureEditorDialog *userdata);
 
 static void
 modest_signature_editor_dialog_get_property (GObject *object, guint property_id,
@@ -89,6 +94,14 @@ modest_signature_editor_dialog_dispose (GObject *object)
 static void
 modest_signature_editor_dialog_finalize (GObject *object)
 {
+	ModestSignatureEditorDialogPrivate *priv;
+
+	priv = SIGNATURE_EDITOR_DIALOG_GET_PRIVATE (object);
+
+	if (priv->correct_scroll_idle > 0) {
+		g_source_remove (priv->correct_scroll_idle);
+		priv->correct_scroll_idle = 0;
+	}
 	G_OBJECT_CLASS (modest_signature_editor_dialog_parent_class)->finalize (object);
 }
 
@@ -158,6 +171,9 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->textview), GTK_WRAP_WORD_CHAR);
 	gtk_box_pack_start (GTK_BOX (top_box), priv->textview, TRUE, TRUE, 0);
+
+	g_signal_connect (G_OBJECT (buffer), "end-user-action",
+			  G_CALLBACK (text_buffer_end_user_action), self);
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
@@ -181,6 +197,8 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
 		modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+
+	priv->correct_scroll_idle = 0;
 	
 }
 
@@ -235,3 +253,80 @@ modest_signature_editor_dialog_get_settings (
 	gtk_text_buffer_get_bounds (buffer, &start, &end);
 	return gtk_text_buffer_get_text (buffer, &start, &end, TRUE);
 }
+
+static gboolean 
+correct_scroll_idle_func (gpointer userdata)
+{
+	ModestSignatureEditorDialog *self = (ModestSignatureEditorDialog *) userdata;
+	ModestSignatureEditorDialogPrivate *priv;
+	GtkTextBuffer *buffer;
+	GtkTextIter iter;
+	GdkRectangle rectangle;
+	gint offset_min, offset_max;
+	GtkTextMark *insert;
+	GtkAdjustment *vadj;
+
+	/* It could happen that the window was already closed */
+	if (!GTK_WIDGET_VISIBLE (self))
+		return FALSE;
+
+	priv = SIGNATURE_EDITOR_DIALOG_GET_PRIVATE(self);
+	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
+
+	insert = gtk_text_buffer_get_insert (buffer);
+	gtk_text_buffer_get_iter_at_mark (buffer, &iter, insert);
+
+	gtk_text_view_get_iter_location (GTK_TEXT_VIEW (priv->textview), &iter, &rectangle);
+	offset_min = priv->textview->allocation.y + rectangle.y;
+	offset_max = offset_min + rectangle.height;
+
+	vadj = hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable));
+	offset_min = MAX (offset_min - 48, 0);
+	offset_max = MIN (offset_max + 48, vadj->upper);
+
+	if ((offset_min < vadj->value) || (offset_max > vadj->value + vadj->page_size)) {
+		/* We check if the current center of the visible area is already matching the center
+		   of the selection */
+		gint offset_center;
+		gint center_top, center_bottom;
+
+		offset_center = (offset_min + offset_max) / 2;
+		center_top = vadj->value + vadj->page_size / 3;
+		center_bottom = vadj->value + vadj->page_size * 2 / 3;
+
+		if ((offset_center < center_top) ||
+		    (offset_center > center_bottom))
+			hildon_pannable_area_scroll_to (HILDON_PANNABLE_AREA (priv->pannable), -1, offset_center);
+	}
+
+	priv->correct_scroll_idle = 0;
+	return FALSE;
+}
+
+static void correct_scroll (ModestSignatureEditorDialog *self)
+{
+	ModestSignatureEditorDialogPrivate *priv;
+
+	priv = SIGNATURE_EDITOR_DIALOG_GET_PRIVATE(self);
+
+	if (!gtk_widget_is_focus (priv->textview))
+		return;
+
+	if (priv->correct_scroll_idle > 0) {
+		return;
+	}
+
+	priv->correct_scroll_idle = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+						     (GSourceFunc) correct_scroll_idle_func,
+						     g_object_ref (self),
+						     g_object_unref);
+}
+
+static void
+text_buffer_end_user_action (GtkTextBuffer *buffer,
+			     ModestSignatureEditorDialog *userdata)
+{
+
+	correct_scroll (userdata);
+}
+
