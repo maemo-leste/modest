@@ -1,3 +1,17 @@
+modest (3.0.5-rc1) unstable; urgency=low
+
+  * Week 14, 2009 - thursday release
+  *   modest trunk r8526
+  *   6 bug fixes
+  * Fixes: NB#104208  Intsync: message with 5 Mb attachment stays in failed status in Outbox, but received at least 4 times at the recipient's end
+  * Fixes: NB#104301 	"Checking names" info banner shown blank in a particular scenario
+  * Fixes: NB#107923 	Device reboots when attempt to open a message with certain image inserted to message body from sent folder.
+  * Fixes: NB#108834
+  * Fixes: NB#108954
+  * Fixes: NB#109068 	Modest doesn't call gtk_widget_show() on its menu items
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 01 Apr 2009 16:27:32 +0300
+
 modest (3.0.4-rc1) unstable; urgency=low
 
   * Week 14, 2009 - wednesday release
