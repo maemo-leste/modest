@@ -3288,10 +3288,10 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 		return TRUE;
 
 	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	if ((priv->original_mailbox) && 
-	    (!account_name || strcmp (account_name, priv->original_mailbox)))
-		return TRUE;
-	if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
+	if (priv->original_mailbox) {
+		if (!account_name || strcmp (account_name, priv->original_mailbox))
+			return TRUE;
+	} else if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
 		return TRUE;
 	}
 
