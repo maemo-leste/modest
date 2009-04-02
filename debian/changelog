@@ -1,3 +1,18 @@
+modest (3.0.6-rc1) unstable; urgency=low
+
+  * Week 15, 2009 - friday release
+  * modest/trunk r8555
+  *  7 bug fixes
+  * Fixes: NB#108250   	Account setup -> Incoming details: graphics glitch when scrolling display
+  * Fixes: NB#90878 	Default folder is showing as device root folder instead of 'Document' folder
+  * Fixes: NB#96696 	symbols dynamic exporting should be disabled as it was in Diablo
+  * Fixes: NB#97184 	Cancel Sending: Email application hangs when attempt to cancel multiple sending messages.
+  * Fixes: NB#108619 	Message details: Cc field doesn't contain all the addresses
+  * Fixes: NB#108766 	Message from Inbox does not open properly in viewer view after immediately replying to message
+  * Fixes: NB#109447
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 02 Apr 2009 16:09:43 +0300
+
 modest (3.0.5-rc1) unstable; urgency=low
 
   * Week 14, 2009 - thursday release
