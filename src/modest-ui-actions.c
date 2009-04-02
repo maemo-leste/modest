@@ -109,6 +109,7 @@ typedef struct _ReplyForwardHelper {
 	guint reply_forward_type;
 	ReplyForwardAction action;
 	gchar *account_name;
+	gchar *mailbox;
 	GtkWidget *parent_window;
 	TnyHeader *header;
 } ReplyForwardHelper;
@@ -1009,7 +1010,6 @@ get_header_view_from_window (ModestWindow *window)
 static gchar *
 get_info_from_header (TnyHeader *header, gboolean *is_draft, gboolean *can_open)
 {
-	/* TODO: should also retrieve the mailbox from header */
 	TnyFolder *folder;
 	gchar *account = NULL;
 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
@@ -1140,14 +1140,16 @@ open_msg_cb (ModestMailOperation *mail_op,
 			g_free (mailbox);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
+		const gchar *mailbox = NULL;
+
+		if (parent_win && MODEST_IS_WINDOW (parent_win))
+			mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (parent_win));
 
 		if (helper->rowref && helper->model) {
-			/* TODO: use mailbox */
-			win = modest_msg_view_window_new_with_header_model (msg, account, NULL, (const gchar*) uid,
+			win = modest_msg_view_window_new_with_header_model (msg, account, mailbox, (const gchar*) uid,
 									    helper->model, helper->rowref);
 		} else {
-			/* TODO: use mailbox */
-			win = modest_msg_view_window_new_for_attachment (msg, account, NULL, (const gchar*) uid);
+			win = modest_msg_view_window_new_for_attachment (msg, account, mailbox, (const gchar*) uid);
 		}
 		g_free (uid);
 	}
@@ -1443,9 +1445,10 @@ open_msg_performer(gboolean canceled,
 		header_view = get_header_view_from_window (MODEST_WINDOW (parent_window));
 		uid = modest_tny_folder_get_header_unique_id (helper->header);
 		if (header_view) {
-			/* TODO: use mailbox */
+			const gchar *mailbox = NULL;
+			mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (parent_window));
 			window = modest_msg_view_window_new_from_header_view 
-				(MODEST_HEADER_VIEW (header_view), account_name, NULL, uid, helper->rowref);
+				(MODEST_HEADER_VIEW (header_view), account_name, mailbox, uid, helper->rowref);
 			if (window != NULL) {
 				if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
 									window, NULL)) {
@@ -1654,6 +1657,7 @@ create_reply_forward_helper (ReplyForwardAction action,
 {
 	ReplyForwardHelper *rf_helper = NULL;
 	const gchar *active_acc = modest_window_get_active_account (win);
+	const gchar *active_mailbox = modest_window_get_active_mailbox (win);
 
 	rf_helper = g_slice_new0 (ReplyForwardHelper);
 	rf_helper->reply_forward_type = reply_forward_type;
@@ -1663,6 +1667,7 @@ create_reply_forward_helper (ReplyForwardAction action,
 	rf_helper->account_name = (active_acc) ?
 		g_strdup (active_acc) :
 		modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
+	rf_helper->mailbox = g_strdup (active_mailbox);
 
 	/* Note that window could be destroyed just AFTER calling
 	   register_window so we must ensure that this pointer does
@@ -1681,6 +1686,7 @@ free_reply_forward_helper (gpointer data)
 
 	helper = (ReplyForwardHelper *) data;
 	g_free (helper->account_name);
+	g_free (helper->mailbox);
 	if (helper->header)
 		g_object_unref (helper->header);
 	if (helper->parent_window)
@@ -1715,7 +1721,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		goto cleanup;
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
-						   rf_helper->account_name, NULL);
+						   rf_helper->account_name, rf_helper->mailbox);
 	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr(), 
 						      rf_helper->account_name, 
 						      &use_signature);
@@ -1767,8 +1773,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Create and register the windows */
-	/* TODO: fetch mailbox */
-	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name, NULL, FALSE);
+	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name, rf_helper->mailbox, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win, (ModestWindow *) rf_helper->parent_window);
 
