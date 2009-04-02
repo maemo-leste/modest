@@ -793,6 +793,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	TnyAccount *account = NULL;
 	TnyFolder *folder = NULL;
 	gchar *from_str = NULL, *signature = NULL, *body = NULL;
+	gchar *recipient = NULL;
 	gboolean use_signature = FALSE;
 	ModestWindow *msg_win = NULL;
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
@@ -831,7 +832,9 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		goto cleanup;
 	}
 
-	signature = modest_account_mgr_get_signature (mgr, account_name, &use_signature);
+	recipient = modest_text_utils_get_email_address (from_str);
+	signature = modest_account_mgr_get_signature_from_recipient (mgr, recipient, &use_signature);
+	g_free (recipient);
 	if (body_str != NULL) {
 		body = use_signature ? g_strconcat(body_str, "\n--\n", signature, NULL) : g_strdup(body_str);
 	} else {
@@ -1712,6 +1715,7 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	ModestWindowMgr *mgr = NULL;
 	gchar *signature = NULL;
 	gboolean use_signature;
+	gchar *recipient;
 
 	/* If there was any error. The mail operation could be NULL,
 	   this means that we already have the message downloaded and
@@ -1722,9 +1726,11 @@ reply_forward_cb (ModestMailOperation *mail_op,
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
 						   rf_helper->account_name, rf_helper->mailbox);
-	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr(), 
-						      rf_helper->account_name, 
-						      &use_signature);
+	recipient = modest_text_utils_get_email_address (from);
+	signature = modest_account_mgr_get_signature_from_recipient (modest_runtime_get_account_mgr(), 
+								     recipient, 
+								     &use_signature);
+	g_free (recipient);
 
 	/* Create reply mail */
 	switch (rf_helper->action) {

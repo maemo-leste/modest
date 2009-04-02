@@ -448,46 +448,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 				   HILDON_WINDOW(obj));
 }
 
-static gboolean account_is_multimailbox (const gchar *account_name, ModestProtocol **mmb_protocol)
-{
-	gchar *transport_account;
-	gboolean result = FALSE;
-
-	if (mmb_protocol)
-		*mmb_protocol = NULL;
-
-	transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
-									account_name,
-									TNY_ACCOUNT_TYPE_TRANSPORT);
-	if (transport_account) {
-		gchar *proto;
-		ModestProtocolRegistry *registry;
-
-		registry = modest_runtime_get_protocol_registry ();
-
-		proto = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), transport_account, 
-						       MODEST_ACCOUNT_PROTO, TRUE);
-		if (proto != NULL) {
-			ModestProtocol *protocol = 
-				modest_protocol_registry_get_protocol_by_name (registry,
-									       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
-									       proto);
-			if (protocol &&
-			    modest_protocol_registry_protocol_type_has_tag 
-			    (registry,
-			     modest_protocol_get_type_id (protocol),
-			     MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS)) {
-				if (mmb_protocol)
-					*mmb_protocol = protocol;
-				result = TRUE;
-			}
-			
-		}
-	}
-
-	return result;
-}
-
 static gchar *
 multimailbox_get_default_mailbox (const gchar *account_name)
 {
@@ -549,7 +509,7 @@ get_transports (void)
 			gboolean multi_mailbox = FALSE;
 			ModestProtocol *protocol = NULL;
 
-			if (account_is_multimailbox (account_name, &protocol)) {
+			if (modest_account_mgr_account_is_multimailbox (account_mgr, account_name, &protocol)) {
 
 				transport_account = modest_account_mgr_get_server_account_name 
 					(modest_runtime_get_account_mgr (),
@@ -1625,7 +1585,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
 		priv->original_mailbox = g_strdup (mailbox);
-	} else if (account_is_multimailbox (account_name, NULL)) {
+	} else if (modest_account_mgr_account_is_multimailbox (modest_runtime_get_account_mgr (), account_name, NULL)) {
 		/* We set the first mailbox as the active mailbox */
 		priv->original_mailbox = multimailbox_get_default_mailbox (account_name);
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
@@ -1681,10 +1641,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	gtk_widget_hide (priv->priority_icon);
 	gtk_widget_queue_resize (priv->subject_box);
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
-
-	if (mailbox)
-		update_signature (MODEST_MSG_EDIT_WINDOW (obj), mailbox, NULL);
-	update_signature (MODEST_MSG_EDIT_WINDOW (obj), account_name, priv->last_from_account);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
@@ -3888,33 +3844,6 @@ on_account_removed (TnyAccountStore *account_store,
 	}
 }
 
-static gchar *
-get_signature (const gchar *current_recipient, gboolean *has_signature)
-{
-	gchar *result = NULL;
-	gchar *mailbox = NULL;
-	gchar *account_name;
-	ModestProtocol *protocol = NULL;
-
-	*has_signature = FALSE;
-
-	account_name = modest_utils_get_account_name_from_recipient (current_recipient, &mailbox);
-	if (account_is_multimailbox (account_name, &protocol)
-	    && mailbox) {
-		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
-			result = modest_account_protocol_get_signature (MODEST_ACCOUNT_PROTOCOL (protocol),
-									account_name, mailbox, 
-									has_signature);
-		}
-	}
-
-	if (result == NULL) {
-		result = modest_account_mgr_get_signature (modest_runtime_get_account_mgr (), 
-							   account_name, has_signature);
-	}
-	return result;
-}
-
 static void update_signature (ModestMsgEditWindow *self,
 			      const gchar *old_account, 
 			      const gchar *new_account)
@@ -3936,7 +3865,7 @@ static void update_signature (ModestMsgEditWindow *self,
 
 
 	if (old_account) {
-		signature = get_signature (old_account, &has_old_signature);
+		signature = modest_account_mgr_get_signature_from_recipient (mgr, old_account, &has_old_signature);
 		if (has_old_signature) {
 			full_signature = g_strconcat ("\n--\n", signature, NULL);
 			if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
@@ -3952,7 +3881,7 @@ static void update_signature (ModestMsgEditWindow *self,
 	}
 
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	signature = get_signature (new_account, &has_new_signature);
+	signature = modest_account_mgr_get_signature_from_recipient (mgr, new_account, &has_new_signature);
 	if (has_new_signature) {
 		full_signature = g_strconcat ("\n--\n", signature, NULL);
 		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);

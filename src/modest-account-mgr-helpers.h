@@ -125,6 +125,12 @@ gboolean modest_account_mgr_set_signature (ModestAccountMgr *self, const gchar* 
  */
 gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* name, 
 	gboolean* use_signature);
+
+gchar *modest_account_mgr_get_signature_from_recipient (ModestAccountMgr *self, const gchar *recipient,
+							gboolean *use_signature);
+gboolean modest_account_mgr_account_is_multimailbox (ModestAccountMgr *mgr,
+						     const gchar *account_name, 
+						     ModestProtocol **mmb_protocol);
 	
 /**
  * modest_account_mgr_get_store_protocol:

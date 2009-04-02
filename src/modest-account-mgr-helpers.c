@@ -35,6 +35,7 @@
 #include <string.h>
 #include <strings.h>
 #include <modest-account-protocol.h>
+#include <modest-utils.h>
 
 static const gchar * null_means_empty (const gchar * str);
 
@@ -1178,3 +1179,75 @@ modest_account_mgr_set_user_email (ModestAccountMgr *self,
 				       email, 
 				       FALSE /* not server account */);
 }
+
+gboolean 
+modest_account_mgr_account_is_multimailbox (ModestAccountMgr *mgr,
+					    const gchar *account_name, 
+					    ModestProtocol **mmb_protocol)
+{
+	gchar *transport_account;
+	gboolean result = FALSE;
+
+	if (mmb_protocol)
+		*mmb_protocol = NULL;
+
+	transport_account = modest_account_mgr_get_server_account_name (mgr,
+									account_name,
+									TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (transport_account) {
+		gchar *proto;
+		ModestProtocolRegistry *registry;
+
+		registry = modest_runtime_get_protocol_registry ();
+
+		proto = modest_account_mgr_get_string (mgr, transport_account, 
+						       MODEST_ACCOUNT_PROTO, TRUE);
+		if (proto != NULL) {
+			ModestProtocol *protocol = 
+				modest_protocol_registry_get_protocol_by_name (registry,
+									       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+									       proto);
+			if (protocol &&
+			    modest_protocol_registry_protocol_type_has_tag 
+			    (registry,
+			     modest_protocol_get_type_id (protocol),
+			     MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS)) {
+				if (mmb_protocol)
+					*mmb_protocol = protocol;
+				result = TRUE;
+			}
+			
+		}
+	}
+
+	return result;
+}
+
+gchar *
+modest_account_mgr_get_signature_from_recipient (ModestAccountMgr *mgr, 
+						 const gchar *current_recipient, 
+						 gboolean *has_signature)
+{
+	gchar *result = NULL;
+	gchar *mailbox = NULL;
+	gchar *account_name;
+	ModestProtocol *protocol = NULL;
+
+	*has_signature = FALSE;
+
+	account_name = modest_utils_get_account_name_from_recipient (current_recipient, &mailbox);
+	if (modest_account_mgr_account_is_multimailbox (mgr, account_name, &protocol)) {
+		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+			result = modest_account_protocol_get_signature (MODEST_ACCOUNT_PROTOCOL (protocol),
+									account_name, mailbox, 
+									has_signature);
+		}
+	}
+
+	if (result == NULL) {
+		result = modest_account_mgr_get_signature (mgr, 
+							   account_name, has_signature);
+	}
+	return result;
+}
+
