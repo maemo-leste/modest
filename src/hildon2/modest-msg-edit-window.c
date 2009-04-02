@@ -445,6 +445,85 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 				   HILDON_WINDOW(obj));
 }
 
+static gboolean account_is_multimailbox (const gchar *account_name, ModestProtocol **mmb_protocol)
+{
+	gchar *transport_account;
+	gboolean result = FALSE;
+
+	if (mmb_protocol)
+		*mmb_protocol = NULL;
+
+	transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
+									account_name,
+									TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (transport_account) {
+		gchar *proto;
+		ModestProtocolRegistry *registry;
+
+		registry = modest_runtime_get_protocol_registry ();
+
+		proto = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), transport_account, 
+						       MODEST_ACCOUNT_PROTO, TRUE);
+		if (proto != NULL) {
+			ModestProtocol *protocol = 
+				modest_protocol_registry_get_protocol_by_name (registry,
+									       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+									       proto);
+			if (protocol &&
+			    modest_protocol_registry_protocol_type_has_tag 
+			    (registry,
+			     modest_protocol_get_type_id (protocol),
+			     MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS)) {
+				if (mmb_protocol)
+					*mmb_protocol = protocol;
+				result = TRUE;
+			}
+			
+		}
+	}
+
+	return result;
+}
+
+static gchar *
+multimailbox_get_default_mailbox (const gchar *account_name)
+{
+	gchar *transport_account;
+	gchar *result = NULL;
+
+	transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
+									account_name,
+									TNY_ACCOUNT_TYPE_TRANSPORT);
+	if (transport_account) {
+		gchar *proto;
+		ModestProtocolRegistry *registry;
+
+		registry = modest_runtime_get_protocol_registry ();
+
+		proto = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), transport_account, 
+						       MODEST_ACCOUNT_PROTO, TRUE);
+		if (proto != NULL) {
+			ModestProtocol *protocol = 
+				modest_protocol_registry_get_protocol_by_name (registry,
+									       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+									       proto);
+			if (MODEST_ACCOUNT_PROTOCOL (protocol)) {
+				ModestPairList *pair_list;
+
+				pair_list = modest_account_protocol_get_from_list (MODEST_ACCOUNT_PROTOCOL (protocol),
+										   account_name);
+				if (pair_list) {
+					ModestPair *pair = (ModestPair *) pair_list->data;
+					result = g_strdup ((const gchar *) pair->first);
+					modest_pair_list_free (pair_list);
+				}
+			}
+			
+		}
+	}
+
+	return result;
+}
 
 /** 
  * @result: A ModestPairList, which must be freed with modest_pair_list_free().
@@ -465,30 +544,23 @@ get_transports (void)
 
 			gchar *transport_account;
 			gboolean multi_mailbox = FALSE;
-			gchar *proto;
+			ModestProtocol *protocol = NULL;
 
-			transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
-											account_name,
-											TNY_ACCOUNT_TYPE_TRANSPORT);
-			if (transport_account) {
-				proto = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), transport_account, 
-								       MODEST_ACCOUNT_PROTO, TRUE);
-				if (proto != NULL) {
-					ModestProtocol *protocol = 
-						modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
-											       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
-											       proto);
-					if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
-						ModestPairList *pair_list;
-						pair_list = modest_account_protocol_get_from_list (MODEST_ACCOUNT_PROTOCOL (protocol),
-												   account_name);
-						if (pair_list) {
-							transports = g_slist_concat (transports, pair_list);
-							multi_mailbox = TRUE;
-						}
+			if (account_is_multimailbox (account_name, &protocol)) {
+
+				transport_account = modest_account_mgr_get_server_account_name 
+					(modest_runtime_get_account_mgr (),
+					 account_name,
+					 TNY_ACCOUNT_TYPE_TRANSPORT);
+				if (protocol && MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+					ModestPairList *pair_list;
+					pair_list = modest_account_protocol_get_from_list (MODEST_ACCOUNT_PROTOCOL (protocol),
+											   account_name);
+					if (pair_list) {
+						transports = g_slist_concat (transports, pair_list);
+						multi_mailbox = TRUE;
 					}
 				}
-				g_free (proto);
 			}
 
 			if (!multi_mailbox) {
@@ -1543,9 +1615,16 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 
 	/* Menubar. Update the state of some toggles */
 	priv->from_field_protos = get_transports ();
+	priv->original_mailbox = NULL;
  	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
 	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
+		priv->original_mailbox = g_strdup (mailbox);
+	} else if (account_is_multimailbox (account_name, NULL)) {
+		/* We set the first mailbox as the active mailbox */
+		priv->original_mailbox = multimailbox_get_default_mailbox (account_name);
+		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
+									      (gpointer) priv->original_mailbox);
 	} else {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
 	}
@@ -1564,10 +1643,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 		
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
-	modest_window_set_active_mailbox (MODEST_WINDOW(obj), mailbox);
+	modest_window_set_active_mailbox (MODEST_WINDOW(obj), priv->original_mailbox);
 
 	priv->original_account_name = (account_name) ? g_strdup (account_name) : NULL;
-	priv->original_mailbox = (mailbox) ? g_strdup (mailbox) : NULL;
 
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
