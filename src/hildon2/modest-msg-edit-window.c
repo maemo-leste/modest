@@ -1588,8 +1588,12 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	} else if (modest_account_mgr_account_is_multimailbox (modest_runtime_get_account_mgr (), account_name, NULL)) {
 		/* We set the first mailbox as the active mailbox */
 		priv->original_mailbox = multimailbox_get_default_mailbox (account_name);
-		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
-									      (gpointer) priv->original_mailbox);
+		if (priv->original_mailbox != NULL)
+			modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
+							      (gpointer) priv->original_mailbox);
+		else
+			modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
+							      (gpointer) account_name);
 	} else {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
 	}
