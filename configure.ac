@@ -30,7 +30,7 @@ AC_INIT([modest],[3.0],[http://maemo.org])
 AC_CONFIG_HEADERS([config.h])
 
 m4_define([modest_api_major_version], [1])
-m4_define([modest_api_minor_version], [0])
+m4_define([modest_api_minor_version], [99])
 m4_define([modest_api_micro_version], [0])
 m4_define([modest_api_version], [modest_api_major_version.modest_api_minor_version.modest_api_micro_version])
 
