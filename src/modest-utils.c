@@ -722,7 +722,6 @@ modest_images_cache_get_id (const gchar *account, const gchar *uri)
 gchar *
 modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **mailbox)
 {
-	/* TODO: fetch mailbox too */
 	gchar *account_name = NULL;
 	ModestAccountMgr *mgr = NULL;
 	GSList *accounts = NULL, *node = NULL;

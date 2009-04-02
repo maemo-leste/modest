@@ -59,6 +59,7 @@
 #include <hildon/hildon.h>
 #include <modest-accounts-window.h>
 #include <modest-folder-window.h>
+#include <modest-mailboxes-window.h>
 #endif
 
 #include <tny-list.h>
@@ -534,7 +535,6 @@ find_msg_async_cb (TnyFolder *folder,
 			}
 
                         header = tny_msg_get_header (msg);
-			/* TODO: fetch mailbox */
                         msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, NULL, msg_uid);
                         if (! (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN)) {
 				ModestMailOperation *mail_op;
@@ -1183,18 +1183,36 @@ on_idle_open_account (gpointer user_data)
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (MODEST_IS_ACCOUNTS_WINDOW (top)) {
-		GtkWidget *folder_window;
+		GtkWidget *new_window;
+		ModestProtocolType store_protocol;
+		gboolean mailboxes_protocol;
 
-		/* TODO: should show the mailboxes window in multi mailboxes account */
+		store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+									acc_name);
+		mailboxes_protocol = 
+			modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+									store_protocol,
+									MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS);
 
-		folder_window = (GtkWidget *) modest_folder_window_new (NULL);
-		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window),
-						  acc_name);
-		if (modest_window_mgr_register_window (mgr, MODEST_WINDOW (folder_window), NULL)) {
-			gtk_widget_show (folder_window);
+#ifdef MODEST_TOOLKIT_HILDON2
+		if (mailboxes_protocol) {
+			new_window = GTK_WIDGET (modest_mailboxes_window_new (acc_name));
 		} else {
-			gtk_widget_destroy (folder_window);
-			folder_window = NULL;
+			new_window = GTK_WIDGET (modest_folder_window_new (NULL));
+			modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window),
+							  acc_name);
+		}
+#else
+		new_window = GTK_WIDGET (modest_folder_window_new (NULL));
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window),
+						  acc_name);
+#endif
+
+		if (modest_window_mgr_register_window (mgr, MODEST_WINDOW (new_window), NULL)) {
+			gtk_widget_show (new_window);
+		} else {
+			gtk_widget_destroy (new_window);
+			new_window = NULL;
 		}
 	}
 #else
