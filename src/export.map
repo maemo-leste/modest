@@ -32,5 +32,6 @@
 	modest_validating_entry_*;
 	modest_ui_actions_*;
 	modest_wizard_dialog_*;
+	modest_utils_*;
   local: *;
 };

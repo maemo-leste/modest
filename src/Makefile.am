@@ -176,7 +176,7 @@ libmodest_la_LIBADD = 						\
 	${easysetupmaybe} \
 	widgets/libmodest-widgets.la                    \
 	$(MODEST_TOOLKIT_DIR)/libmodest-ui.la
-libmodest_la_LDFLAGS = -rdynamic -no-undefined -Wl,--version-script=export.map
+libmodest_la_LDFLAGS = -rdynamic -no-undefined
 
 if MODEST_HAVE_DBUS_API
 libmodest_la_LIBADD +=	dbus_api/libmodest-dbus-api.la
@@ -192,7 +192,9 @@ modest_DEPENDENCIES = \
 	libmodest.la
 
 modest_CFLAGS = $(MAEMO_LAUNCHER_CFLAGS)
+modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 modest_LDADD = \
+	$(filter-out $(modest_UNWANTED), \
 	$(MAEMO_LAUNCHER_LIBS) 				\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
@@ -202,9 +204,9 @@ modest_LDADD = \
 	$(MODEST_HILDON_NOTIFY_LIBS)			\
 	$(MODEST_OGS_LIBS)				\
 	${easysetupmaybe}				\
-	libmodest.la
+	libmodest.la)
 
-modest_LDFLAGS = -rdynamic -no-undefined -Wl,--version-script=export.map
+modest_LDFLAGS = -Wl,--version-script=export.map
 
 # modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 
