@@ -1682,6 +1682,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	gtk_widget_queue_resize (priv->subject_box);
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
+	if (mailbox)
+		update_signature (MODEST_MSG_EDIT_WINDOW (obj), mailbox, NULL);
 	update_signature (MODEST_MSG_EDIT_WINDOW (obj), account_name, priv->last_from_account);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
