@@ -735,7 +735,12 @@ modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **
 		
 	for (node = accounts; node != NULL; node = g_slist_next (node)) {
 		gchar *from;
-		gchar *proto;
+		gchar *transport_account;
+
+		if (!strcmp (from_header, node->data)) {
+			account_name = g_strdup (node->data);
+			break;
+		}
 
 		from = 
 			modest_account_mgr_get_from_string (mgr, node->data, NULL);
@@ -758,31 +763,40 @@ modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **
 			g_free (from_header_email);
 			g_free (from);
 		}
-		proto = modest_account_mgr_get_string (mgr, node->data, MODEST_ACCOUNT_PROTO, TRUE);
-		if (proto != NULL) {
-			ModestProtocol *protocol = 
-				modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
-									       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
-									       proto);
-			if (protocol && MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
-				ModestPairList *pair_list;
-				ModestPair *pair;
-				gchar *from_header_email =
-					modest_text_utils_get_email_address (from_header);
-				pair_list = modest_account_protocol_get_from_list (MODEST_ACCOUNT_PROTOCOL (protocol),
-										   node->data);
 
-				pair = modest_pair_list_find_by_first_as_string (pair_list, from_header_email);
-				if (pair != NULL) {
-					account_name = g_strdup (node->data);
-					if (mailbox)
-						*mailbox = g_strdup (from_header_email);
+		transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
+										(const gchar *) node->data,
+										TNY_ACCOUNT_TYPE_TRANSPORT);
+		if (transport_account) {
+			gchar *proto;
+			proto = modest_account_mgr_get_string (mgr, transport_account, MODEST_ACCOUNT_PROTO, TRUE);
+
+			if (proto != NULL) {
+				ModestProtocol *protocol = 
+					modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+										       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+										       proto);
+				if (protocol && MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+					ModestPairList *pair_list;
+					ModestPair *pair;
+					gchar *from_header_email =
+						modest_text_utils_get_email_address (from_header);
+					pair_list = modest_account_protocol_get_from_list (MODEST_ACCOUNT_PROTOCOL (protocol),
+											   node->data);
+					
+					pair = modest_pair_list_find_by_first_as_string (pair_list, from_header_email);
+					if (pair != NULL) {
+						account_name = g_strdup (node->data);
+						if (mailbox)
+							*mailbox = g_strdup (from_header_email);
+					}
+					
+					modest_pair_list_free (pair_list);
+					
 				}
-
-				modest_pair_list_free (pair_list);
-				
+				g_free (proto);
 			}
-			g_free (proto);
+			g_free (transport_account);
 		}
 		if (mailbox && *mailbox)
 			break;

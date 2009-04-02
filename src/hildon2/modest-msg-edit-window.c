@@ -1682,7 +1682,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	gtk_widget_queue_resize (priv->subject_box);
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
 
-	update_signature (self, account_name, priv->last_from_account);
+	update_signature (MODEST_MSG_EDIT_WINDOW (obj), account_name, priv->last_from_account);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
@@ -3886,6 +3886,33 @@ on_account_removed (TnyAccountStore *account_store,
 	}
 }
 
+static gchar *
+get_signature (const gchar *current_recipient, gboolean *has_signature)
+{
+	gchar *result = NULL;
+	gchar *mailbox = NULL;
+	gchar *account_name;
+	ModestProtocol *protocol = NULL;
+
+	*has_signature = FALSE;
+
+	account_name = modest_utils_get_account_name_from_recipient (current_recipient, &mailbox);
+	if (account_is_multimailbox (account_name, &protocol)
+	    && mailbox) {
+		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+			result = modest_account_protocol_get_signature (MODEST_ACCOUNT_PROTOCOL (protocol),
+									account_name, mailbox, 
+									has_signature);
+		}
+	}
+
+	if (result == NULL) {
+		result = modest_account_mgr_get_signature (modest_runtime_get_account_mgr (), 
+							   account_name, has_signature);
+	}
+	return result;
+}
+
 static void update_signature (ModestMsgEditWindow *self,
 			      const gchar *old_account, 
 			      const gchar *new_account)
@@ -3900,11 +3927,14 @@ static void update_signature (ModestMsgEditWindow *self,
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
+	gtk_text_buffer_begin_user_action (priv->text_buffer);
+
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	mgr = modest_runtime_get_account_mgr ();
 
+
 	if (old_account) {
-		signature = modest_account_mgr_get_signature (mgr, old_account, &has_old_signature);
+		signature = get_signature (old_account, &has_old_signature);
 		if (has_old_signature) {
 			full_signature = g_strconcat ("\n--\n", signature, NULL);
 			if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
@@ -3920,19 +3950,21 @@ static void update_signature (ModestMsgEditWindow *self,
 	}
 
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	signature = modest_account_mgr_get_signature (mgr, new_account, &has_new_signature);
+	signature = get_signature (new_account, &has_new_signature);
 	if (has_new_signature) {
 		full_signature = g_strconcat ("\n--\n", signature, NULL);
 		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
 		g_free (full_signature);
 	}
 	g_free (signature);
+	gtk_text_buffer_end_user_action (priv->text_buffer);
 }
 
 static void
 from_field_changed (HildonPickerButton *button,
 		    ModestMsgEditWindow *self)
 {
+	ModestMsgEditWindowPrivate *priv;
 	gchar *old_account, *new_account;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
