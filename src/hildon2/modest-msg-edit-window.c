@@ -177,6 +177,9 @@ static void font_size_clicked (GtkToolButton *button,
 			       ModestMsgEditWindow *window);
 static void font_face_clicked (GtkToolButton *button,
 			       ModestMsgEditWindow *window);
+static void update_signature (ModestMsgEditWindow *self,
+			      const gchar *old_account, 
+			      const gchar *new_account);
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -1617,6 +1620,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	priv->from_field_protos = get_transports ();
 	priv->original_mailbox = NULL;
  	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
+	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
 		priv->original_mailbox = g_strdup (mailbox);
@@ -1676,6 +1681,8 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	gtk_widget_hide (priv->priority_icon);
 	gtk_widget_queue_resize (priv->subject_box);
 	set_msg (MODEST_MSG_EDIT_WINDOW (obj), msg, preserve_is_rich);
+
+	update_signature (self, account_name, priv->last_from_account);
 
 	text_buffer_refresh_attributes (WP_TEXT_BUFFER (priv->text_buffer), MODEST_MSG_EDIT_WINDOW (obj));
 
@@ -3879,9 +3886,9 @@ on_account_removed (TnyAccountStore *account_store,
 	}
 }
 
-static void
-from_field_changed (HildonPickerButton *button,
-		    ModestMsgEditWindow *self)
+static void update_signature (ModestMsgEditWindow *self,
+			      const gchar *old_account, 
+			      const gchar *new_account)
 {
 	ModestMsgEditWindowPrivate *priv;
 	gboolean has_old_signature, has_new_signature;
@@ -3895,28 +3902,47 @@ from_field_changed (HildonPickerButton *button,
 
 	gtk_text_buffer_get_start_iter (priv->text_buffer, &iter);
 	mgr = modest_runtime_get_account_mgr ();
-	signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_old_signature);
-	if (has_old_signature) {
-		full_signature = g_strconcat ("\n--\n", signature, NULL);
-		if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
-			gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
-			iter = match_start;
-		} else if (gtk_text_iter_forward_search (&iter, _("mcen_ia_editor_original_message"), 0,
-							 &match_start, &match_end, NULL)) {
-			iter = match_start;
+
+	if (old_account) {
+		signature = modest_account_mgr_get_signature (mgr, old_account, &has_old_signature);
+		if (has_old_signature) {
+			full_signature = g_strconcat ("\n--\n", signature, NULL);
+			if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
+				gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
+				iter = match_start;
+			} else if (gtk_text_iter_forward_search (&iter, _("mcen_ia_editor_original_message"), 0,
+								 &match_start, &match_end, NULL)) {
+				iter = match_start;
+			}
+			g_free (full_signature);
 		}
-		g_free (full_signature);
+		g_free (signature);
 	}
-	g_free (signature);
 
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	signature = modest_account_mgr_get_signature (mgr, priv->last_from_account, &has_new_signature);
+	signature = modest_account_mgr_get_signature (mgr, new_account, &has_new_signature);
 	if (has_new_signature) {
 		full_signature = g_strconcat ("\n--\n", signature, NULL);
 		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
 		g_free (full_signature);
 	}
 	g_free (signature);
+}
+
+static void
+from_field_changed (HildonPickerButton *button,
+		    ModestMsgEditWindow *self)
+{
+	gchar *old_account, *new_account;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	old_account = priv->last_from_account;
+	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	new_account = priv->last_from_account;
+
+	update_signature (self, old_account, new_account);
+
 }
 
 typedef struct _MessageSettingsHelper {
