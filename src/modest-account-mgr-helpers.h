@@ -358,12 +358,13 @@ ModestServerAccountSettings *modest_account_mgr_load_server_settings (ModestAcco
  * modest_account_mgr_get_from_string
  * @self: a #ModestAccountMgr instance
  * @name: the account name
+ * @mailbox: the mailbox
  *
  * get the From: string for some account; ie. "Foo Bar" &lt;foo.bar@cuux.yy&gt;"
  *
  * Returns: the newly allocated from-string, or NULL in case of error
  */
-gchar * modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name);
+gchar * modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name, const gchar *mailbox);
 
 
 /**

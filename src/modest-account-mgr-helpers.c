@@ -852,22 +852,53 @@ modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
 }
 
 gchar*
-modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name)
+modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name, const gchar *mailbox)
 {
-	gchar *fullname, *email, *from;
+	gchar **from;
 	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (name, NULL);
 
-	fullname      = modest_account_mgr_get_string (self, name,MODEST_ACCOUNT_FULLNAME,
-						       FALSE);
-	email         = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_EMAIL,
-						       FALSE);
-	from = g_strdup_printf ("%s <%s>",
-				fullname ? fullname : "",
-				email    ? email    : "");
-	g_free (fullname);
-	g_free (email);
+	from = NULL;
+
+	if (mailbox) {
+		gchar *transport_account;
+		gchar *proto;
+
+		transport_account = modest_account_mgr_get_server_account_name (self,
+										name,
+										TNY_ACCOUNT_TYPE_TRANSPORT);
+		if (transport_account) {
+			proto = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
+			if (proto != NULL) {
+				ModestProtocol *protocol = 
+					modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+										       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+										       TRUE);
+				if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+					from = modest_account_protocol_get_from (MODEST_ACCOUNT_PROTOCOL (protocol),
+										 name,
+										 mailbox);
+				}
+				g_free (proto);
+			}
+			
+		}
+	}
+
+	if (from == NULL) {
+		gchar *fullname, *email;
+
+		fullname      = modest_account_mgr_get_string (self, name,MODEST_ACCOUNT_FULLNAME,
+							       FALSE);
+		email         = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_EMAIL,
+							       FALSE);
+		from = g_strdup_printf ("%s <%s>",
+					fullname ? fullname : "",
+					email    ? email    : "");
+		g_free (fullname);
+		g_free (email);
+	}
 
 	return from;
 }
