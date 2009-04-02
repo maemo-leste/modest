@@ -934,6 +934,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 ModestWindow *
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 					      const gchar *modest_account_name,
+					      const gchar *mailbox, /*ignored */
 					      const gchar *msg_uid,
 					      GtkTreeModel *model, 
 					      GtkTreeRowReference *row_reference)
@@ -1032,6 +1033,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 ModestWindow *
 modest_msg_view_window_new_for_search_result (TnyMsg *msg, 
 					      const gchar *modest_account_name,
+					      const gchar *mailbox, /*ignored*/
 					      const gchar *msg_uid)
 {
 	ModestMsgViewWindow *window = NULL;
@@ -1065,8 +1067,9 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 
 ModestWindow *
 modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
-			    const gchar *modest_account_name,
-			    const gchar *msg_uid)
+					   const gchar *modest_account_name,
+					   const gchar *mailbox, /* ignored */
+					   const gchar *msg_uid)
 {
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv;	
@@ -2657,7 +2660,8 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, attachment_uid);
+			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, 
+									     NULL, attachment_uid);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win), 
 						modest_window_get_zoom (MODEST_WINDOW (window)));
 			modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window));

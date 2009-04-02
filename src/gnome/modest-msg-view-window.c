@@ -206,8 +206,9 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 ModestWindow *
 modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
-			    const gchar *modest_account_name, 
-			    const gchar *msg_uid)
+					   const gchar *modest_account_name, 
+					   const gchar *mailbox, /* ignored */
+					   const gchar *msg_uid)
 {
 	GObject *obj;
 	ModestMsgViewWindowPrivate *priv;
@@ -370,6 +371,7 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 ModestWindow*   
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 					      const gchar *modest_account_name, 
+					      const gchar *mailbox, /*ignored*/
 					      const gchar *msg_uid,
 					      GtkTreeModel *model, 
 					      GtkTreeRowReference *row_reference)
@@ -379,7 +381,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	   actions */
 	g_message ("partially implemented %s", __FUNCTION__);
 
-	return modest_msg_view_window_new_for_attachment (msg, modest_account_name, msg_uid);
+	return modest_msg_view_window_new_for_attachment (msg, modest_account_name, NULL, msg_uid);
 }
 
 

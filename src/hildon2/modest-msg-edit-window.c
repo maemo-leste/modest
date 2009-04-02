@@ -244,6 +244,8 @@ struct _ModestMsgEditWindowPrivate {
 
 	gchar       *references;
 	gchar       *in_reply_to;
+
+	gchar       *original_mailbox;
 	
 	GtkWidget   *to_field;
 	GtkWidget   *cc_field;
@@ -976,6 +978,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 	}
 	if (priv->original_account_name)
 		g_free (priv->original_account_name);
+	if (priv->original_mailbox)
+		g_free (priv->original_mailbox);
 	g_free (priv->msg_uid);
 	g_free (priv->last_search);
 	g_free (priv->references);
@@ -1486,7 +1490,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 
 ModestWindow*
-modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean preserve_is_rich)
+modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar *mailbox, gboolean preserve_is_rich)
 {
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;
@@ -1524,8 +1528,10 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean pre
 	restore_settings (MODEST_MSG_EDIT_WINDOW(obj));
 		
 	modest_window_set_active_account (MODEST_WINDOW(obj), account_name);
+	modest_window_set_active_mailbox (MODEST_WINDOW(obj), mailbox);
 
 	priv->original_account_name = (account_name) ? g_strdup (account_name) : NULL;
+	priv->original_mailbox = (mailbox) ? g_strdup (mailbox) : NULL;
 
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
 	clipboard_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_CLIPBOARD, FALSE);
@@ -3244,6 +3250,8 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 		return TRUE;
 	if (gtk_text_buffer_get_modified (priv->text_buffer))
 		return TRUE;
+
+	/* TODO: check the mailbox too here */
 	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
 		return TRUE;

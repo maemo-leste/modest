@@ -141,6 +141,7 @@ modest_window_init (ModestWindow *obj)
 	priv->dimming_state = NULL;
 	priv->ui_dimming_enabled = TRUE;
 	priv->active_account = NULL;
+	priv->active_mailbox = NULL;
 
 	/* Connect signals */
 	g_signal_connect (G_OBJECT (obj), 
@@ -161,6 +162,7 @@ modest_window_finalize (GObject *obj)
 	}
 
 	g_free (priv->active_account);
+	g_free (priv->active_mailbox);
 	
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -225,6 +227,31 @@ modest_window_set_active_account (ModestWindow *self, const gchar *active_accoun
 		priv->active_account = NULL;
 		if (active_account)
 			priv->active_account = g_strdup (active_account);
+	}
+}
+
+const gchar*
+modest_window_get_active_mailbox (ModestWindow *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_WINDOW_GET_PRIVATE(self)->active_mailbox;
+}
+
+void
+modest_window_set_active_mailbox (ModestWindow *self, const gchar *active_mailbox)
+{
+	ModestWindowPrivate *priv;
+
+	g_return_if_fail (self);	
+	priv = MODEST_WINDOW_GET_PRIVATE(self);
+
+	if (active_mailbox == priv->active_mailbox)
+		return;
+	else {
+		g_free (priv->active_mailbox);
+		priv->active_mailbox = NULL;
+		if (active_mailbox)
+			priv->active_mailbox = g_strdup (active_mailbox);
 	}
 }
 

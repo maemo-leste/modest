@@ -433,7 +433,7 @@ on_vertical_movement (HildonPannableArea *area,
 
 
 ModestWindow *
-modest_header_window_new (TnyFolder *folder, const gchar *account_name)
+modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gchar *mailbox)
 {
 	ModestHeaderWindow *self = NULL;	
 	ModestHeaderWindowPrivate *priv = NULL;
@@ -554,6 +554,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name)
 
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
+	modest_window_set_active_mailbox (MODEST_WINDOW (self), mailbox);
 	mgr = modest_runtime_get_account_mgr ();
 	settings = modest_account_mgr_load_account_settings (mgr, account_name);
 	if (settings) {

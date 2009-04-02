@@ -46,6 +46,7 @@ struct _ModestWindowPrivate {
 	DimmedState             *dimming_state;
 	gboolean                ui_dimming_enabled;
 	gchar                   *active_account;
+	gchar                   *active_mailbox;
 };
 
 #define MODEST_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \

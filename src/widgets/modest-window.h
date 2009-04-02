@@ -151,6 +151,28 @@ const gchar* modest_window_get_active_account (ModestWindow *self);
 void modest_window_set_active_account (ModestWindow *self, const gchar *active_account);
 
 /**
+ * modest_window_get_active_mailbox:
+ * @self: a modest window instance
+ * 
+ * get the name of the active mailbox
+ * 
+ * Returns: the active mailbox as a constant string
+ */	
+const gchar* modest_window_get_active_mailbox (ModestWindow *self);
+
+
+
+/**
+ * modest_window_set_active_account:
+ * @self: a modest window instance
+ * @active_mailbox: a new active mailbox name for this window
+ * 
+ * set the active mailbox for this window.
+ * 
+ */	
+void modest_window_set_active_mailbox (ModestWindow *self, const gchar *active_mailbox);
+
+/**
  * modest_window_set_zoom:
  * @window: a #ModestWindow instance
  * @zoom: the zoom level (1.0 is no zoom)

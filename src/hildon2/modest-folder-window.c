@@ -459,7 +459,7 @@ modest_folder_window_set_mailbox (ModestFolderWindow *self,
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
 
 	modest_folder_view_set_mailbox (MODEST_FOLDER_VIEW (priv->folder_view), mailbox);
-
+	modest_window_set_active_mailbox (MODEST_WINDOW (self), mailbox);
 }
 
 static void
@@ -516,7 +516,9 @@ on_folder_activated (ModestFolderView *folder_view,
 	if (tny_folder_get_caps (folder) & TNY_FOLDER_CAPS_NOSELECT)
 		return;
 
-	headerwin = modest_header_window_new (folder, modest_window_get_active_account (MODEST_WINDOW (self)));
+	headerwin = modest_header_window_new (folder, 
+					      modest_window_get_active_account (MODEST_WINDOW (self)),
+					      modest_window_get_active_mailbox (MODEST_WINDOW (self)));
 
 	if (modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
 					       MODEST_WINDOW (headerwin),

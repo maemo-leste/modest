@@ -91,6 +91,7 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
  * modest_msg_view_window_new_for_attachment:
  * @msg: an #TnyMsg instance
  * @modest_account_name: the account name 
+ * @mailbox: the mailbox (if any)
  * 
  * instantiates a new #ModestMsgViewWindow widget to view a message that is an
  * attachment in another message.
@@ -100,13 +101,15 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
 ModestWindow*   modest_msg_view_window_new_for_attachment         (TnyMsg *msg, 
-						    const gchar *modest_account_name,
-						    const gchar *msg_uid);
+								   const gchar *modest_account_name,
+								   const gchar *mailbox,
+								   const gchar *msg_uid);
 
 /**
  * modest_msg_view_window_new_with_header_model:
  * @msg: an #TnyMsg instance
  * @modest_account_name: the account name 
+ * @mailbox: the mailbox (if any)
  * @model: a #GtkTreeModel, with the format used by #ModestHeaderView
  * @row_reference: a #GtkTreeRowReference, pointing to the position of @msg in @model.
  * 
@@ -119,6 +122,7 @@ ModestWindow*   modest_msg_view_window_new_for_attachment         (TnyMsg *msg,
  */
 ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 							      const gchar *modest_account_name, 
+							      const gchar *mailbox,
 							      const gchar *msg_uid,
 							      GtkTreeModel *model, 
 							      GtkTreeRowReference *row_reference);
@@ -127,6 +131,7 @@ ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg,
  * modest_msg_view_window_new_from_header_view:
  * @header_view: an #ModestHeaderView instance
  * @modest_account_name: the account name 
+ * @mailbox: the mailbox (if any)
  * @msg_uid: the initial uid reserved by this window
  * @row_reference: a #GtkTreeRowReference, pointing to the selected position @model.
  * 
@@ -139,6 +144,7 @@ ModestWindow*   modest_msg_view_window_new_with_header_model (TnyMsg *msg,
  */
 ModestWindow*   modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view, 
 							     const gchar *modest_account_name, 
+							     const gchar *mailbox,
 							     const gchar *msg_uid,
 							     GtkTreeRowReference *row_reference);
 
@@ -158,6 +164,7 @@ ModestWindow*   modest_msg_view_window_new_from_header_view (ModestHeaderView *h
 ModestWindow *
 modest_msg_view_window_new_for_search_result (TnyMsg *msg, 
 					      const gchar *modest_account_name,
+					      const gchar *mailbox,
 					      const gchar *msg_uid);
 					      
 /**

@@ -498,6 +498,7 @@ find_msg_async_cb (TnyFolder *folder,
                 /* Drafts will be opened in the editor, and others will be opened in the viewer */
                 if (is_draft) {
 			gchar *modest_account_name = NULL;
+			gchar *mailbox = NULL;
 			gchar *from_header;
 
 			/* we cannot edit without a valid account... */
@@ -510,14 +511,16 @@ find_msg_async_cb (TnyFolder *folder,
 			}
                
 			from_header = tny_header_dup_from (header);
-			modest_account_name = modest_utils_get_account_name_from_recipient (from_header);
+			modest_account_name = modest_utils_get_account_name_from_recipient (from_header, &mailbox);
 			g_free (from_header);
 			
 			if (modest_account_name == NULL) {
 				ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 				modest_account_name = modest_account_mgr_get_default_account (mgr);
 			}
-                        msg_view = modest_msg_edit_window_new (msg, modest_account_name, TRUE);
+                        msg_view = modest_msg_edit_window_new (msg, modest_account_name, mailbox, TRUE);
+			if (mailbox)
+				g_free (mailbox);
 			g_free (modest_account_name);
 		} else {
                         TnyHeader *header;
@@ -531,7 +534,8 @@ find_msg_async_cb (TnyFolder *folder,
 			}
 
                         header = tny_msg_get_header (msg);
-                        msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, msg_uid);
+			/* TODO: fetch mailbox */
+                        msg_view = modest_msg_view_window_new_for_search_result (msg, modest_account_name, NULL, msg_uid);
                         if (! (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN)) {
 				ModestMailOperation *mail_op;
 				
@@ -1180,6 +1184,8 @@ on_idle_open_account (gpointer user_data)
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (MODEST_IS_ACCOUNTS_WINDOW (top)) {
 		GtkWidget *folder_window;
+
+		/* TODO: should show the mailboxes window in multi mailboxes account */
 
 		folder_window = (GtkWidget *) modest_folder_window_new (NULL);
 		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (folder_window),

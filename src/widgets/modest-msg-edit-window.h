@@ -130,6 +130,7 @@ GType        modest_msg_edit_window_get_type    (void) G_GNUC_CONST;
  * modest_msg_edit_window_new:
  * @msg: a #TnyMsg instance
  * @account_name: the account this message applies to
+ * @mailbox: the mailbox (if any)
  * @preserve_is_rich: if @msg is not rich, open the message as plain text
  * 
  * instantiates a new #ModestMsgEditWindow widget
@@ -138,6 +139,7 @@ GType        modest_msg_edit_window_get_type    (void) G_GNUC_CONST;
  */
 ModestWindow*   modest_msg_edit_window_new         (TnyMsg *msg, 
 						    const gchar *account_name, 
+						    const gchar *mailbox,
 						    gboolean preserve_is_rich);
 
 

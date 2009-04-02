@@ -183,7 +183,7 @@ gchar *modest_images_cache_get_id (const gchar *account, const gchar *uri);
  * Returns: a newly allocated string containing the account name or
  * %NULL in case of error
  */
-gchar *modest_utils_get_account_name_from_recipient (const gchar *from);
+gchar *modest_utils_get_account_name_from_recipient (const gchar *from, gchar **mailbox);
 
 void modest_utils_on_entry_invalid_character (ModestValidatingEntry *self, 
 					      const gchar* character,

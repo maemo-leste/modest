@@ -1477,7 +1477,10 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 
 ModestWindow*
-modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, gboolean preserve_is_rich)
+modest_msg_edit_window_new (TnyMsg *msg, 
+			    const gchar *account_name, 
+			    const gchar *mailbox, /* ignored */
+			    gboolean preserve_is_rich)
 {
 	GObject *obj;
 	ModestWindowPrivate *parent_priv;

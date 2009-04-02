@@ -73,7 +73,7 @@ GType modest_header_window_get_type (void) G_GNUC_CONST;
  *
  * Returns: a new ModestHeaderWindow, or NULL in case of error
  */
-ModestWindow* modest_header_window_new (TnyFolder *folder, const gchar *account_name);
+ModestWindow* modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gchar *mailbox);
 
 /**
  * modest_header_window_get_header_view:

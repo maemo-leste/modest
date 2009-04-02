@@ -787,6 +787,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 			      gboolean set_as_modified)
 {
 	gchar *account_name = NULL;
+	const gchar *mailbox;
 	TnyMsg *msg = NULL;
 	TnyAccount *account = NULL;
 	TnyFolder *folder = NULL;
@@ -811,6 +812,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		g_printerr ("modest: no account found\n");
 		goto cleanup;
 	}
+
+	mailbox = modest_window_get_active_mailbox (win);
 	account = modest_tny_account_store_get_server_account (store, account_name, TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
 		g_printerr ("modest: failed to get tnyaccount for '%s'\n", account_name);
@@ -844,7 +847,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	/* This is destroyed by TODO. */
 	total_size = 0;
 	allowed_size = MODEST_MAX_ATTACHMENT_SIZE;
-	msg_win = modest_msg_edit_window_new (msg, account_name, FALSE);
+	msg_win = modest_msg_edit_window_new (msg, account_name, mailbox, FALSE);
 
 	if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr(), msg_win, win)) {
 		gtk_widget_destroy (GTK_WIDGET (msg_win));
@@ -1006,6 +1009,7 @@ get_header_view_from_window (ModestWindow *window)
 static gchar *
 get_info_from_header (TnyHeader *header, gboolean *is_draft, gboolean *can_open)
 {
+	/* TODO: should also retrieve the mailbox from header */
 	TnyFolder *folder;
 	gchar *account = NULL;
 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
@@ -1110,6 +1114,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 	if (open_in_editor) {
 		ModestAccountMgr *mgr = modest_runtime_get_account_mgr ();
 		gchar *from_header = NULL, *acc_name;
+		gchar *mailbox = NULL;
 
 		from_header = tny_header_dup_from (header);
 
@@ -1123,22 +1128,26 @@ open_msg_cb (ModestMailOperation *mail_op,
 			}
 		}
 
-		acc_name = modest_utils_get_account_name_from_recipient (from_header);
+		acc_name = modest_utils_get_account_name_from_recipient (from_header, &mailbox);
 		g_free (from_header);
 		if (acc_name) {
 			g_free (account);
 			account = acc_name;
 		}
 
-		win = modest_msg_edit_window_new (msg, account, TRUE);
+		win = modest_msg_edit_window_new (msg, account, mailbox, TRUE);
+		if (mailbox)
+			g_free (mailbox);
 	} else {
 		gchar *uid = modest_tny_folder_get_header_unique_id (header);
 
 		if (helper->rowref && helper->model) {
-			win = modest_msg_view_window_new_with_header_model (msg, account, (const gchar*) uid,
+			/* TODO: use mailbox */
+			win = modest_msg_view_window_new_with_header_model (msg, account, NULL, (const gchar*) uid,
 									    helper->model, helper->rowref);
 		} else {
-			win = modest_msg_view_window_new_for_attachment (msg, account, (const gchar*) uid);
+			/* TODO: use mailbox */
+			win = modest_msg_view_window_new_for_attachment (msg, account, NULL, (const gchar*) uid);
 		}
 		g_free (uid);
 	}
@@ -1434,8 +1443,9 @@ open_msg_performer(gboolean canceled,
 		header_view = get_header_view_from_window (MODEST_WINDOW (parent_window));
 		uid = modest_tny_folder_get_header_unique_id (helper->header);
 		if (header_view) {
-			window = modest_msg_view_window_new_from_header_view
-				(MODEST_HEADER_VIEW (header_view), account_name, uid, helper->rowref);
+			/* TODO: use mailbox */
+			window = modest_msg_view_window_new_from_header_view 
+				(MODEST_HEADER_VIEW (header_view), account_name, NULL, uid, helper->rowref);
 			if (window != NULL) {
 				if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
 									window, NULL)) {
@@ -1757,7 +1767,8 @@ reply_forward_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Create and register the windows */
-	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name, FALSE);
+	/* TODO: fetch mailbox */
+	msg_win = modest_msg_edit_window_new (new_msg, rf_helper->account_name, NULL, FALSE);
 	mgr = modest_runtime_get_window_mgr ();
 	modest_window_mgr_register_window (mgr, msg_win, (ModestWindow *) rf_helper->parent_window);
 
