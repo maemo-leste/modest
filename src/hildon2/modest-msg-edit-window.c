@@ -1660,14 +1660,15 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	const gchar *account_name;
 	ModestMsgEditWindowPrivate *priv;
 	TnyIterator *att_iter;
+	const gchar *picker_active_id;
 	
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window), NULL);
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (edit_window);
-									
-	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	g_return_val_if_fail (account_name, NULL);
 	
+	picker_active_id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	g_return_val_if_fail (picker_active_id, NULL);
+	account_name = modest_utils_get_account_name_from_recipient (picker_active_id, NULL);
 	
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
