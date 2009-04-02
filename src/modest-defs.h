@@ -116,6 +116,11 @@ const gchar *modest_defs_namespace (const gchar *string);
 #define MODEST_CONF_SHOW_CC              (modest_defs_namespace ("/show_cc"))
 #define MODEST_CONF_SHOW_BCC             (modest_defs_namespace ("/show_bcc"))
 
+/* Last used folders for insert images, attach file and save attachments */
+#define MODEST_CONF_LATEST_ATTACH_FILE_PATH (modest_defs_namespace ("/latest_attach_file_path"))
+#define MODEST_CONF_LATEST_INSERT_IMAGE_PATH (modest_defs_namespace ("/latest_inset_image_path"))
+#define MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH (modest_defs_namespace ("/latest_save_attachment_path"))
+
 /* This is the alarmd cookie, obtained from alarm_event_add(), 
  * which apparently remains valid between application instances.
  * We store it so that we can remove it later.

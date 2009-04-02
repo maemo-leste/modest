@@ -2192,8 +2192,22 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 	switch (response) {
 	case GTK_RESPONSE_OK:
+	{
+		gchar *current_folder;
 		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (dialog));
-		break;
+		current_folder = gtk_file_chooser_get_current_folder_uri (GTK_FILE_CHOOSER (dialog));
+		if (current_folder && current_folder != '\0') {
+			GError *err = NULL;
+			modest_conf_set_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_INSERT_IMAGE_PATH, 
+						current_folder, &err);
+			if (err != NULL) {
+				g_debug ("Error storing latest used folder: %s", err->message);
+				g_error_free (err);
+			}
+		}
+		g_free (current_folder);
+	}
+	break;
 	default:
 		break;
 	}
@@ -2305,8 +2319,23 @@ on_attach_file_response (GtkDialog *dialog,
 
 	switch (arg1) {
 	case GTK_RESPONSE_OK:
+	{
+		gchar *current_folder;
+
 		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (dialog));
-		break;
+		current_folder = gtk_file_chooser_get_current_folder_uri (GTK_FILE_CHOOSER (dialog));
+		if (current_folder && current_folder != '\0') {
+			GError *err = NULL;
+			modest_conf_set_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_ATTACH_FILE_PATH, 
+						current_folder, &err);
+			if (err != NULL) {
+				g_debug ("Error storing latest used folder: %s", err->message);
+				g_error_free (err);
+			}
+		}
+		g_free (current_folder);
+	}
+	break;
 	default:
 		break;
 	}
@@ -2345,6 +2374,7 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 {
 	GtkWidget *dialog = NULL;
 	ModestMsgEditWindowPrivate *priv;
+	gchar *conf_folder;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(window));
 
@@ -2356,6 +2386,18 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
 						 GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
+	conf_folder = modest_conf_get_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_ATTACH_FILE_PATH, NULL);
+	if (conf_folder && conf_folder[0] != '\0') {
+		gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (dialog), conf_folder);
+	} else {
+		gchar *docs_folder;
+		/* Set the default folder to images folder */
+		docs_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
+						".documents", NULL);
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), docs_folder);
+		g_free (docs_folder);
+	}
+	g_free (conf_folder);
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), GTK_WINDOW (window));

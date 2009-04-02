@@ -727,6 +727,14 @@ init_default_settings (ModestConf *conf)
 	if (!modest_conf_key_exists (conf, MODEST_CONF_SHOW_BCC, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_SHOW_BCC, FALSE, NULL);
 
+	/* File chooser keys */
+	if (!modest_conf_key_exists (conf, MODEST_CONF_LATEST_ATTACH_FILE_PATH, NULL))
+		modest_conf_set_string (conf, MODEST_CONF_LATEST_ATTACH_FILE_PATH, "", NULL);
+	if (!modest_conf_key_exists (conf, MODEST_CONF_LATEST_INSERT_IMAGE_PATH, NULL))
+		modest_conf_set_string (conf, MODEST_CONF_LATEST_INSERT_IMAGE_PATH, "", NULL);
+	if (!modest_conf_key_exists (conf, MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, NULL))
+		modest_conf_set_string (conf, MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, "", NULL);
+
 	/* Global settings */
 	if (!modest_conf_key_exists (conf, MODEST_CONF_AUTO_UPDATE, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, TRUE, NULL);

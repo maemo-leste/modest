@@ -2697,6 +2697,7 @@ save_attachments_response (GtkDialog *dialog,
 	TnyList *mime_parts;
 	gchar *chooser_uri;
 	GList *files_to_save = NULL;
+	gchar *current_folder;
 
 	mime_parts = TNY_LIST (user_data);
 
@@ -2704,6 +2705,17 @@ save_attachments_response (GtkDialog *dialog,
 		goto end;
 
 	chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
+	current_folder = gtk_file_chooser_get_current_folder_uri (GTK_FILE_CHOOSER (dialog));
+	if (current_folder && current_folder != '\0') {
+		GError *err = NULL;
+		modest_conf_set_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, 
+					current_folder,&err);
+		if (err != NULL) {
+			g_debug ("Error storing latest used folder: %s", err->message);
+			g_error_free (err);
+		}
+	}
+	g_free (current_folder);
 
 	if (!modest_utils_folder_writable (chooser_uri)) {
 		hildon_banner_show_information 
@@ -2758,7 +2770,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 {
 	ModestMsgViewWindowPrivate *priv;
 	GtkWidget *save_dialog = NULL;
-	gchar *folder = NULL;
+	gchar *conf_folder = NULL;
 	gchar *filename = NULL;
 	gchar *save_multiple_str = NULL;
 
@@ -2811,9 +2823,17 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
 
 	/* set folder */
-	folder = g_build_filename (g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
-	gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), folder);
-	g_free (folder);
+	conf_folder = modest_conf_get_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, NULL);
+	if (conf_folder && conf_folder[0] != '\0') {
+		gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (save_dialog), conf_folder);
+	} else {
+		gchar *docs_folder;
+		/* Set the default folder to images folder */
+		docs_folder = g_build_filename (g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
+		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), docs_folder);
+		g_free (docs_folder);
+	}
+	g_free (conf_folder);
 
 	/* set filename */
 	if (filename) {

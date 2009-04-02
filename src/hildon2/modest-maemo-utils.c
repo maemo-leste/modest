@@ -107,18 +107,25 @@ modest_maemo_utils_get_device_name (void)
 void
 modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 {
-	gchar *images_folder;
 	GtkFileFilter *file_filter;
 	GList *image_mimetypes_list;
 	GList *node;
+	gchar *conf_folder;
 
 	g_return_if_fail (GTK_IS_FILE_CHOOSER (chooser));
 
-	/* Set the default folder to images folder */
-	images_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
-					  MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER, NULL);
-	gtk_file_chooser_set_current_folder (chooser, images_folder);
-	g_free (images_folder);
+	conf_folder = modest_conf_get_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_INSERT_IMAGE_PATH, NULL);
+	if (conf_folder && conf_folder[0] != '\0') {
+		gtk_file_chooser_set_current_folder_uri (chooser, conf_folder);
+	} else {
+		gchar *images_folder;
+		/* Set the default folder to images folder */
+		images_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
+						  MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER, NULL);
+		gtk_file_chooser_set_current_folder (chooser, images_folder);
+		g_free (images_folder);
+	}
+	g_free (conf_folder);
 
 	/* Set the images mime filter */
 	file_filter = gtk_file_filter_new ();
