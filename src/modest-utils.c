@@ -739,7 +739,7 @@ modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **
 		gchar *proto;
 
 		from = 
-			modest_account_mgr_get_from_string (mgr, node->data);
+			modest_account_mgr_get_from_string (mgr, node->data, NULL);
 			
 		if (from) {
 			gchar *from_email = 
@@ -759,7 +759,7 @@ modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **
 			g_free (from_header_email);
 			g_free (from);
 		}
-		proto = modest_account_mgr_get_string (self, node->data, MODEST_ACCOUNT_PROTO, TRUE);
+		proto = modest_account_mgr_get_string (mgr, node->data, MODEST_ACCOUNT_PROTO, TRUE);
 		if (proto != NULL) {
 			ModestProtocol *protocol = 
 				modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),

@@ -34,6 +34,7 @@
 #include <modest-defs.h>
 #include <string.h>
 #include <strings.h>
+#include <modest-account-protocol.h>
 
 static const gchar * null_means_empty (const gchar * str);
 
@@ -854,7 +855,7 @@ modest_account_mgr_set_first_account_as_default (ModestAccountMgr *self)
 gchar*
 modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name, const gchar *mailbox)
 {
-	gchar **from;
+	gchar *from;
 	
 	g_return_val_if_fail (self, NULL);
 	g_return_val_if_fail (name, NULL);
@@ -874,7 +875,7 @@ modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name, c
 				ModestProtocol *protocol = 
 					modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
 										       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
-										       TRUE);
+										       proto);
 				if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
 					from = modest_account_protocol_get_from (MODEST_ACCOUNT_PROTOCOL (protocol),
 										 name,

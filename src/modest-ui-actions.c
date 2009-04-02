@@ -824,7 +824,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		g_printerr ("modest: failed to find Drafts folder\n");
 		goto cleanup;
 	}
-	from_str = modest_account_mgr_get_from_string (mgr, account_name);
+	from_str = modest_account_mgr_get_from_string (mgr, account_name, mailbox);
 	if (!from_str) {
 		g_printerr ("modest: failed get from string for '%s'\n", account_name);
 		goto cleanup;
@@ -1715,9 +1715,9 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		goto cleanup;
 
 	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
-						   rf_helper->account_name);
-	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr(),
-						      rf_helper->account_name,
+						   rf_helper->account_name, NULL);
+	signature = modest_account_mgr_get_signature (modest_runtime_get_account_mgr(), 
+						      rf_helper->account_name, 
 						      &use_signature);
 
 	/* Create reply mail */
@@ -2871,7 +2871,7 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	TnyTransportAccount *transport_account;
 	ModestMailOperation *mail_operation;
 	MsgData *data;
-	gchar *account_name, *from;
+	gchar *account_name;
 	ModestAccountMgr *account_mgr;
 	gboolean had_error = FALSE;
 	ModestMainWindow *win = NULL;
@@ -2913,7 +2913,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 		modest_msg_edit_window_free_msg_data (edit_window, data);
 		return FALSE;
 	}
-	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 
 	/* Create the mail operation */
 	mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler,
@@ -2923,9 +2922,9 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	modest_mail_operation_save_to_drafts (mail_operation,
 					      transport_account,
 					      data->draft_msg,
-					      from,
-					      data->to,
-					      data->cc,
+					      data->from,
+					      data->to, 
+					      data->cc, 
 					      data->bcc,
 					      data->subject,
 					      data->plain_body,
@@ -2962,7 +2961,6 @@ modest_ui_actions_on_save_to_drafts (GtkWidget *widget, ModestMsgEditWindow *edi
 	modest_msg_edit_window_set_modified (edit_window, FALSE);
 
 	/* Frees */
-	g_free (from);
 	g_free (account_name);
 	g_object_unref (G_OBJECT (transport_account));
 	g_object_unref (G_OBJECT (mail_operation));
@@ -3016,7 +3014,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	MsgData *data;
 	ModestAccountMgr *account_mgr;
 	gchar *account_name;
-	gchar *from;
 	ModestMailOperation *mail_operation;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
@@ -3065,14 +3062,13 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 
 	/* Create the mail operation */
-	from = modest_account_mgr_get_from_string (account_mgr, account_name);
 	mail_operation = modest_mail_operation_new_with_error_handling (NULL, modest_ui_actions_disk_operations_error_handler, NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_operation);
 
 	modest_mail_operation_send_new_mail (mail_operation,
 					     transport_account,
 					     data->draft_msg,
-					     from,
+					     data->from,
 					     data->to,
 					     data->cc,
 					     data->bcc,
@@ -3099,7 +3095,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 
 	/* Free data: */
-	g_free (from);
 	g_free (account_name);
 	g_object_unref (G_OBJECT (transport_account));
 	g_object_unref (G_OBJECT (mail_operation));

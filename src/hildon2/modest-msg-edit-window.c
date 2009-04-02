@@ -36,6 +36,7 @@
 #include <tny-fs-stream.h>
 #include <tny-vfs-stream.h>
 #include <tny-camel-mem-stream.h>
+#include <modest-account-protocol.h>
 
 #include <config.h>
 
@@ -460,17 +461,48 @@ get_transports (void)
  	GSList *cursor = accounts;
 	while (cursor) {
 		gchar *account_name = cursor->data;
-		gchar *from_string  = NULL;
 		if (account_name) {
-			from_string = modest_account_mgr_get_from_string (account_mgr,
-									  account_name);
-		}
-		
-		if (from_string && account_name) {
-			gchar *name = account_name;
-			ModestPair *pair = modest_pair_new ((gpointer) name,
-						(gpointer) from_string , TRUE);
-			transports = g_slist_prepend (transports, pair);
+
+			gchar *transport_account;
+			gboolean multi_mailbox = FALSE;
+			gchar *proto;
+
+			transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
+											account_name,
+											TNY_ACCOUNT_TYPE_TRANSPORT);
+			if (transport_account) {
+				proto = modest_account_mgr_get_string (modest_runtime_get_account_mgr (), transport_account, 
+								       MODEST_ACCOUNT_PROTO, TRUE);
+				if (proto != NULL) {
+					ModestProtocol *protocol = 
+						modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
+											       MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS,
+											       proto);
+					if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+						ModestPairList *pair_list;
+						pair_list = modest_account_protocol_get_from_list (MODEST_ACCOUNT_PROTOCOL (protocol),
+												   account_name);
+						if (pair_list) {
+							transports = g_slist_concat (transports, pair_list);
+							multi_mailbox = TRUE;
+						}
+					}
+				}
+				g_free (proto);
+			}
+
+			if (!multi_mailbox) {
+				gchar *from_string  = NULL;
+
+				from_string = modest_account_mgr_get_from_string (account_mgr,
+										  account_name, NULL);
+				if (from_string && account_name) {
+					gchar *name = account_name;
+					ModestPair *pair = modest_pair_new ((gpointer) name,
+									    (gpointer) from_string , TRUE);
+					transports = g_slist_prepend (transports, pair);
+				}
+			}
 		}
 		
 		cursor = cursor->next;
@@ -1512,7 +1544,11 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	/* Menubar. Update the state of some toggles */
 	priv->from_field_protos = get_transports ();
  	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
+	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
+		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
+	} else {
+		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
+	}
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	hildon_button_set_title (HILDON_BUTTON (priv->from_field),
 				 _("mail_va_from"));
@@ -1635,8 +1671,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
-	data->from    =  modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
-							     account_name);
+	data->from    =  g_strdup ((gchar *) modest_selector_picker_get_active_display_name (MODEST_SELECTOR_PICKER (priv->from_field)));
 	data->account_name = g_strdup (account_name);
 	data->to      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->to_field)));
 	data->cc      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field)));
@@ -3251,8 +3286,10 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 	if (gtk_text_buffer_get_modified (priv->text_buffer))
 		return TRUE;
 
-	/* TODO: check the mailbox too here */
 	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	if ((priv->original_mailbox) && 
+	    (!account_name || strcmp (account_name, priv->original_mailbox)))
+		return TRUE;
 	if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
 		return TRUE;
 	}
