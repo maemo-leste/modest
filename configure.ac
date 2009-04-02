@@ -134,6 +134,8 @@ AC_SUBST(MODEST_GTKHTML_LIBS)
 CFLAGS="$MODEST_GTKHTML_CFLAGS"
 LIBS="$MODEST_GTKHTML_LIBS"
 AC_CHECK_DECLS([gtk_widget_tap_and_hold_setup],[],[], [#include <gtk/gtk.h>])
+AC_CHECK_FUNCS(gtk_html_set_max_image_size)
+AC_SUBST(HAVE_GTK_HTML_SET_MAX_IMAGE_SIZE)
 AC_CHECK_FUNCS(gtk_html_get_selection_area)
 AC_SUBST(HAVE_GTK_HTML_GET_SELECTION_AREA)
 AC_CHECK_FUNCS(gtk_tree_view_column_get_cell_data_hint)

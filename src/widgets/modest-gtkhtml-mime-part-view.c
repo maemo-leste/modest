@@ -279,6 +279,14 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
 	gtk_container_set_border_width (GTK_CONTAINER (self), MODEST_MARGIN_DEFAULT);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+#ifdef HAVE_GTK_HTML_SET_MAX_IMAGE_SIZE
+	/* We set a maximum width of a bit less than the width of the screen, and a
+	   maximum height of 2 times the full size of the window. Should be enough */
+	gtk_html_set_max_image_size (GTK_HTML (self), 720, 880);
+#endif
+#endif
+
 	gdk_color_parse ("#fff", &base);
 	gdk_color_parse ("#000", &text);
 	gtk_widget_modify_base (GTK_WIDGET (self), GTK_STATE_NORMAL, &base);
