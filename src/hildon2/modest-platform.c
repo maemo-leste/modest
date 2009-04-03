@@ -2536,8 +2536,13 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
 
 	gtk_label_set_text (GTK_LABEL (selection_label), "");
+	modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (folder_view), NULL);
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
+	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view),
+					 MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
+	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view),
+				       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
 
@@ -2645,14 +2650,6 @@ on_move_to_dialog_back_clicked (GtkButton *button,
 				gpointer userdata)
 {
 	GtkWidget *dialog = (GtkWidget *) userdata;
-	ModestFolderView *folder_view;
-
-	/* Revert the effect of show_folders filters */
-        folder_view = MODEST_FOLDER_VIEW (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
-	modest_folder_view_set_account_id_of_visible_server_account (folder_view, NULL);
-	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
-	modest_folder_view_unset_filter (folder_view, MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
-	modest_folder_view_unset_filter (folder_view, MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
 
 	/* Back to show accounts */
 	move_to_dialog_show_accounts (dialog);
@@ -2672,11 +2669,26 @@ on_move_to_dialog_folder_activated (GtkTreeView       *tree_view,
 	dialog = (GtkWidget *) user_data;
 	showing_folders = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS));
 	if (!showing_folders) {
+
 		folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
 
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 		if (selected) {
-			move_to_dialog_show_folders (dialog, selected);
+			gboolean valid;
+
+			valid = TRUE;
+			if (TNY_IS_ACCOUNT (selected) &&
+			    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (selected))) {
+				ModestProtocolType protocol_type;
+				
+				protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (selected));
+				valid  = !modest_protocol_registry_protocol_type_has_tag 
+					(modest_runtime_get_protocol_registry (),
+					 protocol_type,
+					 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD);
+			}
+			if (valid)
+				move_to_dialog_show_folders (dialog, selected);
 		}
 	}
 }

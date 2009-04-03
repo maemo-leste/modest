@@ -5045,7 +5045,9 @@ create_move_to_dialog (GtkWindow *win,
 	g_object_set_data (G_OBJECT(dialog), MODEST_MOVE_TO_DIALOG_FOLDER_VIEW, tree_view);
 
 	/* Hide special folders */
+#ifndef MODEST_TOOLKIT_HILDON2
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (tree_view), FALSE);
+#endif
 	if (list_to_move)
 		modest_folder_view_set_list_to_move (MODEST_FOLDER_VIEW (tree_view), list_to_move);
 #ifndef MODEST_TOOLKIT_HILDON2
