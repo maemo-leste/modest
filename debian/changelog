@@ -1,3 +1,19 @@
+modest (3.0.7-rc1) unstable; urgency=low
+
+  * Week 15, 2009 - monday release
+  * modest trunkr8594
+  *  7 bug fixes
+  * 
+  * Fixes: NB#106344   	Email application need to relaunch to apply the changes made in SMTP server settings
+  * Fixes: NB#107497 	Folders view menu: when account refreshing is going on wrong menu items are shown/hidden
+  * Fixes: NB#108818 	It takes 6-7 s to see the Imap account folders in "Move to folder" dialog
+  * Fixes: NB#109151
+  * Fixes: NB#109327
+  * Fixes: NB#109418 	POP account root folder is not shown in "Move to folder" dialog, but appears there is any other location is accessed and navigating back
+  * Fixes: NB#109562 	Email- Receiving an email with special characters on device from a PC to device in rich format does not work
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 03 Apr 2009 17:23:53 +0300
+
 modest (3.0.6-rc1) unstable; urgency=low
 
   * Week 15, 2009 - friday release
