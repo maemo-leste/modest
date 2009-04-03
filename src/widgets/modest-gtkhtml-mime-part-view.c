@@ -101,7 +101,7 @@ static gboolean modest_gtkhtml_mime_part_view_get_selection_area_default (Modest
 
 /* internal api */
 static TnyMimePart  *get_part   (ModestGtkhtmlMimePartView *self);
-static void          set_html_part   (ModestGtkhtmlMimePartView *self, TnyMimePart *part);
+static void          set_html_part   (ModestGtkhtmlMimePartView *self, TnyMimePart *part, const gchar *encoding);
 static void          set_text_part   (ModestGtkhtmlMimePartView *self, TnyMimePart *part);
 static void          set_empty_part  (ModestGtkhtmlMimePartView *self);
 static void          set_part   (ModestGtkhtmlMimePartView *self, TnyMimePart *part);
@@ -455,7 +455,7 @@ decode_to_stream_cb (TnyMimePart *self,
 }
 
 static void
-set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
+set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part, const gchar *encoding)
 {
 	GtkHTMLStream *gtkhtml_stream;
 	TnyStream *tny_stream;
@@ -465,7 +465,7 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 
 	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
 
-	gtkhtml_stream = gtk_html_begin(GTK_HTML(self));
+	gtkhtml_stream = gtk_html_begin_full(GTK_HTML(self), NULL, (char *) encoding, 0);
 
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	tny_stream_reset (tny_stream);
@@ -516,6 +516,9 @@ static void
 set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 {
 	ModestGtkhtmlMimePartViewPrivate *priv;
+	gchar *header_content_type, *header_content_type_lower;
+	const gchar *tmp;
+	gchar *charset = NULL;
 
 	g_return_if_fail (self);
 	
@@ -535,23 +538,35 @@ set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 		return;
 	}
 
+	header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
+	header_content_type = g_strstrip (header_content_type);
+	header_content_type_lower = g_ascii_strdown (header_content_type, -1);
+
+	if (header_content_type_lower) {
+		tmp = strstr (header_content_type_lower, "charset=");
+		if (tmp) {
+			const gchar *tmp2;
+			tmp = tmp + strlen ("charset=");
+			
+			tmp2 = strstr (tmp, ";");
+			if (tmp2) {
+				charset = g_strndup (tmp, tmp2-tmp);
+			} else {
+				charset = g_strdup (tmp);
+			}
+		}
+	}
+
 	if (tny_mime_part_content_type_is (part, "text/html")) {
-		set_html_part (self, part);
+		set_html_part (self, part, charset);
 	} else {
 		if (tny_mime_part_content_type_is (part, "message/rfc822")) {
-			gchar *header_content_type, *header_content_type_lower;
-			header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
 			if (header_content_type) {
-				header_content_type = g_strstrip (header_content_type);
-				header_content_type_lower = g_ascii_strdown (header_content_type, -1);
-
-				if (!g_ascii_strcasecmp (header_content_type_lower, "text/html"))
-					set_html_part (self, part);
+				if (g_str_has_prefix (header_content_type_lower, "text/html"))
+					set_html_part (self, part, charset);
 				else 
 					set_text_part (self, part);
 
-				g_free (header_content_type_lower);
-				g_free (header_content_type);
 			} else {
 				set_text_part (self, part);
 			}
@@ -559,6 +574,8 @@ set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 			set_text_part (self, part);
 		}
 	}
+	g_free (header_content_type_lower);
+	g_free (header_content_type);
 
 }
 
