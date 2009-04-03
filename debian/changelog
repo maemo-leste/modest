@@ -1,7 +1,7 @@
 modest (3.0.7-rc1) unstable; urgency=low
 
   * Week 15, 2009 - monday release
-  * modest trunkr8594
+  * modest trunkr8596
   *  7 bug fixes
   * 
   * Fixes: NB#106344   	Email application need to relaunch to apply the changes made in SMTP server settings
