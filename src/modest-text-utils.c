@@ -1837,6 +1837,17 @@ modest_text_utils_buffer_selection_is_valid (GtkTextBuffer *buffer)
 	return result;
 }
 
+static void
+remove_quotes (gchar **quotes)
+{
+	if (g_str_has_prefix (*quotes, "\"") && g_str_has_suffix (*quotes, "\"")) {
+		gchar *result;
+		result = g_strndup ((*quotes)+1, strlen (*quotes) - 2);
+		g_free (*quotes);
+		*quotes = result;
+	}
+}
+
 gchar *
 modest_text_utils_escape_mnemonics (const gchar *text)
 {
@@ -1855,4 +1866,54 @@ modest_text_utils_escape_mnemonics (const gchar *text)
 	}
 	
 	return g_string_free (result, FALSE);
+}
+
+gchar *
+modest_text_utils_simplify_recipients (const gchar *recipients)
+{
+	GSList *addresses, *node;
+	GString *result;
+	gboolean is_first = TRUE;
+
+	if (recipients == NULL)
+		return g_strdup ("");
+
+	addresses = modest_text_utils_split_addresses_list (recipients);
+	result = g_string_new ("");
+
+	for (node = addresses; node != NULL; node = g_slist_next (node)) {
+		const gchar *address = (const gchar *) node->data;
+		gchar *left_limit, *right_limit;
+		left_limit = strstr (address, "<");
+		right_limit = g_strrstr (address, ">");
+
+		if (is_first)
+			is_first = FALSE;
+		else
+			result = g_string_append (result, ", ");
+
+		if ((left_limit == NULL)||(right_limit == NULL)|| (left_limit > right_limit)) {
+			result = g_string_append (result, address);
+		} else {
+			gchar *name_side;
+			gchar *email_side;
+			name_side = g_strndup (address, left_limit - address);
+			name_side = g_strstrip (name_side);
+			remove_quotes (&name_side);
+			email_side = get_email_from_address (address);
+			if (name_side && email_side && !strcmp (name_side, email_side)) {
+				result = g_string_append (result, email_side);
+			} else {
+				result = g_string_append (result, address);
+			}
+			g_free (name_side);
+			g_free (email_side);
+		}
+
+	}
+	g_slist_foreach (addresses, (GFunc)g_free, NULL);
+	g_slist_free (addresses);
+
+	return g_string_free (result, FALSE);
+
 }

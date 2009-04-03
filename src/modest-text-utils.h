@@ -474,5 +474,18 @@ gboolean     modest_text_utils_buffer_selection_is_valid (GtkTextBuffer *buffer)
  */
 gchar *modest_text_utils_escape_mnemonics (const gchar *text);
 
+/**
+ * modest_text_utils_simplify_recipients:
+ * @recipients: a list of recipients
+ *
+ * returns a list of simplified recipients:
+ *   * a@b <a@b> converted to a@b
+ *   * NULL converted to ""
+ *
+ * It's mainly intended for printing in screen addresses, but it can
+ * also be used for reply/forward.
+ */
+gchar *modest_text_utils_simplify_recipients (const gchar *recipient);
+
 
 #endif /* __MODEST_TEXT_UTILS_H__ */
