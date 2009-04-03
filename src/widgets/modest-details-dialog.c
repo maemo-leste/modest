@@ -190,6 +190,17 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 			  0, 0);
 }
 
+static void 
+replace_recipients (gchar **recipients)
+{
+
+	gchar *result;
+
+	result = modest_text_utils_simplify_recipients (*recipients);
+
+	g_free (*recipients);
+	*recipients = result;
+}
 
 static void
 modest_details_dialog_set_header_default (ModestDetailsDialog *self,
@@ -229,14 +240,11 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	sent = tny_header_get_date_sent (header);
 	size = tny_header_get_message_size (header);
 
-	if (from == NULL)
-		from = g_strdup ("");
-	if (to == NULL)
-		to = g_strdup ("");
+	replace_recipients (&from);
+	replace_recipients (&to);
+	replace_recipients (&cc);
 	if (subject == NULL)
 		subject = g_strdup ("");
-	if (cc == NULL)
-		cc = g_strdup ("");
 
 	if (!strcmp (subject, "")) {
 		g_free (subject);
@@ -285,8 +293,10 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_cc"), cc);
 
 	/* only show cc when it's there */
-	if (bcc && strlen(bcc) > 0)
+	if (bcc && strlen(bcc) > 0) {
+		replace_recipients (&bcc);
 		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_bcc"), bcc);
+	}
 
 	/* Set size */
 	size_s = modest_text_utils_get_display_size (size);
