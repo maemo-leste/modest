@@ -868,6 +868,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	gchar* old_reply_to;
 	gchar* old_from;
 	gchar* new_to;
+	gchar* tmp;
 	
 	/* according to RFC2369 (http://www.faqs.org/rfcs/rfc2369.html), we
 	 * can identify Mailing-List posts by the List-Help header.
@@ -930,6 +931,10 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 			new_to = tmp;
 		}
 	}
+
+	tmp = modest_text_utils_simplify_recipients (new_to);
+	g_free (new_to);
+	new_to = tmp;
 
 	return new_to;
 }
