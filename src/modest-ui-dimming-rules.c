@@ -619,11 +619,6 @@ modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data)
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, "");
 	}
-	if (!dimmed) {
-		dimmed = _transfer_mode_enabled (win);
-		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");
-	}
 
 	return dimmed;
 }
