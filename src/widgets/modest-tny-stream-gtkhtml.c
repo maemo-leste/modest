@@ -174,11 +174,34 @@ gtkhtml_read (TnyStream *self, char *buffer, size_t n)
 	return -1; /* we cannot read */
 }
 
+typedef struct {
+	ModestTnyStreamGtkhtmlPrivate *priv;
+	const char *buffer;
+	size_t n;
+	GMutex *mutex;
+	GCond *cond;
+} WriteInfo;
+
+static gboolean
+write_in_mainloop (gpointer userdata)
+{
+	WriteInfo * info = (WriteInfo *) userdata;
+
+	g_mutex_lock (info->mutex);
+	if (info->priv->html && info->priv->stream)
+		gtk_html_stream_write (info->priv->stream, info->buffer, info->n);
+	g_cond_signal (info->cond);
+	g_mutex_unlock (info->mutex);
+
+	return FALSE;
+}
+
 
 static ssize_t
 gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 {
 	ModestTnyStreamGtkhtmlPrivate *priv;
+	WriteInfo *info;
 	
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
 
@@ -193,7 +216,27 @@ gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 	if (!priv->html || !GTK_WIDGET_VISIBLE (priv->html))
 		return -1;
 
-	gtk_html_stream_write (priv->stream, buffer, n);
+	info = g_slice_new (WriteInfo);
+	info->mutex = g_mutex_new ();
+	info->priv = priv;
+	info->buffer = buffer;
+	info->n = n;
+	info->cond = g_cond_new ();
+
+	if (g_main_context_acquire (NULL)) {
+		write_in_mainloop (info);
+		g_main_context_release (NULL);
+	} else {
+		g_mutex_lock (info->mutex);
+		g_idle_add (write_in_mainloop, info);
+		g_cond_wait (info->cond, info->mutex);
+		g_mutex_unlock (info->mutex);
+	}
+
+	g_cond_free (info->cond);
+	g_mutex_free (info->mutex);
+	g_slice_free (WriteInfo, info);
+
 	return n; /* hmmm */
 }
 
@@ -205,6 +248,26 @@ gtkhtml_flush (TnyStream *self)
 }
 	
 
+typedef struct {
+	ModestTnyStreamGtkhtmlPrivate *priv;
+	GMutex *mutex;
+	GCond *cond;
+} CloseInfo;
+
+static gboolean
+close_in_mainloop (gpointer userdata)
+{
+	CloseInfo * info = (CloseInfo *) userdata;
+
+	g_mutex_lock (info->mutex);
+	if (info->priv->html && GTK_WIDGET_VISIBLE (info->priv->html))
+		gtk_html_stream_close (info->priv->stream, GTK_HTML_STREAM_OK);
+	g_cond_signal (info->cond);
+	g_mutex_unlock (info->mutex);
+
+	return FALSE;
+}
+
 static gint
 gtkhtml_close (TnyStream *self)
 {
@@ -213,8 +276,29 @@ gtkhtml_close (TnyStream *self)
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
 	
 	if (priv->html && GTK_WIDGET_VISIBLE (priv->html)) {
-		gtk_html_stream_close   (priv->stream, GTK_HTML_STREAM_OK);
+		CloseInfo *info;
+
+		info = g_slice_new (CloseInfo);
+		info->mutex = g_mutex_new ();
+		info->cond = g_cond_new ();
+		info->priv = priv;
+
+		if (g_main_context_acquire (NULL)) {
+			close_in_mainloop (info);
+			g_main_context_release (NULL);
+		} else {
+			g_mutex_lock (info->mutex);
+			g_idle_add (close_in_mainloop, info);
+			g_cond_wait (info->cond, info->mutex);
+			g_mutex_unlock (info->mutex);
+		}
+
+		g_cond_free (info->cond);
+		g_mutex_free (info->mutex);
+		g_slice_free (CloseInfo, info);
+
 	}
+
 	priv->stream = NULL;
 	if (priv->html && priv->stop_streams_id > 0) {
 		g_signal_handler_disconnect (G_OBJECT (priv->html), priv->stop_streams_id);
