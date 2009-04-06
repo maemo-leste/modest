@@ -2775,6 +2775,7 @@ font_face_clicked (GtkToolButton *button,
 
 	selector = hildon_touch_selector_new ();
 	renderer = gtk_cell_renderer_text_new ();
+	g_object_set (G_OBJECT (renderer), "alignment", PANGO_ALIGN_CENTER, "xalign", 0.5, NULL);
 	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), priv->faces_model, 
 					     renderer, "family", 0, "text", 0, NULL);
 	hildon_touch_selector_set_active (HILDON_TOUCH_SELECTOR (selector), 0, priv->current_face_index);
