@@ -66,6 +66,20 @@ static void modest_mailboxes_window_disconnect_signals (ModestWindow *self);
 static void on_mailbox_activated (ModestFolderView *mailboxes_view,
 				  TnyFolder *folder,
 				  gpointer userdata);
+static void on_progress_list_changed (ModestWindowMgr *mgr,
+				      ModestMailboxesWindow *self);
+static gboolean on_map_event (GtkWidget *widget,
+			      GdkEvent *event,
+			      gpointer userdata);
+static void update_progress_hint (ModestMailboxesWindow *self);
+static void on_queue_changed    (ModestMailOperationQueue *queue,
+				 ModestMailOperation *mail_op,
+				 ModestMailOperationQueueNotification type,
+				 ModestMailboxesWindow *self);
+static void on_activity_changed (ModestFolderView *view,
+				 gboolean activity,
+				 ModestMailboxesWindow *folder_window);
+
 typedef struct _ModestMailboxesWindowPrivate ModestMailboxesWindowPrivate;
 struct _ModestMailboxesWindowPrivate {
 
@@ -77,6 +91,8 @@ struct _ModestMailboxesWindowPrivate {
 	GSList *sighandlers;
 
 	gchar *current_store_account;
+	gboolean progress_hint;
+	guint queue_change_handler;
 };
 #define MODEST_MAILBOXES_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_MAILBOXES_WINDOW, \
@@ -140,6 +156,8 @@ modest_mailboxes_window_init (ModestMailboxesWindow *obj)
 	priv->top_vbox = NULL;
 
 	priv->current_store_account = NULL;
+	priv->progress_hint = FALSE;
+	priv->queue_change_handler = 0;
 }
 
 static void
@@ -166,6 +184,11 @@ modest_mailboxes_window_disconnect_signals (ModestWindow *self)
 {
 	ModestMailboxesWindowPrivate *priv;
 	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(self);
+
+	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					   priv->queue_change_handler))
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					     priv->queue_change_handler);
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
 	priv->sighandlers = NULL;
@@ -214,6 +237,16 @@ connect_signals (ModestMailboxesWindow *self)
 						       G_CALLBACK (on_mailbox_activated), self);
 
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (modest_runtime_get_window_mgr ()),
+						       "progress-list-changed",
+						       G_CALLBACK (on_progress_list_changed), self);
+
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (priv->folder_view),
+						       "activity-changed",
+						       G_CALLBACK (on_activity_changed), self);
+
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT (priv->folder_view),
 						       "visible-account-changed",
 						       G_CALLBACK (on_visible_account_changed), self);
@@ -245,6 +278,12 @@ modest_mailboxes_window_new (const gchar *account)
 	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(self);
 
 	pannable = hildon_pannable_area_new ();
+	priv->queue_change_handler =
+		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+				  "queue-changed",
+				  G_CALLBACK (on_queue_changed),
+				  self);
+
 	priv->folder_view  = modest_platform_create_folder_view (NULL);
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (priv->folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
@@ -308,7 +347,11 @@ modest_mailboxes_window_new (const gchar *account)
 	 * so that the UI is not visible for non-menu D-Bus activation.
 	 */
 
-	/* Register edit modes */
+	g_signal_connect (G_OBJECT (self), "map-event",
+			  G_CALLBACK (on_map_event),
+			  G_OBJECT (self));
+	update_progress_hint (self);
+
 	accel_group = gtk_accel_group_new ();
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
@@ -368,6 +411,7 @@ modest_mailboxes_window_set_account (ModestMailboxesWindow *self,
 		 priv->current_store_account);
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
+	update_progress_hint (self);
 
 free_refs:
 	if (store_settings)
@@ -417,5 +461,156 @@ on_mailbox_activated (ModestFolderView *mailboxes_view,
 		gtk_widget_show (new_window);
 	}
 	
+}
+
+static gboolean 
+on_map_event (GtkWidget *widget,
+	      GdkEvent *event,
+	      gpointer userdata)
+{
+	ModestMailboxesWindow *self = (ModestMailboxesWindow *) userdata;
+	ModestMailboxesWindowPrivate *priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE (self);
+
+	if (priv->progress_hint) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+	}
+
+	return FALSE;
+}
+
+static gboolean
+has_active_operations (ModestMailboxesWindow *self)
+{
+	GSList *operations = NULL, *node;
+	ModestMailOperationQueue *queue;
+	gboolean has_active = FALSE;
+
+	queue = modest_runtime_get_mail_operation_queue ();
+	operations = modest_mail_operation_queue_get_by_source (queue, G_OBJECT (self));
+
+	for (node = operations; node != NULL; node = g_slist_next (node)) {
+		if (!modest_mail_operation_is_finished (MODEST_MAIL_OPERATION (node->data))) {
+			has_active = TRUE;
+			break;
+		}
+	}
+
+	if (operations) {
+		g_slist_foreach (operations, (GFunc) g_object_unref, NULL);
+		g_slist_free (operations);
+	}
+
+	return has_active;
+}
+
+static void
+update_progress_hint (ModestMailboxesWindow *self)
+{
+	ModestMailboxesWindowPrivate *priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE (self);
+
+	if (has_active_operations (self)) {
+		priv->progress_hint = TRUE;
+	} else {
+		priv->progress_hint = FALSE;
+	}
+
+	if (!priv->progress_hint && priv->current_store_account) {
+		priv->progress_hint = modest_window_mgr_has_progress_operation_on_account (modest_runtime_get_window_mgr (),
+											   priv->current_store_account);
+	}
+
+	if (!priv->progress_hint) {
+		priv->progress_hint = modest_folder_view_get_activity (MODEST_FOLDER_VIEW (priv->folder_view));
+	}
+
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
+
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint ? 1:0);
+	}
+}
+
+static void
+on_progress_list_changed (ModestWindowMgr *mgr,
+			  ModestMailboxesWindow *self)
+{
+	update_progress_hint (self);
+}
+
+static void 
+on_mail_operation_started (ModestMailOperation *mail_op,
+			   gpointer user_data)
+{
+	ModestMailboxesWindow *self;
+	ModestMailOperationTypeOperation op_type;
+	GObject *source = NULL;
+
+	self = MODEST_MAILBOXES_WINDOW (user_data);
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	source = modest_mail_operation_get_source(mail_op);
+	if (G_OBJECT (self) == source) {
+		update_progress_hint (self);
+	}
+	g_object_unref (source);
+}
+
+static void 
+on_mail_operation_finished (ModestMailOperation *mail_op,
+			    gpointer user_data)
+{
+	ModestMailboxesWindow *self;
+
+	self = MODEST_MAILBOXES_WINDOW (user_data);
+
+	/* Don't disable the progress hint if there are more pending
+	   operations from this window */
+	update_progress_hint (self);
+
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
+}
+
+static void
+on_queue_changed (ModestMailOperationQueue *queue,
+		  ModestMailOperation *mail_op,
+		  ModestMailOperationQueueNotification type,
+		  ModestMailboxesWindow *self)
+{
+	ModestMailboxesWindowPrivate *priv;
+
+	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE (self);
+
+	/* If this operations was created by another window, do nothing */
+	if (!modest_mail_operation_is_mine (mail_op, G_OBJECT(self))) 
+		return;
+
+	if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED) {
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-started",
+							       G_CALLBACK (on_mail_operation_started),
+							       self);
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-finished",
+							       G_CALLBACK (on_mail_operation_finished),
+							       self);
+	} else if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED) {
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-started");
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-finished");
+	}
+}
+
+static void
+on_activity_changed (ModestFolderView *view,
+		     gboolean activity,
+		     ModestMailboxesWindow *self)
+{
+	g_return_if_fail (MODEST_IS_MAILBOXES_WINDOW (self));
+
+	update_progress_hint (self);
 }
 
