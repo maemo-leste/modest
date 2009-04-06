@@ -2799,7 +2799,7 @@ remove_msgs_async_cb (TnyFolder *folder,
 		return;
 	}
 
-	account = tny_folder_get_account (folder);
+	account = modest_tny_folder_get_account (folder);
 	account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 	leave_on_server =
 		modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
@@ -2830,6 +2830,7 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 	TnyHeader *header = NULL;
 	TnyList *remove_headers = NULL;
 	TnyFolderType folder_type = TNY_FOLDER_TYPE_UNKNOWN;
+	ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_LIST (headers));
@@ -2841,58 +2842,74 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 		g_warning ("%s: list of headers is empty\n", __FUNCTION__);
 		goto cleanup; /* nothing to do */
 	}
-	
+
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
-	remove_headers = g_object_ref(headers);
 
 	/* Get folder from first header and sync it */
-	iter = tny_list_create_iterator (headers);	
+	iter = tny_list_create_iterator (headers);
 	header = TNY_HEADER (tny_iterator_get_current (iter));
+	g_object_unref (iter);
 
-	folder = tny_header_get_folder (header);	
+	folder = tny_header_get_folder (header);
 	if (!TNY_IS_FOLDER(folder)) {
 		g_warning ("%s: could not get folder for header\n", __FUNCTION__);
 		goto cleanup;
 	}
 
-	/* Don't remove messages that are being sent */
+	/* Use the merged folder if we're removing messages from outbox */
 	if (modest_tny_folder_is_local_folder (folder)) {
-		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
-	}
-	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
-		TnyTransportAccount *traccount = NULL;
-		ModestTnyAccountStore *accstore = modest_runtime_get_account_store();
-		traccount = modest_tny_account_store_get_transport_account_from_outbox_header(accstore, header);
-		if (traccount) {
-			ModestTnySendQueueStatus status;
-			ModestTnySendQueue *send_queue = modest_runtime_get_send_queue(traccount, TRUE);
+		ModestTnyLocalFoldersAccount *local_account;
 
-			if (TNY_IS_SEND_QUEUE (send_queue)) {
-				TnyIterator *iter = tny_list_create_iterator(headers);
-				g_object_unref(remove_headers);
-				remove_headers = TNY_LIST(tny_simple_list_new());
-				while (!tny_iterator_is_done(iter)) {
+		local_account = (ModestTnyLocalFoldersAccount *)
+			modest_tny_account_store_get_local_folders_account (accstore);
+		g_object_unref (folder);
+		folder = modest_tny_local_folders_account_get_merged_outbox (local_account);
+		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+		g_object_unref (local_account);
+	}
+
+	if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
+		TnyIterator *headers_iter = tny_list_create_iterator (headers);
+
+		while (!tny_iterator_is_done (headers_iter)) {
+			TnyTransportAccount *traccount = NULL;
+			TnyHeader *hdr = NULL;
+
+			hdr = TNY_HEADER (tny_iterator_get_current (headers_iter));
+			traccount = modest_tny_account_store_get_transport_account_from_outbox_header (accstore,
+												       header);
+			if (traccount) {
+				ModestTnySendQueueStatus status;
+				ModestTnySendQueue *send_queue;
+
+				send_queue = modest_runtime_get_send_queue(traccount, TRUE);
+				if (TNY_IS_SEND_QUEUE (send_queue)) {
 					char *msg_id;
-					TnyHeader *hdr = TNY_HEADER(tny_iterator_get_current(iter));
+
 					msg_id = modest_tny_send_queue_get_msg_id (hdr);
 					status = modest_tny_send_queue_get_msg_status(send_queue, msg_id);
 					if (status != MODEST_TNY_SEND_QUEUE_SENDING) {
+						if (G_UNLIKELY (remove_headers == NULL))
+							remove_headers = tny_simple_list_new ();
 						tny_list_append(remove_headers, G_OBJECT(hdr));
 					}
-					g_object_unref(hdr);
 					g_free(msg_id);
-					tny_iterator_next(iter);
 				}
-				g_object_unref(iter);
+				g_object_unref(traccount);
 			}
-			g_object_unref(traccount);
+			g_object_unref(hdr);
+			tny_iterator_next (headers_iter);
 		}
+		g_object_unref(headers_iter);
 	}
 
 	/* Get account and set it into mail_operation */
 	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_DELETE;
 	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+
+	if (!remove_headers)
+		remove_headers = g_object_ref (headers);
 
 	/* remove message from folder */
 	modest_mail_operation_notify_start (self);
@@ -2904,8 +2921,6 @@ cleanup:
 		g_object_unref (remove_headers);
 	if (header)
 		g_object_unref (header);
-	if (iter)
-		g_object_unref (iter);
 	if (folder)
 		g_object_unref (folder);
 }
