@@ -299,7 +299,7 @@ modest_protocol_registry_get_pair_list_by_tag (ModestProtocolRegistry *self, con
 {
 	ModestProtocolRegistryPrivate *priv;
 	GHashTable *tag_table;
-	GSList *result;
+	GSList *result = NULL;
 
 	g_return_val_if_fail (MODEST_IS_PROTOCOL_REGISTRY (self), NULL);
 	priv = MODEST_PROTOCOL_REGISTRY_GET_PRIVATE (self);
@@ -311,7 +311,7 @@ modest_protocol_registry_get_pair_list_by_tag (ModestProtocolRegistry *self, con
 
 	g_hash_table_foreach (tag_table, (GHFunc) add_protocol_to_pair_list, &result);
 
-	return result;	
+	return result;
 }
 
 static gboolean
