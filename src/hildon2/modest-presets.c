@@ -278,7 +278,11 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			else if (val && strcmp (val, "ssl") == 0)
 				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
+			else if (val && strcmp (val, "2") == 0)
+				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			else if (val && strcmp (val, "tls") == 0)
+				protocol_type = MODEST_PROTOCOLS_CONNECTION_TLS;
+			else if (val && strcmp (val, "1") == 0)
 				protocol_type = MODEST_PROTOCOLS_CONNECTION_TLS;
 			g_free(val);
 		}
