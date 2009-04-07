@@ -947,6 +947,8 @@ init_window (ModestMsgEditWindow *obj)
 /* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
 
 	priv->pannable = hildon_pannable_area_new ();
+
+	g_object_set (G_OBJECT (priv->pannable), "hscrollbar-policy", GTK_POLICY_NEVER, NULL);
 	
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 	window_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
