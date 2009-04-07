@@ -1,3 +1,13 @@
+modest (3.0.9-rc1) unstable; urgency=low
+
+  * Week 15, 2009 - wednesday release
+  *  modest trunk r8679
+  *  2 bug fixes
+  * Fixes: NB#106930 Root folder unnecessarily listed in Move to folder dialog although currently selected location is within a root folder
+  * Fixes: NB#107894 "Unable to rename" info banner is displayed when attempt to rename folder in device memory full  
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 07 Apr 2009 18:13:23 +0300
+
 modest (3.0.8-rc1) unstable; urgency=low
  
   * Week 15, 2009 - tuesday release
