@@ -2512,6 +2512,46 @@ _modest_platform_play_email_tone (void)
 #define MOVE_TO_DIALOG_ACTION_BUTTON "action-button"
 #define MOVE_TO_DIALOG_SHOWING_FOLDERS "showing-folders"
 #define MOVE_TO_DIALOG_PANNABLE "pannable"
+#define MOVE_TO_FOLDER_SEPARATOR "/"
+
+static void
+move_to_dialog_set_selected_folder_store (GtkWidget *dialog, 
+					  TnyFolderStore *folder_store)
+{
+	GtkWidget *action_button;
+
+        action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
+
+	hildon_button_set_title (HILDON_BUTTON (action_button),
+				 (TNY_IS_ACCOUNT (folder_store)) ?
+				 tny_account_get_name (TNY_ACCOUNT (folder_store)) :
+				 tny_folder_get_name (TNY_FOLDER (folder_store)));
+
+	if (TNY_IS_CAMEL_FOLDER (folder_store)) {
+		gchar *full_name = NULL;
+		TnyAccount *account;
+		gchar *account_name = NULL;
+
+		account = tny_folder_get_account (TNY_FOLDER (folder_store));
+		if (modest_tny_account_is_virtual_local_folders (account)) {
+			account_name = modest_conf_get_string (modest_runtime_get_conf(),
+							      MODEST_CONF_DEVICE_NAME, NULL);
+		}
+
+		if (!account_name) {
+			account_name = g_strconcat (tny_account_get_name (account),
+						    MOVE_TO_FOLDER_SEPARATOR, NULL);
+		}
+
+		full_name = g_strconcat (account_name, MOVE_TO_FOLDER_SEPARATOR,
+					 tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder_store)),
+					 NULL);
+		hildon_button_set_value (HILDON_BUTTON (action_button), full_name);
+		g_free (full_name);
+		g_free (account_name);
+		g_object_unref (account);
+	}
+}
 
 static void
 move_to_dialog_show_accounts (GtkWidget *dialog)
@@ -2558,7 +2598,6 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	GtkWidget *folder_view;
 	TnyAccount *account;
 	const gchar *account_id;
-	gchar *selection_label_text;
 	GtkWidget *pannable;
 	GtkWidget *action_button;
 
@@ -2582,35 +2621,22 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 
 	account = TNY_ACCOUNT (folder_store);
 	if (modest_tny_account_is_virtual_local_folders (account)) {
-		gchar *device_name;
 		account_id = tny_account_get_id (account);
-		device_name = modest_conf_get_string (modest_runtime_get_conf(),
-						      MODEST_CONF_DEVICE_NAME, NULL);
-		if (device_name) {
-			selection_label_text = g_strconcat (device_name, "/", NULL);
-			g_free (device_name);
-		} else {
-			selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
-		}
 		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 					       MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
 	} else if (modest_tny_account_is_memory_card_account (account)) {
 		account_id = tny_account_get_id (account);
-		selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
 		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 					       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 	} else {
 		account_id = tny_account_get_id (account);
-
-		selection_label_text = g_strconcat (tny_account_get_name (account), "/", NULL);
 		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 					       MODEST_FOLDER_VIEW_FILTER_HIDE_LOCAL_FOLDERS);
 		modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view),
 					       MODEST_FOLDER_VIEW_FILTER_HIDE_MCC_FOLDERS);
 	}
-	hildon_button_set_title (HILDON_BUTTON (action_button), selection_label_text);
-	g_free (selection_label_text);
 
+	move_to_dialog_set_selected_folder_store (dialog, folder_store);
 	modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (folder_view),
 								     account_id);
 
@@ -2619,23 +2645,6 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
 	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
 	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
-}
-
-static void
-move_to_dialog_set_selected_folder (GtkWidget *dialog, TnyFolderStore *folder_store)
-{
-	GtkWidget *action_button;
-
-        action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
-
-	hildon_button_set_title (HILDON_BUTTON (action_button),
-				 (TNY_IS_ACCOUNT (folder_store)) ?
-				 tny_account_get_name (TNY_ACCOUNT (folder_store)) :
-				 tny_folder_get_name (TNY_FOLDER (folder_store)));
-
-	if (TNY_IS_CAMEL_FOLDER (folder_store))
-		hildon_button_set_value (HILDON_BUTTON (action_button), 
-					 tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder_store)));
 }
 
 static void
@@ -2686,7 +2695,7 @@ on_move_to_dialog_row_activated (GtkTreeView       *tree_view,
 		if (valid)
 			move_to_dialog_show_folders (dialog, selected);
 	} else {
-		move_to_dialog_set_selected_folder (dialog, selected);
+		move_to_dialog_set_selected_folder_store (dialog, selected);
 	}
 }
 
@@ -2707,7 +2716,7 @@ on_move_to_dialog_selection_changed (GtkTreeSelection *selection,
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 		if (selected) {
-			move_to_dialog_set_selected_folder (dialog, selected);
+			move_to_dialog_set_selected_folder_store (dialog, selected);
 			g_object_unref (selected);
 		}
 	}
