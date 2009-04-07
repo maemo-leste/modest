@@ -92,6 +92,7 @@
 #define IMAGE_MAX_WIDTH 560
 #define DEFAULT_FONT_SCALE 1.5
 #define ATTACHMENT_BUTTON_WIDTH 118
+#define MAX_FROM_VALUE 48
 
 static gboolean is_wp_text_buffer_started = FALSE;
 
@@ -858,6 +859,7 @@ init_window (ModestMsgEditWindow *obj)
  	priv->from_field    = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
 							  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
 							  NULL, g_str_equal);
+	modest_selector_picker_set_value_max_chars (MODEST_SELECTOR_PICKER (priv->from_field), MAX_FROM_VALUE);
 	modest_maemo_utils_set_hbutton_layout (title_size_group, value_size_group, 
 					       _("mail_va_from"), priv->from_field);
 

@@ -123,6 +123,23 @@ void       modest_selector_picker_set_active_id (ModestSelectorPicker *self, gpo
  */
 const gchar* modest_selector_picker_get_active_display_name  (ModestSelectorPicker *self);
 
+/**
+ * modest_selector_picker_set_value_max_chars:
+ * @self: a #ModestSelectorPicker
+ * @value_max_chars: maximum number of chars displayed in picker button, or -1 if not limited
+ *
+ * Set the maximum number of chars accepted in the value part of the selector picker
+ */
+void       modest_selector_picker_set_value_max_chars (ModestSelectorPicker *self, gint value_max_width_chars);
+
+/**
+ * modest_selector_picker_get_value_max_chars:
+ * @self: a #ModestSelectorPicker
+ *
+ * Get the maximum number of chars accepted in the value part of the selector picker
+ */
+gint       modest_selector_picker_get_value_max_chars (ModestSelectorPicker *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_SELECTOR_PICKER_H__ */

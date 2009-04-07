@@ -32,6 +32,8 @@
 #include <gtk/gtkliststore.h>
 #include "modest-selector-picker.h"
 
+#define TOUCH_SELECTOR_PICKER "calling-picker"
+
 /* 'private'/'protected' functions */
 static void modest_selector_picker_class_init (ModestSelectorPickerClass *klass);
 static void modest_selector_picker_init       (ModestSelectorPicker *obj);
@@ -46,6 +48,8 @@ enum {
 typedef struct _ModestSelectorPickerPrivate ModestSelectorPickerPrivate;
 struct _ModestSelectorPickerPrivate {
 	GEqualFunc id_equal_func;
+
+	gint value_max_chars;
 	
 };
 #define MODEST_SELECTOR_PICKER_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -107,13 +111,31 @@ static gchar *
 touch_selector_print_func (HildonTouchSelector *selector, gpointer userdata)
 {
 	GtkTreeIter iter;
+	ModestSelectorPicker *picker;
+
+	picker = MODEST_SELECTOR_PICKER (g_object_get_data (G_OBJECT (selector), TOUCH_SELECTOR_PICKER));
+	g_return_val_if_fail (MODEST_IS_SELECTOR_PICKER (picker), NULL);
 	if (hildon_touch_selector_get_selected (HILDON_TOUCH_SELECTOR (selector), 0, &iter)) {
 		GtkTreeModel *model;
+		ModestSelectorPickerPrivate *priv;
 		GValue value = {0,};
 		
+		priv = MODEST_SELECTOR_PICKER_GET_PRIVATE (picker);
 		model = hildon_touch_selector_get_model (HILDON_TOUCH_SELECTOR (selector), 0);
 		gtk_tree_model_get_value (model, &iter, COLUMN_DISPLAY_NAME, &value);
-		return g_value_dup_string (&value);
+		if (priv->value_max_chars == -1) {
+			return g_value_dup_string (&value);
+		} else {
+			const gchar *str;
+			str = g_value_get_string (&value);
+			if (g_utf8_strlen (str, -1) > priv->value_max_chars) {
+				const gchar *end;
+				end = g_utf8_offset_to_pointer (str, priv->value_max_chars);
+				return g_strndup (str, end - str);
+			} else {
+				return g_strdup (str);
+			}
+		}
 	}
 	return NULL;
 }
@@ -142,7 +164,7 @@ get_model (ModestPairList *pairs)
 }
 
 static GtkWidget *
-create_touch_selector (GtkTreeModel *model)
+create_touch_selector (ModestSelectorPicker *self, GtkTreeModel *model)
 {
 	GtkCellRenderer *renderer;
 	GtkWidget *selector;
@@ -155,6 +177,7 @@ create_touch_selector (GtkTreeModel *model)
 					     renderer, "text", COLUMN_DISPLAY_NAME, NULL);
 
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR(selector), 0, model);
+	g_object_set_data (G_OBJECT (selector), TOUCH_SELECTOR_PICKER, (gpointer) self);
 	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) touch_selector_print_func);
 
 	return selector;
@@ -169,7 +192,7 @@ modest_selector_picker_set_pair_list (ModestSelectorPicker *self, ModestPairList
 
 	model = get_model (pairs);
 
-	selector = create_touch_selector (model);	
+	selector = create_touch_selector (self, model);
 	gtk_tree_model_get_iter_first (GTK_TREE_MODEL(model), &iter);
 	hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
 	g_object_unref (model);
@@ -193,13 +216,15 @@ modest_selector_picker_new (HildonSizeType size,
 				     "size", size,
 				     "arrangement", arrangement,
 				     NULL));
+
 	priv = MODEST_SELECTOR_PICKER_GET_PRIVATE(obj);
+	priv->value_max_chars = -1;
 	
 	model = get_model (pairs);
 	if (model) {
 		GtkWidget *selector;
 
-		selector = create_touch_selector (model);
+		selector = create_touch_selector (MODEST_SELECTOR_PICKER (obj), model);
 		if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (model), &iter)) {
 			hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
 		}
@@ -299,4 +324,33 @@ modest_selector_picker_get_active_display_name (ModestSelectorPicker *self)
 	retval = g_value_get_string (&val);
 
 	return retval;
+}
+
+void
+modest_selector_picker_set_value_max_chars (ModestSelectorPicker *self, 
+					    gint value_max_chars)
+{
+	ModestSelectorPickerPrivate *priv;
+
+	g_return_if_fail (self);
+	priv = MODEST_SELECTOR_PICKER_GET_PRIVATE(self);
+
+	if (value_max_chars != priv->value_max_chars) {
+		GtkWidget *selector;
+
+		priv->value_max_chars = value_max_chars;
+		selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)));
+		hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) touch_selector_print_func);
+	}
+}
+
+gint
+modest_selector_picker_get_value_max_chars (ModestSelectorPicker *self)
+{
+	ModestSelectorPickerPrivate *priv;
+	g_return_val_if_fail (self, -1);
+
+	priv = MODEST_SELECTOR_PICKER_GET_PRIVATE(self);
+
+	return priv->value_max_chars;
 }
