@@ -1,3 +1,17 @@
+modest (3.0.8-rc1) unstable; urgency=low
+ 
+  * Week 15, 2009 - tuesday release
+  *  modest trunk r8644
+  *  6 bug fixes
+  * Fixes: NB#108904 Logical string shown in the title area of Select Font Size dialog
+  * Fixes: NB#108651
+  * Fixes: NB#109030
+  * Fixes: NB#109660 Font dialog: list of fonts should have center allignment
+  * Fixes: NB#109728 Modest crashes in "add_protocol_to_pair_list" when checking for supported authentication methods
+  * Fixes: NB#109890 Weird behavior observed while deleting failed messages from Outbox folder. 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 07 Apr 2009 09:31:28 +0300
+
 modest (3.0.7-rc1) unstable; urgency=low
 
   * Week 15, 2009 - monday release
