@@ -3460,8 +3460,10 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	if (!error)
 		g_return_if_reached ();
 
-	if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
-	    error->code == MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS) {
+	if (is_memory_full_error ((GError *) error, mail_op)) {
+		message = _KR("cerm_device_memory_full");
+	} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
+		   error->code == MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS) {
 		message = _CS("ckdg_ib_folder_already_exists");
 	} else if (error->domain == TNY_ERROR_DOMAIN &&
 		   error->code == TNY_SERVICE_ERROR_STATE) {
