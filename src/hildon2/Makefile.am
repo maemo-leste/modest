@@ -134,15 +134,10 @@ desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
 ossocudscripts_SCRIPTS = modest-clean.sh
 
-PROVIDER_DATA_FILE=maemo-provider-data.keyfile
-providerdatadir=$(datadir)/modest/provider-data
-providerdata_DATA = $(PROVIDER_DATA_FILE)
-
 EXTRA_DIST=\
 	$(UI_FILES) \
 	$(PIXMAP_FILES) \
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
 	$(backupsettings_DATA) \
-	$(ossocudscripts_SCRIPTS) \
-	$(PROVIDER_DATA_FILE)
+	$(ossocudscripts_SCRIPTS)

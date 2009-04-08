@@ -60,9 +60,3 @@ LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
 	$(MODEST_PLATFORM_LIBS)
 
-PROVIDER_DATA_FILE=maemo-provider-data.keyfile
-providerdatadir=$(datadir)/modest/provider-data
-providerdata_DATA = $(PROVIDER_DATA_FILE)
-
-EXTRA_DIST=\
-	$(PROVIDER_DATA_FILE)

@@ -219,8 +219,13 @@ MMC_MAPPING_FILE=mcc_mapping
 mmccmappingdir=$(datadir)/modest/provider-data
 mmccmapping_DATA = $(MMC_MAPPING_FILE)
 
+PROVIDER_DATA_FILE=fallback-provider-data.keyfile
+providerdatadir=$(datadir)/modest/provider-data
+providerdata_DATA = $(PROVIDER_DATA_FILE)
+
 EXTRA_DIST=modest-marshal.list \
-	$(MMC_MAPPING_FILE)
+	$(MMC_MAPPING_FILE) \
+	$(PROVIDER_DATA_FILE)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = modest-plugin-1.0.pc

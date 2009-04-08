@@ -1263,7 +1263,7 @@ presets_loader (gpointer userdata)
 
 	const gchar* path  = NULL;
 	const gchar* path1 = MODEST_PROVIDER_DATA_FILE;
-	const gchar* path2 = MODEST_MAEMO_PROVIDER_DATA_FILE;
+	const gchar* path2 = MODEST_FALLBACK_PROVIDER_DATA_FILE;
 	
 	if (access(path1, R_OK) == 0) 
 		path = path1;

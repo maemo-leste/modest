@@ -87,7 +87,7 @@ const gchar *modest_defs_namespace (const gchar *string);
 #define MODEST_OPERATOR_WIZARD_MCC_MAPPING "/usr/share/operator-wizard/mcc_mapping"
 
 #define MODEST_PROVIDER_DATA_FILE         PREFIX "/share/modest/provider-data/modest-provider-data.keyfile"  
-#define MODEST_MAEMO_PROVIDER_DATA_FILE	  PREFIX "/share/modest/provider-data/maemo-provider-data.keyfile"  
+#define MODEST_FALLBACK_PROVIDER_DATA_FILE	  PREFIX "/share/modest/provider-data/fallback-provider-data.keyfile"  
 
 
 #ifndef MODEST_TOOLKIT_GTK

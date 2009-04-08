@@ -110,7 +110,7 @@ check_required_files (void)
 		fclose (mcc_file);
 	
 	if (access(MODEST_PROVIDER_DATA_FILE, R_OK) != 0 &&
-	    access(MODEST_MAEMO_PROVIDER_DATA_FILE, R_OK) != 0) {
+	    access(MODEST_FALLBACK_PROVIDER_DATA_FILE, R_OK) != 0) {
 		g_printerr ("modest: cannot find providers data\n");
 		return FALSE;
 	}
