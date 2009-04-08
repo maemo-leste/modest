@@ -237,34 +237,6 @@ modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win,
 #endif /* MODEST_HAVE_HILDON1_WIDGETS */
 }
 
-FILE*
-modest_maemo_open_mcc_mapping_file (void)
-{
-	FILE* result;
-	
-	const gchar* path;
-	const gchar* path1 = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
-	const gchar* path2 = MODEST_MCC_MAPPING;
-	
-	if (access(path1, R_OK) == 0) 
-		path = path1;
-	else if (access(path2, R_OK) == 0)
-		path = path2;
-	else {
-		g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
-			   __FUNCTION__, path1, path2);
-		return NULL;
-	}
-	
-	result = fopen (path, "r");
-	if (!result) {
-		g_warning ("%s: error opening mapping file '%s': %s",
-			   __FUNCTION__, path, strerror(errno));
-		return NULL;
-	}
-	return result;
-}
-
 GtkWidget *
 modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager,
 						const gchar *item_name)

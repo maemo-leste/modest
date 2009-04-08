@@ -33,7 +33,7 @@
 
 #include <stdio.h>
 
-#include "modest-maemo-utils.h"
+#include "modest-utils.h"
 #include "modest-country-picker.h"
 #include <hildon/hildon-touch-selector-entry.h>
 #include <gtk/gtkliststore.h>
@@ -42,7 +42,6 @@
 
 #include <stdlib.h>
 #include <string.h> /* For memcpy() */
-#include <langinfo.h>
 #include <locale.h>
 #include <libintl.h> /* For dgettext(). */
 
@@ -50,8 +49,6 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-
-#define MAX_LINE_LEN 128 /* max length of a line in MCC file */
 
 G_DEFINE_TYPE (ModestCountryPicker, modest_country_picker, HILDON_TYPE_PICKER_BUTTON);
 
@@ -120,143 +117,6 @@ modest_country_picker_class_init (ModestCountryPickerClass *klass)
 
 
 
-/* cluster mcc's, based on the list
- * http://en.wikipedia.org/wiki/Mobile_country_code
- */
-static int
-effective_mcc (gint mcc)
-{
-	switch (mcc) {
-	case 405: return 404; /* india */
-	case 441: return 440; /* japan */	
-	case 235: return 234; /* united kingdom */
-	case 311:
-	case 312:
-	case 313:
-	case 314:
-	case 315:
-	case 316: return 310; /* united states */
-	default:  return mcc;
-	}
-}
-
-
-/* each line is of the form:
-   xxx    logical_id
-
-  NOTE: this function is NOT re-entrant, the out-param country
-  are static strings that should NOT be freed. and will change when
-  calling this function again
-
-  also note, this function will return the "effective mcc", which
-  is the normalized mcc for a country - ie. even if the there
-  are multiple entries for the United States with various mccs,
-  this function will always return 310, even if the real mcc parsed
-  would be 314. see the 'effective_mcc' function above.
-*/
-static int
-parse_mcc_mapping_line (const char* line,  char** country)
-{
-	char mcc[4];  /* the mcc code, always 3 bytes*/
-	gchar *iter, *tab, *final;
-
-	if (!line) {
-		*country = NULL;
-		return 0;
-	}
-
-	/* Go to the first tab (Country separator) */
-	tab = g_utf8_strrchr (line, -1, '\t');
-	if (!tab)
-		return 0;
-
-	*country = g_utf8_find_next_char (tab, NULL);
-
-	/* Replace by end of string. We need to use strlen, because
-	   g_utf8_strrchr expects bytes and not UTF8 characters  */
-	final = g_utf8_strrchr (tab, strlen (tab) + 1, '\n');
-	if (G_LIKELY (final))
-		*final = '\0';
-	else
-		tab[strlen(tab) - 1] = '\0';
-
-	/* Get MCC code */
-	mcc[0] = g_utf8_get_char (line);
-	iter = g_utf8_find_next_char (line, NULL);
-	mcc[1] = g_utf8_get_char (iter);
-	iter = g_utf8_find_next_char (iter, NULL);
-	mcc[2] = g_utf8_get_char (iter);
-	mcc[3] = '\0';
-
-	return effective_mcc ((int) strtol ((const char*)mcc, NULL, 10));
-}
-
-/** Note that the mcc_mapping file is installed 
- * by the operator-wizard-settings package.
- */
-static void
-load_from_file (ModestCountryPicker *self, GtkListStore *liststore)
-{
-	ModestCountryPickerPrivate *priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
-	gboolean translated;
-	char line[MAX_LINE_LEN];
-	guint previous_mcc = 0;
-	gchar *territory;
-
-	FILE *file = modest_maemo_open_mcc_mapping_file (&translated);
-	if (!file) {
-		g_warning("Could not open mcc_mapping file");
-		return;
-	}
-
-	/* Get the territory specified for the current locale */
-	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
-
-	while (fgets (line, MAX_LINE_LEN, file) != NULL) {
-
-		int mcc;
-		char *country = NULL;
-		const gchar *name_translated;
-
-		mcc = parse_mcc_mapping_line (line, &country);
-		if (!country || mcc == 0) {
-			g_warning ("%s: error parsing line: '%s'", __FUNCTION__, line);
-			continue;
-		}
-
-		if (mcc == previous_mcc) {
-			/* g_warning ("already seen: %s", line); */
-			continue;
-		}
-		previous_mcc = mcc;
-
-		if (!priv->locale_mcc) {
-			if (translated) {
-				if (!g_utf8_collate (country, territory))
-					priv->locale_mcc = mcc;
-			} else {
-				gchar *translation = dgettext ("osso-countries", country);
-				if (!g_utf8_collate (translation, territory))
-					priv->locale_mcc = mcc;
-			}
-		}
-		name_translated = dgettext ("osso-countries", country);
-
-		/* Add the row to the model: */
-		GtkTreeIter iter;
-		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set(liststore, &iter, MODEL_COL_MCC, mcc, MODEL_COL_NAME, name_translated, -1);
-	}
-	fclose (file);
-
-	/* Fallback to Finland */
-	if (!priv->locale_mcc)
-		priv->locale_mcc = 244;
-
-	/* Sort the items: */
-	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (liststore), 
-					      MODEL_COL_NAME, GTK_SORT_ASCENDING);
-}
 
 static void
 modest_country_picker_init (ModestCountryPicker *self)
@@ -297,14 +157,17 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 {
 	GtkCellRenderer *renderer;
 	GtkWidget *selector;
-	GtkListStore *model;
+	GtkTreeModel *model;
 	HildonTouchSelectorColumn *column;
+	ModestCountryPickerPrivate *priv;
+
+	priv = MODEST_COUNTRY_PICKER_GET_PRIVATE (self);
 
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an int for the MCC ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	model = gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT);
+	model = modest_utils_create_country_model ();
 
 	/* Country column:
 	 * The ID model column in not shown in the view. */
@@ -313,21 +176,21 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 
 	selector = hildon_touch_selector_entry_new ();
 	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) country_picker_print_func);
-	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (model),
-						      renderer, "text", MODEL_COL_NAME, NULL);
-	g_object_set (G_OBJECT (column), "text-column", MODEL_COL_NAME, NULL);
 
-	/* Fill the model with rows: */
-	load_from_file (self, model);
+	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model,
+						      renderer, "text", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
+	g_object_set (G_OBJECT (column), "text-column", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
+	modest_utils_fill_country_model (model, &(priv->locale_mcc));
 
 	/* Set this _after_ loading from file, it makes loading faster */
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector),
-					 0, GTK_TREE_MODEL (model));
+					 0, model);
 	hildon_touch_selector_entry_set_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector),
-						     MODEL_COL_NAME);
+						     MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME);
 	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
 						    HILDON_GTK_INPUT_MODE_ALPHA |
 						    HILDON_GTK_INPUT_MODE_AUTOCAP);
+
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 
@@ -360,7 +223,7 @@ modest_country_picker_get_active_country_mcc (ModestCountryPicker *self)
 		gtk_tree_model_get (hildon_touch_selector_get_model (hildon_picker_button_get_selector
 								     (HILDON_PICKER_BUTTON (self)), 
 								     0), 
-				    &active, MODEL_COL_MCC, &mcc, -1);
+				    &active, MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, &mcc, -1);
 		return mcc;	
 	}
 	return 0; /* Failed. */
@@ -385,7 +248,7 @@ modest_country_picker_set_active_country_locale (ModestCountryPicker *self)
 	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;
 	do {
-		gtk_tree_model_get (model, &iter, MODEL_COL_MCC, &current_mcc, -1);
+		gtk_tree_model_get (model, &iter, MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, &current_mcc, -1);
 		if (priv->locale_mcc == current_mcc) {
 			hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, 
 							   &iter, TRUE);

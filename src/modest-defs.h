@@ -82,7 +82,7 @@ const gchar *modest_defs_namespace (const gchar *string);
 /* configuration key definitions for modest */
 #define MODEST_CONF_NAMESPACE		(modest_defs_namespace (NULL))
 
-/* the mapping files, there are two possibilities; used in modest_maemo_open_mcc_mapping_file */
+/* the mapping files, there are two possibilities; used in modest_utils_open_mcc_mapping_file */
 #define MODEST_MCC_MAPPING                 PREFIX "/share/modest/provider-data/mcc_mapping"
 #define MODEST_OPERATOR_WIZARD_MCC_MAPPING "/usr/share/operator-wizard/mcc_mapping"
 

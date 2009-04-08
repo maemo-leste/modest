@@ -37,6 +37,7 @@
 #include "maemo/modest-maemo-global-settings-dialog.h"
 #include "modest-widget-memory.h"
 #include <modest-hildon-includes.h>
+#include <modest-utils.h>
 #include <modest-maemo-utils.h>
 #include <dbus_api/modest-dbus-callbacks.h>
 #include <maemo/modest-osso-autosave-callbacks.h>
@@ -102,7 +103,7 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 static gboolean
 check_required_files (void)
 {
-	FILE *mcc_file = modest_maemo_open_mcc_mapping_file ();
+	FILE *mcc_file = modest_utils_open_mcc_mapping_file (NULL);
 	if (!mcc_file) {
 		g_printerr ("modest: check for mcc file failed\n");
 		return FALSE;

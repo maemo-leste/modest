@@ -75,15 +75,6 @@ void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
 osso_context_t *modest_maemo_utils_get_osso_context (void);
 
 /**
- * modest_maemo_open_mcc_mapping_file:
- *
- * open the mcc mapping file, or NULL if it fails
- *
- * Returns: file ptr or NULL in case of error
- */
-FILE* modest_maemo_open_mcc_mapping_file (gboolean *translated);
-
-/**
  * modest_maemo_set_thumbable_scrollbar:
  * @win: a scrollable window
  * @thumbable: set it to thumbable (TRUE) or small (FALSE)

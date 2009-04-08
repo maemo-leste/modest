@@ -189,4 +189,46 @@ void modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
 					      const gchar* character,
 					      gpointer user_data);
 
+/**
+ * modest_utils_open_mcc_mapping_file:
+ * @translated: a #gboolean pointer
+ *
+ * open the mcc mapping file, or %NULL if it fails. It also
+ * sets @translated to %TRUE if the file is translated
+ *
+ * Returns: file ptr or %NULL in case of error
+ */
+FILE* modest_utils_open_mcc_mapping_file (gboolean *translated);
+
+typedef enum {
+	MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME = 0,
+	MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC = 1,
+	MODEST_UTILS_COUNTRY_MODEL_N_COLUMNS
+} ModestUtilsCountryModelColumns;
+
+/**
+ * modest_utils_create_country_model:
+ * @locale_mcc: a #gboolean
+ *
+ * creates the countries tree model used in wizard from the mcc
+ * files.
+ *
+ * Returns: an empty #GtkTreeModel with the columns enumerated in
+ *  #ModestUtilsCountryModelColumns
+ */
+GtkTreeModel *modest_utils_create_country_model (void);
+
+/**
+ * modest_utils_fill_country_model:
+ * @model: a #GtkTreeModel (obtained with modest_utils_create_country_model
+ * @locale_mcc: a #gboolean
+ *
+ * fills the countries tree model used in wizard from the mcc
+ * files.
+ *
+ */
+void modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc);
+
+
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

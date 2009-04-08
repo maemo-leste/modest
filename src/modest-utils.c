@@ -54,6 +54,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-header-window.h"
 #endif
+#include <langinfo.h>
 
 GQuark
 modest_utils_get_supported_secure_authentication_error_quark (void)
@@ -826,3 +827,192 @@ modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
 	modest_platform_information_banner (GTK_WIDGET (self), NULL, message);
 	g_free (message);
 }
+
+FILE*
+modest_utils_open_mcc_mapping_file (gboolean *translated)
+{
+	FILE* result = NULL;
+	const gchar* path;
+	gchar *path1 = g_strdup_printf ("%s.%s", MODEST_OPERATOR_WIZARD_MCC_MAPPING, getenv("LANG"));
+	const gchar* path2 = MODEST_MCC_MAPPING;
+
+	if (translated)
+		*translated = TRUE;
+
+	if (access (path1, R_OK) == 0) {
+		path = path1;
+	} else if (access (MODEST_OPERATOR_WIZARD_MCC_MAPPING, R_OK) == 0) {
+		path = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
+		if (translated)
+			*translated = FALSE;
+	} else if (access (path2, R_OK) == 0) {
+		path = path2;
+	} else {
+		g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
+			   __FUNCTION__, path1, path2);
+		goto end;
+	}
+
+	result = fopen (path, "r");
+	if (!result) {
+		g_warning ("%s: error opening mapping file '%s': %s",
+			   __FUNCTION__, path, strerror(errno));
+		goto end;
+	}
+ end:
+	g_free (path1);
+	return result;
+}
+
+/* cluster mcc's, based on the list
+ * http://en.wikipedia.org/wiki/Mobile_country_code
+ */
+static int
+effective_mcc (gint mcc)
+{
+	switch (mcc) {
+	case 405: return 404; /* india */
+	case 441: return 440; /* japan */	
+	case 235: return 234; /* united kingdom */
+	case 311:
+	case 312:
+	case 313:
+	case 314:
+	case 315:
+	case 316: return 310; /* united states */
+	default:  return mcc;
+	}
+}
+
+/* each line is of the form:
+   xxx    logical_id
+
+  NOTE: this function is NOT re-entrant, the out-param country
+  are static strings that should NOT be freed. and will change when
+  calling this function again
+
+  also note, this function will return the "effective mcc", which
+  is the normalized mcc for a country - ie. even if the there
+  are multiple entries for the United States with various mccs,
+  this function will always return 310, even if the real mcc parsed
+  would be 314. see the 'effective_mcc' function above.
+*/
+static int
+parse_mcc_mapping_line (const char* line,  char** country)
+{
+	char mcc[4];  /* the mcc code, always 3 bytes*/
+	gchar *iter, *tab, *final;
+
+	if (!line) {
+		*country = NULL;
+		return 0;
+	}
+
+	/* Go to the first tab (Country separator) */
+	tab = g_utf8_strrchr (line, -1, '\t');
+	if (!tab)
+		return 0;
+
+	*country = g_utf8_find_next_char (tab, NULL);
+
+	/* Replace by end of string. We need to use strlen, because
+	   g_utf8_strrchr expects bytes and not UTF8 characters  */
+	final = g_utf8_strrchr (tab, strlen (tab) + 1, '\n');
+	if (G_LIKELY (final))
+		*final = '\0';
+	else
+		tab[strlen(tab) - 1] = '\0';
+
+	/* Get MCC code */
+	mcc[0] = g_utf8_get_char (line);
+	iter = g_utf8_find_next_char (line, NULL);
+	mcc[1] = g_utf8_get_char (iter);
+	iter = g_utf8_find_next_char (iter, NULL);
+	mcc[2] = g_utf8_get_char (iter);
+	mcc[3] = '\0';
+
+	return effective_mcc ((int) strtol ((const char*)mcc, NULL, 10));
+}
+
+#define MCC_FILE_MAX_LINE_LEN 128 /* max length of a line in MCC file */
+
+/** Note that the mcc_mapping file is installed 
+ * by the operator-wizard-settings package.
+ */
+GtkTreeModel *
+modest_utils_create_country_model (void)
+{
+	GtkTreeModel *model;
+
+	model = GTK_TREE_MODEL (gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT));
+
+	return model;
+}
+
+void
+modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
+{
+	gboolean translated;
+	char line[MCC_FILE_MAX_LINE_LEN];
+	guint previous_mcc = 0;
+	gchar *territory;
+
+	FILE *file;
+
+	file = modest_utils_open_mcc_mapping_file (&translated);
+	if (!file) {
+		g_warning("Could not open mcc_mapping file");
+	}
+
+	/* Get the territory specified for the current locale */
+	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
+
+	while (fgets (line, MCC_FILE_MAX_LINE_LEN, file) != NULL) {
+
+		int mcc;
+		char *country = NULL;
+		const gchar *name_translated;
+
+		mcc = parse_mcc_mapping_line (line, &country);
+		if (!country || mcc == 0) {
+			g_warning ("%s: error parsing line: '%s'", __FUNCTION__, line);
+			continue;
+		}
+
+		if (mcc == previous_mcc) {
+			/* g_warning ("already seen: %s", line); */
+			continue;
+		}
+		previous_mcc = mcc;
+
+		if (!(*locale_mcc)) {
+			if (translated) {
+				if (!g_utf8_collate (country, territory))
+					*locale_mcc = mcc;
+			} else {
+				gchar *translation = dgettext ("osso-countries", country);
+				if (!g_utf8_collate (translation, territory))
+					*locale_mcc = mcc;
+			}
+		}
+		name_translated = dgettext ("osso-countries", country);
+
+		/* Add the row to the model: */
+		GtkTreeIter iter;
+		gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+		gtk_list_store_set(GTK_LIST_STORE (model), &iter, 
+				   MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, mcc, 
+				   MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, name_translated, 
+				   -1);
+	}
+	fclose (file);
+
+	/* Fallback to Finland */
+	if (!(*locale_mcc))
+		*locale_mcc = 244;
+
+	/* Sort the items: */
+	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (model), 
+					      MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, GTK_SORT_ASCENDING);
+}
+

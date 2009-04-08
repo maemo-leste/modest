@@ -33,7 +33,7 @@
 
 #include <stdio.h>
 
-#include "../modest-maemo-utils.h"
+#include <modest-utils.h>
 #include "modest-easysetup-country-combo-box.h"
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
@@ -121,145 +121,6 @@ easysetup_country_combo_box_class_init (EasysetupCountryComboBoxClass *klass)
 }
 
 
-
-
-/* cluster mcc's, based on the list
- * http://en.wikipedia.org/wiki/Mobile_country_code
- */
-static int
-effective_mcc (gint mcc)
-{
-	switch (mcc) {
-	case 405: return 404; /* india */
-	case 441: return 440; /* japan */	
-	case 235: return 234; /* united kingdom */
-	case 311:
-	case 312:
-	case 313:
-	case 314:
-	case 315:
-	case 316: return 310; /* united states */
-	default:  return mcc;
-	}
-}
-
-
-/* each line is of the form:
-   xxx    logical_id
-   
-  NOTE: this function is NOT re-entrant, the out-param country
-  are static strings that should NOT be freed. and will change when
-  calling this function again
-
-  also note, this function will return the "effective mcc", which
-  is the normalized mcc for a country - ie. even if the there
-  are multiple entries for the United States with various mccs,
-  this function will always return 310, even if the real mcc parsed
-  would be 314. see the 'effective_mcc' function above.
-*/
-static int
-parse_mcc_mapping_line (const char* line,  char** country)
-{
-	int i, j;
-	char mcc[4];  /* the mcc code, always 3 bytes*/
-	static char my_country[128];
-
-	if (!line) {
-		*country = NULL;
-		return 0;
-	}
-	
-	for (i = 3, j = 0; i < 128; ++i) {
-		char kar = line[i];
-		if (kar == '\0')
-			break;
-		else if (kar < '_')
-			continue;
-		else 
-			my_country [j++] = kar;
-	}
-	my_country[j] = '\0';
-
-	mcc[0] = line[0];
-	mcc[1] = line[1];
-	mcc[2] = line[2];
-	mcc[3] = '\0';
-	
-	*country = my_country;
-
-	return effective_mcc ((int) strtol ((const char*)mcc, NULL, 10));
-}
-
-/** Note that the mcc_mapping file is installed 
- * by the operator-wizard-settings package.
- */
-static void
-load_from_file (EasysetupCountryComboBox *self, GtkListStore *liststore)
-{
-	ModestEasysetupCountryComboBoxPrivate *priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
-	
-	char line[MAX_LINE_LEN];
-	guint previous_mcc = 0;
-	gchar *territory, *fallback = NULL;
-	gchar *current_locale;
-
-	/* Get the territory specified for the current locale */
-	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
-
-	/* Tricky stuff, the translations of the OSSO countries does
-	   not always correspond to the country names in locale
-	   databases. Add all these cases here. sergio */
-	if (!strcmp (territory, "United Kingdom"))
-		fallback = g_strdup ("UK");
-
-	current_locale = setlocale (LC_ALL ,NULL);
-
-	FILE *file = modest_maemo_open_mcc_mapping_file ();
-	if (!file) {
-		g_warning("Could not open mcc_mapping file");
-		return;
-	}
-
-	while (fgets (line, MAX_LINE_LEN, file) != NULL) { 
-
-		int mcc;
-		char *country = NULL;
-		const gchar *name_translated, *english_translation;
-
-		mcc = parse_mcc_mapping_line (line, &country);
-		if (!country || mcc == 0) {
-			g_warning ("%s: error parsing line: '%s'", __FUNCTION__, line);
-			continue;
-		}
-
-		if (mcc == previous_mcc) {
-			/* g_warning ("already seen: %s", line); */
-			continue;
-		}
-		previous_mcc = mcc;
-
-		if (!priv->locale_mcc) {
-			english_translation = dgettext ("osso-countries", country);
-			if (!strcmp (english_translation, territory) ||
-			    (fallback && !strcmp (english_translation, fallback)))
-				priv->locale_mcc = mcc;
-		}
-		name_translated = dgettext ("osso-countries", country);
-		
-		/* Add the row to the model: */
-		GtkTreeIter iter;
-		gtk_list_store_append (liststore, &iter);
-		gtk_list_store_set(liststore, &iter, MODEL_COL_MCC, mcc, MODEL_COL_NAME, name_translated, -1);
-	}	
-	fclose (file);
-
-	/* Sort the items: */
-	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (liststore), 
-					      MODEL_COL_NAME, GTK_SORT_ASCENDING);
-
-	g_free (fallback);
-}
-
 static void
 easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 {
@@ -270,13 +131,15 @@ easysetup_country_combo_box_init (EasysetupCountryComboBox *self)
 void
 easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 {
-	GtkListStore *model;
+	ModestEasysetupCountryComboBoxPrivate *priv;
+	GtkTreeModel *model;
 
+	priv = MODEST_EASYSETUP_COUNTRY_COMBO_BOX_GET_PRIVATE (self);
 	/* Create a tree model for the combo box,
 	 * with a string for the name, and an int for the MCC ID.
 	 * This must match our MODEL_COLS enum constants.
 	 */
-	model = gtk_list_store_new (2,  G_TYPE_STRING, G_TYPE_INT);
+	model = modest_utils_create_country_model ();
 	
 	/* Country column:
 	 * The ID model column in not shown in the view. */
@@ -286,24 +149,23 @@ easysetup_country_combo_box_load_data(EasysetupCountryComboBox *self)
 #if MODEST_HILDON_API < 2
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT (self), renderer, TRUE);
 	gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (self), renderer, 
-					"text", MODEL_COL_NAME, NULL);
+					"text", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
 #else
 	GtkWidget *selector = hildon_touch_selector_new ();
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 	hildon_touch_selector_append_column (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)),
-					     GTK_TREE_MODEL (model),
-					     renderer, "text", MODEL_COL_NAME, NULL);
+					     model,
+					     renderer, "text", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
 #endif
 
-	/* Fill the model with rows: */
-	load_from_file (self, model);
+	modest_utils_fill_country_model (model, &(priv->locale_mcc));
 
 	/* Set this _after_ loading from file, it makes loading faster */
 #if MODEST_HILDON_API < 2
-	gtk_combo_box_set_model (GTK_COMBO_BOX (self), GTK_TREE_MODEL (model));
+	gtk_combo_box_set_model (GTK_COMBO_BOX (self), model);
 #else
 	hildon_touch_selector_set_model (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (self)),
-					 0, GTK_TREE_MODEL (model));
+					 0, model);
 #endif
 }
 
@@ -340,12 +202,12 @@ easysetup_country_combo_box_get_active_country_mcc (EasysetupCountryComboBox *se
 		gint mcc = 0;
 #if MODEST_HILDON_API < 2
 		gtk_tree_model_get (gtk_combo_box_get_model (GTK_COMBO_BOX (self)), 
-				    &active, MODEL_COL_MCC, &mcc, -1);
+				    &active, MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, &mcc, -1);
 #else
 		gtk_tree_model_get (hildon_touch_selector_get_model (hildon_picker_button_get_selector
 								     (HILDON_PICKER_BUTTON (self)), 
 								     0), 
-				    &active, MODEL_COL_MCC, &mcc, -1);
+				    &active, MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, &mcc, -1);
 #endif
 		return mcc;	
 	}
@@ -376,7 +238,7 @@ easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox 
 	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;
 	do {
-		gtk_tree_model_get (model, &iter, MODEL_COL_MCC, &current_mcc, -1);
+		gtk_tree_model_get (model, &iter, MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, &current_mcc, -1);
 		if (priv->locale_mcc == current_mcc) {
 #if MODEST_HILDON_API < 2
 			gtk_combo_box_set_active_iter (GTK_COMBO_BOX (self), &iter);
