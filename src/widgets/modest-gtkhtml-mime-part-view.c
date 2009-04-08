@@ -539,8 +539,12 @@ set_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 	}
 
 	header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
-	header_content_type = g_strstrip (header_content_type);
-	header_content_type_lower = g_ascii_strdown (header_content_type, -1);
+	if (header_content_type) {
+		header_content_type = g_strstrip (header_content_type);
+		header_content_type_lower = g_ascii_strdown (header_content_type, -1);
+	} else {
+		header_content_type_lower = NULL;
+	}
 
 	if (header_content_type_lower) {
 		tmp = strstr (header_content_type_lower, "charset=");
