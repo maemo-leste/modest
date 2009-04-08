@@ -95,7 +95,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-osso-autosave-callbacks.h \
 	modest-osso-state-saving.c \
 	modest-osso-state-saving.h   \
-	modest-presets.h modest-presets.c \
 	modest-limit-retrieve-picker.h modest-limit-retrieve-picker.c \
 	modest-retrieve-picker.h modest-retrieve-picker.c \
 	modest-secureauth-picker.h modest-secureauth-picker.c \

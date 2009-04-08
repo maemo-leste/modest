@@ -31,7 +31,7 @@
 #define _EASYSETUP_PROVIDER_COMBO_BOX
 
 #include <gtk/gtkcombobox.h>
-#include "modest-presets.h"
+#include <modest-presets.h>
 
 G_BEGIN_DECLS
 

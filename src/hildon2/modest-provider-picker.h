@@ -31,7 +31,7 @@
 #define _MODEST_PROVIDER_PICKER
 
 #include <hildon/hildon-picker-button.h>
-#include "modest-presets.h"
+#include <modest-presets.h>
 
 G_BEGIN_DECLS
 
