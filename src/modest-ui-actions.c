@@ -805,7 +805,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		goto cleanup;
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	account_name = g_strdup (modest_window_get_active_account(win));
+	if (win)
+		account_name = g_strdup (modest_window_get_active_account(win));
 #endif
 	if (!account_name) {
 		account_name = modest_account_mgr_get_default_account(mgr);
@@ -815,7 +816,10 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		goto cleanup;
 	}
 
-	mailbox = modest_window_get_active_mailbox (win);
+	if (win)
+		mailbox = modest_window_get_active_mailbox (win);
+	else
+		mailbox = NULL;
 	account = modest_tny_account_store_get_server_account (store, account_name, TNY_ACCOUNT_TYPE_STORE);
 	if (!account) {
 		g_printerr ("modest: failed to get tnyaccount for '%s'\n", account_name);
