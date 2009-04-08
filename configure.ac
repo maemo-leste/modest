@@ -180,7 +180,7 @@ have_hildon0=false
 have_gtk=false
 PKG_CHECK_EXISTS(hildon-1, have_hildon1=true,have_hildon1=false)
 if test "$have_hildon1" = "true"; then
-   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0, have_hildon2=true, have_hildon2=false)
+   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0 hildon-fm-2, have_hildon2=true, have_hildon2=false)
    PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-1 hildon-fm-2)
    hildonpkgs="hildon-1 hildon-fm-2"
    detected_toolkit=hildon1

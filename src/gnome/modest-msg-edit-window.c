@@ -201,7 +201,7 @@ get_transports (void)
 	while (cursor) {
 		gchar *account_name = cursor->data ? g_strdup((gchar*)cursor->data) : NULL;
 		gchar *from_string  = modest_account_mgr_get_from_string (account_mgr,
-									  account_name);
+									  account_name, NULL);
 		if (!from_string)  {
 			/* something went wrong: ignore this one */
 			g_free (account_name);
@@ -459,6 +459,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 
 ModestWindow *
 modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
+			    const gchar *mailbox,
 			    gboolean preserve_is_rich)
 {
 	ModestMsgEditWindow *self;
@@ -593,8 +594,8 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	
 	account_name = (gchar*)modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
 	if (account_name) 
-		from_string = modest_account_mgr_get_from_string (
-			modest_runtime_get_account_mgr(), account_name);
+		from_string = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(), 
+								  account_name, NULL);
 	if (!from_string) {
 		g_printerr ("modest: cannot get from string\n");
 		return NULL;
@@ -834,7 +835,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 							      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT, 
 							      GTK_MESSAGE_QUESTION,
 							      GTK_BUTTONS_OK_CANCEL,
-							      message);
+							      "%s", message);
 		g_free (message);
 		dialog_response = (gtk_dialog_run (GTK_DIALOG (confirmation_dialog))==GTK_RESPONSE_OK);
 		gtk_widget_destroy (confirmation_dialog);
