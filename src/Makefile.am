@@ -213,7 +213,14 @@ modest_LDFLAGS = -export-dynamic -Wl,--version-script=export.map
 # modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 
 
-EXTRA_DIST=modest-marshal.list
+# mcc_mapping may be provided by the operator-wizard-settings package:
+# the one here is a copy, as that package is not available in chinook
+MMC_MAPPING_FILE=mcc_mapping
+mmccmappingdir=$(datadir)/modest/provider-data
+mmccmapping_DATA = $(MMC_MAPPING_FILE)
+
+EXTRA_DIST=modest-marshal.list \
+	$(MMC_MAPPING_FILE)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = modest-plugin-1.0.pc

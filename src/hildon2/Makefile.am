@@ -134,12 +134,6 @@ desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
 ossocudscripts_SCRIPTS = modest-clean.sh
 
-# mcc_mapping may be provided by the operator-wizard-settings package:
-# the one here is a copy, as that package is not available in chinook
-MMC_MAPPING_FILE=mcc_mapping
-mmccmappingdir=$(datadir)/modest/provider-data
-mmccmapping_DATA = $(MMC_MAPPING_FILE)
-
 PROVIDER_DATA_FILE=maemo-provider-data.keyfile
 providerdatadir=$(datadir)/modest/provider-data
 providerdata_DATA = $(PROVIDER_DATA_FILE)
@@ -151,5 +145,4 @@ EXTRA_DIST=\
 	$(desktopentry_DATA) \
 	$(backupsettings_DATA) \
 	$(ossocudscripts_SCRIPTS) \
-	$(MMC_MAPPING_FILE)    \
 	$(PROVIDER_DATA_FILE)
