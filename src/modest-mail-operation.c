@@ -2862,9 +2862,11 @@ modest_mail_operation_remove_msgs (ModestMailOperation *self,
 
 		local_account = (ModestTnyLocalFoldersAccount *)
 			modest_tny_account_store_get_local_folders_account (accstore);
-		g_object_unref (folder);
-		folder = modest_tny_local_folders_account_get_merged_outbox (local_account);
 		folder_type = modest_tny_folder_get_local_or_mmc_folder_type (folder);
+		if (folder_type == TNY_FOLDER_TYPE_OUTBOX) {
+			g_object_unref (folder);
+			folder = modest_tny_local_folders_account_get_merged_outbox (local_account);
+		}
 		g_object_unref (local_account);
 	}
 
