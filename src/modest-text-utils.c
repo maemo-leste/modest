@@ -1403,10 +1403,17 @@ modest_text_utils_get_display_date (time_t date)
 	/* if it's today, show the time, if it's not today, show the date instead */
 
 	/* TODO: take into account the system config for 24/12h */
+#ifdef MODEST_TOOLKIT_HILDON2
 	if (day == date_day) /* is the date today? */
 		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, _HL("wdgt_va_24h_time"), date);
 	else 
 		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, _HL("wdgt_va_date"), date); 
+#else
+	if (day == date_day) /* is the date today? */
+		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%X", date);
+	else 
+		modest_text_utils_strftime (date_buf, DATE_BUF_SIZE, "%x", date); 
+#endif
 
 	return date_buf; /* this is a static buffer, don't free! */
 }

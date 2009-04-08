@@ -479,7 +479,7 @@ get_transports (void)
 		gchar *from_string  = NULL;
 		if (account_name) {
 			from_string = modest_account_mgr_get_from_string (account_mgr,
-									  account_name);
+									  account_name, NULL);
 		}
 		
 		if (from_string && account_name) {
@@ -1627,7 +1627,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
 	data->from    =  modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
-							     account_name);
+							     account_name, NULL);
 	data->account_name = g_strdup (account_name);
 	data->to      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->to_field)));
 	data->cc      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field)));

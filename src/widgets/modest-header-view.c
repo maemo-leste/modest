@@ -2402,6 +2402,19 @@ update_style (ModestHeaderView *self)
 			      "attributes", attr_list,
 			      NULL);
 		pango_attr_list_unref (attr_list);
+	} else {
+		g_object_set (G_OBJECT (priv->renderer_address),
+			      "foreground-gdk", &style_color,
+			      "foreground-set", TRUE,
+			      "scale", PANGO_SCALE_SMALL,
+			      "scale-set", TRUE,
+			      NULL);
+		g_object_set (G_OBJECT (priv->renderer_date_status),
+			      "foreground-gdk", &style_color,
+			      "foreground-set", TRUE,
+			      "scale", PANGO_SCALE_SMALL,
+			      "scale-set", TRUE,
+			      NULL);
 	}
 }
 
