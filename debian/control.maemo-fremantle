@@ -12,8 +12,8 @@ Standards-Version: 3.6.0
 
 Package: modest
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends}, modest-providers-data, modest-l10n-mr0,
- osso-icons-theme, operator-wizard-settings, osso-countries-l10n-mr0, microb-engine
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${launcher:Depends}, modest-providers-data, modest-l10n-mr | modest-l10n-mr0,
+ osso-icons-theme, operator-wizard-settings, osso-countries-l10n-mr | osso-countries-l10n-mr0, microb-engine
 Description: an e-mail client for platforms with modest resources
  e-mail client for osso
 
