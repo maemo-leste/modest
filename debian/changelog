@@ -1,3 +1,13 @@
+modest (3.0.10-rc1) unstable; urgency=low
+
+  * Week 16, 2009 - first release
+  *  modest trunk 8730
+  *  2 bug fixes
+  * Fixes: NB#110084 Application doesn't resond when opening the next message in a viewer and trying to access Message details
+  * Fixes: NB#110320 Messages are not deleted from Drafts/Sent folder
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 09 Apr 2009 16:48:38 +0300
+
 modest (3.0.9-rc1) unstable; urgency=low
 
   * Week 15, 2009 - wednesday release
