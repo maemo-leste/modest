@@ -274,7 +274,11 @@ then
 	PKG_CHECK_MODULES(MAEMO_LAUNCHER, [maemo-launcher-app])
 	AC_SUBST(MAEMO_LAUNCHER_CFLAGS)
 	AC_SUBST(MAEMO_LAUNCHER_LIBS)
+	MAEMO_LAUNCHER_MODEST_LDFLAGS="-shared "
+else
+	MAEMO_LAUNCHER_MODEST_LDFLAGS="-export-dynamic "
 fi
+AC_SUBST(MAEMO_LAUNCHER_MODEST_LDFLAGS)
 
 have_easysetup=false
 if test "x$with_toolkit" == "xgtk"; then
