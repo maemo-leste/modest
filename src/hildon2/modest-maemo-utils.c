@@ -368,6 +368,7 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 	GtkWidget *dialog;
 	gint response;
 	gboolean result = TRUE;
+	gint attachments_added = 0;
 
 	model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_OBJECT));
 	for (iterator = tny_list_create_iterator (att_list);
@@ -395,6 +396,7 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 			label = g_strconcat (filename, NULL);
 			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
 			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, label, 1, part, -1);
+			attachments_added ++;
 			g_free (label);
 			g_object_unref (part);
 		}
@@ -408,7 +410,8 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 							 HILDON_TOUCH_SELECTOR_SELECTION_MODE_MULTIPLE);
 
 	dialog = hildon_picker_dialog_new (window);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachments_title"));
+	gtk_window_set_title (GTK_WINDOW (dialog), (attachments_added > 1)?
+			      _("mcen_ti_select_attachments_title"):_("mcen_ti_select_attachment_title"));
 	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
 	hildon_picker_dialog_set_done_label (HILDON_PICKER_DIALOG (dialog), _HL("wdgt_bd_done"));
 
