@@ -289,10 +289,14 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
 	GtkWidget *main_vbox, *pannable;
+	GtkWidget *align;
 
 
 	/* Specify a default size */
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
+	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
+	gtk_widget_hide (GTK_DIALOG (self)->action_area);
+
 	
 	/* This seems to be necessary to make the window show at the front with decoration.
 	 * If we use property type=GTK_WINDOW_TOPLEVEL instead of the default GTK_WINDOW_POPUP+decoration, 
@@ -316,7 +320,13 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	g_signal_connect (G_OBJECT (priv->account_view), "row-activated",
 			  G_CALLBACK (on_account_activated), self);
 
-	gtk_box_pack_start (GTK_BOX(main_vbox), pannable, TRUE, TRUE, MODEST_MARGIN_DEFAULT);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DEFAULT, MODEST_MARGIN_DEFAULT);
+	gtk_widget_show (align);
+
+	gtk_container_add (GTK_CONTAINER (align), pannable);
+
+	gtk_box_pack_start (GTK_BOX(main_vbox), align, TRUE, TRUE, 0);
 
 }
 
