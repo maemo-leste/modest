@@ -507,6 +507,15 @@ if test "x$with_platform" == "xmaemo"; then
    fi
 fi
 
+AC_CHECK_HEADERS([clockd/libtime.h], have_libtime=true, have_libtime=false)
+
+if test "x$have_libtime" == "xtrue"; then
+   AC_DEFINE_UNQUOTED(MODEST_USE_LIBTIME, 1, ["use libtime API"])
+   MODEST_LIBTIME_LIBS=-ltime
+else
+   MODEST_LIBTIME_LIBS=
+fi
+AC_SUBST(MODEST_LIBTIME_LIBS)
 
 #
 # if we don't have an addressbook, use the dummy one
@@ -655,6 +664,7 @@ echo "MozEmbed support : $use_mozembed"
 if [ $gtk_html_found = "true" ]; then
    echo "GtkHTML version  : $gtk_html_version"
 fi
+echo "Libtime          : $have_libtime"
 
 echo "CFLAGS           : $CFLAGS"
 echo "Debug version    : $with_debug"

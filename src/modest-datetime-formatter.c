@@ -256,11 +256,14 @@ modest_datetime_formatter_format_time (ModestDatetimeFormatter *self,
 	ModestDatetimeFormatterPrivate *priv;
 	const gchar *format_string = NULL;
 	gboolean is_pm;
+	struct tm localtime_tm = {0, };
+	time_t date_copy;
 
 	g_return_val_if_fail (MODEST_IS_DATETIME_FORMATTER (self), NULL);
 	priv = MODEST_DATETIME_FORMATTER_GET_PRIVATE (self);
-
-	is_pm = (date / (60 * 60 * 12)) % 2;
+	date_copy = date;
+	localtime_r (&date_copy, &localtime_tm);
+	is_pm = (localtime_tm.tm_hour/12) % 2;
 
 	switch (priv->current_format) {
 	case DATETIME_FORMAT_12H:

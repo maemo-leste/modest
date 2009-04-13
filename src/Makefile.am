@@ -175,6 +175,7 @@ libmodest_la_LIBADD = 						\
 	$(MODEST_HILDON_HELP_LIBS)			\
 	$(MODEST_HILDON_NOTIFY_LIBS)			\
 	$(MODEST_OGS_LIBS)				\
+	$(MODEST_LIBTIME_LIBS)                          \
 	${easysetupmaybe} \
 	widgets/libmodest-widgets.la                    \
 	$(MODEST_TOOLKIT_DIR)/libmodest-ui.la
@@ -205,6 +206,7 @@ modest_LDADD = \
 	$(MODEST_HILDON_HELP_LIBS)			\
 	$(MODEST_HILDON_NOTIFY_LIBS)			\
 	$(MODEST_OGS_LIBS)				\
+	$(MODEST_LIBTIME_LIBS)                          \
 	${easysetupmaybe}				\
 	libmodest.la)
 

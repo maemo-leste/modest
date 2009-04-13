@@ -63,6 +63,9 @@
 #include <libgnomevfs/gnome-vfs.h>
 #include "modest-utils.h"
 #include "modest-debug.h"
+#ifdef MODEST_USE_LIBTIME
+#include <clockd/libtime.h>
+#endif
 
 #define KB 1024
 
@@ -1570,6 +1573,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
 	gboolean headers_only, ignore_limit;
+	time_t time_to_store;
 
 	info = (UpdateAccountInfo *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (info->mail_op);
@@ -1600,7 +1604,14 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	}
 
 	/* Set the last updated as the current time */
-	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time (NULL));
+#ifdef MODEST_USE_LIBTIME
+	struct tm utc_tm;
+	time_get_utc (&utc_tm);
+	time_to_store = time_mktime (&utc_tm, "GMT");
+#else
+	time_to_store = time (NULL);
+#endif
+	modest_account_mgr_set_last_updated (mgr, tny_account_get_id (priv->account), time_to_store);
 
 	/* Get the message max size */
 	max_size  = modest_conf_get_int (modest_runtime_get_conf (),

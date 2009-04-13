@@ -64,6 +64,9 @@
 #include "maemo/modest-osso-state-saving.h"
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
+#ifdef MODEST_USE_LIBTIME
+#include <clockd/libtime.h>
+#endif
 
 #define MODEST_MAIN_WINDOW_ACTION_GROUP_ADDITIONS "ModestMainWindowActionAdditions"
 
@@ -2027,6 +2030,16 @@ create_details_widget (GtkWidget *styled_widget, TnyAccount *account)
 		/* Get last updated from configuration */
 		last_updated = modest_account_mgr_get_last_updated (modest_runtime_get_account_mgr (), 
 								    tny_account_get_id (account));
+
+#ifdef MODEST_USE_LIBTIME
+		/* If we use libtime, we are storing the time in UTC so we have to convert to currently
+		 * selected time */
+		time_t now;
+		struct tm *localtime_tm;
+		time (&now);
+		localtime_tm = localtime (&now);
+		last_updated -= time_get_utc_offset (localtime_tm->tm_zone);
+#endif
 
 		if (last_updated > 0) 
 			last_updated_string = modest_text_utils_get_display_date(last_updated);
