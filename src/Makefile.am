@@ -208,7 +208,7 @@ modest_LDADD = \
 	${easysetupmaybe}				\
 	libmodest.la)
 
-modest_LDFLAGS = -export-dynamic -Wl,--version-script=export.map
+modest_LDFLAGS = -shared -Wl,--version-script=export.map
 
 # modest_UNWANTED = -export-dynamic -Wl,--export-dynamic
 
