@@ -2586,11 +2586,11 @@ static gboolean idle_save_mime_part_show_result (SaveMimePartInfo *info);
 static gpointer save_mime_part_to_file (SaveMimePartInfo *info);
 static void save_mime_parts_to_file_with_checks (SaveMimePartInfo *info);
 
-static void 
+static void
 save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
 {
-	
 	GList *node;
+
 	for (node = info->pairs; node != NULL; node = g_list_next (node)) {
 		SaveMimePartPair *pair = (SaveMimePartPair *) node->data;
 		g_free (pair->filename);
@@ -3079,10 +3079,14 @@ on_fetch_image_idle_refresh_view (gpointer userdata)
 
 	FetchImageData *fidata = (FetchImageData *) userdata;
 	g_message ("REFRESH VIEW");
+
+	gdk_threads_enter ();
 	if (GTK_WIDGET_DRAWABLE (fidata->msg_view)) {
 		g_message ("QUEUING DRAW");
 		gtk_widget_queue_draw (fidata->msg_view);
 	}
+	gdk_threads_leave ();
+
 	g_object_unref (fidata->msg_view);
 	g_slice_free (FetchImageData, fidata);
 	return FALSE;
@@ -3095,8 +3099,13 @@ on_fetch_image_thread (gpointer userdata)
 	TnyStreamCache *cache;
 	TnyStream *cache_stream;
 
+	gdk_threads_enter ();
 	cache = modest_runtime_get_images_cache ();
-	cache_stream = tny_stream_cache_get_stream (cache, fidata->cache_id, (TnyStreamCacheOpenStreamFetcher) fetch_image_open_stream, (gpointer) fidata->uri);
+	cache_stream = 
+		tny_stream_cache_get_stream (cache, 
+					     fidata->cache_id, 
+					     (TnyStreamCacheOpenStreamFetcher) fetch_image_open_stream, 
+					     (gpointer) fidata->uri);
 	g_free (fidata->cache_id);
 	g_free (fidata->uri);
 
@@ -3108,11 +3117,9 @@ on_fetch_image_thread (gpointer userdata)
 
 	tny_stream_close (fidata->output_stream);
 	g_object_unref (fidata->output_stream);
-
-
-	gdk_threads_enter ();
-	g_idle_add (on_fetch_image_idle_refresh_view, fidata);
 	gdk_threads_leave ();
+
+	g_idle_add (on_fetch_image_idle_refresh_view, fidata);
 
 	return NULL;
 }
