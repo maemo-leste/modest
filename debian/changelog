@@ -1,3 +1,21 @@
+modest (3.0.11-rc1) unstable; urgency=low
+
+  * Week 16, 2009 - second release
+  * modest trunk 8764
+  * 9 bugs fixes
+  * Fixes: NB#102665	Modest crashes when tapped on "Download external images" while next message is retrieving
+  * Fixes: NB#110416	Modest crashes when deleting messages in waiting state from Outbox
+  * Fixes: NB#110127	Randomly modest crashed when attempt to access the message from Inbox
+  * Fixes: NB#96696	symbols dynamic exporting should be disabled as it was in Diablo
+  * Fixes: NB#107216	Long sender's name is not accomodated properly in editor
+  * Fixes: NB#107764	Layout of the "E-mail accounts" Hildon Touch Picker Dialog is distorted
+  * Fixes: NB#110512	"Last Updated" time is proper
+  * Fixes: NB#110459	Folder details: size of remote Imap folders is shown as 0 Kb
+  * Fixes: NB#110371	<coverity> FORWARD_NULL type defects from tinymail
+  * Fixes: NB#108391	"Attachments" dialog should have "mcen_ti_select_attachments_title" title
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 14 Apr 2009 14:07:30 +0300
+
 modest (3.0.10-rc1) unstable; urgency=low
 
   * Week 16, 2009 - first release
