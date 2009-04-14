@@ -211,7 +211,13 @@ gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 			n = priv->max_size - priv->current_size;
 	}
 
+	if (!g_main_context_is_owner (NULL))
+		gdk_threads_enter ();
+
 	gtk_html_stream_write (priv->stream, buffer, n);
+
+	if (!g_main_context_is_owner (NULL))
+		gdk_threads_leave ();
 	priv->current_size += n;
 
 	return n; /* hmmm */
@@ -233,7 +239,14 @@ gtkhtml_close (TnyStream *self)
 	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(self);
 	
 	if (priv->html && GTK_WIDGET_VISIBLE (priv->html)) {
+		if (!g_main_context_is_owner (NULL))
+			gdk_threads_enter ();
+
 		gtk_html_stream_close   (priv->stream, GTK_HTML_STREAM_OK);
+
+		if (!g_main_context_is_owner (NULL))
+			gdk_threads_leave ();
+
 	}
 	priv->stream = NULL;
 	if (priv->html && priv->stop_streams_id > 0) {

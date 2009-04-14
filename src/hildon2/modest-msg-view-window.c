@@ -3125,26 +3125,20 @@ on_fetch_image_thread (gpointer userdata)
 				while (G_UNLIKELY (nb_written < nb_read)) {
 					gssize len;
 
-					gdk_threads_enter ();
 					len = tny_stream_write (fidata->output_stream, buffer + nb_written,
 								nb_read - nb_written);
-					gdk_threads_leave ();
 					if (G_UNLIKELY (len < 0))
 						break;
 					nb_written += len;
 				}
 			}
 		}
-		gdk_threads_enter ();
 		tny_stream_close (cache_stream);
 		g_object_unref (cache_stream);
-		gdk_threads_leave ();
 	}
 
-	gdk_threads_enter ();
 	tny_stream_close (fidata->output_stream);
 	g_object_unref (fidata->output_stream);
-	gdk_threads_leave ();
 
 	g_idle_add (on_fetch_image_idle_refresh_view, fidata);
 
