@@ -285,6 +285,9 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	   maximum height of 2 times the full size of the window. Should be enough */
 	gtk_html_set_max_image_size (GTK_HTML (self), 720, 880);
 #endif
+#ifdef HAVE_GTK_HTML_SET_ALLOW_DND
+	gtk_html_set_allow_dnd       (GTK_HTML(self), FALSE);
+#endif
 #endif
 
 	gdk_color_parse ("#fff", &base);
