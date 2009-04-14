@@ -1843,6 +1843,25 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 
 			return FALSE;
 		}
+	} else if (current_page == priv->page_custom_incoming ||
+		   current_page == priv->page_custom_outgoing) {
+
+		const gchar *hostname;
+		GtkWidget *entry = (current_page == priv->page_custom_incoming) ?
+			priv->entry_incomingserver :
+			priv->entry_outgoingserver;
+
+		hostname = gtk_entry_get_text (GTK_ENTRY (entry));
+		if (!modest_text_utils_validate_domain_name (hostname)) {
+			/* Show error */
+			modest_platform_information_banner (NULL, NULL, _("mcen_ib_invalid_servername"));
+
+			/* Return focus to the email address entry: */
+			gtk_widget_grab_focus (entry);
+			gtk_editable_select_region (GTK_EDITABLE (entry), 0, -1);
+
+			return FALSE;
+		}
 	}
 
 	if (next_page == priv->page_custom_incoming) {
