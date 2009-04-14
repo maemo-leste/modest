@@ -308,12 +308,33 @@ compare_msguids (ModestWindow *win,
 	} else {
 		msg_uid = modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (win));
 	}
-	
+
 	if (msg_uid && uid &&!strcmp (msg_uid, uid))
 		return 0;
 	else
 		return 1;
 }
+
+static gint
+compare_headers (ModestWindow *win,
+		 TnyHeader *header)
+{
+	TnyHeader *my_header;
+	gint result = 1;
+
+	if (!MODEST_IS_MSG_VIEW_WINDOW (win))
+		return 1;
+
+	/* Get message uid from msg window */
+	my_header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
+	if (my_header) {
+		if (my_header == header)
+			result = 0;
+		g_object_unref (my_header);
+	}
+	return result;
+}
+
 
 static gboolean
 modest_hildon2_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHeader *header,
@@ -388,6 +409,34 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 		   and it was already registered */
 		gtk_window_present (GTK_WINDOW (window));
 		return FALSE;
+	}
+
+	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		gchar *uid;
+		TnyHeader *header;
+		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (window));
+
+		if (header) {
+			uid = modest_tny_folder_get_header_unique_id (header);
+
+			/* Embedded messages do not have uid */
+			if (uid) {
+				if (g_list_find_custom (priv->window_list, uid, (GCompareFunc) compare_msguids)) {
+					g_debug ("%s found another view window showing the same header", __FUNCTION__);
+					g_free (uid);
+					g_object_unref (header);
+					return FALSE;
+				}
+				g_free (uid);
+			} else {
+				if (g_list_find_custom (priv->window_list, header, (GCompareFunc) compare_headers)) {
+					g_debug ("%s found another view window showing the same header", __FUNCTION__);
+					g_object_unref (header);
+					return FALSE;
+				}
+			}
+			g_object_unref (header);
+		}
 	}
 
 	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
