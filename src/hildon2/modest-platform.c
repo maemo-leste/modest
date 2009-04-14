@@ -631,27 +631,22 @@ on_response (GtkDialog *dialog,
 
 	if (response != GTK_RESPONSE_ACCEPT)
 		return;
-	
+
 	/* Get entry */
 	entry = g_object_get_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ENTRY);
 	picker = g_object_get_data (G_OBJECT (dialog), COMMON_FOLDER_DIALOG_ACCOUNT_PICKER);
-	
+
 	parent = TNY_FOLDER_STORE (user_data);
 	new_name = gtk_entry_get_text (GTK_ENTRY (entry));
 	exists = FALSE;
-	
-	if (picker != NULL) {
 
+	if (picker != NULL)
 		parent = g_object_get_data (G_OBJECT (picker), FOLDER_PICKER_CURRENT_FOLDER);
-	}
 
 	/* Look for another folder with the same name */
-	if (modest_tny_folder_has_subfolder_with_name (parent, 
-						       new_name,
-						       TRUE)) {
+	if (modest_tny_folder_has_subfolder_with_name (parent, new_name, TRUE))
 		exists = TRUE;
-	}
-	
+
 	if (!exists) {
 		if (TNY_IS_ACCOUNT (parent) &&
 		    modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (parent)) &&
@@ -660,9 +655,8 @@ on_response (GtkDialog *dialog,
 			exists = TRUE;
 		}
 	}
-	
+
 	if (exists) {
-		
 		/* Show an error */
 		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
 						NULL, _CS("ckdg_ib_folder_already_exists"));
@@ -672,7 +666,6 @@ on_response (GtkDialog *dialog,
 		/* Do not close the dialog */
 		g_signal_stop_emission_by_name (dialog, "response");
 	}
-
 }
 
 typedef struct _FolderChooserData {
@@ -832,9 +825,9 @@ folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
 	} else {
 		GtkWidget *image;
 
-		g_object_ref (store);
-		g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER, 
-					store, (GDestroyNotify) g_object_unref);
+		g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER,
+					g_object_ref (store),
+					(GDestroyNotify) g_object_unref);
 		name = folder_store_get_display_name (store);
 		hildon_button_set_value (HILDON_BUTTON (button), name);
 		g_free (name);
@@ -926,9 +919,8 @@ folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 
 	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 1.0);
 
-	if (suggested) {
+	if (suggested)
 		folder_picker_set_store (GTK_BUTTON (button), suggested);
-	}
 
 	g_signal_connect (G_OBJECT (button), "clicked",
 			  G_CALLBACK (folder_picker_clicked),
@@ -1106,6 +1098,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	gint result;
 	ModestTnyAccountStore *acc_store;
 	TnyAccount *account;
+	gboolean do_free = FALSE;
 
 	real_suggested_name = get_next_folder_name ((const gchar *) suggested_name,
 						    suggested_folder);
@@ -1122,9 +1115,11 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	}
 
 	/* If there is not archive folder then fallback to local folders account */
-	if (!suggested_folder)
+	if (!suggested_folder) {
+		do_free = TRUE;
 		suggested_folder = (TnyFolderStore *)
 			modest_tny_account_store_get_local_folders_account (acc_store);
+	}
 
 	result = modest_platform_run_folder_common_dialog (parent_window,
 							   suggested_folder,
@@ -1135,6 +1130,9 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 							   TRUE,
 							   folder_name,
 							   parent_folder);
+
+	if (do_free)
+		g_object_unref (suggested_folder);
 
 	g_free(real_suggested_name);
 
