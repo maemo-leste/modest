@@ -251,7 +251,7 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 	gtk_binding_entry_skip (binding_set, GDK_End, 0);
 	gtk_binding_entry_skip (binding_set, GDK_KP_Home, 0);
 	gtk_binding_entry_skip (binding_set, GDK_KP_End, 0);
-	
+
 	g_type_class_add_private (gobject_class, sizeof(ModestGtkhtmlMimePartViewPrivate));
 
 	signals[STOP_STREAMS_SIGNAL] = 
@@ -265,7 +265,7 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 
 }
 
-static void    
+static void
 modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 {
 	ModestGtkhtmlMimePartViewPrivate *priv = MODEST_GTKHTML_MIME_PART_VIEW_GET_PRIVATE (self);
@@ -288,6 +288,11 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 #ifdef HAVE_GTK_HTML_SET_ALLOW_DND
 	gtk_html_set_allow_dnd       (GTK_HTML(self), FALSE);
 #endif
+#endif
+
+#ifdef HAVE_GTK_HTML_SET_DEFAULT_ENGINE
+	/* Enable Content type handling */
+	gtk_html_set_default_engine (GTK_HTML (self), TRUE);
 #endif
 
 	gdk_color_parse ("#fff", &base);
@@ -410,12 +415,6 @@ on_url (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMimePartView *self)
 	g_signal_emit_by_name (G_OBJECT (self), "link-hover", uri, &result);
 	return result;
 }
-
-typedef struct {
-	gpointer buffer;
-	GtkHTML *html;
-	GtkHTMLStream *stream;
-} ImageFetcherInfo;
 
 static gboolean
 on_url_requested (GtkWidget *widget, const gchar *uri, GtkHTMLStream *stream, 
