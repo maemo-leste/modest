@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #include <config.h>
 #include "modest-easysetup-wizard-dialog.h"
 #include <glib/gi18n.h>
@@ -89,18 +89,18 @@ struct _ModestEasysetupWizardDialogPrivate
 	/* Remember what fields the user edited manually to not prefill them
 	 * again. */
 	ModestEasysetupWizardDialogServerChanges server_changes;
-	
+
 	/* Check if the user changes a field to show a confirmation dialog */
 	gboolean dirty;
 
 	/* If we have a pending load of settings or not. */
 	gboolean pending_load_settings;
-	
+
 	/* Used by derived widgets to query existing accounts,
 	 * and to create new accounts: */
 	ModestAccountMgr *account_manager;
 	ModestAccountSettings *settings;
-	
+
 	/* notebook pages: */
 	GtkWidget *page_welcome;
 	GtkWidget *check_support_progress;
@@ -109,21 +109,21 @@ struct _ModestEasysetupWizardDialogPrivate
 	guint check_support_progress_pulse_id;
 	gint pending_check_support;
 	gboolean destroyed;
-	
+
 	GtkWidget *page_account_details;
 	GtkWidget *account_country_picker;
 	GtkWidget *account_serviceprovider_picker;
 	GtkWidget *entry_account_title;
 	GtkWidget *caption_account_title;
-	
+
 	GtkWidget *page_user_details;
 	GtkWidget *entry_user_name;
 	GtkWidget *entry_user_username;
 	GtkWidget *entry_user_password;
 	GtkWidget *entry_user_email;
-	
+
 	GtkWidget *page_complete_easysetup;
-	
+
 	GtkWidget *page_custom_incoming;
 	GtkWidget *incoming_servertype_picker;
 	GtkWidget *caption_incoming;
@@ -137,7 +137,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *entry_outgoingserver;
 	GtkWidget *checkbox_outgoing_smtp_specific;
 	GtkWidget *button_outgoing_smtp_servers;
-	
+
 	GtkWidget *page_complete_customsetup;
 
 	ModestProtocolType last_plugin_protocol_selected;
@@ -225,7 +225,7 @@ set_default_custom_servernames(ModestEasysetupWizardDialog *dialog);
 
 static void on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpointer user_data);
 
-static gint 
+static gint
 get_port_from_protocol (ModestProtocolType server_type,
 			gboolean alternate_port)
 {
@@ -317,9 +317,9 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 		GtkWidget *selector;
 
 		selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (widget)));
-		default_account_name_start = 
+		default_account_name_start =
 			g_strdup (hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
-		
+
 	}
 	default_account_name = modest_account_mgr_get_unused_account_display_name (
 		priv->account_manager, default_account_name_start);
@@ -334,8 +334,8 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 									  proto_name);
 		if (protocol != NULL) {
 			proto_type = modest_protocol_get_type_id (protocol);
-			
-			hide_account_title = (modest_protocol_registry_protocol_type_has_tag 
+
+			hide_account_title = (modest_protocol_registry_protocol_type_has_tag
 					      (modest_runtime_get_protocol_registry (),
 					       proto_type,
 					       MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS) ||
@@ -345,7 +345,7 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 					       MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS));
 		}
 	}
-	
+
 	if (hide_account_title)
 		gtk_widget_hide (priv->caption_account_title);
 	else
@@ -358,7 +358,7 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 /** This is a convenience function to create a caption containing a mandatory widget.
  * When the widget is edited, the enable_buttons() vfunc will be called.
  */
-static GtkWidget* 
+static GtkWidget*
 create_captioned (ModestEasysetupWizardDialog *self,
 		  GtkSizeGroup *title_size_group,
 		  GtkSizeGroup *value_size_group,
@@ -371,28 +371,28 @@ create_captioned (ModestEasysetupWizardDialog *self,
 	result = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
 						      value, use_markup, control);
 
-	/* Connect to the appropriate changed signal for the widget, 
+	/* Connect to the appropriate changed signal for the widget,
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
 	 */
 	if (GTK_IS_ENTRY (control)) {
 		g_signal_connect (G_OBJECT (control), "changed",
 				  G_CALLBACK (on_caption_entry_changed), self);
-		
+
 	}
 	else if (GTK_IS_COMBO_BOX (control)) {
 		g_signal_connect (G_OBJECT (control), "changed",
 				  G_CALLBACK (on_caption_combobox_changed), self);
 	}
-	 
+
 	return result;
 }
-           
+
 static GtkWidget*
 create_page_welcome (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *box;
 	GtkWidget *align;
-	GtkWidget *label; 
+	GtkWidget *label;
 	ModestEasysetupWizardDialogPrivate *priv;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
@@ -420,9 +420,9 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gint column, g
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	
+
 	priv->dirty = TRUE;
-	
+
 	/* Fill the providers picker, based on the selected country: */
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_picker_get_active_country_mcc (
@@ -435,7 +435,7 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gint column, g
 static void
 update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 {
-	ModestEasysetupWizardDialogPrivate *priv; 
+	ModestEasysetupWizardDialogPrivate *priv;
 	gchar* provider_id = NULL, *with_at = NULL;
 
 	g_assert(self);
@@ -468,7 +468,7 @@ on_account_serviceprovider_selector_changed (HildonTouchSelector *widget, gint c
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	
+
 	priv->dirty = TRUE;
 
 	update_user_email_from_provider (self);
@@ -504,32 +504,32 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	/* The country widgets: */
 	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new (MODEST_EDITABLE_SIZE,
 									      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup, 
+	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
 					       _("mcen_fi_country"), priv->account_country_picker);
 	g_signal_connect (G_OBJECT (priv->account_country_picker), "value-changed",
 			  G_CALLBACK (on_picker_button_value_changed), self);
 	gtk_box_pack_start (GTK_BOX (box), priv->account_country_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (priv->account_country_picker);
-	
-	/* The service provider widgets: */	
+
+	/* The service provider widgets: */
 	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE,
 										       HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
 	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-					       _("mcen_fi_serviceprovider"), 
+					       _("mcen_fi_serviceprovider"),
 					       priv->account_serviceprovider_picker);
 	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
 			  G_CALLBACK (on_serviceprovider_picker_button_value_changed), self);
 	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, 0);
 	gtk_widget_show (priv->account_serviceprovider_picker);
-	
-	/* The description widgets: */	
+
+	/* The description widgets: */
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	g_signal_connect(G_OBJECT(priv->entry_account_title), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 	/* Do use auto-capitalization: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title), 
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
-	
+
 	/* Set a default account title, choosing one that does not already exist: */
 	/* Note that this is irrelevant to the non-user visible name, which we will create later. */
 	gchar* default_account_name_start = g_strdup (_("mcen_ia_emailsetup_defaultname"));
@@ -537,20 +537,20 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 		priv->account_manager, default_account_name_start);
 	g_free (default_account_name_start);
 	default_account_name_start = NULL;
-	
+
 	hildon_entry_set_text (HILDON_ENTRY (priv->entry_account_title), default_account_name);
 	g_free (default_account_name);
 	default_account_name = NULL;
 
-	priv->caption_account_title = create_captioned (self, title_sizegroup, value_sizegroup, 
+	priv->caption_account_title = create_captioned (self, title_sizegroup, value_sizegroup,
 							_("mcen_fi_account_title"), FALSE,
 							priv->entry_account_title);
 	gtk_widget_show (priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_account_title, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_account_title);
 	gtk_widget_set_no_show_all (priv->caption_account_title, TRUE);
-	
-	/* Prevent the use of some characters in the account title, 
+
+	/* Prevent the use of some characters in the account title,
 	 * as required by our UI specification: */
 	GList *list_prevent = NULL;
 	list_prevent = g_list_append (list_prevent, "\\");
@@ -560,23 +560,23 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	list_prevent = g_list_append (list_prevent, "?");
 	list_prevent = g_list_append (list_prevent, "\""); /* The UI spec mentions “, but maybe means ", maybe both. */
 	list_prevent = g_list_append (list_prevent, "“");
-	list_prevent = g_list_append (list_prevent, "<"); 
-	list_prevent = g_list_append (list_prevent, ">"); 
+	list_prevent = g_list_append (list_prevent, "<");
+	list_prevent = g_list_append (list_prevent, ">");
 	list_prevent = g_list_append (list_prevent, "|");
-	list_prevent = g_list_append (list_prevent, "^"); 	
+	list_prevent = g_list_append (list_prevent, "^");
 	modest_validating_entry_set_unallowed_characters (
 	 	MODEST_VALIDATING_ENTRY (priv->entry_account_title), list_prevent);
 	g_list_free (list_prevent);
 	list_prevent = NULL;
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_account_title),
 																	 modest_utils_on_entry_invalid_character, self);
-	
+
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_account_title), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_account_title), 
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_account_title),
 					      on_entry_max, self);
-	
+
 	gtk_widget_show (GTK_WIDGET (box));
 
 	g_object_unref (title_sizegroup);
@@ -586,7 +586,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
-	
+
 	return GTK_WIDGET (align);
 }
 
@@ -600,33 +600,33 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	GtkWidget *align;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
-	
+
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	 
+
 	/* The name widgets: (use auto cap) */
 	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_name), 
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_name),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
-	
+
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_name), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name), 
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_name),
 					      on_entry_max, self);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_name"), FALSE, priv->entry_user_name);
-	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed", 
+	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_name);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
-	
-	/* Prevent the use of some characters in the name, 
+
+	/* Prevent the use of some characters in the name,
 	 * as required by our UI specification: */
 	GList *list_prevent = NULL;
 	list_prevent = g_list_append (list_prevent, "<");
@@ -636,47 +636,47 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_user_name),
 		modest_utils_on_entry_invalid_character, self);
 	g_list_free (list_prevent);
-	
-	/* The username widgets: */	
+
+	/* The username widgets: */
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), 
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username),
 					 HILDON_GTK_INPUT_MODE_FULL);
 	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), FALSE,
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", 
+	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (caption);
-	
-	/* Prevent the use of some characters in the username, 
+
+	/* Prevent the use of some characters in the username,
 	 * as required by our UI specification: */
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_user_username),
 		modest_utils_on_entry_invalid_character, self);
-	
+
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_username), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_username), 
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_username),
 					      on_entry_max, self);
-	
-	/* The password widgets: */	
+
+	/* The password widgets: */
 	priv->entry_user_password = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	/* Auto-capitalization is the default, so let's turn it off: */
-	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
+	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
 				    _("mail_fi_password"), FALSE, priv->entry_user_password);
-	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", 
+	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
-	
-	/* The email address widgets: */	
+
+	/* The email address widgets: */
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
@@ -685,17 +685,17 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	update_user_email_from_provider (self);
 	gtk_widget_show (priv->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(priv->entry_user_email), "changed", 
+	g_signal_connect(G_OBJECT(priv->entry_user_email), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (caption);
-	
+
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_email), 64);
-	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_email), 
+	modest_validating_entry_set_max_func (MODEST_VALIDATING_ENTRY (priv->entry_user_email),
 					      on_entry_max, self);
-	
-	
+
+
 	gtk_widget_show (GTK_WIDGET (box));
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
@@ -704,7 +704,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
-	
+
 	return GTK_WIDGET (align);
 }
 
@@ -738,18 +738,18 @@ create_page_complete_easysetup (ModestEasysetupWizardDialog *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
-	
+
 	return GTK_WIDGET (align);
 }
 
-/** Change the caption title for the incoming server, 
+/** Change the caption title for the incoming server,
  * as specified in the UI spec:
  */
-static void 
+static void
 update_incoming_server_title (ModestEasysetupWizardDialog *self)
 {
-	ModestEasysetupWizardDialogPrivate* priv; 
-	ModestProtocolType protocol_type; 
+	ModestEasysetupWizardDialogPrivate* priv;
+	ModestProtocolType protocol_type;
 	ModestProtocolRegistry *protocol_registry;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
@@ -764,7 +764,7 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 		const gchar *protocol_display_name;
 		ModestProtocol *protocol;
 
-		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, 
+		protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry,
 									  protocol_type);
 		protocol_display_name = modest_protocol_get_display_name (protocol);
 
@@ -777,10 +777,10 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 	}
 }
 
-/** Change the caption title for the incoming server, 
+/** Change the caption title for the incoming server,
  * as specified in the UI spec:
  */
-static void 
+static void
 update_incoming_server_security_choices (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
@@ -788,18 +788,18 @@ update_incoming_server_security_choices (ModestEasysetupWizardDialog *self)
 	ModestProtocolType protocol_type;
 	ModestSecurityOptionsView *view;
 
-	server_type_picker = 
+	server_type_picker =
 		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker);
-	protocol_type = 
+	protocol_type =
 		modest_servertype_picker_get_active_servertype (server_type_picker);
-	
+
 	/* Fill the combo with appropriately titled choices for all
 	   those protocols */
 	view = MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security);
 	modest_security_options_view_set_server_type (view, protocol_type);
 }
 
-static void 
+static void
 on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
@@ -808,7 +808,7 @@ on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpoin
 	ModestProtocolType protocol_type;
 
 	priv->dirty = TRUE;
-	
+
 	/* Update title */
 	update_incoming_server_title (self);
 
@@ -821,7 +821,7 @@ on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpoin
 	set_default_custom_servernames (self);
 }
 
-static void 
+static void
 on_entry_incoming_servername_changed(GtkEntry *entry, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
@@ -830,11 +830,11 @@ on_entry_incoming_servername_changed(GtkEntry *entry, gpointer user_data)
 	priv->server_changes |= MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED;
 }
 
-static GtkWidget* 
+static GtkWidget*
 create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 {
 	ModestProtocolRegistry *protocol_registry;
-	ModestEasysetupWizardDialogPrivate* priv; 
+	ModestEasysetupWizardDialogPrivate* priv;
 	GtkWidget *box;
 	GtkWidget *align;
 	GtkWidget *pannable;
@@ -856,13 +856,13 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 	gtk_widget_show (label);
-	
+
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	 
+
 	/* The incoming server widgets: */
 	priv->incoming_servertype_picker = GTK_WIDGET (modest_servertype_picker_new (MODEST_EDITABLE_SIZE,
 										     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
@@ -874,7 +874,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 			  G_CALLBACK (on_picker_button_value_changed), self);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_picker, FALSE, FALSE, 0);
 	gtk_widget_show (priv->incoming_servertype_picker);
-	
+
 	priv->entry_incomingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	g_signal_connect(G_OBJECT(priv->entry_incomingserver), "changed", G_CALLBACK(on_easysetup_changed), self);
 	/* Auto-capitalization is the default, so let's turn it off: */
@@ -884,16 +884,16 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	priv->caption_incoming = create_captioned (self, title_sizegroup, value_sizegroup,
-						   "This will be removed", 
+						   "This will be removed",
 						   FALSE, priv->entry_incomingserver);
 	update_incoming_server_title (self);
 	gtk_widget_show (priv->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_incoming);
-	
-	/* Change the caption title when the servertype changes, 
+
+	/* Change the caption title when the servertype changes,
 	 * as in the UI spec: */
-	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->incoming_servertype_picker))), 
+	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->incoming_servertype_picker))),
 			  "changed",
 			  G_CALLBACK (on_servertype_selector_changed), self);
 
@@ -902,24 +902,24 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	                  G_CALLBACK (on_entry_incoming_servername_changed), self);
 
 	/* The secure connection widgets. These are only valid for
-	   protocols with security */	
-	priv->incoming_security = 
+	   protocols with security */
+	priv->incoming_security =
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
 							FALSE, title_sizegroup, value_sizegroup);
-	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
+	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security,
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->incoming_security);
 
 	/* Set default selection */
 	modest_servertype_picker_set_active_servertype (
-		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker), 
+		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker),
 		MODEST_PROTOCOLS_STORE_POP);
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
-	
+
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
 	gtk_widget_show (GTK_WIDGET (box));
 	gtk_widget_show (pannable);
@@ -934,7 +934,7 @@ static void
 on_check_button_changed (HildonCheckButton *button, gpointer user_data)
 {
 	GtkWidget *widget = GTK_WIDGET (user_data);
-	
+
 	/* Enable the widget only if the check button is active: */
 	const gboolean enable = hildon_check_button_get_active (button);
 	gtk_widget_set_sensitive (widget, enable);
@@ -947,7 +947,7 @@ enable_widget_for_checkbutton (GtkWidget *widget, HildonCheckButton* button)
 {
 	g_signal_connect (G_OBJECT (button), "toggled",
 			  G_CALLBACK (on_check_button_changed), widget);
-	
+
 	/* Set the starting sensitivity: */
 	on_check_button_changed (button, widget);
 }
@@ -958,11 +958,11 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 	GtkWidget *specific_window;
-	
+
 	/* We set dirty here because setting it depending on the connection specific dialog
 	seems overkill */
 	priv->dirty = TRUE;
-	
+
 	/* Create the window, if necessary: */
 	specific_window = (GtkWidget *) modest_connection_specific_smtp_window_new ();
 	modest_connection_specific_smtp_window_fill_with_connections (MODEST_CONNECTION_SPECIFIC_SMTP_WINDOW (specific_window), priv->account_manager);
@@ -972,7 +972,7 @@ on_button_outgoing_smtp_servers (GtkButton *button, gpointer user_data)
 	gtk_widget_show (specific_window);
 }
 
-static void 
+static void
 on_entry_outgoing_servername_changed (GtkEntry *entry, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
@@ -980,7 +980,7 @@ on_entry_outgoing_servername_changed (GtkEntry *entry, gpointer user_data)
 	priv->server_changes |= MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED;
 }
 
-static GtkWidget* 
+static GtkWidget*
 create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
@@ -990,13 +990,13 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
 	pannable = hildon_pannable_area_new ();
-	
+
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup *title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	GtkSizeGroup *value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	 
+
 	/* The outgoing server widgets: */
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
@@ -1014,11 +1014,11 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	set_default_custom_servernames (self);
 
 	/* The secure connection widgets. These are only valid for
-	   protocols with security */	
-	priv->outgoing_security = 
+	   protocols with security */
+	priv->outgoing_security =
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
 							FALSE, title_sizegroup, value_sizegroup);
-	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
+	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security,
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->outgoing_security);
 
@@ -1028,7 +1028,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	/* connection-specific checkbox: */
 	priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific),
 					FALSE);
 	gtk_button_set_label (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific),
 			      _("mcen_fi_advsetup_connection_smtp"));
@@ -1043,14 +1043,14 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	/* Connection-specific SMTP-Severs Edit button: */
 	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_advsetup_optional_smtp"));
-	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers, 
-					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);	
+	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers,
+					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
-	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, 
+	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers,
 			    FALSE, FALSE, 0);
 
 	/* Only enable the button when the checkbox is checked: */
-	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
+	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers,
 				       HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific));
 
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
@@ -1064,14 +1064,14 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
-	
+
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
 	gtk_widget_show (GTK_WIDGET (box));
 	gtk_widget_show (pannable);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-	
+
 	return GTK_WIDGET (pannable);
 }
 
@@ -1081,7 +1081,7 @@ show_advanced_edit(gpointer user_data)
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	gint response;
-	
+
 	/* Show the Account Settings window: */
 	ModestAccountSettingsDialog *dialog = modest_default_account_settings_dialog_new ();
 	if (priv->pending_load_settings) {
@@ -1089,13 +1089,13 @@ show_advanced_edit(gpointer user_data)
 		priv->pending_load_settings = FALSE;
 	}
 	modest_account_settings_dialog_load_settings (dialog, priv->settings);
-	
+
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), GTK_WINDOW (self));
-	
+
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (GTK_WIDGET (dialog));
-	
+
 	return FALSE; /* Do not call this timeout callback again. */
 }
 
@@ -1103,11 +1103,11 @@ static void
 on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 {
 	ModestEasysetupWizardDialog * self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
-	
+
 	/* Show the Account Settings window: */
 	show_advanced_edit(self);
 }
-static GtkWidget* 
+static GtkWidget*
 create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
 	GtkWidget *align;
@@ -1135,7 +1135,7 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, 0);
 
-	g_signal_connect (G_OBJECT (button_edit), "clicked", 
+	g_signal_connect (G_OBJECT (button_edit), "clicked",
 			  G_CALLBACK (on_button_edit_advanced_settings), self);
 
 	gtk_widget_show (GTK_WIDGET (box));
@@ -1144,14 +1144,14 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
-	
+
 	return GTK_WIDGET (align);
 }
 
 
 /*
  */
-static void 
+static void
 on_response (ModestWizardDialog *wizard_dialog,
 	     gint response_id,
 	     gpointer user_data)
@@ -1161,7 +1161,7 @@ on_response (ModestWizardDialog *wizard_dialog,
 	invoke_enable_buttons_vfunc (self);
 }
 
-static void 
+static void
 on_response_before (ModestWizardDialog *wizard_dialog,
                     gint response_id,
                     gpointer user_data)
@@ -1172,7 +1172,7 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 		/* This is mostly copied from
 		 * src/maemo/modest-account-settings-dialog.c */
 		if (priv->dirty) {
-			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
+			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self),
 				_("imum_nc_wizard_confirm_lose_changes")));
 			/* TODO: These button names will be ambiguous, and not
 			 * specified in the UI specification. */
@@ -1200,11 +1200,11 @@ fill_providers (ModestEasysetupWizardDialog *self)
 		modest_country_picker_load_data(
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		/* connect to country picker's changed signal, so we can fill the provider picker: */
-		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
+		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
 					    (HILDON_PICKER_BUTTON (priv->account_country_picker))),
 				  "changed",
 				  G_CALLBACK (on_account_country_selector_changed), self);
-            
+
 		modest_country_picker_set_active_country_locale (
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		mcc = modest_country_picker_get_active_country_mcc (
@@ -1213,11 +1213,11 @@ fill_providers (ModestEasysetupWizardDialog *self)
 			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker),
 			priv->presets, mcc);
 		/* connect to providers picker's changed signal, so we can fill the email address: */
-		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector 
+		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
 					    (HILDON_PICKER_BUTTON (priv->account_serviceprovider_picker))),
 				  "changed",
 				  G_CALLBACK (on_account_serviceprovider_selector_changed), self);
-		
+
 		modest_provider_picker_set_others_provider (MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
 	}
 
@@ -1264,8 +1264,8 @@ presets_loader (gpointer userdata)
 	const gchar* path  = NULL;
 	const gchar* path1 = MODEST_PROVIDER_DATA_FILE;
 	const gchar* path2 = MODEST_FALLBACK_PROVIDER_DATA_FILE;
-	
-	if (access(path1, R_OK) == 0) 
+
+	if (access(path1, R_OK) == 0)
 		path = path1;
 	else if (access(path2, R_OK) == 0)
 		path = path2;
@@ -1280,12 +1280,12 @@ presets_loader (gpointer userdata)
 		g_warning ("%s: failed to parse '%s'", __FUNCTION__, path);
 		return NULL;
 	}
-	
+
 	idle_data = g_new0 (IdleData, 1);
 	idle_data->dialog = self;
 	idle_data->presets = presets;
-	
-	g_idle_add (presets_idle, idle_data);	
+
+	g_idle_add (presets_idle, idle_data);
 
 	return NULL;
 }
@@ -1339,32 +1339,32 @@ static void
 modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 {
 	gtk_container_set_border_width (GTK_CONTAINER (self), MODEST_MARGIN_HALF);
-	
+
 	/* Create the notebook to be used by the ModestWizardDialog base class:
 	 * Each page of the notebook will be a page of the wizard: */
 	GtkNotebook *notebook = GTK_NOTEBOOK (gtk_notebook_new());
 	gtk_widget_set_size_request (GTK_WIDGET (notebook), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
-	
+
 	/* Set the notebook used by the ModestWizardDialog base class: */
 	g_object_set (G_OBJECT(self), "wizard-notebook", notebook, NULL);
-    
+
 	/* Set the wizard title:
 	 * The actual window title will be a combination of this and the page's tab label title. */
 	g_object_set (G_OBJECT(self), "wizard-name", _("mcen_ti_emailsetup"), NULL);
 
 	/* Read in the information about known service providers: */
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	
+
 	/* The server fields did not have been manually changed yet */
 	priv->server_changes = 0;
 	priv->pending_load_settings = TRUE;
 
-	/* Get the account manager object, 
+	/* Get the account manager object,
 	 * so we can check for existing accounts,
 	 * and create new accounts: */
 	priv->account_manager = modest_runtime_get_account_mgr ();
 	g_object_ref (priv->account_manager);
-	
+
 	/* Initialize fields */
 	priv->check_support_done = FALSE;
 	priv->check_support_show_progress_id = 0;
@@ -1379,28 +1379,28 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	init_incoming_page (priv);
 	init_outgoing_page (priv);
 
-	priv->page_complete_easysetup = NULL;       
+	priv->page_complete_easysetup = NULL;
 	priv->page_complete_customsetup = NULL;
 	priv->last_plugin_protocol_selected = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	priv->missing_data_signals = NULL;
 
 	/* Add the common pages */
-	modest_easysetup_wizard_dialog_append_page (notebook, priv->page_welcome, 
+	modest_easysetup_wizard_dialog_append_page (notebook, priv->page_welcome,
 						    _("mcen_ti_emailsetup_welcome"));
-	modest_easysetup_wizard_dialog_append_page (notebook, priv->page_account_details, 
+	modest_easysetup_wizard_dialog_append_page (notebook, priv->page_account_details,
 						    _("mcen_ti_accountdetails"));
-		
-	/* Connect to the dialog's response signal so we can enable/disable buttons 
+
+	/* Connect to the dialog's response signal so we can enable/disable buttons
 	 * for the newly-selected page, because the prev/next buttons cause response to be emitted.
 	 * Note that we use g_signal_connect_after() instead of g_signal_connect()
-	 * so that we can be enable/disable after ModestWizardDialog has done its own 
+	 * so that we can be enable/disable after ModestWizardDialog has done its own
 	 * enabling/disabling of buttons.
-	 * 
-	 * HOWEVER, this doesn't work because ModestWizardDialog's response signal handler 
+	 *
+	 * HOWEVER, this doesn't work because ModestWizardDialog's response signal handler
 	 * does g_signal_stop_emission_by_name(), stopping our signal handler from running.
-	 * 
-	 * It's not enough to connect to the notebook's switch-page signal, because 
-	 * ModestWizardDialog's "response" signal handler enables the buttons itself, 
+	 *
+	 * It's not enough to connect to the notebook's switch-page signal, because
+	 * ModestWizardDialog's "response" signal handler enables the buttons itself,
 	 * _after_ switching the page (understandably).
 	 * (Note that if we had, if we used g_signal_connect() instead of g_signal_connect_after()
 	 * then gtk_notebook_get_current_page() would return an incorrect value.)
@@ -1418,10 +1418,10 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Reset dirty, because there was no user input until now */
 	priv->dirty = FALSE;
 
-	/* When this window is shown, hibernation should not be possible, 
+	/* When this window is shown, hibernation should not be possible,
 	 * because there is no sensible way to save the state: */
 	modest_window_mgr_prevent_hibernation_while_window_is_shown (
-		modest_runtime_get_window_mgr (), GTK_WINDOW (self)); 
+		modest_runtime_get_window_mgr (), GTK_WINDOW (self));
 
 	/* Load provider presets */
 	g_object_ref (self);
@@ -1434,12 +1434,12 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 
 ModestEasysetupWizardDialog*
 modest_easysetup_wizard_dialog_new (void)
-{	
-	
+{
+
 	return g_object_new (MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, NULL);
 }
 
-static void 
+static void
 create_subsequent_customsetup_pages (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
@@ -1452,18 +1452,18 @@ create_subsequent_customsetup_pages (ModestEasysetupWizardDialog *self)
 
 	if (!priv->page_user_details) {
 		priv->page_user_details = create_page_user_details (self);
-	}			
+	}
 
 	/* Create the custom pages: */
 	if(!(priv->page_custom_incoming)) {
 		priv->page_custom_incoming = create_page_custom_incoming (self);
 	}
-		
+
 	/* TODO: only if needed */
 	if(!(priv->page_custom_outgoing)) {
 		priv->page_custom_outgoing = create_page_custom_outgoing (self);
 	}
-	
+
 	if(!(priv->page_complete_customsetup)) {
 		priv->page_complete_customsetup = create_page_complete_custom (self);
 	}
@@ -1473,22 +1473,22 @@ create_subsequent_customsetup_pages (ModestEasysetupWizardDialog *self)
 							    _("mcen_ti_emailsetup_userdetails"));
 
 	if (!gtk_widget_get_parent (GTK_WIDGET (priv->page_custom_incoming)))
-		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_custom_incoming, 
+		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_custom_incoming,
 							    _("mcen_ti_emailsetup_incomingdetails"));
-	
-	if (!gtk_widget_get_parent (GTK_WIDGET (priv->page_custom_outgoing)))		
-		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_custom_outgoing, 
+
+	if (!gtk_widget_get_parent (GTK_WIDGET (priv->page_custom_outgoing)))
+		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_custom_outgoing,
 							    _("mcen_ti_emailsetup_outgoingdetails"));
-		
+
 	if (!gtk_widget_get_parent (GTK_WIDGET (priv->page_complete_customsetup)))
-		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_complete_customsetup, 
+		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_complete_customsetup,
 							    _("mcen_ti_emailsetup_complete"));
-			
+
 	/* This is unnecessary with GTK+ 2.10: */
 	modest_wizard_dialog_force_title_update (MODEST_WIZARD_DIALOG(self));
 }
-	
-static void 
+
+static void
 create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
@@ -1496,24 +1496,24 @@ create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self)
 
 	g_object_get (self, "wizard-notebook", &notebook, NULL);
 	g_assert(notebook);
-	
+
 	/* Create the easysetup-specific pages: */
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	if(!priv->page_complete_easysetup)
 		priv->page_complete_easysetup = create_page_complete_easysetup (self);
 
 	if (!gtk_widget_get_parent (GTK_WIDGET (priv->page_complete_easysetup)))
-		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_complete_easysetup, 
+		modest_easysetup_wizard_dialog_append_page (notebook, priv->page_complete_easysetup,
 							    _("mcen_ti_emailsetup_complete"));
-			
+
 	/* This is unnecessary with GTK+ 2.10: */
 	modest_wizard_dialog_force_title_update (MODEST_WIZARD_DIALOG(self));
 }
 
 /* */
 static void
-remove_non_common_tabs (GtkNotebook *notebook, 
-			gboolean remove_user_details) 
+remove_non_common_tabs (GtkNotebook *notebook,
+			gboolean remove_user_details)
 {
 	gint starting_tab;
 	/* The first 2 tabs are the common ones (welcome tab and the
@@ -1521,8 +1521,8 @@ remove_non_common_tabs (GtkNotebook *notebook,
 	   end */
 
 	starting_tab = (remove_user_details) ? 2 : 3;
-	while (gtk_notebook_get_n_pages (notebook) > starting_tab) 
-		gtk_notebook_remove_page (notebook, -1); 
+	while (gtk_notebook_get_n_pages (notebook) > starting_tab)
+		gtk_notebook_remove_page (notebook, -1);
 }
 
 static void
@@ -1534,10 +1534,10 @@ on_missing_mandatory_data (ModestAccountProtocol *protocol,
 }
 
 /* After the user details page,
- * the following pages depend on whether "Other" was chosen 
+ * the following pages depend on whether "Other" was chosen
  * in the provider combobox on the account page
  */
-static void 
+static void
 create_subsequent_pages (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
@@ -1551,7 +1551,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 	g_object_get (self, "wizard-notebook", &notebook, NULL);
 	modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
 							    NULL);
-	
+
 
 	if (id_type == MODEST_PROVIDER_PICKER_ID_OTHER) {
 		/* "Other..." was selected: */
@@ -1560,8 +1560,8 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 		if (priv->page_complete_easysetup) {
 			remove_non_common_tabs (notebook, FALSE);
 			priv->page_complete_easysetup = NULL;
-		} 
-		
+		}
+
 		/* If we come from a rollbacked plugin protocol setup */
 		if (priv->last_plugin_protocol_selected != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
 			remove_non_common_tabs (notebook, TRUE);
@@ -1588,16 +1588,16 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			gchar *proto_name;
 			ModestProtocolType proto_type;
 
-			
+
 			/* If we come from a rollbacked easy setup */
-			if (priv->last_plugin_protocol_selected == 
+			if (priv->last_plugin_protocol_selected ==
 			    MODEST_PROTOCOL_REGISTRY_TYPE_INVALID &&
 			    priv->page_complete_easysetup) {
 				remove_non_common_tabs (notebook, TRUE);
 				init_user_page (priv);
 				priv->page_complete_easysetup = NULL;
 			}
-			
+
 			proto_name = modest_provider_picker_get_active_provider_id (picker);
 			protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
 										  MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
@@ -1616,7 +1616,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 
 				/* Get tabs */
 				tabs = modest_account_protocol_get_easysetupwizard_tabs (MODEST_ACCOUNT_PROTOCOL (protocol));
-				response_override = modest_account_protocol_get_wizard_response_override 
+				response_override = modest_account_protocol_get_wizard_response_override
 					(MODEST_ACCOUNT_PROTOCOL (protocol));
 				modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
 										    response_override);
@@ -1634,11 +1634,11 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 
 					/* Connect signals */
 					if (MODEST_IS_EASYSETUP_WIZARD_PAGE (pair->second)) {
-						priv->missing_data_signals = 
-							modest_signal_mgr_connect (priv->missing_data_signals, 
-										   G_OBJECT (pair->second), 
+						priv->missing_data_signals =
+							modest_signal_mgr_connect (priv->missing_data_signals,
+										   G_OBJECT (pair->second),
 										   "missing-mandatory-data",
-										   G_CALLBACK (on_missing_mandatory_data), 
+										   G_CALLBACK (on_missing_mandatory_data),
 										   self);
 					}
 
@@ -1651,7 +1651,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			}
 			g_free (proto_name);
 		} else {
-			if (priv->last_plugin_protocol_selected != 
+			if (priv->last_plugin_protocol_selected !=
 			    MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
 				remove_non_common_tabs (notebook, TRUE);
 				init_user_page (priv);
@@ -1662,12 +1662,12 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			}
 			if (!priv->page_user_details) {
 				priv->page_user_details = create_page_user_details (self);
-				modest_easysetup_wizard_dialog_append_page (notebook, 
+				modest_easysetup_wizard_dialog_append_page (notebook,
 									    priv->page_user_details,
 									    _("mcen_ti_emailsetup_userdetails"));
 			}
 		}
-		
+
 		/* Create the easysetup pages: */
 		create_subsequent_easysetup_pages (self);
 	}
@@ -1685,37 +1685,37 @@ util_get_default_servername_from_email_address (const gchar* email_address, Mode
 
 	if (!email_address)
 		return NULL;
-	
+
 	at = g_utf8_strchr (email_address, -1, '@');
 	if (!at || (g_utf8_strlen (at, -1) < 2))
 		return NULL;
-		
+
 	domain = g_utf8_next_char (at);
 	if(!domain)
 		return NULL;
 
 	protocol_registry = modest_runtime_get_protocol_registry ();
 	protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
-		
+
 	if (modest_protocol_registry_protocol_type_has_tag (protocol_registry, protocol_type, MODEST_PROTOCOL_REGISTRY_REMOTE_STORE_PROTOCOLS) ||
 	    modest_protocol_registry_protocol_type_has_tag (protocol_registry, protocol_type, MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS)) {
 		hostname = modest_protocol_get_name (protocol);
 	}
-	
+
 	if (!hostname)
 		return NULL;
-		
+
 	return g_strdup_printf ("%s.%s", hostname, domain);
 }
 
-static void 
+static void
 set_default_custom_servernames (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 
 	if (!priv->entry_incomingserver)
 		return;
-		
+
 	/* Set a default domain for the server, based on the email address,
 	 * if no server name was already specified.
 	 */
@@ -1726,29 +1726,29 @@ set_default_custom_servernames (ModestEasysetupWizardDialog *self)
 
 		/* This could happen when the combo box has still no active iter */
 		if (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
-			const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY(priv->entry_user_email));	
-			gchar* servername = util_get_default_servername_from_email_address (email_address, 
+			const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY(priv->entry_user_email));
+			gchar* servername = util_get_default_servername_from_email_address (email_address,
 											    protocol_type);
 
 			/* Do not set the INCOMING_CHANGED flag because of this edit */
 			g_signal_handlers_block_by_func (G_OBJECT (priv->entry_incomingserver), G_CALLBACK (on_entry_incoming_servername_changed), self);
 			hildon_entry_set_text (HILDON_ENTRY (priv->entry_incomingserver), servername);
 			g_signal_handlers_unblock_by_func (G_OBJECT (priv->entry_incomingserver), G_CALLBACK (on_entry_incoming_servername_changed), self);
-			
+
 			g_free (servername);
 		}
 	}
-	
+
 	/* Set a default domain for the server, based on the email address,
 	 * if no server name was already specified.
 	 */
 	if (!priv->entry_outgoingserver)
 		return;
-		
+
 	if (priv->entry_user_email
 	    && ((priv->server_changes & MODEST_EASYSETUP_WIZARD_DIALOG_OUTGOING_CHANGED) == 0)) {
 		const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY(priv->entry_user_email));
-		
+
 		gchar* servername = util_get_default_servername_from_email_address (email_address, MODEST_PROTOCOLS_TRANSPORT_SMTP);
 
 		/* Do not set the OUTGOING_CHANGED flag because of this edit */
@@ -1775,15 +1775,15 @@ get_entered_account_title (ModestEasysetupWizardDialog *self)
 		/* Strip it of whitespace at the start and end: */
 		gchar *result = g_strdup (account_title);
 		result = g_strstrip (result);
-		
+
 		if (!result)
 			return NULL;
-			
+
 		if (g_utf8_strlen (result, -1) == 0) {
 			g_free (result);
-			return NULL;	
+			return NULL;
 		}
-		
+
 		return result;
 	}
 }
@@ -1801,17 +1801,17 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	 * this wizard */
 	if (next_page != NULL)
 		priv->pending_load_settings = TRUE;
-	
+
 	/* Do extra validation that couldn't be done for every key press,
 	 * either because it was too slow,
 	 * or because it requires interaction:
 	 */
-	if (current_page == priv->page_account_details) {	
+	if (current_page == priv->page_account_details) {
 		/* Check that the title is not already in use: */
 		gchar* account_title = get_entered_account_title (self);
 		if (!account_title)
 			return FALSE;
-			
+
 		/* Aavoid a clash with an existing display name: */
 		const gboolean name_in_use = modest_account_mgr_account_with_display_name_exists (
 			priv->account_manager, account_title);
@@ -1820,7 +1820,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
 			hildon_banner_show_information(NULL, NULL, _("mail_ib_account_name_already_existing"));
-            
+
 			return FALSE;
 		}
 
@@ -1832,11 +1832,11 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		const gchar* email_address = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_email));
 		if ((!email_address) || (g_utf8_strlen (email_address, -1) == 0))
 			return FALSE;
-			
+
 		if (!modest_text_utils_validate_email_address (email_address, NULL)) {
 			/* Warn the user via a dialog: */
 			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
-                                             
+
 			/* Return focus to the email address entry: */
 			gtk_widget_grab_focus (priv->entry_user_email);
 			gtk_editable_select_region (GTK_EDITABLE (priv->entry_user_email), 0, -1);
@@ -1844,7 +1844,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 			return FALSE;
 		}
 	}
-	  
+
 	if (next_page == priv->page_custom_incoming) {
 		set_default_custom_servernames (self);
 	} else if (next_page == priv->page_custom_outgoing) {
@@ -1856,11 +1856,11 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 				return FALSE;
 		gtk_widget_show (priv->outgoing_security);
 	}
-	
-	/* If this is the last page, and this is a click on Finish, 
+
+	/* If this is the last page, and this is a click on Finish,
 	 * then attempt to create the dialog.
 	 */
-	if(!next_page && 
+	if(!next_page &&
 	   current_page != priv->page_account_details) /* This is NULL when this is a click on Finish. */
 	{
 		if (priv->pending_load_settings) {
@@ -1875,8 +1875,8 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 
 		modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
 	}
-	
-	
+
+
 	return TRUE;
 }
 
@@ -1884,7 +1884,7 @@ static gboolean entry_is_empty (GtkWidget *entry)
 {
 	if (!entry)
 		return FALSE;
-		
+
 	const gchar* text = hildon_entry_get_text (HILDON_ENTRY (entry));
 	if ((!text) || (g_utf8_strlen (text, -1) == 0))
 		return TRUE;
@@ -1892,12 +1892,12 @@ static gboolean entry_is_empty (GtkWidget *entry)
 		/* Strip it of whitespace at the start and end: */
 		gchar *stripped = g_strdup (text);
 		stripped = g_strstrip (stripped);
-		
+
 		if (!stripped)
 			return TRUE;
-			
+
 		const gboolean result = (g_utf8_strlen (stripped, -1) == 0);
-		
+
 		g_free (stripped);
 		return result;
 	}
@@ -1905,7 +1905,7 @@ static gboolean entry_is_empty (GtkWidget *entry)
 
 static void
 real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next)
-{		
+{
 	GtkNotebook *notebook = NULL;
 	gboolean is_finish_tab;
 	GtkWidget *current;
@@ -1947,7 +1947,7 @@ on_enable_buttons (ModestWizardDialog *dialog, GtkWidget *current_page)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (dialog);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	
+
 	gboolean enable_next = TRUE;
 	if (current_page == priv->page_welcome) {
 		enable_next = TRUE;
@@ -1955,11 +1955,11 @@ on_enable_buttons (ModestWizardDialog *dialog, GtkWidget *current_page)
 		/* The account details title is mandatory: */
 		if (entry_is_empty(priv->entry_account_title))
 			enable_next = FALSE;
-	} else if (current_page == priv->page_user_details) {	
+	} else if (current_page == priv->page_user_details) {
 		/* The user details username is mandatory: */
 		if (entry_is_empty(priv->entry_user_username))
 			enable_next = FALSE;
-			
+
 		/* The user details email address is mandatory: */
 		if (enable_next && entry_is_empty (priv->entry_user_email))
 			enable_next = FALSE;
@@ -1971,8 +1971,8 @@ on_enable_buttons (ModestWizardDialog *dialog, GtkWidget *current_page)
 		enable_next = !modest_easysetup_wizard_page_validate (
 		       MODEST_EASYSETUP_WIZARD_PAGE (current_page));
 	}
-			
-	/* Enable/disable buttons */ 
+
+	/* Enable/disable buttons */
 	real_enable_buttons (dialog, enable_next);
 }
 
@@ -1985,8 +1985,8 @@ modest_easysetup_wizard_dialog_class_init (ModestEasysetupWizardDialogClass *kla
 
 	object_class->dispose = modest_easysetup_wizard_dialog_dispose;
 	object_class->finalize = modest_easysetup_wizard_dialog_finalize;
-	
-	/* Provide a vfunc implementation so we can decide 
+
+	/* Provide a vfunc implementation so we can decide
 	 * when to enable/disable the prev/next buttons.
 	 */
 	ModestWizardDialogClass *base_klass = (ModestWizardDialogClass*)(klass);
@@ -2072,7 +2072,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	transport_settings = modest_account_settings_get_transport_settings (priv->settings);
 
 	/* Incoming server: */
-	/* Note: We need something as default for the transport store protocol values, 
+	/* Note: We need something as default for the transport store protocol values,
 	 * or modest_account_mgr_add_server_account will fail. */
 	store_port = 0;
 	store_protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
@@ -2117,17 +2117,17 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 			store_port = get_port_from_protocol(store_provider_server_type, use_alternate_port);
 		}
 
-		modest_server_account_settings_set_security_protocol (store_settings, 
+		modest_server_account_settings_set_security_protocol (store_settings,
 								      store_security);
-		modest_server_account_settings_set_auth_protocol (store_settings, 
+		modest_server_account_settings_set_auth_protocol (store_settings,
 								  store_auth_protocol);
 		if (store_port != 0)
 			modest_server_account_settings_set_port (store_settings, store_port);
 	} else {
 		/* Use custom pages because no preset was specified: */
-		store_hostname = g_strdup (hildon_entry_get_text (HILDON_ENTRY (priv->entry_incomingserver) ));		
+		store_hostname = g_strdup (hildon_entry_get_text (HILDON_ENTRY (priv->entry_incomingserver) ));
 		store_protocol = modest_servertype_picker_get_active_servertype (
-			MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));		
+			MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
 
 		modest_security_options_view_save_settings (
 				    MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security),
@@ -2142,27 +2142,27 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 	g_object_unref (store_settings);
 	g_free (store_hostname);
-	
+
 	/* Outgoing server: */
 	transport_hostname = NULL;
 	transport_protocol = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 	transport_security = MODEST_PROTOCOLS_CONNECTION_NONE;
 	transport_auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 	transport_port = 0;
-	
+
 	if (provider_id) {
 		ModestProtocolType transport_provider_server_type;
 		ModestProtocolType transport_provider_security;
 
 		/* Use presets */
-		transport_hostname = modest_presets_get_server (priv->presets, provider_id, 
+		transport_hostname = modest_presets_get_server (priv->presets, provider_id,
 								FALSE /* transport */);
-			
+
 		transport_provider_server_type = modest_presets_get_info_server_type (priv->presets,
-										      provider_id, 
-										      FALSE /* transport */);		
-		transport_provider_security = modest_presets_get_info_server_security (priv->presets, 
-										       provider_id, 
+										      provider_id,
+										      FALSE /* transport */);
+		transport_provider_security = modest_presets_get_info_server_security (priv->presets,
+										       provider_id,
 										       FALSE /* transport */);
 
 		/* Note: We need something as default, or modest_account_mgr_add_server_account will fail. */
@@ -2175,7 +2175,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 								FALSE /* transport */);
 			if (special_port != 0)
 				transport_port = special_port;
-			else 
+			else
 				transport_port = 465;
 			transport_auth_protocol = MODEST_PROTOCOLS_AUTH_PASSWORD;
 		} else {
@@ -2183,12 +2183,12 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 			transport_auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 		}
 
-		modest_server_account_settings_set_security_protocol (transport_settings, 
+		modest_server_account_settings_set_security_protocol (transport_settings,
 								      transport_security);
-		modest_server_account_settings_set_auth_protocol (transport_settings, 
+		modest_server_account_settings_set_auth_protocol (transport_settings,
 								  transport_auth_protocol);
 		if (transport_port != 0)
-			modest_server_account_settings_set_port (transport_settings, 
+			modest_server_account_settings_set_port (transport_settings,
 								 transport_port);
 	} else {
 		ModestProtocolRegistry *registry;
@@ -2198,7 +2198,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 		/* Use custom pages because no preset was specified: */
 		transport_hostname = g_strdup (hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver) ));
 
-		store_proto = modest_protocol_registry_get_protocol_by_type (registry, 
+		store_proto = modest_protocol_registry_get_protocol_by_type (registry,
 									     store_protocol);
 
 		if (transport_protocol == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
@@ -2282,7 +2282,7 @@ check_for_supported_auth_methods (ModestEasysetupWizardDialog* self)
 	int port_num;
 	GList *list_auth_methods;
 	ModestEasysetupWizardDialogPrivate *priv;
-	
+
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	registry = modest_runtime_get_protocol_registry ();
 	protocol_type = modest_servertype_picker_get_active_servertype (
@@ -2326,7 +2326,7 @@ check_for_supported_auth_methods (ModestEasysetupWizardDialog* self)
 	return NULL;
 }
 
-static gboolean 
+static gboolean
 check_has_supported_auth_methods(ModestEasysetupWizardDialog* self)
 {
 	GList* methods = check_for_supported_auth_methods(self);
@@ -2339,7 +2339,7 @@ check_has_supported_auth_methods(ModestEasysetupWizardDialog* self)
 	return TRUE;
 }
 
-static gboolean 
+static gboolean
 check_support_progress_pulse (gpointer userdata)
 {
 	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
@@ -2355,7 +2355,7 @@ check_support_progress_pulse (gpointer userdata)
 	return TRUE;
 }
 
-static gboolean 
+static gboolean
 check_support_show_progress (gpointer userdata)
 {
 	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
@@ -2416,18 +2416,18 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
 	registry = modest_runtime_get_protocol_registry ();
-	provider_protos = modest_protocol_registry_get_by_tag (registry, 
+	provider_protos = modest_protocol_registry_get_by_tag (registry,
 							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
 
 	for (node = provider_protos; node != NULL; node = g_slist_next (node)) {
 		ModestProtocol *proto = MODEST_PROTOCOL (node->data);
 
-		if (!modest_protocol_registry_protocol_type_has_tag (registry, 
+		if (!modest_protocol_registry_protocol_type_has_tag (registry,
 								     modest_protocol_get_type_id (proto),
 								     MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS))
 			continue;
 
-		if (modest_protocol_registry_protocol_type_has_tag 
+		if (modest_protocol_registry_protocol_type_has_tag
 		    (registry,
 		     modest_protocol_get_type_id (proto),
 		     MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS)) {
@@ -2448,7 +2448,7 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 
 	if (priv->pending_check_support > 0) {
 		priv->check_support_show_progress_id = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
-									   check_support_show_progress, 
+									   check_support_show_progress,
 									   g_object_ref (self), g_object_unref);
 	} else {
 		priv->check_support_done = TRUE;
