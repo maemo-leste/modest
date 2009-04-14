@@ -3099,7 +3099,6 @@ on_fetch_image_thread (gpointer userdata)
 	TnyStreamCache *cache;
 	TnyStream *cache_stream;
 
-	gdk_threads_enter ();
 	cache = modest_runtime_get_images_cache ();
 	cache_stream = 
 		tny_stream_cache_get_stream (cache, 
@@ -3110,11 +3109,37 @@ on_fetch_image_thread (gpointer userdata)
 	g_free (fidata->uri);
 
 	if (cache_stream != NULL) {
-		tny_stream_write_to_stream (cache_stream, fidata->output_stream);
+		char buffer[4096];
+
+		while (G_LIKELY (!tny_stream_is_eos (cache_stream))) {
+			gssize nb_read;
+
+			nb_read = tny_stream_read (cache_stream, buffer, sizeof (buffer));
+			if (G_UNLIKELY (nb_read < 0)) {
+				break;
+			} else if (G_LIKELY (nb_read > 0)) {
+				gssize nb_written = 0;
+
+				while (G_UNLIKELY (nb_written < nb_read)) {
+					gssize len;
+
+					gdk_threads_enter ();
+					len = tny_stream_write (fidata->output_stream, buffer + nb_written,
+								nb_read - nb_written);
+					gdk_threads_leave ();
+					if (G_UNLIKELY (len < 0))
+						break;
+					nb_written += len;
+				}
+			}
+		}
+		gdk_threads_enter ();
 		tny_stream_close (cache_stream);
 		g_object_unref (cache_stream);
+		gdk_threads_leave ();
 	}
 
+	gdk_threads_enter ();
 	tny_stream_close (fidata->output_stream);
 	g_object_unref (fidata->output_stream);
 	gdk_threads_leave ();
