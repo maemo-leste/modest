@@ -71,6 +71,24 @@ GType       modest_tny_stream_gtkhtml_get_type    (void) G_GNUC_CONST;
  **/
 GObject*    modest_tny_stream_gtkhtml_new         (GtkHTMLStream* stream, GtkHTML *html);
 
+/**
+ * modest_tny_stream_gtkhtml_set_max_size:
+ * @stream: a #ModestTnyStreamGtkhtml
+ * @max_size: a #gssize
+ *
+ * set @max_size as the maximum size @stream will process
+ */
+void modest_tny_stream_gtkhtml_set_max_size (ModestTnyStreamGtkhtml *stream, gssize max_size);
+
+/**
+ * modest_tny_stream_gtkhtml_get_max_size:
+ * @stream: a #ModestTnyStreamGtkhtml
+ *
+ * obtain the maximum size @stream will process
+ *
+ * Returns: a #gssize (or 0 if unlimited)
+ */
+gssize modest_tny_stream_gtkhtml_get_max_size (ModestTnyStreamGtkhtml *stream);
 
 G_END_DECLS
 

@@ -57,6 +57,9 @@ struct _ModestTnyStreamGtkhtmlPrivate {
 	GtkHTMLStream *stream;
 	GtkHTML *html;
 	guint stop_streams_id;
+
+	gssize max_size;
+	gssize current_size;
 };
 #define MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                        MODEST_TYPE_TNY_STREAM_GTKHTML, \
@@ -123,6 +126,9 @@ modest_tny_stream_gtkhtml_init (ModestTnyStreamGtkhtml *obj)
 	priv->stream  = NULL;
 	priv->html = NULL;
 	priv->stop_streams_id = 0;
+
+	priv->max_size = 0;
+	priv->current_size = 0;
 }
 
 static void
@@ -160,6 +166,7 @@ modest_tny_stream_gtkhtml_new (GtkHTMLStream *stream, GtkHTML *html)
 
 	priv->stop_streams_id = g_signal_connect (G_OBJECT (html), "stop-streams",
 						  G_CALLBACK (stop_streams), obj);
+	priv->current_size = 0;
 
 	return obj;
 }
@@ -193,7 +200,20 @@ gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 	if (!priv->html || !GTK_WIDGET_VISIBLE (priv->html))
 		return -1;
 
+	if (priv->max_size > 0) {
+
+		/* We only use the maximum size for write method, and even we
+		 * ignore and fake as we would do a successfull read */
+		if (priv->current_size > priv->max_size)
+			return n;
+
+		if (priv->current_size + n > priv->max_size)
+			n = priv->max_size - priv->current_size;
+	}
+
 	gtk_html_stream_write (priv->stream, buffer, n);
+	priv->current_size += n;
+
 	return n; /* hmmm */
 }
 
@@ -268,6 +288,29 @@ stop_streams (ModestGtkhtmlMimePartView *view, gpointer userdata)
 		g_object_unref (priv->html);
 		priv->html = NULL;
 	}
+}
+
+void 
+modest_tny_stream_gtkhtml_set_max_size (ModestTnyStreamGtkhtml *stream, 
+					gssize max_size)
+{
+	ModestTnyStreamGtkhtmlPrivate *priv;
+
+	g_return_if_fail (MODEST_IS_TNY_STREAM_GTKHTML (stream));
+	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE (stream);
+
+	priv->max_size = max_size;
+}
+
+gssize 
+modest_tny_stream_gtkhtml_get_max_size (ModestTnyStreamGtkhtml *stream)
+{
+	ModestTnyStreamGtkhtmlPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_TNY_STREAM_GTKHTML (stream), 0);
+	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE (stream);
+
+	return priv->max_size;
 }
 
 static void
