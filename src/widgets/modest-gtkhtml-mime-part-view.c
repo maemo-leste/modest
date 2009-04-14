@@ -470,6 +470,7 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part, const gchar *
 	gtkhtml_stream = gtk_html_begin_full(GTK_HTML(self), NULL, (char *) encoding, 0);
 
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
+	modest_tny_stream_gtkhtml_set_max_size (MODEST_TNY_STREAM_GTKHTML (tny_stream), 128*1024);
 	tny_stream_reset (tny_stream);
 
 	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
@@ -491,11 +492,12 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 
 	gtkhtml_stream = gtk_html_begin(GTK_HTML(self));
 	tny_stream =  TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
+	modest_tny_stream_gtkhtml_set_max_size (MODEST_TNY_STREAM_GTKHTML (tny_stream), 128*1024);
 	text_to_html_stream = TNY_STREAM (modest_stream_text_to_html_new (tny_stream));
 	modest_stream_text_to_html_set_linkify_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream),
 						      64*1024);
 	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream),
-						   640*1024);
+						   128*1024);
 
 	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
 					      text_to_html_stream, decode_to_stream_cb,

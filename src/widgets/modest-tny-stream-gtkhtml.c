@@ -204,7 +204,7 @@ gtkhtml_write (TnyStream *self, const char *buffer, size_t n)
 
 		/* We only use the maximum size for write method, and even we
 		 * ignore and fake as we would do a successfull read */
-		if (priv->current_size > priv->max_size)
+		if (priv->current_size >= priv->max_size)
 			return n;
 
 		if (priv->current_size + n > priv->max_size)
