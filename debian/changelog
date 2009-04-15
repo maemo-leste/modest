@@ -1,3 +1,16 @@
+modest (3.0.12-rc1) unstable; urgency=low
+
+  * Week 16, 2009 - third release.
+  * Fixes: NB#:110349 	Cyrillic is not rendered properly in a viewer 
+  * Fixes: NB#:107921 	libosso-email-interface: missing GNU_STACK causing executable stacks in applications 
+  * Fixes: NB#:110907 	Second level local folder created disappears when a switch is made between account view and folder view 
+  * Fixes: NB#:110316 	Messages view menu: "Move messages" and "Delete messages" menu option are not hidden if there is no messages in Inbox folder. 
+  * Fixes: NB#:110813 	email - Â§mcen_ib_invalid_servernameÂ§ banner not appear 
+  * Fixes: NB#:110770 	multiple viewer sub views are showing when multiple times tapped on embedded attachment 
+  * Fixes: NB#:110863 	<coverity> REVERSE_INULL defects from tinymail 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 15 Apr 2009 13:34:24 +0300
+
 modest (3.0.11-rc1) unstable; urgency=low
 
   * Week 16, 2009 - second release
