@@ -39,10 +39,6 @@ noinst_LTLIBRARIES = libmodest.la
 bin_PROGRAMS=\
 	modest
 
-to_remove=\
-	modest-testplugin-protocol.c \
-	modest-testplugin-protocol.h
-
 #
 # NOTE: $(addressbook) will be modest-addressbook-dummy.c
 # if no real addressbook has been defined (configure.ac)

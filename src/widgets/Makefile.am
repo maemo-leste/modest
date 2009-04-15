@@ -19,10 +19,6 @@ INCLUDES=\
 noinst_LTLIBRARIES=\
 	libmodest-widgets.la
 
-to_remove=\
-	modest-testplugin-easysetup-wizard-page.h \
-	modest-testplugin-account-settings-dialog.h \
-	modest-testplugin-account-settings-widget.h
 
 libmodest_widgets_public_headers = \
 	modest-account-settings-dialog.h \

@@ -64,7 +64,7 @@ G_BEGIN_DECLS
  *
  * If the selected option is a provider then the ID will be the provider ID
  * If the selected option is "Other..." the the ID will be 0
- * If the selected option is a provider protocol () the the ID will be protocol name
+ * If the selected option is a singleton provider protocol then the ID will be protocol name
  **/
 typedef enum {
 	MODEST_PROVIDER_PICKER_ID_PROVIDER,
