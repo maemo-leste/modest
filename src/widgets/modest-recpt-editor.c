@@ -507,7 +507,7 @@ modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
 	GtkTextMark *selection_bound;
 	GtkTextTag *tag;
 	gboolean selection_changed = FALSE;
-	
+
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
@@ -523,10 +523,10 @@ modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
 		if (!gtk_text_iter_begins_tag (&start, tag)) {
 			gtk_text_iter_backward_to_tag_toggle (&start, tag);
 			selection_changed = TRUE;
-		} 
+		}
 
 	tag = iter_has_recipient (&end);
-	if (tag != NULL) 
+	if (tag != NULL)
 		if (!gtk_text_iter_ends_tag (&end, tag)) {
 			gtk_text_iter_forward_to_tag_toggle (&end, tag);
 			selection_changed = TRUE;
@@ -537,9 +537,9 @@ modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
 		   stack overflow caused by recursive calls to this
 		   handler as the select_range call could issue a
 		   "mark-set" signal */
-		g_signal_handler_block (recpt_editor, priv->on_mark_set_handler);
+		g_signal_handler_block (buffer, priv->on_mark_set_handler);
 		gtk_text_buffer_select_range (buffer, &start, &end);
-		g_signal_handler_unblock (recpt_editor, priv->on_mark_set_handler);
+		g_signal_handler_unblock (buffer, priv->on_mark_set_handler);
 	}
 }
 
