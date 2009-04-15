@@ -205,7 +205,7 @@ modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
 								   title,
 								   use_markup,
 								   control,
-								   HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+								   0);
 }
 
 /**
