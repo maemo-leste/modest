@@ -2578,7 +2578,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 		     gpointer user_data)
 {
 	ModestMainWindow *win = NULL;
-	GtkWidget *folder_view;
+	GtkWidget *folder_view, *header_view;
 	const GError *error;
 
 	g_return_if_fail (TNY_IS_FOLDER (folder));
@@ -2597,6 +2597,8 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 
 	folder_view =
 		modest_main_window_get_child_widget(win, MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
+	header_view =
+		modest_main_window_get_child_widget(win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
 
 	if (folder_view) {
 		TnyFolderStore *current_folder;
@@ -2611,10 +2613,10 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Check if folder is empty and set headers view contents style */
-	if (tny_folder_get_all_count (folder) == 0)
+	if ((tny_folder_get_all_count (folder) == 0) ||
+	    modest_header_view_is_empty (MODEST_HEADER_VIEW (header_view)))
 		modest_main_window_set_contents_style (win,
 						       MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY);
-
 }
 
 void

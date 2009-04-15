@@ -358,15 +358,24 @@ connect_signals (ModestHeaderWindow *self)
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 }
 
+static void
+folder_refreshed_cb (ModestMailOperation *mail_op,
+		     TnyFolder *folder,
+		     gpointer user_data)
+{
+	/* Update the view (folder could be empty) */
+	update_view (MODEST_HEADER_WINDOW (user_data), NULL);
+}
+
 static GtkWidget *
 create_header_view (ModestWindow *self, TnyFolder *folder)
 {
 	GtkWidget *header_view;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
-	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder, 
-				       TRUE, self, NULL, NULL);
-	modest_header_view_set_filter (MODEST_HEADER_VIEW (header_view), 
+	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder,
+				       TRUE, self, folder_refreshed_cb, self);
+	modest_header_view_set_filter (MODEST_HEADER_VIEW (header_view),
 				       MODEST_HEADER_VIEW_FILTER_NONE);
 	modest_widget_memory_restore (modest_runtime_get_conf (), G_OBJECT(header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);

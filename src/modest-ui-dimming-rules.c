@@ -490,7 +490,8 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 			header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
 			folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 			if (folder) {
-				dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+				dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0) ||
+					modest_header_view_is_empty (MODEST_HEADER_VIEW (header_view));
 
 				if (!dimmed &&
 				    (tny_folder_get_folder_type (TNY_FOLDER (folder)) == TNY_FOLDER_TYPE_OUTBOX)) {
@@ -3103,7 +3104,8 @@ modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer us
 		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
 		folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 		if (folder) {
-			dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0);
+			dimmed = (tny_folder_get_all_count (TNY_FOLDER (folder)) == 0) ||
+				modest_header_view_is_empty (MODEST_HEADER_VIEW (header_view));
 
 			if (!dimmed &&
 			    (tny_folder_get_folder_type (TNY_FOLDER (folder)) == TNY_FOLDER_TYPE_OUTBOX)) {
