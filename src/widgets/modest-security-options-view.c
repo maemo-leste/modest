@@ -234,11 +234,15 @@ get_current_state (ModestSecurityOptionsView* self,
 
 	/* Get security */
 #ifdef MODEST_TOOLKIT_HILDON2
-	state->security = 
+	state->security =
 		modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+	state->port =
+		modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (priv->security_view));
 #else
-	state->security = 
+	state->security =
 		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
+	state->port =
+		modest_serversecurity_combo_box_get_active_serversecurity_port (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
 #endif
 
 	/* Get auth */

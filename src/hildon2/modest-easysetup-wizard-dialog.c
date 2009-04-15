@@ -2172,6 +2172,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	if (provider_id) {
 		ModestProtocolType transport_provider_server_type;
 		ModestProtocolType transport_provider_security;
+		gboolean is_secure;
 
 		/* Use presets */
 		transport_hostname = modest_presets_get_server (priv->presets, provider_id,
@@ -2187,20 +2188,25 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 		/* Note: We need something as default, or modest_account_mgr_add_server_account will fail. */
 		transport_protocol = transport_provider_server_type;
 		transport_security = transport_provider_security;
-		if (transport_security == MODEST_PROTOCOLS_CONNECTION_SSL) {
-			/* printf("DEBUG: %s: using secure SMTP\n", __FUNCTION__); */
-			/* we check if there is a *special* port */
-			special_port = modest_presets_get_port (priv->presets, provider_id,
-								FALSE /* transport */);
-			if (special_port != 0)
-				transport_port = special_port;
-			else
-				transport_port = 465;
-			transport_auth_protocol = MODEST_PROTOCOLS_AUTH_PASSWORD;
+		is_secure = modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (),
+									      transport_security);
+
+		/* we check if there is a *special* port */
+		special_port = modest_presets_get_port (priv->presets, provider_id,
+							FALSE /* transport */);
+		if (special_port != 0) {
+			transport_port = special_port;
 		} else {
-			/* printf("DEBUG: %s: using non-secure SMTP\n", __FUNCTION__); */
-			transport_auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
+			gboolean use_alternate_port = FALSE;
+			if (transport_security == MODEST_PROTOCOLS_CONNECTION_SSL)
+				use_alternate_port = TRUE;
+			transport_port = get_port_from_protocol(transport_provider_server_type, use_alternate_port);
 		}
+
+		if (is_secure)
+			transport_auth_protocol = MODEST_PROTOCOLS_AUTH_PASSWORD;
+		else
+			transport_auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 
 		modest_server_account_settings_set_security_protocol (transport_settings,
 								      transport_security);

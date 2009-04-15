@@ -1153,9 +1153,6 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (dialog);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
-	incoming_account = modest_account_settings_get_store_settings (settings);
-	outgoing_account = modest_account_settings_get_transport_settings (settings);
-
 	account_name = modest_account_settings_get_account_name (settings);
 
 	/* Save the account name so we can refer to it later: */
@@ -1194,6 +1191,7 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages), 
 					modest_account_settings_get_leave_messages_on_server (settings));
 
+	incoming_account = modest_account_settings_get_store_settings (settings);
 	if (incoming_account) {
 		const gchar *username, *password, *hostname, *proto_str, *account_title;
 		gchar *proto_name, *title;
