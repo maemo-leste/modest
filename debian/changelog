@@ -72,8 +72,8 @@ modest (3.0.7-rc1) unstable; urgency=low
   * Fixes: NB#106344   	Email application need to relaunch to apply the changes made in SMTP server settings
   * Fixes: NB#107497 	Folders view menu: when account refreshing is going on wrong menu items are shown/hidden
   * Fixes: NB#108818 	It takes 6-7 s to see the Imap account folders in "Move to folder" dialog
-  * Fixes: NB#109151
-  * Fixes: NB#109327
+  * Fixes: NB#109151 	<coverity>
+  * Fixes: NB#109327 	<coverity>
   * Fixes: NB#109418 	POP account root folder is not shown in "Move to folder" dialog, but appears there is any other location is accessed and navigating back
   * Fixes: NB#109562 	Email- Receiving an email with special characters on device from a PC to device in rich format does not work
 
@@ -90,7 +90,7 @@ modest (3.0.6-rc1) unstable; urgency=low
   * Fixes: NB#97184 	Cancel Sending: Email application hangs when attempt to cancel multiple sending messages.
   * Fixes: NB#108619 	Message details: Cc field doesn't contain all the addresses
   * Fixes: NB#108766 	Message from Inbox does not open properly in viewer view after immediately replying to message
-  * Fixes: NB#109447
+  * Fixes: NB#109447 	
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 02 Apr 2009 16:09:43 +0300
 
@@ -99,11 +99,11 @@ modest (3.0.5-rc1) unstable; urgency=low
   * Week 14, 2009 - thursday release
   *   modest trunk r8526
   *   6 bug fixes
-  * Fixes: NB#104208  Intsync: message with 5 Mb attachment stays in failed status in Outbox, but received at least 4 times at the recipient's end
+  * Fixes: NB#104208  
   * Fixes: NB#104301 	"Checking names" info banner shown blank in a particular scenario
   * Fixes: NB#107923 	Device reboots when attempt to open a message with certain image inserted to message body from sent folder.
-  * Fixes: NB#108834
-  * Fixes: NB#108954
+  * Fixes: NB#108834 	Coverity
+  * Fixes: NB#108954 	
   * Fixes: NB#109068 	Modest doesn't call gtk_widget_show() on its menu items
 
  -- Moises Martinez <moises.martinez@nokia.com>  Wed, 01 Apr 2009 16:27:32 +0300
@@ -116,8 +116,8 @@ modest (3.0.4-rc1) unstable; urgency=low
   * Fixes: NB#108704 	New message saved with shortcut command "Ctrl+s" doesn't open
   * Fixes: NB#108765 	<coverity> moderate defects in modest
   * Fixes: NB#108791 	Modest crashes at "modest_text_utils_hyperlinkify_begin" and "modest_text_utils_hyperlinkify_end" while trying to pane through the attached messages' content
-  * Fixes: NB#108797
-  * Fixes: NB#108973
+  * Fixes: NB#108797 	<coverity>
+  * Fixes: NB#108973 	
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 31 Mar 2009 16:28:09 +0300
 
@@ -129,7 +129,7 @@ modest (3.0.3-rc1) unstable; urgency=low
   * Fixes: NB#108387    When Outbox or Drafts folder contains 1 message show "mcen_ti_message" in folder status
   * Fixes: NB#108391 	"Attachments" dialog should have "mcen_ti_select_attachments_title" title
   * Fixes: NB#108705 	Logical string "mail_va_no_subject" in "Message details" dialog 
-  * Fixes: NB#108753    [Scrums server] : For longer timeout cases, error to connect to server is not notified to user
+  * Fixes: NB#108753    
 
  -- Moises Martinez <moises.martinez@nokia.com>  Mon, 30 Mar 2009 16:03:32 +0300
 
@@ -140,7 +140,7 @@ modest (3.0.2-rc1) unstable; urgency=low
   *  6 bug fixes
   * Fixes: NB#103571    for embedded attachment '.eml' extension is showing
   * Fixes: NB#107674 	"mcen_ib_advsetup_settings_saved" to be shown only when changes are made to one or more fields
-  * Fixes: NB#107847
+  * Fixes: NB#107847 	
   * Fixes: NB#108268 	Folder view title is not update after renaming the account title in account settings dialog opened from error note
   * Fixes: NB#108353 	Trying to open a particular message in a viewier takes a long time and in process shows no progress indicator
   * Fixes: NB#108366 	Trying to access the details of the attched messages crashes modest 
@@ -159,7 +159,7 @@ modest (3.0.1-rc1) unstable; urgency=low
   * Fixes: NB#107766 	"Downward triangle" indicating a list is missing for the Font face button in editor toolbar
   * Fixes: NB#107767 	Font Size button in editor toolbar does not have a downward triangle representing list
   * Fixes: NB#108071 	modest & Global Search
-  * Fixes: NB#108077
+  * Fixes: NB#108077 	
   * Fixes: NB#108236 	modest: GLIB CRITICAL ** GModule - g_module_close: assertion `module->ref_count > 0' failed
   * Fixes: NB#108253 	modest: GLIB CRITICAL ** default - modest_account_mgr_get_bool: assertion `account' failed
   * Fixes: NB#108254 	modest: GLIB CRITICAL ** Gtk - gtk_widget_destroy: assertion `GTK_IS_WIDGET (widget)' failed
@@ -174,12 +174,12 @@ modest (3.0-rc1) unstable; urgency=low
   * Week 13, 2009 - thursday release
   *   modest trunk r8354
   *  8 bug fixes.
-  * Fixes: NB#107106
+  * Fixes: NB#107106 	
   * Fixes: NB#107607 	deleting a POP email in modest does not clear its content from .modest/cache
-  * Fixes: NB#107697 	Does not retrieve mailboxes until the previously trusted devices are removed for an alpo5 account
+  * Fixes: NB#107697 	
   * Fixes: NB#107761 	Select Font face - Hildon Touch picker dialog uses incorrect title
   * Fixes: NB#107763 	Select Font Size - Hildon Touch picker dialog uses incorrect title
-  * Fixes: NB#107840
+  * Fixes: NB#107840 	
   * Fixes: NB#107853 	AOL: some remote folders with a non zero status change font when scrolling the folders view
   * Fixes: NB#107917 	WHEN and WHAT pickers should be insensitive when account has not been connected 
 
@@ -214,7 +214,7 @@ modest (2.99-2009.13-2) unstable; urgency=low
   * Week 13, 2009 - second release on monday
   *  modest trunk r8253
   *  7 bug fixes
-  * Fixes: NB#101939
+  * Fixes: NB#101939 
   * Fixes: NB#105328 TOP10: Internal memory card is not mounted to PC in USB Mass storage mode
   * Fixes: NB#106740 Device freezes and restarted when attempt to insert a certain image into the message body
   * Fixes: NB#106752 Modest gets crashed when Closing the Editor though back button while inserting large size image file
@@ -236,14 +236,14 @@ modest (2.99-2009.13-1) unstable; urgency=low
   * Fixes: NB#94954    'file error ' information banner is dispalying instead of 'device storage memory full ' error banner.
   * Fixes: NB#100246   Modest crashed when moving to Accounts view from Folders view
   * Fixes: NB#101068   'Done' button is missing in select contact dialog box after checking names
-  * Fixes: NB#102518
+  * Fixes: NB#102518   
   * Fixes: NB#103983   There should be no action on tapping the path that is not allowed for moving messages
   * Fixes: NB#105531   selected value is not shown in touch selector
   * Fixes: NB#105869   'Value must be between 1 and 65535' error banner is not showing
   * Fixes: NB#105911   When moving a folder show progress indication
-  * Fixes: NB#106115
+  * Fixes: NB#106115   <coverity>
   * Fixes: NB#106165   Untranslated string for Â§mcen_me_folder_inboxÂ§ in Email application
-  * Fixes: NB#106443
+  * Fixes: NB#106443   
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 19 Mar 2009 16:35:33 +0200
 
@@ -266,12 +266,12 @@ modest (2.99-2009.12-4) unstable; urgency=low
   * Week 12, 2009 - fourth release on Wednesday
   *  modest trunk r8076
   *   7 bug fixes
-  * Fixes: NB#100070
+  * Fixes: NB#100070 	  	
   * Fixes: NB#103682 	mail-gen 	Default region in email account creation does not reflect chosen country/region if country and region are not the same
   * Fixes: NB#104978 	mail-acc 	Modest crashes in "fill_providers"
-  * Fixes: NB#105240
-  * Fixes: NB#105557
-  * Fixes: NB#105761
+  * Fixes: NB#105240 	
+  * Fixes: NB#105557 	
+  * Fixes: NB#105761 	
   * Fixes: NB#106143 	mail-gen 	Modest crashed once in "tny_camel_folder_poke_status_default" 
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 17 Mar 2009 16:21:35 +0200
@@ -281,7 +281,7 @@ modest (2.99-2009.12-3) unstable; urgency=low
   * Week 12, 2009 - third release on Tuesday
   *  modest trunk r8048
   *  4 bug fixes
-  * Fixes: NB#99258
+  * Fixes: NB#99258     
   * Fixes: NB#105818 	mail-sen 	message is sent instead of incorrect SMTP server name in connection specific SMTP server configuration
   * Fixes: NB#105903 	mail-vie 	Inline image is not inserted without any notification
   * Fixes: NB#105914 	mail-gen 	Modest crashes when renaming [Gmail] folder 
@@ -307,7 +307,7 @@ modest (2.99-2009.12-1) unstable; urgency=low
   * Week 12, 2009 - first release on Firday
   *  modest trunk r7980
   *  5 bug fixes
-  * Fixes:NB#101939 	Modest relaunch needed to update the fodler structure when a mailbox is added or deleted on an TEST account
+  * Fixes:NB#101939 	
   * Fixes:NB#102852 	Blank "Select attachment" dialog opened and "Done" button is active for remove email attachment from local folder
   * Fixes:NB#104301 	"Checking names" info banner shown blank in a particular scenario
   * Fixes:NB#104780 	Editor: a one tap on a resolved recipient should highlight the recipient.
@@ -321,7 +321,7 @@ modest (2.99-2009.11-4) unstable; urgency=low
   *   modest trunk r7931
   *   3 bug fixes
   * Fixes: NB#105206 	mail-vie 	Conflict of behavior with respect to spec while attaching files
-  * Fixes: NB#105239
+  * Fixes: NB#105239 	
   * Fixes: NB#105319 	mail-ui 	After renaming imap user defined folder it's status is not shown until the folder is accessed
 
  -- Moises Martinez <moises.martinez@nokia.com>  Wed, 11 Mar 2009 14:47:44 +0200
@@ -332,14 +332,14 @@ modest (2.99-2009.11-3) unstable; urgency=low
   *   modest trunk r7922
   *   10 bug fixes
   * Fixes: NB#100011    mail-gen   just created child folder under user defined local folder disappears if Folders view is closed
-  * Fixes: NB#100070
+  * Fixes: NB#100070    
   * Fixes: NB#104978 	mail-acc   Modest crashes in "fill_providers"
   * Fixes: NB#104982 	mail-vie   Editor view doesn't scroll when attempt to Find in message
-  * Fixes: NB#104998
+  * Fixes: NB#104998 	
   * Fixes: NB#105062 	mail-gen   after showing 'No matching contact found' , the enterred text disappearing from TO field
   * Fixes: NB#105115 	mail-gen   'checking names' banner is showing after cancelling the 'select contact' dialog box
   * Fixes: NB#105153 	mail-gen   modest shouldn't depend on libhildonhelp0
-  * Fixes: NB#105163
+  * Fixes: NB#105163 	
   * Fixes: NB#101877   	mail-gen   Memory full: No error note is shown when account is not refreshed after it has been configured
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 10 Mar 2009 14:24:13 +0200
@@ -350,9 +350,9 @@ modest (2.1-2009.11-2) unstable; urgency=low
   *   modest trunk r7847
   *   20 bug fixes
   * Fixes: NB#104896    mail-vie        Removed attachment is included in Save attachment dialog
-  * Fixes: NB#97644
+  * Fixes: NB#97644     
   * Fixes: NB#98705 	mail-vie 	When forwarding a mail with multiple attachments a new editor opens with To field overlapped
-  * Fixes: NB#100392
+  * Fixes: NB#100392 	
   * Fixes: NB#101311 	mail-tin 	A newly configured account is not refreshed until Email is relaunched and "Send&Receive" is tapped
   * Fixes: NB#102751 	mail-vie 	Modest Crashes on moving message with external images from viewer view
   * Fixes: NB#103682 	mail-gen 	Default region in email account creation does not reflect chosen country/region if country and region are not the same
@@ -362,7 +362,7 @@ modest (2.1-2009.11-2) unstable; urgency=low
   * Fixes: NB#103918 	mail-ui 	"Checking names" should not be shown after the connection to database has been established
   * Fixes: NB#104017 	mail-ui 	When Email is launched for the first time Accounts view should be shown
   * Fixes: NB#104083 	mail-gen 	MMC user folders is also shown along with local user folders under local root folder path in "Move to Folder" dialog
-  * Fixes: NB#104208
+  * Fixes: NB#104208 	
   * Fixes: NB#104249 	mail-acc 	"Enter text first" info banner not shown with an empty string in Account field.
   * Fixes: NB#104352 	mail-gen 	icon of outbox and sent folder is changing in location field of new folder dialog box
   * Fixes: NB#104367 	mail-gen 	auto increment is not happening for IMAP user created folder
@@ -378,7 +378,7 @@ modest (2.1-2009.11-1) unstable; urgency=low
   *  modest r7811
   *
   * Fixes NB#98705  When forwarding a mail with multiple attachments a new editor opens with To field overlapped
-  * Fixes NB#100392
+  * Fixes NB#100392 
   * Fixes NB#101311 A newly configured account is not refreshed until Email is relaunched and "Send&Receive" is tapped
   * Fixes NB#102751 Modest Crashes on moving message with external images from viewer view
   * Fixes NB#103682 Default region in email account creation does not reflect chosen country/region if country and region are not the same
