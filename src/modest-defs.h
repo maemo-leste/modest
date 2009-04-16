@@ -247,8 +247,11 @@ const gchar *modest_defs_namespace (const gchar *string);
 /* Notification ids */
 #define MODEST_CONF_NOTIFICATION_IDS (modest_defs_namespace ("/notification_ids"))      /* list of ints */
 
-
+#ifdef MODEST_TOOLKIT_HILDON2
+#define MODEST_EXAMPLE_EMAIL_ADDRESS _("mcen_va_example_email_address")
+#else
 #define MODEST_EXAMPLE_EMAIL_ADDRESS "first.last@example.com"
+#endif
 
 
 /* max size of message we still allow to save/send when we're in low-mem
