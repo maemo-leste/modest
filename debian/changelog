@@ -1,3 +1,20 @@
+modest (3.0.13-rc1) unstable; urgency=low
+
+  * Week 17, 2009 - Thursday release r8849
+  * Fixes: NB#107921 - libosso-email-interface: missing GNU_STACK causing executable stacks in applications 
+  * Fixes: NB#110349 - Cyrillic is not rendered properly in a viewer 
+  * Fixes: NB#110863 - <coverity> REVERSE_INULL defects from tinymail 
+  * Fixes: NB#110907 - Second level local folder created disappears when a switch is made between account view and folder view 
+  * Fixes: NB#110947 - UI hang upon attempt to close the viewer of the attached message 
+  * Fixes: NB#110998 - change confirmation note is showing without modifying anything in account settings dialog box 
+  * Fixes: NB#111054 - Able to send a message with an invalid E-mail address 
+  * Fixes: NB#111106 - Modest crashes in "_gtk_text_iter_get_text_line" 
+  * Fixes: NB#111128 - Message priority buttons in Message settings dialog are not visually grouped 
+  * Fixes: NB#111353 - E-Mail, Unlocalized string, Â§mcen_va_example_email_address 
+  * Fixes: NB#111362 - Display issue for Sort Â§mcen_me_sortÂ§ 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 16 Apr 2009 14:20:22 +0300
+
 modest (3.0.12-rc1) unstable; urgency=low
 
   * Week 16, 2009 - third release.
