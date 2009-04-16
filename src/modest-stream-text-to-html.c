@@ -58,7 +58,9 @@ struct _ModestStreamTextToHtmlPrivate {
 	gboolean written_prefix;
 	gsize linkify_limit;
 	gsize full_limit;
+	gsize line_limit;
 	gsize total_output;
+	gsize total_lines_output;
 };
 #define MODEST_STREAM_TEXT_TO_HTML_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                        MODEST_TYPE_STREAM_TEXT_TO_HTML, \
@@ -125,6 +127,7 @@ modest_stream_text_to_html_init (ModestStreamTextToHtml *obj)
 	priv->linkify_limit = 0;
 	priv->full_limit = 0;
 	priv->total_output = 0;
+	priv->total_lines_output = 0;
 	modest_text_utils_hyperlinkify_begin ();
 }
 
@@ -157,6 +160,13 @@ modest_stream_text_to_html_new (TnyStream *out_stream)
 	priv->out_stream = g_object_ref (out_stream);
 
 	return obj;
+}
+
+void        
+modest_stream_text_to_html_set_line_limit (ModestStreamTextToHtml *self, gssize limit)
+{
+	ModestStreamTextToHtmlPrivate *priv = MODEST_STREAM_TEXT_TO_HTML_GET_PRIVATE (self);
+	priv->line_limit = limit;
 }
 
 void        
@@ -195,6 +205,8 @@ write_line (TnyStream *self, const gchar *str, gboolean convert_to_html)
 	   preserve the prefix and suffix */
 	if (convert_to_html && (priv->full_limit > 0) &&(priv->total_output > priv->full_limit))
 		return TRUE;
+	if (convert_to_html && (priv->line_limit > 0) && (priv->total_lines_output > priv->line_limit))
+		return TRUE;
 	if ((priv->linkify_limit > 0) && (priv->total_output > priv->linkify_limit))
 		hyperlinkify = FALSE;
 	if (convert_to_html) {
@@ -205,6 +217,7 @@ write_line (TnyStream *self, const gchar *str, gboolean convert_to_html)
 
 	pending_bytes = strlen (html_buffer);
 	priv->total_output += pending_bytes;
+	priv->total_lines_output ++;
 	offset = html_buffer;
 
 	while (pending_bytes > 0) {
@@ -242,6 +255,12 @@ text_to_html_write (TnyStream *self, const char *buffer, size_t n)
 
 	while (n > 0) {
 		gchar c = *buffer;
+
+		if ((priv->full_limit > 0) && (priv->total_output > priv->full_limit))
+			return n;
+		if ((priv->line_limit > 0) && (priv->total_lines_output > priv->line_limit))
+			return n;
+
 		if (priv->line_buffer == NULL)
 			priv->line_buffer = g_string_new (NULL);
 

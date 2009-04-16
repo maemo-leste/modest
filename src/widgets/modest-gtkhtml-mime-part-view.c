@@ -498,6 +498,8 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 						      64*1024);
 	modest_stream_text_to_html_set_full_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream),
 						   128*1024);
+	modest_stream_text_to_html_set_line_limit (MODEST_STREAM_TEXT_TO_HTML (text_to_html_stream),
+						   1024);
 
 	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
 					      text_to_html_stream, decode_to_stream_cb,
