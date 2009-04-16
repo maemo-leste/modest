@@ -93,6 +93,7 @@
 #define DEFAULT_FONT_SCALE 1.5
 #define ATTACHMENT_BUTTON_WIDTH 118
 #define MAX_FROM_VALUE 48
+#define MAX_BODY_LENGTH 4096
 
 static gboolean is_wp_text_buffer_started = FALSE;
 
@@ -111,6 +112,11 @@ static void  text_buffer_apply_tag (GtkTextBuffer *buffer, GtkTextTag *tag,
 				    GtkTextIter *start, GtkTextIter *end,
 				    gpointer userdata);
 static void  text_buffer_delete_images_by_id (GtkTextBuffer *buffer, const gchar * image_id);
+static void  body_insert_text (GtkTextBuffer *buffer, 
+				      GtkTextIter *location,
+				      gchar *text,
+				      gint len,
+				      ModestMsgEditWindow *window);
 static void  subject_field_changed (GtkEditable *editable, ModestMsgEditWindow *window);
 static void  subject_field_insert_text (GtkEditable *editable, 
 					gchar *new_text,
@@ -713,6 +719,8 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (text_buffer_can_redo), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
                           G_CALLBACK (body_changed), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "insert-text", 
+			  G_CALLBACK (body_insert_text), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "modified-changed",
                           G_CALLBACK (body_changed), obj);
 	g_signal_connect (G_OBJECT (priv->text_buffer), "end-user-action",
@@ -3494,6 +3502,43 @@ update_window_title (ModestMsgEditWindow *window)
 
 }
 
+
+static void  
+body_insert_text (GtkTextBuffer *buffer, 
+		  GtkTextIter *location,
+		  gchar *text,
+		  gint len,
+		  ModestMsgEditWindow *window)
+{
+	GtkTextIter end_iter;
+	gint offset;
+
+	gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (buffer), &end_iter);
+
+	offset = gtk_text_iter_get_offset (&end_iter);
+
+	if (offset + len > MAX_BODY_LENGTH) {
+		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
+		if (offset < MAX_BODY_LENGTH)
+		{
+			gchar *result;
+
+			/* Prevent endless recursion */
+			result = g_strndup (text, MAX_BODY_LENGTH - offset);
+			g_signal_handlers_block_by_func (G_OBJECT (buffer), G_CALLBACK (body_insert_text), window);
+			g_signal_emit_by_name (G_OBJECT (buffer), "insert-text", location,
+					       (gpointer) result, (gpointer) MAX_BODY_LENGTH - offset,
+					       (gpointer) window);
+			g_signal_handlers_unblock_by_func (G_OBJECT (buffer), G_CALLBACK (body_insert_text), window);
+		}
+
+	}
+	if (offset + len > MAX_BODY_LENGTH) {
+		hildon_banner_show_information (GTK_WIDGET (window), NULL, 
+						_CS("ckdg_ib_maximum_characters_reached"));
+	}
+}
+
 static void  
 subject_field_changed (GtkEditable *editable, 
 		       ModestMsgEditWindow *window)
@@ -3504,7 +3549,6 @@ subject_field_changed (GtkEditable *editable,
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
 }
-
 static void  
 subject_field_insert_text (GtkEditable *editable, 
 			   gchar *new_text,
