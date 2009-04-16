@@ -66,11 +66,6 @@
 #include <glib/gstdio.h>
 #include <modest-debug.h>
 #include <modest-header-window.h>
-#include <gdk/gdk.h>
-#include <gdk/gdkx.h>
-#include <X11/Xatom.h>
-#include <X11/XKBlib.h>
-#include <X11/Xdmcp.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -230,7 +225,6 @@ static void setup_menu (ModestMsgViewWindow *self);
 static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
 						   GdkEvent *event,
 						   gpointer userdata);
-static void _make_zoom_buttons_grabeable (GtkWidget* widget);
 
 
 /* list my signals */
@@ -1617,15 +1611,6 @@ modest_msg_view_window_key_event (GtkWidget *window,
 	GtkWidget *focus;
 
 	focus = gtk_window_get_focus (GTK_WINDOW (window));
-
-	if (event->keyval == HILDON_HARDKEY_DECREASE && event->type == GDK_KEY_PRESS) {
-		modest_ui_actions_on_zoom_minus (NULL, MODEST_WINDOW (window));
-		return TRUE;
-	}
-	if (event->keyval == HILDON_HARDKEY_INCREASE && event->type == GDK_KEY_PRESS) {
-		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW (window));
-		return TRUE;
-	}
 
 	/* for the find toolbar case */
 	if (focus && GTK_IS_ENTRY (focus)) {
@@ -3311,21 +3296,5 @@ _modest_msg_view_window_map_event (GtkWidget *widget,
 		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
 	}
 
-	_make_zoom_buttons_grabeable (GTK_WIDGET (self));
 	return FALSE;
-}
-
-static void
-_make_zoom_buttons_grabeable (GtkWidget* widget)
-{
-    GdkDisplay *display;
-    Atom atom;
-    unsigned long val = 1;
-
-    display = gdk_drawable_get_display (widget->window);
-    atom = gdk_x11_get_xatom_by_name_for_display (display, "_HILDON_ZOOM_KEY_ATOM");
-    XChangeProperty (GDK_DISPLAY_XDISPLAY (display),
-                     GDK_WINDOW_XID (widget->window), atom,
-                     XA_INTEGER, 32, PropModeReplace,
-                     (unsigned char *) &val, 1);
 }

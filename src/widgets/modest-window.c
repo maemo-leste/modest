@@ -35,7 +35,13 @@
 #include "modest-window-mgr.h"
 #include "modest-defs.h"
 #include <string.h> /* for strcmp */
+#include <hildon/hildon-defines.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk/gdk.h>
+#include <gdk/gdkx.h>
+#include <X11/Xatom.h>
+#include <X11/XKBlib.h>
+#include <X11/Xdmcp.h>
 
 /* 'private'/'protected' functions */
 static void modest_window_class_init (ModestWindowClass *klass);
@@ -58,6 +64,10 @@ static void     modest_window_set_zoom_default           (ModestWindow *window,
 							  gdouble zoom);
 
 static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
+static void _make_zoom_buttons_grabeable (GtkWidget* widget);
+static gboolean _modest_window_map_event (GtkWidget *widget,
+					  GdkEvent *event,
+					  gpointer userdata);
 
 /* list my signals  */
 enum {
@@ -146,6 +156,9 @@ modest_window_init (ModestWindow *obj)
 	g_signal_connect (G_OBJECT (obj), 
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), NULL);
+	g_signal_connect (G_OBJECT (obj), "map-event",
+			  G_CALLBACK (_modest_window_map_event),
+			  G_OBJECT (obj));
 }
 
 static void
@@ -465,7 +478,14 @@ on_key_pressed (GtkWidget *self,
  	case GDK_F6: 
 		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
 		return TRUE;
-#ifndef MODEST_TOOLKIT_HILDON2
+#ifdef MODEST_TOOLKIT_HILDON2
+	case HILDON_HARDKEY_INCREASE: 
+		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
+		return TRUE;
+	case HILDON_HARDKEY_DECREASE: 
+		modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
+		return TRUE;
+#else
 	case GDK_F7: 
 		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
 		return TRUE;
@@ -482,4 +502,28 @@ on_key_pressed (GtkWidget *self,
 	}
 	
 	return FALSE;
+}
+
+static gboolean 
+_modest_window_map_event (GtkWidget *widget,
+			  GdkEvent *event,
+			  gpointer userdata)
+{
+	_make_zoom_buttons_grabeable (GTK_WIDGET (widget));
+	return FALSE;
+}
+
+static void
+_make_zoom_buttons_grabeable (GtkWidget* widget)
+{
+    GdkDisplay *display;
+    Atom atom;
+    unsigned long val = 1;
+
+    display = gdk_drawable_get_display (widget->window);
+    atom = gdk_x11_get_xatom_by_name_for_display (display, "_HILDON_ZOOM_KEY_ATOM");
+    XChangeProperty (GDK_DISPLAY_XDISPLAY (display),
+                     GDK_WINDOW_XID (widget->window), atom,
+                     XA_INTEGER, 32, PropModeReplace,
+                     (unsigned char *) &val, 1);
 }
