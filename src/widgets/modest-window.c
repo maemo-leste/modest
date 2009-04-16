@@ -59,7 +59,6 @@ static void     modest_window_set_zoom_default           (ModestWindow *window,
 
 static gboolean on_key_pressed (GtkWidget *self, GdkEventKey *event, gpointer user_data);
 
-
 /* list my signals  */
 enum {
 	LAST_SIGNAL
@@ -466,12 +465,14 @@ on_key_pressed (GtkWidget *self,
  	case GDK_F6: 
 		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
 		return TRUE;
+#ifndef MODEST_TOOLKIT_HILDON2
 	case GDK_F7: 
 		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
 		return TRUE;
 	case GDK_F8: 
 		modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
 		return TRUE;
+#endif
  	case GDK_Escape: 
 		if (modest_window_mgr_get_fullscreen_mode (mgr))
 			modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
