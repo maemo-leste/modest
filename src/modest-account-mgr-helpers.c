@@ -869,7 +869,7 @@ modest_account_mgr_get_from_string (ModestAccountMgr *self, const gchar* name, c
 									name,
 									TNY_ACCOUNT_TYPE_TRANSPORT);
 	if (transport_account) {
-		proto = modest_account_mgr_get_string (self, name, MODEST_ACCOUNT_PROTO, TRUE);
+		proto = modest_account_mgr_get_string (self, transport_account, MODEST_ACCOUNT_PROTO, TRUE);
 		if (proto != NULL) {
 			ModestProtocol *protocol = 
 				modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
