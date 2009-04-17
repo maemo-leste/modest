@@ -1,4 +1,4 @@
-modest (3.0.13-rc2) unstable; urgency=low
+modest (3.0.14-rc1) unstable; urgency=low
 
   * Week 17, 2009 - Friday release r8890
   * Fixes: NB#94485 - modest is crashing while copy pasting big amount texts 7-8 times 
