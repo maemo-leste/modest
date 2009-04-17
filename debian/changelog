@@ -1,17 +1,34 @@
-modest (3.0.13-rc1) unstable; urgency=low
+modest (3.0.13-rc2) unstable; urgency=low
 
-  * Week 17, 2009 - Thursday release r8849
+  * Week 17, 2009 - Friday release r8890
+  * Fixes: NB#94485 - modest is crashing while copy pasting big amount texts 7-8 times 
   * Fixes: NB#107921 - libosso-email-interface: missing GNU_STACK causing executable stacks in applications 
   * Fixes: NB#110349 - Cyrillic is not rendered properly in a viewer 
   * Fixes: NB#110863 - <coverity> REVERSE_INULL defects from tinymail 
-  * Fixes: NB#110907 - Second level local folder created disappears when a switch is made between account view and folder view 
+  * Fixes: NB#110866 - Modest crashes with signal 6 at "html_tokenizer_real_next_token" upon multiple taps on message details of the attached message 
   * Fixes: NB#110947 - UI hang upon attempt to close the viewer of the attached message 
-  * Fixes: NB#110998 - change confirmation note is showing without modifying anything in account settings dialog box 
   * Fixes: NB#111054 - Able to send a message with an invalid E-mail address 
   * Fixes: NB#111106 - Modest crashes in "_gtk_text_iter_get_text_line" 
   * Fixes: NB#111128 - Message priority buttons in Message settings dialog are not visually grouped 
   * Fixes: NB#111353 - E-Mail, Unlocalized string, Â§mcen_va_example_email_address 
-  * Fixes: NB#111362 - Display issue for Sort Â§mcen_me_sortÂ§ 
+  * Fixes: NB#111421 - Zoom functionality is not working in email application. 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 17 Apr 2009 12:47:03 +0300
+
+modest (3.0.13-rc1) unstable; urgency=low
+
+  * Week 17, 2009 - Thursday release r8849
+  *  NB#107921 - libosso-email-interface: missing GNU_STACK causing executable stacks in applications 
+  *  NB#110349 - Cyrillic is not rendered properly in a viewer 
+  *  NB#110863 - <coverity> REVERSE_INULL defects from tinymail 
+  *  NB#110907 - Second level local folder created disappears when a switch is made between account view and folder view 
+  *  NB#110947 - UI hang upon attempt to close the viewer of the attached message 
+  *  NB#110998 - change confirmation note is showing without modifying anything in account settings dialog box 
+  *  NB#111054 - Able to send a message with an invalid E-mail address 
+  *  NB#111106 - Modest crashes in "_gtk_text_iter_get_text_line" 
+  *  NB#111128 - Message priority buttons in Message settings dialog are not visually grouped 
+  *  NB#111353 - E-Mail, Unlocalized string, Â§mcen_va_example_email_address 
+  *  NB#111362 - Display issue for Sort Â§mcen_me_sortÂ§ 
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 16 Apr 2009 14:20:22 +0300
 
