@@ -2153,7 +2153,7 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 	GtkWidget *dialog;
 	
 	/* Create dialog */
-	dialog = modest_details_dialog_new_with_header (parent_window, header);
+	dialog = modest_details_dialog_new_with_header (parent_window, header, TRUE);
 
 	/* Run dialog */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 

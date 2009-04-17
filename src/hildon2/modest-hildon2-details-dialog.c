@@ -89,7 +89,8 @@ modest_hildon2_details_dialog_init (ModestHildon2DetailsDialog *self)
 
 GtkWidget*
 modest_hildon2_details_dialog_new_with_header (GtkWindow *parent, 
-					       TnyHeader *header)
+					       TnyHeader *header,
+					       gboolean get_size)
 {
 	ModestDetailsDialog *dialog;
 
@@ -101,7 +102,7 @@ modest_hildon2_details_dialog_new_with_header (GtkWindow *parent,
 							NULL));
 
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->create_container_func (dialog);
-	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header);
+	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header, get_size);
 
 	return GTK_WIDGET (dialog);
 }

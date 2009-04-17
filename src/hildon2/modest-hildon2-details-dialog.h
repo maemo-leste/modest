@@ -72,7 +72,8 @@ typedef struct {
 GType modest_hildon2_details_dialog_get_type (void);
 
 GtkWidget* modest_hildon2_details_dialog_new_with_header (GtkWindow *parent, 
-							  TnyHeader *header);
+							  TnyHeader *header,
+							  gboolean get_size);
 
 GtkWidget* modest_hildon2_details_dialog_new_with_folder  (GtkWindow *parent, 
 							   TnyFolder *folder);

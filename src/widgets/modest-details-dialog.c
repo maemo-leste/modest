@@ -46,10 +46,14 @@
 #include <string.h> /* for strlen */
 
 static void    modest_details_dialog_set_header_default          (ModestDetailsDialog *self,
-								  TnyHeader *header);
+								  TnyHeader *header,
+								  gboolean get_size);
 
 static void    modest_details_dialog_set_folder_default          (ModestDetailsDialog *self,
 								  TnyFolder *foler);
+
+static void    modest_details_dialog_set_message_size_default    (ModestDetailsDialog *self, 
+								  guint message_size);
 
 static void    modest_details_dialog_create_container_default    (ModestDetailsDialog *self);
 
@@ -90,6 +94,7 @@ modest_details_dialog_class_init (ModestDetailsDialogClass *klass)
 	klass->create_container_func = modest_details_dialog_create_container_default;
 	klass->add_data_func = modest_details_dialog_add_data_default;
 	klass->set_header_func = modest_details_dialog_set_header_default;
+	klass->set_message_size_func = modest_details_dialog_set_message_size_default;
 	klass->set_folder_func = modest_details_dialog_set_folder_default;
 }
 
@@ -100,7 +105,8 @@ modest_details_dialog_init (ModestDetailsDialog *self)
 
 GtkWidget*
 modest_details_dialog_new_with_header (GtkWindow *parent, 
-				       TnyHeader *header)
+				       TnyHeader *header,
+				       gboolean get_size)
 {
 	ModestDetailsDialog *dialog;
 
@@ -112,7 +118,7 @@ modest_details_dialog_new_with_header (GtkWindow *parent,
 							NULL));
 
 	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->create_container_func (dialog);
-	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header);
+	MODEST_DETAILS_DIALOG_GET_CLASS (dialog)->set_header_func (dialog, header, get_size);
 
 	/* Add close button */
 	gtk_dialog_add_button (GTK_DIALOG (dialog), _("mcen_bd_close"), GTK_RESPONSE_CLOSE);
@@ -148,6 +154,13 @@ modest_details_dialog_add_data (ModestDetailsDialog *self,
 				const gchar *value)
 {
 	MODEST_DETAILS_DIALOG_GET_CLASS (self)->add_data_func (self, label, value);
+}
+
+void
+modest_details_dialog_set_message_size (ModestDetailsDialog *self,
+					guint size)
+{
+	MODEST_DETAILS_DIALOG_GET_CLASS (self)->set_message_size_func (self, size);
 }
 
 static void
@@ -204,7 +217,8 @@ replace_recipients (gchar **recipients)
 
 static void
 modest_details_dialog_set_header_default (ModestDetailsDialog *self,
-					  TnyHeader *header)
+					  TnyHeader *header,
+					  gboolean get_size)
 {
 	gchar *from = NULL, *subject = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
 	time_t received, sent;
@@ -238,7 +252,11 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	bcc = tny_header_dup_bcc (header);
 	received = tny_header_get_date_received (header);
 	sent = tny_header_get_date_sent (header);
-	size = tny_header_get_message_size (header);
+	if (get_size) {
+		size = tny_header_get_message_size (header);
+	} else {
+		size = -1;
+	}
 
 	replace_recipients (&from);
 	replace_recipients (&to);
@@ -299,9 +317,11 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	}
 
 	/* Set size */
-	size_s = modest_text_utils_get_display_size (size);
-	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_size"), size_s);
-	g_free (size_s);
+	if (get_size) {
+		size_s = modest_text_utils_get_display_size (size);
+		modest_details_dialog_add_data (self, _("mcen_fi_message_properties_size"), size_s);
+		g_free (size_s);
+	}
 
 	/* Frees */
 	g_object_unref (datetime_formatter);
@@ -310,6 +330,16 @@ modest_details_dialog_set_header_default (ModestDetailsDialog *self,
 	g_free (subject);
 	g_free (cc);
 	g_free (bcc);
+}
+
+static void
+modest_details_dialog_set_message_size_default (ModestDetailsDialog *self,
+						guint size)
+{
+	gchar *size_s;
+	size_s = modest_text_utils_get_display_size (size);
+	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_size"), size_s);
+	g_free (size_s);
 }
 
 static void

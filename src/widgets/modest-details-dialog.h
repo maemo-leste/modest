@@ -70,15 +70,17 @@ typedef struct {
 	/* virtual methods */
 	void (*create_container_func) (ModestDetailsDialog *self);
 	void (*add_data_func) (ModestDetailsDialog *self, const gchar *label, const gchar *value);
-	void (*set_header_func) (ModestDetailsDialog *self, TnyHeader *header);
+	void (*set_header_func) (ModestDetailsDialog *self, TnyHeader *header, gboolean get_size);
 	void (*set_folder_func) (ModestDetailsDialog *self, TnyFolder *folder);
+	void (*set_message_size_func) (ModestDetailsDialog *self, guint message_size);
 
 } ModestDetailsDialogClass;
 
 GType modest_details_dialog_get_type (void);
 
 GtkWidget* modest_details_dialog_new_with_header  (GtkWindow *parent, 
-						   TnyHeader *header);
+						   TnyHeader *header,
+						   gboolean get_size);
 
 GtkWidget* modest_details_dialog_new_with_folder  (GtkWindow *parent, 
 						   TnyFolder *folder);
