@@ -78,6 +78,7 @@
 #include <modest-ui-constants.h>
 #include <modest-selector-picker.h>
 #include <modest-icon-names.h>
+#include <modest-count-stream.h>
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -2434,6 +2435,69 @@ modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
 				  dialog);
 }
 
+typedef struct _HeaderDetailsGetSizeInfo {
+	GtkWidget *dialog;
+	TnyMimePart *part;
+	guint total;
+} HeaderDetailsGetSizeInfo;
+
+static void 
+header_details_dialog_destroy (gpointer userdata,
+			       GObject *object)
+{
+	HeaderDetailsGetSizeInfo *info = (HeaderDetailsGetSizeInfo *) userdata;
+
+	info->dialog = NULL;
+}
+
+static gboolean
+idle_get_mime_part_size_cb (gpointer userdata)
+{
+	HeaderDetailsGetSizeInfo *info = (HeaderDetailsGetSizeInfo *) userdata;
+	gdk_threads_enter ();
+
+	if (info->dialog && GTK_WIDGET_VISIBLE (info->dialog)) {
+		modest_details_dialog_set_message_size (MODEST_DETAILS_DIALOG (info->dialog),
+							info->total);
+	}
+
+	if (info->dialog) {
+		g_object_weak_unref (G_OBJECT (info->dialog), header_details_dialog_destroy, info);
+		info->dialog = NULL;
+	}
+	g_object_unref (info->part);
+	g_slice_free (HeaderDetailsGetSizeInfo, info);
+
+	gdk_threads_leave ();
+
+	return FALSE;
+}
+
+static gpointer
+get_mime_part_size_thread (gpointer thr_user_data)
+{
+	HeaderDetailsGetSizeInfo *info = (HeaderDetailsGetSizeInfo *) thr_user_data;
+	gssize result = 0;
+	TnyStream *count_stream;
+
+	count_stream = modest_count_stream_new ();
+	result = tny_mime_part_decode_to_stream (info->part, count_stream, NULL);
+	info->total = modest_count_stream_get_count(MODEST_COUNT_STREAM (count_stream));
+	if (info->total == 0) {
+		modest_count_stream_reset_count(MODEST_COUNT_STREAM (count_stream));
+		result = tny_mime_part_write_to_stream (info->part, count_stream, NULL);
+		info->total = modest_count_stream_get_count(MODEST_COUNT_STREAM (count_stream));
+	}
+	
+	/* if there was an error, don't set the size (this is pretty uncommon) */
+	if (result < 0) {
+		g_warning ("%s: error while writing mime part to stream\n", __FUNCTION__);
+	}
+	g_idle_add (idle_get_mime_part_size_cb, info);
+
+	return NULL;
+}
+
 void
 modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 					   TnyHeader *header,
@@ -2443,7 +2507,18 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 	GtkWidget *dialog;
 
 	/* Create dialog */
-	dialog = modest_hildon2_details_dialog_new_with_header (parent_window, header, TRUE);
+	dialog = modest_hildon2_details_dialog_new_with_header (parent_window, header, !async_get_size);
+
+	if (async_get_size && msg && TNY_IS_MSG (msg)) {
+		HeaderDetailsGetSizeInfo *info;
+		info = g_slice_new (HeaderDetailsGetSizeInfo);
+		info->dialog = dialog;
+		info->total = 0;
+		info->part = TNY_MIME_PART (g_object_ref (msg));
+
+		g_object_weak_ref (G_OBJECT (dialog), header_details_dialog_destroy, info);
+		g_thread_create (get_mime_part_size_thread, info, FALSE, NULL);
+	}
 
 	/* Run dialog */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 

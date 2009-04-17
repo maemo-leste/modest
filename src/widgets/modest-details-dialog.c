@@ -340,6 +340,7 @@ modest_details_dialog_set_message_size_default (ModestDetailsDialog *self,
 	size_s = modest_text_utils_get_display_size (size);
 	modest_details_dialog_add_data (self, _("mcen_fi_message_properties_size"), size_s);
 	g_free (size_s);
+	gtk_widget_show_all (GTK_WIDGET (self));
 }
 
 static void
