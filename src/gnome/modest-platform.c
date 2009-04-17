@@ -546,7 +546,9 @@ modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
 
 void
 modest_platform_run_header_details_dialog (GtkWindow *parent_window,
-					   TnyHeader *header)
+					   TnyHeader *header,
+					   gboolean async_get_size, 
+					   TnyMsg *msg)
 {
 	GtkWidget *dialog;
 	

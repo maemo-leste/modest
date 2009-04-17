@@ -519,11 +519,15 @@ void     modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
  * modest_platform_run_header_details_dialog:
  * @parent_window: the parent #GtkWindow for the new dialog
  * @header: the #TnyHeader whose details will be shown
+ * @async_get_size: %TRUE if size is obtained asynchronously from @msg
+ * @msg: a #TnyMsg
  *
  * Shows the header details dialog
  **/
 void     modest_platform_run_header_details_dialog (GtkWindow *parent_window,
-						    TnyHeader *header);
+						    TnyHeader *header,
+						    gboolean async_get_size,
+						    TnyMsg *msg);
 
 /**
  * modest_platform_on_runtime_initialized:

@@ -4592,7 +4592,18 @@ headers_action_show_details (TnyHeader *header,
 			     gpointer user_data)
 
 {
-	modest_platform_run_header_details_dialog (GTK_WINDOW (window), header);
+	gboolean async_retrieval;
+	TnyMsg *msg = NULL;
+
+	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
+		async_retrieval = TRUE;
+		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (window));
+	} else {
+		async_retrieval = FALSE;
+	}
+	modest_platform_run_header_details_dialog (GTK_WINDOW (window), header, async_retrieval, msg);
+	if (msg)
+		g_object_unref (msg);
 }
 
 /*
