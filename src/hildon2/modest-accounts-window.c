@@ -71,6 +71,10 @@ static gboolean _modest_accounts_window_map_event (GtkWidget *widget,
 						   GdkEvent *event,
 						   gpointer userdata);
 static void update_progress_hint (ModestAccountsWindow *self);
+static void on_queue_changed    (ModestMailOperationQueue *queue,
+				 ModestMailOperation *mail_op,
+				 ModestMailOperationQueueNotification type,
+				 ModestAccountsWindow *self);
 static void on_row_inserted (GtkTreeModel *tree_model,
 			     GtkTreePath  *path,
 			     GtkTreeIter  *iter,
@@ -93,6 +97,7 @@ struct _ModestAccountsWindowPrivate {
 	GSList *sighandlers;
 
 	gboolean progress_hint;
+	guint queue_change_handler;
 };
 #define MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									    MODEST_TYPE_ACCOUNTS_WINDOW, \
@@ -178,6 +183,11 @@ modest_accounts_window_disconnect_signals (ModestWindow *self)
 {	
 	ModestAccountsWindowPrivate *priv;	
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
+
+	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					   priv->queue_change_handler))
+		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
+					     priv->queue_change_handler);
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
 	priv->sighandlers = NULL;	
@@ -276,6 +286,13 @@ modest_accounts_window_new (void)
 			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
 	
 	priv->pannable = hildon_pannable_area_new ();
+
+	priv->queue_change_handler =
+		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
+				  "queue-changed",
+				  G_CALLBACK (on_queue_changed),
+				  self);
+
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
@@ -444,12 +461,45 @@ _modest_accounts_window_map_event (GtkWidget *widget,
 	return FALSE;
 }
 
+static gboolean
+has_active_operations (ModestAccountsWindow *self)
+{
+	GSList *operations = NULL, *node;
+	ModestMailOperationQueue *queue;
+	gboolean has_active = FALSE;
+
+	queue = modest_runtime_get_mail_operation_queue ();
+	operations = modest_mail_operation_queue_get_by_source (queue, G_OBJECT (self));
+
+	for (node = operations; node != NULL; node = g_slist_next (node)) {
+		if (!modest_mail_operation_is_finished (MODEST_MAIL_OPERATION (node->data))) {
+			has_active = TRUE;
+			break;
+		}
+	}
+
+	if (operations) {
+		g_slist_foreach (operations, (GFunc) g_object_unref, NULL);
+		g_slist_free (operations);
+	}
+
+	return has_active;
+}
+
 static void
 update_progress_hint (ModestAccountsWindow *self)
 {
 	ModestAccountsWindowPrivate *priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
 
-	priv->progress_hint = modest_window_mgr_has_progress_operation (modest_runtime_get_window_mgr ());
+	if (has_active_operations (self)) {
+		priv->progress_hint = TRUE;
+	} else {
+		priv->progress_hint = FALSE;
+	}
+
+	if (!priv->progress_hint) {
+		priv->progress_hint = modest_window_mgr_has_progress_operation (modest_runtime_get_window_mgr ());
+	}
 	
 	if (GTK_WIDGET_VISIBLE (self)) {
 		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
@@ -511,3 +561,71 @@ static void row_count_changed (ModestAccountsWindow *self)
 				 "fill", count > 0,
 				 NULL);
 }
+
+static void 
+on_mail_operation_started (ModestMailOperation *mail_op,
+			   gpointer user_data)
+{
+	ModestAccountsWindow *self;
+	ModestMailOperationTypeOperation op_type;
+	GObject *source = NULL;
+
+	self = MODEST_ACCOUNTS_WINDOW (user_data);
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	source = modest_mail_operation_get_source(mail_op);
+	if (G_OBJECT (self) == source) {
+		update_progress_hint (self);
+	}
+	g_object_unref (source);
+}
+
+static void 
+on_mail_operation_finished (ModestMailOperation *mail_op,
+			    gpointer user_data)
+{
+	ModestAccountsWindow *self;
+
+	self = MODEST_ACCOUNTS_WINDOW (user_data);
+
+	/* Don't disable the progress hint if there are more pending
+	   operations from this window */
+	update_progress_hint (self);
+
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
+}
+
+static void
+on_queue_changed (ModestMailOperationQueue *queue,
+		  ModestMailOperation *mail_op,
+		  ModestMailOperationQueueNotification type,
+		  ModestAccountsWindow *self)
+{
+	ModestAccountsWindowPrivate *priv;
+
+	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
+
+	/* If this operations was created by another window, do nothing */
+	if (!modest_mail_operation_is_mine (mail_op, G_OBJECT(self))) 
+		return;
+
+	if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_ADDED) {
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-started",
+							       G_CALLBACK (on_mail_operation_started),
+							       self);
+		priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+							       G_OBJECT (mail_op),
+							       "operation-finished",
+							       G_CALLBACK (on_mail_operation_finished),
+							       self);
+	} else if (type == MODEST_MAIL_OPERATION_QUEUE_OPERATION_REMOVED) {
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-started");
+		priv->sighandlers = modest_signal_mgr_disconnect (priv->sighandlers,
+								  G_OBJECT (mail_op),
+								  "operation-finished");
+	}
+}
+
