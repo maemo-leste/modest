@@ -1700,20 +1700,36 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 					     msg);
 
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), tny_msg_get_allow_external_images (msg));
-	
+
 	body = modest_tny_msg_find_body_part (msg, TRUE);
 	if (body) {
+		ModestAttachmentsView *widget;
+
 		tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), body);
 		g_object_unref (body);
+		widget = MODEST_ATTACHMENTS_VIEW (priv->attachments_view);
 
-		if(modest_attachments_view_has_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view))) {
+		if (modest_attachments_view_has_attachments (widget)) {
+			GtkLabel *label;
+			GList *children = NULL;
+			gchar *text = NULL;
+			/* Ugly but... */
+			children = gtk_container_get_children (GTK_CONTAINER (priv->attachments_box));
+			label = GTK_LABEL (children->data);
 			gtk_widget_show_all (priv->attachments_box);
+			if (modest_attachments_view_get_num_attachments (widget) > 1) {
+				text = _("mail_va_attachments");
+			} else {
+				text = _("mail_va_attachment");
+			}
+			gtk_label_set_text (label, text);
 		} else {
 			gtk_widget_hide_all (priv->attachments_box);
 		}
 
-	} else 
+	} else {
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
+	}
 
 	if (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)) &&
 	    !modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {

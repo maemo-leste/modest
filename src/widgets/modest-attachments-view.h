@@ -90,7 +90,7 @@ void modest_attachments_view_get_sizes (ModestAttachmentsView *attachments_view,
 
 void modest_attachments_view_set_style (ModestAttachmentsView *attachments_view,
 					ModestAttachmentsViewStyle style);
-
+guint modest_attachments_view_get_num_attachments (ModestAttachmentsView *atts_view);
 G_END_DECLS
 
 #endif

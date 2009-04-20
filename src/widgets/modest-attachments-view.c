@@ -1006,3 +1006,20 @@ modest_attachments_view_set_style (ModestAttachmentsView *self,
 
 	}
 }
+
+guint
+modest_attachments_view_get_num_attachments (ModestAttachmentsView *atts_view)
+{
+	ModestAttachmentsViewPrivate *priv;
+	GList *children;
+	gint result;
+
+	g_return_val_if_fail (MODEST_IS_ATTACHMENTS_VIEW (atts_view), 0);
+	priv = MODEST_ATTACHMENTS_VIEW_GET_PRIVATE (atts_view);
+
+	children = gtk_container_get_children (GTK_CONTAINER (priv->box));
+	result = g_list_length (children);
+	g_list_free (children);
+
+	return result;
+}
