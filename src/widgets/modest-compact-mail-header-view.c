@@ -137,7 +137,7 @@ set_date_time (ModestCompactMailHeaderView *compact_mail_header)
 	date_str = modest_datetime_formatter_format_time (priv->datetime_formatter, priv->date_to_show);
 	buffer = g_string_append (buffer, date_str);
 	buffer = g_string_append (buffer, "\n");
-	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_long"), priv->date_to_show);
+	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_medium"), priv->date_to_show);
 	buffer = g_string_append (buffer, date_buf);
 
 	gtk_label_set_text (GTK_LABEL (priv->date_label), buffer->str);
