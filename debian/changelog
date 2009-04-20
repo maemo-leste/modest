@@ -1,3 +1,10 @@
+modest (3.0.14-rc2) unstable; urgency=low
+
+  * Week 17, 2009 - Monday release r8942
+  * Fixes: NB#110838 - Modest UI stops responding when trying to access the Message details of the attached message 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 20 Apr 2009 13:51:55 +0300
+
 modest (3.0.14-rc1) unstable; urgency=low
 
   * Week 17, 2009 - Friday release r8890
