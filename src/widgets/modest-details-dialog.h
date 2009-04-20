@@ -89,6 +89,9 @@ void       modest_details_dialog_add_data         (ModestDetailsDialog *self,
 						   const gchar *label, 
 						   const gchar *value);
 
+void       modest_details_dialog_set_message_size (ModestDetailsDialog *self,
+						   guint message_size);
+
 G_END_DECLS
 
 #endif /* __MODEST_DETAILS_DIALOG */
