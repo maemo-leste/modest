@@ -150,15 +150,29 @@ on_change(GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
 }
 
 static void
-on_outgoing_server_changed (GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
+on_mandatory_entry_changed (GtkWidget* widget, ModestConnectionSpecificSmtpEditWindow *self)
 {
 	const gchar *text;
-	gboolean sensitive = FALSE;
+	gboolean sensitive = TRUE;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv;
+	ModestProtocolType auth_proto;
 
+	priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+
+	/* Check all mandatory entries */
 	on_change (widget, self);
-	text = hildon_entry_get_text (HILDON_ENTRY (widget));
-	if (text && (strlen(text) > 0))
-		sensitive = TRUE;
+
+	auth_proto = modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker));
+	if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (),
+							      auth_proto)) {
+		text = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username));
+		if (!text || (strlen(text) == 0))
+			sensitive = FALSE;
+	}
+
+	text = hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver));
+	if (!text || (strlen(text) == 0))
+		sensitive = FALSE;
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (self), GTK_RESPONSE_OK, sensitive);
 }
@@ -319,15 +333,19 @@ auth_picker_set_sensitive (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
 static void
 on_auth_picker_changed (HildonPickerButton *widget, gpointer user_data)
 {
-	ModestConnectionSpecificSmtpEditWindow *self =
-		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
-	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
-		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
+	ModestConnectionSpecificSmtpEditWindow *self;
+	ModestConnectionSpecificSmtpEditWindowPrivate *priv;
+
+	self = MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
+	priv = CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 
 	on_change (GTK_WIDGET(widget), self);
 
 	/* Enable/disable username and password fields */
 	auth_picker_set_sensitive (priv);
+
+	/* Check missing mandatory data */
+	on_mandatory_entry_changed (priv->entry_user_username, self);
 }
 
 static void
@@ -360,7 +378,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_outgoing_server_changed), self);
+	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
 
 	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	
@@ -392,7 +410,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("mail_fi_username"), FALSE,
 							 priv->entry_user_username);
-	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_change), self);
+	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 	gtk_widget_show (captioned);
