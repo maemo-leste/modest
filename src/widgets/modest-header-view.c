@@ -1337,9 +1337,9 @@ refresh_folder_error_handler (ModestMailOperation *mail_op,
 		ModestMailOperationStatus st = modest_mail_operation_get_status (mail_op);
 		/* If the mail op has been cancelled then it's not an error: don't show any message */
 		if (st != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-			modest_platform_information_banner (NULL, NULL,
-							    dgettext("ke-recv",
-								     "cerm_device_memory_full"));
+			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			modest_platform_information_banner (NULL, NULL, msg);
+			g_free (msg);
 		}
 	}
 }

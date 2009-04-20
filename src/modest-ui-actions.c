@@ -1238,10 +1238,11 @@ check_memory_full_error (GtkWidget *parent_window, GError *err)
 	if (err == NULL)
 		return FALSE;
 
-	if (is_memory_full_error (err, NULL))
-		modest_platform_information_banner (parent_window,
-						    NULL, _KR("cerm_device_memory_full"));
-	else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
+	if (is_memory_full_error (err, NULL)) {
+		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		modest_platform_information_banner (parent_window, NULL, msg);
+		g_free (msg);
+	} else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
 		/* If the account was created in memory full
 		   conditions then tinymail won't be able to
 		   connect so it'll return this error code */
@@ -1269,8 +1270,9 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 	   don't show any message */
 	if (status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
 		if (is_memory_full_error ((GError *) error, mail_op)) {
-			modest_platform_information_banner ((GtkWidget *) win,
-							    NULL, _KR("cerm_device_memory_full"));
+			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			modest_platform_information_banner ((GtkWidget *) win, NULL, msg);
+			g_free (msg);
 		} else if (error->code == TNY_SYSTEM_ERROR_MEMORY) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, _("emev_ui_imap_inbox_select_error"));
@@ -2849,9 +2851,10 @@ enough_space_for_message (ModestMsgEditWindow *edit_window,
 	/* Double check: memory full condition or message too big */
 	if (available_disk < MIN_FREE_SPACE ||
 	    expected_size > available_disk) {
+		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		modest_platform_information_banner (NULL, NULL, msg);
+		g_free (msg);
 
-		modest_platform_information_banner (NULL, NULL,
-						    _KR("cerm_device_memory_full"));
 		return FALSE;
 	}
 
@@ -3459,15 +3462,17 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
 	const GError *error = NULL;
-	const gchar *message = NULL;
+	gchar *message = NULL;
+	gboolean mem_full;
 
 	/* Get error message */
 	error = modest_mail_operation_get_error (mail_op);
 	if (!error)
 		g_return_if_reached ();
 
-	if (is_memory_full_error ((GError *) error, mail_op)) {
-		message = _KR("cerm_device_memory_full");
+	mem_full = is_memory_full_error ((GError *) error, mail_op);
+	if (mem_full) {
+		message = g_strdup_printf (_KR("cerm_device_memory_full"), "");
 	} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
 		   error->code == MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS) {
 		message = _CS("ckdg_ib_folder_already_exists");
@@ -3483,6 +3488,9 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	/* We don't set a parent for the dialog because the dialog
 	   will be destroyed so the banner won't appear */
 	modest_platform_information_banner (NULL, NULL, message);
+
+	if (mem_full)
+		g_free (message);
 }
 
 typedef struct {
@@ -5496,13 +5504,15 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
 
-	if (error && is_memory_full_error ((GError *) error, mail_op))
-		modest_platform_information_banner ((GtkWidget *) win,
-						    NULL, _KR("cerm_device_memory_full"));
-	else
+	if (error && is_memory_full_error ((GError *) error, mail_op)) {
+		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		modest_platform_information_banner ((GtkWidget *) win, NULL, msg);
+		g_free (msg);
+	} else {
 		modest_platform_run_information_dialog ((GtkWindow *) win,
 							_("mail_in_ui_folder_move_target_error"),
 							FALSE);
+	}
 	if (win)
 		g_object_unref (win);
 }

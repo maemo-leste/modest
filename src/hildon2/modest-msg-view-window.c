@@ -2434,8 +2434,9 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 
 	if (cancelled || err) {
 		if (err) {
-			modest_platform_information_banner (NULL, NULL,
-							    _KR("cerm_device_memory_full"));
+			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			modest_platform_information_banner (NULL, NULL, msg);
+			g_free (msg);
 		}
 		goto free;
 	}
@@ -2621,8 +2622,9 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 		if (info->result == GNOME_VFS_OK) {
 			hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
 		} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
-			hildon_banner_show_information (NULL, NULL, 
-							_KR("cerm_device_memory_full"));
+			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			modest_platform_information_banner (NULL, NULL, msg);
+			g_free (msg);
 		} else {
 			hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
 		}
