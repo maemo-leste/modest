@@ -1528,24 +1528,21 @@ modest_platform_push_email_notification(void)
 	}
 }
 
-void 
+void
 modest_platform_on_new_headers_received (TnyList *header_list,
 					 gboolean show_visual)
 {
-	g_return_if_fail (TNY_IS_LIST(header_list));
+	g_return_if_fail (TNY_IS_LIST (header_list));
 
-	if (tny_list_get_length(header_list) == 0) {
-		g_warning ("%s: header list is empty", __FUNCTION__);
+	if (tny_list_get_length (header_list) < 1)
 		return;
-	}
 
-	if (!show_visual) {
-                modest_platform_push_email_notification ();
-		/* We do a return here to avoid indentation with an else */
+	/* If the window is in the foreground don't do anything */
+	if (hildon_program_get_is_topmost (hildon_program_get_instance ()))
 		return;
-	}
 
 #ifdef MODEST_HAVE_HILDON_NOTIFY
+	/* For any other case issue a notification */
 	HildonNotification *notification;
 	TnyIterator *iter;
 	GSList *notifications_list = NULL;
@@ -1626,7 +1623,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		/* We don't listen for the "closed" signal, because we
 		   don't care about if the notification was removed or
 		   not to store the list in gconf */
-	
+
 		/* Free & carry on */
 		g_free (display_address);
 		g_free (url);
@@ -1641,7 +1638,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 			      notifications_list, MODEST_CONF_VALUE_INT, NULL);
 
 	g_slist_free (notifications_list);
-	
+
 #endif /*MODEST_HAVE_HILDON_NOTIFY*/
 }
 
