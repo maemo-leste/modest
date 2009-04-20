@@ -4228,6 +4228,9 @@ setup_menu (ModestMsgEditWindow *self)
 						  NULL);
 	g_signal_connect (G_OBJECT (priv->cc_button), "toggled",
 			  G_CALLBACK (on_cc_button_toggled), (gpointer) self);
+	gtk_button_set_alignment (GTK_BUTTON (priv->cc_button), 0.5, 0.5);
+	gtk_button_set_alignment (GTK_BUTTON (priv->cc_button), 0.5, 0.5);
+
 	priv->bcc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("mcen_me_editor_showbcc"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button),
@@ -4236,6 +4239,8 @@ setup_menu (ModestMsgEditWindow *self)
 						  NULL);
 	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
 			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
+	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
+	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
 
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_insert_image),
