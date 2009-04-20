@@ -313,6 +313,37 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 	gtk_label_set_text (GTK_LABEL (priv->size_view), "");
 
 	if (show_size && priv->detect_size) {
+		gchar *disposition;
+
+		disposition = modest_tny_mime_part_get_header_value (mime_part, "Content-Disposition");
+		if (disposition) {
+			const gchar *size_tmp;
+			size_tmp = strstr (disposition, "size=");
+			if (size_tmp) size_tmp += strlen("size=");
+			if (size_tmp) {
+				gchar *disposition_value;
+				const gchar *size_end;
+				size_end = strstr (size_tmp, ";");
+				if (size_end == NULL) {
+					disposition_value = g_strdup (size_tmp);
+				} else {
+					disposition_value = g_strndup (size_tmp, size_end - size_tmp);
+				}
+				if (disposition_value && disposition_value[0] != '\0') {
+					priv->size = atoll (disposition_value);
+					if (priv->size != 0) {
+						show_size = FALSE;
+						update_size_label (MODEST_ATTACHMENT_VIEW (self));
+					}
+				}
+				g_free (disposition_value);
+			}
+			
+			g_free (disposition);
+		}
+	}
+
+	if (show_size && priv->detect_size) {
 		g_object_ref (self);
 		if (!priv->get_size_stream)
 			priv->get_size_stream = modest_count_stream_new ();
