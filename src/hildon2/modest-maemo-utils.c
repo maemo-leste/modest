@@ -376,7 +376,6 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 	     tny_iterator_next (iterator)) {
 		GtkTreeIter iter;
 		TnyMimePart *part;
-		gchar *label;
 		gchar *filename = NULL;
 
 		part = (TnyMimePart *) tny_iterator_get_current (iterator);
@@ -397,11 +396,10 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 			} else {
 				filename = g_strdup (tny_mime_part_get_filename (part));
 			}
-			label = g_strconcat (filename, NULL);
 			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
-			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, label, 1, part, -1);
+			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, filename, 1, part, -1);
 			attachments_added ++;
-			g_free (label);
+			g_free (filename);
 			g_object_unref (part);
 		}
 	}
