@@ -2607,7 +2607,7 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 	GtkWidget *action_button;
 	GtkWidget *image = NULL;
 	TnyAccount *account;
-	gchar *account_name = NULL;
+	gchar *account_name = NULL, *short_name = NULL;
 
         action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
 
@@ -2627,22 +2627,34 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 	g_object_unref (account);
 
 	/* Set title of button: account or folder name */
-	if (TNY_IS_FOLDER (folder_store)) {
-		hildon_button_set_title (HILDON_BUTTON (action_button), 
-					 tny_folder_get_name (TNY_FOLDER (folder_store)));
-	} else {
-		hildon_button_set_title (HILDON_BUTTON (action_button), account_name);
-	}
+	if (TNY_IS_FOLDER (folder_store))
+		short_name = folder_store_get_display_name (folder_store);
+	else
+		short_name = g_strdup (account_name);
+
+	hildon_button_set_title (HILDON_BUTTON (action_button), short_name);
 
 	/* Set value of button, folder full name */
 	if (TNY_IS_CAMEL_FOLDER (folder_store)) {
-		gchar *full_name = g_strconcat (account_name, MOVE_TO_FOLDER_SEPARATOR,
-						tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder_store)),
-						NULL);
+		const gchar *camel_full_name;
+		gchar *last_slash, *full_name;
+
+		camel_full_name = tny_camel_folder_get_full_name (TNY_CAMEL_FOLDER (folder_store));
+		last_slash = g_strrstr (camel_full_name, "/");
+		if (last_slash) {
+			gchar *prefix = g_strndup (camel_full_name, last_slash - camel_full_name + 1);
+			full_name = g_strconcat (account_name, MOVE_TO_FOLDER_SEPARATOR, prefix, short_name, NULL);
+			g_free (prefix);
+		} else {
+			full_name = g_strconcat (account_name, MOVE_TO_FOLDER_SEPARATOR,
+						 short_name,
+						 NULL);
+		}
 		hildon_button_set_value (HILDON_BUTTON (action_button), full_name);
 		g_free (full_name);
 	}
 	g_free (account_name);
+	g_free (short_name);
 
 	/* Set image for the button */
 	image = get_image_for_folder_store (folder_store, MODEST_ICON_SIZE_BIG);
