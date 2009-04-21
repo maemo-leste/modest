@@ -461,13 +461,16 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part, const gchar *
 {
 	GtkHTMLStream *gtkhtml_stream;
 	TnyStream *tny_stream;
+	gchar *content_type;
 
 	g_return_if_fail (self);
 	g_return_if_fail (part);
 
 	g_signal_emit (G_OBJECT (self), signals[STOP_STREAMS_SIGNAL], 0);
 
-	gtkhtml_stream = gtk_html_begin_full(GTK_HTML(self), NULL, (char *) encoding, 0);
+	content_type = g_strdup_printf ("text/html; charset=%s", encoding);
+	gtkhtml_stream = gtk_html_begin_full(GTK_HTML(self), NULL, content_type, 0);
+	g_free (content_type);
 
 	tny_stream     = TNY_STREAM(modest_tny_stream_gtkhtml_new (gtkhtml_stream, GTK_HTML (self)));
 	modest_tny_stream_gtkhtml_set_max_size (MODEST_TNY_STREAM_GTKHTML (tny_stream), 128*1024);
