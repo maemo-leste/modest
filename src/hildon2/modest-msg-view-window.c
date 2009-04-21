@@ -85,6 +85,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget   *prev_toolitem;
 	GtkWidget   *next_toolitem;
 	gboolean    progress_hint;
+	gint        fetching_images;
 
 	/* Optimized view enabled */
 	gboolean optimized_view;
@@ -441,6 +442,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->row_inserted_handler = 0;
 	priv->rows_reordered_handler = 0;
 	priv->progress_hint = FALSE;
+	priv->fetching_images = 0;
 
 	priv->optimized_view  = FALSE;
 	priv->purge_timeout = 0;
@@ -479,6 +481,18 @@ set_toolbar_transfer_mode (ModestMsgViewWindow *self)
 	return FALSE;
 }
 
+static void
+update_progress_hint (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
+	if (GTK_WIDGET_VISIBLE (self)) {
+		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), 
+							  (priv->progress_hint || (priv->fetching_images > 0))?1:0);
+	}
+}
+
 static void 
 set_progress_hint (ModestMsgViewWindow *self, 
 		   gboolean enabled)
@@ -494,9 +508,7 @@ set_progress_hint (ModestMsgViewWindow *self,
 	/* Sets current progress hint */
 	priv->progress_hint = enabled;
 
-	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), enabled?1:0);
-	}
+	update_progress_hint (self);
 
 }
 
@@ -3076,6 +3088,7 @@ typedef struct {
 	gchar *cache_id;
 	TnyStream *output_stream;
 	GtkWidget *msg_view;
+	GtkWidget *window;
 } FetchImageData;
 
 gboolean
@@ -3083,16 +3096,20 @@ on_fetch_image_idle_refresh_view (gpointer userdata)
 {
 
 	FetchImageData *fidata = (FetchImageData *) userdata;
-	g_message ("REFRESH VIEW");
 
 	gdk_threads_enter ();
 	if (GTK_WIDGET_DRAWABLE (fidata->msg_view)) {
-		g_message ("QUEUING DRAW");
+		ModestMsgViewWindowPrivate *priv;
+
+		priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (fidata->window);
+		priv->fetching_images--;
 		gtk_widget_queue_draw (fidata->msg_view);
+		update_progress_hint (MODEST_MSG_VIEW_WINDOW (fidata->window));
 	}
 	gdk_threads_leave ();
 
 	g_object_unref (fidata->msg_view);
+	g_object_unref (fidata->window);
 	g_slice_free (FetchImageData, fidata);
 	return FALSE;
 }
@@ -3164,10 +3181,12 @@ on_fetch_image (ModestMsgView *msgview,
 
 	fidata = g_slice_new0 (FetchImageData);
 	fidata->msg_view = g_object_ref (msgview);
+	fidata->window = g_object_ref (window);
 	fidata->uri = g_strdup (uri);
 	fidata->cache_id = modest_images_cache_get_id (current_account, uri);
 	fidata->output_stream = g_object_ref (stream);
 
+	priv->fetching_images++;
 	if (g_thread_create (on_fetch_image_thread, fidata, FALSE, NULL) == NULL) {
 		g_object_unref (fidata->output_stream);
 		g_free (fidata->cache_id);
@@ -3175,8 +3194,11 @@ on_fetch_image (ModestMsgView *msgview,
 		g_object_unref (fidata->msg_view);
 		g_slice_free (FetchImageData, fidata);
 		tny_stream_close (stream);
+		priv->fetching_images--;
+		update_progress_hint (window);
 		return FALSE;
 	}
+	update_progress_hint (window);
 
 	return TRUE;
 }
@@ -3292,11 +3314,8 @@ _modest_msg_view_window_map_event (GtkWidget *widget,
 				   gpointer userdata)
 {
 	ModestMsgViewWindow *self = (ModestMsgViewWindow *) userdata;
-	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 
-	if (priv->progress_hint) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
-	}
+	update_progress_hint (self);
 
 	return FALSE;
 }
