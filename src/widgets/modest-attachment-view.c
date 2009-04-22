@@ -43,6 +43,7 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-runtime.h>
 #include <modest-count-stream.h>
+#include <modest-ui-constants.h>
 
 #define GET_SIZE_BUFFER_SIZE 128
 
@@ -413,6 +414,7 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	ModestAttachmentViewPrivate *priv = MODEST_ATTACHMENT_VIEW_GET_PRIVATE (instance);
 	PangoContext *context;
 	GtkWidget *box = NULL;
+	GtkWidget *icon_alignment = NULL;
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	PangoAttrList *attr_list;
@@ -421,6 +423,8 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 #endif
 
 	priv->mime_part = NULL;
+	icon_alignment = gtk_alignment_new (0.5, 0.5, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (icon_alignment), 0, 0, 0, MODEST_MARGIN_DEFAULT);
 	priv->icon = gtk_image_new ();
 	priv->filename_view = gtk_label_new ("");
 	gtk_label_set_line_wrap (GTK_LABEL (priv->filename_view), FALSE);
@@ -443,7 +447,8 @@ modest_attachment_view_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->detect_size = TRUE;
 
 	box = gtk_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (box), priv->icon, FALSE, FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (icon_alignment), priv->icon);
+	gtk_box_pack_start (GTK_BOX (box), icon_alignment, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), priv->filename_view, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (box), priv->size_view, FALSE, FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (instance), box);
