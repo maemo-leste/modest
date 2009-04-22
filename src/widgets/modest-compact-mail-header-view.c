@@ -53,6 +53,7 @@ struct _ModestCompactMailHeaderViewPriv
 
 	GtkWidget    *fromto_label;
 	GtkWidget    *fromto_contents;
+	GtkWidget    *time_label;
 	GtkWidget    *date_label;
 
 	GSList       *custom_labels;
@@ -130,7 +131,9 @@ set_date_time (ModestCompactMailHeaderView *compact_mail_header)
 	buffer = g_string_append_c (buffer, ' ');
 	date_str = modest_datetime_formatter_format_time (priv->datetime_formatter, priv->date_to_show);
 	buffer = g_string_append (buffer, date_str);
-	buffer = g_string_append (buffer, "\n");
+	gtk_label_set_text (GTK_LABEL (priv->time_label), buffer->str);
+	g_string_free  (buffer, TRUE);
+	buffer = g_string_new ("");
 	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_medium"), priv->date_to_show);
 	buffer = g_string_append (buffer, date_buf);
 
@@ -323,6 +326,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 	GtkWidget *from_date_hbox, *vbox, *main_vbox;
 	GtkWidget *main_align;
+	GtkWidget *headers_date_hbox;
 
 	priv->header = NULL;
 	priv->custom_labels = NULL;
@@ -335,6 +339,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	 * as we want to track the style changes and update the color properly */
 
 	from_date_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
+	headers_date_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_DOUBLE);
 
 	priv->fromto_label = gtk_label_new (NULL);
 	gtk_misc_set_alignment (GTK_MISC (priv->fromto_label), 0.0, 1.0);
@@ -345,12 +350,17 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	priv->date_label = gtk_label_new (NULL);
 	gtk_label_set_justify (GTK_LABEL (priv->date_label), GTK_JUSTIFY_RIGHT);
-	gtk_misc_set_alignment (GTK_MISC (priv->date_label), 1.0, 1.0);
+	gtk_misc_set_alignment (GTK_MISC (priv->date_label), 1.0, 0.0);
 	gtk_misc_set_padding (GTK_MISC (priv->date_label), MODEST_MARGIN_DOUBLE, 0);
+
+	priv->time_label = gtk_label_new (NULL);
+	gtk_label_set_justify (GTK_LABEL (priv->time_label), GTK_JUSTIFY_RIGHT);
+	gtk_misc_set_alignment (GTK_MISC (priv->time_label), 1.0, 1.0);
+	gtk_misc_set_padding (GTK_MISC (priv->time_label), MODEST_MARGIN_DOUBLE, 0);
 
 	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->fromto_label, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->fromto_contents, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->date_label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->time_label, FALSE, FALSE, 0);
 
 	gtk_box_pack_start (GTK_BOX (vbox), from_date_hbox, FALSE, FALSE, 0);
 
@@ -367,7 +377,9 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	g_object_ref (priv->headers_vbox);
 
 	gtk_box_pack_start (GTK_BOX (main_vbox), vbox, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (main_vbox), priv->headers_vbox, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (headers_date_hbox), priv->headers_vbox, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (headers_date_hbox), priv->date_label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (main_vbox), headers_date_hbox, FALSE, FALSE, 0);
 
 	main_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (main_align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
@@ -625,6 +637,7 @@ update_style (ModestCompactMailHeaderView *self)
 	pango_attr_list_insert (attr_list, pango_attr_foreground_new (color.red, color.green, color.blue));
 	pango_attr_list_insert (attr_list, pango_attr_scale_new (PANGO_SCALE_SMALL));
 	gtk_label_set_attributes (GTK_LABEL (priv->date_label), attr_list);
+	gtk_label_set_attributes (GTK_LABEL (priv->time_label), attr_list);
 	pango_attr_list_unref (attr_list);
 
 	/* set style of custom headers */
