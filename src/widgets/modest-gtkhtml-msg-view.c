@@ -53,6 +53,7 @@
 #include <widgets/modest-gtkhtml-msg-view.h>
 #include <widgets/modest-isearch-view.h>
 #include <widgets/modest-ui-constants.h>
+#include <modest-icon-names.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifndef MODEST_TOOLKIT_GTK
@@ -237,14 +238,15 @@ struct _ModestGtkhtmlMsgViewPrivate {
 	GtkWidget   *body_view;
 	GtkWidget   *mail_header_view;
 	GtkWidget   *attachments_view;
+	GtkWidget   *priority_icon;
 
 	TnyMsg      *msg;
 
 	/* embedded elements */
 	GtkWidget   *headers_box;
+	GtkWidget   *priority_box;
 	GtkWidget   *html_scroll;
 	GtkWidget   *attachments_box;
-	GtkWidget   *view_images_button;
 
 	/* internal adjustments for set_scroll_adjustments */
 	GtkAdjustment *hadj;
@@ -1143,6 +1145,18 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
 	
+	priv->priority_icon = gtk_image_new ();
+	gtk_misc_set_alignment (GTK_MISC (priv->priority_icon), 0.0, 0.5);
+	if (priv->priority_icon) {
+		priv->priority_box = (GtkWidget *)
+			modest_mail_header_view_add_custom_header (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view),
+								   _("mcen_me_editor_message_priority"),
+								   priv->priority_icon,
+								   FALSE, FALSE);
+								   
+		gtk_widget_hide_all (priv->priority_box);
+	}
+
 	if (priv->attachments_view) {
 #ifndef MODEST_TOOLKIT_HILDON2
 		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
@@ -1491,7 +1505,8 @@ has_blocked_external_images (ModestGtkhtmlMsgView *self)
 {
 	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
-	return modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view));
+	return (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)) &&
+		!modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view)));
 }
 
 static gboolean
@@ -1647,6 +1662,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	TnyMimePart *body;
 	ModestGtkhtmlMsgViewPrivate *priv;
 	TnyHeader *header;
+	TnyHeaderFlags flags;
 	GtkAdjustment *html_vadj;
 	
 	g_return_if_fail (self);
@@ -1675,6 +1691,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
 		gtk_widget_hide_all (priv->mail_header_view);
 		gtk_widget_hide_all (priv->attachments_box);
+		gtk_widget_hide_all (priv->priority_box);
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
 		gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1721,17 +1738,21 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
 	}
 
-	if (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)) &&
-	    !modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {
-		gtk_widget_show (priv->view_images_button);
+	/* Refresh priority */
+	flags = tny_header_get_flags (header);
+	flags = flags && TNY_HEADER_FLAG_PRIORITY_MASK;
+	if (flags == TNY_HEADER_FLAG_NORMAL_PRIORITY) {
+		gtk_widget_hide_all (priv->priority_box);
 	} else {
-		gtk_widget_hide (priv->view_images_button);
+		gtk_widget_show_all (priv->priority_box);
 	}
 
 	gtk_widget_show (priv->body_view);
+	gtk_widget_set_no_show_all (priv->priority_box, TRUE);
 	gtk_widget_set_no_show_all (priv->attachments_box, TRUE);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_set_no_show_all (priv->attachments_box, FALSE);
+	gtk_widget_set_no_show_all (priv->priority_box, FALSE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_queue_resize (GTK_WIDGET(self));
 	gtk_widget_queue_draw (GTK_WIDGET(self));
@@ -1783,6 +1804,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_hide_all (priv->attachments_box);
+	gtk_widget_hide_all (priv->priority_box);
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
 	gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1853,11 +1875,28 @@ static void
 set_priority (ModestGtkhtmlMsgView *self, TnyHeaderFlags flags)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
+	TnyHeaderFlags priority_flags;
+	gboolean show_priority = FALSE;
 
 	g_return_if_fail (MODEST_IS_GTKHTML_MSG_VIEW (self));
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
 	modest_mail_header_view_set_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), flags);
+	priority_flags = flags & TNY_HEADER_FLAG_PRIORITY_MASK;
+
+	if (priority_flags == TNY_HEADER_FLAG_HIGH_PRIORITY) {
+		show_priority = TRUE;
+		gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), MODEST_HEADER_ICON_HIGH, GTK_ICON_SIZE_MENU);
+	} else if (priority_flags == TNY_HEADER_FLAG_LOW_PRIORITY) {
+		show_priority = TRUE;
+		gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), MODEST_HEADER_ICON_LOW, GTK_ICON_SIZE_MENU);
+	}
+
+	if (show_priority && MODEST_IS_COMPACT_MAIL_HEADER_VIEW (priv->mail_header_view)) {
+		gtk_widget_show_all  (priv->priority_box);
+	} else {
+		gtk_widget_hide_all (priv->priority_box);
+	}
 }
 
 /* INCREMENTAL SEARCH IMPLEMENTATION */
