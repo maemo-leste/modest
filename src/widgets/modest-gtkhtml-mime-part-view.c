@@ -277,7 +277,6 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_html_set_caret_mode      (GTK_HTML(self), FALSE);
 	gtk_html_set_blocking        (GTK_HTML(self), TRUE);
 	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
-	gtk_container_set_border_width (GTK_CONTAINER (self), MODEST_MARGIN_DEFAULT);
 
 #ifdef MODEST_TOOLKIT_HILDON2
 #ifdef HAVE_GTK_HTML_SET_MAX_IMAGE_SIZE
