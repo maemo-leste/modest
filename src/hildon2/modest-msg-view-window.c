@@ -524,22 +524,8 @@ init_window (ModestMsgViewWindow *obj)
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
-#ifdef MODEST_TOOLKIT_HILDON2
 	priv->main_scroll = hildon_pannable_area_new ();
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
-#else
-#ifdef MODEST_USE_MOZEMBED
-	priv->main_scroll = priv->msg_view;
-	gtk_widget_set_size_request (priv->msg_view, -1, 1600);
-#else
-	priv->main_scroll = gtk_scrolled_window_new (NULL, NULL);
-	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
-#endif
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (priv->main_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (priv->main_scroll), GTK_SHADOW_NONE);
-	modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->main_scroll), TRUE);
-
-#endif
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
