@@ -655,7 +655,7 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (select_email_addr_dlg),
 					   HILDON_TOUCH_SELECTOR (selector));
 	gtk_window_set_default_size (GTK_WINDOW (select_email_addr_dlg), MODEST_DIALOG_WINDOW_MAX_HEIGHT, -1);
-	
+
 	gtk_widget_show_all(select_email_addr_dlg);
 	result = gtk_dialog_run(GTK_DIALOG(select_email_addr_dlg));
 
@@ -664,75 +664,135 @@ select_email_addrs_for_contact(GList * email_addr_list)
 
 		current_text = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
 		selected_email_addr_list = g_slist_append (selected_email_addr_list, current_text);
-		
 	}
 
 	gtk_widget_destroy(select_email_addr_dlg);
 	return selected_email_addr_list;
 }
 
-
-static gboolean /* make this public? */
-add_to_address_book (const gchar* address)
+static EContact *
+get_contact_for_address (GList *contacts,
+			 const gchar *address)
 {
-	EBookQuery *query;
-	GList *contacts = NULL;
-	GError *err = NULL;
-	gchar *email;
-	
-	g_return_val_if_fail (address, FALSE);
-	
-	if (!book) {
-		if (!open_addressbook ()) {
-			g_return_val_if_reached (FALSE);
-		}
-	}
-	
-	g_return_val_if_fail (book, FALSE);
+	EContact *retval = NULL, *contact;
+	GList *iter;
 
-	email = modest_text_utils_get_email_address (address);
-	
-	query = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, email);
-	if (!e_book_get_contacts (book, query, &contacts, &err)) {
-		g_printerr ("modest: failed to get contacts: %s",
-			    err ? err->message : "<unknown>");
-		if (err)
-			g_error_free (err);
-		g_free (email);
-		e_book_query_unref (query);
-		return FALSE;
+	iter = contacts;
+	while (iter && !retval) {
+		GList *emails = NULL;
+
+		contact = E_CONTACT (iter->data);
+		emails = e_contact_get (contact, E_CONTACT_EMAIL);
+		if (emails) {
+			/* Look for the email address */
+			if (g_list_find_custom (emails, address, (GCompareFunc) g_strcmp0))
+				retval = contact;
+
+			/* Free the list */
+			g_list_foreach (emails, (GFunc) g_free, NULL);
+			g_list_free (emails);
+		}
+		iter = g_list_next (iter);
 	}
-	e_book_query_unref (query);
-	
-	/*  we need to 'commit' it, even if we already found the email
-	 * address in the addressbook; thus, it will show up in the 'recent list' */
-	if (contacts)  {		
-		g_debug ("%s already in the address book", address);
-		commit_contact ((EContact*)contacts->data, FALSE);
-		
-		g_list_foreach (contacts, (GFunc)unref_gobject, NULL);
+	return retval;
+}
+
+static void
+async_get_contacts_cb (EBook *book,
+		       EBookStatus status,
+		       GList *contacts,
+		       gpointer closure)
+{
+	GSList *addresses, *iter;
+	GList *to_commit_contacts, *to_add_contacts;
+
+	addresses = (GSList *) closure;
+
+	/* Check errors */
+	if (status != E_BOOK_ERROR_OK)
+		goto frees;
+
+	iter = addresses;
+	to_commit_contacts = NULL;
+	to_add_contacts = NULL;
+	while (iter) {
+		EContact *contact;
+		const gchar *address;
+
+		/* Look for a contact with such address. We perform
+		   this kind of search because we assume that users
+		   don't usually send emails to tons of addresses */
+		address = (const gchar *) iter->data;
+		contact = get_contact_for_address (contacts, address);
+
+		/* Add new or commit existing contact */
+		if (contact) {
+			to_commit_contacts = g_list_prepend (to_commit_contacts, contact);
+			g_debug ("Preparing to commit contact %s", address);
+		} else {
+			to_add_contacts = g_list_prepend (to_add_contacts, contact);
+			g_debug ("Preparing to add contact %s", address);
+		}
+
+		iter = g_slist_next (iter);
+	}
+
+	/* Asynchronously add contacts */
+	if (to_add_contacts)
+		e_book_async_add_contacts (book, to_add_contacts, NULL, NULL);
+
+	/* Asynchronously commit contacts */
+	if (to_commit_contacts)
+		e_book_async_commit_contacts (book, to_commit_contacts, NULL, NULL);
+
+	/* Free lists */
+	g_list_free (to_add_contacts);
+	g_list_free (to_commit_contacts);
+
+ frees:
+	if (addresses) {
+		g_slist_foreach (addresses, (GFunc) g_free, NULL);
+		g_slist_free (addresses);
+	}
+	if (contacts) {
+		g_list_foreach (contacts, (GFunc) g_object_unref, NULL);
 		g_list_free (contacts);
-
-	} else {
-		/* it's not yet in the addressbook, add it now! */
-		EContact *new_contact = e_contact_new ();
-		gchar *display_address;
-		display_address = g_strdup (address);
-		if (display_address) {
-			modest_text_utils_get_display_address (display_address);
-			if ((display_address[0] != '\0') && (strlen (display_address) != strlen (address)))
-				e_contact_set (new_contact, E_CONTACT_FULL_NAME, (const gpointer)display_address);
-		}
-		e_contact_set (new_contact, E_CONTACT_EMAIL_1, (const gpointer)email);
-		g_free (display_address);
-		commit_contact (new_contact, TRUE);
-		g_debug ("%s added to address book", address);
-		g_object_unref (new_contact);
 	}
 
-	g_free (email);
+}
 
-	return TRUE;
+
+static void
+add_to_address_book (GSList *addresses)
+{
+	EBookQuery **queries, *composite_query;
+	gint num_add, i;
+
+	g_return_if_fail (addresses);
+
+	if (!book)
+		if (!open_addressbook ())
+			g_return_if_reached ();
+
+	/* Create the list of queries */
+	num_add = g_slist_length (addresses);
+	queries = g_malloc0 (sizeof (EBookQuery *) * num_add);
+	for (i = 0; i < num_add; i++) {
+		gchar *email;
+
+		email = modest_text_utils_get_email_address (g_slist_nth_data (addresses, i));
+		queries[i] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, email);
+		g_free (email);
+	}
+
+	/* Create the query */
+	composite_query = e_book_query_or (num_add, queries, TRUE);
+
+	/* Asynchronously retrieve contacts */
+	e_book_async_get_contacts (book, composite_query, async_get_contacts_cb, NULL);
+
+	/* Frees. This will unref the subqueries as well */
+	e_book_query_unref (composite_query);
 }
 
 typedef struct _CheckNamesInfo {
@@ -830,7 +890,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 {
 	const gchar *recipients = NULL;
 	GSList *start_indexes = NULL, *end_indexes = NULL;
-	GSList *current_start, *current_end;
+	GSList *current_start, *current_end, *to_commit_addresses;
 	gboolean result = TRUE;
 	GtkTextBuffer *buffer;
 	gint offset_delta = 0;
@@ -855,6 +915,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	current_start = start_indexes;
 	current_end = end_indexes;
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
+	to_commit_addresses = NULL;
 
 	while (current_start != NULL) {
 		gchar *address;
@@ -959,15 +1020,20 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		/* note: adding it the to the addressbook if it did not exist yet,
 		 * and adding it to the recent_list */
 		if (result && update_addressbook && store_address)
-			add_to_address_book (address);
+			to_commit_addresses = g_slist_prepend (to_commit_addresses, address);
+		else
+			g_free (address);
 
-		g_free (address);
 		if (result == FALSE)
 			break;
 
 		current_start = g_slist_next (current_start);
 		current_end = g_slist_next (current_end);
 	}
+
+	/* Add addresses to address-book */
+	if (to_commit_addresses)
+		add_to_address_book (to_commit_addresses);
 
 	if (current_start == NULL) {
 		gtk_text_buffer_get_end_iter (buffer, &end_iter);
