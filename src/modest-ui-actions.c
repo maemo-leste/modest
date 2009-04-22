@@ -6693,3 +6693,13 @@ modest_ui_actions_on_delete_account (GtkWindow *parent_window,
 	}
 	return removed;
 }
+
+void 
+modest_ui_actions_on_fetch_images (GtkAction *action,
+				   ModestWindow *window)
+{
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
+
+	modest_msg_view_window_fetch_images (MODEST_MSG_VIEW_WINDOW (window));
+
+}

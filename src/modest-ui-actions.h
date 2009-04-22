@@ -551,6 +551,9 @@ void modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 						 TnyList *headers,
 						 TnyFolder *dst_folder);
 
+void modest_ui_actions_on_fetch_images (GtkAction *action,
+					ModestWindow *window);
+
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

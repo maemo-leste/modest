@@ -942,6 +942,18 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 	return dimmed;
 }
 
+gboolean
+modest_ui_dimming_rules_on_fetch_images (ModestWindow *win, gpointer user_data)
+{
+	gboolean dimmed = FALSE;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+
+	dimmed = !modest_msg_view_window_has_blocked_external_images (MODEST_MSG_VIEW_WINDOW (win));
+
+	return dimmed;
+}
+
 
 gboolean 
 modest_ui_dimming_rules_on_mark_as_read_msg_in_view (ModestWindow *win, gpointer user_data)

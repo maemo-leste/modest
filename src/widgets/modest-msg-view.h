@@ -82,6 +82,9 @@ struct _ModestMsgViewIface {
 	gboolean (*fetch_image)    (ModestMsgView *msgview, const gchar *uri,
 				    TnyStream *stream);
 	void (*show_details)       (ModestMsgView *msgview, gpointer userdata);
+
+	void (*request_fetch_images_func) (ModestMsgView *msgview);
+	gboolean (*has_blocked_external_images_func) (ModestMsgView *msgview);
 };
 
 
@@ -110,6 +113,8 @@ TnyList *modest_msg_view_get_attachments (ModestMsgView *self);
 void modest_msg_view_grab_focus (ModestMsgView *self);
 void modest_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 void modest_msg_view_set_view_images (ModestMsgView *view, gboolean view_images);
+void modest_msg_view_request_fetch_images (ModestMsgView *view);
+gboolean modest_msg_view_has_blocked_external_images (ModestMsgView *view);
 
 
 G_END_DECLS

@@ -525,3 +525,22 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 	modest_ui_actions_on_add_to_contacts (NULL, MODEST_WINDOW (self));
 }
 
+void
+modest_msg_view_window_fetch_images (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	modest_msg_view_request_fetch_images (MODEST_MSG_VIEW (priv->msg_view));
+}
+
+gboolean 
+modest_msg_view_window_has_blocked_external_images (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+
+	return modest_msg_view_has_blocked_external_images (MODEST_MSG_VIEW (priv->msg_view));
+}

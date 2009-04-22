@@ -130,6 +130,8 @@ static TnyList *modest_mozembed_msg_view_get_selected_attachments (ModestMsgView
 static TnyList *modest_mozembed_msg_view_get_attachments (ModestMsgView *self);
 static void modest_mozembed_msg_view_grab_focus (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
+static void modest_mozembed_msg_view_request_fetch_images (ModestMsgView *view);
+static gboolean modest_mozembed_msg_view_has_blocked_external_images (ModestMsgView *view);
 static GtkAdjustment *modest_mozembed_msg_view_get_vadjustment_default (ModestMsgView *self);
 static GtkAdjustment *modest_mozembed_msg_view_get_hadjustment_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_set_vadjustment_default (ModestMsgView *self, GtkAdjustment *vadj);
@@ -142,6 +144,8 @@ static TnyList *modest_mozembed_msg_view_get_selected_attachments_default (Modes
 static TnyList *modest_mozembed_msg_view_get_attachments_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
+static gboolean modest_mozembed_msg_view_has_blocked_external_images_default (ModestMsgView *view);
+static void modest_mozembed_msg_view_request_fetch_images_default (ModestMsgView *view);
 
 /* internal api */
 static void     set_header     (ModestMozembedMsgView *self, TnyHeader *header);
@@ -164,6 +168,8 @@ static TnyList *get_selected_attachments (ModestMozembedMsgView *self);
 static TnyList *get_attachments (ModestMozembedMsgView *self);
 static void grab_focus (ModestMozembedMsgView *self);
 static void remove_attachment (ModestMozembedMsgView *view, TnyMimePart *attachment);
+static void request_fetch_images (ModestMozembedMsgView *view);
+static gboolean has_blocked_external_images (ModestMozembedMsgView *view);
 
 typedef struct _ModestMozembedMsgViewPrivate ModestMozembedMsgViewPrivate;
 struct _ModestMozembedMsgViewPrivate {
@@ -332,6 +338,8 @@ modest_mozembed_msg_view_class_init (ModestMozembedMsgViewClass *klass)
 	klass->get_attachments_func = modest_mozembed_msg_view_get_attachments_default;
 	klass->grab_focus_func = modest_mozembed_msg_view_grab_focus_default;
 	klass->remove_attachment_func = modest_mozembed_msg_view_remove_attachment_default;
+	klass->request_fetch_images_func = modest_mozembed_msg_view_request_fetch_images_default;
+	klass->has_blocked_external_images_func = modest_mozembed_msg_view_has_blocked_external_images_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMozembedMsgViewPrivate));
 
@@ -531,6 +539,33 @@ on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_par
 {
 
 	g_signal_emit_by_name (G_OBJECT(self), "attachment_clicked", mime_part);
+}
+
+
+static void
+request_fetch_images (ModestMozembedMsgView *self)
+{
+	ModestMozembedMsgViewPrivate *priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE (self);
+	TnyMimePart *part;
+
+	/* The message could have not been downloaded yet */
+	if (priv->msg) {
+		modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
+		part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
+		if (part) {
+			tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
+			g_object_unref (part);
+		}
+		tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
+	}
+}
+
+static gboolean
+has_blocked_external_images (ModestMozembedMsgView *self)
+{
+	ModestMozembedMsgViewPrivate *priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE (self);
+
+	return modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view));
 }
 
 static gboolean
@@ -1214,6 +1249,8 @@ modest_msg_view_init (gpointer g, gpointer iface_data)
 	klass->get_attachments_func = modest_mozembed_msg_view_get_attachments;
 	klass->grab_focus_func = modest_mozembed_msg_view_grab_focus;
 	klass->remove_attachment_func = modest_mozembed_msg_view_remove_attachment;
+	klass->request_fetch_images_func = modest_mozembed_msg_view_request_fetch_images;
+	klass->has_blocked_external_images_func = modest_mozembed_msg_view_has_blocked_external_images;
 
 	return;
 }
@@ -1362,3 +1399,26 @@ modest_mozembed_msg_view_remove_attachment_default (ModestMsgView *self, TnyMime
 	remove_attachment (MODEST_MOZEMBED_MSG_VIEW (self), attachment);
 }
 
+static void
+modest_mozembed_msg_view_request_fetch_images (ModestMsgView *self)
+{
+	MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->request_fetch_images_func (self);
+}
+
+static void
+modest_mozembed_msg_view_request_fetch_images_default (ModestMsgView *self)
+{
+	request_fetch_images (MODEST_MOZEMBED_MSG_VIEW (self));
+}
+
+static gboolean
+modest_mozembed_msg_view_has_blocked_external_images (ModestMsgView *self)
+{
+	return MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->has_blocked_external_images_func (self);
+}
+
+static gboolean
+modest_mozembed_msg_view_has_blocked_external_images_default (ModestMsgView *self)
+{
+	return has_blocked_external_images (MODEST_MOZEMBED_MSG_VIEW (self));
+}

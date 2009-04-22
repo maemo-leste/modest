@@ -3236,6 +3236,13 @@ setup_menu (ModestMsgViewWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_addtocontacts"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
+
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mail_bd_external_images"), NULL,
+					   APP_MENU_CALLBACK (modest_ui_actions_on_fetch_images),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_fetch_images));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_ti_message_properties"), NULL,
+					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
 }
 
 void
@@ -3318,4 +3325,24 @@ _modest_msg_view_window_map_event (GtkWidget *widget,
 	update_progress_hint (self);
 
 	return FALSE;
+}
+
+void
+modest_msg_view_window_fetch_images (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	modest_msg_view_request_fetch_images (MODEST_MSG_VIEW (priv->msg_view));
+}
+
+gboolean 
+modest_msg_view_window_has_blocked_external_images (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+
+	return modest_msg_view_has_blocked_external_images (MODEST_MSG_VIEW (priv->msg_view));
 }

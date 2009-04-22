@@ -53,6 +53,7 @@ gboolean modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_
 gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_always_dimmed (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_fetch_images (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_read_msg_in_view (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_unread_msg_in_view (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data);

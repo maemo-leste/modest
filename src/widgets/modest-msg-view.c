@@ -121,6 +121,18 @@ modest_msg_view_remove_attachment (ModestMsgView *self, TnyMimePart *attachment)
 	MODEST_MSG_VIEW_GET_IFACE (self)->remove_attachment_func (self, attachment);
 }
 
+void
+modest_msg_view_request_fetch_images (ModestMsgView *self)
+{
+	MODEST_MSG_VIEW_GET_IFACE (self)->request_fetch_images_func (self);
+}
+
+gboolean
+modest_msg_view_has_blocked_external_images (ModestMsgView *self)
+{
+	return MODEST_MSG_VIEW_GET_IFACE (self)->has_blocked_external_images_func (self);
+}
+
 static void
 modest_msg_view_base_init (gpointer g_class)
 {

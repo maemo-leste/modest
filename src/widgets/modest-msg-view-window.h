@@ -342,6 +342,25 @@ modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self);
 void
 modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self);
 
+/**
+ * modest_msg_view_window_get_msg_view:
+ * @self: a #ModestMsgViewWindow
+ *
+ * Tells that external images should be fetched in this window.
+ */
+void
+modest_msg_view_window_fetch_images (ModestMsgViewWindow *self);
+
+/**
+ * modest_msg_view_window_has_blocked_external_images:
+ * @self: a #ModestMsgViewWindow
+ * 
+ * checks if the msg currently shown has blocked external images.
+ *
+ * Returns: %TRUE if external images are blocked, %FALSE otherwise
+ */
+gboolean modest_msg_view_window_has_blocked_external_images (ModestMsgViewWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */

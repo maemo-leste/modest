@@ -95,6 +95,8 @@ struct _ModestMozembedMsgViewClass {
 	TnyList * (*get_attachments_func) (ModestMsgView *self);
 	void (*grab_focus_func) (ModestMsgView *self);
 	void (*remove_attachment_func) (ModestMsgView *view, TnyMimePart *attachment);
+	void (*request_fetch_images_func) (ModestMsgView *view);
+	gboolean (*has_blocked_external_images_func) (ModestMsgView *view);
 
 	void (*set_scroll_adjustments) (ModestMozembedMsgView *msg_view, GtkAdjustment *hadj, GtkAdjustment *vadj);
 };

@@ -79,7 +79,6 @@ static void     get_property (GObject *object, guint prop_id, GValue *value, GPa
 static void on_recpt_activated (ModestMailHeaderView *header_view, const gchar *address, ModestGtkhtmlMsgView *msg_view);
 static void on_show_details (ModestMailHeaderView *header_view, ModestGtkhtmlMsgView *msg_view);
 static void on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_part, gpointer userdata);
-static void on_view_images_clicked (GtkButton * button, gpointer self);
 
 /* body view signals */
 static gboolean on_activate_link (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMsgView *msg_view);
@@ -184,6 +183,8 @@ static TnyList *modest_gtkhtml_msg_view_get_selected_attachments (ModestMsgView 
 static TnyList *modest_gtkhtml_msg_view_get_attachments (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_grab_focus (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
+static void modest_gtkhtml_msg_view_request_fetch_images (ModestMsgView *view);
+static gboolean modest_gtkhtml_msg_view_has_blocked_external_images (ModestMsgView *view);
 static GtkAdjustment *modest_gtkhtml_msg_view_get_vadjustment_default (ModestMsgView *self);
 static GtkAdjustment *modest_gtkhtml_msg_view_get_hadjustment_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_set_vadjustment_default (ModestMsgView *self, GtkAdjustment *vadj);
@@ -196,6 +197,8 @@ static TnyList *modest_gtkhtml_msg_view_get_selected_attachments_default (Modest
 static TnyList *modest_gtkhtml_msg_view_get_attachments_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
+static gboolean modest_gtkhtml_msg_view_has_blocked_external_images_default (ModestMsgView *view);
+static void modest_gtkhtml_msg_view_request_fetch_images_default (ModestMsgView *view);
 
 /* internal api */
 static void     set_header     (ModestGtkhtmlMsgView *self, TnyHeader *header);
@@ -218,6 +221,8 @@ static TnyList *get_selected_attachments (ModestGtkhtmlMsgView *self);
 static TnyList *get_attachments (ModestGtkhtmlMsgView *self);
 static void grab_focus (ModestGtkhtmlMsgView *self);
 static void remove_attachment (ModestGtkhtmlMsgView *view, TnyMimePart *attachment);
+static void request_fetch_images (ModestGtkhtmlMsgView *view);
+static gboolean has_blocked_external_images (ModestGtkhtmlMsgView *view);
 
 /* list properties */
 enum {
@@ -419,6 +424,8 @@ modest_gtkhtml_msg_view_class_init (ModestGtkhtmlMsgViewClass *klass)
 	klass->get_attachments_func = modest_gtkhtml_msg_view_get_attachments_default;
 	klass->grab_focus_func = modest_gtkhtml_msg_view_grab_focus_default;
 	klass->remove_attachment_func = modest_gtkhtml_msg_view_remove_attachment_default;
+	klass->request_fetch_images_func = modest_gtkhtml_msg_view_request_fetch_images_default;
+	klass->has_blocked_external_images_func = modest_gtkhtml_msg_view_has_blocked_external_images_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestGtkhtmlMsgViewPrivate));
 
@@ -1090,13 +1097,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 #else
 	priv->mail_header_view        = GTK_WIDGET(modest_expander_mail_header_view_new (TRUE));
 #endif
-	priv->view_images_button = gtk_button_new_with_label (_("mail_bd_external_images"));
-#ifdef MODEST_TOOLKIT_HILDON2
-	hildon_gtk_widget_set_theme_size (priv->view_images_button, 
-					  HILDON_SIZE_HALFSCREEN_WIDTH | HILDON_SIZE_FINGER_HEIGHT);
-#endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
-	gtk_widget_set_no_show_all (priv->view_images_button, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
@@ -1129,9 +1130,6 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	g_signal_connect (G_OBJECT (priv->attachments_view), "activate",
 			  G_CALLBACK (on_attachment_activated), obj);
 
-	g_signal_connect (G_OBJECT (priv->view_images_button), "clicked",
-			  G_CALLBACK (on_view_images_clicked), obj);
-
 	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW(priv->html_scroll));
 
 	g_signal_connect (G_OBJECT (html_vadj), "changed",
@@ -1144,19 +1142,6 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
-	if (priv->view_images_button) {
-		GtkWidget *hbuttonbox;
-		
-		hbuttonbox = gtk_hbutton_box_new ();
-		gtk_container_add (GTK_CONTAINER (hbuttonbox), priv->view_images_button);
-#ifdef MODEST_TOOLKIT_HILDON2
-		gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_START);
-		gtk_box_pack_start (GTK_BOX (priv->headers_box), hbuttonbox, TRUE, TRUE, 0);
-#else
-		gtk_box_pack_start (GTK_BOX (priv->headers_box), hbuttonbox, FALSE, FALSE, 0);
-#endif
-		gtk_widget_hide (priv->view_images_button);
-	}
 	
 	if (priv->attachments_view) {
 #ifndef MODEST_TOOLKIT_HILDON2
@@ -1484,7 +1469,7 @@ on_attachment_activated (ModestAttachmentsView * att_view, TnyMimePart *mime_par
 }
 
 static void
-on_view_images_clicked (GtkButton * button, gpointer self)
+request_fetch_images (ModestGtkhtmlMsgView *self)
 {
 	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 	TnyMimePart *part;
@@ -1492,7 +1477,6 @@ on_view_images_clicked (GtkButton * button, gpointer self)
 	/* The message could have not been downloaded yet */
 	if (priv->msg) {
 		modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
-		gtk_widget_hide (priv->view_images_button);
 		part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
 		if (part) {
 			tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
@@ -1500,6 +1484,14 @@ on_view_images_clicked (GtkButton * button, gpointer self)
 		}
 		tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
 	}
+}
+
+static gboolean
+has_blocked_external_images (ModestGtkhtmlMsgView *self)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
+
+	return modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view));
 }
 
 static gboolean
@@ -1614,8 +1606,6 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
-	if (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)))
-		gtk_widget_show (priv->view_images_button);
 	/*
 	 * we search for either something starting with cid:, or something
 	 * with no prefix at all; this latter case occurs when sending mails
@@ -2317,6 +2307,8 @@ modest_msg_view_init (gpointer g, gpointer iface_data)
 	klass->get_attachments_func = modest_gtkhtml_msg_view_get_attachments;
 	klass->grab_focus_func = modest_gtkhtml_msg_view_grab_focus;
 	klass->remove_attachment_func = modest_gtkhtml_msg_view_remove_attachment;
+	klass->request_fetch_images_func = modest_gtkhtml_msg_view_request_fetch_images;
+	klass->has_blocked_external_images_func = modest_gtkhtml_msg_view_has_blocked_external_images;
 
 	return;
 }
@@ -2463,4 +2455,28 @@ static void
 modest_gtkhtml_msg_view_remove_attachment_default (ModestMsgView *self, TnyMimePart *attachment)
 {
 	remove_attachment (MODEST_GTKHTML_MSG_VIEW (self), attachment);
+}
+
+static void
+modest_gtkhtml_msg_view_request_fetch_images (ModestMsgView *self)
+{
+	MODEST_GTKHTML_MSG_VIEW_GET_CLASS (self)->request_fetch_images_func (self);
+}
+
+static void
+modest_gtkhtml_msg_view_request_fetch_images_default (ModestMsgView *self)
+{
+	request_fetch_images (MODEST_GTKHTML_MSG_VIEW (self));
+}
+
+static gboolean
+modest_gtkhtml_msg_view_has_blocked_external_images (ModestMsgView *self)
+{
+	return MODEST_GTKHTML_MSG_VIEW_GET_CLASS (self)->has_blocked_external_images_func (self);
+}
+
+static gboolean
+modest_gtkhtml_msg_view_has_blocked_external_images_default (ModestMsgView *self)
+{
+	return has_blocked_external_images (MODEST_GTKHTML_MSG_VIEW (self));
 }
