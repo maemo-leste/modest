@@ -236,6 +236,7 @@ struct _ModestFolderViewPrivate {
 	ModestFolderViewFilter filter;
 
 	TnyFolderStoreQuery  *query;
+	gboolean              do_refresh;
 	guint                 timer_expander;
 
 	gchar                *local_account_name;
@@ -1259,6 +1260,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->timer_expander = 0;
 	priv->account_store  = NULL;
 	priv->query          = NULL;
+	priv->do_refresh     = TRUE;
 	priv->style          = MODEST_FOLDER_VIEW_STYLE_SHOW_ALL;
 	priv->cur_folder_store   = NULL;
 	priv->visible_account_id = NULL;
@@ -1766,6 +1768,12 @@ modest_folder_view_on_map (ModestFolderView *self,
 GtkWidget*
 modest_folder_view_new (TnyFolderStoreQuery *query)
 {
+	return modest_folder_view_new_full (query, TRUE);
+}
+
+GtkWidget*
+modest_folder_view_new_full (TnyFolderStoreQuery *query, gboolean do_refresh)
+{
 	GObject *self;
 	ModestFolderViewPrivate *priv;
 	GtkTreeSelection *sel;
@@ -1779,6 +1787,8 @@ modest_folder_view_new (TnyFolderStoreQuery *query)
 
 	if (query)
 		priv->query = g_object_ref (query);
+
+	priv->do_refresh = do_refresh;
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	priv->changed_signal = g_signal_connect (sel, "changed",
@@ -2246,8 +2256,12 @@ modest_folder_view_update_model (ModestFolderView *self,
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders */
 #ifdef MODEST_TOOLKIT_HILDON2
+	TnyGtkFolderListStoreFlags flags;
+	flags = TNY_GTK_FOLDER_LIST_STORE_FLAG_SHOW_PATH;
+	if (!priv->do_refresh)
+		flags &= TNY_GTK_FOLDER_LIST_STORE_FLAG_NO_REFRESH;
 	model = tny_gtk_folder_list_store_new_with_flags (NULL, 
-							  TNY_GTK_FOLDER_LIST_STORE_FLAG_SHOW_PATH);
+							  flags);
 	tny_gtk_folder_list_store_set_path_separator (TNY_GTK_FOLDER_LIST_STORE (model),
 						      MODEST_FOLDER_PATH_SEPARATOR);
 #else

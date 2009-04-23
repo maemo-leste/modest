@@ -125,6 +125,17 @@ GType        modest_folder_view_get_type        (void) G_GNUC_CONST;
 GtkWidget*    modest_folder_view_new            (TnyFolderStoreQuery *query);
 
 /**
+ * modest_folder_view_new_full:
+ * @query: a #TnyFolderStoreQuery that specifies the folders to show
+ * @do_refresh: do auto refresh on loading (may be slow)
+ * 
+ * create a new #ModestFolderView instance
+ *  
+ * Returns: a new #GtkWidget (a #GtkTreeView subclass)
+ */
+GtkWidget*    modest_folder_view_new_full            (TnyFolderStoreQuery *query, gboolean do_refresh);
+
+/**
  * modest_folder_view_set_title:
  * @self: a ModestFolderView instance
  * @title: the new title
