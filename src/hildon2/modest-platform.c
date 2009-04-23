@@ -1739,10 +1739,10 @@ modest_platform_show_addressbook (GtkWindow *parent_window)
 	}
 }
 
-GtkWidget *
-modest_platform_create_folder_view (TnyFolderStoreQuery *query)
+static GtkWidget *
+modest_platform_create_folder_view_full (TnyFolderStoreQuery *query, gboolean do_refresh)
 {
-	GtkWidget *widget = modest_folder_view_new (query);
+	GtkWidget *widget = modest_folder_view_new_full (query, do_refresh);
 
 	/* Show one account by default */
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (widget),
@@ -1754,6 +1754,12 @@ modest_platform_create_folder_view (TnyFolderStoreQuery *query)
 				      MODEST_CONF_FOLDER_VIEW_KEY);
 
 	return widget;
+}
+
+GtkWidget *
+modest_platform_create_folder_view (TnyFolderStoreQuery *query)
+{
+	return modest_platform_create_folder_view_full (query, TRUE);
 }
 
 void
@@ -2879,7 +2885,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	top_vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 
 	/* Create folder view */
-	*folder_view = modest_platform_create_folder_view (NULL);
+	*folder_view = modest_platform_create_folder_view_full (NULL, FALSE);
 
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (*folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
