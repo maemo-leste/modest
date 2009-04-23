@@ -2858,6 +2858,12 @@ on_move_to_dialog_action_clicked (GtkButton *selection,
 	}
 }
 
+static void
+move_to_dialog_activity_changed (ModestFolderView *folder_view, gboolean activity, GtkDialog *dialog)
+{
+	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (dialog), activity?1:0);
+}
+
 GtkWidget *
 modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 				       GtkWidget **folder_view)
@@ -2886,6 +2892,8 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 
 	/* Create folder view */
 	*folder_view = modest_platform_create_folder_view_full (NULL, FALSE);
+	g_signal_connect (G_OBJECT (*folder_view), "activity-changed", G_CALLBACK (move_to_dialog_activity_changed),
+			  dialog);
 
 	modest_folder_view_set_cell_style (MODEST_FOLDER_VIEW (*folder_view),
 					   MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT);
