@@ -82,6 +82,21 @@ enum MODEL_COLS {
 	MODEL_COL_ID_TYPE
 };
 
+static gint 
+id_type_index (ModestProviderPickerIdType id_type)
+{
+	switch (id_type) {
+	case MODEST_PROVIDER_PICKER_ID_OTHER:
+		return 2;
+		break;
+	case MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL:
+		return 1;
+		break;
+	case MODEST_PROVIDER_PICKER_ID_PROVIDER:
+	default:
+		return 0;
+	}
+}
 
 /*
  * strictly, we should sort providers with mcc=0 after the other ones.... but, we don't have
@@ -91,10 +106,21 @@ static gint
 provider_sort_func (GtkTreeModel *model, GtkTreeIter *iter1, GtkTreeIter *iter2, gpointer user_data)
 {
 	gchar *prov1, *prov2;
+	ModestProviderPickerIdType id_type1, id_type2;
 	gint retval;
 	
-	gtk_tree_model_get (model, iter1, MODEL_COL_NAME, &prov1, -1);
-	gtk_tree_model_get (model, iter2, MODEL_COL_NAME, &prov2, -1);
+	gtk_tree_model_get (model, iter1, 
+			    MODEL_COL_NAME, &prov1, 
+			    MODEL_COL_ID_TYPE, &id_type1,
+			    -1);
+	gtk_tree_model_get (model, iter2, 
+			    MODEL_COL_NAME, &prov2, 
+			    MODEL_COL_ID_TYPE, &id_type2,
+			    -1);
+
+	retval = id_type_index (id_type2) - id_type_index (id_type1);
+	if (retval != 0)
+		goto end;
 
 	if (strcmp (prov1, prov2) == 0) 
 		retval = 0;
@@ -104,7 +130,7 @@ provider_sort_func (GtkTreeModel *model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 		retval = 1;
 	else
 		retval = modest_text_utils_utf8_strcmp (prov1, prov2, TRUE);
-	
+end:
 	g_free (prov1);
 	g_free (prov2);
 
