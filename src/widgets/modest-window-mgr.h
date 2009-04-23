@@ -31,7 +31,7 @@
 #define __MODEST_WINDOW_MGR_H__
 
 #include <glib-object.h>
-#include "widgets/modest-msg-view-window.h"
+#include "modest-window.h"
 
 G_BEGIN_DECLS
 

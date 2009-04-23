@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <hildon/hildon.h>
+#include "modest-hildon2-window.h"
 #include "modest-hildon2-window-mgr.h"
 #include "modest-msg-edit-window.h"
 #include "modest-mailboxes-window.h"

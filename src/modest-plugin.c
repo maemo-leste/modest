@@ -92,6 +92,13 @@ modest_plugin_get_protocol_registry (void)
 	return modest_runtime_get_protocol_registry ();
 }
 
+ModestMailOperationQueue *
+modest_plugin_get_mail_operation_queue (void)
+{
+	/* This is for avoiding including modest runtime itself */
+	return modest_runtime_get_mail_operation_queue ();
+}
+
 const gchar *
 modest_plugin_get_api_version (ModestPlugin *plugin)
 {

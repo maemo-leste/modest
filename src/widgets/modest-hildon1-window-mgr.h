@@ -31,8 +31,7 @@
 #define __MODEST_HILDON1_WINDOW_MGR_H__
 
 #include <glib-object.h>
-#include "widgets/modest-window-mgr.h"
-#include "widgets/modest-msg-view-window.h"
+#include "modest-window-mgr.h"
 
 G_BEGIN_DECLS
 

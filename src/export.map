@@ -25,10 +25,13 @@
 	modest_conf_*;
 	modest_easysetup_wizard_*;
 	modest_pair_*;
+	modest_mail_operation_get_source;
+	modest_mail_operation_get_type_operation;
 	modest_platform_*;
 	modest_plugin_*;
 	modest_protocol_*;
 	modest_server_account_settings_*;
+	modest_signal_mgr_*;
 	modest_validating_entry_*;
 	modest_ui_actions_*;
 	modest_wizard_dialog_*;

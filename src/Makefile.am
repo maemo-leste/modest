@@ -15,7 +15,7 @@ INCLUDES=\
 	$(MODEST_LIBCONIC_CFLAGS)				\
 	$(MODEST_HILDON_NOTIFY_CFLAGS)				\
 	$(MODEST_MOZEMBED_CFLAGS)				\
-	-fPIC \
+	-fPIC 							\
 	-I$(MODEST_TOOLKIT_DIR)					\
 	-DPREFIX=\"@prefix@\"					\
 	-DMAEMO_CHANGES 					\
@@ -53,6 +53,8 @@ modest_public_headers = \
 	modest-conf.h \
 	modest-defs.h \
 	modest-local-folder-info.h \
+	modest-mail-operation.h \
+	modest-mail-operation-queue.h \
 	modest-pair.h \
 	modest-platform.h \
 	modest-plugin.h \
@@ -60,10 +62,12 @@ modest_public_headers = \
 	modest-protocol.h \
 	modest-protocol-registry.h \
 	modest-server-account-settings.h \
+	modest-signal-mgr.h \
 	modest-text-utils.h \
 	modest-tny-account-store.h \
 	modest-tny-folder.h \
 	modest-tny-local-folders-account.h \
+	modest-tny-send-queue.h \
 	modest-utils.h
 
 libmodest_la_SOURCES=\

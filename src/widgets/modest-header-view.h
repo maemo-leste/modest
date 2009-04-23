@@ -36,6 +36,7 @@
 #include <tny-msg.h>
 #include <tny-header.h>
 #include <tny-gtk-header-list-model.h>
+#include "modest-window.h"
 #include "modest-mail-operation.h"
 #include "modest-header-view-observer.h"
 

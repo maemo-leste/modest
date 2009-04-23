@@ -32,7 +32,6 @@
 
 #include <tny-transport-account.h>
 #include <tny-folder-store.h>
-#include <widgets/modest-msg-edit-window.h>
 #include <modest-tny-send-queue.h>
 #include <modest-tny-account-store.h>
 
