@@ -1,3 +1,22 @@
+modest (3.0.15-rc1) unstable; urgency=low
+
+  * Week 18, 2009 - friday release r9105
+  * Fixes: NB#112012 - not able to make the username field as empty in connection specific SMTP dialog 
+  * Fixes: NB#112208 - â€œNokia-NXX-â€œ is shown in Email and in FM it is â€œNokia-NXX-0â€œ 
+  * Fixes: NB#112130 - Editor: email freezes for more than 10 s when Send button is tapped in a particular scenario 
+  * Fixes: NB#94666 - Incoming events for ongoing tasks in task switcher view is not showing. 
+  * Fixes: NB#108818 - It takes 6-7 s to see the Imap account folders in "Move to folder" dialog 
+  * Fixes: NB#111359 - E-Mail - Â§cerm_device_memory_fullÂ§ is not shown properly 
+  * Fixes: NB#112254 - "Move to folder" dialog: untranslated string in the dialog path 
+  * Fixes: NB#112376 - Show Hildon Touch Progress indicator till all the external images are downloaded 
+  * Fixes: NB#111375 - No textual description is used for the embedded email attachment which has no subject in select attachment dialog 
+  * Fixes: NB#111955 - Viewer: use wdgt_va_date_medium instead of wdgt_va_date_long 
+  * Fixes: NB#111978 - Viewer: show "mail_va_attachment" for 1 attachment and "mail_va_attachments" for multiple attachments 
+  * Fixes: NB#112059 - Show cc and show bcc in Email Editor view should be aligned to center 
+  * Fixes: NB#112366 - Viewer view menu: Load images and Message details menu commands are missing 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 24 Apr 2009 12:38:53 +0300
+
 modest (3.0.14-rc2) unstable; urgency=low
 
   * Week 17, 2009 - Monday release r8942
