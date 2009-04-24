@@ -872,6 +872,7 @@ init_window (ModestMsgEditWindow *obj)
 	modest_selector_picker_set_value_max_chars (MODEST_SELECTOR_PICKER (priv->from_field), MAX_FROM_VALUE);
 	modest_maemo_utils_set_hbutton_layout (title_size_group, value_size_group, 
 					       _("mail_va_from"), priv->from_field);
+	hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
 	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.5, 0.5);
 
 	priv->to_field      = modest_recpt_editor_new ();
@@ -4259,6 +4260,13 @@ setup_menu (ModestMsgEditWindow *self)
 					   NULL);
 }
 
+static void
+emit_open_addressbook (GtkButton *button,
+		       ModestRecptEditor *editor)
+{
+	g_signal_emit_by_name (G_OBJECT (editor), "open-addressbook");
+}
+
 static GtkWidget *
 _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group,
 			 const gchar *label, GtkWidget *control)
@@ -4282,6 +4290,9 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 		gtk_size_group_add_widget (title_size_group, abook_button);
 	if (value_size_group)
 		gtk_size_group_add_widget (value_size_group, control);
+
+	g_signal_connect (G_OBJECT (abook_button), "clicked",
+			  G_CALLBACK (emit_open_addressbook), control);
   
 	return box;  
 }
