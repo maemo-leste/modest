@@ -191,9 +191,7 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 		if (GTK_IS_TOOL_ITEM (priv->widget)) {
 			gtk_widget_set_sensitive (priv->widget, !dimmed);
 		} else {
-			GtkWidget *parent;
-			parent = gtk_widget_get_parent (priv->widget);
-			if (parent && HILDON_IS_APP_MENU (parent)) {
+			if (gtk_widget_get_ancestor (priv->widget, HILDON_TYPE_APP_MENU)) {
 				if (dimmed)
 					gtk_widget_hide (priv->widget);
 				else
