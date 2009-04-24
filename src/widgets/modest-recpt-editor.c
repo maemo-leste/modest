@@ -72,6 +72,7 @@ struct _ModestRecptEditorPrivate
 	GtkWidget *scrolled_window;
 	gchar *recipients;
 	gulong on_mark_set_handler;
+	gboolean show_abook;
 };
 
 #define MODEST_RECPT_EDITOR_GET_PRIVATE(o)	\
@@ -384,7 +385,10 @@ modest_recpt_editor_instance_init (GTypeInstance *instance, gpointer g_class)
 
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (instance);
 
+	priv->show_abook = TRUE;
 	priv->abook_button = gtk_button_new ();
+	gtk_widget_set_no_show_all (GTK_WIDGET (priv->abook_button), TRUE);
+	gtk_widget_show (priv->abook_button);
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_size_request (priv->abook_button, RECPT_BUTTON_WIDTH_HILDON2, -1);
 #else
@@ -992,6 +996,34 @@ modest_recpt_editor_has_focus (ModestRecptEditor *recpt_editor)
 
 	return GTK_WIDGET_VISIBLE (priv->text_view) && 
 		gtk_widget_is_focus (priv->text_view);
+}
+
+void 
+modest_recpt_editor_set_show_abook_button (ModestRecptEditor *recpt_editor, gboolean show)
+{
+	ModestRecptEditorPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor));
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	priv->show_abook = show;
+
+	if (show)
+		gtk_widget_show (priv->abook_button);
+	else
+		gtk_widget_hide (priv->abook_button);
+}
+
+gboolean
+modest_recpt_editor_get_show_abook_button (ModestRecptEditor *recpt_editor, gboolean show)
+{
+	ModestRecptEditorPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
+	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
+
+	return priv->show_abook;
+	
 }
 
 static void

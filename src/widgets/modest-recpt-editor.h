@@ -85,6 +85,8 @@ void modest_recpt_editor_set_field_size_group (ModestRecptEditor *recpt_editor, 
 GtkTextBuffer *modest_recpt_editor_get_buffer (ModestRecptEditor *recpt_editor);
 void modest_recpt_editor_grab_focus (ModestRecptEditor *recpt_editor);
 gboolean modest_recpt_editor_has_focus (ModestRecptEditor *recpt_editor);
+void modest_recpt_editor_set_show_abook_button (ModestRecptEditor *recpt_editor, gboolean show);
+gboolean modest_recpt_editor_get_show_abook_button (ModestRecptEditor *recpt_editor, gboolean show);
 
 G_END_DECLS
 

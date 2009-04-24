@@ -877,6 +877,9 @@ init_window (ModestMsgEditWindow *obj)
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
 	priv->bcc_field     = modest_recpt_editor_new ();
+	modest_recpt_editor_set_show_abook_button (MODEST_RECPT_EDITOR (priv->to_field), FALSE);
+	modest_recpt_editor_set_show_abook_button (MODEST_RECPT_EDITOR (priv->cc_field), FALSE);
+	modest_recpt_editor_set_show_abook_button (MODEST_RECPT_EDITOR (priv->bcc_field), FALSE);
 	priv->subject_box = gtk_hbox_new (FALSE, MODEST_MARGIN_NONE);
 	priv->priority_icon = gtk_image_new ();
 	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->priority_icon, FALSE, FALSE, 0);
