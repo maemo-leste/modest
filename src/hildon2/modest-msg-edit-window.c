@@ -187,6 +187,8 @@ static void font_face_clicked (GtkToolButton *button,
 static void update_signature (ModestMsgEditWindow *self,
 			      const gchar *old_account, 
 			      const gchar *new_account);
+static GtkWidget *_create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group,
+					   const gchar *label, GtkWidget *control);
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -870,6 +872,7 @@ init_window (ModestMsgEditWindow *obj)
 	modest_selector_picker_set_value_max_chars (MODEST_SELECTOR_PICKER (priv->from_field), MAX_FROM_VALUE);
 	modest_maemo_utils_set_hbutton_layout (title_size_group, value_size_group, 
 					       _("mail_va_from"), priv->from_field);
+	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.5, 0.5);
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -899,18 +902,15 @@ init_window (ModestMsgEditWindow *obj)
 	
 	priv->header_box = gtk_vbox_new (FALSE, 0);
 	
-	to_caption = modest_maemo_utils_create_captioned_with_size_type 
+	to_caption = _create_addressbook_box
 		(title_size_group, value_size_group,
-		 _("mail_va_to"), FALSE, priv->to_field,
-		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
-	priv->cc_caption = modest_maemo_utils_create_captioned_with_size_type 
+		 _("mail_va_to"), priv->to_field);
+	priv->cc_caption = _create_addressbook_box
 		(title_size_group, value_size_group,
-		 _("mail_va_cc"), FALSE, priv->cc_field,
-		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
-	priv->bcc_caption = modest_maemo_utils_create_captioned_with_size_type
+		 _("mail_va_cc"), priv->cc_field);
+	priv->bcc_caption = _create_addressbook_box
 		(title_size_group, value_size_group,
-		 _("mail_va_hotfix1"), FALSE, priv->bcc_field,
-		 HILDON_SIZE_AUTO_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+		 _("mail_va_hotfix1"), priv->bcc_field);
 	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
 							       _("mail_va_subject"), FALSE, priv->subject_box);
 	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
@@ -4256,3 +4256,29 @@ setup_menu (ModestMsgEditWindow *self)
 					   NULL);
 }
 
+static GtkWidget *
+_create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group,
+			 const gchar *label, GtkWidget *control)
+{
+	GtkWidget *abook_button;
+	GtkWidget *align;
+	GtkWidget *box;
+
+	box = gtk_hbox_new (FALSE, 0);
+
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, 0, MODEST_MARGIN_DEFAULT);
+
+	abook_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (abook_button), label);
+
+	gtk_container_add (GTK_CONTAINER (align), abook_button);
+	gtk_box_pack_start (GTK_BOX (box), align, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, 0);
+	if (title_size_group)
+		gtk_size_group_add_widget (title_size_group, abook_button);
+	if (value_size_group)
+		gtk_size_group_add_widget (value_size_group, control);
+  
+	return box;  
+}
