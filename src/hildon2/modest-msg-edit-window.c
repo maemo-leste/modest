@@ -1549,9 +1549,6 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	priv->font_face_toolitem = tool_item;
 
 	/* Set expand and homogeneous for remaining items */
-	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
-	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
-	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
 	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ActionsBold");
 	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), TRUE);
 	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), TRUE);
