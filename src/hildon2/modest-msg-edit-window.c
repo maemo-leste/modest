@@ -802,6 +802,7 @@ init_window (ModestMsgEditWindow *obj)
 #endif
 	GtkWidget *from_send_hbox;
 	GtkWidget *send_icon;
+	GtkWidget *attachments_label;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
@@ -906,16 +907,20 @@ init_window (ModestMsgEditWindow *obj)
 		 _("mail_va_hotfix1"), priv->bcc_field);
 	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
 							       _("mail_va_subject"), FALSE, priv->subject_box);
-	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
+	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (NULL, NULL,
 											_("mail_va_attachment"), 
 											FALSE,
 											priv->attachments_view,
 											HILDON_SIZE_AUTO_WIDTH |
 											HILDON_SIZE_AUTO_HEIGHT);
+	attachments_label = modest_maemo_utils_captioned_get_label_widget (priv->attachments_caption);
+	hildon_gtk_widget_set_theme_size (attachments_label, HILDON_SIZE_AUTO_HEIGHT);
+
+
 	priv->send_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	send_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_MAIL_SEND, HILDON_ICON_SIZE_FINGER);
 	gtk_container_add (GTK_CONTAINER (priv->send_button), send_icon);
-	gtk_widget_set_size_request (GTK_WIDGET (priv->send_button), 118, -1);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->send_button), 148, -1);
 
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
@@ -4309,6 +4314,7 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 	gtk_container_add (GTK_CONTAINER (abook_button), label_widget);
 
 	gtk_container_add (GTK_CONTAINER (align), abook_button);
+	gtk_widget_set_size_request (label_widget, 148 - MODEST_MARGIN_DOUBLE, -1);
 	gtk_box_pack_start (GTK_BOX (box), align, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, 0);
 	if (title_size_group)

@@ -406,6 +406,28 @@ modest_maemo_utils_captioned_set_label (GtkWidget *captioned,
 }
 
 /**
+ * modest_maemo_utils_captioned_get_label_widget:
+ * @captioned: a #GtkWidget built as captioned
+ *
+ * obtains the label widget for the captioned
+ *
+ * Returns: a #GtkLabel
+ */
+GtkWidget *
+modest_maemo_utils_captioned_get_label_widget (GtkWidget *captioned)
+{
+	GtkWidget *label;
+
+	g_return_val_if_fail (GTK_IS_WIDGET (captioned), NULL);
+
+	label = g_object_get_data (G_OBJECT (captioned), CAPTIONED_LABEL_CHILD);
+	g_return_val_if_fail (GTK_IS_LABEL (label), NULL);
+
+	return label;
+
+}
+
+/**
  * modest_maemo_utils_set_hbutton_layout:
  * @title_sizegroup: a #GtkSizeGroup, or %NULL
  * @value_sizegroup: a #GtkSizeGroup, or %NULL
