@@ -1894,16 +1894,20 @@ modest_msg_edit_window_set_format (ModestMsgEditWindow *self,
 				   ModestMsgEditFormat format)
 {
 	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 
 	switch (format) {
 	case MODEST_MSG_EDIT_FORMAT_HTML:
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
+		if (parent_priv->toolbar) gtk_widget_show (parent_priv->toolbar);
 		break;
 	case MODEST_MSG_EDIT_FORMAT_TEXT:
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
+		if (parent_priv->toolbar) gtk_widget_hide (parent_priv->toolbar);
 		break;
 	default:
 		g_return_if_reached ();
@@ -2931,17 +2935,27 @@ modest_msg_edit_window_show_toolbar (ModestWindow *self,
 				     gboolean show_toolbar)
 {
 	ModestWindowPrivate *parent_priv;
+	ModestMsgEditWindowPrivate *priv;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(self);
 
 	/* We can not just use the code of
 	   modest_msg_edit_window_setup_toolbar because it has a
 	   mixture of both initialization and creation code. */
-	if (show_toolbar)
-		gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
-	else
+	if (show_toolbar) {
+		gint current_format;
+		current_format = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))
+			? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
+		if (current_format == MODEST_FILE_FORMAT_PLAIN_TEXT) {
+			gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+		} else {
+			gtk_widget_show (GTK_WIDGET (parent_priv->toolbar));
+		}
+	} else {
 		gtk_widget_hide (GTK_WIDGET (parent_priv->toolbar));
+	}
 }
 
 void
@@ -3006,6 +3020,12 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 	current_format = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer))
 		? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
 
+	gtk_widget_set_no_show_all (GTK_WIDGET (parent_priv->toolbar), TRUE);
+
+	if (file_format == MODEST_FILE_FORMAT_PLAIN_TEXT) {
+		if (parent_priv->toolbar) gtk_widget_hide (parent_priv->toolbar);
+	}
+
 	if (current_format != file_format) {
 		switch (file_format) {
 		case MODEST_FILE_FORMAT_FORMATTED_TEXT:
@@ -3021,6 +3041,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			gtk_widget_destroy (dialog);
 			if (response == GTK_RESPONSE_OK) {
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
+				if (parent_priv->toolbar) gtk_widget_hide (parent_priv->toolbar);
 			} else {
 				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu"));
 				modest_utils_toggle_action_set_active_block_notify (action, TRUE);
