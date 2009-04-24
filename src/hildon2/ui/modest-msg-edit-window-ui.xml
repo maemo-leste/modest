@@ -82,12 +82,11 @@
     <toolitem action="ActionsBold"/>
     <toolitem action="ActionsItalics"/>
     <placeholder name="FontColor" />
-    <separator/>
-    <toolitem action="ToolbarSend"/>
   </toolbar>
 
   <accelerator name="AccelToggleFullscreen" action="ToggleFullscreen"/>
   <accelerator name="AccelCloseWindow" action="CloseWindowShortcut"/>
   <accelerator name="AccelSend" action="SendShortcut"/>
+  <accelerator name="AccelSend2" action="SendShortcut2"/>
 
 </ui>
