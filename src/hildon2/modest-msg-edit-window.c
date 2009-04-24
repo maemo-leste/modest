@@ -3027,8 +3027,12 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 
 	gtk_widget_set_no_show_all (GTK_WIDGET (parent_priv->toolbar), TRUE);
 
-	if (file_format == MODEST_FILE_FORMAT_PLAIN_TEXT) {
-		if (parent_priv->toolbar) gtk_widget_hide (parent_priv->toolbar);
+	if (parent_priv->toolbar) {
+		if (file_format == MODEST_FILE_FORMAT_PLAIN_TEXT) {
+			gtk_widget_hide (parent_priv->toolbar);
+		} else {
+			gtk_widget_show (parent_priv->toolbar);
+		}
 	}
 
 	if (current_format != file_format) {
