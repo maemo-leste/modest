@@ -191,10 +191,16 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 		if (GTK_IS_TOOL_ITEM (priv->widget)) {
 			gtk_widget_set_sensitive (priv->widget, !dimmed);
 		} else {
-			if (dimmed)
-				gtk_widget_hide (priv->widget);
-			else
-				gtk_widget_show (priv->widget);
+			GtkWidget *parent;
+			parent = gtk_widget_get_parent (priv->widget);
+			if (parent && HILDON_IS_APP_MENU (parent)) {
+				if (dimmed)
+					gtk_widget_hide (priv->widget);
+				else
+					gtk_widget_show (priv->widget);
+			} else {
+				gtk_widget_set_sensitive (priv->widget, !dimmed);
+			}
 		}
 #else
 		gtk_widget_set_sensitive (priv->widget, !dimmed);

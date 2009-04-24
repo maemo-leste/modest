@@ -915,7 +915,7 @@ init_window (ModestMsgEditWindow *obj)
 	priv->send_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	send_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_MAIL_SEND, HILDON_ICON_SIZE_FINGER);
 	gtk_container_add (GTK_CONTAINER (priv->send_button), send_icon);
-	gtk_size_group_add_widget (title_size_group, send_icon);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->send_button), 118, -1);
 
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
