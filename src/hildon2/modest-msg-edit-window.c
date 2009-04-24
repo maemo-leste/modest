@@ -92,7 +92,7 @@
 #define IMAGE_MAX_WIDTH 560
 #define DEFAULT_FONT_SCALE 1.5
 #define ATTACHMENT_BUTTON_WIDTH 118
-#define MAX_FROM_VALUE 48
+#define MAX_FROM_VALUE 36
 #define MAX_BODY_LENGTH 4096
 
 static gboolean is_wp_text_buffer_started = FALSE;
@@ -267,6 +267,7 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *attachments_view;
 	GtkWidget   *priority_icon;
 	GtkWidget   *subject_box;
+	GtkWidget   *send_button;
 
 	GtkWidget   *cc_caption;
 	GtkWidget   *bcc_caption;
@@ -799,6 +800,8 @@ init_window (ModestMsgEditWindow *obj)
 #if (GTK_MINOR_VERSION >= 10)
 	GdkAtom deserialize_type;
 #endif
+	GtkWidget *from_send_hbox;
+	GtkWidget *send_icon;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
@@ -865,7 +868,7 @@ init_window (ModestMsgEditWindow *obj)
 							  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
 							  NULL, g_str_equal);
 	modest_selector_picker_set_value_max_chars (MODEST_SELECTOR_PICKER (priv->from_field), MAX_FROM_VALUE);
-	modest_maemo_utils_set_hbutton_layout (title_size_group, value_size_group, 
+	modest_maemo_utils_set_hbutton_layout (title_size_group, NULL, 
 					       _("mail_va_from"), priv->from_field);
 	hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
 	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
@@ -909,13 +912,19 @@ init_window (ModestMsgEditWindow *obj)
 											priv->attachments_view,
 											HILDON_SIZE_AUTO_WIDTH |
 											HILDON_SIZE_AUTO_HEIGHT);
-	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->to_field), value_size_group); */
-	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->cc_field), value_size_group); */
-	/* modest_recpt_editor_set_field_size_group (MODEST_RECPT_EDITOR (priv->bcc_field), value_size_group); */
+	priv->send_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	send_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_MAIL_SEND, HILDON_ICON_SIZE_FINGER);
+	gtk_container_add (GTK_CONTAINER (priv->send_button), send_icon);
+	gtk_size_group_add_widget (title_size_group, send_icon);
+
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
 
-	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->from_field, FALSE, FALSE, 0);
+	from_send_hbox = gtk_hbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->from_field, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->send_button, FALSE, FALSE, 0);
+
+	gtk_box_pack_start (GTK_BOX (priv->header_box), from_send_hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), to_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->cc_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->bcc_caption, FALSE, FALSE, 0);
@@ -1633,6 +1642,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 						    MODEST_WINDOW (obj));
 	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->font_face_toolitem,
 						    G_CALLBACK (modest_ui_dimming_rules_on_set_style),
+						    MODEST_WINDOW (obj));
+	modest_dimming_rules_group_add_widget_rule (toolbar_rules_group, priv->send_button,
+						    G_CALLBACK (modest_ui_dimming_rules_on_send),
 						    MODEST_WINDOW (obj));
 	/* Insert dimming rules group for this window */
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, toolbar_rules_group);
