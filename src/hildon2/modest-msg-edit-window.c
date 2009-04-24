@@ -267,7 +267,6 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *attachments_view;
 	GtkWidget   *priority_icon;
 	GtkWidget   *subject_box;
-	GtkWidget   *add_attachment_button;
 
 	GtkWidget   *cc_caption;
 	GtkWidget   *bcc_caption;
@@ -738,8 +737,6 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect_swapped (G_OBJECT (priv->bcc_field), "open-addressbook", 
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 
-	g_signal_connect (G_OBJECT (priv->add_attachment_button), "clicked",
-			  G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), obj);
 	g_signal_connect (G_OBJECT (priv->from_field), "value-changed",
 			  G_CALLBACK (from_field_changed), obj);
 
@@ -789,7 +786,6 @@ init_window (ModestMsgEditWindow *obj)
 {
 	GtkWidget *to_caption, *subject_caption;
 	GtkWidget *main_vbox;
-	GtkWidget *add_attachment_align;
 	ModestMsgEditWindowPrivate *priv;
 	GtkActionGroup *action_group;
 	ModestWindowPrivate *parent_priv;
@@ -798,7 +794,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
-	GtkWidget *attachment_icon;
 	GtkWidget *window_box;
 	GtkWidget *window_align;
 #if (GTK_MINOR_VERSION >= 10)
@@ -873,7 +868,8 @@ init_window (ModestMsgEditWindow *obj)
 	modest_maemo_utils_set_hbutton_layout (title_size_group, value_size_group, 
 					       _("mail_va_from"), priv->from_field);
 	hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.5, 0.5);
+	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
+	hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 1.0, 0.5);
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -890,16 +886,6 @@ init_window (ModestMsgEditWindow *obj)
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->subject_field, TRUE, TRUE, 0);
-	priv->add_attachment_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
-	gtk_widget_set_size_request (priv->add_attachment_button, ATTACHMENT_BUTTON_WIDTH, -1);
-	GTK_WIDGET_UNSET_FLAGS (GTK_WIDGET (priv->add_attachment_button), GTK_CAN_FOCUS);
-	gtk_button_set_focus_on_click (GTK_BUTTON (priv->add_attachment_button), FALSE);
-	attachment_icon = gtk_image_new_from_icon_name (MODEST_HEADER_ICON_ATTACH, HILDON_ICON_SIZE_FINGER);
-	hildon_button_set_image (HILDON_BUTTON (priv->add_attachment_button), attachment_icon);
-	add_attachment_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (add_attachment_align), 0, 0, MODEST_MARGIN_DEFAULT, 0);
-	gtk_container_add (GTK_CONTAINER (add_attachment_align), priv->add_attachment_button);
-	gtk_box_pack_start (GTK_BOX (priv->subject_box), add_attachment_align, FALSE, FALSE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 					   MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS);
@@ -4277,6 +4263,7 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 	GtkWidget *abook_button;
 	GtkWidget *align;
 	GtkWidget *box;
+	GtkWidget *label_widget;
 
 	box = gtk_hbox_new (FALSE, 0);
 
@@ -4284,13 +4271,15 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, 0, MODEST_MARGIN_DEFAULT);
 
 	abook_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	gtk_button_set_label (GTK_BUTTON (abook_button), label);
+	label_widget = gtk_label_new (label);
+	gtk_misc_set_alignment (GTK_MISC (label_widget), 0.0, 0.5);
+	gtk_container_add (GTK_CONTAINER (abook_button), label_widget);
 
 	gtk_container_add (GTK_CONTAINER (align), abook_button);
 	gtk_box_pack_start (GTK_BOX (box), align, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, 0);
 	if (title_size_group)
-		gtk_size_group_add_widget (title_size_group, abook_button);
+		gtk_size_group_add_widget (title_size_group, label_widget);
 	if (value_size_group)
 		gtk_size_group_add_widget (value_size_group, control);
 
