@@ -256,6 +256,9 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 	g_return_if_fail (GTK_IS_BUTTON (button));
 	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE (self);
 
+	modest_ui_dimming_manager_set_widget_dimming_mode (GTK_WIDGET (button),
+							   MODEST_UI_DIMMING_MODE_HIDE);
+
 	if (dimming_callback)
 		modest_dimming_rules_group_add_widget_rule (priv->app_menu_dimming_group,
 							    GTK_WIDGET (button),

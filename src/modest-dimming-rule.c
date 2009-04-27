@@ -28,6 +28,7 @@
  */
 
 #include "modest-dimming-rule.h"
+#include "modest-ui-dimming-manager.h"
 
 static void modest_dimming_rule_class_init (ModestDimmingRuleClass *klass);
 static void modest_dimming_rule_init       (ModestDimmingRule *obj);
@@ -187,22 +188,22 @@ modest_dimming_rule_process (ModestDimmingRule *self)
 		else
 			g_printerr ("modest: action path '%s' has not associatd action\n", priv->action_path);
 	} else if (priv->widget != NULL) {
-#ifdef MODEST_TOOLKIT_HILDON2
-		if (GTK_IS_TOOL_ITEM (priv->widget)) {
+		ModestUIDimmingMode mode;
+
+		mode = modest_ui_dimming_manager_get_widget_dimming_mode (priv->widget);
+		switch (mode) {
+		case MODEST_UI_DIMMING_MODE_HIDE:
+			if (dimmed) {
+				gtk_widget_hide (GTK_WIDGET (priv->widget));
+			} else {
+				gtk_widget_show (GTK_WIDGET (priv->widget));
+			}
+			break;
+		case MODEST_UI_DIMMING_MODE_DIM:
+		default:
 			gtk_widget_set_sensitive (priv->widget, !dimmed);
-		} else {
-/* 			if (gtk_widget_get_ancestor (priv->widget, HILDON_TYPE_APP_MENU)) { */
-/* 				if (dimmed) */
-/* 					gtk_widget_hide (priv->widget); */
-/* 				else */
-/* 					gtk_widget_show (priv->widget); */
-/* 			} else { */
-				gtk_widget_set_sensitive (priv->widget, !dimmed);
-/* 			} */
+			break;
 		}
-#else
-		gtk_widget_set_sensitive (priv->widget, !dimmed);
-#endif
 	}
 }
 
