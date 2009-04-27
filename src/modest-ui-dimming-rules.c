@@ -929,14 +929,7 @@ modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data)
 		if (MODEST_IS_MSG_VIEW_WINDOW (win))
 			dimmed = _msg_download_in_progress (win);
 		if (dimmed)
-			modest_dimming_rule_set_notification (rule, "");		
-		if (!dimmed && MODEST_IS_MSG_VIEW_WINDOW (win)) {
-			if (!modest_msg_view_window_is_search_result (MODEST_MSG_VIEW_WINDOW(win))) {
-				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
-			}
-			if (dimmed)
-				modest_dimming_rule_set_notification (rule, "");
-		}
+			modest_dimming_rule_set_notification (rule, "");
 	}
 
 	return dimmed;
