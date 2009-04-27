@@ -38,6 +38,8 @@ static void modest_ui_dimming_manager_dispose    (GObject *obj);
 
 static void _process_all_rules (gpointer key, gpointer value, gpointer user_data);
 
+#define WIDGET_DIMMING_MODE "widget-dimming-mode"
+
 
 typedef struct _ModestUIDimmingManagerPrivate ModestUIDimmingManagerPrivate;
 struct _ModestUIDimmingManagerPrivate {
@@ -305,3 +307,20 @@ _process_all_rules (gpointer key, gpointer value, gpointer user_data)
 	modest_dimming_rules_group_execute (MODEST_DIMMING_RULES_GROUP (value));
 }
 
+void
+modest_ui_dimming_manager_set_widget_dimming_mode (GtkWidget *widget,
+						   ModestUIDimmingMode mode)
+{
+	g_return_if_fail (GTK_IS_WIDGET (widget));
+
+	g_object_set_data (G_OBJECT (widget), WIDGET_DIMMING_MODE, GINT_TO_POINTER (mode));
+}
+
+ModestUIDimmingMode
+modest_ui_dimming_manager_get_widget_dimming_mode (GtkWidget *widget)
+{
+	g_return_val_if_fail (GTK_IS_WIDGET (widget), MODEST_UI_DIMMING_MODE_DIM);
+
+	return (ModestUIDimmingMode) GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), WIDGET_DIMMING_MODE));
+}
+					   

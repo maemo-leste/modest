@@ -58,6 +58,11 @@ struct _ModestUIDimmingManagerClass {
 	/* Signals */
 };
 
+typedef enum {
+	MODEST_UI_DIMMING_MODE_DIM = 0,
+	MODEST_UI_DIMMING_MODE_HIDE,
+} ModestUIDimmingMode;
+
 ModestUIDimmingManager* modest_ui_dimming_manager_new(void);
 
 
@@ -72,6 +77,14 @@ modest_ui_dimming_manager_process_dimming_rules (ModestUIDimmingManager *self);
 void
 modest_ui_dimming_manager_process_dimming_rules_group (ModestUIDimmingManager *self,
 						       const gchar *group_name);
+
+void
+modest_ui_dimming_manager_set_widget_dimming_mode (GtkWidget *widget,
+						   ModestUIDimmingMode mode);
+						   
+ModestUIDimmingMode
+modest_ui_dimming_manager_get_widget_dimming_mode (GtkWidget *widget);
+						   
 
 
 G_END_DECLS
