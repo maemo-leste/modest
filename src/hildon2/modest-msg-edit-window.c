@@ -738,6 +738,9 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect_swapped (G_OBJECT (priv->bcc_field), "open-addressbook", 
 				  G_CALLBACK (modest_msg_edit_window_open_addressbook), obj);
 
+	g_signal_connect (G_OBJECT (priv->send_button), "clicked",
+			  G_CALLBACK (modest_ui_actions_on_send), obj);
+
 	g_signal_connect (G_OBJECT (priv->from_field), "value-changed",
 			  G_CALLBACK (from_field_changed), obj);
 
