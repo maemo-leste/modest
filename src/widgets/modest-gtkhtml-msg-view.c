@@ -1662,11 +1662,10 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	TnyMimePart *body;
 	ModestGtkhtmlMsgViewPrivate *priv;
 	TnyHeader *header;
-	TnyHeaderFlags flags;
 	GtkAdjustment *html_vadj;
-	
+
 	g_return_if_fail (self);
-	
+
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
 	modest_mail_header_view_set_loading (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), FALSE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
@@ -1685,7 +1684,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 			g_object_ref   (G_OBJECT(msg));
 		priv->msg = msg;
 	}
-	
+
 	if (!msg) {
 		tny_header_view_clear (TNY_HEADER_VIEW (priv->mail_header_view));
 		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
@@ -1739,13 +1738,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	}
 
 	/* Refresh priority */
-	flags = tny_header_get_flags (header);
-	flags = flags && TNY_HEADER_FLAG_PRIORITY_MASK;
-	if (flags == TNY_HEADER_FLAG_NORMAL_PRIORITY) {
-		gtk_widget_hide_all (priv->priority_box);
-	} else {
-		gtk_widget_show_all (priv->priority_box);
-	}
+	set_priority (self, tny_header_get_flags (header));
 
 	gtk_widget_show (priv->body_view);
 	gtk_widget_set_no_show_all (priv->priority_box, TRUE);
