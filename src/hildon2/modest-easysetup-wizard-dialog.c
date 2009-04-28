@@ -524,8 +524,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 
 	/* The description widgets: */
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
-	g_signal_connect(G_OBJECT(priv->entry_account_title), "changed",
-			 G_CALLBACK(on_easysetup_changed), self);
+
 	/* Do use auto-capitalization: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
@@ -541,6 +540,10 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	hildon_entry_set_text (HILDON_ENTRY (priv->entry_account_title), default_account_name);
 	g_free (default_account_name);
 	default_account_name = NULL;
+
+	/* Connect signal after changing the text in the entry */
+	g_signal_connect(G_OBJECT(priv->entry_account_title), "changed",
+			 G_CALLBACK(on_easysetup_changed), self);
 
 	priv->caption_account_title = create_captioned (self, title_sizegroup, value_sizegroup,
 							_("mcen_fi_account_title"), FALSE,
@@ -804,8 +807,6 @@ on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpoin
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
-	ModestServertypePicker *picker;
-	ModestProtocolType protocol_type;
 
 	priv->dirty = TRUE;
 
@@ -813,8 +814,6 @@ on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpoin
 	update_incoming_server_title (self);
 
 	/* Update security options if needed */
-	picker = MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker);
-	protocol_type = modest_servertype_picker_get_active_servertype (picker);
 	update_incoming_server_security_choices (self);
 	gtk_widget_show (priv->incoming_security);
 
@@ -876,7 +875,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->incoming_servertype_picker);
 
 	priv->entry_incomingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
-	g_signal_connect(G_OBJECT(priv->entry_incomingserver), "changed", G_CALLBACK(on_easysetup_changed), self);
+
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
 	set_default_custom_servernames (self);
@@ -890,12 +889,6 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->entry_incomingserver);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_incoming, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_incoming);
-
-	/* Change the caption title when the servertype changes,
-	 * as in the UI spec: */
-	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->incoming_servertype_picker))),
-			  "changed",
-			  G_CALLBACK (on_servertype_selector_changed), self);
 
 	/* Remember when the servername was changed manually: */
 	g_signal_connect (G_OBJECT (priv->entry_incomingserver), "changed",
@@ -914,6 +907,15 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	modest_servertype_picker_set_active_servertype (
 		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker),
 		MODEST_PROTOCOLS_STORE_POP);
+	update_incoming_server_title (self);
+	update_incoming_server_security_choices (self);
+	set_default_custom_servernames (self);
+
+	/* Change the caption title when the servertype changes,
+	 * as in the UI spec: */
+	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->incoming_servertype_picker))),
+			  "changed",
+			  G_CALLBACK (on_servertype_selector_changed), self);
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
@@ -926,6 +928,11 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
+
+	/* Connect changed signals. We do it here after initializing everything */
+	g_signal_connect (G_OBJECT(priv->entry_incomingserver), "changed",
+			  G_CALLBACK(on_easysetup_changed), self);
+
 
 	return GTK_WIDGET (pannable);
 }
@@ -1000,8 +1007,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	/* The outgoing server widgets: */
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
-	g_signal_connect (G_OBJECT (priv->entry_outgoingserver), "changed",
-                  G_CALLBACK (on_easysetup_changed), self);
+
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
@@ -1034,8 +1040,6 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 			      _("mcen_fi_advsetup_connection_smtp"));
 	gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific),
 				  0.0, 0.5);
-	g_signal_connect (G_OBJECT (priv->checkbox_outgoing_smtp_specific), "toggled",
-                  G_CALLBACK (on_easysetup_changed), self);
 
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific,
@@ -1071,6 +1075,12 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
+
+	/* Connect changed signals. We do it here after initializing everything */
+	g_signal_connect (G_OBJECT (priv->entry_outgoingserver), "changed",
+			  G_CALLBACK (on_easysetup_changed), self);
+	g_signal_connect (G_OBJECT (priv->checkbox_outgoing_smtp_specific), "toggled",
+			  G_CALLBACK (on_easysetup_changed), self);
 
 	return GTK_WIDGET (pannable);
 }
