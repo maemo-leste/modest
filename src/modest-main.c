@@ -36,6 +36,13 @@
 #include "modest-platform.h"
 #include "modest-ui-actions.h"
 
+static gboolean show_ui = FALSE;
+static GOptionEntry option_entries [] =
+{
+	{ "show-ui", 's', 0, G_OPTION_ARG_NONE, &show_ui, "Show UI immediately, so no wait for DBUS activation", NULL },
+	{ NULL }
+};
+
 typedef struct {
 	gulong queue_handler;
 	gulong window_list_handler;
@@ -117,10 +124,19 @@ main (int argc, char *argv[])
 	int retval  = 0;
 	MainSignalHandlers *handlers;
 
-	if (argc >= 2) {
-		if (strcmp (argv[1], "showui") == 0)
-			show_ui_without_top_application_method = TRUE;
+	GError *error;
+	GOptionContext *context;
+
+	context = g_option_context_new ("- Modest email client");
+	g_option_context_add_main_entries (context, option_entries, GETTEXT_PACKAGE);
+	g_option_context_add_group (context, gtk_get_option_group (TRUE));
+	if (!g_option_context_parse (context, &argc, &argv, &error)) {
+		g_print ("option parsing failed: %s\n", error->message);
+		exit (1);
 	}
+
+
+	show_ui_without_top_application_method = show_ui;
 
 	if (!show_ui_without_top_application_method) {
 		g_print ("modest: use 'modest showui' to start from cmdline  with UI\n");
