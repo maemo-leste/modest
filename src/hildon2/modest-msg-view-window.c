@@ -2421,6 +2421,11 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 	return selected_attachments;
 }
 
+typedef struct {
+	ModestMsgViewWindow *self;
+	gchar *file_path;
+} DecodeAsyncHelper;
+
 static void
 on_decode_to_stream_async_handler (TnyMimePart *mime_part, 
 				   gboolean cancelled, 
@@ -2428,7 +2433,11 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				   GError *err, 
 				   gpointer user_data)
 {
-	gchar *filepath = (gchar *) user_data;
+	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
+
+	/* It could happen that the window was closed */
+	if (GTK_WIDGET_VISIBLE (helper->self))
+		set_progress_hint (helper->self, FALSE);
 
 	if (cancelled || err) {
 		if (err) {
@@ -2440,14 +2449,16 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	}
 
 	/* make the file read-only */
-	g_chmod(filepath, 0444);
+	g_chmod(helper->file_path, 0444);
 
 	/* Activate the file */
-	modest_platform_activate_file (filepath, tny_mime_part_get_content_type (mime_part));
+	modest_platform_activate_file (helper->file_path, tny_mime_part_get_content_type (mime_part));
 
  free:
 	/* Frees */
-	g_free (filepath);
+	g_object_unref (helper->self);
+	g_free (helper->file_path);
+	g_slice_free (DecodeAsyncHelper, helper);
 }
 
 void
@@ -2468,7 +2479,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 	attachments = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
 	attachment_index = modest_list_index (attachments, (GObject *) mime_part);
 	g_object_unref (attachments);
-	
+
 	if (msg_uid && attachment_index >= 0) {
 		attachment_uid = g_strdup_printf ("%s/%d", msg_uid, attachment_index);
 	}
@@ -2508,10 +2519,19 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 							       &filepath);
 
 		if (temp_stream != NULL) {
-			tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream), 
-							      on_decode_to_stream_async_handler, 
+			DecodeAsyncHelper *helper;
+
+			/* Activate progress hint */
+			set_progress_hint (window, TRUE);
+
+			helper = g_slice_new0 (DecodeAsyncHelper);
+			helper->self = g_object_ref (window);
+			helper->file_path = g_strdup (filepath);
+
+			tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream),
+							      on_decode_to_stream_async_handler,
 							      NULL,
-							      g_strdup (filepath));
+							      helper);
 			g_object_unref (temp_stream);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
