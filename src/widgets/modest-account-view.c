@@ -219,7 +219,8 @@ get_last_updated_string(ModestAccountView *self, ModestAccountMgr* account_mgr, 
 	struct tm *localtime_tm;
 	time (&now);
 	localtime_tm = localtime (&now);
-	last_updated -= time_get_utc_offset (localtime_tm->tm_zone);
+	if (last_updated)
+		last_updated -= time_get_utc_offset (localtime_tm->tm_zone);
 #endif
 	g_object_unref (server_settings);
 	account_name = modest_account_settings_get_account_name (settings);
@@ -234,7 +235,7 @@ get_last_updated_string(ModestAccountView *self, ModestAccountMgr* account_mgr, 
 	} else 	{
 		last_updated_string = _("mcen_va_refreshing");
 	}
-	
+
 	return last_updated_string;
 }
 
@@ -243,9 +244,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 {
 	GSList *account_names, *cursor;
 	GtkListStore *model;
-		
+
 	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));
-	
+
 	/* Get the ID of the currently-selected account,
 	 * so we can select it again after rebuilding the list.
 	 * Note that the name doesn't change even when the display name changes.
