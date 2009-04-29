@@ -728,10 +728,26 @@ async_get_contacts_cb (EBook *book,
 		/* Add new or commit existing contact */
 		if (contact) {
 			to_commit_contacts = g_list_prepend (to_commit_contacts, contact);
-			g_debug ("Preparing to commit contact %s", address);
+			g_debug ("----Preparing to commit contact %s", address);
 		} else {
+			gchar *email_address, *display_address;
+
+			/* Create new contact and add it to the list */
+			contact = e_contact_new ();
+			email_address = modest_text_utils_get_email_address (address);
+			e_contact_set (contact, E_CONTACT_EMAIL_1, email_address);
+			g_free (email_address);
+
+			display_address = g_strdup (address);
+			if (display_address) {
+				modest_text_utils_get_display_address (display_address);
+				if ((display_address[0] != '\0') && (strlen (display_address) != strlen (address)))
+					e_contact_set (contact, E_CONTACT_FULL_NAME, (const gpointer)display_address);
+				g_free (display_address);
+			}
+
 			to_add_contacts = g_list_prepend (to_add_contacts, contact);
-			g_debug ("Preparing to add contact %s", address);
+			g_debug ("----Preparing to add contact %s", address);
 		}
 
 		iter = g_slist_next (iter);
@@ -758,7 +774,6 @@ async_get_contacts_cb (EBook *book,
 		g_list_foreach (contacts, (GFunc) g_object_unref, NULL);
 		g_list_free (contacts);
 	}
-
 }
 
 
@@ -789,7 +804,7 @@ add_to_address_book (GSList *addresses)
 	composite_query = e_book_query_or (num_add, queries, TRUE);
 
 	/* Asynchronously retrieve contacts */
-	e_book_async_get_contacts (book, composite_query, async_get_contacts_cb, NULL);
+	e_book_async_get_contacts (book, composite_query, async_get_contacts_cb, addresses);
 
 	/* Frees. This will unref the subqueries as well */
 	e_book_query_unref (composite_query);
