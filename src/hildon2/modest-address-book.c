@@ -705,12 +705,18 @@ async_get_contacts_cb (EBook *book,
 {
 	GSList *addresses, *iter;
 	GList *to_commit_contacts, *to_add_contacts;
+	EContact *self_contact;
 
 	addresses = (GSList *) closure;
 
 	/* Check errors */
 	if (status != E_BOOK_ERROR_OK)
 		goto frees;
+
+	self_contact = (EContact *) osso_abook_self_contact_get_default ();
+	if (self_contact) {
+		contacts = g_list_prepend (contacts, self_contact);
+	}
 
 	iter = addresses;
 	to_commit_contacts = NULL;
