@@ -1,3 +1,19 @@
+modest (3.0.15-rc3) unstable; urgency=low
+
+  * Week 19, 2009 - Thursday release. r9236.
+  * Fixes: NB#113364 - change confirmation note is showing without giving any text in user details dialog box of account setup wizard 
+  * Fixes: NB#103840 - customized email account settings are incorrect 
+  * Fixes: NB#111849 - modest crashed once while other applications are opened and try to open modest 
+  * Fixes: NB#113192 - The recently sent To mailer address is not listed in Select contacts 
+  * Fixes: NB#112983 - Newly created account always shows Last updated date as 01.01.1970 unless refreshed. 
+  * Fixes: NB#113807 - My own email gets added to the contact list 
+  * Fixes: NB#113211 - Viewer: Message header area includes Priority field for the normal embeded attachment viewer 
+  * Fixes: NB#113218 - Viewer menu: Message details menu option is missing for the embedded viewer opened 
+  * Fixes: NB#113282 - Viewer: "Priority" field is added in message header area after removing an attachment. 
+  * Fixes: NB#113634 - Viewer view: progress indication should be shown if opening a proper viewer for an attachment takes longer time 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 30 Apr 2009 13:36:55 +0300
+
 modest (3.0.15-rc2) unstable; urgency=low
 
   * Week 18, 2009 - Monday release r9172.
