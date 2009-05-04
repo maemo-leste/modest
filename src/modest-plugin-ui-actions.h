@@ -55,5 +55,14 @@ G_BEGIN_DECLS
 gboolean modest_ui_actions_on_delete_account (GtkWindow *parent_window,
 					      const gchar *account_name,
 					      const gchar *account_display_name);
+
+/**
+ * modest_ui_actions_on_reload_message:
+ * @msg_id: a message id
+ *
+ * Reload the message if it's currently being shown in a view.
+ */
+void
+modest_ui_actions_on_reload_message (const gchar *msg_id);
 G_END_DECLS
 #endif /* __MODEST_PLUGIN_UI_ACTIONS_H__ */

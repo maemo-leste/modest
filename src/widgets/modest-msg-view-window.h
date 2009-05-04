@@ -361,6 +361,15 @@ modest_msg_view_window_fetch_images (ModestMsgViewWindow *self);
  */
 gboolean modest_msg_view_window_has_blocked_external_images (ModestMsgViewWindow *self);
 
+/**
+ * modest_msg_view_window_reload:
+ * @self: a #ModestMsgViewWindow
+ *
+ * Reloads currently loaded message. This is intended to show the message in case it
+ * has some update on the previously visible result.
+ */
+void modest_msg_view_window_reload (ModestMsgViewWindow *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_MSG_VIEW_WINDOW_H__ */

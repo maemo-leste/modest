@@ -6703,3 +6703,21 @@ modest_ui_actions_on_fetch_images (GtkAction *action,
 	modest_msg_view_window_fetch_images (MODEST_MSG_VIEW_WINDOW (window));
 
 }
+
+void
+modest_ui_actions_on_reload_message (const gchar *msg_id)
+{
+	ModestWindow *window = NULL;
+
+	g_return_if_fail (msg_id && msg_id[0] != '\0');
+	if (!modest_window_mgr_find_registered_message_uid (modest_runtime_get_window_mgr (),
+							    msg_id,
+							    &window))
+		return;
+
+
+	if (window == NULL || !MODEST_IS_MSG_VIEW_WINDOW (window))
+		return;
+
+	modest_msg_view_window_reload (MODEST_MSG_VIEW_WINDOW (window));
+}

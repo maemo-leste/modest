@@ -544,3 +544,10 @@ modest_msg_view_window_has_blocked_external_images (ModestMsgViewWindow *self)
 
 	return modest_msg_view_has_blocked_external_images (MODEST_MSG_VIEW (priv->msg_view));
 }
+
+void
+modest_msg_view_window_reload (ModestMsgViewWindow *self)
+{
+	/* Not implemented */
+	return;
+}

@@ -3352,3 +3352,21 @@ modest_msg_view_window_has_blocked_external_images (ModestMsgViewWindow *self)
 
 	return modest_msg_view_has_blocked_external_images (MODEST_MSG_VIEW (priv->msg_view));
 }
+
+void 
+modest_msg_view_window_reload (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	TnyHeader *header;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (self));	
+
+	if (!message_reader (self, priv, header, priv->row_reference)) {
+		g_warning ("Shouldn't happen, trying to reload a message failed");
+	}
+
+	g_object_unref (header);
+}
