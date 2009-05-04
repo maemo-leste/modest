@@ -252,16 +252,14 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 		val = g_key_file_get_string (self->keyfile, provider_id,
 					     MODEST_PRESETS_KEY_INCOMING, NULL);
 		if (val) {
-			g_free (val);	
+			g_free (val);
 
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_INCOMING_SECURITY, NULL);
-			if (val && strcmp (val, "0") == 0) {
+			if (val && strcmp (val, "1") == 0) {
 				protocol_type = MODEST_PROTOCOLS_CONNECTION_TLS;
-			} else if (val && strcmp (val, "1") == 0) {
-				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			} else if (val && strcmp (val, "2") == 0) {
-				protocol_type = MODEST_PROTOCOLS_CONNECTION_NONE;
+				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			} else if (val && (strcmp (val, "tls") == 0)) {
 				protocol_type = MODEST_PROTOCOLS_CONNECTION_TLS;
 			} else if (val && (strcmp (val, "ssl") == 0)) {
@@ -274,10 +272,9 @@ modest_presets_get_info_server_security (ModestPresets *self, const gchar *provi
 					     MODEST_PRESETS_KEY_OUTGOING, NULL);
 		if (val) {
 			g_free (val);
-			
+
 			val = g_key_file_get_string (self->keyfile, provider_id,
 						     MODEST_PRESETS_KEY_SECURE_SMTP, NULL);
-			/* printf("debug: %s: provider_id=%s, secure-smtp val=%s\n", __FUNCTION__, provider_id, val); */
 			if (val && strcmp(val,"true") == 0)
 				protocol_type = MODEST_PROTOCOLS_CONNECTION_SSL;
 			else if (val && strcmp (val, "ssl") == 0)
