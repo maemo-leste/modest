@@ -79,6 +79,9 @@ static void modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 static gboolean modest_hildon2_window_mgr_find_registered_header (ModestWindowMgr *self, 
 								  TnyHeader *header,
 								  ModestWindow **win);
+static gboolean modest_hildon2_window_mgr_find_registered_message_uid (ModestWindowMgr *self, 
+								       const gchar *msg_uid,
+								       ModestWindow **win);
 static GList *modest_hildon2_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *self);
 static gboolean window_can_close (ModestWindow *window);
@@ -164,6 +167,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->get_modal = modest_hildon2_window_mgr_get_modal;
 	mgr_class->set_modal = modest_hildon2_window_mgr_set_modal;
 	mgr_class->find_registered_header = modest_hildon2_window_mgr_find_registered_header;
+	mgr_class->find_registered_message_uid = modest_hildon2_window_mgr_find_registered_message_uid;
 	mgr_class->get_window_list = modest_hildon2_window_mgr_get_window_list;
 	mgr_class->close_all_windows = modest_hildon2_window_mgr_close_all_windows;
 	mgr_class->show_initial_window = modest_hildon2_window_mgr_show_initial_window;
@@ -369,6 +373,38 @@ modest_hildon2_window_mgr_find_registered_header (ModestWindowMgr *self, TnyHead
 		}
 	}
 	g_free (uid);
+	
+	return has_header || has_window;
+}
+
+static gboolean
+modest_hildon2_window_mgr_find_registered_message_uid (ModestWindowMgr *self, const gchar *msg_uid,
+						       ModestWindow **win)
+{
+	ModestHildon2WindowMgrPrivate *priv = NULL;
+	gboolean has_header, has_window = FALSE;
+	GList *item = NULL;
+
+	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
+	g_return_val_if_fail (msg_uid && msg_uid[0] != '\0', FALSE);
+	
+	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+
+	has_header = MODEST_WINDOW_MGR_CLASS (parent_class)->find_registered_message_uid (self, msg_uid, win);
+	
+	item = g_list_find_custom (priv->window_list, msg_uid, (GCompareFunc) compare_msguids);
+	if (item) {
+		has_window = TRUE;
+		if (win) {
+			if ((!MODEST_IS_MSG_VIEW_WINDOW(item->data)) && 
+			    (!MODEST_IS_MSG_EDIT_WINDOW (item->data)))
+				g_debug ("not a valid window!");
+			else {
+				g_debug ("found a window");
+				*win = MODEST_WINDOW (item->data);
+			}
+		}
+	}
 	
 	return has_header || has_window;
 }

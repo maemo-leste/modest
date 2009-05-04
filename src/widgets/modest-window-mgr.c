@@ -66,6 +66,9 @@ static gboolean modest_window_mgr_close_all_windows_default (ModestWindowMgr *se
 static gboolean modest_window_mgr_find_registered_header_default (ModestWindowMgr *self, 
 								  TnyHeader *header,
 								  ModestWindow **win);
+static gboolean modest_window_mgr_find_registered_message_uid_default (ModestWindowMgr *self, 
+								       const gchar *msg_uid,
+								       ModestWindow **win);
 static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_get_current_top_default (ModestWindowMgr *self);
@@ -161,6 +164,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->set_modal = modest_window_mgr_set_modal_default;
 	mgr_class->close_all_windows = modest_window_mgr_close_all_windows_default;
 	mgr_class->find_registered_header = modest_window_mgr_find_registered_header_default;
+	mgr_class->find_registered_message_uid = modest_window_mgr_find_registered_message_uid_default;
 	mgr_class->get_window_list = modest_window_mgr_get_window_list_default;
 	mgr_class->show_initial_window = modest_window_mgr_show_initial_window_default;
 	mgr_class->get_current_top = modest_window_mgr_get_current_top_default;
@@ -469,21 +473,40 @@ static gboolean
 modest_window_mgr_find_registered_header_default (ModestWindowMgr *self, TnyHeader *header,
 						  ModestWindow **win)
 {
+	gchar* uid = NULL;
+
+	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
+	g_return_val_if_fail (TNY_IS_HEADER(header), FALSE);
+
+	uid = modest_tny_folder_get_header_unique_id (header);
+
+	return modest_window_mgr_find_registered_message_uid (self, uid, win);
+}
+
+gboolean
+modest_window_mgr_find_registered_message_uid (ModestWindowMgr *self, const gchar *msg_uid,
+					       ModestWindow **win)
+{
+	return MODEST_WINDOW_MGR_GET_CLASS (self)->find_registered_message_uid (self, msg_uid, win);
+}
+
+static gboolean
+modest_window_mgr_find_registered_message_uid_default (ModestWindowMgr *self, const gchar *msg_uid,
+						       ModestWindow **win)
+{
 	ModestWindowMgrPrivate *priv = NULL;
 	gchar* uid = NULL;
 	gboolean has_header = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
-	g_return_val_if_fail (TNY_IS_HEADER(header), FALSE);
+	g_return_val_if_fail (msg_uid && msg_uid[0] != '\0', FALSE);
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-
-	uid = modest_tny_folder_get_header_unique_id (header);
 
 	if (win)
 		*win = NULL;
 
-	has_header = has_uid (priv->preregistered_uids, uid);
+	has_header = has_uid (priv->preregistered_uids, msg_uid);
 	g_free (uid);
 
 	return has_header;

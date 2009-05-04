@@ -76,6 +76,9 @@ struct _ModestWindowMgrClass {
 	gboolean              (*find_registered_header)         (ModestWindowMgr *self,
 								 TnyHeader *header,
 								 ModestWindow **win);
+	gboolean              (*find_registered_message_uid)    (ModestWindowMgr *self,
+								 const gchar *msg_uid,
+								 ModestWindow **win);
 	GList *               (*get_window_list)                (ModestWindowMgr *self);
 	ModestWindow *        (*show_initial_window)            (ModestWindowMgr *self);
 	ModestWindow *        (*get_current_top)                (ModestWindowMgr *self);
@@ -282,6 +285,20 @@ modest_window_mgr_get_help_id (ModestWindowMgr *self, GtkWindow *win);
  **/
 gboolean modest_window_mgr_find_registered_header (ModestWindowMgr *self,  TnyHeader *header,
 					       ModestWindow **win);
+
+
+/**
+ * modest_window_mgr_find_registered_header
+ * @self: a #ModestWindowMgr
+ * @msg_uid: a message uid
+ * 
+ * search for the given uid in both the list of preregistered uids and in the window list;
+ * if it's available in the window list, fill the *win out-param
+ *
+ * returns TRUE if found, FALSE otherwise
+ **/
+gboolean modest_window_mgr_find_registered_message_uid (ModestWindowMgr *self,  const gchar *msg_uid,
+							ModestWindow **win);
 
 /**
  * modest_window_mgr_get_window_list:
