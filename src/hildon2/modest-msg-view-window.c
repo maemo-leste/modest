@@ -2703,12 +2703,22 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
         }
 	if (replaced_files) {
 		GtkWidget *confirm_overwrite_dialog;
-                const gchar *message = (replaced_files == 1) ?
-                        _FM("docm_nc_replace_file") : _FM("docm_nc_replace_multiple");
-                confirm_overwrite_dialog = hildon_note_new_confirmation (NULL, message);
-		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
-			is_ok = FALSE;
+
+		if (replaced_files == 1) {
+			SaveMimePartPair *pair = files->data;
+			const gchar *filename = tny_mime_part_get_filename (pair->part);
+			gchar *message = g_strdup_printf ("%s\n%s",
+							  _FM("docm_nc_replace_file"),
+							  (filename) ? filename : "");
+			confirm_overwrite_dialog = hildon_note_new_confirmation (NULL, message);
+			g_free (message);
+		} else {
+			confirm_overwrite_dialog = hildon_note_new_confirmation (NULL,
+										 _FM("docm_nc_replace_multiple"));
 		}
+		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK)
+			is_ok = FALSE;
+
 		gtk_widget_destroy (confirm_overwrite_dialog);
 	}
 
