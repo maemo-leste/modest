@@ -2923,8 +2923,7 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 
 	}
 
-	modest_address_book_select_addresses (editor);
-
+	modest_address_book_select_addresses (editor, GTK_WINDOW (window));
 }
 
 void
@@ -4184,6 +4183,9 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	g_signal_connect (G_OBJECT (low_toggle), "toggled", G_CALLBACK (on_priority_toggle), &helper);
 	g_signal_connect (G_OBJECT (html_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
 	g_signal_connect (G_OBJECT (text_toggle), "toggled", G_CALLBACK (on_format_toggle), &helper);
+
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+				     GTK_WINDOW (dialog), GTK_WINDOW (window));
 
 	/* Save settings if the user clicked on done */
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {

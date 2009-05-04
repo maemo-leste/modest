@@ -2717,7 +2717,7 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 
 	}
 
-	modest_address_book_select_addresses (editor);
+	modest_address_book_select_addresses (editor, GTK_WINDOW (window));
 
 }
 

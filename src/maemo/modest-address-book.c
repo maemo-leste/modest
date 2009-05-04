@@ -169,7 +169,8 @@ modest_address_book_add_address (const gchar *address)
 }
 
 void
-modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
+modest_address_book_select_addresses (ModestRecptEditor *recpt_editor,
+				      GtkWindow *parent_window)
 {
 #if MODEST_ABOOK_API < 4
 	GtkWidget *contact_view = NULL;

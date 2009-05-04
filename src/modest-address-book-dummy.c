@@ -41,7 +41,8 @@ void modest_address_book_add_address (const gchar *address)
 }
 
 
-void modest_address_book_select_addresses (ModestRecptEditor *editor)
+void modest_address_book_select_addresses (ModestRecptEditor *editor,
+					   GtkWindow *parent_window);
 {
 	return;
 }

@@ -226,7 +226,8 @@ modest_address_book_add_address (const gchar *address)
 }
 
 void
-modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
+modest_address_book_select_addresses (ModestRecptEditor *recpt_editor,
+				      GtkWindow *parent_window)
 {
 #if MODEST_ABOOK_API < 4
 	GtkWidget *contact_view = NULL;
@@ -269,7 +270,7 @@ modest_address_book_select_addresses (ModestRecptEditor *recpt_editor)
 	}
 #else /* MODEST_ABOOK_API < 4 */
 	/* TODO: figure out how to make the contact chooser modal */
-	contact_chooser = osso_abook_contact_chooser_new_with_capabilities (NULL,
+	contact_chooser = osso_abook_contact_chooser_new_with_capabilities (parent_window,
 									    _AB("addr_ti_dia_select_contacts"),
 									    OSSO_ABOOK_CAPS_EMAIL, 
 									    OSSO_ABOOK_CONTACT_ORDER_NAME);
