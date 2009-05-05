@@ -993,6 +993,7 @@ modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
 				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
 				    &header, -1);
 		message_reader (window, priv, header, row_reference);
+		g_object_unref (header);
 	}
 	gtk_tree_path_free (path);
 
