@@ -4278,7 +4278,7 @@ setup_menu (ModestMsgEditWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_insert_image),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: add attachment"), NULL,
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_add_attachment"), NULL,
 					   APP_MENU_CALLBACK (modest_msg_edit_window_add_attachment_clicked),
 					   NULL);
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"), NULL,
