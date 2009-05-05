@@ -935,11 +935,17 @@ modest_attachments_view_get_sizes (ModestAttachmentsView *attachments_view,
 				size = 32768;
 			}
 			*attachments_size += size;
-			
 		}
 		g_object_unref (part);
 	}
 	g_list_free (children);
+}
+
+static void
+dummy_clear_func (GtkClipboard *clipboard,
+		  gpointer user_data_or_owner)
+{
+	/* Do nothing */
 }
 
 static void
@@ -951,8 +957,7 @@ own_clipboard (ModestAttachmentsView *atts_view)
 
 	gtk_clipboard_set_with_owner (gtk_widget_get_clipboard (GTK_WIDGET (atts_view), GDK_SELECTION_PRIMARY),
 				      targets, G_N_ELEMENTS (targets),
-				      clipboard_get, NULL, G_OBJECT(atts_view));
-			      
+				      clipboard_get, dummy_clear_func, G_OBJECT(atts_view));
 }
 
 static gboolean 
