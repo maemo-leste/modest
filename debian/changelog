@@ -1,3 +1,19 @@
+modest (3.0.16-rc1) unstable; urgency=low
+
+  * Week 19, 2009 - Tuesday release.
+  * Fixes: NB#114271 - Not able to configure accounts using easy account setup in Email
+  * Fixes: NB#111687 - SMTP settings are taking wrong in auto configuration
+  * Fixes: NB#112215 - task swithcer and status bar is missing when ever delete confirmation dialog gets popup
+  * Fixes: NB#114434 - file name is missing in the "replace existing file of the same name" dialog
+  * Fixes: NB#114508 - Error occurred when attempt to rename the local folder after removing one attachment from message
+  * Fixes: NB#114517 - Save ' button got again highlighted
+  * Fixes: NB#111126 - <coverity> Misc defects from tinymail
+  * Fixes: NB#112297 - Editor: "Send" button is missing in the message header
+  * Fixes: NB#114379 - Standalone editor: Outbox folder status is not updated after message is sent.
+  * Fixes: NB#112535 - Editor: Attached file should be shown on the same line as "Attachment" text string
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue,  5 May 2009 13:46:09 +0300
+
 modest (3.0.15-rc3) unstable; urgency=low
 
   * Week 19, 2009 - Thursday release. r9236.
@@ -12,7 +28,7 @@ modest (3.0.15-rc3) unstable; urgency=low
   * Fixes: NB#113282 - Viewer: "Priority" field is added in message header area after removing an attachment. 
   * Fixes: NB#113634 - Viewer view: progress indication should be shown if opening a proper viewer for an attachment takes longer time 
 
- -- Moises Martinez <moises.martinez@nokia.com>  Thu, 30 Apr 2009 13:36:55 +0300
+-- Moises Martinez <moises.martinez@nokia.com>  Thu, 30 Apr 2009 13:36:55 +0300
 
 modest (3.0.15-rc2) unstable; urgency=low
 
