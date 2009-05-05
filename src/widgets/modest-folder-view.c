@@ -256,6 +256,7 @@ struct _ModestFolderViewPrivate {
 	gulong                outbox_deleted_handler;
 
 	guint    activity_changed_handler;
+	GdkColor *active_color;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -605,15 +606,13 @@ format_compact_style (gchar **item_name,
 
 		buffer = g_string_append (buffer, *item_name);
 		if (concat_folder_name) {
-			if (bold) buffer = g_string_append (buffer, "<span weight='bold'>");
 			buffer = g_string_append (buffer, folder_name);
-			if (bold) buffer = g_string_append (buffer, "</span>");
 		}
 		g_free (*item_name);
 		g_object_unref (account);
 
 		*item_name = g_string_free (buffer, FALSE);
-		*use_markup = bold;
+		*use_markup = FALSE;
 	} else {
 		*use_markup = FALSE;
 	}
@@ -740,10 +739,21 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 	if (item_name && item_weight) {
 		/* Set the name in the treeview cell: */
-		if (use_markup)
-			g_object_set (rendobj, "markup", item_name, "weight-set", FALSE, NULL);
-		else
-			g_object_set (rendobj, "text", item_name, "weight-set", TRUE, "weight", item_weight, NULL);
+		if (priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT && item_weight == 800 && priv->active_color) {
+			g_object_set (rendobj, 
+				      "text", item_name, 
+				      "weight-set", FALSE,
+				      "foreground-set", TRUE,
+				      "foreground-gdk", priv->active_color,
+				      NULL);
+		} else {
+			g_object_set (rendobj, 
+				      "text", item_name,
+				      "foreground-set", FALSE,
+				      "weight-set", TRUE, 
+				      "weight", item_weight,
+				      NULL);
+		}
 
 		/* Notify display name observers */
 		/* TODO: What listens for this signal, and how can it use only the new name? */
@@ -1310,6 +1320,8 @@ modest_folder_view_init (ModestFolderView *obj)
 						  G_CALLBACK(on_configuration_key_changed),
 						  obj);
 
+	priv->active_color = NULL;
+
 	update_style (obj);
 	g_signal_connect (G_OBJECT (obj), "notify::style", G_CALLBACK (on_notify_style), (gpointer) obj);
 
@@ -1334,6 +1346,11 @@ modest_folder_view_finalize (GObject *obj)
 	g_return_if_fail (obj);
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
+
+	if (priv->active_color) {
+		gdk_color_free (priv->active_color);
+		priv->active_color = NULL;
+	}
 
 	if (priv->timer_expander != 0) {
 		g_source_remove (priv->timer_expander);
@@ -3965,7 +3982,7 @@ static void
 update_style (ModestFolderView *self)
 {
 	ModestFolderViewPrivate *priv;
-	GdkColor style_color;
+	GdkColor style_color, style_active_color;
 	PangoAttrList *attr_list;
 	GtkStyle *style;
 	PangoAttribute *attr;
@@ -3998,6 +4015,12 @@ update_style (ModestFolderView *self)
 			      "attributes", attr_list,
 			      NULL);
 		pango_attr_list_unref (attr_list);
+	}
+	if (priv->active_color)
+		gdk_color_free (priv->active_color);
+
+	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
+		priv->active_color = gdk_color_copy (&style_active_color);
 	}
 }
 
