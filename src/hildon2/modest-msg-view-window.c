@@ -837,7 +837,6 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	ModestMsgViewWindowPrivate *priv = NULL;
 	TnyFolder *header_folder = NULL;
 	ModestHeaderView *header_view = NULL;
-	ModestWindow *main_window = NULL;
 	ModestWindowMgr *mgr = NULL;
 
 	MODEST_DEBUG_BLOCK (
@@ -852,28 +851,14 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	/* Remember the message list's TreeModel so we can detect changes 
+	/* Remember the message list's TreeModel so we can detect changes
 	 * and change the list selection when necessary: */
-
-	main_window = modest_window_mgr_get_main_window(mgr, FALSE); /* don't create */
-	if (main_window) {
-		header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget(
-							 MODEST_MAIN_WINDOW(main_window),
-							 MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
-	}
-	
-	if (header_view != NULL){
-		header_folder = modest_header_view_get_folder(header_view);
-		/* This could happen if the header folder was
-		   unseleted before opening this msg window (for
-		   example if the user selects an account in the
-		   folder view of the main window */
-		if (header_folder) {
-			priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == TNY_FOLDER_TYPE_OUTBOX);
-			priv->header_folder_id = tny_folder_get_id(header_folder);
-			g_assert(priv->header_folder_id != NULL);
-			g_object_unref(header_folder);
-		}
+	header_folder = modest_header_view_get_folder (header_view);
+	if (header_folder) {
+		priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) ==
+				   TNY_FOLDER_TYPE_OUTBOX);
+		priv->header_folder_id = tny_folder_get_id (header_folder);
+		g_object_unref(header_folder);
 	}
 
 	/* Setup row references and connect signals */
@@ -925,11 +910,11 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 }
 
 ModestWindow *
-modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view, 
-					      const gchar *modest_account_name,
+modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
+					     const gchar *modest_account_name,
 					     const gchar *mailbox,
-					      const gchar *msg_uid,
-					      GtkTreeRowReference *row_reference)
+					     const gchar *msg_uid,
+					     GtkTreeRowReference *row_reference)
 {
 	ModestMsgViewWindow *window = NULL;
 	ModestMsgViewWindowPrivate *priv = NULL;
@@ -956,9 +941,9 @@ modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
 		   example if the user selects an account in the
 		   folder view of the main window */
 		if (header_folder) {
-			priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == TNY_FOLDER_TYPE_OUTBOX);
+			priv->is_outbox = (modest_tny_folder_guess_folder_type (header_folder) == 
+					   TNY_FOLDER_TYPE_OUTBOX);
 			priv->header_folder_id = tny_folder_get_id(header_folder);
-			g_assert(priv->header_folder_id != NULL);
 			g_object_unref(header_folder);
 		}
 	}
@@ -996,7 +981,7 @@ modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
 
 	if (header_view != NULL){
 		modest_header_view_add_observer(header_view,
-				MODEST_HEADER_VIEW_OBSERVER(window));
+						MODEST_HEADER_VIEW_OBSERVER(window));
 	}
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), NULL);
