@@ -28,7 +28,7 @@ modest (3.0.15-rc3) unstable; urgency=low
   * Fixes: NB#113282 - Viewer: "Priority" field is added in message header area after removing an attachment. 
   * Fixes: NB#113634 - Viewer view: progress indication should be shown if opening a proper viewer for an attachment takes longer time 
 
--- Moises Martinez <moises.martinez@nokia.com>  Thu, 30 Apr 2009 13:36:55 +0300
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 30 Apr 2009 13:36:55 +0300
 
 modest (3.0.15-rc2) unstable; urgency=low
 
