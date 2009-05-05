@@ -2924,7 +2924,7 @@ void
 modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean get_all)
 {
 	ModestMsgViewWindowPrivate *priv;
-	TnyList *mime_parts = NULL;
+	TnyList *mime_parts = NULL, *tmp;
 	gchar *confirmation_message;
 	gint response;
 	gint n_attachments;
@@ -2938,17 +2938,20 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	 * because we don't have selection
 	 */
 	mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		
-	/* Remove already purged messages from mime parts list */
-	iter = tny_list_create_iterator (mime_parts);
+
+	/* Remove already purged messages from mime parts list. We use
+	   a copy of the list to remove items in the original one */
+	tmp = tny_list_copy (mime_parts);
+	iter = tny_list_create_iterator (tmp);
 	while (!tny_iterator_is_done (iter)) {
 		TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		tny_iterator_next (iter);
-		if (tny_mime_part_is_purged (part)) {
+		if (tny_mime_part_is_purged (part))
 			tny_list_remove (mime_parts, (GObject *) part);
-		}
+
 		g_object_unref (part);
+		tny_iterator_next (iter);
 	}
+	g_object_unref (tmp);
 	g_object_unref (iter);
 
 	if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, TRUE) ||
@@ -2993,7 +2996,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	}
 
 	priv->purge_timeout = g_timeout_add (2000, show_remove_attachment_information, window);
-	
+
 	iter = tny_list_create_iterator (mime_parts);
 	while (!tny_iterator_is_done (iter)) {
 		TnyMimePart *part;
@@ -3023,8 +3026,6 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 		g_object_unref (priv->remove_attachment_banner);
 		priv->remove_attachment_banner = NULL;
 	}
-
-
 }
 
 

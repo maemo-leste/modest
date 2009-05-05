@@ -536,9 +536,10 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, filename, 1, part, -1);
 			attachments_added ++;
 			g_free (filename);
-			g_object_unref (part);
 		}
+		g_object_unref (part);
 	}
+	g_object_unref (iterator);
 
 	selector = GTK_WIDGET (hildon_touch_selector_new ());
 	renderer = gtk_cell_renderer_text_new ();
@@ -572,6 +573,9 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 		}
 		if (tny_list_get_length (att_list) == 0)
 			result = FALSE;
+
+		g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
+		g_list_free (selected_rows);
 	} else {
 		result = FALSE;
 	}

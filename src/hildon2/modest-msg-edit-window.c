@@ -2636,7 +2636,6 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 			g_object_unref (att_list);
 			return;
 		}
-		
 	} else {
 		g_object_ref (att_list);
 	}
@@ -2707,7 +2706,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 	g_object_unref (att_list);
 
 	/* if the last attachment has been removed, focus the Subject: field */
-	if (!modest_attachments_view_has_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view))) 
+	if (!modest_attachments_view_has_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view)))
 		gtk_widget_grab_focus (priv->subject_field);
 }
 
