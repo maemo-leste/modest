@@ -167,6 +167,7 @@ struct _ModestHeaderViewPrivate {
 
 	ModestDatetimeFormatter *datetime_formatter;
 
+	GtkCellRenderer *renderer_subject;
 	GtkCellRenderer *renderer_address;
 	GtkCellRenderer *renderer_date_status;
 };
@@ -359,7 +360,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	GtkCellRenderer *renderer_header,
 		*renderer_attach, *renderer_compact_date_or_status;
 	GtkCellRenderer *renderer_compact_header, *renderer_recpt_box, 
-		*renderer_subject, *renderer_subject_box, *renderer_recpt,
+		*renderer_subject_box, *renderer_recpt,
 		*renderer_priority;
 	ModestHeaderViewPrivate *priv;
 	GtkTreeViewColumn *compact_column = NULL;
@@ -382,7 +383,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	renderer_subject_box = modest_hbox_cell_renderer_new ();
 	renderer_recpt = gtk_cell_renderer_text_new ();
 	priv->renderer_address = renderer_recpt;
-	renderer_subject = gtk_cell_renderer_text_new ();
+	priv->renderer_subject = gtk_cell_renderer_text_new ();
 	renderer_compact_date_or_status  = gtk_cell_renderer_text_new ();
 	priv->renderer_date_status = renderer_compact_date_or_status;
 
@@ -392,8 +393,8 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set_data (G_OBJECT (renderer_compact_header), "recpt-box-renderer", renderer_recpt_box);
 	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_subject_box), renderer_priority, FALSE);
 	g_object_set_data (G_OBJECT (renderer_subject_box), "priority-renderer", renderer_priority);
-	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_subject_box), renderer_subject, TRUE);
-	g_object_set_data (G_OBJECT (renderer_subject_box), "subject-renderer", renderer_subject);
+	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_subject_box), priv->renderer_subject, TRUE);
+	g_object_set_data (G_OBJECT (renderer_subject_box), "subject-renderer", priv->renderer_subject);
 	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_attach, FALSE);
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "attach-renderer", renderer_attach);
 	modest_hbox_cell_renderer_append (MODEST_HBOX_CELL_RENDERER (renderer_recpt_box), renderer_recpt, TRUE);
@@ -413,10 +414,10 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set(G_OBJECT(renderer_header),
 		     "ellipsize", PANGO_ELLIPSIZE_END,
 		     NULL);
-	g_object_set (G_OBJECT (renderer_subject),
+	g_object_set (G_OBJECT (priv->renderer_subject),
 		      "ellipsize", PANGO_ELLIPSIZE_END, "yalign", 1.0,
 		      NULL);
-	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (renderer_subject), 1);
+	gtk_cell_renderer_text_set_fixed_height_from_font (GTK_CELL_RENDERER_TEXT (priv->renderer_subject), 1);
 	g_object_set (G_OBJECT (renderer_recpt),
 		      "ellipsize", PANGO_ELLIPSIZE_END, "yalign", 0.1,
 		      NULL);
@@ -2365,9 +2366,11 @@ update_style (ModestHeaderView *self)
 {
 	ModestHeaderViewPrivate *priv;
 	GdkColor style_color;
+	GdkColor style_active_color;
 	PangoAttrList *attr_list;
 	GtkStyle *style;
 	PangoAttribute *attr;
+	GdkColor *new_color;
 
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
@@ -2416,5 +2419,15 @@ update_style (ModestHeaderView *self)
 			      "scale-set", TRUE,
 			      NULL);
 	}
+
+	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
+		new_color = gdk_color_copy (&style_active_color);
+	} else {
+		new_color = NULL;
+	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	g_object_set_data (G_OBJECT (priv->renderer_subject), BOLD_IS_ACTIVE_COLOR, GINT_TO_POINTER (new_color != NULL));
+	g_object_set_data_full (G_OBJECT (priv->renderer_subject), ACTIVE_COLOR, new_color, (GDestroyNotify) gdk_color_free);
+#endif
 }
 

@@ -35,6 +35,9 @@
 
 G_BEGIN_DECLS
 
+#define ACTIVE_COLOR "active-color"
+#define BOLD_IS_ACTIVE_COLOR "bold-is-active-color"
+
 /* PROTECTED method. It's useful when we want to force a given
    selection to reload a msg. For example if we have selected a header
    in offline mode, when Modest become online, we want to reload the

@@ -131,17 +131,40 @@ set_cell_text (GtkCellRenderer *renderer,
 	       const gchar *text, 
 	       TnyHeaderFlags flags)
 {
-	PangoWeight weight;
 	gboolean strikethrough;
+	gboolean bold_is_active_color;
+	GdkColor *color;
+	PangoWeight weight;
 
-	weight =  (flags & TNY_HEADER_FLAG_SEEN) ? PANGO_WEIGHT_NORMAL: PANGO_WEIGHT_ULTRABOLD;
+	bold_is_active_color = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), BOLD_IS_ACTIVE_COLOR));
+	if (bold_is_active_color) {
+		color = g_object_get_data (G_OBJECT (renderer), ACTIVE_COLOR);
+	}
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	weight =  PANGO_WEIGHT_NORMAL;
+#else
+	weight =  (bold_is_active_color || (flags & TNY_HEADER_FLAG_SEEN)) ? PANGO_WEIGHT_NORMAL: PANGO_WEIGHT_ULTRABOLD;
+#endif
 	strikethrough = (flags & TNY_HEADER_FLAG_DELETED) ?  TRUE:FALSE;
 	g_object_freeze_notify (G_OBJECT (renderer));
 	g_object_set (G_OBJECT (renderer), 
 		      "text", text, 
-		      "weight", (flags & TNY_HEADER_FLAG_SEEN) ? PANGO_WEIGHT_NORMAL : PANGO_WEIGHT_ULTRABOLD,
+		      "weight", weight,
 		      "strikethrough", (flags &TNY_HEADER_FLAG_DELETED) ? TRUE : FALSE,
 		      NULL);
+	if (bold_is_active_color && color) {
+		if (flags & TNY_HEADER_FLAG_SEEN) {
+			g_object_set (G_OBJECT (renderer),
+				      "foreground-set", FALSE,
+				      NULL);
+		} else {
+			g_object_set (G_OBJECT (renderer),
+				      "foreground-gdk", color,
+				      "foreground-set", TRUE,
+				      NULL);
+		}
+	}
 	g_object_thaw_notify (G_OBJECT (renderer));
 }
 
