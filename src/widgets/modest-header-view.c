@@ -403,7 +403,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	g_object_set_data (G_OBJECT (renderer_recpt_box), "date-renderer", renderer_compact_date_or_status);
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	g_object_set (G_OBJECT (renderer_compact_header), "xpad", MODEST_MARGIN_DOUBLE, NULL);
+	g_object_set (G_OBJECT (renderer_compact_header), "xpad", 0, NULL);
 #endif
 	g_object_set (G_OBJECT (renderer_subject_box), "yalign", 1.0, NULL);
 #ifndef MODEST_TOOLKIT_GTK
@@ -445,8 +445,8 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	gtk_cell_renderer_set_fixed_size (renderer_priority, 32, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
 #elif MODEST_TOOLKIT_HILDON2
-	gtk_cell_renderer_set_fixed_size (renderer_attach, 24, 26);
-	gtk_cell_renderer_set_fixed_size (renderer_priority, 24, 26);
+	gtk_cell_renderer_set_fixed_size (renderer_attach, 24 + MODEST_MARGIN_DEFAULT, 26);
+	gtk_cell_renderer_set_fixed_size (renderer_priority, 24 + MODEST_MARGIN_DEFAULT, 26);
 	gtk_cell_renderer_set_fixed_size (renderer_compact_header, -1, 64);
 #else
 	gtk_cell_renderer_set_fixed_size (renderer_attach, 16, 16);
