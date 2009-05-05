@@ -106,6 +106,9 @@ void modest_security_options_view_enable_changes (ModestSecurityOptionsView* sel
  **/
 gboolean modest_security_options_view_auth_check (ModestSecurityOptionsView* self);
 
+gboolean modest_security_options_view_has_missing_mandatory_data (ModestSecurityOptionsView* self);
+
+
 G_END_DECLS
 
 #endif /* __MODEST_SECURITY_OPTIONS_VIEW_H__ */

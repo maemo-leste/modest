@@ -45,6 +45,16 @@
 #define PORT_MIN 1
 #define PORT_MAX 65535
 
+typedef struct _ModestMaemoSecurityOptionsViewPrivate ModestMaemoSecurityOptionsViewPrivate;
+struct _ModestMaemoSecurityOptionsViewPrivate {
+	gboolean missing_data;
+};
+
+#define MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE(o) \
+	(G_TYPE_INSTANCE_GET_PRIVATE((o), \
+				     MODEST_TYPE_MAEMO_SECURITY_OPTIONS_VIEW, \
+				     ModestMaemoSecurityOptionsViewPrivate))
+
 static void modest_maemo_security_options_view_init (ModestMaemoSecurityOptionsView *obj);
 static void modest_maemo_security_options_view_finalize (GObject *obj);
 static void modest_maemo_security_options_view_class_init (ModestMaemoSecurityOptionsViewClass *klass);
@@ -199,35 +209,39 @@ on_entry_changed (GtkEditable *editable,
 		  gpointer user_data)
 {
 	ModestSecurityOptionsView* self;
+	ModestMaemoSecurityOptionsViewPrivate *priv;
  	ModestSecurityOptionsViewPrivate *ppriv;
 	ModestProtocolType auth_proto;
 	ModestSecureauthPicker *picker;
-	gboolean is_secure, missing;
+	gboolean is_secure;
 	ModestProtocolRegistry *protocol_registry;
 
 	self = MODEST_SECURITY_OPTIONS_VIEW (user_data);
+	priv = MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Outgoing username is mandatory if outgoing auth is secure */
 	picker = MODEST_SECUREAUTH_PICKER (ppriv->auth_view);
 	auth_proto = modest_secureauth_picker_get_active_secureauth (picker);
-	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry, 
+	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry,
 								      auth_proto);
 
-	if (is_secure && 
+	if (is_secure &&
 	    !g_ascii_strcasecmp (hildon_entry_get_text (HILDON_ENTRY (ppriv->user_entry)), "")) {
-		missing = TRUE;
+		priv->missing_data = TRUE;
 	} else {
-		missing = FALSE;
+		priv->missing_data = FALSE;
 	}
 
-	if (!missing && ppriv->full && !modest_number_editor_is_valid (MODEST_NUMBER_EDITOR (ppriv->port_view)))
-		missing = TRUE;
-	
+	if (!priv->missing_data &&
+	    ppriv->full &&
+	    !modest_number_editor_is_valid (MODEST_NUMBER_EDITOR (ppriv->port_view)))
+		priv->missing_data = TRUE;
+
 	/* Emit a signal to notify if mandatory data is missing */
-	g_signal_emit_by_name (G_OBJECT (self), "missing_mandatory_data", 
-			       missing, NULL);
+	g_signal_emit_by_name (G_OBJECT (self), "missing_mandatory_data",
+			       priv->missing_data, NULL);
 }
 
 void
@@ -384,8 +398,18 @@ modest_maemo_security_options_view_new  (ModestSecurityOptionsType type,
 	return (GtkWidget *) self;
 }
 
-static void 
-modest_maemo_security_options_view_load_settings (ModestSecurityOptionsView* self, 
+gboolean
+modest_security_options_view_has_missing_mandatory_data (ModestSecurityOptionsView* self)
+{
+ 	ModestMaemoSecurityOptionsViewPrivate *priv;
+
+	priv = MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+
+	return priv->missing_data;
+}
+
+static void
+modest_maemo_security_options_view_load_settings (ModestSecurityOptionsView* self,
 						  ModestAccountSettings *settings)
 {
  	ModestSecurityOptionsViewPrivate *ppriv;
@@ -491,6 +515,7 @@ modest_maemo_security_options_view_class_init (ModestMaemoSecurityOptionsViewCla
 
 	modest_maemo_security_options_view_parent_class = g_type_class_peek_parent (klass);
 
+	g_type_class_add_private (gobject_class, sizeof (ModestMaemoSecurityOptionsViewPrivate));
 	gobject_class->finalize = modest_maemo_security_options_view_finalize;
 
 	MODEST_SECURITY_OPTIONS_VIEW_CLASS (klass)->load_settings = 

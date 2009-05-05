@@ -1423,10 +1423,11 @@ enable_buttons (ModestDefaultAccountSettingsDialog *self)
 {
 	gboolean enable_ok = TRUE;
 	ModestProtocolRegistry *protocol_registry;
+	ModestSecurityOptionsView *sec_view;
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
-	
+
 	/* The account details title is mandatory: */
 	if (entry_is_empty(priv->entry_account_title))
 		enable_ok = FALSE;
@@ -1434,7 +1435,7 @@ enable_buttons (ModestDefaultAccountSettingsDialog *self)
 	/* The user details username is mandatory: */
 	if (enable_ok && entry_is_empty(priv->entry_user_username))
 		enable_ok = FALSE;
-		
+
 	/* The user details email address is mandatory: */
 	if (enable_ok && entry_is_empty (priv->entry_user_email))
 		enable_ok = FALSE;
@@ -1443,12 +1444,22 @@ enable_buttons (ModestDefaultAccountSettingsDialog *self)
 	if (enable_ok && entry_is_empty(priv->entry_incomingserver))
 		enable_ok = FALSE;
 
+	sec_view = MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security);
+	if (enable_ok &&
+	    modest_security_options_view_has_missing_mandatory_data (sec_view))
+		enable_ok = FALSE;
+
 	/* The custom outgoing server is mandatory: */
 	if (enable_ok && entry_is_empty(priv->entry_outgoingserver))
 		enable_ok = FALSE;
 
+	sec_view = MODEST_SECURITY_OPTIONS_VIEW (priv->outgoing_security);
+	if (enable_ok &&
+	    modest_security_options_view_has_missing_mandatory_data (sec_view))
+		enable_ok = FALSE;
+
 	protocol_registry = modest_runtime_get_protocol_registry ();
-			
+
 	/* Enable the buttons, 
 	 * identifying them via their associated response codes:
 	 */

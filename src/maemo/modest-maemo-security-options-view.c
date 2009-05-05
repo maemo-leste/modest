@@ -51,6 +51,7 @@
 
 typedef struct _ModestMaemoSecurityOptionsViewPrivate ModestMaemoSecurityOptionsViewPrivate;
 struct _ModestMaemoSecurityOptionsViewPrivate {
+	gboolean missing_data;
 };
 
 #define MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE(o) \
@@ -208,32 +209,34 @@ on_entry_changed (GtkEditable *editable,
 		  gpointer user_data)
 {
 	ModestSecurityOptionsView* self;
+ 	ModestMaemoSecurityOptionsViewPrivate *priv;
  	ModestSecurityOptionsViewPrivate *ppriv;
 	ModestProtocolType auth_proto;
 	ModestSecureauthComboBox *combo;
-	gboolean is_secure, missing;
+	gboolean is_secure;
 	ModestProtocolRegistry *protocol_registry;
 
 	self = MODEST_SECURITY_OPTIONS_VIEW (user_data);
+	priv = MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Outgoing username is mandatory if outgoing auth is secure */
 	combo = MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view);
 	auth_proto = modest_secureauth_combo_box_get_active_secureauth (combo);
-	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry, 
+	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry,
 								      auth_proto);
 
-	if (is_secure && 
+	if (is_secure &&
 	    !g_ascii_strcasecmp (gtk_entry_get_text (GTK_ENTRY (ppriv->user_entry)), "")) {
-		missing = TRUE;
+		priv->missing_data = TRUE;
 	} else {
-		missing = FALSE;
+		priv->missing_data = FALSE;
 	}
-	
+
 	/* Emit a signal to notify if mandatory data is missing */
-	g_signal_emit_by_name (G_OBJECT (self), "missing_mandatory_data", 
-			       missing, NULL);
+	g_signal_emit_by_name (G_OBJECT (self), "missing_mandatory_data",
+			       priv->missing_data, NULL);
 }
 
 static void
@@ -455,6 +458,16 @@ modest_maemo_security_options_view_changed (ModestSecurityOptionsView* self,
 		return TRUE;
 	else
 		return FALSE;
+}
+
+gboolean
+modest_security_options_view_has_missing_mandatory_data (ModestSecurityOptionsView* self)
+{
+ 	ModestMaemoSecurityOptionsViewPrivate *priv;
+
+	priv = MODEST_MAEMO_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
+
+	return priv->missing_data;
 }
 
 static void
