@@ -242,7 +242,6 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 
 		window_list = modest_window_mgr_get_window_list (mgr);
 		if (window_list == NULL) {
-			ModestWindow *old_win;
 			win = MODEST_WINDOW (modest_accounts_window_new ());
 			if (modest_window_mgr_register_window (mgr, win, NULL)) {
 				gtk_widget_show_all (GTK_WIDGET (win));
@@ -251,14 +250,6 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 				win = NULL;
 			}
 
-			old_win = win;
-			win = MODEST_WINDOW (modest_folder_window_new (NULL));
-			if (modest_window_mgr_register_window (mgr, win, NULL)) {
-				gtk_widget_show_all (GTK_WIDGET (win));
-			} else {
-				gtk_widget_destroy (GTK_WIDGET (win));
-				win = old_win;
-			}
 		} else {
 			g_list_free (window_list);
 		}
