@@ -431,11 +431,35 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	HildonWindowStack *stack;
 	gboolean nested_msg = FALSE;
 	ModestWindow *current_top;
+	GtkWidget *modal;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
 
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
+
+	/* Check that there is no active modal dialog */
+	modal = (GtkWidget *) modest_window_mgr_get_modal (self);
+	while (modal && GTK_IS_DIALOG (modal)) {
+		GtkWidget *parent;
+
+		/* Get the parent */
+		parent = (GtkWidget *) gtk_window_get_transient_for (GTK_WINDOW (modal));
+
+		/* Try to close it */
+		gtk_dialog_response (GTK_DIALOG (modal), GTK_RESPONSE_DELETE_EVENT);
+
+		/* Maybe the dialog was not closed, because a close
+		   confirmation dialog for example. Then ignore the
+		   register process */
+		if (GTK_IS_WINDOW (modal)) {
+			gtk_window_present (GTK_WINDOW (modal));
+			return FALSE;
+		}
+
+		/* Get next modal */
+		modal = parent;
+	}
 
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
