@@ -454,6 +454,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	GtkWidget *action_area_box;
 	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *alignment;
+	gchar *account_display_name = NULL;
 	
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
@@ -534,15 +535,6 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 		g_object_unref (window_icon);
 	}
 
-	/* Set window title */
-	if (TNY_IS_FOLDER (folder)) {
-		gchar *folder_name;
-
-		folder_name = modest_tny_folder_get_display_name (folder);
-		gtk_window_set_title (GTK_WINDOW (self), folder_name);
-		g_free (folder_name);
-	}
-
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
 	 * and we don't want to do that until later,
@@ -567,6 +559,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	mgr = modest_runtime_get_account_mgr ();
 	settings = modest_account_mgr_load_account_settings (mgr, account_name);
 	if (settings) {
+		account_display_name = g_strdup (modest_account_settings_get_display_name (settings));
 		store_settings = modest_account_settings_get_store_settings (settings);
 		if (store_settings) {
 			priv->current_store_account = 
@@ -575,6 +568,26 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 		}
 		g_object_unref (settings);
 	}
+	/* Set window title */
+	if (TNY_IS_FOLDER (folder)) {
+		gchar *folder_name;
+
+		if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_INBOX) {
+			const gchar *box_name;
+			box_name = mailbox;
+			if (box_name == NULL || box_name[0] == '\0') {
+				box_name = account_display_name;
+			}
+			folder_name = g_strconcat (_("mcen_me_folder_inbox"), " (", box_name, ")", NULL);
+		} else {
+			folder_name = modest_tny_folder_get_display_name (folder);
+		}
+		
+		gtk_window_set_title (GTK_WINDOW (self), folder_name);
+		g_free (folder_name);
+	}
+	g_free (account_display_name);
+
 
 	update_progress_hint (self);
 	update_sort_button (self);
