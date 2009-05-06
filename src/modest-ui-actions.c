@@ -3400,20 +3400,21 @@ do_create_folder (GtkWindow *parent_window,
 
 static void
 modest_ui_actions_create_folder(GtkWidget *parent_window,
-                                GtkWidget *folder_view)
+                                GtkWidget *folder_view,
+				TnyFolderStore *parent_folder)
 {
-	TnyFolderStore *parent_folder;
-
+	if (!parent_folder) {
 #ifdef MODEST_TOOLKIT_HILDON2
-	ModestTnyAccountStore *acc_store;
+		ModestTnyAccountStore *acc_store;
 
-	acc_store = modest_runtime_get_account_store ();
+		acc_store = modest_runtime_get_account_store ();
 
-	parent_folder = (TnyFolderStore *)
-		modest_tny_account_store_get_local_folders_account (acc_store);
+		parent_folder = (TnyFolderStore *)
+			modest_tny_account_store_get_local_folders_account (acc_store);
 #else
-	parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
+		parent_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW(folder_view));
 #endif
+	}
 
 	if (parent_folder) {
 		do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
@@ -3435,13 +3436,13 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestWindow *window)
 		if (!folder_view)
 			return;
 
-		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view);
+		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view, NULL);
 #ifdef MODEST_TOOLKIT_HILDON2
 	} else if (MODEST_IS_FOLDER_WINDOW (window)) {
 		GtkWidget *folder_view;
 
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
-		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view);
+		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view, NULL);
 #endif
 	} else {
 		g_assert_not_reached ();
@@ -4931,9 +4932,12 @@ on_move_to_dialog_response (GtkDialog *dialog,
 
 	switch (response) {
 		TnyFolderStore *dst_folder;
+		TnyFolderStore *selected;
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
-		modest_ui_actions_create_folder (GTK_WIDGET (dialog), GTK_WIDGET (folder_view));
+		selected = modest_folder_view_get_selected (folder_view);
+		modest_ui_actions_create_folder (GTK_WIDGET (dialog), GTK_WIDGET (folder_view), selected);
+		g_object_unref (selected);
 		return;
 	case GTK_RESPONSE_NONE:
 	case GTK_RESPONSE_CANCEL:
