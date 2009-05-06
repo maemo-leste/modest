@@ -813,22 +813,23 @@ modest_hildon2_window_mgr_get_modal (ModestWindowMgr *self)
 {
 	ModestHildon2WindowMgrPrivate *priv;
 	GList *toplevel_list;
-	GtkWidget *toplevel;
-	
+	GtkWindow *toplevel;
+
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), NULL);
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
 	toplevel = NULL;
 	toplevel_list = gtk_window_list_toplevels ();
 	while (toplevel_list) {
-		if (gtk_window_is_active (toplevel_list->data)) {
-			toplevel = toplevel_list->data;
+		if (gtk_window_is_active (toplevel_list->data) &&
+		    gtk_window_get_modal (toplevel_list->data)) {
+			toplevel = (GtkWindow *) toplevel_list->data;
 			break;
 		}
 		toplevel_list = g_list_next (toplevel_list);
 	}
 
-	return NULL;
+	return toplevel;
 }
 
 
