@@ -2135,9 +2135,34 @@ new_messages_arrived (ModestMailOperation *self,
 	   send&receive was invoked by the user then do not show any
 	   visual notification, only play a sound and activate the LED
 	   (for the Maemo version) */
-	if (TNY_IS_LIST(new_headers) && (tny_list_get_length (new_headers)) > 0)
-		modest_platform_on_new_headers_received (new_headers,
-							 show_visual_notifications);
+	if (TNY_IS_LIST(new_headers) && (tny_list_get_length (new_headers)) > 0) {
+
+		/* We only notify about really new messages (not seen) we get */
+		TnyList *actually_new_list;
+		TnyIterator *iterator;
+		actually_new_list = TNY_LIST (tny_simple_list_new ());
+		for (iterator = tny_list_create_iterator (new_headers);
+		     !tny_iterator_is_done (iterator);
+		     tny_iterator_next (iterator)) {
+			TnyHeader *header;
+			TnyHeaderFlags flags;
+			header = TNY_HEADER (tny_iterator_get_current (iterator));
+			flags = tny_header_get_flags (header);
+
+			if (!(flags & TNY_HEADER_FLAG_SEEN)) {
+				tny_list_append (actually_new_list, G_OBJECT (header));
+			}
+			g_object_unref (header);
+			
+		}
+		g_object_unref (iterator);
+
+		if (tny_list_get_length (actually_new_list) > 0) {
+			modest_platform_on_new_headers_received (actually_new_list,
+								 show_visual_notifications);
+		}
+		g_object_unref (actually_new_list);
+	}
 
 }
 
