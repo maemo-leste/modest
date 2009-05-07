@@ -79,6 +79,15 @@ modest_address_book_check_names (ModestRecptEditor *editor, gboolean update_addr
 gboolean
 modest_address_book_has_address (const gchar *address);
 
-
+/**
+ * modest_address_book_get_my_name:
+ * @:
+ *
+ * Returns user name from user's own vcard
+ *
+ * Returns: the user full name
+ **/
+const gchar *
+modest_address_book_get_my_name ();
 
 #endif /* __MODEST_ADDRESS_BOOK_H__ */

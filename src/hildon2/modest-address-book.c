@@ -1330,3 +1330,11 @@ modest_address_book_has_address (const gchar *address)
 
 	return result;
 }
+
+const gchar *
+modest_address_book_get_my_name ()
+{
+	OssoABookSelfContact *self_contact = osso_abook_self_contact_get_default ();
+
+	return osso_abook_contact_get_display_name (OSSO_ABOOK_CONTACT (self_contact));
+}

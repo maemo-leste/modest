@@ -58,3 +58,9 @@ gboolean modest_address_book_has_address (const gchar *address)
 	/* let's be optimistic */
 	return TRUE;
 }
+
+const gchar *
+modest_address_book_get_my_name ()
+{
+	return NULL;
+}

@@ -57,3 +57,9 @@ modest_address_book_has_address (const gchar *address)
 	g_message (__FUNCTION__);
 	return FALSE;
 }
+
+const gchar *
+modest_address_book_get_my_name ()
+{
+	return NULL;
+}
