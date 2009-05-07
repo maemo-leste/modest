@@ -1885,11 +1885,14 @@ set_priority (ModestGtkhtmlMsgView *self, TnyHeaderFlags flags)
 		gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), MODEST_HEADER_ICON_LOW, GTK_ICON_SIZE_MENU);
 	}
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	if (show_priority && MODEST_IS_COMPACT_MAIL_HEADER_VIEW (priv->mail_header_view)) {
 		gtk_widget_show_all  (priv->priority_box);
 	} else {
 		gtk_widget_hide_all (priv->priority_box);
 	}
+#endif
+
 }
 
 /* INCREMENTAL SEARCH IMPLEMENTATION */

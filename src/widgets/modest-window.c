@@ -35,13 +35,15 @@
 #include "modest-window-mgr.h"
 #include "modest-defs.h"
 #include <string.h> /* for strcmp */
-#include <hildon/hildon-defines.h>
 #include <gdk/gdkkeysyms.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 #include <X11/Xatom.h>
 #include <X11/XKBlib.h>
 #include <X11/Xdmcp.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-defines.h>
+#endif
 
 /* 'private'/'protected' functions */
 static void modest_window_class_init (ModestWindowClass *klass);
