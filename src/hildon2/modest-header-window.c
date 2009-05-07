@@ -578,7 +578,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 			if (box_name == NULL || box_name[0] == '\0') {
 				box_name = account_display_name;
 			}
-			folder_name = g_strconcat (_("mcen_me_folder_inbox"), " (", box_name, ")", NULL);
+			folder_name = g_strconcat (_("mcen_me_folder_inbox"), " - ", box_name, NULL);
 		} else {
 			folder_name = modest_tny_folder_get_display_name (folder);
 		}
