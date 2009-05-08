@@ -305,8 +305,7 @@ modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_e
 	while (email_lists_list) {
 		gchar *recipient_id = (gchar *) recipient_ids_list->data;
 		GSList *email_list = (GSList *) email_lists_list->data;
-		
-	  
+
 		tag = gtk_text_buffer_create_tag (buffer, NULL, 
 						  "underline", PANGO_UNDERLINE_SINGLE,
 						  "wrap-mode", GTK_WRAP_NONE,
@@ -314,17 +313,17 @@ modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_e
 
 		g_object_set_data (G_OBJECT (tag), "recipient-tag-id", GINT_TO_POINTER (RECIPIENT_TAG_ID));
 		g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
-		
+
 		for (node = email_list; node != NULL; node = g_slist_next (node)) {
 			gchar *recipient = (gchar *) node->data;
 
 			if ((recipient) && (strlen (recipient) != 0)) {
-				
+
 				if (!is_first_recipient)
 					gtk_text_buffer_insert (buffer, start, "\n", -1);
 
 				gtk_text_buffer_insert_with_tags (buffer, start, recipient, -1, tag, NULL);
-				
+
 				if (node->next != NULL)
 					gtk_text_buffer_insert (buffer, start, ";", -1);
 				is_first_recipient = FALSE;
@@ -333,6 +332,10 @@ modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_e
 
 		email_lists_list = g_slist_next (email_lists_list);
 		recipient_ids_list = g_slist_next (recipient_ids_list);
+
+		/* Add a separator between lists of emails*/
+		if (recipient_ids_list)
+			gtk_text_buffer_insert (buffer, start, ";", -1);
 	}
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 
