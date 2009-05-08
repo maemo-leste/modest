@@ -1385,6 +1385,19 @@ modest_folder_view_finalize (GObject *obj)
 		priv->display_name_changed_signal = 0;
 	}
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkTreeModel *tny_model;
+
+	if (get_inner_models (MODEST_FOLDER_VIEW (obj), NULL, NULL, &tny_model)) {
+		if (g_signal_handler_is_connected (tny_model,
+						   priv->activity_changed_handler)) {
+			g_signal_handler_disconnect (tny_model,
+						     priv->activity_changed_handler);
+			priv->activity_changed_handler = 0;
+		}
+	}
+#endif
+
 	if (priv->query) {
 		g_object_unref (G_OBJECT (priv->query));
 		priv->query = NULL;

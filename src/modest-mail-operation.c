@@ -2097,7 +2097,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 		}
 	}
 
-	if (!strcmp (name, " ") || strchr (name, '/')) {
+	if (!priv->error && (!strcmp (name, " ") || strchr (name, '/'))) {
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
