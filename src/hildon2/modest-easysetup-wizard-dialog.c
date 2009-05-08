@@ -59,6 +59,7 @@
 #include "modest-hildon-includes.h"
 #include "modest-maemo-security-options-view.h"
 #include "modest-account-protocol.h"
+#include "modest-address-book.h"
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -601,6 +602,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	GtkWidget *box;
 	ModestEasysetupWizardDialogPrivate *priv;
 	GtkWidget *align;
+	const gchar *my_name;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 
@@ -623,6 +625,12 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 					      on_entry_max, self);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       _("mcen_li_emailsetup_name"), FALSE, priv->entry_user_name);
+
+	/* Try to initialize the user name with my own contact */
+	my_name = modest_address_book_get_my_name ();
+	if (my_name)
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_name), my_name);
+
 	g_signal_connect(G_OBJECT(priv->entry_user_name), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 	gtk_widget_show (priv->entry_user_name);
