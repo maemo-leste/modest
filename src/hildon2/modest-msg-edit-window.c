@@ -3542,28 +3542,33 @@ body_insert_text (GtkTextBuffer *buffer,
 {
 	GtkTextIter end_iter;
 	gint offset;
+	glong utf8_len;
 
 	gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (buffer), &end_iter);
 
 	offset = gtk_text_iter_get_offset (&end_iter);
+	utf8_len = g_utf8_strlen (text, len);
 
-	if (offset + len > MAX_BODY_LENGTH) {
+	if (offset + utf8_len > MAX_BODY_LENGTH) {
 		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
 		if (offset < MAX_BODY_LENGTH)
 		{
 			gchar *result;
+			gchar *utf8_end;
+
+			utf8_end = g_utf8_offset_to_pointer (text, MAX_BODY_LENGTH - offset);
 
 			/* Prevent endless recursion */
-			result = g_strndup (text, MAX_BODY_LENGTH - offset);
+			result = g_strndup (text, utf8_end - text);
 			g_signal_handlers_block_by_func (G_OBJECT (buffer), G_CALLBACK (body_insert_text), window);
 			g_signal_emit_by_name (G_OBJECT (buffer), "insert-text", location,
-					       (gpointer) result, (gpointer) MAX_BODY_LENGTH - offset,
+					       (gpointer) result, (gpointer) (utf8_end - text),
 					       (gpointer) window);
 			g_signal_handlers_unblock_by_func (G_OBJECT (buffer), G_CALLBACK (body_insert_text), window);
 		}
 
 	}
-	if (offset + len > MAX_BODY_LENGTH) {
+	if (offset + utf8_len > MAX_BODY_LENGTH) {
 		hildon_banner_show_information (GTK_WIDGET (window), NULL, 
 						_CS("ckdg_ib_maximum_characters_reached"));
 	}
