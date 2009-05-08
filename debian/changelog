@@ -1,3 +1,22 @@
+modest (3.0.17-rc3) unstable; urgency=low
+
+  * Week 20, 2009 - Friday release
+  * Fixes: NB#111212 <coverity> CHECKED_RETURN type of defects from tinymail
+  * Fixes: NB#112215 task swithcer and status bar is missing when ever delete confirmation dialog gets popup
+  * Fixes: NB#112787 Folders view: show folder name in ActiveTextColor if it's status is non-zero
+  * Fixes: NB#112797 Messages view: show Subject in ActiveTextColor if the message is new
+  * Fixes: NB#113810 Accounts view should be shown also when Email is launched first time from other applications
+  * Fixes: NB#114384 email is hanging in certain scenario
+  * Fixes: NB#114489 Account settings dialog is not opened after connection to server failed error note is closed
+  * Fixes: NB#114785 Modest crashes in "own_clipboard" in a particular scenario
+  * Fixes: NB#114847 Autocapitalization is not true in Account settings dialog in Name field
+  * Fixes: NB#114892 New folder dialog opened during move messages, location path should be chosen folder in the currently selected folder
+  * Fixes: NB#115315 Invalid email address is displayed when check names is selected from menu item
+  * Fixes: NB#115353 Modest crashed when tried to reply the message which contains external images
+  * Fixes: NB#115390 <coverity> mixed findings 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 08 May 2009 12:59:17 +0300
+
 modest (3.0.16-rc1) unstable; urgency=low
 
   * Week 19, 2009 - Tuesday release.
