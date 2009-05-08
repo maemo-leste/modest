@@ -1107,33 +1107,36 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		/* Can't allocate memory for this operation */
 
 	case TNY_SERVICE_ERROR_UNKNOWN: 
-		return FALSE;			
+		return FALSE;
 	default:
 		g_debug ("Unexpected error %d", error->code);
 		g_return_val_if_reached (FALSE);
 	}
-	
+
 
 	if (error->code == TNY_SERVICE_ERROR_CERTIFICATE)
 		retval = modest_platform_run_certificate_confirmation_dialog (server_name,
 									      error->message);
 	else if (error->code == TNY_SERVICE_ERROR_AUTHENTICATE ||
 		 error->code == TNY_SERVICE_ERROR_CONNECT) {
+		TnyDevice *device = modest_runtime_get_device ();
 
 		modest_platform_run_information_dialog (NULL, prompt, TRUE);
 
-		/* Show the account dialog if it was wrong */
-		if (error->code == TNY_SERVICE_ERROR_AUTHENTICATE)
+		/* Show the account dialog. Checking the online status
+		   allows us to minimize the number of times that we
+		   incorrectly show the dialog */
+		if (tny_device_is_online (device))
 			show_wrong_password_dialog (account);
 
 		retval = TRUE;
 	}
 
 	g_debug ("%s: error code %d (%s", __FUNCTION__, error->code, error->message);
-	
+
 	if (prompt)
 		g_free (prompt);
-	
+
 	return retval;
 }
 
