@@ -493,7 +493,8 @@ show_password_warning_only (const gchar *msg)
 }
 
 static void 
-show_wrong_password_dialog (TnyAccount *account)
+show_wrong_password_dialog (TnyAccount *account, 
+			    gboolean show_banner)
 { 
 	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
 		modest_ui_actions_on_smtp_servers (NULL, NULL);
@@ -519,7 +520,8 @@ show_wrong_password_dialog (TnyAccount *account)
 		}
 	}
 	/* Show an explanatory temporary banner: */
-	modest_platform_information_banner (NULL, NULL, _("mcen_ib_username_pw_incorrect"));
+	if (show_banner)
+		modest_platform_information_banner (NULL, NULL, _("mcen_ib_username_pw_incorrect"));
 }
 
 /* This callback will be called by Tinymail when it needs the password
@@ -650,7 +652,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 		if (settings_have_password) {
 			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
-			show_wrong_password_dialog (account);
+			show_wrong_password_dialog (account, TRUE);
 
 			if (cancel)
 				*cancel = TRUE;
@@ -1127,7 +1129,8 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		   allows us to minimize the number of times that we
 		   incorrectly show the dialog */
 		if (tny_device_is_online (device))
-			show_wrong_password_dialog (account);
+			show_wrong_password_dialog (account,
+						    (error->code == TNY_SERVICE_ERROR_CONNECT) ? FALSE : TRUE);
 
 		retval = TRUE;
 	}
