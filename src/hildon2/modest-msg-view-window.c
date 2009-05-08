@@ -1843,13 +1843,13 @@ message_reader (ModestMsgViewWindow *window,
 
 	g_return_val_if_fail (row_reference != NULL, FALSE);
 
+	/* We set the header from model while we're loading */
+	tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
+	gtk_window_set_title (GTK_WINDOW (window), _CS("ckdg_pb_updating"));
+
 	mgr = modest_runtime_get_window_mgr ();
 	/* Msg download completed */
 	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
-
-		/* We set the header from model while we're loading */
-		tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
-		gtk_window_set_title (GTK_WINDOW (window), _CS("ckdg_pb_updating"));
 
 		/* Ask the user if he wants to download the message if
 		   we're not online */
@@ -1878,13 +1878,13 @@ message_reader (ModestMsgViewWindow *window,
 			return TRUE;
 		}
 	}
-	
+
 	folder = tny_header_get_folder (header);
 	account = tny_folder_get_account (folder);
 	info = g_slice_new (MsgReaderInfo);
 	info->header = g_object_ref (header);
 	info->row_reference = gtk_tree_row_reference_copy (row_reference);
-	
+
 	message_reader_performer (FALSE, NULL, (GtkWindow *) window, account, info);
 	g_object_unref (account);
 	g_object_unref (folder);
