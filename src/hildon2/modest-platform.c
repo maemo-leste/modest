@@ -645,7 +645,8 @@ on_response (GtkDialog *dialog,
 		parent = g_object_get_data (G_OBJECT (picker), FOLDER_PICKER_CURRENT_FOLDER);
 
 	/* Look for another folder with the same name */
-	if (modest_tny_folder_has_subfolder_with_name (parent, new_name, TRUE))
+	if (!TNY_IS_MERGE_FOLDER (parent) &&
+	    modest_tny_folder_has_subfolder_with_name (parent, new_name, TRUE))
 		exists = TRUE;
 
 	if (!exists) {
@@ -893,15 +894,17 @@ folder_picker_clicked (GtkButton *button,
 	store = folder_chooser_dialog_run (helper->folder_view);
 	if (store) {
 		const gchar *current_name;
-		gboolean exists;
+		gboolean exists = FALSE;
 
 		folder_picker_set_store (GTK_BUTTON (button), store);
 
 		/* Update the name of the folder */
 		current_name = gtk_entry_get_text (helper->entry);
-		exists = modest_tny_folder_has_subfolder_with_name (store,
-								    current_name,
-								    TRUE);
+
+		if (TNY_IS_FOLDER_STORE (store))
+			exists = modest_tny_folder_has_subfolder_with_name (store,
+									    current_name,
+									    TRUE);
 		if (exists) {
 			gchar *new_name = get_next_folder_name (NULL, store);
 			gtk_entry_set_text (helper->entry, new_name);

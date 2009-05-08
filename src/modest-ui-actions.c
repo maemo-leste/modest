@@ -46,6 +46,7 @@
 #include "modest-platform.h"
 #include "modest-debug.h"
 #include <tny-mime-part.h>
+#include <tny-error.h>
 #include <tny-camel-folder.h>
 #include <tny-camel-imap-folder.h>
 #include <tny-camel-pop-folder.h>
@@ -3361,6 +3362,19 @@ do_create_folder_performer (gboolean canceled,
 	if (canceled || err) {
 		/* In memory full conditions we could get this error here */
 		check_memory_full_error ((GtkWidget *) parent_window, err);
+
+		/* This happens if we have selected the outbox folder
+		   as the parent */
+		if (err->code == TNY_SERVICE_ERROR_UNKNOWN &&
+		    TNY_IS_MERGE_FOLDER (helper->parent)) {
+			/* Show an error and retry */
+			modest_platform_information_banner ((GtkWidget *) parent_window,
+							    NULL,
+							    _("mail_in_ui_folder_create_error"));
+
+			do_create_folder (parent_window, helper->parent, helper->folder_name);
+		}
+
 		goto frees;
 	}
 
