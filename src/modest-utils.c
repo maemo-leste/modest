@@ -961,7 +961,8 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 
 	file = modest_utils_open_mcc_mapping_file (&translated);
 	if (!file) {
-		g_warning("Could not open mcc_mapping file");
+		g_warning ("Could not open mcc_mapping file");
+		return;
 	}
 
 	/* Get the territory specified for the current locale */

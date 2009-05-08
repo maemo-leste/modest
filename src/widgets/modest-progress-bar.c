@@ -349,11 +349,6 @@ modest_progress_bar_cancel_current_operation (ModestProgressObject *self)
 static void 
 modest_progress_bar_cancel_all_operations (ModestProgressObject *self)
 {
-	ModestProgressBar *me;
-	ModestProgressBarPrivate *priv;
-
-	me = MODEST_PROGRESS_BAR (self);
-	priv = MODEST_PROGRESS_BAR_GET_PRIVATE (me);
 
 	/* Cancel all the mail operations */
 	modest_mail_operation_queue_cancel_all (modest_runtime_get_mail_operation_queue ());

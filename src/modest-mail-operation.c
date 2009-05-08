@@ -665,7 +665,7 @@ send_mail_on_sync_async_cb (TnyFolder *folder,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	if (cancelled || err)
+	if (cancelled)
 		goto end;
 
 	if (err) {
@@ -750,7 +750,7 @@ send_mail_on_added_to_outbox (TnySendQueue *send_queue,
 	self = helper->mail_op;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
 
-	if (cancelled || err)
+	if (cancelled)
 		goto end;
 
 	if (err) {

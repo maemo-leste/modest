@@ -959,7 +959,7 @@ modest_account_mgr_get_list (ModestAccountMgr *self, const gchar *name,
 			     const gchar *key, ModestConfValueType list_type,
 			     gboolean server_account)
 {
-	ModestAccountMgrPrivate *priv = MODEST_ACCOUNT_MGR_GET_PRIVATE (self);
+	ModestAccountMgrPrivate *priv = NULL;
 
 	const gchar *keyname;
 	GSList *retval;

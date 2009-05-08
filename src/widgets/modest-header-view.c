@@ -806,7 +806,6 @@ TnyList *
 modest_header_view_get_selected_headers (ModestHeaderView *self)
 {
 	GtkTreeSelection *sel;
-	ModestHeaderViewPrivate *priv;
 	TnyList *header_list = NULL;
 	TnyHeader *header;
 	GList *list, *tmp = NULL;
@@ -815,7 +814,6 @@ modest_header_view_get_selected_headers (ModestHeaderView *self)
 
 	g_return_val_if_fail (self && MODEST_IS_HEADER_VIEW(self), NULL);
 	
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	/* Get selected rows */
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
@@ -1452,14 +1450,12 @@ on_header_row_activated (GtkTreeView *treeview, GtkTreePath *path,
 			 GtkTreeViewColumn *column, gpointer userdata)
 {
 	ModestHeaderView *self = NULL;
-	ModestHeaderViewPrivate *priv = NULL;
 	GtkTreeIter iter;
 	GtkTreeModel *model = NULL;
 	TnyHeader *header = NULL;
 	TnyHeaderFlags flags;
 
 	self = MODEST_HEADER_VIEW (treeview);
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	model = gtk_tree_view_get_model (treeview);	
 	if ((path == NULL) || (!gtk_tree_model_get_iter(model, &iter, path))) 
@@ -1502,14 +1498,12 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 	GtkTreePath *path = NULL;	
 	GtkTreeIter iter;
 	ModestHeaderView *self;
-	ModestHeaderViewPrivate *priv;
 	GList *selected = NULL;
 	
 	g_return_if_fail (sel);
 	g_return_if_fail (user_data);
 	
 	self = MODEST_HEADER_VIEW (user_data);
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);	
 
 	selected = gtk_tree_selection_get_selected_rows (sel, &model);
 	if (selected != NULL) 
@@ -2122,7 +2116,13 @@ filter_row (GtkTreeModel *model,
 	gtk_tree_model_get_value (model, iter, TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &value);
 	header = (TnyHeader *) g_value_get_object (&value);
 	g_value_unset (&value);
-	
+
+	/* Get message id from header (ensure is a valid id) */
+	if (!header) {
+		visible = FALSE;
+		goto frees;
+	}
+
 	/* Hide deleted and mark as deleted heders */
 	if (flags & TNY_HEADER_FLAG_DELETED ||
 	    flags & TNY_HEADER_FLAG_EXPUNGED) {
@@ -2150,21 +2150,15 @@ filter_row (GtkTreeModel *model,
 	if (modest_email_clipboard_cleared(priv->clipboard)) {
 		visible = TRUE;
 		goto frees;
-	}	    	
-
-	/* Get message id from header (ensure is a valid id) */
-	if (!header) {
-		visible = FALSE;
-		goto frees;
 	}
-	
+
 	/* Check hiding */
 	if (priv->hidding_ids != NULL) {
 		id = tny_header_dup_message_id (header);
 		for (i=0; i < priv->n_selected && !found; i++)
 			if (priv->hidding_ids[i] != NULL && id != NULL)
 				found = (!strcmp (priv->hidding_ids[i], id));
-	
+
 		visible = !found;
 		g_free(id);
 	}
@@ -2173,18 +2167,21 @@ filter_row (GtkTreeModel *model,
 	old_status = priv->status;
 	priv->status = ((gboolean) priv->status) && !visible;
 	if ((priv->notify_status) && (priv->status != old_status)) {
-		NotifyFilterInfo *info;
-
 		if (priv->status_timeout)
 			g_source_remove (priv->status_timeout);
 
-		info = g_slice_new0 (NotifyFilterInfo);
-		info->self = g_object_ref (G_OBJECT (user_data));
-		info->folder = tny_header_get_folder (header);
-		priv->status_timeout = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
-							   notify_filter_change,
-							   info,
-							   notify_filter_change_destroy);
+		if (header) {
+			NotifyFilterInfo *info;
+
+			info = g_slice_new0 (NotifyFilterInfo);
+			info->self = g_object_ref (G_OBJECT (user_data));
+			if (header)
+				info->folder = tny_header_get_folder (header);
+			priv->status_timeout = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
+								   notify_filter_change,
+								   info,
+								   notify_filter_change_destroy);
+		}
 	}
 
 	return visible;

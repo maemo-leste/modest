@@ -188,10 +188,6 @@ init_format (ModestDatetimeFormatter *obj)
 static void
 modest_datetime_formatter_instance_init (ModestDatetimeFormatter *obj)
 {
-	ModestDatetimeFormatterPrivate *priv;
-
-	priv = MODEST_DATETIME_FORMATTER_GET_PRIVATE (obj);
-
 	init_format (obj);
 }
 

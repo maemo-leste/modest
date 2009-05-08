@@ -605,12 +605,8 @@ static void
 modest_window_mgr_unregister_window_default (ModestWindowMgr *self, 
 					     ModestWindow *window)
 {
-	ModestWindowMgrPrivate *priv;
-
 	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
 	g_return_if_fail (MODEST_IS_WINDOW (window));
-
-	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 
 	/* Save state */
 	modest_window_save_state (window);

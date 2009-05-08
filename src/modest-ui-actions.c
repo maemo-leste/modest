@@ -2643,7 +2643,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 					       gboolean selected,
 					       ModestMainWindow *main_window)
 {
-	ModestConf *conf;
 	GtkWidget *header_view;
 
 	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
@@ -2653,7 +2652,6 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	if (!header_view)
 		return;
 
-	conf = modest_runtime_get_conf ();
 
 	if (TNY_IS_ACCOUNT (folder_store)) {
 		if (selected) {
@@ -2665,14 +2663,11 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 	} else {
 		if (TNY_IS_FOLDER (folder_store) && selected) {
 			TnyAccount *account;
-			const gchar *account_name = NULL;
 
 			/* Update the active account */
 			account = modest_tny_folder_get_account (TNY_FOLDER (folder_store));
 			if (account) {
 				set_active_account_from_tny_account (account, MODEST_WINDOW (main_window));
-				account_name =
-					modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 				g_object_unref (account);
 				account = NULL;
 			}
@@ -2850,13 +2845,11 @@ static gboolean
 enough_space_for_message (ModestMsgEditWindow *edit_window,
 			  MsgData *data)
 {
-	TnyAccountStore *acc_store;
 	guint64 available_disk, expected_size;
 	gint parts_count;
 	guint64 parts_size;
 
 	/* Check size */
-	acc_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store());
 	available_disk = modest_utils_get_available_space (NULL);
 	modest_msg_edit_window_get_parts_size (edit_window, &parts_count, &parts_size);
 	expected_size = modest_tny_msg_estimate_size (data->plain_body,
@@ -6636,7 +6629,8 @@ modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win)
 #endif
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
-		folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
+		if (header)
+			folder = TNY_FOLDER_STORE (tny_header_get_folder (header));
 	}
 
 	if (!header || !folder)

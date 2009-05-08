@@ -1050,11 +1050,9 @@ static void
 modest_recpt_editor_class_init (ModestRecptEditorClass *klass)
 {
 	GObjectClass *object_class;
-	GtkWidgetClass *widget_class;
 
 	parent_class = g_type_class_peek_parent (klass);
 	object_class = (GObjectClass*) klass;
-	widget_class = GTK_WIDGET_CLASS (klass);
 
 	object_class->finalize = modest_recpt_editor_finalize;
 
