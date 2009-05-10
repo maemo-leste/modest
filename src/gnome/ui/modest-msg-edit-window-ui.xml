@@ -56,21 +56,8 @@
       <menuitem name="SelectAllMenu" action="SelectAll"/>
     </menu>
 
-    <menu name="ViewMenu" action="View">
-      <menuitem name="ViewToggleFullscreenMenu" action="ViewToggleFullscreen"/>
-      <separator/>
-      <menu name="ShowToolbarMenu" action="ShowToolbar">
-	<menuitem name="ViewShowToolbarNormalScreenMenu" action="ViewShowToolbarNormalScreen"/>
-	<menuitem name="ViewShowToolbarFullScreenMenu" action="ViewShowToolbarFullScreen"/>
-      </menu>
-      <separator/>
-      <menuitem name="ViewCcFieldMenu" action="ViewCcField"/>
-      <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
-    </menu>
-
     <menu name="AttachmentsMenu" action="Attachments">
       <menuitem name="AttachFileMenu" action="AttachFile"/>
-      <menuitem name="InsertImageMenu" action="InsertImage"/>
       <separator/>
       <menuitem name="RemoveAttachmentsMenu" action="RemoveAttachments"/>
     </menu>
@@ -92,6 +79,7 @@
 
   <toolbar name="ToolBar">
     <toolitem action="ToolbarSend"/>
+    <toolitem action="ToolbarAttach"/>
   </toolbar>
 
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>

@@ -51,13 +51,14 @@
 #include <tny-vfs-stream.h>
 #include <tny-gtk-text-buffer-stream.h>
 #include <gtksourceview/gtksourceview.h>
+#include <modest-utils.h>
+#include <widgets/modest-recpt-editor.h>
+#include <modest-tny-account.h>
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
 static void  modest_msg_edit_window_finalize     (GObject *obj);
 
-static void  modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
-							    ModestMsgEditWindow *window);
 static void update_next_cid (ModestMsgEditWindow *self, TnyList *attachments);
 
 /* list my signals */
@@ -70,10 +71,10 @@ enum {
 typedef struct _ModestMsgEditWindowPrivate ModestMsgEditWindowPrivate;
 struct _ModestMsgEditWindowPrivate {
 
-	GtkWidget   *toolbar;
 	GtkWidget   *menubar;
 
 	GtkWidget   *msg_body;
+	GtkTextBuffer *text_buffer;
 	
 	ModestPairList *from_field_protos;
 	GtkWidget   *from_field;
@@ -95,6 +96,11 @@ struct _ModestMsgEditWindowPrivate {
 	gchar       *in_reply_to;
 
 	gboolean    sent;
+	gboolean    can_undo, can_redo;
+	gchar       *original_account_name;
+	GtkWidget   *priority_icon;
+	TnyHeaderFlags priority_flags;
+	gulong      account_removed_handler_id;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -135,15 +141,29 @@ static void
 save_state (ModestWindow *self)
 {
 	modest_widget_memory_save (modest_runtime_get_conf (),
-				    G_OBJECT(self), "modest-edit-msg-window");
+				    G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
 
 static void
 restore_settings (ModestMsgEditWindow *self)
 {
-	modest_widget_memory_restore (modest_runtime_get_conf (),
-				      G_OBJECT(self), "modest-edit-msg-window");
+	ModestConf *conf = NULL;
+	GtkAction *action;
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
+
+	conf = modest_runtime_get_conf ();
+
+	/* Dim at start clipboard actions */
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CutMenu");
+	gtk_action_set_sensitive (action, FALSE);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/EditMenu/CopyMenu");
+	gtk_action_set_sensitive (action, FALSE);
+	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/AttachmentsMenu/RemoveAttachmentsMenu");
+	gtk_action_set_sensitive (action, FALSE);
+
+	modest_widget_memory_restore (conf,
+				      G_OBJECT(self), MODEST_CONF_EDIT_WINDOW_KEY);
 }
 
 static void
@@ -169,7 +189,6 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	ModestMsgEditWindowPrivate *priv;
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 
-	priv->toolbar       = NULL;
 	priv->menubar       = NULL;
 	priv->msg_body      = NULL;
 	priv->from_field    = NULL;
@@ -186,6 +205,10 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	priv->msg_uid = NULL;
 	priv->references = NULL;
 	priv->in_reply_to = NULL;
+	priv->can_undo = FALSE;
+	priv->can_redo = FALSE;
+	priv->priority_flags = 0;
+	priv->account_removed_handler_id = 0;
 }
 
 /** 
@@ -228,12 +251,98 @@ on_from_combo_changed (ModestComboBox *combo, ModestWindow *win)
 		win, modest_combo_box_get_active_id(combo));
 }
 
+static void
+attachment_deleted (ModestAttachmentsView *attachments_view,
+		    gpointer user_data)
+{
+	modest_msg_edit_window_remove_attachments (MODEST_MSG_EDIT_WINDOW (user_data),
+						   NULL);
+}
+
+static void  
+text_buffer_can_undo (GtkTextBuffer *buffer, GParamSpec *param_spec, ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	g_object_get (G_OBJECT (buffer), "can-undo", &(priv->can_undo), NULL);
+}
+
+static void  
+text_buffer_can_redo (GtkTextBuffer *buffer, GParamSpec *param_spec, ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	g_object_get (G_OBJECT (buffer), "can-redo", &(priv->can_redo), NULL);
+}
+
+gboolean            
+modest_msg_edit_window_can_undo (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	return priv->can_undo;
+}
+
+gboolean            
+modest_msg_edit_window_can_redo (ModestMsgEditWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv;
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	return priv->can_redo;
+}
+
+static void
+body_changed (GtkTextBuffer *buffer, ModestMsgEditWindow *editor)
+{
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (editor));
+}
+
+static void
+recpt_field_changed (GtkTextBuffer *buffer,
+		  ModestMsgEditWindow *editor)
+{
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (editor));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (editor));
+}
+
+static void
+connect_signals (ModestMsgEditWindow *obj)
+{
+	ModestMsgEditWindowPrivate *priv;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
+
+	g_signal_connect (G_OBJECT (priv->text_buffer), "notify::can-undo",
+			  G_CALLBACK (text_buffer_can_undo), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "notify::can-redo",
+			  G_CALLBACK (text_buffer_can_redo), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "changed",
+                          G_CALLBACK (body_changed), obj);
+	g_signal_connect (G_OBJECT (priv->text_buffer), "modified-changed",
+                          G_CALLBACK (body_changed), obj);
+
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))),
+			  "changed", G_CALLBACK (recpt_field_changed), obj);
+
+	g_signal_connect (G_OBJECT (priv->attachments_view), "delete", G_CALLBACK (attachment_deleted), obj);
+}
+
 
 
 static void
 init_window (ModestMsgEditWindow *obj, const gchar* account)
 {
-	GtkWidget *to_button, *cc_button, *bcc_button, *add_attachment_button; 
+	GtkWidget *to_button, *cc_button, *bcc_button;
+	GtkWidget *subject_box;
 	GtkWidget *header_table;
 	GtkWidget *main_vbox;
 	GtkWidget *msg_vbox;
@@ -247,7 +356,6 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	to_button     = gtk_button_new_with_label (_("To..."));
 	cc_button     = gtk_button_new_with_label (_("Cc..."));
 	bcc_button    = gtk_button_new_with_label (_("Bcc..."));
-	add_attachment_button = gtk_button_new_with_label (_("Attach..."));
 	
 	/* Note: This ModestPairList* must exist for as long as the combo
 	 * that uses it, because the ModestComboBox uses the ID opaquely, 
@@ -263,10 +371,19 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	/* auto-update the active account */
 	g_signal_connect (G_OBJECT(priv->from_field), "changed", G_CALLBACK(on_from_combo_changed), obj);
 	
-	priv->to_field      = gtk_entry_new_with_max_length (80);
-	priv->cc_field      = gtk_entry_new_with_max_length (80);
-	priv->bcc_field     = gtk_entry_new_with_max_length (80);
+	priv->to_field      = modest_recpt_editor_new ();
+	modest_recpt_editor_set_show_abook_button (MODEST_RECPT_EDITOR (priv->to_field), FALSE);
+	priv->cc_field      = modest_recpt_editor_new ();
+	modest_recpt_editor_set_show_abook_button (MODEST_RECPT_EDITOR (priv->cc_field), FALSE);
+	priv->bcc_field     = modest_recpt_editor_new ();
+	modest_recpt_editor_set_show_abook_button (MODEST_RECPT_EDITOR (priv->bcc_field), FALSE);
+
+	subject_box = gtk_hbox_new (FALSE, 0);
+	priv->priority_icon = gtk_image_new ();
+	gtk_box_pack_start (GTK_BOX (subject_box), priv->priority_icon, FALSE, FALSE, 0);
 	priv->subject_field = gtk_entry_new_with_max_length (80);
+	gtk_box_pack_start (GTK_BOX (subject_box), priv->subject_field, TRUE, TRUE, 0);
+	g_object_set (G_OBJECT (priv->subject_field), "truncate-multiline", TRUE, NULL);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	
 	header_table = gtk_table_new (6,2, FALSE);
@@ -278,16 +395,16 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	gtk_table_attach (GTK_TABLE(header_table), bcc_button,    0,1,3,4, GTK_FILL, 0, 0, 0);
 	gtk_table_attach (GTK_TABLE(header_table), gtk_label_new (_("Subject:")),
 			  0,1,4,5, GTK_FILL, 0, 0, 0);
-	gtk_table_attach (GTK_TABLE(header_table), add_attachment_button, 0, 1, 5, 6, GTK_FILL, 0, 0, 0);
 
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->from_field,   1,2,0,1);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->to_field,     1,2,1,2);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->cc_field,     1,2,2,3);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->bcc_field,    1,2,3,4);
-	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->subject_field,1,2,4,5);
+	gtk_table_attach_defaults (GTK_TABLE(header_table), subject_box,1,2,4,5);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->attachments_view,1,2,5,6);
 
 	priv->msg_body = gtk_source_view_new ();
+	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW (priv->msg_body), TRUE);
 	gtk_source_view_set_right_margin_position (GTK_SOURCE_VIEW (priv->msg_body), 78);
 	gtk_source_view_set_show_right_margin (GTK_SOURCE_VIEW (priv->msg_body), TRUE);
@@ -307,7 +424,7 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_IN);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(main_vbox), priv->toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX(main_vbox), parent_priv->toolbar, FALSE, FALSE, 0);
 	
 	msg_vbox = gtk_vbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (main_vbox), msg_vbox, TRUE, TRUE, 0);
@@ -320,16 +437,28 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	gtk_widget_show_all (GTK_WIDGET(main_vbox));
 	gtk_container_add (GTK_CONTAINER(obj), main_vbox);
 
-	g_signal_connect_object (add_attachment_button, "clicked", 
-				 G_CALLBACK (modest_msg_edit_window_add_attachment_clicked), G_OBJECT (obj), 0);
 }
 
+
+static void
+modest_msg_edit_window_disconnect_signals (ModestWindow *window)
+{
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
+	if (priv->account_removed_handler_id && 
+	    g_signal_handler_is_connected (modest_runtime_get_account_store (), 
+					   priv->account_removed_handler_id))
+		g_signal_handler_disconnect(modest_runtime_get_account_store (), 
+					   priv->account_removed_handler_id);
+}
 
 static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	
+	modest_msg_edit_window_disconnect_signals (MODEST_WINDOW (obj));
+
 	/* These had to stay alive for as long as the comboboxes that used them: */
 	modest_pair_list_free (priv->from_field_protos);
 	g_object_unref (priv->attachments);
@@ -353,6 +482,8 @@ modest_msg_edit_window_finalize (GObject *obj)
 		g_object_unref (priv->outbox_msg);
 		priv->outbox_msg = NULL;
 	}
+	if (priv->original_account_name)
+		g_free (priv->original_account_name);
 	g_free (priv->msg_uid);
 	g_free (priv->references);
 	g_free (priv->in_reply_to);
@@ -402,6 +533,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	ModestMsgEditWindowPrivate *priv;
 	TnyMimePart *body_part;
 	GtkTextBuffer *buffer;
+	TnyHeaderFlags priority_flags;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
@@ -413,16 +545,19 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	cc      = tny_header_dup_cc (header);
 	bcc     = tny_header_dup_bcc (header);
 	subject = tny_header_dup_subject (header);
+	priority_flags = tny_header_get_priority (header);
 
 	if (to)
-		gtk_entry_set_text (GTK_ENTRY(priv->to_field), to);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field), to);
 	if (cc)
-		gtk_entry_set_text (GTK_ENTRY(priv->cc_field), cc);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  cc);
 	if (bcc)
-		gtk_entry_set_text (GTK_ENTRY(priv->bcc_field),  bcc);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
 	if (subject)
 		gtk_entry_set_text (GTK_ENTRY(priv->subject_field), subject);
 
+	modest_msg_edit_window_set_priority_flags (MODEST_MSG_EDIT_WINDOW(self),
+						   priority_flags);
 	modest_tny_msg_get_references (TNY_MSG (msg), NULL, &(priv->references), &(priv->in_reply_to));
 
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), msg);
@@ -441,7 +576,17 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 		gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->msg_body), TRUE);
 	}
 
+	/* Set the default focus depending on having already a To: field or not */
+	if ((!to)||(*to == '\0')) {
+		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
+	} else {
+		gtk_widget_grab_focus (priv->msg_body);
+	}
+
+
 	modest_msg_edit_window_set_modified (self, FALSE);
+	text_buffer_can_undo (priv->text_buffer, FALSE, self);
+	text_buffer_can_redo (priv->text_buffer, FALSE, self);
 
 	if (priv->msg_uid) {
 		g_free (priv->msg_uid);
@@ -471,9 +616,52 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	g_free (bcc);
 }
 
+static void
+modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
+{
+	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+	GtkWidget *tool_item;
+
+	/* Toolbar */
+	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+
+	/* Set expand and homogeneous for remaining items */
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarSend");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
+	gtk_tool_item_set_is_important (GTK_TOOL_ITEM (tool_item), TRUE);
+	tool_item = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarAttach");
+	gtk_tool_item_set_expand (GTK_TOOL_ITEM (tool_item), FALSE);
+	gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (tool_item), FALSE);
+	gtk_tool_item_set_is_important (GTK_TOOL_ITEM (tool_item), TRUE);
+
+	gtk_toolbar_set_tooltips (GTK_TOOLBAR (parent_priv->toolbar), TRUE);
+
+}
+
+static void
+on_account_removed (TnyAccountStore *account_store, 
+		    TnyAccount *account,
+		    gpointer user_data)
+{
+	/* Do nothing if it's a store account, because we use the
+	   transport to send the messages */
+	if (tny_account_get_account_type(account) == TNY_ACCOUNT_TYPE_TRANSPORT) {
+		const gchar *parent_acc = NULL;
+		const gchar *our_acc = NULL;
+
+		our_acc = modest_window_get_active_account (MODEST_WINDOW (user_data));
+		parent_acc = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		/* Close this window if I'm showing a message of the removed account */
+		if (strcmp (parent_acc, our_acc) == 0)
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (user_data));
+	}
+}
+
+
 
 ModestWindow *
-modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
+modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name,
 			    const gchar *mailbox,
 			    gboolean preserve_is_rich)
 {
@@ -487,6 +675,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	GError *error = NULL;
 
 	g_return_val_if_fail (msg, NULL);
+	g_return_val_if_fail (account_name, NULL);
 	
 	self = MODEST_MSG_EDIT_WINDOW(g_object_new(MODEST_TYPE_MSG_EDIT_WINDOW, NULL));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(self);
@@ -530,15 +719,15 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 
 	/* Toolbar / Menubar */
-	priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
+	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (self));
 	priv->menubar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/MenuBar");
-
-	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (priv->from_field), (gpointer) account_name);
 
 	/* Init window */
-	init_window (MODEST_MSG_EDIT_WINDOW(self), account);
+	init_window (MODEST_MSG_EDIT_WINDOW(self), account_name);
 
-	restore_settings (MODEST_MSG_EDIT_WINDOW(self));
+	connect_signals (MODEST_MSG_EDIT_WINDOW (self));
+	restore_settings (MODEST_MSG_EDIT_WINDOW (self));
 	
 	gtk_window_set_title (GTK_WINDOW(self), "Modest");
 	gtk_window_set_icon_from_file (GTK_WINDOW(self), MODEST_APP_ICON, NULL);
@@ -546,6 +735,9 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	g_signal_connect (G_OBJECT(self), "delete-event",
 			  G_CALLBACK(on_delete_event), self);
 	
+	modest_window_set_active_account (MODEST_WINDOW(self), account_name);
+	priv->original_account_name = (account_name) ? g_strdup (account_name) : NULL;
+
 	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new ();
 	menu_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 	toolbar_rules_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_TOOLBAR, TRUE);
@@ -584,6 +776,21 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 
 	set_msg (self, msg);
 	
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (self));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (self), MODEST_DIMMING_RULES_CLIPBOARD);
+
+	modest_msg_edit_window_set_modified (MODEST_MSG_EDIT_WINDOW (self), FALSE);
+
+	/* Track account-removed signal, this window should be closed
+	   in the case we're creating a mail associated to the account
+	   that is deleted */
+	priv->account_removed_handler_id = 
+		g_signal_connect (G_OBJECT (modest_runtime_get_account_store ()),
+				  "account_removed",
+				  G_CALLBACK(on_account_removed),
+				  self);
+
 	return MODEST_WINDOW(self);
 }
 
@@ -614,6 +821,7 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	
 	
 	data = g_slice_new0 (MsgData);
+	data->account_name = g_strdup (account_name);
 	data->from    =  from_string; /* will be freed when data is freed */
 	data->to      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->to_field)));
 	data->cc      =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->cc_field)));
@@ -621,10 +829,18 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->subject =  g_strdup ( gtk_entry_get_text (GTK_ENTRY(priv->subject_field)));
 	data->references = g_strdup (priv->references);
 	data->in_reply_to = g_strdup (priv->in_reply_to);
+	if (priv->draft_msg) {
+		data->draft_msg = g_object_ref (priv->draft_msg);
+	} else if (priv->outbox_msg) {
+		data->draft_msg = g_object_ref (priv->outbox_msg);
+	} else {
+		data->draft_msg = NULL;
+	}
 
 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
 	GtkTextIter b, e;
 	gtk_text_buffer_get_bounds (buf, &b, &e);
+	gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 	data->plain_body =  gtk_text_buffer_get_text (buf, &b, &e, FALSE); /* Returns a copy. */
 	data->html_body = NULL;
 
@@ -653,6 +869,9 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	} else {
 		data->draft_msg = NULL;
 	}
+
+	data->priority_flags = priv->priority_flags;
+
 	return data;
 }
 
@@ -679,6 +898,7 @@ modest_msg_edit_window_free_msg_data (ModestMsgEditWindow *edit_window,
 	g_free (data->subject);
 	g_free (data->plain_body);
 	g_free (data->html_body);
+	g_free (data->account_name);
 	g_free (data->references);
 	g_free (data->in_reply_to);
 
@@ -857,6 +1077,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 
 			modest_attachments_view_remove_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 								   mime_part);
+			gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 			g_object_unref (mime_part);
 		}
 		g_object_unref (iter);
@@ -864,13 +1085,6 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 
 	g_object_unref (att_list);
 
-}
-
-static void
-modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
-					       ModestMsgEditWindow *window)
-{
-	modest_msg_edit_window_offer_attach_file (window);
 }
 
 void 
@@ -920,11 +1134,42 @@ void
 modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 					   TnyHeaderFlags priority_flags)
 {
-	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
-      
-	g_message ("not implemented yet %s", __FUNCTION__);
-}
+	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
 
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	if (priv->priority_flags != priority_flags) {
+		GtkAction *priority_action = NULL;
+
+		priv->priority_flags = priority_flags;
+
+		switch (priority_flags) {
+		case TNY_HEADER_FLAG_HIGH_PRIORITY:
+			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_high", GTK_ICON_SIZE_MENU);
+			gtk_widget_show (priv->priority_icon);
+			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityHighMenu");
+			break;
+		case TNY_HEADER_FLAG_LOW_PRIORITY:
+			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), "qgn_list_messaging_low", GTK_ICON_SIZE_MENU);
+			gtk_widget_show (priv->priority_icon);
+			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityLowMenu");
+			break;
+		default:
+			gtk_widget_hide (priv->priority_icon);
+			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager, 
+								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityNormalMenu");
+			break;
+		}
+		gtk_toggle_action_set_active (GTK_TOGGLE_ACTION (priority_action), TRUE);
+		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
+	}
+}
 
 void
 modest_msg_edit_window_select_contacts (ModestMsgEditWindow *window)
@@ -1011,7 +1256,16 @@ void
 modest_msg_edit_window_set_modified      (ModestMsgEditWindow *window,
 					  gboolean modified)
 {
-	g_message (__FUNCTION__);
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	GtkTextBuffer *buffer;
+
+	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->to_field));
+	gtk_text_buffer_set_modified (buffer, modified);
+	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->cc_field));
+	gtk_text_buffer_set_modified (buffer, modified);
+	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->bcc_field));
+	gtk_text_buffer_set_modified (buffer, modified);
+	gtk_text_buffer_set_modified (priv->text_buffer, modified);
 }
 
 void            
@@ -1134,6 +1388,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 		modest_attachments_view_add_attachment (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
 							mime_part,
 							info->size == 0, info->size);
+		gtk_text_buffer_set_modified (priv->text_buffer, TRUE);
 		g_free (filename);
 		g_object_unref (mime_part);
 		gnome_vfs_file_info_unref (info);
@@ -1177,8 +1432,27 @@ modest_msg_edit_window_set_draft (ModestMsgEditWindow *window,
 gboolean        
 modest_msg_edit_window_is_modified         (ModestMsgEditWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
-	return TRUE;
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+	const char *account_name;
+	GtkTextBuffer *buffer;
+
+	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->to_field));
+	if (gtk_text_buffer_get_modified (buffer))
+		return TRUE;
+	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->cc_field));
+	if (gtk_text_buffer_get_modified (buffer))
+		return TRUE;
+	buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR(priv->bcc_field));
+	if (gtk_text_buffer_get_modified (buffer))
+		return TRUE;
+	if (gtk_text_buffer_get_modified (priv->text_buffer))
+		return TRUE;
+	account_name = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->from_field));
+	if (!priv->original_account_name || strcmp(account_name, priv->original_account_name)) {
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 const gchar *
@@ -1186,19 +1460,6 @@ modest_msg_edit_window_get_clipboard_text (ModestMsgEditWindow *win)
 {
 	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return NULL;
-}
-
-gboolean            
-modest_msg_edit_window_can_redo               (ModestMsgEditWindow *window)
-{
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
-	return FALSE;
-}
-gboolean            
-modest_msg_edit_window_can_undo               (ModestMsgEditWindow *window)
-{
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
-	return FALSE;
 }
 
 const gchar*    

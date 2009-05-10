@@ -108,8 +108,10 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 #ifndef MODEST_TOOLKIT_HILDON2
 	/* Find in page. This is a normal menu option in Hildon2, and a checkbox in the others */
 	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), "<CTRL>F", NULL, G_CALLBACK (modest_ui_actions_on_toggle_find_in_page)},
-	{ "ToolbarSend", MODEST_TOOLBAR_ICON_MAIL_SEND, MODEST_TOOLBAR_ICON_MAIL_SEND,  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
-
+	{ "ToolbarSend", MODEST_TOOLBAR_ICON_MAIL_SEND, N_("mcen_me_editor_send"),  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
+#endif
+#ifdef MODEST_TOOLKIT_GTK
+	{ "ToolbarAttach", "stock_attach", N_("mcen_me_editor_attachfile"),  NULL, NULL,  G_CALLBACK (modest_ui_actions_on_attach_file) },
 #endif
 };
 
