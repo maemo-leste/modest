@@ -286,7 +286,7 @@ AC_SUBST(MAEMO_LAUNCHER_MODEST_LDFLAGS)
 
 have_easysetup=false
 if test "x$with_toolkit" == "xgtk"; then
-   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
+   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0)
    AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_GTK, 1, ["Whether modest is being build for the gtk toolkit."])
    MODEST_TOOLKIT_DIR=gnome
 else

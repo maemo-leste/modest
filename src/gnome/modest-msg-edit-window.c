@@ -50,6 +50,7 @@
 #include <libgnomevfs/gnome-vfs.h>
 #include <tny-vfs-stream.h>
 #include <tny-gtk-text-buffer-stream.h>
+#include <gtksourceview/gtksourceview.h>
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
@@ -286,9 +287,17 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->subject_field,1,2,4,5);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->attachments_view,1,2,5,6);
 
-	priv->msg_body = gtk_text_view_new ();
+	priv->msg_body = gtk_source_view_new ();
+	gtk_source_view_set_highlight_current_line (GTK_SOURCE_VIEW (priv->msg_body), TRUE);
+	gtk_source_view_set_right_margin_position (GTK_SOURCE_VIEW (priv->msg_body), 78);
+	gtk_source_view_set_show_right_margin (GTK_SOURCE_VIEW (priv->msg_body), TRUE);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->msg_body), TRUE);
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->msg_body), GTK_WRAP_WORD_CHAR);
+
+	PangoFontDescription *font_desc;
+	font_desc = pango_font_description_from_string ("Monospace");
+	gtk_widget_modify_font (priv->msg_body, font_desc);
+	pango_font_description_free (font_desc);
 	
 	main_vbox = gtk_vbox_new  (FALSE, 0);
 
@@ -496,6 +505,12 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 					     modest_msg_edit_toggle_action_entries,
 					     G_N_ELEMENTS (modest_msg_edit_toggle_action_entries),
 					     self);
+	gtk_action_group_add_radio_actions (action_group,
+					    modest_msg_edit_priority_action_entries,
+					    G_N_ELEMENTS (modest_msg_edit_priority_action_entries),
+					    0,
+					    G_CALLBACK (modest_ui_actions_msg_edit_on_change_priority),
+					    self);
 	gtk_ui_manager_insert_action_group (parent_priv->ui_manager, action_group, 0);
 	g_object_unref (action_group);
 

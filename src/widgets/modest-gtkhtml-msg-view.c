@@ -238,15 +238,18 @@ struct _ModestGtkhtmlMsgViewPrivate {
 	GtkWidget   *body_view;
 	GtkWidget   *mail_header_view;
 	GtkWidget   *attachments_view;
-	GtkWidget   *priority_icon;
 
 	TnyMsg      *msg;
 
 	/* embedded elements */
 	GtkWidget   *headers_box;
-	GtkWidget   *priority_box;
 	GtkWidget   *html_scroll;
 	GtkWidget   *attachments_box;
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget   *priority_box;
+	GtkWidget   *priority_icon;
+#endif
 
 	/* internal adjustments for set_scroll_adjustments */
 	GtkAdjustment *hadj;
@@ -1144,7 +1147,8 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	if (priv->mail_header_view)
 		gtk_box_pack_start (GTK_BOX(priv->headers_box), priv->mail_header_view, FALSE, FALSE, 0);
-	
+
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->priority_icon = gtk_image_new ();
 	gtk_misc_set_alignment (GTK_MISC (priv->priority_icon), 0.0, 0.5);
 	if (priv->priority_icon) {
@@ -1156,7 +1160,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 								   
 		gtk_widget_hide_all (priv->priority_box);
 	}
-
+#endif
 	if (priv->attachments_view) {
 #ifndef MODEST_TOOLKIT_HILDON2
 		gchar *att_label = g_strconcat (_("mcen_me_viewer_attachments"), ":", NULL);
@@ -1690,7 +1694,9 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 		modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
 		gtk_widget_hide_all (priv->mail_header_view);
 		gtk_widget_hide_all (priv->attachments_box);
+#ifdef MODEST_TOOKIT_HILDON2
 		gtk_widget_hide_all (priv->priority_box);
+#endif
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
 		gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1741,11 +1747,15 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg)
 	set_priority (self, tny_header_get_flags (header));
 
 	gtk_widget_show (priv->body_view);
+#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_no_show_all (priv->priority_box, TRUE);
+#endif
 	gtk_widget_set_no_show_all (priv->attachments_box, TRUE);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_set_no_show_all (priv->attachments_box, FALSE);
+#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_no_show_all (priv->priority_box, FALSE);
+#endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	gtk_widget_queue_resize (GTK_WIDGET(self));
 	gtk_widget_queue_draw (GTK_WIDGET(self));
@@ -1797,7 +1807,9 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW (priv->attachments_view), NULL);
 	gtk_widget_show_all (priv->mail_header_view);
 	gtk_widget_hide_all (priv->attachments_box);
+#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_hide_all (priv->priority_box);
+#endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
 	gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1868,15 +1880,17 @@ static void
 set_priority (ModestGtkhtmlMsgView *self, TnyHeaderFlags flags)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
-	TnyHeaderFlags priority_flags;
-	gboolean show_priority = FALSE;
 
 	g_return_if_fail (MODEST_IS_GTKHTML_MSG_VIEW (self));
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
 	modest_mail_header_view_set_priority (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), flags);
-	priority_flags = flags & TNY_HEADER_FLAG_PRIORITY_MASK;
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	gboolean show_priority = FALSE;
+	TnyHeaderFlags priority_flags;
+
+	priority_flags = flags & TNY_HEADER_FLAG_PRIORITY_MASK;
 	if (priority_flags == TNY_HEADER_FLAG_HIGH_PRIORITY) {
 		show_priority = TRUE;
 		gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), MODEST_HEADER_ICON_HIGH, GTK_ICON_SIZE_MENU);
@@ -1885,7 +1899,6 @@ set_priority (ModestGtkhtmlMsgView *self, TnyHeaderFlags flags)
 		gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon), MODEST_HEADER_ICON_LOW, GTK_ICON_SIZE_MENU);
 	}
 
-#ifdef MODEST_TOOLKIT_HILDON2
 	if (show_priority && MODEST_IS_COMPACT_MAIL_HEADER_VIEW (priv->mail_header_view)) {
 		gtk_widget_show_all  (priv->priority_box);
 	} else {

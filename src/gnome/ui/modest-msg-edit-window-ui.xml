@@ -68,21 +68,6 @@
       <menuitem name="ViewBccFieldMenu" action="ViewBccField"/>
     </menu>
 
-    <menu name="FormatMenu" action="Format">
-      <menuitem name="SelectFontMenu" action="SelectFont"/>
-<!--      <menuitem name="BulletedListMenu" action="ActionsBulletedList"/> -->
-      <menu name="AlignmentMenu" action="Alignment">
-         <menuitem name="AlignmentLeftMenu" action="AlignmentLeft"/>
-         <menuitem name="AlignmentCenterMenu" action="AlignmentCenter"/>
-         <menuitem name="AlignmentRightMenu" action="AlignmentRight"/>
-      </menu>
-      <separator/>
-      <menu name="FileFormatMenu" action="FileFormat">
-	<menuitem name="FileFormatPlainTextMenu" action="FileFormatPlainText"/>
-	<menuitem name="FileFormatFormattedTextMenu" action="FileFormatFormattedText"/>
-      </menu>
-    </menu>
-
     <menu name="AttachmentsMenu" action="Attachments">
       <menuitem name="AttachFileMenu" action="AttachFile"/>
       <menuitem name="InsertImageMenu" action="InsertImage"/>
@@ -107,11 +92,6 @@
 
   <toolbar name="ToolBar">
     <toolitem action="ToolbarSend"/>
-    <separator/>
-    <placeholder name="FontAttributes" />
-    <toolitem action="ActionsBold"/>
-    <toolitem action="ActionsItalics"/>
-    <placeholder name="FontColor" />
   </toolbar>
 
   <accelerator name="AccelZoomMinus" action="ZoomMinus"/>
