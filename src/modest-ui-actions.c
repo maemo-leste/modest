@@ -2708,7 +2708,8 @@ modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 #ifdef MODEST_TOOLKIT_GTK
 			if (modest_main_window_get_contents_style (main_window) ==
 			    MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS)
-				modest_widget_memory_save (conf, G_OBJECT (header_view),
+				modest_widget_memory_save (modest_runtime_get_conf (), 
+							   G_OBJECT (header_view),
 							   MODEST_CONF_HEADER_VIEW_KEY);
 #endif
 			modest_header_view_clear (MODEST_HEADER_VIEW(header_view));
