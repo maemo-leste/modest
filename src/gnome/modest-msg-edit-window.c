@@ -49,6 +49,7 @@
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 #include <libgnomevfs/gnome-vfs.h>
 #include <tny-vfs-stream.h>
+#include <tny-gtk-text-buffer-stream.h>
 
 static void  modest_msg_edit_window_class_init   (ModestMsgEditWindowClass *klass);
 static void  modest_msg_edit_window_init         (ModestMsgEditWindow *obj);
@@ -285,9 +286,9 @@ init_window (ModestMsgEditWindow *obj, const gchar* account)
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->subject_field,1,2,4,5);
 	gtk_table_attach_defaults (GTK_TABLE(header_table), priv->attachments_view,1,2,5,6);
 
-	priv->msg_body = gtk_html_new ();
-	gtk_html_load_empty (GTK_HTML (priv->msg_body));
-	gtk_html_set_editable (GTK_HTML (priv->msg_body), TRUE);
+	priv->msg_body = gtk_text_view_new ();
+	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->msg_body), TRUE);
+	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->msg_body), GTK_WRAP_WORD_CHAR);
 	
 	main_vbox = gtk_vbox_new  (FALSE, 0);
 
@@ -390,7 +391,8 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	TnyFolder *msg_folder;
 	gchar *to, *cc, *bcc, *subject;
 	ModestMsgEditWindowPrivate *priv;
-	gchar *body;
+	TnyMimePart *body_part;
+	GtkTextBuffer *buffer;
 	
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (self));
 	g_return_if_fail (TNY_IS_MSG (msg));
@@ -418,13 +420,17 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg)
 	priv->attachments = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
 	update_next_cid (self, priv->attachments);
 
-	body = modest_tny_msg_get_body (msg, FALSE, NULL);
-	gtk_html_set_editable (GTK_HTML (priv->msg_body), FALSE);
-	if (body) {
-		gtk_html_load_from_string (GTK_HTML (priv->msg_body), body, -1);
+	body_part = modest_tny_msg_find_body_part  (msg, FALSE);
+	if (body_part) {
+		TnyStream *stream;
+		gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->msg_body), FALSE);
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
+		stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buffer));
+		tny_stream_reset (stream);
+		tny_mime_part_decode_to_stream (body_part, stream, NULL);
+		tny_stream_reset (stream);
+		gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->msg_body), TRUE);
 	}
-	gtk_html_set_editable (GTK_HTML (priv->msg_body), TRUE);
-	g_free (body);
 
 	modest_msg_edit_window_set_modified (self, FALSE);
 
@@ -566,16 +572,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account,
 	return MODEST_WINDOW(self);
 }
 
-static gboolean
-html_export_save_buffer (gpointer engine,
-			 const gchar *data,
-			 size_t len,
-			 GString **buffer)
-{
-	*buffer = g_string_append (*buffer, data);
-	return TRUE;
-}
-
 
 MsgData * 
 modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
@@ -585,7 +581,6 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	const gchar *account_name;
 	gchar *from_string = NULL;
 	ModestMsgEditWindowPrivate *priv;
-	GString *buffer;
 	TnyIterator *att_iter;
 	
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (edit_window), NULL);
@@ -612,17 +607,11 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 	data->references = g_strdup (priv->references);
 	data->in_reply_to = g_strdup (priv->in_reply_to);
 
-/* 	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body)); */
-/* 	GtkTextIter b, e; */
-/* 	gtk_text_buffer_get_bounds (buf, &b, &e); */
-/* 	data->plain_body =  gtk_text_buffer_get_text (buf, &b, &e, FALSE); /\* Returns a copy. *\/ */
-
-	buffer = g_string_new ("");
-	gtk_html_export (GTK_HTML (priv->msg_body), "text/html", (GtkHTMLSaveReceiverFn) html_export_save_buffer, &buffer);
-	data->html_body = g_string_free (buffer, FALSE);
-	buffer = g_string_new ("");
-	gtk_html_export (GTK_HTML (priv->msg_body), "text/plain", (GtkHTMLSaveReceiverFn) html_export_save_buffer, &buffer);
-	data->plain_body = g_string_free (buffer, FALSE);
+	GtkTextBuffer *buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
+	GtkTextIter b, e;
+	gtk_text_buffer_get_bounds (buf, &b, &e);
+	data->plain_body =  gtk_text_buffer_get_text (buf, &b, &e, FALSE); /* Returns a copy. */
+	data->html_body = NULL;
 
 	/* deep-copy the attachment data */
 	att_iter = tny_list_create_iterator (priv->attachments);
