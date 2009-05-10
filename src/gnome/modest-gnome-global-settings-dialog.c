@@ -34,7 +34,6 @@
 #include <glib/gi18n.h>
 #include <gtk/gtkbox.h>
 #include <gtk/gtkvbox.h>
-#include <gtk/gtknotebook.h>
 #include <gtk/gtklabel.h>
 #include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkhseparator.h>
@@ -128,15 +127,9 @@ modest_gnome_global_settings_dialog_init (ModestGnomeGlobalSettingsDialog *self)
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
 
 	ppriv->updating_page = create_updating_page (self);
-	ppriv->composing_page = create_composing_page (self);
+	ppriv->composing_page = NULL;
     
-	/* Add the notebook pages: */
-	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->updating_page, 
-		gtk_label_new (_("mcen_ti_options_updating")));
-	gtk_notebook_append_page (GTK_NOTEBOOK (ppriv->notebook), ppriv->composing_page, 
-		gtk_label_new (_("mcen_ti_options_composing")));
-		
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->notebook);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), ppriv->updating_page);
 	gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (self)->vbox), 12);
 	gtk_container_set_border_width (GTK_CONTAINER (self), 12);
 	gtk_window_set_default_size (GTK_WINDOW (self), 480, -1);
@@ -147,7 +140,7 @@ modest_gnome_global_settings_dialog_init (ModestGnomeGlobalSettingsDialog *self)
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
 	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_SAVE, GTK_RESPONSE_OK);
     
-	gtk_widget_show_all (ppriv->notebook);
+	gtk_widget_show_all (ppriv->updating_page);
 }
 
 static void

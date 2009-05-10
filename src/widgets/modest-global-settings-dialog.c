@@ -294,9 +294,15 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->play_sound = priv->initial_state.play_sound;
 #else
 	state->play_sound = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
+#ifndef MODEST_TOOLKIT_GTK
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
 #endif
+#endif
+#ifdef MODEST_TOOLKIT_GTK
+	state->prefer_formatted_text = FALSE;
+#else
 	state->prefer_formatted_text = (*id == MODEST_FILE_FORMAT_FORMATTED_TEXT) ? TRUE : FALSE;
+#endif
 }
 
 static gboolean
