@@ -198,7 +198,7 @@ void modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
  *
  * Returns: file ptr or %NULL in case of error
  */
-FILE* modest_utils_open_mcc_mapping_file (gboolean *translated);
+FILE* modest_utils_open_mcc_mapping_file (gboolean from_lc_messages, gboolean *translated);
 
 typedef enum {
 	MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME = 0,

@@ -829,28 +829,50 @@ modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
 }
 
 FILE*
-modest_utils_open_mcc_mapping_file (gboolean *translated)
+modest_utils_open_mcc_mapping_file (gboolean from_lc_messages, gboolean *translated)
 {
 	FILE* result = NULL;
 	const gchar* path;
-	gchar *path1 = g_strdup_printf ("%s.%s", MODEST_OPERATOR_WIZARD_MCC_MAPPING, getenv("LANG"));
+	const gchar *env_list;
+	gchar **parts, **node;
+
+	if (from_lc_messages) {
+		env_list = getenv ("LC_MESSAGES");
+	} else {
+		env_list = getenv ("LANG");
+	}
+	parts = g_strsplit (env_list, ":", 0);
+	gchar *path1;
 	const gchar* path2 = MODEST_MCC_MAPPING;
 
 	if (translated)
 		*translated = TRUE;
 
-	if (access (path1, R_OK) == 0) {
-		path = path1;
-	} else if (access (MODEST_OPERATOR_WIZARD_MCC_MAPPING, R_OK) == 0) {
-		path = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
-		if (translated)
-			*translated = FALSE;
-	} else if (access (path2, R_OK) == 0) {
-		path = path2;
-	} else {
-		g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
-			   __FUNCTION__, path1, path2);
-		goto end;
+	path = NULL;
+	for (node = parts; path == NULL && node != NULL && *node != NULL && **node != '\0'; node++) {
+		path1 = g_strdup_printf ("%s.%s", MODEST_OPERATOR_WIZARD_MCC_MAPPING, *node);
+		if (access (path1, R_OK) == 0) {
+			path = path1;
+			break;
+		} else {
+			g_free (path1);
+			path1 = NULL;
+		}
+	}
+	g_strfreev (parts);
+
+	if (path == NULL) {
+		if (access (MODEST_OPERATOR_WIZARD_MCC_MAPPING, R_OK) == 0) {
+			path = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
+			if (translated)
+				*translated = FALSE;
+		} else if (access (path2, R_OK) == 0) {
+			path = path2;
+		} else {
+			g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
+				   __FUNCTION__, path1, path2);
+			goto end;
+		}
 	}
 
 	result = fopen (path, "r");
@@ -959,7 +981,8 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 
 	FILE *file;
 
-	file = modest_utils_open_mcc_mapping_file (&translated);
+	/* First we need to know our current region */
+	file = modest_utils_open_mcc_mapping_file (FALSE, &translated);
 	if (!file) {
 		g_warning ("Could not open mcc_mapping file");
 		return;
@@ -969,10 +992,8 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
 
 	while (fgets (line, MCC_FILE_MAX_LINE_LEN, file) != NULL) {
-
 		int mcc;
 		char *country = NULL;
-		const gchar *name_translated;
 
 		mcc = parse_mcc_mapping_line (line, &country);
 		if (!country || mcc == 0) {
@@ -996,6 +1017,33 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 					*locale_mcc = mcc;
 			}
 		}
+	}
+	fclose (file);
+
+	/* Now we fill the model */
+	file = modest_utils_open_mcc_mapping_file (TRUE, &translated);
+	if (!file) {
+		g_warning ("Could not open mcc_mapping file");
+		return;
+	}
+	while (fgets (line, MCC_FILE_MAX_LINE_LEN, file) != NULL) {
+
+		int mcc;
+		char *country = NULL;
+		const gchar *name_translated;
+
+		mcc = parse_mcc_mapping_line (line, &country);
+		if (!country || mcc == 0) {
+			g_warning ("%s: error parsing line: '%s'", __FUNCTION__, line);
+			continue;
+		}
+
+		if (mcc == previous_mcc) {
+			/* g_warning ("already seen: %s", line); */
+			continue;
+		}
+		previous_mcc = mcc;
+
 		name_translated = dgettext ("osso-countries", country);
 
 		/* Add the row to the model: */

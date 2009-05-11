@@ -134,9 +134,16 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 static gboolean
 check_required_files (void)
 {
-	FILE *mcc_file = modest_utils_open_mcc_mapping_file (NULL);
+	FILE *mcc_file = modest_utils_open_mcc_mapping_file (FALSE, NULL);
 	if (!mcc_file) {
-		g_printerr ("modest: check for mcc file failed\n");
+		g_printerr ("modest: check for mcc file (for LANG) failed\n");
+		return FALSE;
+	} else 
+		fclose (mcc_file);
+	
+	mcc_file = modest_utils_open_mcc_mapping_file (TRUE, NULL);
+	if (!mcc_file) {
+		g_printerr ("modest: check for mcc file (for LC_MESSAGES) failed\n");
 		return FALSE;
 	} else 
 		fclose (mcc_file);
