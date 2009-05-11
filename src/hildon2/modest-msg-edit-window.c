@@ -2897,7 +2897,7 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	if (editor == NULL) {
-		GtkWidget *view_focus;
+		GtkWidget *view_focus, *parent;
 		view_focus = gtk_window_get_focus (GTK_WINDOW (window));
 
 		/* This code should be kept in sync with ModestRecptEditor. The
@@ -2906,20 +2906,12 @@ modest_msg_edit_window_open_addressbook (ModestMsgEditWindow *window,
 		   hbox recpt editor inherits from, we'll need to go up in the 
 		   hierarchy to know if the text view is part of the recpt editor
 		   or if it's a different text entry */
-
-		if (gtk_widget_get_parent (view_focus)) {
-			GtkWidget *first_parent;
-
-			first_parent = gtk_widget_get_parent (view_focus);
-			if (gtk_widget_get_parent (first_parent) && 
-			    MODEST_IS_RECPT_EDITOR (gtk_widget_get_parent (first_parent))) {
-				editor = MODEST_RECPT_EDITOR (gtk_widget_get_parent (first_parent));
-			}
-		}
+		parent = gtk_widget_get_parent (view_focus);
+		if (parent && MODEST_IS_RECPT_EDITOR (parent))
+			editor = MODEST_RECPT_EDITOR (parent);
 
 		if (editor == NULL)
 			editor = MODEST_RECPT_EDITOR (priv->to_field);
-
 	}
 
 	modest_address_book_select_addresses (editor, GTK_WINDOW (window));
