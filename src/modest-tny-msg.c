@@ -1191,6 +1191,7 @@ modest_tny_msg_header_get_all_recipients_list (TnyHeader *header)
 {
 	GSList *recipients = NULL;
 	gchar *from = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
+	gchar *tmp = NULL, *old_tmp = NULL;
 
 	if (header == NULL)
 		return NULL;
@@ -1201,19 +1202,33 @@ modest_tny_msg_header_get_all_recipients_list (TnyHeader *header)
 	bcc = tny_header_dup_bcc (header);
 
 	recipients = NULL;
-	if (from)
-		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (from));
-	if (to)
-		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (to));
-	if (cc)
-		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (cc));
-	if (bcc)
-		recipients = g_slist_concat (recipients, modest_text_utils_split_addresses_list (bcc));
+	if (from) {
+		tmp = g_strdup (from);
+		old_tmp = tmp;
+		g_free (from);
+	}
+	if (to) {
+		tmp = g_strjoin ("; ", old_tmp, to, NULL);
+		g_free (old_tmp);
+		old_tmp = tmp;
+		g_free (to);
+	}
+	if (cc) {
+		tmp = g_strjoin ("; ", old_tmp, cc, NULL);
+		g_free (old_tmp);
+		old_tmp = tmp;
+		g_free (cc);
+	}
+	if (bcc) {
+		tmp = g_strjoin ("; ", old_tmp, bcc, NULL);
+		g_free (old_tmp);
+		old_tmp = tmp;
+		g_free (bcc);
+	}
 
-	g_free (from);
-	g_free (to);
-	g_free (cc);
-	g_free (bcc);
+	old_tmp = modest_text_utils_remove_duplicate_addresses (tmp);
+	recipients = modest_text_utils_split_addresses_list (old_tmp);
+	g_free (tmp);
 
 	return recipients;
 }
