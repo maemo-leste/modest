@@ -472,6 +472,12 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 		return FALSE;
 	}
 
+	/* Do not allow standalone editors or standalone viewers */
+	if (!current_top &&
+	    (MODEST_IS_MSG_VIEW_WINDOW (window) ||
+	     MODEST_IS_MSG_EDIT_WINDOW (window)))
+		modest_window_mgr_show_initial_window (self);
+
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
 		gchar *uid;
 		TnyHeader *header;
