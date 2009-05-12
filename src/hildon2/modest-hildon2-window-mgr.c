@@ -877,6 +877,23 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 }
 
 static void
+close_all_but_first (HildonWindowStack *stack)
+{
+	gint num_windows, i;
+	gboolean retval;
+
+	num_windows = hildon_window_stack_size (stack);
+
+	for (i = 0; i < (num_windows - 1); i++) {
+		GtkWidget *current_top;
+
+		/* Close window */
+		current_top = hildon_window_stack_peek (stack);
+		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+	}
+}
+
+static void
 on_account_removed (TnyAccountStore *acc_store, 
 		    TnyAccount *account,
 		    gpointer user_data)
@@ -904,8 +921,6 @@ on_account_removed (TnyAccountStore *acc_store,
 		header_view = modest_header_window_get_header_view (MODEST_HEADER_WINDOW (current_top));
 		folder = modest_header_view_get_folder (header_view);
 		if (folder) {
-			gboolean retval;
-
 			/* Close if it's my account */
 			if (!TNY_IS_MERGE_FOLDER (folder)) {
 				TnyAccount *my_account;
@@ -913,9 +928,7 @@ on_account_removed (TnyAccountStore *acc_store,
 				my_account = tny_folder_get_account (folder);
 				if (my_account) {
 					if (my_account == account) {
-						g_signal_emit_by_name (G_OBJECT (current_top),
-								       "delete-event",
-								       NULL, &retval);
+						close_all_but_first (stack);
 						deleted = TRUE;
 					}
 					g_object_unref (my_account);
@@ -925,17 +938,14 @@ on_account_removed (TnyAccountStore *acc_store,
 			/* Close if viewing outbox and no account left */
 			if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_OUTBOX) {
 				if (!has_accounts) {
-					g_signal_emit_by_name (G_OBJECT (current_top),
-							       "delete-event",
-							       NULL, &retval);
+					close_all_but_first (stack);
 					deleted = TRUE;
 				}
 			}
 			g_object_unref (folder);
 
-			if (deleted) {
+			if (deleted)
 				current_top = (ModestWindow *) hildon_window_stack_peek (stack);
-			}
 		}
 	}
 }

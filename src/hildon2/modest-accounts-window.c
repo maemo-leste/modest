@@ -538,12 +538,13 @@ on_row_deleted (GtkTreeModel *tree_model,
 	row_count_changed (self);
 }
 
-static void row_count_changed (ModestAccountsWindow *self)
+static void 
+row_count_changed (ModestAccountsWindow *self)
 {
 	ModestAccountsWindowPrivate *priv;
 	GtkTreeModel *model;
 	gint count;
-	
+
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->account_view));
 
@@ -552,9 +553,11 @@ static void row_count_changed (ModestAccountsWindow *self)
 	if (count == 0) {
 		gtk_widget_hide (priv->account_view);
 		gtk_widget_show (priv->no_accounts_container);
+		g_debug ("%s: hiding accounts view", __FUNCTION__);
 	} else {
 		gtk_widget_hide (priv->no_accounts_container);
 		gtk_widget_show (priv->account_view);
+		g_debug ("%s: showing accounts view", __FUNCTION__);
 	}
 	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->pannable, 
 				 "expand", count > 0,
