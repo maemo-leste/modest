@@ -978,7 +978,7 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 	char line[MCC_FILE_MAX_LINE_LEN];
 	guint previous_mcc = 0;
 	gchar *territory;
-
+	GHashTable *country_hash;
 	FILE *file;
 
 	/* First we need to know our current region */
@@ -1026,10 +1026,13 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 		g_warning ("Could not open mcc_mapping file");
 		return;
 	}
+
+	country_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	while (fgets (line, MCC_FILE_MAX_LINE_LEN, file) != NULL) {
 
 		int mcc;
 		char *country = NULL;
+		GtkTreeIter iter;
 		const gchar *name_translated;
 
 		mcc = parse_mcc_mapping_line (line, &country);
@@ -1038,22 +1041,27 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 			continue;
 		}
 
-		if (mcc == previous_mcc) {
-			/* g_warning ("already seen: %s", line); */
+		if (mcc == previous_mcc ||
+		    g_hash_table_lookup (country_hash, country)) {
+			g_message ("already seen: '%s' %d", country, mcc);
 			continue;
 		}
 		previous_mcc = mcc;
 
+		g_hash_table_insert (country_hash, g_strdup (country), GINT_TO_POINTER (mcc));
+
 		name_translated = dgettext ("osso-countries", country);
 
 		/* Add the row to the model: */
-		GtkTreeIter iter;
 		gtk_list_store_append (GTK_LIST_STORE (model), &iter);
 		gtk_list_store_set(GTK_LIST_STORE (model), &iter, 
 				   MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, mcc, 
 				   MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, name_translated, 
 				   -1);
 	}
+
+
+	g_hash_table_unref (country_hash);
 	fclose (file);
 
 	/* Fallback to Finland */

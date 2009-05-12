@@ -580,22 +580,12 @@ init_debug_logging (void)
 static void
 init_i18n (void)
 {
-       /* little trick make en_GB the fallback language, instead
-        * of the logical IDs
-        * we need the ugly ifdefs, because modest_platform_init is
-        * too late.
-        */
 	const gchar *lc_messages = getenv ("LC_MESSAGES");
 
 	if (!lc_messages) {
 		setenv ("LANGUAGE", "en_GB", 1);
 		setenv ("LC_MESSAGES", "en_GB", 1);
-	} else {
-		gchar *language = g_strdup_printf ("%s:en_GB", lc_messages);
-		setenv ("LC_MESSAGES", language, 1);
-		g_free (language);
 	}
-	/* end of little trick */
 
 	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
