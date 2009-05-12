@@ -28,6 +28,7 @@
  */
 
 #include "modest-provider-picker.h"
+#include <hildon/hildon-touch-selector-entry.h>
 #include <gtk/gtkliststore.h>
 #include <gtk/gtkcelllayout.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -170,6 +171,7 @@ modest_provider_picker_new (HildonSizeType size,
 	ModestProviderPicker *self;
 	GtkCellRenderer *renderer;
 	GtkWidget *selector;
+	HildonTouchSelectorColumn *column;
 
 	self = g_object_new (MODEST_TYPE_PROVIDER_PICKER, 
 			     "arrangement", arrangement,
@@ -192,12 +194,20 @@ modest_provider_picker_new (HildonSizeType size,
 	renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (renderer), "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 
-	selector = hildon_touch_selector_new ();
-	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (priv->model),
-					     renderer, "text", MODEL_COL_NAME, NULL);
+	selector = hildon_touch_selector_entry_new ();
+	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), 
+					      (HildonTouchSelectorPrintFunc) touch_selector_print_func);
+	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), GTK_TREE_MODEL (priv->model),
+						      renderer, "text", MODEL_COL_NAME, NULL);
+	hildon_touch_selector_entry_set_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector),
+						     MODEL_COL_NAME);
 
+	/* Set this _after_ loading from file, it makes loading faster */
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector), 0, GTK_TREE_MODEL (priv->model));
-	hildon_touch_selector_set_print_func (HILDON_TOUCH_SELECTOR (selector), (HildonTouchSelectorPrintFunc) touch_selector_print_func);
+	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
+						    HILDON_GTK_INPUT_MODE_ALPHA |
+						    HILDON_GTK_INPUT_MODE_AUTOCAP);
+
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 	modest_provider_picker_set_others_provider (MODEST_PROVIDER_PICKER (self));
