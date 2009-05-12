@@ -179,14 +179,13 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 
 	column = hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model,
 						      renderer, "text", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
-	g_object_set (G_OBJECT (column), "text-column", MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, NULL);
+	hildon_touch_selector_entry_set_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector),
+						     MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME);
 	modest_utils_fill_country_model (model, &(priv->locale_mcc));
 
 	/* Set this _after_ loading from file, it makes loading faster */
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector),
 					 0, model);
-	hildon_touch_selector_entry_set_text_column (HILDON_TOUCH_SELECTOR_ENTRY (selector),
-						     MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME);
 	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
 						    HILDON_GTK_INPUT_MODE_ALPHA |
 						    HILDON_GTK_INPUT_MODE_AUTOCAP);
