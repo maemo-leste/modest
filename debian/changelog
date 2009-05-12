@@ -1,3 +1,24 @@
+modest (3.0.17-rc4) unstable; urgency=low
+
+  * Week 20, 2009 - Tuesday release
+  * Fixes: NB#111687 - SMTP settings are taking wrong in auto configuration
+  * Fixes: NB#113810 - Accounts view should be shown also when Email is launched first time from other applications
+  * Fixes: NB#102523 - Outbox Folder view and Title is updated properly after deleting account from account settings dialog.
+  * Fixes: NB#113242 - Unreproducible modest crash at "_dbus_pending_call_get_connection_and_lock ()" when "Move" is tapped in the edit mode
+  * Fixes: NB#114996 - two same contacts are showing in add to contact dialog box for embedded attachment
+  * Fixes: NB#115318 - Viewer view : "Updating" string and hildon progress indication should be shown when unread message is opened from Intellisync account
+  * Fixes: NB#115566 - "User name or password incorrect" reported when gmail is unavailable
+  * Fixes: NB#115712 - Corematic: Crash in "modest_mail_operation_create_folder"
+  * Fixes: NB#111126 - <coverity> Misc defects from tinymail
+  * Fixes: NB#110057 - Region offered creating account different from Region set in first boot
+  * Fixes: NB#115045 - Account setup wizard: Name field is not prefilled with the name from a Me Card
+  * Fixes: NB#115325 - No error Note is shown when Outbox is selected for creating a new folder.
+  * Fixes: NB#116113 - missed mail identification opens up a seperate window
+  * Fixes: NB#116255 - Account setup wizard: SERVICE PROVIDER is not per Email UI spec
+  * Fixes: NB#115890 - Address gets added in To field instead of Bcc when Check name command is used
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 12 May 2009 15:08:41 +0300
+
 modest (3.0.17-rc3) unstable; urgency=low
 
   * Week 20, 2009 - Friday release
