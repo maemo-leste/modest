@@ -618,8 +618,7 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	sort_ids[sort_key] = TNY_HEADER_FLAG_PRIORITY_MASK;
 	priority_sort_id = sort_key;
 	
-	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
-				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)))));
+	sortable = GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)));
 	/* Launch dialogs */
 	if (!gtk_tree_sortable_get_sort_column_id (sortable,
 						   &current_sort_colid, &current_sort_type)) {

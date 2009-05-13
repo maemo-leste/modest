@@ -322,9 +322,8 @@ connect_signals (ModestHeaderWindow *self)
 					   G_CALLBACK (on_expose_event),
 					   self);
 
-	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
-				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (
-								      GTK_TREE_VIEW (priv->header_view)))));
+	sortable = GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view)));
+
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (sortable),
@@ -1091,9 +1090,7 @@ update_sort_button (ModestHeaderWindow *self)
 	const gchar *value = NULL;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
-	sortable = GTK_TREE_SORTABLE (gtk_tree_model_filter_get_model
-				      (GTK_TREE_MODEL_FILTER (gtk_tree_view_get_model (
-								      GTK_TREE_VIEW (priv->header_view)))));
+	sortable = GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view)));
 
 	if (!gtk_tree_sortable_get_sort_column_id (sortable,
 						   &current_sort_colid, &current_sort_type)) {
