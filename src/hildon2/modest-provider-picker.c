@@ -206,6 +206,7 @@ modest_provider_picker_new (HildonSizeType size,
 	hildon_touch_selector_set_model (HILDON_TOUCH_SELECTOR (selector), 0, GTK_TREE_MODEL (priv->model));
 	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
 						    HILDON_GTK_INPUT_MODE_ALPHA |
+						    HILDON_GTK_INPUT_MODE_SPECIAL |
 						    HILDON_GTK_INPUT_MODE_AUTOCAP);
 
 
