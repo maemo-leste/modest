@@ -602,7 +602,9 @@ cancel_window_operations (ModestWindow *window)
 		GSList* tmp_list = NULL;
 
 		type = modest_mail_operation_get_type_operation (MODEST_MAIL_OPERATION (pending_ops->data));
-		if (type == MODEST_MAIL_OPERATION_TYPE_RECEIVE || type == MODEST_MAIL_OPERATION_TYPE_OPEN) {
+		if (type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ||
+		    type == MODEST_MAIL_OPERATION_TYPE_OPEN ||
+		    type == MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE) {
 			modest_mail_operation_cancel (pending_ops->data);
 		}
 		g_object_unref (G_OBJECT (pending_ops->data));
