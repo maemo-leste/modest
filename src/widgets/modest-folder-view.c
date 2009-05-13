@@ -853,7 +853,7 @@ messages_cell_data  (GtkTreeViewColumn *column,
 				item_name = g_strdup_printf (drafts?_("mcen_ti_messages"):_("mcen_ti_new_messages"), 
 							     number);
 			} else if (number == 1) {
-				item_name = g_strdup_printf (drafts?_("mcen_ti_message"):_("mcen_ti_new_message"), 
+				item_name = g_strdup_printf (drafts?_("mcen_ti_message"):_("mcen_ti_new_messages_singular"), 
 							     number);
 			}
 		} 
