@@ -105,6 +105,7 @@ struct _ModestAccountsWindowPrivate {
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
+static GtkWidget *pre_created_accounts_window = NULL;
 
 /************************************************************************/
 
@@ -237,15 +238,13 @@ connect_signals (ModestAccountsWindow *self)
 	 * after disconnecting all signals, in destroy stage */
 }
 
-ModestWindow *
-modest_accounts_window_new (void)
+static ModestWindow *
+modest_accounts_window_new_real (void)
 {
 	ModestAccountsWindow *self = NULL;
 	ModestAccountsWindowPrivate *priv = NULL;
-	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GdkPixbuf *new_message_pixbuf;
-	GtkWidget *action_area_box;
 	guint accel_key;
 	GdkModifierType accel_mods;
 	GtkAccelGroup *accel_group;
@@ -293,22 +292,16 @@ modest_accounts_window_new (void)
 				  G_CALLBACK (on_queue_changed),
 				  self);
 
-	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
-
-	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
 	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
 	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
 	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
 
-	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
-	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
 
 	g_object_unref (new_message_pixbuf);
 	setup_menu (self);
 
-	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
 	gtk_box_pack_start (GTK_BOX (priv->box), priv->pannable, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (box_alignment), priv->box);
 	gtk_container_add (GTK_CONTAINER (self), box_alignment);
@@ -317,37 +310,15 @@ modest_accounts_window_new (void)
 	gtk_widget_show (priv->box);
 	gtk_widget_show (box_alignment);
 
-	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
-
-	/* Load previous osso state, for instance if we are being restored from 
-	 * hibernation:  */
-	modest_osso_load_state ();
-
 	/* Get device name */
 	modest_maemo_utils_get_device_name ();
 
-	app = hildon_program_get_instance ();
-	hildon_program_add_window (app, HILDON_WINDOW (self));
-	
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
 	if (window_icon) {
 		gtk_window_set_icon (GTK_WINDOW (self), window_icon);
 		g_object_unref (window_icon);
 	}
-
-	/* Dont't restore settings here, 
-	 * because it requires a gtk_widget_show(), 
-	 * and we don't want to do that until later,
-	 * so that the UI is not visible for non-menu D-Bus activation.
-	 */
-
-	g_signal_connect (G_OBJECT (self), "map-event",
-			  G_CALLBACK (_modest_accounts_window_map_event),
-			  G_OBJECT (self));
-	update_progress_hint (self);
-
-	row_count_changed (self);
 
 	accel_group = gtk_accel_group_new ();
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
@@ -357,6 +328,54 @@ modest_accounts_window_new (void)
 
 	return MODEST_WINDOW(self);
 }
+
+ModestWindow *
+modest_accounts_window_new (void)
+{
+	GtkWidget *action_area_box;
+	ModestWindow *self;
+	ModestAccountsWindowPrivate *priv = NULL;
+	HildonProgram *app;
+
+	if (pre_created_accounts_window) {
+		self = MODEST_WINDOW (pre_created_accounts_window);
+		pre_created_accounts_window = NULL;
+	} else {
+		self = modest_accounts_window_new_real ();
+	}
+	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
+	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
+
+	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
+	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
+	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
+	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
+
+	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
+
+	/* Load previous osso state, for instance if we are being restored from 
+	 * hibernation:  */
+	modest_osso_load_state ();
+
+	app = hildon_program_get_instance ();
+	hildon_program_add_window (app, HILDON_WINDOW (self));
+	
+	/* Dont't restore settings here, 
+	 * because it requires a gtk_widget_show(), 
+	 * and we don't want to do that until later,
+	 * so that the UI is not visible for non-menu D-Bus activation.
+	 */
+
+	g_signal_connect (G_OBJECT (self), "map-event",
+			  G_CALLBACK (_modest_accounts_window_map_event),
+			  G_OBJECT (self));
+	update_progress_hint (MODEST_ACCOUNTS_WINDOW (self));
+
+	row_count_changed (MODEST_ACCOUNTS_WINDOW (self));
+
+	return self;
+}
+
 
 ModestAccountView *
 modest_accounts_window_get_account_view (ModestAccountsWindow *self)
@@ -632,3 +651,12 @@ on_queue_changed (ModestMailOperationQueue *queue,
 	}
 }
 
+void 
+modest_accounts_window_pre_create (void)
+{
+	static gboolean pre_created = FALSE;
+	if (!pre_created) {
+		pre_created = TRUE;
+		pre_created_accounts_window = GTK_WIDGET (modest_accounts_window_new_real ());
+	}
+}

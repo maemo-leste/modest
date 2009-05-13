@@ -83,6 +83,7 @@ struct _ModestWindowMgrClass {
 	ModestWindow *        (*show_initial_window)            (ModestWindowMgr *self);
 	ModestWindow *        (*get_current_top)                (ModestWindowMgr *self);
 	gboolean              (*screen_is_on)                   (ModestWindowMgr *self);
+	void                  (*create_caches)                  (ModestWindowMgr *self);
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
 	void (*progress_list_changed) (ModestWindowMgr *self);
@@ -463,6 +464,15 @@ gboolean modest_window_mgr_has_progress_operation (ModestWindowMgr *self);
  */
 gboolean modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
 							      const gchar *account_name);
+
+/**
+ * modest_window_mgr_create_caches:
+ * @self: a #ModestWindowMgr
+ *
+ * creates cached windows. This is called in modest main, just before the show-ui
+ * code. So it should be valid for the two startup ways (with --show-ui and without).
+ */
+void modest_window_mgr_create_caches (ModestWindowMgr *self);
 
 G_END_DECLS
 

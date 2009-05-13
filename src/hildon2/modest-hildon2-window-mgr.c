@@ -89,6 +89,7 @@ static gboolean window_has_modals (ModestWindow *window);
 static ModestWindow *modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self);
 static ModestWindow *modest_hildon2_window_mgr_get_current_top (ModestWindowMgr *self);
 static gboolean modest_hildon2_window_mgr_screen_is_on (ModestWindowMgr *self);
+static void modest_hildon2_window_mgr_create_caches (ModestWindowMgr *self);
 static void osso_display_event_cb (osso_display_state_t state, 
 				   gpointer data);
 static void on_account_removed (TnyAccountStore *acc_store, 
@@ -173,6 +174,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->show_initial_window = modest_hildon2_window_mgr_show_initial_window;
 	mgr_class->get_current_top = modest_hildon2_window_mgr_get_current_top;
 	mgr_class->screen_is_on = modest_hildon2_window_mgr_screen_is_on;
+	mgr_class->create_caches = modest_hildon2_window_mgr_create_caches;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowMgrPrivate));
 
@@ -1046,6 +1048,17 @@ modest_hildon2_window_mgr_screen_is_on (ModestWindowMgr *self)
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 	
 	return (priv->display_state == OSSO_DISPLAY_ON) ? TRUE : FALSE;
+}
+
+static void
+modest_hildon2_window_mgr_create_caches (ModestWindowMgr *self)
+{
+	g_return_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self));
+
+	modest_accounts_window_pre_create ();
+
+	MODEST_WINDOW_MGR_CLASS(parent_class)->create_caches (self);
+	
 }
 
 static void 

@@ -83,6 +83,15 @@ ModestWindow* modest_accounts_window_new ();
  */
 ModestAccountView *modest_accounts_window_get_account_view (ModestAccountsWindow *self);
 
+/**
+ * modest_accounts_window_pre_create:
+ *
+ * Creates an instance of #ModestAccountsWindow that will be used in the next call
+ * to modest_accounts_window_new (). Should be called in the initialisation process
+ *
+ */
+void modest_accounts_window_pre_create (void);
+
 G_END_DECLS
 
 #endif

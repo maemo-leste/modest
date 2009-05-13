@@ -73,6 +73,7 @@ static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_get_current_top_default (ModestWindowMgr *self);
 static gboolean modest_window_mgr_screen_is_on_default (ModestWindowMgr *self);
+static void modest_window_mgr_create_caches_default (ModestWindowMgr *self);
 static void modest_window_mgr_on_queue_changed (ModestMailOperationQueue *queue,
 						ModestMailOperation *mail_op,
 						ModestMailOperationQueueNotification type,
@@ -169,6 +170,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->show_initial_window = modest_window_mgr_show_initial_window_default;
 	mgr_class->get_current_top = modest_window_mgr_get_current_top_default;
 	mgr_class->screen_is_on = modest_window_mgr_screen_is_on_default;
+	mgr_class->create_caches = modest_window_mgr_create_caches_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
 
@@ -561,8 +563,6 @@ modest_window_mgr_register_window_default (ModestWindowMgr *self,
 			return FALSE;
 		} else {
 			priv->main_window = window;
-			load_new_view (self);
-			load_new_editor (self);
 		}
 	}
 
@@ -973,6 +973,19 @@ modest_window_mgr_screen_is_on_default (ModestWindowMgr *self)
 	return TRUE;
 }
 
+void
+modest_window_mgr_create_caches (ModestWindowMgr *mgr)
+{
+	MODEST_WINDOW_MGR_GET_CLASS (mgr)->create_caches (mgr);
+}
+
+static void
+modest_window_mgr_create_caches_default (ModestWindowMgr *self)
+{
+	load_new_editor (self);
+	load_new_view (self);
+}
+
 static gboolean
 tny_list_find (TnyList *list, GObject *item)
 {
@@ -1126,3 +1139,4 @@ modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
 
 	return account_ops;
 }
+

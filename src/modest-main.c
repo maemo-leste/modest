@@ -145,6 +145,8 @@ main (int argc, char *argv[])
 	GError *error;
 	GOptionContext *context;
 
+	ModestWindowMgr *mgr;
+
 	context = g_option_context_new ("- Modest email client");
 	g_option_context_add_main_entries (context, option_entries, GETTEXT_PACKAGE);
 	g_option_context_add_group (context, gtk_get_option_group (TRUE));
@@ -211,6 +213,10 @@ main (int argc, char *argv[])
 				  G_CALLBACK (modest_ui_actions_on_password_requested),
 				  NULL);
 
+	/* Create cached windows */
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_create_caches (mgr);
+
 	/* Usually, we only show the UI when we get the "top_application" D-Bus method.
 	 * This allows modest to start via D-Bus activation to provide a service,
 	 * without showing the UI.
@@ -219,7 +225,6 @@ main (int argc, char *argv[])
 	 */
 	if (show_ui_without_top_application_method) {
 		ModestWindow *window;
-		ModestWindowMgr *mgr;
 
 		modest_runtime_set_allow_shutdown (TRUE);
 		mgr = modest_runtime_get_window_mgr();
