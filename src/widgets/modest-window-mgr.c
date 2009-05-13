@@ -233,7 +233,7 @@ load_new_view (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	if ((priv->cached_view == NULL) && (priv->idle_load_view_id == 0))
-		priv->idle_load_view_id = g_idle_add ((GSourceFunc) idle_load_view, self);
+		priv->idle_load_view_id = g_timeout_add (2500, (GSourceFunc) idle_load_view, self);
 }
 
 static void
@@ -241,7 +241,7 @@ load_new_editor (ModestWindowMgr *self)
 {
 	ModestWindowMgrPrivate *priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 	if ((priv->cached_editor == NULL) && (priv->idle_load_editor_id == 0))
-		priv->idle_load_editor_id = g_idle_add ((GSourceFunc) idle_load_editor, self);
+		priv->idle_load_editor_id = g_timeout_add (5000, (GSourceFunc) idle_load_editor, self);
 }
 
 static void
