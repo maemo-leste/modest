@@ -59,6 +59,7 @@ struct _ModestAttachmentsViewPrivate
 	GtkWidget *box;
 	GList *selected;
 	GtkWidget *rubber_start;
+	GtkWidget *press_att_view;
 	ModestAttachmentsViewStyle style;
 };
 
@@ -310,6 +311,7 @@ modest_attachments_view_instance_init (GTypeInstance *instance, gpointer g_class
 	priv->msg = NULL;
 	priv->box = gtk_vbox_new (FALSE, 0);
 	priv->rubber_start = NULL;
+	priv->press_att_view = NULL;
 	priv->selected = NULL;
 	priv->style = MODEST_ATTACHMENTS_VIEW_STYLE_SELECTABLE;
 
@@ -431,11 +433,9 @@ button_press_event (GtkWidget *widget,
 				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
 			} else if ((priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) ||
 			    (GTK_WIDGET_STATE (att_view) == GTK_STATE_SELECTED && (g_list_length (priv->selected) < 2))) {
-				TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
-				if (TNY_IS_MIME_PART (mime_part)) {
-					g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0, mime_part);
-					g_object_unref (mime_part);
-				}
+				priv->press_att_view = att_view;
+				set_selected (MODEST_ATTACHMENTS_VIEW (widget), MODEST_ATTACHMENT_VIEW (att_view));
+				gtk_grab_add (widget);
 			} else {
 				TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
 
@@ -465,13 +465,25 @@ button_release_event (GtkWidget *widget,
 		att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
 						   (gint) event->x_root, (gint) event->y_root);
 
-		if (att_view != NULL) {
+		if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) {
 			unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
-			select_range (MODEST_ATTACHMENTS_VIEW (widget), 
-				      MODEST_ATTACHMENT_VIEW (priv->rubber_start), 
-				      MODEST_ATTACHMENT_VIEW (att_view));
+			if (att_view == priv->press_att_view) {
+				TnyMimePart *mime_part;
+				mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+				g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0, mime_part);
+				g_object_unref (mime_part);
+			}
+			priv->press_att_view = NULL;
+		} else {
+
+			if (att_view != NULL) {
+				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
+				select_range (MODEST_ATTACHMENTS_VIEW (widget), 
+					      MODEST_ATTACHMENT_VIEW (priv->rubber_start), 
+					      MODEST_ATTACHMENT_VIEW (att_view));
+			}
+			priv->rubber_start = NULL;
 		}
-		priv->rubber_start = NULL;
 		gtk_grab_remove (widget);
 	}
 	return TRUE;
@@ -488,12 +500,20 @@ motion_notify_event (GtkWidget *widget,
 
 		att_view = get_att_view_at_coords (MODEST_ATTACHMENTS_VIEW (widget), 
 						   (gint) event->x_root, (gint) event->y_root);
+		if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) {
+			if (att_view == priv->press_att_view) {
+				set_selected (MODEST_ATTACHMENTS_VIEW (widget), MODEST_ATTACHMENT_VIEW (att_view));
+			} else {
+				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
+			}
+		} else {
 
-		if (att_view != NULL) {
-			unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
-			select_range (MODEST_ATTACHMENTS_VIEW (widget), 
-				      MODEST_ATTACHMENT_VIEW (priv->rubber_start), 
-				      MODEST_ATTACHMENT_VIEW (att_view));
+			if (att_view != NULL) {
+				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
+				select_range (MODEST_ATTACHMENTS_VIEW (widget), 
+					      MODEST_ATTACHMENT_VIEW (priv->rubber_start), 
+					      MODEST_ATTACHMENT_VIEW (att_view));
+			}
 		}
 	}
 	return TRUE;
