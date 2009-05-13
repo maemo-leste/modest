@@ -502,9 +502,12 @@ motion_notify_event (GtkWidget *widget,
 						   (gint) event->x_root, (gint) event->y_root);
 		if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) {
 			if (att_view == priv->press_att_view) {
+				if (priv->selected == NULL)
 				set_selected (MODEST_ATTACHMENTS_VIEW (widget), MODEST_ATTACHMENT_VIEW (att_view));
 			} else {
-				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
+				if (priv->selected) {
+					unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
+				}
 			}
 		} else {
 
@@ -515,6 +518,7 @@ motion_notify_event (GtkWidget *widget,
 					      MODEST_ATTACHMENT_VIEW (att_view));
 			}
 		}
+		gdk_event_request_motions (event);
 	}
 	return TRUE;
 }
