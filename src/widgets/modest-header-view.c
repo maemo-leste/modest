@@ -354,7 +354,7 @@ remove_all_columns (ModestHeaderView *obj)
 gboolean
 modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, TnyFolderType type)
 {
-	GtkTreeModel *tree_filter, *sortable;
+	GtkTreeModel *sortable;
 	GtkTreeViewColumn *column=NULL;
 	GtkTreeSelection *selection = NULL;
 	GtkCellRenderer *renderer_header,
@@ -458,8 +458,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
 	gtk_tree_selection_set_mode(selection, GTK_SELECTION_MULTIPLE);
-	tree_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(tree_filter));
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 
 	/* Add new columns */
 	for (cursor = columns; cursor; cursor = g_list_next(cursor)) {
@@ -574,7 +573,7 @@ modest_header_view_set_columns (ModestHeaderView *self, const GList *columns, Tn
 	}		
 
 	if (sortable) {
-		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 						 (GtkTreeIterCompareFunc) cmp_rows,
 						 compact_column, NULL);
@@ -1147,19 +1146,17 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 					      set_folder_intern_get_headers_async_cb, 
 					      NULL, self);
 
-	sortable = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(headers));
-	g_object_unref (G_OBJECT (headers));
+	/* Create a tree model filter to hide and show rows for cut operations  */
+	filter_model = gtk_tree_model_filter_new (GTK_TREE_MODEL (headers), NULL);
+	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
+						filter_row, self, NULL);
+	g_object_unref (headers);
 
 	/* Init filter_row function to examine empty status */
 	priv->status  = HEADER_VIEW_INIT;
 
-	/* Create a tree model filter to hide and show rows for cut operations  */
-	filter_model = gtk_tree_model_filter_new (sortable, NULL);
-	gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filter_model),
-						filter_row,
-						self,
-						NULL);
-	g_object_unref (G_OBJECT (sortable));
+	/* Create sortable model */
+	sortable = gtk_tree_model_sort_new_with_model (filter_model);
 
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));
@@ -1169,27 +1166,26 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 		type  = modest_tny_folder_guess_folder_type (folder);
 		if (type == TNY_FOLDER_TYPE_INVALID)
 			g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
-		
+
 		sort_colid = modest_header_view_get_sort_column_id (self, type); 
 		sort_type = modest_header_view_get_sort_type (self, type); 
-		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
+		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
 						      sort_colid,
 						      sort_type);
-		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
 						 TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN,
 						 (GtkTreeIterCompareFunc) cmp_rows,
 						 cols->data, NULL);
-		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(sortable),
+		gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sortable),
 						 TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN,
 						 (GtkTreeIterCompareFunc) cmp_subject_rows,
 						 cols->data, NULL);
 	}
 
 	/* Set new model */
-	gtk_tree_view_set_model (GTK_TREE_VIEW (self), filter_model);
-	modest_header_view_notify_observers(self, GTK_TREE_MODEL(filter_model),
-			tny_folder_get_id(folder));
-	g_object_unref (G_OBJECT (filter_model));
+	gtk_tree_view_set_model (GTK_TREE_VIEW (self), sortable);
+	modest_header_view_notify_observers (self, sortable, tny_folder_get_id (folder));
+	g_object_unref (sortable);
 
 	/* Free */
 	g_list_free (cols);
@@ -1201,26 +1197,24 @@ modest_header_view_sort_by_column_id (ModestHeaderView *self,
 				      GtkSortType sort_type)
 {
 	ModestHeaderViewPrivate *priv = NULL;
-	GtkTreeModel *tree_filter, *sortable = NULL; 
+	GtkTreeModel *sortable = NULL; 
 	TnyFolderType type;
 
 	g_return_if_fail (self && MODEST_IS_HEADER_VIEW(self));
 	g_return_if_fail (sort_type == GTK_SORT_ASCENDING || sort_type == GTK_SORT_DESCENDING);
 	
 	/* Get model and private data */
-	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);		
-	tree_filter = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	sortable = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(tree_filter));
-/* 	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self)); */
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);		
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	
 	/* Sort tree model */
 	type  = modest_tny_folder_guess_folder_type (priv->folder);
 	if (type == TNY_FOLDER_TYPE_INVALID)
 		g_warning ("%s: BUG: TNY_FOLDER_TYPE_INVALID", __FUNCTION__);
 	else {
-		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
-					      sort_colid,
-					      sort_type);
+		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sortable),
+						      sort_colid,
+						      sort_type);
 		/* Store new sort parameters */
 		modest_header_view_set_sort_params (self, sort_colid, sort_type, type);
 	}	
@@ -1573,10 +1567,8 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	gint t1, t2;
 	gint val1, val2;
 	gint cmp;
-/* 	static int counter = 0; */
 
 	g_return_val_if_fail (GTK_IS_TREE_VIEW_COLUMN(user_data), 0);
-/* 	col_id = gtk_tree_sortable_get_sort_column_id (GTK_TREE_SORTABLE (tree_model)); */
 	col_id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(user_data), MODEST_HEADER_VIEW_FLAG_SORT));
 
 	
