@@ -4307,7 +4307,7 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 
 	box = gtk_hbox_new (FALSE, 0);
 
-	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, 0, MODEST_MARGIN_DEFAULT);
 
 	abook_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
