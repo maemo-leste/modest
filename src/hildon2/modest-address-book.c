@@ -1336,5 +1336,11 @@ modest_address_book_get_my_name ()
 {
 	OssoABookSelfContact *self_contact = osso_abook_self_contact_get_default ();
 
-	return osso_abook_contact_get_display_name (OSSO_ABOOK_CONTACT (self_contact));
+	/* We are not using osso_abook_contact_get_display_name
+	   because that method fallbacks to another fields if the name
+	   is not defined */
+	if (self_contact)
+		return e_contact_get ((EContact *) self_contact, E_CONTACT_NAME);
+	else
+		return NULL;
 }
