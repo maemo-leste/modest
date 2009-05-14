@@ -769,6 +769,54 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 #endif /* !MODEST_TOOLKIT_GTK */
 }
 
+static guint64
+count_part_size (const gchar *part)
+{
+	GnomeVFSURI *vfs_uri;
+	gchar *escaped_filename;
+	gchar *filename;
+	GnomeVFSFileInfo *info;
+	guint64 result;
+
+	/* Estimation of attachment size if we cannot get it from file info */
+	result = 32768;
+
+	vfs_uri = gnome_vfs_uri_new (part);
+
+	escaped_filename = g_path_get_basename (gnome_vfs_uri_get_path (vfs_uri));
+	filename = gnome_vfs_unescape_string_for_display (escaped_filename);
+	g_free (escaped_filename);
+	gnome_vfs_uri_unref (vfs_uri);
+
+	info = gnome_vfs_file_info_new ();
+	
+	if (gnome_vfs_get_file_info (part, 
+				     info, 
+				     GNOME_VFS_FILE_INFO_GET_MIME_TYPE)
+	    == GNOME_VFS_OK) {
+		if (info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE) {
+			result = info->size;
+		}
+	}
+	g_free (filename);
+	gnome_vfs_file_info_unref (info);
+
+	return result;
+}
+
+static guint64 
+count_parts_size (GSList *parts)
+{
+	GSList *node;
+	guint64 result = 0;
+
+	for (node = parts; node != NULL; node = g_slist_next (node)) {
+		result += count_part_size ((const gchar *) node->data);
+	}
+
+	return result;
+}
+
 void
 modest_ui_actions_compose_msg(ModestWindow *win,
 			      const gchar *to_str,
@@ -791,10 +839,36 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	ModestAccountMgr *mgr = modest_runtime_get_account_mgr();
 	ModestTnyAccountStore *store = modest_runtime_get_account_store();
 	GnomeVFSFileSize total_size, allowed_size;
+	guint64 available_disk, expected_size, parts_size;
+	guint parts_count;
 
 	/* we check for low-mem */
 	if (modest_platform_check_memory_low (win, TRUE))
 		goto cleanup;
+
+	available_disk = modest_utils_get_available_space (NULL);
+	parts_count = g_slist_length (attachments);
+	parts_size = count_parts_size (attachments);
+	expected_size = modest_tny_msg_estimate_size (body, NULL, parts_count, parts_size);
+
+	/* Double check: memory full condition or message too big */
+	if (available_disk < MIN_FREE_SPACE ||
+	    expected_size > available_disk) {
+		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		modest_platform_information_banner (NULL, NULL, msg);
+		g_free (msg);
+
+		return;
+	}
+
+	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
+		modest_platform_run_information_dialog (
+			GTK_WINDOW(win),
+			_KR("memr_ib_operation_disabled"),
+			TRUE);
+		return;
+	}
+
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (win)
