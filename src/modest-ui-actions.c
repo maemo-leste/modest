@@ -931,16 +931,18 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	gtk_widget_show_all (GTK_WIDGET (msg_win));
 
 	while (attachments) {
-		total_size +=
+		GnomeVFSFileSize att_size;
+		att_size =
 			modest_msg_edit_window_attach_file_one((ModestMsgEditWindow *)msg_win,
 							       attachments->data, allowed_size);
+		total_size += att_size;
 
-		if (total_size > allowed_size) {
+		if (att_size > allowed_size) {
 			g_warning ("%s: total size: %u",
 				   __FUNCTION__, (unsigned int)total_size);
 			break;
 		}
-		allowed_size -= total_size;
+		allowed_size -= att_size;
 
 		attachments = g_slist_next(attachments);
 	}
