@@ -244,21 +244,6 @@ modest_number_editor_init                       (ModestNumberEditor *editor)
     g_assert (priv);
 
     priv->select_all_idle_id = 0;
-
-    /* Connect child widget signals */
-    g_signal_connect (GTK_OBJECT (editor), "changed",
-            G_CALLBACK (modest_number_editor_entry_changed),
-            editor);
-
-    g_signal_connect (GTK_OBJECT (editor), "focus-out-event",
-            G_CALLBACK (modest_number_editor_entry_focusout),
-            editor);
-
-    hildon_gtk_entry_set_input_mode (GTK_ENTRY (editor), 
-				     HILDON_GTK_INPUT_MODE_NUMERIC);
-
-    modest_number_editor_set_range (editor, G_MININT, G_MAXINT);
-
     priv->is_valid = TRUE;
 }
 
@@ -468,8 +453,22 @@ modest_number_editor_new                        (gint min,
 {
     ModestNumberEditor *editor = g_object_new (MODEST_TYPE_NUMBER_EDITOR, NULL);
 
+    /* Connect child widget signals */
+    g_signal_connect (GTK_OBJECT (editor), "changed",
+            G_CALLBACK (modest_number_editor_entry_changed),
+            editor);
+
+    g_signal_connect (GTK_OBJECT (editor), "focus-out-event",
+            G_CALLBACK (modest_number_editor_entry_focusout),
+            editor);
+
+    /* Numeric input mode */
+    hildon_gtk_entry_set_input_mode (GTK_ENTRY (editor), 
+				     HILDON_GTK_INPUT_MODE_NUMERIC);
+
     /* Set user inputted range to editor */
     modest_number_editor_set_range (editor, min, max);
+
 
     return GTK_WIDGET (editor);
 }
