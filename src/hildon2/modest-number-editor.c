@@ -465,10 +465,11 @@ modest_number_editor_new                        (gint min,
     /* Numeric input mode */
     hildon_gtk_entry_set_input_mode (GTK_ENTRY (editor), 
 				     HILDON_GTK_INPUT_MODE_NUMERIC);
+    hildon_gtk_widget_set_theme_size ((GtkWidget *) editor, 
+				      HILDON_SIZE_FINGER_HEIGHT);
 
     /* Set user inputted range to editor */
     modest_number_editor_set_range (editor, min, max);
-
 
     return GTK_WIDGET (editor);
 }
