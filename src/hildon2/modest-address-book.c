@@ -671,13 +671,31 @@ select_email_addrs_for_contact(GList * email_addr_list)
 	return selected_email_addr_list;
 }
 
+/* Assumes that the second argument (the user provided one) is a pure
+   email address without name */
+static gint
+compare_addresses (const gchar *address1,
+		   const gchar *mail2)
+{
+	gint retval;
+	gchar *mail1;
+
+	mail1 = modest_text_utils_get_email_address (address1);
+	retval = g_strcmp0 (mail1, mail2);
+	g_free (mail1);
+
+	return retval;
+}
+
 static EContact *
 get_contact_for_address (GList *contacts,
 			 const gchar *address)
 {
 	EContact *retval = NULL, *contact;
 	GList *iter;
+	gchar *email;
 
+	email = modest_text_utils_get_email_address (address);
 	iter = contacts;
 	while (iter && !retval) {
 		GList *emails = NULL;
@@ -686,7 +704,7 @@ get_contact_for_address (GList *contacts,
 		emails = e_contact_get (contact, E_CONTACT_EMAIL);
 		if (emails) {
 			/* Look for the email address */
-			if (g_list_find_custom (emails, address, (GCompareFunc) g_strcmp0))
+			if (g_list_find_custom (emails, email, (GCompareFunc) compare_addresses))
 				retval = contact;
 
 			/* Free the list */
@@ -695,6 +713,8 @@ get_contact_for_address (GList *contacts,
 		}
 		iter = g_list_next (iter);
 	}
+	g_free (email);
+
 	return retval;
 }
 
