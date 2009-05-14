@@ -113,11 +113,17 @@ gchar*
 modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar* account_name)
 {
 	/* This directory should contain an "outbox" child directory: */
-	return g_build_filename (g_get_home_dir(),
-				 MODEST_DIR,
-				 MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDERS_MAILDIR, 
-				 account_name,
-				 NULL);
+	gchar *escaped, *filename;
+
+	escaped = g_uri_escape_string (account_name, NULL, FALSE);
+	filename = g_build_filename (g_get_home_dir(),
+				     MODEST_DIR,
+				     MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDERS_MAILDIR, 
+				     escaped,
+				     NULL);
+	g_free (escaped);
+
+	return filename;
 }
 
 gchar*
