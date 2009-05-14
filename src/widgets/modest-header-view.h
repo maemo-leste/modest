@@ -451,6 +451,22 @@ void modest_header_view_remove_observer(
 		ModestHeaderView *header_view,
 		ModestHeaderViewObserver *observer);
 
+/**
+ * modest_header_view_get_header_at_pos:
+ * @header_view: a #ModestHeaderView
+ * @initial_x: the x coordinate
+ * @initial_y: the y coordinate
+ *
+ * Return the #TnyHeader stored in the row at (x,y) coordinates
+ * relatives to the widget. It returns a new reference so you must
+ * unref it once you're done with it.
+ *
+ * Returns: a #TnyHeader if found, else NULL
+ **/
+TnyHeader* modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
+						 gint initial_x,
+						 gint initial_y);
+
 G_END_DECLS
 
 

@@ -2419,3 +2419,36 @@ update_style (ModestHeaderView *self)
 	g_object_set_data_full (G_OBJECT (priv->renderer_subject), ACTIVE_COLOR, new_color, (GDestroyNotify) gdk_color_free);
 #endif
 }
+
+TnyHeader *
+modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
+				      gint initial_x,
+				      gint initial_y)
+{
+	GtkTreePath *path;
+	GtkTreeModel *tree_model;
+	GtkTreeIter iter;
+	TnyHeader *header;
+
+	/* Get tree path */
+	if (!gtk_tree_view_get_dest_row_at_pos ((GtkTreeView *) header_view,
+						initial_x,
+						initial_y,
+						&path,
+						NULL))
+		return NULL;
+
+	g_debug ("located path: %s", gtk_tree_path_to_string (path));
+
+	/* Get model */
+	tree_model = gtk_tree_view_get_model ((GtkTreeView *) header_view);
+	if (!gtk_tree_model_get_iter (tree_model, &iter, path))
+		return NULL;
+
+	/* Get header */
+	gtk_tree_model_get (tree_model, &iter,
+			    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
+			    &header, -1);
+
+	return header;
+}

@@ -580,7 +580,7 @@ void          modest_mail_operation_xfer_msgs      (ModestMailOperation *self,
 						    gpointer user_data);
 
 /**
- * modest_mail_operation_remove_msg:
+ * modest_mail_operation_remove_msgs:
  * @self: a #ModestMailOperation
  * @headers: the #TnyList of the messages to delete
  * @remove_to_trash: TRUE to move it to trash or FALSE to delete it

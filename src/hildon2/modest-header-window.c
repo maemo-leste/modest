@@ -52,6 +52,7 @@
 #include <hildon/hildon-banner.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-tny-folder.h>
+#include <tny-simple-list.h>
 
 typedef enum {
 	CONTENTS_STATE_NONE = 0,
@@ -159,7 +160,11 @@ static void update_progress_hint (ModestHeaderWindow *self);
 static void on_sort_column_changed (GtkTreeSortable *treesortable,
 				    gpointer         user_data);
 static void update_sort_button (ModestHeaderWindow *self);
-
+static void on_horizontal_movement (HildonPannableArea *hildonpannable,
+				    gint                direction,
+				    gdouble             initial_x,
+				    gdouble             initial_y,
+				    gpointer            user_data);
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -350,11 +355,19 @@ connect_signals (ModestHeaderWindow *self)
 						       G_OBJECT (modest_runtime_get_window_mgr ()),
 						       "progress-list-changed",
 						       G_CALLBACK (on_progress_list_changed), self);
-	priv->sighandlers = 
+	priv->sighandlers =
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (priv->new_message_button),
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+
+	/* Pannable area */
+	priv->sighandlers =
+		modest_signal_mgr_connect (priv->sighandlers,
+					   (GObject *) priv->contents_view,
+					   "horizontal-movement",
+					   G_CALLBACK (on_horizontal_movement),
+					   self);
 }
 
 static void
@@ -1143,4 +1156,66 @@ update_sort_button (ModestHeaderWindow *self)
 	}
 
 	hildon_button_set_value (HILDON_BUTTON (priv->sort_button), value?value:"");
+}
+
+static void
+on_horizontal_movement (HildonPannableArea *hildonpannable,
+			gint                direction,
+			gdouble             initial_x,
+			gdouble             initial_y,
+			gpointer            user_data)
+{
+	ModestHeaderWindowPrivate *priv;
+	gint dest_x, dest_y;
+	TnyHeader *header;
+
+	/* Ignore right to left movement */
+	if (direction == HILDON_MOVEMENT_LEFT)
+		return;
+
+	/* Get the header to delete */
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data);
+
+	/* Get tree view coordinates */
+	if (!gtk_widget_translate_coordinates ((GtkWidget *) hildonpannable,
+					       priv->header_view,
+					       initial_x,
+					       initial_y,
+					       &dest_x,
+					       &dest_y))
+	    return;
+
+	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
+						       dest_x, dest_y);
+	if (header) {
+		gint response;
+		gchar *subject, *msg;
+
+		subject = tny_header_dup_subject (header);
+		if (!subject)
+			subject = g_strdup (_("mail_va_no_subject"));
+
+		msg = g_strdup_printf (ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 1),
+				       subject);
+		g_free (subject);
+
+		/* Confirmation dialog */
+		response = modest_platform_run_confirmation_dialog ((GtkWindow *) user_data, msg);
+		g_free (msg);
+
+		if (response == GTK_RESPONSE_OK) {
+			ModestMailOperation *mail_op;
+			TnyList *header_list;
+
+			header_list = tny_simple_list_new ();
+			tny_list_append (header_list, (GObject *) header);
+			mail_op = modest_mail_operation_new ((GObject *) user_data);
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
+			modest_mail_operation_remove_msgs (mail_op, header_list, FALSE);
+			g_object_unref (mail_op);
+			g_object_unref (header_list);
+		}
+		g_object_unref (header);
+	}
 }
