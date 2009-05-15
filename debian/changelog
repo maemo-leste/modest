@@ -1,3 +1,22 @@
+modest (3.0.17-rc5) unstable; urgency=low
+
+  * Week 21, 2009 Friday release.
+  * Fixes: NB#116476 - Account setup Wizard: Search field in Service provider option doesn't support symbols. 
+  * Fixes: NB#116491 - SMTP settings for some providers are wrong in auto account configuration setup 
+  * Fixes: NB#116993 - Sent message doesn't come to Outbox for Yahoo! Mail account 
+  * Fixes: NB#115922 - Email, Some countries appear more than once on a Region list 
+  * Fixes: NB#116624 - Duplicate copy of contact is saved in address book when reply to all a message 
+  * Fixes: NB#117008 - ISYNC and MfE shows up the incorrect wizard pages associated to them when switched these providers 
+  * Fixes: NB#117117 - Corematic: Crash in "camel_folder_summary_count" 
+  * Fixes: NB#99805 - Counter-intuitive digits input (French KB) 
+  * Fixes: NB#111542 - All the Attachment selected at a time are not displayed in Message Editor when shared via Email from file manger. 
+  * Fixes: NB#116438 - Unread status of folder should be shown as "%d new message" in case of 1 new message 
+  * Fixes: NB#116483 - Name in Account setup wizard Account details field is pre filled wrongly if Me Card has not be created 
+  * Fixes: NB#113314 - Tapping on attachment to view it should highlight the attachment 
+  * Fixes: NB#115954 - To button is increasing in height when we tap on it and keep on adding the contacts 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 15 May 2009 15:43:55 +0300
+
 modest (3.0.17-rc4) unstable; urgency=low
 
   * Week 20, 2009 - Tuesday release
