@@ -1606,21 +1606,21 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			gchar *proto_name;
 			ModestProtocolType proto_type;
 
-
-			/* If we come from a rollbacked easy setup */
-			if (priv->last_plugin_protocol_selected ==
-			    MODEST_PROTOCOL_REGISTRY_TYPE_INVALID &&
-			    priv->page_complete_easysetup) {
-				remove_non_common_tabs (notebook, TRUE);
-				init_user_page (priv);
-				priv->page_complete_easysetup = NULL;
-			}
-
+			/* Get protocol data */
 			proto_name = modest_provider_picker_get_active_provider_id (picker);
 			protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
 										  MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
 										  proto_name);
 			proto_type = modest_protocol_get_type_id (protocol);
+
+
+			/* If we come from a rollbacked easy setup */
+			if (priv->last_plugin_protocol_selected != proto_type &&
+			    priv->page_complete_easysetup) {
+				remove_non_common_tabs (notebook, TRUE);
+				init_user_page (priv);
+				priv->page_complete_easysetup = NULL;
+			}
 
 			if (protocol && MODEST_IS_ACCOUNT_PROTOCOL (protocol) &&
 			    proto_type != priv->last_plugin_protocol_selected) {
