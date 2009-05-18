@@ -188,6 +188,7 @@ modest_country_picker_load_data(ModestCountryPicker *self)
 					 0, model);
 	hildon_touch_selector_entry_set_input_mode (HILDON_TOUCH_SELECTOR_ENTRY (selector),
 						    HILDON_GTK_INPUT_MODE_ALPHA |
+						    HILDON_GTK_INPUT_MODE_SPECIAL |
 						    HILDON_GTK_INPUT_MODE_AUTOCAP);
 
 
