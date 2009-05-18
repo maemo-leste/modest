@@ -5032,6 +5032,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 	GtkWidget *parent_win;
 	MoveToInfo *helper = NULL;
 	ModestFolderView *folder_view;
+	gboolean unset_edit_mode = FALSE;
 
 	helper = (MoveToInfo *) user_data;
 
@@ -5093,6 +5094,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 		if (dst_folder)
 			g_object_unref (dst_folder);
 
+		unset_edit_mode = TRUE;
 		break;
 	default:
 		g_warning ("%s unexpected response id %d", __FUNCTION__, response);
@@ -5101,6 +5103,11 @@ on_move_to_dialog_response (GtkDialog *dialog,
 	/* Free the helper and exit */
 	if (helper->list)
 		g_object_unref (helper->list);
+	if (unset_edit_mode) {
+#ifdef MODEST_TOOLKIT_HILDON2
+		modest_hildon2_window_unset_edit_mode (MODEST_HILDON2_WINDOW (helper->win));
+#endif
+	}
 	g_slice_free (MoveToInfo, helper);
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
@@ -6060,7 +6067,7 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 	/* Show the dialog */
 	gtk_widget_show (dialog);
 
-	return TRUE;
+	return FALSE;
 }
 
 /*
