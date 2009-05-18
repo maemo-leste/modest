@@ -1604,12 +1604,14 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 
 			first_notification = FALSE;
 
-			/* Set the led pattern */
+			/* Set the led pattern and make the notification persistent */
 			notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
 							    "dialog-type", 4);
 			notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
 							    "led-pattern",
 							    MODEST_NEW_MAIL_LIGHTING_PATTERN);
+			notify_notification_set_hint_byte (NOTIFY_NOTIFICATION (notification),
+							   "persistent", TRUE);
 
 			/* Set the account of the headers */
 			account = tny_folder_get_account (folder);
