@@ -835,33 +835,56 @@ modest_hildon2_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show)
 		gtk_widget_show_all (GTK_WIDGET (result));
 		gtk_window_present (GTK_WINDOW (result));
 	}
-	
+
 	return result;
 }
 
+static gint
+look_for_transient (gconstpointer a,
+		    gconstpointer b)
+{
+	GtkWindow *win, *child;
+
+	if (a == b)
+		return 1;
+
+	child = (GtkWindow *) b;
+	win = (GtkWindow *) a;
+
+	if (gtk_window_get_transient_for (win) == child)
+		return 0;
+	else
+		return 1;
+}
 
 static GtkWindow *
 modest_hildon2_window_mgr_get_modal (ModestWindowMgr *self)
 {
 	ModestHildon2WindowMgrPrivate *priv;
 	GList *toplevel_list;
-	GtkWindow *toplevel;
+	GtkWidget *current_top, *toplevel;
+	HildonWindowStack *stack;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), NULL);
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
-	toplevel = NULL;
+	/* Get current top */
+	stack = hildon_window_stack_get_default ();
+	current_top = hildon_window_stack_peek (stack);
+	toplevel = current_top;
 	toplevel_list = gtk_window_list_toplevels ();
-	while (toplevel_list) {
-		if (gtk_window_is_active (toplevel_list->data) &&
-		    gtk_window_get_modal (toplevel_list->data)) {
-			toplevel = (GtkWindow *) toplevel_list->data;
+
+	while (toplevel) {
+		GList *parent_link;
+
+		parent_link = g_list_find_custom (toplevel_list, toplevel, look_for_transient);
+		if (parent_link)
+			toplevel = (GtkWidget *) parent_link->data;
+		else
 			break;
-		}
-		toplevel_list = g_list_next (toplevel_list);
 	}
 
-	return toplevel;
+	return (GtkWindow *) toplevel;
 }
 
 
