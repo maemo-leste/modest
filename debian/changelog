@@ -1,3 +1,17 @@
+modest (3.0.17-rc6) unstable; urgency=low
+
+  * Week 21, 2009 - second release on Monday
+  *
+  * Fixes: NB#117447  Stop Senidng: Email application hangs when try to stop sending message.
+  * Fixes: NB#114384  email is hanging in certain scenario
+  * Fixes: NB#115045  Account setup wizard: Name field is not prefilled with the name from a Me Card
+  * Fixes: NB#116720  Unopened task for email is not shown in task switcher area after rebooting the device
+  * Fixes: NB#116988  Once "Unable to connect to scrubs..." error note was shown after Intellisync had been already deleted
+  * Fixes: NB#117330  Account setup Wizard: Search field in Service provider touch list doesn't support numerical
+  * Fixes: NB#117428  Account setup Wizard: Search field in Region touch list doesn't support special characters 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 18 May 2009 16:05:36 +0300
+
 modest (3.0.17-rc5) unstable; urgency=low
 
   * Week 21, 2009 Friday release.
