@@ -2692,10 +2692,11 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 
 		if (replaced_files == 1) {
 			SaveMimePartPair *pair = files->data;
-			const gchar *filename = tny_mime_part_get_filename (pair->part);
+			const gchar *basename = strrchr (pair->filename, G_DIR_SEPARATOR) + 1;
+
 			gchar *message = g_strdup_printf ("%s\n%s",
 							  _FM("docm_nc_replace_file"),
-							  (filename) ? filename : "");
+							  (basename) ? basename : "");
 			confirm_overwrite_dialog = hildon_note_new_confirmation (NULL, message);
 			g_free (message);
 		} else {
