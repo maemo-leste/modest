@@ -1360,10 +1360,7 @@ modest_address_book_get_my_name ()
 	   because that method fallbacks to another fields if the name
 	   is not defined */
 	if (self_contact)
-		if (OSSO_ABOOK_IS_CONTACT (self_contact))
-			return osso_abook_contact_get_name ((OssoABookContact*)self_contact);
-		else
-			return e_contact_get ((EContact *) self_contact, E_CONTACT_NAME);
+		return e_contact_get ((EContact *) self_contact, E_CONTACT_FULL_NAME);
 	else
 		return NULL;
 }
