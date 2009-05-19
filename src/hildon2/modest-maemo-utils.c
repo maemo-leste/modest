@@ -77,31 +77,19 @@ modest_maemo_utils_set_osso_context (osso_context_t *osso_context)
 }
 
 static void
-get_properties_cb (DBusPendingCall *call,
-		   void *user_data)
+get_properties_cb (DBusMessage *message)
 {
 	DBusMessageIter iter;
 	DBusMessageIter dict_iter;
 	DBusMessageIter dict_entry_iter;
 	DBusError err;
 	gchar *bt_name = NULL;
-	DBusMessage *message;
 	int key_type, array_type, msg_type;
-
-	if ( !dbus_pending_call_get_completed ( call ) )
-		g_warning ("%s: Call not completed!", __FUNCTION__);
-
-	message = dbus_pending_call_steal_reply ( call );
-
-	if (message == NULL)
-		g_warning ("%s: Message is NULL", __FUNCTION__);
-
 
 	dbus_error_init(&err);
 	if (dbus_set_error_from_message (&err, message)) {
 		g_warning ("%s: %s", __FUNCTION__, err.message);
 	}
-
 
 	/* Get msg type */
 	dbus_message_iter_init (message, &iter);
@@ -153,34 +141,36 @@ get_properties_cb (DBusPendingCall *call,
 }
 
 static void
-get_default_adapter_cb (DBusPendingCall *call,
-			void *user_data)
+get_default_adapter_cb (DBusMessage *message)
 {
-	DBusMessage *message;
 	DBusMessageIter iter;
 	gchar* path = NULL;
 
-	message = dbus_pending_call_steal_reply(call);
-
-	// Todo extract msg info from here
-	dbus_message_iter_init ( message, &iter );
+	dbus_message_iter_init (message, &iter);
 
 	dbus_message_iter_get_basic (&iter, &path);
 	if (path != NULL) {
+		DBusError error;
 		DBusConnection *conn;
-		DBusMessage *adapterMsg = dbus_message_new_method_call("org.bluez", path,
-								       "org.bluez.Adapter",
-								       "GetProperties");
-		DBusPendingCall *call = NULL;
+		DBusMessage *adapterMsg = dbus_message_new_method_call ("org.bluez", path,
+									"org.bluez.Adapter",
+									"GetProperties");
 
 		conn = dbus_bus_get (DBUS_BUS_SYSTEM, NULL);
 
-		if (conn && dbus_connection_send_with_reply(conn, adapterMsg, &call, -1) ) {
-			g_debug ("Getting the properties");
-			dbus_pending_call_set_notify(call, get_properties_cb, NULL, NULL);
-			dbus_pending_call_block(call);
-			dbus_pending_call_unref(call);
+		if (conn) {
+			DBusMessage *msg;
+
+			dbus_error_init (&error);
+			msg = dbus_connection_send_with_reply_and_block (conn, adapterMsg, -1, &error);
+			if (msg) {
+				g_debug ("Getting the properties");
+				get_properties_cb (msg);
+				dbus_message_unref (msg);
+			}
+			dbus_connection_unref (conn);
 		}
+		dbus_message_unref (adapterMsg);
 	} else {
 		g_warning ("Failed to get the default bluetooth adapter");
 	}
@@ -192,7 +182,7 @@ modest_maemo_utils_get_device_name (void)
 	static DBusConnection *conn = NULL;
 	DBusMessage *request;
 	DBusError error;
-	DBusPendingCall *call = NULL;
+	DBusMessage *msg;
 
 	dbus_error_init (&error);
 	if (!conn) {
@@ -206,16 +196,18 @@ modest_maemo_utils_get_device_name (void)
 	}
 
 	/* Get the default adapter */
-	request = dbus_message_new_method_call("org.bluez", "/" ,
-					       "org.bluez.Manager",
-					       "DefaultAdapter");
+	request = dbus_message_new_method_call ("org.bluez", "/" ,
+						"org.bluez.Manager",
+						"DefaultAdapter");
 
-	if (dbus_connection_send_with_reply(conn, request, &call, -1)) {
+	msg = dbus_connection_send_with_reply_and_block (conn, request, -1, &error);
+	if (msg) {
 		g_debug ("Getting the default adapter");
-		dbus_pending_call_set_notify(call, get_default_adapter_cb, NULL, NULL);
-		dbus_pending_call_block(call);
-		dbus_pending_call_unref(call);
+		get_default_adapter_cb (msg);
+		dbus_message_unref (msg);
 	}
+	dbus_message_unref (request);
+	dbus_connection_unref (conn);
 }
 
 void
