@@ -255,6 +255,9 @@ modest_header_window_finalize (GObject *obj)
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
+	tny_folder_sync_async (TNY_FOLDER (priv->folder),
+			       FALSE, NULL, NULL, NULL);
+
 	g_object_unref (priv->folder);
 	g_object_unref (priv->header_view);
 	g_object_unref (priv->empty_view);

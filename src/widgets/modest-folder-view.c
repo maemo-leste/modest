@@ -2414,9 +2414,11 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		   cause (and it actually does it) a free of the
 		   summary of the folder (because the main window will
 		   clear the headers view */
+#ifndef MODEST_TOOLKIT_HILDON2
 		if (TNY_IS_FOLDER(priv->cur_folder_store))
 			tny_folder_sync_async (TNY_FOLDER(priv->cur_folder_store),
 					       FALSE, NULL, NULL, NULL);
+#endif
 
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       priv->cur_folder_store, FALSE);
