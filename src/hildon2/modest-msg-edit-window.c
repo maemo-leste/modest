@@ -189,6 +189,7 @@ static void update_signature (ModestMsgEditWindow *self,
 			      const gchar *new_account);
 static GtkWidget *_create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group,
 					   const gchar *label, GtkWidget *control);
+static void max_chars_banner_unref (ModestMsgEditWindow *self, GObject *old_ref);
 static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
@@ -322,6 +323,8 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *app_menu;
 	GtkWidget   *cc_button;
 	GtkWidget   *bcc_button;
+
+	GtkWidget   *max_chars_banner;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -445,6 +448,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->references = NULL;
 	priv->in_reply_to = NULL;
+	priv->max_chars_banner = NULL;
 
 	if (!is_wp_text_buffer_started) {
 		is_wp_text_buffer_started = TRUE;
@@ -1018,7 +1022,12 @@ static void
 modest_msg_edit_window_finalize (GObject *obj)
 {
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (obj);
-	
+
+	if (priv->max_chars_banner) {
+		g_object_weak_unref (G_OBJECT (priv->max_chars_banner), (GWeakNotify) max_chars_banner_unref, obj);
+		priv->max_chars_banner = FALSE;
+	}
+
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_edit_window_disconnect_signals (MODEST_WINDOW (obj));
@@ -3536,6 +3545,8 @@ body_insert_text (GtkTextBuffer *buffer,
 	gint offset;
 	glong utf8_len;
 
+	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
+
 	gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (buffer), &end_iter);
 
 	offset = gtk_text_iter_get_offset (&end_iter);
@@ -3561,8 +3572,11 @@ body_insert_text (GtkTextBuffer *buffer,
 
 	}
 	if (offset + utf8_len > MAX_BODY_LENGTH) {
-		hildon_banner_show_information (GTK_WIDGET (window), NULL, 
-						_CS("ckdg_ib_maximum_characters_reached"));
+		if (priv->max_chars_banner == NULL) {
+			priv->max_chars_banner = hildon_banner_show_information (GTK_WIDGET (window), NULL, 
+										 _CS("ckdg_ib_maximum_characters_reached"));
+			g_object_weak_ref (G_OBJECT (priv->max_chars_banner), (GWeakNotify) max_chars_banner_unref, window);
+		}
 	}
 }
 
@@ -4328,4 +4342,15 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 			  G_CALLBACK (emit_open_addressbook), control);
   
 	return box;  
+}
+
+static void 
+max_chars_banner_unref (ModestMsgEditWindow *self, GObject *old_ref)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW(self));
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+	priv->max_chars_banner = NULL;
 }
