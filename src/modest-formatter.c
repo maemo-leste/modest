@@ -38,6 +38,8 @@
 #include "modest-tny-platform-factory.h"
 #include <modest-runtime.h>
 
+#define MAX_BODY_LENGTH 4096
+
 typedef struct _ModestFormatterPrivate ModestFormatterPrivate;
 struct _ModestFormatterPrivate {
 	gchar *content_type;
@@ -66,16 +68,39 @@ static TnyMimePart *find_body_parent (TnyMimePart *part);
 static gchar *
 extract_text (ModestFormatter *self, TnyMimePart *body)
 {
+	TnyStream *mp_stream;
 	TnyStream *stream;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	gchar *text, *converted_text;
 	ModestFormatterPrivate *priv;
+	gint total;
 
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
 	tny_stream_reset (stream);
-	tny_mime_part_decode_to_stream (body, stream, NULL);
+	mp_stream = tny_mime_part_get_decoded_stream (body);
+
+	total = 0;
+
+	while (!tny_stream_is_eos (mp_stream)) {
+		gchar buffer [128];
+		gint n_read;
+		gint next_read;
+
+		next_read = MIN (128, MAX_BODY_LENGTH - total);
+		if (next_read == 0)
+			break;
+		n_read = tny_stream_read (mp_stream, buffer, next_read);
+		if (n_read > 0) {
+			gint n_write;
+			n_write = tny_stream_write (stream, buffer, n_read);
+			total += n_write;
+		} else if (n_read == -1) {
+			break;
+		}
+	}
+
 	tny_stream_reset (stream);
 
 	g_object_unref (G_OBJECT(stream));
