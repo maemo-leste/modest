@@ -1194,7 +1194,6 @@ on_idle_open_account (gpointer user_data)
 									store_protocol,
 									MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS);
 
-#ifdef MODEST_TOOLKIT_HILDON2
 		if (mailboxes_protocol) {
 			new_window = GTK_WIDGET (modest_mailboxes_window_new (acc_name));
 		} else {
@@ -1202,11 +1201,6 @@ on_idle_open_account (gpointer user_data)
 			modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window),
 							  acc_name);
 		}
-#else
-		new_window = GTK_WIDGET (modest_folder_window_new (NULL));
-		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window),
-						  acc_name);
-#endif
 
 		if (modest_window_mgr_register_window (mgr, MODEST_WINDOW (new_window), NULL)) {
 			gtk_widget_show (new_window);

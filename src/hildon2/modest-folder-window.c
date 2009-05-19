@@ -816,10 +816,10 @@ on_visible_account_changed (ModestFolderView *folder_view,
 							       account_id);
 
 	/* Update window title */
-	update_window_title (MODEST_FOLDER_WINDOW (user_data), account);
-
-	if (account)
+	if (account) {
+		update_window_title (MODEST_FOLDER_WINDOW (user_data), account);
 		g_object_unref (account);
+	}
 }
 
 static void

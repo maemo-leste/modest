@@ -1616,9 +1616,12 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 			/* Set the account of the headers */
 			account = tny_folder_get_account (folder);
 			if (account) {
+				const gchar *acc_name;
+				acc_name =
+					modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
 								    "email-account",
-								    tny_account_get_id (account));
+								    acc_name);
 				g_object_unref (account);
 			}
 		}
