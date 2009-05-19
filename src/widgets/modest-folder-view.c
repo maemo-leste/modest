@@ -850,7 +850,7 @@ messages_cell_data  (GtkTreeViewColumn *column,
 
 		if (priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT) {
 			if (number > 1) {
-				item_name = g_strdup_printf (drafts?_("mcen_ti_messages"):_("mcen_ti_new_messages"), 
+				item_name = g_strdup_printf (drafts?_("mcen_ti_messages"):_("mcen_ti_new_messages_plural"), 
 							     number);
 			} else if (number == 1) {
 				item_name = g_strdup_printf (drafts?_("mcen_ti_message"):_("mcen_ti_new_messages_singular"), 
