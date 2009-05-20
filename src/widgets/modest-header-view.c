@@ -1157,6 +1157,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 
 	/* Create sortable model */
 	sortable = gtk_tree_model_sort_new_with_model (filter_model);
+	g_object_unref (filter_model);
 
 	/* install our special sorting functions */
 	cursor = cols = gtk_tree_view_get_columns (GTK_TREE_VIEW(self));

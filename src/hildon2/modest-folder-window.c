@@ -506,10 +506,7 @@ on_folder_activated (ModestFolderView *folder_view,
 
 	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
 
-	if (!folder)
-		return;
-
-	if (!TNY_IS_FOLDER (folder))
+	if (!folder || !TNY_IS_FOLDER (folder))
 		return;
 
 	/* We cannot open noselect folders (fake ones) */
