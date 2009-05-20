@@ -77,7 +77,7 @@ static void    modest_tny_account_store_instance_init (ModestTnyAccountStore *ob
 static void    modest_tny_account_store_init          (gpointer g, gpointer iface_data);
 static void    modest_tny_account_store_base_init     (gpointer g_class);
 
-static void    on_account_inserted         (ModestAccountMgr *acc_mgr, 
+static void    on_account_inserted         (ModestAccountMgr *acc_mgr,
 					    const gchar *account,
 					    gpointer user_data);
 
@@ -1638,7 +1638,8 @@ insert_account (ModestTnyAccountStore *self,
 {
 	ModestTnyAccountStorePrivate *priv = NULL;
 	TnyAccount *store_account = NULL, *transport_account = NULL;
-	
+	ModestTnySendQueue *send_queue;
+
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* Get the server and the transport account */
@@ -1658,11 +1659,17 @@ insert_account (ModestTnyAccountStore *self,
 	/* Add accounts to the lists */
 	tny_list_append (priv->store_accounts, G_OBJECT (store_account));
 	tny_list_append (priv->transport_accounts, G_OBJECT (transport_account));
-	
+
 	/* Create a new pseudo-account with an outbox for this
 	   transport account and add it to the global outbox
 	   in the local account */
 	add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);	
+
+	/* Force the creation of the send queue, this way send queues
+	   will automatically send missing emails when the connections
+	   become active */
+	send_queue = modest_runtime_get_send_queue ((TnyTransportAccount *) transport_account, TRUE);
+	g_object_unref (send_queue);
 
 	/* Notify the observers. We do it after everything is
 	   created */
