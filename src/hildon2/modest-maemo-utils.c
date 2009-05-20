@@ -141,39 +141,32 @@ get_properties_cb (DBusMessage *message)
 }
 
 static void
-get_default_adapter_cb (DBusMessage *message)
+get_default_adapter_cb (DBusConnection *conn,
+			DBusMessage *message)
 {
 	DBusMessageIter iter;
 	gchar* path = NULL;
+	DBusError error;
+	DBusMessage *msg, *adapterMsg;
 
 	dbus_message_iter_init (message, &iter);
-
 	dbus_message_iter_get_basic (&iter, &path);
-	if (path != NULL) {
-		DBusError error;
-		DBusConnection *conn;
-		DBusMessage *adapterMsg = dbus_message_new_method_call ("org.bluez", path,
-									"org.bluez.Adapter",
-									"GetProperties");
 
-		conn = dbus_bus_get (DBUS_BUS_SYSTEM, NULL);
+	if (!path)
+		return;
 
-		if (conn) {
-			DBusMessage *msg;
+	adapterMsg = dbus_message_new_method_call ("org.bluez", path,
+						   "org.bluez.Adapter",
+						   "GetProperties");
 
-			dbus_error_init (&error);
-			msg = dbus_connection_send_with_reply_and_block (conn, adapterMsg, -1, &error);
-			if (msg) {
-				g_debug ("Getting the properties");
-				get_properties_cb (msg);
-				dbus_message_unref (msg);
-			}
-			dbus_connection_unref (conn);
-		}
-		dbus_message_unref (adapterMsg);
-	} else {
-		g_warning ("Failed to get the default bluetooth adapter");
+	dbus_error_init (&error);
+	msg = dbus_connection_send_with_reply_and_block (conn, adapterMsg, -1, &error);
+	if (msg) {
+		g_debug ("Getting the properties");
+		get_properties_cb (msg);
+		dbus_message_unref (msg);
 	}
+	dbus_message_unref (adapterMsg);
 }
 
 void
@@ -203,11 +196,10 @@ modest_maemo_utils_get_device_name (void)
 	msg = dbus_connection_send_with_reply_and_block (conn, request, -1, &error);
 	if (msg) {
 		g_debug ("Getting the default adapter");
-		get_default_adapter_cb (msg);
+		get_default_adapter_cb (conn, msg);
 		dbus_message_unref (msg);
 	}
 	dbus_message_unref (request);
-	dbus_connection_unref (conn);
 }
 
 void
