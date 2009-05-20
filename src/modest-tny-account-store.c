@@ -255,7 +255,6 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 static void
 modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 {
-	GnomeVFSVolumeMonitor* monitor = NULL;
 	ModestTnyAccountStorePrivate *priv;
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
@@ -278,21 +277,6 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
          */
 	priv->password_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 						     g_free, g_free);
-
-	/* Respond to volume mounts and unmounts, such 
-	 * as the insertion/removal of the memory card: */
-	/* This is a singleton, so it does not need to be unrefed. */
-	monitor = gnome_vfs_get_volume_monitor();
-
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
-						       G_OBJECT(monitor), 
-						       "volume-mounted",
-						       G_CALLBACK(on_vfs_volume_mounted),
-						       obj);
-	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers, 
-						       G_OBJECT(monitor), "volume-unmounted",
-						       G_CALLBACK(on_vfs_volume_unmounted),
-						       obj);
 }
 
 /* disconnect the list of TnyAccounts */
@@ -841,7 +825,7 @@ modest_tny_account_store_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-gboolean 
+static gboolean 
 volume_path_is_mounted (const gchar* path)
 {
 	g_return_val_if_fail (path, FALSE);
@@ -896,13 +880,14 @@ volume_path_is_mounted (const gchar* path)
 }
 
 ModestTnyAccountStore*
-modest_tny_account_store_new (ModestAccountMgr *account_mgr, 
-			      TnyDevice *device) 
+modest_tny_account_store_new (ModestAccountMgr *account_mgr,
+			      TnyDevice *device)
 {
 	GObject *obj;
 	ModestTnyAccountStorePrivate *priv;
 	TnyAccount *local_account = NULL;
-	TnyLockable *lockable;	
+	TnyLockable *lockable;
+	GnomeVFSVolumeMonitor* monitor = NULL;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
@@ -912,7 +897,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 
 	priv->account_mgr = g_object_ref (G_OBJECT(account_mgr));
 	priv->device = g_object_ref (device);
-	
+
 	priv->session = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	if (!priv->session) {
 		g_warning ("failed to get TnySessionCamel");
@@ -923,7 +908,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	lockable = tny_gtk_lockable_new ();
 	tny_session_camel_set_ui_locker (priv->session,	lockable);
 	g_object_unref (lockable);
-	
+
 	/* Connect signals */
 	priv->sighandlers  =  modest_signal_mgr_connect (priv->sighandlers,
 							 G_OBJECT(account_mgr), "account_inserted",
@@ -934,6 +919,20 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	priv->sighandlers  =  modest_signal_mgr_connect (priv->sighandlers,
 							 G_OBJECT(account_mgr), "account_removed",
 							 G_CALLBACK (on_account_removed), obj);
+
+	/* Respond to volume mounts and unmounts, such as the
+	   insertion/removal of the memory card. This is a singleton,
+	   so it does not need to be unrefed */
+	monitor = gnome_vfs_get_volume_monitor();
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(monitor),
+						       "volume-mounted",
+						       G_CALLBACK(on_vfs_volume_mounted),
+						       obj);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(monitor), "volume-unmounted",
+						       G_CALLBACK(on_vfs_volume_unmounted),
+						       obj);
 
 	/* Create the lists of accounts */
 	priv->store_accounts = tny_simple_list_new ();

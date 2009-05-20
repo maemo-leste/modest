@@ -113,6 +113,8 @@ struct _ModestTnySendQueuePrivate {
 	gboolean requested_send_receive;
 
 	gboolean sending;
+
+	GSList *sighandlers;
 };
 
 #define MODEST_TNY_SEND_QUEUE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -407,6 +409,7 @@ modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->outbox = NULL;
 	priv->sentbox = NULL;
 	priv->sending = FALSE;
+	priv->sighandlers = NULL;
 }
 
 static void
@@ -415,6 +418,9 @@ modest_tny_send_queue_finalize (GObject *obj)
 	ModestTnySendQueuePrivate *priv;
 
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (obj);
+
+	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
+	priv->sighandlers = NULL;
 
 	g_queue_foreach (priv->queue, (GFunc)modest_tny_send_queue_info_free, NULL);
 	g_queue_free (priv->queue);
@@ -487,9 +493,9 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	ModestTnySendQueuePrivate *priv = NULL;
 	TnyList *headers = NULL;
 	GetHeadersInfo *info;
-	
+
 	g_return_val_if_fail (TNY_IS_CAMEL_TRANSPORT_ACCOUNT(account), NULL);
-	
+
 	self = MODEST_TNY_SEND_QUEUE(g_object_new(MODEST_TYPE_TNY_SEND_QUEUE, NULL));
 
 	/* Set outbox and sentbox */
@@ -507,24 +513,27 @@ modest_tny_send_queue_new (TnyCamelTransportAccount *account)
 	}
 
 	/* Connect signals to control when a msg is being or has been sent */
-	g_signal_connect (G_OBJECT(self), "msg-sending",
-			  G_CALLBACK(_on_msg_start_sending),
-			  NULL);			  
-	g_signal_connect (G_OBJECT(self), "msg-sent",
-			  G_CALLBACK(_on_msg_has_been_sent), 
-			  NULL);
-	g_signal_connect (G_OBJECT(self), "error-happened",
-	                  G_CALLBACK(_on_msg_error_happened),
-			  NULL);
-
-	g_signal_connect (G_OBJECT (self), "queue-start",
-			  G_CALLBACK (_on_queue_start),
-			  NULL);
-
-	g_signal_connect (G_OBJECT (self), "queue-stop",
-			  G_CALLBACK (_on_queue_stop),
-			  NULL);
-
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self),
+						       "msg-sending",
+						       G_CALLBACK(_on_msg_start_sending),
+						       NULL);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self), "msg-sent",
+						       G_CALLBACK(_on_msg_has_been_sent),
+						       NULL);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT(self), "error-happened",
+						       G_CALLBACK(_on_msg_error_happened),
+						       NULL);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (self), "queue-start",
+						       G_CALLBACK (_on_queue_start),
+						       NULL);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (self), "queue-stop",
+						       G_CALLBACK (_on_queue_stop),
+						       NULL);
 	priv->requested_send_receive = FALSE;
 
 	headers = tny_simple_list_new ();
