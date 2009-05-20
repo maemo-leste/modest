@@ -579,6 +579,38 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	return GTK_WIDGET (box);
 }
 
+static void
+on_user_username_changed(GtkWidget* widget, ModestEasysetupWizardDialog *self)
+{
+	ModestEasysetupWizardDialogPrivate* priv;
+	gchar* provider_id = NULL;
+
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	/* Work out the user email address */
+	provider_id = modest_provider_picker_get_active_provider_id (
+		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+
+	if (provider_id) {
+		gchar *email_address;
+		gchar *domain_name = modest_presets_get_domain (priv->presets, provider_id);
+
+		email_address = g_strdup_printf ("%s@%s",
+						 hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username)),
+						 domain_name);
+
+		/* Update the email address */
+		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_email), email_address);
+
+		g_free (email_address);
+		g_free (domain_name);
+		g_free (provider_id);
+	}
+
+	/* Update state */
+	on_easysetup_changed(widget, self);
+}
+
 static GtkWidget*
 create_page_user_details (ModestEasysetupWizardDialog *self)
 {
@@ -634,7 +666,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, MODEST_MARGIN_HALF);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", 
-			 G_CALLBACK(on_easysetup_changed), self);
+			 G_CALLBACK(on_user_username_changed), self);
 	gtk_widget_show (caption);
 	
 	/* Prevent the use of some characters in the username, 
