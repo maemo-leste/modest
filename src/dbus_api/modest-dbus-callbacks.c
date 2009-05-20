@@ -1166,20 +1166,15 @@ on_idle_open_account (gpointer user_data)
 	ModestWindow *top;
 	ModestWindowMgr *mgr;
 	gchar *acc_name;
-	gboolean retval = TRUE;
 
 	gdk_threads_enter ();
 
 	acc_name = (gchar *) user_data;
 	mgr = modest_runtime_get_window_mgr ();
 
-	/* If Modest is already launched then just ignore this call */
-	if (modest_window_mgr_get_current_top (mgr)) {
-		retval = FALSE;
-		goto end;
-	}
-
-	top = modest_window_mgr_show_initial_window (mgr);
+	top = modest_window_mgr_get_current_top (mgr);
+	if (!top)
+		top = modest_window_mgr_show_initial_window (mgr);
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (MODEST_IS_ACCOUNTS_WINDOW (top)) {
@@ -1225,9 +1220,8 @@ on_idle_open_account (gpointer user_data)
 		}
 	}
 #endif
-	gdk_threads_leave ();
 
- end:
+	gdk_threads_leave ();
 	g_free (acc_name);
 	return FALSE;
 }
