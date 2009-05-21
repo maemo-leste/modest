@@ -841,7 +841,7 @@ modest_utils_open_mcc_mapping_file (gboolean from_lc_messages, gboolean *transla
 		env_list = getenv ("LANG");
 	}
 	parts = g_strsplit (env_list, ":", 0);
-	gchar *path1;
+	gchar *path1 = NULL;
 	const gchar* path2 = MODEST_MCC_MAPPING;
 
 	if (translated)

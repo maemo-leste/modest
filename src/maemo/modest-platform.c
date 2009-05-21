@@ -103,19 +103,27 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 static gboolean
 check_required_files (void)
 {
-	FILE *mcc_file = modest_utils_open_mcc_mapping_file (NULL);
+	FILE *mcc_file = modest_utils_open_mcc_mapping_file (FALSE,NULL);
 	if (!mcc_file) {
 		g_printerr ("modest: check for mcc file failed\n");
 		return FALSE;
-	} else 
+	} else
 		fclose (mcc_file);
-	
+
+
+	mcc_file = modest_utils_open_mcc_mapping_file (TRUE, NULL);
+	if (!mcc_file) {
+		g_printerr ("modest: check for mcc file (for LC_MESSAGES) failed\n");
+		return FALSE;
+	} else
+		fclose (mcc_file);
+
 	if (access(MODEST_PROVIDER_DATA_FILE, R_OK) != 0 &&
 	    access(MODEST_FALLBACK_PROVIDER_DATA_FILE, R_OK) != 0) {
 		g_printerr ("modest: cannot find providers data\n");
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -1244,28 +1252,24 @@ modest_platform_on_new_headers_received (GList *URI_list,
 						   MODEST_CONF_NOTIFICATION_IDS, 
 						   MODEST_CONF_VALUE_INT, NULL);
 
-	iter = header_list;
+	iter = URI_list;
 	while (iter) {
-		gchar *display_address = NULL,  *summary = NULL;
-		const gchar *display_date;
+		gchar *display_address = NULL;
 		gboolean first_notification = TRUE;
 		gint notif_id;
-		gchar *str;
 		ModestMsgNotificationData *data;
 
 		data = (ModestMsgNotificationData *) iter->data;
 
-		/* constant string, don't free */
-		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
-
 		display_address = g_strdup (data->from);
 		modest_text_utils_get_display_address (display_address); /* string is changed in-place */
 
-		summary = g_strdup_printf ("%s - %s", display_date, display_address);
-		notification = hildon_notification_new (summary,
+		notification = hildon_notification_new (display_address,
 							data->subject,
 							"qgn_list_messagin",
 							"email.arrive");
+		g_free (display_address);
+
 		/* Add DBus action */
 		hildon_notification_add_dbus_action(notification,
 						    "default",
@@ -1274,7 +1278,7 @@ modest_platform_on_new_headers_received (GList *URI_list,
 						    MODEST_DBUS_OBJECT,
 						    MODEST_DBUS_IFACE,
 						    MODEST_DBUS_METHOD_OPEN_MESSAGE,
-						    G_TYPE_STRING, data->url,
+						    G_TYPE_STRING, data->uri,
 						    -1);
 
 		/* Play sound if the user wants. Show the LED
@@ -1304,10 +1308,6 @@ modest_platform_on_new_headers_received (GList *URI_list,
 		/* We don't listen for the "closed" signal, because we
 		   don't care about if the notification was removed or
 		   not to store the list in gconf */
-
-		/* Free & carry on */
-		g_free (display_address);
-		g_free (summary);
 
 		iter = g_list_next (iter);
 	}

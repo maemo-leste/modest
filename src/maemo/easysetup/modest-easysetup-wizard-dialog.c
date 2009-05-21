@@ -584,23 +584,24 @@ on_user_username_changed(GtkWidget* widget, ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate* priv;
 	gchar* provider_id = NULL;
+	EasysetupProviderComboBox *combo;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
 	/* Work out the user email address */
-	provider_id = modest_provider_picker_get_active_provider_id (
-		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+	combo = EASYSETUP_PROVIDER_COMBO_BOX (priv->combo_account_serviceprovider);
+	provider_id = easysetup_provider_combo_box_get_active_provider_id (combo);
 
 	if (provider_id) {
 		gchar *email_address;
 		gchar *domain_name = modest_presets_get_domain (priv->presets, provider_id);
 
 		email_address = g_strdup_printf ("%s@%s",
-						 hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username)),
+						 gtk_entry_get_text (GTK_ENTRY (priv->entry_user_username)),
 						 domain_name);
 
 		/* Update the email address */
-		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_email), email_address);
+		gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), email_address);
 
 		g_free (email_address);
 		g_free (domain_name);

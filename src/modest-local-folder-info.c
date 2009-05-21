@@ -115,7 +115,12 @@ modest_per_account_local_outbox_folder_info_get_maildir_path (const gchar* accou
 	/* This directory should contain an "outbox" child directory: */
 	gchar *escaped, *filename;
 
+#if GLIB_CHECK_VERSION(2, 16, 0)
 	escaped = g_uri_escape_string (account_name, NULL, FALSE);
+#else
+	/* TODO: escape without calling glib */
+	escaped = g_strdup (account_name);
+#endif
 	filename = g_build_filename (g_get_home_dir(),
 				     MODEST_DIR,
 				     MODEST_PER_ACCOUNT_LOCAL_OUTBOX_FOLDERS_MAILDIR, 

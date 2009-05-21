@@ -133,7 +133,7 @@ set_cell_text (GtkCellRenderer *renderer,
 {
 	gboolean strikethrough;
 	gboolean bold_is_active_color;
-	GdkColor *color;
+	GdkColor *color = NULL;
 	PangoWeight weight;
 
 	bold_is_active_color = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), BOLD_IS_ACTIVE_COLOR));

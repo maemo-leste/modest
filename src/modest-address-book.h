@@ -32,6 +32,7 @@
 #ifndef __MODEST_ADDRESS_BOOK_H__
 #define __MODEST_ADDRESS_BOOK_H__
 
+#include <gtk/gtkwindow.h>
 #include <glib.h>
 #include <widgets/modest-recpt-editor.h>
 
