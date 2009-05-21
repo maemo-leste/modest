@@ -1669,7 +1669,6 @@ insert_account (ModestTnyAccountStore *self,
 	   will automatically send missing emails when the connections
 	   become active */
 	send_queue = modest_runtime_get_send_queue ((TnyTransportAccount *) transport_account, TRUE);
-	g_object_unref (send_queue);
 
 	/* Notify the observers. We do it after everything is
 	   created */
