@@ -282,13 +282,31 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 			g_object_unref (header);
 		}
 	} else {
+		gboolean is_other_body = FALSE;
 		filename = g_strdup (tny_mime_part_get_filename (mime_part));
+		if (filename == NULL) {
+			gchar *description;
+			description = modest_tny_mime_part_get_header_value (mime_part, "Content-Description");
+			if (description) {
+				g_strstrip (description);
+				filename = description;
+			}
+			if (!filename || filename[0] == '\0') {
+				g_free (filename);
+				filename = g_strdup (_("mail_va_no_subject"));
+			}
+			is_other_body = TRUE;
+		}
 		if (priv->is_purged) {
 			file_icon_name = modest_platform_get_file_icon_name (NULL, NULL, NULL);
 		} else {
-			file_icon_name = modest_platform_get_file_icon_name (
-				filename, modest_tny_mime_part_get_content_type (mime_part), NULL);
-			show_size = TRUE;
+			if (is_other_body) {
+				file_icon_name = modest_platform_get_file_icon_name (NULL, "message/rfc822", NULL);
+			} else {
+				file_icon_name = modest_platform_get_file_icon_name (
+					filename, modest_tny_mime_part_get_content_type (mime_part), NULL);
+				show_size = TRUE;
+			}
 		}
 	}
 
