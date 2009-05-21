@@ -1072,3 +1072,70 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 					      MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, GTK_SORT_ASCENDING);
 }
 
+GList *
+modest_utils_create_notification_list_from_header_list (TnyList *header_list)
+{
+	GList *new_headers_list;
+	TnyIterator *iter;
+
+	g_return_val_if_fail (TNY_IS_LIST (header_list), NULL);
+	g_return_val_if_fail (tny_list_get_length (header_list) > 0, NULL);
+
+	new_headers_list = NULL;
+	iter = tny_list_create_iterator (header_list);
+	while (!tny_iterator_is_done (iter)) {
+		ModestMsgNotificationData *data;
+		TnyHeader *header;
+		TnyFolder *folder;
+
+		header = (TnyHeader *) tny_iterator_get_current (iter);
+		if (header) {
+			folder = tny_header_get_folder (header);
+
+			if (folder) {
+				gchar *uri, *uid;
+
+				uid = tny_header_dup_uid (header);
+				uri = g_strdup_printf ("%s/%s",
+						       tny_folder_get_url_string (folder),
+						       uid);
+				g_free (uid);
+
+				/* Create data & add to list */
+				data = g_slice_new0 (ModestMsgNotificationData);
+				data->subject = tny_header_dup_subject (header);
+				data->from = tny_header_dup_from (header);
+				data->uri = uri;
+
+				new_headers_list = g_list_append (new_headers_list, data);
+
+				g_object_unref (folder);
+			}
+			g_object_unref (header);
+		}
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+	return new_headers_list;
+}
+
+static void
+free_notification_data (gpointer data,
+			gpointer user_data)
+{
+	ModestMsgNotificationData *notification_data  = (ModestMsgNotificationData *) data;
+
+	g_free (notification_data->from);
+	g_free (notification_data->subject);
+	g_free (notification_data->uri);
+}
+
+void
+modest_utils_free_notification_list (GList *notification_list)
+{
+	g_return_if_fail (g_list_length (notification_list) > 0);
+
+	g_list_foreach (notification_list, free_notification_data, NULL);
+	g_list_free (notification_list);
+}

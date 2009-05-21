@@ -350,7 +350,7 @@ modest_platform_push_email_notification(void)
 }
 
 void 
-modest_platform_on_new_headers_received (TnyList *header_list,
+modest_platform_on_new_headers_received (GList *URI_list,
 					 gboolean show_visual)
 {
 	/* TODO: implement this */

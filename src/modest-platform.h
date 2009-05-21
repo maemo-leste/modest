@@ -304,13 +304,13 @@ void modest_platform_push_email_notification(void);
 
 /**
  * modest_platform_on_new_headers_received:
- * @header_list: the list of new received headers
+ * @header_list: a list of #ModestMsgNotificationData
  * @show_visual: adds a visual notification 
  *
  * Performs the required actions when new headers are
  * received. Tipically it's useful for showing new email notifications
  **/
-void modest_platform_on_new_headers_received (TnyList *header_list,
+void modest_platform_on_new_headers_received (GList *URI_list,
 					      gboolean show_visual);
 
 /**

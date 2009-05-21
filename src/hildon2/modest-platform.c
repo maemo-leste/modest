@@ -1539,12 +1539,10 @@ modest_platform_push_email_notification(void)
 }
 
 void
-modest_platform_on_new_headers_received (TnyList *header_list,
+modest_platform_on_new_headers_received (GList *URI_list,
 					 gboolean show_visual)
 {
-	g_return_if_fail (TNY_IS_LIST (header_list));
-
-	if (tny_list_get_length (header_list) < 1)
+	if (g_list_length (URI_list) == 0)
 		return;
 
 	/* If the window is in the foreground don't do anything */
@@ -1554,7 +1552,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	/* For any other case issue a notification */
 	HildonNotification *notification;
-	TnyIterator *iter;
+	GList *iter;
 	GSList *notifications_list = NULL;
 
 	/* Get previous notifications ids */
@@ -1562,30 +1560,26 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 						   MODEST_CONF_NOTIFICATION_IDS,
 						   MODEST_CONF_VALUE_INT, NULL);
 
-	iter = tny_list_create_iterator (header_list);
-	while (!tny_iterator_is_done (iter)) {
-		gchar *url = NULL, *display_address = NULL;
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		TnyFolder *folder = tny_header_get_folder (header);
+	iter = URI_list;
+	while (iter) {
+		ModestMsgNotificationData *data;
 		gboolean first_notification = TRUE;
 		gint notif_id;
-		gchar *str;
+		gchar *from;
 
-		display_address = tny_header_dup_from (header);
-		/* string is changed in-place */
-		modest_text_utils_get_display_address (display_address);
+		data = (ModestMsgNotificationData *) iter->data;
 
-		str = tny_header_dup_subject (header);
-		notification = hildon_notification_new (display_address,
-							str,
+		/* String is changed in-place. There is no need to
+		   actually dup the data->from string but we just do
+		   it in order not to modify the original contents */
+		from = g_strdup (data->from);
+		modest_text_utils_get_display_address (from);
+
+		notification = hildon_notification_new (from,
+							data->subject,
 							"qgn_list_messagin",
 							MODEST_NOTIFICATION_CATEGORY);
-		g_free (str);
-		/* Create the message URL */
-		str = tny_header_dup_uid (header);
-		url = g_strdup_printf ("%s/%s", tny_folder_get_url_string (folder), 
-				       str);
-		g_free (str);
+		g_free (from);
 
 		hildon_notification_add_dbus_action(notification,
 						    "default",
@@ -1594,12 +1588,13 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 						    MODEST_DBUS_OBJECT,
 						    MODEST_DBUS_IFACE,
 						    MODEST_DBUS_METHOD_OPEN_MESSAGE,
-						    G_TYPE_STRING, url,
+						    G_TYPE_STRING, data->uri,
 						    -1);
 
 		/* Play sound if the user wants. Show the LED
 		   pattern. Show and play just one */
 		if (G_UNLIKELY (first_notification)) {
+			TnyAccountStore *acc_store;
 			TnyAccount *account;
 
 			first_notification = FALSE;
@@ -1614,7 +1609,8 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 							   "persistent", TRUE);
 
 			/* Set the account of the headers */
-			account = tny_folder_get_account (folder);
+			acc_store = (TnyAccountStore *) modest_runtime_get_account_store ();
+			account = tny_account_store_find_account (acc_store, data->uri);
 			if (account) {
 				const gchar *acc_name;
 				acc_name =
@@ -1640,13 +1636,8 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		   not to store the list in gconf */
 
 		/* Free & carry on */
-		g_free (display_address);
-		g_free (url);
-		g_object_unref (folder);
-		g_object_unref (header);
-		tny_iterator_next (iter);
+		iter = g_list_next (iter);
 	}
-	g_object_unref (iter);
 
 	/* Save the ids */
 	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 

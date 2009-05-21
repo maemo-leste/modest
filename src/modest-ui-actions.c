@@ -2230,13 +2230,21 @@ new_messages_arrived (ModestMailOperation *self,
 				tny_list_append (actually_new_list, G_OBJECT (header));
 			}
 			g_object_unref (header);
-			
 		}
 		g_object_unref (iterator);
 
 		if (tny_list_get_length (actually_new_list) > 0) {
-			modest_platform_on_new_headers_received (actually_new_list,
-								 show_visual_notifications);
+			GList *new_headers_list = NULL;
+
+			new_headers_list = modest_utils_create_notification_list_from_header_list (actually_new_list);
+
+			/* Send notifications */
+			if (new_headers_list) {
+				modest_platform_on_new_headers_received (new_headers_list,
+									 show_visual_notifications);
+				/* Free the list */
+				modest_utils_free_notification_list (new_headers_list);
+			}
 		}
 		g_object_unref (actually_new_list);
 	}

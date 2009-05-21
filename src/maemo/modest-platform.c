@@ -1215,16 +1215,12 @@ modest_platform_push_email_notification(void)
 }
 
 void 
-modest_platform_on_new_headers_received (TnyList *header_list,
+modest_platform_on_new_headers_received (GList *URI_list,
 					 gboolean show_visual)
 {
-	g_return_if_fail (TNY_IS_LIST(header_list));
-
-	if (tny_list_get_length(header_list) == 0) {
-		g_warning ("%s: header list is empty", __FUNCTION__);
+	if (g_list_length (URI_list) == 0)
 		return;
-	}
-	
+
 	if (!show_visual) {
                 modest_platform_push_email_notification ();
 		/* We do a return here to avoid indentation with an else */
@@ -1240,7 +1236,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 					   NULL);
 
 	HildonNotification *notification;
-	TnyIterator *iter;
+	GList *iter;
 	GSList *notifications_list = NULL;
 
 	/* Get previous notifications ids */
@@ -1248,35 +1244,29 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 						   MODEST_CONF_NOTIFICATION_IDS, 
 						   MODEST_CONF_VALUE_INT, NULL);
 
-	iter = tny_list_create_iterator (header_list);
-	while (!tny_iterator_is_done (iter)) {
-		gchar *url = NULL, *display_address = NULL,  *summary = NULL;
+	iter = header_list;
+	while (iter) {
+		gchar *display_address = NULL,  *summary = NULL;
 		const gchar *display_date;
-		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (iter));
-		TnyFolder *folder = tny_header_get_folder (header);
 		gboolean first_notification = TRUE;
 		gint notif_id;
 		gchar *str;
+		ModestMsgNotificationData *data;
+
+		data = (ModestMsgNotificationData *) iter->data;
 
 		/* constant string, don't free */
 		display_date = modest_text_utils_get_display_date (tny_header_get_date_received (header));
 
-		display_address = tny_header_dup_from (header);
+		display_address = g_strdup (data->from);
 		modest_text_utils_get_display_address (display_address); /* string is changed in-place */
-		
+
 		summary = g_strdup_printf ("%s - %s", display_date, display_address);
-		str = tny_header_dup_subject (header);
 		notification = hildon_notification_new (summary,
-							str,
+							data->subject,
 							"qgn_list_messagin",
 							"email.arrive");
-		g_free (str);
-		/* Create the message URL */
-		str = tny_header_dup_uid (header);
-		url = g_strdup_printf ("%s/%s", tny_folder_get_url_string (folder), 
-				       str);
-		g_free (str);
-
+		/* Add DBus action */
 		hildon_notification_add_dbus_action(notification,
 						    "default",
 						    "Cancel",
@@ -1284,7 +1274,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 						    MODEST_DBUS_OBJECT,
 						    MODEST_DBUS_IFACE,
 						    MODEST_DBUS_METHOD_OPEN_MESSAGE,
-						    G_TYPE_STRING, url,
+						    G_TYPE_STRING, data->url,
 						    -1);
 
 		/* Play sound if the user wants. Show the LED
@@ -1301,7 +1291,7 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 							    "dialog-type", 4);
 			notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
 							    "led-pattern",
-							    MODEST_NEW_MAIL_LIGHTING_PATTERN);			
+							    MODEST_NEW_MAIL_LIGHTING_PATTERN);
 		}
 
 		/* Notify. We need to do this in an idle because this function
@@ -1314,23 +1304,20 @@ modest_platform_on_new_headers_received (TnyList *header_list,
 		/* We don't listen for the "closed" signal, because we
 		   don't care about if the notification was removed or
 		   not to store the list in gconf */
-	
+
 		/* Free & carry on */
 		g_free (display_address);
 		g_free (summary);
-		g_free (url);
-		g_object_unref (folder);
-		g_object_unref (header);
-		tny_iterator_next (iter);
+
+		iter = g_list_next (iter);
 	}
-	g_object_unref (iter);
 
 	/* Save the ids */
 	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 
 			      notifications_list, MODEST_CONF_VALUE_INT, NULL);
 
 	g_slist_free (notifications_list);
-	
+
 #endif /*MODEST_HAVE_HILDON_NOTIFY*/
 }
 

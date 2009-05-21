@@ -45,6 +45,12 @@ typedef enum _ModestSortDialogType {
 	MODEST_SORT_HEADERS,
 } ModestSortDialogType;
 
+typedef struct _ModestMsgNotificationData {
+	gchar *subject;
+	gchar *from;
+	gchar *uri;
+} ModestMsgNotificationData;
+
 GQuark modest_utils_get_supported_secure_authentication_error_quark (void);
 
 
@@ -229,6 +235,8 @@ GtkTreeModel *modest_utils_create_country_model (void);
  */
 void modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc);
 
+GList *modest_utils_create_notification_list_from_header_list (TnyList *header_list);
 
+void  modest_utils_free_notification_list (GList *notification_list);
 
 #endif /*__MODEST_MAEMO_UTILS_H__*/
