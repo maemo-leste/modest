@@ -85,7 +85,7 @@ static void   add_existing_accounts       (ModestTnyAccountStore *self);
 
 static void    insert_account              (ModestTnyAccountStore *self,
 					    const gchar *account,
-					    gboolean notify);
+					    gboolean is_new);
 
 static void    on_account_removed          (ModestAccountMgr *acc_mgr, 
 					    const gchar *account,
@@ -943,24 +943,24 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	local_account = 
 		modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session, NULL);
 	tny_list_append (priv->store_accounts, G_OBJECT(local_account));
-	g_object_unref (local_account);	
+	g_object_unref (local_account);
 
 	/* Add the other remote accounts. Do this after adding the
 	   local account, because we need to add our outboxes to the
 	   global OUTBOX hosted in the local account */
 	add_existing_accounts (MODEST_TNY_ACCOUNT_STORE (obj));
-	
+
 	/* Add connection-specific transport accounts if there are any
 	   accounts available */
 	if (!only_local_accounts (MODEST_TNY_ACCOUNT_STORE(obj)))
 		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
-	
+
 	/* This is a singleton, so it does not need to be unrefed. */
 	if (volume_path_is_mounted (g_getenv (MODEST_MMC1_VOLUMEPATH_ENV))) {
 		/* It is mounted: */
-		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */); 
+		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */);
 	}
-	
+
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 
@@ -1634,22 +1634,21 @@ add_outbox_from_transport_account_to_global_outbox (ModestTnyAccountStore *self,
 static void
 insert_account (ModestTnyAccountStore *self,
 		const gchar *account,
-		gboolean notify)
+		gboolean is_new)
 {
 	ModestTnyAccountStorePrivate *priv = NULL;
 	TnyAccount *store_account = NULL, *transport_account = NULL;
-	ModestTnySendQueue *send_queue;
 
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
 	/* Get the server and the transport account */
-	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE, notify);
+	store_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_STORE, is_new);
 	if (!store_account || !TNY_IS_ACCOUNT(store_account)) {
 		g_warning ("%s: failed to create store account", __FUNCTION__);
 		return;
 	}
 
-	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT, notify);
+	transport_account = create_tny_account (self, account, TNY_ACCOUNT_TYPE_TRANSPORT, is_new);
 	if (!transport_account || !TNY_IS_ACCOUNT(transport_account)) {
 		g_warning ("%s: failed to create transport account", __FUNCTION__);
 		g_object_unref (store_account);
@@ -1663,17 +1662,20 @@ insert_account (ModestTnyAccountStore *self,
 	/* Create a new pseudo-account with an outbox for this
 	   transport account and add it to the global outbox
 	   in the local account */
-	add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);	
+	add_outbox_from_transport_account_to_global_outbox (self, account, transport_account);
 
 	/* Force the creation of the send queue, this way send queues
 	   will automatically send missing emails when the connections
 	   become active */
-	send_queue = modest_runtime_get_send_queue ((TnyTransportAccount *) transport_account, TRUE);
-
 	/* Notify the observers. We do it after everything is
 	   created */
-	if (notify) {
-		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, store_account);	
+	if (is_new) {
+		/* We only have to do this for new accounts, already
+		   existing accounts at boot time are instantiated by
+		   modest_tny_account_store_start_send_queues */
+		modest_runtime_get_send_queue ((TnyTransportAccount *) transport_account, TRUE);
+
+		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, store_account);
 		g_signal_emit (G_OBJECT (self), signals [ACCOUNT_INSERTED_SIGNAL], 0, transport_account);
 	}
 
@@ -1696,7 +1698,7 @@ on_account_inserted (ModestAccountMgr *acc_mgr,
 	gboolean add_specific;
 
 	add_specific = only_local_accounts (MODEST_TNY_ACCOUNT_STORE (user_data));
-	    	
+
 	/* Insert the account and notify the observers */
 	insert_account (MODEST_TNY_ACCOUNT_STORE (user_data), account, TRUE);
 
@@ -2215,11 +2217,42 @@ count_remote_accounts (gpointer data, gpointer user_data)
 guint
 modest_tny_account_store_get_num_remote_accounts (ModestTnyAccountStore *self)
 {
-	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	ModestTnyAccountStorePrivate *priv;
 	gint count = 0;
 
+	g_return_val_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self), 0);
+
 	/* Count remote accounts */
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
 	tny_list_foreach (priv->store_accounts, (GFunc) count_remote_accounts, &count);
 
 	return count;
+}
+
+static void
+init_send_queue (TnyAccount *account, gpointer user_data)
+{
+	modest_runtime_get_send_queue ((TnyTransportAccount *) account, TRUE);
+}
+
+void
+modest_tny_account_store_start_send_queues (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv;
+	TnyList *tmp;
+
+	g_return_if_fail (MODEST_IS_TNY_ACCOUNT_STORE (self));
+
+	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+
+	/* We need to create a copy of the list because if the send
+	   queues are created they'll directly access to the TnyList
+	   of transport accounts, and thus we'll end up blocked in the
+	   mutex the TnyList uses to synchronize accesses */
+	tmp = tny_list_copy (priv->transport_accounts);
+
+	/* Just instantiate them. They'll begin to listen for
+	   connection changes to send messages ASAP */
+	tny_list_foreach (tmp, (GFunc) init_send_queue, NULL);
+	g_object_unref (tmp);
 }

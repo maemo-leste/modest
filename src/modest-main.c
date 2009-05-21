@@ -123,6 +123,7 @@ main (int argc, char *argv[])
 	gboolean show_ui_without_top_application_method = FALSE;
 	int retval  = 0;
 	MainSignalHandlers *handlers;
+	ModestTnyAccountStore *acc_store;
 
 	GError *error;
 	GOptionContext *context;
@@ -166,6 +167,11 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
+
+	/* Create the account store & launch send queues */
+	acc_store = modest_runtime_get_account_store ();
+	modest_tny_account_store_start_send_queues (acc_store);
+
 	handlers = g_malloc0 (sizeof (MainSignalHandlers));
 	/* Connect to the "queue-emtpy" signal */
 	handlers->queue_handler =
@@ -183,7 +189,7 @@ main (int argc, char *argv[])
 
 	/* Connect to the "password-requested" signal */
 	handlers->get_password_handler =
-		g_signal_connect (modest_runtime_get_account_store (),
+		g_signal_connect (acc_store,
 				  "password_requested",
 				  G_CALLBACK (modest_ui_actions_on_password_requested),
 				  NULL);

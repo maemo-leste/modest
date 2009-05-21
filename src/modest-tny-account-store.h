@@ -273,6 +273,16 @@ void modest_tny_account_store_set_send_mail_blocked (ModestTnyAccountStore *self
 
 guint modest_tny_account_store_get_num_remote_accounts (ModestTnyAccountStore *self);
 
+/**
+ * modest_tny_account_store_start_send_queues:
+ * @self: a #ModestTnyAccountStore
+ *
+ * Instantiates the send queues for the available transport
+ * accounts. Note that send queues will start to listen to
+ * connection-changed signals to try to send pending emails ASAP
+ **/
+void modest_tny_account_store_start_send_queues (ModestTnyAccountStore *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */
