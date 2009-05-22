@@ -1085,7 +1085,7 @@ modest_msg_view_window_is_other_body (ModestMsgViewWindow *self)
 
 ModestWindow *
 modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
-					    TnyMimePart *part,
+					    TnyMimePart *other_body,
 					    const gchar *modest_account_name,
 					    const gchar *mailbox, /* ignored */
 					    const gchar *msg_uid)
@@ -1103,7 +1103,7 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 
 	if (other_body) {
 		priv->other_body = g_object_ref (other_body);
-		modest_msg_view_set_msg_with_other_body (TNY_MSG_VIEW (priv->msg_view), msg, other_body);
+		modest_msg_view_set_msg_with_other_body (MODEST_MSG_VIEW (priv->msg_view), msg, other_body);
 	} else {
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	}
