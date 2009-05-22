@@ -140,7 +140,7 @@ main (int argc, char *argv[])
 	show_ui_without_top_application_method = show_ui;
 
 	if (!show_ui_without_top_application_method) {
-		g_print ("modest: use 'modest showui' to start from cmdline  with UI\n");
+		g_print ("modest: use 'modest -s' to start from cmdline  with UI\n");
 	}
 
 	if (!g_thread_supported())
