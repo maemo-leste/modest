@@ -373,7 +373,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 					   const gchar *msg_uid)
 {
 
-	return modest_msg_view_new_with_other_body (msg, NULL, modest_account_name, mailbox, msg_uid);
+	return modest_msg_view_window_new_with_other_body (msg, NULL, modest_account_name, mailbox, msg_uid);
 
 }
 
