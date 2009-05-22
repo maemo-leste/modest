@@ -117,6 +117,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget *remove_attachment_banner;
 
 	gchar *msg_uid;
+	gboolean is_other_body;
 
 	GSList *sighandlers;
 };
@@ -448,6 +449,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->purge_timeout = 0;
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
+	priv->is_other_body = FALSE;
 	
 	priv->sighandlers = NULL;
 	
@@ -1059,6 +1061,7 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 					  modest_account_name, mailbox, msg_uid);
 
 	if (other_body) {
+		priv->is_other_body = TRUE;
 		modest_msg_view_set_msg_with_other_body (MODEST_MSG_VIEW (priv->msg_view), msg, other_body);
 	} else {
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
@@ -1345,6 +1348,9 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	if (priv->is_other_body)
+		return NULL;
 
 	/* If the message was not obtained from a treemodel,
 	 * for instance if it was opened directly by the search UI:
@@ -2510,7 +2516,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 	if (tny_mime_part_is_purged (mime_part))
 		goto frees;
 
-	if (!modest_tny_mime_part_is_msg (mime_part)) {
+	if (!modest_tny_mime_part_is_msg (mime_part) && tny_mime_part_get_filename (mime_part)) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
 		gboolean show_error_banner = FALSE;
@@ -2551,6 +2557,29 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			g_free (filepath);
 		if (show_error_banner)
 			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
+	} else if (!modest_tny_mime_part_is_msg (mime_part)) {
+		ModestWindowMgr *mgr;
+		mgr = modest_runtime_get_window_mgr ();
+		ModestWindow *msg_win = NULL;
+		TnyMsg *current_msg;
+
+		gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
+		const gchar *mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (window));
+		if (!account)
+			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+
+		current_msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (window));
+		msg_win = modest_msg_view_window_new_with_other_body (TNY_MSG (current_msg), TNY_MIME_PART (mime_part),
+								      account, mailbox, attachment_uid);
+		g_object_unref (current_msg);
+
+		modest_window_set_zoom (MODEST_WINDOW (msg_win),
+					modest_window_get_zoom (MODEST_WINDOW (window)));
+		if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window)))
+			gtk_widget_show_all (GTK_WIDGET (msg_win));
+		else
+			gtk_widget_destroy (GTK_WIDGET (msg_win));
+		
 	} else {
 		/* message attachment */
 		TnyHeader *header = NULL;
