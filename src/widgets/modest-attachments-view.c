@@ -103,6 +103,27 @@ modest_attachments_view_new (TnyMsg *msg)
 	return GTK_WIDGET (self);
 }
 
+static void
+add_digest_attachments (ModestAttachmentsView *attachments_view, TnyMimePart *part)
+{
+	TnyList *parts;
+	TnyIterator *iter;
+
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_mime_part_get_parts (TNY_MIME_PART (part), parts);
+
+	for (iter  = tny_list_create_iterator(parts); 
+	     !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyMimePart *cur_part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		modest_attachments_view_add_attachment (attachments_view, cur_part, TRUE, 0);
+		g_object_unref (cur_part);
+	}
+	g_object_unref (iter);
+	g_object_unref (parts);
+
+}
+
 
 void
 modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, TnyMsg *msg)
@@ -112,6 +133,8 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	TnyIterator *iter;
 	gchar *msg_content_type = NULL;
 	TnyMimePart *part_to_check;
+	gboolean body_found;
+	gboolean is_alternate;
 	
 	if (msg == priv->msg) return;
 
@@ -134,6 +157,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	part_to_check = modest_tny_msg_get_attachments_parent (TNY_MSG (msg));
 
 	msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (part_to_check));
+	is_alternate = !strcasecmp (msg_content_type, "multipart/alternative");
 
 	/* If the top mime part is a multipart/related, we don't show the attachments, as they're
 	 * embedded images in body */
@@ -177,13 +201,30 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	tny_mime_part_get_parts (TNY_MIME_PART (part_to_check), parts);
 	iter = tny_list_create_iterator (parts);
 
+	body_found = FALSE;
 	while (!tny_iterator_is_done (iter)) {
 		TnyMimePart *part;
+		gchar *content_type;
 
 		part = TNY_MIME_PART (tny_iterator_get_current (iter));
 
-		if (part && (modest_tny_mime_part_is_attachment_for_modest (part))) 
+		if (part && (modest_tny_mime_part_is_attachment_for_modest (part))) {
 			modest_attachments_view_add_attachment (attachments_view, part, TRUE, 0);
+
+		} else if (part && !is_alternate) {
+			content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
+			g_strstrip (content_type);
+
+			if (g_str_has_prefix (content_type, "multipart/digest")) {
+				add_digest_attachments (attachments_view, part);
+			} else if (body_found && g_str_has_prefix (content_type, "text/")) {
+				   modest_attachments_view_add_attachment (attachments_view, part, TRUE, 0);
+			} else if (g_str_has_prefix (content_type, "multipart/") || 
+				   g_str_has_prefix (content_type, "text/")) {
+				body_found = TRUE;
+			}
+		}
+
 
 		if (part)
 			g_object_unref (part);
