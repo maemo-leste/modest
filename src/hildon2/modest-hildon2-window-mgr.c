@@ -481,29 +481,30 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
 		gchar *uid;
 		TnyHeader *header;
+
+		uid = g_strdup (modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (window)));
+		
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (window));
 
-		if (header) {
+		if (uid == NULL)
 			uid = modest_tny_folder_get_header_unique_id (header);
-
-			/* Embedded messages do not have uid */
-			if (uid) {
-				if (g_list_find_custom (priv->window_list, uid, (GCompareFunc) compare_msguids)) {
-					g_debug ("%s found another view window showing the same header", __FUNCTION__);
-					g_free (uid);
-					g_object_unref (header);
-					return FALSE;
-				}
+		/* Embedded messages do not have uid */
+		if (uid) {
+			if (g_list_find_custom (priv->window_list, uid, (GCompareFunc) compare_msguids)) {
+				g_debug ("%s found another view window showing the same header", __FUNCTION__);
 				g_free (uid);
-			} else {
-				if (g_list_find_custom (priv->window_list, header, (GCompareFunc) compare_headers)) {
-					g_debug ("%s found another view window showing the same header", __FUNCTION__);
-					g_object_unref (header);
-					return FALSE;
-				}
+				g_object_unref (header);
+				return FALSE;
 			}
-			g_object_unref (header);
+			g_free (uid);
+		} else {
+			if (g_list_find_custom (priv->window_list, header, (GCompareFunc) compare_headers)) {
+				g_debug ("%s found another view window showing the same header", __FUNCTION__);
+				g_object_unref (header);
+				return FALSE;
+			}
 		}
+		g_object_unref (header);
 	}
 
 	/* Do not go backwards */

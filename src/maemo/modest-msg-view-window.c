@@ -237,6 +237,7 @@ struct _ModestMsgViewWindowPrivate {
 	guint progress_bar_timeout;
 
 	gchar *msg_uid;
+	TnyMimePart *other_body;
 	
 	GSList *sighandlers;
 };
@@ -478,6 +479,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->purge_timeout = 0;
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
+	priv->other_body = NULL;
 	
 	priv->sighandlers = NULL;
 	
@@ -704,6 +706,11 @@ modest_msg_view_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_view_window_disconnect_signals (MODEST_WINDOW (obj));
+
+	if (priv->other_body != NULL) {
+		g_object_unref (priv->other_body);
+		priv->other_body = NULL;
+	}
 
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
@@ -1065,6 +1072,17 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	return MODEST_WINDOW(window);
 }
 
+gboolean
+modest_msg_view_window_is_other_body (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	return (priv->other_body != NULL);
+}
+
 ModestWindow *
 modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
 					    TnyMimePart *part,
@@ -1084,6 +1102,7 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 		modest_account_name, msg_uid);
 
 	if (other_body) {
+		priv->other_body = g_object_ref (other_body);
 		modest_msg_view_set_msg_with_other_body (TNY_MSG_VIEW (priv->msg_view), msg, other_body);
 	} else {
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
@@ -3093,7 +3112,15 @@ update_window_title (ModestMsgViewWindow *window)
 	
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
-	if (msg != NULL) {
+	if (priv->other_body) {
+		gchar *description;
+
+		description = modest_tny_mime_part_get_header_value (priv->other_body, "Content-Description");
+		if (description) {
+			g_strstrip (description);
+			subject = description;
+		}
+	} else if (msg != NULL) {
 		header = tny_msg_get_header (msg);
 		subject = tny_header_dup_subject (header);
 		g_object_unref (header);

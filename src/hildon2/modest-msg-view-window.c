@@ -117,7 +117,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget *remove_attachment_banner;
 
 	gchar *msg_uid;
-	gboolean is_other_body;
+	TnyMimePart *other_body;
 
 	GSList *sighandlers;
 };
@@ -449,7 +449,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->purge_timeout = 0;
 	priv->remove_attachment_banner = NULL;
 	priv->msg_uid = NULL;
-	priv->is_other_body = FALSE;
+	priv->other_body = NULL;
 	
 	priv->sighandlers = NULL;
 	
@@ -611,6 +611,11 @@ modest_msg_view_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_view_window_disconnect_signals (MODEST_WINDOW (obj));
+
+	if (priv->other_body != NULL) {
+		g_object_unref (priv->other_body);
+		priv->other_body = NULL;
+	}
 
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
@@ -1042,6 +1047,17 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	return MODEST_WINDOW(window);
 }
 
+gboolean
+modest_msg_view_window_is_other_body (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	return (priv->other_body != NULL);
+}
+
 ModestWindow *
 modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
 					    TnyMimePart *other_body,
@@ -1061,7 +1077,7 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 					  modest_account_name, mailbox, msg_uid);
 
 	if (other_body) {
-		priv->is_other_body = TRUE;
+		priv->other_body = g_object_ref (other_body);
 		modest_msg_view_set_msg_with_other_body (MODEST_MSG_VIEW (priv->msg_view), msg, other_body);
 	} else {
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
@@ -1348,9 +1364,6 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self)
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), NULL);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
-
-	if (priv->is_other_body)
-		return NULL;
 
 	/* If the message was not obtained from a treemodel,
 	 * for instance if it was opened directly by the search UI:
@@ -2559,27 +2572,40 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 	} else if (!modest_tny_mime_part_is_msg (mime_part)) {
 		ModestWindowMgr *mgr;
-		mgr = modest_runtime_get_window_mgr ();
 		ModestWindow *msg_win = NULL;
 		TnyMsg *current_msg;
-
-		gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
-		const gchar *mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (window));
-		if (!account)
-			account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+		gboolean found;
+		TnyHeader *header;
 
 		current_msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (window));
-		msg_win = modest_msg_view_window_new_with_other_body (TNY_MSG (current_msg), TNY_MIME_PART (mime_part),
-								      account, mailbox, attachment_uid);
-		g_object_unref (current_msg);
-
-		modest_window_set_zoom (MODEST_WINDOW (msg_win),
-					modest_window_get_zoom (MODEST_WINDOW (window)));
-		if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window)))
-			gtk_widget_show_all (GTK_WIDGET (msg_win));
-		else
-			gtk_widget_destroy (GTK_WIDGET (msg_win));
+		mgr = modest_runtime_get_window_mgr ();
+		header = tny_msg_get_header (TNY_MSG (current_msg));
+		found = modest_window_mgr_find_registered_message_uid (mgr,
+								       attachment_uid,
+								       &msg_win);
 		
+		if (found) {
+			g_warning ("window for this body is already being created");
+		} else {
+
+			/* it's not found, so create a new window for it */
+			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
+			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
+			const gchar *mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (window));
+			if (!account)
+				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+			
+			msg_win = modest_msg_view_window_new_with_other_body (TNY_MSG (current_msg), TNY_MIME_PART (mime_part),
+									      account, mailbox, attachment_uid);
+			
+			modest_window_set_zoom (MODEST_WINDOW (msg_win),
+						modest_window_get_zoom (MODEST_WINDOW (window)));
+			if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window)))
+				gtk_widget_show_all (GTK_WIDGET (msg_win));
+			else
+				gtk_widget_destroy (GTK_WIDGET (msg_win));
+		}
+		g_object_unref (current_msg);		
 	} else {
 		/* message attachment */
 		TnyHeader *header = NULL;
@@ -3076,7 +3102,15 @@ update_window_title (ModestMsgViewWindow *window)
 
 	msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 
-	if (msg != NULL) {
+	if (priv->other_body) {
+		gchar *description;
+
+		description = modest_tny_mime_part_get_header_value (priv->other_body, "Content-Description");
+		if (description) {
+			g_strstrip (description);
+			subject = description;
+		}
+	} else if (msg != NULL) {
 		header = tny_msg_get_header (msg);
 		subject = tny_header_dup_subject (header);
 		g_object_unref (header);

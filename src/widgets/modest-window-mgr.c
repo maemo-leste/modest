@@ -379,11 +379,12 @@ modest_window_mgr_register_header (ModestWindowMgr *self,  TnyHeader *header, co
 	g_return_if_fail (TNY_IS_HEADER(header));
 		
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-	uid = modest_tny_folder_get_header_unique_id (header);
-
-	if (uid == NULL)
+	if (alt_uid != NULL) {
 		uid = g_strdup (alt_uid);
-	
+	} else {
+		uid = modest_tny_folder_get_header_unique_id (header);
+	}
+
 	if (!has_uid (priv->preregistered_uids, uid)) {
 		MODEST_DEBUG_BLOCK(g_debug ("registering new uid %s", uid););
 		priv->preregistered_uids = append_uid (priv->preregistered_uids, uid);

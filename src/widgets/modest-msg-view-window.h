@@ -125,6 +125,16 @@ ModestWindow*   modest_msg_view_window_new_with_other_body         (TnyMsg *msg,
 								   const gchar *msg_uid);
 
 /**
+ * modest_msg_view_window_is_other_body:
+ * @self: a #ModestMsgViewWindow
+ *
+ * tells if the view window is showing other body
+ *
+ * Returns: %TRUE if showing "not first body"
+ */
+gboolean modest_msg_view_window_is_other_body (ModestMsgViewWindow *self);
+
+/**
  * modest_msg_view_window_new_with_header_model:
  * @msg: an #TnyMsg instance
  * @modest_account_name: the account name 

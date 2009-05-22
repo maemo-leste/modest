@@ -65,6 +65,7 @@ struct _ModestMsgViewWindowPrivate {
 	GtkWidget   *msg_view;
 
 	gchar *msg_uid;
+	TnyMimePart *other_body;
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -153,6 +154,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->menubar  = NULL;
 	priv->msg_view = NULL;
 	priv->msg_uid  = NULL;
+	priv->other_body = NULL;
 }
 
 
@@ -168,6 +170,7 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg, TnyMimePart *other_body)
 
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	if (other_body) {
+		priv->other_body = g_object_ref (other_body);
 		modest_msg_view_set_msg_with_other_body (MODEST_MSG_VIEW (priv->msg_view), msg, other_body);
 	} else {
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
@@ -195,6 +198,11 @@ modest_msg_view_window_finalize (GObject *obj)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 
+	if (priv->other_body != NULL) {
+		g_object_unref (priv->other_body);
+		priv->other_body = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -207,6 +215,17 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 	return FALSE;
 }
 
+
+gboolean
+modest_msg_view_window_is_other_body (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	return (priv->other_body != NULL);
+}
 
 ModestWindow *
 modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
@@ -289,8 +308,19 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 	restore_settings (MODEST_WINDOW(obj));
 
 	header = tny_msg_get_header (msg);
-	if (header)
-		subject = tny_header_dup_subject (header);
+	if (other_body) {
+		gchar *description;
+
+		description = modest_tny_mime_part_get_header_value (other_body, "Content-Description");
+		if (description) {
+			g_strstrip (description);
+			subject = description;
+		}
+	} else {
+		if (header)
+			subject = tny_header_dup_subject (header);
+	}
+
 	
 	if (subject != NULL)
 		gtk_window_set_title (GTK_WINDOW (obj), subject);
