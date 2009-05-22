@@ -241,14 +241,14 @@ _modest_header_view_sender_receiver_cell_data  (GtkTreeViewColumn *column,
 		sender_receiver_col = TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN;
 	else
 		sender_receiver_col = TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN;
-		
+
 	gtk_tree_model_get (tree_model, iter,
 			    sender_receiver_col,  &address,
 			    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
 			    -1);
-	
+
 	modest_text_utils_get_display_address (address); /* string is changed in-place */
-	
+
 	set_cell_text (renderer, (address && address[0] != '\0')?address:_("mail_va_no_to"),
 		       flags);
 	g_free (address);
@@ -262,27 +262,22 @@ void
 _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCellRenderer *renderer,
 					       GtkTreeModel *tree_model,  GtkTreeIter *iter,  gpointer user_data)
 {
-	/* Note that GtkTreeModel is a GtkTreeModelFilter. */
-	
-	/* printf ("DEBUG: %s: tree_model gtype=%s\n", __FUNCTION__, G_OBJECT_TYPE_NAME (tree_model)); */
-	
 	TnyHeaderFlags flags = 0;
-	gchar *address = NULL;
+	gchar *recipients = NULL, *addresses;
+	GSList *recipient_list;
 	gchar *subject = NULL;
 	time_t date;
-
-#ifdef MAEMO_CHANGES
-#ifdef HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT
-	GtkTreeCellDataHint hint;
-#endif
-#endif
-	
 	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
 		*attach_cell, *priority_cell,
 		*recipient_box, *subject_box = NULL;
 	TnyHeader *msg_header = NULL;
 	TnyHeaderFlags prio = 0;
 
+#ifdef MAEMO_CHANGES
+#ifdef HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT
+	GtkTreeCellDataHint hint;
+#endif
+#endif
 
 	g_return_if_fail (GTK_IS_TREE_VIEW_COLUMN (column));
 	g_return_if_fail (GTK_IS_CELL_RENDERER (renderer));
@@ -296,7 +291,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		return;
 #endif
 #endif
-	
+
 	recipient_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "recpt-box-renderer"));
 	subject_box = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (renderer), "subject-box-renderer"));
 	priority_cell = GTK_CELL_RENDERER (g_object_get_data (G_OBJECT (subject_box), "priority-renderer"));
@@ -310,7 +305,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_IN)
 		gtk_tree_model_get (tree_model, iter,
 				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,  &address,
+				    TNY_GTK_HEADER_LIST_MODEL_FROM_COLUMN,  &recipients,
 				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_RECEIVED_TIME_T_COLUMN, &date,
 				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &msg_header,
@@ -318,7 +313,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	else
 		gtk_tree_model_get (tree_model, iter,
 				    TNY_GTK_HEADER_LIST_MODEL_FLAGS_COLUMN, &flags,
-				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN,  &address,
+				    TNY_GTK_HEADER_LIST_MODEL_TO_COLUMN,  &recipients,
 				    TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &subject,
 				    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &date,
 				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN, &msg_header,
@@ -343,12 +338,35 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		       flags);
 	g_free (subject);
 
-	/* FIXME: we hardcode the color to #666666; instead we should use SecondaryTextColour from the
-	 * theme (gtkrc file) */
-	modest_text_utils_get_display_address (address); /* changed in-place */
-	set_cell_text (recipient_cell, (address && address[0] != '\0')?address:_("mail_va_no_to"), flags);
-	g_free (address);
-	
+	/* Show the list of senders/recipients */
+	addresses = NULL;
+	recipient_list = modest_text_utils_split_addresses_list (recipients);
+	if (recipient_list) {
+		GString *add_string = g_string_sized_new (strlen (recipients));
+		GSList *iter = recipient_list;
+		gboolean first = TRUE;
+
+		while (iter) {
+			/* Strings are changed in place */
+			modest_text_utils_get_display_address ((gchar *) iter->data);
+			if (G_UNLIKELY (first)) {
+				g_string_append_printf (add_string, "%s", (gchar *) iter->data);
+				first = FALSE;
+			} else {
+				g_string_append_printf (add_string, ", %s", (gchar *) iter->data);
+			}
+			iter = g_slist_next (iter);
+		}
+		g_slist_foreach (recipient_list, (GFunc) g_free, NULL);
+		g_slist_free (recipient_list);
+		addresses = g_string_free (add_string, FALSE);
+	}
+
+	set_cell_text (recipient_cell, (addresses) ? addresses : _("mail_va_no_to"), flags);
+	g_free (addresses);
+	g_free (recipients);
+
+	/* Show status (outbox folder) or sent date */
 	if (header_mode == MODEST_HEADER_VIEW_COMPACT_HEADER_MODE_OUTBOX) {
 		ModestTnySendQueueStatus status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 		const gchar *status_str = "";
@@ -358,7 +376,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 				tny_header_set_flag (msg_header, TNY_HEADER_FLAG_SUSPENDED);
 			}
 		}
-		
+
 		status_str = get_status_string (status);
 		set_cell_text (date_or_status_cell, status_str, flags);
 	} else {
