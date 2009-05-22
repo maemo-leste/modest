@@ -2617,7 +2617,8 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			mime_part = (TnyMimePart *) tny_iterator_get_current (iter);
 			g_object_unref (iter);
 		}
-		g_object_unref (selected_attachments);
+		if (selected_attachments)
+		  g_object_unref (selected_attachments);
 
 		if (error)
 			return;
@@ -2633,7 +2634,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 	/* we also check for mime_part == priv->msg, as this means it's a direct attachment
 	 * shown as attachment, so it should behave as a file */
 	window_msg = TNY_MIME_PART (tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view)));
-	if (!modest_tny_mime_part_is_msg (mime_part)||
+	if ((!modest_tny_mime_part_is_msg (mime_part) && tny_mime_part_get_filename (mime_part)) ||
 	    mime_part == window_msg) {
 		gchar *filepath = NULL;
 		const gchar *att_filename = tny_mime_part_get_filename (mime_part);
@@ -2670,6 +2671,42 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			g_free (filepath);
 		if (show_error_banner)
 			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
+	} else if (!modest_tny_mime_part_is_msg (mime_part)) {
+		ModestWindowMgr *mgr;
+		ModestWindow *msg_win = NULL;
+		TnyMsg *current_msg;
+		gboolean found;
+		TnyHeader *header;
+
+		current_msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (window));
+		mgr = modest_runtime_get_window_mgr ();
+		header = tny_msg_get_header (TNY_MSG (current_msg));
+		found = modest_window_mgr_find_registered_message_uid (mgr,
+								       attachment_uid,
+								       &msg_win);
+		
+		if (found) {
+			g_warning ("window for this body is already being created");
+		} else {
+
+			/* it's not found, so create a new window for it */
+			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
+			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
+			const gchar *mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (window));
+			if (!account)
+				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+			
+			msg_win = modest_msg_view_window_new_with_other_body (TNY_MSG (current_msg), TNY_MIME_PART (mime_part),
+									      account, mailbox, attachment_uid);
+			
+			modest_window_set_zoom (MODEST_WINDOW (msg_win),
+						modest_window_get_zoom (MODEST_WINDOW (window)));
+			if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window)))
+				gtk_widget_show_all (GTK_WIDGET (msg_win));
+			else
+				gtk_widget_destroy (GTK_WIDGET (msg_win));
+		}
+		g_object_unref (current_msg);		
 	} else {
 		/* message attachment */
 		TnyHeader *header = NULL;

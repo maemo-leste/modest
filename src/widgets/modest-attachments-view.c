@@ -60,6 +60,7 @@ struct _ModestAttachmentsViewPrivate
 	GList *selected;
 	GtkWidget *rubber_start;
 	GtkWidget *press_att_view;
+	GtkWidget *previous_selection;
 	ModestAttachmentsViewStyle style;
 };
 
@@ -472,12 +473,16 @@ button_press_event (GtkWidget *widget,
 		if (att_view != NULL) {
 			if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS) {
 				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
-			} else if ((priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) ||
-			    (GTK_WIDGET_STATE (att_view) == GTK_STATE_SELECTED && (g_list_length (priv->selected) < 2))) {
+			} else if (priv->style == MODEST_ATTACHMENTS_VIEW_STYLE_LINKS) {
 				priv->press_att_view = att_view;
 				set_selected (MODEST_ATTACHMENTS_VIEW (widget), MODEST_ATTACHMENT_VIEW (att_view));
 				gtk_grab_add (widget);
 			} else {
+				if (g_list_length (priv->selected) == 1) {
+					priv->previous_selection = GTK_WIDGET (priv->selected->data);
+				} else {
+					priv->previous_selection = NULL;
+				}
 				TnyMimePart *mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
 
 				/* Do not select purged attachments */
@@ -517,7 +522,14 @@ button_release_event (GtkWidget *widget,
 			priv->press_att_view = NULL;
 		} else {
 
-			if (att_view != NULL) {
+			if (priv->style != MODEST_ATTACHMENTS_VIEW_STYLE_NO_FOCUS &&
+			    priv->rubber_start == att_view  && 
+			    priv->previous_selection == att_view) {
+				TnyMimePart *mime_part;
+				mime_part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (att_view));
+				g_signal_emit (G_OBJECT (widget), signals[ACTIVATE_SIGNAL], 0, mime_part);
+				g_object_unref (mime_part);
+			} else if (att_view != NULL) {
 				unselect_all (MODEST_ATTACHMENTS_VIEW (widget));
 				select_range (MODEST_ATTACHMENTS_VIEW (widget), 
 					      MODEST_ATTACHMENT_VIEW (priv->rubber_start), 

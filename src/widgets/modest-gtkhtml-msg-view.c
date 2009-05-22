@@ -1737,11 +1737,15 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 			children = gtk_container_get_children (GTK_CONTAINER (priv->attachments_box));
 			label = GTK_LABEL (children->data);
 			gtk_widget_show_all (priv->attachments_box);
+#ifdef MODEST_TOOLKIT_HILDON2
 			if (modest_attachments_view_get_num_attachments (widget) > 1) {
 				text = _("mail_va_attachments");
 			} else {
 				text = _("mail_va_attachment");
 			}
+#else
+				text = _("mail_va_attachment");
+#endif
 			gtk_label_set_text (label, text);
 		} else {
 			gtk_widget_hide_all (priv->attachments_box);
