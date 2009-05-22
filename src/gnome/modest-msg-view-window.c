@@ -157,7 +157,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 
 
 static void
-init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
+init_window (ModestMsgViewWindow *obj, TnyMsg *msg, TnyMimePart *other_body)
 {
 	GtkWidget *main_vbox, *scrolled_window;
 	ModestMsgViewWindowPrivate *priv;
@@ -167,7 +167,11 @@ init_window (ModestMsgViewWindow *obj, TnyMsg *msg)
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
-	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	if (other_body) {
+		modest_msg_view_set_msg_with_other_body (MODEST_MSG_VIEW (priv->msg_view), msg, other_body);
+	} else {
+		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	}
 	main_vbox = gtk_vbox_new  (FALSE, 0);
 	
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->menubar, FALSE, FALSE, 0);
@@ -205,10 +209,11 @@ on_delete_event (GtkWidget *widget, GdkEvent *event, ModestMsgViewWindow *self)
 
 
 ModestWindow *
-modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
-					   const gchar *modest_account_name, 
-					   const gchar *mailbox, /* ignored */
-					   const gchar *msg_uid)
+modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
+					    TnyMimePart *other_body,
+					    const gchar *modest_account_name, 
+					    const gchar *mailbox, /* ignored */
+					    const gchar *msg_uid)
 {
 	GObject *obj;
 	ModestMsgViewWindowPrivate *priv;
@@ -280,7 +285,7 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	gtk_toolbar_set_tooltips (GTK_TOOLBAR (priv->toolbar), TRUE);
 
 	/* Init window */
-	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg);
+	init_window (MODEST_MSG_VIEW_WINDOW(obj), msg, other_body);
 	restore_settings (MODEST_WINDOW(obj));
 
 	header = tny_msg_get_header (msg);
@@ -329,6 +334,17 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	g_signal_connect (G_OBJECT(obj), "delete-event", G_CALLBACK(on_delete_event), obj);
 
 	return MODEST_WINDOW(obj);
+}
+
+ModestWindow *
+modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
+					   const gchar *modest_account_name, 
+					   const gchar *mailbox, /* ignored */
+					   const gchar *msg_uid)
+{
+
+	return modest_msg_view_new_with_other_body (msg, NULL, modest_account_name, mailbox, msg_uid);
+
 }
 
 

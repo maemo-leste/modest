@@ -43,6 +43,12 @@ enum {
 };
 static guint signals[LAST_SIGNAL] = {0};
 
+void
+modest_msg_view_set_msg_with_other_body (ModestMsgView *self, TnyMsg *msg, TnyMimePart *part)
+{
+	return MODEST_MSG_VIEW_GET_IFACE (self)->set_msg_with_other_body_func (self, msg, part);
+}
+
 GtkAdjustment*
 modest_msg_view_get_vadjustment (ModestMsgView *self)
 {

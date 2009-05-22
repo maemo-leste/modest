@@ -54,6 +54,7 @@ typedef struct _ModestMsgViewIface ModestMsgViewIface;
 struct _ModestMsgViewIface {
 	GTypeInterface parent;
 
+	void (*set_msg_with_other_body_func) (ModestMsgView *self, TnyMsg *msg, TnyMimePart *other_body);
 	GtkAdjustment* (*get_vadjustment_func) (ModestMsgView *self);
 	GtkAdjustment* (*get_hadjustment_func) (ModestMsgView *self);
 	void (*set_vadjustment_func) (ModestMsgView *self, GtkAdjustment *vadj);
@@ -98,7 +99,7 @@ struct _ModestMsgViewIface {
  */
 GType        modest_msg_view_get_type    (void) G_GNUC_CONST;
 
-
+void modest_msg_view_set_msg_with_other_body (ModestMsgView *self, TnyMsg *msg, TnyMimePart *part);
 GtkAdjustment *modest_msg_view_get_vadjustment (ModestMsgView *self);
 GtkAdjustment *modest_msg_view_get_hadjustment (ModestMsgView *self);
 void modest_msg_view_set_vadjustment (ModestMsgView *self, GtkAdjustment *vadj);

@@ -106,6 +106,25 @@ ModestWindow*   modest_msg_view_window_new_for_attachment         (TnyMsg *msg,
 								   const gchar *msg_uid);
 
 /**
+ * modest_msg_view_window_new_with_other_body:
+ * @msg: an #TnyMsg instance
+ * @modest_account_name: the account name 
+ * @mailbox: the mailbox (if any)
+ * 
+ * instantiates a new #ModestMsgViewWindow widget to view a message that is a different body
+ * in another message.
+ * The account name is used to
+ * set the proper account when choosing reply/forward from the msg view window
+ *
+ * Returns: a new #ModestMsgViewWindow, or NULL in case of error
+ */
+ModestWindow*   modest_msg_view_window_new_with_other_body         (TnyMsg *msg,
+								   TnyMimePart *other_body,
+								   const gchar *modest_account_name,
+								   const gchar *mailbox,
+								   const gchar *msg_uid);
+
+/**
  * modest_msg_view_window_new_with_header_model:
  * @msg: an #TnyMsg instance
  * @modest_account_name: the account name 

@@ -83,6 +83,7 @@ struct _ModestGtkhtmlMsgViewClass {
 	gboolean (*search_func)             (ModestISearchView *self, const gchar *string);
 	gboolean (*search_next_func)        (ModestISearchView *self);
 	/* ModestMsgView interface methods */
+	void (*set_msg_with_other_body_func) (ModestMsgView *self, TnyMsg *msg, TnyMimePart *other_body);
 	GtkAdjustment* (*get_vadjustment_func) (ModestMsgView *self);
 	GtkAdjustment* (*get_hadjustment_func) (ModestMsgView *self);
 	void (*set_vadjustment_func) (ModestMsgView *self, GtkAdjustment *vadj);

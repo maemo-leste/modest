@@ -1066,10 +1066,11 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 }
 
 ModestWindow *
-modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
-					   const gchar *modest_account_name,
-					   const gchar *mailbox, /* ignored */
-					   const gchar *msg_uid)
+modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
+					    TnyMimePart *part,
+					    const gchar *modest_account_name,
+					    const gchar *mailbox, /* ignored */
+					    const gchar *msg_uid)
 {
 	GObject *obj = NULL;
 	ModestMsgViewWindowPrivate *priv;	
@@ -1082,7 +1083,11 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	modest_msg_view_window_construct (MODEST_MSG_VIEW_WINDOW (obj), 
 		modest_account_name, msg_uid);
 
-	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	if (other_body) {
+		modest_msg_view_set_msg_with_other_body (TNY_MSG_VIEW (priv->msg_view), msg, other_body);
+	} else {
+		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	}
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 
 	gtk_widget_show_all (GTK_WIDGET (obj));
@@ -1093,6 +1098,16 @@ modest_msg_view_window_new_for_attachment (TnyMsg *msg,
 	modest_window_check_dimming_rules_group (MODEST_WINDOW (obj), MODEST_DIMMING_RULES_CLIPBOARD);
 
 	return MODEST_WINDOW(obj);
+}
+
+ModestWindow *
+modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
+					   const gchar *modest_account_name,
+					   const gchar *mailbox, /* ignored */
+					   const gchar *msg_uid)
+{
+	return modest_msg_view_window_new_with_other_body (msg, NULL, modest_account_name, mailbox, msg_uid);
+
 }
 
 static void

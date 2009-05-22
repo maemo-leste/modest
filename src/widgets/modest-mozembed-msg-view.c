@@ -118,6 +118,7 @@ static gboolean modest_msg_view_search_default (ModestISearchView *self, const g
 static gboolean modest_msg_view_search_next (ModestISearchView *self);
 static gboolean modest_msg_view_search_next_default (ModestISearchView *self);
 /* ModestMsgView implementation */
+static void modest_mozembed_msg_view_set_msg_with_other_body (ModestMsgView *self, TnyMsg *msg, TnyMimePart *part);
 static GtkAdjustment *modest_mozembed_msg_view_get_vadjustment (ModestMsgView *self);
 static GtkAdjustment *modest_mozembed_msg_view_get_hadjustment (ModestMsgView *self);
 static void modest_mozembed_msg_view_set_vadjustment (ModestMsgView *self, GtkAdjustment *vadj);
@@ -132,6 +133,7 @@ static void modest_mozembed_msg_view_grab_focus (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 static void modest_mozembed_msg_view_request_fetch_images (ModestMsgView *view);
 static gboolean modest_mozembed_msg_view_has_blocked_external_images (ModestMsgView *view);
+static void modest_mozembed_msg_view_set_msg_with_other_body_default (ModestMsgView *self, TnyMsg *msg, TnyMimePart *part);
 static GtkAdjustment *modest_mozembed_msg_view_get_vadjustment_default (ModestMsgView *self);
 static GtkAdjustment *modest_mozembed_msg_view_get_hadjustment_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_set_vadjustment_default (ModestMsgView *self, GtkAdjustment *vadj);
@@ -150,7 +152,7 @@ static void modest_mozembed_msg_view_request_fetch_images_default (ModestMsgView
 /* internal api */
 static void     set_header     (ModestMozembedMsgView *self, TnyHeader *header);
 static TnyMsg   *get_message   (ModestMozembedMsgView *self);
-static void     set_message    (ModestMozembedMsgView *self, TnyMsg *tny_msg);
+static void     set_message    (ModestMozembedMsgView *self, TnyMsg *msg, TnyMimePart *other_body);
 static gboolean is_empty       (ModestMozembedMsgView *self); 
 static void     set_zoom       (ModestMozembedMsgView *self, gdouble zoom);
 static gdouble  get_zoom       (ModestMozembedMsgView *self);
@@ -326,6 +328,7 @@ modest_mozembed_msg_view_class_init (ModestMozembedMsgViewClass *klass)
 	klass->zoom_plus_func = modest_msg_view_zoom_plus_default;
 	klass->search_func = modest_msg_view_search_default;
 	klass->search_next_func = modest_msg_view_search_next_default;
+	klass->set_msg_with_other_body_func = modest_mozembed_msg_view_set_msg_with_other_body_default;
 	klass->get_vadjustment_func = modest_mozembed_msg_view_get_vadjustment_default;
 	klass->get_hadjustment_func = modest_mozembed_msg_view_get_hadjustment_default;
 	klass->set_vadjustment_func = modest_mozembed_msg_view_set_vadjustment_default;
@@ -689,7 +692,7 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 }
 
 static void
-set_message (ModestMozembedMsgView *self, TnyMsg *msg)
+set_message (ModestMozembedMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 {
 	TnyMimePart *body;
 	ModestMozembedMsgViewPrivate *priv;
@@ -723,9 +726,15 @@ set_message (ModestMozembedMsgView *self, TnyMsg *msg)
 	g_object_unref (header);
 
 	modest_attachments_view_set_message (MODEST_ATTACHMENTS_VIEW(priv->attachments_view),
-					     msg);
+					     other_body?NULL:msg);
 	
-	body = modest_tny_msg_find_body_part (msg, TRUE);
+	if (other_body) {
+		body = other_body;
+		g_object_ref (body);
+	} else {
+		body = modest_tny_msg_find_body_part (msg, TRUE);
+	}
+
 	if (body) {
 		tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), body);
 
@@ -754,7 +763,7 @@ set_header (ModestMozembedMsgView *self, TnyHeader *header)
 	g_return_if_fail (self);
 
 	if (header == NULL)
-		set_message (self, NULL);
+		set_message (self, NULL, NULL);
 	
 	priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE(self);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
@@ -958,7 +967,7 @@ modest_msg_view_clear_header (TnyHeaderView *self)
 static void
 modest_msg_view_clear_header_default (TnyHeaderView *self)
 {
-	set_message (MODEST_MOZEMBED_MSG_VIEW (self), NULL);
+	set_message (MODEST_MOZEMBED_MSG_VIEW (self), NULL, NULL);
 }
 
 /* TNY MSG IMPLEMENTATION */
@@ -1028,7 +1037,7 @@ modest_msg_view_clear (TnyMsgView *self)
 static void
 modest_msg_view_clear_default (TnyMsgView *self)
 {
-	set_message (MODEST_MOZEMBED_MSG_VIEW (self), NULL);
+	set_message (MODEST_MOZEMBED_MSG_VIEW (self), NULL, NULL);
 }
 
 static TnyMimePartView*
@@ -1098,7 +1107,7 @@ modest_msg_view_mp_set_part_default (TnyMimePartView *self,
 {
 	g_return_if_fail ((part == NULL) || TNY_IS_MSG (part));
 
-	set_message (MODEST_MOZEMBED_MSG_VIEW (self), TNY_MSG (part));
+	set_message (MODEST_MOZEMBED_MSG_VIEW (self), TNY_MSG (part), NULL);
 }
 
 static void
@@ -1237,6 +1246,7 @@ modest_msg_view_init (gpointer g, gpointer iface_data)
 {
 	ModestMsgViewIface *klass = (ModestMsgViewIface *)g;
 
+	klass->set_msg_with_other_body_func = modest_mozembed_msg_view_set_msg_with_other_body;
 	klass->get_vadjustment_func = modest_mozembed_msg_view_get_vadjustment;
 	klass->get_hadjustment_func = modest_mozembed_msg_view_get_hadjustment;
 	klass->set_vadjustment_func = modest_mozembed_msg_view_set_vadjustment;
@@ -1253,6 +1263,18 @@ modest_msg_view_init (gpointer g, gpointer iface_data)
 	klass->has_blocked_external_images_func = modest_mozembed_msg_view_has_blocked_external_images;
 
 	return;
+}
+
+static void
+modest_mozembed_msg_view_set_msg_with_other_body (ModestMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
+{
+	MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->set_msg_with_other_body_func (self, msg, other_body);
+}
+
+static void
+modest_mozembed_msg_view_set_msg_with_other_body_default (ModestMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
+{
+	set_message (MODEST_MOZEMBED_MSG_VIWE (self), msg, other_body);
 }
 
 static GtkAdjustment*
