@@ -442,10 +442,55 @@ modest_tny_msg_get_body (TnyMsg *msg, gboolean want_html, gboolean *is_html)
 }
 
 
+static TnyMimePart*
+modest_tny_msg_find_body_part_in_alternative (TnyMimePart *msg, gboolean want_html)
+{
+	TnyList *parts;
+	TnyIterator *iter;
+	TnyMimePart *part = NULL;
+	TnyMimePart *first_part = NULL;
+	const gchar *desired_mime_type = want_html ? "text/html" : "text/plain";
+
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+
+	for (iter  = tny_list_create_iterator(parts); 
+	     !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		gchar *content_type;
+		gboolean is_body;
+
+		part = TNY_MIME_PART (tny_iterator_get_current (iter));
+
+		if (first_part == NULL) {
+			g_object_ref (part);
+			first_part = part;
+		}
+
+		is_body = FALSE;
+		content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
+		is_body = g_str_has_prefix (content_type, desired_mime_type);
+		if (is_body)
+			break;
+
+		g_object_unref (part);
+		part = NULL;
+
+	}
+	g_object_unref (iter);
+	g_object_unref (parts);
+
+	if (part == NULL) {
+		return first_part;
+	} else {
+		if (first_part) g_object_unref (first_part);
+		return part;
+	}
+}
+
 TnyMimePart*
 modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_html)
 {
-	const gchar *desired_mime_type = want_html ? "text/html" : "text/plain";
 	TnyMimePart *part = NULL;
 	TnyList *parts = NULL;
 	TnyIterator *iter = NULL;
@@ -469,6 +514,12 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		g_free (header_content_type_lower);
 		g_free (header_content_type);
 		return NULL;
+	}	
+	if (header_content_type_lower && 
+	    g_str_has_prefix (header_content_type_lower, "multipart/alternative")) {
+		g_free (header_content_type_lower);
+		g_free (header_content_type);
+		return modest_tny_msg_find_body_part_in_alternative (msg, want_html);
 	}	
 	g_free (header_content_type_lower);
 	g_free (header_content_type);
@@ -533,12 +584,22 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 				g_free (content_disp);
 			}
 			
-			if (g_str_has_prefix (content_type, desired_mime_type) && 
+			if (g_str_has_prefix (content_type, "text/") && 
 			    !has_content_disp_name &&
 			    !modest_tny_mime_part_is_attachment_for_modest (part)) {
-				/* we found the desired mime-type! */
+				/* we found the body. Doesn't have to be the desired mime part, first
+				   text/ part in a mixed is the body */
 				g_free (content_type);
 				break;
+
+			} else if (g_str_has_prefix(content_type, "multipart/alternative")) {
+
+				/* multipart? recurse! */
+				g_object_unref (part);
+				g_free (content_type);
+				part = modest_tny_msg_find_body_part_in_alternative (part, want_html);
+				if (part)
+					break;
 
 			} else 	if (g_str_has_prefix(content_type, "multipart")) {
 
@@ -564,14 +625,8 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 	g_object_unref (G_OBJECT(iter));
 	g_object_unref (G_OBJECT(parts));
 
-	/* if were trying to find an HTML part and couldn't find it,
-	 * try to find a text/plain part instead
-	 */
-	if (!part && want_html) 
-		return modest_tny_msg_find_body_part_from_mime_part (msg, FALSE);
-	else
-		return part; /* this maybe NULL, this is not an error; some message just don't have a body
-			      * part */
+	return part; /* this maybe NULL, this is not an error; some message just don't have a body
+		      * part */
 }
 
 
