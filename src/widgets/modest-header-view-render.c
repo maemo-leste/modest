@@ -264,7 +264,6 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 {
 	TnyHeaderFlags flags = 0;
 	gchar *recipients = NULL, *addresses;
-	GSList *recipient_list;
 	gchar *subject = NULL;
 	time_t date;
 	GtkCellRenderer *recipient_cell, *date_or_status_cell, *subject_cell,
@@ -339,29 +338,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	g_free (subject);
 
 	/* Show the list of senders/recipients */
-	addresses = NULL;
-	recipient_list = modest_text_utils_split_addresses_list (recipients);
-	if (recipient_list) {
-		GString *add_string = g_string_sized_new (strlen (recipients));
-		GSList *iter = recipient_list;
-		gboolean first = TRUE;
-
-		while (iter) {
-			/* Strings are changed in place */
-			modest_text_utils_get_display_address ((gchar *) iter->data);
-			if (G_UNLIKELY (first)) {
-				g_string_append_printf (add_string, "%s", (gchar *) iter->data);
-				first = FALSE;
-			} else {
-				g_string_append_printf (add_string, ", %s", (gchar *) iter->data);
-			}
-			iter = g_slist_next (iter);
-		}
-		g_slist_foreach (recipient_list, (GFunc) g_free, NULL);
-		g_slist_free (recipient_list);
-		addresses = g_string_free (add_string, FALSE);
-	}
-
+	addresses = modest_text_utils_get_display_addresses ((const gchar *) recipients);
 	set_cell_text (recipient_cell, (addresses) ? addresses : _("mail_va_no_to"), flags);
 	g_free (addresses);
 	g_free (recipients);

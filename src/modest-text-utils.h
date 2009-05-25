@@ -246,6 +246,19 @@ void modest_text_utils_hyperlinkify (GString *string_buffer);
 void modest_text_utils_get_display_address (gchar *address);
 
 /**
+ * modest_text_utils_get_display_addresses:
+ * @addresses: a list of comma-separated addresses
+ *
+ * Transforms a list of email addresses in a list of recipients,
+ * replacing each plain email address by the correspondent display
+ * address.
+ *
+ * Returns: a newly allocated string, that must be freed by the caller
+ **/
+gchar *modest_text_utils_get_display_addresses (const gchar *addresses);
+
+
+/**
  * modest_text_utils_get_email_address:
  * @full_address: original address (UTF8 string)
  *
@@ -486,6 +499,5 @@ gchar *modest_text_utils_escape_mnemonics (const gchar *text);
  * also be used for reply/forward.
  */
 gchar *modest_text_utils_simplify_recipients (const gchar *recipient);
-
 
 #endif /* __MODEST_TEXT_UTILS_H__ */

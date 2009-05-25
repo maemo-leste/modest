@@ -656,9 +656,7 @@ fill_address (ModestCompactMailHeaderView *self)
 	ModestCompactMailHeaderViewPriv *priv;
 	gchar *recipients;
 	const gchar *label;
-	GSList *recipient_list;
-	gchar *first_address;
-	
+
 	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 
@@ -670,25 +668,18 @@ fill_address (ModestCompactMailHeaderView *self)
 		recipients = tny_header_dup_from (TNY_HEADER (priv->header));
 	}
 
-	recipient_list = modest_text_utils_split_addresses_list (recipients);
-	if (recipient_list == NULL) {
-		first_address = NULL;
-	} else {
-		gchar *first_recipient;
-
-		first_recipient = (gchar *) recipient_list->data;
-		first_address = first_recipient?g_strdup (first_recipient):NULL;
-	}
-	g_slist_foreach (recipient_list, (GFunc) g_free, NULL);
-	g_slist_free (recipient_list);
-
+	/* Set label */
 	gtk_label_set_text (GTK_LABEL (priv->fromto_label), label);
-	if (recipients) {
-		modest_text_utils_get_display_address (first_address);
-		gtk_label_set_text (GTK_LABEL (priv->fromto_contents), first_address);
-		g_free (recipients);
-		g_free (first_address);
-	}
 
+	/* Set recipients */
+	if (recipients) {
+		gchar *addresses;
+
+		addresses = modest_text_utils_get_display_addresses ((const gchar *) recipients);
+		gtk_label_set_text (GTK_LABEL (priv->fromto_contents), 
+				    (addresses) ? addresses : _("mail_va_no_to"));
+		g_free (addresses);
+		g_free (recipients);
+	}
 }
 
