@@ -2911,8 +2911,11 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 		}
 		g_object_unref (mime_part);
 	} else {
-		save_multiple_str = g_strdup_printf (_FM("sfil_va_number_of_objects_attachments"), 
-						     tny_list_get_length (mime_parts));
+		gint num = tny_list_get_length (mime_parts);
+		save_multiple_str = g_strdup_printf (dngettext("hildon-fm",
+							       "sfil_va_number_of_objects_attachment",
+							      "sfil_va_number_of_objects_attachments",
+							      num), num);
 	}
 
 	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
