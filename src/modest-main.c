@@ -37,11 +37,15 @@
 #include "modest-ui-actions.h"
 
 static gboolean show_ui = FALSE;
+static gint shutdown_timeout = 30;
 static GOptionEntry option_entries [] =
 {
 	{ "show-ui", 's', 0, G_OPTION_ARG_NONE, &show_ui, "Show UI immediately, so no wait for DBUS activation", NULL },
+	{ "shutdown-timeout", 't', 0, G_OPTION_ARG_INT, &shutdown_timeout, "Timeout in minutes for running Modest in prestart mode", NULL },
 	{ NULL }
 };
+
+static guint shutdown_timeout_id = 0;
 
 typedef struct {
 	gulong queue_handler;
@@ -95,6 +99,9 @@ on_queue_empty (ModestMailOperationQueue *queue,
 {
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
+	if (!modest_runtime_get_allow_shutdown ())
+		return;
+
 	/* Exit if the queue is empty and there are no more
 	   windows. We can exit as well if the main window is hidden
 	   and it's the only one */
@@ -108,9 +115,19 @@ on_window_list_empty (ModestWindowMgr *window_mgr,
 {
 	ModestMailOperationQueue *queue = modest_runtime_get_mail_operation_queue ();
 
+	if (!modest_runtime_get_allow_shutdown ())
+		return;
+
 	/* Exit if there are no more windows and the queue is empty */
 	if (modest_mail_operation_queue_num_elements (queue) == 0)
 		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, NULL);
+}
+
+static gboolean
+shutdown_timeout_handler (gpointer userdata)
+{
+	modest_runtime_set_allow_shutdown (TRUE);
+	return FALSE;
 }
 
 int
@@ -204,6 +221,7 @@ main (int argc, char *argv[])
 		ModestWindow *window;
 		ModestWindowMgr *mgr;
 
+		modest_runtime_set_allow_shutdown (TRUE);
 		mgr = modest_runtime_get_window_mgr();
 		window = modest_window_mgr_show_initial_window (mgr);
 		if (!window) {
@@ -213,6 +231,9 @@ main (int argc, char *argv[])
 		}
 		/* Remove new mail notifications if exist */
 		modest_platform_remove_new_mail_notifications (FALSE);
+	} else {
+		modest_runtime_set_allow_shutdown (FALSE);
+		shutdown_timeout_id = g_timeout_add_seconds (shutdown_timeout * 60, shutdown_timeout_handler, NULL);
 	}
 
 	gtk_main ();

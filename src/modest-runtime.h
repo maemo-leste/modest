@@ -251,6 +251,23 @@ ModestProtocolRegistry* modest_runtime_get_protocol_registry (void);
  **/
 ModestPluginFactory * modest_runtime_get_plugin_factory (void);
 
+/**
+ * modest_runtime_get_allow_shutdown:
+ *
+ * tell if Modest will shutdown when window list and mail op queue are empty
+ *
+ * Returns: %TRUE if modest shutdown is allowed, %FALSE otherwise
+ */
+gboolean modest_runtime_get_allow_shutdown (void);
+
+/**
+ * modest_runtime_get_allow_shutdown:
+ * @allow: a #gboolean
+ *
+ * set if Modest will shutdown when window list and mail op queue are empty
+ *
+ */
+void modest_runtime_set_allow_shutdown (gboolean allow);
 
 G_END_DECLS
 
