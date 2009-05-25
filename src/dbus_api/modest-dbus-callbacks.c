@@ -1356,14 +1356,17 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
 		if (arguments->len != MODEST_DBUS_MAIL_TO_ARGS_COUNT)
 			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
 		return on_mail_to (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_MESSAGE) == 0) {
 		if (arguments->len != MODEST_DBUS_OPEN_MESSAGE_ARGS_COUNT)
 			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
 		return on_open_message (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_ACCOUNT) == 0) {
 		if (arguments->len != MODEST_DBUS_OPEN_ACCOUNT_ARGS_COUNT)
 			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
 		return on_open_account (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE) == 0) {
 		if (arguments->len != 0)
@@ -1372,6 +1375,7 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
 			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
 		return on_compose_mail (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_DELETE_MESSAGE) == 0) {
 		if (arguments->len != MODEST_DBUS_DELETE_MESSAGE_ARGS_COUNT)
@@ -1380,10 +1384,12 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_DEFAULT_INBOX) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
 		return on_open_default_inbox (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_TOP_APPLICATION) == 0) {
 		if (arguments->len != 0)
 			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
 		return on_top_application (arguments, data, retval); 
 	} else { 
 		/* We need to return INVALID here so
