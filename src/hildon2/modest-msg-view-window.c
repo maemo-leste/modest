@@ -237,9 +237,8 @@ enum {
 };
 
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
-	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), NULL, NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
+	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), "<CTRL>F", NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
 };
-
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                     MODEST_TYPE_MSG_VIEW_WINDOW, \
