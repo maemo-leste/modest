@@ -110,7 +110,7 @@
 #define MODEST_ALARMD_APPID PACKAGE_NAME
 
 
-static void _modest_platform_play_email_tone (void);
+static void modest_platform_play_email_tone (void);
 
 
 static void	
@@ -1521,7 +1521,7 @@ modest_platform_push_email_notification(void)
 	   foreground we don't show anything */
 	if (!(screen_on && app_in_foreground)) {
 
-		_modest_platform_play_email_tone ();
+		modest_platform_play_email_tone ();
 
 		/* Activate LED. This must be deactivated by
 		   modest_platform_remove_new_mail_notifications */
@@ -1620,6 +1620,9 @@ modest_platform_on_new_headers_received (GList *URI_list,
 								    acc_name);
 				g_object_unref (account);
 			}
+
+			/* Play sound */
+			modest_platform_play_email_tone ();
 		}
 
 		/* Notify. We need to do this in an idle because this function
@@ -2530,7 +2533,7 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 	}
 
 	/* Run dialog */
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (dialog),
 				     parent_window);
 	gtk_widget_show_all (dialog);
@@ -2547,7 +2550,7 @@ modest_platform_get_osso_context (void)
 }
 
 static void
-_modest_platform_play_email_tone (void)
+modest_platform_play_email_tone (void)
 {
 	gchar *mail_tone;
 	gint mail_volume_int;
