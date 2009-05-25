@@ -37,7 +37,7 @@
 #include "modest-ui-actions.h"
 
 static gboolean show_ui = FALSE;
-static gint shutdown_timeout = 30;
+static gint shutdown_timeout = 0;
 static GOptionEntry option_entries [] =
 {
 	{ "show-ui", 's', 0, G_OPTION_ARG_NONE, &show_ui, "Show UI immediately, so no wait for DBUS activation", NULL },
@@ -232,8 +232,10 @@ main (int argc, char *argv[])
 		/* Remove new mail notifications if exist */
 		modest_platform_remove_new_mail_notifications (FALSE);
 	} else {
-		modest_runtime_set_allow_shutdown (FALSE);
-		shutdown_timeout_id = g_timeout_add_seconds (shutdown_timeout * 60, shutdown_timeout_handler, NULL);
+		if (shutdown_timeout > 0) {
+			modest_runtime_set_allow_shutdown (FALSE);
+			shutdown_timeout_id = g_timeout_add_seconds (shutdown_timeout * 60, shutdown_timeout_handler, NULL);
+		}
 	}
 
 	gtk_main ();
