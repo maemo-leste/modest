@@ -2761,12 +2761,15 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
 		if (replaced_files == 1) {
 			SaveMimePartPair *pair = files->data;
 			const gchar *basename = strrchr (pair->filename, G_DIR_SEPARATOR) + 1;
+			gchar *escaped_basename, *message;
 
-			gchar *message = g_strdup_printf ("%s\n%s",
-							  _FM("docm_nc_replace_file"),
-							  (basename) ? basename : "");
+			escaped_basename = g_uri_unescape_string (basename, NULL);
+			message = g_strdup_printf ("%s\n%s",
+						   _FM("docm_nc_replace_file"),
+						   (escaped_basename) ? escaped_basename : "");
 			confirm_overwrite_dialog = hildon_note_new_confirmation (NULL, message);
 			g_free (message);
+			g_free (escaped_basename);
 		} else {
 			confirm_overwrite_dialog = hildon_note_new_confirmation (NULL,
 										 _FM("docm_nc_replace_multiple"));
