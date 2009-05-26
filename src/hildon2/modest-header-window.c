@@ -1168,57 +1168,57 @@ on_horizontal_movement (HildonPannableArea *hildonpannable,
 			gdouble             initial_y,
 			gpointer            user_data)
 {
-	ModestHeaderWindowPrivate *priv;
-	gint dest_x, dest_y;
-	TnyHeader *header;
+/* 	ModestHeaderWindowPrivate *priv; */
+/* 	gint dest_x, dest_y; */
+/* 	TnyHeader *header; */
 
-	/* Ignore right to left movement */
-	if (direction == HILDON_MOVEMENT_LEFT)
-		return;
+/* 	/\* Ignore right to left movement *\/ */
+/* 	if (direction == HILDON_MOVEMENT_LEFT) */
+/* 		return; */
 
-	/* Get the header to delete */
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data);
+/* 	/\* Get the header to delete *\/ */
+/* 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data); */
 
-	/* Get tree view coordinates */
-	if (!gtk_widget_translate_coordinates ((GtkWidget *) hildonpannable,
-					       priv->header_view,
-					       initial_x,
-					       initial_y,
-					       &dest_x,
-					       &dest_y))
-	    return;
+/* 	/\* Get tree view coordinates *\/ */
+/* 	if (!gtk_widget_translate_coordinates ((GtkWidget *) hildonpannable, */
+/* 					       priv->header_view, */
+/* 					       initial_x, */
+/* 					       initial_y, */
+/* 					       &dest_x, */
+/* 					       &dest_y)) */
+/* 	    return; */
 
-	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
-						       dest_x, dest_y);
-	if (header) {
-		gint response;
-		gchar *subject, *msg;
+/* 	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view, */
+/* 						       dest_x, dest_y); */
+/* 	if (header) { */
+/* 		gint response; */
+/* 		gchar *subject, *msg; */
 
-		subject = tny_header_dup_subject (header);
-		if (!subject)
-			subject = g_strdup (_("mail_va_no_subject"));
+/* 		subject = tny_header_dup_subject (header); */
+/* 		if (!subject) */
+/* 			subject = g_strdup (_("mail_va_no_subject")); */
 
-		msg = g_strdup_printf (ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 1),
-				       subject);
-		g_free (subject);
+/* 		msg = g_strdup_printf (ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 1), */
+/* 				       subject); */
+/* 		g_free (subject); */
 
-		/* Confirmation dialog */
-		response = modest_platform_run_confirmation_dialog ((GtkWindow *) user_data, msg);
-		g_free (msg);
+/* 		/\* Confirmation dialog *\/ */
+/* 		response = modest_platform_run_confirmation_dialog ((GtkWindow *) user_data, msg); */
+/* 		g_free (msg); */
 
-		if (response == GTK_RESPONSE_OK) {
-			ModestMailOperation *mail_op;
-			TnyList *header_list;
+/* 		if (response == GTK_RESPONSE_OK) { */
+/* 			ModestMailOperation *mail_op; */
+/* 			TnyList *header_list; */
 
-			header_list = tny_simple_list_new ();
-			tny_list_append (header_list, (GObject *) header);
-			mail_op = modest_mail_operation_new ((GObject *) user_data);
-			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-							 mail_op);
-			modest_mail_operation_remove_msgs (mail_op, header_list, FALSE);
-			g_object_unref (mail_op);
-			g_object_unref (header_list);
-		}
-		g_object_unref (header);
-	}
+/* 			header_list = tny_simple_list_new (); */
+/* 			tny_list_append (header_list, (GObject *) header); */
+/* 			mail_op = modest_mail_operation_new ((GObject *) user_data); */
+/* 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), */
+/* 							 mail_op); */
+/* 			modest_mail_operation_remove_msgs (mail_op, header_list, FALSE); */
+/* 			g_object_unref (mail_op); */
+/* 			g_object_unref (header_list); */
+/* 		} */
+/* 		g_object_unref (header); */
+/* 	} */
 }
