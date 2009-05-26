@@ -97,6 +97,7 @@ const GtkTargetEntry folder_view_drag_types[] =
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
 static void modest_folder_view_init        (ModestFolderView *obj);
 static void modest_folder_view_finalize    (GObject *obj);
+static void modest_folder_view_dispose     (GObject *obj);
 
 static void         tny_account_store_view_init (gpointer g,
 						 gpointer iface_data);
@@ -198,10 +199,9 @@ static gboolean     get_inner_models        (ModestFolderView *self,
 					     GtkTreeModel **sort_model,
 					     GtkTreeModel **tny_model);
 #ifdef MODEST_TOOLKIT_HILDON2
-static void
-on_activity_changed (TnyGtkFolderListStore *store,
-		     gboolean activity,
-		     ModestFolderView *folder_view);
+static void on_activity_changed (TnyGtkFolderListStore *store,
+				 gboolean activity,
+				 ModestFolderView *folder_view);
 #endif
 
 enum {
@@ -255,7 +255,7 @@ struct _ModestFolderViewPrivate {
 
 	gulong                outbox_deleted_handler;
 
-	guint    activity_changed_handler;
+	GSList   *signal_handlers;
 	GdkColor *active_color;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
@@ -313,6 +313,7 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_view_finalize;
+	gobject_class->finalize = modest_folder_view_dispose;
 
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestFolderViewPrivate));
@@ -1278,7 +1279,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->folder_to_select = NULL;
 	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
-	priv->activity_changed_handler = 0;
+	priv->signal_handlers = 0;
 
 	/* Initialize the local account name */
 	conf = modest_runtime_get_conf();
@@ -1337,6 +1338,54 @@ tny_account_store_view_init (gpointer g, gpointer iface_data)
 }
 
 static void
+modest_folder_view_dispose (GObject *obj)
+{
+	static gboolean disposed = FALSE;
+	ModestFolderViewPrivate *priv;
+
+	if (disposed)
+		return;
+
+	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (obj);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
+#endif
+
+	/* Free external references */
+	if (priv->account_store) {
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_inserted_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_removed_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_changed_signal);
+		g_object_unref (G_OBJECT(priv->account_store));
+		priv->account_store = NULL;
+	}
+
+	if (priv->query) {
+		g_object_unref (G_OBJECT (priv->query));
+		priv->query = NULL;
+	}
+
+	if (priv->folder_to_select) {
+		g_object_unref (G_OBJECT(priv->folder_to_select));
+	    	priv->folder_to_select = NULL;
+	}
+
+	if (priv->cur_folder_store) {
+		g_object_unref (priv->cur_folder_store);
+		priv->cur_folder_store = NULL;
+	}
+
+	if (priv->list_to_move) {
+		g_object_unref (priv->list_to_move);
+		priv->list_to_move = NULL;
+	}
+}
+
+static void
 modest_folder_view_finalize (GObject *obj)
 {
 	ModestFolderViewPrivate *priv;
@@ -1367,45 +1416,11 @@ modest_folder_view_finalize (GObject *obj)
 		g_object_unref (local_account);
 	}
 
-	if (priv->account_store) {
-		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
-					     priv->account_inserted_signal);
-		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
-					     priv->account_removed_signal);
-		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
-					     priv->account_changed_signal);
-		g_object_unref (G_OBJECT(priv->account_store));
-		priv->account_store = NULL;
-	}
-
 	if (g_signal_handler_is_connected (modest_runtime_get_account_mgr (), 
 					   priv->display_name_changed_signal)) {
 		g_signal_handler_disconnect (modest_runtime_get_account_mgr (),
 					     priv->display_name_changed_signal);
 		priv->display_name_changed_signal = 0;
-	}
-
-#ifdef MODEST_TOOLKIT_HILDON2
-	GtkTreeModel *tny_model;
-
-	if (get_inner_models (MODEST_FOLDER_VIEW (obj), NULL, NULL, &tny_model)) {
-		if (g_signal_handler_is_connected (tny_model,
-						   priv->activity_changed_handler)) {
-			g_signal_handler_disconnect (tny_model,
-						     priv->activity_changed_handler);
-			priv->activity_changed_handler = 0;
-		}
-	}
-#endif
-
-	if (priv->query) {
-		g_object_unref (G_OBJECT (priv->query));
-		priv->query = NULL;
-	}
-
-	if (priv->folder_to_select) {
-		g_object_unref (G_OBJECT(priv->folder_to_select));
-	    	priv->folder_to_select = NULL;
 	}
 
 	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
@@ -1420,16 +1435,6 @@ modest_folder_view_finalize (GObject *obj)
 		g_signal_handler_disconnect (modest_runtime_get_conf (),
 					     priv->conf_key_signal);
 		priv->conf_key_signal = 0;
-	}
-
-	if (priv->cur_folder_store) {
-		g_object_unref (priv->cur_folder_store);
-		priv->cur_folder_store = NULL;
-	}
-
-	if (priv->list_to_move) {
-		g_object_unref (priv->list_to_move);
-		priv->list_to_move = NULL;
 	}
 
 	/* Clear hidding array created by cut operation */
@@ -2343,13 +2348,14 @@ modest_folder_view_update_model (ModestFolderView *self,
 						self,
 						NULL);
 
-	if (priv->activity_changed_handler > 0) {
+	if (priv->signal_handlers > 0) {
 		GtkTreeModel *old_tny_model;
 
 		if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
-			g_signal_handler_disconnect (G_OBJECT (old_tny_model), priv->activity_changed_handler);
+			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
+									      G_OBJECT (old_tny_model), 
+									      "activity-changed");
 		}
-		priv->activity_changed_handler = 0;
 	}
 
 	/* Set new model */
@@ -2360,8 +2366,11 @@ modest_folder_view_update_model (ModestFolderView *self,
 #endif
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	priv->activity_changed_handler = 
-		g_signal_connect (G_OBJECT (model), "activity-changed", G_CALLBACK (on_activity_changed), self);
+	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
+							   G_OBJECT (model),
+							   "activity-changed",
+							   G_CALLBACK (on_activity_changed), 
+							   self);
 #endif
 
 	g_object_unref (model);
@@ -3841,8 +3850,9 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 
 	/* Get src model*/
 	if (get_inner_models (folder_view_dst, NULL, NULL, &old_tny_model)) {
-		g_signal_handler_disconnect (G_OBJECT (old_tny_model), dst_priv->activity_changed_handler);
-		dst_priv->activity_changed_handler = 0;
+		modest_signal_mgr_disconnect (dst_priv->signal_handlers,
+					      G_OBJECT (old_tny_model),
+					      "activity-changed");
 	}
 	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (folder_view_src));
 	model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER(filter_model));
@@ -3863,9 +3873,13 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 			  (GCallback) on_row_inserted_maybe_select_folder, folder_view_dst);
 #endif
 #ifdef MODEST_TOOLKIT_HILDON2
-	if (new_tny_model)
-		dst_priv->activity_changed_handler = g_signal_connect (G_OBJECT (new_tny_model), "activity-changed",
-								       G_CALLBACK (on_activity_changed), folder_view_dst);
+	if (new_tny_model) {
+		dst_priv->signal_handlers = modest_signal_mgr_connect (dst_priv->signal_handlers,
+								       G_OBJECT (new_tny_model),
+								       "activity-changed",
+								       G_CALLBACK (on_activity_changed),
+								       folder_view_dst);
+	}
 #endif
 
 	/* Free */
