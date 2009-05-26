@@ -6814,14 +6814,34 @@ modest_ui_actions_on_delete_account (GtkWindow *parent_window,
 	return removed;
 }
 
-void 
+static void
+on_fetch_images_performer (gboolean canceled,
+			   GError *err,
+			   GtkWindow *parent_window,
+			   TnyAccount *account,
+			   gpointer user_data)
+{
+	if (err || canceled) {
+		/* Show an unable to retrieve images ??? */
+		return;
+	}
+
+	/* Note that the user could have closed the window while connecting */
+	if (GTK_WIDGET_VISIBLE (parent_window))
+		modest_msg_view_window_fetch_images ((ModestMsgViewWindow *) parent_window);
+	g_object_unref ((GObject *) user_data);
+}
+
+void
 modest_ui_actions_on_fetch_images (GtkAction *action,
 				   ModestWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 
-	modest_msg_view_window_fetch_images (MODEST_MSG_VIEW_WINDOW (window));
-
+	modest_platform_connect_and_perform ((GtkWindow *) window, TRUE, 
+					     NULL,
+					     on_fetch_images_performer, 
+					     g_object_ref (window));
 }
 
 void
