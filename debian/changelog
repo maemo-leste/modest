@@ -1,3 +1,33 @@
+modest (3.0.17-rc8) unstable; urgency=low
+
+  * Fixes: NB#111126    <coverity> Misc defects from tinymail
+  * Fixes: NB#112513 	Tapping on grouped mail notifications for 2 accounts opens Folders view with E-mail as title
+  * Fixes: NB#113242 	Unreproducible modest crash at "_dbus_pending_call_get_connection_and_lock ()" when "Move" is tapped in the edit mode
+  * Fixes: NB#114977    unreproducible modest crash
+  * Fixes: NB#116091 	Trying to forward the attached messages makes the device UI inaccessible and after some time modest quits
+  * Fixes: NB#116989 	"Move folder" edit mode should not get closed after "Move" button is tapped
+  * Fixes: NB#117440 	Nonreproducible modest crash in "get_folders_sync_ns_only_lsub"
+  * Fixes: NB#117533 	Messages stay in waiting state for a long time even after connection is established
+  * Fixes: NB#117585 	Logical string is showing as 'mcen_ti_new_messages'
+  * Fixes: NB#117618 	Unexpected default for Name in account settings
+  * Fixes: NB#117665 	Replace File name error note shows incorrect file name when attempted to save an attachment
+  * Fixes: NB#117666 	Mail could add "auto" flag to its backup conf
+  * Fixes: NB#117669 	Email UI doesn't respond in a particular scenario
+  * Fixes: NB#117778 	Email to several recipient shown as if sent to 1st recipient only in 'Sent' folder.
+  * Fixes: NB#117875 	IMAP message body of maemo-developers digest mail not shown
+  * Fixes: NB#117911 	Unable to rename the folder when after accessing non empty local folder
+  * Fixes: NB#117938 	Account setup wizard: Autocompletion should be added if email address is "username@provider"
+  * Fixes: NB#118129 	logical string is coming as 'mcen_ti_new_messages_singular'
+  * Fixes: NB#118220 	Email is not trasmitting the whole web link as URL.
+  * Fixes: NB#117985 	External images are not downloaded after connecting the device to network
+  * Fixes: NB#118126 	New e-mail notifications from Modest do not play audio
+  * Fixes: NB#118450 	'ctrl+f' HW keys not working on email viewer view
+  * Fixes: NB#118506 	Message from Sent folder: viewer shows only one recipient
+  * Fixes: NB#118518 	Logical id sfil_va_number_of_objects_attachments is shown when trying to save more than one attachment(unsupported file format)
+  * Fixes: NB#118888 	File name in "Replace existing file of same name" contains unexpected characters
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 26 May 2009 15:21:44 +0300
+
 modest (3.0.17-rc7) unstable; urgency=low
 
   * Week 22, 2009 - first release on Friday
