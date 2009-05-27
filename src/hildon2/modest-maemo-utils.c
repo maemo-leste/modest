@@ -508,13 +508,13 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 			if (TNY_IS_MSG (part)) {
 				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
 				filename = tny_header_dup_subject (header);
-				if ((filename == NULL) || (filename[0] == '\0')) {
-					g_free (filename);
-					filename = g_strdup (_("mail_va_no_subject"));
-				}
 				g_object_unref (header);
 			} else {
 				filename = g_strdup (tny_mime_part_get_filename (part));
+			}
+			if ((filename == NULL) || (filename[0] == '\0')) {
+				g_free (filename);
+				filename = g_strdup (_("mail_va_no_subject"));
 			}
 			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
 			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, filename, 1, part, -1);
