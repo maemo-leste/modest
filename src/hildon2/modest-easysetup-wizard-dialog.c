@@ -72,7 +72,7 @@ G_DEFINE_TYPE (ModestEasysetupWizardDialog, modest_easysetup_wizard_dialog, MODE
    						    MODEST_TYPE_EASYSETUP_WIZARD_DIALOG, \
 						    ModestEasysetupWizardDialogPrivate))
 
-#define LABELS_WIDTH 480
+#define LABELS_WIDTH 520
 #define DIALOG_WIDTH LABELS_WIDTH + MODEST_MARGIN_DOUBLE
 
 typedef struct _ModestEasysetupWizardDialogPrivate ModestEasysetupWizardDialogPrivate;
@@ -1161,28 +1161,27 @@ on_button_edit_advanced_settings (GtkButton *button, gpointer user_data)
 static GtkWidget*
 create_page_complete_custom (ModestEasysetupWizardDialog *self)
 {
+	gchar *complete_string;
 	GtkWidget *align;
-	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
-	GtkWidget *label = gtk_label_new(_("mcen_ia_emailsetup_setup_complete"));
-	GtkWidget *button_edit = gtk_button_new_with_label (_("mcen_fi_advanced_settings"));
-	hildon_gtk_widget_set_theme_size (button_edit, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	GtkWidget *box;
+	GtkWidget *label;
+	GtkWidget *button_edit;
+
+	box = gtk_vbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	complete_string = g_strconcat (_("mcen_ia_emailsetup_setup_complete"), " ",
+				       _("mcen_ia_customsetup_complete"), NULL);
+	label = gtk_label_new(complete_string);
+	g_free (complete_string);
 	gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
-	gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
-	gtk_widget_show (label);
-
-	label = gtk_label_new (_("mcen_ia_customsetup_complete"));
-	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
-	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
-	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
-	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
 	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_widget_show (label);
 
+	button_edit = gtk_button_new_with_label (_("mcen_fi_advanced_settings"));
+	hildon_gtk_widget_set_theme_size (button_edit, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, 0);
 
