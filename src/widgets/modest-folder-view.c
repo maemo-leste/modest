@@ -1024,7 +1024,7 @@ get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *in
 	    type != TNY_FOLDER_TYPE_INBOX &&
 	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
 #ifdef MODEST_TOOLKIT_HILDON2
-		return get_composite_icons (MODEST_FOLDER_ICON_ACCOUNT,
+		return get_composite_icons (MODEST_FOLDER_ICON_REMOTE_FOLDER,
 					    &anorm_pixbuf,
 					    &anorm_pixbuf_open,
 					    &anorm_pixbuf_close);

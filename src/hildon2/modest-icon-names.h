@@ -75,6 +75,7 @@
 #define MODEST_FOLDER_ICON_LOCAL_FOLDERS	"general_device_root_folder"
 #define MODEST_FOLDER_ICON_MMC                  "general_removable_memory_card"
 #define MODEST_FOLDER_ICON_MMC_FOLDER           "general_removable_memory_card"
+#define MODEST_FOLDER_ICON_REMOTE_FOLDER	"email_remote_folder"
 
 /* toolbar */
 #define  MODEST_TOOLBAR_ICON_MAIL_SEND		"email_message_send"
