@@ -1,3 +1,13 @@
+modest (3.0.17-rc9) unstable; urgency=low
+
+  * Fixes: NB#111445    Email. truncation of Â§mcen_ia_customsetup_completeÂ§
+  * Fixes: NB#117246 	List of folders in Change folder dialog is not correct when attempt to move messages between two different accounts
+  * Fixes: NB#117447 	Stop Senidng: Email application hangs when try to stop sending message.
+  * Fixes: NB#119490 	user created remote folders should use "email_remote_folder" icon
+  * Fixes: NB#119517 	Resolved email address is not moved to the next line in the particular scenario 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 29 May 2009 13:50:46 +0300
+
 modest (3.0.17-rc8) unstable; urgency=low
 
   * Fixes: NB#111126    <coverity> Misc defects from tinymail
