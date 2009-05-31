@@ -564,11 +564,27 @@ init_debug_g_type (void)
 	g_type_init_with_debug_flags (gflags);
 }
 
+static void 
+null_log(const gchar* dom, 
+	 GLogLevelFlags l, 
+	 const gchar* m, 
+	 gpointer d)
+{
+	return;
+};
+
 static void
 init_debug_logging (void)
 {
 	ModestRuntimeDebugFlags mflags;
 	mflags = modest_runtime_get_debug_flags ();
+
+#ifndef DEBUG
+	if (! (mflags & MODEST_RUNTIME_DEBUG_CODE)) {
+		g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, null_log, NULL);
+	}
+#endif
+
 	
 	if (mflags & MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING)
 		g_log_set_always_fatal (G_LOG_LEVEL_ERROR |
