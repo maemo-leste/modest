@@ -3130,6 +3130,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	ModestAccountMgr *account_mgr;
 	gchar *account_name;
 	ModestMailOperation *mail_operation;
+	gchar *recipients;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
 
@@ -3137,6 +3138,24 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		return TRUE;
 
 	data = modest_msg_edit_window_get_msg_data (edit_window);
+
+	if (data->subject == NULL || data->subject[0] == '\0') {
+		/* Empty subject -> no send */
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+		return FALSE;
+	}
+
+	recipients = g_strconcat (data->to?data->to:"", 
+				  data->cc?data->cc:"",
+				  data->bcc?data->bcc:"",
+				  NULL);
+	if (recipients == NULL || recipients[0] == '\0') {
+		/* Empty subject -> no send */
+		g_free (recipients);
+		modest_msg_edit_window_free_msg_data (edit_window, data);
+		return FALSE;
+	}
+	g_free (recipients);
 
 	/* Check size */
 	if (!enough_space_for_message (edit_window, data)) {
