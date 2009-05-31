@@ -855,7 +855,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	if (available_disk < MIN_FREE_SPACE ||
 	    expected_size > available_disk) {
 		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
-		modest_platform_information_banner (NULL, NULL, msg);
+		modest_platform_system_banner (NULL, NULL, msg);
 		g_free (msg);
 
 		return;
