@@ -2635,6 +2635,52 @@ modest_platform_play_email_tone (void)
 #define MOVE_TO_FOLDER_SEPARATOR "/"
 
 static void
+translate_path (gchar **path)
+{
+	gchar **parts;
+	gchar **current;
+	GString *output;
+	gboolean add_separator;
+
+	parts = g_strsplit (*path, MOVE_TO_FOLDER_SEPARATOR, 0);
+	g_free (*path);
+
+	current = parts;
+	output = g_string_new ("");
+	add_separator = FALSE;
+
+	while (*current != NULL) {
+		TnyFolderType folder_type;
+		gchar *downcase;
+
+		if (add_separator) {
+			output = g_string_append (output, MOVE_TO_FOLDER_SEPARATOR);
+		} else {
+			add_separator = TRUE;
+		}
+
+		downcase = g_ascii_strdown (*current, -1);
+		folder_type = modest_local_folder_info_get_type (downcase);
+		if (strcmp (downcase, "inbox") == 0) {
+			output = g_string_append (output, _("mcen_me_folder_inbox"));
+		} else if (folder_type == TNY_FOLDER_TYPE_ARCHIVE ||
+		    folder_type == TNY_FOLDER_TYPE_DRAFTS ||
+		    folder_type == TNY_FOLDER_TYPE_SENT ||
+		    folder_type == TNY_FOLDER_TYPE_OUTBOX) {
+			output = g_string_append (output, modest_local_folder_info_get_type_display_name (folder_type));
+		} else {
+			output = g_string_append (output, *current);
+		}
+		g_free (downcase);
+
+		current++;
+	}
+
+	g_strfreev (parts);
+	*path = g_string_free (output, FALSE);
+}
+
+static void
 move_to_dialog_set_selected_folder_store (GtkWidget *dialog, 
 					  TnyFolderStore *folder_store)
 {
@@ -2684,6 +2730,7 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 						 short_name,
 						 NULL);
 		}
+		translate_path (&full_name);
 		hildon_button_set_value (HILDON_BUTTON (action_button), full_name);
 		g_free (full_name);
 	}
