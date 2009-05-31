@@ -502,15 +502,28 @@ static void
 convert_parent_folders_to_dots (gchar **item_name)
 {
 	gint n_parents = 0;
+	gint n_inbox_parents = 0;
 	gchar *c;
+	gchar *path_start;
 	gchar *last_separator;
 
 	if (item_name == NULL)
 		return;
 
+	path_start = *item_name;
 	for (c = *item_name; *c != '\0'; c++) {
 		if (g_str_has_prefix (c, MODEST_FOLDER_PATH_SEPARATOR)) {
+			gchar *compare;
+			if (c != path_start) {
+				compare = g_strndup (path_start, c - path_start);
+				compare = g_strstrip (compare);
+				if (g_ascii_strcasecmp (compare, "inbox") == 0) {
+					n_inbox_parents++;
+				}
+				g_free (compare);
+			}
 			n_parents++;
+			path_start = c + 1;
 		}
 	}
 
@@ -524,7 +537,7 @@ convert_parent_folders_to_dots (gchar **item_name)
 		gint i;
 
 		buffer = g_string_new ("");
-		for (i = 0; i < n_parents; i++) {
+		for (i = 0; i < n_parents - n_inbox_parents; i++) {
 			buffer = g_string_append (buffer, MODEST_FOLDER_DOT);
 		}
 		buffer = g_string_append (buffer, last_separator);
