@@ -120,7 +120,7 @@ modest_tny_account_get_special_folder (TnyAccount *account,
 	 * returning an empty list. murrayc. */	
 	tny_folder_store_get_folders (TNY_FOLDER_STORE (local_account), folders, NULL, FALSE, &error);
 	if (error) {
-		g_warning ("%s: tny_folder_store_get_folders() failed:%s\n", __FUNCTION__, error->message);
+		g_debug ("%s: tny_folder_store_get_folders() failed:%s\n", __FUNCTION__, error->message);
 		g_error_free (error);
 		goto cleanup;
 	}
@@ -426,7 +426,7 @@ set_online_callback (TnyCamelAccount *account, gboolean canceled, GError *err, g
 				TNY_ACCOUNT (account), TNY_ALERT_TYPE_ERROR, FALSE, 
 				err);
 		}
-		g_warning ("err: %s", err->message);
+		g_debug ("err: %s", err->message);
 	}
 }
 
@@ -607,7 +607,7 @@ on_modest_file_system_info (HildonFileSystemInfoHandle *handle,
 	GetMmcAccountNameData *callback_data = (GetMmcAccountNameData*)data;
 
 	if (error) {
-		g_warning ("%s: error=%s", __FUNCTION__, error->message);
+		g_debug ("%s: error=%s", __FUNCTION__, error->message);
   	}
 	
 	TnyAccount *account = TNY_ACCOUNT (callback_data->account);

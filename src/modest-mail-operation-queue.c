@@ -342,7 +342,7 @@ modest_mail_operation_queue_remove (ModestMailOperationQueue *self,
 			modest_mail_operation_execute_error_handler (mail_op);
 		} else {
 			if (status == MODEST_MAIL_OPERATION_STATUS_CANCELED) 
-				g_warning ("%s: operation canceled \n", __FUNCTION__);
+				g_debug ("%s: operation canceled \n", __FUNCTION__);
 			else
 				g_warning ("%s: possible error in a mail operation " \
 					   "implementation. The status is not successful " \

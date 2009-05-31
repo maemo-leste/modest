@@ -680,7 +680,7 @@ modest_hildon1_window_mgr_unregister_window (ModestWindowMgr *self,
 
 	win = g_list_find (priv->window_list, window);
 	if (!win) {
-		g_warning ("Trying to unregister a window that has not being registered yet");
+		g_debug ("Trying to unregister a window that has not being registered yet");
 		return;
 	}
 
@@ -1004,7 +1004,7 @@ remove_modal_from_queue (GtkWidget *widget,
 	g_mutex_lock (priv->queue_lock);
 	item = g_queue_find (priv->modal_windows, widget);
 	if (!item) {
-		g_warning ("Trying to remove a modal window that is not registered");
+		g_debug ("Trying to remove a modal window that is not registered");
 		g_mutex_unlock (priv->queue_lock);
 		return;
 	}

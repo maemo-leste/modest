@@ -1703,7 +1703,7 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		gtk_widget_show (GTK_WIDGET (priv->header_view));
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_DETAILS:
-		g_message ("This view is not supported in Fremantle style");
+		g_warning ("This view is not supported in Fremantle style");
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->empty_view));
@@ -2467,7 +2467,7 @@ static void on_folder_view_row_activated (GtkTreeView *tree_view,
 			g_object_unref (folder_store);
 	}
 
-	g_message ("FOLDER VIEW CELL ACTIVATED");
+	g_debug ("FOLDER VIEW CELL ACTIVATED");
 	
 }
 

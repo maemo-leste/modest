@@ -425,7 +425,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	/* Currently we simply redirect to new constructor. It should store a
 	   reference to the header list model, to enable next/prev message
 	   actions */
-	g_message ("partially implemented %s", __FUNCTION__);
+	g_debug ("partially implemented %s", __FUNCTION__);
 
 	return modest_msg_view_window_new_for_attachment (msg, modest_account_name, NULL, msg_uid);
 }
@@ -434,32 +434,32 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 gboolean
 modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	g_warning ("not implemented %s", __FUNCTION__);
 	return FALSE;
 }
 
 gboolean
 modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	g_warning ("not implemented %s", __FUNCTION__);
 	return FALSE;
 }
 
 void
 modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, TnyMimePart *mime_part)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	g_warning ("not implemented %s", __FUNCTION__);
 }
 
 void
 modest_msg_view_window_save_attachments (ModestMsgViewWindow *window, TnyList *mime_parts)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	g_warning ("not implemented %s", __FUNCTION__);
 }
 void
 modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean get_all)
 {
-	g_message ("not implemented %s", __FUNCTION__);
+	g_warning ("not implemented %s", __FUNCTION__);
 }
 
 TnyHeader *
@@ -507,28 +507,28 @@ modest_msg_view_window_get_folder_type (ModestMsgViewWindow *window)
 gboolean 
 modest_msg_view_window_last_message_selected (ModestMsgViewWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return TRUE;
 }
 
 gboolean 
 modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return TRUE;
 }
 
 gboolean 
 modest_msg_view_window_transfer_mode_enabled (ModestMsgViewWindow *self)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;
 }
 
 gboolean  
 modest_msg_view_window_toolbar_on_transfer_mode     (ModestMsgViewWindow *self)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;
 }
 
@@ -539,21 +539,21 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 	TnyList *result;
 
 	result = tny_simple_list_new ();
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return result;	
 }
 
 gboolean 
 modest_msg_view_window_is_search_result (ModestMsgViewWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;	
 }
 
 gboolean 
 modest_msg_view_window_has_headers_model (ModestMsgViewWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;	
 }
 
@@ -561,7 +561,7 @@ static void
 modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
 					    gpointer data)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;	
 }
 

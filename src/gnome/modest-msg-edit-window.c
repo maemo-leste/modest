@@ -928,7 +928,7 @@ modest_msg_edit_window_set_format (ModestMsgEditWindow *self,
 	case MODEST_MSG_EDIT_FORMAT_TEXT:
 		break;
 	case MODEST_MSG_EDIT_FORMAT_HTML:
-		g_message ("HTML format not supported in Gnome ModestMsgEditWindow");
+		g_warning ("HTML format not supported in Gnome ModestMsgEditWindow");
 		break;
 	default:
 		break;
@@ -963,7 +963,7 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
-	g_message ("Select color operation is not supported");
+	g_warning ("Select color operation is not supported");
 }
 
 void
@@ -972,7 +972,7 @@ modest_msg_edit_window_select_file_format (ModestMsgEditWindow *window,
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
-	g_message ("Select file format operation is not supported");
+	g_warning ("Select file format operation is not supported");
 }
 
 void
@@ -980,7 +980,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
-	g_message ("Select font operation is not supported");
+	g_warning ("Select font operation is not supported");
 }
 
 void
@@ -988,7 +988,7 @@ modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
-	g_message ("Select background color operation is not supported");
+	g_warning ("Select background color operation is not supported");
 }
 
 void
@@ -996,7 +996,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
-	g_message ("Insert image operation is not supported");
+	g_warning ("Insert image operation is not supported");
 }
 
 void
@@ -1004,7 +1004,7 @@ modest_msg_edit_window_attach_file (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
-	g_message ("Attach file operation is not supported");
+	g_warning ("Attach file operation is not supported");
 }
 
 void
@@ -1106,7 +1106,7 @@ modest_msg_edit_window_show_cc (ModestMsgEditWindow *window,
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 }
 void
 modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window, 
@@ -1114,21 +1114,21 @@ modest_msg_edit_window_show_bcc (ModestMsgEditWindow *window,
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 }
 void
 modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
       
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 }
 void
 modest_msg_edit_window_toggle_fullscreen (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
       
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 }
 void
 modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
@@ -1176,7 +1176,7 @@ modest_msg_edit_window_select_contacts (ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 }
 
 gboolean
@@ -1184,7 +1184,7 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to
 {
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
 
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 	return TRUE;
 }
 
@@ -1194,7 +1194,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 {
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 
-	g_message ("not implemented yet %s", __FUNCTION__);
+	g_warning ("not implemented yet %s", __FUNCTION__);
 }
 
 gboolean 
@@ -1272,7 +1272,7 @@ void
 modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
 					    gboolean show)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 
 void                    
@@ -1289,7 +1289,7 @@ modest_msg_edit_window_add_part (ModestMsgEditWindow *window,
 void            
 modest_msg_edit_window_redo               (ModestMsgEditWindow *window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 
 void                    
@@ -1458,7 +1458,7 @@ modest_msg_edit_window_is_modified         (ModestMsgEditWindow *window)
 const gchar *
 modest_msg_edit_window_get_clipboard_text (ModestMsgEditWindow *win)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return NULL;
 }
 

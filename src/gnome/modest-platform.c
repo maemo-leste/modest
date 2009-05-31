@@ -100,21 +100,21 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	g_message ("NOT IMPLEMENTED");;
+	g_warning ("NOT IMPLEMENTED");;
 	return FALSE;
 }
 
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
-	g_message ("NOT IMPLEMENTED");;
+	g_warning ("NOT IMPLEMENTED");;
 	return FALSE;
 }
 
 gboolean 
 modest_platform_show_uri_popup (const gchar *uri)
 {
-	g_message ("NOT IMPLEMENTED");;
+	g_warning ("NOT IMPLEMENTED");;
 	return FALSE;
 }
 
@@ -370,7 +370,7 @@ modest_platform_information_banner (GtkWidget *widget,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
-	g_message ("NOT IMPLEMENTED");;
+	g_warning ("NOT IMPLEMENTED");;
 }
 
 void
@@ -379,7 +379,7 @@ modest_platform_information_banner_with_timeout (GtkWidget *widget,
 						 const gchar *text,
 						 gint timeout)
 {
-	g_message ("NOT IMPLEMENTED");;
+	g_warning ("NOT IMPLEMENTED");;
 }
 
 GtkWidget *
@@ -387,7 +387,7 @@ modest_platform_animation_banner (GtkWidget *widget,
 				  const gchar *icon_name,
 				  const gchar *text)
 {
-	g_message ("NOT IMPLEMENTED");
+	g_warning ("NOT IMPLEMENTED");
 	return NULL;
 }
 
@@ -395,7 +395,7 @@ modest_platform_animation_banner (GtkWidget *widget,
 void
 modest_platform_show_search_messages (GtkWindow *parent_window)
 {
-	g_message ("NOT IMPLEMENTED");;
+	g_warning ("NOT IMPLEMENTED");;
 }
 
 GtkWidget *
@@ -465,13 +465,13 @@ modest_platform_connect_and_perform_if_network_folderstore (GtkWindow *parent_wi
 void 
 modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 
 gboolean 
 modest_platform_check_and_wait_for_account_is_online(TnyAccount *account)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return TRUE;
 }
 
@@ -479,7 +479,7 @@ gboolean
 modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 						     const gchar *certificate)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return TRUE;
 }
 
@@ -489,14 +489,14 @@ modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
                                           const gchar *suggested_name,
                                           gchar **folder_name)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 	return GTK_RESPONSE_CANCEL;
 }
 
 void 
 modest_platform_show_addressbook (GtkWindow *parent_window)
 {
-	g_message ("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning ("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 
 GtkWidget *

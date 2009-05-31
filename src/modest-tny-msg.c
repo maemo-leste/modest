@@ -942,7 +942,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	old_from     = tny_header_dup_from (header);
 	
 	if (!old_from && !old_reply_to) {
-		g_warning ("%s: failed to get either Reply-To: or From: from header",
+		g_debug ("%s: failed to get either Reply-To: or From: from header",
 			   __FUNCTION__);
 		return NULL;
 	}
@@ -963,7 +963,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
 		gchar *old_to = tny_header_dup_to (header);
 		if (!old_to) 
-			g_warning ("%s: no To: address found in source mail",
+			g_debug ("%s: no To: address found in source mail",
 				   __FUNCTION__);
 		else {
 			/* append the old To: */
@@ -1160,7 +1160,7 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	new_header = tny_msg_get_header(new_msg);
 	new_to = get_new_to (msg, header, from, reply_mode);
 	if (!new_to)
-		g_warning ("%s: failed to get new To:", __FUNCTION__);
+		g_debug ("%s: failed to get new To:", __FUNCTION__);
 	else {
 		tny_header_set_to (new_header, new_to);
 		g_free (new_to);
@@ -1207,7 +1207,7 @@ get_content_type(const gchar *s)
 			g_string_append(type, "; charset=\"utf-8\"");
 		} else {
 			/* it should be impossible to reach this, but better safe than sorry */
-			g_warning("invalid utf8 in message");
+			g_debug("invalid utf8 in message");
 			g_string_append(type, "; charset=\"latin1\"");
 		}
 	}

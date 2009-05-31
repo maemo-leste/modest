@@ -2125,8 +2125,8 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 								      priv->settings);
 			g_list_free (wizard_pages);
 		} else {
-			g_warning ("The selected protocol is a plugin protocol "//
-				   "but it's not a ModestAccountProtocol");
+			g_debug ("The selected protocol is a plugin protocol "//
+				 "but it's not a ModestAccountProtocol");
 		}
 
 		g_free (provider_id);

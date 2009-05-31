@@ -180,7 +180,7 @@ static void DEBUG_BUFFER (WPTextBuffer *buffer)
 {
 #ifdef DEBUG
 	GtkTextIter iter;
-	g_message ("BEGIN BUFFER OF SIZE %d", gtk_text_buffer_get_char_count (GTK_TEXT_BUFFER (buffer)));
+	g_debug ("BEGIN BUFFER OF SIZE %d", gtk_text_buffer_get_char_count (GTK_TEXT_BUFFER (buffer)));
 
 	gtk_text_buffer_get_start_iter (GTK_TEXT_BUFFER (buffer), &iter);
 	while (!gtk_text_iter_is_end (&iter)) {
@@ -207,11 +207,11 @@ static void DEBUG_BUFFER (WPTextBuffer *buffer)
 			g_string_append (output, " ");
 		}
 		output = g_string_append (output, "]\n");
-		g_message ("%s", output->str);
+		g_debug ("%s", output->str);
 		g_string_free (output, TRUE);
 		gtk_text_iter_forward_to_tag_toggle (&iter, NULL);
 	}
-	g_message ("END BUFFER");
+	g_debug ("END BUFFER");
 #endif
 }
 
@@ -2391,7 +2391,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 				return 0;
 			}
 		} else
-			g_warning ("%s: could not get attachment size", __FUNCTION__);
+			g_debug ("%s: could not get attachment size", __FUNCTION__);
 		
 		stream = create_stream_for_uri (uri);
 		

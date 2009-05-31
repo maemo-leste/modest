@@ -2563,7 +2563,7 @@ _invalid_clipboard_selected (ModestWindow *win,
 		result = !has_selection;
 	} else if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		if (focused) {
-			MODEST_DEBUG_BLOCK (g_message ("FOCUSED %s", g_type_name (G_TYPE_FROM_INSTANCE (focused))););
+			MODEST_DEBUG_BLOCK (g_debug ("FOCUSED %s", g_type_name (G_TYPE_FROM_INSTANCE (focused))););
 			if (GTK_IS_LABEL (focused) && 
 			    !gtk_label_get_selection_bounds (GTK_LABEL (focused), NULL, NULL)) {
 				result = TRUE;

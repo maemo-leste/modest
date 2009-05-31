@@ -229,11 +229,11 @@ easysetup_country_combo_box_set_active_country_locale (EasysetupCountryComboBox 
 
 #if MODEST_HILDON_API < 2
 	model = gtk_combo_box_get_model (GTK_COMBO_BOX (self));
-	g_message ("HILDON < 2");
+	g_debug ("%s: HILDON < 2", __FUNCTION__);
 #else
 	model = hildon_touch_selector_get_model (hildon_picker_button_get_selector 
 						 (HILDON_PICKER_BUTTON (self)), 0);
-	g_message ("HILDON >= 2");
+	g_debug ("%s: HILDON >= 2", __FUNCTION__);
 #endif
 	if (!gtk_tree_model_get_iter_first (model, &iter))
 		return FALSE;

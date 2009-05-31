@@ -64,7 +64,7 @@ osso_context_t *
 modest_maemo_utils_get_osso_context (void)
 {
 	if (!__osso_context) 
-		g_warning ("%s: __osso_context == NULL", __FUNCTION__);
+		g_debug ("%s: __osso_context == NULL", __FUNCTION__);
 
 	return __osso_context;
 }

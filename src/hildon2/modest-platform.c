@@ -374,7 +374,7 @@ modest_platform_activate_uri (const gchar *uri)
 			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
 		hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
 						_("mcen_ib_unsupported_link"));
-		g_warning ("%s: cannot open uri '%s'", __FUNCTION__,uri);
+		g_debug ("%s: cannot open uri '%s'", __FUNCTION__,uri);
 	} 
 	
 	return result;
@@ -1466,7 +1466,7 @@ modest_platform_set_update_interval (guint minutes)
 	 * because we will replace it: */
 	if (alarm_cookie) {
 		if (alarmd_event_del(alarm_cookie) != 0)
-			g_warning ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
+			g_debug ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
 		alarm_cookie = 0;
 		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
 	}
@@ -1518,7 +1518,7 @@ modest_platform_set_update_interval (guint minutes)
 	
 	if (!alarm_cookie) {
 	    /* Error */
-	    g_debug ("Error setting alarm event. \n");
+	    g_warning ("Error setting alarm event. \n");
 	    
 	    return FALSE;
 	}
@@ -2011,8 +2011,8 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	win = MODEST_WINDOW (hildon_window_stack_peek (stack));
 
 	if (!win) {
-	  g_warning ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
-			   __FUNCTION__);
+		g_debug ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
+			 __FUNCTION__);
 		return FALSE;
 	}
 
@@ -2054,8 +2054,8 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 	top_win = MODEST_WINDOW (hildon_window_stack_peek (stack));
 
 	if (!top_win) {
-		g_warning ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
-			   __FUNCTION__);
+		g_debug ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
+			 __FUNCTION__);
 		return FALSE;
 	}
 

@@ -216,7 +216,7 @@ modest_plugin_factory_load (const gchar *file)
 		g_type_module_use (type_module);
 		plugin = MODEST_PLUGIN (modest_module_new_object (MODEST_MODULE (type_module)));
 		if (plugin)
-			g_message ("Plugin %s API version %s", plugin_name, modest_plugin_get_api_version (plugin));
+			g_debug ("Plugin %s API version %s", plugin_name, modest_plugin_get_api_version (plugin));
 		g_type_module_unuse (type_module);
 	}
 	g_free (path);

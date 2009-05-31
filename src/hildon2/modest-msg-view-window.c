@@ -1181,7 +1181,7 @@ modest_msg_view_window_on_row_inserted (GtkTreeModel *model,
 	/* Setup row_reference for the actual msg. */
 	priv->row_reference = gtk_tree_row_reference_new (priv->header_model, tree_path);
 	if (priv->row_reference == NULL) {
-		g_warning("No reference for msg header item.");
+		g_warning("%s: No reference for msg header item.", __FUNCTION__);
 		return;
 	}
 
@@ -2584,7 +2584,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 								       &msg_win);
 		
 		if (found) {
-			g_warning ("window for this body is already being created");
+			g_debug ("window for this body is already being created");
 		} else {
 
 			/* it's not found, so create a new window for it */
@@ -2619,7 +2619,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		if (found) {
 			/* if it's found, but there is no msg_win, it's probably in the process of being created;
 			 * thus, we don't do anything */
-			g_warning ("window for is already being created");
+			g_debug ("window for is already being created");
 		} else {
 			/* it's not found, so create a new window for it */
 			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
@@ -2733,7 +2733,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 		g_slice_free (SaveMimePartPair, pair);
 		info->pairs = g_list_delete_link (info->pairs, info->pairs);
 	} else {
-		g_warning ("modest: could not create save attachment %s: %s\n", pair->filename, gnome_vfs_result_to_string (info->result));
+		g_warning ("Could not create save attachment %s: %s\n", pair->filename, gnome_vfs_result_to_string (info->result));
 		save_mime_part_info_free (info, FALSE);
 	}
 
@@ -2908,7 +2908,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 			filename = g_strdup (tny_mime_part_get_filename (mime_part));
 		} else {
 			/* TODO: show any error? */
-			g_warning ("Tried to save a non-file attachment");
+			g_warning ("%s: Tried to save a non-file attachment", __FUNCTION__);
 			g_object_unref (mime_parts);
 			return;
 		}

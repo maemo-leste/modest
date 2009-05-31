@@ -407,8 +407,8 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 
 			g_object_unref (mmc_account);
 		} else {
-			g_warning ("%s: there was no store account for the unmounted MMC",
-				   __FUNCTION__);
+			g_debug ("%s: there was no store account for the unmounted MMC",
+				 __FUNCTION__);
 		}
 	}
 	g_free (volume_path_uri);
@@ -557,7 +557,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 	server_account_name = tny_account_get_id (account);
 	if (!server_account_name || !self) {
-		g_warning ("modest: %s: could not retrieve account_store for account %s",
+		g_warning ("%s: could not retrieve account_store for account %s",
 			   __FUNCTION__, server_account_name ? server_account_name : "<NULL>");
 		if (cancel)
 			*cancel = TRUE;
@@ -1059,7 +1059,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 		server_name = tny_account_get_hostname (account);
 		protocol_type = modest_tny_account_get_protocol_type (account);
 		if (protocol_type == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID){
-			g_warning("modest: %s: account with id=%s has no proto.\n", __FUNCTION__, 
+			g_warning("%s: account with id=%s has no proto.\n", __FUNCTION__, 
 				  tny_account_get_id (account));
 			return FALSE;
 		}
@@ -1110,8 +1110,10 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	case TNY_SERVICE_ERROR_UNKNOWN: 
 		return FALSE;
 	default:
-		g_debug ("Unexpected error %d", error->code);
-		g_return_val_if_reached (FALSE);
+		/* We don't treat this as an error, but as a not handled message. Then,
+		 * debug message, and return false */
+		g_debug ("Unexpected error %d (%s)", error->code, error->message);
+		return FALSE;
 	}
 
 

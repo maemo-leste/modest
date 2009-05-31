@@ -186,7 +186,7 @@ force_ke_recv_load (void)
 {
 	if (strcmp ("cerm_device_memory_full",
 		    _KR("cerm_device_memory_full")) == 0) {
-		g_warning ("%s: cannot get translation for cerm_device_memory_full",
+		g_debug ("%s: cannot get translation for cerm_device_memory_full",
 			   __FUNCTION__);
 		return FALSE;
 	}
@@ -281,7 +281,7 @@ init_ui (gint argc, gchar** argv)
 {
 	/* Set application name */
 	g_set_application_name (modest_platform_get_app_name());
-	/* g_message (modest_platform_get_app_name()); */
+	/* g_debug (modest_platform_get_app_name()); */
 
 	/* Init stock icons */
 	init_stock_icons ();
@@ -680,7 +680,7 @@ init_stock_icons (void)
 				g_object_unref (pixbuf);
 			}
 			else
-				g_warning ("Modest: %s: failed to load %s icon", __FUNCTION__, items_names[i]);
+				g_warning ("%s: failed to load %s icon", __FUNCTION__, items_names[i]);
 		}
 		/* Drop our reference to the factory, GTK will hold a reference. */
 		g_object_unref (factory);

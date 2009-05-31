@@ -850,18 +850,18 @@ on_header_selected (ModestHeaderView *header_view,
 void      
 modest_main_window_notify_send_receive_initied    (ModestMainWindow *self)
 {
-	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 void      
 modest_main_window_notify_send_receive_completed    (ModestMainWindow *self)
 {
-	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning("NOT IMPLEMENTED %s", __FUNCTION__);
 }
 
 gboolean
 modest_main_window_transfer_mode_enabled (ModestMainWindow *self)
 {
-	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;
 }
 
@@ -871,14 +871,14 @@ modest_main_window_on_msg_view_window_msg_changed (ModestMsgViewWindow *view_win
 						   GtkTreeRowReference *row_reference,
 						   ModestMainWindow *self)
 {
-	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning("NOT IMPLEMENTED %s", __FUNCTION__);
 	return FALSE;
 }
 
 gboolean  
 modest_main_window_screen_is_on (ModestMainWindow *self)
 {
-	g_message("NOT IMPLEMENTED %s", __FUNCTION__);
+	g_warning("NOT IMPLEMENTED %s", __FUNCTION__);
 	return TRUE;
 }
 

@@ -344,7 +344,7 @@ modest_platform_activate_uri (const gchar *uri)
 			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
 		hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
 						_("mcen_ib_unsupported_link"));
-		g_warning ("%s: cannot open uri '%s'", __FUNCTION__,uri);
+		g_debug ("%s: cannot open uri '%s'", __FUNCTION__,uri);
 	} 
 	
 	return result;
@@ -1107,7 +1107,7 @@ modest_platform_set_update_interval (guint minutes)
 	 * because we will replace it: */
 	if (alarm_cookie) {
 		if (alarm_event_del(alarm_cookie) != 1)
-			g_warning ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
+			g_debug ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
 		alarm_cookie = 0;
 		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
 	}
@@ -1672,8 +1672,8 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	ModestWindow *main_win;
 	
 	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
-		g_warning ("%s: don't show dialogs if there's no main window; assuming 'Cancel'",
-			   __FUNCTION__);
+		g_debug ("%s: don't show dialogs if there's no main window; assuming 'Cancel'",
+			 __FUNCTION__);
 		return FALSE;
 	}
 
@@ -1718,7 +1718,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 	ModestWindow *main_win; 
 
 	if (!modest_window_mgr_main_window_exists (modest_runtime_get_window_mgr())) {
-		g_warning ("%s:\n'%s'\ndon't show dialogs if there's no main window;"
+		g_debug ("%s:\n'%s'\ndon't show dialogs if there's no main window;"
 			   " assuming 'Cancel' for questions, 'Ok' otherwise", prompt, __FUNCTION__);
 		return is_question ? FALSE : TRUE;
 	}

@@ -232,7 +232,7 @@ modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
 {
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
 
-	g_warning ("%s not implemented", __FUNCTION__);
+	g_debug ("%s not implemented", __FUNCTION__);
 }
 
 void

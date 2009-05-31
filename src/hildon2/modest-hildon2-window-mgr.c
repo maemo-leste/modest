@@ -730,7 +730,7 @@ modest_hildon2_window_mgr_unregister_window (ModestWindowMgr *self,
 
 	win = g_list_find (priv->window_list, window);
 	if (!win) {
-		g_warning ("Trying to unregister a window that has not being registered yet");
+		g_debug ("Trying to unregister a window that has not being registered yet");
 		return;
 	}
 

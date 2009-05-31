@@ -118,11 +118,11 @@
 /* some extra #defines, so it will compile with the 'normal' gtk */
 #ifndef MODEST_HAVE_HILDON_GTK
 #define hildon_gtk_entry_set_input_mode(a,b) \
-	g_warning ("%s: hildon_gtk_entry_set_input_mode requires gtk-hildon", __FUNCTION__)
+	g_debug ("%s: hildon_gtk_entry_set_input_mode requires gtk-hildon", __FUNCTION__)
 #define hildon_gtk_text_view_set_input_mode(a,b) \
-	g_warning ("%s: hildon_gtk_text_view_set_input_mode requires gtk-hildon", __FUNCTION__)
+	g_debug ("%s: hildon_gtk_text_view_set_input_mode requires gtk-hildon", __FUNCTION__)
 #define gtk_widget_tap_and_hold_setup(a,b,c,d)				\
-	g_warning ("%s: gtk_widget_tap_and_hold_setup requires gtk-hildon", __FUNCTION__)
+	g_debug ("%s: gtk_widget_tap_and_hold_setup requires gtk-hildon", __FUNCTION__)
 
 typedef enum
 {

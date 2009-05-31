@@ -938,8 +938,8 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		total_size += att_size;
 
 		if (att_size > allowed_size) {
-			g_warning ("%s: total size: %u",
-				   __FUNCTION__, (unsigned int)total_size);
+			g_debug ("%s: total size: %u",
+				 __FUNCTION__, (unsigned int)total_size);
 			break;
 		}
 		allowed_size -= att_size;
@@ -2856,7 +2856,7 @@ void
 modest_ui_actions_on_msg_link_hover (ModestMsgView *msgview, const gchar* link,
 				     ModestWindow *win)
 {
-	/* g_message ("%s %s", __FUNCTION__, link); */
+	/* g_debug ("%s %s", __FUNCTION__, link); */
 }
 
 
@@ -2892,7 +2892,7 @@ modest_ui_actions_on_msg_recpt_activated (ModestMsgView *msgview,
 					  const gchar *address,
 					  ModestWindow *win)
 {
-	/* g_message ("%s %s", __FUNCTION__, address); */
+	/* g_debug ("%s %s", __FUNCTION__, address); */
 }
 
 static void
@@ -5515,7 +5515,7 @@ modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
 			modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (msg_view_window), TRUE);
 		else {
 			/* do nothing; uid was registered before, so window is probably on it's way */
-			g_warning ("debug: header %p has already been registered", header);
+			g_debug ("header %p has already been registered", header);
 		}
 	} else {
 		ModestMailOperation *mail_op = NULL;

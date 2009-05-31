@@ -36,8 +36,8 @@
 
 void modest_address_book_add_address (const gchar *address)
 {
-	g_message ("trying to add '%s' to non-existing address book",
-		   address);
+	g_debug ("trying to add '%s' to non-existing address book",
+		 address);
 }
 
 

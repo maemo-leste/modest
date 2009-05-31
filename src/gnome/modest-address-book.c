@@ -34,27 +34,27 @@
 void
 modest_address_book_add_address (const gchar *address)
 {
-	g_message (__FUNCTION__);
+	g_debug (__FUNCTION__);
 }
 
 void
 modest_address_book_select_addresses (ModestRecptEditor *editor,
 				      GtkWindow *parent_window)
 {
-	g_message (__FUNCTION__);
+	g_debug (__FUNCTION__);
 }
 
 gboolean
 modest_address_book_check_names (ModestRecptEditor *editor, gboolean update_addressbook)
 {
-	g_message (__FUNCTION__);
+	g_debug (__FUNCTION__);
 	return TRUE;
 }
 
 gboolean
 modest_address_book_has_address (const gchar *address)
 {
-	g_message (__FUNCTION__);
+	g_debug (__FUNCTION__);
 	return FALSE;
 }
 

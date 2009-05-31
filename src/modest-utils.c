@@ -1042,7 +1042,7 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 
 		if (mcc == previous_mcc ||
 		    g_hash_table_lookup (country_hash, country)) {
-			g_message ("already seen: '%s' %d", country, mcc);
+			g_debug ("already seen: '%s' %d", country, mcc);
 			continue;
 		}
 		previous_mcc = mcc;

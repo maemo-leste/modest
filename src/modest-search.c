@@ -243,8 +243,8 @@ search_mime_part_strcmp (TnyMimePart *part, ModestSearch *search)
 	len = (sizeof (buffer) - 1) / 2;
 
 	if (strlen (search->body) > len) {
-		g_warning ("Search term bigger then chunk."
-			   "We might not find everything");	
+		g_debug ("Search term bigger then chunk."
+			 "We might not find everything");	
 	}
 
 	stream = tny_mime_part_get_stream (part);

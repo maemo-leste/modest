@@ -460,7 +460,7 @@ modest_account_mgr_load_server_settings (ModestAccountMgr *self, const gchar* na
 	gchar *hostname, *username, *pwd, *uri, *proto, *auth, *sec;
 
 	if (!modest_account_mgr_account_exists (self, name, TRUE)) {
-		g_message ("%s account %s does not exist", __FUNCTION__, name);
+		g_warning ("%s account %s does not exist", __FUNCTION__, name);
 		return NULL;
 	}
 
@@ -708,7 +708,7 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 								    store_settings);
 			g_object_unref (store_settings);
 		} else {
-			g_message ("%s can not load server settings. Account corrupted?", __FUNCTION__);
+			g_warning ("%s can not load server settings. Account corrupted?", __FUNCTION__);
 			g_object_unref (settings);
 			return NULL;
 		}
@@ -727,7 +727,7 @@ modest_account_mgr_load_account_settings (ModestAccountMgr *self,
 			modest_account_settings_set_transport_settings (settings, transport_settings);
 			g_object_unref (transport_settings);
 		} else {
-			g_message ("%s can not load server settings. Account corrupted?", __FUNCTION__);
+			g_warning ("%s can not load server settings. Account corrupted?", __FUNCTION__);
 			g_object_unref (settings);
 			return NULL;
 		}

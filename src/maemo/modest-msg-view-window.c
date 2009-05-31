@@ -2686,7 +2686,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 								       &msg_win);
 		
 		if (found) {
-			g_warning ("window for this body is already being created");
+			g_debug ("window for this body is already being created");
 		} else {
 
 			/* it's not found, so create a new window for it */
@@ -2724,7 +2724,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			else 
 				/* if it's found, but there is no msg_win, it's probably in the process of being created;
 				 * thus, we don't do anything */
-				g_warning ("window for is already being created");
+				g_debug ("window for is already being created");
 		} else { 
 			/* it's not found, so create a new window for it */
 			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
@@ -3222,9 +3222,9 @@ on_fetch_image_idle_refresh_view (gpointer userdata)
 {
 
 	FetchImageData *fidata = (FetchImageData *) userdata;
-	g_message ("REFRESH VIEW");
+	g_debug ("REFRESH VIEW");
 	if (GTK_WIDGET_DRAWABLE (fidata->msg_view)) {
-		g_message ("QUEUING DRAW");
+		g_debug ("QUEUING DRAW");
 		gtk_widget_queue_draw (fidata->msg_view);
 	}
 	g_object_unref (fidata->msg_view);

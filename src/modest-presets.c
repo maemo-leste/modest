@@ -233,7 +233,7 @@ modest_presets_get_info_server_type (ModestPresets *self,
 	g_free (val);
 
 	/* debug: */
-/* 	g_message ("provider id: %s, server type: %d", provider_id, info); */
+/* 	g_debug ("provider id: %s, server type: %d", provider_id, info); */
 	return protocol_type;
 }
 

@@ -769,7 +769,7 @@ thread_prepare_delete_message (gpointer userdata)
 		g_object_unref (account);
 
 	if (!msg) {
-		g_warning ("%s: Could not find message '%s'", __FUNCTION__, uri);
+		g_debug ("%s: Could not find message '%s'", __FUNCTION__, uri);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
 		g_free (uri);
 		return FALSE; 
@@ -779,7 +779,7 @@ thread_prepare_delete_message (gpointer userdata)
 
 	folder = tny_msg_get_folder (msg);
 	if (!folder) {
-		g_warning ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
+		g_debug ("%s: Could not find folder (uri:'%s')", __FUNCTION__, uri);
 		g_object_unref (msg);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
 		g_free (uri);
