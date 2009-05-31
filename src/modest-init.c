@@ -564,6 +564,7 @@ init_debug_g_type (void)
 	g_type_init_with_debug_flags (gflags);
 }
 
+#ifndef DEBUG
 static void 
 null_log(const gchar* dom, 
 	 GLogLevelFlags l, 
@@ -572,6 +573,7 @@ null_log(const gchar* dom,
 {
 	return;
 };
+#endif
 
 static void
 init_debug_logging (void)
