@@ -1461,7 +1461,7 @@ modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
-	GtkWidget *banner, *banner_parent = NULL;
+	GtkWidget *banner_parent = NULL;
 	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 
 	if (modest_window_mgr_get_num_windows (mgr) == 0)
@@ -1484,8 +1484,25 @@ modest_platform_information_banner (GtkWidget *parent,
 			return;
 	}
 
+	modest_platform_system_banner (banner_parent, icon_name, text);
 
-	banner = hildon_banner_show_information (banner_parent, icon_name, text);
+}
+
+void
+modest_platform_system_banner (GtkWidget *parent,
+				    const gchar *icon_name,
+				    const gchar *text)
+{
+	GtkWidget *banner = NULL;
+	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+
+
+	if (parent && GTK_IS_WINDOW (parent)) {
+		if (!gtk_window_is_active (GTK_WINDOW (parent)))
+			parent = NULL;
+	}
+
+	banner = hildon_banner_show_information (parent, icon_name, text);
 
 	modest_window_mgr_register_banner (mgr);
 	g_object_ref (mgr);
