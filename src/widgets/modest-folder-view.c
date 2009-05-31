@@ -2652,6 +2652,51 @@ compare_accounts_first (TnyFolderStore *s1, TnyFolderStore *s2)
 	return is_account2 - is_account1;
 }
 
+static gint
+compare_folders (const gchar *name1, const gchar *name2)
+{
+	const gchar *separator1, *separator2;
+	const gchar *next1, *next2;
+	gchar *top1, *top2;
+	gint cmp;
+
+	if (name1 == NULL || name1[0] == '\0')
+		return -1;
+	if (name2 == NULL || name2[0] == '\0')
+		return 1;
+
+	separator1 = strstr (name1, MODEST_FOLDER_PATH_SEPARATOR);
+	if (separator1) {
+		top1 = g_strndup (name1, separator1 - name1);
+	} else {
+		top1 = g_strdup (name1);
+	}
+
+	separator2 = strstr (name2, MODEST_FOLDER_PATH_SEPARATOR);
+	if (separator2) {
+		top2 = g_strndup (name2, separator2 - name2);
+	} else {
+		top2 = g_strdup (name2);
+	}
+
+
+	cmp = modest_text_utils_utf8_strcmp (top1, top2, TRUE);
+	g_free (top1);
+	g_free (top2);
+
+	if (cmp != 0)
+		return cmp;
+
+	if (separator1 == NULL && separator2 == NULL)
+		return 0;
+
+	next1 = (separator1 != NULL)?separator1 + strlen (MODEST_FOLDER_PATH_SEPARATOR):NULL;
+	next2 = (separator2 != NULL)?separator2 + strlen (MODEST_FOLDER_PATH_SEPARATOR):NULL;
+
+	return compare_folders (next1, next2);
+}
+
+
 /*
  * This function orders the mail accounts according to these rules:
  * 1st - remote accounts
@@ -2707,7 +2752,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	}
 
 	/* Pure sort by name */
-	cmp = modest_text_utils_utf8_strcmp (name1, name2, TRUE);
+	cmp = compare_folders (name1, name2);
  finish:
 	if (folder1)
 		g_object_unref(G_OBJECT(folder1));
