@@ -923,6 +923,8 @@ get_composite_icons (const gchar *icon_code,
 		icon = modest_platform_get_icon (icon_code, FOLDER_ICON_SIZE);
 		if (icon) {
 			*pixbuf = gdk_pixbuf_copy (icon);
+		} else {
+			*pixbuf = NULL;
 		}
 	}
 
