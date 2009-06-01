@@ -519,7 +519,7 @@ modest_platform_get_icon (const gchar *name, guint icon_size)
 					   GTK_ICON_LOOKUP_NO_SVG,
 					   &err);
 	if (!pixbuf) {
-		g_printerr ("modest: error loading theme icon '%s': %s\n",
+		g_warning ("Error loading theme icon '%s': %s\n",
 			    name, err->message);
 		g_error_free (err);
 	} 
