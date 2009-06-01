@@ -809,7 +809,7 @@ get_image_for_folder_store (TnyFolderStore *store,
 				icon_name = MODEST_FOLDER_ICON_INBOX;
 				break;
 			default:
-				icon_name = MODEST_FOLDER_ICON_ACCOUNT;
+				icon_name = MODEST_FOLDER_ICON_REMOTE_FOLDER;
 			}
 		} else if (modest_tny_folder_is_local_folder (TNY_FOLDER (store))) {
 			switch (type) {
