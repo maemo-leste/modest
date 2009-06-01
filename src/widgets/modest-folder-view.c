@@ -247,7 +247,7 @@ struct _ModestFolderViewPrivate {
 	GtkCellRenderer *messages_renderer;
 
 	GSList   *signal_handlers;
-	GdkColor *active_color;
+	GdkColor active_color;
 };
 #define MODEST_FOLDER_VIEW_GET_PRIVATE(o)			\
 	(G_TYPE_INSTANCE_GET_PRIVATE((o),			\
@@ -744,12 +744,13 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 	if (item_name && item_weight) {
 		/* Set the name in the treeview cell: */
-		if (priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT && item_weight == 800 && priv->active_color) {
+		if (priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT && item_weight == 800 && 
+		    (priv->active_color.red != 0 || priv->active_color.blue != 0 || priv->active_color.green != 0)) {
 			g_object_set (rendobj, 
 				      "text", item_name, 
 				      "weight-set", FALSE,
 				      "foreground-set", TRUE,
-				      "foreground-gdk", priv->active_color,
+				      "foreground-gdk", &(priv->active_color),
 				      NULL);
 		} else {
 			g_object_set (rendobj, 
@@ -1328,7 +1329,7 @@ modest_folder_view_init (ModestFolderView *obj)
 							   G_CALLBACK(on_configuration_key_changed),
 							   obj);
 
-	priv->active_color = NULL;
+	gdk_color_parse ("000", &priv->active_color);
 
 	update_style (obj);
 	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
@@ -1395,11 +1396,6 @@ modest_folder_view_finalize (GObject *obj)
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE(obj);
 
-	if (priv->active_color) {
-		gdk_color_free (priv->active_color);
-		priv->active_color = NULL;
-	}
-
 	if (priv->timer_expander != 0) {
 		g_source_remove (priv->timer_expander);
 		priv->timer_expander = 0;
@@ -1411,6 +1407,8 @@ modest_folder_view_finalize (GObject *obj)
 
 	/* Clear hidding array created by cut operation */
 	_clear_hidding_filter (MODEST_FOLDER_VIEW (obj));
+
+	gdk_color_parse ("000", &priv->active_color);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -4072,11 +4070,11 @@ update_style (ModestFolderView *self)
 			      NULL);
 		pango_attr_list_unref (attr_list);
 	}
-	if (priv->active_color)
-		gdk_color_free (priv->active_color);
 
 	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
-		priv->active_color = gdk_color_copy (&style_active_color);
+		priv->active_color = style_active_color;
+	} else {
+		gdk_color_parse ("000", &(priv->active_color));
 	}
 }
 
