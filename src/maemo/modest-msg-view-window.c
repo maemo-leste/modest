@@ -2759,7 +2759,7 @@ typedef struct
 static void save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct);
 static gboolean idle_save_mime_part_show_result (SaveMimePartInfo *info);
 static gpointer save_mime_part_to_file (SaveMimePartInfo *info);
-static void save_mime_parts_to_file_with_checks (SaveMimePartInfo *info);
+static void save_mime_parts_to_file_with_checks (GtkWindow *parent, SaveMimePartInfo *info);
 
 static void 
 save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
@@ -2836,7 +2836,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 }
 
 static void
-save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
+save_mime_parts_to_file_with_checks (GtkWindow *parent, SaveMimePartInfo *info)
 {
 	gboolean is_ok = TRUE;
         gint replaced_files = 0;
@@ -2850,14 +2850,12 @@ save_mime_parts_to_file_with_checks (SaveMimePartInfo *info)
                 }
         }
 	if (replaced_files) {
-		GtkWidget *confirm_overwrite_dialog;
+		gint response;
                 const gchar *message = (replaced_files == 1) ?
                         _FM("docm_nc_replace_file") : _FM("docm_nc_replace_multiple");
-                confirm_overwrite_dialog = hildon_note_new_confirmation (NULL, message);
-		if (gtk_dialog_run (GTK_DIALOG (confirm_overwrite_dialog)) != GTK_RESPONSE_OK) {
+                response = modest_platform_run_confirmation_dialog (parent, message);
+		if (response != GTK_RESPONSE_OK)
 			is_ok = FALSE;
-		}
-		gtk_widget_destroy (confirm_overwrite_dialog);
 	}
 
 	if (!is_ok) {
@@ -2925,7 +2923,7 @@ save_attachments_response (GtkDialog *dialog,
 		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
 		info->pairs = files_to_save;
 		info->result = TRUE;
-		save_mime_parts_to_file_with_checks (info);
+		save_mime_parts_to_file_with_checks ((GtkWindow*) dialog, info);
 	}
 
  end:
