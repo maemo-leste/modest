@@ -1237,7 +1237,7 @@ add_columns (GtkWidget *treeview)
 	priv->messages_renderer = gtk_cell_renderer_text_new ();
 	g_object_set (priv->messages_renderer, 
 #ifdef MODEST_TOOLKIT_HILDON2
-		      "yalign", 0.0,
+		      "yalign", 0.5,
 		      "ypad", MODEST_MARGIN_DEFAULT,
 		      "xpad", MODEST_MARGIN_DOUBLE,
 #else
