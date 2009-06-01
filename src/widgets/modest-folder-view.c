@@ -918,15 +918,20 @@ get_composite_icons (const gchar *icon_code,
 {
 	ThreePixbufs *retval;
 
-	if (!*pixbuf)
-		*pixbuf = gdk_pixbuf_copy (modest_platform_get_icon (icon_code, FOLDER_ICON_SIZE));
+	if (!*pixbuf) {
+		GdkPixbuf *icon;
+		icon = modest_platform_get_icon (icon_code, FOLDER_ICON_SIZE);
+		if (icon) {
+			*pixbuf = gdk_pixbuf_copy (icon);
+		}
+	}
 
-	if (!*pixbuf_open)
+	if (!*pixbuf_open && pixbuf && *pixbuf)
 		*pixbuf_open = get_composite_pixbuf ("qgn_list_gene_fldr_exp",
 						     FOLDER_ICON_SIZE,
 						     *pixbuf);
 
-	if (!*pixbuf_close)
+	if (!*pixbuf_close && pixbuf && *pixbuf)
 		*pixbuf_close = get_composite_pixbuf ("qgn_list_gene_fldr_clp",
 						      FOLDER_ICON_SIZE,
 						      *pixbuf);
