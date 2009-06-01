@@ -1571,101 +1571,92 @@ modest_platform_on_new_headers_received (GList *URI_list,
 #ifdef MODEST_HAVE_HILDON_NOTIFY
 	/* For any other case issue a notification */
 	HildonNotification *notification;
-	GList *iter;
-	GSList *notifications_list = NULL;
+	ModestMsgNotificationData *data;
+	gint notif_id;
+	gchar *from;
+	TnyAccountStore *acc_store;
+	TnyAccount *account;
 
-	/* Get previous notifications ids */
-	notifications_list = modest_conf_get_list (modest_runtime_get_conf (),
-						   MODEST_CONF_NOTIFICATION_IDS,
-						   MODEST_CONF_VALUE_INT, NULL);
+	data = (ModestMsgNotificationData *) URI_list->data;
 
-	iter = URI_list;
-	while (iter) {
-		ModestMsgNotificationData *data;
-		gboolean first_notification = TRUE;
-		gint notif_id;
-		gchar *from;
+	/* String is changed in-place. There is no need to
+	   actually dup the data->from string but we just do
+	   it in order not to modify the original contents */
+	from = g_strdup (data->from);
+	modest_text_utils_get_display_address (from);
 
-		data = (ModestMsgNotificationData *) iter->data;
+	/* Create notification */
+	notification = hildon_notification_new (from,
+						data->subject,
+						"qgn_list_messagin",
+						MODEST_NOTIFICATION_CATEGORY);
+	g_free (from);
 
-		/* String is changed in-place. There is no need to
-		   actually dup the data->from string but we just do
-		   it in order not to modify the original contents */
-		from = g_strdup (data->from);
-		modest_text_utils_get_display_address (from);
+	/* Add DBus action */
+	hildon_notification_add_dbus_action(notification,
+					    "default",
+					    "Cancel",
+					    MODEST_DBUS_SERVICE,
+					    MODEST_DBUS_OBJECT,
+					    MODEST_DBUS_IFACE,
+					    MODEST_DBUS_METHOD_OPEN_MESSAGE,
+					    G_TYPE_STRING, data->uri,
+					    -1);
 
-		notification = hildon_notification_new (from,
-							data->subject,
-							"qgn_list_messagin",
-							MODEST_NOTIFICATION_CATEGORY);
-		g_free (from);
+	/* Set the led pattern */
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
+					    "dialog-type", 4);
+	notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
+					    "led-pattern",
+					    MODEST_NEW_MAIL_LIGHTING_PATTERN);
 
-		hildon_notification_add_dbus_action(notification,
-						    "default",
-						    "Cancel",
-						    MODEST_DBUS_SERVICE,
-						    MODEST_DBUS_OBJECT,
-						    MODEST_DBUS_IFACE,
-						    MODEST_DBUS_METHOD_OPEN_MESSAGE,
-						    G_TYPE_STRING, data->uri,
-						    -1);
+	/* Make the notification persistent */
+	notify_notification_set_hint_byte (NOTIFY_NOTIFICATION (notification),
+					   "persistent", TRUE);
 
-		/* Play sound if the user wants. Show the LED
-		   pattern. Show and play just one */
-		if (G_UNLIKELY (first_notification)) {
-			TnyAccountStore *acc_store;
-			TnyAccount *account;
+	/* Set the number of new notifications */
+	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
+					    "amount", g_list_length (URI_list));
 
-			first_notification = FALSE;
+	/* Set the account of the headers */
+	acc_store = (TnyAccountStore *) modest_runtime_get_account_store ();
+	account = tny_account_store_find_account (acc_store, data->uri);
+	if (account) {
+		const gchar *acc_name;
+		acc_name =
+			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+		notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
+						    "email-account",
+						    acc_name);
+		g_object_unref (account);
+	}
 
-			/* Set the led pattern and make the notification persistent */
-			notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
-							    "dialog-type", 4);
-			notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-							    "led-pattern",
-							    MODEST_NEW_MAIL_LIGHTING_PATTERN);
-			notify_notification_set_hint_byte (NOTIFY_NOTIFICATION (notification),
-							   "persistent", TRUE);
+	/* Play sound */
+	modest_platform_play_email_tone ();
+	if (notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL)) {
+		GSList *notifications_list = NULL;
 
-			/* Set the account of the headers */
-			acc_store = (TnyAccountStore *) modest_runtime_get_account_store ();
-			account = tny_account_store_find_account (acc_store, data->uri);
-			if (account) {
-				const gchar *acc_name;
-				acc_name =
-					modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-				notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-								    "email-account",
-								    acc_name);
-				g_object_unref (account);
-			}
-
-			/* Play sound */
-			modest_platform_play_email_tone ();
-		}
-
-		/* Notify. We need to do this in an idle because this function
-		   could be called from a thread */
-		if (!notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL)) {
-			g_warning ("Failed to send notification");
-		}
+		/* Get previous notifications ids */
+		notifications_list = modest_conf_get_list (modest_runtime_get_conf (),
+							   MODEST_CONF_NOTIFICATION_IDS,
+							   MODEST_CONF_VALUE_INT, NULL);
 
 		/* Save id in the list */
-		g_object_get(G_OBJECT(notification), "id", &notif_id, NULL);
+		g_object_get(G_OBJECT (notification), "id", &notif_id, NULL);
 		notifications_list = g_slist_prepend (notifications_list, GINT_TO_POINTER(notif_id));
+
 		/* We don't listen for the "closed" signal, because we
 		   don't care about if the notification was removed or
 		   not to store the list in gconf */
 
-		/* Free & carry on */
-		iter = g_list_next (iter);
+		/* Save the ids */
+		modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS,
+				      notifications_list, MODEST_CONF_VALUE_INT, NULL);
+
+		g_slist_free (notifications_list);
+	} else {
+		g_warning ("Failed to send notification");
 	}
-
-	/* Save the ids */
-	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 
-			      notifications_list, MODEST_CONF_VALUE_INT, NULL);
-
-	g_slist_free (notifications_list);
 
 #endif /*MODEST_HAVE_HILDON_NOTIFY*/
 }
