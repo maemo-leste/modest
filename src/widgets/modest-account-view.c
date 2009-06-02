@@ -212,16 +212,6 @@ get_last_updated_string(ModestAccountView *self, ModestAccountMgr* account_mgr, 
 	store_account_name = modest_server_account_settings_get_account_name (server_settings);
 	last_updated = modest_account_mgr_get_last_updated (account_mgr, store_account_name);
 
-#ifdef MODEST_USE_LIBTIME
-	/* If we use libtime, we are storing the time in UTC so we have to convert to currently
-	 * selected time */
-	time_t now;
-	struct tm *localtime_tm;
-	time (&now);
-	localtime_tm = localtime (&now);
-	if (last_updated)
-		last_updated -= localtime_tm->tm_gmtoff;
-#endif
 	g_object_unref (server_settings);
 	account_name = modest_account_settings_get_account_name (settings);
 	if (!modest_account_mgr_account_is_busy(account_mgr, account_name)) {
