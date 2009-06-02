@@ -864,7 +864,7 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
 		modest_platform_run_information_dialog (
 			GTK_WINDOW(win),
-			_KR("memr_ib_operation_disabled"),
+			_FM("sfil_ib_opening_not_allowed"),
 			TRUE);
 		return;
 	}
@@ -3005,7 +3005,7 @@ enough_space_for_message (ModestMsgEditWindow *edit_window,
 	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
 		modest_platform_run_information_dialog (
 			GTK_WINDOW(edit_window),
-			_KR("memr_ib_operation_disabled"),
+			_FM("sfil_ib_opening_not_allowed"),
 			TRUE);
 		return FALSE;
 	}
