@@ -86,9 +86,9 @@ struct _ModestAccountProtocolClass {
 	const GdkPixbuf * (*get_icon) (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
 				       GObject *object, guint icon_size);
 	gchar * (*get_service_name) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
+	const GdkPixbuf * (*get_service_icon) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
 
 	/* Padding for future expansions */
-	void (*_reserved2) (void);
 	void (*_reserved3) (void);
 	void (*_reserved4) (void);
 	void (*_reserved5) (void);
@@ -418,6 +418,20 @@ const GdkPixbuf * modest_account_protocol_get_icon (ModestAccountProtocol *self,
 gchar *modest_account_protocol_get_service_name (ModestAccountProtocol *self,
 						 const gchar *account_id,
 						 const gchar *mailbox);
+
+/**
+ * modest_account_protocol_get_service_icon:
+ * @self: a #ModestAccountProtocol
+ * @account_id: a transport account name
+ * @mailbox: a mailbox
+ *
+ * Obtain the service icon for the account and mailbox.
+ *
+ * Returns: a protocol owned #GdkPixbuf
+ */
+const GdkPixbuf *modest_account_protocol_get_service_icon (ModestAccountProtocol *self,
+							   const gchar *account_id,
+							   const gchar *mailbox);
 
 
 G_END_DECLS

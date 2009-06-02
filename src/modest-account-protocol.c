@@ -107,6 +107,10 @@ static gchar *modest_account_protocol_get_service_name_default (ModestAccountPro
 								const gchar *account_id,
 								const gchar *mailbox);
 
+static const GdkPixbuf *modest_account_protocol_get_service_icon_default (ModestAccountProtocol *self,
+									  const gchar *account_id,
+									  const gchar *mailbox);
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -203,6 +207,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_get_icon_default;
 	account_class->get_service_name =
 		modest_account_protocol_get_service_name_default;
+	account_class->get_service_icon =
+		modest_account_protocol_get_service_icon_default;
 }
 
 static void
@@ -722,6 +728,24 @@ modest_account_protocol_get_service_name (ModestAccountProtocol *self,
 
 static gchar *
 modest_account_protocol_get_service_name_default (ModestAccountProtocol *self,
+						  const gchar *account_id,
+						  const gchar *mailbox)
+{
+	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+
+	return NULL;
+}
+
+const GdkPixbuf *
+modest_account_protocol_get_service_icon (ModestAccountProtocol *self,
+					  const gchar *account_id,
+					  const gchar *mailbox)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_service_icon (self, account_id, mailbox);
+}
+
+static const GdkPixbuf *
+modest_account_protocol_get_service_icon_default (ModestAccountProtocol *self,
 						  const gchar *account_id,
 						  const gchar *mailbox)
 {
