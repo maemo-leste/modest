@@ -1251,7 +1251,7 @@ cleanup:
 }
 
 static gboolean
-is_memory_full_error (GError *error, ModestMailOperation *mail_op)
+is_memory_full_error (GError *error, ModestMailOperation *mail_op, gboolean *is_mmc)
 {
 	gboolean enough_free_space = TRUE;
 	GnomeVFSURI *cache_dir_uri;
@@ -1261,11 +1261,16 @@ is_memory_full_error (GError *error, ModestMailOperation *mail_op)
 
 	acc_store = TNY_ACCOUNT_STORE (modest_runtime_get_account_store ());
 
+	if (is_mmc)
+		*is_mmc = FALSE;
+
 	/* Cache dir is different in case we're using an external storage (like MMC account) */
 	if (mail_op) {
 		TnyAccount *account = modest_mail_operation_get_account (mail_op);
 		if (account) {
 			if (modest_tny_account_is_memory_card_account (account)) {
+				if (is_mmc)
+					*is_mmc = TRUE;
 				cache_dir = g_getenv (MODEST_MMC1_VOLUMEPATH_ENV);
 			}
 			g_object_unref (account);
@@ -1300,16 +1305,25 @@ is_memory_full_error (GError *error, ModestMailOperation *mail_op)
 	}
 }
 
+/* Shows an error if we're in memory full conditions. The #alternate
+   parametter contains the error that will be shown if the memory full
+   conditions happen in the mmc external storage */
 static gboolean
-check_memory_full_error (GtkWidget *parent_window, GError *err)
+check_memory_full_error (GtkWidget *parent_window, GError *err, const gchar *alternate)
 {
+	gboolean is_mcc;
+
 	if (err == NULL)
 		return FALSE;
 
-	if (is_memory_full_error (err, NULL)) {
-		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
-		modest_platform_information_banner (parent_window, NULL, msg);
-		g_free (msg);
+	if (is_memory_full_error (err, NULL, &is_mcc)) {
+		if (is_mcc && alternate) {
+			modest_platform_information_banner (parent_window, NULL, alternate);
+		} else {
+			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			modest_platform_information_banner (parent_window, NULL, msg);
+			g_free (msg);
+		}
 	} else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
 		/* If the account was created in memory full
 		   conditions then tinymail won't be able to
@@ -1337,7 +1351,7 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 	/* If the mail op has been cancelled then it's not an error:
 	   don't show any message */
 	if (status != MODEST_MAIL_OPERATION_STATUS_CANCELED) {
-		if (is_memory_full_error ((GError *) error, mail_op)) {
+		if (is_memory_full_error ((GError *) error, mail_op, NULL)) {
 			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
 			modest_platform_information_banner ((GtkWidget *) win, NULL, msg);
 			g_free (msg);
@@ -1464,7 +1478,7 @@ open_msg_performer(gboolean canceled,
 		open_msg_helper_destroyer (helper);
 
 		/* In memory full conditions we could get this error here */
-		check_memory_full_error ((GtkWidget *) parent_window, err);
+		check_memory_full_error ((GtkWidget *) parent_window, err, NULL);
 
 		goto clean;
 	}
@@ -2296,7 +2310,7 @@ do_send_receive_performer (gboolean canceled,
 
 	if (err || canceled) {
 		/* In memory full conditions we could get this error here */
-		check_memory_full_error ((GtkWidget *) parent_window, err);
+		check_memory_full_error ((GtkWidget *) parent_window, err, NULL);
 
 		if (info->mail_op) {
 			modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (),
@@ -3415,11 +3429,12 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 		   stop the main loop in a gtk_dialog_run and then,
 		   the message won't be shown until that dialog is
 		   closed */
-		modest_ui_actions_disk_operations_error_handler (mail_op,
-								 _("mail_in_ui_folder_create_error"));
-
-		if (!is_memory_full_error ((GError *) error, mail_op)) {
-			/* Try again if there is no full memory condition */
+		if (!check_memory_full_error ((GtkWidget *) source_win, (GError *) error,
+					      _("mail_in_ui_folder_create_error_memory"))) {
+			/* Show an error and try again if there is no
+			   full memory condition */
+			modest_platform_information_banner ((GtkWidget *) source_win, NULL,
+							    _("mail_in_ui_folder_create_error"));
 			do_create_folder (source_win, parent_folder, (const gchar *) suggested_name);
 		}
 	} else {
@@ -3465,7 +3480,8 @@ do_create_folder_performer (gboolean canceled,
 
 	if (canceled || err) {
 		/* In memory full conditions we could get this error here */
-		check_memory_full_error ((GtkWidget *) parent_window, err);
+		check_memory_full_error ((GtkWidget *) parent_window, err, 
+					 _("mail_in_ui_folder_create_error_memory"));
 
 		/* This happens if we have selected the outbox folder
 		   as the parent */
@@ -3598,7 +3614,7 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 	if (!error)
 		g_return_if_reached ();
 
-	mem_full = is_memory_full_error ((GError *) error, mail_op);
+	mem_full = is_memory_full_error ((GError *) error, mail_op, NULL);
 	if (mem_full) {
 		message = g_strdup_printf (_KR("cerm_device_memory_full"), "");
 	} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
@@ -3662,7 +3678,7 @@ on_rename_folder_performer (gboolean canceled,
 
 	if (canceled || err) {
 		/* In memory full conditions we could get this error here */
-		check_memory_full_error ((GtkWidget *) parent_window, err);
+		check_memory_full_error ((GtkWidget *) parent_window, err, NULL);
 	} else {
 
 		mail_op =
@@ -5642,7 +5658,7 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
 
-	if (error && is_memory_full_error ((GError *) error, mail_op)) {
+	if (error && is_memory_full_error ((GError *) error, mail_op, NULL)) {
 		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
 		modest_platform_information_banner ((GtkWidget *) win, NULL, msg);
 		g_free (msg);
@@ -5681,7 +5697,7 @@ xfer_messages_performer  (gboolean canceled,
 	helper = (XferMsgsHelper *) user_data;
 
 	if (canceled || err) {
-		if (!check_memory_full_error ((GtkWidget *) parent_window, err)) {
+		if (!check_memory_full_error ((GtkWidget *) parent_window, err, NULL)) {
 			/* Show the proper error message */
 			modest_ui_actions_on_account_connection_error (parent_window, account);
 		}
@@ -6277,7 +6293,7 @@ retrieve_msg_contents_performer (gboolean canceled,
 	TnyList *headers = TNY_LIST (user_data);
 
 	if (err || canceled) {
-		check_memory_full_error ((GtkWidget *) parent_window, err);
+		check_memory_full_error ((GtkWidget *) parent_window, err, NULL);
 		goto out;
 	}
 
