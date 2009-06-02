@@ -35,6 +35,9 @@
 #endif
 #include <glib/gi18n.h>
 #include "modest-text-utils.h"
+#ifdef MODEST_USE_LIBTIME
+#include <clockd/libtime.h>
+#endif
 
 typedef enum {
 	DATETIME_FORMAT_12H,
@@ -253,12 +256,16 @@ modest_datetime_formatter_format_time (ModestDatetimeFormatter *self,
 	const gchar *format_string = NULL;
 	gboolean is_pm;
 	struct tm localtime_tm = {0, };
-	time_t date_copy;
 
 	g_return_val_if_fail (MODEST_IS_DATETIME_FORMATTER (self), NULL);
 	priv = MODEST_DATETIME_FORMATTER_GET_PRIVATE (self);
+#ifdef MODEST_USE_LIBTIME
+	time_get_local_ex (date, &localtime_tm);
+#else
+	time_t date_copy;
 	date_copy = date;
 	localtime_r (&date_copy, &localtime_tm);
+#endif
 	is_pm = (localtime_tm.tm_hour/12) % 2;
 
 	switch (priv->current_format) {
@@ -298,10 +305,25 @@ modest_datetime_formatter_display_datetime (ModestDatetimeFormatter *self,
 					    time_t date)
 {
 
-	int day = time (NULL) / (24*60*60);
-	int date_day = date / (24*60*60);
+	struct tm today_localtime_tm = {0, };
+	struct tm date_localtime_tm = {0, };
+	time_t today;
 
-	if (day == date_day)
+	today = time (NULL);
+#ifdef MODEST_USE_LIBTIME
+	time_get_local_ex (today, &today_localtime_tm);
+	time_get_local_ex (date, &date_localtime_tm);
+#else
+	time_t date_copy;
+	date_copy = today;
+	localtime_r (&date_copy, &today_localtime_tm);
+	date_copy = date;
+	localtime_r (&date_copy, &date_localtime_tm);
+#endif
+
+	if (today_localtime_tm.tm_mday == date_localtime_tm.tm_mday &&
+	    today_localtime_tm.tm_mon == date_localtime_tm.tm_mon &&
+	    today_localtime_tm.tm_year == date_localtime_tm.tm_year)
 		return modest_datetime_formatter_format_time (self, date);
 	else
 		return modest_datetime_formatter_format_date (self, date);
