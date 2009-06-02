@@ -893,7 +893,10 @@ modest_hildon2_window_mgr_get_modal (ModestWindowMgr *self)
 			break;
 	}
 
-	return (GtkWindow *) toplevel;
+	if (toplevel && GTK_WIDGET_VISIBLE (toplevel) && gtk_window_get_modal ((GtkWindow *) toplevel))
+		return (GtkWindow *) toplevel;
+	else
+		return NULL;
 }
 
 
