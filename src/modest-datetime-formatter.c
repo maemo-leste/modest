@@ -37,6 +37,8 @@
 #include "modest-text-utils.h"
 #ifdef MODEST_USE_LIBTIME
 #include <clockd/libtime.h>
+#include <libosso.h>
+#include <modest-platform.h>
 #endif
 
 typedef enum {
@@ -159,6 +161,14 @@ clock_format_changed (GConfClient *gconf,
 }
 #endif
 
+#ifdef MODEST_USE_LIBTIME
+static void 
+time_changed_cb (gpointer userdata)
+{
+	time_get_synced ();
+}
+#endif
+
 static void
 init_format (ModestDatetimeFormatter *obj)
 {
@@ -184,8 +194,16 @@ init_format (ModestDatetimeFormatter *obj)
 		g_warning ("Error listening to time format in gconf %s", err->message);
 		g_error_free (err);
 	}
+
 	update_format (obj);
 #endif
+
+#ifdef MODEST_USE_LIBTIME
+	osso_time_set_notification_cb (modest_platform_get_osso_context (),
+				       time_changed_cb,
+				       obj);
+#endif
+
 }
 
 static void
