@@ -203,6 +203,7 @@ init_format (ModestDatetimeFormatter *obj)
 	osso_time_set_notification_cb (modest_platform_get_osso_context (),
 				       time_changed_cb,
 				       obj);
+	time_get_synced ();
 #endif
 
 }
