@@ -166,6 +166,7 @@ static void
 time_changed_cb (gpointer userdata)
 {
 	time_get_synced ();
+	g_signal_emit (G_OBJECT (userdata), signals[FORMAT_CHANGED_SIGNAL], 0);
 }
 #endif
 
