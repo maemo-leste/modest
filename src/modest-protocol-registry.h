@@ -54,6 +54,7 @@ G_BEGIN_DECLS
 #define MODEST_PROTOCOL_REGISTRY_USE_ALTERNATE_PORT "use-alternate-port"
 #define MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS "store-has-folders"
 #define MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD "store-forbid-message-add"
+#define MODEST_PROTOCOL_REGISTRY_NO_AUTO_UPDATE_PROTOCOLS "no-auto-update"
 
 /* convenience macros */
 #define MODEST_TYPE_PROTOCOL_REGISTRY             (modest_protocol_registry_get_type())

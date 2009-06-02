@@ -2363,6 +2363,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	gchar *acc_name = NULL;
 	SendReceiveInfo *info;
 	ModestTnyAccountStore *acc_store;
+	TnyAccount *account;
 
 	/* If no account name was provided then get the current account, and if
 	   there is no current account then pick the default one: */
@@ -2380,6 +2381,25 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	}
 
 	acc_store = modest_runtime_get_account_store ();
+	account = modest_tny_account_store_get_server_account (acc_store, acc_name, TNY_ACCOUNT_TYPE_STORE);
+
+	/* Do not automatically refresh accounts that are flagged as
+	   NO_AUTO_UPDATE. This could be useful for accounts that
+	   handle their own update times */
+	if (!interactive) {
+		ModestProtocolType proto = modest_tny_account_get_protocol_type (account);
+		if (proto != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
+			const gchar *tag = MODEST_PROTOCOL_REGISTRY_NO_AUTO_UPDATE_PROTOCOLS;
+			ModestProtocolRegistry *registry = modest_runtime_get_protocol_registry ();
+
+			if (modest_protocol_registry_protocol_type_has_tag (registry, proto, tag)) {
+				g_debug ("%s no auto update allowed for account %s", __FUNCTION__, account_name);
+				g_object_unref (account);
+				g_free (acc_name);
+				return;
+			}
+		}
+	}
 
 	/* Create the info for the connect and perform */
 	info = g_slice_new (SendReceiveInfo);
@@ -2387,8 +2407,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	info->win = (win) ? g_object_ref (win) : NULL;
 	info->poke_status = poke_status;
 	info->interactive = interactive;
-	info->account = modest_tny_account_store_get_server_account (acc_store, acc_name,
-								     TNY_ACCOUNT_TYPE_STORE);
+	info->account = account;
 	/* We need to create the operation here, because otherwise it
 	   could happen that the queue emits the queue-empty signal
 	   while we're trying to connect the account */
