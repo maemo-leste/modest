@@ -939,6 +939,7 @@ init_window (ModestMsgEditWindow *obj)
 	g_object_unref (value_size_group);
 
 	priv->brand_icon = gtk_image_new ();
+	gtk_misc_set_alignment (GTK_MISC (priv->brand_icon), 0.5, 0.5);
 	priv->brand_label = gtk_label_new (NULL);
 	gtk_misc_set_alignment (GTK_MISC (priv->brand_label), 0.0, 0.5);
 	gtk_widget_set_no_show_all (priv->brand_icon, TRUE);
