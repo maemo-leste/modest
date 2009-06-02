@@ -85,9 +85,9 @@ struct _ModestAccountProtocolClass {
 	gchar * (*get_signature) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox, gboolean *has_signature);
 	const GdkPixbuf * (*get_icon) (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
 				       GObject *object, guint icon_size);
+	gchar * (*get_service_name) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
 
 	/* Padding for future expansions */
-	void (*_reserved1) (void);
 	void (*_reserved2) (void);
 	void (*_reserved3) (void);
 	void (*_reserved4) (void);
@@ -404,6 +404,20 @@ gchar *modest_account_protocol_get_signature (ModestAccountProtocol *self,
  */
 const GdkPixbuf * modest_account_protocol_get_icon (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
 						    GObject *object, guint icon_size);
+
+/**
+ * modest_account_protocol_get_service_name:
+ * @self: a #ModestAccountProtocol
+ * @account_id: a transport account name
+ * @mailbox: a mailbox
+ *
+ * Obtain the service name string for the account and mailbox.
+ *
+ * Returns: a newly allocated string
+ */
+gchar *modest_account_protocol_get_service_name (ModestAccountProtocol *self,
+						 const gchar *account_id,
+						 const gchar *mailbox);
 
 
 G_END_DECLS
