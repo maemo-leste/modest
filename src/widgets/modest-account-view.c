@@ -220,7 +220,7 @@ get_last_updated_string(ModestAccountView *self, ModestAccountMgr* account_mgr, 
 	time (&now);
 	localtime_tm = localtime (&now);
 	if (last_updated)
-		last_updated -= time_get_utc_offset (localtime_tm->tm_zone);
+		last_updated -= localtime_tm->tm_gmtoff;
 #endif
 	g_object_unref (server_settings);
 	account_name = modest_account_settings_get_account_name (settings);
