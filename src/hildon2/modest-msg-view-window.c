@@ -2748,19 +2748,21 @@ save_mime_parts_to_file_with_checks (GtkWindow *parent,
 	gboolean is_ok = TRUE;
         gint replaced_files = 0;
         const GList *files = info->pairs;
-        const GList *iter;
+        const GList *iter, *to_replace;
 
         for (iter = files; (iter != NULL) && (replaced_files < 2); iter = g_list_next(iter)) {
                 SaveMimePartPair *pair = iter->data;
                 if (modest_utils_file_exists (pair->filename)) {
 			replaced_files++;
+			if (replaced_files == 1)
+				to_replace = iter;
                 }
         }
 	if (replaced_files) {
 		gint response;
 
 		if (replaced_files == 1) {
-			SaveMimePartPair *pair = files->data;
+			SaveMimePartPair *pair = to_replace->data;
 			const gchar *basename = strrchr (pair->filename, G_DIR_SEPARATOR) + 1;
 			gchar *escaped_basename, *message;
 
