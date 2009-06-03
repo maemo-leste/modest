@@ -808,6 +808,9 @@ on_visible_account_changed (ModestFolderView *folder_view,
 {
 	TnyAccount *account;
 
+	if (!account_id)
+		return;
+
 	account = modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store(),
 							       MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
 							       account_id);
