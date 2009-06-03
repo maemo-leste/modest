@@ -3831,6 +3831,11 @@ on_delete_folder_cb (gboolean canceled,
 	GtkTreeSelection *sel;
 
 	if (!MODEST_IS_WINDOW(parent_window) || canceled || (err!=NULL)) {
+		/* Note that the connection process can fail due to
+		   memory low conditions as it can not successfully
+		   store the summary */
+		if (!check_memory_full_error ((GtkWidget*) parent_window, err, NULL))
+			g_debug ("Error connecting when trying to delete a folder");
 		g_object_unref (G_OBJECT (info->folder));
 		g_free (info);
 		return;
