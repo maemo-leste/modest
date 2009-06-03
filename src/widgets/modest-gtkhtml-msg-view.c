@@ -186,6 +186,7 @@ static TnyList *modest_gtkhtml_msg_view_get_attachments (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_grab_focus (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 static void modest_gtkhtml_msg_view_request_fetch_images (ModestMsgView *view);
+static void modest_gtkhtml_msg_view_set_branding (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 static gboolean modest_gtkhtml_msg_view_has_blocked_external_images (ModestMsgView *view);
 static void modest_gtkhtml_msg_view_set_msg_with_other_body_default (ModestMsgView *view, TnyMsg *msg, TnyMimePart *part);
 static GtkAdjustment *modest_gtkhtml_msg_view_get_vadjustment_default (ModestMsgView *self);
@@ -202,6 +203,7 @@ static void modest_gtkhtml_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_gtkhtml_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
 static gboolean modest_gtkhtml_msg_view_has_blocked_external_images_default (ModestMsgView *view);
 static void modest_gtkhtml_msg_view_request_fetch_images_default (ModestMsgView *view);
+static void modest_gtkhtml_msg_view_set_branding_default (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 
 /* internal api */
 static void     set_header     (ModestGtkhtmlMsgView *self, TnyHeader *header);
@@ -225,6 +227,7 @@ static TnyList *get_attachments (ModestGtkhtmlMsgView *self);
 static void grab_focus (ModestGtkhtmlMsgView *self);
 static void remove_attachment (ModestGtkhtmlMsgView *view, TnyMimePart *attachment);
 static void request_fetch_images (ModestGtkhtmlMsgView *view);
+static void set_branding (ModestGtkhtmlMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 static gboolean has_blocked_external_images (ModestGtkhtmlMsgView *view);
 
 /* list properties */
@@ -433,6 +436,7 @@ modest_gtkhtml_msg_view_class_init (ModestGtkhtmlMsgViewClass *klass)
 	klass->grab_focus_func = modest_gtkhtml_msg_view_grab_focus_default;
 	klass->remove_attachment_func = modest_gtkhtml_msg_view_remove_attachment_default;
 	klass->request_fetch_images_func = modest_gtkhtml_msg_view_request_fetch_images_default;
+	klass->set_branding_func = modest_gtkhtml_msg_view_set_branding_default;
 	klass->has_blocked_external_images_func = modest_gtkhtml_msg_view_has_blocked_external_images_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestGtkhtmlMsgViewPrivate));
@@ -1507,6 +1511,14 @@ request_fetch_images (ModestGtkhtmlMsgView *self)
 	}
 }
 
+static void
+set_branding (ModestGtkhtmlMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
+
+	modest_mail_header_view_set_branding (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), brand_name, brand_icon);
+}
+
 static gboolean
 has_blocked_external_images (ModestGtkhtmlMsgView *self)
 {
@@ -2369,6 +2381,7 @@ modest_msg_view_init (gpointer g, gpointer iface_data)
 	klass->grab_focus_func = modest_gtkhtml_msg_view_grab_focus;
 	klass->remove_attachment_func = modest_gtkhtml_msg_view_remove_attachment;
 	klass->request_fetch_images_func = modest_gtkhtml_msg_view_request_fetch_images;
+	klass->set_branding_func = modest_gtkhtml_msg_view_set_branding;
 	klass->has_blocked_external_images_func = modest_gtkhtml_msg_view_has_blocked_external_images;
 
 	return;
@@ -2540,6 +2553,18 @@ static void
 modest_gtkhtml_msg_view_request_fetch_images_default (ModestMsgView *self)
 {
 	request_fetch_images (MODEST_GTKHTML_MSG_VIEW (self));
+}
+
+static void
+modest_gtkhtml_msg_view_set_branding (ModestMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	MODEST_GTKHTML_MSG_VIEW_GET_CLASS (self)->set_branding_func (self, brand_name, brand_icon);
+}
+
+static void
+modest_gtkhtml_msg_view_set_branding_default (ModestMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	set_branding (MODEST_GTKHTML_MSG_VIEW (self), brand_name, brand_icon);
 }
 
 static gboolean

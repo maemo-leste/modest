@@ -128,6 +128,12 @@ modest_msg_view_remove_attachment (ModestMsgView *self, TnyMimePart *attachment)
 }
 
 void
+modest_msg_view_set_branding (ModestMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	MODEST_MSG_VIEW_GET_IFACE (self)->set_branding_func (self, brand_name, brand_icon);
+}
+
+void
 modest_msg_view_request_fetch_images (ModestMsgView *self)
 {
 	MODEST_MSG_VIEW_GET_IFACE (self)->request_fetch_images_func (self);

@@ -63,6 +63,12 @@ modest_mail_header_view_set_loading (ModestMailHeaderView *self, gboolean is_loa
 	MODEST_MAIL_HEADER_VIEW_GET_IFACE (self)->set_loading (self, is_loading);
 }
 
+void
+modest_mail_header_view_set_branding (ModestMailHeaderView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	MODEST_MAIL_HEADER_VIEW_GET_IFACE (self)->set_branding (self, brand_name, brand_icon);
+}
+
 const GtkWidget *
 modest_mail_header_view_add_custom_header (ModestMailHeaderView *self,
 					   const gchar *label,

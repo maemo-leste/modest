@@ -132,6 +132,7 @@ static TnyList *modest_mozembed_msg_view_get_attachments (ModestMsgView *self);
 static void modest_mozembed_msg_view_grab_focus (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
 static void modest_mozembed_msg_view_request_fetch_images (ModestMsgView *view);
+static void modest_mozembed_msg_view_set_branding (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 static gboolean modest_mozembed_msg_view_has_blocked_external_images (ModestMsgView *view);
 static void modest_mozembed_msg_view_set_msg_with_other_body_default (ModestMsgView *self, TnyMsg *msg, TnyMimePart *part);
 static GtkAdjustment *modest_mozembed_msg_view_get_vadjustment_default (ModestMsgView *self);
@@ -148,6 +149,7 @@ static void modest_mozembed_msg_view_grab_focus_default (ModestMsgView *self);
 static void modest_mozembed_msg_view_remove_attachment_default (ModestMsgView *view, TnyMimePart *attachment);
 static gboolean modest_mozembed_msg_view_has_blocked_external_images_default (ModestMsgView *view);
 static void modest_mozembed_msg_view_request_fetch_images_default (ModestMsgView *view);
+static void modest_mozembed_msg_view_set_branding_default (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 
 /* internal api */
 static void     set_header     (ModestMozembedMsgView *self, TnyHeader *header);
@@ -171,6 +173,7 @@ static TnyList *get_attachments (ModestMozembedMsgView *self);
 static void grab_focus (ModestMozembedMsgView *self);
 static void remove_attachment (ModestMozembedMsgView *view, TnyMimePart *attachment);
 static void request_fetch_images (ModestMozembedMsgView *view);
+static void set_branding (ModestMozembedMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 static gboolean has_blocked_external_images (ModestMozembedMsgView *view);
 
 typedef struct _ModestMozembedMsgViewPrivate ModestMozembedMsgViewPrivate;
@@ -342,6 +345,7 @@ modest_mozembed_msg_view_class_init (ModestMozembedMsgViewClass *klass)
 	klass->grab_focus_func = modest_mozembed_msg_view_grab_focus_default;
 	klass->remove_attachment_func = modest_mozembed_msg_view_remove_attachment_default;
 	klass->request_fetch_images_func = modest_mozembed_msg_view_request_fetch_images_default;
+	klass->set_branding_func = modest_mozembed_msg_view_set_branding_default;
 	klass->has_blocked_external_images_func = modest_mozembed_msg_view_has_blocked_external_images_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestMozembedMsgViewPrivate));
@@ -561,6 +565,14 @@ request_fetch_images (ModestMozembedMsgView *self)
 		}
 		tny_msg_set_allow_external_images (TNY_MSG (priv->msg), TRUE);
 	}
+}
+
+static void
+set_branding (ModestMozembedMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	ModestMozembedMsgViewPrivate *priv = MODEST_MOZEMBED_MSG_VIEW_GET_PRIVATE (self);
+
+	modest_mail_header_view_set_branding (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), brand_name, brand_icon);
 }
 
 static gboolean
@@ -1260,6 +1272,7 @@ modest_msg_view_init (gpointer g, gpointer iface_data)
 	klass->grab_focus_func = modest_mozembed_msg_view_grab_focus;
 	klass->remove_attachment_func = modest_mozembed_msg_view_remove_attachment;
 	klass->request_fetch_images_func = modest_mozembed_msg_view_request_fetch_images;
+	klass->set_branding_func = modest_mozembed_msg_view_set_branding;
 	klass->has_blocked_external_images_func = modest_mozembed_msg_view_has_blocked_external_images;
 
 	return;
@@ -1431,6 +1444,18 @@ static void
 modest_mozembed_msg_view_request_fetch_images_default (ModestMsgView *self)
 {
 	request_fetch_images (MODEST_MOZEMBED_MSG_VIEW (self));
+}
+
+static void
+modest_mozembed_msg_view_set_branding (ModestMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	MODEST_MOZEMBED_MSG_VIEW_GET_CLASS (self)->set_branding_func (self, brand_name, brand_icon);
+}
+
+static void
+modest_mozembed_msg_view_set_branding_default (ModestMsgView *self, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	set_branding (MODEST_MOZEMBED_MSG_VIEW (self), brand_name, brand_icon);
 }
 
 static gboolean

@@ -68,6 +68,7 @@ struct _ModestMsgViewIface {
 	TnyList * (*get_attachments_func) (ModestMsgView *self);
 	void (*grab_focus_func) (ModestMsgView *self);
 	void (*remove_attachment_func) (ModestMsgView *view, TnyMimePart *attachment);
+	void (*set_branding_func) (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 
 	/* signals */
 	void (*set_scroll_adjustments)      (ModestMsgView *msg_view,
@@ -113,6 +114,7 @@ TnyList *modest_msg_view_get_selected_attachments (ModestMsgView *self);
 TnyList *modest_msg_view_get_attachments (ModestMsgView *self);
 void modest_msg_view_grab_focus (ModestMsgView *self);
 void modest_msg_view_remove_attachment (ModestMsgView *view, TnyMimePart *attachment);
+void modest_msg_view_set_branding (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 void modest_msg_view_set_view_images (ModestMsgView *view, gboolean view_images);
 void modest_msg_view_request_fetch_images (ModestMsgView *view);
 gboolean modest_msg_view_has_blocked_external_images (ModestMsgView *view);

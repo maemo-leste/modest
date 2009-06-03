@@ -55,6 +55,8 @@ struct _ModestCompactMailHeaderViewPriv
 	GtkWidget    *fromto_contents;
 	GtkWidget    *time_label;
 	GtkWidget    *date_label;
+	GtkWidget    *brand_label;
+	GtkWidget    *brand_image;
 
 	GSList       *custom_labels;
 
@@ -97,6 +99,8 @@ static gboolean modest_compact_mail_header_view_get_loading (ModestMailHeaderVie
 static gboolean modest_compact_mail_header_view_get_loading_default (ModestMailHeaderView *headers_view);
 static void modest_compact_mail_header_view_set_loading (ModestMailHeaderView *headers_view, gboolean is_loading);
 static void modest_compact_mail_header_view_set_loading_default (ModestMailHeaderView *headers_view, gboolean is_loading);
+static void modest_compact_mail_header_view_set_branding (ModestMailHeaderView *headers_view, const gchar *brand_name, const GdkPixbuf *brand_icon);
+static void modest_compact_mail_header_view_set_branding_default (ModestMailHeaderView *headers_view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 static const GtkWidget *modest_compact_mail_header_view_add_custom_header (ModestMailHeaderView *self,
 									    const gchar *label,
 									    GtkWidget *custom_widget,
@@ -327,6 +331,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	GtkWidget *from_date_hbox, *vbox, *main_vbox;
 	GtkWidget *main_align;
 	GtkWidget *headers_date_hbox;
+	GtkWidget *date_brand_vbox, *brand_hbox;
 
 	priv->header = NULL;
 	priv->custom_labels = NULL;
@@ -358,6 +363,16 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_misc_set_alignment (GTK_MISC (priv->time_label), 1.0, 1.0);
 	gtk_misc_set_padding (GTK_MISC (priv->time_label), MODEST_MARGIN_DOUBLE, 0);
 
+	priv->brand_label = gtk_label_new (NULL);
+	gtk_label_set_justify (GTK_LABEL (priv->brand_label), GTK_JUSTIFY_RIGHT);
+	gtk_misc_set_alignment (GTK_MISC (priv->brand_label), 1.0, 0.5);
+	gtk_misc_set_padding (GTK_MISC (priv->brand_label), MODEST_MARGIN_DOUBLE, 0);
+	gtk_widget_set_no_show_all (priv->brand_label, TRUE);
+
+	priv->brand_image = gtk_image_new ();
+	gtk_misc_set_alignment (GTK_MISC (priv->brand_image), 0.5, 0.5);
+	gtk_widget_set_no_show_all (priv->brand_image, TRUE);
+
 	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->fromto_label, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->fromto_contents, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (from_date_hbox), priv->time_label, FALSE, FALSE, 0);
@@ -376,9 +391,17 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_container_set_focus_chain (GTK_CONTAINER (priv->headers_vbox), NULL);
 	g_object_ref (priv->headers_vbox);
 
+	brand_hbox = gtk_hbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (brand_hbox), priv->brand_image, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (brand_hbox), priv->brand_label, TRUE, TRUE, 0);
+
+	date_brand_vbox = gtk_vbox_new (FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (date_brand_vbox), priv->date_label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (date_brand_vbox), brand_hbox, FALSE, FALSE, 0);
+
 	gtk_box_pack_start (GTK_BOX (main_vbox), vbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (headers_date_hbox), priv->headers_vbox, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (headers_date_hbox), priv->date_label, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (headers_date_hbox), date_brand_vbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (main_vbox), headers_date_hbox, FALSE, FALSE, 0);
 
 	main_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
@@ -445,6 +468,7 @@ modest_mail_header_view_init (gpointer g, gpointer iface_data)
 	klass->set_priority = modest_compact_mail_header_view_set_priority;
 	klass->get_loading = modest_compact_mail_header_view_get_loading;
 	klass->set_loading = modest_compact_mail_header_view_set_loading;
+	klass->set_branding = modest_compact_mail_header_view_set_branding;
 	klass->add_custom_header = modest_compact_mail_header_view_add_custom_header;
 
 	return;
@@ -464,6 +488,7 @@ modest_compact_mail_header_view_class_init (ModestCompactMailHeaderViewClass *kl
 	klass->get_priority_func = modest_compact_mail_header_view_get_priority_default;
 	klass->set_loading_func = modest_compact_mail_header_view_set_loading_default;
 	klass->get_loading_func = modest_compact_mail_header_view_get_loading_default;
+	klass->set_branding_func = modest_compact_mail_header_view_set_branding_default;
 	klass->add_custom_header_func = modest_compact_mail_header_view_add_custom_header_default;
 	object_class->finalize = modest_compact_mail_header_view_finalize;
 
@@ -588,6 +613,37 @@ modest_compact_mail_header_view_set_loading_default (ModestMailHeaderView *heade
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
 
 	priv->is_loading = is_loading;
+}
+
+static void
+modest_compact_mail_header_view_set_branding (ModestMailHeaderView *headers_view, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	MODEST_COMPACT_MAIL_HEADER_VIEW_GET_CLASS (headers_view)->set_branding_func (headers_view, brand_name, brand_icon);
+}
+
+static void
+modest_compact_mail_header_view_set_branding_default (ModestMailHeaderView *headers_view, const gchar *brand_name, const GdkPixbuf *brand_icon)
+{
+	ModestCompactMailHeaderViewPriv *priv;
+
+	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (headers_view));
+	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (headers_view);
+
+	if (brand_name) {
+		gtk_label_set_text (GTK_LABEL (priv->brand_label), brand_name);
+		gtk_widget_show (priv->brand_label);
+	} else {
+		gtk_widget_hide (priv->brand_label);
+	}
+
+	if (brand_icon) {
+		gtk_image_set_from_pixbuf (GTK_IMAGE (priv->brand_image), (GdkPixbuf *) brand_icon);
+		gtk_widget_show (priv->brand_image);
+	} else {
+		gtk_widget_hide (priv->brand_image);
+	}
+
+
 }
 
 static void 

@@ -97,6 +97,7 @@ struct _ModestGtkhtmlMsgViewClass {
 	void (*grab_focus_func) (ModestMsgView *self);
 	void (*remove_attachment_func) (ModestMsgView *view, TnyMimePart *attachment);
 	void (*request_fetch_images_func) (ModestMsgView *view);
+	void (*set_branding_func) (ModestMsgView *view, const gchar *brand_name, const GdkPixbuf *brand_icon);
 	gboolean (*has_blocked_external_images_func) (ModestMsgView *view);
 
 	void (*set_scroll_adjustments) (ModestGtkhtmlMsgView *msg_view, GtkAdjustment *hadj, GtkAdjustment *vadj);

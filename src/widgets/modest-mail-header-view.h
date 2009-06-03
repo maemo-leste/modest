@@ -56,6 +56,7 @@ struct _ModestMailHeaderViewIface {
 					       gboolean start);
 	void (*set_loading) (ModestMailHeaderView *self, gboolean is_loading);
 	gboolean (*get_loading) (ModestMailHeaderView *self);
+	void (*set_branding) (ModestMailHeaderView *self, const gchar *brand_name, const GdkPixbuf *brand_icon);
 	
 	/* signals */
 	void (*show_details) (ModestMailHeaderView *msgview,
@@ -84,6 +85,7 @@ const GtkWidget *modest_mail_header_view_add_custom_header (ModestMailHeaderView
 							    gboolean start);
 void modest_mail_header_view_set_loading (ModestMailHeaderView *self, gboolean is_loading);
 gboolean modest_mail_header_view_get_loading (ModestMailHeaderView *self);
+void modest_mail_header_view_set_branding (ModestMailHeaderView *self, const gchar *brand_name, const GdkPixbuf *brand_icon);
 
 
 G_END_DECLS
