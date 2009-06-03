@@ -1,3 +1,26 @@
+modest (3.0.17-rc10) unstable; urgency=low
+
+  * Fixes: NB#110512    "Last Updated" time is proper
+  * Fixes: NB#113941 	email application very slow with continuous mail notifications
+  * Fixes: NB#114986 	"Unable to create folder. External MMC memory full" information note should show when attempt to create folder if external MMC is full
+  * Fixes: NB#118464 	New message with no subject is moved to outbox using â€œCtrl+Enterâ€ shortcut key.
+  * Fixes: NB#119126 	LED is not glowing for incoming mail when E-mail main view is open and display is off
+  * Fixes: NB#119622 	Mem full: No notification is shown when an attempt to delete a user defined remote Gmail folder fails
+  * Fixes: NB#119631 	Mem full and Email is not running: attempt to launch editor from other applications silently fails
+  * Fixes: NB#119633 	Archive folder name shown untranslated in the path area in Move to folder dialog
+  * Fixes: NB#119715 	E-Mail hangs while interacting with Camera under mentioned scenario
+  * Fixes: NB#119775 	mcen_va_new_messages logical ID
+  * Fixes: NB#119784 	Modest spams the console
+  * Fixes: NB#119818 	Folders view hierarchy is sometimes displayed incorrectly
+  * Fixes: NB#119920 	Folder status representation string has wrong vertical alignment
+  * Fixes: NB#120155 	Wrong file name is shown in the Replace existing file of same name confirmation note
+  * Fixes: NB#120160 	Colour pallete window appears instead of new message editor
+  * Fixes: NB#120277 	Different Infobanners while sharing a large file via email through FileManager & as an attachment in new email
+  * Fixes: NB#120338 	modest plugins need a way to notify modest that they don't want to received timed-interval syncs
+  * Fixes: NB#120438 	Remote Folders are not displayed while creating New Folder in Change Folder Dialog. 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 03 Jun 2009 16:51:21 +0300
+
 modest (3.0.17-rc9) unstable; urgency=low
 
   * Fixes: NB#111445    Email. truncation of Â§mcen_ia_customsetup_completeÂ§
