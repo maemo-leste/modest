@@ -66,6 +66,7 @@
 #include <glib/gstdio.h>
 #include <modest-debug.h>
 #include <modest-header-window.h>
+#include <modest-account-protocol.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -227,6 +228,7 @@ static void setup_menu (ModestMsgViewWindow *self);
 static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
 						   GdkEvent *event,
 						   gpointer userdata);
+static void update_branding (ModestMsgViewWindow *self);
 
 
 /* list my signals */
@@ -904,6 +906,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	update_window_title (MODEST_MSG_VIEW_WINDOW (window));
+	update_branding (MODEST_MSG_VIEW_WINDOW (window));
 
 	/* gtk_widget_show_all (GTK_WIDGET (window)); */
 	modest_msg_view_window_update_priority (window);
@@ -991,6 +994,7 @@ modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
 	}
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), NULL);
+	update_branding (MODEST_MSG_VIEW_WINDOW (window));
 
 	path = gtk_tree_row_reference_get_path (row_reference);
 	if (gtk_tree_model_get_iter (priv->header_model, &iter, path)) {
@@ -1033,6 +1037,7 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	priv->is_search_result = TRUE;
 
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+	update_branding (MODEST_MSG_VIEW_WINDOW (window));
 	
 	update_window_title (window);
 	/* gtk_widget_show_all (GTK_WIDGET (window));*/
@@ -1082,6 +1087,7 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	}
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
+	update_branding (MODEST_MSG_VIEW_WINDOW (obj));
 
 	/* gtk_widget_show_all (GTK_WIDGET (obj)); */
 
@@ -2087,6 +2093,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 		modest_msg_view_window_update_priority (self);
 		update_window_title (MODEST_MSG_VIEW_WINDOW (self));
+		update_branding (MODEST_MSG_VIEW_WINDOW (self));
 		modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 	}
 
@@ -3075,6 +3082,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	tny_msg_rewrite_cache (msg);
 	tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	g_object_unref (msg);
+	update_branding (MODEST_MSG_VIEW_WINDOW (window));
 
 	g_object_unref (mime_parts);
 
@@ -3450,4 +3458,35 @@ modest_msg_view_window_reload (ModestMsgViewWindow *self)
 	}
 
 	g_object_unref (header);
+}
+
+static void
+update_branding (ModestMsgViewWindow *self)
+{
+	const gchar *account; 
+	const gchar *mailbox;
+	ModestAccountMgr *mgr;
+	ModestProtocol *protocol = NULL;
+	gchar *service_name = NULL;
+	const GdkPixbuf *service_icon = NULL;
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+	account = modest_window_get_active_account (MODEST_WINDOW (self));
+	mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (self));
+
+	mgr = modest_runtime_get_account_mgr ();
+	
+	if (modest_account_mgr_account_is_multimailbox (mgr, account, &protocol)) {
+		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+			service_name = modest_account_protocol_get_service_name (MODEST_ACCOUNT_PROTOCOL (protocol),
+										 account, mailbox);
+			service_icon = modest_account_protocol_get_service_icon (MODEST_ACCOUNT_PROTOCOL (protocol),
+										 account, mailbox, MODEST_ICON_SIZE_SMALL);
+		}
+	}
+
+	modest_msg_view_set_branding (MODEST_MSG_VIEW (priv->msg_view), service_name, service_icon);
+	g_free (service_name);
 }

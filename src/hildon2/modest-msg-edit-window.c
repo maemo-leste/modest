@@ -1626,7 +1626,6 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
  	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
 	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	update_branding (MODEST_MSG_EDIT_WINDOW (obj), priv->last_from_account);
 	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
 		priv->original_mailbox = g_strdup (mailbox);
@@ -1643,6 +1642,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
 	}
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	update_branding (MODEST_MSG_EDIT_WINDOW (obj), priv->last_from_account);
 	hildon_button_set_title (HILDON_BUTTON (priv->from_field),
 				 _("mail_va_from"));
 	hildon_button_set_value (HILDON_BUTTON (priv->from_field), 
