@@ -937,7 +937,6 @@ on_account_removed (TnyAccountStore *acc_store,
 {
 	HildonWindowStack *stack;
 	ModestWindow *current_top;
-	gboolean has_accounts;
 
 	/* Ignore transport account removals */
 	if (TNY_IS_TRANSPORT_ACCOUNT (account))
@@ -945,7 +944,6 @@ on_account_removed (TnyAccountStore *acc_store,
 
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
-	has_accounts = modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (), TRUE);
 
 	/* if we're showing the header view of the currently deleted
 	   account, or the outbox and we deleted the last account,
@@ -953,7 +951,6 @@ on_account_removed (TnyAccountStore *acc_store,
 	if (current_top && MODEST_IS_HEADER_WINDOW (current_top)) {
 		ModestHeaderView *header_view;
 		TnyFolder *folder;
-		gboolean deleted = FALSE;
 
 		header_view = modest_header_window_get_header_view (MODEST_HEADER_WINDOW (current_top));
 		folder = modest_header_view_get_folder (header_view);
@@ -964,25 +961,18 @@ on_account_removed (TnyAccountStore *acc_store,
 
 				my_account = tny_folder_get_account (folder);
 				if (my_account) {
-					if (my_account == account) {
+					if (my_account == account)
 						close_all_but_first (stack);
-						deleted = TRUE;
-					}
+
 					g_object_unref (my_account);
 				}
 			}
 
 			/* Close if viewing outbox and no account left */
-			if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_OUTBOX) {
-				if (!has_accounts) {
-					close_all_but_first (stack);
-					deleted = TRUE;
-				}
-			}
-			g_object_unref (folder);
+			if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_OUTBOX)
+				close_all_but_first (stack);
 
-			if (deleted)
-				current_top = (ModestWindow *) hildon_window_stack_peek (stack);
+			g_object_unref (folder);
 		}
 	}
 }

@@ -33,6 +33,7 @@
 #include <tny-folder-monitor.h>
 #include <tny-folder-change.h>
 #include <tny-error.h>
+#include <tny-merge-folder.h>
 #include <string.h>
 
 #include <modest-header-view.h>
@@ -2233,10 +2234,19 @@ on_account_removed (TnyAccountStore *self,
 	if (priv->folder) {
 		TnyAccount *my_account;
 
-		my_account = tny_folder_get_account (priv->folder);
-		if (my_account == account)
-			modest_header_view_clear (MODEST_HEADER_VIEW (user_data));
-		g_object_unref (my_account);
+		if (TNY_IS_MERGE_FOLDER (priv->folder) &&
+		    tny_folder_get_folder_type (priv->folder) == TNY_FOLDER_TYPE_OUTBOX) {
+			ModestTnyAccountStore *acc_store = modest_runtime_get_account_store ();
+			my_account = modest_tny_account_store_get_local_folders_account (acc_store);
+		} else {
+			my_account = tny_folder_get_account (priv->folder);
+		}
+
+		if (my_account) {
+			if (my_account == account)
+				modest_header_view_clear (MODEST_HEADER_VIEW (user_data));
+			g_object_unref (my_account);
+		}
 	}
 }
 
