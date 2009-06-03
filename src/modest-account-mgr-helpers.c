@@ -1251,3 +1251,33 @@ modest_account_mgr_get_signature_from_recipient (ModestAccountMgr *mgr,
 	return result;
 }
 
+void
+modest_account_mgr_get_branding_from_recipient (ModestAccountMgr *mgr, 
+						const gchar *current_recipient, 
+						gchar **service_name,
+						const GdkPixbuf **service_icon,
+						guint64 icon_size)
+{
+	gchar *mailbox = NULL;
+	gchar *account_name;
+	ModestProtocol *protocol = NULL;
+
+	*service_name = NULL;
+	*service_icon = NULL;
+
+	account_name = modest_utils_get_account_name_from_recipient (current_recipient, &mailbox);
+	if (modest_account_mgr_account_is_multimailbox (mgr, account_name, &protocol)) {
+		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+			gchar *name;
+			const GdkPixbuf *icon;
+			name = modest_account_protocol_get_service_name (MODEST_ACCOUNT_PROTOCOL (protocol),
+									 account_name, mailbox);
+			icon = modest_account_protocol_get_service_icon (MODEST_ACCOUNT_PROTOCOL (protocol),
+									 account_name, mailbox, icon_size);
+			*service_name = name;
+			*service_icon = icon;
+		}
+	}
+
+}
+

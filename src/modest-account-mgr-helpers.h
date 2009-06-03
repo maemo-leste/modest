@@ -128,6 +128,13 @@ gchar* modest_account_mgr_get_signature (ModestAccountMgr *self, const gchar* na
 
 gchar *modest_account_mgr_get_signature_from_recipient (ModestAccountMgr *self, const gchar *recipient,
 							gboolean *use_signature);
+
+void modest_account_mgr_get_branding_from_recipient (ModestAccountMgr *mgr, 
+						     const gchar *current_recipient, 
+						     gchar **service_name,
+						     const GdkPixbuf **service_icon,
+						     guint64 icon_size);
+
 gboolean modest_account_mgr_account_is_multimailbox (ModestAccountMgr *mgr,
 						     const gchar *account_name, 
 						     ModestProtocol **mmb_protocol);

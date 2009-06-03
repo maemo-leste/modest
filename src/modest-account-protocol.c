@@ -109,7 +109,8 @@ static gchar *modest_account_protocol_get_service_name_default (ModestAccountPro
 
 static const GdkPixbuf *modest_account_protocol_get_service_icon_default (ModestAccountProtocol *self,
 									  const gchar *account_id,
-									  const gchar *mailbox);
+									  const gchar *mailbox,
+									  guint icon_size);
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -739,15 +740,17 @@ modest_account_protocol_get_service_name_default (ModestAccountProtocol *self,
 const GdkPixbuf *
 modest_account_protocol_get_service_icon (ModestAccountProtocol *self,
 					  const gchar *account_id,
-					  const gchar *mailbox)
+					  const gchar *mailbox,
+					  guint icon_size)
 {
-	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_service_icon (self, account_id, mailbox);
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->get_service_icon (self, account_id, mailbox, icon_size);
 }
 
 static const GdkPixbuf *
 modest_account_protocol_get_service_icon_default (ModestAccountProtocol *self,
 						  const gchar *account_id,
-						  const gchar *mailbox)
+						  const gchar *mailbox,
+						  guint icon_size)
 {
 	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
 

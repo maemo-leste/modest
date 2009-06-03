@@ -86,7 +86,7 @@ struct _ModestAccountProtocolClass {
 	const GdkPixbuf * (*get_icon) (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
 				       GObject *object, guint icon_size);
 	gchar * (*get_service_name) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
-	const GdkPixbuf * (*get_service_icon) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
+	const GdkPixbuf * (*get_service_icon) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox, guint icon_size);
 
 	/* Padding for future expansions */
 	void (*_reserved3) (void);
@@ -431,7 +431,8 @@ gchar *modest_account_protocol_get_service_name (ModestAccountProtocol *self,
  */
 const GdkPixbuf *modest_account_protocol_get_service_icon (ModestAccountProtocol *self,
 							   const gchar *account_id,
-							   const gchar *mailbox);
+							   const gchar *mailbox,
+							   guint icon_size);
 
 
 G_END_DECLS

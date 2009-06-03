@@ -187,6 +187,8 @@ static void font_face_clicked (GtkToolButton *button,
 static void update_signature (ModestMsgEditWindow *self,
 			      const gchar *old_account, 
 			      const gchar *new_account);
+static void update_branding (ModestMsgEditWindow *self,
+			     const gchar *new_account);
 static GtkWidget *_create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group,
 					   const gchar *label, GtkWidget *control);
 static void max_chars_banner_unref (ModestMsgEditWindow *self, GObject *old_ref);
@@ -325,6 +327,9 @@ struct _ModestMsgEditWindowPrivate {
 	GtkWidget   *bcc_button;
 
 	GtkWidget   *max_chars_banner;
+
+	GtkWidget   *brand_icon;
+	GtkWidget   *brand_label;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -810,6 +815,7 @@ init_window (ModestMsgEditWindow *obj)
 	GtkWidget *from_send_hbox;
 	GtkWidget *send_icon;
 	GtkWidget *attachments_label;
+	GtkWidget *branding_box;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
@@ -932,9 +938,20 @@ init_window (ModestMsgEditWindow *obj)
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
 
+	priv->brand_icon = gtk_image_new ();
+	priv->brand_label = gtk_label_new (NULL);
+	gtk_misc_set_alignment (GTK_MISC (priv->brand_label), 0.0, 0.5);
+	gtk_widget_set_no_show_all (priv->brand_icon, TRUE);
+	gtk_widget_set_no_show_all (priv->brand_label, TRUE);
+
 	from_send_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->from_field, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->send_button, FALSE, FALSE, 0);
+
+	branding_box = gtk_hbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	gtk_box_pack_start (GTK_BOX (branding_box), priv->brand_icon, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (branding_box), priv->brand_label, TRUE, TRUE, 0);
+
 
 	gtk_box_pack_start (GTK_BOX (priv->header_box), from_send_hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), to_caption, FALSE, FALSE, 0);
@@ -942,6 +959,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->bcc_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), subject_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->attachments_caption, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->header_box), branding_box, FALSE, FALSE, 0);
 	gtk_widget_set_no_show_all (priv->attachments_caption, TRUE);
 
 	init_wp_text_view_style ();
@@ -1607,6 +1625,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
  	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
 	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	update_branding (MODEST_MSG_EDIT_WINDOW (obj), priv->last_from_account);
 	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
 		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
 		priv->original_mailbox = g_strdup (mailbox);
@@ -3985,6 +4004,34 @@ static void update_signature (ModestMsgEditWindow *self,
 	gtk_text_buffer_end_user_action (priv->text_buffer);
 }
 
+static void update_branding (ModestMsgEditWindow *self,
+			     const gchar *new_account)
+{
+	ModestMsgEditWindowPrivate *priv;
+	ModestAccountMgr *mgr;
+	const GdkPixbuf *new_icon = NULL;
+	gchar *new_label = NULL;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	mgr = modest_runtime_get_account_mgr ();
+
+	modest_account_mgr_get_branding_from_recipient (mgr, new_account, &new_label, &new_icon, MODEST_ICON_SIZE_SMALL);
+	if (new_icon) {
+		gtk_image_set_from_pixbuf (GTK_IMAGE (priv->brand_icon), (GdkPixbuf *) new_icon);
+		gtk_widget_show (priv->brand_icon);
+	} else {
+		gtk_widget_hide (priv->brand_icon);
+	}
+	if (new_label) {
+		gtk_label_set_text (GTK_LABEL (priv->brand_label), new_label);
+		gtk_widget_show (priv->brand_label);
+		g_free (new_label);
+	} else {
+		gtk_widget_hide (priv->brand_label);
+	}
+}
+
 static void
 from_field_changed (HildonPickerButton *button,
 		    ModestMsgEditWindow *self)
@@ -3999,6 +4046,7 @@ from_field_changed (HildonPickerButton *button,
 	new_account = priv->last_from_account;
 
 	update_signature (self, old_account, new_account);
+	update_branding (self, new_account);
 
 }
 
