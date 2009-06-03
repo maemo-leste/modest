@@ -692,7 +692,8 @@ folder_chooser_activated (ModestFolderView *folder_view,
 }
 
 static TnyFolderStore *
-folder_chooser_dialog_run (ModestFolderView *original, TnyFolderStore *current)
+folder_chooser_dialog_run (ModestFolderView *original,
+			   TnyFolderStore *current)
 {
 	GtkWidget *folder_view;
 	FolderChooserData userdata = {NULL, NULL};
@@ -705,23 +706,27 @@ folder_chooser_dialog_run (ModestFolderView *original, TnyFolderStore *current)
 
 	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM("ckdg_ti_change_folder"));
 
-	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original), 
+	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original),
 				       MODEST_FOLDER_VIEW (folder_view));
 
-	if (TNY_IS_FOLDER_STORE (current)) {
-		if (TNY_IS_ACCOUNT (current)) {
+	if (TNY_IS_ACCOUNT (current)) {
+		/* If the current account is the local folders account
+		   then it's because we're creating a new folder from
+		   folders view (we force the local account to be the
+		   default location for new folders */
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (current)))
+			visible_id =
+				g_strdup (modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (original)));
+		else
 			visible_id = g_strdup (tny_account_get_id (TNY_ACCOUNT (current)));
-		} else if (TNY_IS_FOLDER (current)) {
-			TnyAccount *account;
-
-			account = tny_folder_get_account (TNY_FOLDER (current));
-			if (account) {
-				visible_id = g_strdup (tny_account_get_id (TNY_ACCOUNT (current)));
-			}
+	} else if (TNY_IS_FOLDER (current)) {
+		TnyAccount *account;
+		account = tny_folder_get_account (TNY_FOLDER (current));
+		if (account) {
+			visible_id = g_strdup (tny_account_get_id (account));
+			g_object_unref (account);
 		}
-	}
-
-	if (visible_id == NULL) {
+	} else {
 		visible_id = g_strdup (
 			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(original)));
 	}
@@ -1134,14 +1139,16 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 						    suggested_folder);
 
 	/* In hildon 2.2 we always suggest the archive folder as parent */
-	acc_store = modest_runtime_get_account_store ();
-	account = modest_tny_account_store_get_mmc_folders_account (acc_store);
-	if (account) {
-		suggested_folder = (TnyFolderStore *)
-			modest_tny_account_get_special_folder (account,
-							       TNY_FOLDER_TYPE_ARCHIVE);
-		g_object_unref (account);
-		account = NULL;
+	if (!suggested_folder) {
+		acc_store = modest_runtime_get_account_store ();
+		account = modest_tny_account_store_get_mmc_folders_account (acc_store);
+		if (account) {
+			suggested_folder = (TnyFolderStore *)
+				modest_tny_account_get_special_folder (account,
+								       TNY_FOLDER_TYPE_ARCHIVE);
+			g_object_unref (account);
+			account = NULL;
+		}
 	}
 
 	/* If there is not archive folder then fallback to local folders account */
