@@ -171,6 +171,9 @@ struct _ModestHeaderViewPrivate {
 	GtkCellRenderer *renderer_subject;
 	GtkCellRenderer *renderer_address;
 	GtkCellRenderer *renderer_date_status;
+
+	GdkColor active_color;
+	GdkColor secondary_color;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -2370,7 +2373,6 @@ update_style (ModestHeaderView *self)
 	PangoAttrList *attr_list;
 	GtkStyle *style;
 	PangoAttribute *attr;
-	GdkColor *new_color;
 
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
@@ -2381,6 +2383,7 @@ update_style (ModestHeaderView *self)
 	if (!gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
 		gdk_color_parse ("grey", &style_color);
 	}
+	priv->secondary_color = style_color;
 	attr = pango_attr_foreground_new (style_color.red, style_color.green, style_color.blue);
 	pango_attr_list_insert (attr_list, attr);
 
@@ -2395,25 +2398,25 @@ update_style (ModestHeaderView *self)
 		pango_attr_list_insert (attr_list, attr);
 
 		g_object_set (G_OBJECT (priv->renderer_address),
-			      "foreground-gdk", &style_color,
+			      "foreground-gdk", priv->secondary_color,
 			      "foreground-set", TRUE,
 			      "attributes", attr_list,
 			      NULL);
 		g_object_set (G_OBJECT (priv->renderer_date_status),
-			      "foreground-gdk", &style_color,
+			      "foreground-gdk", priv->secondary_color,
 			      "foreground-set", TRUE,
 			      "attributes", attr_list,
 			      NULL);
 		pango_attr_list_unref (attr_list);
 	} else {
 		g_object_set (G_OBJECT (priv->renderer_address),
-			      "foreground-gdk", &style_color,
+			      "foreground-gdk", priv->secondary_color,
 			      "foreground-set", TRUE,
 			      "scale", PANGO_SCALE_SMALL,
 			      "scale-set", TRUE,
 			      NULL);
 		g_object_set (G_OBJECT (priv->renderer_date_status),
-			      "foreground-gdk", &style_color,
+			      "foreground-gdk", priv->secondary_color,
 			      "foreground-set", TRUE,
 			      "scale", PANGO_SCALE_SMALL,
 			      "scale-set", TRUE,
@@ -2421,14 +2424,16 @@ update_style (ModestHeaderView *self)
 	}
 
 	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
-		new_color = gdk_color_copy (&style_active_color);
-	} else {
-		new_color = NULL;
-	}
+		priv->active_color = style_active_color;
 #ifdef MODEST_TOOLKIT_HILDON2
-	g_object_set_data (G_OBJECT (priv->renderer_subject), BOLD_IS_ACTIVE_COLOR, GINT_TO_POINTER (new_color != NULL));
-	g_object_set_data_full (G_OBJECT (priv->renderer_subject), ACTIVE_COLOR, new_color, (GDestroyNotify) gdk_color_free);
+		g_object_set_data (G_OBJECT (priv->renderer_subject), BOLD_IS_ACTIVE_COLOR, GINT_TO_POINTER (TRUE));
+		g_object_set_data_full (G_OBJECT (priv->renderer_subject), ACTIVE_COLOR, new_color, (GDestroyNotify) gdk_color_free);
 #endif
+	} else {
+#ifdef MODEST_TOOLKIT_HILDON2
+		g_object_set_data (G_OBJECT (priv->renderer_subject), BOLD_IS_ACTIVE_COLOR, GINT_TO_POINTER (FALSE));
+#endif
+	}
 }
 
 TnyHeader *
