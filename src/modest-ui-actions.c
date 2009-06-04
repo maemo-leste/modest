@@ -5421,6 +5421,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 					     gpointer user_data)
 {
 	GObject *win = NULL;
+	const GError *error;
 
 #ifndef MODEST_TOOLKIT_HILDON2
 	ModestWindow *main_window = NULL;
@@ -5428,6 +5429,8 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	/* Disable next automatic folder selection */
 	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
 							 FALSE); /* don't create */
+
+	/* Show notification dialog only if the main window exists */
 	if (main_window) {
 		GtkWidget *folder_view = NULL;
 
@@ -5441,11 +5444,14 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 		}
 	}
 #endif
-	/* Show notification dialog only if the main window exists */
 	win = modest_mail_operation_get_source (mail_op);
-	modest_platform_run_information_dialog ((GtkWindow *) win,
-						_("mail_in_ui_folder_move_target_error"),
-						FALSE);
+	error = modest_mail_operation_get_error (mail_op);
+
+	/* If it's not a memory full error then show a generic error */
+	if (!check_memory_full_error ((GtkWidget *) win, (GError *) error, NULL))
+		modest_platform_run_information_dialog ((GtkWindow *) win,
+							_("mail_in_ui_folder_move_target_error"),
+							FALSE);
 	if (win)
 		g_object_unref (win);
 }
@@ -5800,6 +5806,12 @@ on_move_folder_cb (gboolean canceled, GError *err, GtkWindow *parent_window,
 	ModestMailOperation *mail_op = NULL;
 
 	if (canceled || err || !MODEST_IS_WINDOW (parent_window)) {
+		/* Note that the connection process can fail due to
+		   memory low conditions as it can not successfully
+		   store the summary */
+		if (!check_memory_full_error ((GtkWidget*) parent_window, err, NULL))
+			g_debug ("Error connecting when trying to move a folder");
+
 		g_object_unref (G_OBJECT (info->src_folder));
 		g_object_unref (G_OBJECT (info->dst_folder));
 		g_free (info);
