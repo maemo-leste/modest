@@ -2398,25 +2398,25 @@ update_style (ModestHeaderView *self)
 		pango_attr_list_insert (attr_list, attr);
 
 		g_object_set (G_OBJECT (priv->renderer_address),
-			      "foreground-gdk", priv->secondary_color,
+			      "foreground-gdk", &(priv->secondary_color),
 			      "foreground-set", TRUE,
 			      "attributes", attr_list,
 			      NULL);
 		g_object_set (G_OBJECT (priv->renderer_date_status),
-			      "foreground-gdk", priv->secondary_color,
+			      "foreground-gdk", &(priv->secondary_color),
 			      "foreground-set", TRUE,
 			      "attributes", attr_list,
 			      NULL);
 		pango_attr_list_unref (attr_list);
 	} else {
 		g_object_set (G_OBJECT (priv->renderer_address),
-			      "foreground-gdk", priv->secondary_color,
+			      "foreground-gdk", &(priv->secondary_color),
 			      "foreground-set", TRUE,
 			      "scale", PANGO_SCALE_SMALL,
 			      "scale-set", TRUE,
 			      NULL);
 		g_object_set (G_OBJECT (priv->renderer_date_status),
-			      "foreground-gdk", priv->secondary_color,
+			      "foreground-gdk", &(priv->secondary_color),
 			      "foreground-set", TRUE,
 			      "scale", PANGO_SCALE_SMALL,
 			      "scale-set", TRUE,
@@ -2427,7 +2427,7 @@ update_style (ModestHeaderView *self)
 		priv->active_color = style_active_color;
 #ifdef MODEST_TOOLKIT_HILDON2
 		g_object_set_data (G_OBJECT (priv->renderer_subject), BOLD_IS_ACTIVE_COLOR, GINT_TO_POINTER (TRUE));
-		g_object_set_data_full (G_OBJECT (priv->renderer_subject), ACTIVE_COLOR, new_color, (GDestroyNotify) gdk_color_free);
+		g_object_set_data (G_OBJECT (priv->renderer_subject), ACTIVE_COLOR, &(priv->active_color));
 #endif
 	} else {
 #ifdef MODEST_TOOLKIT_HILDON2
