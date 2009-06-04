@@ -235,8 +235,22 @@ GtkTreeModel *modest_utils_create_country_model (void);
  */
 void modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc);
 
+/**
+ * modest_utils_create_notification_list_from_header_list:
+ * @header_list: a #TnyList of #TnyHeader instances
+ *
+ * This function transforms a list of #TnyHeader objects into a list
+ * that will be used to issue new email notifications
+ *
+ * Returns: a #GList of #ModestMsgNotificationData
+ **/
 GList *modest_utils_create_notification_list_from_header_list (TnyList *header_list);
 
+/**
+ * modest_utils_free_notification_list:
+ * @notification_list: a #GList of #ModestMsgNotificationData
+ *
+ * Frees a list of #ModestMsgNotificationData structures
+ **/
 void  modest_utils_free_notification_list (GList *notification_list);
-
 #endif /*__MODEST_MAEMO_UTILS_H__*/

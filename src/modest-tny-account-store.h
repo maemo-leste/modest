@@ -88,6 +88,9 @@ typedef enum {
 } ModestTnyAccountStoreQueryType;
 
 
+/* We set 5Mb as the upper limit to consider disk full conditions */
+#define MODEST_TNY_ACCOUNT_STORE_MIN_FREE_SPACE 5 * 1024 * 1024
+
 /**
  * modest_tny_account_store_get_type:
  *
@@ -282,6 +285,40 @@ guint modest_tny_account_store_get_num_remote_accounts (ModestTnyAccountStore *s
  * connection-changed signals to try to send pending emails ASAP
  **/
 void modest_tny_account_store_start_send_queues (ModestTnyAccountStore *self);
+
+/**
+ * modest_utils_check_disk_full_error:
+ * @parent_window: a #GtkWidget that will be used as the parent of information banners that will be shown
+ * @err: a #GError
+ * @alternate: a string that contains the error that will be shown if
+ * the memory full conditions happen in the MMC external storage
+ *
+ * Shows an information banner if the passed #GError is a disk full error.
+ *
+ * Returns: TRUE if it's a disk full error, false otherwise
+ **/
+gboolean modest_tny_account_store_check_disk_full_error (ModestTnyAccountStore *self,
+							 GtkWidget *parent_window,
+							 GError *err,
+							 TnyAccount *account,
+							 const gchar *alternate);
+
+/**
+ * modest_utils_is_disk_full_error:
+ * @error: a #GError
+ * @mail_op: the #ModestMailOperation that returned the error
+ * @is_mmc: returns if the disk full error happens in the external MMC or not
+ *
+ * This function returns if the given #GError is a disk full error or
+ * not, whithout showing anything to the user. The optional #is_mmc
+ * returns TRUE if the disk full conditions happen in the external MMC
+ * account
+ *
+ * Returns: TRUE if is a memory full error, FALSE otherwise.
+ **/
+gboolean modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *self,
+						      GError *error,
+						      TnyAccount *account);
 
 G_END_DECLS
 

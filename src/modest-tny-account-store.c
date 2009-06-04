@@ -53,7 +53,7 @@
 #include <widgets/modest-window-mgr.h>
 #include <modest-signal-mgr.h>
 #include <modest-debug.h>
-
+#include "modest-utils.h"
 #include <modest-defs.h>
 #include "modest-tny-account-store.h"
 #include "modest-tny-platform-factory.h"
@@ -1053,7 +1053,7 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 
 	/* NOTE: account may be NULL in some cases */
 	g_return_val_if_fail (error, FALSE);
-	
+
 	/* Get the server name: */
 	if (account) {
 		server_name = tny_account_get_hostname (account);
@@ -1087,7 +1087,6 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 			g_return_val_if_reached (FALSE);
 		}
 		break;
-		
 	case TNY_SERVICE_ERROR_AUTHENTICATE:
 		/* It seems that there's no better error to show with
 		 * POP and IMAP because TNY_SERVICE_ERROR_AUTHENTICATE
@@ -1099,15 +1098,17 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 			g_return_val_if_reached (FALSE);
 		}
 		break;
-			
 	case TNY_SERVICE_ERROR_CERTIFICATE:
 		/* We'll show the proper dialog later */
 		break;
 
 	case TNY_SYSTEM_ERROR_MEMORY:
 		/* Can't allocate memory for this operation */
-
-	case TNY_SERVICE_ERROR_UNKNOWN: 
+		if (modest_tny_account_store_check_disk_full_error ((ModestTnyAccountStore*)self,
+								    NULL, error, account, NULL))
+			retval = FALSE;
+		break;
+	case TNY_SERVICE_ERROR_UNKNOWN:
 		return FALSE;
 	default:
 		/* We don't treat this as an error, but as a not handled message. Then,
@@ -2257,4 +2258,78 @@ modest_tny_account_store_start_send_queues (ModestTnyAccountStore *self)
 	   connection changes to send messages ASAP */
 	tny_list_foreach (tmp, (GFunc) init_send_queue, NULL);
 	g_object_unref (tmp);
+}
+
+
+gboolean
+modest_tny_account_store_check_disk_full_error (ModestTnyAccountStore *self,
+						GtkWidget *parent_window,
+						GError *err,
+						TnyAccount *account,
+						const gchar *alternate)
+{
+	if (err == NULL)
+		return FALSE;
+
+	if (modest_tny_account_store_is_disk_full_error (self, err, account)) {
+		gboolean is_mcc = modest_tny_account_is_memory_card_account (account);
+		if (is_mcc && alternate) {
+			modest_platform_information_banner (parent_window, NULL, alternate);
+		} else {
+			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			modest_platform_information_banner (parent_window, NULL, msg);
+			g_free (msg);
+		}
+	} else if (err->code == TNY_SYSTEM_ERROR_MEMORY)
+		/* If the account was created in memory full
+		   conditions then tinymail won't be able to
+		   connect so it'll return this error code */
+		modest_platform_information_banner (parent_window,
+						    NULL, _("emev_ui_imap_inbox_select_error"));
+	else
+		return FALSE;
+
+	return TRUE;
+}
+
+gboolean
+modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *self,
+					     GError *error,
+					     TnyAccount *account)
+{
+	gboolean enough_free_space = TRUE;
+	GnomeVFSURI *cache_dir_uri;
+	const gchar *cache_dir = NULL;
+	GnomeVFSFileSize free_space;
+
+	/* Cache dir is different in case we're using an external storage (like MMC account) */
+	if (account && modest_tny_account_is_memory_card_account (account))
+		cache_dir = g_getenv (MODEST_MMC1_VOLUMEPATH_ENV);
+
+	/* Get the default local cache dir */
+	if (!cache_dir)
+		cache_dir = tny_account_store_get_cache_dir ((TnyAccountStore *) self);
+
+	cache_dir_uri = gnome_vfs_uri_new (cache_dir);
+	if (cache_dir_uri) {
+		if (gnome_vfs_get_volume_free_space (cache_dir_uri, &free_space) == GNOME_VFS_OK) {
+			if (free_space < MODEST_TNY_ACCOUNT_STORE_MIN_FREE_SPACE)
+				enough_free_space = FALSE;
+		}
+		gnome_vfs_uri_unref (cache_dir_uri);
+	}
+
+	if ((error->code == TNY_SYSTEM_ERROR_MEMORY ||
+	     /* When asking for a mail and no space left on device
+		tinymail returns this error */
+	     error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE ||
+	     /* When the folder summary could not be read or
+		written */
+	     error->code == TNY_IO_ERROR_WRITE ||
+	     error->code == TNY_IO_ERROR_READ) &&
+	    !enough_free_space) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
 }
