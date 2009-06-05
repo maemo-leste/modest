@@ -596,7 +596,9 @@ on_open_message_performer (gboolean canceled,
                         modest_tny_account_store_get_local_folders_account (account_store));
                 folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
                 g_object_unref (local_folders_account);
-        } else {
+        } else if (TNY_IS_CAMEL_STORE_ACCOUNT (account)) {
+		folder = tny_camel_store_account_factor_folder (TNY_CAMEL_STORE_ACCOUNT (account), info->uri, NULL);
+	} else {
                 folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), info->uri, NULL);
         }
         if (!folder) {
