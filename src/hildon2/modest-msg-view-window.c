@@ -532,10 +532,6 @@ init_window (ModestMsgViewWindow *obj)
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
-	priv->find_toolbar = hildon_find_toolbar_new (NULL);
-	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
-	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
-
 	/* NULL-ize fields if the window is destroyed */
 	g_signal_connect (priv->msg_view, "destroy", G_CALLBACK (gtk_widget_destroyed), &(priv->msg_view));
 
@@ -818,11 +814,19 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	modest_window_set_active_account (MODEST_WINDOW(obj), modest_account_name);
 	modest_window_set_active_mailbox (MODEST_WINDOW(obj), mailbox);
 
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
-	priv->last_search = NULL;
-
+	/* First add out toolbar ... */
 	modest_msg_view_window_show_toolbar (MODEST_WINDOW (obj), TRUE);
+
+	/* ... and later the find toolbar. This way find toolbar will
+	   be shown over the other */
+	priv->find_toolbar = hildon_find_toolbar_new (NULL);
+	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
+	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", 
+			  G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", 
+			  G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
+	priv->last_search = NULL;
 
 	/* Init the clipboard actions dim status */
 	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));
