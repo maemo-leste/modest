@@ -710,11 +710,10 @@ folder_chooser_dialog_run (ModestFolderView *original,
 				       MODEST_FOLDER_VIEW (folder_view));
 
 	if (TNY_IS_ACCOUNT (current)) {
-		/* If the current account is the local folders account
-		   then it's because we're creating a new folder from
-		   folders view (we force the local account to be the
-		   default location for new folders */
-		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (current)))
+		/* Local folders and MMC account are always shown
+		   along with the currently visible server account */
+		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (current)) ||
+		    modest_tny_account_is_memory_card_account (TNY_ACCOUNT (current)))
 			visible_id =
 				g_strdup (modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (original)));
 		else
@@ -723,7 +722,13 @@ folder_chooser_dialog_run (ModestFolderView *original,
 		TnyAccount *account;
 		account = tny_folder_get_account (TNY_FOLDER (current));
 		if (account) {
-			visible_id = g_strdup (tny_account_get_id (account));
+			if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account)) ||
+			    modest_tny_account_is_memory_card_account (TNY_ACCOUNT (account))) {
+				visible_id =
+					g_strdup (modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (original)));
+			} else {
+				visible_id = g_strdup (tny_account_get_id (account));
+			}
 			g_object_unref (account);
 		}
 	} else {
