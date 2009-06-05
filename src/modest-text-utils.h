@@ -54,6 +54,10 @@ extern const guint ACCOUNT_TITLE_FORBIDDEN_CHARS_LENGTH;
 extern const guint FOLDER_NAME_FORBIDDEN_CHARS_LENGTH;
 extern const guint USER_NAME_FORBIDDEN_CHARS_LENGTH;
 
+/* It includes a white space as RFC 3676 Section 4.3 about usenet
+   message signatures defines */
+#define MODEST_TEXT_UTILS_SIGNATURE_MARKER "-- "
+
 /**
  * modest_text_utils_derived_subject:
  * @subject: a string which contains the original subject

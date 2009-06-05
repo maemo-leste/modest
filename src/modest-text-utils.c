@@ -63,8 +63,6 @@
  * will hang modest
  */
 #define HYPERLINKIFY_MAX_LENGTH (1024*50)
-#define SIGNATURE_MARKER "--"
-
 
 /*
  * we need these regexps to find URLs in plain text e-mails
@@ -216,7 +214,7 @@ modest_text_utils_cite (const gchar *text,
 	if (!signature) {
 		tmp_sig = g_strdup (text);
 	} else {
-		tmp_sig = g_strconcat (text, "\n", SIGNATURE_MARKER, "\n", signature, NULL);
+		tmp_sig = g_strconcat (text, "\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n", signature, NULL);
 	}
 
 	if (strcmp (content_type, "text/html") == 0) {
@@ -768,7 +766,7 @@ get_indent_level (const char *l)
 	/*      if we hit the signature marker "-- ", we return -(indent + 1). This
 	 *      stops reformatting.
 	 */
-	if (strcmp (l, "-- ") == 0) {
+	if (strcmp (l, MODEST_TEXT_UTILS_SIGNATURE_MARKER) == 0) {
 		return -1 - indent;
 	} else {
 		return indent;
@@ -966,7 +964,7 @@ modest_text_utils_quote_plain_text (const gchar *text,
 	q = g_string_new ("");
 
 	if (signature != NULL) {
-		q = g_string_append (q, "\n--\n");
+		g_string_append_printf (q, "\n%s\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER);
 		q = g_string_append (q, signature);
 	}
 
@@ -1013,7 +1011,7 @@ modest_text_utils_quote_html (const gchar *text,
 		GString *quoted_text;
 		g_string_append (result_string, "<pre>\n");
 		if (signature) {
-			quote_html_add_to_gstring (result_string, SIGNATURE_MARKER);
+			quote_html_add_to_gstring (result_string, MODEST_TEXT_UTILS_SIGNATURE_MARKER);
 			quote_html_add_to_gstring (result_string, signature);
 		}
 		quote_html_add_to_gstring (result_string, cite);

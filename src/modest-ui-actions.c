@@ -905,9 +905,12 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	signature = modest_account_mgr_get_signature_from_recipient (mgr, recipient, &use_signature);
 	g_free (recipient);
 	if (body_str != NULL) {
-		body = use_signature ? g_strconcat(body_str, "\n--\n", signature, NULL) : g_strdup(body_str);
+		body = use_signature ? g_strconcat(body_str, "\n",
+						   MODEST_TEXT_UTILS_SIGNATURE_MARKER,
+						   "\n", signature, NULL) : g_strdup(body_str);
 	} else {
-		body = use_signature ? g_strconcat("\n--\n", signature, NULL) : g_strdup("");
+		body = use_signature ? g_strconcat("\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER,
+						   "\n", signature, NULL) : g_strdup("");
 	}
 
 	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, NULL, NULL, body, NULL, NULL, NULL);

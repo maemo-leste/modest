@@ -61,7 +61,7 @@ static gboolean is_ascii(const gchar *s);
 
 TnyMsg*
 modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
-		    const gchar *bcc, const gchar* subject, 
+		    const gchar *bcc, const gchar* subject,
 		    const gchar *references, const gchar *in_reply_to,
 		    const gchar *body,
 		    GList *attachments, gint *attached, GError **err)
@@ -70,11 +70,11 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 	TnyHeader *header;
 	gchar *content_type;
 	gint tmp_attached = 0;
-	
+
 	/* Create new msg */
 	new_msg = modest_formatter_create_message (NULL, TRUE, (attachments != NULL), FALSE);
 	header  = tny_msg_get_header (new_msg);
-	
+
 	if ((from != NULL) && (strlen(from) > 0)) {
 		tny_header_set_from (TNY_HEADER (header), from);
 		tny_header_set_replyto (TNY_HEADER (header), from);
@@ -84,12 +84,12 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 		tny_header_set_to (TNY_HEADER (header), removed_to);
 		g_free (removed_to);
 	}
-	if ((cc != NULL) && (strlen(cc) > 0)) 
+	if ((cc != NULL) && (strlen(cc) > 0))
 		tny_header_set_cc (TNY_HEADER (header), cc);
-	if ((bcc != NULL) && (strlen(bcc) > 0)) 
+	if ((bcc != NULL) && (strlen(bcc) > 0))
 		tny_header_set_bcc (TNY_HEADER (header), bcc);
-	
-	if ((subject != NULL) && (strlen(subject) > 0)) 
+
+	if ((subject != NULL) && (strlen(subject) > 0))
 		tny_header_set_subject (TNY_HEADER (header), subject);
 
 	content_type = get_content_type(body);
@@ -106,12 +106,12 @@ modest_tny_msg_new (const gchar* mailto, const gchar* from, const gchar *cc,
 
 	if (in_reply_to)
 		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "In-Reply-To", in_reply_to);
-	
+
 	/* Add the body of the new mail */
 	/* This is needed even if body is NULL or empty. */
 	add_body_part (new_msg, body, content_type);
 	g_free (content_type);
-		       
+
 	/* Add attachments */
 	if (attachments)
 		tmp_attached = add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE, err);
