@@ -435,7 +435,7 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 		guchar kar = data[i];
 		
 		if (space_seen && kar != ' ') {
-			g_string_append_c (html, ' ');
+			g_string_append (html, "&nbsp;");
 			space_seen = FALSE;
 		}
 		
