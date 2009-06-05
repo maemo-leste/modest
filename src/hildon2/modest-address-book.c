@@ -56,7 +56,6 @@ static EBook *book = NULL;
 static EBookView * book_view = NULL;
 
 static GSList *get_recipients_for_given_contact (EContact * contact, gboolean *canceled);
-static void commit_contact(EContact * contact, gboolean is_new);
 static gchar *get_email_addr_from_user(const gchar * given_name, gboolean *canceled);
 static gchar *ui_get_formatted_email_id(gchar * current_given_name,
 					gchar * current_sur_name, gchar * current_email_id);
@@ -327,7 +326,7 @@ get_recipients_for_given_contact (EContact * contact,
 		emailid = get_email_addr_from_user(display_name, canceled);
 		if (emailid) {
 			e_contact_set(contact, E_CONTACT_EMAIL_1, emailid);
-			commit_contact(contact, FALSE);
+			osso_abook_contact_commit (abook_contact, FALSE, NULL, NULL);
 		}
 		g_object_unref (abook_contact);
 	}
@@ -365,39 +364,6 @@ get_recipients_for_given_contact (EContact * contact,
 	}
 
 	return formattedlist;
-}
-
-/**
- * This is a helper function to commit a EContact to Address_Book application.
- *
- * @param  contact  Contact of type #EContact
- * @return void
- */
-static void 
-commit_contact(EContact * contact, gboolean is_new)
-{
-	g_return_if_fail (contact);
-	g_return_if_fail (book);
-
-	if (!contact || !book)
-		return;
-
-	if (OSSO_ABOOK_IS_CONTACT (contact)) {
-		osso_abook_contact_commit(OSSO_ABOOK_CONTACT(contact), is_new, book, NULL);
-	} else {
-		GError *err = NULL;
-		if (is_new) {
-			if (!e_book_add_contact (book, contact, &err)) {
-				g_warning ("Failed to add contact: %s", err->message);
-				g_error_free (err);
-			}
-		} else {
-			if (!e_book_commit_contact (book, contact, &err)) {
-				g_warning ("Failed to commit contact: %s", err->message);
-				g_error_free (err);
-			}
-		}
-	}
 }
 
 /**
