@@ -2555,8 +2555,6 @@ modest_mail_operation_find_msg (ModestMailOperation *self,
 	g_slice_free (ModestMailOperationState, state);
 	
 	tny_folder_find_msg_async (folder, msg_uid, get_msg_async_cb, get_msg_status_cb, helper);
-
-	g_object_unref (G_OBJECT (folder));
 }
 
 void 
@@ -2712,7 +2710,8 @@ get_msg_async_cb (TnyFolder *folder,
 		/* Clean */
 		if (info->more_msgs)
 			g_object_unref (info->more_msgs);
-		g_object_unref (info->header);
+		if (info->header)
+			g_object_unref (info->header);
 		g_object_unref (info->mail_op);
 		g_slice_free (GetMsgInfo, info);
 	} else if (info->more_msgs) {

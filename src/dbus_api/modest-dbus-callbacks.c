@@ -586,7 +586,8 @@ on_open_message_performer (gboolean canceled,
 
 	info = (OpenMsgPerformerInfo *) user_data;
         if (canceled || err) {
-		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
+		if (!canceled)
+			modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
 		g_idle_add (notify_error_in_dbus_callback, NULL);
                 on_find_msg_async_destroy (info);
                 return;
@@ -706,15 +707,20 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 		/* Try to get the message, if it's already downloaded
 		   we don't need to connect */
 		if (account) {
-			if (TNY_ACCOUNT (local_folders_account) == account) {
+			TnyDevice *device;
+			gboolean device_online;
+
+			device = modest_runtime_get_device ();
+			device_online = tny_device_is_online (device);
+			if (!device_online || TNY_ACCOUNT (local_folders_account) == account) {
 				folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
 			} else {
 				folder = NULL;
-				info->connect = TRUE;
 			}
 		} else {
 			folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
 			g_object_unref (local_folders_account);
+			info->connect = FALSE;
 		}
 		if (folder) {
 			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);

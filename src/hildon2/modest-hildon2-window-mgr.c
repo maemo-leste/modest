@@ -497,14 +497,15 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 				return FALSE;
 			}
 			g_free (uid);
-		} else {
+		} else if (header) {
 			if (g_list_find_custom (priv->window_list, header, (GCompareFunc) compare_headers)) {
 				g_debug ("%s found another view window showing the same header", __FUNCTION__);
 				g_object_unref (header);
 				return FALSE;
 			}
 		}
-		g_object_unref (header);
+		if (header)
+			g_object_unref (header);
 	}
 
 	/* Do not go backwards */

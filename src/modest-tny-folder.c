@@ -528,3 +528,43 @@ modest_tny_folder_get_display_name (TnyFolder *folder)
 
 	return fname;
 }
+
+TnyFolder *
+modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, const gchar *uri)
+{
+	TnyList *children;
+	TnyIterator *iterator;
+	TnyFolder *result;
+
+	result = NULL;
+	children = TNY_LIST (tny_simple_list_new ());
+	tny_folder_store_get_folders (folder_store, children, NULL, FALSE, NULL);
+
+	for (iterator = tny_list_create_iterator (children);
+	     !tny_iterator_is_done (iterator) && (result == NULL);
+	     tny_iterator_next (iterator)) {
+		TnyFolderStore *child;
+
+		child = TNY_FOLDER_STORE (tny_iterator_get_current (iterator));
+
+		if (TNY_IS_FOLDER (child)) {
+			gchar *folder_url;
+
+			folder_url = tny_folder_get_url_string (TNY_FOLDER (child));
+			if (g_str_has_prefix (uri, folder_url))
+				result = g_object_ref (child);
+			g_free (folder_url);
+		}
+
+		if ((child == NULL) && TNY_IS_FOLDER_STORE (child)) {
+			result = modest_tny_folder_store_find_folder_from_uri (child, uri);
+		}
+
+		g_object_unref (child);
+	}
+
+	g_object_unref (iterator);
+	g_object_unref (children);
+
+	return result;
+}

@@ -571,15 +571,14 @@ modest_window_mgr_register_window_default (ModestWindowMgr *self,
 		const gchar *uid = modest_msg_view_window_get_message_uid
 			(MODEST_MSG_VIEW_WINDOW (window));
 
-		if (!has_uid (priv->preregistered_uids, uid)) 
-			g_debug ("weird: no uid for window (%s)", uid);
-		
 		MODEST_DEBUG_BLOCK(g_debug ("registering window for %s", uid ? uid : "<none>"););
 		
-		priv->preregistered_uids = 
-			remove_uid (priv->preregistered_uids,
-				    modest_msg_view_window_get_message_uid
-				    (MODEST_MSG_VIEW_WINDOW (window)));
+		if (has_uid (priv->preregistered_uids, uid)) {
+			priv->preregistered_uids = 
+				remove_uid (priv->preregistered_uids,
+					    modest_msg_view_window_get_message_uid
+					    (MODEST_MSG_VIEW_WINDOW (window)));
+		}
 	} else if (MODEST_IS_MSG_EDIT_WINDOW(window)) {
 		const gchar *uid = modest_msg_edit_window_get_message_uid
 			(MODEST_MSG_EDIT_WINDOW (window));
