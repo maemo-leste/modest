@@ -2694,25 +2694,21 @@ save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
 static gboolean
 idle_save_mime_part_show_result (SaveMimePartInfo *info)
 {
-	if (info->pairs != NULL) {
-		save_mime_part_to_file (info);
-	} else {
-		/* This is a GDK lock because we are an idle callback and
-	 	 * hildon_banner_show_information is or does Gtk+ code */
+	/* This is a GDK lock because we are an idle callback and
+	 * hildon_banner_show_information is or does Gtk+ code */
 
-		gdk_threads_enter (); /* CHECKED */
-		save_mime_part_info_free (info, TRUE);
-		if (info->result == GNOME_VFS_OK) {
-			hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
-		} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
-			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
-			modest_platform_information_banner (NULL, NULL, msg);
-			g_free (msg);
-		} else {
-			hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
-		}
-		gdk_threads_leave (); /* CHECKED */
+	gdk_threads_enter (); /* CHECKED */
+	if (info->result == GNOME_VFS_OK) {
+		hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
+	} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
+		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		modest_platform_information_banner (NULL, NULL, msg);
+		g_free (msg);
+	} else {
+		hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
 	}
+	save_mime_part_info_free (info, FALSE);
+	gdk_threads_leave (); /* CHECKED */
 
 	return FALSE;
 }
@@ -2740,15 +2736,19 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 			}
 		}
 		g_object_unref (G_OBJECT (stream));
-		g_object_unref (pair->part);
-		g_slice_free (SaveMimePartPair, pair);
-		info->pairs = g_list_delete_link (info->pairs, info->pairs);
 	} else {
-		g_warning ("Could not create save attachment %s: %s\n", pair->filename, gnome_vfs_result_to_string (info->result));
-		save_mime_part_info_free (info, FALSE);
+		g_warning ("Could not create save attachment %s: %s\n", 
+			   pair->filename, gnome_vfs_result_to_string (info->result));
 	}
 
-	g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
+	/* Go on saving remaining files */
+	info->pairs = g_list_remove_link (info->pairs, info->pairs);
+	if (info->pairs != NULL) {
+		save_mime_part_to_file (info);
+	} else {
+		g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
+	}
+
 	return NULL;
 }
 
