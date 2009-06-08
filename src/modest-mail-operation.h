@@ -610,6 +610,25 @@ void          modest_mail_operation_get_msg     (ModestMailOperation *self,
 						 GetMsgAsyncUserCallback user_callback,
 						 gpointer user_data);
 /**
+ * modest_mail_operation_find_msg:
+ * @self: a #ModestMailOperation
+ * @msg_uid: a string
+ * @progress_feedback: a #gboolean. If %TRUE, we'll get progress bar feedback.
+ * @user_callback: a #GetMsgAsyncUserCallback function to call after tinymail callback execution.
+ * @user_data: generic user data which will be passed to @user_callback function.
+ * 
+ * Gets a message from a uid using an user defined @callback function
+ * pased as argument. This operation is asynchronous, so the
+ * #ModestMailOperation should be added to #ModestMailOperationQueue
+ **/
+void          modest_mail_operation_find_msg     (ModestMailOperation *self,
+						  TnyFolder *folder,
+						  const gchar *msg_uid,
+						  gboolean progress_feedback,
+						  GetMsgAsyncUserCallback user_callback,
+						  gpointer user_data);
+
+/**
  * modest_mail_operation_get_msgs_full:
  * @self: a #ModestMailOperation
  * @header_list: a #TnyList of #TnyHeader objects to get and process

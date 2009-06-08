@@ -937,6 +937,86 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 
 }
 
+ModestWindow *
+modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
+				     const gchar *mailbox,
+				     const gchar *msg_uid)
+{
+	ModestMsgViewWindow *window = NULL;
+	ModestMsgViewWindowPrivate *priv = NULL;
+	TnyFolder *folder = NULL;
+	ModestWindowMgr *mgr = NULL;
+	gboolean is_merge;
+	TnyAccount *account = NULL;
+
+	mgr = modest_runtime_get_window_mgr ();
+	window = MODEST_MSG_VIEW_WINDOW (modest_window_mgr_get_msg_view_window (mgr));
+	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window), NULL);
+
+	modest_msg_view_window_construct (window, modest_account_name, mailbox, msg_uid);
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+
+
+	is_merge = g_str_has_prefix (msg_uid, "merge:");
+
+	/* Get the account */
+	if (!is_merge)
+		account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+							  msg_uid);
+
+ 	
+	if (is_merge || account) {
+		OpenMsgPerformerInfo *info;
+		TnyFolder *folder = NULL;
+
+		/* Try to get the message, if it's already downloaded
+		   we don't need to connect */
+		if (account) {
+			folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), msg_uid, NULL);
+		} else {
+			ModestTnyAccountStore *account_store;
+			ModestTnyLocalFoldersAccount *local_folders_account;
+
+			account_store = modest_runtime_get_account_store ();
+			local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
+				modest_tny_account_store_get_local_folders_account (account_store));
+			folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
+			g_object_unref (local_folders_account);
+		}
+		if (folder) {
+			TnyDevice *device;
+			gboolean device_online;
+
+			device = modest_runtime_get_device();
+			device_online = tny_device_is_online (device);
+			if (device_online) {
+				message_reader (window, priv, NULL, msg_uid, folder, NULL);
+			} else {
+				TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
+				if (msg) {
+					tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+					g_object_unref (msg);
+				} else {
+					message_reader (window, priv, NULL, msg_uid, folder, NULL);
+				}
+			}
+			g_object_unref (folder);
+		}
+
+ 	}
+
+	/* Check dimming rules */
+	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
+	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
+	modest_window_check_dimming_rules_group (MODEST_WINDOW (window), MODEST_DIMMING_RULES_CLIPBOARD);
+
+	return MODEST_WINDOW(window);
+}
+
+
+
 /* FIXME: parameter checks */
 ModestWindow *
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
@@ -1815,6 +1895,8 @@ modest_msg_view_window_first_message_selected (ModestMsgViewWindow *window)
 
 typedef struct {
 	TnyHeader *header;
+	gchar *msg_uid;
+	TnyFolder *folder;
 	GtkTreeRowReference *row_reference;
 } MsgReaderInfo;
 
@@ -1842,7 +1924,10 @@ message_reader_performer (gboolean canceled,
 								 NULL, NULL);
 				
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg (mail_op, info->header, TRUE, view_msg_cb, info->row_reference);
+	if (info->header)
+		modest_mail_operation_get_msg (mail_op, info->header, TRUE, view_msg_cb, info->row_reference);
+	else
+		modest_mail_operation_find_msg (mail_op, info->folder, info->uid, TRUE, view_msg_cb);
 	g_object_unref (mail_op);
 
 	/* Update dimming rules */
@@ -1851,6 +1936,7 @@ message_reader_performer (gboolean canceled,
 
  frees:
 	/* Frees. The row_reference will be freed by the view_msg_cb callback */
+	g_free (info->uid);
 	g_object_unref (info->header);
 	g_slice_free (MsgReaderInfo, info);
 }
@@ -1872,16 +1958,15 @@ static gboolean
 message_reader (ModestMsgViewWindow *window,
 		ModestMsgViewWindowPrivate *priv,
 		TnyHeader *header,
+		const gchar *msg_uid,
+		TnyFolder *folder,
 		GtkTreeRowReference *row_reference)
 {
 	gboolean already_showing = FALSE;
 	ModestWindow *msg_window = NULL;
 	ModestWindowMgr *mgr;
 	TnyAccount *account;
-	TnyFolder *folder;
 	MsgReaderInfo *info;
-
-	g_return_val_if_fail (row_reference != NULL, FALSE);
 
 	mgr = modest_runtime_get_window_mgr ();
 	already_showing = modest_window_mgr_find_registered_header (mgr, header, &msg_window);
@@ -1894,7 +1979,7 @@ message_reader (ModestMsgViewWindow *window,
 	}
 
 	/* Msg download completed */
-	if (!(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
+	if (!header || !(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
 		/* Ask the user if he wants to download the message if
 		   we're not online */
 		if (!tny_device_is_online (modest_runtime_get_device())) {
@@ -1904,11 +1989,21 @@ message_reader (ModestMsgViewWindow *window,
 									    _("mcen_nc_get_msg"));
 			if (response == GTK_RESPONSE_CANCEL)
 				return FALSE;
-		
-			folder = tny_header_get_folder (header);
+
+			if (header)
+				folder = tny_header_get_folder (header);
+			else
+				g_object_ref (folder);
 			info = g_slice_new (MsgReaderInfo);
-			info->header = g_object_ref (header);
-			info->row_reference = gtk_tree_row_reference_copy (row_reference);
+			info->msg_uid = g_strdup (msg_uid);
+			if (header)
+				info->header = g_object_ref (header);
+			else
+				info->header = NULL;
+			if (row_reference)
+				info->row_reference = gtk_tree_row_reference_copy (row_reference);
+			else
+				info->row_reference = NULL;
 
 			/* Offer the connection dialog if necessary */
 			modest_platform_connect_if_remote_and_perform ((GtkWindow *) window, 
@@ -1920,12 +2015,22 @@ message_reader (ModestMsgViewWindow *window,
 			return TRUE;
 		}
 	}
-	
-	folder = tny_header_get_folder (header);
+
+	if (header)
+		folder = tny_header_get_folder (header);
+	else
+		g_object_ref (folder);
 	account = tny_folder_get_account (folder);
 	info = g_slice_new (MsgReaderInfo);
-	info->header = g_object_ref (header);
-	info->row_reference = gtk_tree_row_reference_copy (row_reference);
+	info->msg_uid = g_strdup (msg_uid);
+	if (header)
+		info->header = g_object_ref (header);
+	else
+		info->header = NULL;
+	if (row_reference)
+		info->row_reference = gtk_tree_row_reference_copy (row_reference);
+	else
+		row_reference = NULL;
 	
 	message_reader_performer (FALSE, NULL, (GtkWindow *) window, account, info);
 	g_object_unref (account);
@@ -1979,7 +2084,7 @@ modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 			    &header, -1);
 	
 	/* Read the message & show it */
-	if (!message_reader (window, priv, header, row_reference)) {
+	if (!message_reader (window, priv, header, NULL, NULL, row_reference)) {
 		retval = FALSE;
 	}
 	gtk_tree_row_reference_free (row_reference);
@@ -2020,7 +2125,7 @@ modest_msg_view_window_select_previous_message (ModestMsgViewWindow *window)
 				GtkTreeRowReference *row_reference;
 				row_reference = gtk_tree_row_reference_new (priv->header_model, path);
 				/* Read the message & show it */
-				retval = message_reader (window, priv, header, row_reference);
+				retval = message_reader (window, priv, header, NULL, NULL, row_reference);
 				gtk_tree_row_reference_free (row_reference);
 			} else {
 				finished = FALSE;
@@ -2050,13 +2155,15 @@ view_msg_cb (ModestMailOperation *mail_op,
 
 	row_reference = (GtkTreeRowReference *) user_data;
 	if (canceled) {
-		gtk_tree_row_reference_free (row_reference);
+		if (row_reference)
+			gtk_tree_row_reference_free (row_reference);
 		return;
 	}
 	
 	/* If there was any error */
 	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
-		gtk_tree_row_reference_free (row_reference);			
+		if (row_reference)
+			gtk_tree_row_reference_free (row_reference);			
 		return;
 	}
 
@@ -2100,7 +2207,8 @@ view_msg_cb (ModestMailOperation *mail_op,
 
 	/* Frees */
 	g_object_unref (self);
-	gtk_tree_row_reference_free (row_reference);		
+	if (row_reference)
+		gtk_tree_row_reference_free (row_reference);
 }
 
 TnyFolderType
@@ -3330,7 +3438,7 @@ modest_msg_view_window_reload (ModestMsgViewWindow *self)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (self));	
 
-	if (!message_reader (self, priv, header, priv->row_reference)) {
+	if (!message_reader (self, priv, header, NULL, NULL, priv->row_reference)) {
 		g_warning ("Shouldn't happen, trying to reload a message failed");
 	}
 

@@ -2495,6 +2495,71 @@ modest_mail_operation_rename_folder (ModestMailOperation *self,
 /* ******************************************************************* */
 
 void 
+modest_mail_operation_find_msg (ModestMailOperation *self,
+				TnyFolder *folder,
+				const gchar *msg_uid,
+				gboolean progress_feedback,
+				GetMsgAsyncUserCallback user_callback,
+				gpointer user_data)
+{
+	GetMsgInfo *helper = NULL;
+	ModestMailOperationPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (msg_uid != NULL);
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->total = 1;
+	priv->done = 0;
+
+	/* Check memory low */
+	if (_check_memory_low (self)) {
+		if (user_callback)
+			user_callback (self, NULL, FALSE, NULL, priv->error, user_data);
+		modest_mail_operation_notify_end (self);
+		return;
+	}
+
+	/* Get account and set it into mail_operation */
+	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	
+	/* Check for cached messages */
+	if (progress_feedback) {
+		priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+	} else {
+		priv->op_type = MODEST_MAIL_OPERATION_TYPE_UNKNOWN;
+	}
+	
+	/* Create the helper */
+	helper = g_slice_new0 (GetMsgInfo);
+	helper->header = NULL;
+	helper->mail_op = g_object_ref (self);
+	helper->user_callback = user_callback;
+	helper->user_data = user_data;
+	helper->destroy_notify = NULL;
+	helper->last_total_bytes = 0;
+	helper->sum_total_bytes = 0;
+	helper->total_bytes = 0;
+	helper->more_msgs = NULL;
+
+	modest_mail_operation_notify_start (self);
+	
+	/* notify about the start of the operation */ 
+	ModestMailOperationState *state;
+	state = modest_mail_operation_clone_state (self);
+	state->done = 0;
+	state->total = 0;
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+				0, state, NULL);
+	g_slice_free (ModestMailOperationState, state);
+	
+	tny_folder_find_msg_async (folder, msg_uid, get_msg_async_cb, get_msg_status_cb, helper);
+
+	g_object_unref (G_OBJECT (folder));
+}
+
+void 
 modest_mail_operation_get_msg (ModestMailOperation *self,
 			       TnyHeader *header,
 			       gboolean progress_feedback,
@@ -2627,6 +2692,8 @@ get_msg_async_cb (TnyFolder *folder,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
+	if (info->header == NULL && msg)
+		info->header = tny_msg_get_header (msg);
 
 	/* Call the user callback */
 	if (info->user_callback)
