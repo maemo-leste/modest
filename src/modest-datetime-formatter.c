@@ -230,7 +230,9 @@ modest_datetime_formatter_finalize   (GObject *obj)
 				 NULL);
 
 	/* Disconnect notification */
+#ifdef MODEST_USE_LIBTIME
 	osso_time_set_notification_cb (modest_platform_get_osso_context (), NULL, NULL);
+#endif
 #endif
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
