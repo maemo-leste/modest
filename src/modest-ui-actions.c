@@ -3364,7 +3364,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 
 	error = modest_mail_operation_get_error (mail_op);
 	if (error) {
-		gboolean disk_full;
+		gboolean disk_full = FALSE;
 		TnyAccount *account;
 		/* Show an error. If there was some problem writing to
 		   disk, show it, otherwise show the generic folder
