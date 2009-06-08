@@ -3433,14 +3433,10 @@ do_create_folder_performer (gboolean canceled,
 	ModestMailOperation *mail_op;
 
 	if (canceled || err) {
-		TnyAccount *account = modest_mail_operation_get_account (mail_op);
 		/* In disk full conditions we could get this error here */
 		modest_tny_account_store_check_disk_full_error (modest_runtime_get_account_store(),
 								(GtkWidget *) parent_window, err,
-								account,
-								_("mail_in_ui_folder_create_error_memory"));
-		if (account)
-			g_object_unref (account);
+								NULL, _("mail_in_ui_folder_create_error_memory"));
 
 		/* This happens if we have selected the outbox folder
 		   as the parent */
