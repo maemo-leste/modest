@@ -605,6 +605,42 @@ on_open_message_performer (gboolean canceled,
                 on_find_msg_async_destroy (info);
                 return;
         }
+
+        if (!(modest_tny_folder_is_local_folder (folder) &&
+	      (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS))) {
+		ModestWindowMgr *win_mgr;
+		ModestWindow *msg_view;
+
+		win_mgr = modest_runtime_get_window_mgr ();
+		if (modest_window_mgr_find_registered_message_uid (win_mgr, info->uri, &msg_view)) {
+			gtk_window_present (GTK_WINDOW(msg_view));
+		} else {
+			const gchar *modest_account_name;
+			TnyAccount *account;
+
+			account = tny_folder_get_account (folder);
+			if (account) {
+				modest_account_name =
+					modest_tny_account_get_parent_modest_account_name_for_server_account (account);
+			} else {
+				modest_account_name = NULL;
+			}
+			
+			msg_view = modest_msg_view_window_new_from_uid (modest_account_name, NULL, info->uri);
+			if (msg_view != NULL) {
+				if (!modest_window_mgr_register_window (win_mgr, msg_view, NULL)) {
+					gtk_widget_destroy (GTK_WIDGET (msg_view));
+				} else {
+					gtk_widget_show_all (GTK_WIDGET (msg_view));
+				}
+			}
+			g_object_unref (account);
+
+		}
+		on_find_msg_async_destroy (info);
+		return;
+        }
+
 #ifndef MODEST_TOOLKIT_HILDON2
 	info->animation_timeout = g_timeout_add (1000, on_show_opening_animation, info);
 #endif
