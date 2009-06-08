@@ -1916,7 +1916,8 @@ message_reader_performer (gboolean canceled,
 	}
 
 	/* Register the header - it'll be unregistered in the callback */
-	modest_window_mgr_register_header (modest_runtime_get_window_mgr (), info->header, NULL);
+	if (info->header)
+		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), info->header, NULL);
 
 	/* New mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
@@ -1937,7 +1938,10 @@ message_reader_performer (gboolean canceled,
  frees:
 	/* Frees. The row_reference will be freed by the view_msg_cb callback */
 	g_free (info->uid);
-	g_object_unref (info->header);
+	if (info->header)
+		g_object_unref (info->header);
+	if (info->folder)
+		g_object_unref (info->folder);
 	g_slice_free (MsgReaderInfo, info);
 }
 
@@ -1969,7 +1973,7 @@ message_reader (ModestMsgViewWindow *window,
 	MsgReaderInfo *info;
 
 	mgr = modest_runtime_get_window_mgr ();
-	already_showing = modest_window_mgr_find_registered_header (mgr, header, &msg_window);
+	already_showing = header && modest_window_mgr_find_registered_header (mgr, header, &msg_window);
 	if (already_showing && (msg_window != MODEST_WINDOW (window))) {
 		gboolean retval;
 		if (msg_window)
@@ -1977,6 +1981,10 @@ message_reader (ModestMsgViewWindow *window,
 		g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &retval);
 		return TRUE;
 	}
+
+	if (folder)
+		g_object_ref (folder);
+		
 
 	/* Msg download completed */
 	if (!header || !(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
@@ -1990,10 +1998,10 @@ message_reader (ModestMsgViewWindow *window,
 			if (response == GTK_RESPONSE_CANCEL)
 				return FALSE;
 
-			if (header)
+			if (header) {
+				if (folder) g_object_unref (folder);
 				folder = tny_header_get_folder (header);
-			else
-				g_object_ref (folder);
+			}
 			info = g_slice_new (MsgReaderInfo);
 			info->msg_uid = g_strdup (msg_uid);
 			if (header)
@@ -2016,10 +2024,10 @@ message_reader (ModestMsgViewWindow *window,
 		}
 	}
 
-	if (header)
+	if (header) {
+		if (folder) g_object_unref (folder);
 		folder = tny_header_get_folder (header);
-	else
-		g_object_ref (folder);
+	}
 	account = tny_folder_get_account (folder);
 	info = g_slice_new (MsgReaderInfo);
 	info->msg_uid = g_strdup (msg_uid);

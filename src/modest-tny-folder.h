@@ -204,6 +204,19 @@ gboolean modest_tny_folder_is_ancestor (TnyFolder *folder,
 					TnyFolderStore *ancestor);
 
 /**
+ * modest_tny_folder_store_find_folder_from_uri:
+ * @folder_store: a #TnyFolderStore
+ * @uri: a string
+ *
+ * This method tries to find a folder in @folder_store. The idea is
+ * being as fast as possible being synchronous. This is accomplished
+ * avoiding network access.
+ *
+ * Returns: %NULL if folder is not found, or a #TnyFolder.
+ */
+TnyFolder *modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, const gchar *uri);
+
+/**
  * modest_tny_folder_get_display_name:
  * @folder: a #TnyFolder
  *

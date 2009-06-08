@@ -959,7 +959,7 @@ modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
 		/* Try to get the message, if it's already downloaded
 		   we don't need to connect */
 		if (account) {
-			folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), msg_uid, NULL);
+			folder = modest_tny_folder_store_find_folder_from_uri (TNY_FOLDER_STORE (account), msg_uid);
 		} else {
 			ModestTnyAccountStore *account_store;
 			ModestTnyLocalFoldersAccount *local_folders_account;
@@ -982,6 +982,7 @@ modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
 				TnyMsg *msg = tny_folder_find_msg (folder, msg_uid, NULL);
 				if (msg) {
 					tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
+					update_window_title (MODEST_MSG_VIEW_WINDOW (window));
 					update_branding (MODEST_MSG_VIEW_WINDOW (window));
 					g_object_unref (msg);
 				} else {
@@ -1919,7 +1920,8 @@ message_reader_performer (gboolean canceled,
 	}
 
 	/* Register the header - it'll be unregistered in the callback */
-	modest_window_mgr_register_header (modest_runtime_get_window_mgr (), info->header, NULL);
+	if (info->header)
+		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), info->header, NULL);
 
 	/* New mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
@@ -1976,6 +1978,9 @@ message_reader (ModestMsgViewWindow *window,
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
 	gtk_window_set_title (GTK_WINDOW (window), _CS("ckdg_pb_updating"));
 
+	if (folder)
+		g_object_ref (folder);
+
 	mgr = modest_runtime_get_window_mgr ();
 	/* Msg download completed */
 	if (!header || !(tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)) {
@@ -1994,8 +1999,6 @@ message_reader (ModestMsgViewWindow *window,
 
 			if (header) {
 				folder = tny_header_get_folder (header);
-			} else {
-				g_object_ref (folder);
 			}
 			info = g_slice_new (MsgReaderInfo);
 			info->msg_uid = g_strdup (msg_uid);
@@ -2026,17 +2029,15 @@ message_reader (ModestMsgViewWindow *window,
 
 	if (header) {
 		folder = tny_header_get_folder (header);
-	} else {
-		g_object_ref (folder);
 	}
 	account = tny_folder_get_account (folder);
 	info = g_slice_new (MsgReaderInfo);
 	info->msg_uid = g_strdup (msg_uid);
-	if (info->folder)
+	if (folder)
 		info->folder = g_object_ref (folder);
 	else
 		info->folder = NULL;
-	if (info->header)
+	if (header)
 		info->header = g_object_ref (header);
 	else
 		info->header = NULL;
