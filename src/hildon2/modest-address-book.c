@@ -219,7 +219,7 @@ get_recipients_for_given_contact (EContact * contact,
 
 		emailid = get_email_addr_from_user(display_name, canceled);
 		if (emailid) {
-			e_contact_set(contact, E_CONTACT_EMAIL_1, emailid);
+			e_contact_set(E_CONTACT (abook_contact), E_CONTACT_EMAIL_1, emailid);
 			osso_abook_contact_commit (abook_contact, FALSE, NULL, NULL);
 		}
 		g_object_unref (abook_contact);
