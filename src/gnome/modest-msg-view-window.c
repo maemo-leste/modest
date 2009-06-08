@@ -414,6 +414,15 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 	return priv->msg_uid;
 }
 
+ModestWindow *
+modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
+				     const gchar *mailbox,
+				     const gchar *msg_uid)
+{
+	/* NOT IMPLEMENTED */
+	return NULL;
+}
+
 ModestWindow*   
 modest_msg_view_window_new_with_header_model (TnyMsg *msg, 
 					      const gchar *modest_account_name, 

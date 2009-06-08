@@ -179,6 +179,14 @@ ModestWindow*   modest_msg_view_window_new_from_header_view (ModestHeaderView *h
 
 
 /**
+ * modest_msg_view_window_new_from_uid:
+ */
+ModestWindow *
+modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
+				     const gchar *mailbox,
+				     const gchar *msg_uid);
+					      
+/**
  * modest_msg_view_window_new_for_search_result:
  * @msg: an #TnyMsg instance
  * @modest_account_name: the account name 
