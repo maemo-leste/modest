@@ -2759,7 +2759,7 @@ save_mime_parts_to_file_with_checks (GtkWindow *parent,
 	gboolean is_ok = TRUE;
         gint replaced_files = 0;
         const GList *files = info->pairs;
-        const GList *iter, *to_replace;
+        const GList *iter, *to_replace = NULL;
 
         for (iter = files; (iter != NULL) && (replaced_files < 2); iter = g_list_next(iter)) {
                 SaveMimePartPair *pair = iter->data;
