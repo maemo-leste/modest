@@ -577,6 +577,12 @@ on_open_message_performer (gboolean canceled,
 {
 	OpenMsgPerformerInfo *info;
 	TnyFolder *folder = NULL;
+	ModestTnyAccountStore *account_store;
+	ModestTnyLocalFoldersAccount *local_folders_account;
+ 
+	account_store = modest_runtime_get_account_store ();
+	local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
+		modest_tny_account_store_get_local_folders_account (account_store));
 
 	info = (OpenMsgPerformerInfo *) user_data;
         if (canceled || err) {
@@ -588,27 +594,14 @@ on_open_message_performer (gboolean canceled,
 
         /* Get folder */
         if (!account) {
-                ModestTnyAccountStore *account_store;
-                ModestTnyLocalFoldersAccount *local_folders_account;
- 
-                account_store = modest_runtime_get_account_store ();
-                local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
-                        modest_tny_account_store_get_local_folders_account (account_store));
                 folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
                 g_object_unref (local_folders_account);
-        } else if (TNY_IS_CAMEL_STORE_ACCOUNT (account)) {
-		folder = tny_camel_store_account_factor_folder (TNY_CAMEL_STORE_ACCOUNT (account), info->uri, NULL);
-	} else {
+        } else if (account == TNY_ACCOUNT (local_folders_account)) {
                 folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), info->uri, NULL);
-        }
-        if (!folder) {
-		modest_platform_run_information_dialog (NULL, _("mail_ni_ui_folder_get_msg_folder_error"), TRUE);
-		g_idle_add (notify_error_in_dbus_callback, NULL);
-                on_find_msg_async_destroy (info);
-                return;
-        }
-
-        if (!(modest_tny_folder_is_local_folder (folder) &&
+        } else {
+		folder = NULL;
+	}
+        if (!(folder && modest_tny_folder_is_local_folder (folder) &&
 	      (modest_tny_folder_get_local_or_mmc_folder_type (folder) == TNY_FOLDER_TYPE_DRAFTS))) {
 		ModestWindowMgr *win_mgr;
 		ModestWindow *msg_view;
@@ -618,9 +611,6 @@ on_open_message_performer (gboolean canceled,
 			gtk_window_present (GTK_WINDOW(msg_view));
 		} else {
 			const gchar *modest_account_name;
-			TnyAccount *account;
-
-			account = tny_folder_get_account (folder);
 			if (account) {
 				modest_account_name =
 					modest_tny_account_get_parent_modest_account_name_for_server_account (account);
@@ -698,6 +688,8 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 	if (is_merge || account) {
 		OpenMsgPerformerInfo *info;
 		TnyFolder *folder = NULL;
+		ModestTnyAccountStore *account_store;
+		ModestTnyLocalFoldersAccount *local_folders_account;
 
 		info = g_slice_new0 (OpenMsgPerformerInfo);
 		if (account) 
@@ -707,36 +699,30 @@ on_open_message (GArray * arguments, gpointer data, osso_rpc_t * retval)
 		info->animation = NULL;
 		info->animation_timeout = 0;
 
+		account_store = modest_runtime_get_account_store ();
+		local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT 
+			(modest_tny_account_store_get_local_folders_account (account_store));
+
 		/* Try to get the message, if it's already downloaded
 		   we don't need to connect */
 		if (account) {
-			folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+			if (TNY_ACCOUNT (local_folders_account) == account) {
+				folder = tny_store_account_find_folder (TNY_STORE_ACCOUNT (account), uri, NULL);
+			} else {
+				folder = NULL;
+				info->connect = TRUE;
+			}
 		} else {
-			ModestTnyAccountStore *account_store;
-			ModestTnyLocalFoldersAccount *local_folders_account;
-
-			account_store = modest_runtime_get_account_store ();
-			local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
-				modest_tny_account_store_get_local_folders_account (account_store));
 			folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
 			g_object_unref (local_folders_account);
 		}
 		if (folder) {
-			TnyDevice *device;
-			gboolean device_online;
-
-			device = modest_runtime_get_device();
-			device_online = tny_device_is_online (device);
-			if (device_online) {
-				info->connect = TRUE;
+			TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
+			if (msg) {
+				info->connect = FALSE;
+				g_object_unref (msg);
 			} else {
-				TnyMsg *msg = tny_folder_find_msg (folder, uri, NULL);
-				if (msg) {
-					info->connect = FALSE;
-					g_object_unref (msg);
-				} else {
-					info->connect = TRUE;
-				}
+				info->connect = TRUE;
 			}
 			g_object_unref (folder);
 		}
