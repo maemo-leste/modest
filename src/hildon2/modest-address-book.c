@@ -64,129 +64,23 @@ static GSList *select_email_addrs_for_contact(GList * email_addr_list);
 static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, GSList **contact_id, gboolean *canceled);
 static gchar *unquote_string (const gchar *str);
 
-
-static void
-unref_gobject (GObject *obj)
-{
-	if (obj)
-		g_object_unref (obj);
-}
-	
-
-static void
-get_book_view_cb (EBook *book, EBookStatus status, EBookView *bookview, gpointer data)
-{
-	if (status != E_BOOK_ERROR_OK) {
-		g_object_unref (book);
-		book = NULL;
-		return;
-	}
-	book_view = bookview;
-
-	if (contact_model)
-		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model),
-						     book_view);
-
-	e_book_view_start (book_view);
-}
-
-static void
-book_open_cb (EBook *view, EBookStatus status, gpointer data)
-{
-	EBookQuery *query = NULL;
-
-	if (status != E_BOOK_ERROR_OK) {
-		g_object_unref (book);
-		book = NULL;
-		return;
-	}
-	query = e_book_query_any_field_contains ("");
-	e_book_async_get_book_view (book, query, NULL, -1, get_book_view_cb, NULL);
-	e_book_query_unref (query);
-}
-
-static gboolean 
+static gboolean
 open_addressbook ()
 {
-	book = e_book_new_system_addressbook (NULL);
-	if (!book)
+	OssoABookRoster *roster;
+
+	if (book && book_view)
+		return TRUE;
+
+	roster = osso_abook_aggregator_get_default (NULL);
+	if (roster) {
+		book = osso_abook_roster_get_book (roster);
+		book_view = osso_abook_roster_get_book_view (roster);
+
+		return TRUE;
+	} else {
 		return FALSE;
-
-	if (e_book_async_open (book, FALSE, book_open_cb, NULL) != E_BOOK_ERROR_OK)
-		return FALSE;
-
-	return TRUE; /* FIXME */	
-}
-
-typedef struct _OpenAddressbookSyncInfo {
-	gboolean retval;
-	GMainLoop *mainloop;
-} OpenAddressbookSyncInfo;
-
-static void
-get_book_view_sync_cb (EBook *book, EBookStatus status, EBookView *bookview, gpointer data)
-{
-	OpenAddressbookSyncInfo *info = (OpenAddressbookSyncInfo *) data;
-
-	if (status != E_BOOK_ERROR_OK) {
-		g_object_unref (book);
-		book = NULL;
-		info->retval = FALSE;
-		g_main_loop_quit (info->mainloop);
-		return;
 	}
-	book_view = bookview;
-
-	if (contact_model)
-		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model),
-						     book_view);
-
-	e_book_view_start (book_view);
-	info->retval = TRUE;
-	g_main_loop_quit (info->mainloop);
-}
-
-static void
-book_open_sync_cb (EBook *view, EBookStatus status, gpointer data)
-{
-	EBookQuery *query = NULL;
-	OpenAddressbookSyncInfo *info = (OpenAddressbookSyncInfo *) data;
-
-	if (status != E_BOOK_ERROR_OK) {
-		g_object_unref (book);
-		book = NULL;
-		info->retval = FALSE;
-		g_main_loop_quit (info->mainloop);
-		return;
-	}
-	query = e_book_query_any_field_contains ("");
-	e_book_async_get_book_view (book, query, NULL, -1, get_book_view_sync_cb, info);
-	e_book_query_unref (query);
-}
-
-static gboolean
-open_addressbook_sync ()
-{
-	OpenAddressbookSyncInfo *info;
-	gboolean retval;
-
-	book = e_book_new_system_addressbook (NULL);
-	if (!book)
-		return FALSE;
-
-	info = g_slice_new (OpenAddressbookSyncInfo);
-	info->mainloop = g_main_loop_new (NULL, FALSE);
-	info->retval = FALSE;
-	if (e_book_async_open (book, FALSE, book_open_sync_cb, info) == E_BOOK_ERROR_OK) {
-		GDK_THREADS_LEAVE ();
-		g_main_loop_run (info->mainloop);
-		GDK_THREADS_ENTER ();
-	}
-	retval = info->retval;
-	g_main_loop_unref (info->mainloop);
-	g_slice_free (OpenAddressbookSyncInfo, info);
-	/* Make it launch a main loop */
-	return e_book_open (book, FALSE, NULL);
 }
 
 void
@@ -1111,7 +1005,7 @@ resolve_address (const gchar *address,
 	show_check_names_banner (info);
 	
 	contact_model = osso_abook_contact_model_new ();
-	if (!open_addressbook_sync ()) {
+	if (!open_addressbook ()) {
 		hide_check_names_banner (info);
 		if (contact_model) {
 			g_object_unref (contact_model);
@@ -1157,7 +1051,7 @@ resolve_address (const gchar *address,
 			}
 		}
 
-		g_list_foreach (resolved_contacts, (GFunc)unref_gobject, NULL);
+		g_list_foreach (resolved_contacts, (GFunc)g_object_unref, NULL);
 		g_list_free (resolved_contacts);
 		clean_check_names_banner (info);
 
@@ -1237,7 +1131,7 @@ modest_address_book_has_address (const gchar *address)
 
 	result = (contacts != NULL);
 	if (contacts) {
-		g_list_foreach (contacts, (GFunc)unref_gobject, NULL);
+		g_list_foreach (contacts, (GFunc)g_object_unref, NULL);
 		g_list_free (contacts);
 	}
 	
