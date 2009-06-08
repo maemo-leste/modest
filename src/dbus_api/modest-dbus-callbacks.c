@@ -286,7 +286,7 @@ on_idle_compose_mail(gpointer user_data)
 		gchar **list = g_strsplit(idle_data->attachments, ",", 0);
 		gint i = 0;
 		for (i=0; list[i] != NULL; i++) {
-			attachments = g_slist_append(attachments, g_strdup(list[i]));
+			attachments = g_slist_append(attachments, g_uri_unescape_string (list[i], NULL));
 		}
 		g_strfreev(list);
 	}
