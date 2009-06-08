@@ -1099,42 +1099,40 @@ unquote_string (const gchar *str)
 gboolean
 modest_address_book_has_address (const gchar *address)
 {
-	EBookQuery *query;
 	GList *contacts = NULL;
 	GError *err = NULL;
 	gchar *email;
 	gboolean result;
+	OssoABookAggregator *roster;
 
 	g_return_val_if_fail (address, FALSE);
-	
+
 	if (!book) {
 		if (!open_addressbook ()) {
 			g_return_val_if_reached (FALSE);
 		}
 	}
-	
 	g_return_val_if_fail (book, FALSE);
 
 	email = modest_text_utils_get_email_address (address);
-	
-	query = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, email);
-	if (!e_book_get_contacts (book, query, &contacts, &err)) {
+
+	roster = (OssoABookAggregator *) osso_abook_aggregator_get_default (NULL);
+	contacts = osso_abook_aggregator_find_contacts_for_email_address (roster, email);
+	if (!contacts) {
 		g_printerr ("modest: failed to get contacts: %s",
 			    err ? err->message : "<unknown>");
 		if (err)
 			g_error_free (err);
 		g_free (email);
-		e_book_query_unref (query);
 		return FALSE;
 	}
-	e_book_query_unref (query);
 
 	result = (contacts != NULL);
 	if (contacts) {
 		g_list_foreach (contacts, (GFunc)g_object_unref, NULL);
 		g_list_free (contacts);
 	}
-	
+
 	g_free (email);
 
 	return result;
