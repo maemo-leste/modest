@@ -718,7 +718,7 @@ folder_chooser_dialog_run (ModestFolderView *original,
 				g_strdup (modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (original)));
 		else
 			visible_id = g_strdup (tny_account_get_id (TNY_ACCOUNT (current)));
-	} else if (TNY_IS_FOLDER (current)) {
+	} else if (TNY_IS_FOLDER (current) && !TNY_IS_MERGE_FOLDER (current)) {
 		TnyAccount *account;
 		account = tny_folder_get_account (TNY_FOLDER (current));
 		if (account) {
