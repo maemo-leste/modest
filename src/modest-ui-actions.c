@@ -1001,7 +1001,8 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 			      error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE)) {
 			gchar *subject, *msg, *format = NULL;
 			TnyAccount *account;
-			subject = tny_header_dup_subject (header);
+			
+			subject = header?tny_header_dup_subject (header):NULL;
 			if (!subject)
 				subject = g_strdup (_("mail_va_no_subject"));
 
