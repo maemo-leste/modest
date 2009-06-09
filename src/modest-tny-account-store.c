@@ -469,14 +469,6 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 }
 
 static void 
-show_password_warning_only (const gchar *msg)
-{
-	/* Show an explanatory temporary banner: */
-	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()))
-		modest_platform_information_banner (NULL, NULL, msg);
-}
-
-static void 
 show_wrong_password_dialog (TnyAccount *account, 
 			    gboolean show_banner)
 { 
@@ -603,6 +595,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		if (modest_protocol_registry_protocol_type_has_tag(modest_runtime_get_protocol_registry (), 
 								   protocol_type, MODEST_PROTOCOL_REGISTRY_TRANSPORT_PROTOCOLS)) {
 			gchar *username = NULL, *msg = NULL;
+			gboolean is_banner = FALSE;
 			username = modest_account_mgr_get_server_account_username (priv->account_mgr,
 										   server_account_name);
 			if (!username || strlen(username) == 0) {
@@ -614,24 +607,43 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 				password  = modest_account_mgr_get_server_account_password (priv->account_mgr,
 											    server_account_name);
 
-				if (already_asked)
-					msg = g_strdup (_("mcen_ib_username_pw_incorrect"));
-				else if (!password || strlen(password) == 0)
+				if (already_asked) {
+					msg = g_strdup (_CS("ecdg_ib_set_password_incorrect"));
+					is_banner = TRUE;
+				} else if (!password || strlen(password) == 0) {
 					msg = g_strdup_printf (_("emev_ni_ui_smtp_passwd_invalid"), 
 							       tny_account_get_name (account),
 							       tny_account_get_hostname (account));
-				else
+				} else {
 					msg = g_strdup_printf (_("emev_ni_ui_smtp_authentication_fail_error"), 
 							       tny_account_get_hostname (account));
+				}
 				if (password)
 					g_free (password);
 			}
 			if (msg) {
-				modest_platform_run_information_dialog (NULL, msg, TRUE);
+				if (is_banner)
+					modest_platform_information_banner (NULL, NULL, msg);
+				else
+					modest_platform_run_information_dialog (NULL, msg, TRUE);
 				g_free (msg);
 			}
 			if (username)
 				g_free (username);
+		} else {
+			if (already_asked) {
+				const gchar *msg;
+				gboolean username_known = 
+					modest_account_mgr_get_server_account_username_has_succeeded(priv->account_mgr, 
+											     server_account_name);
+				/* If the login has ever succeeded then show a specific message */
+				if (username_known)
+					msg = _CS ("ecdg_ib_set_password_incorrect");
+				else
+					msg = _("mcen_ib_username_pw_incorrect");
+				if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()))
+					modest_platform_information_banner (NULL, NULL, msg);
+			}
 		}
 
 		if (settings_have_password) {
@@ -645,29 +657,13 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		}
 
 		/* we don't have it yet. Get the password from the user */
+		pwd = NULL;
 		const gchar* account_id = tny_account_get_id (account);
 		gboolean remember = FALSE;
-		pwd = NULL;
-
-		if (already_asked) {
-			const gchar *msg;
-			gboolean username_known = 
-				modest_account_mgr_get_server_account_username_has_succeeded(priv->account_mgr, 
-											     server_account_name);
-			/* If the login has ever succeeded then show a specific message */
-			if (username_known)
-				msg = _CS ("ecdg_ib_set_password_incorrect");
-			else
-				msg = _("mcen_ib_username_pw_incorrect");
-			show_password_warning_only (msg);
-		}
-
-		/* Request password */
 		g_signal_emit (G_OBJECT (self), signals[PASSWORD_REQUESTED_SIGNAL], 0,
 			       account_id, /* server_account_name */
 			       &username, &pwd, cancel, &remember);
 
-		
 		if (!*cancel) {
 			/* The password will be returned as the result,
 			 * but we need to tell tinymail about the username too: */
