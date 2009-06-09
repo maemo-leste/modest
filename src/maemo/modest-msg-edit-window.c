@@ -2386,8 +2386,8 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 		    info->valid_fields & GNOME_VFS_FILE_INFO_FIELDS_SIZE) {
 			size = info->size;
 			if (size > allowed_size) {
-				modest_platform_information_banner (NULL, NULL, 
-								    _FM("sfil_ib_opening_not_allowed"));
+				modest_platform_information_banner (NULL, NULL,
+								    _("mail_ib_error_attachment_size"));
 				return 0;
 			}
 		} else
