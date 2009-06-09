@@ -71,6 +71,9 @@
 #define PORT_MIN 1
 #define PORT_MAX 65535
 
+#define RESPONSE_DELETE_DUMMY 1
+#define RESPONSE_SIGNATURE_DUMMY 2
+
 static void modest_account_settings_dialog_init (gpointer g, gpointer iface_data);
 
 G_DEFINE_TYPE_EXTENDED (ModestDefaultAccountSettingsDialog, 
@@ -441,19 +444,17 @@ get_entered_account_title (ModestDefaultAccountSettingsDialog *dialog)
 
 
 static void
-on_button_signature (GtkButton *button, gpointer user_data)
+signature_button_clicked (ModestDefaultAccountSettingsDialog *self)
 {
-	ModestDefaultAccountSettingsDialog *self;
 	gint response;
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 
-	self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	/* Create the window, if necessary: */
 	if (!(priv->signature_dialog)) {
 		priv->signature_dialog = GTK_WIDGET (modest_signature_editor_dialog_new ());
-	
+
 		gboolean use_signature = modest_account_settings_get_use_signature (priv->settings);
 		const gchar *signature = modest_account_settings_get_signature(priv->settings);
 		gchar* account_title = get_entered_account_title (self);
@@ -482,15 +483,13 @@ on_button_signature (GtkButton *button, gpointer user_data)
 	}
 }
 
-static void
-on_button_delete (GtkButton *button, gpointer user_data)
+static gboolean
+delete_button_clicked (ModestDefaultAccountSettingsDialog *self)
 {
-	ModestDefaultAccountSettingsDialog *self;
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	gchar *account_title;
 	gboolean removed;
 
-	self = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	if (priv->modified)
@@ -503,9 +502,7 @@ on_button_delete (GtkButton *button, gpointer user_data)
 						       (const gchar *) account_title);
 	g_free (account_title);
 
-	/* Close window */
-	if (removed)
-		gtk_widget_destroy (GTK_WIDGET (self));
+	return removed;
 }
 
 static GtkWidget*
@@ -614,26 +611,20 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 	
 	/* Delete button: */
 	if (!priv->button_delete)
-		priv->button_delete = gtk_button_new_with_label (_HL("wdgt_bd_delete"));
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (self)->action_area), priv->button_delete, 
-			    FALSE, FALSE, 0);
+		priv->button_delete = gtk_dialog_add_button (GTK_DIALOG (self),
+							     _HL("wdgt_bd_delete"),
+							     RESPONSE_DELETE_DUMMY);
 
 	/* Signature button: */
 	if (!priv->button_signature)
-		priv->button_signature = gtk_button_new_with_label (_("mcen_bd_email_signature"));
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (self)->action_area), priv->button_signature, 
-			    FALSE, FALSE, 0);
+		priv->button_signature = gtk_dialog_add_button (GTK_DIALOG (self),
+								_("mcen_bd_email_signature"),
+								RESPONSE_SIGNATURE_DUMMY);
 	gtk_widget_show (priv->button_signature);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
-		
-	g_signal_connect (G_OBJECT (priv->button_signature), "clicked",
-        	G_CALLBACK (on_button_signature), self);
-        	
-	g_signal_connect (G_OBJECT (priv->button_delete), "clicked",
-        	G_CALLBACK (on_button_delete), self);
-        	
+
 	gtk_widget_show (GTK_WIDGET (box));
 
 	return GTK_WIDGET (box);
@@ -962,6 +953,21 @@ on_response (GtkDialog *wizard_dialog,
 	gboolean prevent_response = FALSE, sec_changed;
 	ModestSecurityOptionsView *incoming_sec, *outgoing_sec;
 
+	/* Dummy and delete buttons have a response id because they're
+	   added with gtk_dialog_add_button in order to get the proper
+	   theme */
+	if (response_id == RESPONSE_SIGNATURE_DUMMY) {
+		signature_button_clicked (self);
+		g_signal_stop_emission_by_name (wizard_dialog, "response");
+		return;
+	}
+
+	if (response_id == RESPONSE_DELETE_DUMMY) {
+		if (!delete_button_clicked (self))
+			g_signal_stop_emission_by_name (wizard_dialog, "response");
+		return;
+	}
+
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	enable_buttons (self);
 
@@ -991,7 +997,6 @@ on_response (GtkDialog *wizard_dialog,
 	}
 
 	if (prevent_response) {
-		/* This is a nasty hack. murrayc. */
 		/* Don't let the dialog close */
 		g_signal_stop_emission_by_name (wizard_dialog, "response");
 		return;
