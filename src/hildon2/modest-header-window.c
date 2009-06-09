@@ -506,7 +506,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->header_view));
-	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+	priv->new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
 	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
 	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);

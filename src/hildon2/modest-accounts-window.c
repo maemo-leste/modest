@@ -292,7 +292,8 @@ modest_accounts_window_new_real (void)
 				  G_CALLBACK (on_queue_changed),
 				  self);
 
-	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+	priv->new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE,
+						      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
 	hildon_button_set_title (HILDON_BUTTON (priv->new_message_button), _("mcen_ti_new_message"));
 	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
