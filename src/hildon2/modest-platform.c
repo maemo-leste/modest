@@ -163,23 +163,16 @@ gboolean
 modest_platform_init (int argc, char *argv[])
 {
 	osso_context_t *osso_context;
-	
 	osso_hw_state_t hw_state = { 0 };
-	DBusConnection *con;	
+	DBusConnection *con;
 	GSList *acc_names;
-	
+
 	if (!check_required_files ()) {
 		g_printerr ("modest: missing required files\n");
 		return FALSE;
 	}
-	
-	osso_context = 	osso_initialize(PACKAGE,PACKAGE_VERSION,
-					FALSE, NULL);	
-	if (!osso_context) {
-		g_printerr ("modest: failed to acquire osso context\n");
-		return FALSE;
-	}
-	modest_maemo_utils_set_osso_context (osso_context);
+
+	osso_context = modest_maemo_utils_get_osso_context();
 
 	if ((con = osso_get_dbus_connection (osso_context)) == NULL) {
 		g_printerr ("modest: could not get dbus connection\n");

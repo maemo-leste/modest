@@ -64,16 +64,10 @@ osso_context_t *
 modest_maemo_utils_get_osso_context (void)
 {
 	if (!__osso_context) 
-		g_debug ("%s: __osso_context == NULL", __FUNCTION__);
+		__osso_context = osso_initialize(PACKAGE,PACKAGE_VERSION,
+						 FALSE, NULL);
 
 	return __osso_context;
-}
-
-void
-modest_maemo_utils_set_osso_context (osso_context_t *osso_context)
-{
-	g_return_if_fail (osso_context);
-	__osso_context = osso_context;
 }
 
 static void
