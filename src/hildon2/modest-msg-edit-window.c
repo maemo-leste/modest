@@ -941,6 +941,7 @@ init_window (ModestMsgEditWindow *obj)
 	priv->brand_icon = gtk_image_new ();
 	gtk_misc_set_alignment (GTK_MISC (priv->brand_icon), 0.5, 0.5);
 	priv->brand_label = gtk_label_new (NULL);
+	hildon_helper_set_logical_font (priv->brand_label, "SmallSystemFont");
 	gtk_misc_set_alignment (GTK_MISC (priv->brand_label), 0.0, 0.5);
 	gtk_widget_set_no_show_all (priv->brand_icon, TRUE);
 	gtk_widget_set_no_show_all (priv->brand_label, TRUE);

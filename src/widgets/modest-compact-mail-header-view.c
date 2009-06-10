@@ -41,6 +41,7 @@
 #include <modest-datetime-formatter.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-gtk.h>
+#include <hildon/hildon-helper.h>
 #endif
 
 static GObjectClass *parent_class = NULL;
@@ -364,6 +365,9 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_misc_set_padding (GTK_MISC (priv->time_label), MODEST_MARGIN_DOUBLE, 0);
 
 	priv->brand_label = gtk_label_new (NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_helper_set_logical_font (priv->brand_label, "SmallSystemFont");
+#endif
 	gtk_label_set_justify (GTK_LABEL (priv->brand_label), GTK_JUSTIFY_RIGHT);
 	gtk_misc_set_alignment (GTK_MISC (priv->brand_label), 1.0, 0.5);
 	gtk_misc_set_padding (GTK_MISC (priv->brand_label), MODEST_MARGIN_DOUBLE, 0);
