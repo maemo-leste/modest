@@ -109,6 +109,8 @@
 #define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
 #define MODEST_ALARMD_APPID PACKAGE_NAME
 
+static ca_context *ca_con = NULL;
+
 
 static void modest_platform_play_email_tone (void);
 
@@ -2592,7 +2594,6 @@ modest_platform_play_email_tone (void)
 	gchar *mail_tone;
 	gint mail_volume_int;
 	int ret;
-	ca_context *ca_con = NULL;
 	ca_proplist *pl = NULL;
 
 #ifdef MODEST_USE_PROFILE
@@ -2620,14 +2621,15 @@ modest_platform_play_email_tone (void)
 
 	if (mail_volume_int > 0) {
 
-		if ((ret = ca_context_create(&ca_con)) != CA_SUCCESS) {
-			g_warning("ca_context_create: %s\n", ca_strerror(ret));
-			return;
+		if (ca_con == NULL) {
+			if ((ret = ca_context_create (&ca_con)) != CA_SUCCESS) {
+				g_warning("ca_context_create: %s\n", ca_strerror(ret));
+				return;
+			}
 		}
 
 		if ((ret = ca_context_open(ca_con)) != CA_SUCCESS) {
 			g_warning("ca_context_open: %s\n", ca_strerror(ret));
-			ca_context_destroy(ca_con);
 			return;
 		}
 
@@ -2639,7 +2641,6 @@ modest_platform_play_email_tone (void)
 		g_debug("ca_context_play_full (vol %f): %s\n", (gfloat) mail_volume_int, ca_strerror(ret));
 
 		ca_proplist_destroy(pl);
-		ca_context_destroy(ca_con);
 	}
 
 	g_free (mail_tone);
