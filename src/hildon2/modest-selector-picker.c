@@ -237,7 +237,10 @@ modest_selector_picker_new (HildonSizeType size,
 		priv->id_equal_func = id_equal_func;
 	else
 		priv->id_equal_func = g_direct_equal; /* compare the ptr values */
-	
+
+	/* For theming purpouses. Widget name must end in Button-finger */
+	gtk_widget_set_name ((GtkWidget *) obj, "ModestSelectorPickerButton-finger");
+
 	return GTK_WIDGET(obj);
 }
 

@@ -201,10 +201,15 @@ ModestCountryPicker*
 modest_country_picker_new (HildonSizeType size,
 			   HildonButtonArrangement arrangement)
 {
-	return g_object_new (MODEST_TYPE_COUNTRY_PICKER, 
-			     "arrangement", arrangement,
-			     "size", size,
-			     NULL);
+	ModestCountryPicker *picker = g_object_new (MODEST_TYPE_COUNTRY_PICKER, 
+						    "arrangement", arrangement,
+						    "size", size,
+						    NULL);
+
+	/* For theming purpouses. Widget name must end in Button-finger */
+	gtk_widget_set_name ((GtkWidget *) picker, "ModestCountryPickerButton-finger");
+
+	return picker;
 }
 
 /**

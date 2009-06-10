@@ -138,6 +138,9 @@ modest_secureauth_picker_new (HildonSizeType size,
 
 	modest_secureauth_picker_fill (self);
 
+	/* For theming purpouses. Widget name must end in Button-finger */
+	gtk_widget_set_name ((GtkWidget *) self, "ModestSecureauthPickerButton-finger");
+
 	return self;
 }
 

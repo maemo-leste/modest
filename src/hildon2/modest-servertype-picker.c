@@ -194,6 +194,9 @@ modest_servertype_picker_new (HildonSizeType size,
 	/* Fill the model */	
 	modest_servertype_picker_fill (self, filter_providers);
 
+	/* For theming purpouses. Widget name must end in Button-finger */
+	gtk_widget_set_name ((GtkWidget *) self, "ModestServertypePickerButton-finger");
+
 	return self;
 }
 

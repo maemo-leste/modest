@@ -140,6 +140,9 @@ modest_retrieve_picker_new (HildonSizeType size,
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));
 
+	/* For theming purpouses. Widget name must end in Button-finger */
+	gtk_widget_set_name ((GtkWidget *) self, "ModestRetrievePickerButton-finger");
+
 	return self;
 }
 
