@@ -330,6 +330,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *brand_icon;
 	GtkWidget   *brand_label;
+	GtkWidget   *brand_container;
 };
 
 #define MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -951,8 +952,14 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->send_button, FALSE, FALSE, 0);
 
 	branding_box = gtk_hbox_new (FALSE, MODEST_MARGIN_DEFAULT);
+	gtk_widget_show (branding_box);
+	gtk_box_pack_start (GTK_BOX (branding_box), priv->brand_label, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (branding_box), priv->brand_icon, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (branding_box), priv->brand_label, TRUE, TRUE, 0);
+
+	priv->brand_container = gtk_alignment_new (0.0, 0.5, 0.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (priv->brand_container), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_container_add (GTK_CONTAINER (priv->brand_container), branding_box);
+	gtk_widget_set_no_show_all (priv->brand_container, TRUE);
 
 
 	gtk_box_pack_start (GTK_BOX (priv->header_box), from_send_hbox, FALSE, FALSE, 0);
@@ -961,7 +968,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->bcc_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), subject_caption, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->attachments_caption, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (priv->header_box), branding_box, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->header_box), priv->brand_container, FALSE, FALSE, 0);
 	gtk_widget_set_no_show_all (priv->attachments_caption, TRUE);
 
 	init_wp_text_view_style ();
@@ -4011,6 +4018,7 @@ static void update_branding (ModestMsgEditWindow *self,
 	ModestAccountMgr *mgr;
 	const GdkPixbuf *new_icon = NULL;
 	gchar *new_label = NULL;
+	gboolean show = FALSE;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
@@ -4020,6 +4028,7 @@ static void update_branding (ModestMsgEditWindow *self,
 	if (new_icon) {
 		gtk_image_set_from_pixbuf (GTK_IMAGE (priv->brand_icon), (GdkPixbuf *) new_icon);
 		gtk_widget_show (priv->brand_icon);
+		show = TRUE;
 	} else {
 		gtk_widget_hide (priv->brand_icon);
 	}
@@ -4027,9 +4036,15 @@ static void update_branding (ModestMsgEditWindow *self,
 		gtk_label_set_text (GTK_LABEL (priv->brand_label), new_label);
 		gtk_widget_show (priv->brand_label);
 		g_free (new_label);
+		show = TRUE;
 	} else {
 		gtk_widget_hide (priv->brand_label);
 	}
+
+	if (show)
+		gtk_widget_show (priv->brand_container);
+	else
+		gtk_widget_hide (priv->brand_container);
 }
 
 static void
