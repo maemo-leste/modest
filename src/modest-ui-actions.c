@@ -1744,20 +1744,27 @@ reply_forward_cb (ModestMailOperation *mail_op,
 
 	/* Create reply mail */
 	switch (rf_helper->action) {
+		/* Use the msg_header to ensure that we have all the
+		   information. The summary can lack some data */
+		TnyHeader *msg_header;
 	case ACTION_REPLY:
+		msg_header = tny_msg_get_header (msg);
 		new_msg =
-			modest_tny_msg_create_reply_msg (msg, header, from,
+			modest_tny_msg_create_reply_msg (msg, msg_header, from,
 							 (use_signature) ? signature : NULL,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
+		g_object_unref (msg_header);
 		break;
 	case ACTION_REPLY_TO_ALL:
+		msg_header = tny_msg_get_header (msg);
 		new_msg =
-			modest_tny_msg_create_reply_msg (msg, header, from,
+			modest_tny_msg_create_reply_msg (msg, msg_header, from,
 							 (use_signature) ? signature : NULL,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_ALL);
 		edit_type = MODEST_EDIT_TYPE_REPLY;
+		g_object_unref (msg_header);
 		break;
 	case ACTION_FORWARD:
 		new_msg =
