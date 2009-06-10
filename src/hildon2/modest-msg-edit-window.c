@@ -1098,8 +1098,6 @@ modest_msg_edit_window_finalize (GObject *obj)
 	g_free (priv->last_search);
 	g_free (priv->references);
 	g_free (priv->in_reply_to);
-	g_object_unref (priv->faces_model);
-	g_object_unref (priv->sizes_model);
 	g_object_unref (priv->attachments);
 	g_object_unref (priv->images);
 
