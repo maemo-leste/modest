@@ -68,19 +68,39 @@ static gboolean
 open_addressbook ()
 {
 	OssoABookRoster *roster;
+	GError *error = NULL;
+	time_t init,end;
 
 	if (book && book_view)
 		return TRUE;
 
-	roster = osso_abook_aggregator_get_default (NULL);
-	if (roster) {
-		book = osso_abook_roster_get_book (roster);
-		book_view = osso_abook_roster_get_book_view (roster);
+	roster = osso_abook_aggregator_get_default (&error);
+	if (error)
+		goto error;
 
-		return TRUE;
-	} else {
-		return FALSE;
-	}
+	/* Wait until it's ready */
+	init = time (NULL);
+	osso_abook_waitable_run ((OssoABookWaitable *) roster,
+				 g_main_context_default (),
+				 &error);
+	end = time (NULL);
+	g_debug ("Opening addressbook lasted %ld seconds", (gint) end-init);
+
+	if (error)
+		goto error;
+
+	if (!osso_abook_waitable_is_ready ((OssoABookWaitable *) roster,
+					   &error))
+		goto error;
+
+	book = osso_abook_roster_get_book (roster);
+	book_view = osso_abook_roster_get_book_view (roster);
+
+	return TRUE;
+ error:
+	g_warning ("error opening addressbook %s", error->message);
+	g_error_free (error);
+	return FALSE;
 }
 
 void
