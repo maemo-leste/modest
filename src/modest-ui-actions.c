@@ -2304,7 +2304,7 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 		if (!acc_name)
 			acc_name  = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 		if (!acc_name) {
-			g_printerr ("modest: cannot get default account\n");
+			modest_platform_information_banner (NULL, NULL, _("emev_ni_internal_error"));
 			return;
 		}
 	} else {
@@ -2313,6 +2313,12 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 
 	acc_store = modest_runtime_get_account_store ();
 	account = modest_tny_account_store_get_server_account (acc_store, acc_name, TNY_ACCOUNT_TYPE_STORE);
+
+	if (!account) {
+		g_free (acc_name);
+		modest_platform_information_banner (NULL, NULL, _("emev_ni_internal_error"));
+		return;
+	}
 
 	/* Do not automatically refresh accounts that are flagged as
 	   NO_AUTO_UPDATE. This could be useful for accounts that
