@@ -615,10 +615,8 @@ async_get_contacts_cb (EBook *book,
 		g_slist_foreach (addresses, (GFunc) g_free, NULL);
 		g_slist_free (addresses);
 	}
-	if (contacts) {
-		g_list_foreach (contacts, (GFunc) g_object_unref, NULL);
+	if (contacts)
 		g_list_free (contacts);
-	}
 }
 
 
@@ -1071,7 +1069,6 @@ resolve_address (const gchar *address,
 			}
 		}
 
-		g_list_foreach (resolved_contacts, (GFunc)g_object_unref, NULL);
 		g_list_free (resolved_contacts);
 		clean_check_names_banner (info);
 
@@ -1139,18 +1136,15 @@ modest_address_book_has_address (const gchar *address)
 	roster = (OssoABookAggregator *) osso_abook_aggregator_get_default (NULL);
 	contacts = osso_abook_aggregator_find_contacts_for_email_address (roster, email);
 	if (!contacts) {
-		g_printerr ("modest: failed to get contacts: %s",
-			    err ? err->message : "<unknown>");
 		if (err)
 			g_error_free (err);
 		g_free (email);
 		return FALSE;
 	}
 
-	result = (contacts != NULL);
 	if (contacts) {
-		g_list_foreach (contacts, (GFunc)g_object_unref, NULL);
 		g_list_free (contacts);
+		result = TRUE;
 	}
 
 	g_free (email);
