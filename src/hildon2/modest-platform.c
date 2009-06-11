@@ -2949,7 +2949,14 @@ on_move_to_dialog_action_clicked (GtkButton *selection,
 		selected = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
 
 		if (selected) {
-			gtk_dialog_response  (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
+			/* It's not possible to select root folders as
+			   targets unless they're the local account or
+			   the memory card account */
+			if ((TNY_IS_FOLDER (selected) && !TNY_IS_MERGE_FOLDER (selected)) ||
+			    (TNY_IS_ACCOUNT (selected) &&
+			     (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (selected)) ||
+			      modest_tny_account_is_memory_card_account (TNY_ACCOUNT (selected)))))
+				gtk_dialog_response  (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 			g_object_unref (selected);
 		}
 	}
