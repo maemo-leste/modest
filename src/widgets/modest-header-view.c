@@ -2203,17 +2203,20 @@ _clear_hidding_filter (ModestHeaderView *header_view)
 void
 modest_header_view_refilter (ModestHeaderView *header_view)
 {
-	GtkTreeModel *model = NULL;
+	GtkTreeModel *model, *sortable = NULL;
 	ModestHeaderViewPrivate *priv = NULL;
 
 	g_return_if_fail (header_view && MODEST_IS_HEADER_VIEW (header_view));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(header_view);
 
 	/* Hide cut headers */
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	if (GTK_IS_TREE_MODEL_FILTER (model)) {
-		priv->status = HEADER_VIEW_INIT;
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+		model = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
+		if (GTK_IS_TREE_MODEL_FILTER (model)) {
+			priv->status = HEADER_VIEW_INIT;
+			gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+		}
 	}
 }
 
@@ -2324,17 +2327,13 @@ modest_header_view_set_filter (ModestHeaderView *self,
 			       ModestHeaderViewFilter filter)
 {
 	ModestHeaderViewPrivate *priv;
-	GtkTreeModel *filter_model;
 
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
 
 	priv->filter |= filter;
 
-	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
-	}
+	modest_header_view_refilter (self);
 }
 
 void
@@ -2342,17 +2341,13 @@ modest_header_view_unset_filter (ModestHeaderView *self,
 				 ModestHeaderViewFilter filter)
 {
 	ModestHeaderViewPrivate *priv;
-	GtkTreeModel *filter_model;
 
 	g_return_if_fail (MODEST_IS_HEADER_VIEW (self));
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (self);
 
 	priv->filter &= ~filter;
 
-	filter_model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	if (GTK_IS_TREE_MODEL_FILTER(filter_model)) {
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
-	}
+	modest_header_view_refilter (self);
 }
 
 static void
