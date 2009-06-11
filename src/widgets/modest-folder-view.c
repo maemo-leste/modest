@@ -2272,8 +2272,10 @@ modest_folder_view_update_model (ModestFolderView *self,
 #ifdef MODEST_TOOLKIT_HILDON2
 	TnyGtkFolderListStoreFlags flags;
 	flags = TNY_GTK_FOLDER_LIST_STORE_FLAG_SHOW_PATH;
-	if (!priv->do_refresh)
-		flags &= TNY_GTK_FOLDER_LIST_STORE_FLAG_NO_REFRESH;
+	if (priv->do_refresh)
+		flags |= TNY_GTK_FOLDER_LIST_STORE_FLAG_DELAYED_REFRESH;
+	else
+		flags |= TNY_GTK_FOLDER_LIST_STORE_FLAG_NO_REFRESH;
 	model = tny_gtk_folder_list_store_new_with_flags (NULL, 
 							  flags);
 	tny_gtk_folder_list_store_set_path_separator (TNY_GTK_FOLDER_LIST_STORE (model),
