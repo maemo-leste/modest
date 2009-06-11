@@ -32,6 +32,12 @@
 #include <modest-address-book.h>
 
 void
+modest_address_book_init (void)
+{
+	g_debug (__FUNCTION__);
+}
+
+void
 modest_address_book_add_address (const gchar *address)
 {
 	g_debug (__FUNCTION__);

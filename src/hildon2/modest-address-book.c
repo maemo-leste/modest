@@ -1021,7 +1021,7 @@ resolve_address (const gchar *address,
 	*canceled = FALSE;
 	info = g_slice_new0 (CheckNamesInfo);
 	show_check_names_banner (info);
-	
+
 	contact_model = osso_abook_contact_model_new ();
 	if (!open_addressbook ()) {
 		hide_check_names_banner (info);
@@ -1164,4 +1164,10 @@ modest_address_book_get_my_name ()
 		return e_contact_get ((EContact *) self_contact, E_CONTACT_FULL_NAME);
 	else
 		return NULL;
+}
+
+void
+modest_address_book_init (void)
+{
+	open_addressbook ();
 }

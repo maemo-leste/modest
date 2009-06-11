@@ -36,6 +36,7 @@
 #include <modest-runtime-priv.h>
 #include <modest-init.h>
 #include <modest-defs.h>
+#include "modest-address-book.h"
 #include <modest-singletons.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-folder-view.h>
@@ -244,6 +245,9 @@ modest_init (int argc, char *argv[])
 		g_printerr ("modest: failed to run platform-specific initialization\n");
 		return FALSE;
 	}
+
+	/* Initialize addressbook */
+	modest_address_book_init ();
 
 	reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
 	if (!init_header_columns(modest_runtime_get_conf(), reset)) {

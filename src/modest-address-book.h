@@ -37,6 +37,14 @@
 #include <widgets/modest-recpt-editor.h>
 
 /**
+ * modest_address_book_init:
+ *
+ * initializes the addressbook
+ */
+void
+modest_address_book_init (void);
+
+/**
  * modest_address_book_add_address:
  * @address: a string
  *

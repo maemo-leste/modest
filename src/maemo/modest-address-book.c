@@ -62,14 +62,12 @@ static GSList *select_email_addrs_for_contact(GList * email_addr_list);
 static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, gchar **contact_id);
 static gchar *unquote_string (const gchar *str);
 
-
 static void
 unref_gobject (GObject *obj)
 {
 	if (obj)
 		g_object_unref (obj);
 }
-	
 
 static void
 get_book_view_cb (EBook *book, EBookStatus status, EBookView *bookview, gpointer data)
@@ -1045,4 +1043,11 @@ modest_address_book_get_my_name ()
 {
 	/* There is no support to get my own contact in this version */
 	return NULL;
+}
+
+
+void
+modest_address_book_init (void)
+{
+	open_addressbook ();
 }
