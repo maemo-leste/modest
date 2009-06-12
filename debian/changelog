@@ -1,6 +1,26 @@
+modest (3.0.17-rc13) unstable; urgency=low
+ 
+  * Week 25 - second release
+  *
+  * Fixes: NB#108159 Contacts Startup is slow in Email - New mail compose view 
+  * Fixes: NB#116869 Theme and Layout Issues 
+  * Fixes: NB#117340 Sometimes Send/receive not initiated after a connection is selected 
+  * Fixes: NB#120910 Modest crash while updating the folders view. 
+  * Fixes: NB#121339 Messages disappear from Inbox and modest is continuously retrieving in the particular scenario 
+  * Fixes: NB#121911 No error note is shown upon creating non existing account using manual account setup 
+  * Fixes: NB#121968 Move to folder: Unable to move local user defined folder under Gmail account root folder 
+  * Fixes: NB#122003 modest-74E5-11-3571.rcore.lzo crashed 
+  * Fixes: NB#122017 After removing all messages from Imap folder still the menu commands 
+  *            related to messages management are not dimmed 
+  * Fixes: NB#122232 Signature gets duplicated 
+  * Fixes: NB#122287 Conflict behavior in closing "Find on page" tool bar using Ctrl+F short cut key in Email 
+  * Fixes: NB#119126 LED is not glowing for incoming mail when E-mail main view is open and display is off 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 12 Jun 2009 13:06:45 +0300
+
 modest (3.0.17-rc12) unstable; urgency=low
 
-  * Week 24, 2009 - third release
+  * Week 25, 2009 - first release
   *
   * Fixes: NB#112963 Opening New Editor takes more than expected time(ie 1 sec) when 
   *        launched from Accounts view/Folders View.
