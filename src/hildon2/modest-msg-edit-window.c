@@ -3964,17 +3964,16 @@ on_account_removed (TnyAccountStore *account_store,
 	}
 }
 
-static void update_signature (ModestMsgEditWindow *self,
-			      const gchar *old_account, 
-			      const gchar *new_account)
+static void
+update_signature (ModestMsgEditWindow *self,
+		  const gchar *old_account,
+		  const gchar *new_account)
 {
 	ModestMsgEditWindowPrivate *priv;
 	gboolean has_old_signature, has_new_signature;
 	GtkTextIter iter;
-	GtkTextIter match_start, match_end;
 	ModestAccountMgr *mgr;
 	gchar *signature;
-	gchar *full_signature;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
@@ -3987,15 +3986,21 @@ static void update_signature (ModestMsgEditWindow *self,
 	if (old_account) {
 		signature = modest_account_mgr_get_signature_from_recipient (mgr, old_account, &has_old_signature);
 		if (has_old_signature) {
-			full_signature = g_strconcat ("\n--\n", signature, NULL);
-			if (gtk_text_iter_forward_search (&iter, full_signature, 0, &match_start, &match_end, NULL)) {
+			GtkTextIter match_start, match_end;
+			/* We cannot use
+			   MODEST_TEXT_UTILS_SIGNATURE_MARKER as it
+			   seems that the search has some problems
+			   with the blank space at the end */
+			if (gtk_text_iter_forward_search (&iter, "--",
+							  GTK_TEXT_SEARCH_TEXT_ONLY,
+							  &match_start, NULL, NULL)) {
+				gtk_text_buffer_get_end_iter (priv->text_buffer ,&match_end);
 				gtk_text_buffer_delete (priv->text_buffer, &match_start, &match_end);
 				iter = match_start;
 			} else if (gtk_text_iter_forward_search (&iter, _("mcen_ia_editor_original_message"), 0,
 								 &match_start, &match_end, NULL)) {
 				iter = match_start;
 			}
-			g_free (full_signature);
 		}
 		g_free (signature);
 	}
@@ -4003,7 +4008,8 @@ static void update_signature (ModestMsgEditWindow *self,
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	signature = modest_account_mgr_get_signature_from_recipient (mgr, new_account, &has_new_signature);
 	if (has_new_signature) {
-		full_signature = g_strconcat ("\n--\n", signature, NULL);
+		gchar *full_signature = g_strconcat ("\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n",
+						     signature, NULL);
 		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
 		g_free (full_signature);
 	}
@@ -4057,8 +4063,18 @@ from_field_changed (HildonPickerButton *button,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	old_account = priv->last_from_account;
-	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
-	new_account = priv->last_from_account;
+	new_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+
+	if (!new_account) {
+		g_warning ("%s, could not get the new account", __FUNCTION__);
+		return;
+	}
+
+	/* If the From is the same do nothing */
+	if (old_account && new_account && !strcmp (old_account, new_account))
+		return;
+
+	priv->last_from_account = new_account;
 
 	update_signature (self, old_account, new_account);
 	update_branding (self, new_account);
