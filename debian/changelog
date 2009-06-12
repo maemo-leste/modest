@@ -1,3 +1,11 @@
+modest (3.0.17-rc14) unstable; urgency=low
+
+  * Week 25 test release to check the following bug.
+  *
+  * Fixes: NB#117967 Opening a email viewer when tapped on new email notification received should be improved
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 12 Jun 2009 15:31:10 +0300
+
 modest (3.0.17-rc13) unstable; urgency=low
  
   * Week 25 - second release
