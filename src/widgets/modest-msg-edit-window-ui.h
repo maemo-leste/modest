@@ -106,8 +106,6 @@ static const GtkActionEntry modest_msg_edit_action_entries [] = {
 
 	/* TOOLBAR ACTIONS */
 #ifndef MODEST_TOOLKIT_HILDON2
-	/* Find in page. This is a normal menu option in Hildon2, and a checkbox in the others */
-	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), "<CTRL>F", NULL, G_CALLBACK (modest_ui_actions_on_toggle_find_in_page)},
 	{ "ToolbarSend", MODEST_TOOLBAR_ICON_MAIL_SEND, N_("mcen_me_editor_send"),  "<Control>Return", NULL,  G_CALLBACK (modest_ui_actions_on_send) },
 #endif
 #ifdef MODEST_TOOLKIT_GTK
@@ -139,10 +137,8 @@ static const GtkToggleActionEntry modest_msg_edit_toggle_action_entries [] = {
 	{ "ActionsBold", MODEST_TOOLBAR_ICON_BOLD, MODEST_TOOLBAR_ICON_BOLD, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_bold), FALSE },
 	{ "ActionsItalics", MODEST_TOOLBAR_ICON_ITALIC, MODEST_TOOLBAR_ICON_ITALIC, NULL, NULL, G_CALLBACK (modest_ui_actions_on_toggle_italics), FALSE },
 
-#ifndef MODEST_TOOLKIT_HILDON2
 	/* Find in page */
 	{ "FindInMessage", NULL, N_("mcen_me_viewer_find"), "<CTRL>F", NULL, G_CALLBACK (modest_ui_actions_on_toggle_find_in_page), FALSE },
-#endif
 };
 
 static const GtkRadioActionEntry modest_msg_edit_alignment_radio_action_entries [] = {
