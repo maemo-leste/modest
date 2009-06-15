@@ -682,14 +682,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 		new_msg = modest_formatter_quote  (formatter, no_text_part ? NULL: body, header,
 						    attachments);
 	else {
-		/* for attachements; inline if there is a text part, and include the
-		 * full old mail if there was none */
-		if (no_text_part) {
-			new_msg = modest_formatter_attach (formatter, msg, header);
-		} else { 
-			new_msg = modest_formatter_inline  (formatter, body, header,
-							    attachments);
-		}
+		new_msg = modest_formatter_attach (formatter, msg, header);
 	}
 
 	g_object_unref (G_OBJECT(formatter));
