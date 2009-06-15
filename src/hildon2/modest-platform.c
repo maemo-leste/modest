@@ -689,12 +689,13 @@ folder_chooser_activated (ModestFolderView *folder_view,
 
 static TnyFolderStore *
 folder_chooser_dialog_run (ModestFolderView *original,
-			   TnyFolderStore *current)
+			   TnyFolderStore *current,
+			   GtkButton *picker)
 {
 	GtkWidget *folder_view;
 	FolderChooserData userdata = {NULL, NULL};
 	GtkWidget *pannable;
-	gchar *visible_id = NULL;
+	const gchar *visible_id = NULL;
 
 	userdata.dialog = hildon_dialog_new ();
 	pannable = hildon_pannable_area_new ();
@@ -710,31 +711,28 @@ folder_chooser_dialog_run (ModestFolderView *original,
 		   along with the currently visible server account */
 		if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (current)) ||
 		    modest_tny_account_is_memory_card_account (TNY_ACCOUNT (current)))
-			visible_id =
-				g_strdup (modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (original)));
+			visible_id = g_object_get_data ((GObject *) picker, FOLDER_PICKER_ORIGINAL_ACCOUNT);
 		else
-			visible_id = g_strdup (tny_account_get_id (TNY_ACCOUNT (current)));
-	} else if (TNY_IS_FOLDER (current) && !TNY_IS_MERGE_FOLDER (current)) {
+			visible_id = tny_account_get_id (TNY_ACCOUNT (current));
+	} else if (TNY_IS_FOLDER (current)) {
 		TnyAccount *account;
-		account = tny_folder_get_account (TNY_FOLDER (current));
+		account = modest_tny_folder_get_account ((TnyFolder *) current);
 		if (account) {
 			if (modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (account)) ||
 			    modest_tny_account_is_memory_card_account (TNY_ACCOUNT (account))) {
-				visible_id =
-					g_strdup (modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (original)));
+				visible_id = g_object_get_data ((GObject *) picker, FOLDER_PICKER_ORIGINAL_ACCOUNT);
 			} else {
-				visible_id = g_strdup (tny_account_get_id (account));
+				visible_id = tny_account_get_id (account);
 			}
 			g_object_unref (account);
 		}
 	} else {
-		visible_id = g_strdup (
-			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(original)));
+		visible_id =
+			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(original));
 	}
 
 	modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(folder_view),
 								     visible_id);
-	g_free (visible_id);
 
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (userdata.dialog)->vbox), pannable);
 	gtk_container_add (GTK_CONTAINER (pannable), folder_view);
@@ -923,7 +921,7 @@ folder_picker_clicked (GtkButton *button,
 
 	current = g_object_get_data (G_OBJECT (button), FOLDER_PICKER_CURRENT_FOLDER);
 
-	store = folder_chooser_dialog_run (helper->folder_view, current);
+	store = folder_chooser_dialog_run (helper->folder_view, current, button);
 	if (store) {
 		const gchar *current_name;
 		gboolean exists = FALSE;
