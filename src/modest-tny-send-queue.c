@@ -84,6 +84,9 @@ static void modest_tny_send_queue_add_async (TnySendQueue *self,
 
 static TnyFolder* modest_tny_send_queue_get_outbox  (TnySendQueue *self);
 static TnyFolder* modest_tny_send_queue_get_sentbox (TnySendQueue *self);
+static void modest_tny_send_queue_cancel (TnySendQueue *self,
+					  TnySendQueueCancelAction cancel_action,
+					  GError **err);
 
 /* list my signals  */
 enum {
@@ -111,8 +114,8 @@ struct _ModestTnySendQueuePrivate {
 
 	/* last was send receive operation?*/
 	gboolean requested_send_receive;
-
 	gboolean sending;
+	gboolean suspend;
 
 	GSList *sighandlers;
 };
@@ -344,6 +347,24 @@ modest_tny_send_queue_get_outbox (TnySendQueue *self)
 	return g_object_ref (priv->outbox);
 }
 
+static void
+modest_tny_send_queue_cancel (TnySendQueue *self,
+			      TnySendQueueCancelAction cancel_action,
+			      GError **err)
+{
+	ModestTnySendQueuePrivate *priv;
+
+	g_return_if_fail (self);
+
+	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
+
+	/* Call the parent */
+	TNY_CAMEL_SEND_QUEUE_CLASS(parent_class)->cancel (self, cancel_action, err);
+
+	if (cancel_action == TNY_SEND_QUEUE_CANCEL_ACTION_SUSPEND && (err == NULL || *err == NULL))
+		priv->suspend = TRUE;
+}
+
 GType
 modest_tny_send_queue_get_type (void)
 {
@@ -384,6 +405,7 @@ modest_tny_send_queue_class_init (ModestTnySendQueueClass *klass)
 	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->add_async   = modest_tny_send_queue_add_async;
 	TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_outbox  = modest_tny_send_queue_get_outbox;
         TNY_CAMEL_SEND_QUEUE_CLASS(klass)->get_sentbox = modest_tny_send_queue_get_sentbox;
+        TNY_CAMEL_SEND_QUEUE_CLASS(klass)->cancel      = modest_tny_send_queue_cancel;
 	klass->status_changed   = NULL;
 
 	signals[STATUS_CHANGED_SIGNAL] =
@@ -409,6 +431,7 @@ modest_tny_send_queue_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->outbox = NULL;
 	priv->sentbox = NULL;
 	priv->sending = FALSE;
+	priv->suspend = FALSE;
 	priv->sighandlers = NULL;
 }
 
@@ -749,7 +772,61 @@ _on_queue_start (TnySendQueue *self,
 	priv->sending = TRUE;
 }
 
-static void 
+static void
+on_queue_stop_get_headers_async_cb (TnyFolder *folder,
+				    gboolean cancelled,
+				    TnyList *headers,
+				    GError *err,
+				    gpointer user_data)
+{
+	ModestTnySendQueue *self = (ModestTnySendQueue *) user_data;
+	TnyIterator *iter;
+
+	if (cancelled || err)
+		goto end;
+
+	/* Update the info about headers */
+	iter = tny_list_create_iterator (headers);
+	while (!tny_iterator_is_done (iter)) {
+		TnyHeader *header;
+
+		header = (TnyHeader *) tny_iterator_get_current (iter);
+		if (header) {
+			gchar *msg_id = NULL;
+			GList *item;
+
+			/* Get message uid */
+			msg_id = modest_tny_send_queue_get_msg_id (header);
+			if (msg_id)
+				item = modest_tny_send_queue_lookup_info (MODEST_TNY_SEND_QUEUE (self), msg_id);
+			else
+				g_warning ("%s: could not get msg-id for header", __FUNCTION__);
+
+			if (item) {
+				SendInfo *info;
+				/* Set current status item */
+				info = item->data;
+				if (tny_header_get_flags (header) & TNY_HEADER_FLAG_SUSPENDED) {
+					info->status = MODEST_TNY_SEND_QUEUE_SUSPENDED;
+					g_signal_emit (self, signals[STATUS_CHANGED_SIGNAL], 0,
+						       info->msg_id, info->status);
+				}
+			} else {
+				g_warning ("%s: could not find item with id '%s'", __FUNCTION__, msg_id);
+			}
+			g_object_unref (header);
+		}
+		tny_iterator_next (iter);
+	}
+	g_object_unref (iter);
+
+ end:
+	/* Unrefs */
+	g_object_unref (headers);
+	g_object_unref (self);
+}
+
+static void
 _on_queue_stop (TnySendQueue *self,
 		gpointer data)
 {
@@ -757,9 +834,20 @@ _on_queue_stop (TnySendQueue *self,
 
 	priv = MODEST_TNY_SEND_QUEUE_GET_PRIVATE (self);
 	priv->sending = FALSE;
+
+	if (priv->suspend) {
+		TnyList *headers;
+		priv->suspend = FALSE;
+
+		/* Update the state of messages in the queue */
+		headers = tny_simple_list_new ();
+		tny_folder_get_headers_async (priv->outbox, headers, TRUE,
+					      on_queue_stop_get_headers_async_cb,
+					      NULL, g_object_ref (self));
+	}
 }
 
-static void 
+static void
 fill_list_of_caches (gpointer key, gpointer value, gpointer userdata)
 {
 	GSList **send_queues = (GSList **) userdata;
@@ -782,14 +870,14 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 	ModestTnySendQueueStatus queue_status = MODEST_TNY_SEND_QUEUE_UNKNOWN;
 	gchar *msg_uid = NULL;
 	ModestTnySendQueue *send_queue = NULL;
-	
+
 	g_return_val_if_fail (TNY_IS_HEADER(header), MODEST_TNY_SEND_QUEUE_UNKNOWN);
 
 	msg_uid = modest_tny_send_queue_get_msg_id (header);
 	cache_mgr = modest_runtime_get_cache_mgr ();
 	send_queue_cache = modest_cache_mgr_get_cache (cache_mgr,
 						       MODEST_CACHE_MGR_CACHE_TYPE_SEND_QUEUE);
-	
+
 	g_hash_table_foreach (send_queue_cache, (GHFunc) fill_list_of_caches, &send_queues);
 	if (send_queues == NULL) {
 		accounts = tny_simple_list_new (); 
@@ -797,9 +885,9 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 		tny_account_store_get_accounts (TNY_ACCOUNT_STORE(accounts_store), 
 						accounts, 
 						TNY_ACCOUNT_STORE_TRANSPORT_ACCOUNTS);
-		
+
 		iter = tny_list_create_iterator (accounts);
-		while (!tny_iterator_is_done (iter)) {			
+		while (!tny_iterator_is_done (iter)) {
 			account = TNY_TRANSPORT_ACCOUNT(tny_iterator_get_current (iter));
 			send_queue = modest_runtime_get_send_queue(TNY_TRANSPORT_ACCOUNT(account), TRUE);
 			g_object_unref(account);
@@ -818,7 +906,7 @@ modest_tny_all_send_queues_get_msg_status (TnyHeader *header)
 	else {
 		for (node = send_queues; node != NULL; node = g_slist_next (node)) {
 			send_queue = MODEST_TNY_SEND_QUEUE (node->data);
-			
+
 			queue_status = modest_tny_send_queue_get_msg_status (send_queue, msg_uid);
 			if (queue_status != MODEST_TNY_SEND_QUEUE_UNKNOWN) {
 				status = queue_status;
