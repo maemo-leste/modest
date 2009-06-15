@@ -4008,7 +4008,7 @@ update_signature (ModestMsgEditWindow *self,
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	signature = modest_account_mgr_get_signature_from_recipient (mgr, new_account, &has_new_signature);
 	if (has_new_signature) {
-		gchar *full_signature = g_strconcat ("\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n",
+		gchar *full_signature = g_strconcat (MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n",
 						     signature, NULL);
 		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
 		g_free (full_signature);
