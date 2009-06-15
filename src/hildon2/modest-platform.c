@@ -107,6 +107,7 @@
 #define COMMON_FOLDER_DIALOG_ENTRY "entry"
 #define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
 #define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
+#define FOLDER_PICKER_ORIGINAL_ACCOUNT "original-account"
 #define MODEST_ALARMD_APPID PACKAGE_NAME
 
 static ca_context *ca_con = NULL;
@@ -954,8 +955,27 @@ folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 
 	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 1.0);
 
-	if (suggested)
+	if (suggested) {
+		const gchar *acc_id = NULL;
+
 		folder_picker_set_store (GTK_BUTTON (button), suggested);
+
+		if (TNY_IS_ACCOUNT (suggested)) {
+			acc_id = tny_account_get_id ((TnyAccount *) suggested);
+		} else {
+			TnyAccount *account = modest_tny_folder_get_account ((TnyFolder *) suggested);
+			if (account) {
+				acc_id = tny_account_get_id ((TnyAccount *) account);
+				g_object_unref (account);
+			}
+		}
+
+		if (!acc_id)
+			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(helper->folder_view));
+
+		g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_ORIGINAL_ACCOUNT,
+					g_strdup (acc_id), (GDestroyNotify) g_free);
+	}
 
 	g_signal_connect (G_OBJECT (button), "clicked",
 			  G_CALLBACK (folder_picker_clicked),
