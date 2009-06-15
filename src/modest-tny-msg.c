@@ -652,6 +652,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	gchar *old_subject;
 	gchar *new_subject;
 	TnyMimePart *body = NULL;
+	TnyMimePart *html_body = NULL;
 	ModestFormatter *formatter;
 	gchar *subject_prefix;
 	gboolean no_text_part;
@@ -664,8 +665,10 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 
 	/* Get body from original msg. Always look for the text/plain
 	   part of the message to create the reply/forwarded mail */
-	if (msg != NULL)
+	if (msg != NULL) {
 		body   = modest_tny_msg_find_body_part (msg, FALSE);
+		html_body = modest_tny_msg_find_body_part (msg, TRUE);
+	}
 
 	if (modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_PREFER_FORMATTED_TEXT,
 				  NULL))
@@ -682,12 +685,19 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 		new_msg = modest_formatter_quote  (formatter, no_text_part ? NULL: body, header,
 						    attachments);
 	else {
-		new_msg = modest_formatter_attach (formatter, msg, header);
+		if (no_text_part || (html_body && (strcmp (tny_mime_part_get_content_type (html_body), "text/html")==0))) {
+			new_msg = modest_formatter_attach (formatter, msg, header);
+		} else {
+			new_msg = modest_formatter_inline  (formatter, body, header,
+							    attachments);
+		}
 	}
 
 	g_object_unref (G_OBJECT(formatter));
 	if (body)
 		g_object_unref (G_OBJECT(body));
+	if (html_body)
+		g_object_unref (G_OBJECT(html_body));
 
 	/* Fill the header */
 	new_header = tny_msg_get_header (new_msg);
