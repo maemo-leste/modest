@@ -742,28 +742,6 @@ modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **
 			break;
 		}
 
-		from = 
-			modest_account_mgr_get_from_string (mgr, node->data, NULL);
-			
-		if (from) {
-			gchar *from_email = 
-				modest_text_utils_get_email_address (from);
-			gchar *from_header_email =
-				modest_text_utils_get_email_address (from_header);
-				
-			if (from_email && from_header_email) {
-				if (!modest_text_utils_utf8_strcmp (from_header_email, from_email, TRUE)) {
-					account_name = g_strdup (node->data);
-					g_free (from);
-					g_free (from_email);
-					break;
-				}
-			}
-			g_free (from_email);
-			g_free (from_header_email);
-			g_free (from);
-		}
-
 		transport_account = modest_account_mgr_get_server_account_name (modest_runtime_get_account_mgr (),
 										(const gchar *) node->data,
 										TNY_ACCOUNT_TYPE_TRANSPORT);
@@ -800,6 +778,29 @@ modest_utils_get_account_name_from_recipient (const gchar *from_header, gchar **
 		}
 		if (mailbox && *mailbox)
 			break;
+
+		from = 
+			modest_account_mgr_get_from_string (mgr, node->data, NULL);
+			
+		if (from) {
+			gchar *from_email = 
+				modest_text_utils_get_email_address (from);
+			gchar *from_header_email =
+				modest_text_utils_get_email_address (from_header);
+				
+			if (from_email && from_header_email) {
+				if (!modest_text_utils_utf8_strcmp (from_header_email, from_email, TRUE)) {
+					account_name = g_strdup (node->data);
+					g_free (from);
+					g_free (from_email);
+					break;
+				}
+			}
+			g_free (from_email);
+			g_free (from_header_email);
+			g_free (from);
+		}
+
 			
 	}
 	g_slist_foreach (accounts, (GFunc) g_free, NULL);
