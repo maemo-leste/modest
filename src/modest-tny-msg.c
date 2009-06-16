@@ -350,7 +350,9 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 						tny_mime_part_set_header_pair (attachment_part, "Content-Disposition",
 									       "attachment");
 				}
-				tny_mime_part_set_transfer_encoding (TNY_MIME_PART (attachment_part), "base64");
+				if (!TNY_IS_MSG (old_attachment))  {
+					tny_mime_part_set_transfer_encoding (TNY_MIME_PART (attachment_part), "base64");
+				}
 				ret = tny_mime_part_add_part (TNY_MIME_PART (part), attachment_part);
 				attached++;
 				if (old_cid)
