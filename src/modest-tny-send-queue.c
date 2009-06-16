@@ -793,7 +793,7 @@ on_queue_stop_get_headers_async_cb (TnyFolder *folder,
 		header = (TnyHeader *) tny_iterator_get_current (iter);
 		if (header) {
 			gchar *msg_id = NULL;
-			GList *item;
+			GList *item = NULL;
 
 			/* Get message uid */
 			msg_id = modest_tny_send_queue_get_msg_id (header);
