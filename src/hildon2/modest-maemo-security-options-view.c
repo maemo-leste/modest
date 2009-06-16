@@ -156,39 +156,32 @@ create_incoming_security (ModestSecurityOptionsView* self,
 					       _("mcen_li_emailsetup_secure_connection"), 
 					       ppriv->security_view);
 
-	if (ppriv->full) {		
-		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
-		entry_caption = modest_maemo_utils_create_captioned (title_size_group,
-								     value_size_group,
-								     _("mcen_fi_emailsetup_port"), 
-								     FALSE,
-								     ppriv->port_view);
-	}
-
 	ppriv->auth_view = hildon_check_button_new (MODEST_EDITABLE_SIZE);
 	gtk_button_set_label (GTK_BUTTON (ppriv->auth_view), _("mcen_li_emailsetup_secure_authentication"));
 	gtk_button_set_alignment (GTK_BUTTON (ppriv->auth_view), 0.0, 0.5);
 
-	/* Track changes in UI */	
+	/* Track changes in UI */
 	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
 	                  G_CALLBACK (on_security_changed), self);
 
-	/* Pack into container */
-	gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view,
-			    FALSE, FALSE, 0);
-	if (ppriv->full)
-		gtk_box_pack_start (GTK_BOX (self), entry_caption, 
-				    FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_box_pack_start (GTK_BOX (self), ppriv->security_view,
-			    FALSE, FALSE, 0);
+	/* Pack into container & show */
+	gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, 0);
+	gtk_widget_show (ppriv->security_view);
+	gtk_widget_show (ppriv->auth_view);
 
-	/* Show widgets */
 	if (ppriv->full) {
+		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
+		entry_caption = modest_maemo_utils_create_captioned (title_size_group,
+								     value_size_group,
+								     _("mcen_fi_emailsetup_port"),
+								     FALSE,
+								     ppriv->port_view);
+		/* Pack & show widgets */
+		gtk_box_pack_start (GTK_BOX (self), entry_caption, FALSE, FALSE, 0);
 		gtk_widget_show (ppriv->port_view);
 		gtk_widget_show (entry_caption);
 	}
-	gtk_widget_show (ppriv->security_view);
-	gtk_widget_show (ppriv->auth_view);
 }
 
 static void
