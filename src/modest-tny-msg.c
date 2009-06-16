@@ -659,6 +659,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	gchar *subject_prefix;
 	gboolean no_text_part;
 	gchar *parent_uid;
+	gboolean forward_as_attach = FALSE;
 
 	if (header)
 		g_object_ref (header);
@@ -688,8 +689,10 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 						    attachments);
 	else {
 		if (no_text_part || (html_body && (strcmp (tny_mime_part_get_content_type (html_body), "text/html")==0))) {
+			forward_as_attach = TRUE;
 			new_msg = modest_formatter_attach (formatter, msg, header);
 		} else {
+			forward_as_attach = FALSE;
 			new_msg = modest_formatter_inline  (formatter, body, header,
 							    attachments);
 		}
@@ -737,7 +740,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	g_object_unref (G_OBJECT (header));
 	/* ugly to unref it here instead of in the calling func */
 
-	if (!is_reply & !no_text_part) {
+	if (!is_reply & !forward_as_attach) {
 		add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE, NULL);
 	}
 
