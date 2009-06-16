@@ -192,55 +192,19 @@ modest_hildon2_global_settings_dialog_new (void)
 static GtkWidget*
 create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 {
-	GtkWidget *vbox, *vbox_update;
+	GtkWidget *vbox;
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
-	GtkWidget *pannable;
+	GtkWidget *pannable, *separator;
 	ModestHildon2GlobalSettingsDialogPrivate *priv;
 
 	priv = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	vbox = gtk_vbox_new (FALSE, MODEST_MARGIN_HALF);
 
-	vbox_update = gtk_vbox_new (FALSE, 0);
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-
-	/* Auto update */
-	ppriv->auto_update = hildon_check_button_new (MODEST_EDITABLE_SIZE);
-	gtk_button_set_label (GTK_BUTTON (ppriv->auto_update), _("mcen_fi_options_autoupdate"));
-	gtk_button_set_alignment (GTK_BUTTON (ppriv->auto_update), 0.0, 0.5);
-	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->auto_update, FALSE, FALSE, MODEST_MARGIN_HALF);
-	g_signal_connect (ppriv->auto_update, "clicked", G_CALLBACK (on_auto_update_clicked), self);
-
-	/* Connected via */
-
-	/* Note: This ModestPairList* must exist for as long as the picker
-	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
-	 * so it can't know how to manage its memory. */ 
-	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
-	ppriv->connect_via = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							 HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-							 ppriv->connect_via_list, g_int_equal);
-	modest_maemo_utils_set_vbutton_layout (title_size_group, 
-					       _("mcen_fi_options_connectiontype"),
-					       ppriv->connect_via);
-	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->connect_via, FALSE, FALSE, 0);
-
-	/* Update interval */
-
-	/* Note: This ModestPairList* must exist for as long as the picker
-	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
-	 * so it can't know how to manage its memory. */ 
-	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
-	ppriv->update_interval = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							     HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-							     ppriv->update_interval_list, g_int_equal);
-	modest_maemo_utils_set_vbutton_layout (title_size_group, 
-					       _("mcen_fi_options_updateinterval"), 
-					       ppriv->update_interval);
-	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->update_interval, FALSE, FALSE, 0);
 
 	/* Default account selector */
 	ppriv->accounts_list = get_accounts_list ();
@@ -262,34 +226,65 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 			ppriv->initial_state.default_account = default_account;
 		}
 	}
-	modest_maemo_utils_set_vbutton_layout (title_size_group, 
-					       _("mcen_ti_default_account"), 
+	modest_maemo_utils_set_vbutton_layout (title_size_group,
+					       _("mcen_ti_default_account"),
 					       ppriv->default_account_selector);
-	gtk_box_pack_start (GTK_BOX (vbox_update), ppriv->default_account_selector, 
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->default_account_selector,
 			    FALSE, FALSE, 0);
 
-	/* Add to vbox */
-	gtk_box_pack_start (GTK_BOX (vbox), vbox_update, FALSE, FALSE, 0);
-
-	g_object_unref (title_size_group);
-	g_object_unref (value_size_group);
-
-	/* Limits */
-	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-
+	/* Message format */
 	/* Note: This ModestPairList* must exist for as long as the picker
-	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
-	 * so it can't know how to manage its memory. */ 
+	 * that uses it, because the ModestSelectorPicker uses the ID opaquely,
+	 * so it can't know how to manage its memory. */
 	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
 	ppriv->msg_format = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
 							HILDON_BUTTON_ARRANGEMENT_VERTICAL,
 							ppriv->msg_format_list, g_int_equal);
-	modest_maemo_utils_set_vbutton_layout (title_size_group, 
-					       _("mcen_fi_options_messageformat"), 
+	modest_maemo_utils_set_vbutton_layout (title_size_group,
+					       _("mcen_fi_options_messageformat"),
 					       ppriv->msg_format);
 
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, 0);
+
+	/* Separator label */
+	separator = gtk_label_new (_("mcen_ti_updating"));
+	gtk_label_set_justify ((GtkLabel *) separator, GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start (GTK_BOX (vbox), separator, FALSE, FALSE, MODEST_MARGIN_DEFAULT);
+
+	/* Auto update */
+	ppriv->auto_update = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+	gtk_button_set_label (GTK_BUTTON (ppriv->auto_update), _("mcen_fi_options_autoupdate"));
+	gtk_button_set_alignment (GTK_BUTTON (ppriv->auto_update), 0.0, 0.5);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->auto_update, FALSE, FALSE, 0);
+	g_signal_connect (ppriv->auto_update, "clicked", G_CALLBACK (on_auto_update_clicked), self);
+
+	/* Connected via */
+
+	/* Note: This ModestPairList* must exist for as long as the picker
+	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
+	ppriv->connect_via = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							 HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+							 ppriv->connect_via_list, g_int_equal);
+	modest_maemo_utils_set_vbutton_layout (title_size_group, 
+					       _("mcen_fi_options_connectiontype"),
+					       ppriv->connect_via);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->connect_via, FALSE, FALSE, 0);
+
+	/* Update interval */
+
+	/* Note: This ModestPairList* must exist for as long as the picker
+	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
+	 * so it can't know how to manage its memory. */ 
+	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
+	ppriv->update_interval = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
+							     HILDON_BUTTON_ARRANGEMENT_VERTICAL,
+							     ppriv->update_interval_list, g_int_equal);
+	modest_maemo_utils_set_vbutton_layout (title_size_group, 
+					       _("mcen_fi_options_updateinterval"), 
+					       ppriv->update_interval);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->update_interval, FALSE, FALSE, 0);
 
 	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
 
