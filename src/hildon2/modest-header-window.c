@@ -96,6 +96,11 @@ struct _ModestHeaderWindowPrivate {
 
 	/* sort button */
 	GtkWidget *sort_button;
+
+	/* CSM menu */
+	GtkWidget *csm_menu;
+	gdouble x_coord;
+	gdouble y_coord;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_HEADER_WINDOW, \
@@ -116,7 +121,7 @@ static GtkWidget *create_header_view (ModestWindow *progress_window,
 
 static void update_view (ModestHeaderWindow *self,
 			 TnyFolderChange *change);
-static void set_contents_state (ModestHeaderWindow *window, 
+static void set_contents_state (ModestHeaderWindow *window,
 				ContentsState state);
 
 static void on_msg_count_changed (ModestHeaderView *header_view,
@@ -227,7 +232,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
 	priv->sighandlers = NULL;
-	
+
 	priv->header_view = NULL;
 	priv->empty_view = NULL;
 	priv->top_vbox = NULL;
@@ -242,7 +247,9 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->current_store_account = NULL;
 	priv->sort_button = NULL;
 	priv->new_message_button = NULL;
-	
+	priv->x_coord = 0;
+	priv->y_coord = 0;
+
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
 					    "applications_email_headerview");
@@ -364,13 +371,16 @@ connect_signals (ModestHeaderWindow *self)
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
-	/* Pannable area */
-	priv->sighandlers =
-		modest_signal_mgr_connect (priv->sighandlers,
-					   (GObject *) priv->contents_view,
-					   "horizontal-movement",
-					   G_CALLBACK (on_horizontal_movement),
-					   self);
+	/* Delete using horizontal gesture */
+	/* DISABLED because it's unreliabile */
+	if (FALSE) {
+		priv->sighandlers =
+			modest_signal_mgr_connect (priv->sighandlers,
+						   (GObject *) priv->contents_view,
+						   "horizontal-movement",
+						   G_CALLBACK (on_horizontal_movement),
+						   self);
+	}
 }
 
 static void
@@ -382,10 +392,97 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	update_view (MODEST_HEADER_WINDOW (user_data), NULL);
 }
 
+static gboolean
+tap_and_hold_query_cb (GtkWidget *widget,
+		       GdkEvent *event,
+		       gpointer user_data)
+{
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv;
+
+	self = (ModestHeaderWindow *) user_data;
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	if (event->type == GDK_BUTTON_PRESS) {
+		priv->x_coord = ((GdkEventButton*)event)->x;
+		priv->y_coord = ((GdkEventButton*)event)->y;
+	}
+
+	return FALSE;
+}
+
+static void
+delete_header (GtkWindow *parent,
+	       TnyHeader *header)
+{
+	gint response;
+	gchar *subject, *msg;
+
+	subject = tny_header_dup_subject (header);
+	if (!subject)
+		subject = g_strdup (_("mail_va_no_subject"));
+
+	msg = g_strdup_printf (ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 1),
+			       subject);
+	g_free (subject);
+
+	/* Confirmation dialog */
+	response = modest_platform_run_confirmation_dialog (parent, msg);
+	g_free (msg);
+
+	if (response == GTK_RESPONSE_OK) {
+		ModestMailOperation *mail_op;
+		TnyList *header_list;
+
+		header_list = tny_simple_list_new ();
+		tny_list_append (header_list, (GObject *) header);
+		mail_op = modest_mail_operation_new ((GObject *) parent);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+						 mail_op);
+		modest_mail_operation_remove_msgs (mail_op, header_list, FALSE);
+		g_object_unref (mail_op);
+		g_object_unref (header_list);
+	}
+}
+
+
+static void
+on_delete_csm_activated (GtkMenuItem *item,
+			 gpointer user_data)
+{
+	TnyHeader *header;
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv;
+
+	self = (ModestHeaderWindow *) user_data;
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
+						       priv->x_coord, priv->y_coord);
+	if (header) {
+		delete_header ((GtkWindow *) self, header);
+		g_object_unref (header);
+	}
+}
+
+static void
+on_mark_read_csm_activated (GtkMenuItem *item,
+			    gpointer user_data)
+{
+}
+
+static void
+on_mark_unread_csm_activated (GtkMenuItem *item,
+			      gpointer user_data)
+{
+}
+
 static GtkWidget *
 create_header_view (ModestWindow *self, TnyFolder *folder)
 {
 	GtkWidget *header_view;
+	GtkWidget *delete_item, *mark_read_item, *mark_unread_item;
+	GtkWidget *csm_menu;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder,
@@ -394,6 +491,29 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 				       MODEST_HEADER_VIEW_FILTER_NONE);
 	modest_widget_memory_restore (modest_runtime_get_conf (), G_OBJECT(header_view),
 				      MODEST_CONF_HEADER_VIEW_KEY);
+
+	/* Create CSM menu */
+	csm_menu = gtk_menu_new ();
+	delete_item = gtk_menu_item_new_with_label (_HL("wdgt_bd_delete"));
+	mark_read_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_read"));
+	mark_unread_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_unread"));
+	gtk_menu_shell_append (GTK_MENU_SHELL (csm_menu), delete_item);
+	gtk_menu_shell_append (GTK_MENU_SHELL (csm_menu), mark_read_item);
+	gtk_menu_shell_append (GTK_MENU_SHELL (csm_menu), mark_unread_item);
+	gtk_widget_show_all (csm_menu);
+
+	/* Connect signals */
+	g_signal_connect ((GObject *) header_view, "tap-and-hold-query",
+			  G_CALLBACK (tap_and_hold_query_cb), self);
+	g_signal_connect ((GObject *) delete_item, "activate",
+			  G_CALLBACK (on_delete_csm_activated), self);
+	g_signal_connect ((GObject *) mark_read_item, "activate",
+			  G_CALLBACK (on_mark_read_csm_activated), self);
+	g_signal_connect ((GObject *) mark_unread_item, "activate",
+			  G_CALLBACK (on_mark_unread_csm_activated), self);
+
+	/* Add tap&hold handling */
+	gtk_widget_tap_and_hold_setup (header_view, csm_menu, NULL, 0);
 
 	return header_view;
 }
@@ -1168,57 +1288,30 @@ on_horizontal_movement (HildonPannableArea *hildonpannable,
 			gdouble             initial_y,
 			gpointer            user_data)
 {
-/* 	ModestHeaderWindowPrivate *priv; */
-/* 	gint dest_x, dest_y; */
-/* 	TnyHeader *header; */
+	ModestHeaderWindowPrivate *priv;
+	gint dest_x, dest_y;
+	TnyHeader *header;
 
-/* 	/\* Ignore right to left movement *\/ */
-/* 	if (direction == HILDON_MOVEMENT_LEFT) */
-/* 		return; */
+	/* Ignore right to left movement */
+	if (direction == HILDON_MOVEMENT_LEFT)
+		return;
 
-/* 	/\* Get the header to delete *\/ */
-/* 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data); */
+	/* Get the header to delete */
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (user_data);
 
-/* 	/\* Get tree view coordinates *\/ */
-/* 	if (!gtk_widget_translate_coordinates ((GtkWidget *) hildonpannable, */
-/* 					       priv->header_view, */
-/* 					       initial_x, */
-/* 					       initial_y, */
-/* 					       &dest_x, */
-/* 					       &dest_y)) */
-/* 	    return; */
+	/* Get tree view coordinates */
+	if (!gtk_widget_translate_coordinates ((GtkWidget *) hildonpannable,
+					       priv->header_view,
+					       initial_x,
+					       initial_y,
+					       &dest_x,
+					       &dest_y))
+	    return;
 
-/* 	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view, */
-/* 						       dest_x, dest_y); */
-/* 	if (header) { */
-/* 		gint response; */
-/* 		gchar *subject, *msg; */
-
-/* 		subject = tny_header_dup_subject (header); */
-/* 		if (!subject) */
-/* 			subject = g_strdup (_("mail_va_no_subject")); */
-
-/* 		msg = g_strdup_printf (ngettext("emev_nc_delete_message", "emev_nc_delete_messages", 1), */
-/* 				       subject); */
-/* 		g_free (subject); */
-
-/* 		/\* Confirmation dialog *\/ */
-/* 		response = modest_platform_run_confirmation_dialog ((GtkWindow *) user_data, msg); */
-/* 		g_free (msg); */
-
-/* 		if (response == GTK_RESPONSE_OK) { */
-/* 			ModestMailOperation *mail_op; */
-/* 			TnyList *header_list; */
-
-/* 			header_list = tny_simple_list_new (); */
-/* 			tny_list_append (header_list, (GObject *) header); */
-/* 			mail_op = modest_mail_operation_new ((GObject *) user_data); */
-/* 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), */
-/* 							 mail_op); */
-/* 			modest_mail_operation_remove_msgs (mail_op, header_list, FALSE); */
-/* 			g_object_unref (mail_op); */
-/* 			g_object_unref (header_list); */
-/* 		} */
-/* 		g_object_unref (header); */
-/* 	} */
+	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
+						       dest_x, dest_y);
+	if (header) {
+		delete_header ((GtkWindow *) user_data, header);
+		g_object_unref (header);
+	}
 }
