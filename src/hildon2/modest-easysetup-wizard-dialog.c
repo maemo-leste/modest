@@ -1346,11 +1346,15 @@ modest_easysetup_wizard_dialog_append_page (GtkNotebook *notebook,
 					    const gchar *label)
 {
 	gint index;
+
 	/* Append page and set attributes */
 	index = gtk_notebook_append_page (notebook, page, gtk_label_new (label));
 	gtk_container_child_set (GTK_CONTAINER (notebook), page,
 				 "tab-expand", TRUE, "tab-fill", TRUE,
 				 NULL);
+
+	/* Give focus to page and show it */
+	gtk_container_set_focus_child (GTK_CONTAINER (notebook), page);
 	gtk_widget_show (page);
 }
 
