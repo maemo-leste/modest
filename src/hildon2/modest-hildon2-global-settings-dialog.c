@@ -515,9 +515,6 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 					      (gpointer) &combo_id);
 	ppriv->initial_state.connect_via = combo_id;
 
-	/* Emit toggled to update the visibility of connect_by caption */
-	gtk_toggle_button_toggled (GTK_TOGGLE_BUTTON (ppriv->auto_update));
-
 	/* Update interval */
 	combo_id = modest_conf_get_int (conf, MODEST_CONF_UPDATE_INTERVAL, &error);
 	if (error) {
@@ -548,7 +545,6 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 		error = NULL;
 		checked = FALSE;
 	}
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ppriv->play_sound), checked);
 	ppriv->initial_state.play_sound = checked;
 
 	/* Msg format */
