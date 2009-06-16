@@ -493,12 +493,40 @@ static void
 on_mark_read_csm_activated (GtkMenuItem *item,
 			    gpointer user_data)
 {
+	TnyHeader *header;
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv;
+
+	self = (ModestHeaderWindow *) user_data;
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
+						       priv->x_coord, priv->y_coord);
+
+	if (header) {
+		tny_header_set_flag (header, TNY_HEADER_FLAG_SEEN);
+		g_object_unref (header);
+	}
 }
 
 static void
 on_mark_unread_csm_activated (GtkMenuItem *item,
 			      gpointer user_data)
 {
+	TnyHeader *header;
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv;
+
+	self = (ModestHeaderWindow *) user_data;
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	header = modest_header_view_get_header_at_pos ((ModestHeaderView *) priv->header_view,
+						       priv->x_coord, priv->y_coord);
+
+	if (header) {
+		tny_header_unset_flag (header, TNY_HEADER_FLAG_SEEN);
+		g_object_unref (header);
+	}
 }
 
 static GtkWidget *
