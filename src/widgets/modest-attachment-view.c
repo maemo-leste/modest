@@ -267,8 +267,11 @@ modest_attachment_view_set_part_default (TnyMimePartView *self, TnyMimePart *mim
 				gchar *header_content_type;
 				header_content_type = modest_tny_mime_part_get_content_type (mime_part);
 				if ((g_str_has_prefix (header_content_type, "message/rfc822") ||
-				     g_str_has_prefix (header_content_type, "multipart/") ||
-				     g_str_has_prefix (header_content_type, "text/"))) {
+				     g_str_has_prefix (header_content_type, "multipart/"))) {
+					file_icon_name = 
+						modest_platform_get_file_icon_name (
+							NULL, "message/rfc822", NULL);
+				} else if (g_str_has_prefix (header_content_type, "text/")) {
 					file_icon_name = 
 						modest_platform_get_file_icon_name (
 							NULL, tny_mime_part_get_content_type (mime_part), NULL);
