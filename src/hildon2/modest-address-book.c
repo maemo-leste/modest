@@ -1022,7 +1022,7 @@ resolve_address (const gchar *address,
 	info = g_slice_new0 (CheckNamesInfo);
 	show_check_names_banner (info);
 
-	contact_model = osso_abook_contact_model_new ();
+	contact_model = osso_abook_contact_model_get_default ();
 	if (!open_addressbook ()) {
 		hide_check_names_banner (info);
 		if (contact_model) {
