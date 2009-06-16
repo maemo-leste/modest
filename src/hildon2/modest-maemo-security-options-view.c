@@ -151,7 +151,7 @@ create_incoming_security (ModestSecurityOptionsView* self,
 									     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
 	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (ppriv->security_view), 
 					   modest_protocol_registry_get_pop_type_id ());
-	modest_maemo_utils_set_hbutton_layout (title_size_group, 
+	modest_maemo_utils_set_hbutton_layout (title_size_group,
 					       value_size_group,
 					       _("mcen_li_emailsetup_secure_connection"), 
 					       ppriv->security_view);

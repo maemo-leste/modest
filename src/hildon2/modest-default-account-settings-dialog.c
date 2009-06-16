@@ -627,23 +627,19 @@ update_incoming_server_title (ModestDefaultAccountSettingsDialog *self,
 	g_free (incomingserver_title);
 }
 
-static GtkWidget* 
-create_page_incoming (ModestDefaultAccountSettingsDialog *self)
+/* The size groups passed as arguments are only used by the security settings */
+static GtkWidget*
+create_page_incoming (ModestDefaultAccountSettingsDialog *self,
+		      GtkSizeGroup *security_title_sizegroup,
+		      GtkSizeGroup *security_value_sizegroup)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *box;
-	GtkSizeGroup *title_sizegroup;
-	GtkSizeGroup *value_sizegroup;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 
-	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);	
-	/* Create a size group to be used by all captions.
-	 * Note that HildonCaption does not create a default size group if we do not specify one.
-	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
-	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	 
+	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+
 	/* The incoming server widgets: */
 	if(!priv->entry_incomingserver)
 		priv->entry_incomingserver = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
@@ -652,11 +648,11 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 
 	if (priv->caption_incoming)
 		gtk_widget_destroy (priv->caption_incoming);
-	   
+
 	/* The caption title will be updated in update_incoming_server_title().
 	 * so this default text will never be seen: */
 	/* (Note: Changing the title seems pointless. murrayc) */
-	priv->caption_incoming = create_captioned (self, title_sizegroup, value_sizegroup,
+	priv->caption_incoming = create_captioned (self, security_title_sizegroup, security_value_sizegroup,
 						   "Incoming Server", FALSE, priv->entry_incomingserver);
 	gtk_widget_show (priv->entry_incomingserver);
 	connect_for_modified (self, priv->entry_incomingserver);
@@ -664,18 +660,16 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self)
 	gtk_widget_show (priv->caption_incoming);
 
 	/* Incoming security widgets */
-	priv->incoming_security = 
+	priv->incoming_security =
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
-							TRUE, title_sizegroup, value_sizegroup);
-	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security, 
+							TRUE, security_title_sizegroup,
+							security_value_sizegroup);
+	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security,
 			    FALSE, FALSE, 0);
 
 	gtk_widget_show (priv->incoming_security);
-
-	g_object_unref (title_sizegroup);	
-	g_object_unref (value_sizegroup);	
 	gtk_widget_show (GTK_WIDGET (box));
-	
+
 	return GTK_WIDGET (box);
 }
 
@@ -730,20 +724,16 @@ on_missing_mandatory_data (ModestSecurityOptionsView *security_view,
 					   !missing);
 }
 
-static GtkWidget* 
-create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
+static GtkWidget*
+create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
+		      GtkSizeGroup *security_title_sizegroup,
+		      GtkSizeGroup *security_value_sizegroup)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	gchar *smtp_caption_label;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
-
-	/* Create a size group to be used by all captions.
-	 * Note that HildonCaption does not create a default size group if we do not specify one.
-	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
-	GtkSizeGroup *title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	GtkSizeGroup *value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
  
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
@@ -752,7 +742,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
-	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
+	GtkWidget *caption = create_captioned (self, security_title_sizegroup, security_value_sizegroup,
 					       smtp_caption_label, TRUE, priv->entry_outgoingserver);
 	g_free (smtp_caption_label);
 	gtk_widget_show (priv->entry_outgoingserver);
@@ -763,7 +753,8 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	/* Outgoing security widgets */
 	priv->outgoing_security = 
 		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
-							TRUE, title_sizegroup, value_sizegroup);
+							TRUE, security_title_sizegroup,
+							security_value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->outgoing_security);
@@ -799,9 +790,6 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self)
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
 		GTK_BUTTON (priv->checkbox_outgoing_smtp_specific));
-
-	g_object_unref (title_sizegroup);
-	g_object_unref (value_sizegroup);
 
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
@@ -1025,6 +1013,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	GtkWidget *pannable;
 	GtkWidget *separator;
 	GtkWidget *align;
+	GtkSizeGroup *sec_title_sizegroup, *sec_value_sizegroup;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self);
 
@@ -1040,16 +1029,23 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	priv->account_manager = modest_runtime_get_account_mgr ();
 	g_assert (priv->account_manager);
 	g_object_ref (priv->account_manager);
-	
+
 	priv->protocol_authentication_incoming = MODEST_PROTOCOLS_AUTH_PASSWORD;
 
-    /* Create the common pages, 
-     */
+	/* Create the common pages */
 	priv->page_account_details = create_page_account_details (self);
 	priv->page_user_details = create_page_user_details (self);
-	priv->page_incoming = create_page_incoming (self);
-	priv->page_outgoing = create_page_outgoing (self);
-	
+
+	/* Create size groups for security settings */
+	sec_title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	sec_value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+
+	/* Create incoming and outgoing "pages" */
+	priv->page_incoming = create_page_incoming (self, sec_title_sizegroup, sec_value_sizegroup);
+	priv->page_outgoing = create_page_outgoing (self, sec_title_sizegroup, sec_value_sizegroup);
+	g_object_unref (sec_title_sizegroup);
+	g_object_unref (sec_value_sizegroup);
+
 	/* Add the notebook pages: */
 	gtk_box_pack_start (GTK_BOX (priv->main_container),
 			    priv->page_account_details,
