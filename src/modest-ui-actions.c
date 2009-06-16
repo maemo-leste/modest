@@ -5379,7 +5379,7 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 {
 	GObject *win = NULL;
 	const GError *error;
-	TnyAccount *account;
+	TnyAccount *account = NULL;
 
 #ifndef MODEST_TOOLKIT_HILDON2
 	ModestWindow *main_window = NULL;
@@ -5404,7 +5404,11 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 #endif
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
-	account = modest_mail_operation_get_account (mail_op);
+
+	if (TNY_IS_FOLDER (user_data))
+		account = modest_tny_folder_get_account (TNY_FOLDER (user_data));
+	else if (TNY_IS_ACCOUNT (user_data))
+		account = g_object_ref (user_data);
 
 	/* If it's not a disk full error then show a generic error */
 	if (!modest_tny_account_store_check_disk_full_error (modest_runtime_get_account_store(),
@@ -5817,15 +5821,10 @@ on_move_folder_cb (gboolean canceled,
 
 	mail_op =
 		modest_mail_operation_new_with_error_handling (G_OBJECT(parent_window),
-				modest_ui_actions_move_folder_error_handler,
-				info->src_folder, NULL);
+							       modest_ui_actions_move_folder_error_handler,
+							       g_object_ref (info->dst_folder), g_object_unref);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-			mail_op);
-
-	/* Select *after* the changes */
-	/* TODO: this function hangs UI after transfer */
-	/* 			modest_folder_view_select_folder (MODEST_FOLDER_VIEW(folder_view), */
-	/* 							  TNY_FOLDER (src_folder), TRUE); */
+					 mail_op);
 
 	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
 		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
