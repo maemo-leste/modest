@@ -274,9 +274,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 #endif
 	state->connect_via = *id;
 #ifndef MODEST_TOOLKIT_GTK
-#ifdef MODEST_TOOLKIT_HILDON2
-	state->size_limit = modest_number_editor_get_value (MODEST_NUMBER_EDITOR (priv->size_limit));
-#else
+#ifndef MODEST_TOOLKIT_HILDON2
 	state->size_limit = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
 #endif
 #else
@@ -309,7 +307,7 @@ static gboolean
 modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog *self)
 {
 	ModestConf *conf;
-	ModestGlobalSettingsState current_state;
+	ModestGlobalSettingsState current_state = {0,};
 	GError *error = NULL;
 	ModestGlobalSettingsDialogPrivate *priv;
 
@@ -425,8 +423,8 @@ on_response (GtkDialog *dialog,
 	     gpointer user_data)
 {
 	ModestGlobalSettingsDialogPrivate *priv;
-	ModestGlobalSettingsState current_state;
-	gboolean changed;
+	ModestGlobalSettingsState current_state = {0,};
+	gboolean changed = FALSE;
 
 	priv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (user_data);
 

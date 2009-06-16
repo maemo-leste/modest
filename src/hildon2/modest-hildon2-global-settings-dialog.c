@@ -68,14 +68,6 @@ static ModestConnectedVia current_connection (void);
 
 static GtkWidget* create_updating_page   (ModestHildon2GlobalSettingsDialog *self);
 
-static gboolean   on_range_error         (ModestNumberEditor *editor, 
-					  ModestNumberEditorErrorType type,
-					  gpointer user_data);
-
-static void       on_size_notify         (ModestNumberEditor *editor, 
-					  GParamSpec *arg1,
-					  gpointer user_data);
-
 static void       on_auto_update_clicked (GtkButton *button,
 					  gpointer user_data);
 static void       update_sensitive       (ModestGlobalSettingsDialog *dialog);
@@ -200,8 +192,7 @@ modest_hildon2_global_settings_dialog_new (void)
 static GtkWidget*
 create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 {
-	GtkWidget *vbox, *vbox_update, *vbox_limit, *label, *hbox;
-	GtkWidget *align;
+	GtkWidget *vbox, *vbox_update;
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
@@ -284,25 +275,8 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	g_object_unref (value_size_group);
 
 	/* Limits */
-	vbox_limit = gtk_vbox_new (FALSE, 0);
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
 	value_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
-
-	/* Size limit */
-	ppriv->size_limit = modest_number_editor_new (MSG_SIZE_MIN_VAL, MSG_SIZE_MAX_VAL);
-	modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->size_limit), MSG_SIZE_DEF_VAL);
-	g_signal_connect (ppriv->size_limit, "range_error", G_CALLBACK (on_range_error), self);
-	g_signal_connect (ppriv->size_limit, "notify", G_CALLBACK (on_size_notify), self);
-	label = gtk_label_new (_("mcen_fi_advsetup_sizelimit"));
-	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_TRIPLE);
-	hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
-	gtk_container_add (GTK_CONTAINER (align), label);
-	gtk_box_pack_start (GTK_BOX (hbox), align, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (hbox), ppriv->size_limit, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (vbox_limit), hbox, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (vbox), vbox_limit, FALSE, FALSE, 0);
-	gtk_widget_show_all (vbox_limit);
 
 	/* Note: This ModestPairList* must exist for as long as the picker
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
@@ -353,56 +327,6 @@ on_auto_update_clicked (GtkButton *button,
 {
 	g_return_if_fail (MODEST_IS_GLOBAL_SETTINGS_DIALOG (user_data));
 	update_sensitive ((ModestGlobalSettingsDialog *) user_data);
-}
-static gboolean
-on_range_error (ModestNumberEditor *editor, 
-		ModestNumberEditorErrorType type,
-		gpointer user_data)
-{
-	gchar *msg;
-	gint new_val;
-
-	switch (type) {
-	case MODEST_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
-		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
-		new_val = MSG_SIZE_MAX_VAL;
-		break;
-	case MODEST_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
-		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
-		new_val = MSG_SIZE_MIN_VAL;
-		break;
-	case MODEST_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
-		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_set_a_value_within_range"), 
-				       MSG_SIZE_MIN_VAL, 
-				       MSG_SIZE_MAX_VAL);
-		/* FIXME: use the previous */
-		new_val = MSG_SIZE_DEF_VAL;
-		break;
-	default:
-		g_return_val_if_reached (FALSE);
-	}
-
-	/* Restore value */
-	modest_number_editor_set_value (editor, new_val);
-
-	/* Show error */
-	hildon_banner_show_information (GTK_WIDGET (user_data), NULL, msg);
-
-	/* Free */
-	g_free (msg);
-
-	return TRUE;
-}
-
-static void
-on_size_notify         (ModestNumberEditor *editor, 
-			GParamSpec *arg1,
-			gpointer user_data)
-{
-	ModestHildon2GlobalSettingsDialog *dialog = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG (user_data);
-	gint value = modest_number_editor_get_value (editor);
-
-	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
 }
 
 static ModestConnectedVia
@@ -487,7 +411,7 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 {
 	ModestConf *conf;
 	gboolean checked;
-	gint combo_id, value;
+	gint combo_id;
 	GError *error = NULL;
 	ModestGlobalSettingsDialogPrivate *ppriv;
 
@@ -525,18 +449,6 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->update_interval),
 					(gpointer) &combo_id);
 	ppriv->initial_state.update_interval = combo_id;
-
-	/* Size limit */
-	value  = modest_conf_get_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, &error);
-	if (error) {
-		g_error_free (error);
-		error = NULL;
-		value = 1000;
-	}
-	/* It's better to do this in the subclasses, but it's just one
-	   line, so we'll leave it here for the moment */
-	modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->size_limit), value);
-	ppriv->initial_state.size_limit = value;
 
 	/* Play sound */
 	checked = modest_conf_get_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, &error);
