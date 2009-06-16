@@ -74,7 +74,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	TnyStream *input_stream;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
-	gchar *text, *converted_text;
+	gchar *text;
 	ModestFormatterPrivate *priv;
 	gint total;
 
@@ -122,15 +122,6 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	/* Convert to desired content type if needed */
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 
-	if (strcmp (tny_mime_part_get_content_type (body), priv->content_type) == 0) {
-		if (!strcmp (priv->content_type, "text/html"))
-			converted_text = modest_text_utils_convert_to_html  (text);
-		else
-			converted_text = g_strdup (text);
-
-		g_free (text);
-		text = converted_text;
-	}
 	return text;
 }
 
