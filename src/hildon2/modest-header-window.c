@@ -393,7 +393,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 }
 
 static gboolean
-tap_and_hold_query_cb (GtkWidget *widget,
+tap_and_hold_query_cb (GtkWidget *header_view,
 		       GdkEvent *event,
 		       gpointer user_data)
 {
@@ -404,8 +404,32 @@ tap_and_hold_query_cb (GtkWidget *widget,
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	if (event->type == GDK_BUTTON_PRESS) {
+		TnyHeader *header;
+
 		priv->x_coord = ((GdkEventButton*)event)->x;
 		priv->y_coord = ((GdkEventButton*)event)->y;
+
+		/* Enable/Disable mark as (un)read */
+		header = modest_header_view_get_header_at_pos ((ModestHeaderView *) header_view,
+							       priv->x_coord, priv->y_coord);
+		if (header) {
+			GList *children;
+			GtkWidget *mark_read_item, *mark_unread_item;
+
+			/* Show "mark as read" or "mark as unread" */
+			children = gtk_container_get_children (GTK_CONTAINER (priv->csm_menu));
+			mark_read_item = (GtkWidget *) g_list_nth_data (children, 1);
+			mark_unread_item = (GtkWidget *) g_list_nth_data (children, 2);
+
+			if (tny_header_get_flags (header) & TNY_HEADER_FLAG_SEEN) {
+				gtk_widget_show (mark_unread_item);
+				gtk_widget_hide (mark_read_item);
+			} else {
+				gtk_widget_show (mark_read_item);
+				gtk_widget_hide (mark_unread_item);
+			}
+			g_object_unref (header);
+		}
 	}
 
 	return FALSE;
@@ -482,7 +506,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 {
 	GtkWidget *header_view;
 	GtkWidget *delete_item, *mark_read_item, *mark_unread_item;
-	GtkWidget *csm_menu;
+	ModestHeaderWindowPrivate *priv;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
 	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder,
@@ -493,14 +517,15 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 				      MODEST_CONF_HEADER_VIEW_KEY);
 
 	/* Create CSM menu */
-	csm_menu = gtk_menu_new ();
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	priv->csm_menu = gtk_menu_new ();
 	delete_item = gtk_menu_item_new_with_label (_HL("wdgt_bd_delete"));
 	mark_read_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_read"));
 	mark_unread_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_unread"));
-	gtk_menu_shell_append (GTK_MENU_SHELL (csm_menu), delete_item);
-	gtk_menu_shell_append (GTK_MENU_SHELL (csm_menu), mark_read_item);
-	gtk_menu_shell_append (GTK_MENU_SHELL (csm_menu), mark_unread_item);
-	gtk_widget_show_all (csm_menu);
+	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), delete_item);
+	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), mark_read_item);
+	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), mark_unread_item);
+	gtk_widget_show_all (priv->csm_menu);
 
 	/* Connect signals */
 	g_signal_connect ((GObject *) header_view, "tap-and-hold-query",
@@ -513,7 +538,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 			  G_CALLBACK (on_mark_unread_csm_activated), self);
 
 	/* Add tap&hold handling */
-	gtk_widget_tap_and_hold_setup (header_view, csm_menu, NULL, 0);
+	gtk_widget_tap_and_hold_setup (header_view, priv->csm_menu, NULL, 0);
 
 	return header_view;
 }
