@@ -33,6 +33,7 @@
 #include <tny-simple-list.h>
 #include <tny-gtk-text-buffer-stream.h>
 #include <tny-camel-mem-stream.h>
+#include <tny-camel-html-to-text-stream.h>
 #include "modest-formatter.h"
 #include "modest-text-utils.h"
 #include "modest-tny-platform-factory.h"
@@ -70,6 +71,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 {
 	TnyStream *mp_stream;
 	TnyStream *stream;
+	TnyStream *input_stream;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	gchar *text, *converted_text;
@@ -81,9 +83,15 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	tny_stream_reset (stream);
 	mp_stream = tny_mime_part_get_decoded_stream (body);
 
+	if (g_strcmp0 (tny_mime_part_get_content_type (body), "text/html") == 0) {
+		input_stream = tny_camel_html_to_text_stream_new (mp_stream);
+	} else {
+		input_stream = g_object_ref (mp_stream);
+	}
+
 	total = 0;
 
-	while (!tny_stream_is_eos (mp_stream)) {
+	while (!tny_stream_is_eos (input_stream)) {
 		gchar buffer [128];
 		gint n_read;
 		gint next_read;
@@ -91,7 +99,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 		next_read = MIN (128, MAX_BODY_LENGTH - total);
 		if (next_read == 0)
 			break;
-		n_read = tny_stream_read (mp_stream, buffer, next_read);
+		n_read = tny_stream_read (input_stream, buffer, next_read);
 		if (n_read > 0) {
 			gint n_write;
 			n_write = tny_stream_write (stream, buffer, n_read);
@@ -104,6 +112,8 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	tny_stream_reset (stream);
 
 	g_object_unref (G_OBJECT(stream));
+	g_object_unref (G_OBJECT (mp_stream));
+	g_object_unref (G_OBJECT (input_stream));
 	
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	text = gtk_text_buffer_get_text (buf, &start, &end, FALSE);

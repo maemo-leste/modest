@@ -685,7 +685,7 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 
 	/* when we're reply, include the text part if we have it, or nothing otherwise. */
 	if (is_reply)
-		new_msg = modest_formatter_quote  (formatter, no_text_part ? NULL: body, header,
+		new_msg = modest_formatter_quote  (formatter, body, header,
 						    attachments);
 	else {
 		if (no_text_part || (html_body && (strcmp (tny_mime_part_get_content_type (html_body), "text/html")==0))) {
