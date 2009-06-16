@@ -41,8 +41,6 @@
 #include "modest-account-mgr.h"
 #include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
-#include "modest-retrieve-picker.h"
-#include "modest-limit-retrieve-picker.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
 #include "modest-account-mgr-helpers.h" /* For modest_account_mgr_get_account_data(). */
@@ -107,8 +105,6 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	
 	GtkWidget *page_account_details;
 	GtkWidget *entry_account_title;
-	GtkWidget *retrieve_picker;
-	GtkWidget *limit_retrieve_picker;
 	GtkWidget *checkbox_leave_messages;
 	
 	GtkWidget *page_user_details;
@@ -116,7 +112,6 @@ struct _ModestDefaultAccountSettingsDialogPrivate
 	GtkWidget *entry_user_username;
 	GtkWidget *entry_user_password;
 	GtkWidget *entry_user_email;
-/* 	GtkWidget *entry_incoming_port; */
 	GtkWidget *button_signature;
 	GtkWidget *button_delete;
 	
@@ -372,27 +367,6 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 		on_entry_max, self);
 
 	hbox = gtk_hbox_new (TRUE, 0);
-	/* The retrieve picker: */
-	priv->retrieve_picker = GTK_WIDGET (modest_retrieve_picker_new (MODEST_EDITABLE_SIZE,
-									HILDON_BUTTON_ARRANGEMENT_VERTICAL));
-	modest_maemo_utils_set_vbutton_layout (title_sizegroup, 
-					       _("mcen_fi_advsetup_retrievetype"), priv->retrieve_picker);
-
-	gtk_widget_show (priv->retrieve_picker);
-	connect_for_modified (self, priv->retrieve_picker);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->retrieve_picker, TRUE, TRUE, 0);
-
-	/* The limit-retrieve picker: */
-	priv->limit_retrieve_picker = GTK_WIDGET (modest_limit_retrieve_picker_new (MODEST_EDITABLE_SIZE,
-										    HILDON_BUTTON_ARRANGEMENT_VERTICAL));
-	modest_maemo_utils_set_vbutton_layout (value_sizegroup, 
-					       _("mcen_fi_advsetup_limit_retrieve"), 
-					       priv->limit_retrieve_picker);
-	gtk_widget_show (priv->limit_retrieve_picker);
-	connect_for_modified (self, priv->limit_retrieve_picker);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->limit_retrieve_picker, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
-	gtk_widget_show (hbox);
 
 	/* The leave-messages widgets: */
 	if(!priv->checkbox_leave_messages) {
@@ -1191,9 +1165,6 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 			    null_means_empty (modest_account_settings_get_fullname (settings)));
 	gtk_entry_set_text( GTK_ENTRY (priv->entry_user_email), 
 			    null_means_empty (modest_account_settings_get_email_address (settings)));
-	modest_limit_retrieve_picker_set_active_limit_retrieve (
-		MODEST_LIMIT_RETRIEVE_PICKER (priv->limit_retrieve_picker), 
-		modest_account_settings_get_retrieve_limit (settings));
 
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages), 
 					modest_account_settings_get_leave_messages_on_server (settings));
@@ -1203,10 +1174,6 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 		const gchar *username, *password, *hostname, *proto_str, *account_title;
 		gchar *proto_name, *title;
 		ModestProtocolType incoming_protocol;
-
-		modest_retrieve_picker_fill (MODEST_RETRIEVE_PICKER (priv->retrieve_picker), modest_server_account_settings_get_protocol (incoming_account));
-		modest_retrieve_picker_set_active_retrieve_conf (MODEST_RETRIEVE_PICKER (priv->retrieve_picker), 
-								 modest_account_settings_get_retrieve_type (settings));
 
 		if (!modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry,
 										 modest_server_account_settings_get_protocol (incoming_account))) {
@@ -1309,8 +1276,6 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 	const gchar* emailaddress;
 	ModestServerAccountSettings *store_settings;
 	ModestServerAccountSettings *transport_settings;
-	ModestAccountRetrieveType retrieve_type;
-	gint retrieve_limit;
 	gboolean leave_on_server;
 	const gchar* hostname;
 	const gchar* username;
@@ -1339,15 +1304,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 		modest_account_settings_set_use_signature (priv->settings, use_signature);
 		modest_account_settings_set_signature (priv->settings, signature);
 	}
-	
-	retrieve_type = modest_retrieve_picker_get_active_retrieve_conf (
-		MODEST_RETRIEVE_PICKER (priv->retrieve_picker));
-	modest_account_settings_set_retrieve_type (priv->settings, retrieve_type);
-	
-	retrieve_limit = modest_limit_retrieve_picker_get_active_limit_retrieve (
-		MODEST_LIMIT_RETRIEVE_PICKER (priv->limit_retrieve_picker));
-	modest_account_settings_set_retrieve_limit (priv->settings, retrieve_limit);
-	
+
 	leave_on_server = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages));
 	modest_account_settings_set_leave_messages_on_server (priv->settings, leave_on_server); 
 
