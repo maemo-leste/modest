@@ -1216,11 +1216,8 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 	return dimmed;
 }
 
-#ifdef MODEST_TOOLKIT_HILDON2
-#endif
-
 gboolean 
-modest_ui_dimming_rules_on_find_msg (ModestWindow *win, gpointer user_data)
+modest_ui_dimming_rules_on_find_in_msg (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;

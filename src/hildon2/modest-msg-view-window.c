@@ -125,26 +125,25 @@ struct _ModestMsgViewWindowPrivate {
 
 static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klass);
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
-static void  modest_header_view_observer_init(
-		ModestHeaderViewObserverIface *iface_class);
+static void  modest_header_view_observer_init    (ModestHeaderViewObserverIface *iface_class);
 static void  modest_msg_view_window_finalize     (GObject *obj);
-static void  modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *obj,
-							 gpointer data);
-static void  modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
-							ModestMsgViewWindow *obj);
+static void  modest_msg_view_window_show_find_toolbar   (GtkWidget *obj, gpointer data);
+static void  modest_msg_view_window_find_toolbar_close  (GtkWidget *widget,
+							 ModestMsgViewWindow *obj);
 static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
-							ModestMsgViewWindow *obj);
-
+							 ModestMsgViewWindow *obj);
+static void  modest_msg_view_window_toggle_find_toolbar (GtkWidget *obj,
+							 gpointer data);
 static void modest_msg_view_window_disconnect_signals (ModestWindow *self);
 
-static gdouble modest_msg_view_window_get_zoom (ModestWindow *window);
-static void modest_msg_view_window_set_zoom (ModestWindow *window,
-					     gdouble zoom);
+static gdouble modest_msg_view_window_get_zoom    (ModestWindow *window);
+static void modest_msg_view_window_set_zoom       (ModestWindow *window,
+						   gdouble zoom);
 static gboolean modest_msg_view_window_zoom_minus (ModestWindow *window);
-static gboolean modest_msg_view_window_zoom_plus (ModestWindow *window);
-static gboolean modest_msg_view_window_key_event (GtkWidget *window,
-						  GdkEventKey *event,
-						  gpointer userdata);
+static gboolean modest_msg_view_window_zoom_plus  (ModestWindow *window);
+static gboolean modest_msg_view_window_key_event  (GtkWidget *window,
+						   GdkEventKey *event,
+						   gpointer userdata);
 static void modest_msg_view_window_update_priority (ModestMsgViewWindow *window);
 
 static void modest_msg_view_window_show_toolbar   (ModestWindow *window,
@@ -1508,46 +1507,44 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 	return (const gchar*) priv->msg_uid;
 }
 
-static void 
-modest_msg_view_window_toggle_find_toolbar (GtkToggleAction *toggle,
+/* Used for the Ctrl+F accelerator */
+static void
+modest_msg_view_window_toggle_find_toolbar (GtkWidget *obj,
 					    gpointer data)
 {
 	ModestMsgViewWindow *window = MODEST_MSG_VIEW_WINDOW (data);
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
-	ModestWindowPrivate *parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
-	gboolean is_active;
-	GtkAction *action;
 
-	is_active = gtk_toggle_action_get_active (toggle);
-
-	if (is_active) {
-		gtk_widget_show (priv->find_toolbar);
-		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
-	} else {
-		gtk_widget_hide (priv->find_toolbar);
-		modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
-	}
-
-	/* update the toggle buttons status */
-	action = gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage");
-	if (action)
-		modest_utils_toggle_action_set_active_block_notify (GTK_TOGGLE_ACTION (action), is_active);
-
+	if (GTK_WIDGET_VISIBLE (priv->find_toolbar)) {
+		modest_msg_view_window_find_toolbar_close (obj, data);
+       } else {
+		modest_msg_view_window_show_find_toolbar (obj, data);
+       }
 }
 
+/* Handler for menu option */
+static void
+modest_msg_view_window_show_find_toolbar (GtkWidget *obj,
+					  gpointer data)
+{
+	ModestMsgViewWindow *window = MODEST_MSG_VIEW_WINDOW (data);
+	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+
+	gtk_widget_show (priv->find_toolbar);
+	hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
+}
+
+/* Handler for click on the "X" close button in find toolbar */
 static void
 modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
 					   ModestMsgViewWindow *obj)
 {
-	GtkToggleAction *toggle;
-	ModestWindowPrivate *parent_priv;
 	ModestMsgViewWindowPrivate *priv;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
-	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
 
-	toggle = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/ToolBar/FindInMessage"));
-	gtk_toggle_action_set_active (toggle, FALSE);
+	/* Hide toolbar */
+	gtk_widget_hide (priv->find_toolbar);
 	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 }
 
@@ -3430,9 +3427,14 @@ setup_menu (ModestMsgViewWindow *self)
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(self));
 
 	/* Settings menu buttons */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_replytoall"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_reply_all),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"), NULL,
+					   APP_MENU_CALLBACK (modest_msg_view_window_show_find_toolbar),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_find_in_msg));
+
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_messages"), NULL,
+					   APP_MENU_CALLBACK (modest_ui_actions_on_move_to),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
+
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_forward"), "<Control>d",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_forward),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
@@ -3440,6 +3442,7 @@ setup_menu (ModestMsgViewWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_mark_as_read"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_mark_as_read),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_mark_as_read_msg_in_view));
+
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_mark_as_unread"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_mark_as_unread),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_mark_as_unread_msg_in_view));
@@ -3458,9 +3461,6 @@ setup_menu (ModestMsgViewWindow *self)
 					   APP_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mail_bd_external_images"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_fetch_images),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_fetch_images));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_ti_message_properties"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
@@ -3603,7 +3603,7 @@ update_branding (ModestMsgViewWindow *self)
 	mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (self));
 
 	mgr = modest_runtime_get_account_mgr ();
-	
+
 	if (modest_account_mgr_account_is_multimailbox (mgr, account, &protocol)) {
 		if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
 			service_name = modest_account_protocol_get_service_name (MODEST_ACCOUNT_PROTOCOL (protocol),
