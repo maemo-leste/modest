@@ -1,14 +1,7 @@
-modest (3.0.17-rc14) unstable; urgency=low
+modest (3.0.17-rc16) unstable; urgency=low
 
-  * Week 25 test release to check the following bug.
   *
-  * Fixes: NB#117967 Opening a email viewer when tapped on new email notification received should be improved
-
- -- Moises Martinez <moises.martinez@nokia.com>  Fri, 12 Jun 2009 15:31:10 +0300
-
-modest (3.0.17-rc13) unstable; urgency=low
- 
-  * Week 25 - second release
+  * Week 25, 2009 second release
   *
   * Fixes: NB#108159 Contacts Startup is slow in Email - New mail compose view 
   * Fixes: NB#116869 Theme and Layout Issues 
@@ -23,6 +16,20 @@ modest (3.0.17-rc13) unstable; urgency=low
   * Fixes: NB#122232 Signature gets duplicated 
   * Fixes: NB#122287 Conflict behavior in closing "Find on page" tool bar using Ctrl+F short cut key in Email 
   * Fixes: NB#119126 LED is not glowing for incoming mail when E-mail main view is open and display is off 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 17 Jun 2009 15:01:31 +0300
+
+modest (3.0.17-rc14) unstable; urgency=low
+
+  * Could fix:
+  * NB#117967 Opening a email viewer when tapped on new email notification received should be improved
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 12 Jun 2009 15:31:10 +0300
+
+modest (3.0.17-rc13) unstable; urgency=low
+ 
+  * Week 25 release
+  *
 
  -- Moises Martinez <moises.martinez@nokia.com>  Fri, 12 Jun 2009 13:06:45 +0300
 
