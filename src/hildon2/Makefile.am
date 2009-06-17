@@ -130,6 +130,8 @@ ui_DATA = $(UI_FILES)
 serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
+prebackup_SCRIPTS = modest-prebackup.sh
+restore_SCRIPTS = modest-restore.sh
 ossocudscripts_SCRIPTS = modest-clean.sh
 
 EXTRA_DIST=\
@@ -138,4 +140,6 @@ EXTRA_DIST=\
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
 	$(backupsettings_DATA) \
+	$(prebackup_SCRIPTS) \
+	$(restore_SCRIPTS) \
 	$(ossocudscripts_SCRIPTS)
