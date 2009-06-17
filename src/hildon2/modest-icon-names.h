@@ -82,7 +82,7 @@
 #define  MODEST_TOOLBAR_ICON_NEW_MAIL		"email_message_editor"
 #define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	"general_refresh"
 #define  MODEST_TOOLBAR_ICON_REPLY		"email_message_reply"
-#define  MODEST_TOOLBAR_ICON_REPLY_ALL		""
+#define  MODEST_TOOLBAR_ICON_REPLY_ALL		"email_message_reply_all"
 #define  MODEST_TOOLBAR_ICON_FORWARD		""
 #define  MODEST_TOOLBAR_ICON_DELETE		"general_delete"
 #define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     ""
@@ -95,6 +95,7 @@
 #define  MODEST_TOOLBAR_ICON_NEXT               "general_forward"
 #define  MODEST_TOOLBAR_ICON_PREV               "general_back"
 #define  MODEST_TOOLBAR_ICON_FIND               "general_search"
+#define  MODEST_TOOLBAR_ICON_DOWNLOAD_IMAGES    "email_message_download_external_images"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"

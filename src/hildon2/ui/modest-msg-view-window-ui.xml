@@ -52,10 +52,10 @@
   </menubar>
 
   <toolbar name="ToolBar">
-    <toolitem action="ToolbarMessageReply"/> 
-    <toolitem action="ToolbarMessageMoveTo"/>
+    <toolitem action="ToolbarMessageReply"/>
+    <toolitem action="ToolbarMessageReplyAll"/>
     <toolitem action="ToolbarDeleteMessage"/>
-    <toolitem action="FindInMessage"/>
+    <toolitem action="ToolbarDownloadExternalImages"/>
     <toolitem action="ToolbarMessageBack" position="bot"/>
     <toolitem action="ToolbarMessageNext" position="bot"/>
   </toolbar>

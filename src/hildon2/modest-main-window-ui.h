@@ -119,6 +119,7 @@ static const GtkActionEntry modest_action_entries [] = {
 	{ "ToolbarMessageNext",    MODEST_TOOLBAR_ICON_NEXT, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
 	{ "ToolbarMessageMoveTo",     MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER, N_("qgn_toolb_gene_movetofldr"),   NULL, NULL, G_CALLBACK(modest_ui_actions_on_move_to) },
 	{ "ToolbarCancel",       GTK_STOCK_STOP,   "",      NULL, NULL,  NULL },
+	{ "ToolbarDownloadExternalImages", MODEST_TOOLBAR_ICON_DOWNLOAD_IMAGES, N_("mail_bd_external_images"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_fetch_images) },
 };
 
 G_END_DECLS

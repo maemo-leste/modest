@@ -2324,7 +2324,7 @@ toolbar_resize (ModestMsgViewWindow *self)
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
-		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageMoveTo");
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReplyAll");
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
@@ -2332,7 +2332,7 @@ toolbar_resize (ModestMsgViewWindow *self)
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
-		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FindInMessage");
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarDownloadExternalImages");
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
 		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
