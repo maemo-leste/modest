@@ -1046,6 +1046,7 @@ typedef struct {
 typedef struct {
 	GtkTreeModel *model;
 	TnyHeader *header;
+	ModestWindow *caller_window;
 	OpenMsgBannerInfo *banner_info;
 	GtkTreeRowReference *rowref;
 } OpenMsgHelper;
@@ -1350,9 +1351,21 @@ get_account_from_header (TnyHeader *header)
 }
 
 static void
+caller_win_destroyed (OpenMsgHelper *helper, GObject *object)
+{
+	if (helper->caller_window)
+		helper->caller_window = NULL;
+}
+
+static void
 open_msg_helper_destroyer (gpointer user_data)
 {
 	OpenMsgHelper *helper = (OpenMsgHelper *) user_data;
+
+	if (helper->caller_window) {
+		g_object_weak_unref ((GObject *) helper->caller_window, (GWeakNotify) caller_win_destroyed, helper);
+		helper->caller_window = NULL;
+	}
 
 	if (helper->banner_info) {
 		g_free (helper->banner_info->message);
@@ -1393,7 +1406,7 @@ open_msg_performer(gboolean canceled,
 	helper = (OpenMsgHelper *) user_data;
 
 	status = tny_account_get_connection_status (account);
-	if (err || canceled) {
+	if (err || canceled || helper->caller_window == NULL) {
 		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), helper->header);
 		/* Free the helper */
 		open_msg_helper_destroyer (helper);
@@ -1592,6 +1605,8 @@ open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWind
 	   (the user could switch between folders) */
 	helper = g_slice_new (OpenMsgHelper);
 	helper->model = g_object_ref (gtk_tree_view_get_model (GTK_TREE_VIEW (header_view)));
+	helper->caller_window = win;
+	g_object_weak_ref ((GObject *) helper->caller_window, (GWeakNotify) caller_win_destroyed, helper);
 	helper->header = g_object_ref (header);
 	helper->rowref = gtk_tree_row_reference_copy (rowref);
 	helper->banner_info = NULL;
