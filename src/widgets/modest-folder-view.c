@@ -571,20 +571,10 @@ format_compact_style (gchar **item_name,
 		/* Remove mailbox prefix if any */
 		gchar *prefix = g_strconcat (mailbox, MODEST_FOLDER_PATH_SEPARATOR, NULL);
 		if (g_str_has_prefix (*item_name, prefix)) {
-			gchar *new_item_name;
-
-			new_item_name = g_strdup (*item_name + strlen (prefix));
-			if (!g_ascii_strcasecmp (new_item_name, "Inbox")) {
-				g_free (new_item_name);
-				new_item_name = g_strdup (_("mcen_me_folder_inbox"));
-			}
+			gchar *new_item_name = g_strdup (*item_name + strlen (prefix));
 			g_free (*item_name);
 			*item_name = new_item_name;
 		}
-	} else if (!g_ascii_strcasecmp (*item_name, "Inbox")) {
-
-		g_free (*item_name);
-		*item_name = g_strdup (_("mcen_me_folder_inbox"));
 	}
 
 	if (!is_special || multiaccount) {
@@ -727,6 +717,13 @@ text_cell_data  (GtkTreeViewColumn *column,
 			item_name = g_strdup (fname);
 			item_weight = 800;
 		}
+	}
+
+	/* Convert INBOX */
+	if (type == TNY_FOLDER_TYPE_INBOX &&
+	    !g_ascii_strcasecmp (fname, "Inbox")) {
+		g_free (item_name);
+		item_name = g_strdup (_("mcen_me_folder_inbox"));
 	}
 
 	if (!item_name)
