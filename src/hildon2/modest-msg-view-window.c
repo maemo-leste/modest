@@ -394,7 +394,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	ModestWindowPrivate *parent_priv = NULL;
 	GtkActionGroup *action_group = NULL;
 	GError *error = NULL;
-	GdkPixbuf *window_icon;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE(obj);
@@ -456,13 +455,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj));
-	
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_VIEW_ICON, MODEST_ICON_SIZE_BIG); 
-	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
-		g_object_unref (window_icon);
-	}	
 	
 	hildon_program_add_window (hildon_program_get_instance(),
 				   HILDON_WINDOW(obj));
