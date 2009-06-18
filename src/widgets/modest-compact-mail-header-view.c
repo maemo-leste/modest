@@ -122,28 +122,33 @@ static void fill_address (ModestCompactMailHeaderView *self);
 static void
 set_date_time (ModestCompactMailHeaderView *compact_mail_header)
 {
-	const guint BUF_SIZE = 64; 
-	const gchar *date_str;
-	gchar date_buf[BUF_SIZE];
-	GString *buffer = g_string_new ("");
-
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (compact_mail_header);
 
-	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_week"), priv->date_to_show);
-	buffer = g_string_append (buffer, date_buf);
-	buffer = g_string_append_c (buffer, ' ');
-	buffer = g_string_append_unichar (buffer, 0x2015);
-	buffer = g_string_append_c (buffer, ' ');
-	date_str = modest_datetime_formatter_format_time (priv->datetime_formatter, priv->date_to_show);
-	buffer = g_string_append (buffer, date_str);
-	gtk_label_set_text (GTK_LABEL (priv->time_label), buffer->str);
-	g_string_free  (buffer, TRUE);
-	buffer = g_string_new ("");
-	modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_medium"), priv->date_to_show);
-	buffer = g_string_append (buffer, date_buf);
+	if (priv->date_to_show == 0) {
+		gtk_label_set_text (GTK_LABEL (priv->time_label), "");
+		gtk_label_set_text (GTK_LABEL (priv->date_label), "");
+	} else {
+		const guint BUF_SIZE = 64; 
+		const gchar *date_str;
+		gchar date_buf[BUF_SIZE];
+		GString *buffer = g_string_new ("");
 
-	gtk_label_set_text (GTK_LABEL (priv->date_label), buffer->str);
-	g_string_free (buffer, TRUE);
+		modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_week"), priv->date_to_show);
+		buffer = g_string_append (buffer, date_buf);
+		buffer = g_string_append_c (buffer, ' ');
+		buffer = g_string_append_unichar (buffer, 0x2015);
+		buffer = g_string_append_c (buffer, ' ');
+		date_str = modest_datetime_formatter_format_time (priv->datetime_formatter, priv->date_to_show);
+		buffer = g_string_append (buffer, date_str);
+		gtk_label_set_text (GTK_LABEL (priv->time_label), buffer->str);
+		g_string_free  (buffer, TRUE);
+		buffer = g_string_new ("");
+		modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_medium"), priv->date_to_show);
+		buffer = g_string_append (buffer, date_buf);
+
+		gtk_label_set_text (GTK_LABEL (priv->date_label), buffer->str);
+		g_string_free (buffer, TRUE);
+	}
 
 }
 
