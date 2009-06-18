@@ -483,7 +483,10 @@ modest_window_mgr_find_registered_header_default (ModestWindowMgr *self, TnyHead
 
 	uid = modest_tny_folder_get_header_unique_id (header);
 
-	return modest_window_mgr_find_registered_message_uid (self, uid, win);
+	if (uid)
+		return modest_window_mgr_find_registered_message_uid (self, uid, win);
+	else
+		return FALSE;
 }
 
 gboolean
