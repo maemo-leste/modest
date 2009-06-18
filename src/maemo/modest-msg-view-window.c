@@ -1326,41 +1326,41 @@ modest_msg_view_window_on_row_reordered (GtkTreeModel *header_model,
 					 gpointer arg3,
 					 ModestMsgViewWindow *window)
 {
-	ModestMsgViewWindowPrivate *priv = NULL; 
+	ModestMsgViewWindowPrivate *priv = NULL;
 	gboolean already_changed = FALSE;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(window);
 
 	/* If the current row was reordered select the proper next
 	   valid row. The same if the next row reference changes */
-	if (priv->row_reference && 
-	    gtk_tree_row_reference_valid (priv->row_reference)) {
-		GtkTreePath *path;
-		path = gtk_tree_row_reference_get_path (priv->row_reference);
-		if (gtk_tree_path_compare (path, arg1) == 0) {
-			if (priv->next_row_reference) {
-				gtk_tree_row_reference_free (priv->next_row_reference);
-			}
+	if (!priv->row_reference ||
+	    !gtk_tree_row_reference_valid (priv->row_reference))
+		return;
+
+	if (priv->next_row_reference &&
+	    gtk_tree_row_reference_valid (priv->next_row_reference)) {
+		GtkTreePath *cur, *next;
+		/* Check that the order is still the correct one */
+		cur = gtk_tree_row_reference_get_path (priv->row_reference);
+		next = gtk_tree_row_reference_get_path (priv->next_row_reference);
+		gtk_tree_path_next (cur);
+		if (gtk_tree_path_compare (cur, next) != 0) {
+			gtk_tree_row_reference_free (priv->next_row_reference);
 			priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
 			select_next_valid_row (header_model, &(priv->next_row_reference), FALSE, priv->is_outbox);
 			already_changed = TRUE;
 		}
-		gtk_tree_path_free (path);
+		gtk_tree_path_free (cur);
+		gtk_tree_path_free (next);
+	} else {
+		if (priv->next_row_reference)
+			gtk_tree_row_reference_free (priv->next_row_reference);
+		/* Update next row reference */
+		priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+		select_next_valid_row (header_model, &(priv->next_row_reference), FALSE, priv->is_outbox);
+		already_changed = TRUE;
 	}
-	if (!already_changed &&
-	    priv->next_row_reference &&
-	    gtk_tree_row_reference_valid (priv->next_row_reference)) {
-		GtkTreePath *path;
-		path = gtk_tree_row_reference_get_path (priv->next_row_reference);
-		if (gtk_tree_path_compare (path, arg1) == 0) {
-			if (priv->next_row_reference) {
-				gtk_tree_row_reference_free (priv->next_row_reference);
-			}
-			priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
-			select_next_valid_row (header_model, &(priv->next_row_reference), FALSE, priv->is_outbox);
-		}
-		gtk_tree_path_free (path);
-	}
+
 	check_dimming_rules_after_change (window);
 }
 
