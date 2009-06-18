@@ -1342,16 +1342,26 @@ tny_account_store_view_init (gpointer g, gpointer iface_data)
 	klass->set_account_store = modest_folder_view_set_account_store;
 }
 
+static gboolean
+match_all (TnyList *list, GObject *item, gpointer match_data)
+{
+	return TRUE;
+}
+
 static void
 modest_folder_view_dispose (GObject *obj)
 {
 	static gboolean disposed = FALSE;
 	ModestFolderViewPrivate *priv;
+	GtkTreeModel *model;
 
 	if (disposed)
 		return;
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (obj);
+
+	model = gtk_tree_view_get_model (GTK_TREE_VIEW (obj));
+	tny_list_remove_matches (TNY_LIST (model), match_all, NULL);
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
