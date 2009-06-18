@@ -1713,11 +1713,11 @@ modest_text_utils_get_display_size (guint64 size)
 	else if (KB <= size && size < 100 * KB)
 		return g_strdup_printf (_FM("sfil_li_size_1kb_99kb"), (int) size / KB);
 	else if (100*KB <= size && size < MB)
-		return g_strdup_printf (_FM("sfil_li_size_100kb_1mb"), (float) size / MB);
+		return g_strdup_printf (_FM("sfil_li_size_100kb_1mb"), (int) size / KB);
 	else if (MB <= size && size < 10*MB)
 		return g_strdup_printf (_FM("sfil_li_size_1mb_10mb"), (float) size / MB);
 	else if (10*MB <= size && size < GB)
-		return g_strdup_printf (_FM("sfil_li_size_10mb_1gb"), (int) size / MB);
+		return g_strdup_printf (_FM("sfil_li_size_10mb_1gb"), (float) size / MB);
 	else
 		return g_strdup_printf (_FM("sfil_li_size_1gb_or_greater"), (float) size / GB);
 }
