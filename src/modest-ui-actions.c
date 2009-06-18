@@ -521,7 +521,6 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 
 
 	if (response == GTK_RESPONSE_OK) {
-		ModestWindow *main_window = NULL;
 		ModestWindowMgr *mgr = NULL;
 		GtkTreeModel *model = NULL;
 		GtkTreeSelection *sel = NULL;
@@ -552,7 +551,7 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 		}
 
 		/* Disable window dimming management */
-		modest_window_disable_dimming (MODEST_WINDOW(win));
+		modest_window_disable_dimming (win);
 
 		/* Remove each header. If it's a view window header_view == NULL */
 		mail_op = modest_mail_operation_new ((GObject *) win);
@@ -565,18 +564,14 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 		if (sel != NULL) {
 			gtk_tree_selection_unselect_all (sel);
 		}
-		modest_window_enable_dimming (MODEST_WINDOW(win));
+		modest_window_enable_dimming (win);
 
 		if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 			modest_ui_actions_refresh_message_window_after_delete (MODEST_MSG_VIEW_WINDOW (win));
 
 			/* Get main window */
 			mgr = modest_runtime_get_window_mgr ();
-			main_window = modest_window_mgr_get_main_window (mgr, FALSE); /* don't create */
 		} else if (MODEST_IS_MAIN_WINDOW (win)) {
-			/* Move cursor to next row */
-			main_window = win;
-
 			/* Select next or previous row */
 			if (gtk_tree_row_reference_valid (next_row_reference)) {
 				gtk_tree_selection_select_path (sel, next_path);
@@ -597,10 +592,8 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 		}
 
 		/* Update toolbar dimming state */
-		if (main_window) {
-			modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (main_window));
-			modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (main_window));
-		}
+		modest_ui_actions_check_menu_dimming_rules (win);
+		modest_ui_actions_check_toolbar_dimming_rules (win);
 
 		/* Free */
 		g_list_foreach (sel_list, (GFunc) gtk_tree_path_free, NULL);

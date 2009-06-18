@@ -202,7 +202,6 @@ static void set_progress_hint    (ModestMsgViewWindow *self,
 
 static void update_window_title (ModestMsgViewWindow *window);
 
-static gboolean set_toolbar_transfer_mode     (ModestMsgViewWindow *self); 
 static void init_window (ModestMsgViewWindow *obj);
 
 static gboolean msg_is_visible (TnyHeader *header, gboolean check_outbox);
@@ -468,21 +467,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	hildon_program_add_window (hildon_program_get_instance(),
 				   HILDON_WINDOW(obj));
 
-}
-
-
-static gboolean
-set_toolbar_transfer_mode (ModestMsgViewWindow *self)
-{
-	ModestMsgViewWindowPrivate *priv = NULL;
-	
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self), FALSE);
-
-	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
-
-	set_progress_hint (self, TRUE);
-	
-	return FALSE;
 }
 
 static void
@@ -2470,8 +2454,10 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 	tmp = priv->progress_widgets;
 	source = modest_mail_operation_get_source(mail_op);
 	if (G_OBJECT (self) == source) {
-		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
-			set_toolbar_transfer_mode(self);
+		if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ||
+		    op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ||
+		    op_type == MODEST_MAIL_OPERATION_TYPE_DELETE) {
+			set_progress_hint (self, TRUE);
 			while (tmp) {
 				modest_progress_object_add_operation (
 						MODEST_PROGRESS_OBJECT (tmp->data),
@@ -2481,9 +2467,12 @@ on_mail_operation_started (ModestMailOperation *mail_op,
 		}
 	}
 	g_object_unref (source);
+
+	/* Update dimming rules */
+	check_dimming_rules_after_change (self);
 }
 
-static void 
+static void
 on_mail_operation_finished (ModestMailOperation *mail_op,
 			    gpointer user_data)
 {
@@ -2491,13 +2480,15 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	ModestMailOperationTypeOperation op_type;
 	GSList *tmp;
 	ModestMsgViewWindowPrivate *priv;
-	
+
 	self = MODEST_MSG_VIEW_WINDOW (user_data);
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 	op_type = modest_mail_operation_get_type_operation (mail_op);
 	tmp = priv->progress_widgets;
-	
-	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE) {
+
+	if (op_type == MODEST_MAIL_OPERATION_TYPE_RECEIVE ||
+	    op_type == MODEST_MAIL_OPERATION_TYPE_OPEN ||
+	    op_type == MODEST_MAIL_OPERATION_TYPE_DELETE) {
 		while (tmp) {
 			modest_progress_object_remove_operation (MODEST_PROGRESS_OBJECT (tmp->data),
 								 mail_op);
@@ -2516,7 +2507,6 @@ on_mail_operation_finished (ModestMailOperation *mail_op,
 	   won't let the user delete the message that has been
 	   readed for example */
 	check_dimming_rules_after_change (self);
-
 }
 
 static void
