@@ -554,6 +554,20 @@ void modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 void modest_ui_actions_on_fetch_images (GtkAction *action,
 					ModestWindow *window);
 
+/**
+ * modest_ui_actions_check_for_active_account:
+ * @win: a #ModestWindow
+ * @account_name: the account name of the account to check
+ *
+ * Check whether any connections are active, and cancel them if
+ * the user wants.
+ *
+ * Returns: Returns TRUE if there was no problem, or if an operation
+ * was cancelled so we can continue. Returns FALSE if the user chose
+ * to cancel his request instead.
+ **/
+gboolean modest_ui_actions_check_for_active_account (ModestWindow *win,
+						     const gchar* account_name);
 
 G_END_DECLS
 #endif /* __MODEST_UI_ACTIONS_H__ */

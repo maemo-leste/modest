@@ -32,7 +32,7 @@
 
 #include <widgets/modest-account-view-window.h>
 #include <widgets/modest-account-view.h>
-
+#include "modest-ui-actions.h"
 #include <modest-runtime.h>
 #include <modest-account-mgr-helpers.h>
 #include <string.h>
@@ -45,8 +45,6 @@
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
 static void                            modest_account_view_window_init         (ModestAccountViewWindow *obj);
 static void                            modest_account_view_window_finalize     (GObject *obj);
-static gboolean                        check_for_active_account                (ModestAccountViewWindow *self, 
-										const gchar* account_name);
 /* list my signals */
 enum {
 	/* MY_SIGNAL_1, */
@@ -168,7 +166,7 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	if (!account_title)
 		return;
 
-	if (check_for_active_account (self, account_name)) {
+	if (modest_ui_actions_check_for_active_account (self, account_name)) {
 		gboolean removed;
 		gchar *txt;
 		gint response;
@@ -202,70 +200,6 @@ on_remove_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	}
 }
 
-/** Check whether any connections are active, and cancel them if 
- * the user wishes.
- * Returns TRUE is there was no problem, 
- * or if an operation was cancelled so we can continue.
- * Returns FALSE if the user chose to cancel his request instead.
- */
-static gboolean
-check_for_active_account (ModestAccountViewWindow *self, const gchar* account_name)
-{
-	ModestTnyAccountStore *acc_store;
-	ModestMailOperationQueue* queue;
-	TnyConnectionStatus store_conn_status, transport_conn_status;
-	TnyAccount *store_account = NULL, *transport_account = NULL;
-	gboolean retval = TRUE;
-
-	acc_store = modest_runtime_get_account_store ();
-	queue = modest_runtime_get_mail_operation_queue ();
-
-	store_account = 
-		modest_tny_account_store_get_server_account (acc_store,
-							     account_name,
-							     TNY_ACCOUNT_TYPE_STORE);
-	transport_account = 
-		modest_tny_account_store_get_server_account (acc_store,
-							     account_name,
-							     TNY_ACCOUNT_TYPE_TRANSPORT);
-
-	store_conn_status = tny_account_get_connection_status (store_account);
-	transport_conn_status = tny_account_get_connection_status (transport_account);
-
-	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED ||
-	    transport_conn_status == TNY_CONNECTION_STATUS_CONNECTED) {
-		gint response;
-
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
-								_("emev_nc_disconnect_account"));
-		if (response == GTK_RESPONSE_OK) {
-			/* FIXME: We should only cancel those of this account */
-			modest_mail_operation_queue_cancel_all (queue);
-
-			/* Also disconnect the account */
-			if (tny_account_get_connection_status (store_account) == TNY_CONNECTION_STATUS_CONNECTED) {
-				tny_account_cancel (store_account);
-				tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
-							      FALSE, NULL, NULL);
-			}
-			if (tny_account_get_connection_status (transport_account) == TNY_CONNECTION_STATUS_CONNECTED) {
-				tny_account_cancel (transport_account);
-				tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account),
-							      FALSE, NULL, NULL);
-			}
-			retval = TRUE;
-		} else {
-			retval = FALSE;
-		}
-	}
-
-	/* Frees */
-	g_object_unref (store_account);
-	g_object_unref (transport_account);
-	
-	return retval;
-}
-
 static void
 on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 {
@@ -278,7 +212,7 @@ on_edit_button_clicked (GtkWidget *button, ModestAccountViewWindow *self)
 	/* Check whether any connections are active, and cancel them if 
 	 * the user wishes.
 	 */
-	if (check_for_active_account (self, account_name)) {
+	if (modest_ui_actions_check_for_active_account (self, account_name)) {
 		ModestAccountProtocol *proto;
 		ModestProtocolType proto_type;
 

@@ -6917,3 +6917,89 @@ modest_ui_actions_on_reload_message (const gchar *msg_id)
 
 	modest_msg_view_window_reload (MODEST_MSG_VIEW_WINDOW (window));
 }
+
+/** Check whether any connections are active, and cancel them if 
+ * the user wishes.
+ * Returns TRUE is there was no problem, 
+ * or if an operation was cancelled so we can continue.
+ * Returns FALSE if the user chose to cancel his request instead.
+ */
+
+gboolean
+modest_ui_actions_check_for_active_account (ModestWindow *self,
+					    const gchar* account_name)
+{
+	ModestTnySendQueue *send_queue;
+	ModestTnyAccountStore *acc_store;
+	ModestMailOperationQueue* queue;
+	TnyConnectionStatus store_conn_status;
+	TnyAccount *store_account = NULL, *transport_account = NULL;
+	gboolean retval = TRUE, sending = FALSE;
+
+	acc_store = modest_runtime_get_account_store ();
+	queue = modest_runtime_get_mail_operation_queue ();
+
+	store_account = 
+		modest_tny_account_store_get_server_account (acc_store,
+							     account_name,
+							     TNY_ACCOUNT_TYPE_STORE);
+
+	/* This could happen if the account was deleted before the
+	   call to this function */
+	if (!store_account)
+		return FALSE;
+
+	transport_account = 
+		modest_tny_account_store_get_server_account (acc_store,
+							     account_name,
+							     TNY_ACCOUNT_TYPE_TRANSPORT);
+
+	/* This could happen if the account was deleted before the
+	   call to this function */
+	if (!transport_account) {
+		g_object_unref (store_account);
+		return FALSE;
+	}
+
+	/* If the transport account was not used yet, then the send
+	   queue could not exist (it's created on demand) */
+	send_queue = modest_runtime_get_send_queue (TNY_TRANSPORT_ACCOUNT (transport_account), FALSE);
+	if (TNY_IS_SEND_QUEUE (send_queue))
+		sending = modest_tny_send_queue_sending_in_progress (send_queue);
+
+	store_conn_status = tny_account_get_connection_status (store_account);
+	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED || sending) {
+		gint response;
+
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
+								_("emev_nc_disconnect_account"));
+		if (response == GTK_RESPONSE_OK) {
+			retval = TRUE;
+		} else {
+			retval = FALSE;
+		}
+	}
+
+	if (retval) {
+
+		/* FIXME: We should only cancel those of this account */
+		modest_mail_operation_queue_cancel_all (queue);
+
+		/* Also disconnect the account */
+		if ((tny_account_get_connection_status (store_account) != TNY_CONNECTION_STATUS_DISCONNECTED) &&
+		    (tny_account_get_connection_status (store_account) != TNY_CONNECTION_STATUS_DISCONNECTED_BROKEN)) {
+			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
+						      FALSE, NULL, NULL);
+		}
+		if (sending) {
+			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (transport_account),
+						      FALSE, NULL, NULL);
+		}
+	}
+		
+	/* Frees */
+	g_object_unref (store_account);
+	g_object_unref (transport_account);
+	
+	return retval;
+}
