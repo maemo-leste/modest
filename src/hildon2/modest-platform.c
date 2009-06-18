@@ -958,7 +958,9 @@ folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 
 		folder_picker_set_store (GTK_BUTTON (button), suggested);
 
-		if (TNY_IS_ACCOUNT (suggested)) {
+		if (TNY_IS_ACCOUNT (suggested) &&
+		    !modest_tny_account_is_virtual_local_folders (TNY_ACCOUNT (suggested)) &&
+		    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (suggested))) {
 			acc_id = tny_account_get_id ((TnyAccount *) suggested);
 		} else {
 			TnyAccount *account = modest_tny_folder_get_account ((TnyFolder *) suggested);
