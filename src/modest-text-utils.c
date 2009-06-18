@@ -416,6 +416,9 @@ modest_text_utils_remove_duplicate_addresses (const gchar *address_list)
 	g_slist_foreach (addresses, (GFunc)g_free, NULL);
 	g_slist_free (addresses);
 
+	if (new_list == NULL)
+		new_list = g_strdup ("");
+
 	return new_list;
 }
 
