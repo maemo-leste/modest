@@ -553,6 +553,9 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), delete_item);
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), mark_read_item);
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), mark_unread_item);
+	hildon_gtk_widget_set_theme_size (delete_item, MODEST_EDITABLE_SIZE);
+	hildon_gtk_widget_set_theme_size (mark_unread_item, MODEST_EDITABLE_SIZE);
+	hildon_gtk_widget_set_theme_size (mark_read_item, MODEST_EDITABLE_SIZE);
 	gtk_widget_show_all (priv->csm_menu);
 
 	/* Connect signals */
