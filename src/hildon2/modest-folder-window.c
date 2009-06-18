@@ -463,6 +463,13 @@ modest_folder_window_set_mailbox (ModestFolderWindow *self,
 }
 
 static void
+edit_account (GtkButton *button,
+	      ModestFolderWindow *self)
+{
+
+}
+
+static void
 setup_menu (ModestFolderWindow *self)
 {
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
@@ -482,15 +489,17 @@ setup_menu (ModestFolderWindow *self)
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_delete));
 
 	/* send receive actions should be only one visible always */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), 
-					   _("mcen_me_inbox_sendandreceive"), 
-					   NULL,
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
 
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_edit_account"), NULL,
+					   APP_MENU_CALLBACK (edit_account),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_edit_accounts));
 }
 
 static void
