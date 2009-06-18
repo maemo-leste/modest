@@ -466,7 +466,32 @@ static void
 edit_account (GtkButton *button,
 	      ModestFolderWindow *self)
 {
+	const gchar *account_name;
 
+	account_name = modest_window_get_active_account ((ModestWindow *) self);
+	if (modest_ui_actions_check_for_active_account ((ModestWindow *) self, account_name)) {
+		/* Show the account settings dialog */
+		ModestAccountProtocol *proto;
+		ModestProtocolType proto_type;
+
+		/* Get proto */
+		proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (),
+								    account_name);
+		proto = (ModestAccountProtocol *)
+			modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+								       proto_type);
+
+		/* Create and show the dialog */
+		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
+			ModestAccountSettingsDialog *dialog =
+				modest_account_protocol_get_account_settings_dialog (proto, account_name);
+			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+						     (GtkWindow *) dialog,
+						     (GtkWindow *) self);
+			gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), FALSE);
+			gtk_widget_show (GTK_WIDGET (dialog));
+		}
+	}
 }
 
 static void
