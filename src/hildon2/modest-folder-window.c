@@ -53,6 +53,7 @@
 #include <modest-window-priv.h>
 #include "modest-text-utils.h"
 #include "modest-tny-account.h"
+#include "modest-account-protocol.h"
 
 typedef enum {
 	EDIT_MODE_COMMAND_MOVE = 1,

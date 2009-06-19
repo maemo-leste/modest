@@ -48,6 +48,7 @@
 #include "modest-maemo-utils.h"
 #include "modest-utils.h"
 #include "modest-tny-msg.h"
+#include "modest-tny-account.h"
 #include <tny-merge-folder.h>
 
 /* 'private'/'protected' functions */
@@ -84,7 +85,6 @@ static gboolean modest_hildon2_window_mgr_find_registered_message_uid (ModestWin
 								       ModestWindow **win);
 static GList *modest_hildon2_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *self);
-static gboolean window_can_close (ModestWindow *window);
 static gboolean window_has_modals (ModestWindow *window);
 static ModestWindow *modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self);
 static ModestWindow *modest_hildon2_window_mgr_get_current_top (ModestWindowMgr *self);
@@ -648,24 +648,14 @@ window_has_modals (ModestWindow *window)
 }
 
 static gboolean
-window_can_close (ModestWindow *window)
-{
-	/* An editor can be always closed no matter the dialogs it has 
-	 * on top. */
-	if (MODEST_IS_MSG_EDIT_WINDOW (window))
-		return TRUE;
-
-	return !window_has_modals (window);
-}
-
-static gboolean
 on_window_destroy (ModestWindow *window, 
 		   GdkEvent *event,
 		   ModestHildon2WindowMgr *self)
 {
 	gboolean no_propagate = FALSE;
 
-	if (!window_can_close (window))
+	/* Do not close the window if it has modals on top */
+	if (!MODEST_IS_MSG_EDIT_WINDOW (window) && window_has_modals (window))
 		return TRUE;
 
 	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
@@ -916,11 +906,15 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
-static void
-close_all_but_first (HildonWindowStack *stack)
+static gboolean
+on_idle_close_all_but_first (gpointer data)
 {
 	gint num_windows, i;
 	gboolean retval;
+	HildonWindowStack *stack;
+
+	stack = hildon_window_stack_get_default ();
+	g_return_val_if_fail (stack, FALSE);
 
 	num_windows = hildon_window_stack_size (stack);
 
@@ -931,10 +925,11 @@ close_all_but_first (HildonWindowStack *stack)
 		current_top = hildon_window_stack_peek (stack);
 		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
 	}
+	return FALSE;
 }
 
 static void
-on_account_removed (TnyAccountStore *acc_store, 
+on_account_removed (TnyAccountStore *acc_store,
 		    TnyAccount *account,
 		    gpointer user_data)
 {
@@ -951,32 +946,20 @@ on_account_removed (TnyAccountStore *acc_store,
 	/* if we're showing the header view of the currently deleted
 	   account, or the outbox and we deleted the last account,
 	   then close the window */
-	if (current_top && MODEST_IS_HEADER_WINDOW (current_top)) {
-		ModestHeaderView *header_view;
-		TnyFolder *folder;
+	if (current_top &&
+	    (MODEST_IS_HEADER_WINDOW (current_top) ||
+	     MODEST_IS_FOLDER_WINDOW (current_top))) {
+		    const gchar *acc_name;
 
-		header_view = modest_header_window_get_header_view (MODEST_HEADER_WINDOW (current_top));
-		folder = modest_header_view_get_folder (header_view);
-		if (folder) {
-			/* Close if it's my account */
-			if (!TNY_IS_MERGE_FOLDER (folder)) {
-				TnyAccount *my_account;
+		    acc_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
 
-				my_account = tny_folder_get_account (folder);
-				if (my_account) {
-					if (my_account == account)
-						close_all_but_first (stack);
-
-					g_object_unref (my_account);
-				}
-			}
-
-			/* Close if viewing outbox and no account left */
-			if (tny_folder_get_folder_type (folder) == TNY_FOLDER_TYPE_OUTBOX)
-				close_all_but_first (stack);
-
-			g_object_unref (folder);
-		}
+		    /* We emit it in an idle, because sometimes this
+		       function could called when the account settings
+		       dialog is about to close but still there. That
+		       modal dialog would otherwise, prevent the
+		       windows from being closed */
+		    if (!strcmp (acc_name, modest_window_get_active_account (current_top)))
+			    g_idle_add (on_idle_close_all_but_first, NULL);
 	}
 }
 
