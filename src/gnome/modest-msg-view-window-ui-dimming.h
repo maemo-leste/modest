@@ -66,7 +66,7 @@ static const ModestDimmingEntry modest_msg_view_toolbar_dimming_entries [] = {
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/ToolBar/ToolbarMessageMoveTo", G_CALLBACK(modest_ui_dimming_rules_on_move_to) },
 	{ "/ToolBar/ToolbarDeleteMessage",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
-	{ "/ToolBar/FindInMessage", G_CALLBACK(modest_ui_dimming_rules_on_find_msg) },
+	{ "/ToolBar/FindInMessage", G_CALLBACK(modest_ui_dimming_rules_on_find_in_msg) },
 	{ "/ToolBar/ToolbarMessageBack", G_CALLBACK(modest_ui_dimming_rules_on_view_previous) },
 	{ "/ToolBar/ToolbarMessageNext", G_CALLBACK(modest_ui_dimming_rules_on_view_next) },
 	{ "/ToolBar/ToolbarCancel", NULL },

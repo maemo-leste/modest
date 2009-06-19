@@ -64,3 +64,9 @@ modest_address_book_get_my_name ()
 {
 	return NULL;
 }
+
+void
+modest_address_book_init (void)
+{
+	/* Do nothing */
+}
