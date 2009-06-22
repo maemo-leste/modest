@@ -504,4 +504,15 @@ gchar *modest_text_utils_escape_mnemonics (const gchar *text);
  */
 gchar *modest_text_utils_simplify_recipients (const gchar *recipient);
 
+/**
+ * modest_text_utils_remove_duplicate_addresses_list
+ * @address_list: non-NULL #GSList of email addresses
+ *
+ * remove duplicate addresses from a list of email addresses
+ *
+ * Returns: a list without the duplicate addresses or NULL in case of
+ * error or the original @address_list was NULL
+ */
+GSList *modest_text_utils_remove_duplicate_addresses_list (GSList *address_list);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

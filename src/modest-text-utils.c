@@ -1955,3 +1955,39 @@ modest_text_utils_simplify_recipients (const gchar *recipients)
 	return g_string_free (result, FALSE);
 
 }
+
+GSList *
+modest_text_utils_remove_duplicate_addresses_list (GSList *address_list)
+{
+	GSList *new_list, *iter;
+	GHashTable *table;
+
+	g_return_val_if_fail (address_list, NULL);
+
+	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+	new_list = address_list;
+	iter = address_list;
+	while (iter) {
+		const gchar* address = (const gchar*)iter->data;
+
+		/* We need only the email to just compare it and not
+		   the full address which would make "a <a@a.com>"
+		   different from "a@a.com" */
+		const gchar *email = get_email_from_address (address);
+
+		/* ignore the address if already seen */
+		if (g_hash_table_lookup (table, email) == 0) {
+			g_hash_table_insert (table, (gchar*)email, GINT_TO_POINTER(1));
+			iter = g_slist_next (iter);
+		} else {
+			GSList *tmp = g_slist_next (iter);
+			new_list = g_slist_delete_link (new_list, iter);
+			iter = tmp;
+		}
+	}
+
+	g_hash_table_unref (table);
+
+	return new_list;
+}

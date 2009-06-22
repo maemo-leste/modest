@@ -784,7 +784,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 
 		start_pos = (*((gint*) current_start->data)) + offset_delta;
 		end_pos = (*((gint*) current_end->data)) + offset_delta;
-	       
+
 		start_ptr = g_utf8_offset_to_pointer (recipients, start_pos);
 		end_ptr = g_utf8_offset_to_pointer (recipients, end_pos);
 
@@ -890,8 +890,11 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	}
 
 	/* Add addresses to address-book */
-	if (to_commit_addresses)
-		add_to_address_book (to_commit_addresses);
+	if (to_commit_addresses) {
+		to_commit_addresses = modest_text_utils_remove_duplicate_addresses_list (to_commit_addresses);
+		if (to_commit_addresses)
+			add_to_address_book (to_commit_addresses);
+	}
 
 	if (current_start == NULL) {
 		gtk_text_buffer_get_end_iter (buffer, &end_iter);
