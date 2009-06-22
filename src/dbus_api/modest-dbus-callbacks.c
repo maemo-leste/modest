@@ -923,9 +923,6 @@ static gboolean
 on_idle_send_receive(gpointer user_data)
 {
 	gboolean auto_update;
-	ModestWindow *top_win = NULL;
-
-	top_win = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
 
 	gdk_threads_enter (); /* CHECKED */
 
@@ -934,8 +931,10 @@ on_idle_send_receive(gpointer user_data)
 					    MODEST_CONF_AUTO_UPDATE, NULL);
 
 	if (auto_update)
-		/* Do send receive */
-		modest_ui_actions_do_send_receive_all (top_win, FALSE, FALSE, FALSE);
+		/* Do send receive. Never set the current top window
+		   as we always assume that DBus send/receive requests
+		   are not user driven */
+		modest_ui_actions_do_send_receive_all (NULL, FALSE, FALSE, FALSE);
 	else
 		/* Disable auto update */
 		modest_platform_set_update_interval (0);
