@@ -217,8 +217,9 @@ modest_tny_mime_part_get_headers_content_type (TnyMimePart *part)
 
 	header_content_type = modest_tny_mime_part_get_header_value (part, "Content-Type");
 
+	/* See RFC2045 sec 5.2 */
 	if (!header_content_type)
-		return NULL;
+		return g_strdup ("text/plain; charset=us-ascii");
 
 	header_content_type = g_strstrip (header_content_type);
 
