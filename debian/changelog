@@ -1,3 +1,41 @@
+modest (3.0.17-rc18) unstable; urgency=low
+
+  * Week 26, 2009 - first release
+  *  20 bug fixes
+  * 
+  * Fixes: NB#101663    Random date and time are shown in viewer when a draft message is attached from 
+  * 	outlook as embedded message
+  * Fixes: NB#105445 	Message content retrieving should not be stopped after navigating to Folders view
+  * Fixes: NB#107215 	After account is tapped and navigating to Folders view remote imap folders are shown with a delay
+  * Fixes: NB#110254 	inline images are not displayed while forwarding a message with inline images created from device
+  * Fixes: NB#117246 	List of folders in Change folder dialog is not correct when attempt to move messages 
+  * 	between two different accounts
+  * Fixes: NB#117612 	Email messages from user defined folder are not restoring with backup and restore
+  * Fixes: NB#117967 	Opening a email viewer when tapped on new email notification received should be improved
+  * Fixes: NB#119629 	Mem full: a wrong notification/no notification is shown when attempt to move a remote 
+  * 	folder under Archive fails
+  * Fixes: NB#120148 	Cancel Sending: Waiting status messages get stuck in Outbox
+  * Fixes: NB#120415 	Account setup cursor focus should be on the first text input field when setting up an account
+  * Fixes: NB#121091 	Modest doesn't attempt to go online when a new email notification is tapped
+  * Fixes: NB#121783 	The Original message in the message body is lost upon performing Reply or Reply to all.
+  * Fixes: NB#123040 	Check Names Functionality Not working when contacts added with same first alphabet
+  * Fixes: NB#123141 	Viewer view is not per Email UI spec
+  * Fixes: NB#123142 	A long tap on a message in messages view doesn't open CSM
+  * Fixes: NB#123143 	Folders view menu: "Edit account" command is missing
+  * Fixes: NB#123401 	Toolbar icons are not dimmed during msg content retrieving after deletion of the previous message
+  * Fixes: NB#123431 	size of some images file are showing wrong in attachment field
+  * Fixes: NB#123588 	"Inbox" is untranslated in Change folder dialog
+  * Fixes: NB#123681 	Remote folders are not listed out in New folder dialog box 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 22 Jun 2009 11:52:08 +0300
+
+modest (3.0.17-rc17) unstable; urgency=low
+
+  * Week 25, 2009 - release
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 17 Jun 2009 19:10:32 +0300
+
 modest (3.0.17-rc16) unstable; urgency=low
 
   *
