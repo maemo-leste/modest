@@ -369,8 +369,9 @@ create_captioned (ModestEasysetupWizardDialog *self,
 {
 
 	GtkWidget *result;
-	result = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-						      value, use_markup, control);
+	result = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
+								     value, use_markup, control,
+								     MODEST_EDITABLE_SIZE);
 
 	/* Connect to the appropriate changed signal for the widget,
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
