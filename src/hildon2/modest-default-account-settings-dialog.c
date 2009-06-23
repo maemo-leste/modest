@@ -764,6 +764,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 
 	GtkWidget *separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_DEFAULT);
+	hildon_gtk_widget_set_theme_size (separator, HILDON_SIZE_AUTO);
 	gtk_widget_show (separator);
 
 	/* connection-specific checkbox: */
@@ -1056,6 +1057,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 			    FALSE, FALSE, 0);
 
 	separator = gtk_hseparator_new ();
+	hildon_gtk_widget_set_theme_size (separator, HILDON_SIZE_AUTO);
 	gtk_box_pack_start (GTK_BOX (priv->main_container), separator,
 			    FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);
@@ -1063,6 +1065,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 			    priv->page_incoming,
 			    FALSE, FALSE, 0);
 	separator = gtk_hseparator_new ();
+	hildon_gtk_widget_set_theme_size (separator, HILDON_SIZE_AUTO);
 	gtk_box_pack_start (GTK_BOX (priv->main_container), separator,
 			    FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);

@@ -172,11 +172,13 @@ create_incoming_security (ModestSecurityOptionsView* self,
 
 	if (ppriv->full) {
 		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
-		entry_caption = modest_maemo_utils_create_captioned (title_size_group,
-								     value_size_group,
-								     _("mcen_fi_emailsetup_port"),
-								     FALSE,
-								     ppriv->port_view);
+		entry_caption =
+			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
+									    value_size_group,
+									    _("mcen_fi_emailsetup_port"),
+									    FALSE,
+									    ppriv->port_view,
+									    MODEST_EDITABLE_SIZE);
 		/* Pack & show widgets */
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, FALSE, FALSE, 0);
 		gtk_widget_show (ppriv->port_view);
@@ -285,11 +287,12 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						 HILDON_GTK_INPUT_MODE_FULL);
 
 		user_label = g_strdup_printf("%s*", _("mail_fi_username"));
-		user_caption = modest_maemo_utils_create_captioned (title_size_group,
-								    value_size_group,
-								    user_label,
-								    FALSE,
-								    ppriv->user_entry);
+		user_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group,
+										   value_size_group,
+										   user_label,
+										   FALSE,
+										   ppriv->user_entry,
+										   MODEST_EDITABLE_SIZE);
 		g_free (user_label);
 	
 		/* Prevent the use of some characters. Limit the max
@@ -309,18 +312,22 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						 HILDON_GTK_INPUT_MODE_INVISIBLE);
 		gtk_entry_set_visibility (GTK_ENTRY (ppriv->pwd_entry), FALSE);
 
-		pwd_caption = modest_maemo_utils_create_captioned (title_size_group,
-								   value_size_group,
-								   _("mail_fi_password"), 
-								   FALSE,
-								   ppriv->pwd_entry);
+		pwd_caption =
+			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
+									    value_size_group,
+									    _("mail_fi_password"),
+									    FALSE,
+									    ppriv->pwd_entry,
+									    MODEST_EDITABLE_SIZE);
 
 		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
-		port_caption = modest_maemo_utils_create_captioned (title_size_group,
-								    value_size_group,
-								    _("mcen_fi_emailsetup_port"), 
-								    FALSE,
-								    ppriv->port_view);
+		port_caption =
+			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
+									    value_size_group,
+									    _("mcen_fi_emailsetup_port"),
+									    FALSE,
+									    ppriv->port_view,
+									    MODEST_EDITABLE_SIZE);
 	}
 
 	/* Track changes in UI */	
