@@ -1,7 +1,27 @@
+modest (3.0.17-rc19) unstable; urgency=low
+
+  * Week 26, 2009 - second release
+  *  7 bug fixes.
+  *
+  * Fixes: NB#121603    Scheduled Sync does not happen as per the setting in the 
+  * 	control panel applet and is very inconsistent
+  * Fixes: NB#122748 	Modest is appearing in Title Window instead of Email
+  * Fixes: NB#123812 	Duplicate contact is created in addressbook when mail 
+  * 	sent to same email address .
+  * Fixes: NB#123829 	Security:Email ui crashes on tapping on the message
+  * Fixes: NB#123895 	Contents of message/rfc822 parts with no Content-type 
+  * 	headers are not shown
+  * Fixes: NB#123994 	Entries in the account setup wizard are the wrong size 
+  * 	(graphics get scaled)
+  * Fixes: NB#124155 	Done button in Select contacts dialog doesn't close the 
+  * 	dialog after selecting a contact 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 23 Jun 2009 17:55:45 +0300
+
 modest (3.0.17-rc18) unstable; urgency=low
 
   * Week 26, 2009 - first release
-  *  20 bug fixes
+  *  19 bug fixes
   * 
   * Fixes: NB#101663    Random date and time are shown in viewer when a draft message is attached from 
   * 	outlook as embedded message
@@ -18,7 +38,6 @@ modest (3.0.17-rc18) unstable; urgency=low
   * Fixes: NB#120415 	Account setup cursor focus should be on the first text input field when setting up an account
   * Fixes: NB#121091 	Modest doesn't attempt to go online when a new email notification is tapped
   * Fixes: NB#121783 	The Original message in the message body is lost upon performing Reply or Reply to all.
-  * Fixes: NB#123040 	Check Names Functionality Not working when contacts added with same first alphabet
   * Fixes: NB#123141 	Viewer view is not per Email UI spec
   * Fixes: NB#123142 	A long tap on a message in messages view doesn't open CSM
   * Fixes: NB#123143 	Folders view menu: "Edit account" command is missing
