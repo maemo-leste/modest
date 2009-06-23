@@ -1003,6 +1003,8 @@ select_contacts_for_name_dialog (const gchar *name)
 	if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK)
 		result = osso_abook_contact_chooser_get_selection (contact_dialog);
 
+	gtk_widget_destroy ((GtkWidget *) contact_dialog);
+
 	g_free (unquoted);
 
 	return result;
