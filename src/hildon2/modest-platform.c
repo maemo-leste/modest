@@ -947,6 +947,7 @@ static GtkWidget *
 folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 {
 	GtkWidget *button;
+	const gchar *acc_id = NULL;
 
 	button = hildon_button_new (MODEST_EDITABLE_SIZE,
 				    HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
@@ -954,7 +955,6 @@ folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 1.0);
 
 	if (suggested) {
-		const gchar *acc_id = NULL;
 
 		folder_picker_set_store (GTK_BUTTON (button), suggested);
 
@@ -969,13 +969,14 @@ folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 				g_object_unref (account);
 			}
 		}
-
-		if (!acc_id)
-			modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(helper->folder_view));
-
-		g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_ORIGINAL_ACCOUNT,
-					g_strdup (acc_id), (GDestroyNotify) g_free);
 	}
+
+	if (!acc_id)
+		acc_id = modest_folder_view_get_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(helper->folder_view));
+
+	g_object_set_data_full (G_OBJECT (button), FOLDER_PICKER_ORIGINAL_ACCOUNT,
+				g_strdup (acc_id), (GDestroyNotify) g_free);
+
 
 	g_signal_connect (G_OBJECT (button), "clicked",
 			  G_CALLBACK (folder_picker_clicked),
