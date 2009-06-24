@@ -39,7 +39,9 @@
 #include "modest-tny-platform-factory.h"
 #include <modest-runtime.h>
 
-#define MAX_BODY_LENGTH 4096
+#define LINE_WRAP 78
+#define MAX_BODY_LINES 1024
+#define MAX_BODY_LENGTH 1024*128
 
 typedef struct _ModestFormatterPrivate ModestFormatterPrivate;
 struct _ModestFormatterPrivate {
@@ -76,7 +78,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	GtkTextIter start, end;
 	gchar *text;
 	ModestFormatterPrivate *priv;
-	gint total;
+	gint total, total_lines, line_chars;
 
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
@@ -90,9 +92,12 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	}
 
 	total = 0;
+	total_lines = 0;
+	line_chars = 0;
 
 	while (!tny_stream_is_eos (input_stream)) {
 		gchar buffer [128];
+		gchar *offset;
 		gint n_read;
 		gint next_read;
 
@@ -100,13 +105,37 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 		if (next_read == 0)
 			break;
 		n_read = tny_stream_read (input_stream, buffer, next_read);
-		if (n_read > 0) {
+
+		offset = buffer;
+		while (offset < buffer + n_read) {
+			
+			if (*offset == '\n') {
+				total_lines ++;
+				line_chars = 0;
+			} else {
+				line_chars ++;
+				if (line_chars >= LINE_WRAP) {
+					total_lines ++;
+					line_chars = 0;
+				}
+			}
+			if (total_lines >= MAX_BODY_LINES)
+				break;
+			offset++;
+		}
+
+		
+
+		if (offset - buffer > 0) {
 			gint n_write;
-			n_write = tny_stream_write (stream, buffer, n_read);
+			n_write = tny_stream_write (stream, buffer, offset - buffer);
 			total += n_write;
 		} else if (n_read == -1) {
 			break;
 		}
+
+		if (total_lines >= MAX_BODY_LINES)
+			break;
 	}
 
 	tny_stream_reset (stream);

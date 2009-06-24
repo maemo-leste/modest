@@ -93,7 +93,8 @@
 #define DEFAULT_FONT_SCALE 1.5
 #define ATTACHMENT_BUTTON_WIDTH 118
 #define MAX_FROM_VALUE 36
-#define MAX_BODY_LENGTH 4096
+#define MAX_BODY_LENGTH 128*1024
+#define MAX_BODY_LINES 2048
 
 static gboolean is_wp_text_buffer_started = FALSE;
 
@@ -3570,17 +3571,34 @@ body_insert_text (GtkTextBuffer *buffer,
 	GtkTextIter end_iter;
 	gint offset;
 	glong utf8_len;
+	gint line;
+	gchar *text_offset;
+	gint text_lines;
 
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (buffer), &end_iter);
 
 	offset = gtk_text_iter_get_offset (&end_iter);
+	line = gtk_text_iter_get_line (&end_iter);
+
+	text_offset = text;
+	text_lines = 0;
+	while (text_offset < text + len) {
+		if (*text_offset == '\n')
+			text_lines++;
+		if (text_lines + line >= MAX_BODY_LINES) {
+			len = text_offset - text;
+			break;
+		}
+		text_offset++;
+	}
+
 	utf8_len = g_utf8_strlen (text, len);
 
-	if (offset + utf8_len > MAX_BODY_LENGTH) {
+	if (line > MAX_BODY_LINES || offset + utf8_len > MAX_BODY_LENGTH) {
 		g_signal_stop_emission_by_name (G_OBJECT (buffer), "insert-text");
-		if (offset < MAX_BODY_LENGTH)
+		if (line <= MAX_BODY_LINES && offset < MAX_BODY_LENGTH)
 		{
 			gchar *result;
 			gchar *utf8_end;
@@ -3597,7 +3615,7 @@ body_insert_text (GtkTextBuffer *buffer,
 		}
 
 	}
-	if (offset + utf8_len > MAX_BODY_LENGTH) {
+	if (line > MAX_BODY_LINES || offset + utf8_len > MAX_BODY_LENGTH) {
 		if (priv->max_chars_banner == NULL) {
 			priv->max_chars_banner = hildon_banner_show_information (GTK_WIDGET (window), NULL, 
 										 _CS("ckdg_ib_maximum_characters_reached"));
