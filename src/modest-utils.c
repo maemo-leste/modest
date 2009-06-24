@@ -39,7 +39,7 @@
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
-
+#include <locale.h>
 #include <modest-defs.h>
 #include "modest-utils.h"
 #include "modest-platform.h"
@@ -837,7 +837,7 @@ modest_utils_open_mcc_mapping_file (gboolean from_lc_messages, gboolean *transla
 	gchar **parts, **node;
 
 	if (from_lc_messages) {
-		env_list = getenv ("LC_MESSAGES");
+		env_list = setlocale (LC_MESSAGES, NULL);
 	} else {
 		env_list = getenv ("LANG");
 	}

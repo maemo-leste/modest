@@ -602,11 +602,13 @@ init_debug_logging (void)
 static void
 init_i18n (void)
 {
-	const gchar *lc_messages = getenv ("LC_MESSAGES");
+	const gchar *lc_messages = setlocale (LC_MESSAGES, NULL);
 
 	if (!lc_messages) {
 		setenv ("LANGUAGE", "en_GB", 1);
 		setenv ("LC_MESSAGES", "en_GB", 1);
+	} else {
+		setenv ("LC_MESSAGES", lc_messages, 1);
 	}
 
 	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);
