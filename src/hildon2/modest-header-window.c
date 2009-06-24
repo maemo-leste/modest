@@ -655,7 +655,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	priv->contents_view = hildon_pannable_area_new ();
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment),
-				   0, 0,
+				   HILDON_MARGIN_HALF, 0,
 				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 
 	/* We need to do this here to properly listen for mail

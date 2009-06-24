@@ -320,7 +320,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	priv->top_vbox = gtk_vbox_new (0, FALSE);
 	top_alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (top_alignment),
-				   0, 0,
+				   HILDON_MARGIN_HALF, 0,
 				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 
 	gtk_container_add (GTK_CONTAINER (pannable), priv->folder_view);

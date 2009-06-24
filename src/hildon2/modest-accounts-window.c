@@ -259,7 +259,7 @@ modest_accounts_window_new_real (void)
 
 	box_alignment = gtk_alignment_new (0, 0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (box_alignment), 
-				   0, 0,
+				   HILDON_MARGIN_HALF, 0,
 				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
 	priv->box = gtk_vbox_new (FALSE, 0);
 
