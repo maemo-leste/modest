@@ -6864,8 +6864,15 @@ modest_ui_actions_on_delete_account (GtkWindow *parent_window,
 		g_free (default_account_name);
 
 		removed = modest_account_mgr_remove_account (account_mgr, account_name);
-		if (!removed)
+		if (removed) {
+			/* Close all email notifications, we cannot
+			   distinguish if the notification belongs to
+			   this account or not, so for safety reasons
+			   we remove them all */
+			modest_platform_remove_new_mail_notifications (FALSE);
+		} else {
 			g_warning ("%s: modest_account_mgr_remove_account() failed.\n", __FUNCTION__);
+		}
 	}
 	return removed;
 }
