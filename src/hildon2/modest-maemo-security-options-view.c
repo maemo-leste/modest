@@ -352,14 +352,14 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 
 	/* Pack into container */
 	if (ppriv->full) {
-		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), user_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), pwd_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), port_caption, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (self), user_caption, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (self), pwd_caption, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (self), port_caption, FALSE, FALSE, 0);
 	} else {
-		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, MODEST_MARGIN_HALF);
-		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->auth_view, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, 0);
 	}
 
 	/* Show widgets */
