@@ -90,6 +90,16 @@ void modest_tny_stream_gtkhtml_set_max_size (ModestTnyStreamGtkhtml *stream, gss
  */
 gssize modest_tny_stream_gtkhtml_get_max_size (ModestTnyStreamGtkhtml *stream);
 
+/**
+ * modest_tny_stream_gtkhtml_limit_reached:
+ * @self: a #ModestTnyStreamGtkhtml
+ *
+ * tells if on processing the stream, the max size limit has been hit.
+ *
+ * Returns: %TRUE if limit is reached, %FALSE otherwise.
+ */
+gboolean    modest_tny_stream_gtkhtml_limit_reached (ModestTnyStreamGtkhtml *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_STREAM_GTKHTML_H__ */

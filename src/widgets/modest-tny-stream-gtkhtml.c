@@ -326,6 +326,17 @@ modest_tny_stream_gtkhtml_get_max_size (ModestTnyStreamGtkhtml *stream)
 	return priv->max_size;
 }
 
+gboolean
+modest_tny_stream_gtkhtml_limit_reached (ModestTnyStreamGtkhtml *self)
+{
+	ModestTnyStreamGtkhtmlPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_TNY_STREAM_GTKHTML (self), 0);
+	priv = MODEST_TNY_STREAM_GTKHTML_GET_PRIVATE (self);
+
+	return (priv->max_size > 0) && (priv->current_size >= priv->max_size);
+}
+
 static void
 modest_tny_stream_gtkhml_iface_init (gpointer g_iface, gpointer iface_data)
 {
