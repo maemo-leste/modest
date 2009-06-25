@@ -710,11 +710,12 @@ void free_resolved_addresses_list (gpointer data,
 }
 
 gboolean
-modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
+modest_address_book_check_names (ModestRecptEditor *recpt_editor,
+				 GSList **address_list)
 {
 	const gchar *recipients = NULL;
 	GSList *start_indexes = NULL, *end_indexes = NULL;
-	GSList *current_start, *current_end, *to_commit_addresses;
+	GSList *current_start, *current_end;
 	gboolean result = TRUE;
 	GtkTextBuffer *buffer;
 	gint offset_delta = 0;
@@ -739,7 +740,8 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	current_start = start_indexes;
 	current_end = end_indexes;
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
-	to_commit_addresses = NULL;
+	if (address_list)
+		*address_list = NULL;
 
 	while (current_start != NULL) {
 		gchar *address;
@@ -828,14 +830,14 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 			}
 			g_slist_free (tags);
 			if (!has_recipient) {
-				GSList * address_list = NULL;
+				GSList * addr_list = NULL;
 
-				address_list = g_slist_prepend (address_list, address);
+				addr_list = g_slist_prepend (addr_list, address);
 				modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
 										     &start_iter, &end_iter,
-										     address_list, 
+										     addr_list,
 										     "");
-				g_slist_free (address_list);
+				g_slist_free (addr_list);
 				store_address = TRUE;
 			}
 		}
@@ -843,8 +845,8 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		/* so, it seems a valid address */
 		/* note: adding it the to the addressbook if it did not exist yet,
 		 * and adding it to the recent_list */
-		if (result && update_addressbook && store_address)
-			to_commit_addresses = g_slist_prepend (to_commit_addresses, address);
+		if (result && address_list && store_address)
+			*address_list = g_slist_prepend (*address_list, address);
 		else
 			g_free (address);
 
@@ -855,12 +857,9 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		current_end = g_slist_next (current_end);
 	}
 
-	/* Add addresses to address-book */
-	if (to_commit_addresses) {
-		to_commit_addresses = modest_text_utils_remove_duplicate_addresses_list (to_commit_addresses);
-		if (to_commit_addresses)
-			modest_address_book_add_address_list (to_commit_addresses);
-	}
+	/* Remove dup's */
+	if (address_list && *address_list)
+		*address_list = modest_text_utils_remove_duplicate_addresses_list (*address_list);
 
 	if (current_start == NULL) {
 		gtk_text_buffer_get_end_iter (buffer, &end_iter);

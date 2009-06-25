@@ -47,7 +47,8 @@ void modest_address_book_select_addresses (ModestRecptEditor *editor,
 	return;
 }
 
-gboolean modest_address_book_check_names (ModestRecptEditor *editor, gboolean update_addressbook)
+gboolean modest_address_book_check_names (ModestRecptEditor *editor,
+					  GSList **address_list)
 {
 	/* let's be optimistic */
 	return TRUE;

@@ -67,15 +67,17 @@ modest_address_book_select_addresses (ModestRecptEditor *editor,
 /**
  * modest_address_book_check_names:
  * @editor: a #ModestRecptEditor
- * @update_addressbook: if TRUE, add valid addresses to the addressbook, recent list
- * 
+ * @address_list: if it is not NULL, this list is filled with the
+ * valid addresses ready to be added to the address book
+ *
  * Performs verification of addresses in a recipient editor.
  *
  * Returns: %TRUE if all recipients are valid or there are
  * no recipients, %FALSE otherwise.
  */
 gboolean
-modest_address_book_check_names (ModestRecptEditor *editor, gboolean update_addressbook);
+modest_address_book_check_names (ModestRecptEditor *editor,
+				 GSList **address_list);
 
 /**
  * modest_address_book_has_address:

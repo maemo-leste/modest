@@ -700,7 +700,8 @@ hide_check_names_banner (GtkWidget **banner, guint banner_timeout)
 }
 
 gboolean
-modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean update_addressbook)
+modest_address_book_check_names (ModestRecptEditor *recpt_editor,
+				 GSList **address_list)
 {
 	const gchar *recipients = NULL;
 	GSList *start_indexes = NULL, *end_indexes = NULL;
@@ -801,14 +802,14 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 			}
 			g_slist_free (tags);
 			if (!has_recipient) {
-				GSList * address_list = NULL;
+				GSList * addr_list = NULL;
 
-				address_list = g_slist_prepend (address_list, address);
+				addr_list = g_slist_prepend (addr_list, address);
 				modest_recpt_editor_replace_with_resolved_recipient (recpt_editor,
 										     &start_iter, &end_iter,
-										     address_list, 
+										     addr_list,
 										     "");
-				g_slist_free (address_list);
+				g_slist_free (addr_list);
 				store_address = TRUE;
 			}
 		}
@@ -816,7 +817,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 		/* so, it seems a valid address */
 		/* note: adding it the to the addressbook if it did not exist yet,
 		 * and adding it to the recent_list */
-		if (result && update_addressbook && store_address)
+		if (result && store_address)
 			add_to_address_book (address);
 
 		g_free (address);
