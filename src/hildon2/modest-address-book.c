@@ -740,8 +740,6 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 	current_start = start_indexes;
 	current_end = end_indexes;
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
-	if (address_list)
-		*address_list = NULL;
 
 	while (current_start != NULL) {
 		gchar *address;

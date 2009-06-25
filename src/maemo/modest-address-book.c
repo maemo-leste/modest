@@ -817,16 +817,21 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 		/* so, it seems a valid address */
 		/* note: adding it the to the addressbook if it did not exist yet,
 		 * and adding it to the recent_list */
-		if (result && store_address)
-			add_to_address_book (address);
+		if (result && address_list && store_address)
+			*address_list = g_slist_prepend (*address_list, address);
+		else
+			g_free (address);
 
-		g_free (address);
 		if (result == FALSE)
 			break;
 
 		current_start = g_slist_next (current_start);
 		current_end = g_slist_next (current_end);
 	}
+
+	/* Remove dup's */
+	if (address_list && *address_list)
+		*address_list = modest_text_utils_remove_duplicate_addresses_list (*address_list);
 
 	if (current_start == NULL) {
 		gtk_text_buffer_get_end_iter (buffer, &end_iter);
