@@ -1669,7 +1669,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		   if the mail operation has a source (this means that
 		   was invoked by the user and not automatically by a
 		   D-Bus method) */
-		if (info->retrieve_all_cb && priv->source)
+		if (info->retrieve_all_cb && info->interactive)
 			ignore_limit = info->retrieve_all_cb (priv->source,
 							      new_headers_array->len,
 							      retrieve_limit);
@@ -1679,7 +1679,9 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	new_headers = tny_simple_list_new ();
 	for (i=0; i < new_headers_array->len; i++) {
 		TnyHeader *header = TNY_HEADER (g_ptr_array_index (new_headers_array, i));
-		tny_list_append (new_headers, G_OBJECT (header));
+		/* We want the first element to be the most recent
+		   one, that's why we reverse the list */
+		tny_list_prepend (new_headers, G_OBJECT (header));
 	}
 	g_ptr_array_foreach (new_headers_array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (new_headers_array, FALSE);

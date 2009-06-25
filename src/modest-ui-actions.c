@@ -2179,7 +2179,12 @@ new_messages_arrived (ModestMailOperation *self,
 			flags = tny_header_get_flags (header);
 
 			if (!(flags & TNY_HEADER_FLAG_SEEN)) {
-				tny_list_append (actually_new_list, G_OBJECT (header));
+				/* Messages are ordered from most
+				   recent to oldest. But we want to
+				   show notifications starting from
+				   the oldest message. That's why we
+				   reverse the list */
+				tny_list_prepend (actually_new_list, G_OBJECT (header));
 			}
 			g_object_unref (header);
 		}

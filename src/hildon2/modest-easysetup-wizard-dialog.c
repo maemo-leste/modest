@@ -2321,6 +2321,11 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	modest_account_settings_set_display_name (priv->settings, display_name);
 	g_free (display_name);
 	g_free (provider_id);
+
+	/* This values are hardcoded for Fremantle */
+	modest_account_settings_set_retrieve_type (priv->settings,
+						   MODEST_ACCOUNT_RETRIEVE_MESSAGES_AND_ATTACHMENTS);
+	modest_account_settings_set_retrieve_limit (priv->settings, 20);
 }
 
 
