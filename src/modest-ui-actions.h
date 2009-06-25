@@ -91,6 +91,8 @@ void     modest_ui_actions_on_prev          (GtkAction *action, ModestWindow *ma
 
 void     modest_ui_actions_on_details       (GtkAction *action, ModestWindow *win);
 
+void     modest_ui_actions_on_limit_error   (GtkAction *action, ModestWindow *win);
+
 gboolean     modest_ui_actions_on_edit_mode_move_to       (ModestWindow *win);
 
 void     modest_ui_actions_on_move_to       (GtkAction *action, ModestWindow *win);

@@ -758,6 +758,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 			  G_CALLBACK (modest_ui_actions_on_details), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "link_contextual",
 			  G_CALLBACK (modest_ui_actions_on_msg_link_contextual), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "limit_error",
+			  G_CALLBACK (modest_ui_actions_on_limit_error), obj);
 	g_signal_connect (G_OBJECT (priv->msg_view), "fetch_image",
 			  G_CALLBACK (on_fetch_image), obj);
 

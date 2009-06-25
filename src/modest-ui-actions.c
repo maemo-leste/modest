@@ -4816,6 +4816,16 @@ modest_ui_actions_on_details (GtkAction *action,
 }
 
 void
+modest_ui_actions_on_limit_error (GtkAction *action,
+				  ModestWindow *win)
+{
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win));
+
+	modest_platform_information_banner ((GtkWidget *) win, NULL, _CS("ckdg_ib_maximum_characters_reached"));
+
+}
+
+void
 modest_ui_actions_on_toggle_show_cc (GtkToggleAction *toggle,
 				     ModestMsgEditWindow *window)
 {
