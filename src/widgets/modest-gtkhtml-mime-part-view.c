@@ -133,6 +133,7 @@ struct _ModestGtkhtmlMimePartViewPrivate {
 
 enum {
 	STOP_STREAMS_SIGNAL,
+	LIMIT_ERROR_SIGNAL,
 	LAST_SIGNAL
 };
 
@@ -259,6 +260,15 @@ modest_gtkhtml_mime_part_view_class_init (ModestGtkhtmlMimePartViewClass *klass)
 			      G_TYPE_FROM_CLASS (gobject_class),
 			      G_SIGNAL_RUN_FIRST,
 			      G_STRUCT_OFFSET (ModestGtkhtmlMimePartViewClass,stop_streams),
+			      NULL, NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
+	signals[LIMIT_ERROR_SIGNAL] = 
+		g_signal_new ("limit-error",
+			      G_TYPE_FROM_CLASS (gobject_class),
+			      G_SIGNAL_RUN_FIRST,
+			      G_STRUCT_OFFSET (ModestGtkhtmlMimePartViewClass,limit_error),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
@@ -444,13 +454,20 @@ decode_to_stream_cb (TnyMimePart *self,
 		     GError *err,
 		     gpointer user_data)
 {
-	gboolean is_text = GPOINTER_TO_INT (user_data);
+	ModestGtkhtmlMimePartView *view = (ModestGtkhtmlMimePartView *) user_data;
 
-	if (is_text) {
+	if (MODEST_IS_STREAM_TEXT_TO_HTML (stream)) {
 		if (tny_stream_write (stream, "\n", 1) == -1) {
 			g_warning ("failed to write CR in %s", __FUNCTION__);
 		}
+		if (modest_stream_text_to_html_limit_reached (MODEST_STREAM_TEXT_TO_HTML (stream))) {
+			g_signal_emit (G_OBJECT (view), signals[LIMIT_ERROR_SIGNAL], 0);
+		}
 		tny_stream_reset (stream);
+	} else {
+		if (modest_tny_stream_gtkhtml_limit_reached (MODEST_TNY_STREAM_GTKHTML (stream))) {
+			g_signal_emit (G_OBJECT (view), signals[LIMIT_ERROR_SIGNAL], 0);
+		}
 	}
 	tny_stream_close (stream);
 }
@@ -477,7 +494,7 @@ set_html_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part, const gchar *
 
 	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
 					      tny_stream, decode_to_stream_cb,
-					      NULL, GINT_TO_POINTER (FALSE));
+					      NULL, self);
 	g_object_unref (tny_stream);
 }
 
@@ -505,7 +522,7 @@ set_text_part (ModestGtkhtmlMimePartView *self, TnyMimePart *part)
 
 	tny_mime_part_decode_to_stream_async (TNY_MIME_PART (part),
 					      text_to_html_stream, decode_to_stream_cb,
-					      NULL, GINT_TO_POINTER (TRUE));
+					      NULL, self);
 
 	g_object_unref (G_OBJECT(text_to_html_stream));
 	g_object_unref (G_OBJECT(tny_stream));

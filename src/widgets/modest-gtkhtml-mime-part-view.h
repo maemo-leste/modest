@@ -80,6 +80,7 @@ struct _ModestGtkhtmlMimePartViewClass {
 
 	/* signals */
 	void (*stop_streams) (ModestGtkhtmlMimePartView *self);
+	void (*limit_error) (ModestGtkhtmlMimePartView *self);
 };
 
 
