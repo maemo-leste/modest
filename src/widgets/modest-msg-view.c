@@ -39,6 +39,7 @@ enum {
 	LINK_CONTEXTUAL_SIGNAL,
 	FETCH_IMAGE_SIGNAL,
 	SHOW_DETAILS_SIGNAL,
+	LIMIT_ERROR_SIGNAL,
 	LAST_SIGNAL
 };
 static guint signals[LAST_SIGNAL] = {0};
@@ -193,6 +194,15 @@ modest_msg_view_base_init (gpointer g_class)
 				      MODEST_TYPE_MSG_VIEW,
 				      G_SIGNAL_RUN_FIRST,
 				      G_STRUCT_OFFSET(ModestMsgViewIface, show_details),
+				      NULL, NULL,
+				      g_cclosure_marshal_VOID__VOID,
+				      G_TYPE_NONE, 0);
+		
+		signals[LIMIT_ERROR_SIGNAL] =
+			g_signal_new ("limit_error",
+				      MODEST_TYPE_MSG_VIEW,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestMsgViewIface, limit_error),
 				      NULL, NULL,
 				      g_cclosure_marshal_VOID__VOID,
 				      G_TYPE_NONE, 0);

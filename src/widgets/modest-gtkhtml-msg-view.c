@@ -86,6 +86,7 @@ static gboolean on_activate_link (GtkWidget *widget, const gchar *uri, ModestGtk
 static gboolean on_fetch_url (GtkWidget *widget, const gchar *uri, TnyStream *stream,
 			      ModestGtkhtmlMsgView *msg_view);
 static gboolean on_link_hover (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMsgView *msg_view);
+static void on_limit_error (GtkWidget *widget, ModestGtkhtmlMsgView *msg_view);
 
 #ifdef MAEMO_CHANGES
 static void     on_tap_and_hold (GtkWidget *widget, gpointer userdata); 
@@ -1125,6 +1126,8 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 				       G_CALLBACK(on_fetch_url), obj);
 	g_signal_connect (G_OBJECT(priv->body_view), "link_hover",
 				       G_CALLBACK(on_link_hover), obj);
+	g_signal_connect (G_OBJECT(priv->body_view), "limit_error",
+			  G_CALLBACK(on_limit_error), obj);
 #ifdef MAEMO_CHANGES
 	g_signal_connect (G_OBJECT(priv->body_view), "motion-notify-event",
 			  G_CALLBACK (motion_notify_event), obj);
@@ -1554,6 +1557,11 @@ on_link_hover (GtkWidget *widget, const gchar *uri, ModestGtkhtmlMsgView *self)
 	return result;
 }
 
+static void 
+on_limit_error (GtkWidget *widget, ModestGtkhtmlMsgView *msg_view)
+{
+	g_signal_emit_by_name (G_OBJECT (msg_view), "limit-error");
+}
 
 
 static TnyMimePart *

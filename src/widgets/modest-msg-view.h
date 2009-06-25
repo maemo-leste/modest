@@ -87,6 +87,7 @@ struct _ModestMsgViewIface {
 
 	void (*request_fetch_images_func) (ModestMsgView *msgview);
 	gboolean (*has_blocked_external_images_func) (ModestMsgView *msgview);
+	void (*limit_error)        (ModestMsgView *msgview);
 };
 
 
