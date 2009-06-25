@@ -316,7 +316,23 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 			tmp += prefix_len;
 			tmp = g_strchug (tmp);
 		} else {
-			break;
+			gchar *prefix_down, *tmp_down;
+
+			/* We need this to properly check the cases of
+			   some clients adding FW: instead of Fw: for
+			   example */
+			prefix_down = g_utf8_strdown (prefix, -1);
+			tmp_down = g_utf8_strdown (tmp, -1);
+			if (g_str_has_prefix (tmp_down, prefix_down)) {
+				tmp += prefix_len;
+				tmp = g_strchug (tmp);
+				g_free (prefix_down);
+				g_free (tmp_down);
+			} else {
+				g_free (prefix_down);
+				g_free (tmp_down);
+				break;
+			}
 		}
 	} while (tmp);
 
