@@ -183,6 +183,16 @@ modest_stream_text_to_html_set_full_limit (ModestStreamTextToHtml *self, gssize 
 	priv->full_limit = limit;
 }
 
+gboolean
+modest_stream_text_to_html_limit_reached (ModestStreamTextToHtml *self)
+{
+	ModestStreamTextToHtmlPrivate *priv = MODEST_STREAM_TEXT_TO_HTML_GET_PRIVATE (self);
+
+	return (priv->full_limit > 0 && priv->total_output > priv->full_limit) ||
+		(priv->line_limit > 0 && priv->total_lines_output > priv->line_limit);
+	
+}
+
 /* the rest are interface functions */
 
 

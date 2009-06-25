@@ -74,6 +74,7 @@ GObject*    modest_stream_text_to_html_new         (TnyStream *out_stream);
 void        modest_stream_text_to_html_set_linkify_limit (ModestStreamTextToHtml *self, gssize limit);
 void        modest_stream_text_to_html_set_full_limit (ModestStreamTextToHtml *self, gssize limit);
 void        modest_stream_text_to_html_set_line_limit (ModestStreamTextToHtml *self, gssize limit);
+gboolean    modest_stream_text_to_html_limit_reached (ModestStreamTextToHtml *self);
 
 
 G_END_DECLS
