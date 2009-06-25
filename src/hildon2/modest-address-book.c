@@ -619,40 +619,6 @@ async_get_contacts_cb (EBook *book,
 		g_list_free (contacts);
 }
 
-
-static void
-add_to_address_book (GSList *addresses)
-{
-	EBookQuery **queries, *composite_query;
-	gint num_add, i;
-
-	g_return_if_fail (addresses);
-
-	if (!book)
-		if (!open_addressbook ())
-			g_return_if_reached ();
-
-	/* Create the list of queries */
-	num_add = g_slist_length (addresses);
-	queries = g_malloc0 (sizeof (EBookQuery *) * num_add);
-	for (i = 0; i < num_add; i++) {
-		gchar *email;
-
-		email = modest_text_utils_get_email_address (g_slist_nth_data (addresses, i));
-		queries[i] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, email);
-		g_free (email);
-	}
-
-	/* Create the query */
-	composite_query = e_book_query_or (num_add, queries, TRUE);
-
-	/* Asynchronously retrieve contacts */
-	e_book_async_get_contacts (book, composite_query, async_get_contacts_cb, addresses);
-
-	/* Frees. This will unref the subqueries as well */
-	e_book_query_unref (composite_query);
-}
-
 typedef struct _CheckNamesInfo {
 	GtkWidget *banner;
 	guint show_banner_timeout;
@@ -893,7 +859,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor, gboolean updat
 	if (to_commit_addresses) {
 		to_commit_addresses = modest_text_utils_remove_duplicate_addresses_list (to_commit_addresses);
 		if (to_commit_addresses)
-			add_to_address_book (to_commit_addresses);
+			modest_address_book_add_address_list (to_commit_addresses);
 	}
 
 	if (current_start == NULL) {
@@ -1175,4 +1141,37 @@ void
 modest_address_book_init (void)
 {
 	open_addressbook ();
+}
+
+void
+modest_address_book_add_address_list (GSList *address_list)
+{
+	EBookQuery **queries, *composite_query;
+	gint num_add, i;
+
+	g_return_if_fail (address_list);
+
+	if (!book)
+		if (!open_addressbook ())
+			g_return_if_reached ();
+
+	/* Create the list of queries */
+	num_add = g_slist_length (address_list);
+	queries = g_malloc0 (sizeof (EBookQuery *) * num_add);
+	for (i = 0; i < num_add; i++) {
+		gchar *email;
+
+		email = modest_text_utils_get_email_address (g_slist_nth_data (address_list, i));
+		queries[i] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_IS, email);
+		g_free (email);
+	}
+
+	/* Create the query */
+	composite_query = e_book_query_or (num_add, queries, TRUE);
+
+	/* Asynchronously retrieve contacts */
+	e_book_async_get_contacts (book, composite_query, async_get_contacts_cb, address_list);
+
+	/* Frees. This will unref the subqueries as well */
+	e_book_query_unref (composite_query);
 }

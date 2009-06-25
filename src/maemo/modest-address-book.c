@@ -1051,3 +1051,9 @@ modest_address_book_init (void)
 {
 	open_addressbook ();
 }
+
+void
+modest_address_book_add_address_list (GSList *address_list)
+{
+
+}

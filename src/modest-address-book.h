@@ -99,4 +99,13 @@ modest_address_book_has_address (const gchar *address);
 const gchar *
 modest_address_book_get_my_name ();
 
+/**
+ * modest_address_book_add_address_list:
+ * @address_list: a list of email addresses to add to the addressbook
+ *
+ * Inserts a list of addresses in the addressbook
+ **/
+void
+modest_address_book_add_address_list (GSList *address_list);
+
 #endif /* __MODEST_ADDRESS_BOOK_H__ */

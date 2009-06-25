@@ -70,3 +70,9 @@ modest_address_book_init (void)
 {
 	/* Do nothing */
 }
+
+void
+modest_address_book_add_address_list (GSList *address_list)
+{
+	/* Do nothing */
+}
