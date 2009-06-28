@@ -1,3 +1,25 @@
+modest (3.0.17-rc20) unstable; urgency=low
+
+  * Week 27, 2009 - First release
+  * 11 bug fixes
+  * 
+  * Fixes: NB#116112 	Already downloaded headers should be shown without a delay after 
+  * 	messages view is activated 
+  * Fixes: NB#116869 	Theme and Layout Issues 
+  * Fixes: NB#124063 	Email application is not localized 
+  * Fixes: NB#124324 	The original instance of "FW:" is not removed in the subject field. 
+  * Fixes: NB#122233 	Message is truncated and user is not notified 
+  * Fixes: NB#124313 	After account is removed the notification for this account in 
+  * 	Task Switcher is still shown 
+  * Fixes: NB#124410 	Viewer view menu: "mcen_me_move_message" should be used for Move command 
+  * Fixes: NB#121125 	E-mail editor maximum amount of characters is way too low 
+  * Fixes: NB#124742 	Duplicate contacts are created in contacts application when a 
+  * 	message is sent with same email address entered in all To: , Cc: , Bcc field 
+  * Fixes: NB#124248 	New folder: Inbox and drafts folder displayed twice in change folder dialog 
+  * Fixes: NB#124831 	Removed attachment should not include while forwarding HTML message
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Sun, 28 Jun 2009 20:35:38 +0300
+
 modest (3.0.17-rc19) unstable; urgency=low
 
   * Week 26, 2009 - second release
