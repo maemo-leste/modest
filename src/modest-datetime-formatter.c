@@ -63,6 +63,14 @@ struct _ModestDatetimeFormatterPrivate {
 #endif
 };
 
+/* We need this very nasty stuff because the call to
+   osso_time_set_notification_cb cannot be reverted and thus the
+   handler will be called always even though we try to set another
+   one */
+#ifdef MODEST_USE_LIBTIME
+static ModestDatetimeFormatter *global_self = NULL;
+#endif
+
 #define MODEST_DATETIME_FORMATTER_GET_PRIVATE(o)     (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
 										   MODEST_TYPE_DATETIME_FORMATTER, \
 										   ModestDatetimeFormatterPrivate))
@@ -162,11 +170,13 @@ clock_format_changed (GConfClient *gconf,
 #endif
 
 #ifdef MODEST_USE_LIBTIME
-static void 
+static void
 time_changed_cb (gpointer userdata)
 {
-	time_get_synced ();
-	g_signal_emit (G_OBJECT (userdata), signals[FORMAT_CHANGED_SIGNAL], 0);
+	if (global_self) {
+		time_get_synced ();
+		g_signal_emit (global_self, signals[FORMAT_CHANGED_SIGNAL], 0);
+	}
 }
 #endif
 
@@ -200,9 +210,10 @@ init_format (ModestDatetimeFormatter *obj)
 #endif
 
 #ifdef MODEST_USE_LIBTIME
-	osso_time_set_notification_cb (modest_platform_get_osso_context (),
-				       time_changed_cb,
-				       obj);
+	if (OSSO_OK == osso_time_set_notification_cb (modest_platform_get_osso_context (),
+						      time_changed_cb,
+						      NULL))
+		global_self = obj;
 	time_get_synced ();
 #endif
 
@@ -231,7 +242,9 @@ modest_datetime_formatter_finalize   (GObject *obj)
 
 	/* Disconnect notification */
 #ifdef MODEST_USE_LIBTIME
-	osso_time_set_notification_cb (modest_platform_get_osso_context (), NULL, NULL);
+	if (OSSO_OK != osso_time_set_notification_cb (modest_platform_get_osso_context (),
+						      NULL, NULL))
+		global_self = NULL;
 #endif
 #endif
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
