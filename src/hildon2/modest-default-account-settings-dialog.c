@@ -316,18 +316,16 @@ on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 }
 
 static GtkWidget*
-create_page_account_details (ModestDefaultAccountSettingsDialog *self)
+create_page_account_details (ModestDefaultAccountSettingsDialog *self, 
+			     GtkSizeGroup *title_sizegroup,
+			     GtkSizeGroup *value_sizegroup)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *box;
-	GtkSizeGroup* title_sizegroup;
-	GtkSizeGroup* value_sizegroup;
 	GtkWidget *hbox;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
            
 	/* The description widgets: */	
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
@@ -381,9 +379,6 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_leave_messages, FALSE, FALSE, 0);
 	gtk_widget_show (priv->checkbox_leave_messages);
 
-	g_object_unref (title_sizegroup);
-	g_object_unref (value_sizegroup);
-	
 	gtk_widget_show (GTK_WIDGET (box));
 	
 	return GTK_WIDGET (box);
@@ -481,18 +476,16 @@ delete_button_clicked (ModestDefaultAccountSettingsDialog *self)
 }
 
 static GtkWidget*
-create_page_user_details (ModestDefaultAccountSettingsDialog *self)
+create_page_user_details (ModestDefaultAccountSettingsDialog *self,
+			  GtkSizeGroup *title_sizegroup,
+			  GtkSizeGroup *value_sizegroup)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
 	GtkWidget *box;
-	GtkSizeGroup* title_sizegroup;
-	GtkSizeGroup* value_sizegroup;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
  
 	/* The name widgets: */
 	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
@@ -596,9 +589,6 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self)
 								_("mcen_bd_email_signature"),
 								RESPONSE_SIGNATURE_DUMMY);
 	gtk_widget_show (priv->button_signature);
-
-	g_object_unref (title_sizegroup);
-	g_object_unref (value_sizegroup);
 
 	gtk_widget_show (GTK_WIDGET (box));
 
@@ -1015,6 +1005,8 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	GtkWidget *pannable;
 	GtkWidget *separator;
 	GtkWidget *align;
+	GtkSizeGroup* account_title_sizegroup;
+	GtkSizeGroup* account_value_sizegroup;
 	GtkSizeGroup *sec_title_sizegroup, *sec_value_sizegroup;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self);
@@ -1035,8 +1027,13 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	priv->protocol_authentication_incoming = MODEST_PROTOCOLS_AUTH_PASSWORD;
 
 	/* Create the common pages */
-	priv->page_account_details = create_page_account_details (self);
-	priv->page_user_details = create_page_user_details (self);
+	account_title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	account_value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	priv->page_account_details = create_page_account_details (self, account_title_sizegroup, account_value_sizegroup);
+	priv->page_user_details = create_page_user_details (self, account_title_sizegroup, account_value_sizegroup);
+	g_object_unref (account_title_sizegroup);
+	g_object_unref (account_value_sizegroup);
+	
 
 	/* Create size groups for security settings */
 	sec_title_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
