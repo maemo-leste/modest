@@ -994,19 +994,27 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 			      error->code == TNY_SERVICE_ERROR_MESSAGE_NOT_AVAILABLE)) {
 			gchar *subject, *msg, *format = NULL;
 			TnyAccount *account;
-			
-			subject = header?tny_header_dup_subject (header):NULL;
+
+			subject = (header) ? tny_header_dup_subject (header) : NULL;
 			if (!subject)
 				subject = g_strdup (_("mail_va_no_subject"));
 
 			account = modest_mail_operation_get_account (mail_op);
 			if (account) {
-				ModestProtocol *protocol;
-				ModestProtocolType proto;
-				proto = modest_tny_account_get_protocol_type (account);
-				protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), proto);
-				if (protocol)
-				  format = modest_protocol_get_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, subject);
+				ModestProtocolType proto = modest_tny_account_get_protocol_type (account);
+				ModestProtocol *protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), proto);
+
+				if (protocol) {
+					if (tny_account_get_connection_status (account) ==
+					    TNY_CONNECTION_STATUS_CONNECTED) {
+						format = modest_protocol_get_translation (protocol,
+											  MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE,
+											  subject);
+					} else {
+						format = g_strdup_printf (_("mail_ib_backend_server_invalid"),
+									  tny_account_get_hostname (account));
+					}
+				}
 				g_object_unref (account);
 			}
 
