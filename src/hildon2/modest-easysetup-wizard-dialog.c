@@ -608,12 +608,19 @@ on_user_username_changed(GtkWidget* widget, ModestEasysetupWizardDialog *self)
 		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
 
 	if (provider_id) {
+		const gchar *current_username;
 		gchar *email_address;
 		gchar *domain_name = modest_presets_get_domain (priv->presets, provider_id);
 
-		email_address = g_strdup_printf ("%s@%s",
-						 hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username)),
-						 domain_name);
+		current_username = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username));
+
+		if (current_username && strstr (current_username, "@")) {
+			email_address = g_strdup (current_username);
+		} else {
+			email_address = g_strdup_printf ("%s@%s",
+							 current_username,
+							 domain_name);
+		}
 
 		/* Update the email address */
 		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_email), email_address);
