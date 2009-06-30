@@ -3415,7 +3415,12 @@ setup_menu (ModestMsgViewWindow *self)
 					   APP_MENU_CALLBACK (modest_msg_view_window_show_find_toolbar),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_find_in_msg));
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_move_message"), NULL,
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self),
+					   dngettext(GETTEXT_PACKAGE,
+						     "mcen_me_move_message",
+						     "mcen_me_move_messages",
+						     1),
+					   NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_move_to),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
 
