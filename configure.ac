@@ -501,6 +501,15 @@ if test "x$with_platform" == "xmaemo"; then
      abook_api=`$PKG_CONFIG --modversion libosso-abook-1.0 | cut -d. -f1`
      AC_SUBST(MODEST_ABOOK_CFLAGS)
      AC_SUBST(MODEST_ABOOK_LIBE)
+
+     modest_save_cflags="$CFLAGS"
+     modest_save_libs="$LIBS"
+     CFLAGS="$MODEST_ABOOK_CFLAGS"
+     LIBS="$MODEST_ABOOK_LIBS"
+     AC_CHECK_FUNCS(osso_abook_contact_chooser_set_visible_func)
+     AC_SUBST(HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC)
+     CFLAGS="$modest_save_cflags"
+     LIBS="$modest_save_libs"
    fi
 
    if test "x$have_abook" == "xtrue"; then

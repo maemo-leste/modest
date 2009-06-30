@@ -924,6 +924,7 @@ get_contacts_for_name (const gchar *name)
 	return result;
 }
 
+#ifdef HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC
 static gboolean
 filter_by_name (OssoABookContactChooser *chooser,
 		OssoABookContact        *contact,
@@ -939,15 +940,25 @@ filter_by_name (OssoABookContactChooser *chooser,
 	else
 		return FALSE;
 }
+#endif
 
 static GList *
 select_contacts_for_name_dialog (const gchar *name)
 {
+#ifdef HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC
 	GtkWidget *contact_view;
 	OssoABookContactChooser *contact_dialog;
+#else
+	EBookQuery *full_name_book_query = NULL;
+	EBookView *book_view = NULL;
+#endif
+
 	GList *result = NULL;
 	gchar *unquoted;
 
+	unquoted = unquote_string (name);
+
+#ifdef HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC
 	contact_dialog = (OssoABookContactChooser *)
 		osso_abook_contact_chooser_new_with_capabilities (NULL,
 								  _AB("addr_ti_dia_select_contacts"),
@@ -958,7 +969,6 @@ select_contacts_for_name_dialog (const gchar *name)
 	osso_abook_contact_chooser_set_maximum_selection (contact_dialog, G_MAXUINT);
 
 	/* Set up the filtering */
-	unquoted = unquote_string (name);
 	contact_view = osso_abook_contact_chooser_get_contact_view (contact_dialog);
 	osso_abook_contact_chooser_set_model (contact_dialog, contact_model);
 	osso_abook_contact_chooser_set_visible_func (contact_dialog, filter_by_name, unquoted, NULL);
@@ -967,6 +977,34 @@ select_contacts_for_name_dialog (const gchar *name)
 		result = osso_abook_contact_chooser_get_selection (contact_dialog);
 
 	gtk_widget_destroy ((GtkWidget *) contact_dialog);
+#else
+	full_name_book_query = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, unquoted);
+	e_book_get_book_view (book, full_name_book_query, NULL, -1, &book_view, NULL);
+	e_book_query_unref (full_name_book_query);
+
+	if (book_view) {
+		GtkWidget *contact_dialog = NULL;
+		osso_abook_list_store_set_book_view (OSSO_ABOOK_LIST_STORE (contact_model), book_view);
+		e_book_view_start (book_view);
+
+		/* TODO: figure out how to make the contact chooser modal */
+		contact_dialog = osso_abook_contact_chooser_new_with_capabilities (NULL,
+										   _AB("addr_ti_dia_select_contacts"),
+										   OSSO_ABOOK_CAPS_EMAIL,
+										   OSSO_ABOOK_CONTACT_ORDER_NAME);
+		/* Enable multiselection */
+		osso_abook_contact_chooser_set_maximum_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
+								  G_MAXUINT);
+		osso_abook_contact_chooser_set_model (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
+						      contact_model);
+
+		if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK)
+			result = osso_abook_contact_chooser_get_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog));
+		e_book_view_stop (book_view);
+		g_object_unref (book_view);
+		gtk_widget_destroy (contact_dialog);
+	}
+#endif
 
 	g_free (unquoted);
 
