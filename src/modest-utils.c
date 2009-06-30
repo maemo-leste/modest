@@ -36,6 +36,7 @@
 #include <tny-fs-stream.h>
 #include <tny-camel-account.h>
 #include <tny-status.h>
+#include <tny-camel-send-queue.h>
 #include <tny-camel-transport-account.h>
 #include <tny-camel-imap-store-account.h>
 #include <tny-camel-pop-store-account.h>
@@ -1139,4 +1140,25 @@ modest_utils_free_notification_list (GList *notification_list)
 
 	g_list_foreach (notification_list, free_notification_data, NULL);
 	g_list_free (notification_list);
+}
+
+void
+modest_utils_flush_send_queue (const gchar *account_id)
+{
+	TnyTransportAccount *account;
+
+	/* Get the transport account */
+	account = (TnyTransportAccount *)
+		modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store (),
+							     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+							     account_id);
+
+	if (account) {
+		ModestTnySendQueue *send_queue = modest_runtime_get_send_queue (account, TRUE);
+
+		/* Flush it! */
+		tny_camel_send_queue_flush ((TnyCamelSendQueue *) send_queue);
+
+		g_object_unref (account);
+	}
 }

@@ -253,4 +253,14 @@ GList *modest_utils_create_notification_list_from_header_list (TnyList *header_l
  * Frees a list of #ModestMsgNotificationData structures
  **/
 void  modest_utils_free_notification_list (GList *notification_list);
+
+/**
+ * modest_utils_flush_send_queue:
+ * @account_id: the ID of the modest account
+ *
+ * Flushes the send queue of the given account. That will try to send
+ * all the remaining messages in the send queue
+ **/
+void  modest_utils_flush_send_queue (const gchar *account_id);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/
