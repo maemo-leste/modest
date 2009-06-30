@@ -535,10 +535,18 @@ modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, cons
 	TnyList *children;
 	TnyIterator *iterator;
 	TnyFolder *result;
+	gchar *uri_to_find, *slash;
+	gint uri_lenght;
 
 	result = NULL;
 	children = TNY_LIST (tny_simple_list_new ());
 	tny_folder_store_get_folders (folder_store, children, NULL, FALSE, NULL);
+
+	slash = strrchr (uri, '/');
+	uri_lenght = slash - uri + 1;
+	uri_to_find = g_malloc0 (sizeof(char) * uri_lenght);
+	strncpy (uri_to_find, uri, uri_lenght);
+	uri_to_find[uri_lenght - 1] = '\0';
 
 	for (iterator = tny_list_create_iterator (children);
 	     !tny_iterator_is_done (iterator) && (result == NULL);
@@ -551,18 +559,19 @@ modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, cons
 			gchar *folder_url;
 
 			folder_url = tny_folder_get_url_string (TNY_FOLDER (child));
-			if (g_str_has_prefix (uri, folder_url))
+			if (uri_to_find && folder_url && !strcmp (folder_url, uri_to_find))
 				result = g_object_ref (child);
 			g_free (folder_url);
 		}
 
-		if ((child == NULL) && TNY_IS_FOLDER_STORE (child)) {
+		if ((result == NULL) && TNY_IS_FOLDER_STORE (child)) {
 			result = modest_tny_folder_store_find_folder_from_uri (child, uri);
 		}
 
 		g_object_unref (child);
 	}
 
+	g_free (uri_to_find);
 	g_object_unref (iterator);
 	g_object_unref (children);
 
