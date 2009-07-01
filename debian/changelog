@@ -1,3 +1,22 @@
+modest (3.0.17-rc21) unstable; urgency=low
+
+  * Week 27, 2009 - second release
+  *
+  * Fixes: NB#117612 Email messages from user defined folder are not restoring with backup and restore
+  * Fixes: NB#123040 Check Names Functionality Not working when contacts added with same first alphabet
+  * Fixes: NB#125051 Email application is crashed when attempt scroll drafts message list after date is changed.
+  * Fixes: NB#120341 Folder view: message count of folder is not updated when push email is received
+  * Fixes: NB#124317 "Message (no subject) is not available on the server" is shown to the user while it is there
+  * Fixes: NB#124605 Incorrect server error note "Message %s not available on server" is shown when disconnected from network while retrieving the content of the message
+  * Fixes: NB#124628 20 newest messages are not downloaded when the account has been configured
+  * Fixes: NB#124639 Only headers are downloaded when Send&Receive command has been executed
+  * Fixes: NB#124936 Gmail profile creation parameters are incorrect
+  * Fixes: NB#124953 logical string is coming as 'mcen_me_edit_account'
+  * Fixes  NB#125192 "Account title" field's text input area not inline with other field in the Account settings dialog
+  * Fixes: NB#125835 NMS/m-nm-p needs a way to request that modest/tinymail flush its send-queue 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 01 Jul 2009 12:21:19 +0300
+
 modest (3.0.17-rc20) unstable; urgency=low
 
   * Week 27, 2009 - First release
