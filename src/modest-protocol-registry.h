@@ -53,7 +53,8 @@ G_BEGIN_DECLS
 #define MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS "multi-mailbox-providers"
 #define MODEST_PROTOCOL_REGISTRY_USE_ALTERNATE_PORT "use-alternate-port"
 #define MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS "store-has-folders"
-#define MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD "store-forbid-message-add"
+/* Accounts that cannot be the destination of messages or folders transfers */
+#define MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS "store-forbid-incoming-xfers"
 #define MODEST_PROTOCOL_REGISTRY_NO_AUTO_UPDATE_PROTOCOLS "no-auto-update"
 
 /* convenience macros */

@@ -5745,7 +5745,7 @@ xfer_messages_performer  (gboolean canceled,
 	/* tinymail will return NULL for local folders it seems */
 	dst_forbids_message_add = modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
 										  modest_tny_account_get_protocol_type (dst_account),
-										  MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD);
+										  MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS);
 	g_object_unref (dst_account);
 
 	if (dst_forbids_message_add) {

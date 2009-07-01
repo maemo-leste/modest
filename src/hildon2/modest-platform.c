@@ -2916,7 +2916,7 @@ on_move_to_dialog_row_activated (GtkTreeView       *tree_view,
 			valid  = !modest_protocol_registry_protocol_type_has_tag 
 				(modest_runtime_get_protocol_registry (),
 				 protocol_type,
-				 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD);
+				 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS);
 		}
 		if (valid)
 			move_to_dialog_show_folders (dialog, selected);

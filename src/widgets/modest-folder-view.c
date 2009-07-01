@@ -2117,10 +2117,10 @@ filter_row (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 			ModestProtocolType protocol_type;
 
 			protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (instance));
-			retval  = !modest_protocol_registry_protocol_type_has_tag 
+			retval  = !modest_protocol_registry_protocol_type_has_tag
 				(modest_runtime_get_protocol_registry (),
 				 protocol_type,
-				 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_MESSAGE_ADD);
+				 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS);
 		}
 	}
 
