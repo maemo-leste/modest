@@ -1139,12 +1139,17 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 		/* This is mostly copied from
 		 * src/maemo/modest-account-settings-dialog.c */
 		if (priv->dirty) {
-			GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
-				_("imum_nc_wizard_confirm_lose_changes")));
-			/* TODO: These button names will be ambiguous, and not
-			 * specified in the UI specification. */
+			gint dialog_response;
+			GtkWidget *dialog;
 
-			const gint dialog_response = gtk_dialog_run (dialog);
+			dialog = hildon_note_new_confirmation ((GtkWindow *) self,
+							       _("imum_nc_wizard_confirm_lose_changes"));
+
+			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+						     (GtkWindow *) dialog,
+						     (GtkWindow *) wizard_dialog);
+
+			dialog_response = gtk_dialog_run ((GtkDialog *) dialog);
 			gtk_widget_destroy (GTK_WIDGET (dialog));
 
 			if (dialog_response != GTK_RESPONSE_OK) {

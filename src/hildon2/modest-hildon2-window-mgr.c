@@ -445,6 +445,15 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	while (modal && GTK_IS_DIALOG (modal)) {
 		GtkWidget *parent;
 
+		/* If it's a hildon note then don't try to close it as
+		   this is the default behaviour of WM, delete event
+		   is not issued for this kind of notes as we want the
+		   user to always click on a button */
+		if (HILDON_IS_NOTE (modal)) {
+			gtk_window_present (GTK_WINDOW (modal));
+			return FALSE;
+		}
+
 		/* Get the parent */
 		parent = (GtkWidget *) gtk_window_get_transient_for (GTK_WINDOW (modal));
 
