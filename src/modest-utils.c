@@ -1154,10 +1154,14 @@ modest_utils_flush_send_queue (const gchar *account_id)
 							     account_id);
 
 	if (account) {
+		ModestMailOperation *wakeup_op;
 		ModestTnySendQueue *send_queue = modest_runtime_get_send_queue (account, TRUE);
 
 		/* Flush it! */
-		tny_camel_send_queue_flush ((TnyCamelSendQueue *) send_queue);
+		wakeup_op = modest_mail_operation_new (NULL);
+		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+						 wakeup_op);
+		modest_mail_operation_queue_wakeup (wakeup_op, send_queue);
 
 		g_object_unref (account);
 	}
