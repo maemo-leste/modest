@@ -610,7 +610,14 @@ format_compact_style (gchar **item_name,
 
 		buffer = g_string_append (buffer, *item_name);
 		if (concat_folder_name) {
-			buffer = g_string_append (buffer, folder_name);
+			if (!is_special && folder_type == TNY_FOLDER_TYPE_DRAFTS) {
+				buffer = g_string_append (buffer, folder_name);
+				/* TODO: append a sensitive string to the remote drafts to
+				 * be able to know it's the remote one */
+/* 				buffer = g_string_append (buffer, " (TODO:remote)"); */
+			} else {
+				buffer = g_string_append (buffer, folder_name);
+			}
 		}
 		g_free (*item_name);
 		g_object_unref (account);
