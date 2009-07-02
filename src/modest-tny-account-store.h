@@ -128,7 +128,7 @@ TnyAccount* modest_tny_account_store_get_tny_account_by  (ModestTnyAccountStore 
  * modest_tny_account_store_get_server_account
  * @self: a ModestTnyAccountStore instance
  * @account_name: a modest account name
- * @type: the tny account type (#TNY_ACCOUNT_TYPE_STORE or #TNY_ACCOUNT_TYPE_STORE)
+ * @type: the tny account type (#TNY_ACCOUNT_TYPE_STORE or #TNY_ACCOUNT_TYPE_TRANSPORT)
  * 
  * Get the tny account corresponding to one of the server_accounts for account with @account_name
  * 
