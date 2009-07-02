@@ -1149,10 +1149,9 @@ modest_utils_flush_send_queue (const gchar *account_id)
 
 	/* Get the transport account */
 	account = (TnyTransportAccount *)
-		modest_tny_account_store_get_tny_account_by (modest_runtime_get_account_store (),
-							     MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
-							     account_id);
-
+		modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+							     account_id,
+							     TNY_ACCOUNT_TYPE_TRANSPORT);
 	if (account) {
 		ModestMailOperation *wakeup_op;
 		ModestTnySendQueue *send_queue = modest_runtime_get_send_queue (account, TRUE);
