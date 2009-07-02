@@ -47,6 +47,7 @@
 #include <widgets/modest-attachments-view.h>
 #include <modest-runtime.h>
 #include <tny-simple-list.h>
+#include <tny-merge-folder.h>
 #include <widgets/modest-recpt-editor.h>
 #include <gtkhtml/gtkhtml.h>
 #include <modest-runtime.h>
@@ -85,6 +86,7 @@ static void fill_list_of_caches (gpointer key, gpointer value, gpointer userdata
 static gboolean _send_receive_in_progress (ModestWindow *win);
 static gboolean _msgs_send_in_progress (void);
 static gboolean _all_msgs_in_sending_status (ModestHeaderView *header_view) G_GNUC_UNUSED;
+static gboolean _forbid_outgoing_xfers (ModestWindow *window);
 
 static DimmedState *
 _define_main_window_dimming_state (ModestMainWindow *window)
@@ -1108,11 +1110,35 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
 							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
 
-	
+	if (folder_view) {
+		TnyFolderStore *selected = modest_folder_view_get_selected ((ModestFolderView *)folder_view);
+		if (selected) {
+			TnyAccount *account = NULL;
+
+			if (TNY_IS_ACCOUNT (selected)) {
+				account = g_object_ref (selected);
+			} else if (!TNY_IS_MERGE_FOLDER (selected)){
+				account = tny_folder_get_account (TNY_FOLDER (selected));
+			}
+			if (account) {
+				ModestProtocolType protocol_type;
+
+				protocol_type = modest_tny_account_get_protocol_type (account);
+				dimmed  = modest_protocol_registry_protocol_type_has_tag
+					(modest_runtime_get_protocol_registry (),
+					 protocol_type,
+					 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_OUTGOING_XFERS);
+
+				g_object_unref (account);
+			}
+			g_object_unref (selected);
+		}
+	}
+
 	/* Check diming rules for folders transfer  */
-	if (folder_view && gtk_widget_is_focus (folder_view)) {
+	if (!dimmed && folder_view && gtk_widget_is_focus (folder_view)) {
 		TnyFolderType types[5];
-		
+
 		types[0] = TNY_FOLDER_TYPE_DRAFTS; 
 		types[1] = TNY_FOLDER_TYPE_OUTBOX;
 		types[2] = TNY_FOLDER_TYPE_SENT;
@@ -1143,14 +1169,40 @@ modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user
 	if (!dimmed) {
 		if (!(folder_view && gtk_widget_is_focus (folder_view)))
 			dimmed = _invalid_msg_selected (MODEST_MAIN_WINDOW(win), FALSE, user_data);
-		
+
 	}
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("sfil_ib_unable_to_move_selected_items"));
 	}
-	
+
+	return dimmed;
+}
+
+static gboolean
+_forbid_outgoing_xfers (ModestWindow *window)
+{
+	const gchar *account_name;
+	TnyAccount *account;
+	gboolean dimmed = FALSE;
+
+	account_name = modest_window_get_active_account (window);
+	account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+							       account_name,
+							       TNY_ACCOUNT_TYPE_STORE);
+
+	if (account) {
+		ModestProtocolType protocol_type;
+
+		protocol_type = modest_tny_account_get_protocol_type (account);
+		dimmed  = modest_protocol_registry_protocol_type_has_tag
+			(modest_runtime_get_protocol_registry (),
+			 protocol_type,
+			 MODEST_PROTOCOL_REGISTRY_STORE_FORBID_OUTGOING_XFERS);
+
+		g_object_unref (account);
+	}
 	return dimmed;
 }
 
@@ -1174,10 +1226,13 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 	}
 
 	/* Check dimmed rule */
-
 	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));	
+		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
+
+	if (!dimmed)
+		dimmed = _forbid_outgoing_xfers (win);
+
 	if (!dimmed) {
 		dimmed = modest_window_get_dimming_state (win)->any_marked_as_deleted;
 		if (dimmed) {
@@ -1186,7 +1241,7 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 			g_free (msg);
 		}
 	}
-	
+
 	if (!dimmed) {
 		dimmed = _selected_msg_sent_in_progress (win);
 		if (dimmed)
@@ -1208,7 +1263,6 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW (win));
 			}
 		}
-		
 		if (dimmed) 
 			modest_dimming_rule_set_notification (rule, _("emev_nc_unabletomove_item"));
 	}
@@ -3099,6 +3153,9 @@ modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer us
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
 
+	if (!dimmed)
+		dimmed = _forbid_outgoing_xfers (win);
+
 	if (!dimmed) {
 		GtkWidget *header_view;
 		TnyFolder *folder;
@@ -3134,6 +3191,9 @@ modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer us
 	dimmed = _transfer_mode_enabled (win);
 	if (dimmed)
 		modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
+
+	if (!dimmed)
+		dimmed = _forbid_outgoing_xfers (win);
 
 	if (MODEST_IS_FOLDER_WINDOW (win)) {
 		ModestFolderView *folder_view;
