@@ -760,7 +760,7 @@ init_default_settings (ModestConf *conf)
 		modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, MODEST_UPDATE_INTERVAL_15_MIN, NULL);
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_MSG_SIZE_LIMIT, NULL))
-		modest_conf_set_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, 1000, NULL);
+		modest_conf_set_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, 100, NULL);
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, FALSE, NULL);
