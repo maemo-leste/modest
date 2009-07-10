@@ -220,6 +220,13 @@ struct _ModestFolderViewPrivate {
 
 	TnyFolder            *folder_to_select; /* folder to select after the next update */
 
+	gulong                changed_signal;
+	gulong                account_inserted_signal;
+	gulong                account_removed_signal;
+	gulong		      account_changed_signal;
+	gulong                conf_key_signal;
+	gulong                display_name_changed_signal;
+
 	/* not unref this object, its a singlenton */
 	ModestEmailClipboard *clipboard;
 
@@ -245,6 +252,8 @@ struct _ModestFolderViewPrivate {
 	gboolean  reexpand; /* next time we expose, we'll expand all root folders */
 
 	GtkCellRenderer *messages_renderer;
+
+	gulong                outbox_deleted_handler;
 
 	GSList   *signal_handlers;
 	GdkColor active_color;
@@ -1282,6 +1291,7 @@ modest_folder_view_init (ModestFolderView *obj)
 	priv->visible_account_id = NULL;
 	priv->mailbox = NULL;
 	priv->folder_to_select = NULL;
+	priv->outbox_deleted_handler = 0;
 	priv->reexpand = TRUE;
 	priv->signal_handlers = 0;
 
@@ -1306,32 +1316,30 @@ modest_folder_view_init (ModestFolderView *obj)
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
 
 	/* Connect signals */
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT (obj), "key-press-event",
-							   G_CALLBACK (on_key_pressed), NULL);
+ 	g_signal_connect (G_OBJECT (obj),
+ 			  "key-press-event",
+ 			  G_CALLBACK (on_key_pressed), NULL);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   (GObject*) modest_runtime_get_account_mgr (),
-							   "display_name_changed",
-							   G_CALLBACK (on_display_name_changed),
-							   obj);
+ 	priv->display_name_changed_signal =
+ 		g_signal_connect (modest_runtime_get_account_mgr (),
+ 				  "display_name_changed",
+ 				  G_CALLBACK (on_display_name_changed),
+ 				  obj);
 
 	/*
 	 * Track changes in the local account name (in the device it
 	 * will be the device name)
 	 */
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT(conf),
-							   "key_changed",
-							   G_CALLBACK(on_configuration_key_changed),
-							   obj);
+ 	priv->conf_key_signal = g_signal_connect (G_OBJECT(conf),
+ 						  "key_changed",
+ 						  G_CALLBACK(on_configuration_key_changed),
+ 						  obj);
 
 	gdk_color_parse ("000", &priv->active_color);
 
 	update_style (obj);
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT (obj), "notify::style",
-							   G_CALLBACK (on_notify_style), (gpointer) obj);
+ 	g_signal_connect (G_OBJECT (obj), "notify::style", 
+			  G_CALLBACK (on_notify_style), (gpointer) obj);
 }
 
 static void
@@ -1342,26 +1350,16 @@ tny_account_store_view_init (gpointer g, gpointer iface_data)
 	klass->set_account_store = modest_folder_view_set_account_store;
 }
 
-static gboolean
-match_all (TnyList *list, GObject *item, gpointer match_data)
-{
-	return TRUE;
-}
-
 static void
 modest_folder_view_dispose (GObject *obj)
 {
 	static gboolean disposed = FALSE;
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *model;
 
 	if (disposed)
 		return;
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (obj);
-
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (obj));
-	tny_list_remove_matches (TNY_LIST (model), match_all, NULL);
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
@@ -1369,6 +1367,12 @@ modest_folder_view_dispose (GObject *obj)
 
 	/* Free external references */
 	if (priv->account_store) {
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_inserted_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_removed_signal);
+		g_signal_handler_disconnect (G_OBJECT(priv->account_store),
+					     priv->account_changed_signal);
 		g_object_unref (G_OBJECT(priv->account_store));
 		priv->account_store = NULL;
 	}
@@ -1398,6 +1402,8 @@ static void
 modest_folder_view_finalize (GObject *obj)
 {
 	ModestFolderViewPrivate *priv;
+	GtkTreeSelection    *sel;
+	TnyAccount *local_account;
 
 	g_return_if_fail (obj);
 
@@ -1408,9 +1414,36 @@ modest_folder_view_finalize (GObject *obj)
 		priv->timer_expander = 0;
 	}
 
+	local_account = (TnyAccount *)
+		modest_tny_account_store_get_local_folders_account (modest_runtime_get_account_store ());
+	if (local_account) {
+		if (g_signal_handler_is_connected (local_account,
+						   priv->outbox_deleted_handler))
+			g_signal_handler_disconnect (local_account,
+						     priv->outbox_deleted_handler);
+		g_object_unref (local_account);
+	}
+
+	if (g_signal_handler_is_connected (modest_runtime_get_account_mgr (), 
+					   priv->display_name_changed_signal)) {
+		g_signal_handler_disconnect (modest_runtime_get_account_mgr (),
+					     priv->display_name_changed_signal);
+		priv->display_name_changed_signal = 0;
+	}
+
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW(obj));
+	if (sel)
+		g_signal_handler_disconnect (G_OBJECT(sel), priv->changed_signal);
+
 	g_free (priv->local_account_name);
 	g_free (priv->visible_account_id);
 	g_free (priv->mailbox);
+
+	if (priv->conf_key_signal) {
+		g_signal_handler_disconnect (modest_runtime_get_conf (),
+					     priv->conf_key_signal);
+		priv->conf_key_signal = 0;
+	}
 
 	/* Clear hidding array created by cut operation */
 	_clear_hidding_filter (MODEST_FOLDER_VIEW (obj));
@@ -1435,40 +1468,34 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 
 	if (G_UNLIKELY (priv->account_store)) {
 
-		if (modest_signal_mgr_is_connected (priv->signal_handlers,
-						    G_OBJECT (priv->account_store),
-						    "account_inserted"))
-			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
-									      G_OBJECT (priv->account_store),
-									      "account_inserted");
-		if (modest_signal_mgr_is_connected (priv->signal_handlers,
-						    G_OBJECT (priv->account_store),
-						    "account_removed"))
-			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
-									      G_OBJECT (priv->account_store),
-									      "account_removed");
-		if (modest_signal_mgr_is_connected (priv->signal_handlers,
-						    G_OBJECT (priv->account_store),
-						    "account_changed"))
-			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
-									      G_OBJECT (priv->account_store),
-									      "account_changed");
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store),
+						   priv->account_inserted_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store),
+						     priv->account_inserted_signal);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store),
+						   priv->account_removed_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store),
+						     priv->account_removed_signal);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->account_store),
+						   priv->account_changed_signal))
+			g_signal_handler_disconnect (G_OBJECT (priv->account_store),
+						     priv->account_changed_signal);
 		g_object_unref (G_OBJECT (priv->account_store));
 	}
 
 	priv->account_store = g_object_ref (G_OBJECT (account_store));
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT(account_store), "account_removed",
-							   G_CALLBACK (on_account_removed), self);
+	priv->account_removed_signal =
+		g_signal_connect (G_OBJECT(account_store), "account_removed",
+				  G_CALLBACK (on_account_removed), self);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT(account_store), "account_inserted",
-							   G_CALLBACK (on_account_inserted), self);
+	priv->account_inserted_signal =
+		g_signal_connect (G_OBJECT(account_store), "account_inserted",
+				  G_CALLBACK (on_account_inserted), self);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT(account_store), "account_changed",
-							   G_CALLBACK (on_account_changed), self);
+	priv->account_changed_signal =
+		g_signal_connect (G_OBJECT(account_store), "account_changed",
+				  G_CALLBACK (on_account_changed), self);
 
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (self), account_store);
 	priv->reselect = FALSE;
@@ -1539,10 +1566,12 @@ on_account_inserted (TnyAccountStore *account_store,
 	   for a merge folder */
 	if (TNY_IS_GTK_FOLDER_LIST_STORE (model) &&
 	    MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (account)) {
-		priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-								   (GObject*) account, "outbox-deleted",
-								   G_CALLBACK (on_outbox_deleted_cb),
-								   user_data);
+
+		priv->outbox_deleted_handler =
+			g_signal_connect (account,
+					  "outbox-deleted",
+					  G_CALLBACK (on_outbox_deleted_cb),
+					  user_data);
 	}
 
 	/* Refilter the model */
@@ -1696,10 +1725,10 @@ on_account_removed (TnyAccountStore *account_store,
 	/* Disconnect the signal handler */
 	if (TNY_IS_GTK_FOLDER_LIST_STORE (model) &&
 	    MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (account)) {
-		if (modest_signal_mgr_is_connected (priv->signal_handlers, (GObject*) account, "outbox-deleted"))
-			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
-									      (GObject *) account,
-									      "outbox-deleted");
+		if (g_signal_handler_is_connected (account,
+						   priv->outbox_deleted_handler))
+			g_signal_handler_disconnect (account,
+						     priv->outbox_deleted_handler);
 	}
 
 	/* Remove the account from the model */
@@ -1807,17 +1836,12 @@ modest_folder_view_new_full (TnyFolderStoreQuery *query, gboolean do_refresh)
 	priv->do_refresh = do_refresh;
 
 	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(self));
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   (GObject*) sel, "changed",
-							   G_CALLBACK (on_selection_changed), self);
+	priv->changed_signal = g_signal_connect (sel, "changed",
+						 G_CALLBACK (on_selection_changed), self);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   self, "row-activated",
-							   G_CALLBACK (on_row_activated), self);
+	g_signal_connect (self, "row-activated", G_CALLBACK (on_row_activated), self);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   self, "expose-event", 
-							   G_CALLBACK (modest_folder_view_on_map), NULL);
+	g_signal_connect (self, "expose-event", G_CALLBACK (modest_folder_view_on_map), NULL);
 
  	return GTK_WIDGET(self);
 }
@@ -2257,7 +2281,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 {
 	ModestFolderViewPrivate *priv;
 	GtkTreeModel *model;
-	GtkTreeModel *filter_model = NULL, *sortable = NULL, *old_tny_model;
+	GtkTreeModel *filter_model = NULL, *sortable = NULL;
 
 	g_return_val_if_fail (self && MODEST_IS_FOLDER_VIEW (self), FALSE);
 	g_return_val_if_fail (account_store && MODEST_IS_TNY_ACCOUNT_STORE(account_store),
@@ -2303,16 +2327,16 @@ modest_folder_view_update_model (ModestFolderView *self,
 		acc_store = modest_runtime_get_account_store ();
 		account = modest_tny_account_store_get_local_folders_account (acc_store);
 
-		if (modest_signal_mgr_is_connected (priv->signal_handlers, (GObject *) account,
-						    "outbox-deleted"))
-			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
-									      (GObject *) account,
-									      "outbox-deleted");
+		if (g_signal_handler_is_connected (account,
+						   priv->outbox_deleted_handler))
+			g_signal_handler_disconnect (account,
+						     priv->outbox_deleted_handler);
 
-		priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-								   (GObject*) account, "outbox-deleted",
-								   G_CALLBACK (on_outbox_deleted_cb),
-								   self);
+		priv->outbox_deleted_handler =
+			g_signal_connect (account,
+					  "outbox-deleted",
+					  G_CALLBACK (on_outbox_deleted_cb),
+					  self);
 		g_object_unref (account);
 	}
 
@@ -2336,20 +2360,21 @@ modest_folder_view_update_model (ModestFolderView *self,
 						self,
 						NULL);
 
-	if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
-		if (modest_signal_mgr_is_connected (priv->signal_handlers, (GObject *) old_tny_model,
-						    "activity-changed"))
+	if (priv->signal_handlers > 0) {
+		GtkTreeModel *old_tny_model;
+
+		if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
 			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
-									      G_OBJECT (old_tny_model),
+									      G_OBJECT (old_tny_model), 
 									      "activity-changed");
+		}
 	}
 
 	/* Set new model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
 #ifndef MODEST_TOOLKIT_HILDON2
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT(filter_model), "row-inserted",
-							   (GCallback) on_row_inserted_maybe_select_folder, self);
+	g_signal_connect (G_OBJECT(filter_model), "row-inserted",
+			  (GCallback) on_row_inserted_maybe_select_folder, self);
 #endif
 
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -3411,19 +3436,16 @@ setup_drag_and_drop (GtkTreeView *self)
 #ifdef MODEST_TOOLKIT_HILDON2
 	return;
 #endif
-	ModestFolderViewPrivate *priv;
-
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
-
 	gtk_drag_dest_set (GTK_WIDGET (self),
 			   GTK_DEST_DEFAULT_HIGHLIGHT,
 			   folder_view_drag_types,
 			   G_N_ELEMENTS (folder_view_drag_types),
 			   GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT (self), "drag_data_received",
-							   G_CALLBACK (on_drag_data_received), NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_data_received",
+			  G_CALLBACK (on_drag_data_received),
+			  NULL);
 
 
 	/* Set up the treeview as a dnd source */
@@ -3433,17 +3455,20 @@ setup_drag_and_drop (GtkTreeView *self)
 			     G_N_ELEMENTS (folder_view_drag_types),
 			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT (self), "drag_motion",
-							   G_CALLBACK (on_drag_motion), NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_motion",
+			  G_CALLBACK (on_drag_motion),
+			  NULL);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT (self), "drag_data_get",
-							   G_CALLBACK (on_drag_data_get), NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_data_get",
+			  G_CALLBACK (on_drag_data_get),
+			  NULL);
 
-	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
-							   G_OBJECT (self), "drag_drop",
-							   G_CALLBACK (drag_drop_cb), NULL);
+	g_signal_connect (G_OBJECT (self),
+			  "drag_drop",
+			  G_CALLBACK (drag_drop_cb),
+			  NULL);
 }
 
 /*
