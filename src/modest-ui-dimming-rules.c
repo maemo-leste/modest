@@ -1234,11 +1234,14 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 		dimmed = _forbid_outgoing_xfers (win);
 
 	if (!dimmed) {
-		dimmed = modest_window_get_dimming_state (win)->any_marked_as_deleted;
-		if (dimmed) {
-			gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
-			modest_dimming_rule_set_notification (rule, msg);
-			g_free (msg);
+		DimmedState *state = modest_window_get_dimming_state (win);
+		if (state) {
+			dimmed = state->any_marked_as_deleted;
+			if (dimmed) {
+				gchar *msg = modest_ui_actions_get_msg_already_deleted_error_msg (win);
+				modest_dimming_rule_set_notification (rule, msg);
+				g_free (msg);
+			}
 		}
 	}
 
