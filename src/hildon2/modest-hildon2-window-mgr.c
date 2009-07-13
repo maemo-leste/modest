@@ -523,17 +523,24 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	if ((MODEST_IS_MSG_VIEW_WINDOW (current_top) || MODEST_IS_MSG_EDIT_WINDOW (current_top)) &&
 	    (MODEST_IS_FOLDER_WINDOW (window) || MODEST_IS_ACCOUNTS_WINDOW (window) || 
 	     MODEST_IS_MAILBOXES_WINDOW (window))) {
-		gtk_window_present (GTK_WINDOW (window));
+		gtk_window_present (GTK_WINDOW (current_top));
 		return FALSE;
 	}
 
 	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
-		gtk_window_present (GTK_WINDOW (window));
-		return FALSE;
+		gboolean retval;
+
+		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
+
+		if (retval) {
+			gtk_window_present (GTK_WINDOW (current_top));
+			return FALSE;
+		}
+		current_top = (ModestWindow *) hildon_window_stack_peek (stack);
 	}
 
 	if (MODEST_IS_MAILBOXES_WINDOW (current_top) && MODEST_IS_MAILBOXES_WINDOW (window)) {
-		gtk_window_present (GTK_WINDOW (window));
+		gtk_window_present (GTK_WINDOW (current_top));
 		return FALSE;
 	}
 
@@ -585,7 +592,7 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 
 		/* Close the current view */
 		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
-		if (retval == TRUE) {
+		if (retval) {
 			/* Cancelled closing top window, then we fail to register */
 			goto fail;
 		}

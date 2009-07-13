@@ -1206,32 +1206,30 @@ on_idle_open_account (gpointer user_data)
 		top = modest_window_mgr_show_initial_window (mgr);
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_ACCOUNTS_WINDOW (top)) {
-		GtkWidget *new_window;
-		ModestProtocolType store_protocol;
-		gboolean mailboxes_protocol;
+	GtkWidget *new_window;
+	ModestProtocolType store_protocol;
+	gboolean mailboxes_protocol;
 
-		store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
-									acc_name);
-		mailboxes_protocol = 
-			modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
-									store_protocol,
-									MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS);
+	store_protocol = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+								acc_name);
+	mailboxes_protocol = 
+		modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
+								store_protocol,
+								MODEST_PROTOCOL_REGISTRY_MULTI_MAILBOX_PROVIDER_PROTOCOLS);
 
-		if (mailboxes_protocol) {
-			new_window = GTK_WIDGET (modest_mailboxes_window_new (acc_name));
-		} else {
-			new_window = GTK_WIDGET (modest_folder_window_new (NULL));
-			modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window),
-							  acc_name);
-		}
+	if (mailboxes_protocol) {
+		new_window = GTK_WIDGET (modest_mailboxes_window_new (acc_name));
+	} else {
+		new_window = GTK_WIDGET (modest_folder_window_new (NULL));
+		modest_folder_window_set_account (MODEST_FOLDER_WINDOW (new_window),
+						  acc_name);
+	}
 
-		if (modest_window_mgr_register_window (mgr, MODEST_WINDOW (new_window), NULL)) {
-			gtk_widget_show (new_window);
-		} else {
-			gtk_widget_destroy (new_window);
-			new_window = NULL;
-		}
+	if (modest_window_mgr_register_window (mgr, MODEST_WINDOW (new_window), NULL)) {
+		gtk_widget_show (new_window);
+	} else {
+		gtk_widget_destroy (new_window);
+		new_window = NULL;
 	}
 #else
 	if (MODEST_IS_MAIN_WINDOW (top)) {
