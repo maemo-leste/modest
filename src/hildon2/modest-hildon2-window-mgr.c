@@ -862,7 +862,8 @@ look_for_transient (gconstpointer a,
 	child = (GtkWindow *) b;
 	win = (GtkWindow *) a;
 
-	if (gtk_window_get_transient_for (win) == child)
+	if ((gtk_window_get_transient_for (win) == child) &&
+	    GTK_WIDGET_VISIBLE (win))
 		return 0;
 	else
 		return 1;
