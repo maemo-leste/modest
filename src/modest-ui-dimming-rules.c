@@ -1234,7 +1234,7 @@ modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user
 		dimmed = _forbid_outgoing_xfers (win);
 
 	if (!dimmed) {
-		DimmedState *state = modest_window_get_dimming_state (win);
+		const DimmedState *state = modest_window_get_dimming_state (win);
 		if (state) {
 			dimmed = state->any_marked_as_deleted;
 			if (dimmed) {
