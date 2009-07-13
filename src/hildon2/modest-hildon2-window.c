@@ -52,7 +52,7 @@ typedef struct _EditModeRegister {
 /* 'private'/'protected' functions */
 static void modest_hildon2_window_class_init  (gpointer klass, gpointer class_data);
 static void modest_hildon2_window_instance_init (GTypeInstance *instance, gpointer g_class);
-static void modest_hildon2_window_finalize    (GObject *obj);
+static void modest_hildon2_window_dispose     (GObject *obj);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 static void setup_menu (ModestHildon2Window *self);
@@ -142,7 +142,7 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	ModestHildon2WindowClass *modest_hildon2_window_class = (ModestHildon2WindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
-	gobject_class->finalize = modest_hildon2_window_finalize;
+	gobject_class->dispose  = modest_hildon2_window_dispose;
 
 	signals[EDIT_MODE_CHANGED_SIGNAL] =
 		g_signal_new ("edit-mode-changed",
@@ -165,19 +165,23 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 }
 
 static void
-modest_hildon2_window_finalize (GObject *obj)
+modest_hildon2_window_dispose (GObject *obj)
 {
 	ModestHildon2WindowPrivate *priv;
 
 	priv = MODEST_HILDON2_WINDOW_GET_PRIVATE(obj);
 
-	g_object_unref (priv->app_menu_dimming_group);
-	priv->app_menu_dimming_group = NULL;
+	if (priv->app_menu_dimming_group) {
+		g_object_unref (priv->app_menu_dimming_group);
+		priv->app_menu_dimming_group = NULL;
+	}
 
-	g_hash_table_destroy (priv->edit_mode_registry);
-	priv->edit_mode_registry = NULL;
+	if (priv->edit_mode_registry) {
+		g_hash_table_unref (priv->edit_mode_registry);
+		priv->edit_mode_registry = NULL;
+	}
 
-	G_OBJECT_CLASS(parent_class)->finalize (obj);
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 static void

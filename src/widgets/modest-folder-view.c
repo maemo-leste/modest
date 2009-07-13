@@ -313,7 +313,7 @@ modest_folder_view_class_init (ModestFolderViewClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_view_finalize;
-	gobject_class->finalize = modest_folder_view_dispose;
+	gobject_class->dispose  = modest_folder_view_dispose;
 
 	g_type_class_add_private (gobject_class,
 				  sizeof(ModestFolderViewPrivate));
@@ -1353,16 +1353,15 @@ tny_account_store_view_init (gpointer g, gpointer iface_data)
 static void
 modest_folder_view_dispose (GObject *obj)
 {
-	static gboolean disposed = FALSE;
 	ModestFolderViewPrivate *priv;
-
-	if (disposed)
-		return;
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (obj);
 
 #ifdef MODEST_TOOLKIT_HILDON2
-	modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
+	if (priv->signal_handlers) {
+		modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
+		priv->signal_handlers = NULL;
+	}
 #endif
 
 	/* Free external references */
@@ -1396,6 +1395,8 @@ modest_folder_view_dispose (GObject *obj)
 		g_object_unref (priv->list_to_move);
 		priv->list_to_move = NULL;
 	}
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 static void
@@ -2360,10 +2361,9 @@ modest_folder_view_update_model (ModestFolderView *self,
 						self,
 						NULL);
 
-	if (priv->signal_handlers > 0) {
-		GtkTreeModel *old_tny_model;
-
-		if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
+	GtkTreeModel *old_tny_model;
+	if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
+		if (priv->signal_handlers > 0) {
 			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
 									      G_OBJECT (old_tny_model), 
 									      "activity-changed");

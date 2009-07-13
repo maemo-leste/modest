@@ -184,7 +184,7 @@ modest_window_finalize (GObject *obj)
 static void
 modest_window_dispose (GObject *obj)
 {
-	ModestWindowPrivate *priv;	
+	ModestWindowPrivate *priv;
 
 	priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
@@ -199,6 +199,7 @@ modest_window_dispose (GObject *obj)
 		g_object_unref (G_OBJECT(priv->ui_dimming_manager));
 		priv->ui_dimming_manager = NULL;
 	}
+
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
