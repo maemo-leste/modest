@@ -66,6 +66,7 @@
 #ifdef MODEST_USE_LIBTIME
 #include <clockd/libtime.h>
 #endif
+#include "modest-account-protocol.h"
 
 #define KB 1024
 
@@ -1139,6 +1140,46 @@ modest_mail_operation_send_new_mail (ModestMailOperation *self,
 
 typedef struct
 {
+	ModestMailOperation *mailop;
+	TnyMsg *msg;
+	SaveToDraftstCallback callback;
+	gpointer userdata;
+} FinishSaveRemoteDraftInfo;
+
+static void
+finish_save_remote_draft (ModestAccountProtocol *protocol,
+			  GError *err,
+			  const gchar *account_id,
+			  TnyMsg *new_remote_msg,
+			  TnyMsg *new_msg,
+			  TnyMsg *old_msg,
+			  gpointer userdata)
+{
+	FinishSaveRemoteDraftInfo *info = (FinishSaveRemoteDraftInfo *) userdata;
+	ModestMailOperationPrivate *priv = NULL;
+
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mailop);
+
+	if (!priv->error && err != NULL) {
+		/* Priority for errors in save to local stage */
+		priv->error = g_error_copy (err);
+		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
+	}
+
+	if (info->callback)
+		info->callback (info->mailop, info->msg, info->userdata);
+
+	if (info->msg)
+		g_object_unref (info->msg);
+
+	modest_mail_operation_notify_end (info->mailop);
+	g_object_unref (info->mailop);
+
+	g_slice_free (FinishSaveRemoteDraftInfo, info);
+}
+
+typedef struct
+{
 	TnyTransportAccount *transport_account;
 	TnyMsg *draft_msg;
 	SaveToDraftstCallback callback;
@@ -1157,6 +1198,7 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 	ModestMailOperationPrivate *priv = NULL;
 	SaveToDraftsAddMsgInfo *info = (SaveToDraftsAddMsgInfo *) userdata;
 	GError *io_error = NULL;
+	gboolean callback_called = FALSE;
 
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE(info->mailop);
 
@@ -1201,8 +1243,32 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
+	if (info->transport_account) {
+		ModestProtocolType transport_protocol_type;
+		ModestProtocol *transport_protocol;
+
+		transport_protocol_type = modest_tny_account_get_protocol_type (TNY_ACCOUNT (info->transport_account));
+
+		transport_protocol = modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
+										    transport_protocol_type);
+		if (transport_protocol && MODEST_IS_ACCOUNT_PROTOCOL (transport_protocol)) {
+			FinishSaveRemoteDraftInfo *srd_info = g_slice_new (FinishSaveRemoteDraftInfo);
+			srd_info->mailop = info->mailop?g_object_ref (info->mailop):NULL;
+			srd_info->msg = info->msg?g_object_ref (info->msg):NULL;
+			srd_info->callback = info->callback;
+			srd_info->userdata = info->user_data;
+			modest_account_protocol_save_remote_draft (MODEST_ACCOUNT_PROTOCOL (transport_protocol), 
+								   tny_account_get_id (TNY_ACCOUNT (info->transport_account)),
+								   info->msg, info->draft_msg,
+								   finish_save_remote_draft,
+								   srd_info);
+								   
+			callback_called = TRUE;
+		}
+	}
+
 	/* Call the user callback */
-	if (info->callback)
+	if (!callback_called && info->callback)
 		info->callback (info->mailop, info->msg, info->user_data);
 
 	if (info->transport_account)
@@ -1214,7 +1280,8 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 	if (info->msg)
 		g_object_unref (G_OBJECT (info->msg));
 
-	modest_mail_operation_notify_end (info->mailop);
+	if (!callback_called)
+		modest_mail_operation_notify_end (info->mailop);
 	g_object_unref(info->mailop);
 	g_slice_free (SaveToDraftsAddMsgInfo, info);
 }

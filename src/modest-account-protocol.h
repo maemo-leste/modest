@@ -62,6 +62,13 @@ typedef enum {
 
 typedef void (*ModestAccountProtocolCheckSupportFunc) (ModestAccountProtocol *self, 
 						       gboolean supported, gpointer userdata);
+typedef void (*ModestAccountProtocolSaveRemoteDraftCallback) (ModestAccountProtocol *self,
+							      GError *error,
+							      const gchar *account_id,
+							      TnyMsg *new_remote_msg,
+							      TnyMsg *new_msg,
+							      TnyMsg *old_msg,
+							      gpointer userdata);
 
 
 struct _ModestAccountProtocol {
@@ -87,9 +94,12 @@ struct _ModestAccountProtocolClass {
 				       GObject *object, guint icon_size);
 	gchar * (*get_service_name) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox);
 	const GdkPixbuf * (*get_service_icon) (ModestAccountProtocol *self, const gchar *account_id, const gchar *mailbox, guint icon_size);
+	void (*save_remote_draft) (ModestAccountProtocol *self, 
+				   const gchar *account_id, TnyMsg *new_msg, TnyMsg *old_msg,
+				   ModestAccountProtocolSaveRemoteDraftCallback callback,
+				   gpointer userdata);
 
 	/* Padding for future expansions */
-	void (*_reserved3) (void);
 	void (*_reserved4) (void);
 	void (*_reserved5) (void);
 	void (*_reserved6) (void);
@@ -433,6 +443,24 @@ const GdkPixbuf *modest_account_protocol_get_service_icon (ModestAccountProtocol
 							   const gchar *account_id,
 							   const gchar *mailbox,
 							   guint icon_size);
+
+/**
+ * modest_account_protocol_save_remote_draft:
+ * @self: a #ModestAccountProtocol
+ * @account_id: a transport account_name
+ * @new_msg: the newly created message in local storage.
+ * @old_msg: the old message
+ * @callback: the code that should be executed on finishing the remote message saving
+ * @userdata: a #gpointer
+ *
+ * Saves the just-saved to local draft, into a remote storage.
+ */
+void modest_account_protocol_save_remote_draft (ModestAccountProtocol *self,
+						    const gchar *account_id,
+						    TnyMsg *new_msg,
+						    TnyMsg *old_msg,
+						    ModestAccountProtocolSaveRemoteDraftCallback callback,
+						    gpointer userdata);
 
 
 G_END_DECLS

@@ -32,6 +32,7 @@
 #include "modest-account-mgr-helpers.h"
 #include "widgets/modest-default-account-settings-dialog.h"
 #include "modest-runtime.h"
+#include "modest-marshal.h"
 
 enum {
 	PROP_0,
@@ -111,6 +112,12 @@ static const GdkPixbuf *modest_account_protocol_get_service_icon_default (Modest
 									  const gchar *account_id,
 									  const gchar *mailbox,
 									  guint icon_size);
+static void modest_account_protocol_save_remote_draft_default (ModestAccountProtocol *self,
+							       const gchar *account_id,
+							       TnyMsg *new_msg,
+							       TnyMsg *old_msg,
+							       ModestAccountProtocolSaveRemoteDraftCallback callback,
+							       gpointer userdata);
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -210,6 +217,9 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_get_service_name_default;
 	account_class->get_service_icon =
 		modest_account_protocol_get_service_icon_default;
+	account_class->save_remote_draft =
+		modest_account_protocol_save_remote_draft_default;
+
 }
 
 static void
@@ -659,7 +669,7 @@ modest_account_protocol_get_from_default (ModestAccountProtocol *self,
 					  const gchar *account_id,
 					  const gchar *mailbox)
 {
-	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
 
 	return NULL;
 }
@@ -674,7 +684,7 @@ static ModestPairList *
 modest_account_protocol_get_from_list_default (ModestAccountProtocol *self,
 					       const gchar *account_id)
 {
-	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
 
 	return NULL;
 }
@@ -694,7 +704,7 @@ modest_account_protocol_get_signature_default (ModestAccountProtocol *self,
 					       const gchar *mailbox,
 					       gboolean *has_signature)
 {
-	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
 	if (has_signature)
 		*has_signature = FALSE;
 
@@ -714,7 +724,7 @@ static const GdkPixbuf *
 modest_account_protocol_get_icon_default (ModestAccountProtocol *self, ModestAccountProtocolIconType icon_type, 
 					  GObject *object, guint icon_size)
 {
-	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
 
 	return NULL;
 }
@@ -732,7 +742,7 @@ modest_account_protocol_get_service_name_default (ModestAccountProtocol *self,
 						  const gchar *account_id,
 						  const gchar *mailbox)
 {
-	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
 
 	return NULL;
 }
@@ -752,8 +762,34 @@ modest_account_protocol_get_service_icon_default (ModestAccountProtocol *self,
 						  const gchar *mailbox,
 						  guint icon_size)
 {
-	g_return_val_if_fail (MODEST_ACCOUNT_PROTOCOL (self), NULL);
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_PROTOCOL (self), NULL);
 
 	return NULL;
+}
+
+void
+modest_account_protocol_save_remote_draft (ModestAccountProtocol *self,
+					   const gchar *account_id,
+					   TnyMsg *new_msg,
+					   TnyMsg *old_msg,
+					   ModestAccountProtocolSaveRemoteDraftCallback callback,
+					   gpointer userdata)
+{
+	MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->save_remote_draft (self, account_id, 
+								     new_msg, old_msg,
+								     callback, userdata);
+}
+
+static void
+modest_account_protocol_save_remote_draft_default (ModestAccountProtocol *self,
+						   const gchar *account_id,
+						   TnyMsg *new_msg,
+						   TnyMsg *old_msg,
+						   ModestAccountProtocolSaveRemoteDraftCallback callback,
+						   gpointer userdata)
+{
+	if (callback) {
+		callback (self, NULL, account_id, NULL, new_msg, old_msg, userdata);
+	}
 }
 
