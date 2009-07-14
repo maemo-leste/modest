@@ -104,10 +104,8 @@ struct _ModestEasysetupWizardDialogPrivate
 
 	/* notebook pages: */
 	GtkWidget *page_welcome;
-	GtkWidget *check_support_progress;
 	gboolean  check_support_done;
 	guint check_support_show_progress_id;
-	guint check_support_progress_pulse_id;
 	gint pending_check_support;
 	gboolean destroyed;
 
@@ -156,7 +154,6 @@ static void check_support_callback (ModestAccountProtocol *protocol,
 				    gpointer userdata);
 static void check_support_of_protocols (ModestEasysetupWizardDialog *self);
 static gboolean check_support_show_progress (gpointer userdata);
-static gboolean check_support_progress_pulse (gpointer userdata);
 
 static gboolean
 on_delete_event (GtkWidget *widget,
@@ -184,11 +181,6 @@ modest_easysetup_wizard_dialog_dispose (GObject *object)
 	if (priv->check_support_show_progress_id > 0) {
 		g_source_remove (priv->check_support_show_progress_id);
 		priv->check_support_show_progress_id = 0;
-	}
-
-	if (priv->check_support_progress_pulse_id > 0) {
-		g_source_remove (priv->check_support_progress_pulse_id);
-		priv->check_support_progress_pulse_id = 0;
 	}
 
 	if (G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->dispose)
@@ -400,7 +392,6 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
-	priv->check_support_progress = gtk_progress_bar_new ();
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_set_size_request (label, LABELS_WIDTH, -1);
@@ -409,7 +400,6 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
-	gtk_box_pack_end (GTK_BOX (box), priv->check_support_progress, FALSE, FALSE, 0);
 	gtk_container_add (GTK_CONTAINER (align), box);
 	gtk_widget_show (label);
 	gtk_widget_show (GTK_WIDGET (box));
@@ -1435,7 +1425,6 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Initialize fields */
 	priv->check_support_done = FALSE;
 	priv->check_support_show_progress_id = 0;
-	priv->check_support_progress_pulse_id = 0;
 	priv->pending_check_support = 0;
 	priv->destroyed = FALSE;
 	priv->page_welcome = create_page_welcome (self);
@@ -2437,22 +2426,6 @@ check_has_supported_auth_methods(ModestEasysetupWizardDialog* self)
 }
 
 static gboolean
-check_support_progress_pulse (gpointer userdata)
-{
-	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
-	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-
-	if (priv->destroyed) {
-		priv->check_support_progress_pulse_id = 0;
-		return FALSE;
-	}
-
-	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->check_support_progress));
-
-	return TRUE;
-}
-
-static gboolean
 check_support_show_progress (gpointer userdata)
 {
 	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
@@ -2463,10 +2436,7 @@ check_support_show_progress (gpointer userdata)
 	if (priv->destroyed)
 		return FALSE;
 
-	gtk_widget_show (priv->check_support_progress);
-	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->check_support_progress));
-
-	priv->check_support_progress_pulse_id = g_timeout_add (200, check_support_progress_pulse, self);
+	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
 
 	return FALSE;
 }
@@ -2486,18 +2456,13 @@ check_support_callback (ModestAccountProtocol *protocol,
 		priv->check_support_show_progress_id = 0;
 	}
 
-	if (priv->check_support_progress_pulse_id > 0) {
-		g_source_remove (priv->check_support_progress_pulse_id);
-		priv->check_support_progress_pulse_id = 0;
-	}
-
 	if (priv->pending_check_support == 0) {
 		priv->check_support_done = TRUE;
 
 		if (!priv->destroyed) {
 			if (priv->presets)
 				fill_providers (self);
-			gtk_widget_hide (priv->check_support_progress);
+			hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), FALSE);
 			invoke_enable_buttons_vfunc (self);
 		}
 	}
