@@ -131,7 +131,8 @@ open_addressbook_sync ()
 }
 
 void
-modest_address_book_add_address (const gchar *address)
+modest_address_book_add_address (const gchar *address,
+				 GtkWindow *parent)
 {
 	OssoABookAccount *account = NULL;
 	GtkWidget *dialog = NULL;
@@ -147,13 +148,18 @@ modest_address_book_add_address (const gchar *address)
 	}
 
 	email_address = modest_text_utils_get_email_address (address);
-	
+
 	account = osso_abook_account_get (EVC_EMAIL, NULL, email_address);
 	g_free (email_address);
 	if (account)
 	{
 		dialog = osso_abook_add_to_contacts_dialog_new (contact_model, account);
 		g_object_unref (account);
+
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr(),
+					     (GtkWindow *) parent,
+					     (GtkWindow *) dialog);
+
 		gtk_dialog_run (GTK_DIALOG (dialog));
 
 		if (contact_model) {

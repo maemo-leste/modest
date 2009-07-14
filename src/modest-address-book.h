@@ -51,7 +51,8 @@ modest_address_book_init (void);
  * launches the UI for adding @address to the addressbook
  */
 void
-modest_address_book_add_address (const gchar *address);
+modest_address_book_add_address (const gchar *address,
+				 GtkWindow *parent);
 
 /**
  * modest_address_book_select_addresses:

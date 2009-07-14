@@ -3521,7 +3521,7 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 			gtk_widget_destroy (picker_dialog);
 
 			if (selected)
-				modest_address_book_add_address (selected);
+				modest_address_book_add_address (selected, (GtkWindow *) self);
 			g_free (selected);
 
 		} else {

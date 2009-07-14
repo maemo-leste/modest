@@ -34,7 +34,8 @@
 
 #include "modest-address-book.h"
 
-void modest_address_book_add_address (const gchar *address)
+void modest_address_book_add_address (const gchar *address,
+				      GtkWindow *parent)
 {
 	g_debug ("trying to add '%s' to non-existing address book",
 		 address);

@@ -700,12 +700,8 @@ modest_ui_actions_on_add_to_contacts (GtkAction *action, ModestWindow *win)
 	clipboard = gtk_clipboard_get (GDK_SELECTION_PRIMARY);
 	selection = gtk_clipboard_wait_for_text (clipboard);
 
-	/* Question: why is the clipboard being used here?
-	 * It doesn't really make a lot of sense. */
-
-	if (selection)
-	{
-		modest_address_book_add_address (selection);
+	if (selection) {
+		modest_address_book_add_address (selection, (GtkWindow *) win);
 		g_free (selection);
 	}
 }

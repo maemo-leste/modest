@@ -104,7 +104,8 @@ open_addressbook ()
 }
 
 void
-modest_address_book_add_address (const gchar *address)
+modest_address_book_add_address (const gchar *address,
+				 GtkWindow *parent)
 {
 	GtkWidget *dialog = NULL;
 	gchar *email_address;
@@ -115,10 +116,11 @@ modest_address_book_add_address (const gchar *address)
 	}
 
 	email_address = modest_text_utils_get_email_address (address);
-	
+
 	attribute = e_vcard_attribute_new (NULL, EVC_EMAIL);
 	e_vcard_attribute_add_value (attribute, email_address);
-	dialog = osso_abook_temporary_contact_dialog_new (NULL, book, attribute, NULL);
+	dialog = osso_abook_temporary_contact_dialog_new (parent, book, attribute, NULL);
+
 	gtk_dialog_run (GTK_DIALOG (dialog));
 
 	gtk_widget_destroy (dialog);
