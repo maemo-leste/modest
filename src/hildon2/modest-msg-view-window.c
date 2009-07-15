@@ -2769,6 +2769,7 @@ typedef struct
 {
 	GList *pairs;
 	GnomeVFSResult result;
+	gchar *uri;
 } SaveMimePartInfo;
 
 static void save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct);
@@ -2789,6 +2790,7 @@ save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
 	}
 	g_list_free (info->pairs);
 	info->pairs = NULL;
+	g_free (info->uri);
 	if (with_struct) {
 		g_slice_free (SaveMimePartInfo, info);
 	}
@@ -2804,7 +2806,13 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	if (info->result == GNOME_VFS_OK) {
 		hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
 	} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
-		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		gchar *msg = NULL;
+
+		/* Check if the uri belongs to the external mmc */
+		if (g_str_has_prefix (info->uri, g_getenv (MODEST_MMC1_VOLUMEPATH_ENV)))
+			msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+		else
+			msg = g_strdup (_KR("cerm_memory_card_full"));
 		modest_platform_information_banner (NULL, NULL, msg);
 		g_free (msg);
 	} else {
@@ -2963,14 +2971,15 @@ save_attachments_response (GtkDialog *dialog,
 		}
 		g_object_unref (iter);
 	}
-	g_free (chooser_uri);
 
 	if (files_to_save != NULL) {
 		SaveMimePartInfo *info = g_slice_new0 (SaveMimePartInfo);
 		info->pairs = files_to_save;
 		info->result = TRUE;
+		info->uri = g_strdup (chooser_uri);
 		save_mime_parts_to_file_with_checks ((GtkWindow *) dialog, info);
 	}
+	g_free (chooser_uri);
 
  end:
 	/* Free and close the dialog */
