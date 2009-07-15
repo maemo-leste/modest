@@ -1006,7 +1006,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 /* get the new Cc:, based on the old header,
  * result is newly allocated or NULL in case of error */
 static gchar*
-get_new_cc (TnyHeader *header, const gchar* from)
+get_new_cc (TnyHeader *header, const gchar* from, const gchar *new_to)
 {
 	gchar *old_cc, *result, *dup;
 
@@ -1016,6 +1016,21 @@ get_new_cc (TnyHeader *header, const gchar* from)
 
 	/* remove me (the new From:) from the Cc: list */
 	dup =  modest_text_utils_remove_address (old_cc, from);
+
+	if (new_to) {
+		gchar **to_parts, **current;
+
+		to_parts = g_strsplit (new_to, ",", 0);
+		for (current = to_parts; current && *current != '\0'; current++) {
+			gchar *dup2;
+
+			dup2 = modest_text_utils_remove_address (dup, g_strstrip (*current));
+			g_free (dup);
+			dup = dup2;
+		}
+		g_strfreev (to_parts);
+	}
+
 	result = modest_text_utils_remove_duplicate_addresses (dup);
 	g_free (dup);
 	g_free (old_cc);
@@ -1171,16 +1186,18 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 		g_debug ("%s: failed to get new To:", __FUNCTION__);
 	else {
 		tny_header_set_to (new_header, new_to);
-		g_free (new_to);
 	}
 
 	if (reply_mode == MODEST_TNY_MSG_REPLY_MODE_ALL) {
-		gchar *new_cc = get_new_cc (header, from);
+		gchar *new_cc = get_new_cc (header, from, new_to);
 		if (new_cc) { 
 			tny_header_set_cc (new_header, new_cc);
 			g_free (new_cc);
 		}
 	}
+
+	if (new_to)
+		g_free (new_to);
 
 	/* Clean */
 	g_object_unref (G_OBJECT (new_header));
