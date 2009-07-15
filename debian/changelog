@@ -1,3 +1,27 @@
+modest (3.0.17-rc23) unstable; urgency=low
+
+  * Week 30, 2009 - first release
+  * 
+  * Fixes: NB#116112 Already downloaded headers should be shown without 
+  * 	a delay after messages view is activated
+  * Fixes: NB#121339 Remote folders are not shown and modest is continuously 
+  * 	retrieving after disconnecting from network
+  * Fixes: NB#125071 "Memory card full.\nRemove data to free memory." should show 
+  * 	when attempt to move message under external MMC in memory full conition.
+  * Fixes: NB#125074 "Memory card full.\nRemove data to free memory." information 
+  * 	note should show when attempt to save files in memory full external MMC
+  * Fixes: NB#125952 Modality Issue: Email stops responding @ on_response_before () 
+  * 	upon launching an editor from Contacts 
+  * Fixes: NB#126882 Progress bar to be replaced with progress indicator 
+  * 	(spinning wheel) in wizard
+  * Fixes: NB#127102 Sometimes e-mail does not go to foreground after tapping on 
+  * 	notification
+  * Fixes: NB#127684 Crash at "modest_ui_dimming_rules_on_view_window_move_to( )"
+  * Fixes: NB#127915 Modest crashed at "mgea_initialize ()" while configuring NMS 
+  * 	account after correcting wrong email address in "Account setup:advanced settings" 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 15 Jul 2009 15:38:38 +0300
+
 modest (3.0.17-rc22) unstable; urgency=low
 
   * Week 28, 2009 - second release
