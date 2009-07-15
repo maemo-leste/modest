@@ -5687,20 +5687,20 @@ xfer_messages_error_handler (ModestMailOperation *mail_op,
 
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
-	account = modest_mail_operation_get_account (mail_op);
 
-	if (error && modest_tny_account_store_is_disk_full_error (modest_runtime_get_account_store(),
-								  (GError *) error, account)) {
-		gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
-		modest_platform_information_banner ((GtkWidget *) win, NULL, msg);
-		g_free (msg);
-	} else {
+	/* We cannot get the account from the mail op as that is the
+	   source account and for checking memory full conditions we
+	   need the destination one */
+	account = TNY_ACCOUNT (user_data);
+
+	if (error &&
+	    !modest_tny_account_store_check_disk_full_error (modest_runtime_get_account_store(),
+							     (GtkWidget *) win, (GError*) error,
+							     account, _KR("cerm_memory_card_full"))) {
 		modest_platform_run_information_dialog ((GtkWindow *) win,
 							_("mail_in_ui_folder_move_target_error"),
 							FALSE);
 	}
-	if (account)
-		g_object_unref (account);
 	if (win)
 		g_object_unref (win);
 }
@@ -5746,7 +5746,6 @@ xfer_messages_performer  (gboolean canceled,
 	dst_forbids_message_add = modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
 										  modest_tny_account_get_protocol_type (dst_account),
 										  MODEST_PROTOCOL_REGISTRY_STORE_FORBID_INCOMING_XFERS);
-	g_object_unref (dst_account);
 
 	if (dst_forbids_message_add) {
 		modest_platform_information_banner (GTK_WIDGET (win),
@@ -5778,7 +5777,8 @@ xfer_messages_performer  (gboolean canceled,
 	/* Perform the mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(win),
 								 xfer_messages_error_handler,
-								 movehelper, NULL);
+								 g_object_ref (dst_account),
+								 g_object_unref);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 
@@ -5791,6 +5791,8 @@ xfer_messages_performer  (gboolean canceled,
 
 	g_object_unref (G_OBJECT (mail_op));
  end:
+	if (dst_account)
+		g_object_unref (dst_account);
 	g_object_unref (helper->dst_folder);
 	g_object_unref (helper->headers);
 	g_slice_free (XferMsgsHelper, helper);
