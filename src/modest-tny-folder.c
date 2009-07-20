@@ -555,7 +555,7 @@ modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, cons
 	uri_to_find[uri_lenght - 1] = '\0';
 
 	for (iterator = tny_list_create_iterator (children);
-	     !tny_iterator_is_done (iterator) && (result == NULL);
+	     iterator && !tny_iterator_is_done (iterator) && (result == NULL);
 	     tny_iterator_next (iterator)) {
 		TnyFolderStore *child;
 
