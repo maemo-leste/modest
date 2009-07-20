@@ -1938,6 +1938,10 @@ modest_text_utils_simplify_recipients (const gchar *recipients)
 	for (node = addresses; node != NULL; node = g_slist_next (node)) {
 		const gchar *address = (const gchar *) node->data;
 		gchar *left_limit, *right_limit;
+
+		if (address && strstr(address, "undisclosed-recipients"))
+			continue;
+
 		left_limit = strstr (address, "<");
 		right_limit = g_strrstr (address, ">");
 
