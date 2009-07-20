@@ -1953,6 +1953,9 @@ message_reader (ModestMsgViewWindow *window,
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
 	gtk_window_set_title (GTK_WINDOW (window), _CS("ckdg_pb_updating"));
 
+	if (header)
+		folder = NULL;
+
 	if (folder)
 		g_object_ref (folder);
 
