@@ -1928,7 +1928,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 	ReplyForwardHelper *rf_helper = NULL;
 	guint reply_forward_type;
 
-	g_return_if_fail (MODEST_IS_WINDOW(win));
+	g_return_if_fail (win && MODEST_IS_WINDOW(win));
 
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * reply/forward (because it could potentially require a lot of memory */
