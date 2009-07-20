@@ -2026,7 +2026,8 @@ message_reader (ModestMsgViewWindow *window,
 
 	message_reader_performer (FALSE, NULL, (GtkWindow *) window, account, info);
 	g_object_unref (account);
-	g_object_unref (folder);
+	if (folder)
+		g_object_unref (folder);
 
 	return TRUE;
 }
