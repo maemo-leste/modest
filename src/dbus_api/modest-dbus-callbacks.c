@@ -627,7 +627,8 @@ on_open_message_performer (gboolean canceled,
 					gtk_widget_show_all (GTK_WIDGET (msg_view));
 				}
 			}
-			g_object_unref (account);
+			if (account)
+				g_object_unref (account);
 
 		}
 		on_find_msg_async_destroy (info);
