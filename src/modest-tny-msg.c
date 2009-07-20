@@ -920,6 +920,38 @@ count_addresses (const gchar* addresses)
 	return count;
 }
 
+static void
+remove_undisclosed_recipients (gchar **recipients)
+{
+	GSList *addresses, *node;
+	gboolean is_first;
+	GString *result;
+
+	g_return_if_fail (recipients);
+	addresses = modest_text_utils_split_addresses_list (*recipients);
+
+	is_first = TRUE;
+	result = g_string_new ("");
+	for (node = addresses; node != NULL; node = g_slist_next (node)) {
+		const gchar *address = (const gchar *) node->data;
+
+		if (address && strstr (address, "undisclosed-recipients"))
+			continue;
+
+		if (is_first)
+			is_first = FALSE;
+		else
+			result = g_string_append (result, ", ");
+
+		result = g_string_append (result, address);
+	}
+	g_slist_foreach (addresses, (GFunc)g_free, NULL);
+	g_slist_free (addresses);
+
+	g_free (*recipients);
+	*recipients = g_string_free (result, FALSE);
+}
+
 
 /* get the new To:, based on the old header,
  * result is newly allocated or NULL in case of error
@@ -996,6 +1028,7 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	}
 
 	tmp = modest_text_utils_simplify_recipients (new_to);
+	remove_undisclosed_recipients  (&tmp);
 	g_free (new_to);
 	new_to = tmp;
 
@@ -1035,6 +1068,7 @@ get_new_cc (TnyHeader *header, const gchar* from, const gchar *new_to)
 	g_free (dup);
 	dup = result;
 	result = modest_text_utils_simplify_recipients (dup);
+	remove_undisclosed_recipients  (&result);
 	g_free (dup);
 	g_free (old_cc);
 	return result;
