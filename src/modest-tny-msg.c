@@ -1033,6 +1033,9 @@ get_new_cc (TnyHeader *header, const gchar* from, const gchar *new_to)
 
 	result = modest_text_utils_remove_duplicate_addresses (dup);
 	g_free (dup);
+	dup = result;
+	result = modest_text_utils_simplify_recipients (dup);
+	g_free (dup);
 	g_free (old_cc);
 	return result;
 }
