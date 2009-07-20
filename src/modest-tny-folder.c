@@ -538,11 +538,17 @@ modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, cons
 	gchar *uri_to_find, *slash;
 	gint uri_lenght;
 
+	if (uri == NULL)
+		return NULL;
+
+	slash = strrchr (uri, '/');
+	if (slash == NULL)
+		return NULL;
+
 	result = NULL;
 	children = TNY_LIST (tny_simple_list_new ());
 	tny_folder_store_get_folders (folder_store, children, NULL, FALSE, NULL);
 
-	slash = strrchr (uri, '/');
 	uri_lenght = slash - uri + 1;
 	uri_to_find = g_malloc0 (sizeof(char) * uri_lenght);
 	strncpy (uri_to_find, uri, uri_lenght);
@@ -554,6 +560,8 @@ modest_tny_folder_store_find_folder_from_uri (TnyFolderStore *folder_store, cons
 		TnyFolderStore *child;
 
 		child = TNY_FOLDER_STORE (tny_iterator_get_current (iterator));
+		if (!child) 
+			continue;
 
 		if (TNY_IS_FOLDER (child)) {
 			gchar *folder_url;
