@@ -928,7 +928,7 @@ get_composite_icons (const gchar *icon_code,
 {
 	ThreePixbufs *retval;
 
-	if (!*pixbuf) {
+	if (pixbuf && !*pixbuf) {
 		GdkPixbuf *icon;
 		icon = modest_platform_get_icon (icon_code, FOLDER_ICON_SIZE);
 		if (icon) {
@@ -938,23 +938,29 @@ get_composite_icons (const gchar *icon_code,
 		}
 	}
 
-	if (!*pixbuf_open && pixbuf && *pixbuf)
+	if (pixbuf_open && !*pixbuf_open && pixbuf && *pixbuf)
 		*pixbuf_open = get_composite_pixbuf ("qgn_list_gene_fldr_exp",
 						     FOLDER_ICON_SIZE,
 						     *pixbuf);
 
-	if (!*pixbuf_close && pixbuf && *pixbuf)
+	if (pixbuf_close && !*pixbuf_close && pixbuf && *pixbuf)
 		*pixbuf_close = get_composite_pixbuf ("qgn_list_gene_fldr_clp",
 						      FOLDER_ICON_SIZE,
 						      *pixbuf);
 
 	retval = g_slice_new0 (ThreePixbufs);
-	if (*pixbuf)
+	if (pixbuf && *pixbuf)
 		retval->pixbuf = g_object_ref (*pixbuf);
-	if (*pixbuf_open)
+	else
+		retval->pixbuf = NULL;
+	if (pixbuf_open && *pixbuf_open)
 		retval->pixbuf_open = g_object_ref (*pixbuf_open);
-	if (*pixbuf_close)
+	else
+		retval->pixbuf_open = NULL;
+	if (pixbuf_close && *pixbuf_close)
 		retval->pixbuf_close = g_object_ref (*pixbuf_close);
+	else
+		retval->pixbuf_close = NULL;
 
 	return retval;
 }
