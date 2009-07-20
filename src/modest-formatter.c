@@ -106,6 +106,9 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 			break;
 		n_read = tny_stream_read (input_stream, buffer, next_read);
 
+		if (G_UNLIKELY (n_read < 0))
+			break;
+
 		offset = buffer;
 		while (offset < buffer + n_read) {
 			
