@@ -2048,7 +2048,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			if (folder)
 				g_object_unref (folder);
 		} else {
-			reply_forward_cb (NULL, header, FALSE, NULL, NULL, rf_helper);
+			reply_forward_cb (NULL, header, FALSE, NULL, NULL, NULL);
 		}
 		/* Frees */
 		g_object_unref (header_list);
