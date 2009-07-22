@@ -36,5 +36,6 @@
 	modest_ui_actions_*;
 	modest_wizard_dialog_*;
 	modest_utils_*;
+	modest_tny_account_store_*;
   local: *;
 };
