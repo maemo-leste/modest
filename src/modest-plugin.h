@@ -33,6 +33,7 @@
 #include <glib/gi18n.h>
 #include <modest-account-mgr.h>
 #include <modest-protocol-registry.h>
+#include <modest-tny-account-store.h>
 #include <modest-mail-operation-queue.h>
 
 #define MODEST_API_VERSION_STR2_HELPER(x) #x
@@ -121,6 +122,7 @@ register_modest_plugin (GTypeModule *module)					\
 /* Global methods providing access to singletons without using modest runtime */
 ModestAccountMgr *modest_plugin_get_account_mgr (void);
 ModestProtocolRegistry *modest_plugin_get_protocol_registry (void);
+ModestTnyAccountStore *modest_plugin_get_account_store (void);
 ModestMailOperationQueue *modest_plugin_get_mail_operation_queue (void);
 const gchar *modest_plugin_get_api_version (ModestPlugin *plugin);
 G_END_DECLS
