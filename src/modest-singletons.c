@@ -242,16 +242,16 @@ modest_singletons_finalize (GObject *obj)
 		priv->email_clipboard = NULL;
 	}
 
-	if (priv->plugin_factory) {
-		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->plugin_factory,"");
-		g_object_unref (G_OBJECT(priv->plugin_factory));
-		priv->plugin_factory = NULL;
-	}
-
 	if (priv->protocol_registry) {
 		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->protocol_registry,"");
 		g_object_unref (G_OBJECT(priv->protocol_registry));
 		priv->protocol_registry = NULL;
+	}
+
+	if (priv->plugin_factory) {
+		MODEST_DEBUG_VERIFY_OBJECT_LAST_REF(priv->plugin_factory,"");
+		g_object_unref (G_OBJECT(priv->plugin_factory));
+		priv->plugin_factory = NULL;
 	}
 
 	/* It is important that the account manager is uninitialized after
