@@ -2180,12 +2180,16 @@ view_msg_cb (ModestMailOperation *mail_op,
 	/* Update the row reference */
 	if (priv->row_reference != NULL) {
 		gtk_tree_row_reference_free (priv->row_reference);
-		priv->row_reference = gtk_tree_row_reference_copy (row_reference);
+		priv->row_reference = row_reference?gtk_tree_row_reference_copy (row_reference):NULL;
 		if (priv->next_row_reference != NULL) {
 			gtk_tree_row_reference_free (priv->next_row_reference);
 		}
-		priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
-		select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE, priv->is_outbox);
+		if (row_reference) {
+			priv->next_row_reference = gtk_tree_row_reference_copy (priv->row_reference);
+			select_next_valid_row (priv->header_model, &(priv->next_row_reference), TRUE, priv->is_outbox);
+		} else {
+			priv->next_row_reference = NULL;
+		}
 	}
 
 	/* Mark header as read */
