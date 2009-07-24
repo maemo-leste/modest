@@ -1487,7 +1487,16 @@ modest_platform_set_update_interval (guint minutes)
 	ModestConf *conf = modest_runtime_get_conf ();
 	if (!conf)
 		return FALSE;
-		
+
+	if (minutes > 0) {
+		GSList *acc_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
+		if (!acc_names) {
+			minutes = 0;
+		} else {
+			modest_account_mgr_free_account_names (acc_names);
+		}
+	}
+
 	cookie_t alarm_cookie = modest_conf_get_int (conf, MODEST_CONF_ALARM_ID, NULL);
 
 	/* Delete any existing alarm,
