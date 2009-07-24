@@ -229,32 +229,6 @@ modest_formatter_inline (ModestFormatter *self, TnyMimePart *body, TnyHeader *he
 	return modest_formatter_do (self, body, header, modest_formatter_wrapper_inline, attachments);
 }
 
-static void
-remove_purgeds (TnyMimePart *part)
-{
-	TnyList *parts;
-	TnyIterator *iterator;
-
-	parts = TNY_LIST (tny_simple_list_new ());
-	tny_mime_part_get_parts (part, parts);
-
-	for (iterator = tny_list_create_iterator (parts);
-	     !tny_iterator_is_done (iterator);
-	     tny_iterator_next (iterator)) {
-		TnyMimePart *current;
-
-		current = (TnyMimePart *) tny_iterator_get_current (iterator);
-		if (tny_mime_part_is_purged (current)) {
-			tny_mime_part_del_part (part, current);
-		}
-
-		g_object_unref (current);
-	}
-
-	g_object_unref (iterator);
-	g_object_unref (parts);
-}
-
 TnyMsg *
 modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 {
@@ -276,10 +250,6 @@ modest_formatter_attach (ModestFormatter *self, TnyMsg *msg, TnyHeader *header)
 	g_object_unref (body_part);
 
 	if (msg) {
-
-		/* Remove purgeds */
-		remove_purgeds (TNY_MIME_PART (msg));
-
 		/* Add parts */
 		tny_mime_part_add_part (TNY_MIME_PART (new_msg), TNY_MIME_PART (msg));
 	}
