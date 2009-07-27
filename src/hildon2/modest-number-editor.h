@@ -40,20 +40,21 @@ G_BEGIN_DECLS
                                                 (modest_number_editor_get_type())
 
 #define                                         MODEST_NUMBER_EDITOR(obj) \
-                                                (GTK_CHECK_CAST (obj, MODEST_TYPE_NUMBER_EDITOR, ModestNumberEditor))
+                                                (G_TYPE_CHECK_INSTANCE_CAST (obj, MODEST_TYPE_NUMBER_EDITOR, ModestNumberEditor))
 
 #define                                         MODEST_NUMBER_EDITOR_CLASS(klass) \
-                                                (GTK_CHECK_CLASS_CAST ((klass), MODEST_TYPE_NUMBER_EDITOR, \
+                                                (G_TYPE_CHECK_CLASS_CAST ((klass), MODEST_TYPE_NUMBER_EDITOR, \
                                                 ModestNumberEditorClass))
 
 #define                                         MODEST_IS_NUMBER_EDITOR(obj) \
-                                                (GTK_CHECK_TYPE (obj, MODEST_TYPE_NUMBER_EDITOR))
+                                                (G_TYPE_CHECK_INSTANCE_TYPE (obj, MODEST_TYPE_NUMBER_EDITOR))
 
 #define                                         MODEST_IS_NUMBER_EDITOR_CLASS(klass) \
-                                                (GTK_CHECK_CLASS_TYPE ((klass), MODEST_TYPE_NUMBER_EDITOR))
+                                                (G_TYPE_CHECK_CLASS_TYPE ((klass), MODEST_TYPE_NUMBER_EDITOR))
 
 #define                                         MODEST_NUMBER_EDITOR_GET_CLASS(obj) \
-                                                ((ModestNumberEditorClass *) G_OBJECT_GET_CLASS(obj))
+						(G_TYPE_INSTANCE_GET_CLASS ((obj), MODEST_TYPE_NUMBER_EDITOR, \
+						ModestNumberEditorClass))
 
 typedef struct                                  _ModestNumberEditor ModestNumberEditor;
 

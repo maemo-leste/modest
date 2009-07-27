@@ -40,20 +40,19 @@ G_BEGIN_DECLS
 
 #define MODEST_TYPE_WIZARD_DIALOG (modest_wizard_dialog_get_type())
 
-#define MODEST_WIZARD_DIALOG(obj) (GTK_CHECK_CAST ((obj), \
+#define MODEST_WIZARD_DIALOG(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), \
             MODEST_TYPE_WIZARD_DIALOG, ModestWizardDialog))
 
-#define MODEST_WIZARD_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_CAST ((klass), \
+#define MODEST_WIZARD_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), \
             MODEST_TYPE_WIZARD_DIALOG, ModestWizardDialogClass))
 
-#define MODEST_IS_WIZARD_DIALOG(obj) (GTK_CHECK_TYPE ((obj), \
+#define MODEST_IS_WIZARD_DIALOG(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), \
             MODEST_TYPE_WIZARD_DIALOG))
 
-#define MODEST_IS_WIZARD_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), \
+#define MODEST_IS_WIZARD_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), \
             MODEST_TYPE_WIZARD_DIALOG))
             
-#define MODEST_WIZARD_DIALOG_GET_CLASS(obj) \
-            (G_TYPE_INSTANCE_GET_CLASS ((obj), \
+#define MODEST_WIZARD_DIALOG_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), \
             MODEST_TYPE_WIZARD_DIALOG, ModestWizardDialogClass))
 
 typedef struct _ModestWizardDialog ModestWizardDialog;
