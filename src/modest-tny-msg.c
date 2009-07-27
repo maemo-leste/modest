@@ -334,8 +334,8 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 
 		old_attachment = pos->data;
 		if (!tny_mime_part_is_purged (old_attachment)) {
-			const gchar *old_cid;
-			old_cid = tny_mime_part_get_content_id (old_attachment);
+			gchar *old_cid;
+			old_cid = g_strdup (tny_mime_part_get_content_id (old_attachment));
 			attachment_part = copy_mime_part (old_attachment, err);
 			if (attachment_part != NULL) {
 				if (add_inline) {
@@ -359,6 +359,7 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 					tny_mime_part_set_content_id (attachment_part, old_cid);
 				g_object_unref (attachment_part);
 			}
+			g_free (old_cid);
 		}
 	}
 	return attached;
