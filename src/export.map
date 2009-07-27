@@ -26,6 +26,7 @@
 	modest_easysetup_wizard_*;
 	modest_pair_*;
 	modest_mail_operation_get_source;
+	modest_mail_operation_get_account;
 	modest_mail_operation_get_type_operation;
 	modest_platform_*;
 	modest_plugin_*;
