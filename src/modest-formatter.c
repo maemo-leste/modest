@@ -478,7 +478,7 @@ find_body_parent (TnyMimePart *part)
 	msg_content_type = tny_mime_part_get_content_type (part);
 
 	if ((msg_content_type != NULL) &&
-	    (!g_strcasecmp (msg_content_type, "multipart/alternative")))
+	    (!g_ascii_strcasecmp (msg_content_type, "multipart/alternative")))
 		return g_object_ref (part);
 	else if ((msg_content_type != NULL) &&
 		 (g_str_has_prefix (msg_content_type, "multipart/"))) {
@@ -491,10 +491,10 @@ find_body_parent (TnyMimePart *part)
 
 		while (!tny_iterator_is_done (iter)) {
 			TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
-			if (part && !g_strcasecmp(tny_mime_part_get_content_type (part), "multipart/alternative")) {
+			if (part && !g_ascii_strcasecmp(tny_mime_part_get_content_type (part), "multipart/alternative")) {
 				alternative_part = part;
 				break;
-			} else if (part && !g_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
+			} else if (part && !g_ascii_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
 				related_part = part;
 				break;
 			}

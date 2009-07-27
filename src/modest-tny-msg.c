@@ -383,7 +383,7 @@ add_images (TnyMsg *msg, GList *images_list, GError **err)
 
 		while (!tny_iterator_is_done (iter)) {
 			TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
-			if (part && !g_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
+			if (part && !g_ascii_strcasecmp (tny_mime_part_get_content_type (part), "multipart/related")) {
 				related_part = part;
 				break;
 			}
@@ -1100,13 +1100,13 @@ modest_tny_msg_get_references (TnyMsg *msg, gchar **message_id, gchar **referenc
 
 		pair = TNY_PAIR (tny_iterator_get_current (iterator));
 		name = tny_pair_get_name (pair);
-		if (!g_strcasecmp (name, "References")) {
+		if (!g_ascii_strcasecmp (name, "References")) {
 			if (l_references) g_free (l_references);
 			l_references = g_strdup (tny_pair_get_value (pair));
-		} else if (!g_strcasecmp (name, "In-Reply-To")) {
+		} else if (!g_ascii_strcasecmp (name, "In-Reply-To")) {
 			if (l_in_reply_to) g_free (l_in_reply_to);
 			l_in_reply_to = g_strdup (tny_pair_get_value (pair));
-		} else if (!g_strcasecmp (name, "Message-ID")) {
+		} else if (!g_ascii_strcasecmp (name, "Message-ID")) {
 			if (l_message_id) g_free (l_message_id);
 			l_message_id = g_strdup (tny_pair_get_value (pair));
 		}
