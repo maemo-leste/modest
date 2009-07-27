@@ -88,7 +88,8 @@ static void modest_recpt_editor_class_init (ModestRecptEditorClass *klass);
 /* widget events */
 static void modest_recpt_editor_on_abook_clicked (GtkButton *button,
 						  ModestRecptEditor *editor);
-static void modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor);
+static void modest_recpt_editor_add_tags (ModestRecptEditor *editor,
+					  const gchar * recipient_id);
 static gboolean modest_recpt_editor_on_focus_in (GtkTextView *text_view,
 					     GdkEventFocus *event,
 					     ModestRecptEditor *editor);
@@ -211,7 +212,6 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 	ModestRecptEditorPrivate *priv;
 	GtkTextBuffer *buffer = NULL;
 	GtkTextIter start, end, iter;
-	GtkTextTag *tag = NULL;
 	GSList *node;
 	gboolean is_first_recipient = TRUE;
       
@@ -243,14 +243,6 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 
 	gtk_text_buffer_get_end_iter (buffer, &iter);
 
-	tag = gtk_text_buffer_create_tag (buffer, NULL, 
-					  "underline", PANGO_UNDERLINE_SINGLE,
-					  "wrap-mode", GTK_WRAP_NONE,
-					  "editable", TRUE, NULL);
-
-	g_object_set_data (G_OBJECT (tag), "recipient-tag-id", GINT_TO_POINTER (RECIPIENT_TAG_ID));
-	g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
-
 	for (node = email_list; node != NULL; node = g_slist_next (node)) {
 		gchar *recipient = (gchar *) node->data;
 
@@ -259,16 +251,15 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 			if (!is_first_recipient)
 			gtk_text_buffer_insert (buffer, &iter, "\n", -1);
 
-			gtk_text_buffer_insert_with_tags (buffer, &iter, recipient, -1, tag, NULL);
+			gtk_text_buffer_insert (buffer, &iter, recipient, -1);
 			gtk_text_buffer_insert (buffer, &iter, ";", -1);
 			is_first_recipient = FALSE;
 		}
 	}
+	modest_recpt_editor_add_tags (recpt_editor, recipient_id);
+
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text_after, recpt_editor);
-
-	modest_recpt_editor_move_cursor_to_end (recpt_editor);
-
 }
 
 void 
@@ -984,22 +975,55 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	}
 }
 
-static void 
-modest_recpt_editor_move_cursor_to_end (ModestRecptEditor *editor)
+/* NOTE: before calling this function be sure that both
+   modest_recpt_editor_on_insert_text and
+   modest_recpt_editor_on_insert_text_after won't be triggered during
+   the execution of the procedure. You'll have to block both signal
+   handlers otherwise you'll get an infinite loop and most likely a
+   SIGSEV caused by a stack overflow */
+static void
+modest_recpt_editor_add_tags (ModestRecptEditor *editor,
+			      const gchar * recipient_id)
 {
+
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->text_view));
 #else
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->text_view));
 #endif
+	GtkTextTag *tag;
 	GtkTextIter start, end;
+	gchar * buffer_contents;
+	GtkTextIter start_match, end_match;
 
-	gtk_text_buffer_get_end_iter (buffer, &start);
-	end = start;
-	gtk_text_buffer_select_range (buffer, &start, &end);
+	/* This would move the cursor to the end of the buffer
+	   containing new line character. */
+	gtk_text_buffer_get_bounds (buffer, &start, &end);
+	buffer_contents = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+	gtk_text_buffer_set_text(buffer,buffer_contents,strlen(buffer_contents));
 
+	tag = gtk_text_buffer_create_tag (buffer, NULL,
+					  "underline", PANGO_UNDERLINE_SINGLE,
+					  "wrap-mode", GTK_WRAP_NONE,
+					  "editable", TRUE, NULL);
 
+	g_object_set_data (G_OBJECT (tag), "recipient-tag-id", GINT_TO_POINTER (RECIPIENT_TAG_ID));
+	g_object_set_data_full (G_OBJECT (tag), "recipient-id", g_strdup (recipient_id), (GDestroyNotify) g_free);
+
+	/* Formatting the buffer content by applying tag */
+	gtk_text_buffer_get_bounds (buffer, &start, &end);
+	while (gtk_text_iter_forward_search(&start, ";",
+					    GTK_TEXT_SEARCH_TEXT_ONLY |
+					    GTK_TEXT_SEARCH_VISIBLE_ONLY,
+					    &start_match, &end_match, &end )) {
+		int offset;
+
+		gtk_text_buffer_apply_tag(buffer, tag, &start, &start_match);
+		offset = gtk_text_iter_get_offset (&end_match);
+		gtk_text_buffer_get_iter_at_offset(buffer, &start, offset);
+	}
+	g_free (buffer_contents);
 }
 
 void
