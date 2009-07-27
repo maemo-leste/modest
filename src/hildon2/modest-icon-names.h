@@ -95,7 +95,7 @@
 #define  MODEST_TOOLBAR_ICON_NEXT               "general_forward"
 #define  MODEST_TOOLBAR_ICON_PREV               "general_back"
 #define  MODEST_TOOLBAR_ICON_FIND               "general_search"
-#define  MODEST_TOOLBAR_ICON_DOWNLOAD_IMAGES    "email_message_download_external_images"
+#define  MODEST_TOOLBAR_ICON_DOWNLOAD_IMAGES    "email_download_external_images"
 
 /* Stock icon names */
 #define  MODEST_STOCK_MAIL_SEND    "modest-stock-mail-send"
