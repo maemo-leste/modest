@@ -5,6 +5,8 @@ modest (3.0.17-rc25) unstable; urgency=low
   * Fixes: NB#129013 modest adds himself into alarm list always
   * Fixes: NB#129320 Continuous modest crashes at "parse_mime_part/ea_send_to" 
   * 	when attempt to forwarding a message after removing the email attachment
+  * Fixes: NB#128962 Crash> modest-singletons.c
+  * Fixes: NB#129121 Corematic: Crash in "IA__gtk_tree_row_reference_copy ()"
 
  -- Moises Martinez <moises.martinez@nokia.com>  Sun, 26 Jul 2009 22:31:43 +0300
 
