@@ -1131,6 +1131,8 @@ free_notification_data (gpointer data,
 	g_free (notification_data->from);
 	g_free (notification_data->subject);
 	g_free (notification_data->uri);
+
+	g_slice_free (ModestMsgNotificationData, notification_data);
 }
 
 void
