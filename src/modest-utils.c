@@ -71,7 +71,7 @@ modest_utils_folder_writable (const gchar *filename)
 	if (!filename)
 		return FALSE;
 
-	if (g_strncasecmp (filename, "obex", 4) != 0) {
+	if (g_ascii_strncasecmp (filename, "obex", 4) != 0) {
 		GnomeVFSFileInfo *folder_info = NULL;
 		GnomeVFSResult result = GNOME_VFS_OK;
 		GnomeVFSURI *uri = NULL;
