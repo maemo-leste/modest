@@ -48,6 +48,8 @@
 #define SMALL_ICON_SIZE MODEST_ICON_SIZE_SMALL
 #endif
 
+#define MODEST_HEADER_VIEW_MAX_TEXT_LENGTH 128
+
 static const gchar *
 get_status_string (ModestTnySendQueueStatus status)
 {
@@ -127,14 +129,33 @@ set_common_flags (GtkCellRenderer *renderer, TnyHeaderFlags flags)
 }
 
 static void
-set_cell_text (GtkCellRenderer *renderer, 
-	       const gchar *text, 
+set_cell_text (GtkCellRenderer *renderer,
+	       const gchar *text,
 	       TnyHeaderFlags flags)
 {
 	gboolean strikethrough;
 	gboolean bold_is_active_color;
 	GdkColor *color = NULL;
 	PangoWeight weight;
+	gchar *newtext = NULL;
+
+	/* We have to limit the size of the text. Otherwise Pango
+	   could cause freezes trying to render too large texts. This
+	   prevents DoS attacks with specially malformed emails */
+	if (g_utf8_validate(text, -1, NULL)) {
+		if (g_utf8_strlen (text, -1) > MODEST_HEADER_VIEW_MAX_TEXT_LENGTH) {
+			/* UTF-8 bytes are 4 bytes length in the worst case */
+			newtext = g_malloc0 (MODEST_HEADER_VIEW_MAX_TEXT_LENGTH * 4);
+			g_utf8_strncpy (newtext, text, MODEST_HEADER_VIEW_MAX_TEXT_LENGTH);
+			text = newtext;
+		}
+	} else {
+		if (strlen (text) > MODEST_HEADER_VIEW_MAX_TEXT_LENGTH) {
+			newtext = g_malloc0 (MODEST_HEADER_VIEW_MAX_TEXT_LENGTH);
+			strncpy (newtext, text, MODEST_HEADER_VIEW_MAX_TEXT_LENGTH);
+			text = newtext;
+		}
+	}
 
 	bold_is_active_color = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (renderer), BOLD_IS_ACTIVE_COLOR));
 	if (bold_is_active_color) {
@@ -165,6 +186,10 @@ set_cell_text (GtkCellRenderer *renderer,
 				      NULL);
 		}
 	}
+
+	if (newtext)
+		g_free (newtext);
+
 	g_object_thaw_notify (G_OBJECT (renderer));
 }
 
