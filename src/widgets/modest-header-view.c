@@ -2089,6 +2089,13 @@ notify_filter_change_destroy (gpointer data)
 }
 
 static gboolean
+current_folder_needs_filtering (ModestHeaderViewPrivate *priv)
+{
+	/* For the moment we only need to filter outbox */
+	return priv->is_outbox;
+}
+
+static gboolean
 filter_row (GtkTreeModel *model,
 	    GtkTreeIter *iter,
 	    gpointer user_data)
@@ -2128,7 +2135,7 @@ filter_row (GtkTreeModel *model,
 	}
 
 	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_DELETABLE)) {
-		if (priv->is_outbox &&
+		if (current_folder_needs_filtering (priv) &&
 		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING) {
 			visible = FALSE;
 			goto frees;
@@ -2136,7 +2143,7 @@ filter_row (GtkTreeModel *model,
 	}
 
 	if (visible && (priv->filter & MODEST_HEADER_VIEW_FILTER_MOVEABLE)) {
-		if (priv->is_outbox &&
+		if (current_folder_needs_filtering (priv) &&
 		    modest_tny_all_send_queues_get_msg_status (header) == MODEST_TNY_SEND_QUEUE_SENDING) {
 			visible = FALSE;
 			goto frees;
@@ -2333,7 +2340,8 @@ modest_header_view_set_filter (ModestHeaderView *self,
 
 	priv->filter |= filter;
 
-	modest_header_view_refilter (self);
+	if (current_folder_needs_filtering (priv))
+		modest_header_view_refilter (self);
 }
 
 void
@@ -2347,7 +2355,8 @@ modest_header_view_unset_filter (ModestHeaderView *self,
 
 	priv->filter &= ~filter;
 
-	modest_header_view_refilter (self);
+	if (current_folder_needs_filtering (priv))
+		modest_header_view_refilter (self);
 }
 
 static void
