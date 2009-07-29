@@ -961,6 +961,8 @@ static gchar*
 get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	    ModestTnyMsgReplyMode reply_mode)
 {
+	const gchar *reply_header = "Reply-To:";
+	const gchar *from_header = "From:";
 	gchar* old_reply_to;
 	gchar* old_from;
 	gchar* new_to;
@@ -981,13 +983,21 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	old_reply_to = modest_tny_mime_part_get_header_value (TNY_MIME_PART(msg), 
 							      "Reply-To"); 
 	old_from     = tny_header_dup_from (header);
-	
+
 	if (!old_from && !old_reply_to) {
 		g_debug ("%s: failed to get either Reply-To: or From: from header",
 			   __FUNCTION__);
 		return NULL;
 	}
-	
+
+	/* Prevent DoS attacks caused by malformed emails */
+	if (old_from)
+		old_from = modest_text_utils_get_secure_header (old_from,
+								from_header);
+	if (old_reply_to)
+		old_reply_to = modest_text_utils_get_secure_header (old_reply_to,
+								    reply_header);
+
 	/* for mailing lists, use both Reply-To and From if we did a
 	 * 'Reply All:'
 	 * */

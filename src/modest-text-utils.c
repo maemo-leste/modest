@@ -2008,3 +2008,19 @@ modest_text_utils_remove_duplicate_addresses_list (GSList *address_list)
 
 	return new_list;
 }
+
+gchar *
+modest_text_utils_get_secure_header (gchar *value,
+				     const gchar *header)
+{
+	gchar *new_value = value;
+	gchar *needle = g_strrstr (value, header);
+
+	if (needle) {
+		gchar *tmp = value;
+		new_value = g_strdup (needle + strlen (header));
+		g_free (tmp);
+	}
+
+	return new_value;
+}

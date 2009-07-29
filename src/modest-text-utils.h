@@ -515,4 +515,17 @@ gchar *modest_text_utils_simplify_recipients (const gchar *recipient);
  */
 GSList *modest_text_utils_remove_duplicate_addresses_list (GSList *address_list);
 
+/**
+ * modest_text_utils_get_secure_header:
+ * @value: the value of a mail header
+ * @header: the header that we're evaluating
+ *
+ * This function returns the secure value for a header. Basically it
+ * avoids DoS attacks caused by specially malformed headers like for
+ * example. From:From:From...From: some@mail.com
+ *
+ * Returns: returns the secured header
+ **/
+gchar * modest_text_utils_get_secure_header (gchar *value, const gchar *header);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */
