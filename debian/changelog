@@ -1,3 +1,24 @@
+modest (3.0.17-rc26) unstable; urgency=low
+
+  * Week 31, 2009 - second release
+  *
+  * Fixes: NB#116469 	Editor: every further contact added is unnecessary highlighted
+  * Fixes: NB#122195 	Email application and device becomes inaccessible while scrolling
+  * 	 the message list when local folder has some set of security messages (MIME)
+  * Fixes: NB#123483 	Performance: Time taken to open edit mode for Move messages/Delete 
+  * 	message is too long [~20seconds]
+  * Fixes: NB#126904 	Crash in "camel_message_info_free"/ "tny_folder_change_finalize"
+  * Fixes: NB#128529 	codereview, S3 	<MemLeak> modest-utils.c
+  * Fixes: NB#128869 	Corematic: Crash in "camel_imap_folder_changed"
+  * Fixes: NB#129039 	Modest sends empty ENABLE command when IMAP server advertises ENABLE 
+  * 	but not CONDSTORE or QRESYNC capabilities
+  * Fixes: NB#129516 	Icon for "download images" not shown in view toolbar
+  * Fixes: NB#130151 	Remove deprecated Glib symbols
+  * Fixes: NB#130154 	Remove deprecated Gtk+ symbols
+  * Fixes: NB#130164 	Crash in "selected_msg_sent_in_progress" 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 29 Jul 2009 09:16:38 +0300
+
 modest (3.0.17-rc25) unstable; urgency=low
 
   * Week 31, 2009 first release
