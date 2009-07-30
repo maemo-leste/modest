@@ -10,4 +10,4 @@ usr/share/pixmaps/modest/*
 etc/osso-backup/applications/modest.conf
 etc/osso-cud-scripts/modest-clean.sh
 etc/osso-backup/pre-backup.d/*
-etc/osso-backup/restore.c/always/*
+etc/osso-backup/restore.d/always/*
