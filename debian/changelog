@@ -1,3 +1,14 @@
+modest (3.0.17-rc27) unstable; urgency=low
+
+  * Week 32, 2009 - first release
+  * 
+  * Fixes: NB#117612  Email messages from user defined folder are not restoring 
+  * 	 with backup and restore
+  * Fixes: NB#122697  Security: when attempt to reply to the attached message, reply editor
+  * 	 doesn't open and the whole device UI freezes 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 31 Jul 2009 15:05:09 +0300
+
 modest (3.0.17-rc26) unstable; urgency=low
 
   * Week 31, 2009 - second release
