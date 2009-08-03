@@ -106,16 +106,16 @@ modest_utils_folder_writable (const gchar *filename)
 gboolean
 modest_utils_file_exists (const gchar *filename)
 {
-	GnomeVFSURI *uri = NULL;
 	gboolean result = FALSE;
+	gchar *escaped;
 
 	g_return_val_if_fail (filename, FALSE);
 
-	uri = gnome_vfs_uri_new (filename);
-	if (uri) {
-		result = gnome_vfs_uri_exists (uri);
-		gnome_vfs_uri_unref (uri);
-	}
+	escaped = g_uri_escape_string (filename, NULL, FALSE);
+	if (g_access (escaped, F_OK) == 0)
+		result = TRUE;
+	g_free (escaped);
+
 	return result;
 }
 
@@ -124,7 +124,7 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 {
 	gint fd;
 	gchar *filepath = NULL;
-	gchar *tmpdir;
+	gchar *tmpdir, *tmp;
 	guint hash_number;
 
 	/* hmmm... maybe we need a modest_text_utils_validate_file_name? */
@@ -156,15 +156,16 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 		return NULL;
 	}
 
-	filepath = g_strconcat (tmpdir, "/", orig_name, NULL);
+	tmp = g_uri_escape_string (orig_name, NULL, FALSE);
+	filepath = g_build_filename (tmpdir, tmp, NULL);
+	g_free (tmp);
 
 	/* if file exists, first we try to remove it */
-	if (modest_utils_file_exists (filepath)) {
+	if (g_access (filepath, F_OK) == 0)
 		g_unlink (filepath);
-	}
 
 	/* don't overwrite if it already exists, even if it is writable */
-	if (modest_utils_file_exists (filepath)) {
+	if (g_access (filepath, F_OK) == 0) {
 		if (path!=NULL) {
 			*path = filepath;
 		} else {
