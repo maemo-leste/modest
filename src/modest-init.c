@@ -608,7 +608,11 @@ init_i18n (void)
 		setenv ("LANGUAGE", "en_GB", 1);
 		setenv ("LC_MESSAGES", "en_GB", 1);
 	} else {
-		setenv ("LC_MESSAGES", lc_messages, 1);
+		gchar *new_lc_messages;
+		new_lc_messages = g_strconcat (lc_messages, ":en_GB", NULL);
+		setenv ("LANGUAGE", new_lc_messages, 1);
+		setenv ("LC_MESSAGES", new_lc_messages, 1);
+		g_free (new_lc_messages);
 	}
 
 	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);
