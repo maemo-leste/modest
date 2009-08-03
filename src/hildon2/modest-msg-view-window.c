@@ -3098,6 +3098,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	if (save_multiple_str) {
 		g_object_set (G_OBJECT (save_dialog), "save-multiple", save_multiple_str, NULL);
 		gtk_window_set_title (GTK_WINDOW (save_dialog), _FM("sfil_ti_save_objects_files"));
+		g_free (save_multiple_str);
 	}
 
 	/* We must run this asynchronously, because the hildon dialog
