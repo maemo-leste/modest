@@ -220,6 +220,7 @@ modest_plugin_factory_load (const gchar *file)
 		g_type_module_unuse (type_module);
 	}
 	g_free (path);
+	g_free (plugin_name);
 
 	return plugin;
 error:

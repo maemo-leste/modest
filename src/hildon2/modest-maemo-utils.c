@@ -193,7 +193,10 @@ modest_maemo_utils_get_device_name (void)
 		get_default_adapter_cb (conn, msg);
 		dbus_message_unref (msg);
 	}
+
 	dbus_message_unref (request);
+	if (dbus_error_is_set (&error))
+		dbus_error_free (&error);
 }
 
 void

@@ -152,9 +152,10 @@ main (int argc, char *argv[])
 	g_option_context_add_group (context, gtk_get_option_group (TRUE));
 	if (!g_option_context_parse (context, &argc, &argv, &error)) {
 		g_print ("option parsing failed: %s\n", error->message);
+		g_option_context_free (context);
 		exit (1);
 	}
-
+	g_option_context_free (context);
 
 	show_ui_without_top_application_method = show_ui;
 
