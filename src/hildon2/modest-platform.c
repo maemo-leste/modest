@@ -2069,14 +2069,17 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	   example. With GTK_RESPONSE_HELP the view button is aligned
 	   to the left while the other two to the right */
 	note = hildon_note_new_confirmation_add_buttons  (
-		NULL,
+		(GtkWindow *) win,
 		question,
 		_HL("wdgt_bd_yes"),     GTK_RESPONSE_OK,
 		_HL("wdgt_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
 		_HL("wdgt_bd_no"), GTK_RESPONSE_CANCEL,
 		NULL, NULL);
 
-	g_signal_connect (G_OBJECT(note), "response", 
+	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+				     (GtkWindow *) note, (GtkWindow *) win);
+
+	g_signal_connect (G_OBJECT(note), "response",
 			  G_CALLBACK(on_cert_dialog_response),
 			  (gpointer) certificate);
 
