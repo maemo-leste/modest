@@ -2458,8 +2458,6 @@ modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 						NULL))
 		return NULL;
 
-	g_debug ("located path: %s", gtk_tree_path_to_string (path));
-
 	/* Get model */
 	tree_model = gtk_tree_view_get_model ((GtkTreeView *) header_view);
 	if (!gtk_tree_model_get_iter (tree_model, &iter, path))
