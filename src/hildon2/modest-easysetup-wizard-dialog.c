@@ -407,7 +407,7 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 }
 
 static void
-on_account_country_selector_changed (HildonTouchSelector *widget, gint column, gpointer user_data)
+on_account_country_selector_changed (HildonTouchSelector *widget, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -1253,9 +1253,8 @@ fill_providers (ModestEasysetupWizardDialog *self)
 		modest_country_picker_load_data(
 			MODEST_COUNTRY_PICKER (priv->account_country_picker));
 		/* connect to country picker's changed signal, so we can fill the provider picker: */
-		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
-					    (HILDON_PICKER_BUTTON (priv->account_country_picker))),
-				  "changed",
+		g_signal_connect ((GObject *) priv->account_country_picker,
+				  "value-changed",
 				  G_CALLBACK (on_account_country_selector_changed), self);
 
 		modest_country_picker_set_active_country_locale (
