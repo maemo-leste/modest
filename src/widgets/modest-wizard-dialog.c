@@ -490,48 +490,33 @@ create_title (ModestWizardDialog *wizard_dialog)
     gchar *str = NULL;
     ModestWizardDialogPrivate *priv = NULL;
     GtkNotebook *notebook = NULL;
+    gint pages, current;
+    const gchar *steps;
 
     g_return_if_fail (MODEST_IS_WIZARD_DIALOG(wizard_dialog));
     g_return_if_fail (wizard_dialog->priv != NULL);
 
-    priv = wizard_dialog->priv;    
+    priv = wizard_dialog->priv;
     notebook = priv->notebook;
 
     if (!notebook)
         return;
 
     /* Get page information, we'll need that when creating title */
-    gint pages = gtk_notebook_get_n_pages (notebook);
+    pages = gtk_notebook_get_n_pages (notebook);
     if (pages == 0)
-      return;
-	
-    gint current = gtk_notebook_get_current_page (priv->notebook);
+	    return;
+
+    current = gtk_notebook_get_current_page (priv->notebook);
     if (current < 0)
-        current = 0;
+	    current = 0;
 
-    /* the welcome title on the initial page */
-    /* This is the standard wizard title, with, e.g., 1/4 at the end,
-	 * but the Modest UI spec does not want this. */
-	/*
-    if (current == 0) {
-        str = g_strdup_printf (_HL("ecdg_ti_wizard_welcome"), 
-                priv->wizard_name, pages);
-    } else {
-    */
-    	const gchar *steps = gtk_notebook_get_tab_label_text (notebook,
-        	gtk_notebook_get_nth_page (notebook, current));
-                
-		/* This is the standard wizard title, with, e.g., 1/4 at the end,
-		 * but the Modest UI spec does not want this.
-		 */
-		/*
-        str = g_strdup_printf (_HL("ecdg_ti_wizard_step"), 
-                priv->wizard_name, current + 1, pages, steps);
-        */
+    steps = gtk_notebook_get_tab_label_text (notebook,
+					     gtk_notebook_get_nth_page (notebook, current));
 
-        str = g_strdup_printf ((steps&&*steps)?_HL("%s: %s"):_HL("%s"), 
-                priv->wizard_name, steps);
-    /* } */
+    str = g_strdup_printf ((steps&&*steps)?_HL("%s%s %s"):_HL("%s"),
+			   priv->wizard_name, _HL("ecdg_ti_caption_separator"),
+			   steps);
 
     /* Update the dialog to display the generated title */
     gtk_window_set_title (GTK_WINDOW (wizard_dialog), str);
