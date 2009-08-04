@@ -1567,17 +1567,31 @@ create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self)
 
 /* */
 static void
-remove_non_common_tabs (GtkNotebook *notebook,
+remove_non_common_tabs (ModestEasysetupWizardDialog *self,
 			gboolean remove_user_details)
 {
 	gint starting_tab;
+	GtkNotebook *notebook;
+	ModestEasysetupWizardDialogPrivate *priv;
+
+	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	g_object_get (self, "wizard-notebook", &notebook, NULL);
+
 	/* The first 2 tabs are the common ones (welcome tab and the
 	   providers tab), so we always remove starting from the
 	   end */
-
 	starting_tab = (remove_user_details) ? 2 : 3;
-	while (gtk_notebook_get_n_pages (notebook) > starting_tab)
+	while (gtk_notebook_get_n_pages (notebook) > starting_tab) {
+		/* Disconnect signal */
+		GtkWidget *page = gtk_notebook_get_nth_page (notebook, -1);
+		if (modest_signal_mgr_is_connected (priv->missing_data_signals, (GObject *) page, "missing-mandatory-data")) {
+			priv->missing_data_signals = modest_signal_mgr_disconnect (priv->missing_data_signals,
+										   (GObject *) page,
+										   "missing-mandatory-data");
+		}
+		/* Remove page from notebook */
 		gtk_notebook_remove_page (notebook, -1);
+	}
 }
 
 static void
@@ -1613,13 +1627,13 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 
 		/* If we come from a rollbacked easysetup */
 		if (priv->page_complete_easysetup) {
-			remove_non_common_tabs (notebook, FALSE);
+			remove_non_common_tabs (self, FALSE);
 			priv->page_complete_easysetup = NULL;
 		}
 
 		/* If we come from a rollbacked plugin protocol setup */
 		if (priv->last_plugin_protocol_selected != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
-			remove_non_common_tabs (notebook, TRUE);
+			remove_non_common_tabs (self, TRUE);
 			priv->last_plugin_protocol_selected = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
 			modest_signal_mgr_disconnect_all_and_destroy (priv->missing_data_signals);
 			priv->missing_data_signals = NULL;
@@ -1629,7 +1643,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 	} else {
 		/* If we come from a rollbacked custom setup */
 		if (priv->page_custom_incoming) {
-			remove_non_common_tabs (notebook, TRUE);
+			remove_non_common_tabs (self, TRUE);
 			init_user_page (priv);
 			init_incoming_page (priv);
 			init_outgoing_page (priv);
@@ -1654,7 +1668,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			/* If we come from a rollbacked easy setup */
 			if (priv->last_plugin_protocol_selected != proto_type &&
 			    priv->page_complete_easysetup) {
-				remove_non_common_tabs (notebook, TRUE);
+				remove_non_common_tabs (self, TRUE);
 				init_user_page (priv);
 				priv->page_complete_easysetup = NULL;
 			}
@@ -1708,7 +1722,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 		} else {
 			if (priv->last_plugin_protocol_selected !=
 			    MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
-				remove_non_common_tabs (notebook, TRUE);
+				remove_non_common_tabs (self, TRUE);
 				init_user_page (priv);
 				priv->page_complete_easysetup = NULL;
 				priv->last_plugin_protocol_selected = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
