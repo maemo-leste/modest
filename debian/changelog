@@ -1,3 +1,22 @@
+modest (3.0.17-rc28) unstable; urgency=low
+
+  * Week 32, 2009 - second release
+  *
+  * Fixes: NB#128553   [REGF]Saving email attachment when usb mass storage 
+  * 	is used - is not proper
+  * Fixes: NB#128634 	attached pdf document in opened only one time , 
+  * 	second time we are getting "File Error "
+  * Fixes: NB#130519 	Experience of using the list items in "Region" 
+  * 	field in wizard is poor
+  * Fixes: NB#130686 	Valgrind shows memleaks in Modest
+  * Fixes: NB#130850 	device is getting hung with unknown certificate 
+  * 	and the confirmation note
+  * Fixes: NB#130999 	memleak in camel-imap-folder.c
+  * Fixes: NB#131178 	Email, Account setup - colon ':' should not be 
+  * 	hardcoded after string Â§mcen_ti_emailsetupÂ§ 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 04 Aug 2009 23:21:58 +0300
+
 modest (3.0.17-rc27) unstable; urgency=low
 
   * Week 32, 2009 - first release
