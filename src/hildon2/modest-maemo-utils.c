@@ -57,6 +57,9 @@
 /* Label child of a captioned */
 #define CAPTIONED_LABEL_CHILD "captioned-label"
 
+#ifdef MODEST_PLATFORM_MAEMO
+#define INTERNAL_MMC_USB_MODE  "/system/osso/af/internal-mmc-used-over-usb"
+#endif
 
 static osso_context_t *__osso_context = NULL; /* urgh global */
 
@@ -567,3 +570,11 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 
 	return result;
 }
+
+#ifdef MODEST_PLATFORM_MAEMO
+gboolean
+modest_maemo_utils_in_usb_mode ()
+{
+	return modest_conf_get_bool (modest_runtime_get_conf (), INTERNAL_MMC_USB_MODE, NULL);
+}
+#endif

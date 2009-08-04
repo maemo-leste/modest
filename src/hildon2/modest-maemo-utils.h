@@ -146,4 +146,16 @@ GtkWidget *modest_maemo_utils_create_group_box (const gchar *label, GtkWidget *c
 
 gboolean   modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs);
 
+#ifdef MODEST_PLATFORM_MAEMO
+/**
+ * modest_maemo_utils_in_usb_mode:
+ *
+ * Check if the device is working in mass storage mode
+ *
+ * Returns: returns TRUE if the internal memory of the device is
+ * working in mass storage mode
+ **/
+gboolean modest_maemo_utils_in_usb_mode ();
+#endif
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/

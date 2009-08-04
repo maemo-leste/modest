@@ -2936,9 +2936,9 @@ save_attachments_response (GtkDialog *dialog,
 
 	chooser_uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (dialog));
 	current_folder = gtk_file_chooser_get_current_folder_uri (GTK_FILE_CHOOSER (dialog));
-	if (current_folder && current_folder != '\0') {
+	if (current_folder && *current_folder != '\0') {
 		GError *err = NULL;
-		modest_conf_set_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, 
+		modest_conf_set_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH,
 					current_folder,&err);
 		if (err != NULL) {
 			g_debug ("Error storing latest used folder: %s", err->message);
@@ -2948,8 +2948,18 @@ save_attachments_response (GtkDialog *dialog,
 	g_free (current_folder);
 
 	if (!modest_utils_folder_writable (chooser_uri)) {
-		hildon_banner_show_information 
-			(NULL, NULL, _FM("sfil_ib_readonly_location"));
+		const gchar *err_msg;
+
+#ifdef MODEST_PLATFORM_MAEMO
+		if (modest_maemo_utils_in_usb_mode ()) {
+			err_msg = dgettext ("hildon-status-bar-usb", "usbh_ib_mmc_usb_connected");
+		} else {
+			err_msg = _FM("sfil_ib_readonly_location");
+		}
+#else
+		err_msg = _FM("sfil_ib_readonly_location");
+#endif
+		hildon_banner_show_information (NULL, NULL, err_msg);
 	} else {
 		TnyIterator *iter;
 
@@ -3004,6 +3014,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	gchar *conf_folder = NULL;
 	gchar *filename = NULL;
 	gchar *save_multiple_str = NULL;
+	const gchar *root_folder = "file:///";
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
@@ -3056,8 +3067,15 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
 
-	/* set folder */
+	/* Get last used folder */
 	conf_folder = modest_conf_get_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, NULL);
+
+	/* File chooser stops working if we select "file:///" as current folder */
+	if (conf_folder && g_ascii_strcasecmp (root_folder, conf_folder) != 0) {
+		g_free (conf_folder);
+		conf_folder = NULL;
+	}
+
 	if (conf_folder && conf_folder[0] != '\0') {
 		gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (save_dialog), conf_folder);
 	} else {
