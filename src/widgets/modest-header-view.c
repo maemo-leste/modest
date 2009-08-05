@@ -1624,7 +1624,6 @@ cmp_subject_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *ite
 	gint t1, t2;
 	gchar *val1, *val2;
 	gint cmp;
-/* 	static int counter = 0; */
 
 	g_return_val_if_fail (GTK_IS_TREE_VIEW_COLUMN(user_data), 0);
 
@@ -1633,9 +1632,22 @@ cmp_subject_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *ite
 	gtk_tree_model_get (tree_model, iter2, TNY_GTK_HEADER_LIST_MODEL_SUBJECT_COLUMN, &val2,
 			    TNY_GTK_HEADER_LIST_MODEL_DATE_SENT_TIME_T_COLUMN, &t2, -1);
 
-	cmp = modest_text_utils_utf8_strcmp (val1 + modest_text_utils_get_subject_prefix_len(val1),
-					     val2 + modest_text_utils_get_subject_prefix_len(val2),
+	/* Do not use the prefixes for sorting. Consume all the blank
+	   spaces for sorting */
+	cmp = modest_text_utils_utf8_strcmp (g_strchug (val1 + modest_text_utils_get_subject_prefix_len(val1)),
+					     g_strchug (val2 + modest_text_utils_get_subject_prefix_len(val2)),
 					     TRUE);
+
+	/* If they're equal based on subject without prefix then just
+	   sort them by length. This will show messages like this.
+	   * Fw:
+	   * Fw:Fw:
+	   * Fw:Fw:
+	   * Fw:Fw:Fw:
+	   * */
+	if (cmp == 0)
+		cmp = (g_utf8_strlen (val1, -1) >= g_utf8_strlen (val2, -1)) ? 1 : -1;
+
 	g_free (val1);
 	g_free (val2);
 	return cmp;
