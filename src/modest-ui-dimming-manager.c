@@ -140,6 +140,15 @@ modest_ui_dimming_manager_finalize (GObject *obj)
 }
 
 static void
+dispose_objects  (gpointer key,
+		  gpointer value,
+		  gpointer user_data)
+{
+	if (G_IS_OBJECT (value))
+	    g_object_run_dispose (value);
+}
+
+static void
 modest_ui_dimming_manager_dispose (GObject *obj)
 {
 	ModestUIDimmingManagerPrivate *priv;
@@ -155,7 +164,7 @@ modest_ui_dimming_manager_dispose (GObject *obj)
 	}
 
 	if (priv->groups_map) {
-		g_hash_table_foreach (priv->groups_map, g_object_run_dispose, NULL);
+		g_hash_table_foreach (priv->groups_map, dispose_objects, NULL);
 		g_hash_table_unref (priv->groups_map);
 		priv->groups_map = NULL;
 	}
