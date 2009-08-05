@@ -33,6 +33,7 @@
 static void modest_dimming_rule_class_init (ModestDimmingRuleClass *klass);
 static void modest_dimming_rule_init       (ModestDimmingRule *obj);
 static void modest_dimming_rule_finalize   (GObject *obj);
+static void modest_dimming_rule_dispose    (GObject *obj);
 
 typedef struct _ModestDimmingRulePrivate ModestDimmingRulePrivate;
 struct _ModestDimmingRulePrivate {
@@ -83,6 +84,7 @@ modest_dimming_rule_class_init (ModestDimmingRuleClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_dimming_rule_finalize;
+	gobject_class->dispose  = modest_dimming_rule_dispose;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestDimmingRulePrivate));
 }
@@ -116,6 +118,21 @@ modest_dimming_rule_finalize (GObject *obj)
 		g_free(priv->notification);
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
+modest_dimming_rule_dispose (GObject *obj)
+{
+	ModestDimmingRulePrivate *priv;
+
+	priv = MODEST_DIMMING_RULE_GET_PRIVATE(obj);
+
+	if (priv->group != NULL) {
+		g_object_unref (priv->group);
+		priv->group = NULL;
+	}
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 

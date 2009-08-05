@@ -36,6 +36,7 @@
 static void modest_dimming_rules_group_class_init (ModestDimmingRulesGroupClass *klass);
 static void modest_dimming_rules_group_init       (ModestDimmingRulesGroup *obj);
 static void modest_dimming_rules_group_finalize   (GObject *obj);
+static void modest_dimming_rules_group_dispose    (GObject *obj);
 
 #ifndef MODEST_TOOLKIT_GTK
 static void _insensitive_press_callback (GtkWidget *widget, gpointer user_data);
@@ -100,6 +101,7 @@ modest_dimming_rules_group_class_init (ModestDimmingRulesGroupClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_dimming_rules_group_finalize;
+	gobject_class->dispose  = modest_dimming_rules_group_dispose;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestDimmingRulesGroupPrivate));
 }
@@ -131,16 +133,27 @@ modest_dimming_rules_group_finalize (GObject *obj)
 	if (priv->window)
 		g_object_weak_unref (G_OBJECT (priv->window), on_window_destroy, obj);
 
-	if (priv->name != NULL)
-		g_free(priv->name);
-
-	if (priv->rules_map != NULL)
-		g_hash_table_destroy (priv->rules_map);
-
-	if (priv->widget_rules != NULL)
-		g_slist_foreach (priv->widget_rules, (GFunc) g_object_unref, NULL);
-
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
+modest_dimming_rules_group_dispose (GObject *obj)
+{
+	ModestDimmingRulesGroupPrivate *priv;
+
+	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(obj);
+
+	if (priv->rules_map != NULL) {
+		g_hash_table_destroy (priv->rules_map);
+		priv->rules_map = NULL;
+	}
+
+	if (priv->widget_rules != NULL) {
+		g_slist_foreach (priv->widget_rules, (GFunc) g_object_unref, NULL);
+		priv->widget_rules = NULL;
+	}
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 
