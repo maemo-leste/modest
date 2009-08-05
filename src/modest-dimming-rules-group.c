@@ -56,6 +56,7 @@ struct _ModestDimmingRulesGroupPrivate {
 	gboolean notifications_enabled;
 	GHashTable *rules_map;
 	GSList *widget_rules;
+	gboolean window_weak_ref;
 };
 
 
@@ -121,6 +122,7 @@ modest_dimming_rules_group_init (ModestDimmingRulesGroup *obj)
 						 (GDestroyNotify) g_free,
 						 (GDestroyNotify) g_object_unref);
 	priv->widget_rules = NULL;
+	priv->window_weak_ref = FALSE;
 }
 
 static void
@@ -130,8 +132,10 @@ modest_dimming_rules_group_finalize (GObject *obj)
 
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(obj);
 
-	if (priv->window)
+	if (priv->window && priv->window_weak_ref) {
 		g_object_weak_unref (G_OBJECT (priv->window), on_window_destroy, obj);
+		priv->window_weak_ref = FALSE;
+	}
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -238,7 +242,11 @@ modest_dimming_rules_group_add_widget_rule (ModestDimmingRulesGroup *self,
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
 
 	/* Set window to process dimming rules */
+	if (priv->window_weak_ref)
+		g_object_weak_unref ((GObject *) priv->window, on_window_destroy, self);
 	priv->window = MODEST_WINDOW (window);
+	g_object_weak_ref (G_OBJECT (window), on_window_destroy, self);
+	priv->window_weak_ref = TRUE;
 
 	dim_rule = modest_dimming_rule_new_from_widget (priv->window,
 							(ModestDimmingCallback) callback,
@@ -268,8 +276,11 @@ modest_dimming_rules_group_add_rules (ModestDimmingRulesGroup *self,
 	priv = MODEST_DIMMING_RULES_GROUP_GET_PRIVATE(self);
 
 	/* Set window to process dimming rules */
+	if (priv->window_weak_ref)
+		g_object_weak_unref ((GObject *) priv->window, on_window_destroy, self);
 	priv->window = MODEST_WINDOW (window);
 	g_object_weak_ref (G_OBJECT (window), on_window_destroy, self);
+	priv->window_weak_ref = TRUE;
 
 	/* Add dimming rules */
 	for (i=0; i < n_elements; i++) {
