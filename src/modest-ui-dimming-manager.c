@@ -154,6 +154,12 @@ modest_ui_dimming_manager_dispose (GObject *obj)
 		g_hash_table_remove_all (priv->delayed_calls);
 	}
 
+	if (priv->groups_map) {
+		g_hash_table_foreach (priv->groups_map, g_object_run_dispose, NULL);
+		g_hash_table_unref (priv->groups_map);
+		priv->groups_map = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
