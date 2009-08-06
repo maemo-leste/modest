@@ -737,7 +737,7 @@ text_cell_data  (GtkTreeViewColumn *column,
 
 	/* Convert INBOX */
 	if (type == TNY_FOLDER_TYPE_INBOX &&
-	    !g_ascii_strcasecmp (fname, "Inbox")) {
+	    g_str_has_suffix (fname, "Inbox")) {
 		g_free (item_name);
 		item_name = g_strdup (_("mcen_me_folder_inbox"));
 	}
