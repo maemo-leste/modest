@@ -3209,7 +3209,7 @@ modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer us
 	if (!dimmed)
 		dimmed = _forbid_outgoing_xfers (win);
 
-	if (MODEST_IS_FOLDER_WINDOW (win)) {
+	if (!dimmed && MODEST_IS_FOLDER_WINDOW (win)) {
 		ModestFolderView *folder_view;
 		folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (win));
 		dimmed = !modest_folder_view_any_folder_fulfils_rules (folder_view,
