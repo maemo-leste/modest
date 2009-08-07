@@ -171,6 +171,7 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 	ModestDetailsDialogPrivate *priv;
 	guint n_rows = 0;
 	GtkWidget *label_w, *value_w;
+	gchar *secure_value;
 
 	priv = MODEST_DETAILS_DIALOG_GET_PRIVATE (self);
 
@@ -181,12 +182,15 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 	gtk_misc_set_alignment (GTK_MISC (label_w), 1.0, 0.0);
 	gtk_label_set_justify (GTK_LABEL (label_w), GTK_JUSTIFY_RIGHT);
 
+	/* Create secure value */
+	secure_value = modest_text_utils_get_secure_header (value, "");
+
 	/* Create value */
-	value_w = gtk_label_new (value);
-	gtk_label_set_line_wrap (GTK_LABEL (value_w), TRUE);
-	gtk_label_set_line_wrap_mode (GTK_LABEL (value_w), PANGO_WRAP_WORD_CHAR);
+	value_w = gtk_label_new (secure_value);
+	gtk_label_set_line_wrap ((GtkLabel *) value_w, TRUE);
+	gtk_label_set_line_wrap_mode ((GtkLabel *) value_w, PANGO_WRAP_WORD_CHAR);
 	gtk_misc_set_alignment (GTK_MISC (value_w), 0.0, 0.0);
-	gtk_label_set_justify (GTK_LABEL (value_w), GTK_JUSTIFY_LEFT);
+	gtk_label_set_justify ((GtkLabel *) value_w, GTK_JUSTIFY_LEFT);
 
 	/* Attach label and value */
 	gtk_table_attach (GTK_TABLE (priv->props_table), 
@@ -201,6 +205,8 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 			  GTK_EXPAND|GTK_FILL, 
 			  GTK_SHRINK|GTK_FILL, 
 			  0, 0);
+
+	g_free (secure_value);
 }
 
 static void 

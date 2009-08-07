@@ -991,12 +991,16 @@ get_new_to (TnyMsg *msg, TnyHeader *header, const gchar* from,
 	}
 
 	/* Prevent DoS attacks caused by malformed emails */
-	if (old_from)
-		old_from = modest_text_utils_get_secure_header (old_from,
-								from_header);
-	if (old_reply_to)
-		old_reply_to = modest_text_utils_get_secure_header (old_reply_to,
-								    reply_header);
+	if (old_from) {
+		gchar *tmp = old_from;
+		old_from = modest_text_utils_get_secure_header ((const gchar *) tmp, from_header);
+		g_free (tmp);
+	}
+	if (old_reply_to) {
+		gchar *tmp = old_reply_to;
+		old_reply_to = modest_text_utils_get_secure_header ((const gchar *) tmp, reply_header);
+		g_free (tmp);
+	}
 
 	/* for mailing lists, use both Reply-To and From if we did a
 	 * 'Reply All:'
@@ -1368,6 +1372,15 @@ modest_tny_msg_header_get_all_recipients_list (TnyHeader *header)
 
 	recipients = modest_text_utils_split_addresses_list (after_remove);
 	g_free (after_remove);
+
+	if (from)
+		g_free (from);
+	if (to)
+		g_free (to);
+	if (cc)
+		g_free (cc);
+	if (bcc)
+		g_free (bcc);
 
 	return recipients;
 }

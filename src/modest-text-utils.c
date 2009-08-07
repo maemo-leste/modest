@@ -2010,16 +2010,35 @@ modest_text_utils_remove_duplicate_addresses_list (GSList *address_list)
 }
 
 gchar *
-modest_text_utils_get_secure_header (gchar *value,
+modest_text_utils_get_secure_header (const gchar *value,
 				     const gchar *header)
 {
-	gchar *new_value = value;
+	const gint max_len = 128;
+	gchar *new_value = NULL;
 	gchar *needle = g_strrstr (value, header);
 
-	if (needle) {
-		gchar *tmp = value;
+	if (needle && value != needle)
 		new_value = g_strdup (needle + strlen (header));
-		g_free (tmp);
+
+	if (!new_value)
+		new_value = g_strdup (value);
+
+	/* Do a max length check to prevent DoS attacks caused by huge
+	   malformed headers */
+	if (g_utf8_validate (new_value, -1, NULL)) {
+		if (g_utf8_strlen (new_value, -1) > max_len) {
+			gchar *tmp = g_malloc0 (max_len * 4);
+			g_utf8_strncpy (tmp, (const gchar *) new_value, max_len);
+			g_free (new_value);
+			new_value = tmp;
+		}
+	} else {
+		if (strlen (new_value) > max_len) {
+			gchar *tmp = g_malloc0 (max_len);
+			strncpy (new_value, tmp, max_len);
+			g_free (new_value);
+			new_value = tmp;
+		}
 	}
 
 	return new_value;
