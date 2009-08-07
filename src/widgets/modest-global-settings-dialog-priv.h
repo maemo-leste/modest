@@ -30,7 +30,7 @@
 #ifndef __MODEST_GLOBAL_SETTINGS_DIALOG_PRIV_H__
 #define __MODEST_GLOBAL_SETTINGS_DIALOG_PRIV_H__
 
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 #include "modest-pair.h"
 
 G_BEGIN_DECLS

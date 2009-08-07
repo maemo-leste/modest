@@ -28,7 +28,7 @@
  */
 
 #include <string.h>
-#include <gtk/gtkvbox.h>
+#include <gtk/gtk.h>
 #include "modest-utils.h"
 #include "modest-runtime.h"
 #include "modest-platform.h"

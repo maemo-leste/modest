@@ -31,7 +31,7 @@
 #define __MODEST_DETAILS_DIALOG
 
 #include <glib.h>
-#include <gtk/gtkdialog.h>
+#include <gtk/gtk.h>
 #include <tny-header.h>
 
 

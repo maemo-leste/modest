@@ -31,7 +31,7 @@
 #ifndef _MODEST_RETRIEVE_COMBO_BOX
 #define _MODEST_RETRIEVE_COMBO_BOX
 
-#include <gtk/gtkcombobox.h>
+#include <gtk/gtk.h>
 #include "modest-protocol-registry.h"
 #include <modest-account-settings.h>
 

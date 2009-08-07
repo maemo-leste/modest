@@ -30,7 +30,7 @@
 #ifndef __MODEST_HEADER_VIEW_PRIV_H__
 #define __MODEST_HEADER_VIEW_PRIV_H__
 
-#include <gtk/gtktreeview.h>
+#include <gtk/gtk.h>
 #include "modest-header-view.h"
 
 G_BEGIN_DECLS

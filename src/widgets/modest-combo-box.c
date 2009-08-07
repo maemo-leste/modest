@@ -27,9 +27,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <gtk/gtkcelllayout.h>
-#include <gtk/gtkcellrenderertext.h>
-#include <gtk/gtkliststore.h>
+#include <gtk/gtk.h>
 #include "modest-combo-box.h"
 
 /* 'private'/'protected' functions */

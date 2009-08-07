@@ -28,7 +28,7 @@
  */
 
 #include "modest-dnd.h"
-#include <gtk/gtktreeview.h>
+#include <gtk/gtk.h>
 #include <string.h>
 
 GdkAtom tree_path_as_string_list_atom;

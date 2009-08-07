@@ -31,7 +31,7 @@
 #define __MODEST_DND_H__
 
 #include <gdk/gdk.h>
-#include <gtk/gtkselection.h>
+#include <gtk/gtk.h>
 
 extern GdkAtom tree_path_as_string_list_atom;
 

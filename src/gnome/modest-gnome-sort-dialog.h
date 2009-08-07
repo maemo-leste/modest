@@ -31,7 +31,7 @@
 #define __MODEST_GNOME_SORT_DIALOG
 
 #include <glib.h>
-#include <gtk/gtkdialog.h>
+#include <gtk/gtk.h>
 #include <widgets/modest-sort-criterium-view.h>
 
 G_BEGIN_DECLS

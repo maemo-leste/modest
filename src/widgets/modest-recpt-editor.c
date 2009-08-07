@@ -31,10 +31,7 @@
 
 #include <glib/gi18n-lib.h>
 
-#include <gtk/gtkscrolledwindow.h>
-#include <gtk/gtktextview.h>
-#include <gtk/gtkimage.h>
-#include <gtk/gtkbutton.h>
+#include <gtk/gtk.h>
 
 #include <modest-text-utils.h>
 #include <modest-recpt-editor.h>

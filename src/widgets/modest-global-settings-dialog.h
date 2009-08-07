@@ -33,7 +33,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-dialog.h>
 #else
-#include <gtk/gtkdialog.h>
+#include <gtk/gtk.h>
 #endif
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-platform.h"

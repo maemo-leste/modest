@@ -31,7 +31,7 @@
 #ifndef _MODEST_SECUREAUTH_COMBO_BOX
 #define _MODEST_SECUREAUTH_COMBO_BOX
 
-#include <gtk/gtkcombobox.h>
+#include <gtk/gtk.h>
 #include "modest-protocol-registry.h"
 
 G_BEGIN_DECLS

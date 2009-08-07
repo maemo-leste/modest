@@ -31,7 +31,7 @@
 #define __MODEST_SORT_CRITERIUM_VIEW_H__
 
 #include <glib-object.h>
-#include <gtk/gtkenums.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

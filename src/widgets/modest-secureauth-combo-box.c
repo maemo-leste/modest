@@ -30,9 +30,7 @@
 
 #include "modest-secureauth-combo-box.h"
 #include <modest-runtime.h>
-#include <gtk/gtkliststore.h>
-#include <gtk/gtkcelllayout.h>
-#include <gtk/gtkcellrenderertext.h>
+#include <gtk/gtk.h>
 #include <glib/gi18n.h>
 
 #include <stdlib.h>

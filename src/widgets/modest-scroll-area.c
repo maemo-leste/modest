@@ -40,10 +40,7 @@
  */
 
 #include "modest-scroll-area.h"
-#include <gtk/gtkscrolledwindow.h>
-#include <gtk/gtkfixed.h>
-#include <gtk/gtkadjustment.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 #include <string.h>
 
 typedef struct

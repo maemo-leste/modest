@@ -34,13 +34,13 @@
 #define __MODEST_TNY_ACCOUNT_STORE_H__
 
 #include <glib-object.h>
+#include <gtk/gtk.h>
 #include <tny-account-store.h>
 #include <tny-session-camel.h>
 #include <tny-shared.h>
 #include <tny-folder.h>
 #include <modest-account-mgr.h>
 #include <modest-tny-local-folders-account.h>
-#include <gtk/gtkwidget.h>
 
 /* other include files */
 

@@ -30,7 +30,7 @@
 #ifndef __MODEST_COMBO_BOX_H__
 #define __MODEST_COMBO_BOX_H__
 
-#include <gtk/gtkcombobox.h>
+#include <gtk/gtk.h>
 #include <modest-pair.h>
 
 G_BEGIN_DECLS

@@ -30,7 +30,7 @@
 #ifndef MODEST_HBOX_CELL_RENDERER_H
 #define MODEST_HBOX_CELL_RENDERER_H
 #include <glib-object.h>
-#include <gtk/gtkcellrenderer.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

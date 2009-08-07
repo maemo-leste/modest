@@ -28,6 +28,7 @@
  */
 
 #include <glib/gi18n.h>
+#include <gtk/gtk.h>
 #include "modest-account-view.h"
 
 #include <modest-account-mgr.h>
@@ -37,10 +38,6 @@
 #include <modest-runtime.h>
 #include <modest-signal-mgr.h>
 
-#include <gtk/gtkcellrenderertoggle.h>
-#include <gtk/gtkcellrenderertext.h>
-#include <gtk/gtktreeselection.h>
-#include <gtk/gtkliststore.h>
 #include <string.h> /* For strcmp(). */
 #include <modest-account-mgr-helpers.h>
 #include <modest-datetime-formatter.h>

@@ -31,7 +31,7 @@
 
 #include <glib/gi18n-lib.h>
 
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 
 #include <modest-text-utils.h>
 #include <modest-vbox-cell-renderer.h>

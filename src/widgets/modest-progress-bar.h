@@ -30,7 +30,7 @@
 #ifndef __MODEST_PROGRESS_BAR_H__
 #define __MODEST_PROGRESS_BAR_H__
 
-#include <gtk/gtkvbox.h>
+#include <gtk/gtk.h>
 #include "modest-progress-object.h"
 
 G_BEGIN_DECLS

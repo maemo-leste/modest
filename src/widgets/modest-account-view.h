@@ -31,7 +31,7 @@
 #define __MODEST_ACCOUNT_VIEW_H__
 
 #include "modest-account-mgr.h"
-#include <gtk/gtktreeview.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

@@ -30,7 +30,7 @@
 #include <config.h>
 
 #include <glib/gi18n-lib.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 
 #include <modest-text-utils.h>
 #include <modest-hbox-cell-renderer.h>

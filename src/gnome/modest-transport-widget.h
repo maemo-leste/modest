@@ -32,7 +32,7 @@
 
 G_BEGIN_DECLS
 
-#include <gtk/gtkvbox.h>
+#include <gtk/gtk.h>
 #include "modest-protocol-registry.h"
 
 /* convenience macros */

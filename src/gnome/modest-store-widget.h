@@ -30,7 +30,7 @@
 #ifndef __MODEST_STORE_WIDGET_H__
 #define __MODEST_STORE_WIDGET_H__
 
-#include <gtk/gtkvbox.h>
+#include <gtk/gtk.h>
 #include "modest-protocol.h"
 
 G_BEGIN_DECLS

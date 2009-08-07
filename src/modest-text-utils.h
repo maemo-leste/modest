@@ -35,9 +35,8 @@
 
 #include <time.h>
 #include <glib.h>
-#include <gdk/gdkcolor.h>
-#include <gtk/gtktextbuffer.h>
-#include <gtk/gtklabel.h>
+#include <gdk/gdk.h>
+#include <gtk/gtk.h>
 
 #define _FM(str) dgettext("hildon-fm",str)
 #define _CS(str) dgettext("hildon-common-strings",str)

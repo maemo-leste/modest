@@ -33,7 +33,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-entry.h>
 #else
-#include <gtk/gtkentry.h>
+#include <gtk/gtk.h>
 #endif
 
 G_BEGIN_DECLS

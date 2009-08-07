@@ -31,7 +31,7 @@
 #ifndef _MODEST_LIMIT_RETRIEVE_COMBO_BOX
 #define _MODEST_LIMIT_RETRIEVE_COMBO_BOX
 
-#include <gtk/gtkcombobox.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

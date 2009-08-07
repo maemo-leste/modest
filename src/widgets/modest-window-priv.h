@@ -30,7 +30,7 @@
 #ifndef __MODEST_WINDOW_PRIV_H__
 #define __MODEST_WINDOW_PRIV_H__
 
-#include <gtk/gtkuimanager.h>
+#include <gtk/gtk.h>
 #include <tny-account-store.h>
 #include "modest-tny-platform-factory.h"
 #include "modest-ui-dimming-manager.h"

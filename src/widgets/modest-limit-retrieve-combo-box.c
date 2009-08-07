@@ -29,9 +29,7 @@
  */
 
 #include "modest-limit-retrieve-combo-box.h"
-#include <gtk/gtkliststore.h>
-#include <gtk/gtkcelllayout.h>
-#include <gtk/gtkcellrenderertext.h>
+#include <gtk/gtk.h>
 #include <glib/gi18n.h>
 
 #include <stdlib.h>

@@ -46,7 +46,6 @@ G_BEGIN_DECLS
  * this way is probably the easiest to maintain
  */
 #ifdef MODEST_TOOLKIT_GTK
-#include <gtk/gtkwindow.h>
 typedef GtkWindow      ModestWindowParent;
 typedef GtkWindowClass ModestWindowParentClass;
 #else

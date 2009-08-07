@@ -29,8 +29,7 @@
 
 #ifndef MODEST_SCROLL_TEXT_H
 #define MODEST_SCROLL_TEXT_H
-#include <gtk/gtkscrolledwindow.h>
-#include <gtk/gtktextview.h>
+#include <gtk/gtk.h>
 #include <glib-object.h>
 
 G_BEGIN_DECLS

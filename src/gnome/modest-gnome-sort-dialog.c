@@ -30,10 +30,7 @@
 #include <glib/gi18n.h>
 #include "modest-gnome-sort-dialog.h"
 #include "widgets/modest-sort-criterium-view.h"
-#include <gtk/gtkstock.h>
-#include <gtk/gtkvbox.h>
-#include <gtk/gtkcombobox.h>
-
+#include <gtk/gtk.h>
 
 static gint    modest_gnome_sort_dialog_add_sort_key        (ModestSortCriteriumView *self,
 								      const gchar *sort_key);

@@ -28,7 +28,7 @@
  */
 
 #include <glib/gi18n.h>
-#include <gtk/gtktreeviewcolumn.h>
+#include <gtk/gtk.h>
 #include <tny-account-store-view.h>
 #include <tny-simple-list.h>
 #include <tny-error.h>

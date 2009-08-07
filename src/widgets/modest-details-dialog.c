@@ -31,10 +31,7 @@
 
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
-#include <gtk/gtkscrolledwindow.h>
-#include <gtk/gtktable.h>
-#include <gtk/gtkstock.h>
-#include <gtk/gtklabel.h>
+#include <gtk/gtk.h>
 #include <tny-msg.h>
 #include <tny-header.h>
 #include <tny-header-view.h>

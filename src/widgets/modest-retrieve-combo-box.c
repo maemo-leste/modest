@@ -31,9 +31,7 @@
 #include "modest-retrieve-combo-box.h"
 #include "modest-defs.h" /* For the conf names. */
 #include "modest-account-settings.h"
-#include <gtk/gtkliststore.h>
-#include <gtk/gtkcelllayout.h>
-#include <gtk/gtkcellrenderertext.h>
+#include <gtk/gtk.h>
 #include <glib/gi18n.h>
 
 #include <stdlib.h>

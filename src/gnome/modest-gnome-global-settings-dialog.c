@@ -32,13 +32,7 @@
 #endif /*HAVE_CONFIG_H*/
 
 #include <glib/gi18n.h>
-#include <gtk/gtkbox.h>
-#include <gtk/gtkvbox.h>
-#include <gtk/gtklabel.h>
-#include <gtk/gtkcheckbutton.h>
-#include <gtk/gtkhseparator.h>
-#include <gtk/gtktable.h>
-#include <gtk/gtkspinbutton.h>
+#include <gtk/gtk.h>
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "widgets/modest-combo-box.h"
 #include "modest-runtime.h"

@@ -30,8 +30,7 @@
 #ifndef _MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG
 #define _MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG
 
-#include <gtk/gtkdialog.h>
-#include <gtk/gtknotebook.h>
+#include <gtk/gtk.h>
 #include "widgets/modest-account-settings-dialog.h"
 #include <modest-protocol.h>
 

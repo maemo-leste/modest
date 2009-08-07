@@ -31,7 +31,7 @@
 
 #include <glib/gi18n-lib.h>
 
-#include <gtk/gtktextview.h>
+#include <gtk/gtk.h>
 
 #include <modest-scroll-text.h>
 

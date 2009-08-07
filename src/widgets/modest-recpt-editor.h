@@ -30,9 +30,7 @@
 #ifndef MODEST_RECPT_EDITOR_H
 #define MODEST_RECPT_EDITOR_H
 #include <glib-object.h>
-#include <gtk/gtkhbox.h>
-#include <gtk/gtksizegroup.h>
-#include <gtk/gtktextbuffer.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

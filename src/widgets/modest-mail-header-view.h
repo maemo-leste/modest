@@ -31,7 +31,7 @@
 #define __MODEST_MAIL_HEADER_VIEW_H__
 
 #include <tny-header-view.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

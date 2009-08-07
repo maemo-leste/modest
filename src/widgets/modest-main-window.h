@@ -31,7 +31,7 @@
 #ifndef __MODEST_MAIN_WINDOW_H__
 #define __MODEST_MAIN_WINDOW_H__
 
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 #include <widgets/modest-window.h>
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-folder-view.h>

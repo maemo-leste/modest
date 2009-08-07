@@ -30,15 +30,7 @@
 
 #include "widgets/modest-account-settings-dialog.h"
 #include <glib/gi18n.h>
-#include <gtk/gtknotebook.h>
-#include <gtk/gtkvbox.h>
-#include <gtk/gtklabel.h>
-#include <gtk/gtkcombobox.h>
-#include <gtk/gtkentry.h>
-#include <gtk/gtkbutton.h>
-#include <gtk/gtkcheckbutton.h>
-#include <gtk/gtkmessagedialog.h>
-#include <gtk/gtkstock.h>
+#include <gtk/gtk.h>
 
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"

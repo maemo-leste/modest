@@ -37,8 +37,7 @@
 #endif
 #include <widgets/modest-window.h>
 #include <widgets/modest-header-view.h>
-#include <gtk/gtktreemodel.h>
-#include <gtk/gtkenums.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 

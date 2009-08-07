@@ -41,13 +41,6 @@
  */
 
 #include <config.h>
-#include <gtk/gtkdialog.h>
-#include <gtk/gtknotebook.h>
-#include <gtk/gtkimage.h>
-#include <gtk/gtkbox.h>
-#include <gtk/gtkhbox.h>
-#include <gtk/gtkvbox.h>
-#include <gtk/gtkbutton.h>
 #include <gtk/gtk.h>
 
 #ifdef HAVE_CONFIG_H

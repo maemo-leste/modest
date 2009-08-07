@@ -34,7 +34,7 @@
  * that should be available in plugins.
  */
 
-#include <gtk/gtkwindow.h>
+#include <gtk/gtk.h>
 #include <glib.h>
 
 G_BEGIN_DECLS
