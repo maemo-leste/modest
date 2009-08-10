@@ -1,28 +1,29 @@
 modest (3.0.17-rc29) unstable; urgency=low
 
   * Week 33, 2009 - first release
-  * 
-  * Fixes: NB#123378    Security: Email UI hangs when attempt to check message details of the 
-  * 	message attached.
+  *
+  * Fixes: NB#114614 (Multi-app test case) Folder created under Activesync inbox in exchange 
+  * 	server is not synched to the device until Email application is restarted.
+  * Fixes: NB#123378 	Security: Email UI hangs when attempt to check message details of 
+  * 	the message attached.
   * Fixes: NB#125205 	Sort By Subject (A-Z) is incorrect
   * Fixes: NB#126904 	Crash in "camel_message_info_free"/ "tny_folder_change_finalize"
   * Fixes: NB#128553 	[REGF]Saving email attachment when usb mass storage is used - is not proper
-  * Fixes: NB#128634 	attached pdf document in opened only one time , second time we are getting 
-  * 	"File Error "
+  * Fixes: NB#128634 	attached pdf document in opened only one time , second time we are getting "File Error "
+  * Fixes: NB#129177 	[Erkko S3 OPEN]Corematic: Random crash in pop3_get_local_size ()
   * Fixes: NB#130519 	Experience of using the list items in "Region" field in wizard is poor
   * Fixes: NB#130686 	Valgrind shows memleaks in Modest
+  * Fixes: NB#130850 	device is getting hung with unknown certificate and the confirmation note
   * Fixes: NB#130999 	memleak in camel-imap-folder.c
   * Fixes: NB#131002 	"Inbox" is hardcoded in the mailbox folders view
-  * Fixes: NB#131102 	Memleak reported by Valgrind while executing test case "Message Move to 
-  * 	Local Folder"
-  * Fixes: NB#131178 	Email, Account setup - colon ':' should not be hardcoded after string 
-  * 	Â§mcen_ti_emailsetupÂ§
+  * Fixes: NB#131102 	Memleak reported by Valgrind while executing test case "Message Move to Local Folder"
+  * Fixes: NB#131178 	Email, Account setup - colon ':' should not be hardcoded after 
+  * 	string Â§mcen_ti_emailsetupÂ§
   * Fixes: NB#131348 	Crash in notify_folder_observers_about_in_idle ()
-  * Fixes: NB#131583 	Email application hangs often when retrieving messages 
-  * Fixes: NB#130850 	device is getting hung with unknown certificate 
-  * 	and the confirmation note
+  * Fixes: NB#131583 	Email application hangs often when retrieving messages
+  * Fixes: NB#132131 	Email- Gmail option is not present for pt-PT in service provider list 
 
- -- Moises Martinez <moises.martinez@nokia.com>  Sun, 09 Aug 2009 17:53:17 +0300
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 10 Aug 2009 21:28:42 +0300
 
 modest (3.0.17-rc27) unstable; urgency=low
 
