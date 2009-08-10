@@ -49,6 +49,7 @@ typedef struct _ModestMsgNotificationData {
 	gchar *subject;
 	gchar *from;
 	gchar *uri;
+	time_t time;
 } ModestMsgNotificationData;
 
 GQuark modest_utils_get_supported_secure_authentication_error_quark (void);

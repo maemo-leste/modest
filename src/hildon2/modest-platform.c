@@ -1648,6 +1648,10 @@ modest_platform_on_new_headers_received (GList *URI_list,
 					    -1);
 
 	/* Set the led pattern */
+	if (data->time)
+		notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
+						    "time", data->time);
+
 	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
 					    "dialog-type", 4);
 	notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
