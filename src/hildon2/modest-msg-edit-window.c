@@ -2534,14 +2534,19 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
 						 GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
-	conf_folder = modest_conf_get_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_ATTACH_FILE_PATH, NULL);
+	conf_folder = modest_conf_get_string (modest_runtime_get_conf (),
+					      MODEST_CONF_LATEST_ATTACH_FILE_PATH, NULL);
 	if (conf_folder && conf_folder[0] != '\0') {
 		gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (dialog), conf_folder);
 	} else {
 		gchar *docs_folder;
-		/* Set the default folder to images folder */
-		docs_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
-						".documents", NULL);
+		/* Set the default folder to documents folder */
+		docs_folder = (gchar *) g_strdup(g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
+		if (!docs_folder) {
+			/* fallback */
+			docs_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
+							".documents", NULL);
+		}
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), docs_folder);
 		g_free (docs_folder);
 	}

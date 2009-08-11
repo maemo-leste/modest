@@ -3068,7 +3068,8 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
 
 	/* Get last used folder */
-	conf_folder = modest_conf_get_string (modest_runtime_get_conf (), MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, NULL);
+	conf_folder = modest_conf_get_string (modest_runtime_get_conf (),
+					      MODEST_CONF_LATEST_SAVE_ATTACHMENT_PATH, NULL);
 
 	/* File chooser stops working if we select "file:///" as current folder */
 	if (conf_folder && g_ascii_strcasecmp (root_folder, conf_folder) != 0) {
@@ -3080,8 +3081,12 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 		gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER (save_dialog), conf_folder);
 	} else {
 		gchar *docs_folder;
-		/* Set the default folder to images folder */
-		docs_folder = g_build_filename (g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
+		/* Set the default folder to documents folder */
+		docs_folder = (gchar *) g_strdup(g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
+		if (!docs_folder) {
+			/* fallback */
+			docs_folder = g_build_filename (g_getenv (MYDOCS_ENV), DOCS_FOLDER, NULL);
+		}
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (save_dialog), docs_folder);
 		g_free (docs_folder);
 	}
