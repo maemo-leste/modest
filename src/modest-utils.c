@@ -107,14 +107,18 @@ gboolean
 modest_utils_file_exists (const gchar *filename)
 {
 	gboolean result = FALSE;
-	gchar *escaped;
+	gchar *path;
 
 	g_return_val_if_fail (filename, FALSE);
 
-	escaped = g_uri_escape_string (filename, NULL, FALSE);
-	if (g_access (escaped, F_OK) == 0)
+	path = strstr (filename, "file://");
+	if (!path)
+		path = (gchar *) filename;
+	else
+		path = (gchar *) filename + strlen ("file://");
+
+	if (g_access (path, F_OK) == 0)
 		result = TRUE;
-	g_free (escaped);
 
 	return result;
 }
