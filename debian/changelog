@@ -1,11 +1,20 @@
+modest (3.0.17-rc30) unstable; urgency=low
+
+  * Week 33, 2009 - second release
+  * 
+  * Fixes: NB#131394  email needs to support global safe folders
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 11 Aug 2009 12:23:16 +0300
+
 modest (3.0.17-rc29) unstable; urgency=low
 
   * Week 33, 2009 - first release
   *
   * Fixes: NB#114614 (Multi-app test case) Folder created under Activesync inbox in exchange 
   * 	server is not synched to the device until Email application is restarted.
-  * Fixes: NB#123378 	Security: Email UI hangs when attempt to check message details of 
-  * 	the message attached.
+  * Fixes: NB#123378    Security: Email UI hangs when attempt to check message details of 
+  *     the message attached.
   * Fixes: NB#125205 	Sort By Subject (A-Z) is incorrect
   * Fixes: NB#126904 	Crash in "camel_message_info_free"/ "tny_folder_change_finalize"
   * Fixes: NB#128553 	[REGF]Saving email attachment when usb mass storage is used - is not proper
