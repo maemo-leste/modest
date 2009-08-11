@@ -475,9 +475,9 @@ modest_platform_show_uri_popup (const gchar *uri)
 		 * and/or might have security implications
 		 * we still allow to copy the url though
 		 */
-		if (!g_str_has_prefix (uri, "file:")) { 		
-		
-			GSList *node;			
+		if (!g_str_has_prefix (uri, "file:")) {
+
+			GSList *node;
 			popup_info->actions = actions_list;
 			popup_info->uri = g_strdup (uri);
 
@@ -489,6 +489,7 @@ modest_platform_show_uri_popup (const gchar *uri)
 				action_name = hildon_uri_action_get_name (action);
 				translation_domain = hildon_uri_action_get_translation_domain (action);
 				menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain, action_name));
+				hildon_gtk_widget_set_theme_size (menu_item, MODEST_EDITABLE_SIZE);
 				g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
 				g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
 						  popup_info);
