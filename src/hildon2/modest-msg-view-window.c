@@ -505,6 +505,7 @@ init_window (ModestMsgViewWindow *obj)
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
 	priv->main_scroll = hildon_pannable_area_new ();
+        g_object_set (G_OBJECT (priv->main_scroll), "mov-mode", HILDON_MOVEMENT_MODE_BOTH, NULL);
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);

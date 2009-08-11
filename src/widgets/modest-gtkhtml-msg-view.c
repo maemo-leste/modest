@@ -597,6 +597,8 @@ set_hadjustment_values (ModestGtkhtmlMsgView *self,
 {
 	GtkAllocation view_allocation;
 	GtkAdjustment *hadj = get_hadjustment (self);
+	gint full_width = 0;
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
 	get_view_allocation (self, &view_allocation);
 	hadj->page_size = view_allocation.width;
@@ -606,11 +608,20 @@ set_hadjustment_values (ModestGtkhtmlMsgView *self,
 	hadj->lower = 0;
 	hadj->upper = view_allocation.width;
 
+	/* Get the real width of the embedded html */
+	if (priv->html_scroll && GTK_WIDGET_VISIBLE(priv->html_scroll)) {
+		GtkAdjustment *html_hadj;
+		html_hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+		full_width += html_hadj->upper;
+	}
+
+	hadj->upper = MAX (view_allocation.width, full_width);
+
 	reclamp_adjustment (hadj, value_changed);
 
 }
 
-static void 
+static void
 set_vadjustment_values (ModestGtkhtmlMsgView *self,
 			gboolean *value_changed)
 {
