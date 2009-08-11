@@ -1,3 +1,13 @@
+modest (3.0.17-rc31) unstable; urgency=low
+
+  * Week 33, 2009 - third release
+  * 
+  * Fixes: NB#131187 No kinetic scrolling in message viewer
+  * Fixes: NB#131375 "Replace existing file of same name?" confirmation note is not asked upon 
+  * 	saving a file which already exist in target folder. 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 11 Aug 2009 22:59:20 +0300
+
 modest (3.0.17-rc30) unstable; urgency=low
 
   * Week 33, 2009 - second release
