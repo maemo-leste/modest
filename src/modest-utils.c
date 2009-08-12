@@ -134,13 +134,17 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 	/* hmmm... maybe we need a modest_text_utils_validate_file_name? */
 	g_return_val_if_fail (orig_name && strlen(orig_name) != 0, NULL);
 
-	if (strlen(orig_name) > 200) {
+	tmp = g_uri_escape_string (orig_name, G_URI_RESERVED_CHARS_ALLOWED_IN_PATH_ELEMENT, FALSE);
+
+	if (strlen(tmp) > 200) {
+		g_free (tmp);
 		g_warning ("%s: filename too long ('%s')",
 			   __FUNCTION__, orig_name);
 		return NULL;
 	}
 
-	if (g_strstr_len (orig_name, strlen(orig_name), "/") != NULL) {
+	if (g_strstr_len (tmp, strlen (tmp), "/") != NULL) {
+		g_free (tmp);
 		g_warning ("%s: filename contains '/' character(s) (%s)",
 			   __FUNCTION__, orig_name);
 		return NULL;
@@ -160,7 +164,6 @@ modest_utils_create_temp_stream (const gchar *orig_name, const gchar *hash_base,
 		return NULL;
 	}
 
-	tmp = g_uri_escape_string (orig_name, NULL, FALSE);
 	filepath = g_build_filename (tmpdir, tmp, NULL);
 	g_free (tmp);
 
