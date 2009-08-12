@@ -38,6 +38,7 @@
 #include "modest-debug.h"
 #include "modest-search.h"
 #include "widgets/modest-msg-edit-window.h"
+#include "widgets/modest-window-mgr.h"
 #include "modest-tny-msg.h"
 #include "modest-platform.h"
 #include "modest-defs.h"
@@ -1369,16 +1370,36 @@ on_idle_show_memory_low (gpointer user_data)
 	return FALSE;
 }
 
+static gboolean
+on_idle_present_modal (gpointer user_data)
+{
+	gdk_threads_enter ();
+	gtk_window_present (user_data);
+	gdk_threads_leave ();
+
+	return FALSE;
+}
+
+
 /* Callback for normal D-BUS messages */
 gint
 modest_dbus_req_handler(const gchar * interface, const gchar * method,
 			GArray * arguments, gpointer data,
 			osso_rpc_t * retval)
 {
+	GtkWindow *dialog;
+
 	/* Check memory low conditions */
 	if (modest_platform_check_memory_low (NULL, FALSE)) {
 		g_idle_add (on_idle_show_memory_low, NULL);
 		goto param_error;
+	}
+
+	/* Check if there is already a dialog or note open */
+	dialog = modest_window_mgr_get_modal (modest_runtime_get_window_mgr());
+	if (dialog) {
+		g_idle_add (on_idle_present_modal, dialog);
+		return OSSO_OK;
 	}
 
 	if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_MAIL_TO) == 0) {
@@ -1431,7 +1452,7 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 	g_idle_add (notify_error_in_dbus_callback, NULL);
 	return OSSO_ERROR;
 }
-					 
+
 /* A complex D-Bus type (like a struct),
  * used to return various information about a search hit.
  */
