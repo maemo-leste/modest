@@ -1,3 +1,16 @@
+modest (3.0.17-rc33) unstable; urgency=low
+
+  * Week 34, 2009 second release
+  *
+  * Fixes: NB#126941 [REVIEW]<Coverity> Major and moderate findings
+  * Fixes: NB#130848  New email -note on screen not with correct time
+  * Fixes: NB#131375  "Replace existing file of same name?" confirmation note is 
+  * 	not asked upon saving a file which already exist in target folder.
+  * Fixes: NB#131389  Randomly modest hangs when attempt to delete message. 
+  * Fixes: NB#131187 No kinetic scrolling in message viewer
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 13 Aug 2009 23:32:11 +0300
+
 modest (3.0.17-rc32) unstable; urgency=low
 
   * Week 34, 2009 - first release
@@ -12,7 +25,6 @@ modest (3.0.17-rc31) unstable; urgency=low
 
   * Week 33, 2009 - third release
   * 
-  * Fixes: NB#131187 No kinetic scrolling in message viewer
   * Fixes: NB#131375 "Replace existing file of same name?" confirmation note is not asked upon 
   * 	saving a file which already exist in target folder. 
 
