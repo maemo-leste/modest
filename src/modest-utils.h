@@ -69,7 +69,9 @@ gboolean modest_utils_folder_writable (const gchar *filename);
  * modest_utils_file_exists:
  * @filename: a string
  *
- * Checks if @filename exists
+ * Checks if @filename exists. The filename must NOT use escaped
+ * characters as this function uses g_access to check if the file
+ * exists or not
  *
  * Returns: %TRUE if @filename currently exists, %FALSE otherwise
  */

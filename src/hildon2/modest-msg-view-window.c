@@ -2883,11 +2883,14 @@ save_mime_parts_to_file_with_checks (GtkWindow *parent,
 
         for (iter = files; (iter != NULL) && (replaced_files < 2); iter = g_list_next(iter)) {
                 SaveMimePartPair *pair = iter->data;
-                if (modest_utils_file_exists (pair->filename)) {
+		gchar *unescaped = g_uri_unescape_string (pair->filename, NULL);
+
+                if (modest_utils_file_exists (unescaped)) {
 			replaced_files++;
 			if (replaced_files == 1)
 				to_replace = iter;
                 }
+		g_free (unescaped);
         }
 	if (replaced_files) {
 		gint response;
