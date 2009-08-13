@@ -1947,7 +1947,7 @@ message_reader (ModestMsgViewWindow *window,
 		GtkTreeRowReference *row_reference)
 {
 	ModestWindowMgr *mgr;
-	TnyAccount *account;
+	TnyAccount *account = NULL;
 	MsgReaderInfo *info;
 
 	/* We set the header from model while we're loading */
@@ -2001,7 +2001,8 @@ message_reader (ModestMsgViewWindow *window,
 								       TNY_FOLDER_STORE (folder),
 								       message_reader_performer, 
 								       info);
-			g_object_unref (folder);
+			if (folder)
+				g_object_unref (folder);
 			return TRUE;
 		}
 	}
@@ -2009,7 +2010,9 @@ message_reader (ModestMsgViewWindow *window,
 	if (header) {
 		folder = tny_header_get_folder (header);
 	}
-	account = tny_folder_get_account (folder);
+        if (folder)
+		account = tny_folder_get_account (folder);
+
 	info = g_slice_new (MsgReaderInfo);
 	info->msg_uid = g_strdup (msg_uid);
 	if (folder)
@@ -2026,14 +2029,15 @@ message_reader (ModestMsgViewWindow *window,
 		info->row_reference = NULL;
 
 	message_reader_performer (FALSE, NULL, (GtkWindow *) window, account, info);
-	g_object_unref (account);
+        if (account)
+		g_object_unref (account);
 	if (folder)
 		g_object_unref (folder);
 
 	return TRUE;
 }
 
-gboolean        
+gboolean
 modest_msg_view_window_select_next_message (ModestMsgViewWindow *window)
 {
 	ModestMsgViewWindowPrivate *priv;

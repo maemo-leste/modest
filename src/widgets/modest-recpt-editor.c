@@ -305,7 +305,7 @@ modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_e
 
 	gtk_text_buffer_delete (buffer, start, end);
 
-	while (email_lists_list) {
+	while (email_lists_list && recipient_ids_list) {
 		gchar *recipient_id = (gchar *) recipient_ids_list->data;
 		GSList *email_list = (GSList *) email_lists_list->data;
 
