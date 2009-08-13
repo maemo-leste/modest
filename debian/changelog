@@ -1,3 +1,13 @@
+modest (3.0.17-rc32) unstable; urgency=low
+
+  * Week 34, 2009 - first release
+  *
+  * Fixes: NB#132639  Security:Crash Modest Crashed upon Tapping Message Details.
+  * Fixes: NB#132618  Corematic: random crash in "tny_cached_file_is_active" 
+  * Fixes: NB#128171 Able to launch multiple instances of account wizard opens up from Contacts 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 13 Aug 2009 07:20:43 +0300
+
 modest (3.0.17-rc31) unstable; urgency=low
 
   * Week 33, 2009 - third release
