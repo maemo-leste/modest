@@ -1618,8 +1618,12 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 	picker = MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker);
 	id_type = modest_provider_picker_get_active_id_type (picker);
 	g_object_get (self, "wizard-notebook", &notebook, NULL);
-	modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
-							    NULL);
+
+	/* Remove the response override handler for non-plugin
+	   protocols. For plugins it'll be overriden later */
+	if (id_type != MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL)
+		modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
+								    NULL);
 
 
 	if (id_type == MODEST_PROVIDER_PICKER_ID_OTHER) {
@@ -1656,6 +1660,7 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 			ModestProtocol *protocol;
 			gchar *proto_name;
 			ModestProtocolType proto_type;
+			ModestWizardDialogResponseOverrideFunc response_override;
 
 			/* Get protocol data */
 			proto_name = modest_provider_picker_get_active_provider_id (picker);
@@ -1673,22 +1678,25 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 				priv->page_complete_easysetup = NULL;
 			}
 
+			/* Ensure that the response override handler
+			   is set. It might happen that plugins clear
+			   them incorrectly */
+			response_override = modest_account_protocol_get_wizard_response_override
+				(MODEST_ACCOUNT_PROTOCOL (protocol));
+			modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
+									    response_override);
+
 			if (protocol && MODEST_IS_ACCOUNT_PROTOCOL (protocol) &&
 			    proto_type != priv->last_plugin_protocol_selected) {
 				ModestPairList *tabs;
 				GSList *tmp;
 				gboolean first_page = TRUE;
-				ModestWizardDialogResponseOverrideFunc response_override;
 
 				/* Remember the last selected plugin protocol */
 				priv->last_plugin_protocol_selected = proto_type;
 
 				/* Get tabs */
 				tabs = modest_account_protocol_get_easysetupwizard_tabs (MODEST_ACCOUNT_PROTOCOL (protocol));
-				response_override = modest_account_protocol_get_wizard_response_override
-					(MODEST_ACCOUNT_PROTOCOL (protocol));
-				modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
-										    response_override);
 				tmp = (GSList *) tabs;
 				while (tmp) {
 					ModestPair *pair = (ModestPair *) tmp->data;
