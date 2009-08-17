@@ -33,6 +33,7 @@
 #include "modest-tny-folder.h"
 #include "modest-ui-actions.h"
 #include "modest-platform.h"
+#include "modest-defs.h"
 #include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
@@ -535,6 +536,19 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 				   ModestWindow *window,
 				   ModestWindow *parent)
 {
+	/* If this is the first registered window then reset the
+	   status of the TnyDevice as it might be forced to be offline
+	   when modest is running in the background (see
+	   modest_tny_account_store_new() and automatic updates are
+	   disabled*/
+	if (modest_window_mgr_get_num_windows (self) == 0) {
+		gboolean auto_update;
+		auto_update = modest_conf_get_bool (modest_runtime_get_conf (),
+						    MODEST_CONF_AUTO_UPDATE, NULL);
+		if (!auto_update)
+			tny_device_reset (modest_runtime_get_device ());
+	}
+
 	return MODEST_WINDOW_MGR_GET_CLASS (self)->register_window (self, window, parent);
 }
 

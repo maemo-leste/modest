@@ -884,6 +884,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	TnyAccount *local_account = NULL;
 	TnyLockable *lockable;
 	GnomeVFSVolumeMonitor* monitor = NULL;
+	gboolean auto_update;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
@@ -893,6 +894,13 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 
 	priv->account_mgr = g_object_ref (G_OBJECT(account_mgr));
 	priv->device = g_object_ref (device);
+
+	/* If autoupdate is off then we don't try to connect to the
+	   accounts when they're added to the account store*/
+	auto_update = modest_conf_get_bool (modest_runtime_get_conf (),
+					    MODEST_CONF_AUTO_UPDATE, NULL);
+	if (!auto_update)
+		tny_device_force_offline (priv->device);
 
 	priv->session = tny_session_camel_new (TNY_ACCOUNT_STORE(obj));
 	if (!priv->session) {
@@ -936,7 +944,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	priv->store_accounts_outboxes = tny_simple_list_new ();
 
 	/* Create the local folders account */
-	local_account = 
+	local_account =
 		modest_tny_account_new_for_local_folders (priv->account_mgr, priv->session, NULL);
 	tny_list_append (priv->store_accounts, G_OBJECT(local_account));
 	g_object_unref (local_account);
