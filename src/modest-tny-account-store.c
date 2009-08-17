@@ -965,6 +965,9 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */);
 	}
 
+	/* Initialize session */
+	tny_session_camel_set_initialized (priv->session);
+
 	return MODEST_TNY_ACCOUNT_STORE(obj);
 }
 
@@ -994,9 +997,6 @@ modest_tny_account_store_get_accounts  (TnyAccountStore *self,
 	default:
 		g_return_if_reached ();
 	}
-
-	/* Initialize session. Why do we need this ??? */
-	tny_session_camel_set_initialized (priv->session);
 }
 
 
