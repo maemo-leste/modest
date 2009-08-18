@@ -520,8 +520,11 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	}
 
 	/* Do not go backwards */
-	if ((MODEST_IS_MSG_VIEW_WINDOW (current_top) || MODEST_IS_MSG_EDIT_WINDOW (current_top)) &&
-	    (MODEST_IS_FOLDER_WINDOW (window) || MODEST_IS_ACCOUNTS_WINDOW (window) || 
+	if ((MODEST_IS_MSG_VIEW_WINDOW (current_top) ||
+	     MODEST_IS_MSG_EDIT_WINDOW (current_top) ||
+	     MODEST_IS_HEADER_WINDOW (current_top)) &&
+	    (MODEST_IS_FOLDER_WINDOW (window) ||
+	     MODEST_IS_ACCOUNTS_WINDOW (window) ||
 	     MODEST_IS_MAILBOXES_WINDOW (window))) {
 		gtk_window_present (GTK_WINDOW (current_top));
 		return FALSE;
