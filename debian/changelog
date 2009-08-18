@@ -1,3 +1,14 @@
+modest (3.0.17-rc35) unstable; urgency=low
+
+  * Week 34, 2009 - fourth release
+  *
+  * Fixes: NB#127203 IMAP traffic over GPRS contrary to settings
+  * Fixes: NB#132390 [REVIEW]<coverity> remaining defects from Email
+  * Fixes: NB#133666 Panning on e-mail editor view has problems 
+  * 	due the horizontal overshooting 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 18 Aug 2009 18:23:20 +0300
+
 modest (3.0.17-rc34) unstable; urgency=low
 
   * Week 34, 2009 - third release
