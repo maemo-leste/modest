@@ -1282,7 +1282,8 @@ modest_mail_operation_save_to_drafts_add_msg_cb(TnyFolder *self,
 
 	if (!callback_called)
 		modest_mail_operation_notify_end (info->mailop);
-	g_object_unref(info->mailop);
+        if (info->mailop)
+		g_object_unref(info->mailop);
 	g_slice_free (SaveToDraftsAddMsgInfo, info);
 }
 

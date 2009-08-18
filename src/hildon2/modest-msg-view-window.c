@@ -3618,13 +3618,14 @@ modest_msg_view_window_reload (ModestMsgViewWindow *self)
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
-	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (self));	
+	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (self));
 
-	if (!message_reader (self, priv, header, NULL, NULL, priv->row_reference)) {
-		g_warning ("Shouldn't happen, trying to reload a message failed");
+        if (header) {
+		if (!message_reader (self, priv, header, NULL, NULL, priv->row_reference))
+			g_warning ("Shouldn't happen, trying to reload a message failed");
+
+		g_object_unref (header);
 	}
-
-	g_object_unref (header);
 }
 
 static void

@@ -150,21 +150,13 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	priv->selected = NULL;
 
 	gtk_container_foreach (GTK_CONTAINER (priv->box), (GtkCallback) gtk_widget_destroy, NULL);
-	
-	if (priv->msg == NULL) {
+
+	if (priv->msg == NULL)
 		return;
-	}
 
 	part_to_check = modest_tny_msg_get_attachments_parent (TNY_MSG (msg));
-
-	if (part_to_check) {
-		msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (part_to_check));
-		is_alternate = !strcasecmp (msg_content_type, "multipart/alternative");
-	} else {
-		/* If we couldn't find parent, just go through fallback */
-		msg_content_type = NULL;
-		is_alternate = FALSE;
-	}
+	msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (part_to_check));
+	is_alternate = !strcasecmp (msg_content_type, "multipart/alternative");
 
 	/* If the top mime part is a multipart/related, we don't show the attachments, as they're
 	 * embedded images in body */
@@ -175,7 +167,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 		g_free (msg_content_type);
 
 		header_content_type = modest_tny_mime_part_get_headers_content_type (TNY_MIME_PART (part_to_check));
-		
+
 		if ((header_content_type != NULL) && 
 		    !strstr (header_content_type, "application/")) {
 			application_multipart = TRUE;
@@ -241,7 +233,6 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 	g_object_unref (iter);
 	g_object_unref (parts);
 	g_object_unref (part_to_check);
-	
 
 	gtk_widget_queue_draw (GTK_WIDGET (attachments_view));
 
