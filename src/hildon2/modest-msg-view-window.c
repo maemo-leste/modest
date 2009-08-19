@@ -3613,19 +3613,30 @@ void
 modest_msg_view_window_reload (ModestMsgViewWindow *self)
 {
 	ModestMsgViewWindowPrivate *priv;
-	TnyHeader *header;
+	const gchar *msg_uid;
+	TnyHeader *header = NULL;
+	TnyFolder *folder = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
-	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (self));
 
-        if (header) {
-		if (!message_reader (self, priv, header, NULL, NULL, priv->row_reference))
+	header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (self));
+	if (!header)
+		return;
+
+	folder = tny_header_get_folder (header);
+	g_object_unref (header);
+
+	if (!folder)
+		return;
+
+	msg_uid = modest_msg_view_window_get_message_uid (self);
+        if (msg_uid)
+		if (!message_reader (self, priv, NULL, msg_uid, folder, priv->row_reference))
 			g_warning ("Shouldn't happen, trying to reload a message failed");
 
-		g_object_unref (header);
-	}
+	g_object_unref (folder);
 }
 
 static void
