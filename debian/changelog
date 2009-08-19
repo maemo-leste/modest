@@ -1,3 +1,15 @@
+modest (3.0.17-rc36) unstable; urgency=low
+
+  * Week 35, 2009 - first release
+  * 
+  * Fixes: NB#121339  Remote folders are not shown and modest is continuously 
+  * 	retrieving after disconnecting from network
+  * Fixes: NB#129177  Corematic: Random crash in pop3_get_local_size ()
+  * Fixes: NB#133699  When receiving mail from AF, flow on UI is wrong
+  * Fixes: NB#133864  Crash after opening .msg file 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 19 Aug 2009 19:29:06 +0300
+
 modest (3.0.17-rc35) unstable; urgency=low
 
   * Week 34, 2009 - fourth release
