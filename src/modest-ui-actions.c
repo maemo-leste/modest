@@ -2212,29 +2212,6 @@ new_messages_arrived (ModestMailOperation *self,
 
 }
 
-gboolean
-retrieve_all_messages_cb (GObject *source,
-			  guint num_msgs,
-			  guint retrieve_limit)
-{
-	GtkWindow *window;
-	gchar *msg;
-	gint response;
-
-	window = GTK_WINDOW (source);
-	msg = g_strdup_printf (_("mail_nc_msg_count_limit_exceeded"),
-			       num_msgs, retrieve_limit);
-
-	/* Ask the user if they want to retrieve all the messages */
-	response =
-		modest_platform_run_confirmation_dialog_with_buttons (window, msg,
-								      _("mcen_bd_get_all"),
-								      _("mcen_bd_newest_only"));
-	/* Free and return */
-	g_free (msg);
-	return (response == GTK_RESPONSE_ACCEPT) ? TRUE : FALSE;
-}
-
 typedef struct {
 	TnyAccount *account;
 	ModestWindow *win;
@@ -2280,7 +2257,6 @@ do_send_receive_performer (gboolean canceled,
 
 	/* Send & receive. */
 	modest_mail_operation_update_account (info->mail_op, info->account_name, info->poke_status, info->interactive,
-					      (info->win) ? retrieve_all_messages_cb : NULL,
 					      new_messages_arrived, info->win);
 
  clean:

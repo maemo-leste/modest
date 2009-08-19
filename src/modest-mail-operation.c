@@ -136,7 +136,6 @@ typedef struct
 	gint pending_calls;
 	gboolean poke_all;
 	TnyFolderObserver *inbox_observer;
-	RetrieveAllCallback retrieve_all_cb;
 	gboolean interactive;
 	gboolean msg_readed;
 } UpdateAccountInfo;
@@ -1640,7 +1639,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	ModestAccountMgr *mgr;
 	ModestAccountRetrieveType retrieve_type;
 	TnyList *new_headers = NULL;
-	gboolean headers_only, ignore_limit;
+	gboolean headers_only;
 	time_t time_to_store;
 
 	info = (UpdateAccountInfo *) user_data;
@@ -1729,20 +1728,6 @@ inbox_refreshed_cb (TnyFolder *inbox,
 	/* Order by date */
 	g_ptr_array_sort (new_headers_array, (GCompareFunc) compare_headers_by_date);
 
-	/* Ask the users if they want to retrieve all the messages
-	   even though the limit was exceeded */
-	ignore_limit = FALSE;
-	if (new_headers_array->len > retrieve_limit) {
-		/* Ask the user if a callback has been specified and
-		   if the mail operation has a source (this means that
-		   was invoked by the user and not automatically by a
-		   D-Bus method) */
-		if (info->retrieve_all_cb && info->interactive)
-			ignore_limit = info->retrieve_all_cb (priv->source,
-							      new_headers_array->len,
-							      retrieve_limit);
-	}
-
 	/* Copy the headers to a list and free the array */
 	new_headers = tny_simple_list_new ();
 	for (i=0; i < new_headers_array->len; i++) {
@@ -1760,10 +1745,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		GetMsgInfo *msg_info;
 
 		priv->done = 0;
-		if (ignore_limit)
-			priv->total = tny_list_get_length (new_headers);
-		else
-			priv->total = MIN (tny_list_get_length (new_headers), retrieve_limit);
+		priv->total = MIN (tny_list_get_length (new_headers), retrieve_limit);
 
 		iter = tny_list_create_iterator (new_headers);
 
@@ -1956,7 +1938,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 				      const gchar *account_name,
 				      gboolean poke_all,
 				      gboolean interactive,
-				      RetrieveAllCallback retrieve_all_cb,
 				      UpdateAccountCallback callback,
 				      gpointer user_data)
 {
@@ -2013,7 +1994,6 @@ modest_mail_operation_update_account (ModestMailOperation *self,
 	info->account_name = g_strdup (account_name);
 	info->callback = callback;
 	info->user_data = user_data;
-	info->retrieve_all_cb = retrieve_all_cb;
 
 	/* Set account busy */
 	modest_account_mgr_set_account_busy (modest_runtime_get_account_mgr (), account_name, TRUE);

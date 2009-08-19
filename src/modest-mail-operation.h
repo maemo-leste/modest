@@ -456,7 +456,6 @@ void          modest_mail_operation_update_account (ModestMailOperation *self,
 						    const gchar *account_name,
 						    gboolean poke_all,
 						    gboolean interactive,
-						    RetrieveAllCallback retrieve_all_cb,
 						    UpdateAccountCallback callback,
 						    gpointer user_data);
 
