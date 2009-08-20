@@ -3822,8 +3822,8 @@ on_delete_folder_cb (gboolean canceled,
 
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
 
-	g_object_unref (G_OBJECT (mail_op));
-	g_object_unref (G_OBJECT (info->folder));
+	g_object_unref (mail_op);
+	g_object_unref (info->folder);
 	g_free (info);
 }
 
@@ -3873,22 +3873,23 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 	g_free (message);
 
 	if (response == GTK_RESPONSE_OK) {
-		DeleteFolderInfo *info;
+		TnyAccount *account = NULL;
+		DeleteFolderInfo *info = NULL;
 		info = g_new0(DeleteFolderInfo, 1);
-		info->folder = folder;
+		info->folder = g_object_ref (folder);
 		info->move_to_trash = move_to_trash;
-		g_object_ref (G_OBJECT (info->folder));
-		TnyAccount *account = tny_folder_get_account (TNY_FOLDER (folder));
+
+		account = tny_folder_get_account (TNY_FOLDER (folder));
 		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (window),
 							       TRUE,
 							       TNY_FOLDER_STORE (account),
 							       on_delete_folder_cb, info);
 		g_object_unref (account);
+		g_object_unref (folder);
 		return TRUE;
 	} else {
 		return FALSE;
 	}
-	g_object_unref (G_OBJECT (folder));
 }
 
 void
@@ -5067,7 +5068,6 @@ on_move_to_dialog_response (GtkDialog *dialog,
 	parent_win = (GtkWidget *) helper->win;
 	folder_view = MODEST_FOLDER_VIEW (g_object_get_data (G_OBJECT (dialog),
 							     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
-
 	switch (response) {
 		TnyFolderStore *dst_folder;
 		TnyFolderStore *selected;
@@ -5185,8 +5185,8 @@ create_move_to_dialog (GtkWindow *win,
 
 		modest_folder_view_set_style (MODEST_FOLDER_VIEW (tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
-		modest_folder_view_update_model (MODEST_FOLDER_VIEW (tree_view),
-						 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
+		/* modest_folder_view_update_model (MODEST_FOLDER_VIEW (tree_view), */
+		/* 				 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ())); */
 
 		active_account_name = modest_window_get_active_account (MODEST_WINDOW (win));
 		mgr = modest_runtime_get_account_mgr ();

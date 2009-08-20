@@ -998,7 +998,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 					  gchar **folder_name,
 					  TnyFolderStore **parent)
 {
-	GtkWidget *accept_btn = NULL; 
+	GtkWidget *accept_btn = NULL;
 	GtkWidget *dialog, *entry = NULL, *label_entry = NULL,  *label_location = NULL, *hbox;
 	GtkWidget *account_picker = NULL;
 	GList *buttons = NULL;
@@ -2940,6 +2940,7 @@ on_move_to_dialog_row_activated (GtkTreeView       *tree_view,
 	} else {
 		move_to_dialog_set_selected_folder_store (dialog, selected);
 	}
+	g_object_unref (selected);
 }
 
 static void

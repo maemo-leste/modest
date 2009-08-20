@@ -2374,7 +2374,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 						self,
 						NULL);
 
-	GtkTreeModel *old_tny_model;
+	GtkTreeModel *old_tny_model = NULL;
 	if (get_inner_models (self, NULL, NULL, &old_tny_model)) {
 		if (priv->signal_handlers > 0) {
 			priv->signal_handlers = modest_signal_mgr_disconnect (priv->signal_handlers,
@@ -2394,7 +2394,7 @@ modest_folder_view_update_model (ModestFolderView *self,
 	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
 							   G_OBJECT (model),
 							   "activity-changed",
-							   G_CALLBACK (on_activity_changed), 
+							   G_CALLBACK (on_activity_changed),
 							   self);
 #endif
 
