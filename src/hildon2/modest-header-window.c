@@ -77,8 +77,6 @@ struct _ModestHeaderWindowPrivate {
 	/* state bar */
 	ContentsState contents_state;
 
-	TnyFolder *folder;
-
 	/* autoscroll */
 	gboolean autoscroll;
 
@@ -238,7 +236,6 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->top_vbox = NULL;
 	priv->contents_view = NULL;
 	priv->contents_state = CONTENTS_STATE_NONE;
-	priv->folder = NULL;
 	priv->updating_banner = NULL;
 	priv->updating_banner_timeout = 0;
 	priv->autoscroll = TRUE;
@@ -259,13 +256,16 @@ static void
 modest_header_window_finalize (GObject *obj)
 {
 	ModestHeaderWindowPrivate *priv;
+	TnyFolder *folder;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
-	tny_folder_sync_async (TNY_FOLDER (priv->folder),
-			       FALSE, NULL, NULL, NULL);
+	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
+	if (folder) {
+		tny_folder_sync_async (folder, FALSE, NULL, NULL, NULL);
+		g_object_unref (folder);
+	}
 
-	g_object_unref (priv->folder);
 	g_object_unref (priv->header_view);
 	g_object_unref (priv->empty_view);
 
@@ -650,8 +650,6 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
-	priv->folder = g_object_ref (folder);
-
 	priv->contents_view = hildon_pannable_area_new ();
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment),
@@ -848,10 +846,14 @@ update_view (ModestHeaderWindow *self,
 	gboolean refilter = FALSE;
 	gboolean folder_empty = FALSE;
 	gboolean all_marked_as_deleted = FALSE;
+	TnyFolder *folder;
 
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
-	g_return_if_fail (priv->folder);
+
+	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
+	if (!folder)
+		return;
 
 	if (change != NULL) {
 		TnyFolderChangeChanged changed;
@@ -861,13 +863,14 @@ update_view (ModestHeaderWindow *self,
 		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
 			folder_empty = (((guint) tny_folder_change_get_new_all_count (change)) == 0);
 		else
-			folder_empty = (((guint) tny_folder_get_all_count (TNY_FOLDER (priv->folder))) == 0);
+			folder_empty = (((guint) tny_folder_get_all_count (folder)) == 0);
 
 		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)
 			refilter = TRUE;
 	} else {
-		folder_empty = (((guint) tny_folder_get_all_count (TNY_FOLDER (priv->folder))) == 0);
+		folder_empty = (((guint) tny_folder_get_all_count (folder)) == 0);
 	}
+	g_object_unref (folder);
 
 	/* Check if all messages are marked to be deleted */
 	all_marked_as_deleted = modest_header_view_is_empty (MODEST_HEADER_VIEW (priv->header_view));
