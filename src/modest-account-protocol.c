@@ -89,6 +89,7 @@ modest_account_protocol_get_wizard_response_override_default (ModestAccountProto
 static void modest_account_protocol_check_support_default (ModestAccountProtocol *self,
 							   ModestAccountProtocolCheckSupportFunc func,
 							   gpointer userdata);
+static void modest_account_protocol_cancel_check_support_default (ModestAccountProtocol *self);
 static gboolean modest_account_protocol_is_supported_default (ModestAccountProtocol *self);
 static gchar *modest_account_protocol_get_from_default (ModestAccountProtocol *self,
 							const gchar *account_id,
@@ -205,6 +206,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_is_supported_default;
 	account_class->check_support =
 		modest_account_protocol_check_support_default;
+	account_class->cancel_check_support =
+		modest_account_protocol_cancel_check_support_default;
 	account_class->get_from =
 		modest_account_protocol_get_from_default;
 	account_class->get_from_list =
@@ -655,6 +658,18 @@ modest_account_protocol_check_support (ModestAccountProtocol *self,
 				       gpointer userdata)
 {
 	MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->check_support (self, func, userdata);
+}
+
+static void
+modest_account_protocol_cancel_check_support_default (ModestAccountProtocol *self)
+{
+	return;
+}
+
+void
+modest_account_protocol_cancel_check_support (ModestAccountProtocol *self)
+{
+	MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->cancel_check_support (self);
 }
 
 gchar *

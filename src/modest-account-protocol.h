@@ -98,9 +98,9 @@ struct _ModestAccountProtocolClass {
 				   const gchar *account_id, TnyMsg *new_msg, TnyMsg *old_msg,
 				   ModestAccountProtocolSaveRemoteDraftCallback callback,
 				   gpointer userdata);
+	void (*cancel_check_support) (ModestAccountProtocol *self);
 
 	/* Padding for future expansions */
-	void (*_reserved4) (void);
 	void (*_reserved5) (void);
 	void (*_reserved6) (void);
 	void (*_reserved7) (void);
@@ -347,6 +347,17 @@ ModestWizardDialogResponseOverrideFunc modest_account_protocol_get_wizard_respon
 void modest_account_protocol_check_support (ModestAccountProtocol *self, 
 					    ModestAccountProtocolCheckSupportFunc func, 
 					    gpointer userdata);
+
+/**
+ * modest_account_protocol_cancel_check_support:
+ * @self: a #ModestAccountProtocol
+ *
+ * This method requests that the check support requests running should be
+ * immediately cancelled. Once this happens, is_supported should return %FALSE
+ * until a new succesful check_support request is finished.
+ */
+void modest_account_protocol_cancel_check_support (ModestAccountProtocol *self);
+
 /**
  * modest_account_protocol_is_supported:
  * @self: a #ModestAccountProtocol
