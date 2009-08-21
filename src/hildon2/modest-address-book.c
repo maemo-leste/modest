@@ -241,7 +241,8 @@ get_recipients_for_given_contact (EContact * contact,
 
 		emailid = get_email_addr_from_user(display_name, canceled);
 		if (emailid) {
-			e_contact_set(E_CONTACT (abook_contact), E_CONTACT_EMAIL_1, emailid);
+			list = g_list_append (list, g_strdup (emailid));
+			e_contact_set(E_CONTACT (abook_contact), E_CONTACT_EMAIL, list);
 			osso_abook_contact_commit (abook_contact, FALSE, NULL, NULL);
 		}
 		g_object_unref (abook_contact);
@@ -578,12 +579,15 @@ async_get_contacts_cb (EBook *book,
 			g_debug ("----Preparing to commit contact %s", address);
 		} else {
 			gchar *email_address, *display_address;
+			GList *email_list = NULL;
 
 			/* Create new contact and add it to the list */
 			contact = e_contact_new ();
 			email_address = modest_text_utils_get_email_address (address);
-			e_contact_set (contact, E_CONTACT_EMAIL_1, email_address);
+			email_list = g_list_append (email_list, email_address);
+			e_contact_set (contact, E_CONTACT_EMAIL, email_list);
 			g_free (email_address);
+			g_list_free (email_list);
 
 			display_address = g_strdup (address);
 			if (display_address) {
