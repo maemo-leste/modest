@@ -99,9 +99,9 @@ struct _ModestAccountProtocolClass {
 				   ModestAccountProtocolSaveRemoteDraftCallback callback,
 				   gpointer userdata);
 	void (*cancel_check_support) (ModestAccountProtocol *self);
+	void (*wizard_finished) (ModestAccountProtocol *self);
 
 	/* Padding for future expansions */
-	void (*_reserved5) (void);
 	void (*_reserved6) (void);
 	void (*_reserved7) (void);
 	void (*_reserved8) (void);
@@ -357,6 +357,15 @@ void modest_account_protocol_check_support (ModestAccountProtocol *self,
  * until a new succesful check_support request is finished.
  */
 void modest_account_protocol_cancel_check_support (ModestAccountProtocol *self);
+
+/**
+ * modest_account_protocol_wizard_finished:
+ * @self: a #ModestAccountProtocol
+ *
+ * Method that let protocol know if the wizard has finished, for the case it's
+ * needed to do some stuff after check_support.
+ */
+void modest_account_protocol_wizard_finished (ModestAccountProtocol *self);
 
 /**
  * modest_account_protocol_is_supported:

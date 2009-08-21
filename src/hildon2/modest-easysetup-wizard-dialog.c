@@ -201,6 +201,26 @@ modest_easysetup_wizard_dialog_finalize (GObject *object)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (object);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	ModestProtocolRegistry *registry;
+	GSList *provider_protos, *node;
+
+	registry = modest_runtime_get_protocol_registry ();
+	provider_protos = modest_protocol_registry_get_by_tag (registry,
+							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
+
+	for (node = provider_protos; node != NULL; node = g_slist_next (node)) {
+		ModestProtocol *proto = MODEST_PROTOCOL (node->data);
+
+		if (!modest_protocol_registry_protocol_type_has_tag (registry,
+								     modest_protocol_get_type_id (proto),
+								     MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS))
+			continue;
+
+		if (MODEST_ACCOUNT_PROTOCOL (proto)) {
+			modest_account_protocol_wizard_finished (MODEST_ACCOUNT_PROTOCOL (proto));
+		}
+	}
+	g_slist_free (provider_protos);
 
 	if (priv->account_manager)
 		g_object_unref (G_OBJECT (priv->account_manager));
