@@ -87,6 +87,7 @@ struct _ModestHeaderWindowPrivate {
 	/* signals */
 	GSList *sighandlers;
 	gulong queue_change_handler;
+	gulong sort_column_handler;
 
 	/* progress hint */
 	gboolean progress_hint;
@@ -241,6 +242,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->autoscroll = TRUE;
 	priv->progress_hint = FALSE;
 	priv->queue_change_handler = 0;
+	priv->sort_column_handler = 0;
 	priv->current_store_account = NULL;
 	priv->sort_button = NULL;
 	priv->new_message_button = NULL;
@@ -266,6 +268,10 @@ modest_header_window_finalize (GObject *obj)
 		g_object_unref (folder);
 	}
 
+	/* Sanity check: shouldn't be needed, the window mgr should
+	   call this function before */
+	modest_header_window_disconnect_signals (MODEST_WINDOW (obj));
+
 	g_object_unref (priv->header_view);
 	g_object_unref (priv->empty_view);
 
@@ -273,10 +279,6 @@ modest_header_window_finalize (GObject *obj)
 		g_free (priv->current_store_account);
 		priv->current_store_account = NULL;
 	}
-
-	/* Sanity check: shouldn't be needed, the window mgr should
-	   call this function before */
-	modest_header_window_disconnect_signals (MODEST_WINDOW (obj));	
 
 	if (priv->updating_banner_timeout > 0) {
 		g_source_remove (priv->updating_banner_timeout);
@@ -294,12 +296,27 @@ static void
 modest_header_window_disconnect_signals (ModestWindow *self)
 {
 	ModestHeaderWindowPrivate *priv;
+
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
 	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
-					   priv->queue_change_handler))
+					   priv->queue_change_handler)) {
 		g_signal_handler_disconnect (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
 					     priv->queue_change_handler);
+		priv->queue_change_handler = 0;
+	}
+
+	if (priv->header_view) {
+		GtkTreeModel *sortable;
+
+		sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view));
+		if (g_signal_handler_is_connected (G_OBJECT (sortable),
+						   priv->sort_column_handler)) {
+			g_signal_handler_disconnect (G_OBJECT (sortable),
+						     priv->sort_column_handler);
+			priv->sort_column_handler = 0;
+		}
+	}
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
 	priv->sighandlers = NULL;
@@ -308,11 +325,8 @@ modest_header_window_disconnect_signals (ModestWindow *self)
 
 static void
 connect_signals (ModestHeaderWindow *self)
-{	
-	ModestHeaderWindowPrivate *priv;
-	GtkTreeSortable *sortable;
-	
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
+{
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
 	/* header view */
 
@@ -335,15 +349,6 @@ connect_signals (ModestHeaderWindow *self)
 					   G_OBJECT (priv->header_view),
 					   "expose-event",
 					   G_CALLBACK (on_expose_event),
-					   self);
-
-	sortable = GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view)));
-
-	priv->sighandlers = 
-		modest_signal_mgr_connect (priv->sighandlers,
-					   G_OBJECT (sortable),
-					   "sort-column-changed",
-					   G_CALLBACK (on_sort_column_changed),
 					   self);
 
 	priv->sighandlers =
@@ -529,6 +534,41 @@ on_mark_unread_csm_activated (GtkMenuItem *item,
 	}
 }
 
+static void
+on_header_view_model_destroyed (gpointer user_data,
+				GObject *model)
+{
+	ModestHeaderWindow *self = (ModestHeaderWindow *) user_data;
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	if (g_signal_handler_is_connected (G_OBJECT (model),
+					   priv->sort_column_handler)) {
+		g_signal_handler_disconnect (G_OBJECT (model),
+					     priv->sort_column_handler);
+		priv->sort_column_handler = 0;
+	}
+}
+
+static void
+on_header_view_model_changed (GObject *gobject,
+			      GParamSpec *arg1,
+			      gpointer user_data)
+{
+	ModestHeaderWindow *self = (ModestHeaderWindow *) user_data;
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (gobject));
+
+	if (!model)
+		return;
+
+	/* Connect the signal. Listen to object destruction to disconnect it */
+	priv->sort_column_handler = g_signal_connect ((GObject *) model,
+						      "sort-column-changed",
+						      G_CALLBACK (on_sort_column_changed),
+						      self);
+	g_object_weak_ref ((GObject *) model, on_header_view_model_destroyed, self);
+}
+
 static GtkWidget *
 create_header_view (ModestWindow *self, TnyFolder *folder)
 {
@@ -537,6 +577,9 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	ModestHeaderWindowPrivate *priv;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
+	g_signal_connect ((GObject*) header_view, "notify::model",
+			  G_CALLBACK (on_header_view_model_changed), self);
+
 	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder,
 				       TRUE, self, folder_refreshed_cb, self);
 	modest_header_view_set_filter (MODEST_HEADER_VIEW (header_view),
@@ -1290,6 +1333,12 @@ update_sort_button (ModestHeaderWindow *self)
 	const gchar *value = NULL;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
+	/* This could happen as the first time the model is set the
+	   header_view is still not assigned to priv->header_view */
+	if (!priv->header_view)
+		return;
+
 	sortable = GTK_TREE_SORTABLE (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view)));
 
 	if (!gtk_tree_sortable_get_sort_column_id (sortable,
