@@ -402,6 +402,7 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_widget_set_size_request (privacy_note, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (privacy_note), TRUE);
+	hildon_helper_set_logical_font (privacy_note, "SmallSystemFont");
 	/* So that it is not truncated: */
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
