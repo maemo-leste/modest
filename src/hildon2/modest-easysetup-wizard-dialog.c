@@ -2589,13 +2589,14 @@ static void
 check_support_of_protocols (ModestEasysetupWizardDialog *self)
 {
 	ModestProtocolRegistry *registry;
-	GSList *provider_protos, *node;
+	GSList *provider_protos, *node, *check_support_providers;
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
 	registry = modest_runtime_get_protocol_registry ();
 	provider_protos = modest_protocol_registry_get_by_tag (registry,
 							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
 
+	check_support_providers = NULL;
 	for (node = provider_protos; node != NULL; node = g_slist_next (node)) {
 		ModestProtocol *proto = MODEST_PROTOCOL (node->data);
 
@@ -2616,12 +2617,19 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 
 		if (MODEST_ACCOUNT_PROTOCOL (proto)) {
 			priv->pending_check_support ++;
-			modest_account_protocol_check_support (MODEST_ACCOUNT_PROTOCOL (proto),
-							       check_support_callback,
-							       g_object_ref (self));
+			check_support_providers = g_slist_prepend (check_support_providers, proto);
 		}
 	}
 	g_slist_free (provider_protos);
+	
+	for (node = check_support_providers; node != NULL; node = g_slist_next (node)) {
+		ModestProtocol *proto = MODEST_PROTOCOL (node->data);
+
+		modest_account_protocol_check_support (MODEST_ACCOUNT_PROTOCOL (proto),
+						       check_support_callback,
+						       g_object_ref (self));
+	}
+	g_slist_free (check_support_providers);
 
 	if (priv->pending_check_support > 0) {
 		priv->check_support_show_progress_id = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
