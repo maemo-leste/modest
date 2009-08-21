@@ -1,3 +1,12 @@
+modest (3.0.17-rc37) unstable; urgency=low
+
+  * Week 35, 2009 - second release
+  *
+  * Fixes: NB#133352 Remove "mail_nc_msg_count_limit_exceeded" confirmation note
+  * Fixes: NB#133623 Security:Crash on tapping embedded message.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 21 Aug 2009 09:57:17 +0300
+
 modest (3.0.17-rc36) unstable; urgency=low
 
   * Week 35, 2009 - first release
