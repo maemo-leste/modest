@@ -106,6 +106,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *page_welcome;
 	gboolean  check_support_done;
 	guint check_support_show_progress_id;
+	GtkWidget *check_support_cancel_note;
 	gint pending_check_support;
 	gboolean destroyed;
 
@@ -1438,6 +1439,7 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Initialize fields */
 	priv->check_support_done = FALSE;
 	priv->check_support_show_progress_id = 0;
+	priv->check_support_cancel_note = NULL;
 	priv->pending_check_support = 0;
 	priv->destroyed = FALSE;
 	priv->page_welcome = create_page_welcome (self);
@@ -2498,6 +2500,11 @@ check_support_callback (ModestAccountProtocol *protocol,
 	if (priv->pending_check_support == 0) {
 		priv->check_support_done = TRUE;
 
+		if (priv->check_support_cancel_note) {
+			gtk_widget_destroy (priv->check_support_cancel_note);
+			priv->check_support_cancel_note = NULL;
+		}
+
 		if (!priv->destroyed) {
 			if (priv->presets)
 				fill_providers (self);
@@ -2509,6 +2516,16 @@ check_support_callback (ModestAccountProtocol *protocol,
 	g_object_unref (self);
 }
 
+static void
+on_check_support_cancel (GtkDialog *cancel_note,
+			 gint response,
+			 ModestEasysetupWizardDialog *self)
+{
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	gtk_widget_destroy (GTK_WIDGET (cancel_note));
+	priv->check_support_cancel_note = NULL;
+}
 
 static void
 check_support_of_protocols (ModestEasysetupWizardDialog *self)
@@ -2552,6 +2569,11 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 		priv->check_support_show_progress_id = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
 									   check_support_show_progress,
 									   g_object_ref (self), g_object_unref);
+		priv->check_support_cancel_note = hildon_note_new_cancel_with_progress_bar (GTK_WINDOW (self),
+											    _("mcen_cn_availability_check"),
+											    NULL);
+		gtk_widget_show (priv->check_support_cancel_note);
+		g_signal_connect (priv->check_support_cancel_note, "response", G_CALLBACK (on_check_support_cancel), self);
 	} else {
 		priv->check_support_done = TRUE;
 	}
