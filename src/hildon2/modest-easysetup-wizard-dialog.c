@@ -1484,7 +1484,6 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 
 	priv->settings = modest_account_settings_new ();
 
-	check_support_of_protocols (self);
 }
 
 ModestEasysetupWizardDialog*
@@ -1883,7 +1882,12 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 	 * either because it was too slow,
 	 * or because it requires interaction:
 	 */
-	if (current_page == priv->page_account_details) {
+	if (current_page == priv->page_welcome) {
+		if (!priv->check_support_done) {
+			check_support_of_protocols (self);
+			return priv->check_support_done;
+		}
+	} else if (current_page == priv->page_account_details) {
 		/* Check that the title is not already in use: */
 		gchar* account_title = get_entered_account_title (self);
 		if (!account_title)
@@ -2030,7 +2034,7 @@ real_enable_buttons (ModestWizardDialog *dialog, gboolean enable_next)
 
 		/* If the check support is not done then do not enable
 		   the wizard to continue */
-		enable_next = enable_next && priv->check_support_done;
+		enable_next = enable_next && priv->pending_check_support == 0;
 	}
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog),
@@ -2485,6 +2489,7 @@ check_support_callback (ModestAccountProtocol *protocol,
 				fill_providers (self);
 			hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), FALSE);
 			invoke_enable_buttons_vfunc (self);
+			gtk_dialog_response (GTK_DIALOG (self), MODEST_WIZARD_DIALOG_NEXT);
 		}
 	}
 	g_object_unref (self);
