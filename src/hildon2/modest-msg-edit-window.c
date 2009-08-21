@@ -975,7 +975,7 @@ init_window (ModestMsgEditWindow *obj)
 	init_wp_text_view_style ();
 
 	priv->msg_body = modest_wp_text_view_new ();
-	
+	hildon_gtk_widget_set_theme_size (priv->msg_body, MODEST_EDITABLE_SIZE);
 
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->msg_body), GTK_WRAP_WORD_CHAR);
 	priv->text_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->msg_body));
