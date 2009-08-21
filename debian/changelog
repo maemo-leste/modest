@@ -1,3 +1,14 @@
+modest (3.0.17-rc38) unstable; urgency=low
+
+  * Week 35, 2009 - third release
+  * 
+  * Fixes: NB#123383 [AF Checked]Unexpected lines appear in new email editor body area
+  * Fixes: NB#133838 Empty contact created in exchange server in the mentioned scenario.
+  * Fixes: NB#134457 Sort: Sort hildon touch list opens and displayed background of 
+  * 	menu list and whole device is freezed. 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Sat, 22 Aug 2009 00:19:42 +0300
+
 modest (3.0.17-rc37) unstable; urgency=low
 
   * Week 35, 2009 - second release
