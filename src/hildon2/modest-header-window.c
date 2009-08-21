@@ -825,8 +825,8 @@ static void setup_menu (ModestHeaderWindow *self)
 	priv->sort_button = hildon_button_new (MODEST_EDITABLE_SIZE,
 					       HILDON_BUTTON_ARRANGEMENT_VERTICAL);
 	hildon_button_set_title (HILDON_BUTTON (priv->sort_button), _("mcen_me_sort"));
-	g_signal_connect (G_OBJECT (priv->sort_button), "clicked",
-			  G_CALLBACK (modest_ui_actions_on_sort), (gpointer) self);
+	g_signal_connect_after (G_OBJECT (priv->sort_button), "clicked",
+				G_CALLBACK (modest_ui_actions_on_sort), (gpointer) self);
 	hildon_button_set_style(HILDON_BUTTON (priv->sort_button), HILDON_BUTTON_STYLE_PICKER);
 	hildon_button_set_title_alignment (HILDON_BUTTON (priv->sort_button), 0.5, 0.5);
 	hildon_button_set_value_alignment (HILDON_BUTTON (priv->sort_button), 0.5, 0.5);
