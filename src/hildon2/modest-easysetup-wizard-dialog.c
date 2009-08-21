@@ -106,7 +106,9 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *page_welcome;
 	gboolean  check_support_done;
 	guint check_support_show_progress_id;
+	guint check_support_progress_pulse_id;
 	GtkWidget *check_support_cancel_note;
+	GtkWidget *check_support_progress;
 	gint pending_check_support;
 	gboolean destroyed;
 
@@ -155,6 +157,7 @@ static void check_support_callback (ModestAccountProtocol *protocol,
 				    gpointer userdata);
 static void check_support_of_protocols (ModestEasysetupWizardDialog *self);
 static gboolean check_support_show_progress (gpointer userdata);
+static gboolean check_support_progress_pulse (gpointer userdata);
 
 static gboolean
 on_delete_event (GtkWidget *widget,
@@ -182,6 +185,11 @@ modest_easysetup_wizard_dialog_dispose (GObject *object)
 	if (priv->check_support_show_progress_id > 0) {
 		g_source_remove (priv->check_support_show_progress_id);
 		priv->check_support_show_progress_id = 0;
+	}
+
+	if (priv->check_support_progress_pulse_id > 0) {
+		g_source_remove (priv->check_support_progress_pulse_id);
+		priv->check_support_progress_pulse_id = 0;
 	}
 
 	if (G_OBJECT_CLASS (modest_easysetup_wizard_dialog_parent_class)->dispose)
@@ -1439,7 +1447,9 @@ modest_easysetup_wizard_dialog_init (ModestEasysetupWizardDialog *self)
 	/* Initialize fields */
 	priv->check_support_done = FALSE;
 	priv->check_support_show_progress_id = 0;
+	priv->check_support_progress_pulse_id = 0;
 	priv->check_support_cancel_note = NULL;
+	priv->check_support_progress = NULL;
 	priv->pending_check_support = 0;
 	priv->destroyed = FALSE;
 	priv->page_welcome = create_page_welcome (self);
@@ -2482,6 +2492,22 @@ check_support_show_progress (gpointer userdata)
 	return FALSE;
 }
 
+static gboolean
+check_support_progress_pulse (gpointer userdata)
+{
+	ModestEasysetupWizardDialog *self = (ModestEasysetupWizardDialog *) userdata;
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	if (priv->destroyed || priv->check_support_progress == NULL) {
+		priv->check_support_progress_pulse_id = 0;
+		return FALSE;
+	}
+
+	gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->check_support_progress));
+
+	return TRUE;
+}
+
 static void
 check_support_callback (ModestAccountProtocol *protocol,
 			gboolean supported,
@@ -2503,6 +2529,7 @@ check_support_callback (ModestAccountProtocol *protocol,
 		if (priv->check_support_cancel_note) {
 			gtk_widget_destroy (priv->check_support_cancel_note);
 			priv->check_support_cancel_note = NULL;
+			priv->check_support_progress = NULL;
 		}
 
 		if (!priv->destroyed) {
@@ -2555,6 +2582,7 @@ on_check_support_cancel (GtkDialog *cancel_note,
 
 	gtk_widget_destroy (GTK_WIDGET (cancel_note));
 	priv->check_support_cancel_note = NULL;
+	priv->check_support_progress = NULL;
 }
 
 static void
@@ -2599,9 +2627,13 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 		priv->check_support_show_progress_id = g_timeout_add_full (G_PRIORITY_DEFAULT, 1000,
 									   check_support_show_progress,
 									   g_object_ref (self), g_object_unref);
+		priv->check_support_progress_pulse_id = g_timeout_add_full (G_PRIORITY_DEFAULT, 200,
+									   check_support_progress_pulse,
+									   g_object_ref (self), g_object_unref);
+		priv->check_support_progress = gtk_progress_bar_new ();
 		priv->check_support_cancel_note = hildon_note_new_cancel_with_progress_bar (GTK_WINDOW (self),
 											    _("mcen_cn_availability_check"),
-											    NULL);
+											    GTK_PROGRESS_BAR (priv->check_support_progress));
 		gtk_widget_show (priv->check_support_cancel_note);
 		g_signal_connect (priv->check_support_cancel_note, "response", G_CALLBACK (on_check_support_cancel), self);
 	} else {
