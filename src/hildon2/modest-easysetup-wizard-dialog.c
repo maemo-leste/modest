@@ -2522,6 +2522,36 @@ on_check_support_cancel (GtkDialog *cancel_note,
 			 ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	ModestProtocolRegistry *registry;
+	GSList *provider_protos, *node;
+
+	registry = modest_runtime_get_protocol_registry ();
+	provider_protos = modest_protocol_registry_get_by_tag (registry,
+							       MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS);
+
+	for (node = provider_protos; node != NULL; node = g_slist_next (node)) {
+		ModestProtocol *proto = MODEST_PROTOCOL (node->data);
+
+		if (!modest_protocol_registry_protocol_type_has_tag (registry,
+								     modest_protocol_get_type_id (proto),
+								     MODEST_PROTOCOL_REGISTRY_STORE_PROTOCOLS))
+			continue;
+
+		if (modest_protocol_registry_protocol_type_has_tag
+		    (registry,
+		     modest_protocol_get_type_id (proto),
+		     MODEST_PROTOCOL_REGISTRY_SINGLETON_PROVIDER_PROTOCOLS)) {
+			/* Check if there's already an account configured with this account type */
+			if (modest_account_mgr_singleton_protocol_exists (modest_runtime_get_account_mgr (),
+									  modest_protocol_get_type_id (proto)))
+				continue;
+		}
+
+		if (MODEST_ACCOUNT_PROTOCOL (proto)) {
+			modest_account_protocol_cancel_check_support (MODEST_ACCOUNT_PROTOCOL (proto));
+		}
+	}
+	g_slist_free (provider_protos);
 
 	gtk_widget_destroy (GTK_WIDGET (cancel_note));
 	priv->check_support_cancel_note = NULL;
