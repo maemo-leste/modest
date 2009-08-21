@@ -387,10 +387,12 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	GtkWidget *box;
 	GtkWidget *align;
 	GtkWidget *label;
+	GtkWidget *pannable;
 	ModestEasysetupWizardDialogPrivate *priv;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
+	pannable = hildon_pannable_area_new ();
 	label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
@@ -402,8 +404,13 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_box_pack_start (GTK_BOX (box), label, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (align), box);
 	gtk_widget_show (label);
+
+	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
 	gtk_widget_show (GTK_WIDGET (box));
-	return GTK_WIDGET (align);
+	gtk_widget_show (GTK_WIDGET (align));
+	gtk_widget_show (pannable);
+
+	return GTK_WIDGET (pannable);
 }
 
 static void
