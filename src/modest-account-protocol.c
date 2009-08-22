@@ -95,6 +95,12 @@ static gboolean modest_account_protocol_decode_part_to_stream_default (ModestAcc
 								       TnyMimePart *part,
 								       TnyStream *stream,
 								       GError *error);
+static gboolean modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *protocol,
+									     TnyMimePart *self, 
+									     TnyStream *stream, 
+									     TnyMimePartCallback callback, 
+									     TnyStatusCallback status_callback, 
+									     gpointer user_data);
 static gboolean modest_account_protocol_is_supported_default (ModestAccountProtocol *self);
 static gchar *modest_account_protocol_get_from_default (ModestAccountProtocol *self,
 							const gchar *account_id,
@@ -217,6 +223,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_wizard_finished_default;
 	account_class->decode_part_to_stream =
 		modest_account_protocol_decode_part_to_stream_default;
+	account_class->decode_part_to_stream_async =
+		modest_account_protocol_decode_part_to_stream_async_default;
 	account_class->get_from =
 		modest_account_protocol_get_from_default;
 	account_class->get_from_list =
@@ -713,6 +721,34 @@ modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *self,
 										part,
 										stream,
 										error);
+}
+
+static gboolean
+modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *self,
+							     TnyMimePart *part,
+							     TnyStream *stream, 
+							     TnyMimePartCallback callback, 
+							     TnyStatusCallback status_callback, 
+							     gpointer user_data)
+{
+	/* By default account protocols do not handle themselves the transfer */
+	return FALSE;
+}
+
+gboolean
+modest_account_protocol_decode_part_to_stream_async (ModestAccountProtocol *self,
+						     TnyMimePart *part, 
+						     TnyStream *stream, 
+						     TnyMimePartCallback callback, 
+						     TnyStatusCallback status_callback, 
+						     gpointer user_data)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->decode_part_to_stream_async (self,
+										      part,
+										      stream,
+										      callback,
+										      status_callback,
+										      user_data);
 }
 
 gchar *

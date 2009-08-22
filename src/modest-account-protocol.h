@@ -104,9 +104,14 @@ struct _ModestAccountProtocolClass {
 					   TnyMimePart *part,
 					   TnyStream *stream,
 					   GError *error);
+	gboolean (*decode_part_to_stream_async) (ModestAccountProtocol *protocol,
+						 TnyMimePart *part, 
+						 TnyStream *stream, 
+						 TnyMimePartCallback callback, 
+						 TnyStatusCallback status_callback, 
+						 gpointer user_data);
 
 	/* Padding for future expansions */
-	void (*_reserved7) (void);
 	void (*_reserved8) (void);
 	void (*_reserved9) (void);
 	void (*_reserved10) (void);
@@ -506,6 +511,25 @@ modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *protocol,
                                                TnyStream *stream,
                                                GError *error);
 
+/**
+ * modest_account_protocol_decode_part_to_stream_async:
+ * @self: a #ModestAccountProtocol
+ * @part: a #TnyMimePart
+ * @stream: a #TnyStream
+ * @error: a #GError
+ *
+ * This virtual method delegates on the account protocol to decode @part
+ * into @stream, but asynchronously.
+ *
+ * Returns: %TRUE if @protocol does the decode operation (then we shouldn't expect
+ * callback to happen from this call, %FALSE if modest should do it.
+ */
+gboolean modest_account_protocol_decode_part_to_stream_async (ModestAccountProtocol *self,
+							      TnyMimePart *part, 
+							      TnyStream *stream, 
+							      TnyMimePartCallback callback, 
+							      TnyStatusCallback status_callback, 
+							      gpointer user_data);
 
 
 G_END_DECLS
