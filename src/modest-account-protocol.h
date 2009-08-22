@@ -100,9 +100,12 @@ struct _ModestAccountProtocolClass {
 				   gpointer userdata);
 	void (*cancel_check_support) (ModestAccountProtocol *self);
 	void (*wizard_finished) (ModestAccountProtocol *self);
+	gboolean (*decode_part_to_stream) (ModestAccountProtocol *protocol,
+					   TnyMimePart *part,
+					   TnyStream *stream,
+					   GError *error);
 
 	/* Padding for future expansions */
-	void (*_reserved6) (void);
 	void (*_reserved7) (void);
 	void (*_reserved8) (void);
 	void (*_reserved9) (void);
@@ -481,6 +484,28 @@ void modest_account_protocol_save_remote_draft (ModestAccountProtocol *self,
 						    TnyMsg *old_msg,
 						    ModestAccountProtocolSaveRemoteDraftCallback callback,
 						    gpointer userdata);
+
+/**
+ * modest_account_protocol_decode_part_to_stream:
+ * @self: a #ModestAccountProtocol
+ * @part: a #TnyMimePart
+ * @stream: a #TnyStream
+ * @error: a #GError
+ *
+ * This virtual method delegates on the account protocol to decode @part
+ * into @stream. It just allows the provider to decode it as it needs
+ * (i.e. when the original message has a fake attachment, and provider
+ * can return the real attachment).
+ *
+ * Returns: %TRUE if @protocol does the decode operation, %FALSE if modest
+ * should do it.
+ */
+gboolean
+modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *protocol,
+                                               TnyMimePart *part,
+                                               TnyStream *stream,
+                                               GError *error);
+
 
 
 G_END_DECLS
