@@ -94,7 +94,8 @@ static void modest_account_protocol_wizard_finished_default (ModestAccountProtoc
 static gboolean modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *protocol,
 								       TnyMimePart *part,
 								       TnyStream *stream,
-								       GError *error);
+								       gssize *written,
+								       GError **error);
 static gboolean modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *protocol,
 									     TnyMimePart *self, 
 									     TnyStream *stream, 
@@ -705,7 +706,8 @@ static gboolean
 modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *self,
 						       TnyMimePart *part,
 						       TnyStream *stream,
-						       GError *error)
+						       gssize *written,
+						       GError **error)
 {
 	/* By default account protocols do not handle themselves the transfer */
 	return FALSE;
@@ -715,11 +717,13 @@ gboolean
 modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *self,
 					       TnyMimePart *part,
 					       TnyStream *stream,
-					       GError *error)
+					       gssize *written,
+					       GError **error)
 {
 	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->decode_part_to_stream (self,
 										part,
 										stream,
+										written,
 										error);
 }
 

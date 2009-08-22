@@ -103,7 +103,8 @@ struct _ModestAccountProtocolClass {
 	gboolean (*decode_part_to_stream) (ModestAccountProtocol *protocol,
 					   TnyMimePart *part,
 					   TnyStream *stream,
-					   GError *error);
+					   gssize *written,
+					   GError **error);
 	gboolean (*decode_part_to_stream_async) (ModestAccountProtocol *protocol,
 						 TnyMimePart *part, 
 						 TnyStream *stream, 
@@ -495,6 +496,7 @@ void modest_account_protocol_save_remote_draft (ModestAccountProtocol *self,
  * @self: a #ModestAccountProtocol
  * @part: a #TnyMimePart
  * @stream: a #TnyStream
+ * @written: a #gssize pointer, with the number of bytes written
  * @error: a #GError
  *
  * This virtual method delegates on the account protocol to decode @part
@@ -509,14 +511,14 @@ gboolean
 modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *protocol,
                                                TnyMimePart *part,
                                                TnyStream *stream,
-                                               GError *error);
+					       gssize *written,
+                                               GError **error);
 
 /**
  * modest_account_protocol_decode_part_to_stream_async:
  * @self: a #ModestAccountProtocol
  * @part: a #TnyMimePart
  * @stream: a #TnyStream
- * @error: a #GError
  *
  * This virtual method delegates on the account protocol to decode @part
  * into @stream, but asynchronously.
