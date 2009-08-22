@@ -1,3 +1,12 @@
+modest (3.0.17-rc39) unstable; urgency=low
+
+  * Week 35, 2009 - fourth release
+  *
+  * Fixes: NB#120278 Modest: 'Inbox' UI is not updated when change read/unread status from Web interface 
+  * Fixes: NB#134613 Email editor body doesn't get expanded when entering text
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Sun, 23 Aug 2009 01:53:00 +0300
+
 modest (3.0.17-rc38) unstable; urgency=low
 
   * Week 35, 2009 - third release
