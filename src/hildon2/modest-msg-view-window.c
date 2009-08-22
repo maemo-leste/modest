@@ -2667,7 +2667,11 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 							       &filepath);
 
 		if (temp_stream != NULL) {
+			ModestAccountMgr *mgr;
 			DecodeAsyncHelper *helper;
+			gboolean decode_in_provider;
+			ModestProtocol *protocol;
+			const gchar *account; 
 
 			/* Activate progress hint */
 			set_progress_hint (window, TRUE);
@@ -2676,10 +2680,27 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			helper->self = g_object_ref (window);
 			helper->file_path = g_strdup (filepath);
 
-			tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream),
-							      on_decode_to_stream_async_handler,
-							      NULL,
-							      helper);
+			decode_in_provider = FALSE;
+			mgr = modest_runtime_get_account_mgr ();
+			account = modest_window_get_active_account (MODEST_WINDOW (window));
+			if (modest_account_mgr_account_is_multimailbox (mgr, account, &protocol)) {
+				if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+					decode_in_provider = 
+						modest_account_protocol_decode_part_to_stream_async (
+							MODEST_ACCOUNT_PROTOCOL (protocol),
+							mime_part, 
+							TNY_STREAM (temp_stream),
+							on_decode_to_stream_async_handler,
+							NULL,
+							helper);
+				}
+			}
+
+			if (!decode_in_provider)
+				tny_mime_part_decode_to_stream_async (mime_part, TNY_STREAM (temp_stream),
+								      on_decode_to_stream_async_handler,
+								      NULL,
+								      helper);
 			g_object_unref (temp_stream);
 			/* NOTE: files in the temporary area will be automatically
 			 * cleaned after some time if they are no longer in use */
@@ -2786,6 +2807,7 @@ typedef struct
 	GList *pairs;
 	GnomeVFSResult result;
 	gchar *uri;
+	ModestMsgViewWindow *window;
 } SaveMimePartInfo;
 
 static void save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct);
@@ -2807,6 +2829,8 @@ save_mime_part_info_free (SaveMimePartInfo *info, gboolean with_struct)
 	g_list_free (info->pairs);
 	info->pairs = NULL;
 	g_free (info->uri);
+	g_object_unref (info->window);
+	info->window = NULL;
 	if (with_struct) {
 		g_slice_free (SaveMimePartInfo, info);
 	}
@@ -2850,8 +2874,32 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 	info->result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
 	if (info->result == GNOME_VFS_OK) {
 		GError *error = NULL;
+		gboolean decode_in_provider;
+		gssize written;
+		ModestAccountMgr *mgr;
+		const gchar *account;
+		ModestProtocol *protocol = NULL;
+
 		stream = tny_vfs_stream_new (handle);
-		if (tny_mime_part_decode_to_stream (pair->part, stream, &error) < 0) {
+
+		decode_in_provider = FALSE;
+		mgr = modest_runtime_get_account_mgr ();
+		account = modest_window_get_active_account (MODEST_WINDOW (info->window));
+		if (modest_account_mgr_account_is_multimailbox (mgr, account, &protocol)) {
+			if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+				decode_in_provider = 
+					modest_account_protocol_decode_part_to_stream (
+						MODEST_ACCOUNT_PROTOCOL (protocol),
+						pair->part,
+						stream,
+						&written,
+						&error);
+			}
+		}
+		if (!decode_in_provider)
+			written = tny_mime_part_decode_to_stream (pair->part, stream, &error);
+
+		if (written < 0) {
 			g_warning ("modest: could not save attachment %s: %d (%s)\n", pair->filename, error?error->code:-1, error?error->message:"Unknown error");
 
 			if ((error->domain == TNY_ERROR_DOMAIN) && 
@@ -2930,6 +2978,11 @@ save_mime_parts_to_file_with_checks (GtkWindow *parent,
 
 }
 
+typedef struct _SaveAttachmentsInfo {
+	TnyList *attachments_list;
+	ModestMsgViewWindow *window;
+} SaveAttachmentsInfo;
+
 static void
 save_attachments_response (GtkDialog *dialog,
 			   gint       arg1,
@@ -2939,8 +2992,9 @@ save_attachments_response (GtkDialog *dialog,
 	gchar *chooser_uri;
 	GList *files_to_save = NULL;
 	gchar *current_folder;
+	SaveAttachmentsInfo *sa_info = (SaveAttachmentsInfo *) user_data;
 
-	mime_parts = TNY_LIST (user_data);
+	mime_parts = TNY_LIST (sa_info->attachments_list);
 
 	if (arg1 != GTK_RESPONSE_OK)
 		goto end;
@@ -3006,6 +3060,7 @@ save_attachments_response (GtkDialog *dialog,
 		info->pairs = files_to_save;
 		info->result = TRUE;
 		info->uri = g_strdup (chooser_uri);
+		info->window = g_object_ref (sa_info->window);
 		save_mime_parts_to_file_with_checks ((GtkWindow *) dialog, info);
 	}
 	g_free (chooser_uri);
@@ -3013,6 +3068,8 @@ save_attachments_response (GtkDialog *dialog,
  end:
 	/* Free and close the dialog */
 	g_object_unref (mime_parts);
+	g_object_unref (sa_info->window);
+	g_slice_free (SaveAttachmentsInfo, sa_info);
 	gtk_widget_destroy (GTK_WIDGET (dialog));
 }
 
@@ -3120,8 +3177,12 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	/* We must run this asynchronously, because the hildon dialog
 	   performs a gtk_dialog_run by itself which leads to gdk
 	   deadlocks */
+	SaveAttachmentsInfo *sa_info;
+	sa_info = g_slice_new (SaveAttachmentsInfo);
+	sa_info->attachments_list = mime_parts;
+	sa_info->window = g_object_ref (window);
 	g_signal_connect (save_dialog, "response", 
-			  G_CALLBACK (save_attachments_response), mime_parts);
+			  G_CALLBACK (save_attachments_response), sa_info);
 
 	gtk_widget_show_all (save_dialog);
 }
