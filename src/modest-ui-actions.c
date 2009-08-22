@@ -2152,17 +2152,15 @@ modest_ui_actions_on_sort (GtkAction *action,
 }
 
 static void
-new_messages_arrived (ModestMailOperation *self,
-		      TnyList *new_headers,
-		      gpointer user_data)
+update_account_cb (ModestMailOperation *self,
+		   TnyList *new_headers,
+		   gpointer user_data)
 {
 	GObject *source;
 	gboolean show_visual_notifications;
 
 	source = modest_mail_operation_get_source (self);
 	show_visual_notifications = (source) ? FALSE : TRUE;
-	if (source)
-		g_object_unref (source);
 
 	/* Notify new messages have been downloaded. If the
 	   send&receive was invoked by the user then do not show any
@@ -2210,6 +2208,32 @@ new_messages_arrived (ModestMailOperation *self,
 		g_object_unref (actually_new_list);
 	}
 
+	if (source) {
+		ModestHeaderView *header_view = NULL;
+
+		/* Refresh the current view */
+#ifdef MODEST_TOOLKIT_HILDON2
+		if (MODEST_IS_HEADER_WINDOW (source))
+			header_view = modest_header_window_get_header_view ((ModestHeaderWindow *) source);
+#else
+		if (MODEST_IS_MAIN_WINDOW (source))
+			header_view = modest_main_window_get_child_widget ((ModestMainWindow *) source,
+									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+#endif
+		if (header_view) {
+			TnyFolder *folder = modest_header_view_get_folder (header_view);
+			if (folder) {
+				/* We must clear first, because otherwise set_folder will ignore
+				   the change as the folders are the same */
+				modest_header_view_clear (header_view);
+				modest_header_view_set_folder (header_view, folder, TRUE,
+							       (ModestWindow *) source, NULL, NULL);
+				g_object_unref (folder);
+			}
+		}
+
+		g_object_unref (source);
+	}
 }
 
 typedef struct {
@@ -2257,7 +2281,7 @@ do_send_receive_performer (gboolean canceled,
 
 	/* Send & receive. */
 	modest_mail_operation_update_account (info->mail_op, info->account_name, info->poke_status, info->interactive,
-					      new_messages_arrived, info->win);
+					      update_account_cb, info->win);
 
  clean:
 	/* Frees */

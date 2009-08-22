@@ -1119,7 +1119,9 @@ set_folder_intern_get_headers_async_cb (TnyFolder *folder,
 }
 
 static void
-modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
+modest_header_view_set_folder_intern (ModestHeaderView *self,
+				      TnyFolder *folder,
+				      gboolean refresh)
 {
 	TnyFolderType type;
 	TnyList *headers;
@@ -1146,7 +1148,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self, TnyFolder *folder)
 	   be added again by tny_gtk_header_list_model_set_folder, so
 	   we'd end up with duplicate headers. sergio */
 	tny_gtk_header_list_model_set_folder (TNY_GTK_HEADER_LIST_MODEL(headers),
-					      folder, FALSE,
+					      folder, refresh,
 					      set_folder_intern_get_headers_async_cb,
 					      NULL, self);
 
@@ -1375,7 +1377,7 @@ modest_header_view_set_folder (ModestHeaderView *self,
 		ModestMailOperation *mail_op = NULL;
 
 		/* Set folder in the model */
-		modest_header_view_set_folder_intern (self, folder);
+		modest_header_view_set_folder_intern (self, folder, refresh);
 
 		/* Pick my reference. Nothing to do with the mail operation */
 		priv->folder = g_object_ref (folder);
