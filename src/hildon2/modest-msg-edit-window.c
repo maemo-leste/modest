@@ -718,6 +718,16 @@ attachment_deleted (ModestAttachmentsView *attachments_view,
 }
 
 static void
+body_size_request (GtkWidget *body,
+		   GtkRequisition *req,
+		   gpointer user_data)
+{
+	/* Make sure the body always get at least 70 pixels */
+	if (req->height < 70)
+		req->height = 70;
+}
+
+static void
 connect_signals (ModestMsgEditWindow *obj)
 {
 	ModestMsgEditWindowPrivate *priv;
@@ -759,6 +769,8 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (msg_body_focus), obj);
 	g_signal_connect (G_OBJECT (priv->msg_body), "focus-out-event",
 			  G_CALLBACK (msg_body_focus), obj);
+	g_signal_connect (G_OBJECT (priv->msg_body), "size-request",
+			  G_CALLBACK (body_size_request), obj);
 	g_signal_connect (G_OBJECT (obj), "set-focus", G_CALLBACK (window_focus), obj);
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
 			  "changed", G_CALLBACK (recpt_field_changed), obj);
