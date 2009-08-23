@@ -310,11 +310,13 @@ modest_header_window_disconnect_signals (ModestWindow *self)
 		GtkTreeModel *sortable;
 
 		sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view));
-		if (g_signal_handler_is_connected (G_OBJECT (sortable),
-						   priv->sort_column_handler)) {
-			g_signal_handler_disconnect (G_OBJECT (sortable),
-						     priv->sort_column_handler);
-			priv->sort_column_handler = 0;
+		if (sortable) {
+			if (g_signal_handler_is_connected (G_OBJECT (sortable),
+							   priv->sort_column_handler)) {
+				g_signal_handler_disconnect (G_OBJECT (sortable),
+							     priv->sort_column_handler);
+				priv->sort_column_handler = 0;
+			}
 		}
 	}
 

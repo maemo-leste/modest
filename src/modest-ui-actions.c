@@ -2151,6 +2151,40 @@ modest_ui_actions_on_sort (GtkAction *action,
 	modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);
 }
 
+static gboolean
+idle_refresh_folder (gpointer source)
+{
+	ModestHeaderView *header_view = NULL;
+
+	/* If the window still exists */
+	if (!GTK_IS_WIDGET (source) ||
+	    !GTK_WIDGET_VISIBLE (source))
+		return FALSE;
+
+	/* Refresh the current view */
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (MODEST_IS_HEADER_WINDOW (source))
+		header_view = modest_header_window_get_header_view ((ModestHeaderWindow *) source);
+#else
+	if (MODEST_IS_MAIN_WINDOW (source))
+		header_view = modest_main_window_get_child_widget ((ModestMainWindow *) source,
+								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+#endif
+	if (header_view) {
+		TnyFolder *folder = modest_header_view_get_folder (header_view);
+		if (folder) {
+			/* We must clear first, because otherwise set_folder will ignore
+			   the change as the folders are the same */
+			modest_header_view_clear (header_view);
+			modest_header_view_set_folder (header_view, folder, TRUE,
+						       (ModestWindow *) source, NULL, NULL);
+			g_object_unref (folder);
+		}
+	}
+
+	return FALSE;
+}
+
 static void
 update_account_cb (ModestMailOperation *self,
 		   TnyList *new_headers,
@@ -2209,29 +2243,13 @@ update_account_cb (ModestMailOperation *self,
 	}
 
 	if (source) {
-		ModestHeaderView *header_view = NULL;
-
-		/* Refresh the current view */
-#ifdef MODEST_TOOLKIT_HILDON2
-		if (MODEST_IS_HEADER_WINDOW (source))
-			header_view = modest_header_window_get_header_view ((ModestHeaderWindow *) source);
-#else
-		if (MODEST_IS_MAIN_WINDOW (source))
-			header_view = modest_main_window_get_child_widget ((ModestMainWindow *) source,
-									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-#endif
-		if (header_view) {
-			TnyFolder *folder = modest_header_view_get_folder (header_view);
-			if (folder) {
-				/* We must clear first, because otherwise set_folder will ignore
-				   the change as the folders are the same */
-				modest_header_view_clear (header_view);
-				modest_header_view_set_folder (header_view, folder, TRUE,
-							       (ModestWindow *) source, NULL, NULL);
-				g_object_unref (folder);
-			}
-		}
-
+		/* Refresh the current folder in an idle. We do this
+		   in order to avoid refresh cancelations if the
+		   currently viewed folder is the inbox */
+		g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+				 idle_refresh_folder,
+				 g_object_ref (source),
+				 g_object_unref);
 		g_object_unref (source);
 	}
 }
