@@ -38,6 +38,11 @@ m4_define([modest_api_version], [modest_api_major_version.modest_api_minor_versi
 AC_CONFIG_SRCDIR(src/modest-main.c)
 AM_INIT_AUTOMAKE([dist-bzip2])
 
+# Support silent build rules, requires at least automake-1.11. Disable
+# by either passing --disable-silent-rules to configure or passing V=1
+# to make
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 MODEST_API_MAJOR_VERSION=modest_api_major_version
 MODEST_API_MINOR_VERSION=modest_api_minor_version
 MODEST_API_MICRO_VERSION=modest_api_micro_version
