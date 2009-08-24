@@ -268,8 +268,6 @@ modest_header_window_finalize (GObject *obj)
 		g_object_unref (folder);
 	}
 
-	/* Sanity check: shouldn't be needed, the window mgr should
-	   call this function before */
 	modest_header_window_disconnect_signals (MODEST_WINDOW (obj));
 
 	g_object_unref (priv->header_view);
@@ -540,8 +538,14 @@ static void
 on_header_view_model_destroyed (gpointer user_data,
 				GObject *model)
 {
-	ModestHeaderWindow *self = (ModestHeaderWindow *) user_data;
-	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv;
+
+	self = (ModestHeaderWindow *) user_data;
+	if (!GTK_IS_WIDGET (self))
+		return;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	if (g_signal_handler_is_connected (G_OBJECT (model),
 					   priv->sort_column_handler)) {
