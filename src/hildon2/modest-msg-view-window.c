@@ -2688,7 +2688,8 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 					decode_in_provider = 
 						modest_account_protocol_decode_part_to_stream_async (
 							MODEST_ACCOUNT_PROTOCOL (protocol),
-							mime_part, 
+							mime_part,
+							NULL,
 							TNY_STREAM (temp_stream),
 							on_decode_to_stream_async_handler,
 							NULL,
@@ -2891,6 +2892,7 @@ save_mime_part_to_file (SaveMimePartInfo *info)
 					modest_account_protocol_decode_part_to_stream (
 						MODEST_ACCOUNT_PROTOCOL (protocol),
 						pair->part,
+						pair->filename,
 						stream,
 						&written,
 						&error);

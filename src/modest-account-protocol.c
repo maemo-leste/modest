@@ -93,11 +93,13 @@ static void modest_account_protocol_cancel_check_support_default (ModestAccountP
 static void modest_account_protocol_wizard_finished_default (ModestAccountProtocol *self);
 static gboolean modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *protocol,
 								       TnyMimePart *part,
+								       const gchar *stream_uri,
 								       TnyStream *stream,
 								       gssize *written,
 								       GError **error);
 static gboolean modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *protocol,
 									     TnyMimePart *self, 
+									     const gchar *stream_uri,
 									     TnyStream *stream, 
 									     TnyMimePartCallback callback, 
 									     TnyStatusCallback status_callback, 
@@ -705,6 +707,7 @@ modest_account_protocol_wizard_finished (ModestAccountProtocol *self)
 static gboolean
 modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *self,
 						       TnyMimePart *part,
+						       const gchar *stream_uri,
 						       TnyStream *stream,
 						       gssize *written,
 						       GError **error)
@@ -716,12 +719,14 @@ modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *se
 gboolean
 modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *self,
 					       TnyMimePart *part,
+					       const gchar *stream_uri,
 					       TnyStream *stream,
 					       gssize *written,
 					       GError **error)
 {
 	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->decode_part_to_stream (self,
 										part,
+										stream_uri,
 										stream,
 										written,
 										error);
@@ -730,6 +735,7 @@ modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *self,
 static gboolean
 modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *self,
 							     TnyMimePart *part,
+							     const gchar *stream_uri,
 							     TnyStream *stream, 
 							     TnyMimePartCallback callback, 
 							     TnyStatusCallback status_callback, 
@@ -742,6 +748,7 @@ modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtoc
 gboolean
 modest_account_protocol_decode_part_to_stream_async (ModestAccountProtocol *self,
 						     TnyMimePart *part, 
+						     const gchar *stream_uri,
 						     TnyStream *stream, 
 						     TnyMimePartCallback callback, 
 						     TnyStatusCallback status_callback, 
@@ -749,6 +756,7 @@ modest_account_protocol_decode_part_to_stream_async (ModestAccountProtocol *self
 {
 	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->decode_part_to_stream_async (self,
 										      part,
+										      stream_uri,
 										      stream,
 										      callback,
 										      status_callback,
