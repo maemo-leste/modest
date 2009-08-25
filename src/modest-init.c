@@ -757,7 +757,7 @@ init_default_settings (ModestConf *conf)
 		modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, NULL);
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_UPDATE_INTERVAL, NULL))
-		modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, MODEST_UPDATE_INTERVAL_15_MIN, NULL);
+		modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, MODEST_UPDATE_INTERVAL_30_MIN, NULL);
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_MSG_SIZE_LIMIT, NULL))
 		modest_conf_set_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, 100, NULL);
