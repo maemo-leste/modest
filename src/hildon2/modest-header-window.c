@@ -100,6 +100,9 @@ struct _ModestHeaderWindowPrivate {
 	GtkWidget *csm_menu;
 	gdouble x_coord;
 	gdouble y_coord;
+
+	/* weak refs */
+	GtkTreeModel *model_weak_ref;
 };
 #define MODEST_HEADER_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									  MODEST_TYPE_HEADER_WINDOW, \
@@ -169,6 +172,8 @@ static void on_horizontal_movement (HildonPannableArea *hildonpannable,
 				    gdouble             initial_x,
 				    gdouble             initial_y,
 				    gpointer            user_data);
+static void on_header_view_model_destroyed (gpointer user_data,
+					    GObject *model);
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -243,6 +248,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->progress_hint = FALSE;
 	priv->queue_change_handler = 0;
 	priv->sort_column_handler = 0;
+	priv->model_weak_ref = NULL;
 	priv->current_store_account = NULL;
 	priv->sort_button = NULL;
 	priv->new_message_button = NULL;
@@ -261,6 +267,18 @@ modest_header_window_finalize (GObject *obj)
 	TnyFolder *folder;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
+
+	if (priv->model_weak_ref) {
+		g_object_weak_unref ((GObject *) priv->model_weak_ref,
+				     on_header_view_model_destroyed,
+				     obj);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->model_weak_ref),
+						   priv->sort_column_handler)) {
+			g_signal_handler_disconnect (G_OBJECT (priv->model_weak_ref),
+						     priv->sort_column_handler);
+		}
+		on_header_view_model_destroyed (obj, (GObject *) priv->model_weak_ref);
+	}
 
 	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
 	if (folder) {
@@ -546,13 +564,9 @@ on_header_view_model_destroyed (gpointer user_data,
 		return;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	priv->model_weak_ref = NULL;
 
-	if (g_signal_handler_is_connected (G_OBJECT (model),
-					   priv->sort_column_handler)) {
-		g_signal_handler_disconnect (G_OBJECT (model),
-					     priv->sort_column_handler);
-		priv->sort_column_handler = 0;
-	}
+	priv->sort_column_handler = 0;
 }
 
 static void
@@ -564,6 +578,18 @@ on_header_view_model_changed (GObject *gobject,
 	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (gobject));
 
+	if (priv->model_weak_ref ) {
+		g_object_weak_unref ((GObject *) priv->model_weak_ref,
+				     on_header_view_model_destroyed,
+				     self);
+		if (g_signal_handler_is_connected (G_OBJECT (priv->model_weak_ref),
+						   priv->sort_column_handler)) {
+			g_signal_handler_disconnect (G_OBJECT (priv->model_weak_ref),
+						     priv->sort_column_handler);
+		}
+		on_header_view_model_destroyed (self, (GObject *) priv->model_weak_ref);
+	}
+
 	if (!model)
 		return;
 
@@ -572,6 +598,7 @@ on_header_view_model_changed (GObject *gobject,
 						      "sort-column-changed",
 						      G_CALLBACK (on_sort_column_changed),
 						      self);
+	priv->model_weak_ref = model;
 	g_object_weak_ref ((GObject *) model, on_header_view_model_destroyed, self);
 }
 
