@@ -718,7 +718,7 @@ update_style (ModestCompactMailHeaderView *self)
 	}
 	pango_attr_list_unref (attr_list);
 
-	gdk_color_parse ("#ff00ff", &bg_color);
+	gdk_color_parse (MODEST_COMPACT_HEADER_BG, &bg_color);
 	gtk_widget_modify_bg (GTK_WIDGET (priv->event_box), GTK_STATE_NORMAL, &bg_color);
 }
 

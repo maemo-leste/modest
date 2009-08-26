@@ -41,6 +41,7 @@
 #include <modest-attachments-view.h>
 #include <modest-tny-mime-part.h>
 #include <modest-tny-msg.h>
+#include <modest-ui-constants.h>
 
 static GObjectClass *parent_class = NULL;
 
@@ -81,6 +82,8 @@ static void select_range (ModestAttachmentsView *atts_view, ModestAttachmentView
 static void clipboard_get (GtkClipboard *clipboard, GtkSelectionData *selection_data,
 			   guint info, gpointer userdata);
 static void own_clipboard (ModestAttachmentsView *atts_view);
+static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
+static void update_style (ModestAttachmentsView *self);
 
 static guint signals[LAST_SIGNAL] = {0};
 
@@ -365,6 +368,10 @@ modest_attachments_view_instance_init (GTypeInstance *instance, gpointer g_class
 	g_signal_connect (G_OBJECT (instance), "focus", G_CALLBACK (focus), instance);
 
 	GTK_WIDGET_SET_FLAGS (instance, GTK_CAN_FOCUS);
+
+	g_signal_connect (G_OBJECT (instance), "notify::style", G_CALLBACK (on_notify_style), (gpointer) instance);
+
+	update_style (MODEST_ATTACHMENTS_VIEW (instance));
 
 	return;
 }
@@ -1102,3 +1109,33 @@ modest_attachments_view_get_num_attachments (ModestAttachmentsView *atts_view)
 
 	return result;
 }
+
+static void 
+on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
+{
+	if (strcmp ("style", spec->name) == 0) {
+		update_style (MODEST_ATTACHMENTS_VIEW (obj));
+		gtk_widget_queue_draw (GTK_WIDGET (obj));
+	} 
+}
+
+/* This method updates the color (and other style settings) of widgets using secondary text color,
+ * tracking the gtk style */
+static void
+update_style (ModestAttachmentsView *self)
+{
+#ifdef MODEST_COMPACT_HEADER_BG
+	GdkColor bg_color;
+	GtkStyle *style;
+	GdkColor *current_bg;
+
+	g_return_if_fail (MODEST_IS_ATTACHMENTS_VIEW (self));
+
+	gdk_color_parse (MODEST_COMPACT_HEADER_BG, &bg_color);
+	style = gtk_widget_get_style (GTK_WIDGET (self));
+	current_bg = &(style->bg[GTK_STATE_NORMAL]);
+	if (current_bg->red != bg_color.red || current_bg->blue != bg_color.blue || current_bg->green != bg_color.green)
+		gtk_widget_modify_bg (GTK_WIDGET (self), GTK_STATE_NORMAL, &bg_color);
+#endif
+}
+
