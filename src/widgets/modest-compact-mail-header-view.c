@@ -415,7 +415,7 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_box_pack_start (GTK_BOX (main_vbox), headers_date_hbox, FALSE, FALSE, 0);
 
 	main_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (main_align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (main_align), 0, MODEST_MARGIN_HALF, MODEST_MARGIN_DOUBLE, 0);
 	priv->event_box = gtk_event_box_new ();
 	gtk_event_box_set_visible_window (GTK_EVENT_BOX (priv->event_box), TRUE);
 	gtk_container_add (GTK_CONTAINER (main_align), main_vbox);
