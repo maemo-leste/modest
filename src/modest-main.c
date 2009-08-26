@@ -63,7 +63,8 @@ on_idle_exit_modest (gpointer data)
 	gdk_threads_enter ();
 	mail_op_queue = modest_runtime_get_mail_operation_queue ();
 
-	if (modest_mail_operation_queue_running_shutdown (mail_op_queue)) {
+	if (modest_tny_account_store_is_shutdown (modest_runtime_get_account_store ()) &&
+	    modest_mail_operation_queue_running_shutdown (mail_op_queue)) {
 
 		/* Disconnect signals. Will be freed by the destroy notify */
 		handlers = (MainSignalHandlers *) data;
