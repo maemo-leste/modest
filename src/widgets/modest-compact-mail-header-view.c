@@ -51,6 +51,7 @@ typedef struct _ModestCompactMailHeaderViewPriv ModestCompactMailHeaderViewPriv;
 struct _ModestCompactMailHeaderViewPriv
 {
 	GtkWidget    *headers_vbox;
+	GtkWidget    *event_box;
 
 	GtkWidget    *fromto_label;
 	GtkWidget    *fromto_contents;
@@ -415,10 +416,13 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	main_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (main_align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	priv->event_box = gtk_event_box_new ();
+	gtk_event_box_set_visible_window (GTK_EVENT_BOX (priv->event_box), TRUE);
 	gtk_container_add (GTK_CONTAINER (main_align), main_vbox);
-	gtk_box_pack_start (GTK_BOX (self), main_align, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (priv->event_box), main_align);
+	gtk_box_pack_start (GTK_BOX (self), priv->event_box, TRUE, TRUE, 0);
 
-	gtk_widget_show_all (main_align);
+	gtk_widget_show_all (priv->event_box);
 
 	priv->is_outgoing = FALSE;
 	priv->is_draft = FALSE;
@@ -674,6 +678,7 @@ update_style (ModestCompactMailHeaderView *self)
 	PangoColor color;
 	PangoAttrList *attr_list;
 	GSList *node;
+	GdkColor bg_color;
 
 	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
@@ -713,6 +718,8 @@ update_style (ModestCompactMailHeaderView *self)
 	}
 	pango_attr_list_unref (attr_list);
 
+	gdk_color_parse ("#ff00ff", &bg_color);
+	gtk_widget_modify_bg (GTK_WIDGET (priv->event_box), GTK_STATE_NORMAL, &bg_color);
 }
 
 static void
