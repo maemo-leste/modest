@@ -1087,7 +1087,6 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 {
  	ModestGtkhtmlMsgViewPrivate *priv;
 	GtkAdjustment *html_vadj;
-	GtkWidget *separator;
 
 	GTK_WIDGET_UNSET_FLAGS (obj, GTK_NO_WINDOW);
 	gtk_widget_set_redraw_on_allocate (GTK_WIDGET (obj), TRUE);
@@ -1198,8 +1197,10 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 		g_free (att_label);
 	}
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX(priv->headers_box), separator, FALSE, FALSE, 0);
+#endif
 
 	gtk_widget_set_parent (priv->headers_box, GTK_WIDGET (obj));
 
