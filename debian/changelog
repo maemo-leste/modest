@@ -1,3 +1,11 @@
+modest (3.0.17-rc41) unstable; urgency=low
+
+  * Week 35, 2009 - sixth release
+  * 
+  * Fixes: NB#135054 Email Default update values should be changed
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 26 Aug 2009 12:31:26 +0300
+
 modest (3.0.17-rc40) unstable; urgency=low
 
   * Week 35, 2009 - fifth release
