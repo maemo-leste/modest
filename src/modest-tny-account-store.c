@@ -2191,6 +2191,51 @@ modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 }
 
 gboolean 
+modest_tny_account_store_is_shutdown (ModestTnyAccountStore *self)
+{
+	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE (self);
+	TnyIterator *iter;
+	gboolean found;
+
+	found = FALSE;
+
+	for (iter = tny_list_create_iterator (priv->store_accounts);
+	     !found && !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyAccount *account;
+
+		account = (TnyAccount *) tny_iterator_get_current (iter);
+		if (TNY_IS_ACCOUNT (account)) {
+			found = (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED) ||
+				(tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_RECONNECTING);
+		}
+		g_object_unref (account);
+	}
+	g_object_unref (iter);
+
+	if (found)
+		return !found;
+
+	for (iter = tny_list_create_iterator (priv->transport_accounts);
+	     !found && !tny_iterator_is_done (iter);
+	     tny_iterator_next (iter)) {
+		TnyAccount *account;
+
+		account = (TnyAccount *) tny_iterator_get_current (iter);
+		if (TNY_IS_ACCOUNT (account)) {
+			found = (tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_CONNECTED) ||
+				(tny_account_get_connection_status (account) == TNY_CONNECTION_STATUS_RECONNECTING);
+		}
+		g_object_unref (account);
+	}
+	g_object_unref (iter);
+
+	return !found;
+
+}
+
+
+gboolean 
 modest_tny_account_store_is_send_mail_blocked (ModestTnyAccountStore *self)
 {
 	ModestTnyAccountStorePrivate *priv;
