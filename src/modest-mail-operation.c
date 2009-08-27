@@ -1765,11 +1765,13 @@ inbox_refreshed_cb (TnyFolder *inbox,
 						  NULL, msg_info);
 
 			g_object_unref (folder);
+			g_object_unref (header);
 
 			msg_num++;
 			tny_iterator_next (iter);
 		}
 		g_object_unref (iter);
+		g_object_unref (new_headers);
 
 		/* The mail operation will finish when the last
 		   message is retrieved */
