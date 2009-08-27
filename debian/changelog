@@ -1,3 +1,14 @@
+modest (3.0.17-rc42) unstable; urgency=low
+
+  * Week 36, 2009 - first release
+  *
+  * Fixes: NB#135412 Message view background in header area should be grey
+  * Fixes: NB#114929 Mail on Ovi: username field in the Account setup wizard should be 
+  * 	prefilled with @ovi.com 
+  * Fixes: NB#134700 Email application active, no sound after send & receive or timed retrieval
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 27 Aug 2009 16:10:30 +0300
+
 modest (3.0.17-rc41) unstable; urgency=low
 
   * Week 35, 2009 - sixth release
