@@ -38,6 +38,7 @@
 #include <libebook/e-vcard.h>
 #include "modest-hildon-includes.h"
 #include <libosso-abook/osso-abook.h>
+#include <libedataserver/e-data-server-util.h>
 #include "modest-platform.h"
 #include "modest-runtime.h"
 #include "widgets/modest-window-mgr.h"
@@ -941,7 +942,7 @@ filter_by_name (OssoABookContactChooser *chooser,
 
 	contact_name = osso_abook_contact_get_name (contact);
 	/* contact_name includes both name and surname */
-	if (contact_name && name && strstr (contact_name, name))
+	if (contact_name && name && e_util_utf8_strstrcase (contact_name, name))
 		return TRUE;
 	else
 		return FALSE;
