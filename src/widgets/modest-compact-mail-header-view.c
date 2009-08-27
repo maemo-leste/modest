@@ -331,6 +331,14 @@ datetime_format_changed (ModestDatetimeFormatter *formatter,
 }
 
 static void
+unref_event_box (ModestCompactMailHeaderView *self,
+		 GtkWidget *event_box)
+{
+	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
+	priv->event_box = NULL;
+}
+
+static void
 modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestCompactMailHeaderView *self = (ModestCompactMailHeaderView *)instance;
@@ -389,10 +397,6 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 
 	gtk_box_pack_start (GTK_BOX (vbox), from_date_hbox, FALSE, FALSE, 0);
 
-	update_style (self);
-
-	g_signal_connect (G_OBJECT (self), "notify::style", G_CALLBACK (on_notify_style), (gpointer) self);
-
 	priv->datetime_formatter = modest_datetime_formatter_new ();
 	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
 			  G_CALLBACK (datetime_format_changed), (gpointer) self);
@@ -421,6 +425,11 @@ modest_compact_mail_header_view_instance_init (GTypeInstance *instance, gpointer
 	gtk_container_add (GTK_CONTAINER (main_align), main_vbox);
 	gtk_container_add (GTK_CONTAINER (priv->event_box), main_align);
 	gtk_box_pack_start (GTK_BOX (self), priv->event_box, TRUE, TRUE, 0);
+	g_object_weak_ref (G_OBJECT (priv->event_box), (GWeakNotify) unref_event_box, (gpointer) self);
+
+	update_style (self);
+
+	g_signal_connect (G_OBJECT (self), "notify::style", G_CALLBACK (on_notify_style), (gpointer) self);
 
 	gtk_widget_show_all (priv->event_box);
 
@@ -436,6 +445,11 @@ modest_compact_mail_header_view_finalize (GObject *object)
 {
 	ModestCompactMailHeaderView *self = (ModestCompactMailHeaderView *)object;	
 	ModestCompactMailHeaderViewPriv *priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
+
+	if (priv->event_box) {
+		g_object_weak_unref (G_OBJECT (priv->event_box), (GWeakNotify) unref_event_box, (gpointer) self);
+		priv->event_box = NULL;
+	}
 
 	if (priv->datetime_formatter) {
 		g_object_unref (priv->datetime_formatter);
