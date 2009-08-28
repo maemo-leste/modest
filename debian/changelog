@@ -1,3 +1,15 @@
+modest (3.0.17-rc43) unstable; urgency=low
+
+  * Week 36, 2009 - second release
+  *
+  * Fixes: NB#101571  Modest crashes at 'on_attach_file_response' while selecting 
+  * 	a file from MMC for attachment.
+  * Fixes: NB#131550  Send and Receive Email manually
+  * Fixes: NB#135191  Checking names in editor: if small letter is used then Contacts 
+  * 	starting from this letter are not shown 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 28 Aug 2009 10:59:49 +0300
+
 modest (3.0.17-rc42) unstable; urgency=low
 
   * Week 36, 2009 - first release
