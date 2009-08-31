@@ -1,3 +1,13 @@
+modest (3.0.17-rc44) unstable; urgency=low
+
+  * Week 36, 2009 - third release
+  *
+  * Fixes: NB#131351 Modest crash in ssl_Read () from /usr/lib/microb-engine/libssl3.so
+  * Fixes: NB#134642 Random crash in "on_header_view_model_destroyed"
+  * Fixes: NB#136024 Corematic: crash in " do_notify_in_idle_destroy " 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 31 Aug 2009 12:02:03 +0300
+
 modest (3.0.17-rc43) unstable; urgency=low
 
   * Week 36, 2009 - second release
