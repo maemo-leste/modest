@@ -2142,6 +2142,35 @@ modest_easysetup_wizard_dialog_class_init (ModestEasysetupWizardDialogClass *kla
 	base_klass->save = on_save;
 }
 
+static void
+check_username_for_provider (const gchar *provider_id,
+			     const gchar *domain,
+			     gchar **username)
+{
+	gchar *providers_to_check[] = { "ovi.com", "yahoomailplus.com" };
+	gint i;
+	gboolean found = FALSE;
+	gchar *old;
+
+	/* Check if the username contains the @hostname, if not then add it */
+	if (strchr (*username, '@'))
+		return;
+
+	/* Check if it's one of the providers to check */
+	for (i = 0; i < G_N_ELEMENTS (providers_to_check) && !found; i++) {
+		if (!g_ascii_strncasecmp (providers_to_check[i], provider_id, strlen (providers_to_check[i])))
+			found = TRUE;
+	}
+
+	if (!found)
+		return;
+
+	/* Replace the username */
+	old = *username;
+	*username = g_strconcat (*username, "@", domain, NULL);
+	g_free (old);
+}
+
 /**
  * save_to_settings:
  * @self: a #ModestEasysetupWizardDialog
@@ -2154,7 +2183,8 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	guint special_port;
 	gchar *provider_id = NULL;
-	gchar* display_name;
+	gchar *alternate_username = NULL;
+	gchar *display_name;
 	const gchar *username, *password;
 	gchar *store_hostname, *transport_hostname;
 	guint store_port, transport_port;
@@ -2228,6 +2258,8 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	if (provider_id) {
 		ModestProtocolType store_provider_server_type;
 		gboolean store_provider_use_alternate_port;
+		gchar *domain = NULL;
+
 		/* Use presets: */
 		store_hostname = modest_presets_get_server (priv->presets, provider_id,
 							    TRUE /* store */);
@@ -2244,6 +2276,17 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 		store_provider_use_alternate_port  = modest_presets_get_info_server_use_alternate_port (priv->presets,
 													provider_id,
 													TRUE /* store */);
+
+
+		/* This is HORRIBLE, but it seems that somehow it helps users
+		   that do not like to read the user instructions for their
+		   email accounts */
+		domain = modest_presets_get_domain (priv->presets, provider_id);
+		if (domain) {
+			alternate_username = g_strdup (username);
+			check_username_for_provider (provider_id, domain, &alternate_username);
+			g_free (domain);
+		}
 
 		/* We don't check for SMTP here as that is impossible for an incoming server. */
 		if (store_provider_server_type == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID)
@@ -2282,7 +2325,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 	/* now we store the common store account settings */
 	modest_server_account_settings_set_hostname (store_settings, store_hostname);
-	modest_server_account_settings_set_username (store_settings, username);
+	modest_server_account_settings_set_username (store_settings, (alternate_username) ? alternate_username : username);
 	modest_server_account_settings_set_password (store_settings, password);
 	modest_server_account_settings_set_protocol (store_settings, store_protocol);
 
@@ -2368,12 +2411,14 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 
 	/* now we store the common transport account settings */
 	modest_server_account_settings_set_hostname (transport_settings, transport_hostname);
-	modest_server_account_settings_set_username (transport_settings, username);
+	modest_server_account_settings_set_username (transport_settings, (alternate_username) ? alternate_username : username);
 	modest_server_account_settings_set_password (transport_settings, password);
 	modest_server_account_settings_set_protocol (transport_settings, transport_protocol);
 
 	g_object_unref (transport_settings);
 	g_free (transport_hostname);
+	if (alternate_username)
+		g_free (alternate_username);
 
 	fullname = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_name));
 	email_address = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_email));

@@ -249,7 +249,16 @@ typedef void (*ModestTnyAccountStoreShutdownCallback) (ModestTnyAccountStore *ac
 void modest_tny_account_store_shutdown (ModestTnyAccountStore *self,
 					ModestTnyAccountStoreShutdownCallback callback,
 					gpointer userdata);
-					
+
+/**
+ * modest_tny_account_store_is_shutdown:
+ * @self: a #ModestTnyAccountStore
+ *
+ * Check if all accounts are disconnected
+ *
+ * Returns: %TRUE if all accounts are disconnected, %FALSE otherwise.
+ */
+gboolean modest_tny_account_store_is_shutdown (ModestTnyAccountStore *self);
 
 /**
  * modest_tny_account_store_is_send_mail_blocked:
