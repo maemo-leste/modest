@@ -1595,7 +1595,6 @@ update_account_get_msg_async_cb (TnyFolder *folder,
 		/* Call the user callback and free */
 		new_headers = tny_iterator_get_list (msg_info->more_msgs);
 		update_account_notify_user_and_free (info, new_headers);
-		g_object_unref (new_headers);
 
 		/* Delete the helper */
 		g_object_unref (msg_info->more_msgs);
