@@ -1,3 +1,12 @@
+modest (3.0.17-rc45) unstable; urgency=low
+
+  * Week 36, 2009 - fourth release
+  * 
+  * Fixes: NB#134700 Email application active, no sound after send & receive or timed retrieval 
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 01 Sep 2009 10:43:13 +0300
+
 modest (3.0.17-rc44) unstable; urgency=low
 
   * Week 36, 2009 - third release
