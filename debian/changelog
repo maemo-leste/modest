@@ -1,3 +1,13 @@
+modest (3.0.17-rc46) unstable; urgency=low
+
+  * Week 36, 2009 - fifth release
+  *
+  * Fixes: NB#133938 API for handling 'Save attachment' should be provided to modest plugins
+  * Fixes: NB#134642 Random crash in "on_header_view_model_destroyed"
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 02 Sep 2009 12:44:15 +0300
+
 modest (3.0.17-rc45) unstable; urgency=low
 
   * Week 36, 2009 - fourth release
