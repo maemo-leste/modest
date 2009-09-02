@@ -100,10 +100,21 @@ struct _ModestAccountProtocolClass {
 				   gpointer userdata);
 	void (*cancel_check_support) (ModestAccountProtocol *self);
 	void (*wizard_finished) (ModestAccountProtocol *self);
+	gboolean (*decode_part_to_stream) (ModestAccountProtocol *protocol,
+					   TnyMimePart *part,
+					   const gchar *stream_uri,
+					   TnyStream *stream,
+					   gssize *written,
+					   GError **error);
+	gboolean (*decode_part_to_stream_async) (ModestAccountProtocol *protocol,
+						 TnyMimePart *part,
+						 const gchar *stream_uri,
+						 TnyStream *stream, 
+						 TnyMimePartCallback callback, 
+						 TnyStatusCallback status_callback, 
+						 gpointer user_data);
 
 	/* Padding for future expansions */
-	void (*_reserved6) (void);
-	void (*_reserved7) (void);
 	void (*_reserved8) (void);
 	void (*_reserved9) (void);
 	void (*_reserved10) (void);
@@ -481,6 +492,58 @@ void modest_account_protocol_save_remote_draft (ModestAccountProtocol *self,
 						    TnyMsg *old_msg,
 						    ModestAccountProtocolSaveRemoteDraftCallback callback,
 						    gpointer userdata);
+
+/**
+ * modest_account_protocol_decode_part_to_stream:
+ * @self: a #ModestAccountProtocol
+ * @part: a #TnyMimePart
+ * @stream_uri: a string
+ * @stream: a #TnyStream
+ * @written: a #gssize pointer, with the number of bytes written
+ * @error: a #GError
+ *
+ * This virtual method delegates on the account protocol to decode @part
+ * into @stream. It just allows the provider to decode it as it needs
+ * (i.e. when the original message has a fake attachment, and provider
+ * can return the real attachment).
+ *
+ * The @stream_uri parameter tells the uri of the resource @stream is
+ * wrapping (if known).
+ *
+ * Returns: %TRUE if @protocol does the decode operation, %FALSE if modest
+ * should do it.
+ */
+gboolean
+modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *protocol,
+                                               TnyMimePart *part,
+					       const gchar *stream_uri,
+                                               TnyStream *stream,
+					       gssize *written,
+                                               GError **error);
+
+/**
+ * modest_account_protocol_decode_part_to_stream_async:
+ * @self: a #ModestAccountProtocol
+ * @part: a #TnyMimePart
+ * @stream_uri: a string
+ * @stream: a #TnyStream
+ *
+ * This virtual method delegates on the account protocol to decode @part
+ * into @stream, but asynchronously.
+ *
+ * The @stream_uri parameter tells the uri of the resource @stream is
+ * wrapping (if known).
+ *
+ * Returns: %TRUE if @protocol does the decode operation (then we shouldn't expect
+ * callback to happen from this call, %FALSE if modest should do it.
+ */
+gboolean modest_account_protocol_decode_part_to_stream_async (ModestAccountProtocol *self,
+							      TnyMimePart *part, 
+							      const gchar *stream_uri,
+							      TnyStream *stream, 
+							      TnyMimePartCallback callback, 
+							      TnyStatusCallback status_callback, 
+							      gpointer user_data);
 
 
 G_END_DECLS

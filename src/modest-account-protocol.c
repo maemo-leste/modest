@@ -91,6 +91,19 @@ static void modest_account_protocol_check_support_default (ModestAccountProtocol
 							   gpointer userdata);
 static void modest_account_protocol_cancel_check_support_default (ModestAccountProtocol *self);
 static void modest_account_protocol_wizard_finished_default (ModestAccountProtocol *self);
+static gboolean modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *protocol,
+								       TnyMimePart *part,
+								       const gchar *stream_uri,
+								       TnyStream *stream,
+								       gssize *written,
+								       GError **error);
+static gboolean modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *protocol,
+									     TnyMimePart *self, 
+									     const gchar *stream_uri,
+									     TnyStream *stream, 
+									     TnyMimePartCallback callback, 
+									     TnyStatusCallback status_callback, 
+									     gpointer user_data);
 static gboolean modest_account_protocol_is_supported_default (ModestAccountProtocol *self);
 static gchar *modest_account_protocol_get_from_default (ModestAccountProtocol *self,
 							const gchar *account_id,
@@ -211,6 +224,10 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_cancel_check_support_default;
 	account_class->wizard_finished =
 		modest_account_protocol_wizard_finished_default;
+	account_class->decode_part_to_stream =
+		modest_account_protocol_decode_part_to_stream_default;
+	account_class->decode_part_to_stream_async =
+		modest_account_protocol_decode_part_to_stream_async_default;
 	account_class->get_from =
 		modest_account_protocol_get_from_default;
 	account_class->get_from_list =
@@ -685,6 +702,65 @@ void
 modest_account_protocol_wizard_finished (ModestAccountProtocol *self)
 {
 	MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->wizard_finished (self);
+}
+
+static gboolean
+modest_account_protocol_decode_part_to_stream_default (ModestAccountProtocol *self,
+						       TnyMimePart *part,
+						       const gchar *stream_uri,
+						       TnyStream *stream,
+						       gssize *written,
+						       GError **error)
+{
+	/* By default account protocols do not handle themselves the transfer */
+	return FALSE;
+}
+
+gboolean
+modest_account_protocol_decode_part_to_stream (ModestAccountProtocol *self,
+					       TnyMimePart *part,
+					       const gchar *stream_uri,
+					       TnyStream *stream,
+					       gssize *written,
+					       GError **error)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->decode_part_to_stream (self,
+										part,
+										stream_uri,
+										stream,
+										written,
+										error);
+}
+
+static gboolean
+modest_account_protocol_decode_part_to_stream_async_default (ModestAccountProtocol *self,
+							     TnyMimePart *part,
+							     const gchar *stream_uri,
+							     TnyStream *stream, 
+							     TnyMimePartCallback callback, 
+							     TnyStatusCallback status_callback, 
+							     gpointer user_data)
+{
+	/* By default account protocols do not handle themselves the transfer */
+	return FALSE;
+}
+
+gboolean
+modest_account_protocol_decode_part_to_stream_async (ModestAccountProtocol *self,
+						     TnyMimePart *part, 
+						     const gchar *stream_uri,
+						     TnyStream *stream, 
+						     TnyMimePartCallback callback, 
+						     TnyStatusCallback status_callback, 
+						     gpointer user_data)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->decode_part_to_stream_async (self,
+										      part,
+										      stream_uri,
+										      stream,
+										      callback,
+										      status_callback,
+										      user_data);
 }
 
 gchar *
