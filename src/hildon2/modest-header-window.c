@@ -88,6 +88,7 @@ struct _ModestHeaderWindowPrivate {
 	GSList *sighandlers;
 	gulong queue_change_handler;
 	gulong sort_column_handler;
+	gulong notify_model;
 
 	/* progress hint */
 	gboolean progress_hint;
@@ -254,6 +255,7 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->new_message_button = NULL;
 	priv->x_coord = 0;
 	priv->y_coord = 0;
+	priv->notify_model = 0;
 
 	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
 					    GTK_WINDOW(obj),
@@ -314,6 +316,11 @@ modest_header_window_disconnect_signals (ModestWindow *self)
 	ModestHeaderWindowPrivate *priv;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
+
+	if (g_signal_handler_is_connected ((GObject*) priv->header_view, priv->notify_model)) {
+		g_signal_handler_disconnect ((GObject*) priv->header_view, priv->notify_model);
+		priv->notify_model = 0;
+	}
 
 	if (g_signal_handler_is_connected (G_OBJECT (modest_runtime_get_mail_operation_queue ()), 
 					   priv->queue_change_handler)) {
@@ -610,8 +617,9 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	ModestHeaderWindowPrivate *priv;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
-	g_signal_connect ((GObject*) header_view, "notify::model",
-			  G_CALLBACK (on_header_view_model_changed), self);
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	priv->notify_model = g_signal_connect ((GObject*) header_view, "notify::model",
+					       G_CALLBACK (on_header_view_model_changed), self);
 
 	modest_header_view_set_folder (MODEST_HEADER_VIEW (header_view), folder,
 				       TRUE, self, folder_refreshed_cb, self);
@@ -621,7 +629,6 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 				      MODEST_CONF_HEADER_VIEW_KEY);
 
 	/* Create CSM menu */
-	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 	priv->csm_menu = gtk_menu_new ();
 	delete_item = gtk_menu_item_new_with_label (_HL("wdgt_bd_delete"));
 	mark_read_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_read"));

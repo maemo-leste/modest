@@ -1,3 +1,53 @@
+modest (3.0.17-rc45) unstable; urgency=low
+
+  * Week 36, 2009 - fourth release
+  * 
+  * Fixes: NB#134700 Email application active, no sound after send & receive or timed retrieval 
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 01 Sep 2009 10:43:13 +0300
+
+modest (3.0.17-rc44) unstable; urgency=low
+
+  * Week 36, 2009 - third release
+  *
+  * Fixes: NB#131351 Modest crash in ssl_Read () from /usr/lib/microb-engine/libssl3.so
+  * Fixes: NB#134642 Random crash in "on_header_view_model_destroyed"
+  * Fixes: NB#136024 Corematic: crash in " do_notify_in_idle_destroy " 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 31 Aug 2009 12:02:03 +0300
+
+modest (3.0.17-rc43) unstable; urgency=low
+
+  * Week 36, 2009 - second release
+  *
+  * Fixes: NB#101571  Modest crashes at 'on_attach_file_response' while selecting 
+  * 	a file from MMC for attachment.
+  * Fixes: NB#131550  Send and Receive Email manually
+  * Fixes: NB#135191  Checking names in editor: if small letter is used then Contacts 
+  * 	starting from this letter are not shown 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 28 Aug 2009 10:59:49 +0300
+
+modest (3.0.17-rc42) unstable; urgency=low
+
+  * Week 36, 2009 - first release
+  *
+  * Fixes: NB#135412 Message view background in header area should be grey
+  * Fixes: NB#114929 Mail on Ovi: username field in the Account setup wizard should be 
+  * 	prefilled with @ovi.com 
+  * Fixes: NB#134700 Email application active, no sound after send & receive or timed retrieval
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 27 Aug 2009 16:10:30 +0300
+
+modest (3.0.17-rc41) unstable; urgency=low
+
+  * Week 35, 2009 - sixth release
+  * 
+  * Fixes: NB#135054 Email Default update values should be changed
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 26 Aug 2009 12:31:26 +0300
+
 modest (3.0.17-rc40) unstable; urgency=low
 
   * Week 35, 2009 - fifth release

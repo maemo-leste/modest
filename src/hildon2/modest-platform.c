@@ -111,6 +111,7 @@
 #define MODEST_ALARMD_APPID PACKAGE_NAME
 
 static ca_context *ca_con = NULL;
+static gboolean ca_con_opened = FALSE;
 
 
 static void modest_platform_play_email_tone (void);
@@ -2663,9 +2664,13 @@ modest_platform_play_email_tone (void)
 			}
 		}
 
-		if ((ret = ca_context_open(ca_con)) != CA_SUCCESS) {
-			g_warning("ca_context_open: %s\n", ca_strerror(ret));
-			return;
+		if (!ca_con_opened) {
+			if ((ret = ca_context_open(ca_con)) != CA_SUCCESS) {
+				g_warning("ca_context_open: %s\n", ca_strerror(ret));
+				return;
+			} else {
+				ca_con_opened = TRUE;
+			}
 		}
 
 		ca_proplist_create(&pl);
