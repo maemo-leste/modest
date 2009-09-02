@@ -33,7 +33,7 @@
 
 #include <glib.h>
 #include <libosso.h>
-#include <dbus_api/modest-dbus-api.h>
+#include <libmodest-dbus-client/libmodest-dbus-api.h>
 
 gint modest_dbus_req_handler(const gchar * interface, const gchar * method,
                       GArray * arguments, gpointer data,

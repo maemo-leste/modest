@@ -28,10 +28,6 @@
 
 SUBDIRS= src man po
 
-if MODEST_HAVE_DBUS_API
-SUBDIRS += libmodest-dbus-client
-endif
-
 if BUILD_TESTS
 SUBDIRS += tests
 endif
