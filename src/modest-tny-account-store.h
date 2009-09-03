@@ -329,6 +329,10 @@ gboolean modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *sel
 						      GError *error,
 						      TnyAccount *account);
 
+
+void modest_tny_account_store_reset_attempt_count (ModestTnyAccountStore *self,
+						   TnyAccount *account);
+
 G_END_DECLS
 
 #endif /* __MODEST_TNY_ACCOUNT_STORE_H__ */
