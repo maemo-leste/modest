@@ -1107,6 +1107,9 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 {
  	ModestGtkhtmlMsgViewPrivate *priv;
 	GtkAdjustment *html_vadj;
+#ifndef MODEST_TOOLKIT_HILDON2
+	GtkWidget *separator;
+#endif
 
 	GTK_WIDGET_UNSET_FLAGS (obj, GTK_NO_WINDOW);
 	gtk_widget_set_redraw_on_allocate (GTK_WIDGET (obj), TRUE);
