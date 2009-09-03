@@ -1,5 +1,10 @@
-libmodest-dbus-client (3.0.17-rc33) unstable; urgency=low
+libmodest-dbus-client (4:1.0.0-1) unstable; urgency=low
 
-  * Initial import
+  * Week 37, 2009 release
+  *
+  * Releasing libmodest-dbus-client binaries in it's own source package.
+  *
+  * Fixes: NB#132625 - modest and libosso-abook have a cyclic dependency
+  *
 
- -- Anonymous <anonymous@internet.com>  Mon, 17 Aug 2009 00:00:00 +0000
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 03 Sep 2009 11:33:46 +0300
