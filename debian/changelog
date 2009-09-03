@@ -1,3 +1,13 @@
+modest (3.0.17-rc47) unstable; urgency=low
+
+  * Week 37, 2009 - first release
+  *
+  * Fixes: NB#132625 - modest and libosso-abook have a cyclic dependency
+  * Fixes: NB#129121 - Corematic: Crash in "IA__gtk_tree_row_reference_copy ()"
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 03 Sep 2009 11:41:50 +0300
+
 modest (3.0.17-rc46) unstable; urgency=low
 
   * Week 36, 2009 - fifth release
