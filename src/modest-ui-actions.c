@@ -1544,7 +1544,7 @@ open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWind
 	OpenMsgHelper *helper;
 	ModestWindow *window;
 
-	g_return_if_fail (header != NULL && rowref != NULL);
+	g_return_if_fail (header != NULL && rowref != NULL && gtk_tree_row_reference_valid (rowref));
 
 	mgr = modest_runtime_get_window_mgr ();
 
