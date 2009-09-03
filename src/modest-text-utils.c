@@ -454,7 +454,7 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 		guchar kar = data[i];
 		
 		if (space_seen && kar != ' ') {
-			g_string_append (html, "&nbsp;");
+			g_string_append (html, " ");
 			space_seen = FALSE;
 		}
 		
@@ -491,7 +491,6 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 			break_dist = 0;
 			if (space_seen) { /* second space in a row */
 				g_string_append (html, "&nbsp; ");
-				space_seen = FALSE;
 			} else
 				space_seen = TRUE;
 			break;
