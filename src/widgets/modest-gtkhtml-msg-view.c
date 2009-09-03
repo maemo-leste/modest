@@ -908,6 +908,11 @@ size_allocate (GtkWidget *widget,
 	     allocation->height != widget->allocation.height))
 		gdk_window_invalidate_rect (widget->window, NULL, FALSE);
 
+	if (widget->allocation.width != allocation->width) {
+		g_object_ref (self);
+		g_idle_add ((GSourceFunc) idle_readjust_scroll, self);
+	}
+
 	widget->allocation = *allocation;
 	set_hadjustment_values (self, &hadj_value_changed);
 	set_vadjustment_values (self, &vadj_value_changed);
@@ -1063,19 +1068,34 @@ idle_readjust_scroll (ModestGtkhtmlMsgView *self)
 	if (GTK_WIDGET_DRAWABLE (self)) {
 		ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 		GtkAdjustment *html_vadj;
+		GtkAdjustment *html_hadj;
+
 		html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
-		html_vadj->page_size = html_vadj->upper;
-		gtk_adjustment_changed (html_vadj);
-		gtk_widget_queue_resize (GTK_WIDGET (self));
-		gtk_widget_queue_draw (GTK_WIDGET (self));
+		html_vadj->upper = 0;
+		html_vadj->page_size = 0;
+		g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+		html_hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+		html_hadj->upper = 0;
+		html_hadj->page_size = 0;
+		g_signal_emit_by_name (G_OBJECT (html_hadj), "changed");
+
+		gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
+		gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
+
+		gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
+		gtk_widget_queue_draw (GTK_WIDGET (priv->body_view));
 
 		/* Just another hack for making readjust really work. This forces an update
 		 * of the scroll, and then, make the scroll really update properly the
 		 * the size and not corrupt scrollable area */
 		gtk_adjustment_set_value (priv->vadj, 1.0);
 		gtk_adjustment_set_value (priv->vadj, 0.0);
+
 	}
 	g_object_unref (G_OBJECT (self));
+
+
 
 	gdk_threads_leave ();
 
@@ -1701,7 +1721,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	TnyMimePart *body;
 	ModestGtkhtmlMsgViewPrivate *priv;
 	TnyHeader *header;
-	GtkAdjustment *html_vadj;
+	GtkAdjustment *html_vadj, *html_hadj;
 
 	g_return_if_fail (self);
 
@@ -1709,16 +1729,6 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	modest_mail_header_view_set_loading (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), FALSE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), FALSE);
-
-	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
-	html_vadj->upper = 0;
-	html_vadj->page_size = 0;
-	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
-
-	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
-	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
-
-	gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
 
 	if (msg != priv->msg) {
 		if (priv->msg)
@@ -1738,6 +1748,22 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 #endif
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
+
+		html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+		html_vadj->upper = 0;
+		html_vadj->page_size = 0;
+		g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+		html_hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+		html_hadj->upper = 0;
+		html_hadj->page_size = 0;
+		g_signal_emit_by_name (G_OBJECT (html_hadj), "changed");
+
+		gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
+		gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
+
+		gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
+
 		gtk_widget_queue_resize (GTK_WIDGET(self));
 		gtk_widget_queue_draw (GTK_WIDGET(self));
 		return;
@@ -1805,6 +1831,22 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	gtk_widget_set_no_show_all (priv->priority_box, FALSE);
 #endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
+
+	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+	html_vadj->upper = 0;
+	html_vadj->page_size = 0;
+	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+	html_hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+	html_hadj->upper = 0;
+	html_hadj->page_size = 0;
+	g_signal_emit_by_name (G_OBJECT (html_hadj), "changed");
+
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
+
+	gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
+
 	gtk_widget_queue_resize (GTK_WIDGET(self));
 	gtk_widget_queue_draw (GTK_WIDGET(self));
 
@@ -1819,14 +1861,14 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	 * makes the html view get the proper and expected size and prevent being able to scroll
 	 * the buffer when it shouldn't be scrollable */
 	g_object_ref (self);
-	g_timeout_add (250, (GSourceFunc) idle_readjust_scroll, self);
+	g_idle_add ((GSourceFunc) idle_readjust_scroll, self);
 }
 
 static void
 set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
-	GtkAdjustment *html_vadj;
+	GtkAdjustment *html_vadj, *html_hadj;
 	
 	g_return_if_fail (self);
 
@@ -1844,6 +1886,11 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	html_vadj->upper = 0;
 	html_vadj->page_size = 0;
 	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+	html_hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+	html_hadj->upper = 0;
+	html_hadj->page_size = 0;
+	g_signal_emit_by_name (G_OBJECT (html_hadj), "changed");
 
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
@@ -1895,11 +1942,25 @@ static void
 set_zoom (ModestGtkhtmlMsgView *self, gdouble zoom)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
+	GtkAdjustment *html_vadj, *html_hadj;
 
 	g_return_if_fail (MODEST_IS_GTKHTML_MSG_VIEW (self));
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
 	modest_zoomable_set_zoom (MODEST_ZOOMABLE(priv->body_view), zoom);
+
+	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+	html_vadj->upper = 0;
+	html_vadj->page_size = 0;
+	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+	html_hadj = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
+	html_hadj->upper = 0;
+	html_hadj->page_size = 0;
+	g_signal_emit_by_name (G_OBJECT (html_hadj), "changed");
+
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 
 	gtk_widget_queue_resize (priv->body_view);
 }
