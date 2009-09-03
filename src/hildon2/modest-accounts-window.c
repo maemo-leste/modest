@@ -83,6 +83,9 @@ static void on_row_deleted (GtkTreeModel *tree_model,
 			    GtkTreePath  *path,
 			    gpointer      user_data);
 static void row_count_changed (ModestAccountsWindow *self);
+static gboolean on_key_press(GtkWidget *widget,
+				GdkEventKey *event,
+				gpointer user_data);
 
 typedef struct _ModestAccountsWindowPrivate ModestAccountsWindowPrivate;
 struct _ModestAccountsWindowPrivate {
@@ -236,6 +239,10 @@ connect_signals (ModestAccountsWindow *self)
 
 	/* we don't register this in sighandlers, as it should be run
 	 * after disconnecting all signals, in destroy stage */
+
+
+	g_signal_connect(G_OBJECT(self), "key-press-event",
+			G_CALLBACK(on_key_press), self);
 }
 
 static ModestWindow *
@@ -667,4 +674,32 @@ modest_accounts_window_pre_create (void)
 		pre_created = TRUE;
 		pre_created_accounts_window = GTK_WIDGET (modest_accounts_window_new_real ());
 	}
+}
+
+
+static gboolean
+on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	ModestAccountsWindowPrivate *priv;
+	HildonPannableArea *pannable;
+
+	if (event->type == GDK_KEY_RELEASE)
+		return FALSE;
+
+	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(user_data);
+
+	pannable = HILDON_PANNABLE_AREA (priv->pannable);
+
+	switch (event->keyval) {
+
+	case GDK_Up:
+		modest_maemo_utils_scroll_pannable(pannable, 0, -1);
+		break;
+
+	case GDK_Down:
+		modest_maemo_utils_scroll_pannable(pannable, 0, 1);
+		break;
+	}
+
+	return FALSE;
 }

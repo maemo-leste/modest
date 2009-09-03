@@ -175,6 +175,9 @@ static void on_horizontal_movement (HildonPannableArea *hildonpannable,
 				    gpointer            user_data);
 static void on_header_view_model_destroyed (gpointer user_data,
 					    GObject *model);
+static gboolean on_key_press(GtkWidget *widget,
+					GdkEventKey *event,
+					gpointer user_data);
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -411,6 +414,10 @@ connect_signals (ModestHeaderWindow *self)
 						   G_CALLBACK (on_horizontal_movement),
 						   self);
 	}
+
+
+	g_signal_connect(G_OBJECT(self), "key-press-event",
+			G_CALLBACK(on_key_press), self);
 }
 
 static void
@@ -1467,4 +1474,36 @@ on_horizontal_movement (HildonPannableArea *hildonpannable,
 		delete_header ((GtkWindow *) user_data, header);
 		g_object_unref (header);
 	}
+}
+
+
+static gboolean
+on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	ModestHeaderWindowPrivate *priv;
+	HildonPannableArea *pannable;
+	/* FIXME: set scroll_speed depends on for how long the key was pressed */
+	gint scroll_speed = 3;
+
+	if (event->type == GDK_KEY_RELEASE)
+		return FALSE;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(user_data);
+
+	pannable = HILDON_PANNABLE_AREA (priv->contents_view);
+
+	switch (event->keyval) {
+
+	case GDK_Up:
+		priv->autoscroll = FALSE;
+		modest_maemo_utils_scroll_pannable(pannable, 0, -scroll_speed);
+		break;
+
+	case GDK_Down:
+		priv->autoscroll = FALSE;
+		modest_maemo_utils_scroll_pannable(pannable, 0, scroll_speed);
+		break;
+	}
+
+	return FALSE;
 }

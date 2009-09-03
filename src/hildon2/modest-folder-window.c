@@ -106,6 +106,9 @@ static void on_visible_account_changed (ModestFolderView *folder_view,
 static void on_account_changed (TnyAccountStore *account_store,
 				TnyAccount *account,
 				gpointer user_data);
+static gboolean on_key_press(GtkWidget *widget,
+				GdkEventKey *event,
+				gpointer user_data);
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -262,6 +265,10 @@ connect_signals (ModestFolderWindow *self)
 						       G_OBJECT (modest_runtime_get_account_store()),
 						       "account-changed",
 						       G_CALLBACK (on_account_changed), self);
+
+
+	g_signal_connect(G_OBJECT(self), "key-press-event",
+			G_CALLBACK(on_key_press), self);
 }
 
 ModestWindow *
@@ -880,4 +887,32 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Update title if the visible account is the one that have just changed */
 	if (acc_id && visible && !g_utf8_collate (acc_id, visible))
 		update_window_title (MODEST_FOLDER_WINDOW (user_data), account);
+}
+
+
+static gboolean
+on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	ModestFolderWindowPrivate *priv;
+	HildonPannableArea *pannable;
+
+	if (event->type == GDK_KEY_RELEASE)
+		return FALSE;
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (user_data);
+
+	pannable = HILDON_PANNABLE_AREA (gtk_widget_get_parent (priv->folder_view));
+
+	switch (event->keyval) {
+
+	case GDK_Up:
+		modest_maemo_utils_scroll_pannable(pannable, 0, -1);
+		break;
+
+	case GDK_Down:
+		modest_maemo_utils_scroll_pannable(pannable, 0, 1);
+		break;
+	}
+
+	return FALSE;
 }
