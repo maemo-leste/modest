@@ -75,6 +75,9 @@ modest_default_connection_policy_on_connect (TnyConnectionPolicy *self, TnyAccou
 		}
 	}
 
+	/* Reset the attempt count */
+	modest_tny_account_store_reset_attempt_count (modest_runtime_get_account_store (), account);
+
 	return;
 }
 
