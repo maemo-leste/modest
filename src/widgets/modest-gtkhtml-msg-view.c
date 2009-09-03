@@ -1715,6 +1715,9 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	html_vadj->page_size = 0;
 	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
 
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
+
 
 	if (msg != priv->msg) {
 		if (priv->msg)
@@ -1840,6 +1843,9 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	html_vadj->upper = 0;
 	html_vadj->page_size = 0;
 	g_signal_emit_by_name (G_OBJECT (html_vadj), "changed");
+
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
+	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 
 
 	if (priv->msg) {
