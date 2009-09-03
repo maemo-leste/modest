@@ -1028,7 +1028,7 @@ modest_header_view_on_expose_event(GtkTreeView *header_view,
 			gtk_tree_path_free (tree_iter_path);
 		}
 	} else {
-		if (priv->autoselect_reference != NULL) {
+		if (priv->autoselect_reference != NULL && gtk_tree_row_reference_valid (priv->autoselect_reference)) {
 			gboolean moved_selection = FALSE;
 			GtkTreePath * last_path;
 			if (gtk_tree_selection_count_selected_rows (sel) != 1) {
