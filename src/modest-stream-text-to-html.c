@@ -38,8 +38,8 @@
 #define HTML_PREFIX "<html><head>" \
 	"<meta http-equiv=\"content-type\" content=\"text/html; charset=utf8\">" \
 	"</head>" \
-	"<body>"
-#define HTML_SUFFIX "</body></html>"
+	"<body><p>"
+#define HTML_SUFFIX "</p></body></html>"
 
 
 /* 'private'/'protected' functions */
