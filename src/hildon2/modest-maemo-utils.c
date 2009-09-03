@@ -583,3 +583,42 @@ modest_maemo_utils_in_usb_mode ()
 	return modest_conf_get_bool (modest_runtime_get_conf (), INTERNAL_MMC_USB_MODE, NULL);
 }
 #endif
+
+void
+modest_maemo_utils_scroll_pannable (HildonPannableArea *pannable,
+				    gint horizontal,
+				    gint vertical)
+{
+	gint h_pos = -1;
+	gint v_pos = -1;
+
+	g_assert (pannable);
+	/* at atleast one of values have to be valid */
+	g_return_if_fail (h_pos == -1 && v_pos == -1);
+
+	if (horizontal != 0) {
+		GtkAdjustment *h_adj;
+
+		h_adj = hildon_pannable_area_get_hadjustment (pannable);
+		g_return_if_fail (h_adj);
+
+		h_pos = h_adj->value + h_adj->step_increment * horizontal;
+		if (horizontal > 0) {
+			h_pos += h_adj->page_size;
+		}
+	}
+
+	if (vertical != 0) {
+		GtkAdjustment *v_adj;
+
+		v_adj = hildon_pannable_area_get_vadjustment (pannable);
+		g_return_if_fail (v_adj);
+
+		v_pos = v_adj->value + v_adj->step_increment * vertical;
+		if (vertical > 0) {
+			v_pos += v_adj->page_size;
+		}
+	}
+
+	hildon_pannable_area_scroll_to (pannable, h_pos, v_pos);
+}

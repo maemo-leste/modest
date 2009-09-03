@@ -230,7 +230,6 @@ static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
 						   gpointer userdata);
 static void update_branding (ModestMsgViewWindow *self);
 
-
 /* list my signals */
 enum {
 	MSG_CHANGED_SIGNAL,
@@ -290,22 +289,48 @@ static void
 save_state (ModestWindow *self)
 {
 	modest_widget_memory_save (modest_runtime_get_conf (),
-				   G_OBJECT(self), 
+				   G_OBJECT(self),
 				   MODEST_CONF_MSG_VIEW_WINDOW_KEY);
 }
 
-static 
-gboolean modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
-					      GtkScrollType scroll_type,
-					      gboolean horizontal,
-					      gpointer userdata)
+static gboolean
+modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
+				     GtkScrollType scroll_type,
+				     gboolean horizontal,
+				     gpointer userdata)
 {
 	ModestMsgViewWindowPrivate *priv;
-	gboolean return_value;
+	gint step = 0;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
-	g_signal_emit_by_name (priv->main_scroll, "scroll-child", scroll_type, horizontal, &return_value);
-	return return_value;
+
+	switch (scroll_type) {
+	case GTK_SCROLL_STEP_UP:
+		step = -1;
+		break;
+	case GTK_SCROLL_STEP_DOWN:
+		step = +1;
+		break;
+	case GTK_SCROLL_PAGE_UP:
+		step = -6;
+		break;
+	case GTK_SCROLL_PAGE_DOWN:
+		step = +6;
+		break;
+	case GTK_SCROLL_START:
+		step = -100;
+		break;
+	case GTK_SCROLL_END:
+		step = +100;
+		break;
+	default:
+		step = 0;
+	}
+
+	if (step)
+		modest_maemo_utils_scroll_pannable((HildonPannableArea *) priv->main_scroll, 0, step);
+
+	return (gboolean) step;
 }
 
 static void
@@ -314,7 +339,7 @@ add_scroll_binding (GtkBindingSet *binding_set,
 		    GtkScrollType scroll)
 {
 	guint keypad_keyval = keyval - GDK_Left + GDK_KP_Left;
-	
+
 	gtk_binding_entry_add_signal (binding_set, keyval, 0,
 				      "scroll_child", 2,
 				      GTK_TYPE_SCROLL_TYPE, scroll,
@@ -1686,7 +1711,6 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 	modest_zoomable_set_zoom (MODEST_ZOOMABLE (priv->msg_view), zoom_level);
 
 	return TRUE;
-	
 }
 
 static gboolean
@@ -1706,52 +1730,11 @@ modest_msg_view_window_key_event (GtkWidget *window,
 			gtk_widget_event (focus, copy);
 			gdk_event_free (copy);
 			return TRUE;
-		} else 
-			return FALSE;
-	}
-	if (event->keyval == GDK_Up || event->keyval == GDK_KP_Up ||
-	    event->keyval == GDK_Down || event->keyval == GDK_KP_Down ||
-	    event->keyval == GDK_Page_Up || event->keyval == GDK_KP_Page_Up ||
-	    event->keyval == GDK_Page_Down || event->keyval == GDK_KP_Page_Down ||
-	    event->keyval == GDK_Home || event->keyval == GDK_KP_Home ||
-	    event->keyval == GDK_End || event->keyval == GDK_KP_End) {
-		/* ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window); */
-		/* gboolean return_value; */
-
-		if (event->type == GDK_KEY_PRESS) {
-			GtkScrollType scroll_type;
-
-			switch (event->keyval) {
-			case GDK_Up: 
-			case GDK_KP_Up:
-				scroll_type = GTK_SCROLL_STEP_UP; break;
-			case GDK_Down: 
-			case GDK_KP_Down:
-				scroll_type = GTK_SCROLL_STEP_DOWN; break;
-			case GDK_Page_Up:
-			case GDK_KP_Page_Up:
-				scroll_type = GTK_SCROLL_PAGE_UP; break;
-			case GDK_Page_Down:
-			case GDK_KP_Page_Down:
-				scroll_type = GTK_SCROLL_PAGE_DOWN; break;
-			case GDK_Home:
-			case GDK_KP_Home:
-				scroll_type = GTK_SCROLL_START; break;
-			case GDK_End:
-			case GDK_KP_End:
-				scroll_type = GTK_SCROLL_END; break;
-			default: scroll_type = GTK_SCROLL_NONE;
-			}
-
-			/* g_signal_emit_by_name (G_OBJECT (priv->main_scroll), "scroll-child",  */
-			/* 		       scroll_type, FALSE, &return_value); */
-			return FALSE;
 		} else {
 			return FALSE;
 		}
-	} else {
-		return FALSE;
 	}
+	return FALSE;
 }
 
 gboolean

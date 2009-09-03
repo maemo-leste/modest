@@ -79,6 +79,9 @@ static void on_queue_changed    (ModestMailOperationQueue *queue,
 static void on_activity_changed (ModestFolderView *view,
 				 gboolean activity,
 				 ModestMailboxesWindow *folder_window);
+static gboolean on_key_press(GtkWidget *widget,
+				GdkEventKey *event,
+				gpointer user_data);
 
 typedef struct _ModestMailboxesWindowPrivate ModestMailboxesWindowPrivate;
 struct _ModestMailboxesWindowPrivate {
@@ -257,6 +260,9 @@ connect_signals (ModestMailboxesWindow *self)
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
+	/* connect window keys -> priv->folder_view scroll here? */
+	g_signal_connect(G_OBJECT(self), "key-press-event",
+			G_CALLBACK(on_key_press), self);
 }
 
 ModestWindow *
@@ -614,3 +620,30 @@ on_activity_changed (ModestFolderView *view,
 	update_progress_hint (self);
 }
 
+
+static gboolean
+on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	ModestMailboxesWindowPrivate *priv;
+	HildonPannableArea *pannable;
+
+	if (event->type == GDK_KEY_RELEASE)
+		return FALSE;
+
+	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(user_data);
+
+	pannable = HILDON_PANNABLE_AREA (gtk_widget_get_parent (priv->folder_view));
+
+	switch (event->keyval) {
+
+	case GDK_Up:
+		modest_maemo_utils_scroll_pannable(pannable, 0, -1);
+		break;
+
+	case GDK_Down:
+		modest_maemo_utils_scroll_pannable(pannable, 0, 1);
+		break;
+	}
+
+	return FALSE;
+}
