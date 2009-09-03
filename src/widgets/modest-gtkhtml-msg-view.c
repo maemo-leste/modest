@@ -1718,6 +1718,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 
+	gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
 
 	if (msg != priv->msg) {
 		if (priv->msg)
@@ -1846,7 +1847,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
-
+	gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
 
 	if (priv->msg) {
 		g_object_unref (G_OBJECT(priv->msg));
