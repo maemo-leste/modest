@@ -1,3 +1,15 @@
+modest (3.0.17-rc48) unstable; urgency=low
+
+  * Week 37, 2009 - second release
+  * 
+  * Fixes: NB#120278 Modest: 'Inbox' UI is not updated when change read/unread status from Web interface
+  * Fixes: NB#125495 Gmail/IMAP suffering from connection problems while running background updates.
+  * Fixes: NB#133627 Keyboard UP/Down arrow keys are not working in Mail Editor/Index
+  * Fixes: NB#134645 Randomly Ovi account settings dialog is shown when Email is not running
+  * Fixes: NB#134905 ASCII mails dont wrap around in UI 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 04 Sep 2009 11:15:00 +0300
+
 modest (3.0.17-rc47) unstable; urgency=low
 
   * Week 37, 2009 - first release
@@ -22,7 +34,7 @@ modest (3.0.17-rc45) unstable; urgency=low
 
   * Week 36, 2009 - fourth release
   * 
-  * Fixes: NB#134700 Email application active, no sound after send & receive or timed retrieval 
+  * Fixes NB#134700 Email application active, no sound after send & receive or timed retrieval 
   *
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 01 Sep 2009 10:43:13 +0300
