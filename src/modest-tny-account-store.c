@@ -537,6 +537,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	const gchar *server_account_name;
 	gchar *url_string;
 	PwdAttempt *attempt = NULL;
+	gpointer attempt_ptr = NULL;
 
 	g_return_val_if_fail (account, NULL);
 
@@ -578,12 +579,15 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		return NULL;
 	}
 
+	/* We need to do this to avoid "dereferencing type-punned pointer will break strict-aliasing rules" */
+	attempt_ptr = (gpointer) &attempt;
+
 	/* This hash map stores passwords, including passwords that are not stored in gconf. */
 	/* Is it in the hash? if it's already there, it must be wrong... */
 	already_asked = priv->password_hash && g_hash_table_lookup_extended (priv->password_hash,
 									     server_account_name,
 									     NULL,
-									     (gpointer*)&attempt);
+									     &attempt_ptr);
 
 	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
