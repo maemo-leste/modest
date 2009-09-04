@@ -906,7 +906,7 @@ get_contacts_for_name (const gchar *name)
 	GList *result;
 	gchar *unquoted;
 	GetContactsInfo *info;
-	EBookQuery *queries[8];
+	EBookQuery *queries[10];
 
 	if (name == NULL)
 		return NULL;
@@ -921,7 +921,9 @@ get_contacts_for_name (const gchar *name)
 	queries[5] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
 	queries[6] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
 	queries[7] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	book_query = e_book_query_or (8, queries, TRUE);
+	queries[8] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[9] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	book_query = e_book_query_or (10, queries, TRUE);
 
 	g_free (unquoted);
 
