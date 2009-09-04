@@ -2675,6 +2675,12 @@ modest_platform_play_email_tone (void)
 		if (ca_con == NULL) {
 			if ((ret = ca_context_create (&ca_con)) != CA_SUCCESS) {
 				g_warning("ca_context_create: %s\n", ca_strerror(ret));
+				ca_con = NULL;
+				return;
+			}
+			if ((ret = ca_context_set_driver (ca_con, "gstreamer")) != CA_SUCCESS) {
+				g_warning ("ca_context_set_driver: %s\n", ca_strerror (ret));
+				ca_con = NULL;
 				return;
 			}
 		}
