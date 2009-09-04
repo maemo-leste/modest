@@ -79,6 +79,7 @@
 #include <modest-selector-picker.h>
 #include <modest-icon-names.h>
 #include <modest-count-stream.h>
+#include <math.h>
 
 #ifdef MODEST_HAVE_MCE
 #include <mce/dbus-names.h>
@@ -2624,6 +2625,19 @@ modest_platform_get_osso_context (void)
 	return modest_maemo_utils_get_osso_context ();
 }
 
+static gfloat
+convert_volume_to_db (int linear_volume)
+{
+    gfloat linear_converted = linear_volume / 100.0;
+    gfloat db_vol = 0.0;
+    
+    db_vol = 20 * log10 (linear_converted);
+    if (isinf (db_vol) != 0)
+        return -60.0;
+
+    return db_vol;
+}
+
 static void
 modest_platform_play_email_tone (void)
 {
@@ -2631,6 +2645,7 @@ modest_platform_play_email_tone (void)
 	gint mail_volume_int;
 	int ret;
 	ca_proplist *pl = NULL;
+	gfloat db_volume;
 
 #ifdef MODEST_USE_PROFILE
 	gchar *active_profile;
@@ -2675,7 +2690,8 @@ modest_platform_play_email_tone (void)
 
 		ca_proplist_create(&pl);
 		ca_proplist_sets(pl, CA_PROP_MEDIA_FILENAME, mail_tone);
-		ca_proplist_setf(pl, CA_PROP_CANBERRA_VOLUME, "%f", (gfloat) mail_volume_int);
+		db_volume = convert_volume_to_db (mail_volume_int);
+		ca_proplist_setf(pl, CA_PROP_CANBERRA_VOLUME, "%f", db_volume);
 
 		ret = ca_context_play_full(ca_con, 0, pl, NULL, NULL);
 		g_debug("ca_context_play_full (vol %f): %s\n", (gfloat) mail_volume_int, ca_strerror(ret));
