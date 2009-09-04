@@ -944,63 +944,31 @@ get_contacts_for_name (const gchar *name)
 	return result;
 }
 
-#ifdef HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC
-static gboolean
-filter_by_name (OssoABookContactChooser *chooser,
-		OssoABookContact        *contact,
-		gpointer                 user_data)
-{
-	const gchar *contact_name;
-	const gchar *name = (const gchar *) user_data;
-
-	contact_name = osso_abook_contact_get_name (contact);
-	/* contact_name includes both name and surname */
-	if (contact_name && name && e_util_utf8_strstrcase (contact_name, name))
-		return TRUE;
-	else
-		return FALSE;
-}
-#endif
 
 static GList *
 select_contacts_for_name_dialog (const gchar *name)
 {
-#ifdef HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC
-	GtkWidget *contact_view;
-	OssoABookContactChooser *contact_dialog;
-#else
-	EBookQuery *full_name_book_query = NULL;
+	EBookQuery *book_query = NULL;
 	EBookView *book_view = NULL;
-#endif
-
 	GList *result = NULL;
 	gchar *unquoted;
+	EBookQuery *queries[10];
 
 	unquoted = unquote_string (name);
 
-#ifdef HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC
-	contact_dialog = (OssoABookContactChooser *)
-		osso_abook_contact_chooser_new_with_capabilities (NULL,
-								  _AB("addr_ti_dia_select_contacts"),
-								  OSSO_ABOOK_CAPS_EMAIL,
-								  OSSO_ABOOK_CONTACT_ORDER_NAME);
-
-	/* Enable multiselection */
-	osso_abook_contact_chooser_set_maximum_selection (contact_dialog, G_MAXUINT);
-
-	/* Set up the filtering */
-	contact_view = osso_abook_contact_chooser_get_contact_view (contact_dialog);
-	osso_abook_contact_chooser_set_model (contact_dialog, contact_model);
-	osso_abook_contact_chooser_set_visible_func (contact_dialog, filter_by_name, unquoted, NULL);
-
-	if (gtk_dialog_run (GTK_DIALOG (contact_dialog)) == GTK_RESPONSE_OK)
-		result = osso_abook_contact_chooser_get_selection (contact_dialog);
-
-	gtk_widget_destroy ((GtkWidget *) contact_dialog);
-#else
-	full_name_book_query = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, unquoted);
-	e_book_get_book_view (book, full_name_book_query, NULL, -1, &book_view, NULL);
-	e_book_query_unref (full_name_book_query);
+	queries[0] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[1] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[2] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[3] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[4] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[5] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[6] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[7] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[8] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[9] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	book_query = e_book_query_or (10, queries, TRUE);
+	e_book_get_book_view (book, book_query, NULL, -1, &book_view, NULL);
+	e_book_query_unref (book_query);
 
 	if (book_view) {
 		GtkWidget *contact_dialog = NULL;
@@ -1024,8 +992,6 @@ select_contacts_for_name_dialog (const gchar *name)
 		g_object_unref (book_view);
 		gtk_widget_destroy (contact_dialog);
 	}
-#endif
-
 	g_free (unquoted);
 
 	return result;
