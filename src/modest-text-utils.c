@@ -342,6 +342,39 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 	return retval;
 }
 
+
+/* Performs a case-insensitive strstr for ASCII strings */
+static const gchar *
+ascii_stristr(const gchar *haystack, const gchar *needle)
+{
+	int needle_len;
+	int haystack_len;
+	const gchar *pos;
+	const gchar *max_pos;
+
+	if (haystack == NULL || needle == NULL) {
+		return haystack;  /* as in strstr */
+	}
+
+	needle_len = strlen(needle);
+
+	if (needle_len == 0) {
+		return haystack;  /* as in strstr */
+	}
+
+	haystack_len = strlen(haystack);
+	max_pos = haystack + haystack_len - needle_len;
+
+	for (pos = haystack; pos <= max_pos; pos++) {
+		if (g_ascii_strncasecmp (pos, needle, needle_len) == 0) {
+			return pos;
+		}
+	}
+
+	return NULL;
+}
+
+
 gchar*
 modest_text_utils_remove_address (const gchar *address_list, const gchar *address)
 {
@@ -350,26 +383,26 @@ modest_text_utils_remove_address (const gchar *address_list, const gchar *addres
 	gchar *email_address;
 
 	g_return_val_if_fail (address_list, NULL);
-	
+
 	if (!address)
 		return g_strdup (address_list);
 
 	email_address = get_email_from_address (address);
-	
+
 	/* search for substring */
-	if (!strstr ((const char *) address_list, (const char *) email_address)) {
+	if (!ascii_stristr ((const char *) address_list, (const char *) email_address)) {
 		g_free (email_address);
 		return g_strdup (address_list);
 	}
 
 	dup = g_strdup (address_list);
 	filtered_emails = g_string_new (NULL);
-	
+
 	token = strtok_r (dup, ",", &ptr);
 
 	while (token != NULL) {
 		/* Add to list if not found */
-		if (!strstr ((const char *) token, (const char *) email_address)) {
+		if (!ascii_stristr ((const char *) token, (const char *) email_address)) {
 			if (filtered_emails->len == 0)
 				g_string_append_printf (filtered_emails, "%s", g_strstrip (token));
 			else
