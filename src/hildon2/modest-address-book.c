@@ -902,29 +902,40 @@ get_contacts_for_name_cb (EBook *book,
 static GList *
 get_contacts_for_name (const gchar *name)
 {
-	EBookQuery *full_name_book_query = NULL;
+	EBookQuery *book_query = NULL;
 	GList *result;
 	gchar *unquoted;
 	GetContactsInfo *info;
+	EBookQuery *queries[8];
 
 	if (name == NULL)
 		return NULL;
 
 	unquoted = unquote_string (name);
-	full_name_book_query = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_CONTAINS, unquoted);
+
+	queries[0] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[1] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[2] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[3] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[4] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[5] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[6] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[7] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	book_query = e_book_query_or (8, queries, TRUE);
+
 	g_free (unquoted);
 
 	/* TODO: Make it launch a mainloop */
 	info = g_slice_new (GetContactsInfo);
 	info->mainloop = g_main_loop_new (NULL, FALSE);
 	info->result = NULL;
-	if (e_book_async_get_contacts (book, full_name_book_query, get_contacts_for_name_cb, info) == 0) {
+	if (e_book_async_get_contacts (book, book_query, get_contacts_for_name_cb, info) == 0) {
 		GDK_THREADS_LEAVE ();
 		g_main_loop_run (info->mainloop);
 		GDK_THREADS_ENTER ();
 	} 
 	result = info->result;
-	e_book_query_unref (full_name_book_query);
+	e_book_query_unref (book_query);
 	g_main_loop_unref (info->mainloop);
 	g_slice_free (GetContactsInfo, info);
 
