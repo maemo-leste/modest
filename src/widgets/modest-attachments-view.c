@@ -159,7 +159,7 @@ modest_attachments_view_set_message (ModestAttachmentsView *attachments_view, Tn
 
 	part_to_check = modest_tny_msg_get_attachments_parent (TNY_MSG (msg));
 	msg_content_type = modest_tny_mime_part_get_content_type (TNY_MIME_PART (part_to_check));
-	is_alternate = !strcasecmp (msg_content_type, "multipart/alternative");
+	is_alternate = (msg_content_type != NULL) && !strcasecmp (msg_content_type, "multipart/alternative");
 
 	/* If the top mime part is a multipart/related, we don't show the attachments, as they're
 	 * embedded images in body */
