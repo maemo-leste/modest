@@ -274,9 +274,12 @@ modest_hildon2_sort_dialog_get_sort_order (ModestSortCriteriumView *self)
 	g_return_val_if_fail (MODEST_IS_HILDON2_SORT_DIALOG (self), GTK_SORT_ASCENDING);
 
 	selector = hildon_picker_dialog_get_selector (HILDON_PICKER_DIALOG (self));
-	hildon_touch_selector_get_selected (selector, 0, &iter);
-
 	model = hildon_touch_selector_get_model (selector, 0);
+
+	if (!hildon_touch_selector_get_selected (selector, 0, &iter)) {
+		g_return_val_if_fail (gtk_tree_model_get_iter_first (model, &iter), GTK_SORT_ASCENDING);
+	}
+
 	gtk_tree_model_get (model, &iter, ID_COLUMN, &id, -1);
 
 	switch (id) {
