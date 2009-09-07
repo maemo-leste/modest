@@ -973,6 +973,7 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 				g_string_prepend (l, remaining->str);
 			} else {
 				do {
+					gunichar remaining_first;
 					breakpoint =
 						get_breakpoint (remaining->str,
 								rem_indent,
@@ -981,9 +982,11 @@ modest_text_utils_quote_body (GString *output, const gchar *text,
 						       remaining, breakpoint);
 					g_string_erase (remaining, 0,
 							breakpoint);
-					if (remaining->str[0] == ' ') {
-						g_string_erase (remaining, 0,
-								1);
+					remaining_first = g_utf8_get_char_validated (remaining->str, remaining->len);
+					if (remaining_first != ((gunichar) -1)) {
+						if (g_unichar_isspace (remaining_first)) {
+							g_string_erase (remaining, 0, g_utf8_next_char (remaining->str) - remaining->str);
+						}
 					}
 				} while (remaining->len);
 			}
