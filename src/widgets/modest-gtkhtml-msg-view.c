@@ -270,6 +270,10 @@ struct _ModestGtkhtmlMsgViewPrivate {
 	/* id handler for dragged scroll */
 	guint idle_motion_id;
 
+	/* idle changes count */
+	gint idle_changes_count;
+	guint idle_readjust_scroll_id;
+
 	/* zoom */
 	gdouble current_zoom;
 
@@ -908,9 +912,10 @@ size_allocate (GtkWidget *widget,
 	     allocation->height != widget->allocation.height))
 		gdk_window_invalidate_rect (widget->window, NULL, FALSE);
 
-	if (widget->allocation.width != allocation->width) {
+	if (priv->idle_readjust_scroll_id == 0 && priv->idle_changes_count < 5 && widget->allocation.width != allocation->width) {
 		g_object_ref (self);
-		g_idle_add ((GSourceFunc) idle_readjust_scroll, self);
+		priv->idle_readjust_scroll_id = g_idle_add ((GSourceFunc) idle_readjust_scroll, self);
+		priv->idle_changes_count ++;
 	}
 
 	widget->allocation = *allocation;
@@ -1061,12 +1066,12 @@ html_adjustment_changed (GtkAdjustment *adj,
 gboolean
 idle_readjust_scroll (ModestGtkhtmlMsgView *self)
 {
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
 	/* We're out the main lock */
 	gdk_threads_enter ();
 
 	if (GTK_WIDGET_DRAWABLE (self)) {
-		ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 		GtkAdjustment *html_vadj;
 		GtkAdjustment *html_hadj;
 
@@ -1093,8 +1098,8 @@ idle_readjust_scroll (ModestGtkhtmlMsgView *self)
 		gtk_adjustment_set_value (priv->vadj, 0.0);
 
 	}
+	priv->idle_readjust_scroll_id = 0;
 	g_object_unref (G_OBJECT (self));
-
 
 
 	gdk_threads_leave ();
@@ -1118,6 +1123,8 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(obj);
 
+	priv->idle_changes_count = 0;
+	priv->idle_readjust_scroll_id = 0;
 	priv->current_zoom = 1.0;
 
 	priv->hadj = NULL;
@@ -1249,6 +1256,11 @@ modest_gtkhtml_msg_view_finalize (GObject *obj)
 	if (priv->msg) {
 		g_object_unref (G_OBJECT(priv->msg));
 		priv->msg = NULL;
+	}
+
+	if (priv->idle_readjust_scroll_id > 0) {
+		g_source_remove (priv->idle_readjust_scroll_id);
+		priv->idle_readjust_scroll_id = 0;
 	}
 
 	if (priv->idle_motion_id > 0) {
@@ -1765,6 +1777,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 		gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 		gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 
+		priv->idle_changes_count = 0;
 		gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
 
 		gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1848,6 +1861,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 
+	priv->idle_changes_count = 0;
 	gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
 
 	gtk_widget_queue_resize (GTK_WIDGET(self));
@@ -1863,8 +1877,10 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	/* This is a hack to force reallocation of scroll after drawing all the stuff. This
 	 * makes the html view get the proper and expected size and prevent being able to scroll
 	 * the buffer when it shouldn't be scrollable */
-	g_object_ref (self);
-	g_idle_add ((GSourceFunc) idle_readjust_scroll, self);
+	if (priv->idle_readjust_scroll_id == 0) {
+		g_object_ref (self);
+		priv->idle_readjust_scroll_id = g_idle_add ((GSourceFunc) idle_readjust_scroll, self);
+	}
 }
 
 static void
@@ -1895,6 +1911,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	html_hadj->page_size = 0;
 	g_signal_emit_by_name (G_OBJECT (html_hadj), "changed");
 
+	priv->idle_changes_count = 0;
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 	gtk_widget_queue_resize (GTK_WIDGET (priv->body_view));
@@ -1913,6 +1930,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 #endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
+	priv->idle_changes_count = 0;
 	gtk_widget_queue_resize (GTK_WIDGET(self));
 	gtk_widget_queue_draw (GTK_WIDGET(self));
 }
@@ -1965,6 +1983,7 @@ set_zoom (ModestGtkhtmlMsgView *self, gdouble zoom)
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), 1, 1);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->body_view), -1, -1);
 
+	priv->idle_changes_count = 0;
 	gtk_widget_queue_resize (priv->body_view);
 }
 
