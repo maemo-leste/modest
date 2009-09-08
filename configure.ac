@@ -142,6 +142,8 @@ AC_CHECK_FUNCS(gtk_html_set_allow_dnd)
 AC_SUBST(HAVE_GTK_HTML_SET_ALLOW_DND)
 AC_CHECK_FUNCS(gtk_html_set_default_engine)
 AC_SUBST(HAVE_GTK_HTML_SET_DEFAULT_ENGINE)
+AC_CHECK_FUNCS(gtk_html_set_word_char_wrapping)
+AC_SUBST(HAVE_GTK_HTML_SET_WORD_CHAR_WRAPPING)
 AC_CHECK_FUNCS(gtk_tree_view_column_get_cell_data_hint)
 AC_SUBST(HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT)
 CFLAGS="$modest_save_cflags"

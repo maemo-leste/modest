@@ -304,6 +304,9 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 #ifdef HAVE_GTK_HTML_SET_ALLOW_DND
 	gtk_html_set_allow_dnd       (GTK_HTML(self), FALSE);
 #endif
+#ifdef HAVE_GTK_HTML_SET_WORD_CHAR_WRAPPING
+	gtk_html_set_word_char_wrapping (GTK_HTML (self), TRUE);
+#endif
 #endif
 
 #ifdef HAVE_GTK_HTML_SET_DEFAULT_ENGINE
