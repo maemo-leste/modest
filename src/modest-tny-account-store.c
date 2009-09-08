@@ -689,13 +689,18 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 		}
 
 		if (settings_have_password) {
-			/* The password must be wrong, so show the account settings dialog so it can be corrected: */
-			show_wrong_password_dialog (account, TRUE);
+			if (pwd) {
+				/* The password must be wrong, so show the account settings dialog so it can be corrected: */
+				show_wrong_password_dialog (account, TRUE);
 
-			if (cancel)
-				*cancel = TRUE;
+				if (cancel)
+					*cancel = TRUE;
 
-			return NULL;
+				return NULL;
+			} else {
+				/* Get the password from the account settings */
+				return modest_account_mgr_get_server_account_password (priv->account_mgr, server_account_name);
+			}
 		}
 
 		/* we don't have it yet. Get the password from the user */
