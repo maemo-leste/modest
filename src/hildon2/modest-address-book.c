@@ -500,11 +500,16 @@ compare_addresses (const gchar *address1,
 		   const gchar *mail2)
 {
 	gint retval;
-	gchar *mail1;
+	gchar *mail1, *mail1_down, *mail2_down;
 
+	/* Perform a case insensitive comparison */
 	mail1 = modest_text_utils_get_email_address (address1);
-	retval = g_strcmp0 (mail1, mail2);
+	mail1_down = g_ascii_strdown (mail1, -1);
+	mail2_down = g_ascii_strdown (mail2, -1);
+	retval = g_strcmp0 (mail1_down, mail2_down);
 	g_free (mail1);
+	g_free (mail1_down);
+	g_free (mail2_down);
 
 	return retval;
 }
