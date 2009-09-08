@@ -3819,12 +3819,14 @@ modest_mail_operation_to_string (ModestMailOperation *self)
 	
 	switch (priv->op_type) {
 	case MODEST_MAIL_OPERATION_TYPE_SEND:    type= "SEND";    break;
+	case MODEST_MAIL_OPERATION_TYPE_SEND_AND_RECEIVE:    type= "SEND-AND-RECEIVE";    break;
 	case MODEST_MAIL_OPERATION_TYPE_RECEIVE: type= "RECEIVE"; break;
 	case MODEST_MAIL_OPERATION_TYPE_OPEN:    type= "OPEN";    break;
 	case MODEST_MAIL_OPERATION_TYPE_DELETE:  type= "DELETE";  break;
 	case MODEST_MAIL_OPERATION_TYPE_INFO:    type= "INFO";    break;
 	case MODEST_MAIL_OPERATION_TYPE_RUN_QUEUE: type= "RUN-QUEUE"; break;
 	case MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER: type= "SYNC-FOLDER"; break;
+	case MODEST_MAIL_OPERATION_TYPE_SHUTDOWN: type= "SHUTDOWN"; break;
 	case MODEST_MAIL_OPERATION_TYPE_UNKNOWN: type= "UNKNOWN"; break;
 	default: type = "UNEXPECTED"; break;
 	}
