@@ -1,3 +1,12 @@
+modest (3.0.17-rc50) unstable; urgency=low
+
+  * Week 37, 2009 - fourth release
+  * 
+  * Fixes: NB#134827 Email always hangs when trying to reply/reply-to-all for a specific 
+  * 	email chain in Mail for exchange
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 08 Sep 2009 10:25:15 +0300
+
 modest (3.0.17-rc49) unstable; urgency=low
 
   * Week 37, 2009 - third release
