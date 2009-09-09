@@ -3070,19 +3070,13 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 
 	gtk_widget_set_no_show_all (GTK_WIDGET (parent_priv->toolbar), TRUE);
 
-	if (parent_priv->toolbar) {
-		if (file_format == MODEST_FILE_FORMAT_PLAIN_TEXT) {
-			gtk_widget_hide (parent_priv->toolbar);
-		} else {
-			gtk_widget_show (parent_priv->toolbar);
-		}
-	}
-
 	if (current_format != file_format) {
 		switch (file_format) {
 		case MODEST_FILE_FORMAT_FORMATTED_TEXT:
 			wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 			remove_tags (WP_TEXT_BUFFER (priv->text_buffer));
+			if (parent_priv->toolbar)
+				gtk_widget_show (parent_priv->toolbar);
 			break;
 		case MODEST_FILE_FORMAT_PLAIN_TEXT:
 		{
@@ -3093,7 +3087,8 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			gtk_widget_destroy (dialog);
 			if (response == GTK_RESPONSE_OK) {
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
-				if (parent_priv->toolbar) gtk_widget_hide (parent_priv->toolbar);
+				if (parent_priv->toolbar)
+					gtk_widget_hide (parent_priv->toolbar);
 			} else {
 				GtkToggleAction *action = GTK_TOGGLE_ACTION (gtk_ui_manager_get_action (parent_priv->ui_manager, "/MenuBar/FormatMenu/FileFormatFormattedTextMenu"));
 				modest_utils_toggle_action_set_active_block_notify (action, TRUE);
