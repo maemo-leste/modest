@@ -1,3 +1,14 @@
+modest (3.0.17-rc51) unstable; urgency=low
+
+  * Week 37, 2009 - fifth release
+  * 
+  * Fixes: NB#126904  Crash in "camel_message_info_free"/ "tny_folder_change_finalize"
+  * Fixes: NB#131351  Modest crash in ssl_Read () from /usr/lib/microb-engine/libssl3.so
+  * Fixes: NB#135345  When sending mails to existing constacts, new entries with just the 
+  * 	mail address are created 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 09 Sep 2009 11:05:23 +0300
+
 modest (3.0.17-rc50) unstable; urgency=low
 
   * Week 37, 2009 - fourth release
