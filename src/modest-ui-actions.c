@@ -3489,7 +3489,7 @@ do_create_folder_performer (gboolean canceled,
 
 		/* This happens if we have selected the outbox folder
 		   as the parent */
-		if (err && err->code == TNY_SERVICE_ERROR_UNKNOWN &&
+		if (err->code == TNY_SERVICE_ERROR_UNKNOWN &&
 		    TNY_IS_MERGE_FOLDER (helper->parent)) {
 			/* Show an error and retry */
 			modest_platform_information_banner ((GtkWidget *) parent_window,
