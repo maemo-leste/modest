@@ -1,3 +1,4 @@
+#include <libmodest-dbus-client/libmodest-dbus-api.h>
 #include <libmodest-dbus-client/libmodest-dbus-client.h>
 #include <stdio.h>
 
