@@ -273,6 +273,7 @@ struct _ModestGtkhtmlMsgViewPrivate {
 	/* idle changes count */
 	gint idle_changes_count;
 	guint idle_readjust_scroll_id;
+	guint idle_resize_children_id;
 
 	/* zoom */
 	gdouble current_zoom;
@@ -1033,6 +1034,18 @@ adjustment_value_changed (GtkAdjustment *adj, gpointer data)
 	}
 }
 
+static gboolean
+resize_children_idle (GtkContainer *cont)
+{
+	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (cont);
+	if (GTK_WIDGET_DRAWABLE (cont)) {
+		gtk_container_resize_children (cont);
+	}
+	priv->idle_resize_children_id = 0;
+
+	return FALSE;
+}
+
 static void
 html_adjustment_changed (GtkAdjustment *adj,
 			 gpointer userdata)
@@ -1058,7 +1071,8 @@ html_adjustment_changed (GtkAdjustment *adj,
 	if (GTK_WIDGET_DRAWABLE (priv->html_scroll)) {
 		gdk_window_resize (priv->html_window, (gint) priv->hadj->upper, (gint) new_height);
 		gdk_window_process_updates (priv->view_window, TRUE);
-		gtk_container_resize_children (GTK_CONTAINER (self));
+		if (priv->idle_resize_children_id == 0)
+			priv->idle_resize_children_id = gdk_threads_add_idle ((GSourceFunc) resize_children_idle, self);
 	}
 	
 }
@@ -1122,6 +1136,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 
 	priv->idle_changes_count = 0;
 	priv->idle_readjust_scroll_id = 0;
+	priv->idle_resize_children_id = 0;
 	priv->current_zoom = 1.0;
 
 	priv->hadj = NULL;
@@ -1253,6 +1268,11 @@ modest_gtkhtml_msg_view_finalize (GObject *obj)
 	if (priv->msg) {
 		g_object_unref (G_OBJECT(priv->msg));
 		priv->msg = NULL;
+	}
+
+	if (priv->idle_resize_children_id > 0) {
+		g_source_remove (priv->idle_resize_children_id);
+		priv->idle_resize_children_id = 0;
 	}
 
 	if (priv->idle_readjust_scroll_id > 0) {
