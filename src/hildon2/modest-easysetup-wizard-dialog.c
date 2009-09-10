@@ -2147,7 +2147,7 @@ check_username_for_provider (const gchar *provider_id,
 			     const gchar *domain,
 			     gchar **username)
 {
-	gchar *providers_to_check[] = { "ovi.com", "yahoomailplus.com" };
+	gchar *providers_to_check[] = { "ovi.com", "yahoomailplus.com", "hotmail.com" };
 	gint i;
 	gboolean found = FALSE;
 	gchar *old;
