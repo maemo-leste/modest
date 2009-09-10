@@ -587,7 +587,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	already_asked = priv->password_hash && g_hash_table_lookup_extended (priv->password_hash,
 									     server_account_name,
 									     NULL,
-									     &attempt_ptr);
+									     attempt_ptr);
 
 	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
