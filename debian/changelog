@@ -1,3 +1,18 @@
+modest (3.0.17-rc52) unstable; urgency=low
+
+  * Week 37, 2009 - release
+  * 
+  * Fixes: NB#131601 Tool bar is lost after cancelling lose formatting confirmation note warning shown
+  * Fixes: NB#136052 E-Mail locks with specific E-mail format (Pauldirekt newsletter)
+  * Fixes: NB#137187 "Invalid email address" info banner is displayed while replying to a message.
+  * Fixes: NB#137624 modest is crashing while trying to create a new folder under remote 
+  * 	folder in offline mode
+  * Fixes: NB#138261 Accounts settings dialog should be shown when account is configured 
+  * 	using incorrect username and password.
+  * Fixes: NB#138269 Hotmail setup: username shold be prefilled with @hotmail.com 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 11 Sep 2009 12:03:09 +0300
+
 modest (3.0.17-rc51) unstable; urgency=low
 
   * Week 37, 2009 - fifth release
