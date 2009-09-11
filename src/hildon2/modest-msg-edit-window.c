@@ -1359,12 +1359,17 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	modest_tny_msg_get_references (TNY_MSG (msg), NULL, &(priv->references), &(priv->in_reply_to));
 	priority_flags = tny_header_get_priority (header);
 
-	if (to)
-		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field),  to);
+	if (to) {
+		gchar *quoted_names = modest_text_utils_quote_names (to);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->to_field), quoted_names);
+		g_free (quoted_names);
+	}
 
 	field_view_set = TRUE;
 	if (cc) {
-		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  cc);
+		gchar *quoted_names = modest_text_utils_quote_names (cc);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->cc_field),  quoted_names);
+		g_free (quoted_names);
 		gtk_widget_set_no_show_all (priv->cc_caption, FALSE);
 		gtk_widget_show (priv->cc_caption);
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_CC, NULL)) {
@@ -1376,7 +1381,9 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 
 	field_view_set = TRUE;
 	if (bcc) {
-		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), bcc);
+		gchar *quoted_names = modest_text_utils_quote_names (bcc);
+		modest_recpt_editor_set_recipients (MODEST_RECPT_EDITOR (priv->bcc_field), quoted_names);
+		g_free (quoted_names);
 		gtk_widget_set_no_show_all (priv->bcc_caption, FALSE);
 		gtk_widget_show (priv->bcc_caption);
 	} else if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_SHOW_BCC, NULL)) {

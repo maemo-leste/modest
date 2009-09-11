@@ -322,7 +322,7 @@ modest_recpt_editor_replace_with_resolved_recipients (ModestRecptEditor *recpt_e
 
 			if ((recipient) && (strlen (recipient) != 0)) {
 
-				if (!is_first_recipient)
+				if (!is_first_recipient || !gtk_text_iter_is_start(start))
 					gtk_text_buffer_insert (buffer, start, "\n", -1);
 
 				gtk_text_buffer_insert_with_tags (buffer, start, recipient, -1, tag, NULL);

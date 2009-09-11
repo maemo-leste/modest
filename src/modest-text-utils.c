@@ -2084,3 +2084,84 @@ modest_text_utils_get_secure_header (const gchar *value,
 
 	return new_value;
 }
+
+static gboolean
+is_quoted (const char *start, const gchar *end)
+{
+	gchar *c;
+
+	c = (gchar *) start;
+	while (*c == ' ')
+		c = g_utf8_next_char (c);
+
+	if (*c == '\0' || *c != '\"')
+		return FALSE;
+
+	c = (gchar *) end;
+	while (*c == ' ' && c != start)
+		c = g_utf8_prev_char (c);
+
+	if (c == start || *c != '\"')
+		return FALSE;
+
+	return TRUE;
+}
+
+
+static void
+quote_name_part (GString **str, gchar **cur, gchar **start)
+{
+	gchar *blank;
+	gint str_len = g_utf8_pointer_to_offset (*start, *cur) -
+		g_utf8_pointer_to_offset (*start, *start) + 1;
+
+	while (**start == ' ')
+		*start = g_utf8_next_char (*start);
+
+	blank = g_utf8_strrchr (*start, str_len, g_utf8_get_char (" "));
+	if (blank && (blank != *start)) {
+		if (is_quoted (*start, blank - 1)) {
+			*str = g_string_append_len (*str, *start, str_len - 1);
+			*str = g_string_append (*str, ";\n ");
+			*start = g_utf8_next_char (*cur);
+		} else {
+			*str = g_string_append_c (*str, '"');
+			*str = g_string_append_len (*str, *start,
+						    (g_utf8_pointer_to_offset (*start, blank) -
+						     g_utf8_pointer_to_offset (*start, *start)));
+			*str = g_string_append_c (*str, '"');
+			*str = g_string_append_len (*str, blank,
+						    (g_utf8_pointer_to_offset (*start, *cur) -
+						     g_utf8_pointer_to_offset (*start, blank)));
+			*str = g_string_append (*str, ";\n");
+			*start = g_utf8_next_char (*cur);
+		}
+	} else {
+		*str = g_string_append_len (*str, *start, (str_len - 1));
+		*str = g_string_append (*str, ";\n");
+		*start = g_utf8_next_char (*cur);
+	}
+}
+
+gchar *
+modest_text_utils_quote_names (const gchar *recipients)
+{
+	GString *str;
+	gchar *start, *cur;
+
+	str = g_string_new ("");
+	start = (gchar*) recipients;
+	cur = (gchar*) recipients;
+
+	for (cur = start; *cur != '\0'; cur = g_utf8_next_char (cur)) {
+		if (*cur == ',' || *cur == ';') {
+			if (!g_utf8_strchr (start, (cur - start + 1), g_utf8_get_char ("@")))
+				continue;
+			quote_name_part (&str, &cur, &start);
+		}
+	}
+
+	quote_name_part (&str, &cur, &start);
+
+	return g_string_free (str, FALSE);
+}
