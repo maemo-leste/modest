@@ -340,10 +340,9 @@ ui_get_formatted_email_id(gchar * current_given_name,
 	} else if ((current_sur_name != NULL) && (strlen(current_sur_name) != 0)) {
 		g_string_append_printf(email_id_str, "%s", current_sur_name);
 	}
-	if (g_utf8_strchr (email_id_str->str, -1, ' ')) {
-		g_string_prepend_c (email_id_str, '\"');
-		g_string_append_c (email_id_str, '\"');
-	}
+	g_string_prepend_c (email_id_str, '\"');
+	g_string_append_c (email_id_str, '\"');
+
 	g_string_append_printf (email_id_str, " %c%s%c", '<', current_email_id, '>');
 	return g_string_free (email_id_str, FALSE);
 }

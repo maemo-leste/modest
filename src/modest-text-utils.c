@@ -1699,6 +1699,7 @@ modest_text_utils_validate_recipient (const gchar *recipient, const gchar **inva
 
 	/* quoted string */
 	if (*current == '\"') {
+		gchar *last_quote = NULL;
 		current = g_utf8_next_char (current);
 		has_error = TRUE;
 		for (; *current != '\0'; current = g_utf8_next_char (current)) {
@@ -1714,9 +1715,11 @@ modest_text_utils_validate_recipient (const gchar *recipient, const gchar **inva
 			} else if (*current == '\"') {
 				has_error = FALSE;
 				current = g_utf8_next_char (current);
-				break;
+				last_quote = current;
 			}
 		}
+		if (last_quote)
+			current = last_quote;
 	} else {
 		has_error = TRUE;
 		for (current = stripped ; *current != '\0'; current = g_utf8_next_char (current)) {
@@ -1735,6 +1738,9 @@ modest_text_utils_validate_recipient (const gchar *recipient, const gchar **inva
 	right_part = g_strdup (current);
 	g_free (stripped);
 	right_part = g_strstrip (right_part);
+
+	if (g_str_has_suffix (right_part, ",") || g_str_has_suffix (right_part, ";"))
+               right_part [(strlen (right_part) - 1)] = '\0';
 
 	if (g_str_has_prefix (right_part, "<") &&
 	    g_str_has_suffix (right_part, ">")) {
