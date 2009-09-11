@@ -196,7 +196,7 @@ modest_recpt_editor_add_recipients (ModestRecptEditor *recpt_editor, const gchar
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text_after, recpt_editor);
 
 	gtk_text_buffer_insert (buffer, &iter, string_to_add, -1);
-	
+
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, recpt_editor);
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text_after, recpt_editor);
 
@@ -632,19 +632,32 @@ create_valid_text (const gchar *text, gint len)
 			next_c = g_utf8_get_char (g_utf8_next_char (current));
 		else
 			next_c = 0;
-		if (c != 0x2022 && c != 0xfffc && 
+		if (c != 0x2022 && c != 0xfffc &&
 		    c != g_utf8_get_char ("\n") &&
 		    c != g_utf8_get_char ("\t"))
 			str = g_string_append_unichar (str, c);
 		if (!quoted && ((c == g_utf8_get_char(",") || c == g_utf8_get_char (";")))) {
-			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n")))
-				str = g_string_append_c (str, '\n');
+			if ((next_c != 0) && (next_c != g_utf8_get_char ("\n"))) {
+				gchar *last_separator = MAX (g_utf8_strrchr(str->str, -1, g_utf8_get_char (",")),
+							     g_utf8_strrchr(str->str, -1, g_utf8_get_char (";")));
+				if (last_separator) {
+					gchar *last_at = g_utf8_strrchr (str->str, -1, g_utf8_get_char ("@"));
+					if (last_at) {
+						if (last_at > last_separator)
+							str = g_string_append_c (str, '\n');
+					}
+				} else {
+					if (g_utf8_strrchr (str->str, -1, g_utf8_get_char ("@")))
+						str = g_string_append_c (str, '\n');
+				}
+			}
 		}
 		if (c == g_utf8_get_char ("\""))
 			quoted = !quoted;
 		current = g_utf8_next_char (current);
 		i = current - text;
 	}
+
 	return g_string_free (str, FALSE);
 }
 
