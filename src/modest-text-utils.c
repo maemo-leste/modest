@@ -604,59 +604,32 @@ modest_text_utils_convert_to_html_body (const gchar *data, gssize n, gboolean hy
 void
 modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_indexes, GSList **end_indexes)
 {
-	gchar *current, *start, *last_blank;
-	gint start_offset = 0, current_offset = 0;
+	GString *str;
+	gchar *start, *cur;
 
-	g_return_if_fail (start_indexes != NULL);
-	g_return_if_fail (end_indexes != NULL);
+	str = g_string_new ("");
+	start = (gchar*) addresses;
+	cur = (gchar*) addresses;
 
-	start = (gchar *) addresses;
-	current = start;
-	last_blank = start;
-
-	while (*current != '\0') {
-		if ((start == current)&&((*current == ' ')||(*current == ',')||(*current == ';'))) {
-			start = g_utf8_next_char (start);
-			start_offset++;
-			last_blank = current;
-		} else if ((*current == ',')||(*current == ';')) {
-			gint *start_index, *end_index;
-			start_index = g_new0(gint, 1);
-			end_index = g_new0(gint, 1);
-			*start_index = start_offset;
-			*end_index = current_offset;
-			*start_indexes = g_slist_prepend (*start_indexes, start_index);
-			*end_indexes = g_slist_prepend (*end_indexes, end_index);
-			start = g_utf8_next_char (current);
-			start_offset = current_offset + 1;
-			last_blank = start;
-		} else if (*current == '"') {
-			current = g_utf8_next_char (current);
-			current_offset ++;
-			while ((*current != '"')&&(*current != '\0')) {
-				current = g_utf8_next_char (current);
-				current_offset ++;
+	for (cur = start; *cur != '\0'; cur = g_utf8_next_char (cur)) {
+		if (*cur == ',' || *cur == ';') {
+			if (!g_utf8_strchr (start, (cur - start + 1), g_utf8_get_char ("@")))
+				continue;
+			{
+				gint *start_index, *end_index;
+				start_index = g_new0 (gint, 1);
+				end_index = g_new0 (gint, 1);
+				*start_index = g_utf8_pointer_to_offset (addresses, start);
+				*end_index = g_utf8_pointer_to_offset (addresses, cur);;
+				*start_indexes = g_slist_prepend (*start_indexes, start_index);
+				*end_indexes = g_slist_prepend (*end_indexes, end_index);
+				start = g_utf8_next_char (cur);
 			}
 		}
-				
-		current = g_utf8_next_char (current);
-		current_offset ++;
 	}
 
-	if (start != current) {
-			gint *start_index, *end_index;
-			start_index = g_new0(gint, 1);
-			end_index = g_new0(gint, 1);
-			*start_index = start_offset;
-			*end_index = current_offset;
-			*start_indexes = g_slist_prepend (*start_indexes, start_index);
-			*end_indexes = g_slist_prepend (*end_indexes, end_index);
-	}
-	
 	*start_indexes = g_slist_reverse (*start_indexes);
 	*end_indexes = g_slist_reverse (*end_indexes);
-
-	return;
 }
 
 
@@ -2113,16 +2086,18 @@ quote_name_part (GString **str, gchar **cur, gchar **start)
 {
 	gchar *blank;
 	gint str_len = g_utf8_pointer_to_offset (*start, *cur) -
-		g_utf8_pointer_to_offset (*start, *start) + 1;
+		g_utf8_pointer_to_offset (*start, *start);
 
-	while (**start == ' ')
+	while (**start == ' ') {
 		*start = g_utf8_next_char (*start);
+		str_len--;
+	}
 
 	blank = g_utf8_strrchr (*start, str_len, g_utf8_get_char (" "));
 	if (blank && (blank != *start)) {
 		if (is_quoted (*start, blank - 1)) {
-			*str = g_string_append_len (*str, *start, str_len - 1);
-			*str = g_string_append (*str, ";\n ");
+			*str = g_string_append_len (*str, *start, str_len);
+			*str = g_string_append (*str, "; ");
 			*start = g_utf8_next_char (*cur);
 		} else {
 			*str = g_string_append_c (*str, '"');
@@ -2133,12 +2108,12 @@ quote_name_part (GString **str, gchar **cur, gchar **start)
 			*str = g_string_append_len (*str, blank,
 						    (g_utf8_pointer_to_offset (*start, *cur) -
 						     g_utf8_pointer_to_offset (*start, blank)));
-			*str = g_string_append (*str, ";\n");
+			*str = g_string_append (*str, "; ");
 			*start = g_utf8_next_char (*cur);
 		}
 	} else {
-		*str = g_string_append_len (*str, *start, (str_len - 1));
-		*str = g_string_append (*str, ";\n");
+		*str = g_string_append_len (*str, *start, str_len);
+		*str = g_string_append (*str, "; ");
 		*start = g_utf8_next_char (*cur);
 	}
 }
