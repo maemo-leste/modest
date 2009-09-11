@@ -528,4 +528,21 @@ GSList *modest_text_utils_remove_duplicate_addresses_list (GSList *address_list)
  **/
 gchar * modest_text_utils_get_secure_header (const gchar *value, const gchar *header);
 
+/**
+ * modest_text_utils_quote_names:
+ * @recipients: a list of valid email addresses separated by ',' or ';'
+ *
+ * This function quotes the name part of an email address if it's not
+ * quoted and if it exists. For example
+ * aaa@bbb.com -> aaa@bbb.com
+ * "my name" <aaa@bbb.com> -> "my name" <aaa@bbb.com>
+ * my name aaa@bbb.com -> "my name" aaa@bbb.com
+ *
+ * It even supports things like
+ * my, name <aaa@bbb.com>, aaa@ccc.com -> "my, name" <aaa@bbb.com>; aaa@ccc.com
+ *
+ * Returns: a newly allocated string with the quoted email addresses
+ **/
+gchar * modest_text_utils_quote_names (const gchar *recipients);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */
