@@ -1,3 +1,12 @@
+modest (3.0.17-rc53) unstable; urgency=low
+
+  * Week 38, 2009 - first release
+  * 
+  * Fixes: NB#136358 E-mail retrieval does not work according to the settings
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Sun, 13 Sep 2009 22:54:13 +0300
+
 modest (3.0.17-rc52) unstable; urgency=low
 
   * Week 37, 2009 - release
