@@ -1,3 +1,14 @@
+modest (3.0.17-rc55) unstable; urgency=low
+
+  * Week 38, 2009 - fourth release
+  *
+  * Fixes: NB#137949 Inconsistent behavior in issuing sound and mail notifications whe
+  * 	 Email is running
+  * Fixes: NB#138110 Reboot needed: Manual send&receive and autoupdate doesn't work 
+  * Fixes: NB#138247 Number of new messages not updated properly
+
+ -- Moises Martinez <moises.martinez@nokia.com>  MonTue, 15 Sep 2009 00:07:10 +0300
+
 modest (3.0.17-rc54) unstable; urgency=low
 
   * Week 38, 2009 - second release
