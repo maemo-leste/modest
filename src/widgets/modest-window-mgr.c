@@ -539,13 +539,9 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 	/* If this is the first registered window then reset the
 	   status of the TnyDevice as it might be forced to be offline
 	   when modest is running in the background (see
-	   modest_tny_account_store_new() and automatic updates are
-	   disabled*/
+	   modest_tny_account_store_new()) */
 	if (modest_window_mgr_get_num_windows (self) == 0) {
-		gboolean auto_update;
-		auto_update = modest_conf_get_bool (modest_runtime_get_conf (),
-						    MODEST_CONF_AUTO_UPDATE, NULL);
-		if (!auto_update)
+		if (tny_device_is_forced (modest_runtime_get_device ()))
 			tny_device_reset (modest_runtime_get_device ());
 	}
 
