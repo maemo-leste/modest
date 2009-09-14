@@ -1,3 +1,13 @@
+modest (3.0.17-rc54) unstable; urgency=low
+
+  * Week 38, 2009 - second release
+  * 
+  * Fixes a regression caused with NB#137187
+  * Fixes: NB#137187 "Invalid email address" info banner is displayed while replying to a message.
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 14 Sep 2009 15:10:18 +0300
+
 modest (3.0.17-rc53) unstable; urgency=low
 
   * Week 38, 2009 - first release
