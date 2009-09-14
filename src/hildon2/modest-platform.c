@@ -1601,19 +1601,6 @@ void
 modest_platform_on_new_headers_received (GList *URI_list,
 					 gboolean show_visual)
 {
-	gboolean screen_on, app_in_foreground;
-
-	/* Get the window status */
-	app_in_foreground = hildon_program_get_is_topmost (hildon_program_get_instance ());
-	screen_on = modest_window_mgr_screen_is_on (modest_runtime_get_window_mgr ());
-
-	/* If the screen is on and the app is in the foreground we
-	   don't show anything, just play a chime */
-	if (screen_on && app_in_foreground) {
-		modest_platform_play_email_tone ();
-		return;
-	}
-
 	if (g_list_length (URI_list) == 0)
 		return;
 
