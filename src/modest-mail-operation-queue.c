@@ -228,6 +228,28 @@ modest_mail_operation_queue_new (void)
 }
 
 static void
+on_operation_started (ModestMailOperation *mail_op,
+		       gpointer user_data)
+{
+	ModestMailOperationQueue *self = MODEST_MAIL_OPERATION_QUEUE (user_data);
+	ModestMailOperationTypeOperation op_type;
+	ModestMailOperationQueuePrivate *priv;
+	TnyDevice *device;
+
+	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
+
+	op_type = modest_mail_operation_get_type_operation (mail_op);
+	device = modest_runtime_get_device ();
+
+	if ((op_type != MODEST_MAIL_OPERATION_TYPE_SHUTDOWN) &&
+	    priv->running_final_sync &&
+	    tny_device_is_forced (device))
+		tny_device_reset (device);
+
+	priv->running_final_sync = (op_type == MODEST_MAIL_OPERATION_TYPE_SHUTDOWN);
+}
+
+static void
 on_operation_finished (ModestMailOperation *mail_op,
 		       gpointer user_data)
 {
@@ -248,21 +270,24 @@ modest_mail_operation_queue_add (ModestMailOperationQueue *self,
 
 	priv = MODEST_MAIL_OPERATION_QUEUE_GET_PRIVATE(self);
 
-	priv->running_final_sync = (modest_mail_operation_get_type_operation (mail_op) == MODEST_MAIL_OPERATION_TYPE_SHUTDOWN);
-
 	g_mutex_lock (priv->queue_lock);
 	g_queue_push_tail (priv->op_queue, g_object_ref (mail_op));
 	g_mutex_unlock (priv->queue_lock);
 
 	MODEST_DEBUG_BLOCK (print_queue_item (mail_op, "add"););
 
+	g_signal_connect (G_OBJECT (mail_op),
+			  "operation-started",
+			  G_CALLBACK (on_operation_started),
+			  self);
+
 	/* Get notified when the operation ends to remove it from the
 	   queue. We connect it using the *after* because we want to
 	   let the other handlers for the finish function happen
 	   before this */
-	g_signal_connect_after (G_OBJECT (mail_op), 
+	g_signal_connect_after (G_OBJECT (mail_op),
 				"operation-finished",
-				G_CALLBACK (on_operation_finished), 
+				G_CALLBACK (on_operation_finished),
 				self);
 
 	/* Notify observers */
