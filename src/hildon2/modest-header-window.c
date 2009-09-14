@@ -113,6 +113,7 @@ struct _ModestHeaderWindowPrivate {
 static void modest_header_window_class_init  (ModestHeaderWindowClass *klass);
 static void modest_header_window_init        (ModestHeaderWindow *obj);
 static void modest_header_window_finalize    (GObject *obj);
+static void modest_header_window_dispose     (GObject *obj);
 
 static void connect_signals (ModestHeaderWindow *self);
 static void modest_header_window_disconnect_signals (ModestWindow *self);
@@ -225,6 +226,7 @@ modest_header_window_class_init (ModestHeaderWindowClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_header_window_finalize;
+	gobject_class->dispose = modest_header_window_dispose;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHeaderWindowPrivate));
 	
@@ -266,10 +268,26 @@ modest_header_window_init (ModestHeaderWindow *obj)
 }
 
 static void
-modest_header_window_finalize (GObject *obj)
+modest_header_window_dispose (GObject *obj)
 {
 	ModestHeaderWindowPrivate *priv;
 	TnyFolder *folder;
+
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
+
+	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
+	if (folder) {
+		tny_folder_sync_async (folder, FALSE, NULL, NULL, NULL);
+		g_object_unref (folder);
+	}
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
+}
+
+static void
+modest_header_window_finalize (GObject *obj)
+{
+	ModestHeaderWindowPrivate *priv;
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(obj);
 
@@ -283,12 +301,6 @@ modest_header_window_finalize (GObject *obj)
 						     priv->sort_column_handler);
 		}
 		on_header_view_model_destroyed (obj, (GObject *) priv->model_weak_ref);
-	}
-
-	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
-	if (folder) {
-		tny_folder_sync_async (folder, FALSE, NULL, NULL, NULL);
-		g_object_unref (folder);
 	}
 
 	modest_header_window_disconnect_signals (MODEST_WINDOW (obj));
