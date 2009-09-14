@@ -607,29 +607,49 @@ modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_
 	GString *str;
 	gchar *start, *cur;
 
+	if (!addresses)
+		return;
+
+	if (strlen (addresses) == 0)
+		return;
+
 	str = g_string_new ("");
 	start = (gchar*) addresses;
 	cur = (gchar*) addresses;
 
 	for (cur = start; *cur != '\0'; cur = g_utf8_next_char (cur)) {
 		if (*cur == ',' || *cur == ';') {
-			if (!g_utf8_strchr (start, (cur - start + 1), g_utf8_get_char ("@")))
+			gint *start_index, *end_index;
+			gchar *next_char = g_utf8_next_char (cur);
+
+			if (!g_utf8_strchr (start, (cur - start + 1), g_utf8_get_char ("@")) &&
+			    next_char && *next_char != '\n')
 				continue;
-			{
-				gint *start_index, *end_index;
-				start_index = g_new0 (gint, 1);
-				end_index = g_new0 (gint, 1);
-				*start_index = g_utf8_pointer_to_offset (addresses, start);
-				*end_index = g_utf8_pointer_to_offset (addresses, cur);;
-				*start_indexes = g_slist_prepend (*start_indexes, start_index);
-				*end_indexes = g_slist_prepend (*end_indexes, end_index);
-				start = g_utf8_next_char (cur);
-			}
+
+			start_index = g_new0 (gint, 1);
+			end_index = g_new0 (gint, 1);
+			*start_index = g_utf8_pointer_to_offset (addresses, start);
+			*end_index = g_utf8_pointer_to_offset (addresses, cur);;
+			*start_indexes = g_slist_prepend (*start_indexes, start_index);
+			*end_indexes = g_slist_prepend (*end_indexes, end_index);
+			start = g_utf8_next_char (cur);
 		}
 	}
 
-	*start_indexes = g_slist_reverse (*start_indexes);
-	*end_indexes = g_slist_reverse (*end_indexes);
+	if (start != cur) {
+		gint *start_index, *end_index;
+		start_index = g_new0 (gint, 1);
+		end_index = g_new0 (gint, 1);
+		*start_index = g_utf8_pointer_to_offset (addresses, start);
+		*end_index = g_utf8_pointer_to_offset (addresses, cur);;
+		*start_indexes = g_slist_prepend (*start_indexes, start_index);
+		*end_indexes = g_slist_prepend (*end_indexes, end_index);
+	}
+
+	if (*start_indexes)
+		*start_indexes = g_slist_reverse (*start_indexes);
+	if (*end_indexes)
+		*end_indexes = g_slist_reverse (*end_indexes);
 }
 
 
@@ -1692,7 +1712,7 @@ modest_text_utils_validate_recipient (const gchar *recipient, const gchar **inva
 			}
 		}
 		if (last_quote)
-			current = last_quote;
+			current = g_utf8_next_char (last_quote);
 	} else {
 		has_error = TRUE;
 		for (current = stripped ; *current != '\0'; current = g_utf8_next_char (current)) {
@@ -2097,7 +2117,7 @@ quote_name_part (GString **str, gchar **cur, gchar **start)
 	if (blank && (blank != *start)) {
 		if (is_quoted (*start, blank - 1)) {
 			*str = g_string_append_len (*str, *start, str_len);
-			*str = g_string_append (*str, "; ");
+			*str = g_string_append (*str, ";");
 			*start = g_utf8_next_char (*cur);
 		} else {
 			*str = g_string_append_c (*str, '"');
@@ -2108,12 +2128,12 @@ quote_name_part (GString **str, gchar **cur, gchar **start)
 			*str = g_string_append_len (*str, blank,
 						    (g_utf8_pointer_to_offset (*start, *cur) -
 						     g_utf8_pointer_to_offset (*start, blank)));
-			*str = g_string_append (*str, "; ");
+			*str = g_string_append (*str, ";");
 			*start = g_utf8_next_char (*cur);
 		}
 	} else {
 		*str = g_string_append_len (*str, *start, str_len);
-		*str = g_string_append (*str, "; ");
+		*str = g_string_append (*str, ";");
 		*start = g_utf8_next_char (*cur);
 	}
 }

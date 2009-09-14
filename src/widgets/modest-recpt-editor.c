@@ -232,10 +232,11 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 
 		gtk_text_buffer_get_bounds (buffer, &start, &end);
 		buffer_contents = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
+		g_strstrip (buffer_contents);
 		if (!g_str_has_suffix (buffer_contents, "\n")) {
 			if (g_str_has_suffix (buffer_contents, ";")||(g_str_has_suffix (buffer_contents, ",")))
 				gtk_text_buffer_insert (buffer, &end, "\n", -1);
-			else 
+			else
 				gtk_text_buffer_insert (buffer, &end, ";\n", -1);
 		}
 		g_free (buffer_contents);
@@ -249,7 +250,7 @@ modest_recpt_editor_add_resolved_recipient (ModestRecptEditor *recpt_editor, GSL
 		if ((recipient) && (strlen (recipient) != 0)) {
 
 			if (!is_first_recipient)
-			gtk_text_buffer_insert (buffer, &iter, "\n", -1);
+				gtk_text_buffer_insert (buffer, &iter, "\n", -1);
 
 			gtk_text_buffer_insert (buffer, &iter, recipient, -1);
 			gtk_text_buffer_insert (buffer, &iter, ";", -1);
@@ -352,7 +353,6 @@ modest_recpt_editor_get_recipients (ModestRecptEditor *recpt_editor)
 	ModestRecptEditorPrivate *priv;
 	GtkTextBuffer *buffer = NULL;
 	GtkTextIter start, end;
-	gchar *c;
 
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), NULL);
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
@@ -372,11 +372,6 @@ modest_recpt_editor_get_recipients (ModestRecptEditor *recpt_editor)
 	gtk_text_buffer_get_end_iter (buffer, &end);
 
 	priv->recipients = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
-	for (c = priv->recipients; *c != '\0'; c = g_utf8_next_char (c)) {
-		if (*c == '\n') {
-			*c = ' ';
-		}
-	}
 
 	return priv->recipients;
 
@@ -643,7 +638,7 @@ create_valid_text (const gchar *text, gint len)
 				if (last_separator) {
 					gchar *last_at = g_utf8_strrchr (str->str, -1, g_utf8_get_char ("@"));
 					if (last_at) {
-						if (last_at > last_separator)
+						if (last_at < last_separator)
 							str = g_string_append_c (str, '\n');
 					}
 				} else {
@@ -675,17 +670,20 @@ modest_recpt_editor_on_insert_text_after (GtkTextBuffer *buffer,
 	ModestRecptEditorPrivate *priv = MODEST_RECPT_EDITOR_GET_PRIVATE (editor);
 
 	prev = *location;
-	if (!gtk_text_iter_backward_char (&prev))
+	/* We must go backwards twice as location points to the next
+	   valid position to insert text */
+	if (!gtk_text_iter_backward_chars (&prev, 2))
 		return;
 
 	prev_char = gtk_text_iter_get_char (&prev);
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
 	g_signal_handlers_block_by_func (buffer, modest_recpt_editor_on_insert_text_after, editor);
-	if ((prev_char == ';'||prev_char == ',')&&(!quote_opened(location))) {
+	if ((prev_char == ';'||prev_char == ',')&&(!quote_opened(&prev))) {
 		GtkTextMark *insert;
-		gtk_text_buffer_insert (buffer, location, "\n",-1);
+		gtk_text_iter_forward_char (&prev);
+		gtk_text_buffer_insert (buffer, &prev, "\n",-1);
 		insert = gtk_text_buffer_get_insert (buffer);
-		gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (priv->text_view), location, 0.0,TRUE, 0.0, 1.0);
+		gtk_text_view_scroll_to_iter (GTK_TEXT_VIEW (priv->text_view), &prev, 0.0,TRUE, 0.0, 1.0);
 	}
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text, editor);
 	g_signal_handlers_unblock_by_func (buffer, modest_recpt_editor_on_insert_text_after, editor);
