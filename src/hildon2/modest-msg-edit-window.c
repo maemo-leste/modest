@@ -3251,11 +3251,25 @@ void
 modest_msg_edit_window_undo (ModestMsgEditWindow *window)
 {
 	ModestMsgEditWindowPrivate *priv;
+	ModestWindowPrivate *parent_priv;
+	gboolean was_rich_text, is_rich_text;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	
+	parent_priv = MODEST_WINDOW_GET_PRIVATE (window);
+
+	was_rich_text = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
+
 	wp_text_buffer_undo (WP_TEXT_BUFFER (priv->text_buffer));
+
+	is_rich_text = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
+
+	if (parent_priv->toolbar && was_rich_text != is_rich_text) {
+		if (is_rich_text)
+			gtk_widget_show (parent_priv->toolbar);
+		else
+			gtk_widget_hide (parent_priv->toolbar);
+	}
 
 	modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
