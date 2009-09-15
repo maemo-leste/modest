@@ -1506,7 +1506,8 @@ modest_platform_set_update_interval (guint minutes)
 	/* Delete any existing alarm, because we will replace it: */
 	alarm_cookies = alarmd_event_query (0,0, 0,0, MODEST_ALARMD_APPID);
 	if (alarm_cookies) {
-		for (; alarm_cookies != NULL; alarm_cookies++) {
+		/* alarmd_event_query returns a zero terminated array */
+		for (; *alarm_cookies != 0; alarm_cookies++) {
 			alarmd_event_del (*alarm_cookies);
 		}
 		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
