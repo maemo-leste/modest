@@ -923,7 +923,7 @@ check_data (ModestDefaultAccountSettingsDialog *self)
 	if (!account_title)
 		return FALSE; /* Should be prevented already anyway. */
 		
-	if (strcmp(account_title, priv->original_account_title) != 0) {
+	if (g_strcmp0 (account_title, priv->original_account_title) != 0) {
 		gboolean name_in_use; 
 
 		/* Check the changed title: */

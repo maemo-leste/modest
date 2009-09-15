@@ -790,7 +790,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 
 	return GTK_WIDGET (box);
 }
-	
+
 static gboolean
 check_data (ModestDefaultAccountSettingsDialog *self)
 {
@@ -806,23 +806,23 @@ check_data (ModestDefaultAccountSettingsDialog *self)
 	account_title = get_entered_account_title (self);
 	if (!account_title)
 		return FALSE; /* Should be prevented already anyway. */
-		
-	if (strcmp(account_title, priv->original_account_title) != 0) {
+
+	if (g_strcmp0 (account_title, priv->original_account_title) != 0) {
 		gboolean name_in_use; 
 
 		/* Check the changed title: */
 		name_in_use = modest_account_mgr_account_with_display_name_exists (priv->account_manager,
 										   account_title);
-		
+
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
 			modest_platform_information_banner(NULL, NULL, _("mail_ib_account_name_already_existing"));
-			
+
 			g_free (account_title);
 			return FALSE;
 		}
 	}
-	
+
 	g_free (account_title);
 	account_title  = NULL;
 
@@ -831,7 +831,7 @@ check_data (ModestDefaultAccountSettingsDialog *self)
 	if ((!email_address) || (strlen(email_address) == 0)) {
 		return FALSE;
 	}
-			
+
 	if (!modest_text_utils_validate_email_address (email_address, NULL)) {
 		/* Warn the user via a dialog: */
 		modest_platform_information_banner (NULL, NULL, _("mcen_ib_invalid_email"));
