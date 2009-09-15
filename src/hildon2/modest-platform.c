@@ -1486,7 +1486,8 @@ gboolean
 modest_platform_set_update_interval (guint minutes)
 {
 #ifdef MODEST_HAVE_LIBALARM
-	
+
+	cookie_t alarm_cookie, *alarm_cookies;
 	ModestConf *conf = modest_runtime_get_conf ();
 	if (!conf)
 		return FALSE;
@@ -1500,38 +1501,37 @@ modest_platform_set_update_interval (guint minutes)
 		}
 	}
 
-	cookie_t alarm_cookie = modest_conf_get_int (conf, MODEST_CONF_ALARM_ID, NULL);
+	/* cookie_t alarm_cookie = modest_conf_get_int (conf, MODEST_CONF_ALARM_ID, NULL); */
 
-	/* Delete any existing alarm,
-	 * because we will replace it: */
-	if (alarm_cookie) {
-		if (alarmd_event_del(alarm_cookie) != 0)
-			g_debug ("%s: alarm %d was not on the queue", __FUNCTION__, (int)alarm_cookie);
-		alarm_cookie = 0;
+	/* Delete any existing alarm, because we will replace it: */
+	alarm_cookies = alarmd_event_query (0,0, 0,0, MODEST_ALARMD_APPID);
+	if (alarm_cookies) {
+		for (; alarm_cookies != NULL; alarm_cookies++) {
+			alarmd_event_del (*alarm_cookies);
+		}
 		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
 	}
-	
+
 	/* 0 means no updates: */
 	if (minutes == 0)
 		return TRUE;
-	
-     
+
 	/* Register alarm: */
-	
+
 	/* Set the interval in alarm_event_t structure: */
 	alarm_event_t *event = alarm_event_create ();
 	alarm_event_add_actions (event, 1);
 	alarm_action_t *action = alarm_event_get_action (event, 0);
 	alarm_event_set_alarm_appid (event, MODEST_ALARMD_APPID);
 	event->alarm_time = minutes * 60; /* seconds */
-	
+
 	/* Set recurrence every few minutes: */
 	event->recur_secs = minutes*60;
 	event->recur_count = -1; /* Means infinite */
 
 	/* Specify what should happen when the alarm happens:
 	 * It should call this D-Bus method: */
-	 
+
 	action->dbus_path = g_strdup(MODEST_DBUS_OBJECT);
 	action->dbus_interface = g_strdup (MODEST_DBUS_IFACE);
 	action->dbus_service = g_strdup (MODEST_DBUS_SERVICE);
@@ -1546,23 +1546,23 @@ modest_platform_set_update_interval (guint minutes)
 	 * ALARM_EVENT_CONNECTED will prevent the alarm from being called in case that the device is offline
          */
 	event->flags = ALARM_EVENT_CONNECTED;
-	
+
 	alarm_cookie = alarmd_event_add (event);
 
 	/* now, free it */
 	alarm_event_delete (event);
-	
+
 	/* Store the alarm ID in GConf, so we can remove it later:
 	 * This is apparently valid between application instances. */
 	modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, alarm_cookie, NULL);
-	
+
 	if (!alarm_cookie) {
 	    /* Error */
 	    g_warning ("Error setting alarm event. \n");
-	    
+
 	    return FALSE;
 	}
-#endif /* MODEST_HAVE_LIBALARM */	
+#endif /* MODEST_HAVE_LIBALARM */
 	return TRUE;
 }
 
