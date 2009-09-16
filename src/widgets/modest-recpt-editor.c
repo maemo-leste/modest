@@ -115,7 +115,7 @@ static gunichar iter_previous_char (GtkTextIter *iter);
 /* static gunichar iter_next_char (GtkTextIter *iter); */
 static GtkTextTag *prev_iter_has_recipient (GtkTextIter *iter);
 /* static GtkTextTag *next_iter_has_recipient (GtkTextIter *iter); */
-static void select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag);
+static void select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag, gboolean grow, gboolean left_not_right);
 static gboolean quote_opened (GtkTextIter *iter);
 static gboolean is_valid_insert (const gchar *text, gint len);
 static gchar *create_valid_text (const gchar *text, gint len);
@@ -514,42 +514,60 @@ modest_recpt_editor_on_mark_set (GtkTextBuffer *buffer,
 				 ModestRecptEditor *recpt_editor)
 {
 	ModestRecptEditorPrivate *priv;
-	GtkTextIter start, end;
+	GtkTextIter insert_iter, selection_iter;
 	GtkTextMark *selection_bound;
+	GtkTextMark *insert;
 	GtkTextTag *tag;
 	gboolean selection_changed = FALSE;
+	gboolean select_to_left;
 
 	priv = MODEST_RECPT_EDITOR_GET_PRIVATE (recpt_editor);
 
 	buffer = modest_recpt_editor_get_buffer (recpt_editor);
 	selection_bound = gtk_text_buffer_get_selection_bound (buffer);
+	insert = gtk_text_buffer_get_insert (buffer);
 
-	if (mark != selection_bound)
+	if (mark != selection_bound && mark != insert)
 		return;
 
-	gtk_text_buffer_get_selection_bounds (buffer, &start, &end);
+	gtk_text_buffer_get_iter_at_mark (buffer, &insert_iter, insert);
+	gtk_text_buffer_get_iter_at_mark (buffer, &selection_iter, selection_bound);
 
-	tag = iter_has_recipient (&start);
-	if (tag != NULL)
-		if (!gtk_text_iter_begins_tag (&start, tag)) {
-			gtk_text_iter_backward_to_tag_toggle (&start, tag);
+	select_to_left = gtk_text_iter_get_offset (&selection_iter) > gtk_text_iter_get_offset (&insert_iter);
+
+	tag = iter_has_recipient (&insert_iter);
+	if (tag) {
+		if (select_to_left) {
+			if (!gtk_text_iter_begins_tag (&insert_iter, tag)) {
+				gtk_text_iter_backward_to_tag_toggle (&insert_iter, tag);
+				selection_changed = TRUE;
+			}
+		} else {
+			gtk_text_iter_forward_to_tag_toggle (&insert_iter, tag);
 			selection_changed = TRUE;
 		}
-
-	tag = iter_has_recipient (&end);
-	if (tag != NULL)
-		if (!gtk_text_iter_ends_tag (&end, tag)) {
-			gtk_text_iter_forward_to_tag_toggle (&end, tag);
+	}
+		
+	tag = iter_has_recipient (&selection_iter);
+	if (tag != NULL) {
+		if (select_to_left) {
+			gtk_text_iter_forward_to_tag_toggle (&selection_iter, tag);
 			selection_changed = TRUE;
+		} else {
+			if (!gtk_text_iter_begins_tag (&selection_iter, tag)) {
+				gtk_text_iter_backward_to_tag_toggle (&selection_iter, tag);
+				selection_changed = TRUE;
+			}
 		}
-
+	}
+	
 	if (selection_changed) {
 		/* We block this signal handler in order to prevent a
 		   stack overflow caused by recursive calls to this
 		   handler as the select_range call could issue a
 		   "mark-set" signal */
 		g_signal_handler_block (buffer, priv->on_mark_set_handler);
-		gtk_text_buffer_select_range (buffer, &start, &end);
+		gtk_text_buffer_select_range (buffer, &insert_iter, &selection_iter);
 		g_signal_handler_unblock (buffer, priv->on_mark_set_handler);
 	}
 }
@@ -778,17 +796,40 @@ iter_previous_char (GtkTextIter *iter)
 /* } */
 
 static void
-select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag)
+select_tag_of_iter (GtkTextIter *iter, GtkTextTag *tag, gboolean grow, gboolean left_not_right)
 {
 	GtkTextIter start, end;
 
 	start = *iter;
-	if (!gtk_text_iter_begins_tag (&start, tag))
+	if (!gtk_text_iter_begins_tag (&start, tag)) {
 		gtk_text_iter_backward_to_tag_toggle (&start, tag);
+	} else {
+		if (!left_not_right) {
+			gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &start, &start);
+			return;
+		}
+	}
 	end = *iter;
-	if (!gtk_text_iter_ends_tag (&end, tag))
+	if (!gtk_text_iter_ends_tag (&end, tag)) {
 		gtk_text_iter_forward_to_tag_toggle (&end, tag);
-	gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &start, &end);
+	} else {
+		if (left_not_right) {
+			gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &end, &end);
+			return;
+		}
+	}
+	if (grow) {
+		if (left_not_right)
+			gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &start, &end);
+		else
+			gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &end, &start);
+	} else {
+		if (left_not_right)
+			gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &start, &start);
+		else
+			gtk_text_buffer_select_range (gtk_text_iter_get_buffer (iter), &end, &end);
+	}
+	*iter = left_not_right?start:end;
 }
 
 static gboolean 
@@ -826,6 +867,9 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	GtkTextBuffer * buffer;
 	GtkTextIter location, selection_loc;
 	GtkTextTag *tag;
+	gboolean shift_pressed;
+	gboolean select_to_left;
+	gboolean has_selection;
      
 #ifdef MODEST_TOOLKIT_HILDON2
 	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (text_view));
@@ -857,11 +901,18 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	gtk_text_buffer_get_iter_at_mark (buffer, &location, insert);
 	gtk_text_buffer_get_iter_at_mark (buffer, &selection_loc, selection);
 
+	select_to_left = gtk_text_iter_get_offset (&selection_loc) > gtk_text_iter_get_offset (&location);
+	has_selection = gtk_text_iter_get_offset (&selection_loc) != gtk_text_iter_get_offset (&location);
+	shift_pressed = key->state & GDK_SHIFT_MASK;
+
 	switch (key->keyval) {
 	case GDK_Left:
 	case GDK_KP_Left: 
 	{
 		gboolean cursor_ready = FALSE;
+		GtkTextIter prev_location;
+
+		prev_location = location;
 		while (!cursor_ready) {
 			if (iter_previous_char (&location) == '\n') {
 				gtk_text_iter_backward_char (&location);
@@ -870,19 +921,44 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 			}
 		}
 		tag = iter_has_recipient (&location);
+		if (has_selection && gtk_text_iter_ends_tag (&prev_location, tag)) {
+			gtk_text_iter_backward_to_tag_toggle (&prev_location, tag);
+			location = prev_location;
+			cursor_ready = FALSE;
+			while (!cursor_ready) {
+				if (iter_previous_char (&location) == '\n') {
+					gtk_text_iter_backward_char (&location);
+				} else {
+					cursor_ready = TRUE;
+				}
+			}
+		}
+		
 		if ((tag != NULL)&& (gtk_text_iter_is_start (&location) || !(gtk_text_iter_begins_tag (&location, tag)))) {
-			select_tag_of_iter (&location, tag);
+			if (has_selection) {
+				gtk_text_buffer_select_range (buffer, &location, &location);
+			} else {
+				select_tag_of_iter (&location, tag, select_to_left, TRUE);
+			}
 			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+
+			if (shift_pressed) {
+				gtk_text_buffer_select_range (buffer, &location, &selection_loc);
+			}
 			return TRUE;
 		}
 		gtk_text_iter_backward_char (&location);
 		tag = iter_has_recipient (&location);
 		if (tag != NULL)
-			select_tag_of_iter (&location, tag);
+			select_tag_of_iter (&location, tag, select_to_left, TRUE);
 		else {
 			gtk_text_buffer_place_cursor (buffer, &location);
 		}
 		gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+
+		if (shift_pressed) {
+			gtk_text_buffer_select_range (buffer, &location, &selection_loc);
+		}
 
 		return TRUE;
 	}
@@ -899,6 +975,10 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 				gtk_text_iter_forward_char (&location);
 			gtk_text_buffer_place_cursor (buffer, &location);
 			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+
+			if (shift_pressed) {
+				gtk_text_buffer_select_range (buffer, &location, &selection_loc);
+			}
 			return TRUE;
 		}
 
@@ -915,10 +995,14 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 
 		tag = iter_has_recipient (&location);
 		if (tag != NULL)
-			select_tag_of_iter (&location, tag);
+			select_tag_of_iter (&location, tag, !select_to_left, FALSE);
 		else
 			gtk_text_buffer_place_cursor (buffer, &location);
 		gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
+
+		if (shift_pressed) {
+			gtk_text_buffer_select_range (buffer, &location, &selection_loc);
+		}
 		return TRUE;
 	}
 	break;
@@ -974,7 +1058,7 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 			GtkTextIter iter_in_tag;
 			iter_in_tag = location;
 			gtk_text_iter_backward_char (&iter_in_tag);
-			select_tag_of_iter (&iter_in_tag, tag);
+			select_tag_of_iter (&iter_in_tag, tag, FALSE, TRUE);
 			gtk_text_buffer_delete_selection (buffer, TRUE, TRUE);
 			return TRUE;
 		}
@@ -983,6 +1067,21 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	break;
 	default:
 		return FALSE;
+	}
+}
+
+static void _discard_chars (GtkTextIter *start, GtkTextIter *end)
+{
+	while (!gtk_text_iter_equal (start, end)) {
+		gunichar c = gtk_text_iter_get_char (start);
+
+		if (c == '\n' || c == ';' || c == ',' || c == ' ') {
+			if (!gtk_text_iter_forward_char (start))
+				break;
+		} else {
+			break;
+		}
+
 	}
 }
 
@@ -1024,6 +1123,7 @@ modest_recpt_editor_add_tags (ModestRecptEditor *editor,
 
 	/* Formatting the buffer content by applying tag */
 	gtk_text_buffer_get_bounds (buffer, &start, &end);
+	_discard_chars (&start, &end);
 	while (gtk_text_iter_forward_search(&start, ";",
 					    GTK_TEXT_SEARCH_TEXT_ONLY |
 					    GTK_TEXT_SEARCH_VISIBLE_ONLY,
@@ -1033,6 +1133,7 @@ modest_recpt_editor_add_tags (ModestRecptEditor *editor,
 		gtk_text_buffer_apply_tag(buffer, tag, &start, &start_match);
 		offset = gtk_text_iter_get_offset (&end_match);
 		gtk_text_buffer_get_iter_at_offset(buffer, &start, offset);
+		_discard_chars (&start, &end);
 	}
 	g_free (buffer_contents);
 }
