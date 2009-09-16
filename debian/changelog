@@ -1,3 +1,14 @@
+modest (3.0.17-rc56) unstable; urgency=low
+
+  * Week 38, 2009 - fifth release
+  * 
+  * Fixes: NB#114184  missing 'auto' update interval for IMAP
+  * Fixes: NB#130325  New message view UI is not harmonized
+  * Fixes: NB#131601  Toolbar is lost after cancelling lose formatting confirmation note warning shown 
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 16 Sep 2009 10:01:02 +0300
+
 modest (3.0.17-rc55) unstable; urgency=low
 
   * Week 38, 2009 - fourth release
@@ -7,7 +18,7 @@ modest (3.0.17-rc55) unstable; urgency=low
   * Fixes: NB#138110 Reboot needed: Manual send&receive and autoupdate doesn't work 
   * Fixes: NB#138247 Number of new messages not updated properly
 
- -- Moises Martinez <moises.martinez@nokia.com>  MonTue, 15 Sep 2009 00:07:10 +0300
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 15 Sep 2009 00:07:10 +0300
 
 modest (3.0.17-rc54) unstable; urgency=low
 
