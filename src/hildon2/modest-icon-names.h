@@ -83,7 +83,7 @@
 #define  MODEST_TOOLBAR_ICON_SEND_RECEIVE	"general_refresh"
 #define  MODEST_TOOLBAR_ICON_REPLY		"email_message_reply"
 #define  MODEST_TOOLBAR_ICON_REPLY_ALL		"email_message_reply_all"
-#define  MODEST_TOOLBAR_ICON_FORWARD		""
+#define  MODEST_TOOLBAR_ICON_FORWARD		"email_message_forward"
 #define  MODEST_TOOLBAR_ICON_DELETE		"general_delete"
 #define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     ""
 #define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         "general_foldertree"

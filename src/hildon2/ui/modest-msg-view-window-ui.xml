@@ -54,6 +54,7 @@
   <toolbar name="ToolBar">
     <toolitem action="ToolbarMessageReply"/>
     <toolitem action="ToolbarMessageReplyAll"/>
+    <toolitem action="ToolbarMessageForward"/>
     <toolitem action="ToolbarDeleteMessage"/>
     <toolitem action="ToolbarDownloadExternalImages"/>
     <toolitem action="ToolbarMessageBack" position="bot"/>
