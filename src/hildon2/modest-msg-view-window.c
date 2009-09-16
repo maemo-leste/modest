@@ -2307,24 +2307,22 @@ toolbar_resize (ModestMsgViewWindow *self)
 	static_button_size = modest_window_mgr_get_fullscreen_mode (mgr)?120:120;
 
 	if (parent_priv->toolbar) {
-		/* left size buttons */
+		/* Set expandable and homogeneous tool buttons */
 		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReply");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
 		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageReplyAll");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
+		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageForward");
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
 		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarDeleteMessage");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
 		widget = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarDownloadExternalImages");
-		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), FALSE);
-		gtk_widget_set_size_request (GTK_WIDGET (widget), static_button_size, -1);
-
+		gtk_tool_item_set_expand (GTK_TOOL_ITEM (widget), TRUE);
+		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (widget), TRUE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
 		gtk_tool_item_set_expand (GTK_TOOL_ITEM (priv->next_toolitem), TRUE);
 		gtk_tool_item_set_homogeneous (GTK_TOOL_ITEM (priv->prev_toolitem), TRUE);
@@ -3532,10 +3530,6 @@ setup_menu (ModestMsgViewWindow *self)
 					   NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_move_to),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
-
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_forward"), "<Control>d",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_forward),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_reply_msg));
 
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_mark_as_read"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_mark_as_read),

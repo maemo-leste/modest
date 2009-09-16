@@ -14,7 +14,6 @@ static const ModestDimmingEntry modest_msg_view_menu_dimming_entries [] = {
 	{ "/MenuBar/MessageMenu/MessageNewMenu", G_CALLBACK(modest_ui_dimming_rules_on_new_msg) },
 	{ "/MenuBar/MessageMenu/MessageReplyMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/MessageMenu/MessageReplyAllMenu", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
-	{ "/MenuBar/MessageMenu/MessageForwardMenu",  G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/MenuBar/MessageMenu/MessageDeleteMenu",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
 	{ "/MenuBar/MessageMenu/MessageDetailsMenu", G_CALLBACK(modest_ui_dimming_rules_on_details) },
 
@@ -60,6 +59,7 @@ static const ModestDimmingEntry modest_msg_view_toolbar_dimming_entries [] = {
 	/* Toolbar */
 	{ "/ToolBar/ToolbarMessageReply", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/ToolBar/ToolbarMessageReplyAll", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
+	{ "/ToolBar/ToolbarMessageForward", G_CALLBACK(modest_ui_dimming_rules_on_reply_msg) },
 	{ "/ToolBar/ToolbarDeleteMessage",  G_CALLBACK(modest_ui_dimming_rules_on_delete_msg) },
 	{ "/ToolBar/ToolbarDownloadExternalImages", G_CALLBACK(modest_ui_dimming_rules_on_fetch_images) },
 	{ "/ToolBar/ToolbarMessageBack", G_CALLBACK(modest_ui_dimming_rules_on_view_previous) },
