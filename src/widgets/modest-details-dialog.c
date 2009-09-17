@@ -41,6 +41,9 @@
 #include <modest-text-utils.h>
 #include <modest-datetime-formatter.h>
 #include <string.h> /* for strlen */
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon-helper.h>
+#endif
 
 static void    modest_details_dialog_set_header_default          (ModestDetailsDialog *self,
 								  TnyHeader *header,
@@ -176,8 +179,13 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 
 	/* Create label */
 	label_w = gtk_label_new (label);
-	gtk_misc_set_alignment (GTK_MISC (label_w), 1.0, 0.0);
-	gtk_label_set_justify (GTK_LABEL (label_w), GTK_JUSTIFY_RIGHT);
+	gtk_misc_set_alignment (GTK_MISC (label_w), 0.0, 0.0);
+	gtk_label_set_justify (GTK_LABEL (label_w), GTK_JUSTIFY_LEFT);
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_helper_set_logical_color (label_w,
+			GTK_RC_FG, GTK_STATE_NORMAL, "SecondaryTextColor");
+#endif
 
 	/* Create secure value */
 	secure_value = modest_text_utils_get_secure_header (value, "");
@@ -351,7 +359,6 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 					  TnyFolder *folder)
 {
 	gchar *count_s, *size_s, *name = NULL;
-	gchar *tmp = NULL;
 	guint size, count;
 
 	g_return_if_fail (folder && TNY_IS_FOLDER (folder));
@@ -384,17 +391,29 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 			name = g_strdup (tny_folder_get_name (folder));
 	}
 
-	tmp = g_strconcat (_("mcen_fi_folder_properties_foldername"), ":", NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_foldername"), name);
+#else
+	gchar *tmp = g_strconcat (_("mcen_fi_folder_properties_foldername"), ":", NULL);
 	modest_details_dialog_add_data (self, tmp, name);
 	g_free (tmp);
+#endif
 
-	tmp = g_strconcat (_("mcen_fi_folder_properties_messages"), ":", NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_messages"), count_s);
+#else
+	gchar *tmp = g_strconcat (_("mcen_fi_folder_properties_messages"), ":", NULL);
 	modest_details_dialog_add_data (self, tmp, count_s);
 	g_free (tmp);
+#endif
 
-	tmp = g_strconcat (_("mcen_fi_folder_properties_size"), ":", NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_size"), size_s);
+#else
+	gchar *tmp = g_strconcat (_("mcen_fi_folder_properties_size"), ":", NULL);
 	modest_details_dialog_add_data (self, tmp, size_s);
 	g_free (tmp);
+#endif
 
 	/* Frees */
 	g_free (name);
