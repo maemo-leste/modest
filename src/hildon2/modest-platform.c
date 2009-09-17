@@ -2646,7 +2646,7 @@ modest_platform_play_email_tone (void)
 	g_free (mail_volume);
 	g_free (active_profile);
 #else
-	mail_tone = MAIL_TONE;
+	mail_tone = g_strdup (MAIL_TONE);
 	mail_volume_int = 100;
 #endif
 
