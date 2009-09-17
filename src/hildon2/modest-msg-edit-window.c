@@ -914,6 +914,7 @@ init_window (ModestMsgEditWindow *obj)
 	priv->subject_field = hildon_entry_new (MODEST_EDITABLE_SIZE);
 	gtk_entry_set_max_length (GTK_ENTRY (priv->subject_field) ,SUBJECT_MAX_LENGTH);
 	g_object_set (G_OBJECT (priv->subject_field), "truncate-multiline", TRUE, NULL);
+	hildon_entry_set_placeholder ((HildonEntry *) priv->subject_field, _("mail_va_no_subject"));
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->subject_field, TRUE, TRUE, 0);

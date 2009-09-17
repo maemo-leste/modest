@@ -1861,37 +1861,24 @@ modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
 	gboolean dimmed = FALSE;
-	GtkWidget *subject_field, *body_field;
-	const gchar *subject = NULL;
+	GtkWidget *body_field;
 
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	body_field = modest_msg_edit_window_get_child_widget (
-							      MODEST_MSG_EDIT_WINDOW (win),
+	body_field = modest_msg_edit_window_get_child_widget (MODEST_MSG_EDIT_WINDOW (win),
 							      MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BODY);
-	subject_field = modest_msg_edit_window_get_child_widget (
-								 MODEST_MSG_EDIT_WINDOW (win),
-								 MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_SUBJECT);
-	subject = gtk_entry_get_text (GTK_ENTRY (subject_field));
-
-	dimmed = (subject == NULL || subject[0] == '\0');
-	if (dimmed)
-		modest_dimming_rule_set_notification (rule, _("mcen_ib_subject_not_modified"));
 
 	if (!dimmed) {
 		GtkWidget *to_field, *cc_field, *bcc_field;
 		GtkTextBuffer * to_buffer, *cc_buffer, *bcc_buffer;
-		cc_field = modest_msg_edit_window_get_child_widget (
-			MODEST_MSG_EDIT_WINDOW (win),
-			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_CC);
-		to_field = modest_msg_edit_window_get_child_widget (
-			MODEST_MSG_EDIT_WINDOW (win),
-			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_TO);
-		bcc_field = modest_msg_edit_window_get_child_widget (
-			MODEST_MSG_EDIT_WINDOW (win),
-			MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BCC);
+		cc_field = modest_msg_edit_window_get_child_widget (MODEST_MSG_EDIT_WINDOW (win),
+								    MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_CC);
+		to_field = modest_msg_edit_window_get_child_widget (MODEST_MSG_EDIT_WINDOW (win),
+								    MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_TO);
+		bcc_field = modest_msg_edit_window_get_child_widget (MODEST_MSG_EDIT_WINDOW (win),
+								     MODEST_MSG_EDIT_WINDOW_WIDGET_TYPE_BCC);
 		to_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (to_field));
 		cc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (cc_field));
 		bcc_buffer = modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (bcc_field));
