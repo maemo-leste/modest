@@ -1,3 +1,15 @@
+modest (3.0.17-rc57) unstable; urgency=low
+
+  * Week 38, 2009 - sixth release
+  * 
+  * Fixes: NB#135463 Modest crash once when an Email account is finished while BT
+  * 	 headset connected during ongoing call
+  * Fixes: NB#139035 Forward button needed in email view (and remove Forward button 
+  * 	from view menu) 
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 17 Sep 2009 10:00:37 +0300
+
 modest (3.0.17-rc56) unstable; urgency=low
 
   * Week 38, 2009 - fifth release
