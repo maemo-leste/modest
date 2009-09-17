@@ -3145,12 +3145,6 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	data = modest_msg_edit_window_get_msg_data (edit_window);
 
-	if (data->subject == NULL || data->subject[0] == '\0') {
-		/* Empty subject -> no send */
-		modest_msg_edit_window_free_msg_data (edit_window, data);
-		return FALSE;
-	}
-
 	recipients = g_strconcat (data->to?data->to:"", 
 				  data->cc?data->cc:"",
 				  data->bcc?data->bcc:"",

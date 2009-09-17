@@ -143,7 +143,7 @@ main (int argc, char *argv[])
 	MainSignalHandlers *handlers;
 	ModestTnyAccountStore *acc_store;
 
-	GError *error;
+	GError *error = NULL;
 	GOptionContext *context;
 
 	ModestWindowMgr *mgr;
