@@ -1546,7 +1546,7 @@ modest_platform_set_update_interval (guint minutes)
 	 * (The old maemo email-client did this, though it isn't specified in the UI spec.)
 	 * ALARM_EVENT_CONNECTED will prevent the alarm from being called in case that the device is offline
          */
-	event->flags = ALARM_EVENT_CONNECTED;
+	event->flags = ALARM_EVENT_CONNECTED | ALARM_EVENT_RUN_DELAYED;
 
 	alarm_cookie = alarmd_event_add (event);
 
