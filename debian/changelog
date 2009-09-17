@@ -1,6 +1,17 @@
-modest (3.0.17-rc57) unstable; urgency=low
+modest (3.0.17-rc58) unstable; urgency=low
 
   * Week 38, 2009 - sixth release
+  * 
+  * Fixes: NB#133759 It should be possible to send message without subject - Send 
+  *     button should not be dimmed
+  * Fixes: NB#133776 Several contacts added in To field: the last contact and 
+  *     also space before it is uncessary highlighted
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 17 Sep 2009 14:49:20 +0300
+
+modest (3.0.17-rc57) unstable; urgency=low
+
   * 
   * Fixes: NB#135463 Modest crash once when an Email account is finished while BT
   * 	 headset connected during ongoing call
@@ -14,7 +25,6 @@ modest (3.0.17-rc56) unstable; urgency=low
 
   * Week 38, 2009 - fifth release
   * 
-  * Fixes: NB#114184  missing 'auto' update interval for IMAP
   * Fixes: NB#130325  New message view UI is not harmonized
   * Fixes: NB#131601  Toolbar is lost after cancelling lose formatting confirmation note warning shown 
   * 
