@@ -2599,9 +2599,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	}
 
 	content_type = tny_mime_part_get_content_type (mime_part);
-	if ((g_str_has_prefix (content_type, "message/rfc822") ||
-	     g_str_has_prefix (content_type, "multipart/") ||
-	     g_str_has_prefix (content_type, "text/"))) {
+	if (g_str_has_prefix (content_type, "message/rfc822")) {
 		ModestWindowMgr *mgr;
 		ModestWindow *msg_win = NULL;
 		TnyMsg * msg;
@@ -2631,7 +2629,10 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				gtk_widget_show_all (GTK_WIDGET (msg_win));
 			else
 				gtk_widget_destroy (GTK_WIDGET (msg_win));
+			g_object_unref (msg);
 			g_object_unref (file_stream);
+		} else {
+			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 		}
 
 	} else {
