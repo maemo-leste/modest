@@ -1,3 +1,13 @@
+modest (3.0.17-rc59) unstable; urgency=low
+
+  * Week 39, 2009 - first release
+  * 
+  * Fixes: NB#133759 It should be possible to send message without subject
+  * 	 - Send button should not be dimmed
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 18 Sep 2009 09:40:47 +0300
+
 modest (3.0.17-rc58) unstable; urgency=low
 
   * Week 38, 2009 - sixth release
