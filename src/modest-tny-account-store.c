@@ -1149,27 +1149,31 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	else if (error->code == TNY_SERVICE_ERROR_AUTHENTICATE ||
 		 error->code == TNY_SERVICE_ERROR_CONNECT) {
 		TnyDevice *device = modest_runtime_get_device ();
+		gboolean success;
 
-		if (error->code == TNY_SERVICE_ERROR_CONNECT) {
-			gboolean success;
-			success = modest_account_mgr_get_server_account_username_has_succeeded (modest_runtime_get_account_mgr (),
-												tny_account_get_id (account));
-			if (success)
-				goto end;
+		/* If we get the connection error after establishing a
+		   proper connection then do not show the dialog as we
+		   are probably behind a firewall, or in a network
+		   with connection issues. We just keep this code to
+		   detect situations were the user does not enter the
+		   server info properly */
+		success = modest_account_mgr_get_server_account_username_has_succeeded (modest_runtime_get_account_mgr (),
+											tny_account_get_id (account));
+
+		if (!success) {
+
+			modest_platform_run_information_dialog (NULL, prompt, TRUE);
+
+			/* Show the account dialog. Checking the online status
+			   allows us to minimize the number of times that we
+			   incorrectly show the dialog */
+			if (tny_device_is_online (device))
+				show_wrong_password_dialog (account,
+							    (error->code == TNY_SERVICE_ERROR_CONNECT) ? FALSE : TRUE);
+			retval = TRUE;
 		}
-
-		modest_platform_run_information_dialog (NULL, prompt, TRUE);
-
-		/* Show the account dialog. Checking the online status
-		   allows us to minimize the number of times that we
-		   incorrectly show the dialog */
-		if (tny_device_is_online (device))
-			show_wrong_password_dialog (account,
-						    (error->code == TNY_SERVICE_ERROR_CONNECT) ? FALSE : TRUE);
-
-		retval = TRUE;
 	}
- end:
+
 	g_debug ("%s: error code %d (%s", __FUNCTION__, error->code, error->message);
 
 	if (prompt)
