@@ -1,3 +1,14 @@
+modest (3.0.17-rc61) unstable; urgency=low
+
+  * Week 39, 2009 - third release
+  * 
+  * Fixes: NB#125495 Gmail/IMAP suffering from connection problems while running
+  * 	 background updates.
+  * Fixes: NB#139449 Email does not use IPHB for connection synchronization 
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 23 Sep 2009 12:07:28 +0300
+
 modest (3.0.17-rc60) unstable; urgency=low
 
   * Week 39, 2009 - second release
