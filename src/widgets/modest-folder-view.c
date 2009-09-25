@@ -2362,10 +2362,48 @@ modest_folder_view_update_model (ModestFolderView *self,
 		g_object_unref (account);
 	}
 
-	/* Get the accounts: */
-	tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
-					TNY_LIST (model),
-					TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+       if (priv->style == MODEST_FOLDER_VIEW_STYLE_SHOW_ALL) {
+               /* Get the accounts */
+               tny_account_store_get_accounts (TNY_ACCOUNT_STORE(account_store),
+                                               TNY_LIST (model),
+                                               TNY_ACCOUNT_STORE_STORE_ACCOUNTS);
+       } else {
+               if (priv->visible_account_id) {
+                       TnyAccount *account;
+
+                       /* Add local folders account */
+		       account = modest_tny_account_store_get_local_folders_account ((ModestTnyAccountStore *) account_store);
+
+                       if (account) {
+                               tny_list_append (TNY_LIST (model), (GObject *) account);
+                               g_object_unref (account);
+                       }
+
+		       account = modest_tny_account_store_get_mmc_folders_account ((ModestTnyAccountStore *) account_store);
+
+                       if (account) {
+                               tny_list_append (TNY_LIST (model), (GObject *) account);
+                               g_object_unref (account);
+                       }
+
+                       /* Add visible account */
+		       account = modest_tny_account_store_get_tny_account_by ((ModestTnyAccountStore *) account_store,
+									      MODEST_TNY_ACCOUNT_STORE_QUERY_ID,
+                                                                              priv->visible_account_id);
+                       if (account) {
+                               tny_list_append (TNY_LIST (model), (GObject *) account);
+                               g_object_unref (account);
+                       } else {
+                               g_warning ("You need to set an account first");
+                               g_object_unref (model);
+                               return FALSE;
+                       }
+               } else {
+                       g_warning ("You need to set an account first");
+                       g_object_unref (model);
+                       return FALSE;
+               }
+       }
 
 	sortable = gtk_tree_model_sort_new_with_model (model);
 	gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(sortable),
@@ -3611,6 +3649,9 @@ modest_folder_view_set_account_id_of_visible_server_account (ModestFolderView *s
 	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
 	if (GTK_IS_TREE_MODEL_FILTER (model))
 		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (model));
+	else
+		modest_folder_view_update_model(self,
+						(TnyAccountStore *) modest_runtime_get_account_store());
 
 	/* Save settings to gconf */
 	modest_widget_memory_save (modest_runtime_get_conf (), G_OBJECT(self),
