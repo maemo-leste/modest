@@ -61,6 +61,7 @@
 #include <modest-accounts-window.h>
 #include <modest-folder-window.h>
 #include <modest-mailboxes-window.h>
+#include <modest-maemo-utils.h>
 #endif
 
 #include <tny-list.h>
@@ -1161,7 +1162,7 @@ on_send_receive_performer(gboolean canceled,
 	   same as the one specified by the user */
 	if (connect_when == MODEST_CONNECTED_VIA_ANY ||
 	    connect_when == modest_platform_get_current_connection ()) {
-		g_idle_add (on_idle_send_receive, NULL);
+		modest_heartbeat_add (on_idle_send_receive, NULL);
 	} else {
 		/* We need this to allow modest to finish */
 		g_idle_add (notify_error_in_dbus_callback, NULL);
