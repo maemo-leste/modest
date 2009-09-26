@@ -53,6 +53,9 @@
 #include "modest-platform.h"
 #include "modest-ui-constants.h"
 #include <hildon/hildon-picker-dialog.h>
+#ifdef MODEST_USE_IPHB
+#include <iphbd/libiphb.h>
+#endif
 
 /* Label child of a captioned */
 #define CAPTIONED_LABEL_CHILD "captioned-label"
@@ -622,3 +625,124 @@ modest_maemo_utils_scroll_pannable (HildonPannableArea *pannable,
 
 	hildon_pannable_area_scroll_to (pannable, h_pos, v_pos);
 }
+
+#ifdef MODEST_USE_IPHB
+
+typedef struct _ModestHeartbeatSource {
+	GSource source;
+	iphb_t iphb;
+	GPollFD poll;
+	gint interval;
+} ModestHeartbeatSource;
+
+static gboolean modest_heartbeat_prepare (GSource* source, gint *timeout)
+{
+    *timeout = -1;
+    return FALSE;
+}
+
+static gboolean 
+modest_heartbeat_check(GSource* source)
+{
+	return ((ModestHeartbeatSource *) source)->poll.revents != 0;
+}
+
+static gboolean modest_heartbeat_dispatch (GSource *source, GSourceFunc callback, gpointer userdata)
+{
+    if (callback(userdata))
+    {
+	    ModestHeartbeatSource *hb_source = (ModestHeartbeatSource *) source;
+
+	    g_source_remove_poll (source, &(hb_source->poll));
+
+	    int min = MAX(hb_source->interval - 30, 5);
+	    iphb_wait(hb_source->iphb, min, min + 60, 0);
+
+	    hb_source->poll.fd = iphb_get_fd(hb_source->iphb);
+	    hb_source->poll.events = G_IO_IN;
+	    hb_source->poll.revents = 0;
+
+	    g_source_add_poll(source, &(hb_source->poll));
+
+	    return TRUE;
+    } else {
+	    return FALSE;
+    }
+}
+
+static void 
+modest_heartbeat_finalize (GSource* source)
+{
+	ModestHeartbeatSource* hb_source = (ModestHeartbeatSource *) source;
+	hb_source->iphb = iphb_close(hb_source->iphb);
+}
+
+GSourceFuncs modest_heartbeat_funcs =
+{
+  modest_heartbeat_prepare,
+  modest_heartbeat_check,
+  modest_heartbeat_dispatch,
+  modest_heartbeat_finalize,
+  NULL,
+  NULL
+};
+
+static GSource *
+modest_heartbeat_source_new (void)
+{
+	GSource *source;
+	ModestHeartbeatSource *hb_source;
+	iphb_t iphb;
+	int hb_interval;
+
+	source = NULL;
+	hb_interval = 0;
+
+	iphb = iphb_open (&hb_interval);
+
+	if (iphb != 0) {
+		int min;
+		source = g_source_new (&modest_heartbeat_funcs, sizeof (ModestHeartbeatSource));
+		hb_source = (ModestHeartbeatSource *) source;
+		g_source_set_priority (source, G_PRIORITY_DEFAULT_IDLE);
+		hb_source->iphb = iphb;
+		hb_source->interval = hb_interval;
+
+		min = MAX(hb_interval - 30, 5);
+		iphb_wait(hb_source->iphb, min, min + 60, 0);
+
+		hb_source->poll.fd = iphb_get_fd(hb_source->iphb);
+		hb_source->poll.events = G_IO_IN;
+		hb_source->poll.revents = 0;
+
+		g_source_add_poll(source, &(hb_source->poll));
+	} else {
+		source = g_idle_source_new ();
+	}
+
+	return source;
+}
+
+guint
+modest_heartbeat_add (GSourceFunc function,
+		      gpointer userdata)
+{
+	GSource *source;
+	guint id;
+
+	source = modest_heartbeat_source_new ();
+	g_source_set_callback (source, function, userdata, NULL);
+	id = g_source_attach (source, NULL);
+	g_source_unref (source);
+
+	return id;
+}
+
+#else
+guint
+modest_heartbeat_add (GSourceFunc function,
+		      gpointer userdata)
+{
+	return g_idle_add (function, userdata);
+}
+#endif
