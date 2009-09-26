@@ -535,6 +535,16 @@ else
 fi
 AC_SUBST(MODEST_LIBTIME_LIBS)
 
+AC_CHECK_HEADERS([iphbd/libiphb.h], have_libiphb=true, have_libiphb=false)
+
+if test "x$have_libiphb" == "xtrue"; then
+   AC_DEFINE_UNQUOTED(MODEST_USE_IPHB, 1, ["use IP Heartbeat API"])
+   MODEST_LIBIPHB_LIBS=-liphb
+else
+   MODEST_LIBIPHB_LIBS=
+fi
+AC_SUBST(MODEST_LIBIPHB_LIBS)
+
 #
 # if we don't have an addressbook, use the dummy one
 #

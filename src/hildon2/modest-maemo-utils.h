@@ -174,4 +174,19 @@ modest_maemo_utils_scroll_pannable(HildonPannableArea *pannable,
 				   gint horizontal,
 				   gint vertical);
 
+/**
+ * modest_heartbeat_add:
+ * @function: function to call
+ * @userdata: data to pass to @function.
+ *
+ * Adds a function to be called when heartbeat is called. If the
+ * function returns FALSE it is automatically removed from the
+ * list of event sources and will not be called again.
+ *
+ * Returns: the ID (greater than 0) of the event source
+ */
+guint
+modest_heartbeat_add (GSourceFunc function,
+		      gpointer userdata);
+
 #endif /*__MODEST_MAEMO_UTILS_H__*/
