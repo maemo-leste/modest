@@ -1084,7 +1084,8 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 	gboolean retval = TRUE;
 
 	/* NOTE: account may be NULL in some cases */
-	g_return_val_if_fail (error, FALSE);
+	if (!error)
+		return FALSE;
 
 	/* Get the server name: */
 	if (account) {
