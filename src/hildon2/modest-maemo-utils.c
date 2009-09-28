@@ -535,6 +535,7 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 
 	selector = GTK_WIDGET (hildon_touch_selector_new ());
 	renderer = gtk_cell_renderer_text_new ();
+	g_object_set((GObject *) renderer, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
 	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model, renderer,
 					     "text", 0, NULL);
 	hildon_touch_selector_set_column_selection_mode (HILDON_TOUCH_SELECTOR (selector), 
