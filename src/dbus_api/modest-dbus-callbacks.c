@@ -926,6 +926,9 @@ static gboolean
 on_idle_send_receive(gpointer user_data)
 {
 	gboolean auto_update;
+	ModestMailOperation *mail_op = (ModestMailOperation *) user_data;
+	ModestConnectedVia connect_when;
+
 
 	gdk_threads_enter (); /* CHECKED */
 
@@ -933,14 +936,29 @@ on_idle_send_receive(gpointer user_data)
 	auto_update = modest_conf_get_bool (modest_runtime_get_conf (), 
 					    MODEST_CONF_AUTO_UPDATE, NULL);
 
-	if (auto_update)
+	if (auto_update) {
 		/* Do send receive. Never set the current top window
 		   as we always assume that DBus send/receive requests
 		   are not user driven */
-		modest_ui_actions_do_send_receive_all (NULL, FALSE, FALSE, FALSE);
-	else
+
+		connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
+						    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
+		/* Perform a send and receive if the user selected to connect
+		   via any mean or if the current connection method is the
+		   same as the one specified by the user */
+		if (connect_when == MODEST_CONNECTED_VIA_ANY ||
+		    connect_when == modest_platform_get_current_connection ()) {
+			modest_ui_actions_do_send_receive_all (NULL, FALSE, FALSE, FALSE);
+		}
+	} else {
 		/* Disable auto update */
 		modest_platform_set_update_interval (0);
+	}
+
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (),
+					    mail_op);
+
+	g_object_unref (mail_op);
 
 	gdk_threads_leave (); /* CHECKED */
 	
@@ -1147,26 +1165,17 @@ on_send_receive_performer(gboolean canceled,
 			  TnyAccount *account,
 			  gpointer user_data)
 {
-	ModestConnectedVia connect_when;
+	ModestMailOperation *mail_op;
 
 	if (err || canceled) {
 		g_idle_add (notify_error_in_dbus_callback, NULL);
 		return;
 	}
 
-	connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
-					    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
-
-	/* Perform a send and receive if the user selected to connect
-	   via any mean or if the current connection method is the
-	   same as the one specified by the user */
-	if (connect_when == MODEST_CONNECTED_VIA_ANY ||
-	    connect_when == modest_platform_get_current_connection ()) {
-		modest_heartbeat_add (on_idle_send_receive, NULL);
-	} else {
-		/* We need this to allow modest to finish */
-		g_idle_add (notify_error_in_dbus_callback, NULL);
-	}
+	mail_op = modest_mail_operation_new (NULL);
+	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+					 mail_op);
+	modest_heartbeat_add (on_idle_send_receive, mail_op);
 }
 
 
