@@ -343,12 +343,19 @@ add_attachments (TnyMimePart *part, GList *attachments_list, gboolean add_inline
 								       "inline");
 				} else {
 					const gchar *filename;
+
 					filename = tny_mime_part_get_filename (old_attachment);
-					if (filename)
-						tny_mime_part_set_filename (attachment_part, filename);
-					else
+					if (filename) {
+						/* If the mime part has a filename do not set it again
+						   because Camel won't replace the old one. Instead it
+						   will append the filename to the old one and that will
+						   mislead email clients */
+						if (!tny_mime_part_get_filename (attachment_part))
+							tny_mime_part_set_filename (attachment_part, filename);
+					} else {
 						tny_mime_part_set_header_pair (attachment_part, "Content-Disposition",
 									       "attachment");
+					}
 				}
 				if (!TNY_IS_MSG (old_attachment))  {
 					tny_mime_part_set_transfer_encoding (TNY_MIME_PART (attachment_part), "base64");
