@@ -610,10 +610,6 @@ init_view (ModestAccountView *self)
 	 *
 	 * djcb: indeed, they have been removed for post-bora, i added the ifdefs...
        	 */
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	g_object_set(G_OBJECT(self), "allow-checkbox-mode", FALSE, NULL);
-	g_object_set(G_OBJECT(toggle_renderer), "checkbox-mode", FALSE, NULL);
-#endif /* MODEST_HAVE_HILDON0_WIDGETS */
 
 	priv->sig_handlers = 
 		modest_signal_mgr_connect (priv->sig_handlers,

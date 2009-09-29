@@ -210,21 +210,12 @@ modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 
 	/* Set the images mime filter */
 	file_filter = gtk_file_filter_new ();
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	image_mimetypes_list = osso_mime_get_mime_types_for_category (OSSO_MIME_CATEGORY_IMAGES);
-#else
 	image_mimetypes_list = hildon_mime_get_mime_types_for_category (HILDON_MIME_CATEGORY_IMAGES);
-#endif
 	for (node = image_mimetypes_list; node != NULL; node = g_list_next (node)) {
 		gtk_file_filter_add_mime_type (file_filter, node->data);
 	}
 	gtk_file_chooser_set_filter (chooser, file_filter);
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	osso_mime_types_list_free (image_mimetypes_list);
-#else
 	hildon_mime_types_list_free (image_mimetypes_list);
-#endif
-
 }
 
 void

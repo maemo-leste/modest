@@ -58,21 +58,6 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-notification.h>
 #endif /*MODEST_HILDON_NOTIFY*/
 
-#if MODEST_HILDON_API == 0
-#include <hildon-widgets/hildon-color-selector.h>
-#include <hildon-widgets/hildon-color-button.h>
-#include <hildon-widgets/hildon-banner.h>
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-number-editor.h>
-#include <hildon-widgets/hildon-note.h>
-#include <hildon-widgets/hildon-file-chooser-dialog.h>
-#include <hildon-widgets/hildon-font-selection-dialog.h>
-#include <hildon-widgets/hildon-find-toolbar.h>
-#include <hildon-widgets/hildon-sort-dialog.h>
-#include <hildon-widgets/hildon-program.h>
-
-#else
-
 #if MODEST_HILDON_API >= 1
 #include <hildon/hildon-helper.h>
 #include <hildon/hildon-file-chooser-dialog.h>
@@ -87,9 +72,7 @@ k * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 #include <hildon/hildon-sort-dialog.h>
 #include <hildon/hildon-number-editor.h>
 #include <hildon/hildon-program.h>
-
-#endif /*__MODEST_HAVE_HILDON1_WIDGETS*/
-#endif /*__MODEST_HAVE_HILDON0_WIDGETS_*/
+#endif /* MODEST_HILDON_API >= 1 */
 
 
 /* backward compatibility... */

@@ -55,11 +55,7 @@
 #endif
 
 #ifndef MODEST_TOOLKIT_GTK
-#if MODEST_HILDON_API == 0
-#include <hildon-widgets/hildon-defines.h>
-#else
 #include <hildon/hildon-defines.h>
-#endif /*MODEST_HILDON_API == 0*/
 #endif /*!MODEST_TOOLKIT_GTK*/
 
 #include "modest-wizard-dialog.h"
@@ -265,16 +261,11 @@ init (ModestWizardDialog *wizard_dialog)
 #ifdef MODEST_TOOLKIT_GTK
     priv->image = gtk_image_new_from_stock (GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_DIALOG);
 #else /*MODEST_TOOLKIT_GTK*/
-#if MODEST_HILDON_API == 0
-    priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
-						HILDON_ICON_SIZE_WIDG_WIZARD);
-#else	    
     static int icon_size = 0;
     if (!icon_size)
 	    icon_size = gtk_icon_size_register("modest_wizard", 50, 50);
     priv->image = gtk_image_new_from_icon_name ("qgn_widg_wizard",
 						icon_size);
-#endif /*MODEST_HILDON_API == 0*/
 #endif /*!MODEST_TOOLKIT_GTK*/
 #endif /*MODEST_TOOLKIT_HILDON2 */
     /* Default values for user provided properties */

@@ -1813,14 +1813,12 @@ static gchar *
 get_gray_color_markup (GtkWidget *styled_widget)
 {
 	gchar *gray_color_markup = NULL;
-#ifndef MODEST_HAVE_HILDON0_WIDGETS
 	/* Obtain the secondary text color. We need a realized widget, that's why 
 	   we get styled_widget from outside */
 	GdkColor color;
 	if (gtk_style_lookup_color (styled_widget->style, "SecondaryTextColor", &color)) 
 		gray_color_markup = modest_text_utils_get_color_string (&color);
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
-	
+
 	if (!gray_color_markup) 
 		gray_color_markup = g_strdup ("#BBBBBB");
 

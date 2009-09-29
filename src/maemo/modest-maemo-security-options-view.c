@@ -38,13 +38,8 @@
 #include "widgets/modest-serversecurity-combo-box.h"
 #include "widgets/modest-secureauth-combo-box.h"
 #include "maemo/easysetup/modest-easysetup-servertype-combo-box.h"
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-caption.h>
-#include <hildon-widgets/hildon-number-editor.h>
-#else
 #include <hildon/hildon-caption.h>
 #include <hildon/hildon-number-editor.h>
-#endif /*MODEST_HAVE_HILDON0_WIDGETS*/
 
 #define PORT_MIN 1
 #define PORT_MAX 65535

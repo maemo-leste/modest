@@ -444,27 +444,15 @@ on_range_error (HildonNumberEditor *editor,
 	gint new_val;
 
 	switch (type) {
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	case MAXIMUM_VALUE_EXCEED:
-#else
 	case HILDON_NUMBER_EDITOR_ERROR_MAXIMUM_VALUE_EXCEED:
-#endif
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_maximum_value"), MSG_SIZE_MAX_VAL);
 		new_val = MSG_SIZE_MAX_VAL;
 		break;
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	case MINIMUM_VALUE_EXCEED:
-#else
 	case HILDON_NUMBER_EDITOR_ERROR_MINIMUM_VALUE_EXCEED:
-#endif
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_minimum_value"), MSG_SIZE_MIN_VAL);
 		new_val = MSG_SIZE_MIN_VAL;
 		break;
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-	case ERRONEOUS_VALUE:
-#else
 	case HILDON_NUMBER_EDITOR_ERROR_ERRONEOUS_VALUE:
-#endif
 		msg = g_strdup_printf (dgettext("hildon-libs", "ckct_ib_set_a_value_within_range"), 
 				       MSG_SIZE_MIN_VAL, 
 				       MSG_SIZE_MAX_VAL);
