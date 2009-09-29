@@ -45,11 +45,7 @@
 #include "widgets/modest-combo-box.h"
 #endif
 #ifndef MODEST_TOOLKIT_GTK
-#if MODEST_HILDON_API == 0
-#include <hildon-widgets/hildon-number-editor.h>
-#else
 #include <hildon/hildon-number-editor.h>
-#endif /*MODEST_HILDON_API = 0*/
 #endif
 /* include other impl specific header files */
 

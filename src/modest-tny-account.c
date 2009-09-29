@@ -50,11 +50,7 @@
 #include <modest-debug.h>
 #include <string.h>
 #ifndef MODEST_TOOLKIT_GTK
-#if MODEST_HILDON_API == 0
-#include <hildon-widgets/hildon-file-system-info.h>
-#else
 #include <hildon/hildon-file-system-info.h>
-#endif
 #endif
 
 /* we need these dummy functions, or tinymail will complain */

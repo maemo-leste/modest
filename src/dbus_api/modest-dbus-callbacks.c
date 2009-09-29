@@ -47,13 +47,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <glib/gstdio.h>
-#ifdef MODEST_HAVE_HILDON0_WIDGETS
-#include <hildon-widgets/hildon-program.h>
-#include <libgnomevfs/gnome-vfs-mime-utils.h>
-#else
 #include <hildon/hildon-program.h>
 #include <libgnomevfs/gnome-vfs-mime.h>
-#endif
 #include <tny-fs-stream.h>
 
 #ifdef MODEST_TOOLKIT_HILDON2
