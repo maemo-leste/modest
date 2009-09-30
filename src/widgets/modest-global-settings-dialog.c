@@ -104,15 +104,9 @@ modest_global_settings_dialog_get_type (void)
 			(GInstanceInitFunc) modest_global_settings_dialog_init,
 			NULL
 		};
-#ifdef MODEST_TOOLKIT_HILDON2
-		my_type = g_type_register_static (HILDON_TYPE_DIALOG,
-		                                  "ModestGlobalSettingsDialog",
-		                                  &my_info, 0);
-#else
 		my_type = g_type_register_static (GTK_TYPE_DIALOG,
 		                                  "ModestGlobalSettingsDialog",
 		                                  &my_info, 0);
-#endif
 	}
 	return my_type;
 }

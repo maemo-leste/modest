@@ -700,7 +700,7 @@ folder_chooser_dialog_run (ModestFolderView *original,
 	GtkWidget *pannable;
 	const gchar *visible_id = NULL;
 
-	userdata.dialog = hildon_dialog_new ();
+	userdata.dialog = gtk_dialog_new ();
 	pannable = hildon_pannable_area_new ();
 	folder_view = modest_platform_create_folder_view (NULL);
 
