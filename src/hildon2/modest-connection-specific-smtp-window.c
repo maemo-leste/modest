@@ -33,7 +33,10 @@
 #include "widgets/modest-ui-constants.h"
 
 #include <modest-runtime.h>
+
+#if MODEST_HAVE_CONIC
 #include <tny-maemo-conic-device.h>
+#endif
 
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkcellrenderertext.h>
@@ -166,11 +169,10 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 							      ModestAccountMgr *account_manager)
 {
 	gboolean empty = TRUE;
-#ifdef MODEST_HAVE_CONIC
 	ModestConnectionSpecificSmtpWindowPrivate *priv = 
 		CONNECTION_SPECIFIC_SMTP_WINDOW_GET_PRIVATE (self);
 	priv->account_manager = account_manager;
-	
+#ifdef MODEST_HAVE_CONIC
 	GtkListStore *liststore = GTK_LIST_STORE (priv->model);
 	
 	TnyDevice *device = modest_runtime_get_device ();
