@@ -456,8 +456,6 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gpointer user_
 	g_assert(self);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
-	priv->dirty = TRUE;
-
 	/* Fill the providers picker, based on the selected country: */
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_picker_get_active_country_mcc (
@@ -502,9 +500,6 @@ on_account_serviceprovider_selector_changed (HildonTouchSelector *widget, gint c
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
-	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-
-	priv->dirty = TRUE;
 
 	update_user_email_from_provider (self);
 }
