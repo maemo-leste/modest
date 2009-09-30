@@ -478,6 +478,9 @@ tap_and_hold_query_cb (GtkWidget *header_view,
 				gtk_widget_hide (mark_unread_item);
 			}
 			g_object_unref (header);
+		} else {
+			/* Do not show the CSM if there is no header below */
+			return TRUE;
 		}
 	}
 
