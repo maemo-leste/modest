@@ -2204,8 +2204,8 @@ idle_refresh_folder (gpointer source)
 		header_view = modest_header_window_get_header_view ((ModestHeaderWindow *) source);
 #else
 	if (MODEST_IS_MAIN_WINDOW (source))
-		header_view = modest_main_window_get_child_widget ((ModestMainWindow *) source,
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
+		header_view = MODEST_HEADER_VIEW (modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (source),
+										       MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
 #endif
 	if (header_view) {
 		TnyFolder *folder = modest_header_view_get_folder (header_view);

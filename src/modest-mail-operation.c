@@ -2468,7 +2468,7 @@ modest_mail_operation_xfer_folder (ModestMailOperation *self,
 	priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 	g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 		     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-		     error_msg);
+		     "%s", error_msg);
 
 	/* Call the user callback if exists */
 	if (user_callback)
@@ -2740,7 +2740,7 @@ get_msg_async_cb (TnyFolder *folder,
 		} else {
 			g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 				     MODEST_MAIL_OPERATION_ERROR_ITEM_NOT_FOUND,
-				     err->message);
+				     "%s", err->message);
 		}
 	} else if (finished && priv->status == MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS) {
 		/* Set the success status before calling the user callback */
