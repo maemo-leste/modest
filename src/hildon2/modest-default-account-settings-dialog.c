@@ -138,6 +138,10 @@ enable_buttons (ModestDefaultAccountSettingsDialog *self);
 static gboolean
 save_configuration (ModestDefaultAccountSettingsDialog *dialog);
 
+static void on_missing_mandatory_data (ModestSecurityOptionsView *security_view,
+				       gboolean missing,
+				       gpointer user_data);
+
 static const gchar * null_means_empty (const gchar * str);
 
 static const gchar *
@@ -660,6 +664,8 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self,
 
 	gtk_widget_show (priv->incoming_security);
 	gtk_widget_show (GTK_WIDGET (box));
+	g_signal_connect (priv->incoming_security, "missing-mandatory-data",
+			  G_CALLBACK (on_missing_mandatory_data), self);
 
 	return GTK_WIDGET (box);
 }
