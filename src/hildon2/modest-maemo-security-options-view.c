@@ -65,6 +65,8 @@ G_DEFINE_TYPE (ModestMaemoSecurityOptionsView,
 
 static void on_entry_changed (GtkEditable *editable, gpointer user_data);
 
+static void on_valid_changed (ModestNumberEditor *editor, gboolean valid, ModestSecurityOptionsView *self);
+
 /* Tracks changes in the incoming security picker */
 static void
 on_security_changed (GtkWidget *widget, 
@@ -183,6 +185,10 @@ create_incoming_security (ModestSecurityOptionsView* self,
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, FALSE, FALSE, 0);
 		gtk_widget_show (ppriv->port_view);
 		gtk_widget_show (entry_caption);
+
+		/* Track changes in UI */
+		g_signal_connect (G_OBJECT (ppriv->port_view), "valid-changed",
+					    G_CALLBACK (on_valid_changed), self);
 	}
 }
 
@@ -206,7 +212,6 @@ on_entry_changed (GtkEditable *editable,
 	ModestSecurityOptionsView* self;
 	ModestMaemoSecurityOptionsViewPrivate *priv;
  	ModestSecurityOptionsViewPrivate *ppriv;
-	ModestProtocolType auth_proto;
 	ModestSecureauthPicker *picker;
 	gboolean is_secure;
 	ModestProtocolRegistry *protocol_registry;
@@ -216,14 +221,19 @@ on_entry_changed (GtkEditable *editable,
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
-	/* Outgoing username is mandatory if outgoing auth is secure */
-	picker = MODEST_SECUREAUTH_PICKER (ppriv->auth_view);
-	auth_proto = modest_secureauth_picker_get_active_secureauth (picker);
-	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry,
-								      auth_proto);
+	/* Check if it's a secure protocol */
+	if (MODEST_IS_SECUREAUTH_PICKER (ppriv->auth_view)) {
+		ModestProtocolType auth_proto;
+		picker = MODEST_SECUREAUTH_PICKER (ppriv->auth_view);
+		auth_proto = modest_secureauth_picker_get_active_secureauth (picker);
+		is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry,
+									      auth_proto);
+	} else if (HILDON_IS_CHECK_BUTTON (ppriv->auth_view)) {
+		is_secure = hildon_check_button_get_active (HILDON_CHECK_BUTTON (ppriv->auth_view));
+	}
 
 	if (is_secure &&
-	    !g_ascii_strcasecmp (hildon_entry_get_text (HILDON_ENTRY (ppriv->user_entry)), "")) {
+	    !g_strcmp0 (hildon_entry_get_text (HILDON_ENTRY (ppriv->user_entry)), "")) {
 		priv->missing_data = TRUE;
 	} else {
 		priv->missing_data = FALSE;
@@ -239,7 +249,7 @@ on_entry_changed (GtkEditable *editable,
 			       priv->missing_data, NULL);
 }
 
-void
+static void
 on_valid_changed (ModestNumberEditor *editor,
 		  gboolean valid,
 		  ModestSecurityOptionsView *self)
