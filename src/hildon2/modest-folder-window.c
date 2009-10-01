@@ -47,6 +47,7 @@
 #include <hildon/hildon-banner.h>
 #include <hildon/hildon-button.h>
 #include <tny-account-store-view.h>
+#include <tny-gtk-folder-list-store.h>
 #include <modest-header-window.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-ui-dimming-manager.h>
@@ -65,6 +66,7 @@ typedef enum {
 static void modest_folder_window_class_init  (ModestFolderWindowClass *klass);
 static void modest_folder_window_init        (ModestFolderWindow *obj);
 static void modest_folder_window_finalize    (GObject *obj);
+static void modest_folder_window_dispose     (GObject *obj);
 
 static void connect_signals (ModestFolderWindow *self);
 static void modest_folder_window_disconnect_signals (ModestWindow *self);
@@ -167,6 +169,7 @@ modest_folder_window_class_init (ModestFolderWindowClass *klass)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_window_finalize;
+	gobject_class->dispose = modest_folder_window_dispose;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestFolderWindowPrivate));
 	
@@ -212,6 +215,41 @@ modest_folder_window_finalize (GObject *obj)
 	modest_folder_window_disconnect_signals (MODEST_WINDOW (obj));	
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
+modest_folder_window_dispose (GObject *obj)
+{
+	ModestFolderWindowPrivate *priv;
+
+	priv = MODEST_FOLDER_WINDOW_GET_PRIVATE(obj);
+	if (priv->folder_view) {
+		TnyList *list;
+
+		list = modest_folder_view_get_model_tny_list (MODEST_FOLDER_VIEW (priv->folder_view));
+
+		if (list) {
+			TnyIterator *iter;
+
+			iter = tny_list_create_iterator (list);
+			while (!tny_iterator_is_done (iter)) {
+				GObject *item = tny_iterator_get_current (iter);
+
+				if (TNY_IS_ACCOUNT (item)) {
+					if (TNY_IS_FOLDER_STORE (item) && 
+					    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (item))) {
+						tny_account_cancel (TNY_ACCOUNT (item));
+					}
+				}
+				g_object_unref (item);
+				tny_iterator_next (iter);
+			}
+			g_object_unref (iter);
+		}
+		g_object_unref (list);
+	}	
+
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
 static void
