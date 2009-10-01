@@ -371,6 +371,16 @@ void modest_folder_view_show_message_count (ModestFolderView *self,
  */
 gboolean modest_folder_view_get_activity (ModestFolderView *self);
 
+/**
+ * modest_folder_view_get_model_tny_list:
+ * @self: a #ModestFolderView
+ *
+ * obtains the #TnyList model containing the accounts in the folder view.
+ *
+ * Returns: a caller owner #TnyList
+ */
+TnyList *modest_folder_view_get_model_tny_list (ModestFolderView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_FOLDER_VIEW_H__ */

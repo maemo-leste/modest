@@ -4333,3 +4333,21 @@ on_activity_changed (TnyGtkFolderListStore *store,
 		       activity);
 }
 #endif
+
+TnyList *
+modest_folder_view_get_model_tny_list (ModestFolderView *self)
+{
+	GtkTreeModel *model;
+	TnyList *ret_value;
+
+	ret_value = NULL;
+	model = NULL;
+
+	if (get_inner_models (MODEST_FOLDER_VIEW (self), NULL, NULL, (GtkTreeModel **) &model)) {
+		ret_value = TNY_LIST (model);
+		g_object_ref (ret_value);
+	}
+
+	return ret_value;
+
+}
