@@ -1672,8 +1672,6 @@ modest_platform_on_new_headers_received (GList *URI_list,
 		g_object_unref (account);
 	}
 
-	/* Play sound */
-	modest_platform_play_email_tone ();
 	if (notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL)) {
 		GSList *notifications_list = NULL;
 
