@@ -1,3 +1,29 @@
+modest (3.0.17-rc64) unstable; urgency=low
+
+  * Week 41, first release
+  * 
+  * Fixes: NB#139449 Email does not use IPHB for connection synchronization
+  * Fixes: NB#141493 Accounts settings incorrectly shown when sending messages
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 02 Oct 2009 18:38:47 +0300
+
+modest (3.0.17-rc63) unstable; urgency=low
+
+  * Week 40, 2009 - first release 
+  * Implements IPHB functionality in modest. With this  modest does:
+  *
+  *   On receiving the send receive dbus event, it begins waiting for heartbeat.
+  *   Once it gets heartbeat, it starts the mail operation for send receive.
+  *   Then, if modest happens to be closed between the dbus event and the 
+  *     heartbeat, then the send receive operation won't be played that time. 
+  *
+  * Fixes: NB#137711 Receive Large emails:SINGLE:3G
+  * Fixes: NB#139449 Email does not use IPHB for connection synchronization
+  *
+  
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 28 Sep 2009 13:00:37 +0300
+
 modest (3.0.17-rc61) unstable; urgency=low
 
   * Week 39, 2009 - third release
