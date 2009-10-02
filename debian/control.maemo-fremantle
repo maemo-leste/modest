@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 4.0.0), cdbs, libmodest-dbus-client-dev, gnome-comm
  libglib2.0-dev, libosso-abook-dev, libosso-gnomevfs2-dev, libhildonmime-dev, libprofile-dev, libtime-dev, libtinymail-1.0-0-dev, libtinymail-camel-1.0-0-dev,
  libtinymail-maemo-1.0-0-dev, libtinymailui-1.0-0-dev, libtinymail-gnomevfs-1.0-0-dev, libtinymailui-gtk-1.0-0-dev, wpeditor0,
  wpeditor-dev, modest-providers-data, libalarm-dev, gtk-doc-tools, libnotify-dev, libhildonfm2-dev,
- microb-engine-dev, mce-dev, maemo-launcher-dev, profile-data-dev
+ microb-engine-dev, mce-dev, maemo-launcher-dev, profile-data-dev, libiphb-dev
 Standards-Version: 3.8.0
 
 Package: modest
