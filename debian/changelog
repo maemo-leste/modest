@@ -1,3 +1,12 @@
+modest (3.0.17-rc65) unstable; urgency=low
+
+  * Week 41, 2009 second release
+  * 
+  * Fixes: NB#141627 Update the vibrapattern for mail to new specs
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 05 Oct 2009 11:51:45 +0300
+
 modest (3.0.17-rc64) unstable; urgency=low
 
   * Week 41, first release
