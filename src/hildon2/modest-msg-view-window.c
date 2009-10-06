@@ -2157,6 +2157,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 		if (self) {
 			/* Restore window title */
 			update_window_title (self);
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
 			g_object_unref (self);
 		}
 		return;
@@ -2170,6 +2171,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 		if (self) {
 			/* Restore window title */
 			update_window_title (self);
+			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
 			g_object_unref (self);
 		}
 		return;
