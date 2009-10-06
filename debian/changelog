@@ -1,8 +1,16 @@
+modest (3.0.17-rc66) unstable; urgency=low
+
+  * Week 41, 2009 third release
+  * 
+  * Fixes: NB#141003 Deleting "To:" address in email hangs application
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 06 Oct 2009 14:44:18 +0300
+
 modest (3.0.17-rc65) unstable; urgency=low
 
-  * Week 41, 2009 second release
+  * Week 41, 2009 build
   * 
-  * Fixes: NB#141627 Update the vibrapattern for mail to new specs
   * 
 
  -- Moises Martinez <moises.martinez@nokia.com>  Mon, 05 Oct 2009 11:51:45 +0300
