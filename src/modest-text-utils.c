@@ -2047,7 +2047,7 @@ gchar *
 modest_text_utils_get_secure_header (const gchar *value,
 				     const gchar *header)
 {
-	const gint max_len = 128;
+	const gint max_len = 2048;
 	gchar *new_value = NULL;
 	gchar *needle = g_strrstr (value, header);
 
