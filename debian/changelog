@@ -1,3 +1,90 @@
+modest (3.90.0) unstable; urgency=low
+
+  * First release in development series for modest 4.0 release. It includes
+  *    lots of fixes from modest-3-0 branch
+  * Fixes: NB#136030  Increase the limit of characters to "secure" headers to
+  *    2048
+  * Fixes: NB#140122  On error fetching messages in msg view window, close it
+  *    always.
+  * Fixes: NB#141003  Remove the infinite loops that were causing the 
+  *    application hang.
+  * Use IPHB in Maemo Fremantle.
+  * Fixes: MB#5188    HildonDialog deprecated symbol.
+  * Fixes: MB#4918    Fix locales setup.
+  * Use Gtk+ single includes (in GNOME version of modest).
+  * Fixes: MB#5156    Add AM_PROG_CC_C_O to configure.ac
+  * Fixes: NB#125495  Do not show account settings dialog if the settings are ok
+  *    and authentication fails due to timeouts
+  * Fixes: NB#139404  Fixes fro decode part to stream functionality.
+  * Fixes: NB#114184  Autoupdate not working when switching connections Added
+  *    RUN_DELAYED flag to the alarm event.
+  * Fixes: NB#133759  Do allow sending messages without subject
+  * Fixes a crash when freeing a const gchar *
+  * Lots of fixes on selection behavior in recipient editor
+  * Fixes: NB#135463  Crash in check_data
+  * Fixes: NB#139035  Forward button moved from menu to toolbar
+  * Fixes: NB#130325  Remove additional separation among headers and body in editor
+  * Fixes: NB#131601  toolbar lost in editor when doing undo after changing the
+  *    message settings to plain text
+  * Fixes: NB#114184  auto-update fails sometimes
+  * Fixes: NB#138110  sometimes manual send&receive does not work
+  * Fixes: NB#137949  show notifications even if the application is in the foreground
+  * Sync headers in ModestHeaderWindow dispose instead of finalize.
+  * Fixes: NB#137187  problems parsing email addresses
+  * Fixes: NB#138269  append @hotmail.com to the username if the user haven't inserted it
+  * Fixes: NB#138261  settings dialog not shown when the password is incorrect
+  * On html adjustment changes, resize children in idle.
+  * Fix dbus tests using the new library.
+  * Fixes: NB#137624  Crash when creating a new folder in offline mode
+  * Fixes: NB#131601  Toolbar lost in editor after canceling "lose formatting"
+  *    confirmation note
+  * Additional check in sort dialog (code review).
+  * Code review fix in ModestAttachmentsView.
+  * Fixes: NB#131351  Crash when exiting modest if there are new connection attempts
+  * Improved the output of modest_mail_operation_to_string
+  * Fixes: NB#134905  Set word char wrapping mode in gtkhtml widget
+  * Fixes: NB#135345  Perform a case-insensitive emails comparison when looking for
+  *    existing contacts
+  * Fixes: NB#134827  Take into account unichar space on converting to plain text
+  *    quoted text
+  * Limit the number of changes for correcting scroll to avoid infinite loop.
+  * Fixes: NB#132706  Check emails addresses case when checking the presence of our
+  *    email address when replying to emails
+  * Fixes: NB#135191  Move to use e book query for searches in check names select contacts
+  * Set gstreamer driver in canberra for playing sounds (supports aac then).
+  * Pass proper volume to canberra on play sounds from modest.
+  * Fixed a type-punned warning in compilation
+  * Do not check the presence of libmodest-dbus-client library in GNOME platform
+  * Added "separator" variable when not using hildon2 libs and only use
+  *    MODEST_COMPACT_HEADER_BG if it's defined
+  * Do not use gtk_html_set_auto_panning for the GNOME version
+  * Added connection reattempts to get_password function Do not show the account settings
+  *    dialog to the user if there is a connection issue
+  * Change scroll readjustment management in msg view.
+  * Better handling of spaces on converting text to html
+  * Add <p> to text-to-html stream, so that wrapping works better.
+  * Fixes: NB#133627  Added vertical scrolling using hw keys
+  * Fixes: NB#129121  Added row reference valid checks all around modest
+  * Fixes: NB#132625  Converted libmodest-dbus-client into a new library package
+  * New plugins API to fetch parts into streams.
+  * Make modest CUD script regenerate the NSS settings for maemosec
+  * Fixes: NB#134642  Fixes a crash in on_header_view_model_changed
+  * Handle properly ca_context_open, so that we can play more than one tone.
+  * Handle better finalize/last ref of model cases in ModestHeaderWindow
+  * On showing the check names "select contact" dialog, filter properly case.
+  * Fix reference leaks causing power consuption because of running IDLE.
+  * Fixed a reference problem in grey coloring of mail header view.
+  * Remove separator in hildon2
+  * Also change bg color of attachments view.
+  * Put grey in compact mail header view.
+  * Fixes: NB#114929  Add support to autocomplete usernames for Ovi and Yahoo Mail Plus
+  * Fixes: NB#134700  Play a sound after a send&receive if new headers are received 
+  *    and application is active in the foreground
+  * Fixes: NB#135054  Default update interval should be 30 minutes
+  * Fixes: NB#134642  Crash when closing the headers window
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Wed, 07 Oct 2009 13:33:00 +0200
+
 modest (3.0.17-rc40) unstable; urgency=low
 
   * Week 35, 2009 - fifth release
