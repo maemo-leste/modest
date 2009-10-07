@@ -1,3 +1,9 @@
+modest (3.1.0) unstable; urgency=low
+
+  * Branch for 3.1 release series.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 07 Oct 2009 11:11:00 +0200
+
 modest (3.0.17-rc66) unstable; urgency=low
 
   * Week 41, 2009 third release
