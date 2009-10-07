@@ -908,11 +908,12 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	{
 		gboolean cursor_ready = FALSE;
 		GtkTextIter prev_location;
+		gboolean moved = TRUE;
 
 		prev_location = location;
 		while (!cursor_ready) {
-			if (iter_previous_char (&location) == '\n') {
-				gtk_text_iter_backward_char (&location);
+			if (moved && (iter_previous_char (&location) == '\n')) {
+				moved = gtk_text_iter_backward_char (&location);
 			} else {
 				cursor_ready = TRUE;
 			}
@@ -922,15 +923,16 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 			gtk_text_iter_backward_to_tag_toggle (&prev_location, tag);
 			location = prev_location;
 			cursor_ready = FALSE;
-			while (!cursor_ready) {
+			moved = TRUE;
+			while (moved && !cursor_ready) {
 				if (iter_previous_char (&location) == '\n') {
-					gtk_text_iter_backward_char (&location);
+					moved = gtk_text_iter_backward_char (&location);
 				} else {
 					cursor_ready = TRUE;
 				}
 			}
 		}
-		
+
 		if ((tag != NULL)&& (gtk_text_iter_is_start (&location) || !(gtk_text_iter_begins_tag (&location, tag)))) {
 			if (has_selection) {
 				gtk_text_buffer_select_range (buffer, &location, &location);
@@ -964,12 +966,14 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	case GDK_KP_Right:
 	{
 		gboolean cursor_moved = FALSE;
+		gboolean moved = TRUE;
 
 		tag = iter_has_recipient (&location);
 		if ((tag != NULL)&&(!gtk_text_iter_ends_tag (&location, tag))) {
 			gtk_text_iter_forward_to_tag_toggle (&location, tag);
-			while (gtk_text_iter_get_char (&location) == '\n')
-				gtk_text_iter_forward_char (&location);
+			moved = TRUE;
+			while (moved && (gtk_text_iter_get_char (&location) == '\n'))
+				moved = gtk_text_iter_forward_char (&location);
 			gtk_text_buffer_place_cursor (buffer, &location);
 			gtk_text_view_scroll_to_mark (GTK_TEXT_VIEW (text_view), insert, 0.0, FALSE, 0.0, 1.0);
 
@@ -979,14 +983,17 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 			return TRUE;
 		}
 
-		while (gtk_text_iter_get_char (&location) == '\n') {
-			gtk_text_iter_forward_char (&location);
+		moved = TRUE;
+		while (moved && (gtk_text_iter_get_char (&location) == '\n')) {
+			moved = gtk_text_iter_forward_char (&location);
 			cursor_moved = TRUE;
 		}
 		if (!cursor_moved)
 			gtk_text_iter_forward_char (&location);
-		while (gtk_text_iter_get_char (&location) == '\n') {
-			gtk_text_iter_forward_char (&location);
+
+		moved = TRUE;
+		while (moved && (gtk_text_iter_get_char (&location) == '\n')) {
+			moved = gtk_text_iter_forward_char (&location);
 			cursor_moved = TRUE;
 		}
 
