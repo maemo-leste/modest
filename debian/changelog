@@ -1,3 +1,15 @@
+modest (3.1.1) unstable; urgency=low
+
+  * Week 42, 2009 - first release
+  * 
+  * Fixes: NB#133774 Corematic: Crash in "notify_views_add ()"
+  * Fixes: NB#136007 'refreshing' progressing animation is going on for gmail account
+  * Fixes: NB#136030 Message details: unable to view all recipients of the email
+  * Fixes: NB#137611 random crashes occurs and can not be able to view Gmail account
+  * Fixes: NB#140122 Changes in modest are needed to resolve 138559 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 08 Oct 2009 15:51:42 +0300
+
 modest (3.1.0) unstable; urgency=low
 
   * Branch for 3.1 release series.
