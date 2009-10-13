@@ -2168,6 +2168,25 @@ modest_ui_actions_on_sort (GtkAction *action,
 	modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);
 }
 
+static void
+sync_folder_cb (TnyFolder *folder,
+		gboolean cancelled,
+		GError *err,
+		gpointer user_data)
+{
+	ModestHeaderView *header_view = (ModestHeaderView *) user_data;
+
+	tny_folder_refresh_async (folder, NULL, NULL, NULL);
+	/* ModestWindow *parent = (ModestWindow *) gtk_widget_get_ancestor ((GtkWidget *) user_data, GTK_TYPE_WINDOW); */
+
+	/* We must clear first, because otherwise set_folder will ignore
+	   the change as the folders are the same */
+	/* modest_header_view_clear (header_view); */
+	/* modest_header_view_set_folder (header_view, folder, TRUE, parent, NULL, NULL); */
+
+	g_object_unref (header_view);
+}
+
 static gboolean
 idle_refresh_folder (gpointer source)
 {
@@ -2190,11 +2209,8 @@ idle_refresh_folder (gpointer source)
 	if (header_view) {
 		TnyFolder *folder = modest_header_view_get_folder (header_view);
 		if (folder) {
-			/* We must clear first, because otherwise set_folder will ignore
-			   the change as the folders are the same */
-			modest_header_view_clear (header_view);
-			modest_header_view_set_folder (header_view, folder, TRUE,
-						       (ModestWindow *) source, NULL, NULL);
+			/* Sync the folder status */
+			tny_folder_sync_async (folder, TRUE, sync_folder_cb, NULL, g_object_ref (header_view));
 			g_object_unref (folder);
 		}
 	}
