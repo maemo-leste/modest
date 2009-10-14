@@ -1,3 +1,14 @@
+modest (3.1.2) unstable; urgency=low
+
+  * Week 42, 2009 second release
+  * 
+  * Fixes: NB#132711 Junk characters is added when file name has some space/special symbols is opened
+  * Fixes: NB#133657 Account settings dialog looses focus if "mcen_ni_smtp_config_error" is shown on top of it
+  * Fixes: NB#136381 <coverity> defects from Email
+  * Fixes: NB#141137 after read the new mail notification also the song assigned for mail notification continue playing 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 14 Oct 2009 10:26:59 +0300
+
 modest (3.1.1) unstable; urgency=low
 
   * Week 42, 2009 - first release
