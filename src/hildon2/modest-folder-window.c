@@ -246,6 +246,11 @@ modest_folder_window_dispose (GObject *obj)
 			}
 			g_object_unref (iter);
 		}
+
+		if (list && TNY_IS_GTK_FOLDER_LIST_STORE (list)) {
+			g_object_run_dispose (G_OBJECT (list));
+		}
+
 		g_object_unref (list);
 	}	
 

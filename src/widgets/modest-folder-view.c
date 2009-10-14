@@ -1374,10 +1374,6 @@ modest_folder_view_dispose (GObject *obj)
 	get_inner_models (MODEST_FOLDER_VIEW (obj),
 			  NULL, NULL, &model);
 
-	if (model && TNY_IS_GTK_FOLDER_LIST_STORE (model)) {
-		g_object_run_dispose (G_OBJECT (model));
-	}
-
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (priv->signal_handlers) {
 		modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
