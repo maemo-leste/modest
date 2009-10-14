@@ -1,3 +1,10 @@
+libmodest-dbus-client (4:1.0.0-2) unstable; urgency=low
+
+  * Week 42, 2009 - first release
+  *  With modest version changes in configure files of libmodest-dbus-client
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 14 Oct 2009 10:35:53 +0300
+
 libmodest-dbus-client (4:1.0.0-1) unstable; urgency=low
 
   * Week 37, 2009 release
