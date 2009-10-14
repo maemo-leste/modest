@@ -1925,17 +1925,14 @@ on_timeout_check_account_is_online(CheckAccountIdleData* data)
 {
 	gboolean stop_trying = FALSE;
 	g_return_val_if_fail (data && data->account, FALSE);
-	
-	printf ("DEBUG: %s: tny_account_get_connection_status()==%d\n", __FUNCTION__,
-		tny_account_get_connection_status (data->account));	
-	
+
 	if (data && data->account && 
 		/* We want to wait until TNY_CONNECTION_STATUS_INIT has changed to something else,
 		 * after which the account is likely to be usable, or never likely to be usable soon: */
 		(tny_account_get_connection_status (data->account) != TNY_CONNECTION_STATUS_INIT) )
 	{
 		data->is_online = TRUE;
-		
+
 		stop_trying = TRUE;
 	} else {
 		/* Give up if we have tried too many times: */
@@ -1946,15 +1943,15 @@ on_timeout_check_account_is_online(CheckAccountIdleData* data)
 			++(data->count_tries);
 		}
 	}
-	
+
 	if (stop_trying) {
 		/* Allow the function that requested this idle callback to continue: */
 		if (data->loop)
 			g_main_loop_quit (data->loop);
-			
+
 		if (data->account)
 			g_object_unref (data->account);
-		
+
 		return FALSE; /* Don't call this again. */
 	} else {
 		return TRUE; /* Call this timeout callback again. */

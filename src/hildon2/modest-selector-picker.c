@@ -193,8 +193,8 @@ modest_selector_picker_set_pair_list (ModestSelectorPicker *self, ModestPairList
 	model = get_model (pairs);
 
 	selector = create_touch_selector (self, model);
-	gtk_tree_model_get_iter_first (GTK_TREE_MODEL(model), &iter);
-	hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL(model), &iter))
+		hildon_touch_selector_select_iter (HILDON_TOUCH_SELECTOR (selector), 0, &iter, TRUE);
 	g_object_unref (model);
 
 	hildon_picker_button_set_selector (HILDON_PICKER_BUTTON (self), HILDON_TOUCH_SELECTOR (selector));

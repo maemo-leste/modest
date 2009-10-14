@@ -3180,7 +3180,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 	}
 
 	/* Get the currently-active transport account for this modest account: */
-	if (strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) != 0) {
+	if (account_name && strcmp (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) != 0) {
 		transport_account =
 			TNY_TRANSPORT_ACCOUNT(modest_tny_account_store_get_server_account
 					      (modest_runtime_get_account_store (),
