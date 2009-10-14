@@ -1,3 +1,14 @@
+modest (3.1.3) unstable; urgency=low
+
+  * Week 42, 2009 third release
+  * 
+  * Fixes: NB#132740   Valgrind run shows leaks in tinymail  
+  * Fixes: NB#139032  Message details window changes  
+  * Fixes: NB#139637  <coverity> defects from modest  
+  * Fixes: NB#142325  UI is not refreshing after creating New folder under Gmail IMAP  
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 15 Oct 2009 00:29:39 +0300
+
 modest (3.1.2) unstable; urgency=low
 
   * Week 42, 2009 second release
