@@ -1,3 +1,16 @@
+modest (3.90.1) unstable; urgency=low
+
+  * Fixes: NB#141137  do not play email tone twice when sending notifications
+  * Fixes: NB#133657  set the proper parent to the account settings dialog.
+  *    This could cause "hangs" when another modal dialog is shown after
+  *    this one.
+  * Fixes: NB#132711  junk characters added to filenames with non-ASCII
+  * Fixes: NB#139637  coverity defects in modest
+  * Fixes: NB#139032  remove the colons in folder details dialog. Use secondary
+  *    color as well for labels
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Wed, 14 Oct 2009 15:43:00 +0200
+
 modest (3.90.0) unstable; urgency=low
 
   * First release in development series for modest 4.0 release. It includes
@@ -6,7 +19,7 @@ modest (3.90.0) unstable; urgency=low
   *    2048
   * Fixes: NB#140122  On error fetching messages in msg view window, close it
   *    always.
-  * Fixes: NB#141003  Remove the infinite loops that were causing the 
+  * Fixes: NB#141003  Remove the infinite loops that were causing the
   *    application hang.
   * Use IPHB in Maemo Fremantle.
   * Fixes: MB#5188    HildonDialog deprecated symbol.
