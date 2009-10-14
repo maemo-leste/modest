@@ -252,6 +252,7 @@ modest_folder_window_dispose (GObject *obj)
 		}
 
 		g_object_unref (list);
+		priv->folder_view = NULL;
 	}	
 
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
