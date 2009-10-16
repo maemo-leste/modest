@@ -2580,10 +2580,6 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
 	const gchar *content_type;
 
-	/* It could happen that the window was closed */
-	if (GTK_WIDGET_VISIBLE (helper->self))
-		set_progress_hint (helper->self, FALSE);
-
 	if (cancelled || err) {
 		if (err) {
 			gchar *msg;
@@ -2599,6 +2595,14 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 		}
 		goto free;
 	}
+
+	/* It could happen that the window was closed. So we
+	   assume it is a cancelation */
+	if (!GTK_WIDGET_VISIBLE (helper->self))
+		goto free;
+
+	/* Remove the progress hint */
+	set_progress_hint (helper->self, FALSE);
 
 	content_type = tny_mime_part_get_content_type (mime_part);
 	if (g_str_has_prefix (content_type, "message/rfc822")) {
