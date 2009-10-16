@@ -67,6 +67,7 @@
 #include <modest-debug.h>
 #include <modest-header-window.h>
 #include <modest-account-protocol.h>
+#include <tny-camel-msg.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -2566,6 +2567,7 @@ modest_msg_view_window_get_attachments (ModestMsgViewWindow *win)
 typedef struct {
 	ModestMsgViewWindow *self;
 	gchar *file_path;
+	gchar *attachment_uid;
 } DecodeAsyncHelper;
 
 static void
@@ -2576,30 +2578,83 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				   gpointer user_data)
 {
 	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
-
-	/* It could happen that the window was closed */
-	if (GTK_WIDGET_VISIBLE (helper->self))
-		set_progress_hint (helper->self, FALSE);
+	const gchar *content_type;
 
 	if (cancelled || err) {
 		if (err) {
-			gchar *msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			gchar *msg;
+			if ((err->domain == TNY_ERROR_DOMAIN) && 
+			    (err->code == TNY_IO_ERROR_WRITE) &&
+			    (errno == ENOSPC)) {
+				msg = g_strdup_printf (_KR("cerm_device_memory_full"), "");
+			} else {
+				msg = g_strdup (_("mail_ib_file_operation_failed"));
+			}
 			modest_platform_information_banner (NULL, NULL, msg);
 			g_free (msg);
 		}
 		goto free;
 	}
 
-	/* make the file read-only */
-	g_chmod(helper->file_path, 0444);
+	/* It could happen that the window was closed. So we
+	   assume it is a cancelation */
+	if (!GTK_WIDGET_VISIBLE (helper->self))
+		goto free;
 
-	/* Activate the file */
-	modest_platform_activate_file (helper->file_path, tny_mime_part_get_content_type (mime_part));
+	/* Remove the progress hint */
+	set_progress_hint (helper->self, FALSE);
+
+	content_type = tny_mime_part_get_content_type (mime_part);
+	if (g_str_has_prefix (content_type, "message/rfc822")) {
+		ModestWindowMgr *mgr;
+		ModestWindow *msg_win = NULL;
+		TnyMsg * msg;
+		gchar *account;
+		const gchar *mailbox;
+		TnyStream *file_stream;
+		gint fd;
+
+		fd = g_open (helper->file_path, O_RDONLY, 0644);
+		if (fd != -1) {
+			file_stream = tny_fs_stream_new (fd);
+
+			mgr = modest_runtime_get_window_mgr ();
+
+			account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (helper->self)));
+			mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (helper->self));
+
+			if (!account)
+				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+
+			msg = tny_camel_msg_new ();
+			tny_camel_msg_parse (msg, file_stream);
+			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (msg), account, mailbox, helper->attachment_uid);
+			modest_window_set_zoom (MODEST_WINDOW (msg_win),
+						modest_window_get_zoom (MODEST_WINDOW (helper->self)));
+			if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (helper->self)))
+				gtk_widget_show_all (GTK_WIDGET (msg_win));
+			else
+				gtk_widget_destroy (GTK_WIDGET (msg_win));
+			g_object_unref (msg);
+			g_object_unref (file_stream);
+		} else {
+			modest_platform_information_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
+		}
+
+	} else {
+
+		/* make the file read-only */
+		g_chmod(helper->file_path, 0444);
+
+		/* Activate the file */
+		modest_platform_activate_file (helper->file_path, tny_mime_part_get_content_type (mime_part));
+	}
 
  free:
 	/* Frees */
 	g_object_unref (helper->self);
 	g_free (helper->file_path);
+	g_free (helper->attachment_uid);
 	g_slice_free (DecodeAsyncHelper, helper);
 }
 
@@ -2673,21 +2728,25 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			helper = g_slice_new0 (DecodeAsyncHelper);
 			helper->self = g_object_ref (window);
 			helper->file_path = g_strdup (filepath);
+			helper->attachment_uid = g_strdup (attachment_uid);
 
 			decode_in_provider = FALSE;
 			mgr = modest_runtime_get_account_mgr ();
 			account = modest_window_get_active_account (MODEST_WINDOW (window));
 			if (modest_account_mgr_account_is_multimailbox (mgr, account, &protocol)) {
 				if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+					gchar *uri;
+					uri = g_strconcat ("file://", filepath, NULL);
 					decode_in_provider = 
 						modest_account_protocol_decode_part_to_stream_async (
 							MODEST_ACCOUNT_PROTOCOL (protocol),
 							mime_part,
-							NULL,
+							filepath,
 							TNY_STREAM (temp_stream),
 							on_decode_to_stream_async_handler,
 							NULL,
 							helper);
+					g_free (uri);
 				}
 			}
 
