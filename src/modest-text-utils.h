@@ -44,6 +44,7 @@
 #define _MD(str) dgettext("maemo-af-desktop",str)
 #define _AB(str) dgettext("osso-addressbook",str)
 #define _KR(str) dgettext("ke-recv",str)
+#define _UR(str) dgettext("osso-uri",str)
 
 /* Forbidden char arrays */
 extern const gchar account_title_forbidden_chars[];
