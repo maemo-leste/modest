@@ -1,4 +1,4 @@
-#include <src/dbus_api/modest-dbus-api.h>
+#include <libmodest-dbus-client/libmodest-dbus-api.h>
 #include <libosso.h>
 #include <stdio.h>
 
