@@ -922,13 +922,28 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
  	return OSSO_OK;
 }
 
+typedef struct _SendReceivePerformerData {
+	gchar *account_id;
+	gboolean manual;
+	ModestMailOperation *mail_op;
+} SendReceivePerformerData;
+
+static void send_receive_performer_data_free (SendReceivePerformerData *data)
+{
+	if (data->mail_op) {
+		g_object_unref (data->mail_op);
+	}
+	g_free (data->account_id);
+	g_slice_free (SendReceivePerformerData, data);
+}
+
 static gboolean
 on_idle_send_receive(gpointer user_data)
 {
 	gboolean auto_update;
-	ModestMailOperation *mail_op = (ModestMailOperation *) user_data;
+	SendReceivePerformerData *data = (SendReceivePerformerData *) user_data;
 	ModestConnectedVia connect_when;
-
+	gboolean right_connection = FALSE;
 
 	gdk_threads_enter (); /* CHECKED */
 
@@ -948,17 +963,25 @@ on_idle_send_receive(gpointer user_data)
 		   same as the one specified by the user */
 		if (connect_when == MODEST_CONNECTED_VIA_ANY ||
 		    connect_when == modest_platform_get_current_connection ()) {
-			modest_ui_actions_do_send_receive_all (NULL, FALSE, FALSE, FALSE);
+			right_connection = TRUE;
 		}
 	} else {
 		/* Disable auto update */
 		modest_platform_set_update_interval (0);
 	}
 
-	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (),
-					    mail_op);
+	if ((auto_update && right_connection) || data->manual) {
+		if (data->account_id) {
+			modest_ui_actions_do_send_receive (data->account_id, data->manual, FALSE, data->manual, NULL);
+		} else {
+			modest_ui_actions_do_send_receive_all (NULL, data->manual, FALSE, data->manual);
+		}
+	}
 
-	g_object_unref (mail_op);
+	modest_mail_operation_queue_remove (modest_runtime_get_mail_operation_queue (),
+					    data->mail_op);
+
+	send_receive_performer_data_free (data);
 
 	gdk_threads_leave (); /* CHECKED */
 	
@@ -1165,17 +1188,24 @@ on_send_receive_performer(gboolean canceled,
 			  TnyAccount *account,
 			  gpointer user_data)
 {
-	ModestMailOperation *mail_op;
+	SendReceivePerformerData *data = (SendReceivePerformerData *) user_data;
 
-	if (err || canceled) {
+	if (err || canceled || data == NULL) {
 		g_idle_add (notify_error_in_dbus_callback, NULL);
+		if (data) {
+			send_receive_performer_data_free (data);
+		}
 		return;
 	}
 
-	mail_op = modest_mail_operation_new (NULL);
+	data->mail_op = modest_mail_operation_new (NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-					 mail_op);
-	modest_heartbeat_add (on_idle_send_receive, mail_op);
+					 data->mail_op);
+	if (data->manual) {
+		g_idle_add (on_idle_send_receive, data);
+	} else {
+		modest_heartbeat_add (on_idle_send_receive, data);
+	}
 }
 
 
@@ -1183,11 +1213,49 @@ static gint
 on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 {
 	TnyDevice *device = modest_runtime_get_device ();
+	SendReceivePerformerData *srp_data;
+
+	srp_data = g_slice_new0 (SendReceivePerformerData);
+	srp_data->account_id = NULL;
+	srp_data->manual = FALSE;
+	srp_data->mail_op = NULL;
 
 	if (!tny_device_is_online (device))
-		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, NULL);
+		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, srp_data);
 	else
-		on_send_receive_performer (FALSE, NULL, NULL, NULL, NULL);
+		on_send_receive_performer (FALSE, NULL, NULL, NULL, srp_data);
+
+ 	return OSSO_OK;
+}
+
+static gint
+on_send_receive_full (GArray *arguments, gpointer data, osso_rpc_t * retval)
+{
+ 	osso_rpc_t val;
+	gchar *account_id;
+	gboolean manual;
+	TnyDevice *device;
+	SendReceivePerformerData *srp_data;
+
+	val = g_array_index (arguments, osso_rpc_t, MODEST_DBUS_SEND_RECEIVE_FULL_ARG_ACCOUNT_ID);
+	account_id = g_strdup (val.value.s);
+	val = g_array_index (arguments, osso_rpc_t, MODEST_DBUS_SEND_RECEIVE_FULL_ARG_MANUAL);
+	manual = val.value.b;
+
+	srp_data = g_slice_new0 (SendReceivePerformerData);
+	srp_data->manual = manual;
+	if (account_id && account_id[0] != '\0') {
+		srp_data->account_id = account_id;
+	} else {
+		srp_data->account_id = NULL;
+		g_free (account_id);
+	}
+	srp_data->mail_op = NULL;
+	device = modest_runtime_get_device ();
+	if (!tny_device_is_online (device))
+		modest_platform_connect_and_perform (NULL, FALSE, NULL, on_send_receive_performer, srp_data);
+	else
+		on_send_receive_performer (FALSE, NULL, NULL, NULL, srp_data);
 
  	return OSSO_OK;
 }
@@ -1431,6 +1499,10 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		if (arguments->len != 0)
 			goto param_error;
 		return on_send_receive (arguments, data, retval);
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_SEND_RECEIVE_FULL) == 0) {
+		if (arguments->len != MODEST_DBUS_SEND_RECEIVE_FULL_ARGS_COUNT)
+			goto param_error;
+		return on_send_receive_full (arguments, data, retval);
 	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_COMPOSE_MAIL) == 0) {
 		if (arguments->len != MODEST_DBUS_COMPOSE_MAIL_ARGS_COUNT)
 			goto param_error;

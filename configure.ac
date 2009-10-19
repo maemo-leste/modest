@@ -120,7 +120,8 @@ else
    AC_MSG_ERROR([install gtkhtml 3.8 or newer])
 fi
 
-
+PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0 >= 3.1.0)
+re.ac
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
 
 PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
