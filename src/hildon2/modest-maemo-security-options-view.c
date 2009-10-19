@@ -213,7 +213,7 @@ on_entry_changed (GtkEditable *editable,
 	ModestMaemoSecurityOptionsViewPrivate *priv;
  	ModestSecurityOptionsViewPrivate *ppriv;
 	ModestSecureauthPicker *picker;
-	gboolean is_secure;
+	gboolean is_secure = FALSE;
 	ModestProtocolRegistry *protocol_registry;
 
 	self = MODEST_SECURITY_OPTIONS_VIEW (user_data);
