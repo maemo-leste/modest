@@ -434,16 +434,17 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 	/* if it's a copy thingy, the uri will look like 'copy:http://slashdot.org' */
 	if (g_str_has_prefix (action_name, URI_ACTION_COPY)) {
 		GtkClipboard *clipboard = gtk_clipboard_get (GDK_NONE);
-		action_name += strlen(URI_ACTION_COPY); /* jump past the prefix */
+		const gchar *uri = (const gchar *) popup_info->uri;
 
-		if (g_str_has_prefix (action_name, "mailto:")) /* ignore mailto: prefixes */
-			action_name += strlen ("mailto:");
-		
-		gtk_clipboard_set_text (clipboard, action_name, strlen (action_name));
+		/* Special case: ignore "mailto:" prefixes */
+		if (g_str_has_prefix (uri, "mailto:"))
+			uri = popup_info->uri + strlen ("mailto:");
+
+		gtk_clipboard_set_text (clipboard, uri, strlen (uri));
 		modest_platform_information_banner (NULL, NULL, _CS("ecoc_ib_edwin_copied"));
 		return; /* we're done */
 	}
-	
+
 	/* now, the real uri-actions... */
 	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
 		HildonURIAction *action = (HildonURIAction *) node->data;
@@ -459,60 +460,66 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 	}
 }
 
-gboolean 
+gboolean
 modest_platform_show_uri_popup (const gchar *uri)
 {
-	GSList *actions_list;
+	GSList *actions_list, *node;
+	GtkWidget *menu;
+	ModestPlatformPopupInfo *popup_info;
+	GtkWidget *menu_item;
 
 	if (uri == NULL)
 		return FALSE;
-	
+
+	/* Create menu */
+	menu = gtk_menu_new ();
+	popup_info = g_new0 (ModestPlatformPopupInfo, 1);
+	popup_info->uri = g_strdup (uri);
+
+	/* don't add actions for file: uri's -- they might confuse the user,
+	 * and/or might have security implications
+	 * we still allow to copy the url though
+	 */
+	if (g_str_has_prefix (uri, "file:"))
+		goto add_copy_link;
+
 	actions_list = hildon_uri_get_actions_by_uri (uri, -1, NULL);
-	if (actions_list) {
+	if (!actions_list)
+		goto add_copy_link;
 
-		GtkWidget *menu = gtk_menu_new ();
-		ModestPlatformPopupInfo *popup_info = g_new0 (ModestPlatformPopupInfo, 1);
+	popup_info->actions = actions_list;
+	for (node = actions_list; node != NULL; node = g_slist_next (node)) {
+		const gchar *action_name;
+		const gchar *translation_domain;
+		HildonURIAction *action = (HildonURIAction *) node->data;
+		action_name = hildon_uri_action_get_name (action);
+		translation_domain = hildon_uri_action_get_translation_domain (action);
+		menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain, action_name));
+		hildon_gtk_widget_set_theme_size (menu_item, MODEST_EDITABLE_SIZE);
+		g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
+		g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
+				  popup_info);
 
-		/* don't add actions for file: uri's -- they might confuse the user,
-		 * and/or might have security implications
-		 * we still allow to copy the url though
-		 */
-		if (!g_str_has_prefix (uri, "file:")) {
-
-			GSList *node;
-			popup_info->actions = actions_list;
-			popup_info->uri = g_strdup (uri);
-
-			for (node = actions_list; node != NULL; node = g_slist_next (node)) {
-				GtkWidget *menu_item;
-				const gchar *action_name;
-				const gchar *translation_domain;
-				HildonURIAction *action = (HildonURIAction *) node->data;
-				action_name = hildon_uri_action_get_name (action);
-				translation_domain = hildon_uri_action_get_translation_domain (action);
-				menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain, action_name));
-				hildon_gtk_widget_set_theme_size (menu_item, MODEST_EDITABLE_SIZE);
-				g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
-				g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
-						  popup_info);
-
-				if (hildon_uri_is_default_action (action, NULL)) {
-					gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
-				} else {
-					gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
-				}
-				gtk_widget_show (menu_item);
-			}
+		if (hildon_uri_is_default_action (action, NULL)) {
+			gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
+		} else {
+			gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
 		}
-
-
-		/* and what to do when the link is deleted */
-		g_signal_connect (G_OBJECT (menu), "delete-event", G_CALLBACK (delete_uri_popup), popup_info);
-		gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
-
-	} else {
-		hildon_banner_show_information (NULL, NULL, _("mcen_ib_unsupported_link"));
+		gtk_widget_show (menu_item);
 	}
+
+ add_copy_link:
+	/* Add the "Copy link" menu option */
+	menu_item = gtk_menu_item_new_with_label (_UR("uri_link_copy_link_location"));
+	hildon_gtk_widget_set_theme_size (menu_item, MODEST_EDITABLE_SIZE);
+	g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer) URI_ACTION_COPY);
+	g_signal_connect (G_OBJECT (menu_item), "activate", (GCallback) activate_uri_popup_item, popup_info);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
+	gtk_widget_show (menu_item);
+
+	/* and what to do when the link is deleted */
+	g_signal_connect (G_OBJECT (menu), "delete-event", G_CALLBACK (delete_uri_popup), popup_info);
+	gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
 
 	return TRUE;
 }
