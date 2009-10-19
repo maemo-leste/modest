@@ -1,3 +1,21 @@
+modest (3.1.4) unstable; urgency=low
+
+  * Week 43, 2009 first release
+  * 
+  * Fixes: NB#112533 Long attachment's name is not truncated in the Select attachment dialog
+  * Fixes: NB#132979 Locales in Gnome version of Modest not working correctly
+  * Fixes: NB#134253 Advanced Settings: Save button is active if Incoming port value is removed
+  * Fixes: NB#137463 "File error" is shown and unable to view the image file from sent message 
+  * 	if the file has some special symbols
+  * Fixes: NB#138240 Editor: changing sending account 2 times removes the contents from the message body
+  * Fixes: NB#139196 csm menus are showing in blank view also
+  * Fixes: NB#139513 Modest crash in "camel_object_cast ()"
+  * Fixes: NB#140483 random modest crash occurred "on_account_connect_done"
+  * Fixes: NB#141119 Import conic support only if It's available 
+  *
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 19 Oct 2009 11:57:25 +0300
+
 modest (3.1.3) unstable; urgency=low
 
   * Week 42, 2009 third release
