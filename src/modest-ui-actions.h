@@ -119,6 +119,7 @@ void     modest_ui_actions_on_help          (GtkAction *action, GtkWindow *win);
  **/
 void     modest_ui_actions_on_csm_help      (GtkAction *action, GtkWindow *win);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 /**
  * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction
@@ -147,15 +148,18 @@ void	 modest_ui_actions_toggle_header_list_view    (GtkAction *action,
 void     modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
 							TnyHeader *header,
 							ModestMainWindow *main_window);
+#endif
 void     modest_ui_actions_on_header_activated         (ModestHeaderView *folder_view, 
 							TnyHeader *header,
 							GtkTreePath *path,
 							ModestWindow *main_window);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 void     modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 							 TnyFolderStore *folder_store, 
 							 gboolean selected,
 							 ModestMainWindow *main_window);
+#endif
 
 void     modest_ui_actions_on_item_not_found           (ModestHeaderView *header_view,
 							 ModestItemType type,
@@ -272,8 +276,10 @@ void     modest_ui_actions_on_rename_folder            (GtkAction *action,
 void     modest_ui_actions_on_delete_folder            (GtkAction *action,
 							ModestWindow *window);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkAction *action,
 							       ModestMainWindow *main_window);
+#endif
 
 void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 						  const gchar* server_account_name,
