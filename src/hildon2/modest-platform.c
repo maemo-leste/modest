@@ -337,7 +337,7 @@ modest_platform_activate_uri (const gchar *uri)
 	HildonURIAction *action;
 	gboolean result = FALSE;
 	GSList *actions, *iter = NULL;
-	
+
 	g_return_val_if_fail (uri, FALSE);
 	if (!uri)
 		return FALSE;
@@ -345,9 +345,9 @@ modest_platform_activate_uri (const gchar *uri)
 	/* don't try to activate file: uri's -- they might confuse the user,
 	 * and/or might have security implications */
 	if (!g_str_has_prefix (uri, "file:")) {
-		
+
 		actions = hildon_uri_get_actions_by_uri (uri, -1, NULL);
-		
+
 		for (iter = actions; iter; iter = g_slist_next (iter)) {
 			action = (HildonURIAction*) iter->data;
 			if (action && strcmp (hildon_uri_action_get_service (action),
@@ -356,20 +356,20 @@ modest_platform_activate_uri (const gchar *uri)
 				break;
 			}
 		}
-		
+
 		/* if we could not open it with email, try something else */
 		if (!result)
-			result = checked_hildon_uri_open (uri, NULL);	
-	} 
-	
+			result = checked_hildon_uri_open (uri, NULL);
+	}
+
 	if (!result) {
 		ModestWindow *parent =
-			modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
+			modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
 		hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
 						_("mcen_ib_unsupported_link"));
 		g_debug ("%s: cannot open uri '%s'", __FUNCTION__,uri);
-	} 
-	
+	}
+
 	return result;
 }
 
@@ -446,7 +446,7 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 		if (strcmp (action_name, hildon_uri_action_get_name (action))==0) {
 			if (!checked_hildon_uri_open (popup_info->uri, action)) {
 				ModestWindow *parent =
-					modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE);
+					modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
 				hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
 								_("mcen_ib_unsupported_link"));
 			}

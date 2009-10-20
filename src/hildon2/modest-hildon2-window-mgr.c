@@ -823,41 +823,10 @@ modest_hildon2_window_mgr_show_toolbars (ModestWindowMgr *self,
 	return;
 }
 
-static ModestWindow*  
+static ModestWindow*
 modest_hildon2_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show)
 {
-	ModestHildon2WindowMgrPrivate *priv;
-	ModestWindow *result;
-
-	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), NULL);
-	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
-
-	/* TODO: make this return NULL always */
-
-	result = MODEST_WINDOW_MGR_CLASS (parent_class)->get_main_window (self, FALSE);
-	/* create the main window, if it hasn't been created yet */
-	if (!result && show) {
-		/* modest_window_mgr_register_window will set priv->main_window */
-		result = modest_main_window_new ();
-		/* We have to remove all other windows */
-		if (!modest_window_mgr_close_all_windows (self)) {
-			gtk_widget_destroy (GTK_WIDGET (result));
-			return NULL;
-		}
-		if (!modest_window_mgr_register_window (self, result, NULL)) {
-			gtk_widget_destroy (GTK_WIDGET (result));
-			return NULL;
-		}
-		MODEST_DEBUG_BLOCK(
-			g_debug ("%s: created main window: %p\n", __FUNCTION__, result);
-		);
-	}
-	if (show) {
-		gtk_widget_show_all (GTK_WIDGET (result));
-		gtk_window_present (GTK_WINDOW (result));
-	}
-
-	return result;
+	return NULL;
 }
 
 static gint
