@@ -40,7 +40,6 @@
 #include <modest-maemo-utils.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
-#include <modest-main-window-ui.h>
 #include "modest-msg-view-window-ui-dimming.h"
 #include <modest-widget-memory.h>
 #include <modest-progress-object.h>
@@ -67,6 +66,8 @@
 #include <modest-debug.h>
 #include <modest-header-window.h>
 #include <modest-account-protocol.h>
+#include <modest-icon-names.h>
+#include <modest-ui-actions.h>
 #include <tny-camel-msg.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
@@ -236,6 +237,18 @@ enum {
 	MSG_CHANGED_SIGNAL,
 	SCROLL_CHILD_SIGNAL,
 	LAST_SIGNAL
+};
+
+static const GtkActionEntry msg_view_toolbar_action_entries [] = {
+
+	/* Toolbar items */
+	{ "ToolbarMessageReply",      MODEST_STOCK_REPLY,     N_("mcen_me_inbox_reply"),      "<CTRL>R", NULL,  G_CALLBACK (modest_ui_actions_on_reply) },
+	{ "ToolbarMessageReplyAll",   MODEST_STOCK_REPLY_ALL,     N_("mcen_me_inbox_replytoall"),         NULL, NULL,  G_CALLBACK (modest_ui_actions_on_reply_all) },
+	{ "ToolbarMessageForward",    MODEST_STOCK_FORWARD,     N_("mcen_me_inbox_forward"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_forward) },
+	{ "ToolbarDeleteMessage",     MODEST_STOCK_DELETE,     N_("qgn_toolb_gene_deletebutton"),             NULL, NULL,  G_CALLBACK (modest_ui_actions_on_delete_message_or_folder) },
+	{ "ToolbarMessageBack",       MODEST_TOOLBAR_ICON_PREV,    N_("qgn_toolb_gene_back"),         NULL, NULL, G_CALLBACK (modest_ui_actions_on_prev) },
+	{ "ToolbarMessageNext",    MODEST_TOOLBAR_ICON_NEXT, N_("qgn_toolb_gene_forward"),      NULL, NULL, G_CALLBACK (modest_ui_actions_on_next) },
+	{ "ToolbarDownloadExternalImages", MODEST_TOOLBAR_ICON_DOWNLOAD_IMAGES, N_("mail_bd_external_images"),      NULL, NULL,  G_CALLBACK (modest_ui_actions_on_fetch_images) },
 };
 
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
@@ -430,8 +443,8 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 
 	/* Add common actions */
 	gtk_action_group_add_actions (action_group,
-				      modest_action_entries,
-				      G_N_ELEMENTS (modest_action_entries),
+				      msg_view_toolbar_action_entries,
+				      G_N_ELEMENTS (msg_view_toolbar_action_entries),
 				      obj);
 	gtk_action_group_add_toggle_actions (action_group,
 					     msg_view_toggle_action_entries,

@@ -69,8 +69,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-wp-text-view.c \
 	modest-wp-text-view.h \
 	modest-maemo-security-options-view.c \
-	modest-main-window.c          \
-	modest-main-window-ui.h       \
 	modest-hildon-includes.h      \
 	modest-hildon2-details-dialog.h \
 	modest-hildon2-details-dialog.c \
