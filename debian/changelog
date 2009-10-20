@@ -1,3 +1,15 @@
+modest (3.1.5) unstable; urgency=low
+
+  * Week 43, 2009 - second release
+  * 
+  * Fixes: NB#133828 "Copy link location" option is missing in CSM for received link in mail
+  * Fixes: NB#139404 Open attachment: Fixes in modest are needed to resolve bug #126595
+  * Fixes: NB#139752 Fix modest compilation warning
+  * Fixes: NB#140687 Remove HildonDialog deprecated symbol
+  * Fixes: NB#143352 Add dbus API to modest to allow requesting immediate send/receive 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 20 Oct 2009 11:18:45 +0300
+
 modest (3.1.4) unstable; urgency=low
 
   * Week 43, 2009 first release
@@ -7,7 +19,6 @@ modest (3.1.4) unstable; urgency=low
   * Fixes: NB#134253 Advanced Settings: Save button is active if Incoming port value is removed
   * Fixes: NB#137463 "File error" is shown and unable to view the image file from sent message 
   * 	if the file has some special symbols
-  * Fixes: NB#138240 Editor: changing sending account 2 times removes the contents from the message body
   * Fixes: NB#139196 csm menus are showing in blank view also
   * Fixes: NB#139513 Modest crash in "camel_object_cast ()"
   * Fixes: NB#140483 random modest crash occurred "on_account_connect_done"
