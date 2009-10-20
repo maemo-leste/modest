@@ -1367,12 +1367,8 @@ static void
 modest_folder_view_dispose (GObject *obj)
 {
 	ModestFolderViewPrivate *priv;
-	GtkTreeModel *model = NULL;
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (obj);
-
-	get_inner_models (MODEST_FOLDER_VIEW (obj),
-			  NULL, NULL, &model);
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	if (priv->signal_handlers) {
