@@ -66,8 +66,10 @@ struct _ModestWindowMgrClass {
 								 GType window_type,
 								 gboolean show_toolbars,
 								 gboolean fullscreen);
+#ifndef MODEST_TOOLKIT_HILDON2
 	ModestWindow *        (*get_main_window)                (ModestWindowMgr *self,
 								 gboolean show);
+#endif
 	gboolean              (*close_all_windows)              (ModestWindowMgr *self);
 	GtkWindow *           (*get_modal)                      (ModestWindowMgr *self);
 	void                  (*set_modal)                      (ModestWindowMgr *self,
@@ -175,6 +177,7 @@ void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 							GType window_type,
 							gboolean show_toolbars,
 							gboolean fullscreen);
+#ifndef MODEST_TOOLKIT_HILDON2
 /**
  * modest_window_mgr_get_main_window:
  * @self: a #ModestWindowMgr
@@ -205,8 +208,7 @@ void modest_window_mgr_set_main_window (ModestWindowMgr *self, ModestWindow *mai
  * Returns: TRUE if there's a main window, FALSE otherwise
  **/
 gboolean  modest_window_mgr_main_window_exists       (ModestWindowMgr *self);
-
-
+#endif
 
 /**
  * modest_window_mgr_get_modal:

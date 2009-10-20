@@ -72,7 +72,6 @@ static void modest_hildon2_window_mgr_show_toolbars (ModestWindowMgr *self,
 						     GType window_type,
 						     gboolean show_toolbars,
 						     gboolean fullscreen);
-static ModestWindow* modest_hildon2_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show);
 static GtkWindow *modest_hildon2_window_mgr_get_modal (ModestWindowMgr *self);
 static void modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self, 
 						 GtkWindow *window,
@@ -164,7 +163,6 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->set_fullscreen_mode = modest_hildon2_window_mgr_set_fullscreen_mode;
 	mgr_class->get_fullscreen_mode = modest_hildon2_window_mgr_get_fullscreen_mode;
 	mgr_class->show_toolbars = modest_hildon2_window_mgr_show_toolbars;
-	mgr_class->get_main_window = modest_hildon2_window_mgr_get_main_window;
 	mgr_class->get_modal = modest_hildon2_window_mgr_get_modal;
 	mgr_class->set_modal = modest_hildon2_window_mgr_set_modal;
 	mgr_class->find_registered_header = modest_hildon2_window_mgr_find_registered_header;
@@ -260,9 +258,6 @@ modest_hildon2_window_mgr_finalize (GObject *obj)
 		g_mutex_unlock (priv->queue_lock);
 	}
 	g_mutex_free (priv->queue_lock);
-
-	/* Do not unref priv->main_window because it does not hold a
-	   new reference */
 
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
@@ -821,12 +816,6 @@ modest_hildon2_window_mgr_show_toolbars (ModestWindowMgr *self,
 	g_return_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self));
 
 	return;
-}
-
-static ModestWindow*
-modest_hildon2_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show)
-{
-	return NULL;
 }
 
 static gint

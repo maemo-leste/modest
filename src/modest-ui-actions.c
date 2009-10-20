@@ -3698,8 +3698,10 @@ on_rename_folder_cb (ModestMailOperation *mail_op,
 	/* Note that if the rename fails new_folder will be NULL */
 	if (new_folder) {
 		modest_folder_view_select_folder (folder_view, new_folder, FALSE);
+#ifndef MODEST_TOOLKIT_HILDON2
 	} else {
 		modest_folder_view_select_first_inbox_or_local (folder_view);
+#endif
 	}
 	gtk_widget_grab_focus (GTK_WIDGET (folder_view));
 }
@@ -3895,7 +3897,9 @@ on_delete_folder_cb (gboolean canceled,
 			mail_op);
 	modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (info->folder), info->move_to_trash);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
+#endif
 
 	g_object_unref (mail_op);
 	g_object_unref (info->folder);

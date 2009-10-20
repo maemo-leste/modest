@@ -144,6 +144,7 @@ static void         on_configuration_key_changed  (ModestConf* conf,
 						   ModestConfNotificationId notification_id,
 						   ModestFolderView *self);
 
+#ifndef MODEST_TOOLKIT_HILDON2
 /* DnD functions */
 static void         on_drag_data_get       (GtkWidget *widget,
 					    GdkDragContext *context,
@@ -168,23 +169,22 @@ static gboolean     on_drag_motion         (GtkWidget      *widget,
 					    guint           time,
 					    gpointer        user_data);
 
-static void         expand_root_items (ModestFolderView *self);
+static void         setup_drag_and_drop    (GtkTreeView *self);
+
+static void         on_row_inserted_maybe_select_folder (GtkTreeModel     *tree_model,
+							 GtkTreePath      *path,
+							 GtkTreeIter      *iter,
+							 ModestFolderView *self);
 
 static gint         expand_row_timeout     (gpointer data);
+#endif
 
-static void         setup_drag_and_drop    (GtkTreeView *self);
+static void         expand_root_items (ModestFolderView *self);
 
 static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view,
 						  gboolean delete);
 
 static void         _clear_hidding_filter (ModestFolderView *folder_view);
-
-#ifndef MODEST_TOOLKIT_HILDON2
-static void         on_row_inserted_maybe_select_folder (GtkTreeModel     *tree_model,
-							 GtkTreePath      *path,
-							 GtkTreeIter      *iter,
-							 ModestFolderView *self);
-#endif
 
 static void         on_display_name_changed (ModestAccountMgr *self,
 					     const gchar *account,
@@ -1325,8 +1325,10 @@ modest_folder_view_init (ModestFolderView *obj)
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Setup drag and drop */
 	setup_drag_and_drop (GTK_TREE_VIEW(obj));
+#endif
 
 	/* Connect signals */
  	g_signal_connect (G_OBJECT (obj),
@@ -1513,7 +1515,9 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (self), account_store);
 	priv->reselect = FALSE;
+#ifndef MODEST_TOOLKIT_HILDON2
 	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (self));
+#endif
 
 	g_object_unref (G_OBJECT (device));
 }
@@ -1621,6 +1625,7 @@ same_account_selected (ModestFolderView *self,
 	return same_account;
 }
 
+#ifndef MODEST_TOOLKIT_HILDON2
 /**
  *
  * Selects the first inbox or the local account in an idle
@@ -1636,6 +1641,7 @@ on_idle_select_first_inbox_or_local (gpointer user_data)
 
 	return FALSE;
 }
+#endif
 
 static void
 on_account_changed (TnyAccountStore *account_store,
@@ -1680,10 +1686,12 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
 	if (same_account && !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account))
 		g_idle_add (on_idle_select_first_inbox_or_local, self);
+#endif
 }
 
 static void
@@ -1765,10 +1773,12 @@ on_account_removed (TnyAccountStore *account_store,
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 
+#ifndef MODEST_TOOLKIT_HILDON2
 	/* Select the first INBOX if the currently selected folder
 	   belongs to the account that is being deleted */
 	if (same_account)
 		g_idle_add (on_idle_select_first_inbox_or_local, self);
+#endif
 }
 
 void
@@ -1809,7 +1819,9 @@ modest_folder_view_on_map (ModestFolderView *self,
 		   deathlock situation */
 		/* TODO: check if this is still the case */
 		priv->reselect = FALSE;
+#ifndef MODEST_TOOLKIT_HILDON2
  		modest_folder_view_select_first_inbox_or_local (self);
+#endif
 		/* Notify the display name observers */
 		g_signal_emit (G_OBJECT(self),
 			       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
@@ -2851,6 +2863,7 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	return cmp;
 }
 
+#ifndef MODEST_TOOLKIT_HILDON2
 /*****************************************************************************/
 /*                        DRAG and DROP stuff                                */
 /*****************************************************************************/
@@ -2921,7 +2934,6 @@ tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
 				    -1);
 	return folder;
 }
-
 
 /*
  * This function is used by drag_data_received_cb to manage drag and
@@ -3484,9 +3496,6 @@ setup_drag_and_drop (GtkTreeView *self)
 	/* Set up the folder view as a dnd destination. Set only the
 	   highlight flag, otherwise gtk will have a different
 	   behaviour */
-#ifdef MODEST_TOOLKIT_HILDON2
-	return;
-#endif
 	gtk_drag_dest_set (GTK_WIDGET (self),
 			   GTK_DEST_DEFAULT_HIGHLIGHT,
 			   folder_view_drag_types,
@@ -3521,6 +3530,7 @@ setup_drag_and_drop (GtkTreeView *self)
 			  G_CALLBACK (drag_drop_cb),
 			  NULL);
 }
+#endif
 
 /*
  * This function manages the navigation through the folders using the
@@ -3697,13 +3707,10 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 	return FALSE;
 }
 
-
-
-
+#ifndef MODEST_TOOLKIT_HILDON2
 void
 modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 {
-#ifndef MODEST_TOOLKIT_HILDON2
 	GtkTreeModel *model;
 	GtkTreeIter iter, inbox_iter;
 	GtkTreeSelection *sel;
@@ -3735,9 +3742,8 @@ modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
 
 	/* set focus */
 	gtk_widget_grab_focus (GTK_WIDGET(self));
-#endif
 }
-
+#endif
 
 /* recursive */
 static gboolean

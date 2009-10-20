@@ -1439,7 +1439,7 @@ on_idle_show_memory_low (gpointer user_data)
 	ModestWindow *main_win = NULL;
 
 	gdk_threads_enter ();
-	main_win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (), FALSE);
+	main_win = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
 	modest_platform_run_information_dialog (GTK_WINDOW (main_win),
 						dgettext("ke-recv","memr_ib_operation_disabled"),
 						TRUE);

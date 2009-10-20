@@ -306,6 +306,7 @@ else
     AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
 fi
 AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test "x$have_easysetup" == "xtrue")
+AM_CONDITIONAL(MODEST_IS_TOOLKIT_HILDON1, [test "x$with_toolkit" == "xhildon1"])
 AC_SUBST(MODEST_TOOLKIT)
 AC_SUBST(MODEST_TOOLKIT_DIR)
 
