@@ -103,20 +103,14 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 static gboolean
 check_required_files (void)
 {
-	FILE *mcc_file = modest_utils_open_mcc_mapping_file (FALSE,NULL);
+	FILE *mcc_file = modest_utils_open_mcc_mapping_file ();
+
 	if (!mcc_file) {
 		g_printerr ("modest: check for mcc file failed\n");
 		return FALSE;
-	} else
+	} else {
 		fclose (mcc_file);
-
-
-	mcc_file = modest_utils_open_mcc_mapping_file (TRUE, NULL);
-	if (!mcc_file) {
-		g_printerr ("modest: check for mcc file (for LC_MESSAGES) failed\n");
-		return FALSE;
-	} else
-		fclose (mcc_file);
+	}
 
 	if (access(MODEST_PROVIDER_DATA_FILE, R_OK) != 0 &&
 	    access(MODEST_FALLBACK_PROVIDER_DATA_FILE, R_OK) != 0) {

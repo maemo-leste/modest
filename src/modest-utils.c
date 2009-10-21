@@ -833,60 +833,27 @@ modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
 }
 
 FILE*
-modest_utils_open_mcc_mapping_file (gboolean from_lc_messages, gboolean *translated)
+modest_utils_open_mcc_mapping_file (void)
 {
 	FILE* result = NULL;
 	const gchar* path;
-	const gchar *env_list;
-	gchar **parts, **node;
 
-	if (from_lc_messages) {
-		env_list = setlocale (LC_MESSAGES, NULL);
+	if (access (MODEST_OPERATOR_WIZARD_MCC_MAPPING, R_OK) == 0) {
+		path = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
+	} else if (access (MODEST_MCC_MAPPING, R_OK) == 0) {
+		path = MODEST_MCC_MAPPING;
 	} else {
-		env_list = getenv ("LANG");
-	}
-	parts = g_strsplit (env_list, ":", 0);
-	gchar *path1 = NULL;
-	const gchar* path2 = MODEST_MCC_MAPPING;
-
-	if (translated)
-		*translated = TRUE;
-
-	path = NULL;
-	for (node = parts; path == NULL && node != NULL && *node != NULL && **node != '\0'; node++) {
-		path1 = g_strdup_printf ("%s.%s", MODEST_OPERATOR_WIZARD_MCC_MAPPING, *node);
-		if (access (path1, R_OK) == 0) {
-			path = path1;
-			break;
-		} else {
-			g_free (path1);
-			path1 = NULL;
-		}
-	}
-	g_strfreev (parts);
-
-	if (path == NULL) {
-		if (access (MODEST_OPERATOR_WIZARD_MCC_MAPPING, R_OK) == 0) {
-			path = MODEST_OPERATOR_WIZARD_MCC_MAPPING;
-			if (translated)
-				*translated = FALSE;
-		} else if (access (path2, R_OK) == 0) {
-			path = path2;
-		} else {
-			g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
-				   __FUNCTION__, path1, path2);
-			goto end;
-		}
+		g_warning ("%s: neither '%s' nor '%s' is a readable mapping file",
+			   __FUNCTION__, MODEST_OPERATOR_WIZARD_MCC_MAPPING, MODEST_MCC_MAPPING);
+		return NULL;
 	}
 
 	result = fopen (path, "r");
 	if (!result) {
 		g_warning ("%s: error opening mapping file '%s': %s",
 			   __FUNCTION__, path, strerror(errno));
-		goto end;
 	}
- end:
-	g_free (path1);
+
 	return result;
 }
 
@@ -942,8 +909,9 @@ parse_mcc_mapping_line (const char* line,  char** country)
 	*country = g_utf8_find_next_char (tab, NULL);
 
 	/* Replace by end of string. We need to use strlen, because
-	   g_utf8_strrchr expects bytes and not UTF8 characters  */
-	final = g_utf8_strrchr (tab, strlen (tab) + 1, '\n');
+	   g_utf8_strrchr expects bytes and not UTF8 characters. File
+	   lines end with \r\n */
+	final = g_utf8_strrchr (tab, strlen (tab) + 1, '\r');
 	if (G_LIKELY (final))
 		*final = '\0';
 	else
@@ -978,7 +946,6 @@ modest_utils_create_country_model (void)
 void
 modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 {
-	gboolean translated;
 	char line[MCC_FILE_MAX_LINE_LEN];
 	guint previous_mcc = 0;
 	gchar *territory;
@@ -986,7 +953,7 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 	FILE *file;
 
 	/* First we need to know our current region */
-	file = modest_utils_open_mcc_mapping_file (FALSE, &translated);
+	file = modest_utils_open_mcc_mapping_file ();
 	if (!file) {
 		g_warning ("Could not open mcc_mapping file");
 		return;
@@ -1012,25 +979,14 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 		previous_mcc = mcc;
 
 		if (!(*locale_mcc)) {
-			if (translated) {
-				if (!g_utf8_collate (country, territory))
-					*locale_mcc = mcc;
-			} else {
-				gchar *translation = dgettext ("osso-countries", country);
-				if (!g_utf8_collate (translation, territory))
-					*locale_mcc = mcc;
-			}
+			gchar *translation = dgettext ("osso-countries", country);
+			if (!g_utf8_collate (translation, territory))
+				*locale_mcc = mcc;
 		}
 	}
-	fclose (file);
 
 	/* Now we fill the model */
-	file = modest_utils_open_mcc_mapping_file (TRUE, &translated);
-	if (!file) {
-		g_warning ("Could not open mcc_mapping file");
-		return;
-	}
-
+	rewind (file);
 	country_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	while (fgets (line, MCC_FILE_MAX_LINE_LEN, file) != NULL) {
 
@@ -1056,12 +1012,16 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 
 		name_translated = dgettext ("osso-countries", country);
 
-		/* Add the row to the model: */
-		gtk_list_store_append (GTK_LIST_STORE (model), &iter);
-		gtk_list_store_set(GTK_LIST_STORE (model), &iter, 
-				   MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, mcc, 
-				   MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, name_translated, 
-				   -1);
+		/* Add the row to the model if we have translation for it */
+		if (g_utf8_collate (country, name_translated)) {
+			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+			gtk_list_store_set(GTK_LIST_STORE (model), &iter,
+					   MODEST_UTILS_COUNTRY_MODEL_COLUMN_MCC, mcc,
+					   MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME, name_translated,
+					   -1);
+		} else {
+			g_debug ("%s no translation for %s", __FUNCTION__, country);
+		}
 	}
 
 
