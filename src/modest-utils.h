@@ -202,12 +202,11 @@ void modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
  * modest_utils_open_mcc_mapping_file:
  * @translated: a #gboolean pointer
  *
- * open the mcc mapping file, or %NULL if it fails. It also
- * sets @translated to %TRUE if the file is translated
+ * open the mcc mapping file, or %NULL if it fails
  *
  * Returns: file ptr or %NULL in case of error
  */
-FILE* modest_utils_open_mcc_mapping_file (gboolean from_lc_messages, gboolean *translated);
+FILE* modest_utils_open_mcc_mapping_file (void);
 
 typedef enum {
 	MODEST_UTILS_COUNTRY_MODEL_COLUMN_NAME = 0,
