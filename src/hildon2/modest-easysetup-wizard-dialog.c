@@ -1946,7 +1946,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 
 		if (name_in_use) {
 			/* Warn the user via a dialog: */
-			hildon_banner_show_information(NULL, NULL, _("mail_ib_account_name_already_existing"));
+			modest_platform_system_banner(NULL, NULL, _("mail_ib_account_name_already_existing"));
 
 			return FALSE;
 		}
@@ -1962,7 +1962,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 
 		if (!modest_text_utils_validate_email_address (email_address, NULL)) {
 			/* Warn the user via a dialog: */
-			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_email"));
+			modest_platform_system_banner (NULL, NULL, _("mcen_ib_invalid_email"));
 
 			/* Return focus to the email address entry: */
 			gtk_widget_grab_focus (priv->entry_user_email);

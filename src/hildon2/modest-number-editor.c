@@ -61,8 +61,7 @@
 #include                                        "modest-marshal.h"
 #include                                        <hildon/hildon-banner.h>
 #include                                        "modest-text-utils.h"
-
-#define                                         _(String) dgettext("modest-libs", String)
+#include                                        "modest-platform.h"
 
 typedef struct                                  _ModestNumberEditorPrivate ModestNumberEditorPrivate;
 
@@ -428,9 +427,8 @@ modest_number_editor_range_error                (ModestNumberEditor *editor,
     }
 
     /* Infoprint error */
-    if (err_msg)
-    {
-        hildon_banner_show_information (GTK_WIDGET (GTK_WINDOW (gtk_widget_get_ancestor (GTK_WIDGET(editor),
+    if (err_msg) {
+        modest_platform_system_banner (GTK_WIDGET (GTK_WINDOW (gtk_widget_get_ancestor (GTK_WIDGET(editor),
                                         GTK_TYPE_WINDOW))), NULL, err_msg);
         g_free(err_msg);
     }

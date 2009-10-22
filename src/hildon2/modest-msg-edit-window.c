@@ -2702,7 +2702,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 	}
 
 	if (tny_list_get_length (att_list) == 0) {
-		hildon_banner_show_information (NULL, NULL, _("TODO: no attachments selected to remove"));
+		modest_platform_system_banner (NULL, NULL, _("TODO: no attachments selected to remove"));
 	} else {
 		gboolean dialog_response;
 		gchar *message = NULL;
@@ -3716,7 +3716,7 @@ subject_field_insert_text (GtkEditable *editable,
 	}
 
 	if (result_len + old_length > 1000) {
-		hildon_banner_show_information (GTK_WIDGET (window), NULL, 
+		modest_platform_system_banner (GTK_WIDGET (window), NULL, 
 						_CS("ckdg_ib_maximum_characters_reached"));
 	}
 	g_string_free (result, TRUE);
@@ -3815,7 +3815,7 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 	if (message_is_empty (window)) {
 		g_free (priv->last_search);
 		priv->last_search = NULL;
-		hildon_banner_show_information (GTK_WIDGET (window), NULL, _("mail_ib_nothing_to_find"));
+		modest_platform_system_banner (GTK_WIDGET (window), NULL, _("mail_ib_nothing_to_find"));
 		return;
 	}
 
@@ -3825,7 +3825,7 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 		g_free (priv->last_search);
 		priv->last_search = NULL;
 		/* Information banner about empty search */
-		hildon_banner_show_information (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
+		modest_platform_system_banner (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
 		return;
 	}
 
@@ -3841,14 +3841,14 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 		result = gtk_text_iter_forward_search_insensitive (&selection_end, current_search, 
 								   &match_start, &match_end);
 		if (!result)
-			hildon_banner_show_information (NULL, NULL, _HL("ckct_ib_find_search_complete"));
+			modest_platform_system_banner (NULL, NULL, _HL("ckct_ib_find_search_complete"));
 	} else {
 		GtkTextIter buffer_start;
 		gtk_text_buffer_get_start_iter (priv->text_buffer, &buffer_start);
 		result = gtk_text_iter_forward_search_insensitive (&buffer_start, current_search, 
 								   &match_start, &match_end);
 		if (!result)
-			hildon_banner_show_information (NULL, NULL, _HL("ckct_ib_find_no_matches"));
+			modest_platform_system_banner (NULL, NULL, _HL("ckct_ib_find_no_matches"));
 	}
 
 	/* Mark as selected the string found in search */

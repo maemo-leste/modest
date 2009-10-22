@@ -254,7 +254,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 		if (hostname && (hostname[0] != '\0') &&
 		    (!modest_text_utils_validate_domain_name (hostname))) { 
 			g_signal_stop_emission_by_name (dialog, "response");
-			hildon_banner_show_information (NULL, NULL, _("mcen_ib_invalid_servername"));
+			modest_platform_system_banner (NULL, NULL, _("mcen_ib_invalid_servername"));
 			gtk_widget_grab_focus (priv->entry_outgoingserver);
 			gtk_editable_select_region (GTK_EDITABLE (priv->entry_outgoingserver), 0, -1);
 			return;

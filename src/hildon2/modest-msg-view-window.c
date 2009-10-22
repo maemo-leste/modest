@@ -1578,7 +1578,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 
 	if (modest_mime_part_view_is_empty (MODEST_MIME_PART_VIEW (priv->msg_view))) {
-		hildon_banner_show_information (NULL, NULL, _("mail_ib_nothing_to_find"));
+		modest_platform_system_banner (NULL, NULL, _("mail_ib_nothing_to_find"));
 		return;
 	}
 
@@ -1586,7 +1586,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 
 	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
 		g_free (current_search);
-		hildon_banner_show_information (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
+		modest_platform_system_banner (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
 		return;
 	}
 
@@ -1597,7 +1597,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		result = modest_isearch_view_search (MODEST_ISEARCH_VIEW (priv->msg_view),
 						     priv->last_search);
 		if (!result) {
-			hildon_banner_show_information (NULL, NULL, 
+			modest_platform_system_banner (NULL, NULL, 
 							_HL("ckct_ib_find_no_matches"));
 			g_free (priv->last_search);
 			priv->last_search = NULL;
@@ -1606,7 +1606,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		}
 	} else {
 		if (!modest_isearch_view_search_next (MODEST_ISEARCH_VIEW (priv->msg_view))) {
-			hildon_banner_show_information (NULL, NULL, 
+			modest_platform_system_banner (NULL, NULL, 
 							_HL("ckct_ib_find_search_complete"));
 			g_free (priv->last_search);
 			priv->last_search = NULL;
@@ -1659,7 +1659,7 @@ modest_msg_view_window_zoom_plus (ModestWindow *window)
 	zoom_level =  modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
 
 	if (zoom_level >= 2.0) {
-		hildon_banner_show_information (NULL, NULL, 
+		modest_platform_system_banner (NULL, NULL, 
 						_CS("ckct_ib_max_zoom_level_reached"));
 		return FALSE;
 	} else if (zoom_level >= 1.5) {
@@ -1700,7 +1700,7 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 	zoom_level =  modest_zoomable_get_zoom (MODEST_ZOOMABLE (priv->msg_view));
 
 	if (zoom_level <= 0.5) {
-		hildon_banner_show_information (NULL, NULL, 
+		modest_platform_system_banner (NULL, NULL, 
 						_CS("ckct_ib_min_zoom_level_reached"));
 		return FALSE;
 	} else if (zoom_level <= 0.8) {
@@ -2700,7 +2700,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		if (selected_attachments == NULL || tny_list_get_length (selected_attachments) == 0) {
 			error = TRUE;
 		} else if (tny_list_get_length (selected_attachments) > 1) {
-			hildon_banner_show_information (NULL, NULL, _("mcen_ib_unable_to_display_more"));
+			modest_platform_system_banner (NULL, NULL, _("mcen_ib_unable_to_display_more"));
 			error = TRUE;
 		} else {
 			TnyIterator *iter;
@@ -2907,11 +2907,11 @@ static gboolean
 idle_save_mime_part_show_result (SaveMimePartInfo *info)
 {
 	/* This is a GDK lock because we are an idle callback and
-	 * hildon_banner_show_information is or does Gtk+ code */
+	 * modest_platform_system_banner is or does Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED */
 	if (info->result == GNOME_VFS_OK) {
-		hildon_banner_show_information (NULL, NULL, _CS("sfil_ib_saved"));
+		modest_platform_system_banner (NULL, NULL, _CS("sfil_ib_saved"));
 	} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
 		gchar *msg = NULL;
 
@@ -2923,7 +2923,7 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 		modest_platform_information_banner (NULL, NULL, msg);
 		g_free (msg);
 	} else {
-		hildon_banner_show_information (NULL, NULL, _("mail_ib_file_operation_failed"));
+		modest_platform_system_banner (NULL, NULL, _("mail_ib_file_operation_failed"));
 	}
 	save_mime_part_info_free (info, FALSE);
 	gdk_threads_leave (); /* CHECKED */
@@ -3092,7 +3092,7 @@ save_attachments_response (GtkDialog *dialog,
 #else
 		err_msg = _FM("sfil_ib_readonly_location");
 #endif
-		hildon_banner_show_information (NULL, NULL, err_msg);
+		modest_platform_system_banner (NULL, NULL, err_msg);
 	} else {
 		TnyIterator *iter;
 
@@ -3270,7 +3270,7 @@ show_remove_attachment_information (gpointer userdata)
 	}
 
 	priv->remove_attachment_banner = g_object_ref (
-		hildon_banner_show_animation (NULL, NULL, _("mcen_me_inbox_remove_attachments")));
+		modest_platform_animation_banner (NULL, NULL, _("mcen_me_inbox_remove_attachments")));
 
 	gdk_threads_leave ();
 
