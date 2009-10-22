@@ -41,27 +41,19 @@ DimmedState *modest_ui_dimming_rules_define_dimming_state (ModestWindow *window)
 
 /* Menu & toolbar dimming rules */
 gboolean modest_ui_dimming_rules_on_new_msg (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_new_msg_or_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_rename_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_sort (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_reply_msg (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_always_dimmed (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_details (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_fetch_images (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_read_msg_in_view (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_mark_as_unread_msg_in_view (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_window_move_to (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_paste (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_msgs (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointer user_data);
@@ -74,7 +66,6 @@ gboolean modest_ui_dimming_rules_on_cut (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_previous (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_view_next (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_tools_smtp_servers (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_cancel_sending_all (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_send_receive (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_data);
@@ -93,7 +84,17 @@ gboolean modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gp
 gboolean modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_edit_accounts (ModestWindow *win, gpointer user_data);
+#else
+gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_main_window_move_to (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_open_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_contents_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_mark_as_read_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_mark_as_unread_msg (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_paste (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_cancel_sending (ModestWindow *win, gpointer user_data);
 #endif
 
 G_END_DECLS
-#endif 
+#endif
