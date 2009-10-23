@@ -85,6 +85,7 @@ static void on_mail_operation_started (ModestMailOperation *mail_op,
 				       gpointer user_data);
 static void on_mail_operation_finished (ModestMailOperation *mail_op,
 					gpointer user_data);
+static gboolean modest_window_mgr_close_all_but_initial_default (ModestWindowMgr *self);
 
 /* list my signals  */
 enum {
@@ -177,6 +178,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->get_current_top = modest_window_mgr_get_current_top_default;
 	mgr_class->screen_is_on = modest_window_mgr_screen_is_on_default;
 	mgr_class->create_caches = modest_window_mgr_create_caches_default;
+	mgr_class->close_all_but_initial = modest_window_mgr_close_all_but_initial_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
 
@@ -1167,8 +1169,8 @@ modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
 	return account_ops;
 }
 
-
-void
+/* 'Protected method' must be only called by children */
+gboolean
 _modest_window_mgr_close_active_modals (ModestWindowMgr *self)
 {
 	GtkWidget *modal;
@@ -1184,6 +1186,8 @@ _modest_window_mgr_close_active_modals (ModestWindowMgr *self)
 	while (modal && GTK_IS_DIALOG (modal)) {
 		GtkWidget *parent;
 
+#if defined(MODEST_TOOLKIT_HILDON2) || defined(MODEST_TOOLKIT_HILDON)
+#include <hildon/hildon.h>
 		/* If it's a hildon note then don't try to close it as
 		   this is the default behaviour of WM, delete event
 		   is not issued for this kind of notes as we want the
@@ -1192,6 +1196,7 @@ _modest_window_mgr_close_active_modals (ModestWindowMgr *self)
 			gtk_window_present (GTK_WINDOW (modal));
 			return FALSE;
 		}
+#endif
 
 		/* Get the parent */
 		parent = (GtkWidget *) gtk_window_get_transient_for (GTK_WINDOW (modal));
@@ -1211,4 +1216,17 @@ _modest_window_mgr_close_active_modals (ModestWindowMgr *self)
 		modal = parent;
 	}
 	return TRUE;
+}
+
+gboolean
+modest_window_mgr_close_all_but_initial (ModestWindowMgr *self)
+{
+	return MODEST_WINDOW_MGR_GET_CLASS (self)->close_all_but_initial (self);
+}
+
+static gboolean
+modest_window_mgr_close_all_but_initial_default (ModestWindowMgr *self)
+{
+	/* Empty default implementation */
+	return FALSE;
 }
