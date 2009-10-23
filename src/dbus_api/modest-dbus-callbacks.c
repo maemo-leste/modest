@@ -1429,7 +1429,61 @@ on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
 	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_top_application, NULL);
- 	
+
+ 	return OSSO_OK;
+}
+
+static gboolean
+on_idle_open_edit_accounts_dialog (gpointer user_data)
+{
+	ModestWindow *top;
+	ModestWindowMgr *mgr;
+	gboolean closed;
+
+	/* This is a GDK lock because we are an idle callback and
+	 * the code below is or does Gtk+ code */
+
+	gdk_threads_enter (); /* CHECKED */
+
+	mgr = modest_runtime_get_window_mgr ();
+	closed = modest_window_mgr_close_all_but_initial (mgr);
+	top = modest_window_mgr_get_current_top (mgr);
+
+	if (closed) {
+		/* Show edit accounts dialog */
+		modest_ui_actions_on_accounts (NULL, top);
+	} else {
+		gboolean has_accounts;
+
+		has_accounts = modest_account_mgr_has_accounts (modest_runtime_get_account_mgr (),
+								TRUE);
+
+		/* Present the current top window */
+		gdk_threads_leave ();
+		on_idle_top_application (NULL);
+		gdk_threads_enter ();
+
+		/* Show edit accounts dialog if we're launching the
+		   program and there is no account (if there is at
+		   least one account then on_idle_top_application will
+		   show the accounts wizard */
+		if (!top && has_accounts) {
+			top = modest_window_mgr_get_current_top (mgr);
+			modest_ui_actions_on_accounts (NULL, top);
+		}
+	}
+
+	gdk_threads_leave (); /* CHECKED */
+
+	return FALSE; /* Do not call this callback again. */
+}
+
+static gint
+on_open_edit_accounts_dialog (GArray * arguments, gpointer data, osso_rpc_t * retval)
+{
+	/* Use g_idle to context-switch into the application's thread: */
+ 	g_idle_add (on_idle_open_edit_accounts_dialog, NULL);
+
  	return OSSO_OK;
 }
 
@@ -1521,8 +1575,13 @@ modest_dbus_req_handler(const gchar * interface, const gchar * method,
 		if (arguments->len != 0)
 			goto param_error;
 		modest_runtime_set_allow_shutdown (TRUE);
-		return on_top_application (arguments, data, retval); 
-	} else { 
+		return on_top_application (arguments, data, retval);
+	} else if (g_ascii_strcasecmp (method, MODEST_DBUS_METHOD_OPEN_EDIT_ACCOUNTS_DIALOG) == 0) {
+		if (arguments->len != 0)
+			goto param_error;
+		modest_runtime_set_allow_shutdown (TRUE);
+		return on_open_edit_accounts_dialog (arguments, data, retval);
+	} else {
 		/* We need to return INVALID here so
 		 * libosso will return DBUS_HANDLER_RESULT_NOT_YET_HANDLED,
 		 * so that our modest_dbus_req_filter will then be tried instead.
