@@ -35,6 +35,7 @@
 #include "modest-mailboxes-window.h"
 #include "modest-header-window.h"
 #include "modest-main-window.h"
+#include "modest-window-mgr-priv.h"
 #include "modest-conf.h"
 #include "modest-defs.h"
 #include "modest-signal-mgr.h"
@@ -428,44 +429,16 @@ modest_hildon2_window_mgr_register_window (ModestWindowMgr *self,
 	HildonWindowStack *stack;
 	gboolean nested_msg = FALSE;
 	ModestWindow *current_top;
-	GtkWidget *modal;
 
 	g_return_val_if_fail (MODEST_IS_HILDON2_WINDOW_MGR (self), FALSE);
 	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
 
 	priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (self);
 
-	/* Check that there is no active modal dialog */
-	modal = (GtkWidget *) modest_window_mgr_get_modal (self);
-	while (modal && GTK_IS_DIALOG (modal)) {
-		GtkWidget *parent;
-
-		/* If it's a hildon note then don't try to close it as
-		   this is the default behaviour of WM, delete event
-		   is not issued for this kind of notes as we want the
-		   user to always click on a button */
-		if (HILDON_IS_NOTE (modal)) {
-			gtk_window_present (GTK_WINDOW (modal));
-			return FALSE;
-		}
-
-		/* Get the parent */
-		parent = (GtkWidget *) gtk_window_get_transient_for (GTK_WINDOW (modal));
-
-		/* Try to close it */
-		gtk_dialog_response (GTK_DIALOG (modal), GTK_RESPONSE_DELETE_EVENT);
-
-		/* Maybe the dialog was not closed, because a close
-		   confirmation dialog for example. Then ignore the
-		   register process */
-		if (GTK_IS_WINDOW (modal)) {
-			gtk_window_present (GTK_WINDOW (modal));
-			return FALSE;
-		}
-
-		/* Get next modal */
-		modal = parent;
-	}
+	/* Try to close active modal dialogs */
+	if (modest_window_mgr_get_num_windows (self) &&
+	    !_modest_window_mgr_close_active_modals (self))
+		return FALSE;
 
 	stack = hildon_window_stack_get_default ();
 	current_top = (ModestWindow *) hildon_window_stack_peek (stack);
@@ -1035,4 +1008,3 @@ osso_display_event_cb (osso_display_state_t state,
 	if (priv->display_state == OSSO_DISPLAY_ON)
 		modest_platform_remove_new_mail_notifications (TRUE);
 }
-
