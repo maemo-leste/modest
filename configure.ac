@@ -121,7 +121,7 @@ else
 fi
 
 
-PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0 >= 3.1.0)
+PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0 >= 3.2.0)
 
 
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
