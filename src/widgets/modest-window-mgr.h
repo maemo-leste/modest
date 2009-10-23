@@ -82,8 +82,11 @@ struct _ModestWindowMgrClass {
 	GList *               (*get_window_list)                (ModestWindowMgr *self);
 	ModestWindow *        (*show_initial_window)            (ModestWindowMgr *self);
 	ModestWindow *        (*get_current_top)                (ModestWindowMgr *self);
+	gboolean              (*close_all_but_initial)          (ModestWindowMgr *self);
+
 	gboolean              (*screen_is_on)                   (ModestWindowMgr *self);
 	void                  (*create_caches)                  (ModestWindowMgr *self);
+
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
 	void (*progress_list_changed) (ModestWindowMgr *self);
@@ -473,6 +476,19 @@ gboolean modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *s
  * code. So it should be valid for the two startup ways (with --show-ui and without).
  */
 void modest_window_mgr_create_caches (ModestWindowMgr *self);
+
+/**
+ * modest_window_mgr_close_all_but_initial:
+ * @self: a #ModestWindowMgr
+ *
+ * closes all but the initial window.
+ *
+ * Returns: %TRUE if the initial window is returned in @initial_window
+ * and it does not have any other dialog or window on top, otherwhise
+ * %FALSE
+ */
+gboolean modest_window_mgr_close_all_but_initial (ModestWindowMgr *self);
+
 
 G_END_DECLS
 

@@ -86,6 +86,7 @@ static gboolean modest_hildon2_window_mgr_find_registered_message_uid (ModestWin
 								       ModestWindow **win);
 static GList *modest_hildon2_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_hildon2_window_mgr_close_all_windows (ModestWindowMgr *self);
+static gboolean modest_hildon2_window_mgr_close_all_but_initial (ModestWindowMgr *self);
 static gboolean window_has_modals (ModestWindow *window);
 static ModestWindow *modest_hildon2_window_mgr_show_initial_window (ModestWindowMgr *self);
 static ModestWindow *modest_hildon2_window_mgr_get_current_top (ModestWindowMgr *self);
@@ -172,6 +173,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->find_registered_message_uid = modest_hildon2_window_mgr_find_registered_message_uid;
 	mgr_class->get_window_list = modest_hildon2_window_mgr_get_window_list;
 	mgr_class->close_all_windows = modest_hildon2_window_mgr_close_all_windows;
+	mgr_class->close_all_but_initial = modest_hildon2_window_mgr_close_all_but_initial;
 	mgr_class->show_initial_window = modest_hildon2_window_mgr_show_initial_window;
 	mgr_class->get_current_top = modest_hildon2_window_mgr_get_current_top;
 	mgr_class->screen_is_on = modest_hildon2_window_mgr_screen_is_on;
@@ -899,15 +901,15 @@ modest_hildon2_window_mgr_set_modal (ModestWindowMgr *self,
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
-static gboolean
-on_idle_close_all_but_first (gpointer data)
+static void
+close_all_but_first (gpointer data)
 {
 	gint num_windows, i;
 	gboolean retval;
 	HildonWindowStack *stack;
 
 	stack = hildon_window_stack_get_default ();
-	g_return_val_if_fail (stack, FALSE);
+	g_return_if_fail (stack);
 
 	num_windows = hildon_window_stack_size (stack);
 
@@ -918,6 +920,15 @@ on_idle_close_all_but_first (gpointer data)
 		current_top = hildon_window_stack_peek (stack);
 		g_signal_emit_by_name (G_OBJECT (current_top), "delete-event", NULL, &retval);
 	}
+}
+
+static gboolean
+on_idle_close_all_but_first (gpointer data)
+{
+	gdk_threads_enter ();
+	close_all_but_first (data);
+	gdk_threads_leave ();
+
 	return FALSE;
 }
 
@@ -1035,11 +1046,10 @@ modest_hildon2_window_mgr_create_caches (ModestWindowMgr *self)
 	modest_accounts_window_pre_create ();
 
 	MODEST_WINDOW_MGR_CLASS(parent_class)->create_caches (self);
-	
 }
 
-static void 
-osso_display_event_cb (osso_display_state_t state, 
+static void
+osso_display_event_cb (osso_display_state_t state,
 		       gpointer data)
 {
 	ModestHildon2WindowMgrPrivate *priv = MODEST_HILDON2_WINDOW_MGR_GET_PRIVATE (data);
@@ -1049,4 +1059,36 @@ osso_display_event_cb (osso_display_state_t state,
 	/* Stop blinking if the screen becomes on */
 	if (priv->display_state == OSSO_DISPLAY_ON)
 		modest_platform_remove_new_mail_notifications (TRUE);
+}
+
+static gboolean
+modest_hildon2_window_mgr_close_all_but_initial (ModestWindowMgr *self)
+{
+	ModestWindow *top;
+
+	/* Exit if there are no windows */
+	if (!modest_window_mgr_get_num_windows (self)) {
+		g_warning ("%s: unable to close, there are no windows", __FUNCTION__);
+		return FALSE;
+	}
+
+	/* Close active modals */
+	if (!_modest_window_mgr_close_active_modals (self)) {
+		g_debug ("%s: unable to close some dialogs", __FUNCTION__);
+		return FALSE;
+	}
+
+	/* Close all but first */
+	top = modest_window_mgr_get_current_top (self);
+	if (!MODEST_IS_ACCOUNTS_WINDOW (top))
+		close_all_but_first (NULL);
+
+	/* If some cannot be closed return */
+	top = modest_window_mgr_get_current_top (self);
+	if (!MODEST_IS_ACCOUNTS_WINDOW (top)) {
+		g_debug ("%s: could not close some windows", __FUNCTION__);
+		return FALSE;
+	}
+
+	return TRUE;
 }
