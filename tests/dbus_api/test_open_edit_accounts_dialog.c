@@ -5,7 +5,7 @@ int
 main (int argc, char *argv[])
 {
 	osso_context_t *osso_context;
-      	gboolean ret;
+	gboolean ret;
 
 	osso_context = osso_initialize ("test_open_default_inbox",
 					"0.0.1",
@@ -17,7 +17,7 @@ main (int argc, char *argv[])
 	    return -1;
 	}
 
-	ret = libmodest_dbus_client_open_default_inbox (osso_context);
+	ret = libmodest_dbus_client_open_edit_accounts_dialog (osso_context);
 
 	if (!ret) {
 		g_printerr ("libmodest_dbus_client_open_default_inbox() failed.\n");
