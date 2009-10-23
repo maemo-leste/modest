@@ -1152,3 +1152,48 @@ modest_window_mgr_has_progress_operation_on_account (ModestWindowMgr *self,
 	return account_ops;
 }
 
+
+void
+_modest_window_mgr_close_active_modals (ModestWindowMgr *self)
+{
+	GtkWidget *modal;
+
+	/* Exit if there are no windows */
+	if (!modest_window_mgr_get_num_windows (self)) {
+		g_warning ("%s: there are no windows to close", __FUNCTION__);
+		return FALSE;
+	}
+
+	/* Check that there is no active modal dialog */
+	modal = (GtkWidget *) modest_window_mgr_get_modal (self);
+	while (modal && GTK_IS_DIALOG (modal)) {
+		GtkWidget *parent;
+
+		/* If it's a hildon note then don't try to close it as
+		   this is the default behaviour of WM, delete event
+		   is not issued for this kind of notes as we want the
+		   user to always click on a button */
+		if (HILDON_IS_NOTE (modal)) {
+			gtk_window_present (GTK_WINDOW (modal));
+			return FALSE;
+		}
+
+		/* Get the parent */
+		parent = (GtkWidget *) gtk_window_get_transient_for (GTK_WINDOW (modal));
+
+		/* Try to close it */
+		gtk_dialog_response (GTK_DIALOG (modal), GTK_RESPONSE_DELETE_EVENT);
+
+		/* Maybe the dialog was not closed, because a close
+		   confirmation dialog for example. Then ignore the
+		   register process */
+		if (GTK_IS_WINDOW (modal)) {
+			gtk_window_present (GTK_WINDOW (modal));
+			return FALSE;
+		}
+
+		/* Get next modal */
+		modal = parent;
+	}
+	return TRUE;
+}

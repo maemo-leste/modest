@@ -111,6 +111,7 @@ libmodest_widgets_la_SOURCES=          \
 	modest-tny-stream-gtkhtml.h    \
 	modest-validating-entry.c \
 	modest-window.c                \
+	modest-window-mgr-priv.h	\
 	modest-window-mgr.h            \
 	modest-window-mgr.c            \
 	modest-wizard-dialog.h         \

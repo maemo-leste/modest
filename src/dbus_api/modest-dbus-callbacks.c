@@ -1424,7 +1424,7 @@ on_idle_top_application (gpointer user_data)
 }
 #endif
 
-static gint 
+static gint
 on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
 	/* Use g_idle to context-switch into the application's thread: */
