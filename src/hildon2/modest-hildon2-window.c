@@ -55,6 +55,8 @@ static void modest_hildon2_window_instance_init (GTypeInstance *instance, gpoint
 static void modest_hildon2_window_dispose     (GObject *obj);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
+static void modest_hildon2_window_show_progress (ModestWindow *window,
+						 gboolean show);
 static void setup_menu (ModestHildon2Window *self);
 
 static void modest_hildon2_window_show_toolbar (ModestWindow *self,
@@ -160,6 +162,7 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_hildon2_window_show_toolbar;
+	modest_window_class->show_progress_func = modest_hildon2_window_show_progress;
 
 	modest_hildon2_window_class->pack_toolbar_func = modest_hildon2_window_pack_toolbar_not_implemented;
 }
@@ -343,6 +346,14 @@ modest_hildon2_window_show_toolbar (ModestWindow *self,
 {
 	/* Empty implementation: Hildon 2.2 implementation
 	 * doesn't switch toolbar visibility */
+}
+
+static void
+modest_hildon2_window_show_progress (ModestWindow *self,
+				     gboolean show)
+{
+	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self),
+						  show);
 }
 
 void 

@@ -81,7 +81,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-platform.c	      \
 	modest-signature-editor-dialog.c         \
 	modest-signature-editor-dialog.h         \
-	modest-msg-view-window.c      \
+	modest-hildon2-msg-view-window.h      \
+	modest-hildon2-msg-view-window.c      \
 	modest-msg-edit-window.c      \
 	modest-maemo-utils.c          \
 	modest-number-editor.c        \

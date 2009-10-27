@@ -282,9 +282,15 @@ modest_msg_view_window_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_window_init,
 			NULL
 		};
+#ifdef MODEST_TOOLKIT_GTK
+		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
+		                                  "ModestMsgViewWindow",
+		                                  &my_info, 0);
+#else
 		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
 		                                  "ModestMsgViewWindow",
 		                                  &my_info, 0);
+#endif
 
 		static const GInterfaceInfo modest_header_view_observer_info = 
 		{
@@ -495,9 +501,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	
 	/* Init window */
 	init_window (MODEST_MSG_VIEW_WINDOW(obj));
-	
-	hildon_program_add_window (hildon_program_get_instance(),
-				   HILDON_WINDOW(obj));
 
 }
 
@@ -508,8 +511,8 @@ update_progress_hint (ModestMsgViewWindow *self)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 
 	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), 
-							  (priv->progress_hint || (priv->fetching_images > 0))?1:0);
+		modest_window_show_progress (MODEST_WINDOW (self),
+					     (priv->progress_hint || (priv->fetching_images > 0))?1:0);
 	}
 }
 
@@ -544,6 +547,9 @@ init_window (ModestMsgViewWindow *obj)
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
+	/****** HILDON2:START
+	 * create panning widget, and set parameters
+	 */
 	priv->main_scroll = hildon_pannable_area_new ();
         g_object_set (G_OBJECT (priv->main_scroll),
 		      "mov-mode", HILDON_MOVEMENT_MODE_BOTH,
@@ -551,6 +557,7 @@ init_window (ModestMsgViewWindow *obj)
 		      NULL);
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
+	/****** HILDON2:END */
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
 	/* NULL-ize fields if the window is destroyed */
@@ -840,6 +847,9 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	/* First add out toolbar ... */
 	modest_msg_view_window_show_toolbar (MODEST_WINDOW (obj), TRUE);
 
+	/****** HILDON2:START
+	 * adds the toolbar
+	 */
 	/* ... and later the find toolbar. This way find toolbar will
 	   be shown over the other */
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
@@ -850,6 +860,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", 
 			  G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
 	priv->last_search = NULL;
+	/****** HILDON2:END */
 
 	/* Init the clipboard actions dim status */
 	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));
@@ -1553,7 +1564,9 @@ modest_msg_view_window_show_find_toolbar (GtkWidget *obj,
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	gtk_widget_show (priv->find_toolbar);
+	/****** HILDON2:START */
 	hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
+	/****** HILDON2:END */
 }
 
 /* Handler for click on the "X" close button in find toolbar */
@@ -1602,7 +1615,9 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
+			/****** HILDON2:START */
 			hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
+			/****** HILDON2:END */
 		}
 	} else {
 		if (!modest_isearch_view_search_next (MODEST_ISEARCH_VIEW (priv->msg_view))) {
@@ -1611,7 +1626,9 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
+			/****** HILDON2:START */
 			hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
+			/****** HILDON2:END */
 		}
 	}
 	
@@ -2374,9 +2391,13 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		priv->prev_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
 		toolbar_resize (MODEST_MSG_VIEW_WINDOW (self));
 
+		/****** HILDON2:START
+		 * attach toolbar to window
+		 */
 		/* Add to window */
 		hildon_window_add_toolbar (HILDON_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
+		/****** HILDON2:END */
 
 	}
 
@@ -3205,8 +3226,12 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 							      num), num);
 	}
 
+	/****** HILDON2:START
+	 * creation of hildon file chooser dialog for saving
+	 */
 	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
 						      GTK_FILE_CHOOSER_ACTION_SAVE);
+	/****** HILDON2:END */
 
 	/* Get last used folder */
 	conf_folder = modest_conf_get_string (modest_runtime_get_conf (),
@@ -3596,6 +3621,10 @@ setup_menu (ModestMsgViewWindow *self)
 {
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(self));
 
+	/****** HILDON2:START
+	 * add actions to hildon window menu
+	 */
+
 	/* Settings menu buttons */
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"), NULL,
 					   APP_MENU_CALLBACK (modest_msg_view_window_show_find_toolbar),
@@ -3635,6 +3664,8 @@ setup_menu (ModestMsgViewWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_ti_message_properties"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
+
+	/****** HILDON2:END */
 }
 
 void
@@ -3661,6 +3692,10 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 	}
 
 	if (recipients != NULL) {
+	  /****** HILDON2:START 
+	   * shows dialog with addresses not present in addressbook. User can choose one to 
+	   * add it to addressbook.
+	   * */
 		GtkWidget *picker_dialog;
 		GtkWidget *selector;
 		GSList *node;
@@ -3702,6 +3737,7 @@ modest_msg_view_window_add_to_contacts (ModestMsgViewWindow *self)
 			g_object_unref (selector);
 
 		}
+		/****** HILDON2:END */
 	}
 	
 	if (recipients) {g_slist_foreach (recipients, (GFunc) g_free, NULL); g_slist_free (recipients);}

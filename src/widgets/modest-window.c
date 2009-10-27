@@ -59,6 +59,9 @@ static gboolean modest_window_zoom_minus_default         (ModestWindow *window);
 
 static void     modest_window_disconnect_signals_default (ModestWindow *self);
 
+static void     modest_window_show_progress_default      (ModestWindow *self,
+							  gboolean show);
+
 static void     modest_window_show_toolbar_default       (ModestWindow *window,
 							  gboolean show_toolbar);
 
@@ -133,6 +136,7 @@ modest_window_class_init (ModestWindowClass *klass)
 	klass->zoom_minus_func = modest_window_zoom_minus_default;
 	klass->show_toolbar_func = modest_window_show_toolbar_default;
 	klass->disconnect_signals_func = modest_window_disconnect_signals_default;
+	klass->show_progress_func = modest_window_show_progress_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowPrivate));
 }
@@ -415,6 +419,12 @@ modest_window_disconnect_signals (ModestWindow *window)
 	MODEST_WINDOW_GET_CLASS (window)->disconnect_signals_func (window);
 }
 
+void 
+modest_window_show_progress (ModestWindow *window, gboolean show)
+{
+	MODEST_WINDOW_GET_CLASS (window)->show_progress_func (window, show);
+}
+
 
 /* Default implementations */
 
@@ -456,6 +466,12 @@ modest_window_show_toolbar_default (ModestWindow *window,
 
 static void 
 modest_window_disconnect_signals_default (ModestWindow *self)
+{
+	g_warning ("modest: You should implement %s", __FUNCTION__);
+}
+
+static void 
+modest_window_show_progress_default (ModestWindow *self, gboolean show)
 {
 	g_warning ("modest: You should implement %s", __FUNCTION__);
 }

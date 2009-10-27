@@ -114,6 +114,7 @@ struct _ModestWindowClass {
 	void (*show_toolbar_func) (ModestWindow *self, gboolean show_toolbar);
 	void (*save_state_func) (ModestWindow *self);
 	void (*disconnect_signals_func) (ModestWindow *self);
+	void (*show_progress_func) (ModestWindow *self, gboolean show);
 };
 
 /**
@@ -324,6 +325,8 @@ void modest_window_disable_dimming (ModestWindow *self);
 
 
 void modest_window_disconnect_signals (ModestWindow *self);
+
+void modest_window_show_progress (ModestWindow *self, gboolean show_progress);
 
 
 G_END_DECLS

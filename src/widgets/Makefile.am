@@ -14,6 +14,7 @@ INCLUDES=\
 	-I ${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
+	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-Wall
 
 noinst_LTLIBRARIES=\
@@ -79,6 +80,7 @@ libmodest_widgets_la_SOURCES=          \
 	modest-msg-edit-window-ui.h    \
 	modest-msg-edit-window.h       \
 	modest-msg-view-window.h       \
+	modest-msg-view-window.c       \
 	modest-msg-view.c              \
 	modest-msg-view.h	       \
 	modest-gtkhtml-msg-view.c              \
