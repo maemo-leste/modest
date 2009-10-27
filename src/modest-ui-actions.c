@@ -66,8 +66,8 @@
 #include "maemo/modest-hildon-includes.h"
 #include "maemo/modest-connection-specific-smtp-window.h"
 #endif /* !MODEST_TOOLKIT_GTK */
-#include <modest-utils.h>
 
+#include <modest-utils.h>
 #include "widgets/modest-ui-constants.h"
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
@@ -639,7 +639,7 @@ modest_ui_actions_on_quit (GtkAction *action, ModestWindow *win)
 	ModestWindowMgr *mgr = NULL;
 
 #ifdef MODEST_PLATFORM_MAEMO
-	modest_osso_save_state();
+	modest_window_mgr_save_state_for_all_windows (modest_runtime_get_window_mgr ());
 #endif /* MODEST_PLATFORM_MAEMO */
 
 	g_debug ("closing down, clearing %d item(s) from operation queue",

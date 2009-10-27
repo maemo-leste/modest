@@ -61,7 +61,6 @@
 #include "modest-progress-bar.h"
 #include "modest-text-utils.h"
 #include "modest-ui-dimming-manager.h"
-#include "modest-osso-state-saving.h"
 #include "modest-text-utils.h"
 #include "modest-signal-mgr.h"
 #include <tny-gtk-folder-store-tree-model.h>
@@ -1017,7 +1016,6 @@ on_hildon_program_is_topmost_notify(GObject *self,
 			hildon_program_set_can_hibernate (app, FALSE);
 		else {
 			/* Allow hibernation, after saving the state: */
-			modest_osso_save_state();
 			hildon_program_set_can_hibernate (app, TRUE);
 		}
 	}	
@@ -1047,10 +1045,6 @@ modest_main_window_on_show (GtkWidget *self, gpointer user_data)
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
 						  TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()));
-
-	/* Load previous osso state, for instance if we are being restored from
-	 * hibernation:  */
-	modest_osso_load_state ();
 
 	/* Restore window & widget settings */
 	priv->wait_for_settings = TRUE;
