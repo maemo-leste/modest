@@ -58,8 +58,8 @@
 #include <modest-folder-window.h>
 #include <modest-maemo-utils.h>
 #endif
-
-#include <modest-utils.h>
+#include "modest-utils.h"
+#include "widgets/modest-connection-specific-smtp-window.h"
 #include "widgets/modest-ui-constants.h"
 #include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
