@@ -1,3 +1,12 @@
+modest (3.1.7) unstable; urgency=low
+
+  * Week 44, 2009 - third release
+  * 
+  * Fixes: NB#132740 Valgrind run shows leaks in tinymail in CamelException's
+  * Fixes: NB#133900 CTA: MEA regions are not available in Email setup list
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 27 Oct 2009 11:21:54 +0200
+
 modest (3.1.6) unstable; urgency=low
 
   * Week 44, 2009 - first release
