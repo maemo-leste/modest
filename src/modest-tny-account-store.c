@@ -65,7 +65,6 @@
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
-#include <maemo/modest-maemo-utils.h>
 #endif
 
 #include <libgnomevfs/gnome-vfs-volume-monitor.h>

@@ -55,12 +55,6 @@
 #include <widgets/modest-ui-constants.h>
 #include <modest-icon-names.h>
 
-/* FIXNE: we should have no maemo-deps in widgets/ */
-#ifndef MODEST_TOOLKIT_GTK
-#include "maemo/modest-hildon-includes.h"
-#endif /*!MODEST_TOOLKIT_GTK*/
-
-
 /* 'private'/'protected' functions */
 static void     modest_gtkhtml_msg_view_class_init   (ModestGtkhtmlMsgViewClass *klass);
 static void     tny_header_view_init (gpointer g, gpointer iface_data);

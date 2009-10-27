@@ -60,11 +60,11 @@
 #endif
 
 #ifdef MODEST_PLATFORM_MAEMO
-#include "maemo/modest-osso-state-saving.h"
+#include "hildon2/modest-osso-state-saving.h"
 #endif /* MODEST_PLATFORM_MAEMO */
 #ifndef MODEST_TOOLKIT_GTK
-#include "maemo/modest-hildon-includes.h"
-#include "maemo/modest-connection-specific-smtp-window.h"
+#include "hildon2/modest-hildon-includes.h"
+#include "hildon2/modest-connection-specific-smtp-window.h"
 #endif /* !MODEST_TOOLKIT_GTK */
 #include <modest-utils.h>
 

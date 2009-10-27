@@ -501,16 +501,12 @@ src/Makefile
 src/modest-plugin-1.0.pc
 src/dbus_api/Makefile
 src/gnome/Makefile
-src/maemo/Makefile
-src/maemo/easysetup/Makefile
 src/hildon2/Makefile
 src/widgets/Makefile
 docs/Makefile
 docs/reference/Makefile
 tests/Makefile
 tests/dbus_api/Makefile
-src/maemo/modest.desktop
-src/maemo/com.nokia.modest.service
 src/hildon2/modest.desktop
 src/hildon2/com.nokia.modest.service
 ])
