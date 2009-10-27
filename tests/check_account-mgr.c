@@ -132,13 +132,13 @@ START_TEST (test_add_exists_remove_account_regular)
 
 	/* Test 2b */
 	gchar *account_name_from_recipient;
-	account_name_from_recipient = modest_utils_get_account_name_from_recipient ("user@email.com");
+	account_name_from_recipient = modest_utils_get_account_name_from_recipient ("user@email.com", NULL);
 	fail_unless (account_name_from_recipient != NULL,
 		     "modest_utils_get_account_name_from_recipient failed: "\
 		     "From user@email.com should match account");
 	
 	/* Test 2c */
-	account_name_from_recipient = modest_utils_get_account_name_from_recipient ("egg@egg.com");
+	account_name_from_recipient = modest_utils_get_account_name_from_recipient ("egg@egg.com", NULL);
 	fail_unless (account_name_from_recipient == NULL,
 		     "modest_utils_get_account_name_from_recipient failed: "\
 		     "From egg@egg.com shouldn't match account");

@@ -1,10 +1,10 @@
 # Copyright (c) 2006,2007 Nokia Corporation
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-# 
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
 # * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
 # * Neither the name of the Nokia Corporation nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 # IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -231,7 +231,7 @@ dnl -------- TOOLKIT SELECTION: *TOOLKIT DIR* -----------
 if test "x$with_toolkit" == "xgtk"; then
    PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0)
    AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_GTK, 1, ["Whether modest is being build for the gtk toolkit."])
-   MODEST_TOOLKIT_DIR=gnome
+   MODEST_TOOLKIT_DIR=gtke
 else
    if test "$with_toolkit" = "hildon2"; then
       AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
@@ -500,7 +500,7 @@ man/Makefile
 src/Makefile
 src/modest-plugin-1.0.pc
 src/dbus_api/Makefile
-src/gnome/Makefile
+src/gtk/Makefile
 src/hildon2/Makefile
 src/widgets/Makefile
 docs/Makefile

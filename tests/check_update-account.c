@@ -98,7 +98,7 @@ func (gpointer_data)
 			  G_CALLBACK (on_progress_changed), queue);
 
 	modest_mail_operation_update_account (mail_op, modest_account_mgr_get_default_account (acc_mgr),
-					      TRUE, FALSE, NULL, update_account_cb, queue);
+					      TRUE, FALSE, update_account_cb, queue);
 	modest_mail_operation_queue_add (queue, mail_op);
 
 	g_object_unref (G_OBJECT (mail_op));
