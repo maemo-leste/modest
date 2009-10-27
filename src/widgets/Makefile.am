@@ -116,20 +116,6 @@ libmodest_widgets_la_SOURCES=          \
 	modest-zoomable.h              \
 	modest-zoomable.c
 
-if MODEST_IS_TOOLKIT_HILDON1
-libmodest_widgets_la_SOURCES+=          \
-	modest-hildon1-window-mgr.c \
-	modest-hildon1-window-mgr.h
-endif
-
-if BUILD_MOZEMBED
-libmodest_widgets_la_SOURCES+=          \
-	modest-mozembed-msg-view.c              \
-	modest-mozembed-msg-view.h	       \
-	modest-mozembed-mime-part-view.cpp \
-	modest-mozembed-mime-part-view.h
-endif
-
 libmodest_widgets_la_includedir = $(includedir)/modest-plugin-1.0/widgets/
 libmodest_widgets_la_include_HEADERS = $(libmodest_widgets_public_headers)
 

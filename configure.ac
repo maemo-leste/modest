@@ -150,9 +150,7 @@ AC_SUBST(HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT)
 CFLAGS="$modest_save_cflags"
 LIBS="$modest_save_libs"
 
-
-dnl dnl now, determine what to build
-dnl AC_MSG_NOTICE([Determining what platform to build])
+dnl --------------- PLATFORM -----------
 PKG_CHECK_MODULES(MODEST_MAEMO_LIBS,conic,[detected_platform=maemo],[detected_platform=gnome])
 
 AC_ARG_WITH(platform, [
@@ -179,96 +177,91 @@ elif test "$with_platform" = "gnome"; then
 fi
 AC_SUBST(MODEST_PLUGIN_DEFINES)
 
-#
-# check the widgets library
-#
-have_hildon2=false
-have_hildon1=false
-have_hildon0=false
-have_gtk=false
-PKG_CHECK_EXISTS(hildon-1, have_hildon1=true,have_hildon1=false)
-if test "$have_hildon1" = "true"; then
-   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0 hildon-fm-2, have_hildon2=true, have_hildon2=false)
-   PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-1 hildon-fm-2)
-   hildonpkgs="hildon-1 hildon-fm-2"
-   detected_toolkit=hildon1
-   echo "DETECTED HILDON 1 $have_hildon2."
+dnl ---------- PLATFORM: *DBUS API* -----------
+if test "x$with_platform" == "xgnome"; then
+   PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 glib-2.0 >= 2.8 libnotify)
+   AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
 else
-   hildonpkgs="hildon-libs hildon-fm"
-   detected_toolkit=hildon1
-   PKG_CHECK_EXISTS(hildon-libs >= 0.12.0, have_hildon1=true, have_hildon1=false)
-   if test "$have_hildon1" = "false"; then
-      PKG_CHECK_EXISTS(hildon-libs, have_hildon0=true, have_hildon0=false)
-      if test "$have_hildon0" = "false"; then
-      	 have_gtk=true
-	 detected_toolkit=gtk
-	 hildonpkgs=
-      fi
+   have_dbusapi=true
+   PKG_CHECK_MODULES(MODEST_PLATFORM,libosso dbus-1 libtinymail-maemo-1.0 libebook-1.2 )
+   AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
+fi
+AM_CONDITIONAL(MODEST_HAVE_DBUS_API,test "x$have_dbusapi" == "xtrue")
+AC_SUBST(MODEST_PLATFORM)
+
+
+dnl --------------- TOOLKIT SELECTION -----------
+AC_ARG_WITH(toolkit, [
+Target toolkit:
+  --with-toolkit=detect  detect target toolkit (default)
+  --with-toolkit=gtk   build for Gnome
+  --with-toolkit=hildon2   build for Hildon 2.x
+],
+[case "${with_toolkit}" in
+       gtk|hildon2|detect)    MODEST_TOOLKIT=${with_toolkit};;
+       *)        AC_MSG_ERROR([Unknown toolkit selected]);;
+esac], [MODEST_TOOLKIT=detect])
+
+have_hildon2=false
+have_gtk=false
+
+if test "$MODEST_TOOLKIT" = "detect"; then
+   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0 hildon-fm-2, have_hildon2=true, have_gtk=true)
+   if test "x$have_hildon2" = "xtrue"; then
+      PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-1 hildon-fm-2)
+      hildonpkgs="hildon-1 hildon-fm-2"
+      detected_toolkit=hildon2
+      hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
+      echo "DETECTED HILDON 2 $have_hildon2."
    fi
-   if test "$have_gtk" = "false"; then
-      PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-libs hildon-fm)
+   MODEST_TOOLKIT="$detected_toolkit"
+   with_toolkit=$detected_toolkit
+fi
+
+dnl -------- TOOLKIT SELECTION: *HILDON API* -----------
+if test "$with_toolkit" = "hildon2"; then
+   AC_DEFINE_UNQUOTED(MODEST_HILDON_API, $hildon_api, ["the API version of hildon"])
+   MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_HILDON_API=$hildon_api"
+   MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON2"
+elif test "$with_toolkit" = "gtk"; then
+     MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_GTK"
+fi
+
+dnl -------- TOOLKIT SELECTION: *TOOLKIT DIR* -----------
+if test "x$with_toolkit" == "xgtk"; then
+   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0)
+   AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_GTK, 1, ["Whether modest is being build for the gtk toolkit."])
+   MODEST_TOOLKIT_DIR=gnome
+else
+   if test "$with_toolkit" = "hildon2"; then
+      AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
+      MODEST_TOOLKIT_DIR=hildon2
    fi
 fi
+AC_SUBST(MODEST_TOOLKIT)
+AC_SUBST(MODEST_TOOLKIT_DIR)
+
 
 dnl --------------- HILDON & PLUGIN PKGS -----------
 pluginpkgs=$hildonpkgs
-echo "Plugin Packages $pluginpkgs"
+dnl echo "Plugin Packages $pluginpkgs"
 AC_SUBST(pluginpkgs)
 
 use_profile_data=false
 # Plugin packages must not include libcanberra and libprofile
-if test "$have_hildon2" = "true"; then
-   echo "DETECTED HILDON 2 $have_hildon2."
-   detected_toolkit=hildon2
+if test "$with_platform" = "maemo"; then
    hildonpkgs="$hildonpkgs libcanberra"
    AC_CHECK_HEADER([profiled/keys_nokia.h], use_profile_data=true, use_profile_data=false)
    if test "$use_profile_data" = "true"; then
       hildonpkgs="$hildonpkgs profile"
       AC_DEFINE_UNQUOTED(MODEST_USE_PROFILE, 1, ["Use the Profile data include"])
+dnl      echo "HILDON 2 PACKAGES $hildonpkgs"
    fi
-   echo "HILDON 2 PACKAGES $hildonpkgs"
 fi
 AC_SUBST(hildonpkgs)
+PKG_CHECK_MODULES(MODEST_TOOLKIT,$hildonpkgs)
 
-dnl --------------- HILDON API ------------
-hildon_api=
-if test "$have_hildon0" = "true"; then
-   hildon_api=0
-elif test "$have_hildon1" = "true"; then
-   hildon_api=1
-elif test "$have_gtk" = "false"; then
-   hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
-fi
-
-AC_DEFINE_UNQUOTED(MODEST_HILDON_API, $hildon_api, ["the API version of hildon"])
-MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_HILDON_API=$hildon_api"
-
-AC_ARG_WITH(toolkit, [
-Target toolkit:
-  --with-toolkit=detect  detect target toolkit (default)
-  --with-toolkit=gtk   build for Gnome
-  --with-toolkit=hildon1   build for Hildon 1.x
-  --with-toolkit=hildon2   build for Hildon 2.x
-],
-[case "${with_toolkit}" in
-       gtk|hildon1|hildon2|detect)    MODEST_TOOLKIT=${with_toolkit};;
-       *)        AC_MSG_ERROR([Unknown platform selected]);;
-esac], [MODEST_TOOLKIT=detect])
-
-if test "$MODEST_TOOLKIT" = "detect"; then
-	MODEST_TOOLKIT="$detected_toolkit"
-	with_toolkit=$detected_toolkit
-fi
-
-if test "$with_toolkit" = "hildon1"; then
-   	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON1"
-elif test "$with_toolkit" = "hildon2"; then
-	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON2"
-elif test "$with_toolkit" = "gtk"; then
-	MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_GNOME"
-fi
-
-dnl Whether to use maemo-launcher or not
+dnl -------------------- MAEMO LAUNCHER STUFF ------------
 AC_ARG_ENABLE([maemo-launcher],
 	      [AS_HELP_STRING([--enable-maemo-launcher],
 			      [build with maemo-launcher support])],
@@ -288,84 +281,40 @@ else
 fi
 AC_SUBST(MAEMO_LAUNCHER_MODEST_LDFLAGS)
 
-have_easysetup=false
-if test "x$with_toolkit" == "xgtk"; then
-   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0)
-   AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_GTK, 1, ["Whether modest is being build for the gtk toolkit."])
-   MODEST_TOOLKIT_DIR=gnome
-else
-   have_easysetup=true
-   PKG_CHECK_MODULES(MODEST_TOOLKIT,$hildonpkgs)
-   if test "$with_toolkit" = "hildon2"; then
-      AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
-      MODEST_TOOLKIT_DIR=hildon2
-   else
-      AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON1, 1, ["Whether modest is being build for the hildon2 toolkit."])
-      MODEST_TOOLKIT_DIR=maemo
-   fi
-    AC_DEFINE_UNQUOTED(MODEST_HAVE_EASYSETUP, 1, ["Whether we have the easysetup feature"])
-fi
-AM_CONDITIONAL(MODEST_HAVE_EASYSETUP,test "x$have_easysetup" == "xtrue")
-AM_CONDITIONAL(MODEST_IS_TOOLKIT_HILDON1, [test "x$with_toolkit" == "xhildon1"])
-AC_SUBST(MODEST_TOOLKIT)
-AC_SUBST(MODEST_TOOLKIT_DIR)
-
-if test "x$with_platform" == "xgnome"; then
-      PKG_CHECK_MODULES(MODEST_PLATFORM,libtinymail-gnome-desktop-1.0 glib-2.0 >= 2.8 libnotify)
-    AC_DEFINE_UNQUOTED(MODEST_PLATFORM_GNOME, 1, ["Whether modest is being built for the GNOME platform."])
-dnl     AC_MSG_ERROR([The GNOME Build is currently broken; please try the Maemo build instead])
-else
-    have_dbusapi=true
-    PKG_CHECK_MODULES(MODEST_PLATFORM,libosso dbus-1 libtinymail-maemo-1.0 libebook-1.2 )
-    AC_DEFINE_UNQUOTED(MODEST_PLATFORM_MAEMO, 1, ["Whether modest is being built for the MAEMO platform."])
-fi
-AM_CONDITIONAL(MODEST_HAVE_DBUS_API,test "x$have_dbusapi" == "xtrue")
-AC_SUBST(MODEST_PLATFORM)
-
-
-
-#
-# check for wpeditor or libwpeditor-plus (on maemo)
-#
-if test "x$with_toolkit" != "xgtk"; then  
-PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)
-if test "x$have_wpeditor" == "xfalse"; then
-   PKG_CHECK_MODULES(MODEST_WPEDITOR,libwpeditor-plus,have_libwpeditorplus=true,have_libwpeditorplus=false)	
-   if test "x$have_libwpeditorplus" == "xtrue"; then
+dnl --------------- EDITOR -----------
+if test "x$with_toolkit" != "xgtk"; then
+   PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)
+   if test "x$have_wpeditor" == "xfalse"; then
+      PKG_CHECK_MODULES(MODEST_WPEDITOR,libwpeditor-plus,have_libwpeditorplus=true,have_libwpeditorplus=false)
+      if test "x$have_libwpeditorplus" == "xtrue"; then
       	wpeditor="libwpeditor-plus"
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBWPEDITOR_PLUS, 1, ["Whether libwpeditor-plus is used."])		
-   else
+	AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBWPEDITOR_PLUS, 1, ["Whether libwpeditor-plus is used."])
+      else
 	AC_MSG_ERROR([you need to have either wpeditor or libwpeditor-plus installed])
+      fi
+   else
+	wpeditor="wpeditor"
+	AC_DEFINE_UNQUOTED(MODEST_HAVE_WPEDITOR, 1, ["Whether wpeditor is used."])
    fi
 else
-   wpeditor="wpeditor"	
-   AC_DEFINE_UNQUOTED(MODEST_HAVE_WPEDITOR, 1, ["Whether wpeditor is used."])		
-fi
+   PKG_CHECK_EXISTS(gtksourceview-2.0, []. [])
 fi
 
-
-#
-# check libalarm
-#
-if test "x$with_platform" == "xmaemo"; then  
-   PKG_CHECK_MODULES(MODEST_LIBALARM,libalarm,have_libalarm=true,have_libalarm=false)
-   if test "x$have_libalarm" == "xfalse"; then
-      PKG_CHECK_MODULES(MODEST_LIBALARM, alarm, have_libalarm=true,have_libalarm=false)
-   fi
+dnl --------------- LIBALARM -----------
+if test "x$with_platform" == "xmaemo"; then
+   PKG_CHECK_MODULES(MODEST_LIBALARM, alarm, have_libalarm=true,have_libalarm=false)
    if test "x$have_libalarm" == "xtrue"; then
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBALARM, 1, ["Whether libalarm is used."])		
+      AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBALARM, 1, ["Whether libalarm is used."])
       AC_SUBST(MODEST_LIBALARM_CFLAGS)
       AC_SUBST(MODEST_LIBALARM_LIBS)
    fi
 fi
 
-#
-# check for MCE
-#
-if test "x$with_platform" == "xmaemo"; then  
+dnl --------------- MCE -----------
+if test "x$with_platform" == "xmaemo"; then
 PKG_CHECK_MODULES(MODEST_MCE,mce,have_mce=true,have_mce=false)
 if test "x$have_mce" == "xtrue"; then
-   mce="mce"	
+   mce="mce"
    AC_DEFINE_UNQUOTED(MODEST_HAVE_MCE, 1, ["Whether mce is used."])
    AC_SUBST(MODEST_MCE_CFLAGS)
    AC_SUBST(MODEST_MCE_LIBS)
@@ -374,12 +323,12 @@ else
 fi
 fi
 
-#
-# check for libconic; this is a trick to check whether we run
-# on a 'real' maemo platform, or on, say, ubuntu embedded
-# this determines whether we build with the non-hildon GTK+
-#
-if test "x$with_platform" == "xmaemo"; then  
+dnl --------------- LIBCONIC -----------
+dnl check for libconic; this is a trick to check whether we run on a
+dnl 'real' maemo platform, or on, say, ubuntu embedded. This determines
+dnl whether we build with the non-hildon GTK+
+
+if test "x$with_platform" == "xmaemo"; then
 PKG_CHECK_MODULES(MODEST_LIBCONIC,conic,have_libconic=true,have_libconic=false)
 if test "x$have_libconic" == "xtrue"; then
    AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_GTK,1,["Whether modest is being built with Hildon/Gtk"])
@@ -392,120 +341,32 @@ else
 fi
 fi
 
-#
-# check hildon-help (only for maemo AND NOT fremantle)
-#
-if test "x$with_toolkit" == "xhildon1"; then
-   PKG_CHECK_MODULES(MODEST_HILDON_HELP,hildon-help,have_hildon_help=true,have_hildon_help=false)
-   if test "x$have_hildon_help" == "xfalse"; then
-      PKG_CHECK_MODULES(MODEST_HILDON_HELP,libossohelp,have_osso_help=true,have_osso_help=false)	
-      if test "x$have_osso_help" == "xtrue"; then
-      	helplib="osso-help"
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_OSSO_HELP, 1, ["Whether osso-help is used."])		
-      else
-	AC_MSG_ERROR([you need to have either osso-help or hildon-help installed])
-      fi
-   else
-     helplib="hildon-help"
-     AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_HELP, 1, ["Whether hildon-help is used."])		
-   fi
-fi
-
-
-
-#
-# check for the notification stuff (only maemo)
-#
-if test "x$with_toolkit" != "xgtk"; then  
+dnl --------------- NOTIFICATION STUFF -----------
+if test "x$with_toolkit" != "xgtk"; then
    PKG_CHECK_MODULES(MODEST_HILDON_NOTIFY,hildon-notify libnotify,have_hildon_notify=true,have_hildon_notify=false)
    if test "x$have_hildon_notify" == "xtrue"; then
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_NOTIFY, 1, ["Whether hildon-notify is available"])      
+      AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_NOTIFY, 1, ["Whether hildon-notify is available"])
    fi
 fi
 
-
-#
-# check for the uri/mime stuff
-#
-if test "x$with_toolkit" != "xgtk"; then  
+dnl --------------- URI/MIME STUFF -----------
+if test "x$with_toolkit" != "xgtk"; then
    PKG_CHECK_MODULES(MODEST_HILDON_MIME,libhildonmime,have_hildonmime=true,have_hildonmime=false)
-   if test "x$have_hildonmime" == "xfalse"; then
-      PKG_CHECK_MODULES(MODEST_HILDON_MIME,libossomime,have_ossomime=true,have_ossomime=false)	
-      if test "x$have_ossomime" == "xtrue"; then
-      	mimelib="osso-mime"
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_OSSO_MIME, 1, ["Whether osso-mime is used."])		
-      else
-	AC_MSG_ERROR([you need to have either osso-mime or hildon-mime installed])
-      fi
-   else
-     mimelib="hildon-mime"	
-     AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_MIME, 1, ["Whether hildon-mime is used."])		
+   if test "x$have_hildonmime" == "xtrue"; then
+     mimelib="hildon-mime"
+     AC_DEFINE_UNQUOTED(MODEST_HAVE_HILDON_MIME, 1, ["Whether hildon-mime is used."])
    fi
 fi
 
-PKG_CHECK_MODULES(MODEST_MOZEMBED, libtinymailui-mozembed-1.0, have_mozembed=true, have_mozembed=false)
-AC_ARG_ENABLE(mozembed,
-AC_HELP_STRING([--enable-mozembed],
-	[Build with GtkMozEmbed (yes, no)]),
-[case "${enableval}" in
-      yes)
-	if test x$have_mozembed = xfalse; then
-	   AC_MSG_ERROR([building of GtkMozEmbed support requested and gtkmozembed not found])
-	fi
-	use_mozembed=true
-	;;
-      *)
-        use_mozembed=false
-	;;
-esac],[use_mozembed=false])
+dnl --------------- ADDRESSBOOK --------------
+if test "x$with_platform" == "xmaemo"; then
+   PKG_CHECK_MODULES(MODEST_ABOOK, libosso-abook-1.0,have_abook=true,have_abook=false)
 
-AM_CONDITIONAL(BUILD_MOZEMBED, test x$use_mozembed = xtrue)
+   if test "x$have_abook" == "xtrue"; then
 
-if test x$use_mozembed = xtrue; then
-   	AC_DEFINE_UNQUOTED(MODEST_USE_MOZEMBED, 1, ["Whether we use GtkMozEmbed."])
-fi
-
-#dnl wether we can and should build the 
-#dnl search plugin (on maemo)
-if test "x$with_platform" == "xmaemo"; then  
-PKG_CHECK_MODULES(MODEST_OGS, libosso >= 0.8.5 libogs-1.2, have_ogs=true, have_ogs=false)
-have_ogs_support=false
-AC_ARG_ENABLE(ogs_support,
-AC_HELP_STRING([--enable-ogs-support],
-	[Build with osso global search support (yes, no)]),
-[case "${enableval}" in
-      yes)
-	if test x$have_ogs = xfalse; then
-	   AC_MSG_ERROR([building of ogs support requested and libogs-1.2 not found])
-	fi
-	;;
-      *) 
-	have_ogs_support=false
-	;;
-esac],[have_ogs_support=$have_ogs])
-
-if test x$have_ogs_support = xtrue; then
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_OGS, 1, ["Whether ogs is available."])
-fi
-fi
-
-
-
-
-#
-# check the version of the addressbook on maemo
-#
-if test "x$with_platform" == "xmaemo"; then  
-   PKG_CHECK_MODULES(MODEST_ABOOK,osso-addressbook-1.0,have_abook=true,have_abook=false)
-   abook_api=`$PKG_CONFIG --modversion osso-addressbook-1.0 | cut -d. -f1`
-   AC_SUBST(MODEST_ABOOK_CFLAGS)
-   AC_SUBST(MODEST_ABOOK_LIBS)
-
-   if test "x$have_abook" == "xfalse"; then
-     PKG_CHECK_MODULES(MODEST_ABOOK, libosso-abook-1.0,have_abook=true,have_abook=false)
      abook_api=`$PKG_CONFIG --modversion libosso-abook-1.0 | cut -d. -f1`
      AC_SUBST(MODEST_ABOOK_CFLAGS)
-     AC_SUBST(MODEST_ABOOK_LIBE)
+     AC_SUBST(MODEST_ABOOK_LIBS)
 
      modest_save_cflags="$CFLAGS"
      modest_save_libs="$LIBS"
@@ -515,16 +376,16 @@ if test "x$with_platform" == "xmaemo"; then
      AC_SUBST(HAVE_OSSO_ABOOK_CONTACT_CHOOSER_SET_VISIBLE_FUNC)
      CFLAGS="$modest_save_cflags"
      LIBS="$modest_save_libs"
-   fi
 
-   if test "x$have_abook" == "xtrue"; then
-      AC_DEFINE_UNQUOTED(OSSO_ABOOK_ENABLE_DEPRECATED, 1, ["use deprecated addressbook API"])
-      AC_DEFINE_UNQUOTED(MODEST_ABOOK_API, $abook_api, ["the API version of osso-addressbook"])
-      AC_DEFINE_UNQUOTED(MODEST_HAVE_ABOOK, 1, ["whether we have osso-addressbook"])
-      addressbook="osso-addressbook"
+     AC_DEFINE_UNQUOTED(OSSO_ABOOK_ENABLE_DEPRECATED, 1, ["use deprecated addressbook API"])
+     AC_DEFINE_UNQUOTED(MODEST_ABOOK_API, $abook_api, ["the API version of osso-addressbook"])
+     AC_DEFINE_UNQUOTED(MODEST_HAVE_ABOOK, 1, ["whether we have osso-addressbook"])
    fi
 fi
 
+AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook" != "xtrue")
+
+dnl --------------- LIBTIME --------------
 AC_CHECK_HEADERS([clockd/libtime.h], have_libtime=true, have_libtime=false)
 
 if test "x$have_libtime" == "xtrue"; then
@@ -535,6 +396,7 @@ else
 fi
 AC_SUBST(MODEST_LIBTIME_LIBS)
 
+dnl --------------- IPHB --------------
 AC_CHECK_HEADERS([iphbd/libiphb.h], have_libiphb=true, have_libiphb=false)
 
 if test "x$have_libiphb" == "xtrue"; then
@@ -545,25 +407,18 @@ else
 fi
 AC_SUBST(MODEST_LIBIPHB_LIBS)
 
-#
-# if we don't have an addressbook, use the dummy one
-#
-AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook" != "xtrue")
 
-
+dnl --------------- GETTEXT --------------
 AM_GLIB_GNU_GETTEXT
 IT_PROG_INTLTOOL([0.35.0])
 
-# gettext support
-GETTEXT_PACKAGE=modest	
+GETTEXT_PACKAGE=modest
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", ["gettext package"])
 
 
-#
-# settings for maemo platform
-#
-if test "x$with_platform" == "xmaemo"; then  
+dnl --------------- SETTINGS FOR MAEMO --------------
+if test "x$with_platform" == "xmaemo"; then
 
   # warnings are errors, but don't check format errors, because
   # it breaks with logical ids
@@ -607,7 +462,7 @@ if test "x$with_platform" == "xmaemo"; then
 
 fi
 
-dnl ## setup the testing framework (ie., make check)
+dnl --------------- TESTING -------------------
 build_tests=false
 AC_ARG_ENABLE(tests,
 AC_HELP_STRING([--enable-tests],
@@ -619,16 +474,11 @@ AC_HELP_STRING([--enable-tests],
 esac],[build_tests=false])
 AM_CONDITIONAL(BUILD_TESTS, test x$build_tests = xtrue)
 
-
-
-dnl ## is the check package installed?
 if test x$build_tests = xtrue; then
    PKG_CHECK_MODULES(CHECK, check >= 0.9.4 glib-2.0)
 fi
 
-
-
-dnl ## do we want documentation (gtk-doc)
+dnl ------------ TESTING: GTK-DOC ----------
 build_docs=false
 AC_ARG_ENABLE(docs,
 AC_HELP_STRING([--enable-docs],
@@ -640,9 +490,9 @@ AC_HELP_STRING([--enable-docs],
 esac],[build_docs=false])
 AM_CONDITIONAL(BUILD_DOCS, test x$build_docs = xtrue)
 
-dnl ## gtk-doc
 GTK_DOC_CHECK([1.0])
 
+dnl ---------------- OUTPUT --------------
 AC_OUTPUT([
 po/Makefile.in
 Makefile
@@ -680,17 +530,12 @@ if test "x$with_platform" == "xmaemo"; then
    echo "Maemo Launcher   : $maemo_launcher"
    echo "Editor lib       : $wpeditor"
    echo "Addressbook      : $have_abook"
-   if test "x$with_toolkit" == "xhildon1"; then
-      echo "Help lib         : $helplib"
-   fi
    echo "libconic support : $have_libconic"
    echo "Alarm            : $have_libalarm"
    echo "MCE              : $have_mce"
    echo "Hildon-Notify    : $have_hildon_notify"
-   echo "LibOGS support   : $have_ogs_support"
 fi
 
-echo "MozEmbed support : $use_mozembed"
 if [ $gtk_html_found = "true" ]; then
    echo "GtkHTML version  : $gtk_html_version"
 fi

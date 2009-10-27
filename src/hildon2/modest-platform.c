@@ -66,8 +66,8 @@
 #include "hildon2/modest-hildon2-details-dialog.h"
 #include "hildon2/modest-hildon2-window-mgr.h"
 #ifdef MODEST_USE_PROFILE
-#include <keys_nokia.h>
-#include <libprofile.h>
+#include <profiled/keys_nokia.h>
+#include <profiled/libprofile.h>
 #endif
 #include <canberra.h>
 #include <modest-datetime-formatter.h>
