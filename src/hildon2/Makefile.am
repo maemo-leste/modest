@@ -90,10 +90,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \
 	modest-connection-specific-smtp-edit-window.c \
-	modest-osso-autosave-callbacks.c \
-	modest-osso-autosave-callbacks.h \
-	modest-osso-state-saving.c \
-	modest-osso-state-saving.h   \
 	modest-secureauth-picker.h modest-secureauth-picker.c \
 	modest-selector-picker.h modest-selector-picker.c \
 	modest-hildon2-window-mgr.h modest-hildon2-window-mgr.c

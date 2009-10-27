@@ -28,8 +28,6 @@
  */
 
 #include <modest-mailboxes-window.h>
-#include <modest-osso-state-saving.h>
-#include <libosso.h>
 #include <hildon/hildon-pannable-area.h>
 #include <modest-window-mgr.h>
 #include <modest-signal-mgr.h>
@@ -329,10 +327,6 @@ modest_mailboxes_window_new (const gchar *account)
 	gtk_widget_show (priv->top_vbox);
 
 	connect_signals (MODEST_MAILBOXES_WINDOW (self));
-
-	/* Load previous osso state, for instance if we are being restored from 
-	 * hibernation:  */
-	modest_osso_load_state ();
 
 	/* Get device name */
 	modest_maemo_utils_get_device_name ();

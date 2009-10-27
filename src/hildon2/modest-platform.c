@@ -41,7 +41,6 @@
 #include <modest-maemo-utils.h>
 #include <modest-utils.h>
 #include <dbus_api/modest-dbus-callbacks.h>
-#include <modest-osso-autosave-callbacks.h>
 #include <libosso.h>
 #include <tny-maemo-conic-device.h>
 #include <tny-camel-folder.h>
@@ -207,15 +206,6 @@ modest_platform_init (int argc, char *argv[])
 	/* Register hardware event dbus callback: */
     	hw_state.shutdown_ind = TRUE;
 	osso_hw_set_event_cb(osso_context, NULL, NULL, NULL);
-
-	/* Register osso auto-save callbacks: */
-	result = osso_application_set_autosave_cb (osso_context, 
-		modest_on_osso_application_autosave, NULL /* user_data */);
-	if (result != OSSO_OK) {
-		g_printerr ("modest: osso_application_set_autosave_cb() failed.\n");
-		return FALSE;
-	}
-	
 
 	/* Make sure that the update interval is changed whenever its gconf key 
 	 * is changed */

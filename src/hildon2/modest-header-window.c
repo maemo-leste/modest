@@ -28,8 +28,6 @@
  */
 
 #include <modest-header-window.h>
-#include <modest-osso-state-saving.h>
-#include <libosso.h>
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-helper.h>
 #include <modest-window-mgr.h>
@@ -811,10 +809,6 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	connect_signals (MODEST_HEADER_WINDOW (self));
 
 	update_view (self, NULL);
-
-	/* Load previous osso state, for instance if we are being restored from 
-	 * hibernation:  */
-	modest_osso_load_state ();
 
 	/* Get device name */
 	modest_maemo_utils_get_device_name ();

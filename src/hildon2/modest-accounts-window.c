@@ -28,8 +28,6 @@
  */
 
 #include <modest-accounts-window.h>
-#include <modest-osso-state-saving.h>
-#include <libosso.h>
 #include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-banner.h>
 #include <hildon/hildon-helper.h>
@@ -360,10 +358,6 @@ modest_accounts_window_new (void)
 	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
 
 	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
-
-	/* Load previous osso state, for instance if we are being restored from 
-	 * hibernation:  */
-	modest_osso_load_state ();
 
 	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
