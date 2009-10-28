@@ -64,6 +64,10 @@ static void    modest_details_dialog_add_data_default            (ModestDetailsD
 								  const gchar *label,
 								  const gchar *value);
 
+static gboolean on_key_press_event (GtkWindow *window, GdkEventKey *event, gpointer userdata);
+
+static void value_w_size_allocate (GtkWidget *label, GtkAllocation *allocation, gpointer data);
+
 
 G_DEFINE_TYPE (ModestDetailsDialog, 
 	       modest_details_dialog, 
@@ -195,6 +199,9 @@ modest_details_dialog_add_data_default (ModestDetailsDialog *self,
 
 	/* Create value */
 	value_w = gtk_label_new (secure_value);
+	g_signal_connect (G_OBJECT (value_w), "size-allocate",
+			  G_CALLBACK (value_w_size_allocate), NULL);
+
 	gtk_label_set_line_wrap ((GtkLabel *) value_w, TRUE);
 	gtk_label_set_line_wrap_mode ((GtkLabel *) value_w, PANGO_WRAP_WORD_CHAR);
 	gtk_misc_set_alignment (GTK_MISC (value_w), 0.0, 0.0);
@@ -422,6 +429,12 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 	g_free (name);
 	g_free (size_s);
 	g_free (count_s);
+}
+
+static void 
+value_w_size_allocate (GtkWidget *label, GtkAllocation *allocation, gpointer data)
+{
+	gtk_widget_set_size_request(label, allocation->width, -1);
 }
 
 static gboolean
