@@ -223,6 +223,12 @@ typedef struct _XFerFolderAsyncHelper
 	gpointer user_data;
 } XFerFolderAsyncHelper;
 
+typedef struct _SyncFolderHelper {
+	ModestMailOperation *mail_op;
+	SyncFolderCallback user_callback;
+	gpointer user_data;
+} SyncFolderHelper;
+
 typedef void (*ModestMailOperationCreateMsgCallback) (ModestMailOperation *mail_op,
 						      TnyMsg *msg,
 						      gpointer userdata);
@@ -2907,6 +2913,7 @@ remove_msgs_async_cb (TnyFolder *folder,
 	ModestMailOperation *self;
 	ModestMailOperationPrivate *priv;
 	ModestProtocolRegistry *protocol_registry;
+	SyncFolderHelper *helper;
 
 	self = (ModestMailOperation *) user_data;
 	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
@@ -2942,9 +2949,17 @@ remove_msgs_async_cb (TnyFolder *folder,
 	else
 		expunge = FALSE;
 
+	/* Create helper */
+	helper = g_slice_new0 (SyncFolderHelper);
+	helper->mail_op = g_object_ref (self);
+	helper->user_callback = NULL;
+	helper->user_data = NULL;
+
 	/* Sync folder */
-	tny_folder_sync_async(folder, expunge, sync_folder_finish_callback, 
-			      NULL, self);
+	tny_folder_sync_async(folder, expunge, sync_folder_finish_callback, NULL, helper);
+
+	/* Remove the extra reference */
+	g_object_unref (self);
 }
 
 void 
@@ -3673,17 +3688,17 @@ modest_mail_operation_shutdown (ModestMailOperation *self, ModestTnyAccountStore
 }
 
 static void
-sync_folder_finish_callback (TnyFolder *self, 
-			     gboolean cancelled, 
-			     GError *err, 
+sync_folder_finish_callback (TnyFolder *self,
+			     gboolean cancelled,
+			     GError *err,
 			     gpointer user_data)
 
 {
-	ModestMailOperation *mail_op;
 	ModestMailOperationPrivate *priv;
+	SyncFolderHelper *helper;
 
-	mail_op = (ModestMailOperation *) user_data;
-	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (mail_op);
+	helper = (SyncFolderHelper *) user_data;
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (helper->mail_op);
 
 	/* If canceled by the user, ignore the error given by Tinymail */
 	if (cancelled) {
@@ -3702,15 +3717,26 @@ sync_folder_finish_callback (TnyFolder *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_SUCCESS;
 	}
 
-	modest_mail_operation_notify_end (mail_op);
-	g_object_unref (mail_op);
+	/* User callback */
+	if (helper->user_callback)
+		helper->user_callback (helper->mail_op, self, helper->user_data);
+
+	modest_mail_operation_notify_end (helper->mail_op);
+
+	/* Frees */
+	g_object_unref (helper->mail_op);
+	g_slice_free (SyncFolderHelper, helper);
 }
 
 void
 modest_mail_operation_sync_folder (ModestMailOperation *self,
-				   TnyFolder *folder, gboolean expunge)
+				   TnyFolder *folder,
+				   gboolean expunge,
+				   SyncFolderCallback callback,
+				   gpointer user_data)
 {
 	ModestMailOperationPrivate *priv;
+	SyncFolderHelper *helper;
 
 	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
 	g_return_if_fail (TNY_IS_FOLDER (folder));
@@ -3720,11 +3746,16 @@ modest_mail_operation_sync_folder (ModestMailOperation *self,
 	priv->account = modest_tny_folder_get_account (folder);
 	priv->op_type = MODEST_MAIL_OPERATION_TYPE_SYNC_FOLDER;
 
+	/* Create helper */
+	helper = g_slice_new0 (SyncFolderHelper);
+	helper->mail_op = g_object_ref (self);
+	helper->user_callback = callback;
+	helper->user_data = user_data;
+
 	modest_mail_operation_notify_start (self);
-	g_object_ref (self);
-	tny_folder_sync_async (folder, expunge, 
-			       (TnyFolderCallback) sync_folder_finish_callback, 
-			       NULL, self);
+	tny_folder_sync_async (folder, expunge,
+			       (TnyFolderCallback) sync_folder_finish_callback,
+			       NULL, helper);
 }
 
 static void

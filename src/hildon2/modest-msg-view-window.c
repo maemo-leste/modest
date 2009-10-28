@@ -3819,7 +3819,7 @@ sync_flags (ModestMsgViewWindow *self)
 			mail_op = modest_mail_operation_new (NULL);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
-			modest_mail_operation_sync_folder (mail_op, folder, FALSE);
+			modest_mail_operation_sync_folder (mail_op, folder, FALSE, NULL, NULL);
 			g_object_unref (mail_op);
 			g_object_unref (folder);
 		}

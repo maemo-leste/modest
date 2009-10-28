@@ -2536,7 +2536,7 @@ on_window_hide (GObject    *gobject,
 			mail_op = modest_mail_operation_new (NULL);
 			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 							 mail_op);
-			modest_mail_operation_sync_folder (mail_op, TNY_FOLDER (folder_store), FALSE);
+			modest_mail_operation_sync_folder (mail_op, TNY_FOLDER (folder_store), FALSE, NULL, NULL);
 			g_object_unref (mail_op);
 			g_object_unref (folder_store);
 		}

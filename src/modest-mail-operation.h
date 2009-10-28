@@ -230,6 +230,20 @@ typedef void (*CreateFolderUserCallback) (ModestMailOperation *mail_op,
 					  TnyFolder *new_folder, 
 					  gpointer user_data);
 
+/**
+ * SyncFolderCallback:
+ *
+ * @self: a #ModestMailOperation
+ * @folder: the #TnyFolder to sync
+ * @user_data: generic data passed to user defined function.
+ *
+ * This is the callback of the sync_folder operation.
+ */
+typedef void (*SyncFolderCallback) (ModestMailOperation *self,
+				    TnyFolder *folder,
+				    gpointer user_data);
+
+
 /* This struct represents the internal state of a mail operation in a
    given time */
 typedef struct {
@@ -679,7 +693,10 @@ void          modest_mail_operation_queue_wakeup       (ModestMailOperation *sel
  * running while we do that sync operation.
  */
 void          modest_mail_operation_sync_folder     (ModestMailOperation *self,
-						     TnyFolder *folder, gboolean expunge);
+						     TnyFolder *folder,
+						     gboolean expunge,
+						     SyncFolderCallback callback,
+						     gpointer user_data);
 
 /**
  * modest_mail_operation_shutdown:
