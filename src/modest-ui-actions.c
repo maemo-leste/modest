@@ -2169,20 +2169,22 @@ modest_ui_actions_on_sort (GtkAction *action,
 }
 
 static void
-sync_folder_cb (TnyFolder *folder,
-		gboolean cancelled,
-		GError *err,
+sync_folder_cb (ModestMailOperation *mail_op,
+		TnyFolder *folder,
 		gpointer user_data)
 {
 	ModestHeaderView *header_view = (ModestHeaderView *) user_data;
 
-	tny_folder_refresh_async (folder, NULL, NULL, NULL);
-	/* ModestWindow *parent = (ModestWindow *) gtk_widget_get_ancestor ((GtkWidget *) user_data, GTK_TYPE_WINDOW); */
+	if (modest_mail_operation_get_status (mail_op) == MODEST_MAIL_OPERATION_STATUS_SUCCESS) {
+		ModestWindow *parent = (ModestWindow *) modest_mail_operation_get_source (mail_op);
 
-	/* We must clear first, because otherwise set_folder will ignore
-	   the change as the folders are the same */
-	/* modest_header_view_clear (header_view); */
-	/* modest_header_view_set_folder (header_view, folder, TRUE, parent, NULL, NULL); */
+		/* We must clear first, because otherwise set_folder will ignore */
+		/*    the change as the folders are the same */
+		modest_header_view_clear (header_view);
+		modest_header_view_set_folder (header_view, folder, TRUE, parent, NULL, NULL);
+
+		g_object_unref (parent);
+	}
 
 	g_object_unref (header_view);
 }
@@ -2210,8 +2212,11 @@ idle_refresh_folder (gpointer source)
 		TnyFolder *folder = modest_header_view_get_folder (header_view);
 		if (folder) {
 			/* Sync the folder status */
-			tny_folder_sync_async (folder, TRUE, sync_folder_cb, NULL, g_object_ref (header_view));
+			ModestMailOperation *mail_op = modest_mail_operation_new (source);
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
+			modest_mail_operation_sync_folder (mail_op, folder, FALSE, sync_folder_cb, g_object_ref (header_view));
 			g_object_unref (folder);
+			g_object_unref (mail_op);
 		}
 	}
 
