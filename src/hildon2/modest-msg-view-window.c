@@ -230,6 +230,7 @@ static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
 						   GdkEvent *event,
 						   gpointer userdata);
 static void update_branding (ModestMsgViewWindow *self);
+static void sync_flags      (ModestMsgViewWindow *self);
 
 /* list my signals */
 enum {
@@ -603,7 +604,7 @@ modest_msg_view_window_disconnect_signals (ModestWindow *self)
 							   MODEST_HEADER_VIEW_OBSERVER(self));
 		}
 	}
-}	
+}
 
 static void
 modest_msg_view_window_finalize (GObject *obj)
@@ -950,8 +951,6 @@ modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-
-
 	is_merge = g_str_has_prefix (msg_uid, "merge:");
 
 	/* Get the account */
@@ -959,7 +958,6 @@ modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
 		account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
 							  msg_uid);
 
- 	
 	if (is_merge || account) {
 		TnyFolder *folder = NULL;
 
@@ -992,6 +990,8 @@ modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
 					update_window_title (MODEST_MSG_VIEW_WINDOW (window));
 					update_branding (MODEST_MSG_VIEW_WINDOW (window));
 					g_object_unref (msg);
+					/* Sync flags to server */
+					sync_flags (MODEST_MSG_VIEW_WINDOW (window));
 				} else {
 					message_reader (window, priv, NULL, msg_uid, folder, NULL);
 				}
@@ -2217,13 +2217,18 @@ view_msg_cb (ModestMailOperation *mail_op,
 	}
 
 	/* Notify the observers */
-	g_signal_emit (G_OBJECT (self), signals[MSG_CHANGED_SIGNAL], 
+	g_signal_emit (G_OBJECT (self), signals[MSG_CHANGED_SIGNAL],
 		       0, priv->header_model, priv->row_reference);
+
+	/* Sync the flags if the message is not opened from a header
+	   model, i.e, if it's opened from a notification */
+	if (!priv->header_model)
+		sync_flags (self);
 
 	/* Frees */
 	g_object_unref (self);
 	if (row_reference)
-		gtk_tree_row_reference_free (row_reference);		
+		gtk_tree_row_reference_free (row_reference);
 }
 
 TnyFolderType
@@ -3788,4 +3793,36 @@ update_branding (ModestMsgViewWindow *self)
 
 	modest_msg_view_set_branding (MODEST_MSG_VIEW (priv->msg_view), service_name, service_icon);
 	g_free (service_name);
+}
+
+static void
+sync_flags (ModestMsgViewWindow *self)
+{
+	TnyHeader *header = NULL;
+
+	header = modest_msg_view_window_get_header (self);
+	if (!header) {
+		TnyMsg *msg = modest_msg_view_window_get_message (self);
+		if (msg) {
+			header = tny_msg_get_header (msg);
+			g_object_unref (msg);
+		}
+	}
+
+	if (header) {
+		TnyFolder *folder = tny_header_get_folder (header);
+
+		if (folder) {
+			ModestMailOperation *mail_op;
+
+			/* Sync folder, we need this to save the seen flag */
+			mail_op = modest_mail_operation_new (NULL);
+			modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
+							 mail_op);
+			modest_mail_operation_sync_folder (mail_op, folder, FALSE);
+			g_object_unref (mail_op);
+			g_object_unref (folder);
+		}
+		g_object_unref (header);
+	}
 }
