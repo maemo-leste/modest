@@ -1,3 +1,13 @@
+modest (3.1.8) unstable; urgency=low
+
+  * Week 44, 2009 - fourth release
+  * 
+  * Fixes: NB#139032 Message details window changes
+  * Fixes: NB#140509 Perform a sync of the currently viewed folder when a send&receive
+  * 	 (manual or automatic) is activated 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 28 Oct 2009 21:59:39 +0200
+
 modest (3.1.7) unstable; urgency=low
 
   * Week 44, 2009 - third release
