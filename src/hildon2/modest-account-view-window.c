@@ -45,7 +45,8 @@
 #include "modest-account-settings-dialog.h"
 #include <modest-utils.h>
 #include "widgets/modest-ui-constants.h"
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
+#include <modest-toolkit-factory.h>
 
 /* 'private'/'protected' functions */
 static void                            modest_account_view_window_class_init   (ModestAccountViewWindowClass *klass);
@@ -204,7 +205,7 @@ static void
 modest_account_view_window_init (ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv;
-	GtkWidget *main_vbox, *pannable;
+	GtkWidget *main_vbox, *scrollable;
 	GtkWidget *align;
 
 
@@ -227,9 +228,9 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 
 	main_vbox = GTK_DIALOG (self)->vbox;
 
-	pannable = hildon_pannable_area_new ();
-	gtk_widget_show (pannable);
-	gtk_container_add (GTK_CONTAINER (pannable), 
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
+	gtk_widget_show (scrollable);
+	gtk_container_add (GTK_CONTAINER (scrollable),
 			   GTK_WIDGET (priv->account_view));
 	gtk_widget_show (GTK_WIDGET (priv->account_view));
 
@@ -240,7 +241,7 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DEFAULT, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (align);
 
-	gtk_container_add (GTK_CONTAINER (align), pannable);
+	gtk_container_add (GTK_CONTAINER (align), scrollable);
 
 	gtk_box_pack_start (GTK_BOX(main_vbox), align, TRUE, TRUE, 0);
 
