@@ -53,10 +53,13 @@ struct _ModestScrollableIface
 	GtkAdjustment * (*get_hadjustment) (ModestScrollable *self);
 	void (*scroll_to) (ModestScrollable *self, const gint x, const gint y);
 	void (*jump_to) (ModestScrollable *self, const gint x, const gint y);
+	GtkPolicyType (*get_vertical_policy) (ModestScrollable *self);
+	GtkPolicyType (*get_horizontal_policy) (ModestScrollable *self);
+	void (*set_vertical_policy) (ModestScrollable *self, GtkPolicyType policy);
+	void (*set_horizontal_policy) (ModestScrollable *self, GtkPolicyType policy);
 
 	/* properties */
 	/* hscrollbar-policy; */
-	/* initial-hint; */
 	/* vscrollbar-policy; */	
 };
 
@@ -67,7 +70,10 @@ GtkAdjustment * modest_scrollable_get_vadjustment (ModestScrollable *self);
 GtkAdjustment * modest_scrollable_get_hadjustment (ModestScrollable *self);
 void modest_scrollable_scroll_to (ModestScrollable *self, const gint x, const gint y);
 void modest_scrollable_jump_to (ModestScrollable *self, const gint x, const gint y);
-
+GtkPolicyType modest_scrollable_get_vertical_policy (ModestScrollable *self);
+GtkPolicyType modest_scrollable_get_horizontal_policy (ModestScrollable *self);
+void modest_scrollable_set_vertical_policy (ModestScrollable *self, GtkPolicyType policy);
+void modest_scrollable_set_horizontal_policy (ModestScrollable *self, GtkPolicyType policy);
 
 G_END_DECLS
 

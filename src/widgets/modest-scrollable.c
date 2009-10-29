@@ -121,7 +121,73 @@ modest_scrollable_jump_to (ModestScrollable *scrollable,
 	}
 }
 
+/**
+ * modest_scrollable_get_vertical_policy:
+ * @scrollable: a #ModestScrollable instance
+ *
+ * returns the vertical scroll policy
+ *
+ * Returns: a #GtkPolicyType
+ */
+GtkPolicyType            
+modest_scrollable_get_vertical_policy (ModestScrollable *scrollable)
+{
+	if (MODEST_SCROLLABLE_GET_IFACE (scrollable)->get_vertical_policy) {
+		return MODEST_SCROLLABLE_GET_IFACE (scrollable)->get_vertical_policy (scrollable);
+	} else {
+		return GTK_POLICY_NEVER;
+	}
+}
 
+/**
+ * modest_scrollable_get_horizontal_policy:
+ * @scrollable: a #ModestScrollable instance
+ *
+ * returns the horizontal scroll policy
+ *
+ * Returns: a #GtkPolicyType
+ */
+GtkPolicyType            
+modest_scrollable_get_horizontal_policy (ModestScrollable *scrollable)
+{
+	if (MODEST_SCROLLABLE_GET_IFACE (scrollable)->get_horizontal_policy) {
+		return MODEST_SCROLLABLE_GET_IFACE (scrollable)->get_horizontal_policy (scrollable);
+	} else {
+		return GTK_POLICY_NEVER;
+	}
+}
+
+/**
+ * modest_scrollable_set_vertical_policy:
+ * @scrollable: a #ModestScrollable instance
+ * @policy: a #GtkPolicyType
+ *
+ * sets the vertical scroll policy
+ */
+void
+modest_scrollable_set_vertical_policy (ModestScrollable *scrollable,
+				       GtkPolicyType policy)
+{
+	if (MODEST_SCROLLABLE_GET_IFACE (scrollable)->set_vertical_policy) {
+		MODEST_SCROLLABLE_GET_IFACE (scrollable)->set_vertical_policy (scrollable, policy);
+	}
+}
+
+/**
+ * modest_scrollable_set_horizontal_policy:
+ * @scrollable: a #ModestScrollable instance
+ * @policy: a #GtkPolicyType
+ *
+ * sets the horizontal scroll policy
+ */
+void
+modest_scrollable_set_horizontal_policy (ModestScrollable *scrollable,
+					 GtkPolicyType policy)
+{
+	if (MODEST_SCROLLABLE_GET_IFACE (scrollable)->set_horizontal_policy) {
+		MODEST_SCROLLABLE_GET_IFACE (scrollable)->set_horizontal_policy (scrollable, policy);
+	}
+}
 
 static void
 modest_scrollable_base_init (gpointer g_iface)
@@ -133,18 +199,18 @@ modest_scrollable_base_init (gpointer g_iface)
 		initialized = TRUE;
 
 		g_object_interface_install_property (g_iface,
-						     g_param_spec_enum ("vscrollbar_policy",
-									"vscrollbar policy",
-									"Visual policy of the vertical scrollbar",
+						     g_param_spec_enum ("vertical_policy",
+									"Vertical scroll policy",
+									"Visual policy of the vertical scroll",
 									GTK_TYPE_POLICY_TYPE,
 									GTK_POLICY_AUTOMATIC,
 									G_PARAM_READWRITE |
 									G_PARAM_CONSTRUCT));
 
 		g_object_interface_install_property (g_iface,
-						     g_param_spec_enum ("hscrollbar_policy",
-									"hscrollbar policy",
-									"Visual policy of the horizontal scrollbar",
+						     g_param_spec_enum ("horizontal_policy",
+									"Horizontal scroll policy",
+									"Visual policy of the horizontal scroll",
 									GTK_TYPE_POLICY_TYPE,
 									GTK_POLICY_AUTOMATIC,
 									G_PARAM_READWRITE |
