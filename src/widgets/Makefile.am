@@ -101,6 +101,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-scroll-area.c          \
 	modest-scroll-text.c           \
 	modest-scroll-text.h           \
+	modest-scrolled-window-scrollable.c \
+	modest-scrolled-window-scrollable.h \
 	modest-security-options-view.h	\
 	modest-security-options-view.c	\
 	modest-serversecurity-combo-box.h \
