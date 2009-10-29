@@ -41,7 +41,8 @@
 #include <gtk/gtktreeview.h>
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtkliststore.h>
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
+#include <modest-toolkit-factory.h>
 #include <hildon/hildon-gtk.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
@@ -68,7 +69,7 @@ struct _ModestConnectionSpecificSmtpWindowPrivate
 	GtkTreeView *treeview;
 	GtkTreeModel *model;
 	GtkWidget *no_connection_label;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	ModestAccountMgr *account_manager;
 };
 
@@ -235,17 +236,17 @@ modest_connection_specific_smtp_window_fill_with_connections (ModestConnectionSp
 #endif /*MODEST_HAVE_CONIC */
 
 	GtkWidget *child;
-	child = gtk_bin_get_child (GTK_BIN (priv->pannable));
+	child = gtk_bin_get_child (GTK_BIN (priv->scrollable));
 	if (child) {
-		gtk_container_remove (GTK_CONTAINER (priv->pannable), child);
+		gtk_container_remove (GTK_CONTAINER (priv->scrollable), child);
 	}
 
 	if (empty) {
-		hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), 
-							priv->no_connection_label);
+		modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (priv->scrollable), 
+						     priv->no_connection_label);
 		gtk_widget_show (priv->no_connection_label);
 	} else {
-		gtk_container_add (GTK_CONTAINER (priv->pannable), GTK_WIDGET (priv->treeview));
+		gtk_container_add (GTK_CONTAINER (priv->scrollable), GTK_WIDGET (priv->treeview));
 		gtk_widget_show (GTK_WIDGET (priv->treeview));
 	}
 }
@@ -399,14 +400,13 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	gtk_widget_show (label);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
-	/* Put the treeview in a pannable and add it to the box: */
-	priv->pannable = hildon_pannable_area_new ();
+	/* Put the treeview in a scrollable and add it to the box: */
+	priv->scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
-	g_object_set (G_OBJECT (priv->pannable), "initial-hint", TRUE, NULL);
-	gtk_widget_show (priv->pannable);
+	gtk_widget_show (priv->scrollable);
 	gtk_widget_show (align);
-	gtk_container_add (GTK_CONTAINER (align), GTK_WIDGET (priv->pannable));
+	gtk_container_add (GTK_CONTAINER (align), GTK_WIDGET (priv->scrollable));
 	gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (align), TRUE, TRUE, 0);
 	gtk_widget_show (vbox);
 

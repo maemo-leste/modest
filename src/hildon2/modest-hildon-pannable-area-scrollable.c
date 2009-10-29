@@ -91,7 +91,9 @@ G_DEFINE_TYPE_EXTENDED    (ModestHildonPannableAreaScrollable,
 GtkWidget *
 modest_hildon_pannable_area_scrollable_new                            (void)
 {
-    GtkWidget *scrollable = g_object_new (MODEST_TYPE_HILDON_PANNABLE_AREA_SCROLLABLE, NULL);
+	GtkWidget *scrollable = g_object_new (MODEST_TYPE_HILDON_PANNABLE_AREA_SCROLLABLE, 
+					      "initial-hint", TRUE, 
+					      NULL);
 
     return scrollable;
 }

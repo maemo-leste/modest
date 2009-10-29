@@ -37,7 +37,8 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtktextview.h>
 #include <gtk/gtklabel.h>
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
+#include <modest-toolkit-factory.h>
 #include <gtk/gtkstock.h>
 #include <glib/gi18n.h>
 #include <modest-maemo-utils.h>
@@ -55,7 +56,7 @@ struct _ModestSignatureEditorDialogPrivate
 {
 	GtkWidget *checkbox_use;
 	GtkWidget *label;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *textview;
 
 	guint correct_scroll_idle;
@@ -185,10 +186,10 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	
 	gtk_widget_show (top_box);
 
-	priv->pannable = hildon_pannable_area_new ();
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), align);
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), priv->pannable);
-	gtk_widget_show (priv->pannable);		
+	priv->scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (priv->scrollable), align);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), priv->scrollable);
+	gtk_widget_show (priv->scrollable);		
 
 	gtk_widget_show (box);
 	gtk_widget_set_size_request (GTK_WIDGET (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
@@ -280,7 +281,7 @@ correct_scroll_idle_func (gpointer userdata)
 	offset_min = priv->textview->allocation.y + rectangle.y;
 	offset_max = offset_min + rectangle.height;
 
-	vadj = hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable));
+	vadj = modest_scrollable_get_vadjustment (MODEST_SCROLLABLE (priv->scrollable));
 	offset_min = MAX (offset_min - 48, 0);
 	offset_max = MIN (offset_max + 48, vadj->upper);
 
@@ -296,7 +297,7 @@ correct_scroll_idle_func (gpointer userdata)
 
 		if ((offset_center < center_top) ||
 		    (offset_center > center_bottom))
-			hildon_pannable_area_scroll_to (HILDON_PANNABLE_AREA (priv->pannable), -1, offset_center);
+			modest_scrollable_scroll_to (MODEST_SCROLLABLE (priv->scrollable), -1, offset_center);
 	}
 
 	priv->correct_scroll_idle = 0;
