@@ -28,7 +28,7 @@
  */
 
 #include <modest-accounts-window.h>
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
 #include <hildon/hildon-banner.h>
 #include <hildon/hildon-helper.h>
 #include <modest-ui-actions.h>
@@ -89,7 +89,7 @@ typedef struct _ModestAccountsWindowPrivate ModestAccountsWindowPrivate;
 struct _ModestAccountsWindowPrivate {
 
 	GtkWidget *box;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *account_view;
 	GtkWidget *no_accounts_container;
 	GtkWidget *new_message_button;
@@ -289,7 +289,7 @@ modest_accounts_window_new_real (void)
 			  "clicked",
 			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
 	
-	priv->pannable = hildon_pannable_area_new ();
+	priv->scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
 	priv->queue_change_handler =
 		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
@@ -308,11 +308,11 @@ modest_accounts_window_new_real (void)
 	g_object_unref (new_message_pixbuf);
 	setup_menu (self);
 
-	gtk_box_pack_start (GTK_BOX (priv->box), priv->pannable, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (priv->box), priv->scrollable, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (box_alignment), priv->box);
 	gtk_container_add (GTK_CONTAINER (self), box_alignment);
 
-	gtk_widget_show (priv->pannable);
+	gtk_widget_show (priv->scrollable);
 	gtk_widget_show (priv->box);
 	gtk_widget_show (box_alignment);
 
@@ -355,7 +355,7 @@ modest_accounts_window_new (void)
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
-	gtk_container_add (GTK_CONTAINER (priv->pannable), priv->account_view);
+	gtk_container_add (GTK_CONTAINER (priv->scrollable), priv->account_view);
 
 	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
 
@@ -587,7 +587,7 @@ row_count_changed (ModestAccountsWindow *self)
 		gtk_widget_show (priv->account_view);
 		g_debug ("%s: showing accounts view", __FUNCTION__);
 	}
-	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->pannable, 
+	gtk_container_child_set (GTK_CONTAINER(priv->box), priv->scrollable, 
 				 "expand", count > 0,
 				 "fill", count > 0,
 				 NULL);
@@ -675,23 +675,23 @@ static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	ModestAccountsWindowPrivate *priv;
-	HildonPannableArea *pannable;
+	ModestScrollable *scrollable;
 
 	if (event->type == GDK_KEY_RELEASE)
 		return FALSE;
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(user_data);
 
-	pannable = HILDON_PANNABLE_AREA (priv->pannable);
+	scrollable = MODEST_SCROLLABLE (priv->scrollable);
 
 	switch (event->keyval) {
 
 	case GDK_Up:
-		modest_maemo_utils_scroll_pannable(pannable, 0, -1);
+		modest_scrollable_scroll (scrollable, 0, -1);
 		break;
 
 	case GDK_Down:
-		modest_maemo_utils_scroll_pannable(pannable, 0, 1);
+		modest_scrollable_scroll (scrollable, 0, 1);
 		break;
 	}
 
