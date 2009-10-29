@@ -32,6 +32,7 @@
 
 #include <modest-platform.h>
 #include <modest-defs.h>
+#include <modest-scrollable.h>
 #include <modest-runtime.h>
 #include <modest-main-window.h>
 #include <modest-header-view.h>
@@ -689,11 +690,11 @@ folder_chooser_dialog_run (ModestFolderView *original,
 {
 	GtkWidget *folder_view;
 	FolderChooserData userdata = {NULL, NULL};
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	const gchar *visible_id = NULL;
 
 	userdata.dialog = gtk_dialog_new ();
-	pannable = hildon_pannable_area_new ();
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	folder_view = modest_platform_create_folder_view (NULL);
 
 	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM("ckdg_ti_change_folder"));
@@ -729,12 +730,12 @@ folder_chooser_dialog_run (ModestFolderView *original,
 	modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW(folder_view),
 								     visible_id);
 
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (userdata.dialog)->vbox), pannable);
-	gtk_container_add (GTK_CONTAINER (pannable), folder_view);
-	gtk_widget_set_size_request (pannable, -1, 320);
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (userdata.dialog)->vbox), scrollable);
+	gtk_container_add (GTK_CONTAINER (scrollable), folder_view);
+	gtk_widget_set_size_request (scrollable, -1, 320);
 
 	gtk_widget_show (folder_view);
-	gtk_widget_show (pannable);
+	gtk_widget_show (scrollable);
 	gtk_widget_show (userdata.dialog);
 	g_signal_connect (G_OBJECT (folder_view), "folder-activated", 
 			  G_CALLBACK (folder_chooser_activated), 
@@ -2687,7 +2688,7 @@ modest_platform_play_email_tone (void)
 #define MOVE_TO_DIALOG_BACK_BUTTON "back-button"
 #define MOVE_TO_DIALOG_ACTION_BUTTON "action-button"
 #define MOVE_TO_DIALOG_SHOWING_FOLDERS "showing-folders"
-#define MOVE_TO_DIALOG_PANNABLE "pannable"
+#define MOVE_TO_DIALOG_SCROLLABLE "scrollable"
 #define MOVE_TO_FOLDER_SEPARATOR "/"
 
 static void
@@ -2804,13 +2805,13 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 {
 	GtkWidget *back_button;
 	GtkWidget *folder_view;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *action_button;
 
         back_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON));
         action_button = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
         folder_view = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
-        pannable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
+        scrollable = GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SCROLLABLE));
 
 	gtk_widget_set_sensitive (back_button, FALSE);
 	gtk_widget_set_sensitive (action_button, FALSE);
@@ -2835,7 +2836,7 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 					 MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), 
 				       MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
-	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
+	modest_scrollable_jump_to (MODEST_SCROLLABLE (scrollable), 0, 0);
 }
 
 static void
@@ -2845,7 +2846,7 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	GtkWidget *folder_view;
 	TnyAccount *account;
 	const gchar *account_id;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *action_button;
 
         back_button =
@@ -2854,8 +2855,8 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 		GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON));
         folder_view =
 		GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW));
-        pannable =
-		GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE));
+        scrollable =
+		GTK_WIDGET (g_object_get_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SCROLLABLE));
 
 	gtk_widget_set_sensitive (back_button, TRUE);
 	gtk_widget_set_sensitive (action_button, TRUE);
@@ -2891,7 +2892,7 @@ move_to_dialog_show_folders (GtkWidget *dialog, TnyFolderStore *folder_store)
 	modest_folder_view_set_style (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_STYLE_SHOW_ONE);
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
 	modest_folder_view_unset_filter (MODEST_FOLDER_VIEW (folder_view), MODEST_FOLDER_VIEW_FILTER_HIDE_FOLDERS);
-	hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (pannable), 0, 0);
+	modest_scrollable_jump_to (MODEST_SCROLLABLE (scrollable), 0, 0);
 }
 
 static void
@@ -3062,8 +3063,8 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	gtk_widget_set_sensitive (GTK_WIDGET (action_button), FALSE);
 	gtk_box_pack_start (GTK_BOX (top_vbox), buttons_hbox, FALSE, FALSE, 0);
 
-	/* Create pannable and add it to the dialog */
-	folder_view_container = hildon_pannable_area_new ();
+	/* Create scrollable and add it to the dialog */
+	folder_view_container = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	gtk_container_add (GTK_CONTAINER (folder_view_container), *folder_view);
 	gtk_box_pack_start (GTK_BOX (top_vbox), folder_view_container, TRUE, TRUE, 0);
 
@@ -3085,7 +3086,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_FOLDER_VIEW, *folder_view);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_BACK_BUTTON, back_button);
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_ACTION_BUTTON, action_button);
-	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_PANNABLE, folder_view_container);
+	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SCROLLABLE, folder_view_container);
 
         /* Simulate the behaviour of a HildonPickerDialog by emitting
 	   a response when a folder is selected */
