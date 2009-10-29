@@ -206,37 +206,39 @@ have_hildon2=false
 have_gtk=false
 
 if test "$MODEST_TOOLKIT" = "detect"; then
-   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0 hildon-fm-2, have_hildon2=true, have_gtk=true)
+   PKG_CHECK_EXISTS(hildon-1 >= 2.1.0 hildon-fm-2, have_hildon2=true, have_hildon2=false)
+   PKG_CHECK_EXISTS(glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0, have_gtk=true, have_gtk=false)
    if test "x$have_hildon2" = "xtrue"; then
-      PKG_CHECK_MODULES(MODEST_HILDON_WIDGETS,hildon-1 hildon-fm-2)
-      hildonpkgs="hildon-1 hildon-fm-2"
       detected_toolkit=hildon2
       hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
-      echo "DETECTED HILDON 2 $have_hildon2."
+      echo "DETECTED HILDON 2 $have_hildon2 (API is $hildon_api)."
+   elif test "x$have_gtk" == "xtrue"; then
+      detected_toolkit=gtk
+      echo "DETECTED GTK."
    fi
    MODEST_TOOLKIT="$detected_toolkit"
    with_toolkit=$detected_toolkit
 fi
 
 dnl -------- TOOLKIT SELECTION: *HILDON API* -----------
-if test "$with_toolkit" = "hildon2"; then
+if test "x$with_toolkit" == "xhildon2"; then
+   hildonpkgs="hildon-1 hildon-fm-2"
+   hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
    AC_DEFINE_UNQUOTED(MODEST_HILDON_API, $hildon_api, ["the API version of hildon"])
    MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_HILDON_API=$hildon_api"
    MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_HILDON2"
-elif test "$with_toolkit" = "gtk"; then
+elif test "x$with_toolkit" == "xgtk"; then
      MODEST_PLUGIN_DEFINES="$MODEST_PLUGIN_DEFINES -DMODEST_TOOLKIT_GTK"
 fi
 
 dnl -------- TOOLKIT SELECTION: *TOOLKIT DIR* -----------
 if test "x$with_toolkit" == "xgtk"; then
-   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0)
+   PKG_CHECK_MODULES(MODEST_TOOLKIT,glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify)
    AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_GTK, 1, ["Whether modest is being build for the gtk toolkit."])
-   MODEST_TOOLKIT_DIR=gtke
-else
-   if test "$with_toolkit" = "hildon2"; then
-      AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
-      MODEST_TOOLKIT_DIR=hildon2
-   fi
+   MODEST_TOOLKIT_DIR=gtk
+elif test "$with_toolkit" = "hildon2"; then
+   AC_DEFINE_UNQUOTED(MODEST_TOOLKIT_HILDON2, 1, ["Whether modest is being build for the hildon2 toolkit."])
+   MODEST_TOOLKIT_DIR=hildon2
 fi
 AC_SUBST(MODEST_TOOLKIT)
 AC_SUBST(MODEST_TOOLKIT_DIR)
@@ -249,7 +251,7 @@ AC_SUBST(pluginpkgs)
 
 use_profile_data=false
 # Plugin packages must not include libcanberra and libprofile
-if test "$with_platform" = "maemo"; then
+if test "x$with_platform" == "xmaemo"; then
    hildonpkgs="$hildonpkgs libcanberra"
    AC_CHECK_HEADER([profiled/keys_nokia.h], use_profile_data=true, use_profile_data=false)
    if test "$use_profile_data" = "true"; then
