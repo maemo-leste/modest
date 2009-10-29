@@ -48,7 +48,7 @@ GType
 modest_toolkit_factory_get_type                       (void) G_GNUC_CONST;
 
 ModestToolkitFactory *
-modest_toolkit_factory_new                            (void);
+modest_toolkit_factory_get_instance                            (void);
 
 GtkWidget *
 modest_toolkit_factory_create_scrollable              (ModestToolkitFactory *self);

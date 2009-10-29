@@ -201,6 +201,13 @@ modest_runtime_get_platform_factory  (void)
 	return modest_singletons_get_platform_factory (_singletons);
 }
 
+ModestToolkitFactory*
+modest_runtime_get_toolkit_factory  (void)
+{
+	g_return_val_if_fail (_singletons, NULL);
+	return modest_singletons_get_toolkit_factory (_singletons);
+}
+
 ModestTnySendQueue*
 modest_runtime_get_send_queue  (TnyTransportAccount *account,
 				gboolean create)

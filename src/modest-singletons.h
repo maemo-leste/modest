@@ -39,6 +39,7 @@
 #include <modest-mail-operation-queue.h>
 #include <modest-cache-mgr.h>
 #include <modest-tny-platform-factory.h>
+#include <widgets/modest-toolkit-factory.h>
 #include "modest-plugin-factory.h"
 #include "widgets/modest-window-mgr.h"
 #include "modest-protocol-registry.h"
@@ -152,6 +153,18 @@ ModestCacheMgr*           modest_singletons_get_cache_mgr     (ModestSingletons 
  * Returns: the #TnyPlatformFactory singleton
  **/
 TnyPlatformFactory*       modest_singletons_get_platform_factory  (ModestSingletons *self);
+
+/**
+ * modest_singletons_get_toolkit_factory:
+ * @self: a valid #ModestSingletons instance
+ * 
+ * get the #TnyToolkitFactory singleton instance
+ * don't use this function directly, use the modest-runtime
+ * functions instead.
+ *
+ * Returns: the #ModestToolkitFactory singleton
+ **/
+ModestToolkitFactory*       modest_singletons_get_toolkit_factory  (ModestSingletons *self);
 
 
 /**

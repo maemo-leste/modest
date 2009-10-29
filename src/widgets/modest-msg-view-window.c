@@ -48,7 +48,8 @@
 #include <modest-tny-folder.h>
 #include <modest-text-utils.h>
 #include <modest-account-mgr-helpers.h>
-#include <hildon/hildon-pannable-area.h>
+#include <modest-toolkit-factory.h>
+#include <modest-scrollable.h>
 #include <hildon/hildon-picker-dialog.h>
 #include <hildon/hildon-app-menu.h>
 #include "modest-defs.h"
@@ -349,7 +350,7 @@ modest_msg_view_window_scroll_child (ModestMsgViewWindow *self,
 	}
 
 	if (step)
-		modest_maemo_utils_scroll_pannable((HildonPannableArea *) priv->main_scroll, 0, step);
+		modest_scrollable_scroll ((ModestScrollable *) priv->main_scroll, 0, step);
 
 	return (gboolean) step;
 }
@@ -547,17 +548,15 @@ init_window (ModestMsgViewWindow *obj)
 	priv->msg_view = GTK_WIDGET (tny_platform_factory_new_msg_view (modest_tny_platform_factory_get_instance ()));
 	modest_msg_view_set_shadow_type (MODEST_MSG_VIEW (priv->msg_view), GTK_SHADOW_NONE);
 	main_vbox = gtk_vbox_new  (FALSE, 6);
-	/****** HILDON2:START
-	 * create panning widget, and set parameters
-	 */
-	priv->main_scroll = hildon_pannable_area_new ();
+
+	priv->main_scroll = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
+	modest_scrollable_set_horizontal_policy (MODEST_SCROLLABLE (priv->main_scroll), GTK_POLICY_AUTOMATIC);
         g_object_set (G_OBJECT (priv->main_scroll),
-		      "mov-mode", HILDON_MOVEMENT_MODE_BOTH,
-		      "hovershoot-max", 0,
+		      "movement-mode", MODEST_MOVEMENT_MODE_BOTH,
+		      "horizontal-max-overshoot", 0,
 		      NULL);
 	gtk_container_add (GTK_CONTAINER (priv->main_scroll), priv->msg_view);
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->main_scroll, TRUE, TRUE, 0);
-	/****** HILDON2:END */
 	gtk_container_add   (GTK_CONTAINER(obj), main_vbox);
 
 	/* NULL-ize fields if the window is destroyed */

@@ -44,7 +44,7 @@ G_DEFINE_TYPE    (ModestToolkitFactory,
 		  G_TYPE_OBJECT);
 
 ModestToolkitFactory *
-modest_toolkit_factory_new                            (void)
+modest_toolkit_factory_get_instance                            (void)
 {
     GObject* self = g_object_new (MODEST_TYPE_TOOLKIT_FACTORY, NULL);
 

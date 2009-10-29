@@ -55,6 +55,7 @@ struct _ModestSingletonsPrivate {
 	ModestWindowMgr           *window_mgr;
 	ModestProtocolRegistry    *protocol_registry;
 	ModestPluginFactory   *plugin_factory;
+	ModestToolkitFactory      *toolkit_factory;
 	TnyStreamCache            *images_cache;
 };
 #define MODEST_SINGLETONS_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -116,6 +117,7 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->window_mgr      = NULL;
 	priv->protocol_registry = NULL;
 	priv->plugin_factory = NULL;
+	priv->toolkit_factory = NULL;
 
 	priv->protocol_registry = modest_protocol_registry_new ();
 	if (!priv->protocol_registry) {
@@ -146,6 +148,12 @@ modest_singletons_init (ModestSingletons *obj)
 	priv->platform_fact  = modest_tny_platform_factory_get_instance ();
 	if (!priv->platform_fact) {
 		g_printerr ("modest: cannot create platform factory instance\n");
+		return;
+	}
+
+	priv->toolkit_factory  = modest_toolkit_factory_get_instance ();
+	if (!priv->toolkit_factory) {
+		g_printerr ("modest: cannot create toolkit factory instance\n");
 		return;
 	}
 
@@ -352,6 +360,13 @@ modest_singletons_get_platform_factory (ModestSingletons *self)
 {
 	g_return_val_if_fail (self, NULL);
 	return MODEST_SINGLETONS_GET_PRIVATE(self)->platform_fact;
+}
+
+ModestToolkitFactory*
+modest_singletons_get_toolkit_factory (ModestSingletons *self)
+{
+	g_return_val_if_fail (self, NULL);
+	return MODEST_SINGLETONS_GET_PRIVATE(self)->toolkit_factory;
 }
 
 ModestWindowMgr* 

@@ -216,6 +216,29 @@ modest_scrollable_base_init (gpointer g_iface)
 									G_PARAM_READWRITE |
 									G_PARAM_CONSTRUCT));
 
+		g_object_interface_install_property (g_iface,
+						     g_param_spec_enum ("movement_mode",
+									"Directions scroll is allowed",
+									"Movements allowed in the scrollable",
+									MODEST_TYPE_MOVEMENT_MODE,
+									MODEST_MOVEMENT_MODE_VERTICAL,
+									G_PARAM_READWRITE |
+									G_PARAM_CONSTRUCT));
+
+		g_object_interface_install_property (g_iface,
+						     g_param_spec_int ("horizontal-max-overshoot",
+								       "Horizontal max overshoot",
+								       "Horizontal maximum overshoot (0 disables)",
+								       0, G_MAXINT, 150,
+								       G_PARAM_READWRITE |G_PARAM_CONSTRUCT));
+
+		g_object_interface_install_property (g_iface,
+						     g_param_spec_int ("vertical-max-overshoot",
+								       "Vertical max overshoot",
+								       "Vertical maximum overshoot (0 disables)",
+								       0, G_MAXINT, 150,
+								       G_PARAM_READWRITE |G_PARAM_CONSTRUCT));
+
 
 	}
 }
@@ -247,4 +270,59 @@ modest_scrollable_get_type (void)
 	}
 
 	return type;
+}
+
+void
+modest_scrollable_scroll (ModestScrollable *scrollable, 
+			  gint horizontal, gint vertical)
+{
+	g_return_if_fail (MODEST_IS_SCROLLABLE (scrollable));
+	gint h_pos = -1;
+	gint v_pos = -1;
+
+	g_assert (scrollable);
+	/* at atleast one of values have to be valid */
+	g_return_if_fail (h_pos == -1 && v_pos == -1);
+
+	if (horizontal != 0) {
+		GtkAdjustment *h_adj;
+
+		h_adj = modest_scrollable_get_hadjustment (scrollable);
+		g_return_if_fail (h_adj);
+
+		h_pos = h_adj->value + h_adj->step_increment * horizontal;
+		if (horizontal > 0) {
+			h_pos += h_adj->page_size;
+		}
+	}
+
+	if (vertical != 0) {
+		GtkAdjustment *v_adj;
+
+		v_adj = modest_scrollable_get_vadjustment (scrollable);
+		g_return_if_fail (v_adj);
+
+		v_pos = v_adj->value + v_adj->step_increment * vertical;
+		if (vertical > 0) {
+			v_pos += v_adj->page_size;
+		}
+	}
+
+	modest_scrollable_scroll_to (scrollable, h_pos, v_pos);
+}
+
+GType
+modest_movement_mode_get_type (void)
+{
+  static GType etype = 0;
+  if (etype == 0) {
+    static const GFlagsValue values[] = {
+	    { MODEST_MOVEMENT_MODE_HORIZONTAL, "HILDON_MOVEMENT_MODE_HORIZONTAL", "horizontal" },
+	    { MODEST_MOVEMENT_MODE_VERTICAL, "MODEST_MOVEMENT_MODE_VERTICAL", "vertical" },
+	    { MODEST_MOVEMENT_MODE_BOTH, "MODEST_MOVEMENT_MODE_BOTH", "both" },
+	    { 0, NULL, NULL }
+    };
+    etype = g_flags_register_static ("ModestMovementMode", values);
+  }
+  return etype;
 }

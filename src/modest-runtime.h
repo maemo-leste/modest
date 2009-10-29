@@ -45,6 +45,7 @@
 #include <modest-protocol-registry.h>
 #include <tny-stream-cache.h>
 #include <modest-plugin-factory.h>
+#include <widgets/modest-toolkit-factory.h>
 
 G_BEGIN_DECLS
 
@@ -182,8 +183,14 @@ TnyDevice*                    modest_runtime_get_device     (void);
  **/
 TnyPlatformFactory*           modest_runtime_get_platform_factory     (void);
 
-
-
+/**
+ * modest_runtime_get_toolkit_factory:
+ * 
+ * get the #ModestToolkitFactory singleton instance
+ *
+ * Returns: the #ModestToolkitFactory singleton. This should NOT be unref'd.
+ **/
+ModestToolkitFactory*           modest_runtime_get_toolkit_factory     (void);
 
 /**
  * modest_runtime_get_mail_operation_queue:

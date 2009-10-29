@@ -70,6 +70,9 @@ enum {
 	PROP_0,
 	PROP_HORIZONTAL_POLICY,
 	PROP_VERTICAL_POLICY,
+	PROP_MOVEMENT_MODE,
+	PROP_HORIZONTAL_MAX_OVERSHOOT,
+	PROP_VERTICAL_MAX_OVERSHOOT,
 };
 
 /* globals */
@@ -131,6 +134,31 @@ modest_hildon_pannable_area_scrollable_class_init (ModestHildonPannableAreaScrol
 							    GTK_POLICY_AUTOMATIC,
 							    G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 
+	g_object_class_install_property (gobject_class,
+					 PROP_MOVEMENT_MODE,
+					 g_param_spec_enum ("movement_mode",
+							    "Directions scroll is allowed",
+							    "Movements allowed in the scrollable",
+							    MODEST_TYPE_MOVEMENT_MODE,
+							    MODEST_MOVEMENT_MODE_VERTICAL,
+							    G_PARAM_READWRITE |
+							    G_PARAM_CONSTRUCT));
+
+	g_object_class_install_property (gobject_class,
+					 PROP_HORIZONTAL_MAX_OVERSHOOT,
+					 g_param_spec_int ("horizontal-max-overshoot",
+							   "Horizontal max overshoot",
+							   "Horizontal maximum overshoot (0 disables)",
+							   0, G_MAXINT, 150,
+							   G_PARAM_READWRITE |G_PARAM_CONSTRUCT));
+
+	g_object_class_install_property (gobject_class,
+					 PROP_VERTICAL_MAX_OVERSHOOT,
+					 g_param_spec_int ("vertical-max-overshoot",
+							   "Vertical max overshoot",
+							   "Vertical maximum overshoot (0 disables)",
+							   0, G_MAXINT, 150,
+							   G_PARAM_READWRITE |G_PARAM_CONSTRUCT));
 }
 
 static void
@@ -167,6 +195,8 @@ modest_hildon_pannable_area_scrollable_get_property (GObject *obj,
 						     GParamSpec *pspec)
 {
 	GtkPolicyType policy;
+	HildonMovementMode mov_mode;
+	gint overshoot;
 
 	switch (prop_id) {
 	case PROP_VERTICAL_POLICY:
@@ -176,6 +206,29 @@ modest_hildon_pannable_area_scrollable_get_property (GObject *obj,
 	case PROP_HORIZONTAL_POLICY:
 		g_object_get (obj, "hscrollbar-policy", &policy, NULL);
 		g_value_set_enum (value, policy);
+		break;
+	case PROP_MOVEMENT_MODE:
+		g_object_get (obj, "mov-mode", &mov_mode, NULL);
+		switch (mov_mode) {
+		case HILDON_MOVEMENT_MODE_HORIZ:
+			g_value_set_enum (value, MODEST_MOVEMENT_MODE_HORIZONTAL);
+			break;
+		case HILDON_MOVEMENT_MODE_BOTH:
+			g_value_set_enum (value, MODEST_MOVEMENT_MODE_BOTH);
+			break;
+		default:
+		case HILDON_MOVEMENT_MODE_VERT:
+			g_value_set_enum (value, MODEST_MOVEMENT_MODE_VERTICAL);
+			break;
+		}
+		break;
+	case PROP_HORIZONTAL_MAX_OVERSHOOT:
+		g_object_get (obj, "hovershoot-max", &overshoot, NULL);
+		g_value_set_int (value, overshoot);
+		break;
+	case PROP_VERTICAL_MAX_OVERSHOOT:
+		g_object_get (obj, "vovershoot-max", &overshoot, NULL);
+		g_value_set_int (value, overshoot);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, prop_id, pspec);
@@ -190,6 +243,8 @@ modest_hildon_pannable_area_scrollable_set_property (GObject *obj,
 						     GParamSpec *pspec)
 {
 	GtkPolicyType policy;
+	ModestMovementMode mov_mode;
+	gint overshoot;
 
 	switch (prop_id) {
 	case PROP_VERTICAL_POLICY:
@@ -199,6 +254,29 @@ modest_hildon_pannable_area_scrollable_set_property (GObject *obj,
 	case PROP_HORIZONTAL_POLICY:
 		policy = g_value_get_enum (value);
 		g_object_set (obj, "hscrollbar-policy", policy, NULL);
+		break;
+	case PROP_MOVEMENT_MODE:
+		mov_mode = g_value_get_enum (value);
+		switch (mov_mode) {
+		case MODEST_MOVEMENT_MODE_HORIZONTAL:
+			g_object_set (obj, "mov-mode", HILDON_MOVEMENT_MODE_HORIZ, NULL);
+			break;
+		case HILDON_MOVEMENT_MODE_BOTH:
+			g_object_set (obj, "mov-mode", HILDON_MOVEMENT_MODE_BOTH, NULL);
+			break;
+		default:
+		case MODEST_MOVEMENT_MODE_VERTICAL:
+			g_object_set (obj, "mov-mode", HILDON_MOVEMENT_MODE_VERT, NULL);
+			break;
+		}
+		break;
+	case PROP_HORIZONTAL_MAX_OVERSHOOT:
+		overshoot = g_value_get_int (value);
+		g_object_set (obj, "hovershoot-max", overshoot, NULL);
+		break;
+	case PROP_VERTICAL_MAX_OVERSHOOT:
+		overshoot = g_value_get_int (value);
+		g_object_set (obj, "vovershoot-max", overshoot, NULL);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, prop_id, pspec);

@@ -59,12 +59,28 @@ struct _ModestScrollableIface
 	void (*set_horizontal_policy) (ModestScrollable *self, GtkPolicyType policy);
 
 	/* properties */
-	/* hscrollbar-policy; */
-	/* vscrollbar-policy; */	
+	/* horizontal-policy; */
+	/* vertical-policy; */
+	/* movement-mode */
+	/* horizontal-max-overshoot */
+	/* vertical-max-overshoot */
+	
 };
 
 GType modest_scrollable_get_type (void);
 
+typedef enum {
+  MODEST_MOVEMENT_MODE_HORIZONTAL = 1 << 1,
+  MODEST_MOVEMENT_MODE_VERTICAL = 1 << 2,
+  MODEST_MOVEMENT_MODE_BOTH = 0x000006
+} ModestMovementMode;
+
+
+GType modest_movement_mode_get_type (void);
+#define MODEST_TYPE_MOVEMENT_MODE (modest_movement_mode_get_type())
+
+
+/* virtual methods */
 void modest_scrollable_add_with_viewport (ModestScrollable *self, GtkWidget *widget);
 GtkAdjustment * modest_scrollable_get_vadjustment (ModestScrollable *self);
 GtkAdjustment * modest_scrollable_get_hadjustment (ModestScrollable *self);
@@ -74,6 +90,9 @@ GtkPolicyType modest_scrollable_get_vertical_policy (ModestScrollable *self);
 GtkPolicyType modest_scrollable_get_horizontal_policy (ModestScrollable *self);
 void modest_scrollable_set_vertical_policy (ModestScrollable *self, GtkPolicyType policy);
 void modest_scrollable_set_horizontal_policy (ModestScrollable *self, GtkPolicyType policy);
+
+/* utils */
+void modest_scrollable_scroll (ModestScrollable *self, gint horizontal, gint vertical);
 
 G_END_DECLS
 
