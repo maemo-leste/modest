@@ -35,7 +35,7 @@
 #include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
 #include <hildon/hildon-entry.h>
 #include <modest-ui-constants.h>
 #include <gtk/gtkbutton.h>
@@ -353,7 +353,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 {
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv; 
 	GtkWidget *dialog_box;
-	GtkWidget *pannable, *vbox, *align;
+	GtkWidget *scrollable, *vbox, *align;
 	gchar *server_label;
 
 	/* The title of this dialog is quite long, so make the window wide enough */
@@ -475,11 +475,10 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 
 	priv->account_name = NULL;
 
-	pannable = hildon_pannable_area_new ();
-	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	gtk_container_add (GTK_CONTAINER (align), vbox);
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
-	gtk_box_pack_start (GTK_BOX (dialog_box), pannable, TRUE, TRUE, 0);
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), align);
+	gtk_box_pack_start (GTK_BOX (dialog_box), scrollable, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (dialog_box);
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
