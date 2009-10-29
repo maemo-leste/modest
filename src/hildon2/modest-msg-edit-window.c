@@ -64,7 +64,7 @@
 #include <tny-simple-list.h>
 #include <modest-wp-text-view.h>
 #include <wptextbuffer.h>
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
 #include <hildon/hildon-touch-selector.h>
 #include <hildon/hildon-picker-dialog.h>
 #include "modest-msg-edit-window-ui-dimming.h"
@@ -297,7 +297,7 @@ struct _ModestMsgEditWindowPrivate {
 
 	GtkWidget   *font_dialog;
 
-	GtkWidget   *pannable;
+	GtkWidget   *scrollable;
 	guint        correct_scroll_idle;
 	guint        scroll_drag_timeout_id;
 	gdouble      last_upper;
@@ -617,7 +617,7 @@ correct_scroll_without_drag_check_idle (gpointer userdata)
 	offset_min = priv->msg_body->allocation.y + rectangle.y;
 	offset_max = offset_min + rectangle.height;
 
-	vadj = hildon_pannable_area_get_vadjustment (HILDON_PANNABLE_AREA (priv->pannable));
+	vadj = modest_scrollable_get_vadjustment (MODEST_SCROLLABLE (priv->scrollable));
 	offset_min = MAX (offset_min - 48, 0);
 	offset_max = MIN (offset_max + 48, vadj->upper);
 
@@ -1008,9 +1008,9 @@ init_window (ModestMsgEditWindow *obj)
 
 /* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
 
-	priv->pannable = hildon_pannable_area_new ();
+	priv->scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
-	g_object_set (G_OBJECT (priv->pannable), "hscrollbar-policy", GTK_POLICY_NEVER, NULL);
+	g_object_set (G_OBJECT (priv->scrollable), "horizontal-policy", GTK_POLICY_NEVER, NULL);
 	
 	main_vbox = gtk_vbox_new  (FALSE, DEFAULT_MAIN_VBOX_SPACING);
 	window_align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
@@ -1020,13 +1020,13 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_box_pack_start (GTK_BOX(main_vbox), priv->msg_body, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (window_align), main_vbox);
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (priv->pannable), window_align);
-	gtk_widget_show_all (GTK_WIDGET(priv->pannable));
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (priv->scrollable), window_align);
+	gtk_widget_show_all (GTK_WIDGET(priv->scrollable));
 	
 	window_box = gtk_vbox_new (FALSE, 0);
 	gtk_container_add (GTK_CONTAINER(obj), window_box);
 
-	gtk_box_pack_start (GTK_BOX (window_box), priv->pannable, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (window_box), priv->scrollable, TRUE, TRUE, 0);
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG); 
