@@ -60,6 +60,8 @@
 #include "modest-maemo-security-options-view.h"
 #include "modest-account-protocol.h"
 #include "modest-address-book.h"
+#include <modest-scrollable.h>
+#include <modest-toolkit-factory.h>
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -417,12 +419,12 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	GtkWidget *align;
 	GtkWidget *label;
 	GtkWidget *privacy_note;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	ModestEasysetupWizardDialogPrivate *priv;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	pannable = hildon_pannable_area_new ();
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	label = gtk_label_new(_("mcen_ia_emailsetup_intro"));
 	privacy_note = gtk_label_new (_("mcen_ia_privacy_notice"));
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
@@ -441,12 +443,12 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (label);
 	gtk_widget_show (privacy_note);
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), align);
 	gtk_widget_show (GTK_WIDGET (box));
 	gtk_widget_show (GTK_WIDGET (align));
-	gtk_widget_show (pannable);
+	gtk_widget_show (scrollable);
 
-	return GTK_WIDGET (pannable);
+	return GTK_WIDGET (scrollable);
 }
 
 static void
@@ -918,7 +920,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate* priv;
 	GtkWidget *box;
 	GtkWidget *align;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *label;
 	GtkSizeGroup *title_sizegroup;
 	GtkSizeGroup *value_sizegroup;
@@ -927,7 +929,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-	pannable = hildon_pannable_area_new ();
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
 	/* Show note that account type cannot be changed in future: */
 	label = gtk_label_new (_("mcen_ia_emailsetup_account_type"));
@@ -1004,9 +1006,9 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), align);
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_widget_show (pannable);
+	gtk_widget_show (scrollable);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
@@ -1016,7 +1018,7 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 			  G_CALLBACK(on_easysetup_changed), self);
 
 
-	return GTK_WIDGET (pannable);
+	return GTK_WIDGET (scrollable);
 }
 
 static void
@@ -1074,11 +1076,11 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
 	gchar *smtp_caption_label;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *align;
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 
-	pannable = hildon_pannable_area_new ();
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.
@@ -1151,9 +1153,9 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), box);
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), align);
 	gtk_widget_show (GTK_WIDGET (box));
-	gtk_widget_show (pannable);
+	gtk_widget_show (scrollable);
 
 	g_object_unref (title_sizegroup);
 	g_object_unref (value_sizegroup);
@@ -1164,7 +1166,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	g_signal_connect (G_OBJECT (priv->checkbox_outgoing_smtp_specific), "toggled",
 			  G_CALLBACK (on_easysetup_changed), self);
 
-	return GTK_WIDGET (pannable);
+	return GTK_WIDGET (scrollable);
 }
 
 static gboolean
