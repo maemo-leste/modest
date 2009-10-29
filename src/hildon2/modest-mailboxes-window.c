@@ -28,7 +28,7 @@
  */
 
 #include <modest-mailboxes-window.h>
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
 #include <modest-window-mgr.h>
 #include <modest-signal-mgr.h>
 #include <modest-runtime.h>
@@ -270,7 +270,7 @@ modest_mailboxes_window_new (const gchar *account)
 	ModestMailboxesWindowPrivate *priv = NULL;
 	HildonProgram *app;
 	GdkPixbuf *window_icon;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *action_area_box;
 	GdkPixbuf *new_message_pixbuf;
 	guint accel_key;
@@ -281,7 +281,7 @@ modest_mailboxes_window_new (const gchar *account)
 	self  = MODEST_MAILBOXES_WINDOW(g_object_new(MODEST_TYPE_MAILBOXES_WINDOW, NULL));
 	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(self);
 
-	pannable = hildon_pannable_area_new ();
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	priv->queue_change_handler =
 		g_signal_connect (G_OBJECT (modest_runtime_get_mail_operation_queue ()),
 				  "queue-changed",
@@ -316,13 +316,13 @@ modest_mailboxes_window_new (const gchar *account)
 				   0, 0, 
 				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 
-	gtk_container_add (GTK_CONTAINER (pannable), priv->folder_view);
-	gtk_box_pack_end (GTK_BOX (priv->top_vbox), pannable, TRUE, TRUE, 0);
+	gtk_container_add (GTK_CONTAINER (scrollable), priv->folder_view);
+	gtk_box_pack_end (GTK_BOX (priv->top_vbox), scrollable, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (top_alignment), priv->top_vbox);
 	gtk_container_add (GTK_CONTAINER (self), top_alignment);
 
 	gtk_widget_show (priv->folder_view);
-	gtk_widget_show (pannable);
+	gtk_widget_show (scrollable);
 	gtk_widget_show (top_alignment);
 	gtk_widget_show (priv->top_vbox);
 
@@ -619,23 +619,23 @@ static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	ModestMailboxesWindowPrivate *priv;
-	HildonPannableArea *pannable;
+	ModestScrollable *scrollable;
 
 	if (event->type == GDK_KEY_RELEASE)
 		return FALSE;
 
 	priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE(user_data);
 
-	pannable = HILDON_PANNABLE_AREA (gtk_widget_get_parent (priv->folder_view));
+	scrollable = MODEST_SCROLLABLE (gtk_widget_get_parent (priv->folder_view));
 
 	switch (event->keyval) {
 
 	case GDK_Up:
-		modest_maemo_utils_scroll_pannable(pannable, 0, -1);
+		modest_scrollable_scroll (scrollable, 0, -1);
 		break;
 
 	case GDK_Down:
-		modest_maemo_utils_scroll_pannable(pannable, 0, 1);
+		modest_scrollable_scroll (scrollable, 0, 1);
 		break;
 	}
 

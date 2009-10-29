@@ -28,8 +28,8 @@
  */
 
 #include <modest-header-window.h>
-#include <hildon/hildon-pannable-area.h>
-#include <hildon/hildon-helper.h>
+#include <hildon/hildon.h>
+#include <modest-scrollable.h>
 #include <modest-window-mgr.h>
 #include <modest-window-priv.h>
 #include <modest-signal-mgr.h>
@@ -45,9 +45,6 @@
 #include <modest-ui-actions.h>
 #include <modest-platform.h>
 #include <modest-text-utils.h>
-#include <hildon/hildon-button.h>
-#include <hildon/hildon-program.h>
-#include <hildon/hildon-banner.h>
 #include <modest-ui-dimming-rules.h>
 #include <modest-tny-folder.h>
 #include <tny-simple-list.h>
@@ -147,9 +144,16 @@ static gboolean on_expose_event(GtkTreeView *header_view,
 static gboolean on_map_event (GtkWidget *widget,
 			      GdkEvent *event,
 			      gpointer userdata);
+#ifdef MODEST_TOOLKIT_HILDON2
 static void on_vertical_movement (HildonPannableArea *area,
 				  HildonMovementDirection direction,
 				  gdouble x, gdouble y, gpointer user_data);
+static void on_horizontal_movement (HildonPannableArea *hildonpannable,
+				    gint                direction,
+				    gdouble             initial_x,
+				    gdouble             initial_y,
+				    gpointer            user_data);
+#endif
 static void on_queue_changed    (ModestMailOperationQueue *queue,
 				 ModestMailOperation *mail_op,
 				 ModestMailOperationQueueNotification type,
@@ -167,11 +171,6 @@ static void update_progress_hint (ModestHeaderWindow *self);
 static void on_sort_column_changed (GtkTreeSortable *treesortable,
 				    gpointer         user_data);
 static void update_sort_button (ModestHeaderWindow *self);
-static void on_horizontal_movement (HildonPannableArea *hildonpannable,
-				    gint                direction,
-				    gdouble             initial_x,
-				    gdouble             initial_y,
-				    gpointer            user_data);
 static void on_header_view_model_destroyed (gpointer user_data,
 					    GObject *model);
 static gboolean on_key_press(GtkWidget *widget,
@@ -395,13 +394,16 @@ connect_signals (ModestHeaderWindow *self)
 					   "map-event",
 					   G_CALLBACK (on_map_event),
 					   self);
-
-	priv->sighandlers =
-		modest_signal_mgr_connect (priv->sighandlers,
-					   G_OBJECT (priv->contents_view), 
-					   "vertical-movement", 
-					   G_CALLBACK (on_vertical_movement), 
-					   self);
+#ifdef MODEST_TOOLKIT_HILDON2
+	if (HILDON_IS_PANNABLE_AREA (priv->contents_view)) {
+		priv->sighandlers =
+			modest_signal_mgr_connect (priv->sighandlers,
+						   G_OBJECT (priv->contents_view), 
+						   "vertical-movement", 
+						   G_CALLBACK (on_vertical_movement), 
+						   self);
+	}
+#endif
 
 	/* Mail Operation Queue */
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
@@ -414,16 +416,20 @@ connect_signals (ModestHeaderWindow *self)
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	/* Delete using horizontal gesture */
 	/* DISABLED because it's unreliabile */
-	if (FALSE) {
-		priv->sighandlers =
-			modest_signal_mgr_connect (priv->sighandlers,
-						   (GObject *) priv->contents_view,
-						   "horizontal-movement",
-						   G_CALLBACK (on_horizontal_movement),
-						   self);
+	if (HILDON_IS_PANNABLE_AREA (priv->contents_view)) {
+		if (FALSE) {
+			priv->sighandlers =
+				modest_signal_mgr_connect (priv->sighandlers,
+							   (GObject *) priv->contents_view,
+							   "horizontal-movement",
+							   G_CALLBACK (on_horizontal_movement),
+							   self);
+		}
 	}
+#endif
 
 
 	g_signal_connect(G_OBJECT(self), "key-press-event",
@@ -723,6 +729,7 @@ create_empty_view (ModestWindow *self)
 	return viewport;
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_vertical_movement (HildonPannableArea *area,
 		      HildonMovementDirection direction,
@@ -733,7 +740,7 @@ on_vertical_movement (HildonPannableArea *area,
 
 	priv->autoscroll = FALSE;
 }
-
+#endif
 
 ModestWindow *
 modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gchar *mailbox)
@@ -753,7 +760,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	self  = MODEST_HEADER_WINDOW(g_object_new(MODEST_TYPE_HEADER_WINDOW, NULL));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(self);
 
-	priv->contents_view = hildon_pannable_area_new ();
+	priv->contents_view = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment),
 				   HILDON_MARGIN_HALF, 0,
@@ -1143,7 +1150,7 @@ on_expose_event(GtkTreeView *header_view,
 	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW (self), FALSE);
 
 	if (priv->autoscroll)
-		hildon_pannable_area_jump_to (HILDON_PANNABLE_AREA (priv->contents_view), 0.0, 0.0);
+		modest_scrollable_jump_to (MODEST_SCROLLABLE (priv->contents_view), 0.0, 0.0);
 
 	return FALSE;
 }
@@ -1450,6 +1457,7 @@ update_sort_button (ModestHeaderWindow *self)
 	hildon_button_set_value (HILDON_BUTTON (priv->sort_button), value?value:"");
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_horizontal_movement (HildonPannableArea *hildonpannable,
 			gint                direction,
@@ -1484,13 +1492,13 @@ on_horizontal_movement (HildonPannableArea *hildonpannable,
 		g_object_unref (header);
 	}
 }
-
+#endif
 
 static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	ModestHeaderWindowPrivate *priv;
-	HildonPannableArea *pannable;
+	ModestScrollable *scrollable;
 	/* FIXME: set scroll_speed depends on for how long the key was pressed */
 	gint scroll_speed = 3;
 
@@ -1499,18 +1507,18 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE(user_data);
 
-	pannable = HILDON_PANNABLE_AREA (priv->contents_view);
+	scrollable = MODEST_SCROLLABLE (priv->contents_view);
 
 	switch (event->keyval) {
 
 	case GDK_Up:
 		priv->autoscroll = FALSE;
-		modest_maemo_utils_scroll_pannable(pannable, 0, -scroll_speed);
+		modest_scrollable_scroll (scrollable, 0, -scroll_speed);
 		break;
 
 	case GDK_Down:
 		priv->autoscroll = FALSE;
-		modest_maemo_utils_scroll_pannable(pannable, 0, scroll_speed);
+		modest_scrollable_scroll (scrollable, 0, scroll_speed);
 		break;
 	}
 
