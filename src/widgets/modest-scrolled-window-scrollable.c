@@ -91,7 +91,9 @@ G_DEFINE_TYPE_EXTENDED    (ModestScrolledWindowScrollable,
 GtkWidget *
 modest_scrolled_window_scrollable_new                            (void)
 {
-	GtkWidget *scrollable = g_object_new (MODEST_TYPE_SCROLLED_WINDOW_SCROLLABLE, 
+	GtkWidget *scrollable = g_object_new (MODEST_TYPE_SCROLLED_WINDOW_SCROLLABLE,
+					      "hscrollbar-policy", GTK_POLICY_NEVER,
+					      "vscrollbar-policy", GTK_POLICY_AUTOMATIC,
 					      NULL);
 
     return scrollable;
