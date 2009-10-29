@@ -28,7 +28,11 @@
  */
 
 #include <glib/gi18n.h>
+#ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-hildon-pannable-area-scrollable.h>
+#else
+#include <modest-scrolled-window-scrollable.h>
+#endif
 #include "modest-toolkit-factory.h"
 
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
@@ -73,5 +77,9 @@ modest_toolkit_factory_create_scrollable (ModestToolkitFactory *self)
 static GtkWidget *
 modest_toolkit_factory_create_scrollable_default (ModestToolkitFactory *self)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
 	return modest_hildon_pannable_area_scrollable_new ();
+#else
+	return modest_scrolled_window_scrollable_new ();
+#endif
 }
