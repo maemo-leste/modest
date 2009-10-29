@@ -38,7 +38,6 @@
 #include "widgets/modest-global-settings-dialog.h"
 #include "widgets/modest-validating-entry.h"
 #include <hildon/hildon-gtk.h>
-#include <hildon/hildon-pannable-area.h>
 
 #define MODEST_MAEMO_UTILS_MYDOCS_ENV "MYDOCSDIR"
 #define MODEST_MAEMO_UTILS_DEFAULT_IMAGE_FOLDER ".images"
@@ -158,21 +157,6 @@ gboolean   modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *at
  **/
 gboolean modest_maemo_utils_in_usb_mode ();
 #endif
-
-/**
- * modest_maemo_utils_scroll_pannable:
- * @pannable: a #HildonPannableArea
- * @horizontal: the amount to scroll in horizontal direction
- * @vertical: the amount to scroll in vertical direction
- *
- * Performs some scrolling over a pannable area. The amount of
- * scrolling is expressed in step_increments of the pannable area
- * GtkAdjustments
- **/
-void
-modest_maemo_utils_scroll_pannable(HildonPannableArea *pannable,
-				   gint horizontal,
-				   gint vertical);
 
 /**
  * modest_heartbeat_add:

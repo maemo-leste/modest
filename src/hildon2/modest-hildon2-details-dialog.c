@@ -43,8 +43,9 @@
 #include <modest-tny-account.h>
 #include <modest-text-utils.h>
 #include "modest-hildon2-details-dialog.h"
-#include <hildon/hildon-pannable-area.h>
+#include <modest-scrollable.h>
 #include <modest-ui-constants.h>
+#include <modest-runtime.h>
 
 static void modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *self);
 
@@ -131,7 +132,7 @@ static void
 modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *self)
 {
 	ModestHildon2DetailsDialogPrivate *priv;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *align;
 
 	priv = MODEST_HILDON2_DETAILS_DIALOG_GET_PRIVATE (self);
@@ -145,11 +146,11 @@ modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *sel
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 
-	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	gtk_container_add (GTK_CONTAINER (align), priv->props_table);
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), 
-						GTK_WIDGET (align));
-	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), pannable);
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), 
+					     GTK_WIDGET (align));
+	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), scrollable);
 
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
 }

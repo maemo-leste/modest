@@ -52,7 +52,6 @@
 #include <tny-camel-pop-folder.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-accounts-window.h>
-#include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-gtk.h>
 #include <modest-header-window.h>
 #include <modest-folder-window.h>

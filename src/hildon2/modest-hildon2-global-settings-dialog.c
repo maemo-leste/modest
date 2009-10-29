@@ -32,6 +32,7 @@
 #endif /*HAVE_CONFIG_H*/
 
 #include <modest-hildon-includes.h>
+#include <modest-scrollable.h>
 #include <modest-maemo-utils.h>
 
 #include <glib/gi18n.h>
@@ -44,7 +45,6 @@
 #include "modest-runtime.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
 #include "modest-selector-picker.h"
-#include "hildon/hildon-pannable-area.h"
 #include "modest-hildon2-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
 #include "modest-text-utils.h"
@@ -196,7 +196,7 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	GtkSizeGroup *title_size_group;
 	GtkSizeGroup *value_size_group;
 	ModestGlobalSettingsDialogPrivate *ppriv;
-	GtkWidget *pannable, *separator;
+	GtkWidget *scrollable, *separator;
 	ModestHildon2GlobalSettingsDialogPrivate *priv;
 
 	priv = MODEST_HILDON2_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
@@ -286,16 +286,16 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 					       ppriv->update_interval);
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->update_interval, FALSE, FALSE, 0);
 
-	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), vbox);
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), vbox);
 	gtk_widget_show (vbox);
-	gtk_widget_show (pannable);
+	gtk_widget_show (scrollable);
 
 	g_object_unref (title_size_group);
 	g_object_unref (value_size_group);
 
-	return pannable;
+	return scrollable;
 }
 
 

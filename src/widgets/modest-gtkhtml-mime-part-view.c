@@ -288,7 +288,7 @@ modest_gtkhtml_mime_part_view_init (ModestGtkhtmlMimePartView *self)
 	gtk_html_set_blocking        (GTK_HTML(self), TRUE);
 	gtk_html_set_images_blocking (GTK_HTML(self), TRUE);
 	/* We don't need this for Hildon2 as this widget will be most
-	   likely inside pannable area */
+	   likely inside scrollable area */
 #ifndef MODEST_TOOLKIT_HILDON2
 #ifndef MODEST_TOOLKIT_GTK
         gtk_html_set_auto_panning    (GTK_HTML (self), TRUE);

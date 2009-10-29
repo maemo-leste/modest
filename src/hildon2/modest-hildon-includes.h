@@ -75,7 +75,6 @@
 #include <hildon/hildon-entry.h>
 #include <hildon/hildon-picker-button.h>
 #include <hildon/hildon-check-button.h>
-#include <hildon/hildon-pannable-area.h>
 #include <hildon/hildon-stackable-window.h>
 #include <hildon/hildon-text-view.h>
 
