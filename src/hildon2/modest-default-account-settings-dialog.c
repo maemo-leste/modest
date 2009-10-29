@@ -56,6 +56,7 @@
 #include "widgets/modest-ui-constants.h"
 #include <tny-account.h>
 #include <tny-status.h>
+#include <modest-scrollable.h>
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
@@ -1008,7 +1009,7 @@ static void
 modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog *self)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
-	GtkWidget *pannable;
+	GtkWidget *scrollable;
 	GtkWidget *separator;
 	GtkWidget *align;
 	GtkSizeGroup* account_title_sizegroup;
@@ -1077,18 +1078,17 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 			    FALSE, FALSE, 0);
 		
 	GtkDialog *dialog = GTK_DIALOG (self);
-	pannable = hildon_pannable_area_new ();
-	g_object_set (G_OBJECT (pannable), "initial-hint", TRUE, NULL);
+	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
 	gtk_widget_show (align);
 	gtk_container_add (GTK_CONTAINER (align), priv->main_container);
 	
-	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), align);
-	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (pannable));
+	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), align);
+	gtk_container_add (GTK_CONTAINER (dialog->vbox), GTK_WIDGET (scrollable));
 	gtk_widget_show (GTK_WIDGET (priv->main_container));
-	gtk_widget_show (GTK_WIDGET (pannable));
+	gtk_widget_show (GTK_WIDGET (scrollable));
         
     /* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG(self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
