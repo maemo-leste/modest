@@ -112,6 +112,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-sort-criterium-view.h   \
 	modest-tny-stream-gtkhtml.c    \
 	modest-tny-stream-gtkhtml.h    \
+	modest-toolkit-factory.c \
+	modest-toolkit-factory.h \
 	modest-validating-entry.c \
 	modest-window.c                \
 	modest-window-mgr.h            \
