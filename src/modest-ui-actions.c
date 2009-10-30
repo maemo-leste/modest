@@ -2227,11 +2227,11 @@ update_account_cb (ModestMailOperation *self,
 		   TnyList *new_headers,
 		   gpointer user_data)
 {
-	GObject *source;
+	ModestWindow *top;
 	gboolean show_visual_notifications;
 
-	source = modest_mail_operation_get_source (self);
-	show_visual_notifications = (source) ? FALSE : TRUE;
+	top = modest_window_mgr_get_current_top (modest_runtime_get_window_mgr ());
+	show_visual_notifications = (top) ? FALSE : TRUE;
 
 	/* Notify new messages have been downloaded. If the
 	   send&receive was invoked by the user then do not show any
@@ -2279,15 +2279,14 @@ update_account_cb (ModestMailOperation *self,
 		g_object_unref (actually_new_list);
 	}
 
-	if (source) {
+	if (top) {
 		/* Refresh the current folder in an idle. We do this
 		   in order to avoid refresh cancelations if the
 		   currently viewed folder is the inbox */
 		g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
 				 idle_refresh_folder,
-				 g_object_ref (source),
+				 g_object_ref (top),
 				 g_object_unref);
-		g_object_unref (source);
 	}
 }
 
