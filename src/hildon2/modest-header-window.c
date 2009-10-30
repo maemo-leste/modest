@@ -1001,8 +1001,9 @@ update_view (ModestHeaderWindow *self,
 	if (refilter)
 		modest_header_view_refilter (MODEST_HEADER_VIEW (priv->header_view));
 
-	visible = gtk_tree_model_iter_n_children (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view)),
-						  NULL);
+	visible = modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view));
+	if (visible > all_count)
+		visible = all_count;
 	show_more_value = g_strdup_printf (_("TODO: %d of %d shown"), visible, all_count);
 
 	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
