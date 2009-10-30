@@ -61,6 +61,8 @@ static void setup_menu (ModestHildon2Window *self);
 
 static void modest_hildon2_window_show_toolbar (ModestWindow *self,
 						 gboolean show_toolbar);
+static void modest_hildon2_window_add_toolbar (ModestWindow *self,
+					       GtkToolbar *toolbar);
 static gboolean modest_hildon2_window_toggle_menu (HildonWindow *window,
 						    guint button,
 						    guint32 time);
@@ -162,6 +164,7 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	modest_window_class->zoom_minus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_hildon2_window_show_toolbar;
+	modest_window_class->add_toolbar_func = modest_hildon2_window_add_toolbar;
 	modest_window_class->show_progress_func = modest_hildon2_window_show_progress;
 
 	modest_hildon2_window_class->pack_toolbar_func = modest_hildon2_window_pack_toolbar_not_implemented;
@@ -346,6 +349,14 @@ modest_hildon2_window_show_toolbar (ModestWindow *self,
 {
 	/* Empty implementation: Hildon 2.2 implementation
 	 * doesn't switch toolbar visibility */
+}
+
+static void
+modest_hildon2_window_add_toolbar (ModestWindow *self,
+				   GtkToolbar *toolbar)
+{
+	hildon_window_add_toolbar (HILDON_WINDOW (self),
+				   toolbar);
 }
 
 static void
