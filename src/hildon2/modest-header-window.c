@@ -961,6 +961,9 @@ update_view (ModestHeaderWindow *self,
 	gboolean folder_empty = FALSE;
 	gboolean all_marked_as_deleted = FALSE;
 	TnyFolder *folder;
+	gchar *show_more_value;
+	guint visible;
+	guint all_count;
 
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
@@ -975,14 +978,16 @@ update_view (ModestHeaderWindow *self,
 		changed = tny_folder_change_get_changed (change);
 		/* If something changes */
 		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_ALL_COUNT)
-			folder_empty = (((guint) tny_folder_change_get_new_all_count (change)) == 0);
+			all_count = (guint) tny_folder_change_get_new_all_count (change);
 		else
-			folder_empty = (((guint) tny_folder_get_all_count (folder)) == 0);
+			all_count = (guint) tny_folder_get_all_count (folder);
 
+		folder_empty = (all_count == 0);
 		if ((changed) & TNY_FOLDER_CHANGE_CHANGED_EXPUNGED_HEADERS)
 			refilter = TRUE;
 	} else {
-		folder_empty = (((guint) tny_folder_get_all_count (folder)) == 0);
+		all_count = (guint) tny_folder_get_all_count (folder);
+		folder_empty = (all_count == 0);
 	}
 	g_object_unref (folder);
 
@@ -995,6 +1000,13 @@ update_view (ModestHeaderWindow *self,
 
 	if (refilter)
 		modest_header_view_refilter (MODEST_HEADER_VIEW (priv->header_view));
+
+	visible = gtk_tree_model_iter_n_children (gtk_tree_view_get_model (GTK_TREE_VIEW (priv->header_view)),
+						  NULL);
+	show_more_value = g_strdup_printf (_("TODO: %d of %d shown"), visible, all_count);
+
+	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
+				 show_more_value);
 }
 
 static void 
@@ -1546,5 +1558,6 @@ modest_header_window_show_more (GtkAction *action, ModestWindow *win)
 	if (modest_header_view_get_not_latest (MODEST_HEADER_VIEW (priv->header_view)) > 0) {
 		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view),
 						    modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view)) + 50);
+		update_view (self, NULL);
 	}
 }
