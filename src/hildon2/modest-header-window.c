@@ -177,6 +177,7 @@ static void on_header_view_model_destroyed (gpointer user_data,
 static gboolean on_key_press(GtkWidget *widget,
 					GdkEventKey *event,
 					gpointer user_data);
+static void modest_header_window_show_more (GtkAction *action, ModestWindow *win);
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -637,6 +638,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	ModestHeaderWindowPrivate *priv;
 
 	header_view  = modest_header_view_new (NULL, MODEST_HEADER_VIEW_STYLE_TWOLINES);
+	modest_header_view_set_show_latest (MODEST_HEADER_VIEW (header_view), 50);
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 	priv->notify_model = g_signal_connect ((GObject*) header_view, "notify::model",
 					       G_CALLBACK (on_header_view_model_changed), self);
@@ -935,6 +937,9 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("TODO: show more"), NULL,
+					   APP_MENU_CALLBACK (modest_header_window_show_more),
+					   NULL);
 }
 
 static void 
@@ -1515,4 +1520,21 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	}
 
 	return FALSE;
+}
+
+static void
+modest_header_window_show_more (GtkAction *action, ModestWindow *win)
+{
+	ModestHeaderWindow *self;
+	ModestHeaderWindowPrivate *priv = NULL;
+
+	self = MODEST_HEADER_WINDOW (win);
+	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+	if (!priv->header_view)
+		return;
+	
+	if (modest_header_view_get_not_latest (MODEST_HEADER_VIEW (priv->header_view)) > 0) {
+		modest_header_view_set_show_latest (MODEST_HEADER_VIEW (priv->header_view),
+						    modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view)) + 50);
+	}
 }

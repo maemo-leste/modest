@@ -2520,3 +2520,29 @@ modest_header_view_get_show_latest (ModestHeaderView *header_view)
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
 	return priv->show_latest;
 }
+
+gint
+modest_header_view_get_not_latest (ModestHeaderView *header_view)
+{
+	ModestHeaderViewPrivate *priv;
+	gint not_latest = 0;
+	GtkTreeModel *sortable, *filter, *model;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+
+	if (priv->show_latest == 0)
+		return 0;
+
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
+		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+			if (model) {
+				not_latest = MAX (0, tny_list_get_length (TNY_LIST (model)) - priv->show_latest);
+			}
+		}
+	}
+
+	return not_latest;
+}
