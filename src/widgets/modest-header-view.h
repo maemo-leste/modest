@@ -467,6 +467,11 @@ TnyHeader* modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 						 gint initial_x,
 						 gint initial_y);
 
+void modest_header_view_set_show_latest (ModestHeaderView *header_view,
+					 gint show_latest);
+
+gint modest_header_view_get_show_latest (ModestHeaderView *header_view);
+
 G_END_DECLS
 
 

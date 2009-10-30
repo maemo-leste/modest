@@ -174,6 +174,8 @@ struct _ModestHeaderViewPrivate {
 
 	GdkColor active_color;
 	GdkColor secondary_color;
+
+	gint show_latest;
 };
 
 typedef struct _HeadersCountChangedHelper HeadersCountChangedHelper;
@@ -607,6 +609,8 @@ modest_header_view_init (ModestHeaderView *obj)
 	guint i, j;
 
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(obj);
+
+	priv->show_latest = 0;
 
 	priv->folder  = NULL;
 	priv->is_outbox = FALSE;
@@ -1134,6 +1138,7 @@ modest_header_view_set_folder_intern (ModestHeaderView *self,
 	priv = MODEST_HEADER_VIEW_GET_PRIVATE(self);
 
 	headers = TNY_LIST (tny_gtk_header_list_model_new ());
+	tny_gtk_header_list_model_set_show_latest (TNY_GTK_HEADER_LIST_MODEL (headers), priv->show_latest);
 
 	/* Start the monitor in the callback of the
 	   tny_gtk_header_list_model_set_folder call. It's crucial to
@@ -2483,4 +2488,35 @@ modest_header_view_get_header_at_pos (ModestHeaderView *header_view,
 			    &header, -1);
 
 	return header;
+}
+
+void
+modest_header_view_set_show_latest (ModestHeaderView *header_view,
+				    gint show_latest)
+{
+	ModestHeaderViewPrivate *priv;
+	GtkTreeModel *sortable, *filter, *model;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+	priv->show_latest = show_latest;
+
+	sortable = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
+	if (GTK_IS_TREE_MODEL_SORT (sortable)) {
+		filter = gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (sortable));
+		if (GTK_IS_TREE_MODEL_FILTER (filter)) {
+			model = gtk_tree_model_filter_get_model (GTK_TREE_MODEL_FILTER (filter));
+			if (model) {
+				tny_gtk_header_list_model_set_show_latest (TNY_GTK_HEADER_LIST_MODEL (model), priv->show_latest);
+			}
+		}
+	}
+}
+
+gint
+modest_header_view_get_show_latest (ModestHeaderView *header_view)
+{
+	ModestHeaderViewPrivate *priv;
+
+	priv = MODEST_HEADER_VIEW_GET_PRIVATE (header_view);
+	return priv->show_latest;
 }
