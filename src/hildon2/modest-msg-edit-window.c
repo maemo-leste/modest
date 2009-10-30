@@ -1500,7 +1500,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	gtk_toolbar_set_show_arrow (GTK_TOOLBAR (parent_priv->toolbar), FALSE);
 	gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
-	hildon_window_add_toolbar (HILDON_WINDOW (window), GTK_TOOLBAR (parent_priv->toolbar));
+	modest_window_add_toolbar (MODEST_WINDOW (window), GTK_TOOLBAR (parent_priv->toolbar));
 
 	/* Font color placeholder */
 	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontColor");
@@ -1669,7 +1669,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 				 hildon_touch_selector_get_current_text 
 				 (HILDON_TOUCH_SELECTOR (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->from_field)))));
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
-	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
+	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 
 	/* Init window */
 	connect_signals (MODEST_MSG_EDIT_WINDOW(obj));

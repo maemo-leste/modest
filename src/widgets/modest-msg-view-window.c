@@ -852,7 +852,7 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	/* ... and later the find toolbar. This way find toolbar will
 	   be shown over the other */
 	priv->find_toolbar = hildon_find_toolbar_new (NULL);
-	hildon_window_add_toolbar (HILDON_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
+	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
 	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
 	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", 
 			  G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
@@ -2390,13 +2390,8 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		priv->prev_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageBack");
 		toolbar_resize (MODEST_MSG_VIEW_WINDOW (self));
 
-		/****** HILDON2:START
-		 * attach toolbar to window
-		 */
-		/* Add to window */
-		hildon_window_add_toolbar (HILDON_WINDOW (self), 
+		modest_window_add_toolbar (MODEST_WINDOW (self), 
 					   GTK_TOOLBAR (parent_priv->toolbar));
-		/****** HILDON2:END */
 
 	}
 
