@@ -375,7 +375,7 @@ modest_accounts_window_new (void)
 
 	row_count_changed (MODEST_ACCOUNTS_WINDOW (self));
 
-	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ap_name"));
+	modest_window_set_title (MODEST_WINDOW (self), _("mcen_ap_name"));
 
 	return self;
 }

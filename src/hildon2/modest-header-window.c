@@ -878,7 +878,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 			folder_name = modest_tny_folder_get_display_name (folder);
 		}
 		
-		gtk_window_set_title (GTK_WINDOW (self), folder_name);
+		modest_window_set_title (MODEST_WINDOW (self), folder_name);
 		g_free (folder_name);
 	}
 	g_free (account_display_name);

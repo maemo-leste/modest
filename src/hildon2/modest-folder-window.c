@@ -875,13 +875,13 @@ update_window_title (ModestFolderWindow *self,
 								     name);
 		}
 		if (title) {
-			gtk_window_set_title (GTK_WINDOW (self), title);
+			modest_window_set_title (MODEST_WINDOW (self), title);
 			g_free (title);
 		} else {
-			gtk_window_set_title (GTK_WINDOW (self), _("mcen_ap_name"));
+			modest_window_set_title (MODEST_WINDOW (self), _("mcen_ap_name"));
 		}
 	} else {
-		gtk_window_set_title (GTK_WINDOW (self), _("mcen_ap_name"));
+		modest_window_set_title (MODEST_WINDOW (self), _("mcen_ap_name"));
 	}
 }
 

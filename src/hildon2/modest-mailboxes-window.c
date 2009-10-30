@@ -213,15 +213,15 @@ on_visible_account_changed (ModestFolderView *mailboxes_view,
 			title = modest_account_mgr_get_display_name (modest_runtime_get_account_mgr(),
 								     name);
 			if (title) {
-				gtk_window_set_title (GTK_WINDOW (user_data), title);
+				modest_window_set_title (MODEST_WINDOW (user_data), title);
 				g_free (title);
 			} else {
-				gtk_window_set_title (GTK_WINDOW (user_data), _("mcen_ap_name"));
+				modest_window_set_title (MODEST_WINDOW (user_data), _("mcen_ap_name"));
 			}
 			g_object_unref (acc);
 		}
 	} else {
-		gtk_window_set_title (GTK_WINDOW (user_data), _("mcen_ap_name"));
+		modest_window_set_title (MODEST_WINDOW (user_data), _("mcen_ap_name"));
 	}
 }
 

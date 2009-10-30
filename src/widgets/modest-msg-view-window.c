@@ -1969,7 +1969,7 @@ message_reader (ModestMsgViewWindow *window,
 
 	/* We set the header from model while we're loading */
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
-	gtk_window_set_title (GTK_WINDOW (window), _CS("ckdg_pb_updating"));
+	modest_window_set_title (MODEST_WINDOW (window), _CS("ckdg_pb_updating"));
 
 	if (header)
 		folder = NULL;
@@ -3448,7 +3448,7 @@ update_window_title (ModestMsgViewWindow *window)
 		subject = g_strdup (_("mail_va_no_subject"));
 	}
 
-	gtk_window_set_title (GTK_WINDOW (window), subject);
+	modest_window_set_title (MODEST_WINDOW (window), subject);
 }
 
 

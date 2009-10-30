@@ -3525,7 +3525,7 @@ update_window_title (ModestMsgEditWindow *window)
 	if (subject == NULL || subject[0] == '\0')
 		subject = _("mail_va_new_email");
 
-	gtk_window_set_title (GTK_WINDOW (window), subject);
+	modest_window_set_title (MODEST_WINDOW (window), subject);
 
 }
 
