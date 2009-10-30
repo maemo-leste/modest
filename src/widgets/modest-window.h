@@ -109,6 +109,7 @@ struct _ModestWindowClass {
 	void (*disconnect_signals_func) (ModestWindow *self);
 	void (*show_progress_func) (ModestWindow *self, gboolean show);
 	void (*add_toolbar_func) (ModestWindow *self, GtkToolbar *toolbar);
+	void (*set_title_func) (ModestWindow *self, const gchar *title);
 };
 
 /**
@@ -323,6 +324,8 @@ void modest_window_disconnect_signals (ModestWindow *self);
 void modest_window_show_progress (ModestWindow *self, gboolean show_progress);
 
 void modest_window_add_toolbar (ModestWindow *self, GtkToolbar *toolbar);
+
+void modest_window_set_title (ModestWindow *self, const gchar *title);
 
 
 G_END_DECLS
