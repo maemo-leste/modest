@@ -806,7 +806,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->show_more_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
-	gtk_widget_show_all (priv->show_more_button);
+	gtk_widget_hide_all (priv->show_more_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->header_view), TRUE);
 	
 	setup_menu (self);
@@ -1004,6 +1004,10 @@ update_view (ModestHeaderWindow *self,
 	visible = modest_header_view_get_show_latest (MODEST_HEADER_VIEW (priv->header_view));
 	if (visible > all_count)
 		visible = all_count;
+	if (visible == all_count)
+		gtk_widget_hide_all (priv->show_more_button);
+	else
+		gtk_widget_show_all (priv->show_more_button);
 	show_more_value = g_strdup_printf (_("TODO: %d of %d shown"), visible, all_count);
 
 	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
