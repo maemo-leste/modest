@@ -68,6 +68,22 @@ static gchar*  modest_formatter_wrapper_inline (ModestFormatter *self, const gch
 
 static TnyMimePart *find_body_parent (TnyMimePart *part);
 
+static guint
+count_end_tag_lines (const gchar *haystack, const gchar *needle)
+{
+	gchar *tmp;
+	guint lines = 0;
+
+	tmp = g_strstr_len (haystack, g_utf8_strlen (haystack, -1), ">\n");
+	while (tmp && (tmp <= needle)) {
+		lines++;
+		tmp += 2;
+		tmp = g_strstr_len (tmp, g_utf8_strlen (tmp, -1), ">\n");
+	}
+
+	return lines;
+}
+
 static gchar *
 extract_text (ModestFormatter *self, TnyMimePart *body)
 {
@@ -78,14 +94,16 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	GtkTextIter start, end;
 	gchar *text;
 	ModestFormatterPrivate *priv;
-	gint total, total_lines, line_chars;
+	gint total, lines, total_lines, line_chars;
+	gboolean is_html;
 
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
 	tny_stream_reset (stream);
 	mp_stream = tny_mime_part_get_decoded_stream (body);
 
-	if (g_strcmp0 (tny_mime_part_get_content_type (body), "text/html") == 0) {
+	is_html = (g_strcmp0 (tny_mime_part_get_content_type (body), "text/html") == 0);
+	if (is_html) {
 		input_stream = tny_camel_html_to_text_stream_new (mp_stream);
 	} else {
 		input_stream = g_object_ref (mp_stream);
@@ -94,6 +112,83 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	total = 0;
 	total_lines = 0;
 	line_chars = 0;
+	lines = 0;
+
+	/* For pure HTML emails tny_camel_html_to_text_stream inserts
+	   a \n for every ">\n" found in the email including the HTML
+	   headers (<html>, <head> ...). For that reason we need to
+	   remove them from the resulting text as it is artificially
+	   added by the stream */
+	if (is_html) {
+		const guint BUFFER_SIZE = 1024;
+		TnyStream *is;
+		gboolean look_for_end_tag, found;
+		gchar buffer [BUFFER_SIZE + 1];
+		gchar *needle;
+
+		is = g_object_ref (mp_stream);
+		look_for_end_tag = FALSE;
+		found = FALSE;
+
+		/* This algorithm does not work if the body tag is
+		   spread along 2 different stream reads. But there
+		   are not a lot of changes for this to happen as the
+		   buffer size is big enough in most situations. In
+		   the worst case, when it's not found we just accept
+		   the original translation with the extra "\n" */
+		while (!tny_stream_is_eos (is) && !found) {
+			gint n_read;
+
+			needle = NULL;
+			memset (buffer, 0, BUFFER_SIZE);
+			n_read = tny_stream_read (is, buffer, BUFFER_SIZE);
+
+			if (G_UNLIKELY (n_read < 0))
+				break;
+
+			buffer[n_read] = '\0';
+
+			/* If we found body,then look for the end of the tag */
+			if (look_for_end_tag) {
+				needle = strchr (buffer, '>');
+
+				if (needle) {
+					found = TRUE;
+					lines += count_end_tag_lines (buffer, needle);
+					break;
+				}
+			} else {
+				gchar *closing;
+
+				/* Try to find the <body> tag. There
+				   is no other HTML tag starting by
+				   "bo", and we can detect more cases
+				   were <body> tag falls into two
+				   different stream reads */
+				needle = g_strstr_len (buffer, n_read, "<bo");
+
+				if (needle)
+					look_for_end_tag = TRUE;
+				else
+					needle = &(buffer[n_read]);
+
+				lines += count_end_tag_lines (buffer, needle);
+
+				closing = strchr (needle, '>');
+				if (closing) {
+					if (*(closing + 1) == '\n')
+						lines++;
+					found = TRUE;
+					break;
+				}
+			}
+		}
+		if (!found)
+			lines = 0;
+		tny_stream_reset (is);
+
+		g_object_unref (is);
+	}
 
 	while (!tny_stream_is_eos (input_stream)) {
 		gchar buffer [128];
@@ -111,7 +206,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 
 		offset = buffer;
 		while (offset < buffer + n_read) {
-			
+
 			if (*offset == '\n') {
 				total_lines ++;
 				line_chars = 0;
@@ -127,11 +222,22 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 			offset++;
 		}
 
-		
-
 		if (offset - buffer > 0) {
-			gint n_write;
-			n_write = tny_stream_write (stream, buffer, offset - buffer);
+			gint n_write = 0, to_write = 0;
+			gchar *buffer_ptr;
+
+			/* Discard lines artificially inserted by
+			   Camel when translating from HTML to text */
+			buffer_ptr = buffer;
+			if (lines) {
+				int i;
+				for (i=0; i < lines; i++) {
+					buffer_ptr = strchr (buffer_ptr, '\n');
+					buffer_ptr++;
+				}
+			}
+			to_write = offset - buffer_ptr;
+			n_write = tny_stream_write (stream, buffer_ptr, to_write);
 			total += n_write;
 		} else if (n_read == -1) {
 			break;
@@ -146,7 +252,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	g_object_unref (G_OBJECT(stream));
 	g_object_unref (G_OBJECT (mp_stream));
 	g_object_unref (G_OBJECT (input_stream));
-	
+
 	gtk_text_buffer_get_bounds (buf, &start, &end);
 	text = gtk_text_buffer_get_text (buf, &start, &end, FALSE);
 	g_object_unref (G_OBJECT(buf));
@@ -203,7 +309,7 @@ modest_formatter_do (ModestFormatter *self, TnyMimePart *body, TnyHeader *header
 	priv = MODEST_FORMATTER_GET_PRIVATE (self);
 	construct_from_text (TNY_MIME_PART (body_part), (const gchar*) txt, priv->content_type);
 	g_object_unref (body_part);
-	
+
 	/* Clean */
 	g_free (body_text);
 	g_free (txt);
