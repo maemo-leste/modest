@@ -261,7 +261,7 @@ on_mail_to(GArray * arguments, gpointer data, osso_rpc_t * retval)
  	
  	/* Note that we cannot report failures during sending, 
  	 * because that would be asynchronous. */
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 
@@ -356,7 +356,7 @@ on_compose_mail(GArray * arguments, gpointer data, osso_rpc_t * retval)
 	/* Use g_idle to context-switch into the application's thread: */
   	g_idle_add(on_idle_compose_mail, (gpointer)idle_data);
  	
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 static TnyMsg *
@@ -919,7 +919,7 @@ on_delete_message (GArray *arguments, gpointer data, osso_rpc_t *retval)
 	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_delete_message, (gpointer)uri);
  	
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 typedef struct _SendReceivePerformerData {
@@ -1225,7 +1225,7 @@ on_send_receive(GArray *arguments, gpointer data, osso_rpc_t * retval)
 	else
 		on_send_receive_performer (FALSE, NULL, NULL, NULL, srp_data);
 
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 static gint
@@ -1257,7 +1257,7 @@ on_send_receive_full (GArray *arguments, gpointer data, osso_rpc_t * retval)
 	else
 		on_send_receive_performer (FALSE, NULL, NULL, NULL, srp_data);
 
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 static gint
@@ -1265,7 +1265,7 @@ on_open_default_inbox(GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
  	g_idle_add(on_idle_top_application, NULL);
 
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 
@@ -1430,7 +1430,7 @@ on_top_application(GArray * arguments, gpointer data, osso_rpc_t * retval)
 	/* Use g_idle to context-switch into the application's thread: */
  	g_idle_add(on_idle_top_application, NULL);
 
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 static gboolean
@@ -1482,9 +1482,9 @@ static gint
 on_open_edit_accounts_dialog (GArray * arguments, gpointer data, osso_rpc_t * retval)
 {
 	/* Use g_idle to context-switch into the application's thread: */
- 	g_idle_add (on_idle_open_edit_accounts_dialog, NULL);
+	g_idle_add (on_idle_open_edit_accounts_dialog, NULL);
 
- 	return OSSO_OK;
+	return OSSO_OK;
 }
 
 static gboolean 
