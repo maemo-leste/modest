@@ -52,6 +52,8 @@
 #include <modest-tny-folder.h>
 #include <tny-simple-list.h>
 
+#define SHOW_LATEST_SIZE 250
+
 typedef enum {
 	CONTENTS_STATE_NONE = 0,
 	CONTENTS_STATE_EMPTY = 1,
