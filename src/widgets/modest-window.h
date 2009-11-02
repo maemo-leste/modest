@@ -46,8 +46,8 @@ G_BEGIN_DECLS
  * this way is probably the easiest to maintain
  */
 #ifdef MODEST_TOOLKIT_GTK
-typedef GtkWindow      ModestWindowParent;
-typedef GtkWindowClass ModestWindowParentClass;
+typedef GtkVBox      ModestWindowParent;
+typedef GtkVBoxClass ModestWindowParentClass;
 #else
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-stackable-window.h>
