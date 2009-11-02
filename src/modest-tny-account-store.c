@@ -489,10 +489,12 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 	g_object_unref (iter);
 }
 
-static void 
-show_wrong_password_dialog (TnyAccount *account, 
+static void
+show_wrong_password_dialog (TnyAccount *account,
 			    gboolean show_banner)
-{ 
+{
+	g_debug ("%s: %s", __FUNCTION__, tny_account_get_id (account));
+
 	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
 		modest_ui_actions_on_smtp_servers (NULL, NULL);
 	} else {
@@ -548,9 +550,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 	g_return_val_if_fail (account, NULL);
 
-	MODEST_DEBUG_BLOCK(
-		g_debug ("%s: prompt (not shown) = %s\n", __FUNCTION__, prompt_not_used);
-	);
+	g_debug ("%s: %s", __FUNCTION__, prompt_not_used);
 
 	/* Get a reference to myself */
 	self = MODEST_TNY_ACCOUNT_STORE (g_object_get_data (G_OBJECT(account), "account_store"));
@@ -1174,6 +1174,9 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 											tny_account_get_id (account));
 
 		if (!success) {
+			g_debug ("%s: %s alert received (%s)", __FUNCTION__,
+				 (error->code == TNY_SERVICE_ERROR_CONNECT) ? "connect" : "aunthenticate",
+				 error->message);
 
 			modest_platform_run_information_dialog (NULL, prompt, TRUE);
 
