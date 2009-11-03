@@ -1685,14 +1685,10 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 	switch (priv->contents_style) {
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_FOLDERS:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->folder_view));
-		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
-						      TRUE);
 		gtk_widget_grab_focus (GTK_WIDGET (priv->folder_view));
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_HEADERS:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->header_view));
-		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
-						      TRUE);
 		gtk_widget_grab_focus (GTK_WIDGET (priv->header_view));
 		gtk_widget_show (GTK_WIDGET (priv->header_view));
 		break;
@@ -1701,8 +1697,6 @@ modest_main_window_set_contents_style (ModestMainWindow *self,
 		break;
 	case MODEST_MAIN_WINDOW_CONTENTS_STYLE_EMPTY:
 		wrap_in_scrolled_window (priv->contents_widget, GTK_WIDGET (priv->empty_view));
-		modest_maemo_set_thumbable_scrollbar (GTK_SCROLLED_WINDOW(priv->contents_widget),
-						      FALSE);
 		if (priv->style == MODEST_MAIN_WINDOW_STYLE_SIMPLE)
 			gtk_widget_grab_focus (GTK_WIDGET (priv->empty_view));
 		break;

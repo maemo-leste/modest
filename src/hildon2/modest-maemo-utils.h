@@ -76,16 +76,6 @@ void modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser);
 osso_context_t *modest_maemo_utils_get_osso_context (void);
 
 /**
- * modest_maemo_set_thumbable_scrollbar:
- * @win: a scrollable window
- * @thumbable: set it to thumbable (TRUE) or small (FALSE)
- *
- * changes the thumbability of scrollbars in a scrollable window
- */
-void modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, gboolean thumbable);
-
-
-/**
  * modest_maemo_get_osso_context:
  *
  * retrieve the osso context for this application
