@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-hildon-pannable-area-scrollable.h>
+#include <modest-hildon-find-toolbar.h>
 #include <hildon/hildon.h>
 #else
 #include <modest-scrolled-window-scrollable.h>
@@ -43,6 +44,7 @@ static void modest_toolkit_factory_init (ModestToolkitFactory *self);
 static GtkWidget * modest_toolkit_factory_create_scrollable_default (ModestToolkitFactory *self);
 static GtkWidget * modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, const gchar *label);
 static GtkWidget * modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label);
+static GtkWidget * modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *self, const gchar *label);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -66,6 +68,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_scrollable = modest_toolkit_factory_create_scrollable_default;
 	klass->create_check_button = modest_toolkit_factory_create_check_button_default;
 	klass->create_check_menu = modest_toolkit_factory_create_check_menu_default;
+	klass->create_isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar_default;
 }
 
 static void
@@ -108,6 +111,7 @@ modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, 
 #endif
 	return result;
 }
+
 GtkWidget *
 modest_toolkit_factory_create_check_menu (ModestToolkitFactory *self, const gchar *label)
 {
@@ -165,3 +169,23 @@ modest_is_togglable (GtkWidget *widget)
 	return GTK_IS_CHECK_MENU_ITEM (widget) || GTK_IS_TOGGLE_BUTTON (widget);
 #endif
 }
+
+GtkWidget *
+modest_toolkit_factory_create_isearch_toolbar (ModestToolkitFactory *self, const gchar *label)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_isearch_toolbar (self, label);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *self, const gchar *label)
+{
+	GtkWidget *result;
+#ifdef MODEST_TOOLKIT_HILDON2
+	result = modest_hildon_find_toolbar_new (label);
+#else
+	/* TODO: create gtk-only based isearch toolbar implementation */
+	result = gtk_toolbar_new ();
+#endif
+	return result;
+}
+

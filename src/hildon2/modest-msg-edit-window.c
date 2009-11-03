@@ -65,6 +65,7 @@
 #include <modest-wp-text-view.h>
 #include <wptextbuffer.h>
 #include <modest-scrollable.h>
+#include <modest-isearch-toolbar.h>
 #include <hildon/hildon-touch-selector.h>
 #include <hildon/hildon-picker-dialog.h>
 #include "modest-msg-edit-window-ui-dimming.h"
@@ -142,10 +143,10 @@ static void subject_field_move_cursor (GtkEntry *entry,
 static void update_window_title (ModestMsgEditWindow *window);
 
 /* Find toolbar */
-static void modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
-							ModestMsgEditWindow *window);
-static void modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
-						       ModestMsgEditWindow *window);
+static void modest_msg_edit_window_isearch_toolbar_search (GtkWidget *widget,
+							   ModestMsgEditWindow *window);
+static void modest_msg_edit_window_isearch_toolbar_close (GtkWidget *widget,
+							  ModestMsgEditWindow *window);
 static gboolean gtk_text_iter_forward_search_insensitive (const GtkTextIter *iter,
 							  const gchar *str,
 							  GtkTextIter *match_start,
@@ -285,7 +286,7 @@ struct _ModestMsgEditWindowPrivate {
 	gint         current_size_index;
 	GtkWidget   *size_tool_button_label;
 
-	GtkWidget   *find_toolbar;
+	GtkWidget   *isearch_toolbar;
 	gchar       *last_search;
 
 	GtkWidget   *font_dialog;
@@ -423,7 +424,7 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 
 	priv->priority_flags = 0;
 
-	priv->find_toolbar = NULL;
+	priv->isearch_toolbar = NULL;
 	priv->last_search = NULL;
 
 	priv->draft_msg = NULL;
@@ -775,8 +776,10 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect_after (G_OBJECT (priv->subject_field), "move-cursor", G_CALLBACK (subject_field_move_cursor), obj);
 	g_signal_connect (G_OBJECT (priv->subject_field), "insert-text", G_CALLBACK (subject_field_insert_text), obj);
 
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", G_CALLBACK (modest_msg_edit_window_find_toolbar_search), obj);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", G_CALLBACK (modest_msg_edit_window_find_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "isearch-search",
+			  G_CALLBACK (modest_msg_edit_window_isearch_toolbar_search), obj);
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "isearch-close",
+			  G_CALLBACK (modest_msg_edit_window_isearch_toolbar_close), obj);
  
 	priv->clipboard_change_handler_id = 
 		g_signal_connect (G_OBJECT (gtk_clipboard_get (GDK_SELECTION_PRIMARY)), "owner-change",
@@ -996,8 +999,9 @@ init_window (ModestMsgEditWindow *obj)
 #endif
 	wp_text_buffer_reset_buffer (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 
-	priv->find_toolbar = hildon_find_toolbar_new (NULL);
-	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
+	priv->isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar (modest_runtime_get_toolkit_factory (),
+									       NULL);
+	gtk_widget_set_no_show_all (priv->isearch_toolbar, TRUE);
 
 /* 	g_signal_connect (G_OBJECT (obj), "key_pressed", G_CALLBACK (on_key_pressed), NULL) */
 
@@ -1669,7 +1673,7 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 				 hildon_touch_selector_get_current_text 
 				 (HILDON_TOUCH_SELECTOR (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->from_field)))));
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
-	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
+	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->isearch_toolbar));
 
 	/* Init window */
 	connect_signals (MODEST_MSG_EDIT_WINDOW(obj));
@@ -3653,21 +3657,21 @@ subject_field_insert_text (GtkEditable *editable,
 }
 
 void
-modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
-					    gboolean show)
+modest_msg_edit_window_toggle_isearch_toolbar (ModestMsgEditWindow *window,
+					       gboolean show)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
 
 	g_return_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window));
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	gtk_widget_set_no_show_all (priv->find_toolbar, FALSE);
+	gtk_widget_set_no_show_all (priv->isearch_toolbar, FALSE);
 
 	if (show) {
-		gtk_widget_show_all (priv->find_toolbar);
-		hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
+		gtk_widget_show_all (priv->isearch_toolbar);
+		modest_isearch_toolbar_highlight_entry (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar), TRUE);
 	} else {
-		gtk_widget_hide_all (priv->find_toolbar);
+		gtk_widget_hide_all (priv->isearch_toolbar);
 		gtk_widget_grab_focus (priv->msg_body);
 	}
 }
@@ -3732,10 +3736,10 @@ gtk_text_iter_forward_search_insensitive (const GtkTextIter *iter,
 
 
 static void 
-modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
-					    ModestMsgEditWindow *window)
+modest_msg_edit_window_isearch_toolbar_search (GtkWidget *widget,
+					       ModestMsgEditWindow *window)
 {
-	gchar *current_search = NULL;
+	const gchar *current_search = NULL;
 	ModestMsgEditWindowPrivate *priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	gboolean result;
 	GtkTextIter selection_start, selection_end;
@@ -3749,9 +3753,8 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 		return;
 	}
 
-	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
+	current_search = modest_isearch_toolbar_get_search (MODEST_ISEARCH_TOOLBAR (widget));
 	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
-		g_free (current_search);
 		g_free (priv->last_search);
 		priv->last_search = NULL;
 		/* Information banner about empty search */
@@ -3790,7 +3793,6 @@ modest_msg_edit_window_find_toolbar_search (GtkWidget *widget,
 		g_free (priv->last_search);
 		priv->last_search = NULL;
 	}
-	g_free (current_search);
 }
 
 gboolean 
@@ -3813,10 +3815,10 @@ modest_msg_edit_window_set_sent (ModestMsgEditWindow *window,
 }
 
 static void
-modest_msg_edit_window_find_toolbar_close (GtkWidget *widget,
-                                          ModestMsgEditWindow *window)
+modest_msg_edit_window_isearch_toolbar_close (GtkWidget *widget,
+					      ModestMsgEditWindow *window)
 {
-	modest_msg_edit_window_toggle_find_toolbar (window, FALSE);
+	modest_msg_edit_window_toggle_isearch_toolbar (window, FALSE);
 }
 
 void

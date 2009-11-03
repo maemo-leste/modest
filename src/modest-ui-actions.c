@@ -6628,8 +6628,8 @@ modest_ui_actions_on_toggle_find_in_page (GtkAction *action,
 	else
 		active = TRUE;
 
-	modest_msg_edit_window_toggle_find_toolbar (MODEST_MSG_EDIT_WINDOW (window),
-						    active);
+	modest_msg_edit_window_toggle_isearch_toolbar (MODEST_MSG_EDIT_WINDOW (window),
+						       active);
 }
 
 #ifndef MODEST_TOOLKIT_HILDON2

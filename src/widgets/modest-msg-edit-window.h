@@ -387,14 +387,14 @@ gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *wind
 						       gboolean add_to_addressbook);
 
 /**
- * modest_msg_edit_window_toggle_find_toolbar:
+ * modest_msg_edit_window_toggle_isearch_toolbar:
  * @window: a #ModestMsgEditWindow
  * @show: a #gboolean
  *
- * Shows/Hides the find toolbar
+ * Shows/Hides the isearch toolbar
  */
-void            modest_msg_edit_window_toggle_find_toolbar (ModestMsgEditWindow *window,
-							    gboolean show);
+void            modest_msg_edit_window_toggle_isearch_toolbar (ModestMsgEditWindow *window,
+							       gboolean show);
 
 
 /**
