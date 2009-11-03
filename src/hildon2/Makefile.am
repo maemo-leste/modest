@@ -70,6 +70,8 @@ libmodest_ui_la_SOURCES=              \
 	modest-wp-text-view.h \
 	modest-maemo-security-options-view.c \
 	modest-hildon-includes.h      \
+	modest-hildon-find-toolbar.h  \
+	modest-hildon-find-toolbar.c  \
 	modest-hildon-pannable-area-scrollable.h	\
 	modest-hildon-pannable-area-scrollable.c	\
 	modest-hildon2-details-dialog.h \

@@ -48,8 +48,8 @@ struct _ModestISearchToolbarIface
 	GTypeInterface parent;
 
 	/*signals*/
-	void (*close) (ModestISearchToolbar *self);
-	void (*search) (ModestISearchToolbar *self);
+	void (*isearch_close) (ModestISearchToolbar *self);
+	void (*isearch_search) (ModestISearchToolbar *self);
 	
 	/* virtuals */
 	void (*highlight_entry) (ModestISearchToolbar *self, gboolean get_focus);

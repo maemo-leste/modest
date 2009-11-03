@@ -59,17 +59,17 @@ modest_isearch_toolbar_base_init (gpointer g_class)
 	if (!initialized) {
 
 		/* init signals here */
-		g_signal_new ("close",
+		g_signal_new ("isearch-close",
 			      MODEST_TYPE_ISEARCH_TOOLBAR,
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (ModestISearchToolbarIface, close),
+			      G_STRUCT_OFFSET (ModestISearchToolbarIface, isearch_close),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
-		g_signal_new ("search",
+		g_signal_new ("isearch-search",
 			      MODEST_TYPE_ISEARCH_TOOLBAR,
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (ModestISearchToolbarIface, search),
+			      G_STRUCT_OFFSET (ModestISearchToolbarIface, isearch_search),
 			      NULL, NULL,
 			      g_cclosure_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
