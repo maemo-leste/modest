@@ -909,23 +909,23 @@ static void setup_menu (ModestHeaderWindow *self)
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_new_msg),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self),
-					   dngettext(GETTEXT_PACKAGE,
-						     "mcen_me_move_message",
-						     "mcen_me_move_messages",
-						     2),
-					   NULL,
-					   APP_MENU_CALLBACK (set_moveto_edit_mode),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_delete_messages"), NULL,
-					   APP_MENU_CALLBACK (set_delete_edit_mode),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_folder_details"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_details),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_new_message"), "<Control>n",
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_new_msg),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_new_msg));
+	modest_window_add_to_menu (MODEST_WINDOW (self),
+				   dngettext(GETTEXT_PACKAGE,
+					     "mcen_me_move_message",
+					     "mcen_me_move_messages",
+					     2),
+				   NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (set_moveto_edit_mode),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_delete_messages"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (set_delete_edit_mode),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_folder_details"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_details),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
 	priv->sort_button = hildon_button_new (MODEST_EDITABLE_SIZE,
 					       HILDON_BUTTON_ARRANGEMENT_VERTICAL);
 	hildon_button_set_title (HILDON_BUTTON (priv->sort_button), _("mcen_me_sort"));
@@ -936,12 +936,12 @@ static void setup_menu (ModestHeaderWindow *self)
 	hildon_button_set_value_alignment (HILDON_BUTTON (priv->sort_button), 0.5, 0.5);
 	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->sort_button),
 						  modest_ui_dimming_rules_on_sort);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_cancel_send),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_send_receive),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
 }
 
 static void 

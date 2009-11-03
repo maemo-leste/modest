@@ -63,6 +63,11 @@ static void modest_hildon2_window_show_toolbar (ModestWindow *self,
 						 gboolean show_toolbar);
 static void modest_hildon2_window_add_toolbar (ModestWindow *self,
 					       GtkToolbar *toolbar);
+static void modest_hildon2_window_add_to_menu (ModestWindow *window,
+					       const gchar *label,
+					       const gchar *accelerator,
+					       ModestWindowMenuCallback callback,
+					       ModestDimmingCallback dimming_callback);
 static void modest_hildon2_window_set_title (ModestWindow *self,
 					     const gchar *title);
 static gboolean modest_hildon2_window_toggle_menu (HildonWindow *window,
@@ -167,6 +172,7 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	modest_window_class->zoom_plus_func = on_zoom_minus_plus_not_implemented;
 	modest_window_class->show_toolbar_func = modest_hildon2_window_show_toolbar;
 	modest_window_class->add_toolbar_func = modest_hildon2_window_add_toolbar;
+	modest_window_class->add_to_menu_func = modest_hildon2_window_add_to_menu;
 	modest_window_class->set_title_func = modest_hildon2_window_set_title;
 	modest_window_class->show_progress_func = modest_hildon2_window_show_progress;
 
@@ -281,11 +287,11 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 	gtk_widget_show (GTK_WIDGET (button));
 }
 
-void 
+static void
 modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
 				   gchar *label,
 				   const gchar *accelerator,
-				   ModestHildon2AppMenuCallback callback,
+				   ModestWindowMenuCallback callback,
 				   ModestDimmingCallback dimming_callback)
 {
 	ModestHildon2WindowPrivate *priv = NULL;

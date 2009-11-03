@@ -4327,12 +4327,12 @@ setup_menu (ModestMsgEditWindow *self)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	/* Settings menu buttons */
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_checknames"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_check_names),
-					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_undo"), "<Ctrl>z",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_undo),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_checknames"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_check_names),
+				   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_undo"), "<Ctrl>z",
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_undo),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
 
 	priv->cc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("mcen_me_editor_showcc"));
@@ -4356,21 +4356,21 @@ setup_menu (ModestMsgEditWindow *self)
 	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
 	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
 
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_insert_image),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_add_attachment"), NULL,
-					   APP_MENU_CALLBACK (modest_msg_edit_window_add_attachment_clicked),
-					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_remove_attachments"), NULL,
-					   APP_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
-					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_message_settings"), NULL,
-					   APP_MENU_CALLBACK (on_message_settings),
-					   NULL);
-	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_find"), "<Ctrl>f",
-					   APP_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
-					   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_insert_image),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_set_style));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_add_attachment"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_msg_edit_window_add_attachment_clicked),
+				   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_remove_attachments"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_remove_attachments),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_editor_remove_attachment));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_message_settings"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (on_message_settings),
+				   NULL);
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_find"), "<Ctrl>f",
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_toggle_find_in_page),
+				   NULL);
 }
 
 static void

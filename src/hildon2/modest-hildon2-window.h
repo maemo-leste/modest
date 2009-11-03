@@ -59,10 +59,8 @@ struct _ModestHildon2WindowClass {
 	void (*edit_mode_changed) (ModestHildon2Window *self, gint edit_mode, gboolean enabled);
 };
 
-typedef void (*ModestHildon2AppMenuCallback) (GObject *control, gpointer userdata);
 typedef gboolean (*ModestHildon2EditModeCallback) (ModestHildon2Window *self);
 
-#define APP_MENU_CALLBACK(x) ((ModestHildon2AppMenuCallback) (x))
 #define EDIT_MODE_CALLBACK(x) ((ModestHildon2EditModeCallback) (x))
 
 /* edit mode id for no edit mode */
@@ -77,23 +75,6 @@ typedef gboolean (*ModestHildon2EditModeCallback) (ModestHildon2Window *self);
  */
 GType modest_hildon2_window_get_type (void) G_GNUC_CONST;
 
-/**
- * modest_hildon2_window_add_to_menu:
- * @self: a #ModestHildon2Window
- * @label: the label of the button added to menu
- * @callback: a #ModestHildon2AppMenuCallback
- * @dimming_callback: a #ModestDimmingCallback or %NULL for no dimming rule
- *
- * creates a button in the window #HildonAppMenu, with label @label.
- * It will call @callback, and will configure @dimming_callback for
- * dimming.
- */
-void 
-modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
-				   gchar *label,
-				   const gchar *accelerator,
-				   ModestHildon2AppMenuCallback callback,
-				   ModestDimmingCallback dimming_callback);
 
 /**
  * modest_hildon2_window_add_button_to_menu:

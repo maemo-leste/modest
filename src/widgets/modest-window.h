@@ -30,17 +30,16 @@
 #ifndef __MODEST_WINDOW_H__
 #define __MODEST_WINDOW_H__
 
-#include <glib-object.h>
-#include <tny-account-store.h>
-
-G_BEGIN_DECLS
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 
+#include <glib-object.h>
 #include <gtk/gtk.h>
- 
+#include <modest-dimming-rule.h>
+
+G_BEGIN_DECLS
+
 /* 
  * admittedly, the ifdefs for gtk and maemo are rather ugly; still
  * this way is probably the easiest to maintain
@@ -92,6 +91,9 @@ typedef struct _DimmedState {
 typedef struct _ModestWindow      ModestWindow;
 typedef struct _ModestWindowClass ModestWindowClass;
 
+typedef void (*ModestWindowMenuCallback) (GObject *control, gpointer userdata);
+#define MODEST_WINDOW_MENU_CALLBACK(x) ((ModestWindowMenuCallback) (x))
+ 
 struct _ModestWindow {
 	 ModestWindowParent parent;
 };
@@ -110,6 +112,11 @@ struct _ModestWindowClass {
 	void (*show_progress_func) (ModestWindow *self, gboolean show);
 	void (*add_toolbar_func) (ModestWindow *self, GtkToolbar *toolbar);
 	void (*set_title_func) (ModestWindow *self, const gchar *title);
+	void (*add_to_menu_func) (ModestWindow *self,
+				  const gchar *label,
+				  const gchar *accelerator,
+				  ModestWindowMenuCallback callback,
+				  ModestDimmingCallback dimming_callback);
 };
 
 /**
@@ -326,6 +333,24 @@ void modest_window_show_progress (ModestWindow *self, gboolean show_progress);
 void modest_window_add_toolbar (ModestWindow *self, GtkToolbar *toolbar);
 
 void modest_window_set_title (ModestWindow *self, const gchar *title);
+
+/**
+ * modest_window_add_to_menu:
+ * @self: a #ModestWindow
+ * @label: the label of the button added to menu
+ * @callback: a #ModestWindowMenuCallback
+ * @dimming_callback: a #ModestDimmingCallback or %NULL for no dimming rule
+ *
+ * creates a menu item in the window @self, with label @label.
+ * It will call @callback, and will configure @dimming_callback for
+ * dimming.
+ */
+void modest_window_add_to_menu (ModestWindow *self,
+				const gchar *label,
+				const gchar *accelerator,
+				ModestWindowMenuCallback callback,
+				ModestDimmingCallback dimming_callback);
+				
 
 
 G_END_DECLS

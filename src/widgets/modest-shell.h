@@ -36,6 +36,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <modest-shell-window.h>
 
 G_BEGIN_DECLS
  

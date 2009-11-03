@@ -68,6 +68,12 @@ static void     modest_window_show_toolbar_default       (ModestWindow *window,
 static void     modest_window_add_toolbar_default       (ModestWindow *window,
 							 GtkToolbar *toolbar);
 
+static void     modest_window_add_to_menu_default       (ModestWindow *self,
+							 const gchar *label,
+							 const gchar *accelerator,
+							 ModestWindowMenuCallback callback,
+							 ModestDimmingCallback dimming_callback);
+
 static void     modest_window_set_title_default       (ModestWindow *window,
 						       const gchar *title);
 
@@ -142,6 +148,7 @@ modest_window_class_init (ModestWindowClass *klass)
 	klass->zoom_minus_func = modest_window_zoom_minus_default;
 	klass->show_toolbar_func = modest_window_show_toolbar_default;
 	klass->add_toolbar_func = modest_window_add_toolbar_default;
+	klass->add_to_menu_func = modest_window_add_to_menu_default;
 	klass->set_title_func = modest_window_set_title_default;
 	klass->disconnect_signals_func = modest_window_disconnect_signals_default;
 	klass->show_progress_func = modest_window_show_progress_default;
@@ -430,6 +437,20 @@ modest_window_add_toolbar (ModestWindow *window,
 }
 
 void 
+modest_window_add_to_menu (ModestWindow *window,
+			   const gchar *label,
+			   const gchar *accelerator,
+			   ModestWindowMenuCallback callback,
+			   ModestDimmingCallback dimming_callback);
+{
+	MODEST_WINDOW_GET_CLASS (window)->add_to_menu_func (window,
+							    label,
+							    accelerator,
+							    callback,
+							    dimming_callback);
+}
+
+void 
 modest_window_set_title (ModestWindow *window,
 			 const gchar *title)
 {
@@ -491,6 +512,16 @@ modest_window_show_toolbar_default (ModestWindow *window,
 static void 
 modest_window_add_toolbar_default (ModestWindow *window,
 				   GtkToolbar *toolbar)
+{
+	g_warning ("modest: You should implement %s", __FUNCTION__);
+}
+
+static void 
+modest_window_add_to_menu_default (ModestWindow *window,
+				   const gchar *label,
+				   const gchar *accelerator,
+				   ModestWindowMenuCallback callback,
+				   ModestDimmingCallback dimming_callback);
 {
 	g_warning ("modest: You should implement %s", __FUNCTION__);
 }
