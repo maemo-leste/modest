@@ -67,6 +67,9 @@ modest_togglable_get_active (GtkWidget *widget);
 void
 modest_togglable_set_active (GtkWidget *widget, gboolean active);
 
+gboolean
+modest_is_togglable (GtkWidget *widget);
+
 G_END_DECLS
 
 #endif /* __MODEST_WP_TEXT_VIEW_H__ */

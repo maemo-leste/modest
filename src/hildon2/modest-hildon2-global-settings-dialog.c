@@ -252,9 +252,8 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	gtk_box_pack_start (GTK_BOX (vbox), separator, FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 
 	/* Auto update */
-	ppriv->auto_update = hildon_check_button_new (MODEST_EDITABLE_SIZE);
-	gtk_button_set_label (GTK_BUTTON (ppriv->auto_update), _("mcen_fi_options_autoupdate"));
-	gtk_button_set_alignment (GTK_BUTTON (ppriv->auto_update), 0.0, 0.5);
+	ppriv->auto_update = modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (),
+									 _("mcen_fi_options_autoupdate"));
 	gtk_box_pack_start (GTK_BOX (vbox), ppriv->auto_update, FALSE, FALSE, 0);
 	g_signal_connect (ppriv->auto_update, "clicked", G_CALLBACK (on_auto_update_clicked), self);
 
@@ -307,7 +306,7 @@ update_sensitive (ModestGlobalSettingsDialog *dialog)
 	g_return_if_fail (MODEST_IS_GLOBAL_SETTINGS_DIALOG (dialog));
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (dialog);
 
-	if (hildon_check_button_get_active (HILDON_CHECK_BUTTON (ppriv->auto_update))) {
+	if (modest_togglable_get_active (ppriv->auto_update)) {
 		gtk_widget_set_sensitive (ppriv->connect_via, TRUE);
 		gtk_widget_set_sensitive (ppriv->update_interval, TRUE);
 	} else {
@@ -420,7 +419,7 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 		error = NULL;
 		checked = FALSE;
 	}
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->auto_update), checked);
+	modest_togglable_set_active (ppriv->auto_update, checked);
 	ppriv->initial_state.auto_update = checked;
 
 	/* Connected by */

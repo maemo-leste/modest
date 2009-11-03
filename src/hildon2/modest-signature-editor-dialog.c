@@ -125,14 +125,14 @@ enable_widgets (ModestSignatureEditorDialog *self)
 	ModestSignatureEditorDialogPrivate *priv = 
 		SIGNATURE_EDITOR_DIALOG_GET_PRIVATE (self);
 		
-	const gboolean enable = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
+	const gboolean enable = modest_togglable_get_active (priv->checkbox_use);
 	gtk_widget_set_sensitive (priv->label, enable);
 	gtk_widget_set_sensitive (priv->textview, enable);
 	gtk_text_view_set_editable (GTK_TEXT_VIEW (priv->textview), enable);
 }
 
 static void
-on_toggle_button_changed (GtkToggleButton *togglebutton, gpointer user_data)
+on_toggle_button_changed (GtkWidget *togglebutton, gpointer user_data)
 {
 	ModestSignatureEditorDialog *self = MODEST_SIGNATURE_EDITOR_DIALOG (user_data);
 	enable_widgets (self);
@@ -150,10 +150,8 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	GtkWidget *box = GTK_DIALOG(self)->vbox; /* gtk_vbox_new (FALSE, MODEST_MARGIN_HALF); */
 	top_box = gtk_vbox_new (FALSE, 0);
 
-	priv->checkbox_use = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	gtk_button_set_label (GTK_BUTTON (priv->checkbox_use), 
-			      _("mcen_fi_email_signatures_use_signature"));
-	gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_use), 0.0, 0.5);
+	priv->checkbox_use = modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (),
+									 _("mcen_fi_email_signatures_use_signature"));
 	gtk_box_pack_start (GTK_BOX (top_box), priv->checkbox_use, FALSE, FALSE, 0);
 	gtk_widget_show (priv->checkbox_use);
 	
@@ -224,7 +222,7 @@ modest_signature_editor_dialog_set_settings (
 	gtk_label_set_ellipsize (GTK_LABEL (priv->label),  PANGO_ELLIPSIZE_END);
 	g_free (label_text);
 	
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_use), use_signature);
+	modest_togglable_set_active (priv->checkbox_use, use_signature);
 	
 	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	if (signature && signature[0] != '\0')
@@ -246,7 +244,7 @@ modest_signature_editor_dialog_get_settings (
 		
 	g_assert(use_signature);
 	
-	*use_signature = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_use));
+	*use_signature = modest_togglable_get_active (priv->checkbox_use);
 			
 	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
 	

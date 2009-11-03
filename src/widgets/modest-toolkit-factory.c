@@ -155,3 +155,13 @@ modest_togglable_set_active (GtkWidget *widget, gboolean active)
 	}
 #endif
 }
+
+gboolean
+modest_is_togglable (GtkWidget *widget)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	return HILDON_IS_CHECK_BUTTON (widget);
+#else
+	return GTK_IS_CHECK_MENU_ITEM (widget) || GTK_IS_TOGGLE_BUTTON (widget);
+#endif
+}

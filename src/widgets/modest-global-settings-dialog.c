@@ -250,13 +250,12 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	gint *id;
 
 	/* Get values from UI */
+	state->auto_update = modest_togglable_get_active (priv->auto_update);
 #ifdef MODEST_TOOLKIT_HILDON2
 	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->connect_via));
-	state->auto_update = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->auto_update));
 	state->default_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->default_account_selector));
 #else
 	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
-	state->auto_update = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->auto_update));
 	state->default_account = NULL;
 #endif
 	state->connect_via = *id;

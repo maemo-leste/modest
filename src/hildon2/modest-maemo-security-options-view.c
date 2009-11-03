@@ -39,7 +39,6 @@
 #include "modest-secureauth-picker.h"
 #include "modest-maemo-utils.h"
 #include <modest-number-editor.h>
-#include <hildon/hildon-check-button.h>
 #include "modest-hildon-includes.h"
 
 #define PORT_MIN 1
@@ -89,8 +88,8 @@ on_security_changed (GtkWidget *widget,
 
 	if (MODEST_SECURITY_OPTIONS_VIEW (self)->type == MODEST_SECURITY_OPTIONS_INCOMING) {
 		/* Activate and dim checkbutton if it's secure */
-		hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->auth_view), 
-						is_secure);
+		modest_togglable_set_active (ppriv->auth_view,
+					     is_secure);
 		gtk_widget_set_sensitive (ppriv->auth_view, !is_secure);
 	} else {
 
@@ -158,9 +157,8 @@ create_incoming_security (ModestSecurityOptionsView* self,
 					       _("mcen_li_emailsetup_secure_connection"), 
 					       ppriv->security_view);
 
-	ppriv->auth_view = hildon_check_button_new (MODEST_EDITABLE_SIZE);
-	gtk_button_set_label (GTK_BUTTON (ppriv->auth_view), _("mcen_li_emailsetup_secure_authentication"));
-	gtk_button_set_alignment (GTK_BUTTON (ppriv->auth_view), 0.0, 0.5);
+	ppriv->auth_view = modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (),
+								       _("mcen_li_emailsetup_secure_authentication"));
 
 	/* Track changes in UI */
 	g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
@@ -228,8 +226,8 @@ on_entry_changed (GtkEditable *editable,
 		auth_proto = modest_secureauth_picker_get_active_secureauth (picker);
 		is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry,
 									      auth_proto);
-	} else if (HILDON_IS_CHECK_BUTTON (ppriv->auth_view)) {
-		is_secure = hildon_check_button_get_active (HILDON_CHECK_BUTTON (ppriv->auth_view));
+	} else if (modest_is_togglable (ppriv->auth_view)) {
+		is_secure = modest_togglable_get_active (ppriv->auth_view);
 	}
 
 	if (is_secure &&

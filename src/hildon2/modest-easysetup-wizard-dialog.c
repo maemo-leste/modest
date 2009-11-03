@@ -36,7 +36,6 @@
 #include <gtk/gtklabel.h>
 #include <gtk/gtkentry.h>
 #include <gtk/gtkbutton.h>
-#include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
 #include "modest-country-picker.h"
@@ -1022,19 +1021,19 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 }
 
 static void
-on_check_button_changed (HildonCheckButton *button, gpointer user_data)
+on_check_button_changed (GtkWidget *button, gpointer user_data)
 {
 	GtkWidget *widget = GTK_WIDGET (user_data);
 
 	/* Enable the widget only if the check button is active: */
-	const gboolean enable = hildon_check_button_get_active (button);
+	const gboolean enable = modest_togglable_get_active (button);
 	gtk_widget_set_sensitive (widget, enable);
 }
 
 /* Make the sensitivity of a widget depend on a check button.
  */
 static void
-enable_widget_for_checkbutton (GtkWidget *widget, HildonCheckButton* button)
+enable_widget_for_checkbutton (GtkWidget *widget, GtkWidget* button)
 {
 	g_signal_connect (G_OBJECT (button), "toggled",
 			  G_CALLBACK (on_check_button_changed), widget);
@@ -1117,13 +1116,11 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (separator);
 
 	/* connection-specific checkbox: */
-	priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific),
-					FALSE);
-	gtk_button_set_label (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific),
-			      _("mcen_fi_advsetup_connection_smtp"));
-	gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific),
-				  0.0, 0.5);
+	priv->checkbox_outgoing_smtp_specific = modest_toolkit_factory_create_check_button 
+		(modest_runtime_get_toolkit_factory (),
+		 _("mcen_fi_advsetup_connection_smtp"));
+	modest_togglable_set_active (priv->checkbox_outgoing_smtp_specific,
+				     FALSE);
 
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific,
@@ -1139,7 +1136,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers,
-				       HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific));
+				       priv->checkbox_outgoing_smtp_specific);
 
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
 			  G_CALLBACK (on_button_outgoing_smtp_servers), self);
@@ -2433,7 +2430,7 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	if (priv->checkbox_outgoing_smtp_specific) {
 		modest_account_settings_set_use_connection_specific_smtp
 			(priv->settings,
-			 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
+			 modest_togglable_get_active(priv->checkbox_outgoing_smtp_specific));
 	}
 
 	display_name = get_entered_account_title (self);

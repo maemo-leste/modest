@@ -33,7 +33,6 @@
 #include <gtk/gtklabel.h>
 #include <gtk/gtkentry.h>
 #include <gtk/gtkbutton.h>
-#include <gtk/gtkcheckbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkstock.h>
 #include "modest-hildon-includes.h"
@@ -206,7 +205,7 @@ on_modified_entry_changed (GtkEditable *editable, gpointer user_data)
 }
 
 static void
-on_modified_checkbutton_toggled (GtkButton *button, gpointer user_data)
+on_modified_checkbutton_toggled (GtkWidget *button, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
@@ -243,7 +242,7 @@ connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widge
 	} else if (HILDON_IS_PICKER_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "value-changed",
 				  G_CALLBACK (on_modified_picker_changed), self);
-	} else if (HILDON_IS_CHECK_BUTTON (widget)) {
+	} else if (modest_is_togglable (widget)) {
 		g_signal_connect (G_OBJECT (widget), "toggled",
 			G_CALLBACK (on_modified_checkbutton_toggled), self);
 	}
@@ -375,10 +374,8 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self,
 	/* The leave-messages widgets: */
 	if(!priv->checkbox_leave_messages) {
 		priv->checkbox_leave_messages = 
-			hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
-		gtk_button_set_label (GTK_BUTTON (priv->checkbox_leave_messages),
-				      _("mcen_fi_advsetup_leave_on_server"));
-		gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_leave_messages), 0.0, 0.5);
+			modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (),
+								    _("mcen_fi_advsetup_leave_on_server"));
 	}
 	connect_for_modified (self, priv->checkbox_leave_messages);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_leave_messages, FALSE, FALSE, 0);
@@ -672,19 +669,19 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self,
 }
 
 static void
-on_check_button_clicked (GtkButton *button, gpointer user_data)
+on_check_button_clicked (GtkWidget *button, gpointer user_data)
 {
 	GtkWidget *widget = GTK_WIDGET (user_data);
 	
 	/* Enable the widget only if the check button is active: */
-	const gboolean enable = hildon_check_button_get_active (HILDON_CHECK_BUTTON (button));
+	const gboolean enable = modest_togglable_get_active (button);
 	gtk_widget_set_sensitive (widget, enable);
 }
 
 /* Make the sensitivity of a widget depend on a check button.
  */
 static void
-enable_widget_for_checkbutton (GtkWidget *widget, GtkButton* button)
+enable_widget_for_checkbutton (GtkWidget *widget, GtkWidget* button)
 {
 	g_signal_connect (G_OBJECT (button), "clicked",
 		G_CALLBACK (on_check_button_clicked), widget);
@@ -766,12 +763,11 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 
 	/* connection-specific checkbox: */
 	if (!priv->checkbox_outgoing_smtp_specific) {
-		priv->checkbox_outgoing_smtp_specific = hildon_check_button_new (MODEST_EDITABLE_SIZE);
-		hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
-			FALSE);
-		gtk_button_set_label (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific),
-				      _("mcen_fi_advsetup_connection_smtp"));
-		gtk_button_set_alignment (GTK_BUTTON (priv->checkbox_outgoing_smtp_specific), 0.0, 0.5);
+		priv->checkbox_outgoing_smtp_specific = 
+			modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (),
+								    _("mcen_fi_advsetup_connection_smtp"));
+		modest_togglable_set_active (priv->checkbox_outgoing_smtp_specific,
+					     FALSE);
 	}
 	gtk_widget_show (priv->checkbox_outgoing_smtp_specific);
 	gtk_box_pack_start (GTK_BOX (box), priv->checkbox_outgoing_smtp_specific, 
@@ -788,7 +784,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 
 	/* Only enable the button when the checkbox is checked: */
 	enable_widget_for_checkbutton (priv->button_outgoing_smtp_servers, 
-		GTK_BUTTON (priv->checkbox_outgoing_smtp_specific));
+		priv->checkbox_outgoing_smtp_specific);
 
 	g_signal_connect (G_OBJECT (priv->button_outgoing_smtp_servers), "clicked",
         	G_CALLBACK (on_button_outgoing_smtp_servers), self);
@@ -1169,8 +1165,8 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 	gtk_entry_set_text( GTK_ENTRY (priv->entry_user_email), 
 			    null_means_empty (modest_account_settings_get_email_address (settings)));
 
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages), 
-					modest_account_settings_get_leave_messages_on_server (settings));
+	modest_togglable_set_active (priv->checkbox_leave_messages,
+				     modest_account_settings_get_leave_messages_on_server (settings));
 
 	incoming_account = modest_account_settings_get_store_settings (settings);
 	if (incoming_account) {
@@ -1247,9 +1243,8 @@ modest_default_account_settings_dialog_load_settings (ModestAccountSettingsDialo
 
 		const gboolean has_specific = 
 			modest_account_settings_get_use_connection_specific_smtp (settings);
-		hildon_check_button_set_active (
-			HILDON_CHECK_BUTTON (priv->checkbox_outgoing_smtp_specific), 
-			has_specific);
+		modest_togglable_set_active (priv->checkbox_outgoing_smtp_specific,
+					     has_specific);
 		g_object_unref (outgoing_account);
 	}
 
@@ -1308,7 +1303,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 		modest_account_settings_set_signature (priv->settings, signature);
 	}
 
-	leave_on_server = hildon_check_button_get_active (HILDON_CHECK_BUTTON (priv->checkbox_leave_messages));
+	leave_on_server = modest_togglable_get_active (priv->checkbox_leave_messages);
 	modest_account_settings_set_leave_messages_on_server (priv->settings, leave_on_server); 
 
 	store_settings = modest_account_settings_get_store_settings (priv->settings);
@@ -1353,7 +1348,7 @@ save_configuration (ModestDefaultAccountSettingsDialog *dialog)
 	/* Save connection-specific SMTP server accounts: */
 	modest_account_settings_set_use_connection_specific_smtp 
 		(priv->settings, 
-		 hildon_check_button_get_active(HILDON_CHECK_BUTTON(priv->checkbox_outgoing_smtp_specific)));
+		 modest_togglable_get_active(priv->checkbox_outgoing_smtp_specific));
 
 	/* this configuration is not persistent, we should not save */
 	if (account_name != NULL)
