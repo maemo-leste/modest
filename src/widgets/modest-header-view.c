@@ -2398,7 +2398,7 @@ update_style (ModestHeaderView *self)
 	/* Set color */
 
 	attr_list = pango_attr_list_new ();
-	if (!gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
+	if (!gtk_style_lookup_color (gtk_widget_get_style (GTK_WIDGET (self)), "SecondaryTextColor", &style_color)) {
 		gdk_color_parse ("grey", &style_color);
 	}
 	priv->secondary_color = style_color;
@@ -2441,7 +2441,7 @@ update_style (ModestHeaderView *self)
 			      NULL);
 	}
 
-	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
+	if (gtk_style_lookup_color (gtk_widget_get_style (GTK_WIDGET (self)), "ActiveTextColor", &style_active_color)) {
 		priv->active_color = style_active_color;
 #ifdef MODEST_TOOLKIT_HILDON2
 		g_object_set_data (G_OBJECT (priv->renderer_subject), BOLD_IS_ACTIVE_COLOR, GINT_TO_POINTER (TRUE));

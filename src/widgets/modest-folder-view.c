@@ -3273,7 +3273,11 @@ on_drag_data_received (GtkWidget *widget,
 	}
 
 	/* Check if the get_data failed */
+#if GTK_CHECK_VERSION (2,14,0)
+	if ((selection_data == NULL) || (gtk_selection_data_get_length (selection_data) < 0))
+#else
 	if (selection_data == NULL || selection_data->length < 0)
+#endif
 		goto end;
 
 	/* Select the destination model */
@@ -4141,7 +4145,8 @@ update_style (ModestFolderView *self)
 	/* Set color */
 
 	attr_list = pango_attr_list_new ();
-	if (!gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
+
+	if (!gtk_style_lookup_color (gtk_widget_get_style (GTK_WIDGET (self)), "SecondaryTextColor", &style_color)) {
 		gdk_color_parse ("grey", &style_color);
 	}
 	attr = pango_attr_foreground_new (style_color.red, style_color.green, style_color.blue);
@@ -4165,7 +4170,7 @@ update_style (ModestFolderView *self)
 		pango_attr_list_unref (attr_list);
 	}
 
-	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "ActiveTextColor", &style_active_color)) {
+	if (gtk_style_lookup_color (gtk_widget_get_style (GTK_WIDGET (self)), "ActiveTextColor", &style_active_color)) {
 		priv->active_color = style_active_color;
 	} else {
 		gdk_color_parse ("000", &(priv->active_color));

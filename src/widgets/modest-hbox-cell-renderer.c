@@ -202,6 +202,8 @@ modest_hbox_cell_renderer_get_size     (GtkCellRenderer       *cell,
 {
 	gint calc_width, calc_height;
 	gint full_width, full_height;
+	guint xpad, ypad;
+	gfloat xalign, yalign;
 	GList *node;
 	ModestHBoxCellRendererPrivate *priv = MODEST_HBOX_CELL_RENDERER_GET_PRIVATE (cell);
 
@@ -220,18 +222,25 @@ modest_hbox_cell_renderer_get_size     (GtkCellRenderer       *cell,
 		}
 	}
 
-	full_width = (gint) cell->xpad * 2 + calc_width;
-	full_height = (gint) cell->ypad * 2 + calc_height;
+	g_object_get (cell,
+		      "xpad", &xpad,
+		      "ypad", &ypad,
+		      "xalign", &xalign,
+		      "yalign", &yalign,
+		      NULL);
+
+	full_width = (gint) xpad * 2 + calc_width;
+	full_height = (gint) ypad * 2 + calc_height;
 
 	if (rectangle && calc_width > 0 && calc_height > 0) {
 		if (x_offset) {
 			*x_offset = (((gtk_widget_get_direction (widget) == GTK_TEXT_DIR_RTL) ?
-				      (1.0 - cell->xalign) : cell->xalign) *
+				      (1.0 - xalign) : xalign) *
 				     (rectangle->width - full_width));
 			*x_offset = MAX (*x_offset, 0);
 		}
 		if (y_offset) {
-			*y_offset = ((cell->yalign) *
+			*y_offset = ((yalign) *
 				     (rectangle->height - full_height));
 			*y_offset = MAX (*y_offset, 0);
 		}

@@ -697,7 +697,7 @@ update_style (ModestCompactMailHeaderView *self)
 	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
 
-	if (gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
+	if (gtk_style_lookup_color (gtk_widget_get_style (GTK_WIDGET (self)), "SecondaryTextColor", &style_color)) {
 		color.red = style_color.red;
 		color.green = style_color.green;
 		color.blue = style_color.blue;

@@ -761,10 +761,15 @@ get_att_view_at_coords (ModestAttachmentsView *atts_view,
 		gint pos_x, pos_y, w, h, int_x, int_y;
 		gint widget_x, widget_y;
 
+#if GTK_CHECK_VERSION (2,14,0)
+		gdk_window_get_origin (gtk_widget_get_window (att_view), &widget_x, &widget_y);
+#else
 		gdk_window_get_origin (att_view->window, &widget_x, &widget_y);
+#endif
 
 		pos_x = widget_x;
 		pos_y = widget_y;
+
 		w = att_view->allocation.width;
 		h = att_view->allocation.height;
 
