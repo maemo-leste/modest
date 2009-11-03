@@ -244,16 +244,6 @@ modest_maemo_utils_setup_images_filechooser (GtkFileChooser *chooser)
 
 }
 
-void
-modest_maemo_set_thumbable_scrollbar (GtkScrolledWindow *win, 
-				      gboolean thumbable)
-{
-	g_return_if_fail (GTK_IS_SCROLLED_WINDOW(win));
-#ifdef MODEST_HAVE_HILDON1_WIDGETS		
-	hildon_helper_set_thumb_scrollbar (win, thumbable);
-#endif /* MODEST_HAVE_HILDON1_WIDGETS */
-}
-
 GtkWidget *
 modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager,
 						const gchar *item_name)
