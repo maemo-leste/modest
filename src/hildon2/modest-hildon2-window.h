@@ -77,21 +77,6 @@ GType modest_hildon2_window_get_type (void) G_GNUC_CONST;
 
 
 /**
- * modest_hildon2_window_add_button_to_menu:
- * @self: a #ModestHildon2Window
- * @button: a #GtkButton
- * @dimming_callback: a #ModestDimmingCallback or %NULL for no dimming rule
- *
- * adds a previously configured button @button to the window #HildonAppMenu.
- * It will configure @dimming_callback for dimming. User should previously
- * attach the proper signal handler for @button.
- */
-void 
-modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
-					  GtkButton *button,
-					  ModestDimmingCallback dimming_callback);
-
-/**
  * modest_hildon2_window_pack_toolbar:
  * @self: a #ModestHildon2Window
  * @pack_type: a #GtkPackType

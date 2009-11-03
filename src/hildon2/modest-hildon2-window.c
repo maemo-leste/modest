@@ -68,6 +68,9 @@ static void modest_hildon2_window_add_to_menu (ModestWindow *window,
 					       const gchar *accelerator,
 					       ModestWindowMenuCallback callback,
 					       ModestDimmingCallback dimming_callback);
+static void modest_hildon2_window_add_item_to_menu (ModestWindow *window,
+						    GtkWidget *item,
+						    ModestDimmingCallback dimming_callback);
 static void modest_hildon2_window_set_title (ModestWindow *self,
 					     const gchar *title);
 static gboolean modest_hildon2_window_toggle_menu (HildonWindow *window,
@@ -173,6 +176,7 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	modest_window_class->show_toolbar_func = modest_hildon2_window_show_toolbar;
 	modest_window_class->add_toolbar_func = modest_hildon2_window_add_toolbar;
 	modest_window_class->add_to_menu_func = modest_hildon2_window_add_to_menu;
+	modest_window_class->add_item_to_menu_func = modest_hildon2_window_add_item_to_menu;
 	modest_window_class->set_title_func = modest_hildon2_window_set_title;
 	modest_window_class->show_progress_func = modest_hildon2_window_show_progress;
 
@@ -265,9 +269,9 @@ modest_hildon2_window_pack_toolbar (ModestHildon2Window *self,
 }
 
 void 
-modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
-					  GtkButton *button,
-					  ModestDimmingCallback dimming_callback)
+modest_hildon2_window_add_item_to_menu (ModestWindow *self,
+					GtkWidget *button,
+					ModestDimmingCallback dimming_callback)
 {
 	ModestHildon2WindowPrivate *priv;
 
@@ -316,7 +320,7 @@ modest_hildon2_window_add_to_menu (ModestWindow *self,
 					    accel_key, accel_mods, 0);
 	}
 
-	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (button), dimming_callback);
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), GTK_WIDGET (button), dimming_callback);
 }
 
 static void setup_menu (ModestHildon2Window *self)

@@ -119,6 +119,9 @@ struct _ModestWindowClass {
 				  const gchar *accelerator,
 				  ModestWindowMenuCallback callback,
 				  ModestDimmingCallback dimming_callback);
+	void (*add_item_to_menu_func) (ModestWindow *self,
+				       GtkWidget *widget,
+				       ModestDimmingCallback dimming_callback);
 };
 
 /**
@@ -352,8 +355,21 @@ void modest_window_add_to_menu (ModestWindow *self,
 				const gchar *accelerator,
 				ModestWindowMenuCallback callback,
 				ModestDimmingCallback dimming_callback);
-				
 
+/**
+ * modest_window_add_item_to_menu:
+ * @self: a #ModestWindow
+ * @item: a #GtkWidget (a #GtkButton in hildon, a #GtkMenuItem in gtk)
+ * @dimming_callback: a #ModestDimmingCallback or %NULL for no dimming rule
+ *
+ * adds a previously configured item @item to the window menu.
+ * It will configure @dimming_callback for dimming. User should previously
+ * attach the proper signal handler for @button.
+ */
+void 
+modest_window_add_item_to_menu (ModestWindow *self,
+				GtkWidget *item,
+				ModestDimmingCallback dimming_callback);
 
 G_END_DECLS
 

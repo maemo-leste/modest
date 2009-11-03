@@ -1371,7 +1371,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_widget_hide (priv->cc_caption);
 		field_view_set = FALSE;
 	}
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button), field_view_set);
+	modest_togglable_set_active (priv->cc_button, field_view_set);
 
 	field_view_set = TRUE;
 	if (bcc) {
@@ -1385,7 +1385,7 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 		gtk_widget_hide (priv->bcc_caption);
 		field_view_set = FALSE;
 	}
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button), field_view_set);
+	modest_togglable_set_active (priv->bcc_button, field_view_set);
 
 
 	if (subject)
@@ -4298,23 +4298,23 @@ on_message_settings (GtkAction *action,
 }
 
 static void
-on_cc_button_toggled (HildonCheckButton *button,
+on_cc_button_toggled (GtkWidget *button,
 		      ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
 	modest_msg_edit_window_show_cc (MODEST_MSG_EDIT_WINDOW (window),
-					hildon_check_button_get_active (button));
+					modest_togglable_get_active (button));
 }
 
 static void
-on_bcc_button_toggled (HildonCheckButton *button,
+on_bcc_button_toggled (GtkWidget *button,
 		      ModestMsgEditWindow *window)
 {
 	g_return_if_fail (MODEST_MSG_EDIT_WINDOW (window));
 
 	modest_msg_edit_window_show_bcc (MODEST_MSG_EDIT_WINDOW (window),
-					hildon_check_button_get_active (button));
+					modest_togglable_get_active (button));
 }
 
 static void 
@@ -4334,27 +4334,23 @@ setup_menu (ModestMsgEditWindow *self)
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_undo),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
 
-	priv->cc_button = hildon_check_button_new (0);
-	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("mcen_me_editor_showcc"));
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button),
-					FALSE);
-	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->cc_button),
-						  NULL);
+	priv->cc_button = modest_toolkit_factory_create_check_menu (modest_runtime_get_toolkit_factory (),
+								    _("mcen_me_editor_showcc"));
+	modest_togglable_set_active (priv->cc_button,
+				     FALSE);
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), priv->cc_button,
+					NULL);
 	g_signal_connect (G_OBJECT (priv->cc_button), "toggled",
 			  G_CALLBACK (on_cc_button_toggled), (gpointer) self);
-	gtk_button_set_alignment (GTK_BUTTON (priv->cc_button), 0.5, 0.5);
-	gtk_button_set_alignment (GTK_BUTTON (priv->cc_button), 0.5, 0.5);
 
-	priv->bcc_button = hildon_check_button_new (0);
-	gtk_button_set_label (GTK_BUTTON (priv->bcc_button), _("mcen_me_editor_showbcc"));
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->bcc_button),
-					FALSE);
-	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->bcc_button),
-						  NULL);
+	priv->bcc_button = modest_toolkit_factory_create_check_menu (modest_runtime_get_toolkit_factory (),
+								     _("mcen_me_editor_showbcc"));
+	modest_togglable_set_active (priv->bcc_button,
+				     FALSE);
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), priv->bcc_button,
+					NULL);
 	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
 			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
-	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
-	gtk_button_set_alignment (GTK_BUTTON (priv->bcc_button), 0.5, 0.5);
 
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_insert_image),

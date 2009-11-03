@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-hildon-pannable-area-scrollable.h>
+#include <hildon/hildon.h>
 #else
 #include <modest-scrolled-window-scrollable.h>
 #endif
@@ -40,6 +41,8 @@ static void modest_toolkit_factory_init (ModestToolkitFactory *self);
 
 /* GObject interface */
 static GtkWidget * modest_toolkit_factory_create_scrollable_default (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, const gchar *label);
+static GtkWidget * modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -61,6 +64,8 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	parent_class = g_type_class_peek_parent (klass);
 
 	klass->create_scrollable = modest_toolkit_factory_create_scrollable_default;
+	klass->create_check_button = modest_toolkit_factory_create_check_button_default;
+	klass->create_check_menu = modest_toolkit_factory_create_check_menu_default;
 }
 
 static void
@@ -81,5 +86,72 @@ modest_toolkit_factory_create_scrollable_default (ModestToolkitFactory *self)
 	return modest_hildon_pannable_area_scrollable_new ();
 #else
 	return modest_scrolled_window_scrollable_new ();
+#endif
+}
+
+GtkWidget *
+modest_toolkit_factory_create_check_button (ModestToolkitFactory *self, const gchar *label)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_check_button (self, label);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, const gchar *label)
+{
+	GtkWidget *result;
+#ifdef MODEST_TOOLKIT_HILDON2
+	result = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
+	gtk_button_set_label (GTK_BUTTON (result), label);
+	gtk_button_set_alignment (GTK_BUTTON (result), 0.0, 0.5);
+#else
+	result = gtk_check_button_new_with_label (label);
+#endif
+	return result;
+}
+GtkWidget *
+modest_toolkit_factory_create_check_menu (ModestToolkitFactory *self, const gchar *label)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_check_menu (self, label);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label)
+{
+	GtkWidget *result;
+#ifdef MODEST_TOOLKIT_HILDON2
+	result = hildon_check_button_new (0);
+	gtk_button_set_label (GTK_BUTTON (result), label);
+	gtk_button_set_alignment (GTK_BUTTON (result), 0.5, 0.5);
+#else
+	result = gtk_check_menu_item_new_with_label (label);
+#endif
+	return result;
+}
+
+gboolean
+modest_togglable_get_active (GtkWidget *widget)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	return hildon_check_button_get_active (HILDON_CHECK_BUTTON (widget));
+#else
+	if (GTK_IS_CHECK_MENU_ITEM (widget)) {
+		return gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (widget));
+	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
+		return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+	}
+#endif
+}
+
+void
+modest_togglable_set_active (GtkWidget *widget, gboolean active)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (widget), active);
+#else
+	if (GTK_IS_CHECK_MENU_ITEM (widget)) {
+		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (widget), active);
+	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), active);
+	}
 #endif
 }
