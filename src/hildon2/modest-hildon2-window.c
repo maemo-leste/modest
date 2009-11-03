@@ -288,8 +288,8 @@ modest_hildon2_window_add_button_to_menu (ModestHildon2Window *self,
 }
 
 static void
-modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
-				   gchar *label,
+modest_hildon2_window_add_to_menu (ModestWindow *self,
+				   const gchar *label,
 				   const gchar *accelerator,
 				   ModestWindowMenuCallback callback,
 				   ModestDimmingCallback dimming_callback)
@@ -316,7 +316,7 @@ modest_hildon2_window_add_to_menu (ModestHildon2Window *self,
 					    accel_key, accel_mods, 0);
 	}
 
-	modest_hildon2_window_add_button_to_menu (self, GTK_BUTTON (button), dimming_callback);
+	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (button), dimming_callback);
 }
 
 static void setup_menu (ModestHildon2Window *self)

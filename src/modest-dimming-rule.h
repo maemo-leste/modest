@@ -47,10 +47,6 @@ G_BEGIN_DECLS
 typedef struct _ModestDimmingRule      ModestDimmingRule;
 typedef struct _ModestDimmingRuleClass ModestDimmingRuleClass;
 
-typedef gboolean (*ModestDimmingCallback) (ModestWindow *self, gpointer user_data);
-
-#define MODEST_DIMMING_CALLBACK(x) ((ModestDimmingCallback) (x))
-
 
 struct _ModestDimmingRule {
 	 GObject parent;

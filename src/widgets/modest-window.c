@@ -441,7 +441,7 @@ modest_window_add_to_menu (ModestWindow *window,
 			   const gchar *label,
 			   const gchar *accelerator,
 			   ModestWindowMenuCallback callback,
-			   ModestDimmingCallback dimming_callback);
+			   ModestDimmingCallback dimming_callback)
 {
 	MODEST_WINDOW_GET_CLASS (window)->add_to_menu_func (window,
 							    label,
@@ -521,7 +521,7 @@ modest_window_add_to_menu_default (ModestWindow *window,
 				   const gchar *label,
 				   const gchar *accelerator,
 				   ModestWindowMenuCallback callback,
-				   ModestDimmingCallback dimming_callback);
+				   ModestDimmingCallback dimming_callback)
 {
 	g_warning ("modest: You should implement %s", __FUNCTION__);
 }

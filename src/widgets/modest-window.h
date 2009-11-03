@@ -36,7 +36,6 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <modest-dimming-rule.h>
 
 G_BEGIN_DECLS
 
@@ -92,7 +91,10 @@ typedef struct _ModestWindow      ModestWindow;
 typedef struct _ModestWindowClass ModestWindowClass;
 
 typedef void (*ModestWindowMenuCallback) (GObject *control, gpointer userdata);
+typedef gboolean (*ModestDimmingCallback) (ModestWindow *self, gpointer user_data);
+
 #define MODEST_WINDOW_MENU_CALLBACK(x) ((ModestWindowMenuCallback) (x))
+#define MODEST_DIMMING_CALLBACK(x) ((ModestDimmingCallback) (x))
  
 struct _ModestWindow {
 	 ModestWindowParent parent;

@@ -32,6 +32,7 @@
 
 #include <glib-object.h>
 #include "modest-window.h"
+#include <tny-header.h>
 
 G_BEGIN_DECLS
 
