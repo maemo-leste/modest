@@ -1,3 +1,13 @@
+modest (3.1.9) unstable; urgency=low
+
+  * Week 45, 2009 first release
+  * 
+  * Fixes: NB#140509 Perform a sync of the currently viewed folder when a send&receive (manual or automatic) is activated
+  * Fixes: NB#140731 MfE distorts original message formatting when replying 
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 03 Nov 2009 18:00:19 +0200
+
 modest (3.1.8) unstable; urgency=low
 
   * Week 44, 2009 - fourth release
