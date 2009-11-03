@@ -50,6 +50,7 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-toolkit-factory.h>
 #include <modest-scrollable.h>
+#include <modest-isearch-toolbar.h>
 #include <hildon/hildon-picker-dialog.h>
 #include <hildon/hildon-app-menu.h>
 #include "modest-defs.h"
@@ -79,7 +80,7 @@ struct _ModestMsgViewWindowPrivate {
 
 	GtkWidget   *msg_view;
 	GtkWidget   *main_scroll;
-	GtkWidget   *find_toolbar;
+	GtkWidget   *isearch_toolbar;
 	gchar       *last_search;
 
 	/* Progress observers */
@@ -130,13 +131,13 @@ static void  modest_msg_view_window_class_init   (ModestMsgViewWindowClass *klas
 static void  modest_msg_view_window_init         (ModestMsgViewWindow *obj);
 static void  modest_header_view_observer_init    (ModestHeaderViewObserverIface *iface_class);
 static void  modest_msg_view_window_finalize     (GObject *obj);
-static void  modest_msg_view_window_show_find_toolbar   (GtkWidget *obj, gpointer data);
-static void  modest_msg_view_window_find_toolbar_close  (GtkWidget *widget,
-							 ModestMsgViewWindow *obj);
-static void  modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
-							 ModestMsgViewWindow *obj);
-static void  modest_msg_view_window_toggle_find_toolbar (GtkWidget *obj,
-							 gpointer data);
+static void  modest_msg_view_window_show_isearch_toolbar   (GtkWidget *obj, gpointer data);
+static void  modest_msg_view_window_isearch_toolbar_close  (GtkWidget *widget,
+							    ModestMsgViewWindow *obj);
+static void  modest_msg_view_window_isearch_toolbar_search (GtkWidget *widget,
+							    ModestMsgViewWindow *obj);
+static void  modest_msg_view_window_toggle_isearch_toolbar (GtkWidget *obj,
+							    gpointer data);
 static void modest_msg_view_window_disconnect_signals (ModestWindow *self);
 
 static gdouble modest_msg_view_window_get_zoom    (ModestWindow *window);
@@ -254,7 +255,7 @@ static const GtkActionEntry msg_view_toolbar_action_entries [] = {
 };
 
 static const GtkToggleActionEntry msg_view_toggle_action_entries [] = {
-	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), "<CTRL>F", NULL, G_CALLBACK (modest_msg_view_window_toggle_find_toolbar), FALSE },
+	{ "FindInMessage",    MODEST_TOOLBAR_ICON_FIND,    N_("qgn_toolb_gene_find"), "<CTRL>F", NULL, G_CALLBACK (modest_msg_view_window_toggle_isearch_toolbar), FALSE },
 };
 
 #define MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -846,20 +847,15 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 	/* First add out toolbar ... */
 	modest_msg_view_window_show_toolbar (MODEST_WINDOW (obj), TRUE);
 
-	/****** HILDON2:START
-	 * adds the toolbar
-	 */
-	/* ... and later the find toolbar. This way find toolbar will
-	   be shown over the other */
-	priv->find_toolbar = hildon_find_toolbar_new (NULL);
-	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->find_toolbar));
-	gtk_widget_set_no_show_all (priv->find_toolbar, TRUE);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "close", 
-			  G_CALLBACK (modest_msg_view_window_find_toolbar_close), obj);
-	g_signal_connect (G_OBJECT (priv->find_toolbar), "search", 
-			  G_CALLBACK (modest_msg_view_window_find_toolbar_search), obj);
+	priv->isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar (modest_runtime_get_toolkit_factory (),
+									       NULL);
+	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->isearch_toolbar));
+	gtk_widget_set_no_show_all (priv->isearch_toolbar, TRUE);
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "isearch-close", 
+			  G_CALLBACK (modest_msg_view_window_isearch_toolbar_close), obj);
+	g_signal_connect (G_OBJECT (priv->isearch_toolbar), "isearch-search", 
+			  G_CALLBACK (modest_msg_view_window_isearch_toolbar_search), obj);
 	priv->last_search = NULL;
-	/****** HILDON2:END */
 
 	/* Init the clipboard actions dim status */
 	modest_msg_view_grab_focus(MODEST_MSG_VIEW (priv->msg_view));
@@ -1541,52 +1537,50 @@ modest_msg_view_window_get_message_uid (ModestMsgViewWindow *self)
 
 /* Used for the Ctrl+F accelerator */
 static void
-modest_msg_view_window_toggle_find_toolbar (GtkWidget *obj,
-					    gpointer data)
+modest_msg_view_window_toggle_isearch_toolbar (GtkWidget *obj,
+					       gpointer data)
 {
 	ModestMsgViewWindow *window = MODEST_MSG_VIEW_WINDOW (data);
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	if (GTK_WIDGET_VISIBLE (priv->find_toolbar)) {
-		modest_msg_view_window_find_toolbar_close (obj, data);
+	if (GTK_WIDGET_VISIBLE (priv->isearch_toolbar)) {
+		modest_msg_view_window_isearch_toolbar_close (obj, data);
        } else {
-		modest_msg_view_window_show_find_toolbar (obj, data);
+		modest_msg_view_window_show_isearch_toolbar (obj, data);
        }
 }
 
 /* Handler for menu option */
 static void
-modest_msg_view_window_show_find_toolbar (GtkWidget *obj,
-					  gpointer data)
+modest_msg_view_window_show_isearch_toolbar (GtkWidget *obj,
+					     gpointer data)
 {
 	ModestMsgViewWindow *window = MODEST_MSG_VIEW_WINDOW (data);
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
-	gtk_widget_show (priv->find_toolbar);
-	/****** HILDON2:START */
-	hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
-	/****** HILDON2:END */
+	gtk_widget_show (priv->isearch_toolbar);
+	modest_isearch_toolbar_highlight_entry (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar), TRUE);
 }
 
-/* Handler for click on the "X" close button in find toolbar */
+/* Handler for click on the "X" close button in isearch toolbar */
 static void
-modest_msg_view_window_find_toolbar_close (GtkWidget *widget,
-					   ModestMsgViewWindow *obj)
+modest_msg_view_window_isearch_toolbar_close (GtkWidget *widget,
+					      ModestMsgViewWindow *obj)
 {
 	ModestMsgViewWindowPrivate *priv;
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 
 	/* Hide toolbar */
-	gtk_widget_hide (priv->find_toolbar);
+	gtk_widget_hide (priv->isearch_toolbar);
 	modest_msg_view_grab_focus (MODEST_MSG_VIEW (priv->msg_view));
 }
 
 static void
-modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
-					   ModestMsgViewWindow *obj)
+modest_msg_view_window_isearch_toolbar_search (GtkWidget *widget,
+					       ModestMsgViewWindow *obj)
 {
-	gchar *current_search;
+	const gchar *current_search;
 	ModestMsgViewWindowPrivate *priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (obj);
 
 	if (modest_mime_part_view_is_empty (MODEST_MIME_PART_VIEW (priv->msg_view))) {
@@ -1594,10 +1588,9 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 		return;
 	}
 
-	g_object_get (G_OBJECT (widget), "prefix", &current_search, NULL);
+	current_search = modest_isearch_toolbar_get_search (MODEST_ISEARCH_TOOLBAR (widget));
 
 	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
-		g_free (current_search);
 		modest_platform_system_banner (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
 		return;
 	}
@@ -1614,9 +1607,7 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
-			/****** HILDON2:START */
-			hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
-			/****** HILDON2:END */
+			modest_isearch_toolbar_highlight_entry (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar), TRUE);
 		}
 	} else {
 		if (!modest_isearch_view_search_next (MODEST_ISEARCH_VIEW (priv->msg_view))) {
@@ -1625,14 +1616,10 @@ modest_msg_view_window_find_toolbar_search (GtkWidget *widget,
 			g_free (priv->last_search);
 			priv->last_search = NULL;
 		} else {
-			/****** HILDON2:START */
-			hildon_find_toolbar_highlight_entry (HILDON_FIND_TOOLBAR (priv->find_toolbar), TRUE);
-			/****** HILDON2:END */
+			modest_isearch_toolbar_highlight_entry (MODEST_ISEARCH_TOOLBAR (priv->isearch_toolbar), TRUE);
 		}
 	}
 	
-	g_free (current_search);
-		
 }
 
 static void
@@ -1752,7 +1739,7 @@ modest_msg_view_window_key_event (GtkWidget *window,
 
 	focus = gtk_window_get_focus (GTK_WINDOW (window));
 
-	/* for the find toolbar case */
+	/* for the isearch toolbar case */
 	if (focus && GTK_IS_ENTRY (focus)) {
 		if (event->keyval == GDK_BackSpace) {
 			GdkEvent *copy;
@@ -3617,7 +3604,7 @@ setup_menu (ModestMsgViewWindow *self)
 
 	/* Settings menu buttons */
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_viewer_find"), NULL,
-				   MODEST_WINDOW_MENU_CALLBACK (modest_msg_view_window_show_find_toolbar),
+				   MODEST_WINDOW_MENU_CALLBACK (modest_msg_view_window_show_isearch_toolbar),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_find_in_msg));
 
 	modest_window_add_to_menu (MODEST_WINDOW (self),
