@@ -105,6 +105,7 @@ modest_scrolled_window_scrollable_class_init (ModestScrolledWindowScrollableClas
 	GObjectClass *gobject_class;
 
 	parent_class = g_type_class_peek_parent (klass);
+	gobject_class = (GObjectClass *) klass;
 	gobject_class->finalize = modest_scrolled_window_scrollable_finalize;
 	gobject_class->set_property = modest_scrolled_window_scrollable_set_property;
 	gobject_class->get_property = modest_scrolled_window_scrollable_get_property;

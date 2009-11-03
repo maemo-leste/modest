@@ -86,6 +86,7 @@ modest_hildon_find_toolbar_class_init (ModestHildonFindToolbarClass *klass)
 	GObjectClass *gobject_class;
 
 	parent_class = g_type_class_peek_parent (klass);
+	gobject_class = (GObjectClass *) klass;
 	gobject_class->finalize = modest_hildon_find_toolbar_finalize;
 
 	klass->highlight_entry_func = modest_hildon_find_toolbar_highlight_entry_default;

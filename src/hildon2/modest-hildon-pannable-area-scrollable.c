@@ -104,6 +104,7 @@ modest_hildon_pannable_area_scrollable_class_init (ModestHildonPannableAreaScrol
 	GObjectClass *gobject_class;
 
 	parent_class = g_type_class_peek_parent (klass);
+	gobject_class = (GObjectClass *) klass;
 	gobject_class->finalize = modest_hildon_pannable_area_scrollable_finalize;
 	gobject_class->set_property = modest_hildon_pannable_area_scrollable_set_property;
 	gobject_class->get_property = modest_hildon_pannable_area_scrollable_get_property;
