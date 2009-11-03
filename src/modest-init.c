@@ -250,7 +250,7 @@ modest_init (int argc, char *argv[])
 	modest_address_book_init ();
 
 	reset = modest_runtime_get_debug_flags () & MODEST_RUNTIME_DEBUG_FACTORY_SETTINGS;
-	if (!init_header_columns(modest_runtime_get_conf(), reset)) {
+	if (!init_header_columns(modest_runtime_get_conf(), TRUE)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init header columns\n");
 		return FALSE;
