@@ -3160,7 +3160,8 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
 
-	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
+	/* Check names but do not automatically add them to addressbook */
+	if (!modest_msg_edit_window_check_names (edit_window, FALSE))
 		return TRUE;
 
 	data = modest_msg_edit_window_get_msg_data (edit_window);
