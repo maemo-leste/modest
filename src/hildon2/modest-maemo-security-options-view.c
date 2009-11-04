@@ -231,7 +231,7 @@ on_entry_changed (GtkEditable *editable,
 	}
 
 	if (is_secure &&
-	    !g_strcmp0 (hildon_entry_get_text (HILDON_ENTRY (ppriv->user_entry)), "")) {
+	    !g_strcmp0 (modest_entry_get_text (ppriv->user_entry), "")) {
 		priv->missing_data = TRUE;
 	} else {
 		priv->missing_data = FALSE;
@@ -312,7 +312,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						      on_entry_max, self);
 		
 		/* Password widgets */
-		ppriv->pwd_entry = hildon_entry_new (MODEST_EDITABLE_SIZE);
+		ppriv->pwd_entry = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 
 		/* Auto-capitalization is the default, so let's turn it off */
 		hildon_gtk_entry_set_input_mode (GTK_ENTRY (ppriv->pwd_entry),

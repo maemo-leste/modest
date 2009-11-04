@@ -395,7 +395,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name,
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(add_email_addr_to_contact_dlg)->vbox), cptn_cntrl,
 			   FALSE, FALSE, 0);
 
-	email_entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	email_entry = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	cptn_cntrl = modest_maemo_utils_create_captioned (size_group, NULL, 
 							  _("mcen_fi_add_email_name"), FALSE,
 							  email_entry);
@@ -412,7 +412,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name,
 
 		if (result == GTK_RESPONSE_ACCEPT) {
 			const gchar *invalid_char_offset = NULL;
-			new_email_addr = g_strdup(hildon_entry_get_text(HILDON_ENTRY(email_entry)));
+			new_email_addr = g_strdup(modest_entry_get_text(email_entry));
 			new_email_addr = g_strstrip(new_email_addr);
 			if (!modest_text_utils_validate_email_address (new_email_addr, &invalid_char_offset)) {
 				gtk_widget_grab_focus(email_entry);

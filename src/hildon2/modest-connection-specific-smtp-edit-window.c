@@ -165,12 +165,12 @@ on_mandatory_entry_changed (GtkWidget* widget, ModestConnectionSpecificSmtpEditW
 	auth_proto = modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker));
 	if (modest_protocol_registry_protocol_type_is_secure (modest_runtime_get_protocol_registry (),
 							      auth_proto)) {
-		text = hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username));
+		text = modest_entry_get_text (priv->entry_user_username);
 		if (!text || (strlen(text) == 0))
 			sensitive = FALSE;
 	}
 
-	text = hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver));
+	text = modest_entry_get_text (priv->entry_outgoingserver);
 	if (!text || (strlen(text) == 0))
 		sensitive = FALSE;
 
@@ -238,7 +238,7 @@ on_response (GtkDialog *dialog, int response_id, gpointer user_data)
 	ModestConnectionSpecificSmtpEditWindowPrivate *priv =
        		CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (self);
 
-	hostname = hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver));
+	hostname = modest_entry_get_text (priv->entry_outgoingserver);
 
 	/* Don't close the dialog if a range error occured */
 	if(response_id == GTK_RESPONSE_OK && priv->range_error_occured)
@@ -375,7 +375,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	 
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
-		priv->entry_outgoingserver = hildon_entry_new (MODEST_EDITABLE_SIZE);
+		priv->entry_outgoingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
@@ -425,7 +425,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_username), 64);
 	
 	/* The password widgets: */	
-	priv->entry_user_password = hildon_entry_new (MODEST_EDITABLE_SIZE);
+	priv->entry_user_password = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
@@ -540,11 +540,11 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		if (priv->account_name)
 			g_free (priv->account_name);
 		priv->account_name = g_strdup (modest_server_account_settings_get_account_name (server_settings));
-		hildon_entry_set_text (HILDON_ENTRY (priv->entry_outgoingserver), 
+		modest_entry_set_text (priv->entry_outgoingserver,
 				       modest_server_account_settings_get_hostname (server_settings));
-		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_username),
+		modest_entry_set_text (priv->entry_user_username,
 				       modest_server_account_settings_get_username (server_settings));	
-		hildon_entry_set_text (HILDON_ENTRY (priv->entry_user_password), 
+		modest_entry_set_text (priv->entry_user_password,
 				       modest_server_account_settings_get_password (server_settings));
 	
 		modest_serversecurity_picker_set_active_serversecurity (
@@ -574,7 +574,7 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	const gchar *outgoing_server = NULL;
 
 	priv = 	CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW_GET_PRIVATE (window);
-	outgoing_server = hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver));
+	outgoing_server = modest_entry_get_text (priv->entry_outgoingserver);
 
 	/* If the outgoing server is NULL, we are removing the connection specific
 	 * settings */
@@ -585,13 +585,13 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	server_settings = modest_server_account_settings_new ();
 	
 	modest_server_account_settings_set_hostname (server_settings, 
-						     hildon_entry_get_text (HILDON_ENTRY (priv->entry_outgoingserver)));
+						     modest_entry_get_text (priv->entry_outgoingserver));
 	modest_server_account_settings_set_protocol (server_settings,
 						     MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	modest_server_account_settings_set_username (server_settings,
-						     hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_username)));
+						     modest_entry_get_text (priv->entry_user_username));
 	modest_server_account_settings_set_password (server_settings,
-						     hildon_entry_get_text (HILDON_ENTRY (priv->entry_user_password)));
+						     modest_entry_get_text (priv->entry_user_password));
 	
 	modest_server_account_settings_set_security_protocol (server_settings, 
 						     modest_serversecurity_picker_get_active_serversecurity (

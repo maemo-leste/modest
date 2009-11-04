@@ -1031,7 +1031,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 
 	if (show_name) {
 		label_entry = gtk_label_new (label_text);
-		entry = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+		entry = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 		gtk_entry_set_max_length (GTK_ENTRY (entry), 20);
 
 		gtk_misc_set_alignment (GTK_MISC (label_entry), 0.0, 0.5);

@@ -548,7 +548,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self,
 		on_entry_max, self);
 	
 	/* The password widgets: */	
-	priv->entry_user_password = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+	priv->entry_user_password = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
@@ -635,7 +635,7 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self,
 
 	/* The incoming server widgets: */
 	if(!priv->entry_incomingserver)
-		priv->entry_incomingserver = hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+		priv->entry_incomingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
 
@@ -732,8 +732,7 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
  
 	/* The outgoing server widgets: */
 	if (!priv->entry_outgoingserver)
-		priv->entry_outgoingserver = 
-			hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+		priv->entry_outgoingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
