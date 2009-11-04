@@ -38,6 +38,7 @@
 #define USE_GTK_FIND_TOOLBAR
 #define USE_GTK_CHECK_BUTTON
 #define USE_GTK_CHECK_MENU
+#define USE_GTK_ENTRY
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -60,6 +61,7 @@ static GtkWidget * modest_toolkit_factory_create_scrollable_default (ModestToolk
 static GtkWidget * modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, const gchar *label);
 static GtkWidget * modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label);
 static GtkWidget * modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *self, const gchar *label);
+static GtkWidget * modest_toolkit_factory_create_entry_default (ModestToolkitFactory *self);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -84,6 +86,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_check_button = modest_toolkit_factory_create_check_button_default;
 	klass->create_check_menu = modest_toolkit_factory_create_check_menu_default;
 	klass->create_isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar_default;
+	klass->create_entry = modest_toolkit_factory_create_entry_default;
 }
 
 static void
@@ -204,5 +207,61 @@ modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *sel
 	result = modest_hildon_find_toolbar_new (label);
 #endif
 	return result;
+}
+
+GtkWidget *
+modest_toolkit_factory_create_entry (ModestToolkitFactory *self)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_entry (self);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_entry_default (ModestToolkitFactory *self)
+{
+#ifdef USE_GTK_ENTRY
+	return gtk_entry_new ();
+#else
+	return hildon_entry_new (HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+#endif
+}
+
+void
+modest_entry_set_text (GtkWidget *widget, const gchar *text)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_entry_set_text (HILDON_ENTRY (widget), text);
+#else
+	gtk_entry_set_text (GTK_ENTRY (widget), text);
+#endif
+}
+
+const gchar *
+modest_entry_get_text (GtkWidget *widget)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	return hildon_entry_get_text (HILDON_ENTRY (widget));
+#else
+	return gtk_entry_set_text (GTK_ENTRY (widget));
+#endif
+}
+
+void 
+modest_entry_set_hint (GtkWidget *widget, const gchar *hint)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	hildon_entry_set_placeholder (HILDON_ENTRY (widget), hint);
+#else
+	gtk_widget_set_tooltip_text (widget, hint);
+#endif
+}
+
+gboolean
+modest_is_entry (GtkWidget *widget)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	return HILDON_IS_ENTRY (widget);
+#else
+	return GTK_IS_ENTRY (widget);
+#endif
 }
 

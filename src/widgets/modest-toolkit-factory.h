@@ -39,6 +39,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_check_button) (ModestToolkitFactory *self, const gchar *label);
 	GtkWidget * (*create_check_menu) (ModestToolkitFactory *self, const gchar *label);
 	GtkWidget * (*create_isearch_toolbar) (ModestToolkitFactory *self, const gchar *label);
+	GtkWidget * (*create_entry) (ModestToolkitFactory *self);
 };
 
 struct                                          _ModestToolkitFactory
@@ -65,6 +66,9 @@ modest_toolkit_factory_create_check_menu (ModestToolkitFactory *self, const gcha
 GtkWidget *
 modest_toolkit_factory_create_isearch_toolbar (ModestToolkitFactory *self, const gchar *label);
 
+GtkWidget *
+modest_toolkit_factory_create_entry (ModestToolkitFactory *self);
+
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
 
@@ -73,6 +77,18 @@ modest_togglable_set_active (GtkWidget *widget, gboolean active);
 
 gboolean
 modest_is_togglable (GtkWidget *widget);
+
+void
+modest_entry_set_text (GtkWidget *widget, const gchar *text);
+
+const gchar *
+modest_entry_get_text (GtkWidget *widget);
+
+void
+modest_entry_set_hint (GtkWidget *widget, const gchar *hint);
+
+gboolean 
+modest_is_entry (GtkWidget *widget);
 
 G_END_DECLS
 
