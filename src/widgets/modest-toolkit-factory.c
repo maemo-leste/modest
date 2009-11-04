@@ -29,14 +29,28 @@
 
 #include <glib/gi18n.h>
 #ifdef MODEST_TOOLKIT_HILDON2
-#include <modest-hildon-pannable-area-scrollable.h>
-#include <modest-hildon-find-toolbar.h>
 #include <hildon/hildon.h>
-#else
-#include <modest-scrolled-window-scrollable.h>
-#include <modest-find-toolbar.h>
 #endif
 #include "modest-toolkit-factory.h"
+
+#ifndef MODEST_TOOLKIT_HILDON2
+#define USE_SCROLLED_WINDOW
+#define USE_GTK_FIND_TOOLBAR
+#define USE_GTK_CHECK_BUTTON
+#define USE_GTK_CHECK_MENU
+#endif
+
+#ifdef USE_SCROLLED_WINDOW
+#include <modest-scrolled-window-scrollable.h>
+#else
+#include <modest-hildon-pannable-area-scrollable.h>
+#endif
+
+#ifdef USE_GTK_TOOLBAR
+#include <modest-find-toolbar.h>
+#else
+#include <modest-hildon-find-toolbar.h>
+#endif
 
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
 static void modest_toolkit_factory_init (ModestToolkitFactory *self);
@@ -86,10 +100,10 @@ modest_toolkit_factory_create_scrollable (ModestToolkitFactory *self)
 static GtkWidget *
 modest_toolkit_factory_create_scrollable_default (ModestToolkitFactory *self)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	return modest_hildon_pannable_area_scrollable_new ();
-#else
+#ifdef USE_SCROLLED_WINDOW
 	return modest_scrolled_window_scrollable_new ();
+#else
+	return modest_hildon_pannable_area_scrollable_new ();
 #endif
 }
 
@@ -103,12 +117,12 @@ static GtkWidget *
 modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, const gchar *label)
 {
 	GtkWidget *result;
-#ifdef MODEST_TOOLKIT_HILDON2
+#ifdef USE_GTK_CHECK_BUTTON
+	result = gtk_check_button_new_with_label (label);
+#else
 	result = hildon_check_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	gtk_button_set_label (GTK_BUTTON (result), label);
 	gtk_button_set_alignment (GTK_BUTTON (result), 0.0, 0.5);
-#else
-	result = gtk_check_button_new_with_label (label);
 #endif
 	return result;
 }
@@ -123,12 +137,12 @@ static GtkWidget *
 modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label)
 {
 	GtkWidget *result;
-#ifdef MODEST_TOOLKIT_HILDON2
+#ifdef USE_GTK_CHECK_MENU
+	result = gtk_check_menu_item_new_with_label (label);
+#else
 	result = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (result), label);
 	gtk_button_set_alignment (GTK_BUTTON (result), 0.5, 0.5);
-#else
-	result = gtk_check_menu_item_new_with_label (label);
 #endif
 	return result;
 }
@@ -136,39 +150,42 @@ modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, co
 gboolean
 modest_togglable_get_active (GtkWidget *widget)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	return hildon_check_button_get_active (HILDON_CHECK_BUTTON (widget));
-#else
 	if (GTK_IS_CHECK_MENU_ITEM (widget)) {
 		return gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (widget));
 	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
 		return gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
-	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (HILDON_IS_CHECK_BUTTON (widget)) {
+		return hildon_check_button_get_active (HILDON_CHECK_BUTTON (widget));
 #endif
+	} else {
+		g_return_val_if_reached (FALSE);
+	}
 }
 
 void
 modest_togglable_set_active (GtkWidget *widget, gboolean active)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	hildon_check_button_set_active (HILDON_CHECK_BUTTON (widget), active);
-#else
 	if (GTK_IS_CHECK_MENU_ITEM (widget)) {
 		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (widget), active);
 	} else if (GTK_IS_TOGGLE_BUTTON (widget)) {
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget), active);
-	}
+#ifdef MODEST_TOOLKIT_HILDON2
+	} else if (HILDON_IS_CHECK_BUTTON (widget)) {
+		hildon_check_button_set_active (HILDON_CHECK_BUTTON (widget), active);
 #endif
+	}
 }
 
 gboolean
 modest_is_togglable (GtkWidget *widget)
 {
+	return GTK_IS_CHECK_MENU_ITEM (widget) 
+		|| GTK_IS_TOGGLE_BUTTON (widget)
 #ifdef MODEST_TOOLKIT_HILDON2
-	return HILDON_IS_CHECK_BUTTON (widget);
-#else
-	return GTK_IS_CHECK_MENU_ITEM (widget) || GTK_IS_TOGGLE_BUTTON (widget);
+		|| HILDON_IS_CHECK_BUTTON (widget)
 #endif
+		;
 }
 
 GtkWidget *
@@ -181,11 +198,10 @@ static GtkWidget *
 modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *self, const gchar *label)
 {
 	GtkWidget *result;
-#ifdef MODEST_TOOLKIT_HILDON2
-	result = modest_hildon_find_toolbar_new (label);
-#else
-	/* TODO: create gtk-only based isearch toolbar implementation */
+#ifdef USE_GTK_FIND_TOOLBAR
 	result = modest_find_toolbar_new (label);
+#else
+	result = modest_hildon_find_toolbar_new (label);
 #endif
 	return result;
 }
