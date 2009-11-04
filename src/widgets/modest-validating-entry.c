@@ -37,11 +37,14 @@
 #include <config.h>
 #endif
 
+#ifndef MODEST_TOOLKIT_HILDON2
+#define USE_GTK_ENTRY
+#endif
 
-#ifdef MODEST_TOOLKIT_HILDON2
-G_DEFINE_TYPE (ModestValidatingEntry, modest_validating_entry, HILDON_TYPE_ENTRY);
-#else
+#ifdef USE_GTK_ENTRY
 G_DEFINE_TYPE (ModestValidatingEntry, modest_validating_entry, GTK_TYPE_ENTRY);
+#else
+G_DEFINE_TYPE (ModestValidatingEntry, modest_validating_entry, HILDON_TYPE_ENTRY);
 #endif
 
 #define VALIDATING_ENTRY_GET_PRIVATE(o) \
@@ -237,7 +240,7 @@ modest_validating_entry_new (void)
 	
 	entry = g_object_new (MODEST_TYPE_VALIDATING_ENTRY, NULL);
 
-#ifdef MODEST_TOOLKIT_HILDON2
+#ifndef MODEST_TOOLKIT_HILDON2
 	hildon_gtk_widget_set_theme_size (GTK_WIDGET (entry), MODEST_EDITABLE_SIZE);
 #endif
 
