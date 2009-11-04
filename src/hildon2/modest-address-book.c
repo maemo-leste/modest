@@ -1200,3 +1200,48 @@ modest_address_book_add_address_list (GSList *address_list)
 	/* Frees. This will unref the subqueries as well */
 	e_book_query_unref (composite_query);
 }
+
+void
+modest_address_book_add_address_list_with_selector (GSList *address_list, GtkWindow *parent)
+{
+	GtkWidget *picker_dialog;
+	GtkWidget *selector;
+	GSList *node;
+	gchar *selected = NULL;
+	gboolean contacts_to_add = FALSE;
+
+	selector = hildon_touch_selector_new_text ();
+	g_object_ref (selector);
+
+	for (node = address_list; node != NULL; node = g_slist_next (node)) {
+		if (!modest_address_book_has_address ((const gchar *) node->data)) {
+			hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), 
+							   (const gchar *) node->data);
+			contacts_to_add = TRUE;
+		}
+	}
+
+	if (contacts_to_add) {
+		gint picker_result;
+
+		picker_dialog = hildon_picker_dialog_new (parent);
+		gtk_window_set_title (GTK_WINDOW (picker_dialog), _("mcen_me_viewer_addtocontacts"));
+
+		hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (picker_dialog),
+						   HILDON_TOUCH_SELECTOR (selector));
+
+		picker_result = gtk_dialog_run (GTK_DIALOG (picker_dialog));
+
+		if (picker_result == GTK_RESPONSE_OK) {
+			selected = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
+		}
+		gtk_widget_destroy (picker_dialog);
+
+		if (selected)
+			modest_address_book_add_address (selected, parent);
+		g_free (selected);
+
+	} else {
+		g_object_unref (selector);
+	}
+}
