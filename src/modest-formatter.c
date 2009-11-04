@@ -95,7 +95,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 	gchar *text;
 	ModestFormatterPrivate *priv;
 	gint total, lines, total_lines, line_chars;
-	gboolean is_html;
+	gboolean is_html, first_time;
 
 	buf = gtk_text_buffer_new (NULL);
 	stream = TNY_STREAM (tny_gtk_text_buffer_stream_new (buf));
@@ -190,6 +190,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 		g_object_unref (is);
 	}
 
+	first_time = TRUE;
 	while (!tny_stream_is_eos (input_stream)) {
 		gchar buffer [128];
 		gchar *offset;
@@ -227,14 +228,16 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 			gchar *buffer_ptr;
 
 			/* Discard lines artificially inserted by
-			   Camel when translating from HTML to text */
+			   Camel when translating from HTML to
+			   text. Do it only for the first read */
 			buffer_ptr = buffer;
-			if (lines) {
+			if (G_UNLIKELY (first_time) && lines) {
 				int i;
 				for (i=0; i < lines; i++) {
 					buffer_ptr = strchr (buffer_ptr, '\n');
 					buffer_ptr++;
 				}
+				first_time = FALSE;
 			}
 			to_write = offset - buffer_ptr;
 			n_write = tny_stream_write (stream, buffer_ptr, to_write);
