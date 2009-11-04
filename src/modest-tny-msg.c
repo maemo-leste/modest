@@ -1330,52 +1330,19 @@ modest_tny_msg_header_get_all_recipients_list (TnyHeader *header)
 {
 	GSList *recipients = NULL;
 	gchar *from = NULL, *to = NULL, *cc = NULL, *bcc = NULL;
-	gchar *after_remove;
-	GString *buffer;
-	gboolean add_separator = TRUE;
+	gchar *after_remove, *joined;
 
 	if (header == NULL)
 		return NULL;
-
-	buffer = g_string_new ("");
 
 	from = tny_header_dup_from (header);
 	to = tny_header_dup_to (header);
 	cc = tny_header_dup_cc (header);
 	bcc = tny_header_dup_bcc (header);
 
-	recipients = NULL;
-	if (from) {
-		buffer = g_string_append (buffer, from);
-		add_separator = TRUE;
-	}
-	if (to) {
-		if (add_separator)
-			buffer = g_string_append (buffer, "; ");
-		else
-			add_separator = TRUE;
-
-		buffer = g_string_append (buffer, to);
-	}
-	if (cc) {
-		if (add_separator)
-			buffer = g_string_append (buffer, "; ");
-		else
-			add_separator = TRUE;
-
-		buffer = g_string_append (buffer, cc);
-	}
-	if (bcc) {
-		if (add_separator)
-			buffer = g_string_append (buffer, "; ");
-		else
-			add_separator = TRUE;
-
-		buffer = g_string_append (buffer, bcc);
-	}
-
-	after_remove = modest_text_utils_remove_duplicate_addresses (buffer->str);
-	g_string_free (buffer, TRUE);
+	joined = modest_text_utils_join_addresses (from, to, cc, bcc);
+	after_remove = modest_text_utils_remove_duplicate_addresses (joined);
+	g_free (joined);
 
 	recipients = modest_text_utils_split_addresses_list (after_remove);
 	g_free (after_remove);
