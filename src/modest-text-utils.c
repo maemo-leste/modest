@@ -665,15 +665,16 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	gboolean after_at = FALSE;
 
 	g_return_val_if_fail (addresses, NULL);
-	
-	/* skip any space, ',', ';' at the start */
-	while (my_addrs && (my_addrs[0] == ' ' || my_addrs[0] == ',' || my_addrs[0] == ';'))
+
+	/* skip any space, ',', ';' '\n' at the start */
+	while (my_addrs && (my_addrs[0] == ' ' || my_addrs[0] == ',' ||
+			    my_addrs[0] == ';' || my_addrs[0] == '\n'))
 	       ++my_addrs;
 
 	/* are we at the end of addresses list? */
 	if (!my_addrs[0])
 		return NULL;
-	
+
 	/* nope, we are at the start of some address
 	 * now, let's find the end of the address */
 	end = my_addrs + 1;
