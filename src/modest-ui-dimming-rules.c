@@ -2111,45 +2111,60 @@ modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_da
 gboolean
 modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
 {
-	TnyMsg *msg;
-	GSList *recipients, *node;
+	GSList *recipients;
 	gboolean has_recipients_to_add;
 
  	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
-	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
 
-	msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
+	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
+		TnyMsg *msg;
 
-	/* Message is loaded asynchronously, so this could happen */
-	if (!msg) {
-#ifdef MODEST_TOOLKIT_HILDON2
-		TnyHeader *header;
+		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (win));
 
-		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
-		if (!header)
-			return TRUE;
+		/* Message is loaded asynchronously, so this could happen */
+		if (!msg) {
+			TnyHeader *header;
 
-		recipients = modest_tny_msg_header_get_all_recipients_list (header);
-		g_object_unref (header);
-#else
-		return TRUE;
-#endif
-	} else {
-		recipients = modest_tny_msg_get_all_recipients_list (msg);
-		g_object_unref (msg);
+			header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
+			if (!header)
+				return TRUE;
+
+			recipients = modest_tny_msg_header_get_all_recipients_list (header);
+			g_object_unref (header);
+		} else {
+			recipients = modest_tny_msg_get_all_recipients_list (msg);
+			g_object_unref (msg);
+		}
+	} else if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
+		/* Get recipients */
+		gchar *joined, *after_remove;
+		MsgData *data = modest_msg_edit_window_get_msg_data ((ModestMsgEditWindow *) win);
+
+		/* We don't check the from */
+		joined = modest_text_utils_join_addresses (NULL, data->to, data->cc, data->bcc);
+		after_remove = modest_text_utils_remove_duplicate_addresses (joined);
+		g_free (joined);
+
+		recipients = modest_text_utils_split_addresses_list (after_remove);
+		g_free (after_remove);
+
+		modest_msg_edit_window_free_msg_data ((ModestMsgEditWindow *) win, data);
 	}
 
 	has_recipients_to_add = FALSE;
-	for (node = recipients; node != NULL; node = g_slist_next (node)) {
-		if (!modest_address_book_has_address ((const gchar *) node->data)) {
-			has_recipients_to_add = TRUE;
-			break;
+
+	if (recipients) {
+		GSList *node;
+		for (node = recipients; node != NULL; node = g_slist_next (node)) {
+			if (!modest_address_book_has_address ((const gchar *) node->data)) {
+				has_recipients_to_add = TRUE;
+				break;
+			}
 		}
+		g_slist_foreach (recipients, (GFunc) g_free, NULL);
+		g_slist_free (recipients);
 	}
 
-	g_slist_foreach (recipients, (GFunc) g_free, NULL);
-	g_slist_free (recipients);
-  
 	return !has_recipients_to_add;
 }
 #else
