@@ -686,9 +686,10 @@ modest_ui_actions_on_close_window (GtkAction *action, ModestWindow *win)
 void
 modest_ui_actions_add_to_contacts (GtkAction *action, ModestWindow *win)
 {
-       g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win));
-
-       modest_msg_view_window_add_to_contacts (MODEST_MSG_VIEW_WINDOW (win));
+	if (MODEST_IS_MSG_VIEW_WINDOW (win))
+		modest_msg_view_window_add_to_contacts (MODEST_MSG_VIEW_WINDOW (win));
+	else if (MODEST_IS_MSG_EDIT_WINDOW (win))
+		modest_msg_edit_window_add_to_contacts (MODEST_MSG_EDIT_WINDOW (win));
 }
 
 void

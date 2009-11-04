@@ -3435,6 +3435,42 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to
 
 }
 
+void
+modest_msg_edit_window_add_to_contacts (ModestMsgEditWindow *self)
+{
+	GSList *recipients = NULL;
+	ModestMsgEditWindowPrivate *priv;
+	gchar *joined, *after_remove, *to, *cc, *bcc;
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	/* First of all check names */
+	if (!modest_msg_edit_window_check_names (self, FALSE))
+		return;
+
+	/* Don't add the from obviously */
+	to  =  g_strdup (modest_recpt_editor_get_recipients ((ModestRecptEditor *) priv->to_field));
+	cc  =  g_strdup (modest_recpt_editor_get_recipients ((ModestRecptEditor *) priv->cc_field));
+	bcc =  g_strdup (modest_recpt_editor_get_recipients ((ModestRecptEditor *) priv->bcc_field));
+
+	joined = modest_text_utils_join_addresses (NULL, to, cc, bcc);
+	g_free (to);
+	g_free (cc);
+	g_free (bcc);
+
+	after_remove = modest_text_utils_remove_duplicate_addresses (joined);
+	g_free (joined);
+
+	recipients = modest_text_utils_split_addresses_list (after_remove);
+	g_free (after_remove);
+
+	if (recipients) {
+		/* Offer the user to add recipients to the address book */
+		modest_address_book_add_address_list_with_selector (recipients, (GtkWindow *) self);
+		g_slist_foreach (recipients, (GFunc) g_free, NULL); g_slist_free (recipients);
+	}
+}
+
 static void
 modest_msg_edit_window_add_attachment_clicked (GtkButton *button,
 					       ModestMsgEditWindow *window)
@@ -4334,6 +4370,9 @@ setup_menu (ModestMsgEditWindow *self)
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_editor_checknames"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_check_names),
 					   NULL);
+	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_viewer_addtocontacts"), NULL,
+					   APP_MENU_CALLBACK (modest_ui_actions_add_to_contacts),
+					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_add_to_contacts));
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_undo"), "<Ctrl>z",
 					   APP_MENU_CALLBACK (modest_ui_actions_on_undo),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
