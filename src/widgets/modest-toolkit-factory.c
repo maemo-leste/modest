@@ -34,6 +34,7 @@
 #include <hildon/hildon.h>
 #else
 #include <modest-scrolled-window-scrollable.h>
+#include <modest-find-toolbar.h>
 #endif
 #include "modest-toolkit-factory.h"
 
@@ -184,7 +185,7 @@ modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *sel
 	result = modest_hildon_find_toolbar_new (label);
 #else
 	/* TODO: create gtk-only based isearch toolbar implementation */
-	result = gtk_toolbar_new ();
+	result = modest_find_toolbar_new (label);
 #endif
 	return result;
 }
