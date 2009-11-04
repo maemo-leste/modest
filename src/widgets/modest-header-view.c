@@ -2124,36 +2124,43 @@ current_folder_needs_filtering (ModestHeaderViewPrivate *priv)
 static gboolean
 header_match_string (TnyHeader *header, gchar **words)
 {
+	gchar *subject;
+	gchar *cc;
+	gchar *bcc;
+	gchar *to;
+	gchar *from;
+
 	gchar **current_word;
 	gboolean found;
 
+	subject = tny_header_dup_subject (header);
+	cc = tny_header_dup_cc (header);
+	bcc = tny_header_dup_bcc (header);
+	to = tny_header_dup_to (header);
+	from = tny_header_dup_from (header);
+
 	found = FALSE;
 
-	for (current_word = words; !found && *current_word != NULL; current_word++) {
-		gchar *subject;
-		gchar *cc;
-		gchar *bcc;
-		gchar *to;
-		gchar *from;
-
-		subject = tny_header_dup_subject (header);
-		cc = tny_header_dup_cc (header);
-		bcc = tny_header_dup_bcc (header);
-		to = tny_header_dup_to (header);
-		from = tny_header_dup_from (header);
+	for (current_word = words; *current_word != NULL; current_word++) {
 
 		if ((subject && g_strstr_len (subject, -1, *current_word))
 		    || (cc && g_strstr_len (cc, -1, *current_word))
 		    || (bcc && g_strstr_len (bcc, -1, *current_word))
 		    || (to && g_strstr_len (to, -1, *current_word))
-		    || (from && g_strstr_len (from, -1, *current_word)))
+		    || (from && g_strstr_len (from, -1, *current_word))) {
 			found = TRUE;
-		g_free (subject);
-		g_free (cc);
-		g_free (bcc);
-		g_free (to);
-		g_free (from);
+		} else {
+			found = FALSE;
+			break;
+		}
 	}
+
+	g_free (subject);
+	g_free (cc);
+	g_free (bcc);
+	g_free (to);
+	g_free (from);
+
 	return found;
 }
 
