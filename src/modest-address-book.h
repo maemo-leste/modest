@@ -111,4 +111,17 @@ modest_address_book_get_my_name ();
 void
 modest_address_book_add_address_list (GSList *address_list);
 
+/**
+ * modest_address_book_add_address_list_with_selector:
+ * @address_list: a list of email addresses to add to the addressbook
+ * @parent: the parent window. The UI elements shown to the user
+ * (tipically a dialog) will have that window as parent
+ *
+ * Presents some UI to the users to allow them to select and then
+ * insert a list of selected addresses in the addressbook.
+ **/
+void
+modest_address_book_add_address_list_with_selector (GSList *address_list,
+						    GtkWindow *parent);
+
 #endif /* __MODEST_ADDRESS_BOOK_H__ */
