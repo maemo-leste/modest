@@ -38,7 +38,6 @@
 #include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
 #include "modest-maemo-utils.h"
-#include <modest-number-editor.h>
 #include "modest-hildon-includes.h"
 
 #define PORT_MIN 1
@@ -64,7 +63,9 @@ G_DEFINE_TYPE (ModestMaemoSecurityOptionsView,
 
 static void on_entry_changed (GtkEditable *editable, gpointer user_data);
 
+#ifdef MODEST_NUMBER_ENTRY_SUPPORT_VALID_CHANGED
 static void on_valid_changed (ModestNumberEditor *editor, gboolean valid, ModestSecurityOptionsView *self);
+#endif
 
 /* Tracks changes in the incoming security picker */
 static void
@@ -100,8 +101,8 @@ on_security_changed (GtkWidget *widget,
 			modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
 		
 		if(port_number) {
-			modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->port_view), 
-							port_number);
+			modest_number_entry_set_value (ppriv->port_view,
+						       port_number);
 		}
 	}
 }
@@ -171,7 +172,8 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	gtk_widget_show (ppriv->auth_view);
 
 	if (ppriv->full) {
-		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
+		ppriv->port_view = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
+									       PORT_MIN, PORT_MAX);
 		entry_caption =
 			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
 									    value_size_group,
@@ -185,8 +187,10 @@ create_incoming_security (ModestSecurityOptionsView* self,
 		gtk_widget_show (entry_caption);
 
 		/* Track changes in UI */
+#ifdef MODEST_NUMBER_ENTRY_SUPPORT_VALID_CHANGED
 		g_signal_connect (G_OBJECT (ppriv->port_view), "valid-changed",
 					    G_CALLBACK (on_valid_changed), self);
+#endif
 	}
 }
 
@@ -239,7 +243,7 @@ on_entry_changed (GtkEditable *editable,
 
 	if (!priv->missing_data &&
 	    ppriv->full &&
-	    !modest_number_editor_is_valid (MODEST_NUMBER_EDITOR (ppriv->port_view)))
+	    !modest_number_entry_is_valid (ppriv->port_view))
 		priv->missing_data = TRUE;
 
 	/* Emit a signal to notify if mandatory data is missing */
@@ -247,6 +251,7 @@ on_entry_changed (GtkEditable *editable,
 			       priv->missing_data, NULL);
 }
 
+#ifdef MODEST_NUMBER_ENTRY_SUPPORT_VALID_CHANGED
 static void
 on_valid_changed (ModestNumberEditor *editor,
 		  gboolean valid,
@@ -254,6 +259,7 @@ on_valid_changed (ModestNumberEditor *editor,
 {
 	on_entry_changed (NULL, (gpointer) self);
 }
+#endif
 
 static void
 create_outgoing_security (ModestSecurityOptionsView* self,
@@ -328,7 +334,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 									    ppriv->pwd_entry,
 									    MODEST_EDITABLE_SIZE);
 
-		ppriv->port_view = GTK_WIDGET (modest_number_editor_new (PORT_MIN, PORT_MAX));
+		ppriv->port_view = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
+									       PORT_MIN, PORT_MAX);
 		port_caption =
 			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
 									    value_size_group,
@@ -346,8 +353,10 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 				  G_CALLBACK (on_auth_changed), self);
 		g_signal_connect (G_OBJECT (ppriv->user_entry), "changed",
 				  G_CALLBACK (on_entry_changed), self);
+#ifdef MODEST_NUMBER_ENTRY_SUPPORT_VALID_CHANGED
 		g_signal_connect (G_OBJECT (ppriv->port_view), "valid-changed",
 					    G_CALLBACK (on_valid_changed), self);
+#endif
 	}
 
 	/* Initialize widgets */
@@ -439,8 +448,8 @@ modest_maemo_security_options_view_load_settings (ModestSecurityOptionsView* sel
 	} else if (ppriv->full) {
 		/* Keep the user-entered port-number, or the
 		 * already-appropriate automatic port number */
-		modest_number_editor_set_value (MODEST_NUMBER_EDITOR (ppriv->port_view), 
-						port_number);
+		modest_number_entry_set_value (ppriv->port_view,
+					       port_number);
 	}
 	/* Frees */
 	g_object_unref (server_settings);
@@ -462,7 +471,7 @@ modest_maemo_security_options_view_save_settings (ModestSecurityOptionsView* sel
 		server_settings = modest_account_settings_get_transport_settings (settings);
 
 	if (ppriv->full) {
-		server_port = modest_number_editor_get_value (MODEST_NUMBER_EDITOR (ppriv->port_view));
+		server_port = modest_number_entry_get_value (ppriv->port_view);
 	} else {
 		server_port = modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (ppriv->security_view));
 	}
@@ -493,7 +502,7 @@ modest_maemo_security_options_view_changed (ModestSecurityOptionsView* self,
 		server_settings = modest_account_settings_get_transport_settings (settings);
 	
 	server_port = 
-		modest_number_editor_get_value (MODEST_NUMBER_EDITOR (ppriv->port_view));
+		modest_number_entry_get_value (ppriv->port_view);
 
 	/* Frees */
 	g_object_unref (server_settings);

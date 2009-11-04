@@ -259,13 +259,7 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	state->default_account = NULL;
 #endif
 	state->connect_via = *id;
-#ifndef MODEST_TOOLKIT_GTK
-#ifndef MODEST_TOOLKIT_HILDON2
-	state->size_limit = hildon_number_editor_get_value (HILDON_NUMBER_EDITOR (priv->size_limit));
-#endif
-#else
-	state->size_limit = gtk_spin_button_get_value (GTK_SPIN_BUTTON (priv->size_limit));
-#endif
+	state->size_limit = modest_number_entry_get_value (priv->size_limit);
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->update_interval));

@@ -40,7 +40,6 @@
 #define USE_GTK_CHECK_BUTTON
 #define USE_GTK_CHECK_MENU
 #define USE_GTK_ENTRY
-#define USE_GTK_SPIN_BUTTON
 #endif
 
 #ifdef USE_SCROLLED_WINDOW

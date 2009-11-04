@@ -293,8 +293,8 @@ security_picker_set_port (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
 			MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker));
 
 	if(port_number != 0) {
-		modest_number_editor_set_value (
-			MODEST_NUMBER_EDITOR (priv->entry_port), port_number);
+		modest_number_entry_set_value (
+			priv->entry_port, port_number);
 	}
 }
 
@@ -455,7 +455,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
-		priv->entry_port = GTK_WIDGET (modest_number_editor_new (PORT_RANGE_MIN, PORT_RANGE_MAX));
+		priv->entry_port = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
+									       PORT_RANGE_MIN, PORT_RANGE_MAX);
 	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
 							 _("mcen_fi_emailsetup_port"), FALSE, priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
@@ -556,8 +557,8 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		modest_server_account_settings_get_auth_protocol (server_settings));
 		
 		/* port: */
-		modest_number_editor_set_value (
-			MODEST_NUMBER_EDITOR (priv->entry_port), 
+		modest_number_entry_set_value (
+			priv->entry_port, 
 			modest_server_account_settings_get_port (server_settings));
 		
 		
@@ -604,7 +605,7 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 	
 	/* port: */
 	modest_server_account_settings_set_port (server_settings,
-						 modest_number_editor_get_value (MODEST_NUMBER_EDITOR (priv->entry_port)));
+						 modest_number_entry_get_value (priv->entry_port));
 			
 	return server_settings;
 }

@@ -103,6 +103,14 @@ modest_number_entry_set_value (GtkWidget *widget, gint value);
 gboolean
 modest_number_entry_is_valid (GtkWidget *widget);
 
+#ifndef MODEST_TOOLKIT_HILDON2
+#define USE_GTK_SPIN_BUTTON
+#endif
+
+#ifndef USE_GTK_SPIN_BUTTON
+#define MODEST_NUMBER_ENTRY_SUPPORT_VALID_CHANGED
+#endif
+
 G_END_DECLS
 
 #endif /* __MODEST_WP_TEXT_VIEW_H__ */

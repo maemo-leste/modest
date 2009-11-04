@@ -56,6 +56,7 @@
 #include <tny-account.h>
 #include <tny-status.h>
 #include <modest-scrollable.h>
+#include <modest-toolkit-factory.h>
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
@@ -211,16 +212,16 @@ on_modified_checkbutton_toggled (GtkWidget *button, gpointer user_data)
 }
 
 static void
-on_modified_number_editor_changed (ModestNumberEditor *number_editor, gint new_value, gpointer user_data)
+on_modified_number_entry_changed (GtkWidget *number_entry, gint new_value, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
 
 static void       
-on_number_editor_notify (ModestNumberEditor *editor, GParamSpec *arg1, gpointer user_data)
+on_number_entry_notify (GtkWidget *entry, GParamSpec *arg1, gpointer user_data)
 {
 	ModestDefaultAccountSettingsDialog *dialog = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data);
-	gint value = modest_number_editor_get_value (editor);
+	gint value = modest_number_entry_get_value (entry);
 
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, value > 0);
 }
@@ -231,10 +232,10 @@ on_number_editor_notify (ModestNumberEditor *editor, GParamSpec *arg1, gpointer 
 static void
 connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widget)
 {
-	if (MODEST_IS_NUMBER_EDITOR (widget)) {
+	if (modest_is_number_entry (widget)) {
 		g_signal_connect (G_OBJECT (widget), "notify::value",
-			G_CALLBACK (on_modified_number_editor_changed), self);
-		g_signal_connect (G_OBJECT (widget), "notify", G_CALLBACK (on_number_editor_notify), self);
+			G_CALLBACK (on_modified_number_entry_changed), self);
+		g_signal_connect (G_OBJECT (widget), "notify", G_CALLBACK (on_number_entry_notify), self);
 	}
 	else if (GTK_IS_ENTRY (widget)) {
 		g_signal_connect (G_OBJECT (widget), "changed",
