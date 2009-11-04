@@ -3407,24 +3407,27 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to
 
 	/* Check names */
 	g_object_ref (window);
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field),  &address_list)) {
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field),
+					      (add_to_addressbook) ? &address_list : NULL)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
 		g_object_unref (window);
 		return FALSE;
 	}
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field),  &address_list)) {
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field),
+					      (add_to_addressbook) ? &address_list : NULL)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->cc_field));
 		g_object_unref (window);
 		return FALSE;
 	}
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field), &address_list)) {
+	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field),
+					      (add_to_addressbook) ? &address_list : NULL)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->bcc_field));
 		g_object_unref (window);
 		return FALSE;
 	}
 
 	/* Add contacts to address book */
-	if (address_list)
+	if (add_to_addressbook && address_list)
 		modest_address_book_add_address_list (address_list);
 
 	if (!modest_recpt_editor_has_focus (MODEST_RECPT_EDITOR (priv->cc_field)) &&
