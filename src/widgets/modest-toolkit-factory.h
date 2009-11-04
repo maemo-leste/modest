@@ -40,6 +40,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_check_menu) (ModestToolkitFactory *self, const gchar *label);
 	GtkWidget * (*create_isearch_toolbar) (ModestToolkitFactory *self, const gchar *label);
 	GtkWidget * (*create_entry) (ModestToolkitFactory *self);
+	GtkWidget * (*create_number_entry) (ModestToolkitFactory *self, gint min, gint max);
 };
 
 struct                                          _ModestToolkitFactory
@@ -69,6 +70,9 @@ modest_toolkit_factory_create_isearch_toolbar (ModestToolkitFactory *self, const
 GtkWidget *
 modest_toolkit_factory_create_entry (ModestToolkitFactory *self);
 
+GtkWidget *
+modest_toolkit_factory_create_number_entry (ModestToolkitFactory *self, gint min, gint max);
+
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
 
@@ -89,6 +93,15 @@ modest_entry_set_hint (GtkWidget *widget, const gchar *hint);
 
 gboolean 
 modest_is_entry (GtkWidget *widget);
+
+gint
+modest_number_entry_get_value (GtkWidget *widget);
+
+void
+modest_number_entry_set_value (GtkWidget *widget, gint value);
+
+gboolean
+modest_number_entry_is_valid (GtkWidget *widget);
 
 G_END_DECLS
 

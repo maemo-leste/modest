@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon.h>
+#include <modest-number-editor.h>
 #endif
 #include "modest-toolkit-factory.h"
 
@@ -39,6 +40,7 @@
 #define USE_GTK_CHECK_BUTTON
 #define USE_GTK_CHECK_MENU
 #define USE_GTK_ENTRY
+#define USE_GTK_SPIN_BUTTON
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -62,6 +64,7 @@ static GtkWidget * modest_toolkit_factory_create_check_button_default (ModestToo
 static GtkWidget * modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label);
 static GtkWidget * modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *self, const gchar *label);
 static GtkWidget * modest_toolkit_factory_create_entry_default (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_number_entry_default (ModestToolkitFactory *self, gint min, gint max);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -87,6 +90,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_check_menu = modest_toolkit_factory_create_check_menu_default;
 	klass->create_isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar_default;
 	klass->create_entry = modest_toolkit_factory_create_entry_default;
+	klass->create_number_entry = modest_toolkit_factory_create_number_entry_default;
 }
 
 static void
@@ -262,6 +266,65 @@ modest_is_entry (GtkWidget *widget)
 	return HILDON_IS_ENTRY (widget);
 #else
 	return GTK_IS_ENTRY (widget);
+#endif
+}
+
+GtkWidget *
+modest_toolkit_factory_create_number_entry (ModestToolkitFactory *self, gint min, gint max)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_number_entry (self, min, max);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_number_entry_default (ModestToolkitFactory *self, gint min, gint max)
+{
+	GtkWidget *result;
+#ifdef USE_GTK_SPIN_BUTTON
+	result = gtk_spin_button_new_with_range (min, max, 1.0);
+	gtk_spin_button_set_digits (GTK_SPIN_BUTTON (result), 0);
+#else
+	result = modest_number_editor_new (min, max);
+#endif
+	return result;
+}
+
+void
+modest_number_entry_set_value (GtkWidget *widget, gint value)
+{
+#ifdef USE_GTK_SPIN_BUTTON
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (widget), value);
+#else
+	modest_number_editor_set_value (MODEST_NUMBER_EDITOR (widget), value);
+#endif
+}
+
+gint
+modest_number_entry_get_value (GtkWidget *widget)
+{
+#ifdef USE_GTK_SPIN_BUTTON
+	return gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (widget));
+#else
+	return modest_number_editor_get_value (MODEST_NUMBER_EDITOR (widget));
+#endif
+}
+
+gboolean 
+modest_number_entry_is_valid (GtkWidget *widget)
+{
+#ifdef USE_GTK_SPIN_BUTTON
+	return TRUE;
+#else
+	return modest_number_editor_is_valid (MODEST_NUMBER_EDITOR (widget));
+#endif
+}
+
+gboolean
+modest_is_number_entry (GtkWidget *widget)
+{
+#ifdef USE_GTK_SPIN_BUTTON
+	return GTK_IS_SPIN_BUTTON (widget);
+#else
+	return MODEST_IS_NUMBER_EDITOR (widget);
 #endif
 }
 
