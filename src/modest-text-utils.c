@@ -704,6 +704,48 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	return head;
 }
 
+gchar *
+modest_text_utils_join_addresses (const gchar *from,
+				  const gchar *to,
+				  const gchar *cc,
+				  const gchar *bcc)
+{
+	GString *buffer;
+	gboolean add_separator = FALSE;
+
+	buffer = g_string_new ("");
+
+	if (from && strlen (from)) {
+		buffer = g_string_append (buffer, from);
+		add_separator = TRUE;
+	}
+	if (to && strlen (to)) {
+		if (add_separator)
+			buffer = g_string_append (buffer, "; ");
+		else
+			add_separator = TRUE;
+
+		buffer = g_string_append (buffer, to);
+	}
+	if (cc && strlen (cc)) {
+		if (add_separator)
+			buffer = g_string_append (buffer, "; ");
+		else
+			add_separator = TRUE;
+
+		buffer = g_string_append (buffer, cc);
+	}
+	if (bcc && strlen (bcc)) {
+		if (add_separator)
+			buffer = g_string_append (buffer, "; ");
+		else
+			add_separator = TRUE;
+
+		buffer = g_string_append (buffer, bcc);
+	}
+
+	return g_string_free (buffer, FALSE);
+}
 
 void
 modest_text_utils_address_range_at_position (const gchar *recipients_list,

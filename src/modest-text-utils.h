@@ -396,6 +396,21 @@ gboolean     modest_text_utils_validate_recipient (const gchar *recipient,
  **/
 GSList      *modest_text_utils_split_addresses_list (const gchar *addresses);
 
+/**
+ * modest_text_utils_join_addresses:
+ * @from: comma separated string of addresses
+ * @to: comma separated string of addresses
+ * @cc: comma separated string of addresses
+ * @bcc: comma separated string of addresses
+ *
+ * joins all the addresses in a single comma-separated string
+ *
+ * Returns: a newly allocated string with a list of addresses
+ **/
+gchar       *modest_text_utils_join_addresses (const gchar *from,
+					       const gchar *to,
+					       const gchar *cc,
+					       const gchar *bcc);
 
 /**
  * modest_text_utils_get_addresses_indexes:
