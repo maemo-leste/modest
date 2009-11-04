@@ -2712,12 +2712,13 @@ modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 					    gpointer userdata)
 {
 	ModestMsgEditWindowPrivate *priv;
-	GdkColor *new_color;
+	GdkColor new_color;
+
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	hildon_color_button_get_color (HILDON_COLOR_BUTTON(priv->font_color_button), new_color);
+	hildon_color_button_get_color (HILDON_COLOR_BUTTON(priv->font_color_button), &new_color);
 
-	wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) new_color);
+	wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) &new_color);
 
 	gtk_window_set_focus (GTK_WINDOW (window), priv->msg_body);
 }
