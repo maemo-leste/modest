@@ -1,3 +1,17 @@
+modest (3.1.11) unstable; urgency=low
+
+  * Week 46, 2009 - first release
+  * 
+  * Fixes: NB#139032 Message details window changes
+  * Fixes: NB#139790 Fix some compilation warnings in GNOME version
+  * Fixes: NB#141120 Remove Hildon 0.x conditional code
+  * Fixes: NB#141490 Remove Hildon 1.x conditional code in Hildon2 version of modest
+  * Fixes: NB#141651 Remove unused modest-osso-autosave-callbacks.[c/h] files
+  * Fixes: NB#145249 Modest crashes always when replying in MfE
+  * Fixes: NB#145254 Modest crashes when changing color in editor 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 05 Nov 2009 10:04:58 +0200
+
 modest (3.1.9) unstable; urgency=low
 
   * Week 45, 2009 first release
