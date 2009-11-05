@@ -396,6 +396,18 @@ gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *wind
 						       gboolean add_to_addressbook);
 
 /**
+ * modest_msg_edit_window_has_pending_addresses:
+ * @window: a #ModestMsgEditWindow
+ * @add_to_addressbook: if TRUE, add valid addresses to the addressbook
+ *
+ * Validates all the recipients, and checks if there are addresses in
+ * any field that could be added to the addressbook
+ *
+ * Returns: %TRUE if there are valid pending addresses, %FALSE otherwise
+ */
+gboolean        modest_msg_edit_window_has_pending_addresses    (ModestMsgEditWindow *window);
+
+/**
  * modest_msg_edit_window_toggle_find_toolbar:
  * @window: a #ModestMsgEditWindow
  * @show: a #gboolean
