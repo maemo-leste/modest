@@ -857,44 +857,12 @@ modest_utils_open_mcc_mapping_file (void)
 	return result;
 }
 
-/* cluster mcc's, based on the list
- * http://en.wikipedia.org/wiki/Mobile_country_code
- */
-static int
-effective_mcc (gint mcc)
-{
-	switch (mcc) {
-	case 405: return 404; /* india */
-	case 441: return 440; /* japan */
-	case 348: /* NOTE: see below */
-	case 235: return 234; /* united kingdom */
-	case 289: return 282; /* georgia */
-	case 549: /* NOTE: see below */
-	case 311:
-	case 312:
-	case 313:
-	case 314:
-	case 315:
-	case 316: return 310; /* united states */
-	default:  return mcc;
-	}
-	/* NOTE: 348 for UK and 549 for US are not correct, but we do
-	   a workaround here as changing operator-wizard package is
-	   more difficult */
-}
-
 /* each line is of the form:
    xxx    logical_id
 
   NOTE: this function is NOT re-entrant, the out-param country
   are static strings that should NOT be freed. and will change when
   calling this function again
-
-  also note, this function will return the "effective mcc", which
-  is the normalized mcc for a country - ie. even if the there
-  are multiple entries for the United States with various mccs,
-  this function will always return 310, even if the real mcc parsed
-  would be 314. see the 'effective_mcc' function above.
 */
 static int
 parse_mcc_mapping_line (const char* line,  char** country)
@@ -931,7 +899,7 @@ parse_mcc_mapping_line (const char* line,  char** country)
 	mcc[2] = g_utf8_get_char (iter);
 	mcc[3] = '\0';
 
-	return effective_mcc ((int) strtol ((const char*)mcc, NULL, 10));
+	return (int) strtol ((const char*)mcc, NULL, 10);
 }
 
 #define MCC_FILE_MAX_LINE_LEN 128 /* max length of a line in MCC file */

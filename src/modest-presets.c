@@ -79,6 +79,37 @@ modest_presets_new (const gchar *presetfile)
 	return presets;
 }
 
+/* cluster mcc's, based on the list
+ * http://en.wikipedia.org/wiki/Mobile_country_code
+ *
+ * This function will return the "effective mcc", which is the
+ * normalized mcc for a country - ie. even if the there are multiple
+ * entries for the United States with various mcc's, this function will
+ * always return 310, even if the real mcc parsed would be 314.
+ */
+static int
+effective_mcc (gint mcc)
+{
+	switch (mcc) {
+	case 405: return 404; /* india */
+	case 441: return 440; /* japan */
+	case 348: /* NOTE: see below */
+	case 235: return 234; /* united kingdom */
+	case 289: return 282; /* georgia */
+	case 549: /* NOTE: see below */
+	case 311:
+	case 312:
+	case 313:
+	case 314:
+	case 315:
+	case 316: return 310; /* united states */
+	default:  return mcc;
+	}
+	/* NOTE: 348 for UK and 549 for US are not correct, but we do
+	   a workaround here as changing operator-wizard package is
+	   more difficult */
+}
+
 gchar**
 modest_presets_get_providers  (ModestPresets *self, guint mcc,
 			       gboolean include_globals, gchar ***provider_ids)
@@ -89,7 +120,7 @@ modest_presets_get_providers  (ModestPresets *self, guint mcc,
 	gchar **filtered_ids = NULL;
 	GError *err       = NULL;
 	guint i, j, len;
-	
+
 	g_return_val_if_fail (self && self->keyfile, NULL);
 
 	/* Get all the provider IDs: */
@@ -103,19 +134,19 @@ modest_presets_get_providers  (ModestPresets *self, guint mcc,
 		if(provider_id) {
 			gchar* name = g_key_file_get_string(self->keyfile, provider_id, 
 				MODEST_PRESETS_KEY_NAME, NULL);
-				
+
 			/* Be forgiving of missing names.
 			 * If we use NULL then we will null-terminate the array.
 			 */
 			if(!name)
 				name = g_strdup("");
-				
-			all_providers[i] = name;	
+
+			all_providers[i] = name;
 		}
 		else
 			all_providers[i] = NULL;
 	};
-		
+
 	/* return *all* providers? */
 	/*
 	if (mcc == 0 && include_globals) {
@@ -123,7 +154,7 @@ modest_presets_get_providers  (ModestPresets *self, guint mcc,
 		return all_providers;
 	}
 	*/
-	
+
 	/* nope: filter them */
 
 	filtered = g_new0(gchar*, len + 1); /* Provider names. */
@@ -139,25 +170,26 @@ modest_presets_get_providers  (ModestPresets *self, guint mcc,
 			g_strfreev (all_provider_ids);
 			g_strfreev (filtered);
 			g_strfreev (filtered_ids);
-			
+
 			g_printerr ("modest: error parsing keyfile: %s\n", err->message);
 			g_error_free (err);
-			
+
 			return NULL;
 		}
-		
-		if (this_mcc == mcc || (this_mcc == 0 && include_globals)) {
+
+		if (this_mcc == mcc ||
+		    effective_mcc (this_mcc) == effective_mcc (mcc) ||
+		    (this_mcc == 0 && include_globals)) {
 			filtered[j]   = all_providers[i];
 			filtered_ids[j]   = all_provider_ids[i];
 			++j;
 			filtered[j] = NULL; /* the array must be NULL-terminated */
 			filtered_ids[j] = NULL; /* the array must be NULL-terminated */
-			
+
 			all_providers[i]  = NULL; /*  g_strfreev: leave it alone */
 			all_provider_ids[i]  = NULL; /*  g_strfreev: leave it alone */
 		}
 	}
-	
 	g_strfreev (all_providers);
 	g_strfreev (all_provider_ids);
 	
