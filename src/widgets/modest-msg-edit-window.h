@@ -1,4 +1,4 @@
-/* Copyright (c) 2006,2007 Nokia Corporation
+* Copyright (c) 2006,2007 Nokia Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -394,6 +394,18 @@ void            modest_msg_edit_window_add_to_contacts     (ModestMsgEditWindow 
  */
 gboolean        modest_msg_edit_window_check_names    (ModestMsgEditWindow *window,
 						       gboolean add_to_addressbook);
+
+/**
+ * modest_msg_edit_window_has_pending_addresses:
+ * @window: a #ModestMsgEditWindow
+ * @add_to_addressbook: if TRUE, add valid addresses to the addressbook
+ *
+ * Validates all the recipients, and checks if there are addresses in
+ * any field that could be added to the addressbook
+ *
+ * Returns: %TRUE if there are valid pending addresses, %FALSE otherwise
+ */
+gboolean        modest_msg_edit_window_has_pending_addresses    (ModestMsgEditWindow *window);
 
 /**
  * modest_msg_edit_window_toggle_isearch_toolbar:

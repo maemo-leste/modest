@@ -2136,19 +2136,8 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 			g_object_unref (msg);
 		}
 	} else if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
-		/* Get recipients */
-		gchar *joined, *after_remove;
-		MsgData *data = modest_msg_edit_window_get_msg_data ((ModestMsgEditWindow *) win);
-
-		/* We don't check the from */
-		joined = modest_text_utils_join_addresses (NULL, data->to, data->cc, data->bcc);
-		after_remove = modest_text_utils_remove_duplicate_addresses (joined);
-		g_free (joined);
-
-		recipients = modest_text_utils_split_addresses_list (after_remove);
-		g_free (after_remove);
-
-		modest_msg_edit_window_free_msg_data ((ModestMsgEditWindow *) win, data);
+		/* Check if there are pending addresses to add */
+		return !modest_msg_edit_window_has_pending_addresses ((ModestMsgEditWindow *) win);
 	}
 
 	has_recipients_to_add = FALSE;

@@ -3452,6 +3452,9 @@ modest_msg_edit_window_add_to_contacts (ModestMsgEditWindow *self)
 	if (!modest_msg_edit_window_check_names (self, FALSE))
 		return;
 
+	if (!modest_msg_edit_window_has_pending_addresses (self))
+		return;
+
 	/* Don't add the from obviously */
 	to  =  g_strdup (modest_recpt_editor_get_recipients ((ModestRecptEditor *) priv->to_field));
 	cc  =  g_strdup (modest_recpt_editor_get_recipients ((ModestRecptEditor *) priv->cc_field));
@@ -4463,4 +4466,67 @@ max_chars_banner_unref (ModestMsgEditWindow *self, GObject *old_ref)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 	priv->max_chars_banner = NULL;
+}
+
+static gboolean
+has_pending_addresses (ModestRecptEditor *recpt_editor)
+{
+	const gchar *recipients = NULL;
+	GSList *start_indexes = NULL, *end_indexes = NULL;
+	GSList *current_start, *current_end;
+	GtkTextBuffer *buffer;
+	gint offset_delta = 0;
+	gint last_length;
+	gboolean has_recipients_to_add = FALSE;
+
+	recipients = modest_recpt_editor_get_recipients (recpt_editor);
+	last_length = g_utf8_strlen (recipients, -1);
+	modest_text_utils_get_addresses_indexes (recipients, &start_indexes, &end_indexes);
+
+	if (!start_indexes)
+		return FALSE;
+
+	current_start = start_indexes;
+	current_end = end_indexes;
+	buffer = modest_recpt_editor_get_buffer (recpt_editor);
+
+	while (current_start && !has_recipients_to_add) {
+		gchar *address;
+		gchar *start_ptr, *end_ptr;
+		gint start_pos, end_pos;
+
+		start_pos = (*((gint*) current_start->data)) + offset_delta;
+		end_pos = (*((gint*) current_end->data)) + offset_delta;
+
+		start_ptr = g_utf8_offset_to_pointer (recipients, start_pos);
+		end_ptr = g_utf8_offset_to_pointer (recipients, end_pos);
+
+		address = g_strstrip (g_strndup (start_ptr, end_ptr - start_ptr));
+
+		if (modest_text_utils_validate_recipient (address, NULL)) {
+			if (!modest_address_book_has_address (address)) {
+				has_recipients_to_add = TRUE;
+			}
+		}
+		current_start = g_slist_next (current_start);
+		current_end = g_slist_next (current_end);
+	}
+	return has_recipients_to_add;
+}
+
+gboolean
+modest_msg_edit_window_has_pending_addresses (ModestMsgEditWindow *self)
+{
+	ModestMsgEditWindowPrivate *priv = NULL;
+
+	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(self), FALSE);
+
+	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
+
+	if (!has_pending_addresses ((ModestRecptEditor *) priv->to_field) &&
+	    !has_pending_addresses ((ModestRecptEditor *) priv->cc_field) &&
+	    !has_pending_addresses ((ModestRecptEditor *) priv->bcc_field))
+		return FALSE;
+	else
+		return TRUE;
 }
