@@ -1201,50 +1201,90 @@ modest_address_book_add_address_list (GSList *address_list)
 	e_book_query_unref (composite_query);
 }
 
+static void
+selector_on_response (GtkDialog *dialog,
+		      gint       response_id,
+		      gpointer   user_data)
+{
+	if (response_id == GTK_RESPONSE_OK) {
+		gchar *current_selection = NULL;
+		GtkTreePath *selected_row = NULL;
+		HildonTouchSelector *selector;
+
+		selector = hildon_picker_dialog_get_selector (HILDON_PICKER_DIALOG (dialog));
+		selected_row = hildon_touch_selector_get_last_activated_row (selector, 0);
+		if (selected_row) {
+			GtkTreeIter iter;
+			GtkTreeModel *model = hildon_touch_selector_get_model (selector, 0);
+			if (gtk_tree_model_get_iter (model, &iter, selected_row)) {
+				gtk_tree_model_get (model, &iter, 0, &current_selection, -1);
+				/* modest_address_book_add_address (current_selection, user_data); */
+				g_debug ("Current selection : %s", current_selection);
+				g_free (current_selection);
+			}
+		}
+	}
+
+	if (response_id != GTK_RESPONSE_DELETE_EVENT)
+		gtk_widget_destroy ((GtkWidget *) dialog);
+}
+
+static void
+selector_selection_changed (HildonTouchSelector * selector,
+			    gint column,
+			    gpointer *user_data)
+{
+	/* Close the dialog */
+	gtk_dialog_response (GTK_DIALOG (user_data), GTK_RESPONSE_OK);
+}
+
 void
 modest_address_book_add_address_list_with_selector (GSList *address_list, GtkWindow *parent)
 {
 	GtkWidget *picker_dialog;
-	GtkWidget *selector;
+	HildonTouchSelector *selector;
 	GSList *node;
-	gchar *selected = NULL;
+	GtkTreeModel *model;
 	gboolean contacts_to_add = FALSE;
 
-	selector = hildon_touch_selector_new_text ();
-	g_object_ref (selector);
+	/* We cannot use hildon_touch_selector_new_text() because
+	   there is a bug in hildon that does not retrieve the current
+	   selected text when using MODES_NORMAL. So we need a
+	   temporary workaround here */
+	selector = (HildonTouchSelector*) hildon_touch_selector_new ();
+
+	model = (GtkTreeModel *) gtk_list_store_new (1,  G_TYPE_STRING);
+	hildon_touch_selector_append_text_column (selector, model, TRUE);
+	hildon_touch_selector_set_hildon_ui_mode (selector, HILDON_UI_MODE_NORMAL);
+	g_object_unref (model);
 
 	for (node = address_list; node != NULL; node = g_slist_next (node)) {
 		const gchar *recipient = (const gchar *) node->data;
 		if (modest_text_utils_validate_recipient (recipient, NULL)) {
 			if (!modest_address_book_has_address (recipient)) {
-				hildon_touch_selector_append_text ((HildonTouchSelector *) selector,
-								   recipient);
+				GtkTreeIter iter;
+				gtk_list_store_append ((GtkListStore *) model, &iter);
+				gtk_list_store_set ((GtkListStore *) model, &iter, 0, recipient, -1);
 				contacts_to_add = TRUE;
 			}
 		}
 	}
 
 	if (contacts_to_add) {
-		gint picker_result;
-
 		picker_dialog = hildon_picker_dialog_new (parent);
 		gtk_window_set_title (GTK_WINDOW (picker_dialog), _("mcen_me_viewer_addtocontacts"));
 
 		hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (picker_dialog),
-						   HILDON_TOUCH_SELECTOR (selector));
+						   selector);
 
-		picker_result = gtk_dialog_run (GTK_DIALOG (picker_dialog));
+		g_signal_connect ((GObject*) selector, "changed",
+				  G_CALLBACK (selector_selection_changed), picker_dialog);
 
-		if (picker_result == GTK_RESPONSE_OK) {
-			selected = hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector));
-		}
-		gtk_widget_destroy (picker_dialog);
+		g_signal_connect ((GObject*) picker_dialog, "response",
+				  G_CALLBACK (selector_on_response), parent);
 
-		if (selected)
-			modest_address_book_add_address (selected, parent);
-		g_free (selected);
-
+		gtk_widget_show (picker_dialog);
 	} else {
-		g_object_unref (selector);
+		gtk_widget_destroy ((GtkWidget *) selector);
 	}
 }
