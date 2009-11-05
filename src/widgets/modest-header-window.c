@@ -977,7 +977,7 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_cancel_sending_all));
-	modest_window_add_to_menu (MODEST_WINDOW (self), _("Find..."), NULL,
+	modest_window_add_to_menu (MODEST_WINDOW (self), _HL("wdgt_bd_search"), "<Control>f",
 				   MODEST_WINDOW_MENU_CALLBACK (toggle_isearch_toolbar), NULL);
 }
 
