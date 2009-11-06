@@ -147,6 +147,9 @@ modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *sel
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
+	modest_scrollable_set_vertical_policy (MODEST_SCROLLABLE (scrollable), GTK_POLICY_AUTOMATIC);
+	modest_scrollable_set_horizontal_policy (MODEST_SCROLLABLE (scrollable), GTK_POLICY_NEVER);
+
 	gtk_container_add (GTK_CONTAINER (align), priv->props_table);
 	modest_scrollable_add_with_viewport (MODEST_SCROLLABLE (scrollable), 
 					     GTK_WIDGET (align));
