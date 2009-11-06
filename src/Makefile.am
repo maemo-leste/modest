@@ -147,6 +147,8 @@ libmodest_la_SOURCES=\
 	modest-transport-account-decorator.h \
 	modest-stream-text-to-html.c \
 	modest-stream-text-to-html.h \
+	modest-stream-html-to-text.c \
+	modest-stream-html-to-text.h \
 	modest-ui-actions.c \
 	modest-ui-actions.h \
 	modest-ui-dimming-manager.c \
