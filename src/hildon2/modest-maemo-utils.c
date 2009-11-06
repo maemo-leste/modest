@@ -518,15 +518,16 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 	selector = GTK_WIDGET (hildon_touch_selector_new ());
 	renderer = gtk_cell_renderer_text_new ();
 	g_object_set((GObject *) renderer, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
-	hildon_touch_selector_append_column (HILDON_TOUCH_SELECTOR (selector), model, renderer,
+	hildon_touch_selector_append_column ((HildonTouchSelector *) selector, model, renderer,
 					     "text", 0, NULL);
-	hildon_touch_selector_set_column_selection_mode (HILDON_TOUCH_SELECTOR (selector), 
+	hildon_touch_selector_set_column_selection_mode ((HildonTouchSelector *) selector, 
 							 HILDON_TOUCH_SELECTOR_SELECTION_MODE_MULTIPLE);
 
 	dialog = hildon_picker_dialog_new (window);
 	gtk_window_set_title (GTK_WINDOW (dialog), (attachments_added > 1)?
 			      _("mcen_ti_select_attachments_title"):_("mcen_ti_select_attachment_title"));
-	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), HILDON_TOUCH_SELECTOR (selector));
+	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), (HildonTouchSelector *) selector);
+	hildon_touch_selector_unselect_all ((HildonTouchSelector *) selector, 0);
 	hildon_picker_dialog_set_done_label (HILDON_PICKER_DIALOG (dialog), _HL("wdgt_bd_done"));
 
 	response = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -535,7 +536,7 @@ modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gbo
 		GList *selected_rows, *node;
 
 		tny_list_remove_matches (att_list, match_all, NULL);
-		selected_rows = hildon_touch_selector_get_selected_rows (HILDON_TOUCH_SELECTOR (selector), 0);
+		selected_rows = hildon_touch_selector_get_selected_rows ((HildonTouchSelector *) selector, 0);
 		for (node = selected_rows; node != NULL; node = g_list_next (node)) {
 			GtkTreePath *path;
 			GObject *selected;
