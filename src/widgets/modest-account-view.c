@@ -71,7 +71,7 @@ static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
 static void update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view);
 static void on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata);
-static void update_picker_mode (ModestAccountView *self);
+static void update_display_mode (ModestAccountView *self);
 
 typedef enum {
 	MODEST_ACCOUNT_VIEW_NAME_COLUMN,
@@ -90,6 +90,7 @@ struct _ModestAccountViewPrivate {
 
 	ModestDatetimeFormatter *datetime_formatter;
 	gboolean picker_mode;
+	gboolean show_last_updated;
 
 	/* Signal handlers */
 	GSList *sig_handlers;
@@ -157,6 +158,7 @@ modest_account_view_init (ModestAccountView *obj)
 
 	priv->datetime_formatter = modest_datetime_formatter_new ();
 	priv->picker_mode = FALSE;
+	priv->show_last_updated = TRUE;
 	g_signal_connect (G_OBJECT (priv->datetime_formatter), "format-changed", 
 			  G_CALLBACK (datetime_format_changed), (gpointer) obj);
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -231,7 +233,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 {
 	GSList *account_names, *cursor;
 	GtkListStore *model;
-
+ 	ModestAccountViewPrivate *priv;
+	
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(view);
 	model = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(view)));
 
 	/* Get the ID of the currently-selected account,
@@ -283,9 +287,13 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 #ifdef MODEST_TOOLKIT_HILDON2
 				gchar *last_updated_hildon2;
 
-				last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", 
-								   last_updated_string,
-								   NULL);
+				if (priv->show_last_updated) {
+					last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", 
+									    last_updated_string,
+									    NULL);
+				} else {
+					last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", NULL);
+				}
 #endif
 				protocol_registry = modest_runtime_get_protocol_registry ();
 				protocol_type = modest_server_account_settings_get_protocol (store_settings);
@@ -655,7 +663,7 @@ init_view (ModestAccountView *self)
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
 #endif
 
-	update_picker_mode (self);
+	update_display_mode (self);
 
 	priv->sig_handlers = 
 		modest_signal_mgr_connect (priv->sig_handlers, 
@@ -883,7 +891,7 @@ on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
 }
 
 static void
-update_picker_mode (ModestAccountView *self)
+update_display_mode (ModestAccountView *self)
 {
 	ModestAccountViewPrivate *priv;
 	GtkTreeViewColumn *column;
@@ -917,7 +925,7 @@ modest_account_view_set_picker_mode (ModestAccountView *self, gboolean enable)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 
 	priv->picker_mode = enable;
-	update_picker_mode (self);
+	update_display_mode (self);
 }
 
 gboolean 
@@ -929,4 +937,28 @@ modest_account_view_get_picker_mode (ModestAccountView *self)
 	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
 
 	return priv->picker_mode;
+}
+
+void
+modest_account_view_set_show_last_update (ModestAccountView *self, 
+					  gboolean show)
+{
+	ModestAccountViewPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_ACCOUNT_VIEW (self));
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+
+	priv->show_last_updated = show;
+	update_account_view (priv->account_mgr, self);
+}
+
+gboolean 
+modest_account_view_get_show_last_updated (ModestAccountView *self)
+{
+	ModestAccountViewPrivate *priv;
+	
+	g_return_val_if_fail (MODEST_IS_ACCOUNT_VIEW (self), FALSE);
+	priv = MODEST_ACCOUNT_VIEW_GET_PRIVATE(self);
+
+	return priv->show_last_updated;
 }

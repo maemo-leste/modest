@@ -118,6 +118,25 @@ void modest_account_view_set_picker_mode (ModestAccountView *self, gboolean enab
  */
 gboolean modest_account_view_get_picker_mode (ModestAccountView *self);
 
+/**
+ * modest_account_view_set_show_last_update:
+ * @self: a #ModestAccountView
+ * @show: a #gboolean
+ *
+ * show/hide the last update column
+ */
+void modest_account_view_set_show_last_update (ModestAccountView *self, gboolean show);
+
+/**
+ * modest_account_view_get_show_last_update:
+ * @self: a #ModestAccountView
+ *
+ * tell if it's showing  the last update column
+ *
+ * Returns: a #gboolean
+ */
+gboolean modest_account_view_get_show_last_update (ModestAccountView *self);
+
 G_END_DECLS
 
 #endif /* __MODEST_ACCOUNT_VIEW_H__ */

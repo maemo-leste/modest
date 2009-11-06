@@ -84,6 +84,9 @@ static void row_count_changed (ModestAccountsWindow *self);
 static gboolean on_key_press(GtkWidget *widget,
 				GdkEventKey *event,
 				gpointer user_data);
+static gboolean on_delete_event (GtkWidget *widget,
+				 GdkEvent *event,
+				 gpointer userdata);
 
 typedef struct _ModestAccountsWindowPrivate ModestAccountsWindowPrivate;
 struct _ModestAccountsWindowPrivate {
@@ -371,6 +374,8 @@ modest_accounts_window_new (void)
 	g_signal_connect (G_OBJECT (self), "map-event",
 			  G_CALLBACK (_modest_accounts_window_map_event),
 			  G_OBJECT (self));
+	g_signal_connect (G_OBJECT (self), "delete-event",
+			  G_CALLBACK (on_delete_event), self);
 	update_progress_hint (MODEST_ACCOUNTS_WINDOW (self));
 
 	row_count_changed (MODEST_ACCOUNTS_WINDOW (self));
@@ -696,4 +701,26 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 	}
 
 	return FALSE;
+}
+
+static gboolean
+on_delete_event (GtkWidget *widget,
+		 GdkEvent *event,
+		 gpointer userdata)
+{
+	ModestAccountsWindowPrivate *priv;
+
+	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (widget);
+
+	modest_account_view_set_show_last_update (MODEST_ACCOUNT_VIEW (priv->account_view), FALSE);
+
+	gtk_widget_queue_resize (widget);
+
+	gdk_window_process_updates (priv->account_view->window, TRUE);
+	hildon_gtk_window_take_screenshot (GTK_WINDOW (widget), TRUE);
+
+	modest_account_view_set_show_last_update (MODEST_ACCOUNT_VIEW (priv->account_view), TRUE);
+
+	return FALSE;
+
 }
