@@ -1,3 +1,13 @@
+modest (3.1.12) unstable; urgency=low
+
+  * Week 46, 2009 - second release
+  * 
+  * Fixes: NB#103963 Email application is slow with large mailboxes
+  * Fixes: NB#139032 Message details window changes
+  * Fixes: NB#140731 MfE distorts original message formatting when replying 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 06 Nov 2009 20:44:25 +0200
+
 modest (3.1.11) unstable; urgency=low
 
   * Week 46, 2009 - first release
