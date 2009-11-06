@@ -163,6 +163,8 @@ static gchar*   modest_text_utils_quote_html       (const gchar *text,
 						    GList *attachments,
 						    int limit);
 static gchar*   get_email_from_address (const gchar *address);
+static void     remove_extra_spaces (gchar *string);
+
 
 
 /* ******************************************************************* */
@@ -693,6 +695,8 @@ modest_text_utils_split_addresses_list (const gchar *addresses)
 	/* we got the address; copy it and remove trailing whitespace */
 	addr = g_strndup (my_addrs, end - my_addrs);
 	g_strchomp (addr);
+
+	remove_extra_spaces (addr);
 
 	head = g_slist_append (NULL, addr);
 	head->next = modest_text_utils_split_addresses_list (end); /* recurse */
@@ -1933,6 +1937,20 @@ remove_quotes (gchar **quotes)
 		result = g_strndup ((*quotes)+1, strlen (*quotes) - 2);
 		g_free (*quotes);
 		*quotes = result;
+	}
+}
+
+static void
+remove_extra_spaces (gchar *string)
+{
+	gchar *start;
+
+	start = string;
+	while (start && start[0] != '\0') {
+		if ((start[0] == ' ') && (start[1] == ' ')) {
+			g_strchug (start+1);
+		}
+		start++;
 	}
 }
 
