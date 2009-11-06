@@ -145,7 +145,11 @@ modest_hildon2_details_dialog_create_container_default (ModestDetailsDialog *sel
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DEFAULT);
 
-	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, "initial-hint", TRUE, NULL);
+	pannable = g_object_new (HILDON_TYPE_PANNABLE_AREA, 
+				 "initial-hint", TRUE, 
+				 "hscrollbar-policy", GTK_POLICY_NEVER,
+				 "vscrollbar-policy", GTK_POLICY_AUTOMATIC,
+				 NULL);
 	gtk_container_add (GTK_CONTAINER (align), priv->props_table);
 	hildon_pannable_area_add_with_viewport (HILDON_PANNABLE_AREA (pannable), 
 						GTK_WIDGET (align));
