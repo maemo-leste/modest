@@ -930,9 +930,14 @@ size_allocate (GtkWidget *widget,
 	html_vadj = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll));
 
 	html_allocation.x = 0;
-	html_allocation.y = headers_allocation.height;
+	html_allocation.y = MAX (0, headers_allocation.height - priv->vadj->value);
 	html_allocation.width = view_allocation.width;
-	html_allocation.height = MAX ((gint) html_vadj->upper, (gint)(priv->vadj->upper - headers_allocation.height));
+	if (html_vadj->upper < allocation->height) {
+		html_allocation.height = MAX (html_vadj->upper, allocation->height - headers_allocation.height);
+	} else {
+		html_allocation.height = allocation->height;
+	}
+	/* html_allocation.height = MAX ((gint) html_vadj->upper, (gint)(priv->vadj->upper - headers_allocation.height)); */
 
 	if (GTK_WIDGET_REALIZED (widget)) {
 		gdk_window_move_resize (widget->window,
@@ -953,7 +958,7 @@ size_allocate (GtkWidget *widget,
 					headers_allocation.height);
 		gdk_window_move_resize (priv->html_window,
 					(gint) (- priv->hadj->value),
-					(gint) (html_allocation.y - priv->vadj->value),
+					(gint) html_allocation.y,
 					(gint) priv->hadj->upper,
 					html_allocation.height);
 	}
@@ -965,8 +970,11 @@ size_allocate (GtkWidget *widget,
 		html_allocation.x = 0;
 		html_allocation.y = 0;
 		html_allocation.width = (gint) priv->hadj->upper;
-		html_allocation.height = (gint) priv->vadj->upper - headers_allocation.height;
 		gtk_widget_size_allocate (priv->html_scroll, &html_allocation);
+		if (html_vadj->page_size != html_allocation.height) {
+			html_vadj->page_size = html_allocation.height;
+			gtk_adjustment_changed (html_vadj);
+		}
 	}
 	gtk_adjustment_changed (priv->hadj);
 	gtk_adjustment_changed (priv->vadj);
@@ -1015,9 +1023,15 @@ adjustment_value_changed (GtkAdjustment *adj, gpointer data)
 		if (priv->html_scroll && GTK_WIDGET_VISIBLE (priv->html_scroll)) {
 			gint old_x, old_y;
 			gint new_x, new_y;
+			gint new_internal_vvalue;
 			gdk_window_get_position (priv->html_window, &old_x, &old_y);
 			new_x = -hadj->value;
-			new_y = headers_offset - vadj->value;
+
+			new_internal_vvalue = MAX (0, vadj->value - headers_offset);
+			gtk_adjustment_set_value (gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (priv->html_scroll)),
+						  new_internal_vvalue);
+
+			new_y = MAX (0, headers_offset - vadj->value);
 
 			if (new_x != old_x || new_y != old_y) {
 				gdk_window_move (priv->html_window, new_x, new_y);
@@ -1053,13 +1067,18 @@ html_adjustment_changed (GtkAdjustment *adj,
 	g_signal_stop_emission_by_name (G_OBJECT (adj), "changed");
 
 	priv->html_scroll->requisition.height = html_vadj->upper;
-	if (html_vadj->upper == priv->html_scroll->allocation.height)
+	if ((priv->vadj != NULL && (html_vadj->upper == (priv->vadj->upper - GTK_WIDGET (priv->headers_box)->allocation.height)))
+	    && html_vadj->page_size == priv->html_scroll->allocation.height)
 		return;
-	priv->html_scroll->allocation.height = html_vadj->upper;
 
 	set_vadjustment_values (self, &vadj_changed);
 
-	new_height = MAX ((gint) html_vadj->upper, (gint) (priv->vadj->upper - priv->headers_box->allocation.height));
+	if (html_vadj->upper < GTK_WIDGET (self)->allocation.height) {
+		new_height = MAX (html_vadj->upper, 
+					GTK_WIDGET (self)->allocation.height - GTK_WIDGET(priv->headers_box)->allocation.height);
+	} else {
+		new_height = GTK_WIDGET (self)->allocation.height;
+	}
 	
 	gtk_adjustment_changed (priv->vadj);
 	if (GTK_WIDGET_DRAWABLE (priv->html_scroll)) {
