@@ -3025,7 +3025,8 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 					      GTK_WINDOW (parent_window),
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
 					      GTK_DIALOG_DESTROY_WITH_PARENT,
-					      _HL("wdgt_bd_new"), MODEST_GTK_RESPONSE_NEW_FOLDER,
+					      _FM ("ckdg_bd_change_folder_new_folder"),
+					      MODEST_GTK_RESPONSE_NEW_FOLDER,
 	                                      NULL);
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
