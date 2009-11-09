@@ -906,6 +906,12 @@ update_view (ModestHeaderWindow *self,
 	TnyFolder *folder;
 
 	g_return_if_fail (MODEST_IS_HEADER_WINDOW(self));
+
+	/* It could happen when some event is received and the window
+	   was previously closed */
+	if (!MODEST_IS_HEADER_WINDOW (self))
+		return;
+
 	priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
