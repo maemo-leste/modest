@@ -2156,9 +2156,12 @@ modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_dat
 	if (recipients) {
 		GSList *node;
 		for (node = recipients; node != NULL; node = g_slist_next (node)) {
-			if (!modest_address_book_has_address ((const gchar *) node->data)) {
-				has_recipients_to_add = TRUE;
-				break;
+			const gchar *recipient = (const gchar *) node->data;
+			if (modest_text_utils_validate_recipient (recipient, NULL)) {
+				if (!modest_address_book_has_address (recipient)) {
+					has_recipients_to_add = TRUE;
+					break;
+				}
 			}
 		}
 		g_slist_foreach (recipients, (GFunc) g_free, NULL);

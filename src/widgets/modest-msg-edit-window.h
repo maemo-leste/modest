@@ -374,6 +374,15 @@ gboolean            modest_msg_edit_window_can_redo               (ModestMsgEdit
 void            modest_msg_edit_window_select_contacts    (ModestMsgEditWindow *window);
 
 /**
+ * modest_msg_edit_window_add_to_contacts:
+ * @self: a #ModestMsgEditWindow
+ *
+ * activates the add to contacts use. It shows the add to contacts
+ * dialog to select the recipient to add.
+ */
+void            modest_msg_edit_window_add_to_contacts     (ModestMsgEditWindow *self);
+
+/**
  * modest_msg_edit_window_check_names:
  * @window: a #ModestMsgEditWindow
  * @add_to_addressbook: if TRUE, add valid addresses to the addressbook

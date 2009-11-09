@@ -1214,10 +1214,13 @@ modest_address_book_add_address_list_with_selector (GSList *address_list, GtkWin
 	g_object_ref (selector);
 
 	for (node = address_list; node != NULL; node = g_slist_next (node)) {
-		if (!modest_address_book_has_address ((const gchar *) node->data)) {
-			hildon_touch_selector_append_text (HILDON_TOUCH_SELECTOR (selector), 
-							   (const gchar *) node->data);
-			contacts_to_add = TRUE;
+		const gchar *recipient = (const gchar *) node->data;
+		if (modest_text_utils_validate_recipient (recipient, NULL)) {
+			if (!modest_address_book_has_address (recipient)) {
+				hildon_touch_selector_append_text ((HildonTouchSelector *) selector,
+								   recipient);
+				contacts_to_add = TRUE;
+			}
 		}
 	}
 
