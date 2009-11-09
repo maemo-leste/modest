@@ -911,23 +911,27 @@ get_contacts_for_name (const gchar *name)
 	gchar *unquoted;
 	GetContactsInfo *info;
 	EBookQuery *queries[10];
+	gint i;
 
 	if (name == NULL)
 		return NULL;
 
 	unquoted = unquote_string (name);
 
-	queries[0] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[1] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[2] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[3] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[4] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[5] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[6] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[7] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[8] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[9] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	book_query = e_book_query_or (10, queries, TRUE);
+	i = 0;
+	queries[i++] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[i++] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[i++] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[i++] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	if (strchr (name, '@')) {
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	}
+	queries[i] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	book_query = e_book_query_or (i, queries, TRUE);
 
 	g_free (unquoted);
 
