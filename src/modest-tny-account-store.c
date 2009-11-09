@@ -697,6 +697,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 		if (settings_have_password) {
 			if (pwd) {
+				g_debug ("%s: going to show the dialog. Attempt count is %d", __FUNCTION__, attempt->count);
 				/* The password must be wrong, so show the account settings dialog so it can be corrected: */
 				show_wrong_password_dialog (account, TRUE);
 
