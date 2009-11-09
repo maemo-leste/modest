@@ -2193,13 +2193,9 @@ quote_name_part (GString **str, gchar **cur, gchar **start)
 			*start = g_utf8_next_char (*cur);
 		} else {
 			*str = g_string_append_c (*str, '"');
-			*str = g_string_append_len (*str, *start,
-						    (g_utf8_pointer_to_offset (*start, blank) -
-						     g_utf8_pointer_to_offset (*start, *start)));
+			*str = g_string_append_len (*str, *start, (blank - *start));
 			*str = g_string_append_c (*str, '"');
-			*str = g_string_append_len (*str, blank,
-						    (g_utf8_pointer_to_offset (*start, *cur) -
-						     g_utf8_pointer_to_offset (*start, blank)));
+			*str = g_string_append_len (*str, blank, (*cur - blank));
 			*str = g_string_append (*str, ";");
 			*start = g_utf8_next_char (*cur);
 		}
