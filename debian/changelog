@@ -1,3 +1,16 @@
+modest (3.1.13) unstable; urgency=low
+
+  * Week 46, 2009 - third release
+  * 
+  * Fixes: NB#132034 Moving message to Folder - New button - wrong logical 
+  * 	ID used (wdgt_bd_new), modest logical ID missing
+  * Fixes: NB#139348 Email screenshot must be shown when Email starts
+  * Fixes: NB#144914 Contacts should not be added to addressbook automatically
+  * Fixes: NB#145788 Modest crashed once when navigation is made between folders view. 
+  * 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 10 Nov 2009 17:49:11 +0200
+
 modest (3.1.12) unstable; urgency=low
 
   * Week 46, 2009 - second release
