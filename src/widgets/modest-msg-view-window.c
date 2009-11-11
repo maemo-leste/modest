@@ -67,6 +67,7 @@
 #include <modest-account-protocol.h>
 #include <modest-icon-names.h>
 #include <modest-ui-actions.h>
+#include <modest-hildon2-window-mgr.h>
 #include <tny-camel-msg.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
@@ -2180,6 +2181,59 @@ view_msg_cb (ModestMailOperation *mail_op,
 			gtk_tree_row_reference_free (row_reference);
 		self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
 		if (self) {
+			priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+			/* First we check if the parent is a folder window */
+			if (priv->msg_uid && !modest_hildon2_window_mgr_get_folder_window (MODEST_HILDON2_WINDOW_MGR (modest_runtime_get_window_mgr ()))) {
+				gboolean is_merge;
+				TnyAccount *account = NULL;
+				GtkWidget *header_window = NULL;
+
+				is_merge = g_str_has_prefix (priv->msg_uid, "merge:");
+
+				/* Get the account */
+				if (!is_merge)
+					account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+										  priv->msg_uid);
+
+				if (is_merge || account) {
+					TnyFolder *folder = NULL;
+
+					/* Try to get the message, if it's already downloaded
+					   we don't need to connect */
+					if (account) {
+						folder = modest_tny_folder_store_find_folder_from_uri (TNY_FOLDER_STORE (account), 
+												       priv->msg_uid);
+					} else {
+						ModestTnyAccountStore *account_store;
+						ModestTnyLocalFoldersAccount *local_folders_account;
+
+						account_store = modest_runtime_get_account_store ();
+						local_folders_account = MODEST_TNY_LOCAL_FOLDERS_ACCOUNT (
+							modest_tny_account_store_get_local_folders_account (account_store));
+						folder = modest_tny_local_folders_account_get_merged_outbox (local_folders_account);
+						g_object_unref (local_folders_account);
+					}
+					if (account) g_object_unref (account);
+
+					if (folder) {
+						header_window = (GtkWidget *)
+							modest_header_window_new (
+								folder, 
+								modest_window_get_active_account (MODEST_WINDOW (self)), 
+								modest_window_get_active_mailbox (MODEST_WINDOW (self)));
+						if (!modest_window_mgr_register_window (modest_runtime_get_window_mgr (),
+											MODEST_WINDOW (header_window),
+											NULL)) {
+							gtk_widget_destroy (GTK_WIDGET (header_window));
+						} else {
+							gtk_widget_show_all (GTK_WIDGET (header_window));
+						}
+						g_object_unref (folder);
+					}
+				}
+			}
+
+
 			/* Restore window title */
 			update_window_title (self);
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
