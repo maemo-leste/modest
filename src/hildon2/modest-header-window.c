@@ -75,7 +75,6 @@ struct _ModestHeaderWindowPrivate {
 	GtkWidget *top_vbox;
 	GtkWidget *new_message_button;
 	GtkWidget *show_more_button;
-	GtkWidget *show_more_button2;
 
 	/* state bar */
 	ContentsState contents_state;
@@ -263,7 +262,6 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->sort_button = NULL;
 	priv->new_message_button = NULL;
 	priv->show_more_button = NULL;
-	priv->show_more_button2 = NULL;
 	priv->x_coord = 0;
 	priv->y_coord = 0;
 	priv->notify_model = 0;
@@ -425,12 +423,6 @@ connect_signals (ModestHeaderWindow *self)
 	priv->sighandlers =
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (priv->show_more_button),
-					   "clicked",
-					   G_CALLBACK (modest_header_window_show_more), self);
-
-	priv->sighandlers =
-		modest_signal_mgr_connect (priv->sighandlers,
-					   G_OBJECT (priv->show_more_button2),
 					   "clicked",
 					   G_CALLBACK (modest_header_window_show_more), self);
 
@@ -750,18 +742,9 @@ create_empty_view (ModestWindow *self)
 	g_object_unref (new_message_pixbuf);
 	gtk_widget_show_all (button);
 
-	priv->show_more_button2 = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
-	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button2), _("mcen_va_more"));
-	hildon_button_set_alignment (HILDON_BUTTON (priv->show_more_button2), 0.5, 0.5, 1.0, 1.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (priv->show_more_button2), 0.5, 0.5);
-	hildon_button_set_value_alignment (HILDON_BUTTON (priv->show_more_button2), 0.5, 0.5);
-	gtk_widget_hide_all (priv->show_more_button2);
-
 	hbox = gtk_hbox_new (TRUE, 0);
 	gtk_widget_show (hbox);
 	gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (hbox), priv->show_more_button2, TRUE, TRUE, 0);
-
 	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
 	gtk_widget_show (vbox);
@@ -844,16 +827,8 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	hildon_button_set_image (HILDON_BUTTON (priv->new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
 	g_object_unref (new_message_pixbuf);
 
-	priv->show_more_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
-	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button), _("mcen_va_more"));
-	hildon_button_set_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5, 1.0, 1.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
-	hildon_button_set_value_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
-
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
-	gtk_box_pack_start (GTK_BOX (action_area_box), priv->show_more_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
-	gtk_widget_hide_all (priv->show_more_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->header_view), TRUE);
 	
 	setup_menu (self);
@@ -991,6 +966,16 @@ static void setup_menu (ModestHeaderWindow *self)
 	hildon_button_set_value_alignment (HILDON_BUTTON (priv->sort_button), 0.5, 0.5);
 	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->sort_button),
 						  modest_ui_dimming_rules_on_sort);
+
+	priv->show_more_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_VERTICAL);
+	hildon_button_set_title (HILDON_BUTTON (priv->show_more_button), _("mcen_va_more"));
+	hildon_button_set_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5, 1.0, 1.0);
+	hildon_button_set_title_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
+	hildon_button_set_value_alignment (HILDON_BUTTON (priv->show_more_button), 0.5, 0.5);
+	modest_hildon2_window_add_button_to_menu (MODEST_HILDON2_WINDOW (self), GTK_BUTTON (priv->show_more_button),
+						  NULL);
+	gtk_widget_hide_all (priv->show_more_button);
+
 	modest_hildon2_window_add_to_menu (MODEST_HILDON2_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 					   APP_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 					   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
@@ -1064,16 +1049,12 @@ update_view (ModestHeaderWindow *self,
 		visible = all_count;
 	if (visible == 0 || visible == all_count) {
 		gtk_widget_hide_all (priv->show_more_button);
-		gtk_widget_hide_all (priv->show_more_button2);
 	} else {
 		gtk_widget_show_all (priv->show_more_button);
-		gtk_widget_show_all (priv->show_more_button2);
 	}
 	show_more_value = g_strdup_printf (_("mcen_va_more_toview"), visible, all_count);
 
 	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button),
-				 show_more_value);
-	hildon_button_set_value (HILDON_BUTTON (priv->show_more_button2),
 				 show_more_value);
 }
 
