@@ -330,8 +330,16 @@ gboolean modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *sel
 						      TnyAccount *account);
 
 
-void modest_tny_account_store_reset_attempt_count (ModestTnyAccountStore *self,
-						   TnyAccount *account);
+/**
+ * modest_tny_account_store_forget_password_in_memory
+ * @self: a TnyAccountStore instance
+ * @account: A server account.
+ *
+ * Forget any password stored in memory for this account.
+ * For instance, this should be called when the user has changed the password in the account settings.
+ */
+void    modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self,
+							    const gchar *server_account_name);
 
 G_END_DECLS
 

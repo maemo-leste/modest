@@ -75,8 +75,8 @@ modest_default_connection_policy_on_connect (TnyConnectionPolicy *self, TnyAccou
 		}
 	}
 
-	/* Reset the attempt count */
-	modest_tny_account_store_reset_attempt_count (modest_runtime_get_account_store (), account);
+	/* Clear the pwd */
+	modest_tny_account_store_forget_password_in_memory (modest_runtime_get_account_store (), tny_account_get_id (account));
 
 	return;
 }
@@ -90,7 +90,9 @@ modest_default_connection_policy_on_connection_broken (TnyConnectionPolicy *self
 static void
 modest_default_connection_policy_on_disconnect (TnyConnectionPolicy *self, TnyAccount *account)
 {
-	return;
+	/* Reset the pwd */
+	modest_tny_account_store_forget_password_in_memory (modest_runtime_get_account_store (),
+							    tny_account_get_id (account));
 }
 
 static void
