@@ -105,9 +105,6 @@ static void    on_vfs_volume_unmounted     (GnomeVFSVolumeMonitor *volume_monito
 					    GnomeVFSVolume *volume, 
 					    gpointer user_data);
 
-static void    forget_password_in_memory (ModestTnyAccountStore *self, 
-					  const gchar *server_account_name);
-
 static void    add_connection_specific_transport_accounts         (ModestTnyAccountStore *self);
 
 static void    remove_connection_specific_transport_accounts      (ModestTnyAccountStore *self);
@@ -149,13 +146,6 @@ struct _ModestTnyAccountStorePrivate {
 #define MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
                                                       MODEST_TYPE_TNY_ACCOUNT_STORE, \
                                                       ModestTnyAccountStorePrivate))
-
-#define RETRY_ATTEMPTS 3
-
-typedef struct _PwdAttempt {
-	gint count;
-	gchar *pwd;
-} PwdAttempt;
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -260,20 +250,6 @@ modest_tny_account_store_class_init (ModestTnyAccountStoreClass *klass)
 }
 
 static void
-free_pwd_attempt (gpointer data)
-{
-	PwdAttempt *attempt = (PwdAttempt *) data;
-
-	/* Note that we sometimes insert NULL */
-	if (!attempt)
-		return;
-
-	if (attempt->pwd)
-		g_free (attempt->pwd);
-	g_slice_free (PwdAttempt, attempt);
-}
-
-static void
 modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
 {
 	ModestTnyAccountStorePrivate *priv;
@@ -297,7 +273,7 @@ modest_tny_account_store_instance_init (ModestTnyAccountStore *obj)
          * so they need to be asked for from the user once in each session:
          */
 	priv->password_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
-						     g_free, free_pwd_attempt);
+						     g_free, g_free);
 }
 
 /* disconnect the list of TnyAccounts */
@@ -436,23 +412,14 @@ on_vfs_volume_unmounted(GnomeVFSVolumeMonitor *volume_monitor,
 	g_free (uri);
 }
 
-/**
- * forget_password_in_memory
- * @self: a TnyAccountStore instance
- * @account: A server account.
- * 
- * Forget any password stored in memory for this account.
- * For instance, this should be called when the user has changed the password in the account settings.
- */
-static void
-forget_password_in_memory (ModestTnyAccountStore *self, 
+void
+modest_tny_account_store_forget_password_in_memory (ModestTnyAccountStore *self, 
 			   const gchar * server_account_name)
 {
 	ModestTnyAccountStorePrivate *priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
 
-	if (server_account_name && priv->password_hash) {
+	if (server_account_name && priv->password_hash)
 		g_hash_table_remove (priv->password_hash, server_account_name);
-	}
 }
 
 static void
@@ -542,11 +509,10 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	ModestTnyAccountStorePrivate *priv;
 	gchar *username = NULL;
 	gchar *pwd = NULL;
+	gpointer pwd_ptr;
 	gboolean already_asked = FALSE;
 	const gchar *server_account_name;
 	gchar *url_string;
-	PwdAttempt *attempt = NULL;
-	gpointer attempt_ptr = NULL;
 
 	g_return_val_if_fail (account, NULL);
 
@@ -587,25 +553,23 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	}
 
 	/* We need to do this to avoid "dereferencing type-punned pointer will break strict-aliasing rules" */
-	attempt_ptr = (gpointer) &attempt;
+	pwd_ptr = (gpointer) &pwd;
 
 	/* This hash map stores passwords, including passwords that are not stored in gconf. */
 	/* Is it in the hash? if it's already there, it must be wrong... */
 	already_asked = priv->password_hash && g_hash_table_lookup_extended (priv->password_hash,
 									     server_account_name,
 									     NULL,
-									     attempt_ptr);
+									     pwd_ptr);
 
 	/* If the password is not already there, try ModestConf */
 	if (!already_asked) {
 		pwd  = modest_account_mgr_get_server_account_password (priv->account_mgr,
 								       server_account_name);
-		PwdAttempt *new_attempt = g_slice_new0 (PwdAttempt);
-		new_attempt->count = RETRY_ATTEMPTS;
-		new_attempt->pwd = g_strdup (pwd);
-		g_hash_table_insert (priv->password_hash, g_strdup (server_account_name), new_attempt);
-	} else if (attempt) {
-		pwd = g_strdup (attempt->pwd);
+		g_hash_table_insert (priv->password_hash, g_strdup (server_account_name), g_strdup (pwd));
+	} else {
+		/* We need to get it again because forget_password has cleared it */
+		pwd = modest_account_mgr_get_server_account_password (priv->account_mgr, server_account_name);
 	}
 
 	/* This is horrible but we need it until we don't get a proper
@@ -615,22 +579,11 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 	   cases it makes no sense to ask the user. It's better just
 	   to cancel cleanly */
 	if (g_strstr_len (prompt_not_used, -1, "Connection timed out")) {
-		g_debug ("%s, Incorrect get_password with connection issue %s",
-			 __FUNCTION__, (attempt && (attempt->count > 0)) ? "retrying" : "canceling");
-		if (attempt) {
-			if (attempt->count == 0) {
-				modest_tny_account_store_reset_attempt_count (self, account);
-				if (cancel)
-					*cancel = TRUE;
-				return NULL;
-			} else {
-				return pwd;
-			}
-		} else {
-			if (cancel)
-				*cancel = TRUE;
-			return NULL;
-		}
+		g_debug ("%s, Incorrect get_password with connection issue", __FUNCTION__);
+		modest_tny_account_store_forget_password_in_memory (self, tny_account_get_id (account));
+		if (cancel)
+			*cancel = TRUE;
+		return NULL;
 	}
 
 	/* If it was already asked, it must have been wrong, so ask again */
@@ -697,9 +650,16 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 		if (settings_have_password) {
 			if (pwd) {
-				g_debug ("%s: going to show the dialog. Attempt count is %d", __FUNCTION__, attempt->count);
-				/* The password must be wrong, so show the account settings dialog so it can be corrected: */
-				show_wrong_password_dialog (account, TRUE);
+
+				/* Never show it if the UI is not launched */
+				if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ())) {
+					g_debug ("%s: going to show the dialog (%d windows)", __FUNCTION__,
+						 modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()));
+					/* The password must be wrong, so show the account settings dialog so it can be corrected: */
+					show_wrong_password_dialog (account, TRUE);
+				} else {
+					g_debug ("%s: not showing the dialog (no windows)", __FUNCTION__);
+				}
 
 				if (cancel)
 					*cancel = TRUE;
@@ -775,7 +735,7 @@ forget_password (TnyAccount *account)
 	ModestTnyAccountStorePrivate *priv;
 	const TnyAccountStore *account_store;
 	const gchar *key;
-	PwdAttempt *attempt;
+	gchar *pwd;
 
         account_store = TNY_ACCOUNT_STORE(g_object_get_data (G_OBJECT(account),
 							     "account_store"));
@@ -785,15 +745,11 @@ forget_password (TnyAccount *account)
 
 	/* Do not remove the key, this will allow us to detect that we
 	   have already asked for it at least once */
-	attempt = g_hash_table_lookup (priv->password_hash, key);
-	if (attempt) {
-		attempt->count--;
-		g_debug ("%s, remaining %d for account %s", __FUNCTION__, attempt->count, key);
-		if (attempt->count == 0) {
-			if (attempt->pwd)
-				memset (attempt->pwd, 0, strlen (attempt->pwd));
-			g_hash_table_insert (priv->password_hash, g_strdup (key), NULL);
-		}
+	pwd = g_hash_table_lookup (priv->password_hash, key);
+	if (pwd) {
+		g_debug ("%s, forgetting %s for account %s", __FUNCTION__, pwd, key);
+		memset (pwd, 0, strlen (pwd));
+		g_hash_table_insert (priv->password_hash, g_strdup (key), NULL);
 	}
 }
 
@@ -1181,12 +1137,21 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 
 			modest_platform_run_information_dialog (NULL, prompt, TRUE);
 
-			/* Show the account dialog. Checking the online status
-			   allows us to minimize the number of times that we
-			   incorrectly show the dialog */
-			if (tny_device_is_online (device))
+			/* Show the account dialog. Checking the
+			   online status allows us to minimize the
+			   number of times that we incorrectly show
+			   the dialog. Also do not show it if the UI
+			   is not launched */
+			if (tny_device_is_online (device) &&
+			    modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ())) {
 				show_wrong_password_dialog (account,
 							    (error->code == TNY_SERVICE_ERROR_CONNECT) ? FALSE : TRUE);
+			} else {
+				if (tny_device_is_online (device))
+					g_debug ("%s: not showing the dialog (no windows)", __FUNCTION__);
+				else
+					g_debug ("%s: not showing the dialog (no connection)", __FUNCTION__);
+			}
 			retval = TRUE;
 		}
 	}
@@ -1578,7 +1543,7 @@ create_tny_account (ModestTnyAccountStore *self,
 	if (account) {
 		/* Forget any cached password for the account, so that
 		   we use a new account if any */
-		forget_password_in_memory (self, tny_account_get_id (account));
+		modest_tny_account_store_forget_password_in_memory (self, tny_account_get_id (account));
 
 		/* Set the account store */
 		g_object_set_data (G_OBJECT(account), "account_store", self);
@@ -1900,7 +1865,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	   with the configuration system this could not exist */
 	if (TNY_IS_STORE_ACCOUNT(store_account)) {
 		/* Forget any cached password for the account */
-		forget_password_in_memory (self, tny_account_get_id (store_account));
+		modest_tny_account_store_forget_password_in_memory (self, tny_account_get_id (store_account));
 
 		/* Remove it from the list of accounts and notify the
 		   observers. Do not need to wait for account
@@ -1926,7 +1891,7 @@ on_account_removed (ModestAccountMgr *acc_mgr,
 	if (TNY_IS_TRANSPORT_ACCOUNT(transport_account)) {
 
 		/* Forget any cached password for the account */
-		forget_password_in_memory (self, tny_account_get_id (transport_account));
+		modest_tny_account_store_forget_password_in_memory (self, tny_account_get_id (transport_account));
 
 		/* Remove transport account. It'll free the reference
 		   added by get_server_account */
@@ -2426,22 +2391,5 @@ modest_tny_account_store_is_disk_full_error (ModestTnyAccountStore *self,
 		return TRUE;
 	} else {
 		return FALSE;
-	}
-}
-
-void
-modest_tny_account_store_reset_attempt_count (ModestTnyAccountStore *self,
-					      TnyAccount *account)
-{
-	ModestTnyAccountStorePrivate *priv;
-	PwdAttempt *attempt;
-
-        priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(self);
-
-	/* Reset the count */
-	attempt = g_hash_table_lookup (priv->password_hash, tny_account_get_id (account));
-	if (attempt) {
-		attempt->count = RETRY_ATTEMPTS;
-		g_debug ("%s, reseting the attempt count for account %s", __FUNCTION__, tny_account_get_id (account));
 	}
 }
