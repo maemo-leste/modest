@@ -98,6 +98,7 @@ G_BEGIN_DECLS
 #define MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR "translation-auth-error" /* server name */
 #define MODEST_PROTOCOL_TRANSLATION_ACCOUNT_CONNECTION_ERROR "translation-account-connection-error" /* hostname */
 #define MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE "translation-msg-not-available" /* subject */
+#define MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE_LOST_HEADER "translation-msg-not-available-lost-header" /* subject */
 #define MODEST_PROTOCOL_TRANSLATION_SSL_PROTO_NAME "translation-ssl-proto-name"
 
 

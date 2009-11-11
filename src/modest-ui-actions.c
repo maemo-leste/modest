@@ -1010,9 +1010,14 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 				if (protocol) {
 					if (tny_account_get_connection_status (account) ==
 					    TNY_CONNECTION_STATUS_CONNECTED) {
-						format = modest_protocol_get_translation (protocol,
-											  MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE,
-											  subject);
+						if (header) {
+							format = modest_protocol_get_translation (protocol,
+												  MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE,
+												  subject);
+						} else {
+							format = modest_protocol_get_translation (protocol,
+												  MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE_LOST_HEADER);
+						}
 					} else {
 						format = g_strdup_printf (_("mail_ib_backend_server_invalid"),
 									  tny_account_get_hostname (account));

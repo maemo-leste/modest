@@ -457,6 +457,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, translation_is_userdata, "emev_ni_ui_pop3_msg_connect_error", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_ACCOUNT_CONNECTION_ERROR, translation_is_userdata, "emev_ni_ui_pop3_msg_connect_error", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, translation_is_userdata_no_param, "emev_ni_ui_pop3_msg_recv_error", NULL);
+	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE_LOST_HEADER, translation_is_userdata, "emev_ni_ui_pop3_msg_recv_error", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_SSL_PROTO_NAME, translation_is_userdata_no_param, "mcen_fi_advsetup_other_security_securepop3s", NULL);
 	modest_protocol_registry_add (self, protocol, 3,
 				      MODEST_PROTOCOL_REGISTRY_TRANSPORT_STORE_PROTOCOLS,
@@ -476,6 +477,7 @@ modest_protocol_registry_set_to_default (ModestProtocolRegistry *self)
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_AUTH_ERROR, translation_is_userdata, "emev_ni_ui_imap_connect_server_error", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_ACCOUNT_CONNECTION_ERROR, translation_is_userdata, "emev_ni_ui_imap_connect_server_error", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE, translation_is_userdata, "emev_ni_ui_imap_message_not_available_in_server", NULL);
+	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_MSG_NOT_AVAILABLE_LOST_HEADER, translation_is_userdata, "emev_ni_ui_pop3_msg_recv_error", NULL);
 	modest_protocol_set_translation (protocol, MODEST_PROTOCOL_TRANSLATION_SSL_PROTO_NAME, translation_is_userdata_no_param, "mcen_fi_advsetup_other_security_secureimap4s", NULL);
 	account_options = tny_simple_list_new ();
 	pair = tny_pair_new (MODEST_ACCOUNT_OPTION_USE_LSUB, "");
