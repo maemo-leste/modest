@@ -51,10 +51,7 @@
 #include <modest-toolkit-factory.h>
 #include <modest-scrollable.h>
 #include <modest-isearch-toolbar.h>
-#include <hildon/hildon-picker-dialog.h>
-#include <hildon/hildon-app-menu.h>
 #include "modest-defs.h"
-#include "modest-hildon-includes.h"
 #include "modest-ui-dimming-manager.h"
 #include <gdk/gdkkeysyms.h>
 #include <modest-tny-account.h>
@@ -377,12 +374,10 @@ static void
 modest_msg_view_window_class_init (ModestMsgViewWindowClass *klass)
 {
 	GObjectClass *gobject_class;
-	HildonWindowClass *hildon_window_class;
 	ModestWindowClass *modest_window_class;
 	GtkBindingSet *binding_set;
 
 	gobject_class = (GObjectClass*) klass;
-	hildon_window_class = (HildonWindowClass *) klass;
 	modest_window_class = (ModestWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
@@ -2370,7 +2365,9 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 	if (!parent_priv->toolbar) {
 		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 								  "/ToolBar");
-		gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
+
+		/* We don't use HILDON_ICON_SIZE_FINGER in order to avoid the ifdef here */
+		gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), gtk_icon_size_from_name ("hildon-finger"));
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
