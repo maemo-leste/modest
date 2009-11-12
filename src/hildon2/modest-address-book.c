@@ -1218,7 +1218,7 @@ selector_on_response (GtkDialog *dialog,
 			GtkTreeModel *model = hildon_touch_selector_get_model (selector, 0);
 			if (gtk_tree_model_get_iter (model, &iter, selected_row)) {
 				gtk_tree_model_get (model, &iter, 0, &current_selection, -1);
-				/* modest_address_book_add_address (current_selection, user_data); */
+				modest_address_book_add_address (current_selection, user_data);
 				g_debug ("Current selection : %s", current_selection);
 				g_free (current_selection);
 			}
