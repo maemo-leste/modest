@@ -3207,12 +3207,11 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 							      num), num);
 	}
 
-	/****** HILDON2:START
-	 * creation of hildon file chooser dialog for saving
-	 */
-	save_dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
-						      GTK_FILE_CHOOSER_ACTION_SAVE);
-	/****** HILDON2:END */
+	/* Creation of hildon file chooser dialog for saving */
+	save_dialog = modest_toolkit_factory_create_file_chooser_dialog (modest_runtime_get_toolkit_factory (),
+									 "",
+									 (GtkWindow *) window,
+									 GTK_FILE_CHOOSER_ACTION_SAVE);
 
 	/* Get last used folder */
 	conf_folder = modest_conf_get_string (modest_runtime_get_conf (),

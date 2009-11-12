@@ -2288,8 +2288,10 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), GTK_FILE_CHOOSER_ACTION_OPEN);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ia_select_inline_image_title"));
+	dialog = modest_toolkit_factory_create_file_chooser_dialog (modest_runtime_get_toolkit_factory (),
+								    _("mcen_ia_select_inline_image_title"),
+								    (GtkWindow *) window,
+								    GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
 
 	modest_maemo_utils_setup_images_filechooser (GTK_FILE_CHOOSER (dialog));
@@ -2491,9 +2493,10 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 	if (modest_platform_check_memory_low (MODEST_WINDOW(window), TRUE))
 		return;
 
-	dialog = hildon_file_chooser_dialog_new (GTK_WINDOW (window), 
-						 GTK_FILE_CHOOSER_ACTION_OPEN);
-	gtk_window_set_title (GTK_WINDOW (dialog), _("mcen_ti_select_attachment_title"));
+	dialog = modest_toolkit_factory_create_file_chooser_dialog (modest_runtime_get_toolkit_factory (),
+								    _("mcen_ia_select_attachment_title"),
+								    (GtkWindow *) window,
+								    GTK_FILE_CHOOSER_ACTION_OPEN);
 	conf_folder = modest_conf_get_string (modest_runtime_get_conf (),
 					      MODEST_CONF_LATEST_ATTACH_FILE_PATH, NULL);
 	if (conf_folder && conf_folder[0] != '\0') {
