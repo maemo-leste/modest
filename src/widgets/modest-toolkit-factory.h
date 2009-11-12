@@ -43,6 +43,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_number_entry) (ModestToolkitFactory *self, gint min, gint max);
 	GtkWidget * (*create_file_chooser_dialog) (ModestToolkitFactory *self, const gchar *title,
 						   GtkWindow *parent, GtkFileChooserAction action);
+	GtkWidget * (*create_country_selector) (ModestToolkitFactory *self);
 };
 
 struct                                          _ModestToolkitFactory
@@ -79,6 +80,9 @@ GtkWidget *
 modest_toolkit_factory_create_file_chooser_dialog (ModestToolkitFactory *self, const gchar *title,
 						   GtkWindow *parent, GtkFileChooserAction action);
 
+GtkWidget *
+modest_toolkit_factory_create_country_selector (ModestToolkitFactory *self);
+
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
 
@@ -111,6 +115,16 @@ modest_number_entry_is_valid (GtkWidget *widget);
 
 gboolean
 modest_is_number_entry (GtkWidget *widget);
+
+gint
+modest_country_selector_get_active_country_mcc (GtkWidget *widget);
+
+void
+modest_country_selector_load_data (GtkWidget *widget);
+
+gboolean
+modest_country_selector_set_active_country_locale (GtkWidget *widget);
+
 
 #ifndef MODEST_TOOLKIT_HILDON2
 #define USE_GTK_SPIN_BUTTON

@@ -38,7 +38,6 @@
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
-#include "modest-country-picker.h"
 #include "modest-provider-picker.h"
 #include "modest-servertype-picker.h"
 #include "widgets/modest-validating-entry.h"
@@ -114,7 +113,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	gboolean destroyed;
 
 	GtkWidget *page_account_details;
-	GtkWidget *account_country_picker;
+	GtkWidget *account_country_selector;
 	GtkWidget *account_serviceprovider_picker;
 	GtkWidget *entry_account_title;
 	GtkWidget *caption_account_title;
@@ -307,7 +306,7 @@ on_caption_combobox_changed (GtkComboBox *widget, gpointer user_data)
 }
 
 static void
-on_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
+on_picker_button_value_changed (GtkWidget *widget, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -330,7 +329,7 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 	self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
-	on_picker_button_value_changed (widget, user_data);
+	on_picker_button_value_changed (GTK_WIDGET (widget), user_data);
 
 	provider_id_type = modest_provider_picker_get_active_id_type (
 		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
@@ -451,7 +450,7 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 }
 
 static void
-on_account_country_selector_changed (HildonTouchSelector *widget, gpointer user_data)
+on_account_country_selector_changed (GtkWidget *widget, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -461,8 +460,7 @@ on_account_country_selector_changed (HildonTouchSelector *widget, gpointer user_
 
 	/* Fill the providers picker, based on the selected country: */
 	if (priv->presets != NULL) {
-		gint mcc = modest_country_picker_get_active_country_mcc (
-			MODEST_COUNTRY_PICKER (priv->account_country_picker));
+		gint mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
 		modest_provider_picker_fill (
 			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker), priv->presets, mcc);
 	}
@@ -538,14 +536,25 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	GtkSizeGroup* value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* The country widgets: */
-	priv->account_country_picker = GTK_WIDGET (modest_country_picker_new (MODEST_EDITABLE_SIZE,
-									      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-					       _("mcen_fi_country"), priv->account_country_picker);
-	g_signal_connect (G_OBJECT (priv->account_country_picker), "value-changed",
-			  G_CALLBACK (on_picker_button_value_changed), self);
-	gtk_box_pack_start (GTK_BOX (box), priv->account_country_picker, FALSE, FALSE, MODEST_MARGIN_HALF);
-	gtk_widget_show (priv->account_country_picker);
+	priv->account_country_selector = modest_toolkit_factory_create_country_selector (modest_runtime_get_toolkit_factory ());
+	if (GTK_IS_COMBO_BOX (priv->account_country_selector)) {
+		GtkWidget *captioned;
+		g_signal_connect (G_OBJECT (priv->account_country_selector), "changed",
+				  G_CALLBACK (on_picker_button_value_changed), self);
+		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+								 _("mcen_fi_country"), FALSE,
+								 priv->account_country_selector);
+		
+		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_widget_show (captioned);
+	} else {
+		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+						       _("mcen_fi_country"), priv->account_country_selector);
+		g_signal_connect (G_OBJECT (priv->account_country_selector), "value-changed",
+				  G_CALLBACK (on_picker_button_value_changed), self);
+		gtk_box_pack_start (GTK_BOX (box), priv->account_country_selector, FALSE, FALSE, MODEST_MARGIN_HALF);
+	}
+	gtk_widget_show (priv->account_country_selector);
 
 	/* The service provider widgets: */
 	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE,
@@ -1288,21 +1297,24 @@ fill_providers (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
-	if (MODEST_IS_COUNTRY_PICKER (priv->account_country_picker)) {
+	if (priv->account_country_selector) {
 /* 		gint mcc = get_default_country_code(); */
 		gint mcc;
 		/* Fill the combo in an idle call, as it takes a lot of time */
-		modest_country_picker_load_data(
-			MODEST_COUNTRY_PICKER (priv->account_country_picker));
+		modest_country_selector_load_data(priv->account_country_selector);
 		/* connect to country picker's changed signal, so we can fill the provider picker: */
-		g_signal_connect ((GObject *) priv->account_country_picker,
-				  "value-changed",
-				  G_CALLBACK (on_account_country_selector_changed), self);
+		if (GTK_IS_COMBO_BOX (priv->account_country_selector)) {
+			g_signal_connect ((GObject *) priv->account_country_selector,
+					  "changed",
+					  G_CALLBACK (on_account_country_selector_changed), self);
+		} else {
+			g_signal_connect ((GObject *) priv->account_country_selector,
+					  "value-changed",
+					  G_CALLBACK (on_account_country_selector_changed), self);
+		}
 
-		modest_country_picker_set_active_country_locale (
-			MODEST_COUNTRY_PICKER (priv->account_country_picker));
-		mcc = modest_country_picker_get_active_country_mcc (
-		        MODEST_COUNTRY_PICKER (priv->account_country_picker));
+		modest_country_selector_set_active_country_locale (priv->account_country_selector);
+		mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
 		modest_provider_picker_fill (
 			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker),
 			priv->presets, mcc);
@@ -2710,6 +2722,8 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 		g_signal_connect (priv->check_support_cancel_note, "response", G_CALLBACK (on_check_support_cancel), self);
 	} else {
 		priv->check_support_done = TRUE;
+		if (priv->presets)
+			fill_providers (self);
 	}
 	invoke_enable_buttons_vfunc (self);
 }

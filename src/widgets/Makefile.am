@@ -48,6 +48,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-compact-mail-header-view.c \
 	modest-compact-mail-header-view.h \
 	modest-connection-specific-smtp-window.h \
+	modest-country-combo-box.c \
+	modest-country-combo-box.h \
 	modest-default-account-settings-dialog.h \
 	modest-dnd.c                   \
 	modest-dnd.h                   \
