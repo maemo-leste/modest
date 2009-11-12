@@ -1,3 +1,12 @@
+modest (3.1.14) unstable; urgency=low
+
+  * Week 46 release
+  * 
+  * Fixes: NB#137323 Randomly "Invalid username or password" and Account settings 
+  * 	are shown for mail accounts when Email is not running
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 12 Nov 2009 15:26:13 +0200
+
 modest (3.1.13) unstable; urgency=low
 
   * Week 46, 2009 - third release
