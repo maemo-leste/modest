@@ -38,7 +38,6 @@
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
-#include "modest-provider-picker.h"
 #include "modest-servertype-picker.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
@@ -114,7 +113,7 @@ struct _ModestEasysetupWizardDialogPrivate
 
 	GtkWidget *page_account_details;
 	GtkWidget *account_country_selector;
-	GtkWidget *account_serviceprovider_picker;
+	GtkWidget *account_serviceprovider_selector;
 	GtkWidget *entry_account_title;
 	GtkWidget *caption_account_title;
 
@@ -314,13 +313,13 @@ on_picker_button_value_changed (GtkWidget *widget, gpointer user_data)
 }
 
 static void
-on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpointer user_data)
+on_serviceprovider_selector_value_changed (GtkWidget *widget, gpointer user_data)
 {
 	gchar* default_account_name_start;
 	gchar* default_account_name;
 	ModestEasysetupWizardDialog *self;
 	ModestEasysetupWizardDialogPrivate *priv;
-	ModestProviderPickerIdType provider_id_type;
+	ModestProviderSelectorIdType provider_id_type;
 	ModestProtocol *protocol;
 	gchar *proto_name;
 	ModestProtocolType proto_type;
@@ -331,17 +330,13 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 
 	on_picker_button_value_changed (GTK_WIDGET (widget), user_data);
 
-	provider_id_type = modest_provider_picker_get_active_id_type (
-		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
-	if (provider_id_type == MODEST_PROVIDER_PICKER_ID_OTHER) {
+	provider_id_type = modest_provider_selector_get_active_id_type (
+		priv->account_serviceprovider_selector);
+	if (provider_id_type == MODEST_PROVIDER_SELECTOR_ID_OTHER) {
 		default_account_name_start = g_strdup (_("mcen_ia_emailsetup_defaultname"));
 	} else {
-		GtkWidget *selector;
-
-		selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (widget)));
-		default_account_name_start =
-			g_strdup (hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
-
+		/* obtain properly the account name! */
+		default_account_name_start = modest_provider_selector_get_active_provider_label (widget);
 	}
 	default_account_name = modest_account_mgr_get_unused_account_display_name (
 		priv->account_manager, default_account_name_start);
@@ -349,7 +344,7 @@ on_serviceprovider_picker_button_value_changed (HildonPickerButton *widget, gpoi
 	default_account_name_start = NULL;
 
 	hide_account_title = FALSE;
-	proto_name = modest_provider_picker_get_active_provider_id (MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+	proto_name = modest_provider_selector_get_active_provider_id (priv->account_serviceprovider_selector);
 	if (proto_name != NULL) {
 		protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
 									  MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
@@ -458,11 +453,10 @@ on_account_country_selector_changed (GtkWidget *widget, gpointer user_data)
 
 	priv->dirty = TRUE;
 
-	/* Fill the providers picker, based on the selected country: */
+	/* Fill the providers selector, based on the selected country: */
 	if (priv->presets != NULL) {
 		gint mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
-		modest_provider_picker_fill (
-			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker), priv->presets, mcc);
+		modest_provider_selector_fill (priv->account_serviceprovider_selector, priv->presets, mcc);
 	}
 }
 
@@ -476,8 +470,8 @@ update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
 	/* Fill the providers combo, based on the selected country: */
-	provider_id = modest_provider_picker_get_active_provider_id (
-		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+	provider_id = modest_provider_selector_get_active_provider_id (
+		priv->account_serviceprovider_selector);
 
 	if (provider_id) {
 		gchar *domain_name = modest_presets_get_domain (priv->presets, provider_id);
@@ -497,7 +491,19 @@ update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 }
 
 static void
-on_account_serviceprovider_selector_changed (HildonTouchSelector *widget, gint column, gpointer user_data)
+on_account_serviceprovider_selector_changed (GtkWidget *widget, gint column, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	g_assert(self);
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+
+	priv->dirty = TRUE;
+
+	update_user_email_from_provider (self);
+}
+
+static void
+on_account_serviceprovider_selector_combo_box_changed (GtkWidget *widget, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	g_assert(self);
@@ -557,15 +563,26 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->account_country_selector);
 
 	/* The service provider widgets: */
-	priv->account_serviceprovider_picker = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE,
-										       HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-					       _("mcen_fi_serviceprovider"),
-					       priv->account_serviceprovider_picker);
-	g_signal_connect (G_OBJECT (priv->account_serviceprovider_picker), "value-changed",
-			  G_CALLBACK (on_serviceprovider_picker_button_value_changed), self);
-	gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_picker, FALSE, FALSE, 0);
-	gtk_widget_show (priv->account_serviceprovider_picker);
+	priv->account_serviceprovider_selector = modest_toolkit_factory_create_provider_selector (modest_runtime_get_toolkit_factory ());
+	if (GTK_IS_COMBO_BOX (priv->account_serviceprovider_selector)) {
+		GtkWidget *captioned;
+		g_signal_connect (G_OBJECT (priv->account_serviceprovider_selector), "changed",
+				  G_CALLBACK (on_serviceprovider_selector_value_changed), self);
+		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+								 _("mcen_fi_serviceprovider"), FALSE,
+								 priv->account_serviceprovider_selector);
+		
+		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_widget_show (captioned);
+	} else {
+		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+						       _("mcen_fi_serviceprovider"),
+						       priv->account_serviceprovider_selector);
+		g_signal_connect (G_OBJECT (priv->account_serviceprovider_selector), "value-changed",
+				  G_CALLBACK (on_serviceprovider_selector_value_changed), self);
+		gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_selector, FALSE, FALSE, 0);
+	}
+	gtk_widget_show (priv->account_serviceprovider_selector);
 
 	/* The description widgets: */
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
@@ -647,8 +664,8 @@ on_user_username_changed(GtkWidget* widget, ModestEasysetupWizardDialog *self)
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 
 	/* Work out the user email address */
-	provider_id = modest_provider_picker_get_active_provider_id (
-		MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+	provider_id = modest_provider_selector_get_active_provider_id (
+		priv->account_serviceprovider_selector);
 
 	if (provider_id) {
 		const gchar *current_username;
@@ -1315,16 +1332,21 @@ fill_providers (ModestEasysetupWizardDialog *self)
 
 		modest_country_selector_set_active_country_locale (priv->account_country_selector);
 		mcc = modest_country_selector_get_active_country_mcc (priv->account_country_selector);
-		modest_provider_picker_fill (
-			MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker),
+		modest_provider_selector_fill (
+			priv->account_serviceprovider_selector,
 			priv->presets, mcc);
 		/* connect to providers picker's changed signal, so we can fill the email address: */
-		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
-					    (HILDON_PICKER_BUTTON (priv->account_serviceprovider_picker))),
-				  "changed",
-				  G_CALLBACK (on_account_serviceprovider_selector_changed), self);
-
-		modest_provider_picker_set_others_provider (MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker));
+		if (GTK_IS_COMBO_BOX (priv->account_serviceprovider_selector)) {
+			g_signal_connect (priv->account_serviceprovider_selector,
+					  "changed",
+					  G_CALLBACK (on_account_serviceprovider_selector_combo_box_changed), self);
+		} else {
+			g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
+						    (HILDON_PICKER_BUTTON (priv->account_serviceprovider_selector))),
+					  "changed",
+					  G_CALLBACK (on_account_serviceprovider_selector_changed), self);
+		}
+		modest_provider_selector_set_others_provider (priv->account_serviceprovider_selector);
 	}
 
 	priv->dirty = FALSE;
@@ -1666,23 +1688,23 @@ static void
 create_subsequent_pages (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv;
-	ModestProviderPicker *picker;
-        ModestProviderPickerIdType id_type;
+	GtkWidget *picker;
+        ModestProviderSelectorIdType id_type;
 	GtkNotebook *notebook;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	picker = MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker);
-	id_type = modest_provider_picker_get_active_id_type (picker);
+	picker = priv->account_serviceprovider_selector;
+	id_type = modest_provider_selector_get_active_id_type (picker);
 	g_object_get (self, "wizard-notebook", &notebook, NULL);
 
 	/* Remove the response override handler for non-plugin
 	   protocols. For plugins it'll be overriden later */
-	if (id_type != MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL)
+	if (id_type != MODEST_PROVIDER_SELECTOR_ID_PLUGIN_PROTOCOL)
 		modest_wizard_dialog_set_response_override_handler (MODEST_WIZARD_DIALOG (self),
 								    NULL);
 
 
-	if (id_type == MODEST_PROVIDER_PICKER_ID_OTHER) {
+	if (id_type == MODEST_PROVIDER_SELECTOR_ID_OTHER) {
 		/* "Other..." was selected: */
 
 		/* If we come from a rollbacked easysetup */
@@ -1712,14 +1734,14 @@ create_subsequent_pages (ModestEasysetupWizardDialog *self)
 		}
 
 		/* It's a pluggable protocol and not a provider with presets */
-		if (id_type == MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL) {
+		if (id_type == MODEST_PROVIDER_SELECTOR_ID_PLUGIN_PROTOCOL) {
 			ModestProtocol *protocol;
 			gchar *proto_name;
 			ModestProtocolType proto_type;
 			ModestWizardDialogResponseOverrideFunc response_override;
 
 			/* Get protocol data */
-			proto_name = modest_provider_picker_get_active_provider_id (picker);
+			proto_name = modest_provider_selector_get_active_provider_id (picker);
 			protocol = modest_protocol_registry_get_protocol_by_name (modest_runtime_get_protocol_registry (),
 										  MODEST_PROTOCOL_REGISTRY_PROVIDER_PROTOCOLS,
 										  proto_name);
@@ -2205,20 +2227,20 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	ModestProtocolType store_auth_protocol, transport_auth_protocol;
 	ModestServerAccountSettings *store_settings, *transport_settings;
 	const gchar *fullname, *email_address;
-	ModestProviderPicker *picker;
-	ModestProviderPickerIdType id_type;
+	GtkWidget *picker;
+	ModestProviderSelectorIdType id_type;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
-	picker = MODEST_PROVIDER_PICKER (priv->account_serviceprovider_picker);
+	picker = priv->account_serviceprovider_selector;
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Get details from the specified presets: */
-	id_type = modest_provider_picker_get_active_id_type (picker);
-	provider_id = modest_provider_picker_get_active_provider_id (picker);
+	id_type = modest_provider_selector_get_active_id_type (picker);
+	provider_id = modest_provider_selector_get_active_provider_id (picker);
 
 	/* Let the plugin save the settings. We do a return in order
 	   to save an indentation level */
-	if (id_type == MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL) {
+	if (id_type == MODEST_PROVIDER_SELECTOR_ID_PLUGIN_PROTOCOL) {
 		ModestProtocol *protocol;
 
 		protocol = modest_protocol_registry_get_protocol_by_name (

@@ -95,6 +95,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-details-dialog.h        \
 	modest-progress-bar.c	\
 	modest-progress-bar.h	\
+	modest-provider-combo-box.c    \
+	modest-provider-combo-box.h    \
 	modest-recpt-editor.c          \
 	modest-recpt-editor.h          \
 	modest-recpt-view.c            \

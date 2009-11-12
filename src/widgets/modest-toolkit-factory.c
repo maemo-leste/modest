@@ -44,6 +44,7 @@
 #define USE_GTK_ENTRY
 #define USE_GTK_FILE_CHOOSER
 #define USE_COUNTRY_COMBOBOX
+#define USE_PROVIDER_COMBOBOX
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -62,6 +63,12 @@
 #include <modest-country-combo-box.h>
 #else
 #include <modest-country-picker.h>
+#endif
+
+#ifdef USE_PROVIDER_COMBOBOX
+#include <modest-provider-combo-box.h>
+#else
+#include <modest-provider-picker.h>
 #endif
 
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
@@ -84,6 +91,7 @@ static GtkWidget * modest_toolkit_factory_create_file_chooser_dialog_default  (M
 									       GtkWindow *parent,
 									       GtkFileChooserAction action);
 static GtkWidget * modest_toolkit_factory_create_country_selector_default     (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_provider_selector_default     (ModestToolkitFactory *self);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -112,6 +120,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_number_entry = modest_toolkit_factory_create_number_entry_default;
 	klass->create_file_chooser_dialog = modest_toolkit_factory_create_file_chooser_dialog_default;
 	klass->create_country_selector = modest_toolkit_factory_create_country_selector_default;
+	klass->create_provider_selector = modest_toolkit_factory_create_provider_selector_default;
 }
 
 static void
@@ -424,5 +433,117 @@ modest_country_selector_set_active_country_locale (GtkWidget *widget)
 	return modest_country_combo_box_set_active_country_locale (MODEST_COUNTRY_COMBO_BOX (widget));
 #else
 	return modest_country_picker_set_active_country_locale (MODEST_COUNTRY_PICKER (widget));
+#endif
+}
+
+GtkWidget *
+modest_toolkit_factory_create_provider_selector (ModestToolkitFactory *self)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_provider_selector (self);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_provider_selector_default (ModestToolkitFactory *self)
+{
+	GtkWidget *result;
+#ifdef USE_PROVIDER_COMBOBOX
+	result = modest_provider_combo_box_new ();
+#else
+	result = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE, 
+							 HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
+#endif
+	return result;
+}
+
+void
+modest_provider_selector_fill (GtkWidget *widget,
+			       ModestPresets *presets,
+			       gint mcc)
+{
+#ifdef USE_PROVIDER_COMBOBOX
+	modest_provider_combo_box_fill (MODEST_PROVIDER_COMBO_BOX (widget),
+					presets,
+					mcc);
+#else
+	modest_provider_picker_fill (MODEST_PROVIDER_PICKER (widget),
+				     presets,
+				     mcc);
+#endif
+}
+
+gchar *
+modest_provider_selector_get_active_provider_id (GtkWidget *widget)
+{
+#ifdef USE_PROVIDER_COMBOBOX
+	return modest_provider_combo_box_get_active_provider_id (MODEST_PROVIDER_COMBO_BOX (widget));
+#else
+	return modest_provider_picker_get_active_provider_id (MODEST_PROVIDER_PICKER (widget));
+#endif
+}
+
+gchar *
+modest_provider_selector_get_active_provider_label (GtkWidget *widget)
+{
+#ifdef USE_PROVIDER_COMBOBOX
+	
+	return modest_provider_combo_box_get_active_provider_label (MODEST_PROVIDER_COMBO_BOX (widget));
+#else
+	GtkWidget *selector;
+	
+	selector = GTK_WIDGET (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (widget)));
+	return g_strdup (hildon_touch_selector_get_current_text (HILDON_TOUCH_SELECTOR (selector)));
+#endif
+}
+
+ModestProviderSelectorIdType
+modest_provider_selector_get_active_id_type (GtkWidget *widget)
+{
+	ModestProviderSelectorIdType result;
+#ifdef USE_PROVIDER_COMBOBOX
+	ModestProviderComboBoxIdType id_type;
+
+	id_type = modest_provider_combo_box_get_active_id_type (MODEST_PROVIDER_COMBO_BOX (widget));
+	switch (id_type) {
+	case MODEST_PROVIDER_COMBO_BOX_ID_PROVIDER:
+		result = MODEST_PROVIDER_SELECTOR_ID_PROVIDER;
+		break;
+	case MODEST_PROVIDER_COMBO_BOX_ID_OTHER:
+		result = MODEST_PROVIDER_SELECTOR_ID_OTHER;
+		break;
+	case MODEST_PROVIDER_COMBO_BOX_ID_PLUGIN_PROTOCOL:
+		result = MODEST_PROVIDER_SELECTOR_ID_PLUGIN_PROTOCOL;
+		break;
+	default:
+		result = MODEST_PROVIDER_SELECTOR_ID_OTHER;
+	}
+	return result;
+#else
+	ModestProviderPickerIdType id_type;
+
+	id_type = modest_provider_picker_get_active_id_type (MODEST_PROVIDER_PICKER (widget));
+	switch (id_type) {
+	case MODEST_PROVIDER_PICKER_ID_PROVIDER:
+		result = MODEST_PROVIDER_SELECTOR_ID_PROVIDER;
+		break;
+	case MODEST_PROVIDER_PICKER_ID_OTHER:
+		result = MODEST_PROVIDER_SELECTOR_ID_OTHER;
+		break;
+	case MODEST_PROVIDER_PICKER_ID_PLUGIN_PROTOCOL:
+		result = MODEST_PROVIDER_SELECTOR_ID_PLUGIN_PROTOCOL;
+		break;
+	default:
+		result = MODEST_PROVIDER_SELECTOR_ID_OTHER;
+	}
+#endif
+	return result;
+}
+
+void
+modest_provider_selector_set_others_provider (GtkWidget *self)
+{
+#ifdef USE_PROVIDER_COMBOBOX
+	modest_provider_combo_box_set_others_provider (MODEST_PROVIDER_COMBO_BOX (self));
+#else
+	modest_provider_picker_set_others_provider (MODEST_PROVIDER_PICKER (self));
 #endif
 }

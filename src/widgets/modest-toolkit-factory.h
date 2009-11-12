@@ -3,6 +3,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <modest-presets.h>
 
 G_BEGIN_DECLS
 
@@ -44,6 +45,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_file_chooser_dialog) (ModestToolkitFactory *self, const gchar *title,
 						   GtkWindow *parent, GtkFileChooserAction action);
 	GtkWidget * (*create_country_selector) (ModestToolkitFactory *self);
+	GtkWidget * (*create_provider_selector) (ModestToolkitFactory *self);
 };
 
 struct                                          _ModestToolkitFactory
@@ -82,6 +84,9 @@ modest_toolkit_factory_create_file_chooser_dialog (ModestToolkitFactory *self, c
 
 GtkWidget *
 modest_toolkit_factory_create_country_selector (ModestToolkitFactory *self);
+
+GtkWidget *
+modest_toolkit_factory_create_provider_selector (ModestToolkitFactory *self);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
@@ -124,6 +129,28 @@ modest_country_selector_load_data (GtkWidget *widget);
 
 gboolean
 modest_country_selector_set_active_country_locale (GtkWidget *widget);
+
+typedef enum {
+	MODEST_PROVIDER_SELECTOR_ID_PROVIDER,
+	MODEST_PROVIDER_SELECTOR_ID_OTHER,
+	MODEST_PROVIDER_SELECTOR_ID_PLUGIN_PROTOCOL
+} ModestProviderSelectorIdType;
+
+
+void
+modest_provider_selector_fill (GtkWidget *widget, ModestPresets *presets, gint mcc);
+
+gchar *
+modest_provider_selector_get_active_provider_id (GtkWidget *widget);
+
+gchar *
+modest_provider_selector_get_active_provider_label (GtkWidget *widget);
+
+ModestProviderSelectorIdType
+modest_provider_selector_get_active_id_type (GtkWidget *widget);
+
+void
+modest_provider_selector_set_others_provider (GtkWidget *self);
 
 
 #ifndef MODEST_TOOLKIT_HILDON2
