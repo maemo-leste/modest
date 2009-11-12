@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon.h>
+#include <hildon/hildon-file-chooser-dialog.h>
 #include <modest-number-editor.h>
 #endif
 #include "modest-toolkit-factory.h"
@@ -40,6 +41,7 @@
 #define USE_GTK_CHECK_BUTTON
 #define USE_GTK_CHECK_MENU
 #define USE_GTK_ENTRY
+#define USE_GTK_FILE_CHOOSER
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -58,12 +60,21 @@ static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 static void modest_toolkit_factory_init (ModestToolkitFactory *self);
 
 /* GObject interface */
-static GtkWidget * modest_toolkit_factory_create_scrollable_default (ModestToolkitFactory *self);
-static GtkWidget * modest_toolkit_factory_create_check_button_default (ModestToolkitFactory *self, const gchar *label);
-static GtkWidget * modest_toolkit_factory_create_check_menu_default (ModestToolkitFactory *self, const gchar *label);
-static GtkWidget * modest_toolkit_factory_create_isearch_toolbar_default (ModestToolkitFactory *self, const gchar *label);
-static GtkWidget * modest_toolkit_factory_create_entry_default (ModestToolkitFactory *self);
-static GtkWidget * modest_toolkit_factory_create_number_entry_default (ModestToolkitFactory *self, gint min, gint max);
+static GtkWidget * modest_toolkit_factory_create_scrollable_default           (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_check_button_default         (ModestToolkitFactory *self,
+									       const gchar *label);
+static GtkWidget * modest_toolkit_factory_create_check_menu_default           (ModestToolkitFactory *self,
+									       const gchar *label);
+static GtkWidget * modest_toolkit_factory_create_isearch_toolbar_default      (ModestToolkitFactory *self,
+									       const gchar *label);
+static GtkWidget * modest_toolkit_factory_create_entry_default                (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_number_entry_default         (ModestToolkitFactory *self,
+									       gint min,
+									       gint max);
+static GtkWidget * modest_toolkit_factory_create_file_chooser_dialog_default  (ModestToolkitFactory *self,
+									       const gchar *title,
+									       GtkWindow *parent,
+									       GtkFileChooserAction action);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -90,6 +101,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_isearch_toolbar = modest_toolkit_factory_create_isearch_toolbar_default;
 	klass->create_entry = modest_toolkit_factory_create_entry_default;
 	klass->create_number_entry = modest_toolkit_factory_create_number_entry_default;
+	klass->create_file_chooser_dialog = modest_toolkit_factory_create_file_chooser_dialog_default;
 }
 
 static void
@@ -327,3 +339,31 @@ modest_is_number_entry (GtkWidget *widget)
 #endif
 }
 
+GtkWidget *
+modest_toolkit_factory_create_file_chooser_dialog (ModestToolkitFactory *self,
+						   const gchar *title,
+						   GtkWindow *parent,
+						   GtkFileChooserAction action)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_file_chooser_dialog (self, title, parent, action);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_file_chooser_dialog_default (ModestToolkitFactory *self,
+							   const gchar *title,
+							   GtkWindow *parent,
+							   GtkFileChooserAction action)
+{
+	GtkWidget *result;
+#ifdef USE_GTK_FILE_CHOOSER
+	result = gtk_file_chooser_dialog_new (title, parent, action,
+					      (action == GTK_FILE_CHOOSER_ACTION_OPEN) ? GTK_STOCK_OPEN : GTK_STOCK_SAVE,
+					      GTK_RESPONSE_OK,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      NULL);
+#else
+	result = hildon_file_chooser_dialog_new (parent, action);
+	gtk_window_set_title ((GtkWindow *) result, title);
+#endif
+	return result;
+}

@@ -41,6 +41,8 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_isearch_toolbar) (ModestToolkitFactory *self, const gchar *label);
 	GtkWidget * (*create_entry) (ModestToolkitFactory *self);
 	GtkWidget * (*create_number_entry) (ModestToolkitFactory *self, gint min, gint max);
+	GtkWidget * (*create_file_chooser_dialog) (ModestToolkitFactory *self, const gchar *title,
+						   GtkWindow *parent, GtkFileChooserAction action);
 };
 
 struct                                          _ModestToolkitFactory
@@ -72,6 +74,10 @@ modest_toolkit_factory_create_entry (ModestToolkitFactory *self);
 
 GtkWidget *
 modest_toolkit_factory_create_number_entry (ModestToolkitFactory *self, gint min, gint max);
+
+GtkWidget *
+modest_toolkit_factory_create_file_chooser_dialog (ModestToolkitFactory *self, const gchar *title,
+						   GtkWindow *parent, GtkFileChooserAction action);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
