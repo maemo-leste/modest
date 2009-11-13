@@ -73,7 +73,7 @@ extract_text (ModestFormatter *self, TnyMimePart *body)
 {
 	TnyStream *mp_stream;
 	TnyStream *stream;
-	TnyStream *input_stream;
+	TnyStream *input_stream = NULL;
 	GtkTextBuffer *buf;
 	GtkTextIter start, end;
 	gchar *text;
