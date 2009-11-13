@@ -47,6 +47,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_country_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_provider_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_servertype_selector) (ModestToolkitFactory *self, gboolean filter_providers);
+	GtkWidget * (*create_serversecurity_selector) (ModestToolkitFactory *self);
 };
 
 struct                                          _ModestToolkitFactory
@@ -91,6 +92,9 @@ modest_toolkit_factory_create_provider_selector (ModestToolkitFactory *self);
 
 GtkWidget *
 modest_toolkit_factory_create_servertype_selector (ModestToolkitFactory *self, gboolean filter_providers);
+
+GtkWidget *
+modest_toolkit_factory_create_serversecurity_selector (ModestToolkitFactory *self);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
@@ -161,6 +165,16 @@ modest_servertype_selector_get_active_servertype (GtkWidget *self);
 
 void
 modest_servertype_selector_set_active_servertype (GtkWidget *self, ModestProtocolType protocol_type_id);
+
+void modest_serversecurity_selector_fill (GtkWidget *combobox, ModestProtocolType protocol);
+
+ModestProtocolType modest_serversecurity_selector_get_active_serversecurity (GtkWidget *combobox);
+
+gboolean modest_serversecurity_selector_set_active_serversecurity (GtkWidget *combobox,
+								   ModestProtocolType serversecurity);
+
+gint modest_serversecurity_selector_get_active_serversecurity_port (GtkWidget *combobox);
+
 
 #ifndef MODEST_TOOLKIT_HILDON2
 #define USE_PROVIDER_COMBOBOX

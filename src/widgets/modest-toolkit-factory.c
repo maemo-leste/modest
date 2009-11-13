@@ -44,6 +44,7 @@
 #define USE_GTK_ENTRY
 #define USE_GTK_FILE_CHOOSER
 #define USE_COUNTRY_COMBOBOX
+#define USE_SERVERSECURITY_PICKER
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -76,6 +77,12 @@
 #include <modest-servertype-picker.h>
 #endif
 
+#ifdef USE_SERVERSECURITY_COMBOBOX
+#include <modest-serversecurity-combo-box.h>
+#else
+#include <modest-serversecurity-picker.h>
+#endif
+
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
 static void modest_toolkit_factory_init (ModestToolkitFactory *self);
 
@@ -99,6 +106,7 @@ static GtkWidget * modest_toolkit_factory_create_country_selector_default     (M
 static GtkWidget * modest_toolkit_factory_create_provider_selector_default    (ModestToolkitFactory *self);
 static GtkWidget * modest_toolkit_factory_create_servertype_selector_default  (ModestToolkitFactory *self,
 									       gboolean filter_providers);
+static GtkWidget * modest_toolkit_factory_create_security_selector_default    (ModestToolkitFactory *self);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -129,6 +137,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_country_selector = modest_toolkit_factory_create_country_selector_default;
 	klass->create_provider_selector = modest_toolkit_factory_create_provider_selector_default;
 	klass->create_servertype_selector = modest_toolkit_factory_create_servertype_selector_default;
+	klass->create_serversecurity_selector = modest_toolkit_factory_create_serversecurity_selector_default;
 }
 
 static void
@@ -594,5 +603,70 @@ modest_servertype_selector_set_active_servertype (GtkWidget *self,
 	modest_servertype_combo_box_set_active_servertype (MODEST_SERVERTYPE_COMBO_BOX (self), protocol_type_id);
 #else
 	modest_servertype_picker_set_active_servertype (MODEST_SERVERTYPE_PICKER (self), protocol_type_id);
+#endif
+}
+
+GtkWidget *
+modest_toolkit_factory_create_serversecurity_selector (ModestToolkitFactory *self)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_servertype_selector (self);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_serversecurity_selector_default (ModestToolkitFactory *self)
+{
+	GtkWidget *result;
+#ifdef USE_PROVIDER_COMBOBOX
+	result = GTK_WIDGET (modest_serversecurity_combo_box_new ());
+#else
+	result = GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE, 
+							       HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
+#endif
+	return result;
+}
+
+void
+modest_serversecurity_selector_fill (GtkWidget *combobox, 
+				     ModestProtocolType protocol)
+{
+#ifdef USE_SERVERSECURITY_COMBOBOX
+	modest_serversecurity_combo_box_fill (MODEST_SERVERSECURITY_COMBO_BOX (combobox),
+					      protocol);
+#else
+	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (combobox),
+					   protocol);
+#endif
+}
+
+ModestProtocolType
+modest_serversecurity_selector_get_active_serversecurity (GtkWidget *combobox)
+{
+#ifdef USE_SERVERSECURITY_COMBOBOX
+	return modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (combobox));
+#else
+	return modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (combobox));
+#endif
+}
+
+gboolean
+modest_serversecurity_selector_set_active_serversecurity (GtkWidget *combobox,
+							  ModestProtocolType serversecurity)
+{
+#ifdef USE_SERVERSECURITY_COMBOBOX
+	return modest_serversecurity_combo_box_set_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (combobox),
+									  serversecurity);
+#else
+	return modest_serversecurity_picker_set_active_serversecurity (MODEST_SERVERSECURITY_PICKER (combobox),
+								       serversecurity);
+#endif
+}
+
+gint
+modest_serversecurity_selector_get_active_serversecurity_port (GtkWidget *combobox)
+{
+#ifdef USE_SERVERSECURITY_COMBOBOX
+	return modest_serversecurity_combo_box_get_active_serversecurity_port (MODEST_SERVERSECURITY_COMBO_BOX (combobox));
+#else
+	return modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (combobox));
 #endif
 }
