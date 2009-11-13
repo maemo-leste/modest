@@ -38,7 +38,6 @@
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkseparator.h>
-#include "modest-servertype-picker.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-conf.h"
@@ -126,7 +125,7 @@ struct _ModestEasysetupWizardDialogPrivate
 	GtkWidget *page_complete_easysetup;
 
 	GtkWidget *page_custom_incoming;
-	GtkWidget *incoming_servertype_picker;
+	GtkWidget *incoming_servertype_selector;
 	GtkWidget *caption_incoming;
 	GtkWidget *entry_incomingserver;
 
@@ -244,7 +243,9 @@ create_subsequent_easysetup_pages (ModestEasysetupWizardDialog *self);
 static void
 set_default_custom_servernames(ModestEasysetupWizardDialog *dialog);
 
+#ifdef HILDON_PICKER_BUTTON
 static void on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpointer user_data);
+#endif
 
 static gint
 get_port_from_protocol (ModestProtocolType server_type,
@@ -490,6 +491,7 @@ update_user_email_from_provider (ModestEasysetupWizardDialog *self)
 	g_free (provider_id);
 }
 
+#ifdef HILDON_PICKER_BUTTON
 static void
 on_account_serviceprovider_selector_changed (GtkWidget *widget, gint column, gpointer user_data)
 {
@@ -501,6 +503,7 @@ on_account_serviceprovider_selector_changed (GtkWidget *widget, gint column, gpo
 
 	update_user_email_from_provider (self);
 }
+#endif
 
 static void
 on_account_serviceprovider_selector_combo_box_changed (GtkWidget *widget, gpointer user_data)
@@ -867,8 +870,8 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
-	protocol_type = modest_servertype_picker_get_active_servertype (
-		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
+	protocol_type = modest_servertype_selector_get_active_servertype (
+		priv->incoming_servertype_selector);
 
 	/* This could happen when the combo box has still no active iter */
 	if (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
@@ -896,14 +899,12 @@ static void
 update_incoming_server_security_choices (ModestEasysetupWizardDialog *self)
 {
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
-	ModestServertypePicker *server_type_picker;
+	GtkWidget *server_type_selector;
 	ModestProtocolType protocol_type;
 	ModestSecurityOptionsView *view;
 
-	server_type_picker =
-		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker);
-	protocol_type =
-		modest_servertype_picker_get_active_servertype (server_type_picker);
+	server_type_selector = priv->incoming_servertype_selector;
+	protocol_type = modest_servertype_selector_get_active_servertype (server_type_selector);
 
 	/* Fill the combo with appropriately titled choices for all
 	   those protocols */
@@ -911,8 +912,28 @@ update_incoming_server_security_choices (ModestEasysetupWizardDialog *self)
 	modest_security_options_view_set_server_type (view, protocol_type);
 }
 
+#ifdef HILDON_PICKER_BUTTON
 static void
 on_servertype_selector_changed(HildonTouchSelector *selector, gint column, gpointer user_data)
+{
+	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
+	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
+
+	priv->dirty = TRUE;
+
+	/* Update title */
+	update_incoming_server_title (self);
+
+	/* Update security options if needed */
+	update_incoming_server_security_choices (self);
+	gtk_widget_show (priv->incoming_security);
+
+	set_default_custom_servernames (self);
+}
+#endif
+
+static void
+on_servertype_combo_changed(GtkWidget *selector, gpointer user_data)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (user_data);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
@@ -972,16 +993,28 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	value_sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
 	/* The incoming server widgets: */
-	priv->incoming_servertype_picker = GTK_WIDGET (modest_servertype_picker_new (MODEST_EDITABLE_SIZE,
-										     HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
-										     TRUE));
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_type"),
-					       priv->incoming_servertype_picker);
-	g_signal_connect (G_OBJECT (priv->incoming_servertype_picker), "value-changed",
-			  G_CALLBACK (on_picker_button_value_changed), self);
-	gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_picker, FALSE, FALSE, 0);
-	gtk_widget_show (priv->incoming_servertype_picker);
+	priv->incoming_servertype_selector = 
+		modest_toolkit_factory_create_servertype_selector (modest_runtime_get_toolkit_factory (), 
+								   TRUE);
+	if (GTK_IS_COMBO_BOX (priv->incoming_servertype_selector)) {
+		GtkWidget *captioned;
+		g_signal_connect (G_OBJECT (priv->incoming_servertype_selector), "changed",
+				  G_CALLBACK (on_picker_button_value_changed), self);
+		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+								 _("mcen_fi_country"), FALSE,
+								 priv->incoming_servertype_selector);
+		
+		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_widget_show (captioned);
+	} else {
+		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+						       _("mcen_li_emailsetup_type"),
+						       priv->incoming_servertype_selector);
+		g_signal_connect (G_OBJECT (priv->incoming_servertype_selector), "value-changed",
+				  G_CALLBACK (on_picker_button_value_changed), self);
+		gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_selector, FALSE, FALSE, 0);
+	}
+	gtk_widget_show (priv->incoming_servertype_selector);
 
 	priv->entry_incomingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 
@@ -1013,18 +1046,25 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (priv->incoming_security);
 
 	/* Set default selection */
-	modest_servertype_picker_set_active_servertype (
-		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker),
-		MODEST_PROTOCOLS_STORE_POP);
+	modest_servertype_selector_set_active_servertype (priv->incoming_servertype_selector,
+							  MODEST_PROTOCOLS_STORE_POP);
 	update_incoming_server_title (self);
 	update_incoming_server_security_choices (self);
 	set_default_custom_servernames (self);
 
 	/* Change the caption title when the servertype changes,
 	 * as in the UI spec: */
-	g_signal_connect (G_OBJECT (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->incoming_servertype_picker))),
-			  "changed",
-			  G_CALLBACK (on_servertype_selector_changed), self);
+	if (GTK_IS_COMBO_BOX (priv->incoming_servertype_selector)) {
+		g_signal_connect (priv->incoming_servertype_selector,
+				  "changed",
+				  G_CALLBACK (on_servertype_combo_changed), self);
+	} else {
+#ifdef HILDON_PICKER_BUTTON
+		g_signal_connect (G_OBJECT (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->incoming_servertype_selector))),
+				  "changed",
+				  G_CALLBACK (on_servertype_selector_changed), self);
+#endif
+	}
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
@@ -1341,10 +1381,12 @@ fill_providers (ModestEasysetupWizardDialog *self)
 					  "changed",
 					  G_CALLBACK (on_account_serviceprovider_selector_combo_box_changed), self);
 		} else {
+#ifdef HILDON_PICKER_BUTTON
 			g_signal_connect (G_OBJECT (hildon_picker_button_get_selector
 						    (HILDON_PICKER_BUTTON (priv->account_serviceprovider_selector))),
 					  "changed",
 					  G_CALLBACK (on_account_serviceprovider_selector_changed), self);
+#endif
 		}
 		modest_provider_selector_set_others_provider (priv->account_serviceprovider_selector);
 	}
@@ -1450,7 +1492,7 @@ static void
 init_incoming_page (ModestEasysetupWizardDialogPrivate *priv)
 {
 	priv->page_custom_incoming = NULL;
-	priv->incoming_servertype_picker = NULL;
+	priv->incoming_servertype_selector = NULL;
 	priv->caption_incoming = NULL;
 	priv->entry_incomingserver = NULL;
 	priv->entry_user_email = NULL;
@@ -1876,8 +1918,8 @@ set_default_custom_servernames (ModestEasysetupWizardDialog *self)
 	 */
 	if (priv->entry_user_email
 	    && ((priv->server_changes & MODEST_EASYSETUP_WIZARD_DIALOG_INCOMING_CHANGED) == 0)) {
-		const ModestProtocolType protocol_type = modest_servertype_picker_get_active_servertype (
-			MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
+		const ModestProtocolType protocol_type = modest_servertype_selector_get_active_servertype (
+			priv->incoming_servertype_selector);
 
 		/* This could happen when the combo box has still no active iter */
 		if (protocol_type != MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
@@ -2348,8 +2390,8 @@ save_to_settings (ModestEasysetupWizardDialog *self)
 	} else {
 		/* Use custom pages because no preset was specified: */
 		store_hostname = g_strdup (modest_entry_get_text (priv->entry_incomingserver ));
-		store_protocol = modest_servertype_picker_get_active_servertype (
-			MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
+		store_protocol = modest_servertype_selector_get_active_servertype (
+			priv->incoming_servertype_selector);
 
 		modest_security_options_view_save_settings (
 				    MODEST_SECURITY_OPTIONS_VIEW (priv->incoming_security),
@@ -2520,8 +2562,8 @@ check_for_supported_auth_methods (ModestEasysetupWizardDialog* self)
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
 	registry = modest_runtime_get_protocol_registry ();
-	protocol_type = modest_servertype_picker_get_active_servertype (
-		MODEST_SERVERTYPE_PICKER (priv->incoming_servertype_picker));
+	protocol_type = modest_servertype_selector_get_active_servertype (
+		priv->incoming_servertype_selector);
 	hostname = gtk_entry_get_text(GTK_ENTRY(priv->entry_incomingserver));
 	username = gtk_entry_get_text(GTK_ENTRY(priv->entry_user_username));
 	security_protocol_incoming_type = modest_security_options_view_get_connection_protocol

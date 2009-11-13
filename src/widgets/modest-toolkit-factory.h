@@ -46,6 +46,7 @@ struct                                          _ModestToolkitFactoryClass
 						   GtkWindow *parent, GtkFileChooserAction action);
 	GtkWidget * (*create_country_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_provider_selector) (ModestToolkitFactory *self);
+	GtkWidget * (*create_servertype_selector) (ModestToolkitFactory *self, gboolean filter_providers);
 };
 
 struct                                          _ModestToolkitFactory
@@ -87,6 +88,9 @@ modest_toolkit_factory_create_country_selector (ModestToolkitFactory *self);
 
 GtkWidget *
 modest_toolkit_factory_create_provider_selector (ModestToolkitFactory *self);
+
+GtkWidget *
+modest_toolkit_factory_create_servertype_selector (ModestToolkitFactory *self, gboolean filter_providers);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
@@ -152,13 +156,26 @@ modest_provider_selector_get_active_id_type (GtkWidget *widget);
 void
 modest_provider_selector_set_others_provider (GtkWidget *self);
 
+ModestProtocolType
+modest_servertype_selector_get_active_servertype (GtkWidget *self);
+
+void
+modest_servertype_selector_set_active_servertype (GtkWidget *self, ModestProtocolType protocol_type_id);
 
 #ifndef MODEST_TOOLKIT_HILDON2
-#define USE_GTK_SPIN_BUTTON
+#define USE_PROVIDER_COMBOBOX
+#define USE_SERVERTYPE_COMBOBOX
 #endif
 
 #ifndef USE_GTK_SPIN_BUTTON
 #define MODEST_NUMBER_ENTRY_SUPPORT_VALID_CHANGED
+#endif
+
+#ifndef USE_PROVIDER_COMBOBOX
+#include <hildon/hildon.h>
+#endif
+#ifndef USE_SERVERTYPE_COMBOBOX
+#include <hildon/hildon.h>
 #endif
 
 G_END_DECLS

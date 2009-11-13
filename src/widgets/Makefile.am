@@ -115,6 +115,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-security-options-view.c	\
 	modest-serversecurity-combo-box.h \
 	modest-serversecurity-combo-box.c \
+	modest-servertype-combo-box.h \
+	modest-servertype-combo-box.c \
 	modest-secureauth-combo-box.h \
 	modest-secureauth-combo-box.c \
 	modest-sort-criterium-view.c   \
