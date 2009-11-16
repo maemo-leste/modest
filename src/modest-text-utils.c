@@ -297,10 +297,12 @@ modest_text_utils_strftime(char *s, gsize max, const char *fmt, time_t timet)
 }
 
 gchar *
-modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
+modest_text_utils_derived_subject (const gchar *subject, gboolean is_reply)
 {
-	gchar *tmp, *subject_dup, *retval;
-	gint prefix_len;
+	gchar *tmp, *subject_dup, *retval, *prefix;
+	const gchar *untranslated_prefix;
+	gint prefix_len, untranslated_prefix_len;
+	gboolean untranslated_found = FALSE;
 
 	g_return_val_if_fail (prefix, NULL);
 
@@ -310,13 +312,23 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 	subject_dup = g_strdup (subject);
 	tmp = g_strchug (subject_dup);
 
+	prefix = (is_reply) ? _("mail_va_re") : _("mail_va_fw");
+	prefix = g_strconcat (prefix, ":", NULL);
+	prefix_len = g_utf8_strlen (prefix, -1);
+
+	untranslated_prefix =  (is_reply) ? "Re:" : "Fw:";
+	untranslated_prefix_len = 3;
+
 	/* We do not want things like "Re: Re: Re:" or "Fw: Fw:" so
 	   delete the previous ones */
-	prefix_len = strlen (prefix);
 	do {
 		if (g_str_has_prefix (tmp, prefix)) {
 			tmp += prefix_len;
 			tmp = g_strchug (tmp);
+		} else if (g_str_has_prefix (tmp, untranslated_prefix)) {
+			tmp += untranslated_prefix_len;
+			tmp = g_strchug (tmp);
+			untranslated_found = TRUE;
 		} else {
 			gchar *prefix_down, *tmp_down;
 
@@ -338,8 +350,9 @@ modest_text_utils_derived_subject (const gchar *subject, const gchar *prefix)
 		}
 	} while (tmp);
 
-	retval = g_strdup_printf ("%s %s", prefix, tmp);
+	retval = g_strdup_printf ("%s %s", (untranslated_found) ? untranslated_prefix : prefix, tmp);
 	g_free (subject_dup);
+	g_free (prefix);
 
 	return retval;
 }
