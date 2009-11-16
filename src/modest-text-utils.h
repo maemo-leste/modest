@@ -61,16 +61,22 @@ extern const guint USER_NAME_FORBIDDEN_CHARS_LENGTH;
 /**
  * modest_text_utils_derived_subject:
  * @subject: a string which contains the original subject
- * @prefix: the prefix for the new subject (such as 'Re:' or 'Fwd:'),
- *           must not be NULL
+ * @is_reply: whether the derived subject is for a reply or a forward message
  *
- * create a 'derived' subject line for eg. replies and forwards 
- * 
+ * create a 'derived' subject line for eg. replies and forwards. Note
+ * that this function will use the localized versions of "Re" and
+ * "Fw", unless one of these two versions was already included. For
+ * example replying to an email in Finish would work as:
+ *
+ * "some subject"     -> "VS: some subject"
+ * "VS: some subject" -> "VS: some subject"
+ * "Re: some subject" -> "Re: some subject"
+ * "Fw: some subject" -> "VS: Fw: some subject"
+ *
  * Returns: a newly allocated string containing the resulting subject
- * subject == NULL, then @prefix " " will be returned
  */
-gchar* modest_text_utils_derived_subject (const gchar *subject, 
-					  const gchar* prefix);
+gchar* modest_text_utils_derived_subject (const gchar *subject,
+					  gboolean is_reply);
 
 
 /**

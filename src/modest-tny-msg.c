@@ -664,7 +664,6 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	TnyMimePart *body = NULL;
 	TnyMimePart *html_body = NULL;
 	ModestFormatter *formatter;
-	gchar *subject_prefix;
 	gboolean no_text_part;
 	gchar *parent_uid;
 	gboolean forward_as_attach = FALSE;
@@ -718,16 +717,10 @@ create_reply_forward_mail (TnyMsg *msg, TnyHeader *header, const gchar *from,
 	tny_header_set_replyto (new_header, from);
 
 	/* Change the subject */
-	if (is_reply)
-		subject_prefix = g_strconcat (_("mail_va_re"), ":", NULL);
-	else
-		subject_prefix = g_strconcat (_("mail_va_fw"), ":", NULL);
 	old_subject = tny_header_dup_subject (header);
 	new_subject =
-		(gchar *) modest_text_utils_derived_subject (old_subject,
-							     subject_prefix);
+		(gchar *) modest_text_utils_derived_subject (old_subject, is_reply);
 	g_free (old_subject);
-	g_free (subject_prefix);
 	tny_header_set_subject (new_header, (const gchar *) new_subject);
 	g_free (new_subject);
 
