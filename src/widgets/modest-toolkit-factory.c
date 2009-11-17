@@ -45,6 +45,7 @@
 #define USE_GTK_FILE_CHOOSER
 #define USE_COUNTRY_COMBOBOX
 #define USE_SERVERSECURITY_COMBOBOX
+#define USE_SECUREAUTH_COMBOBOX
 #define USE_GTK_SECURITY_OPTIONS_VIEW
 #endif
 
@@ -84,6 +85,12 @@
 #include <modest-serversecurity-picker.h>
 #endif
 
+#ifdef USE_SECUREAUTH_COMBOBOX
+#include <modest-secureauth-combo-box.h>
+#else
+#include <modest-secureauth-picker.h>
+#endif
+
 #ifdef USE_GTK_SECURITY_OPTIONS_VIEW
 #include <modest-gtk-security-options-view.h>
 #else
@@ -114,6 +121,12 @@ static GtkWidget * modest_toolkit_factory_create_provider_selector_default    (M
 static GtkWidget * modest_toolkit_factory_create_servertype_selector_default  (ModestToolkitFactory *self,
 									       gboolean filter_providers);
 static GtkWidget * modest_toolkit_factory_create_serversecurity_selector_default (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_secureauth_selector_default (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_security_options_view_default (ModestToolkitFactory *self, 
+										ModestSecurityOptionsType type,
+										gboolean full, 
+										GtkSizeGroup *title_size_group,
+										GtkSizeGroup *value_size_group);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -145,6 +158,8 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_provider_selector = modest_toolkit_factory_create_provider_selector_default;
 	klass->create_servertype_selector = modest_toolkit_factory_create_servertype_selector_default;
 	klass->create_serversecurity_selector = modest_toolkit_factory_create_serversecurity_selector_default;
+	klass->create_secureauth_selector = modest_toolkit_factory_create_secureauth_selector_default;
+	klass->create_security_options_view = modest_toolkit_factory_create_security_options_view_default;
 }
 
 static void
@@ -471,7 +486,7 @@ modest_toolkit_factory_create_provider_selector_default (ModestToolkitFactory *s
 {
 	GtkWidget *result;
 #ifdef USE_PROVIDER_COMBOBOX
-	result = modest_provider_combo_box_new ();
+	result = GTK_WIDGET (modest_provider_combo_box_new ());
 #else
 	result = GTK_WIDGET (modest_provider_picker_new (MODEST_EDITABLE_SIZE, 
 							 HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
@@ -623,7 +638,7 @@ static GtkWidget *
 modest_toolkit_factory_create_serversecurity_selector_default (ModestToolkitFactory *self)
 {
 	GtkWidget *result;
-#ifdef USE_PROVIDER_COMBOBOX
+#ifdef USE_SERVERSECURITY_COMBOBOX
 	result = GTK_WIDGET (modest_serversecurity_combo_box_new ());
 #else
 	result = GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE, 
@@ -679,11 +694,74 @@ modest_serversecurity_selector_get_active_serversecurity_port (GtkWidget *combob
 }
 
 GtkWidget *
+modest_toolkit_factory_create_secureauth_selector (ModestToolkitFactory *self)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_secureauth_selector (self);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_secureauth_selector_default (ModestToolkitFactory *self)
+{
+	GtkWidget *result;
+#ifdef USE_SECUREAUTH_COMBOBOX
+	result = GTK_WIDGET (modest_secureauth_combo_box_new ());
+#else
+	result = GTK_WIDGET (modest_secureauth_picker_new (MODEST_EDITABLE_SIZE, 
+							   HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
+#endif
+	return result;
+}
+
+ModestProtocolType
+modest_secureauth_selector_get_active_secureauth (GtkWidget *widget)
+{
+#ifdef USE_SECUREAUTH_COMBOBOX
+	return modest_secureauth_combo_box_get_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (widget));
+#else
+	return modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (widget));
+#endif
+}
+
+gboolean
+modest_secureauth_selector_set_active_secureauth (GtkWidget *widget,
+						  ModestProtocolType secureauth)
+{
+#ifdef USE_SECUREAUTH_COMBOBOX
+	return modest_secureauth_combo_box_set_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (widget),
+								  secureauth);
+#else
+	return modest_secureauth_picker_set_active_secureauth (MODEST_SECUREAUTH_PICKER (widget),
+							       secureauth);
+#endif
+}
+
+gboolean
+modest_is_secureauth_selector (GtkWidget *widget)
+{
+#ifdef USE_SECUREAUTH_COMBOBOX
+	return MODEST_IS_SECUREAUTH_COMBO_BOX (widget);
+#else
+	return MODEST_IS_SECUREAUTH_PICKER (widget);
+#endif
+}
+
+GtkWidget *
 modest_toolkit_factory_create_security_options_view (ModestToolkitFactory *self, 
 						     ModestSecurityOptionsType type,
 						     gboolean full, 
 						     GtkSizeGroup *title_size_group, 
 						     GtkSizeGroup *value_size_group)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_security_options_view (self, type, full, 
+										      title_size_group, value_size_group);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_security_options_view_default (ModestToolkitFactory *self, 
+							     ModestSecurityOptionsType type,
+							     gboolean full, 
+							     GtkSizeGroup *title_size_group, 
+							     GtkSizeGroup *value_size_group)
 {
 	GtkWidget *result;
 #ifdef USE_GTK_SECURITY_OPTIONS_VIEW

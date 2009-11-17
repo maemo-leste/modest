@@ -35,10 +35,8 @@
 #include "modest-security-options-view.h"
 #include "modest-security-options-view-priv.h"
 #ifdef MODEST_TOOLKIT_HILDON2
-#include "modest-secureauth-picker.h"
 #include <modest-hildon-includes.h>
 #endif
-#include "widgets/modest-secureauth-combo-box.h"
 
 /* list my signals */
 enum {
@@ -101,15 +99,8 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 			modest_togglable_set_active (priv->auth_view,
 						     TRUE);
 	} else {
-		if (MODEST_IS_SECUREAUTH_COMBO_BOX (priv->auth_view)) {
-			modest_secureauth_combo_box_set_active_secureauth (
-				MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view), secure_auth);
-		} else {
-#ifdef MODEST_TOOLKIT_HILDON2
-			modest_secureauth_picker_set_active_secureauth (
-				MODEST_SECUREAUTH_PICKER (priv->auth_view), secure_auth);
-#endif
-		}
+		modest_secureauth_selector_set_active_secureauth (
+			priv->auth_view, secure_auth);
 	}
 
 	MODEST_SECURITY_OPTIONS_VIEW_GET_CLASS (self)->load_settings (self, settings);
@@ -154,15 +145,7 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 			}
 		}
 	} else {
-		if  (MODEST_IS_SECUREAUTH_COMBO_BOX (priv->auth_view)) {
-			auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
-				MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
-		} else {
-#ifdef MODEST_TOOLKIT_HILDON2
-			auth_protocol = modest_secureauth_picker_get_active_secureauth (
-				MODEST_SECUREAUTH_PICKER (priv->auth_view));
-#endif
-		}
+		auth_protocol = modest_secureauth_selector_get_active_secureauth (priv->auth_view);
 	}
 
 	/* Save settings */
@@ -218,13 +201,7 @@ get_current_state (ModestSecurityOptionsView* self,
 
 	/* Get auth */
 	if (self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
-		if (MODEST_IS_SECUREAUTH_COMBO_BOX (priv->auth_view)) {
-			state->auth = modest_secureauth_combo_box_get_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
-		} else {
-#ifdef MODEST_TOOLKIT_HILDON2
-			state->auth = modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->auth_view));
-#endif
-		}
+		state->auth = modest_secureauth_selector_get_active_secureauth (priv->auth_view);
 		if (priv->full) {
 		}
 	} else {

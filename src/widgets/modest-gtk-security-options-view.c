@@ -35,7 +35,6 @@
 #include "modest-account-protocol.h"
 #include "widgets/modest-ui-constants.h"
 #include "widgets/modest-validating-entry.h"
-#include "widgets/modest-secureauth-combo-box.h"
 
 #define PORT_MIN 1
 #define PORT_MAX 65535
@@ -103,7 +102,6 @@ on_auth_changed (GtkWidget *widget,
 		 ModestGtkSecurityOptionsView *self)
 {
 	ModestSecurityOptionsViewPrivate* ppriv;
-	ModestSecureauthComboBox *combo;
 	ModestProtocolRegistry *protocol_registry;
 	ModestProtocolType auth_proto;
 	gboolean secureauth_used;
@@ -111,9 +109,8 @@ on_auth_changed (GtkWidget *widget,
 
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	protocol_registry = modest_runtime_get_protocol_registry ();
-	combo = MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view);
 
-	auth_proto = modest_secureauth_combo_box_get_active_secureauth (combo);
+	auth_proto = modest_secureauth_selector_get_active_secureauth (ppriv->auth_view);
 	secureauth_used = modest_protocol_registry_protocol_type_is_secure (protocol_registry, 
 									    auth_proto);
 
@@ -203,7 +200,6 @@ on_entry_changed (GtkEditable *editable,
  	ModestGtkSecurityOptionsViewPrivate *priv;
  	ModestSecurityOptionsViewPrivate *ppriv;
 	ModestProtocolType auth_proto;
-	ModestSecureauthComboBox *combo;
 	gboolean is_secure;
 	ModestProtocolRegistry *protocol_registry;
 
@@ -213,8 +209,7 @@ on_entry_changed (GtkEditable *editable,
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Outgoing username is mandatory if outgoing auth is secure */
-	combo = MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view);
-	auth_proto = modest_secureauth_combo_box_get_active_secureauth (combo);
+	auth_proto = modest_secureauth_selector_get_active_secureauth (ppriv->auth_view);
 	is_secure = modest_protocol_registry_protocol_type_is_secure (protocol_registry,
 								      auth_proto);
 
@@ -249,7 +244,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 							   ppriv->security_view);
 	
 	/* The secure authentication widgets */
-	ppriv->auth_view = GTK_WIDGET (modest_secureauth_combo_box_new ());
+	ppriv->auth_view = modest_toolkit_factory_create_secureauth_selector (modest_runtime_get_toolkit_factory ());
 	auth_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
 							    _("mcen_li_emailsetup_secure_authentication"), FALSE,
 							    ppriv->auth_view);
@@ -309,8 +304,13 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 				  G_CALLBACK (on_security_changed), self);
 	}
 	if (ppriv->full) {
-		g_signal_connect (G_OBJECT (ppriv->auth_view), "changed",
-				  G_CALLBACK (on_auth_changed), self);
+		if (GTK_IS_COMBO_BOX (ppriv->auth_view)) {
+			g_signal_connect (G_OBJECT (ppriv->auth_view), "changed",
+					  G_CALLBACK (on_auth_changed), self);
+		} else {
+			g_signal_connect (G_OBJECT (ppriv->auth_view), "value-changed",
+					  G_CALLBACK (on_auth_changed), self);
+		}
 		g_signal_connect (G_OBJECT (ppriv->user_entry), "changed",
 				  G_CALLBACK (on_entry_changed), self);
 	}
@@ -319,8 +319,8 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	modest_serversecurity_selector_set_active_serversecurity (
 		ppriv->security_view,
 		MODEST_PROTOCOLS_CONNECTION_NONE);
-	modest_secureauth_combo_box_set_active_secureauth (
-	   MODEST_SECUREAUTH_COMBO_BOX (ppriv->auth_view),
+	modest_secureauth_selector_set_active_secureauth (
+	   ppriv->auth_view,
 	   MODEST_PROTOCOLS_AUTH_NONE);
 
 	/* Pack into container */

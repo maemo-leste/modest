@@ -49,6 +49,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_provider_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_servertype_selector) (ModestToolkitFactory *self, gboolean filter_providers);
 	GtkWidget * (*create_serversecurity_selector) (ModestToolkitFactory *self);
+	GtkWidget * (*create_secureauth_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_security_options_view) (ModestToolkitFactory *self, ModestSecurityOptionsType type,
 						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
 };
@@ -98,6 +99,9 @@ modest_toolkit_factory_create_servertype_selector (ModestToolkitFactory *self, g
 
 GtkWidget *
 modest_toolkit_factory_create_serversecurity_selector (ModestToolkitFactory *self);
+
+GtkWidget *
+modest_toolkit_factory_create_secureauth_selector (ModestToolkitFactory *self);
 
 GtkWidget *
 modest_toolkit_factory_create_security_options_view (ModestToolkitFactory *self, ModestSecurityOptionsType type,
@@ -182,6 +186,15 @@ gboolean modest_serversecurity_selector_set_active_serversecurity (GtkWidget *co
 
 gint modest_serversecurity_selector_get_active_serversecurity_port (GtkWidget *combobox);
 
+ModestProtocolType
+modest_secureauth_selector_get_active_secureauth (GtkWidget *widget);
+
+gboolean
+modest_secureauth_selector_set_active_secureauth (GtkWidget *widget,
+						  ModestProtocolType secureauth);
+
+gboolean
+modest_is_secureauth_selector (GtkWidget *widget);
 
 #ifndef MODEST_TOOLKIT_HILDON2
 #define USE_PROVIDER_COMBOBOX

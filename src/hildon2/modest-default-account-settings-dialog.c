@@ -38,7 +38,6 @@
 #include "modest-hildon-includes.h"
 #include "modest-default-account-settings-dialog.h"
 #include "modest-account-mgr.h"
-#include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-text-utils.h"
 #include "modest-account-mgr.h"
