@@ -164,9 +164,9 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 	gtk_box_pack_start (GTK_BOX (top_box), priv->label, FALSE, FALSE, 0);
 	gtk_widget_show (priv->label);
 	
-	priv->textview = hildon_text_view_new ();
+	priv->textview = modest_toolkit_factory_create_text_view (modest_runtime_get_toolkit_factory ());
 	gtk_widget_show (priv->textview);
-	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
+	GtkTextBuffer *buffer = modest_text_view_get_buffer (priv->textview);
 	gtk_text_buffer_set_text (buffer, _("mcen_va_default_signature_tablet"), -1); /* Default, as per the UI spec. */
 	gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (priv->textview), GTK_WRAP_WORD_CHAR);
 	gtk_box_pack_start (GTK_BOX (top_box), priv->textview, TRUE, TRUE, 0);
@@ -224,7 +224,7 @@ modest_signature_editor_dialog_set_settings (
 	
 	modest_togglable_set_active (priv->checkbox_use, use_signature);
 	
-	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
+	GtkTextBuffer *buffer = modest_text_view_get_buffer (priv->textview);
 	if (signature && signature[0] != '\0')
 		gtk_text_buffer_set_text (buffer, signature, -1);
 	else
@@ -246,7 +246,7 @@ modest_signature_editor_dialog_get_settings (
 	
 	*use_signature = modest_togglable_get_active (priv->checkbox_use);
 			
-	GtkTextBuffer *buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
+	GtkTextBuffer *buffer = modest_text_view_get_buffer (priv->textview);
 	
 	GtkTextIter start, end;
 	gtk_text_buffer_get_bounds (buffer, &start, &end);
@@ -270,7 +270,7 @@ correct_scroll_idle_func (gpointer userdata)
 		return FALSE;
 
 	priv = SIGNATURE_EDITOR_DIALOG_GET_PRIVATE(self);
-	buffer = hildon_text_view_get_buffer (HILDON_TEXT_VIEW (priv->textview));
+	buffer = modest_text_view_get_buffer (priv->textview);
 
 	insert = gtk_text_buffer_get_insert (buffer);
 	gtk_text_buffer_get_iter_at_mark (buffer, &iter, insert);
