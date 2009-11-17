@@ -173,7 +173,7 @@ static void on_message_settings (GtkAction *action,
 				 ModestMsgEditWindow *window);
 static void setup_menu (ModestMsgEditWindow *self);
 
-static void from_field_changed (HildonPickerButton *button,
+static void from_field_changed (GtkWidget *button,
 				ModestMsgEditWindow *self);
 static void font_size_clicked (GtkToolButton *button,
 			       ModestMsgEditWindow *window);
@@ -756,8 +756,13 @@ connect_signals (ModestMsgEditWindow *obj)
 	g_signal_connect (G_OBJECT (priv->send_button), "clicked",
 			  G_CALLBACK (modest_ui_actions_on_send), obj);
 
-	g_signal_connect (G_OBJECT (priv->from_field), "value-changed",
-			  G_CALLBACK (from_field_changed), obj);
+	if (GTK_IS_COMBO_BOX (priv->from_field)) {
+		g_signal_connect (G_OBJECT (priv->from_field), "changed",
+				  G_CALLBACK (from_field_changed), obj);
+	} else {
+		g_signal_connect (G_OBJECT (priv->from_field), "value-changed",
+				  G_CALLBACK (from_field_changed), obj);
+	}
 
 	g_signal_connect (G_OBJECT (priv->msg_body), "focus-in-event",
 			  G_CALLBACK (msg_body_focus), obj);
@@ -826,6 +831,7 @@ init_window (ModestMsgEditWindow *obj)
 	GtkWidget *send_icon;
 	GtkWidget *attachments_label;
 	GtkWidget *branding_box;
+	GtkWidget *from_caption;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE(obj);
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (obj);
@@ -888,15 +894,22 @@ init_window (ModestMsgEditWindow *obj)
 	/* Note: This ModestPairList* must exist for as long as the picker
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
- 	priv->from_field    = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							  HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
-							  NULL, g_str_equal);
-	modest_selector_picker_set_value_max_chars (MODEST_SELECTOR_PICKER (priv->from_field), MAX_FROM_VALUE);
-	modest_maemo_utils_set_hbutton_layout (title_size_group, NULL, 
-					       _("mail_va_from"), priv->from_field);
-	hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
-	hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
-	hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 1.0, 0.5);
+ 	priv->from_field    = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
+								      NULL, g_str_equal);
+	modest_selector_set_value_max_chars (priv->from_field, MAX_FROM_VALUE);
+	if (GTK_IS_COMBO_BOX (priv->from_field)) {
+		from_caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
+								    _("mail_va_from"), FALSE,
+								    priv->from_field);
+		gtk_widget_show (from_caption);
+	} else {
+		modest_maemo_utils_set_hbutton_layout (title_size_group, NULL, 
+						       _("mail_va_from"), priv->from_field);
+		hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
+		hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
+		hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 1.0, 0.5);
+		from_caption = priv->from_field;
+	}
 
 	priv->to_field      = modest_recpt_editor_new ();
 	priv->cc_field      = modest_recpt_editor_new ();
@@ -958,7 +971,7 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_widget_set_no_show_all (priv->brand_label, TRUE);
 
 	from_send_hbox = gtk_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->from_field, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (from_send_hbox), from_caption, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (from_send_hbox), priv->send_button, FALSE, FALSE, 0);
 
 	branding_box = gtk_hbox_new (FALSE, MODEST_MARGIN_DEFAULT);
@@ -1647,31 +1660,35 @@ modest_msg_edit_window_new (TnyMsg *msg, const gchar *account_name, const gchar 
 	/* Menubar. Update the state of some toggles */
 	priv->from_field_protos = get_transports ();
 	priv->original_mailbox = NULL;
- 	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (priv->from_field), priv->from_field_protos);
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
-	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+ 	modest_selector_set_pair_list (priv->from_field, priv->from_field_protos);
+	modest_selector_set_active_id (priv->from_field, (gpointer) account_name);
+	priv->last_from_account = modest_selector_get_active_id (priv->from_field);
 	if (mailbox && modest_pair_list_find_by_first_as_string (priv->from_field_protos, mailbox)) {
-		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) mailbox);
+		modest_selector_set_active_id (priv->from_field, (gpointer) mailbox);
 		priv->original_mailbox = g_strdup (mailbox);
 	} else if (modest_account_mgr_account_is_multimailbox (modest_runtime_get_account_mgr (), account_name, NULL)) {
 		/* We set the first mailbox as the active mailbox */
 		priv->original_mailbox = multimailbox_get_default_mailbox (account_name);
 		if (priv->original_mailbox != NULL)
-			modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
-							      (gpointer) priv->original_mailbox);
+			modest_selector_set_active_id (priv->from_field,
+						       (gpointer) priv->original_mailbox);
 		else
-			modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field),
-							      (gpointer) account_name);
+			modest_selector_set_active_id (priv->from_field,
+						       (gpointer) account_name);
 	} else {
-		modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (priv->from_field), (gpointer) account_name);
+		modest_selector_set_active_id (priv->from_field, (gpointer) account_name);
 	}
-	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	priv->last_from_account = modest_selector_get_active_id (priv->from_field);
 	update_branding (MODEST_MSG_EDIT_WINDOW (obj), priv->last_from_account);
-	hildon_button_set_title (HILDON_BUTTON (priv->from_field),
-				 _("mail_va_from"));
-	hildon_button_set_value (HILDON_BUTTON (priv->from_field), 
-				 hildon_touch_selector_get_current_text 
-				 (HILDON_TOUCH_SELECTOR (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->from_field)))));
+	if (!GTK_IS_COMBO_BOX (priv->from_field)) {
+#ifdef HILDON_TOOLKIT_HILDON2
+		hildon_button_set_title (HILDON_BUTTON (priv->from_field),
+					 _("mail_va_from"));
+		hildon_button_set_value (HILDON_BUTTON (priv->from_field), 
+					 hildon_touch_selector_get_current_text 
+					 (HILDON_TOUCH_SELECTOR (hildon_picker_button_get_selector (HILDON_PICKER_BUTTON (priv->from_field)))));
+#endif
+	}
 	modest_msg_edit_window_setup_toolbar (MODEST_MSG_EDIT_WINDOW (obj));
 	modest_window_add_toolbar (MODEST_WINDOW (obj), GTK_TOOLBAR (priv->isearch_toolbar));
 
@@ -1785,13 +1802,13 @@ modest_msg_edit_window_get_msg_data (ModestMsgEditWindow *edit_window)
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (edit_window);
 	
-	picker_active_id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	picker_active_id = modest_selector_get_active_id (priv->from_field);
 	g_return_val_if_fail (picker_active_id, NULL);
 	account_name = modest_utils_get_account_name_from_recipient (picker_active_id, NULL);
 	
 	/* don't free these (except from) */
 	data = g_slice_new0 (MsgData);
-	data->from    =  g_strdup ((gchar *) modest_selector_picker_get_active_display_name (MODEST_SELECTOR_PICKER (priv->from_field)));
+	data->from    =  g_strdup ((gchar *) modest_selector_get_active_display_name (priv->from_field));
 	data->account_name = g_strdup (account_name);
 	data->to      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->to_field)));
 	data->cc      =  g_strdup (modest_recpt_editor_get_recipients (MODEST_RECPT_EDITOR (priv->cc_field)));
@@ -3376,7 +3393,7 @@ modest_msg_edit_window_is_modified (ModestMsgEditWindow *editor)
 	if (gtk_text_buffer_get_modified (priv->text_buffer))
 		return TRUE;
 
-	account_name = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	account_name = modest_selector_get_active_id (priv->from_field);
 	if (priv->original_mailbox) {
 		if (!account_name || strcmp (account_name, priv->original_mailbox))
 			return TRUE;
@@ -4042,7 +4059,7 @@ update_signature (ModestMsgEditWindow *self,
 		g_free (signature);
 	}
 
-	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	priv->last_from_account = modest_selector_get_active_id (priv->from_field);
 	signature = modest_account_mgr_get_signature_from_recipient (mgr, new_account, &has_new_signature);
 	if (has_new_signature) {
 
@@ -4093,7 +4110,7 @@ static void update_branding (ModestMsgEditWindow *self,
 }
 
 static void
-from_field_changed (HildonPickerButton *button,
+from_field_changed (GtkWidget *button,
 		    ModestMsgEditWindow *self)
 {
 	ModestMsgEditWindowPrivate *priv;
@@ -4102,7 +4119,7 @@ from_field_changed (HildonPickerButton *button,
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (self);
 
 	old_account = priv->last_from_account;
-	new_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
+	new_account = modest_selector_get_active_id (priv->from_field);
 
 	if (!new_account) {
 		g_warning ("%s, could not get the new account", __FUNCTION__);
