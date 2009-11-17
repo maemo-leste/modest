@@ -315,40 +315,40 @@ modest_toolkit_factory_create_entry_default (ModestToolkitFactory *self)
 void
 modest_entry_set_text (GtkWidget *widget, const gchar *text)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	hildon_entry_set_text (HILDON_ENTRY (widget), text);
-#else
+#ifdef USE_GTK_ENTRY
 	gtk_entry_set_text (GTK_ENTRY (widget), text);
+#else
+	hildon_entry_set_text (HILDON_ENTRY (widget), text);
 #endif
 }
 
 const gchar *
 modest_entry_get_text (GtkWidget *widget)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	return hildon_entry_get_text (HILDON_ENTRY (widget));
+#ifdef USE_GTK_ENTRY
+	return gtk_entry_get_text (GTK_ENTRY (widget));
 #else
-	return gtk_entry_set_text (GTK_ENTRY (widget));
+	return hildon_entry_get_text (HILDON_ENTRY (widget));
 #endif
 }
 
 void 
 modest_entry_set_hint (GtkWidget *widget, const gchar *hint)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	hildon_entry_set_placeholder (HILDON_ENTRY (widget), hint);
-#else
+#ifdef USE_GTK_ENTRY
 	gtk_widget_set_tooltip_text (widget, hint);
+#else
+	hildon_entry_set_placeholder (HILDON_ENTRY (widget), hint);
 #endif
 }
 
 gboolean
 modest_is_entry (GtkWidget *widget)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
-	return HILDON_IS_ENTRY (widget);
-#else
+#ifdef USE_GTK_ENTRY
 	return GTK_IS_ENTRY (widget);
+#else
+	return HILDON_IS_ENTRY (widget);
 #endif
 }
 

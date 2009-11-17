@@ -575,6 +575,8 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 								 _("mcen_fi_serviceprovider"), FALSE,
 								 priv->account_serviceprovider_selector);
 		
+		g_signal_connect (G_OBJECT (priv->account_serviceprovider_selector), "changed",
+				  G_CALLBACK (on_serviceprovider_selector_value_changed), self);
 		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_widget_show (captioned);
 	} else {
@@ -637,7 +639,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_list_free (list_prevent);
 	list_prevent = NULL;
 	modest_validating_entry_set_func(MODEST_VALIDATING_ENTRY(priv->entry_account_title),
-																	 modest_utils_on_entry_invalid_character, self);
+					 modest_utils_on_entry_invalid_character, self);
 
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
