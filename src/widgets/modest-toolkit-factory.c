@@ -48,6 +48,7 @@
 #define USE_SECUREAUTH_COMBOBOX
 #define USE_GTK_SECURITY_OPTIONS_VIEW
 #define USE_GTK_TEXT_VIEW
+#define USE_SELECTOR_COMBOBOX
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -98,6 +99,12 @@
 #include <modest-maemo-security-options-view.h>
 #endif
 
+#ifdef USE_SELECTOR_COMBOBOX
+#include <modest-combo-box.h>
+#else
+#include <modest-selector-picker.h>
+#endif
+
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
 static void modest_toolkit_factory_init (ModestToolkitFactory *self);
 
@@ -129,6 +136,9 @@ static GtkWidget * modest_toolkit_factory_create_security_options_view_default (
 										GtkSizeGroup *title_size_group,
 										GtkSizeGroup *value_size_group);
 static GtkWidget * modest_toolkit_factory_create_text_view_default            (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_selector_default             (ModestToolkitFactory *self,
+									       ModestPairList *pairs, GEqualFunc id_equal_func);
+
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -163,6 +173,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_secureauth_selector = modest_toolkit_factory_create_secureauth_selector_default;
 	klass->create_security_options_view = modest_toolkit_factory_create_security_options_view_default;
 	klass->create_text_view = modest_toolkit_factory_create_text_view_default;
+	klass->create_selector = modest_toolkit_factory_create_selector_default;
 }
 
 static void
@@ -811,3 +822,83 @@ modest_is_text_view (GtkWidget *widget)
 #endif
 }
 
+GtkWidget *
+modest_toolkit_factory_create_selector (ModestToolkitFactory *self,
+					ModestPairList *pairs, GEqualFunc id_equal_func)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_selector (self, pairs, id_equal_func);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_selector_default (ModestToolkitFactory *self,
+						ModestPairList *pairs, GEqualFunc id_equal_func)
+{
+#ifdef USE_SELECTOR_COMBOBOX
+	return modest_combo_box_new (pairs, id_equal_func);
+#else
+	return modest_selector_picker_new (MODEST_EDITABLE_SIZE, 
+					   HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
+					   pairs, id_equal_func);
+#endif
+}
+
+void
+modest_selector_set_pair_list (GtkWidget *widget, 
+			       ModestPairList *pairs)
+{
+#ifdef USE_SELECTOR_COMBOBOX
+	modest_combo_box_set_pair_list (MODEST_COMBO_BOX (widget),
+					pairs);
+#else
+	modest_selector_picker_set_pair_list (MODEST_SELECTOR_PICKER (widget),
+					      pairs);
+#endif
+}
+
+gpointer
+modest_selector_get_active_id  (GtkWidget *self)
+{
+#ifdef USE_SELECTOR_COMBOBOX
+	return modest_combo_box_get_active_id (MODEST_COMBO_BOX (self));
+#else
+	return modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (self));
+#endif
+}
+
+void
+modest_selector_set_active_id (GtkWidget *self, gpointer id)
+{
+#ifdef USE_SELECTOR_COMBOBOX
+	modest_combo_box_set_active_id (MODEST_COMBO_BOX (self), id);
+#else
+	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (self), id);
+#endif
+}
+
+const gchar*
+modest_selector_get_active_display_name  (GtkWidget *self)
+{
+#ifdef USE_SELECTOR_COMBOBOX
+	return modest_combo_box_get_active_display_name (MODEST_COMBO_BOX (self));
+#else
+	return modest_selector_picker_get_active_display_name (MODEST_SELECTOR_PICKER (self));
+#endif
+}
+
+void
+modest_selector_set_value_max_chars (GtkWidget *self, gint value_max_width_chars)
+{
+#ifndef USE_SELECTOR_COMBOBOX
+	modest_selector_picker_set_value_max_chars (MODEST_SELECTOR_PICKER (self), value_max_width_chars);
+#endif
+}
+
+gint
+modest_selector_get_value_max_chars (GtkWidget *self)
+{
+#ifdef USE_SELECTOR_COMBOBOX
+	return G_MAXINT;
+#else
+	return modest_selector_picker_get_value_max_chars (MODEST_SELECTOR_PICKER (self));
+#endif
+}

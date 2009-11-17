@@ -5,6 +5,7 @@
 #include <gtk/gtk.h>
 #include <modest-presets.h>
 #include <widgets/modest-security-options-view.h>
+#include <modest-pair.h>
 
 G_BEGIN_DECLS
 
@@ -53,6 +54,8 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_security_options_view) (ModestToolkitFactory *self, ModestSecurityOptionsType type,
 						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
 	GtkWidget * (*create_text_view) (ModestToolkitFactory *self);
+	GtkWidget * (*create_selector) (ModestToolkitFactory *self,
+					ModestPairList *pairs, GEqualFunc id_equal_func);
 };
 
 struct                                          _ModestToolkitFactory
@@ -110,6 +113,10 @@ modest_toolkit_factory_create_security_options_view (ModestToolkitFactory *self,
 
 GtkWidget *
 modest_toolkit_factory_create_text_view (ModestToolkitFactory *self);
+
+GtkWidget *
+modest_toolkit_factory_create_selector (ModestToolkitFactory *self,
+					ModestPairList *pairs, GEqualFunc id_equal_func);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
@@ -206,6 +213,13 @@ modest_text_view_get_buffer (GtkWidget *widget);
 gboolean 
 modest_is_text_view (GtkWidget *widget);
 
+void         modest_selector_set_pair_list (GtkWidget *widget, 
+					    ModestPairList *pairs);
+gpointer   modest_selector_get_active_id  (GtkWidget *self);
+void       modest_selector_set_active_id (GtkWidget *self, gpointer id);
+const gchar* modest_selector_get_active_display_name  (GtkWidget *self);
+void       modest_selector_set_value_max_chars (GtkWidget *self, gint value_max_width_chars);
+gint       modest_selector_get_value_max_chars (GtkWidget *self);
 
 
 #ifndef MODEST_TOOLKIT_HILDON2
