@@ -212,7 +212,7 @@ have_gtk=false
 
 if test "$MODEST_TOOLKIT" = "detect"; then
    PKG_CHECK_EXISTS(hildon-1 >= 2.1.0 hildon-fm-2, have_hildon2=true, have_hildon2=false)
-   PKG_CHECK_EXISTS(glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify gtksourceview-2.0, have_gtk=true, have_gtk=false)
+   PKG_CHECK_EXISTS(glib-2.0 >= 2.8 gtk+-2.0 >= 2.10 libnotify, have_gtk=true, have_gtk=false)
    if test "x$have_hildon2" = "xtrue"; then
       detected_toolkit=hildon2
       hildon_api=`$PKG_CONFIG --modversion hildon-1 | cut -d. -f1`
@@ -289,22 +289,18 @@ fi
 AC_SUBST(MAEMO_LAUNCHER_MODEST_LDFLAGS)
 
 dnl --------------- EDITOR -----------
-if test "x$with_toolkit" != "xgtk"; then
-   PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)
-   if test "x$have_wpeditor" == "xfalse"; then
-      PKG_CHECK_MODULES(MODEST_WPEDITOR,libwpeditor-plus,have_libwpeditorplus=true,have_libwpeditorplus=false)
-      if test "x$have_libwpeditorplus" == "xtrue"; then
-      	wpeditor="libwpeditor-plus"
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBWPEDITOR_PLUS, 1, ["Whether libwpeditor-plus is used."])
-      else
-	AC_MSG_ERROR([you need to have either wpeditor or libwpeditor-plus installed])
-      fi
+PKG_CHECK_MODULES(MODEST_WPEDITOR,wpeditor,have_wpeditor=true,have_wpeditor=false)
+if test "x$have_wpeditor" == "xfalse"; then
+   PKG_CHECK_MODULES(MODEST_WPEDITOR,libwpeditor-plus,have_libwpeditorplus=true,have_libwpeditorplus=false)
+   if test "x$have_libwpeditorplus" == "xtrue"; then
+      wpeditor="libwpeditor-plus"
+      AC_DEFINE_UNQUOTED(MODEST_HAVE_LIBWPEDITOR_PLUS, 1, ["Whether libwpeditor-plus is used."])
    else
-	wpeditor="wpeditor"
-	AC_DEFINE_UNQUOTED(MODEST_HAVE_WPEDITOR, 1, ["Whether wpeditor is used."])
+      AC_MSG_ERROR([you need to have either wpeditor or libwpeditor-plus installed])
    fi
 else
-   PKG_CHECK_EXISTS(gtksourceview-2.0, []. [])
+   wpeditor="wpeditor"
+   AC_DEFINE_UNQUOTED(MODEST_HAVE_WPEDITOR, 1, ["Whether wpeditor is used."])
 fi
 
 dnl --------------- LIBALARM -----------
