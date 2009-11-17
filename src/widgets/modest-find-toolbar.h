@@ -2,8 +2,8 @@
 #define                                         __MODEST_FIND_TOOLBAR_H__
 
 #include <glib-object.h>
+#include <gtk/gtk.h>
 #include <modest-isearch-toolbar.h>
-#include <hildon/hildon.h>
 
 G_BEGIN_DECLS
 
