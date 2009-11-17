@@ -34,7 +34,8 @@ INCLUDES=\
 	-DPREFIX=\"@prefix@\" \
 	-Wall
 
-libmodest_ui_la_SOURCES=
+libmodest_ui_la_SOURCES= \
+	modest-icon-names.h
 
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) \
