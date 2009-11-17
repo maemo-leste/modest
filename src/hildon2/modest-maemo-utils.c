@@ -296,6 +296,19 @@ modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
 								   0);
 }
 
+GtkWidget *
+modest_maemo_utils_create_vcaptioned    (GtkSizeGroup *size_group,
+					const gchar *title,
+					gboolean use_markup,
+					GtkWidget *control)
+{
+	return modest_maemo_utils_create_vcaptioned_with_size_type (size_group,
+								    title,
+								    use_markup,
+								    control,
+								    0);
+}
+
 /**
  * modest_maemo_utils_create_captioned_with_size_type:
  * @title_size_group: a #GtkSizeGroup
@@ -344,6 +357,47 @@ modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_
 		gtk_size_group_add_widget (title_size_group, label);
 	if (value_size_group)
 		gtk_size_group_add_widget (value_size_group, control);
+
+	hildon_gtk_widget_set_theme_size (control, size_type);
+
+	g_object_set_data (G_OBJECT (box), CAPTIONED_LABEL_CHILD, label);
+
+	return box;
+}
+
+GtkWidget *
+modest_maemo_utils_create_vcaptioned_with_size_type    (GtkSizeGroup *size_group,
+							const gchar *title,
+							gboolean use_markup,
+							GtkWidget *control,
+							HildonSizeType size_type)
+{
+ 	GtkWidget *label;
+	GtkWidget *align;
+	GtkWidget *box;
+  
+	if (use_markup) {
+		label = gtk_label_new (NULL);
+		gtk_label_set_markup (GTK_LABEL (label), title);
+	} else {
+		label = gtk_label_new (title);
+	}
+	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+
+	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
+	hildon_gtk_widget_set_theme_size (label, HILDON_SIZE_FINGER_HEIGHT);
+	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+	gtk_widget_show (label);
+	gtk_widget_show (align);
+	box = gtk_vbox_new (FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (align), label);
+	gtk_box_pack_start (GTK_BOX (box), align, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), control, TRUE, TRUE, 0);
+	if (size_group) {
+		gtk_size_group_add_widget (size_group, label);
+		gtk_size_group_add_widget (size_group, control);
+	}
 
 	hildon_gtk_widget_set_theme_size (control, size_type);
 

@@ -226,9 +226,9 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	if (GTK_IS_COMBO_BOX (ppriv->default_account_selector)) {
 		GtkWidget *caption;
 
-		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
-							       _("mcen_ti_default_account"), FALSE,
-							       ppriv->default_account_selector);
+		caption = modest_maemo_utils_create_vcaptioned (title_size_group,
+								_("mcen_ti_default_account"), FALSE,
+								ppriv->default_account_selector);
 		gtk_widget_show (caption);
 		gtk_box_pack_start (GTK_BOX (vbox), caption,
 				    FALSE, FALSE, 0);
@@ -249,9 +249,9 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 								    ppriv->msg_format_list, g_int_equal);
 	if (GTK_IS_COMBO_BOX (ppriv->msg_format)) {
 		GtkWidget *caption;
-		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
-							       _("mcen_fi_options_messageformat"), FALSE,
-							       ppriv->msg_format);
+		caption = modest_maemo_utils_create_vcaptioned (title_size_group,
+								_("mcen_fi_options_messageformat"), FALSE,
+								ppriv->msg_format);
 		gtk_widget_show (caption);
 		gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, 0);
 	} else {
@@ -283,9 +283,9 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 								     ppriv->connect_via_list, g_int_equal);
 	if (GTK_IS_COMBO_BOX (ppriv->connect_via)) {
 		GtkWidget *caption;
-		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
-							       _("mcen_fi_options_connectiontype"), FALSE,
-							       ppriv->connect_via);
+		caption = modest_maemo_utils_create_vcaptioned (title_size_group,
+								_("mcen_fi_options_connectiontype"), FALSE,
+								ppriv->connect_via);
 		gtk_widget_show (caption);
 		gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, 0);
 	} else {
@@ -305,9 +305,9 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 									 ppriv->update_interval_list, g_int_equal);
 	if (GTK_IS_COMBO_BOX (ppriv->update_interval)) {
 		GtkWidget *caption;
-		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
-							       _("mcen_fi_options_updateinterval"), FALSE,
-							       ppriv->update_interval);
+		caption = modest_maemo_utils_create_vcaptioned (title_size_group,
+								_("mcen_fi_options_updateinterval"), FALSE,
+								ppriv->update_interval);
 		gtk_widget_show (caption);
 		gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, 0);
 	} else {

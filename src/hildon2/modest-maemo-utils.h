@@ -110,6 +110,10 @@ GtkWidget *modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_grou
 						   const gchar *title,
 						   gboolean use_markup,
 						   GtkWidget *control);
+GtkWidget *modest_maemo_utils_create_vcaptioned    (GtkSizeGroup *size_group,
+						    const gchar *title,
+						    gboolean use_markup,
+						    GtkWidget *control);
 
 GtkWidget *modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_group,
 								  GtkSizeGroup *value_size_group,
@@ -117,6 +121,12 @@ GtkWidget *modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *
 								  gboolean use_markup,
 								  GtkWidget *control,
 								  HildonSizeType size_type);
+
+GtkWidget *modest_maemo_utils_create_vcaptioned_with_size_type    (GtkSizeGroup *size_group,
+								   const gchar *title,
+								   gboolean use_markup,
+								   GtkWidget *control,
+								   HildonSizeType size_type);
 
 void       modest_maemo_utils_captioned_set_label (GtkWidget *captioned,
 						   const gchar *new_label,
