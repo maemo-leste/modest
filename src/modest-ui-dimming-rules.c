@@ -51,8 +51,8 @@
 #include <widgets/modest-recpt-editor.h>
 #include <gtkhtml/gtkhtml.h>
 #include <modest-runtime.h>
+#include <widgets/modest-header-window.h>
 #ifdef MODEST_TOOLKIT_HILDON2
-#include <modest-header-window.h>
 #include <modest-folder-window.h>
 #endif
 

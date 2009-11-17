@@ -52,9 +52,7 @@
 #include "widgets/modest-main-window.h"
 #include "modest-widget-memory.h"
 #include "widgets/modest-sort-criterium-view.h"
-#ifdef MODEST_TOOLKIT_HILDON2
-#include "modest-header-window.h"
-#endif
+#include "widgets/modest-header-window.h"
 #include <langinfo.h>
 
 GQuark

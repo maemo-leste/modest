@@ -74,6 +74,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-header-view-render.c    \
 	modest-header-view.c           \
 	modest-header-view.h           \
+	modest-header-window.c         \
+	modest-header-window.h         \
 	modest-isearch-toolbar.c       \
 	modest-isearch-toolbar.h       \
 	modest-isearch-view.c          \
