@@ -52,6 +52,7 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_secureauth_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_security_options_view) (ModestToolkitFactory *self, ModestSecurityOptionsType type,
 						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
+	GtkWidget * (*create_text_view) (ModestToolkitFactory *self);
 };
 
 struct                                          _ModestToolkitFactory
@@ -106,6 +107,9 @@ modest_toolkit_factory_create_secureauth_selector (ModestToolkitFactory *self);
 GtkWidget *
 modest_toolkit_factory_create_security_options_view (ModestToolkitFactory *self, ModestSecurityOptionsType type,
 						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
+
+GtkWidget *
+modest_toolkit_factory_create_text_view (ModestToolkitFactory *self);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);
@@ -195,6 +199,14 @@ modest_secureauth_selector_set_active_secureauth (GtkWidget *widget,
 
 gboolean
 modest_is_secureauth_selector (GtkWidget *widget);
+
+GtkTextBuffer *
+modest_text_view_get_buffer (GtkWidget *widget);
+
+gboolean 
+modest_is_text_view (GtkWidget *widget);
+
+
 
 #ifndef MODEST_TOOLKIT_HILDON2
 #define USE_PROVIDER_COMBOBOX

@@ -47,6 +47,7 @@
 #define USE_SERVERSECURITY_COMBOBOX
 #define USE_SECUREAUTH_COMBOBOX
 #define USE_GTK_SECURITY_OPTIONS_VIEW
+#define USE_GTK_TEXT_VIEW
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -127,6 +128,7 @@ static GtkWidget * modest_toolkit_factory_create_security_options_view_default (
 										gboolean full, 
 										GtkSizeGroup *title_size_group,
 										GtkSizeGroup *value_size_group);
+static GtkWidget * modest_toolkit_factory_create_text_view_default            (ModestToolkitFactory *self);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -160,6 +162,7 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_serversecurity_selector = modest_toolkit_factory_create_serversecurity_selector_default;
 	klass->create_secureauth_selector = modest_toolkit_factory_create_secureauth_selector_default;
 	klass->create_security_options_view = modest_toolkit_factory_create_security_options_view_default;
+	klass->create_text_view = modest_toolkit_factory_create_text_view_default;
 }
 
 static void
@@ -771,3 +774,40 @@ modest_toolkit_factory_create_security_options_view_default (ModestToolkitFactor
 #endif
 	return result;
 }
+
+GtkWidget *
+modest_toolkit_factory_create_text_view (ModestToolkitFactory *self)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_text_view (self);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_text_view_default (ModestToolkitFactory *self)
+{
+#ifdef USE_GTK_TEXT_VIEW
+	return gtk_text_view_new ();
+#else
+	return hildon_text_view_new ();
+#endif
+}
+
+GtkTextBuffer *
+modest_text_view_get_buffer (GtkWidget *widget)
+{
+#ifdef USE_GTK_TEXT_VIEW
+	return gtk_text_view_get_buffer (GTK_TEXT_VIEW (widget));
+#else
+	return hildon_text_view_get_buffer (HILDON_TEXT_VIEW (widget));
+#endif
+}
+
+gboolean
+modest_is_text_view (GtkWidget *widget)
+{
+#ifdef USE_GTK_TEXT_VIEW
+	return GTK_IS_TEXT_VIEW (widget);
+#else
+	return HILDON_IS_TEXT_VIEW (widget);
+#endif
+}
+
