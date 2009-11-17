@@ -105,45 +105,6 @@ void modest_maemo_utils_set_osso_context (osso_context_t *osso_context);
  */
 GtkWidget *modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager, const gchar *item_name);
 
-GtkWidget *modest_maemo_utils_create_captioned    (GtkSizeGroup *title_size_group,
-						   GtkSizeGroup *value_size_group,
-						   const gchar *title,
-						   gboolean use_markup,
-						   GtkWidget *control);
-GtkWidget *modest_maemo_utils_create_vcaptioned    (GtkSizeGroup *size_group,
-						    const gchar *title,
-						    gboolean use_markup,
-						    GtkWidget *control);
-
-GtkWidget *modest_maemo_utils_create_captioned_with_size_type    (GtkSizeGroup *title_size_group,
-								  GtkSizeGroup *value_size_group,
-								  const gchar *title,
-								  gboolean use_markup,
-								  GtkWidget *control,
-								  HildonSizeType size_type);
-
-GtkWidget *modest_maemo_utils_create_vcaptioned_with_size_type    (GtkSizeGroup *size_group,
-								   const gchar *title,
-								   gboolean use_markup,
-								   GtkWidget *control,
-								   HildonSizeType size_type);
-
-void       modest_maemo_utils_captioned_set_label (GtkWidget *captioned,
-						   const gchar *new_label,
-						   gboolean use_markup);
-
-GtkWidget *modest_maemo_utils_captioned_get_label_widget (GtkWidget *captioned);
-
-void       modest_maemo_utils_set_hbutton_layout (GtkSizeGroup *title_sizegroup, 
-						  GtkSizeGroup *value_sizegroup,
-						  const gchar *title, 
-						  GtkWidget *button);
-void       modest_maemo_utils_set_vbutton_layout (GtkSizeGroup *sizegroup, 
-						  const gchar *title, 
-						  GtkWidget *button);
-
-GtkWidget *modest_maemo_utils_create_group_box (const gchar *label, GtkWidget *contents);
-
 gboolean   modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs);
 
 #ifdef MODEST_PLATFORM_MAEMO

@@ -4142,7 +4142,6 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	 */
 	gtk_widget_set_sensitive (entry_username, FALSE);
 
-#ifndef MODEST_TOOLKIT_GTK
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_username), HILDON_GTK_INPUT_MODE_FULL);
 
@@ -4151,45 +4150,33 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	 * We use GTK_SIZE_GROUP_HORIZONTAL, so that the widths are the same. */
 	GtkSizeGroup *sizegroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
-#ifdef MODEST_TOOLKIT_HILDON2
-	GtkWidget *caption = modest_maemo_utils_create_captioned (sizegroup, NULL,
-								  _("mail_fi_username"), FALSE,
-								  entry_username);
-#else
-	GtkWidget *caption = hildon_caption_new (sizegroup,
-		_("mail_fi_username"), entry_username, NULL, HILDON_CAPTION_MANDATORY);
-#endif
+	GtkWidget *caption = modest_toolkit_utils_create_captioned (sizegroup, NULL,
+								    _("mail_fi_username"), FALSE,
+								    entry_username);
 	gtk_widget_show (entry_username);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption,
 		FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
-#else
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_username,
-			    TRUE, FALSE, 0);
-#endif /* !MODEST_TOOLKIT_GTK */
 
 	/* password: */
 	GtkWidget *entry_password = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	gtk_entry_set_visibility (GTK_ENTRY(entry_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY(entry_password), "*"); */
 
-#ifndef MODEST_TOOLKIT_GTK
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_password),
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
+#endif
 
-	caption = modest_maemo_utils_create_captioned (sizegroup, NULL,
-						       _("mail_fi_password"), FALSE,
-						       entry_password);
+	caption = modest_toolkit_utils_create_captioned (sizegroup, NULL,
+							 _("mail_fi_password"), FALSE,
+							 entry_password);
 	gtk_widget_show (entry_password);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), caption,
 		FALSE, FALSE, MODEST_MARGIN_HALF);
 	gtk_widget_show (caption);
 	g_object_unref (sizegroup);
-#else
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), entry_password,
-			    TRUE, FALSE, 0);
-#endif /* !MODEST_TOOLKIT_GTK */
 
 	if (initial_username != NULL)
 		gtk_widget_grab_focus (GTK_WIDGET (entry_password));

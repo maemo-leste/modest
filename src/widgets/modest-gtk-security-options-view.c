@@ -137,15 +137,15 @@ create_incoming_security (ModestSecurityOptionsView* self,
 
 	/* Create widgets for incoming security */
 	ppriv->security_view = modest_toolkit_factory_create_serversecurity_selector (modest_runtime_get_toolkit_factory ());
-	combo_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							     _("mcen_li_emailsetup_secure_connection"), FALSE,
-							     ppriv->security_view);
+	combo_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+							       _("mcen_li_emailsetup_secure_connection"), FALSE,
+							       ppriv->security_view);
 
 	if (ppriv->full) {		
 		ppriv->port_view = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (), PORT_MIN, PORT_MAX);
-		entry_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								     _("mcen_fi_emailsetup_port"), FALSE,
-								     ppriv->port_view);
+		entry_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+								       _("mcen_fi_emailsetup_port"), FALSE,
+								       ppriv->port_view);
 	}
 
 	ppriv->auth_view = modest_toolkit_factory_create_check_button (modest_runtime_get_toolkit_factory (), 
@@ -239,15 +239,15 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	ppriv->security_view = modest_toolkit_factory_create_serversecurity_selector (modest_runtime_get_toolkit_factory ());
 	modest_serversecurity_selector_fill (ppriv->security_view,
 					     MODEST_PROTOCOLS_TRANSPORT_SMTP);
-	sec_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							   _("mcen_li_emailsetup_secure_connection"), FALSE,
-							   ppriv->security_view);
+	sec_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+							     _("mcen_li_emailsetup_secure_connection"), FALSE,
+							     ppriv->security_view);
 	
 	/* The secure authentication widgets */
 	ppriv->auth_view = modest_toolkit_factory_create_secureauth_selector (modest_runtime_get_toolkit_factory ());
-	auth_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							    _("mcen_li_emailsetup_secure_authentication"), FALSE,
-							    ppriv->auth_view);
+	auth_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+							      _("mcen_li_emailsetup_secure_authentication"), FALSE,
+							      ppriv->auth_view);
 
 	if (ppriv->full) {
 		gchar *user_label;
@@ -260,9 +260,9 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 						 HILDON_GTK_INPUT_MODE_FULL);
 
 		user_label = g_strdup_printf("%s*", _("mail_fi_username"));
-		user_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								    user_label, FALSE,
-								    ppriv->user_entry);
+		user_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+								      user_label, FALSE,
+								      ppriv->user_entry);
 		g_free (user_label);
 	
 		/* Prevent the use of some characters. Limit the max
@@ -284,15 +284,15 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 #endif
 		gtk_entry_set_visibility (GTK_ENTRY (ppriv->pwd_entry), FALSE);
 
-		pwd_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
+		pwd_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
 								   _("mail_fi_password"), FALSE,
 								   ppriv->pwd_entry);
 
 		ppriv->port_view = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
 									       PORT_MIN, PORT_MAX);
-		port_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								    _("mcen_fi_emailsetup_port"), FALSE,
-								    ppriv->port_view);
+		port_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+								      _("mcen_fi_emailsetup_port"), FALSE,
+								      ppriv->port_view);
 	}
 
 	/* Track changes in UI */

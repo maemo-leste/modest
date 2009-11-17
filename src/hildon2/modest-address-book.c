@@ -390,16 +390,16 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name,
 	name_label = gtk_label_new(contact_name);
 	gtk_misc_set_alignment(GTK_MISC(name_label), 0.0, 0.5);
 	cptn_cntrl =
-		modest_maemo_utils_create_captioned (size_group, NULL,
-						     _("mcen_ia_add_email_name"), FALSE,
-						     name_label);
+		modest_toolkit_utils_create_captioned (size_group, NULL,
+						       _("mcen_ia_add_email_name"), FALSE,
+						       name_label);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(add_email_addr_to_contact_dlg)->vbox), cptn_cntrl,
 			   FALSE, FALSE, 0);
 
 	email_entry = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
-	cptn_cntrl = modest_maemo_utils_create_captioned (size_group, NULL, 
-							  _("mcen_fi_add_email_name"), FALSE,
-							  email_entry);
+	cptn_cntrl = modest_toolkit_utils_create_captioned (size_group, NULL, 
+							    _("mcen_fi_add_email_name"), FALSE,
+							    email_entry);
 	hildon_gtk_entry_set_input_mode(GTK_ENTRY(email_entry), HILDON_GTK_INPUT_MODE_FULL);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(add_email_addr_to_contact_dlg)->vbox), cptn_cntrl,
 			   TRUE, TRUE, 0);

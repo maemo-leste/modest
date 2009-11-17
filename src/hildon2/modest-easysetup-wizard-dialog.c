@@ -58,6 +58,7 @@
 #include "modest-address-book.h"
 #include <modest-scrollable.h>
 #include <modest-toolkit-factory.h>
+#include <modest-toolkit-utils.h>
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -386,9 +387,9 @@ create_captioned (ModestEasysetupWizardDialog *self,
 {
 
 	GtkWidget *result;
-	result = modest_maemo_utils_create_captioned_with_size_type (title_size_group, value_size_group,
-								     value, use_markup, control,
-								     MODEST_EDITABLE_SIZE);
+	result = modest_toolkit_utils_create_captioned_with_size_type (title_size_group, value_size_group,
+								       value, use_markup, control,
+								       MODEST_EDITABLE_SIZE);
 
 	/* Connect to the appropriate changed signal for the widget,
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -550,15 +551,15 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 		GtkWidget *captioned;
 		g_signal_connect (G_OBJECT (priv->account_country_selector), "changed",
 				  G_CALLBACK (on_picker_button_value_changed), self);
-		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-								 _("mcen_fi_country"), FALSE,
-								 priv->account_country_selector);
+		captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+								   _("mcen_fi_country"), FALSE,
+								   priv->account_country_selector);
 		
 		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_widget_show (captioned);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-						       _("mcen_fi_country"), priv->account_country_selector);
+		modest_toolkit_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+							 _("mcen_fi_country"), priv->account_country_selector);
 		g_signal_connect (G_OBJECT (priv->account_country_selector), "value-changed",
 				  G_CALLBACK (on_picker_button_value_changed), self);
 		gtk_box_pack_start (GTK_BOX (box), priv->account_country_selector, FALSE, FALSE, MODEST_MARGIN_HALF);
@@ -571,18 +572,18 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 		GtkWidget *captioned;
 		g_signal_connect (G_OBJECT (priv->account_serviceprovider_selector), "changed",
 				  G_CALLBACK (on_serviceprovider_selector_value_changed), self);
-		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-								 _("mcen_fi_serviceprovider"), FALSE,
-								 priv->account_serviceprovider_selector);
+		captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+								   _("mcen_fi_serviceprovider"), FALSE,
+								   priv->account_serviceprovider_selector);
 		
 		g_signal_connect (G_OBJECT (priv->account_serviceprovider_selector), "changed",
 				  G_CALLBACK (on_serviceprovider_selector_value_changed), self);
 		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_widget_show (captioned);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-						       _("mcen_fi_serviceprovider"),
-						       priv->account_serviceprovider_selector);
+		modest_toolkit_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+							 _("mcen_fi_serviceprovider"),
+							 priv->account_serviceprovider_selector);
 		g_signal_connect (G_OBJECT (priv->account_serviceprovider_selector), "value-changed",
 				  G_CALLBACK (on_serviceprovider_selector_value_changed), self);
 		gtk_box_pack_start (GTK_BOX (box), priv->account_serviceprovider_selector, FALSE, FALSE, 0);
@@ -888,7 +889,7 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 		incomingserver_title = g_strconcat (_("mcen_li_emailsetup_servertype"), "\n<small>(",
 						    protocol_display_name, ")</small>", NULL);
 
-		modest_maemo_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
+		modest_toolkit_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
 
 		g_free(incomingserver_title);
 	}
@@ -1002,16 +1003,16 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 		GtkWidget *captioned;
 		g_signal_connect (G_OBJECT (priv->incoming_servertype_selector), "changed",
 				  G_CALLBACK (on_picker_button_value_changed), self);
-		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-								 _("mcen_fi_country"), FALSE,
-								 priv->incoming_servertype_selector);
+		captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+								   _("mcen_fi_country"), FALSE,
+								   priv->incoming_servertype_selector);
 		
 		gtk_box_pack_start (GTK_BOX (box), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_widget_show (captioned);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-						       _("mcen_li_emailsetup_type"),
-						       priv->incoming_servertype_selector);
+		modest_toolkit_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+							 _("mcen_li_emailsetup_type"),
+							 priv->incoming_servertype_selector);
 		g_signal_connect (G_OBJECT (priv->incoming_servertype_selector), "value-changed",
 				  G_CALLBACK (on_picker_button_value_changed), self);
 		gtk_box_pack_start (GTK_BOX (box), priv->incoming_servertype_selector, FALSE, FALSE, 0);

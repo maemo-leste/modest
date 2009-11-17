@@ -128,6 +128,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-tny-stream-gtkhtml.h    \
 	modest-toolkit-factory.c \
 	modest-toolkit-factory.h \
+	modest-toolkit-utils.c \
+	modest-toolkit-utils.h \
 	modest-validating-entry.c \
 	modest-window.c                \
 	modest-window-mgr-priv.h	\

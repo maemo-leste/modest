@@ -153,18 +153,18 @@ create_incoming_security (ModestSecurityOptionsView* self,
 	if (GTK_IS_COMBO_BOX (ppriv->security_view)) {
 		GtkWidget *captioned;
 
-		captioned = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								 _("mcen_li_emailsetup_secure_connection"), FALSE,
-								 ppriv->security_view);
+		captioned = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+								   _("mcen_li_emailsetup_secure_connection"), FALSE,
+								   ppriv->security_view);
 		g_signal_connect (G_OBJECT (ppriv->security_view), "changed",
 				  G_CALLBACK (on_security_changed), self);
 		gtk_box_pack_start (GTK_BOX (self), captioned, FALSE, FALSE, 0);
 		gtk_widget_show (captioned);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_size_group,
-						       value_size_group,
-						       _("mcen_li_emailsetup_secure_connection"), 
-						       ppriv->security_view);
+		modest_toolkit_utils_set_hbutton_layout (title_size_group,
+							 value_size_group,
+							 _("mcen_li_emailsetup_secure_connection"), 
+							 ppriv->security_view);
 		g_signal_connect (G_OBJECT (ppriv->security_view), "value-changed",
 				  G_CALLBACK (on_security_changed), self);
 		gtk_box_pack_start (GTK_BOX (self), ppriv->security_view, FALSE, FALSE, 0);
@@ -178,12 +178,12 @@ create_incoming_security (ModestSecurityOptionsView* self,
 		ppriv->port_view = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
 									       PORT_MIN, PORT_MAX);
 		entry_caption =
-			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
-									    value_size_group,
-									    _("mcen_fi_emailsetup_port"),
-									    FALSE,
-									    ppriv->port_view,
-									    MODEST_EDITABLE_SIZE);
+			modest_toolkit_utils_create_captioned_with_size_type (title_size_group,
+									      value_size_group,
+									      _("mcen_fi_emailsetup_port"),
+									      FALSE,
+									      ppriv->port_view,
+									      MODEST_EDITABLE_SIZE);
 		/* Pack & show widgets */
 		gtk_box_pack_start (GTK_BOX (self), entry_caption, FALSE, FALSE, 0);
 		gtk_widget_show (ppriv->port_view);
@@ -278,30 +278,30 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	modest_serversecurity_selector_fill (ppriv->security_view,
 					      MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	if (GTK_IS_COMBO_BOX (ppriv->security_view)) {
-		security_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								 _("mcen_li_emailsetup_secure_connection"), FALSE,
-								 ppriv->security_view);
+		security_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+									  _("mcen_li_emailsetup_secure_connection"), FALSE,
+									  ppriv->security_view);
 		gtk_widget_show (security_caption);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_size_group,
-						       value_size_group,
-						       _("mcen_li_emailsetup_secure_connection"), 
-						       ppriv->security_view);
+		modest_toolkit_utils_set_hbutton_layout (title_size_group,
+							 value_size_group,
+							 _("mcen_li_emailsetup_secure_connection"), 
+							 ppriv->security_view);
 		security_caption = ppriv->security_view;
 	}
 	
 	/* The secure authentication widgets */
 	ppriv->auth_view = modest_toolkit_factory_create_secureauth_selector (modest_runtime_get_toolkit_factory ());
 	if (GTK_IS_COMBO_BOX (ppriv->auth_view)) {
-		auth_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-								    _("mcen_li_emailsetup_secure_authentication"), FALSE,
-								    ppriv->auth_view);
+		auth_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+								      _("mcen_li_emailsetup_secure_authentication"), FALSE,
+								      ppriv->auth_view);
 		gtk_widget_show (auth_caption);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_size_group,
-						       value_size_group,
-						       _("mcen_li_emailsetup_secure_authentication"), 
-						       ppriv->auth_view);
+		modest_toolkit_utils_set_hbutton_layout (title_size_group,
+							 value_size_group,
+							 _("mcen_li_emailsetup_secure_authentication"), 
+							 ppriv->auth_view);
 		auth_caption = ppriv->auth_view;
 	}
 
@@ -318,12 +318,12 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 #endif
 
 		user_label = g_strdup_printf("%s*", _("mail_fi_username"));
-		user_caption = modest_maemo_utils_create_captioned_with_size_type (title_size_group,
-										   value_size_group,
-										   user_label,
-										   FALSE,
-										   ppriv->user_entry,
-										   MODEST_EDITABLE_SIZE);
+		user_caption = modest_toolkit_utils_create_captioned_with_size_type (title_size_group,
+										     value_size_group,
+										     user_label,
+										     FALSE,
+										     ppriv->user_entry,
+										     MODEST_EDITABLE_SIZE);
 		g_free (user_label);
 	
 		/* Prevent the use of some characters. Limit the max
@@ -346,22 +346,22 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		gtk_entry_set_visibility (GTK_ENTRY (ppriv->pwd_entry), FALSE);
 
 		pwd_caption =
-			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
-									    value_size_group,
-									    _("mail_fi_password"),
-									    FALSE,
-									    ppriv->pwd_entry,
-									    MODEST_EDITABLE_SIZE);
+			modest_toolkit_utils_create_captioned_with_size_type (title_size_group,
+									      value_size_group,
+									      _("mail_fi_password"),
+									      FALSE,
+									      ppriv->pwd_entry,
+									      MODEST_EDITABLE_SIZE);
 
 		ppriv->port_view = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
 									       PORT_MIN, PORT_MAX);
 		port_caption =
-			modest_maemo_utils_create_captioned_with_size_type (title_size_group,
-									    value_size_group,
-									    _("mcen_fi_emailsetup_port"),
-									    FALSE,
-									    ppriv->port_view,
-									    MODEST_EDITABLE_SIZE);
+			modest_toolkit_utils_create_captioned_with_size_type (title_size_group,
+									      value_size_group,
+									      _("mcen_fi_emailsetup_port"),
+									      FALSE,
+									      ppriv->port_view,
+									      MODEST_EDITABLE_SIZE);
 	}
 
 	/* Track changes in UI */

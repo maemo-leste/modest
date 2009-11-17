@@ -902,13 +902,13 @@ init_window (ModestMsgEditWindow *obj)
 								      NULL, g_str_equal);
 	modest_selector_set_value_max_chars (priv->from_field, MAX_FROM_VALUE);
 	if (GTK_IS_COMBO_BOX (priv->from_field)) {
-		from_caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
-								    _("mail_va_from"), FALSE,
-								    priv->from_field);
+		from_caption = modest_toolkit_utils_create_captioned (title_size_group, NULL,
+								      _("mail_va_from"), FALSE,
+								      priv->from_field);
 		gtk_widget_show (from_caption);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_size_group, NULL, 
-						       _("mail_va_from"), priv->from_field);
+		modest_toolkit_utils_set_hbutton_layout (title_size_group, NULL, 
+							 _("mail_va_from"), priv->from_field);
 		hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
 		hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
 		hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 1.0, 0.5);
@@ -946,15 +946,15 @@ init_window (ModestMsgEditWindow *obj)
 	priv->bcc_caption = _create_addressbook_box
 		(title_size_group, value_size_group,
 		 _("mail_va_hotfix1"), priv->bcc_field);
-	subject_caption = modest_maemo_utils_create_captioned (title_size_group, value_size_group,
-							       _("mail_va_subject"), FALSE, priv->subject_box);
-	priv->attachments_caption = modest_maemo_utils_create_captioned_with_size_type (NULL, NULL,
-											_("mail_va_attachment"), 
-											FALSE,
-											priv->attachments_view,
-											HILDON_SIZE_AUTO_WIDTH |
-											HILDON_SIZE_AUTO_HEIGHT);
-	attachments_label = modest_maemo_utils_captioned_get_label_widget (priv->attachments_caption);
+	subject_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
+								 _("mail_va_subject"), FALSE, priv->subject_box);
+	priv->attachments_caption = modest_toolkit_utils_create_captioned_with_size_type (NULL, NULL,
+											  _("mail_va_attachment"), 
+											  FALSE,
+											  priv->attachments_view,
+											  HILDON_SIZE_AUTO_WIDTH |
+											  HILDON_SIZE_AUTO_HEIGHT);
+	attachments_label = modest_toolkit_utils_captioned_get_label_widget (priv->attachments_caption);
 	hildon_gtk_widget_set_theme_size (attachments_label, HILDON_SIZE_AUTO_HEIGHT);
 
 
@@ -4268,8 +4268,8 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 	gtk_box_pack_start (GTK_BOX (priority_hbox), medium_toggle, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (priority_hbox), high_toggle, TRUE, TRUE, 0);
 	gtk_widget_show_all (priority_hbox);
-	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mcen_me_editor_message_priority"), FALSE, priority_hbox);
+	captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+							   _("mcen_me_editor_message_priority"), FALSE, priority_hbox);
 	gtk_widget_show (captioned);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 

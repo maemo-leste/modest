@@ -267,9 +267,9 @@ create_captioned (ModestDefaultAccountSettingsDialog *self,
 
 	GtkWidget *result;
 
-	result = modest_maemo_utils_create_captioned_with_size_type (title_sizegroup, value_sizegroup,
-								     label_text, use_markup, control,
-								     MODEST_EDITABLE_SIZE);
+	result = modest_toolkit_utils_create_captioned_with_size_type (title_sizegroup, value_sizegroup,
+								       label_text, use_markup, control,
+								       MODEST_EDITABLE_SIZE);
 
 	/* Connect to the appropriate changed signal for the widget, 
 	 * so we can ask for the prev/next buttons to be enabled/disabled appropriately:
@@ -616,7 +616,7 @@ update_incoming_server_title (ModestDefaultAccountSettingsDialog *self,
 	incomingserver_title = g_strconcat(_("mcen_li_emailsetup_servertype"), "*", 
 					   "\n<small>(", protocol_display_name, ")</small>", NULL);
 	
-	modest_maemo_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
+	modest_toolkit_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
 	g_free (incomingserver_title);
 }
 

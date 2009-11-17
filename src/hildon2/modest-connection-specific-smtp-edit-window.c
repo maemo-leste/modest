@@ -381,9 +381,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	
 	GtkWidget *captioned = 
-	  modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-					       server_label, TRUE,
-					       priv->entry_outgoingserver);
+		modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+						       server_label, TRUE,
+						       priv->entry_outgoingserver);
 	g_free (server_label);
 	gtk_widget_show (priv->entry_outgoingserver);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
@@ -396,15 +396,15 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	}
 	if (GTK_IS_COMBO_BOX (priv->outgoing_auth_selector)) {
 		GtkWidget *captioned;
-		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-								 _("mcen_li_emailsetup_secure_authentication"), FALSE,
-								 priv->outgoing_auth_selector);
+		captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+								   _("mcen_li_emailsetup_secure_authentication"), FALSE,
+								   priv->outgoing_auth_selector);
 		gtk_widget_show (captioned);
 		gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-						       _("mcen_li_emailsetup_secure_authentication"),
-						       priv->outgoing_auth_selector);
+		modest_toolkit_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+							 _("mcen_li_emailsetup_secure_authentication"),
+							 priv->outgoing_auth_selector);
 		gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_auth_selector, FALSE, FALSE, 0);
 	}
 	gtk_widget_show (priv->outgoing_auth_selector);
@@ -413,9 +413,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
-	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mail_fi_username"), FALSE,
-							 priv->entry_user_username);
+	captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+							   _("mail_fi_username"), FALSE,
+							   priv->entry_user_username);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
@@ -437,8 +437,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
-	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mail_fi_password"), FALSE, priv->entry_user_password);
+	captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+							   _("mail_fi_password"), FALSE, priv->entry_user_password);
 	g_signal_connect(G_OBJECT(priv->entry_user_password), "changed", G_CALLBACK(on_change), self);
 	gtk_widget_show (priv->entry_user_password);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
@@ -453,15 +453,15 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (GTK_IS_COMBO_BOX (priv->outgoing_security_selector)) {
 		GtkWidget *captioned;
 
-		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-								 _("mcen_li_emailsetup_secure_connection"), FALSE,
-								 priv->outgoing_security_selector);
+		captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+								   _("mcen_li_emailsetup_secure_connection"), FALSE,
+								   priv->outgoing_security_selector);
 		gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
 		gtk_widget_show (captioned);
 	} else {
-		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-						       _("mcen_li_emailsetup_secure_connection"), 
-						       priv->outgoing_security_selector);
+		modest_toolkit_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+							 _("mcen_li_emailsetup_secure_connection"), 
+							 priv->outgoing_security_selector);
 		gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_security_selector, FALSE, FALSE, 0);
 	}
 	gtk_widget_show (priv->outgoing_security_selector);
@@ -470,8 +470,8 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (!priv->entry_port)
 		priv->entry_port = modest_toolkit_factory_create_number_entry (modest_runtime_get_toolkit_factory (),
 									       PORT_RANGE_MIN, PORT_RANGE_MAX);
-	captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
-							 _("mcen_fi_emailsetup_port"), FALSE, priv->entry_port);
+	captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
+							   _("mcen_fi_emailsetup_port"), FALSE, priv->entry_port);
 	gtk_widget_add_events(GTK_WIDGET(priv->entry_port), GDK_FOCUS_CHANGE_MASK);
 	gtk_widget_show (priv->entry_port);
 	gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, 0);
