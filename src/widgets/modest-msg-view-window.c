@@ -37,7 +37,7 @@
 #include "modest-marshal.h"
 #include "modest-platform.h"
 #include <modest-utils.h>
-#include <modest-maemo-utils.h>
+#include <modest-toolkit-utils.h>
 #include <modest-tny-msg.h>
 #include <modest-msg-view-window.h>
 #include "modest-msg-view-window-ui-dimming.h"
