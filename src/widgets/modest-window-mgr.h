@@ -90,6 +90,8 @@ struct _ModestWindowMgrClass {
 	gboolean              (*screen_is_on)                   (ModestWindowMgr *self);
 	void                  (*create_caches)                  (ModestWindowMgr *self);
 
+	ModestWindow *        (*get_folder_window)              (ModestWindowMgr *self);
+
 	/* Signals */
 	void (*window_list_empty) (ModestWindowMgr *self);
 	void (*progress_list_changed) (ModestWindowMgr *self);

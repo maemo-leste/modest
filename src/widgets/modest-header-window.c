@@ -28,14 +28,16 @@
  */
 
 #include <modest-header-window.h>
+#ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon.h>
+#include <modest-maemo-utils.h>
+#endif
 #include <modest-scrollable.h>
 #include <modest-window-mgr.h>
 #include <modest-window-priv.h>
 #include <modest-signal-mgr.h>
 #include <modest-runtime.h>
 #include <modest-platform.h>
-#include <modest-maemo-utils.h>
 #include <modest-icon-names.h>
 #include <modest-ui-constants.h>
 #include <modest-account-mgr.h>
@@ -48,6 +50,7 @@
 #include <modest-ui-dimming-rules.h>
 #include <modest-tny-folder.h>
 #include <tny-simple-list.h>
+#include <gdk/gdkkeysyms.h>
 
 typedef enum {
 	CONTENTS_STATE_NONE = 0,
@@ -55,10 +58,12 @@ typedef enum {
 	CONTENTS_STATE_HEADERS = 2
 } ContentsState;
 
+#ifdef MODEST_TOOLKIT_HILDON2
 typedef enum {
 	EDIT_MODE_COMMAND_MOVE = 1,
 	EDIT_MODE_COMMAND_DELETE = 2,
 } EditModeCommand;
+#endif
 
 typedef struct _ModestHeaderWindowPrivate ModestHeaderWindowPrivate;
 struct _ModestHeaderWindowPrivate {
@@ -131,10 +136,12 @@ static void on_header_activated (ModestHeaderView *header_view,
 static void on_updating_msg_list (ModestHeaderView *header_view,
 				  gboolean starting,
 				  gpointer user_data);
+#ifdef MODEST_TOOLKIT_HILDON2
 static void set_delete_edit_mode (GtkButton *button,
 				  ModestHeaderWindow *self);
 static void set_moveto_edit_mode (GtkButton *button,
 				  ModestHeaderWindow *self);
+#endif
 static gboolean on_expose_event(GtkTreeView *header_view,
 				GdkEventExpose *event,
 				gpointer user_data);
@@ -155,13 +162,15 @@ static void on_queue_changed    (ModestMailOperationQueue *queue,
 				 ModestMailOperation *mail_op,
 				 ModestMailOperationQueueNotification type,
 				 ModestHeaderWindow *self);
-static void modest_header_window_pack_toolbar (ModestHildon2Window *self,
+static void modest_header_window_pack_toolbar (ModestWindow *self,
 					       GtkPackType pack_type,
 					       GtkWidget *toolbar);
+#ifdef MODEST_TOOLKIT_HILDON2
 static void edit_mode_changed (ModestHeaderWindow *header_window,
 			       gint edit_mode_id,
 			       gboolean enabled,
 			       ModestHeaderWindow *self);
+#endif
 static void on_progress_list_changed (ModestWindowMgr *mgr,
 				      ModestHeaderWindow *self);
 static void update_progress_hint (ModestHeaderWindow *self);
@@ -200,7 +209,12 @@ modest_header_window_get_type (void)
 			(GInstanceInitFunc) modest_header_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
+		my_type = g_type_register_static (
+#ifdef MODEST_TOOLKIT_HILDON2
+						  MODEST_TYPE_HILDON2_WINDOW,
+#else
+						  MODEST_TYPE_WINDOW,
+#endif
 		                                  "ModestHeaderWindow",
 		                                  &my_info, 0);
 	}
@@ -213,7 +227,6 @@ modest_header_window_class_init (ModestHeaderWindowClass *klass)
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
-	ModestHildon2WindowClass *modest_hildon2_window_class = (ModestHildon2WindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_header_window_finalize;
@@ -222,7 +235,7 @@ modest_header_window_class_init (ModestHeaderWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestHeaderWindowPrivate));
 	
 	modest_window_class->disconnect_signals_func = modest_header_window_disconnect_signals;
-	modest_hildon2_window_class->pack_toolbar_func = modest_header_window_pack_toolbar;
+	modest_window_class->pack_toolbar_func = modest_header_window_pack_toolbar;
 }
 
 static void
@@ -625,9 +638,11 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), delete_item);
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), mark_read_item);
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), mark_unread_item);
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (delete_item, MODEST_EDITABLE_SIZE);
 	hildon_gtk_widget_set_theme_size (mark_unread_item, MODEST_EDITABLE_SIZE);
 	hildon_gtk_widget_set_theme_size (mark_read_item, MODEST_EDITABLE_SIZE);
+#endif
 	gtk_widget_show_all (priv->csm_menu);
 
 	/* Connect signals */
@@ -641,7 +656,9 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 			  G_CALLBACK (on_mark_unread_csm_activated), self);
 
 	/* Add tap&hold handling */
+#ifdef MAEMO_CHANGES
 	gtk_widget_tap_and_hold_setup (header_view, priv->csm_menu, NULL, 0);
+#endif
 
 	return header_view;
 }
@@ -653,14 +670,14 @@ create_empty_view (ModestWindow *self)
 	GtkWidget *label = NULL;
 	GtkWidget *align = NULL;
 	GtkWidget *vbox = NULL;
-	GtkWidget *button = NULL;
-	GdkPixbuf *new_message_pixbuf;
 
 	vbox = gtk_vbox_new (0, FALSE);
 
 	align = gtk_alignment_new(EMPTYVIEW_XALIGN, EMPTYVIEW_YALIGN, EMPTYVIEW_XSPACE, EMPTYVIEW_YSPACE);
 	label = gtk_label_new (_("mcen_ia_nomessages"));
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_helper_set_logical_font (label, "LargeSystemFont");
+#endif
 	gtk_misc_set_alignment (GTK_MISC (label), 0.5, 0.5);
 	gtk_widget_show (label);
 	gtk_widget_show (align);
@@ -668,6 +685,9 @@ create_empty_view (ModestWindow *self)
 	gtk_container_add (GTK_CONTAINER (align), label);
 	gtk_box_pack_end (GTK_BOX (vbox), align, TRUE, TRUE, 0);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GdkPixbuf *new_message_pixbuf;
+	GtkWidget *button = NULL;
 	button = hildon_button_new (MODEST_EDITABLE_SIZE, 
 				    HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
@@ -678,12 +698,15 @@ create_empty_view (ModestWindow *self)
 	g_object_unref (new_message_pixbuf);
 	gtk_widget_show_all (button);
 	gtk_box_pack_start (GTK_BOX (vbox), button, FALSE, FALSE, 0);
+#endif
 
 	gtk_widget_show (vbox);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	g_signal_connect (button,
 			  "clicked",
 			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
+#endif
 
 	viewport = gtk_viewport_new ((GtkAdjustment *) gtk_adjustment_new (0, 0, 0, 0, 0, 0), 
 				     (GtkAdjustment *) gtk_adjustment_new (0, 0, 0, 0, 0, 0));
@@ -710,13 +733,10 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 {
 	ModestHeaderWindow *self = NULL;	
 	ModestHeaderWindowPrivate *priv = NULL;
-	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	ModestAccountMgr *mgr;
 	ModestAccountSettings *settings = NULL;
 	ModestServerAccountSettings *store_settings = NULL;
-	GtkWidget *action_area_box;
-	GdkPixbuf *new_message_pixbuf;
 	GtkWidget *alignment;
 	gchar *account_display_name = NULL;
 	
@@ -726,8 +746,8 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	priv->contents_view = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (alignment),
-				   HILDON_MARGIN_HALF, 0,
-				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
+				   MODEST_MARGIN_HALF, 0,
+				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 
 	/* We need to do this here to properly listen for mail
 	   operations because create_header_view launches a mail
@@ -749,6 +769,10 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	g_object_ref_sink (priv->header_view);
 	g_object_ref_sink (priv->empty_view);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GdkPixbuf *new_message_pixbuf;
+	GtkWidget *action_area_box;
+
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 
@@ -763,6 +787,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->header_view), TRUE);
+#endif
 	
 	setup_menu (self);
 
@@ -780,11 +805,15 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 
 	update_view (self, NULL);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonProgram *app;
+
 	/* Get device name */
 	modest_maemo_utils_get_device_name ();
-
 	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
+#endif
+
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
@@ -800,6 +829,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	 */
 
 	/* setup edit modes */
+#ifdef MODEST_TOOLKIT_HILDON2
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_DELETE,
 						  _("mcen_ti_edit_delete"), _HL("wdgt_bd_delete"),
 						  GTK_TREE_VIEW (priv->header_view),
@@ -810,6 +840,7 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));
+#endif
 
 
 	modest_window_set_active_account (MODEST_WINDOW (self), account_name);
@@ -877,6 +908,7 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
+#ifdef MODEST_TOOLKIT_HILDON2
 	modest_window_add_to_menu (MODEST_WINDOW (self),
 				   dngettext(GETTEXT_PACKAGE,
 					     "mcen_me_move_message",
@@ -888,6 +920,7 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_delete_messages"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (set_delete_edit_mode),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
+#endif
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_folder_details"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_details),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_details));
@@ -1095,6 +1128,7 @@ on_updating_msg_list (ModestHeaderView *header_view,
 	}
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 set_delete_edit_mode (GtkButton *button,
 		      ModestHeaderWindow *self)
@@ -1108,6 +1142,7 @@ set_moveto_edit_mode (GtkButton *button,
 {
 	modest_hildon2_window_set_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_MOVE);
 }
+#endif
 
 static gboolean 
 on_expose_event(GtkTreeView *header_view,
@@ -1136,7 +1171,7 @@ on_map_event(GtkWidget *widget,
 	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW (self), FALSE);
 
 	if (priv->progress_hint) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+		modest_window_show_progress (MODEST_WINDOW (self), TRUE);
 	}
 	return FALSE;
 }
@@ -1197,7 +1232,7 @@ update_progress_hint (ModestHeaderWindow *self)
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
+		modest_window_show_progress (MODEST_WINDOW (self), priv->progress_hint?1:0);
 	}
 }
 
@@ -1291,7 +1326,7 @@ on_queue_changed (ModestMailOperationQueue *queue,
 }
 
 static void
-modest_header_window_pack_toolbar (ModestHildon2Window *self,
+modest_header_window_pack_toolbar (ModestWindow *self,
 				   GtkPackType pack_type,
 				   GtkWidget *toolbar)
 {
@@ -1307,6 +1342,7 @@ modest_header_window_pack_toolbar (ModestHildon2Window *self,
 	}
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void 
 edit_mode_changed (ModestHeaderWindow *header_window,
 		   gint edit_mode_id,
@@ -1348,6 +1384,7 @@ edit_mode_changed (ModestHeaderWindow *header_window,
 						 filter);
 	}
 }
+#endif
 
 #ifdef MODEST_TOOLKIT_HILDON2
 static void

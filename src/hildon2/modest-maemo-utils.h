@@ -105,8 +105,6 @@ void modest_maemo_utils_set_osso_context (osso_context_t *osso_context);
  */
 GtkWidget *modest_maemo_utils_get_manager_menubar_as_menu (GtkUIManager *manager, const gchar *item_name);
 
-gboolean   modest_maemo_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs);
-
 #ifdef MODEST_PLATFORM_MAEMO
 /**
  * modest_maemo_utils_in_usb_mode:

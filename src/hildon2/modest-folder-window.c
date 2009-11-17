@@ -80,7 +80,7 @@ static void set_moveto_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
 static void set_rename_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
-static void modest_folder_window_pack_toolbar (ModestHildon2Window *self,
+static void modest_folder_window_pack_toolbar (ModestWindow *self,
 					       GtkPackType pack_type,
 					       GtkWidget *toolbar);
 static void edit_mode_changed (ModestFolderWindow *folder_window,
@@ -163,7 +163,6 @@ modest_folder_window_class_init (ModestFolderWindowClass *klass)
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
-	ModestHildon2WindowClass *modest_hildon2_window_class = (ModestHildon2WindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->finalize = modest_folder_window_finalize;
@@ -172,7 +171,7 @@ modest_folder_window_class_init (ModestFolderWindowClass *klass)
 	g_type_class_add_private (gobject_class, sizeof(ModestFolderWindowPrivate));
 	
 	modest_window_class->disconnect_signals_func = modest_folder_window_disconnect_signals;
-	modest_hildon2_window_class->pack_toolbar_func = modest_folder_window_pack_toolbar;
+	modest_window_class->pack_toolbar_func = modest_folder_window_pack_toolbar;
 }
 
 static void
@@ -631,7 +630,7 @@ set_rename_edit_mode (GtkButton *button,
 }
 
 static void
-modest_folder_window_pack_toolbar (ModestHildon2Window *self,
+modest_folder_window_pack_toolbar (ModestWindow *self,
 				   GtkPackType pack_type,
 				   GtkWidget *toolbar)
 {

@@ -409,7 +409,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_messages"), count_s);
 #else
-	gchar *tmp = g_strconcat (_("mcen_fi_folder_properties_messages"), ":", NULL);
+	tmp = g_strconcat (_("mcen_fi_folder_properties_messages"), ":", NULL);
 	modest_details_dialog_add_data (self, tmp, count_s);
 	g_free (tmp);
 #endif
@@ -417,7 +417,7 @@ modest_details_dialog_set_folder_default (ModestDetailsDialog *self,
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_details_dialog_add_data (self, _("mcen_fi_folder_properties_size"), size_s);
 #else
-	gchar *tmp = g_strconcat (_("mcen_fi_folder_properties_size"), ":", NULL);
+	tmp = g_strconcat (_("mcen_fi_folder_properties_size"), ":", NULL);
 	modest_details_dialog_add_data (self, tmp, size_s);
 	g_free (tmp);
 #endif

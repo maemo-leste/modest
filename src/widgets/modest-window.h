@@ -122,7 +122,10 @@ struct _ModestWindowClass {
 	void (*add_item_to_menu_func) (ModestWindow *self,
 				       GtkWidget *widget,
 				       ModestDimmingCallback dimming_callback);
+	void (*pack_toolbar_func) (ModestWindow *self, GtkPackType pack_type, GtkWidget *toolbar);
+	void (*edit_mode_changed) (ModestWindow *self, gint edit_mode, gboolean enabled);
 };
+
 
 /**
  * modest_window_get_type:
@@ -370,6 +373,19 @@ void
 modest_window_add_item_to_menu (ModestWindow *self,
 				GtkWidget *item,
 				ModestDimmingCallback dimming_callback);
+
+/**
+ * modest_window_pack_toolbar:
+ * @self: a #ModestWindow
+ * @pack_type: a #GtkPackType
+ * @toolbar: a toolbar widget
+ *
+ * packs a toolbar (widget @toolbar) in @self with @pack_type
+ */
+void modest_window_pack_toolbar (ModestWindow *self,
+				 GtkPackType pack_type,
+				 GtkWidget *toolbar);
+
 
 G_END_DECLS
 

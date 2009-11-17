@@ -34,6 +34,7 @@
 #include <modest-runtime.h>
 
 #include <modest-defs.h>
+#include <modest-text-utils.h>
 #include "modest-toolkit-utils.h"
 #include "modest-ui-constants.h"
 #ifdef MODEST_TOOLKIT_HILDON2
@@ -328,3 +329,108 @@ modest_toolkit_utils_create_group_box (const gchar *label_text, GtkWidget *conte
 
 	return box;
 }
+
+static gboolean match_all (TnyList *list, GObject *item, gpointer match_data)
+{
+	return TRUE;
+}
+
+gboolean
+modest_toolkit_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs)
+{
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkTreeModel *model;
+	TnyIterator *iterator;
+	GtkWidget *selector;
+	GtkCellRenderer *renderer;
+	GtkWidget *dialog;
+	gint response;
+	gboolean result = TRUE;
+	gint attachments_added = 0;
+
+	model = GTK_TREE_MODEL (gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_OBJECT));
+	for (iterator = tny_list_create_iterator (att_list);
+	     !tny_iterator_is_done (iterator);
+	     tny_iterator_next (iterator)) {
+		GtkTreeIter iter;
+		TnyMimePart *part;
+		gchar *filename = NULL;
+
+		part = (TnyMimePart *) tny_iterator_get_current (iterator);
+
+		/* Ignore purged attachments and messages if ignore is
+		   set to TRUE */
+		if (!(tny_mime_part_is_purged (part) ||
+		      (TNY_IS_MSG (part) && !include_msgs))) {
+
+			if (TNY_IS_MSG (part)) {
+				TnyHeader *header = tny_msg_get_header (TNY_MSG (part));
+				filename = tny_header_dup_subject (header);
+				g_object_unref (header);
+			} else {
+				filename = g_strdup (tny_mime_part_get_filename (part));
+			}
+			if ((filename == NULL) || (filename[0] == '\0')) {
+				g_free (filename);
+				filename = g_strdup (_("mail_va_no_subject"));
+			}
+			gtk_list_store_append (GTK_LIST_STORE (model), &iter);
+			gtk_list_store_set (GTK_LIST_STORE (model), &iter, 0, filename, 1, part, -1);
+			attachments_added ++;
+			g_free (filename);
+		}
+		g_object_unref (part);
+	}
+	g_object_unref (iterator);
+
+	selector = GTK_WIDGET (hildon_touch_selector_new ());
+	renderer = gtk_cell_renderer_text_new ();
+	g_object_set((GObject *) renderer, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
+	hildon_touch_selector_append_column ((HildonTouchSelector *) selector, model, renderer,
+					     "text", 0, NULL);
+	hildon_touch_selector_set_column_selection_mode ((HildonTouchSelector *) selector, 
+							 HILDON_TOUCH_SELECTOR_SELECTION_MODE_MULTIPLE);
+
+	dialog = hildon_picker_dialog_new (window);
+	gtk_window_set_title (GTK_WINDOW (dialog), (attachments_added > 1)?
+			      _("mcen_ti_select_attachments_title"):_("mcen_ti_select_attachment_title"));
+	hildon_picker_dialog_set_selector (HILDON_PICKER_DIALOG (dialog), (HildonTouchSelector *) selector);
+	hildon_touch_selector_unselect_all ((HildonTouchSelector *) selector, 0);
+	hildon_picker_dialog_set_done_label (HILDON_PICKER_DIALOG (dialog), _HL("wdgt_bd_done"));
+
+	response = gtk_dialog_run (GTK_DIALOG (dialog));
+
+	if (response == GTK_RESPONSE_OK) {
+		GList *selected_rows, *node;
+
+		tny_list_remove_matches (att_list, match_all, NULL);
+		selected_rows = hildon_touch_selector_get_selected_rows ((HildonTouchSelector *) selector, 0);
+		for (node = selected_rows; node != NULL; node = g_list_next (node)) {
+			GtkTreePath *path;
+			GObject *selected;
+			GtkTreeIter iter;
+
+			path = (GtkTreePath *) node->data;
+			gtk_tree_model_get_iter (model, &iter, path);
+			gtk_tree_model_get (model, &iter, 1, &selected, -1);
+			tny_list_append (att_list, selected);
+		}
+		if (tny_list_get_length (att_list) == 0)
+			result = FALSE;
+
+		g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
+		g_list_free (selected_rows);
+	} else {
+		result = FALSE;
+	}
+
+	gtk_widget_destroy (dialog);
+
+	g_object_unref (model);
+
+	return result;
+#else
+	return FALSE;
+#endif
+}
+

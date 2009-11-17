@@ -76,6 +76,7 @@ static GList *modest_window_mgr_get_window_list_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_show_initial_window_default (ModestWindowMgr *self);
 static ModestWindow *modest_window_mgr_get_current_top_default (ModestWindowMgr *self);
 static gboolean modest_window_mgr_screen_is_on_default (ModestWindowMgr *self);
+static ModestWindow *modest_window_mgr_get_folder_window_default (ModestWindowMgr *self);
 static void modest_window_mgr_create_caches_default (ModestWindowMgr *self);
 static void modest_window_mgr_on_queue_changed (ModestMailOperationQueue *queue,
 						ModestMailOperation *mail_op,
@@ -179,6 +180,7 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->screen_is_on = modest_window_mgr_screen_is_on_default;
 	mgr_class->create_caches = modest_window_mgr_create_caches_default;
 	mgr_class->close_all_but_initial = modest_window_mgr_close_all_but_initial_default;
+	mgr_class->get_folder_window = modest_window_mgr_get_folder_window_default;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowMgrPrivate));
 
@@ -1230,3 +1232,18 @@ modest_window_mgr_close_all_but_initial_default (ModestWindowMgr *self)
 	/* Empty default implementation */
 	return FALSE;
 }
+
+ModestWindow *
+modest_window_mgr_get_folder_window (ModestWindowMgr *self)
+{
+	return MODEST_WINDOW_MGR_GET_CLASS (self)->get_folder_window (self);
+}
+
+static ModestWindow *
+modest_window_mgr_get_folder_window_default (ModestWindowMgr *self)
+{
+	/* Default implementation returns NULL always */
+
+	return NULL;
+}
+

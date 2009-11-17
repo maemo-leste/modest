@@ -1001,12 +1001,12 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	GtkSizeGroup *sizegroup;
 	ModestFolderView *folder_view;
 	ModestWindow *folder_window;
-	ModestHildon2WindowMgr *window_mgr;
+	ModestWindowMgr *window_mgr;
 	FolderPickerHelper *helper = NULL;
 	GtkWidget *top_vbox, *top_align;
 
-	window_mgr = (ModestHildon2WindowMgr *) modest_runtime_get_window_mgr ();
-	folder_window = modest_hildon2_window_mgr_get_folder_window (window_mgr);
+	window_mgr = modest_runtime_get_window_mgr ();
+	folder_window = modest_window_mgr_get_folder_window (window_mgr);
 	g_return_val_if_fail (MODEST_IS_FOLDER_WINDOW (folder_window), GTK_RESPONSE_NONE);
 	
 	folder_view = modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (folder_window));

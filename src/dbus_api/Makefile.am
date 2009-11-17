@@ -38,7 +38,6 @@ INCLUDES=\
 	-I ${top_srcdir}/src  \
 	-I ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR) \
 	-DPREFIX=\"@prefix@\" \
-	-DMAEMO_CHANGES \
 	-DPIXMAP_PREFIX=\"${datadir}/pixmaps/modest/\" \
 	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-DPROVIDER_DATA_DIR=\""${datadir}/modest/provider-data/"\" \

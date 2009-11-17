@@ -96,6 +96,7 @@ static void osso_display_event_cb (osso_display_state_t state,
 static void on_account_removed (TnyAccountStore *acc_store, 
 				TnyAccount *account,
 				gpointer user_data);
+static ModestWindow *modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self);
 
 typedef struct _ModestHildon2WindowMgrPrivate ModestHildon2WindowMgrPrivate;
 struct _ModestHildon2WindowMgrPrivate {
@@ -176,6 +177,7 @@ modest_hildon2_window_mgr_class_init (ModestHildon2WindowMgrClass *klass)
 	mgr_class->get_current_top = modest_hildon2_window_mgr_get_current_top;
 	mgr_class->screen_is_on = modest_hildon2_window_mgr_screen_is_on;
 	mgr_class->create_caches = modest_hildon2_window_mgr_create_caches;
+	mgr_class->get_folder_window = modest_hildon2_window_mgr_get_folder_window;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestHildon2WindowMgrPrivate));
 
@@ -967,7 +969,7 @@ find_folder_window (gconstpointer a,
 	return (MODEST_IS_FOLDER_WINDOW (a)) ? 0 : 1;
 }
 
-ModestWindow *
+static ModestWindow *
 modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self)
 {
 	ModestHildon2WindowMgrPrivate *priv;

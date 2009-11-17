@@ -84,6 +84,8 @@ void       modest_toolkit_utils_set_vbutton_layout (GtkSizeGroup *sizegroup,
 
 GtkWidget *modest_toolkit_utils_create_group_box (const gchar *label, GtkWidget *contents);
 
+gboolean   modest_toolkit_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs);
+
 
 
 #endif /*__MODEST_TOOLKIT_UTILS_H__*/

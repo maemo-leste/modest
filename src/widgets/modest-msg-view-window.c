@@ -67,8 +67,9 @@
 #include <modest-account-protocol.h>
 #include <modest-icon-names.h>
 #include <modest-ui-actions.h>
-#include <modest-hildon2-window-mgr.h>
+#include <modest-window-mgr.h>
 #include <tny-camel-msg.h>
+#include <modest-icon-names.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -2183,7 +2184,7 @@ view_msg_cb (ModestMailOperation *mail_op,
 		if (self) {
 			priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
 			/* First we check if the parent is a folder window */
-			if (priv->msg_uid && !modest_hildon2_window_mgr_get_folder_window (MODEST_HILDON2_WINDOW_MGR (modest_runtime_get_window_mgr ()))) {
+			if (priv->msg_uid && !modest_window_mgr_get_folder_window (MODEST_WINDOW_MGR (modest_runtime_get_window_mgr ()))) {
 				gboolean is_merge;
 				TnyAccount *account = NULL;
 				GtkWidget *header_window = NULL;
@@ -3217,7 +3218,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (mime_parts && !modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, FALSE)) {
+		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (window), mime_parts, FALSE)) {
 			g_object_unref (mime_parts);
 			return;
 		}
@@ -3372,7 +3373,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	g_object_unref (tmp);
 	g_object_unref (iter);
 
-	if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), mime_parts, TRUE) ||
+	if (!modest_toolkit_utils_select_attachments (GTK_WINDOW (window), mime_parts, TRUE) ||
 	    tny_list_get_length (mime_parts) == 0) {
 		g_object_unref (mime_parts);
 		return;

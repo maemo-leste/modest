@@ -57,7 +57,7 @@
 #include <modest-hildon-pannable-area-scrollable.h>
 #endif
 
-#ifdef USE_GTK_TOOLBAR
+#ifdef USE_GTK_FIND_TOOLBAR
 #include <modest-find-toolbar.h>
 #else
 #include <modest-hildon-find-toolbar.h>

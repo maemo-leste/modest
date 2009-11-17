@@ -2654,7 +2654,7 @@ modest_msg_edit_window_remove_attachments (ModestMsgEditWindow *window,
 
 	if (att_list == NULL) {
 		att_list = modest_attachments_view_get_attachments (MODEST_ATTACHMENTS_VIEW (priv->attachments_view));
-		if (!modest_maemo_utils_select_attachments (GTK_WINDOW (window), att_list, TRUE)) {
+		if (!modest_toolkit_utils_select_attachments (GTK_WINDOW (window), att_list, TRUE)) {
 			g_object_unref (att_list);
 			return;
 		}

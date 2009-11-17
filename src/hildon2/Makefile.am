@@ -43,7 +43,6 @@ INCLUDES=\
 	-I ${top_srcdir}/src/widgets        \
 	-I ${top_srcdir}/src                \
 	-DPREFIX=\"@prefix@\" 	            \
-	-DMAEMO_CHANGES                     \
 	-DMODEST_UIDIR=\""$(datadir)/modest/ui/"\" \
 	-Wall
 

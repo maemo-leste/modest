@@ -344,6 +344,10 @@ else
 fi
 fi
 
+if test "x$with_toolkit" != "xgtk"; then
+MODEST_TOOLKIT_CFLAGS="$MODEST_TOOLKIT_CFLAGS -DMAEMO_CHANGES"
+fi
+
 dnl --------------- NOTIFICATION STUFF -----------
 if test "x$with_toolkit" != "xgtk"; then
    PKG_CHECK_MODULES(MODEST_HILDON_NOTIFY,hildon-notify libnotify,have_hildon_notify=true,have_hildon_notify=false)

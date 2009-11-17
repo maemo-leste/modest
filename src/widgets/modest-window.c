@@ -89,6 +89,10 @@ static void _make_zoom_buttons_grabeable (GtkWidget* widget);
 static gboolean _modest_window_map_event (GtkWidget *widget,
 					  GdkEvent *event,
 					  gpointer userdata);
+static void modest_window_pack_toolbar_not_implemented (ModestWindow *self,
+							GtkPackType pack_type,
+							GtkWidget *toolbar);
+
 
 /* list my signals  */
 enum {
@@ -157,6 +161,7 @@ modest_window_class_init (ModestWindowClass *klass)
 	klass->set_title_func = modest_window_set_title_default;
 	klass->disconnect_signals_func = modest_window_disconnect_signals_default;
 	klass->show_progress_func = modest_window_show_progress_default;
+	klass->pack_toolbar_func = modest_window_pack_toolbar_not_implemented;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestWindowPrivate));
 }
@@ -638,3 +643,24 @@ _make_zoom_buttons_grabeable (GtkWidget* widget)
                      XA_INTEGER, 32, PropModeReplace,
                      (unsigned char *) &val, 1);
 }
+
+static void 
+modest_window_pack_toolbar_not_implemented (ModestWindow *self,
+					    GtkPackType pack_type,
+					    GtkWidget *toolbar)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (self));
+
+	g_debug ("%s not implemented", __FUNCTION__);
+}
+
+void
+modest_window_pack_toolbar (ModestWindow *self,
+			    GtkPackType pack_type,
+			    GtkWidget *toolbar)
+{
+	g_return_if_fail (MODEST_IS_WINDOW (self));
+
+	MODEST_WINDOW_GET_CLASS (self)->pack_toolbar_func (self, pack_type, toolbar);
+}
+

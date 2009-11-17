@@ -225,6 +225,7 @@ gint       modest_selector_get_value_max_chars (GtkWidget *self);
 #ifndef MODEST_TOOLKIT_HILDON2
 #define USE_PROVIDER_COMBOBOX
 #define USE_SERVERTYPE_COMBOBOX
+#define USE_GTK_SPIN_BUTTON
 #endif
 
 #ifndef USE_GTK_SPIN_BUTTON

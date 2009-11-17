@@ -76,6 +76,7 @@
 #include <tny-msg-view.h>
 #include <tny-device.h>
 #include <tny-merge-folder.h>
+#include <widgets/modest-toolkit-utils.h>
 
 #include <gtkhtml/gtkhtml.h>
 
@@ -447,55 +448,12 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Check first if the header view has the focus */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *header_view = NULL;
-
-		header_view =
-			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		if (!gtk_widget_is_focus (header_view))
-			return FALSE;
-	}
-#endif
 	/* Get the headers, either from the header view (if win is the main window),
 	 * or from the message view window: */
 	header_list = get_selected_headers (win);
 	if (!header_list) return FALSE;
 
 	/* Check if any of the headers are already opened, or in the process of being opened */
-#ifndef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		gint opened_headers = 0;
-
-		iter = tny_list_create_iterator (header_list);
-		mgr = modest_runtime_get_window_mgr ();
-		while (!tny_iterator_is_done (iter)) {
-			header = TNY_HEADER (tny_iterator_get_current (iter));
-			if (header) {
-				if (modest_window_mgr_find_registered_header (mgr, header, NULL))
-					opened_headers++;
-				g_object_unref (header);
-			}
-			tny_iterator_next (iter);
-		}
-		g_object_unref (iter);
-
-		if (opened_headers > 0) {
-			gchar *msg;
-
-			msg = g_strdup_printf (_("mcen_nc_unable_to_delete_n_messages"),
-					       opened_headers);
-
-			modest_platform_run_information_dialog (GTK_WINDOW (win), (const gchar *) msg, FALSE);
-
-			g_free (msg);
-			g_object_unref (header_list);
-			return FALSE;
-		}
-	}
-#endif
 
 	/* Select message */
 	if (tny_list_get_length(header_list) == 1) {
@@ -526,31 +484,6 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 		ModestMailOperation *mail_op = NULL;
 
 		/* Find last selected row */
-#ifndef MODEST_TOOLKIT_HILDON2
-		if (MODEST_IS_MAIN_WINDOW (win)) {
-			GList *tmp = NULL;
-			ModestWindowMgr *mgr = NULL;
-			GtkTreeModel *model = NULL;
-			GtkTreeRowReference *next_row_reference = NULL, *prev_row_reference = NULL;
-			GtkTreePath *next_path = NULL, *prev_path = NULL;
-
-			model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-			sel_list = gtk_tree_selection_get_selected_rows (sel, &model);
-			for (tmp=sel_list; tmp; tmp=tmp->next) {
-				if (tmp->next == NULL) {
-					prev_path = gtk_tree_path_copy((GtkTreePath *) tmp->data);
-					next_path = gtk_tree_path_copy((GtkTreePath *) tmp->data);
-
-					gtk_tree_path_prev (prev_path);
-					gtk_tree_path_next (next_path);
-
-					prev_row_reference = gtk_tree_row_reference_new (model, prev_path);
-					next_row_reference = gtk_tree_row_reference_new (model, next_path);
-				}
-			}
-		}
-#endif
 
 		/* Disable window dimming management */
 		modest_window_disable_dimming (win);
@@ -573,26 +506,6 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 
 			/* Get main window */
 			mgr = modest_runtime_get_window_mgr ();
-#ifndef MODEST_TOOLKIT_HILDON2
-		} else if (MODEST_IS_MAIN_WINDOW (win)) {
-			/* Select next or previous row */
-			if (gtk_tree_row_reference_valid (next_row_reference)) {
-				gtk_tree_selection_select_path (sel, next_path);
-			}
-			else if (gtk_tree_row_reference_valid (prev_row_reference)) {
-				gtk_tree_selection_select_path (sel, prev_path);
-			}
-
-			/* Free */
-			if (gtk_tree_row_reference_valid (next_row_reference))
-				gtk_tree_row_reference_free (next_row_reference);
-			if (next_path != NULL)
-				gtk_tree_path_free (next_path);
-			if (gtk_tree_row_reference_valid (prev_row_reference))
-				gtk_tree_row_reference_free (prev_row_reference);
-			if (prev_path != NULL)
-				gtk_tree_path_free (prev_path);
-#endif
 		}
 
 		/* Update toolbar dimming state */
@@ -4143,7 +4056,9 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 	gtk_widget_set_sensitive (entry_username, FALSE);
 
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (entry_username), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 
 	/* Create a size group to be used by all captions.
 	 * Note that HildonCaption does not create a default size group if we do not specify one.

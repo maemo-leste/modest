@@ -76,9 +76,6 @@ static void modest_hildon2_window_set_title (ModestWindow *self,
 static gboolean modest_hildon2_window_toggle_menu (HildonWindow *window,
 						    guint button,
 						    guint32 time);
-static void modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
-								GtkPackType pack_type,
-								GtkWidget *toolbar);
 static EditModeRegister *edit_mode_register_new (const gchar *description,
 						 const gchar *button_label,
 						 GtkTreeView *tree_view,
@@ -180,7 +177,6 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	modest_window_class->set_title_func = modest_hildon2_window_set_title;
 	modest_window_class->show_progress_func = modest_hildon2_window_show_progress;
 
-	modest_hildon2_window_class->pack_toolbar_func = modest_hildon2_window_pack_toolbar_not_implemented;
 }
 
 static void
@@ -247,27 +243,6 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 	hildon_banner_show_information (NULL, NULL, _CS("ckct_ib_cannot_zoom_here"));
 	return FALSE;
 }
-
-static void 
-modest_hildon2_window_pack_toolbar_not_implemented (ModestHildon2Window *self,
-						    GtkPackType pack_type,
-						    GtkWidget *toolbar)
-{
-	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
-
-	g_debug ("%s not implemented", __FUNCTION__);
-}
-
-void
-modest_hildon2_window_pack_toolbar (ModestHildon2Window *self,
-				    GtkPackType pack_type,
-				    GtkWidget *toolbar)
-{
-	g_return_if_fail (MODEST_IS_HILDON2_WINDOW (self));
-
-	MODEST_HILDON2_WINDOW_GET_CLASS (self)->pack_toolbar_func (self, pack_type, toolbar);
-}
-
 void 
 modest_hildon2_window_add_item_to_menu (ModestWindow *self,
 					GtkWidget *button,
@@ -462,8 +437,8 @@ modest_hildon2_window_set_edit_mode (ModestHildon2Window *self,
 				       reg->description);
 	hildon_edit_toolbar_set_button_label (HILDON_EDIT_TOOLBAR (priv->edit_toolbar),
 					      reg->button_label);
-	modest_hildon2_window_pack_toolbar (self, GTK_PACK_START,
-					    priv->edit_toolbar);
+	modest_window_pack_toolbar (MODEST_WINDOW (self), GTK_PACK_START,
+				    priv->edit_toolbar);
 
 	g_signal_connect (G_OBJECT (priv->edit_toolbar), "button-clicked",
 			  G_CALLBACK (edit_toolbar_button_clicked), (gpointer) self);
