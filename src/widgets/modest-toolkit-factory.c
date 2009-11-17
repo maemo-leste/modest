@@ -106,7 +106,7 @@ static GtkWidget * modest_toolkit_factory_create_country_selector_default     (M
 static GtkWidget * modest_toolkit_factory_create_provider_selector_default    (ModestToolkitFactory *self);
 static GtkWidget * modest_toolkit_factory_create_servertype_selector_default  (ModestToolkitFactory *self,
 									       gboolean filter_providers);
-static GtkWidget * modest_toolkit_factory_create_security_selector_default    (ModestToolkitFactory *self);
+static GtkWidget * modest_toolkit_factory_create_serversecurity_selector_default (ModestToolkitFactory *self);
 /* globals */
 static GObjectClass *parent_class = NULL;
 
@@ -609,7 +609,7 @@ modest_servertype_selector_set_active_servertype (GtkWidget *self,
 GtkWidget *
 modest_toolkit_factory_create_serversecurity_selector (ModestToolkitFactory *self)
 {
-	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_servertype_selector (self);
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_serversecurity_selector (self);
 }
 
 static GtkWidget *

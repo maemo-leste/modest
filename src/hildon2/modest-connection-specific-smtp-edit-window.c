@@ -32,7 +32,6 @@
 #include "modest-hildon-includes.h"
 #include "modest-runtime.h"
 
-#include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
 #include "widgets/modest-validating-entry.h"
 #include <modest-scrollable.h>
@@ -44,6 +43,7 @@
 #include <gtk/gtkstock.h>
 #include "modest-text-utils.h"
 #include "modest-maemo-utils.h"
+#include <modest-toolkit-factory.h>
 
 #include <glib/gi18n.h>
 
@@ -67,7 +67,7 @@ struct _ModestConnectionSpecificSmtpEditWindowPrivate
 	GtkWidget *outgoing_auth_picker;
 	GtkWidget *entry_user_username;
 	GtkWidget *entry_user_password;
-	GtkWidget *outgoing_security_picker;
+	GtkWidget *outgoing_security_selector;
 	GtkWidget *entry_port;
 	
 	GtkWidget *button_ok;
@@ -286,11 +286,10 @@ on_set_focus_child (GtkContainer *container, GtkWidget *widget, gpointer user_da
 }
 
 static void
-security_picker_set_port (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
+security_selector_set_port (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
 {
 	const gint port_number = 
-		modest_serversecurity_picker_get_active_serversecurity_port (
-			MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker));
+		modest_serversecurity_selector_get_active_serversecurity_port (priv->outgoing_security_selector);
 
 	if(port_number != 0) {
 		modest_number_entry_set_value (
@@ -299,7 +298,7 @@ security_picker_set_port (ModestConnectionSpecificSmtpEditWindowPrivate *priv)
 }
 
 static void
-on_security_picker_changed (HildonPickerButton *widget, gpointer user_data)
+on_security_selector_changed (GtkWidget *widget, gpointer user_data)
 {
 	ModestConnectionSpecificSmtpEditWindow *self = 
 		MODEST_CONNECTION_SPECIFIC_SMTP_EDIT_WINDOW (user_data);
@@ -309,7 +308,7 @@ on_security_picker_changed (HildonPickerButton *widget, gpointer user_data)
 	on_change(GTK_WIDGET(widget), self);
 
 	/* Enable/disable username and password fields */
-	security_picker_set_port (priv);
+	security_selector_set_port (priv);
 }
 
 static void
@@ -439,19 +438,26 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_widget_show (captioned);
 	
 	/* The secure connection widgets: */	
-	if (!priv->outgoing_security_picker)
-		priv->outgoing_security_picker = 
-			GTK_WIDGET (modest_serversecurity_picker_new (MODEST_EDITABLE_SIZE,
-								      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL));
-	modest_serversecurity_picker_fill (
-		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_TRANSPORT_SMTP);
-	modest_serversecurity_picker_set_active_serversecurity (
-		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), MODEST_PROTOCOLS_CONNECTION_NONE);
-	modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
-					       _("mcen_li_emailsetup_secure_connection"), 
-					       priv->outgoing_security_picker);
-	gtk_widget_show (priv->outgoing_security_picker);
-	gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_security_picker, FALSE, FALSE, 0);
+	if (!priv->outgoing_security_selector)
+		priv->outgoing_security_selector = 
+			modest_toolkit_factory_create_serversecurity_selector (modest_runtime_get_toolkit_factory ());
+	modest_serversecurity_selector_fill (priv->outgoing_security_selector, MODEST_PROTOCOLS_TRANSPORT_SMTP);
+	modest_serversecurity_selector_set_active_serversecurity (priv->outgoing_security_selector, MODEST_PROTOCOLS_CONNECTION_NONE);
+	if (GTK_IS_COMBO_BOX (priv->outgoing_security_selector)) {
+		GtkWidget *captioned;
+
+		captioned = modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
+								 _("mcen_li_emailsetup_secure_connection"), FALSE,
+								 priv->outgoing_security_selector);
+		gtk_box_pack_start (GTK_BOX (vbox), captioned, FALSE, FALSE, MODEST_MARGIN_HALF);
+		gtk_widget_show (captioned);
+	} else {
+		modest_maemo_utils_set_hbutton_layout (title_sizegroup, value_sizegroup,
+						       _("mcen_li_emailsetup_secure_connection"), 
+						       priv->outgoing_security_selector);
+		gtk_box_pack_start (GTK_BOX (vbox), priv->outgoing_security_selector, FALSE, FALSE, 0);
+	}
+	gtk_widget_show (priv->outgoing_security_selector);
 	
 	/* The port number widgets: */
 	if (!priv->entry_port)
@@ -494,13 +500,20 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 
 	/* Refresh view with current settings */
 	auth_picker_set_sensitive (priv);
-	security_picker_set_port (priv);
+	security_selector_set_port (priv);
 
 	/* Connect signals to track changes */
-	g_signal_connect (G_OBJECT (priv->outgoing_security_picker),
-			  "value-changed",
-			  (GCallback) on_security_picker_changed,
-			  self);
+	if (GTK_IS_COMBO_BOX (priv->outgoing_security_selector)) {
+		g_signal_connect (G_OBJECT (priv->outgoing_security_selector),
+				  "changed",
+				  (GCallback) on_security_selector_changed,
+				  self);
+	} else {
+		g_signal_connect (G_OBJECT (priv->outgoing_security_selector),
+				  "value-changed",
+				  (GCallback) on_security_selector_changed,
+				  self);
+	}
 	g_signal_connect (G_OBJECT (priv->outgoing_auth_picker),
 			  "value-changed",
 			  (GCallback) on_auth_picker_changed,
@@ -548,9 +561,9 @@ modest_connection_specific_smtp_edit_window_set_connection (
 		modest_entry_set_text (priv->entry_user_password,
 				       modest_server_account_settings_get_password (server_settings));
 	
-		modest_serversecurity_picker_set_active_serversecurity (
-		MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker), 
-		modest_server_account_settings_get_security_protocol (server_settings));
+		modest_serversecurity_selector_set_active_serversecurity 
+			(priv->outgoing_security_selector, 
+			 modest_server_account_settings_get_security_protocol (server_settings));
 	
 		modest_secureauth_picker_set_active_secureauth (
 		MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker), 
@@ -595,8 +608,8 @@ modest_connection_specific_smtp_edit_window_get_settings (ModestConnectionSpecif
 						     modest_entry_get_text (priv->entry_user_password));
 	
 	modest_server_account_settings_set_security_protocol (server_settings, 
-						     modest_serversecurity_picker_get_active_serversecurity (
-						     MODEST_SERVERSECURITY_PICKER (priv->outgoing_security_picker)));
+							      modest_serversecurity_selector_get_active_serversecurity (
+								      priv->outgoing_security_selector));
 	modest_server_account_settings_set_auth_protocol (server_settings,
 							  modest_secureauth_picker_get_active_secureauth (
 							  MODEST_SECUREAUTH_PICKER (priv->outgoing_auth_picker)));
