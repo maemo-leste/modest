@@ -655,9 +655,10 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self,
 
 	/* Incoming security widgets */
 	priv->incoming_security =
-		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
-							TRUE, security_title_sizegroup,
-							security_value_sizegroup);
+		modest_toolkit_factory_create_security_options_view (modest_runtime_get_toolkit_factory (),
+								     MODEST_SECURITY_OPTIONS_INCOMING,
+								     TRUE, security_title_sizegroup,
+								     security_value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security,
 			    FALSE, FALSE, 0);
 
@@ -747,9 +748,10 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 
 	/* Outgoing security widgets */
 	priv->outgoing_security = 
-		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
-							TRUE, security_title_sizegroup,
-							security_value_sizegroup);
+		modest_toolkit_factory_create_security_options_view (modest_runtime_get_toolkit_factory (),
+								     MODEST_SECURITY_OPTIONS_OUTGOING,
+								     TRUE, security_title_sizegroup,
+								     security_value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security, 
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->outgoing_security);

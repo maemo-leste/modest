@@ -35,13 +35,10 @@
 #include "modest-security-options-view.h"
 #include "modest-security-options-view-priv.h"
 #ifdef MODEST_TOOLKIT_HILDON2
-#include "modest-serversecurity-picker.h"
 #include "modest-secureauth-picker.h"
 #include <modest-hildon-includes.h>
-#else
-#include "widgets/modest-serversecurity-combo-box.h"
-#include "widgets/modest-secureauth-combo-box.h"
 #endif
+#include "widgets/modest-secureauth-combo-box.h"
 
 /* list my signals */
 enum {
@@ -77,11 +74,7 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 
 	/* Update UI */
 	modest_security_options_view_set_server_type (self, server_proto);
-#ifdef MODEST_TOOLKIT_HILDON2
-	modest_serversecurity_picker_set_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view), secure_protocol);
-#else
-	modest_serversecurity_combo_box_set_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view), secure_protocol);
-#endif
+	modest_serversecurity_selector_set_active_serversecurity (priv->security_view, secure_protocol);
 
 /* 		update_incoming_server_title (dialog, dialog->incoming_protocol); */
 
@@ -108,13 +101,15 @@ modest_security_options_view_load_settings (ModestSecurityOptionsView* self,
 			modest_togglable_set_active (priv->auth_view,
 						     TRUE);
 	} else {
+		if (MODEST_IS_SECUREAUTH_COMBO_BOX (priv->auth_view)) {
+			modest_secureauth_combo_box_set_active_secureauth (
+				MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view), secure_auth);
+		} else {
 #ifdef MODEST_TOOLKIT_HILDON2
-		modest_secureauth_picker_set_active_secureauth (
-		   MODEST_SECUREAUTH_PICKER (priv->auth_view), secure_auth);
-#else
-		modest_secureauth_combo_box_set_active_secureauth (
-		   MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view), secure_auth);
+			modest_secureauth_picker_set_active_secureauth (
+				MODEST_SECUREAUTH_PICKER (priv->auth_view), secure_auth);
 #endif
+		}
 	}
 
 	MODEST_SECURITY_OPTIONS_VIEW_GET_CLASS (self)->load_settings (self, settings);
@@ -145,11 +140,7 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 	auth_protocol = MODEST_PROTOCOLS_AUTH_NONE;
 
 	/* Get data */
-#ifdef MODEST_TOOLKIT_HILDON2
-	security_proto = modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
-#else
-	security_proto = modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
-#endif
+	security_proto = modest_serversecurity_selector_get_active_serversecurity (priv->security_view);
 
 	if (self->type == MODEST_SECURITY_OPTIONS_INCOMING) {
 		if (modest_togglable_get_active (priv->auth_view)) {
@@ -163,13 +154,15 @@ modest_security_options_view_save_settings (ModestSecurityOptionsView* self,
 			}
 		}
 	} else {
+		if  (MODEST_IS_SECUREAUTH_COMBO_BOX (priv->auth_view)) {
+			auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
+				MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+		} else {
 #ifdef MODEST_TOOLKIT_HILDON2
-		auth_protocol = modest_secureauth_picker_get_active_secureauth (
-			MODEST_SECUREAUTH_PICKER (priv->auth_view));
-#else
-		auth_protocol = modest_secureauth_combo_box_get_active_secureauth (
-			MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+			auth_protocol = modest_secureauth_picker_get_active_secureauth (
+				MODEST_SECUREAUTH_PICKER (priv->auth_view));
 #endif
+		}
 	}
 
 	/* Save settings */
@@ -202,15 +195,9 @@ modest_security_options_view_set_server_type (ModestSecurityOptionsView* self,
  	ModestSecurityOptionsViewPrivate *priv;
 	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
-#ifdef MODEST_TOOLKIT_HILDON2		
-	modest_serversecurity_picker_fill (MODEST_SERVERSECURITY_PICKER (priv->security_view), server_type);
-	modest_serversecurity_picker_set_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view),
-								MODEST_PROTOCOLS_CONNECTION_NONE);
-#else
-	modest_serversecurity_combo_box_fill (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view), server_type);
-	modest_serversecurity_combo_box_set_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view),
-								   MODEST_PROTOCOLS_CONNECTION_NONE);
-#endif
+	modest_serversecurity_selector_fill (priv->security_view, server_type);
+	modest_serversecurity_selector_set_active_serversecurity (priv->security_view,
+								  MODEST_PROTOCOLS_CONNECTION_NONE);
 }
 
 static void
@@ -224,25 +211,20 @@ get_current_state (ModestSecurityOptionsView* self,
 	proto_registry = modest_runtime_get_protocol_registry ();
 
 	/* Get security */
-#ifdef MODEST_TOOLKIT_HILDON2
 	state->security =
-		modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
+		modest_serversecurity_selector_get_active_serversecurity (priv->security_view);
 	state->port =
-		modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (priv->security_view));
-#else
-	state->security =
-		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
-	state->port =
-		modest_serversecurity_combo_box_get_active_serversecurity_port (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
-#endif
+		modest_serversecurity_selector_get_active_serversecurity_port (priv->security_view);
 
 	/* Get auth */
 	if (self->type == MODEST_SECURITY_OPTIONS_OUTGOING) {
+		if (MODEST_IS_SECUREAUTH_COMBO_BOX (priv->auth_view)) {
+			state->auth = modest_secureauth_combo_box_get_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+		} else {
 #ifdef MODEST_TOOLKIT_HILDON2
-		state->auth = modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->auth_view));
-#else
-		state->auth = modest_secureauth_combo_box_get_active_secureauth (MODEST_SECUREAUTH_COMBO_BOX (priv->auth_view));
+			state->auth = modest_secureauth_picker_get_active_secureauth (MODEST_SECUREAUTH_PICKER (priv->auth_view));
 #endif
+		}
 		if (priv->full) {
 		}
 	} else {
@@ -313,13 +295,8 @@ modest_security_options_view_auth_check (ModestSecurityOptionsView* self)
 	protocol_registry = modest_runtime_get_protocol_registry ();
 
 	/* Check if the server supports secure authentication */
-#ifdef MODEST_TOOLKIT_HILDON2
 	security_incoming_type = 
-		modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
-#else
-	security_incoming_type = 
-		modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
-#endif
+		modest_serversecurity_selector_get_active_serversecurity (priv->security_view);
 
 	auth_active = 
 		modest_togglable_get_active (priv->auth_view);
@@ -342,11 +319,7 @@ modest_security_options_view_get_connection_protocol (ModestSecurityOptionsView 
 	g_return_val_if_fail (MODEST_IS_SECURITY_OPTIONS_VIEW (self), MODEST_PROTOCOL_REGISTRY_TYPE_INVALID);
 	priv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 
-#ifdef MODEST_TOOLKIT_HILDON2
-	return modest_serversecurity_picker_get_active_serversecurity (MODEST_SERVERSECURITY_PICKER (priv->security_view));
-#else
-	return modest_serversecurity_combo_box_get_active_serversecurity (MODEST_SERVERSECURITY_COMBO_BOX (priv->security_view));
-#endif
+	return modest_serversecurity_selector_get_active_serversecurity (priv->security_view);
 }
 
 static void 

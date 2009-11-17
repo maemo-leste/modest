@@ -4,6 +4,7 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <modest-presets.h>
+#include <widgets/modest-security-options-view.h>
 
 G_BEGIN_DECLS
 
@@ -48,6 +49,8 @@ struct                                          _ModestToolkitFactoryClass
 	GtkWidget * (*create_provider_selector) (ModestToolkitFactory *self);
 	GtkWidget * (*create_servertype_selector) (ModestToolkitFactory *self, gboolean filter_providers);
 	GtkWidget * (*create_serversecurity_selector) (ModestToolkitFactory *self);
+	GtkWidget * (*create_security_options_view) (ModestToolkitFactory *self, ModestSecurityOptionsType type,
+						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
 };
 
 struct                                          _ModestToolkitFactory
@@ -95,6 +98,10 @@ modest_toolkit_factory_create_servertype_selector (ModestToolkitFactory *self, g
 
 GtkWidget *
 modest_toolkit_factory_create_serversecurity_selector (ModestToolkitFactory *self);
+
+GtkWidget *
+modest_toolkit_factory_create_security_options_view (ModestToolkitFactory *self, ModestSecurityOptionsType type,
+						     gboolean full, GtkSizeGroup *title_size_group, GtkSizeGroup *value_size_group);
 
 gboolean
 modest_togglable_get_active (GtkWidget *widget);

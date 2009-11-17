@@ -44,7 +44,8 @@
 #define USE_GTK_ENTRY
 #define USE_GTK_FILE_CHOOSER
 #define USE_COUNTRY_COMBOBOX
-#define USE_SERVERSECURITY_PICKER
+#define USE_SERVERSECURITY_COMBOBOX
+#define USE_GTK_SECURITY_OPTIONS_VIEW
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -81,6 +82,12 @@
 #include <modest-serversecurity-combo-box.h>
 #else
 #include <modest-serversecurity-picker.h>
+#endif
+
+#ifdef USE_GTK_SECURITY_OPTIONS_VIEW
+#include <modest-gtk-security-options-view.h>
+#else
+#include <modest-maemo-security-options-view.h>
 #endif
 
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
@@ -669,4 +676,20 @@ modest_serversecurity_selector_get_active_serversecurity_port (GtkWidget *combob
 #else
 	return modest_serversecurity_picker_get_active_serversecurity_port (MODEST_SERVERSECURITY_PICKER (combobox));
 #endif
+}
+
+GtkWidget *
+modest_toolkit_factory_create_security_options_view (ModestToolkitFactory *self, 
+						     ModestSecurityOptionsType type,
+						     gboolean full, 
+						     GtkSizeGroup *title_size_group, 
+						     GtkSizeGroup *value_size_group)
+{
+	GtkWidget *result;
+#ifdef USE_GTK_SECURITY_OPTIONS_VIEW
+	result = GTK_WIDGET (modest_gtk_security_options_view_new (type, full, title_size_group, value_size_group));
+#else
+	result = GTK_WIDGET (modest_maemo_security_options_view_new (type, full, title_size_group, value_size_group));
+#endif
+	return result;
 }

@@ -1038,9 +1038,9 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 
 	/* The secure connection widgets. These are only valid for
 	   protocols with security */
-	priv->incoming_security =
-		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_INCOMING,
-							FALSE, title_sizegroup, value_sizegroup);
+	priv->incoming_security = modest_toolkit_factory_create_security_options_view (modest_runtime_get_toolkit_factory (),
+										       MODEST_SECURITY_OPTIONS_INCOMING,
+										       FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->incoming_security,
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->incoming_security);
@@ -1171,8 +1171,9 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	/* The secure connection widgets. These are only valid for
 	   protocols with security */
 	priv->outgoing_security =
-		modest_maemo_security_options_view_new (MODEST_SECURITY_OPTIONS_OUTGOING,
-							FALSE, title_sizegroup, value_sizegroup);
+		modest_toolkit_factory_create_security_options_view (modest_runtime_get_toolkit_factory (),
+								     MODEST_SECURITY_OPTIONS_OUTGOING,
+								     FALSE, title_sizegroup, value_sizegroup);
 	gtk_box_pack_start (GTK_BOX (box), priv->outgoing_security,
 			    FALSE, FALSE, 0);
 	gtk_widget_show (priv->outgoing_security);
