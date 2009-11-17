@@ -39,10 +39,7 @@
 #include "modest-tny-msg.h"
 #include "modest-platform.h"
 #ifdef MODEST_TOOLKIT_HILDON2
-#include "hildon2/modest-selector-picker.h"
 #include "modest-hildon-includes.h"
-#else
-#include "widgets/modest-combo-box.h"
 #endif
 #ifndef MODEST_TOOLKIT_GTK
 #include <hildon/hildon-number-editor.h>
@@ -251,36 +248,16 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 
 	/* Get values from UI */
 	state->auto_update = modest_togglable_get_active (priv->auto_update);
-#ifdef MODEST_TOOLKIT_HILDON2
-	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->connect_via));
-	state->default_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->default_account_selector));
-#else
-	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->connect_via));
-	state->default_account = NULL;
-#endif
+	id = modest_selector_get_active_id (priv->connect_via);
+	state->default_account = modest_selector_get_active_id (priv->default_account_selector);
 	state->connect_via = *id;
 	state->size_limit = modest_number_entry_get_value (priv->size_limit);
 
-#ifdef MODEST_TOOLKIT_HILDON2
-	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->update_interval));
-#else
-	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->update_interval));
-#endif
+	id = modest_selector_get_active_id (priv->update_interval);
 	state->update_interval = *id;
-#ifdef MODEST_TOOLKIT_HILDON2
-	id = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->msg_format));
+	id = modest_selector_get_active_id (priv->msg_format);
 	state->play_sound = priv->initial_state.play_sound;
-#else
-	state->play_sound = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->play_sound));
-#ifndef MODEST_TOOLKIT_GTK
-	id = modest_combo_box_get_active_id (MODEST_COMBO_BOX (priv->msg_format));
-#endif
-#endif
-#ifdef MODEST_TOOLKIT_GTK
-	state->prefer_formatted_text = FALSE;
-#else
 	state->prefer_formatted_text = (*id == MODEST_FILE_FORMAT_FORMATTED_TEXT) ? TRUE : FALSE;
-#endif
 }
 
 static gboolean

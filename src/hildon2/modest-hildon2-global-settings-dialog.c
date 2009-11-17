@@ -44,7 +44,6 @@
 #include <gtk/gtkcheckbutton.h>
 #include "modest-runtime.h"
 #include "widgets/modest-global-settings-dialog-priv.h"
-#include "modest-selector-picker.h"
 #include "modest-hildon2-global-settings-dialog.h"
 #include "widgets/modest-ui-constants.h"
 #include "modest-text-utils.h"
@@ -208,10 +207,9 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 
 	/* Default account selector */
 	ppriv->accounts_list = get_accounts_list ();
-	ppriv->default_account_selector = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-								      HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-								      ppriv->accounts_list,
-								      g_str_equal);
+	ppriv->default_account_selector = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
+										  ppriv->accounts_list,
+										  g_str_equal);
 	if (ppriv->accounts_list == NULL) {
 		gtk_widget_set_sensitive (GTK_WIDGET (ppriv->default_account_selector), FALSE);
 	} else {
@@ -220,31 +218,49 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 		default_account = modest_account_mgr_get_default_account (
 			modest_runtime_get_account_mgr ());
 		if (default_account) {
-			modest_selector_picker_set_active_id (
-				MODEST_SELECTOR_PICKER (ppriv->default_account_selector),
-				default_account);
+			modest_selector_set_active_id (ppriv->default_account_selector,
+						       default_account);
 			ppriv->initial_state.default_account = default_account;
 		}
 	}
-	modest_maemo_utils_set_vbutton_layout (title_size_group,
-					       _("mcen_ti_default_account"),
-					       ppriv->default_account_selector);
-	gtk_box_pack_start (GTK_BOX (vbox), ppriv->default_account_selector,
-			    FALSE, FALSE, 0);
+	if (GTK_IS_COMBO_BOX (ppriv->default_account_selector)) {
+		GtkWidget *caption;
+
+		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
+							       _("mcen_ti_default_account"), FALSE,
+							       ppriv->default_account_selector);
+		gtk_widget_show (caption);
+		gtk_box_pack_start (GTK_BOX (vbox), caption,
+				    FALSE, FALSE, 0);
+	} else {
+		modest_maemo_utils_set_vbutton_layout (title_size_group,
+						       _("mcen_ti_default_account"),
+						       ppriv->default_account_selector);
+		gtk_box_pack_start (GTK_BOX (vbox), ppriv->default_account_selector,
+				    FALSE, FALSE, 0);
+	}
 
 	/* Message format */
 	/* Note: This ModestPairList* must exist for as long as the picker
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely,
 	 * so it can't know how to manage its memory. */
 	ppriv->msg_format_list = _modest_global_settings_dialog_get_msg_formats ();
-	ppriv->msg_format = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-							ppriv->msg_format_list, g_int_equal);
-	modest_maemo_utils_set_vbutton_layout (title_size_group,
-					       _("mcen_fi_options_messageformat"),
-					       ppriv->msg_format);
+	ppriv->msg_format = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
+								    ppriv->msg_format_list, g_int_equal);
+	if (GTK_IS_COMBO_BOX (ppriv->msg_format)) {
+		GtkWidget *caption;
+		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
+							       _("mcen_fi_options_messageformat"), FALSE,
+							       ppriv->msg_format);
+		gtk_widget_show (caption);
+		gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, 0);
+	} else {
+		modest_maemo_utils_set_vbutton_layout (title_size_group,
+						       _("mcen_fi_options_messageformat"),
+						       ppriv->msg_format);
+		gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, 0);
+	}
 
-	gtk_box_pack_start (GTK_BOX (vbox), ppriv->msg_format, FALSE, FALSE, 0);
 
 	/* Separator label */
 	separator = gtk_label_new (_("mcen_ti_updating"));
@@ -263,13 +279,21 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
 	ppriv->connect_via_list = _modest_global_settings_dialog_get_connected_via ();
-	ppriv->connect_via = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							 HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-							 ppriv->connect_via_list, g_int_equal);
-	modest_maemo_utils_set_vbutton_layout (title_size_group, 
-					       _("mcen_fi_options_connectiontype"),
-					       ppriv->connect_via);
-	gtk_box_pack_start (GTK_BOX (vbox), ppriv->connect_via, FALSE, FALSE, 0);
+	ppriv->connect_via = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
+								     ppriv->connect_via_list, g_int_equal);
+	if (GTK_IS_COMBO_BOX (ppriv->connect_via)) {
+		GtkWidget *caption;
+		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
+							       _("mcen_fi_options_connectiontype"), FALSE,
+							       ppriv->connect_via);
+		gtk_widget_show (caption);
+		gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, 0);
+	} else {
+		modest_maemo_utils_set_vbutton_layout (title_size_group, 
+						       _("mcen_fi_options_connectiontype"),
+						       ppriv->connect_via);
+		gtk_box_pack_start (GTK_BOX (vbox), ppriv->connect_via, FALSE, FALSE, 0);
+	}
 
 	/* Update interval */
 
@@ -277,13 +301,21 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	 * that uses it, because the ModestSelectorPicker uses the ID opaquely, 
 	 * so it can't know how to manage its memory. */ 
 	ppriv->update_interval_list = _modest_global_settings_dialog_get_update_interval ();
-	ppriv->update_interval = modest_selector_picker_new (MODEST_EDITABLE_SIZE,
-							     HILDON_BUTTON_ARRANGEMENT_VERTICAL,
-							     ppriv->update_interval_list, g_int_equal);
-	modest_maemo_utils_set_vbutton_layout (title_size_group, 
-					       _("mcen_fi_options_updateinterval"), 
-					       ppriv->update_interval);
-	gtk_box_pack_start (GTK_BOX (vbox), ppriv->update_interval, FALSE, FALSE, 0);
+	ppriv->update_interval = modest_toolkit_factory_create_selector (modest_runtime_get_toolkit_factory (),
+									 ppriv->update_interval_list, g_int_equal);
+	if (GTK_IS_COMBO_BOX (ppriv->update_interval)) {
+		GtkWidget *caption;
+		caption = modest_maemo_utils_create_captioned (title_size_group, NULL,
+							       _("mcen_fi_options_updateinterval"), FALSE,
+							       ppriv->update_interval);
+		gtk_widget_show (caption);
+		gtk_box_pack_start (GTK_BOX (vbox), caption, FALSE, FALSE, 0);
+	} else {
+		modest_maemo_utils_set_vbutton_layout (title_size_group, 
+						       _("mcen_fi_options_updateinterval"), 
+						       ppriv->update_interval);
+		gtk_box_pack_start (GTK_BOX (vbox), ppriv->update_interval, FALSE, FALSE, 0);
+	}
 
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
@@ -429,8 +461,8 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 		error = NULL;
 		combo_id = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
 	}
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->connect_via),
-					      (gpointer) &combo_id);
+	modest_selector_set_active_id (ppriv->connect_via,
+				       (gpointer) &combo_id);
 	ppriv->initial_state.connect_via = combo_id;
 
 	/* Update interval */
@@ -440,8 +472,8 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 		error = NULL;
 		combo_id = MODEST_UPDATE_INTERVAL_15_MIN;
 	}
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->update_interval),
-					(gpointer) &combo_id);
+	modest_selector_set_active_id (ppriv->update_interval,
+				       (gpointer) &combo_id);
 	ppriv->initial_state.update_interval = combo_id;
 
 	/* Play sound */
@@ -461,8 +493,8 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 		combo_id = MODEST_FILE_FORMAT_FORMATTED_TEXT;
 	}
 	combo_id = (checked) ? MODEST_FILE_FORMAT_FORMATTED_TEXT : MODEST_FILE_FORMAT_PLAIN_TEXT;
-	modest_selector_picker_set_active_id (MODEST_SELECTOR_PICKER (ppriv->msg_format),
-					      (gpointer) &combo_id);
+	modest_selector_set_active_id (ppriv->msg_format,
+				       (gpointer) &combo_id);
 	ppriv->initial_state.prefer_formatted_text = checked;
 
 	/* force update of sensitiveness */
