@@ -35,6 +35,7 @@
 #include "modest-account-protocol.h"
 #include "widgets/modest-ui-constants.h"
 #include "widgets/modest-validating-entry.h"
+#include "modest-toolkit-utils.h"
 
 #define PORT_MIN 1
 #define PORT_MAX 65535
@@ -256,8 +257,10 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		ppriv->user_entry = GTK_WIDGET (modest_validating_entry_new ());
 
 		/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 		hildon_gtk_entry_set_input_mode (GTK_ENTRY (ppriv->user_entry), 
 						 HILDON_GTK_INPUT_MODE_FULL);
+#endif
 
 		user_label = g_strdup_printf("%s*", _("mail_fi_username"));
 		user_caption = modest_toolkit_utils_create_captioned (title_size_group, value_size_group,
@@ -277,7 +280,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 		ppriv->pwd_entry = gtk_entry_new ();
 
 		/* Auto-capitalization is the default, so let's turn it off */
-#ifdef MODEST_TOOLKIT_HILDON2
+#ifdef MAEMO_CHANGES
 		hildon_gtk_entry_set_input_mode (GTK_ENTRY (ppriv->pwd_entry),
 						 HILDON_GTK_INPUT_MODE_FULL | 
 						 HILDON_GTK_INPUT_MODE_INVISIBLE);
