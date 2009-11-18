@@ -388,6 +388,14 @@ if test "x$with_platform" == "xmaemo"; then
      AC_DEFINE_UNQUOTED(MODEST_ABOOK_API, $abook_api, ["the API version of osso-addressbook"])
      AC_DEFINE_UNQUOTED(MODEST_HAVE_ABOOK, 1, ["whether we have osso-addressbook"])
    fi
+
+   # Check the presence of the calendar widgets
+   PKG_CHECK_MODULES(MODEST_CALENDAR_WIDGETS,calendar-ui-widgets,have_calendar_widgets=true,have_calendar_widgets=false)
+   AC_SUBST(MODEST_CALENDAR_WIDGETS_CFLAGS)
+   AC_SUBST(MODEST_CALENDAR_WIDGETS_LIBS)
+   if test "x$have_calendar_widgets" == "xtrue"; then
+      AC_DEFINE_UNQUOTED(MODEST_USE_CALENDAR_WIDGETS, 1, ["Use the Calendar color widgets"])
+   fi
 fi
 
 AM_CONDITIONAL(MODEST_USE_DUMMY_ADDRESS_BOOK,test "x$have_abook" != "xtrue")
@@ -537,6 +545,7 @@ if test "x$with_platform" == "xmaemo"; then
    echo "Alarm            : $have_libalarm"
    echo "MCE              : $have_mce"
    echo "Hildon-Notify    : $have_hildon_notify"
+   echo "Calendar widgets : $have_calendar_widgets"
 fi
 
 if [ $gtk_html_found = "true" ]; then
