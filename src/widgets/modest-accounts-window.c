@@ -129,7 +129,12 @@ modest_accounts_window_get_type (void)
 			(GInstanceInitFunc) modest_accounts_window_instance_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
+		my_type = g_type_register_static (
+#ifdef MODEST_TOOLKIT_HILDON2
+						  MODEST_TYPE_HILDON2_WINDOW,
+#else
+						  MODEST_TYPE_WINDOW,
+#endif
 		                                  "ModestAccountsWindow",
 		                                  &my_info, 0);
 	}
@@ -266,8 +271,8 @@ modest_accounts_window_new_real (void)
 
 	box_alignment = gtk_alignment_new (0, 0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (box_alignment), 
-				   HILDON_MARGIN_HALF, 0,
-				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
+				   MODEST_MARGIN_HALF, 0,
+				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 	priv->box = gtk_vbox_new (FALSE, 0);
 
 	no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
