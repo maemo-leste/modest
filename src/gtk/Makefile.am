@@ -41,6 +41,7 @@ noinst_LTLIBRARIES=\
 libmodest_ui_la_SOURCES= \
 	modest-icon-names.h \
 	modest-gtk-window-mgr.h modest-gtk-window-mgr.c \
+	modest-platform.c \
 	modest-shell.h modest-shell.c
 
 libmodest_ui_la_LIBADD = \
