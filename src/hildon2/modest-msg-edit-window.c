@@ -1485,12 +1485,14 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 static void
 color_button_clicked (GtkButton *button)
 {
+	static PipCalendarColor color = PipCalendarColorInvalid;
+
 	/* Show ColorPicker dialog */
-	PipCalendarColor color = pip_color_picker_select_color(PipTextColorRed, PipColorPickerText);
+	color = pip_color_picker_select_color(color, PipColorPickerText);
 
 	/* Check if some color is selected rather than dialog is dismissed */
 	if (color != PipCalendarColorInvalid) {
-		GdkColor *gdk_color = (GdkColor *) pip_calendar_color_get_gdkcolor(color);
+		GdkColor *gdk_color = (GdkColor *) pip_calendar_color_get_gdkcolor (color);
 		if (gdk_color)
 			hildon_color_button_set_color ((HildonColorButton *) button, gdk_color);
 	}
