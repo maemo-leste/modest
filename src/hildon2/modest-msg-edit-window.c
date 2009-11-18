@@ -77,6 +77,9 @@
 #include "modest-maemo-utils.h"
 #include <modest-ui-constants.h>
 
+#ifdef MODEST_USE_CALENDAR_WIDGETS
+#include <calendar-ui-widgets.h>
+#endif
 
 #define DEFAULT_FONT_SIZE 3
 #define DEFAULT_FONT 2
@@ -1495,6 +1498,21 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	g_free (bcc);
 }
 
+#ifdef MODEST_USE_CALENDAR_WIDGETS
+static void
+color_button_clicked (GtkButton *button)
+{
+	/* Show ColorPicker dialog */
+	PipCalendarColor color = pip_color_picker_select_color(PipTextColorRed, PipColorPickerText);
+
+	/* Check if some color is selected rather than dialog is dismissed */
+	if (color != PipCalendarColorInvalid) {
+		GdkColor *gdk_color = (GdkColor *) pip_calendar_color_get_gdkcolor(color);
+		if (gdk_color)
+			hildon_color_button_set_color ((HildonColorButton *) button, gdk_color);
+	}
+}
+#endif
 
 static void
 modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
@@ -1537,6 +1555,13 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 				  "notify::color", 
 				  G_CALLBACK (modest_msg_edit_window_color_button_change), 
 				  window);
+
+	/* Yes I know this is a horrible hack, but it works for the
+	   moment while we don't create a ModestColorButton */
+#ifdef MODEST_USE_CALENDAR_WIDGETS
+	GtkButtonClass *button_class = GTK_BUTTON_CLASS (HILDON_COLOR_BUTTON_GET_CLASS (priv->font_color_button));
+	button_class->clicked = color_button_clicked;
+#endif
 
 	/* Font size and face placeholder */
 	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontAttributes");
@@ -2216,14 +2241,13 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 void
 modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 {
-	
 	WPTextBufferFormat *buffer_format = g_new0 (WPTextBufferFormat, 1);
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
-		
+
 	dialog = hildon_color_chooser_new ();
 	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog), &(buffer_format->color));
 	g_free (buffer_format);
@@ -2241,7 +2265,6 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 void
 modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
 {
-	
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *dialog = NULL;
 	GdkColor *old_color = NULL;
