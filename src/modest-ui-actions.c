@@ -1020,8 +1020,13 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 				g_object_unref (account);
 			}
 
-			if (!format)
-				format = g_strdup (_("emev_ni_ui_imap_message_not_available_in_server"));
+			if (!format) {
+				if (header) {
+					format = g_strdup (_("emev_ni_ui_imap_message_not_available_in_server"));
+				} else {
+					format = g_strdup (_("emev_ni_ui_pop3_msg_recv_error"));
+				}
+			}
 
 			msg = g_strdup_printf (format, subject);
 			modest_platform_run_information_dialog (NULL, msg, FALSE);
