@@ -1502,10 +1502,10 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 static void
 color_button_clicked (GtkButton *button)
 {
-	static PipCalendarColor color = PipCalendarColorInvalid;
+	PipCalendarColor color;
 
 	/* Show ColorPicker dialog */
-	color = pip_color_picker_select_color(color, PipColorPickerText);
+	color = pip_color_picker_select_color(PipCalendarColorInvalid, PipColorPickerText);
 
 	/* Check if some color is selected rather than dialog is dismissed */
 	if (color != PipCalendarColorInvalid) {
