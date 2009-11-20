@@ -57,6 +57,7 @@ libmodest_ui_la_SOURCES=              \
 	modest-default-account-settings-dialog.c \
 	modest-easysetup-wizard-dialog.h modest-easysetup-wizard-dialog.c \
 	modest-country-picker.h modest-country-picker.c \
+	modest-color-button.h modest-color-button.c \
 	modest-provider-picker.h modest-provider-picker.c \
 	modest-serversecurity-picker.h modest-serversecurity-picker.c \
 	modest-servertype-picker.h modest-servertype-picker.c \
