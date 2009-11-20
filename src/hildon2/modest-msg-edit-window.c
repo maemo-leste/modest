@@ -75,6 +75,7 @@
 #include <modest-utils.h>
 #include "modest-maemo-utils.h"
 #include <modest-ui-constants.h>
+#include "modest-color-button.h"
 
 #ifdef MODEST_USE_CALENDAR_WIDGETS
 #include <calendar-ui-widgets.h>
@@ -1481,24 +1482,6 @@ set_msg (ModestMsgEditWindow *self, TnyMsg *msg, gboolean preserve_is_rich)
 	g_free (bcc);
 }
 
-#ifdef MODEST_USE_CALENDAR_WIDGETS
-static void
-color_button_clicked (GtkButton *button)
-{
-	PipCalendarColor color;
-
-	/* Show ColorPicker dialog */
-	color = pip_color_picker_select_color(PipCalendarColorInvalid, PipColorPickerText);
-
-	/* Check if some color is selected rather than dialog is dismissed */
-	if (color != PipCalendarColorInvalid) {
-		GdkColor *gdk_color = (GdkColor *) pip_calendar_color_get_gdkcolor (color);
-		if (gdk_color)
-			hildon_color_button_set_color ((HildonColorButton *) button, gdk_color);
-	}
-}
-#endif
-
 static void
 modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 {
@@ -1528,7 +1511,7 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 	/* font color */
 	priv->font_color_toolitem = GTK_WIDGET (gtk_tool_item_new ());
-	priv->font_color_button = hildon_color_button_new ();
+	priv->font_color_button = modest_color_button_new ();
 	gtk_widget_set_size_request (priv->font_color_button, -1, 48);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_toolitem, GTK_CAN_FOCUS);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_button, GTK_CAN_FOCUS);
@@ -1540,13 +1523,6 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 				  "notify::color", 
 				  G_CALLBACK (modest_msg_edit_window_color_button_change), 
 				  window);
-
-	/* Yes I know this is a horrible hack, but it works for the
-	   moment while we don't create a ModestColorButton */
-#ifdef MODEST_USE_CALENDAR_WIDGETS
-	GtkButtonClass *button_class = GTK_BUTTON_CLASS (HILDON_COLOR_BUTTON_GET_CLASS (priv->font_color_button));
-	button_class->clicked = color_button_clicked;
-#endif
 
 	/* Font size and face placeholder */
 	placeholder = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/FontAttributes");
