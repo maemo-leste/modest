@@ -1,3 +1,21 @@
+modest (3.2.1) unstable; urgency=low
+
+  * Week 48, 2009 - first release
+  * 
+  * Fixes: NB#114468 EXT - Mail view gets jammed (distorted output on screen 
+  * 	after scrolling long message)
+  * Fixes: NB#137991 Email, Unnecessary colons within folder Details dialog
+  * Fixes: NB#138980 Infinite scrolling in the Pauldirekt newsletter viewer
+  * Fixes: NB#139790 Fix some compilation warnings in GNOME version
+  * Fixes: NB#141651 Remove unused modest-osso-autosave-callbacks.[c/h] files
+  * Fixes: NB#142269 Email, Saving multiple attachments only selects one by default
+  * Fixes: NB#142363 non-localized reply and forward prefixes
+  * Fixes: NB#145849 "Check names" should not be performed for contacts' email addresses
+  * Fixes: NB#146571 Reproducible crash in "html_to_text_is_eos" when replying 
+  * 	to a mail without body in MfE 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 20 Nov 2009 18:39:36 +0200
+
 modest (3.2.0) unstable; urgency=low
 
   * Branch for 3.2 release series.
