@@ -195,7 +195,6 @@ force_ke_recv_load (void)
 	return TRUE;
 }
 
-
 gboolean
 modest_init (int argc, char *argv[])
 {
@@ -204,8 +203,8 @@ modest_init (int argc, char *argv[])
 	if (_is_initialized) {
 		g_printerr ("modest: %s may only be invoked once\n", __FUNCTION__);
 		return FALSE;
-	} 
-	
+	}
+
 	init_i18n();
 
 	if (!force_ke_recv_load()) {
@@ -221,25 +220,25 @@ modest_init (int argc, char *argv[])
 
 	/* initialize the prng, we need it when creating random files */
 	srandom((int)getpid());
-	
+
 	if (!gnome_vfs_initialized()) {
 		if (!gnome_vfs_init ()) {
 			g_printerr ("modest: failed to init gnome-vfs\n");
 			return FALSE;
 		}
 	}
-	
+
 	if (!modest_runtime_init()) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to initialize the modest runtime\n");
 		return FALSE;
 	}
-	
+
 	modest_plugin_factory_load_all (modest_runtime_get_plugin_factory ());
 
 	/* do an initial guess for the device name */
 	init_device_name (modest_runtime_get_conf());
-	
+
 	if (!modest_platform_init(argc, argv)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to run platform-specific initialization\n");
@@ -257,19 +256,19 @@ modest_init (int argc, char *argv[])
 	}
 
 	init_default_settings (modest_runtime_get_conf ());
-	
+
 	if (!modest_init_local_folders(NULL)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init local folders\n");
 		return FALSE;
 	}
-	
+
 	if (!init_default_account_maybe (modest_runtime_get_account_mgr ())) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init default account\n");
 		return FALSE;
-	}	
-	
+	}
+
 	if (!init_ui (argc, argv)) {
 		modest_init_uninit ();
 		g_printerr ("modest: failed to init ui\n");
@@ -591,13 +590,11 @@ init_debug_logging (void)
 	}
 #endif
 
-	
 	if (mflags & MODEST_RUNTIME_DEBUG_ABORT_ON_WARNING)
 		g_log_set_always_fatal (G_LOG_LEVEL_ERROR |
 					G_LOG_LEVEL_CRITICAL |
 					G_LOG_LEVEL_WARNING);
 }
-
 
 static void
 init_i18n (void)
@@ -607,12 +604,14 @@ init_i18n (void)
 	if (!lc_messages) {
 		setenv ("LANGUAGE", "en_GB", 1);
 		setenv ("LC_MESSAGES", "en_GB", 1);
+#ifdef MODEST_PLATFORM_GNOME
 	} else {
 		gchar *new_lc_messages;
 		new_lc_messages = g_strconcat (lc_messages, ":en_GB", NULL);
 		setenv ("LANGUAGE", new_lc_messages, 1);
 		setenv ("LC_MESSAGES", new_lc_messages, 1);
 		g_free (new_lc_messages);
+#endif
 	}
 
 	bindtextdomain (GETTEXT_PACKAGE, MODEST_LOCALE_DIR);

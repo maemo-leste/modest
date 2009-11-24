@@ -188,7 +188,6 @@ main (int argc, char *argv[])
 		goto cleanup;
 	}
 
-
 	/* Create the account store & launch send queues */
 	acc_store = modest_runtime_get_account_store ();
 	modest_tny_account_store_start_send_queues (acc_store);
