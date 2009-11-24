@@ -131,7 +131,7 @@ modest_plugin_factory_new (void)
 }
 
 void
-modest_plugin_factory_load_all (ModestPluginFactory *self) 
+modest_plugin_factory_load_all (ModestPluginFactory *self)
 {
 	ModestPluginFactoryPrivate *priv;
 	GError *error = NULL;
@@ -159,7 +159,7 @@ modest_plugin_factory_load_all (ModestPluginFactory *self)
 	while ((dirent = g_dir_read_name (d))) {
 		if (g_str_has_suffix (dirent, PLUGIN_EXT)) {
 			gchar *plugin_file;
-			ModestPlugin *plugin;
+			ModestPlugin *plugin = NULL;
 
 			plugin_file = g_build_filename (MODEST_MAILPLUGINDIR, dirent, NULL);
 			plugin = modest_plugin_factory_load (plugin_file);
@@ -169,7 +169,6 @@ modest_plugin_factory_load_all (ModestPluginFactory *self)
 				priv->plugins = g_slist_prepend (priv->plugins, plugin);
 		}
 	}
-
 	priv->plugins = g_slist_reverse (priv->plugins);
 
 	g_dir_close (d);

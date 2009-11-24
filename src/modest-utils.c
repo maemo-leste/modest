@@ -934,7 +934,9 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 	}
 
 	/* Get the territory specified for the current locale */
-	territory = nl_langinfo (_NL_ADDRESS_COUNTRY_NAME);
+	territory = nl_langinfo (_NL_IDENTIFICATION_TERRITORY);
+
+	setlocale (LC_MESSAGES, "en_GB");
 
 	while (fgets (line, MCC_FILE_MAX_LINE_LEN, file) != NULL) {
 		int mcc;
@@ -958,6 +960,8 @@ modest_utils_fill_country_model (GtkTreeModel *model, gint *locale_mcc)
 				*locale_mcc = mcc;
 		}
 	}
+
+	setlocale (LC_MESSAGES, "");
 
 	/* Now we fill the model */
 	rewind (file);
