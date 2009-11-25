@@ -45,7 +45,6 @@
 #include "modest-tny-folder.h"
 #include "modest-folder-window.h"
 #include "modest-accounts-window.h"
-#include "modest-maemo-utils.h"
 #include "modest-utils.h"
 #include "modest-tny-msg.h"
 #include "modest-tny-account.h"

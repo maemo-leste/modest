@@ -30,8 +30,10 @@
 #ifndef __MODEST_ACCOUNTS_WINDOW_H__
 #define __MODEST_ACCOUNTS_WINDOW_H__
 
-#include <widgets/modest-window.h>
+#ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-hildon2-window.h>
+#endif
+#include <widgets/modest-window.h>
 #include <widgets/modest-account-view.h>
 
 G_BEGIN_DECLS
@@ -49,11 +51,19 @@ typedef struct _ModestAccountsWindow      ModestAccountsWindow;
 typedef struct _ModestAccountsWindowClass ModestAccountsWindowClass;
 
 struct _ModestAccountsWindow {
+#ifdef MODEST_TOOLKIT_HILDON2
 	ModestHildon2Window parent;
+#else
+	ModestWindow parent;
+#endif
 };
 
 struct _ModestAccountsWindowClass {
+#ifdef MODEST_TOOLKIT_HILDON2
 	ModestHildon2WindowClass parent_class;
+#else
+	ModestWindowClass parent_class;
+#endif
 };
 
 /**

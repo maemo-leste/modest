@@ -39,6 +39,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-account-settings-dialog.c \
 	modest-account-view.c          \
 	modest-account-view.h          \
+	modest-accounts-window.c \
+	modest-accounts-window.h \
 	modest-attachment-view.c       \
 	modest-attachment-view.h       \
 	modest-attachments-view.c      \
