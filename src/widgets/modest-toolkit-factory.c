@@ -49,6 +49,7 @@
 #define USE_GTK_SECURITY_OPTIONS_VIEW
 #define USE_GTK_TEXT_VIEW
 #define USE_SELECTOR_COMBOBOX
+#define USE_GTK_DETAILS_DIALOG
 #endif
 
 #ifdef USE_SCROLLED_WINDOW
@@ -105,6 +106,12 @@
 #include <modest-selector-picker.h>
 #endif
 
+#ifdef USE_GTK_DETAILS_DIALOG
+#include <modest-gtk-details-dialog.h>
+#else
+#include <modest-hildon2-details-dialog.h>
+#endif
+
 static void modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass);
 static void modest_toolkit_factory_init (ModestToolkitFactory *self);
 
@@ -138,6 +145,10 @@ static GtkWidget * modest_toolkit_factory_create_security_options_view_default (
 static GtkWidget * modest_toolkit_factory_create_text_view_default            (ModestToolkitFactory *self);
 static GtkWidget * modest_toolkit_factory_create_selector_default             (ModestToolkitFactory *self,
 									       ModestPairList *pairs, GEqualFunc id_equal_func);
+static GtkWidget * modest_toolkit_factory_create_details_dialog_with_header_default   (ModestToolkitFactory *self, GtkWindow *parent,
+									       TnyHeader *header, gboolean get_size);
+static GtkWidget * modest_toolkit_factory_create_details_dialog_with_folder_default  (ModestToolkitFactory *self, GtkWindow *parent,
+									      TnyFolder *folder);
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -174,6 +185,8 @@ modest_toolkit_factory_class_init (ModestToolkitFactoryClass *klass)
 	klass->create_security_options_view = modest_toolkit_factory_create_security_options_view_default;
 	klass->create_text_view = modest_toolkit_factory_create_text_view_default;
 	klass->create_selector = modest_toolkit_factory_create_selector_default;
+	klass->create_details_dialog_with_header = modest_toolkit_factory_create_details_dialog_with_header_default;
+	klass->create_details_dialog_with_folder = modest_toolkit_factory_create_details_dialog_with_folder_default;
 }
 
 static void
@@ -902,3 +915,46 @@ modest_selector_get_value_max_chars (GtkWidget *self)
 	return modest_selector_picker_get_value_max_chars (MODEST_SELECTOR_PICKER (self));
 #endif
 }
+
+GtkWidget *
+modest_toolkit_factory_create_details_dialog_with_header (ModestToolkitFactory *self,
+							  GtkWindow *parent,
+							  TnyHeader *header,
+							  gboolean get_size)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_details_dialog_with_header (self, parent, header, get_size);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_details_dialog_with_header_default (ModestToolkitFactory *self,
+								  GtkWindow *parent,
+								  TnyHeader *header, 
+								  gboolean get_size)
+{
+#ifndef USE_GTK_DETAILS_DIALOG
+	return modest_hildon2_details_dialog_new_with_header (parent, header, get_size);
+#else
+	return modest_gtk_details_dialog_new_with_header (parent, header, get_size);
+#endif
+}
+
+GtkWidget *
+modest_toolkit_factory_create_details_dialog_with_folder (ModestToolkitFactory *self,
+							  GtkWindow *parent,
+							  TnyFolder *folder)
+{
+	return MODEST_TOOLKIT_FACTORY_GET_CLASS (self)->create_details_dialog_with_folder (self, parent, folder);
+}
+
+static GtkWidget *
+modest_toolkit_factory_create_details_dialog_with_folder_default (ModestToolkitFactory *self,
+								  GtkWindow *parent,
+								  TnyFolder *folder)
+{
+#ifndef USE_GTK_DETAILS_DIALOG
+	return modest_hildon2_details_dialog_new_with_folder (parent, folder);
+#else
+	return modest_gtk_details_dialog_new_with_folder (parent, folder);
+#endif
+}
+

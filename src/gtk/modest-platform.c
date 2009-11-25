@@ -62,6 +62,7 @@
 #include <modest-ui-constants.h>
 #include <modest-icon-names.h>
 #include <modest-count-stream.h>
+#include <modest-gtk-details-dialog.h>
 #include <math.h>
 
 
@@ -1047,7 +1048,6 @@ gboolean
 modest_platform_connect_and_wait (GtkWindow *parent_window, 
 				  TnyAccount *account)
 {
-	ConnectAndWaitData *data = NULL;
 	gboolean device_online;
 	TnyDevice *device;
 	TnyConnectionStatus conn_status;
@@ -1228,7 +1228,7 @@ modest_platform_animation_banner (GtkWidget *parent,
 				  const gchar *animation_name,
 				  const gchar *text)
 {
-	return;
+	return NULL;
 }
 
 typedef struct
@@ -1342,16 +1342,13 @@ on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert
 {
 	/* GTK_RESPONSE_HELP means we need to show the certificate */
 	if (response_id == GTK_RESPONSE_APPLY) {
-		GtkWidget *note;
 		gchar *msg;
 		
 		/* Do not close the dialog */
 		g_signal_stop_emission_by_name (dialog, "response");
 
 		msg = g_strdup_printf (_("mcen_ni_view_unknown_certificate"), cert);	
-		note = modest_platform_information_banner (NULL, NULL, msg);
-		gtk_dialog_run (GTK_DIALOG(note));
-		gtk_widget_destroy (note);
+		modest_platform_run_information_dialog (NULL, msg, TRUE);
 	}
 }
 
@@ -1383,9 +1380,6 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 				_HL("wdgt_bd_no"), GTK_RESPONSE_CANCEL,
 				NULL, NULL);
 
-	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-				     (GtkWindow *) note, (GtkWindow *) win);
-
 	g_signal_connect (G_OBJECT(note), "response",
 			  G_CALLBACK(on_cert_dialog_response),
 			  (gpointer) certificate);
@@ -1405,6 +1399,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 
 	gboolean retval = TRUE;
 	if (is_question) {
+		GtkWidget *dialog;
 		/* The Tinymail documentation says that we should show Yes and No buttons,
 		 * when it is a question.
 		 * Obviously, we need tinymail to use more specific error codes instead,
@@ -1667,7 +1662,8 @@ modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
 	GtkWidget *dialog;
 	
 	/* Create dialog */
-	dialog = modest_hildon2_details_dialog_new_with_folder (parent_window, folder);
+	dialog = modest_toolkit_factory_create_details_dialog_with_folder (modest_runtime_get_toolkit_factory (),
+									   parent_window, folder);
 
 	/* Run dialog */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
@@ -1752,7 +1748,8 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 	GtkWidget *dialog;
 
 	/* Create dialog */
-	dialog = modest_hildon2_details_dialog_new_with_header (parent_window, header, !async_get_size);
+	dialog = modest_toolkit_factory_create_details_dialog_with_header (modest_runtime_get_toolkit_factory (),
+									   parent_window, header, !async_get_size);
 
 	if (async_get_size && msg && TNY_IS_MSG (msg)) {
 		HeaderDetailsGetSizeInfo *info;

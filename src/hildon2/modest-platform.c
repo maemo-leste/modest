@@ -2486,7 +2486,8 @@ modest_platform_run_folder_details_dialog (GtkWindow *parent_window,
 	GtkWidget *dialog;
 	
 	/* Create dialog */
-	dialog = modest_hildon2_details_dialog_new_with_folder (parent_window, folder);
+	dialog = modest_toolkit_factory_create_details_dialog_with_folder (modest_runtime_get_toolkit_factory (),
+									   parent_window, folder);
 
 	/* Run dialog */
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
@@ -2571,7 +2572,8 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 	GtkWidget *dialog;
 
 	/* Create dialog */
-	dialog = modest_hildon2_details_dialog_new_with_header (parent_window, header, !async_get_size);
+	dialog = modest_toolkit_factory_create_details_dialog_with_header (modest_runtime_get_toolkit_factory (),
+									   parent_window, header, !async_get_size);
 
 	if (async_get_size && msg && TNY_IS_MSG (msg)) {
 		HeaderDetailsGetSizeInfo *info;

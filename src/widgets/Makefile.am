@@ -67,6 +67,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-global-settings-dialog.h \
 	modest-gtkhtml-mime-part-view.c \
 	modest-gtkhtml-mime-part-view.h \
+	modest-gtk-details-dialog.c \
+	modest-gtk-details-dialog.h \
 	modest-gtk-security-options-view.c \
 	modest-gtk-security-options-view.h \
 	modest-hbox-cell-renderer.c    \
