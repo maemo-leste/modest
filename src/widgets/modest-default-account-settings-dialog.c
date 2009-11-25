@@ -35,7 +35,6 @@
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkmessagedialog.h>
 #include <gtk/gtkstock.h>
-#include "modest-hildon-includes.h"
 #include "modest-default-account-settings-dialog.h"
 #include "modest-account-mgr.h"
 #include "widgets/modest-validating-entry.h"
@@ -48,8 +47,6 @@
 #include "modest-signature-editor-dialog.h"
 #include <modest-utils.h>
 #include <modest-defs.h>
-#include "modest-maemo-utils.h"
-#include "modest-maemo-security-options-view.h"
 #include "modest-ui-actions.h"
 #include "widgets/modest-ui-constants.h"
 #include <tny-account.h>
@@ -60,6 +57,10 @@
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */
+
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 
 /* Include config.h so that _() works: */
@@ -194,7 +195,7 @@ set_modified (ModestDefaultAccountSettingsDialog *self, gboolean modified)
 }
 
 static void
-on_modified_picker_changed (HildonPickerButton *widget, gpointer user_data)
+on_modified_picker_changed (GtkWidget *widget, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
@@ -240,9 +241,11 @@ connect_for_modified (ModestDefaultAccountSettingsDialog *self, GtkWidget *widge
 	else if (GTK_IS_ENTRY (widget)) {
 		g_signal_connect (G_OBJECT (widget), "changed",
 			G_CALLBACK (on_modified_entry_changed), self);
+#ifdef MODEST_TOOLKIT_HILDON2
 	} else if (HILDON_IS_PICKER_BUTTON (widget)) {
 		g_signal_connect (G_OBJECT (widget), "value-changed",
 				  G_CALLBACK (on_modified_picker_changed), self);
+#endif
 	} else if (modest_is_togglable (widget)) {
 		g_signal_connect (G_OBJECT (widget), "toggled",
 			G_CALLBACK (on_modified_checkbutton_toggled), self);
@@ -335,8 +338,10 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self,
 	/* The description widgets: */	
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	/* Do use auto-capitalization: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
+#endif
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       _("mcen_fi_account_title"), FALSE,
 					       priv->entry_account_title);
@@ -494,9 +499,11 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self,
 	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
 
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_name),
 					 HILDON_GTK_INPUT_MODE_FULL |
 					 HILDON_GTK_INPUT_MODE_AUTOCAP);
+#endif
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
 	gtk_entry_set_max_length (GTK_ENTRY (priv->entry_user_name), 64);
@@ -525,7 +532,9 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self,
 	/* The username widgets: */	
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
 				    _("mail_fi_username"), FALSE,
 				    priv->entry_user_username);
@@ -551,8 +560,10 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self,
 	/* The password widgets: */	
 	priv->entry_user_password = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
+#endif
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
@@ -565,7 +576,9 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self,
 	/* The email address widgets: */	
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
 				    _("mcen_li_emailsetup_email_address"), FALSE, priv->entry_user_email);
 	gtk_entry_set_text (GTK_ENTRY (priv->entry_user_email), MODEST_EXAMPLE_EMAIL_ADDRESS); /* Default text. */
@@ -638,7 +651,9 @@ create_page_incoming (ModestDefaultAccountSettingsDialog *self,
 	if(!priv->entry_incomingserver)
 		priv->entry_incomingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 
 	if (priv->caption_incoming)
 		gtk_widget_destroy (priv->caption_incoming);
@@ -736,7 +751,9 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 	if (!priv->entry_outgoingserver)
 		priv->entry_outgoingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	GtkWidget *caption = create_captioned (self, security_title_sizegroup, security_value_sizegroup,
 					       smtp_caption_label, TRUE, priv->entry_outgoingserver);
@@ -760,7 +777,9 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 
 	GtkWidget *separator = gtk_hseparator_new ();
 	gtk_box_pack_start (GTK_BOX (box), separator, FALSE, FALSE, MODEST_MARGIN_DEFAULT);
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (separator, HILDON_SIZE_AUTO);
+#endif
 	gtk_widget_show (separator);
 
 	/* connection-specific checkbox: */
@@ -779,8 +798,10 @@ create_page_outgoing (ModestDefaultAccountSettingsDialog *self,
 	/* Connection-specific SMTP-Severs Edit button: */
 	if (!priv->button_outgoing_smtp_servers)
 		priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_advsetup_optional_smtp"));
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers, 
 					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);	
+#endif
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers, FALSE, FALSE, 0);
 
@@ -940,12 +961,10 @@ on_response (GtkDialog *wizard_dialog,
 	/* Warn about unsaved changes: */
 	if ((response_id == GTK_RESPONSE_CANCEL || response_id == GTK_RESPONSE_DELETE_EVENT) && 
 	    (priv->modified || sec_changed)) {
-		GtkDialog *dialog = GTK_DIALOG (hildon_note_new_confirmation (GTK_WINDOW (self), 
-			_("imum_nc_wizard_confirm_lose_changes")));
+		gint response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
+									 _("imum_nc_wizard_confirm_lose_changes")));
 		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
 
-		 const gint dialog_response = gtk_dialog_run (dialog);
-		 gtk_widget_destroy (GTK_WIDGET (dialog));
 
 		if (dialog_response != GTK_RESPONSE_OK)
 			prevent_response = TRUE;
