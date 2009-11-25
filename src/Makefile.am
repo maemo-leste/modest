@@ -3,7 +3,7 @@
 # Time-stamp: <2008-01-06 10:18:49 (djcb)>
 
 SUBDIRS= $(MODEST_TOOLKIT_DIR) widgets $(dbus_api)
-DIST_SUBDIRS = widgets gnome maemo hildon2 dbus_api
+DIST_SUBDIRS = widgets gtk maemo hildon2 dbus_api
 
 INCLUDES=\
 	$(MODEST_GSTUFF_CFLAGS)					\

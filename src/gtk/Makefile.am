@@ -31,11 +31,17 @@ INCLUDES=\
 	$(MODEST_TOOLKIT_CFLAGS) \
 	$(MODEST_PLUGIN_DEFINES) \
 	-I ${top_srcdir}/src  \
+	-I ${top_srcdir}/src/widgets  \
 	-DPREFIX=\"@prefix@\" \
 	-Wall
 
+noinst_LTLIBRARIES=\
+	libmodest-ui.la
+
 libmodest_ui_la_SOURCES= \
-	modest-icon-names.h
+	modest-icon-names.h \
+	modest-gtk-window-mgr.h modest-gtk-window-mgr.c \
+	modest-shell.h modest-shell.c
 
 libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \
