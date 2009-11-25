@@ -2863,7 +2863,6 @@ modest_ui_actions_on_select_editor_background_color (GtkAction *action,
 	if (modest_msg_edit_window_get_format (MODEST_MSG_EDIT_WINDOW(window)) == MODEST_MSG_EDIT_FORMAT_TEXT)
 		return;
 
-	modest_msg_edit_window_select_background_color (window);
 }
 
 void
@@ -3789,13 +3788,6 @@ modest_ui_actions_on_undo (GtkAction *action,
 {
 	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
 		modest_msg_edit_window_undo (MODEST_MSG_EDIT_WINDOW (window));
-#ifndef MODEST_TOOLKIT_HILDON2
-	} else if (MODEST_IS_MAIN_WINDOW (window)) {
-		ModestEmailClipboard *clipboard = NULL;
-		/* Clear clipboard source */
-		clipboard = modest_runtime_get_email_clipboard ();
-		modest_email_clipboard_clear (clipboard);
-#endif
 	} else {
 		g_return_if_reached ();
 	}
@@ -4015,31 +4007,6 @@ modest_ui_actions_on_select_all (GtkAction *action,
 		gtk_text_buffer_select_range (buffer, &start, &end);
 	} else if (GTK_IS_HTML (focused_widget)) {
 		gtk_html_select_all (GTK_HTML (focused_widget));
-#ifndef MODEST_TOOLKIT_HILDON2
-	} else if (MODEST_IS_MAIN_WINDOW (window)) {
-		GtkWidget *header_view = focused_widget;
- 		GtkTreeSelection *selection = NULL;
-
-		if (!(MODEST_IS_HEADER_VIEW (focused_widget))) {
-			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (window),
-									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		}
-
-		/* Disable window dimming management */
-		modest_window_disable_dimming (MODEST_WINDOW(window));
-
-		/* Select all messages */
-		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(header_view));
-		gtk_tree_selection_select_all (selection);
-
-		/* Set focuse on header view */
-		gtk_widget_grab_focus (header_view);
-
-		/* Enable window dimming management */
-		modest_window_enable_dimming (MODEST_WINDOW(window));
-		modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (window));
-		modest_ui_actions_check_toolbar_dimming_rules (MODEST_WINDOW (window));
-#endif
 	}
 
 }
@@ -4204,37 +4171,6 @@ modest_ui_actions_on_details (GtkAction *action,
 			g_object_unref (header);
 		}
 		g_object_unref (msg);
-#ifndef MODEST_TOOLKIT_HILDON2
-	} else if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *folder_view, *header_view;
-
-		/* Check which widget has the focus */
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-								    MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		if (gtk_widget_is_focus (folder_view)) {
-			TnyFolderStore *folder_store
-				= modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-			if (!folder_store) {
-				g_warning ("%s: No item was selected.\n", __FUNCTION__);
-				return;
-			}
-			/* Show only when it's a folder */
-			/* This function should not be called for account items,
-			 * because we dim the menu item for them. */
-			if (TNY_IS_FOLDER (folder_store)) {
-				modest_platform_run_folder_details_dialog (GTK_WINDOW (win),
-									   TNY_FOLDER (folder_store));
-			}
-
-			g_object_unref (folder_store);
-
-		} else {
-			header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-									   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-			/* Show details of each header */
-			do_headers_action (win, headers_action_show_details, header_view);
-		}
-#else
 	} else if (MODEST_IS_HEADER_WINDOW (win)) {
 		TnyFolder *folder;
 		GtkWidget *header_view;
@@ -4246,7 +4182,6 @@ modest_ui_actions_on_details (GtkAction *action,
 								   folder);
 			g_object_unref (folder);
 		}
-#endif
 	}
 }
 
@@ -4278,19 +4213,6 @@ modest_ui_actions_on_toggle_show_bcc (GtkToggleAction *toggle,
 	modest_msg_edit_window_show_bcc (window, gtk_toggle_action_get_active (toggle));
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-void
-modest_ui_actions_toggle_folders_view (GtkAction *action,
-				       ModestMainWindow *main_window)
-{
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW(main_window));
-
-	if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action)))
-		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SPLIT);
-	else
-		modest_main_window_set_style (main_window, MODEST_MAIN_WINDOW_STYLE_SIMPLE);
-}
-#endif
 
 void
 modest_ui_actions_on_toggle_toolbar (GtkToggleAction *toggle,
@@ -4357,152 +4279,6 @@ modest_ui_actions_on_check_names (GtkAction *action, ModestMsgEditWindow *window
 	modest_msg_edit_window_check_names (window, FALSE);
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-/*
- * This function is used to track changes in the selection of the
- * folder view that is inside the "move to" dialog to enable/disable
- * the OK button because we do not want the user to select a disallowed
- * destination for a folder.
- * The user also not desired to be able to use NEW button on items where
- * folder creation is not possibel.
- */
-static void
-on_move_to_dialog_folder_selection_changed (ModestFolderView* self,
-					    TnyFolderStore *folder_store,
-					    gboolean selected,
-					    gpointer user_data)
-{
-	GtkWidget *dialog = NULL;
-	gboolean ok_sensitive = TRUE, new_sensitive = TRUE;
-	gboolean moving_folder = FALSE;
-	gboolean is_local_account = TRUE;
-	GtkWidget *folder_view = NULL;
-	ModestTnyFolderRules rules;
-
-	g_return_if_fail (MODEST_IS_FOLDER_VIEW(self));
-
-	if (!selected)
-		return;
-
-	dialog = gtk_widget_get_ancestor (GTK_WIDGET (self), GTK_TYPE_DIALOG);
-	if (!dialog)
-		return;
-
-	/* check if folder_store is an remote account */
-	if (TNY_IS_ACCOUNT (folder_store)) {
-		TnyAccount *local_account = NULL;
-		TnyAccount *mmc_account = NULL;
-		ModestTnyAccountStore *account_store = NULL;
-
-		account_store = modest_runtime_get_account_store ();
-		local_account = modest_tny_account_store_get_local_folders_account (account_store);
-		mmc_account = modest_tny_account_store_get_mmc_folders_account (account_store);
-
-		if ((gpointer) local_account != (gpointer) folder_store &&
-		    (gpointer) mmc_account != (gpointer) folder_store) {
-			ModestProtocolType proto;
-			proto = modest_tny_account_get_protocol_type (TNY_ACCOUNT (folder_store));
-			if (proto == MODEST_PROTOCOL_REGISTRY_TYPE_INVALID) {
-				proto = MODEST_PROTOCOLS_STORE_MAILDIR;
-			}
-			is_local_account = FALSE;
-			/* New button should be dimmed on remote
-			   POP account root */
-			new_sensitive = (modest_protocol_registry_protocol_type_has_tag (modest_runtime_get_protocol_registry (),
-											 proto,
-											 MODEST_PROTOCOL_REGISTRY_STORE_HAS_FOLDERS));
-		}
-		g_object_unref (local_account);
-
-		/* It could not exist */
-		if (mmc_account)
-			g_object_unref (mmc_account);
-	}
-
-	/* Check the target folder rules */
-	if (TNY_IS_FOLDER (folder_store)) {
-		rules = modest_tny_folder_get_rules (TNY_FOLDER (folder_store));
-		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
-			ok_sensitive = FALSE;
-			new_sensitive = FALSE;
-			goto end;
-		}
-	}
-
-	/* Check if we're moving a folder */
-	if (MODEST_IS_MAIN_WINDOW (user_data)) {
-		/* Get the widgets */
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (user_data),
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		if (gtk_widget_is_focus (folder_view))
-			moving_folder = TRUE;
-	}
-
-	if (moving_folder) {
-		TnyFolderStore *moved_folder = NULL, *parent = NULL;
-
-		/* Get the folder to move */
-		moved_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-		/* Check that we're not moving to the same folder */
-		if (TNY_IS_FOLDER (moved_folder)) {
-			parent = tny_folder_get_folder_store (TNY_FOLDER (moved_folder));
-			if (parent == folder_store)
-				ok_sensitive = FALSE;
-			g_object_unref (parent);
-		}
-
-		if (ok_sensitive && TNY_IS_ACCOUNT (folder_store)) {
-			/* Do not allow to move to an account unless it's the
-			   local folders account */
-			if (!is_local_account)
-				ok_sensitive = FALSE;
-		}
-
-		if (ok_sensitive && (moved_folder == folder_store)) {
-			/* Do not allow to move to itself */
-			ok_sensitive = FALSE;
-		}
-		g_object_unref (moved_folder);
-	} else {
-		TnyFolder *src_folder = NULL;
-
-		/* Moving a message */
-		if (MODEST_IS_MSG_VIEW_WINDOW (user_data)) {
-
-			TnyHeader *header = NULL;
-			header = modest_msg_view_window_get_header
-				(MODEST_MSG_VIEW_WINDOW (user_data));
-			if (!TNY_IS_HEADER(header))
-				g_warning ("%s: could not get source header", __FUNCTION__);
-			else
-				src_folder = tny_header_get_folder (header);
-
-			if (header)
-				g_object_unref (header);
-		} else {
-			src_folder =
-				TNY_FOLDER (modest_folder_view_get_selected
-					    (MODEST_FOLDER_VIEW (folder_view)));
-		}
-
-		if (TNY_IS_FOLDER(src_folder)) {
-			/* Do not allow to move the msg to the same folder */
-			/* Do not allow to move the msg to an account */
-			if ((gpointer) src_folder == (gpointer) folder_store ||
-			    TNY_IS_ACCOUNT (folder_store))
-				ok_sensitive = FALSE;
-			g_object_unref (src_folder);
-		} else
-			g_warning ("%s: could not get source folder", __FUNCTION__);
-	}
-
- end:
-	/* Set sensitivity of the OK and NEW button */
-	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), GTK_RESPONSE_OK, ok_sensitive);
-	gtk_dialog_set_response_sensitive (GTK_DIALOG (dialog), MODEST_GTK_RESPONSE_NEW_FOLDER, new_sensitive);
-}
-#endif
 
 static void
 on_move_to_dialog_response (GtkDialog *dialog,
@@ -4756,24 +4532,6 @@ move_to_cb (ModestMailOperation *mail_op,
 			/* No more messages to view, so close this window */
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW(self));
 		}
-#ifndef MODEST_TOOLKIT_HILDON2
-	} else if (MODEST_IS_MAIN_WINDOW (object) &&
-		   gtk_tree_row_reference_valid (helper->reference)) {
-		GtkWidget *header_view;
-		GtkTreePath *path;
-		GtkTreeSelection *sel;
-
-		header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-		path = gtk_tree_row_reference_get_path (helper->reference);
-		/* We need to unselect the previous one
-		   because we could be copying instead of
-		   moving */
-		gtk_tree_selection_unselect_all (sel);
-		gtk_tree_selection_select_path (sel, path);
-		gtk_tree_path_free (path);
-#endif
 	}
 	g_object_unref (object);
 
@@ -4790,20 +4548,7 @@ folder_move_to_cb (ModestMailOperation *mail_op,
 	GObject *object;
 
 	object = modest_mail_operation_get_source (mail_op);
-#ifndef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_MAIN_WINDOW (object)) {
-		GtkWidget *folder_view;
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(object),
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		g_object_ref (folder_view);
-		g_object_unref (object);
-		move_to_cb (mail_op, user_data);
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view), new_folder, FALSE);
-		g_object_unref (folder_view);
-	} else {
-#else
-		{
-#endif
+	{
 		move_to_cb (mail_op, user_data);
 	}
 }
@@ -4823,27 +4568,6 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 	const GError *error;
 	TnyAccount *account = NULL;
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	ModestWindow *main_window = NULL;
-
-	/* Disable next automatic folder selection */
-	main_window = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-							 FALSE); /* don't create */
-
-	/* Show notification dialog only if the main window exists */
-	if (main_window) {
-		GtkWidget *folder_view = NULL;
-
-		folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (main_window),
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-		modest_folder_view_disable_next_folder_selection (MODEST_FOLDER_VIEW(folder_view));
-
-		if (user_data && TNY_IS_FOLDER (user_data)) {
-			modest_folder_view_select_folder (MODEST_FOLDER_VIEW (folder_view),
-							  TNY_FOLDER (user_data), FALSE);
-		}
-	}
-#endif
 	win = modest_mail_operation_get_source (mail_op);
 	error = modest_mail_operation_get_error (mail_op);
 
@@ -4865,150 +4589,6 @@ modest_ui_actions_move_folder_error_handler (ModestMailOperation *mail_op,
 		g_object_unref (win);
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-static void
-open_msg_for_purge_cb (ModestMailOperation *mail_op,
-		       TnyHeader *header,
-		       gboolean canceled,
-		       TnyMsg *msg,
-		       GError *err,
-		       gpointer user_data)
-{
-	TnyList *parts;
-	TnyIterator *iter;
-	gint pending_purges = 0;
-	gboolean some_purged = FALSE;
-	ModestWindow *win = MODEST_WINDOW (user_data);
-	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
-
-	/* If there was any error */
-	if (!modest_ui_actions_msg_retrieval_check (mail_op, header, msg)) {
-		modest_window_mgr_unregister_header (mgr, header);
-		return;
-	}
-
-	/* Once the message has been retrieved for purging, we check if
-	 * it's all ok for purging */
-
-	parts = tny_simple_list_new ();
-	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
-	iter = tny_list_create_iterator (parts);
-
-	while (!tny_iterator_is_done (iter)) {
-		TnyMimePart *part;
-		part = TNY_MIME_PART (tny_iterator_get_current (iter));
-		if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part))) {
-			if (tny_mime_part_is_purged (part))
-				some_purged = TRUE;
-			else
-				pending_purges++;
-		}
-
-		if (part)
-			g_object_unref (part);
-
-		tny_iterator_next (iter);
-	}
-	g_object_unref (iter);
-
-
-	if (pending_purges>0) {
-		gint response;
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),_("mcen_nc_purge_file_text_inbox"));
-
-		if (response == GTK_RESPONSE_OK) {
-			GtkWidget *info;
-			info =
-				modest_platform_animation_banner (GTK_WIDGET (win), NULL, _("mcen_me_inbox_remove_attachments"));
-			iter = tny_list_create_iterator (parts);
-			while (!tny_iterator_is_done (iter)) {
-				TnyMimePart *part;
-
-				part = TNY_MIME_PART (tny_iterator_get_current (iter));
-				if (part && (tny_mime_part_is_attachment (part) || TNY_IS_MSG (part)))
-					tny_mime_part_set_purged (part);
-
-				if (part)
-					g_object_unref (part);
-
-				tny_iterator_next (iter);
-			}
-			g_object_unref (iter);
-
-			tny_msg_rewrite_cache (msg);
-
-			gtk_widget_destroy (info);
-		}
-	}
-
-	modest_window_mgr_unregister_header (mgr, header);
-
-	g_object_unref (parts);
-}
-
-static void
-modest_ui_actions_on_main_window_remove_attachments (GtkAction *action,
-						     ModestMainWindow *win)
-{
-	GtkWidget *header_view;
-	TnyList *header_list;
-	TnyHeader *header;
-	TnyHeaderFlags flags;
-	ModestWindow *msg_view_window =  NULL;
-	gboolean found;
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
-
-	header_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-
-	header_list = modest_header_view_get_selected_headers (MODEST_HEADER_VIEW (header_view));
-	if (!header_list) {
-		g_warning ("%s: no header selected", __FUNCTION__);
-		return;
-	}
-
-	if (tny_list_get_length (header_list) == 1) {
-		TnyIterator *iter = tny_list_create_iterator (header_list);
-		header = TNY_HEADER (tny_iterator_get_current (iter));
-		g_object_unref (iter);
-	} else
-		return;
-
-	if (!header || !TNY_IS_HEADER(header)) {
-		g_warning ("%s: header is not valid", __FUNCTION__);
-		return;
-	}
-
-	found = modest_window_mgr_find_registered_header (modest_runtime_get_window_mgr (),
-							  header, &msg_view_window);
-	flags = tny_header_get_flags (header);
-	if (!(flags & TNY_HEADER_FLAG_CACHED))
-		return;
-	if (found) {
-		if (msg_view_window != NULL)
-			modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (msg_view_window), TRUE);
-		else {
-			/* do nothing; uid was registered before, so window is probably on it's way */
-			g_debug ("header %p has already been registered", header);
-		}
-	} else {
-		ModestMailOperation *mail_op = NULL;
-		modest_window_mgr_register_header (modest_runtime_get_window_mgr (), header, NULL);
-		mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT (win),
-									 modest_ui_actions_disk_operations_error_handler,
-									 NULL, NULL);
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-		modest_mail_operation_get_msg (mail_op, header, FALSE, open_msg_for_purge_cb, win);
-
-		g_object_unref (mail_op);
-	}
-	if (header)
-		g_object_unref (header);
-	if (header_list)
-		g_object_unref (header_list);
-}
-#endif
 
 /*
  * Checks if we need a connection to do the transfer and if the user
@@ -5170,21 +4750,6 @@ xfer_messages_performer  (gboolean canceled,
 
 	movehelper = g_new0 (MoveToHelper, 1);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	movehelper->banner = modest_platform_animation_banner (GTK_WIDGET (win), NULL,
-							       _CS("ckct_nw_pasting"));
-	if (movehelper->banner != NULL)  {
-		g_object_ref (movehelper->banner);
-		gtk_widget_show (GTK_WIDGET (movehelper->banner));
-	}
-
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		GtkWidget *header_view =
-			modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(win),
-							     MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-		movehelper->reference = get_next_after_selected_headers (MODEST_HEADER_VIEW (header_view));
-	}
-#endif
 
 	/* Perform the mail operation */
 	mail_op = modest_mail_operation_new_with_error_handling (G_OBJECT(win),
@@ -5272,12 +4837,6 @@ on_move_folder_cb (gboolean canceled,
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 					 mail_op);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW(info->folder_view),
-						  TNY_FOLDER (info->dst_folder), TRUE);
-	}
-#endif
 	modest_mail_operation_xfer_folder (mail_op,
 			TNY_FOLDER (info->src_folder),
 			info->dst_folder,
@@ -5303,77 +4862,6 @@ get_account_from_folder_store (TnyFolderStore *folder_store)
 	else
 		return tny_folder_get_account (TNY_FOLDER (folder_store));
 }
-
-#ifndef MODEST_TOOLKIT_HILDON2
-/*
- * UI handler for the "Move to" action when invoked from the
- * ModestMainWindow
- */
-static void
-modest_ui_actions_on_main_window_move_to (GtkAction *action,
-					  GtkWidget *folder_view,
-					  TnyFolderStore *dst_folder,
-					  ModestMainWindow *win)
-{
-	ModestHeaderView *header_view = NULL;
-	TnyFolderStore *src_folder = NULL;
-
-	g_return_if_fail (MODEST_IS_MAIN_WINDOW (win));
-
-	/* Get the source folder */
-	src_folder = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-	/* Get header view */
-	header_view = (ModestHeaderView *)
-		modest_main_window_get_child_widget (win, MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-
-	/* Get folder or messages to transfer */
-	if (gtk_widget_is_focus (folder_view)) {
-		gboolean do_xfer = TRUE;
-
-		/* Allow only to transfer folders to the local root folder */
-		if (TNY_IS_ACCOUNT (dst_folder) &&
-		    !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (dst_folder) &&
-		    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (dst_folder))) {
-			do_xfer = FALSE;
-		} else if (!TNY_IS_FOLDER (src_folder)) {
-			g_warning ("%s: src_folder is not a TnyFolder.\n", __FUNCTION__);
-			do_xfer = FALSE;
-		}
-
-		if (do_xfer) {
-			MoveFolderInfo *info = g_new0 (MoveFolderInfo, 1);
-			DoubleConnectionInfo *connect_info = g_slice_new (DoubleConnectionInfo);
-
-			info->src_folder = g_object_ref (src_folder);
-			info->dst_folder = g_object_ref (dst_folder);
-			info->delete_original = TRUE;
-			info->folder_view = folder_view;
-
-			connect_info->callback = on_move_folder_cb;
-			connect_info->dst_account = get_account_from_folder_store (TNY_FOLDER_STORE (dst_folder));
-			connect_info->data = info;
-
-			modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
-								   TNY_FOLDER_STORE (src_folder),
-								   connect_info);
-		}
-	} else if (gtk_widget_is_focus (GTK_WIDGET(header_view))) {
-		TnyList *headers;
-
-		headers = modest_header_view_get_selected_headers(header_view);
-
-		/* Transfer the messages */
-		modest_ui_actions_transfer_messages_helper (GTK_WINDOW (win), TNY_FOLDER (src_folder),
-							    headers, TNY_FOLDER (dst_folder));
-
-		g_object_unref (headers);
-	}
-
-	/* Frees */
-	g_object_unref (src_folder);
-}
-#endif
 
 #ifdef MODEST_TOOLKIT_HILDON2
 /*
@@ -5532,16 +5020,6 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 
 	g_return_val_if_fail (MODEST_IS_WINDOW (win), FALSE);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Get the main window if exists */
-	ModestMainWindow *main_window;
-	if (MODEST_IS_MAIN_WINDOW (win))
-		main_window = MODEST_MAIN_WINDOW (win);
-	else
-		main_window =
-			MODEST_MAIN_WINDOW (modest_window_mgr_get_main_window (modest_runtime_get_window_mgr (),
-									       FALSE)); /* don't create */
-#endif
 
 	list_to_move = modest_platform_get_list_to_move (MODEST_WINDOW (win));
 
@@ -5652,13 +5130,7 @@ void
 modest_ui_actions_remove_attachments (GtkAction *action,
 				      ModestWindow *window)
 {
-#ifndef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_MAIN_WINDOW (window)) {
-		modest_ui_actions_on_main_window_remove_attachments (action, MODEST_MAIN_WINDOW (window));
-	} else if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
-#else
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
-#endif
 		modest_msg_view_window_remove_attachments (MODEST_MSG_VIEW_WINDOW (window), FALSE);
 	} else {
 		/* not supported window for this action */
@@ -5704,31 +5176,6 @@ modest_ui_actions_on_csm_help (GtkAction *action,
 			       GtkWindow *win)
 {
 	/* Help app is not available at all in fremantle */
-#ifndef MODEST_TOOLKIT_HILDON2
-
-	const gchar* help_id = NULL;
-	GtkWidget *folder_view;
-	TnyFolderStore *folder_store;
-
-	g_return_if_fail (win && MODEST_IS_MAIN_WINDOW (win));
-
-	/* Get selected folder */
-	folder_view = modest_main_window_get_child_widget (MODEST_MAIN_WINDOW (win),
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-	/* Switch help_id */
-	if (folder_store && TNY_IS_FOLDER (folder_store))
-		help_id = modest_tny_folder_get_help_id (TNY_FOLDER (folder_store));
-
-	if (folder_store)
-		g_object_unref (folder_store);
-
-        if (help_id)
-                modest_platform_show_help (GTK_WINDOW (win), help_id);
-	else
-		modest_ui_actions_on_help (action, win);
-#endif
 }
 
 static void
@@ -5967,60 +5414,6 @@ modest_ui_actions_on_toggle_find_in_page (GtkAction *action,
 						       active);
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-static void
-on_send_receive_finished (ModestMailOperation  *mail_op,
-			   gpointer user_data)
-{
-	GtkWidget *header_view, *folder_view;
-	TnyFolderStore *folder_store;
-	ModestMainWindow *main_win = MODEST_MAIN_WINDOW (user_data);
-
-	/* Set send/receive operation finished */
-	modest_main_window_notify_send_receive_completed (main_win);
-
-	/* Don't refresh the current folder if there were any errors */
-	if (modest_mail_operation_get_status (mail_op) !=
-	    MODEST_MAIL_OPERATION_STATUS_SUCCESS)
-		return;
-
-	/* Refresh the current folder if we're viewing a window. We do
-	   this because the user won't be able to see the new mails in
-	   the selected folder after a Send&Receive because it only
-	   performs a poke_status, i.e, only the number of read/unread
-	   messages is updated, but the new headers are not
-	   downloaded */
-	folder_view = modest_main_window_get_child_widget (main_win,
-							   MODEST_MAIN_WINDOW_WIDGET_TYPE_FOLDER_VIEW);
-	if (!folder_view)
-		return;
-
-	folder_store = modest_folder_view_get_selected (MODEST_FOLDER_VIEW (folder_view));
-
-	/* Do not need to refresh INBOX again because the
-	   update_account does it always automatically */
-	if (folder_store && TNY_IS_FOLDER (folder_store) &&
-	    tny_folder_get_folder_type (TNY_FOLDER (folder_store)) != TNY_FOLDER_TYPE_INBOX) {
-		ModestMailOperation *refresh_op;
-
-		header_view = modest_main_window_get_child_widget (main_win,
-								   MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW);
-
-		/* We do not need to set the contents style
-		   because it hasn't changed. We also do not
-		   need to save the widget status. Just force
-		   a refresh */
-		refresh_op = modest_mail_operation_new (G_OBJECT (main_win));
-		modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), refresh_op);
-		modest_mail_operation_refresh_folder (refresh_op, TNY_FOLDER (folder_store),
-						      folder_refreshed_cb, main_win);
-		g_object_unref (refresh_op);
-	}
-
-	if (folder_store)
-		g_object_unref (folder_store);
-}
-#endif
 
 void
 modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,

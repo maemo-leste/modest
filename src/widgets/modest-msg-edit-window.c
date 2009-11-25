@@ -359,7 +359,12 @@ modest_msg_edit_window_get_type (void)
 			(GInstanceInitFunc) modest_msg_edit_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
+		my_type = g_type_register_static (
+#ifdef MODEST_TOOLKIT_HILDON2
+						  MODEST_TYPE_HILDON2_WINDOW,
+#else
+						  MODEST_TYPE_WINDOW,
+#endif
 		                                  "ModestMsgEditWindow",
 		                                  &my_info, 0);
 
@@ -462,9 +467,10 @@ modest_msg_edit_window_init (ModestMsgEditWindow *obj)
 	}
 
 	init_window (obj);
-	
+#ifdef MODEST_TOOLKIT_HILDON2	
 	hildon_program_add_window (hildon_program_get_instance(),
 				   HILDON_WINDOW(obj));
+#endif
 }
 
 static gchar *
@@ -822,7 +828,6 @@ init_window (ModestMsgEditWindow *obj)
 	ModestMsgEditWindowPrivate *priv;
 	GtkActionGroup *action_group;
 	ModestWindowPrivate *parent_priv;
-	GdkPixbuf *window_icon = NULL;
 	GError *error = NULL;
 
 	GtkSizeGroup *title_size_group;
@@ -908,12 +913,14 @@ init_window (ModestMsgEditWindow *obj)
 								      priv->from_field);
 		gtk_widget_show (from_caption);
 	} else {
+#ifdef MODEST_TOOLKIT_HILDON2
 		modest_toolkit_utils_set_hbutton_layout (title_size_group, NULL, 
 							 _("mail_va_from"), priv->from_field);
 		hildon_button_set_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5, 1.0, 1.0);
 		hildon_button_set_title_alignment (HILDON_BUTTON (priv->from_field), 0.0, 0.5);
 		hildon_button_set_value_alignment (HILDON_BUTTON (priv->from_field), 1.0, 0.5);
 		from_caption = priv->from_field;
+#endif
 	}
 
 	priv->to_field      = modest_recpt_editor_new ();
@@ -929,8 +936,10 @@ init_window (ModestMsgEditWindow *obj)
 	gtk_entry_set_max_length (GTK_ENTRY (priv->subject_field) ,SUBJECT_MAX_LENGTH);
 	g_object_set (G_OBJECT (priv->subject_field), "truncate-multiline", TRUE, NULL);
 	modest_entry_set_hint (priv->subject_field, _("mail_va_no_subject"));
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->subject_field), 
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
+#endif
 	gtk_box_pack_start (GTK_BOX (priv->subject_box), priv->subject_field, TRUE, TRUE, 0);
 	priv->attachments_view = modest_attachments_view_new (NULL);
 	modest_attachments_view_set_style (MODEST_ATTACHMENTS_VIEW (priv->attachments_view),
@@ -953,14 +962,26 @@ init_window (ModestMsgEditWindow *obj)
 											  _("mail_va_attachment"), 
 											  FALSE,
 											  priv->attachments_view,
+#ifdef MODEST_TOOLKIT_HILDON2
 											  HILDON_SIZE_AUTO_WIDTH |
-											  HILDON_SIZE_AUTO_HEIGHT);
+											  HILDON_SIZE_AUTO_HEIGHT
+#else
+											  0
+#endif
+											  );
 	attachments_label = modest_toolkit_utils_captioned_get_label_widget (priv->attachments_caption);
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (attachments_label, HILDON_SIZE_AUTO_HEIGHT);
+#endif
 
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->send_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
 	send_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_MAIL_SEND, HILDON_ICON_SIZE_FINGER);
+#else
+	priv->send_button = gtk_button_new ();
+	send_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_MAIL_SEND, GTK_ICON_SIZE_BUTTON);
+#endif
 	gtk_container_add (GTK_CONTAINER (priv->send_button), send_icon);
 	gtk_widget_set_size_request (GTK_WIDGET (priv->send_button), 148, -1);
 
@@ -970,7 +991,9 @@ init_window (ModestMsgEditWindow *obj)
 	priv->brand_icon = gtk_image_new ();
 	gtk_misc_set_alignment (GTK_MISC (priv->brand_icon), 0.5, 0.5);
 	priv->brand_label = gtk_label_new (NULL);
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_helper_set_logical_font (priv->brand_label, "SmallSystemFont");
+#endif
 	gtk_misc_set_alignment (GTK_MISC (priv->brand_label), 0.0, 0.5);
 	gtk_widget_set_no_show_all (priv->brand_icon, TRUE);
 	gtk_widget_set_no_show_all (priv->brand_label, TRUE);
@@ -1043,12 +1066,6 @@ init_window (ModestMsgEditWindow *obj)
 
 	gtk_box_pack_start (GTK_BOX (window_box), priv->scrollable, TRUE, TRUE, 0);
 
-	/* Set window icon */
-	window_icon = modest_platform_get_icon (MODEST_APP_MSG_EDIT_ICON, MODEST_ICON_SIZE_BIG); 
-	if (window_icon) {
-		gtk_window_set_icon (GTK_WINDOW (obj), window_icon);
-		g_object_unref (window_icon);
-	}	
 }
 	
 static void
@@ -1187,7 +1204,7 @@ pixbuf_from_stream (TnyStream *stream,
 	}
 	g_signal_connect (G_OBJECT (loader), "size-prepared", G_CALLBACK (pixbuf_size_prepared), self);
 
-	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+	modest_window_show_progress (MODEST_WINDOW (self), TRUE);
 
 	tny_stream_reset (TNY_STREAM (stream));
 	while (!tny_stream_is_eos (TNY_STREAM (stream))) {
@@ -1202,7 +1219,7 @@ pixbuf_from_stream (TnyStream *stream,
 		while (gtk_events_pending ())
 			gtk_main_iteration ();
 	}
-	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), FALSE);
+	modest_window_show_progress (MODEST_WINDOW (self), FALSE);
 
 	gdk_pixbuf_loader_close (loader, &error);
 
@@ -1520,7 +1537,13 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	/* Toolbar */
 	parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar");
 	gtk_toolbar_set_show_arrow (GTK_TOOLBAR (parent_priv->toolbar), FALSE);
-	gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
+	gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), 
+#ifdef MODEST_TOOLKIT_HILDON2
+				   HILDON_ICON_SIZE_FINGER
+#else
+				   GTK_ICON_SIZE_LARGE_TOOLBAR
+#endif
+				   );
 	modest_window_add_toolbar (MODEST_WINDOW (window), GTK_TOOLBAR (parent_priv->toolbar));
 
 	/* Font color placeholder */
@@ -1529,7 +1552,11 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 
 	/* font color */
 	priv->font_color_toolitem = GTK_WIDGET (gtk_tool_item_new ());
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->font_color_button = modest_color_button_new ();
+#else
+	priv->font_color_button = gtk_color_button_new ();
+#endif
 	gtk_widget_set_size_request (priv->font_color_button, -1, 48);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_toolitem, GTK_CAN_FOCUS);
 	GTK_WIDGET_UNSET_FLAGS (priv->font_color_button, GTK_CAN_FOCUS);
@@ -1554,7 +1581,9 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_label_set_markup (GTK_LABEL (priv->size_tool_button_label), markup);
 	gtk_misc_set_alignment (GTK_MISC (priv->size_tool_button_label), 1.0, 0.5);
 	g_free (markup);
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_helper_set_logical_font (priv->size_tool_button_label, "LargeSystemFont");
+#endif
 	hbox = gtk_hbox_new (MODEST_MARGIN_DEFAULT, FALSE);
 	gtk_box_pack_start (GTK_BOX (hbox), priv->size_tool_button_label, TRUE, TRUE, 0);
 	arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_NONE);
@@ -1592,7 +1621,9 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gtk_label_set_markup (GTK_LABEL (priv->font_tool_button_label), markup);
 	gtk_misc_set_alignment (GTK_MISC (priv->font_tool_button_label), 1.0, 0.5);
 	g_free(markup);
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_helper_set_logical_font (priv->font_tool_button_label, "LargeSystemFont");
+#endif
 	hbox = gtk_hbox_new (MODEST_MARGIN_DEFAULT, FALSE);
 	gtk_box_pack_start (GTK_BOX (hbox), priv->font_tool_button_label, TRUE, TRUE, 0);
 	arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_NONE);
@@ -2166,7 +2197,11 @@ text_buffer_refresh_attributes (WPTextBuffer *buffer, ModestMsgEditWindow *windo
 	g_signal_handlers_block_by_func (G_OBJECT (priv->font_color_button), 
 					 G_CALLBACK (modest_msg_edit_window_color_button_change),
 					 window);
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_color_button_set_color (HILDON_COLOR_BUTTON (priv->font_color_button), & (buffer_format->color));
+#else
+	gtk_color_button_set_color (GTK_COLOR_BUTTON (priv->font_color_button), & (buffer_format->color));
+#endif
 	g_signal_handlers_unblock_by_func (G_OBJECT (priv->font_color_button), 
 					   G_CALLBACK (modest_msg_edit_window_color_button_change),
 					   window);
@@ -2227,6 +2262,7 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 	wp_text_buffer_get_attributes (WP_TEXT_BUFFER (priv->text_buffer), buffer_format, FALSE);
 
+#ifdef MODEST_TOOLKIT_HILDON2		
 	dialog = hildon_color_chooser_new ();
 	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog), &(buffer_format->color));
 	g_free (buffer_format);
@@ -2238,29 +2274,25 @@ modest_msg_edit_window_select_color (ModestMsgEditWindow *window)
 					      (gpointer) &col);
 	}
 	gtk_widget_destroy (dialog);
-}
+#else
+	dialog = gtk_color_selection_dialog_new (NULL);
+	GtkWidget *selection;
 
+	g_object_get (G_OBJECT (dialog), "color_selection", &selection, NULL);
+	gtk_color_selection_set_current_color (GTK_COLOR_SELECTION (selection), &(buffer_format->color));
+	gtk_color_selection_set_previous_color (GTK_COLOR_SELECTION (selection), &(buffer_format->color));
+	g_free (buffer_format);
 
-void
-modest_msg_edit_window_select_background_color (ModestMsgEditWindow *window)
-{
-	ModestMsgEditWindowPrivate *priv;
-	GtkWidget *dialog = NULL;
-	GdkColor *old_color = NULL;
-	
-	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
-	old_color = (GdkColor*)wp_text_buffer_get_background_color (WP_TEXT_BUFFER (priv->text_buffer));
-	
-	dialog = hildon_color_chooser_new ();
-	hildon_color_chooser_set_color (HILDON_COLOR_CHOOSER (dialog),(GdkColor*)old_color);
-
-	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) { 
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
 		GdkColor col;
-		hildon_color_chooser_get_color (HILDON_COLOR_CHOOSER(dialog), &col);
-		wp_text_buffer_set_background_color (WP_TEXT_BUFFER (priv->text_buffer), &col);
+		gtk_color_selection_get_current_color (GTK_COLOR_SELECTION(selection), &col);
+		wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR,
+					      (gpointer) &col);
 	}
 	gtk_widget_destroy (dialog);
+#endif
 }
+
 
 
 static TnyStream*
@@ -2746,7 +2778,7 @@ modest_msg_edit_window_color_button_change (ModestMsgEditWindow *window,
 
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
-	hildon_color_button_get_color (HILDON_COLOR_BUTTON(priv->font_color_button), &new_color);
+	gtk_color_button_get_color (GTK_COLOR_BUTTON(priv->font_color_button), &new_color);
 
 	wp_text_buffer_set_attribute (WP_TEXT_BUFFER (priv->text_buffer), WPT_FORECOLOR, (gpointer) &new_color);
 
@@ -2757,6 +2789,7 @@ static void
 font_size_clicked (GtkToolButton *button,
 		   ModestMsgEditWindow *window)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *selector, *dialog;
 	
@@ -2803,13 +2836,14 @@ font_size_clicked (GtkToolButton *button,
 	gtk_widget_destroy (dialog);
 
 	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
-
+#endif
 }
 
 static void
 font_face_clicked (GtkToolButton *button,
 		   ModestMsgEditWindow *window)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
 	ModestMsgEditWindowPrivate *priv;
 	GtkWidget *selector, *dialog;
 	GtkCellRenderer *renderer;
@@ -2857,7 +2891,7 @@ font_face_clicked (GtkToolButton *button,
 	gtk_widget_destroy (dialog);
 
 	gtk_widget_grab_focus (GTK_WIDGET (priv->msg_body));
-
+#endif
 }
 
 void
@@ -2995,7 +3029,12 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 		case TNY_HEADER_FLAG_HIGH_PRIORITY:
 			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon),
 						      MODEST_HEADER_ICON_HIGH, 
-						      HILDON_ICON_SIZE_SMALL);
+#ifdef MODEST_TOOLKIT_HILDON2
+						      HILDON_ICON_SIZE_SMALL
+#else
+						      GTK_ICON_SIZE_BUTTON
+#endif
+);
 			gtk_widget_show (priv->priority_icon);
 			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager,
 								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityHighMenu");
@@ -3003,7 +3042,12 @@ modest_msg_edit_window_set_priority_flags (ModestMsgEditWindow *window,
 		case TNY_HEADER_FLAG_LOW_PRIORITY:
 			gtk_image_set_from_icon_name (GTK_IMAGE (priv->priority_icon),
 						      MODEST_HEADER_ICON_LOW,
-						      HILDON_ICON_SIZE_SMALL);
+#ifdef MODEST_TOOLKIT_HILDON2
+						      HILDON_ICON_SIZE_SMALL
+#else
+						      GTK_ICON_SIZE_BUTTON
+#endif
+);
 			gtk_widget_show (priv->priority_icon);
 			priority_action = gtk_ui_manager_get_action (parent_priv->ui_manager,
 								     "/MenuBar/ToolsMenu/MessagePriorityMenu/MessagePriorityLowMenu");
@@ -3048,11 +3092,8 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 			break;
 		case MODEST_FILE_FORMAT_PLAIN_TEXT:
 		{
-			GtkWidget *dialog;
 			gint response;
-			dialog = hildon_note_new_confirmation (NULL, _("emev_nc_formatting_lost"));
-			response = gtk_dialog_run (GTK_DIALOG (dialog));
-			gtk_widget_destroy (dialog);
+			response = modest_platform_run_confirmation_dialog (NULL, _("emev_nc_formatting_lost"));
 			if (response == GTK_RESPONSE_OK) {
 				wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), FALSE);
 				if (parent_priv->toolbar)
@@ -3073,6 +3114,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 void
 modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *dialog;
 	ModestMsgEditWindowPrivate *priv;
 	WPTextBufferFormat oldfmt, fmt;
@@ -3206,6 +3248,7 @@ modest_msg_edit_window_select_font (ModestMsgEditWindow *window)
 	gtk_widget_destroy (dialog);
 	
 	gtk_widget_grab_focus(GTK_WIDGET(priv->msg_body));
+#endif
 }
 
 void
@@ -3659,9 +3702,11 @@ body_insert_text (GtkTextBuffer *buffer,
 	}
 	if (line > MAX_BODY_LINES || offset + utf8_len > MAX_BODY_LENGTH) {
 		if (priv->max_chars_banner == NULL) {
+#ifdef MODEST_TOOLKIT_HILDON2
 			priv->max_chars_banner = hildon_banner_show_information (GTK_WIDGET (window), NULL, 
 										 _CS("ckdg_ib_maximum_characters_reached"));
 			g_object_weak_ref (G_OBJECT (priv->max_chars_banner), (GWeakNotify) max_chars_banner_unref, window);
+#endif
 		}
 	}
 }
@@ -4223,6 +4268,7 @@ on_format_toggle (GtkToggleButton *button,
 static void
 modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 {
+#ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *dialog;
 	GtkWidget *align;
 	GtkWidget *vbox;
@@ -4359,6 +4405,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	gtk_widget_destroy (dialog);
 	g_slist_free (helper.priority_group);
+#endif
 }
 
 static void
@@ -4408,6 +4455,7 @@ setup_menu (ModestMsgEditWindow *self)
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_undo),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_undo));
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->cc_button = hildon_check_button_new (0);
 	gtk_button_set_label (GTK_BUTTON (priv->cc_button), _("mcen_me_editor_showcc"));
 	hildon_check_button_set_active (HILDON_CHECK_BUTTON (priv->cc_button),
@@ -4424,6 +4472,7 @@ setup_menu (ModestMsgEditWindow *self)
 					NULL);
 	g_signal_connect (G_OBJECT (priv->bcc_button), "toggled",
 			  G_CALLBACK (on_bcc_button_toggled), (gpointer) self);
+#endif
 
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_editor_attach_inlineimage"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_insert_image),
@@ -4463,7 +4512,11 @@ _create_addressbook_box (GtkSizeGroup *title_size_group, GtkSizeGroup *value_siz
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 0.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, 0, MODEST_MARGIN_DEFAULT);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	abook_button = hildon_gtk_button_new (HILDON_SIZE_FINGER_HEIGHT);
+#else
+	abook_button = gtk_button_new ();
+#endif
 	label_widget = gtk_label_new (label);
 	gtk_misc_set_alignment (GTK_MISC (label_widget), 0.0, 0.5);
 	gtk_container_add (GTK_CONTAINER (abook_button), label_widget);

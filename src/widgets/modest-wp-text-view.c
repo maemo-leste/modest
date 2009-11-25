@@ -61,8 +61,11 @@ modest_wp_text_view_button_press_event (GtkWidget        *widget,
 {
     ModestWpTextViewPrivate *priv = MODEST_WP_TEXT_VIEW_GET_PRIVATE (widget);
 
-    if (GTK_TEXT_VIEW (widget)->editable &&
-        hildon_gtk_im_context_filter_event (GTK_TEXT_VIEW (widget)->im_context, (GdkEvent*)event)) {
+    if (GTK_TEXT_VIEW (widget)->editable 
+#ifdef MAEMO_CHANGES
+	&& hildon_gtk_im_context_filter_event (GTK_TEXT_VIEW (widget)->im_context, (GdkEvent*)event)
+#endif
+	) {
         GTK_TEXT_VIEW (widget)->need_im_reset = TRUE;
         return TRUE;
     }
@@ -86,8 +89,11 @@ modest_wp_text_view_button_release_event (GtkWidget        *widget,
     GtkTextIter iter;
     gint x, y;
 
-    if (text_view->editable &&
-        hildon_gtk_im_context_filter_event (text_view->im_context, (GdkEvent*)event)) {
+    if (text_view->editable
+#ifdef MAEMO_CHANGES
+        && hildon_gtk_im_context_filter_event (text_view->im_context, (GdkEvent*)event)
+#endif
+	) {
         text_view->need_im_reset = TRUE;
         return TRUE;
     }
