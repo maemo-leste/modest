@@ -63,7 +63,7 @@ struct _ModestFolderWindowClass {
 #ifdef MODEST_TOOLKIT_HILDON2
 	ModestHildon2WindowClass parent_class;
 #else
-	ModestWindow parent_class;
+	ModestWindowClass parent_class;
 #endif
 };
 

@@ -96,10 +96,9 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_widget_show (priv->main_vbox);
 
 	priv->notebook = gtk_notebook_new ();
-	gtk_notebook_set_show_tabs (GTK_NOTEBOOK (priv->notebook), FALSE);
 	gtk_widget_show (priv->notebook);
 	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->notebook, TRUE, TRUE, 0);
-
+	gtk_container_add (GTK_CONTAINER (obj), priv->main_vbox);
 }
 
 static void

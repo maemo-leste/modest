@@ -52,7 +52,7 @@ struct _ModestShell {
 };
 
 struct _ModestShellClass {
-	GtkWindow parent_class;
+	GtkWindowClass parent_class;
 };
 
 

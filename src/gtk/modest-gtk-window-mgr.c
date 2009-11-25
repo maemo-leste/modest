@@ -200,6 +200,7 @@ modest_gtk_window_mgr_instance_init (ModestGtkWindowMgr *obj)
 
 	priv->modal_handler_uids = NULL;
 	priv->shell = modest_shell_new ();
+	gtk_widget_show (priv->shell);
 }
 
 static void
@@ -416,7 +417,6 @@ modest_gtk_window_mgr_register_window (ModestWindowMgr *self,
 	ModestWindow *current_top;
 
 	g_return_val_if_fail (MODEST_IS_GTK_WINDOW_MGR (self), FALSE);
-	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
 
 	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
 

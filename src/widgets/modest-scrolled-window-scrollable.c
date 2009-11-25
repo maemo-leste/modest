@@ -84,7 +84,6 @@ G_DEFINE_TYPE_EXTENDED    (ModestScrolledWindowScrollable,
 			   0,
 			   {
 			     G_IMPLEMENT_INTERFACE (MODEST_TYPE_SCROLLABLE, modest_scrollable_iface_init);
-			     g_type_interface_add_prerequisite (g_define_type_id, GTK_TYPE_BIN);
 			   }
 			   );
 
@@ -140,13 +139,13 @@ modest_scrolled_window_scrollable_class_init (ModestScrolledWindowScrollableClas
 
 	g_object_class_install_property (gobject_class,
 					 PROP_MOVEMENT_MODE,
-					 g_param_spec_enum ("movement_mode",
-							    "Directions scroll is allowed",
-							    "Movements allowed in the scrollable",
-							    MODEST_TYPE_MOVEMENT_MODE,
-							    MODEST_MOVEMENT_MODE_VERTICAL,
-							    G_PARAM_READWRITE |
-							    G_PARAM_CONSTRUCT));
+					 g_param_spec_flags ("movement_mode",
+							     "Directions scroll is allowed",
+							     "Movements allowed in the scrollable",
+							     MODEST_TYPE_MOVEMENT_MODE,
+							     MODEST_MOVEMENT_MODE_VERTICAL,
+							     G_PARAM_READWRITE |
+							     G_PARAM_CONSTRUCT));
 
 	g_object_class_install_property (gobject_class,
 					 PROP_HORIZONTAL_MAX_OVERSHOOT,

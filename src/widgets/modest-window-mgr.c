@@ -445,11 +445,12 @@ modest_window_mgr_register_help_id (ModestWindowMgr *self, GtkWindow *win, const
 	/* we don't need 'self', but for API consistency... */
 	g_return_if_fail (self && MODEST_IS_WINDOW_MGR(self));
 
-	g_return_if_fail (win && GTK_IS_WINDOW(win));
 	g_return_if_fail (help_id);
-	
-	g_object_set_data_full (G_OBJECT(win), MODEST_WINDOW_HELP_ID_PARAM,
-				g_strdup(help_id), g_free);
+
+	if (GTK_IS_WINDOW (win)) {
+		g_object_set_data_full (G_OBJECT(win), MODEST_WINDOW_HELP_ID_PARAM,
+					g_strdup(help_id), g_free);
+	}
 }
 
 
@@ -566,7 +567,7 @@ modest_window_mgr_register_window_default (ModestWindowMgr *self,
 	ModestWindowMgrPrivate *priv;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
-	g_return_val_if_fail (GTK_IS_WINDOW (window), FALSE);
+	g_return_val_if_fail (MODEST_IS_WINDOW (window), FALSE);
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
 

@@ -217,13 +217,13 @@ modest_scrollable_base_init (gpointer g_iface)
 									G_PARAM_CONSTRUCT));
 
 		g_object_interface_install_property (g_iface,
-						     g_param_spec_enum ("movement_mode",
-									"Directions scroll is allowed",
-									"Movements allowed in the scrollable",
-									MODEST_TYPE_MOVEMENT_MODE,
-									MODEST_MOVEMENT_MODE_VERTICAL,
-									G_PARAM_READWRITE |
-									G_PARAM_CONSTRUCT));
+						     g_param_spec_flags ("movement_mode",
+									 "Directions scroll is allowed",
+									 "Movements allowed in the scrollable",
+									 MODEST_TYPE_MOVEMENT_MODE,
+									 MODEST_MOVEMENT_MODE_VERTICAL,
+									 G_PARAM_READWRITE |
+									 G_PARAM_CONSTRUCT));
 
 		g_object_interface_install_property (g_iface,
 						     g_param_spec_int ("horizontal-max-overshoot",

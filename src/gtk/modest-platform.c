@@ -103,6 +103,7 @@ on_modest_conf_update_interval_changed (ModestConf* self,
 static gboolean
 check_required_files (void)
 {
+#if 0
 	FILE *mcc_file = modest_utils_open_mcc_mapping_file ();
 
 	if (!mcc_file) {
@@ -117,7 +118,7 @@ check_required_files (void)
 		g_printerr ("modest: cannot find providers data\n");
 		return FALSE;
 	}
-
+#endif
 	return TRUE;
 }
 

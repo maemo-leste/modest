@@ -218,7 +218,6 @@ modest_hildon2_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->edit_mode_registry = g_hash_table_new_full (g_direct_hash, g_direct_equal,
 							  NULL, edit_mode_register_destroy);
 
-	parent_priv->ui_dimming_manager = modest_ui_dimming_manager_new();
 	priv->app_menu_dimming_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 	gtk_window_add_accel_group (GTK_WINDOW (self), priv->accel_group);
 

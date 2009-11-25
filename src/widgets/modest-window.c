@@ -130,7 +130,7 @@ modest_window_get_type (void)
 		parent_type = HILDON_TYPE_WINDOW;
 #endif
 #else
-		parent_type = GTK_TYPE_WINDOW;
+		parent_type = GTK_TYPE_VBOX;
 #endif 
 		my_type = g_type_register_static (parent_type,
 		                                  "ModestWindow",
@@ -174,7 +174,7 @@ modest_window_init (ModestWindow *obj)
 	priv = MODEST_WINDOW_GET_PRIVATE(obj);
 
 	priv->ui_manager     = NULL;
-	priv->ui_dimming_manager     = NULL;
+	priv->ui_dimming_manager     = modest_ui_dimming_manager_new ();
 	priv->toolbar        = NULL;
 	priv->menubar        = NULL;
 
