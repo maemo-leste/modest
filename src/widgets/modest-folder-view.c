@@ -72,26 +72,14 @@ const GtkTargetEntry folder_view_drag_types[] =
 };
 
 /* Default icon sizes for Fremantle style are different */
-#ifdef MODEST_TOOLKIT_HILDON2
 #define FOLDER_ICON_SIZE MODEST_ICON_SIZE_BIG
-#else
-#define FOLDER_ICON_SIZE MODEST_ICON_SIZE_SMALL
-#endif
 
 /* Column names depending on we use list store or tree store */
-#ifdef MODEST_TOOLKIT_HILDON2
 #define NAME_COLUMN TNY_GTK_FOLDER_LIST_STORE_NAME_COLUMN
 #define UNREAD_COLUMN TNY_GTK_FOLDER_LIST_STORE_UNREAD_COLUMN
 #define ALL_COLUMN TNY_GTK_FOLDER_LIST_STORE_ALL_COLUMN
 #define TYPE_COLUMN TNY_GTK_FOLDER_LIST_STORE_TYPE_COLUMN
 #define INSTANCE_COLUMN TNY_GTK_FOLDER_LIST_STORE_INSTANCE_COLUMN
-#else
-#define NAME_COLUMN TNY_GTK_FOLDER_STORE_TREE_MODEL_NAME_COLUMN
-#define UNREAD_COLUMN TNY_GTK_FOLDER_STORE_TREE_MODEL_UNREAD_COLUMN
-#define ALL_COLUMN TNY_GTK_FOLDER_STORE_TREE_MODEL_ALL_COLUMN
-#define TYPE_COLUMN TNY_GTK_FOLDER_STORE_TREE_MODEL_TYPE_COLUMN
-#define INSTANCE_COLUMN TNY_GTK_FOLDER_STORE_TREE_MODEL_INSTANCE_COLUMN
-#endif
 
 /* 'private'/'protected' functions */
 static void modest_folder_view_class_init  (ModestFolderViewClass *klass);
@@ -144,41 +132,6 @@ static void         on_configuration_key_changed  (ModestConf* conf,
 						   ModestConfNotificationId notification_id,
 						   ModestFolderView *self);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-/* DnD functions */
-static void         on_drag_data_get       (GtkWidget *widget,
-					    GdkDragContext *context,
-					    GtkSelectionData *selection_data,
-					    guint info,
-					    guint time,
-					    gpointer data);
-
-static void         on_drag_data_received  (GtkWidget *widget,
-					    GdkDragContext *context,
-					    gint x,
-					    gint y,
-					    GtkSelectionData *selection_data,
-					    guint info,
-					    guint time,
-					    gpointer data);
-
-static gboolean     on_drag_motion         (GtkWidget      *widget,
-					    GdkDragContext *context,
-					    gint            x,
-					    gint            y,
-					    guint           time,
-					    gpointer        user_data);
-
-static void         setup_drag_and_drop    (GtkTreeView *self);
-
-static void         on_row_inserted_maybe_select_folder (GtkTreeModel     *tree_model,
-							 GtkTreePath      *path,
-							 GtkTreeIter      *iter,
-							 ModestFolderView *self);
-
-static gint         expand_row_timeout     (gpointer data);
-#endif
-
 static void         expand_root_items (ModestFolderView *self);
 
 static gboolean     _clipboard_set_selected_data (ModestFolderView *folder_view,
@@ -198,11 +151,9 @@ static gboolean     get_inner_models        (ModestFolderView *self,
 					     GtkTreeModel **filter_model,
 					     GtkTreeModel **sort_model,
 					     GtkTreeModel **tny_model);
-#ifdef MODEST_TOOLKIT_HILDON2
 static void on_activity_changed (TnyGtkFolderListStore *store,
 				 gboolean activity,
 				 ModestFolderView *folder_view);
-#endif
 
 enum {
 	FOLDER_SELECTION_CHANGED_SIGNAL,
@@ -1059,17 +1010,10 @@ get_folder_icons (ModestFolderView *folder_view, TnyFolderType type, GObject *in
 	    !TNY_IS_ACCOUNT (instance) &&
 	    type != TNY_FOLDER_TYPE_INBOX &&
 	    modest_tny_folder_store_is_remote (TNY_FOLDER_STORE (instance))) {
-#ifdef MODEST_TOOLKIT_HILDON2
 		return get_composite_icons (MODEST_FOLDER_ICON_REMOTE_FOLDER,
 					    &anorm_pixbuf,
 					    &anorm_pixbuf_open,
 					    &anorm_pixbuf_close);
-#else
-		return get_composite_icons (MODEST_FOLDER_ICON_NORMAL,
-					    &normal_pixbuf,
-					    &normal_pixbuf_open,
-					    &normal_pixbuf_close);
-#endif
 	}
 
 	switch (type) {
@@ -1230,25 +1174,19 @@ add_columns (GtkWidget *treeview)
 
 	/* Set icon and text render function */
 	renderer = gtk_cell_renderer_pixbuf_new();
-#ifdef MODEST_TOOLKIT_HILDON2
 	g_object_set (renderer,
 		      "xpad", MODEST_MARGIN_DEFAULT,
 		      "ypad", MODEST_MARGIN_DEFAULT,
 		      NULL);
-#endif
 	gtk_tree_view_column_pack_start (column, renderer, FALSE);
 	gtk_tree_view_column_set_cell_data_func(column, renderer,
 						icon_cell_data, treeview, NULL);
 
 	renderer = gtk_cell_renderer_text_new();
 	g_object_set (renderer, 
-#ifdef MODEST_TOOLKIT_HILDON2
 		      "ellipsize", PANGO_ELLIPSIZE_MIDDLE,
 		      "ypad", MODEST_MARGIN_DEFAULT,
 		      "xpad", MODEST_MARGIN_DEFAULT,
-#else
-		      "ellipsize", PANGO_ELLIPSIZE_END,
-#endif
 		      "ellipsize-set", TRUE, NULL);
 	gtk_tree_view_column_pack_start (column, renderer, TRUE);
 	gtk_tree_view_column_set_cell_data_func(column, renderer,
@@ -1256,14 +1194,9 @@ add_columns (GtkWidget *treeview)
 
 	priv->messages_renderer = gtk_cell_renderer_text_new ();
 	g_object_set (priv->messages_renderer, 
-#ifdef MODEST_TOOLKIT_HILDON2
 		      "yalign", 0.5,
 		      "ypad", MODEST_MARGIN_DEFAULT,
 		      "xpad", MODEST_MARGIN_DOUBLE,
-#else
-		      "scale", PANGO_SCALE_X_SMALL,
-		      "scale-set", TRUE,
-#endif
 		      "alignment", PANGO_ALIGN_RIGHT,
 		      "align-set", TRUE,
 		      "xalign", 1.0,
@@ -1325,11 +1258,6 @@ modest_folder_view_init (ModestFolderView *obj)
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Setup drag and drop */
-	setup_drag_and_drop (GTK_TREE_VIEW(obj));
-#endif
-
 	/* Connect signals */
  	g_signal_connect (G_OBJECT (obj),
  			  "key-press-event",
@@ -1372,12 +1300,10 @@ modest_folder_view_dispose (GObject *obj)
 
 	priv =	MODEST_FOLDER_VIEW_GET_PRIVATE (obj);
 
-#ifdef MODEST_TOOLKIT_HILDON2
 	if (priv->signal_handlers) {
 		modest_signal_mgr_disconnect_all_and_destroy (priv->signal_handlers);
 		priv->signal_handlers = NULL;
 	}
-#endif
 
 	/* Free external references */
 	if (priv->account_store) {
@@ -1515,9 +1441,6 @@ modest_folder_view_set_account_store (TnyAccountStoreView *self, TnyAccountStore
 
 	modest_folder_view_update_model (MODEST_FOLDER_VIEW (self), account_store);
 	priv->reselect = FALSE;
-#ifndef MODEST_TOOLKIT_HILDON2
-	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (self));
-#endif
 
 	g_object_unref (G_OBJECT (device));
 }
@@ -1625,24 +1548,6 @@ same_account_selected (ModestFolderView *self,
 	return same_account;
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-/**
- *
- * Selects the first inbox or the local account in an idle
- */
-static gboolean
-on_idle_select_first_inbox_or_local (gpointer user_data)
-{
-	ModestFolderView *self = MODEST_FOLDER_VIEW (user_data);
-
-	gdk_threads_enter ();
-	modest_folder_view_select_first_inbox_or_local (self);
-	gdk_threads_leave ();
-
-	return FALSE;
-}
-#endif
-
 static void
 on_account_changed (TnyAccountStore *account_store,
 		    TnyAccount *tny_account,
@@ -1686,12 +1591,6 @@ on_account_changed (TnyAccountStore *account_store,
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Select the first INBOX if the currently selected folder
-	   belongs to the account that is being deleted */
-	if (same_account && !MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (tny_account))
-		g_idle_add (on_idle_select_first_inbox_or_local, self);
-#endif
 }
 
 static void
@@ -1773,12 +1672,6 @@ on_account_removed (TnyAccountStore *account_store,
 	/* Refilter the model */
 	gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (filter_model));
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Select the first INBOX if the currently selected folder
-	   belongs to the account that is being deleted */
-	if (same_account)
-		g_idle_add (on_idle_select_first_inbox_or_local, self);
-#endif
 }
 
 void
@@ -1819,9 +1712,6 @@ modest_folder_view_on_map (ModestFolderView *self,
 		   deathlock situation */
 		/* TODO: check if this is still the case */
 		priv->reselect = FALSE;
-#ifndef MODEST_TOOLKIT_HILDON2
- 		modest_folder_view_select_first_inbox_or_local (self);
-#endif
 		/* Notify the display name observers */
 		g_signal_emit (G_OBJECT(self),
 			       signals[FOLDER_DISPLAY_NAME_CHANGED_SIGNAL], 0,
@@ -2326,7 +2216,6 @@ modest_folder_view_update_model (ModestFolderView *self,
 
 	/* FIXME: the local accounts are not shown when the query
 	   selects only the subscribed folders */
-#ifdef MODEST_TOOLKIT_HILDON2
 	TnyGtkFolderListStoreFlags flags;
 	flags = TNY_GTK_FOLDER_LIST_STORE_FLAG_SHOW_PATH;
 	if (priv->do_refresh)
@@ -2337,9 +2226,6 @@ modest_folder_view_update_model (ModestFolderView *self,
 							  flags);
 	tny_gtk_folder_list_store_set_path_separator (TNY_GTK_FOLDER_LIST_STORE (model),
 						      MODEST_FOLDER_PATH_SEPARATOR);
-#else
-	model = tny_gtk_folder_store_tree_model_new (NULL);
-#endif
 
 	/* When the model is a list store (plain representation) the
 	   outbox is not a child of any account so we have to manually
@@ -2435,18 +2321,12 @@ modest_folder_view_update_model (ModestFolderView *self,
 
 	/* Set new model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW(self), filter_model);
-#ifndef MODEST_TOOLKIT_HILDON2
-	g_signal_connect (G_OBJECT(filter_model), "row-inserted",
-			  (GCallback) on_row_inserted_maybe_select_folder, self);
-#endif
 
-#ifdef MODEST_TOOLKIT_HILDON2
 	priv->signal_handlers = modest_signal_mgr_connect (priv->signal_handlers,
 							   G_OBJECT (model),
 							   "activity-changed",
 							   G_CALLBACK (on_activity_changed),
 							   self);
-#endif
 
 	g_object_unref (model);
 	g_object_unref (filter_model);
@@ -2498,11 +2378,6 @@ on_selection_changed (GtkTreeSelection *sel, gpointer user_data)
 		   cause (and it actually does it) a free of the
 		   summary of the folder (because the main window will
 		   clear the headers view */
-#ifndef MODEST_TOOLKIT_HILDON2
-		if (TNY_IS_FOLDER(priv->cur_folder_store))
-			tny_folder_sync_async (TNY_FOLDER(priv->cur_folder_store),
-					       FALSE, NULL, NULL, NULL);
-#endif
 
 		g_signal_emit (G_OBJECT(tree_view), signals[FOLDER_SELECTION_CHANGED_SIGNAL], 0,
 		       priv->cur_folder_store, FALSE);
@@ -2863,678 +2738,6 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	return cmp;
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-/*****************************************************************************/
-/*                        DRAG and DROP stuff                                */
-/*****************************************************************************/
-/*
- * This function fills the #GtkSelectionData with the row and the
- * model that has been dragged. It's called when this widget is a
- * source for dnd after the event drop happened
- */
-static void
-on_drag_data_get (GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selection_data,
-		  guint info, guint time, gpointer data)
-{
-	GtkTreeSelection *selection;
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	GtkTreePath *source_row;
-
-	selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
-	if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
-
-		source_row = gtk_tree_model_get_path (model, &iter);
-		gtk_tree_set_row_drag_data (selection_data,
-					    model,
-					    source_row);
-
-		gtk_tree_path_free (source_row);
-	}
-}
-
-typedef struct _DndHelper {
-	ModestFolderView *folder_view;
-	gboolean delete_source;
-	GtkTreePath *source_row;
-} DndHelper;
-
-static void
-dnd_helper_destroyer (DndHelper *helper)
-{
-	/* Free the helper */
-	gtk_tree_path_free (helper->source_row);
-	g_slice_free (DndHelper, helper);
-}
-
-static void
-xfer_folder_cb (ModestMailOperation *mail_op,
-		TnyFolder *new_folder,
-		gpointer user_data)
-{
-	if (new_folder) {
-		/* Select the folder */
-		modest_folder_view_select_folder (MODEST_FOLDER_VIEW (user_data),
-						  new_folder, FALSE);
-	}
-}
-
-
-/* get the folder for the row the treepath refers to. */
-/* folder must be unref'd */
-static TnyFolderStore *
-tree_path_to_folder (GtkTreeModel *model, GtkTreePath *path)
-{
-	GtkTreeIter iter;
-	TnyFolderStore *folder = NULL;
-
-	if (gtk_tree_model_get_iter (model,&iter, path))
-		gtk_tree_model_get (model, &iter,
-				    INSTANCE_COLUMN, &folder,
-				    -1);
-	return folder;
-}
-
-/*
- * This function is used by drag_data_received_cb to manage drag and
- * drop of a header, i.e, and drag from the header view to the folder
- * view.
- */
-static void
-drag_and_drop_from_header_view (GtkTreeModel *source_model,
-				GtkTreeModel *dest_model,
-				GtkTreePath  *dest_row,
-				GtkSelectionData *selection_data)
-{
-	TnyList *headers = NULL;
-	TnyFolder *folder = NULL, *src_folder = NULL;
-	TnyFolderType folder_type;
-	GtkTreeIter source_iter, dest_iter;
-	ModestWindowMgr *mgr = NULL;
-	ModestWindow *main_win = NULL;
-	gchar **uris, **tmp;
-
-	/* Build the list of headers */
-	mgr = modest_runtime_get_window_mgr ();
-	headers = tny_simple_list_new ();
-	uris = modest_dnd_selection_data_get_paths (selection_data);
-	tmp = uris;
-
-	while (*tmp != NULL) {
-		TnyHeader *header;
-		GtkTreePath *path;
-		gboolean first = TRUE;
-
-		/* Get header */
-		path = gtk_tree_path_new_from_string (*tmp);
-		gtk_tree_model_get_iter (source_model, &source_iter, path);
-		gtk_tree_model_get (source_model, &source_iter,
-				    TNY_GTK_HEADER_LIST_MODEL_INSTANCE_COLUMN,
-				    &header, -1);
-
-		/* Do not enable d&d of headers already opened */
-		if (!modest_window_mgr_find_registered_header(mgr, header, NULL))
-			tny_list_append (headers, G_OBJECT (header));
-
-		if (G_UNLIKELY (first)) {
-			src_folder = tny_header_get_folder (header);
-			first = FALSE;
-		}
-
-		/* Free and go on */
-		gtk_tree_path_free (path);
-		g_object_unref (header);
-		tmp++;
-	}
-	g_strfreev (uris);
-
-	/* This could happen ig we perform a d&d very quickly over the
-	   same row that row could dissapear because message is
-	   transferred */
-	if (!TNY_IS_FOLDER (src_folder))
-		goto cleanup;
-
-	/* Get the target folder */
-	gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
-	gtk_tree_model_get (dest_model, &dest_iter,
-			    INSTANCE_COLUMN,
-			    &folder, -1);
-
-	if (!folder || !TNY_IS_FOLDER(folder)) {
-/* 		g_warning ("%s: not a valid target folder (%p)", __FUNCTION__, folder); */
-		goto cleanup;
-	}
-
-	folder_type = modest_tny_folder_guess_folder_type (folder);
-	if (folder_type == TNY_FOLDER_TYPE_INVALID) {
-/* 		g_warning ("%s: invalid target folder", __FUNCTION__); */
-		goto cleanup;  /* cannot move messages there */
-	}
-
-	if (modest_tny_folder_get_rules((TNY_FOLDER(folder))) & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
-/* 		g_warning ("folder not writable"); */
-		goto cleanup; /* verboten! */
-	}
-
-	/* Ask for confirmation to move */
-	main_win = modest_window_mgr_get_main_window (mgr, FALSE); /* don't create */
-	if (!main_win) {
-		g_warning ("%s: BUG: no main window found", __FUNCTION__);
-		goto cleanup;
-	}
-
-	/* Transfer messages */
-	modest_ui_actions_transfer_messages_helper (GTK_WINDOW (main_win), src_folder,
-						    headers, folder);
-
-	/* Frees */
-cleanup:
-	if (G_IS_OBJECT (src_folder))
-		g_object_unref (src_folder);
-	if (G_IS_OBJECT(folder))
-		g_object_unref (G_OBJECT (folder));
-	if (G_IS_OBJECT(headers))
-		g_object_unref (headers);
-}
-
-typedef struct {
-	TnyFolderStore *src_folder;
-	TnyFolderStore *dst_folder;
-	ModestFolderView *folder_view;
-	DndHelper *helper;
-} DndFolderInfo;
-
-static void
-dnd_folder_info_destroyer (DndFolderInfo *info)
-{
-	if (info->src_folder)
-		g_object_unref (info->src_folder);
-	if (info->dst_folder)
-		g_object_unref (info->dst_folder);
-	g_slice_free (DndFolderInfo, info);
-}
-
-static void
-dnd_on_connection_failed_destroyer (DndFolderInfo *info,
-				    GtkWindow *parent_window,
-				    TnyAccount *account)
-{
-	/* Show error */
-	modest_ui_actions_on_account_connection_error (parent_window, account);
-
-	/* Free the helper & info */
-	dnd_helper_destroyer (info->helper);
-	dnd_folder_info_destroyer (info);
-}
-
-static void
-drag_and_drop_from_folder_view_src_folder_performer (gboolean canceled,
-						     GError *err,
-						     GtkWindow *parent_window,
-						     TnyAccount *account,
-						     gpointer user_data)
-{
-	DndFolderInfo *info = NULL;
-	ModestMailOperation *mail_op;
-
-	info = (DndFolderInfo *) user_data;
-
-	if (err || canceled) {
-		dnd_on_connection_failed_destroyer (info, parent_window, account);
-		return;
-	}
-
-	/* Do the mail operation */
-	mail_op = modest_mail_operation_new_with_error_handling ((GObject *) parent_window,
-								 modest_ui_actions_move_folder_error_handler,
-								 info->src_folder, NULL);
-
-	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
-					 mail_op);
-
-	/* Transfer the folder */
-	modest_mail_operation_xfer_folder (mail_op,
-					   TNY_FOLDER (info->src_folder),
-					   info->dst_folder,
-					   info->helper->delete_source,
-					   xfer_folder_cb,
-					   info->helper->folder_view);
-
-	/* Frees */
-	g_object_unref (G_OBJECT (mail_op));
-	dnd_helper_destroyer (info->helper);
-	dnd_folder_info_destroyer (info);
-}
-
-
-static void
-drag_and_drop_from_folder_view_dst_folder_performer (gboolean canceled,
-						     GError *err,
-						     GtkWindow *parent_window,
-						     TnyAccount *account,
-						     gpointer user_data)
-{
-	DndFolderInfo *info = NULL;
-
-	info = (DndFolderInfo *) user_data;
-
-	if (err || canceled) {
-		dnd_on_connection_failed_destroyer (info, parent_window, account);
-		return;
-	}
-
-	/* Connect to source folder and perform the copy/move */
-	modest_platform_connect_if_remote_and_perform (NULL, TRUE,
-						       info->src_folder,
-						       drag_and_drop_from_folder_view_src_folder_performer,
-						       info);
-}
-
-/*
- * This function is used by drag_data_received_cb to manage drag and
- * drop of a folder, i.e, and drag from the folder view to the same
- * folder view.
- */
-static void
-drag_and_drop_from_folder_view (GtkTreeModel     *source_model,
-				GtkTreeModel     *dest_model,
-				GtkTreePath      *dest_row,
-				GtkSelectionData *selection_data,
-				DndHelper        *helper)
-{
-	GtkTreeIter dest_iter, iter;
-	TnyFolderStore *dest_folder = NULL;
-	TnyFolderStore *folder = NULL;
-	gboolean forbidden = FALSE;
-	ModestWindow *win;
-	DndFolderInfo *info = NULL;
-
-	win = modest_window_mgr_get_main_window (modest_runtime_get_window_mgr(), FALSE); /* don't create */
-	if (!win) {
-		g_warning ("%s: BUG: no main window", __FUNCTION__);
-		dnd_helper_destroyer (helper);
-		return;
-	}
-
-	if (!forbidden) {
-		/* check the folder rules for the destination */
-		folder = tree_path_to_folder (dest_model, dest_row);
-		if (TNY_IS_FOLDER(folder)) {
-			ModestTnyFolderRules rules =
-				modest_tny_folder_get_rules (TNY_FOLDER (folder));
-			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE;
-		} else if (TNY_IS_FOLDER_STORE(folder)) {
-			/* enable local root as destination for folders */
-			if (!MODEST_IS_TNY_LOCAL_FOLDERS_ACCOUNT (folder) &&
-			    !modest_tny_account_is_memory_card_account (TNY_ACCOUNT (folder)))
-				forbidden = TRUE;
-		}
-		g_object_unref (folder);
-	}
-	if (!forbidden) {
-		/* check the folder rules for the source */
-		folder = tree_path_to_folder (source_model, helper->source_row);
-		if (TNY_IS_FOLDER(folder)) {
-			ModestTnyFolderRules rules =
-				modest_tny_folder_get_rules (TNY_FOLDER (folder));
-			forbidden = rules & MODEST_FOLDER_RULES_FOLDER_NON_MOVEABLE;
-		} else
-			forbidden = TRUE;
-		g_object_unref (folder);
-	}
-
-
-	/* Check if the drag is possible */
-	if (forbidden || !gtk_tree_path_compare (helper->source_row, dest_row)) {
-		/* Show error */
-		modest_platform_run_information_dialog ((GtkWindow *) win, 
-							_("mail_in_ui_folder_move_target_error"), 
-							FALSE);
-		/* Restore the previous selection */
-		folder = tree_path_to_folder (source_model, helper->source_row);
-		if (folder) {
-			if (TNY_IS_FOLDER (folder))
-				modest_folder_view_select_folder (helper->folder_view, 
-								  TNY_FOLDER (folder), FALSE);
-			g_object_unref (folder);
-		}
-		dnd_helper_destroyer (helper);
-		return;
-	}
-
-	/* Get data */
-	gtk_tree_model_get_iter (dest_model, &dest_iter, dest_row);
-	gtk_tree_model_get (dest_model, &dest_iter,
-			    INSTANCE_COLUMN,
-			    &dest_folder, -1);
-	gtk_tree_model_get_iter (source_model, &iter, helper->source_row);
-	gtk_tree_model_get (source_model, &iter,
-			    INSTANCE_COLUMN,
-			    &folder, -1);
-
-	/* Create the info for the performer */
-	info = g_slice_new0 (DndFolderInfo);
-	info->src_folder = g_object_ref (folder);
-	info->dst_folder = g_object_ref (dest_folder);
-	info->helper = helper;
-
-	/* Connect to the destination folder and perform the copy/move */
-	modest_platform_connect_if_remote_and_perform (GTK_WINDOW (win), TRUE,
-						       dest_folder,
-						       drag_and_drop_from_folder_view_dst_folder_performer,
-						       info);
-
-	/* Frees */
-	g_object_unref (dest_folder);
-	g_object_unref (folder);
-}
-
-/*
- * This function receives the data set by the "drag-data-get" signal
- * handler. This information comes within the #GtkSelectionData. This
- * function will manage both the drags of folders of the treeview and
- * drags of headers of the header view widget.
- */
-static void
-on_drag_data_received (GtkWidget *widget,
-		       GdkDragContext *context,
-		       gint x,
-		       gint y,
-		       GtkSelectionData *selection_data,
-		       guint target_type,
-		       guint time,
-		       gpointer data)
-{
-	GtkWidget *source_widget;
-	GtkTreeModel *dest_model, *source_model;
- 	GtkTreePath *source_row, *dest_row;
-	GtkTreeViewDropPosition pos;
-	gboolean delete_source = FALSE;
-	gboolean success = FALSE;
-
-	/* Do not allow further process */
-	g_signal_stop_emission_by_name (widget, "drag-data-received");
-	source_widget = gtk_drag_get_source_widget (context);
-
-	/* Get the action */
-	if (context->action == GDK_ACTION_MOVE) {
-		delete_source = TRUE;
-
-		/* Notify that there is no folder selected. We need to
-		   do this in order to update the headers view (and
-		   its monitors, because when moving, the old folder
-		   won't longer exist. We can not wait for the end of
-		   the operation, because the operation won't start if
-		   the folder is in use */
-		if (source_widget == widget) {
-			GtkTreeSelection *sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
-			gtk_tree_selection_unselect_all (sel);
-		}
-	}
-
-	/* Check if the get_data failed */
-#if GTK_CHECK_VERSION (2,14,0)
-	if ((selection_data == NULL) || (gtk_selection_data_get_length (selection_data) < 0))
-#else
-	if (selection_data == NULL || selection_data->length < 0)
-#endif
-		goto end;
-
-	/* Select the destination model */
-	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
-
-	/* Get the path to the destination row. Can not call
-	   gtk_tree_view_get_drag_dest_row() because the source row
-	   is not selected anymore */
-	gtk_tree_view_get_dest_row_at_pos (GTK_TREE_VIEW (widget), x, y,
-					   &dest_row, &pos);
-
-	/* Only allow drops IN other rows */
-	if (!dest_row ||
-	    pos == GTK_TREE_VIEW_DROP_BEFORE ||
-	    pos == GTK_TREE_VIEW_DROP_AFTER)
-		goto end;
-
-	success = TRUE;
-	/* Drags from the header view */
-	if (source_widget != widget) {
-		source_model = gtk_tree_view_get_model (GTK_TREE_VIEW (source_widget));
-
-		drag_and_drop_from_header_view (source_model,
-						dest_model,
-						dest_row,
-						selection_data);
-	} else {
-		DndHelper *helper = NULL;
-
-		/* Get the source model and row */
-		gtk_tree_get_row_drag_data (selection_data,
-					    &source_model,
-					    &source_row);
-
-		/* Create the helper */
-		helper = g_slice_new0 (DndHelper);
-		helper->delete_source = delete_source;
-		helper->source_row = gtk_tree_path_copy (source_row);
-		helper->folder_view = MODEST_FOLDER_VIEW (widget);
-
-		drag_and_drop_from_folder_view (source_model,
-						dest_model,
-						dest_row,
-						selection_data,
-						helper);
-
-		gtk_tree_path_free (source_row);
-	}
-
-	/* Frees */
-	gtk_tree_path_free (dest_row);
-
- end:
-	/* Finish the drag and drop */
-	gtk_drag_finish (context, success, FALSE, time);
-}
-
-/*
- * We define a "drag-drop" signal handler because we do not want to
- * use the default one, because the default one always calls
- * gtk_drag_finish and we prefer to do it in the "drag-data-received"
- * signal handler, because there we have all the information available
- * to know if the dnd was a success or not.
- */
-static gboolean
-drag_drop_cb (GtkWidget      *widget,
-	      GdkDragContext *context,
-	      gint            x,
-	      gint            y,
-	      guint           time,
-	      gpointer        user_data)
-{
-	gpointer target;
-
-	if (!context->targets)
-		return FALSE;
-
-	/* Check if we're dragging a folder row */
-	target = gtk_drag_dest_find_target (widget, context, NULL);
-
-	/* Request the data from the source. */
-	gtk_drag_get_data(widget, context, target, time);
-
-    return TRUE;
-}
-
-/*
- * This function expands a node of a tree view if it's not expanded
- * yet. Not sure why it needs the threads stuff, but gtk+`example code
- * does that, so that's why they're here.
- */
-static gint
-expand_row_timeout (gpointer data)
-{
-	GtkTreeView *tree_view = data;
-	GtkTreePath *dest_path = NULL;
-	GtkTreeViewDropPosition pos;
-	gboolean result = FALSE;
-
-	gdk_threads_enter ();
-
-	gtk_tree_view_get_drag_dest_row (tree_view,
-					 &dest_path,
-					 &pos);
-
-	if (dest_path &&
-	    (pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER ||
-	     pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE)) {
-		gtk_tree_view_expand_row (tree_view, dest_path, FALSE);
-		gtk_tree_path_free (dest_path);
-	}
-	else {
-		if (dest_path)
-			gtk_tree_path_free (dest_path);
-
-		result = TRUE;
-	}
-
-	gdk_threads_leave ();
-
-	return result;
-}
-
-/*
- * This function is called whenever the pointer is moved over a widget
- * while dragging some data. It installs a timeout that will expand a
- * node of the treeview if not expanded yet. This function also calls
- * gdk_drag_status in order to set the suggested action that will be
- * used by the "drag-data-received" signal handler to know if we
- * should do a move or just a copy of the data.
- */
-static gboolean
-on_drag_motion (GtkWidget      *widget,
-		GdkDragContext *context,
-		gint            x,
-		gint            y,
-		guint           time,
-		gpointer        user_data)
-{
-	GtkTreeViewDropPosition pos;
-	GtkTreePath *dest_row;
-	GtkTreeModel *dest_model;
-	ModestFolderViewPrivate *priv;
-	GdkDragAction suggested_action;
-	gboolean valid_location = FALSE;
-	TnyFolderStore *folder = NULL;
-
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (widget);
-
-	if (priv->timer_expander != 0) {
-		g_source_remove (priv->timer_expander);
-		priv->timer_expander = 0;
-	}
-
-	gtk_tree_view_get_dest_row_at_pos (GTK_TREE_VIEW (widget),
-					   x, y,
-					   &dest_row,
-					   &pos);
-
-	/* Do not allow drops between folders */
-	if (!dest_row ||
-	    pos == GTK_TREE_VIEW_DROP_BEFORE ||
-	    pos == GTK_TREE_VIEW_DROP_AFTER) {
-		gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW (widget), NULL, 0);
-		gdk_drag_status(context, 0, time);
-		valid_location = FALSE;
-		goto out;
-	} else {
-		valid_location = TRUE;
-	}
-
-	/* Check that the destination folder is writable */
-	dest_model = gtk_tree_view_get_model (GTK_TREE_VIEW (widget));
-	folder = tree_path_to_folder (dest_model, dest_row);
-	if (folder && TNY_IS_FOLDER (folder)) {
-		ModestTnyFolderRules rules = modest_tny_folder_get_rules(TNY_FOLDER (folder));
-
-		if (rules & MODEST_FOLDER_RULES_FOLDER_NON_WRITEABLE) {
-			valid_location = FALSE;
-			goto out;
-		}
-	}
-
-	/* Expand the selected row after 1/2 second */
-	if (!gtk_tree_view_row_expanded (GTK_TREE_VIEW (widget), dest_row)) {
-		priv->timer_expander = g_timeout_add (500, expand_row_timeout, widget);
-	}
-	gtk_tree_view_set_drag_dest_row (GTK_TREE_VIEW (widget), dest_row, pos);
-
-	/* Select the desired action. By default we pick MOVE */
-	suggested_action = GDK_ACTION_MOVE;
-
-        if (context->actions == GDK_ACTION_COPY)
-            gdk_drag_status(context, GDK_ACTION_COPY, time);
-	else if (context->actions == GDK_ACTION_MOVE)
-            gdk_drag_status(context, GDK_ACTION_MOVE, time);
-	else if (context->actions & suggested_action)
-            gdk_drag_status(context, suggested_action, time);
-	else
-            gdk_drag_status(context, GDK_ACTION_DEFAULT, time);
-
- out:
-	if (folder)
-		g_object_unref (folder);
-	if (dest_row) {
-		gtk_tree_path_free (dest_row);
-	}
-	g_signal_stop_emission_by_name (widget, "drag-motion");
-
-	return valid_location;
-}
-
-/*
- * This function sets the treeview as a source and a target for dnd
- * events. It also connects all the requirede signals.
- */
-static void
-setup_drag_and_drop (GtkTreeView *self)
-{
-	/* Set up the folder view as a dnd destination. Set only the
-	   highlight flag, otherwise gtk will have a different
-	   behaviour */
-	gtk_drag_dest_set (GTK_WIDGET (self),
-			   GTK_DEST_DEFAULT_HIGHLIGHT,
-			   folder_view_drag_types,
-			   G_N_ELEMENTS (folder_view_drag_types),
-			   GDK_ACTION_MOVE | GDK_ACTION_COPY);
-
-	g_signal_connect (G_OBJECT (self),
-			  "drag_data_received",
-			  G_CALLBACK (on_drag_data_received),
-			  NULL);
-
-
-	/* Set up the treeview as a dnd source */
-	gtk_drag_source_set (GTK_WIDGET (self),
-			     GDK_BUTTON1_MASK,
-			     folder_view_drag_types,
-			     G_N_ELEMENTS (folder_view_drag_types),
-			     GDK_ACTION_MOVE | GDK_ACTION_COPY);
-
-	g_signal_connect (G_OBJECT (self),
-			  "drag_motion",
-			  G_CALLBACK (on_drag_motion),
-			  NULL);
-
-	g_signal_connect (G_OBJECT (self),
-			  "drag_data_get",
-			  G_CALLBACK (on_drag_data_get),
-			  NULL);
-
-	g_signal_connect (G_OBJECT (self),
-			  "drag_drop",
-			  G_CALLBACK (drag_drop_cb),
-			  NULL);
-}
-#endif
 
 /*
  * This function manages the navigation through the folders using the
@@ -3711,44 +2914,6 @@ find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter
 	return FALSE;
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-void
-modest_folder_view_select_first_inbox_or_local (ModestFolderView *self)
-{
-	GtkTreeModel *model;
-	GtkTreeIter iter, inbox_iter;
-	GtkTreeSelection *sel;
-	GtkTreePath *path = NULL;
-
-	g_return_if_fail (self && MODEST_IS_FOLDER_VIEW(self));
-
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (self));
-	if (!model)
-		return;
-
-	expand_root_items (self);
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-
-	if (!gtk_tree_model_get_iter_first (model, &iter)) {
-		g_warning ("%s: model is empty", __FUNCTION__);
-		return;
-	}
-
-	if (find_inbox_iter (model, &iter, &inbox_iter))
-		path = gtk_tree_model_get_path (model, &inbox_iter);
-	else
-		path = gtk_tree_path_new_first ();
-
-	/* Select the row and free */
-	gtk_tree_view_set_cursor (GTK_TREE_VIEW (self), path, NULL, FALSE);
-	gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (self), path, NULL, FALSE, 0.0, 0.0);
-	gtk_tree_path_free (path);
-
-	/* set focus */
-	gtk_widget_grab_focus (GTK_WIDGET(self));
-}
-#endif
-
 /* recursive */
 static gboolean
 find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_iter,
@@ -3784,62 +2949,6 @@ find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_it
 	return FALSE;
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-static void
-on_row_inserted_maybe_select_folder (GtkTreeModel *tree_model,
-				     GtkTreePath *path,
-				     GtkTreeIter *iter,
-				     ModestFolderView *self)
-{
-	ModestFolderViewPrivate *priv = NULL;
-	GtkTreeSelection *sel;
-	TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
-	GObject *instance = NULL;
-
-	if (!MODEST_IS_FOLDER_VIEW(self))
-		return;
-
-	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
-
-	priv->reexpand = TRUE;
-
-	gtk_tree_model_get (tree_model, iter,
-			    TYPE_COLUMN, &type,
-			    INSTANCE_COLUMN, &instance,
-			    -1);
-
-	if (!instance)
-		return;
-
-	if (type == TNY_FOLDER_TYPE_INBOX && priv->folder_to_select == NULL) {
-		priv->folder_to_select = g_object_ref (instance);
-	}
-	g_object_unref (instance);
-
-	if (priv->folder_to_select) {
-
-		if (!modest_folder_view_select_folder (self, priv->folder_to_select,
-						       FALSE)) {
-			GtkTreePath *path;
-			path = gtk_tree_model_get_path (tree_model, iter);
-			gtk_tree_view_expand_to_path (GTK_TREE_VIEW(self), path);
-
-			sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-
-			gtk_tree_selection_select_iter (sel, iter);
-			gtk_tree_view_set_cursor (GTK_TREE_VIEW(self), path, NULL, FALSE);
-
-			gtk_tree_path_free (path);
-		}
-
-		/* Disable next */
-		modest_folder_view_disable_next_folder_selection (self);
-
-		/* Refilter the model */
-		gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (tree_model));
-	}
-}
-#endif
 
 void
 modest_folder_view_disable_next_folder_selection (ModestFolderView *self)
@@ -3989,13 +3098,6 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 
 	/* Set copied model */
 	gtk_tree_view_set_model (GTK_TREE_VIEW (folder_view_dst), new_filter_model);
-#ifndef MODEST_TOOLKIT_HILDON2
-	dst_priv->signal_handlers = modest_signal_mgr_connect (dst_priv->signal_handlers,
-							       G_OBJECT(new_filter_model), "row-inserted",
-							       (GCallback) on_row_inserted_maybe_select_folder,
-							       folder_view_dst);
-#endif
-#ifdef MODEST_TOOLKIT_HILDON2
 	if (new_tny_model) {
 		dst_priv->signal_handlers = modest_signal_mgr_connect (dst_priv->signal_handlers,
 								       G_OBJECT (new_tny_model),
@@ -4003,7 +3105,6 @@ modest_folder_view_copy_model (ModestFolderView *folder_view_src,
 								       G_CALLBACK (on_activity_changed),
 								       folder_view_dst);
 	}
-#endif
 
 	/* Free */
 	g_object_unref (new_filter_model);
@@ -4320,7 +3421,6 @@ modest_folder_view_get_activity (ModestFolderView *self)
 	}
 }
 
-#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_activity_changed (TnyGtkFolderListStore *store,
 		     gboolean activity,
@@ -4335,7 +3435,6 @@ on_activity_changed (TnyGtkFolderListStore *store,
 	g_signal_emit (G_OBJECT (folder_view), signals[ACTIVITY_CHANGED_SIGNAL], 0,
 		       activity);
 }
-#endif
 
 TnyList *
 modest_folder_view_get_model_tny_list (ModestFolderView *self)

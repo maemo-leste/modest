@@ -3148,10 +3148,6 @@ on_rename_folder_cb (ModestMailOperation *mail_op,
 	/* Note that if the rename fails new_folder will be NULL */
 	if (new_folder) {
 		modest_folder_view_select_folder (folder_view, new_folder, FALSE);
-#ifndef MODEST_TOOLKIT_HILDON2
-	} else {
-		modest_folder_view_select_first_inbox_or_local (folder_view);
-#endif
 	}
 	gtk_widget_grab_focus (GTK_WIDGET (folder_view));
 }
@@ -3322,10 +3318,6 @@ on_delete_folder_cb (gboolean canceled,
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (),
 			mail_op);
 	modest_mail_operation_remove_folder (mail_op, TNY_FOLDER (info->folder), info->move_to_trash);
-
-#ifndef MODEST_TOOLKIT_HILDON2
-	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (folder_view));
-#endif
 
 	g_object_unref (mail_op);
 	g_object_unref (info->folder);
@@ -4419,14 +4411,8 @@ create_move_to_dialog (GtkWindow *win,
 	g_object_set_data (G_OBJECT(dialog), MODEST_MOVE_TO_DIALOG_FOLDER_VIEW, tree_view);
 
 	/* Hide special folders */
-#ifndef MODEST_TOOLKIT_HILDON2
-	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (tree_view), FALSE);
-#endif
 	if (list_to_move)
 		modest_folder_view_set_list_to_move (MODEST_FOLDER_VIEW (tree_view), list_to_move);
-#ifndef MODEST_TOOLKIT_HILDON2
-	modest_folder_view_select_first_inbox_or_local (MODEST_FOLDER_VIEW (tree_view));
-#endif
 
 	gtk_widget_show (GTK_WIDGET (tree_view));
 
