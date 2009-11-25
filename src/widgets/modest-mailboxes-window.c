@@ -33,7 +33,6 @@
 #include <modest-signal-mgr.h>
 #include <modest-runtime.h>
 #include <modest-platform.h>
-#include <modest-maemo-utils.h>
 #include <modest-icon-names.h>
 #include <modest-ui-constants.h>
 #include <modest-account-mgr.h>
@@ -41,9 +40,6 @@
 #include <modest-defs.h>
 #include <modest-ui-actions.h>
 #include <modest-window.h>
-#include <hildon/hildon-program.h>
-#include <hildon/hildon-banner.h>
-#include <hildon/hildon-button.h>
 #include <tny-account-store-view.h>
 #include <modest-header-window.h>
 #include <modest-ui-dimming-rules.h>
@@ -52,6 +48,13 @@
 #include "modest-text-utils.h"
 #include "modest-tny-account.h"
 #include <modest-folder-window.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
+#ifdef MODEST_PLATFORM_MAEMO
+#include <modest-maemo-utils.h>
+#endif
+#include <gdk/gdkkeysyms.h>
 
 /* 'private'/'protected' functions */
 static void modest_mailboxes_window_class_init  (ModestMailboxesWindowClass *klass);
@@ -121,7 +124,12 @@ modest_mailboxes_window_get_type (void)
 			(GInstanceInitFunc) modest_mailboxes_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
+		my_type = g_type_register_static (
+#ifdef MODEST_TOOLKIT_HILDON2
+						  MODEST_TYPE_HILDON2_WINDOW,
+#else
+						  MODEST_TYPE_WINDOW,
+#endif
 		                                  "ModestMailboxesWindow",
 		                                  &my_info, 0);
 	}
@@ -268,14 +276,8 @@ modest_mailboxes_window_new (const gchar *account)
 {
 	ModestMailboxesWindow *self = NULL;	
 	ModestMailboxesWindowPrivate *priv = NULL;
-	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GtkWidget *scrollable;
-	GtkWidget *action_area_box;
-	GdkPixbuf *new_message_pixbuf;
-	guint accel_key;
-	GdkModifierType accel_mods;
-	GtkAccelGroup *accel_group;
 	GtkWidget *top_alignment;
 	
 	self  = MODEST_MAILBOXES_WINDOW(g_object_new(MODEST_TYPE_MAILBOXES_WINDOW, NULL));
@@ -294,6 +296,9 @@ modest_mailboxes_window_new (const gchar *account)
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 				       MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *action_area_box;
+	GdkPixbuf *new_message_pixbuf;
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->folder_view));
 	priv->new_message_button = hildon_button_new (0, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
@@ -305,6 +310,7 @@ modest_mailboxes_window_new (const gchar *account)
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->folder_view), TRUE);
+#endif
 	
 	/* Set account store */
 	tny_account_store_view_set_account_store (TNY_ACCOUNT_STORE_VIEW (priv->folder_view),
@@ -329,10 +335,16 @@ modest_mailboxes_window_new (const gchar *account)
 	connect_signals (MODEST_MAILBOXES_WINDOW (self));
 
 	/* Get device name */
+#ifdef MODEST_PLATFORM_MAEMO
 	modest_maemo_utils_get_device_name ();
+#endif
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonProgram *app;
 
 	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
+#endif
 	
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
@@ -352,11 +364,17 @@ modest_mailboxes_window_new (const gchar *account)
 			  G_OBJECT (self));
 	update_progress_hint (self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	guint accel_key;
+	GdkModifierType accel_mods;
+	GtkAccelGroup *accel_group;
+
 	accel_group = gtk_accel_group_new ();
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
 				    accel_key, accel_mods, 0);
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
+#endif
 
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view),
 				       MODEST_FOLDER_VIEW_FILTER_SHOW_ONLY_MAILBOXES);
@@ -472,7 +490,7 @@ on_map_event (GtkWidget *widget,
 	ModestMailboxesWindowPrivate *priv = MODEST_MAILBOXES_WINDOW_GET_PRIVATE (self);
 
 	if (priv->progress_hint) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+		modest_window_show_progress (MODEST_WINDOW (self), TRUE);
 	}
 
 	return FALSE;
@@ -526,7 +544,7 @@ update_progress_hint (ModestMailboxesWindow *self)
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint ? 1:0);
+		modest_window_show_progress (MODEST_WINDOW (self), priv->progress_hint ? 1:0);
 	}
 }
 

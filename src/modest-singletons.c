@@ -34,7 +34,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "hildon2/modest-hildon2-window-mgr.h"
 #else
-#include "widgets/modest-hildon1-window-mgr.h"
+#include "gtk/modest-gtk-window-mgr.h"
 #endif
 #include <tny-fs-stream-cache.h>
 
@@ -178,7 +178,7 @@ modest_singletons_init (ModestSingletons *obj)
 #if MODEST_TOOLKIT_HILDON2
 	priv->window_mgr = modest_hildon2_window_mgr_new ();
 #else
-	priv->window_mgr = modest_hildon1_window_mgr_new ();
+	priv->window_mgr = modest_gtk_window_mgr_new ();
 #endif
 	if (!priv->window_mgr) {
 		g_printerr ("modest: cannot create modest window manager instance\n");
