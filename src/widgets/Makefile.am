@@ -88,6 +88,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-limit-retrieve-combo-box.c \
 	modest-mail-header-view.h \
 	modest-mail-header-view.c \
+	modest-mailboxes-window.c \
+	modest-mailboxes-window.h \
 	modest-main-window.h	       \
 	modest-mime-part-view.c        \
 	modest-mime-part-view.h        \

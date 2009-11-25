@@ -85,7 +85,7 @@ static gboolean modest_gtk_window_mgr_find_registered_message_uid (ModestWindowM
 static GList *modest_gtk_window_mgr_get_window_list (ModestWindowMgr *self);
 static gboolean modest_gtk_window_mgr_close_all_windows (ModestWindowMgr *self);
 static gboolean modest_gtk_window_mgr_close_all_but_initial (ModestWindowMgr *self);
-static gboolean window_has_modals (ModestWindow *window);
+static gboolean shell_has_modals (ModestShell *window);
 static ModestWindow *modest_gtk_window_mgr_show_initial_window (ModestWindowMgr *self);
 static ModestWindow *modest_gtk_window_mgr_get_current_top (ModestWindowMgr *self);
 static gboolean modest_gtk_window_mgr_screen_is_on (ModestWindowMgr *self);
@@ -263,7 +263,7 @@ modest_gtk_window_mgr_close_all_windows (ModestWindowMgr *self)
 {
 	ModestGtkWindowMgrPrivate *priv = NULL;
 	gboolean ret_value = FALSE;
-	GtkWidget *window;
+	ModestWindow *window;
 	gboolean failed = FALSE;
 
 	g_return_val_if_fail (MODEST_IS_GTK_WINDOW_MGR (self), FALSE);
@@ -485,7 +485,7 @@ modest_gtk_window_mgr_register_window (ModestWindowMgr *self,
 	if (MODEST_IS_FOLDER_WINDOW (current_top) && MODEST_IS_FOLDER_WINDOW (window)) {
 		gboolean retval;
 
-		retval = modest_shell_delete_window (MODEST_SHELL (priv->shell), shell);
+		retval = modest_shell_delete_window (MODEST_SHELL (priv->shell), MODEST_WINDOW (window));
 
 		if (retval) {
 			gtk_window_present (GTK_WINDOW (priv->shell));
@@ -540,7 +540,7 @@ modest_gtk_window_mgr_register_window (ModestWindowMgr *self,
 		/* If the current view has modal dialogs then
 		   we fail to register the new view */
 		if ((current_top != NULL) &&
-		    window_has_modals (MODEST_WINDOW (current_top))) {
+		    shell_has_modals (MODEST_SHELL (priv->shell))) {
 			/* Window on top but it has opened dialogs */
 			goto fail;
 		}
@@ -600,7 +600,7 @@ cancel_window_operations (ModestWindow *window)
 }
 
 static gboolean
-window_has_modals (ModestWindow *window)
+shell_has_modals (ModestShell *shell)
 {
 	GList *toplevels;
 	GList *node;
@@ -610,7 +610,7 @@ window_has_modals (ModestWindow *window)
 	toplevels = gtk_window_list_toplevels ();
 	for (node = toplevels; node != NULL; node = g_list_next (node)) {
 		if (GTK_IS_WINDOW (node->data) &&
-		    gtk_window_get_transient_for (GTK_WINDOW (node->data)) == GTK_WINDOW (priv->shell) &&
+		    gtk_window_get_transient_for (GTK_WINDOW (node->data)) == GTK_WINDOW (shell) &&
 		    GTK_WIDGET_VISIBLE (node->data)) {
 			retvalue = TRUE;
 			break;
@@ -625,10 +625,13 @@ on_window_destroy (ModestWindow *window,
 		   GdkEvent *event,
 		   ModestGtkWindowMgr *self)
 {
+	ModestGtkWindowMgrPrivate *priv;
 	gboolean no_propagate = FALSE;
 
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
+
 	/* Do not close the window if it has modals on top */
-	if (!MODEST_IS_MSG_EDIT_WINDOW (window) && window_has_modals (window))
+	if (!MODEST_IS_MSG_EDIT_WINDOW (window) && shell_has_modals (MODEST_SHELL (priv->shell)))
 		return TRUE;
 
 	if (MODEST_IS_MSG_EDIT_WINDOW (window)) {
@@ -793,7 +796,7 @@ modest_gtk_window_mgr_get_modal (ModestWindowMgr *self)
 {
 	ModestGtkWindowMgrPrivate *priv;
 	GList *toplevel_list;
-	GtkWidget *current_top, *toplevel;
+	GtkWidget *toplevel;
 
 	g_return_val_if_fail (MODEST_IS_GTK_WINDOW_MGR (self), NULL);
 	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
@@ -837,15 +840,13 @@ close_all_but_first (gpointer data)
 {
 	gint num_windows, i;
 	gboolean retval;
-	HildonWindowStack *stack;
+	ModestGtkWindowMgrPrivate *priv;
 
-	stack = hildon_window_stack_get_default ();
-	g_return_if_fail (stack);
-
-	num_windows = hildon_window_stack_size (stack);
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE(data);
+	num_windows = modest_shell_count_windows (MODEST_SHELL (priv->shell));
 
 	for (i = 0; i < (num_windows - 1); i++) {
-		GtkWidget *current_top;
+		ModestWindow *current_top;
 
 		/* Close window */
 		current_top = modest_shell_peek_window (MODEST_SHELL (priv->shell));
@@ -869,6 +870,9 @@ on_account_removed (TnyAccountStore *acc_store,
 		    gpointer user_data)
 {
 	ModestWindow *current_top;
+	ModestGtkWindowMgrPrivate *priv;
+
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (user_data);
 
 	/* Ignore transport account removals */
 	if (TNY_IS_TRANSPORT_ACCOUNT (account))
@@ -892,7 +896,7 @@ on_account_removed (TnyAccountStore *acc_store,
 		       modal dialog would otherwise, prevent the
 		       windows from being closed */
 		    if (!strcmp (acc_name, modest_window_get_active_account (current_top)))
-			    g_idle_add (on_idle_close_all_but_first, NULL);
+			    g_idle_add (on_idle_close_all_but_first, (gpointer) priv->shell);
 	}
 }
 
@@ -926,7 +930,6 @@ modest_gtk_window_mgr_show_initial_window (ModestWindowMgr *self)
 static ModestWindow *
 modest_gtk_window_mgr_get_current_top (ModestWindowMgr *self)
 {
-	ModestWindow *initial_window = NULL;
 	ModestGtkWindowMgrPrivate *priv;
 
 	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
@@ -983,6 +986,9 @@ static gboolean
 modest_gtk_window_mgr_close_all_but_initial (ModestWindowMgr *self)
 {
 	ModestWindow *top;
+	ModestGtkWindowMgrPrivate *priv;
+
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE(self);
 
 	/* Exit if there are no windows */
 	if (!modest_window_mgr_get_num_windows (self)) {
@@ -999,7 +1005,7 @@ modest_gtk_window_mgr_close_all_but_initial (ModestWindowMgr *self)
 	/* Close all but first */
 	top = modest_window_mgr_get_current_top (self);
 	if (!MODEST_IS_ACCOUNTS_WINDOW (top))
-		close_all_but_first (NULL);
+		close_all_but_first ((gpointer) priv->shell);
 
 	/* If some cannot be closed return */
 	top = modest_window_mgr_get_current_top (self);

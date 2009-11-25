@@ -60,11 +60,12 @@ struct _ModestShellClass {
 GType        modest_shell_get_type    (void) G_GNUC_CONST;
 
 /* typical parameter-less _new function */
-GtkWindow*    modest_shell_new  (void);
+GtkWidget*    modest_shell_new  (void);
 
 ModestWindow *modest_shell_peek_window (ModestShell *shell);
 gboolean modest_shell_delete_window (ModestShell *shell, ModestWindow *window);
 void modest_shell_add_window (ModestShell *shell, ModestWindow *window);
+gint modest_shell_count_windows (ModestShell *shell);
 
 
 G_END_DECLS

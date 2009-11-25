@@ -29,16 +29,11 @@
 
 #include <modest-accounts-window.h>
 #include <modest-scrollable.h>
-#include <hildon/hildon-banner.h>
-#include <hildon/hildon-helper.h>
 #include <modest-ui-actions.h>
 #include <modest-window-mgr.h>
 #include <modest-signal-mgr.h>
 #include <modest-runtime.h>
 #include <modest-platform.h>
-#include <hildon/hildon-program.h>
-#include <hildon/hildon-button.h>
-#include <modest-maemo-utils.h>
 #include <modest-icon-names.h>
 #include <modest-defs.h>
 #include <modest-folder-window.h>
@@ -48,6 +43,10 @@
 #include <modest-ui-constants.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-mailboxes-window.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <modest-maemo-utils.h>
+#include <hildon/hildon.h>
+#endif
 
 
 /* 'private'/'protected' functions */

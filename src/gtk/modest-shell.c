@@ -108,10 +108,10 @@ modest_shell_finalize (GObject *obj)
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
-ModestWindowMgr*
+GtkWidget*
 modest_shell_new (void)
 {
-	return MODEST_WINDOW_MGR(g_object_new(MODEST_TYPE_SHELL, NULL));
+	return (GtkWidget *) g_object_new(MODEST_TYPE_SHELL, NULL);
 }
 
 ModestWindow *
@@ -120,7 +120,7 @@ modest_shell_peek_window (ModestShell *shell)
 	ModestShellPrivate *priv;
 	gint count;
 
-	priv = MODEST_SHELL_GET_PRIVATE(obj);
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
 	count = gtk_notebook_get_n_pages (GTK_NOTEBOOK (priv->notebook));
 
 	if (count > 0) {
@@ -136,8 +136,8 @@ modest_shell_delete_window (ModestShell *shell, ModestWindow *window)
 	ModestShellPrivate *priv;
 	gboolean ret_value;
 
-	priv = MODEST_SHELL_GET_PRIVATE(obj);
-	g_signal_emit (G_OBJECT (window), "delete-event", NULL, &ret_value);
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+	g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &ret_value);
 	if (ret_value == FALSE) {
 		gint page_num;
 		
@@ -155,6 +155,16 @@ modest_shell_add_window (ModestShell *shell, ModestWindow *window)
 {
 	ModestShellPrivate *priv;
 
-	priv = MODEST_SHELL_GET_PRIVATE(obj);
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
 	gtk_notebook_append_page (GTK_NOTEBOOK (priv->notebook), GTK_WIDGET (window), NULL);
+}
+
+gint
+modest_shell_count_windows (ModestShell *shell)
+{
+	ModestShellPrivate *priv;
+
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+
+	return gtk_notebook_get_n_pages (GTK_NOTEBOOK (priv->notebook));
 }
