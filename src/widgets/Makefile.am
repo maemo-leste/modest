@@ -153,6 +153,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-window-mgr.c            \
 	modest-wizard-dialog.h         \
 	modest-wizard-dialog.c         \
+	modest-wp-text-view.c \
+	modest-wp-text-view.h \
 	modest-zoomable.h              \
 	modest-zoomable.c
 

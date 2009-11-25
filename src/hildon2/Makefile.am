@@ -60,8 +60,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-icon-names.h           \
 	modest-hildon2-global-settings-dialog.c \
 	modest-hildon2-global-settings-dialog.h \
-	modest-wp-text-view.c \
-	modest-wp-text-view.h \
 	modest-maemo-security-options-view.c \
 	modest-hildon-includes.h      \
 	modest-hildon-find-toolbar.h  \
