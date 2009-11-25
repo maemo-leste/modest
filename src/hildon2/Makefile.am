@@ -83,7 +83,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-maemo-utils.c          \
 	modest-number-editor.c        \
 	modest-number-editor.h        \
-	modest-connection-specific-smtp-window.c \
 	modest-connection-specific-smtp-edit-window.h \
 	modest-connection-specific-smtp-edit-window.c \
 	modest-secureauth-picker.h modest-secureauth-picker.c \
