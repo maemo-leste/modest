@@ -77,6 +77,7 @@
 #include "modest-maemo-utils.h"
 #include <modest-ui-constants.h>
 #include "modest-color-button.h"
+#include <modest-toolkit-utils.h>
 
 #ifdef MODEST_USE_CALENDAR_WIDGETS
 #include <calendar-ui-widgets.h>

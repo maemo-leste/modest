@@ -60,8 +60,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-provider-picker.h modest-provider-picker.c \
 	modest-serversecurity-picker.h modest-serversecurity-picker.c \
 	modest-servertype-picker.h modest-servertype-picker.c \
-	modest-folder-window.c \
-	modest-folder-window.h \
 	modest-icon-names.h           \
 	modest-hildon2-global-settings-dialog.c \
 	modest-hildon2-global-settings-dialog.h \

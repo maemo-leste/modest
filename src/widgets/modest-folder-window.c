@@ -33,7 +33,6 @@
 #include <modest-signal-mgr.h>
 #include <modest-runtime.h>
 #include <modest-platform.h>
-#include <modest-maemo-utils.h>
 #include <modest-icon-names.h>
 #include <modest-ui-constants.h>
 #include <modest-account-mgr.h>
@@ -41,9 +40,12 @@
 #include <modest-defs.h>
 #include <modest-ui-actions.h>
 #include <modest-window.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <modest-maemo-utils.h>
 #include <hildon/hildon-program.h>
 #include <hildon/hildon-banner.h>
 #include <hildon/hildon-button.h>
+#endif
 #include <tny-account-store-view.h>
 #include <tny-gtk-folder-list-store.h>
 #include <modest-header-window.h>
@@ -53,12 +55,15 @@
 #include "modest-text-utils.h"
 #include "modest-tny-account.h"
 #include "modest-account-protocol.h"
+#include <gdk/gdkkeysyms.h>
 
+#ifdef MODEST_TOOLKIT_HILDON2
 typedef enum {
 	EDIT_MODE_COMMAND_MOVE = 1,
 	EDIT_MODE_COMMAND_DELETE = 2,
 	EDIT_MODE_COMMAND_RENAME = 3,
 } EditModeCommand;
+#endif
 
 /* 'private'/'protected' functions */
 static void modest_folder_window_class_init  (ModestFolderWindowClass *klass);
@@ -74,19 +79,23 @@ static void on_folder_activated (ModestFolderView *folder_view,
 				 gpointer userdata);
 static void setup_menu (ModestFolderWindow *self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void set_delete_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
 static void set_moveto_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
 static void set_rename_edit_mode (GtkButton *button,
 				  ModestFolderWindow *self);
+#endif
 static void modest_folder_window_pack_toolbar (ModestWindow *self,
 					       GtkPackType pack_type,
 					       GtkWidget *toolbar);
+#ifdef MODEST_TOOLKIT_HILDON2
 static void edit_mode_changed (ModestFolderWindow *folder_window,
 			       gint edit_mode_id,
 			       gboolean enabled,
 			       ModestFolderWindow *self);
+#endif
 static void on_progress_list_changed (ModestWindowMgr *mgr,
 				      ModestFolderWindow *self);
 static gboolean on_map_event (GtkWidget *widget,
@@ -150,7 +159,12 @@ modest_folder_window_get_type (void)
 			(GInstanceInitFunc) modest_folder_window_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_HILDON2_WINDOW,
+		my_type = g_type_register_static (
+#ifdef MODEST_TOOLKIT_HILDON2
+						  MODEST_TYPE_HILDON2_WINDOW,
+#else
+						  MODEST_TYPE_WINDOW,
+#endif
 		                                  "ModestFolderWindow",
 		                                  &my_info, 0);
 	}
@@ -317,11 +331,8 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 {
 	ModestFolderWindow *self = NULL;	
 	ModestFolderWindowPrivate *priv = NULL;
-	HildonProgram *app;
 	GdkPixbuf *window_icon;
 	GtkWidget *scrollable;
-	GtkWidget *action_area_box;
-	GdkPixbuf *new_message_pixbuf;
 	guint accel_key;
 	GdkModifierType accel_mods;
 	GtkAccelGroup *accel_group;
@@ -344,6 +355,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	modest_folder_view_set_filter (MODEST_FOLDER_VIEW (priv->folder_view), 
 				       MODEST_FOLDER_VIEW_FILTER_HIDE_ACCOUNTS);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *action_area_box;
+	GdkPixbuf *new_message_pixbuf;
 	g_signal_connect (G_OBJECT (self), "edit-mode-changed",
 			  G_CALLBACK (edit_mode_changed), (gpointer) self);
 
@@ -358,6 +372,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	gtk_widget_show_all (priv->new_message_button);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->folder_view), TRUE);
+#endif
 	
 	setup_menu (self);
 
@@ -368,8 +383,8 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	priv->top_vbox = gtk_vbox_new (0, FALSE);
 	top_alignment = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (top_alignment),
-				   HILDON_MARGIN_HALF, 0,
-				   HILDON_MARGIN_DOUBLE, HILDON_MARGIN_DOUBLE);
+				   MODEST_MARGIN_HALF, 0,
+				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
 
 	gtk_container_add (GTK_CONTAINER (scrollable), priv->folder_view);
 	gtk_container_add (GTK_CONTAINER (top_alignment), scrollable);
@@ -384,10 +399,13 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	connect_signals (MODEST_FOLDER_WINDOW (self));
 
 	/* Get device name */
+#ifdef MODEST_TOOLKIT_HILDON2
+	HildonProgram *app;
 	modest_maemo_utils_get_device_name ();
 
 	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
+#endif
 	
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
@@ -403,6 +421,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	 */
 
 	/* Register edit modes */
+#ifdef MODEST_TOOLKIT_HILDON2
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), 
 						  EDIT_MODE_COMMAND_DELETE,
 						  _("mcen_ti_edit_folder_delete"), 
@@ -424,6 +443,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 						  GTK_TREE_VIEW (priv->folder_view),
 						  GTK_SELECTION_SINGLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_rename_folder));
+#endif
 	
 	g_signal_connect (G_OBJECT (self), "map-event",
 			  G_CALLBACK (on_map_event),
@@ -551,6 +571,7 @@ setup_menu (ModestFolderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_inbox_sendandreceive"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_send_receive),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_send_receive));
+#ifdef MODEST_TOOLKIT_HILDON2
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_rename_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (set_rename_edit_mode),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_rename_folder));
@@ -560,6 +581,7 @@ setup_menu (ModestFolderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_delete_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (set_delete_edit_mode),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_delete));
+#endif
 
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_cancel_send),
@@ -608,6 +630,7 @@ on_folder_activated (ModestFolderView *folder_view,
 	}
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 set_delete_edit_mode (GtkButton *button,
 		      ModestFolderWindow *self)
@@ -628,6 +651,7 @@ set_rename_edit_mode (GtkButton *button,
 {
 	modest_hildon2_window_set_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_RENAME);
 }
+#endif
 
 static void
 modest_folder_window_pack_toolbar (ModestWindow *self,
@@ -646,6 +670,7 @@ modest_folder_window_pack_toolbar (ModestWindow *self,
 	}
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void 
 edit_mode_changed (ModestFolderWindow *folder_window,
 		   gint edit_mode_id,
@@ -690,6 +715,7 @@ edit_mode_changed (ModestFolderWindow *folder_window,
 						 filter);
 	}
 }
+#endif
 
 static gboolean 
 on_map_event (GtkWidget *widget,
@@ -700,7 +726,7 @@ on_map_event (GtkWidget *widget,
 	ModestFolderWindowPrivate *priv = MODEST_FOLDER_WINDOW_GET_PRIVATE (self);
 
 	if (priv->progress_hint) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+		modest_window_show_progress (MODEST_WINDOW (self), TRUE);
 	}
 
 	return FALSE;
@@ -754,7 +780,7 @@ update_progress_hint (ModestFolderWindow *self)
 	modest_ui_actions_check_menu_dimming_rules (MODEST_WINDOW (self));
 
 	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint ? 1:0);
+		modest_window_show_progress (MODEST_WINDOW (self), priv->progress_hint ? 1:0);
 	}
 }
 

@@ -43,6 +43,7 @@
 #include "modest-text-utils.h"
 #include "modest-maemo-utils.h"
 #include <modest-toolkit-factory.h>
+#include <modest-toolkit-utils.h>
 
 #include <glib/gi18n.h>
 

@@ -59,6 +59,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-find-toolbar.c          \
 	modest-find-toolbar.h          \
 	modest-folder-view.c           \
+	modest-folder-window.c         \
+	modest-folder-window.h         \
 	modest-global-settings-dialog.c \
 	modest-global-settings-dialog.h \
 	modest-gtkhtml-mime-part-view.c \

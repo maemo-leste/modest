@@ -494,6 +494,8 @@ void modest_window_mgr_create_caches (ModestWindowMgr *self);
  */
 gboolean modest_window_mgr_close_all_but_initial (ModestWindowMgr *self);
 
+ModestWindow *modest_window_mgr_get_folder_window (ModestWindowMgr *self);
+
 
 G_END_DECLS
 

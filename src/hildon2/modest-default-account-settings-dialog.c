@@ -56,6 +56,7 @@
 #include <tny-status.h>
 #include <modest-scrollable.h>
 #include <modest-toolkit-factory.h>
+#include <modest-toolkit-utils.h>
 
 #include <gconf/gconf-client.h>
 #include <string.h> /* For strlen(). */

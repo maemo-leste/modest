@@ -37,6 +37,8 @@
 #include "widgets/modest-validating-entry.h"
 #include "modest-maemo-utils.h"
 #include "modest-hildon-includes.h"
+#include <modest-toolkit-factory.h>
+#include <modest-toolkit-utils.h>
 
 #define PORT_MIN 1
 #define PORT_MAX 65535
@@ -274,7 +276,7 @@ create_outgoing_security (ModestSecurityOptionsView* self,
 	ppriv = MODEST_SECURITY_OPTIONS_VIEW_GET_PRIVATE (self);
 	
 	/* The secure connection widgets */
-	ppriv->security_view = modest_toolkit_factory_create_serversecurity (modest_runtime_get_toolkit_factory ());
+	ppriv->security_view = modest_toolkit_factory_create_serversecurity_selector (modest_runtime_get_toolkit_factory ());
 	modest_serversecurity_selector_fill (ppriv->security_view,
 					      MODEST_PROTOCOLS_TRANSPORT_SMTP);
 	if (GTK_IS_COMBO_BOX (ppriv->security_view)) {

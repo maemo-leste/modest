@@ -96,7 +96,7 @@ static void osso_display_event_cb (osso_display_state_t state,
 static void on_account_removed (TnyAccountStore *acc_store, 
 				TnyAccount *account,
 				gpointer user_data);
-static ModestWindow *modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self);
+static ModestWindow *modest_hildon2_window_mgr_get_folder_window (ModestWindowMgr *self);
 
 typedef struct _ModestHildon2WindowMgrPrivate ModestHildon2WindowMgrPrivate;
 struct _ModestHildon2WindowMgrPrivate {
@@ -970,7 +970,7 @@ find_folder_window (gconstpointer a,
 }
 
 static ModestWindow *
-modest_hildon2_window_mgr_get_folder_window (ModestHildon2WindowMgr *self)
+modest_hildon2_window_mgr_get_folder_window (ModestWindowMgr *self)
 {
 	ModestHildon2WindowMgrPrivate *priv;
 	GList *window;

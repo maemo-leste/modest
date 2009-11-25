@@ -52,6 +52,7 @@
 #include <gtk/gtkentry.h>
 #include <modest-maemo-utils.h>
 #include <dbus_api/asdbus.h>
+#include <modest-toolkit-utils.h>
 
 static OssoABookContactModel *contact_model =  NULL;
 static EBook *book = NULL;

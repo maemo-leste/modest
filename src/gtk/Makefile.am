@@ -37,7 +37,10 @@ INCLUDES=\
 libmodest_ui_la_SOURCES= \
 	modest-icon-names.h
 
-LDADD = \
+libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \
+	$(MODEST_ABOOK_LIBS) \
 	$(MODEST_PLATFORM_LIBS) \
-	$(MODEST_TOOKIT_LIBS)
+	$(MODEST_TOOLKIT_LIBS) \
+	$(MODEST_WPEDITOR_LIBS)
+

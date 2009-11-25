@@ -52,7 +52,7 @@
 #include <gtkhtml/gtkhtml.h>
 #include <modest-runtime.h>
 #include <widgets/modest-header-window.h>
-#include <modest-folder-window.h>
+#include <widgets/modest-folder-window.h>
 
 
 static gboolean _invalid_attach_selected (ModestWindow *win, 
@@ -206,7 +206,11 @@ modest_ui_dimming_rules_on_delete (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	if (MODEST_IS_FOLDER_WINDOW (win)) {
+#ifdef MODEST_TOOLKIT_HILDON2
 		dimmed = modest_ui_dimming_rules_on_folder_window_delete (win, user_data);
+#else
+		dimmed = FALSE;
+#endif
 	} else if (MODEST_IS_HEADER_WINDOW (win)) {
 
 		if (!dimmed)
@@ -542,9 +546,17 @@ modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data)
 	rule = MODEST_DIMMING_RULE (user_data);
 
 	if (MODEST_IS_HEADER_WINDOW (win))
+#ifdef MODEST_TOOLKIT_HILDON2
 		dimmed = modest_ui_dimming_rules_on_header_window_move_to (win, user_data);
+#else
+	dimmed = TRUE;
+#endif
 	else if (MODEST_IS_FOLDER_WINDOW (win))
+#ifdef MODEST_TOOLKIT_HILDON2
 		dimmed = modest_ui_dimming_rules_on_folder_window_move_to (win, user_data);
+#else
+	dimmed = TRUE;
+#endif
 	else if (MODEST_IS_MSG_VIEW_WINDOW (win)) 
 		 dimmed = modest_ui_dimming_rules_on_view_window_move_to (win, user_data);
 
@@ -728,7 +740,6 @@ modest_ui_dimming_rules_on_view_attachments (ModestWindow *win, gpointer user_da
 	return dimmed;
 }
 
-#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 _not_valid_attachments (ModestWindow *win, gboolean save_not_remove)
 {
@@ -788,7 +799,6 @@ _not_valid_attachments (ModestWindow *win, gboolean save_not_remove)
 	return result;
 
 }
-#endif
 
 gboolean 
 modest_ui_dimming_rules_on_save_attachments (ModestWindow *win, gpointer user_data)

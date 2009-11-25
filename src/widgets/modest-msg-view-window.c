@@ -71,6 +71,10 @@
 #include <tny-camel-msg.h>
 #include <modest-icon-names.h>
 
+#ifdef MODEST_PLATFORM_MAEMO
+#include <modest-maemo-utils.h>
+#endif
+
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
 

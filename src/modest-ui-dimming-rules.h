@@ -79,11 +79,11 @@ gboolean modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer us
 gboolean modest_ui_dimming_rules_on_editor_paste_show_menu (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_save_to_drafts (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_insert_image (ModestWindow *win, gpointer user_data);
+gboolean modest_ui_dimming_rules_on_edit_accounts (ModestWindow *win, gpointer user_data);
 #ifdef MODEST_TOOLKIT_HILDON2
 gboolean modest_ui_dimming_rules_on_header_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_folder_window_move_to (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_folder_window_delete (ModestWindow *win, gpointer user_data);
-gboolean modest_ui_dimming_rules_on_edit_accounts (ModestWindow *win, gpointer user_data);
 #else
 gboolean modest_ui_dimming_rules_on_new_folder (ModestWindow *win, gpointer user_data);
 gboolean modest_ui_dimming_rules_on_delete_folder (ModestWindow *win, gpointer user_data);

@@ -150,7 +150,6 @@ modest_hildon2_window_class_init (gpointer klass, gpointer class_data)
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
 	HildonWindowClass *hildon_window_class = (HildonWindowClass *) klass;
-	ModestHildon2WindowClass *modest_hildon2_window_class = (ModestHildon2WindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->dispose  = modest_hildon2_window_dispose;
@@ -527,7 +526,7 @@ edit_toolbar_button_clicked (HildonEditToolbar *toolbar,
 							GINT_TO_POINTER (priv->edit_command));
 
 	if (reg) {
-		if ((reg->action == NULL) || reg->action (self))
+		if ((reg->action == NULL) || reg->action (MODEST_WINDOW (self)))
 			modest_hildon2_window_unset_edit_mode (self);
 	} else {
 		modest_hildon2_window_unset_edit_mode (self);

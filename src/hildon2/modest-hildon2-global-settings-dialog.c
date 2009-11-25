@@ -50,6 +50,7 @@
 #include "modest-defs.h"
 #include <tny-account-store.h>
 #include <modest-account-mgr-helpers.h>
+#include <modest-toolkit-utils.h>
 
 
 #define MSG_SIZE_MAX_VAL 5000
