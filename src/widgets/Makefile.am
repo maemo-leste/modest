@@ -139,6 +139,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-servertype-combo-box.c \
 	modest-secureauth-combo-box.h \
 	modest-secureauth-combo-box.c \
+	modest-signature-editor-dialog.c         \
+	modest-signature-editor-dialog.h         \
 	modest-sort-criterium-view.c   \
 	modest-sort-criterium-view.c   \
 	modest-sort-criterium-view.h   \

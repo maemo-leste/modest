@@ -961,8 +961,8 @@ on_response (GtkDialog *wizard_dialog,
 	/* Warn about unsaved changes: */
 	if ((response_id == GTK_RESPONSE_CANCEL || response_id == GTK_RESPONSE_DELETE_EVENT) && 
 	    (priv->modified || sec_changed)) {
-		gint response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
-									 _("imum_nc_wizard_confirm_lose_changes")));
+		gint dialog_response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
+										_("imum_nc_wizard_confirm_lose_changes"));
 		/* TODO: These button names will be ambiguous, and not specified in the UI specification. */
 
 
@@ -1078,7 +1078,9 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 			    FALSE, FALSE, 0);
 
 	separator = gtk_hseparator_new ();
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (separator, HILDON_SIZE_AUTO);
+#endif
 	gtk_box_pack_start (GTK_BOX (priv->main_container), separator,
 			    FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);
@@ -1086,7 +1088,9 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 			    priv->page_incoming,
 			    FALSE, FALSE, 0);
 	separator = gtk_hseparator_new ();
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (separator, HILDON_SIZE_AUTO);
+#endif
 	gtk_box_pack_start (GTK_BOX (priv->main_container), separator,
 			    FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 	gtk_widget_show (separator);

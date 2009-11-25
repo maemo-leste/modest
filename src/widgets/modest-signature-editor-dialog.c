@@ -29,7 +29,6 @@
 
 #include "modest-signature-editor-dialog.h"
 #include "widgets/modest-ui-constants.h"
-#include "modest-hildon-includes.h"
 #include "widgets/modest-validating-entry.h"
 #include "modest-runtime.h"
 #include <modest-account-mgr-helpers.h>
@@ -41,9 +40,10 @@
 #include <modest-toolkit-factory.h>
 #include <gtk/gtkstock.h>
 #include <glib/gi18n.h>
-#include <modest-maemo-utils.h>
 #include "modest-text-utils.h"
-#include <hildon/hildon-text-view.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 G_DEFINE_TYPE (ModestSignatureEditorDialog, modest_signature_editor_dialog, GTK_TYPE_DIALOG);
 

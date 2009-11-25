@@ -71,8 +71,6 @@ libmodest_ui_la_SOURCES=              \
 	modest-hildon2-window.h \
 	modest-hildon2-window.c \
 	modest-platform.c	      \
-	modest-signature-editor-dialog.c         \
-	modest-signature-editor-dialog.h         \
 	modest-hildon2-msg-view-window.h      \
 	modest-hildon2-msg-view-window.c      \
 	modest-maemo-utils.c          \
