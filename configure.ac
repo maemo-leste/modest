@@ -125,7 +125,6 @@ else
    AC_MSG_ERROR([install gtkhtml 3.8 or newer])
 fi
 
-PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0 >= 3.2.0)
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
 
 PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
@@ -176,7 +175,7 @@ fi
 
 if test "$with_platform" = "maemo"; then
    	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_MAEMO -DMODEST_API_VERSION=${MODEST_API_VERSION}"
-	PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0)
+	PKG_CHECK_MODULES(LIBMODEST_DBUS_CLIENT,libmodest-dbus-client-1.0 >= 3.2.0)
 elif test "$with_platform" = "gnome"; then
 	MODEST_PLUGIN_DEFINES=" -DMODEST_PLATFORM_GNOME -DMODEST_API_VERSION=${MODEST_API_VERSION}"
 fi

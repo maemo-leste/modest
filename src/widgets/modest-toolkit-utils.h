@@ -34,7 +34,6 @@
 #include <gtk/gtk.h>
 #include <stdio.h> /* for FILE* */
 #include <tny-fs-stream.h>
-#include <libosso.h>
 #include "widgets/modest-global-settings-dialog.h"
 #include "widgets/modest-validating-entry.h"
 

@@ -1275,7 +1275,9 @@ replace_with_images (ModestMsgEditWindow *self, TnyList *attachments)
 			if (pixbuf != NULL) {
 				priv->images_count ++;
 				priv->images_size += stream_size;
+#ifndef MODEST_HAVE_LIBWPEDITOR_PLUS
 				wp_text_buffer_replace_image (WP_TEXT_BUFFER (priv->text_buffer), cid, pixbuf);
+#endif
 				g_object_unref (pixbuf);
 			}
 		}
