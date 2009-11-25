@@ -71,7 +71,6 @@
 #include <libgnomevfs/gnome-vfs-mime.h>
 #include <modest-utils.h>
 #include <modest-ui-constants.h>
-#include "modest-color-button.h"
 #include <modest-toolkit-utils.h>
 
 #ifdef MODEST_USE_CALENDAR_WIDGETS
@@ -81,6 +80,7 @@
 #include <hildon/hildon.h>
 #include "modest-maemo-utils.h"
 #include "modest-hildon-includes.h"
+#include "modest-color-button.h"
 #endif
 
 #define DEFAULT_FONT_SIZE 3
