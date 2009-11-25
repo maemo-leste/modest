@@ -36,23 +36,16 @@
 #include <modest-runtime.h>
 #include <modest-main-window.h>
 #include <modest-header-view.h>
-#include "modest-hildon2-global-settings-dialog.h"
 #include "modest-widget-memory.h"
-#include <modest-hildon-includes.h>
-#include <modest-maemo-utils.h>
 #include <modest-utils.h>
-#include <dbus_api/modest-dbus-callbacks.h>
-#include <libosso.h>
-#include <tny-maemo-conic-device.h>
 #include <tny-camel-folder.h>
 #include <tny-simple-list.h>
 #include <tny-merge-folder.h>
 #include <tny-error.h>
 #include <tny-folder.h>
 #include <tny-account-store-view.h>
-#include <gtk/gtkicontheme.h>
-#include <gtk/gtkmenuitem.h>
-#include <gtk/gtkmain.h>
+#include <tny-gnome-device.h>
+#include <gtk/gtk.h>
 #include <modest-text-utils.h>
 #include "modest-tny-folder.h"
 #include "modest-tny-account.h"
@@ -60,58 +53,28 @@
 #include <libgnomevfs/gnome-vfs-mime-utils.h>
 #include <modest-account-settings-dialog.h>
 #include <modest-easysetup-wizard-dialog.h>
-#include "modest-hildon2-sort-dialog.h"
-#include <hildon/hildon.h>
-#include <osso-mem.h>
-#include "hildon2/modest-hildon2-details-dialog.h"
 #include "widgets/modest-window-mgr.h"
-#ifdef MODEST_USE_PROFILE
-#include <profiled/keys_nokia.h>
-#include <profiled/libprofile.h>
-#endif
-#include <canberra.h>
 #include <modest-datetime-formatter.h>
 #include "modest-header-window.h"
 #include <modest-folder-window.h>
 #include <modest-account-mgr.h>
 #include <modest-account-mgr-helpers.h>
 #include <modest-ui-constants.h>
-#include <modest-selector-picker.h>
 #include <modest-icon-names.h>
 #include <modest-count-stream.h>
 #include <math.h>
-
-#ifdef MODEST_HAVE_MCE
-#include <mce/dbus-names.h>
-#endif /*MODEST_HAVE_MCE*/
-
-#ifdef MODEST_HAVE_ABOOK
-#include <libosso-abook/osso-abook.h>
-#endif /*MODEST_HAVE_ABOOK*/
-
-#ifdef MODEST_HAVE_LIBALARM
-#include <alarmd/libalarm.h> /* For alarm_event_add(), etc. */
-#endif /*MODEST_HAVE_LIBALARM*/
 
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
 #define MODEST_NOTIFICATION_CATEGORY "email-message"
 #define MODEST_NEW_MAIL_LIGHTING_PATTERN "PatternChatAndEmail"
-#ifdef MODEST_USE_PROFILE
-#define PROFILE_MAIL_TONE PROFILEKEY_EMAIL_ALERT_TONE
-#define PROFILE_MAIL_VOLUME PROFILEKEY_EMAIL_ALERT_VOLUME
-#else
-#define MAIL_TONE "message-new-email"
-#endif
 
 #define COMMON_FOLDER_DIALOG_ENTRY "entry"
 #define COMMON_FOLDER_DIALOG_ACCOUNT_PICKER "account-picker"
 #define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
 #define FOLDER_PICKER_ORIGINAL_ACCOUNT "original-account"
-#define MODEST_ALARMD_APPID PACKAGE_NAME
 
-static ca_context *ca_con = NULL;
 static gboolean ca_con_opened = FALSE;
 
 
@@ -162,51 +125,12 @@ check_required_files (void)
 gboolean
 modest_platform_init (int argc, char *argv[])
 {
-	osso_context_t *osso_context;
-	osso_hw_state_t hw_state = { 0 };
-	DBusConnection *con;
 	GSList *acc_names;
 
 	if (!check_required_files ()) {
 		g_printerr ("modest: missing required files\n");
 		return FALSE;
 	}
-
-	osso_context = modest_maemo_utils_get_osso_context();
-
-	if ((con = osso_get_dbus_connection (osso_context)) == NULL) {
-		g_printerr ("modest: could not get dbus connection\n");
-		return FALSE;
-	}
-
-	/* Add a D-Bus handler to be used when the main osso-rpc 
-	 * D-Bus handler has not handled something.
-	 * We use this for D-Bus methods that need to use more complex types 
-	 * than osso-rpc supports. 
-	 */
-	if (!dbus_connection_add_filter (con,
-					 modest_dbus_req_filter,
-					 NULL,
-					 NULL)) {
-
-		g_printerr ("modest: Could not add D-Bus filter\n");
-		return FALSE;
-	}
-
-	/* Register our simple D-Bus callbacks, via the osso API: */
-	osso_return_t result = osso_rpc_set_cb_f(osso_context, 
-                               MODEST_DBUS_SERVICE, 
-                               MODEST_DBUS_OBJECT, 
-                               MODEST_DBUS_IFACE,
-                               modest_dbus_req_handler, NULL /* user_data */);
-    	if (result != OSSO_OK) {
-       		g_printerr ("modest: Error setting D-BUS callback (%d)\n", result);
-		return FALSE;
-   	}
-
-	/* Register hardware event dbus callback: */
-    	hw_state.shutdown_ind = TRUE;
-	osso_hw_set_event_cb(osso_context, NULL, NULL, NULL);
 
 	/* Make sure that the update interval is changed whenever its gconf key 
 	 * is changed */
@@ -231,27 +155,13 @@ modest_platform_init (int argc, char *argv[])
 						       MODEST_CONF_EVENT_KEY_CHANGED, 0, NULL);
 		modest_account_mgr_free_account_names (acc_names);
 	}
-
 	
-#ifdef MODEST_HAVE_ABOOK
-	/* initialize the addressbook */
-	if (!osso_abook_init (&argc, &argv, osso_context)) {
-		g_printerr ("modest: failed to initialized addressbook\n");
-		return FALSE;
-	}
-#endif /*MODEST_HAVE_ABOOK*/
-
 	return TRUE;
 }
 
 gboolean
 modest_platform_uninit (void)
 {
-	osso_context_t *osso_context =
-		modest_maemo_utils_get_osso_context ();
-	if (osso_context)
-		osso_deinitialize (osso_context);
-
 	return TRUE;
 }
 
@@ -261,63 +171,18 @@ modest_platform_uninit (void)
 TnyDevice*
 modest_platform_get_new_device (void)
 {
-	return TNY_DEVICE (tny_maemo_conic_device_new ());
+	return TNY_DEVICE (tny_gnome_device_new ());
 }
 
 gchar*
 modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 				    gchar **effective_mime_type)
 {
-	GString *mime_str = NULL;
-	gchar *icon_name  = NULL;
-	gchar **icons, **cursor;
-	
-	if (!mime_type || g_ascii_strcasecmp (mime_type, "application/octet-stream") == 0) 
-		mime_str = g_string_new (gnome_vfs_get_mime_type_for_name (name));
-	else {
-		mime_str = g_string_new (mime_type);
-		g_string_ascii_down (mime_str);
-	}
-	
-	icons = hildon_mime_get_icon_names (mime_str->str, NULL);
-	
-	for (cursor = icons; cursor; ++cursor) {
-		if (!g_ascii_strcasecmp (*cursor, "gnome-mime-message") ||
-		    !g_ascii_strcasecmp (*cursor, "gnome-mime-message-rfc822")) {
-			icon_name = g_strdup ("qgn_list_messagin");
-			break;
-		} else if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
-			icon_name = g_strdup (*cursor);
-			break;
-		}
-	}
-	g_strfreev (icons);
 
-	if (effective_mime_type)
-		*effective_mime_type = g_string_free (mime_str, FALSE);
-	else
-		g_string_free (mime_str, TRUE);
+	g_warning ("Not implemented %s", __FUNCTION__);
+
+	return NULL;
 	
-	return icon_name;
-}
-
-
-static gboolean
-checked_hildon_uri_open (const gchar *uri, HildonURIAction *action)
-{
-	GError *err = NULL;
-	gboolean result;
-
-	g_return_val_if_fail (uri, FALSE);
-	
-	result = hildon_uri_open (uri, action, &err);
-	if (!result) {
-		g_printerr ("modest: hildon_uri_open ('%s', %p) failed: %s",
-			    uri, action,  err && err->message ? err->message : "unknown error");
-		if (err)
-			g_error_free (err);
-	}
-	return result;
 }
 
 
@@ -325,217 +190,35 @@ checked_hildon_uri_open (const gchar *uri, HildonURIAction *action)
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	HildonURIAction *action;
-	gboolean result = FALSE;
-	GSList *actions, *iter = NULL;
+	g_warning ("Not implemented %s", __FUNCTION__);
 
-	g_return_val_if_fail (uri, FALSE);
-	if (!uri)
-		return FALSE;
+	return FALSE;
 
-	/* don't try to activate file: uri's -- they might confuse the user,
-	 * and/or might have security implications */
-	if (!g_str_has_prefix (uri, "file:")) {
-
-		actions = hildon_uri_get_actions_by_uri (uri, -1, NULL);
-
-		for (iter = actions; iter; iter = g_slist_next (iter)) {
-			action = (HildonURIAction*) iter->data;
-			if (action && strcmp (hildon_uri_action_get_service (action),
-					      "com.nokia.modest") == 0) {
-				result = checked_hildon_uri_open (uri, action);
-				break;
-			}
-		}
-
-		/* if we could not open it with email, try something else */
-		if (!result)
-			result = checked_hildon_uri_open (uri, NULL);
-	}
-
-	if (!result) {
-		ModestWindow *parent =
-			modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
-		hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
-						_("mcen_ib_unsupported_link"));
-		g_debug ("%s: cannot open uri '%s'", __FUNCTION__,uri);
-	}
-
-	return result;
 }
 
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
-	gint result = 0;
-	DBusConnection *con;
-	gchar *uri_path = NULL;
-	
-	uri_path = gnome_vfs_get_uri_from_local_path (path);	
-	con = osso_get_dbus_connection (modest_maemo_utils_get_osso_context());
-	
-	if (mime_type)
-		result = hildon_mime_open_file_with_mime_type (con, uri_path, mime_type);
-	if (result != 1)
-		result = hildon_mime_open_file (con, uri_path);
-	if (result != 1)
-		modest_platform_run_information_dialog (NULL, _("mcen_ni_noregistered_viewer"), FALSE);
-	
-	return result != 1;
-}
-
-typedef struct  {
-	GSList *actions;
-	gchar  *uri;
-} ModestPlatformPopupInfo;
-
-static gboolean
-delete_uri_popup (GtkWidget *menu,
-		  GdkEvent *event,
-		  gpointer userdata)
-{
-	ModestPlatformPopupInfo *popup_info = (ModestPlatformPopupInfo *) userdata;
-
-	g_free (popup_info->uri);
-	hildon_uri_free_actions (popup_info->actions);
+	g_warning ("Not implemented %s", __FUNCTION__);
 
 	return FALSE;
-}
-
-static void
-activate_uri_popup_item (GtkMenuItem *menu_item,
-			 gpointer userdata)
-{
-	GSList *node;
-	ModestPlatformPopupInfo *popup_info = (ModestPlatformPopupInfo *) userdata;
-	const gchar* action_name;
-
-	action_name = g_object_get_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION);
-	if (!action_name) {
-		g_printerr ("modest: no action name defined\n");
-		return;
-	}
-
-	/* special handling for the copy menu item -- copy the uri to the clipboard */
-	/* if it's a copy thingy, the uri will look like 'copy:http://slashdot.org' */
-	if (g_str_has_prefix (action_name, URI_ACTION_COPY)) {
-		GtkClipboard *clipboard = gtk_clipboard_get (GDK_NONE);
-		const gchar *uri = (const gchar *) popup_info->uri;
-
-		/* Special case: ignore "mailto:" prefixes */
-		if (g_str_has_prefix (uri, "mailto:"))
-			uri = popup_info->uri + strlen ("mailto:");
-
-		gtk_clipboard_set_text (clipboard, uri, strlen (uri));
-		modest_platform_information_banner (NULL, NULL, _CS("ecoc_ib_edwin_copied"));
-		return; /* we're done */
-	}
-
-	/* now, the real uri-actions... */
-	for (node = popup_info->actions; node != NULL; node = g_slist_next (node)) {
-		HildonURIAction *action = (HildonURIAction *) node->data;
-		if (strcmp (action_name, hildon_uri_action_get_name (action))==0) {
-			if (!checked_hildon_uri_open (popup_info->uri, action)) {
-				ModestWindow *parent =
-					modest_window_mgr_get_current_top (modest_runtime_get_window_mgr());
-				hildon_banner_show_information (parent ? GTK_WIDGET(parent): NULL, NULL,
-								_("mcen_ib_unsupported_link"));
-			}
-			break;
-		}
-	}
 }
 
 gboolean
 modest_platform_show_uri_popup (const gchar *uri)
 {
-	GSList *actions_list, *node;
-	GtkWidget *menu;
-	ModestPlatformPopupInfo *popup_info;
-	GtkWidget *menu_item;
+	g_warning ("Not implemented %s", __FUNCTION__);
 
-	if (uri == NULL)
-		return FALSE;
-
-	/* Create menu */
-	menu = gtk_menu_new ();
-	popup_info = g_new0 (ModestPlatformPopupInfo, 1);
-	popup_info->uri = g_strdup (uri);
-
-	/* don't add actions for file: uri's -- they might confuse the user,
-	 * and/or might have security implications
-	 * we still allow to copy the url though
-	 */
-	if (g_str_has_prefix (uri, "file:"))
-		goto add_copy_link;
-
-	actions_list = hildon_uri_get_actions_by_uri (uri, -1, NULL);
-	if (!actions_list)
-		goto add_copy_link;
-
-	popup_info->actions = actions_list;
-	for (node = actions_list; node != NULL; node = g_slist_next (node)) {
-		const gchar *action_name;
-		const gchar *translation_domain;
-		HildonURIAction *action = (HildonURIAction *) node->data;
-		action_name = hildon_uri_action_get_name (action);
-		translation_domain = hildon_uri_action_get_translation_domain (action);
-		menu_item = gtk_menu_item_new_with_label (dgettext(translation_domain, action_name));
-		hildon_gtk_widget_set_theme_size (menu_item, MODEST_EDITABLE_SIZE);
-		g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer)action_name);  /* hack */
-		g_signal_connect (G_OBJECT (menu_item), "activate", G_CALLBACK (activate_uri_popup_item),
-				  popup_info);
-
-		if (hildon_uri_is_default_action (action, NULL)) {
-			gtk_menu_shell_prepend (GTK_MENU_SHELL (menu), menu_item);
-		} else {
-			gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
-		}
-		gtk_widget_show (menu_item);
-	}
-
- add_copy_link:
-	/* Add the "Copy link" menu option */
-	menu_item = gtk_menu_item_new_with_label (_UR("uri_link_copy_link_location"));
-	hildon_gtk_widget_set_theme_size (menu_item, MODEST_EDITABLE_SIZE);
-	g_object_set_data (G_OBJECT(menu_item), HILDON_OSSO_URI_ACTION, (gpointer) URI_ACTION_COPY);
-	g_signal_connect (G_OBJECT (menu_item), "activate", (GCallback) activate_uri_popup_item, popup_info);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), menu_item);
-	gtk_widget_show (menu_item);
-
-	/* and what to do when the link is deleted */
-	g_signal_connect (G_OBJECT (menu), "delete-event", G_CALLBACK (delete_uri_popup), popup_info);
-	gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
-
-	return TRUE;
+	return FALSE;
 }
 
 
 GdkPixbuf*
 modest_platform_get_icon (const gchar *name, guint icon_size)
 {
-	GError *err = NULL;
-	GdkPixbuf* pixbuf = NULL;
-	GtkIconTheme *current_theme = NULL;
+	g_warning ("Not implemented %s", __FUNCTION__);
 
-	g_return_val_if_fail (name, NULL);
-
-	/* strlen == 0 is not really an error; it just
-	 * means the icon is not available
-	 */
-	if (!name || strlen(name) == 0)
-		return NULL;
-
-	current_theme = gtk_icon_theme_get_default ();
-	pixbuf = gtk_icon_theme_load_icon (current_theme, name, icon_size,
-					   GTK_ICON_LOOKUP_NO_SVG,
-					   &err);
-	if (!pixbuf) {
-		g_warning ("Error loading theme icon '%s': %s\n",
-			    name, err->message);
-		g_error_free (err);
-	} 
-	return pixbuf;
+	return NULL;
 }
 
 const gchar*
@@ -560,8 +243,8 @@ entry_insert_text (GtkEditable *editable,
 
 	/* Show WID-INF036 */
 	if (chars_length >= 20) {
-		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
-						 _CS("ckdg_ib_maximum_characters_reached"));
+		modest_platform_information_banner  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
+						   _CS("ckdg_ib_maximum_characters_reached"));
 	} else {
 		if (modest_text_utils_is_forbidden_char (*text, FOLDER_NAME_FORBIDDEN_CHARS)) {
 			/* Show an error */
@@ -570,14 +253,14 @@ entry_insert_text (GtkEditable *editable,
 			tmp = g_strndup (folder_name_forbidden_chars,
 					 FOLDER_NAME_FORBIDDEN_CHARS_LENGTH);
 			msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
-			hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)),
-							 NULL, msg);
+			modest_platform_information_banner  (gtk_widget_get_parent (GTK_WIDGET (data)),
+							     NULL, msg);
 			g_free (msg);
 			g_free (tmp);
 		} else {
 			if (length >= 20) {
-				hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
-								 _CS("ckdg_ib_maximum_characters_reached"));
+				modest_platform_information_banner  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
+								     _CS("ckdg_ib_maximum_characters_reached"));
 			}
 			/* Write the text in the entry if it's valid */
 			g_signal_handlers_block_by_func (editable,
@@ -607,8 +290,8 @@ entry_changed (GtkEditable *editable,
 
 
 	if (g_utf8_strlen (chars,-1) >= 20) {
-		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
-						 _CS("ckdg_ib_maximum_characters_reached"));
+		modest_platform_information_banner  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
+						     _CS("ckdg_ib_maximum_characters_reached"));
 	}
 	gtk_widget_set_sensitive (ok_button, modest_text_utils_validate_folder_name(chars));
 
@@ -659,8 +342,8 @@ on_response (GtkDialog *dialog,
 
 	if (exists) {
 		/* Show an error */
-		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
-						NULL, _CS("ckdg_ib_folder_already_exists"));
+		modest_platform_information_banner (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
+						    NULL, _CS("ckdg_ib_folder_already_exists"));
 		/* Select the text */
 		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 		gtk_widget_grab_focus (entry);
@@ -855,13 +538,13 @@ folder_picker_set_store (GtkButton *button, TnyFolderStore *store)
 					g_object_ref (store),
 					(GDestroyNotify) g_object_unref);
 		name = folder_store_get_display_name (store);
-		hildon_button_set_value (HILDON_BUTTON (button), name);
+		gtk_button_set_label (GTK_BUTTON (button), name);
 		g_free (name);
 
 		/* Select icon */
 		image = get_image_for_folder_store (store, MODEST_ICON_SIZE_SMALL);
 		if (image)
-			hildon_button_set_image (HILDON_BUTTON (button), image);
+			gtk_button_set_image (GTK_BUTTON (button), image);
 	}
 }
 
@@ -945,10 +628,9 @@ folder_picker_new (TnyFolderStore *suggested, FolderPickerHelper *helper)
 	GtkWidget *button;
 	const gchar *acc_id = NULL;
 
-	button = hildon_button_new (MODEST_EDITABLE_SIZE,
-				    HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
+	button = gtk_button_new ();
 
-	hildon_button_set_alignment (HILDON_BUTTON (button), 0.0, 0.5, 1.0, 1.0);
+	gtk_misc_set_alignment (GTK_MISC (button), 0.0, 0.5);
 
 	if (suggested) {
 
@@ -1235,8 +917,11 @@ modest_platform_run_confirmation_dialog (GtkWindow *parent_window,
 {
 	GtkWidget *dialog;
 	gint response;
-	
-	dialog = hildon_note_new_confirmation (parent_window, message);
+
+	dialog = gtk_message_dialog_new (parent_window, GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+					 GTK_MESSAGE_QUESTION,
+					 GTK_BUTTONS_OK_CANCEL,
+					 message);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), parent_window);
 
@@ -1256,10 +941,14 @@ modest_platform_run_confirmation_dialog_with_buttons (GtkWindow *parent_window,
 	GtkWidget *dialog;
 	gint response;
 	
-	dialog = hildon_note_new_confirmation_add_buttons (parent_window, message,
-							   button_accept, GTK_RESPONSE_ACCEPT,
-							   button_cancel, GTK_RESPONSE_CANCEL,
-							   NULL);
+	dialog = gtk_message_dialog_new (parent_window, GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+					 GTK_MESSAGE_QUESTION,
+					 GTK_BUTTONS_NONE,
+					 message);
+	gtk_dialog_add_buttons (GTK_DIALOG (dialog),
+				button_accept, GTK_RESPONSE_ACCEPT,
+				button_cancel, GTK_RESPONSE_CANCEL,
+				NULL);
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), parent_window);
@@ -1278,7 +967,10 @@ modest_platform_run_information_dialog (GtkWindow *parent_window,
 {
 	GtkWidget *note;
 	
-	note = hildon_note_new_information (parent_window, message);
+	note = gtk_message_dialog_new (parent_window, GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+				       GTK_MESSAGE_INFO,
+				       GTK_BUTTONS_OK,
+				       message);
 	if (block)
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 					     GTK_WINDOW (note), parent_window);
@@ -1373,8 +1065,8 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 		if (device_online)
 			return TRUE;
 		else
-			return tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), 
-							       NULL, user_requested);
+			/* TODO: should show connection dialog through gnome device */
+			return FALSE;
 	}
 
 	/* Return if the account is already connected */
@@ -1382,51 +1074,7 @@ modest_platform_connect_and_wait (GtkWindow *parent_window,
 	if (device_online && conn_status == TNY_CONNECTION_STATUS_CONNECTED)
 		return TRUE;
 
-	/* Create the helper */
-	data = g_slice_new0 (ConnectAndWaitData);
-	data->mutex = g_mutex_new ();
-	data->has_callback = FALSE;
-
-	/* Connect the device */
-	if (!device_online) {
-		/* Track account connection status changes */
-		data->handler = g_signal_connect (account, "connection-status-changed",
-						  G_CALLBACK (on_connection_status_changed),
-						  data);
-		/* Try to connect the device */
-		device_online = tny_maemo_conic_device_connect (TNY_MAEMO_CONIC_DEVICE (device), 
-								NULL, user_requested);
-
-		/* If the device connection failed then exit */
-		if (!device_online && data->handler)
-			goto frees;
-	} else {
-		/* Force a reconnection of the account */
-		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, 
-					      on_tny_camel_account_set_online_cb, data);
-	}
-
-	/* Wait until the callback is executed */
-	g_mutex_lock (data->mutex);
-	if (!data->has_callback) {
-		data->wait_loop = g_main_loop_new (g_main_context_new (), FALSE);
-		gdk_threads_leave ();
-		g_mutex_unlock (data->mutex);
-		g_main_loop_run (data->wait_loop);
-		g_mutex_lock (data->mutex);
-		gdk_threads_enter ();
-	}
-	g_mutex_unlock (data->mutex);
-
- frees:
-	if (g_signal_handler_is_connected (account, data->handler))
-		g_signal_handler_disconnect (account, data->handler);
-	g_mutex_free (data->mutex);
-	g_main_loop_unref (data->wait_loop);
-	g_slice_free (ConnectAndWaitData, data);
-
-	conn_status = tny_account_get_connection_status (account);
-	return (conn_status == TNY_CONNECTION_STATUS_CONNECTED)	? TRUE: FALSE;
+	return FALSE;
 }
 
 gboolean 
@@ -1467,284 +1115,34 @@ modest_platform_connect_and_wait_if_network_folderstore (GtkWindow *parent_windo
 GtkWidget *
 modest_platform_create_sort_dialog       (GtkWindow *parent_window)
 {
-	GtkWidget *dialog;
+	return NULL;
 
-	dialog = modest_hildon2_sort_dialog_new (parent_window);
-
-	return dialog;
 }
 
 
 gboolean 
 modest_platform_set_update_interval (guint minutes)
 {
-#ifdef MODEST_HAVE_LIBALARM
-
-	cookie_t alarm_cookie, *alarm_cookies;
-	ModestConf *conf = modest_runtime_get_conf ();
-	if (!conf)
-		return FALSE;
-
-	if (minutes > 0) {
-		GSList *acc_names = modest_account_mgr_account_names (modest_runtime_get_account_mgr (), TRUE);
-		if (!acc_names) {
-			minutes = 0;
-		} else {
-			modest_account_mgr_free_account_names (acc_names);
-		}
-	}
-
-	/* cookie_t alarm_cookie = modest_conf_get_int (conf, MODEST_CONF_ALARM_ID, NULL); */
-
-	/* Delete any existing alarm, because we will replace it: */
-	alarm_cookies = alarmd_event_query (0,0, 0,0, MODEST_ALARMD_APPID);
-	if (alarm_cookies) {
-		/* alarmd_event_query returns a zero terminated array */
-		for (; *alarm_cookies != 0; alarm_cookies++) {
-			alarmd_event_del (*alarm_cookies);
-		}
-		modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, 0, NULL);
-	}
-
-	/* 0 means no updates: */
-	if (minutes == 0)
-		return TRUE;
-
-	/* Register alarm: */
-
-	/* Set the interval in alarm_event_t structure: */
-	alarm_event_t *event = alarm_event_create ();
-	alarm_event_add_actions (event, 1);
-	alarm_action_t *action = alarm_event_get_action (event, 0);
-	alarm_event_set_alarm_appid (event, MODEST_ALARMD_APPID);
-	event->alarm_time = minutes * 60; /* seconds */
-
-	/* Set recurrence every few minutes: */
-	event->recur_secs = minutes*60;
-	event->recur_count = -1; /* Means infinite */
-
-	/* Specify what should happen when the alarm happens:
-	 * It should call this D-Bus method: */
-
-	action->dbus_path = g_strdup(MODEST_DBUS_OBJECT);
-	action->dbus_interface = g_strdup (MODEST_DBUS_IFACE);
-	action->dbus_service = g_strdup (MODEST_DBUS_SERVICE);
-	action->dbus_name = g_strdup (MODEST_DBUS_METHOD_SEND_RECEIVE);
-	action->flags = ALARM_ACTION_WHEN_TRIGGERED | ALARM_ACTION_TYPE_DBUS | ALARM_ACTION_DBUS_USE_ACTIVATION;
-
-	/* Use ALARM_EVENT_NO_DIALOG: Otherwise, a dialog will be shown if 
-	 * exec_name or dbus_path is NULL, even though we have specified no dialog text.
-	 * Also use ALARM_EVENT_ACTIVATION so that modest is started (without UI) to get emails 
-	 * This is why we want to use the Alarm API instead of just g_timeout_add().
-	 * (The old maemo email-client did this, though it isn't specified in the UI spec.)
-	 * ALARM_EVENT_CONNECTED will prevent the alarm from being called in case that the device is offline
-         */
-	event->flags = ALARM_EVENT_CONNECTED | ALARM_EVENT_RUN_DELAYED;
-
-	alarm_cookie = alarmd_event_add (event);
-
-	/* now, free it */
-	alarm_event_delete (event);
-
-	/* Store the alarm ID in GConf, so we can remove it later:
-	 * This is apparently valid between application instances. */
-	modest_conf_set_int (conf, MODEST_CONF_ALARM_ID, alarm_cookie, NULL);
-
-	if (!alarm_cookie) {
-	    /* Error */
-	    g_warning ("Error setting alarm event. \n");
-
-	    return FALSE;
-	}
-#endif /* MODEST_HAVE_LIBALARM */
 	return TRUE;
 }
 
 void
 modest_platform_push_email_notification(void)
 {
-	gboolean screen_on, app_in_foreground;
-
-	/* Get the window status */
-	app_in_foreground = hildon_program_get_is_topmost (hildon_program_get_instance ());
-
-	screen_on = modest_window_mgr_screen_is_on (modest_runtime_get_window_mgr ());
-
-	/* If the screen is on and the app is in the
-	   foreground we don't show anything */
-	if (!(screen_on && app_in_foreground)) {
-
-		modest_platform_play_email_tone ();
-
-		/* Activate LED. This must be deactivated by
-		   modest_platform_remove_new_mail_notifications */
-#ifdef MODEST_HAVE_MCE
-		osso_rpc_run_system (modest_maemo_utils_get_osso_context (),
-				     MCE_SERVICE,
-				     MCE_REQUEST_PATH,
-				     MCE_REQUEST_IF,
-				     MCE_ACTIVATE_LED_PATTERN,
-				     NULL,
-				     DBUS_TYPE_STRING, MODEST_NEW_MAIL_LIGHTING_PATTERN,
-				     DBUS_TYPE_INVALID);
-#endif
-	}
+	return;
 }
 
 void
 modest_platform_on_new_headers_received (GList *URI_list,
 					 gboolean show_visual)
 {
-	if (g_list_length (URI_list) == 0)
-		return;
-
-#ifdef MODEST_HAVE_HILDON_NOTIFY
-	/* For any other case issue a notification */
-	HildonNotification *notification;
-	ModestMsgNotificationData *data;
-	gint notif_id;
-	gchar *from;
-	TnyAccountStore *acc_store;
-	TnyAccount *account;
-
-	data = (ModestMsgNotificationData *) URI_list->data;
-
-	/* String is changed in-place. There is no need to
-	   actually dup the data->from string but we just do
-	   it in order not to modify the original contents */
-	from = g_strdup (data->from);
-	modest_text_utils_get_display_address (from);
-
-	/* Create notification */
-	notification = hildon_notification_new (from,
-						data->subject,
-						"qgn_list_messagin",
-						MODEST_NOTIFICATION_CATEGORY);
-	g_free (from);
-
-	/* Add DBus action */
-	hildon_notification_add_dbus_action(notification,
-					    "default",
-					    "Cancel",
-					    MODEST_DBUS_SERVICE,
-					    MODEST_DBUS_OBJECT,
-					    MODEST_DBUS_IFACE,
-					    MODEST_DBUS_METHOD_OPEN_MESSAGE,
-					    G_TYPE_STRING, data->uri,
-					    -1);
-
-	/* Set the led pattern */
-	if (data->time)
-		notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
-						    "time", data->time);
-
-	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
-					    "dialog-type", 4);
-	notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-					    "led-pattern",
-					    MODEST_NEW_MAIL_LIGHTING_PATTERN);
-
-	/* Make the notification persistent */
-	notify_notification_set_hint_byte (NOTIFY_NOTIFICATION (notification),
-					   "persistent", TRUE);
-
-	/* Set the number of new notifications */
-	notify_notification_set_hint_int32 (NOTIFY_NOTIFICATION (notification),
-					    "amount", g_list_length (URI_list));
-
-	/* Set the account of the headers */
-	acc_store = (TnyAccountStore *) modest_runtime_get_account_store ();
-	account = tny_account_store_find_account (acc_store, data->uri);
-	if (account) {
-		const gchar *acc_name;
-		acc_name =
-			modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-		notify_notification_set_hint_string(NOTIFY_NOTIFICATION (notification),
-						    "email-account",
-						    acc_name);
-		g_object_unref (account);
-	}
-
-	if (notify_notification_show (NOTIFY_NOTIFICATION (notification), NULL)) {
-		GSList *notifications_list = NULL;
-
-		/* Get previous notifications ids */
-		notifications_list = modest_conf_get_list (modest_runtime_get_conf (),
-							   MODEST_CONF_NOTIFICATION_IDS,
-							   MODEST_CONF_VALUE_INT, NULL);
-
-		/* Save id in the list */
-		g_object_get(G_OBJECT (notification), "id", &notif_id, NULL);
-		notifications_list = g_slist_prepend (notifications_list, GINT_TO_POINTER(notif_id));
-
-		/* We don't listen for the "closed" signal, because we
-		   don't care about if the notification was removed or
-		   not to store the list in gconf */
-
-		/* Save the ids */
-		modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS,
-				      notifications_list, MODEST_CONF_VALUE_INT, NULL);
-
-		g_slist_free (notifications_list);
-	} else {
-		g_warning ("Failed to send notification");
-	}
-
-#endif /*MODEST_HAVE_HILDON_NOTIFY*/
+	return;
 }
 
 void
 modest_platform_remove_new_mail_notifications (gboolean only_visuals) 
 {
-	if (only_visuals) {
-#ifdef MODEST_HAVE_MCE
-		osso_rpc_run_system (modest_maemo_utils_get_osso_context (),
-				     MCE_SERVICE,
-				     MCE_REQUEST_PATH,
-				     MCE_REQUEST_IF,
-				     MCE_DEACTIVATE_LED_PATTERN,
-				     NULL,
-				     DBUS_TYPE_STRING, MODEST_NEW_MAIL_LIGHTING_PATTERN,
-				     DBUS_TYPE_INVALID);
-#endif
-		return;
-	}
-
-#ifdef MODEST_HAVE_HILDON_NOTIFY
-	GSList *notif_list = NULL;
-
-	/* Get previous notifications ids */
-	notif_list = modest_conf_get_list (modest_runtime_get_conf (), 
-					   MODEST_CONF_NOTIFICATION_IDS, 
-					   MODEST_CONF_VALUE_INT, NULL);
-
-        while (notif_list) {
-		gint notif_id;
-		NotifyNotification *notif;
-
-		/* Nasty HACK to remove the notifications, set the id
-		   of the existing ones and then close them */
-		notif_id = GPOINTER_TO_INT(notif_list->data);
-		notif = notify_notification_new("dummy", NULL, NULL, NULL);
-		g_object_set(G_OBJECT(notif), "id", notif_id, NULL);
-
-		/* Close the notification, note that some ids could be
-		   already invalid, but we don't care because it does
-		   not fail */
-		notify_notification_close(notif, NULL);
-		g_object_unref(notif);
-
-		/* Delete the link, it's like going to the next */
-		notif_list = g_slist_delete_link (notif_list, notif_list);
-        }
-
-	/* Save the ids */
-	modest_conf_set_list (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATION_IDS, 
-			      notif_list, MODEST_CONF_VALUE_INT, NULL);
-
-	g_slist_free (notif_list);
-
-#endif /* MODEST_HAVE_HILDON_NOTIFY */
+	return;
 }
 
 
@@ -1752,7 +1150,7 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 GtkWidget * 
 modest_platform_get_global_settings_dialog ()
 {
-	return modest_hildon2_global_settings_dialog_new ();
+	return NULL;
 }
 
 void
@@ -1765,29 +1163,13 @@ modest_platform_show_help (GtkWindow *parent_window,
 void 
 modest_platform_show_search_messages (GtkWindow *parent_window)
 {
-	osso_return_t result = OSSO_ERROR;
-	
-	result = osso_rpc_run_with_defaults (modest_maemo_utils_get_osso_context(),
-					     "osso_global_search",
-					     "search_email", NULL, DBUS_TYPE_INVALID);
-
-	if (result != OSSO_OK) {
-		g_warning ("%s: osso_rpc_run_with_defaults() failed.\n", __FUNCTION__);
-	}
+	return;
 }
 
 void 
 modest_platform_show_addressbook (GtkWindow *parent_window)
 {
-	osso_return_t result = OSSO_ERROR;
-
-	result = osso_rpc_run_with_defaults (modest_maemo_utils_get_osso_context(),
-					     "osso_addressbook",
-					     "top_application", NULL, DBUS_TYPE_INVALID);
-
-	if (result != OSSO_OK) {
-		g_warning ("%s: osso_rpc_run_with_defaults() failed.\n", __FUNCTION__);
-	}
+	return;
 }
 
 static GtkWidget *
@@ -1821,30 +1203,7 @@ modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
-	GtkWidget *banner_parent = NULL;
-	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
-
-	if (modest_window_mgr_get_num_windows (mgr) == 0)
-		return;
-
-	if (parent && GTK_IS_WINDOW (parent)) {
-		/* If the window is the active one then show the
-		   banner on top of this window */
-		if (gtk_window_is_active (GTK_WINDOW (parent)))
-			banner_parent = parent;
-		/* If the window is not the topmost but it's visible
-		   (it's minimized for example) then show the banner
-		   with no parent */ 
-		else if (GTK_WIDGET_VISIBLE (parent))
-			banner_parent = NULL;
-		/* If the window is hidden (like the main window when
-		   running in the background) then do not show
-		   anything */
-		else 
-			return;
-	}
-
-	modest_platform_system_banner (banner_parent, icon_name, text);
+	return;
 }
 
 void 
@@ -1852,19 +1211,7 @@ modest_platform_system_banner (GtkWidget *parent,
 			       const gchar *icon_name,
 			       const gchar *text)
 {
-	GtkWidget *banner = NULL;
-	ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
-
-	if (parent && GTK_IS_WINDOW (parent)) {
-		if (!gtk_window_is_active (GTK_WINDOW (parent)))
-			parent = NULL;
-	}
-
-	banner = hildon_banner_show_information (parent, icon_name, text);
-
-	modest_window_mgr_register_banner (mgr);
-	g_object_ref (mgr);
-	g_object_weak_ref ((GObject *) banner, banner_finish, mgr);
+	return;
 }
 
 void
@@ -1873,13 +1220,7 @@ modest_platform_information_banner_with_timeout (GtkWidget *parent,
 						 const gchar *text,
 						 gint timeout)
 {
-	GtkWidget *banner;
-
-	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0)
-		return;
-
-	banner = hildon_banner_show_information (parent, icon_name, text);
-	hildon_banner_set_timeout(HILDON_BANNER(banner), timeout);
+	return;
 }
 
 GtkWidget *
@@ -1887,20 +1228,7 @@ modest_platform_animation_banner (GtkWidget *parent,
 				  const gchar *animation_name,
 				  const gchar *text)
 {
-	GtkWidget *inf_note = NULL;
-
-	g_return_val_if_fail (text != NULL, NULL);
-
-	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0)
-		return NULL;
-
-	/* If the parent is not visible then do not show */
-	if (parent && !GTK_WIDGET_VISIBLE (parent))
-		return NULL;
-
-	inf_note = hildon_banner_show_animation (parent, animation_name, text);
-
-	return inf_note;
+	return;
 }
 
 typedef struct
@@ -2021,7 +1349,7 @@ on_cert_dialog_response (GtkDialog *dialog, gint response_id,  const gchar* cert
 		g_signal_stop_emission_by_name (dialog, "response");
 
 		msg = g_strdup_printf (_("mcen_ni_view_unknown_certificate"), cert);	
-		note = hildon_note_new_information (NULL, msg);
+		note = modest_platform_information_banner (NULL, NULL, msg);
 		gtk_dialog_run (GTK_DIALOG(note));
 		gtk_widget_destroy (note);
 	}
@@ -2034,18 +1362,8 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 {
 	GtkWidget *note;
 	gint response;
-	ModestWindow *win;
-	HildonWindowStack *stack;
 
-	stack = hildon_window_stack_get_default ();
-	win = MODEST_WINDOW (hildon_window_stack_peek (stack));
-
-	if (!win) {
-		g_debug ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
-			 __FUNCTION__);
-		return FALSE;
-	}
-
+	
 	gchar *question = g_strdup_printf (_("mcen_nc_unknown_certificate"),
 					   server_name);
 
@@ -2053,13 +1371,17 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 	   middle of OK and CANCEL the same as the browser does for
 	   example. With GTK_RESPONSE_HELP the view button is aligned
 	   to the left while the other two to the right */
-	note = hildon_note_new_confirmation_add_buttons  (
-		(GtkWindow *) win,
-		question,
-		_HL("wdgt_bd_yes"),     GTK_RESPONSE_OK,
-		_HL("wdgt_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
-		_HL("wdgt_bd_no"), GTK_RESPONSE_CANCEL,
-		NULL, NULL);
+	note = gtk_message_dialog_new  (
+		NULL,
+		GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+		GTK_MESSAGE_QUESTION,
+		GTK_BUTTONS_NONE,
+		question);
+	gtk_dialog_add_buttons (GTK_DIALOG (note),
+				_HL("wdgt_bd_yes"),     GTK_RESPONSE_OK,
+				_HL("wdgt_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
+				_HL("wdgt_bd_no"), GTK_RESPONSE_CANCEL,
+				NULL, NULL);
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     (GtkWindow *) note, (GtkWindow *) win);
@@ -2080,17 +1402,6 @@ gboolean
 modest_platform_run_alert_dialog (const gchar* prompt,
 				  gboolean is_question)
 {
-	ModestWindow *top_win;
-	HildonWindowStack *stack;
-
-	stack = hildon_window_stack_get_default ();
-	top_win = MODEST_WINDOW (hildon_window_stack_peek (stack));
-
-	if (!top_win) {
-		g_debug ("%s: don't show dialogs if there's no window shown; assuming 'Cancel'",
-			 __FUNCTION__);
-		return FALSE;
-	}
 
 	gboolean retval = TRUE;
 	if (is_question) {
@@ -2098,10 +1409,10 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		 * when it is a question.
 		 * Obviously, we need tinymail to use more specific error codes instead,
 		 * so we know what buttons to show. */
-		GtkWidget *dialog = GTK_WIDGET (hildon_note_new_confirmation (GTK_WINDOW (top_win), 
-									      prompt));
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-					     GTK_WINDOW (dialog), GTK_WINDOW (top_win));
+		dialog = gtk_message_dialog_new (NULL, GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						 GTK_MESSAGE_QUESTION,
+						 GTK_BUTTONS_YES_NO,
+						 prompt);
 
 		const int response = gtk_dialog_run (GTK_DIALOG (dialog));
 		retval = (response == GTK_RESPONSE_YES) || (response == GTK_RESPONSE_OK);
@@ -2165,57 +1476,6 @@ on_account_went_online (TnyCamelAccount *account, gboolean canceled, GError *err
  	return;
 }
  
- 
-static void
-on_conic_device_went_online (TnyMaemoConicDevice *device, const gchar* iap_id, gboolean canceled, GError *err, gpointer user_data)
-{
- 	OnWentOnlineInfo *info = (OnWentOnlineInfo *) user_data;
- 	info->iap = g_strdup (iap_id);
- 	
- 	if (canceled || err || !info->account) {
- 	
- 		/* If there's a problem or if there's no account (then that's it for us, we callback
- 		 * the caller's callback now. He'll have to handle err or canceled, of course.
- 		 * We are not really online, as the account is not really online here ... */	
- 		
- 		/* We'll use the err and the canceled of this cb. TnyMaemoConicDevice delivered us
- 		 * this info. We don't cleanup err, Tinymail does that! */
- 		
- 		if (info->callback) {
- 			
- 			/* info->account can be NULL here, this means that the user did not
- 			 * provide a nice account instance. We'll assume that the user knows
- 			 * what he's doing and is happy with just the device going online. 
- 			 * 
- 			 * We can't do magic, we don't know what account the user wants to
- 			 * see going online. So just the device goes online, end of story */
- 			
- 			info->callback (canceled, err, info->parent_window, info->account, info->user_data);
- 		}
- 		
- 	} else if (info->account) {
- 		
- 		/* If there's no problem and if we have an account, we'll put the account
- 		 * online too. When done, the callback of bringing the account online
- 		 * will callback the caller's callback. This is the most normal case. */
- 
- 		info->device = TNY_DEVICE (g_object_ref (device));
- 		
- 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (info->account), TRUE,
-					      on_account_went_online, info);
- 		
- 		/* The on_account_went_online cb frees up the info, go look if you
- 		 * don't believe me! (so we return here) */
- 		
- 		return;
- 	}
- 	
- 	/* We cleanup if we are not bringing the account online too */
- 	on_went_online_info_free (info);
- 
- 	return;	
-}
- 	
 void 
 modest_platform_connect_and_perform (GtkWindow *parent_window, 
 				     gboolean force,
@@ -2243,24 +1503,6 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  			
  		} else {
  			
- 			info = g_slice_new0 (OnWentOnlineInfo);
- 			
- 			info->iap = NULL;
- 			info->device = NULL;
- 			info->account = NULL;
- 		
- 			if (parent_window)
- 				info->parent_window = (GtkWindow *) g_object_ref (parent_window);
- 			else
- 				info->parent_window = NULL;
- 			info->user_data = user_data;
- 			info->callback = callback;
- 		
- 			tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
-							      force, on_conic_device_went_online, 
-							      info);
- 
- 			/* We'll cleanup in on_conic_device_went_online */
  		}
  
  		/* The other code has no more reason to run. This is all that we can do for the
@@ -2285,34 +1527,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  		return;
  	}
  	
- 	/* Else, we are in a state that requires that we go online before we
- 	 * call the caller's callback. */
- 	
- 	info = g_slice_new0 (OnWentOnlineInfo);
- 	
- 	info->device = NULL;
- 	info->iap = NULL;
- 	info->account = TNY_ACCOUNT (g_object_ref (account));
- 	
- 	if (parent_window)
- 		info->parent_window = (GtkWindow *) g_object_ref (parent_window);
- 	else
- 		info->parent_window = NULL;
- 	
- 	/* So we'll put the callback away for later ... */
- 	
- 	info->user_data = user_data;
- 	info->callback = callback;
- 	
- 	if (!device_online) {
- 
- 		/* If also the device is offline, then we connect both the device 
- 		 * and the account */
- 		
- 		tny_maemo_conic_device_connect_async (TNY_MAEMO_CONIC_DEVICE (device), NULL,
-						      force, on_conic_device_went_online, 
-						      info);
- 		
+ 	if (device_online) {
  	} else {
  		
  		/* If the device is online, we'll just connect the account */
@@ -2431,27 +1646,7 @@ modest_platform_get_current_connection (void)
 	if (!tny_device_is_online (device))
 		return MODEST_CONNECTED_VIA_ANY;
 
-#ifdef MODEST_HAVE_CONIC
-	/* Get iap id */
-	const gchar *iap_id = tny_maemo_conic_device_get_current_iap_id (TNY_MAEMO_CONIC_DEVICE (device));
-	if (iap_id) {
-		ConIcIap *iap = tny_maemo_conic_device_get_iap (
-			TNY_MAEMO_CONIC_DEVICE (device), iap_id);
-		const gchar *bearer_type = con_ic_iap_get_bearer_type (iap);
-		if (bearer_type) {
-			if (!strcmp (bearer_type, CON_IC_BEARER_WLAN_INFRA) ||
-			    !strcmp (bearer_type, CON_IC_BEARER_WLAN_ADHOC) ||
-			    !strcmp (bearer_type, "WIMAX")) {
-				retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX;
-			} else {
-				retval = MODEST_CONNECTED_VIA_ANY;
-			}
-		}	
-		g_object_unref (iap);
-	}
-#else
 	retval = MODEST_CONNECTED_VIA_WLAN_OR_WIMAX; /* assume WLAN (fast) internet */  
-#endif /* MODEST_HAVE_CONIC */
 	return retval;
 }
 
@@ -2461,22 +1656,8 @@ gboolean
 modest_platform_check_memory_low (ModestWindow *win,
 				  gboolean visuals)
 {
-	gboolean lowmem;
+	return FALSE;
 	
-	/* are we in low memory state? */
-	lowmem = osso_mem_in_lowmem_state () ? TRUE : FALSE;
-	
-	if (win && lowmem && visuals)
-		modest_platform_run_information_dialog (
-			GTK_WINDOW(win),
-			_KR("memr_ib_operation_disabled"),
-			TRUE);
-
-	if (lowmem)
-		g_debug ("%s: low memory reached. disallowing some operations",
-			 __FUNCTION__);
-
-	return lowmem;
 }
 
 void 
@@ -2595,93 +1776,10 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 				  dialog);
 }
 
-osso_context_t *
-modest_platform_get_osso_context (void)
-{
-	return modest_maemo_utils_get_osso_context ();
-}
-
-static gfloat
-convert_volume_to_db (int linear_volume)
-{
-    gfloat linear_converted = linear_volume / 100.0;
-    gfloat db_vol = 0.0;
-    
-    db_vol = 20 * log10 (linear_converted);
-    if (isinf (db_vol) != 0)
-        return -60.0;
-
-    return db_vol;
-}
-
 static void
 modest_platform_play_email_tone (void)
 {
-	gchar *mail_tone;
-	gint mail_volume_int;
-	int ret;
-	ca_proplist *pl = NULL;
-	gfloat db_volume;
-
-#ifdef MODEST_USE_PROFILE
-	gchar *active_profile;
-	gchar *mail_volume;
-
-	active_profile = profile_get_profile ();
-	mail_tone = profile_get_value (active_profile, PROFILE_MAIL_TONE);
-	mail_volume = profile_get_value (active_profile, PROFILE_MAIL_VOLUME);
-	mail_volume_int = profile_parse_int (mail_volume);
-	g_free (mail_volume);
-	g_free (active_profile);
-#else
-	mail_tone = g_strdup (MAIL_TONE);
-	mail_volume_int = 100;
-#endif
-
-	if (mail_tone && !strstr (mail_tone, "/")) {
-		gchar *tmp;
-
-		tmp = g_strconcat ("/usr/share/sounds", mail_tone, NULL);
-		g_free (mail_tone);
-		mail_tone = tmp;
-	}
-
-	if (mail_volume_int > 0) {
-
-		if (ca_con == NULL) {
-			if ((ret = ca_context_create (&ca_con)) != CA_SUCCESS) {
-				g_warning("ca_context_create: %s\n", ca_strerror(ret));
-				ca_con = NULL;
-				return;
-			}
-			if ((ret = ca_context_set_driver (ca_con, "gstreamer")) != CA_SUCCESS) {
-				g_warning ("ca_context_set_driver: %s\n", ca_strerror (ret));
-				ca_con = NULL;
-				return;
-			}
-		}
-
-		if (!ca_con_opened) {
-			if ((ret = ca_context_open(ca_con)) != CA_SUCCESS) {
-				g_warning("ca_context_open: %s\n", ca_strerror(ret));
-				return;
-			} else {
-				ca_con_opened = TRUE;
-			}
-		}
-
-		ca_proplist_create(&pl);
-		ca_proplist_sets(pl, CA_PROP_MEDIA_FILENAME, mail_tone);
-		db_volume = convert_volume_to_db (mail_volume_int);
-		ca_proplist_setf(pl, CA_PROP_CANBERRA_VOLUME, "%f", db_volume);
-
-		ret = ca_context_play_full(ca_con, 0, pl, NULL, NULL);
-		g_debug("ca_context_play_full (vol %f): %s\n", (gfloat) mail_volume_int, ca_strerror(ret));
-
-		ca_proplist_destroy(pl);
-	}
-
-	g_free (mail_tone);
+	return;
 }
 
 #define MOVE_TO_DIALOG_FOLDER_VIEW "folder-view"
@@ -2769,7 +1867,7 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 	else
 		short_name = g_strdup (account_name);
 
-	hildon_button_set_title (HILDON_BUTTON (action_button), short_name);
+	gtk_button_set_label (GTK_BUTTON (action_button), short_name);
 
 	/* Set value of button, folder full name */
 	if (TNY_IS_CAMEL_FOLDER (folder_store)) {
@@ -2788,7 +1886,7 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 						 NULL);
 		}
 		translate_path (&full_name);
-		hildon_button_set_value (HILDON_BUTTON (action_button), full_name);
+		gtk_button_set_label (GTK_BUTTON (action_button), full_name);
 		g_free (full_name);
 	}
 	g_free (account_name);
@@ -2797,7 +1895,7 @@ move_to_dialog_set_selected_folder_store (GtkWidget *dialog,
 	/* Set image for the button */
 	image = get_image_for_folder_store (folder_store, MODEST_ICON_SIZE_BIG);
 	if (image)
-		hildon_button_set_image (HILDON_BUTTON (action_button), image);
+		gtk_button_set_image (GTK_BUTTON (action_button), image);
 }
 
 static void
@@ -2821,9 +1919,8 @@ move_to_dialog_show_accounts (GtkWidget *dialog)
 	g_object_set_data (G_OBJECT (dialog), MOVE_TO_DIALOG_SHOWING_FOLDERS, GINT_TO_POINTER (FALSE));
 
 	/* Reset action button */
-	hildon_button_set_title (HILDON_BUTTON (action_button), NULL);
-	hildon_button_set_value (HILDON_BUTTON (action_button), NULL);
-	hildon_button_set_image (HILDON_BUTTON (action_button), NULL);
+	gtk_button_set_label (GTK_BUTTON (action_button), NULL);
+	gtk_button_set_image (GTK_BUTTON (action_button), NULL);
 
 	modest_folder_view_set_account_id_of_visible_server_account (MODEST_FOLDER_VIEW (folder_view), NULL);
 	modest_folder_view_show_non_move_folders (MODEST_FOLDER_VIEW (folder_view), TRUE);
@@ -3004,7 +2101,6 @@ on_move_to_dialog_action_clicked (GtkButton *selection,
 static void
 move_to_dialog_activity_changed (ModestFolderView *folder_view, gboolean activity, GtkDialog *dialog)
 {
-	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (dialog), activity?1:0);
 }
 
 GtkWidget *
@@ -3054,8 +2150,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 		g_object_unref (back_pixbuf);
 	}
 
-	action_button = hildon_button_new (HILDON_SIZE_AUTO_WIDTH | HILDON_SIZE_FINGER_HEIGHT,
-					   HILDON_BUTTON_ARRANGEMENT_VERTICAL);
+	action_button = gtk_button_new ();
 	gtk_button_set_alignment (GTK_BUTTON (action_button), 0.0, 0.5);
 
 	gtk_box_pack_start (GTK_BOX (buttons_hbox), back_button, FALSE, FALSE, 0);
