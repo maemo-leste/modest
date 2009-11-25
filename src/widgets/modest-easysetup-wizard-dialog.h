@@ -39,8 +39,6 @@
 #include <config.h>
 #endif
 
-#include <hildon/hildon-caption.h>
-
 G_BEGIN_DECLS
 
 #define MODEST_TYPE_EASYSETUP_WIZARD_DIALOG modest_easysetup_wizard_dialog_get_type()

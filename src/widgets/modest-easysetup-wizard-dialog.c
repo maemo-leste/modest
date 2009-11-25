@@ -50,15 +50,15 @@
 #include "widgets/modest-ui-constants.h"
 #include "widgets/modest-default-account-settings-dialog.h"
 #include "widgets/modest-easysetup-wizard-page.h"
-#include "modest-maemo-utils.h"
 #include "modest-utils.h"
-#include "modest-hildon-includes.h"
-#include "modest-maemo-security-options-view.h"
 #include "modest-account-protocol.h"
 #include "modest-address-book.h"
 #include <modest-scrollable.h>
 #include <modest-toolkit-factory.h>
 #include <modest-toolkit-utils.h>
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 /* Include config.h so that _() works: */
 #ifdef HAVE_CONFIG_H
@@ -428,7 +428,9 @@ create_page_welcome (ModestEasysetupWizardDialog *self)
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_widget_set_size_request (privacy_note, LABELS_WIDTH, -1);
 	gtk_label_set_line_wrap (GTK_LABEL (privacy_note), TRUE);
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_helper_set_logical_font (privacy_note, "SmallSystemFont");
+#endif
 	/* So that it is not truncated: */
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
 	gtk_misc_set_padding (GTK_MISC (label), MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
@@ -594,8 +596,10 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 
 	/* Do use auto-capitalization: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
+#endif
 
 	/* Set a default account title, choosing one that does not already exist: */
 	/* Note that this is irrelevant to the non-user visible name, which we will create later. */
@@ -722,8 +726,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 
 	/* The name widgets: (use auto cap) */
 	priv->entry_user_name = GTK_WIDGET (modest_validating_entry_new ());
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_name),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
+#endif
 
 	/* Set max length as in the UI spec:
 	 * The UI spec seems to want us to show a dialog if we hit the maximum. */
@@ -758,8 +764,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* The username widgets: */
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username),
 					 HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), FALSE,
 				    priv->entry_user_username);
 	gtk_widget_show (priv->entry_user_username);
@@ -782,8 +790,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* The password widgets: */
 	priv->entry_user_password = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password),
 					 HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
+#endif
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
@@ -797,7 +807,9 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* The email address widgets: */
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
 				    _("mcen_li_emailsetup_email_address"), FALSE, priv->entry_user_email);
 	update_user_email_from_provider (self);
@@ -1022,7 +1034,9 @@ create_page_custom_incoming (ModestEasysetupWizardDialog *self)
 	priv->entry_incomingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_incomingserver), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	set_default_custom_servernames (self);
 
 	/* The caption title will be updated in update_incoming_server_title().
@@ -1161,7 +1175,9 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 	priv->entry_outgoingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       smtp_caption_label, TRUE, priv->entry_outgoingserver);
@@ -1198,8 +1214,10 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	/* Connection-specific SMTP-Severs Edit button: */
 	priv->button_outgoing_smtp_servers = gtk_button_new_with_label (_("mcen_bd_advsetup_optional_smtp"));
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (priv->button_outgoing_smtp_servers,
 					  HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+#endif
 	gtk_widget_show (priv->button_outgoing_smtp_servers);
 	gtk_box_pack_start (GTK_BOX (box), priv->button_outgoing_smtp_servers,
 			    FALSE, FALSE, 0);
@@ -1291,7 +1309,9 @@ create_page_complete_custom (ModestEasysetupWizardDialog *self)
 	gtk_widget_show (label);
 
 	button_edit = gtk_button_new_with_label (_("mcen_fi_advanced_settings"));
+#ifdef MAEMO_CHANGES
 	hildon_gtk_widget_set_theme_size (button_edit, HILDON_SIZE_FINGER_HEIGHT | HILDON_SIZE_AUTO_WIDTH);
+#endif
 	gtk_widget_show (button_edit);
 	gtk_box_pack_start (GTK_BOX (box), button_edit, FALSE, FALSE, 0);
 
@@ -1333,17 +1353,9 @@ on_response_before (ModestWizardDialog *wizard_dialog,
 		 * src/maemo/modest-account-settings-dialog.c */
 		if (priv->dirty) {
 			gint dialog_response;
-			GtkWidget *dialog;
 
-			dialog = hildon_note_new_confirmation ((GtkWindow *) self,
-							       _("imum_nc_wizard_confirm_lose_changes"));
-
-			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-						     (GtkWindow *) dialog,
-						     (GtkWindow *) wizard_dialog);
-
-			dialog_response = gtk_dialog_run ((GtkDialog *) dialog);
-			gtk_widget_destroy (GTK_WIDGET (dialog));
+			dialog_response = modest_platform_run_confirmation_dialog ((GtkWindow *) self,
+										   _("imum_nc_wizard_confirm_lose_changes"));
 
 			if (dialog_response != GTK_RESPONSE_OK) {
 				/* Don't let the dialog close */
@@ -2631,7 +2643,9 @@ check_support_show_progress (gpointer userdata)
 	if (priv->destroyed)
 		return FALSE;
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+#endif
 
 	return FALSE;
 }
@@ -2679,7 +2693,9 @@ check_support_callback (ModestAccountProtocol *protocol,
 		if (!priv->destroyed) {
 			if (priv->presets)
 				fill_providers (self);
+#ifdef MODEST_TOOLKIT_HILDON2
 			hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), FALSE);
+#endif
 			invoke_enable_buttons_vfunc (self);
 			gtk_dialog_response (GTK_DIALOG (self), MODEST_WIZARD_DIALOG_NEXT);
 		}
@@ -2783,11 +2799,13 @@ check_support_of_protocols (ModestEasysetupWizardDialog *self)
 									   check_support_progress_pulse,
 									   g_object_ref (self), g_object_unref);
 		priv->check_support_progress = gtk_progress_bar_new ();
+#ifdef MODEST_TOOLKIT_HILDON2
 		priv->check_support_cancel_note = hildon_note_new_cancel_with_progress_bar (GTK_WINDOW (self),
 											    _("mcen_cn_availability_check"),
 											    GTK_PROGRESS_BAR (priv->check_support_progress));
 		gtk_widget_show (priv->check_support_cancel_note);
 		g_signal_connect (priv->check_support_cancel_note, "response", G_CALLBACK (on_check_support_cancel), self);
+#endif
 	} else {
 		priv->check_support_done = TRUE;
 		if (priv->presets)

@@ -52,7 +52,6 @@ noinst_LTLIBRARIES=\
 libmodest_ui_la_SOURCES=              \
 	modest-account-view-window.c  \
 	modest-default-account-settings-dialog.c \
-	modest-easysetup-wizard-dialog.h modest-easysetup-wizard-dialog.c \
 	modest-country-picker.h modest-country-picker.c \
 	modest-color-button.h modest-color-button.c \
 	modest-provider-picker.h modest-provider-picker.c \

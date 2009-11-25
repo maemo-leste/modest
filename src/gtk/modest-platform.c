@@ -1415,7 +1415,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 		on_destroy_dialog (dialog);
 	} else {
 	 	/* Just show the error text and use the default response: */
-	 	modest_platform_run_information_dialog (GTK_WINDOW (top_win), 
+	 	modest_platform_run_information_dialog (NULL, 
 							prompt, FALSE);
 	}
 	return retval;
