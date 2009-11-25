@@ -12,6 +12,7 @@ INCLUDES=\
 	$(MODEST_WPEDITOR_CFLAGS)           \
 	$(MODEST_LIBCONIC_CFLAGS)	    \
 	$(MODEST_HILDON_NOTIFY_CFLAGS) \
+	$(MODEST_CALENDAR_WIDGETS_CFLAGS)   \
 	-I ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR) \
 	-I ${top_srcdir}/src \
 	-DPREFIX=\"@prefix@\" \
@@ -167,9 +168,11 @@ libmodest_widgets_la_includedir = $(includedir)/modest-plugin-1.0/widgets/
 libmodest_widgets_la_include_HEADERS = $(libmodest_widgets_public_headers)
 
 LDADD = \
-	$(MODEST_GSTUFF_LIBS) 				\
-	$(MODEST_MOZEMBED_LIBS)                         \
-	$(MODEST_WPEDITOR_LIBS) \
-	$(MODEST_PLATFORM_LIBS)				\
-	$(MODEST_LIBCONIC_LIBS) \
-	$(MODEST_TOOLKIT_LIBS) 
+	$(MODEST_GSTUFF_LIBS)		\
+	$(MODEST_MOZEMBED_LIBS)         \
+	$(MODEST_WPEDITOR_LIBS) 	\
+	$(MODEST_PLATFORM_LIBS)		\
+	$(MODEST_LIBCONIC_LIBS) 	\
+	$(MODEST_TOOLKIT_LIBS) 		\
+	$(MODEST_CALENDAR_WIDGETS_LIBS)
+
