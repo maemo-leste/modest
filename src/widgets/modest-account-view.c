@@ -41,6 +41,7 @@
 #include <string.h> /* For strcmp(). */
 #include <modest-account-mgr-helpers.h>
 #include <modest-datetime-formatter.h>
+#include <modest-ui-constants.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-defines.h>
 #endif
@@ -62,10 +63,6 @@ static void on_default_account_changed         (ModestAccountMgr *mgr,
 static void on_display_name_changed            (ModestAccountMgr *self, 
 						const gchar *account,
 						gpointer user_data);
-
-#ifndef MODEST_TOOLKIT_HILDON2
-static void modest_account_view_select_first_account (ModestAccountView *account_view);
-#endif
 
 static void on_account_updated (ModestAccountMgr* mgr, gchar* account_name,
                     gpointer user_data);
@@ -284,7 +281,6 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 				ModestProtocolRegistry *protocol_registry;
 				ModestProtocol *protocol;
 				const gchar *proto_name;
-#ifdef MODEST_TOOLKIT_HILDON2
 				gchar *last_updated_hildon2;
 
 				if (priv->show_last_updated) {
@@ -294,7 +290,6 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 				} else {
 					last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", NULL);
 				}
-#endif
 				protocol_registry = modest_runtime_get_protocol_registry ();
 				protocol_type = modest_server_account_settings_get_protocol (store_settings);
 				protocol = modest_protocol_registry_get_protocol_by_type (protocol_registry, protocol_type);
@@ -309,15 +304,9 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 					MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, 
 					modest_account_settings_get_is_default (settings),
 					MODEST_ACCOUNT_VIEW_PROTO_COLUMN, proto_name,
-#ifdef MODEST_TOOLKIT_HILDON2
 					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_hildon2,
-#else
-					MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN,  last_updated_string,
-#endif
 					-1);
-#ifdef MODEST_TOOLKIT_HILDON2
 				g_free (last_updated_hildon2);
-#endif
 			}
 		}
 		
@@ -333,10 +322,6 @@ update_account_view (ModestAccountMgr *account_mgr, ModestAccountView *view)
 	if (selected_name) {
 		modest_account_view_select_account (view, selected_name);
 		g_free (selected_name);
-	} else {
-#ifndef MODEST_TOOLKIT_HILDON2
-		modest_account_view_select_first_account (view);
-#endif
 	}
 }
 
@@ -367,24 +352,16 @@ on_account_busy_changed(ModestAccountMgr *account_mgr,
 				return;
 			}
 			const gchar* last_updated_string = get_last_updated_string(self, account_mgr, settings);
-#ifdef MODEST_TOOLKIT_HILDON2
 			gchar *last_updated_hildon2;
 
 			last_updated_hildon2 = g_strconcat (_("mcen_ti_lastupdated"), "\n", 
 							    last_updated_string,
 							    NULL);
-#endif
 			gtk_list_store_set(model, &iter, 
-#ifdef MODEST_TOOLKIT_HILDON2
 					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_hildon2,
-#else
-					   MODEST_ACCOUNT_VIEW_LAST_UPDATED_COLUMN, last_updated_string,
-#endif
 					   -1);
 
-#ifdef MODEST_TOOLKIT_HILDON2
 			g_free (last_updated_hildon2);
-#endif
 			g_object_unref (settings);
 			found = TRUE;
 		}
@@ -431,10 +408,6 @@ on_account_removed (TnyAccountStore *account_store,
 	
 	selected_name = modest_account_view_get_selected_account (self);
 	if (selected_name == NULL) {
-#ifndef MODEST_TOOLKIT_HILDON2
-		/* we select the first account if none is selected */
-		modest_account_view_select_first_account (self);
-#endif
 	} else {
 		g_free (selected_name);
 	}
@@ -604,9 +577,7 @@ init_view (ModestAccountView *self)
 		 "active", MODEST_ACCOUNT_VIEW_IS_DEFAULT_COLUMN, NULL);
 	gtk_tree_view_append_column (GTK_TREE_VIEW(self),
 				     column);
-#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_tree_view_column_set_visible (column, FALSE);
-#endif
 					
 	/* Disable the Maemo GtkTreeView::allow-checkbox-mode Maemo modification, 
 	 * which causes the model column to be updated automatically when the row is clicked.
@@ -627,9 +598,7 @@ init_view (ModestAccountView *self)
 	text_renderer = gtk_cell_renderer_text_new ();
 	g_object_set (G_OBJECT (text_renderer), 
 		      "ellipsize", PANGO_ELLIPSIZE_END, "ellipsize-set", TRUE, 
-#ifdef MODEST_TOOLKIT_HILDON2
-		      "xpad", HILDON_MARGIN_DOUBLE,
-#endif
+		      "xpad", MODEST_MARGIN_DOUBLE,
 		      NULL);
 
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_account"), text_renderer, "text",
@@ -644,9 +613,7 @@ init_view (ModestAccountView *self)
 	g_object_set (G_OBJECT (text_renderer), 
 		      "alignment", PANGO_ALIGN_RIGHT, 
 		      "xalign", 1.0,
-#ifdef MODEST_TOOLKIT_HILDON2
-		      "xpad", HILDON_MARGIN_DOUBLE,
-#endif
+		      "xpad", MODEST_MARGIN_DOUBLE,
 		      NULL);
 
 	column =  gtk_tree_view_column_new_with_attributes (_("mcen_ti_lastupdated"), text_renderer,"markup",
@@ -659,9 +626,6 @@ init_view (ModestAccountView *self)
 	/* Show the column headers,
 	 * which does not seem to be the default on Maemo.
 	 */
-#ifndef MODEST_TOOLKIT_HILDON2
-	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW(self), TRUE);
-#endif
 
 	update_display_mode (self);
 
@@ -803,36 +767,8 @@ static void
 modest_account_view_select_account (ModestAccountView *account_view, 
 				    const gchar* account_name)
 {	
-#ifdef MODEST_TOOLKIT_HILDON2
 	return;
-#endif
-	/* Create a state instance so we can send two items of data to the signal handler: */
-	ForEachData *state = g_new0 (ForEachData, 1);
-	state->self = account_view;
-	state->account_name = account_name;
-	
-	GtkTreeModel *model = gtk_tree_view_get_model (
-		GTK_TREE_VIEW (account_view));
-	gtk_tree_model_foreach (model, 
-		on_model_foreach_select_account, state);
-		
-	g_free (state);
 }
-
-#ifndef MODEST_TOOLKIT_HILDON2
-static void
-modest_account_view_select_first_account (ModestAccountView *account_view)
-{
-	GtkTreeIter iter;
-	GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (account_view));
-
-	if (gtk_tree_model_get_iter_first (model, &iter)) {
-		GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (account_view));
-
-		gtk_tree_selection_select_iter (selection, &iter);
-	}
-}
-#endif
 
 static void
 on_default_account_changed (ModestAccountMgr *mgr,
