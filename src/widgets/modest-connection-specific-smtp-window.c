@@ -43,15 +43,16 @@
 #include <gtk/gtkliststore.h>
 #include <modest-scrollable.h>
 #include <modest-toolkit-factory.h>
-#include <hildon/hildon-gtk.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkstock.h>
 
-#include "modest-hildon-includes.h"
 #include "modest-platform.h"
-#include "modest-maemo-utils.h"
+
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 #include <glib/gi18n.h>
 #include <string.h>
@@ -360,7 +361,11 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 		G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER));
 
 	/* Setup the tree view: */
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->treeview = GTK_TREE_VIEW (hildon_gtk_tree_view_new_with_model (HILDON_UI_MODE_NORMAL, priv->model));
+#else
+	priv->treeview = GTK_TREE_VIEW (gtk_tree_view_new_with_model (priv->model));
+#endif
 	g_object_ref_sink (G_OBJECT (priv->treeview));
 
 	/* No connections label */

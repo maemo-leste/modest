@@ -29,21 +29,22 @@
 
 #include "modest-connection-specific-smtp-edit-window.h"
 #include "widgets/modest-ui-constants.h"
-#include "modest-hildon-includes.h"
 #include "modest-runtime.h"
 
 #include "widgets/modest-validating-entry.h"
 #include <modest-scrollable.h>
-#include <hildon/hildon-entry.h>
 #include <modest-ui-constants.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkstock.h>
 #include "modest-text-utils.h"
-#include "modest-maemo-utils.h"
 #include <modest-toolkit-factory.h>
 #include <modest-toolkit-utils.h>
+
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
 
 #include <glib/gi18n.h>
 
@@ -188,6 +189,7 @@ on_value_changed(GtkWidget* widget, GValue* value, ModestConnectionSpecificSmtpE
 	on_change(widget, self);
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_range_error (GtkWidget *widget, ModestNumberEditorErrorType type, gpointer user_data)
 {
@@ -214,6 +216,7 @@ on_range_error (GtkWidget *widget, ModestNumberEditorErrorType type, gpointer us
 	/* Show error message by not returning TRUE */
 	return TRUE;
 }
+#endif
 
 static gboolean
 on_delete_event (GtkWidget *widget,
@@ -376,7 +379,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	if (!priv->entry_outgoingserver)
 		priv->entry_outgoingserver = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
 
 	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
@@ -413,7 +418,9 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* The username widgets: */	
 	priv->entry_user_username = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username), HILDON_GTK_INPUT_MODE_FULL);
+#endif
 	captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
 							   _("mail_fi_username"), FALSE,
 							   priv->entry_user_username);
@@ -434,8 +441,10 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	/* The password widgets: */	
 	priv->entry_user_password = modest_toolkit_factory_create_entry (modest_runtime_get_toolkit_factory ());
 	/* Auto-capitalization is the default, so let's turn it off: */
+#ifdef MAEMO_CHANGES
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_password), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_INVISIBLE);
+#endif
 	gtk_entry_set_visibility (GTK_ENTRY (priv->entry_user_password), FALSE);
 	/* gtk_entry_set_invisible_char (GTK_ENTRY (priv->entry_user_password), '*'); */
 	captioned = modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
@@ -533,10 +542,12 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 				  (GCallback) on_auth_selector_changed,
 				  self);
 	}
+#ifdef MODEST_TOOLKIT_HILDON2
 	g_signal_connect(G_OBJECT(priv->entry_port),
 			 "range-error",
 			 G_CALLBACK(on_range_error),
 			 self);
+#endif
 	g_signal_connect(G_OBJECT(priv->entry_port),
 			 "notify::value",
 			 G_CALLBACK(on_value_changed),
