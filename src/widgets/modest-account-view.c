@@ -739,30 +739,6 @@ typedef struct
 		const gchar *account_name;
 } ForEachData;
 
-static gboolean
-on_model_foreach_select_account(GtkTreeModel *model, 
-	GtkTreePath *path, GtkTreeIter *iter, gpointer user_data)
-{
-	ForEachData *state = (ForEachData*)(user_data);
-	
-	/* Select the item if it has the matching account name: */
-	gchar *this_account_name = NULL;
-	gtk_tree_model_get (model, iter, 
-		MODEST_ACCOUNT_VIEW_NAME_COLUMN, &this_account_name, 
-		-1); 
-	if(this_account_name && state->account_name 
-		&& (strcmp (this_account_name, state->account_name) == 0)) {
-		
-		GtkTreeSelection *selection = 
-			gtk_tree_view_get_selection (GTK_TREE_VIEW (state->self));
-		gtk_tree_selection_select_iter (selection, iter);
-		
-		return TRUE; /* Stop walking the tree. */
-	}
-	
-	return FALSE; /* Keep walking the tree. */
-}
-
 static void 
 modest_account_view_select_account (ModestAccountView *account_view, 
 				    const gchar* account_name)

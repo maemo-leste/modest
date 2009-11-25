@@ -44,6 +44,7 @@
 
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon.h>
+#include <modest-number-editor.h>
 #endif
 
 #include <glib/gi18n.h>
