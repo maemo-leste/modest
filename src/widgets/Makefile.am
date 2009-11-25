@@ -9,6 +9,7 @@ INCLUDES=\
 	$(MODEST_PLUGIN_DEFINES) \
 	$(MODEST_HILDON_HELP_CFLAGS)    \
 	$(MODEST_MOZEMBED_CFLAGS) \
+	$(MODEST_WPEDITOR_CFLAGS)           \
 	$(MODEST_HILDON_NOTIFY_CFLAGS) \
 	-I ${top_srcdir}/src/$(MODEST_TOOLKIT_DIR) \
 	-I ${top_srcdir}/src \
@@ -101,6 +102,7 @@ libmodest_widgets_la_SOURCES=          \
 	modest-mime-part-view.h        \
 	modest-msg-edit-window-ui.h    \
 	modest-msg-edit-window.h       \
+	modest-msg-edit-window.c       \
 	modest-msg-view-window.h       \
 	modest-msg-view-window.c       \
 	modest-msg-view.c              \
@@ -160,5 +162,6 @@ libmodest_widgets_la_include_HEADERS = $(libmodest_widgets_public_headers)
 LDADD = \
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS)                         \
+	$(MODEST_WPEDITOR_LIBS) \
 	$(MODEST_PLATFORM_LIBS)				\
 	$(MODEST_TOOLKIT_LIBS) 

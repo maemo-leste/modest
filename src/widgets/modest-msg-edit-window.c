@@ -44,7 +44,6 @@
 #include <modest-account-mgr-helpers.h>
 
 #include <widgets/modest-msg-edit-window.h>
-#include <modest-selector-picker.h>
 #include <widgets/modest-recpt-editor.h>
 #include <widgets/modest-attachments-view.h>
 
@@ -66,21 +65,22 @@
 #include <wptextbuffer.h>
 #include <modest-scrollable.h>
 #include <modest-isearch-toolbar.h>
-#include <hildon/hildon-touch-selector.h>
-#include <hildon/hildon-picker-dialog.h>
 #include "modest-msg-edit-window-ui-dimming.h"
 
-#include "modest-hildon-includes.h"
 #include "widgets/modest-msg-edit-window-ui.h"
 #include <libgnomevfs/gnome-vfs-mime.h>
 #include <modest-utils.h>
-#include "modest-maemo-utils.h"
 #include <modest-ui-constants.h>
 #include "modest-color-button.h"
 #include <modest-toolkit-utils.h>
 
 #ifdef MODEST_USE_CALENDAR_WIDGETS
 #include <calendar-ui-widgets.h>
+#endif
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#include "modest-maemo-utils.h"
+#include "modest-hildon-includes.h"
 #endif
 
 #define DEFAULT_FONT_SIZE 3
@@ -2313,7 +2313,9 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 								    GTK_FILE_CHOOSER_ACTION_OPEN);
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (dialog), TRUE);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	modest_maemo_utils_setup_images_filechooser (GTK_FILE_CHOOSER (dialog));
+#endif
 
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), 
 				     GTK_WINDOW (dialog), GTK_WINDOW (window));
@@ -2524,11 +2526,13 @@ modest_msg_edit_window_offer_attach_file (ModestMsgEditWindow *window)
 		gchar *docs_folder;
 		/* Set the default folder to documents folder */
 		docs_folder = (gchar *) g_strdup(g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS));
+#ifdef MODEST_TOOLKIT_HILDON2
 		if (!docs_folder) {
 			/* fallback */
 			docs_folder = g_build_filename (g_getenv (MODEST_MAEMO_UTILS_MYDOCS_ENV),
 							".documents", NULL);
 		}
+#endif
 		gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), docs_folder);
 		g_free (docs_folder);
 	}
