@@ -29,8 +29,6 @@
 
 #include <config.h>
 
-#include <glib/gi18n-lib.h>
-
 #include <gtk/gtk.h>
 
 #include <modest-text-utils.h>
@@ -41,6 +39,8 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <modest-ui-constants.h>
+#include <modest-toolkit-factory.h>
+#include <modest-runtime.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifndef MODEST_TOOLKIT_GTK
@@ -836,7 +836,7 @@ modest_recpt_editor_on_key_press_event (GtkTextView *text_view,
 	gboolean select_to_left;
 	gboolean has_selection;
      
-	buffer = modest_text_view_get_buffer (text_view);
+	buffer = modest_text_view_get_buffer (GTK_WIDGET (text_view));
 	insert = gtk_text_buffer_get_insert (buffer);
 	selection = gtk_text_buffer_get_selection_bound (buffer);
 

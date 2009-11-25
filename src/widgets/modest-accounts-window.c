@@ -44,9 +44,12 @@
 #include <modest-account-mgr-helpers.h>
 #include <modest-mailboxes-window.h>
 #ifdef MODEST_TOOLKIT_HILDON2
-#include <modest-maemo-utils.h>
 #include <hildon/hildon.h>
 #endif
+#ifdef MODEST_PLATFORM_MAEMO
+#include <modest-maemo-utils.h>
+#endif
+#include <gdk/gdkkeysyms.h>
 
 
 /* 'private'/'protected' functions */
@@ -236,11 +239,13 @@ connect_signals (ModestAccountsWindow *self)
 					   "row-deleted",
 					   G_CALLBACK (on_row_deleted), self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->sighandlers = 
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (priv->new_message_button),
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
+#endif
 
 	/* we don't register this in sighandlers, as it should be run
 	 * after disconnecting all signals, in destroy stage */
@@ -256,18 +261,11 @@ modest_accounts_window_new_real (void)
 	ModestAccountsWindow *self = NULL;
 	ModestAccountsWindowPrivate *priv = NULL;
 	GdkPixbuf *window_icon;
-	GdkPixbuf *new_message_pixbuf;
-	guint accel_key;
-	GdkModifierType accel_mods;
-	GtkAccelGroup *accel_group;
 	GtkWidget *no_accounts_label;
-	GtkWidget *empty_view_new_message_button;
 	GtkWidget *box_alignment;
 
 	self  = MODEST_ACCOUNTS_WINDOW(g_object_new(MODEST_TYPE_ACCOUNTS_WINDOW, NULL));
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
-
-	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
 
 	box_alignment = gtk_alignment_new (0, 0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (box_alignment), 
@@ -278,23 +276,33 @@ modest_accounts_window_new_real (void)
 	no_accounts_label = gtk_label_new (_("mcen_ia_noaccounts"));
 	
 	gtk_misc_set_alignment (GTK_MISC (no_accounts_label), 0.5, 0.5);
+#ifdef MODEST_TOOLKIT_HILDON2
 	hildon_helper_set_logical_font (no_accounts_label, "LargeSystemFont");
+#endif
+
+#ifdef MODEST_TOOLKIT_HILDON2
+	GdkPixbuf *new_message_pixbuf;
+	GtkWidget *empty_view_new_message_button;
+
+	new_message_pixbuf = modest_platform_get_icon ("general_add", MODEST_ICON_SIZE_BIG);
 
 	empty_view_new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE, HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 	hildon_button_set_title (HILDON_BUTTON (empty_view_new_message_button), _("mcen_ti_new_message"));
 	hildon_button_set_image (HILDON_BUTTON (empty_view_new_message_button), gtk_image_new_from_pixbuf (new_message_pixbuf));
-
+#endif
 
 	priv->no_accounts_container = gtk_vbox_new (FALSE, 0);
+#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_box_pack_start (GTK_BOX (priv->no_accounts_container), empty_view_new_message_button, FALSE, FALSE, 0);
 	gtk_widget_show_all (empty_view_new_message_button);
+	g_signal_connect (G_OBJECT (empty_view_new_message_button),
+			  "clicked",
+			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
+#endif
 	gtk_box_pack_end (GTK_BOX (priv->no_accounts_container), no_accounts_label, TRUE, TRUE, 0);
 	gtk_widget_show (no_accounts_label);
 	gtk_box_pack_start (GTK_BOX (priv->box), priv->no_accounts_container, TRUE, TRUE, 0);
 
-	g_signal_connect (G_OBJECT (empty_view_new_message_button),
-			  "clicked",
-			  G_CALLBACK (modest_ui_actions_on_new_msg), self);
 	
 	priv->scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 
@@ -304,6 +312,7 @@ modest_accounts_window_new_real (void)
 				  G_CALLBACK (on_queue_changed),
 				  self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->new_message_button = hildon_button_new (MODEST_EDITABLE_SIZE,
 						      HILDON_BUTTON_ARRANGEMENT_HORIZONTAL);
 
@@ -313,6 +322,7 @@ modest_accounts_window_new_real (void)
 	gtk_widget_show_all (priv->new_message_button);
 
 	g_object_unref (new_message_pixbuf);
+#endif
 	setup_menu (self);
 
 	gtk_box_pack_start (GTK_BOX (priv->box), priv->scrollable, TRUE, TRUE, 0);
@@ -324,7 +334,9 @@ modest_accounts_window_new_real (void)
 	gtk_widget_show (box_alignment);
 
 	/* Get device name */
+#ifdef MODEST_PLATFORM_MAEMO
 	modest_maemo_utils_get_device_name ();
+#endif
 
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
@@ -333,11 +345,16 @@ modest_accounts_window_new_real (void)
 		g_object_unref (window_icon);
 	}
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	guint accel_key;
+	GdkModifierType accel_mods;
+	GtkAccelGroup *accel_group;
 	accel_group = gtk_accel_group_new ();
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
 				    accel_key, accel_mods, 0);
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
+#endif
 
 	return MODEST_WINDOW(self);
 }
@@ -345,10 +362,11 @@ modest_accounts_window_new_real (void)
 ModestWindow *
 modest_accounts_window_new (void)
 {
-	GtkWidget *action_area_box;
 	ModestWindow *self;
 	ModestAccountsWindowPrivate *priv = NULL;
+#ifdef MODEST_TOOLKIT_HILDON2
 	HildonProgram *app;
+#endif
 
 	if (pre_created_accounts_window) {
 		self = MODEST_WINDOW (pre_created_accounts_window);
@@ -359,15 +377,21 @@ modest_accounts_window_new (void)
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE(self);
 	priv->account_view  = GTK_WIDGET (modest_account_view_new (modest_runtime_get_account_mgr ()));
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkWidget *action_area_box;
+
 	action_area_box = hildon_tree_view_get_action_area_box (GTK_TREE_VIEW (priv->account_view));
 	gtk_box_pack_start (GTK_BOX (action_area_box), priv->new_message_button, TRUE, TRUE, 0);
 	hildon_tree_view_set_action_area_visible (GTK_TREE_VIEW (priv->account_view), TRUE);
+#endif
 	gtk_container_add (GTK_CONTAINER (priv->scrollable), priv->account_view);
 
 	connect_signals (MODEST_ACCOUNTS_WINDOW (self));
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	app = hildon_program_get_instance ();
 	hildon_program_add_window (app, HILDON_WINDOW (self));
+#endif
 	
 	/* Dont't restore settings here, 
 	 * because it requires a gtk_widget_show(), 
@@ -492,7 +516,7 @@ _modest_accounts_window_map_event (GtkWidget *widget,
 	ModestAccountsWindowPrivate *priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (self);
 
 	if (priv->progress_hint) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), TRUE);
+		modest_window_show_progress (MODEST_WINDOW (self), TRUE);
 	}
 
 	return FALSE;
@@ -539,7 +563,7 @@ update_progress_hint (ModestAccountsWindow *self)
 	}
 	
 	if (GTK_WIDGET_VISIBLE (self)) {
-		hildon_gtk_window_set_progress_indicator (GTK_WINDOW (self), priv->progress_hint?1:0);
+		modest_window_show_progress (MODEST_WINDOW (self), priv->progress_hint?1:0);
 	}
 }
 
@@ -716,14 +740,17 @@ on_delete_event (GtkWidget *widget,
 
 	priv = MODEST_ACCOUNTS_WINDOW_GET_PRIVATE (widget);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	modest_account_view_set_show_last_update (MODEST_ACCOUNT_VIEW (priv->account_view), FALSE);
 
 	gtk_widget_queue_resize (widget);
 
 	gdk_window_process_updates (priv->account_view->window, TRUE);
+
 	hildon_gtk_window_take_screenshot (GTK_WINDOW (widget), TRUE);
 
 	modest_account_view_set_show_last_update (MODEST_ACCOUNT_VIEW (priv->account_view), TRUE);
+#endif
 
 	return FALSE;
 
