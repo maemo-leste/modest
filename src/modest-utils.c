@@ -551,16 +551,9 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 	GtkTreeSortable *sortable;
 
 	/* Get header window */
-#ifndef MODEST_TOOLKIT_HILDON2
-	if (MODEST_IS_MAIN_WINDOW (parent_window)) {
-		header_view = MODEST_HEADER_VIEW(modest_main_window_get_child_widget (MODEST_MAIN_WINDOW(parent_window),
-										      MODEST_MAIN_WINDOW_WIDGET_TYPE_HEADER_VIEW));
-	}
-#else
 	if (MODEST_IS_HEADER_WINDOW (parent_window)) {
 		header_view = MODEST_HEADER_VIEW (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (parent_window)));
 	}
-#endif
 	if (!header_view)
 		return;
 

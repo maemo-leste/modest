@@ -37,6 +37,7 @@ libmodest_widgets_public_headers = \
 libmodest_widgets_la_SOURCES=          \
 	$(libmodest_widgets_public_headers) \
 	modest-account-view-window.h   \
+	modest-account-view-window.c   \
 	modest-account-settings-dialog.c \
 	modest-account-view.c          \
 	modest-account-view.h          \

@@ -78,3 +78,10 @@ modest_address_book_add_address_list (GSList *address_list)
 {
 	/* Do nothing */
 }
+
+void
+modest_address_book_add_address_list_with_selector (GSList *address_list,
+						    GtkWindow *parent)
+{
+	/* Do nothing */
+}

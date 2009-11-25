@@ -159,16 +159,6 @@ save_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 	modest_conf_set_int (conf, key, width, NULL);
 	g_free (key);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Save also the main window style */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		ModestMainWindowStyle style = modest_main_window_get_style (MODEST_MAIN_WINDOW (win));
-
-		key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WINDOW_STYLE);
-		modest_conf_set_int (conf, key, style, NULL);
-		g_free (key);
-	}
-#endif
 	return TRUE;
 }
 
@@ -201,19 +191,6 @@ restore_settings_window (ModestConf *conf, GtkWindow *win, const gchar *name)
 		gtk_window_set_default_size (win, width, height);
 #endif
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Restore also the main window style */
-	if (MODEST_IS_MAIN_WINDOW (win)) {
-		ModestMainWindowStyle style;
-
-		key = _modest_widget_memory_get_keyname (name, MODEST_WIDGET_MEMORY_PARAM_WINDOW_STYLE);
-		if (modest_conf_key_exists (conf, key, NULL)) {
-			style = (ModestMainWindowStyle) modest_conf_get_int (conf, key, NULL);		
-			modest_main_window_set_style (MODEST_MAIN_WINDOW (win), style);
-			g_free (key);
-		}
-	}
-#endif
 
 	return TRUE;
 }

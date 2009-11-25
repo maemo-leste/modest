@@ -50,7 +50,6 @@ noinst_LTLIBRARIES=\
 	libmodest-ui.la
 
 libmodest_ui_la_SOURCES=              \
-	modest-account-view-window.c  \
 	modest-default-account-settings-dialog.c \
 	modest-country-picker.h modest-country-picker.c \
 	modest-color-button.h modest-color-button.c \

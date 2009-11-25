@@ -578,18 +578,6 @@ modest_window_mgr_register_window_default (ModestWindowMgr *self,
 							       self);
 	}
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Check that it's not a second main window */
-	if (MODEST_IS_MAIN_WINDOW (window)) {
-		if (priv->main_window) {
-			g_warning ("%s: trying to register a second main window",
-				   __FUNCTION__);
-			return FALSE;
-		} else {
-			priv->main_window = window;
-		}
-	}
-#endif
 
 	/* remove from the list of pre-registered uids */
 	if (MODEST_IS_MSG_VIEW_WINDOW(window)) {
@@ -710,17 +698,7 @@ modest_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show)
 static ModestWindow*
 modest_window_mgr_get_main_window_default (ModestWindowMgr *self, gboolean show)
 {
-	ModestWindowMgrPrivate *priv;
-
-	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), NULL);
-
-	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-	if (priv->main_window)
-		return priv->main_window;
-
-	if (show)
-		return modest_main_window_new ();
-	else return NULL;
+	return NULL;
 }
 
 

@@ -4863,7 +4863,6 @@ get_account_from_folder_store (TnyFolderStore *folder_store)
 		return tny_folder_get_account (TNY_FOLDER (folder_store));
 }
 
-#ifdef MODEST_TOOLKIT_HILDON2
 /*
  * UI handler for the "Move to" action when invoked from the
  * ModestFolderWindow
@@ -4922,7 +4921,6 @@ modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 	/* Frees */
 	g_object_unref (src_folder);
 }
-#endif
 
 
 void
