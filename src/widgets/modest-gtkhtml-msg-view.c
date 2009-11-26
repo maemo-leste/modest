@@ -54,6 +54,7 @@
 #include <widgets/modest-isearch-view.h>
 #include <widgets/modest-ui-constants.h>
 #include <modest-icon-names.h>
+#include <tny-camel-bs-mime-part.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifndef MODEST_TOOLKIT_GTK
@@ -280,6 +281,8 @@ struct _ModestGtkhtmlMsgViewPrivate {
 
 	/* link click management */
 	gchar *last_url;
+
+	gboolean has_blocked_bs_images;
 };
 
 #define MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -1153,6 +1156,8 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(obj);
 
+	priv->has_blocked_bs_images = FALSE;
+
 	priv->idle_changes_count = 0;
 	priv->idle_readjust_scroll_id = 0;
 	priv->idle_resize_children_id = 0;
@@ -1610,7 +1615,8 @@ has_blocked_external_images (ModestGtkhtmlMsgView *self)
 {
 	ModestGtkhtmlMsgViewPrivate *priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
-	return (modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)) &&
+	return ((modest_mime_part_view_has_external_images (MODEST_MIME_PART_VIEW (priv->body_view)) ||
+		 (priv->has_blocked_bs_images)) &&
 		!modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view)));
 }
 
@@ -1758,6 +1764,13 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 		} else {
 			return FALSE;
 		}
+	} else if (TNY_IS_CAMEL_BS_MIME_PART (part) && 
+		   !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (part))){
+		if (!modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {
+			priv->has_blocked_bs_images = TRUE;
+			tny_stream_close (stream);
+			return TRUE;
+		}
 	}
 
 	tny_mime_part_decode_to_stream ((TnyMimePart*)part, stream, NULL);
@@ -1777,6 +1790,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 	g_return_if_fail (self);
 
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
+	priv->has_blocked_bs_images = FALSE;
 	modest_mail_header_view_set_loading (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), FALSE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), FALSE);
@@ -1933,6 +1947,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 	}
 	
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE(self);
+	priv->has_blocked_bs_images = FALSE;
 	modest_mail_header_view_set_loading (MODEST_MAIL_HEADER_VIEW (priv->mail_header_view), TRUE);
 	gtk_widget_set_no_show_all (priv->mail_header_view, FALSE);
 	modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), FALSE);
