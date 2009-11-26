@@ -550,11 +550,14 @@ edit_account (GtkButton *button,
 		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
 			ModestAccountSettingsDialog *dialog =
 				modest_account_protocol_get_account_settings_dialog (proto, account_name);
-			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-						     (GtkWindow *) dialog,
-						     (GtkWindow *) self);
-			gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), FALSE);
-			gtk_widget_show (GTK_WIDGET (dialog));
+
+			if (dialog) {
+				modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+							     (GtkWindow *) dialog,
+							     (GtkWindow *) self);
+				gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), FALSE);
+				gtk_widget_show (GTK_WIDGET (dialog));
+			}
 		}
 	}
 }

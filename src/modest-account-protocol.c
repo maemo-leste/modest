@@ -555,12 +555,16 @@ modest_account_protocol_get_account_settings_dialog (ModestAccountProtocol *self
 	if (dialog == NULL) {
 
 		dialog = MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->create_account_settings_dialog (self);
-	
+
+		/* Check existence of dialog */
+		if (dialog == NULL)
+			return NULL;
+
 		/* Load settings */
-		settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (), 
+		settings = modest_account_mgr_load_account_settings (modest_runtime_get_account_mgr (),
 								     account_name);
 		modest_account_settings_dialog_load_settings (dialog, settings);
-	
+
 		/* Close dialog on response */
 		g_signal_connect_swapped (dialog,
 					  "response",

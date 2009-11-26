@@ -164,12 +164,12 @@ on_account_activated (GtkTreeView *account_view,
 		      ModestAccountViewWindow *self)
 {
 	ModestAccountViewWindowPrivate *priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (self);
-	
+
 	gchar* account_name = modest_account_view_get_path_account (priv->account_view, path);
 	if (!account_name)
 		return;
-		
-	/* Check whether any connections are active, and cancel them if 
+
+	/* Check whether any connections are active, and cancel them if
 	 * the user wishes.
 	 */
 	if (modest_ui_actions_check_for_active_account ((ModestWindow *) self, account_name)) {
@@ -177,19 +177,24 @@ on_account_activated (GtkTreeView *account_view,
 		ModestProtocolType proto_type;
 
 		/* Get proto */
-		proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+		proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (),
 								    account_name);
 		proto = (ModestAccountProtocol *)
-			modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
+			modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (),
 								       proto_type);
 
 		/* Create and show the dialog */
 		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
 			ModestAccountSettingsDialog *dialog =
 				modest_account_protocol_get_account_settings_dialog (proto, account_name);
-			modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (dialog), GTK_WINDOW (self));
-			gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), FALSE);
-			gtk_widget_show (GTK_WIDGET (dialog));
+
+			if (dialog) {
+				modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
+							     (GtkWindow *) dialog,
+							     (GtkWindow *) self);
+				gtk_window_set_destroy_with_parent (GTK_WINDOW (dialog), FALSE);
+				gtk_widget_show (GTK_WIDGET (dialog));
+			}
 		}
 	}
 	g_free (account_name);
