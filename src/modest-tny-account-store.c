@@ -479,17 +479,18 @@ show_wrong_password_dialog (TnyAccount *account,
 
 		/* Create and show the dialog */
 		if (proto && MODEST_IS_ACCOUNT_PROTOCOL (proto)) {
-			GtkWindow *parent;
-			ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
 			ModestAccountSettingsDialog *dialog =
 				modest_account_protocol_get_account_settings_dialog (proto, modest_account_name);
 
-			parent = modest_window_mgr_get_modal (mgr);
-			if (!parent)
-				parent = (GtkWindow *) modest_window_mgr_get_current_top (mgr);
+			if (dialog) {
+				ModestWindowMgr *mgr = modest_runtime_get_window_mgr ();
+				GtkWindow *parent = modest_window_mgr_get_modal (mgr);
+				if (!parent)
+					parent = (GtkWindow *) modest_window_mgr_get_current_top (mgr);
 
-			modest_window_mgr_set_modal (mgr, GTK_WINDOW (dialog), parent);
-			gtk_widget_show (GTK_WIDGET (dialog));
+				modest_window_mgr_set_modal (mgr, GTK_WINDOW (dialog), parent);
+				gtk_widget_show (GTK_WIDGET (dialog));
+			}
 		}
 	}
 	/* Show an explanatory temporary banner: */
