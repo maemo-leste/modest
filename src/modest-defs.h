@@ -240,6 +240,8 @@ const gchar *modest_defs_namespace (const gchar *string);
 #define MODEST_CONF_PREFER_FORMATTED_TEXT (modest_defs_namespace ("/prefer_formatted_text")) /* bool */
 #define MODEST_CONF_REPLY_TYPE           (modest_defs_namespace ("/reply_type"))        /*  int  */
 #define MODEST_CONF_FORWARD_TYPE         (modest_defs_namespace  ("/forward_type"))      /*  int  */
+#define MODEST_CONF_NOTIFICATIONS (modest_defs_namespace ("/notifications")) /* bool */
+#define MODEST_CONF_AUTO_ADD_TO_CONTACTS (modest_defs_namespace ("/auto_add_to_contacs")) /* bool */
 
 /* hidden global settings */
 #define MODEST_CONF_FETCH_HTML_EXTERNAL_IMAGES (modest_defs_namespace ("/fetch_external_images")) /* bool */

@@ -40,9 +40,11 @@ typedef struct _ModestGlobalSettingsState {
 	gint     connect_via;
 	gint     update_interval;
 	gint     size_limit;
-	gchar *default_account;
+	gchar   *default_account;
 	gboolean play_sound;
 	gboolean prefer_formatted_text;
+	gboolean notifications;
+	gboolean add_to_contacts;
 } ModestGlobalSettingsState;
 
 typedef struct _ModestGlobalSettingsDialogPrivate ModestGlobalSettingsDialogPrivate;
@@ -67,6 +69,9 @@ struct _ModestGlobalSettingsDialogPrivate {
 	
 	ModestPairList *msg_format_list;
 	GtkWidget *msg_format;
+
+	GtkWidget *notifications;
+	GtkWidget *add_to_contacts;
 
 	ModestGlobalSettingsState initial_state;
 };
