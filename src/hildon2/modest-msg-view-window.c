@@ -70,6 +70,7 @@
 #include <modest-hildon2-window-mgr.h>
 #include <tny-camel-msg.h>
 #include <tny-camel-bs-mime-part.h>
+#include <tny-camel-bs-msg.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -2231,6 +2232,30 @@ view_msg_cb (ModestMailOperation *mail_op,
 			g_object_unref (self);
 		}
 		return;
+	}
+
+	if (msg && TNY_IS_CAMEL_BS_MSG (msg)) {
+		TnyMimePart *body;
+		body = modest_tny_msg_find_body_part (msg, TRUE);
+		
+		if (body && !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (body))) {
+			/* We have body structure but not the body mime part. What we do
+			 * is restarting load of message */
+			self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
+			priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
+
+			tny_header_unset_flag (TNY_HEADER (header), TNY_HEADER_FLAG_CACHED);
+
+			modest_msg_view_window_reload (self);
+
+			if (row_reference)
+				gtk_tree_row_reference_free (row_reference);
+			g_object_unref (body);
+			return;
+		}
+
+		if (body)
+			g_object_unref  (body);
 	}
 
 	/* Get the window */ 
