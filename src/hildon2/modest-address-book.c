@@ -66,6 +66,7 @@ static gchar *run_add_email_addr_to_contact_dlg(const gchar * contact_name, gboo
 static GSList *select_email_addrs_for_contact(GList * email_addr_list);
 static gboolean resolve_address (const gchar *address, GSList **resolved_addresses, GSList **contact_id, gboolean *canceled);
 static gchar *unquote_string (const gchar *str);
+static void set_contact_from_display_name (EContact *contact, const gchar *display_name);
 
 static gboolean
 open_addressbook ()
@@ -600,7 +601,7 @@ async_get_contacts_cb (EBook *book,
 			if (display_address) {
 				modest_text_utils_get_display_address (display_address);
 				if ((display_address[0] != '\0') && (strlen (display_address) != strlen (address)))
-					e_contact_set (contact, E_CONTACT_FULL_NAME, (const gpointer)display_address);
+					set_contact_from_display_name (contact, (const gchar *) display_address);
 				g_free (display_address);
 			}
 
@@ -954,6 +955,49 @@ get_contacts_for_name (const gchar *name)
 	return result;
 }
 
+static void
+set_contact_from_display_name (EContact *contact, const gchar *disp_name)
+{
+	const gchar *parent_open;
+	const gchar *comma_separator;
+	GString *buffer;
+	gchar *display_name;
+
+	display_name = unquote_string (disp_name);
+	buffer = g_string_new ("");
+
+	/* First we remove part in () */
+	parent_open = g_strstr_len (display_name, -1, "(");
+	if (parent_open) {
+		const gchar *parent_close;
+
+		parent_close = g_strstr_len (parent_open, -1, ")");
+
+		buffer = g_string_append_len (buffer, display_name, parent_open - display_name);
+		if (parent_close) {
+			buffer = g_string_append (buffer, parent_close + 1);
+		}
+	} else {
+		buffer = g_string_append (buffer, display_name);
+	}
+
+	comma_separator = g_strstr_len (buffer->str, -1, ", ");
+	if (comma_separator) {
+		gchar *surname, *name;
+		surname = g_strndup (buffer->str, comma_separator - buffer->str);
+		name = g_strdup (comma_separator + 2);
+
+		e_contact_set (contact, E_CONTACT_FAMILY_NAME, (const gpointer) surname);
+		e_contact_set (contact, E_CONTACT_GIVEN_NAME, (const gpointer) name);
+		g_free (name);
+		g_free (surname);
+	} else {
+		e_contact_set (contact, E_CONTACT_GIVEN_NAME, (const gpointer) buffer->str);
+	}
+
+	g_string_free (buffer, TRUE);
+	g_free (display_name);
+}
 
 static GList *
 select_contacts_for_name_dialog (const gchar *name, GList *external_contacts)
@@ -1004,7 +1048,7 @@ select_contacts_for_name_dialog (const gchar *name, GList *external_contacts)
 				char *uid = osso_abook_create_temporary_uid ();
 				OssoABookContact *contact = osso_abook_contact_new ();
 				osso_abook_contact_set_uid (contact, uid);
-				e_contact_set (E_CONTACT (contact), E_CONTACT_FULL_NAME, recipient->display_name);
+				set_contact_from_display_name (E_CONTACT (contact), recipient->display_name);
 				osso_abook_contact_set_value (E_CONTACT (contact), EVC_EMAIL, recipient->email_address);
 
 				OssoABookListStoreRow *row = osso_abook_list_store_row_new (contact);
