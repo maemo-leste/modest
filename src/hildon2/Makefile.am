@@ -39,6 +39,7 @@ INCLUDES=\
 	$(MODEST_HILDON_MIME_CFLAGS)        \
 	$(MODEST_HILDON_NOTIFY_CFLAGS)      \
 	$(MODEST_LIBALARM_CFLAGS)           \
+	$(MODEST_CALENDAR_WIDGETS_CFLAGS)   \
 	-I ${top_srcdir}/src/widgets        \
 	-I ${top_srcdir}/src                \
 	-DPREFIX=\"@prefix@\" 	            \
@@ -98,7 +99,8 @@ libmodest_ui_la_LIBADD = \
 	$(MODEST_HILDON_HELP_LIBS) \
 	$(MODEST_LIBALARM_LIBS)   \
 	$(MODEST_LIBIPHB_LIBS)   \
-	$(MODEST_HILDON_NOTIFY_LIBS)
+	$(MODEST_HILDON_NOTIFY_LIBS) \
+	$(MODEST_CALENDAR_WIDGETS_LIBS)
 
 UI_FILES=\
 	ui/modest-main-window-ui.xml \
