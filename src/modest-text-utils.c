@@ -304,8 +304,6 @@ modest_text_utils_derived_subject (const gchar *subject, gboolean is_reply)
 	gint prefix_len, untranslated_prefix_len;
 	gboolean untranslated_found = FALSE;
 
-	g_return_val_if_fail (prefix, NULL);
-
 	if (!subject || subject[0] == '\0')
 		subject = _("mail_va_no_subject");
 
