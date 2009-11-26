@@ -1595,6 +1595,10 @@ void
 modest_platform_on_new_headers_received (GList *URI_list,
 					 gboolean show_visual)
 {
+	/* Check if the user wants to show notifications or not */
+	if (!modest_conf_get_bool (modest_runtime_get_conf (), MODEST_CONF_NOTIFICATIONS, NULL))
+		return;
+
 	if (g_list_length (URI_list) == 0)
 		return;
 
