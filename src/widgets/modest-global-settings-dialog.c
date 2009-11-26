@@ -247,6 +247,8 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	gint *id;
 
 	/* Get values from UI */
+	state->notifications = modest_togglable_get_active (HILDON_CHECK_BUTTON (priv->notifications));
+	state->add_to_contacts = modest_togglabale_get_active (HILDON_CHECK_BUTTON (priv->add_to_contacts));
 	state->auto_update = modest_togglable_get_active (priv->auto_update);
 	id = modest_selector_get_active_id (priv->connect_via);
 	state->default_account = modest_selector_get_active_id (priv->default_account_selector);
@@ -275,6 +277,10 @@ modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog 
 	get_current_settings (priv, &current_state);
 
 	/* Save configuration */
+	modest_conf_set_bool (conf, MODEST_CONF_NOTIFICATIONS, current_state.notifications, &error);
+	RETURN_FALSE_ON_ERROR(error);
+	modest_conf_set_bool (conf, MODEST_CONF_AUTO_ADD_TO_CONTACTS, current_state.add_to_contacts, &error);
+	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, current_state.auto_update, &error);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, current_state.connect_via, NULL);
@@ -298,7 +304,7 @@ modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog 
 	if (priv->initial_state.auto_update != current_state.auto_update ||
 	    priv->initial_state.connect_via != current_state.connect_via ||
 	    priv->initial_state.update_interval != current_state.update_interval) {
-		
+
 		TnyAccountStore *account_store;
 		TnyDevice *device;
 		
@@ -344,6 +350,8 @@ settings_changed (ModestGlobalSettingsState initial_state,
 		  ModestGlobalSettingsState current_state)
 {
 	if (initial_state.auto_update != current_state.auto_update ||
+	    initial_state.notifications != current_state.notifications ||
+	    initial_state.add_to_contacts != current_state.add_to_contacts ||
 	    initial_state.connect_via != current_state.connect_via ||
 	    initial_state.update_interval != current_state.update_interval ||
 	    initial_state.size_limit != current_state.size_limit ||

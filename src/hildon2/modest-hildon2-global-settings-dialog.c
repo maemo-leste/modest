@@ -263,6 +263,18 @@ create_updating_page (ModestHildon2GlobalSettingsDialog *self)
 	}
 
 
+	/* Incoming notifications */
+	ppriv->notifications = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+	gtk_button_set_label (GTK_BUTTON (ppriv->notifications), _("mcen_fi_options_incoming_notifications"));
+	gtk_button_set_alignment (GTK_BUTTON (ppriv->notifications), 0.0, 0.5);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->notifications, FALSE, FALSE, 0);
+
+	/* Automatic add to contacts */
+	ppriv->add_to_contacts = hildon_check_button_new (MODEST_EDITABLE_SIZE);
+	gtk_button_set_label (GTK_BUTTON (ppriv->add_to_contacts), _("mcen_fi_options_automatic_add"));
+	gtk_button_set_alignment (GTK_BUTTON (ppriv->add_to_contacts), 0.0, 0.5);
+	gtk_box_pack_start (GTK_BOX (vbox), ppriv->add_to_contacts, FALSE, FALSE, 0);
+
 	/* Separator label */
 	separator = gtk_label_new (_("mcen_ti_updating"));
 	gtk_label_set_justify ((GtkLabel *) separator, GTK_JUSTIFY_CENTER);
@@ -444,6 +456,26 @@ modest_hildon2_global_settings_dialog_load_settings (ModestGlobalSettingsDialog 
 
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	conf = modest_runtime_get_conf ();
+
+	/* Incoming notifications */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_NOTIFICATIONS, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->notifications), checked);
+	ppriv->initial_state.notifications = checked;
+
+	/* Add to contacts */
+	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_ADD_TO_CONTACTS, &error);
+	if (error) {
+		g_clear_error (&error);
+		error = NULL;
+		checked = FALSE;
+	}
+	hildon_check_button_set_active (HILDON_CHECK_BUTTON (ppriv->add_to_contacts), checked);
+	ppriv->initial_state.add_to_contacts = checked;
 
 	/* Autoupdate */
 	checked = modest_conf_get_bool (conf, MODEST_CONF_AUTO_UPDATE, &error);

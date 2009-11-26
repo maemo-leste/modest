@@ -756,6 +756,12 @@ init_default_settings (ModestConf *conf)
 	if (!modest_conf_key_exists (conf, MODEST_CONF_AUTO_UPDATE, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_AUTO_UPDATE, TRUE, NULL);
 
+	if (!modest_conf_key_exists (conf, MODEST_CONF_NOTIFICATIONS, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_NOTIFICATIONS, TRUE, NULL);
+
+	if (!modest_conf_key_exists (conf, MODEST_CONF_AUTO_ADD_TO_CONTACTS, NULL))
+		modest_conf_set_bool (conf, MODEST_CONF_AUTO_ADD_TO_CONTACTS, TRUE, NULL);
+
 	if (!modest_conf_key_exists (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL))
 		modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, MODEST_CONNECTED_VIA_WLAN_OR_WIMAX, NULL);
 
