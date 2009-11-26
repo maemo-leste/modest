@@ -67,6 +67,10 @@ gboolean modest_shell_delete_window (ModestShell *shell, ModestWindow *window);
 void modest_shell_add_window (ModestShell *shell, ModestWindow *window);
 gint modest_shell_count_windows (ModestShell *shell);
 
+GtkWidget *modest_shell_get_menu (ModestShell *shell, ModestShellWindow *window);
+void modest_shell_set_title (ModestShell *shell, ModestShellWindow *window, const gchar *title);
+void modest_shell_show_progress (ModestShell *shell, ModestShellWindow *window, gboolean show);
+
 
 G_END_DECLS
 
