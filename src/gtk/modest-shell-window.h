@@ -70,6 +70,8 @@ GType modest_shell_window_get_type (void) G_GNUC_CONST;
 void modest_shell_window_set_shell (ModestShellWindow *self,
 				    ModestShell *shell);
 
+GtkWidget *modest_shell_window_get_menu (ModestShellWindow *self);
+
 G_END_DECLS
 
 #endif

@@ -167,3 +167,19 @@ modest_shell_count_windows (ModestShell *shell)
 
 	return gtk_notebook_get_n_pages (GTK_NOTEBOOK (priv->notebook));
 }
+
+void
+modest_shell_set_title (ModestShell *shell, ModestShellWindow *window, const gchar *title)
+{
+	ModestShellPrivate *priv;
+
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+
+	gtk_notebook_set_tab_label_text (GTK_NOTEBOOK (priv->notebook), GTK_WIDGET (window), title);
+}
+
+void
+modest_shell_show_progress (ModestShell *shell, ModestShellWindow *window, gboolean show)
+{
+}
+

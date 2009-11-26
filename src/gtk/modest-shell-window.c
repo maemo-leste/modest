@@ -69,6 +69,8 @@ struct _ModestShellWindowPrivate {
 	ModestDimmingRulesGroup *app_menu_dimming_group;
 	GtkAccelGroup *accel_group;
 
+	GtkWidget *menu;
+
 };
 #define MODEST_SHELL_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 									    MODEST_TYPE_SHELL_WINDOW, \
@@ -142,6 +144,11 @@ modest_shell_window_dispose (GObject *obj)
 		priv->app_menu_dimming_group = NULL;
 	}
 
+	if (priv->menu) {
+		gtk_widget_destroy (priv->menu);
+		priv->menu = NULL;
+	}
+
 	G_OBJECT_CLASS(parent_class)->dispose (obj);
 }
 
@@ -161,7 +168,7 @@ modest_shell_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->app_menu_dimming_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
 	gtk_window_add_accel_group (GTK_WINDOW (self), priv->accel_group);
 
-	setup_menu (self);
+	priv->menu = gtk_menu_new ();
 
 	modest_ui_dimming_manager_insert_rules_group (parent_priv->ui_dimming_manager, 
 						      priv->app_menu_dimming_group);
@@ -201,8 +208,11 @@ modest_shell_window_add_item_to_menu (ModestWindow *self,
 							    GTK_WIDGET (button),
 							    (GCallback) dimming_callback,
 							    MODEST_WINDOW (self));
-	menu = modest_shell_get_menu (MODEST_SHELL (priv->shell), self);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), button);
+	if (priv->menu) {
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), button);
+	} else {
+		gtk_widget_destroy (button);
+	}
 
 	gtk_widget_show (GTK_WIDGET (button));
 }
@@ -237,8 +247,11 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 					    accel_key, accel_mods, 0);
 	}
 
-	menu = modest_shell_get_menu (MODEST_SHELL (priv->shell), MODEST_WINDOW (self));
-	gtk_menu_shell_append (GTK_MENU (menu), menu_item);
+	if (priv->menu) {
+		gtk_menu_shell_append (GTK_MENU (priv->menu), menu_item);
+	} else {
+		gtk_widget_destroy (menu_item);
+	}
 }
 
 static void
@@ -291,4 +304,14 @@ modest_shell_window_set_shell (ModestShellWindow *self,
 	}
 
 	priv->shell = g_object_ref (shell);
+}
+
+GtkWidget *
+modest_shell_window_get_menu (ModestShellWindow *self)
+{
+	ModestShellWindowPrivate *priv = NULL;
+
+	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
+
+	return priv->menu;
 }
