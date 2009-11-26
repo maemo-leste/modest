@@ -3073,6 +3073,9 @@ save_mime_part_to_file_connect_handler (gboolean canceled,
 					SaveMimePartInfo *info)
 {
 	if (canceled || err) {
+		if (canceled && !err) {
+			info->result = GNOME_VFS_ERROR_CANCELLED;
+		}
 		g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
 	} else {
 		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
