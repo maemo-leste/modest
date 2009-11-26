@@ -41,6 +41,7 @@
 static void modest_shell_window_class_init  (gpointer klass, gpointer class_data);
 static void modest_shell_window_instance_init (GTypeInstance *instance, gpointer g_class);
 static void modest_shell_window_dispose     (GObject *obj);
+static void modest_shell_window_finalize     (GObject *obj);
 
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 static void modest_shell_window_show_progress (ModestWindow *window,
@@ -68,6 +69,7 @@ struct _ModestShellWindowPrivate {
 	GtkAccelGroup *accel_group;
 
 	GtkWidget *menu;
+	gchar *title;
 
 };
 #define MODEST_SHELL_WINDOW_GET_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -115,6 +117,7 @@ modest_shell_window_class_init (gpointer klass, gpointer class_data)
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->dispose  = modest_shell_window_dispose;
+	gobject_class->finalize  = modest_shell_window_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestShellWindowPrivate));
 	
@@ -150,6 +153,19 @@ modest_shell_window_dispose (GObject *obj)
 }
 
 static void
+modest_shell_window_finalize (GObject *obj)
+{
+	ModestShellWindowPrivate *priv;
+
+	priv = MODEST_SHELL_WINDOW_GET_PRIVATE(obj);
+
+	if (priv->title)
+		g_free (priv->title);
+
+	G_OBJECT_CLASS(parent_class)->finalize (obj);
+}
+
+static void
 modest_shell_window_instance_init (GTypeInstance *instance, gpointer g_class)
 {
 	ModestShellWindow *self = NULL;	
@@ -159,6 +175,8 @@ modest_shell_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	self = (ModestShellWindow *) instance;
 	parent_priv = MODEST_WINDOW_GET_PRIVATE (self);
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
+
+	priv->title = NULL;
 
 	priv->accel_group = gtk_accel_group_new ();
 
@@ -271,9 +289,14 @@ modest_shell_window_set_title (ModestWindow *self,
 	ModestShellWindowPrivate *priv = NULL;
 
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
-	modest_shell_set_title (MODEST_SHELL (priv->shell),
-				MODEST_WINDOW (self),
-				title);
+	if (priv->title)
+		g_free (priv->title);
+	priv->title = g_strdup (title);
+	if (priv->shell) {
+		modest_shell_set_title (MODEST_SHELL (priv->shell),
+					MODEST_WINDOW (self),
+					title);
+	}
 }
 
 static void
@@ -302,6 +325,9 @@ modest_shell_window_set_shell (ModestShellWindow *self,
 	}
 
 	priv->shell = g_object_ref (shell);
+	modest_shell_set_title (MODEST_SHELL (priv->shell),
+				MODEST_WINDOW (self),
+				priv->title);
 }
 
 GtkWidget *

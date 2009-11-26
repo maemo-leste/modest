@@ -190,6 +190,7 @@ modest_shell_add_window (ModestShell *shell, ModestWindow *window)
 
 	priv = MODEST_SHELL_GET_PRIVATE (shell);
 	gtk_notebook_append_page (GTK_NOTEBOOK (priv->notebook), GTK_WIDGET (window), NULL);
+	modest_shell_window_set_shell (MODEST_SHELL_WINDOW (window), shell);
 	update_title (shell);
 }
 
