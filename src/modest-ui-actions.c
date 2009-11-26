@@ -3162,7 +3162,7 @@ gboolean
 modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 {
 	TnyTransportAccount *transport_account = NULL;
-	gboolean had_error = FALSE;
+	gboolean had_error = FALSE, add_to_contacts;
 	MsgData *data;
 	ModestAccountMgr *account_mgr;
 	gchar *account_name;
@@ -3171,7 +3171,10 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW(edit_window), TRUE);
 
-	if (!modest_msg_edit_window_check_names (edit_window, TRUE))
+	/* Check whether to automatically add new contacts to addressbook or not */
+	add_to_contacts = modest_conf_get_bool (modest_runtime_get_conf (),
+						MODEST_CONF_AUTO_ADD_TO_CONTACTS, NULL);
+	if (!modest_msg_edit_window_check_names (edit_window, add_to_contacts))
 		return TRUE;
 
 	data = modest_msg_edit_window_get_msg_data (edit_window);
