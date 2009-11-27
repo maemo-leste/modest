@@ -1,3 +1,16 @@
+modest (3.2.2) unstable; urgency=low
+
+  * Week 49, 2009 - first release
+  * 
+  * Fixes: NB#133593 The contact first or last name are lost when Reply/Send an email with Nokia id.
+  * Fixes: NB#142722 Strange behaviour when scandinavic characters in senders name
+  * Fixes: NB#144914 Contacts should not be added to addressbook automatically
+  * Fixes: NB#147998 Global settings dialog: INCOMING NOTIFICATIONS (enable/disable) option is missing
+  * Fixes: NB#148121 The message subject is not getting populated while doing 
+  * 	Reply or Reply to All or Forward.
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 27 Nov 2009 09:27:14 +0200
+
 modest (3.2.1) unstable; urgency=low
 
   * Week 48, 2009 - first release
@@ -22,11 +35,30 @@ modest (3.2.0) unstable; urgency=low
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 16 Nov 2009 11:07:00 +0100
 
+modest (3.1.16) unstable; urgency=low
+
+  * Week 47, 2009 release
+  * 
+  * Fixes NB#140449 'no subject' and nothing is showing in viewer view tapped 
+  * 	from new mail notification for the rules created mails
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 19 Nov 2009 10:17:16 +0200
+
+modest (3.1.15) unstable; urgency=low
+
+  * Week 47, 2009 release
+  * 
+  * Fixes NB#140449 'no subject' and nothing is showing in viewer view tapped from 
+  * 	new mail notification for the rules created mails
+  * Fixes NB#146429 Send-Receive button move to top part of the menu to avoid its moving 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 17 Nov 2009 01:01:13 +0200
+
 modest (3.1.14) unstable; urgency=low
 
   * Week 46 release
   * 
-  * Fixes: NB#137323 Randomly "Invalid username or password" and Account settings 
+  * Fixes NB#137323 Randomly "Invalid username or password" and Account settings 
   * 	are shown for mail accounts when Email is not running
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 12 Nov 2009 15:26:13 +0200
@@ -35,11 +67,11 @@ modest (3.1.13) unstable; urgency=low
 
   * Week 46, 2009 - third release
   * 
-  * Fixes: NB#132034 Moving message to Folder - New button - wrong logical 
+  * Fixes NB#132034 Moving message to Folder - New button - wrong logical 
   * 	ID used (wdgt_bd_new), modest logical ID missing
-  * Fixes: NB#139348 Email screenshot must be shown when Email starts
-  * Fixes: NB#144914 Contacts should not be added to addressbook automatically
-  * Fixes: NB#145788 Modest crashed once when navigation is made between folders view. 
+  * Fixes NB#139348 Email screenshot must be shown when Email starts
+  * Fixes NB#144914 Contacts should not be added to addressbook automatically
+  * Fixes NB#145788 Modest crashed once when navigation is made between folders view. 
   * 
 
  -- Moises Martinez <moises.martinez@nokia.com>  Tue, 10 Nov 2009 17:49:11 +0200
