@@ -67,6 +67,7 @@
 #include <clockd/libtime.h>
 #endif
 #include "modest-account-protocol.h"
+#include <camel/camel-stream-null.h>
 
 #define KB 1024
 
@@ -194,6 +195,8 @@ typedef struct {
 	gint last_total_bytes;
 	gint sum_total_bytes;
 	gint total_bytes;
+	TnyIterator *get_parts;
+	TnyMsg *msg;
 } GetMsgInfo;
 
 typedef struct _RefreshAsyncHelper {	
@@ -1603,6 +1606,8 @@ update_account_get_msg_async_cb (TnyFolder *folder,
 		update_account_notify_user_and_free (info, new_headers);
 
 		/* Delete the helper */
+		if (msg_info->msg)
+			g_object_unref (msg_info->msg);
 		g_object_unref (msg_info->more_msgs);
 		g_object_unref (msg_info->mail_op);
 		g_slice_free (GetMsgInfo, msg_info);
@@ -1759,6 +1764,7 @@ inbox_refreshed_cb (TnyFolder *inbox,
 		msg_info->mail_op = g_object_ref (info->mail_op);
 		msg_info->total_bytes = compute_message_list_size (new_headers, priv->total);
 		msg_info->more_msgs = g_object_ref (iter);
+		msg_info->msg = NULL;
 		msg_info->user_data = info;
 
 		while ((msg_num < priv->total ) && !tny_iterator_is_done (iter)) {
@@ -2599,6 +2605,8 @@ modest_mail_operation_find_msg (ModestMailOperation *self,
 	helper->sum_total_bytes = 0;
 	helper->total_bytes = 0;
 	helper->more_msgs = NULL;
+	helper->get_parts = NULL;
+	helper->msg = NULL;
 
 	modest_mail_operation_notify_start (self);
 	
@@ -2666,6 +2674,80 @@ modest_mail_operation_get_msg (ModestMailOperation *self,
 	helper->sum_total_bytes = 0;
 	helper->total_bytes = tny_header_get_message_size (header);
 	helper->more_msgs = NULL;
+	helper->get_parts = NULL;
+	helper->msg = NULL;
+
+	modest_mail_operation_notify_start (self);
+	
+	/* notify about the start of the operation */ 
+	ModestMailOperationState *state;
+	state = modest_mail_operation_clone_state (self);
+	state->done = 0;
+	state->total = 0;
+	g_signal_emit (G_OBJECT (self), signals[PROGRESS_CHANGED_SIGNAL], 
+				0, state, NULL);
+	g_slice_free (ModestMailOperationState, state);
+	
+	tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, helper);
+
+	g_object_unref (G_OBJECT (folder));
+}
+
+void 
+modest_mail_operation_get_msg_and_parts (ModestMailOperation *self,
+					 TnyHeader *header,
+					 TnyList *parts,
+					 gboolean progress_feedback,
+					 GetMsgAsyncUserCallback user_callback,
+					 gpointer user_data)
+{
+	GetMsgInfo *helper = NULL;
+	TnyFolder *folder;
+	ModestMailOperationPrivate *priv;
+	
+	g_return_if_fail (MODEST_IS_MAIL_OPERATION (self));
+	g_return_if_fail (TNY_IS_HEADER (header));
+	
+	priv = MODEST_MAIL_OPERATION_GET_PRIVATE (self);
+	priv->status = MODEST_MAIL_OPERATION_STATUS_IN_PROGRESS;
+	priv->total = 1;
+	priv->done = 0;
+
+	/* Check memory low */
+	if (_check_memory_low (self)) {
+		if (user_callback)
+			user_callback (self, header, FALSE, NULL, priv->error, user_data);
+		modest_mail_operation_notify_end (self);
+		return;
+	}
+
+	/* Get account and set it into mail_operation */
+	folder = tny_header_get_folder (header);
+	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	
+	/* Check for cached messages */
+	if (progress_feedback) {
+		if (tny_header_get_flags (header) & TNY_HEADER_FLAG_CACHED)
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_OPEN;
+		else 
+			priv->op_type = MODEST_MAIL_OPERATION_TYPE_RECEIVE;
+	} else {
+		priv->op_type = MODEST_MAIL_OPERATION_TYPE_UNKNOWN;
+	}
+	
+	/* Create the helper */
+	helper = g_slice_new0 (GetMsgInfo);
+	helper->header = g_object_ref (header);
+	helper->mail_op = g_object_ref (self);
+	helper->user_callback = user_callback;
+	helper->user_data = user_data;
+	helper->destroy_notify = NULL;
+	helper->last_total_bytes = 0;
+	helper->sum_total_bytes = 0;
+	helper->total_bytes = tny_header_get_message_size (header);
+	helper->more_msgs = NULL;
+	helper->get_parts = tny_list_create_iterator (parts);
+	helper->msg = NULL;
 
 	modest_mail_operation_notify_start (self);
 	
@@ -2705,6 +2787,23 @@ get_msg_status_cb (GObject *obj,
 }
 
 static void
+get_msg_async_get_part_cb (TnyMimePart *self, gboolean cancelled, TnyStream *stream, GError *err, gpointer user_data)
+{
+	GetMsgInfo *helper;
+	TnyFolder *folder = NULL;
+
+	helper = (GetMsgInfo *) user_data;
+
+	if (helper->header) {
+		folder = tny_header_get_folder (helper->header);
+	}
+
+	get_msg_async_cb (folder, cancelled, helper->msg, err, user_data);
+
+	if (folder) g_object_unref (folder);
+}
+
+static void
 get_msg_async_cb (TnyFolder *folder, 
 		  gboolean canceled, 
 		  TnyMsg *msg, 
@@ -2723,6 +2822,9 @@ get_msg_async_cb (TnyFolder *folder,
 	if (info->more_msgs) {
 		tny_iterator_next (info->more_msgs);
 		finished = (tny_iterator_is_done (info->more_msgs));
+	} else if (info->get_parts) {
+		tny_iterator_next (info->get_parts);
+		finished = (tny_iterator_is_done (info->get_parts));
 	} else {
 		finished = (priv->done == priv->total) ? TRUE : FALSE;
 	}
@@ -2751,7 +2853,7 @@ get_msg_async_cb (TnyFolder *folder,
 		info->header = tny_msg_get_header (msg);
 
 	/* Call the user callback */
-	if (info->user_callback)
+	if (info->user_callback && (finished || (info->get_parts == NULL)))
 		info->user_callback (info->mail_op, info->header, canceled, 
 				     msg, err, info->user_data);
 
@@ -2765,12 +2867,33 @@ get_msg_async_cb (TnyFolder *folder,
 		modest_mail_operation_notify_end (info->mail_op);
 
 		/* Clean */
+		if (info->msg)
+			g_object_unref (info->msg);
 		if (info->more_msgs)
 			g_object_unref (info->more_msgs);
 		if (info->header)
 			g_object_unref (info->header);
 		g_object_unref (info->mail_op);
 		g_slice_free (GetMsgInfo, info);
+	} else if (info->get_parts) {
+		CamelStream *null_stream;
+		TnyStream *tny_null_stream;
+		TnyMimePart *part;
+
+		if (info->msg == NULL && msg != NULL)
+			info->msg = g_object_ref (msg);
+
+		null_stream = camel_stream_null_new ();
+		tny_null_stream = tny_camel_stream_new (null_stream);
+		
+		part = TNY_MIME_PART (tny_iterator_get_current (info->get_parts));
+		tny_mime_part_decode_to_stream_async (part, tny_null_stream, 
+						      get_msg_async_get_part_cb,
+						      get_msg_status_cb,
+						      info);
+		g_object_unref (tny_null_stream);
+		g_object_unref (part);
+
 	} else if (info->more_msgs) {
 		TnyHeader *header = TNY_HEADER (tny_iterator_get_current (info->more_msgs));
 		TnyFolder *folder = tny_header_get_folder (header);
@@ -2887,6 +3010,7 @@ modest_mail_operation_get_msgs_full (ModestMailOperation *self,
 		msg_info->last_total_bytes = 0;
 		msg_info->sum_total_bytes = 0;
 		msg_info->total_bytes = msg_list_size;
+		msg_info->msg = NULL;
 
 		/* The callback will call it per each header */
 		tny_folder_get_msg_async (folder, header, get_msg_async_cb, get_msg_status_cb, msg_info);

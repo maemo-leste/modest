@@ -606,6 +606,27 @@ void          modest_mail_operation_remove_msgs     (ModestMailOperation *self,
 						     gboolean remove_to_trash);
 
 /**
+ * modest_mail_operation_get_msg_and_parts:
+ * @self: a #ModestMailOperation
+ * @header_list: the #TnyHeader of the message to get
+ * @progress_feedback: a #gboolean. If %TRUE, we'll get progress bar feedback.
+ * @user_callback: a #GetMsgAsyncUserCallback function to call after tinymail callback execution.
+ * @user_data: generic user data which will be passed to @user_callback function.
+ * 
+ * Gets a message from header using an user defined @callback function
+ * pased as argument. This operation is asynchronous, so the
+ * #ModestMailOperation should be added to #ModestMailOperationQueue
+ *
+ * This operation also retrieves to cache all parts of the message. This is needed for
+ * forward operation.
+ **/
+void          modest_mail_operation_get_msg_and_parts     (ModestMailOperation *self,
+							   TnyHeader *header,
+							   TnyList *parts,
+							   gboolean progress_feedback,
+							   GetMsgAsyncUserCallback user_callback,
+							   gpointer user_data);
+/**
  * modest_mail_operation_get_msg:
  * @self: a #ModestMailOperation
  * @header_list: the #TnyHeader of the message to get
