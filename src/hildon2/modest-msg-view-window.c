@@ -1881,6 +1881,7 @@ message_reader_performer (gboolean canceled,
 	info = (MsgReaderInfo *) user_data;
 	if (canceled || err) {
 		update_window_title (MODEST_MSG_VIEW_WINDOW (parent_window));
+		modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (parent_window));
 		goto frees;
 	}
 
