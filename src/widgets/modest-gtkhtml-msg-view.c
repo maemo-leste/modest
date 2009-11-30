@@ -1593,6 +1593,7 @@ request_fetch_images (ModestGtkhtmlMsgView *self)
 	/* The message could have not been downloaded yet */
 	if (priv->msg) {
 		modest_mime_part_view_set_view_images (MODEST_MIME_PART_VIEW (priv->body_view), TRUE);
+		priv->has_blocked_bs_images = FALSE;
 		part = tny_mime_part_view_get_part (TNY_MIME_PART_VIEW (priv->body_view));
 		if (part) {
 			tny_mime_part_view_set_part (TNY_MIME_PART_VIEW (priv->body_view), part);
@@ -1683,6 +1684,14 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 		
 		if (part_cid && strcmp (cid, part_cid) == 0)
 			break;
+
+		if (part_cid && part_cid[0] == '<') {
+			const gchar *end;
+			end = g_strrstr_len (part_cid, -1, ">");
+
+			if (end && strncmp (part_cid + 1, cid, end - part_cid - 1) == 0)
+				break;
+		}
 
 		if (tny_mime_part_content_type_is (part, "multipart/related")) {
 			TnyList *related_parts = TNY_LIST (tny_simple_list_new ());
