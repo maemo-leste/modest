@@ -78,6 +78,7 @@
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon.h>
 #endif
+#include <tny-camel-bs-mime-part.h>
 
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
@@ -2737,6 +2738,24 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 	g_slice_free (DecodeAsyncHelper, helper);
 }
 
+static void
+view_attachment_connect_handler (gboolean canceled,
+				 GError *err,
+				 GtkWindow *parent_window,
+				 TnyAccount *account,
+				 TnyMimePart *part)
+{
+
+	if (canceled || err) {
+		g_object_unref (part);
+		return;
+	}
+
+	modest_msg_view_window_view_attachment (MODEST_MSG_VIEW_WINDOW (parent_window),
+						part);
+	g_object_unref (part);
+}
+
 void
 modest_msg_view_window_view_attachment (ModestMsgViewWindow *window, 
 					TnyMimePart *mime_part)
@@ -2785,6 +2804,28 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 
 	if (tny_mime_part_is_purged (mime_part))
 		goto frees;
+
+	if (TNY_IS_CAMEL_BS_MIME_PART (mime_part) &&
+	    !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (mime_part))) {
+		gboolean is_merge;
+		TnyAccount *account;
+
+		is_merge = g_str_has_prefix (priv->msg_uid, "merge:");
+		account = NULL;
+		/* Get the account */
+		if (!is_merge)
+			account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+								  priv->msg_uid);
+
+		if (!tny_device_is_online (modest_runtime_get_device())) {
+			modest_platform_connect_and_perform (GTK_WINDOW (window),
+							     TRUE,
+							     TNY_ACCOUNT (account),
+							     (ModestConnectedPerformer) view_attachment_connect_handler,
+							     g_object_ref (mime_part));
+			goto frees;
+		}
+	}
 
 	if (!modest_tny_mime_part_is_msg (mime_part) && tny_mime_part_get_filename (mime_part)) {
 		gchar *filepath = NULL;
@@ -2976,7 +3017,9 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	 * modest_platform_system_banner is or does Gtk+ code */
 
 	gdk_threads_enter (); /* CHECKED */
-	if (info->result == GNOME_VFS_OK) {
+	if (info->result == GNOME_VFS_ERROR_CANCELLED) {
+		/* nothing */
+	} else if (info->result == GNOME_VFS_OK) {
 		modest_platform_system_banner (NULL, NULL, _CS_SAVED);
 	} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
 		gchar *msg = NULL;
@@ -2997,12 +3040,57 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 	return FALSE;
 }
 
+static void
+save_mime_part_to_file_connect_handler (gboolean canceled,
+					GError *err,
+					GtkWindow *parent_window,
+					TnyAccount *account,
+					SaveMimePartInfo *info)
+{
+	if (canceled || err) {
+		g_idle_add ((GSourceFunc) idle_save_mime_part_show_result, info);
+	} else {
+		g_thread_create ((GThreadFunc)save_mime_part_to_file, info, FALSE, NULL);
+	}
+}
+
+static gboolean
+save_mime_part_to_file_connect_idle (SaveMimePartInfo *info)
+{
+	gboolean is_merge;
+	TnyAccount *account;
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (info->window);
+
+	is_merge = g_str_has_prefix (priv->msg_uid, "merge:");
+	account = NULL;
+
+	/* Get the account */
+	if (!is_merge)
+		account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
+							  priv->msg_uid);
+
+	modest_platform_connect_and_perform (GTK_WINDOW (info->window),
+					     TRUE,
+					     TNY_ACCOUNT (account),
+					     (ModestConnectedPerformer) save_mime_part_to_file_connect_handler,
+					     info);
+	return FALSE;
+}
+
 static gpointer
 save_mime_part_to_file (SaveMimePartInfo *info)
 {
 	GnomeVFSHandle *handle;
 	TnyStream *stream;
 	SaveMimePartPair *pair = (SaveMimePartPair *) info->pairs->data;
+
+	if (TNY_IS_CAMEL_BS_MIME_PART (pair->part) &&
+	    !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (pair->part))) {
+		g_idle_add ((GSourceFunc) save_mime_part_to_file_connect_idle, info);
+		return NULL;
+	}
 
 	info->result = gnome_vfs_create (&handle, pair->filename, GNOME_VFS_OPEN_WRITE, FALSE, 0644);
 	if (info->result == GNOME_VFS_OK) {
