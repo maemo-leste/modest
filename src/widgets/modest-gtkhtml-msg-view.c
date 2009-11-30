@@ -55,6 +55,7 @@
 #include <widgets/modest-ui-constants.h>
 #include <modest-icon-names.h>
 #include <tny-camel-bs-mime-part.h>
+#include <modest-runtime.h>
 
 /* FIXNE: we should have no maemo-deps in widgets/ */
 #ifndef MODEST_TOOLKIT_GTK
@@ -1775,7 +1776,8 @@ on_fetch_url (GtkWidget *widget, const gchar *uri,
 		}
 	} else if (TNY_IS_CAMEL_BS_MIME_PART (part) && 
 		   !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (part))){
-		if (!modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view))) {
+	  if (!modest_mime_part_view_get_view_images (MODEST_MIME_PART_VIEW (priv->body_view)) || 
+	      !tny_device_is_online (modest_runtime_get_device ())) {
 			priv->has_blocked_bs_images = TRUE;
 			tny_stream_close (stream);
 			return TRUE;
