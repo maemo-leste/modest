@@ -62,6 +62,8 @@
 #include <modest-platform.h>
 #include "modest-ui-actions.h"
 #include <widgets/modest-account-settings-dialog.h>
+#include <tny-camel-bs-msg-receive-strategy.h>
+#include <modest-tny-msg.h>
 
 #ifdef MODEST_PLATFORM_MAEMO
 #include <tny-maemo-conic-device.h>
@@ -866,6 +868,30 @@ volume_path_is_mounted (const gchar* path)
 	return result;
 }
 
+static void _bodies_filter (TnyMsg *msg, TnyList *list)
+{
+	TnyMimePart *html_part, *text_part;
+
+	html_part = modest_tny_msg_find_body_part (msg, TRUE);
+	text_part = modest_tny_msg_find_body_part (msg, FALSE);
+
+	if (text_part && TNY_IS_MIME_PART (text_part) && html_part == text_part) {
+		g_object_unref (text_part);
+		text_part = NULL;
+	}
+
+	if (html_part && TNY_IS_MIME_PART (html_part)) {
+		tny_list_prepend (list, G_OBJECT (html_part));
+		g_object_unref (html_part);
+	}
+
+	if (text_part && TNY_IS_MIME_PART (text_part)) {
+		tny_list_prepend (list, G_OBJECT (text_part));
+		g_object_unref (text_part);
+	}
+}
+
+
 ModestTnyAccountStore*
 modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 			      TnyDevice *device)
@@ -879,6 +905,9 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
+
+	tny_camel_bs_msg_receive_strategy_set_global_bodies_filter (
+		(TnyCamelBsMsgReceiveStrategyBodiesFilter) _bodies_filter);
 
 	obj  = G_OBJECT(g_object_new(MODEST_TYPE_TNY_ACCOUNT_STORE, NULL));
 	priv = MODEST_TNY_ACCOUNT_STORE_GET_PRIVATE(obj);
