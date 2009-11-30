@@ -77,6 +77,8 @@
 #include <tny-device.h>
 #include <tny-merge-folder.h>
 #include <widgets/modest-toolkit-utils.h>
+#include <tny-camel-bs-msg.h>
+#include <tny-camel-bs-mime-part.h>
 
 #include <gtkhtml/gtkhtml.h>
 
@@ -104,6 +106,7 @@ typedef struct _ReplyForwardHelper {
 	gchar *mailbox;
 	GtkWidget *parent_window;
 	TnyHeader *header;
+	TnyList *parts;
 } ReplyForwardHelper;
 
 typedef struct _MoveToHelper {
@@ -1489,7 +1492,8 @@ static ReplyForwardHelper*
 create_reply_forward_helper (ReplyForwardAction action,
 			     ModestWindow *win,
 			     guint reply_forward_type,
-			     TnyHeader *header)
+			     TnyHeader *header,
+			     TnyList *parts)
 {
 	ReplyForwardHelper *rf_helper = NULL;
 	const gchar *active_acc = modest_window_get_active_account (win);
@@ -1504,6 +1508,10 @@ create_reply_forward_helper (ReplyForwardAction action,
 		g_strdup (active_acc) :
 		modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
 	rf_helper->mailbox = g_strdup (active_mailbox);
+	if (parts)
+		rf_helper->parts = g_object_ref (parts);
+	else
+		rf_helper->parts = NULL;
 
 	/* Note that window could be destroyed just AFTER calling
 	   register_window so we must ensure that this pointer does
@@ -1525,6 +1533,8 @@ free_reply_forward_helper (gpointer data)
 	g_free (helper->mailbox);
 	if (helper->header)
 		g_object_unref (helper->header);
+	if (helper->parts)
+		g_object_unref (helper->parts);
 	if (helper->parent_window)
 		g_object_weak_unref (G_OBJECT (helper->parent_window),
 				     rf_helper_window_closed, helper);
@@ -1723,10 +1733,78 @@ reply_forward_performer (gboolean canceled,
 								 modest_ui_actions_disk_operations_error_handler,
 								 NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg (mail_op, rf_helper->header, TRUE, reply_forward_cb, rf_helper);
+	modest_mail_operation_get_msg_and_parts (mail_op, rf_helper->header, rf_helper->parts, TRUE, reply_forward_cb, rf_helper);
 
 	/* Frees */
 	g_object_unref(mail_op);
+}
+
+static gboolean
+all_parts_retrieved (TnyMimePart *part)
+{
+	if (!TNY_IS_CAMEL_BS_MIME_PART (part)) {
+		return TRUE;
+	} else {
+		TnyList *pending_parts;
+		TnyIterator *iterator;
+		gboolean all_retrieved = TRUE;
+
+		pending_parts = TNY_LIST (tny_simple_list_new ());
+		tny_mime_part_get_parts (part, pending_parts);
+		iterator = tny_list_create_iterator (pending_parts);
+		while (all_retrieved && !tny_iterator_is_done (iterator)) {
+			TnyMimePart *child;
+
+			child = TNY_MIME_PART (tny_iterator_get_current (iterator));
+
+			if (tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (child))) {
+				all_retrieved = all_parts_retrieved (TNY_MIME_PART (child));
+			} else {
+				all_retrieved = FALSE;
+			}
+
+			g_object_unref (child);
+			tny_iterator_next (iterator);
+		}
+		g_object_unref (iterator);
+		g_object_unref (pending_parts);
+		return all_retrieved;
+	}
+}
+
+static void
+forward_pending_parts_helper (TnyMimePart *part, TnyList *list)
+{
+	TnyList *parts;
+	TnyIterator *iterator;
+
+	if (!tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (part))) {
+		tny_list_append (list, G_OBJECT (part));
+	}
+	parts = TNY_LIST (tny_simple_list_new ());
+	tny_mime_part_get_parts (part, parts);
+	for (iterator = tny_list_create_iterator (parts); 
+	     !tny_iterator_is_done (iterator);
+	     tny_iterator_next (iterator)) {
+		TnyMimePart *child;
+
+		child = TNY_MIME_PART (tny_iterator_get_current (iterator));
+		forward_pending_parts_helper (child, list);
+		g_object_unref (child);
+	}
+	g_object_unref (iterator);
+	g_object_unref (parts);
+}
+
+static TnyList *
+forward_pending_parts (TnyMsg *msg)
+{
+	TnyList *result = TNY_LIST (tny_simple_list_new ());
+	if (TNY_IS_CAMEL_BS_MIME_PART (msg)) {
+		forward_pending_parts_helper (TNY_MIME_PART (msg), result);
+	}
+
+	return result;
 }
 
 /*
@@ -1767,13 +1845,55 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW(win));
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
 
-		if (msg && header) {
+		if (msg && header && (action != ACTION_FORWARD || all_parts_retrieved (TNY_MIME_PART (msg)))) {
 			/* Create helper */
 			rf_helper = create_reply_forward_helper (action, win,
-								 reply_forward_type, header);
+								 reply_forward_type, header, NULL);
 			reply_forward_cb (NULL, header, FALSE, msg, NULL, rf_helper);
 		} else {
-			g_warning("%s: no message or header found in viewer\n", __FUNCTION__);
+			gboolean do_download = TRUE;
+
+			if (msg && header && action == ACTION_FORWARD) {
+				/* Not all parts retrieved. Then we have to retrieve them all before
+				 * creating the forward message */
+				if (!tny_device_is_online (modest_runtime_get_device ())) {
+					gint response;
+
+					/* If ask for user permission to download the messages */
+					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+											    ngettext("mcen_nc_get_msg",
+												     "mcen_nc_get_msgs",
+												     1));
+
+					/* End if the user does not want to continue */
+					if (response == GTK_RESPONSE_CANCEL)
+						do_download = FALSE;
+				}
+
+				if (do_download) {
+					TnyList *pending_parts;
+					TnyFolder *folder;
+					TnyAccount *account;
+
+					/* Create helper */
+					pending_parts = forward_pending_parts (msg);
+					rf_helper = create_reply_forward_helper (action, win,
+										 reply_forward_type, header, pending_parts);
+					g_object_unref (pending_parts);
+
+					folder = tny_header_get_folder (header);
+					account = tny_folder_get_account (folder);
+					modest_platform_connect_and_perform (GTK_WINDOW (win),
+									     TRUE, account,
+									     reply_forward_performer,
+									     rf_helper);
+					g_object_unref (folder);
+					g_object_unref (account);
+				}
+
+			} else {
+				g_warning("%s: no message or header found in viewer\n", __FUNCTION__);
+			}
 		}
 
 		if (msg)
@@ -1841,7 +1961,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			if (download) {
 				/* Create helper */
 				rf_helper = create_reply_forward_helper (action, win,
-									 reply_forward_type, header);
+									 reply_forward_type, header, NULL);
 				if (uncached_msgs > 0) {
 					modest_platform_connect_and_perform (GTK_WINDOW (win),
 									     TRUE, account,
