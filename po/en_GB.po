@@ -797,11 +797,9 @@ msgstr "Formatted text"
 
 #: ../src/widgets/modest-folder-view.c:823
 msgid "mcen_va_new_message"
-msgstr "One new message"
-
-#: ../src/widgets/modest-folder-view.c:824
-msgid "mcen_va_new_messages"
-msgstr "%d new messages"
+msgid_plural "mcen_va_new_messages"
+msgstr[0] "One new message"
+msgstr[1] "%d new messages"
 
 #: ../src/widgets/modest-folder-view.c:823
 #, c-format
@@ -1278,7 +1276,7 @@ msgstr "(no messages to show)"
 #. Settings menu buttons
 #: ../src/widgets/modest-accounts-window.c:432
 msgid "mcen_me_new_account"
-msgstr "Accounts…"
+msgstr "New account"
 
 #: ../src/widgets/modest-accounts-window.c:435
 #: ../src/widgets/modest-folder-window.c:571
@@ -1290,8 +1288,8 @@ msgstr "Send & receive"
 #: ../src/widgets/modest-folder-window.c:592
 msgid "mcen_me_edit_account"
 msgid_plural "mcen_me_edit_accounts"
-msgstr[0] "Font…"
-msgstr[1] "Font…"
+msgstr[0] "Edit account…"
+msgstr[1] "Edit accounts…"
 
 #: ../src/widgets/modest-accounts-window.c:446
 msgid "mcen_me_inbox_globalsmtpservers"
