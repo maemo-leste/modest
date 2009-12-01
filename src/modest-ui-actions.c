@@ -5092,7 +5092,7 @@ modest_ui_actions_on_settings (GtkAction *action,
 	GtkWidget *dialog;
 
 	dialog = modest_platform_get_global_settings_dialog ();
-	gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (win));
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), modest_toolkit_utils_parent_window (GTK_WIDGET (win)));
 	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 	gtk_widget_show_all (dialog);
 
