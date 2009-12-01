@@ -85,8 +85,4 @@ GtkWidget *modest_toolkit_utils_create_group_box (const gchar *label, GtkWidget 
 
 gboolean   modest_toolkit_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs);
 
-GtkWindow *modest_toolkit_utils_parent_window (GtkWidget *window);
-
-
-
 #endif /*__MODEST_TOOLKIT_UTILS_H__*/

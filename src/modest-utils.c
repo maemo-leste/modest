@@ -683,7 +683,7 @@ modest_utils_run_sort_dialog (ModestWindow *parent_window,
 	GtkWidget *dialog = NULL;
 
 	/* Build dialog */
-	dialog = modest_platform_create_sort_dialog (modest_toolkit_utils_parent_window (GTK_WIDGET (parent_window)));
+	dialog = modest_platform_create_sort_dialog (gtk_widget_get_toplevel (GTK_WIDGET (parent_window)));
 	if (dialog == NULL)
 		return;
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),

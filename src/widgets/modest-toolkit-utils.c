@@ -438,20 +438,3 @@ modest_toolkit_utils_select_attachments (GtkWindow *window, TnyList *att_list, g
 	return FALSE;
 #endif
 }
-
-GtkWindow *
-modest_toolkit_utils_parent_window (GtkWidget *window)
-{
-#ifdef MODEST_TOOLKIT_GTK
-	if (MODEST_IS_WINDOW (window)) {
-		ModestWindowMgr *mgr;
-
-		mgr = modest_runtime_get_window_mgr ();
-		return GTK_WINDOW (modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (mgr)));
-	} else {
-		return GTK_WINDOW (window);
-	}
-#else
-	return GTK_WINDOW (window);
-#endif
-}

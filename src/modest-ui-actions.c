@@ -564,11 +564,14 @@ modest_ui_actions_on_accounts (GtkAction *action,
 		return;
 	} else {
 		/* Show the list of accounts */
-		GtkWindow *account_win = GTK_WINDOW (modest_account_view_window_new ());
+		GtkWindow *toplevel, *account_win;
+
+		account_win = GTK_WINDOW (modest_account_view_window_new ());
+		toplevel = GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (win)));
 
 		/* The accounts dialog must be modal */
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (account_win), (GtkWindow *) win);
-		modest_utils_show_dialog_and_forget (modest_toolkit_utils_parent_window (GTK_WIDGET (win)), GTK_DIALOG (account_win));
+		modest_utils_show_dialog_and_forget (toplevel, GTK_DIALOG (account_win));
 	}
 }
 
@@ -2901,7 +2904,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 			   full memory condition */
 			modest_platform_information_banner ((GtkWidget *) source_win, NULL,
 							    _("mail_in_ui_folder_create_error"));
-			do_create_folder (modest_toolkit_utils_parent_window (GTK_WIDGET (source_win)),
+			do_create_folder ((GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (source_win)),
 					  parent_folder, (const gchar *) suggested_name);
 		}
 
@@ -4133,8 +4136,9 @@ modest_ui_actions_on_details (GtkAction *action,
 		header_view = GTK_WIDGET (modest_header_window_get_header_view (MODEST_HEADER_WINDOW (win)));
 		folder = modest_header_view_get_folder (MODEST_HEADER_VIEW (header_view));
 		if (folder) {
-			modest_platform_run_folder_details_dialog (GTK_WINDOW (win),
-								   folder);
+			GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+
+			modest_platform_run_folder_details_dialog (toplevel, folder);
 			g_object_unref (folder);
 		}
 	}
@@ -5090,9 +5094,11 @@ modest_ui_actions_on_settings (GtkAction *action,
 			       ModestWindow *win)
 {
 	GtkWidget *dialog;
+	GtkWindow *toplevel;
 
 	dialog = modest_platform_get_global_settings_dialog ();
-	gtk_window_set_transient_for (GTK_WINDOW (dialog), modest_toolkit_utils_parent_window (GTK_WIDGET (win)));
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (win));
+	gtk_window_set_transient_for (GTK_WINDOW (dialog), toplevel);
 	gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 	gtk_widget_show_all (dialog);
 
