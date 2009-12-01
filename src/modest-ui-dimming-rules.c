@@ -567,14 +567,34 @@ modest_ui_dimming_rules_on_move_to (ModestWindow *win, gpointer user_data)
 static gboolean
 _forbid_outgoing_xfers (ModestWindow *window)
 {
-	const gchar *account_name;
-	TnyAccount *account;
+	const gchar *account_name = NULL;
+	TnyAccount *account = NULL;
 	gboolean dimmed = FALSE;
 
-	account_name = modest_window_get_active_account (window);
-	account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-							       account_name,
-							       TNY_ACCOUNT_TYPE_STORE);
+#ifdef MODEST_TOOLKIT_HILDON2
+	/* We cannot just get the active account because the active
+	   account of a header window that shows the headers of a
+	   local account is the ID of the remote account */
+	if (MODEST_IS_HEADER_WINDOW (window)) {
+		ModestHeaderView *header_view;
+		TnyFolder *folder;
+
+		header_view = modest_header_window_get_header_view ((ModestHeaderWindow *) window);
+		folder = modest_header_view_get_folder (header_view);
+
+		if (folder) {
+			account = modest_tny_folder_get_account (folder);
+			g_object_unref (folder);
+		}
+	}
+#endif
+
+	if (!account) {
+		account_name = modest_window_get_active_account (window);
+		account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
+								       account_name,
+								       TNY_ACCOUNT_TYPE_STORE);
+	}
 
 	if (account) {
 		ModestProtocolType protocol_type;
