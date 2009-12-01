@@ -212,9 +212,11 @@ modest_platform_show_uri_popup (const gchar *uri)
 GdkPixbuf*
 modest_platform_get_icon (const gchar *name, guint icon_size)
 {
-	g_warning ("Not implemented %s", __FUNCTION__);
-
-	return NULL;
+	return gtk_icon_theme_load_icon (gtk_icon_theme_get_default (),
+					 name,
+					 icon_size,
+					 0,
+					 NULL);
 }
 
 const gchar*
