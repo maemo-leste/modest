@@ -472,11 +472,6 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 		g_error_free (error);
 		error = NULL;
 	}
-	/* ****** */
-
-	/* Add accelerators */
-	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
 	
 	priv->is_search_result = FALSE;
 	priv->is_outbox = FALSE;

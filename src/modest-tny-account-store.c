@@ -875,6 +875,7 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 	TnyLockable *lockable;
 	GnomeVFSVolumeMonitor* monitor = NULL;
 	gboolean auto_update;
+	const gchar *mmc_path = NULL;
 
 	g_return_val_if_fail (account_mgr, NULL);
 	g_return_val_if_fail (device, NULL);
@@ -950,7 +951,8 @@ modest_tny_account_store_new (ModestAccountMgr *account_mgr,
 		add_connection_specific_transport_accounts (MODEST_TNY_ACCOUNT_STORE(obj));
 
 	/* This is a singleton, so it does not need to be unrefed. */
-	if (volume_path_is_mounted (g_getenv (MODEST_MMC1_VOLUMEPATH_ENV))) {
+	mmc_path = g_getenv (MODEST_MMC1_VOLUMEPATH_ENV);
+	if (mmc_path && volume_path_is_mounted (mmc_path)) {
 		/* It is mounted: */
 		add_mmc_account (MODEST_TNY_ACCOUNT_STORE (obj), FALSE /* don't emit the insert signal. */);
 	}

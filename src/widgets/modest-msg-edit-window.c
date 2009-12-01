@@ -892,10 +892,6 @@ init_window (ModestMsgEditWindow *obj)
 		g_clear_error (&error);
 	}
 
-	/* Add accelerators */
-	gtk_window_add_accel_group (GTK_WINDOW (obj), 
-				    gtk_ui_manager_get_accel_group (parent_priv->ui_manager));
-
 	parent_priv->menubar = NULL;
 
 	title_size_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);

@@ -124,7 +124,9 @@ struct _ModestFolderWindowPrivate {
 
 	GtkWidget *folder_view;
 	GtkWidget *top_vbox;
+#ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *new_message_button;
+#endif
 
 	/* signals */
 	GSList *sighandlers;
@@ -308,10 +310,12 @@ connect_signals (ModestFolderWindow *self)
 						       "activity-changed",
 						       G_CALLBACK (on_activity_changed), self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT (priv->new_message_button),
 						       "clicked",
 						       G_CALLBACK (modest_ui_actions_on_new_msg), self);
+#endif
 
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT (modest_runtime_get_account_store()),
@@ -332,7 +336,6 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	GtkWidget *scrollable;
 	guint accel_key;
 	GdkModifierType accel_mods;
-	GtkAccelGroup *accel_group;
 	GtkWidget *top_alignment;
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
@@ -447,11 +450,14 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 			  G_OBJECT (self));
 	update_progress_hint (self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
+	GtkAccelGroup *accel_group;
 	accel_group = gtk_accel_group_new ();
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
 				    accel_key, accel_mods, 0);
 	gtk_window_add_accel_group (GTK_WINDOW (self), accel_group);
+#endif
 
 	return MODEST_WINDOW(self);
 }
@@ -564,7 +570,7 @@ setup_menu (ModestFolderWindow *self)
 {
 	g_return_if_fail (MODEST_IS_FOLDER_WINDOW(self));
 
-	/* folders actions */
+	/* folders actions*/
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_new_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_new_folder),
 				   NULL);

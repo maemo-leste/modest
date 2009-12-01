@@ -3385,7 +3385,9 @@ modest_folder_view_get_activity (ModestFolderView *self)
 
 	g_return_val_if_fail (MODEST_IS_FOLDER_VIEW (self), FALSE);
 	priv = MODEST_FOLDER_VIEW_GET_PRIVATE (self);
-	g_return_val_if_fail (get_inner_models (self, NULL, NULL, &inner_model), FALSE);
+
+	if (!get_inner_models (self, NULL, NULL, &inner_model))
+		return FALSE;
 
 	if (TNY_IS_GTK_FOLDER_LIST_STORE (inner_model)) {
 		return tny_gtk_folder_list_store_get_activity (TNY_GTK_FOLDER_LIST_STORE (inner_model));

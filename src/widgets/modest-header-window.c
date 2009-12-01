@@ -393,13 +393,14 @@ connect_signals (ModestHeaderWindow *self)
 						       G_OBJECT (modest_runtime_get_window_mgr ()),
 						       "progress-list-changed",
 						       G_CALLBACK (on_progress_list_changed), self);
+
+#ifdef MODEST_TOOLKIT_HILDON2
 	priv->sighandlers =
 		modest_signal_mgr_connect (priv->sighandlers,
 					   G_OBJECT (priv->new_message_button),
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
-#ifdef MODEST_TOOLKIT_HILDON2
 	/* Delete using horizontal gesture */
 	/* DISABLED because it's unreliabile */
 	if (HILDON_IS_PANNABLE_AREA (priv->contents_view)) {

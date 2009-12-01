@@ -334,6 +334,7 @@ update_title (ModestShell *self)
 	GtkWidget *child;
 	GString *title_buffer;
 	GString *subtitle_buffer;
+	const gchar *tab_label_text;
 
 	priv = MODEST_SHELL_GET_PRIVATE (self);
 
@@ -347,7 +348,9 @@ update_title (ModestShell *self)
 	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), n_pages - 1);
 	title_buffer = g_string_new ("");
 	title_buffer = g_string_append (title_buffer, "<b>");
-	title_buffer = g_string_append (title_buffer, gtk_notebook_get_tab_label_text (GTK_NOTEBOOK (priv->notebook), child));
+	tab_label_text = gtk_notebook_get_tab_label_text (GTK_NOTEBOOK (priv->notebook), child);
+	if (tab_label_text)
+		title_buffer = g_string_append (title_buffer, tab_label_text);
 	title_buffer = g_string_append (title_buffer, "</b>");
 	gtk_label_set_markup (GTK_LABEL (priv->title_label), 
 			      title_buffer->str);
