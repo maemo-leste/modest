@@ -264,9 +264,6 @@ modest_header_window_init (ModestHeaderWindow *obj)
 	priv->y_coord = 0;
 	priv->notify_model = 0;
 
-	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
-					    GTK_WINDOW(obj),
-					    "applications_email_headerview");
 }
 
 static void

@@ -171,9 +171,6 @@ modest_accounts_window_instance_init (ModestAccountsWindow *obj)
 	priv->account_view = NULL;
 	priv->progress_hint = FALSE;
 	
-	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
-					    GTK_WINDOW(obj),
-					    "applications_email_accountsview");
 }
 
 static void

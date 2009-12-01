@@ -201,9 +201,6 @@ modest_folder_window_init (ModestFolderWindow *obj)
 
 	priv->top_vbox = NULL;
 
-	modest_window_mgr_register_help_id (modest_runtime_get_window_mgr(),
-					    GTK_WINDOW(obj),
-					    "applications_email_folderview");
 	priv->progress_hint = FALSE;
 	priv->current_store_account = NULL;
 	priv->queue_change_handler = 0;
