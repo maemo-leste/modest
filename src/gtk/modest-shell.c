@@ -105,6 +105,7 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_widget_show (priv->main_vbox);
 
 	priv->top_toolbar = gtk_toolbar_new ();
+	gtk_toolbar_set_style (GTK_TOOLBAR (priv->top_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 	gtk_widget_show (priv->top_toolbar);
 	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->top_toolbar, FALSE, FALSE, 0);
 
@@ -126,6 +127,7 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (priv->title_button), title_vbox);
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->title_button, -1);
 	gtk_container_child_set (GTK_CONTAINER (priv->top_toolbar), GTK_WIDGET (priv->title_button), "expand", TRUE, NULL);
+	g_object_set (priv->title_button, "is-important", TRUE, NULL);
 
 	priv->notebook = gtk_notebook_new ();
 	gtk_widget_show (priv->notebook);
