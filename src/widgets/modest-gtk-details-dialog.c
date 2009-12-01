@@ -156,4 +156,5 @@ modest_gtk_details_dialog_create_container_default (ModestDetailsDialog *self)
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), scrollable);
 
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE);
 }
