@@ -111,6 +111,7 @@ modest_shell_instance_init (ModestShell *obj)
 {
 	ModestShellPrivate *priv;
 	GtkWidget *title_vbox;
+	GtkWidget *title_arrow;
 	GtkWidget *new_message_icon;
 	GtkToolItem *separator_toolitem;
 	GtkWidget *top_hbox;
@@ -167,6 +168,9 @@ modest_shell_instance_init (ModestShell *obj)
 
 	priv->title_button = gtk_tool_button_new (NULL, NULL);
 	gtk_widget_show (GTK_WIDGET (priv->title_button));
+	title_arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_NONE);
+	gtk_widget_show (title_arrow);
+	gtk_tool_button_set_icon_widget (GTK_TOOL_BUTTON (priv->title_button), title_arrow);
 	gtk_tool_button_set_label_widget (GTK_TOOL_BUTTON (priv->title_button), title_vbox);
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->title_button, -1);
 	gtk_container_child_set (GTK_CONTAINER (priv->top_toolbar), GTK_WIDGET (priv->title_button), "expand", TRUE, NULL);
