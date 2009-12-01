@@ -34,6 +34,8 @@
 #include <tny-vfs-stream.h>
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-hildon2-window.h>
+#else
+#include <modest-shell-window.h>
 #endif
 #include <widgets/modest-window.h>
 
@@ -54,7 +56,7 @@ struct _ModestMsgEditWindow {
 #ifdef MODEST_TOOLKIT_HILDON2
 	ModestHildon2Window parent;
 #else
-	 ModestWindow parent;
+	ModestShellWindow parent;
 #endif
 	/* insert public members, if any */
 };
@@ -63,7 +65,7 @@ struct _ModestMsgEditWindowClass {
 #ifdef MODEST_TOOLKIT_HILDON2
 	ModestHildon2WindowClass parent_class;
 #else
-	ModestWindowClass parent_class;
+	ModestShellWindowClass parent_class;
 #endif
 	/* insert signal callback declarations, eg. */
 	/* void (* my_event) (ModestMsgEditWindow* obj); */

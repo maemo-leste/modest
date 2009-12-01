@@ -363,7 +363,7 @@ modest_msg_edit_window_get_type (void)
 #ifdef MODEST_TOOLKIT_HILDON2
 						  MODEST_TYPE_HILDON2_WINDOW,
 #else
-						  MODEST_TYPE_WINDOW,
+						  MODEST_TYPE_SHELL_WINDOW,
 #endif
 		                                  "ModestMsgEditWindow",
 		                                  &my_info, 0);

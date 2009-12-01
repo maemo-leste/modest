@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <modest-shell.h>
+#include <modest-shell-window.h>
 
 /* 'private'/'protected' functions */
 static void modest_shell_class_init (ModestShellClass *klass);
@@ -169,7 +170,7 @@ modest_shell_count_windows (ModestShell *shell)
 }
 
 void
-modest_shell_set_title (ModestShell *shell, ModestShellWindow *window, const gchar *title)
+modest_shell_set_title (ModestShell *shell, ModestWindow *window, const gchar *title)
 {
 	ModestShellPrivate *priv;
 
@@ -179,7 +180,7 @@ modest_shell_set_title (ModestShell *shell, ModestShellWindow *window, const gch
 }
 
 void
-modest_shell_show_progress (ModestShell *shell, ModestShellWindow *window, gboolean show)
+modest_shell_show_progress (ModestShell *shell, ModestWindow *window, gboolean show)
 {
 }
 

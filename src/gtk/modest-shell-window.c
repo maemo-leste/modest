@@ -45,8 +45,6 @@ static void modest_shell_window_dispose     (GObject *obj);
 static gboolean on_zoom_minus_plus_not_implemented (ModestWindow *window);
 static void modest_shell_window_show_progress (ModestWindow *window,
 						 gboolean show);
-static void setup_menu (ModestShellWindow *self);
-
 static void modest_shell_window_show_toolbar (ModestWindow *self,
 						 gboolean show_toolbar);
 static void modest_shell_window_add_toolbar (ModestWindow *self,
@@ -80,7 +78,7 @@ struct _ModestShellWindowPrivate {
 static GtkWindowClass *parent_class = NULL;
 
 /* uncomment the following if you have defined any signals */
-static guint signals[LAST_SIGNAL] = {0};
+/* static guint signals[LAST_SIGNAL] = {0}; */
 
 /************************************************************************/
 
@@ -114,7 +112,6 @@ modest_shell_window_class_init (gpointer klass, gpointer class_data)
 	GObjectClass *gobject_class;
 	gobject_class = (GObjectClass*) klass;
 	ModestWindowClass *modest_window_class = (ModestWindowClass *) klass;
-	HildonWindowClass *hildon_window_class = (HildonWindowClass *) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
 	gobject_class->dispose  = modest_shell_window_dispose;
@@ -194,7 +191,6 @@ modest_shell_window_add_item_to_menu (ModestWindow *self,
 					ModestDimmingCallback dimming_callback)
 {
 	ModestShellWindowPrivate *priv;
-	GtkWidget *menu;
 
 	g_return_if_fail (MODEST_IS_SHELL_WINDOW(self));
 	g_return_if_fail (GTK_IS_BUTTON (button));
@@ -226,7 +222,6 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 {
 	ModestShellWindowPrivate *priv = NULL;
 	GtkWidget *menu_item;
-	GtkWidget *menu;
 
 	g_return_if_fail (MODEST_IS_SHELL_WINDOW(self));
 	g_return_if_fail (label && label[0] != '\0');
@@ -235,7 +230,7 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
 
 	menu_item = gtk_menu_item_new_with_label (label);
-	g_signal_connect_after (G_OBJECT (button), "activate-item",
+	g_signal_connect_after (G_OBJECT (menu_item), "activate-item",
 				G_CALLBACK (callback), (gpointer) self);
 
 	if (accelerator != NULL) {
@@ -248,7 +243,7 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 	}
 
 	if (priv->menu) {
-		gtk_menu_shell_append (GTK_MENU (priv->menu), menu_item);
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), menu_item);
 	} else {
 		gtk_widget_destroy (menu_item);
 	}
@@ -264,9 +259,9 @@ modest_shell_window_show_toolbar (ModestWindow *self,
 
 static void
 modest_shell_window_add_toolbar (ModestWindow *self,
-				   GtkToolbar *toolbar)
+				 GtkToolbar *toolbar)
 {
-	gtk_box_pack_end (GTK_BOX (self), toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_end (GTK_BOX (self), GTK_WIDGET (toolbar), FALSE, FALSE, 0);
 }
 
 static void
@@ -285,6 +280,9 @@ static void
 modest_shell_window_show_progress (ModestWindow *self,
 				     gboolean show)
 {
+	ModestShellWindowPrivate *priv = NULL;
+
+	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
 	modest_shell_show_progress (MODEST_SHELL (priv->shell),
 				    self,
 				    show);

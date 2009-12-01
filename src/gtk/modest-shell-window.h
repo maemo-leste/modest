@@ -33,6 +33,7 @@
 #include <widgets/modest-window.h>
 #include <widgets/modest-account-view.h>
 #include <modest-dimming-rule.h>
+#include <modest-shell.h>
 
 G_BEGIN_DECLS
 

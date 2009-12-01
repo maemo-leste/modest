@@ -32,6 +32,8 @@
 
 #ifdef MODEST_TOOLKIT_HILDON2
 #include <modest-hildon2-window.h>
+#else
+#include <modest-shell-window.h>
 #endif
 #include <widgets/modest-window.h>
 #include <widgets/modest-folder-view.h>
@@ -62,7 +64,7 @@ struct _ModestMailboxesWindowClass {
 #ifdef MODEST_TOOLKIT_HILDON2
 	ModestHildon2WindowClass parent_class;
 #else
-	ModestWindowClass parent_class;
+	ModestShellWindowClass parent_class;
 #endif
 };
 

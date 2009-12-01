@@ -287,8 +287,8 @@ modest_msg_view_window_get_type (void)
 			(GInstanceInitFunc) modest_msg_view_window_init,
 			NULL
 		};
-#ifdef MODEST_TOOLKIT_GTK
-		my_type = g_type_register_static (MODEST_TYPE_WINDOW,
+#ifndef MODEST_TOOLKIT_HILDON2
+		my_type = g_type_register_static (MODEST_TYPE_SHELL_WINDOW,
 		                                  "ModestMsgViewWindow",
 		                                  &my_info, 0);
 #else

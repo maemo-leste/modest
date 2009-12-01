@@ -42,7 +42,8 @@ libmodest_ui_la_SOURCES= \
 	modest-icon-names.h \
 	modest-gtk-window-mgr.h modest-gtk-window-mgr.c \
 	modest-platform.c \
-	modest-shell.h modest-shell.c
+	modest-shell.h modest-shell.c \
+	modest-shell-window.h modest-shell-window.c
 
 libmodest_ui_la_LIBADD = \
 	$(MODEST_GSTUFF_LIBS) \
