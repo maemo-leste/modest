@@ -64,7 +64,7 @@
 #include <modest-count-stream.h>
 #include <modest-gtk-details-dialog.h>
 #include <math.h>
-
+#include "widgets/modest-toolkit-utils.h"
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"

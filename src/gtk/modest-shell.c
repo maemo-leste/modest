@@ -137,6 +137,8 @@ modest_shell_instance_init (ModestShell *obj)
 	g_signal_connect (G_OBJECT (priv->title_button), "clicked", G_CALLBACK (on_title_button_clicked), obj);
 
 	priv->notebook = gtk_notebook_new ();
+	gtk_notebook_set_show_tabs ((GtkNotebook *)priv->notebook, FALSE);
+	gtk_notebook_set_show_border ((GtkNotebook *)priv->notebook, FALSE);
 	gtk_widget_show (priv->notebook);
 	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->notebook, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (obj), priv->main_vbox);
@@ -303,7 +305,6 @@ on_title_button_clicked (GtkToolButton *button, ModestShell *self)
 {
 	ModestShellPrivate *priv;
 	gint n_pages;
-	gboolean delete_event_retval;
 	GtkWidget *child;
 	GtkWidget *menu;
 

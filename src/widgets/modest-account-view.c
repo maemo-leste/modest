@@ -689,6 +689,9 @@ modest_account_view_new (ModestAccountMgr *account_mgr)
 	init_view (MODEST_ACCOUNT_VIEW (obj));
 	update_account_view (account_mgr, MODEST_ACCOUNT_VIEW (obj));
 	
+	/* Hide headers by default */
+	gtk_tree_view_set_headers_visible ((GtkTreeView *)obj, FALSE);
+
 	return MODEST_ACCOUNT_VIEW (obj);
 }
 

@@ -1759,6 +1759,9 @@ modest_folder_view_new_full (TnyFolderStoreQuery *query, gboolean do_refresh)
 
 	g_signal_connect (self, "expose-event", G_CALLBACK (modest_folder_view_on_map), NULL);
 
+	/* Hide headers by default */
+	gtk_tree_view_set_headers_visible ((GtkTreeView *)self, FALSE);
+
  	return GTK_WIDGET(self);
 }
 
