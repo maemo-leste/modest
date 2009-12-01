@@ -590,7 +590,7 @@ msgstr "Close"
 #: ../src/widgets/modest-header-window.c:902
 #: ../src/widgets/modest-msg-view-window.c:3690
 msgid "mcen_me_new_message"
-msgstr "Message"
+msgstr "New message"
 
 #: ../src/widgets/modest-msg-edit-window-ui.h:60
 msgid "mcen_me_viewer_newemail"
@@ -1288,8 +1288,8 @@ msgstr "Send & receive"
 #: ../src/widgets/modest-folder-window.c:592
 msgid "mcen_me_edit_account"
 msgid_plural "mcen_me_edit_accounts"
-msgstr[0] "Edit account…"
-msgstr[1] "Edit accounts…"
+msgstr[0] "Edit account"
+msgstr[1] "Edit accounts"
 
 #: ../src/widgets/modest-accounts-window.c:446
 msgid "mcen_me_inbox_globalsmtpservers"
@@ -1687,12 +1687,12 @@ msgstr "Edit"
 #: ../src/widgets/modest-msg-view-window.c:3668
 msgid "mcen_me_move_message"
 msgid_plural "mcen_me_move_messages"
-msgstr[0] "Message"
-msgstr[1] "Message"
+msgstr[0] "Move message"
+msgstr[1] "Move messages"
 
 #: ../src/widgets/modest-header-window.c:921
 msgid "mcen_me_folder_details"
-msgstr "Drafts"
+msgstr "Folder details"
 
 #: ../src/widgets/modest-header-window.c:927
 msgid "mcen_va_more"
