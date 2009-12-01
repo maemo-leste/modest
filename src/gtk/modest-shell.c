@@ -43,6 +43,7 @@ static void update_title (ModestShell *self);
 static void on_back_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_title_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_new_msg_button_clicked (GtkToolButton *button, ModestShell *self);
+static void on_style_set (GtkWidget *widget, GtkStyle *old_style, ModestShell *shell);
 
 
 typedef struct _ModestShellPrivate ModestShellPrivate;
@@ -55,6 +56,11 @@ struct _ModestShellPrivate {
 	GtkToolItem *title_button;
 	GtkWidget *title_label;
 	GtkWidget *subtitle_label;
+
+	GtkWidget *progress_icon;
+	GdkPixbuf **progress_frames;
+	gint next_frame;
+	guint progress_timeout_id;
 };
 #define MODEST_SHELL_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 								      MODEST_TYPE_SHELL, \
@@ -107,16 +113,28 @@ modest_shell_instance_init (ModestShell *obj)
 	GtkWidget *title_vbox;
 	GtkWidget *new_message_icon;
 	GtkToolItem *separator_toolitem;
+	GtkWidget *top_hbox;
 
 	priv = MODEST_SHELL_GET_PRIVATE(obj);
+	priv->progress_frames = g_malloc0 (sizeof(GdkPixbuf *)*31);
+	priv->progress_timeout_id = 0;
+	priv->next_frame = 0;
 
 	priv->main_vbox = gtk_vbox_new (FALSE, 0);
 	gtk_widget_show (priv->main_vbox);
 
+	top_hbox = gtk_hbox_new (FALSE, 0);
+	gtk_widget_show (top_hbox);
+	gtk_box_pack_start (GTK_BOX (priv->main_vbox), top_hbox, FALSE, FALSE, 0);
+
 	priv->top_toolbar = gtk_toolbar_new ();
 	gtk_toolbar_set_style (GTK_TOOLBAR (priv->top_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
 	gtk_widget_show (priv->top_toolbar);
-	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->top_toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (top_hbox), priv->top_toolbar, TRUE, TRUE, 0);
+
+	priv->progress_icon = gtk_image_new ();
+	gtk_widget_show (priv->progress_icon);
+	gtk_box_pack_start (GTK_BOX (top_hbox), priv->progress_icon, FALSE, FALSE, 0);
 
 	new_message_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_NEW_MAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
 	gtk_widget_show (new_message_icon);
@@ -162,11 +180,27 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->notebook, TRUE, TRUE, 0);
 	gtk_container_add (GTK_CONTAINER (obj), priv->main_vbox);
 
+	g_signal_connect (G_OBJECT (obj), "style-set", G_CALLBACK (on_style_set), obj);
 }
 
 static void
 modest_shell_finalize (GObject *obj)
 {
+	ModestShellPrivate *priv;
+	int n;
+
+	priv = MODEST_SHELL_GET_PRIVATE (obj);
+
+	if (priv->progress_timeout_id) {
+		g_source_remove (priv->progress_timeout_id);
+	}
+	for (n = 0; n < 31; n++) {
+		if (priv->progress_frames[n]) {
+			g_object_unref (priv->progress_frames[n]);
+		}
+	}
+	g_free (priv->progress_frames);
+
 	G_OBJECT_CLASS(parent_class)->finalize (obj);
 }
 
@@ -249,9 +283,47 @@ modest_shell_set_title (ModestShell *shell, ModestWindow *window, const gchar *t
 	update_title (shell);
 }
 
+static void
+show_next_frame (ModestShell *shell)
+{
+	ModestShellPrivate *priv;
+
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+
+	gtk_image_set_from_pixbuf (GTK_IMAGE (priv->progress_icon), priv->progress_frames[priv->next_frame]);
+
+	priv->next_frame++;
+	if (priv->next_frame >= 31)
+		priv->next_frame = 0;
+}
+
+static gboolean
+on_progress_timeout (ModestShell *shell)
+{
+	show_next_frame (shell);
+	return TRUE;
+}
+
 void
 modest_shell_show_progress (ModestShell *shell, ModestWindow *window, gboolean show)
 {
+	ModestShellPrivate *priv;
+
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+
+	if (show) {
+		if (priv->progress_timeout_id == 0) {
+			priv->progress_timeout_id = g_timeout_add (100, (GSourceFunc) on_progress_timeout, shell);
+			show_next_frame (shell);
+		}
+		gtk_widget_show (priv->progress_icon);
+	} else {
+		if (priv->progress_timeout_id) {
+			g_source_remove (priv->progress_timeout_id);
+			priv->progress_timeout_id = 0;
+		}
+		gtk_widget_hide (priv->progress_icon);
+	}
 }
 
 static void
@@ -382,4 +454,54 @@ on_new_msg_button_clicked (GtkToolButton *button, ModestShell *self)
 	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), -1);
 
 	modest_ui_actions_on_new_msg (NULL, MODEST_WINDOW (child));
+}
+
+static void
+on_style_set (GtkWidget *widget,
+	      GtkStyle *old_style,
+	      ModestShell *self)
+{
+	ModestShellPrivate *priv;
+	gint icon_w, icon_h;
+	GdkPixbuf *progress_pixbuf;
+	int n;
+
+	priv = MODEST_SHELL_GET_PRIVATE (self);
+
+	if (!gtk_icon_size_lookup (GTK_ICON_SIZE_LARGE_TOOLBAR, &icon_w, &icon_h))
+		return;
+	progress_pixbuf = gtk_icon_theme_load_icon (gtk_icon_theme_get_default (), "process-working", icon_w, 0, NULL);
+
+	for (n = 0; n < 31; n++) {
+		if (priv->progress_frames[n] != NULL) {
+			g_object_unref (priv->progress_frames[n]);
+		}
+		priv->progress_frames[n] = NULL;
+	}
+
+	if (progress_pixbuf) {
+		gint max_x, max_y;
+		gint i, j;
+
+		icon_w = gdk_pixbuf_get_width (progress_pixbuf) / 8;
+
+		n = 0;
+		max_x = 8;
+		max_y = 4;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 8; j++) {
+					GdkPixbuf *frame;
+
+					if ((i == 0) && (j == 0))
+						continue;
+					frame = gdk_pixbuf_new_subpixbuf  (progress_pixbuf,
+									   j*icon_w, i*icon_w,
+									   icon_w, icon_w);
+					priv->progress_frames[n] = frame;
+					n++;
+				}
+			}
+		g_object_unref (progress_pixbuf);
+	}
+
 }
