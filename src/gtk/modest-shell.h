@@ -32,7 +32,7 @@
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <modest-window.h>
+#include <widgets/modest-window.h>
 
 G_BEGIN_DECLS
 
