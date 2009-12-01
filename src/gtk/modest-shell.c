@@ -115,7 +115,9 @@ modest_shell_instance_init (ModestShell *obj)
 
 	title_vbox = gtk_vbox_new (FALSE, 0);
 	priv->title_label = gtk_label_new (NULL);
+	gtk_misc_set_alignment (GTK_MISC (priv->title_label), 0.0, 1.0);
 	priv->subtitle_label = gtk_label_new (NULL);
+	gtk_misc_set_alignment (GTK_MISC (priv->subtitle_label), 0.0, 0.0);
 	gtk_widget_show (priv->title_label);
 	gtk_widget_show (priv->subtitle_label);
 	gtk_box_pack_start (GTK_BOX (title_vbox), priv->title_label, TRUE, TRUE, 0);
@@ -247,13 +249,14 @@ update_title (ModestShell *self)
 
 	subtitle_buffer = g_string_new ("");
 	for (i = 0; i < n_pages - 1; i++) {
+	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), i);
 		if (i != 0) {
 			subtitle_buffer = g_string_append (subtitle_buffer, " / ");
 		}
 		subtitle_buffer = g_string_append (subtitle_buffer,
 						   gtk_notebook_get_tab_label_text (GTK_NOTEBOOK (priv->notebook), child));
 	}
-	gtk_label_set_text (GTK_LABEL (priv->title_label), 
+	gtk_label_set_text (GTK_LABEL (priv->subtitle_label), 
 			    subtitle_buffer->str);
 	g_string_free (subtitle_buffer, TRUE);
 }
