@@ -157,8 +157,10 @@ modest_shell_instance_init (ModestShell *obj)
 
 	title_vbox = gtk_vbox_new (FALSE, 0);
 	priv->title_label = gtk_label_new (NULL);
+	gtk_label_set_ellipsize (GTK_LABEL (priv->title_label), PANGO_ELLIPSIZE_END);
 	gtk_misc_set_alignment (GTK_MISC (priv->title_label), 0.0, 1.0);
 	priv->subtitle_label = gtk_label_new (NULL);
+	gtk_label_set_ellipsize (GTK_LABEL (priv->subtitle_label), PANGO_ELLIPSIZE_START);
 	gtk_misc_set_alignment (GTK_MISC (priv->subtitle_label), 0.0, 0.0);
 	gtk_widget_show (priv->title_label);
 	gtk_widget_show (priv->subtitle_label);
