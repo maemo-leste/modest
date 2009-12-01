@@ -76,6 +76,8 @@ ModestWindowMgr*    modest_gtk_window_mgr_new  (void);
 void modest_gtk_window_mgr_set_account_store   (ModestGtkWindowMgr *self,
 						TnyAccountStore *acc_store);
 
+GtkWidget *modest_gtk_window_mgr_get_shell (ModestGtkWindowMgr *self);
+
 
 G_END_DECLS
 

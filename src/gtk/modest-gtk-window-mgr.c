@@ -839,7 +839,7 @@ modest_gtk_window_mgr_set_modal (ModestWindowMgr *self,
 	if (GTK_IS_WINDOW (parent)) {
 		gtk_window_set_transient_for (window, parent);
 	} else {
-		gtk_window_set_transient_for (window, priv->shell);
+		gtk_window_set_transient_for (window, GTK_WINDOW (priv->shell));
 	}
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
@@ -1024,4 +1024,14 @@ modest_gtk_window_mgr_close_all_but_initial (ModestWindowMgr *self)
 	}
 
 	return TRUE;
+}
+
+GtkWidget *
+modest_gtk_window_mgr_get_shell (ModestGtkWindowMgr *self)
+{
+	ModestGtkWindowMgrPrivate *priv;
+
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE(self);
+
+	return priv->shell;
 }

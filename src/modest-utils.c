@@ -53,6 +53,9 @@
 #include "modest-widget-memory.h"
 #include "widgets/modest-sort-criterium-view.h"
 #include "widgets/modest-header-window.h"
+#ifdef MODEST_TOOLKIT_GTK
+#include <modest-gtk-window-mgr.h>
+#endif
 #include <langinfo.h>
 
 GQuark
@@ -417,13 +420,26 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 }
 
 void
-modest_utils_show_dialog_and_forget (GtkWindow *parent_window,
+modest_utils_show_dialog_and_forget (GtkWidget *parent_window,
 				     GtkDialog *dialog)
 {
-	g_return_if_fail (GTK_IS_WINDOW(parent_window));
 	g_return_if_fail (GTK_IS_DIALOG(dialog));
 
+#ifdef MODEST_TOOLKIT_GTK
+	if (GTK_IS_WINDOW (parent_window)) {
+		gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
+	} else {
+		ModestWindowMgr *window_mgr;
+		GtkWidget *shell;
+
+		window_mgr = modest_runtime_get_window_mgr ();
+		shell  = modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (window_mgr));
+		gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (shell));
+	}
+#else
+	g_return_if_fail (GTK_IS_WINDOW(parent_window));
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
+#endif
 
 	/* Destroy the dialog when it is closed: */
 	g_signal_connect_swapped (dialog,

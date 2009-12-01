@@ -568,7 +568,7 @@ modest_ui_actions_on_accounts (GtkAction *action,
 
 		/* The accounts dialog must be modal */
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (account_win), (GtkWindow *) win);
-		modest_utils_show_dialog_and_forget (GTK_WINDOW (win), GTK_DIALOG (account_win));
+		modest_utils_show_dialog_and_forget (GTK_WIDGET (win), GTK_DIALOG (account_win));
 	}
 }
 
