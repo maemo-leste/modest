@@ -4198,6 +4198,7 @@ typedef struct _MessageSettingsHelper {
 	GtkToggleButton *current_format;
 } MessageSettingsHelper;
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_priority_toggle (GtkToggleButton *button, 
 		    MessageSettingsHelper *helper)
@@ -4266,6 +4267,7 @@ on_format_toggle (GtkToggleButton *button,
 	}
 
 }
+#endif
 
 static void
 modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
@@ -4417,6 +4419,7 @@ on_message_settings (GtkAction *action,
 	modest_msg_edit_window_show_msg_settings_dialog (window);
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_cc_button_toggled (GtkWidget *button,
 		      ModestMsgEditWindow *window)
@@ -4436,8 +4439,9 @@ on_bcc_button_toggled (GtkWidget *button,
 	modest_msg_edit_window_show_bcc (MODEST_MSG_EDIT_WINDOW (window),
 					modest_togglable_get_active (button));
 }
+#endif
 
-static void 
+static void
 setup_menu (ModestMsgEditWindow *self)
 {
 	ModestMsgEditWindowPrivate *priv = NULL;

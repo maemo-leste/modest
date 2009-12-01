@@ -2884,36 +2884,6 @@ modest_folder_view_get_account_id_of_visible_server_account (ModestFolderView *s
 	return (const gchar *) priv->visible_account_id;
 }
 
-static gboolean
-find_inbox_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *inbox_iter)
-{
-	do {
-		GtkTreeIter child;
-		TnyFolderType type = TNY_FOLDER_TYPE_UNKNOWN;
-
-		gtk_tree_model_get (model, iter,
-				    TYPE_COLUMN,
-				    &type, -1);
-
-		gboolean result = FALSE;
-		if (type == TNY_FOLDER_TYPE_INBOX) {
-			result = TRUE;
-		}
-		if (result) {
-			*inbox_iter = *iter;
-			return TRUE;
-		}
-
-		if (gtk_tree_model_iter_children (model, &child, iter))	{
-			if (find_inbox_iter (model, &child, inbox_iter))
-				return TRUE;
-		}
-
-	} while (gtk_tree_model_iter_next (model, iter));
-
-	return FALSE;
-}
-
 /* recursive */
 static gboolean
 find_folder_iter (GtkTreeModel *model, GtkTreeIter *iter, GtkTreeIter *folder_iter,

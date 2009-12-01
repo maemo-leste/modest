@@ -247,8 +247,8 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	gint *id;
 
 	/* Get values from UI */
-	state->notifications = modest_togglable_get_active (HILDON_CHECK_BUTTON (priv->notifications));
-	state->add_to_contacts = modest_togglabale_get_active (HILDON_CHECK_BUTTON (priv->add_to_contacts));
+	state->notifications = modest_togglable_get_active (priv->notifications);
+	state->add_to_contacts = modest_togglable_get_active (priv->add_to_contacts);
 	state->auto_update = modest_togglable_get_active (priv->auto_update);
 	id = modest_selector_get_active_id (priv->connect_via);
 	state->default_account = modest_selector_get_active_id (priv->default_account_selector);

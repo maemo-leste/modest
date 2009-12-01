@@ -330,10 +330,12 @@ modest_toolkit_utils_create_group_box (const gchar *label_text, GtkWidget *conte
 	return box;
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean match_all (TnyList *list, GObject *item, gpointer match_data)
 {
 	return TRUE;
 }
+#endif
 
 gboolean
 modest_toolkit_utils_select_attachments (GtkWindow *window, TnyList *att_list, gboolean include_msgs)

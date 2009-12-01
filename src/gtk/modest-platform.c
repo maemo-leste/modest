@@ -76,12 +76,6 @@
 #define FOLDER_PICKER_CURRENT_FOLDER "current-folder"
 #define FOLDER_PICKER_ORIGINAL_ACCOUNT "original-account"
 
-static gboolean ca_con_opened = FALSE;
-
-
-static void modest_platform_play_email_tone (void);
-
-
 static void	
 on_modest_conf_update_interval_changed (ModestConf* self, 
 					const gchar *key, 
@@ -999,52 +993,6 @@ typedef struct _ConnectAndWaitData {
 } ConnectAndWaitData;
 
 
-static void
-quit_wait_loop (TnyAccount *account,
-		ConnectAndWaitData *data) 
-{
-	/* Set the has_callback to TRUE (means that the callback was
-	   executed and wake up every code waiting for cond to be
-	   TRUE */
-	g_mutex_lock (data->mutex);
-	data->has_callback = TRUE;
-	if (data->wait_loop)
-		g_main_loop_quit (data->wait_loop);
-	g_mutex_unlock (data->mutex);
-}
-
-static void
-on_connection_status_changed (TnyAccount *account, 
-			      TnyConnectionStatus status,
-			      gpointer user_data)
-{
-	TnyConnectionStatus conn_status;
-	ConnectAndWaitData *data;
-			
-	/* Ignore if reconnecting or disconnected */
-	conn_status = tny_account_get_connection_status (account);
-	if (conn_status == TNY_CONNECTION_STATUS_RECONNECTING ||
-	    conn_status == TNY_CONNECTION_STATUS_DISCONNECTED)
-		return;
-
-	/* Remove the handler */
-	data = (ConnectAndWaitData *) user_data;
-	g_signal_handler_disconnect (account, data->handler);
-
-	/* Quit from wait loop */
-	quit_wait_loop (account, (ConnectAndWaitData *) user_data);
-}
-
-static void
-on_tny_camel_account_set_online_cb (TnyCamelAccount *account, 
-				    gboolean canceled, 
-				    GError *err, 
-				    gpointer user_data)
-{
-	/* Quit from wait loop */
-	quit_wait_loop (TNY_ACCOUNT (account), (ConnectAndWaitData *) user_data);
-}
-
 gboolean 
 modest_platform_connect_and_wait (GtkWindow *parent_window, 
 				  TnyAccount *account)
@@ -1482,7 +1430,6 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  	gboolean device_online;
  	TnyDevice *device;
  	TnyConnectionStatus conn_status;
- 	OnWentOnlineInfo *info;
  	
  	device = modest_runtime_get_device();
  	device_online = tny_device_is_online (device);
@@ -1514,28 +1461,40 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  	
  	conn_status = tny_account_get_connection_status (account);
  	if (device_online && conn_status == TNY_CONNECTION_STATUS_CONNECTED) {
- 
+
  		/* We promise to instantly perform the callback, so ... */
  		if (callback) {
  			callback (FALSE, NULL, parent_window, account, user_data);
  		}
- 		
+
  		return;
  	}
- 	
- 	if (device_online) {
- 	} else {
- 		
+
+ 	if (!device_online) {
+		OnWentOnlineInfo *info = NULL;
+
+		info = g_slice_new0 (OnWentOnlineInfo);
+
+		info->device = NULL;
+		info->iap = NULL;
+		info->account = TNY_ACCOUNT (g_object_ref (account));
+
+		if (parent_window)
+			info->parent_window = (GtkWindow *) g_object_ref (parent_window);
+		else
+			info->parent_window = NULL;
+
+		/* So we'll put the callback away for later ... */
+		info->user_data = user_data;
+		info->callback = callback;
+
  		/* If the device is online, we'll just connect the account */
- 		
- 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE, 
+ 		tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (account), TRUE,
 					      on_account_went_online, info);
  	}
- 
+
  	/* The info gets freed by on_account_went_online or on_conic_device_went_online
  	 * in both situations, go look if you don't believe me! */
- 	
- 	return;
 }
 
 void
@@ -1772,12 +1731,6 @@ modest_platform_run_header_details_dialog (GtkWindow *parent_window,
 	g_signal_connect_swapped (dialog, "response", 
 				  G_CALLBACK (gtk_widget_destroy),
 				  dialog);
-}
-
-static void
-modest_platform_play_email_tone (void)
-{
-	return;
 }
 
 #define MOVE_TO_DIALOG_FOLDER_VIEW "folder-view"

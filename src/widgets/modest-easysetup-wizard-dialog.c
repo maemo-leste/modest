@@ -2703,6 +2703,7 @@ check_support_callback (ModestAccountProtocol *protocol,
 	g_object_unref (self);
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_check_support_cancel (GtkDialog *cancel_note,
 			 gint response,
@@ -2744,6 +2745,7 @@ on_check_support_cancel (GtkDialog *cancel_note,
 	priv->check_support_cancel_note = NULL;
 	priv->check_support_progress = NULL;
 }
+#endif
 
 static void
 check_support_of_protocols (ModestEasysetupWizardDialog *self)

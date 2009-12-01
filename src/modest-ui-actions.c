@@ -147,15 +147,6 @@ static void     reply_forward_cb       (ModestMailOperation *mail_op,
 
 static void     reply_forward          (ReplyForwardAction action, ModestWindow *win);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-static void     folder_refreshed_cb    (ModestMailOperation *mail_op,
-					TnyFolder *folder,
-					gpointer user_data);
-
-static void     on_send_receive_finished (ModestMailOperation  *mail_op,
-					  gpointer user_data);
-#endif
-
 static gint header_list_count_uncached_msgs (TnyList *header_list);
 
 static gboolean connect_to_get_msg (ModestWindow *win,
@@ -320,37 +311,6 @@ get_selected_headers (ModestWindow *win)
 		return NULL;
 	}
 }
-
-#ifndef MODEST_TOOLKIT_HILDON2
-static GtkTreeRowReference *
-get_next_after_selected_headers (ModestHeaderView *header_view)
-{
-	GtkTreeSelection *sel;
-	GList *selected_rows, *node;
-	GtkTreePath *path;
-	GtkTreeRowReference *result;
-	GtkTreeModel *model;
-
-	model = gtk_tree_view_get_model (GTK_TREE_VIEW (header_view));
-	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (header_view));
-	selected_rows = gtk_tree_selection_get_selected_rows (sel, NULL);
-
-	if (selected_rows == NULL)
-		return NULL;
-
-	node = g_list_last (selected_rows);
-	path = gtk_tree_path_copy ((GtkTreePath *) node->data);
-	gtk_tree_path_next (path);
-
-	result = gtk_tree_row_reference_new (model, path);
-
-	gtk_tree_path_free (path);
-	g_list_foreach (selected_rows, (GFunc) gtk_tree_path_free, NULL);
-	g_list_free (selected_rows);
-
-	return result;
-}
-#endif
 
 static void
 headers_action_mark_as_read (TnyHeader *header,

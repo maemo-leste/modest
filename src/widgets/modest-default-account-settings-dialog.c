@@ -194,11 +194,13 @@ set_modified (ModestDefaultAccountSettingsDialog *self, gboolean modified)
 	priv->modified = modified;
 }
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_modified_picker_changed (GtkWidget *widget, gpointer user_data)
 {
 	set_modified (MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG (user_data), TRUE);
 }
+#endif
 
 static void
 on_modified_entry_changed (GtkEditable *editable, gpointer user_data)

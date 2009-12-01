@@ -128,36 +128,6 @@ modest_account_view_window_finalize (GObject *self)
 }
 
 static void
-on_account_settings_dialog_response (GtkDialog *dialog,
-				     gint response,
-				     gpointer user_data)
-{
-	TnyAccount *store_account = NULL;
-	gchar* account_name = NULL;
-	ModestAccountViewWindowPrivate *priv = NULL;
-
-	priv = MODEST_ACCOUNT_VIEW_WINDOW_GET_PRIVATE (user_data);
-	account_name = modest_account_view_get_selected_account (priv->account_view);
-	store_account = modest_tny_account_store_get_server_account (modest_runtime_get_account_store (),
-								     account_name,
-								     TNY_ACCOUNT_TYPE_STORE);
-        if (store_account) {
-		/* Reconnect the store account, no need to reconnect the
-		   transport account because it will connect when needed */
-		if (tny_account_get_connection_status (store_account) ==
-		    TNY_CONNECTION_STATUS_DISCONNECTED)
-			tny_camel_account_set_online (TNY_CAMEL_ACCOUNT (store_account),
-						      TRUE, NULL, NULL);
-		g_object_unref (store_account);
-	}
-	/* Disconnect this handler */
-	g_signal_handlers_disconnect_by_func (dialog, on_account_settings_dialog_response, user_data);
-
-	/* Free */
-	g_free (account_name);
-}
-
-static void
 on_account_activated (GtkTreeView *account_view,
 		      GtkTreePath *path,
 		      GtkTreeViewColumn *column,

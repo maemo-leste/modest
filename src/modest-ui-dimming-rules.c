@@ -1224,7 +1224,7 @@ modest_ui_dimming_rules_on_send_receive_all (ModestWindow *win, gpointer user_da
 gboolean
 modest_ui_dimming_rules_on_add_to_contacts (ModestWindow *win, gpointer user_data)
 {
-	GSList *recipients;
+	GSList *recipients = NULL;
 	gboolean has_recipients_to_add;
 
  	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
