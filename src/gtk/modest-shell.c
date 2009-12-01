@@ -106,6 +106,7 @@ modest_shell_instance_init (ModestShell *obj)
 	ModestShellPrivate *priv;
 	GtkWidget *title_vbox;
 	GtkWidget *new_message_icon;
+	GtkToolItem *separator_toolitem;
 
 	priv = MODEST_SHELL_GET_PRIVATE(obj);
 
@@ -130,6 +131,10 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->back_button, -1);
 	gtk_widget_show (GTK_WIDGET (priv->back_button));
 	g_signal_connect (G_OBJECT (priv->back_button), "clicked", G_CALLBACK (on_back_button_clicked), obj);
+
+	separator_toolitem = gtk_separator_tool_item_new ();
+	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), separator_toolitem, -1);
+	gtk_widget_show (GTK_WIDGET (separator_toolitem));
 
 	title_vbox = gtk_vbox_new (FALSE, 0);
 	priv->title_label = gtk_label_new (NULL);
