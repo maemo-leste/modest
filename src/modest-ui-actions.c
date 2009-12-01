@@ -568,7 +568,7 @@ modest_ui_actions_on_accounts (GtkAction *action,
 
 		/* The accounts dialog must be modal */
 		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (account_win), (GtkWindow *) win);
-		modest_utils_show_dialog_and_forget (GTK_WIDGET (win), GTK_DIALOG (account_win));
+		modest_utils_show_dialog_and_forget (modest_toolkit_utils_parent_window (GTK_WIDGET (win)), GTK_DIALOG (account_win));
 	}
 }
 
@@ -1931,7 +1931,7 @@ modest_ui_actions_on_sort (GtkAction *action,
 	}
 
 	/* Show sorting dialog */
-	modest_utils_run_sort_dialog (GTK_WINDOW (window), MODEST_SORT_HEADERS);
+	modest_utils_run_sort_dialog (MODEST_WINDOW (window), MODEST_SORT_HEADERS);
 }
 
 static void
@@ -2901,7 +2901,8 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 			   full memory condition */
 			modest_platform_information_banner ((GtkWidget *) source_win, NULL,
 							    _("mail_in_ui_folder_create_error"));
-			do_create_folder (source_win, parent_folder, (const gchar *) suggested_name);
+			do_create_folder (modest_toolkit_utils_parent_window (GTK_WIDGET (source_win)),
+					  parent_folder, (const gchar *) suggested_name);
 		}
 
 	} else {
@@ -3000,7 +3001,7 @@ do_create_folder (GtkWindow *parent_window,
 		helper->folder_name = g_strdup (folder_name);
 		helper->parent = g_object_ref (parent_folder);
 
-		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (parent_window),
+		modest_platform_connect_if_remote_and_perform (parent_window,
 							       TRUE,
 							       parent_folder,
 							       do_create_folder_performer,
@@ -3014,7 +3015,7 @@ do_create_folder (GtkWindow *parent_window,
 }
 
 static void
-modest_ui_actions_create_folder(GtkWidget *parent_window,
+modest_ui_actions_create_folder(GtkWindow *parent_window,
                                 GtkWidget *folder_view,
 				TnyFolderStore *parent_folder)
 {
@@ -3198,7 +3199,7 @@ modest_ui_actions_on_edit_mode_rename_folder (ModestWindow *window)
 
 		current_name = tny_folder_get_name (TNY_FOLDER (folder));
 		parent = tny_folder_get_folder_store (TNY_FOLDER (folder));
-		response = modest_platform_run_rename_folder_dialog (GTK_WINDOW (window),
+		response = modest_platform_run_rename_folder_dialog (MODEST_WINDOW (window),
 								     parent, current_name,
 								     &folder_name);
 		g_object_unref (parent);

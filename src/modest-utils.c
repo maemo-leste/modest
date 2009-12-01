@@ -420,26 +420,13 @@ modest_utils_get_supported_secure_authentication_methods (ModestProtocolType pro
 }
 
 void
-modest_utils_show_dialog_and_forget (GtkWidget *parent_window,
+modest_utils_show_dialog_and_forget (GtkWindow *parent_window,
 				     GtkDialog *dialog)
 {
 	g_return_if_fail (GTK_IS_DIALOG(dialog));
 
-#ifdef MODEST_TOOLKIT_GTK
-	if (GTK_IS_WINDOW (parent_window)) {
-		gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
-	} else {
-		ModestWindowMgr *window_mgr;
-		GtkWidget *shell;
-
-		window_mgr = modest_runtime_get_window_mgr ();
-		shell  = modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (window_mgr));
-		gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (shell));
-	}
-#else
 	g_return_if_fail (GTK_IS_WINDOW(parent_window));
 	gtk_window_set_transient_for (GTK_WINDOW (dialog), parent_window);
-#endif
 
 	/* Destroy the dialog when it is closed: */
 	g_signal_connect_swapped (dialog,
@@ -550,7 +537,7 @@ checked_modest_sort_criterium_view_add_sort_key (ModestSortCriteriumView *view, 
 }
 
 static void
-launch_sort_headers_dialog (GtkWindow *parent_window,
+launch_sort_headers_dialog (ModestWindow *parent_window,
 			    GtkDialog *dialog)
 {
 	ModestHeaderView *header_view = NULL;
@@ -690,13 +677,13 @@ launch_sort_headers_dialog (GtkWindow *parent_window,
 }
 
 void
-modest_utils_run_sort_dialog (GtkWindow *parent_window,
+modest_utils_run_sort_dialog (ModestWindow *parent_window,
 			      ModestSortDialogType type)
 {
 	GtkWidget *dialog = NULL;
 
 	/* Build dialog */
-	dialog = modest_platform_create_sort_dialog (parent_window);
+	dialog = modest_platform_create_sort_dialog (modest_toolkit_utils_parent_window (GTK_WIDGET (parent_window)));
 	if (dialog == NULL)
 		return;
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),

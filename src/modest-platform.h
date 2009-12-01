@@ -182,7 +182,7 @@ gint      modest_platform_run_new_folder_dialog        (GtkWindow *parent_window
  * 
  * Returns: the #GtkResponseType returned by the dialog
  **/
-gint      modest_platform_run_rename_folder_dialog        (GtkWindow *parent_window,
+gint      modest_platform_run_rename_folder_dialog        (ModestWindow *parent_window,
 							   TnyFolderStore *parent,
 							   const gchar *current_name,
 							   gchar **folder_name);

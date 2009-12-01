@@ -36,6 +36,7 @@
 #include <tny-fs-stream.h>
 #include <modest-protocol.h>
 #include "widgets/modest-validating-entry.h"
+#include <widgets/modest-window.h>
 
 typedef enum {
 	MODEST_UTILS_GET_SUPPORTED_SECURE_AUTHENTICATION_ERROR_CANCELED
@@ -127,7 +128,7 @@ void modest_utils_show_information_note_in_main_context_and_forget (GtkWindow *p
  * blocking. Use this when you don't want to use gtk_dialog_run(), which might lead 
  * to hangs.
  */
-void modest_utils_show_dialog_and_forget (GtkWidget *parent_window, GtkDialog *dialog);
+void modest_utils_show_dialog_and_forget (GtkWindow *parent_window, GtkDialog *dialog);
 
 /**
  * modest_toggle_action_set_active_block_notify:
@@ -145,7 +146,7 @@ void modest_utils_toggle_action_set_active_block_notify (GtkToggleAction *action
  *
  * raises a sort dialog for this window
  */
-void modest_utils_run_sort_dialog (GtkWindow *parent_window, ModestSortDialogType type);
+void modest_utils_run_sort_dialog (ModestWindow *parent_window, ModestSortDialogType type);
 
 
 /**

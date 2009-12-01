@@ -1194,14 +1194,14 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 }
 
 gint
-modest_platform_run_rename_folder_dialog (GtkWindow *parent_window,
+modest_platform_run_rename_folder_dialog (ModestWindow *parent_window,
                                           TnyFolderStore *parent_folder,
                                           const gchar *suggested_name,
                                           gchar **folder_name)
 {
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent_folder), GTK_RESPONSE_REJECT);
 
-	return modest_platform_run_folder_common_dialog (parent_window, 
+	return modest_platform_run_folder_common_dialog (modest_toolkit_utils_parent_window (GTK_WIDGET (parent_window)), 
 							 parent_folder,
 							 _HL("ckdg_ti_rename_folder"),
 							 _HL("ckdg_fi_rename_name"),
