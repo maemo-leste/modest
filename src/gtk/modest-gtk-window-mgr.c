@@ -827,11 +827,20 @@ modest_gtk_window_mgr_set_modal (ModestWindowMgr *self,
 				     GtkWindow *window,
 				     GtkWindow *parent)
 {
+	ModestGtkWindowMgrPrivate *priv;
+
 	g_return_if_fail (MODEST_IS_GTK_WINDOW_MGR (self));
 	g_return_if_fail (GTK_IS_WINDOW (window));
 
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
+
 	gtk_window_set_modal (window, TRUE);
-	gtk_window_set_transient_for (window, parent);
+
+	if (GTK_IS_WINDOW (parent)) {
+		gtk_window_set_transient_for (window, parent);
+	} else {
+		gtk_window_set_transient_for (window, priv->shell);
+	}
 	gtk_window_set_destroy_with_parent (window, TRUE);
 }
 
