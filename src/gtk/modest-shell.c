@@ -130,6 +130,7 @@ modest_shell_instance_init (ModestShell *obj)
 
 	priv->top_toolbar = gtk_toolbar_new ();
 	gtk_toolbar_set_style (GTK_TOOLBAR (priv->top_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
+	gtk_toolbar_set_show_arrow (GTK_TOOLBAR (priv->top_toolbar), FALSE);
 	gtk_widget_show (priv->top_toolbar);
 	gtk_box_pack_start (GTK_BOX (top_hbox), priv->top_toolbar, TRUE, TRUE, 0);
 
