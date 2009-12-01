@@ -139,6 +139,16 @@ modest_shell_window_dispose (GObject *obj)
 
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE(obj);
 
+	if (priv->shell && priv->app_menu_dimming_group) {
+		gtk_window_remove_accel_group (GTK_WINDOW (priv->shell),
+					       priv->accel_group);
+	}
+
+	if (priv->accel_group) {
+		g_object_unref (priv->accel_group);
+		priv->accel_group = NULL;
+	}
+
 	if (priv->app_menu_dimming_group) {
 		g_object_unref (priv->app_menu_dimming_group);
 		priv->app_menu_dimming_group = NULL;
@@ -181,7 +191,8 @@ modest_shell_window_instance_init (GTypeInstance *instance, gpointer g_class)
 	priv->accel_group = gtk_accel_group_new ();
 
 	priv->app_menu_dimming_group = modest_dimming_rules_group_new (MODEST_DIMMING_RULES_MENU, FALSE);
-	gtk_window_add_accel_group (GTK_WINDOW (self), priv->accel_group);
+	if (priv->shell)
+		gtk_window_add_accel_group (GTK_WINDOW (priv->shell), priv->accel_group);
 
 	priv->menu = gtk_menu_new ();
 
@@ -321,6 +332,9 @@ modest_shell_window_set_shell (ModestShellWindow *self,
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
 
 	if (priv->shell) {
+		if (priv->accel_group) {
+			gtk_window_remove_accel_group (GTK_WINDOW (priv->shell), priv->accel_group);
+		}
 		modest_shell_delete_window (MODEST_SHELL (shell), MODEST_WINDOW (self));
 		g_object_unref (priv->shell);
 	}
@@ -329,6 +343,8 @@ modest_shell_window_set_shell (ModestShellWindow *self,
 	modest_shell_set_title (MODEST_SHELL (priv->shell),
 				MODEST_WINDOW (self),
 				priv->title);
+	if (priv->accel_group)
+		gtk_window_add_accel_group (GTK_WINDOW (priv->shell), priv->accel_group);
 }
 
 GtkWidget *
