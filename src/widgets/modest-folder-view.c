@@ -820,8 +820,8 @@ messages_cell_data  (GtkTreeViewColumn *column,
 
 		if ((priv->cell_style == MODEST_FOLDER_VIEW_CELL_STYLE_COMPACT) && (number > 0)) {
 			item_name =
-				g_strdup_printf (ngettext ((drafts) ? "mcen_ti_message" : "mcen_va_new_message",
-							   (drafts) ? "mcen_ti_messages" : "mcen_va_new_messages",
+				g_strdup_printf (ngettext ((drafts) ? "mcen_ti_message" : N_("mcen_va_new_message"),
+							   (drafts) ? "mcen_ti_messages" : N_("mcen_va_new_messages"),
 							   number), number);
 		}
 	}

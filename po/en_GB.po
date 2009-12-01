@@ -1,7 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: modest 20080222172757\n"
-"POT-Creation-Date: 2008.02.22 17:27+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-12-01 16:04+0100\n"
 "PO-Revision-Date: 2008.02.22 17:27+0200\n"
 "Last-Translator:\n"
 "Language-Team: English (UK)\n"
@@ -10,50 +11,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1\n"
 
-msgid "emev_ib_ui_imap_server_not_support_error"
-msgstr "Operation not supported by IMAP server"
-
-msgid "emev_ib_ui_imap_uid_fetch_error"
-msgstr "Unable to retrieve message body"
-
-msgid "emev_ib_ui_imap_unable_to_rename"
+#: ../src/modest-ui-actions.c:265
+msgid ""
+"Copyright (c) 2006, Nokia Corporation\n"
+"All rights reserved."
 msgstr ""
-"Unable to rename.\n"
-"Invalid name."
 
-msgid "emev_ib_ui_pop3_msg_lock_error"
-msgstr "Unable to access e-mail account. Another application may be using it."
-
-msgid "emev_ib_ui_smtp_send_error"
-msgstr "SMTP send operation failed. Please try again later."
-
-msgid "emev_ib_ui_smtp_server_invalid"
+#: ../src/modest-ui-actions.c:268
+msgid ""
+"a modest e-mail client\n"
+"\n"
+"design and implementation: Dirk-Jan C. Binnema\n"
+"contributions from the fine people at KC and Ig\n"
+"uses the tinymail email framework written by Philip van Hoof"
 msgstr ""
-"Unable to connect to SMTP server %s or it does not exist. Server may "
-"currently be unavailable. Check your network has access to server."
 
-msgid "emev_nc_close_windows"
-msgstr ""
-"Several windows currently open.\n"
-"Close all E-mail windows?"
+#: ../src/modest-ui-actions.c:394 ../src/modest-ui-actions.c:831
+#: ../src/modest-formatter.c:403 ../src/modest-text-utils.c:308
+#: ../src/widgets/modest-attachment-view.c:295
+#: ../src/widgets/modest-attachment-view.c:332
+#: ../src/widgets/modest-header-view-render.c:361
+#: ../src/widgets/modest-details-dialog.c:287
+#: ../src/widgets/modest-expander-mail-header-view.c:279
+#: ../src/widgets/modest-header-window.c:486
+#: ../src/widgets/modest-msg-edit-window.c:938
+#: ../src/widgets/modest-msg-edit-window.c:2723
+#: ../src/widgets/modest-msg-view-window.c:3401
+#: ../src/widgets/modest-msg-view-window.c:3491
+#: ../src/widgets/modest-toolkit-utils.c:380
+msgid "mail_va_no_subject"
+msgstr "(no subject)"
 
-msgid "emev_nc_delete_attachment"
-msgid_plural "emev_nc_delete_attachments"
-msgstr[0] ""
-"Remove attachment from message?\n"
-"%s"
-msgstr[1] "Remove selected attachments from message?"
-
-msgid "emev_nc_delete_mailbox"
-msgstr ""
-"Deleting this e-mail account will remove all local copies of messages "
-"retrieved to this account’s Inbox. Delete anyway?"
-
-msgid "emev_nc_delete_mailboximap"
-msgstr ""
-"Deleting this e-mail account will remove all local copies of messages "
-"retrieved to this account's Inbox and IMAP folders. Delete anyway?"
-
+#: ../src/modest-ui-actions.c:402 ../src/widgets/modest-header-window.c:488
+#, c-format
 msgid "emev_nc_delete_message"
 msgid_plural "emev_nc_delete_messages"
 msgstr[0] ""
@@ -61,1031 +51,2117 @@ msgstr[0] ""
 "%s"
 msgstr[1] "Delete messages?"
 
-msgid "emev_nc_disconnect_account"
+#: ../src/modest-ui-actions.c:692 ../src/modest-ui-actions.c:2499
+#: ../src/widgets/modest-msg-edit-window.c:2638
+msgid "mail_ib_error_attachment_size"
+msgstr "Unable to purge attachments"
+
+#: ../src/modest-ui-actions.c:850
+#, c-format
+msgid "mail_ib_backend_server_invalid"
 msgstr ""
-"Online editing of e-mail account will cause it to disconnect and will cancel "
-"any current operations. Continue anyway?"
+"Unable to connect to SMTP server %s or it does not exist. Server may "
+"currently be unavailable. Check your network has access to server."
 
-msgid "emev_nc_formatting_lost"
-msgstr ""
-"All current formatting will be removed.\n"
-"Continue anyway?"
-
-msgid "emev_nc_mailbox_inuse"
-msgstr "E-mail account in use"
-
-msgid "emev_nc_mailbox_notavailable"
-msgstr "E-mail account not available"
-
-msgid "emev_nc_unabletomove_item"
-msgid_plural "emev_nc_unabletomove_items"
-msgstr[0] "Unable to move item"
-msgstr[1] "Unable to move %d items"
-
-msgid "emev_ni_checking_supported_auth_methods"
-msgstr "!!Checking for supported authentication methods…"
-
-msgid "emev_ni_internal_error"
-msgstr "Error occurred"
-
-msgid "emev_ni_ui_imap_connect_server_error"
-msgstr "Unable to connect to %s. Server name or port number may be incorrect."
-
+#: ../src/modest-ui-actions.c:859
 msgid "emev_ni_ui_imap_message_not_available_in_server"
 msgstr "Message %s not available on server."
 
-msgid "emev_ni_ui_pop3_msg_connect_error"
-msgstr "Unable to connect to %s. Server name or port number may be incorrect."
-
-msgid "emev_ni_ui_pop3_msg_eof"
-msgstr ""
-"Connection terminated by e-mail server.\n"
-"Message retrieval cancelled. Try connecting again."
-
+#: ../src/modest-ui-actions.c:861
 msgid "emev_ni_ui_pop3_msg_recv_error"
 msgstr ""
 "Error occurred while processing message.\n"
 "Message may not exist on server."
 
-msgid "emev_ni_ui_smtp_authentication_fail_error"
-msgstr ""
-"SMTP authentication failed. Check user name and password or that you have "
-"access to %s."
-
-msgid "emev_ni_ui_smtp_passwd_invalid"
-msgstr ""
-"SMTP password not defined. Edit e-mail account options for account %s and "
-"enter password for server %s."
-
-msgid "emev_ni_ui_smtp_userid_invalid"
-msgstr ""
-"SMTP user name not defined. Edit e-mail account options for account %1$s and "
-"enter password for server %2$s."
-
+#: ../src/modest-ui-actions.c:1111 ../src/modest-tny-account-store.c:2348
 msgid "emev_ui_imap_inbox_select_error"
 msgstr "Unable to select server Inbox. Restart application and try again."
 
-msgid "emev_ui_pop3_msg_socket_error"
-msgstr ""
-"Error in socket operation. If using SSL encrypted e-mail, disable SSL and "
-"try again."
-
-msgid "imum_nc_wizard_confirm_lose_changes"
-msgstr ""
-"All changes made to the settings will be lost.\n"
-"Continue anyway?"
-
-msgid "mail_fi_emailtype_imap"
-msgstr "IMAP4"
-
-msgid "mail_fi_emailtype_pop3"
-msgstr "POP3"
-
-msgid "mail_fi_password"
-msgstr "Password"
-
-msgid "mail_fi_username"
-msgstr "User name"
-
-msgid "mail_ia_password_info"
-msgstr "Enter password for server %s"
-
-msgid "mail_ib_account_name_already_existing"
-msgstr "E-mail account title already in use"
-
-msgid "mail_ib_checking_names"
-msgstr "Checking names"
-
-msgid "mail_ib_contacts_file_access_permission"
-msgstr "Unable to access contact information"
-
-msgid "mail_ib_file_operation_failed"
-msgstr "File error"
-
-msgid "mail_ib_imap_server_sync_error"
-msgstr ""
-"IMAP synchronisation error occurred while processing messages.\n"
-"Performing Send-Receive operation for e-mail account %s."
-
-msgid "mail_ib_login_cancelled"
-msgstr "Login cancelled"
-
-msgid "mail_ib_notavailable_downloading"
-msgstr "Not available while retrieving message"
-
-msgid "mail_ib_nothing_to_find"
-msgstr "Nothing to find"
-
-msgid "mail_ib_opening_draft_message"
-msgstr "Opening"
-
-msgid "mail_ib_setting_failed"
-msgstr "Unable to save settings"
-
-msgid "mail_ib_unable_to_purge_attachments"
-msgstr "Unable to purge attachments"
-
-msgid "mail_in_ui_folder_create_error"
-msgstr "Unable to create folder"
-
-msgid "mail_in_ui_folder_delete_error"
-msgstr "Unable to delete folder"
-
-msgid "mail_in_ui_folder_move_target_error"
-msgstr "Unable to move to current location"
-
-msgid "mail_ln_sent"
-msgstr "Sent"
-
-msgid "mail_me_opening"
-msgstr "Opening"
-
-msgid "mail_me_receiving"
-msgstr "Retrieving"
-
-msgid "mail_nc_msg_count_limit_exceeded"
-msgstr ""
-"%d new messages on server but retrieval limit is %d.\n"
-"Retrieve all messages or the newest ones up to the limit?"
-
-msgid "mail_ni_ssl_certificate_error"
-msgstr "Secure connection failed"
-
-msgid "mail_ni_ui_folder_file_error"
-msgstr "File error"
-
-msgid "mail_ni_ui_folder_get_header_error"
-msgstr "Unable to retrieve message header"
-
+#: ../src/modest-ui-actions.c:1268 ../src/modest-ui-actions.c:5572
+#: ../src/dbus_api/modest-dbus-callbacks.c:460
+#: ../src/dbus_api/modest-dbus-callbacks.c:467
+#: ../src/dbus_api/modest-dbus-callbacks.c:587
+#, c-format
 msgid "mail_ni_ui_folder_get_msg_folder_error"
 msgstr "Unable to retrieve message"
 
-msgid "mail_ti_password_protected"
-msgstr "Password protected"
-
-msgid "mail_usr_not_available_on_server_dev"
-msgstr "Recipient not found on server"
-
-msgid "mail_va_attachment"
-msgstr "Attachment:"
-
-msgid "mail_va_cc"
-msgstr "Cc:"
-
-msgid "mail_va_date"
-msgstr "Date:"
-
-msgid "mail_va_from"
-msgstr "From:"
-
-msgid "mail_va_fw"
-msgstr "Fw"
-
-msgid "mail_va_hotfix1"
-msgstr "Bcc:"
-
-msgid "mail_va_new_email"
-msgstr "New message"
-
-msgid "mail_va_no_subject"
-msgstr "(no subject)"
-
-msgid "mail_va_no_to"
-msgstr "(no recipient)"
-
-msgid "mail_va_re"
-msgstr "Re"
-
-msgid "mail_va_saved_to_drafts"
-msgstr "Saving to %s"
-
-msgid "mail_va_subject"
-msgstr "Subject:"
-
-msgid "mail_va_time"
-msgstr "Time:"
-
-msgid "mail_va_to"
-msgstr "To:"
-
-msgid "mcen_ap_name"
-msgstr "E-mail"
-
-msgid "mcen_bd_close"
-msgstr "Close"
-
-msgid "mcen_bd_delete"
-msgstr "Delete"
-
-msgid "mcen_bd_dialog_cancel"
-msgstr "Cancel"
-
-msgid "mcen_bd_dialog_ok"
-msgstr "OK"
-
-msgid "mcen_bd_edit"
-msgstr "Edit"
-
-msgid "mcen_bd_get_all"
-msgstr "All"
-
-msgid "mcen_bd_new"
-msgstr "New"
-
-msgid "mcen_bd_newest_only"
-msgstr "Newest only"
-
-msgid "mcen_bd_no"
-msgstr "No"
-
-msgid "mcen_bd_view"
-msgstr "View"
-
-msgid "mcen_bd_yes"
-msgstr "Yes"
-
-msgid "mcen_fi_account_title"
-msgstr "Account title"
-
-msgid "mcen_fi_add_email_name"
-msgstr "E-mail"
-
-msgid "mcen_fi_advanced_settings"
-msgstr "Advanced settings"
-
-msgid "mcen_fi_advsetup_connection_smtp"
-msgstr "Use connection-specific SMTP servers:"
-
-msgid "mcen_fi_advsetup_leave_on_server"
-msgstr "Leave messages on server"
-
-msgid "mcen_fi_advsetup_limit_retrieve"
-msgstr "Retrieval limit"
-
-msgid "mcen_fi_advsetup_optional_smtp"
-msgstr "SMTP servers:"
-
-msgid "mcen_fi_advsetup_other_security_none"
-msgstr "None"
-
-msgid "mcen_fi_advsetup_other_security_normal"
-msgstr "Normal (TLS)"
-
-msgid "mcen_fi_advsetup_other_security_secureimap4s"
-msgstr "SSL (IMAP4S)"
-
-msgid "mcen_fi_advsetup_other_security_securepop3s"
-msgstr "SSL (POP3S)"
-
-msgid "mcen_fi_advsetup_other_security_ssl"
-msgstr "SSL"
-
-msgid "mcen_fi_advsetup_retrieve_100"
-msgstr "Last 100 messages"
-
-msgid "mcen_fi_advsetup_retrieve_20"
-msgstr "Last 20 messages"
-
-msgid "mcen_fi_advsetup_retrieve_200"
-msgstr "Last 200 messages"
-
-msgid "mcen_fi_advsetup_retrieve_50"
-msgstr "Last 50 messages"
-
-msgid "mcen_fi_advsetup_retrieve_nolimit"
-msgstr "No limit"
-
-msgid "mcen_fi_advsetup_retrievetype"
-msgstr "Retrieve"
-
-msgid "mcen_fi_advsetup_retrievetype_headers"
-msgstr "Headers only"
-
-msgid "mcen_fi_advsetup_retrievetype_messages"
-msgstr "Messages"
-
-msgid "mcen_fi_advsetup_retrievetype_messages_attachments"
-msgstr "Messages and attachments"
-
-msgid "mcen_fi_advsetup_sizelimit"
-msgstr "Message size limit (kB)"
-
-msgid "mcen_fi_advsetup_smtp_cram_md5"
-msgstr "CRAM-MD5"
-
-msgid "mcen_fi_advsetup_smtp_login"
-msgstr "Login"
-
-msgid "mcen_fi_advsetup_smtp_none"
-msgstr "None"
-
-msgid "mcen_fi_country"
-msgstr "Region"
-
-msgid "mcen_fi_email_signature"
-msgstr "Signature"
-
-msgid "mcen_fi_email_signatures_use_signature"
-msgstr "Use signature"
-
-msgid "mcen_fi_emailsetup_port"
-msgstr "Port"
-
-msgid "mcen_fi_folder_properties_foldername"
-msgstr "Folder name"
-
-msgid "mcen_fi_folder_properties_messages"
-msgstr "Number of messages"
-
-msgid "mcen_fi_folder_properties_size"
-msgstr "Size"
-
-msgid "mcen_fi_localroot_description"
-msgstr "Local folders on %s"
-
-msgid "mcen_fi_message_properties_cc"
-msgstr "Cc: "
-
-msgid "mcen_fi_message_properties_created"
-msgstr "Created: "
-
-msgid "mcen_fi_message_properties_from"
-msgstr "From: "
-
-msgid "mcen_fi_message_properties_received"
-msgstr "Received: "
-
-msgid "mcen_fi_message_properties_sent"
-msgstr "Sent: "
-
-msgid "mcen_fi_message_properties_size"
-msgstr "Size: "
-
-msgid "mcen_fi_message_properties_subject"
-msgstr "Subject: "
-
-msgid "mcen_fi_message_properties_to"
-msgstr "To: "
-
-msgid "mcen_fi_new_folder_name"
-msgstr "Name"
-
-msgid "mcen_fi_options_autoupdate"
-msgstr "Update automatically"
-
-msgid "mcen_fi_options_connectiontype"
-msgstr "Update when connected via"
-
-msgid "mcen_fi_options_messageformat"
-msgstr "Default message format"
-
-msgid "mcen_fi_options_playsound"
-msgstr "Play sound when message arrives"
-
-msgid "mcen_fi_options_updateinterval"
-msgstr "Update interval"
-
-msgid "mcen_fi_remoteroot_account"
-msgstr "%s account"
-
-msgid "mcen_fi_rootfolder_folders"
-msgstr "Folders"
-
-msgid "mcen_fi_rootfolder_messages"
-msgstr "Messages"
-
-msgid "mcen_fi_rootfolder_size"
-msgstr "Total size"
-
-msgid "mcen_fi_serviceprovider"
-msgstr "Service provider"
-
-msgid "mcen_ia_accountdetails"
-msgstr "Select your country/region and service provider from the list below"
-
-msgid "mcen_ia_add_email_name"
-msgstr "Name"
-
-msgid "mcen_ia_customsetup_complete"
-msgstr ""
-"Tap 'Finish' to save or 'Cancel' to discard the settings.\n"
-"Tap 'Edit' to modify the advanced account settings."
-
-msgid "mcen_ia_default_folder_name"
-msgstr "New folder"
-
-msgid "mcen_ia_default_folder_name_s"
-msgstr "New folder %s"
-
-msgid "mcen_ia_easysetup_complete"
-msgstr ""
-"Tap 'Finish' to save or 'Cancel' to discard the settings. You can edit these "
-"settings via 'Tools > Accounts…' from the menu."
-
-msgid "mcen_ia_editor_attach_filename"
-msgstr "<Attachment:> "
-
-msgid "mcen_ia_editor_original_message"
-msgstr "----- Original message -----"
-
-msgid "mcen_ia_email_signatures_edit_dlg_label"
-msgstr "Signature for account %s"
-
-msgid "mcen_ia_emailsetup_account_type"
-msgstr "Note: Unable to edit account type once setup is complete"
-
-msgid "mcen_ia_emailsetup_defaultname"
-msgstr "Account"
-
-msgid "mcen_ia_emailsetup_intro"
-msgstr ""
-"Account setup wizard allows you to define e-mail accounts\n"
-"for use on your device.\n"
-"Tap 'Next' to continue."
-
-msgid "mcen_ia_emailsetup_setup_complete"
-msgstr "Account setup is complete."
-
-msgid "mcen_ia_nomessages"
-msgstr "(no messages to show)"
-
-msgid "mcen_ia_optionalsmtp_connection_name"
-msgstr "Connection name"
-
-msgid "mcen_ia_optionalsmtp_noconnection"
-msgstr "(no connections)"
-
-msgid "mcen_ia_optionalsmtp_notdefined"
-msgstr "Not defined"
-
-msgid "mcen_ia_optionalsmtp_note"
-msgstr ""
-"Select connection and edit SMTP server to be used when connection is active"
-
-msgid "mcen_ia_optionalsmtp_servername"
-msgstr "SMTP server name"
-
-msgid "mcen_ia_select_inline_image_title"
-msgstr "Select inline image"
-
-msgid "mcen_ib_add_recipients_first"
-msgstr "Unable to send. No recipients."
-
-msgid "mcen_ib_advsetup_settings_saved"
-msgstr "Settings saved"
-
-msgid "mcen_ib_changes_discarded"
-msgstr "Changes discarded"
-
-msgid "mcen_ib_getting_items"
-msgstr "Retrieving"
-
-msgid "mcen_ib_invalid_email"
-msgstr "Invalid e-mail address"
-
-msgid "mcen_ib_invalid_servername"
-msgstr "Invalid server name or IP address"
-
-msgid "mcen_ib_item_unavailable_plaintext"
-msgstr "Not available in plain text mode"
-
-msgid "mcen_ib_message_sent"
-msgid_plural "mcen_ib_messages_sent"
-msgstr[0] "Message sent"
-msgstr[1] "Messages sent"
-
-msgid "mcen_ib_move_cursor_to_message"
-msgstr "Move cursor to message area first"
-
-msgid "mcen_ib_no_message_selected"
-msgstr "Select message first"
-
-msgid "mcen_ib_nothing_to_reply"
-msgstr "Nothing to reply to"
-
-msgid "mcen_ib_outbox_waiting_to_be_sent"
-msgstr "Message moved to Outbox waiting to be sent"
-
-msgid "mcen_ib_removing_attachment"
-msgstr "Removing attachment"
-
-msgid "mcen_ib_select_one_message"
-msgstr "Select 1 message only"
-
-msgid "mcen_ib_subject_not_modified"
-msgstr ""
-"Unable to send.\n"
-"Make sure subject contains some text."
-
-msgid "mcen_ib_unable_to_reply"
-msgstr "Unable to reply"
-
-msgid "mcen_ib_unableto_discover_auth_methods"
-msgstr "!!Unable to discover supported secure authentication methods"
-
-msgid "mcen_ib_unsupported_link"
-msgstr "Unsupported link type"
-
-msgid "mcen_ib_username_pw_incorrect"
-msgstr "User name or password incorrect"
-
-msgid "mcen_li_emailsetup_email_address"
-msgstr "E-mail address"
-
-msgid "mcen_li_emailsetup_name"
-msgstr "Name"
-
-msgid "mcen_li_emailsetup_secure_authentication"
-msgstr "Use secure authentication"
-
-msgid "mcen_li_emailsetup_secure_connection"
-msgstr "Secure connection"
-
-msgid "mcen_li_emailsetup_servertype"
-msgstr "Incoming server (%s)"
-
-msgid "mcen_li_emailsetup_smtp"
-msgstr "Outgoing server (SMTP)"
-
-msgid "mcen_li_emailsetup_type"
-msgstr "Account type"
-
-msgid "mcen_li_outbox_failed"
-msgstr "Failed"
-
-msgid "mcen_li_outbox_sending"
-msgstr "Sending"
-
-msgid "mcen_li_outbox_suspended"
-msgstr "Suspended"
-
-msgid "mcen_li_outbox_waiting"
-msgstr "Waiting"
-
-msgid "mcen_li_sort_attachment"
-msgstr "Attachment"
-
-msgid "mcen_li_sort_date"
-msgstr "Date"
-
-msgid "mcen_li_sort_priority"
-msgstr "Priority"
-
-msgid "mcen_li_sort_sender_recipient"
-msgstr "From/To"
-
-msgid "mcen_li_sort_size"
-msgstr "Size"
-
-msgid "mcen_li_sort_subject"
-msgstr "Subject"
-
-msgid "mcen_me_editor_align"
-msgstr "Alignment"
-
-msgid "mcen_me_editor_align_centred"
-msgstr "Centred"
-
-msgid "mcen_me_editor_align_left"
-msgstr "Left"
-
-msgid "mcen_me_editor_align_right"
-msgstr "Right"
-
-msgid "mcen_me_editor_attach_inlineimage"
-msgstr "Insert image…"
-
-msgid "mcen_me_editor_attachfile"
-msgstr "Attach file…"
-
-msgid "mcen_me_editor_checknames"
-msgstr "Check names"
-
-msgid "mcen_me_editor_file_format"
-msgstr "File format"
-
-msgid "mcen_me_editor_font"
-msgstr "Font…"
-
-msgid "mcen_me_editor_format"
-msgstr "Format"
-
-msgid "mcen_me_editor_formatted_text"
-msgstr "Formatted text"
-
-msgid "mcen_me_editor_message_priority"
-msgstr "Message priority"
-
-msgid "mcen_me_editor_plain_text"
-msgstr "Plain text"
-
-msgid "mcen_me_editor_priority_high"
-msgstr "High"
-
-msgid "mcen_me_editor_priority_low"
-msgstr "Low"
-
-msgid "mcen_me_editor_priority_normal"
-msgstr "Normal"
-
-msgid "mcen_me_editor_save_as_draft"
-msgstr "Save to Drafts"
-
-msgid "mcen_me_editor_selectrecipients"
-msgstr "Select contacts…"
-
-msgid "mcen_me_editor_send"
-msgstr "Send"
-
-msgid "mcen_me_editor_showbcc"
-msgstr "Show Bcc"
-
-msgid "mcen_me_editor_showcc"
-msgstr "Show Cc"
-
-msgid "mcen_me_folder_archive"
-msgstr "Archive"
-
-msgid "mcen_me_folder_drafts"
-msgstr "Drafts"
-
-msgid "mcen_me_folder_inbox"
-msgstr "Inbox"
-
-msgid "mcen_me_folder_outbox"
-msgstr "Outbox"
-
-msgid "mcen_me_folder_sent"
-msgstr "Sent"
-
-msgid "mcen_me_inbox_accounts"
-msgstr "Accounts…"
-
-msgid "mcen_me_inbox_close"
-msgstr "Close"
-
-msgid "mcen_me_inbox_close_window"
-msgstr "Close window"
-
-msgid "mcen_me_inbox_close_windows"
-msgstr "Close all windows"
-
-msgid "mcen_me_inbox_copy"
-msgstr "Copy"
-
-msgid "mcen_me_inbox_cut"
-msgstr "Cut"
-
-msgid "mcen_me_inbox_delete"
-msgstr "Delete"
-
-msgid "mcen_me_inbox_edit"
-msgstr "Edit"
-
-msgid "mcen_me_inbox_email"
-msgstr "E-mail"
-
-msgid "mcen_me_inbox_folder"
-msgstr "Folder"
-
-msgid "mcen_me_inbox_forward"
-msgstr "Forward"
-
-msgid "mcen_me_inbox_fullscreen"
-msgstr "Full screen"
-
-msgid "mcen_me_inbox_globalsmtpservers"
-msgstr "SMTP servers…"
-
-msgid "mcen_me_inbox_help"
-msgstr "Help"
-
-msgid "mcen_me_inbox_hidefolders"
-msgstr "Folders"
-
-msgid "mcen_me_inbox_mark_as_read"
-msgstr "Mark as read"
-
-msgid "mcen_me_inbox_mark_as_unread"
-msgstr "Mark as unread"
-
-msgid "mcen_me_inbox_message"
-msgstr "Message"
-
-msgid "mcen_me_inbox_messagedetails"
-msgstr "Details"
-
-msgid "mcen_me_inbox_moveto"
-msgstr "Move to…"
-
-msgid "mcen_me_inbox_new"
-msgstr "New"
-
-msgid "mcen_me_inbox_normalview"
-msgstr "Normal screen"
-
-msgid "mcen_me_inbox_open"
-msgstr "Open"
-
-msgid "mcen_me_inbox_open_addressbook"
-msgstr "Contacts…"
-
-msgid "mcen_me_inbox_options"
-msgstr "Settings…"
-
-msgid "mcen_me_inbox_paste"
-msgstr "Paste"
-
-msgid "mcen_me_inbox_redo"
-msgstr "Redo"
-
-msgid "mcen_me_inbox_remove_attachments"
-msgstr "Remove attachment"
-
-msgid "mcen_me_inbox_reply"
-msgstr "Reply"
-
-msgid "mcen_me_inbox_replytoall"
-msgstr "Reply to all"
-
-msgid "mcen_me_inbox_retrieve_contents"
-msgstr "Retrieve contents"
-
-msgid "mcen_me_inbox_search"
-msgstr "Search messages…"
-
-msgid "mcen_me_inbox_sendandreceive"
-msgstr "Send & receive"
-
-msgid "mcen_me_inbox_sendandreceive_all"
-msgstr "All"
-
-msgid "mcen_me_inbox_sort"
-msgstr "Sort…"
-
-msgid "mcen_me_inbox_toolbar"
-msgstr "Show toolbar"
-
-msgid "mcen_me_inbox_tools"
-msgstr "Tools"
-
-msgid "mcen_me_inbox_undo"
-msgstr "Undo"
-
-msgid "mcen_me_inbox_view"
-msgstr "View"
-
-msgid "mcen_me_outbox_cancelsend"
-msgstr "Cancel sending"
-
-msgid "mcen_me_receiving"
-msgstr "Retrieving %d/%d"
-
-msgid "mcen_me_toolbar_sendreceive_all"
-msgstr "All"
-
-msgid "mcen_me_toolbar_sendreceive_default"
-msgstr "%s"
-
-msgid "mcen_me_toolbar_sendreceive_mailbox_n"
-msgstr "%s"
-
-msgid "mcen_me_user_renamefolder"
-msgstr "Rename…"
-
-msgid "mcen_me_viewer_100"
-msgstr "100%"
-
-msgid "mcen_me_viewer_120"
-msgstr "120%"
-
-msgid "mcen_me_viewer_150"
-msgstr "150%"
-
-msgid "mcen_me_viewer_200"
-msgstr "200%"
-
-msgid "mcen_me_viewer_50"
-msgstr "50%"
-
-msgid "mcen_me_viewer_80"
-msgstr "80%"
-
-msgid "mcen_me_viewer_addtocontacts"
-msgstr "Add to Contacts…"
-
-msgid "mcen_me_viewer_attachments"
-msgstr "Attachments"
-
-msgid "mcen_me_viewer_find"
-msgstr "Find on page"
-
-msgid "mcen_me_viewer_newemail"
-msgstr "New message"
-
-msgid "mcen_me_viewer_nextmessage"
-msgstr "Next message"
-
-msgid "mcen_me_viewer_previousmessage"
-msgstr "Previous message"
-
-msgid "mcen_me_viewer_save_attachments"
-msgstr "Save attachment…"
-
-msgid "mcen_me_viewer_selectall"
-msgstr "Select all"
-
-msgid "mcen_me_viewer_view_attachment"
-msgstr "View attachment"
-
-msgid "mcen_me_viewer_zoom"
-msgstr "Zoom"
-
-msgid "mcen_nc_delete_folder_text"
-msgstr ""
-"Delete folder and its contents?\n"
-"%s"
-
-msgid "mcen_nc_email_address_not_defined"
-msgstr ""
-"No e-mail address defined for contact %s.\n"
-"Define one now?"
-
+#: ../src/modest-ui-actions.c:1395 ../src/modest-ui-actions.c:1690
+#: ../src/modest-ui-actions.c:1828 ../src/modest-ui-actions.c:4587
+#: ../src/widgets/modest-msg-view-window.c:1979
 msgid "mcen_nc_get_msg"
 msgid_plural "mcen_nc_get_msgs"
 msgstr[0] "Content of message must be retrieved first. Retrieve now?"
 msgstr[1] "Content of messages must be retrieved first. Retrieve now?"
 
-msgid "mcen_nc_no_email_acnts_defined"
-msgstr "No e-mail account defined"
+#. Don't allow activation if there are more than one message selected
+#: ../src/modest-ui-actions.c:1456 ../src/modest-ui-actions.c:1792
+#: ../src/modest-ui-actions.c:2330
+msgid "mcen_ib_select_one_message"
+msgstr "Select 1 message only"
 
-msgid "mcen_nc_no_email_message_modified_save_changes"
-msgstr "Message modified. Save changes?"
+#. This means that the folder is already in use (a
+#. message is opened for example
+#: ../src/modest-ui-actions.c:2132 ../src/modest-ui-actions.c:2144
+#: ../src/modest-ui-actions.c:3078
+msgid "emev_ni_internal_error"
+msgstr "Error occurred"
 
-msgid "mcen_nc_no_matching_contacts"
-msgstr "No matching contacts found"
-
-msgid "mcen_nc_purge_file_text"
-msgid_plural "mcen_nc_purge_files_text"
-msgstr[0] "This will remove attachment %s from message. Continue anyway?"
-msgstr[1] "This will remove %d attachments from message. Continue anyway?"
-
-msgid "mcen_nc_purge_file_text_inbox"
-msgstr "This removes attachments from this message. Continue anyway?"
-
-msgid "mcen_nc_unable_to_delete_n_messages"
+#: ../src/modest-ui-actions.c:2364
+#, c-format
+msgid "The %s you selected cannot be found"
 msgstr ""
-"Unable to delete %d messages.\n"
-"Messages in use or already queued for deletion."
 
+#: ../src/modest-ui-actions.c:2366 ../src/modest-ui-actions.c:2374
+#: ../src/modest-ui-actions.c:3428
+msgid "mcen_bd_dialog_ok"
+msgstr "OK"
+
+#: ../src/modest-ui-actions.c:2369
+msgid "Connection requested"
+msgstr ""
+
+#: ../src/modest-ui-actions.c:2372 ../src/modest-ui-actions.c:3430
+#: ../src/modest-utils.c:381
+msgid "mcen_bd_dialog_cancel"
+msgstr "Cancel"
+
+#: ../src/modest-ui-actions.c:2377
+#, c-format
+msgid ""
+"This %s is not available in offline mode.\n"
+"Do you want to get online?"
+msgstr ""
+
+#. In hildon2 we always show the information banner on saving to drafts.
+#. * It will be a system information banner in this case.
+#.
+#: ../src/modest-ui-actions.c:2581
+#, c-format
+msgid "mail_va_saved_to_drafts"
+msgstr "Saving to %s"
+
+#: ../src/modest-ui-actions.c:2581 ../src/modest-local-folder-info.c:51
+msgid "mcen_me_folder_drafts"
+msgstr "Drafts"
+
+#: ../src/modest-ui-actions.c:2690
+msgid "mcen_ib_outbox_waiting_to_be_sent"
+msgstr "Message moved to Outbox waiting to be sent"
+
+#: ../src/modest-ui-actions.c:2896 ../src/modest-ui-actions.c:2948
+msgid "mail_in_ui_folder_create_error_memory"
+msgstr "Unable to create folder"
+
+#: ../src/modest-ui-actions.c:2903 ../src/modest-ui-actions.c:2957
+#: ../src/modest-mail-operation.c:2153 ../src/modest-mail-operation.c:2161
+#, c-format
+msgid "mail_in_ui_folder_create_error"
+msgstr "Unable to create folder"
+
+#: ../src/modest-ui-actions.c:3228 ../src/modest-ui-actions.c:3316
+#: ../src/modest-mail-operation.c:2206
+#, c-format
+msgid "mail_in_ui_folder_delete_error"
+msgstr "Unable to delete folder"
+
+#. Ask the user
+#: ../src/modest-ui-actions.c:3323
+#, c-format
+msgid "mcen_nc_delete_folder_text"
+msgstr ""
+"Delete folder and its contents?\n"
+"%s"
+
+#: ../src/modest-ui-actions.c:3415 ../src/modest-ui-actions.c:3425
+#: ../src/modest-ui-actions.c:3436
+msgid "mail_ti_password_protected"
+msgstr "Password protected"
+
+#: ../src/modest-ui-actions.c:3458
+#, c-format
+msgid "mail_ia_password_info"
+msgstr "Enter password for server %s"
+
+#: ../src/modest-ui-actions.c:3498
+#: ../src/hildon2/modest-maemo-security-options-view.c:322
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:426
+#: ../src/widgets/modest-default-account-settings-dialog.c:541
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:771
+#: ../src/widgets/modest-gtk-security-options-view.c:265
+msgid "mail_fi_username"
+msgstr "User name"
+
+#: ../src/modest-ui-actions.c:3517
+#: ../src/hildon2/modest-maemo-security-options-view.c:353
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:452
+#: ../src/widgets/modest-default-account-settings-dialog.c:572
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:800
+#: ../src/widgets/modest-gtk-security-options-view.c:291
+msgid "mail_fi_password"
+msgstr "Password"
+
+#: ../src/modest-ui-actions.c:3569 ../src/modest-tny-account-store.c:497
+#: ../src/modest-tny-account-store.c:645
+msgid "mcen_ib_username_pw_incorrect"
+msgstr "User name or password incorrect"
+
+#. Set the error msg
+#: ../src/modest-ui-actions.c:4533 ../src/modest-ui-actions.c:4642
+#: ../src/modest-ui-actions.c:4694 ../src/modest-ui-actions.c:4845
+#: ../src/modest-mail-operation.c:2409
+msgid "mail_in_ui_folder_move_target_error"
+msgid_plural "mail_in_ui_folder_move_targets_error"
+msgstr[0] "Unable to move to current location"
+msgstr[1] "Unable to move to current location"
+
+#: ../src/modest-ui-actions.c:5611
+#, c-format
+msgid "emev_nc_delete_mailbox"
+msgstr ""
+"Deleting this e-mail account will remove all local copies of messages "
+"retrieved to this account’s Inbox. Delete anyway?"
+
+#: ../src/modest-ui-actions.c:5742
+msgid "emev_nc_disconnect_account"
+msgstr ""
+"Online editing of e-mail account will cause it to disconnect and will cancel "
+"any current operations. Continue anyway?"
+
+#: ../src/modest-tny-folder.c:526 ../src/widgets/modest-folder-view.c:693
+#: ../src/widgets/modest-details-dialog.c:396 ../src/gtk/modest-platform.c:464
+#: ../src/gtk/modest-platform.c:1773 ../src/hildon2/modest-platform.c:783
+#: ../src/hildon2/modest-platform.c:2728
+#: ../src/widgets/modest-header-window.c:867
+msgid "mcen_me_folder_inbox"
+msgstr "Inbox"
+
+#. The name of memory card locations will be updated asynchronously.
+#. * This is just a default:
+#: ../src/modest-tny-account.c:737
+msgid "Memory Card"
+msgstr ""
+
+#: ../src/modest-protocol.c:119
+msgid "Protocol name"
+msgstr ""
+
+#: ../src/modest-protocol.c:120
+msgid "The unique name of the protocol"
+msgstr ""
+
+#: ../src/modest-protocol.c:127
+msgid "Display name"
+msgstr ""
+
+#: ../src/modest-protocol.c:128
+msgid "The name of the protocol that user will see"
+msgstr ""
+
+#: ../src/modest-protocol.c:135
+msgid "Protocol id"
+msgstr ""
+
+#: ../src/modest-protocol.c:136
+msgid "Protocol type unique id"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:429
+msgid "Sendmail"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:439
+msgid "SMTP Server"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:452
+msgid "mail_fi_emailtype_pop3"
+msgstr "POP3"
+
+#: ../src/modest-protocol-registry.c:471
+msgid "mail_fi_emailtype_imap"
+msgstr "IMAP4"
+
+#: ../src/modest-protocol-registry.c:499
+msgid "Maildir"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:513
+msgid "MBox"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:527
+msgid "None"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:535
+msgid "SSL"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:545
+msgid "TLS"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:554
+msgid "TLS when possible"
+msgstr ""
+
+#: ../src/modest-protocol-registry.c:563
+msgid "mcen_fi_advsetup_smtp_none"
+msgstr "None"
+
+#: ../src/modest-protocol-registry.c:571
+msgid "mcen_fi_advsetup_smtp_login"
+msgstr "Login"
+
+#: ../src/modest-protocol-registry.c:580
+msgid "mcen_fi_advsetup_smtp_cram_md5"
+msgstr "CRAM-MD5"
+
+#.
+#. * in the maemo case, we try to replace this
+#. * with the device name
+#.
+#: ../src/modest-defs.h:134
+msgid "Local folders"
+msgstr ""
+
+#
+#: ../src/modest-defs.h:253
+msgid "mcen_va_example_email_address"
+msgstr "name.surname@mail.host.com"
+
+#: ../src/modest-tny-msg.c:281
+#, c-format
+msgid "TODO: couldn't retrieve attachment"
+msgstr ""
+
+#: ../src/modest-mail-operation.c:1126
+#, c-format
+msgid "Error trying to send a mail. You need to set at least one recipient"
+msgstr ""
+
+#: ../src/modest-mail-operation.c:2314
+#, c-format
+msgid "Transference of %s was cancelled."
+msgstr ""
+
+#: ../src/modest-mail-operation.c:2541
+#, c-format
+msgid "FIXME: unable to rename"
+msgstr ""
+
+#: ../src/modest-mail-operation.c:3328
+#, c-format
+msgid "mail_in_ui_folder_copy_target_error"
+msgstr "Unable to move to current location"
+
+#: ../src/modest-mail-operation.c:3437
+#, c-format
+msgid "Error trying to refresh the contents of %s"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:43
+msgid "<Unknown>"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:44
+msgid "<Normal>"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:45
+#: ../src/modest-tny-local-folders-account.c:272
+msgid "mcen_me_folder_outbox"
+msgstr "Outbox"
+
+#: ../src/modest-local-folder-info.c:46
+msgid "Trash"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:47
+msgid "Junk"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:48
+msgid "mcen_me_folder_sent"
+msgstr "Sent"
+
+#: ../src/modest-local-folder-info.c:49
+msgid "<root>"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:50
+msgid "Notes"
+msgstr ""
+
+#: ../src/modest-local-folder-info.c:52
+msgid "mcen_me_folder_archive"
+msgstr "Archive"
+
+#: ../src/modest-tny-account-store.c:610
+#, c-format
+msgid "emev_ni_ui_smtp_userid_invalid"
+msgstr ""
+"SMTP user name not defined. Edit e-mail account options for account %1$s and "
+"enter password for server %2$s."
+
+#: ../src/modest-tny-account-store.c:619
+#, c-format
+msgid "emev_ni_ui_smtp_passwd_invalid"
+msgstr ""
+"SMTP password not defined. Edit e-mail account options for account %s and "
+"enter password for server %s."
+
+#: ../src/modest-tny-account-store.c:623
+#, c-format
+msgid "emev_ni_ui_smtp_authentication_fail_error"
+msgstr ""
+"SMTP authentication failed. Check user name and password or that you have "
+"access to %s."
+
+#. Set a default account title, choosing one that does not already exist:
+#. Note that this is irrelevant to the non-user visible name, which we will create later.
+#: ../src/modest-account-mgr.c:301
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:338
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:606
+msgid "mcen_ia_emailsetup_defaultname"
+msgstr "Account"
+
+#: ../src/modest-tny-send-queue.c:698
+msgid "mcen_ib_message_sent"
+msgstr "Message sent"
+
+#. defines
+#: ../src/modest-text-utils.c:52 ../src/modest-text-utils.c:984
+#: ../src/widgets/modest-msg-edit-window.c:4105
+msgid "mcen_ia_editor_original_message"
+msgstr "----- Original message -----"
+
+#: ../src/modest-text-utils.c:53
+#: ../src/widgets/modest-compact-mail-header-view.c:755
+#: ../src/widgets/modest-expander-mail-header-view.c:296
+#: ../src/widgets/modest-expander-mail-header-view.c:306
+#: ../src/widgets/modest-msg-edit-window.c:912
+#: ../src/widgets/modest-msg-edit-window.c:918
+#: ../src/widgets/modest-msg-edit-window.c:1723
+msgid "mail_va_from"
+msgstr "From:"
+
+#: ../src/modest-text-utils.c:54 ../src/widgets/modest-details-dialog.c:320
+#: ../src/widgets/modest-expander-mail-header-view.c:303
+msgid "mcen_fi_message_properties_sent"
+msgstr "Sent: "
+
+#: ../src/modest-text-utils.c:55
+#: ../src/widgets/modest-compact-mail-header-view.c:752
+#: ../src/widgets/modest-expander-mail-header-view.c:288
+#: ../src/widgets/modest-expander-mail-header-view.c:310
+#: ../src/widgets/modest-msg-edit-window.c:952
+msgid "mail_va_to"
+msgstr "To:"
+
+#: ../src/modest-text-utils.c:56
+#: ../src/widgets/modest-expander-mail-header-view.c:297
+#: ../src/widgets/modest-expander-mail-header-view.c:315
+#: ../src/widgets/modest-msg-edit-window.c:960
+msgid "mail_va_subject"
+msgstr "Subject:"
+
+#: ../src/modest-text-utils.c:313
+msgid "mail_va_re"
+msgstr "Re"
+
+#: ../src/modest-text-utils.c:313
+msgid "mail_va_fw"
+msgstr "Fw"
+
+#: ../src/modest-text-utils.c:994
+msgid "mcen_ia_editor_attach_filename"
+msgstr "<Attachment:> "
+
+#: ../src/widgets/modest-header-view.c:480
+msgid "A"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:490
+msgid "From"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:498
+msgid "To"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:506
+#: ../src/widgets/modest-header-view.c:515
+msgid "Header"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:527
+msgid "Subject"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:535
+msgid "Received"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:543
+msgid "Sent"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:551
+msgid "Size"
+msgstr ""
+
+#: ../src/widgets/modest-header-view.c:558
+msgid "Status"
+msgstr ""
+
+#: ../src/widgets/modest-account-view.c:219
+msgid "mcen_va_never"
+msgstr "Never"
+
+#: ../src/widgets/modest-account-view.c:222
+msgid "mcen_va_refreshing"
+msgstr "Refreshing"
+
+#: ../src/widgets/modest-account-view.c:287
+#: ../src/widgets/modest-account-view.c:291
+#: ../src/widgets/modest-account-view.c:357
+#: ../src/widgets/modest-account-view.c:619
+msgid "mcen_ti_lastupdated"
+msgstr "Last updated"
+
+#: ../src/widgets/modest-account-view.c:576
+msgid "mcen_ti_default"
+msgstr "Default"
+
+#: ../src/widgets/modest-account-view.c:604
+msgid "mcen_ti_account"
+msgstr "Account"
+
+#. Toplevel menus
+#: ../src/widgets/modest-msg-edit-window-ui.h:43
+msgid "mcen_me_inbox_email"
+msgstr "E-mail"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:44
+msgid "mcen_me_inbox_view"
+msgstr "View"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:45
+msgid "mcen_me_inbox_edit"
+msgstr "Edit"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:46
+msgid "mcen_me_editor_format"
+msgstr "Format"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:47
+msgid "mcen_me_editor_align"
+msgstr "Alignment"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:48
+#: ../src/widgets/modest-gtkhtml-msg-view.c:1244
+msgid "mcen_me_viewer_attachments"
+msgstr "Attachments"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:49
+#: ../src/widgets/modest-gtkhtml-msg-view.c:1235
+#: ../src/widgets/modest-msg-edit-window.c:4327
+msgid "mcen_me_editor_message_priority"
+msgstr "Message priority"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:50
+msgid "mcen_me_editor_file_format"
+msgstr "File format"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:51
+msgid "mcen_me_inbox_tools"
+msgstr "Tools"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:52
+msgid "mcen_me_inbox_toolbar"
+msgstr "Show toolbar"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:53
+msgid "mcen_me_inbox_close"
+msgstr "Close"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:58
+#: ../src/widgets/modest-header-window.c:902
+#: ../src/widgets/modest-msg-view-window.c:3690
+msgid "mcen_me_new_message"
+msgstr "Message"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:60
+msgid "mcen_me_viewer_newemail"
+msgstr "New message"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:61
+msgid "mcen_me_editor_save_as_draft"
+msgstr "Save to Drafts"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:64
+#: ../src/widgets/modest-header-window.c:917
+msgid "mcen_me_delete_messages"
+msgstr ""
+"Delete message?\n"
+"%s"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:66
+msgid "mcen_me_inbox_delete"
+msgstr "Delete"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:68
+#: ../src/widgets/modest-msg-edit-window-ui.h:109
+msgid "mcen_me_editor_send"
+msgstr "Send"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:70
+msgid "Color"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:70
+msgid "Change text color"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:71
+msgid "Background color"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:71
+msgid "Change background color"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:73
+#: ../src/widgets/modest-msg-edit-window.c:4483
+msgid "mcen_me_editor_attach_inlineimage"
+msgstr "Insert image…"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:75
+#: ../src/widgets/modest-msg-edit-window-ui.h:112
+msgid "mcen_me_editor_attachfile"
+msgstr "Attach file…"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:77
+#: ../src/widgets/modest-msg-edit-window.c:4489
+#: ../src/widgets/modest-msg-view-window.c:3340
+#: ../src/widgets/modest-msg-view-window.c:3686
+msgid "mcen_me_inbox_remove_attachments"
+msgstr "Remove attachment"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:78
+#: ../src/widgets/modest-msg-edit-window.c:4460
+msgid "mcen_me_inbox_undo"
+msgstr "Undo"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:80
+msgid "mcen_me_inbox_redo"
+msgstr "Redo"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:81
+msgid "mcen_me_inbox_cut"
+msgstr "Cut"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:82
+msgid "mcen_me_inbox_copy"
+msgstr "Copy"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:83
+msgid "mcen_me_inbox_paste"
+msgstr "Paste"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:84
+msgid "mcen_me_viewer_selectall"
+msgstr "Select all"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:86
+msgid "mcen_me_editor_font"
+msgstr "Font…"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:88
+msgid "mcen_me_editor_selectrecipients"
+msgstr "Select contacts…"
+
+#. Settings menu buttons
+#: ../src/widgets/modest-msg-edit-window-ui.h:90
+#: ../src/widgets/modest-msg-edit-window.c:4454
+msgid "mcen_me_editor_checknames"
+msgstr "Check names"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:91
+msgid "mcen_me_inbox_close_window"
+msgstr "Close window"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:92
+msgid "mcen_me_inbox_close_windows"
+msgstr "Close all windows"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:93
+msgid "mcen_me_inbox_help"
+msgstr "Help"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:95
+msgid "mcen_me_inbox_search"
+msgstr "Search messages…"
+
+#. KEY ACCELERATOR ACTIONS
+#: ../src/widgets/modest-msg-edit-window-ui.h:98
+msgid "Zoom +"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:99
+msgid "Zoom -"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:100
+#: ../src/widgets/modest-msg-edit-window-ui.h:102
+msgid "Send email"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:104
+msgid "Toggle fullscreen"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:120
+#: ../src/widgets/modest-msg-edit-window-ui.h:123
+#: ../src/widgets/modest-msg-edit-window.c:4466
+msgid "mcen_me_editor_showcc"
+msgstr "Show Cc"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:121
+#: ../src/widgets/modest-msg-edit-window-ui.h:124
+#: ../src/widgets/modest-msg-edit-window.c:4474
+msgid "mcen_me_editor_showbcc"
+msgstr "Show Bcc"
+
+#. Fullscreen toggle
+#: ../src/widgets/modest-msg-edit-window-ui.h:128
+#: ../src/widgets/modest-msg-edit-window-ui.h:131
+msgid "mcen_me_inbox_fullscreen"
+msgstr "Full screen"
+
+#. Toolbar visibility
+#: ../src/widgets/modest-msg-edit-window-ui.h:130
+msgid "mcen_me_inbox_normalview"
+msgstr "Normal screen"
+
+#. Rich text editor functions
+#: ../src/widgets/modest-msg-edit-window-ui.h:134
+msgid "mcen_me_editor_bullets"
+msgstr "Left"
+
+#. Find in page
+#. Settings menu buttons
+#: ../src/widgets/modest-msg-edit-window-ui.h:141
+#: ../src/widgets/modest-msg-edit-window.c:4495
+#: ../src/widgets/modest-msg-view-window.c:3662
+msgid "mcen_me_viewer_find"
+msgstr "Find on page"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:145
+msgid "mcen_me_editor_align_left"
+msgstr "Left"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:146
+msgid "mcen_me_editor_align_centred"
+msgstr "Centred"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:147
+msgid "mcen_me_editor_align_right"
+msgstr "Right"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:151
+#: ../src/widgets/modest-msg-edit-window.c:4311
+msgid "mcen_me_editor_priority_high"
+msgstr "High"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:152
+#: ../src/widgets/modest-msg-edit-window.c:4315
+msgid "mcen_me_editor_priority_normal"
+msgstr "Normal"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:153
+#: ../src/widgets/modest-msg-edit-window.c:4319
+msgid "mcen_me_editor_priority_low"
+msgstr "Low"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:157
+#: ../src/widgets/modest-msg-edit-window.c:4339
+msgid "mcen_me_editor_plain_text"
+msgstr "Plain text"
+
+#: ../src/widgets/modest-msg-edit-window-ui.h:158
+#: ../src/widgets/modest-msg-edit-window.c:4334
+msgid "mcen_me_editor_formatted_text"
+msgstr "Formatted text"
+
+#: ../src/widgets/modest-folder-view.c:823
+msgid "mcen_va_new_message"
+msgstr "One new message"
+
+#: ../src/widgets/modest-folder-view.c:824
+msgid "mcen_va_new_messages"
+msgstr "%d new messages"
+
+#: ../src/widgets/modest-folder-view.c:823
+#, c-format
+msgid "mcen_ti_message"
+msgid_plural "mcen_ti_messages"
+msgstr[0] "One message"
+msgstr[1] "%d messages"
+
+#: ../src/widgets/modest-header-view-render.c:58
+#: ../src/widgets/modest-header-view-render.c:439
+msgid "mcen_li_outbox_waiting"
+msgstr "Waiting"
+
+#: ../src/widgets/modest-header-view-render.c:61
+msgid "mcen_li_outbox_sending"
+msgstr "Sending"
+
+#: ../src/widgets/modest-header-view-render.c:64
+#: ../src/widgets/modest-header-view-render.c:437
+msgid "mcen_li_outbox_suspended"
+msgstr "Suspended"
+
+#: ../src/widgets/modest-header-view-render.c:67
+msgid "mcen_li_outbox_failed"
+msgstr "Failed"
+
+#. string is changed in-place
+#: ../src/widgets/modest-header-view-render.c:277
+#: ../src/widgets/modest-header-view-render.c:367
+#: ../src/widgets/modest-compact-mail-header-view.c:768
+msgid "mail_va_no_to"
+msgstr "(no recipient)"
+
+#. Add close button
+#: ../src/widgets/modest-details-dialog.c:128
+#: ../src/widgets/modest-details-dialog.c:150
+msgid "mcen_bd_close"
+msgstr "Close"
+
+#. Set window title
+#: ../src/widgets/modest-details-dialog.c:253
+#: ../src/widgets/modest-msg-view-window.c:3697
+msgid "mcen_ti_message_properties"
+msgstr "Message details"
+
+#. Add from and subject for all folders
+#: ../src/widgets/modest-details-dialog.c:291
+msgid "mcen_fi_message_properties_from"
+msgstr "From: "
+
+#: ../src/widgets/modest-details-dialog.c:292
+msgid "mcen_fi_message_properties_subject"
+msgstr "Subject: "
+
+#: ../src/widgets/modest-details-dialog.c:302
+msgid "mcen_fi_message_properties_received"
+msgstr "Received: "
+
+#: ../src/widgets/modest-details-dialog.c:310
+#: ../src/widgets/modest-expander-mail-header-view.c:300
+msgid "mcen_fi_message_properties_created"
+msgstr "Created: "
+
+#. Set To and CC
+#: ../src/widgets/modest-details-dialog.c:325
+msgid "mcen_fi_message_properties_to"
+msgstr "To: "
+
+#: ../src/widgets/modest-details-dialog.c:329
+msgid "mcen_fi_message_properties_cc"
+msgstr "Cc: "
+
+#: ../src/widgets/modest-details-dialog.c:334
+msgid "mcen_fi_message_properties_bcc"
+msgstr "Cc: "
+
+#: ../src/widgets/modest-details-dialog.c:340
+#: ../src/widgets/modest-details-dialog.c:359
+msgid "mcen_fi_message_properties_size"
+msgstr "Size: "
+
+#. Set window title
+#: ../src/widgets/modest-details-dialog.c:376
+msgid "mcen_ti_folder_properties"
+msgstr "Folder details"
+
+#: ../src/widgets/modest-details-dialog.c:402
+#: ../src/widgets/modest-details-dialog.c:404
+msgid "mcen_fi_folder_properties_foldername"
+msgstr "Folder name"
+
+#: ../src/widgets/modest-details-dialog.c:410
+#: ../src/widgets/modest-details-dialog.c:412
+msgid "mcen_fi_folder_properties_messages"
+msgstr "Number of messages"
+
+#: ../src/widgets/modest-details-dialog.c:418
+#: ../src/widgets/modest-details-dialog.c:420
+msgid "mcen_fi_folder_properties_size"
+msgstr "Size"
+
+#: ../src/dbus_api/modest-dbus-callbacks.c:413
+msgid "mail_me_opening"
+msgstr "Opening"
+
+#: ../src/dbus_api/modest-dbus-callbacks.c:1493
+msgid "memr_ib_operation_disabled"
+msgstr "File error"
+
+#: ../src/gtk/modest-gtk-window-mgr.c:667
+#: ../src/hildon2/modest-hildon2-window-mgr.c:682
+msgid "mail_in_ui_save_error"
+msgstr "Unable to create folder"
+
+#: ../src/gtk/modest-platform.c:225 ../src/hildon2/modest-platform.c:544
+#: ../src/widgets/modest-accounts-window.c:408
+#: ../src/widgets/modest-folder-window.c:904
+#: ../src/widgets/modest-folder-window.c:907
+#: ../src/widgets/modest-mailboxes-window.c:227
+#: ../src/widgets/modest-mailboxes-window.c:232
+msgid "mcen_ap_name"
+msgstr "E-mail"
+
+#: ../src/gtk/modest-platform.c:1301 ../src/hildon2/modest-platform.c:2027
+#, c-format
+msgid "mcen_ni_view_unknown_certificate"
+msgstr ""
+"Unknown certificate:\n"
+"%s"
+
+#: ../src/gtk/modest-platform.c:1315 ../src/hildon2/modest-platform.c:2053
+#, c-format
 msgid "mcen_nc_unknown_certificate"
 msgstr ""
 "Trying to establish secure connection to server %s with an unknown "
 "certificate.\n"
 "Allow connections?"
 
-msgid "mcen_ni_noregistered_viewer"
-msgstr "No viewer found for this file type"
-
-msgid "mcen_ni_view_unknown_certificate"
-msgstr ""
-"Unknown certificate:\n"
-"%s"
-
-msgid "mcen_ti_account"
-msgstr "Account"
-
-msgid "mcen_ti_account_settings"
-msgstr "%s account settings for %s"
-
-msgid "mcen_ti_account_settings_account"
-msgstr "Account"
-
-msgid "mcen_ti_account_settings_userinfo"
-msgstr "User info"
-
-msgid "mcen_ti_accountdetails"
-msgstr "Account details"
-
-msgid "mcen_ti_add_email_title"
-msgstr "Add e-mail address to contact"
-
-msgid "mcen_ti_advsetup_retrieval"
-msgstr "Incoming"
-
-msgid "mcen_ti_advsetup_sending"
-msgstr "Outgoing"
-
-msgid "mcen_ti_connection_connection_name"
-msgstr "Connection-specific SMTP server: %s"
-
-msgid "mcen_ti_default"
-msgstr "Default"
-
-msgid "mcen_ti_email_signatures_edit_title"
-msgstr "E-mail signature"
-
-msgid "mcen_ti_emailsetup"
-msgstr "Account setup "
-
-msgid "mcen_ti_emailsetup_accounts"
-msgstr "E-mail accounts"
-
-msgid "mcen_ti_emailsetup_complete"
-msgstr "Complete"
-
-msgid "mcen_ti_emailsetup_incomingdetails"
-msgstr "Incoming details"
-
-msgid "mcen_ti_emailsetup_outgoingdetails"
-msgstr "Outgoing details"
-
-msgid "mcen_ti_emailsetup_userdetails"
-msgstr "User details"
-
-msgid "mcen_ti_emailsetup_welcome"
-msgstr "Welcome"
-
-msgid "mcen_ti_folder_properties"
-msgstr "Folder details"
-
-msgid "mcen_ti_lastupdated"
-msgstr "Last updated"
-
-msgid "mcen_ti_message_properties"
-msgstr "Message details"
-
+#. Create dialog. We cannot use a touch selector because we
+#. need to use here the folder view widget directly
+#: ../src/gtk/modest-platform.c:2074 ../src/hildon2/modest-platform.c:3031
 msgid "mcen_ti_moveto_folders_title"
 msgstr "Move to folder"
 
-msgid "mcen_ti_new_folder"
-msgstr "New folder"
+#: ../src/gtk/modest-shell.c:123
+msgid "mcen_va_new_email"
+msgstr "New message"
 
-msgid "mcen_ti_optionalsmtp_servers"
-msgstr "Connection-specific SMTP servers"
+#: ../src/hildon2/modest-address-book.c:308
+#, c-format
+msgid "mcen_nc_email_address_not_defined"
+msgstr ""
+"No e-mail address defined for contact %s.\n"
+"Define one now?"
 
-msgid "mcen_ti_options"
-msgstr "Settings"
+#: ../src/hildon2/modest-address-book.c:381
+msgid "mcen_ti_add_email_title"
+msgstr "Add e-mail address to contact"
 
-msgid "mcen_ti_options_composing"
-msgstr "Composing"
+#: ../src/hildon2/modest-address-book.c:396
+msgid "mcen_ia_add_email_name"
+msgstr "Name"
 
-msgid "mcen_ti_options_updating"
-msgstr "Updating"
+#: ../src/hildon2/modest-address-book.c:403
+msgid "mcen_fi_add_email_name"
+msgstr "E-mail"
 
-msgid "mcen_ti_select_attachment_title"
-msgstr "Select attachment"
+#. this address is not valid, select it and return control to user showing banner
+#. Warn the user via a dialog:
+#: ../src/hildon2/modest-address-book.c:432
+#: ../src/hildon2/modest-address-book.c:828
+#: ../src/widgets/modest-default-account-settings-dialog.c:865
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2056
+msgid "mcen_ib_invalid_email"
+msgstr "Invalid e-mail address"
 
+#: ../src/hildon2/modest-address-book.c:470
 msgid "mcen_ti_select_email_title"
 msgstr "Select e-mail addresses"
 
-msgid "mcen_ti_select_recipients"
-msgstr "Select recipients"
+#: ../src/hildon2/modest-address-book.c:683
+msgid "mail_ib_checking_names"
+msgstr "Checking names"
 
-msgid "mcen_va_default_signature_tablet"
-msgstr "Sent from Nokia Internet Tablet"
+#. no matching contacts for the search string
+#: ../src/hildon2/modest-address-book.c:747
+#: ../src/hildon2/modest-address-book.c:1118
+msgid "mcen_nc_no_matching_contacts"
+msgstr "No matching contacts found"
 
-msgid "mcen_va_message_properties_size_noinfo"
-msgstr "–"
+#: ../src/hildon2/modest-address-book.c:1438
+#: ../src/widgets/modest-msg-edit-window.c:4457
+#: ../src/widgets/modest-msg-view-window.c:3693
+msgid "mcen_me_viewer_addtocontacts"
+msgstr "Add to Contacts…"
 
-msgid "mcen_va_never"
-msgstr "Never"
+#: ../src/hildon2/modest-hildon-pannable-area-scrollable.c:125
+#: ../src/widgets/modest-scrolled-window-scrollable.c:125
+msgid "Horizontal scrollbar policy"
+msgstr ""
 
-msgid "mcen_va_options_connectiontype_all"
-msgstr "Any connection"
+#: ../src/hildon2/modest-hildon-pannable-area-scrollable.c:126
+#: ../src/widgets/modest-scrolled-window-scrollable.c:126
+msgid "Visual policy of the horizontal scrollbar"
+msgstr ""
 
-msgid "mcen_va_options_connectiontype_wlan"
-msgstr "WLAN"
+#: ../src/hildon2/modest-hildon-pannable-area-scrollable.c:134
+#: ../src/widgets/modest-scrolled-window-scrollable.c:134
+msgid "Vertical scrollbar policy"
+msgstr ""
 
+#: ../src/hildon2/modest-hildon-pannable-area-scrollable.c:135
+#: ../src/widgets/modest-scrolled-window-scrollable.c:135
+msgid "Visual policy of the vertical scrollbar"
+msgstr ""
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:231
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:238
+msgid "mcen_ti_default_account"
+msgstr "E-mail accounts"
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:254
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:260
+msgid "mcen_fi_options_messageformat"
+msgstr "Default message format"
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:268
+msgid "mcen_fi_options_incoming_notifications"
+msgstr "Update when connected via"
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:274
+msgid "mcen_fi_options_automatic_add"
+msgstr "Update automatically"
+
+#. Separator label
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:279
+msgid "mcen_ti_updating"
+msgstr "Updating"
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:285
+msgid "mcen_fi_options_autoupdate"
+msgstr "Update automatically"
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:300
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:306
+msgid "mcen_fi_options_connectiontype"
+msgstr "Update when connected via"
+
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:322
+#: ../src/hildon2/modest-hildon2-global-settings-dialog.c:328
+msgid "mcen_fi_options_updateinterval"
+msgstr "Update interval"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:329
+msgid "mcen_li_sort_sender_recipient_az"
+msgstr "From/To"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:332
+msgid "mcen_li_sort_sender_recipient_za"
+msgstr "From/To"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:335
+msgid "mcen_li_sort_date_newest"
+msgstr "Date"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:338
+msgid "mcen_li_sort_date_oldest"
+msgstr "Date"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:341
+msgid "mcen_li_sort_subject_az"
+msgstr "Subject"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:344
+msgid "mcen_li_sort_subject_za"
+msgstr "Subject"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:347 ../src/modest-utils.c:603
+msgid "mcen_li_sort_attachment"
+msgstr "Attachment"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:350
+msgid "mcen_li_sort_size_largest"
+msgstr "Size"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:353
+msgid "mcen_li_sort_size_smallest"
+msgstr "Size"
+
+#: ../src/hildon2/modest-hildon2-sort-dialog.c:356 ../src/modest-utils.c:614
+msgid "mcen_li_sort_priority"
+msgstr "Priority"
+
+#: ../src/hildon2/modest-maemo-security-options-view.c:148
+#: ../src/hildon2/modest-maemo-security-options-view.c:299
+#: ../src/hildon2/modest-maemo-security-options-view.c:305
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:407
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:413
+#: ../src/widgets/modest-gtk-security-options-view.c:153
+#: ../src/widgets/modest-gtk-security-options-view.c:250
+msgid "mcen_li_emailsetup_secure_authentication"
+msgstr "Use secure authentication"
+
+#: ../src/hildon2/modest-maemo-security-options-view.c:159
+#: ../src/hildon2/modest-maemo-security-options-view.c:168
+#: ../src/hildon2/modest-maemo-security-options-view.c:284
+#: ../src/hildon2/modest-maemo-security-options-view.c:290
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:468
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:474
+#: ../src/widgets/modest-gtk-security-options-view.c:142
+#: ../src/widgets/modest-gtk-security-options-view.c:244
+msgid "mcen_li_emailsetup_secure_connection"
+msgstr "Secure connection"
+
+#: ../src/hildon2/modest-maemo-security-options-view.c:185
+#: ../src/hildon2/modest-maemo-security-options-view.c:363
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:485
+#: ../src/widgets/modest-gtk-security-options-view.c:148
+#: ../src/widgets/modest-gtk-security-options-view.c:297
+msgid "mcen_fi_emailsetup_port"
+msgstr "Port"
+
+#: ../src/hildon2/modest-platform.c:360 ../src/hildon2/modest-platform.c:442
+msgid "mcen_ib_unsupported_link"
+msgstr "Unsupported link type"
+
+#: ../src/hildon2/modest-platform.c:382
+msgid "mcen_ni_noregistered_viewer"
+msgstr "No viewer found for this file type"
+
+#: ../src/hildon2/modest-provider-picker.c:128
+#: ../src/hildon2/modest-provider-picker.c:130
+#: ../src/hildon2/modest-provider-picker.c:329
+#: ../src/widgets/modest-provider-combo-box.c:132
+#: ../src/widgets/modest-provider-combo-box.c:134
+#: ../src/widgets/modest-provider-combo-box.c:279
+msgid "mcen_va_serviceprovider_other"
+msgstr "Other"
+
+#. TODO: This logical ID is not in the .po file:
+#: ../src/hildon2/modest-serversecurity-picker.c:169
+#: ../src/widgets/modest-serversecurity-combo-box.c:166
+msgid "mcen_fi_advsetup_other_security_none"
+msgstr "None"
+
+#: ../src/hildon2/modest-serversecurity-picker.c:176
+#: ../src/widgets/modest-serversecurity-combo-box.c:169
+msgid "mcen_fi_advsetup_other_security_normal"
+msgstr "Normal (TLS)"
+
+#: ../src/hildon2/modest-serversecurity-picker.c:188
+#: ../src/widgets/modest-serversecurity-combo-box.c:181
+msgid "mcen_fi_advsetup_other_security_ssl"
+msgstr "SSL"
+
+#: ../src/modest-account-protocol.c:182
+msgid "Standard port"
+msgstr ""
+
+#: ../src/modest-account-protocol.c:183
+msgid "The standard port for the protocol"
+msgstr ""
+
+#: ../src/modest-account-protocol.c:190
+msgid "Alternate port"
+msgstr ""
+
+#: ../src/modest-account-protocol.c:191
+msgid "The alternate port for the protocol (usually used in SSL)"
+msgstr ""
+
+#: ../src/modest-account-protocol.c:198
+msgid "Account factory GType"
+msgstr ""
+
+#: ../src/modest-account-protocol.c:199
+msgid "Account factory GType used for creating new instances."
+msgstr ""
+
+#: ../src/modest-ui-dimming-rules.c:220 ../src/modest-ui-dimming-rules.c:324
+#: ../src/modest-ui-dimming-rules.c:386 ../src/modest-ui-dimming-rules.c:615
+#: ../src/modest-ui-dimming-rules.c:684 ../src/modest-ui-dimming-rules.c:1091
+#: ../src/modest-ui-dimming-rules.c:1115 ../src/modest-ui-dimming-rules.c:1736
+#: ../src/modest-ui-dimming-rules.c:1775 ../src/modest-ui-dimming-rules.c:1809
+msgid "mail_ib_notavailable_downloading"
+msgstr "Not available while retrieving message"
+
+#: ../src/modest-ui-dimming-rules.c:306 ../src/modest-ui-dimming-rules.c:329
+msgid "mcen_ib_unable_to_reply"
+msgstr "Unable to reply"
+
+#: ../src/modest-ui-dimming-rules.c:635 ../src/modest-ui-dimming-rules.c:654
+msgid "emev_nc_unabletomove_item"
+msgstr "Unable to move item"
+
+#: ../src/modest-ui-dimming-rules.c:736
+msgid "mail_ib_attach_not_local"
+msgstr "Attachment:"
+
+#: ../src/modest-ui-dimming-rules.c:836 ../src/modest-ui-dimming-rules.c:1437
+msgid "FIXME:no attachment selected"
+msgstr ""
+
+#: ../src/modest-ui-dimming-rules.c:843 ../src/modest-ui-dimming-rules.c:851
+msgid "mail_ib_unable_to_purge_attachments"
+msgstr "Unable to purge attachments"
+
+#: ../src/modest-ui-dimming-rules.c:946
+msgid "mcen_ib_item_unavailable_plaintext"
+msgstr "Not available in plain text mode"
+
+#: ../src/modest-ui-dimming-rules.c:955 ../src/modest-ui-dimming-rules.c:978
+msgid "mcen_ib_move_cursor_to_message"
+msgstr "Move cursor to message area first"
+
+#: ../src/modest-ui-dimming-rules.c:1071
+msgid "mcen_ib_add_recipients_first"
+msgstr "Unable to send. No recipients."
+
+#: ../src/modest-ui-dimming-rules.c:1194 ../src/modest-ui-dimming-rules.c:1213
+msgid "mcen_nc_no_email_acnts_defined"
+msgstr "No e-mail account defined"
+
+#: ../src/modest-ui-dimming-rules.c:1433
+msgid "mcen_ib_unable_to_save_attach_mail"
+msgstr "!!Unable to discover supported secure authentication methods"
+
+#: ../src/modest-ui-dimming-rules.c:1435
+msgid "FIXME:unable to save attachments with nested elements"
+msgstr ""
+
+#: ../src/modest-ui-dimming-rules.c:1439
+#: ../src/widgets/modest-msg-view-window.c:2767
+msgid "mcen_ib_unable_to_display_more"
+msgstr "Unable to reply"
+
+#: ../src/modest-utils.c:391
+msgid "emev_ni_checking_supported_auth_methods"
+msgstr "!!Checking for supported authentication methods…"
+
+#: ../src/modest-utils.c:574
+msgid "mcen_li_sort_sender_recipient"
+msgstr "From/To"
+
+#: ../src/modest-utils.c:584
+msgid "mcen_li_sort_date"
+msgstr "Date"
+
+#: ../src/modest-utils.c:595
+msgid "mcen_li_sort_subject"
+msgstr "Subject"
+
+#: ../src/modest-utils.c:609
+msgid "mcen_li_sort_size"
+msgstr "Size"
+
+#: ../src/widgets/modest-account-view-window.c:253
+msgid "mcen_ti_emailsetup_accounts"
+msgstr "E-mail accounts"
+
+#: ../src/widgets/modest-accounts-window.c:273
+msgid "mcen_ia_noaccounts"
+msgstr "Account"
+
+#: ../src/widgets/modest-accounts-window.c:287
+#: ../src/widgets/modest-accounts-window.c:316
+#: ../src/widgets/modest-folder-window.c:364
+#: ../src/widgets/modest-header-window.c:691
+#: ../src/widgets/modest-header-window.c:779
+#: ../src/widgets/modest-mailboxes-window.c:305
+msgid "mcen_ti_new_message"
+msgstr "(no messages to show)"
+
+#. Settings menu buttons
+#: ../src/widgets/modest-accounts-window.c:432
+msgid "mcen_me_new_account"
+msgstr "Accounts…"
+
+#: ../src/widgets/modest-accounts-window.c:435
+#: ../src/widgets/modest-folder-window.c:571
+#: ../src/widgets/modest-header-window.c:905
+msgid "mcen_me_inbox_sendandreceive"
+msgstr "Send & receive"
+
+#: ../src/widgets/modest-accounts-window.c:440
+#: ../src/widgets/modest-folder-window.c:592
+msgid "mcen_me_edit_account"
+msgid_plural "mcen_me_edit_accounts"
+msgstr[0] "Font…"
+msgstr[1] "Font…"
+
+#: ../src/widgets/modest-accounts-window.c:446
+msgid "mcen_me_inbox_globalsmtpservers"
+msgstr "SMTP servers…"
+
+#: ../src/widgets/modest-accounts-window.c:449
+#: ../src/widgets/modest-folder-window.c:586
+#: ../src/widgets/modest-header-window.c:936
+msgid "mcen_me_outbox_cancelsend"
+msgstr "Cancel sending"
+
+#: ../src/widgets/modest-accounts-window.c:452
+msgid "mcen_me_inbox_options"
+msgstr "Settings…"
+
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:208
+#, c-format
+msgid "ckct_ib_maximum_value"
+msgstr ""
+
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:210
+#, c-format
+msgid "ckct_ib_minimum_value"
+msgstr ""
+
+#. Warn the user via a dialog:
+#. Show error
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:261
+#: ../src/widgets/modest-default-account-settings-dialog.c:881
+#: ../src/widgets/modest-default-account-settings-dialog.c:897
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2075
+msgid "mcen_ib_invalid_servername"
+msgstr "Invalid server name or IP address"
+
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:271
+#: ../src/widgets/modest-default-account-settings-dialog.c:967
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1358
+#: ../src/widgets/modest-global-settings-dialog.c:416
+msgid "imum_nc_wizard_confirm_lose_changes"
+msgstr ""
+"All changes made to the settings will be lost.\n"
+"Continue anyway?"
+
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:388
+#: ../src/widgets/modest-default-account-settings-dialog.c:759
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1181
+msgid "mcen_li_emailsetup_smtp"
+msgstr "Outgoing server (SMTP)"
+
+#. This causes a warning because of the %s in the translation, but not in the original string:
+#: ../src/widgets/modest-connection-specific-smtp-edit-window.c:574
+#, c-format
+msgid "mcen_ti_connection_connection_name"
+msgstr "Connection-specific SMTP server: %s"
+
+#. No connections label
+#: ../src/widgets/modest-connection-specific-smtp-window.c:372
+msgid "mcen_ia_optionalsmtp_noconnection"
+msgstr "(no connections)"
+
+#. Introductory note:
+#: ../src/widgets/modest-connection-specific-smtp-window.c:400
+msgid "mcen_ia_optionalsmtp_note"
+msgstr ""
+"Select connection and edit SMTP server to be used when connection is active"
+
+#. Set window title
+#: ../src/widgets/modest-connection-specific-smtp-window.c:427
+msgid "mcen_ti_optionalsmtp_servers"
+msgstr "Connection-specific SMTP servers"
+
+#: ../src/widgets/modest-connection-specific-smtp-window.c:501
+#: ../src/widgets/modest-connection-specific-smtp-window.c:556
+msgid "mcen_ia_optionalsmtp_notdefined"
+msgstr "Not defined"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:348
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:621
+msgid "mcen_fi_account_title"
+msgstr "Account title"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:386
+msgid "mcen_fi_advsetup_leave_on_server"
+msgstr "Leave messages on server"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:516
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:740
+msgid "mcen_li_emailsetup_name"
+msgstr "Name"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:585
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:814
+msgid "mcen_li_emailsetup_email_address"
+msgstr "E-mail address"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:607
+msgid "mcen_bd_email_signature"
+msgstr "Signature"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:632
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:901
+msgid "mcen_li_emailsetup_servertype"
+msgstr "Incoming server (%s)"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:791
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1207
+msgid "mcen_fi_advsetup_connection_smtp"
+msgstr "Use connection-specific SMTP servers:"
+
+#. Connection-specific SMTP-Severs Edit button:
+#: ../src/widgets/modest-default-account-settings-dialog.c:802
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1216
+msgid "mcen_bd_advsetup_optional_smtp"
+msgstr "SMTP servers:"
+
+#. Warn the user via a dialog:
+#: ../src/widgets/modest-default-account-settings-dialog.c:847
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2040
+msgid "mail_ib_account_name_already_existing"
+msgstr "E-mail account title already in use"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:1018
+#: ../src/widgets/modest-global-settings-dialog.c:406
+msgid "mcen_ib_advsetup_settings_saved"
+msgstr "Settings saved"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:1021
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2109
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2557
+#: ../src/widgets/modest-global-settings-dialog.c:409
+msgid "mail_ib_setting_failed"
+msgstr "Unable to save settings"
+
+#: ../src/widgets/modest-default-account-settings-dialog.c:1239
+#, c-format
+msgid "mcen_ti_account_settings"
+msgstr "%s account settings for %s"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:423
+msgid "mcen_ia_emailsetup_intro"
+msgstr ""
+"Account setup wizard allows you to define e-mail accounts\n"
+"for use on your device.\n"
+"Tap 'Next' to continue."
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:424
+msgid "mcen_ia_privacy_notice"
+msgstr ""
+"Select connection and edit SMTP server to be used when connection is active"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:535
+msgid "mcen_ia_accountdetails"
+msgstr "Select your country/region and service provider from the list below"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:557
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:564
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1019
+msgid "mcen_fi_country"
+msgstr "Region"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:578
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:587
+msgid "mcen_fi_serviceprovider"
+msgstr "Service provider"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:847
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1299
+msgid "mcen_ia_emailsetup_setup_complete"
+msgstr "Account setup is complete."
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:856
+msgid "mcen_ia_easysetup_complete"
+msgstr ""
+"Tap 'Finish' to save or 'Cancel' to discard the settings. You can edit these "
+"settings via 'Tools > Accounts…' from the menu."
+
+#. Show note that account type cannot be changed in future:
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:996
+msgid "mcen_ia_emailsetup_account_type"
+msgstr "Note: Unable to edit account type once setup is complete"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1026
+msgid "mcen_li_emailsetup_type"
+msgstr "Account type"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1300
+msgid "mcen_ia_customsetup_complete"
+msgstr ""
+"Tap 'Finish' to save or 'Cancel' to discard the settings.\n"
+"Tap 'Edit' to modify the advanced account settings."
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1311
+msgid "mcen_fi_advanced_settings"
+msgstr "Advanced settings"
+
+#. Set the wizard title:
+#. * The actual window title will be a combination of this and the page's tab label title.
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1543
+msgid "mcen_ti_emailsetup"
+msgstr "Account setup "
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1581
+msgid "mcen_ti_emailsetup_welcome"
+msgstr "Welcome"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1583
+msgid "mcen_ti_accountdetails"
+msgstr "Account details"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1664
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1880
+msgid "mcen_ti_emailsetup_userdetails"
+msgstr "User details"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1668
+msgid "mcen_ti_emailsetup_incomingdetails"
+msgstr "Incoming details"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1672
+msgid "mcen_ti_emailsetup_outgoingdetails"
+msgstr "Outgoing details"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1676
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:1698
+msgid "mcen_ti_emailsetup_complete"
+msgstr "Complete"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2613
+msgid "mcen_ib_unableto_discover_auth_methods"
+msgstr "!!Unable to discover supported secure authentication methods"
+
+#: ../src/widgets/modest-easysetup-wizard-dialog.c:2806
+msgid "mcen_cn_availability_check"
+msgstr ""
+
+#: ../src/widgets/modest-expander-mail-header-view.c:146
+msgid "mail_va_time"
+msgstr "Time:"
+
+#: ../src/widgets/modest-expander-mail-header-view.c:292
+#: ../src/widgets/modest-expander-mail-header-view.c:312
+#: ../src/widgets/modest-msg-edit-window.c:955
+msgid "mail_va_cc"
+msgstr "Cc:"
+
+#: ../src/widgets/modest-expander-mail-header-view.c:294
+#: ../src/widgets/modest-expander-mail-header-view.c:314
+#: ../src/widgets/modest-msg-edit-window.c:958
+msgid "mail_va_hotfix1"
+msgstr "Bcc:"
+
+#: ../src/widgets/modest-expander-mail-header-view.c:317
+msgid "mail_va_date"
+msgstr "Date:"
+
+#: ../src/widgets/modest-folder-window.c:424
+msgid "mcen_ti_edit_folder_delete"
+msgstr "Move to folder"
+
+#: ../src/widgets/modest-folder-window.c:431
+msgid "mcen_ti_edit_move_folder"
+msgstr "New folder"
+
+#: ../src/widgets/modest-folder-window.c:438
+msgid "mcen_ti_edit_rename_folder"
+msgstr "Rename…"
+
+#. folders actions
+#: ../src/widgets/modest-folder-window.c:568
+msgid "mcen_me_new_folder"
+msgstr "New folder"
+
+#: ../src/widgets/modest-folder-window.c:575
+msgid "mcen_me_rename_folder"
+msgstr "Rename…"
+
+#: ../src/widgets/modest-folder-window.c:578
+msgid "mcen_me_move_folder"
+msgstr "Folder"
+
+#: ../src/widgets/modest-folder-window.c:581
+msgid "mcen_me_delete_folder"
+msgstr ""
+"Delete folder and its contents?\n"
+"%s"
+
+#. Set title
+#: ../src/widgets/modest-global-settings-dialog.c:138
+msgid "mcen_ti_options"
+msgstr "Settings"
+
+#: ../src/widgets/modest-global-settings-dialog.c:181
 msgid "mcen_va_options_connectiontype_wlan_wimax"
 msgstr "!!WLAN and WiMAX"
 
-msgid "mcen_va_options_messageformat_html"
-msgstr "Formatted text (HTML)"
+#: ../src/widgets/modest-global-settings-dialog.c:183
+#: ../src/widgets/modest-global-settings-dialog.c:185
+msgid "mcen_va_options_connectiontype_wlan"
+msgstr "WLAN"
 
-msgid "mcen_va_options_messageformat_plain"
-msgstr "Plain text"
+#: ../src/widgets/modest-global-settings-dialog.c:189
+msgid "mcen_va_options_connectiontype_all"
+msgstr "Any connection"
 
-msgid "mcen_va_options_updateinterval_10min"
-msgstr "10 minutes"
-
-msgid "mcen_va_options_updateinterval_15min"
-msgstr "15 minutes"
-
-msgid "mcen_va_options_updateinterval_1h"
-msgstr "1 hour"
-
-msgid "mcen_va_options_updateinterval_2h"
-msgstr "2 hours"
-
-msgid "mcen_va_options_updateinterval_30min"
-msgstr "30 minutes"
-
+#: ../src/widgets/modest-global-settings-dialog.c:204
 msgid "mcen_va_options_updateinterval_5min"
 msgstr "5 minutes"
 
-msgid "mcen_va_refreshing"
-msgstr "Refreshing"
+#: ../src/widgets/modest-global-settings-dialog.c:207
+msgid "mcen_va_options_updateinterval_10min"
+msgstr "10 minutes"
 
-msgid "mcen_va_serviceprovider_other"
-msgstr "Other"
+#: ../src/widgets/modest-global-settings-dialog.c:210
+msgid "mcen_va_options_updateinterval_15min"
+msgstr "15 minutes"
+
+#: ../src/widgets/modest-global-settings-dialog.c:213
+msgid "mcen_va_options_updateinterval_30min"
+msgstr "30 minutes"
+
+#: ../src/widgets/modest-global-settings-dialog.c:216
+msgid "mcen_va_options_updateinterval_1h"
+msgstr "1 hour"
+
+#: ../src/widgets/modest-global-settings-dialog.c:219
+msgid "mcen_va_options_updateinterval_2h"
+msgstr "2 hours"
+
+#: ../src/widgets/modest-global-settings-dialog.c:234
+msgid "mcen_va_options_messageformat_html"
+msgstr "Formatted text (HTML)"
+
+#: ../src/widgets/modest-global-settings-dialog.c:237
+msgid "mcen_va_options_messageformat_plain"
+msgstr "Plain text"
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:447
+msgid "Horizontal adjustment"
+msgstr ""
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:448
+msgid "GtkAdjustment with information of the horizontal visible position"
+msgstr ""
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:455
+msgid "Vertical adjustment"
+msgstr ""
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:456
+msgid "GtkAdjustment with information of the vertical visible position"
+msgstr ""
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:463
+msgid "Shadow type"
+msgstr ""
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:464
+msgid "Kind of shadow that's shown around the view"
+msgstr ""
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:1246
+#: ../src/widgets/modest-gtkhtml-msg-view.c:1855
+#: ../src/widgets/modest-gtkhtml-msg-view.c:1858
+#: ../src/widgets/modest-msg-edit-window.c:962
+msgid "mail_va_attachment"
+msgstr "Attachment:"
+
+#: ../src/widgets/modest-gtkhtml-msg-view.c:1853
+msgid "mail_va_attachments"
+msgstr "Attachment:"
+
+#: ../src/widgets/modest-header-window.c:633
+#: ../src/widgets/modest-msg-view-window.c:3675
+msgid "mcen_me_inbox_mark_as_read"
+msgstr "Mark as read"
+
+#: ../src/widgets/modest-header-window.c:634
+#: ../src/widgets/modest-msg-view-window.c:3679
+msgid "mcen_me_inbox_mark_as_unread"
+msgstr "Mark as unread"
+
+#: ../src/widgets/modest-header-window.c:674
+msgid "mcen_ia_nomessages"
+msgstr "(no messages to show)"
+
+#: ../src/widgets/modest-header-window.c:831
+msgid "mcen_ti_edit_delete"
+msgstr "Delete"
+
+#: ../src/widgets/modest-header-window.c:836
+msgid "mcen_ti_edit_move"
+msgstr "Edit"
+
+#: ../src/widgets/modest-header-window.c:911
+#: ../src/widgets/modest-msg-view-window.c:3668
+msgid "mcen_me_move_message"
+msgid_plural "mcen_me_move_messages"
+msgstr[0] "Message"
+msgstr[1] "Message"
+
+#: ../src/widgets/modest-header-window.c:921
+msgid "mcen_me_folder_details"
+msgstr "Drafts"
+
+#: ../src/widgets/modest-header-window.c:927
+msgid "mcen_va_more"
+msgstr "E-mail"
+
+#: ../src/widgets/modest-hildon1-window-mgr.c:592
+msgid "emev_nc_close_windows"
+msgstr ""
+"Several windows currently open.\n"
+"Close all E-mail windows?"
+
+#: ../src/widgets/modest-hildon1-window-mgr.c:641
+msgid "mcen_nc_no_email_message_modified_save_changes"
+msgstr "Message modified. Save changes?"
+
+#: ../src/widgets/modest-limit-retrieve-combo-box.c:157
+msgid "mcen_fi_advsetup_retrieve_nolimit"
+msgstr "No limit"
+
+#: ../src/widgets/modest-limit-retrieve-combo-box.c:160
+msgid "mcen_fi_advsetup_retrieve_200"
+msgstr "Last 200 messages"
+
+#: ../src/widgets/modest-limit-retrieve-combo-box.c:163
+msgid "mcen_fi_advsetup_retrieve_100"
+msgstr "Last 100 messages"
+
+#: ../src/widgets/modest-limit-retrieve-combo-box.c:166
+msgid "mcen_fi_advsetup_retrieve_50"
+msgstr "Last 50 messages"
+
+#: ../src/widgets/modest-limit-retrieve-combo-box.c:169
+msgid "mcen_fi_advsetup_retrieve_20"
+msgstr "Last 20 messages"
+
+#: ../src/widgets/modest-msg-edit-window.c:235
+#: ../src/widgets/modest-msg-edit-window.c:4297
+#: ../src/widgets/modest-msg-edit-window.c:4492
+msgid "mcen_me_message_settings"
+msgstr "Message sent"
+
+#: ../src/widgets/modest-msg-edit-window.c:2345
+msgid "mcen_ia_select_inline_image_title"
+msgstr "Select inline image"
+
+#: ../src/widgets/modest-msg-edit-window.c:2460
+#: ../src/widgets/modest-msg-view-window.c:2668
+#: ../src/widgets/modest-msg-view-window.c:2718
+#: ../src/widgets/modest-msg-view-window.c:2853
+#: ../src/widgets/modest-msg-view-window.c:2990
+msgid "mail_ib_file_operation_failed"
+msgstr "File error"
+
+#: ../src/widgets/modest-msg-edit-window.c:2552
+msgid "mcen_ia_select_attachment_title"
+msgstr "Select attachment"
+
+#: ../src/widgets/modest-msg-edit-window.c:2705
+msgid "TODO: no attachments selected to remove"
+msgstr ""
+
+#: ../src/widgets/modest-msg-edit-window.c:2732
+#, c-format
+msgid "emev_nc_delete_attachment"
+msgid_plural "emev_nc_delete_attachments"
+msgstr[0] ""
+"Remove attachment from message?\n"
+"%s"
+msgstr[1] "Remove selected attachments from message?"
+
+#: ../src/widgets/modest-msg-edit-window.c:2806
+msgid "mcen_ti_font_size"
+msgstr "Size"
+
+#: ../src/widgets/modest-msg-edit-window.c:2864
+msgid "mcen_ti_font_face"
+msgstr "Date"
+
+#: ../src/widgets/modest-msg-edit-window.c:3098
+msgid "emev_nc_formatting_lost"
+msgstr ""
+"All current formatting will be removed.\n"
+"Continue anyway?"
+
+#: ../src/widgets/modest-msg-edit-window.c:3644
+msgid "mail_va_new_email"
+msgstr "New message"
+
+#: ../src/widgets/modest-msg-edit-window.c:3867
+#: ../src/widgets/modest-msg-view-window.c:1588
+msgid "mail_ib_nothing_to_find"
+msgstr "Nothing to find"
+
+#: ../src/widgets/modest-msg-edit-window.c:4486
+msgid "mcen_me_editor_add_attachment"
+msgstr "Attach file…"
+
+#. Toolbar items
+#: ../src/widgets/modest-msg-view-window.c:251
+msgid "mcen_me_inbox_reply"
+msgstr "Reply"
+
+#: ../src/widgets/modest-msg-view-window.c:252
+msgid "mcen_me_inbox_replytoall"
+msgstr "Reply to all"
+
+#: ../src/widgets/modest-msg-view-window.c:253
+msgid "mcen_me_inbox_forward"
+msgstr "Forward"
+
+#: ../src/widgets/modest-msg-view-window.c:254
+msgid "qgn_toolb_gene_deletebutton"
+msgstr ""
+
+#: ../src/widgets/modest-msg-view-window.c:255
+msgid "qgn_toolb_gene_back"
+msgstr ""
+
+#: ../src/widgets/modest-msg-view-window.c:256
+msgid "qgn_toolb_gene_forward"
+msgstr ""
+
+#: ../src/widgets/modest-msg-view-window.c:257
+msgid "mail_bd_external_images"
+msgstr "User name"
+
+#: ../src/widgets/modest-msg-view-window.c:261
+msgid "qgn_toolb_gene_find"
+msgstr ""
+
+#: ../src/widgets/modest-msg-view-window.c:3152
+msgid "usbh_ib_mmc_usb_connected"
+msgstr ""
+
+#: ../src/widgets/modest-msg-view-window.c:3262
+#, c-format
+msgid "sfil_va_number_of_objects_attachment"
+msgid_plural "sfil_va_number_of_objects_attachments"
+msgstr[0] "Unable to purge attachments"
+msgstr[1] "Unable to purge attachments"
+
+#: ../src/widgets/modest-msg-view-window.c:3405
+#: ../src/widgets/modest-msg-view-window.c:3409
+#, c-format
+msgid "mcen_nc_purge_file_text"
+msgid_plural "mcen_nc_purge_files_text"
+msgstr[0] "This will remove attachment %s from message. Continue anyway?"
+msgstr[1] "This will remove %d attachments from message. Continue anyway?"
+
+#: ../src/widgets/modest-msg-view-window.c:3683
+msgid "mcen_me_viewer_save_attachments"
+msgstr "Save attachment…"
+
+#: ../src/widgets/modest-progress-bar.c:371
+#, c-format
+msgid "mcen_me_receiving"
+msgstr "Retrieving %d/%d"
+
+#: ../src/widgets/modest-progress-bar.c:374
+msgid "mail_me_receiving"
+msgstr "Retrieving"
+
+#: ../src/widgets/modest-progress-bar.c:378
+#, c-format
+msgid "mcen_me_sending"
+msgstr "Retrieving %d/%d"
+
+#: ../src/widgets/modest-progress-bar.c:381
+msgid "mail_me_sending"
+msgstr "Opening"
+
+#: ../src/widgets/modest-retrieve-combo-box.c:163
+msgid "mcen_fi_advsetup_retrievetype_headers"
+msgstr "Headers only"
+
+#: ../src/widgets/modest-retrieve-combo-box.c:178
+msgid "mcen_fi_advsetup_retrievetype_messages_attachments"
+msgstr "Messages and attachments"
+
+#: ../src/widgets/modest-signature-editor-dialog.c:148
+msgid "mcen_ti_email_signatures_edit_title"
+msgstr "E-mail signature"
+
+#: ../src/widgets/modest-signature-editor-dialog.c:154
+msgid "mcen_fi_email_signatures_use_signature"
+msgstr "Use signature"
+
+#: ../src/widgets/modest-signature-editor-dialog.c:170
+#: ../src/widgets/modest-signature-editor-dialog.c:231
+msgid "mcen_va_default_signature_tablet"
+msgstr "Sent from Nokia Internet Tablet"
+
+#. This causes a warning because of the %s in the translation, but not in the original string:
+#: ../src/widgets/modest-signature-editor-dialog.c:219
+#, c-format
+msgid "mcen_ia_email_signatures_edit_dlg_label"
+msgstr "Signature for account %s"
+
+#: ../src/widgets/modest-toolkit-utils.c:401
+msgid "mcen_ti_select_attachments_title"
+msgstr "Select attachment"
+
+#: ../src/widgets/modest-toolkit-utils.c:401
+msgid "mcen_ti_select_attachment_title"
+msgstr "Select attachment"
+
+#~ msgid "emev_ib_ui_imap_server_not_support_error"
+#~ msgstr "Operation not supported by IMAP server"
+
+#~ msgid "emev_ib_ui_imap_uid_fetch_error"
+#~ msgstr "Unable to retrieve message body"
+
+#~ msgid "emev_ib_ui_imap_unable_to_rename"
+#~ msgstr ""
+#~ "Unable to rename.\n"
+#~ "Invalid name."
+
+#~ msgid "emev_ib_ui_pop3_msg_lock_error"
+#~ msgstr ""
+#~ "Unable to access e-mail account. Another application may be using it."
+
+#~ msgid "emev_ib_ui_smtp_send_error"
+#~ msgstr "SMTP send operation failed. Please try again later."
+
+#~ msgid "emev_nc_delete_mailboximap"
+#~ msgstr ""
+#~ "Deleting this e-mail account will remove all local copies of messages "
+#~ "retrieved to this account's Inbox and IMAP folders. Delete anyway?"
+
+#~ msgid "emev_nc_mailbox_inuse"
+#~ msgstr "E-mail account in use"
+
+#~ msgid "emev_nc_mailbox_notavailable"
+#~ msgstr "E-mail account not available"
+
+#~ msgid "emev_ni_ui_imap_connect_server_error"
+#~ msgstr ""
+#~ "Unable to connect to %s. Server name or port number may be incorrect."
+
+#~ msgid "emev_ni_ui_pop3_msg_connect_error"
+#~ msgstr ""
+#~ "Unable to connect to %s. Server name or port number may be incorrect."
+
+#~ msgid "emev_ni_ui_pop3_msg_eof"
+#~ msgstr ""
+#~ "Connection terminated by e-mail server.\n"
+#~ "Message retrieval cancelled. Try connecting again."
+
+#~ msgid "emev_ui_pop3_msg_socket_error"
+#~ msgstr ""
+#~ "Error in socket operation. If using SSL encrypted e-mail, disable SSL and "
+#~ "try again."
+
+#~ msgid "mail_ib_contacts_file_access_permission"
+#~ msgstr "Unable to access contact information"
+
+#~ msgid "mail_ib_imap_server_sync_error"
+#~ msgstr ""
+#~ "IMAP synchronisation error occurred while processing messages.\n"
+#~ "Performing Send-Receive operation for e-mail account %s."
+
+#~ msgid "mail_ib_login_cancelled"
+#~ msgstr "Login cancelled"
+
+#~ msgid "mail_ib_opening_draft_message"
+#~ msgstr "Opening"
+
+#~ msgid "mail_ln_sent"
+#~ msgstr "Sent"
+
+#~ msgid "mail_nc_msg_count_limit_exceeded"
+#~ msgstr ""
+#~ "%d new messages on server but retrieval limit is %d.\n"
+#~ "Retrieve all messages or the newest ones up to the limit?"
+
+#~ msgid "mail_ni_ssl_certificate_error"
+#~ msgstr "Secure connection failed"
+
+#~ msgid "mail_ni_ui_folder_file_error"
+#~ msgstr "File error"
+
+#~ msgid "mail_ni_ui_folder_get_header_error"
+#~ msgstr "Unable to retrieve message header"
+
+#~ msgid "mail_usr_not_available_on_server_dev"
+#~ msgstr "Recipient not found on server"
+
+#~ msgid "mcen_bd_get_all"
+#~ msgstr "All"
+
+#~ msgid "mcen_bd_new"
+#~ msgstr "New"
+
+#~ msgid "mcen_bd_newest_only"
+#~ msgstr "Newest only"
+
+#~ msgid "mcen_bd_no"
+#~ msgstr "No"
+
+#~ msgid "mcen_bd_view"
+#~ msgstr "View"
+
+#~ msgid "mcen_bd_yes"
+#~ msgstr "Yes"
+
+#~ msgid "mcen_fi_advsetup_limit_retrieve"
+#~ msgstr "Retrieval limit"
+
+#~ msgid "mcen_fi_advsetup_other_security_secureimap4s"
+#~ msgstr "SSL (IMAP4S)"
+
+#~ msgid "mcen_fi_advsetup_other_security_securepop3s"
+#~ msgstr "SSL (POP3S)"
+
+#~ msgid "mcen_fi_advsetup_retrievetype"
+#~ msgstr "Retrieve"
+
+#~ msgid "mcen_fi_advsetup_retrievetype_messages"
+#~ msgstr "Messages"
+
+#~ msgid "mcen_fi_advsetup_sizelimit"
+#~ msgstr "Message size limit (kB)"
+
+#~ msgid "mcen_fi_localroot_description"
+#~ msgstr "Local folders on %s"
+
+#~ msgid "mcen_fi_new_folder_name"
+#~ msgstr "Name"
+
+#~ msgid "mcen_fi_options_playsound"
+#~ msgstr "Play sound when message arrives"
+
+#~ msgid "mcen_fi_remoteroot_account"
+#~ msgstr "%s account"
+
+#~ msgid "mcen_fi_rootfolder_folders"
+#~ msgstr "Folders"
+
+#~ msgid "mcen_fi_rootfolder_messages"
+#~ msgstr "Messages"
+
+#~ msgid "mcen_fi_rootfolder_size"
+#~ msgstr "Total size"
+
+#~ msgid "mcen_ia_default_folder_name"
+#~ msgstr "New folder"
+
+#~ msgid "mcen_ia_default_folder_name_s"
+#~ msgstr "New folder %s"
+
+#~ msgid "mcen_ia_optionalsmtp_connection_name"
+#~ msgstr "Connection name"
+
+#~ msgid "mcen_ia_optionalsmtp_servername"
+#~ msgstr "SMTP server name"
+
+#~ msgid "mcen_ib_changes_discarded"
+#~ msgstr "Changes discarded"
+
+#~ msgid "mcen_ib_getting_items"
+#~ msgstr "Retrieving"
+
+#~ msgid "mcen_ib_no_message_selected"
+#~ msgstr "Select message first"
+
+#~ msgid "mcen_ib_nothing_to_reply"
+#~ msgstr "Nothing to reply to"
+
+#~ msgid "mcen_ib_removing_attachment"
+#~ msgstr "Removing attachment"
+
+#~ msgid "mcen_ib_subject_not_modified"
+#~ msgstr ""
+#~ "Unable to send.\n"
+#~ "Make sure subject contains some text."
+
+#~ msgid "mcen_me_inbox_hidefolders"
+#~ msgstr "Folders"
+
+#~ msgid "mcen_me_inbox_messagedetails"
+#~ msgstr "Details"
+
+#~ msgid "mcen_me_inbox_moveto"
+#~ msgstr "Move to…"
+
+#~ msgid "mcen_me_inbox_new"
+#~ msgstr "New"
+
+#~ msgid "mcen_me_inbox_open"
+#~ msgstr "Open"
+
+#~ msgid "mcen_me_inbox_open_addressbook"
+#~ msgstr "Contacts…"
+
+#~ msgid "mcen_me_inbox_retrieve_contents"
+#~ msgstr "Retrieve contents"
+
+#~ msgid "mcen_me_inbox_sendandreceive_all"
+#~ msgstr "All"
+
+#~ msgid "mcen_me_inbox_sort"
+#~ msgstr "Sort…"
+
+#~ msgid "mcen_me_toolbar_sendreceive_all"
+#~ msgstr "All"
+
+#~ msgid "mcen_me_toolbar_sendreceive_default"
+#~ msgstr "%s"
+
+#~ msgid "mcen_me_toolbar_sendreceive_mailbox_n"
+#~ msgstr "%s"
+
+#~ msgid "mcen_me_viewer_100"
+#~ msgstr "100%"
+
+#~ msgid "mcen_me_viewer_120"
+#~ msgstr "120%"
+
+#~ msgid "mcen_me_viewer_150"
+#~ msgstr "150%"
+
+#~ msgid "mcen_me_viewer_200"
+#~ msgstr "200%"
+
+#~ msgid "mcen_me_viewer_50"
+#~ msgstr "50%"
+
+#~ msgid "mcen_me_viewer_80"
+#~ msgstr "80%"
+
+#~ msgid "mcen_me_viewer_nextmessage"
+#~ msgstr "Next message"
+
+#~ msgid "mcen_me_viewer_previousmessage"
+#~ msgstr "Previous message"
+
+#~ msgid "mcen_me_viewer_view_attachment"
+#~ msgstr "View attachment"
+
+#~ msgid "mcen_me_viewer_zoom"
+#~ msgstr "Zoom"
+
+#~ msgid "mcen_nc_purge_file_text_inbox"
+#~ msgstr "This removes attachments from this message. Continue anyway?"
+
+#~ msgid "mcen_nc_unable_to_delete_n_messages"
+#~ msgstr ""
+#~ "Unable to delete %d messages.\n"
+#~ "Messages in use or already queued for deletion."
+
+#~ msgid "mcen_ti_account_settings_account"
+#~ msgstr "Account"
+
+#~ msgid "mcen_ti_account_settings_userinfo"
+#~ msgstr "User info"
+
+#~ msgid "mcen_ti_advsetup_retrieval"
+#~ msgstr "Incoming"
+
+#~ msgid "mcen_ti_advsetup_sending"
+#~ msgstr "Outgoing"
+
+#~ msgid "mcen_ti_options_composing"
+#~ msgstr "Composing"
+
+#~ msgid "mcen_ti_select_recipients"
+#~ msgstr "Select recipients"
+
+#~ msgid "mcen_va_message_properties_size_noinfo"
+#~ msgstr "–"
