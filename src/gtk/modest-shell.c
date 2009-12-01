@@ -232,6 +232,7 @@ update_title (ModestShell *self)
 	gint n_pages, i;
 	ModestShellPrivate *priv;
 	GtkWidget *child;
+	GString *title_buffer;
 	GString *subtitle_buffer;
 
 	priv = MODEST_SHELL_GET_PRIVATE (self);
@@ -244,10 +245,16 @@ update_title (ModestShell *self)
 	}
 
 	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), n_pages - 1);
-	gtk_label_set_text (GTK_LABEL (priv->title_label), 
-			    gtk_notebook_get_tab_label_text (GTK_NOTEBOOK (priv->notebook), child));
+	title_buffer = g_string_new ("");
+	title_buffer = g_string_append (title_buffer, "<b>");
+	title_buffer = g_string_append (title_buffer, gtk_notebook_get_tab_label_text (GTK_NOTEBOOK (priv->notebook), child));
+	title_buffer = g_string_append (title_buffer, "</b>");
+	gtk_label_set_markup (GTK_LABEL (priv->title_label), 
+			      title_buffer->str);
+	g_string_free (title_buffer, TRUE);
 
 	subtitle_buffer = g_string_new ("");
+	subtitle_buffer = g_string_append (subtitle_buffer, "<small>");
 	for (i = 0; i < n_pages - 1; i++) {
 	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), i);
 		if (i != 0) {
@@ -256,7 +263,8 @@ update_title (ModestShell *self)
 		subtitle_buffer = g_string_append (subtitle_buffer,
 						   gtk_notebook_get_tab_label_text (GTK_NOTEBOOK (priv->notebook), child));
 	}
-	gtk_label_set_text (GTK_LABEL (priv->subtitle_label), 
-			    subtitle_buffer->str);
+	subtitle_buffer = g_string_append (subtitle_buffer, "</small>");
+	gtk_label_set_markup (GTK_LABEL (priv->subtitle_label), 
+			      subtitle_buffer->str);
 	g_string_free (subtitle_buffer, TRUE);
 }
