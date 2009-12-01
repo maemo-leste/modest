@@ -320,6 +320,29 @@ on_back_button_clicked (GtkToolButton *button, ModestShell *self)
 }
 
 static void
+menu_position_cb (GtkMenu *menu,
+		  gint *x,
+		  gint *y,
+		  gboolean *push_in,
+		  ModestShell *self)
+{
+	ModestShellPrivate *priv;
+	GtkAllocation *alloc;
+	GdkWindow *parent_window;
+	gint pos_x, pos_y;
+
+	priv = MODEST_SHELL_GET_PRIVATE (self);
+
+	alloc = &(GTK_WIDGET (priv->title_button)->allocation);
+	parent_window = gtk_widget_get_parent_window (GTK_WIDGET (priv->title_button));
+	gdk_window_get_position (parent_window, &pos_x, &pos_y);
+	*x = pos_x + alloc->x;
+	*y = pos_y + alloc->y + alloc->height;
+	*push_in = TRUE;
+	
+}
+
+static void
 on_title_button_clicked (GtkToolButton *button, ModestShell *self)
 {
 	ModestShellPrivate *priv;
@@ -337,7 +360,9 @@ on_title_button_clicked (GtkToolButton *button, ModestShell *self)
 	menu = modest_shell_window_get_menu (MODEST_SHELL_WINDOW (child));
 
 	if (menu) {
-		gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
+		gtk_menu_popup (GTK_MENU (menu), NULL, NULL, 
+				(GtkMenuPositionFunc) menu_position_cb, (gpointer) self,
+				1, gtk_get_current_event_time ());
 	}
 }
 
