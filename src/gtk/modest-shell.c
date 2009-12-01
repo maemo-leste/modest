@@ -30,6 +30,8 @@
 #include <string.h>
 #include <modest-shell.h>
 #include <modest-shell-window.h>
+#include <modest-icon-names.h>
+#include <modest-ui-actions.h>
 
 /* 'private'/'protected' functions */
 static void modest_shell_class_init (ModestShellClass *klass);
@@ -40,6 +42,7 @@ static void update_title (ModestShell *self);
 
 static void on_back_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_title_button_clicked (GtkToolButton *button, ModestShell *self);
+static void on_new_msg_button_clicked (GtkToolButton *button, ModestShell *self);
 
 
 typedef struct _ModestShellPrivate ModestShellPrivate;
@@ -47,6 +50,7 @@ struct _ModestShellPrivate {
 	GtkWidget *main_vbox;
 	GtkWidget *notebook;
 	GtkWidget *top_toolbar;
+	GtkToolItem *new_message_button;
 	GtkToolItem *back_button;
 	GtkToolItem *title_button;
 	GtkWidget *title_label;
@@ -101,6 +105,7 @@ modest_shell_instance_init (ModestShell *obj)
 {
 	ModestShellPrivate *priv;
 	GtkWidget *title_vbox;
+	GtkWidget *new_message_icon;
 
 	priv = MODEST_SHELL_GET_PRIVATE(obj);
 
@@ -112,7 +117,16 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_widget_show (priv->top_toolbar);
 	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->top_toolbar, FALSE, FALSE, 0);
 
+	new_message_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_NEW_MAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
+	gtk_widget_show (new_message_icon);
+	priv->new_message_button = gtk_tool_button_new (new_message_icon, _("mcen_va_new_email"));
+	g_object_set (priv->new_message_button, "is-important", TRUE, NULL);
+	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->new_message_button, -1);
+	gtk_widget_show (GTK_WIDGET (priv->new_message_button));
+	g_signal_connect (G_OBJECT (priv->new_message_button), "clicked", G_CALLBACK (on_new_msg_button_clicked), obj);
+
 	priv->back_button = gtk_tool_button_new_from_stock (GTK_STOCK_GO_BACK);
+	g_object_set (priv->back_button, "is-important", TRUE, NULL);
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->back_button, -1);
 	gtk_widget_show (GTK_WIDGET (priv->back_button));
 	g_signal_connect (G_OBJECT (priv->back_button), "clicked", G_CALLBACK (on_back_button_clicked), obj);
@@ -320,4 +334,22 @@ on_title_button_clicked (GtkToolButton *button, ModestShell *self)
 	if (menu) {
 		gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
 	}
+}
+
+static void
+on_new_msg_button_clicked (GtkToolButton *button, ModestShell *self)
+{
+	ModestShellPrivate *priv;
+	gint n_pages;
+	GtkWidget *child;
+
+	priv = MODEST_SHELL_GET_PRIVATE (self);
+
+	n_pages = gtk_notebook_get_n_pages (GTK_NOTEBOOK (priv->notebook));
+	if (n_pages < 1)
+		return;
+
+	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), -1);
+
+	modest_ui_actions_on_new_msg (NULL, MODEST_WINDOW (child));
 }
