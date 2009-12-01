@@ -102,14 +102,6 @@ libmodest_ui_la_LIBADD = \
 	$(MODEST_HILDON_NOTIFY_LIBS) \
 	$(MODEST_CALENDAR_WIDGETS_LIBS)
 
-UI_FILES=\
-	ui/modest-main-window-ui.xml \
-	ui/modest-msg-edit-window-ui.xml \
-	ui/modest-msg-view-window-ui.xml
-
-uidir = $(datadir)/modest/ui
-ui_DATA = $(UI_FILES)
-
 serviceentry_DATA   = com.nokia.modest.service
 desktopentry_DATA   = modest.desktop
 backupsettings_DATA = modest.conf
@@ -118,7 +110,6 @@ restore_SCRIPTS = modest-restore.sh
 ossocudscripts_SCRIPTS = modest-clean.sh
 
 EXTRA_DIST=\
-	$(UI_FILES) \
 	$(PIXMAP_FILES) \
 	$(serviceentry_DATA) \
 	$(desktopentry_DATA) \
