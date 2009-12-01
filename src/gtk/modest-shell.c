@@ -39,6 +39,7 @@ static void modest_shell_finalize   (GObject *obj);
 static void update_title (ModestShell *self);
 
 static void on_back_button_clicked (GtkToolButton *button, ModestShell *self);
+static void on_title_button_clicked (GtkToolButton *button, ModestShell *self);
 
 
 typedef struct _ModestShellPrivate ModestShellPrivate;
@@ -133,6 +134,7 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->title_button, -1);
 	gtk_container_child_set (GTK_CONTAINER (priv->top_toolbar), GTK_WIDGET (priv->title_button), "expand", TRUE, NULL);
 	g_object_set (priv->title_button, "is-important", TRUE, NULL);
+	g_signal_connect (G_OBJECT (priv->title_button), "clicked", G_CALLBACK (on_title_button_clicked), obj);
 
 	priv->notebook = gtk_notebook_new ();
 	gtk_widget_show (priv->notebook);
@@ -293,5 +295,28 @@ on_back_button_clicked (GtkToolButton *button, ModestShell *self)
 
 	if (!delete_event_retval) {
 		update_title (self);
+	}
+}
+
+static void
+on_title_button_clicked (GtkToolButton *button, ModestShell *self)
+{
+	ModestShellPrivate *priv;
+	gint n_pages;
+	gboolean delete_event_retval;
+	GtkWidget *child;
+	GtkWidget *menu;
+
+	priv = MODEST_SHELL_GET_PRIVATE (self);
+
+	n_pages = gtk_notebook_get_n_pages (GTK_NOTEBOOK (priv->notebook));
+	if (n_pages < 1)
+		return;
+
+	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), -1);
+	menu = modest_shell_window_get_menu (MODEST_SHELL_WINDOW (child));
+
+	if (menu) {
+		gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 1, gtk_get_current_event_time ());
 	}
 }

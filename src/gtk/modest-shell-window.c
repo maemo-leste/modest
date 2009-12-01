@@ -248,8 +248,8 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
 
 	menu_item = gtk_menu_item_new_with_label (label);
-	g_signal_connect_after (G_OBJECT (menu_item), "activate-item",
-				G_CALLBACK (callback), (gpointer) self);
+	g_signal_connect (G_OBJECT (menu_item), "activate",
+			  G_CALLBACK (callback), (gpointer) self);
 
 	if (accelerator != NULL) {
 		guint accel_key;
@@ -265,6 +265,7 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 	} else {
 		gtk_widget_destroy (menu_item);
 	}
+	gtk_widget_show (menu_item);
 }
 
 static void
