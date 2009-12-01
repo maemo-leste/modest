@@ -38,6 +38,8 @@ static void modest_shell_finalize   (GObject *obj);
 
 static void update_title (ModestShell *self);
 
+static void on_back_button_clicked (GtkToolButton *button, ModestShell *self);
+
 
 typedef struct _ModestShellPrivate ModestShellPrivate;
 struct _ModestShellPrivate {
@@ -112,6 +114,7 @@ modest_shell_instance_init (ModestShell *obj)
 	priv->back_button = gtk_tool_button_new_from_stock (GTK_STOCK_GO_BACK);
 	gtk_toolbar_insert (GTK_TOOLBAR (priv->top_toolbar), priv->back_button, -1);
 	gtk_widget_show (GTK_WIDGET (priv->back_button));
+	g_signal_connect (G_OBJECT (priv->back_button), "clicked", G_CALLBACK (on_back_button_clicked), obj);
 
 	title_vbox = gtk_vbox_new (FALSE, 0);
 	priv->title_label = gtk_label_new (NULL);
@@ -269,4 +272,26 @@ update_title (ModestShell *self)
 	gtk_label_set_markup (GTK_LABEL (priv->subtitle_label), 
 			      subtitle_buffer->str);
 	g_string_free (subtitle_buffer, TRUE);
+}
+
+static void
+on_back_button_clicked (GtkToolButton *button, ModestShell *self)
+{
+	ModestShellPrivate *priv;
+	gint n_pages;
+	gboolean delete_event_retval;
+	GtkWidget *child;
+
+	priv = MODEST_SHELL_GET_PRIVATE (self);
+
+	n_pages = gtk_notebook_get_n_pages (GTK_NOTEBOOK (priv->notebook));
+	if (n_pages < 1)
+		return;
+
+	child = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), -1);
+	g_signal_emit_by_name (G_OBJECT (child), "delete-event", NULL, &delete_event_retval);
+
+	if (!delete_event_retval) {
+		update_title (self);
+	}
 }
