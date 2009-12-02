@@ -581,6 +581,52 @@ format_compact_style (gchar **item_name,
 }
 
 static void
+replace_special_folder_prefix (gchar **item_name)
+{
+	const gchar *separator;
+	gchar *prefix;
+
+	if (item_name == NULL || *item_name == NULL || **item_name == '\0')
+		return;
+	separator = g_strstr_len (*item_name, -1, MODEST_FOLDER_PATH_SEPARATOR);
+	if (separator == NULL)
+		return;
+
+	prefix = g_strndup (*item_name, separator - *item_name);
+	g_strstrip (prefix);
+
+	if (prefix && *prefix != '\0') {
+		TnyFolderType folder_type;
+		gchar *new_name;
+		gchar *downcase;
+
+		downcase = g_utf8_strdown (prefix, -1);
+		g_free (prefix);
+		prefix = downcase;
+
+		if (strcmp (downcase, "inbox") == 0) {
+			folder_type = TNY_FOLDER_TYPE_INBOX;
+			new_name = g_strconcat (_("mcen_me_folder_inbox"), separator, NULL);
+			g_free (*item_name);
+			*item_name = new_name;
+		} else {
+			folder_type = modest_local_folder_info_get_type (prefix);
+			switch (folder_type) {
+			case TNY_FOLDER_TYPE_INBOX:
+			case TNY_FOLDER_TYPE_ARCHIVE:
+				new_name = g_strconcat (modest_local_folder_info_get_type_display_name (folder_type), separator, NULL);
+				g_free (*item_name);
+				*item_name = new_name;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	g_free (prefix);
+}
+
+static void
 text_cell_data  (GtkTreeViewColumn *column,
 		 GtkCellRenderer *renderer,
 		 GtkTreeModel *tree_model,
@@ -704,6 +750,8 @@ text_cell_data  (GtkTreeViewColumn *column,
 		format_compact_style (&item_name, instance, priv->mailbox,
 				      item_weight == 800, 
 				      multiaccount, &use_markup);
+	} else {
+		replace_special_folder_prefix (&item_name);
 	}
 
 	if (item_name && item_weight) {
