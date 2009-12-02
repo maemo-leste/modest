@@ -67,8 +67,6 @@ libmodest_widgets_la_SOURCES=          \
 	modest-dnd.h                   \
 	modest-easysetup-wizard-dialog.h modest-easysetup-wizard-dialog.c \
 	modest-easysetup-wizard-page.c \
-	modest-expander-mail-header-view.c      \
-	modest-expander-mail-header-view.h      \
 	modest-find-toolbar.c          \
 	modest-find-toolbar.h          \
 	modest-folder-view.c           \

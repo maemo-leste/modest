@@ -41,11 +41,9 @@
 #include <modest-tny-msg.h>
 #include <modest-text-utils.h>
 #include <widgets/modest-msg-view.h>
-#ifdef MODEST_TOOLKIT_HILDON2
 #include <widgets/modest-compact-mail-header-view.h>
+#ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-gtk.h>
-#else
-#include <widgets/modest-expander-mail-header-view.h>
 #endif
 #include <widgets/modest-attachments-view.h>
 #include <modest-marshal.h>
@@ -1173,11 +1171,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 	priv->msg                     = NULL;
 
 	priv->body_view                 = GTK_WIDGET (g_object_new (MODEST_TYPE_GTKHTML_MIME_PART_VIEW, NULL));
-#ifdef MODEST_TOOLKIT_HILDON2
-	priv->mail_header_view        = GTK_WIDGET(modest_compact_mail_header_view_new ());
-#else
-	priv->mail_header_view        = GTK_WIDGET(modest_expander_mail_header_view_new (TRUE));
-#endif
+	priv->mail_header_view        = GTK_WIDGET (modest_compact_mail_header_view_new ());
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	priv->attachments_view        = GTK_WIDGET(modest_attachments_view_new (NULL));
 #ifdef MODEST_TOOLKIT_HILDON2
