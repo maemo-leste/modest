@@ -1188,6 +1188,8 @@ modest_account_mgr_account_is_multimailbox (ModestAccountMgr *mgr,
 	gchar *transport_account;
 	gboolean result = FALSE;
 
+	g_return_val_if_fail (account_name, FALSE);
+
 	if (mmb_protocol)
 		*mmb_protocol = NULL;
 

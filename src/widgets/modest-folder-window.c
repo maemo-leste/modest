@@ -338,8 +338,6 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	ModestFolderWindowPrivate *priv = NULL;
 	GdkPixbuf *window_icon;
 	GtkWidget *scrollable;
-	guint accel_key;
-	GdkModifierType accel_mods;
 	GtkWidget *top_alignment;
 	
 	self  = MODEST_FOLDER_WINDOW(g_object_new(MODEST_TYPE_FOLDER_WINDOW, NULL));
@@ -456,6 +454,9 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 
 #ifdef MODEST_TOOLKIT_HILDON2
 	GtkAccelGroup *accel_group;
+	guint accel_key;
+	GdkModifierType accel_mods;
+
 	accel_group = gtk_accel_group_new ();
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (priv->new_message_button, "clicked", accel_group,
