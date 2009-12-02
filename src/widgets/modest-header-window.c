@@ -433,6 +433,7 @@ folder_refreshed_cb (ModestMailOperation *mail_op,
 	update_view (MODEST_HEADER_WINDOW (user_data), NULL);
 }
 
+#ifdef MAEMO_CHANGES
 static gboolean
 tap_and_hold_query_cb (GtkWidget *header_view,
 		       GdkEvent *event,
@@ -478,6 +479,7 @@ tap_and_hold_query_cb (GtkWidget *header_view,
 
 	return FALSE;
 }
+#endif
 
 static void
 delete_header (GtkWindow *parent,
@@ -648,8 +650,10 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 	gtk_widget_show_all (priv->csm_menu);
 
 	/* Connect signals */
+#ifdef MAEMO_CHANGES
 	g_signal_connect ((GObject *) header_view, "tap-and-hold-query",
 			  G_CALLBACK (tap_and_hold_query_cb), self);
+#endif
 	g_signal_connect ((GObject *) delete_item, "activate",
 			  G_CALLBACK (on_delete_csm_activated), self);
 	g_signal_connect ((GObject *) mark_read_item, "activate",

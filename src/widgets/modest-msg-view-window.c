@@ -75,6 +75,10 @@
 #include <modest-maemo-utils.h>
 #endif
 
+#ifdef MODEST_TOOLKIT_HILDON2
+#include <hildon/hildon.h>
+#endif
+
 #define MYDOCS_ENV "MYDOCSDIR"
 #define DOCS_FOLDER ".documents"
 
@@ -2421,8 +2425,11 @@ modest_msg_view_window_show_toolbar (ModestWindow *self,
 		parent_priv->toolbar = gtk_ui_manager_get_widget (parent_priv->ui_manager, 
 								  "/ToolBar");
 
-		/* We don't use HILDON_ICON_SIZE_FINGER in order to avoid the ifdef here */
-		gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), gtk_icon_size_from_name ("hildon-finger"));
+#ifdef MODEST_TOOLKIT_HILDON2
+		gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), HILDON_ICON_SIZE_FINGER);
+#else
+		gtk_toolbar_set_icon_size (GTK_TOOLBAR (parent_priv->toolbar), GTK_ICON_SIZE_LARGE_TOOLBAR);
+#endif
 		gtk_widget_set_no_show_all (parent_priv->toolbar, TRUE);
 
 		priv->next_toolitem = gtk_ui_manager_get_widget (parent_priv->ui_manager, "/ToolBar/ToolbarMessageNext");
