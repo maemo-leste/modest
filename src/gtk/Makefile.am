@@ -43,6 +43,7 @@ libmodest_ui_la_SOURCES= \
 	modest-gtk-window-mgr.h modest-gtk-window-mgr.c \
 	modest-platform.c \
 	modest-shell.h modest-shell.c \
+	modest-shell-banner.h modest-shell-banner.c \
 	modest-shell-window.h modest-shell-window.c
 
 libmodest_ui_la_LIBADD = \

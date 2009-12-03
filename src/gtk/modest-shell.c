@@ -62,6 +62,8 @@ struct _ModestShellPrivate {
 	GdkPixbuf **progress_frames;
 	gint next_frame;
 	guint progress_timeout_id;
+
+	GtkWidget *banners_box;
 };
 #define MODEST_SHELL_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 								      MODEST_TYPE_SHELL, \
@@ -143,6 +145,10 @@ modest_shell_instance_init (ModestShell *obj)
 	priv->progress_icon = gtk_image_new ();
 	gtk_widget_show (priv->progress_icon);
 	gtk_box_pack_start (GTK_BOX (top_hbox), priv->progress_icon, FALSE, FALSE, 0);
+
+	priv->banners_box = gtk_vbox_new (FALSE, 0);
+	gtk_widget_show (priv->banners_box);
+	gtk_box_pack_start (GTK_BOX (priv->main_vbox), priv->banners_box, FALSE, FALSE, 0);
 
 	new_message_icon = gtk_image_new_from_icon_name (MODEST_TOOLBAR_ICON_NEW_MAIL, GTK_ICON_SIZE_LARGE_TOOLBAR);
 	gtk_widget_show (new_message_icon);
@@ -563,4 +569,13 @@ on_key_pressed (GtkWidget *widget,
 
 	return retval;
 	
+}
+
+void
+modest_shell_add_banner (ModestShell *shell, ModestShellBanner *banner)
+{
+	ModestShellPrivate *priv;
+
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+	gtk_box_pack_start (GTK_BOX (priv->banners_box), GTK_WIDGET (banner), FALSE, FALSE, 0);
 }

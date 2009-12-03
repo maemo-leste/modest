@@ -33,6 +33,7 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <widgets/modest-window.h>
+#include <modest-shell-banner.h>
 
 G_BEGIN_DECLS
 
@@ -69,6 +70,7 @@ gint modest_shell_count_windows (ModestShell *shell);
 
 void modest_shell_set_title (ModestShell *shell, ModestWindow *window, const gchar *title);
 void modest_shell_show_progress (ModestShell *shell, ModestWindow *window, gboolean show);
+void modest_shell_add_banner (ModestShell *shell, ModestShellBanner *banner);
 
 
 G_END_DECLS
