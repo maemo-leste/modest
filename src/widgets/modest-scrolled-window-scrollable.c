@@ -167,6 +167,7 @@ modest_scrolled_window_scrollable_class_init (ModestScrolledWindowScrollableClas
 static void
 modest_scrolled_window_scrollable_init (ModestScrolledWindowScrollable *self)
 {
+	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (self), GTK_SHADOW_NONE);
 }
 
 static void
