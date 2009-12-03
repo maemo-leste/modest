@@ -681,13 +681,15 @@ modest_utils_run_sort_dialog (ModestWindow *parent_window,
 			      ModestSortDialogType type)
 {
 	GtkWidget *dialog = NULL;
+	GtkWindow *toplevel;
 
 	/* Build dialog */
-	dialog = modest_platform_create_sort_dialog (gtk_widget_get_toplevel (GTK_WIDGET (parent_window)));
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (parent_window));
+	dialog = modest_platform_create_sort_dialog (toplevel);
 	if (dialog == NULL)
 		return;
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
-				     GTK_WINDOW (dialog), parent_window);
+				     GTK_WINDOW (dialog), toplevel);
 
 	/* Fill sort keys */
 	switch (type) {

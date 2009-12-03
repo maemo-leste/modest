@@ -3045,9 +3045,11 @@ modest_ui_actions_on_new_folder (GtkAction *action, ModestWindow *window)
 
 	if (MODEST_IS_FOLDER_WINDOW (window)) {
 		GtkWidget *folder_view;
+		GtkWindow *toplevel;
 
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
-		modest_ui_actions_create_folder (GTK_WIDGET (window), folder_view, NULL);
+		toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
+		modest_ui_actions_create_folder (toplevel, folder_view, NULL);
 	} else {
 		g_assert_not_reached ();
 	}
@@ -4260,7 +4262,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
 		selected = modest_folder_view_get_selected (folder_view);
-		modest_ui_actions_create_folder (GTK_WIDGET (dialog), GTK_WIDGET (folder_view), selected);
+		modest_ui_actions_create_folder ((GtkWindow *) dialog, GTK_WIDGET (folder_view), selected);
 		g_object_unref (selected);
 		return;
 	case GTK_RESPONSE_NONE:
