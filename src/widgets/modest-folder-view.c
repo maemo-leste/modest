@@ -122,10 +122,6 @@ static gboolean     filter_row             (GtkTreeModel *model,
 					    GtkTreeIter *iter,
 					    gpointer data);
 
-static gboolean     on_key_pressed         (GtkWidget *self,
-					    GdkEventKey *event,
-					    gpointer user_data);
-
 static void         on_configuration_key_changed  (ModestConf* conf,
 						   const gchar *key,
 						   ModestConfEvent event,
@@ -1306,11 +1302,6 @@ modest_folder_view_init (ModestFolderView *obj)
 
 	/* Build treeview */
 	add_columns (GTK_WIDGET (obj));
-
-	/* Connect signals */
- 	g_signal_connect (G_OBJECT (obj),
- 			  "key-press-event",
- 			  G_CALLBACK (on_key_pressed), NULL);
 
  	priv->display_name_changed_signal =
  		g_signal_connect (modest_runtime_get_account_mgr (),
@@ -2790,42 +2781,6 @@ cmp_rows (GtkTreeModel *tree_model, GtkTreeIter *iter1, GtkTreeIter *iter2,
 	return cmp;
 }
 
-
-/*
- * This function manages the navigation through the folders using the
- * keyboard or the hardware keys in the device
- */
-static gboolean
-on_key_pressed (GtkWidget *self,
-		GdkEventKey *event,
-		gpointer user_data)
-{
-	GtkTreeSelection *selection;
-	GtkTreeIter iter;
-	GtkTreeModel *model;
-	gboolean retval = FALSE;
-
-	/* Up and Down are automatically managed by the treeview */
-	if (event->keyval == GDK_Return) {
-		/* Expand/Collapse the selected row */
-		selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (self));
-		if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
-			GtkTreePath *path;
-
-			path = gtk_tree_model_get_path (model, &iter);
-
-			if (gtk_tree_view_row_expanded (GTK_TREE_VIEW (self), path))
-				gtk_tree_view_collapse_row (GTK_TREE_VIEW (self), path);
-			else
-				gtk_tree_view_expand_row (GTK_TREE_VIEW (self), path, FALSE);
-			gtk_tree_path_free (path);
-		}
-		/* No further processing */
-		retval = TRUE;
-	}
-
-	return retval;
-}
 
 /*
  * We listen to the changes in the local folder account name key,
