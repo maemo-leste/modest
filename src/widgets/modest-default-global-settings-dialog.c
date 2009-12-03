@@ -146,6 +146,7 @@ modest_default_global_settings_dialog_init (ModestDefaultGlobalSettingsDialog *s
 				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_TRIPLE);
 
 	/* Add the buttons: */
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL_SAVE, GTK_RESPONSE_OK);
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
 
