@@ -264,7 +264,12 @@ static void
 modest_scrolled_window_scrollable_add_with_viewport_default (ModestScrollable *self,
 								  GtkWidget *widget)
 {
+	GtkWidget *viewport;
+
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (self), widget);
+
+	viewport = gtk_bin_get_child (GTK_BIN (self));
+	gtk_viewport_set_shadow_type (GTK_VIEWPORT (viewport), GTK_SHADOW_NONE);
 }
 
 static GtkAdjustment *

@@ -157,7 +157,7 @@ modest_default_global_settings_dialog_init (ModestDefaultGlobalSettingsDialog *s
 	gtk_container_add (GTK_CONTAINER (align), top_vbox);
 	gtk_container_add (GTK_CONTAINER (GTK_DIALOG (self)->vbox), align);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (self)->vbox), MODEST_MARGIN_HALF);
-	gtk_window_set_default_size (GTK_WINDOW (self), MODEST_DIALOG_WINDOW_MAX_WIDTH, -1);
+	gtk_window_set_default_size (GTK_WINDOW (self), MODEST_DIALOG_WINDOW_MAX_WIDTH, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 
 	gtk_widget_show (align);
 	gtk_widget_show (top_vbox);
