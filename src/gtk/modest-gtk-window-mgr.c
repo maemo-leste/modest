@@ -114,6 +114,8 @@ struct _ModestGtkWindowMgrPrivate {
 
 	gulong        accounts_handler;
 	GtkWidget    *shell;
+
+	gboolean      fullscreen;
 };
 #define MODEST_GTK_WINDOW_MGR_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
 										   MODEST_TYPE_GTK_WINDOW_MGR, \
@@ -190,6 +192,7 @@ modest_gtk_window_mgr_instance_init (ModestGtkWindowMgr *obj)
 
 	priv->modal_windows = g_queue_new ();
 	priv->queue_lock = g_mutex_new ();
+	priv->fullscreen = FALSE;
 
 	/* Could not initialize it from gconf, singletons are not
 	   ready yet */
@@ -752,13 +755,26 @@ modest_gtk_window_mgr_set_fullscreen_mode (ModestWindowMgr *self,
 {
 	g_return_if_fail (MODEST_IS_GTK_WINDOW_MGR (self));
 
+	ModestGtkWindowMgrPrivate *priv = NULL;
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
+	
+	priv->fullscreen = on;
+
+	if (on) {
+		gtk_window_fullscreen (GTK_WINDOW (priv->shell));
+	} else {
+		gtk_window_unfullscreen (GTK_WINDOW (priv->shell));
+	}
 	return;
 }
 
 static gboolean
 modest_gtk_window_mgr_get_fullscreen_mode (ModestWindowMgr *self)
 {
-	return FALSE;
+	ModestGtkWindowMgrPrivate *priv = NULL;
+	priv = MODEST_GTK_WINDOW_MGR_GET_PRIVATE (self);
+	
+	return priv->fullscreen;
 }
 
 static void 

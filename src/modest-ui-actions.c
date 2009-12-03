@@ -4082,9 +4082,6 @@ modest_ui_actions_on_change_fullscreen (GtkAction *action,
 	fullscreen = modest_window_mgr_get_fullscreen_mode (mgr);
 	modest_window_mgr_set_fullscreen_mode (mgr, !fullscreen);
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	gtk_window_present (GTK_WINDOW (window));
-#endif
 }
 
 /*
