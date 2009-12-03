@@ -80,9 +80,11 @@ static void on_queue_changed    (ModestMailOperationQueue *queue,
 static void on_activity_changed (ModestFolderView *view,
 				 gboolean activity,
 				 ModestMailboxesWindow *folder_window);
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean on_key_press(GtkWidget *widget,
-				GdkEventKey *event,
-				gpointer user_data);
+			     GdkEventKey *event,
+			     gpointer user_data);
+#endif
 
 typedef struct _ModestMailboxesWindowPrivate ModestMailboxesWindowPrivate;
 struct _ModestMailboxesWindowPrivate {
@@ -266,9 +268,11 @@ connect_signals (ModestMailboxesWindow *self)
 					   "clicked",
 					   G_CALLBACK (modest_ui_actions_on_new_msg), self);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	/* connect window keys -> priv->folder_view scroll here? */
 	g_signal_connect(G_OBJECT(self), "key-press-event",
 			G_CALLBACK(on_key_press), self);
+#endif
 }
 
 ModestWindow *
@@ -632,7 +636,7 @@ on_activity_changed (ModestFolderView *view,
 	update_progress_hint (self);
 }
 
-
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
@@ -659,3 +663,4 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	return FALSE;
 }
+#endif

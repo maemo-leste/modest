@@ -83,9 +83,11 @@ static void on_row_deleted (GtkTreeModel *tree_model,
 			    GtkTreePath  *path,
 			    gpointer      user_data);
 static void row_count_changed (ModestAccountsWindow *self);
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean on_key_press(GtkWidget *widget,
-				GdkEventKey *event,
-				gpointer user_data);
+			     GdkEventKey *event,
+			     gpointer user_data);
+#endif
 static gboolean on_delete_event (GtkWidget *widget,
 				 GdkEvent *event,
 				 gpointer userdata);
@@ -247,9 +249,10 @@ connect_signals (ModestAccountsWindow *self)
 	/* we don't register this in sighandlers, as it should be run
 	 * after disconnecting all signals, in destroy stage */
 
-
+#ifdef MODEST_TOOLKIT_HILDON2
 	g_signal_connect(G_OBJECT(self), "key-press-event",
 			G_CALLBACK(on_key_press), self);
+#endif
 }
 
 static ModestWindow *
@@ -700,7 +703,7 @@ modest_accounts_window_pre_create (void)
 	}
 }
 
-
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
@@ -727,6 +730,7 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	return FALSE;
 }
+#endif
 
 static gboolean
 on_delete_event (GtkWidget *widget,

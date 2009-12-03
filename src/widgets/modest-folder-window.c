@@ -115,9 +115,11 @@ static void on_visible_account_changed (ModestFolderView *folder_view,
 static void on_account_changed (TnyAccountStore *account_store,
 				TnyAccount *account,
 				gpointer user_data);
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean on_key_press(GtkWidget *widget,
-				GdkEventKey *event,
-				gpointer user_data);
+			     GdkEventKey *event,
+			     gpointer user_data);
+#endif
 
 typedef struct _ModestFolderWindowPrivate ModestFolderWindowPrivate;
 struct _ModestFolderWindowPrivate {
@@ -323,8 +325,10 @@ connect_signals (ModestFolderWindow *self)
 						       G_CALLBACK (on_account_changed), self);
 
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	g_signal_connect(G_OBJECT(self), "key-press-event",
 			G_CALLBACK(on_key_press), self);
+#endif
 }
 
 ModestWindow *
@@ -956,7 +960,7 @@ on_account_changed (TnyAccountStore *account_store,
 		update_window_title (MODEST_FOLDER_WINDOW (user_data), account);
 }
 
-
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
@@ -983,3 +987,4 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	return FALSE;
 }
+#endif
