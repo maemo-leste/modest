@@ -2420,7 +2420,7 @@ modest_msg_edit_window_insert_image (ModestMsgEditWindow *window)
 			if (stream == NULL) {
 
 				modest_platform_information_banner (NULL, NULL, 
-								    _FM("sfil_ib_opening_not_allowed"));
+								    _FM_OPENING_NOT_ALLOWED);
 				g_free (filename);
 				g_object_unref (mime_part);
 				gnome_vfs_file_info_unref (info);
@@ -2642,7 +2642,7 @@ modest_msg_edit_window_attach_file_one (ModestMsgEditWindow *window,
 		
 		if (stream == NULL) {
 
-			modest_platform_information_banner (NULL, NULL, _FM("sfil_ib_opening_not_allowed"));
+			modest_platform_information_banner (NULL, NULL, _FM_OPENING_NOT_ALLOWED);
 
 			g_object_unref (mime_part);
 			g_free (filename);

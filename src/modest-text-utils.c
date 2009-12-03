@@ -1818,19 +1818,19 @@ modest_text_utils_get_display_size (guint64 size)
 	const guint GB=1024 * MB;
 
 	if (size == 0)
-		return g_strdup_printf (_FM("sfil_li_size_kb"), (int) 0);
+		return g_strdup_printf (_FM_SIZE_KB, (int) 0);
 	if (0 <= size && size < KB)
-		return g_strdup_printf (_FM("sfil_li_size_1kb_99kb"), (int) 1);
+		return g_strdup_printf (_FM_SIZE_1KB_99KB, (int) 1);
 	else if (KB <= size && size < 100 * KB)
-		return g_strdup_printf (_FM("sfil_li_size_1kb_99kb"), (int) size / KB);
+		return g_strdup_printf (_FM_SIZE_1KB_99KB, (int) size / KB);
 	else if (100*KB <= size && size < MB)
-		return g_strdup_printf (_FM("sfil_li_size_100kb_1mb"), (int) size / KB);
+		return g_strdup_printf (_FM_SIZE_100KB_1MB, (int) size / KB);
 	else if (MB <= size && size < 10*MB)
-		return g_strdup_printf (_FM("sfil_li_size_1mb_10mb"), (float) size / MB);
+		return g_strdup_printf (_FM_SIZE_1MB_10MB, (float) size / MB);
 	else if (10*MB <= size && size < GB)
-		return g_strdup_printf (_FM("sfil_li_size_10mb_1gb"), (float) size / MB);
+		return g_strdup_printf (_FM_SIZE_10MB_1GB, (float) size / MB);
 	else
-		return g_strdup_printf (_FM("sfil_li_size_1gb_or_greater"), (float) size / GB);
+		return g_strdup_printf (_FM_SIZE_1GB_OR_GREATER, (float) size / GB);
 }
 
 static gchar *

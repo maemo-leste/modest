@@ -697,7 +697,7 @@ folder_chooser_dialog_run (ModestFolderView *original,
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	folder_view = modest_platform_create_folder_view (NULL);
 
-	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM("ckdg_ti_change_folder"));
+	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM_CHANGE_FOLDER("ckdg_ti_change_folder"));
 
 	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original),
 				       MODEST_FOLDER_VIEW (folder_view));
@@ -870,7 +870,7 @@ static gchar *
 get_next_folder_name (const gchar *suggested_name, 
 		      TnyFolderStore *suggested_folder)
 {
-	const gchar *default_name = _FM("ckdg_va_new_folder_name_stub");
+	const gchar *default_name = _FM_NEW_FOLDER_NAME_STUB;
 	unsigned int i;
 	gchar *real_suggested_name;
 
@@ -885,7 +885,7 @@ get_next_folder_name (const gchar *suggested_name,
 			real_suggested_name = g_strdup (default_name);
 		else
 			real_suggested_name = g_strdup_printf ("%s(%d)",
-							       _FM("ckdg_va_new_folder_name_stub"),
+							       _FM_NEW_FOLDER_NAME_STUB,
 							       i);
 		exists = modest_tny_folder_has_subfolder_with_name (suggested_folder,
 								    real_suggested_name,
@@ -1019,7 +1019,7 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
 					      parent_window,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
-					      _FM("ckdg_bd_new_folder_dialog_ok"),
+					      _FM_NEW_FOLDER_DIALOG_OK,
 					      GTK_RESPONSE_ACCEPT,
 					      NULL);
 
@@ -1040,16 +1040,16 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 		if (suggested_name)
 		  gtk_entry_set_text (GTK_ENTRY (entry), suggested_name);
 		else
-			gtk_entry_set_text (GTK_ENTRY (entry), _FM("ckdg_va_new_folder_name_stub"));
+			gtk_entry_set_text (GTK_ENTRY (entry), _FM_NEW_FOLDER_NAME_STUB);
 		gtk_entry_set_width_chars (GTK_ENTRY (entry),
 					   MAX (g_utf8_strlen (gtk_entry_get_text (GTK_ENTRY (entry)), -1),
-						g_utf8_strlen (_FM("ckdg_va_new_folder_name_stub"), -1)));
+						g_utf8_strlen (_FM_NEW_FOLDER_NAME_STUB, -1)));
 		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 	}
 	
 	if (show_parent) {
 	  
-		label_location = gtk_label_new (_FM("ckdg_fi_new_folder_location"));
+		label_location = gtk_label_new (_FM_NEW_FOLDER_LOCATION);
 
 		gtk_misc_set_alignment (GTK_MISC (label_location), 0.0, 0.5);
 		gtk_size_group_add_widget (sizegroup, label_location);
@@ -1178,7 +1178,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 	result = modest_platform_run_folder_common_dialog (parent_window,
 							   suggested_folder,
 							   _HL("ckdg_ti_new_folder"),
-							   _FM("ckdg_fi_new_folder_name"),
+							   _FM_NEW_FOLDER_NAME,
 							   real_suggested_name,
 							   TRUE,
 							   TRUE,
@@ -3032,7 +3032,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 					      GTK_WINDOW (parent_window),
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
 					      GTK_DIALOG_DESTROY_WITH_PARENT,
-					      _FM ("ckdg_bd_change_folder_new_folder"),
+					      _FM_CHANGE_FOLDER_NEW_FOLDER,
 					      MODEST_GTK_RESPONSE_NEW_FOLDER,
 	                                      NULL);
 
@@ -3054,7 +3054,7 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 
 	buttons_hbox = gtk_hbox_new (FALSE, MODEST_MARGIN_HALF);
 	back_button = gtk_button_new ();
-	back_pixbuf = modest_platform_get_icon (_FM("filemanager_folder_up"), MODEST_ICON_SIZE_BIG);
+	back_pixbuf = modest_platform_get_icon (_FM_FOLDER_UP, MODEST_ICON_SIZE_BIG);
 	if (back_pixbuf) {
 		gtk_button_set_image (GTK_BUTTON (back_button), gtk_image_new_from_pixbuf (back_pixbuf));
 		g_object_unref (back_pixbuf);

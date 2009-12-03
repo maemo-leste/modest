@@ -3091,14 +3091,14 @@ save_mime_parts_to_file_with_checks (GtkWindow *parent,
 
 			escaped_basename = g_uri_unescape_string (basename, NULL);
 			message = g_strdup_printf ("%s\n%s",
-						   _FM("docm_nc_replace_file"),
+						   _FM_REPLACE_FILE,
 						   (escaped_basename) ? escaped_basename : "");
 			response = modest_platform_run_confirmation_dialog (parent, message);
 			g_free (message);
 			g_free (escaped_basename);
 		} else {
 			response = modest_platform_run_confirmation_dialog (parent,
-									    _FM("docm_nc_replace_multiple"));
+									    _FM_REPLACE_MULTIPLE);
 		}
 		if (response != GTK_RESPONSE_OK)
 			is_ok = FALSE;
@@ -3153,10 +3153,10 @@ save_attachments_response (GtkDialog *dialog,
 		if (modest_maemo_utils_in_usb_mode ()) {
 			err_msg = dgettext ("hildon-status-bar-usb", "usbh_ib_mmc_usb_connected");
 		} else {
-			err_msg = _FM("sfil_ib_readonly_location");
+			err_msg = _FM_READ_ONLY_LOCATION;
 		}
 #else
-		err_msg = _FM("sfil_ib_readonly_location");
+		err_msg = _FM_READ_ONLY_LOCATION;
 #endif
 		modest_platform_system_banner (NULL, NULL, err_msg);
 	} else {
@@ -3225,7 +3225,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (window), mime_parts, FALSE)) {
+		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (gtk_widget_get_toplevel (window)), mime_parts, FALSE)) {
 			g_object_unref (mime_parts);
 			return;
 		}
@@ -3307,7 +3307,7 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	/* if multiple, set multiple string */
 	if (save_multiple_str) {
 		g_object_set (G_OBJECT (save_dialog), "save-multiple", save_multiple_str, NULL);
-		gtk_window_set_title (GTK_WINDOW (save_dialog), _FM("sfil_ti_save_objects_files"));
+		gtk_window_set_title (GTK_WINDOW (save_dialog), _FM_SAVE_OBJECT_FILES);
 		g_free (save_multiple_str);
 	}
 
