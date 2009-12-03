@@ -217,18 +217,46 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	g_warning ("Not implemented %s", __FUNCTION__);
-
-	return FALSE;
+	return g_app_info_launch_default_for_uri (uri, NULL, NULL);
 
 }
 
 gboolean 
 modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 {
-	g_warning ("Not implemented %s", __FUNCTION__);
+	gchar *content_type;
+	gboolean retval;
+	GAppInfo *app_info;
+	GList *list;
+	GFile *file;
 
-	return FALSE;
+	content_type = g_content_type_from_mime_type (mime_type);
+	if (!content_type)
+		return FALSE;
+
+	app_info = g_app_info_get_default_for_type (content_type, FALSE);
+	g_free (content_type);
+	if (!app_info) {
+		content_type = g_content_type_guess (path, NULL, 0, NULL);
+		if (!content_type)
+			return FALSE;
+
+		app_info = g_app_info_get_default_for_type (content_type, FALSE);
+		g_free (content_type);
+
+		if (!app_info)
+			return FALSE;
+
+	}
+
+	file = g_file_new_for_path (path);
+	list = g_list_prepend (NULL, file);
+	retval = g_app_info_launch (app_info, list, NULL, NULL);
+
+	g_list_free (list);
+	g_object_unref (file);
+
+	return retval;
 }
 
 gboolean
