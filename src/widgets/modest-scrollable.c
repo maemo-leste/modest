@@ -293,6 +293,11 @@ modest_scrollable_scroll (ModestScrollable *scrollable,
 		h_pos = h_adj->value + h_adj->step_increment * horizontal;
 		if (horizontal > 0) {
 			h_pos += h_adj->page_size;
+			if (h_pos > h_adj->upper - h_adj->page_size) {
+				h_pos = h_adj->upper - h_adj->page_size;
+			} else if (h_pos < 0) {
+				h_pos = 0;
+			}
 		}
 	}
 
@@ -305,6 +310,11 @@ modest_scrollable_scroll (ModestScrollable *scrollable,
 		v_pos = v_adj->value + v_adj->step_increment * vertical;
 		if (vertical > 0) {
 			v_pos += v_adj->page_size;
+			if (v_pos > v_adj->upper - v_adj->page_size) {
+				v_pos = v_adj->upper - v_adj->page_size;
+			} else if (v_pos < 0) {
+				v_pos = 0;
+			}
 		}
 	}
 
