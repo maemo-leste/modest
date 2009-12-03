@@ -214,6 +214,10 @@ modest_shell_instance_init (ModestShell *obj)
 			  "key-press-event", 
 			  G_CALLBACK (on_key_pressed), obj);
 
+	gtk_window_set_default_size (GTK_WINDOW (obj), 
+				     640, 480);
+
+
 }
 
 static void
