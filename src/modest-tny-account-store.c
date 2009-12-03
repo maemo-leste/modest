@@ -640,7 +640,7 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 											     server_account_name);
 				/* If the login has ever succeeded then show a specific message */
 				if (username_known)
-					msg = _CS ("ecdg_ib_set_password_incorrect");
+					msg = _CS_SET_PASSWORD_INCORRECT;
 				else
 					msg = _("mcen_ib_username_pw_incorrect");
 				if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()))

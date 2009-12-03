@@ -421,7 +421,7 @@ run_add_email_addr_to_contact_dlg(const gchar * contact_name,
 				if ((invalid_char_offset != NULL)&&(*invalid_char_offset != '\0')) {
 					gchar *char_in_string = g_strdup_printf ("%c", *invalid_char_offset);
 					gchar *message = g_strdup_printf(
-						_CS("ckdg_ib_illegal_characters_entered"), 
+						_CS_ILLEGAL_CHARACTERS_ENTERED, 
 						char_in_string);
 					g_free (char_in_string);
 					hildon_banner_show_information (
@@ -776,7 +776,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 			if ((invalid_char_position != NULL) && (*invalid_char_position != '\0')) {
 				gchar *char_in_string = g_strdup_printf("%c", *invalid_char_position);
 				gchar *message = 
-					g_strdup_printf(_CS("ckdg_ib_illegal_characters_entered"), 
+					g_strdup_printf(_CS_ILLEGAL_CHARACTERS_ENTERED, 
 							char_in_string);
 				g_free (char_in_string);
 				hildon_banner_show_information (NULL, NULL, message );

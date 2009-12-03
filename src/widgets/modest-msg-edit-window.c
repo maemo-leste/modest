@@ -3702,7 +3702,7 @@ body_insert_text (GtkTextBuffer *buffer,
 		if (priv->max_chars_banner == NULL) {
 #ifdef MODEST_TOOLKIT_HILDON2
 			priv->max_chars_banner = hildon_banner_show_information (GTK_WIDGET (window), NULL, 
-										 _CS("ckdg_ib_maximum_characters_reached"));
+										 _CS_MAXIMUM_CHARACTERS_REACHED);
 			g_object_weak_ref (G_OBJECT (priv->max_chars_banner), (GWeakNotify) max_chars_banner_unref, window);
 #endif
 		}
@@ -3762,7 +3762,7 @@ subject_field_insert_text (GtkEditable *editable,
 
 	if (result_len + old_length > 1000) {
 		modest_platform_system_banner (GTK_WIDGET (window), NULL, 
-						_CS("ckdg_ib_maximum_characters_reached"));
+						_CS_MAXIMUM_CHARACTERS_REACHED);
 	}
 	g_string_free (result, TRUE);
 }
@@ -3869,7 +3869,7 @@ modest_msg_edit_window_isearch_toolbar_search (GtkWidget *widget,
 		g_free (priv->last_search);
 		priv->last_search = NULL;
 		/* Information banner about empty search */
-		modest_platform_system_banner (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
+		modest_platform_system_banner (NULL, NULL, _CS_FIND_REP_ENTER_TEXT);
 		return;
 	}
 

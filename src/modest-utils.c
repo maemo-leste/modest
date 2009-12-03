@@ -824,7 +824,7 @@ modest_utils_on_entry_invalid_character (ModestValidatingEntry *self,
 		show_char = "' '";
 	}
 	
-	message = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), show_char);
+	message = g_strdup_printf (_CS_ILLEGAL_CHARACTERS_ENTERED, show_char);
 	modest_platform_information_banner (GTK_WIDGET (self), NULL, message);
 	g_free (message);
 }

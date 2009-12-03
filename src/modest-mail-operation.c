@@ -2138,7 +2138,7 @@ modest_mail_operation_create_folder (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 		             MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS,
-			     _CS("ckdg_ib_folder_already_exists"));
+			     _CS_FOLDER_ALREADY_EXISTS);
 	}
 
 	/* Check parent */
@@ -2378,7 +2378,7 @@ new_name_valid_if_local_account (ModestMailOperationPrivate *priv,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS,
-			     _CS("ckdg_ib_folder_already_exists"));
+			     _CS_FOLDER_ALREADY_EXISTS);
 		return FALSE;
 	} else
 		return TRUE;
@@ -3295,7 +3295,7 @@ modest_mail_operation_xfer_msgs (ModestMailOperation *self,
 		priv->status = MODEST_MAIL_OPERATION_STATUS_FAILED;
 		g_set_error (&(priv->error), MODEST_MAIL_OPERATION_ERROR,
 			     MODEST_MAIL_OPERATION_ERROR_FOLDER_RULES,
-			     _CS("ckct_ib_unable_to_paste_here"));
+			     _CS_UNABLE_TO_PASTE_HERE);
 		/* Notify the queue */
 		modest_mail_operation_notify_end (self);
 		return;

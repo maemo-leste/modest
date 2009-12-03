@@ -185,7 +185,7 @@ on_entry_max (ModestValidatingEntry *self,
 	      gpointer user_data)
 {
 	modest_platform_information_banner (GTK_WIDGET (self), NULL, 
-					    _CS("ckdg_ib_maximum_characters_reached"));
+					    _CS_MAXIMUM_CHARACTERS_REACHED);
 }
 
 /*

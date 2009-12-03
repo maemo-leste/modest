@@ -1082,7 +1082,7 @@ show_updating_banner (gpointer user_data)
 		gdk_threads_enter ();
 		priv->updating_banner = 
 			modest_platform_animation_banner (GTK_WIDGET (user_data), NULL,
-							  _CS ("ckdg_pb_updating"));
+							  _CS_UPDATING);
 
 		/* We need this because banners in Maemo could be
 		   destroyed by dialogs so we need to properly update

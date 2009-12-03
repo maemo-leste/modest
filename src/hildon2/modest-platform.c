@@ -427,7 +427,7 @@ activate_uri_popup_item (GtkMenuItem *menu_item,
 			uri = popup_info->uri + strlen ("mailto:");
 
 		gtk_clipboard_set_text (clipboard, uri, strlen (uri));
-		modest_platform_information_banner (NULL, NULL, _CS("ecoc_ib_edwin_copied"));
+		modest_platform_information_banner (NULL, NULL, _CS_COPIED);
 		return; /* we're done */
 	}
 
@@ -561,7 +561,7 @@ entry_insert_text (GtkEditable *editable,
 	/* Show WID-INF036 */
 	if (chars_length >= 20) {
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
-						 _CS("ckdg_ib_maximum_characters_reached"));
+						 _CS_MAXIMUM_CHARACTERS_REACHED);
 	} else {
 		if (modest_text_utils_is_forbidden_char (*text, FOLDER_NAME_FORBIDDEN_CHARS)) {
 			/* Show an error */
@@ -569,7 +569,7 @@ entry_insert_text (GtkEditable *editable,
 
 			tmp = g_strndup (folder_name_forbidden_chars,
 					 FOLDER_NAME_FORBIDDEN_CHARS_LENGTH);
-			msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
+			msg = g_strdup_printf (_CS_ILLEGAL_CHARACTERS_ENTERED, tmp);
 			hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)),
 							 NULL, msg);
 			g_free (msg);
@@ -577,7 +577,7 @@ entry_insert_text (GtkEditable *editable,
 		} else {
 			if (length >= 20) {
 				hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (data)), NULL,
-								 _CS("ckdg_ib_maximum_characters_reached"));
+								 _CS_MAXIMUM_CHARACTERS_REACHED);
 			}
 			/* Write the text in the entry if it's valid */
 			g_signal_handlers_block_by_func (editable,
@@ -608,7 +608,7 @@ entry_changed (GtkEditable *editable,
 
 	if (g_utf8_strlen (chars,-1) >= 20) {
 		hildon_banner_show_information  (gtk_widget_get_parent (GTK_WIDGET (user_data)), NULL,
-						 _CS("ckdg_ib_maximum_characters_reached"));
+						 _CS_MAXIMUM_CHARACTERS_REACHED);
 	}
 	gtk_widget_set_sensitive (ok_button, modest_text_utils_validate_folder_name(chars));
 
@@ -660,7 +660,7 @@ on_response (GtkDialog *dialog,
 	if (exists) {
 		/* Show an error */
 		hildon_banner_show_information (gtk_widget_get_parent (GTK_WIDGET (dialog)), 
-						NULL, _CS("ckdg_ib_folder_already_exists"));
+						NULL, _CS_FOLDER_ALREADY_EXISTS);
 		/* Select the text */
 		gtk_entry_select_region (GTK_ENTRY (entry), 0, -1);
 		gtk_widget_grab_focus (entry);

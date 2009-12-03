@@ -1115,7 +1115,7 @@ modest_ui_actions_disk_operations_error_handler (ModestMailOperation *mail_op,
 		} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
 			   error->code == MODEST_MAIL_OPERATION_ERROR_FILE_IO) {
 			modest_platform_information_banner ((GtkWidget *) win,
-							    NULL, _CS ("sfil_ni_unable_to_open_file_not_found"));
+							    NULL, _CS_UNABLE_TO_OPEN_FILE_NOT_FOUND);
 		} else if (user_data) {
 			modest_platform_information_banner ((GtkWidget *) win,
 							    NULL, user_data);
@@ -1928,7 +1928,7 @@ modest_ui_actions_on_sort (GtkAction *action,
 	}
 
 	if (!header_view) {
-		modest_platform_information_banner (NULL, NULL, _CS("ckdg_ib_nothing_to_sort"));
+		modest_platform_information_banner (NULL, NULL, _CS_NOTHING_TO_SORT);
 
 		return;
 	}
@@ -2697,7 +2697,7 @@ modest_ui_actions_on_send (GtkWidget *widget, ModestMsgEditWindow *edit_window)
 		if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
 		    error->code == MODEST_MAIL_OPERATION_ERROR_INSTANCE_CREATION_FAILED) {
 			g_warning ("%s failed: %s\n", __FUNCTION__, (modest_mail_operation_get_error (mail_operation))->message);
-			modest_platform_information_banner (NULL, NULL, _CS("sfil_ni_not_enough_memory"));
+			modest_platform_information_banner (NULL, NULL, _CS_NOT_ENOUGH_MEMORY);
 			had_error = TRUE;
 		}
 	}
@@ -3075,14 +3075,14 @@ modest_ui_actions_rename_folder_error_handler (ModestMailOperation *mail_op,
 		message = g_strdup_printf (_KR("cerm_device_memory_full"), "");
 	} else if (error->domain == MODEST_MAIL_OPERATION_ERROR &&
 		   error->code == MODEST_MAIL_OPERATION_ERROR_FOLDER_EXISTS) {
-		message = _CS("ckdg_ib_folder_already_exists");
+		message = _CS_FOLDER_ALREADY_EXISTS;
 	} else if (error->domain == TNY_ERROR_DOMAIN &&
 		   error->code == TNY_SERVICE_ERROR_STATE) {
 		/* This means that the folder is already in use (a
 		   message is opened for example */
 		message = _("emev_ni_internal_error");
 	} else {
-		message = _CS("ckdg_ib_unable_to_rename");
+		message = _CS_UNABLE_TO_RENAME;
 	}
 
 	/* We don't set a parent for the dialog because the dialog
@@ -3724,7 +3724,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 
 		if (num_of_unc_msgs == 0 || continue_download) {
 			modest_platform_information_banner (
-					NULL, NULL, _CS("mcen_ib_getting_items"));
+					NULL, NULL, _CS_GETTING_ITEMS);
 			modest_header_view_copy_selection (
 					MODEST_HEADER_VIEW (focused_widget));
 		} else
@@ -3739,7 +3739,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 	/* Show information banner if there was a copy to clipboard */
 	if(copied)
 		modest_platform_information_banner (
-				NULL, NULL, _CS("ecoc_ib_edwin_copied"));
+				NULL, NULL, _CS_COPIED);
 }
 
 void
@@ -3841,7 +3841,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 			PasteAsAttachmentHelper *helper = g_new0 (PasteAsAttachmentHelper, 1);
 			helper->window = MODEST_MSG_EDIT_WINDOW (window);
 			helper->banner = modest_platform_animation_banner (GTK_WIDGET (window), NULL,
-									   _CS("ckct_nw_pasting"));
+									   _CS_PASTING);
 			modest_email_clipboard_get_data (e_clipboard, &src_folder, &data, &delete);
 			mail_op = modest_mail_operation_new (G_OBJECT (window));
 			if (helper->banner != NULL) {
@@ -3898,7 +3898,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 			if (response == GTK_RESPONSE_OK) {
 				/* Launch notification */
 				inf_note = modest_platform_animation_banner (GTK_WIDGET (window), NULL,
-									     _CS("ckct_nw_pasting"));
+									     _CS_PASTING);
 				if (inf_note != NULL)  {
 					gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
 					gtk_widget_show (GTK_WIDGET(inf_note));
@@ -3918,7 +3918,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 		} else if (src_folder != NULL) {
 			/* Launch notification */
 			inf_note = modest_platform_animation_banner (GTK_WIDGET (window), NULL,
-								     _CS("ckct_nw_pasting"));
+								     _CS_PASTING);
 			if (inf_note != NULL)  {
 				gtk_window_set_modal (GTK_WINDOW(inf_note), FALSE);
 				gtk_widget_show (GTK_WIDGET(inf_note));
@@ -4151,7 +4151,7 @@ modest_ui_actions_on_limit_error (GtkAction *action,
 {
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win));
 
-	modest_platform_information_banner ((GtkWidget *) win, NULL, _CS("ckdg_ib_maximum_characters_reached"));
+	modest_platform_information_banner ((GtkWidget *) win, NULL, _CS_MAXIMUM_CHARACTERS_REACHED);
 
 }
 
@@ -4765,7 +4765,7 @@ on_move_folder_cb (gboolean canceled,
 	MoveToHelper *helper = g_new0 (MoveToHelper, 1);
 #ifndef MODEST_TOOLKIT_HILDON2
 	helper->banner = modest_platform_animation_banner (GTK_WIDGET (parent_window), NULL,
-			_CS("ckct_nw_pasting"));
+			_CS_PASTING);
 	if (helper->banner != NULL)  {
 		g_object_ref (helper->banner);
 		gtk_widget_show (GTK_WIDGET(helper->banner));
@@ -5430,7 +5430,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 							   server_name);
 		break;
 	case TNY_SERVICE_ERROR_SEND:
-		message = g_strdup (_CS("sfil_ib_unable_to_send"));
+		message = g_strdup (_CS_UNABLE_TO_SEND);
 		break;
 	case TNY_SERVICE_ERROR_UNAVAILABLE:
 		message = modest_protocol_get_translation (protocol,
@@ -5440,7 +5440,7 @@ modest_ui_actions_on_send_queue_error_happened (TnySendQueue *self,
 	default:
 		g_warning ("%s: unexpected ERROR %d",
 			   __FUNCTION__, err->code);
-		message = g_strdup (_CS("sfil_ib_unable_to_send"));
+		message = g_strdup (_CS_UNABLE_TO_SEND);
 		break;
 	}
 

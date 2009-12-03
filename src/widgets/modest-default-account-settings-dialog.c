@@ -295,7 +295,7 @@ on_entry_invalid_account_title_character (ModestValidatingEntry *self, const gch
 	gchar *tmp, *msg;
 			
 	tmp = g_strndup (account_title_forbidden_chars, ACCOUNT_TITLE_FORBIDDEN_CHARS_LENGTH);
-	msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
+	msg = g_strdup_printf (_CS_ILLEGAL_CHARACTERS_ENTERED, tmp);
 
 	modest_platform_information_banner (GTK_WIDGET (self), NULL, msg);
 
@@ -309,7 +309,7 @@ on_entry_invalid_fullname_character (ModestValidatingEntry *self, const gchar* c
 	gchar *tmp, *msg;
 			
 	tmp = g_strndup (user_name_forbidden_chars, USER_NAME_FORBIDDEN_CHARS_LENGTH);
-	msg = g_strdup_printf (_CS("ckdg_ib_illegal_characters_entered"), tmp);
+	msg = g_strdup_printf (_CS_ILLEGAL_CHARACTERS_ENTERED, tmp);
 
 	modest_platform_information_banner (GTK_WIDGET (self), NULL, msg);
 
@@ -322,7 +322,7 @@ static void
 on_entry_max (ModestValidatingEntry *self, gpointer user_data)
 {
 	modest_platform_information_banner (GTK_WIDGET (self), NULL, 
-					    _CS("ckdg_ib_maximum_characters_reached"));
+					    _CS_MAXIMUM_CHARACTERS_REACHED);
 }
 
 static GtkWidget*

@@ -1591,7 +1591,7 @@ modest_msg_view_window_isearch_toolbar_search (GtkWidget *widget,
 	current_search = modest_isearch_toolbar_get_search (MODEST_ISEARCH_TOOLBAR (widget));
 
 	if ((current_search == NULL) || (strcmp (current_search, "") == 0)) {
-		modest_platform_system_banner (NULL, NULL, _CS("ecdg_ib_find_rep_enter_text"));
+		modest_platform_system_banner (NULL, NULL, _CS_FIND_REP_ENTER_TEXT);
 		return;
 	}
 
@@ -1663,7 +1663,7 @@ modest_msg_view_window_zoom_plus (ModestWindow *window)
 
 	if (zoom_level >= 2.0) {
 		modest_platform_system_banner (NULL, NULL, 
-						_CS("ckct_ib_max_zoom_level_reached"));
+						_CS_MAX_ZOOM_LEVEL_REACHED);
 		return FALSE;
 	} else if (zoom_level >= 1.5) {
 		zoom_level = 2.0;
@@ -1704,7 +1704,7 @@ modest_msg_view_window_zoom_minus (ModestWindow *window)
 
 	if (zoom_level <= 0.5) {
 		modest_platform_system_banner (NULL, NULL, 
-						_CS("ckct_ib_min_zoom_level_reached"));
+						_CS_MIN_ZOOM_LEVEL_REACHED);
 		return FALSE;
 	} else if (zoom_level <= 0.8) {
 		zoom_level = 0.5;
@@ -1957,7 +1957,7 @@ message_reader (ModestMsgViewWindow *window,
 
 	/* We set the header from model while we're loading */
 	tny_header_view_set_header (TNY_HEADER_VIEW (priv->msg_view), header);
-	modest_window_set_title (MODEST_WINDOW (window), _CS("ckdg_pb_updating"));
+	modest_window_set_title (MODEST_WINDOW (window), _CS_UPDATING);
 
 	if (header)
 		folder = NULL;
@@ -2977,7 +2977,7 @@ idle_save_mime_part_show_result (SaveMimePartInfo *info)
 
 	gdk_threads_enter (); /* CHECKED */
 	if (info->result == GNOME_VFS_OK) {
-		modest_platform_system_banner (NULL, NULL, _CS("sfil_ib_saved"));
+		modest_platform_system_banner (NULL, NULL, _CS_SAVED);
 	} else if (info->result == GNOME_VFS_ERROR_NO_SPACE) {
 		gchar *msg = NULL;
 

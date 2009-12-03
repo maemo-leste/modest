@@ -411,7 +411,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			if (state)
 				dimmed = state->sent_in_progress;
 			if (dimmed)
-				modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+				modest_dimming_rule_set_notification (rule, _CS_UNABLE_TO_DELETE);
 		}
 
 		/* This could happen if we're viewing a message of the
@@ -427,7 +427,7 @@ modest_ui_dimming_rules_on_delete_msg (ModestWindow *win, gpointer user_data)
 			if (!modest_msg_view_window_is_search_result (MODEST_MSG_VIEW_WINDOW(win))) {
 				dimmed = !modest_msg_view_window_has_headers_model (MODEST_MSG_VIEW_WINDOW(win));
  				if (dimmed) {
-					modest_dimming_rule_set_notification (rule, _CS("ckct_ib_unable_to_delete"));
+					modest_dimming_rule_set_notification (rule, _CS_UNABLE_TO_DELETE);
 				}
 			}
 		}

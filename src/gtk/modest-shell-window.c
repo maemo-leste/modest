@@ -211,7 +211,7 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 {
 	g_return_val_if_fail (MODEST_IS_SHELL_WINDOW (window), FALSE);
 
-	modest_platform_information_banner (NULL, NULL, _CS("ckct_ib_cannot_zoom_here"));
+	modest_platform_information_banner (NULL, NULL, _CS_CANNOT_ZOOM_HERE);
 	return FALSE;
 }
 void 
