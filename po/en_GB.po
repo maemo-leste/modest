@@ -1337,7 +1337,7 @@ msgstr ""
 #: ../src/widgets/modest-default-account-settings-dialog.c:759
 #: ../src/widgets/modest-easysetup-wizard-dialog.c:1181
 msgid "mcen_li_emailsetup_smtp"
-msgstr "Outgoing server (SMTP)"
+msgstr "Outgoing server"
 
 #. This causes a warning because of the %s in the translation, but not in the original string:
 #: ../src/widgets/modest-connection-specific-smtp-edit-window.c:574
@@ -1392,7 +1392,7 @@ msgstr "Signature"
 #: ../src/widgets/modest-default-account-settings-dialog.c:632
 #: ../src/widgets/modest-easysetup-wizard-dialog.c:901
 msgid "mcen_li_emailsetup_servertype"
-msgstr "Incoming server (%s)"
+msgstr "Incoming server"
 
 #: ../src/widgets/modest-default-account-settings-dialog.c:791
 #: ../src/widgets/modest-easysetup-wizard-dialog.c:1207
@@ -2001,11 +2001,11 @@ msgstr ""
 #~ msgid "mcen_fi_advsetup_limit_retrieve"
 #~ msgstr "Retrieval limit"
 
-#~ msgid "mcen_fi_advsetup_other_security_secureimap4s"
-#~ msgstr "SSL (IMAP4S)"
+msgid "mcen_fi_advsetup_other_security_secureimap4s"
+msgstr "SSL (IMAP4S)"
 
-#~ msgid "mcen_fi_advsetup_other_security_securepop3s"
-#~ msgstr "SSL (POP3S)"
+msgid "mcen_fi_advsetup_other_security_securepop3s"
+msgstr "SSL (POP3S)"
 
 #~ msgid "mcen_fi_advsetup_retrievetype"
 #~ msgstr "Retrieve"
