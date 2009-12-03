@@ -614,6 +614,8 @@ on_key_pressed (GtkWidget *self,
 			modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
 		else if (MODEST_IS_MSG_VIEW_WINDOW (self))
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
+		else
+			return FALSE;
 		break;
 	}
 	

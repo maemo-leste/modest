@@ -44,6 +44,7 @@ static void on_back_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_title_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_new_msg_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_style_set (GtkWidget *widget, GtkStyle *old_style, ModestShell *shell);
+static gboolean on_key_pressed (GtkWidget *widget, GdkEventKey *event, ModestShell *shell);
 
 
 typedef struct _ModestShellPrivate ModestShellPrivate;
@@ -208,6 +209,10 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_widget_add_accelerator (GTK_WIDGET (priv->title_button), "clicked", accel_group,
 				    accel_key, accel_mods, 0);
 	gtk_window_add_accel_group (GTK_WINDOW (obj), accel_group);
+
+	g_signal_connect (G_OBJECT (obj), 
+			  "key-press-event", 
+			  G_CALLBACK (on_key_pressed), obj);
 
 }
 
@@ -535,4 +540,23 @@ on_style_set (GtkWidget *widget,
 		g_object_unref (progress_pixbuf);
 	}
 
+}
+
+static gboolean
+on_key_pressed (GtkWidget *widget,
+		GdkEventKey *event,
+		ModestShell *shell)
+{
+	ModestShellPrivate *priv;
+	gboolean retval;
+	GtkWidget *current_window;
+
+	priv = MODEST_SHELL_GET_PRIVATE (shell);
+
+	current_window = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), -1);
+
+	g_signal_emit_by_name (current_window, "key-press-event", event, &retval);
+
+	return retval;
+	
 }
