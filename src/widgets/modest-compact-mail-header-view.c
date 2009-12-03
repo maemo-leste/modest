@@ -692,7 +692,6 @@ update_style (ModestCompactMailHeaderView *self)
 	PangoColor color;
 	PangoAttrList *attr_list;
 	GSList *node;
-	GdkColor bg_color;
 
 	g_return_if_fail (MODEST_IS_COMPACT_MAIL_HEADER_VIEW (self));
 	priv = MODEST_COMPACT_MAIL_HEADER_VIEW_GET_PRIVATE (self);
@@ -733,9 +732,11 @@ update_style (ModestCompactMailHeaderView *self)
 	pango_attr_list_unref (attr_list);
 
 #ifdef MODEST_COMPACT_HEADER_BG
+	GdkColor bg_color;
+
 	gdk_color_parse (MODEST_COMPACT_HEADER_BG, &bg_color);
-#endif
 	gtk_widget_modify_bg (GTK_WIDGET (priv->event_box), GTK_STATE_NORMAL, &bg_color);
+#endif
 }
 
 static void
