@@ -115,6 +115,7 @@ modest_shell_instance_init (ModestShell *obj)
 	GtkWidget *new_message_icon;
 	GtkToolItem *separator_toolitem;
 	GtkWidget *top_hbox;
+	GtkWidget *separator;
 
 	priv = MODEST_SHELL_GET_PRIVATE(obj);
 	priv->progress_frames = g_malloc0 (sizeof(GdkPixbuf *)*31);
@@ -127,6 +128,10 @@ modest_shell_instance_init (ModestShell *obj)
 	top_hbox = gtk_hbox_new (FALSE, 0);
 	gtk_widget_show (top_hbox);
 	gtk_box_pack_start (GTK_BOX (priv->main_vbox), top_hbox, FALSE, FALSE, 0);
+
+	separator = gtk_hseparator_new ();
+	gtk_widget_show (separator);
+	gtk_box_pack_start (GTK_BOX (priv->main_vbox), separator, FALSE, FALSE, 0);
 
 	priv->top_toolbar = gtk_toolbar_new ();
 	gtk_toolbar_set_style (GTK_TOOLBAR (priv->top_toolbar), GTK_TOOLBAR_BOTH_HORIZ);
