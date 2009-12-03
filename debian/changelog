@@ -1,3 +1,16 @@
+modest (3.2.3) unstable; urgency=low
+
+  * Week 50, 2009 - first release
+  * 
+  * Fixes: NB#120969 Signature separator misses trailing space (RFC 3676 violation)
+  * Fixes: NB#121661 Untranslated text string in "Change folder" dialog
+  * Fixes: NB#136936 'move messages' option is not shown for device local folder 
+  * 	messages in mfe account folder view
+  * Fixes: NB#137657 no subject is showing in title of viewer view in certain scenario
+  * Fixes: NB#139348 Email screenshot must be shown when Email starts 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Fri, 04 Dec 2009 01:11:36 +0200
+
 modest (3.2.2) unstable; urgency=low
 
   * Week 49, 2009 - first release
