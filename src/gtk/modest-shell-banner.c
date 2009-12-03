@@ -159,9 +159,24 @@ modest_shell_banner_new_with_timeout (GtkWidget *parent, gint timeout)
 
 	if (toplevel == NULL) {
 		GtkWidget *shell;
+		GList *toplevels;
+
 		shell = modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (modest_runtime_get_window_mgr ()));
-		modest_shell_add_banner (MODEST_SHELL (shell), MODEST_SHELL_BANNER (self));
-	} else if (MODEST_IS_SHELL (toplevel)) {
+
+		toplevels = gtk_window_list_toplevels ();
+		while (toplevels) {
+			if (gtk_window_has_toplevel_focus (GTK_WINDOW (toplevels->data))) {
+				toplevel = toplevels->data;
+				break;
+			}
+			toplevels = g_list_next (toplevels);
+		}
+
+		if (toplevel == NULL)
+			toplevel = shell;
+	}
+
+	if (MODEST_IS_SHELL (toplevel)) {
 		modest_shell_add_banner (MODEST_SHELL (toplevel), MODEST_SHELL_BANNER (self));
 	} else if (GTK_IS_DIALOG (toplevel)) {
 		gtk_container_add (GTK_CONTAINER (GTK_DIALOG (toplevel)->vbox), self);
