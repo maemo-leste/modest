@@ -66,6 +66,7 @@
 #include <modest-default-global-settings-dialog.h>
 #include <math.h>
 #include "widgets/modest-toolkit-utils.h"
+#include <modest-shell-banner.h>
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
@@ -1155,6 +1156,12 @@ modest_platform_information_banner (GtkWidget *parent,
 				    const gchar *icon_name,
 				    const gchar *text)
 {
+	GtkWidget *banner;
+
+	banner = modest_shell_banner_new (parent);
+	modest_shell_banner_set_icon (MODEST_SHELL_BANNER (banner), icon_name);
+	modest_shell_banner_set_text (MODEST_SHELL_BANNER (banner), text);
+
 	return;
 }
 
@@ -1163,7 +1170,7 @@ modest_platform_system_banner (GtkWidget *parent,
 			       const gchar *icon_name,
 			       const gchar *text)
 {
-	return;
+	modest_platform_information_banner (parent, icon_name, text);
 }
 
 void
@@ -1172,6 +1179,12 @@ modest_platform_information_banner_with_timeout (GtkWidget *parent,
 						 const gchar *text,
 						 gint timeout)
 {
+	GtkWidget *banner;
+
+	banner = modest_shell_banner_new_with_timeout (parent, timeout);
+	modest_shell_banner_set_icon (MODEST_SHELL_BANNER (banner), icon_name);
+	modest_shell_banner_set_text (MODEST_SHELL_BANNER (banner), text);
+
 	return;
 }
 
@@ -1180,7 +1193,13 @@ modest_platform_animation_banner (GtkWidget *parent,
 				  const gchar *animation_name,
 				  const gchar *text)
 {
-	return NULL;
+	GtkWidget *banner;
+
+	banner = modest_shell_banner_new_with_timeout (parent, 0);
+	modest_shell_banner_set_animation (MODEST_SHELL_BANNER (banner), animation_name);
+	modest_shell_banner_set_text (MODEST_SHELL_BANNER (banner), text);
+
+	return banner;
 }
 
 typedef struct

@@ -75,7 +75,7 @@ modest_shell_banner_get_type (void)
 			(GInstanceInitFunc) modest_shell_banner_instance_init,
 			NULL
 		};
-		my_type = g_type_register_static (MODEST_TYPE_SHELL_BANNER,
+		my_type = g_type_register_static (GTK_TYPE_FRAME,
 		                                  "ModestShellBanner",
 		                                  &my_info, 0);
 	}
