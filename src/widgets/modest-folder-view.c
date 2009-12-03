@@ -1263,6 +1263,7 @@ add_columns (GtkWidget *treeview)
 	gtk_tree_view_column_set_fixed_width (column, TRUE);
 	gtk_tree_view_set_headers_clickable (GTK_TREE_VIEW(treeview), FALSE);
 	gtk_tree_view_set_enable_search (GTK_TREE_VIEW(treeview), FALSE);
+	gtk_tree_view_set_rules_hint ((GtkTreeView *) treeview, TRUE);
 
 	/* Add column */
 	gtk_tree_view_append_column (GTK_TREE_VIEW(treeview),column);
