@@ -630,7 +630,7 @@ create_header_view (ModestWindow *self, TnyFolder *folder)
 
 	/* Create CSM menu */
 	priv->csm_menu = gtk_menu_new ();
-	delete_item = gtk_menu_item_new_with_label (_HL("wdgt_bd_delete"));
+	delete_item = gtk_menu_item_new_with_label (_HL_DELETE);
 	mark_read_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_read"));
 	mark_unread_item = gtk_menu_item_new_with_label (_("mcen_me_inbox_mark_as_unread"));
 	gtk_menu_shell_append (GTK_MENU_SHELL (priv->csm_menu), delete_item);
@@ -829,12 +829,12 @@ modest_header_window_new (TnyFolder *folder, const gchar *account_name, const gc
 	/* setup edit modes */
 #ifdef MODEST_TOOLKIT_HILDON2
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_DELETE,
-						  _("mcen_ti_edit_delete"), _HL("wdgt_bd_delete"),
+						  _("mcen_ti_edit_delete"), _HL_DELETE,
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_delete_message));
 	modest_hildon2_window_register_edit_mode (MODEST_HILDON2_WINDOW (self), EDIT_MODE_COMMAND_MOVE,
-						  _("mcen_ti_edit_move"), _HL("wdgt_bd_move"),
+						  _("mcen_ti_edit_move"), _HL_MOVE,
 						  GTK_TREE_VIEW (priv->header_view),
 						  GTK_SELECTION_MULTIPLE,
 						  EDIT_MODE_CALLBACK (modest_ui_actions_on_edit_mode_move_to));

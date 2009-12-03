@@ -134,7 +134,7 @@ set_date_time (ModestCompactMailHeaderView *compact_mail_header)
 		gchar date_buf[BUF_SIZE];
 		GString *buffer = g_string_new ("");
 
-		modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_week"), priv->date_to_show);
+		modest_text_utils_strftime (date_buf, BUF_SIZE, _HL_WEEK, priv->date_to_show);
 		buffer = g_string_append (buffer, date_buf);
 		buffer = g_string_append_c (buffer, ' ');
 		buffer = g_string_append_unichar (buffer, 0x2015);
@@ -144,7 +144,7 @@ set_date_time (ModestCompactMailHeaderView *compact_mail_header)
 		gtk_label_set_text (GTK_LABEL (priv->time_label), buffer->str);
 		g_string_free  (buffer, TRUE);
 		buffer = g_string_new ("");
-		modest_text_utils_strftime (date_buf, BUF_SIZE, _HL("wdgt_va_date_medium"), priv->date_to_show);
+		modest_text_utils_strftime (date_buf, BUF_SIZE, _HL_DATE_MEDIUM, priv->date_to_show);
 		buffer = g_string_append (buffer, date_buf);
 
 		gtk_label_set_text (GTK_LABEL (priv->date_label), buffer->str);

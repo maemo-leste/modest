@@ -3885,14 +3885,14 @@ modest_msg_edit_window_isearch_toolbar_search (GtkWidget *widget,
 		result = gtk_text_iter_forward_search_insensitive (&selection_end, current_search, 
 								   &match_start, &match_end);
 		if (!result)
-			modest_platform_system_banner (NULL, NULL, _HL("ckct_ib_find_search_complete"));
+			modest_platform_system_banner (NULL, NULL, _HL_IB_FIND_COMPLETE);
 	} else {
 		GtkTextIter buffer_start;
 		gtk_text_buffer_get_start_iter (priv->text_buffer, &buffer_start);
 		result = gtk_text_iter_forward_search_insensitive (&buffer_start, current_search, 
 								   &match_start, &match_end);
 		if (!result)
-			modest_platform_system_banner (NULL, NULL, _HL("ckct_ib_find_no_matches"));
+			modest_platform_system_banner (NULL, NULL, _HL_IB_FIND_NO_MATCHES);
 	}
 
 	/* Mark as selected the string found in search */
@@ -4292,7 +4292,7 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	dialog = gtk_dialog_new_with_buttons (_("mcen_me_message_settings"), NULL,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-					      _HL("wdgt_bd_done"), GTK_RESPONSE_ACCEPT, NULL);
+					      _HL_DONE, GTK_RESPONSE_ACCEPT, NULL);
 	vbox = gtk_vbox_new (FALSE, 0);
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 0);

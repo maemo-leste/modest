@@ -598,7 +598,7 @@ create_page_user_details (ModestDefaultAccountSettingsDialog *self,
 	/* Delete button: */
 	if (!priv->button_delete)
 		priv->button_delete = gtk_dialog_add_button (GTK_DIALOG (self),
-							     _HL("wdgt_bd_delete"),
+							     _HL_DELETE,
 							     RESPONSE_DELETE_DUMMY);
 
 	/* Signature button: */
@@ -1114,7 +1114,7 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 	gtk_widget_show (GTK_WIDGET (scrollable));
         
     /* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG(self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG(self), _HL_SAVE, GTK_RESPONSE_OK);
 
     gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
 

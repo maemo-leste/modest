@@ -489,7 +489,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	gtk_widget_show (captioned);
 
 	/* Add the button. Disabled by default */
-	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), _HL_SAVE, GTK_RESPONSE_OK);
 	gtk_dialog_set_response_sensitive (GTK_DIALOG (self), GTK_RESPONSE_OK, FALSE);
 
 	priv->is_dirty = FALSE;

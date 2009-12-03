@@ -175,7 +175,7 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 			  G_CALLBACK (text_buffer_end_user_action), self);
 	
 	/* Add the buttons: */
-	gtk_dialog_add_button (GTK_DIALOG (self), _HL("wdgt_bd_save"), GTK_RESPONSE_OK);
+	gtk_dialog_add_button (GTK_DIALOG (self), _HL_SAVE, GTK_RESPONSE_OK);
 
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);

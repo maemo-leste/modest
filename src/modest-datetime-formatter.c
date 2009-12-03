@@ -272,7 +272,7 @@ modest_datetime_formatter_format_date (ModestDatetimeFormatter *self,
 	switch (priv->current_format) {
 	case DATETIME_FORMAT_12H:
 	case DATETIME_FORMAT_24H:
-		format_string = _HL("wdgt_va_date");
+		format_string = _HL_DATE;
 		break;
 	case DATETIME_FORMAT_LOCALE:
 		format_string = "%x";
@@ -308,10 +308,10 @@ modest_datetime_formatter_format_time (ModestDatetimeFormatter *self,
 
 	switch (priv->current_format) {
 	case DATETIME_FORMAT_12H:
-		format_string = is_pm?_HL("wdgt_va_12h_time_pm"):_HL("wdgt_va_12h_time_am");
+		format_string = is_pm?_HL_12H_TIME_PM:_HL_12H_TIME_AM;
 		break;
 	case DATETIME_FORMAT_24H:
-		format_string = _HL("wdgt_va_24h_time");
+		format_string = _HL_24H_TIME;
 		break;
 	case DATETIME_FORMAT_LOCALE:
 		format_string = "%X";

@@ -3420,7 +3420,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 		gtk_dialog_new_with_buttons (_("mail_ti_password_protected"),
 					     NULL,
 					     GTK_DIALOG_MODAL,
-					     _HL("wdgt_bd_done"),
+					     _HL_DONE,
 					     GTK_RESPONSE_ACCEPT,
 					     NULL);
 	gtk_container_set_border_width (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox),

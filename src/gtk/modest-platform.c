@@ -858,7 +858,7 @@ modest_platform_run_new_folder_dialog (GtkWindow *parent_window,
 
 	result = modest_platform_run_folder_common_dialog (parent_window,
 							   suggested_folder,
-							   _HL("ckdg_ti_new_folder"),
+							   _HL_TITLE_NEW_FOLDER,
 							   _FM("ckdg_fi_new_folder_name"),
 							   real_suggested_name,
 							   TRUE,
@@ -884,8 +884,8 @@ modest_platform_run_rename_folder_dialog (ModestWindow *parent_window,
 
 	return modest_platform_run_folder_common_dialog (gtk_widget_get_toplevel (GTK_WIDGET (parent_window)), 
 							 parent_folder,
-							 _HL("ckdg_ti_rename_folder"),
-							 _HL("ckdg_fi_rename_name"),
+							 _HL_TITLE_RENAME_FOLDER,
+							 _HL_RENAME_NAME,
 							 suggested_name,
 							 TRUE,
 							 FALSE,
@@ -1327,9 +1327,9 @@ modest_platform_run_certificate_confirmation_dialog (const gchar* server_name,
 		GTK_BUTTONS_NONE,
 		question);
 	gtk_dialog_add_buttons (GTK_DIALOG (note),
-				_HL("wdgt_bd_yes"),     GTK_RESPONSE_OK,
-				_HL("wdgt_bd_view"),          GTK_RESPONSE_APPLY,   /* abusing this... */
-				_HL("wdgt_bd_no"), GTK_RESPONSE_CANCEL,
+				_HL_YES,     GTK_RESPONSE_OK,
+				_HL_VIEW,          GTK_RESPONSE_APPLY,   /* abusing this... */
+				_HL_NO, GTK_RESPONSE_CANCEL,
 				NULL, NULL);
 
 	g_signal_connect (G_OBJECT(note), "response",
