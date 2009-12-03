@@ -61,6 +61,8 @@ libmodest_widgets_la_SOURCES=          \
 	modest-country-combo-box.h \
 	modest-default-account-settings-dialog.h \
 	modest-default-account-settings-dialog.c \
+	modest-default-global-settings-dialog.h \
+	modest-default-global-settings-dialog.c \
 	modest-dnd.c                   \
 	modest-dnd.h                   \
 	modest-easysetup-wizard-dialog.h modest-easysetup-wizard-dialog.c \
