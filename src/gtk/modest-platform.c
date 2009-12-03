@@ -199,7 +199,7 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 	for (cursor = icon_names; cursor; ++cursor) {
 		if (!g_ascii_strcasecmp (*cursor, "gnome-mime-message") ||
 		    !g_ascii_strcasecmp (*cursor, "gnome-mime-message-rfc822")) {
-			icon_name = g_strdup ("qgn_list_messagin");
+			icon_name = g_strdup ("stock_message-display");
 			break;
 		} else if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
 			icon_name = g_strdup (*cursor);
