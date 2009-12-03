@@ -530,7 +530,7 @@ modest_text_utils_convert_buffer_to_html_start (GString *html, const gchar *data
 
 		/* don't convert &apos; --> wpeditor will try to re-convert it... */	
 		//case '\'' : g_string_append (html, "&apos;"); break;
-		case '\n' : g_string_append (html, "<br>\n");break_dist= 0; break;
+		case '\n' : g_string_append (html, "<br/>\n");break_dist= 0; break;
 		case '\t' : g_string_append (html, MARK_AMP_STR "nbsp;" MARK_AMP_STR "nbsp;" MARK_AMP_STR "nbsp; ");
 			break_dist=0; break; /* note the space at the end*/
 		case ' ':
