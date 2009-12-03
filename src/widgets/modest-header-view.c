@@ -2399,7 +2399,7 @@ update_style (ModestHeaderView *self)
 
 	attr_list = pango_attr_list_new ();
 	if (!gtk_style_lookup_color (gtk_widget_get_style (GTK_WIDGET (self)), "SecondaryTextColor", &style_color)) {
-		gdk_color_parse ("grey", &style_color);
+		gdk_color_parse (MODEST_SECONDARY_COLOR, &style_color);
 	}
 	priv->secondary_color = style_color;
 	attr = pango_attr_foreground_new (style_color.red, style_color.green, style_color.blue);
