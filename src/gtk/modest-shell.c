@@ -188,6 +188,16 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_container_add (GTK_CONTAINER (obj), priv->main_vbox);
 
 	g_signal_connect (G_OBJECT (obj), "style-set", G_CALLBACK (on_style_set), obj);
+
+	guint accel_key;
+	GdkModifierType accel_mods;
+	GtkAccelGroup *accel_group;
+	accel_group = gtk_accel_group_new ();
+	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
+	gtk_widget_add_accelerator (GTK_WIDGET (priv->new_message_button), "clicked", accel_group,
+				    accel_key, accel_mods, 0);
+	gtk_window_add_accel_group (GTK_WINDOW (obj), accel_group);
+
 }
 
 static void
