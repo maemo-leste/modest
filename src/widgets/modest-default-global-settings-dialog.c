@@ -196,6 +196,7 @@ create_updating_page (ModestDefaultGlobalSettingsDialog *self)
 	ModestGlobalSettingsDialogPrivate *ppriv;
 	GtkWidget *scrollable, *separator;
 	ModestDefaultGlobalSettingsDialogPrivate *priv;
+	PangoAttrList *attr_list;
 
 	priv = MODEST_DEFAULT_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
 	ppriv = MODEST_GLOBAL_SETTINGS_DIALOG_GET_PRIVATE (self);
@@ -273,6 +274,10 @@ create_updating_page (ModestDefaultGlobalSettingsDialog *self)
 
 	/* Separator label */
 	separator = gtk_label_new (_("mcen_ti_updating"));
+	attr_list = pango_attr_list_new ();
+	pango_attr_list_insert (attr_list, pango_attr_weight_new (PANGO_WEIGHT_BOLD));
+	gtk_label_set_attributes (GTK_LABEL (separator), attr_list);
+	pango_attr_list_unref (attr_list);
 	gtk_label_set_justify ((GtkLabel *) separator, GTK_JUSTIFY_CENTER);
 	gtk_box_pack_start (GTK_BOX (vbox), separator, FALSE, FALSE, MODEST_MARGIN_DEFAULT);
 
