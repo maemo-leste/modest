@@ -176,11 +176,40 @@ gchar*
 modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 				    gchar **effective_mime_type)
 {
-
-	g_warning ("Not implemented %s", __FUNCTION__);
-
-	return NULL;
+	gchar *icon_name  = NULL;
+	gchar *content_type;
+	GIcon *icon;
+	gchar **icon_names, **cursor;
 	
+	if (!mime_type || g_ascii_strcasecmp (mime_type, "application/octet-stream") == 0) 
+		content_type = g_content_type_guess (name, NULL, 0, NULL);
+	else {
+		content_type = g_content_type_from_mime_type (mime_type);
+	}
+
+	if (!content_type) {
+		content_type = g_content_type_from_mime_type ("application/octet-stream");
+	}
+	icon = g_content_type_get_icon (content_type);
+	if (!G_THEMED_ICON (icon))
+		return NULL;
+
+	g_object_get (G_OBJECT (icon), "names", &icon_names, NULL);
+
+	for (cursor = icon_names; cursor; ++cursor) {
+		if (!g_ascii_strcasecmp (*cursor, "gnome-mime-message") ||
+		    !g_ascii_strcasecmp (*cursor, "gnome-mime-message-rfc822")) {
+			icon_name = g_strdup ("qgn_list_messagin");
+			break;
+		} else if (gtk_icon_theme_has_icon (gtk_icon_theme_get_default(), *cursor)) {
+			icon_name = g_strdup (*cursor);
+			break;
+		}
+	}
+	g_strfreev (icon_names);
+
+	return icon_name;
+
 }
 
 
