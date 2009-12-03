@@ -141,10 +141,13 @@ modest_default_global_settings_dialog_init (ModestDefaultGlobalSettingsDialog *s
 	ppriv->updating_page = create_updating_page (self);
 	top_vbox = gtk_vbox_new (FALSE, 0);
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
-	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, 0);
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 
+				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE, 
+				   MODEST_MARGIN_DOUBLE, MODEST_MARGIN_TRIPLE);
 
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL_SAVE, GTK_RESPONSE_OK);
+	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
 
 	/* Set the default focusable widgets */
 	g_object_set_data (G_OBJECT(ppriv->updating_page), DEFAULT_FOCUS_WIDGET,
