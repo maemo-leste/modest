@@ -905,7 +905,7 @@ on_account_removed (TnyAccountStore *acc_store,
 		       modal dialog would otherwise, prevent the
 		       windows from being closed */
 		    if (!strcmp (acc_name, modest_window_get_active_account (current_top)))
-			    g_idle_add (on_idle_close_all_but_first, (gpointer) priv->shell);
+			    g_idle_add (on_idle_close_all_but_first, (gpointer) user_data);
 	}
 }
 
