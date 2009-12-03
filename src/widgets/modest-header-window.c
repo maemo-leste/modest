@@ -176,9 +176,11 @@ static void on_progress_list_changed (ModestWindowMgr *mgr,
 static void update_progress_hint (ModestHeaderWindow *self);
 static void on_header_view_model_destroyed (gpointer user_data,
 					    GObject *model);
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean on_key_press(GtkWidget *widget,
 					GdkEventKey *event,
 					gpointer user_data);
+#endif
 
 /* globals */
 static GtkWindowClass *parent_class = NULL;
@@ -416,8 +418,10 @@ connect_signals (ModestHeaderWindow *self)
 #endif
 
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	g_signal_connect(G_OBJECT(self), "key-press-event",
 			G_CALLBACK(on_key_press), self);
+#endif
 }
 
 static void
@@ -1421,6 +1425,7 @@ on_horizontal_movement (HildonPannableArea *hildonpannable,
 }
 #endif
 
+#ifdef MODEST_TOOLKIT_HILDON2
 static gboolean
 on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
@@ -1451,3 +1456,4 @@ on_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 
 	return FALSE;
 }
+#endif
