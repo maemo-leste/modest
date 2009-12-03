@@ -610,12 +610,20 @@ on_key_pressed (GtkWidget *self,
 		return TRUE;
 #endif
  	case GDK_Escape: 
-		if (modest_window_mgr_get_fullscreen_mode (mgr))
+		if (modest_window_mgr_get_fullscreen_mode (mgr)) {
 			modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
-		else if (MODEST_IS_MSG_VIEW_WINDOW (self))
+			return TRUE;
+		} else {
+#ifdef MODEST_TOOLKIT_HILDON2
+			if (MODEST_IS_MSG_VIEW_WINDOW (self)) {
+				modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
+				return TRUE;
+			}
+#else
 			modest_ui_actions_on_close_window (NULL, MODEST_WINDOW (self));
-		else
-			return FALSE;
+			return TRUE;
+#endif
+		}
 		break;
 	}
 	
