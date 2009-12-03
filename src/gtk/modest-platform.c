@@ -217,7 +217,14 @@ modest_platform_get_file_icon_name (const gchar* name, const gchar* mime_type,
 gboolean 
 modest_platform_activate_uri (const gchar *uri)
 {
-	return g_app_info_launch_default_for_uri (uri, NULL, NULL);
+	GAppLaunchContext *al_context;
+	gboolean retval;
+
+	al_context = gdk_app_launch_context_new ();
+	retval =  g_app_info_launch_default_for_uri (uri, al_context, NULL);
+	g_object_unref (al_context);
+
+	return retval;
 
 }
 
@@ -229,6 +236,7 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 	GAppInfo *app_info;
 	GList *list;
 	GFile *file;
+	GAppLaunchContext *al_context;
 
 	content_type = g_content_type_from_mime_type (mime_type);
 	if (!content_type)
@@ -251,7 +259,9 @@ modest_platform_activate_file (const gchar *path, const gchar *mime_type)
 
 	file = g_file_new_for_path (path);
 	list = g_list_prepend (NULL, file);
-	retval = g_app_info_launch (app_info, list, NULL, NULL);
+	al_context = gdk_app_launch_context_new ();
+	retval = g_app_info_launch (app_info, list, al_context, NULL);
+	g_object_unref (al_context);
 
 	g_list_free (list);
 	g_object_unref (file);
