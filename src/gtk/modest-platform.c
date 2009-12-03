@@ -63,6 +63,7 @@
 #include <modest-icon-names.h>
 #include <modest-count-stream.h>
 #include <modest-gtk-details-dialog.h>
+#include <modest-default-global-settings-dialog.h>
 #include <math.h>
 #include "widgets/modest-toolkit-utils.h"
 
@@ -1101,7 +1102,7 @@ modest_platform_remove_new_mail_notifications (gboolean only_visuals)
 GtkWidget * 
 modest_platform_get_global_settings_dialog ()
 {
-	return NULL;
+	return modest_default_global_settings_dialog_new ();
 }
 
 void
