@@ -191,7 +191,11 @@ modest_toolkit_utils_create_vcaptioned_with_size_type    (GtkSizeGroup *size_gro
 		label = gtk_label_new (title);
 	}
 	align = gtk_alignment_new (0.0, 0.0, 1.0, 1.0);
+#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_alignment_set_padding (GTK_ALIGNMENT (align), 0, 0, MODEST_MARGIN_DOUBLE, MODEST_MARGIN_DOUBLE);
+#else
+	gtk_alignment_set_padding (GTK_ALIGNMENT (align), MODEST_MARGIN_HALF, 0, 0, 0);
+#endif
 
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 #ifdef MAEMO_CHANGES
