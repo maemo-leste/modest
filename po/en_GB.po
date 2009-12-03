@@ -1019,7 +1019,7 @@ msgstr ""
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:231
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:238
 msgid "mcen_ti_default_account"
-msgstr "E-mail accounts"
+msgstr "Default account"
 
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:254
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:260
@@ -1028,11 +1028,11 @@ msgstr "Default message format"
 
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:268
 msgid "mcen_fi_options_incoming_notifications"
-msgstr "Update when connected via"
+msgstr "Show incoming notifications"
 
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:274
 msgid "mcen_fi_options_automatic_add"
-msgstr "Update automatically"
+msgstr "Add contacts automatically"
 
 #. Separator label
 #: ../src/hildon2/modest-hildon2-global-settings-dialog.c:279
