@@ -109,7 +109,9 @@ modest_find_toolbar_init (ModestFindToolbar *self)
 	gtk_widget_set_no_show_all (GTK_WIDGET (self), TRUE);
 
 	label_tool_item = gtk_tool_item_new ();
+	gtk_widget_show (GTK_WIDGET (label_tool_item));
 	priv->label = gtk_label_new (NULL);
+	gtk_widget_show (priv->label);
 	gtk_container_add (GTK_CONTAINER (label_tool_item), priv->label);
 
 	gtk_toolbar_insert (GTK_TOOLBAR (self), label_tool_item, -1);
@@ -117,7 +119,9 @@ modest_find_toolbar_init (ModestFindToolbar *self)
 	g_object_set (GTK_TOOL_ITEM (label_tool_item), "is-important", TRUE, NULL);
 
 	entry_tool_item = gtk_tool_item_new ();
+	gtk_widget_show (GTK_WIDGET (entry_tool_item));
 	priv->entry = gtk_entry_new ();
+	gtk_widget_show (priv->entry);
 	gtk_container_add (GTK_CONTAINER (entry_tool_item), priv->entry);
 
 	gtk_toolbar_insert (GTK_TOOLBAR (self), entry_tool_item, -1);
@@ -125,6 +129,7 @@ modest_find_toolbar_init (ModestFindToolbar *self)
 	g_object_set (GTK_TOOL_ITEM (entry_tool_item), "is-important", TRUE, NULL);
 
 	close_tool_button = gtk_tool_button_new_from_stock (GTK_STOCK_CLOSE);
+	gtk_widget_show (GTK_WIDGET (close_tool_button));
 
 	gtk_toolbar_insert (GTK_TOOLBAR (self), close_tool_button, -1);
 	gtk_container_child_set (GTK_CONTAINER (self), GTK_WIDGET (close_tool_button), "expand", FALSE, NULL);
