@@ -58,7 +58,7 @@ static ModestTnyAccountStore  *_account_store  = NULL;
 static GSList *_sig_handlers = NULL;
 
 /* will modest shut down when window list and mail op queue are empty? */
-static gboolean _allow_shutdown = TRUE;
+static gboolean _allow_shutdown = FALSE;
 
 /*
  * private functions declared in modest-runtime-priv.h -

@@ -37,15 +37,11 @@
 #include "modest-ui-actions.h"
 
 static gboolean show_ui = FALSE;
-static gint shutdown_timeout = 0;
 static GOptionEntry option_entries [] =
 {
 	{ "show-ui", 's', 0, G_OPTION_ARG_NONE, &show_ui, "Show UI immediately, so no wait for DBUS activation", NULL },
-	{ "shutdown-timeout", 't', 0, G_OPTION_ARG_INT, &shutdown_timeout, "Timeout in minutes for running Modest in prestart mode", NULL },
 	{ NULL }
 };
-
-static guint shutdown_timeout_id = 0;
 
 typedef struct {
 	gulong queue_handler;
@@ -124,13 +120,6 @@ on_window_list_empty (ModestWindowMgr *window_mgr,
 		g_idle_add_full (G_PRIORITY_LOW, on_idle_exit_modest, user_data, NULL);
 }
 
-static gboolean
-shutdown_timeout_handler (gpointer userdata)
-{
-	modest_runtime_set_allow_shutdown (TRUE);
-	return FALSE;
-}
-
 int
 main (int argc, char *argv[])
 {
@@ -138,7 +127,6 @@ main (int argc, char *argv[])
 	 * because we wait for the top_application D-Bus method to
 	 * be called. But that's annoying when starting from the
 	 * command line.: */
-	gboolean show_ui_without_top_application_method = FALSE;
 	int retval  = 0;
 	MainSignalHandlers *handlers;
 	ModestTnyAccountStore *acc_store;
@@ -158,9 +146,7 @@ main (int argc, char *argv[])
 	}
 	g_option_context_free (context);
 
-	show_ui_without_top_application_method = show_ui;
-
-	if (!show_ui_without_top_application_method) {
+	if (!show_ui) {
 		g_print ("modest: use 'modest -s' to start from cmdline  with UI\n");
 	}
 
@@ -224,10 +210,9 @@ main (int argc, char *argv[])
 	 * The UI will be shown later (or just after starting if no otehr D-Bus method was used),
 	 * when we receive the "top_application" D-Bus method.
 	 */
-	if (show_ui_without_top_application_method) {
+	if (show_ui) {
 		ModestWindow *window;
 
-		modest_runtime_set_allow_shutdown (TRUE);
 		mgr = modest_runtime_get_window_mgr();
 		window = modest_window_mgr_show_initial_window (mgr);
 		if (!window) {
@@ -237,11 +222,6 @@ main (int argc, char *argv[])
 		}
 		/* Remove new mail notifications if exist */
 		modest_platform_remove_new_mail_notifications (FALSE);
-	} else {
-		if (shutdown_timeout > 0) {
-			modest_runtime_set_allow_shutdown (FALSE);
-			shutdown_timeout_id = g_timeout_add_seconds (shutdown_timeout * 60, shutdown_timeout_handler, NULL);
-		}
 	}
 
 	gtk_main ();

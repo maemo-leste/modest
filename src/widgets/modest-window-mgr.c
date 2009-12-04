@@ -547,16 +547,25 @@ modest_window_mgr_register_window (ModestWindowMgr *self,
 				   ModestWindow *window,
 				   ModestWindow *parent)
 {
-	/* If this is the first registered window then reset the
-	   status of the TnyDevice as it might be forced to be offline
-	   when modest is running in the background (see
-	   modest_tny_account_store_new()) */
-	if (modest_window_mgr_get_num_windows (self) == 0) {
+	gboolean no_windows, retval;
+
+	no_windows = (modest_window_mgr_get_num_windows (self) == 0);
+
+	retval = MODEST_WINDOW_MGR_GET_CLASS (self)->register_window (self, window, parent);
+
+	if  (no_windows) {
+		/* If this is the first registered window then reset the
+		   status of the TnyDevice as it might be forced to be offline
+		   when modest is running in the background (see
+		   modest_tny_account_store_new()) */
 		if (tny_device_is_forced (modest_runtime_get_device ()))
 			tny_device_reset (modest_runtime_get_device ());
-	}
 
-	return MODEST_WINDOW_MGR_GET_CLASS (self)->register_window (self, window, parent);
+		/* Do also allow modest to shutdown when the
+		   application is closed */
+		modest_runtime_set_allow_shutdown (TRUE);
+	}
+	return retval;
 }
 
 static gboolean
