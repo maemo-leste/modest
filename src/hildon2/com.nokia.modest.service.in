@@ -1,4 +1,4 @@
 [D-BUS Service]
 Name=com.nokia.modest
-Exec=@prefix@/bin/modest -t 30
+Exec=@prefix@/bin/modest
 

@@ -4,7 +4,7 @@ Version=@PACKAGE_VERSION@
 Type=Application
 Name=mcen_ap_name
 Comment=mcen_ap_name_thumb
-Exec=@prefix@/bin/modest -t 30
+Exec=@prefix@/bin/modest
 X-Text-Domain=modest
 
 X-Osso-Service=com.nokia.modest
