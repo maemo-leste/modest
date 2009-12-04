@@ -92,7 +92,24 @@ if test "x$with_gcov" == "xyes" ; then
 	LDFLAGS="$LDFLAGS -lgcov"
 fi
 
+dnl ------
+dnl WebKit
+dnl ------
 
+# Option to enable debugging
+with_webkit=no
+AC_ARG_ENABLE(webkit,
+              [AC_HELP_STRING([--enable-webkit],[Enable webkit support (default=no)])],
+              [with_webkit=yes], [with_webkit=no])
+
+if test "x$with_webkit" == "xyes" ; then
+PKG_CHECK_MODULES(MODEST_WEBKIT,webkit-1.0,have_webkit=true,have_webkit=false)
+MODEST_USE_WEBKIT=1
+AC_SUBST(MODEST_WEBKIT_CFLAGS)
+AC_SUBST(MODEST_WEBKIT_LIBS)
+AC_DEFINE_UNQUOTED(MODEST_USE_WEBKIT, 1, ["Whether modest is being build with webkit support."])
+AC_SUBST(MODEST_USE_WEBKIT)
+fi
 
 dnl -------
 dnl GtkHTML
