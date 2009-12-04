@@ -56,6 +56,12 @@ static void    modest_webkit_mime_part_view_finalize   (GObject *self);
 static void    modest_webkit_mime_part_view_dispose    (GObject *self);
 
 /* Webkit signal handlers */
+static void on_resource_request_starting (WebKitWebView *webview,
+					  WebKitWebFrame *frame,
+					  WebKitWebResource *resource,
+					  WebKitNetworkRequest *request,
+					  WebKitNetworkResponse *response,
+					  gpointer userdata);
 static void      on_notify_style  (GObject *obj, GParamSpec *spec, gpointer userdata);
 static gboolean  update_style     (ModestWebkitMimePartView *self);
 /* TnyMimePartView implementation */
@@ -285,6 +291,9 @@ modest_webkit_mime_part_view_init (ModestWebkitMimePartView *self)
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT(self), "notify::style",
 						       G_CALLBACK (on_notify_style), (gpointer) self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (self), "resource-request-starting",
+						       G_CALLBACK (on_resource_request_starting), (gpointer) self);
 
 	priv->part = NULL;
 	priv->current_zoom = 1.0;
@@ -319,6 +328,27 @@ modest_webkit_mime_part_view_dispose (GObject *obj)
 }
 
 /* WEBKIT SIGNALS HANDLERS */
+
+static void
+on_resource_request_starting (WebKitWebView *webview,
+			      WebKitWebFrame *frame,
+			      WebKitWebResource *resource,
+			      WebKitNetworkRequest *request,
+			      WebKitNetworkResponse *response,
+			      gpointer userdata)
+{
+	ModestWebkitMimePartView *self = (ModestWebkitMimePartView *) userdata;
+	g_return_if_fail (MODEST_IS_WEBKIT_MIME_PART_VIEW (self));
+
+	if (g_str_has_prefix (webkit_network_request_get_uri (request), "http:")) {
+		ModestWebkitMimePartViewPrivate *priv = MODEST_WEBKIT_MIME_PART_VIEW_GET_PRIVATE (self);
+
+		if (!priv->view_images)
+			priv->has_external_images = TRUE;
+	}
+
+	webkit_network_request_set_uri (request, "about:blank");
+}
 
 static void 
 on_notify_style (GObject *obj, GParamSpec *spec, gpointer userdata)
