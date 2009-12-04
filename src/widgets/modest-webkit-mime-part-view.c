@@ -280,6 +280,7 @@ modest_webkit_mime_part_view_init (ModestWebkitMimePartView *self)
 	ModestWebkitMimePartViewPrivate *priv = MODEST_WEBKIT_MIME_PART_VIEW_GET_PRIVATE (self);
 	GdkColor base;
 	GdkColor text;
+	WebKitWebSettings *settings;
 
 	gdk_color_parse ("#fff", &base);
 	gdk_color_parse ("#000", &text);
@@ -299,6 +300,22 @@ modest_webkit_mime_part_view_init (ModestWebkitMimePartView *self)
 	priv->current_zoom = 1.0;
 	priv->view_images = FALSE;
 	priv->has_external_images = FALSE;
+
+	settings = webkit_web_settings_new ();
+	g_object_set (G_OBJECT (settings),
+		      "auto-load-images", FALSE,
+		      "enable-html5-database", FALSE,
+		      "enable-html5-local-storage", FALSE, 
+		      "enable-offline-web-application-cache", FALSE,
+		      "enable-plugins", FALSE,
+		      "enable-private-browsing", TRUE,
+		      "enable-scripts", FALSE,
+		      NULL);
+	webkit_web_view_set_settings (WEBKIT_WEB_VIEW (self), settings);
+	g_object_unref (settings);
+	g_object_set (G_OBJECT (self), 
+		      "editable", FALSE,
+		      NULL);
 }
 
 static void
