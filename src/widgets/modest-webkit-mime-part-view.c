@@ -62,12 +62,22 @@ static void on_resource_request_starting (WebKitWebView *webview,
 					  WebKitNetworkRequest *request,
 					  WebKitNetworkResponse *response,
 					  gpointer userdata);
+static gboolean on_new_window_policy_decision_requested (WebKitWebView             *web_view,
+							 WebKitWebFrame            *frame,
+							 WebKitNetworkRequest      *request,
+							 WebKitWebNavigationAction *navigation_action,
+							 WebKitWebPolicyDecision   *policy_decision,
+							 gpointer                   user_data);
 static gboolean on_navigation_policy_decision_requested (WebKitWebView             *web_view,
 							 WebKitWebFrame            *frame,
 							 WebKitNetworkRequest      *request,
 							 WebKitWebNavigationAction *navigation_action,
 							 WebKitWebPolicyDecision   *policy_decision,
 							 gpointer                   user_data);
+static WebKitNavigationResponse on_navigation_requested                      (WebKitWebView        *web_view,
+									      WebKitWebFrame       *frame,
+									      WebKitNetworkRequest *request,
+									      gpointer              user_data);
 static void      on_notify_style  (GObject *obj, GParamSpec *spec, gpointer userdata);
 static gboolean  update_style     (ModestWebkitMimePartView *self);
 /* TnyMimePartView implementation */
@@ -304,6 +314,12 @@ modest_webkit_mime_part_view_init (ModestWebkitMimePartView *self)
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT (self), "navigation-policy-decision-requested",
 						       G_CALLBACK (on_navigation_policy_decision_requested), (gpointer) self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (self), "new-window-policy-decision-requested",
+						       G_CALLBACK (on_new_window_policy_decision_requested), (gpointer) self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (self), "navigation-requested",
+						       G_CALLBACK (on_navigation_requested), (gpointer) self);
 
 	priv->part = NULL;
 	priv->current_zoom = 1.0;
@@ -355,6 +371,24 @@ modest_webkit_mime_part_view_dispose (GObject *obj)
 
 /* WEBKIT SIGNALS HANDLERS */
 
+static WebKitNavigationResponse
+on_navigation_requested                      (WebKitWebView        *web_view,
+					      WebKitWebFrame       *frame,
+					      WebKitNetworkRequest *request,
+					      gpointer              user_data)
+{
+	const gchar *uri;
+
+	uri = webkit_network_request_get_uri (request);
+	if (g_strcmp0 (uri, "about:blank") == 0) {
+		return WEBKIT_NAVIGATION_RESPONSE_ACCEPT;
+	} else if (g_str_has_prefix (uri, "cid:") == 0) {
+		return WEBKIT_NAVIGATION_RESPONSE_DOWNLOAD;
+	} else {
+		return WEBKIT_NAVIGATION_RESPONSE_ACCEPT;
+	}
+}
+
 static void
 on_resource_request_starting (WebKitWebView *webview,
 			      WebKitWebFrame *frame,
@@ -386,7 +420,42 @@ on_navigation_policy_decision_requested (WebKitWebView             *web_view,
 {
 	WebKitWebNavigationReason reason;
 	reason = webkit_web_navigation_action_get_reason (navigation_action);
-	if (reason != WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED && reason != WEBKIT_WEB_NAVIGATION_REASON_OTHER) {
+	if (reason == WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED) {
+		const gchar *uri;
+		gboolean result;
+
+		webkit_web_policy_decision_ignore (policy_decision);
+		uri = webkit_network_request_get_uri (WEBKIT_NETWORK_REQUEST (request));
+		g_signal_emit_by_name (G_OBJECT (user_data), "activate-link", uri, &result);
+
+		return TRUE;
+	} else if (reason != WEBKIT_WEB_NAVIGATION_REASON_OTHER) {
+		webkit_web_policy_decision_ignore (policy_decision);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static gboolean
+on_new_window_policy_decision_requested (WebKitWebView             *web_view,
+					 WebKitWebFrame            *frame,
+					 WebKitNetworkRequest      *request,
+					 WebKitWebNavigationAction *navigation_action,
+					 WebKitWebPolicyDecision   *policy_decision,
+					 gpointer                   user_data)
+{
+	WebKitWebNavigationReason reason;
+	reason = webkit_web_navigation_action_get_reason (navigation_action);
+	if (reason == WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED) {
+		const gchar *uri;
+		gboolean result;
+
+		webkit_web_policy_decision_ignore (policy_decision);
+		uri = webkit_network_request_get_uri (WEBKIT_NETWORK_REQUEST (request));
+		g_signal_emit_by_name (G_OBJECT (user_data), "activate-link", uri, &result);
+
+		return TRUE;
+	} else if (reason != WEBKIT_WEB_NAVIGATION_REASON_OTHER) {
 		webkit_web_policy_decision_ignore (policy_decision);
 		return TRUE;
 	}
