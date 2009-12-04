@@ -140,6 +140,7 @@ struct _ModestWebkitMimePartViewPrivate {
 	gboolean view_images;
 	gboolean has_external_images;
 	GSList *sighandlers;
+	gchar *last_search;
 };
 
 #define MODEST_WEBKIT_MIME_PART_VIEW_GET_PRIVATE(o)      (G_TYPE_INSTANCE_GET_PRIVATE((o), \
@@ -322,6 +323,7 @@ modest_webkit_mime_part_view_init (ModestWebkitMimePartView *self)
 						       G_CALLBACK (on_navigation_requested), (gpointer) self);
 
 	priv->part = NULL;
+	priv->last_search = NULL;
 	priv->current_zoom = 1.0;
 	priv->view_images = FALSE;
 	priv->has_external_images = FALSE;
@@ -350,6 +352,7 @@ modest_webkit_mime_part_view_finalize (GObject *obj)
 
 	modest_signal_mgr_disconnect_all_and_destroy (priv->sighandlers);
 	priv->sighandlers = NULL;
+	g_free (priv->last_search);
 
 	G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
@@ -748,13 +751,29 @@ static gboolean
 search (ModestWebkitMimePartView *self, 
 	const gchar *string)
 {
-	return FALSE;
+	ModestWebkitMimePartViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_WEBKIT_MIME_PART_VIEW (self), FALSE);
+
+	priv = MODEST_WEBKIT_MIME_PART_VIEW_GET_PRIVATE (self);
+	g_free (priv->last_search);
+	priv->last_search = g_strdup (string);
+	webkit_web_view_mark_text_matches (WEBKIT_WEB_VIEW (self), priv->last_search, FALSE, 0);
+	webkit_web_view_set_highlight_text_matches (WEBKIT_WEB_VIEW (self), TRUE);
+	return webkit_web_view_search_text (WEBKIT_WEB_VIEW (self), priv->last_search, FALSE, TRUE, TRUE);
 }
 
 static gboolean
 search_next (ModestWebkitMimePartView *self)
 {
-	return FALSE;
+	ModestWebkitMimePartViewPrivate *priv;
+
+	g_return_val_if_fail (MODEST_IS_WEBKIT_MIME_PART_VIEW (self), FALSE);
+
+	priv = MODEST_WEBKIT_MIME_PART_VIEW_GET_PRIVATE (self);
+	webkit_web_view_mark_text_matches (WEBKIT_WEB_VIEW (self), priv->last_search, FALSE, 0);
+	webkit_web_view_set_highlight_text_matches (WEBKIT_WEB_VIEW (self), TRUE);
+	return webkit_web_view_search_text (WEBKIT_WEB_VIEW (self), priv->last_search, FALSE, TRUE, FALSE);
 }
 
 static gboolean
