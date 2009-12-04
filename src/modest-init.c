@@ -53,11 +53,10 @@
 #include <libgnomevfs/gnome-vfs.h>
 #include <string.h>
 #include "modest-text-utils.h"
-
-#ifndef MODEST_TOOLKIT_GTK
+#include <locale.h>
+#ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-hildon-includes.h"
 #endif
-#include <locale.h>
 
 static gboolean init_header_columns (ModestConf *conf, gboolean overwrite);
 static gboolean init_default_account_maybe  (ModestAccountMgr *acc_mgr);
@@ -636,7 +635,7 @@ init_stock_icons (void)
 		gint i;
 
 		static GtkStockItem items[] = {
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
 			{ MODEST_STOCK_SORT, "sort mail", 0, 0, NULL },
 			{ MODEST_STOCK_REFRESH, "refresh mail", 0, 0, NULL },
 #endif /*MODEST_TOOLKIT_GTK*/
@@ -650,7 +649,7 @@ init_stock_icons (void)
 		};
 
 		static gchar *items_names [] = {
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
 			MODEST_TOOLBAR_ICON_SORT,
 			MODEST_TOOLBAR_ICON_REFRESH,
 #endif /*MODEST_TOOLKIT_GTK*/

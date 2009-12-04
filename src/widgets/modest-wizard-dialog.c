@@ -47,9 +47,9 @@
 #include <config.h>
 #endif
 
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
 #include <hildon/hildon-defines.h>
-#endif /*!MODEST_TOOLKIT_GTK*/
+#endif
 
 #include "modest-wizard-dialog.h"
 #include "modest-debug.h"

@@ -34,7 +34,7 @@
 #include "widgets/modest-window.h"
 #include "widgets/modest-folder-view.h"
 #include "widgets/modest-sort-criterium-view.h"
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_PLATFORM_MAEMO
 #include <libosso.h>
 #endif
 
@@ -542,7 +542,7 @@ void     modest_platform_run_header_details_dialog (GtkWindow *parent_window,
  **/
 void     modest_platform_on_runtime_initialized ();
 
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_PLATFORM_MAEMO
 /**
  * modest_platform_get_osso_context:
  *

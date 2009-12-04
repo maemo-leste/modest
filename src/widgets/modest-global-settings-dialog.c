@@ -40,8 +40,6 @@
 #include "modest-platform.h"
 #ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-hildon-includes.h"
-#endif
-#ifndef MODEST_TOOLKIT_GTK
 #include <hildon/hildon-number-editor.h>
 #endif
 /* include other impl specific header files */

@@ -42,10 +42,9 @@
 #include <modest-toolkit-factory.h>
 #include <modest-runtime.h>
 
-/* FIXNE: we should have no maemo-deps in widgets/ */
-#ifndef MODEST_TOOLKIT_GTK
+#ifdef MODEST_TOOLKIT_HILDON2
 #include "modest-hildon-includes.h"
-#endif /*!MODEST_TOOLKIT_GTK*/
+#endif
 
 #define RECPT_BUTTON_WIDTH_HILDON2 118
 
