@@ -8,6 +8,7 @@ INCLUDES=\
 	$(MODEST_TOOLKIT_CFLAGS) \
 	$(MODEST_PLUGIN_DEFINES) \
 	$(MODEST_HILDON_HELP_CFLAGS)    \
+	$(MODEST_WEBKIT_CFLAGS) \
 	$(MODEST_MOZEMBED_CFLAGS) \
 	$(MODEST_WPEDITOR_CFLAGS)           \
 	$(MODEST_LIBCONIC_CFLAGS)	    \
@@ -171,6 +172,7 @@ libmodest_widgets_la_include_HEADERS = $(libmodest_widgets_public_headers)
 LDADD = \
 	$(MODEST_GSTUFF_LIBS)		\
 	$(MODEST_MOZEMBED_LIBS)         \
+	$(MODEST_WEBKIT_LIBS)           \
 	$(MODEST_WPEDITOR_LIBS) 	\
 	$(MODEST_PLATFORM_LIBS)		\
 	$(MODEST_LIBCONIC_LIBS) 	\
@@ -178,17 +180,14 @@ LDADD = \
 	$(MODEST_CALENDAR_WIDGETS_LIBS)
 
 if MODEST_USE_WEBKIT
-# libmodest_widgets_la_SOURCES +=          \
-# 	modest-webkit-mime-part-view.c   \
-# 	modest-webkit-mime-part-view.h   \
-# 	modest-webkit-msg-view.c         \
-# 	modest-webkit-msg-view.h
+libmodest_widgets_la_SOURCES +=          \
+	modest-webkit-mime-part-view.c   \
+	modest-webkit-mime-part-view.h   \
+	modest-webkit-msg-view.c         \
+	modest-webkit-msg-view.h         \
+	modest-tny-stream-webkit.c       \
+	modest-tny-stream-webkit.h
 
-LDADD += \
-	$(MODEST_WEBKIT_LIBS)
-
-INCLUDES += \
-	$(MODEST_WEBKIT_CFLAGS)
 endif
 
 UI_FILES=\

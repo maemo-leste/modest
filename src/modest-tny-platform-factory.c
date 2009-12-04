@@ -39,8 +39,8 @@
 
 #include "modest-tny-platform-factory.h"
 #include "modest-tny-account-store.h"
-#ifdef MODEST_USE_MOZEMBED
-#include <widgets/modest-mozembed-msg-view.h>
+#ifdef MODEST_USE_WEBKIT
+#include <widgets/modest-webkit-msg-view.h>
 #else
 #include <widgets/modest-gtkhtml-msg-view.h>
 #endif
@@ -198,8 +198,8 @@ static TnyMsgView*
 modest_tny_platform_factory_new_msg_view (TnyPlatformFactory *self)
 {
 	/* Here we'll select one of the implementations available */
-#ifdef MODEST_USE_MOZEMBED
-	return g_object_new (MODEST_TYPE_MOZEMBED_MSG_VIEW, NULL);
+#ifdef MODEST_USE_WEBKIT
+	return g_object_new (MODEST_TYPE_WEBKIT_MSG_VIEW, NULL);
 #else
 	return g_object_new (MODEST_TYPE_GTKHTML_MSG_VIEW, NULL);
 #endif

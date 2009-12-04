@@ -15,6 +15,7 @@ INCLUDES=\
 	$(MODEST_LIBCONIC_CFLAGS)				\
 	$(MODEST_HILDON_NOTIFY_CFLAGS)				\
 	$(MODEST_MOZEMBED_CFLAGS)				\
+	$(MODEST_WEBKIT_CFLAGS)				\
 	-fPIC 							\
 	-I$(MODEST_TOOLKIT_DIR)					\
 	-DPREFIX=\"@prefix@\"					\
@@ -171,6 +172,7 @@ libmodest_la_LIBADD = 						\
 	$(MAEMO_LAUNCHER_LIBS) 				\
 	$(MODEST_GSTUFF_LIBS) 				\
 	$(MODEST_MOZEMBED_LIBS) 			\
+	$(MODEST_WEBKIT_LIBS) 			\
 	$(MODEST_PLATFORM_LIBS)	                        \
 	$(MODEST_TOOLKIT_LIBS)			\
 	$(MODEST_HILDON_HELP_LIBS)			\
