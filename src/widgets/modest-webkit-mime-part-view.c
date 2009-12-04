@@ -62,6 +62,12 @@ static void on_resource_request_starting (WebKitWebView *webview,
 					  WebKitNetworkRequest *request,
 					  WebKitNetworkResponse *response,
 					  gpointer userdata);
+static gboolean on_navigation_policy_decision_requested (WebKitWebView             *web_view,
+							 WebKitWebFrame            *frame,
+							 WebKitNetworkRequest      *request,
+							 WebKitWebNavigationAction *navigation_action,
+							 WebKitWebPolicyDecision   *policy_decision,
+							 gpointer                   user_data);
 static void      on_notify_style  (GObject *obj, GParamSpec *spec, gpointer userdata);
 static gboolean  update_style     (ModestWebkitMimePartView *self);
 /* TnyMimePartView implementation */
@@ -295,6 +301,9 @@ modest_webkit_mime_part_view_init (ModestWebkitMimePartView *self)
 	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
 						       G_OBJECT (self), "resource-request-starting",
 						       G_CALLBACK (on_resource_request_starting), (gpointer) self);
+	priv->sighandlers = modest_signal_mgr_connect (priv->sighandlers,
+						       G_OBJECT (self), "navigation-policy-decision-requested",
+						       G_CALLBACK (on_navigation_policy_decision_requested), (gpointer) self);
 
 	priv->part = NULL;
 	priv->current_zoom = 1.0;
@@ -365,6 +374,23 @@ on_resource_request_starting (WebKitWebView *webview,
 	}
 
 	webkit_network_request_set_uri (request, "about:blank");
+}
+
+static gboolean
+on_navigation_policy_decision_requested (WebKitWebView             *web_view,
+					 WebKitWebFrame            *frame,
+					 WebKitNetworkRequest      *request,
+					 WebKitWebNavigationAction *navigation_action,
+					 WebKitWebPolicyDecision   *policy_decision,
+					 gpointer                   user_data)
+{
+	WebKitWebNavigationReason reason;
+	reason = webkit_web_navigation_action_get_reason (navigation_action);
+	if (reason != WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED && reason != WEBKIT_WEB_NAVIGATION_REASON_OTHER) {
+		webkit_web_policy_decision_ignore (policy_decision);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 static void 
