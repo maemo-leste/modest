@@ -728,6 +728,7 @@ set_zoom (ModestWebkitMimePartView *self, gdouble zoom)
 	priv = MODEST_WEBKIT_MIME_PART_VIEW_GET_PRIVATE (self);
 	priv->current_zoom = zoom;
 
+	webkit_web_view_set_zoom_level (WEBKIT_WEB_VIEW (self), zoom);
 	gtk_widget_queue_resize (GTK_WIDGET (self));
 }
 
