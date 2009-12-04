@@ -440,6 +440,8 @@ modest_webkit_msg_view_init (ModestWebkitMsgView *obj)
 	}
 
 	gtk_container_add (GTK_CONTAINER (obj), vbox);
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (vbox), gtk_viewport_get_vadjustment (GTK_VIEWPORT (obj)));
+	gtk_container_set_focus_vadjustment (GTK_CONTAINER (priv->body_view), gtk_viewport_get_vadjustment (GTK_VIEWPORT (obj)));
 	
 }
 	
