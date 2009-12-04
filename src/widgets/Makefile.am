@@ -164,6 +164,7 @@ libmodest_widgets_la_SOURCES=          \
 	modest-zoomable.h              \
 	modest-zoomable.c
 
+
 libmodest_widgets_la_includedir = $(includedir)/modest-plugin-1.0/widgets/
 libmodest_widgets_la_include_HEADERS = $(libmodest_widgets_public_headers)
 
@@ -175,6 +176,20 @@ LDADD = \
 	$(MODEST_LIBCONIC_LIBS) 	\
 	$(MODEST_TOOLKIT_LIBS) 		\
 	$(MODEST_CALENDAR_WIDGETS_LIBS)
+
+if MODEST_USE_WEBKIT
+# libmodest_widgets_la_SOURCES +=          \
+# 	modest-webkit-mime-part-view.c   \
+# 	modest-webkit-mime-part-view.h   \
+# 	modest-webkit-msg-view.c         \
+# 	modest-webkit-msg-view.h
+
+LDADD += \
+	$(MODEST_WEBKIT_LIBS)
+
+INCLUDES += \
+	$(MODEST_WEBKIT_CFLAGS)
+endif
 
 UI_FILES=\
 	ui/modest-main-window-ui.xml \
