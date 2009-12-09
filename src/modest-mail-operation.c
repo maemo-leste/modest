@@ -2906,7 +2906,7 @@ remove_msgs_async_cb (TnyFolder *folder,
 		      GError *err, 
 		      gpointer user_data)
 {
-	gboolean expunge, leave_on_server;
+	gboolean expunge;
 	const gchar *account_name;
 	TnyAccount *account;
 	ModestProtocolType account_proto = MODEST_PROTOCOL_REGISTRY_TYPE_INVALID;
@@ -2936,18 +2936,18 @@ remove_msgs_async_cb (TnyFolder *folder,
 
 	account = modest_tny_folder_get_account (folder);
 	account_name = modest_tny_account_get_parent_modest_account_name_for_server_account (account);
-	leave_on_server =
-		modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
-							account_name);	
 	account_proto = modest_tny_account_get_protocol_type (account);
 	g_object_unref (account);
 
-	if ((modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry, account_proto) && 
-	     !leave_on_server) ||
-	    !modest_tny_folder_is_remote_folder (folder))
+	if (modest_protocol_registry_protocol_type_has_leave_on_server (protocol_registry, account_proto)) {
+		if (modest_account_mgr_get_leave_on_server (modest_runtime_get_account_mgr (),
+							    account_name))
+			expunge = FALSE;
+		else
+			expunge = TRUE;
+	} else {
 		expunge = TRUE;
-	else
-		expunge = FALSE;
+	}
 
 	/* Create helper */
 	helper = g_slice_new0 (SyncFolderHelper);
