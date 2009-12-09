@@ -421,7 +421,7 @@ modest_formatter_wrapper_quote (ModestFormatter *self, const gchar *text, TnyHea
 					  from,
 					  tny_header_get_date_sent (header),
 					  filenames,
-					  80);
+					  72);
 	g_free (from);
 
 	g_list_foreach (filenames, (GFunc) g_free, NULL);
