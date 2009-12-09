@@ -302,7 +302,8 @@ modest_text_utils_derived_subject (const gchar *subject, gboolean is_reply)
 	gchar *tmp, *subject_dup, *retval, *prefix;
 	const gchar *untranslated_prefix;
 	gint prefix_len, untranslated_prefix_len;
-	gboolean untranslated_found = FALSE;
+	gboolean translated_found = FALSE;
+	gboolean first_time;
 
 	if (!subject || subject[0] == '\0')
 		subject = _("mail_va_no_subject");
@@ -319,14 +320,18 @@ modest_text_utils_derived_subject (const gchar *subject, gboolean is_reply)
 
 	/* We do not want things like "Re: Re: Re:" or "Fw: Fw:" so
 	   delete the previous ones */
+	first_time = TRUE;
 	do {
 		if (g_str_has_prefix (tmp, prefix)) {
 			tmp += prefix_len;
 			tmp = g_strchug (tmp);
+			/* Do not consider translated prefixes in the
+			   middle of a Re:Re:..Re: like sequence */
+			if (G_UNLIKELY (first_time))
+				translated_found = TRUE;
 		} else if (g_str_has_prefix (tmp, untranslated_prefix)) {
 			tmp += untranslated_prefix_len;
 			tmp = g_strchug (tmp);
-			untranslated_found = TRUE;
 		} else {
 			gchar *prefix_down, *tmp_down;
 
@@ -346,9 +351,20 @@ modest_text_utils_derived_subject (const gchar *subject, gboolean is_reply)
 				break;
 			}
 		}
+		first_time = FALSE;
 	} while (tmp);
 
-	retval = g_strdup_printf ("%s %s", (untranslated_found) ? untranslated_prefix : prefix, tmp);
+	if (!g_strcmp0 (subject, tmp)) {
+		/* normal case */
+		retval = g_strdup_printf ("%s %s", untranslated_prefix, tmp);
+	} else {
+		if (translated_found) {
+			/* Found a translated prefix, i.e, "VS:" in Finish */
+			retval = g_strdup_printf ("%s %s", prefix, tmp);
+		} else {
+			retval = g_strdup_printf ("%s %s", untranslated_prefix, tmp);
+		}
+	}
 	g_free (subject_dup);
 	g_free (prefix);
 
