@@ -920,7 +920,6 @@ get_contacts_for_name (const gchar *name)
 	unquoted = unquote_string (name);
 
 	i = 0;
-	queries[i++] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
 	queries[i++] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
 	queries[i++] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
 	queries[i++] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
