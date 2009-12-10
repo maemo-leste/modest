@@ -718,8 +718,7 @@ modest_ui_dimming_rules_on_select_all (ModestWindow *win, gpointer user_data)
 	g_return_val_if_fail (MODEST_IS_DIMMING_RULE (user_data), FALSE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	focused = gtk_window_get_focus (GTK_WINDOW (win));
-
+	focused = gtk_container_get_focus_child ((GtkContainer *) win);
 
 	if (!dimmed && GTK_IS_ENTRY (focused)) {
 		const gchar *current_text;
@@ -1011,7 +1010,7 @@ modest_ui_dimming_rules_on_editor_paste (ModestWindow *win, gpointer user_data)
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (win), TRUE);
 	rule = MODEST_DIMMING_RULE (user_data);
 
-	focused = gtk_window_get_focus (GTK_WINDOW (win));
+	focused = gtk_container_get_focus_child ((GtkContainer *) win);
 
 	dimmed = MODEST_IS_ATTACHMENTS_VIEW (focused);
 	
@@ -1330,7 +1329,7 @@ _invalid_clipboard_selected (ModestWindow *win,
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 
 	/* Get focuesed widget */
-	focused = gtk_window_get_focus (GTK_WINDOW (win));
+	focused = gtk_container_get_focus_child ((GtkContainer *) win);
 
 	if (MODEST_IS_MSG_EDIT_WINDOW (win)) {
 		gboolean has_selection = FALSE;

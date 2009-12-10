@@ -1739,7 +1739,7 @@ modest_msg_view_window_key_event (GtkWidget *window,
 {
 	GtkWidget *focus;
 
-	focus = gtk_window_get_focus (GTK_WINDOW (window));
+	focus = gtk_container_get_focus_child ((GtkContainer *) window);
 
 	/* for the isearch toolbar case */
 	if (focus && GTK_IS_ENTRY (focus)) {
@@ -3338,10 +3338,11 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (mime_parts == NULL) {
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (gtk_widget_get_toplevel (window)), mime_parts, FALSE)) {
+		if (mime_parts && !modest_toolkit_utils_select_attachments (toplevel, mime_parts, FALSE)) {
 			g_object_unref (mime_parts);
 			return;
 		}

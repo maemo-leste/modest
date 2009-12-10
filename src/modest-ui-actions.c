@@ -229,8 +229,10 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 		}
 	}
 
-	if (win)
-		gtk_window_set_transient_for (GTK_WINDOW (wizard), GTK_WINDOW (win));
+	if (win) {
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+		gtk_window_set_transient_for (GTK_WINDOW (wizard), toplevel);
+	}
 
 	/* make sure the mainwindow is visible. We need to present the
 	   wizard again to give it the focus back. show_all are needed
@@ -256,6 +258,7 @@ modest_ui_actions_run_account_setup_wizard (ModestWindow *win)
 void
 modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 {
+	GtkWindow *toplevel;
 	GtkWidget *about;
 	const gchar *authors[] = {
 		"Dirk-Jan C. Binnema <dirk-jan.binnema@nokia.com>",
@@ -274,7 +277,9 @@ modest_ui_actions_on_about (GtkAction *action, ModestWindow *win)
 					 "uses the tinymail email framework written by Philip van Hoof"));
 	gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about), authors);
 	gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about), "http://modest.garage.maemo.org");
-	gtk_window_set_transient_for (GTK_WINDOW (about), GTK_WINDOW (win));
+
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+	gtk_window_set_transient_for (GTK_WINDOW (about), toplevel);
 	gtk_window_set_modal (GTK_WINDOW (about), TRUE);
 
 	gtk_dialog_run (GTK_DIALOG (about));
@@ -376,6 +381,7 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 	gint response;
 	ModestWindowMgr *mgr;
 	gboolean retval = TRUE;
+	GtkWindow *toplevel;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 
@@ -406,8 +412,8 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 					   tny_list_get_length(header_list)), desc);
 
 	/* Confirmation dialog */
-	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-							    message);
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+	response = modest_platform_run_confirmation_dialog (toplevel, message);
 
 	if (response == GTK_RESPONSE_OK) {
 		GtkTreeSelection *sel = NULL;
@@ -567,14 +573,16 @@ modest_ui_actions_on_accounts (GtkAction *action,
 		return;
 	} else {
 		/* Show the list of accounts */
-		GtkWindow *toplevel, *account_win;
+		GtkWindow *win_toplevel, *acc_toplevel;
+		GtkWidget *account_win;
 
-		account_win = GTK_WINDOW (modest_account_view_window_new ());
-		toplevel = GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (win)));
+		account_win = modest_account_view_window_new ();
+		acc_toplevel = (GtkWindow *) gtk_widget_get_toplevel (account_win);
 
 		/* The accounts dialog must be modal */
-		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), GTK_WINDOW (account_win), (GtkWindow *) win);
-		modest_utils_show_dialog_and_forget (toplevel, GTK_DIALOG (account_win));
+		win_toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+		modest_window_mgr_set_modal (modest_runtime_get_window_mgr (), acc_toplevel, win_toplevel);
+		modest_utils_show_dialog_and_forget (win_toplevel, GTK_DIALOG (account_win));
 	}
 }
 
@@ -693,10 +701,10 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 	}
 
 	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
-		modest_platform_run_information_dialog (
-			GTK_WINDOW(win),
-			_("mail_ib_error_attachment_size"),
-			TRUE);
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+		modest_platform_run_information_dialog (toplevel,
+							_("mail_ib_error_attachment_size"),
+							TRUE);
 		return;
 	}
 
@@ -820,8 +828,11 @@ modest_ui_actions_msg_retrieval_check (ModestMailOperation *mail_op,
 		error = modest_mail_operation_get_error (mail_op);
 		if (error && error->domain == MODEST_MAIL_OPERATION_ERROR &&
 		    error->code == MODEST_MAIL_OPERATION_ERROR_LOW_MEMORY) {
+			GtkWindow *toplevel = NULL;
 			GObject *source = modest_mail_operation_get_source (mail_op);
-			modest_platform_run_information_dialog (GTK_IS_WINDOW (source) ? GTK_WINDOW (source) : NULL,
+
+			toplevel = (GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (source));
+			modest_platform_run_information_dialog (toplevel,
 								_KR("memr_ib_operation_disabled"),
 								TRUE);
 			g_object_unref (source);
@@ -1379,7 +1390,8 @@ open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWind
 	if (found) {
 		if (window) {
 #ifndef MODEST_TOOLKIT_HILDON2
-			gtk_window_present (GTK_WINDOW (window));
+			GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
+			gtk_window_present (toplevel);
 #endif
 		} else {
 			/* the header has been registered already, we don't do
@@ -1395,9 +1407,10 @@ open_msg_from_header (TnyHeader *header, GtkTreeRowReference *rowref, ModestWind
 		/* Allways download if we are online. */
 		if (!tny_device_is_online (modest_runtime_get_device ())) {
 			gint response;
+			GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
 
 			/* If ask for user permission to download the messages */
-			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+			response = modest_platform_run_confirmation_dialog (toplevel,
 									    _("mcen_nc_get_msg"));
 
 			/* End if the user does not want to continue */
@@ -1693,21 +1706,23 @@ connect_to_get_msg (ModestWindow *win,
 		    TnyAccount *account)
 {
 	GtkResponseType response;
+	GtkWindow *toplevel;
 
 	/* Allways download if we are online. */
 	if (tny_device_is_online (modest_runtime_get_device ()))
 		return TRUE;
 
 	/* If offline, then ask for user permission to download the messages */
-	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
-			ngettext("mcen_nc_get_msg",
-			"mcen_nc_get_msgs",
-			num_of_uncached_msgs));
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+	response = modest_platform_run_confirmation_dialog (toplevel,
+							    ngettext("mcen_nc_get_msg",
+								     "mcen_nc_get_msgs",
+								     num_of_uncached_msgs));
 
 	if (response == GTK_RESPONSE_CANCEL)
 		return FALSE;
 
-	return modest_platform_connect_and_wait((GtkWindow *) win, account);
+	return modest_platform_connect_and_wait(toplevel, account);
 }
 
 static void
@@ -1858,9 +1873,11 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				 * creating the forward message */
 				if (!tny_device_is_online (modest_runtime_get_device ())) {
 					gint response;
+					GtkWindow *toplevel;
 
 					/* If ask for user permission to download the messages */
-					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+					toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+					response = modest_platform_run_confirmation_dialog (toplevel,
 											    ngettext("mcen_nc_get_msg",
 												     "mcen_nc_get_msgs",
 												     1));
@@ -1874,6 +1891,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 					TnyList *pending_parts;
 					TnyFolder *folder;
 					TnyAccount *account;
+					GtkWindow *toplevel;
 
 					/* Create helper */
 					pending_parts = forward_pending_parts (msg);
@@ -1883,7 +1901,8 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 					folder = tny_header_get_folder (header);
 					account = tny_folder_get_account (folder);
-					modest_platform_connect_and_perform (GTK_WINDOW (win),
+					toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+					modest_platform_connect_and_perform (toplevel,
 									     TRUE, account,
 									     reply_forward_performer,
 									     rf_helper);
@@ -1945,9 +1964,10 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				/* Allways download if we are online. */
 				if (!tny_device_is_online (modest_runtime_get_device ())) {
 					gint response;
+					GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
 
 					/* If ask for user permission to download the messages */
-					response = modest_platform_run_confirmation_dialog (GTK_WINDOW (win),
+					response = modest_platform_run_confirmation_dialog (toplevel,
 											    ngettext("mcen_nc_get_msg",
 												     "mcen_nc_get_msgs",
 												     uncached_msgs));
@@ -1963,12 +1983,15 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 				rf_helper = create_reply_forward_helper (action, win,
 									 reply_forward_type, header, NULL);
 				if (uncached_msgs > 0) {
-					modest_platform_connect_and_perform (GTK_WINDOW (win),
+					GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+
+					modest_platform_connect_and_perform (toplevel,
 									     TRUE, account,
 									     reply_forward_performer,
 									     rf_helper);
 				} else {
-					reply_forward_performer (FALSE, NULL, GTK_WINDOW (win),
+					GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+					reply_forward_performer (FALSE, NULL, toplevel,
 								 account, rf_helper);
 				}
 			}
@@ -2302,7 +2325,8 @@ modest_ui_actions_do_send_receive (const gchar *account_name,
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), info->mail_op);
 
 	/* Invoke the connect and perform */
-	modest_platform_connect_and_perform ((win) ? GTK_WINDOW (win) : NULL,
+	GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+	modest_platform_connect_and_perform (toplevel,
 					     force_connection, info->account,
 					     do_send_receive_performer, info);
 }
@@ -2473,14 +2497,16 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 	GtkWidget *dialog;
 	gchar *txt, *item;
 	gboolean online;
+	GtkWindow *toplevel;
 
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
 	item = (type == MODEST_ITEM_TYPE_FOLDER) ? "folder" : "message";
 
 	online = tny_device_is_online (modest_runtime_get_device());
 
 	if (online) {
 		/* already online -- the item is simply not there... */
-		dialog = gtk_message_dialog_new (GTK_WINDOW (win),
+		dialog = gtk_message_dialog_new (toplevel,
 						 GTK_DIALOG_MODAL,
 						 GTK_MESSAGE_WARNING,
 						 GTK_BUTTONS_NONE,
@@ -2490,7 +2516,7 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 		gtk_dialog_run (GTK_DIALOG(dialog));
 	} else {
 		dialog = gtk_dialog_new_with_buttons (_("Connection requested"),
-						      GTK_WINDOW (win),
+						      toplevel,
 						      GTK_DIALOG_MODAL,
 						      _("mcen_bd_dialog_cancel"),
 						      GTK_RESPONSE_REJECT,
@@ -2504,7 +2530,7 @@ modest_ui_actions_on_item_not_found (ModestHeaderView *header_view,ModestItemTyp
 		gtk_widget_show_all (GTK_WIDGET(GTK_DIALOG(dialog)->vbox));
 		g_free (txt);
 
-		gtk_window_set_default_size (GTK_WINDOW(dialog), 300, 300);
+		gtk_window_set_default_size ((GtkWindow *) dialog, 300, 300);
 		if (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 			/* TODO: Comment about why is this commented out: */
 			/* modest_platform_connect_and_wait (); */
@@ -2617,10 +2643,10 @@ enough_space_for_message (ModestMsgEditWindow *edit_window,
 	 * somehow got past our checks when attaching.
 	 */
 	if (expected_size > MODEST_MAX_ATTACHMENT_SIZE) {
-		modest_platform_run_information_dialog (
-			GTK_WINDOW(edit_window),
-			_("mail_ib_error_attachment_size"),
-			TRUE);
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) edit_window);
+		modest_platform_run_information_dialog (toplevel,
+							_("mail_ib_error_attachment_size"),
+							TRUE);
 		return FALSE;
 	}
 
@@ -3113,7 +3139,7 @@ do_create_folder (GtkWindow *parent_window,
 	gchar *folder_name = NULL;
 	TnyFolderStore *parent_folder = NULL;
 
-	result = modest_platform_run_new_folder_dialog (GTK_WINDOW (parent_window),
+	result = modest_platform_run_new_folder_dialog (parent_window,
 							suggested_parent,
 							(gchar *) suggested_name,
 							&folder_name,
@@ -3152,7 +3178,7 @@ modest_ui_actions_create_folder(GtkWindow *parent_window,
 	}
 
 	if (parent_folder) {
-		do_create_folder (GTK_WINDOW (parent_window), parent_folder, NULL);
+		do_create_folder (parent_window, parent_folder, NULL);
 		g_object_unref (parent_folder);
 	}
 }
@@ -3332,10 +3358,11 @@ modest_ui_actions_on_edit_mode_rename_folder (ModestWindow *window)
 		if (response != GTK_RESPONSE_ACCEPT || strlen (folder_name) == 0) {
 			do_rename = FALSE;
 		} else {
+			GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
 			RenameFolderInfo *rename_folder_data = g_new0 (RenameFolderInfo, 1);
 			rename_folder_data->folder = g_object_ref (folder);
 			rename_folder_data->new_name = folder_name;
-			modest_platform_connect_if_remote_and_perform (GTK_WINDOW(window), TRUE,
+			modest_platform_connect_if_remote_and_perform (toplevel, TRUE,
 					folder, on_rename_folder_performer, rename_folder_data);
 		}
 	}
@@ -3348,8 +3375,9 @@ modest_ui_actions_delete_folder_error_handler (ModestMailOperation *mail_op,
 					       gpointer user_data)
 {
 	GObject *win = modest_mail_operation_get_source (mail_op);
+	GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (win));
 
-	modest_platform_run_information_dialog ((win) ? GTK_WINDOW (win) : NULL,
+	modest_platform_run_information_dialog (toplevel,
 						_("mail_in_ui_folder_delete_error"),
 						FALSE);
 	g_object_unref (win);
@@ -3419,8 +3447,11 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 	GtkWidget *folder_view;
 	gint response;
 	gchar *message;
+	GtkWindow *toplevel;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(window), FALSE);
+
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
 
 	if (MODEST_IS_FOLDER_WINDOW (window)) {
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
@@ -3437,7 +3468,7 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 
 	/* Show an error if it's an account */
 	if (!TNY_IS_FOLDER (folder)) {
-		modest_platform_run_information_dialog (GTK_WINDOW (window),
+		modest_platform_run_information_dialog (toplevel,
 							_("mail_in_ui_folder_delete_error"),
 							FALSE);
 		g_object_unref (G_OBJECT (folder));
@@ -3447,7 +3478,7 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 	/* Ask the user */
 	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"),
 				    tny_folder_get_name (TNY_FOLDER (folder)));
-	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
+	response = modest_platform_run_confirmation_dialog (toplevel,
 							    (const gchar *) message);
 	g_free (message);
 
@@ -3459,7 +3490,7 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 		info->move_to_trash = move_to_trash;
 
 		account = tny_folder_get_account (TNY_FOLDER (folder));
-		modest_platform_connect_if_remote_and_perform (GTK_WINDOW (window),
+		modest_platform_connect_if_remote_and_perform (toplevel,
 							       TRUE,
 							       TNY_FOLDER_STORE (account),
 							       on_delete_folder_cb, info);
@@ -3742,7 +3773,7 @@ modest_ui_actions_on_cut (GtkAction *action,
 	GtkClipboard *clipboard;
 
 	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
-	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	focused_widget = gtk_container_get_focus_child ((GtkContainer *) window);
 	if (GTK_IS_EDITABLE (focused_widget)) {
 		gtk_editable_cut_clipboard (GTK_EDITABLE(focused_widget));
 		gtk_clipboard_set_can_store (clipboard, NULL, 0);
@@ -3794,7 +3825,7 @@ modest_ui_actions_on_copy (GtkAction *action,
 	gboolean copied = TRUE;
 
 	clipboard = gtk_clipboard_get (GDK_SELECTION_CLIPBOARD);
-	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	focused_widget = gtk_container_get_focus_child ((GtkContainer *) window);
 
 	if (GTK_IS_LABEL (focused_widget)) {
 		gchar *selection;
@@ -3940,7 +3971,7 @@ modest_ui_actions_on_paste (GtkAction *action,
 	GtkWidget *inf_note = NULL;
 	ModestMailOperation *mail_op = NULL;
 
-	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	focused_widget = gtk_container_get_focus_child ((GtkContainer *) window);
 	if (GTK_IS_EDITABLE (focused_widget)) {
 		gtk_editable_paste_clipboard (GTK_EDITABLE(focused_widget));
 	} else if (GTK_IS_TEXT_VIEW (focused_widget)) {
@@ -4070,7 +4101,7 @@ modest_ui_actions_on_select_all (GtkAction *action,
 {
 	GtkWidget *focused_widget;
 
-	focused_widget = gtk_window_get_focus (GTK_WINDOW (window));
+	focused_widget = gtk_container_get_focus_child ((GtkContainer *) window);
 	if (MODEST_IS_ATTACHMENTS_VIEW (focused_widget)) {
 		modest_attachments_view_select_all (MODEST_ATTACHMENTS_VIEW (focused_widget));
 	} else if (GTK_IS_LABEL (focused_widget)) {
@@ -4184,7 +4215,8 @@ modest_ui_actions_on_toggle_fullscreen    (GtkToggleAction *toggle,
 	if (active != fullscreen) {
 		modest_window_mgr_set_fullscreen_mode (mgr, active);
 #ifndef MODEST_TOOLKIT_HILDON2
-		gtk_window_present (GTK_WINDOW (window));
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
+		gtk_window_present (toplevel);
 #endif
 	}
 }
@@ -4378,6 +4410,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 	switch (response) {
 		TnyFolderStore *dst_folder;
 		TnyFolderStore *selected;
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) parent_win);
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
 		selected = modest_folder_view_get_selected (folder_view);
@@ -4398,7 +4431,7 @@ on_move_to_dialog_response (GtkDialog *dialog,
 			modest_ui_actions_on_folder_window_move_to (GTK_WIDGET (folder_view),
 								    dst_folder,
 								    helper->list,
-								    GTK_WINDOW (parent_win));
+								    toplevel);
 		} else {
 			/* if the user selected a root folder
 			   (account) then do not perform any action */
@@ -4987,7 +5020,7 @@ modest_ui_actions_on_folder_window_move_to (GtkWidget *folder_view,
 		connect_info->dst_account = get_account_from_folder_store (TNY_FOLDER_STORE (dst_folder));
 		connect_info->data = info;
 
-		modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+		modest_platform_double_connect_and_perform(win, TRUE,
 							   TNY_FOLDER_STORE (src_folder),
 							   connect_info);
 	}
@@ -5031,12 +5064,12 @@ modest_ui_actions_transfer_messages_helper (GtkWindow *win,
 		connect_info->dst_account = tny_folder_get_account (TNY_FOLDER (dst_folder));
 		connect_info->data = helper;
 
-		modest_platform_double_connect_and_perform(GTK_WINDOW (win), TRUE,
+		modest_platform_double_connect_and_perform(win, TRUE,
 							   TNY_FOLDER_STORE (src_folder),
 							   connect_info);
 	} else {
 		TnyAccount *src_account = get_account_from_folder_store (TNY_FOLDER_STORE (src_folder));
-		xfer_messages_performer (FALSE, NULL, GTK_WINDOW (win),
+		xfer_messages_performer (FALSE, NULL, win,
 					 src_account, helper);
 		g_object_unref (src_account);
 	}
@@ -5059,13 +5092,15 @@ modest_ui_actions_on_window_move_to (GtkAction *action,
 	if (headers) {
 		TnyHeader *header = NULL;
 		TnyIterator *iter;
+		GtkWindow *toplevel;
 
 		iter = tny_list_create_iterator (headers);
 		header = (TnyHeader *) tny_iterator_get_current (iter);
 		src_folder = tny_header_get_folder (header);
 
 		/* Transfer the messages */
-		modest_ui_actions_transfer_messages_helper (GTK_WINDOW (win), src_folder,
+		toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+		modest_ui_actions_transfer_messages_helper (toplevel, src_folder,
 							    headers,
 							    TNY_FOLDER (dst_folder));
 
@@ -5087,6 +5122,7 @@ gboolean
 modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 {
 	GtkWidget *dialog = NULL;
+	GtkWindow *toplevel = NULL;
 	MoveToInfo *helper = NULL;
 	TnyList *list_to_move;
 
@@ -5104,10 +5140,11 @@ modest_ui_actions_on_edit_mode_move_to (ModestWindow *win)
 	}
 
 	/* Create and run the dialog */
-	dialog = create_move_to_dialog (GTK_WINDOW (win), NULL, list_to_move);
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
+	dialog = create_move_to_dialog (toplevel, NULL, list_to_move);
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (dialog),
-				     (GtkWindow *) win);
+				     toplevel);
 
 	/* Create helper */
 	helper = g_slice_new0 (MoveToInfo);
@@ -5241,7 +5278,7 @@ modest_ui_actions_on_help (GtkAction *action,
 	help_id = modest_window_mgr_get_help_id (modest_runtime_get_window_mgr(), win);
 
         if (help_id)
-                modest_platform_show_help (GTK_WINDOW (win), help_id);
+                modest_platform_show_help (win, help_id);
 #endif
 }
 
@@ -5444,6 +5481,8 @@ modest_ui_actions_on_header_view_csm_menu_activated (GtkAction *action,
 void
 modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
 {
+	GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
+
 	g_return_if_fail (MODEST_IS_WINDOW (window));
 
 	/* we check for low-mem; in that case, show a warning, and don't allow
@@ -5452,14 +5491,15 @@ modest_ui_actions_on_search_messages (GtkAction *action, ModestWindow *window)
 	if (modest_platform_check_memory_low (window, TRUE))
 		return;
 
-	modest_platform_show_search_messages (GTK_WINDOW (window));
+	modest_platform_show_search_messages (toplevel);
 }
 
 void
 modest_ui_actions_on_open_addressbook (GtkAction *action, ModestWindow *win)
 {
-	g_return_if_fail (MODEST_IS_WINDOW (win));
+	GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
 
+	g_return_if_fail (MODEST_IS_WINDOW (win));
 
 	/* we check for low-mem; in that case, show a warning, and don't allow
 	 * for the addressbook
@@ -5467,8 +5507,7 @@ modest_ui_actions_on_open_addressbook (GtkAction *action, ModestWindow *win)
 	if (modest_platform_check_memory_low (win, TRUE))
 		return;
 
-
-	modest_platform_show_addressbook (GTK_WINDOW (win));
+	modest_platform_show_addressbook (toplevel);
 }
 
 
@@ -5864,9 +5903,10 @@ modest_ui_actions_check_for_active_account (ModestWindow *self,
 	store_conn_status = tny_account_get_connection_status (store_account);
 	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED || sending) {
 		gint response;
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) self);
 
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (self), 
-								_("emev_nc_disconnect_account"));
+		response = modest_platform_run_confirmation_dialog (toplevel,
+								    _("emev_nc_disconnect_account"));
 		if (response == GTK_RESPONSE_OK) {
 			retval = TRUE;
 		} else {
