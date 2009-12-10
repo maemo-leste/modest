@@ -1037,6 +1037,10 @@ modest_default_account_settings_dialog_init (ModestDefaultAccountSettingsDialog 
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE(self);
 
+#ifndef MODEST_TOOLKIT_HILDON2
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+#endif
+
 	priv->incoming_security = NULL;
 	priv->outgoing_security = NULL;
 
