@@ -1568,13 +1568,11 @@ msgstr "Rename…"
 
 #: ../src/widgets/modest-folder-window.c:578
 msgid "mcen_me_move_folder"
-msgstr "Folder"
+msgstr "Move folder"
 
 #: ../src/widgets/modest-folder-window.c:581
 msgid "mcen_me_delete_folder"
-msgstr ""
-"Delete folder and its contents?\n"
-"%s"
+msgstr "Delete folder"
 
 #. Set title
 #: ../src/widgets/modest-global-settings-dialog.c:138
