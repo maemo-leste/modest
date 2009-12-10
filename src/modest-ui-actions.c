@@ -3404,8 +3404,19 @@ on_delete_folder_cb (gboolean canceled,
 	GtkWidget *folder_view;
 	ModestMailOperation *mail_op;
 	GtkTreeSelection *sel;
+	ModestWindow *modest_window;
 
-	if (!MODEST_IS_WINDOW(parent_window) || canceled || (err!=NULL)) {
+#ifdef MODEST_TOOLKIT_HILDON2
+	modest_window = (ModestWindow*) parent_window;
+#else
+	if (MODEST_IS_SHELL (parent_window)) {
+		modest_window = modest_shell_peek_window (MODEST_SHELL (parent_window));
+	} else {
+		modest_window = NULL;
+	}
+#endif
+
+	if (!MODEST_IS_WINDOW(modest_window) || canceled || (err!=NULL)) {
 		/* Note that the connection process can fail due to
 		   memory low conditions as it can not successfully
 		   store the summary */
@@ -3418,8 +3429,8 @@ on_delete_folder_cb (gboolean canceled,
 		return;
 	}
 
-	if (MODEST_IS_FOLDER_WINDOW (parent_window)) {
-		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (parent_window)));
+	if (MODEST_IS_FOLDER_WINDOW (modest_window)) {
+		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (modest_window)));
 	} else {
 		g_object_unref (G_OBJECT (info->folder));
 		g_free (info);
