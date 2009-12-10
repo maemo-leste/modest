@@ -4220,7 +4220,6 @@ typedef struct _MessageSettingsHelper {
 	GtkToggleButton *current_format;
 } MessageSettingsHelper;
 
-#ifdef MODEST_TOOLKIT_HILDON2
 static void
 on_priority_toggle (GtkToggleButton *button, 
 		    MessageSettingsHelper *helper)
@@ -4289,12 +4288,10 @@ on_format_toggle (GtkToggleButton *button,
 	}
 
 }
-#endif
 
 static void
 modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 {
-#ifdef MODEST_TOOLKIT_HILDON2
 	GtkWidget *dialog;
 	GtkWidget *align;
 	GtkWidget *vbox;
@@ -4329,15 +4326,27 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	/* Priority toggles */
 	priority_hbox = gtk_hbox_new (TRUE, 0);
+#ifdef MODEST_TOOLKIT_HILDON2
 	high_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+#else
+	high_toggle = gtk_toggle_button_new ();
+#endif
 	gtk_button_set_label (GTK_BUTTON (high_toggle), _("mcen_me_editor_priority_high"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, high_toggle);
 	g_object_set_data (G_OBJECT (high_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_HIGH_PRIORITY));
+#ifdef MODEST_TOOLKIT_HILDON2
 	medium_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+#else
+	medium_toggle = gtk_toggle_button_new ();
+#endif
 	gtk_button_set_label (GTK_BUTTON (medium_toggle), _("mcen_me_editor_priority_normal"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, medium_toggle);
 	g_object_set_data (G_OBJECT (medium_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_NORMAL_PRIORITY));
+#ifdef MODEST_TOOLKIT_HILDON2
 	low_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+#else
+	low_toggle = gtk_toggle_button_new ();
+#endif
 	gtk_button_set_label (GTK_BUTTON (low_toggle), _("mcen_me_editor_priority_low"));
 	helper.priority_group = g_slist_prepend (helper.priority_group, low_toggle);
 	g_object_set_data (G_OBJECT (low_toggle), "priority", GINT_TO_POINTER (TNY_HEADER_FLAG_LOW_PRIORITY));
@@ -4352,12 +4361,20 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	/* format toggles */
 	format_hbox = gtk_hbox_new (TRUE, 0);
+#ifdef MODEST_TOOLKIT_HILDON2
 	html_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+#else
+	html_toggle = gtk_toggle_button_new ();
+#endif
 	gtk_button_set_label (GTK_BUTTON (html_toggle), _("mcen_me_editor_formatted_text"));
 	helper.format_group = g_slist_prepend (helper.format_group, html_toggle);
 	g_object_set_data (G_OBJECT (html_toggle), "format", GINT_TO_POINTER (MODEST_MSG_EDIT_FORMAT_HTML));
 	g_object_set_data (G_OBJECT (html_toggle), "file-format", GINT_TO_POINTER (MODEST_FILE_FORMAT_FORMATTED_TEXT));
+#ifdef MODEST_TOOLKIT_HILDON2
 	text_toggle = hildon_gtk_toggle_button_new (HILDON_SIZE_FINGER_HEIGHT);
+#else
+	text_toggle = gtk_toggle_button_new ();
+#endif
 	gtk_button_set_label (GTK_BUTTON (text_toggle), _("mcen_me_editor_plain_text"));
 	helper.format_group = g_slist_prepend (helper.format_group, text_toggle);
 	g_object_set_data (G_OBJECT (text_toggle), "format", GINT_TO_POINTER (MODEST_MSG_EDIT_FORMAT_TEXT));
@@ -4431,7 +4448,6 @@ modest_msg_edit_window_show_msg_settings_dialog (ModestMsgEditWindow *window)
 
 	gtk_widget_destroy (dialog);
 	g_slist_free (helper.priority_group);
-#endif
 }
 
 static void
