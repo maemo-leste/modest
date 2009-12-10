@@ -186,8 +186,13 @@ modest_account_view_window_init (ModestAccountViewWindow *self)
 
 	/* Specify a default size */
 	gtk_window_set_default_size (GTK_WINDOW (self), -1, MODEST_DIALOG_WINDOW_MAX_HEIGHT);
+
+#ifdef MODEST_TOOLKIT_HILDON2
 	gtk_dialog_set_has_separator (GTK_DIALOG (self), FALSE);
 	gtk_widget_hide (GTK_DIALOG (self)->action_area);
+#else
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE);
+#endif
 
 	
 	/* This seems to be necessary to make the window show at the front with decoration.
