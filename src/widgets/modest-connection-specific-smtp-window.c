@@ -426,6 +426,10 @@ modest_connection_specific_smtp_window_init (ModestConnectionSpecificSmtpWindow 
 	/* Set window title */
 	gtk_window_set_title (GTK_WINDOW (self), _("mcen_ti_optionalsmtp_servers"));
 
+#ifndef MODEST_TOOLKIT_HILDON2
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE);
+#endif
+
 	g_signal_connect (self, "response", G_CALLBACK (on_response), NULL);
 }
 
