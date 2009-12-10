@@ -3452,11 +3452,8 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 	GtkWidget *folder_view;
 	gint response;
 	gchar *message;
-	GtkWindow *toplevel;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(window), FALSE);
-
-	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
 
 	if (MODEST_IS_FOLDER_WINDOW (window)) {
 		folder_view = GTK_WIDGET (modest_folder_window_get_folder_view (MODEST_FOLDER_WINDOW (window)));
@@ -3473,7 +3470,7 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 
 	/* Show an error if it's an account */
 	if (!TNY_IS_FOLDER (folder)) {
-		modest_platform_run_information_dialog (toplevel,
+		modest_platform_run_information_dialog (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (window))),
 							_("mail_in_ui_folder_delete_error"),
 							FALSE);
 		g_object_unref (G_OBJECT (folder));
@@ -3483,7 +3480,7 @@ delete_folder (ModestWindow *window, gboolean move_to_trash)
 	/* Ask the user */
 	message =  g_strdup_printf (_("mcen_nc_delete_folder_text"),
 				    tny_folder_get_name (TNY_FOLDER (folder)));
-	response = modest_platform_run_confirmation_dialog (toplevel,
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (window))),
 							    (const gchar *) message);
 	g_free (message);
 
