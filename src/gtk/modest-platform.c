@@ -768,6 +768,8 @@ modest_platform_run_folder_common_dialog (GtkWindow *parent_window,
 	dialog = gtk_dialog_new_with_buttons (dialog_title,
 					      parent_window,
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR | GTK_DIALOG_DESTROY_WITH_PARENT,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_CANCEL,
 					      _FM_NEW_FOLDER_DIALOG_OK,
 					      GTK_RESPONSE_ACCEPT,
 					      NULL);
