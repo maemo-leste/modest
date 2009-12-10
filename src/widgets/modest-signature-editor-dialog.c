@@ -173,6 +173,10 @@ modest_signature_editor_dialog_init (ModestSignatureEditorDialog *self)
 
 	g_signal_connect (G_OBJECT (buffer), "end-user-action",
 			  G_CALLBACK (text_buffer_end_user_action), self);
+
+#ifndef MODEST_TOOLKIT_HILDON2
+	gtk_dialog_add_button (GTK_DIALOG (self), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);
+#endif
 	
 	/* Add the buttons: */
 	gtk_dialog_add_button (GTK_DIALOG (self), _HL_SAVE, GTK_RESPONSE_OK);
