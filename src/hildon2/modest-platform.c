@@ -697,7 +697,7 @@ folder_chooser_dialog_run (ModestFolderView *original,
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	folder_view = modest_platform_create_folder_view (NULL);
 
-	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM_CHANGE_FOLDER("ckdg_ti_change_folder"));
+	gtk_window_set_title (GTK_WINDOW (userdata.dialog), _FM_CHANGE_FOLDER);
 
 	modest_folder_view_copy_model (MODEST_FOLDER_VIEW (original),
 				       MODEST_FOLDER_VIEW (folder_view));
