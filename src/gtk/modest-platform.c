@@ -2174,6 +2174,8 @@ modest_platform_create_move_to_dialog (GtkWindow *parent_window,
 					      GTK_WINDOW (parent_window),
 					      GTK_DIALOG_MODAL | GTK_DIALOG_NO_SEPARATOR |
 					      GTK_DIALOG_DESTROY_WITH_PARENT,
+					      GTK_STOCK_CANCEL,
+					      GTK_RESPONSE_CANCEL,
 					      _FM_CHANGE_FOLDER_NEW_FOLDER,
 					      MODEST_GTK_RESPONSE_NEW_FOLDER,
 	                                      NULL);
