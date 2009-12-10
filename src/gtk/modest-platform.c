@@ -444,6 +444,13 @@ folder_chooser_dialog_run (ModestFolderView *original,
 	const gchar *visible_id = NULL;
 
 	userdata.dialog = gtk_dialog_new ();
+
+	gtk_widget_set_size_request (GTK_WIDGET (userdata.dialog), 
+				     MODEST_DIALOG_WINDOW_MAX_WIDTH,
+				     MODEST_DIALOG_WINDOW_MAX_HEIGHT);
+
+	gtk_dialog_add_button (GTK_DIALOG (userdata.dialog), GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE);
+
 	scrollable = modest_toolkit_factory_create_scrollable (modest_runtime_get_toolkit_factory ());
 	folder_view = modest_platform_create_folder_view (NULL);
 
