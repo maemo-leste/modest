@@ -5913,9 +5913,8 @@ modest_ui_actions_check_for_active_account (ModestWindow *self,
 	store_conn_status = tny_account_get_connection_status (store_account);
 	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED || sending) {
 		gint response;
-		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) self);
 
-		response = modest_platform_run_confirmation_dialog (toplevel,
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (gtk_widget_get_toplevel (self)), 
 								    _("emev_nc_disconnect_account"));
 		if (response == GTK_RESPONSE_OK) {
 			retval = TRUE;
