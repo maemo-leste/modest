@@ -590,12 +590,6 @@ modest_ui_actions_on_accounts (GtkAction *action,
 void
 modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 {
-	/* This is currently only implemented for Maemo,
-	 * because it requires an API (libconic) to detect different connection
-	 * possiblities.
-	 */
-#ifndef MODEST_TOOLKIT_GTK /* Defined in config.h */
-
 	/* Create the window if necessary: */
 	GtkWidget *specific_window = GTK_WIDGET (modest_connection_specific_smtp_window_new ());
 	modest_connection_specific_smtp_window_fill_with_connections (
@@ -606,7 +600,6 @@ modest_ui_actions_on_smtp_servers (GtkAction *action, ModestWindow *win)
 	modest_window_mgr_set_modal (modest_runtime_get_window_mgr (),
 				     GTK_WINDOW (specific_window), (GtkWindow *) win);
     	gtk_widget_show (specific_window);
-#endif /* !MODEST_TOOLKIT_GTK */
 }
 
 static guint64
