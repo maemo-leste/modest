@@ -4401,16 +4401,17 @@ on_move_to_dialog_response (GtkDialog *dialog,
 	MoveToInfo *helper = NULL;
 	ModestFolderView *folder_view;
 	gboolean unset_edit_mode = FALSE;
+	GtkWindow *toplevel;
 
 	helper = (MoveToInfo *) user_data;
 
 	parent_win = (GtkWidget *) helper->win;
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) parent_win);
 	folder_view = MODEST_FOLDER_VIEW (g_object_get_data (G_OBJECT (dialog),
 							     MODEST_MOVE_TO_DIALOG_FOLDER_VIEW));
 	switch (response) {
 		TnyFolderStore *dst_folder;
 		TnyFolderStore *selected;
-		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) parent_win);
 
 	case MODEST_GTK_RESPONSE_NEW_FOLDER:
 		selected = modest_folder_view_get_selected (folder_view);

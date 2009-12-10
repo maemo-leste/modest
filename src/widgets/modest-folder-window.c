@@ -412,7 +412,7 @@ modest_folder_window_new (TnyFolderStoreQuery *query)
 	/* Set window icon */
 	window_icon = modest_platform_get_icon (MODEST_APP_ICON, MODEST_ICON_SIZE_BIG);
 	if (window_icon) {
-		GtkWindow *toplevel = gtk_widget_get_toplevel ((GtkWidget *) self);
+		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) self);
 		gtk_window_set_icon (toplevel, window_icon);
 		g_object_unref (window_icon);
 	}
