@@ -603,9 +603,7 @@ msgstr "Save to Drafts"
 #: ../src/widgets/modest-msg-edit-window-ui.h:64
 #: ../src/widgets/modest-header-window.c:917
 msgid "mcen_me_delete_messages"
-msgstr ""
-"Delete message?\n"
-"%s"
+msgstr "Delete message"
 
 #: ../src/widgets/modest-msg-edit-window-ui.h:66
 msgid "mcen_me_inbox_delete"
@@ -1730,7 +1728,7 @@ msgstr "Last 20 messages"
 #: ../src/widgets/modest-msg-edit-window.c:4297
 #: ../src/widgets/modest-msg-edit-window.c:4492
 msgid "mcen_me_message_settings"
-msgstr "Message sent"
+msgstr "Message settings…"
 
 #: ../src/widgets/modest-msg-edit-window.c:2345
 msgid "mcen_ia_select_inline_image_title"
