@@ -55,6 +55,7 @@ modest_wp_text_view_new                            (void)
     return entry;
 }
 
+#ifdef MAEMO_CHANGES
 static gint
 modest_wp_text_view_button_press_event (GtkWidget        *widget,
 					GdkEventButton   *event)
@@ -62,9 +63,7 @@ modest_wp_text_view_button_press_event (GtkWidget        *widget,
     ModestWpTextViewPrivate *priv = MODEST_WP_TEXT_VIEW_GET_PRIVATE (widget);
 
     if (GTK_TEXT_VIEW (widget)->editable 
-#ifdef MAEMO_CHANGES
 	&& hildon_gtk_im_context_filter_event (GTK_TEXT_VIEW (widget)->im_context, (GdkEvent*)event)
-#endif
 	) {
         GTK_TEXT_VIEW (widget)->need_im_reset = TRUE;
         return TRUE;
@@ -79,7 +78,9 @@ modest_wp_text_view_button_press_event (GtkWidget        *widget,
 
     return FALSE;
 }
+#endif
 
+#ifdef MAEMO_CHANGES
 static gint
 modest_wp_text_view_button_release_event (GtkWidget        *widget,
 					  GdkEventButton   *event)
@@ -90,9 +91,7 @@ modest_wp_text_view_button_release_event (GtkWidget        *widget,
     gint x, y;
 
     if (text_view->editable
-#ifdef MAEMO_CHANGES
         && hildon_gtk_im_context_filter_event (text_view->im_context, (GdkEvent*)event)
-#endif
 	) {
         text_view->need_im_reset = TRUE;
         return TRUE;
@@ -121,6 +120,7 @@ modest_wp_text_view_button_release_event (GtkWidget        *widget,
     }
     return FALSE;
 }
+#endif
 
 static void
 modest_wp_text_view_finalize                       (GObject *object)
@@ -133,12 +133,14 @@ static void
 modest_wp_text_view_class_init                     (ModestWpTextViewClass *klass)
 {
     GObjectClass *gobject_class = (GObjectClass *)klass;
-    GtkWidgetClass *widget_class = (GtkWidgetClass *)klass;
 
     gobject_class->finalize = modest_wp_text_view_finalize;
+#ifdef MAEMO_CHANGES
+    GtkWidgetClass *widget_class = (GtkWidgetClass *)klass;
     widget_class->motion_notify_event = NULL;
     widget_class->button_press_event = modest_wp_text_view_button_press_event;
     widget_class->button_release_event = modest_wp_text_view_button_release_event;
+#endif
 
     g_type_class_add_private (klass, sizeof (ModestWpTextViewPrivate));
 }
