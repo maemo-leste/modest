@@ -70,6 +70,8 @@ AM_PROG_CC_C_O
 AC_HEADER_STDC
 AC_PROG_LIBTOOL
 
+# Initialize pkg-config stuff
+PKG_PROG_PKG_CONFIG()
 
 # Option to enable debugging
 AC_ARG_ENABLE(debug,
@@ -103,10 +105,10 @@ AC_ARG_ENABLE(webkit,
               [with_webkit=yes], [with_webkit=no])
 
 if test "x$with_webkit" == "xyes" ; then
-PKG_CHECK_MODULES(MODEST_WEBKIT,webkit-1.0,have_webkit=true,have_webkit=false)
-AC_SUBST(MODEST_WEBKIT_CFLAGS)
-AC_SUBST(MODEST_WEBKIT_LIBS)
-AC_DEFINE_UNQUOTED(MODEST_USE_WEBKIT, 1, ["Whether modest is being build with webkit support."])
+   PKG_CHECK_EXISTS(MODEST_WEBKIT,webkit-1.0,have_webkit=true,have_webkit=false)
+   AC_SUBST(MODEST_WEBKIT_CFLAGS)
+   AC_SUBST(MODEST_WEBKIT_LIBS)
+   AC_DEFINE_UNQUOTED(MODEST_USE_WEBKIT, 1, ["Whether modest is being build with webkit support."])
 fi
 
 AM_CONDITIONAL(MODEST_USE_WEBKIT,test "x$with_webkit" == "xyes")
@@ -145,7 +147,7 @@ fi
 
 dnl # GLib/Gobject/Gtk/Gconf => mandatory
 
-PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0) 
+PKG_CHECK_MODULES(MODEST_GSTUFF,glib-2.0 >= 2.6 gobject-2.0 gtk+-2.0 >= 2.6 gconf-2.0 gnome-vfs-2.0 libgtkhtml-${gtk_html_version} libtinymail-1.0 libtinymail-camel-1.0 libtinymail-gnomevfs-1.0 libtinymailui-1.0 libtinymailui-gtk-1.0)
 AC_SUBST(MODEST_GSTUFF_CFLAGS)
 AC_SUBST(MODEST_GSTUFF_LIBS)
 
