@@ -596,13 +596,13 @@ setup_menu (ModestFolderWindow *self)
 #else
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_rename_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_rename_folder),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_rename_folder));
+				   NULL);
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_move_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_move_to),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_move_to));
+				   NULL);
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_delete_folder"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_delete_folder),
-				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_folder_window_delete));
+				   NULL);
 #endif
 
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_outbox_cancelsend"), NULL,
