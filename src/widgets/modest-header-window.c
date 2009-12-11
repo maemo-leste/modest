@@ -278,7 +278,7 @@ modest_header_window_dispose (GObject *obj)
 
 	folder = modest_header_view_get_folder ((ModestHeaderView *) priv->header_view);
 	if (folder) {
-		tny_folder_sync_async (folder, FALSE, NULL, NULL, NULL);
+		tny_folder_sync_async (folder, TRUE, NULL, NULL, NULL);
 		g_object_unref (folder);
 	}
 
