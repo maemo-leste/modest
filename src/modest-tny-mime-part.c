@@ -142,16 +142,20 @@ gboolean
 modest_tny_mime_part_is_msg (TnyMimePart *part)
 {
 	const gchar *content_type;
+	gchar *down_content_type;
 
 	if (!TNY_IS_MSG (part))
 		return FALSE;
 
 	content_type = tny_mime_part_get_content_type (part);
-	if ((g_str_has_prefix (content_type, "message/rfc822") ||
-	     g_str_has_prefix (content_type, "multipart/") ||
-	     g_str_has_prefix (content_type, "text/"))) {
+	down_content_type = g_ascii_strdown (content_type, -1);
+	if ((g_str_has_prefix (down_content_type, "message/rfc822") ||
+	     g_str_has_prefix (down_content_type, "multipart/") ||
+	     g_str_has_prefix (down_content_type, "text/"))) {
+		g_free (down_content_type);
 		return TRUE;
 	} else {
+		g_free (down_content_type);
 		return FALSE;
 	}
 }
