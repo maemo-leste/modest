@@ -518,6 +518,7 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	GtkWidget *box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
 	GtkWidget *label = gtk_label_new(_("mcen_ia_accountdetails"));
 	ModestEasysetupWizardDialogPrivate* priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
+	gchar *tmp_str;
 
 	gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
 	gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.0);
@@ -575,9 +576,11 @@ create_page_account_details (ModestEasysetupWizardDialog *self)
 	g_signal_connect(G_OBJECT(priv->entry_account_title), "changed",
 			 G_CALLBACK(on_easysetup_changed), self);
 
+	tmp_str = g_strconcat (_("mcen_fi_account_title"), "*", NULL);
 	priv->caption_account_title = create_captioned (self, title_sizegroup, value_sizegroup,
-							_("mcen_fi_account_title"), FALSE,
+							tmp_str, FALSE,
 							priv->entry_account_title);
+	g_free (tmp_str);
 	gtk_widget_show (priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), priv->caption_account_title, FALSE, FALSE, 0);
 	gtk_widget_show (priv->caption_account_title);
@@ -672,6 +675,7 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	ModestEasysetupWizardDialogPrivate *priv;
 	GtkWidget *align;
 	const gchar *my_name;
+	gchar *tmp_str;
 
 	priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE(self);
 
@@ -722,8 +726,11 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_username),
 					 HILDON_GTK_INPUT_MODE_FULL);
-	caption = create_captioned (self, title_sizegroup, value_sizegroup, _("mail_fi_username"), FALSE,
+	tmp_str = g_strconcat (_("mail_fi_username"), "*", NULL);
+	caption = create_captioned (self, title_sizegroup, value_sizegroup,
+				    tmp_str, FALSE,
 				    priv->entry_user_username);
+	g_free (tmp_str);
 	gtk_widget_show (priv->entry_user_username);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(priv->entry_user_username), "changed",
@@ -760,8 +767,10 @@ create_page_user_details (ModestEasysetupWizardDialog *self)
 	priv->entry_user_email = GTK_WIDGET (modest_validating_entry_new ());
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_user_email), HILDON_GTK_INPUT_MODE_FULL);
+	tmp_str = g_strconcat (_("mcen_li_emailsetup_email_address"), "*", NULL);
 	caption = create_captioned (self, title_sizegroup, value_sizegroup,
-				    _("mcen_li_emailsetup_email_address"), FALSE, priv->entry_user_email);
+				    tmp_str, FALSE, priv->entry_user_email);
+	g_free (tmp_str);
 	update_user_email_from_provider (self);
 	gtk_widget_show (priv->entry_user_email);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
@@ -848,7 +857,7 @@ update_incoming_server_title (ModestEasysetupWizardDialog *self)
 									  protocol_type);
 		protocol_display_name = modest_protocol_get_display_name (protocol);
 
-		incomingserver_title = g_strconcat (_("mcen_li_emailsetup_servertype"), "\n<small>(",
+		incomingserver_title = g_strconcat (_("mcen_li_emailsetup_servertype"), "*\n<small>(",
 						    protocol_display_name, ")</small>", NULL);
 
 		modest_maemo_utils_captioned_set_label (priv->caption_incoming, incomingserver_title, TRUE);
@@ -1087,7 +1096,7 @@ create_page_custom_outgoing (ModestEasysetupWizardDialog *self)
 
 	/* Auto-capitalization is the default, so let's turn it off: */
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
-	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
+	smtp_caption_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "*\n<small>(SMTP)</small>", NULL);
 	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
 					       smtp_caption_label, TRUE, priv->entry_outgoingserver);
 	g_free (smtp_caption_label);

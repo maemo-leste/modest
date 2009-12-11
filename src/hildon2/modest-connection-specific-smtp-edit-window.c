@@ -380,7 +380,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_outgoingserver), HILDON_GTK_INPUT_MODE_FULL);
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
 
-	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
+	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "*\n<small>(SMTP)</small>", NULL);
 	
 	GtkWidget *captioned = 
 	  modest_maemo_utils_create_captioned (title_sizegroup, value_sizegroup,
