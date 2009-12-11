@@ -2193,8 +2193,7 @@ static void
 quote_name_part (GString **str, gchar **cur, gchar **start)
 {
 	gchar *blank;
-	gint str_len = g_utf8_pointer_to_offset (*start, *cur) -
-		g_utf8_pointer_to_offset (*start, *start);
+	gint str_len = *cur - *start;
 
 	while (**start == ' ') {
 		*start = g_utf8_next_char (*start);
