@@ -385,7 +385,7 @@ modest_connection_specific_smtp_edit_window_init (ModestConnectionSpecificSmtpEd
 #endif
 	g_signal_connect(G_OBJECT(priv->entry_outgoingserver), "changed", G_CALLBACK(on_mandatory_entry_changed), self);
 
-	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "\n<small>(SMTP)</small>", NULL);
+	server_label = g_strconcat (_("mcen_li_emailsetup_smtp"), "*\n<small>(SMTP)</small>", NULL);
 	
 	GtkWidget *captioned = 
 		modest_toolkit_utils_create_captioned (title_sizegroup, value_sizegroup,
