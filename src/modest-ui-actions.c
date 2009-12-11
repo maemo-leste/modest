@@ -4916,6 +4916,7 @@ headers_action_show_details (TnyHeader *header,
 	if (MODEST_IS_MSG_VIEW_WINDOW (window)) {
 		async_retrieval = TRUE;
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW (window));
+		async_retrieval = !TNY_IS_CAMEL_BS_MSG (msg);
 	} else {
 		async_retrieval = FALSE;
 	}
