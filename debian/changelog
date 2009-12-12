@@ -15,9 +15,10 @@ modest (3.2.4) unstable; urgency=low
   * 
   * Fixes: NB#142363 non-localized reply and forward prefixes
   * Fixes: NB#145849 "Check names" should not be performed for contacts' email addresses
-  * Fixes: NB#148772 Not able to install Facebook from shortcut to PR 1.0.1
   * Fixes: NB#149093 Unneeded work-heavy restart of modest done every 30 minutes
   * Fixes: NB#149855 Ovi account: messages deleted from the device are not deleted from the server 
+  * Fixes: NB#148667 Text wrapping issues after multiple replies
+ 
 
  -- Moises Martinez <moises.martinez@nokia.com>  Thu, 10 Dec 2009 18:36:35 +0200
 
