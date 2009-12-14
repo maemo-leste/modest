@@ -4041,12 +4041,29 @@ update_signature (ModestMsgEditWindow *self,
 	priv->last_from_account = modest_selector_picker_get_active_id (MODEST_SELECTOR_PICKER (priv->from_field));
 	signature = modest_account_mgr_get_signature_from_recipient (mgr, new_account, &has_new_signature);
 	if (has_new_signature) {
+		gboolean is_rich;
 
 		gchar *full_signature = g_strconcat ((gtk_text_iter_starts_line (&iter)) ? "" : "\n",
 						     MODEST_TEXT_UTILS_SIGNATURE_MARKER, "\n",
 						     signature, NULL);
-		gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
-		g_free (full_signature);
+		is_rich = wp_text_buffer_is_rich_text (WP_TEXT_BUFFER (priv->text_buffer));
+		if (is_rich) {
+			WPTextBufferFormat *fmt;
+			GdkColor style_color;
+			if (!gtk_style_lookup_color (GTK_WIDGET (self)->style, "SecondaryTextColor", &style_color)) {
+				gdk_color_parse ("grey", &style_color);
+			}
+			fmt = g_new0 (WPTextBufferFormat, 1);
+			fmt->color = style_color;
+			fmt->cs.color = 0x1;
+			wp_text_buffer_insert_with_attribute (WP_TEXT_BUFFER (priv->text_buffer), &iter, 
+							      full_signature, -1,
+							      fmt, TRUE);
+			g_free (fmt);
+			g_free (full_signature);
+		} else {
+			gtk_text_buffer_insert (priv->text_buffer, &iter, full_signature, -1);
+		}
 	}
 	g_free (signature);
 	gtk_text_buffer_end_user_action (priv->text_buffer);
