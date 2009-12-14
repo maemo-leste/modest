@@ -44,6 +44,9 @@ static void on_back_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_title_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_new_msg_button_clicked (GtkToolButton *button, ModestShell *self);
 static void on_style_set (GtkWidget *widget, GtkStyle *old_style, ModestShell *shell);
+static gboolean on_delete_event (GtkWidget *widget,
+				 GdkEvent  *event,
+				 gpointer   user_data);
 static gboolean on_key_pressed (GtkWidget *widget, GdkEventKey *event, ModestShell *shell);
 
 
@@ -200,6 +203,7 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_container_add (GTK_CONTAINER (obj), priv->main_vbox);
 
 	g_signal_connect (G_OBJECT (obj), "style-set", G_CALLBACK (on_style_set), obj);
+	g_signal_connect (G_OBJECT (obj), "delete-event", G_CALLBACK (on_delete_event), obj);
 
 	guint accel_key;
 	GdkModifierType accel_mods;
@@ -578,4 +582,19 @@ modest_shell_add_banner (ModestShell *shell, ModestShellBanner *banner)
 
 	priv = MODEST_SHELL_GET_PRIVATE (shell);
 	gtk_box_pack_start (GTK_BOX (priv->banners_box), GTK_WIDGET (banner), FALSE, FALSE, 0);
+}
+
+static gboolean 
+on_delete_event (GtkWidget *widget,
+		 GdkEvent  *event,
+		 gpointer   user_data)
+{
+	ModestWindow *top_window;
+
+	while ((top_window = modest_shell_peek_window (MODEST_SHELL (widget))) != NULL) {
+		if (modest_shell_delete_window (MODEST_SHELL (widget), top_window))
+			return TRUE;
+	}
+
+	return FALSE;
 }
