@@ -1212,7 +1212,7 @@ modest_platform_set_update_interval (guint minutes)
 		GtkWidget *shell;
 		mgr = modest_runtime_get_window_mgr ();
 		shell = modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (mgr));
-		g_object_weak_ref (shell, shell_weak_ref, NULL);
+		g_object_weak_ref ((GObject *) shell, shell_weak_ref, NULL);
 		weak_ref_enabled = TRUE;
 	}
 	if (timeout_handler_id > 0) {

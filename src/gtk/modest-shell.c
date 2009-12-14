@@ -511,7 +511,11 @@ on_title_button_clicked (GtkToolButton *button, ModestShell *self)
 	menu = modest_shell_window_get_menu (MODEST_SHELL_WINDOW (child));
 
 	if (menu) {
-		gtk_menu_popup (GTK_MENU (menu), NULL, NULL, 
+		/* Run dimming rules */
+		ModestWindow *window = modest_shell_peek_window (self);
+		modest_ui_actions_check_menu_dimming_rules (window);
+
+		gtk_menu_popup (GTK_MENU (menu), NULL, NULL,
 				(GtkMenuPositionFunc) menu_position_cb, (gpointer) self,
 				1, gtk_get_current_event_time ());
 	}
