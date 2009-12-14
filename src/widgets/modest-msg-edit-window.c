@@ -793,7 +793,9 @@ connect_signals (ModestMsgEditWindow *obj)
 			  G_CALLBACK (msg_body_focus), obj);
 	g_signal_connect (G_OBJECT (priv->msg_body), "size-request",
 			  G_CALLBACK (body_size_request), obj);
-	g_signal_connect (G_OBJECT (obj), "set-focus", G_CALLBACK (window_focus), obj);
+	if (GTK_IS_WINDOW (obj)) {
+		g_signal_connect (G_OBJECT (obj), "set-focus", G_CALLBACK (window_focus), obj);
+	}
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))),
 			  "changed", G_CALLBACK (recpt_field_changed), obj);
 	g_signal_connect (G_OBJECT (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))),
