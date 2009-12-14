@@ -282,12 +282,13 @@ modest_shell_delete_window (ModestShell *shell, ModestWindow *window)
 	priv = MODEST_SHELL_GET_PRIVATE (shell);
 	g_signal_emit_by_name (G_OBJECT (window), "delete-event", NULL, &ret_value);
 	if (ret_value == FALSE) {
-		gint page_num;
-		
-		page_num = gtk_notebook_page_num (GTK_NOTEBOOK (priv->notebook), GTK_WIDGET (window));
-		if (page_num != -1) {
-			gtk_notebook_remove_page (GTK_NOTEBOOK (priv->notebook), page_num);
+		GList *children;
+
+		children = gtk_container_get_children (GTK_CONTAINER (priv->notebook));
+		if (g_list_find (children, window)) {
+			gtk_container_remove (GTK_CONTAINER (priv->notebook), GTK_WIDGET (window));
 		}
+		
 	}
 
 	update_title (shell);
