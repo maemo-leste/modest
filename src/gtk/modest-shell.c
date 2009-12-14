@@ -208,7 +208,7 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_accelerator_parse ("<Control>n", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (GTK_WIDGET (priv->new_message_button), "clicked", accel_group,
 				    accel_key, accel_mods, 0);
-	gtk_accelerator_parse ("Esc", &accel_key, &accel_mods);
+	gtk_accelerator_parse ("Escape", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (GTK_WIDGET (priv->back_button), "clicked", accel_group,
 				    accel_key, accel_mods, 0);
 	gtk_accelerator_parse ("F10", &accel_key, &accel_mods);
