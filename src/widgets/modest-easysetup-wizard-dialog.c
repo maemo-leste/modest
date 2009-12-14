@@ -2574,9 +2574,11 @@ on_save (ModestWizardDialog *dialog)
 
 	
 	result = modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
+#ifdef MODEST_TOOLKIT_HILDON2
 	if (result) {
 		hildon_gtk_window_take_screenshot ((GtkWindow *) dialog, FALSE);
 	}
+#endif
 	return result;
 
 }
