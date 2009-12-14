@@ -32,6 +32,8 @@
 #include <modest-shell-window.h>
 #include <modest-icon-names.h>
 #include <modest-ui-actions.h>
+#include <modest-gtk-window-mgr.h>
+#include <modest-runtime.h>
 
 /* 'private'/'protected' functions */
 static void modest_shell_class_init (ModestShellClass *klass);
@@ -48,6 +50,10 @@ static void on_style_set (GtkWidget *widget, GtkStyle *old_style, ModestShell *s
 static gboolean on_delete_event (GtkWidget *widget,
 				 GdkEvent  *event,
 				 gpointer   user_data);
+static gboolean on_control_q (GtkAccelGroup *accel_group,
+			      GObject *acceleratable,
+			      guint keyval,
+			      GdkModifierType modifier);
 static gboolean on_key_pressed (GtkWidget *widget, GdkEventKey *event, ModestShell *shell);
 
 
@@ -217,6 +223,11 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_accelerator_parse ("Escape", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (GTK_WIDGET (priv->back_button), "clicked", accel_group,
 				    accel_key, accel_mods, 0);
+	gtk_accelerator_parse ("<Control>w", &accel_key, &accel_mods);
+	gtk_widget_add_accelerator (GTK_WIDGET (priv->back_button), "clicked", accel_group,
+				    accel_key, accel_mods, 0);
+	gtk_accelerator_parse ("<Control>q", &accel_key, &accel_mods);
+	gtk_accel_group_connect (accel_group, accel_key, accel_mods, 0, g_cclosure_new (G_CALLBACK (on_control_q), NULL, NULL));
 	gtk_accelerator_parse ("F10", &accel_key, &accel_mods);
 	gtk_widget_add_accelerator (GTK_WIDGET (priv->title_button), "clicked", accel_group,
 				    accel_key, accel_mods, 0);
@@ -615,4 +626,21 @@ on_delete_event (GtkWidget *widget,
 	}
 
 	return FALSE;
+}
+
+static gboolean 
+on_control_q (GtkAccelGroup *accel_group,
+	      GObject *acceleratable,
+	      guint keyval,
+	      GdkModifierType modifier)
+{
+	ModestWindowMgr *mgr;
+	GtkWidget *shell;
+	gboolean ret_value;
+
+	mgr = modest_runtime_get_window_mgr ();
+	shell = modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (mgr));
+	g_signal_emit_by_name (G_OBJECT (shell), "delete-event", NULL, &ret_value);
+
+	return ret_value;
 }
