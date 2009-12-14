@@ -3346,11 +3346,10 @@ modest_msg_view_window_save_attachments (ModestMsgViewWindow *window,
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
 	if (mime_parts == NULL) {
-		GtkWindow *toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
 		/* In Hildon 2.2 save and delete operate over all the attachments as there's no
 		 * selection available */
 		mime_parts = modest_msg_view_get_attachments (MODEST_MSG_VIEW (priv->msg_view));
-		if (mime_parts && !modest_toolkit_utils_select_attachments (toplevel, mime_parts, FALSE)) {
+		if (mime_parts && !modest_toolkit_utils_select_attachments (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (window))), mime_parts, FALSE)) {
 			g_object_unref (mime_parts);
 			return;
 		}
@@ -3485,6 +3484,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (window));
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
 
+#ifdef MODEST_TOOLKIT_HILDON2
 	/* In hildon 2.2 we ignore the get_all flag as we always get all attachments. This is
 	 * because we don't have selection
 	 */
@@ -3510,6 +3510,31 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 		g_object_unref (mime_parts);
 		return;
 	}
+#else
+	/* In gtk we get only selected attachments for the operation.
+	 */
+	mime_parts = modest_msg_view_get_selected_attachments (MODEST_MSG_VIEW (priv->msg_view));
+
+	/* Remove already purged messages from mime parts list. We use
+	   a copy of the list to remove items in the original one */
+	tmp = tny_list_copy (mime_parts);
+	iter = tny_list_create_iterator (tmp);
+	while (!tny_iterator_is_done (iter)) {
+		TnyMimePart *part = TNY_MIME_PART (tny_iterator_get_current (iter));
+		if (tny_mime_part_is_purged (part))
+			tny_list_remove (mime_parts, (GObject *) part);
+
+		g_object_unref (part);
+		tny_iterator_next (iter);
+	}
+	g_object_unref (tmp);
+	g_object_unref (iter);
+
+	if (tny_list_get_length (mime_parts) == 0) {
+		g_object_unref (mime_parts);
+		return;
+	}
+#endif
 
 	n_attachments = tny_list_get_length (mime_parts);
 	if (n_attachments == 1) {
@@ -3537,7 +3562,7 @@ modest_msg_view_window_remove_attachments (ModestMsgViewWindow *window, gboolean
 								 "mcen_nc_purge_files_text", 
 								 n_attachments), n_attachments);
 	}
-	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (window))),
 							    confirmation_message);
 	g_free (confirmation_message);
 
