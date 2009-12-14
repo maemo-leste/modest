@@ -86,7 +86,6 @@
 #define  MODEST_TOOLBAR_ICON_FORWARD		"email_message_forward"
 #define  MODEST_TOOLBAR_ICON_DELETE		"general_delete"
 #define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     ""
-#define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         "general_foldertree"
 #define  MODEST_TOOLBAR_ICON_SORT               "general_sort"
 #define  MODEST_TOOLBAR_ICON_REFRESH            "general_refresh"
 #define  MODEST_TOOLBAR_ICON_MOVE_TO_FOLDER     "general_move_to_folder"
@@ -108,7 +107,6 @@
 #define  MODEST_STOCK_NEXT         "modest-stock-next"
 #define  MODEST_STOCK_PREV         "modest-stock-prev"
 #define  MODEST_STOCK_STOP         "modest-stock-stop"
-#define  MODEST_STOCK_SPLIT_VIEW   "modest-stock-split-view"
 #define  MODEST_STOCK_SORT         "modest-stock-sort"
 #define  MODEST_STOCK_REFRESH      "modest-stock-refresh"
 

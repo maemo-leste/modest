@@ -95,7 +95,6 @@
 #define  MODEST_TOOLBAR_ICON_PREV		GTK_STOCK_GO_BACK
 #define  MODEST_TOOLBAR_ICON_STOP		GTK_STOCK_STOP
 #define  MODEST_TOOLBAR_ICON_FORMAT_BULLETS     GTK_STOCK_INDENT
-#define  MODEST_TOOLBAR_ICON_SPLIT_VIEW         PIXMAP_PREFIX "folder"
 #define  MODEST_TOOLBAR_ICON_BOLD               GTK_STOCK_BOLD
 #define  MODEST_TOOLBAR_ICON_ITALIC             GTK_STOCK_ITALIC
 #define  MODEST_TOOLBAR_ICON_FIND               GTK_STOCK_FIND
@@ -112,6 +111,5 @@
 #define  MODEST_STOCK_NEXT         "modest-stock-next"
 #define  MODEST_STOCK_PREV         "modest-stock-prev"
 #define  MODEST_STOCK_STOP         "modest-stock-stop"
-#define  MODEST_STOCK_SPLIT_VIEW   "modest-stock-split-view"
 
 #endif  /*__MODEST_ICON_NAMES_H__*/
