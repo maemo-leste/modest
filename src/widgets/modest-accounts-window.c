@@ -748,10 +748,7 @@ on_delete_event (GtkWidget *widget,
 
 	gdk_window_process_updates (priv->account_view->window, TRUE);
 
-	/* Take screenshot. We have to wait a bit to ensure that
-	   screenshot is properly taken */
 	hildon_gtk_window_take_screenshot (GTK_WINDOW (widget), TRUE);
-	g_usleep (G_USEC_PER_SEC);
 
 	modest_account_view_set_show_last_update (MODEST_ACCOUNT_VIEW (priv->account_view), TRUE);
 #endif
