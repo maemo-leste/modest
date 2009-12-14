@@ -214,31 +214,33 @@ on_zoom_minus_plus_not_implemented (ModestWindow *window)
 	modest_platform_information_banner (NULL, NULL, _CS_CANNOT_ZOOM_HERE);
 	return FALSE;
 }
-void 
+
+void
 modest_shell_window_add_item_to_menu (ModestWindow *self,
-					GtkWidget *button,
+					GtkWidget *item,
 					ModestDimmingCallback dimming_callback)
 {
 	ModestShellWindowPrivate *priv;
 
 	g_return_if_fail (MODEST_IS_SHELL_WINDOW(self));
+	g_return_if_fail (GTK_IS_MENU_ITEM (item));
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
 
-	modest_ui_dimming_manager_set_widget_dimming_mode (GTK_WIDGET (button),
+	modest_ui_dimming_manager_set_widget_dimming_mode (item,
 							   MODEST_UI_DIMMING_MODE_HIDE);
 
 	if (dimming_callback)
 		modest_dimming_rules_group_add_widget_rule (priv->app_menu_dimming_group,
-							    GTK_WIDGET (button),
+							    item,
 							    (GCallback) dimming_callback,
 							    MODEST_WINDOW (self));
 	if (priv->menu) {
-		gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), button);
+		gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), item);
 	} else {
-		gtk_widget_destroy (button);
+		gtk_widget_destroy (item);
 	}
 
-	gtk_widget_show (GTK_WIDGET (button));
+	gtk_widget_show (item);
 }
 
 static void
@@ -270,12 +272,7 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 					    accel_key, accel_mods, 0);
 	}
 
-	if (priv->menu) {
-		gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), menu_item);
-	} else {
-		gtk_widget_destroy (menu_item);
-	}
-	gtk_widget_show (menu_item);
+	modest_window_add_item_to_menu (MODEST_WINDOW (self), menu_item, dimming_callback);
 }
 
 static void
