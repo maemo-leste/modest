@@ -126,6 +126,7 @@ struct _ModestMsgViewWindowPrivate {
 	gulong row_deleted_handler;
 	gulong row_inserted_handler;
 	gulong rows_reordered_handler;
+	gulong fetch_image_redraw_handler;
 
 	guint purge_timeout;
 	GtkWidget *remove_attachment_banner;
@@ -492,6 +493,7 @@ modest_msg_view_window_init (ModestMsgViewWindow *obj)
 	priv->row_deleted_handler = 0;
 	priv->row_inserted_handler = 0;
 	priv->rows_reordered_handler = 0;
+	priv->fetch_image_redraw_handler = 0;
 	priv->progress_hint = FALSE;
 	priv->fetching_images = 0;
 
@@ -638,6 +640,11 @@ modest_msg_view_window_finalize (GObject *obj)
 	/* Sanity check: shouldn't be needed, the window mgr should
 	   call this function before */
 	modest_msg_view_window_disconnect_signals (MODEST_WINDOW (obj));
+
+	if (priv->fetch_image_redraw_handler > 0) {
+		g_source_remove (priv->fetch_image_redraw_handler);
+		priv->fetch_image_redraw_handler = 0;
+	}
 
 	if (priv->other_body != NULL) {
 		g_object_unref (priv->other_body);
@@ -3661,6 +3668,21 @@ typedef struct {
 } FetchImageData;
 
 gboolean
+on_fetch_image_timeout_refresh_view (gpointer userdata)
+{
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (userdata);
+	update_progress_hint (MODEST_MSG_VIEW_WINDOW (userdata));
+	if (GTK_WIDGET_DRAWABLE (priv->msg_view)) {
+		gtk_widget_queue_draw (GTK_WIDGET (priv->msg_view));
+	}
+	priv->fetch_image_redraw_handler = 0;
+	g_object_unref (userdata);
+	return FALSE;
+}
+
+gboolean
 on_fetch_image_idle_refresh_view (gpointer userdata)
 {
 
@@ -3672,8 +3694,10 @@ on_fetch_image_idle_refresh_view (gpointer userdata)
 
 		priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (fidata->window);
 		priv->fetching_images--;
-		gtk_widget_queue_draw (fidata->msg_view);
-		update_progress_hint (MODEST_MSG_VIEW_WINDOW (fidata->window));
+		if (priv->fetch_image_redraw_handler == 0) {
+			priv->fetch_image_redraw_handler = g_timeout_add (500, on_fetch_image_timeout_refresh_view, g_object_ref (fidata->window));
+		}
+
 	}
 	gdk_threads_leave ();
 
