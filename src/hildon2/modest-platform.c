@@ -2121,7 +2121,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 
 /***************/
 typedef struct {
- 	GtkWindow *parent_window;
+ 	ModestWindow *parent_window;
  	ModestConnectedPerformer callback;
  	TnyAccount *account;
  	gpointer user_data;
@@ -2221,7 +2221,7 @@ on_conic_device_went_online (TnyMaemoConicDevice *device, const gchar* iap_id, g
 }
  	
 void 
-modest_platform_connect_and_perform (GtkWindow *parent_window, 
+modest_platform_connect_and_perform (ModestWindow *parent_window,
 				     gboolean force,
 				     TnyAccount *account, 
 				     ModestConnectedPerformer callback, 
@@ -2254,7 +2254,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  			info->account = NULL;
  		
  			if (parent_window)
- 				info->parent_window = (GtkWindow *) g_object_ref (parent_window);
+				info->parent_window = (ModestWindow *) g_object_ref (parent_window);
  			else
  				info->parent_window = NULL;
  			info->user_data = user_data;
@@ -2299,7 +2299,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
  	info->account = TNY_ACCOUNT (g_object_ref (account));
  	
  	if (parent_window)
- 		info->parent_window = (GtkWindow *) g_object_ref (parent_window);
+		info->parent_window = (ModestWindow *) g_object_ref (parent_window);
  	else
  		info->parent_window = NULL;
  	
@@ -2332,7 +2332,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 }
 
 void
-modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
+modest_platform_connect_if_remote_and_perform (ModestWindow *parent_window,
 					       gboolean force,
 					       TnyFolderStore *folder_store, 
 					       ModestConnectedPerformer callback, 
@@ -2381,7 +2381,7 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
 static void
 src_account_connect_performer (gboolean canceled,
 			       GError *err,
-			       GtkWindow *parent_window,
+			       ModestWindow *parent_window,
 			       TnyAccount *src_account,
 			       gpointer user_data)
 {
@@ -2403,13 +2403,13 @@ src_account_connect_performer (gboolean canceled,
 }
 
 
-void 
-modest_platform_double_connect_and_perform (GtkWindow *parent_window, 
+void
+modest_platform_double_connect_and_perform (ModestWindow *parent_window,
 					    gboolean force,
 					    TnyFolderStore *folder_store,
 					    DoubleConnectionInfo *connect_info)
 {
-	modest_platform_connect_if_remote_and_perform(parent_window, 
+	modest_platform_connect_if_remote_and_perform(parent_window,
 						      force,
 						      folder_store, 
 						      src_account_connect_performer, 

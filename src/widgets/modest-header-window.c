@@ -1156,11 +1156,12 @@ on_expose_event(GtkTreeView *header_view,
 		gpointer user_data)
 {
 	ModestHeaderWindow *self = (ModestHeaderWindow *) user_data;
-	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
 
 	g_return_val_if_fail (MODEST_IS_HEADER_WINDOW (self), FALSE);
 
 #ifdef MODEST_TOOLKIT_HILDON2
+	ModestHeaderWindowPrivate *priv = MODEST_HEADER_WINDOW_GET_PRIVATE (self);
+
 	if (priv->autoscroll)
 		modest_scrollable_jump_to (MODEST_SCROLLABLE (priv->contents_view), 0.0, 0.0);
 #endif

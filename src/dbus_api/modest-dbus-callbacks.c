@@ -565,11 +565,11 @@ end:
 }
 
 
-static void 
-on_open_message_performer (gboolean canceled, 
+static void
+on_open_message_performer (gboolean canceled,
 			   GError *err,
-			   GtkWindow *parent_window, 
-			   TnyAccount *account, 
+			   ModestWindow *parent_window,
+			   TnyAccount *account,
 			   gpointer user_data)
 {
 	OpenMsgPerformerInfo *info;
@@ -651,11 +651,11 @@ on_idle_open_message_performer (gpointer user_data)
 	/* Lock before the call as we're in an idle handler */
 	gdk_threads_enter ();
 	if (info->connect) {
-		modest_platform_connect_and_perform (GTK_WINDOW (top_win), TRUE, 
-						     info->account, 
+		modest_platform_connect_and_perform (top_win, TRUE,
+						     info->account,
 						     on_open_message_performer, info);
 	} else {
-		on_open_message_performer (FALSE, NULL, GTK_WINDOW (top_win), 
+		on_open_message_performer (FALSE, NULL, top_win,
 					   info->account, info);
 	}
 	gdk_threads_leave ();
@@ -1179,7 +1179,7 @@ on_dbus_method_dump_accounts (DBusConnection *con, DBusMessage *message)
 static void
 on_send_receive_performer(gboolean canceled, 
 			  GError *err,
-			  GtkWindow *parent_window,
+			  ModestWindow *parent_window,
 			  TnyAccount *account,
 			  gpointer user_data)
 {

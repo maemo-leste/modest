@@ -948,9 +948,12 @@ modest_platform_run_rename_folder_dialog (ModestWindow *parent_window,
                                           const gchar *suggested_name,
                                           gchar **folder_name)
 {
+	GtkWindow *toplevel;
+
 	g_return_val_if_fail (TNY_IS_FOLDER_STORE (parent_folder), GTK_RESPONSE_REJECT);
 
-	return modest_platform_run_folder_common_dialog (gtk_widget_get_toplevel (GTK_WIDGET (parent_window)), 
+	toplevel = (GtkWindow *) gtk_widget_get_toplevel (GTK_WIDGET (parent_window));
+	return modest_platform_run_folder_common_dialog (toplevel,
 							 parent_folder,
 							 _HL_TITLE_RENAME_FOLDER,
 							 _HL_RENAME_NAME,
@@ -1461,7 +1464,7 @@ modest_platform_run_alert_dialog (const gchar* prompt,
 
 /***************/
 typedef struct {
- 	GtkWindow *parent_window;
+	ModestWindow *parent_window;
  	ModestConnectedPerformer callback;
  	TnyAccount *account;
  	gpointer user_data;
@@ -1510,7 +1513,7 @@ on_account_went_online (TnyCamelAccount *account, gboolean canceled, GError *err
 }
  
 void 
-modest_platform_connect_and_perform (GtkWindow *parent_window, 
+modest_platform_connect_and_perform (ModestWindow *parent_window,
 				     gboolean force,
 				     TnyAccount *account, 
 				     ModestConnectedPerformer callback, 
@@ -1569,7 +1572,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 		info->account = TNY_ACCOUNT (g_object_ref (account));
 
 		if (parent_window)
-			info->parent_window = (GtkWindow *) g_object_ref (parent_window);
+			info->parent_window = (ModestWindow *) g_object_ref (parent_window);
 		else
 			info->parent_window = NULL;
 
@@ -1587,7 +1590,7 @@ modest_platform_connect_and_perform (GtkWindow *parent_window,
 }
 
 void
-modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
+modest_platform_connect_if_remote_and_perform (ModestWindow *parent_window,
 					       gboolean force,
 					       TnyFolderStore *folder_store, 
 					       ModestConnectedPerformer callback, 
@@ -1636,7 +1639,7 @@ modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
 static void
 src_account_connect_performer (gboolean canceled,
 			       GError *err,
-			       GtkWindow *parent_window,
+			       ModestWindow *parent_window,
 			       TnyAccount *src_account,
 			       gpointer user_data)
 {
@@ -1659,12 +1662,12 @@ src_account_connect_performer (gboolean canceled,
 
 
 void 
-modest_platform_double_connect_and_perform (GtkWindow *parent_window, 
+modest_platform_double_connect_and_perform (ModestWindow *parent_window,
 					    gboolean force,
 					    TnyFolderStore *folder_store,
 					    DoubleConnectionInfo *connect_info)
 {
-	modest_platform_connect_if_remote_and_perform(parent_window, 
+	modest_platform_connect_if_remote_and_perform(parent_window,
 						      force,
 						      folder_store, 
 						      src_account_connect_performer, 

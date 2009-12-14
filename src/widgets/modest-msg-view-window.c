@@ -1895,7 +1895,7 @@ typedef struct {
 static void
 message_reader_performer (gboolean canceled, 
 			  GError *err,
-			  GtkWindow *parent_window, 
+			  ModestWindow *parent_window,
 			  TnyAccount *account, 
 			  gpointer user_data)
 {
@@ -1982,9 +1982,10 @@ message_reader (ModestMsgViewWindow *window,
 		   we're not online */
 		if (!tny_device_is_online (modest_runtime_get_device())) {
 			GtkResponseType response;
+			GtkWindow *toplevel;
 
-			response = modest_platform_run_confirmation_dialog (GTK_WINDOW (window),
-									    _("mcen_nc_get_msg"));
+			toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) window);
+			response = modest_platform_run_confirmation_dialog (toplevel, _("mcen_nc_get_msg"));
 			if (response == GTK_RESPONSE_CANCEL) {
 				update_window_title (window);
 				return FALSE;
@@ -2010,7 +2011,7 @@ message_reader (ModestMsgViewWindow *window,
 			}
 
 			/* Offer the connection dialog if necessary */
-			modest_platform_connect_if_remote_and_perform ((GtkWindow *) window, 
+			modest_platform_connect_if_remote_and_perform ((ModestWindow *) window,
 								       TRUE,
 								       TNY_FOLDER_STORE (folder),
 								       message_reader_performer, 
@@ -2042,7 +2043,7 @@ message_reader (ModestMsgViewWindow *window,
 	else
 		info->row_reference = NULL;
 
-	message_reader_performer (FALSE, NULL, (GtkWindow *) window, account, info);
+	message_reader_performer (FALSE, NULL, (ModestWindow *) window, account, info);
         if (account)
 		g_object_unref (account);
 	if (folder)
@@ -2739,7 +2740,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 
 			msg = tny_camel_msg_new ();
-			tny_camel_msg_parse (msg, file_stream);
+			tny_camel_msg_parse ((TnyCamelMsg *) msg, file_stream);
 			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (msg), account, mailbox, helper->attachment_uid);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win),
 						modest_window_get_zoom (MODEST_WINDOW (helper->self)));
@@ -2850,7 +2851,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 								  priv->msg_uid);
 
 		if (!tny_device_is_online (modest_runtime_get_device())) {
-			modest_platform_connect_and_perform (GTK_WINDOW (window),
+			modest_platform_connect_and_perform ((ModestWindow *) window,
 							     TRUE,
 							     TNY_ACCOUNT (account),
 							     (ModestConnectedPerformer) view_attachment_connect_handler,
@@ -3106,7 +3107,7 @@ save_mime_part_to_file_connect_idle (SaveMimePartInfo *info)
 		account = tny_account_store_find_account (TNY_ACCOUNT_STORE (modest_runtime_get_account_store ()),
 							  priv->msg_uid);
 
-	modest_platform_connect_and_perform (GTK_WINDOW (info->window),
+	modest_platform_connect_and_perform ((ModestWindow *) info->window,
 					     TRUE,
 					     TNY_ACCOUNT (account),
 					     (ModestConnectedPerformer) save_mime_part_to_file_connect_handler,

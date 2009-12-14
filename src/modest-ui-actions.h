@@ -549,12 +549,12 @@ void modest_ui_actions_compose_msg (ModestWindow *win,
 				    GSList *attachments,
 				    gboolean set_as_modified);
 
-void modest_ui_actions_on_account_connection_error (GtkWindow *parent_window,
+void modest_ui_actions_on_account_connection_error (ModestWindow *parent_window,
 						    TnyAccount *account);
 
 gchar *modest_ui_actions_get_msg_already_deleted_error_msg (ModestWindow *win);
 
-void modest_ui_actions_transfer_messages_helper (GtkWindow *win,
+void modest_ui_actions_transfer_messages_helper (ModestWindow *win,
 						 TnyFolder *src_folder,
 						 TnyList *headers,
 						 TnyFolder *dst_folder);

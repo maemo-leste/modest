@@ -420,7 +420,7 @@ void modest_platform_remove_new_mail_notifications (gboolean only_visuals);
  */
 typedef void (*ModestConnectedPerformer) (gboolean canceled, 
 					  GError *err,
-					  GtkWindow *parent_window, 
+					  ModestWindow *parent_window,
 					  TnyAccount *account, 
 					  gpointer user_data);
 
@@ -443,10 +443,10 @@ typedef struct {
  * call of @callback. While making a connection, @account, if not NULL, will go online too. If
  * @account is NULL, only a network connection is made using the platform's device.
  */		
-void modest_platform_connect_and_perform (GtkWindow *parent_window, 
+void modest_platform_connect_and_perform (ModestWindow *parent_window,
 					  gboolean force,
-					  TnyAccount *account, 
-					  ModestConnectedPerformer callback, 
+					  TnyAccount *account,
+					  ModestConnectedPerformer callback,
 					  gpointer user_data);
  		
 /*
@@ -460,10 +460,10 @@ void modest_platform_connect_and_perform (GtkWindow *parent_window,
  * folder store uses the network. For instance, this just returns for local maildir folders. It
  * will in that case synchronously and instantly perform the @callback
  */
-void modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window, 
+void modest_platform_connect_if_remote_and_perform (ModestWindow *parent_window,
 						    gboolean force,
 						    TnyFolderStore *folder_store,
-						    ModestConnectedPerformer callback, 
+						    ModestConnectedPerformer callback,
 						    gpointer user_data);
 
 /*
@@ -474,7 +474,7 @@ void modest_platform_connect_if_remote_and_perform (GtkWindow *parent_window,
  * @info: 
  * 
  */
-void modest_platform_double_connect_and_perform (GtkWindow *parent_window, 
+void modest_platform_double_connect_and_perform (ModestWindow *parent_window,
 						 gboolean force,
 						 TnyFolderStore *folder_store,
 						 DoubleConnectionInfo *info);
