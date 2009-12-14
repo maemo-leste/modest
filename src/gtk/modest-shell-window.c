@@ -222,7 +222,6 @@ modest_shell_window_add_item_to_menu (ModestWindow *self,
 	ModestShellWindowPrivate *priv;
 
 	g_return_if_fail (MODEST_IS_SHELL_WINDOW(self));
-	g_return_if_fail (GTK_IS_BUTTON (button));
 	priv = MODEST_SHELL_WINDOW_GET_PRIVATE (self);
 
 	modest_ui_dimming_manager_set_widget_dimming_mode (GTK_WIDGET (button),
