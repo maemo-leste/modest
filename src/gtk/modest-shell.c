@@ -36,6 +36,7 @@
 /* 'private'/'protected' functions */
 static void modest_shell_class_init (ModestShellClass *klass);
 static void modest_shell_instance_init (ModestShell *obj);
+static void modest_shell_dispose   (GObject *obj);
 static void modest_shell_finalize   (GObject *obj);
 
 static void update_title (ModestShell *self);
@@ -106,6 +107,7 @@ modest_shell_class_init (ModestShellClass *klass)
 	gobject_class = (GObjectClass*) klass;
 
 	parent_class            = g_type_class_peek_parent (klass);
+	gobject_class->dispose = modest_shell_dispose;
 	gobject_class->finalize = modest_shell_finalize;
 
 	g_type_class_add_private (gobject_class, sizeof(ModestShellPrivate));
@@ -231,6 +233,20 @@ modest_shell_instance_init (ModestShell *obj)
 }
 
 static void
+modest_shell_dispose (GObject *obj)
+{
+	ModestShellPrivate *priv;
+
+	priv = MODEST_SHELL_GET_PRIVATE (obj);
+
+	if (priv->progress_timeout_id) {
+		g_source_remove (priv->progress_timeout_id);
+		priv->progress_timeout_id = 0;
+	}
+	G_OBJECT_CLASS(parent_class)->dispose (obj);
+}
+
+static void
 modest_shell_finalize (GObject *obj)
 {
 	ModestShellPrivate *priv;
@@ -240,6 +256,7 @@ modest_shell_finalize (GObject *obj)
 
 	if (priv->progress_timeout_id) {
 		g_source_remove (priv->progress_timeout_id);
+		priv->progress_timeout_id = 0;
 	}
 	for (n = 0; n < 31; n++) {
 		if (priv->progress_frames[n]) {
