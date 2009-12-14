@@ -2024,6 +2024,7 @@ on_before_next (ModestWizardDialog *dialog, GtkWidget *current_page, GtkWidget *
 		}
 
 		modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
+		hildon_gtk_window_take_screenshot ((GtkWindow *) dialog, FALSE);
 	}
 
 
@@ -2463,6 +2464,7 @@ on_save (ModestWizardDialog *dialog)
 {
 	ModestEasysetupWizardDialog *self = MODEST_EASYSETUP_WIZARD_DIALOG (dialog);
 	ModestEasysetupWizardDialogPrivate *priv = MODEST_EASYSETUP_WIZARD_DIALOG_GET_PRIVATE (self);
+	gboolean result;
 
 	save_to_settings (self);
 
@@ -2471,7 +2473,12 @@ on_save (ModestWizardDialog *dialog)
 		return FALSE;
 	}
 
-	return modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
+	
+	result = modest_account_mgr_add_account_from_settings (priv->account_manager, priv->settings);
+	if (result) {
+		hildon_gtk_window_take_screenshot ((GtkWindow *) dialog, FALSE);
+	}
+	return result;
 
 }
 

@@ -7053,6 +7053,9 @@ modest_ui_actions_on_delete_account (GtkWindow *parent_window,
 
 		removed = modest_account_mgr_remove_account (account_mgr, account_name);
 		if (removed) {
+#ifdef MODEST_TOOLKIT_HILDON2
+			hildon_gtk_window_take_screenshot (parent_window, FALSE);
+#endif
 			/* Close all email notifications, we cannot
 			   distinguish if the notification belongs to
 			   this account or not, so for safety reasons
