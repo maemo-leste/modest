@@ -382,7 +382,6 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 	gint response;
 	ModestWindowMgr *mgr;
 	gboolean retval = TRUE;
-	GtkWindow *toplevel;
 
 	g_return_val_if_fail (MODEST_IS_WINDOW(win), FALSE);
 
@@ -413,8 +412,8 @@ modest_ui_actions_on_edit_mode_delete_message (ModestWindow *win)
 					   tny_list_get_length(header_list)), desc);
 
 	/* Confirmation dialog */
-	toplevel = (GtkWindow *) gtk_widget_get_toplevel ((GtkWidget *) win);
-	response = modest_platform_run_confirmation_dialog (toplevel, message);
+	response = modest_platform_run_confirmation_dialog (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (win))),
+							    message);
 
 	if (response == GTK_RESPONSE_OK) {
 		GtkTreeSelection *sel = NULL;
@@ -5922,7 +5921,7 @@ modest_ui_actions_check_for_active_account (ModestWindow *self,
 	if (store_conn_status == TNY_CONNECTION_STATUS_CONNECTED || sending) {
 		gint response;
 
-		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (gtk_widget_get_toplevel (self)), 
+		response = modest_platform_run_confirmation_dialog (GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))), 
 								    _("emev_nc_disconnect_account"));
 		if (response == GTK_RESPONSE_OK) {
 			retval = TRUE;

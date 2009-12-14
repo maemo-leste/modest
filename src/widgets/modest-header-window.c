@@ -926,6 +926,18 @@ static void setup_menu (ModestHeaderWindow *self)
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_delete_messages"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (set_delete_edit_mode),
 				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
+#else
+	modest_window_add_to_menu (MODEST_WINDOW (self),
+				   dngettext(GETTEXT_PACKAGE,
+					     "mcen_me_move_message",
+					     "mcen_me_move_messages",
+					     2),
+				   NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_move_to),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_move_to));
+	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_delete_messages"), NULL,
+				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_delete_message),
+				   MODEST_DIMMING_CALLBACK (modest_ui_dimming_rules_on_delete));
 #endif
 	modest_window_add_to_menu (MODEST_WINDOW (self), _("mcen_me_folder_details"), NULL,
 				   MODEST_WINDOW_MENU_CALLBACK (modest_ui_actions_on_details),
