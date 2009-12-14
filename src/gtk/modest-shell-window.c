@@ -266,7 +266,7 @@ modest_shell_window_add_to_menu (ModestWindow *self,
 		GdkModifierType accel_mods;
 
 		gtk_accelerator_parse (accelerator, &accel_key, &accel_mods);
-		gtk_widget_add_accelerator (menu_item, "clicked", priv->accel_group,
+		gtk_widget_add_accelerator (menu_item, "activate", priv->accel_group,
 					    accel_key, accel_mods, 0);
 	}
 
