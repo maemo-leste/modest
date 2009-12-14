@@ -773,13 +773,8 @@ init_default_settings (ModestConf *conf)
 	if (!modest_conf_key_exists (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, FALSE, NULL);
 
-#ifdef MODEST_TOOLKIT_GTK
-	/* In Gnome port, we only allow editting plain text */
-	modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, FALSE, NULL);
-#else
 	if (!modest_conf_key_exists (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, NULL))
 		modest_conf_set_bool (conf, MODEST_CONF_PREFER_FORMATTED_TEXT, TRUE, NULL);
-#endif
 
 	if (!modest_conf_key_exists (conf, MODEST_CONF_REPLY_TYPE, NULL))
 		modest_conf_set_int (conf, MODEST_CONF_REPLY_TYPE, MODEST_TNY_MSG_REPLY_TYPE_QUOTE, NULL);
