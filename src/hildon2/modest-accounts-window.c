@@ -720,6 +720,7 @@ on_delete_event (GtkWidget *widget,
 
 	/* Take screenshot. We have to wait a bit to ensure that
 	   screenshot is properly taken */
+	hildon_gtk_window_take_screenshot (GTK_WINDOW (widget), FALSE);
 	hildon_gtk_window_take_screenshot (GTK_WINDOW (widget), TRUE);
 	g_usleep (G_USEC_PER_SEC);
 
