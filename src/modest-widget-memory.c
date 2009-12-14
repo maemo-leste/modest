@@ -38,7 +38,6 @@
 #include <widgets/modest-header-view.h>
 #include <widgets/modest-msg-view.h>
 #include <widgets/modest-folder-view.h>
-#include "widgets/modest-main-window.h"
 #include <string.h>
 
 gchar*

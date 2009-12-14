@@ -34,7 +34,6 @@
 #include <modest-defs.h>
 #include <modest-scrollable.h>
 #include <modest-runtime.h>
-#include <modest-main-window.h>
 #include <modest-header-view.h>
 #include "modest-hildon2-global-settings-dialog.h"
 #include "modest-widget-memory.h"

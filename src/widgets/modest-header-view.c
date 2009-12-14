@@ -41,7 +41,6 @@
 #include <modest-dnd.h>
 #include <modest-tny-folder.h>
 #include <modest-debug.h>
-#include <modest-main-window.h>
 #include <modest-ui-actions.h>
 #include <modest-marshal.h>
 #include <modest-text-utils.h>

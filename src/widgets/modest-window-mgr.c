@@ -34,7 +34,6 @@
 #include "modest-ui-actions.h"
 #include "modest-platform.h"
 #include "modest-defs.h"
-#include "widgets/modest-main-window.h"
 #include "widgets/modest-msg-edit-window.h"
 #include "widgets/modest-msg-view-window.h"
 #include "modest-debug.h"
@@ -58,9 +57,6 @@ static void modest_window_mgr_show_toolbars_default (ModestWindowMgr *self,
 						     GType window_type,
 						     gboolean show_toolbars,
 						     gboolean fullscreen);
-#ifndef MODEST_TOOLKIT_HILDON2
-static ModestWindow* modest_window_mgr_get_main_window_default (ModestWindowMgr *self, gboolean show);
-#endif
 static GtkWindow *modest_window_mgr_get_modal_default (ModestWindowMgr *self);
 static void modest_window_mgr_set_modal_default (ModestWindowMgr *self, 
 						 GtkWindow *window,
@@ -99,9 +95,6 @@ typedef struct _ModestWindowMgrPrivate ModestWindowMgrPrivate;
 struct _ModestWindowMgrPrivate {
 	guint         banner_counter;
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	ModestWindow *main_window;
-#endif
 	GSList       *windows_that_prevent_hibernation;
 	GSList       *preregistered_uids;
 
@@ -166,9 +159,6 @@ modest_window_mgr_class_init (ModestWindowMgrClass *klass)
 	mgr_class->set_fullscreen_mode = modest_window_mgr_set_fullscreen_mode_default;
 	mgr_class->get_fullscreen_mode = modest_window_mgr_get_fullscreen_mode_default;
 	mgr_class->show_toolbars = modest_window_mgr_show_toolbars_default;
-#ifndef MODEST_TOOLKIT_HILDON2
-	mgr_class->get_main_window = modest_window_mgr_get_main_window_default;
-#endif
 	mgr_class->get_modal = modest_window_mgr_get_modal_default;
 	mgr_class->set_modal = modest_window_mgr_set_modal_default;
 	mgr_class->close_all_windows = modest_window_mgr_close_all_windows_default;
@@ -261,9 +251,6 @@ modest_window_mgr_init (ModestWindowMgr *obj)
 
 	priv = MODEST_WINDOW_MGR_GET_PRIVATE(obj);
 	priv->banner_counter = 0;
-#ifndef MODEST_TOOLKIT_HILDON2
-	priv->main_window = NULL;
-#endif
 	priv->preregistered_uids = NULL;
 
 	priv->closing_time = 0;
@@ -687,43 +674,6 @@ modest_window_mgr_show_toolbars_default (ModestWindowMgr *self,
 	return;
 }
 
-#ifndef MODEST_TOOLKIT_HILDON2
-void
-modest_window_mgr_set_main_window (ModestWindowMgr *self, ModestWindow *win)
-{
-	ModestWindowMgrPrivate *priv;
-
-	g_return_if_fail (MODEST_IS_WINDOW_MGR (self));
-
-	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-	priv->main_window = win;
-}
-
-ModestWindow*
-modest_window_mgr_get_main_window (ModestWindowMgr *self, gboolean show)
-{
-	return MODEST_WINDOW_MGR_GET_CLASS (self)->get_main_window (self, show);
-}
-
-static ModestWindow*
-modest_window_mgr_get_main_window_default (ModestWindowMgr *self, gboolean show)
-{
-	return NULL;
-}
-
-
-gboolean
-modest_window_mgr_main_window_exists  (ModestWindowMgr *self)
-{
-	ModestWindowMgrPrivate *priv;
-
-	g_return_val_if_fail (MODEST_IS_WINDOW_MGR (self), FALSE);
-	priv = MODEST_WINDOW_MGR_GET_PRIVATE (self);
-
-	return priv->main_window != NULL;
-}
-#endif
-
 GtkWindow *
 modest_window_mgr_get_modal (ModestWindowMgr *self)
 {
@@ -851,12 +801,6 @@ modest_window_mgr_get_num_windows (ModestWindowMgr *self)
 		g_list_free (window_list);
 	}
 
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* Do not take into account the main window if it was hidden */
-	if (num_windows && priv->main_window && !GTK_WIDGET_VISIBLE (priv->main_window))
-		num_windows--;
-#endif
-
 	return num_windows + priv->banner_counter;
 }
 
@@ -955,13 +899,9 @@ modest_window_mgr_show_initial_window (ModestWindowMgr *self)
 static ModestWindow *
 modest_window_mgr_show_initial_window_default (ModestWindowMgr *self)
 {
-#ifndef MODEST_TOOLKIT_HILDON2
-	/* By default it returns the main window creating it if
-	   needed */
-	return modest_window_mgr_get_main_window (self, TRUE);
-#else
+	g_warning ("You must implement %s", __FUNCTION__);
+
 	return NULL;
-#endif
 }
 
 

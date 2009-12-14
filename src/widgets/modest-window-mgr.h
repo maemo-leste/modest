@@ -67,10 +67,6 @@ struct _ModestWindowMgrClass {
 								 GType window_type,
 								 gboolean show_toolbars,
 								 gboolean fullscreen);
-#ifndef MODEST_TOOLKIT_HILDON2
-	ModestWindow *        (*get_main_window)                (ModestWindowMgr *self,
-								 gboolean show);
-#endif
 	gboolean              (*close_all_windows)              (ModestWindowMgr *self);
 	GtkWindow *           (*get_modal)                      (ModestWindowMgr *self);
 	void                  (*set_modal)                      (ModestWindowMgr *self,
@@ -183,38 +179,6 @@ void           modest_window_mgr_show_toolbars         (ModestWindowMgr *self,
 							GType window_type,
 							gboolean show_toolbars,
 							gboolean fullscreen);
-#ifndef MODEST_TOOLKIT_HILDON2
-/**
- * modest_window_mgr_get_main_window:
- * @self: a #ModestWindowMgr
- * @show: if TRUE, create the main window and show it if it was not existing.
- *
- * get the main window, and depending on @create, create one if it does not exist yet
- *
- * Returns: the main window or NULL in case of error, or the main-window
- * did not yet exist
- **/
-ModestWindow*  modest_window_mgr_get_main_window       (ModestWindowMgr *self,
-							gboolean show);
-
-/**
- * modest_window_mgr_set_main_window:
- * @self: a #ModestWindowMgr
- * @main_win: a #ModestMainWindow
- */
-void modest_window_mgr_set_main_window (ModestWindowMgr *self, ModestWindow *main_win);
-
-
-/**
- * modest_window_mgr_main_window_exists:
- * @self: a #ModestWindowMgr
- *
- * do we have a main window?
- *
- * Returns: TRUE if there's a main window, FALSE otherwise
- **/
-gboolean  modest_window_mgr_main_window_exists       (ModestWindowMgr *self);
-#endif
 
 /**
  * modest_window_mgr_get_modal:

@@ -60,7 +60,6 @@
 #include "modest-utils.h"
 #include "widgets/modest-connection-specific-smtp-window.h"
 #include "widgets/modest-ui-constants.h"
-#include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-view-window.h>
 #include <widgets/modest-account-view-window.h>
 #include <widgets/modest-details-dialog.h>
@@ -3058,7 +3057,7 @@ do_create_folder_cb (ModestMailOperation *mail_op,
 		}
 
 	} else {
-		/* the 'source_win' is either the ModestMainWindow, or the 'Move to folder'-dialog
+		/* the 'source_win' is either the ModestWindow, or the 'Move to folder'-dialog
 		 * FIXME: any other? */
 		GtkWidget *folder_view;
 
@@ -3561,7 +3560,7 @@ modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 					 gchar **password,
 					 gboolean *cancel,
 					 gboolean *remember,
-					 ModestMainWindow *main_window)
+					 ModestWindow *window)
 {
 	g_return_if_fail(server_account_name);
 	gboolean completed = FALSE;

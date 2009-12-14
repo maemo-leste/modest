@@ -34,7 +34,6 @@
 #include <modest-defs.h>
 #include <modest-scrollable.h>
 #include <modest-runtime.h>
-#include <modest-main-window.h>
 #include <modest-header-view.h>
 #include "modest-widget-memory.h"
 #include <modest-utils.h>
@@ -66,6 +65,7 @@
 #include <modest-default-global-settings-dialog.h>
 #include <math.h>
 #include "widgets/modest-toolkit-utils.h"
+#include "widgets/modest-msg-view-window.h"
 #include <modest-shell-banner.h>
 #include <modest-ui-actions.h>
 #include <modest-gtk-window-mgr.h>

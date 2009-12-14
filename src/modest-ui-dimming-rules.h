@@ -30,7 +30,6 @@
 #ifndef __MODEST_UI_DIMMING_RULES_H__
 #define __MODEST_UI_DIMMING_RULES_H__
 
-#include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-edit-window.h>
 #include <widgets/modest-recpt-view.h>
 

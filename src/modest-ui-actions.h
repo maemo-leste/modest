@@ -30,9 +30,12 @@
 #ifndef __MODEST_UI_ACTIONS_H__
 #define __MODEST_UI_ACTIONS_H__
 
-#include <widgets/modest-main-window.h>
 #include <widgets/modest-msg-edit-window.h>
+#include <widgets/modest-msg-view-window.h>
+#include <widgets/modest-msg-view.h>
 #include <widgets/modest-recpt-view.h>
+#include <widgets/modest-folder-view.h>
+#include <widgets/modest-header-view.h>
 #include "modest-mail-operation.h"
 #include "modest-tny-send-queue.h"
 #include "modest-plugin-ui-actions.h"
@@ -85,9 +88,9 @@ void     modest_ui_actions_on_sort          (GtkAction *action, ModestWindow *wi
 
 void     modest_ui_actions_on_reply_all     (GtkAction *action, ModestWindow *win);
 
-void     modest_ui_actions_on_next          (GtkAction *action, ModestWindow *main_window);
+void     modest_ui_actions_on_next          (GtkAction *action, ModestWindow *window);
 
-void     modest_ui_actions_on_prev          (GtkAction *action, ModestWindow *main_window);
+void     modest_ui_actions_on_prev          (GtkAction *action, ModestWindow *window);
 
 void     modest_ui_actions_on_details       (GtkAction *action, ModestWindow *win);
 
@@ -123,7 +126,7 @@ void     modest_ui_actions_on_csm_help      (GtkAction *action, GtkWindow *win);
 /**
  * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction
- * @main_window: the #ModestMainWindow
+ * @window: the #ModestWindow
  * 
  * this action switches between split view (with a folders pane at the
  * left) and simple view without the left pane with the folders and
@@ -131,34 +134,34 @@ void     modest_ui_actions_on_csm_help      (GtkAction *action, GtkWindow *win);
  * generic code could be used also by the GNOME UI
  **/
 void	 modest_ui_actions_toggle_folders_view	     (GtkAction *action, 
-						      ModestMainWindow *main_window);
+						      ModestWindow *window);
 
 /**
  * modest_ui_actions_toggle_folders_view:
  * @action: the #GtkAction
- * @main_window: the #ModestMainWindow
+ * @window: the #ModestWindow
  * 
  * this action shows or hides the column titles of the header list
  * view. It also enables the two lines rendering for the treeview rows
  **/
 void	 modest_ui_actions_toggle_header_list_view    (GtkAction *action, 
-						       ModestMainWindow *main_window);
+						       ModestWindow *window);
 
 /* Widget actions */
 void     modest_ui_actions_on_header_selected          (ModestHeaderView *folder_view, 
 							TnyHeader *header,
-							ModestMainWindow *main_window);
+							ModestWindow *window);
 #endif
 void     modest_ui_actions_on_header_activated         (ModestHeaderView *folder_view, 
 							TnyHeader *header,
 							GtkTreePath *path,
-							ModestWindow *main_window);
+							ModestWindow *window);
 
 #ifndef MODEST_TOOLKIT_HILDON2
 void     modest_ui_actions_on_folder_selection_changed (ModestFolderView *folder_view,
 							 TnyFolderStore *folder_store, 
 							 gboolean selected,
-							 ModestMainWindow *main_window);
+							 ModestWindow *window);
 #endif
 
 void     modest_ui_actions_on_item_not_found           (ModestHeaderView *header_view,
@@ -266,7 +269,7 @@ void    modest_ui_actions_on_send_receive              (GtkAction *action,
 							ModestWindow *win);
 
 void     modest_ui_actions_on_new_folder               (GtkAction *action,
-							ModestWindow *main_window);
+							ModestWindow *window);
 
 gboolean     modest_ui_actions_on_edit_mode_rename_folder            (ModestWindow *window);
 
@@ -278,13 +281,13 @@ void     modest_ui_actions_on_delete_folder            (GtkAction *action,
 
 #ifndef MODEST_TOOLKIT_HILDON2
 void     modest_ui_actions_on_move_folder_to_trash_folder     (GtkAction *action,
-							       ModestMainWindow *main_window);
+							       ModestWindow *window);
 #endif
 
 void     modest_ui_actions_on_password_requested (TnyAccountStore *account_store,
 						  const gchar* server_account_name,
 						  gchar **username, gchar **password, gboolean *cancel, 
-						  gboolean *remember, ModestMainWindow *main_window);
+						  gboolean *remember, ModestWindow *window);
 
 void     modest_ui_actions_on_undo                     (GtkAction *action,
 							ModestWindow *window);

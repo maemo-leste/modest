@@ -49,7 +49,6 @@
 #include "modest-text-utils.h"
 #include <modest-local-folder-info.h>
 #include "widgets/modest-header-view.h"
-#include "widgets/modest-main-window.h"
 #include "modest-widget-memory.h"
 #include "widgets/modest-sort-criterium-view.h"
 #include "widgets/modest-header-window.h"

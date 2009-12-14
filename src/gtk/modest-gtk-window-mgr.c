@@ -33,7 +33,6 @@
 #include "modest-msg-edit-window.h"
 #include "modest-mailboxes-window.h"
 #include "modest-header-window.h"
-#include "modest-main-window.h"
 #include "modest-window-mgr-priv.h"
 #include "modest-conf.h"
 #include "modest-defs.h"
