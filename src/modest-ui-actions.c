@@ -80,6 +80,7 @@
 #include <tny-camel-bs-msg.h>
 #include <tny-camel-bs-mime-part.h>
 
+#include <gtk/gtk.h>
 #include <gtkhtml/gtkhtml.h>
 
 #define MODEST_MOVE_TO_DIALOG_FOLDER_VIEW "move-to-dialog-folder-view"
@@ -747,11 +748,28 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 						   MODEST_TEXT_UTILS_SIGNATURE_MARKER,
 						   "\n", signature, NULL) : g_strdup(body_str);
 	} else {
-		body = use_signature ? g_strconcat("\n", MODEST_TEXT_UTILS_SIGNATURE_MARKER,
-						   "\n", signature, NULL) : g_strdup("");
+
+		gchar *gray_color_markup = NULL, *color_begin = NULL, *color_end = NULL;
+		GdkColor color;
+
+		if (gtk_style_lookup_color (GTK_WIDGET (win)->style, "SecondaryTextColor", &color))
+			gray_color_markup = modest_text_utils_get_color_string (&color);
+		if (!gray_color_markup)
+			gray_color_markup = g_strdup ("#999999");
+
+		color_begin = g_strdup_printf ("<font color=\"%s\">", gray_color_markup);
+		color_end = "</font>";
+
+		body = use_signature ? g_strconcat("<br/>\n", color_begin,
+						MODEST_TEXT_UTILS_SIGNATURE_MARKER, "<br/>\n",
+						signature, color_end, NULL) : g_strdup("");
+
+		g_free (gray_color_markup);
+		g_free (color_begin);
 	}
 
-	msg = modest_tny_msg_new (to_str, from_str, cc_str, bcc_str, subject_str, NULL, NULL, body, NULL, NULL, NULL);
+	msg = modest_tny_msg_new_html_plain (to_str, from_str, cc_str, bcc_str, subject_str,
+					NULL, NULL, body, NULL, NULL, NULL, NULL, NULL);
 	if (!msg) {
 		g_printerr ("modest: failed to create new msg\n");
 		goto cleanup;
