@@ -1960,6 +1960,7 @@ modest_msg_edit_window_set_format (ModestMsgEditWindow *self,
 	switch (format) {
 	case MODEST_MSG_EDIT_FORMAT_HTML:
 		wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
+		update_signature (self, priv->last_from_account, priv->last_from_account);
 		if (parent_priv->toolbar) gtk_widget_show (parent_priv->toolbar);
 		break;
 	case MODEST_MSG_EDIT_FORMAT_TEXT:
@@ -3014,6 +3015,7 @@ modest_msg_edit_window_set_file_format (ModestMsgEditWindow *window,
 		case MODEST_FILE_FORMAT_FORMATTED_TEXT:
 			wp_text_buffer_enable_rich_text (WP_TEXT_BUFFER (priv->text_buffer), TRUE);
 			remove_tags (WP_TEXT_BUFFER (priv->text_buffer));
+			update_signature (window, priv->last_from_account, priv->last_from_account);
 			if (parent_priv->toolbar)
 				gtk_widget_show (parent_priv->toolbar);
 			break;
