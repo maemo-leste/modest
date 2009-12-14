@@ -30,27 +30,6 @@
 
 <ui>
 
-  <menubar name="MenuBar">
-    <menu name="MessageMenu" action="Email">
-      <menuitem name="MessageReplyAllMenu" action="EmailReplyAll"/>
-      <menuitem name="MessageForwardMenu" action="EmailForward"/>
-      <separator/>
-      <menuitem name="MessageNewMenu"  action="EmailNewDefault"/>
-      <separator/>
-      <menuitem name="MessageDetailsMenu"      action="EmailDetails"/>
-    </menu>
-
-    <menu name="AttachmentsMenu" action="Attachments">
-      <menuitem name="SaveAttachmentMenu" action="SaveAttachment"/>
-      <menuitem name="RemoveAttachmentMenu" action="RemoveAttachment"/>
-    </menu>
-
-   <menu name="ToolsMenu" action="Tools">
-      <menuitem name="ToolsAddToContactsMenu" action="ToolsAddToContacts"/>
-   </menu>
-
-  </menubar>
-
   <toolbar name="ToolBar">
     <toolitem action="ToolbarMessageReply"/>
     <toolitem action="ToolbarMessageReplyAll"/>
