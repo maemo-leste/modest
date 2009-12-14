@@ -67,6 +67,8 @@
 #include <math.h>
 #include "widgets/modest-toolkit-utils.h"
 #include <modest-shell-banner.h>
+#include <modest-ui-actions.h>
+#include <modest-gtk-window-mgr.h>
 
 #define HILDON_OSSO_URI_ACTION "uri-action"
 #define URI_ACTION_COPY "copy:"
@@ -1151,10 +1153,75 @@ modest_platform_create_sort_dialog       (GtkWindow *parent_window)
 
 }
 
+static guint timeout_handler_id = 0;
+static gboolean weak_ref_enabled = FALSE;
+
+static void
+shell_weak_ref (gpointer data,
+		GObject *was)
+{
+	if (timeout_handler_id > 0) {
+		g_source_remove (timeout_handler_id);
+		timeout_handler_id = 0;
+	}
+}
+
+static gboolean
+update_timeout_handler (gpointer userdata)
+{
+	gboolean auto_update;
+	gboolean right_connection = FALSE;
+
+	/* Check if the autoupdate feature is on */
+	auto_update = modest_conf_get_bool (modest_runtime_get_conf (), 
+					    MODEST_CONF_AUTO_UPDATE, NULL);
+
+	if (auto_update) {
+		gint connect_when;
+		/* Do send receive. Never set the current top window
+		   as we always assume that DBus send/receive requests
+		   are not user driven */
+
+		connect_when = modest_conf_get_int (modest_runtime_get_conf (), 
+						    MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, NULL);
+		/* Perform a send and receive if the user selected to connect
+		   via any mean or if the current connection method is the
+		   same as the one specified by the user */
+		if (connect_when == MODEST_CONNECTED_VIA_ANY ||
+		    connect_when == modest_platform_get_current_connection ()) {
+			right_connection = TRUE;
+		}
+	} else {
+		/* Disable auto update */
+		modest_platform_set_update_interval (0);
+	}
+
+	if (auto_update && right_connection) {
+		modest_ui_actions_do_send_receive_all (NULL, FALSE, FALSE, FALSE);
+	}
+
+	return TRUE;
+}
+
 
 gboolean 
 modest_platform_set_update_interval (guint minutes)
 {
+	if (!weak_ref_enabled) {
+		ModestWindowMgr *mgr;
+		GtkWidget *shell;
+		mgr = modest_runtime_get_window_mgr ();
+		shell = modest_gtk_window_mgr_get_shell (MODEST_GTK_WINDOW_MGR (mgr));
+		g_object_weak_ref (shell, shell_weak_ref, NULL);
+		weak_ref_enabled = TRUE;
+	}
+	if (timeout_handler_id > 0) {
+		g_source_remove (timeout_handler_id);
+		timeout_handler_id = 0;
+	}
+	if (minutes > 0)
+		timeout_handler_id = g_timeout_add_seconds (minutes*60, update_timeout_handler, NULL);
+
 	return TRUE;
 }
 
