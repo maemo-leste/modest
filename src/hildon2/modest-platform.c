@@ -64,6 +64,7 @@
 #include <osso-mem.h>
 #include "hildon2/modest-hildon2-details-dialog.h"
 #include "widgets/modest-window-mgr.h"
+#include "widgets/modest-msg-view-window.h"
 #ifdef MODEST_USE_PROFILE
 #include <profiled/keys_nokia.h>
 #include <profiled/libprofile.h>

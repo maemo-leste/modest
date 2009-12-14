@@ -1583,12 +1583,12 @@ modest_msg_edit_window_setup_toolbar (ModestMsgEditWindow *window)
 	gint size_index;
 	gint font_index;
 	GtkWidget *sizes_menu;
-	GtkWidget *fonts_menu;
 	gchar *markup;
 	GtkWidget *arrow;
 	GtkWidget *hbox;
 #ifndef MODEST_TOOLKIT_HILDON2
 	GSList *radio_group, *node;
+	GtkWidget *fonts_menu;
 #endif
 
 	/* Toolbar */
