@@ -184,12 +184,14 @@ modest_init_get_default_header_view_column_ids (TnyFolderType folder_type, Modes
 static gboolean
 force_ke_recv_load (void)
 {
+#ifdef MODEST_PLATFORM_MAEMO
 	if (strcmp ("cerm_device_memory_full",
 		    _KR("cerm_device_memory_full")) == 0) {
 		g_debug ("%s: cannot get translation for cerm_device_memory_full",
 			   __FUNCTION__);
 		return FALSE;
 	}
+#endif
 
 	return TRUE;
 }
