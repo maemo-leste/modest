@@ -181,7 +181,7 @@ modest_shell_instance_init (ModestShell *obj)
 	gtk_box_pack_start (GTK_BOX (title_vbox), priv->subtitle_label, FALSE, FALSE, 0);
 	gtk_widget_show (title_vbox);
 
-	priv->title_button = gtk_tool_button_new (NULL, NULL);
+	priv->title_button = gtk_tool_button_new (NULL, "");
 	gtk_widget_show (GTK_WIDGET (priv->title_button));
 	title_arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_NONE);
 	gtk_widget_show (title_arrow);
