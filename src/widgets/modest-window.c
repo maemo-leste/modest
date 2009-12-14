@@ -482,12 +482,18 @@ on_key_pressed (GtkWidget *self,
 		modest_ui_actions_on_change_fullscreen (NULL, MODEST_WINDOW(self));
 		return TRUE;
 #ifdef MODEST_TOOLKIT_HILDON2
-	case HILDON_HARDKEY_INCREASE: 
-		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
-		return TRUE;
-	case HILDON_HARDKEY_DECREASE: 
-		modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
-		return TRUE;
+	case HILDON_HARDKEY_INCREASE:
+		if (MODEST_IS_MSG_VIEW_WINDOW (self)) {
+			modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
+			return TRUE;
+		}
+		break;
+	case HILDON_HARDKEY_DECREASE:
+		if (MODEST_IS_MSG_VIEW_WINDOW (self)) {
+			modest_ui_actions_on_zoom_minus	(NULL, MODEST_WINDOW(self));
+			return TRUE;
+		}
+		break;
 #else
 	case GDK_F7: 
 		modest_ui_actions_on_zoom_plus (NULL, MODEST_WINDOW(self));
