@@ -251,7 +251,6 @@ get_current_settings (ModestGlobalSettingsDialogPrivate *priv,
 	id = modest_selector_get_active_id (priv->connect_via);
 	state->default_account = modest_selector_get_active_id (priv->default_account_selector);
 	state->connect_via = *id;
-	state->size_limit = modest_number_entry_get_value (priv->size_limit);
 
 	id = modest_selector_get_active_id (priv->update_interval);
 	state->update_interval = *id;
@@ -284,8 +283,6 @@ modest_global_settings_dialog_save_settings_default (ModestGlobalSettingsDialog 
 	modest_conf_set_int (conf, MODEST_CONF_UPDATE_WHEN_CONNECTED_BY, current_state.connect_via, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_int (conf, MODEST_CONF_UPDATE_INTERVAL, current_state.update_interval, NULL);
-	RETURN_FALSE_ON_ERROR(error);
-	modest_conf_set_int (conf, MODEST_CONF_MSG_SIZE_LIMIT, current_state.size_limit, NULL);
 	RETURN_FALSE_ON_ERROR(error);
 	modest_conf_set_bool (conf, MODEST_CONF_PLAY_SOUND_MSG_ARRIVE, current_state.play_sound, NULL);
 	RETURN_FALSE_ON_ERROR(error);
@@ -352,7 +349,6 @@ settings_changed (ModestGlobalSettingsState initial_state,
 	    initial_state.add_to_contacts != current_state.add_to_contacts ||
 	    initial_state.connect_via != current_state.connect_via ||
 	    initial_state.update_interval != current_state.update_interval ||
-	    initial_state.size_limit != current_state.size_limit ||
 	    initial_state.play_sound != current_state.play_sound ||
 	    initial_state.prefer_formatted_text != current_state.prefer_formatted_text ||
 	    (current_state.default_account &&
