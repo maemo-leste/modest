@@ -768,6 +768,13 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 		end_ptr = g_utf8_offset_to_pointer (recipients, end_pos);
 
 		address = g_strstrip (g_strndup (start_ptr, end_ptr - start_ptr));
+
+		/* Ignore empty addresses */
+		if (!g_strcmp0 (address, "")) {
+			g_free (address);
+			goto next_address;
+		}
+
 		gtk_text_buffer_get_iter_at_offset (buffer, &start_iter, start_pos);
 		gtk_text_buffer_get_iter_at_offset (buffer, &end_iter, end_pos);
 		gtk_text_buffer_select_range (buffer, &start_iter, &end_iter);
@@ -864,6 +871,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 		if (result == FALSE)
 			break;
 
+	next_address:
 		current_start = g_slist_next (current_start);
 		current_end = g_slist_next (current_end);
 	}
