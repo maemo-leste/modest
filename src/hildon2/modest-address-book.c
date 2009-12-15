@@ -893,72 +893,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 
 }
 
-typedef struct _GetContactsInfo {
-	GMainLoop *mainloop;
-	GList *result;
-} GetContactsInfo;
 
-static void 
-get_contacts_for_name_cb (EBook *book, 
-			  EBookStatus status, 
-			  GList *list, 
-			  gpointer userdata)
-{
-	GetContactsInfo *info = (GetContactsInfo *) userdata;
-
-	if (status == E_BOOK_ERROR_OK)
-		info->result = list;
-
-	g_main_loop_quit (info->mainloop);
-}
-
-static GList *
-get_contacts_for_name (const gchar *name)
-{
-	EBookQuery *book_query = NULL;
-	GList *result;
-	gchar *unquoted;
-	GetContactsInfo *info;
-	EBookQuery *queries[10];
-	gint i;
-
-	if (name == NULL)
-		return NULL;
-
-	unquoted = unquote_string (name);
-
-	i = 0;
-	queries[i++] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[i++] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[i++] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	if (strchr (name, '@')) {
-		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	}
-	queries[i] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	book_query = e_book_query_or (i, queries, TRUE);
-
-	g_free (unquoted);
-
-	/* TODO: Make it launch a mainloop */
-	info = g_slice_new (GetContactsInfo);
-	info->mainloop = g_main_loop_new (NULL, FALSE);
-	info->result = NULL;
-	if (e_book_async_get_contacts (book, book_query, get_contacts_for_name_cb, info) == 0) {
-		GDK_THREADS_LEAVE ();
-		g_main_loop_run (info->mainloop);
-		GDK_THREADS_ENTER ();
-	} 
-	result = info->result;
-	e_book_query_unref (book_query);
-	g_main_loop_unref (info->mainloop);
-	g_slice_free (GetContactsInfo, info);
-
-	return result;
-}
 
 static void
 set_contact_from_display_name (EContact *contact, const gchar *disp_name)
@@ -1057,6 +992,55 @@ select_contacts_for_name_dialog (const gchar *name)
 }
 
 static gboolean
+contact_name_or_email_starts_with (OssoABookContact *contact,
+                                   gpointer          user_data)
+{
+	const char *prefix = user_data;
+	gboolean rv = FALSE;
+	GList *contacts, *l;
+
+
+	contacts = osso_abook_contact_get_roster_contacts (contact);
+	contacts = g_list_prepend (contacts, contact);
+
+	for (l = contacts; l; l = l->next) {
+		GList *attrs;
+		attrs = e_vcard_get_attributes (E_VCARD (l->data));
+		for (;attrs;attrs = attrs->next) {
+			EVCardAttribute *attr = attrs->data;
+			const char *name;
+
+			name = e_vcard_attribute_get_name (attr);
+			if (!g_strcmp0 (name, "N") ||
+			    (strchr (prefix, '@') && !g_strcmp0 (name, "EMAIL"))) {
+				GList *values = e_vcard_attribute_get_values (attr);
+				gchar *prefix_down = g_utf8_strdown (prefix, -1);
+
+				for (;values; values = values->next) {
+					gchar *value_down = NULL;
+
+					if (g_strcmp0 (values->data, ""))
+						value_down = g_utf8_strdown (values->data, -1);
+
+					if (value_down && g_str_has_prefix (value_down, prefix_down)) {
+						rv = TRUE;
+						g_free (value_down);
+						g_free (prefix_down);
+						goto out;
+					}
+					g_free (value_down);
+				}
+				g_free (prefix_down);
+			}
+		}
+	}
+ out:
+	g_list_free (contacts);
+
+	return rv;
+}
+
+static gboolean
 resolve_address (const gchar *address, 
 		 GSList **resolved_addresses, 
 		 GSList **contact_ids,
@@ -1064,6 +1048,7 @@ resolve_address (const gchar *address,
 {
 	GList *resolved_contacts;
 	CheckNamesInfo *info;;
+	OssoABookRoster *roster;
 
 	g_return_val_if_fail (canceled, FALSE);
 
@@ -1084,7 +1069,11 @@ resolve_address (const gchar *address,
 		return FALSE;
 	}
 
-	resolved_contacts = get_contacts_for_name (address);
+	roster = osso_abook_aggregator_get_default (NULL);
+	resolved_contacts =
+		osso_abook_aggregator_find_contacts_full ((OssoABookAggregator *) roster,
+							  contact_name_or_email_starts_with,
+							  (gpointer) address);
 	hide_check_names_banner (info);
 
 	if (resolved_contacts == NULL) {
