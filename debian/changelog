@@ -1,3 +1,14 @@
+modest (3.2.5) unstable; urgency=low
+
+  * Week 51, 2009 - third release candidate
+  * 
+  * Fixes: NB#139348 Email screenshot must be shown when Email starts
+  * Fixes: NB#147995 Signature text should use ReversedSecondaryTextColor as the text color
+  * Fixes: NB#149801 Time to download external images should be improved
+  * Fixes: NB#150401 Usage of HW zoom keys should be revised in Email 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 15 Dec 2009 15:41:39 +0200
+
 modest (3.2.4-1) unstable; urgency=low
 
   * Week 51, 2009 - second release
