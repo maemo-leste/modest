@@ -167,12 +167,12 @@ modest_tny_msg_new_html_plain (const gchar* mailto, const gchar* from, const gch
 
 	if (in_reply_to)
 		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg), "In-Reply-To", in_reply_to);
-	
-	/* Add the body of the new mail */	
+
+	/* Add the body of the new mail */
 	add_body_part (new_msg, plain_body, content_type);
 	add_html_body_part (new_msg, html_body);
 	g_free (content_type);
-		       
+
 	/* Add attachments */
 	tmp_attached = add_attachments (TNY_MIME_PART (new_msg), attachments, FALSE, err);
 	if (attached)
@@ -1151,6 +1151,14 @@ modest_tny_msg_get_references (TnyMsg *msg, gchar **message_id, gchar **referenc
 	}
 }
 
+static void
+remove_line_breaks (gchar *str)
+{
+	gchar *needle = g_strrstr (str, "\r\n");
+	if (needle)
+		*needle = '\0';
+}
+
 static void 
 set_references (TnyMsg *reply_msg, TnyMsg *original_msg)
 {
@@ -1185,14 +1193,18 @@ set_references (TnyMsg *reply_msg, TnyMsg *original_msg)
 	g_free (orig_message_id);
 
 	if (in_reply_to) {
+		remove_line_breaks (in_reply_to);
 		tny_mime_part_set_header_pair (TNY_MIME_PART (reply_msg), "In-Reply-To", in_reply_to);
+		g_free (in_reply_to);
 	}
 	if (references) {
+		remove_line_breaks (references);
 		tny_mime_part_set_header_pair (TNY_MIME_PART (reply_msg), "References", references);
+		g_free (references);
 	}
 }
 
-TnyMsg* 
+TnyMsg*
 modest_tny_msg_create_reply_msg (TnyMsg *msg,
 				 TnyHeader *header,
 				 const gchar *from,
