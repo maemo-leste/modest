@@ -101,7 +101,7 @@ static void
 modest_color_button_clicked (GtkButton *button)
 {
 	/* Show ColorPicker dialog */
-	PipCalendarColor color = pip_color_picker_select_color(PipTextColorRed, PipColorPickerText);
+	PipCalendarColor color = pip_color_picker_select_color(PipCalendarColorInvalid, PipColorPickerText);
 
 	/* Check if some color is selected rather than dialog is dismissed */
 	if (color != PipCalendarColorInvalid) {
