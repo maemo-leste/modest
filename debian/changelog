@@ -1,3 +1,13 @@
+modest (3.2.5-1) unstable; urgency=low
+
+  * Week 51, 2009 - fourth release candidate
+  * 
+  * Fixes: NB#125223 Account setup wizard: mandatory fields are not marked with an asterisk
+  * Fixes: NB#139674 Semicolon in To field should be ignored when sending a message
+  * Fixes: NB#150632 Reply to a message: the message is received broken at the receipient's end 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Wed, 16 Dec 2009 11:27:26 +0200
+
 modest (3.2.5) unstable; urgency=low
 
   * Week 51, 2009 - third release candidate
