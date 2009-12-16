@@ -743,10 +743,11 @@ modest_ui_actions_compose_msg(ModestWindow *win,
 		gchar *gray_color_markup = NULL, *color_begin = NULL, *color_end = NULL;
 		GdkColor color;
 
-		if (gtk_style_lookup_color (GTK_WIDGET (win)->style, "SecondaryTextColor", &color))
+		if (win && gtk_style_lookup_color (gtk_widget_get_style ((GtkWidget *) win),
+						   "SecondaryTextColor", &color))
 			gray_color_markup = modest_text_utils_get_color_string (&color);
 		if (!gray_color_markup)
-			gray_color_markup = g_strdup ("#999999");
+			gray_color_markup = g_strdup ("#babababababa");
 
 		color_begin = g_strdup_printf ("<font color=\"%s\">", gray_color_markup);
 		color_end = "</font>";
