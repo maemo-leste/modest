@@ -3651,7 +3651,9 @@ on_fetch_image_timeout_refresh_view (gpointer userdata)
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (userdata);
 	update_progress_hint (MODEST_MSG_VIEW_WINDOW (userdata));
-	if (GTK_WIDGET_DRAWABLE (priv->msg_view)) {
+	/* Note that priv->msg_view is set to NULL when this window is
+	   distroyed */
+	if (priv->msg_view && GTK_WIDGET_DRAWABLE (priv->msg_view)) {
 		gtk_widget_queue_draw (GTK_WIDGET (priv->msg_view));
 	}
 	priv->fetch_image_redraw_handler = 0;
