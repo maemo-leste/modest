@@ -40,6 +40,7 @@ enum {
 	FETCH_IMAGE_SIGNAL,
 	SHOW_DETAILS_SIGNAL,
 	LIMIT_ERROR_SIGNAL,
+	HANDLE_CALENDAR_SIGNAL,
 	LAST_SIGNAL
 };
 static guint signals[LAST_SIGNAL] = {0};
@@ -207,6 +208,14 @@ modest_msg_view_base_init (gpointer g_class)
 				      g_cclosure_marshal_VOID__VOID,
 				      G_TYPE_NONE, 0);
 		
+		signals[HANDLE_CALENDAR_SIGNAL] =
+			g_signal_new ("handle_calendar",
+				      MODEST_TYPE_MSG_VIEW,
+				      G_SIGNAL_RUN_FIRST,
+				      G_STRUCT_OFFSET(ModestMsgViewIface, handle_calendar),
+				      NULL, NULL,
+				      modest_marshal_VOID__OBJECT_OBJECT,
+				      G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
 		initialized = TRUE;
 	}
 }
