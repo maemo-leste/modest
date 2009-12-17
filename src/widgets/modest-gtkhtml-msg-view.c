@@ -1846,6 +1846,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 		gtk_widget_hide_all (priv->priority_box);
 		gtk_widget_hide_all (priv->calendar_box);
 #endif
+		gtk_widget_hide_all (priv->calendar_actions_container);
 		gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 		tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
 
@@ -1926,6 +1927,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_no_show_all (priv->priority_box, TRUE);
 	gtk_widget_set_no_show_all (priv->calendar_box, TRUE);
+	gtk_widget_set_no_show_all (priv->calendar_actions_container, TRUE);
 #endif
 	gtk_widget_set_no_show_all (priv->attachments_box, TRUE);
 	gtk_widget_show_all (priv->mail_header_view);
@@ -1933,6 +1935,7 @@ set_message (ModestGtkhtmlMsgView *self, TnyMsg *msg, TnyMimePart *other_body)
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_set_no_show_all (priv->priority_box, FALSE);
 	gtk_widget_set_no_show_all (priv->calendar_box, FALSE);
+	gtk_widget_set_no_show_all (priv->calendar_actions_container, FALSE);
 #endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 
@@ -2017,6 +2020,7 @@ set_header (ModestGtkhtmlMsgView *self, TnyHeader *header)
 #ifdef MODEST_TOOLKIT_HILDON2
 	gtk_widget_hide_all (priv->priority_box);
 	gtk_widget_hide_all (priv->calendar_box);
+	gtk_widget_hide_all (priv->calendar_actions_container);
 #endif
 	gtk_widget_set_no_show_all (priv->mail_header_view, TRUE);
 	tny_mime_part_view_clear (TNY_MIME_PART_VIEW (priv->body_view));
@@ -2796,15 +2800,23 @@ set_calendar (ModestGtkhtmlMsgView *self, TnyHeader *header, TnyMsg *msg)
 	calendar_part = modest_tny_msg_find_calendar (TNY_MSG (msg));
 
 	if (calendar_part) {
+		gboolean retval = FALSE;
 		priv->calendar_actions_box = gtk_vbox_new (FALSE, 0);
-		gtk_widget_show (priv->calendar_actions_box);
 		gtk_box_pack_start (GTK_BOX (priv->calendar_actions_container), priv->calendar_actions_box, FALSE, FALSE, 0);
-		gtk_widget_show (priv->calendar_actions_container);
-		g_signal_emit_by_name (G_OBJECT (self), "handle-calendar", calendar_part, priv->calendar_actions_box);
+		g_signal_emit_by_name (G_OBJECT (self), "handle-calendar", calendar_part, priv->calendar_actions_box, &retval);
+		if (retval) {
+			gtk_widget_show (priv->calendar_actions_container);
+			gtk_widget_show (priv->calendar_actions_box);
+		} else {
+			gtk_widget_hide (priv->calendar_actions_container);
+			gtk_widget_hide (priv->calendar_actions_box);
+		}
 		gtk_widget_show_all  (priv->calendar_box);
 		g_object_unref (calendar_part);
 	} else {
 		gtk_widget_hide_all (priv->calendar_box);
+		gtk_widget_hide (priv->calendar_actions_container);
+		gtk_widget_hide (priv->calendar_actions_box);
 	}
 	
 

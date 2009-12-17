@@ -214,7 +214,7 @@ modest_msg_view_base_init (gpointer g_class)
 				      G_SIGNAL_RUN_FIRST,
 				      G_STRUCT_OFFSET(ModestMsgViewIface, handle_calendar),
 				      NULL, NULL,
-				      modest_marshal_VOID__OBJECT_OBJECT,
+				      modest_marshal_BOOLEAN__OBJECT_OBJECT,
 				      G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
 		initialized = TRUE;
 	}
