@@ -46,6 +46,7 @@
 #define MODEST_HEADER_ICON_ATTACH		"email_attachment"
 #define MODEST_HEADER_ICON_HIGH	                "email_message_high_priority"
 #define MODEST_HEADER_ICON_LOW   		"email_message_low_priority"
+#define MODEST_HEADER_ICON_CALENDAR   		"email_event_invitation"
 
 /*
  * until we have the custom cell renderer, we use the hacked icons below;
