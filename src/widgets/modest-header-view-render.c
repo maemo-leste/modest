@@ -73,7 +73,7 @@ get_status_string (ModestTnySendQueueStatus status)
 }
 
 static GdkPixbuf*
-get_pixbuf_for_flag (TnyHeaderFlags flag)
+get_pixbuf_for_flag (TnyHeaderFlags flag, gboolean is_calendar)
 {
 	/* optimization */
 	static GdkPixbuf *deleted_pixbuf          = NULL;
@@ -82,6 +82,14 @@ get_pixbuf_for_flag (TnyHeaderFlags flag)
 	static GdkPixbuf *attachments_pixbuf      = NULL;
 	static GdkPixbuf *high_pixbuf             = NULL;
 	static GdkPixbuf *low_pixbuf             = NULL;
+	static GdkPixbuf *calendar_pixbuf             = NULL;
+
+	if (is_calendar) {
+		if (G_UNLIKELY(!calendar_pixbuf))
+			calendar_pixbuf = modest_platform_get_icon (MODEST_HEADER_ICON_CALENDAR,
+								    SMALL_ICON_SIZE);
+		return calendar_pixbuf;
+	}
 	
 	switch (flag) {
 	case TNY_HEADER_FLAG_DELETED:
@@ -204,7 +212,7 @@ _modest_header_view_attach_cell_data (GtkTreeViewColumn *column, GtkCellRenderer
 
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
 		g_object_set (G_OBJECT (renderer), "pixbuf",
-			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS),
+			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS, FALSE),
 			      NULL);
 }
 
@@ -296,6 +304,7 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 		*recipient_box, *subject_box = NULL;
 	TnyHeader *msg_header = NULL;
 	TnyHeaderFlags prio = 0;
+	gboolean is_calendar = FALSE;
 
 #ifdef MAEMO_CHANGES
 #ifdef HAVE_GTK_TREE_VIEW_COLUMN_GET_CELL_DATA_HINT
@@ -346,16 +355,19 @@ _modest_header_view_compact_header_cell_data  (GtkTreeViewColumn *column,  GtkCe
 	/* FIXME: we might gain something by doing all the g_object_set's at once */
 	if (flags & TNY_HEADER_FLAG_ATTACHMENTS)
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
-			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS),
+			      get_pixbuf_for_flag (TNY_HEADER_FLAG_ATTACHMENTS, FALSE),
 			      NULL);
 	else
 		g_object_set (G_OBJECT (attach_cell), "pixbuf",
 			      NULL, NULL);
 
-	if (msg_header)
+	is_calendar = tny_header_get_user_flag (msg_header, "calendar");
+	if (msg_header) {
 		prio = tny_header_get_priority (msg_header);
+	}
+	
 	g_object_set (G_OBJECT (priority_cell), "pixbuf",
-		      get_pixbuf_for_flag (prio), 
+		      get_pixbuf_for_flag (prio, is_calendar),
 		      NULL);
 
 	set_cell_text (subject_cell, (subject && subject[0] != 0)?subject:_("mail_va_no_subject"), 
