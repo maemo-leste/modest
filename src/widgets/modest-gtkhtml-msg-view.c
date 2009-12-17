@@ -1242,6 +1242,7 @@ modest_gtkhtml_msg_view_init (ModestGtkhtmlMsgView *obj)
 		gtk_widget_hide_all (priv->priority_box);
 	}
 	priv->calendar_icon = gtk_image_new ();
+	gtk_image_set_from_icon_name (GTK_IMAGE (priv->calendar_icon), MODEST_HEADER_ICON_CALENDAR, GTK_ICON_SIZE_MENU);
 	gtk_misc_set_alignment (GTK_MISC (priv->calendar_icon), 0.0, 0.5);
 	if (priv->calendar_icon) {
 		priv->calendar_box = (GtkWidget *)
@@ -2776,10 +2777,19 @@ static void
 set_calendar (ModestGtkhtmlMsgView *self, TnyHeader *header, TnyMsg *msg)
 {
 	ModestGtkhtmlMsgViewPrivate *priv;
+	TnyMimePart *calendar_part;
 
 	g_return_if_fail (MODEST_IS_GTKHTML_MSG_VIEW (self));
 	priv = MODEST_GTKHTML_MSG_VIEW_GET_PRIVATE (self);
 
+	calendar_part = modest_tny_msg_find_calendar (TNY_MSG (msg));
+
+	if (calendar_part) {
+		gtk_widget_show_all  (priv->calendar_box);
+		g_object_unref (calendar_part);
+	} else {
+		gtk_widget_hide_all (priv->calendar_box);
+	}
 	
 
 }
