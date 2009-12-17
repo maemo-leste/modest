@@ -1405,6 +1405,36 @@ modest_tny_msg_create_reply_msg (TnyMsg *msg,
 	return new_msg;
 }
 
+TnyMsg*
+modest_tny_msg_create_reply_calendar_msg (TnyMsg *msg,
+					  TnyHeader *header,
+					  const gchar *from,
+					  const gchar *signature,
+					  TnyList *headers)
+{
+	TnyMsg *new_msg = NULL;
+	TnyIterator *iterator;
+
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+
+	new_msg = modest_tny_msg_create_reply_msg (msg, header, from, signature,  
+						   MODEST_TNY_MSG_REPLY_TYPE_QUOTE, MODEST_TNY_MSG_REPLY_MODE_SENDER);
+
+	iterator = tny_list_create_iterator (headers);
+	while (!tny_iterator_is_done (iterator)) {
+		TnyPair *pair = TNY_PAIR (tny_iterator_get_current (iterator));
+
+		tny_mime_part_set_header_pair (TNY_MIME_PART (new_msg),
+					       tny_pair_get_name (pair),
+					       tny_pair_get_value (pair));
+		g_object_unref (pair);
+		tny_iterator_next (iterator);
+	}
+	g_object_unref (iterator);
+
+	return new_msg;
+}
+
 
 static gboolean
 is_ascii(const gchar *s)

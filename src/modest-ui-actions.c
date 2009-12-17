@@ -2041,6 +2041,68 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 }
 
 void
+modest_ui_actions_reply_calendar (ModestWindow *win, TnyMsg *msg, TnyList *header_pairs)
+{
+	gchar *from;
+	gchar *recipient;
+	gchar *signature;
+	gboolean use_signature;
+	TnyMsg *new_msg;
+	GtkWidget *msg_win;
+	gdouble parent_zoom;
+	const gchar *account_name;
+	const gchar *mailbox;
+	TnyHeader *msg_header;
+	ModestWindowMgr *mgr;
+
+	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW(win));
+
+	/* we check for low-mem; in that case, show a warning, and don't allow
+	 * reply/forward (because it could potentially require a lot of memory */
+	if (modest_platform_check_memory_low (MODEST_WINDOW(win), TRUE))
+		return;
+
+	account_name = modest_window_get_active_account (MODEST_WINDOW (win));
+	mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (win));
+	from = modest_account_mgr_get_from_string (modest_runtime_get_account_mgr(),
+						   account_name, mailbox);
+	recipient = modest_text_utils_get_email_address (from);
+	signature = modest_account_mgr_get_signature_from_recipient (modest_runtime_get_account_mgr(), 
+								     recipient, 
+								     &use_signature);
+	g_free (recipient);
+
+	msg_header = tny_msg_get_header (msg);
+	new_msg =
+		modest_tny_msg_create_reply_calendar_msg (msg, msg_header, from,
+							  (use_signature) ? signature : NULL,
+							  header_pairs);
+	g_object_unref (msg_header);
+
+	g_free (from);
+	g_free (signature);
+
+	if (!new_msg) {
+		g_warning ("%s: failed to create message\n", __FUNCTION__);
+		goto cleanup;
+	}
+
+	msg_win = (GtkWidget *) modest_msg_edit_window_new (new_msg, account_name, mailbox, FALSE);
+	mgr = modest_runtime_get_window_mgr ();
+	modest_window_mgr_register_window (mgr, MODEST_WINDOW (msg_win), (ModestWindow *) win);
+
+	parent_zoom = modest_window_get_zoom (MODEST_WINDOW (win));
+	modest_window_set_zoom (MODEST_WINDOW (msg_win), parent_zoom);
+
+	/* Show edit window */
+	gtk_widget_show_all (GTK_WIDGET (msg_win));
+
+cleanup:
+	if (new_msg)
+		g_object_unref (G_OBJECT (new_msg));
+}
+
+void
 modest_ui_actions_on_reply (GtkAction *action, ModestWindow *win)
 {
 	g_return_if_fail (MODEST_IS_WINDOW(win));

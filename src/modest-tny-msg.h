@@ -164,6 +164,24 @@ TnyMsg*       modest_tny_msg_create_forward_msg   (TnyMsg *msg,
 						   ModestTnyMsgForwardType forward_type);
 
 /**
+ * modest_tny_msg_create_reply_calendar_msg:
+ * @msg: a valid #TnyMsg instance, or %NULL
+ * @header: a valid #TnyHeader instance, or %NULL
+ * @from: the sender of the forwarded mail
+ * @signature: signature to add to the reply message
+ * @headers: #TnyList of #TnyPair with the headers to add
+ * 
+ * Creates a new message to reply to a calendar event
+ * 
+ * Returns: Returns: a new #TnyMsg, or NULL in case of error
+ **/
+TnyMsg*       modest_tny_msg_create_reply_calendar_msg     (TnyMsg *msg,
+							    TnyHeader *header,
+							    const gchar *from,
+							    const gchar *signature,
+							    TnyList *headers);
+
+/**
  * modest_tny_msg_create_reply_msg:
  * @msg: a valid #TnyMsg instance, or %NULL
  * @header: a valid #TnyHeader instance, or %NULL
