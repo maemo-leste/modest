@@ -639,6 +639,132 @@ modest_tny_msg_find_body_part_from_mime_part (TnyMimePart *msg, gboolean want_ht
 		      * part */
 }
 
+static TnyMimePart*
+modest_tny_msg_find_calendar_from_mime_part (TnyMimePart *msg)
+{
+	TnyMimePart *part = NULL;
+	TnyList *parts = NULL;
+	TnyIterator *iter = NULL;
+	gchar *header_content_type;
+	gchar *header_content_type_lower = NULL;
+	
+	if (!msg)
+		return NULL;
+
+	/* If it's an application multipart, then we don't get into as we don't
+	 * support them (for example application/sml or wap messages */
+	header_content_type = modest_tny_mime_part_get_header_value (msg, "Content-Type");
+	if (header_content_type) {
+		header_content_type = g_strstrip (header_content_type);
+		header_content_type_lower = g_ascii_strdown (header_content_type, -1);
+	}
+	if (header_content_type_lower && 
+	    g_str_has_prefix (header_content_type_lower, "multipart/") &&
+	    !g_str_has_prefix (header_content_type_lower, "multipart/signed") &&
+	    strstr (header_content_type_lower, "application/")) {
+		g_free (header_content_type_lower);
+		g_free (header_content_type);
+		return NULL;
+	}	
+	g_free (header_content_type_lower);
+	g_free (header_content_type);
+
+	parts = TNY_LIST (tny_simple_list_new());
+	tny_mime_part_get_parts (TNY_MIME_PART (msg), parts);
+
+	iter  = tny_list_create_iterator(parts);
+
+	/* no parts? assume it's single-part message */
+	if (tny_iterator_is_done(iter)) {
+		gchar *content_type;
+		gboolean is_calendar_part;
+		g_object_unref (G_OBJECT(iter));
+		content_type = modest_tny_mime_part_get_content_type (msg);
+		if (content_type == NULL)
+			return NULL;
+		is_calendar_part = 
+			g_str_has_prefix (content_type, "text/calendar");
+		g_free (content_type);
+		/* if this part cannot be a supported body return NULL */
+		if (!is_calendar_part) {
+			return NULL;
+		} else {
+			return TNY_MIME_PART (g_object_ref(G_OBJECT(msg)));
+		}
+	} else {
+		do {
+			gchar *tmp, *content_type = NULL;
+			gboolean has_content_disp_name = FALSE;
+
+			part = TNY_MIME_PART(tny_iterator_get_current (iter));
+
+			if (!part) {
+				g_warning ("%s: not a valid mime part", __FUNCTION__);
+				tny_iterator_next (iter);
+				continue;
+			}
+
+			/* it's a message --> ignore */
+			if (part && TNY_IS_MSG (part)) {
+				g_object_unref (part);
+				part = NULL;
+				tny_iterator_next (iter);
+				continue;
+			}			
+
+			/* we need to strdown the content type, because
+			 * tny_mime_part_has_content_type does not do it...
+			 */
+			content_type = g_ascii_strdown (tny_mime_part_get_content_type (part), -1);
+			
+			/* mime-parts with a content-disposition header (either 'inline' or 'attachment')
+			 * and a 'name=' thingy cannot be body parts
+                         */
+				
+			tmp = modest_tny_mime_part_get_header_value (part, "Content-Disposition");
+			if (tmp) {
+				gchar *content_disp = g_ascii_strdown(tmp, -1);
+				g_free (tmp);
+				has_content_disp_name = g_strstr_len (content_disp, strlen(content_disp), "name=") != NULL;
+				g_free (content_disp);
+			}
+			
+			if (g_str_has_prefix (content_type, "text/calendar") && 
+			    !has_content_disp_name &&
+			    !modest_tny_mime_part_is_attachment_for_modest (part)) {
+				/* we found the body. Doesn't have to be the desired mime part, first
+				   text/ part in a mixed is the body */
+				g_free (content_type);
+				break;
+
+			} else 	if (g_str_has_prefix(content_type, "multipart")) {
+
+				/* multipart? recurse! */
+				g_object_unref (part);
+				g_free (content_type);
+				part = modest_tny_msg_find_calendar_from_mime_part (part);
+				if (part)
+					break;
+			} else
+				g_free (content_type);
+			
+			if (part) {
+				g_object_unref (G_OBJECT(part));
+				part = NULL;
+			}
+			
+			tny_iterator_next (iter);
+			
+		} while (!tny_iterator_is_done(iter));
+	}
+	
+	g_object_unref (G_OBJECT(iter));
+	g_object_unref (G_OBJECT(parts));
+
+	return part; /* this maybe NULL, this is not an error; some message just don't have a body
+		      * part */
+}
+
 
 TnyMimePart*
 modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
@@ -647,6 +773,14 @@ modest_tny_msg_find_body_part (TnyMsg *msg, gboolean want_html)
 	
 	return modest_tny_msg_find_body_part_from_mime_part (TNY_MIME_PART(msg),
 							     want_html);
+}
+
+TnyMimePart*
+modest_tny_msg_find_calendar (TnyMsg *msg)
+{
+	g_return_val_if_fail (msg && TNY_IS_MSG(msg), NULL);
+	
+	return modest_tny_msg_find_calendar_from_mime_part (TNY_MIME_PART(msg));
 }
 
 
