@@ -133,6 +133,11 @@ static void modest_account_protocol_save_remote_draft_default (ModestAccountProt
 							       TnyMsg *old_msg,
 							       ModestAccountProtocolSaveRemoteDraftCallback callback,
 							       gpointer userdata);
+static gboolean
+modest_account_protocol_handle_calendar_default (ModestAccountProtocol *self,
+						 ModestWindow *window,
+						 TnyMimePart *calendar_part,
+						 GtkContainer *container);
 
 /* globals */
 static GObjectClass *parent_class = NULL;
@@ -242,6 +247,8 @@ modest_account_protocol_class_init (ModestAccountProtocolClass *klass)
 		modest_account_protocol_get_service_icon_default;
 	account_class->save_remote_draft =
 		modest_account_protocol_save_remote_draft_default;
+	account_class->handle_calendar =
+		modest_account_protocol_handle_calendar_default;
 
 }
 
@@ -903,3 +910,21 @@ modest_account_protocol_save_remote_draft_default (ModestAccountProtocol *self,
 	}
 }
 
+gboolean
+modest_account_protocol_handle_calendar (ModestAccountProtocol *self,
+					 ModestWindow *window,
+					 TnyMimePart *calendar_part,
+					 GtkContainer *container)
+{
+	return MODEST_ACCOUNT_PROTOCOL_GET_CLASS (self)->handle_calendar (self, window, 
+									  calendar_part, container);
+}
+
+static gboolean
+modest_account_protocol_handle_calendar_default (ModestAccountProtocol *self,
+						 ModestWindow *window,
+						 TnyMimePart *calendar_part,
+						 GtkContainer *container)
+{
+	return FALSE;
+}
