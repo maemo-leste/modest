@@ -35,6 +35,7 @@
 
 #include "widgets/modest-account-settings-dialog.h"
 #include "modest-protocol.h"
+#include "widgets/modest-window.h"
 #include "widgets/modest-wizard-dialog.h"
 #include "modest-pair.h"
 #include <tny-account.h>
@@ -114,8 +115,12 @@ struct _ModestAccountProtocolClass {
 						 TnyStatusCallback status_callback, 
 						 gpointer user_data);
 
+	gboolean (*handle_calendar) (ModestAccountProtocol *protocol,
+				     ModestWindow *window,
+				     TnyMimePart *calendar_part,
+				     GtkContainer *container);
+
 	/* Padding for future expansions */
-	void (*_reserved8) (void);
 	void (*_reserved9) (void);
 	void (*_reserved10) (void);
 	void (*_reserved11) (void);
@@ -544,6 +549,23 @@ gboolean modest_account_protocol_decode_part_to_stream_async (ModestAccountProto
 							      TnyMimePartCallback callback, 
 							      TnyStatusCallback status_callback, 
 							      gpointer user_data);
+
+/**
+ * modest_account_protocol_handle_calendar:
+ * @self: a #ModestAccountProtocol
+ * @window: the #ModestWindow requesting to handle calendar
+ * @calendar_part: a #TnyMimePart
+ * @container: a #GtkContainer (a #GtkVBox now)
+ *
+ * Instruct the account protocol to handle a calendar mime part. The account protocol
+ * will fill @container with the controls to handle the @calendar invitation.
+ *
+ * Returns: %TRUE if account protocol handles the calendar request, %FALSE otherwise
+ */
+gboolean modest_account_protocol_handle_calendar (ModestAccountProtocol *self,
+						  ModestWindow *window,
+						  TnyMimePart *calendar_part,
+						  GtkContainer *container);
 
 
 G_END_DECLS

@@ -240,6 +240,8 @@ static gboolean _modest_msg_view_window_map_event (GtkWidget *widget,
 						   gpointer userdata);
 static void update_branding (ModestMsgViewWindow *self);
 static void sync_flags      (ModestMsgViewWindow *self);
+static gboolean on_handle_calendar (ModestMsgView *msgview, TnyMimePart *calendar_part, 
+				    GtkContainer *container, ModestMsgViewWindow *self);
 
 static gboolean on_realize (GtkWidget *widget,
 			    gpointer userdata);
@@ -819,6 +821,8 @@ modest_msg_view_window_construct (ModestMsgViewWindow *self,
 			  G_CALLBACK (modest_ui_actions_on_msg_link_contextual), obj);
 	g_signal_connect (G_OBJECT(priv->msg_view), "limit_error",
 			  G_CALLBACK (modest_ui_actions_on_limit_error), obj);
+	g_signal_connect (G_OBJECT(priv->msg_view), "handle_calendar",
+			  G_CALLBACK (on_handle_calendar), obj);
 	g_signal_connect (G_OBJECT (priv->msg_view), "fetch_image",
 			  G_CALLBACK (on_fetch_image), obj);
 
@@ -4118,4 +4122,28 @@ on_realize (GtkWidget *widget,
 			 (unsigned char *) &val, 1);
 
 	return FALSE;
+}
+
+static gboolean
+on_handle_calendar (ModestMsgView *msgview, TnyMimePart *calendar_part, GtkContainer *container, ModestMsgViewWindow *self)
+{
+	const gchar *account_name;
+	ModestProtocolType proto_type;
+	ModestProtocol *protocol;
+	gboolean retval = FALSE;
+
+	account_name = modest_window_get_active_account (MODEST_WINDOW (self));
+	
+	/* Get proto */
+	proto_type = modest_account_mgr_get_store_protocol (modest_runtime_get_account_mgr (), 
+							    account_name);
+	protocol = 
+		modest_protocol_registry_get_protocol_by_type (modest_runtime_get_protocol_registry (), 
+							       proto_type);
+
+	if (MODEST_IS_ACCOUNT_PROTOCOL (protocol)) {
+		retval = modest_account_protocol_handle_calendar (MODEST_ACCOUNT_PROTOCOL (protocol), MODEST_WINDOW (self),
+								  calendar_part, container);
+	}
+	return retval;
 }
