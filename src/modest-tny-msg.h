@@ -127,7 +127,7 @@ TnyMimePart*  modest_tny_msg_find_body_part  (TnyMsg * self, gboolean want_html)
  * 
  * Returns: the TnyMimePart for the found part, or NULL if no matching part is found
  */	 
-TnyMimePart* modest_tny_msg_find_calendar_part (TnyMsg *self);
+TnyMimePart* modest_tny_msg_find_calendar (TnyMsg *self);
 
 
 /**
