@@ -884,10 +884,11 @@ volume_path_is_mounted (const gchar* path)
 
 static void _bodies_filter (TnyMsg *msg, TnyList *list)
 {
-	TnyMimePart *html_part, *text_part;
+	TnyMimePart *html_part, *text_part, *calendar_part;
 
 	html_part = modest_tny_msg_find_body_part (msg, TRUE);
 	text_part = modest_tny_msg_find_body_part (msg, FALSE);
+	calendar_part = modest_tny_msg_find_calendar (msg);
 
 	if (text_part && TNY_IS_MIME_PART (text_part) && html_part == text_part) {
 		g_object_unref (text_part);
@@ -902,6 +903,11 @@ static void _bodies_filter (TnyMsg *msg, TnyList *list)
 	if (text_part && TNY_IS_MIME_PART (text_part)) {
 		tny_list_prepend (list, G_OBJECT (text_part));
 		g_object_unref (text_part);
+	}
+
+	if (calendar_part && TNY_IS_MIME_PART (calendar_part)) {
+		tny_list_prepend (list, G_OBJECT (calendar_part));
+		g_object_unref (calendar_part);
 	}
 }
 
