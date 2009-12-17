@@ -1,12 +1,18 @@
-modest (3.2.5-1) unstable; urgency=low
+modest (3.2.6) unstable; urgency=low
 
-  * Week 51, 2009 - fourth release candidate
+  * Week 52, 2009
   * 
   * Fixes: NB#125223 Account setup wizard: mandatory fields are not marked with an asterisk
   * Fixes: NB#139674 Semicolon in To field should be ignored when sending a message
   * Fixes: NB#150632 Reply to a message: the message is received broken at the receipient's end 
+  * Fixes: NB#145849 "Check names" should not be performed for contacts' email addresses
+  * Fixes: NB#150565 Modest crashes when attempt to download unsupported file.
+  * Fixes: NB#150572 Message content is lost when read message is moved from Inbox to local folder
+  * Fixes: NB#150923 Modest crashed when tapped on email address from contacts application
+  * Fixes: NB#150963 Editor tool bar: Red color is selected by just open and cancel the color selector window
+  * Fixes: NB#150973 Random crash is observed while viewing the message with external image. 
 
- -- Moises Martinez <moises.martinez@nokia.com>  Wed, 16 Dec 2009 11:27:26 +0200
+ -- Moises Martinez <moises.martinez@nokia.com>  Thu, 17 Dec 2009 11:23:06 +0200
 
 modest (3.2.5) unstable; urgency=low
 
