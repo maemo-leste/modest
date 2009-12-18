@@ -1056,7 +1056,7 @@ modest_ui_dimming_rules_on_editor_remove_attachment (ModestWindow *win, gpointer
 	return dimmed;
 }
 
-gboolean 
+gboolean
 modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 {
 	ModestDimmingRule *rule = NULL;
@@ -1086,6 +1086,14 @@ modest_ui_dimming_rules_on_send (ModestWindow *win, gpointer user_data)
 		dimmed = ((gtk_text_buffer_get_char_count (to_buffer) +
 			   gtk_text_buffer_get_char_count (cc_buffer) +
 			   gtk_text_buffer_get_char_count (bcc_buffer)) == 0);
+
+		if (!dimmed) {
+			if (modest_text_utils_no_recipient (to_buffer) &&
+			    modest_text_utils_no_recipient (cc_buffer) &&
+			    modest_text_utils_no_recipient (bcc_buffer))
+				dimmed = TRUE;
+		}
+
 		if (dimmed)
 			modest_dimming_rule_set_notification (rule, _("mcen_ib_add_recipients_first"));
 	}

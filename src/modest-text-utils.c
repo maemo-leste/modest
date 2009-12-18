@@ -2247,3 +2247,39 @@ modest_text_utils_quote_names (const gchar *recipients)
 
 	return g_string_free (str, FALSE);
 }
+
+/* Returns TRUE if there is no recipients in the text buffer. Note
+   that strings like " ; , " contain only separators and thus no
+   recipients */
+gboolean
+modest_text_utils_no_recipient (GtkTextBuffer *buffer)
+{
+	gboolean retval = TRUE;
+	gchar *text, *tmp;
+	GtkTextIter start, end;
+
+	if (gtk_text_buffer_get_char_count (buffer) == 0)
+		return TRUE;
+
+	gtk_text_buffer_get_start_iter (buffer, &start);
+	gtk_text_buffer_get_end_iter (buffer, &end);
+
+	text = g_strstrip (gtk_text_buffer_get_text (buffer, &start, &end, FALSE));
+	if (!g_strcmp0 (text, ""))
+		return TRUE;
+
+	tmp = text;
+	while (tmp && *tmp != '\0') {
+		if ((*tmp != ',') && (*tmp != ';') &&
+		    (*tmp != '\r') && (*tmp != '\n') &&
+		    (*tmp != ' ')) {
+			retval = FALSE;
+			break;
+		} else {
+			tmp++;
+		}
+	}
+	g_free (text);
+
+	return retval;
+}
