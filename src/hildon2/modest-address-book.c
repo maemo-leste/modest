@@ -952,20 +952,23 @@ select_contacts_for_name_dialog (const gchar *name)
 	GList *result = NULL;
 	gchar *unquoted;
 	EBookQuery *queries[10];
+	gint i=0;
 
 	unquoted = unquote_string (name);
 
-	queries[0] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[1] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[2] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[3] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[4] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[5] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[6] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[7] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[8] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	queries[9] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
-	book_query = e_book_query_or (10, queries, TRUE);
+	queries[i++] = e_book_query_field_test (E_CONTACT_FULL_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[i++] = e_book_query_field_test (E_CONTACT_GIVEN_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[i++] = e_book_query_field_test (E_CONTACT_FAMILY_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	queries[i++] = e_book_query_field_test (E_CONTACT_NICKNAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	if (strchr (name, '@')) {
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_1, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_2, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_3, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL_4, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+		queries[i++] = e_book_query_field_test (E_CONTACT_EMAIL, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	}
+	queries[i] = e_book_query_field_test (E_CONTACT_NAME, E_BOOK_QUERY_BEGINS_WITH, unquoted);
+	book_query = e_book_query_or (i, queries, TRUE);
 	e_book_get_book_view (book, book_query, NULL, -1, &book_view, NULL);
 	e_book_query_unref (book_query);
 
@@ -977,7 +980,7 @@ select_contacts_for_name_dialog (const gchar *name)
 		/* TODO: figure out how to make the contact chooser modal */
 		contact_dialog = osso_abook_contact_chooser_new_with_capabilities (NULL,
 										   _AB("addr_ti_dia_select_contacts"),
-										   OSSO_ABOOK_CAPS_EMAIL,
+										   OSSO_ABOOK_CAPS_ALL,
 										   OSSO_ABOOK_CONTACT_ORDER_NAME);
 		/* Enable multiselection */
 		osso_abook_contact_chooser_set_maximum_selection (OSSO_ABOOK_CONTACT_CHOOSER (contact_dialog),
@@ -1001,21 +1004,24 @@ contact_name_or_email_starts_with (OssoABookContact *contact,
                                    gpointer          user_data)
 {
 	const char *prefix = user_data;
-	gboolean rv = FALSE;
 	GList *contacts, *l;
-
+	gboolean contact_match;
 
 	contacts = osso_abook_contact_get_roster_contacts (contact);
 	contacts = g_list_prepend (contacts, contact);
 
 	for (l = contacts; l; l = l->next) {
 		GList *attrs;
+
+		contact_match = FALSE;
+
 		attrs = e_vcard_get_attributes (E_VCARD (l->data));
 		for (;attrs;attrs = attrs->next) {
 			EVCardAttribute *attr = attrs->data;
 			const char *name;
 
 			name = e_vcard_attribute_get_name (attr);
+
 			if (!g_strcmp0 (name, "N") ||
 			    (strchr (prefix, '@') && !g_strcmp0 (name, "EMAIL"))) {
 				GList *values = e_vcard_attribute_get_values (attr);
@@ -1028,7 +1034,7 @@ contact_name_or_email_starts_with (OssoABookContact *contact,
 						value_down = g_utf8_strdown (values->data, -1);
 
 					if (value_down && g_str_has_prefix (value_down, prefix_down)) {
-						rv = TRUE;
+						contact_match = TRUE;
 						g_free (value_down);
 						g_free (prefix_down);
 						goto out;
@@ -1042,7 +1048,7 @@ contact_name_or_email_starts_with (OssoABookContact *contact,
  out:
 	g_list_free (contacts);
 
-	return rv;
+	return contact_match;
 }
 
 static gboolean
