@@ -3391,14 +3391,18 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to
 {
 	ModestMsgEditWindowPrivate *priv = NULL;
 	GSList *address_list = NULL;
+	gboolean no_to, no_cc, no_bcc;
 
 	g_return_val_if_fail (MODEST_IS_MSG_EDIT_WINDOW (window), FALSE);
 	priv = MODEST_MSG_EDIT_WINDOW_GET_PRIVATE (window);
 
 	/* check if there's no recipient added */
-	if ((gtk_text_buffer_get_char_count (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field))) == 0) &&
-	    (gtk_text_buffer_get_char_count (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field))) == 0) &&
-	    (gtk_text_buffer_get_char_count (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field))) == 0)) {
+	no_to = modest_text_utils_no_recipient (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->to_field)));
+	no_cc = modest_text_utils_no_recipient (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->cc_field)));
+	no_bcc = modest_text_utils_no_recipient (modest_recpt_editor_get_buffer (MODEST_RECPT_EDITOR (priv->bcc_field)));
+
+
+	if (no_to && no_cc && no_bcc) {
 		/* no recipient contents, then select contacts */
 		modest_msg_edit_window_open_addressbook (window, NULL);
 		return FALSE;
@@ -3406,19 +3410,19 @@ modest_msg_edit_window_check_names (ModestMsgEditWindow *window, gboolean add_to
 
 	/* Check names */
 	g_object_ref (window);
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field),
+	if (!no_to && !modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->to_field),
 					      (add_to_addressbook) ? &address_list : NULL)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->to_field));
 		g_object_unref (window);
 		return FALSE;
 	}
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field),
+	if (!no_cc && !modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->cc_field),
 					      (add_to_addressbook) ? &address_list : NULL)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->cc_field));
 		g_object_unref (window);
 		return FALSE;
 	}
-	if (!modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field),
+	if (!no_bcc && !modest_address_book_check_names (MODEST_RECPT_EDITOR (priv->bcc_field),
 					      (add_to_addressbook) ? &address_list : NULL)) {
 		modest_recpt_editor_grab_focus (MODEST_RECPT_EDITOR (priv->bcc_field));
 		g_object_unref (window);

@@ -567,4 +567,6 @@ gchar * modest_text_utils_get_secure_header (const gchar *value, const gchar *he
  **/
 gchar * modest_text_utils_quote_names (const gchar *recipients);
 
+gboolean modest_text_utils_no_recipient (GtkTextBuffer *buffer);
+
 #endif /* __MODEST_TEXT_UTILS_H__ */

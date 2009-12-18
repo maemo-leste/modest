@@ -733,6 +733,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 	gint offset_delta = 0;
 	gint last_length;
 	GtkTextIter start_iter, end_iter;
+	gboolean empty_recipients = 0;
 
 	g_return_val_if_fail (MODEST_IS_RECPT_EDITOR (recpt_editor), FALSE);
 
@@ -771,6 +772,7 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 		/* Ignore empty addresses */
 		if (!g_strcmp0 (address, "")) {
 			g_free (address);
+			empty_recipients++;
 			goto next_address;
 		}
 
@@ -883,6 +885,10 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 		gtk_text_buffer_get_end_iter (buffer, &end_iter);
 		gtk_text_buffer_place_cursor (buffer, &end_iter);
 	}
+
+	/* Check that at least there is one non-empty recipient */
+	if ((g_slist_length (start_indexes) - empty_recipients) == 0)
+		result = FALSE;
 
 	g_slist_foreach (start_indexes, (GFunc) g_free, NULL);
 	g_slist_foreach (end_indexes, (GFunc) g_free, NULL);
