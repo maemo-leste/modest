@@ -652,7 +652,7 @@ modest_text_utils_get_addresses_indexes (const gchar *addresses, GSList **start_
 			gchar *next_char = g_utf8_next_char (cur);
 
 			if (!g_utf8_strchr (start, (cur - start + 1), g_utf8_get_char ("@")) &&
-			    next_char && *next_char != '\n')
+			    next_char && *next_char != '\n' && *next_char != '\0')
 				continue;
 
 			start_index = g_new0 (gint, 1);
