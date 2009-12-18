@@ -760,7 +760,6 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 		gchar *start_ptr, *end_ptr;
 		gint start_pos, end_pos;
 		const gchar *invalid_char_position = NULL;
-		gboolean store_address = FALSE;
 
 		start_pos = (*((gint*) current_start->data)) + offset_delta;
 		end_pos = (*((gint*) current_end->data)) + offset_delta;
@@ -858,14 +857,13 @@ modest_address_book_check_names (ModestRecptEditor *recpt_editor,
 										     addr_list,
 										     "");
 				g_slist_free (addr_list);
-				store_address = TRUE;
 			}
 		}
 
 		/* so, it seems a valid address */
 		/* note: adding it the to the addressbook if it did not exist yet,
 		 * and adding it to the recent_list */
-		if (result && address_list && store_address)
+		if (result && address_list)
 			*address_list = g_slist_prepend (*address_list, address);
 		else
 			g_free (address);
