@@ -331,12 +331,12 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self,
 			     GtkSizeGroup *value_sizegroup)
 {
 	ModestDefaultAccountSettingsDialogPrivate *priv;
-	GtkWidget *box;
-	GtkWidget *hbox;
+	GtkWidget *box, *hbox, *caption;
+	gchar *tmp = NULL;
 
 	priv = MODEST_DEFAULT_ACCOUNT_SETTINGS_DIALOG_GET_PRIVATE (self);
 	box = gtk_vbox_new (FALSE, MODEST_MARGIN_NONE);
-           
+
 	/* The description widgets: */	
 	priv->entry_account_title = GTK_WIDGET (modest_validating_entry_new ());
 	/* Do use auto-capitalization: */
@@ -344,14 +344,17 @@ create_page_account_details (ModestDefaultAccountSettingsDialog *self,
 	hildon_gtk_entry_set_input_mode (GTK_ENTRY (priv->entry_account_title), 
 		HILDON_GTK_INPUT_MODE_FULL | HILDON_GTK_INPUT_MODE_AUTOCAP);
 #endif
-	GtkWidget *caption = create_captioned (self, title_sizegroup, value_sizegroup,
-					       _("mcen_fi_account_title"), FALSE,
-					       priv->entry_account_title);
+	tmp = g_strconcat (_("mcen_fi_account_title"), "*", NULL);
+	caption = create_captioned (self, title_sizegroup, value_sizegroup,
+				    tmp, FALSE,
+				    priv->entry_account_title);
+	g_free (tmp);
+
 	gtk_widget_show (priv->entry_account_title);
 	connect_for_modified (self, priv->entry_account_title);
 	gtk_box_pack_start (GTK_BOX (box), caption, FALSE, FALSE, 0);
 	gtk_widget_show (caption);
-	
+
 	/* Prevent the use of some characters in the account title, 
 	 * as required by our UI specification: */
 	GList *list_prevent = NULL;
