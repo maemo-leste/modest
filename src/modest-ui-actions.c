@@ -1299,6 +1299,11 @@ open_msg_performer(gboolean canceled,
 	gboolean can_open;
 	gchar *account_name = get_info_from_header (helper->header, &is_draft, &can_open);
 
+	if (!g_strcmp0 (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+		g_free (account_name);
+		account_name = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_window)));
+	}
+
 	if (!can_open) {
 		modest_window_mgr_unregister_header (modest_runtime_get_window_mgr (), helper->header);
 		g_free (account_name);
@@ -4518,8 +4523,6 @@ create_move_to_dialog (GtkWindow *win,
 
 		modest_folder_view_set_style (MODEST_FOLDER_VIEW (tree_view),
 					      MODEST_FOLDER_VIEW_STYLE_SHOW_ALL);
-		/* modest_folder_view_update_model (MODEST_FOLDER_VIEW (tree_view), */
-		/* 				 TNY_ACCOUNT_STORE (modest_runtime_get_account_store ())); */
 
 		active_account_name = modest_window_get_active_account (MODEST_WINDOW (win));
 		mgr = modest_runtime_get_account_mgr ();
