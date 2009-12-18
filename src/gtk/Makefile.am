@@ -53,3 +53,7 @@ libmodest_ui_la_LIBADD = \
 	$(MODEST_TOOLKIT_LIBS) \
 	$(MODEST_WPEDITOR_LIBS)
 
+desktopentry_DATA   = modest.desktop
+
+EXTRA_DIST=\
+	*(desktopentry_DATA)

@@ -493,7 +493,9 @@ if test "x$with_platform" == "xmaemo"; then
    AC_SUBST(icon_scalabledir)
    AC_SUBST(pluginlibdir)
    AC_SUBST(plugindesktopentrydir)
-
+else
+   desktopentrydir=$datadir/applications   
+   AC_SUBST(desktopentrydir)
 fi
 
 dnl --------------- TESTING -------------------
