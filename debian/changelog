@@ -1,3 +1,141 @@
+modest (3.90.2) unstable; urgency=low
+
+  * Removed gnome folder, and added new gtk folder. Now gtk port will be more
+  *   close to hildon port.
+  * Dropped maemo4 and mozembed support.
+  * Finally removed dependencies on ModestMainWindow
+  * Migration of many widgets
+  *     * New toolkit factory for refactored widgets
+  *     * All selectors
+  *     * Text views and entries
+  *     * Menu items, check  buttons, ...
+  *     * Scrollables
+  *     * Find toolbar
+  * New ModestShell, a window that hosts all views in gtk port:
+  *     * Menu button with title and hierarchy subtitle.
+  *     * On creating a new window in Shell, switch to it.
+  *     * New message button
+  *     * Back button in shell, closes last window.
+  *     * Title button in ModestShell, shows menu
+  *     * Progress animation
+  *     * Set Control+q as attachment for closing shell, and Control+w for closing
+  *       last window.
+  *     * Make dimming rules work in shell menu.
+  * New gtk window manager
+  *     * Fix modality implementation in ModestShell window manager
+  *     * Fix modest_utils_show_dialog_and_forget for gtk and modest shell
+  * Implement banner modest-platform API with new ModestShellBanner
+  * Other gtk port fixes
+  *     * Remove help id's in windows (deprecated in hildon2, not used in gtk)
+  *     * Do not show neither tabs nor tree view headers
+  * Moved most windows and dialogs to src/widgets as they are now common code.
+  * New global settings dialog in gtk.
+  * Fix use cases in gtk:
+  *     * Moved ui files to src/widgets
+  *     * Added close/cancel buttons in dialogs.
+  *     * Show rows hint in accounts and folder view for gtk
+  *     * Fix cases where we assumed ModestWindow was a GtkWindow
+  *     * Removed ModestExpanderMailHeaderView
+  *     * Fix compact mail header background color in gtk
+  *     * Reenable smtp servers dialog in gtk. We'll try to implement it properly
+  *       with network manager help.
+  *     * Reenable move, delete and rename in gtk
+  *     * Fix delete folder dialogs
+  *     * Fix delete folder in gtk
+  *     * Fix cc/bcc show/hide buttons in gtk
+  *     * Reenable move to and delete in headers window
+  *     * Fix remove attachments case in gtk
+  * Attachments handling in gtk:
+  *     * Activate uris and files with desktop handler
+  *     * Download properly files.
+  *     * Detect proper icons for each mime type.
+  *     * Desktop feedback on opening a file default app.
+  * Lots of layout enhancements and color fixes in gtk
+  * Adapt wpeditor settings to work better in gtk port.
+  * Fixed many keybindings.
+  * Basic Webkit support.
+  * Retrieve mime parts on demand with new Bodystruct support.
+  * Replaced translations of other modules in modest gtk.
+  * Expunge messages when closing headers window
+  * Use new color button in hildon, based on calendar application
+  * Added the dbus method handler for OpenEditAccountsDialog
+  * Only load one account in folders view (for header window).
+  * Fixes: MB#4887    use accessor functions instead direct access. (only stable
+  * Fixes: MB#4973    support silent build rules
+  * Fixes: MB#5161    fix some gnome version build warnings
+  * Fixes: MB#5241    import conic support only if It's available
+  * Fixes: MB#5242    remove Hildon 0.x conditional code
+  * Fixes: MB#5249    remove Hildon1 conditional code from hildon2.
+  * Panning fixes in gtkhtml message view:
+  *     * Fixes: NB#138980
+  *     * Fixes: NB#114484
+  * Fixes: NB#112533  long attachment's name is not truncated in the
+  *   "Select attachment" dialog
+  * Fixes: NB#120969, MB#3941  insert proper trailing space on signature separator
+  * Fixes: NB#121661  show translated names in first item of paths in change
+  *   folder dialog
+  * Fixes: NB#125223  Show * after mandatory fields in wizard
+  * Fixes: NB#129366  don't assume account protocols return a settings dialog
+  * Fixes: NB#132034  use the proper logical id for the "New" button in Move message dialog
+  * Fixes: NB#133593  fill better the name fields in created contacts
+  * Fixes: NB#133828  show "Copy link location" as an option in CSM
+  * Fixes: NB#133900  some countries are missing in the country list
+  * Fixes: NB#134253  save button active in account settings if incoming port
+  *   is empty
+  * Fixes: NB#136936  do allow to move messages from local accounts
+  * Fixes: NB#137323  do not show account settings dialog if the UI is not shown
+  * Fixes: NB#137657  on cancelling attempt to retrieve a message, close message
+  *   view window
+  * Fixes: NB#138240  do not delete content of the email body when switching
+  *   signatures.
+  * Fixes: NB#139032  increase the char limit for considering a header as "secure"
+  * Fixes: NB#139196  CSM menus shown when tap-and-hold over blank view
+  * Fixes: NB#139348  save screenshot for startup in Hildon
+  * Fixes: NB#139404  download remote message attachments and open them from modest
+  * Fixes: NB#139674  ignore empty addresses when checking recipients
+  * Fixes: NB#140449  fix message not available error in account protocols
+  * Fixes: NB#140483  do not process alerts without error
+  * Fixes: NB#140509  sync() currently viewed folder on send&receive even with
+  *   auto-updates
+  *   GTK+ functions)
+  * Fixes: NB#140731  properly reply to pure HTML emails (using gtkhtml converter)
+  * Fixes: NB#141016  file with non-ASCII chars sent by Modest as attachment is
+  *   not readable by Modest when received
+  * Fixes: NB#142269  do not select any attachment to save by default
+  * Fixes: NB#142363  do not use localized Re: or Fw: when replying/forwarding
+  * Fixes: NB#143352  add a DBus API to request inmmediate Send&Receive
+  * Fixes: NB#143546  select the region in the easysetup wizard based on device's
+  *   regional settings
+  * Fixes: NB#144441, NB#150401  don't handle zoom keys out of message
+  *   view in hildon
+  * Fixes: NB#144914  added support to automatically add contacts to abook when sending
+  *   message
+  * Fixes: NB#145249  remove the first X lines when replying to HTML-only emails only
+  * Fixes: NB#145254  fixes a crash caused by an invalid dereference when changing colors
+  * Fixes: NB#145788  do not update the header window if the window was previously closed
+  * Fixes: NB#145849  do not search in contacts names in "Check names" option if the
+  *   entered text does not contain '@'
+  * Fixes: NB#146292  do not show the settings dialog if the device is offline
+  * Fixes: NB#147995  show signature with grey color
+  * Fixes: NB#147998  added support to show incoming notifications based on settings
+  * Fixes: NB#148121  removed an invalid assertion
+  * Fixes: NB#148772  change wrap line limit to 72 columns
+  * Fixes: NB#149093  do not restart Modest every X minutes
+  * Fixes: NB#149801, MB#6279  avoid redrawing too much on loading
+  *   external images.
+  * Fixes: NB#149855  expunge messages in server when removing them
+  * Fixes: NB#150022  do not use utf8 functions to measure string lengths
+  * Fixes: NB#150565  do not assume that every mime part has content type
+  * Fixes: NB#150632  remove "\r\n" before setting "In-Reply-To:" and "References:"
+  *   headers.
+  * Fixes: NB#150923  fixed a crash when composing a msg from an external program
+  * Fixes: NB#150963  do not change text color if color dialog is closed
+  * Fixes: NB#150973  crash when closing viewer window while downloading external
+  *   images
+  * Make modest_tny_mime_part_is_msg detection content type case insensitive.
+
+ -- Jose Dapena Paz <jdapena@igalia.com>  Mon, 14 Dec 2009 18:43:00 +0200
+
 modest (3.90.1) unstable; urgency=low
 
   * Fixes: NB#141137  do not play email tone twice when sending notifications
