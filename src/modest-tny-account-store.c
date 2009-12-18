@@ -458,10 +458,28 @@ on_account_changed (ModestAccountMgr *acc_mgr,
 }
 
 static void
-show_wrong_password_dialog (TnyAccount *account,
+show_wrong_password_dialog (TnyAccountStore *self,
+			    TnyAccount *account,
 			    gboolean show_banner)
 {
+	TnyDevice *device;
+	gboolean is_online;
+
 	g_debug ("%s: %s", __FUNCTION__, tny_account_get_id (account));
+
+	device = tny_account_store_get_device (self);
+	is_online = tny_device_is_online (device);
+	g_object_unref (device);
+
+	if (!is_online) {
+		g_debug ("%s: not showing the acc settings dialog. Device OFFLINE", __FUNCTION__);
+		return;
+	}
+
+	if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()) == 0) {
+		g_debug ("%s: not showing the account settings dialog. NO windows", __FUNCTION__);
+		return;
+	}
 
 	if (g_object_get_data (G_OBJECT (account), "connection_specific") != NULL) {
 		modest_ui_actions_on_smtp_servers (NULL, NULL);
@@ -652,16 +670,11 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 
 		if (settings_have_password) {
 			if (pwd) {
-
-				/* Never show it if the UI is not launched */
-				if (modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ())) {
-					g_debug ("%s: going to show the dialog (%d windows)", __FUNCTION__,
-						 modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()));
-					/* The password must be wrong, so show the account settings dialog so it can be corrected: */
-					show_wrong_password_dialog (account, TRUE);
-				} else {
-					g_debug ("%s: not showing the dialog (no windows)", __FUNCTION__);
-				}
+				/* The password must be wrong, so show
+				   the account settings dialog so it
+				   can be corrected: */
+				g_debug ("%s: going to show the settings dialog", __FUNCTION__);
+				show_wrong_password_dialog ((TnyAccountStore *) self, account, TRUE);
 
 				if (cancel)
 					*cancel = TRUE;
@@ -669,8 +682,9 @@ get_password (TnyAccount *account, const gchar * prompt_not_used, gboolean *canc
 				return NULL;
 			} else {
 				/* Get the password from the account settings */
-                                return modest_account_mgr_get_server_account_password (priv->account_mgr, server_account_name);
-                        }
+				return modest_account_mgr_get_server_account_password (priv->account_mgr,
+										       server_account_name);
+			}
 		}
 
 		/* we don't have it yet. Get the password from the user */
@@ -1162,27 +1176,20 @@ modest_tny_account_store_alert (TnyAccountStore *self,
 											tny_account_get_id (account));
 
 		if (!success) {
+			gboolean show_banner;
+
 			g_debug ("%s: %s alert received (%s)", __FUNCTION__,
 				 (error->code == TNY_SERVICE_ERROR_CONNECT) ? "connect" : "aunthenticate",
 				 error->message);
 
-			modest_platform_run_information_dialog (NULL, prompt, TRUE);
-
-			/* Show the account dialog. Checking the
-			   online status allows us to minimize the
-			   number of times that we incorrectly show
-			   the dialog. Also do not show it if the UI
-			   is not launched */
 			if (tny_device_is_online (device) &&
-			    modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ())) {
-				show_wrong_password_dialog (account,
-							    (error->code == TNY_SERVICE_ERROR_CONNECT) ? FALSE : TRUE);
-			} else {
-				if (tny_device_is_online (device))
-					g_debug ("%s: not showing the dialog (no windows)", __FUNCTION__);
-				else
-					g_debug ("%s: not showing the dialog (no connection)", __FUNCTION__);
-			}
+			    modest_window_mgr_get_num_windows (modest_runtime_get_window_mgr ()))
+				modest_platform_run_information_dialog (NULL, prompt, TRUE);
+
+			/* Show the account dialog */
+			show_banner = (error->code == TNY_SERVICE_ERROR_CONNECT) ? FALSE : TRUE;
+			g_debug ("%s: going to show settings dialog", __FUNCTION__);
+			show_wrong_password_dialog (self, account, show_banner);
 			retval = TRUE;
 		}
 	}
