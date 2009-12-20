@@ -865,11 +865,11 @@ create_msg_thread (gpointer thread_data)
 	}
 
 	if (new_msg) {
-		TnyHeader *header;
+		TnyHeader *header = tny_msg_get_header (new_msg);
 
 		/* Set priority flags in message */
-		header = tny_msg_get_header (new_msg);
-		tny_header_set_flag (header, info->priority_flags);
+		if (info->priority_flags != TNY_HEADER_FLAG_NORMAL_PRIORITY)
+			tny_header_set_flag (header, info->priority_flags);
 
 		/* Set attachment flags in message */
 		if (info->attachments_list != NULL && attached > 0)
@@ -950,7 +950,7 @@ modest_mail_operation_create_msg (ModestMailOperation *self,
 	g_list_foreach (info->attachments_list, (GFunc) g_object_ref, NULL);
 	info->images_list = g_list_copy ((GList *) images_list);
 	g_list_foreach (info->images_list, (GFunc) g_object_ref, NULL);
-	info->priority_flags = priority_flags;
+	info->priority_flags = 0 | priority_flags;
 
 	info->callback = callback;
 	info->userdata = userdata;
