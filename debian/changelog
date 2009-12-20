@@ -1,3 +1,19 @@
+modest (3.2.7) unstable; urgency=low
+
+  * Week 52, 2009 - second release candidate
+  * 
+  * Fixes: NB#125223 Account setup wizard: mandatory fields are not marked with an asterisk 
+  * Fixes: NB#139674 Semicolon in To field should be ignored when sending a message 
+  * Fixes: NB#145849 "Check names" should not be performed for contacts' email addresses 
+  * Fixes: NB#146292 Mail sporadically asks for username/password for Ovi and gmail accounts 
+  * Fixes: NB#151298 Automaticaly add to contact not working when message is sent after check 
+  * 	names is performed. 
+  * Fixes: NB#151328 Possible to send a message without a receipient 
+  * Fixes: NB#151343 Destination folders (Remote,Local,Archive) are not displayed in
+  * 	 ' move to folder ' dialog when it is launched from message view of local folder
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 21 Dec 2009 01:41:21 +0200
+
 modest (3.2.6) unstable; urgency=low
 
   * Week 52, 2009
