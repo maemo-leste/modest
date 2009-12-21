@@ -1,3 +1,13 @@
+modest (3.2.7-1) unstable; urgency=low
+
+  * Week 52, 2009 - second release candidate - with no code changes
+  * 
+  * Fixes: NB#151397 Original message body is not shown in the reply editor 
+  * Fixes: NB#151498 Not possible to view attachments having Russian names 
+  * Fixes: NB#151534 Embedded mail attachments sent from Outlook: contents broken
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Tue, 22 Dec 2009 00:49:15 +0200
+
 modest (3.2.7) unstable; urgency=low
 
   * Week 52, 2009 - second release candidate
