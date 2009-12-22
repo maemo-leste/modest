@@ -115,6 +115,8 @@ typedef struct _ReplyForwardHelper {
 	gchar *mailbox;
 	GtkWidget *parent_window;
 	TnyHeader *header;
+	TnyHeader *top_header;
+	TnyMsg    *msg_part;
 	TnyList *parts;
 } ReplyForwardHelper;
 
@@ -1258,7 +1260,7 @@ open_msg_cb (ModestMailOperation *mail_op,
 			win = modest_msg_view_window_new_with_header_model (msg, account, mailbox, (const gchar*) uid,
 									    helper->model, helper->rowref);
 		} else {
-			win = modest_msg_view_window_new_for_attachment (msg, account, mailbox, (const gchar*) uid);
+			win = modest_msg_view_window_new_for_attachment (msg, NULL, account, mailbox, (const gchar*) uid);
 		}
 		g_free (uid);
 	}
@@ -1718,6 +1720,8 @@ create_reply_forward_helper (ReplyForwardAction action,
 			     ModestWindow *win,
 			     guint reply_forward_type,
 			     TnyHeader *header,
+			     TnyMsg *msg_part,
+			     TnyHeader *top_header,
 			     TnyList *parts)
 {
 	ReplyForwardHelper *rf_helper = NULL;
@@ -1729,6 +1733,8 @@ create_reply_forward_helper (ReplyForwardAction action,
 	rf_helper->action = action;
 	rf_helper->parent_window = (MODEST_IS_WINDOW (win)) ? GTK_WIDGET (win) : NULL;
 	rf_helper->header = (header) ? g_object_ref (header) : NULL;
+	rf_helper->top_header = (top_header) ? g_object_ref (top_header) : NULL;
+	rf_helper->msg_part = (msg_part) ? g_object_ref (msg_part) : NULL;
 	rf_helper->account_name = (active_acc) ?
 		g_strdup (active_acc) :
 		modest_account_mgr_get_default_account (modest_runtime_get_account_mgr());
@@ -1758,6 +1764,10 @@ free_reply_forward_helper (gpointer data)
 	g_free (helper->mailbox);
 	if (helper->header)
 		g_object_unref (helper->header);
+	if (helper->top_header)
+		g_object_unref (helper->top_header);
+	if (helper->msg_part)
+		g_object_unref (helper->msg_part);
 	if (helper->parts)
 		g_object_unref (helper->parts);
 	if (helper->parent_window)
@@ -1806,18 +1816,18 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		   information. The summary can lack some data */
 		TnyHeader *msg_header;
 	case ACTION_REPLY:
-		msg_header = tny_msg_get_header (msg);
+		msg_header = tny_msg_get_header (rf_helper->msg_part?rf_helper->msg_part:msg);
 		new_msg =
-			modest_tny_msg_create_reply_msg (msg, msg_header, from,
+			modest_tny_msg_create_reply_msg (rf_helper->msg_part?rf_helper->msg_part:msg, msg_header, from,
 							 (use_signature) ? signature : NULL,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_SENDER);
 		g_object_unref (msg_header);
 		break;
 	case ACTION_REPLY_TO_ALL:
-		msg_header = tny_msg_get_header (msg);
+		msg_header = tny_msg_get_header (rf_helper->msg_part?rf_helper->msg_part:msg);
 		new_msg =
-			modest_tny_msg_create_reply_msg (msg, msg_header, from,
+			modest_tny_msg_create_reply_msg (rf_helper->msg_part?rf_helper->msg_part:msg, msg_header, from,
 							 (use_signature) ? signature : NULL,
 							 rf_helper->reply_forward_type,
 							 MODEST_TNY_MSG_REPLY_MODE_ALL);
@@ -1826,7 +1836,8 @@ reply_forward_cb (ModestMailOperation *mail_op,
 		break;
 	case ACTION_FORWARD:
 		new_msg =
-			modest_tny_msg_create_forward_msg (msg, from, (use_signature) ? signature : NULL,
+			modest_tny_msg_create_forward_msg (rf_helper->msg_part?rf_helper->msg_part:msg, from, 
+							   (use_signature) ? signature : NULL,
 							   rf_helper->reply_forward_type);
 		edit_type = MODEST_EDIT_TYPE_FORWARD;
 		break;
@@ -1958,7 +1969,7 @@ reply_forward_performer (gboolean canceled,
 								 modest_ui_actions_disk_operations_error_handler,
 								 NULL, NULL);
 	modest_mail_operation_queue_add (modest_runtime_get_mail_operation_queue (), mail_op);
-	modest_mail_operation_get_msg_and_parts (mail_op, rf_helper->header, rf_helper->parts, TRUE, reply_forward_cb, rf_helper);
+	modest_mail_operation_get_msg_and_parts (mail_op, rf_helper->top_header, rf_helper->parts, TRUE, reply_forward_cb, rf_helper);
 
 	/* Frees */
 	g_object_unref(mail_op);
@@ -2064,21 +2075,25 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 	if (MODEST_IS_MSG_VIEW_WINDOW (win)) {
 		TnyMsg *msg = NULL;
+		TnyMsg *top_msg = NULL;
 		TnyHeader *header = NULL;
 		/* Get header and message. Do not free them here, the
 		   reply_forward_cb must do it */
 		msg = modest_msg_view_window_get_message (MODEST_MSG_VIEW_WINDOW(win));
+		top_msg = modest_msg_view_window_get_top_message (MODEST_MSG_VIEW_WINDOW(win));
 		header = modest_msg_view_window_get_header (MODEST_MSG_VIEW_WINDOW (win));
 
 		if (msg && header && (action != ACTION_FORWARD || all_parts_retrieved (TNY_MIME_PART (msg)))) {
 			/* Create helper */
 			rf_helper = create_reply_forward_helper (action, win,
-								 reply_forward_type, header, NULL);
+								 reply_forward_type, header, NULL, NULL, NULL);
 			reply_forward_cb (NULL, header, FALSE, msg, NULL, rf_helper);
 		} else {
 			gboolean do_download = TRUE;
 
 			if (msg && header && action == ACTION_FORWARD) {
+				if (top_msg == NULL)
+					top_msg = g_object_ref (msg);
 				/* Not all parts retrieved. Then we have to retrieve them all before
 				 * creating the forward message */
 				if (!tny_device_is_online (modest_runtime_get_device ())) {
@@ -2099,21 +2114,24 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 					TnyList *pending_parts;
 					TnyFolder *folder;
 					TnyAccount *account;
+					TnyHeader *top_header;
 
 					/* Create helper */
-					pending_parts = forward_pending_parts (msg);
+					top_header = tny_msg_get_header (top_msg);
+					pending_parts = forward_pending_parts (top_msg);
 					rf_helper = create_reply_forward_helper (action, win,
-										 reply_forward_type, header, pending_parts);
+										 reply_forward_type, header, msg, top_header, pending_parts);
 					g_object_unref (pending_parts);
 
-					folder = tny_header_get_folder (header);
+					folder = tny_header_get_folder (top_header);
 					account = tny_folder_get_account (folder);
 					modest_platform_connect_and_perform (GTK_WINDOW (win),
 									     TRUE, account,
 									     reply_forward_performer,
 									     rf_helper);
-					g_object_unref (folder);
+					if (folder) g_object_unref (folder);
 					g_object_unref (account);
+					if (top_header) g_object_unref (top_header);
 				}
 
 			} else {
@@ -2123,6 +2141,8 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 
 		if (msg)
 			g_object_unref (msg);
+		if (top_msg)
+			g_object_unref (top_msg);
  		if (header)
 			g_object_unref (header);
 	} else {
@@ -2186,7 +2206,7 @@ reply_forward (ReplyForwardAction action, ModestWindow *win)
 			if (download) {
 				/* Create helper */
 				rf_helper = create_reply_forward_helper (action, win,
-									 reply_forward_type, header, NULL);
+									 reply_forward_type, header, NULL, NULL, NULL);
 				if (uncached_msgs > 0) {
 					modest_platform_connect_and_perform (GTK_WINDOW (win),
 									     TRUE, account,

@@ -68,6 +68,7 @@
 #endif
 #include "modest-account-protocol.h"
 #include <camel/camel-stream-null.h>
+#include <widgets/modest-msg-view-window.h>
 
 #define KB 1024
 
@@ -2723,7 +2724,18 @@ modest_mail_operation_get_msg_and_parts (ModestMailOperation *self,
 
 	/* Get account and set it into mail_operation */
 	folder = tny_header_get_folder (header);
-	priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	if (folder == NULL && MODEST_IS_MSG_VIEW_WINDOW (priv->source)) {
+		const gchar *acc_name;
+		acc_name = modest_window_get_active_account (MODEST_WINDOW (priv->source));
+		priv->account = modest_tny_account_store_get_server_account
+			(modest_runtime_get_account_store (),
+			 acc_name,
+			 TNY_ACCOUNT_TYPE_STORE);
+		folder = modest_tny_folder_store_find_folder_from_uri (TNY_FOLDER_STORE (priv->account), 
+								       modest_msg_view_window_get_message_uid (MODEST_MSG_VIEW_WINDOW (priv->source)));
+	} else {
+		priv->account = modest_tny_folder_get_account (TNY_FOLDER(folder));
+	}
 	
 	/* Check for cached messages */
 	if (progress_feedback) {
