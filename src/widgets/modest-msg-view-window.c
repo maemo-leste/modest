@@ -133,6 +133,7 @@ struct _ModestMsgViewWindowPrivate {
 
 	gchar *msg_uid;
 	TnyMimePart *other_body;
+	TnyMsg * top_msg;
 
 	GSList *sighandlers;
 };
@@ -651,6 +652,11 @@ modest_msg_view_window_finalize (GObject *obj)
 		priv->other_body = NULL;
 	}
 
+	if (priv->top_msg != NULL) {
+		g_object_unref (priv->top_msg);
+		priv->top_msg = NULL;
+	}
+
 	if (priv->header_model != NULL) {
 		g_object_unref (priv->header_model);
 		priv->header_model = NULL;
@@ -900,6 +906,7 @@ modest_msg_view_window_new_with_header_model (TnyMsg *msg,
 	modest_msg_view_window_construct (window, modest_account_name, mailbox, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	priv->top_msg = NULL;
 
 	/* Remember the message list's TreeModel so we can detect changes
 	 * and change the list selection when necessary: */
@@ -978,6 +985,7 @@ modest_msg_view_window_new_from_uid (const gchar *modest_account_name,
 	modest_msg_view_window_construct (window, modest_account_name, mailbox, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	priv->top_msg = NULL;
 
 	is_merge = g_str_has_prefix (msg_uid, "merge:");
 
@@ -1058,6 +1066,7 @@ modest_msg_view_window_new_from_header_view (ModestHeaderView *header_view,
 	modest_msg_view_window_construct (window, modest_account_name, mailbox, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	priv->top_msg = NULL;
 
 	/* Remember the message list's TreeModel so we can detect changes 
 	 * and change the list selection when necessary: */
@@ -1151,6 +1160,7 @@ modest_msg_view_window_new_for_search_result (TnyMsg *msg,
 	modest_msg_view_window_construct (window, modest_account_name, mailbox, msg_uid);
 
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (window);
+	priv->top_msg = NULL;
 
 	/* Remember that this is a search result, 
 	 * so we can disable some UI appropriately: */
@@ -1185,6 +1195,7 @@ modest_msg_view_window_is_other_body (ModestMsgViewWindow *self)
 ModestWindow *
 modest_msg_view_window_new_with_other_body (TnyMsg *msg, 
 					    TnyMimePart *other_body,
+					    TnyMsg *top_msg,
 					    const gchar *modest_account_name,
 					    const gchar *mailbox,
 					    const gchar *msg_uid)
@@ -1206,6 +1217,11 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 	} else {
 		tny_msg_view_set_msg (TNY_MSG_VIEW (priv->msg_view), msg);
 	}
+	if (top_msg) {
+		priv->top_msg = g_object_ref (top_msg);
+	} else {
+		priv->top_msg = NULL;
+	}
 	update_window_title (MODEST_MSG_VIEW_WINDOW (obj));
 	update_branding (MODEST_MSG_VIEW_WINDOW (obj));
 
@@ -1220,12 +1236,13 @@ modest_msg_view_window_new_with_other_body (TnyMsg *msg,
 }
 
 ModestWindow *
-modest_msg_view_window_new_for_attachment (TnyMsg *msg, 
+modest_msg_view_window_new_for_attachment (TnyMsg *msg,
+					   TnyMsg *top_msg,
 					   const gchar *modest_account_name,
 					   const gchar *mailbox,
 					   const gchar *msg_uid)
 {
-	return modest_msg_view_window_new_with_other_body (msg, NULL, modest_account_name, mailbox, msg_uid);
+	return modest_msg_view_window_new_with_other_body (msg, NULL, top_msg, modest_account_name, mailbox, msg_uid);
 }
 
 static void
@@ -1530,6 +1547,21 @@ modest_msg_view_window_get_message (ModestMsgViewWindow *self)
 	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
 	
 	return tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+}
+
+TnyMsg*
+modest_msg_view_window_get_top_message (ModestMsgViewWindow *self)
+{
+	ModestMsgViewWindowPrivate *priv;
+	
+	g_return_val_if_fail (self, NULL);
+	
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE(self);
+
+	if (priv->top_msg)
+		return g_object_ref (priv->top_msg);
+	else
+		return NULL;
 }
 
 const gchar*
@@ -2668,6 +2700,9 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 {
 	DecodeAsyncHelper *helper = (DecodeAsyncHelper *) user_data;
 	const gchar *content_type;
+	ModestMsgViewWindowPrivate *priv;
+
+	priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (helper->self);
 
 	if (cancelled || err) {
 		if (err) {
@@ -2705,6 +2740,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 
 		fd = g_open (helper->file_path, O_RDONLY, 0644);
 		if (fd != -1) {
+			TnyMsg *top_msg;
 			file_stream = tny_fs_stream_new (fd);
 
 			mgr = modest_runtime_get_window_mgr ();
@@ -2716,8 +2752,16 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
 
 			msg = tny_camel_msg_new ();
-			tny_camel_msg_parse ((TnyCamelMsg *) msg, file_stream);
-			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (msg), account, mailbox, helper->attachment_uid);
+			tny_camel_msg_parse (msg, file_stream);
+
+			if (priv->top_msg)
+				top_msg = g_object_ref (priv->top_msg);
+			else
+				top_msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+
+			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (msg), top_msg, 
+									     account, mailbox, helper->attachment_uid);
+			if (top_msg) g_object_unref (top_msg);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win),
 						modest_window_get_zoom (MODEST_WINDOW (helper->self)));
 			if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (helper->self)))
@@ -2920,6 +2964,7 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 		if (found) {
 			g_debug ("window for this body is already being created");
 		} else {
+			TnyMsg *top_msg;
 
 			/* it's not found, so create a new window for it */
 			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
@@ -2927,9 +2972,16 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			const gchar *mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (window));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
+
+			if (priv->top_msg)
+				top_msg = g_object_ref (priv->top_msg);
+			else
+				top_msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
 			
-			msg_win = modest_msg_view_window_new_with_other_body (TNY_MSG (current_msg), TNY_MIME_PART (mime_part),
+			msg_win = modest_msg_view_window_new_with_other_body (TNY_MSG (current_msg), TNY_MIME_PART (mime_part), top_msg,
 									      account, mailbox, attachment_uid);
+
+			if (top_msg) g_object_unref (top_msg);
 			
 			modest_window_set_zoom (MODEST_WINDOW (msg_win),
 						modest_window_get_zoom (MODEST_WINDOW (window)));
@@ -2955,14 +3007,20 @@ modest_msg_view_window_view_attachment (ModestMsgViewWindow *window,
 			 * thus, we don't do anything */
 			g_debug ("window for is already being created");
 		} else {
+			TnyMsg *top_msg;
 			/* it's not found, so create a new window for it */
 			modest_window_mgr_register_header (mgr, header, attachment_uid); /* register the uid before building the window */
 			gchar *account = g_strdup (modest_window_get_active_account (MODEST_WINDOW (window)));
 			const gchar *mailbox = modest_window_get_active_mailbox (MODEST_WINDOW (window));
 			if (!account)
 				account = modest_account_mgr_get_default_account (modest_runtime_get_account_mgr ());
-			msg_win = modest_msg_view_window_new_for_attachment (TNY_MSG (mime_part), account, 
-									     mailbox, attachment_uid);
+			if (priv->top_msg)
+				top_msg = g_object_ref (priv->top_msg);
+			else
+				top_msg = tny_msg_view_get_msg (TNY_MSG_VIEW (priv->msg_view));
+			msg_win = modest_msg_view_window_new_for_attachment (
+				TNY_MSG (mime_part), top_msg, account, 
+				mailbox, attachment_uid);
 			modest_window_set_zoom (MODEST_WINDOW (msg_win),
 						modest_window_get_zoom (MODEST_WINDOW (window)));
 			if (modest_window_mgr_register_window (mgr, msg_win, MODEST_WINDOW (window)))

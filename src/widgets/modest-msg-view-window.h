@@ -102,6 +102,7 @@ GType        modest_msg_view_window_get_type    (void) G_GNUC_CONST;
  * Returns: a new #ModestMsgViewWindow, or NULL in case of error
  */
 ModestWindow*   modest_msg_view_window_new_for_attachment         (TnyMsg *msg, 
+								   TnyMsg *top_msg,
 								   const gchar *modest_account_name,
 								   const gchar *mailbox,
 								   const gchar *msg_uid);
@@ -121,6 +122,7 @@ ModestWindow*   modest_msg_view_window_new_for_attachment         (TnyMsg *msg,
  */
 ModestWindow*   modest_msg_view_window_new_with_other_body         (TnyMsg *msg,
 								   TnyMimePart *other_body,
+								   TnyMsg *top_msg,
 								   const gchar *modest_account_name,
 								   const gchar *mailbox,
 								   const gchar *msg_uid);
@@ -227,6 +229,17 @@ modest_msg_view_window_get_header (ModestMsgViewWindow *self);
  * Returns: a new #TnyMsg instance, or NULL in case of error
  */
 TnyMsg*         modest_msg_view_window_get_message     (ModestMsgViewWindow *window);
+
+/**
+ * modest_msg_view_window_get_top_message:
+ * @window: an #ModestMsgViewWindow instance
+ * 
+ * get a new reference to the parent message of the tree of views. The caller
+ * must free this new reference
+ * 
+ * Returns: a new #TnyMsg instance, or NULL in case of error
+ */
+TnyMsg*         modest_msg_view_window_get_top_message     (ModestMsgViewWindow *window);
 
 /**
  * modest_msg_view_window_get_message_uid:
