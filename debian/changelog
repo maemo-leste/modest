@@ -1,3 +1,13 @@
+modest (3.2.8) unstable; urgency=low
+
+  * Week 53, 2009 - first release
+  * 
+  * Fixes: NB#151640 Modest crashes when forwarding embedded attachment opened from viewer view
+  * Fixes: NB#151667 Video attachments are not shown in viewer view.
+  * Fixes: NB#151676 Not possible to view plain text messages 
+
+ -- Moises Martinez <moises.martinez@nokia.com>  Mon, 28 Dec 2009 13:36:02 +0200
+
 modest (3.2.7-1) unstable; urgency=low
 
   * Week 52, 2009 - second release candidate - with no code changes
