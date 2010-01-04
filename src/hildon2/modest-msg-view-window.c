@@ -2273,30 +2273,6 @@ view_msg_cb (ModestMailOperation *mail_op,
 		return;
 	}
 
-	if (msg && TNY_IS_CAMEL_BS_MSG (msg)) {
-		TnyMimePart *body;
-		body = modest_tny_msg_find_body_part (msg, TRUE);
-		
-		if (body && !tny_camel_bs_mime_part_is_fetched (TNY_CAMEL_BS_MIME_PART (body))) {
-			/* We have body structure but not the body mime part. What we do
-			 * is restarting load of message */
-			self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
-			priv = MODEST_MSG_VIEW_WINDOW_GET_PRIVATE (self);
-
-			tny_header_unset_flag (TNY_HEADER (header), TNY_HEADER_FLAG_CACHED);
-
-			modest_msg_view_window_reload (self);
-
-			if (row_reference)
-				gtk_tree_row_reference_free (row_reference);
-			g_object_unref (body);
-			return;
-		}
-
-		if (body)
-			g_object_unref  (body);
-	}
-
 	/* Get the window */ 
 	self = (ModestMsgViewWindow *) modest_mail_operation_get_source (mail_op);
 	g_return_if_fail (MODEST_IS_MSG_VIEW_WINDOW (self));
@@ -2784,7 +2760,7 @@ on_decode_to_stream_async_handler (TnyMimePart *mime_part,
 		g_chmod(helper->file_path, 0444);
 
 		/* Activate the file */
-		modest_platform_activate_file (helper->file_path, tny_mime_part_get_content_type (mime_part));
+		modest_platform_activate_file (helper->file_path, content_type);
 	}
 
  free:
