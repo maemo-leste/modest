@@ -1489,7 +1489,8 @@ open_msg_performer(gboolean canceled,
 	gboolean can_open;
 	gchar *account_name = get_info_from_header (helper->header, &is_draft, &can_open);
 
-	if (!g_strcmp0 (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID)) {
+	if (!g_strcmp0 (account_name, MODEST_LOCAL_FOLDERS_ACCOUNT_ID) ||
+	    !g_strcmp0 (account_name, MODEST_MMC_ACCOUNT_ID)) {
 		g_free (account_name);
 		account_name = g_strdup (modest_window_get_active_account (MODEST_WINDOW (parent_window)));
 	}
