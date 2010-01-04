@@ -1645,6 +1645,22 @@ on_limit_error (GtkWidget *widget, ModestGtkhtmlMsgView *msg_view)
 	g_signal_emit_by_name (G_OBJECT (msg_view), "limit-error");
 }
 
+static gboolean
+part_cids_equal (const gchar *part_cid1,
+		 const gchar *part_cid2)
+{
+	if (g_strcmp0 (part_cid1, part_cid2) == 0)
+		return TRUE;
+
+	if (part_cid2 && part_cid2[0] == '<') {
+		const gchar *end;
+		end = g_strrstr_len (part_cid2, -1, ">");
+
+		if (end && strncmp (part_cid2 + 1, part_cid1, end - part_cid2 - 1) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
 
 static TnyMimePart *
 find_cid_image (TnyMsg *msg, const gchar *cid)
@@ -1673,17 +1689,9 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 		 */
 		if (!part_cid)
 			part_cid = tny_mime_part_get_content_location (part);
-		
-		if (part_cid && strcmp (cid, part_cid) == 0)
+
+		if (part_cids_equal (cid, part_cid))
 			break;
-
-		if (part_cid && part_cid[0] == '<') {
-			const gchar *end;
-			end = g_strrstr_len (part_cid, -1, ">");
-
-			if (end && strncmp (part_cid + 1, cid, end - part_cid - 1) == 0)
-				break;
-		}
 
 		if (tny_mime_part_content_type_is (part, "multipart/related")) {
 			TnyList *related_parts = TNY_LIST (tny_simple_list_new ());
@@ -1696,9 +1704,10 @@ find_cid_image (TnyMsg *msg, const gchar *cid)
 			while (!tny_iterator_is_done (related_iter)) {
 				related_part = TNY_MIME_PART (tny_iterator_get_current (related_iter));
 				part_cid = tny_mime_part_get_content_id (related_part);
-				if (part_cid && strcmp (cid, part_cid) == 0) {
+
+				if (part_cids_equal (cid, part_cid))
 					break;
-				}
+
 				g_object_unref (related_part);
 				related_part = NULL;
 				tny_iterator_next (related_iter);
