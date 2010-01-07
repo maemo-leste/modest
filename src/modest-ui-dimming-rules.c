@@ -947,10 +947,23 @@ gboolean
 modest_ui_dimming_rules_on_fetch_images (ModestWindow *win, gpointer user_data)
 {
 	gboolean dimmed = FALSE;
+	ModestDimmingRule *rule = NULL;
 
 	g_return_val_if_fail (MODEST_IS_MSG_VIEW_WINDOW (win), FALSE);
+	rule = MODEST_DIMMING_RULE (user_data);
 
 	dimmed = !modest_msg_view_window_has_blocked_external_images (MODEST_MSG_VIEW_WINDOW (win));
+
+	if (!dimmed) {
+		dimmed = _transfer_mode_enabled (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mail_ib_notavailable_downloading"));
+	}
+	if (!dimmed) {
+		dimmed = _msg_download_in_progress (win);
+		if (dimmed)
+			modest_dimming_rule_set_notification (rule, _("mcen_ib_unable_to_reply"));
+	}
 
 	return dimmed;
 }
