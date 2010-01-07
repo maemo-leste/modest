@@ -862,7 +862,7 @@ add_if_attachment (gpointer data, gpointer user_data)
 	part = TNY_MIME_PART (data);
 	attachments_list = ((GList **) user_data);
 
-	if ((tny_mime_part_is_attachment (part))||(TNY_IS_MSG (part))) {
+	if (!tny_mime_part_is_purged (part) && ((tny_mime_part_is_attachment (part))||(TNY_IS_MSG (part)))) {
 		*attachments_list = g_list_prepend (*attachments_list, part);
 		g_object_ref (part);
 	}
